@@ -1,5 +1,0 @@
-Informations saisies dans le formulaire {TITLE} :
-{MSG}
-Soumis par : {UNAME} (Numéro d'utilisateur : {UID})
-Adresse IP : {IP}
-Navigateur utilisé : {AGENT}

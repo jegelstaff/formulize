@@ -1,36 +1,5 @@
 <?php
-###############################################################################
-##             Formulaire - Information submitting module for XOOPS          ##
-##                    Copyright (c) 2003 NS Tai (aka tuff)                   ##
-##                       <http://www.brandycoke.com/>                        ##
-###############################################################################
-##                    XOOPS - PHP Content Management System                  ##
-##                       Copyright (c) 2000 XOOPS.org                        ##
-##                          <http://www.xoops.org/>                          ##
-###############################################################################
-##  This program is free software; you can redistribute it and/or modify     ##
-##  it under the terms of the GNU General Public License as published by     ##
-##  the Free Software Foundation; either version 2 of the License, or        ##
-##  (at your option) any later version.                                      ##
-##                                                                           ##
-##  You may not change or alter any portion of this comment or credits       ##
-##  of supporting developers from this source code or any supporting         ##
-##  source code which is considered copyrighted (c) material of the          ##
-##  original comment or credit authors.                                      ##
-##                                                                           ##
-##  This program is distributed in the hope that it will be useful,          ##
-##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
-##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
-##  GNU General Public License for more details.                             ##
-##                                                                           ##
-##  You should have received a copy of the GNU General Public License        ##
-##  along with this program; if not, write to the Free Software              ##
-##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
-###############################################################################
-##  Author of this file: NS Tai (aka tuff)                                   ##
-##  URL: http://www.brandycoke.com/                                          ##
-##  Project: Formulaire                                                      ##
-###############################################################################
+
 include("admin_header.php");
 
 if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
@@ -69,7 +38,7 @@ global $title2, $op, $data;
 	xoops_cp_header();
 
 
-//Sélection des formulaires
+//Sélection des formulizes
 	$sql="SELECT distinct desc_form, id_form FROM ".$xoopsDB->prefix("form_id");
 	$res = mysql_query ( $sql );
 
@@ -79,7 +48,7 @@ if ( $res ) {
   }
 }
 
-if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform'){
+if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform' && $op != 'permlinks'){ // permlinks condition added jwe 08/29/04
 	echo '
 	<table class="outer" width="100%">
 	<th><center>'._FORM_OPT.'</center></th>
@@ -89,8 +58,28 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	</table><br>';
 }
 
-/******************* Affichage des formulaires *******************/
-if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform'){
+/******************* Affichage des formulizes *******************/
+if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform' && $op != 'permlinks'){ // permlinks condition added jwe 08/29/04
+
+	// javascript to confirm deletion added by jwe 8/30/04
+
+	print "<script type='text/javascript'>\n";
+	print "	function confirmdel() {\n";
+	print "		var answer = confirm ('" . _AM_CONFIRM_DEL . "')\n";
+	print "		if (answer)\n";
+	print "		{\n";
+	print "			return true;\n";
+	print "		}\n";
+	print "		else\n";
+	print "		{\n";
+	print "			return false;\n";
+	print "		}\n";
+	print "	}\n";
+	print "</script>\n";
+
+
+
+
 	echo '
 	<table class="outer" width="100%">
 
@@ -115,6 +104,10 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	echo '<tr><td class="head" ALIGN=center>'._FORM_MODPERM.'</td>
 	      <td class="odd"><A HREF="formindex.php?op=permform">
 	      <center><img src="../images/perm.png" alt='._FORM_PERM.'> </center></a></td></tr>';
+
+	echo '<tr><td class="head" ALIGN=center>'._FORM_MODPERMLINKS.'</td>
+	      <td class="odd"><A HREF="formindex.php?op=permlinks">
+	      <center><img src="../images/perm.png" alt='._FORM_PERMLINKS.'> </center></a></td></tr>';
 	
 	foreach($data as $id => $titre) {
 	   //echo '<form action="formindex.php?title='.$id.'" method="post">';	
@@ -123,7 +116,7 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	   echo '<td class="odd" align="center">  
 	         <A HREF="renom.php?title='.$id.'">  <img src="../images/signature.png" alt='._FORM_RENOM.'>  </a>';
 
-	   echo '<A HREF="formindex.php?title='.$id.'&op=delform">  <img src="../images/editdelete.png" alt='._FORM_SUP.'>  </a>';
+	   echo '<A HREF="formindex.php?title='.$id.'&op=delform" onclick="return confirmdel();">  <img src="../images/editdelete.png" alt='._FORM_SUP.'>  </a>';
 	   
 	   echo '<A HREF="formindex.php?title='.$id.'&op=modform">  <img src="../images/kedit.png" alt='._FORM_MODIF.'>  </a>';
 	   
@@ -162,11 +155,11 @@ function addform()
 	$sql = sprintf("INSERT INTO %s (desc_form, admin, groupe, email, expe) VALUES ('%s', '%s', '%s', '%s', '%s')", $xoopsDB->prefix("form_id"), $data[$title], $admin, $groupe, $email, $expe);
 	$xoopsDB->queryF($sql) or $eh->show("error insertion 1 dans addform");
 
-//	$sql2 = sprintf("INSERT INTO %s (itemname,itemurl) VALUES ('%s', '%s')", $xoopsDB->prefix("form_menu"), $title, XOOPS_URL.'/modules/formulaire/index.php?title='.$data[$title].'');
-	$sql2 = sprintf("INSERT INTO %s (itemname,itemurl) VALUES ('%s', '%s')", $xoopsDB->prefix("form_menu"), $title, XOOPS_URL.'/modules/formulaire/index.php?title='.$data[$title].'');
+//	$sql2 = sprintf("INSERT INTO %s (itemname,itemurl) VALUES ('%s', '%s')", $xoopsDB->prefix("form_menu"), $title, XOOPS_URL.'/modules/formulize/index.php?title='.$data[$title].'');
+	$sql2 = sprintf("INSERT INTO %s (itemname,itemurl) VALUES ('%s', '%s')", $xoopsDB->prefix("form_menu"), $title, XOOPS_URL.'/modules/formulize/index.php?title='.$data[$title].'');
 	$xoopsDB->queryF($sql2) or $eh->show("error insertion 2 in addform");
 
-	redirect_header("index.php?title=$data[$title]",1,_FORMULAIRE_NEWFORMADDED);
+	redirect_header("index.php?title=$data[$title]",1,_formulize_NEWFORMADDED);
 }
 
 function renform()
@@ -185,9 +178,9 @@ function renform()
 	$sql = sprintf("UPDATE %s SET desc_form='%s' WHERE desc_form='%s'", $xoopsDB->prefix("form_id"), $title2, $data[$title]);
 	$xoopsDB->queryF($sql) or $eh->show("error insertion 1 dans renform");
 
-	$sql2 = sprintf("UPDATE %s SET itemname='%s',itemurl='%s' WHERE itemname='%s'", $xoopsDB->prefix("form_menu"), $title2, XOOPS_URL.'/modules/formulaire/index.php?title='.$title2, $data[$title]);
+	$sql2 = sprintf("UPDATE %s SET itemname='%s',itemurl='%s' WHERE itemname='%s'", $xoopsDB->prefix("form_menu"), $title2, XOOPS_URL.'/modules/formulize/index.php?title='.$title2, $data[$title]);
 	$xoopsDB->query($sql2) or $eh->show("error insertion 2 dans renform");
-	redirect_header("formindex.php",1,_FORMULAIRE_FORMMOD);
+	redirect_header("formindex.php",1,_formulize_FORMMOD);
 }
 
 function modform()
@@ -197,11 +190,14 @@ function modform()
 	if (empty($data[$title])) {
 		redirect_header("formindex.php", 2, _MD_ERRORTITLE);
 	}
-	redirect_header("index.php?title=$data[$title]",2,_FORMULAIRE_FORMCHARG);
+	redirect_header("index.php?title=$data[$title]",2,_formulize_FORMCHARG);
 }
 
 function delform()
 {
+
+
+
 	global $xoopsDB, $HTTP_POST_VARS, $myts, $eh, $title, $data;
 	//$title4 = $myts->makeTboxData4Save($HTTP_POST_VARS["desc_form4"]);
 	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$data[$title]);
@@ -226,7 +222,9 @@ function delform()
 	$perm_name = 'Permission des catégories';
 	//xoops_groupperm_deletebymoditem ($module_id>$perm_name>$id_form) ;
 
-	redirect_header("formindex.php",3,_FORMULAIRE_FORMDEL._FORMULAIRE_MSG_SUP);
+	xoops_notification_deletebyitem ($module_id, "form", $id_form); // added by jwe-10/10/04 to handle removing notifications for a form once it's gone
+
+	redirect_header("formindex.php",3,_formulize_FORMDEL._formulize_MSG_SUP);
 }
 
 function showform()
@@ -242,12 +240,122 @@ function showform()
 	if ($res){
        		list($count) = mysql_fetch_row($res);
 		if ($count == 0)
-		redirect_header("formindex.php",2,_FORMULAIRE_NOTSHOW.$data[$title]._FORMULAIRE_NOTSHOW2);
-		else redirect_header("consult.php?form=".$title,2,_FORMULAIRE_FORMSHOW.$data[$title]);
+		redirect_header("formindex.php",2,_formulize_NOTSHOW.$data[$title]._formulize_NOTSHOW2);
+		else redirect_header("consult.php?form=".$title,2,_formulize_FORMSHOW.$data[$title]);
 	}
 		
 
 }
+
+//
+// ADDED BY JWE 8/29/04 TO CREATE A PERMISSION PAGE USED TO ASSIGN SCOPE TO LINKS WITH OTHER FORMS
+//
+
+function permlinks()
+{
+
+	global $xoopsDB, $xoopsModule;
+	$module_id = $xoopsModule->getVar('mid');
+
+	$currentperm = $_GET['currentperm'];
+	if(!$currentperm)
+	{
+		$currentperm = "none";
+	}
+
+	// NEED TO GATHER ALL LINKS INTO ARRAYS FOR DRAWING TO THE SELECTION BOX
+	$getlinksq = "SELECT id_form, ele_caption, ele_id FROM " . $xoopsDB->prefix("form") . " WHERE ele_type=\"select\" AND ele_value LIKE '%#*=:*%'";
+	// print "$getlinksq<br>";
+	$resgetlinksq = $xoopsDB->query($getlinksq);
+	while ($rowlinksq = $xoopsDB->fetchRow($resgetlinksq))
+	{
+		//print_r($rowlinksq);
+		//print "<br>";
+		$linkformids[] = $rowlinksq[0];
+		$linkcaptions[] = $rowlinksq[1];
+		$linkeleids[] = $rowlinksq[2];
+	}
+	// now get all the form names for each form that has a link
+
+	if($linkformids) // if a link was found...
+	{
+
+	foreach($linkformids as $aform)
+	{
+	$getlformnamesq = "SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form = $aform";
+	$resq = $xoopsDB->query($getlformnamesq);
+	$rowq = $xoopsDB->fetchRow($resq);
+	$linkformnames[] = $rowq[0];
+	}
+	// now the formid array is the ids
+	// cations array is the linked select box names
+	// names is the form names, 
+	// eleids is the element ids, all indexed together
+	array_multisort($linkformnames, $linkformids, $linkcaptions, $linkeleids);
+
+	// set the item array...
+	// 1. get a list of all the groups
+	// 2. put the list into the array
+
+	array($grouplist_id);
+	array($grouplist_name);
+	$grouplistq = "SELECT groupid, name FROM " . $xoopsDB->prefix("groups");
+	$resgrouplistq = $xoopsDB->query($grouplistq); 
+	while ($rowgrouplistq = $xoopsDB->fetchRow($resgrouplistq))
+	{
+		$grouplist_id[] = $rowgrouplistq[0];
+		$grouplist_name[] = $rowgrouplistq[1];
+	}
+
+	// javascript function to reload page everytime someone selects a new linkbox...
+		print "<script type='text/javascript'>\n";
+		print "<!--//\n";
+		print "	function redrawpage(perm) {\n";
+//		print "	alert(perm)\n";
+		print "		window.location = 'formindex.php?op=permlinks&currentperm=' + perm;\n";
+		print "	}\n";
+		print "//--></script>\n\n";
+
+	print "<table class='outer' cellspacing='1'><tr><td class=head><center><form name=permselect action=formindex.php?op=permlinks method=post>\n";
+	print "<p><b>" . _AM_FORM_CURPERMLINKS . "</b><br>";
+	print "<SELECT name=currentperm size=1 onChange='redrawpage(document.permselect.currentperm.value)'>\n";
+	for($i=0;$i<count($linkformnames);$i++)
+	{
+		if($currentperm == "none")
+		{
+			$currentperm = $linkeleids[$i];
+		}
+		print "<option value=\"" . $linkeleids[$i]. "\"";
+		if ($currentperm == $linkeleids[$i])
+		{
+			print " selected";
+		}
+		print ">" . $linkformnames[$i] . ": " . $linkcaptions[$i] . "</option>\n";
+	}
+
+	print "</SELECT></p></form></center></td></tr></table>\n";
+
+	$title_of_form = "";
+	$perm_name = $currentperm;
+	$perm_desc = '';
+	$form = new XoopsGroupPermForm($title_of_form, $module_id, $perm_name, $perm_desc); 
+	for($i=0;$i<count($grouplist_id);$i++)
+	{
+		$form->addItem($grouplist_id[$i], $grouplist_name[$i]);
+	}
+
+	echo $form->render();
+	
+	}
+	else // of if no link was found
+	{
+	
+		print "NO LINKS!";
+		
+	} // end of if a link was found
+}
+
+
 
 function permform()
 {
@@ -299,8 +407,7 @@ function permform()
 		print " selected";
 	}
 	print ">" . _AM_FORM_PERMADMIN . "</option>\n";
-	print "</SELECT></p><p>\n";
-	print "<INPUT type=submit class=formbutton name=shownewperm value=\"" . _AM_FORM_SUBMITBUTTON . "\"></p></form></center></td></tr></table>\n";
+	print "</SELECT></p></form></center></td></tr></table>\n";
 
 	$title_of_form = "";
 	$perm_name = $currentperm;
@@ -333,6 +440,12 @@ case "showform":
 case "permform":
 	permform();
 	break;
+
+// added jwe 8/29/04
+case "permlinks":
+	permlinks();
+	break;
+
 }
 
 include 'footer.php';

@@ -105,15 +105,18 @@ define("_AM_SAVECHANG","Save changes");
 define("_AM_WANTDEL","Do you really want to delete this menu item?");
 define("_AM_YES","Yes");
 define("_AM_NO","No");
-define("_AM_FORMULAIREMENUSTYLE","MyMenu-Style");
+define("_AM_formulizeMENUSTYLE","MyMenu-Style");
 define("_AM_MAINMENUSTYLE","MainMenu-Style");
 
-define("_AM_VERSION","2.8");
+define("_AM_VERSION","1.0");
 define("_AM_REORD","New sort");
 
-define("_FORMULAIRE_CAPTION_MATCH", "The caption you entered is already in use. A '2' has been appended to it.");
-define("_FORMULAIRE_CAPTION_QUOTES", "Captions cannot have quotes. They have been removed.");
-define("_FORMULAIRE_CAPTION_SLASH", "Captions cannot have backslashes. They have been removed.");
+define("_formulize_CAPTION_MATCH", "The caption you entered is already in use. A '2' has been appended to it.");
+define("_formulize_CAPTION_QUOTES", "Captions cannot have quotes. They have been removed.");
+define("_formulize_CAPTION_SLASH", "Captions cannot have backslashes. They have been removed.");
+define("_formulize_CAPTION_LT", "Captions cannot have < signs. They have been removed.");
+define("_formulize_CAPTION_GT", "Captions cannot have > signs. They have been removed.");
+
 
 
 ?>

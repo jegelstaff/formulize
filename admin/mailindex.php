@@ -1,36 +1,5 @@
 <?php
-###############################################################################
-##             Formulaire - Information submitting module for XOOPS          ##
-##                    Copyright (c) 2003 NS Tai (aka tuff)                   ##
-##                       <http://www.brandycoke.com/>                        ##
-###############################################################################
-##                    XOOPS - PHP Content Management System                  ##
-##                       Copyright (c) 2000 XOOPS.org                        ##
-##                          <http://www.xoops.org/>                          ##
-###############################################################################
-##  This program is free software; you can redistribute it and/or modify     ##
-##  it under the terms of the GNU General Public License as published by     ##
-##  the Free Software Foundation; either version 2 of the License, or        ##
-##  (at your option) any later version.                                      ##
-##                                                                           ##
-##  You may not change or alter any portion of this comment or credits       ##
-##  of supporting developers from this source code or any supporting         ##
-##  source code which is considered copyrighted (c) material of the          ##
-##  original comment or credit authors.                                      ##
-##                                                                           ##
-##  This program is distributed in the hope that it will be useful,          ##
-##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
-##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
-##  GNU General Public License for more details.                             ##
-##                                                                           ##
-##  You should have received a copy of the GNU General Public License        ##
-##  along with this program; if not, write to the Free Software              ##
-##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
-###############################################################################
-##  Author of this file: NS Tai (aka tuff)                                   ##
-##  URL: http://www.brandycoke.com/                                          ##
-##  Project: Formulaire                                                      ##
-###############################################################################
+
 include("admin_header.php");
 include_once '../../../include/cp_header.php';
 if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
@@ -56,7 +25,7 @@ if(!isset($_POST['op'])){ $_POST['op']=" ";}
 // query modified to call in new fields -- jwe 7/25/04. 7/28/04
 
 if ( isset ($title)) {
-	$sql=sprintf("SELECT id_form,admin,groupe,email,expe,singleentry,groupscope,headerlist,showviewentries,maxentries FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$title);
+	$sql=sprintf("SELECT id_form,admin,groupe,email,expe,singleentry,groupscope,headerlist,showviewentries,maxentries,even,odd FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$title);
 	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
 
 	if ( $res ) {
@@ -76,6 +45,9 @@ if ( isset ($title)) {
 	    $headerlist = $row['headerlist'];
 	    $showviewentries = $row['showviewentries'];
 	    $maxentries = $row['maxentries'];
+	    $coloreven = $row['even']; // colors added 9/02/04 by jwe
+	    $colorodd = $row['odd'];
+
 	  }
 	}
 
@@ -109,13 +81,13 @@ if( $_POST['op'] != 'upform' && $op != 'addform'){
 
 	if ($title != '') {
 			echo '
-		<form action="mailindex.php?title='.$title.'" method="post">
+		<form name=mainform action="mailindex.php?title='.$title.'" method="post">'; // name added by jwe 9/02/04
 	
-		<table class="outer" cellspacing="1" width="100%">
+		echo'<table class="outer" cellspacing="1" width="100%">
 		<th><center><font size=5>'._AM_FORM.$title.'<font></center></th>
 		</table>';
 		
-/*		// Affichage des droits du formulaire
+/*		// Affichage des droits du formulize
 		echo '<tr><td class="head"><center>'._FORM_DROIT.'</center></td>
 		<td class="even"><select name="auto" size="4">';
 		for($i=0;$i<$m;$i++) {
@@ -147,7 +119,7 @@ if( $_POST['op'] != 'upform' && $op != 'addform'){
 		<tr><td class="head" ><center>'._FORM_TITLE.'</center></td>
 		<td class="even"><input maxlength="255" size="30" id="newtitle" name="newtitle" type="text"></td></tr>';
 	
-/*	// Affichage des droits du formulaire
+/*	// Affichage des droits du formulize
 		echo '<tr><td class="head"><center>'._FORM_DROIT.'</center></td>
 			<td class="even"><select name="auto" size="4">';
 		for($i=0;$i<$m;$i++) {
@@ -233,6 +205,91 @@ echo '</tr>';
 
 echo '</tr>';
 
+// add in the even/odd colour override controls for report writing page -- added by jwe 9/02/04
+
+	include_once XOOPS_ROOT_PATH."/modules/formulize/admin/colorarrays.php";
+
+	echo '<tr>
+	<td class="head"><center>'._FORM_COLOREVEN.'</center></td><td class="even">';
+
+	echo'<script type="text/javascript">
+
+	function changeEvenSquare(col) {
+		var coltouse = "#"+col;
+		document.getElementById("evenspan").style.backgroundColor = coltouse;
+	}
+
+	</script>
+	<select name="coloreven" size=1 onchange="changeEvenSquare(this.value)">';
+	
+	for($i=0;$i<count($colorlist);$i++)
+	{
+		echo '<option value=' . $colorcode[$i];
+		if($colorcode[$i] == $coloreven)
+		{
+			echo ' selected';
+		}
+		echo '>' . $colorlist[$i]. '</option>';
+	}
+
+	echo '</select><br><br><table width=30%><tr>';
+
+	if ($coloreven)
+	{
+		echo '<td bgcolor="#' . $coloreven . '" id=evenspan width=100%>';
+	}
+	else
+	{
+		echo '<td bgcolor=white id=evenspan width=100%>';
+	}
+
+		echo '<br><br><br>';
+
+		echo '</td></tr></table></td>';
+
+echo '</tr>';
+
+echo '<tr>
+	<td class="head"><center>'._FORM_COLORODD.'</center></td><td class="even">';
+
+	echo'<script type="text/javascript">
+
+	function changeOddSquare(col) {
+		var coltouse = "#"+col;
+		document.getElementById("oddspan").style.backgroundColor = coltouse;
+	}
+
+	</script>
+	<select name="colorodd" size=1 onchange="changeOddSquare(this.value)">';
+	
+	for($i=0;$i<count($colorlist);$i++)
+	{
+		echo '<option value=' . $colorcode[$i];
+		if($colorcode[$i] == $colorodd)
+		{
+			echo ' selected';
+		}
+		echo '>' . $colorlist[$i]. '</option>';
+	}
+
+	echo '</select><br><br><table width=30%><tr>';
+
+	if ($colorodd)
+	{
+		echo '<td bgcolor="#' . $colorodd . '" id=oddspan width=100%>';
+	}
+	else
+	{
+		echo '<td bgcolor=white id=oddspan width=100%>';
+	}
+
+		echo '<br><br><br>';
+
+		echo '</td></tr></table></td>';
+
+echo '</tr>';
+
+
 
 if($title != '')
 {
@@ -275,6 +332,10 @@ echo '<tr>
 
 	echo '</select></td></tr>';
 }// end of IF that controls drawing of headerlist box.
+
+
+
+
 
 if(!$title) // if there is no title, ie: new form, then show default perm box...
 {
@@ -342,19 +403,23 @@ function upform($title)
 
 	$showviewentries = $myts->makeTboxData4Save($HTTP_POST_VARS["showviewentries"]);
 	$maxentries = $HTTP_POST_VARS["maxentries"];
+	$coloreven = $HTTP_POST_VARS["coloreven"];
+	$colorodd = $HTTP_POST_VARS["colorodd"];
+	if($coloreven == "FFFFFF") {$coloreven = "default";}
+	if($colorodd == "FFFFFF") {$colorodd = "default";}
 	
 	// ========= end added code - jwe
-
-	if((!empty($email)) && (!eregi("^[_a-z0-9.-]+@[a-z0-9.-]{2,}[.][a-z]{2,3}$",$email))){
+	// the 'if' checks below commented by jwe 8/30/04
+	/*if((!empty($email)) && (!eregi("^[_a-z0-9.-]+@[a-z0-9.-]{2,}[.][a-z]{2,3}$",$email))){
 		redirect_header("mailindex.php?title=$title", 2, _MD_ERROREMAIL);
 	}
 	if (empty($email) && empty($admin) && $groupe=="0" && empty($expe)) {
 		redirect_header("mailindex.php?title=$title", 2, _MD_ERRORMAIL);
-	}
+	}*/
 	// sql updated with new fields -- jwe 7/25/04 , 7/28/04
-	$sql = sprintf("UPDATE %s SET admin='%s', groupe='%s', email='%s', expe='%s', singleentry='%s', groupscope='%s', headerlist='%s', showviewentries='%s', maxentries='%s' WHERE desc_form='%s'", $xoopsDB->prefix("form_id"), $admin, $groupe, $email, $expe, $singleentry, $groupscope, $cheaderlist, $showviewentries, $maxentries, $title);
+	$sql = sprintf("UPDATE %s SET admin='%s', groupe='%s', email='%s', expe='%s', singleentry='%s', groupscope='%s', headerlist='%s', showviewentries='%s', maxentries='%s', even='%s', odd='%s' WHERE desc_form='%s'", $xoopsDB->prefix("form_id"), $admin, $groupe, $email, $expe, $singleentry, $groupscope, $cheaderlist, $showviewentries, $maxentries, $coloreven, $colorodd, $title);
 	$xoopsDB->query($sql) or $eh->show("0013");
-	redirect_header("formindex.php",1,_FORMULAIRE_FORMTITRE);
+	redirect_header("formindex.php",1,_formulize_FORMTITRE);
 }
 
 
@@ -373,6 +438,10 @@ function addform()
 	
 	$showviewentries = $myts->makeTboxData4Save($HTTP_POST_VARS["showviewentries"]);
 	$maxentries = $HTTP_POST_VARS["maxentries"];
+	$coloreven = $HTTP_POST_VARS["coloreven"];
+	$colorodd = $HTTP_POST_VARS["colorodd"];
+	if($coloreven == "FFFFFF") {$coloreven = "default";}
+	if($colorodd == "FFFFFF") {$colorodd = "default";}
 
 	// ============ end of added code - jwe
 
@@ -391,10 +460,10 @@ function addform()
 	$title = eregi_replace ('&', "_", $title);
 
 	// updated to handle new params -- jwe 7/25/07 , 7/28/04
-	$sql = sprintf("INSERT INTO %s (desc_form, admin, groupe, email, expe, singleentry, groupscope, showviewentries, maxentries) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')", $xoopsDB->prefix("form_id"), $title, $admin, $groupe, $email, $expe, $singleentry, $groupscope, $showviewentries, $maxentries);
+	$sql = sprintf("INSERT INTO %s (desc_form, admin, groupe, email, expe, singleentry, groupscope, showviewentries, maxentries, even, odd) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')", $xoopsDB->prefix("form_id"), $title, $admin, $groupe, $email, $expe, $singleentry, $groupscope, $showviewentries, $maxentries, $coloreven, $colorodd);
 	$xoopsDB->queryF($sql) or $eh->show("error insertion 1 dans addform");
 
-	$sql2 = sprintf("INSERT INTO %s (itemname,itemurl) VALUES ('%s', '%s')", $xoopsDB->prefix("form_menu"), $title, XOOPS_URL.'/modules/formulaire/index.php?title='.$title.'');
+	$sql2 = sprintf("INSERT INTO %s (itemname,itemurl) VALUES ('%s', '%s')", $xoopsDB->prefix("form_menu"), $title, XOOPS_URL.'/modules/formulize/index.php?title='.$title.'');
 	$xoopsDB->queryF($sql2) or $eh->show("error insertion 2 dans addform");
 	
 	// grab and write default perms... -- jwe 7/28/04
@@ -409,7 +478,7 @@ $resgetfidq = mysql_query($getfidq);
 	$id_form = $rowgetfidq[0];
 
 	//get the module id
-	$res4 = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulaire'");
+	$res4 = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulize'");
 	if ($res4) {
 		while ($row = mysql_fetch_row($res4)) {
 			$module_id = $row[0];
@@ -419,7 +488,7 @@ $resgetfidq = mysql_query($getfidq);
 	array($permstowrite);
 	$permstowrite[0] = "view";
 	$permstowrite[1] = "add";
-	$permstowrite[2] = "admin";
+//	$permstowrite[2] = "admin"; // ADMIN IS NOT ASSIGNED BY DEFAULT, MUST BE MANUALLY ASSIGNED
 
 	foreach($defaultadmin as $agid)
 	{
@@ -434,7 +503,7 @@ $resgetfidq = mysql_query($getfidq);
 		} // end of write each perm
 	} // end of loop for each group 
 
-	redirect_header("index.php?title=$title",1,_FORMULAIRE_FORMCREA);
+	redirect_header("index.php?title=$title",1,_formulize_FORMCREA);
 }
 
 

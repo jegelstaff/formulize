@@ -1,37 +1,4 @@
 <?php
-###############################################################################
-##             Formulaire - Information submitting module for XOOPS          ##
-##                    Copyright (c) 2003 NS Tai (aka tuff)                   ##
-##                       <http://www.brandycoke.com/>                        ##
-###############################################################################
-##                    XOOPS - PHP Content Management System                  ##
-##                       Copyright (c) 2000 XOOPS.org                        ##
-##                          <http://www.xoops.org/>                          ##
-###############################################################################
-##  This program is free software; you can redistribute it and/or modify     ##
-##  it under the terms of the GNU General Public License as published by     ##
-##  the Free Software Foundation; either version 2 of the License, or        ##
-##  (at your option) any later version.                                      ##
-##                                                                           ##
-##  You may not change or alter any portion of this comment or credits       ##
-##  of supporting developers from this source code or any supporting         ##
-##  source code which is considered copyrighted (c) material of the          ##
-##  original comment or credit authors.                                      ##
-##                                                                           ##
-##  This program is distributed in the hope that it will be useful,          ##
-##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
-##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
-##  GNU General Public License for more details.                             ##
-##                                                                           ##
-##  You should have received a copy of the GNU General Public License        ##
-##  along with this program; if not, write to the Free Software              ##
-##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
-###############################################################################
-##  Author of this file: NS Tai (aka tuff)                                   ##
-##  URL: http://www.brandycoke.com/                                          ##
-##  Project: Formulaire                                                      ##
-###############################################################################
-//	Version du portable marchand bien, sauf quand aucun nom n'est ajouté au fichier joint
 include 'header.php';
 include_once XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php';
 
@@ -82,7 +49,7 @@ if ( $res ) {
   }
 }
 
-// -------------------------------------- JWE MODS BELOW...
+// -------------------------------------- JWE MODS BELOW... end of july, early august 2004
 
 // SECURITY!
 
@@ -96,7 +63,7 @@ if ( $res ) {
 // code below borrowed from mymenu.php
 
       // SET THE MODULE id 
-	$res4 = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulaire'");
+	$res4 = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulize'");
 	if ($res4) {
 		while ($row = mysql_fetch_row($res4)) {
 			$module_id = $row[0];
@@ -116,6 +83,18 @@ if ( $res ) {
   		}
 	}
 
+	// SET THE GROUPIDADD ARRAY, AND THEN DO THE CHECK FOR **ADD** PERMISSION - groups that can add to this form
+     	$groupidadd = array();
+      $res3 = $xoopsDB->query("SELECT gperm_groupid FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_itemid= ".$id_form." AND gperm_modid=".$module_id . " AND gperm_name=\"add\"");
+	if ( $res3 ) {
+  		while ( $row = mysql_fetch_row ( $res3 ) ) {
+  			$groupidadd[] = $row[0];
+  	  	}
+	}
+/*	print "groupidadd: ";
+	print_r($groupidadd);
+	print "<br>";*/
+
 	// SET THE GROUPID ARRAY, AND THEN DO THE CHECK FOR **VIEW** PERMISSION - groups this form is permitted for
      	$groupid = array();
       $res2 = $xoopsDB->query("SELECT gperm_groupid FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_itemid= ".$id_form." AND gperm_modid=".$module_id . " AND gperm_name=\"view\"");
@@ -134,29 +113,116 @@ if ( $res ) {
 		}
 	}
 
+	// this code checks to see if the user is a member of a group that has been given permission to ADD TO the form
+	$theycanadd = 0;
+	foreach ($groupidadd as $gr){
+           	if ( in_array ($gr, $groupuser)) {
+			$theycanadd = 1;
+			break;
+		}
+	}
+
 	// this code kicks the user out...
 	if (!$lettheminjwe)
 	{
 		//	print "$gr: user is NOT allowed!!!"; // DEBUG CODE
 		//redirect to main page if they don't have permission
-		$kickmsgjwe = _FORMULAIRE_NO_PERMISSION;			
+		$kickmsgjwe = _formulize_NO_PERMISSION;			
 		redirect_header(XOOPS_URL."/index.php", 3, $kickmsgjwe);
 	}
 
-// CHECK FOR SELECT FLAG AND IF SET THEN SHOW THE SELECT-AN-ENTRY PAGE INSTEAD OF FORM...
+// FIND OUT IF THE CURRENT USER IS A MODULE ADMIN (AND USE THIS LATER ON TO SET CERTAIN THINGS, OVERRIDE OTHERS)
+
+$start=1;
+$gpermmodq = "(";
+foreach($groupuser as $agroup) // loop through all the groups the user is a member of to make a query that we can use to check if they've got module admin perms
+{
+	if($start)
+	{
+		$gpermmodq .= "gperm_groupid=$agroup";
+		$start=0;
+	}
+	else
+	{
+		$gpermmodq .= " OR gperm_groupid=$agroup";
+	}
+}
+$gpermmodq .= ")";
+
+$modadminq = "SELECT * FROM " . $xoopsDB->prefix("group_permission") . " WHERE $gpermmodq AND gperm_itemid=$module_id AND gperm_modid=1 AND gperm_name=\"module_admin\"";
+$resmodadminq = mysql_query($modadminq);
+$isadmin = mysql_num_rows($resmodadminq); // if no rows, ie: no permission, isadmin will be 0 so will evaluate to false.
+
+//print "isadmin: $isadmin*";
+
+
+
+
+// CHECK FOR FLAGS...
+
+$issingle = "SELECT singleentry FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$id_form";
+$resissingle = mysql_query($issingle);
+
+$rowissingle = mysql_fetch_row($resissingle);
+$issingle = $rowissingle[0];
+
+//print $issingle;
+
 
 // get flags that control editing entries
 $selectjwe = $_GET['select'];
 $viewentry = $_GET['viewentry'];
-$reportingyn = $_GET['reporting'];
+
 if(!$viewentry)
 {
 	$viewentry = $_POST['viewentry'];
 }
+
+//verify that viewentry is allowed -- required security check...
+$vevq = "SELECT uid FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req = $viewentry GROUP BY id_req";
+$resvevq = mysql_query($vevq);
+$rowvevq = mysql_fetch_row($resvevq);
+$enuid = $rowvevq[0];
+
+array($vegroups);
+$vegq = "SELECT groupid FROM " . $xoopsDB->prefix("groups_users_link") . " WHERE uid=$enuid";
+$resvegq = mysql_query($vegq);
+$vegindexer = 0;
+while ($rowvegq = mysql_fetch_row($resvegq))
+{
+	$vegroups[$vegindexer] = $rowvegq[0];
+	$vegindexer++;
+}
+
+$vevalid=0;
+foreach($vegroups as $avgroup)
+{
+	if(in_array($avgroup, $groupid))
+	{
+		$vevalid = 1;
+		break;
+	}
+}
+
+if(!$vevalid)
+{
+	$viewentry = "";
+	$select = 1;
+}
+
+$reportingyn = $_GET['reporting'];
+$report = $_POST['reportselector'];
+if(!$report)
+{
+	$report = $_GET['reportname'];
+}
+$showscope = 1; // controls display of the scope selection box.
+
+
 //set $sent to 0 since it's important to reference later on and must be empty until the redirect message is put into it.
 $sent = 0;
 
-// get the groupscope setting...
+// GET TEH GROUPSCOPE SETTING
 $hasgroupscope = "SELECT groupscope FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$id_form";
 $reshasgroupscope = mysql_query($hasgroupscope);
 $rowreshasgroupscope = mysql_fetch_row($reshasgroupscope);
@@ -164,53 +230,6 @@ $hasgroupscope = $rowreshasgroupscope[0];
 
 //print "*$hasgroupscope*";
 
-//if form has groupscope, then we need to get a list of all users in the groups that the form is available to, and use that user list to filter the following query...
-//1. get list of groups that have access to form ($groupid)
-//1.5 par list down to groups that the user is a member of ($groupuser)
-//2. get list of users that are in those groups 
-//3. apply user list to query
-
-if($hasgroupscope)
-{
-	$gidindexer = 0;
-	array ($groupid2);
-	foreach($groupid as $gid)
-	{
-		// if the group is one the user is a member of...
-		if( in_array($gid, $groupuser) )
-		{
-			$groupid2[$gidindexer] = $gid;
-			$gidindexer++;
-		}
-	}
-
-	array($masteruserlist);
-	foreach($groupid2 as $gid)
-	{
-		$userlistres = $xoopsDB->query("SELECT uid FROM ".$xoopsDB->prefix("groups_users_link")." WHERE groupid=".$gid);
-		while ( $ulistrow = mysql_fetch_row ( $userlistres ) ) {
-	  		$masteruserlist[] = $ulistrow[0];
-  		}
-	}
-
-	$masteruserlist = array_unique($masteruserlist);
-	$beenthroughonce = 0;
-	foreach($masteruserlist as $oneusersid)
-	{
-		if(!$beenthroughonce)
-		{
-			$gscopeparam = $oneusersid;
-			$beenthroughonce = 1;
-		}
-		else
-		{
-			$gscopeparam = $gscopeparam . " OR uid=" . $oneusersid;
-		}
-	}
-
-	//print_r($masteruserlist);
-	//print "<br>$gscopeparam"; //debug lines
-}
 
 // check to see if the form is supposed to show previous entries...
 $showviewentries = "SELECT showviewentries FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$id_form";
@@ -229,19 +248,111 @@ if($selectjwe) // if we're selecting entries...check to see that this form reall
 		$selectjwe = 0;
 	}
 }
+else // if we're not selecting entries, but there's no add permission, then switch to selecting entries...
+{
+	if(!$theycanadd)
+	{
+		$selectjwe = 1;
+	}
+}
 if($selectjwe) // if we're really selecting entries (cause we checked that they didn't just hack the URL)
 {
 
-
-
 	// set the template to the select template
-	$xoopsOption['template_main'] = 'formulaire_select.html';
+	$xoopsOption['template_main'] = 'formulize_select.html';
 	require(XOOPS_ROOT_PATH."/header.php");
+
+
+	// THIS FUNCTION USED TO TURN STRINGS FORM THE form_reports DB TABLE INTO ARRAYS.
+	function popuparray ($ain)
+	{
+		$returnarray = explode("&*=%4#", $ain);
+		return $returnstring;
+	}
+
+// BIG IF BELOW... CONTROLS READING OF REPORT INFORMATION, overrides gathering of other variables
+if($report) // if a report was specified...
+{
+	//	$xoopsTpl->assign('reportname', $report); // I think this is done below...
+	// read all the query/calc/sort arrays out of the database...
+
+
+	$getreportq = "SELECT report_name, report_id_form, report_uid, report_ispublished, report_scope, report_groupids, report_fields, report_search_typeArray, report_search_textArray, report_andorArray, report_calc_typeArray, report_sort_orderArray, report_ascdscArray FROM " . $xoopsDB->prefix("form_reports") . " WHERE report_id = $report";
+
+	$resgetreportq = mysql_query($getreportq);
+	$rowgetreportq = mysql_fetch_row($resgetreportq);
+
+
+	$report_name = $rowgetreportq[0];
+	$id_form = $rowgetreportq[1];
+	$report_uid = $rowgetreportq[2];
+	$report_ispublished = $rowgetreportq[3];
+	if($rowgetreportq[4])
+	{
+		$gscopeparam = $rowgetreportq[4];
+		$showscope = 0;
+	}
+	$report_groupids = popuparray($rowgetreportq[5]);
+	$reqFieldsJwe = popuparray($rowgetreportq[6]);
+	$search_typeArray = popuparray($rowgetreportq[7]);
+	$search_textArray = popuparray($rowgetreportq[8]);
+	$andorArray = popuparray($rowgetreportq[9]);
+
+	$tempcalc_typeArray = popuparray($rowgetreportq[10]);
+	$tcindexer=0;
+	foreach($tempcalc_typeArray as $tc1)
+	{
+		$tcarray = explode("!@+*+6-", $tc1);
+		$calc_typeArray[$tcindexer] = $tcarray;
+		$tcindexer++;
+	}
+	$sort_orderArray = popuparray($rowgetreportq[11]);
+	$ascdscArray = popuparray($rowgetreportq[12]);
+
+
+// verify that the user is a member of groups that can see the report, and if not, then report=0
+
+	$reportallowed = 0;
+	if($report_uid == $uid) // if it's their own report...
+	{
+		$reportallowed = 1;
+	}
+	else
+	{
+		foreach($groupuser as $anothergid)
+		{
+			if(in_array($anothergid, $report_groupids))
+			{
+				$reportallowed = 1;
+				break;
+			}
+		}
+	}
+
+if($reportallowed)
+{
+		$xoopsTpl->assign('ispublished', $report_ispublished);
+		$xoopsTpl->assign('captions_sort_dir', $ascdscArray); // asc desc sort settings
+		$xoopsTpl->assign('captions_search_type', $search_typeArray);
+		$xoopsTpl->assign('captions_search_text', $search_textArray);
+		$xoopsTpl->assign('captions_andor', $andorArray);
+		$xoopsTpl->assign('captions_calc_type', $calc_typeArray);
+		$xoopsTpl->assign('captions_sort_order', $sort_orderArray);
+}
+else
+{
+	$report=0;
+}
+
+} // END OF if-A-REPORT HAS BEEN REQUESTED...
+
+if(!$report)
+{
 
 // GET THE HEADERS (AND THEN USE THEM TO GET INFO PASSED BACK FROM FORM
 $reqFieldsJwe = array();
 // check to see if the user specified different fields
-if($_POST['colchange'] == _FORMULAIRE_CHANGE)
+if($_POST['colchange'] == _formulize_CHANGE)
 {
 	$fieldsjweindexer=0;
 	foreach($_POST['allformcaplist'] as $userSelectedHeader)
@@ -314,54 +425,7 @@ while ($rowjwe = mysql_fetch_assoc($resultFirstFieldQueryJwe))
 
 } // end else that gets us to look at the headerlist (instead of use specified fields)
 
-//============ start of sorting handling that sends info to template (and excludes multiple entry form elements (ie: checkboxes))
-//Filter the reqFieldsJwe for the fields we allow sorting on.
-$sortq = "SELECT ele_caption, ele_value FROM ". $xoopsDB->prefix("form") . " WHERE id_form = $id_form AND (ele_type = \"checkbox\" OR (ele_type = \"select\" AND ele_value REGEXP \"^.{19}1\")) ORDER BY ele_order";
-$ressortq = mysql_query($sortq);
-$sortarrayb = 0;
-while ($rowsortq = mysql_fetch_row($ressortq))
-{
-	$sortcheckarray[$sortarrayb] =  $rowsortq[0];
-	$sortarrayb++;
-}
-
-//print_r($sortcheckarray);
-
-$sortarrayb = 0;
-$allowedsort = -1;
-foreach($reqFieldsJwe as $onefield)
-{
-	if(!in_array($onefield, $sortcheckarray))
-	{
-		$reqSortFields[$sortarrayb] = $onefield;
-		$allowedsort++;
-	}
-	else
-	{
-		$reqSortFields[$sortarrayb] = "";
-	}
-	$sortarrayb++;
-}
-$xoopsTpl->assign('tempcaptionssort', $reqSortFields);
-
-//set the array that has 1,2,3,4,5 etc for using in the sort priority drop downs
-	
-	$sortcreateindexer = 0;
-	array($sort_indexes);
-	for($sl=0;$sl<=$allowedsort;$sl++) // by controlling the '<=' you can control the number of sorting order options. 
-	{
-		$sort_indexes[$sortcreateindexer] = $sortcreateindexer+1;
-		$sortcreateindexer++;
-	}
-	$xoopsTpl->assign('sort_index_array', $sort_indexes);
-// ================= end of sorting handling for template
-
-
-//7th array element after exploding ele_value on means multiple select box if it starts with 1.
-//a:3:{i:0;i:1;i:1;i:0
-
-
-
+//************ STEPS BELOW NO LONGER APPLY EXACTLY, BUT ARE GENERALLY TRUE
 // gather a list of record ids for entries the user has made in the form... jwe 7/23/04
 // steps:
 // 1. find form id (done above $id_form)
@@ -392,20 +456,25 @@ $xoopsTpl->assign('tempcaptionssort', $reqSortFields);
 
 	
 	//Grab values from the _POST array that have been sent from the reporting section
-	if(isset($_POST['go'])) // if reporting options were sent... 
+	if(isset($_POST['go']) OR isset($_POST['save'])) // if reporting options were sent... 
 	{
 		// now go through the caption list to grab all the values sent back
 		// then assign those values to be returned to the view entries page
 		// and change the data sent to the view entries page to reflect the values sent back by the user
 
+			// the global and or setting
+		//	$globalandor = $_POST['globalandor'];
+
+			array($sentscope);
+			// need to grab the scope setting....
+			$sentscope = $_POST['scopeselector'];
+			
 		$allcapindexer = 0;
 		foreach($reqFieldsJwe as $thisformcap) // loop through all the captions
 		{
 			$pc = str_replace(" ", "_", $thisformcap); // replace the spaces
 			$pc = str_replace(".", "_", $pc); // replace the periods
 
-			// the global and or setting
-		//	$globalandor = $_POST['globalandor'];
 
 			// the search operator settings
 			$search_type_check = $pc . "_search_type";
@@ -449,57 +518,57 @@ $xoopsTpl->assign('tempcaptionssort', $reqSortFields);
 				print "<br><br>";*/
 				if(in_array("sum", $intermediate_calc_typeArray))
 				{
-					$secondintermediate[0] = "\"sum\" selected>" . _FORMULAIRE_SUM;
+					$secondintermediate[0] = "\"sum\" selected>" . _formulize_SUM;
 				}
 				else
 				{
-					$secondintermediate[0] = "\"sum\">" . _FORMULAIRE_SUM;
+					$secondintermediate[0] = "\"sum\">" . _formulize_SUM;
 				}
 				
 									
 				if(in_array("average", $intermediate_calc_typeArray))
 				{
-					$secondintermediate[1] = "\"average\" selected>" . _FORMULAIRE_AVERAGE;
+					$secondintermediate[1] = "\"average\" selected>" . _formulize_AVERAGE;
 				}
 				else
 				{
-					$secondintermediate[1] = "\"average\">" . _FORMULAIRE_AVERAGE;
+					$secondintermediate[1] = "\"average\">" . _formulize_AVERAGE;
 				}
 	
 				if(in_array("min", $intermediate_calc_typeArray))
 				{
-					$secondintermediate[2] = "\"min\" selected>" . _FORMULAIRE_MINIMUM;
+					$secondintermediate[2] = "\"min\" selected>" . _formulize_MINIMUM;
 				}
 				else
 				{
-					$secondintermediate[2] = "\"min\">" . _FORMULAIRE_MINIMUM;
+					$secondintermediate[2] = "\"min\">" . _formulize_MINIMUM;
 				}
 			
 				if(in_array("max", $intermediate_calc_typeArray))
 				{
-					$secondintermediate[3] = "\"max\" selected>" . _FORMULAIRE_MAXIMUM;
+					$secondintermediate[3] = "\"max\" selected>" . _formulize_MAXIMUM;
 				}
 				else
 				{
-					$secondintermediate[3] = "\"max\">" . _FORMULAIRE_MAXIMUM;
+					$secondintermediate[3] = "\"max\">" . _formulize_MAXIMUM;
 				}
 				
 				if(in_array("count", $intermediate_calc_typeArray))
 				{
-					$secondintermediate[4] = "\"count\" selected>" . _FORMULAIRE_COUNT;
+					$secondintermediate[4] = "\"count\" selected>" . _formulize_COUNT;
 				}
 				else
 				{
-					$secondintermediate[4] = "\"count\">" . _FORMULAIRE_COUNT;
+					$secondintermediate[4] = "\"count\">" . _formulize_COUNT;
 				}
 			
 				if(in_array("percent", $intermediate_calc_typeArray))
 				{
-					$secondintermediate[5] = "\"percent\" selected>" . _FORMULAIRE_PERCENTAGES;
+					$secondintermediate[5] = "\"percent\" selected>" . _formulize_PERCENTAGES;
 				}
 				else
 				{
-					$secondintermediate[5] = "\"percent\">" . _FORMULAIRE_PERCENTAGES;
+					$secondintermediate[5] = "\"percent\">" . _formulize_PERCENTAGES;
 				}
 				$calc_typeArray[$allcapindexer] = $secondintermediate;			
 			}
@@ -563,8 +632,396 @@ $xoopsTpl->assign('tempcaptionssort', $reqSortFields);
 	//	$xoopsTpl->assign('globalandor', $globalandor);
 	}
 
+} // END OF BIG IF THAT CONTROLS READING OF REPORT SETTINGS OR READING USER'S OWN QUERY DATA.
+
+// also, create a masteruserlist for applying a specified report scope.
+
+if($sentscope[0]) // if a scope was sent back from the user then make it and let it override the groupsscope
+{
+//1. turn groupids into a list of user ids
+//2. add userids to the list
+
+if(!$gscopeparam) // only do this scope and gscopeparam stuff if there's no gscopeparam coming in from a report
+{
+
+$mulindexer = 0;
+foreach($sentscope as $ascope)
+{
+	if(strstr($ascope, "g")) // if the current entry is a group id then traverse the groups_users_link for user ids.
+	{
+	//	print "old gid: $ascope<br>";
+		$ascope = substr($ascope, 1);
+	//	print "new gid: $ascope<br>";
+		$getuidsq = "SELECT uid FROM " . $xoopsDB->prefix("groups_users_link") . " WHERE groupid=$ascope";
+		$resgetuidsq = mysql_query($getuidsq);
+		while($rowgetuidsq = mysql_fetch_row($resgetuidsq))
+		{
+			$masteruserlist[$mulindexer] = $rowgetuidsq[0];
+			$mulindexer++;	
+		}
+	}
+	else
+	{
+		$masteruserlist[$mulindexer] = $ascope;
+		$mulindexer++;	
+	}
+} // end of foreach
+
+} // end of it no groupscopeparam
+
+}
+elseif(!$gscopeparam) // or else make a groupscope if no sentscope exists and there's no gscopeparam
+{
+
+if($hasgroupscope)
+{
+	$gidindexer = 0;
+	array ($groupid2);
+	foreach($groupidadd as $gid)
+	{
+		// if the group is one the user is a member of...
+		if( in_array($gid, $groupuser) )
+		{
+			$groupid2[$gidindexer] = $gid;
+			$gidindexer++;
+		}
+	}
+//	print "Add-permitted groups the user is a member of: ";
+//	print_r($groupid2)
+//	print "<br>";
+
+	array($masteruserlist);
+	foreach($groupid2 as $gid)
+	{
+		$userlistres = $xoopsDB->query("SELECT uid FROM ".$xoopsDB->prefix("groups_users_link")." WHERE groupid=".$gid);
+		while ( $ulistrow = mysql_fetch_row ( $userlistres ) ) {
+	  		$masteruserlist[] = $ulistrow[0];
+  		}
+	}
+
+	$masteruserlist = array_unique($masteruserlist);
+}
+
+} // end of if there's a sentscope (or else make a groupscope if we need one)
+
+if($masteruserlist[0])  // if there's an entry in the master userlist, then we need to make  the groupsscope parameter
+{
+	$beenthroughonce = 0;
+	foreach($masteruserlist as $oneusersid)
+	{
+		if(!$beenthroughonce)
+		{
+			$gscopeparam = $oneusersid;
+			$beenthroughonce = 1;
+		}
+		else
+		{
+			$gscopeparam = $gscopeparam . " OR uid=" . $oneusersid;
+		}
+	}
+
+	//print_r($masteruserlist);
+	//print "<br>$gscopeparam"; //debug lines
+}
 
 
+// WRITE A REPORT TO THE DB IF THE USER SAVED ONE...
+// note that the form configuration means that if the user has typed in the formname box, then if they *do a query with the ENTER key* the form will be saved.
+if($_POST['reportnametouse'] AND isset($_POST['save']))
+{
+	$report_name = $_POST['reportnametouse'];
+	$report_id_form = $id_form;
+	$report_uid = $uid;
+	$report_ispublished = $_POST['publishreport'];
+	if($_POST['lockscope'] == 1) // get the current scope into a form where we can save it.
+	{
+		$report_scope = $gscopeparam;
+	}
+	
+	function flatarray ($ain)
+	{
+		$startsave = 1;
+		foreach($ain as $fieldtosave)
+		{
+			if($startsave)
+			{
+	  			$returnstring = $fieldtosave;
+				$startsave=0;
+			}
+			else
+			{
+				$returnstring .= "&*=%4#" . $fieldtosave;
+			}
+		}
+		return $returnstring;
+	}
+
+	$report_groupids = flatarray($_POST['reportpubgroups']);
+	$report_fields = flatarray($reqFieldsJwe);
+	$report_search_typeArray = flatarray($search_typeArray);
+	$report_search_textArray = flatarray($search_textArray);
+	$report_andorArray = flatarray($andorArray);
+	$report_sort_orderArray = flatarray($sort_orderArray);
+	$report_ascdscArray = flatarray($ascdscArray);
+
+	//extract all the calc_type arrays and flatten them all and put them together with a unique delimiter
+	$startcalcsave = 1;
+	foreach($calc_typeArray as $onecalcarray)
+	{
+		if($startcalcsave)
+		{
+			$report_calc_typeArray = flatarray($onecalcarray);
+			$startcalcsave = 0;
+		}
+		else
+		{
+			$report_calc_typeArray .= "!@+*+6-" . flatarray($onecalcarray);
+		}
+	}
+
+	$reportwriteq = "INSERT INTO " . $xoopsDB->prefix("form_reports") . " (report_name, report_id_form, report_uid, report_ispublished, report_groupids, report_scope, report_fields, report_search_typeArray, report_search_textArray, report_andorArray, report_calc_typeArray, report_sort_orderArray, report_ascdscArray) VALUES ('$report_name', '$report_id_form', '$report_uid', '$report_ispublished', '$report_groupids', '$report_scope', '$report_fields', '$report_search_typeArray', '$report_search_textArray', '$report_andorArray', '$report_calc_typeArray', '$report_sort_orderArray', '$report_ascdscArray')";
+
+	$resultReportWriteq = $xoopsDB->query($reportwriteq);
+
+	// have to set view perm for groups that the form has been published to, if those groups don't have view perm right now.
+	// 1. find out what groups published to don't have view perm on the form
+	// 2. give those groups view perm
+
+	if(isset($_POST['reportpubgroups'])) // if the report was published to a group or more...
+	{
+
+	$ghavevpq ="SELECT gperm_groupid FROM " . $xoopsDB->prefix("group_permission") . " WHERE gperm_modid=$module_id AND gperm_itemid=$id_form AND gperm_name=\"view\"";
+	$resghavevpq = mysql_query($ghavevpq);
+	$grpviewindexer = 0;
+	while($rowghavevpq = mysql_fetch_row($resghavevpq));
+	{
+		$grpview[$grpviewindexer] = $rowghavevpq[0];
+		$grpviewindexer++;
+	}
+
+	foreach($_POST['reportpubgroups'] as $pubdgrp)
+	{
+		if(!in_array($pubdgrp, $grpview))
+		{
+			$setviewq = "INSERT INTO " . $xoopsDB->prefix("group_permission") . " (gperm_groupid, gperm_itemid, gperm_modid, gperm_name) VALUES ($pubdgrp, $id_form, $module_id, \"view\")";
+			$resultSetViewq = $xoopsDB->query($setviewq);
+		}
+	}
+
+	} // END IF publish group list is set
+
+} // end of writing report to DB
+
+// GET A LIST OF AVAILABLE REPORTS -- AND SEND THE REPORT NUMBERS
+$userreportq = "SELECT report_id, report_name, report_groupids FROM " . $xoopsDB->prefix("form_reports") . " WHERE report_id_form=$id_form AND (report_uid=$uid OR report_ispublished=1) GROUP BY report_id ORDER BY report_id";
+$resuserreportq = mysql_query($userreportq);
+$userreportsindexer = 0;
+array($userreportslist);
+array($userreportsnames);
+array($userreportsgroupids);
+while ($rowuserreportq = mysql_fetch_row($resuserreportq))
+{
+	// need to add in ability to select the chosen report in the list...can happen below?
+	$userreportslist[$userreportsindexer] = $rowuserreportq[0];
+	$userreportsnames[$userreportsindexer] = $rowuserreportq[1];
+	$userreportsgroupids[$userreportsindexer] = $rowuserreportq[2];
+	$userreportsindexer++;
+}
+
+if($userreportsindexer) // if at least one report was found...
+{
+	// cull reports based on groupid matches with user id and membership
+	// make the current report selected.
+	$frlindexer = 0;
+	foreach($userreportslist as $arep)
+	{
+
+		$isallowedforuser = 0; //assume no reports are allowed...
+		$isallowedforuserq = "SELECT report_uid, report_groupids FROM " . $xoopsDB->prefix("form_reports") . " WHERE report_id=$arep";
+		$resisallowedforuserq = mysql_query($isallowedforuserq);
+		$rowisallowedforuserq = mysql_fetch_row($resisallowedforuserq);
+
+		if($rowisallowedforuserq[0] == $uid)
+		{
+			$isallowedforuser = 1;
+		} 
+
+		$rgids = popuparray($rowisallowedforuserq[1]);
+		foreach($rgids as $argid)
+		{
+			if(in_array($argid, $groupuser))
+			{
+				$isallowedforuser = 1;
+				break;
+			}
+		}
+ 
+		if($isallowedforuser)
+		{
+		$finalreportlist[$frlindexer] = $userreportslist[$frlindexer];
+		if($userreportslist[$frlindexer] == $report);
+		{
+			$finalreportlist[$frlindexer] .= " selected";
+		}
+		$finalreportlist[$frlindexer] .= ">" . $userreportsnames[$frlindexer];
+		$frlindexer++;
+		}
+	}
+
+} 
+if($finalreportlist[0]) // if there is at least one report the user can see...send details to template
+{
+	$xoopsTpl->assign('defaultreportselector', _formulize_CHOOSEREPORT);
+	$xoopsTpl->assign('availreports', $finalreportlist);
+}
+else
+{
+	$xoopsTpl->assign('defaultreportselector', _formulize_NOREPORTSAVAIL);
+}
+
+
+// GENERATE AVAILABLE REPORT SCOPES....
+if($reportingyn AND $showscope) // only generate if the report allows it.
+{
+// 1. get all groups that have add permission for the form (done above)
+// 2. if user is not admin, find the user's groups in the groupidadd array (done through the group_user_link table
+// 3. get all users in the final set of groups
+// 4. make an array of all the groups plus all the users and send it to the template
+
+array($scopegroups); // the list of groupids that are valid scopes
+if(!$isadmin)
+{
+	$sgindexer = 0;
+	foreach($groupuser as $ugp)
+	{
+		if(in_array($ugp, $groupidadd))
+		{
+			$scopegroups[$sgindexer] = $ugp;
+			$sgindexer++;
+		}
+	}
+}
+else
+{
+	$scopegroups = $groupidadd;
+}
+
+	//get the names of the scopegroups, and the users in the scope groups
+
+   array($masteruserscopelist);
+   $scopenamesindexer = 0;
+   $userlistindexer = 0;
+	foreach($scopegroups as $sgid)
+	{
+		$scopeuserlistres = $xoopsDB->query("SELECT uid FROM ".$xoopsDB->prefix("groups_users_link")." WHERE groupid=".$sgid);
+		
+
+		while ( $scopeulistrow = mysql_fetch_row ( $scopeuserlistres ) ) {
+//			print "group: $sgid<br>";
+//			print "uid found: $scopeulistrow[0]<br>";
+	  		$masteruserscopelist[$userlistindexer] = $scopeulistrow[0];
+			if(in_array($scopeulistrow[0], $sentscope))
+			{
+				$masteruserscopelist[$userlistindexer] .= " selected";
+			}
+			$queryforrealnames = "SELECT name FROM " . $xoopsDB->prefix("users") . " WHERE uid=$scopeulistrow[0]";
+			$resqforrealnames = mysql_query($queryforrealnames);
+			$rowqforrealnames = mysql_fetch_row($resqforrealnames);
+//			print "username: $rowqforrealnames[0]<br>";
+			$masteruserscopelist[$userlistindexer] .= ">" .  _formulize_USERSCOPE . $rowqforrealnames[0];
+			$userlistindexer++;
+  		}
+
+		$sgnameq = "SELECT name FROM " . $xoopsDB->prefix("groups") . " WHERE groupid=$sgid";
+		$ressgname = mysql_query($sgnameq);
+		$rowsgname = mysql_fetch_row($ressgname);
+		$scopegroups[$scopenamesindexer] = "g" . $sgid; // adds a g to the beginning of the  current groupid, so that it can be identified as a group id later on when reading scope selections the user makes.  
+		// checks to see if this scope was a selected scope and adds on other text as needed to make the selection box work in the template.
+		if(in_array($scopegroups[$scopenamesindexer], $sentscope))
+		{
+			$scopegroups[$scopenamesindexer] .= " selected";	
+		}
+		$scopegroups[$scopenamesindexer] .= ">" . _formulize_GROUPSCOPE . $rowsgname[0];
+		$scopenamesindexer++;
+	}
+
+	// this will now be an array of all the unique user ids in groups that have add permission in the form (culled by groups the user is a member of if they are not an admin)
+	$masteruserscopelist = array_unique($masteruserscopelist);
+
+	function cmp($a, $b) // a function that will do a sort on an array by comparing the text after the last > in the values.
+	{
+		$a = substr(strrchr($a, ">"), 1);
+		$b = substr(strrchr($b, ">"), 1);
+
+		if ($a == $b) {
+	      return 0;
+   		}
+		return ($a < $b) ? -1 : 1;
+	}
+
+	usort($masteruserscopelist, "cmp");
+
+array($tempscopenames);
+
+$masteruserscopelist = array_reverse($masteruserscopelist);
+//print_r($masteruserscopelist);
+$scopegroups = array_reverse($scopegroups);
+//print_r($scopegroups);
+$tempscopenames = array_merge($masteruserscopelist, $scopegroups);
+$tempscopenames = array_reverse($tempscopenames);
+
+$xoopsTpl->assign('reportscope', _formulize_REPORTSCOPE);
+$xoopsTpl->assign('scopenames', $tempscopenames);
+
+}
+// END OF GENERATING REPORT SCOPES...
+
+
+//============ start of sorting handling that sends info to template (and excludes multiple entry form elements (ie: checkboxes))
+//Filter the reqFieldsJwe for the fields we allow sorting on.
+$sortq = "SELECT ele_caption, ele_value FROM ". $xoopsDB->prefix("form") . " WHERE id_form = $id_form AND (ele_type = \"checkbox\" OR (ele_type = \"select\" AND ele_value REGEXP \"^.{19}1\")) ORDER BY ele_order";
+$ressortq = mysql_query($sortq);
+$sortarrayb = 0;
+while ($rowsortq = mysql_fetch_row($ressortq))
+{
+	$sortcheckarray[$sortarrayb] =  $rowsortq[0];
+	$sortarrayb++;
+}
+
+//print_r($sortcheckarray);
+
+$sortarrayb = 0;
+$allowedsort = -1;
+foreach($reqFieldsJwe as $onefield)
+{
+	if(!in_array($onefield, $sortcheckarray))
+	{
+		$reqSortFields[$sortarrayb] = $onefield;
+		$allowedsort++;
+	}
+	else
+	{
+		$reqSortFields[$sortarrayb] = "";
+	}
+	$sortarrayb++;
+}
+$xoopsTpl->assign('tempcaptionssort', $reqSortFields);
+
+//set the array that has 1,2,3,4,5 etc for using in the sort priority drop downs
+	
+	$sortcreateindexer = 0;
+	array($sort_indexes);
+	for($sl=0;$sl<=$allowedsort;$sl++) // by controlling the '<=' you can control the number of sorting order options. 
+	{
+		$sort_indexes[$sortcreateindexer] = $sortcreateindexer+1;
+		$sortcreateindexer++;
+	}
+	$xoopsTpl->assign('sort_index_array', $sort_indexes);
+// ================= end of sorting handling for template
+
+
+//7th array element after exploding ele_value on means multiple select box if it starts with 1.
+//a:3:{i:0;i:1;i:1;i:0
 
 
 // START QUERY TO SELECT THE DATA FOR THE SUMMARY LIST
@@ -858,6 +1315,7 @@ for($i=0;$i<count($reqFieldsJwe);$i++)
 									$savedIds[$savedidindexer] = $cap_id[$z];
 									$savedidindexer++;
 									break 2;
+
 								}
 								break;
 							case "lessthan":
@@ -978,7 +1436,7 @@ if($currentcaptionforquery > 0)
 		$userreportingquery .= ")"; // close out the whole query
 }
 
-print "$userreportingquery<br><br>";   //string we're building
+//print "$userreportingquery<br><br>";   //string we're building
 
 // apply the groupscope param to the query (query with the whole userlist)
 if($hasgroupscope)
@@ -991,7 +1449,7 @@ else
 //	$queryjwe = "SELECT id_req, ele_caption, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid $userreportingquery ORDER BY id_req";
 	$queryjwe = "SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid $userreportingquery ORDER BY id_req";
 }
-print $queryjwe;
+print "initial req query: $queryjwe<br>";
 $recordsjwe = mysql_query($queryjwe);
 $previndex = "none";
 array ($totalresultarray);
@@ -1029,7 +1487,7 @@ foreach($finalselectidreq as $thisfinalreq)
 $totalentriesindex = 0;
 $realqueryjwe = "SELECT id_req, ele_caption, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE $finalreqq ORDER BY id_req";
 
-//print "<br>realquery: $realqueryjwe<br>";
+print "<br>realquery: $realqueryjwe<br>";
 
 $realrecordsjwe = mysql_query($realqueryjwe);
 while($realrowjwe = mysql_fetch_row($realrecordsjwe))
@@ -1241,11 +1699,11 @@ for($i=0;$i<=$totalentriesindex;$i++)
 			{
 				if($selvalstostripfrom == "1")
 				{
-					$selvalstostripfrom = _FORMULAIRE_TEMP_QYES;
+					$selvalstostripfrom = _formulize_TEMP_QYES;
 				}
 				elseif($selvalstostripfrom == "2")
 				{
-					$selvalstostripfrom = _FORMULAIRE_TEMP_QNO;
+					$selvalstostripfrom = _formulize_TEMP_QNO;
 				}
 				else
 				{
@@ -1298,7 +1756,10 @@ for($y=0;$y<count($reqFieldsJwe);$y++)
 
 if($sortcolscounter OR $calccolscounter) // if a calculation or a sort was requested then prepare the data for manipulation
 {	
-	
+	// how many columns?
+	$numcols = count($reqFieldsJwe);
+	$numcols--; // minus 1 so we can nicely use this as an array address
+
 	$colnamenums = 0;
 	foreach($reqFieldsJwe as $colname)
 	{
@@ -1395,16 +1856,14 @@ for($sc=0;$sc<count($sortpri);$sc++)
 arsort($sp); // puts the columns that need to be sorted into proper sorting order
 //print_r($sp);
 
-for($si=0;$si<=count($sortpri);$si++) // set sortcol array to the names of the columns in order that they must be sorted
-{
-	$curcol = current($sp);
-	print "<br>curcol: $curcol";
-	$curcolkey = key($sp); // curcolkey is the column name
-	$sortcol[$si] = $curcolkey;
-	print "<br>curcolkey: $curcolkey<br>";
-	next($sp);
-}		
-//print_r($sortcol);
+$sortcol = array_keys($sp);
+
+/*print "<br>";
+print_r($sortcol);
+print "<br>";
+print_r($sdir);*/
+
+
 //prepare the finalselectidreq for resorting by adding a to the end of it's number indexes...
 $newid = 0;
 foreach($finalselectidreq as $idreqrekey)
@@ -1416,49 +1875,126 @@ foreach($finalselectidreq as $idreqrekey)
 array_splice($finalselectidreq, 0);
 $finalselectidreq = $phfinal;
 
+/*print "<br>initial idreqs: ";
 print_r($finalselectidreq);
+print "<br>";*/
 
 //print "numcols: $numcols<br>";
+$colcounter = 0;
 foreach($sortcol as $curcoltosort)
 {
-	if($sdir[$curcoltosort] == "ASC")
+	foreach(${$curcoltosort} as $numorstr)
 	{
-		asort(${$curcoltosort});
+		if($numorstr)
+		{
+//			print "<br>First entry evaluated: $numorstr<br>";
+			$numericornot = is_numeric($numorstr);
+			break;
+		}
+	}			
+
+	if($numericornot)
+	{
+
+	$nextcol = $sortcol[$colcounter+1];
+	if($sdir[$nextcol] == "DESC") // reverse the requested sorting order if the next column will sort things in reverse (putting DESC in the If instead of ASC allows the primary column -- last col -- to be sorted as requested since there is no next column)
+	{
+		if($sdir[$curcoltosort] == "ASC")
+		{
+			arsort(${$curcoltosort}, SORT_NUMERIC);
+		}
+		else
+		{
+			asort(${$curcoltosort}, SORT_NUMERIC);
+		}
 	}
 	else
 	{
-		arsort(${$curcoltosort});
+		if($sdir[$curcoltosort] == "ASC")
+		{
+			asort(${$curcoltosort}, SORT_NUMERIC);
+		}
+		else
+		{
+			arsort(${$curcoltosort}, SORT_NUMERIC);
+		}
 	}
+
+
+	} else { // middle of the isnumeric condition
+
+	$nextcol = $sortcol[$colcounter+1];
+	if($sdir[$nextcol] == "DESC") // reverse the requested sorting order if the next column will sort things in reverse (putting DESC in the If instead of ASC allows the primary column -- last col -- to be sorted as requested since there is no next column)
+	{
+		if($sdir[$curcoltosort] == "ASC")
+		{
+			arsort(${$curcoltosort}, SORT_STRING);
+		}
+		else
+		{
+			asort(${$curcoltosort}, SORT_STRING);
+		}
+	}
+	else
+	{
+		if($sdir[$curcoltosort] == "ASC")
+		{
+			asort(${$curcoltosort}, SORT_STRING);
+		}
+		else
+		{
+			arsort(${$curcoltosort}, SORT_STRING);
+		}
+	}
+
+	} // end of isnumeric
+	$colcounter++;
+
 	// now match id_reqs and all other columns to this one.
 
-	print_r(${$curcoltosort});
+/*/	print_r(${$curcoltosort});
+	print "<br>";
 	print "<br>old id_reqs: ";
 	print_r($finalselectidreq);
-	print "<br>old id_reqs: ";
+	print "<br>old id_reqs: ";*/
 
 	$synccounter = 0;
 	foreach(array_keys(${$curcoltosort}) as $sortedkeys)
 	{
-		$fv = ${$curcoltosort}[$sortedkeys];
-		print "<br>newfirstvalue: $fv";
-		print "<br>newfirstkey: $sortedkeys";
+
+//		print "<br><br>Now resorting idreqs:<br>";
+//		print "New key for position $synccounter: $sortedkeys";
+		//$fv = ${$curcoltosort}[$sortedkeys];
+		//print "$fv";
+//		$oldp = $finalselectidreq[$sortedkeys];
+//		print "<br>Old id_req at with that key: $oldp";
+		
 		$newid = $synccounter . "a";
-		print "<br>newidforfirstkey: $finalselectidreq[$sortedkeys]";
 		$newreqs[$newid] = $finalselectidreq[$sortedkeys];
+
+//		print "<br>New id_req at position $syncounter: ";
+//		print "$newreqs[$newid]";
+		
 		$synccounter++;
 	}
 	array_splice($finalselectidreq, 0);
 	$finalselectidreq = $newreqs;
 	array_splice($newreqs, 0);
-	print_r($finalselectidreq);
-	print "<br>";
+	
+//	print "<br><br>New id_req array: ";
+//	print_r($finalselectidreq);
+//	print "<br>";
 
 
-	$synccounter = 0;
+	
 	foreach($colarrayname as $coltosync)
 	{
+		$synccounter = 0;
 		if($coltosync != $curcoltosort)
 		{
+/*			print "<br>Now sorting $coltosync<br>";
+			print "Old order of $coltosync: ";
+			print_r(${$coltosync});*/
 			foreach(array_keys(${$curcoltosort}) as $sortedkeys)
 			{
 				$newid = $synccounter . "a";
@@ -1468,10 +2004,16 @@ foreach($sortcol as $curcoltosort)
 			array_splice(${$coltosync}, 0);
 			${$coltosync} = $newreqs;
 			array_splice($newreqs, 0);
+//			print "New order of $coltosync: ";
+//			print_r(${$coltosync});
 		}
 	}
 	
 	// normalize the keys on the curcoltosort so it can be manipulated again
+
+/*	print "<BR><BR>Now normalizing current column ($curcoltosort)<br>";
+	print "sorted array: ";
+	print_r(${$curcoltosort});*/
 	$synccounter = 0;
 	foreach(${$curcoltosort} as $rationalizeval)
 	{
@@ -1482,32 +2024,30 @@ foreach($sortcol as $curcoltosort)
 	array_splice(${$curcoltosort}, 0);
 	${$curcoltosort} = $newreqs;
 	array_splice($newreqs, 0);
+/*	print "<br>normalized array: ";
+	print_r(${$curcoltosort});
+	print "<br>";*/
 }
 
-foreach($colarrayname as $dispcols)
+// how many columns? Remake the variable since it was adjusted for sort only columns
+	$numcols = count($reqFieldsJwe);
+	$numcols--; // minus 1 so we can nicely use this as an array address
+
+
+// take all the entries in the columns and turn them back into a single selvals array
+$selvalindexer = 0;
+for($rowcounter=0;$rowcounter<count($finalselectidreq);$rowcounter++)
 {
-	print "<br>col $dispcols: ";
-	print_r(${$dispcols});
-}
-print "<br>id_reqs: ";
-print_r($finalselectidreq);
-
-//remake finalselectidreq without the "a"
-array_splice($phfinal, 0);
-$newid = 0;
-foreach($finalselectidreq as $idreqrekey)
-{
-	$phfinal[$newid] = $idreqrekey;
-	$newid++;
-}
-array_splice($finalselectidreq, 0);
-$finalselectidreq = $phfinal;
-//$finalselectidreq[0] = 200;
-
-
-
-
-
+	foreach($colarrayname as $remakeselvals)
+	{
+		// take the entry in the current row from each column and put it in selvals
+		$idtouse = $rowcounter . "a";
+		$selvals[$selvalindexer] = ${$remakeselvals}[$idtouse];
+		$selvalindexer++;
+	}
+}	
+//print "<br>Final sorted id_reqs: ";
+//print_r($finalselectidreq);
 
 } // end if there were sorts 
 
@@ -1515,9 +2055,6 @@ $finalselectidreq = $phfinal;
 if($calccolscounter) // now do the calculations...
 {
 
-// how many columns?
-	$numcols = count($reqFieldsJwe);
-	$numcols--; // minus 1 so we can nicely use this as an array address
 	
 	$xoopsTpl->assign('summaryon', "on");
 	for($v=0;$v<=$numcols;$v++) // for each column....
@@ -1545,8 +2082,8 @@ if($calccolscounter) // now do the calculations...
 							$sumtotal = $sumtotal + $thisreqsval;
 						}
 					}						
-					$calcoutput .= "<h4>" . _FORMULAIRE_SUM . ":</h4>";
-					$calcoutput .= "<ul><li>" . _FORMULAIRE_SUM_TEXT . " $sumtotal</li></ul>";
+					$calcoutput .= "<h4>" . _formulize_SUM . ":</h4>";
+					$calcoutput .= "<ul><li>" . _formulize_SUM_TEXT . " $sumtotal</li></ul>";
 					$sumtotal = "";
 				}
 				if(strstr($thiscalcArray, "average"))
@@ -1593,9 +2130,9 @@ if($calccolscounter) // now do the calculations...
 						$average = round($sumtotal / count(${$colarrayname[$v]}), 2);
 						$nbaverage = round($sumtotal / $noblankscounter, 2);
 					}
-					$calcoutput .= "<h4>" . _FORMULAIRE_AVERAGE . ":</h4>";
-					$calcoutput .= "<ul><li>" . _FORMULAIRE_AVERAGE_INCLBLANKS . " $average</li>";
-					$calcoutput .= "<li>" . _FORMULAIRE_AVERAGE_EXCLBLANKS . " $nbaverage</li></ul>";
+					$calcoutput .= "<h4>" . _formulize_AVERAGE . ":</h4>";
+					$calcoutput .= "<ul><li>" . _formulize_AVERAGE_INCLBLANKS . " $average</li>";
+					$calcoutput .= "<li>" . _formulize_AVERAGE_EXCLBLANKS . " $nbaverage</li></ul>";
 					$average = "";
 					$nbaverage = "";
 				}
@@ -1655,9 +2192,9 @@ if($calccolscounter) // now do the calculations...
 					//print "minval: $minval<br>";
 					//print "minvalnozero: $minvalnozero<br>";
 					}
-					$calcoutput .= "<h4>" . _FORMULAIRE_MINIMUM . ":</h4>";
-					$calcoutput .= "<ul><li>" . _FORMULAIRE_MINIMUM_INCLBLANKS . " $minval</li>";
-					$calcoutput .= "<li>" . _FORMULAIRE_MINIMUM_EXCLBLANKS . " $minvalnozero</li></ul>";
+					$calcoutput .= "<h4>" . _formulize_MINIMUM . ":</h4>";
+					$calcoutput .= "<ul><li>" . _formulize_MINIMUM_INCLBLANKS . " $minval</li>";
+					$calcoutput .= "<li>" . _formulize_MINIMUM_EXCLBLANKS . " $minvalnozero</li></ul>";
 					$minval = "";
 					$minvalnozero = "";
 				}
@@ -1695,8 +2232,8 @@ if($calccolscounter) // now do the calculations...
 							}
 						}
 					}
-					$calcoutput .= "<h4>" . _FORMULAIRE_MAXIMUM . ":</h4>";
-					$calcoutput .= "<ul><li>" . _FORMULAIRE_MAXIMUM_TEXT . " $maxval</li></ul>";
+					$calcoutput .= "<h4>" . _formulize_MAXIMUM . ":</h4>";
+					$calcoutput .= "<ul><li>" . _formulize_MAXIMUM_TEXT . " $maxval</li></ul>";
 					$maxval = "";
 				}
 				if(strstr($thiscalcArray, "count"))
@@ -1721,10 +2258,10 @@ if($calccolscounter) // now do the calculations...
 					$countvals = $countvals + $multicount;
 					$nonblanks = $noblankscounter+$multicount;
 					$percentcount = round(($nonblanks/$countvals)*100, 2);
-					$calcoutput .= "<h4>" . _FORMULAIRE_COUNT . ":</h4>";
-					$calcoutput .= "<ul><li>" . _FORMULAIRE_COUNT_INCLBLANKS . " $countvals</li>";
-					$calcoutput .= "<li>" . _FORMULAIRE_COUNT_EXCLBLANKS . " $nonblanks</li>";
-					$calcoutput .= "<li>" . _FORMULAIRE_COUNT_PERCENTBLANKS . " $percentcount%</li></ul>";				
+					$calcoutput .= "<h4>" . _formulize_COUNT . ":</h4>";
+					$calcoutput .= "<ul><li>" . _formulize_COUNT_INCLBLANKS . " $countvals</li>";
+					$calcoutput .= "<li>" . _formulize_COUNT_EXCLBLANKS . " $nonblanks</li>";
+					$calcoutput .= "<li>" . _formulize_COUNT_PERCENTBLANKS . " $percentcount%</li></ul>";				
 					$countvals = "";
 					$nonblanks = "";
 					$percentcount = "";
@@ -1771,8 +2308,8 @@ if($calccolscounter) // now do the calculations...
 					$countvals = $countvals + $multicount;
 					$nonblanks = $noblankscounter+$multicount;
 					//===== end duplicated block
-					$calcoutput .= "<h4>" . _FORMULAIRE_PERCENTAGES . "</h4>";
-					$calcoutput .= "<table><tr><td><nobr>" . _FORMULAIRE_PERCENTAGES_VALUE . "</nobr></td><td><nobr>" . _FORMULAIRE_PERCENTAGES_COUNT . "</nobr></td><td><nobr>" . _FORMULAIRE_PERCENTAGES_PERCENT . "</nobr></td><td><nobr>" . _FORMULAIRE_PERCENTAGES_PERCENTEXCL . "</nobr></td></tr><tr><td><ul>";
+					$calcoutput .= "<h4>" . _formulize_PERCENTAGES . "</h4>";
+					$calcoutput .= "<table><tr><td><nobr>" . _formulize_PERCENTAGES_VALUE . "</nobr></td><td><nobr>" . _formulize_PERCENTAGES_COUNT . "</nobr></td><td><nobr>" . _formulize_PERCENTAGES_PERCENT . "</nobr></td><td><nobr>" . _formulize_PERCENTAGES_PERCENTEXCL . "</nobr></td></tr><tr><td><ul>";
 					foreach(array_keys($valdist) as $uniquekeys)
 					{
 						$calcoutput .= "<li>$uniquekeys</li>";
@@ -1821,13 +2358,13 @@ if($calccolscounter) // now do the calculations...
 	// add the final result array to the stack for the template...
 	if($finalselectidreq)
 	{
-		print_r($finalselectidreq);
+		//print_r($finalselectidreq);
 		$xoopsTpl->assign('tempidsjwe', $finalselectidreq);
 		$xoopsTpl->assign('rows', "true");
 	}
 	else
 	{
-		$xoopsTpl->assign('noentries', _FORMULAIRE_TEMP_NOENTRIES);
+		$xoopsTpl->assign('noentries', _formulize_TEMP_NOENTRIES);
 	}
 
 	array (entereduids);
@@ -1850,19 +2387,37 @@ foreach($entereduids as $entrduids)
 		$realusernames[] = $rowqforrealnames[0];
 	}
 	$xoopsTpl->assign('tempenteredbyname', $realusernames);
-	$xoopsTpl->assign('selectentriestitle', _FORMULAIRE_TEMP_SELENTTITLE_GS);
-	$xoopsTpl->assign('tempenteredby', _FORMULAIRE_TEMP_ENTEREDBY);
+	$xoopsTpl->assign('selectentriestitle', _formulize_TEMP_SELENTTITLE_GS);
+	$xoopsTpl->assign('tempenteredby', _formulize_TEMP_ENTEREDBY);
 	}// end if $hasgroupscope
 	else
 	{
-		$xoopsTpl->assign('tempenteredby', _FORMULAIRE_TEMP_ENTEREDBYSINGLE);
-		$xoopsTpl->assign('selectentriestitle', _FORMULAIRE_TEMP_SELENTTITLE);
+		$xoopsTpl->assign('tempenteredby', _formulize_TEMP_ENTEREDBYSINGLE);
+		$xoopsTpl->assign('selectentriestitle', _formulize_TEMP_SELENTTITLE);
 	}
 	if($reportingyn)
 	{
-		$xoopsTpl->assign('selectentriestitle', _FORMULAIRE_TEMP_SELENTTITLE_RP);
-		$xoopsTpl->assign('selectentriestitle2', _FORMULAIRE_TEMP_SELENTTITLE2_RP);
+		$xoopsTpl->assign('selectentriestitle', _formulize_TEMP_SELENTTITLE_RP);
+		$xoopsTpl->assign('selectentriestitle2', _formulize_TEMP_SELENTTITLE2_RP);
 		$xoopsTpl->assign('reportingyn', $reportingyn);
+		$xoopsTpl->assign('showscope', $showscope);
+		$xoopsTpl->assign('reportname', $report);
+		$xoopsTpl->assign('reportsaving', _formulize_REPORTSAVING);
+
+		// generate a group list and send it.
+	
+		array($compgtosend);
+		$compgidsq = "SELECT groupid, name FROM " . $xoopsDB->prefix("groups");
+		$rescompgids = mysql_query($compgidsq);
+		while ($rowcompgids = mysql_fetch_row($rescompgids))
+		{
+			$compgtosend[] = $rowcompgids[0] . ">" . $rowcompgids[1];		
+		}
+
+		$xoopsTpl->assign('groupnames', $compgtosend);
+		
+
+
 	}
 
 
@@ -1882,44 +2437,53 @@ foreach($entereduids as $entrduids)
 	$xoopsTpl->assign('tempentereddates', $entereddates);
 	$xoopsTpl->assign('tempcaptionsjwe', $reqFieldsJwe);
 	$xoopsTpl->assign('tempvaluesjwe', $selvals);
-	$tempformurl = XOOPS_URL . "/modules/formulaire/index.php?title=$title";
+	$tempformurl = XOOPS_URL . "/modules/formulize/index.php?title=$title";
 	$xoopsTpl->assign('tempformurl', $tempformurl);
-	$xoopsTpl->assign('tempaddentry', _FORMULAIRE_TEMP_ADDENTRY);
-	$xoopsTpl->assign('tempviewingentries', _FORMULAIRE_TEMP_VIEWINGENTRIES);
-	$xoopsTpl->assign('viewthisentry', _FORMULAIRE_TEMP_VIEWTHISENTRY);
+	$xoopsTpl->assign('tempaddentry', _formulize_TEMP_ADDENTRY);
+	$xoopsTpl->assign('tempviewingentries', _formulize_TEMP_VIEWINGENTRIES);
+	$xoopsTpl->assign('viewthisentry', _formulize_TEMP_VIEWTHISENTRY);
 	$xoopsTpl->assign('tempformtitle', $title);
-	$xoopsTpl->assign('tempon', _FORMULAIRE_TEMP_ON);
-	$xoopsTpl->assign('tempturnoffreporting', _FORMULAIRE_REPORT_OFF);
-	$xoopsTpl->assign('tempturnonreporting', _FORMULAIRE_REPORT_ON);
-	$xoopsTpl->assign('reportingoptions', _FORMULAIRE_REPORTING_OPTION);
-	$xoopsTpl->assign('submittext', _FORMULAIRE_SUBMITTEXT);
-	$xoopsTpl->assign('resetbutton', _FORMULAIRE_RESETBUTTON);
-	$xoopsTpl->assign('tempviewreport', _FORMULAIRE_VIEWAVAILREPORTS);
-	$xoopsTpl->assign('tempnoreports', _FORMULAIRE_NOREPORTSAVAIL);
-	$xoopsTpl->assign('tempchoosereport', _FORMULAIRE_CHOOSEREPORT);
-	$xoopsTpl->assign('querycontrols', _FORMULAIRE_QUERYCONTROLS);
-	$xoopsTpl->assign('searchterms', _FORMULAIRE_SEARCH_TERMS);
-	$xoopsTpl->assign('and', _FORMULAIRE_AND);
-	$xoopsTpl->assign('not', _FORMULAIRE_NOT);
-	$xoopsTpl->assign('like', _FORMULAIRE_LIKE);
-	$xoopsTpl->assign('notlike', _FORMULAIRE_NOTLIKE);
-	$xoopsTpl->assign('or', _FORMULAIRE_OR);
-	$xoopsTpl->assign('searchoperator', _FORMULAIRE_SEARCH_OPERATOR);
-	$xoopsTpl->assign('sterms', _FORMULAIRE_STERMS);
-	$xoopsTpl->assign('calculations', _FORMULAIRE_CALCULATIONS);
-	$xoopsTpl->assign('sum', _FORMULAIRE_SUM);
-	$xoopsTpl->assign('average', _FORMULAIRE_AVERAGE);
-	$xoopsTpl->assign('minimum', _FORMULAIRE_MINIMUM);
-	$xoopsTpl->assign('maximum', _FORMULAIRE_MAXIMUM);
-	$xoopsTpl->assign('count', _FORMULAIRE_COUNT);
-	$xoopsTpl->assign('percentages', _FORMULAIRE_PERCENTAGES);
-	$xoopsTpl->assign('sortingorder', _FORMULAIRE_SORTING_ORDER);
-	$xoopsTpl->assign('sortpriority', _FORMULAIRE_SORT_PRIORITY);
-	$xoopsTpl->assign('none', _FORMULAIRE_NONE);
-	$xoopsTpl->assign('changecolumns', _FORMULAIRE_CHANGE_COLUMNS);
-	$xoopsTpl->assign('change', _FORMULAIRE_CHANGE);
-	$xoopsTpl->assign('searchhelp', _FORMULAIRE_SEARCH_HELP);
-	$xoopsTpl->assign('sorthelp', _FORMULAIRE_SORT_HELP);
+	$xoopsTpl->assign('tempon', _formulize_TEMP_ON);
+	$xoopsTpl->assign('tempturnoffreporting', _formulize_REPORT_OFF);
+	$xoopsTpl->assign('tempturnonreporting', _formulize_REPORT_ON);
+	$xoopsTpl->assign('reportingoptions', _formulize_REPORTING_OPTION);
+	$xoopsTpl->assign('submittext', _formulize_SUBMITTEXT);
+	$xoopsTpl->assign('resetbutton', _formulize_RESETBUTTON);
+	$xoopsTpl->assign('tempviewreport', _formulize_VIEWAVAILREPORTS);
+	$xoopsTpl->assign('tempnoreports', _formulize_NOREPORTSAVAIL);
+	$xoopsTpl->assign('tempchoosereport', _formulize_CHOOSEREPORT);
+	$xoopsTpl->assign('querycontrols', _formulize_QUERYCONTROLS);
+	$xoopsTpl->assign('searchterms', _formulize_SEARCH_TERMS);
+	$xoopsTpl->assign('and', _formulize_AND);
+	$xoopsTpl->assign('not', _formulize_NOT);
+	$xoopsTpl->assign('like', _formulize_LIKE);
+	$xoopsTpl->assign('notlike', _formulize_NOTLIKE);
+	$xoopsTpl->assign('or', _formulize_OR);
+	$xoopsTpl->assign('searchoperator', _formulize_SEARCH_OPERATOR);
+	$xoopsTpl->assign('sterms', _formulize_STERMS);
+	$xoopsTpl->assign('calculations', _formulize_CALCULATIONS);
+	$xoopsTpl->assign('sum', _formulize_SUM);
+	$xoopsTpl->assign('average', _formulize_AVERAGE);
+	$xoopsTpl->assign('minimum', _formulize_MINIMUM);
+	$xoopsTpl->assign('maximum', _formulize_MAXIMUM);
+	$xoopsTpl->assign('count', _formulize_COUNT);
+	$xoopsTpl->assign('percentages', _formulize_PERCENTAGES);
+	$xoopsTpl->assign('sortingorder', _formulize_SORTING_ORDER);
+	$xoopsTpl->assign('sortpriority', _formulize_SORT_PRIORITY);
+	$xoopsTpl->assign('none', _formulize_NONE);
+	$xoopsTpl->assign('changecolumns', _formulize_CHANGE_COLUMNS);
+	$xoopsTpl->assign('change', _formulize_CHANGE);
+	$xoopsTpl->assign('searchhelp', _formulize_SEARCH_HELP);
+	$xoopsTpl->assign('sorthelp', _formulize_SORT_HELP);
+	$xoopsTpl->assign('goreport', _formulize_GOREPORT);
+	$xoopsTpl->assign('isadmin', $isadmin);
+	$xoopsTpl->assign('savereportbutton', _formulize_SAVEREPORTBUTTON);
+	$xoopsTpl->assign('reportnametouse', _formulize_REPORTNAME);
+	$xoopsTpl->assign('publishreport', _formulize_PUBLISHREPORT);
+	$xoopsTpl->assign('lockscope', _formulize_LOCKSCOPE);
+	$xoopsTpl->assign('reportpubgroups', _formulize_REPORTPUBGROUPS);
+	
+
 	
 	// make an array the is 0 on all indexes except on numbers equal to rows where a header needs to be redrawn, when the array is 1.
 	$redrawon = 7; //the number of rows after which to redraw the headerrow	
@@ -1942,12 +2506,6 @@ require(XOOPS_ROOT_PATH."/footer.php");
 else // we're drawing the form, not select entry page...
 {
 
-$issingle = "SELECT singleentry FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$id_form";
-$resissingle = mysql_query($issingle);
-$rowissingle = mysql_fetch_row($resissingle);
-$issingle = $rowissingle[0];
-
-print $issingle;
 
 if($issingle) // if it's a single entry form...
 {
@@ -2008,7 +2566,7 @@ while ($rowjwe = mysql_fetch_assoc($resultViewQueryJwe))
 
 $result_form = $xoopsDB->query("SELECT margintop, marginbottom, itemurl, status FROM ".$xoopsDB->prefix("form_menu")." WHERE menuid='".$id_form);
        
-$res_mod = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulaire'");
+$res_mod = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulize'");
 if ($res_mod) {
 	while ($row = mysql_fetch_row($res_mod))
 		$module_id = $row[0];
@@ -2056,7 +2614,7 @@ if ( $status == 1 ) {
                		<a style='font-weight: normal' href='$itemurl'>$title</a></li></td></tr></table>";
                		$display = 1;
                	}
-               	else redirect_header(XOOPS_URL."/modules/formulaire/index.php", 1, "pas la permission !!!");
+               	else redirect_header(XOOPS_URL."/modules/formulize/index.php", 1, "pas la permission !!!");
         }
         $block['content'] .= "</ul>";
 }
@@ -2066,16 +2624,17 @@ if ( $status == 1 ) {
 // following line modified to remove the name of the module from before the form's own name - jwe 07/23/04
 $form2 = "<center><h3>$title</h3></center>";
      	//include_once(XOOPS_ROOT_PATH . "/class/uploader.php");
-include_once(XOOPS_ROOT_PATH . "/modules/formulaire/upload_FA.php");
+include_once(XOOPS_ROOT_PATH . "/modules/formulize/upload_FA.php");
+
 
 if( empty($_POST['submit']) ){
-	$xoopsOption['template_main'] = 'formulaire.html';
+	$xoopsOption['template_main'] = 'formulize.html';
 	include_once XOOPS_ROOT_PATH.'/header.php';
 	$criteria = new Criteria('ele_display', 1);
 	$criteria->setSort('ele_order');
 	$criteria->setOrder('ASC');
-	$elements =& $formulaire_mgr->getObjects2($criteria,$id_form);
-	$form = new XoopsThemeForm($form2, 'formulaire', XOOPS_URL.'/modules/formulaire/index.php?title='.$title.'');
+	$elements =& $formulize_mgr->getObjects2($criteria,$id_form);
+	$form = new XoopsThemeForm($form2, 'formulize', XOOPS_URL.'/modules/formulize/index.php?title='.$title.'');
 	$form->setExtra("enctype='multipart/form-data'") ; // impératif !
 	include_once(XOOPS_ROOT_PATH . "/class/uploader.php");
 
@@ -2092,16 +2651,23 @@ if( empty($_POST['submit']) ){
 		// 5. let the rest of the script carry on drawing the form as usual.
 	
 		// template line here so that it can be overridden by something in viewentry if viewentry is the current state.
-		$xoopsTpl->assign('tempaddingentry', _FORMULAIRE_TEMP_ADDINGENTRY);
-		$xoopsTpl->assign('issingle', $issingle); //sends issingle=on to the template
+		$xoopsTpl->assign('tempaddingentry', _formulize_TEMP_ADDINGENTRY);
+		$xoopsTpl->assign('issingle', $issingle); 
 		if(!$showviewentries) // if viewing entries is not permitted, then send the cue for not showing them, overriding the $issingle setting above.
 		{
 			$xoopsTpl->assign('issingle', "on"); //sends issingle=on to the template
-		}		
+		}
+
+		if($isadmin) // always allow module admins to view entries
+		{
+			$xoopsTpl->assign('issingle', "off"); //sends issingle=off to the template
+		}
+
 		if($viewentry)
 		{
 
-			$xoopsTpl->assign('tempaddingentry', _FORMULAIRE_TEMP_EDITINGENTRY);
+
+			$xoopsTpl->assign('tempaddingentry', _formulize_TEMP_EDITINGENTRY);
 
 		
 			$typejwe = $i->getVar('ele_type');
@@ -2226,7 +2792,7 @@ if( empty($_POST['submit']) ){
 			$ele_value[0] = eregi_replace("'", "`", $ele_value[0]);
 			$ele_value[0] = stripslashes($ele_value[0]); } */
 
-		$renderer =& new FormulaireElementRenderer($i);
+		$renderer =& new formulizeElementRenderer($i);
 		$form_ele =& $renderer->constructElement('ele_'.$i->getVar('ele_id'), $ele_value);
 
 		// new location of block above.
@@ -2261,30 +2827,20 @@ if( empty($_POST['submit']) ){
 	// line below added to pass the viewentry setting onto the writing portion of index.php...
 	$form->addElement (new XoopsFormHidden ('viewentry', $viewentry));
 
-	// check if users have add permission and if they do then put in a submit button. -- jwe 7/28/04
-     	$addgroupid = array();
-      $resadd = $xoopsDB->query("SELECT gperm_groupid FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_itemid= ".$id_form." AND gperm_modid=".$module_id . " AND gperm_name=\"add\"");
-	if ( $resadd ) {
-  		while ( $row = mysql_fetch_row ( $resadd ) ) {
-  			$addgroupid[] = $row[0];
-  	  	}
-	}
-
-		// this code checks to see if the user is a member of a group that has been given permission to write to the form
-	foreach ($addgroupid as $gr){
-           	if ( in_array ($gr, $groupuser)) {
+	// check if users have add permission and if they do then put in a submit button. -- jwe 7/28/04 -- updated 8/05/04
+     	if ($theycanadd) {
 			$form->addElement(new XoopsFormButton('', 'submit', _SUBMIT, 'submit'));
-		}
 	}
+	
 
 
 	//other template terms added by jwe 7/24/04
-	$tempformurl = XOOPS_URL . "/modules/formulaire/index.php?title=$title";
+	$tempformurl = XOOPS_URL . "/modules/formulize/index.php?title=$title";
 	$xoopsTpl->assign('tempformurl', $tempformurl);
 
 	
 
-	$xoopsTpl->assign('tempviewentries', _FORMULAIRE_TEMP_VIEWENTRIES);
+	$xoopsTpl->assign('tempviewentries', _formulize_TEMP_VIEWENTRIES);
 
 
 
@@ -2322,11 +2878,12 @@ if( empty($_POST['submit']) ){
 	if ($id_req == 0) { $num_id = 1; }
 	else if ($num_id <= $id_req) $num_id = $id_req + 1;
 
+
 	$up = array();
 	$desc_form = array();
 	$value = null;
 	foreach( $id as $i ){
-		$element =& $formulaire_mgr->get($i);
+		$element =& $formulize_mgr->get($i);
 		if( !empty($ele[$i]) ){
 			//$pds = $element->getVar('pds');
 			$id_form = $element->getVar('id_form');
@@ -2576,7 +3133,7 @@ if( empty($_POST['submit']) ){
 				case 'upload':
 			$msg.= "<table border=1 bordercolordark=black bordercolorlight=#C0C0C0 width=500><td><b>".$ele_caption."</b><br>";
 							/************* UPLOAD *************/
-				$img_dir = XOOPS_ROOT_PATH . "/modules/formulaire/upload" ;
+				$img_dir = XOOPS_ROOT_PATH . "/modules/formulize/upload" ;
 				$allowed_mimetypes = array();
 				foreach ($ele_value[2] as $v){ $allowed_mimetypes[] = 'image/'.$v[1];
 				}
@@ -2590,8 +3147,8 @@ if( empty($_POST['submit']) ){
 			if( !empty( $fichier ) || $fichier != "") {
 // test si aucun fichier n'a été joint
 				if($_FILES[$fichier]['error'] == '2' || $_FILES[$fichier]['error'] == '1') {	
-					$error = sprintf(_FORMULAIRE_MSG_BIG, $xoopsConfig['sitename'])._FORMULAIRE_MSG_THANK;
-					redirect_header(XOOPS_URL."/modules/formulaire/index.php?title=".$desc_form[0], 3, $error);
+					$error = sprintf(_formulize_MSG_BIG, $xoopsConfig['sitename'])._formulize_MSG_THANK;
+					redirect_header(XOOPS_URL."/modules/formulize/index.php?title=".$desc_form[0], 3, $error);
 				}
 				if(filesize($_FILES[$fichier]['tmp_name']) ==null) {	
 					$value = $path = '';
@@ -2600,17 +3157,17 @@ if( empty($_POST['submit']) ){
 					break;
 				}
 				if($_FILES[$fichier]['size'] > $max_imgsize) {	
-					$error = sprintf(_FORMULAIRE_MSG_UNSENT.$max_imgsize.' octets', $xoopsConfig['sitename'])._FORMULAIRE_MSG_THANK;
-					redirect_header(XOOPS_URL."/modules/formulaire/index.php?title=".$desc_form[0], 3, $error);
+					$error = sprintf(_formulize_MSG_UNSENT.$max_imgsize.' octets', $xoopsConfig['sitename'])._formulize_MSG_THANK;
+					redirect_header(XOOPS_URL."/modules/formulize/index.php?title=".$desc_form[0], 3, $error);
 				}
 // teste si le fichier a été uploadé dans le répertoire temporaire:
 				if( ! is_readable( $_FILES[$fichier]['tmp_name'])  || $_FILES[$fichier]['tmp_name'] == "" ) 
 				{
-				//redirect_header( XOOPS_URL.'/modules/formulaire/index.php?title='.$title , 2, _MD_FILEERROR ) ; 
+				//redirect_header( XOOPS_URL.'/modules/formulize/index.php?title='.$title , 2, _MD_FILEERROR ) ; 
 					$path = '';
 					$filename = '';
-					$error = sprintf(_FORMULAIRE_MSG_UNSENT.$max_imgsize.' octets', $xoopsConfig['sitename'])._FORMULAIRE_MSG_THANK;
-					redirect_header(XOOPS_URL."/modules/formulaire/index.php?title=".$desc_form[0], 3, $error);
+					$error = sprintf(_formulize_MSG_UNSENT.$max_imgsize.' octets', $xoopsConfig['sitename'])._formulize_MSG_THANK;
+					redirect_header(XOOPS_URL."/modules/formulize/index.php?title=".$desc_form[0], 3, $error);
 				//	exit ;				
 				}
 // création de l'objet uploader
@@ -2622,8 +3179,8 @@ if( empty($_POST['submit']) ){
 					if (!in_array ($type, $allowed_mimetypes)) {	//si ce type est autorisé
 						$path = '';
 						$filename = '';
-						$error = sprintf(_FORMULAIRE_MSG_UNTYPE.implode(', ',$allowed_mimetypes))._FORMULAIRE_MSG_THANK;
-						redirect_header(XOOPS_URL."/modules/formulaire/index.php?title=".$desc_form[0], 3, $error);
+						$error = sprintf(_formulize_MSG_UNTYPE.implode(', ',$allowed_mimetypes))._formulize_MSG_THANK;
+						redirect_header(XOOPS_URL."/modules/formulize/index.php?title=".$desc_form[0], 3, $error);
 					}
 // L'upload a réussi 
 					$path = $uploader->getSavedDestination();
@@ -2709,17 +3266,17 @@ $result = $xoopsDB->query($sql);
 	$msg = nl2br($msg);			
 	
 
-if( is_dir(FORMULAIRE_ROOT_PATH."/language/".$xoopsConfig['language']."/mail_template") ){
-	$template_dir = FORMULAIRE_ROOT_PATH."/language/".$xoopsConfig['language']."/mail_template";
+if( is_dir(formulize_ROOT_PATH."/language/".$xoopsConfig['language']."/mail_template") ){
+	$template_dir = formulize_ROOT_PATH."/language/".$xoopsConfig['language']."/mail_template";
 }else{
-	$template_dir = FORMULAIRE_ROOT_PATH."/language/english/mail_template";
+	$template_dir = formulize_ROOT_PATH."/language/english/mail_template";
 }
 
 	$xoopsMailer =&getMailer();
 	$xoopsMailer->multimailer->isHTML(true);
 	$xoopsMailer->setTemplateDir($template_dir);
-	$xoopsMailer->setTemplate('formulaire.tpl');
-	$xoopsMailer->setSubject(_FORMULAIRE_MSG_SUBJECT._FORMULAIRE_MSG_FORM.$title);
+	$xoopsMailer->setTemplate('formulize.tpl');
+	$xoopsMailer->setSubject(_formulize_MSG_SUBJECT._formulize_MSG_FORM.$title);
 	if( is_object($xoopsUser) ){
 		$xoopsMailer->assign("UNAME", $xoopsUser->getVar("uname"));
 		$xoopsMailer->assign("UID", $xoopsUser->getVar("uid"));
@@ -2798,8 +3355,8 @@ if (!empty($groupe) && ($groupe != "0")){
 }	
 	$xoopsMailer->send(); 
 // altered to change the message presented on form submission jwe 7/23/04
-//	$sent = sprintf(_FORMULAIRE_MSG_SENT, $xoopsConfig['sitename'])._FORMULAIRE_MSG_THANK;
-	$sent = _FORMULAIRE_INFO_RECEIVED;
+//	$sent = sprintf(_formulize_MSG_SENT, $xoopsConfig['sitename'])._formulize_MSG_THANK;
+	$sent = _formulize_INFO_RECEIVED;
 	unlink($path);
 	unset ($up);
 	// altered to change default redirect behaviour on submit by jwe 7/23/04
@@ -2862,17 +3419,17 @@ $misscapindex = 0;
 	//		print "exit to view"; // debug code
 		if(!$issingle)
 		{
-			redirect_header(XOOPS_URL."/modules/formulaire/index.php?title=$title&select=1", 2, $sent);
+			redirect_header(XOOPS_URL."/modules/formulize/index.php?title=$title&select=1&reporting=$reportingyn&reportname=$report", 2, $sent);
 		}
 		else // same redirect as if viewentry is off
 		{
-			redirect_header(XOOPS_URL."/modules/formulaire/index.php?title=$title", 2, $sent);
+			redirect_header(XOOPS_URL."/modules/formulize/index.php?title=$title", 2, $sent);
 		}
 	}
 	else // if there's no viewentry set
 	{
 	//	print "exit to form"; // debug code
-		redirect_header(XOOPS_URL."/modules/formulaire/index.php?title=$title", 2, $sent);
+		redirect_header(XOOPS_URL."/modules/formulize/index.php?title=$title", 2, $sent);
 	}// end if view entry
 }// end if sent 
 }// unknown what this is the end of, but it's necessary (!!!)

@@ -1,36 +1,5 @@
 <?php
-###############################################################################
-##             Formulaire - Information submitting module for XOOPS          ##
-##                    Copyright (c) 2003 NS Tai (aka tuff)                   ##
-##                       <http://www.brandycoke.com/>                        ##
-###############################################################################
-##                    XOOPS - PHP Content Management System                  ##
-##                       Copyright (c) 2000 XOOPS.org                        ##
-##                          <http://www.xoops.org/>                          ##
-###############################################################################
-##  This program is free software; you can redistribute it and/or modify     ##
-##  it under the terms of the GNU General Public License as published by     ##
-##  the Free Software Foundation; either version 2 of the License, or        ##
-##  (at your option) any later version.                                      ##
-##                                                                           ##
-##  You may not change or alter any portion of this comment or credits       ##
-##  of supporting developers from this source code or any supporting         ##
-##  source code which is considered copyrighted (c) material of the          ##
-##  original comment or credit authors.                                      ##
-##                                                                           ##
-##  This program is distributed in the hope that it will be useful,          ##
-##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
-##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
-##  GNU General Public License for more details.                             ##
-##                                                                           ##
-##  You should have received a copy of the GNU General Public License        ##
-##  along with this program; if not, write to the Free Software              ##
-##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
-###############################################################################
-##  Author of this file: NS Tai (aka tuff)                                   ##
-##  URL: http://www.brandycoke.com/                                          ##
-##  Project: Formulaire                                                      ##
-###############################################################################
+
 include("admin_header.php");
 include_once '../../../include/cp_header.php';
 if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
@@ -109,7 +78,7 @@ else
 	$sql = sprintf("UPDATE %s SET desc_form='%s' WHERE id_form='%s'", $xoopsDB->prefix("form_id"), $title2, $title);
 	$xoopsDB->queryF($sql) or $eh->show("error insertion 1 dans renform");
 	
-	$sql2 = sprintf("UPDATE %s SET itemname='%s',itemurl='%s' WHERE itemname='%s'", $xoopsDB->prefix("form_menu"), $title2, XOOPS_URL.'/modules/formulaire/index.php?title='.$title2, $desc_form);
+	$sql2 = sprintf("UPDATE %s SET itemname='%s',itemurl='%s' WHERE itemname='%s'", $xoopsDB->prefix("form_menu"), $title2, XOOPS_URL.'/modules/formulize/index.php?title='.$title2, $desc_form);
 	$xoopsDB->query($sql2) or $eh->show("error insertion 2 dans renform");
-	redirect_header("formindex.php",1,_FORMULAIRE_FORMMOD);
+	redirect_header("formindex.php",1,_formulize_FORMMOD);
 }

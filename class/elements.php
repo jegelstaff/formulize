@@ -1,43 +1,11 @@
 <?php
-###############################################################################
-##             Formulaire - Information submitting module for XOOPS          ##
-##                    Copyright (c) 2003 NS Tai (aka tuff)                   ##
-##                       <http://www.brandycoke.com/>                        ##
-###############################################################################
-##                    XOOPS - PHP Content Management System                  ##
-##                       Copyright (c) 2000 XOOPS.org                        ##
-##                          <http://www.xoops.org/>                          ##
-###############################################################################
-##  This program is free software; you can redistribute it and/or modify     ##
-##  it under the terms of the GNU General Public License as published by     ##
-##  the Free Software Foundation; either version 2 of the License, or        ##
-##  (at your option) any later version.                                      ##
-##                                                                           ##
-##  You may not change or alter any portion of this comment or credits       ##
-##  of supporting developers from this source code or any supporting         ##
-##  source code which is considered copyrighted (c) material of the          ##
-##  original comment or credit authors.                                      ##
-##                                                                           ##
-##  This program is distributed in the hope that it will be useful,          ##
-##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
-##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
-##  GNU General Public License for more details.                             ##
-##                                                                           ##
-##  You should have received a copy of the GNU General Public License        ##
-##  along with this program; if not, write to the Free Software              ##
-##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
-###############################################################################
-##  Author of this file: NS Tai (aka tuff)                                   ##
-##  URL: http://www.brandycoke.com/                                          ##
-##  Project: Formulaire                                                      ##
-###############################################################################
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 
 global $xoopsDB;
-define('FORMULAIRE_TABLE', $xoopsDB->prefix("form"));
+define('formulize_TABLE', $xoopsDB->prefix("form"));
 
-class FormulaireFormulaire extends XoopsObject {
-	function FormulaireFormulaire(){
+class formulizeformulize extends XoopsObject {
+	function formulizeformulize(){
 		$this->XoopsObject();
 	//	key, data_type, value, req, max, opt
 		$this->initVar("id_form", XOBJ_DTYPE_INT, NULL, false);
@@ -52,32 +20,32 @@ class FormulaireFormulaire extends XoopsObject {
 	
 }
 
-class FormulaireElementsHandler {
+class formulizeElementsHandler {
 	var $db;
-	function FormulaireElementsHandler(&$db) {
+	function formulizeElementsHandler(&$db) {
 		$this->db =& $db;
 	}
 	function &getInstance(&$db) {
 		static $instance;
 		if (!isset($instance)) {
-			$instance = new FormulaireElementsHandler($db);
+			$instance = new formulizeElementsHandler($db);
 		}
 		return $instance;
 	}
 	function &create() {
-		return new FormulaireFormulaire();
+		return new formulizeformulize();
 	}
 
 	function &get($id){
 		$id = intval($id);
 		if ($id > 0) {
-			$sql = 'SELECT * FROM '.FORMULAIRE_TABLE.' WHERE ele_id='.$id;
+			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_id='.$id;
 			if (!$result = $this->db->query($sql)) {
 				return false;
 			}
 			$numrows = $this->db->getRowsNum($result);
 			if ($numrows == 1) {
-				$element = new FormulaireFormulaire();
+				$element = new formulizeformulize();
 				$element->assignVars($this->db->fetchArray($result));
 				return $element;
 			}
@@ -86,7 +54,7 @@ class FormulaireElementsHandler {
 	}
 
 	function insert(&$element, $force = false){
-        if( get_class($element) != 'formulaireformulaire'){
+        if( get_class($element) != 'formulizeformulize'){
             return false;
         }
         if( !$element->isDirty() ){
@@ -99,13 +67,13 @@ class FormulaireElementsHandler {
 			${$k} = $v;
 		}
 		if( $element->isNew() || empty($ele_id) ){
-			$ele_id = $this->db->genId(FORMULAIRE_TABLE."_ele_id_seq");
+			$ele_id = $this->db->genId(formulize_TABLE."_ele_id_seq");
 			$sql = sprintf("INSERT INTO %s (
 				id_form, ele_id, ele_type, ele_caption, ele_order, ele_req, ele_value, ele_display
 				) VALUES (
 				%u, %u, %s, %s, %u, %u, %s, %u
 				)",
-				FORMULAIRE_TABLE,
+				formulize_TABLE,
 				$id_form,
 				$ele_id,
 				$this->db->quoteString($ele_type),
@@ -124,7 +92,7 @@ class FormulaireElementsHandler {
 				ele_value = %s,
 				ele_display = %u
 				WHERE ele_id = %u AND id_form = %u",
-				FORMULAIRE_TABLE,
+				formulize_TABLE,
 				$this->db->quoteString($ele_type),
 				$this->db->quoteString($ele_caption),
 				$ele_order,
@@ -152,10 +120,10 @@ class FormulaireElementsHandler {
 	}
 	
 	function delete(&$element, $force = false){
-		if( get_class($this) != 'formulaireelementshandler') {
+		if( get_class($this) != 'formulizeelementshandler') {
 			return false;
 		}
-		$sql = "DELETE FROM ".FORMULAIRE_TABLE." WHERE ele_id=".$element->getVar("ele_id")."";
+		$sql = "DELETE FROM ".formulize_TABLE." WHERE ele_id=".$element->getVar("ele_id")."";
         if( false != $force ){
             $result = $this->db->queryF($sql);
         }else{
@@ -167,7 +135,7 @@ class FormulaireElementsHandler {
 	function &getObjects($criteria = null, $id_form , $id_as_key = false){
 		$ret = array();
 		$limit = $start = 0;
-		$sql = 'SELECT * FROM '.FORMULAIRE_TABLE.' WHERE id_form='.$id_form;
+		$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE id_form='.$id_form;
 
 		if( isset($criteria) && is_subclass_of($criteria, 'criteriaelement') ){
 		//	$sql .= ' '.$criteria->renderWhere();
@@ -183,7 +151,7 @@ class FormulaireElementsHandler {
 			return false;
 		}
 		while( $myrow = $this->db->fetchArray($result) ){
-			$elements = new FormulaireFormulaire();
+			$elements = new formulizeformulize();
 			$elements->assignVars($myrow);
 			if( !$id_as_key ){
 				$ret[] =& $elements;
@@ -198,7 +166,7 @@ class FormulaireElementsHandler {
 	function &getObjects2($criteria = null, $id_form , $id_as_key = false){
 		$ret = array();
 		$limit = $start = 0;
-		$sql = 'SELECT * FROM '.FORMULAIRE_TABLE.' WHERE id_form='.$id_form.' AND ele_display=1';
+		$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE id_form='.$id_form.' AND ele_display=1';
 
 		if( isset($criteria) && is_subclass_of($criteria, 'criteriaelement') ){
 		//	$sql .= ' '.$criteria->renderWhere();
@@ -214,7 +182,7 @@ class FormulaireElementsHandler {
 			return false;
 		}
 		while( $myrow = $this->db->fetchArray($result) ){
-			$elements = new FormulaireFormulaire();
+			$elements = new formulizeformulize();
 			$elements->assignVars($myrow);
 			if( !$id_as_key ){
 				$ret[] =& $elements;
@@ -228,7 +196,7 @@ class FormulaireElementsHandler {
 
 	
     function getCount($criteria = null){
-		$sql = 'SELECT COUNT(*) FROM '.FORMULAIRE_TABLE;
+		$sql = 'SELECT COUNT(*) FROM '.formulize_TABLE;
 		if( isset($criteria) && is_subclass_of($criteria, 'criteriaelement') ){
 			$sql .= ' '.$criteria->renderWhere();
 		}
@@ -242,7 +210,7 @@ class FormulaireElementsHandler {
     
     function deleteAll($criteria = null){
     	global $xoopsDB;
-		$sql = 'DELETE FROM '.FORMULAIRE_TABLE;
+		$sql = 'DELETE FROM '.formulize_TABLE;
 		if( isset($criteria) && is_subclass_of($criteria, 'criteriaelement') ){
 			$sql .= ' '.$criteria->renderWhere();
 		}

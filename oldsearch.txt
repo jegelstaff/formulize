@@ -1,0 +1,601 @@
+// START OF REALLY BIG COMMENTED BLOCK THAT CONTAINS THE OLD SEARCH SYSTEM
+/* ************************************
+
+// START QUERY TO SELECT THE DATA FOR THE SUMMARY LIST
+//$queryjwe = "SELECT id_req, ele_caption, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid AND (";
+
+// have to find all the records that belong to the user
+// then query on those records with the captions to get hits 
+
+$totalentriesindex = 0;
+// ***** need to apply Search terms to the $queryjwe below.
+// ***** reporting scope changes would affect this query too.
+
+// setup application of search terms to the query...
+
+// $search_typeArray -- Search operator, array index equals caption order
+// $search_textArray -- Search terms, comma separated, \ escape character, array index equals caption order
+// $andorArray -- local and/or setting, array index equal caption order
+// $globalandor -- global and/or setting
+// $reqFieldsJwe -- caption names, array index equals caption order
+//
+// 1. split the search term into component parts
+// 2. for each caption, loop through and build the query (internally looping through each captions terms)
+
+array($mastersaved);
+array($prevsaved);
+array($termsarray);
+$currentcaptionforquery = 0;
+for($i=0;$i<count($reqFieldsJwe);$i++)
+{
+	if($search_textArray[$i] != "") 
+	{
+
+	//$globalAndOrLocalSwitch = 0;
+
+	if(!$globalandor) // set null to be or, in case of reports that predate the inclusion of globalandor
+	{
+		$globalandor = "or";
+	}
+
+	//array_splice($allIdReqs, 0);
+
+	if($globalandor == "or")
+	{
+
+		if($currentcaptionforquery == 0) // if this is the first hit, then start the query terms
+		{
+			$userreportingquery = " AND ((";
+		}
+		else
+		{
+			$userreportingquery .= " " . strtoupper($globalandor) . " (";
+		}
+	} // end of handling for global OR queries
+	/*elseif($search_typeArray[$i] == "not" OR $search_typeArray[$i] == "notlike") // or if we're in a global AND query with a negative operator, get the full list of id_reqs for this field.
+	{
+		if($gscopeparam)
+		{
+			$globalAndNegativeQ = "SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND ($gscopeparam) AND ele_caption = \"$reqFieldsJwe[$i]\"";		
+		}
+		else
+		{
+			$globalAndNegativeQ = "SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid AND ele_caption = \"$reqFieldsJwe[$i]\"";		
+		}
+		$resgnq = $xoopsDB->query($globalAndNegativeQ);
+		while ($rowgnq = $xoopsDB->fetchRow($resgnq))
+		{
+			$allIdReqs[] = $rowgnq[0];
+		}
+	}*//*
+
+		$currentcaptionforquery++;		
+		$termsintermediate = str_replace("[,]", "*^%=*", $search_textArray[$i]); // save the escaped commas
+		array_splice($termsarray, 0);										
+		$termsarray = explode(",", $termsintermediate); // split out individual terms
+		$morethanonelocalterm = 0; // a flag used to indicate that we're on the first term for this caption in the loop below
+		foreach($termsarray as $thisterm)
+		{
+			$thisterm = trim($thisterm); 
+			$thisterm = str_replace("*^%=*", ",", $thisterm); // replace the escaped commas
+			$elevalueorid = "ele_value";
+
+			switch ($search_typeArray[$i]) {
+				case "equals":
+					$thistermop = "=";
+					break;
+				case "not":
+					$thistermop = "<>";
+					break;
+				case "greaterthan":
+					$thistermop = ">";
+					break;
+				case "greaterthanequal":
+					$thistermop = ">=";
+					break;
+				case "lessthan":
+					$thistermop = "<";
+					break;
+				case "lessthanequal":
+					$thistermop = "<=";
+					break;
+				case "like":
+					$thistermop = "LIKE";
+					break;
+				case "notlike":
+					$thistermop = "NOT LIKE";
+					break;
+
+			} 
+
+			// NEED SPECIAL HANDLING FOR YN QUESTIONS AND OTHERS		 -- it follows below...
+
+				// GENERAL APPROACH FOR THESE SPECIALIZED SEARCHES...
+				// do a query to get all values from the form that have the current caption
+				// then we split out the component parts of each one value if necessary
+				// then we perform the specified search on the component parts
+				// then we figure out which values were hits
+				// then we create a new search term to go with ele_value that will return the values that were hits
+
+			$cappropsq = "SELECT ele_type, ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND ele_caption=\"$reqFieldsJwe[$i]\"";
+			$rescappropsq = mysql_query($cappropsq);
+			$id = 0;
+			while($rowcappropsq = mysql_fetch_row($rescappropsq))
+			{
+				$cap_type[$id] = $rowcappropsq[0];
+				$cap_value[$id] = $rowcappropsq[1];
+				$cap_id[$id] = $rowcappropsq[2];
+				$id++;
+
+			}
+			array($savedIds);
+			array_splice($savedIds, 0);										
+
+/*			print "cap Arrays:<br>";
+			print_r($cap_type);
+			print "<br>";
+			print_r($cap_value);
+			print "<br>";
+			print_r($cap_id);
+			print "<br>";*//*
+
+
+
+			//	YES/NO HANDLING BELOW......
+			$ynindexer=0;
+			$ynidcatcher=0;
+			if($cap_type[0] == "yn") // we have a yes/no column
+			{
+				foreach($cap_value as $thisyn)
+				{
+//					print "This yn: $thisyn<br>";
+					$thistermc = strtoupper($thisterm);
+//					print "thisterm: $thistermc<br><br>";
+					switch ($search_typeArray[$i]) {
+							case "equals":
+//								print "$ynindexer<br>";
+								
+//								print "<br>EQUALS</br>";
+								if($thisyn == "1")
+								{
+									if($thistermc == "YES")
+									{
+//										print "MATCH!";
+										$savedIds[$ynindexer] = $cap_id[$ynidcatcher];
+										$ynindexer++;
+									}
+								}
+								elseif($thisyn == "2")
+								{
+									if($thistermc == "NO")
+									{
+/*										print "MATCH on NO! $thistermc ** $savedIds[$ynindexer]*<br>";
+										print "$rowisynq[$ynidcatcher]*<br>";
+										print "$ynindexer*<br><br>";*//*
+										$savedIds[$ynindexer] = $cap_id[$ynidcatcher];
+										$ynindexer++;
+									}
+								}
+								break;
+							case "not":
+//								print "<br>NOT</br>";
+								if($thisyn == "1")
+								{
+									if($thistermc <> "YES")
+									{
+										$savedIds[$ynindexer] = $cap_id[$ynidcatcher];
+										$ynindexer++;
+									}
+								}
+								elseif($thisyn == "2")
+								{
+									if($thistermc <> "NO")
+									{
+										$savedIds[$ynindexer] = $cap_id[$ynidcatcher];
+										$ynindexer++;
+									}
+								}
+								else // if the field is empty then count it
+								{
+										$savedIds[$ynindexer] = $cap_id[$ynidcatcher];
+										$ynindexer++;
+								}
+								break;
+						} // end switch
+				$ynidcatcher++;
+				} // end of foreach yn question
+			
+				//compiled the savedIds into an ele_id query to replace the ele_value query				
+				$thisterm = "";
+				for($x=0;$x<$ynindexer;$x++)//thisterm equals the OR OR OR id query
+				{
+					if($x>0) // if we're on a second or third... run through
+					{
+						$thisterm .= " OR ele_id=";
+					}
+					$thisterm .= $savedIds[$x];
+				}
+				$thisterm .= ")";
+				$elevalueorid = "(ele_id";
+				$thistermop = "=";
+
+			}// end of if loop that checks the yn questions
+			
+			// HANDLING FOR LINKED FIELDS (TURNS THEM INTO MULTIS, rewrite the cap_value entry with the terms the user selected from the other form)
+			$foundit = 0;
+			foreach($cap_value as $lookforsign)
+			{
+				if(strstr($lookforsign, "#*=:*")) 
+				{
+					$foundit = 1;
+					break;
+				}
+			}
+//			print "FOUNDIT? $foundit<br>";
+			if($foundit) // the value got previously will contain this delimiter if it is a linked field
+			{
+				for($z=0;$z<count($cap_value);$z++)
+				{
+					array($templinkedvals);
+					array_splice($templinkedvals, 0);
+					array($templinkedvals2);
+					array_splice($templinkedvals2, 0);
+					$templinkedvals = explode("#*=:*", $cap_value[$z]);
+					$templinkedvals2 = explode("[=*9*:", $templinkedvals[2]);
+					$thislinkedval = ''; // reset string so we can write it again.
+
+					$cap_value[$z] = "";
+					foreach($templinkedvals2 as $anentry)
+					{
+						$textq = "SELECT ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE ele_id=$anentry GROUP BY ele_value ORDER BY ele_value";
+						$restextq = mysql_query($textq);
+						while ($rowtextq = mysql_fetch_row($restextq))
+						{
+							$cap_value[$z] = $cap_value[$z] . "*=+*:" . $rowtextq[0];
+						}
+					}
+				}
+				
+			}// end of linked field handling
+				
+/*				$multitermq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE ele_caption=\"$reqFieldsJwe[$i]\"";
+				$resmultitermq = mysql_query($multitermq);
+				$multitermindexer = 0;
+				array($multitermValues);
+				array($multitermIds);
+				array_splice($multitermValues, 0);
+				array_splice($multitermIds, 0);
+				while ($rowmultitermq = mysql_fetch_row($resmultitermq))
+				{
+					$multitermValues[$multitermindexer] = $rowmultitermq[0];
+					$multitermIds[$multitermindexer] = $rowmultitermq[1];	
+					$multitermindexer++;
+				}*//*
+			// HANDLING FOR MULTITERM FIELDS (REGARDLESS OF WHETHER THEY ACTUALLY HAVE MORE THAN ONE TERM OR NOT
+			$foundit = 0;
+			foreach($cap_value as $lookforsign)
+			{
+				if(strstr($lookforsign, "*=+*:")) 
+				{
+					$foundit = 1;
+					break;
+				}
+			}
+ 
+			if($foundit) // if we are dealing with a multiterm value (even single terms entered into a multi form element will have this delimiter at the beginning
+			{
+				$savedidindexer = 0;
+//				for($z=0;$z<$multitermindexer;$z++)
+				for($z=0;$z<$id;$z++) // id is the number of elements in cap_value, cap_id, cap_type
+				{
+//					$thesemultiterms = explode("*=+*:", $multitermValues[$z]);
+					$thesemultiterms = explode("*=+*:", $cap_value[$z]);
+					if($thesemultiterms[0] == "") // get rid of any leading blanks, caused by the delimiter going at the beginning of the value string in the DB
+					{
+						array_shift($thesemultiterms);
+					}
+					foreach($thesemultiterms as $thisoneterm)
+					{
+						$thisoneterm = strtoupper($thisoneterm);
+						$thisoneterm = trim($thisoneterm);
+						$thistermc = strtoupper($thisterm);
+						switch ($search_typeArray[$i]) {
+							case "equals":
+							case "not":
+								if($thisoneterm == $thistermc)
+								{
+									$savedIds[$savedidindexer] = $cap_id[$z];
+									$savedidindexer++;
+									break 2;
+								}
+								break;
+							case "greaterthan":
+								if($thisoneterm > $thistermc)
+								{
+									$savedIds[$savedidindexer] = $cap_id[$z];
+									$savedidindexer++;
+									break 2;
+								}
+								break;
+							case "greaterthanequal":
+								if($thisoneterm >= $thistermc)
+								{
+									$savedIds[$savedidindexer] = $cap_id[$z];
+									$savedidindexer++;
+									break 2;
+
+								}
+								break;
+							case "lessthan":
+								if($thisoneterm < $thistermc)
+								{
+									$savedIds[$savedidindexer] = $cap_id[$z];
+									$savedidindexer++;
+									break 2;
+								}
+								break;
+							case "lessthanequal":
+								if($thisoneterm <= $thistermc)
+								{
+									$savedIds[$savedidindexer] = $cap_id[$z];
+									$savedidindexer++;
+									break 2;
+								}
+								break;
+							case "like":
+							case "notlike":
+								if(strstr($thisoneterm, $thistermc))
+								{
+									$savedIds[$savedidindexer] = $cap_id[$z];
+									$savedidindexer++;
+									break 2;
+								}
+								break;
+						}
+					}
+				} // end of loop through all values found
+
+				//compiled the savedIds into an ele_id query to replace the ele_value query				
+/*						print "all ids: ";
+						print_r($multitermIds);
+						print "<br>hits: ";
+						print_r($savedIds);*//*
+
+				switch ($search_typeArray[$i]) {
+					case "notlike":
+					case "not":
+						$thisterm = "";
+						$hadahit = 0;
+//						for($x=0;$x<$multitermindexer;$x++)// make thisterm equal to an OR OR OR id query
+						for($x=0;$x<$id;$x++)
+						{
+							$hadahit;
+							if(!in_array($cap_id[$x], $savedIds)) // if the current id is not one of the ones we found...then write it, otherwise ignore it
+							{
+								if($hadahit) // if we're on a second or third... run through
+								{
+									$thisterm .= " OR ele_id=";
+								}
+//								print "A saved id: $savedIds[$x]<br>";
+								$thisterm .= $cap_id[$x];
+								$hadahit = 1;
+							}
+						}
+						$thisterm .= ")";
+//						print "thisterm is now: $thisterm<br><br>";
+						$elevalueorid = "(ele_id";
+						$thistermop = "=";
+						break;
+					default:
+									
+				$thisterm = "";
+				for($x=0;$x<$savedidindexer;$x++)//thisterm equals the OR OR OR id query
+				{
+					if($x>0) // if we're on a second or third... run through
+					{
+						$thisterm .= " OR ele_id=";
+					}
+//					print "A saved id: $savedIds[$x]<br>";
+					$thisterm .= $savedIds[$x];
+				}
+				$thisterm .= ")";
+//				print "thisterm is now: $thisterm<br><br>";
+				$elevalueorid = "(ele_id";
+				$thistermop = "=";
+				} // end of switch to handle processing of savedids depending on operator
+				
+			} // end of if we've got multiterms
+
+			if($elevalueorid != "(ele_id")			
+			{
+
+				if($search_typeArray[$i] == "like" || $search_typeArray[$i] == "notlike")
+				{
+					$thisterm = "%" . $thisterm . "%";
+				}
+				if(!is_numeric($thisterm))
+				{
+					$thisterm = "\"$thisterm\"";
+				}
+			}
+
+			if($globalandor == "and") // if it's an and do the interim query thing, otherwise, behave normally.
+			{
+
+				if($elevalueorid !="(ele_id") // if savedIds haven't already been made (which turns elevalueorid into id)
+				{
+
+				if($gscopeparam)
+				{
+					$interimq = "SELECT ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND ($gscopeparam) AND (ele_caption = \"$reqFieldsJwe[$i]\" AND ele_value $thistermop $thisterm) ORDER BY id_req";
+				}
+				else
+				{
+					$interimq = "SELECT ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid AND (ele_caption = \"$reqFieldsJwe[$i]\" AND ele_value $thistermop $thisterm) ORDER BY id_req";
+				}
+				$resinterimq = $xoopsDB->query($interimq);
+				while($rowinterimq = $xoopsDB->fetchRow($resinterimq)) // build the savedIds that match this term
+				{
+					$savedIds[] = $rowinterimq[0];
+				}
+
+				} // end of if the savedIds have already been made
+			
+				if(!$savedIds[0] AND $andorArray[$i] == "and" AND !$foundit) // set the globalAndPrepQ to empty if the local and/or is AND and there is a term that returns nothing AND we're not dealing with a multiterm field, then break out of the foreach so no further terms are processed.
+				{
+					$globalAndPrepQ = "";
+					break 2;			
+				}
+
+				/*if(($search_typeArray[$i] == "not" OR $search_typeArray[$i] == "notlike") AND $globalAndOrLocalSwitch == 0) // if we're dealing with a negative operator, then switch the local AND/OR setting so we get the correct results
+				{
+					$globalAndOrLocalSwitch = 1;
+					print "IN";
+					if(strtoupper($andorArray[$i]) == "AND")
+					{
+						print "and";
+						$andorArray[$i] = "or";
+					}
+					else
+					{
+						print "or";
+						$andorArray[$i] = "and";
+					}
+				}*//*
+			
+
+				if($savedIds[0] AND $morethanonelocalterm > 0) // if we're on the second or higher local term, put in the local and/or
+				{
+					$globalAndPrepQ .= " " . strtoupper($andorArray[$i]) . " ";
+				}
+				$start = 1;
+				foreach($savedIds as $onemasid) // build the query that will be used to get the id_reqs for comparison after we're done all the local terms for this field
+				{
+
+					$gandeq = "=";
+					if ($search_typeArray[$i] == "not" OR $search_typeArray[$i] == "notlike")
+					{
+						$gandeq = "<>";
+					}
+
+					if($start)
+					{
+						$globalAndPrepQ .= "(ele_id" . $gandeq . $onemasid;
+						$start = 0;
+						$morethanonelocalterm = 1;
+					}
+					else
+					{
+						$globalAndPrepQ .= " " . strtoupper($andorArray[$i]) . " ele_id" . $gandeq . $onemasid;
+					}
+				}
+				if($savedIds[0]) { $globalAndPrepQ .= ")"; }
+
+			}				
+			else // if "or" then we build a normal userreportingquery
+			{		
+
+						
+	
+			if($morethanonelocalterm > 0) // if we're on the second or higher local term, put in the local and/or
+			{
+				$userreportingquery .= " " . strtoupper($andorArray[$i]) . " ";
+			}
+			if($thisterm == "&/=*INCLUDEthis")
+			{
+			$userreportingquery .= "(ele_caption = \"$reqFieldsJwe[$i]\")"; 
+			$morethanonelocalterm = 1;
+			}
+			else // otherwise make a normal query
+			{
+			$userreportingquery .= "(ele_caption = \"$reqFieldsJwe[$i]\" AND $elevalueorid $thistermop $thisterm)"; // put in the current search term
+			$morethanonelocalterm = 1;
+			}
+
+			} // end of if globalandor
+
+		} // end of the loop that processes each term in the search box (at this point, either process next term for this field, or move on to next field if there are no terms)
+		if($globalandor == "or") 
+		{		
+		$userreportingquery .= ")"; // we're done with the terms for one caption, so we close that part of the query 
+		}
+		else // we're doing a global AND
+		{
+
+				// now get the id_reqs for the saved IDs and then compare the results for this caption with the cumulative overlap from pervious captions, and then save the new overlap for future comparison (or use in final query)
+								
+				array_splice($savedReqs, 0);
+				if($gscopeparam)
+				{
+					$master_reqsq = "SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND ($gscopeparam) AND ele_caption = \"$reqFieldsJwe[$i]\" AND ($globalAndPrepQ)";
+				}
+				else
+				{
+					$master_reqsq = "SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid AND ele_caption = \"$reqFieldsJwe[$i]\" AND ($globalAndPrepQ)";
+				}
+				print "<br>$master_reqsq";
+				$globalAndPrepQ = ""; // reset this for use in the next field
+				$resmrq = $xoopsDB->query($master_reqsq);
+				while ($rowmrq = $xoopsDB->fetchRow($resmrq))
+				{
+					//print "<br>" . $rowmrq[0];
+					$savedReqs[] = $rowmrq[0];
+				}
+				$savedReqs = array_unique($savedReqs);
+				/*if($allIdReqs[0]) // if we're doing a negative query for this field...
+				{
+					// need to invert savedReqs so that all the reqs not selected out of the allidreqs array become selected.
+					$savedReqs = array_diff($allIdReqs, $savedReqs);
+				}*//*
+				print "<br>id_reqs found: ";
+				print_r ($savedReqs);
+	
+
+			
+				if($mastersaved[0]) // if there's anything to intersect with...
+				{
+					array_splice($mastersaved, 0); // clear mastersaved
+					$mastersaved = array_intersect($savedReqs, $prevsaved); //intersect the previous intersection with the current hits
+					array_splice($prevsaved, 0);
+					$prevsaved = $mastersaved; // save the current intersection for the next time through
+				}
+				else
+				{
+					$mastersaved = $savedReqs;
+					$prevsaved = $savedReqs;
+				}
+				print "<br>current intersection of id_reqs: ";
+				print_r ($mastersaved);
+		}
+	}
+} // end of for loop that goes through all fields displayed in form
+
+if($globalandor == "and" AND $mastersaved[0]) // make the userreportingquery based on the mastersaved array if it exists
+{
+	sort($mastersaved); // cleans up the keys in the array so they are sequential from 0.
+	$userreportingquery = " AND (";
+	$start = 1;
+	foreach($mastersaved as $amasterid)
+	{
+		if($start)
+		{
+			$userreportingquery .= "id_req=$amasterid";
+			$start = 0;
+		}
+		else
+		{
+			$userreportingquery .= " OR id_req=$amasterid";
+		}
+	}
+	$userreportingquery .= ")"; // close out the whole query
+}
+elseif($currentcaptionforquery > 0)
+{
+		$userreportingquery .= ")"; // close out the whole query (global OR)
+}
+
+//print "$userreportingquery<br><br>";   //string we're building
+
+// ********************
+*/ //END OF BIG COMMENTED BLOCK CONTAINING THE OLD SEARCH SYSTEM
+// ********************

@@ -1,27 +1,4 @@
 <?php
-// ------------------------------------------------------------------------- //
-//                XOOPS - PHP Content Management System                      //
-//                       <http://www.xoops.org/>                             //
-// ------------------------------------------------------------------------- //
-// Based on:                                                                 //
-// myPHPNUKE Web Portal System - http://myphpnuke.com/                       //
-// PHP-NUKE Web Portal System - http://phpnuke.org/                          //
-// Thatware - http://thatware.org/                                           //
-// ------------------------------------------------------------------------- //
-//  This program is free software; you can redistribute it and/or modify     //
-//  it under the terms of the GNU General Public License as published by     //
-//  the Free Software Foundation; either version 2 of the License, or        //
-//  (at your option) any later version.                                      //
-//                                                                           //
-//  This program is distributed in the hope that it will be useful,          //
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-//  GNU General Public License for more details.                             //
-//                                                                           //
-//  You should have received a copy of the GNU General Public License        //
-//  along with this program; if not, write to the Free Software              //
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA //
-// ------------------------------------------------------------------------- //
 
 include_once("admin_header.php");
 
@@ -70,7 +47,7 @@ function MyMenuAdmin() {
                 <td class='bg3'><b>"._AM_MARGINBOTTOM."</b></td>
                 <td class='bg1'><input type='text' name='marginbottom' size='12' maxlength='12' value='0px' /></td>
                 </tr>";
-         /* L'autentification est gérée par les formulaires
+         /* L'autentification est gérée par les formulizes
                 <tr>
                 <td class='bg3'><b>"._AM_MEMBERSONLY."</b></td>
                 <td class='bg1'>
@@ -82,7 +59,7 @@ function MyMenuAdmin() {
                 <tr>
                 <td class='bg3'><b>Menu-Style</b></td>
                 <td class='bg1'>
-                <input type='radio' checked name='mainmenu' value='1'>"._AM_FORMULAIREMENUSTYLE."
+                <input type='radio' checked name='mainmenu' value='1'>"._AM_formulizeMENUSTYLE."
                 <input type='radio'         name='mainmenu' value='0'>"._AM_MAINMENUSTYLE."
                 </td>
                 </tr>
@@ -146,7 +123,7 @@ function MyMenuAdmin() {
                         }
                 */
                         if ( $mainmenu == 1) {
-                        echo "<td>"._AM_FORMULAIREMENUSTYLE."</td>";
+                        echo "<td>"._AM_formulizeMENUSTYLE."</td>";
                         } else {
                         echo "<td>"._AM_MAINMENUSTYLE."</td>";
                         }
@@ -218,7 +195,7 @@ function MyMenuEdit($menuid) {
                        $checked_mainmenustyle = "checked"; $checked_mymenustyle = "";
                }
                 echo "
-                <input type='radio' $checked_mymenustyle name='mainmenu' value='1'>"._AM_FORMULAIREMENUSTYLE."
+                <input type='radio' $checked_mymenustyle name='mainmenu' value='1'>"._AM_formulizeMENUSTYLE."
                 <input type='radio' $checked_mainmenustyle   name='mainmenu' value='0'>"._AM_MAINMENUSTYLE."
                 </td>
                 </tr>

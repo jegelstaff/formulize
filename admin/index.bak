@@ -265,7 +265,7 @@ if( $_POST['op'] != 'save' ){
 		}
 	}
 	if( empty($error) ){
-//		redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);
+		redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);
 	}else{
 		xoops_cp_header();
 		echo error;

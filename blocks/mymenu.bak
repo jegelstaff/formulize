@@ -58,7 +58,11 @@ function block_FORMULAIREMENU_show() {
   		//echo $itemname." <br>".$status."<br>".$menuid;
   		                if ( $status == 1 ) {
 	                $groupid = array();
-	                $res2 = $xoopsDB->query("SELECT gperm_groupid, gperm_itemid FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_itemid= ".$menuid." AND gperm_modid=".$module_id " AND gperm_name=\"view\"");
+//	                $res2 = $xoopsDB->query("SELECT gperm_groupid, gperm_itemid FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_itemid= ".$menuid." AND gperm_modid=".$module_id " AND gperm_name=\"view\"");
+
+			$res2q = "SELECT gperm_groupid, gperm_itemid FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_itemid=$menuid AND gperm_modid=$module_id AND gperm_name=\"view\"";
+			$res2 = mysql_query($res2q);
+
 			if ( $res2 ) {
 		  	  while ( $row = mysql_fetch_row ( $res2 ) ) {
 		  		$groupid[] = $row[0];

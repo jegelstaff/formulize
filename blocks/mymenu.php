@@ -1,30 +1,11 @@
 <?php
-// ------------------------------------------------------------------------- //
-//                XOOPS - PHP Content Management System                      //
-//                       <http://www.xoops.org/>                             //
-// ------------------------------------------------------------------------- //
-//  This program is free software; you can redistribute it and/or modify     //
-//  it under the terms of the GNU General Public License as published by     //
-//  the Free Software Foundation; either version 2 of the License, or        //
-//  (at your option) any later version.                                      //
-//                                                                           //
-//  This program is distributed in the hope that it will be useful,          //
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-//  GNU General Public License for more details.                             //
-//                                                                           //
-//  You should have received a copy of the GNU General Public License        //
-//  along with this program; if not, write to the Free Software              //
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA //
-// ------------------------------------------------------------------------- //
-
-function block_FORMULAIREMENU_show() {
+function block_formulizeMENU_show() {
         global $xoopsDB, $xoopsUser, $xoopsModule, $myts;
 		    $myts =& MyTextSanitizer::getInstance();
 
         $block = array();
         $groups = array();
-        $block['title'] = ""; //_MB_FORMULAIREMENU_TITLE;
+        $block['title'] = ""; //_MB_formulizeMENU_TITLE;
 	  // following line added jwe 7/23/04 -- part of the form menu redrawing to look like main menu
         $block['content'] = "<table cellspacing='0' border='0'><tr><td id=mainmenu>";
 
@@ -33,7 +14,7 @@ function block_FORMULAIREMENU_show() {
         // Gestion des permissions 
 	include_once XOOPS_ROOT_PATH.'/class/xoopsform/grouppermform.php';
 
-	$res4 = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulaire'");
+	$res4 = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulize'");
 	if ($res4) {
 		while ($row = mysql_fetch_row($res4))
 			$module_id = $row[0];

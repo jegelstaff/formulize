@@ -1,4 +1,4 @@
 <?php
 // Blocks
-define("_MB_FORMULAIREMENU_TITLE","Forms");
+define("_MB_formulizeMENU_TITLE","Forms");
 ?>

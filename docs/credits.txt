@@ -3,13 +3,20 @@
 // XOOPS Content Management System
 // http://www.xoops.org/
 
+// Module Formulize
+// -----------------------------------------------------------------------------------------------
+// Module name: 	modules/formulize/index.php
+// Author of module:	Freeform Solutions
+// Purpose of module: 	Multiple Forms generator and Data Analyzer
+// -----------------------------------------------------------------------------------------------
+// This module is based on the XOOPS modules "Formulaire", "Liaise" and "Mymenu"
+// -----------------------------------------------------------------------------------------------
+//
 // Module Formulaire
 // -----------------------------------------------------------------------------------------------
 // Module name: 	modules/formulaire/index.php
 // Author of module:	xoops-themes.com
 // Purpose of module: 	Multiple Forms generator and Display an individually configured main menu
-// -----------------------------------------------------------------------------------------------
-// This module is based on the XOOPS modules "Liaise" and "Mymenu"
 // -----------------------------------------------------------------------------------------------
 //
 // Module Liaise

@@ -7,5 +7,5 @@
 * -------------------------------------------------------------------- 
 */
 // Blocks
-define("_MB_FORMULAIREMENU_TITLE","Form");
+define("_MB_formulizeMENU_TITLE","Form");
 ?>

@@ -1,41 +1,9 @@
 <?php
-###############################################################################
-##             Formulaire - Information submitting module for XOOPS          ##
-##                    Copyright (c) 2003 NS Tai (aka tuff)                   ##
-##                       <http://www.brandycoke.com/>                        ##
-###############################################################################
-##                    XOOPS - PHP Content Management System                  ##
-##                       Copyright (c) 2000 XOOPS.org                        ##
-##                          <http://www.xoops.org/>                          ##
-###############################################################################
-##  This program is free software; you can redistribute it and/or modify     ##
-##  it under the terms of the GNU General Public License as published by     ##
-##  the Free Software Foundation; either version 2 of the License, or        ##
-##  (at your option) any later version.                                      ##
-##                                                                           ##
-##  You may not change or alter any portion of this comment or credits       ##
-##  of supporting developers from this source code or any supporting         ##
-##  source code which is considered copyrighted (c) material of the          ##
-##  original comment or credit authors.                                      ##
-##                                                                           ##
-##  This program is distributed in the hope that it will be useful,          ##
-##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
-##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
-##  GNU General Public License for more details.                             ##
-##                                                                           ##
-##  You should have received a copy of the GNU General Public License        ##
-##  along with this program; if not, write to the Free Software              ##
-##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
-###############################################################################
-##  Author of this file: NS Tai (aka tuff)                                   ##
-##  URL: http://www.brandycoke.com/                                          ##
-##  Project: Formulaire                                                      ##
-###############################################################################
 
-class FormulaireElementRenderer{
+class formulizeElementRenderer{
 	var $_ele;
 
-	function FormulaireElementRenderer(&$element){
+	function formulizeElementRenderer(&$element){
 		$this->_ele =& $element;
 	}
 
@@ -70,8 +38,8 @@ class FormulaireElementRenderer{
 					$ele_value[2] = preg_replace('/\{mail\}/', '', $ele_value[2]);
 					$ele_value[2] = preg_replace('/\{DATE\}/', '', $ele_value[2]);
 				}elseif( !$admin ){
-					$ele_value[2] = preg_replace('/\{NAME\}/', $xoopsUser->getVar('uname', 'e'), $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{name\}/', $xoopsUser->getVar('uname', 'e'), $ele_value[2]);
+					$ele_value[2] = preg_replace('/\{NAME\}/', $xoopsUser->getVar('name', 'e'), $ele_value[2]); // modified to call real name 9/16/04 by jwe
+					$ele_value[2] = preg_replace('/\{name\}/', $xoopsUser->getVar('name', 'e'), $ele_value[2]); // modified to call real name 9/16/04 by jwe
 					$ele_value[2] = preg_replace('/\{UNAME\}/', $xoopsUser->getVar('uname', 'e'), $ele_value[2]);
 					$ele_value[2] = preg_replace('/\{uname\}/', $xoopsUser->getVar('uname', 'e'), $ele_value[2]);
 					$ele_value[2] = preg_replace('/\{MAIL\}/', $xoopsUser->getVar('email', 'e'), $ele_value[2]);
@@ -79,6 +47,7 @@ class FormulaireElementRenderer{
 					$ele_value[2] = preg_replace('/\{EMAIL\}/', $xoopsUser->getVar('email', 'e'), $ele_value[2]);
 					$ele_value[2] = preg_replace('/\{email\}/', $xoopsUser->getVar('email', 'e'), $ele_value[2]);
 					$ele_value[2] = preg_replace('/\{DATE\}/', date("d-m-Y"), $ele_value[2]);
+
 				}
 
 				$form_ele = new XoopsFormText(
@@ -136,13 +105,90 @@ if($ele_value[0] == 1)
 {
 	$form_ele->addOption("none", _AM_FORMLINK_PICK);
 }
-					$linkedvaluesq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxproperties[1]\" GROUP BY ele_value ORDER BY ele_caption";
+
+// add in a query to limit the elements displays in the linked select box, limit determined by the group permissions on this link that have been established in the admin side of the module. -- jwe 8/29/04
+
+// $form_ele_id is the ele_id of the current link select box, but we have to remove "ele_" from the front of it.
+//print "form_ele_id: $form_ele_id<br>"; // debug code
+$true_ele_id = str_replace("ele_", "", $form_ele_id);
+
+// grab the user's groups and the module id
+global $groupuser;
+global $module_id;
+global $xoopsDB;
+
+// grab the target groups for this link as specified for all the user's groups...
+
+$start = 1;
+foreach($groupuser as $agrp) // setup a query based on all the user's groups
+{
+	if($start)
+	{
+		$agrpq = "gperm_groupid = \"$agrp\"";
+		$start=0;
+	}
+	else
+	{
+		$agrpq .= " OR gperm_groupid = \"$agrp\"";
+	}
+}
+// query for the groups that links are permitted for, based on the user's groups and this link box.
+$linkscopepermq = "SELECT gperm_itemid FROM " . $xoopsDB->prefix("group_permission") . " WHERE ($agrpq) AND gperm_modid=\"$module_id\" AND gperm_name=\"$true_ele_id\"";
+//print "$linkscopepermq<br>"; // debug code
+$reslsq = $xoopsDB->query($linkscopepermq);
+while ($rowlsq = $xoopsDB->fetchRow($reslsq)) // loop through all the itemids (permitted groups) found and save them in an array...
+{
+	$pgroups[] = $rowlsq[0];
+}
+// Note: if no groups were found, then pguidq will be empty and so all entries will be shown, no restrictions
+array_unique($pgroups); // remove duplicate groups from the list
+//print_r ($pgroups); // debug code
+//print "<br>"; // debug code
+$start = 1;
+foreach($pgroups as $agrp2) // setup a query based on all these groups
+{
+	if($start)
+	{
+		$agrpq2 = "groupid = " . $agrp2;
+		$start=0;
+	}
+	else
+	{
+		$agrpq2 .= " OR groupid = " . $agrp2;
+	}
+}
+$puserq = "SELECT uid FROM " . $xoopsDB->prefix("groups_users_link") . " WHERE $agrpq2";
+//print "$puserq<br>"; // debug code
+$respuq = $xoopsDB->query($puserq);
+while ($rowpuq = $xoopsDB->fetchRow($respuq)) // build the pguidq string for use in the next query...
+{
+	$pguid[] = $rowpuq[0];
+}
+array_unique($pguid); // remove duplicate users from the list
+$start = 1;
+foreach($pguid as $apuid) // setup the pguidq based on all these users
+{
+	if($start)
+	{
+		$pguidq = "AND (uid = " . $apuid;
+		$start=0;
+	}
+	else
+	{
+		$pguidq .= " OR uid = " . $apuid;
+	}
+}
+if($pguidq) { $pguidq .= ")"; } // close the pguidq if it has been started
+
+// query below modified to include pguidq which will limit the returned values to just the ones that are allowed for this user's groups to see -- jwe 8/29/04
+					$linkedvaluesq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxproperties[1]\" $pguidq GROUP BY ele_value ORDER BY ele_value";
 					$reslinkedvaluesq = mysql_query($linkedvaluesq);
 					if($reslinkedvaluesq)
 					{
 						while($rowlinkedvaluesq = mysql_fetch_row($reslinkedvaluesq))
 						{
-							$form_ele->addOption($boxproperties[0] . "#*=:*" . $boxproperties[1] . "#*=:*" . $rowlinkedvaluesq[1], $rowlinkedvaluesq[0]); // form_id, caption and ele_id from form_form are the value, value from form_form is name.
+							$slashfreevalue = stripslashes($rowlinkedvaluesq[0]);
+							$form_ele->addOption($boxproperties[0] . "#*=:*" . $boxproperties[1] . "#*=:*" . $rowlinkedvaluesq[1], $slashfreevalue); // form_id, caption and ele_id from form_form are the value, value from form_form is name.
 							foreach($selectedvalues as $thisselection)
 							{
 								if($thisselection == $rowlinkedvaluesq[1]) // if this is our selected entry...set it as the default
@@ -269,6 +315,25 @@ if($ele_value[0] == 1)
 				$ms = substr ($ele_value[0], 3, 2);
 				$an = substr ($ele_value[0], 6, 4);
 				$ele_value[0] = $an.'-'.$ms.'-'.$jr;*/ // code block commented to fix bug in remembering previously entered dates.  -- jwe 7/24/04
+				// lines below added/modified to check that the default setting is a valid timestamp, otherwise, send no default value to the date box. -- jwe 9/23/04
+				print "ele_value: ";
+				print_r($ele_value);
+				print "<br>" . strtotime("") . "<br>";
+				print "<br>" . strtotime("now") . "<br>";
+
+				if($ele_value[0] == "") // if there's no value (ie: it's blank) ...
+				{
+					print "Bad date";
+				$form_ele = new XoopsFormTextDateSelect (
+					$ele_caption,
+					$form_ele_id,
+					15,
+					""
+				);
+				}
+				else
+				{
+					print "good date";
 				$form_ele = new XoopsFormTextDateSelect (
 					$ele_caption,
 					$form_ele_id,
@@ -276,6 +341,7 @@ if($ele_value[0] == 1)
 					strtotime($ele_value[0])
 					//$ele_value[0]
 				);
+				} // end of check to see if the default setting is for real
 			break;
 			case 'sep':
 				//$ele_value[0] = $myts->displayTarea($ele_value[0]);

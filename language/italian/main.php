@@ -6,26 +6,26 @@
 *    http://www.xoopsit.net the XOOPS Official Italian Support Site            
 * -------------------------------------------------------------------- 
 */
-define("_FORMULAIRE_FORM_TITLE", "Contattaci riempiendo questo modulo.");
-//define("_FORMULAIRE_MSG_SUBJECT", $xoopsConfig['sitename'].' - Contact Us Form');
-define("_FORMULAIRE_MSG_SUBJECT", '['.$xoopsConfig['sitename'].'] -');
-define("_FORMULAIRE_MSG_FORM", ' Form : ');
+define("_formulize_FORM_TITLE", "Contattaci riempiendo questo modulo.");
+//define("_formulize_MSG_SUBJECT", $xoopsConfig['sitename'].' - Contact Us Form');
+define("_formulize_MSG_SUBJECT", '['.$xoopsConfig['sitename'].'] -');
+define("_formulize_MSG_FORM", ' Form : ');
 //next two lines added by jwe 7/23/04
-define("_FORMULAIRE_INFO_RECEIVED", "Your information has been received.");
-define("_FORMULAIRE_NO_PERMISSION", "You do not have permission to view this form.");
-define("_FORMULAIRE_MSG_SENT", "Il tuo messaggio è stato inviato con successo!");
-define("_FORMULAIRE_MSG_THANK", "<br />Grazie per il tuo commento.");
-define("_FORMULAIRE_MSG_SUP","<br /> Assicurati che siano stati cancellati i dati");
-define("_FORMULAIRE_MSG_BIG","Il file da allegare è troppo grande.");
-define("_FORMULAIRE_MSG_UNSENT","Per favore allega un file con una dimensione fino a ");
-define("_FORMULAIRE_MSG_UNTYPE","Tu non puoi allegare questo tipo di file.<br>Gli unici tipi di file autorizzati sono: ");
+define("_formulize_INFO_RECEIVED", "Your information has been received.");
+define("_formulize_NO_PERMISSION", "You do not have permission to view this form.");
+define("_formulize_MSG_SENT", "Il tuo messaggio è stato inviato con successo!");
+define("_formulize_MSG_THANK", "<br />Grazie per il tuo commento.");
+define("_formulize_MSG_SUP","<br /> Assicurati che siano stati cancellati i dati");
+define("_formulize_MSG_BIG","Il file da allegare è troppo grande.");
+define("_formulize_MSG_UNSENT","Per favore allega un file con una dimensione fino a ");
+define("_formulize_MSG_UNTYPE","Tu non puoi allegare questo tipo di file.<br>Gli unici tipi di file autorizzati sono: ");
 
-define("_FORMULAIRE_NEWFORMADDED","Nuovo form aggiunto con successo!");
-define("_FORMULAIRE_FORMMOD","Titolo del form modificato con successo!");
-define("_FORMULAIRE_FORMDEL","Form cancellato con successo!");
-define("_FORMULAIRE_FORMCHARG","Form caricato");
-define("_FORMULAIRE_FORMSHOW","Risultati form : ");
-define("_FORMULAIRE_FORMTITRE","I parametri inviati del Form sono stati modificati con successo");
+define("_formulize_NEWFORMADDED","Nuovo form aggiunto con successo!");
+define("_formulize_FORMMOD","Titolo del form modificato con successo!");
+define("_formulize_FORMDEL","Form cancellato con successo!");
+define("_formulize_FORMCHARG","Form caricato");
+define("_formulize_FORMSHOW","Risultati form : ");
+define("_formulize_FORMTITRE","I parametri inviati del Form sono stati modificati con successo");
 
 define("_MD_ERRORTITLE","ERRORE: Non hai specificato il titolo del form!");
 define("_MD_ERROREMAIL","ERRORE: Non hai specificato un indirizzo email valido!");
@@ -51,20 +51,20 @@ define("_FORM_OPT","Opzioni");
 define("_FORM_MENU","Consulta il menu");
 define("_FORM_PREF","Consulta le preferenze");
 
-define("_FORMULAIRE_TEMP_ADDENTRY", "ADD AN ENTRY");
-define("_FORMULAIRE_TEMP_VIEWENTRIES", "VIEW ENTRIES");
-define("_FORMULAIRE_TEMP_ADDINGENTRY", "ADDING AN ENTRY");
-define("_FORMULAIRE_TEMP_VIEWINGENTRIES", "VIEWING ENTRIES");
-define("_FORMULAIRE_TEMP_SELENTTITLE", "Your entries in '");
-define("_FORMULAIRE_TEMP_VIEWTHISENTRY", "View this entry");
-define("_FORMULAIRE_TEMP_EDITINGENTRY", "EDITING AN ENTRY");
+define("_formulize_TEMP_ADDENTRY", "ADD AN ENTRY");
+define("_formulize_TEMP_VIEWENTRIES", "VIEW ENTRIES");
+define("_formulize_TEMP_ADDINGENTRY", "ADDING AN ENTRY");
+define("_formulize_TEMP_VIEWINGENTRIES", "VIEWING ENTRIES");
+define("_formulize_TEMP_SELENTTITLE", "Your entries in '");
+define("_formulize_TEMP_VIEWTHISENTRY", "View this entry");
+define("_formulize_TEMP_EDITINGENTRY", "EDITING AN ENTRY");
 define("_FORM_SINGLEENTRY","Users can only fill in the form once:");
 define("_FORM_GROUPSCOPE","Users can view entries made by everyone in their groups:");
-define("_FORMULAIRE_TEMP_SELENTTITLE_GS", "All entries in '");
-define("_FORMULAIRE_TEMP_NOENTRIES", "No entries yet.");
-define("_FORMULAIRE_TEMP_ENTEREDBY", "Entered by: ");
-define("_FORMULAIRE_TEMP_QYES", "YES");
-define("_FORMULAIRE_TEMP_QNO", "NO");
+define("_formulize_TEMP_SELENTTITLE_GS", "All entries in '");
+define("_formulize_TEMP_NOENTRIES", "No entries yet.");
+define("_formulize_TEMP_ENTEREDBY", "Entered by: ");
+define("_formulize_TEMP_QYES", "YES");
+define("_formulize_TEMP_QNO", "NO");
 
 define("_AM_FORMUL","Form esistenti");
 define("_AM_FORM_SELECT","Seleziona un form");

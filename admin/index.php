@@ -1,36 +1,4 @@
 <?php
-###############################################################################
-##             Formulaire - Information submitting module for XOOPS          ##
-##                    Copyright (c) 2003 NS Tai (aka tuff)                   ##
-##                       <http://www.brandycoke.com/>                        ##
-###############################################################################
-##                    XOOPS - PHP Content Management System                  ##
-##                       Copyright (c) 2000 XOOPS.org                        ##
-##                          <http://www.xoops.org/>                          ##
-###############################################################################
-##  This program is free software; you can redistribute it and/or modify     ##
-##  it under the terms of the GNU General Public License as published by     ##
-##  the Free Software Foundation; either version 2 of the License, or        ##
-##  (at your option) any later version.                                      ##
-##                                                                           ##
-##  You may not change or alter any portion of this comment or credits       ##
-##  of supporting developers from this source code or any supporting         ##
-##  source code which is considered copyrighted (c) material of the          ##
-##  original comment or credit authors.                                      ##
-##                                                                           ##
-##  This program is distributed in the hope that it will be useful,          ##
-##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
-##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
-##  GNU General Public License for more details.                             ##
-##                                                                           ##
-##  You should have received a copy of the GNU General Public License        ##
-##  along with this program; if not, write to the Free Software              ##
-##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
-###############################################################################
-##  Author of this file: NS Tai (aka tuff)                                   ##
-##  URL: http://www.brandycoke.com/                                          ##
-##  Project: Formulaire                                                      ##
-###############################################################################
 include_once ("admin_header.php");
 include_once '../../../include/cp_header.php';
 
@@ -92,12 +60,12 @@ if( $_POST['op'] != 'save' ){
 	$criteria = new Criteria(1,1);
 	$criteria->setSort('ele_order');
 	$criteria->setOrder('ASC');
-	$elements =& $formulaire_mgr->getObjects($criteria,$id_form);
+	$elements =& $formulize_mgr->getObjects($criteria,$id_form);
 	foreach( $elements as $i ){
 		$id = $i->getVar('ele_id');
 		$ele_value = $i->getVar('ele_value');
 		$ele_value[0] = stripslashes ($ele_value[0]);
-		$renderer =& new FormulaireElementRenderer($i);
+		$renderer =& new formulizeElementRenderer($i);
 		$ele_value =& $renderer->constructElement('ele_value['.$id.']', true);
 		$req = $i->getVar('ele_req');
 		$check_req = new XoopsFormCheckBox('', 'ele_req['.$id.']', $req);
@@ -142,7 +110,7 @@ if( $_POST['op'] != 'save' ){
 	extract($_POST);
 	$error = '';
 	foreach( $ele_id as $id ){
-		$element =& $formulaire_mgr->get($id);
+		$element =& $formulize_mgr->get($id);
 		$req = !empty($ele_req[$id]) ? 1 : 0;
 		$element->setVar('ele_req', $req);
 		$order = !empty($ele_order[$id]) ? intval($ele_order[$id]) : 0;
@@ -260,7 +228,7 @@ if( $_POST['op'] != 'save' ){
 		}
 		$element->setVar('ele_value', $value);
 		$element->setVar('id_form', $id_form);
-		if( !$formulaire_mgr->insert($element) ){
+		if( !$formulize_mgr->insert($element) ){
 			$error .= $element->getHtmlErrors();
 		}
 	}
@@ -272,9 +240,9 @@ if( $_POST['op'] != 'save' ){
 	}
 }
 
-	echo '<center><a href="../index.php?title='.$title.'" target="_blank">Afficher le formulaire <br><img src="../images/kdict.png"></a></center>';
+	echo '<center><a href="../index.php?title='.$title.'" target="_blank">Afficher le formulize <br><img src="../images/kdict.png"></a></center>';
 
-	//echo '<br><br>lien a insérer : &lt;a href&nbsp;="'.XOOPS_URL.'/modules/formulaire/index.php?title='.$title.'">'.$title.'&lt;/a><br><br>';   
+	//echo '<br><br>lien a insérer : &lt;a href&nbsp;="'.XOOPS_URL.'/modules/formulize/index.php?title='.$title.'">'.$title.'&lt;/a><br><br>';   
 
 
 include 'footer.php';

@@ -1,44 +1,12 @@
 <?php
-###############################################################################
-##             Formulaire - Information submitting module for XOOPS          ##
-##                    Copyright (c) 2003 NS Tai (aka tuff)                   ##
-##                       <http://www.brandycoke.com/>                        ##
-###############################################################################
-##                    XOOPS - PHP Content Management System                  ##
-##                       Copyright (c) 2000 XOOPS.org                        ##
-##                          <http://www.xoops.org/>                          ##
-###############################################################################
-##  This program is free software; you can redistribute it and/or modify     ##
-##  it under the terms of the GNU General Public License as published by     ##
-##  the Free Software Foundation; either version 2 of the License, or        ##
-##  (at your option) any later version.                                      ##
-##                                                                           ##
-##  You may not change or alter any portion of this comment or credits       ##
-##  of supporting developers from this source code or any supporting         ##
-##  source code which is considered copyrighted (c) material of the          ##
-##  original comment or credit authors.                                      ##
-##                                                                           ##
-##  This program is distributed in the hope that it will be useful,          ##
-##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
-##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
-##  GNU General Public License for more details.                             ##
-##                                                                           ##
-##  You should have received a copy of the GNU General Public License        ##
-##  along with this program; if not, write to the Free Software              ##
-##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
-###############################################################################
-##  Author of this file: NS Tai (aka tuff)                                   ##
-##  URL: http://www.brandycoke.com/                                          ##
-##  Project: Formulaire                                                      ##
-###############################################################################
 //	Version du portable marchand bien, sauf quand aucun nom n'est ajouté au fichier joint
 include("admin_header.php");
 global $xoopsDB, $xoopsConfig;
 
-if( is_dir(FORMULAIRE_ROOT_PATH."/language/".$xoopsConfig['language']."/mail_template") ){
-	$template_dir = FORMULAIRE_ROOT_PATH."/language/".$xoopsConfig['language']."/mail_template";
+if( is_dir(formulize_ROOT_PATH."/language/".$xoopsConfig['language']."/mail_template") ){
+	$template_dir = formulize_ROOT_PATH."/language/".$xoopsConfig['language']."/mail_template";
 }else{
-	$template_dir = FORMULAIRE_ROOT_PATH."/language/english/mail_template";
+	$template_dir = formulize_ROOT_PATH."/language/english/mail_template";
 }
         xoops_cp_header();
 
@@ -69,7 +37,7 @@ if ($req == null) {
           		$date[$row["id_req"]] = $row["date"];
           	}
 	}
-	//Selection du nom du formulaire
+	//Selection du nom du formulize
 	$sql = "SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=".$id_form;
 	$result = mysql_query($sql) or die("Requete SQL ligne 59");
 	if ($result) {

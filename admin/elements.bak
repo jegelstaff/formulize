@@ -1,36 +1,5 @@
 <?php
-###############################################################################
-##             Formulaire - Information submitting module for XOOPS          ##
-##                    Copyright (c) 2003 NS Tai (aka tuff)                   ##
-##                       <http://www.brandycoke.com/>                        ##
-###############################################################################
-##                    XOOPS - PHP Content Management System                  ##
-##                       Copyright (c) 2000 XOOPS.org                        ##
-##                          <http://www.xoops.org/>                          ##
-###############################################################################
-##  This program is free software; you can redistribute it and/or modify     ##
-##  it under the terms of the GNU General Public License as published by     ##
-##  the Free Software Foundation; either version 2 of the License, or        ##
-##  (at your option) any later version.                                      ##
-##                                                                           ##
-##  You may not change or alter any portion of this comment or credits       ##
-##  of supporting developers from this source code or any supporting         ##
-##  source code which is considered copyrighted (c) material of the          ##
-##  original comment or credit authors.                                      ##
-##                                                                           ##
-##  This program is distributed in the hope that it will be useful,          ##
-##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
-##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
-##  GNU General Public License for more details.                             ##
-##                                                                           ##
-##  You should have received a copy of the GNU General Public License        ##
-##  along with this program; if not, write to the Free Software              ##
-##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
-###############################################################################
-##  Author of this file: NS Tai (aka tuff)                                   ##
-##  URL: http://www.brandycoke.com/                                          ##
-##  Project: Formulaire                                                      ##
-###############################################################################
+
 include_once("admin_header.php");
 
 if(!isset($HTTP_POST_VARS['title'])){
@@ -73,11 +42,11 @@ switch($op){
 	case 'edit':
 		xoops_cp_header();
 		if( !empty($ele_id) ){
-			$element =& $formulaire_mgr->get($ele_id);
+			$element =& $formulize_mgr->get($ele_id);
 			$ele_type = $element->getVar('ele_type');
 			$form_title = $clone ? _AM_ELE_CREATE : sprintf(_AM_ELE_EDIT, $element->getVar('ele_caption'));
 		}else{
-			$element =& $formulaire_mgr->create();
+			$element =& $formulize_mgr->create();
 			$form_title = _AM_ELE_CREATE;
 		}
 		$form = new XoopsThemeForm($form_title, 'form_ele', 'elements.php?title='.$title.'');
@@ -148,7 +117,7 @@ switch($op){
 		print "		var quotes=caps.indexOf('\"');\n";
 		print "		if(quotes > -1)\n";
 		print "		{\n";
-		print "			alert(\"" . _FORMULAIRE_CAPTION_QUOTES . "\")\n";
+		print "			alert(\"" . _formulize_CAPTION_QUOTES . "\")\n";
 		print "			var replacement = '';\n";
 		print "			var replacearray=caps.split('\"');\n";
 		print "			for(var i = 0;i<replacearray.length;i++)\n";
@@ -161,8 +130,32 @@ switch($op){
 		print "		if(replacement) {caps=replacement;}\n";		
 		print "		var replacement = '';\n";
 		print "		if(slash > -1) {\n";
-		print "			alert(\"" . _FORMULAIRE_CAPTION_SLASH . "\")\n";
+		print "			alert(\"" . _formulize_CAPTION_SLASH . "\")\n";
 		print "			var replacearray=caps.split('\\\\');\n";
+		print "			for(var i = 0;i<replacearray.length;i++)\n";
+		print "			{\n";
+		print "				replacement = replacement + replacearray[i];\n";
+		print "			}\n";
+		print "			document.form_ele.ele_caption.value = replacement;\n";
+		print "		}\n";
+		print "		var slash=caps.indexOf('>');\n";
+		print "		if(replacement) {caps=replacement;}\n";		
+		print "		var replacement = '';\n";
+		print "		if(slash > -1) {\n";
+		print "			alert(\"" . _formulize_CAPTION_GT . "\")\n";
+		print "			var replacearray=caps.split('>');\n";
+		print "			for(var i = 0;i<replacearray.length;i++)\n";
+		print "			{\n";
+		print "				replacement = replacement + replacearray[i];\n";
+		print "			}\n";
+		print "			document.form_ele.ele_caption.value = replacement;\n";
+		print "		}\n";
+		print "		var slash=caps.indexOf('<');\n";
+		print "		if(replacement) {caps=replacement;}\n";		
+		print "		var replacement = '';\n";
+		print "		if(slash > -1) {\n";
+		print "			alert(\"" . _formulize_CAPTION_LT . "\")\n";
+		print "			var replacearray=caps.split('<');\n";
 		print "			for(var i = 0;i<replacearray.length;i++)\n";
 		print "			{\n";
 		print "				replacement = replacement + replacearray[i];\n";
@@ -175,7 +168,7 @@ switch($op){
 		print "		{\n";
 		print "			if(caps == existingcaps[i])\n";
 		print "			{\n";
-		print "				alert(\"" . _FORMULAIRE_CAPTION_MATCH . "\")\n";
+		print "				alert(\"" . _formulize_CAPTION_MATCH . "\")\n";
 		print "				var replacement = caps + ' 2';\n";
 		print "				document.form_ele.ele_caption.value = replacement;\n";
 		print "				break;\n";
@@ -264,16 +257,16 @@ switch($op){
 			xoops_cp_header();
 			xoops_confirm(array('op' => 'delete', 'ele_id' => $ele_id, 'ok' => 1), 'elements.php?title='.$title.'', _AM_ELE_CONFIRM_DELETE);
 		}else{
-			$element =& $formulaire_mgr->get($ele_id);
-			$formulaire_mgr->delete($element);
+			$element =& $formulize_mgr->get($ele_id);
+			$formulize_mgr->delete($element);
 			redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);
 		}
 	break;
 	case 'save':
 		if( !empty($ele_id) ){
-			$element =& $formulaire_mgr->get($ele_id);
+			$element =& $formulize_mgr->get($ele_id);
 		}else{
-			$element =& $formulaire_mgr->create();
+			$element =& $formulize_mgr->create();
 		}
 		$element->setVar('ele_caption', $ele_caption);
 		$req = !empty($ele_req) ? 1 : 0;
@@ -444,11 +437,11 @@ switch($op){
 		}
 		$element->setVar('ele_value', $value);
 		$element->setVar('id_form', $id_form);
-		if( !$formulaire_mgr->insert($element) ){
+		if( !$formulize_mgr->insert($element) ){
 			xoops_cp_header();
 			echo $element->getHtmlErrors();
 		}else{
-//			redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);
+			redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);
 		}
 	break;
 /*	default:

@@ -1,0 +1,72 @@
+---===***FORMULIZE DOCUMENTATION***===---
+
+***TABLE OF CONTENTS:
+
+--Overview
+
+--Making Forms
+
+--Making Reports
+
+--Notes
+
+=====================
+
+***OVERVIEW:
+
+Formulize is a module for the XOOPS CMS.  Formulize adds to XOOPS the capability to create any kind of data entry form, control how it is accessed by users, and make reports based on the data users have entered into the form.
+
+There are many flexible options for controling how users interact with the forms created in Formulize, including the abilty to restrict users to one entry per form, which they update when they return, or allowing users to create new entries every time they fill in a form.  There is also an option to share entries in a form with other users in the same group so one user can see and update information another has entered.
+
+These options make it possible to use Formulize for any kind of form you can imagine.  Some examples:  registration forms, surveys, activity logs, status reports, user profiles, group profiles, feedback forms, inventory tracking.  You can even use it for common types of form-like applications, such as polls, shared address books or shared bookmarks, however those kind of specialized applications are better handled by dedicated modules.  Formulize is primarily concerned with data entry forms themselves, rather than web applications that happen to use forms as their interface.
+
+There are many powerful reporting features built into Formulize, that make it possible to generate complex reports on the data entered into a form.  Reports can be focused on data from a specific user or users, or on data from a group or groups, or on any combination of users and groups, including everyone in your XOOPS system.  Reports can include multi-term queries on any or all fields in a form, summary calculations on data in a form, and sorting options to control how the returned information is displayed.  Reports can be saved for later viewing by the report author, and they can even be published to other users in the XOOPS system.
+
+Formulize was developed by Freeform Solutions, a not-for-profit IT company dedicated to helping other not-for-profit organizations better use technology.  Formulize is based on the XOOPS module Formulaire, which was based on Liase and MyMenu.
+
+There are several features from the precursor modules still present in Formulize, however they are not discussed in this documentation.  This documentation is concerned only with the features provided by the Formulize module.
+
+***MAKING FORMS:
+
+To make forms you need to have module administration rights for Formulize.
+
+--SETTING UP A FORM
+
+Go to the main administration page for Formulize and click on the 'Create a Form' button.
+
+You can enter a name for the form and choose from the various options controlling the form's behaviour.  The options are:
+
+--Users can view previous entires made in this form
+
+This option is turned on by default.  This option allows users to view previous entries in a form if any exist.  If this option is turned off, then users will only ever see the form itself and will have no access to previous entries (unless a report on previous entries is made available to them by an administrator).
+	
+--This form allows each user only one entry (filling in the form again updates the same entry)
+
+This option controls the number of entries a user can create in a form (but not the number of times a user can fill the form in).  This option is turned off by default, which means every time a user fills in the form, they create a new entry in the form.  If this option is turned on, then when a user returns to a form they have filled in before, they will see the previous entry they made and they will be able to update it.  Examples of forms where you would turn this on include: profile forms, registration forms, status reports that only need to be filled in once (such as a year-end report).
+
+--Entries in this form are shared and visible to all users in the same groups (not just the user who entered them)
+
+This option controls the visibility of other users' entries in a form.  By default, this options is turned off, which means users can only see entries made by themselves in a form.  If this option is turned on, then all entries created by all users in the same group (or groups) will be displayed together.  Turning this option on allows users in a group (or groups) to share information they have entered in a form.  Examples of forms where you would turn this on include: activity logs (where all users in a group should be able to see logs entered by their peers), group profiles, inventory tracking forms (or other internal-use forms where information entered is relevant to a group of people in an organization and not just the one user who entered it).
+
+--Groups that have rights to this form
+
+This option provides a list of all the groups in the system and lets the user choose which ones will be able to fill in the form.  Note that the ability to view information entered into a form and the ability to fill in a form are actually two separate permissions in Formulize.  Both those permissions are turned on for any groups selected here.  Individual permissions per group and per form can be changed by using the 'Modify Form Access Permissions' option on the main Formulize admin page.
+
+--ADDING ELEMENTS TO A FORM
+
+Once you have created a form, you are taken to the interface for adding elements to the form.  This is where you get to specify what textboxes, dropdown lists, radio buttons, checkboxes, etc, are in your form.
+
+The options here are mostly self explanatory, however it is important to know that file upload form elements are not supported throughout the rest of the Formulize module (you can't report on them or view previously uploaded files).  This is because uploading files is not a typical part of a data entry form.  If you need a module that handles uploading files to XOOPS, then one of the available Downloads modules is probably more appropriate.
+
+Once you have finished specifying the elements in your form, you should return to the main Formulize admin page and selecte the update form icon (which is the one on the far right) beside the name of your new form.  On that page you will see all the options you chose when creating your form initially.  You will also see a new option:
+
+--Form elements displayed on the 'View Entries' page
+
+This option lets you select from the form elements you have now added to your form.  The elements you choose will be the ones displayed by default when users view previous entries in the form.  All data entered into the elements you choose will be visible to the user.  Data entered into the form but through a different element will not be visible by default (although users will have the option of changing which form elements are displayed if they make use of the advanced reporting features).
+
+---ABOUT CHANGING OPTIONS
+
+
+
+***MAKING REPORTS: 
+

@@ -106,7 +106,7 @@ define("_AM_SAVECHANG","Salva modifiche");
 define("_AM_WANTDEL","Vuoi realmente cancellare questa voce di menu?");
 define("_AM_YES","Sì");
 define("_AM_NO","No");
-define("_AM_FORMULAIREMENUSTYLE","Stile-Menu personale");
+define("_AM_formulizeMENUSTYLE","Stile-Menu personale");
 define("_AM_MAINMENUSTYLE","Stile-Menu principale");
 
 efine("_AM_VERSION","2.8");
