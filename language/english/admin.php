@@ -15,7 +15,7 @@ define("_AM_ELE_CAPTION","Caption");
 define("_AM_ELE_CAPTION_DESC","<br /></b>{SEPAR} permit you to not display the element name");
 define("_AM_ELE_DEFAULT","Default value");
 define("_AM_ELE_DETAIL","Detail");
-define("_AM_ELE_REQ","Reqired");
+define("_AM_ELE_REQ","Required");
 define("_AM_ELE_ORDER","Order");
 define("_AM_ELE_DISPLAY","Display");
 
@@ -89,7 +89,7 @@ define("_AM_MARGIN_TOPSHORT","mrg. top");
 define("_AM_EDIT","Edit");
 define("_AM_DELETE","Delete");
 define("_AM_ADDMENUITEM","Add menu item");
-define("_AM_CHANGEMENUITEM","Modify/delete menu item");
+define("_AM_CHANGEMENUITEM","Modify menu item");
 define("_AM_SITENAMET","Site Name:");
 define("_AM_URLT","URL:");
 define("_AM_Font","Font:");
@@ -122,6 +122,7 @@ define("_AM_VIEW_FORM", "View the form");
 define("_AM_GOTO_PARAMS", "Edit the form's settings");
 define("_AM_PARAMS_EXTRA", "(Specify what elements appear<br>on the <i>View Entries</i> page)");
 define("_AM_GOTO_MAIN", "Return to main page");
+define("_AM_GOTO_MODFRAME", "Back to first<br>Frameworks page");
 
 define("_AM_CLEAR_DEFAULT", "Clear Default");
 

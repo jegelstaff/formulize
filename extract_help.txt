@@ -1,0 +1,119 @@
+*** NOTES ON THE DATA EXTRACTION LAYER FOR FORMULIZE ***
+
+As of version 1.6 of Formulize, there is a data extraction layer that you can use to access data inside Formulize, from outside the module.  You can access the layer from within XOOPS, or from another website that has access to the XOOPS database.
+
+USE OF THIS LAYER IS STILL EXPERIMENTAL.  It is a programming tool, and not usable by non-technical webmasters.  
+
+We have not tested connecting to it from inside XOOPS, though it should work just fine (there's very little difference between connecting to it inside or outside of XOOPS).  What would connecting to it inside XOOPS mean?  You could write a custom PHP block and access the Formulize data from there.  Or you could access the data from another module.
+
+*** HOW DOES IT WORK? *** 
+
+Here's the overview:
+
+First you have to describe the data you want to expose to the outside world.  You do this through the new option on the Administration screens called "Create or Modify a Form Framework".  Here you can specify the relationships between forms in your site.  
+
+For instance, you might have an activity log form and a user profile form.  You might have a field in the activity log form that is linked back to the name field in the activity log form.  You would have done this through the option to link a selectbox to a field in another form when you created the activity log.
+
+So, you could now create a framework that describes this relationship.  You would select the activity log form and the user profile form from the two lists of forms, and add them to the framework.  Then you would specify that the link between the forms is the name field that feeds the linked selectbox.  (The options for "relationship" and "display as one" do not currently have any effect.)
+
+Lastly, you have to specify the "handles" that you will use to refer the form and its elements while using the data extraction layer.  To do this, you click on the form name after having added it to the framework, and you simply type in the handles you want to use.  A handle is just a short name that you use to refer to the form or element.
+
+ALL HANDLES WITHIN A FRAMEWORK MUST BE UNIQUE.  THE SYSTEM DOES NOT CURRENTLY ENFORCE THIS, IE: YOU CAN ENTER DUPLICATE NAMES AND IT WON'T WARN YOU OR FIX THE DUPLICATES.
+
+ALL FORMS AND ELEMENTS MUST HAVE A HANDLE!  THE SYSTEM ALSO DOES NOT ENFORCE THIS EITHER.
+
+If you want to expose only one form, then for the second form you would have to select a form that the first one was not linked to at all.
+
+Once you have described the framework, then you can use the data extraction layer to refer to it and get all the entries in the framework, including from all linked forms at once.
+
+*** EXTRACTING RESULTS FROM A FRAMEWORK ***
+
+There is a file in the formulize/include folder called dbtest.php.  This is a the skeleton file that you should modify and use to interact with the extraction layer.  Copy this file to a folder on another website where you want to refer to the information in the Formulize module.
+
+At the top of this file are a series of constants that you must define in order for the extraction to work correctly.  They are:
+
+--the database connection information used to access your XOOPS database (this can be found in your mainfile.php if you don't know it)
+
+--the physical path to your XOOPS installation (although the virtual path might work since that is just used to include the extract.php file which contains the functions that actually get the data from the database).
+
+--the name of the framework you are accessing, and the name of the "starting form" you are querying.  You have to pick one form to be the main form that queries will "start from" by default.  This means that you will get back all the entries in that form, plus all entries in other forms linked to it.
+
+--there is a filter constant, but that is not currently used.  It will be a lot easier to use results when this is in place since you will be able to ask for result sets that match your criteria, rather than having to deal with the complete result set each time.
+
+With these constants set, then you just have to point your web browser to the dbtest.php file and you will see a large and ugly array which happens to contain all the data in your defined framework, based on the starting form you specified.  The format of the array is a little complicated, but should be usable for purposes of traversal and formatting of the data.  There's a description of the array at the bottom of this files.  
+
+You can add whatever PHP you want to dbtest.php, you can copy the code in it to another file and call the Formulize extraction layer from there if you want, you can do pretty much anything you want.  The idea is that you can take this result set that you get back, display certain information from it, and perhaps even have links or options on your page that would let visitors click somewhere for different information.  For instance, you could return a set of profile information and use PHP to display only entries related to a specific geographic area.  Then by clicking on a different link, a user could see the same page but this time the PHP would format the result set to display a entries related to a different geographic area.
+
+To manipulate and deal with the result set, you will have to write a few PHP loops to examine the array.  In the future, we will provide more functions for doing this as part of the extraction layer's services.  For the moment, all the extraction layer does is spit out complete result sets.
+
+So, as you can imagine, using this layer is not an automatic process, it is a programming tool.  You have to write the PHP code yourself, but the data is gathered for you in a nice simple step from the Formulize data tables (and of course, you can use the Formuilze forms as the "front end" to this application, to enter new profile info for instance).
+
+*** STRUCTURE OF THE RESULT ARRAY ***
+
+The result array is structured like this...the ultimate value at the end of all the array addresses is the data entered into one form element in one form in Formulize.  The array looks like this:
+
+$array [master id][form handle][record id][field handle][value id] = value
+
+These thigns are:
+
+--master id.  Each record in the result set gets a unique ID.  This is it.
+
+--form handle.  This is the name of the form that generated this value.  The name is the handle specified in the Formulize Framework admin UI.
+
+--record id.  This is the record ID of the entry in this form to which this value belongs.
+
+--field handle.  This is the name of the field in this form to which this value belongs.
+
+--value id.  This is the ID of the value, normally 0, but some form elements can have more than one value (ie: a series of checkboxes, so they would be ID'd as 0, 1, 2, 3, etc)
+
+*** Example:
+
+Suppose you've got that profile form and activity log form suggested above.  You might get results that looked something like this...assume that the activity log is the main form...activity type is a checkbox field:
+
+$results [0]['log'][3]['activity name'][0] = "running with scissors"
+$results [0]['log'][3]['activity date'][0] = "2004-12-12"
+$results [0]['log'][3]['activity type'][0] = "lots of fun"
+$results [0]['log'][3]['activity type'][1] = "dangerous"
+$results [0]['log'][3]['activity done by'][0] = "Frank"
+$results [0]['profile'][12]['name'][0] = "Frank"
+$results [0]['profile'][12]['phonenumber'][0] = "555-1234"
+$results [1]['log'][5]['activity name'][0] = "falling with style"
+$results [1]['log'][5]['activity date'][0] = "2005-01-23"
+$results [1]['log'][5]['activity type'][0] = "dangerous"
+$results [1]['log'][5]['activity done by'][0] = "Mary"
+$results [1]['profile'][19]['name'][0] = "Mary"
+$results [1]['profile'][19]['phonenumber'][0] = "555-1234"
+
+What this means is, we've got back two results (see the 0 and 1 in the first index location? that means two main results).  Each one is made up of entries from the log form and profile form.  
+
+For the first entry (entry 0), the data from the log form is coming from entry 3 in the log, and entry 12 in the profile.  For the second entry (entry 1), the data from the log form comes from entry 5 in the log, and the data from the profile is coming from entry 19 in the profile.
+
+The log and the profile are linked through the "activity done by/name" fields, as you can see by the way the names of the people appear in each field.  
+
+Note the activity type field, which we are saying is a checkbox...  In master entry 0, it has two values (0 and 1), because Frank checked off two options, namely "lots of fun" and "dangerous".  In master entry 1, it only has one value, because Mary only checked off "dangerous".  Note that "dangerous" has the value id 1 in the first master entry, and value id 0 in the second master entry.  That's because the first value returned for a field always gets 0, and the second always gets 1 and the third always gets 2 and so on.  Therefore, since "dangerous" was the second value chosen by Frank, but the first and only one chosen by Mary, "dangerous" gets different value ids in the two different master records.
+
+*** WHAT'S THE POINT ***
+
+The initial point of this layer is to collect together related information from different forms and display it as a collection on non-XOOPS websites.
+
+But the fundamental service that this code provides is the act of collecting the data together; the exposing of it for use elsewhere is simply the only current output that is possible.  
+
+In the future, we plan on using this approach to make it possible to do reports on data in multiple forms at once, and the information in the Framework UI will also make it possible to display different forms together as one to support more complex data gathering interfaces.
+
+Lastly, we believe the code that generates these results is superior to the query and search code currently used in the main body of the module.  Eventually, this will serve as the foundation for a reimplementation of much of the behind-the-scenes functionality of Formulize.
+
+*** QUESTIONS, FEEDBACK? ***
+
+Please direct feedback and support questions to the trackers and forums for Formulize on dev.xoops.org.  That way, the knowledge base there grows, and you might find the answer to your question there before you even post.  
+
+=====================================================
+
+Freeform Solutions
+Toronto, Canada, March 9 2005
+
+
+
+
+
+
+

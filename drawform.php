@@ -302,7 +302,7 @@
 			$form->addElement($submittray);
 
 		}
-		elseif($uid == $veuid OR $isadmin OR !$viewentry) // only put in add button for their own entries, or all entries if they're an admin, or new entries in a multiple.
+		elseif($uid == $veuid OR $isadmin OR !$viewentry OR ($issingle AND $hasgroupscope)) // only put in add button for their own entries, or all entries if they're an admin, or new entries, or any entry in a single-groupscope form
 		{
 			$form->addElement(new XoopsFormButton('', 'submit', _SUBMIT, 'submit'));
 		}
@@ -320,6 +320,11 @@
 	$xoopsTpl->assign('tempviewentries', _formulize_TEMP_VIEWENTRIES);
 
 	$xoopsTpl->assign('theycanadd', $theycanadd);
+
+	//assign isadmin and hasgroupscope to template, so we can hide notification options for non-admin users of non-groupscope forms -- jwe 09/03/05
+	$xoopsTpl->assign('isadmin', $isadmin);
+	$xoopsTpl->assign('hasgroupscope', $hasgroupscope);	
+
 
 	//added by jwe 10/10/04 -- send id_form to template for use in the notifications block which is hard coded in (since the id_form cannot be accessed by the notifications system in the normal way on account of the title and not the id_form being used in the URL
 	//send title too so the notification redirect is correct

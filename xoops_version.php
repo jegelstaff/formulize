@@ -30,7 +30,7 @@
 ###############################################################################
 
 $modversion['name'] = _MI_formulize_NAME;
-$modversion['version'] = "1.5";
+$modversion['version'] = "1.6";
 $modversion['description'] = _MI_formulize_DESC;
 $modversion['author'] = "Freeform Solutions";                                            
 $modversion['credits'] = "";
@@ -173,5 +173,6 @@ $modversion['config'][7]['description'] = '';
 $modversion['config'][7]['formtype'] = 'upload';
 $modversion['config'][7]['valuetype'] = 'int';
 $modversion['config'][7]['default'] = '50000';
+
 
 ?>

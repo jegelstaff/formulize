@@ -317,6 +317,7 @@ switch($op){
 		}else{
 			$element =& $formulize_mgr->create();
 		}
+		$original_caption = $element->getVar('ele_caption'); // added by jwe 09/03/05, used in new code below
 		$element->setVar('ele_caption', $ele_caption);
 		$req = !empty($ele_req) ? 1 : 0;
 		$element->setVar('ele_req', $req);
@@ -490,7 +491,21 @@ switch($op){
 			xoops_cp_header();
 			echo $element->getHtmlErrors();
 		}else{
-			redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);
+			// add code here to rewrite existing captions in form_form table so that changes to the captions don't orphan all existing data! -- jwe 09/03/05
+			// get the current caption so we know what to replace
+			$ele_caption = stripslashes($ele_caption);
+			$ele_caption = eregi_replace ("&#039;", "`", $ele_caption);
+			$ele_caption = eregi_replace ("'", "`", $ele_caption);
+			$ele_caption = eregi_replace ("&quot;", "`", $ele_caption);
+			$original_caption = eregi_replace ("&#039;", "`", $original_caption);
+			$original_caption = eregi_replace ("'", "`", $original_caption);
+			$original_caption = eregi_replace ("&quot;", "`", $original_caption);
+			$updateq = "UPDATE " . $xoopsDB->prefix("form_form") . " SET ele_caption='$ele_caption' WHERE id_form = '$id_form' AND ele_caption='$original_caption'";
+			if(!$res = $xoopsDB->query($updateq)) {
+				print "Error:  update of captions in form $id_form failed.";
+			}
+			// end of added code
+			redirect_header("index.php?title=$title", 1, _AM_DBUPDATED);
 		}
 	break;
 /*	default:

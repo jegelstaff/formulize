@@ -46,6 +46,8 @@
 
 <hr>
 
+<{if $groupscope OR $isadmin}>
+
 <{if $xoops_notification.show}>
 <form name="notification_select" action="<{$xoops_notification.target_page}>" method="post">
 <h4 style="text-align:center;"><{$lang_activenotifications}></h4>
@@ -80,4 +82,5 @@
 <{$lang_notificationmethodis}>:&nbsp;<{$user_method}>&nbsp;&nbsp;[<a href="<{$editprofile_url}>"><{$lang_change}></a>]
 </div>
 </form>
+<{/if}>
 <{/if}>

@@ -1,3 +1,38 @@
+CREATE TABLE formulize_frameworks (
+  frame_id smallint(5) NOT NULL auto_increment,
+  frame_name varchar(255) default NULL,
+  PRIMARY KEY (`frame_id`)
+) TYPE=MyISAM;
+
+CREATE TABLE formulize_framework_links (
+  fl_id smallint(5) NOT NULL auto_increment,
+  fl_frame_id smallint(5),
+  fl_form1_id smallint(5),
+  fl_form2_id smallint(5),
+  fl_key1 smallint(5),
+  fl_key2 smallint(5),
+  fl_relationship smallint(5),
+  fl_unified_display smallint(5),
+  PRIMARY KEY (`fl_id`)
+) TYPE=MyISAM;
+
+CREATE TABLE formulize_framework_forms (
+  ff_id smallint(5) NOT NULL auto_increment,
+  ff_frame_id smallint(5),
+  ff_form_id smallint(5),
+  ff_handle varchar(255) default NULL,
+  PRIMARY KEY (`ff_id`)
+) TYPE=MyISAM;
+
+CREATE TABLE formulize_framework_elements (
+  fe_id smallint(5) NOT NULL auto_increment,
+  fe_frame_id smallint(5),
+  fe_form_id smallint(5),
+  fe_element_id smallint(5),
+  fe_handle varchar(255) default NULL,
+  PRIMARY KEY (`fe_id`)
+) TYPE=MyISAM;
+
 CREATE TABLE form_max_entries (
   max_ent_id smallint(5) NOT NULL auto_increment,
   max_ent_id_form smallint(5),
@@ -55,7 +90,7 @@ CREATE TABLE form_id (
   even varchar(255) default NULL,
   odd varchar(255) default NULL, 
   PRIMARY KEY  (`id_form`),
-  UNIQUE KEY `` (`desc_form`)
+  UNIQUE `desc_form_id` (`desc_form`)
 ) TYPE=MyISAM;
 
 CREATE TABLE form (

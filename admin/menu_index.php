@@ -33,7 +33,7 @@ function MyMenuAdmin() {
         OpenTable();
 
         echo "<big><b>"._AM_TITLE."</big></b>";
-
+/* COMMENTED THE ADD ITEM UI SINCE ADDING AN ITEM DOES BAD THINGS.  see note below re: deleting items.  09/03/05 jwe
         //*********** Menueintrag hinzufügen ******************************************************
         echo "<h4 style='text-align:left;'>"._AM_ADDMENUITEM."</h4>
         <form action='menu_index.php' method='post'>
@@ -72,14 +72,14 @@ function MyMenuAdmin() {
                 <td class='bg3'><b>"._AM_MARGINBOTTOM."</b></td>
                 <td class='bg1'><input type='text' name='marginbottom' size='12' maxlength='12' value='0px' /></td>
                 </tr>";
-         /* L'autentification est gérée par les formulizes
+         / * L'autentification est gérée par les formulizes
                 <tr>
                 <td class='bg3'><b>"._AM_MEMBERSONLY."</b></td>
                 <td class='bg1'>
                 <input type='radio' checked name='membersonly' value='1'>"._AM_MEMBERS."
                 <input type='radio'         name='membersonly' value='0'>"._AM_ALL."
                 </td>
-                </tr>*/
+                </tr>* /
                 echo "
                 <tr>
                 <td class='bg3'><b>Menu-Style</b></td>
@@ -105,6 +105,7 @@ function MyMenuAdmin() {
         </table>
         </form>
         <br />";
+*/
 
         //*********** Menueintrag ändern/löschen ******************************************************
         echo "<h4 style='text-align:left;'>"._AM_CHANGEMENUITEM."</h4>
@@ -148,6 +149,7 @@ function MyMenuAdmin() {
                         }
                 */
                         if ( $mainmenu == 1) {
+
                         echo "<td>"._AM_formulizeMENUSTYLE."</td>";
                         } else {
                         echo "<td>"._AM_MAINMENUSTYLE."</td>";
@@ -157,8 +159,7 @@ function MyMenuAdmin() {
                         } else {
                                 echo "<td>"._AM_INACTIVE."</td>";
                         }
-                echo "<td><a href='menu_index.php?op=MyMenuEdit&amp;menuid=$menuid'>"._AM_EDIT."</a> | <a href='menu_index.php?op=MyMenuDel&amp;menuid=$menuid&amp;ok=0'>"._AM_DELETE."</a></td>
-                </tr>";
+                echo "<td><a href='menu_index.php?op=MyMenuEdit&amp;menuid=$menuid'>"._AM_EDIT."</a></td></tr>"; // Delete link is commented, see note below.  jwe 09/03/05| <a href='menu_index.php?op=MyMenuDel&amp;menuid=$menuid&amp;ok=0'>"._AM_DELETE."</a></td>                </tr>";
                 }
                 echo "</table>
         </td>
@@ -301,7 +302,9 @@ function MyMenuAdd($xposition, $itemname, $indent, $margintop, $marginbottom, $i
     exit();
 }
 
-function MyMenuDel($menuid, $ok=0) {
+// jwe 09/03/05
+// this function commented since deleting a menu item here causes serious problems due to the lack of proper linkage between the form ids and menu ids (deleting a menu entry throws those ids out of sync).
+/*function MyMenuDel($menuid, $ok=0) {
         global $xoopsDB, $xoopsConfig, $xoopsModule;
         if ( $ok == 1 ) {
                 $xoopsDB->query("DELETE FROM ".$xoopsDB->prefix(form_menu)." WHERE menuid=$menuid");
@@ -346,7 +349,7 @@ function MyMenuDel($menuid, $ok=0) {
                 echo "</td></tr></table>\n";
                 CloseTable();
         }
-}
+}*/
  
  if (!ini_get("register_globals")){
    foreach ($_REQUEST as $k=>$v){

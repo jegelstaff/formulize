@@ -116,8 +116,7 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	echo '
 	<table class="outer" width="100%">
 
-	<th><center>'._AM_FORMUL.'</center></th>
-	<th><center>'._FORM_ACT.'</center></th>';
+	<th colspan=2><center>'._FORM_ACT.'</center></th>';
 
 	$renom = new XoopsFormButton('', 'renom', _FORM_RENOM_IMG, 'submit');
 	$hidden_renom = new XoopsFormHidden('op', 'renform');
@@ -135,6 +134,14 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	//echo '<tr><td class="head" ALIGN=center>'._FORM_EXPORT.'</td>
 	//      <td class="odd"><A HREF="export.php">
 	//      <center><img src="../images/xls.png" alt='._FORM_ALT_EXPORT.'>  </center></a></td></tr>';
+
+
+	// added framework link 01/11/05 -- jwe
+
+	echo '<tr><td class="head" ALIGN=center>'._FORM_MODFRAME.'</td>
+	      <td class="odd" align=center><A HREF="modframe.php">
+	      <center><img src="../images/attach.png" alt='._FORM_FRAME.'> </center></a></td></tr>';
+
 	echo '<tr><td class="head" ALIGN=center>'._FORM_MODPERM.'</td>
 	      <td class="odd"><A HREF="formindex.php?op=permform">
 	      <center><img src="../images/perm.png" alt='._FORM_PERM.'> </center></a></td></tr>';
@@ -143,23 +150,28 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	      <td class="odd"><A HREF="formindex.php?op=permlinks">
 	      <center><img src="../images/perm.png" alt='._FORM_PERMLINKS.'> </center></a></td></tr>';
 	
+	echo '</table><table class="outer" width="100%"><br>';
+
+
+	echo '<th colspan=2><center>'._AM_FORMUL.'</center></th>';
+
 	foreach($data as $id => $titre) {
-	   //echo '<form action="formindex.php?title='.$id.'" method="post">';	
+
 	   echo '<tr><td class="head" ALIGN=center>'.$titre.'</td>';
 
 	   echo '<td class="odd" align="center">  
-	         <A HREF="renom.php?title='.$id.'">  <img src="../images/signature.png" alt='._FORM_RENOM.'>  </a>';
+	         <A HREF="renom.php?title='.$id.'">  <img src="../images/signature.png" alt="'._FORM_RENOM.'">  </a>';
 
-	   echo '<A HREF="formindex.php?title='.$id.'&op=delform" onclick="return confirmdel();">  <img src="../images/editdelete.png" alt='._FORM_SUP.'>  </a>';
+	   echo '<A HREF="formindex.php?title='.$id.'&op=delform" onclick="return confirmdel();">  <img src="../images/editdelete.png" alt="'._FORM_SUP.'">  </a>';
 	   
-	   echo '<A HREF="formindex.php?title='.$id.'&op=modform">  <img src="../images/kedit.png" alt='._FORM_MODIF.'>  </a>';
+	   echo '<A HREF="formindex.php?title='.$id.'&op=modform">  <img src="../images/kedit.png" alt="'._FORM_MODIF.'">  </a>';
 	   
 	   //old display entries section, not used anymore 
-	   //echo '<A HREF="formindex.php?title='.$id.'&op=showform">  <img src="../images/kfind.png" alt='._FORM_SHOW.'>  </a>';	   
+	   //echo '<A HREF="formindex.php?title='.$id.'&op=showform">  <img src="../images/kfind.png" alt="'._FORM_SHOW.'">  </a>';	   
 
-	   echo '<A HREF="mailindex.php?title='.$titre.'">  <img src="../images/xfmail.png" alt='._FORM_ADD.'>  </a></td>';	   
+	   echo '<A HREF="mailindex.php?title='.$titre.'">  <img src="../images/xfmail.png" alt="'._FORM_ADD.'">  </a></td></tr>';	   
 	}
-	echo '</tr></table>';
+	echo '</table>';
 
 }
 

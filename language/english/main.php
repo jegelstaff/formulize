@@ -27,12 +27,12 @@ define("_MD_ERRORTITLE","Error ! You did not put the form title !!!!");
 define("_MD_ERROREMAIL","Error ! You did not put a valid E-mail address !!!!");
 define("_MD_ERRORMAIL","Error ! You did not put the form recipient !!!!");
 
-define("_FORM_ACT","Action");
-define("_FORM_CREAT","Create a form");
-define("_FORM_RENOM","Rename a form");
+define("_FORM_ACT","Actions");
+define("_FORM_CREAT","Create a Form");
+define("_FORM_RENOM","Rename the Form");
 define("_FORM_RENOM_IMG","<img src='../images/attach.png'>");
 define("_FORM_SUP","Erase a form");
-define("_FORM_ADD","Sent parameters");
+define("_FORM_ADD","Modify the Form's Settings");
 define("_FORM_SHOW","Consult the results");
 define("_FORM_TITLE","Form title:");
 define("_FORM_EMAIL","E-mail: ");
@@ -44,8 +44,8 @@ define("_FORM_DELTITLE","Form title to erase:");
 define("_FORM_NEW","New form");
 define("_FORM_NOM","Enter the new file name");
 define("_FORM_OPT","Options");
-define("_FORM_MENU","Consult the menu");
-define("_FORM_PREF","Consult the preferences");
+define("_FORM_MENU","Modify entries in the Form Menu block");
+define("_FORM_PREF","Modify the Preferences");
 
 //next section added by jwe 7/25/07
 define("_FORM_SINGLEENTRY","This form allows each user only one entry (filling in the form again updates the same entry):");
@@ -59,7 +59,7 @@ define("_FORM_COLOREVEN","First alternate colour for report writing page (altern
 define("_FORM_COLORODD","Second alternate colour for report writing page:");
 
 
-define("_FORM_MODIF","Modify");
+define("_FORM_MODIF","Modify the Form's Questions");
 define("_AM_FORM","Form: ");
 define("_FORM_EXPORT","Export in CSV format");
 define("_FORM_ALT_EXPORT","Export");
@@ -70,6 +70,8 @@ define("_FORM_PERM","Permissions");
 define("_FORM_MODPERMLINKS","Modify scope of linked selectboxes");
 define("_FORM_PERMLINKS","Linked Selectbox Scopes");
 
+define("_FORM_MODFRAME","Create or Modify a Form Framework");
+define("_FORM_FRAME", "Frameworks");
 
 
 // commented the line below since it's a duplicate of a line above --jwe 7/25/04
@@ -90,7 +92,46 @@ define("_AM_FORM_SUBMITBUTTON", "Show New Permission"); // not used
 define("_AM_FORMLINK_PICK", "Choose an option");
 define("_AM_CONFIRM_DEL", "You are about to delete this form!  Please confirm.");
 
+define("_AM_FRAME_NEW", "Create a New Framework:");
+define("_AM_FRAME_NEWBUTTON", "Create Now!");
+define("_AM_FRAME_EDIT", "Modify an Existing Framework:");
+define("_AM_FRAME_NONE", "No Frameworks Exist");
+define("_AM_FRAME_CHOOSE", "Choose a Framework");
+define("_AM_FRAME_TYPENEWNAME", "Type New Name Here");
+define("_AM_CONFIRM_DEL_FF_FORM", "You are about to remove this set of forms from the framework!  Please confirm.");
+define("_AM_CONFIRM_DEL_FF_FRAME", "You are about to delete this framework!  Please confirm.");
+define("_AM_FRAME_NAMEOF", "Framework Name:");
+define("_AM_FRAME_ADDFORM", "Add a pair of forms to this Framework:");
+define("_AM_FRAME_FORMSIN", "Forms in this Framework: (click a form name to edit its details)");
+define("_AM_FRAME_DELFORM", "Remove");
+define("_AM_FRAME_EDITFORM", "Details for:");
+define("_AM_FRAME_DONEBUTTON", "Done");
+define("_AM_FRAME_NOFORMS", "There are no forms in this Framework");
+define("_AM_FRAME_AVAILFORMS1", "Form One:");
+define("_AM_FRAME_AVAILFORMS2", "Form Two:");
+define("_AM_FRAME_DELETE", "Delete an Existing Framework:");
+define("_AM_FRAME_SUBFORM_OF", "Make it a subform of:");
+define("_AM_FRAME_NOPARENTS", "No Forms in Framework"); 
+define("_AM_FRAME_TYPENEWFORMNAME", "Type a short name here");
+define("_AM_FRAME_NEWFORMBUTTON", "Add Forms!");
+define("_AM_FRAME_NOKEY", "none specified!");
+define("_AM_FRAME_FORMNAMEPROMPT", "Name for this form in this framework:");
+define("_AM_FRAME_RELATIONSHIP", "Relationship:");
+define("_AM_FRAME_ONETOONE", "One to One");
+define("_AM_FRAME_ONETOMANY", "One to Many");
+define("_AM_FRAME_MANYTOONE", "Many to One");
+define("_AM_FRAME_LINKAGE", "Link between these forms:");
+define("_AM_FRAME_DISPLAY", "Display these forms as one?");
+define("_AM_FRAME_UIDLINK", "User ID of the person who filled them in");
+define("_AM_FRAME_UPDATEBUTTON", "Update this Framework with these settings");
+define("_AM_FRAME_UPDATEFORMBUTTON", "Update this Form with these Handles");
+define("_AM_FRAME_UPDATEANDGO", "Update, and return to previous page");
 
+define("_AM_FRAME_FORMHANDLE", "Handle for this form:");
+define("_AM_FRAME_FORMELEMENTS", "Elements In This Form");
+define("_AM_FRAME_ELEMENT_CAPTIONS", "Captions");
+define("_AM_FRAME_ELEMENT_HANDLES", "Handles");
+define("_AM_FRAME_HANDLESHELP", "Use this page to specify <i>Handles</i> for this form and its elements.  Handles are short names that can be used to refer to this form and its elements from outside the Formulize module.");
 
 define("_FORM_EXP_CREE","File has been exported with success");
 

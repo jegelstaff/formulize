@@ -672,6 +672,7 @@ include 'drawform.php';
 // $issingle
 // $showviewentries
 // $isadmin
+// $hasgroupscope
 // $viewentry
 // $reqCaptionsJwe ARRAY
 // $reqValuesJwe ARRAY
