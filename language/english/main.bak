@@ -144,7 +144,6 @@ define("_FORMULAIRE_NONE", "None");
 define("_FORMULAIRE_CHANGE_COLUMNS", "Change to Different Columns");
 define("_FORMULAIRE_CHANGE", "Change");
 define("_FORMULAIRE_SEARCH_HELP", "Use commas to separate terms.  Use [,] to specify a comma.");
-define("_FORMULAIRE_SORT_HELP", "You can sort by any element, except ones that accept multiple inputs, such as checkboxes.");
 
 
 

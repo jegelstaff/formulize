@@ -299,7 +299,8 @@ function permform()
 		print " selected";
 	}
 	print ">" . _AM_FORM_PERMADMIN . "</option>\n";
-	print "</SELECT></p></form></center></td></tr></table>\n";
+	print "</SELECT></p><p>\n";
+	print "<INPUT type=submit class=formbutton name=shownewperm value=\"" . _AM_FORM_SUBMITBUTTON . "\"></p></form></center></td></tr></table>\n";
 
 	$title_of_form = "";
 	$perm_name = $currentperm;

@@ -58,10 +58,6 @@ $modversion['hasMain'] = 1;
 // Templates
 $modversion['templates'][1]['file'] = 'formulaire.html';
 $modversion['templates'][1]['description'] = '';
-// added by jwe 7/24/04
-$modversion['templates'][2]['file'] = 'formulaire_select.html';
-$modversion['templates'][2]['description'] = '';
-
 
 //Bloc du milieu 
 //$modversion['templates'][2]['file'] = "formulaire_menu.html";

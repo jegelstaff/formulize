@@ -1,0 +1,360 @@
+
+<center>
+	<table>
+	<tr>
+	<td width=25%>&nbsp;</td>
+	<td>
+		<table cellpadding=3 cellspacing=1 border=1>
+		<tr>
+		<td class=head valign=middle>
+			<center><p><nobr><a href="<{$tempformurl}>&select=0"><{$tempaddentry}></a></nobr></p></center>
+		</td>
+		<th valign=middle>
+			<center><p><b><nobr><{$tempviewingentries}></nobr></b></p></center>
+		</th>
+		</tr>
+		</table>
+	</td>
+	<td width=25%>&nbsp;</td>
+	</tr>
+	</table>
+</center>
+	<hr>
+
+
+	<table cellspacing="1" class="outer"  width=98%>
+		<tr><th colspan="100"><center><{$selectentriestitle}><{$tempformtitle}>'</center></th></tr>
+
+	<{if $rows}>	
+		<tr>
+		<td class=head>
+		&nbsp;<{$globalandor}>	
+		</td>
+		<{counter start=0 assign=tblcols}>
+		<{foreach from=$tempcaptionsjwe item=curr_caption}>
+			<td class=head>
+				<center><p><b><{$curr_caption}></p></b></center>
+			</td>
+		<{counter}>
+		<{/foreach}>
+		</tr>
+
+		<{counter start=0 assign=tblrows}>
+		<{foreach from=$tempidsjwe item=curr_id}>
+			
+			<{if $redrawhead[$tblrows]}>
+				<tr>
+				<td class=head>
+				&nbsp;	
+				</td>
+				<{foreach from=$tempcaptionsjwe item=curr_caption}>
+				<td class=head>
+					<center><p><b><{$curr_caption}></p></b></center>
+				</td>
+				<{/foreach}>
+				</tr>
+			<{/if}>
+
+				<tr>
+				<{cycle values="even,odd" assign=rowcolor}>
+	
+				<td class=head>
+				<p><a href="<{$tempformurl}>&viewentry=<{$curr_id}>"><{$viewthisentry}></a><br><span class=comDate><{$tempenteredby}> <{$tempenteredbyname[$tblrows]}> <{$tempon}> <{$tempentereddates[$tblrows]}></span></p>	
+				</td>
+			
+				<{math equation="x*y" x=$tblrows y=$tblcols assign=entloopstart}>
+
+				<{section name=entrylooper loop=$tempvaluesjwe start=$entloopstart max=$tblcols}>
+				<td class=<{$rowcolor}>>
+				<p><{$tempvaluesjwe[entrylooper]|replace:"*=+*:":"<br>"}></p>
+				</td>
+				<{/section}>
+				</tr>
+				<{counter}>
+		<{/foreach}>
+
+		</table>
+		<hr>
+		<table cellspacing="1" class="outer"  width=98%>
+		<tr><th colspan="100"><center>Reporting Options</center></th></tr>
+
+		<tr>
+			<td class=head>
+			<form name=reporting action="<{$tempformurl}>&select=1" method=post>
+			<center><p><input type=submit name=go value=Apply></p></center>
+			</td>
+			<{foreach from=$tempcaptionsjwe item=curr_caption}>
+			<td class=head>
+				<center><p><b><{$curr_caption}></p></b></center>
+			</td>
+			<{/foreach}>
+		</tr>
+
+		<tr>
+			<td class=head valign=middle>
+			<center><p><b>Search Terms:</b></p>
+			<span class=comDate>
+			<{if $globalandor == "and"}>
+				<input type=radio name="globalandor" value=and checked>AND&nbsp;&nbsp;
+				<input type=radio name="globalandor" value=or>OR
+			<{elseif $globalandor == "or"}>
+				<input type=radio name="globalandor" value=and>AND&nbsp;&nbsp;
+				<input type=radio name="globalandor" value=or checked>OR
+			<{else}>
+				<input type=radio name="globalandor" value=and checked>AND&nbsp;&nbsp;
+				<input type=radio name="globalandor" value=or>OR
+			<{/if}>
+			</span></center>
+			</td>
+
+			<{assign var=counthack value=-1}>
+			<{foreach from=$tempcaptionsjwe item=curr_caption}>
+			<{math equation="x+y" x=$counthack y=1 assign=counthack}>
+			<{cycle values="even,odd" assign=colcolor1}>
+			<td valign=middle class=<{$colcolor1}>><center><table cellspacing=2><tr><td>Operator:</td><td>
+			<select name="<{$curr_caption}>_search_type" size=1>
+			<{section name=searchtype_loop loop=$captions_search_type start=$counthack max=1}>
+				<{if $captions_search_type[searchtype_loop] == "equals"}>
+					<option value="equals" selected>=</option>
+					<option value="not">NOT</option>
+					<option value="greaterthan">></option>
+					<option value="greaterthanequal">>=</option>
+					<option value="lessthan"><</option>
+					<option value="lessthanequal"><=</option>
+					<option value="like">LIKE</option>
+				<{/if}>
+				<{if $captions_search_type[searchtype_loop] == "not"}>
+					<option value="equals">=</option>
+					<option value="not" selected>NOT</option>
+					<option value="greaterthan">></option>
+					<option value="greaterthanequal">>=</option>
+					<option value="lessthan"><</option>
+					<option value="lessthanequal"><=</option>
+					<option value="like">LIKE</option>
+				<{/if}>
+				<{if $captions_search_type[searchtype_loop] == "greaterthan"}>
+					<option value="equals">=</option>
+					<option value="not">NOT</option>
+					<option value="greaterthan" selected>></option>
+					<option value="greaterthanequal">>=</option>
+					<option value="lessthan"><</option>
+					<option value="lessthanequal"><=</option>
+					<option value="like">LIKE</option>
+				<{/if}>
+				<{if $captions_search_type[searchtype_loop] == "greaterthanequal"}>
+					<option value="equals">=</option>
+					<option value="not">NOT</option>
+					<option value="greaterthan">></option>
+					<option value="greaterthanequal" selected>>=</option>
+					<option value="lessthan"><</option>
+					<option value="lessthanequal"><=</option>
+					<option value="like">LIKE</option>
+				<{/if}>
+				<{if $captions_search_type[searchtype_loop] == "lessthan"}>
+					<option value="equals">=</option>
+					<option value="not">NOT</option>
+					<option value="greaterthan">></option>
+					<option value="greaterthanequal">>=</option>
+					<option value="lessthan" selected><</option>
+					<option value="lessthanequal"><=</option>
+					<option value="like">LIKE</option>
+				<{/if}>
+				<{if $captions_search_type[searchtype_loop] == "lessthanequal"}>
+					<option value="equals">=</option>
+					<option value="not">NOT</option>
+					<option value="greaterthan">></option>
+					<option value="greaterthanequal">>=</option>
+					<option value="lessthan"><</option>
+					<option value="lessthanequal" selected><=</option>
+					<option value="like">LIKE</option>
+				<{/if}>
+				<{if $captions_search_type[searchtype_loop] == "like"}>
+					<option value="equals">=</option>
+					<option value="not">NOT</option>
+					<option value="greaterthan">></option>
+					<option value="greaterthanequal">>=</option>
+					<option value="lessthan"><</option>
+					<option value="lessthanequal"><=</option>
+					<option value="like" selected>LIKE</option>
+				<{/if}>
+				<{if $captions_search_type[searchtype_loop] == ""}>
+					<option value="equals">=</option>
+					<option value="not">NOT</option>
+					<option value="greaterthan">></option>
+					<option value="greaterthanequal">>=</option>
+					<option value="lessthan"><</option>
+					<option value="lessthanequal"><=</option>
+					<option value="like">LIKE</option>
+				<{/if}>
+			<{sectionelse}>
+				<option value="equals">=</option>
+				<option value="not">NOT</option>
+				<option value="greaterthan">></option>
+				<option value="greaterthanequal">>=</option>
+				<option value="lessthan"><</option>
+				<option value="lessthanequal"><=</option>
+				<option value="like">LIKE</option>
+			<{/section name=searchtype_loop}>
+			</select></td></tr><tr><td>Terms:</td><td>
+			<{section name=searchtext_loop loop=$captions_search_text start=$counthack max=1}>
+			<{if $captions_search_text[searchtext_loop] != ""}>
+				<input type=text name="<{$curr_caption}>_search_text" value="<{$captions_search_text[searchtext_loop]}>" size=20>
+			<{else}>
+				<input type=text name="<{$curr_caption}>_search_text" size=20>
+			<{/if}>
+			<{sectionelse}>
+				<input type=text name="<{$curr_caption}>_search_text" size=20>
+			<{/section name=searchtext_loop}>			
+			</td></tr><tr><td></td><td><nobr><span class=comDate>
+			<{section name=capandor_loop loop=$captions_andor start=$counthack max=1}>
+			<{if $captions_andor[capandor_loop] == "and"}>
+				<input type=radio name="<{$curr_caption}>_andor" value=and checked>AND&nbsp;&nbsp;
+				<input type=radio name="<{$curr_caption}>_andor" value=or>OR
+			<{elseif $captions_andor[capandor_loop] == "or"}>
+				<input type=radio name="<{$curr_caption}>_andor" value=and>AND&nbsp;&nbsp;
+				<input type=radio name="<{$curr_caption}>_andor" value=or checked>OR
+			<{else}>
+				<input type=radio name="<{$curr_caption}>_andor" value=and checked>AND&nbsp;&nbsp;
+				<input type=radio name="<{$curr_caption}>_andor" value=or>OR
+			<{/if}>
+			<{sectionelse}>
+				<input type=radio name="<{$curr_caption}>_andor" value=and checked>AND&nbsp;&nbsp;
+				<input type=radio name="<{$curr_caption}>_andor" value=or>OR
+			<{/section name=capandor_loop}>			
+			</span></nobr></td></tr>
+			</table></td></center>
+			<{/foreach}>
+		</tr>
+		<tr>
+			<td class=head valign=middle>
+			<center><p><b>Calculations:</b></p></center>
+			</td>
+			
+			<{assign var=counthack value=-1}>
+			<{foreach from=$tempcaptionsjwe item=curr_caption}>
+			<{math equation="x+y" x=$counthack y=1 assign=counthack}>
+			<{cycle values="even,odd" assign=colcolor2}>
+			<td class=<{$colcolor2}> valign=middle><center>
+			<select name="<{$curr_caption}>_calc_type[]" size=6 multiple>
+			<{section name=calc_type_loop loop=$captions_calc_type start=$counthack max=1}>
+				<{if $captions_calc_type[calc_type_loop] != ""}>
+					<{foreach from=$captions_calc_type[calc_type_loop] item=thiscapcalc}>
+						<option value=<{$thiscapcalc}></option>
+					<{/foreach}>
+				<{else}>
+					<option value="sum">Sum</option>
+					<option value="average">Average</option>
+					<option value="min">Minimum</option>
+					<option value="max">Maximum</option>
+					<option value="count">Count</option>
+					<option value="percent">Percentages</option>
+				<{/if}>	
+			<{sectionelse}>
+				<option value="sum">Sum</option>
+				<option value="average">Average</option>
+				<option value="min">Minimum</option>
+				<option value="max">Maximum</option>
+				<option value="count">Count</option>
+				<option value="percent">Percentages</option>
+			<{/section}>
+			</select>
+			</center></td>
+			<{/foreach}>
+		</tr>
+		<tr>
+			<td class=head valign=middle>
+			<center><p><b>Sorting Order:</b></p</center>
+			</td>
+			
+			<{assign var=counthack value=-1}>
+			<{foreach from=$tempcaptionsjwe item=curr_caption}>
+			<{math equation="x+y" x=$counthack y=1 assign=counthack}>
+			<{cycle values="even,odd" assign=colcolor3}>
+			<td class=<{$colcolor3}> valign=middle><center><p>Sort Priority:&nbsp;
+			<select name="<{$curr_caption}>_sort_order" size=1>
+			<option value="none">None</option>
+			<{section name=sort_order_loop loop=$captions_sort_order start=$counthack max=1}>
+			<{counter name=localsortcount start=1 assign=sortcount}>
+			<{section name=sort_indexes loop=$sort_index_array start=0 max=$tblcols}>
+				<{if $captions_sort_order[sort_order_loop] == $sort_index_array[sort_indexes]}>
+					<option value="<{$sortcount}>" selected><{$sortcount}></option>
+				<{else}>
+					<option value="<{$sortcount}>"><{$sortcount}></option>
+				<{/if}>
+			<{counter name=localsortcount}>
+			<{/section name=sort_indexes}>
+			<{sectionelse}>
+				<{section name=sort_indexes loop=$sort_index_array}>
+					<option value="<{$sortcount}>"><{$sortcount}></option>
+				<{counter name=localsortcount}>
+				<{/section name=sort_indexes}>
+			<{/section name=sort_order_loop}>
+			</select></p><p><nobr><span class=comDate>
+			<{section name=sort_dir_loop loop=$captions_sort_dir start=$counthack max=1}>
+			<{if $captions_sort_dir[sort_dir_loop] == "ASC"}>
+				<input type=radio name="<{$curr_caption}>_sort_dir" value=ASC checked>a..z&nbsp;&nbsp;
+				<input type=radio name="<{$curr_caption}>_sort_dir" value=DESC>z..a
+			<{elseif $captions_sort_dir[sort_dir_loop] == "DESC"}>
+				<input type=radio name="<{$curr_caption}>_sort_dir" value=ASC>a..z&nbsp;&nbsp;
+				<input type=radio name="<{$curr_caption}>_sort_dir" value=DESC checked>z..a
+			<{else}>
+				<input type=radio name="<{$curr_caption}>_sort_dir" value=ASC checked>a..z&nbsp;&nbsp;
+				<input type=radio name="<{$curr_caption}>_sort_dir" value=DESC>z..a
+			<{/if}>
+			<{sectionelse}>
+				<input type=radio name="<{$curr_caption}>_sort_dir" value=ASC checked>a..z&nbsp;&nbsp;
+				<input type=radio name="<{$curr_caption}>_sort_dir" value=DESC>z..a
+			<{/section name=sort_dir_loop}>
+			</span></nobr></p></center></td>
+			<{/foreach}>			
+		</tr>
+
+		<tr>
+			<td class=head valign=middle>
+			<center><p><b>Change to Different Columns:</b></p>
+			<p><input type=submit name=colchange value=Change></p></center>
+			</td>
+			<td class=head valign=middle><center>
+			<select name=allformcaplist[] size=6 multiple>
+			<{foreach from=$allformcaps item=curr_allcap}>
+			<option value="<{$curr_allcap}>"><{$curr_allcap}></option>
+			<{/foreach}>  
+			</select></td>
+
+		</tr>
+		<tr>
+
+			<td class=head valign=middle>
+			<center><p><b>Scope:</b></p></center>
+			</td>
+			<td class=head valign=middle><center>
+			<p>This is where the scope stuff will go</p>
+			</td>
+		</tr>
+		<tr>
+		
+			<td class=head valign=middle>
+			<p>This is the cell where the saving/publishing buttons will appear</p>
+			</td>
+		
+			<td class=head valign=middle>
+			<p>This is where the save/publish options will appear</p>
+			</td>
+		</tr>
+		</table>
+
+		<{counter name=hiddencapsloop start=1 assign=hidethosecaps}> 
+		<{foreach from=$tempcaptionsjwe item=curr_caption}>
+			<input type=hidden name=hiddencap<{$hidethosecaps}> value="<{$curr_caption}>">			
+			<{counter name=hiddencapsloop}>
+		<{/foreach}> 
+	
+		</form>
+	<{else}>	
+	<tr>
+		<td class=head>
+		<center><p><b><{$noentries}></b></p></center>	
+		</td>
+	</tr>
+	</table>
+	<{/if}>

@@ -37,6 +37,7 @@ if( !preg_match("/elements.php/", $_SERVER['PHP_SELF']) ){
 
 // altered to better handle default setting -- jwe 7/28/04
 
+print_r($value);
 if( !empty($ele_id) ){
 	if( $value['_YES'] == 1 ){
 		$selected = '_YES';

@@ -143,30 +143,6 @@ if ( $res ) {
 		redirect_header(XOOPS_URL."/index.php", 3, $kickmsgjwe);
 	}
 
-// FIND OUT IF THE CURRENT USER IS A MODULE ADMIN (AND USE THIS LATER ON TO SET CERTAIN THINGS, OVERRIDE OTHERS)
-
-$start=1;
-$gpermmodq = "(";
-foreach($groupuser as $agroup) // loop through all the groups the user is a member of to make a query that we can use to check if they've got module admin perms
-{
-	if($start)
-	{
-		$gpermmodq .= "gperm_groupid=$agroup";
-		$start=0;
-	}
-	else
-	{
-		$gpermmodq .= " OR gperm_groupid=$agroup";
-	}
-}
-$gpermmodq .= ")";
-
-$modadminq = "SELECT * FROM " . $xoopsDB->prefix("group_permission") . " WHERE $gpermmodq AND gperm_itemid=$module_id AND gperm_modid=1 AND gperm_name=\"module_admin\"";
-$resmodadminq = mysql_query($modadminq);
-$isadmin = mysql_num_rows($resmodadminq); // if no rows, ie: no permission, isadmin will be 0 so will evaluate to false.
-
-//print "isadmin: $isadmin*";
-
 // CHECK FOR SELECT FLAG AND IF SET THEN SHOW THE SELECT-AN-ENTRY PAGE INSTEAD OF FORM...
 
 // get flags that control editing entries
@@ -337,54 +313,6 @@ while ($rowjwe = mysql_fetch_assoc($resultFirstFieldQueryJwe))
 } // end else covering no headerlist fields.
 
 } // end else that gets us to look at the headerlist (instead of use specified fields)
-
-//============ start of sorting handling that sends info to template (and excludes multiple entry form elements (ie: checkboxes))
-//Filter the reqFieldsJwe for the fields we allow sorting on.
-$sortq = "SELECT ele_caption, ele_value FROM ". $xoopsDB->prefix("form") . " WHERE id_form = $id_form AND (ele_type = \"checkbox\" OR (ele_type = \"select\" AND ele_value REGEXP \"^.{19}1\")) ORDER BY ele_order";
-$ressortq = mysql_query($sortq);
-$sortarrayb = 0;
-while ($rowsortq = mysql_fetch_row($ressortq))
-{
-	$sortcheckarray[$sortarrayb] =  $rowsortq[0];
-	$sortarrayb++;
-}
-
-//print_r($sortcheckarray);
-
-$sortarrayb = 0;
-$allowedsort = -1;
-foreach($reqFieldsJwe as $onefield)
-{
-	if(!in_array($onefield, $sortcheckarray))
-	{
-		$reqSortFields[$sortarrayb] = $onefield;
-		$allowedsort++;
-	}
-	else
-	{
-		$reqSortFields[$sortarrayb] = "";
-	}
-	$sortarrayb++;
-}
-$xoopsTpl->assign('tempcaptionssort', $reqSortFields);
-
-//set the array that has 1,2,3,4,5 etc for using in the sort priority drop downs
-	
-	$sortcreateindexer = 0;
-	array($sort_indexes);
-	for($sl=0;$sl<=$allowedsort;$sl++) // by controlling the '<=' you can control the number of sorting order options. 
-	{
-		$sort_indexes[$sortcreateindexer] = $sortcreateindexer+1;
-		$sortcreateindexer++;
-	}
-	$xoopsTpl->assign('sort_index_array', $sort_indexes);
-// ================= end of sorting handling for template
-
-
-//7th array element after exploding ele_value on means multiple select box if it starts with 1.
-//a:3:{i:0;i:1;i:1;i:0
-
-
 
 // gather a list of record ids for entries the user has made in the form... jwe 7/23/04
 // steps:
@@ -564,7 +492,7 @@ $xoopsTpl->assign('tempcaptionssort', $reqSortFields);
 		}
 		// write all detected settings back to the template
 
-/*		print "passback array checks:<br>";
+		print "passback array checks:<br>";
 		print_r($search_typeArray);
 		print "<br>";
 		print_r($search_textArray);
@@ -576,7 +504,7 @@ $xoopsTpl->assign('tempcaptionssort', $reqSortFields);
 		print_r($sort_orderArray);
 		print "<br>";
 		print_r($ascdscArray);
-		print "<br>$globalandor<br><br>";*/
+		print "<br>$globalandor<br><br>";
 		
 		$xoopsTpl->assign('captions_sort_dir', $ascdscArray); // asc desc sort settings
 		$xoopsTpl->assign('captions_search_type', $search_typeArray);
@@ -590,6 +518,16 @@ $xoopsTpl->assign('tempcaptionssort', $reqSortFields);
 
 
 
+//set the array that has 1,2,3,4,5 etc for using in the sort priority drop downs
+	
+	$sortcreateindexer = 0;
+	array($sort_indexes);
+	foreach($reqFieldsJwe as $sortidcreation)
+	{
+		$sort_indexes[$sortcreateindexer] = $sortcreateindexer+1;
+		$sortcreateindexer++;
+	}
+	$xoopsTpl->assign('sort_index_array', $sort_indexes);
 
 // START QUERY TO SELECT THE DATA FOR THE SUMMARY LIST
 //$queryjwe = "SELECT id_req, ele_caption, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid AND (";
@@ -615,10 +553,12 @@ $totalentriesindex = 0;
 $currentcaptionforquery = 0;
 for($i=0;$i<count($reqFieldsJwe);$i++)
 {
-	if($search_textArray[$i] != "") 
+	if($search_textArray[$i] != "") // || $search_textZeroSave[$i] == "&*#+zero")
 	{
-
-	if(!$globalandor) // globalandor is currently turned off
+//		$search_textArray[$i] = "&/=*INCLUDEthis";
+//		$search_typeArray[$i] = "";
+//	} // move conditional to the bottom...
+	if(!$globalandor)
 	{
 		$globalandor = "or";
 	}
@@ -669,48 +609,33 @@ for($i=0;$i<count($reqFieldsJwe);$i++)
 
 			} 
 
-			// NEED SPECIAL HANDLING FOR YN QUESTIONS AND OTHERS		 -- it follows below...
+			// NEED TO ADD SIMILAR SPECIAL FUNCTION FOR HANDLING LINKED FORM DATA
 
-				// GENERAL APPROACH FOR THESE SPECIALIZED SEARCHES...
-				// do a query to get all values from the form that have the current caption
-				// then we split out the component parts of each one value if necessary
-				// then we perform the specified search on the component parts
-				// then we figure out which values were hits
-				// then we create a new search term to go with ele_value that will return the values that were hits
-
-			$cappropsq = "SELECT ele_type, ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND ele_caption=\"$reqFieldsJwe[$i]\"";
-			$rescappropsq = mysql_query($cappropsq);
-			$id = 0;
-			while($rowcappropsq = mysql_fetch_row($rescappropsq))
+			// NEED SPECIAL HANDLING FOR YN QUESTIONS -- it follows below...
+			$isynq = "SELECT ele_type, ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE ele_caption=\"$reqFieldsJwe[$i]\"";
+			$resisynq = mysql_query($isynq);
+			$ynidcatcher = 0;
+			array($ynq_type);
+			array($ynq_value);
+			array($ynq_id);
+			while ($rowisynq = mysql_fetch_row($resisynq))
 			{
-				$cap_type[$id] = $rowcappropsq[0];
-				$cap_value[$id] = $rowcappropsq[1];
-				$cap_id[$id] = $rowcappropsq[2];
-				$id++;
+				$ynq_type[$ynidcatcher] = $rowisynq[0];
+				$ynq_value[$ynidcatcher] = $rowisynq[1];
+				$ynq_id[$ynidcatcher] = $rowisynq[2];
+				$ynidcatcher++;
 			}
-			array($savedIds);
-			array_splice($savedIds, 0);										
-
-			print "cap Arrays:<br>";
-			print_r($cap_type);
-			print "<br>";
-			print_r($cap_value);
-			print "<br>";
-			print_r($cap_id);
-			print "<br>";
-
-
-
-			//	YES/NO HANDLING BELOW......
+			print_r($ynq_type);
 			$ynindexer=0;
 			$ynidcatcher=0;
-			if($cap_type[0] == "yn") // we have a yes/no column
+			array($savedIds);										
+			if($ynq_type[0] == "yn") // we have a yes/no column
 			{
-				foreach($cap_value as $thisyn)
+				foreach($ynq_value as $thisyn)
 				{
-//					print "This yn: $thisyn<br>";
+					print "This yn: $thisyn<br>";
 					$thistermc = strtoupper($thisterm);
-//					print "thisterm: $thistermc<br><br>";
+										print "thisterm: $thistermc<br><br>";
 					switch ($search_typeArray[$i]) {
 							case "equals":
 								print "$ynindexer<br>";
@@ -720,8 +645,8 @@ for($i=0;$i<count($reqFieldsJwe);$i++)
 								{
 									if($thistermc == "YES")
 									{
-//										print "MATCH!";
-										$savedIds[$ynindexer] = $cap_id[$ynidcatcher];
+										print "MATCH!";
+										$savedIds[$ynindexer] = $ynq_id[$ynidcatcher];
 										$ynindexer++;
 									}
 								}
@@ -729,21 +654,21 @@ for($i=0;$i<count($reqFieldsJwe);$i++)
 								{
 									if($thistermc == "NO")
 									{
-/*										print "MATCH on NO! $thistermc ** $savedIds[$ynindexer]*<br>";
+										print "MATCH on NO! $thistermc ** $savedIds[$ynindexer]*<br>";
 										print "$rowisynq[$ynidcatcher]*<br>";
-										print "$ynindexer*<br><br>";*/
-										$savedIds[$ynindexer] = $cap_id[$ynidcatcher];
+										print "$ynindexer*<br><br>";
+										$savedIds[$ynindexer] = $ynq_id[$ynidcatcher];
 										$ynindexer++;
 									}
 								}
 								break;
 							case "not":
-//								print "<br>NOT</br>";
+								print "<br>NOT</br>";
 								if($thisyn == "1")
 								{
 									if($thistermc <> "YES")
 									{
-										$savedIds[$ynindexer] = $cap_id[$ynidcatcher];
+										$savedIds[$ynindexer] = $ynq_id[$ynidcatcher];
 										$ynindexer++;
 									}
 								}
@@ -751,13 +676,13 @@ for($i=0;$i<count($reqFieldsJwe);$i++)
 								{
 									if($thistermc <> "NO")
 									{
-										$savedIds[$ynindexer] = $cap_id[$ynidcatcher];
+										$savedIds[$ynindexer] = $ynq_id[$ynidcatcher];
 										$ynindexer++;
 									}
 								}
 								else // if the field is empty then count it
 								{
-										$savedIds[$ynindexer] = $cap_id[$ynidcatcher];
+										$savedIds[$ynindexer] = $ynq_id[$ynidcatcher];
 										$ynindexer++;
 								}
 								break;
@@ -780,77 +705,33 @@ for($i=0;$i<count($reqFieldsJwe);$i++)
 				$thistermop = "=";
 
 			}// end of if loop that checks the yn questions
-			
-			// HANDLING FOR LINKED FIELDS (TURNS THEM INTO MULTIS, rewrite the cap_value entry with the terms the user selected from the other form)
-			$foundit = 0;
-			foreach($cap_value as $lookforsign)
-			{
-				if(strstr($lookforsign, "#*=:*")) 
-				{
-					$foundit = 1;
-					break;
-				}
-			}
-//			print "FOUNDIT? $foundit<br>";
-			if($foundit) // the value got previously will contain this delimiter if it is a linked field
-			{
-				for($z=0;$z<count($cap_value);$z++)
-				{
-					array($templinkedvals);
-					array_splice($templinkedvals, 0);
-					array($templinkedvals2);
-					array_splice($templinkedvals2, 0);
-					$templinkedvals = explode("#*=:*", $cap_value[$z]);
-					$templinkedvals2 = explode("[=*9*:", $templinkedvals[2]);
-					$thislinkedval = ''; // reset string so we can write it again.
 
-					$cap_value[$z] = "";
-					foreach($templinkedvals2 as $anentry)
-					{
-						$textq = "SELECT ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE ele_id=$anentry GROUP BY ele_value ORDER BY ele_value";
-						$restextq = mysql_query($textq);
-						while ($rowtextq = mysql_fetch_row($restextq))
-						{
-							$cap_value[$z] = $cap_value[$z] . "*=+*:" . $rowtextq[0];
-						}
-					}
-				}
+				// we have a multi term so... (have to check first to see if we do have one)
+				// do a query to get all values from the form that have the current caption
+				// then we split out the component parts of each one
+				// then we perform the specified search on the component parts (< will work for instance)
+				// then we figure out which values were hits
+				// then we create a new search term to go with ele_value that will return the values that were hits
 				
-			}// end of linked field handling
-				
-/*				$multitermq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE ele_caption=\"$reqFieldsJwe[$i]\"";
+				$multitermq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE ele_caption=\"$reqFieldsJwe[$i]\"";
 				$resmultitermq = mysql_query($multitermq);
 				$multitermindexer = 0;
 				array($multitermValues);
 				array($multitermIds);
-				array_splice($multitermValues, 0);
-				array_splice($multitermIds, 0);
+				array($savedIds);										
 				while ($rowmultitermq = mysql_fetch_row($resmultitermq))
 				{
 					$multitermValues[$multitermindexer] = $rowmultitermq[0];
 					$multitermIds[$multitermindexer] = $rowmultitermq[1];	
 					$multitermindexer++;
-				}*/
-			// HANDLING FOR MULTITERM FIELDS (REGARDLESS OF WHETHER THEY ACTUALLY HAVE MORE THAN ONE TERM OR NOT
-			$foundit = 0;
-			foreach($cap_value as $lookforsign)
-			{
-				if(strstr($lookforsign, "*=+*:")) 
-				{
-					$foundit = 1;
-					break;
 				}
-			}
- 
-			if($foundit) // if we are dealing with a multiterm value (even single terms entered into a multi form element will have this delimiter at the beginning
+			if(strstr($multitermValues[0], "*=+*:")) // if we are dealing with a multiterm value
 			{
 				$savedidindexer = 0;
-//				for($z=0;$z<$multitermindexer;$z++)
-				for($z=0;$z<$id;$z++) // id is the number of elements in cap_value, cap_id, cap_type
+				for($z=0;$z<$multitermindexer;$z++)
 				{
-//					$thesemultiterms = explode("*=+*:", $multitermValues[$z]);
-					$thesemultiterms = explode("*=+*:", $cap_value[$z]);
-					if($thesemultiterms[0] == "") // get rid of any leading blanks, caused by the delimiter going at the beginning of the value string in the DB
+					$thesemultiterms = explode("*=+*:", $multitermValues[$z]);
+					if($thesemultiterms[0] == "") // get rid of any leading blanks caused by checkboxes
 					{
 						array_shift($thesemultiterms);
 					}
@@ -863,15 +744,23 @@ for($i=0;$i<count($reqFieldsJwe);$i++)
 							case "not":
 								if($thisoneterm == $thistermc)
 								{
-									$savedIds[$savedidindexer] = $cap_id[$z];
+									$savedIds[$savedidindexer] = $multitermIds[$z];
 									$savedidindexer++;
 									break 2;
 								}
 								break;
+/*							case "not":
+								if($thisoneterm <> $thistermc) // 'not' works differently:  if you get a match, then you kick the entry out of the running (logic below handled differently too)
+								{
+									$savedIds[$savedidindexer] = $multitermIds[$z];
+									$savedidindexer++;
+									break 2;
+								}
+								break;*/
 							case "greaterthan":
 								if($thisoneterm > $thistermc)
 								{
-									$savedIds[$savedidindexer] = $cap_id[$z];
+									$savedIds[$savedidindexer] = $multitermIds[$z];
 									$savedidindexer++;
 									break 2;
 								}
@@ -879,7 +768,7 @@ for($i=0;$i<count($reqFieldsJwe);$i++)
 							case "greaterthanequal":
 								if($thisoneterm >= $thistermc)
 								{
-									$savedIds[$savedidindexer] = $cap_id[$z];
+									$savedIds[$savedidindexer] = $multitermIds[$z];
 									$savedidindexer++;
 									break 2;
 								}
@@ -887,7 +776,7 @@ for($i=0;$i<count($reqFieldsJwe);$i++)
 							case "lessthan":
 								if($thisoneterm < $thistermc)
 								{
-									$savedIds[$savedidindexer] = $cap_id[$z];
+									$savedIds[$savedidindexer] = $multitermIds[$z];
 									$savedidindexer++;
 									break 2;
 								}
@@ -895,7 +784,7 @@ for($i=0;$i<count($reqFieldsJwe);$i++)
 							case "lessthanequal":
 								if($thisoneterm <= $thistermc)
 								{
-									$savedIds[$savedidindexer] = $cap_id[$z];
+									$savedIds[$savedidindexer] = $multitermIds[$z];
 									$savedidindexer++;
 									break 2;
 								}
@@ -904,38 +793,44 @@ for($i=0;$i<count($reqFieldsJwe);$i++)
 							case "notlike":
 								if(strstr($thisoneterm, $thistermc))
 								{
-									$savedIds[$savedidindexer] = $cap_id[$z];
+									$savedIds[$savedidindexer] = $multitermIds[$z];
 									$savedidindexer++;
 									break 2;
 								}
 								break;
+/*							case "notlike":
+								if(!strstr($thisoneterm, $thistermc))
+								{
+									$savedIds[$savedidindexer] = $multitermIds[$z];
+									$savedidindexer++;
+									break 2;
+								}
+								break;*/
 						}
 					}
 				} // end of loop through all values found
 
 				//compiled the savedIds into an ele_id query to replace the ele_value query				
-/*						print "all ids: ";
+						print "all ids: ";
 						print_r($multitermIds);
 						print "<br>hits: ";
-						print_r($savedIds);*/
+						print_r($savedIds);
 
 				switch ($search_typeArray[$i]) {
 					case "notlike":
 					case "not":
 						$thisterm = "";
 						$hadahit = 0;
-//						for($x=0;$x<$multitermindexer;$x++)// make thisterm equal to an OR OR OR id query
-						for($x=0;$x<$id;$x++)
+						for($x=0;$x<$multitermindexer;$x++)//thisterm equals the OR OR OR id query
 						{
-							$hadahit;
-							if(!in_array($cap_id[$x], $savedIds)) // if the current id is not one of the ones we found...then write it, otherwise ignore it
+							if(!in_array($multitermIds[$x], $savedIds)) // if the current id is not one of the ones we found...then write it, otherwise ignore it
 							{
 								if($hadahit) // if we're on a second or third... run through
 								{
 									$thisterm .= " OR ele_id=";
 								}
 //								print "A saved id: $savedIds[$x]<br>";
-								$thisterm .= $cap_id[$x];
+								$thisterm .= $multitermIds[$x];
 								$hadahit = 1;
 							}
 						}
@@ -1002,7 +897,7 @@ if($currentcaptionforquery > 0)
 		$userreportingquery .= ")"; // close out the whole query
 }
 
-//print "$userreportingquery<br><br>";   //string we're building
+print "$userreportingquery<br><br>";   //string we're building
 
 // apply the groupscope param to the query (query with the whole userlist)
 if($hasgroupscope)
@@ -1015,7 +910,7 @@ else
 //	$queryjwe = "SELECT id_req, ele_caption, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid $userreportingquery ORDER BY id_req";
 	$queryjwe = "SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid $userreportingquery ORDER BY id_req";
 }
-//print $queryjwe;
+print $queryjwe;
 $recordsjwe = mysql_query($queryjwe);
 $previndex = "none";
 array ($totalresultarray);
@@ -1059,11 +954,9 @@ $realrecordsjwe = mysql_query($realqueryjwe);
 while($realrowjwe = mysql_fetch_row($realrecordsjwe))
 {
 		$totalresultarray[$totalentriesindex] = $realrowjwe;
-		$finalselectidreq[$totalentriesindex] = $realrowjwe[0];
 		$totalentriesindex++;
 }
 
-$finalselectidreq = array_unique($finalselectidreq);
 /*print "totalresultarray:<br>";
 print_r($totalresultarray);
 print "<br>totalentriesindex = $totalentriesindex<br>";*/
@@ -1216,81 +1109,6 @@ for($i=0;$i<=$totalentriesindex;$i++)
 
 //==================================== end of duplicate code block
 
-// ***** IMPORTANT LOOP THAT PREPARES ENTRIES FOR DISPLAY ON VIEW ENTRIES PAGE *******
-	// Loop alters display of entries to suit printing to screen
-	foreach($selvals as $selvalstostripfrom)
-	{
-
-		//modify a linked selectbox to display correctly.
-		//1. identify values that are like this
-		//2. query what their actual text is right now
-		//3. reformat as text[standard delimiter]text[starndard delimiter]text, etc
-		if(strstr($selvalstostripfrom, "#*=:*"))
-		{
-			array($templinkedvals);
-			array_splice($templinkedvals, 0);
-			array($templinkedvals2);
-			array_splice($templinkedvals2, 0);
-			$templinkedvals = explode("#*=:*", $selvalstostripfrom);
-			$templinkedvals2 = explode("[=*9*:", $templinkedvals[2]);
-			$selvalstostripfrom = ''; // reset string so we can write it again.
-
-			/*print "templinkedvals for display: ";
-			print_r($templinkedvals2);*/
-			
-			foreach($templinkedvals2 as $anentry)
-			{
-				$textq = "SELECT ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE ele_id=$anentry GROUP BY ele_value ORDER BY ele_value";
-				$restextq = mysql_query($textq);
-				$rowtextq = mysql_fetch_row($restextq);
-				$selvalstostripfrom = $selvalstostripfrom . "*=+*:" . $rowtextq[0];
-			}
-		}
-
-
-		//sql to get is yes/no
-		if($hasgroupscope)
-		{
-			$isyesnoquestion = "SELECT ele_type FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND ele_value=$selvalstostripfrom AND (uid=$gscopeparam) ORDER BY id_req";
-		}
-		else
-		{
-			$isyesnoquestion = "SELECT ele_type FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND ele_value=$selvalstostripfrom AND uid=$uid ORDER BY id_req";
-		}
-		$resisyesno = mysql_query($isyesnoquestion);
-		
-		while ($rowisyesno = mysql_fetch_row($resisyesno))
-		{
-			if($rowisyesno[0] == "yn") // if we've found one
-			{
-				if($selvalstostripfrom == "1")
-				{
-					$selvalstostripfrom = _FORMULAIRE_TEMP_QYES;
-				}
-				elseif($selvalstostripfrom == "2")
-				{
-					$selvalstostripfrom = _FORMULAIRE_TEMP_QNO;
-				}
-				else
-				{
-					$selvalstostripfrom = "";
-				}
-				break; // we're done
-			}
-		} 
-
-		$placeholderVals = stripslashes($selvalstostripfrom);
-		//and remove any leading *=+*: while we're at it...
-		if(substr($placeholderVals, 0, 5) == "*=+*:")
-		{
-			$placeholderVals = substr_replace($placeholderVals, "", 0, 5); 
-		}
-		//print "*$placeholderVals*<br>";
-		$tempValsJwe[] = $placeholderVals;
-	}
-	$selvals = $tempValsJwe;
-
-//=================
 //perform summary calculations...
 //put data into columns...
 
@@ -1299,9 +1117,8 @@ for($i=0;$i<=$totalentriesindex;$i++)
 //sort_orderArray
 //ascdscArray
 
-//array($calccols);
-//array($sortcols);
-//array($sortpri);
+array($calccols);
+array($sortcols);
 $calccolscounter = 0;
 $sortcolscounter = 0;
 for($y=0;$y<count($reqFieldsJwe);$y++)
@@ -1311,11 +1128,9 @@ for($y=0;$y<count($reqFieldsJwe);$y++)
 		$calccols[$calccolscounter] = $y;
 		$calccolscounter++;
 	}
-	if($sort_orderArray[$y] <> "") // if a sort was requested, save the column ID
+	if($sort_orderArray[$y] <> "") // if a calculation was requested, save the column ID
 	{
 		$sortcols[$sortcolscounter] = $y;
-		$sortpri[$sortcolscounter] = $sort_orderArray[$y];
-		$sortdir[$sortcolscounter] = $ascdscArray[$y];
 		$sortcolscounter++;
 	}
 }
@@ -1325,14 +1140,13 @@ if($sortcolscounter OR $calccolscounter) // if a calculation or a sort was reque
 	// how many columns?
 	$numcols = count($reqFieldsJwe);
 	$numcols--; // minus 1 so we can nicely use this as an array address
-
+	
 	$colnamenums = 0;
 	foreach($reqFieldsJwe as $colname)
 	{
 		$pc = str_replace(" ", "_", $colname); // replace the spaces
 		$pc = str_replace(".", "_", $pc); // replace the periods
-		$arrayindex = $colnamenums;
-		$colarrayname[$arrayindex] = $pc . "ColArray";
+		$colarrayname[$colnamenums] = $pc . "ColArray";
 		$colnamenums++;
 	}
 
@@ -1346,8 +1160,7 @@ if($sortcolscounter OR $calccolscounter) // if a calculation or a sort was reque
 /*			print "<br>Now writing to $colarrayname[$curcol]";
 			print "<br>Current key is: $currow";
 			print "<br>Current value is: $thisvalue";*/
-			$idtouse = $currow . "a"; // setup to be compatible with an asort below
-			${$colarrayname[$curcol]}[$idtouse] = $thisvalue;
+			${$colarrayname[$curcol]}[$currow] = $thisvalue;
 		}
 		else // if we've moved onto a new row...
 		{
@@ -1356,8 +1169,7 @@ if($sortcolscounter OR $calccolscounter) // if a calculation or a sort was reque
 /*			print "<br>Now writing to $colarrayname[$curcol]";
 			print "<br>Current key is: $currow";
 			print "<br>Current value is: $thisvalue";*/
-			$idtouse = $currow . "a"; // setup to be compatible with an asort below
-			${$colarrayname[$curcol]}[$idtouse] = $thisvalue;
+			${$colarrayname[$curcol]}[$currow] = $thisvalue;
 		}
 		$curcol++;
 	}
@@ -1382,430 +1194,99 @@ if($sortcolscounter OR $calccolscounter) // if a calculation or a sort was reque
 //now if it's required we have arrays as follows:
 //[captionname]ColArray -- one for each caption
 //$colarrayname is an array with all the names in it
-//keys of each column array correspond to the rows, 0 through n, but are named 1i 2i 3i etc, so they can be asorted by the sort function.
+//keys of each column array correspond to the rows, 0 through n.
 
 } // end if a calc or sort was requested
 
-
-if($sortcolscounter) // if sorts were requested, then do them...
-{
-
-// how many columns?
-	$numcols = count($reqSortFields);
-	$numcols--; // minus 1 so we can nicely use this as an array address
-	
-
-// 1. identify the column priority for sorts
-// 1.5 identify the direction of sorting
-// 2. sort all columns plus the req_ids from last to first sorting priority
-// 3. write out the column data to selvals array
-// finalselectidreq is the array of ids.
-
-/*int "<br>cols: ";
-print_r($sortcols);
-print "<br>dir: ";
-print_r($sortdir);
-print "<br>pri: ";
-print_r($sortpri);*/
-
-// assign priorities to columns
-for($sc=0;$sc<count($sortpri);$sc++)
-{
-	$currcol = $sortcols[$sc];
-	$currcolname = $colarrayname[$currcol];
-//	print "$currcolname<br>";
-	$sp[$currcolname] = $sortpri[$sc];
-	$sdir[$currcolname] = $sortdir[$sc];
-	//print "<br><br>Column to sort: $sp[$sc]<br>priority: $sortpri[$sc]";
-}
-//print_r($sp);
-arsort($sp); // puts the columns that need to be sorted into proper sorting order
-//print_r($sp);
-
-$sortcol = array_keys($sp);
-
-/*print "<br>";
-print_r($sortcol);
-print "<br>";
-print_r($sdir);*/
-
-
-//prepare the finalselectidreq for resorting by adding a to the end of it's number indexes...
-$newid = 0;
-foreach($finalselectidreq as $idreqrekey)
-{
-	$newida = $newid . "a";
-	$phfinal[$newida] = $idreqrekey;
-	$newid++;
-}
-array_splice($finalselectidreq, 0);
-$finalselectidreq = $phfinal;
-
-/*print "<br>initial idreqs: ";
-print_r($finalselectidreq);
-print "<br>";*/
-
-//print "numcols: $numcols<br>";
-$colcounter = 0;
-foreach($sortcol as $curcoltosort)
-{
-	foreach(${$curcoltosort} as $numorstr)
-	{
-		if($numorstr)
-		{
-//			print "<br>First entry evaluated: $numorstr<br>";
-			$numericornot = is_numeric($numorstr);
-			break;
-		}
-	}			
-
-	if($numericornot)
-	{
-
-	$nextcol = $sortcol[$colcounter+1];
-	if($sdir[$nextcol] == "DESC") // reverse the requested sorting order if the next column will sort things in reverse (putting DESC in the If instead of ASC allows the primary column -- last col -- to be sorted as requested since there is no next column)
-	{
-		if($sdir[$curcoltosort] == "ASC")
-		{
-			arsort(${$curcoltosort}, SORT_NUMERIC);
-		}
-		else
-		{
-			asort(${$curcoltosort}, SORT_NUMERIC);
-		}
-	}
-	else
-	{
-		if($sdir[$curcoltosort] == "ASC")
-		{
-			asort(${$curcoltosort}, SORT_NUMERIC);
-		}
-		else
-		{
-			arsort(${$curcoltosort}, SORT_NUMERIC);
-		}
-	}
-
-
-	} else { // middle of the isnumeric condition
-
-	$nextcol = $sortcol[$colcounter+1];
-	if($sdir[$nextcol] == "DESC") // reverse the requested sorting order if the next column will sort things in reverse (putting DESC in the If instead of ASC allows the primary column -- last col -- to be sorted as requested since there is no next column)
-	{
-		if($sdir[$curcoltosort] == "ASC")
-		{
-			arsort(${$curcoltosort}, SORT_STRING);
-		}
-		else
-		{
-			asort(${$curcoltosort}, SORT_STRING);
-		}
-	}
-	else
-	{
-		if($sdir[$curcoltosort] == "ASC")
-		{
-			asort(${$curcoltosort}, SORT_STRING);
-		}
-		else
-		{
-			arsort(${$curcoltosort}, SORT_STRING);
-		}
-	}
-
-	} // end of isnumeric
-	$colcounter++;
-
-	// now match id_reqs and all other columns to this one.
-
-/*/	print_r(${$curcoltosort});
-	print "<br>";
-	print "<br>old id_reqs: ";
-	print_r($finalselectidreq);
-	print "<br>old id_reqs: ";*/
-
-	$synccounter = 0;
-	foreach(array_keys(${$curcoltosort}) as $sortedkeys)
-	{
-
-//		print "<br><br>Now resorting idreqs:<br>";
-//		print "New key for position $synccounter: $sortedkeys";
-		//$fv = ${$curcoltosort}[$sortedkeys];
-		//print "$fv";
-//		$oldp = $finalselectidreq[$sortedkeys];
-//		print "<br>Old id_req at with that key: $oldp";
-		
-		$newid = $synccounter . "a";
-		$newreqs[$newid] = $finalselectidreq[$sortedkeys];
-
-//		print "<br>New id_req at position $syncounter: ";
-//		print "$newreqs[$newid]";
-		
-		$synccounter++;
-	}
-	array_splice($finalselectidreq, 0);
-	$finalselectidreq = $newreqs;
-	array_splice($newreqs, 0);
-	
-//	print "<br><br>New id_req array: ";
-//	print_r($finalselectidreq);
-//	print "<br>";
-
-
-	
-	foreach($colarrayname as $coltosync)
-	{
-		$synccounter = 0;
-		if($coltosync != $curcoltosort)
-		{
-/*			print "<br>Now sorting $coltosync<br>";
-			print "Old order of $coltosync: ";
-			print_r(${$coltosync});*/
-			foreach(array_keys(${$curcoltosort}) as $sortedkeys)
-			{
-				$newid = $synccounter . "a";
-				$newreqs[$newid] = ${$coltosync}[$sortedkeys];
-				$synccounter++;
-			}
-			array_splice(${$coltosync}, 0);
-			${$coltosync} = $newreqs;
-			array_splice($newreqs, 0);
-//			print "New order of $coltosync: ";
-//			print_r(${$coltosync});
-		}
-	}
-	
-	// normalize the keys on the curcoltosort so it can be manipulated again
-
-/*	print "<BR><BR>Now normalizing current column ($curcoltosort)<br>";
-	print "sorted array: ";
-	print_r(${$curcoltosort});*/
-	$synccounter = 0;
-	foreach(${$curcoltosort} as $rationalizeval)
-	{
-		$newid = $synccounter . "a";
-		$newreqs[$newid] = $rationalizeval;
-		$synccounter++;
-	}
-	array_splice(${$curcoltosort}, 0);
-	${$curcoltosort} = $newreqs;
-	array_splice($newreqs, 0);
-/*	print "<br>normalized array: ";
-	print_r(${$curcoltosort});
-	print "<br>";*/
-}
-
-// how many columns? Remake the variable since it was adjusted for sort only columns
-	$numcols = count($reqFieldsJwe);
-	$numcols--; // minus 1 so we can nicely use this as an array address
-
-
-// take all the entries in the columns and turn them back into a single selvals array
-$selvalindexer = 0;
-for($rowcounter=0;$rowcounter<count($finalselectidreq);$rowcounter++)
-{
-	foreach($colarrayname as $remakeselvals)
-	{
-		// take the entry in the current row from each column and put it in selvals
-		$idtouse = $rowcounter . "a";
-		$selvals[$selvalindexer] = ${$remakeselvals}[$idtouse];
-		$selvalindexer++;
-	}
-}	
-//print "<br>Final sorted id_reqs: ";
-//print_r($finalselectidreq);
-
-} // end if there were sorts 
-
-
 if($calccolscounter) // now do the calculations...
 {
-
-	
 	$xoopsTpl->assign('summaryon', "on");
-	for($v=0;$v<=$numcols;$v++) // for each column....
+	for($v=0;$v<=$numcols;$v++)
 	{
 		$calcoutput = "";
-		foreach($calc_typeArray[$v] as $thiscalcArray)// for each possible calculation...
+		foreach($calc_typeArray[$v] as $thiscalcArray)
 		{
-			if(strstr($thiscalcArray, "selected")) // if the calculation was selected, then do the calculation on that column...
+			if(strstr($thiscalcArray, "selected"))
 			{
 				if(strstr($thiscalcArray, "sum"))
 				{
 					$sumtotal = 0;
 					foreach(${$colarrayname[$v]} as $thisreqsval)
 					{
-						if(strstr($thisreqsval, "*=+*:")) // if it's a multi...
-						{
-							$thismultival = explode("*=+*:", $thisreqsval);
-							foreach($thismultival as $thisindivval)
-							{
-								$sumtotal = $sumtotal + $thisindivval;
-							}
-						}
-						else
-						{
-							$sumtotal = $sumtotal + $thisreqsval;
-						}
+						$sumtotal = $sumtotal + $thisreqsval;
 					}						
 					$calcoutput .= "<h4>" . _FORMULAIRE_SUM . ":</h4>";
 					$calcoutput .= "<ul><li>" . _FORMULAIRE_SUM_TEXT . " $sumtotal</li></ul>";
-					$sumtotal = "";
 				}
 				if(strstr($thiscalcArray, "average"))
 				{
 					$sumtotal = 0;
-					$nonblankmultis = 0;
-					$noblankscounter = 0;
-					$blankscounter = 0;
 					foreach(${$colarrayname[$v]} as $thisreqsval)
 					{
-						//print "<br>this row: $thisreqsval<br>";
-						if(strstr($thisreqsval, "*=+*:")) // if it's a multi...
-						{
-							$thismultival = explode("*=+*:", $thisreqsval);
-							foreach($thismultival as $thisindivval)
-							{
-								$sumtotal = $sumtotal + $thisindivval;
-								$nonblankmultis++;
-							}
-						}
-						else
-						{
-							$sumtotal = $sumtotal + $thisreqsval;
-							if($thisreqsval)
-							{
-								$noblankscounter++;
-							}
-							else
-							{
-								$blankscounter++;
-							}
-						}
-						/*print "nonblankmultis: $nonblankmultis<br>";
-						print "noblankscounter: $noblankscounter<br>";
-						print "blankscounter: $blankscounter<br>";*/
+						$sumtotal = $sumtotal + $thisreqsval;
 					}			
-					if($nonblankmultis) // if it's a multi...
+					$noblankscounter = 0;
+					foreach(${$colarrayname[$v]} as $thisreqsval)
 					{
-						$average = round($sumtotal / ($blankscounter + $nonblankmultis + $noblankscounter), 2);
-						$nbaverage = round($sumtotal / ($nonblankmultis + $noblankscounter), 2);
+						if($thisreqsval)
+						{
+							$noblankscounter++;
+						}
 					}
-					else
-					{
-						$average = round($sumtotal / count(${$colarrayname[$v]}), 2);
-						$nbaverage = round($sumtotal / $noblankscounter, 2);
-					}
+					$average = $sumtotal / count(${$colarrayname[$v]});
+					$nbaverage = $sumtotal / $noblankscounter;
 					$calcoutput .= "<h4>" . _FORMULAIRE_AVERAGE . ":</h4>";
 					$calcoutput .= "<ul><li>" . _FORMULAIRE_AVERAGE_INCLBLANKS . " $average</li>";
 					$calcoutput .= "<li>" . _FORMULAIRE_AVERAGE_EXCLBLANKS . " $nbaverage</li></ul>";
-					$average = "";
-					$nbaverage = "";
 				}
 				if(strstr($thiscalcArray, "min"))
 				{
  					$start = "1";
 					foreach(${$colarrayname[$v]} as $thisreqsval)
 					{
-						print "<br>this row: $thisreqsval<br>";
-						if(strstr($thisreqsval, "*=+*:")) // if it's a multi...
+						if($start)
 						{
-							$thismultival = explode("*=+*:", $thisreqsval);
-							foreach($thismultival as $thisindivval)
+							$minval = $thisreqsval;
+							if($thisreqsval)
 							{
-								print "<br>this indiv val: $thisindivval";
-								if($start AND $thisindivval AND is_numeric($thisindivval))
-								{
-									$minval = $thisindivval;
-									if($thisindivval)
-									{
-										$minvalnozero = $thisindivval;
-									}
-									$start = 0;
-								}
-								if($thisindivval < $minval AND is_numeric($thisindivval))
-								{
-									$minval = $thisindivval;
-									if($thisindivval)
-									{
-										$minvalnozero = $thisindivval;
-									}
-								}
+								$minvalnozero = $thisreqsval;
+							}
+							$start = 0;
+						}
+						if($thisreqsval < $minval)
+						{
+							$minval = $thisreqsval;
+							if($thisreqsval)
+							{
+								$minvalnozero = $thisreqsval;
 							}
 						}
-						else
-						{
-							print "<br>this indiv val: $thisreqsval";
-
-							if($start AND $thisreqaval AND is_numeric($thisreqval))
-							{
-								$minval = $thisreqsval;
-								if($thisreqsval)
-								{
-									$minvalnozero = $thisreqsval;
-								}
-								$start = 0;
-							}
-							if($thisreqsval < $minval AND is_numeric($thisreqval))
-							{
-								$minval = $thisreqsval;
-								if($thisreqsval)
-								{
-									$minvalnozero = $thisreqsval;
-								}
-							}
-						}
-					//print "minval: $minval<br>";
-					//print "minvalnozero: $minvalnozero<br>";
 					}
 					$calcoutput .= "<h4>" . _FORMULAIRE_MINIMUM . ":</h4>";
 					$calcoutput .= "<ul><li>" . _FORMULAIRE_MINIMUM_INCLBLANKS . " $minval</li>";
 					$calcoutput .= "<li>" . _FORMULAIRE_MINIMUM_EXCLBLANKS . " $minvalnozero</li></ul>";
-					$minval = "";
-					$minvalnozero = "";
 				}
 				if(strstr($thiscalcArray, "max"))
 				{
  					$start = "1";
 					foreach(${$colarrayname[$v]} as $thisreqsval)
 					{
-						if(strstr($thisreqsval, "*=+*:")) // if it's a multi...
+						if($start)
 						{
-							$thismultival = explode("*=+*:", $thisreqsval);
-							foreach($thismultival as $thisindivval)
-							{
-								if($start AND is_numeric($thisindivval))
-								{
-									$maxval = $thisindivval;
-									$start = 0;
-								}
-								if($thisindivval > $maxval AND is_numeric($thisindivval))
-								{
-									$maxval = $thisindivval;
-								}
-							}
+							$maxval = $thisreqsval;
+							$start = 0;
 						}
-						else
+						if($thisreqsval > $maxval)
 						{
-							if($start AND is_numeric($thisreqval))
-							{
-								$maxval = $thisreqsval;
-								$start = 0;
-							}
-							if($thisreqsval > $maxval AND is_numeric($thisreqval))
-							{
-								$maxval = $thisreqsval;
-							}
+							$maxval = $thisreqsval;
 						}
 					}
 					$calcoutput .= "<h4>" . _FORMULAIRE_MAXIMUM . ":</h4>";
 					$calcoutput .= "<ul><li>" . _FORMULAIRE_MAXIMUM_TEXT . " $maxval</li></ul>";
-					$maxval = "";
 				}
 				if(strstr($thiscalcArray, "count"))
 				{
 					$countvals = count(${$colarrayname[$v]});
-					$multicount = 0;
 					$noblankscounter = 0;
 					foreach(${$colarrayname[$v]} as $thisreqsval)
 					{
@@ -1813,118 +1294,36 @@ if($calccolscounter) // now do the calculations...
 						{
 							$noblankscounter++;
 						}
-						if(strstr($thisreqsval, "*=+*:")) // if it's a multi...
-						{
-							$thismultival = explode("*=+*:", $thisreqsval);
-							$extra = count($thismultival);
-							$extra--;
-							$multicount = $multicount + $extra;
-						}
 					}
-					$countvals = $countvals + $multicount;
-					$nonblanks = $noblankscounter+$multicount;
-					$percentcount = round(($nonblanks/$countvals)*100, 2);
+					$percentcount = ($noblankscounter/$countvals)*100;
 					$calcoutput .= "<h4>" . _FORMULAIRE_COUNT . ":</h4>";
 					$calcoutput .= "<ul><li>" . _FORMULAIRE_COUNT_INCLBLANKS . " $countvals</li>";
-					$calcoutput .= "<li>" . _FORMULAIRE_COUNT_EXCLBLANKS . " $nonblanks</li>";
+					$calcoutput .= "<li>" . _FORMULAIRE_COUNT_EXCLBLANKS . " $noblankscounter</li>";
 					$calcoutput .= "<li>" . _FORMULAIRE_COUNT_PERCENTBLANKS . " $percentcount%</li></ul>";				
-					$countvals = "";
-					$nonblanks = "";
-					$percentcount = "";
 				}
 				if(strstr($thiscalcArray, "percent"))
 				{
-					array($valdist);
-					array_splice($valdist, 0);
-//					$valdist[""] = 0;
-					foreach(${$colarrayname[$v]} as $thisreqsval)
-					{
-						if(strstr($thisreqsval, "*=+*:")) // if it's a multi...
-						{
-							$thismultival = explode("*=+*:", $thisreqsval);
-							foreach($thismultival as $thisindivval)
-							{
-								$valdist[$thisindivval]++;
-							}
-						}
-						else
-						{
-							$valdist[$thisreqsval]++;
-						}
-					}
-					arsort($valdist);
-					// ==== duplicated from COUNT above
-					$countvals = count(${$colarrayname[$v]});
-					$multicount = 0;
-					$noblankscounter = 0;
-					foreach(${$colarrayname[$v]} as $thisreqsval)
-					{
-						if($thisreqsval)
-						{
-							$noblankscounter++;
-						}
-						if(strstr($thisreqsval, "*=+*:")) // if it's a multi...
-						{
-							$thismultival = explode("*=+*:", $thisreqsval);
-							$extra = count($thismultival);
-							$extra--;
-							$multicount = $multicount + $extra;
-						}
-					}
-					$countvals = $countvals + $multicount;
-					$nonblanks = $noblankscounter+$multicount;
-					//===== end duplicated block
-					$calcoutput .= "<h4>" . _FORMULAIRE_PERCENTAGES . "</h4>";
-					$calcoutput .= "<table><tr><td><nobr>" . _FORMULAIRE_PERCENTAGES_VALUE . "</nobr></td><td><nobr>" . _FORMULAIRE_PERCENTAGES_COUNT . "</nobr></td><td><nobr>" . _FORMULAIRE_PERCENTAGES_PERCENT . "</nobr></td><td><nobr>" . _FORMULAIRE_PERCENTAGES_PERCENTEXCL . "</nobr></td></tr><tr><td><ul>";
-					foreach(array_keys($valdist) as $uniquekeys)
-					{
-						$calcoutput .= "<li>$uniquekeys</li>";
-					}
-					$calcoutput .= "</ul></td><td><ul>";
-					foreach($valdist as $uniqueval)
-					{
-						$calcoutput .= "<li>$uniqueval</li>";
-					}
-					$calcoutput .= "</ul></td><td><ul>";
-					foreach($valdist as $uniqueval)
-					{
-						$percent = round(($uniqueval/$countvals)*100,2);
-						$calcoutput .= "<li>$percent%</li>";
-					}
-					$calcoutput .= "</ul></td><td><ul>";
-					$blankfinder = 0;
-					foreach($valdist as $uniqueval)
-					{
-						$thiskey = array_keys($valdist, $uniqueval);
-						if($thiskey[0])
-						{
-							$percent = round(($uniqueval/$nonblanks)*100,2);
-							$calcoutput .= "<li>$percent%</li>";
-						}
-						else
-						{
-							$calcoutput .= "<li></li>";
-						}
-					}
-					$calcoutput .= "</ul></td></tr></table>";
-					$countvals = "";
-					$nonblanks = "";
-				} // end percent (5th nesting)
-			} // end of foreach calculation requested for this column
-			if($calcoutput)
-			{
-				$totalcalcoutput[$v] = $calcoutput; // keys will not be sequential but a foreach handles it in the template so that's okay.
-			}
+				}
+			}	
+		} // end of foreach calculation requested for this column
+		if($calcoutput)
+		{
+			$totalcalcoutput[$v] = $calcoutput; // keys will not be sequential but a foreach handles it in the template so that's okay.
 		}
 	}
 	$xoopsTpl->assign('tempcalcresults', $totalcalcoutput);
 }
 
+
+
+
+
+
+
 	// text for the template...
 	// add the final result array to the stack for the template...
 	if($finalselectidreq)
 	{
-		//print_r($finalselectidreq);
 		$xoopsTpl->assign('tempidsjwe', $finalselectidreq);
 		$xoopsTpl->assign('rows', "true");
 	}
@@ -1969,6 +1368,79 @@ foreach($entereduids as $entrduids)
 	}
 
 
+
+	// ***** IMPORTANT LOOP THAT PREPARES ENTRIES FOR DISPLAY ON VIEW ENTRIES PAGE *******
+	// Loop alters display of entries to suit printing to screen
+	foreach($selvals as $selvalstostripfrom)
+	{
+
+		//modify a linked selectbox to display correctly.
+		//1. identify values that are like this
+		//2. query what their actual text is right now
+		//3. reformat as text[standard delimiter]text[starndard delimiter]text, etc
+		if(strstr($selvalstostripfrom, "#*=:*"))
+		{
+			$firstsave = $selvalstostripfrom;
+			array($templinkedvals);
+			array($templinkedvals2);
+			$templinkedvals = explode("#*=:*", $selvalstostripfrom);
+			$templinkedvals2 = explode("[=*9*:", $templinkedvals[2]);
+			$selvalstostripfrom = ''; // reset string so we can write it again.
+			
+			foreach($templinkedvals2 as $anentry)
+			{
+				$textq = "SELECT ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE ele_id=$anentry GROUP BY ele_value ORDER BY ele_value";
+				$restextq = mysql_query($textq);
+				$rowtextq = mysql_fetch_row($restextq);
+				$selvalstostripfrom = $selvalstostripfrom . "*=+*:" . $rowtextq[0];
+			}
+//			$xoopsTpl->assign('placeholder', $firstsave . "**" . $capturer . "**" . $anentry . "**" . $selvalstostripfrom);
+					
+		}
+
+
+		//sql to get is yes/no
+		if($hasgroupscope)
+		{
+			$isyesnoquestion = "SELECT ele_type FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND ele_value=$selvalstostripfrom AND (uid=$gscopeparam) ORDER BY id_req";
+		}
+		else
+		{
+			$isyesnoquestion = "SELECT ele_type FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND ele_value=$selvalstostripfrom AND uid=$uid ORDER BY id_req";
+		}
+		$resisyesno = mysql_query($isyesnoquestion);
+		
+		while ($rowisyesno = mysql_fetch_row($resisyesno))
+		{
+			if($rowisyesno[0] == "yn") // if we've found one
+			{
+				if($selvalstostripfrom == "1")
+				{
+					$selvalstostripfrom = _FORMULAIRE_TEMP_QYES;
+				}
+				elseif($selvalstostripfrom == "2")
+				{
+					$selvalstostripfrom = _FORMULAIRE_TEMP_QNO;
+				}
+				else
+				{
+					$selvalstostripfrom = "";
+				}
+				break; // we're done
+			}
+		} 
+
+		$placeholderVals = stripslashes($selvalstostripfrom);
+		//and remove any leading *=+*: while we're at it...
+		if(substr($placeholderVals, 0, 5) == "*=+*:")
+		{
+			$placeholderVals = substr_replace($placeholderVals, "", 0, 5); 
+		}
+		//print "*$placeholderVals*<br>";
+		$tempValsJwe[] = $placeholderVals;
+	}
+	$selvals = $tempValsJwe;
+	
 	// have to break $selvals into an array for each column?!  Then sort those arrays?!
 	// then set ids, then break up the column or whatever arrays back into a flat selvals style approach?
 
@@ -2022,7 +1494,6 @@ foreach($entereduids as $entrduids)
 	$xoopsTpl->assign('changecolumns', _FORMULAIRE_CHANGE_COLUMNS);
 	$xoopsTpl->assign('change', _FORMULAIRE_CHANGE);
 	$xoopsTpl->assign('searchhelp', _FORMULAIRE_SEARCH_HELP);
-	$xoopsTpl->assign('sorthelp', _FORMULAIRE_SORT_HELP);
 	
 	// make an array the is 0 on all indexes except on numbers equal to rows where a header needs to be redrawn, when the array is 1.
 	$redrawon = 7; //the number of rows after which to redraw the headerrow	
@@ -2050,7 +1521,7 @@ $resissingle = mysql_query($issingle);
 $rowissingle = mysql_fetch_row($resissingle);
 $issingle = $rowissingle[0];
 
-//print $issingle;
+print $issingle;
 
 if($issingle) // if it's a single entry form...
 {
@@ -2196,17 +1667,11 @@ if( empty($_POST['submit']) ){
 	
 		// template line here so that it can be overridden by something in viewentry if viewentry is the current state.
 		$xoopsTpl->assign('tempaddingentry', _FORMULAIRE_TEMP_ADDINGENTRY);
-		$xoopsTpl->assign('issingle', $issingle); 
+		$xoopsTpl->assign('issingle', $issingle); //sends issingle=on to the template
 		if(!$showviewentries) // if viewing entries is not permitted, then send the cue for not showing them, overriding the $issingle setting above.
 		{
 			$xoopsTpl->assign('issingle', "on"); //sends issingle=on to the template
-		}
-
-		if($isadmin) // always allow module admins to view entries
-		{
-			$xoopsTpl->assign('issingle', "off"); //sends issingle=off to the template
-		}
-
+		}		
 		if($viewentry)
 		{
 
@@ -2314,7 +1779,6 @@ if( empty($_POST['submit']) ){
 					else
 					{
 						$ele_value = array("_YES"=>0, "_NO"=>0);
-
 					}
 					break;
 				case "date":
@@ -2959,7 +2423,7 @@ $misscapindex = 0;
 			$finalresulteleidex2 = mysql_fetch_row($resultExtractEleid2);
 			$ele_id2 = $finalresulteleidex2[0];
 
-			$sql="DELETE FROM " .$xoopsDB->prefix("form_form") . " WHERE ele_id = $ele_id2";
+			$sql="UPDATE " .$xoopsDB->prefix("form_form") . " SET id_form=\"$id_form\", id_req=\"$viewentry\", ele_id=\"$ele_id2\", ele_type=\"\", ele_caption=\"$ele_cap2\", ele_value=\"\", uid=\"$uid\", date=\"\" WHERE ele_id = $ele_id2";
 			
 			$result = $xoopsDB->query($sql);
 			}

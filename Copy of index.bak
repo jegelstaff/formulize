@@ -143,30 +143,6 @@ if ( $res ) {
 		redirect_header(XOOPS_URL."/index.php", 3, $kickmsgjwe);
 	}
 
-// FIND OUT IF THE CURRENT USER IS A MODULE ADMIN (AND USE THIS LATER ON TO SET CERTAIN THINGS, OVERRIDE OTHERS)
-
-$start=1;
-$gpermmodq = "(";
-foreach($groupuser as $agroup) // loop through all the groups the user is a member of to make a query that we can use to check if they've got module admin perms
-{
-	if($start)
-	{
-		$gpermmodq .= "gperm_groupid=$agroup";
-		$start=0;
-	}
-	else
-	{
-		$gpermmodq .= " OR gperm_groupid=$agroup";
-	}
-}
-$gpermmodq .= ")";
-
-$modadminq = "SELECT * FROM " . $xoopsDB->prefix("group_permission") . " WHERE $gpermmodq AND gperm_itemid=$module_id AND gperm_modid=1 AND gperm_name=\"module_admin\"";
-$resmodadminq = mysql_query($modadminq);
-$isadmin = mysql_num_rows($resmodadminq); // if no rows, ie: no permission, isadmin will be 0 so will evaluate to false.
-
-//print "isadmin: $isadmin*";
-
 // CHECK FOR SELECT FLAG AND IF SET THEN SHOW THE SELECT-AN-ENTRY PAGE INSTEAD OF FORM...
 
 // get flags that control editing entries
@@ -337,54 +313,6 @@ while ($rowjwe = mysql_fetch_assoc($resultFirstFieldQueryJwe))
 } // end else covering no headerlist fields.
 
 } // end else that gets us to look at the headerlist (instead of use specified fields)
-
-//============ start of sorting handling that sends info to template (and excludes multiple entry form elements (ie: checkboxes))
-//Filter the reqFieldsJwe for the fields we allow sorting on.
-$sortq = "SELECT ele_caption, ele_value FROM ". $xoopsDB->prefix("form") . " WHERE id_form = $id_form AND (ele_type = \"checkbox\" OR (ele_type = \"select\" AND ele_value REGEXP \"^.{19}1\")) ORDER BY ele_order";
-$ressortq = mysql_query($sortq);
-$sortarrayb = 0;
-while ($rowsortq = mysql_fetch_row($ressortq))
-{
-	$sortcheckarray[$sortarrayb] =  $rowsortq[0];
-	$sortarrayb++;
-}
-
-//print_r($sortcheckarray);
-
-$sortarrayb = 0;
-$allowedsort = -1;
-foreach($reqFieldsJwe as $onefield)
-{
-	if(!in_array($onefield, $sortcheckarray))
-	{
-		$reqSortFields[$sortarrayb] = $onefield;
-		$allowedsort++;
-	}
-	else
-	{
-		$reqSortFields[$sortarrayb] = "";
-	}
-	$sortarrayb++;
-}
-$xoopsTpl->assign('tempcaptionssort', $reqSortFields);
-
-//set the array that has 1,2,3,4,5 etc for using in the sort priority drop downs
-	
-	$sortcreateindexer = 0;
-	array($sort_indexes);
-	for($sl=0;$sl<=$allowedsort;$sl++) // by controlling the '<=' you can control the number of sorting order options. 
-	{
-		$sort_indexes[$sortcreateindexer] = $sortcreateindexer+1;
-		$sortcreateindexer++;
-	}
-	$xoopsTpl->assign('sort_index_array', $sort_indexes);
-// ================= end of sorting handling for template
-
-
-//7th array element after exploding ele_value on means multiple select box if it starts with 1.
-//a:3:{i:0;i:1;i:1;i:0
-
-
 
 // gather a list of record ids for entries the user has made in the form... jwe 7/23/04
 // steps:
@@ -590,6 +518,16 @@ $xoopsTpl->assign('tempcaptionssort', $reqSortFields);
 
 
 
+//set the array that has 1,2,3,4,5 etc for using in the sort priority drop downs
+	
+	$sortcreateindexer = 0;
+	array($sort_indexes);
+	foreach($reqFieldsJwe as $sortidcreation)
+	{
+		$sort_indexes[$sortcreateindexer] = $sortcreateindexer+1;
+		$sortcreateindexer++;
+	}
+	$xoopsTpl->assign('sort_index_array', $sort_indexes);
 
 // START QUERY TO SELECT THE DATA FOR THE SUMMARY LIST
 //$queryjwe = "SELECT id_req, ele_caption, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid AND (";
@@ -1002,7 +940,7 @@ if($currentcaptionforquery > 0)
 		$userreportingquery .= ")"; // close out the whole query
 }
 
-//print "$userreportingquery<br><br>";   //string we're building
+print "$userreportingquery<br><br>";   //string we're building
 
 // apply the groupscope param to the query (query with the whole userlist)
 if($hasgroupscope)
@@ -1015,7 +953,7 @@ else
 //	$queryjwe = "SELECT id_req, ele_caption, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid $userreportingquery ORDER BY id_req";
 	$queryjwe = "SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid $userreportingquery ORDER BY id_req";
 }
-//print $queryjwe;
+print $queryjwe;
 $recordsjwe = mysql_query($queryjwe);
 $previndex = "none";
 array ($totalresultarray);
@@ -1059,11 +997,9 @@ $realrecordsjwe = mysql_query($realqueryjwe);
 while($realrowjwe = mysql_fetch_row($realrecordsjwe))
 {
 		$totalresultarray[$totalentriesindex] = $realrowjwe;
-		$finalselectidreq[$totalentriesindex] = $realrowjwe[0];
 		$totalentriesindex++;
 }
 
-$finalselectidreq = array_unique($finalselectidreq);
 /*print "totalresultarray:<br>";
 print_r($totalresultarray);
 print "<br>totalentriesindex = $totalentriesindex<br>";*/
@@ -1299,9 +1235,8 @@ for($i=0;$i<=$totalentriesindex;$i++)
 //sort_orderArray
 //ascdscArray
 
-//array($calccols);
-//array($sortcols);
-//array($sortpri);
+array($calccols);
+array($sortcols);
 $calccolscounter = 0;
 $sortcolscounter = 0;
 for($y=0;$y<count($reqFieldsJwe);$y++)
@@ -1311,11 +1246,9 @@ for($y=0;$y<count($reqFieldsJwe);$y++)
 		$calccols[$calccolscounter] = $y;
 		$calccolscounter++;
 	}
-	if($sort_orderArray[$y] <> "") // if a sort was requested, save the column ID
+	if($sort_orderArray[$y] <> "") // if a calculation was requested, save the column ID
 	{
 		$sortcols[$sortcolscounter] = $y;
-		$sortpri[$sortcolscounter] = $sort_orderArray[$y];
-		$sortdir[$sortcolscounter] = $ascdscArray[$y];
 		$sortcolscounter++;
 	}
 }
@@ -1325,14 +1258,13 @@ if($sortcolscounter OR $calccolscounter) // if a calculation or a sort was reque
 	// how many columns?
 	$numcols = count($reqFieldsJwe);
 	$numcols--; // minus 1 so we can nicely use this as an array address
-
+	
 	$colnamenums = 0;
 	foreach($reqFieldsJwe as $colname)
 	{
 		$pc = str_replace(" ", "_", $colname); // replace the spaces
 		$pc = str_replace(".", "_", $pc); // replace the periods
-		$arrayindex = $colnamenums;
-		$colarrayname[$arrayindex] = $pc . "ColArray";
+		$colarrayname[$colnamenums] = $pc . "ColArray";
 		$colnamenums++;
 	}
 
@@ -1346,8 +1278,7 @@ if($sortcolscounter OR $calccolscounter) // if a calculation or a sort was reque
 /*			print "<br>Now writing to $colarrayname[$curcol]";
 			print "<br>Current key is: $currow";
 			print "<br>Current value is: $thisvalue";*/
-			$idtouse = $currow . "a"; // setup to be compatible with an asort below
-			${$colarrayname[$curcol]}[$idtouse] = $thisvalue;
+			${$colarrayname[$curcol]}[$currow] = $thisvalue;
 		}
 		else // if we've moved onto a new row...
 		{
@@ -1356,8 +1287,7 @@ if($sortcolscounter OR $calccolscounter) // if a calculation or a sort was reque
 /*			print "<br>Now writing to $colarrayname[$curcol]";
 			print "<br>Current key is: $currow";
 			print "<br>Current value is: $thisvalue";*/
-			$idtouse = $currow . "a"; // setup to be compatible with an asort below
-			${$colarrayname[$curcol]}[$idtouse] = $thisvalue;
+			${$colarrayname[$curcol]}[$currow] = $thisvalue;
 		}
 		$curcol++;
 	}
@@ -1382,246 +1312,12 @@ if($sortcolscounter OR $calccolscounter) // if a calculation or a sort was reque
 //now if it's required we have arrays as follows:
 //[captionname]ColArray -- one for each caption
 //$colarrayname is an array with all the names in it
-//keys of each column array correspond to the rows, 0 through n, but are named 1i 2i 3i etc, so they can be asorted by the sort function.
+//keys of each column array correspond to the rows, 0 through n.
 
 } // end if a calc or sort was requested
 
-
-if($sortcolscounter) // if sorts were requested, then do them...
-{
-
-// how many columns?
-	$numcols = count($reqSortFields);
-	$numcols--; // minus 1 so we can nicely use this as an array address
-	
-
-// 1. identify the column priority for sorts
-// 1.5 identify the direction of sorting
-// 2. sort all columns plus the req_ids from last to first sorting priority
-// 3. write out the column data to selvals array
-// finalselectidreq is the array of ids.
-
-/*int "<br>cols: ";
-print_r($sortcols);
-print "<br>dir: ";
-print_r($sortdir);
-print "<br>pri: ";
-print_r($sortpri);*/
-
-// assign priorities to columns
-for($sc=0;$sc<count($sortpri);$sc++)
-{
-	$currcol = $sortcols[$sc];
-	$currcolname = $colarrayname[$currcol];
-//	print "$currcolname<br>";
-	$sp[$currcolname] = $sortpri[$sc];
-	$sdir[$currcolname] = $sortdir[$sc];
-	//print "<br><br>Column to sort: $sp[$sc]<br>priority: $sortpri[$sc]";
-}
-//print_r($sp);
-arsort($sp); // puts the columns that need to be sorted into proper sorting order
-//print_r($sp);
-
-$sortcol = array_keys($sp);
-
-/*print "<br>";
-print_r($sortcol);
-print "<br>";
-print_r($sdir);*/
-
-
-//prepare the finalselectidreq for resorting by adding a to the end of it's number indexes...
-$newid = 0;
-foreach($finalselectidreq as $idreqrekey)
-{
-	$newida = $newid . "a";
-	$phfinal[$newida] = $idreqrekey;
-	$newid++;
-}
-array_splice($finalselectidreq, 0);
-$finalselectidreq = $phfinal;
-
-/*print "<br>initial idreqs: ";
-print_r($finalselectidreq);
-print "<br>";*/
-
-//print "numcols: $numcols<br>";
-$colcounter = 0;
-foreach($sortcol as $curcoltosort)
-{
-	foreach(${$curcoltosort} as $numorstr)
-	{
-		if($numorstr)
-		{
-//			print "<br>First entry evaluated: $numorstr<br>";
-			$numericornot = is_numeric($numorstr);
-			break;
-		}
-	}			
-
-	if($numericornot)
-	{
-
-	$nextcol = $sortcol[$colcounter+1];
-	if($sdir[$nextcol] == "DESC") // reverse the requested sorting order if the next column will sort things in reverse (putting DESC in the If instead of ASC allows the primary column -- last col -- to be sorted as requested since there is no next column)
-	{
-		if($sdir[$curcoltosort] == "ASC")
-		{
-			arsort(${$curcoltosort}, SORT_NUMERIC);
-		}
-		else
-		{
-			asort(${$curcoltosort}, SORT_NUMERIC);
-		}
-	}
-	else
-	{
-		if($sdir[$curcoltosort] == "ASC")
-		{
-			asort(${$curcoltosort}, SORT_NUMERIC);
-		}
-		else
-		{
-			arsort(${$curcoltosort}, SORT_NUMERIC);
-		}
-	}
-
-
-	} else { // middle of the isnumeric condition
-
-	$nextcol = $sortcol[$colcounter+1];
-	if($sdir[$nextcol] == "DESC") // reverse the requested sorting order if the next column will sort things in reverse (putting DESC in the If instead of ASC allows the primary column -- last col -- to be sorted as requested since there is no next column)
-	{
-		if($sdir[$curcoltosort] == "ASC")
-		{
-			arsort(${$curcoltosort}, SORT_STRING);
-		}
-		else
-		{
-			asort(${$curcoltosort}, SORT_STRING);
-		}
-	}
-	else
-	{
-		if($sdir[$curcoltosort] == "ASC")
-		{
-			asort(${$curcoltosort}, SORT_STRING);
-		}
-		else
-		{
-			arsort(${$curcoltosort}, SORT_STRING);
-		}
-	}
-
-	} // end of isnumeric
-	$colcounter++;
-
-	// now match id_reqs and all other columns to this one.
-
-/*/	print_r(${$curcoltosort});
-	print "<br>";
-	print "<br>old id_reqs: ";
-	print_r($finalselectidreq);
-	print "<br>old id_reqs: ";*/
-
-	$synccounter = 0;
-	foreach(array_keys(${$curcoltosort}) as $sortedkeys)
-	{
-
-//		print "<br><br>Now resorting idreqs:<br>";
-//		print "New key for position $synccounter: $sortedkeys";
-		//$fv = ${$curcoltosort}[$sortedkeys];
-		//print "$fv";
-//		$oldp = $finalselectidreq[$sortedkeys];
-//		print "<br>Old id_req at with that key: $oldp";
-		
-		$newid = $synccounter . "a";
-		$newreqs[$newid] = $finalselectidreq[$sortedkeys];
-
-//		print "<br>New id_req at position $syncounter: ";
-//		print "$newreqs[$newid]";
-		
-		$synccounter++;
-	}
-	array_splice($finalselectidreq, 0);
-	$finalselectidreq = $newreqs;
-	array_splice($newreqs, 0);
-	
-//	print "<br><br>New id_req array: ";
-//	print_r($finalselectidreq);
-//	print "<br>";
-
-
-	
-	foreach($colarrayname as $coltosync)
-	{
-		$synccounter = 0;
-		if($coltosync != $curcoltosort)
-		{
-/*			print "<br>Now sorting $coltosync<br>";
-			print "Old order of $coltosync: ";
-			print_r(${$coltosync});*/
-			foreach(array_keys(${$curcoltosort}) as $sortedkeys)
-			{
-				$newid = $synccounter . "a";
-				$newreqs[$newid] = ${$coltosync}[$sortedkeys];
-				$synccounter++;
-			}
-			array_splice(${$coltosync}, 0);
-			${$coltosync} = $newreqs;
-			array_splice($newreqs, 0);
-//			print "New order of $coltosync: ";
-//			print_r(${$coltosync});
-		}
-	}
-	
-	// normalize the keys on the curcoltosort so it can be manipulated again
-
-/*	print "<BR><BR>Now normalizing current column ($curcoltosort)<br>";
-	print "sorted array: ";
-	print_r(${$curcoltosort});*/
-	$synccounter = 0;
-	foreach(${$curcoltosort} as $rationalizeval)
-	{
-		$newid = $synccounter . "a";
-		$newreqs[$newid] = $rationalizeval;
-		$synccounter++;
-	}
-	array_splice(${$curcoltosort}, 0);
-	${$curcoltosort} = $newreqs;
-	array_splice($newreqs, 0);
-/*	print "<br>normalized array: ";
-	print_r(${$curcoltosort});
-	print "<br>";*/
-}
-
-// how many columns? Remake the variable since it was adjusted for sort only columns
-	$numcols = count($reqFieldsJwe);
-	$numcols--; // minus 1 so we can nicely use this as an array address
-
-
-// take all the entries in the columns and turn them back into a single selvals array
-$selvalindexer = 0;
-for($rowcounter=0;$rowcounter<count($finalselectidreq);$rowcounter++)
-{
-	foreach($colarrayname as $remakeselvals)
-	{
-		// take the entry in the current row from each column and put it in selvals
-		$idtouse = $rowcounter . "a";
-		$selvals[$selvalindexer] = ${$remakeselvals}[$idtouse];
-		$selvalindexer++;
-	}
-}	
-//print "<br>Final sorted id_reqs: ";
-//print_r($finalselectidreq);
-
-} // end if there were sorts 
-
-
 if($calccolscounter) // now do the calculations...
 {
-
-	
 	$xoopsTpl->assign('summaryon', "on");
 	for($v=0;$v<=$numcols;$v++) // for each column....
 	{
@@ -1924,7 +1620,6 @@ if($calccolscounter) // now do the calculations...
 	// add the final result array to the stack for the template...
 	if($finalselectidreq)
 	{
-		//print_r($finalselectidreq);
 		$xoopsTpl->assign('tempidsjwe', $finalselectidreq);
 		$xoopsTpl->assign('rows', "true");
 	}
@@ -2022,7 +1717,6 @@ foreach($entereduids as $entrduids)
 	$xoopsTpl->assign('changecolumns', _FORMULAIRE_CHANGE_COLUMNS);
 	$xoopsTpl->assign('change', _FORMULAIRE_CHANGE);
 	$xoopsTpl->assign('searchhelp', _FORMULAIRE_SEARCH_HELP);
-	$xoopsTpl->assign('sorthelp', _FORMULAIRE_SORT_HELP);
 	
 	// make an array the is 0 on all indexes except on numbers equal to rows where a header needs to be redrawn, when the array is 1.
 	$redrawon = 7; //the number of rows after which to redraw the headerrow	
@@ -2050,7 +1744,7 @@ $resissingle = mysql_query($issingle);
 $rowissingle = mysql_fetch_row($resissingle);
 $issingle = $rowissingle[0];
 
-//print $issingle;
+print $issingle;
 
 if($issingle) // if it's a single entry form...
 {
@@ -2196,17 +1890,11 @@ if( empty($_POST['submit']) ){
 	
 		// template line here so that it can be overridden by something in viewentry if viewentry is the current state.
 		$xoopsTpl->assign('tempaddingentry', _FORMULAIRE_TEMP_ADDINGENTRY);
-		$xoopsTpl->assign('issingle', $issingle); 
+		$xoopsTpl->assign('issingle', $issingle); //sends issingle=on to the template
 		if(!$showviewentries) // if viewing entries is not permitted, then send the cue for not showing them, overriding the $issingle setting above.
 		{
 			$xoopsTpl->assign('issingle', "on"); //sends issingle=on to the template
-		}
-
-		if($isadmin) // always allow module admins to view entries
-		{
-			$xoopsTpl->assign('issingle', "off"); //sends issingle=off to the template
-		}
-
+		}		
 		if($viewentry)
 		{
 
@@ -2959,7 +2647,7 @@ $misscapindex = 0;
 			$finalresulteleidex2 = mysql_fetch_row($resultExtractEleid2);
 			$ele_id2 = $finalresulteleidex2[0];
 
-			$sql="DELETE FROM " .$xoopsDB->prefix("form_form") . " WHERE ele_id = $ele_id2";
+			$sql="UPDATE " .$xoopsDB->prefix("form_form") . " SET id_form=\"$id_form\", id_req=\"$viewentry\", ele_id=\"$ele_id2\", ele_type=\"\", ele_caption=\"$ele_cap2\", ele_value=\"\", uid=\"$uid\", date=\"\" WHERE ele_id = $ele_id2";
 			
 			$result = $xoopsDB->query($sql);
 			}

@@ -448,7 +448,7 @@ switch($op){
 			xoops_cp_header();
 			echo $element->getHtmlErrors();
 		}else{
-			redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);
+//			redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);
 		}
 	break;
 /*	default:

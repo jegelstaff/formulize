@@ -136,7 +136,7 @@ if($ele_value[0] == 1)
 {
 	$form_ele->addOption("none", _AM_FORMLINK_PICK);
 }
-					$linkedvaluesq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxproperties[1]\" GROUP BY ele_value ORDER BY ele_value";
+					$linkedvaluesq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxproperties[1]\" GROUP BY ele_value ORDER BY ele_caption";
 					$reslinkedvaluesq = mysql_query($linkedvaluesq);
 					if($reslinkedvaluesq)
 					{

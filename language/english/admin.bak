@@ -62,7 +62,7 @@ define("_AM_ELE_TYPE",'Allowed types');
 //added to handle the formlink part of the selectbox element -- jwe 7/29/04
 define("_AM_ELE_FORMLINK", "Options linked from another form");
 define("_AM_ELE_FORMLINK_DESC","Select a field in another form and use those entries for the options in this Select Box. (This setting overrides any options specified above.)");
-define("_AM_FORMLINK_NONE", "No link -- above options in effect");
+define("_AM_FORMLINK_NONE", "No link -- above options in effect
 
 
 define("_AM_ELE_SELECT_NONE","No element selected.");

@@ -117,7 +117,7 @@ if($resformlist)
 		while ($rowfieldnames = mysql_fetch_row($resfieldnames)) // loop through each caption in the current form
 		{
 			$totalcaptionlist[$captionlistindex] = $rowformlist[1] . ": " . $rowfieldnames[0];  // write formname: caption to the master array that will be passed to the select box.
-			$totalvaluelist[$captionlistindex] = $rowformlist[0] . "#*=:*" . $rowfieldnames[0];
+			$totalvaluelist[$captionlistindex] = $rowformlist[0] . "*=+*:" . $rowfieldnames[0];
 			if($ele_value[2] == $totalvaluelist[$captionlistindex]) // if this is the selected entry...
 			{
 				$defaultlinkselection = $captionlistindex;

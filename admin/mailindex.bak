@@ -404,8 +404,8 @@ function addform()
 	$getfidq = "SELECT id_form FROM " . $xoopsDB->prefix("form_id") . " WHERE desc_form = \"$title\"";
 $resgetfidq = mysql_query($getfidq);	
 	$rowgetfidq = mysql_fetch_row($resgetfidq);
-	//print "query: $getfidq<br>result row: ";
-	//print_r($rowgetfidq);	
+	print "query: $getfidq<br>result row: ";
+	print_r($rowgetfidq);	
 	$id_form = $rowgetfidq[0];
 
 	//get the module id
@@ -434,7 +434,7 @@ $resgetfidq = mysql_query($getfidq);
 		} // end of write each perm
 	} // end of loop for each group 
 
-	redirect_header("index.php?title=$title",1,_FORMULAIRE_FORMCREA);
+//	redirect_header("index.php?title=$title",1,_FORMULAIRE_FORMCREA);
 }
 
 

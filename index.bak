@@ -165,7 +165,7 @@ $modadminq = "SELECT * FROM " . $xoopsDB->prefix("group_permission") . " WHERE $
 $resmodadminq = mysql_query($modadminq);
 $isadmin = mysql_num_rows($resmodadminq); // if no rows, ie: no permission, isadmin will be 0 so will evaluate to false.
 
-//print "isadmin: $isadmin*";
+print "isadmin: $isadmin*";
 
 // CHECK FOR SELECT FLAG AND IF SET THEN SHOW THE SELECT-AN-ENTRY PAGE INSTEAD OF FORM...
 

@@ -1,0 +1,89 @@
+
+<center>
+	<table>
+	<tr>
+	<td width=25%>&nbsp;</td>
+	<td>
+		<table cellpadding=3 cellspacing=1 border=1>
+		<tr>
+		<td class=head valign=middle>
+			<center><p><nobr><a href="<{$tempformurl}>&select=0"><{$tempaddentry}></a></nobr></p></center>
+		</td>
+		<th valign=middle>
+			<center><p><b><nobr><{$tempviewingentries}></nobr></b></p></center>
+		</th>
+		</tr>
+		</table>
+	</td>
+	<td width=25%>&nbsp;</td>
+	</tr>
+	</table>
+</center>
+	<hr>
+
+
+	<table cellspacing="1" class="outer"  width=98%>
+		<tr><th colspan="100"><center><{$selectentriestitle}><{$tempformtitle}>'</center></th></tr>
+
+	<{if $rows}>	
+		<tr>
+		<td class=head>
+		&nbsp;	
+		</td>
+		<{counter name=tablecolumns start=0 assign=tblcols}>
+		<{foreach from=$tempcaptionsjwe item=curr_caption}>
+			<td class=head>
+				<center><p><b><{$curr_caption}></p></b></center>
+			</td>
+		<{counter name=tablecolumns}>
+		<{/foreach}>
+		</tr>
+
+	
+		<{counter name=tablerows start=0 assign=tblrows}>
+		<{foreach from=$tempidsjwe item=curr_id}>
+
+			<{math equation="x/y" x=$tblrows y=$redrawhead assign=redrawcheck}>
+			<tr><td><{$redrawcheck}></td></tr>
+			<{if $redrawcheck==0}>
+
+				<tr>
+				<td class=head>
+				&nbsp;	
+				</td>
+				<{counter name=tablecolumns start=0 assign=tblcols}>
+				<{foreach from=$tempcaptionsjwe item=curr_caption}>
+				<td class=head>
+					<center><p><b><{$curr_caption}></p></b></center>
+				</td>
+				<{counter name=tablecolumns}>
+				<{/foreach}>
+				</tr>
+
+
+			<{/if}>
+				<tr>
+				<{cycle values="even,odd" assign=rowcolor}>
+	
+				<td class=head>
+				<p><a href="<{$tempformurl}>&viewentry=<{$curr_id}>"><{$viewthisentry}></a><br><span class=comDate><{$tempenteredby}> <{$tempenteredbyname[$tblrows]}></span></p>	
+				</td>
+			
+				<{math equation="x*y" x=$tblrows y=$tblcols assign=entloopstart}>
+
+				<{section name=entrylooper loop=$tempvaluesjwe start=$entloopstart max=$tblcols}>
+				<td class=<{$rowcolor}>>
+				<p><{$tempvaluesjwe[entrylooper]|replace:"*=+*:":"<br>"}></p>
+				</td>
+				<{/section}>
+				<{counter name=tablerows}>			
+				</tr>
+		<{/foreach}>
+	<{else}>
+	<tr>
+		<td class=head>
+		<center><p><b><{$noentries}></b></p></center>	
+		</td>
+	</tr>
+	<{/if}>
+	</table>

@@ -10,10 +10,10 @@
 		<table cellpadding=3 cellspacing=1 border=1>
 		<tr>
 		<th valign=middle>
-			<center><h3><nobr><b><{$tempaddingentry}></b></nobr></h3></center>
+			<center><h2><nobr><b><{$tempaddingentry}></b></nobr></h2></center>
 		</th>
 		<td class=head valign=middle>
-			<center><h3><nobr><a href="<{$tempformurl}>&select=1"><{$tempviewentries}></a></nobr></h3></center>
+			<center><h2><nobr><a href="<{$tempformurl}>&select=1"><{$tempviewentries}></a></nobr></h2></center>
 		</td>
 		</tr>
 		</table>
