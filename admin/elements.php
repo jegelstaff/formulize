@@ -1,4 +1,37 @@
 <?php
+###############################################################################
+##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
+##                    Copyright (c) 2004 Freeform Solutions                  ##
+##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
+##                       <http://www.brandycoke.com/>                        ##
+###############################################################################
+##                    XOOPS - PHP Content Management System                  ##
+##                       Copyright (c) 2000 XOOPS.org                        ##
+##                          <http://www.xoops.org/>                          ##
+###############################################################################
+##  This program is free software; you can redistribute it and/or modify     ##
+##  it under the terms of the GNU General Public License as published by     ##
+##  the Free Software Foundation; either version 2 of the License, or        ##
+##  (at your option) any later version.                                      ##
+##                                                                           ##
+##  You may not change or alter any portion of this comment or credits       ##
+##  of supporting developers from this source code or any supporting         ##
+##  source code which is considered copyrighted (c) material of the          ##
+##  original comment or credit authors.                                      ##
+##                                                                           ##
+##  This program is distributed in the hope that it will be useful,          ##
+##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
+##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
+##  GNU General Public License for more details.                             ##
+##                                                                           ##
+##  You should have received a copy of the GNU General Public License        ##
+##  along with this program; if not, write to the Free Software              ##
+##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
+###############################################################################
+##  Author of this file: Freeform Solutions and NS Tai (aka tuff) and others ##
+##  URL: http://www.brandycoke.com/                                          ##
+##  Project: Formulize                                                       ##
+###############################################################################
 
 include_once("admin_header.php");
 
@@ -35,6 +68,8 @@ if( $_POST['submit'] == _AM_ELE_ADD_OPT_SUBMIT && intval($_POST['addopt']) > 0 )
 	$op = 'edit';
 }
 
+
+
 $ele_id = !empty($ele_id) ? intval($ele_id) : 0;
 $myts =& MyTextSanitizer::getInstance();
 
@@ -59,7 +94,7 @@ switch($op){
 			$value = $element->getVar('ele_value', 'f');
 		}else{
 			$ele_caption = $myts->makeTboxData4PreviewInForm($ele_caption);
-			if ($addopt==1) {$ele_caption = '<h5>'.$ele_caption.'</h5>';}
+			// if ($addopt==1) {$ele_caption = '<h5>'.$ele_caption.'</h5>';} // jwe 01/05/05 -- deemed a bug
 			if ($ele_type=='sep') { 
 				$ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 255, '{SEPAR}'.$ele_caption); }
 			else { $ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 255, $ele_caption); }
@@ -226,13 +261,27 @@ switch($op){
 		$ele_display->addOption(1, ' ');
 		$form->addElement($ele_display);
 		
-		$order = !empty($ele_id) ? $element->getVar('ele_order') : 0;
-		$ele_order = new XoopsFormText(_AM_ELE_ORDER, 'ele_order', 3, 2, $order);
+		// added by jwe 01/06/05 -- get the current highest order value for the form, and add up to 10 to it to reach the nearest mod 5 value
+		$highorderq = "SELECT MAX(ele_order) FROM " . $xoopsDB->prefix("form") . " WHERE id_form=$id_form";
+		$reshighorderq = $xoopsDB->query($highorderq);
+		$rowhighorderq = $xoopsDB->fetchRow($reshighorderq);
+		$highorder = $rowhighorderq[0]+1;
+		while($highorder % 10 != 0)
+		{
+			$highorder++;
+		}
+		
+		$order = !empty($ele_id) ? $element->getVar('ele_order') : $highorder;
+		$ele_order = new XoopsFormText(_AM_ELE_ORDER, 'ele_order', 3, 3, $order);
 		$form->addElement($ele_order);
 		
 		$submit = new XoopsFormButton('', 'submit', _AM_SAVE, 'submit');
 		$cancel = new XoopsFormButton('', 'cancel', _CANCEL, 'button');
-		$cancel->setExtra('onclick="javascript:history.go(-1);"');
+		// behaviour of cancel button changed to actually physically go back to the editing elements page -- jwe 01/05/05
+		//$cancel->setExtra('onclick="javascript:history.go(-1);"');
+		$cancelExtra = "onclick='javascript:location.href=\"../admin/index.php?title=$title\"'";
+		$cancelExtra = str_replace(" ", "%20", $cancelExtra);
+		$cancel->setExtra($cancelExtra);
 		$tray = new XoopsFormElementTray('');
 		$tray->addElement($submit);
 		$tray->addElement($cancel);
@@ -388,7 +437,7 @@ switch($op){
 				if ($option[0]) {$value[0] = '<center>'.$value[0].'</center>';}
 				if ($option[1]) {$value[0] = '<u>'.$value[0].'</u>';}
 				if ($option[2]) {$value[0] = '<I>'.$value[0].'</I>';}
-				$value[0] = '<h5>'.$value[0].'</h5>';
+				// $value[0] = '<h5>'.$value[0].'</h5>'; // jwe 01/05/05 -- deemed a bug
 				
 				$value[0] = '<font color='.$couleur.'>'.$value[0].'</font>';
 				

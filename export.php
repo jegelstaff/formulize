@@ -1,9 +1,8 @@
-<?php
+<?
+
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
 ##                    Copyright (c) 2004 Freeform Solutions                  ##
-##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
-##                       <http://www.brandycoke.com/>                        ##
 ###############################################################################
 ##                    XOOPS - PHP Content Management System                  ##
 ##                       Copyright (c) 2000 XOOPS.org                        ##
@@ -28,13 +27,87 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions and NS Tai (aka tuff) and others ##
-##  URL: http://www.brandycoke.com/                                          ##
+##  Author of this file: Freeform Solutions 					     ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-$adminmenu[0]['title'] = _MI_formulize_ADMENU0;
-$adminmenu[0]['link'] = "admin/formindex.php";
-$adminmenu[1]['title'] = _MI_formulize_ADMENU1;
-$adminmenu[1]['link'] = "admin/menu_index.php";
+
+if(isset($_POST['export'])) // write a file to the server and display a download link for it
+{
+	$fdchoice = $_POST['filedelimiter'];
+	if($fdchoice == "comma") 
+	{ 
+		$fd = ",";
+		$fxt = ".csv";
+	}
+	if($fdchoice == "tab")
+	{
+		$fd = "\t";
+		$fxt = ".tabDelimited";
+	}
+	if($fdchoice == "custom")
+	{
+		$fd = $_POST['cusdel'];
+		if(!$fd) { $fd = "*"; }
+		$fxt = ".customDelimited";
+	}
+	$csvfile = "";
+	$runtext = ""; // a variable that holds the field header for the user's full name, if such a thing is used for this query
+	if($realusernames[0]) { $runtext = "User's Full Name" . $fd; } // if there are user full names, then make the field header
+	$headercount = 0;
+	foreach($reqFieldsJwe as $csvheader)
+	{
+		if(!$headercount)
+		{
+			$csvfile =  $runtext . "Modification Date" . $fd . $csvheader;
+		}
+		else
+		{
+			$csvfile .= $fd . $csvheader;
+		}
+		$headercount++;
+	}
+
+	$csvfile .= "\r\n";
+
+	$colcounter = 0;
+	$i=0;
+	foreach($selvals as $acell)
+	{
+		$acell = str_replace("*=+*:", " ++ ", $acell); // replace the custom delimiter with ++
+		if(!$colcounter)
+		{
+			if($realusernames[$i]) { $csvfile .= $realusernames[$i] . $fd; }
+			$csvfile .= $entereddates[$i] . $fd . $acell;
+		}
+		else
+		{
+			$csvfile .= $fd . $acell;
+		}
+		$colcounter++;
+		if($colcounter == $headercount)
+		{
+			$colcounter = 0; 
+			$i++; // increment the counter used to pull in the right names and dates
+			$csvfile .= "\r\n";
+		}
+	}
+	$tempfold = time();
+	$exfilename = _formulize_exfile . $tempfold . $fxt;
+	// open the output file for writing
+	$wpath = XOOPS_ROOT_PATH."/modules/formulize/export/$exfilename";
+	//print $wpath;
+	$exportfile = fopen($wpath, "w");
+	fwrite ($exportfile, $csvfile);
+	fclose ($exportfile);
+	
+	// need to add in logic to cull old files...
+
+	$dlpath = XOOPS_URL . "/modules/formulize/export/$exfilename";
+	$xoopsTpl->assign('dlpath', $dlpath);
+	$xoopsTpl->assign('downloadtext', _formulize_DLTEXT);
+	$xoopsTpl->assign('downloadtext', _formulize_DLTEXT);
+	$xoopsTpl->assign('dlheader', _formulize_DLHEADER);
+	$xoopsTpl->assign('exfilename', $exfilename);
+}
 ?>

@@ -1,4 +1,4 @@
-<?php
+<?
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
 ##                    Copyright (c) 2004 Freeform Solutions                  ##
@@ -32,9 +32,55 @@
 ##  URL: http://www.brandycoke.com/                                          ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
+include 'header.php';
+include_once XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php';
 
-$adminmenu[0]['title'] = _MI_formulize_ADMENU0;
-$adminmenu[0]['link'] = "admin/formindex.php";
-$adminmenu[1]['title'] = _MI_formulize_ADMENU1;
-$adminmenu[1]['link'] = "admin/menu_index.php";
+global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig;
+$block = array();
+$groupuser = array();
+
+//userobject variable gathering moved up here by jwe 7/23/04
+
+if( is_object($xoopsUser) )
+{
+	$uid = $xoopsUser->getVar("uid");
+	$realuid = $uid; // used in the case of proxy submissions
+	$usernamejwe = $xoopsUser->getVar("uname");
+	$realnamejwe = $xoopsUser->getVar("name");
+}
+else {
+	$uid =0;
+}
+
+// print "*$realnamejwe*"; //JWE DEBUG CODE
+
+
+if(!isset($HTTP_POST_VARS['title'])){
+	$title = isset ($HTTP_GET_VARS['title']) ? $HTTP_GET_VARS['title'] : '';
+}else {
+	$title = $HTTP_POST_VARS['title'];
+}
+/*
+if ($title=="") {
+}
+		
+*/
+
+$sql=sprintf("SELECT id_form,admin,groupe,email,expe FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$title);
+$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$sql.'<br>'.mysql_error());
+//global $nb_fichier;
+ 
+      	$myts =& MyTextSanitizer::getInstance();
+        $title = $myts->displayTarea($title);
+
+if ( $res ) {
+  while ( $row = mysql_fetch_array ( $res ) ) {
+    $id_form = $row['id_form'];
+    $admin = $row['admin'];
+    $groupe = $row['groupe'];
+    $email = $row['email'];
+    $expe = $row['expe'];
+  }
+}
+
 ?>

@@ -1,9 +1,8 @@
-<?php
+<?
+
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
 ##                    Copyright (c) 2004 Freeform Solutions                  ##
-##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
-##                       <http://www.brandycoke.com/>                        ##
 ###############################################################################
 ##                    XOOPS - PHP Content Management System                  ##
 ##                       Copyright (c) 2000 XOOPS.org                        ##
@@ -28,13 +27,82 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions and NS Tai (aka tuff) and others ##
-##  URL: http://www.brandycoke.com/                                          ##
+##  Author of this file: Freeform Solutions 					     ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-$adminmenu[0]['title'] = _MI_formulize_ADMENU0;
-$adminmenu[0]['link'] = "admin/formindex.php";
-$adminmenu[1]['title'] = _MI_formulize_ADMENU1;
-$adminmenu[1]['link'] = "admin/menu_index.php";
+// THE ACTUAL QUERY OF DATA FROM THE DATABASE TO DISPLAY ENTRIES
+// apply the groupscope param to the query (query with the whole userlist)
+if($gscopeparam)
+{
+	$queryjwe = "SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND ($gscopeparam) $userreportingquery ORDER BY id_req";
+}
+else
+{
+	$queryjwe = "SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid $userreportingquery ORDER BY id_req";
+}
+//print "initial req query: $queryjwe<br>";
+$recordsjwe = mysql_query($queryjwe);
+
+
+$previndex = "none";
+array ($totalresultarray);
+$totalentriesindex = 0;
+while ($rowjwe = mysql_fetch_row($recordsjwe)) // go through result row by row.
+{
+//		$totalresultarray[$totalentriesindex] = $rowjwe;
+		$finalselectidreq[$totalentriesindex] = $rowjwe[0];
+//		$finalselectidele[$totalentriesindex] = $rowjwe[0];
+		$totalentriesindex++;
+}
+
+// redo the query this time going only by id_req!
+// first make a query expression out of all the reqids...
+
+$finalreqq = "";
+
+//remove duplicates from arrays to give us a count of the number of records to loop through
+$finalselectidreq = array_unique($finalselectidreq);
+//	print_r($finalselectidreq);
+
+$atleastonereq = 0;
+if($finalselectidreq[0]) // if there is at least one entry found...
+{
+$atleastonereq = 1;
+$freq = 0;
+foreach($finalselectidreq as $thisfinalreq)
+{
+	if($freq == 0)
+	{
+		$finalreqq .= "id_req=$thisfinalreq"; 
+	}
+	else
+	{
+		$finalreqq .= " OR id_req=$thisfinalreq"; 
+	}
+	$freq++;
+}
+
+$totalentriesindex = 0;
+$realqueryjwe = "SELECT id_req, ele_caption, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE $finalreqq ORDER BY id_req";
+
+//print "<br>realquery: $realqueryjwe<br>";
+
+$realrecordsjwe = mysql_query($realqueryjwe);
+
+while($realrowjwe = mysql_fetch_row($realrecordsjwe))
+{
+		$totalresultarray[$totalentriesindex] = $realrowjwe;
+		$finalselectidreq[$totalentriesindex] = $realrowjwe[0];
+
+		$totalentriesindex++;
+}
+
+$finalselectidreq = array_unique($finalselectidreq);
+sort($finalselectidreq);
+/*print "totalresultarray:<br>";
+print_r($totalresultarray);
+print "<br>totalentriesindex = $totalentriesindex<br>";*/
+} // end of if-there-is-at-least-one-entry-found
+
 ?>

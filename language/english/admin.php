@@ -20,16 +20,16 @@ define("_AM_ELE_ORDER","Order");
 define("_AM_ELE_DISPLAY","Display");
 
 define("_AM_ELE_TEXT","Text box");
-define("_AM_ELE_TEXT_DESC","{UNAME} will print user name;<br />{EMAIL} will print user email");
+define("_AM_ELE_TEXT_DESC","{NAME} will print full name;<br />{UNAME} will print user name;<br />{EMAIL} will print user email");
 define("_AM_ELE_TAREA","Text area");
-define("_AM_ELE_MODIF","Text area which can't be changed");
+define("_AM_ELE_MODIF","Text for display");
 define("_AM_ELE_SELECT","Select box");
 define("_AM_ELE_CHECK","Check boxes");
 define("_AM_ELE_RADIO","Radio buttons");
 define("_AM_ELE_YN","Simple yes/no radio buttons");
 define("_AM_ELE_DATE","Date");
 define("_AM_ELE_REQ_USELESS","Not usable for select box, check boxes nor radio buttons");
-define("_AM_ELE_SEP","Break up ligne");
+define("_AM_ELE_SEP","Break up line");
 define("_AM_ELE_NOM_SEP","Break up name");
 define("_AM_ELE_UPLOAD","Join a file");
 define("_AM_ELE_CLR","with the color");
@@ -41,7 +41,7 @@ define("_AM_ELE_COLS","Columns");
 define("_AM_ELE_OPT","Options");
 define("_AM_ELE_OPT_DESC","Tick the check boxes for selecting default values");
 define("_AM_ELE_OPT_DESC1","<br />Only the first checked is used if multiple selection is not allowed");
-define("_AM_ELE_OPT_DESC2","Select the default value by checking the radio buttons");
+define("_AM_ELE_OPT_DESC2","Select the default value by checking the radio buttons<br>Boxes with no text in them will be ignored when you click <i>Save</i>");
 define("_AM_ELE_ADD_OPT","Add %s options");
 define("_AM_ELE_ADD_OPT_SUBMIT","Add");
 define("_AM_ELE_SELECTED","Selected");
@@ -110,6 +110,7 @@ define("_AM_MAINMENUSTYLE","MainMenu-Style");
 
 define("_AM_VERSION","1.0");
 define("_AM_REORD","New sort");
+define("_AM_SAVE_CHANGES","Save Changes");
 
 define("_formulize_CAPTION_MATCH", "The caption you entered is already in use. A '2' has been appended to it.");
 define("_formulize_CAPTION_QUOTES", "Captions cannot have quotes. They have been removed.");
@@ -117,6 +118,13 @@ define("_formulize_CAPTION_SLASH", "Captions cannot have backslashes. They have 
 define("_formulize_CAPTION_LT", "Captions cannot have < signs. They have been removed.");
 define("_formulize_CAPTION_GT", "Captions cannot have > signs. They have been removed.");
 
+define("_AM_VIEW_FORM", "View the form");
+define("_AM_GOTO_PARAMS", "Edit the form's settings");
+define("_AM_PARAMS_EXTRA", "(Specify what elements appear<br>on the <i>View Entries</i> page)");
+define("_AM_GOTO_MAIN", "Return to main page");
 
+define("_AM_CLEAR_DEFAULT", "Clear Default");
 
+define("_AM_SAVING_CHANGES", "Saving Changes");
+define("_AM_EDIT_ELEMENTS", "Edit the form's elements");
 ?>

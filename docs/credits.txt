@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------------------------
 // Module name: 	modules/formulize/index.php
 // Author of module:	Freeform Solutions
-// Purpose of module: 	Multiple Forms generator and Data Analyzer
+// Purpose of module: 	ad hoc form creation and reporting system
 // -----------------------------------------------------------------------------------------------
 // This module is based on the XOOPS modules "Formulaire", "Liaise" and "Mymenu"
 // -----------------------------------------------------------------------------------------------

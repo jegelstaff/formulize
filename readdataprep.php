@@ -1,4 +1,4 @@
-<?php
+<?
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
 ##                    Copyright (c) 2004 Freeform Solutions                  ##
@@ -33,8 +33,37 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-$adminmenu[0]['title'] = _MI_formulize_ADMENU0;
-$adminmenu[0]['link'] = "admin/formindex.php";
-$adminmenu[1]['title'] = _MI_formulize_ADMENU1;
-$adminmenu[1]['link'] = "admin/menu_index.php";
+
+
+	$myts =& MyTextSanitizer::getInstance();
+	$msg = '';
+	$i=0;
+	unset($_POST['submit']);
+	foreach( $_POST as $k => $v ){
+		if( preg_match('/ele_/', $k)){
+			$n = explode("_", $k);
+			$ele[$n[1]] = $v;
+			$id[$n[1]] = $n[1];
+		}
+		if($k == 'xoops_upload_file'){
+			$tmp = $k;
+			$k = $v[0];			
+			$v = $tmp;
+			$n = explode("_", $k);
+			$ele[$n[1]] = $v;
+			$id[$n[1]] = $n[1];
+		}
+	}
+	
+	$sql = $xoopsDB->query("SELECT id_req from " . $xoopsDB->prefix("form_form")." order by id_req DESC");
+	list($id_req) = $xoopsDB->fetchRow($sql);
+	if ($id_req == 0) { $num_id = 1; }
+	else if ($num_id <= $id_req) $num_id = $id_req + 1;
+
+
+	$up = array();
+	$desc_form = array();
+	$value = null;
 ?>
+	
+

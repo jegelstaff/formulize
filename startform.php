@@ -1,4 +1,4 @@
-<?php
+<?
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
 ##                    Copyright (c) 2004 Freeform Solutions                  ##
@@ -33,8 +33,55 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-$adminmenu[0]['title'] = _MI_formulize_ADMENU0;
-$adminmenu[0]['link'] = "admin/formindex.php";
-$adminmenu[1]['title'] = _MI_formulize_ADMENU1;
-$adminmenu[1]['link'] = "admin/menu_index.php";
+
+$result_form = $xoopsDB->query("SELECT margintop, marginbottom, itemurl, status FROM ".$xoopsDB->prefix("form_menu")." WHERE menuid='".$id_form);
+       
+$res_mod = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulize'");
+if ($res_mod) {
+	while ($row = mysql_fetch_row($res_mod))
+		$module_id = $row[0];
+}
+
+$gperm_handler =& xoops_gethandler('groupperm');
+
+if ($result_form) {
+	while ($row = mysql_fetch_row ($result_form)) {
+		$margintop = $row[0];
+		$marginbottom = $row[1];
+		$itemurl = $row[2];
+		$status = $row[3];
+	}
+}
+else $status = 0;
+
+if ( $status == 1 ) {
+	$groupid = array();
+        $res2 = $xoopsDB->query("SELECT gperm_groupid,gperm_itemid FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_itemid= ".$menuid." AND gperm_modid=".$module_id);
+	if ( $res2 ) {
+	  while ( $row = mysql_fetch_row ( $res2 ) ) {
+		$groupid[] = $row[0];
+	  }
+	}
+
+	$block['content'] .= "<ul>";
+        $display = 0;
+	$perm_itemid = $menuid; //intval($_GET['category_id']);
+        foreach ($groupid as $gr){
+               	if ( in_array ($gr, $groupuser) && $display != 1) {
+               		$block['content'] .= "<table cellspacing='0' border='0'><tr><td><li><div style='margin-left: $indent px; margin-right: 0; margin-top: $margintop px; margin-bottom: $marginbottom px;'>
+               		<a style='font-weight: normal' href='$itemurl'>$title</a></li></td></tr></table>";
+               		$display = 1;
+               	}
+               	else redirect_header(XOOPS_URL."/modules/formulize/index.php", 1, "pas la permission !!!");
+        }
+        $block['content'] .= "</ul>";
+}
+
+
+
+// following line modified to remove the name of the module from before the form's own name - jwe 07/23/04
+$form2 = "<center><h3>$title</h3></center>";
+     	//include_once(XOOPS_ROOT_PATH . "/class/uploader.php");
+include_once(XOOPS_ROOT_PATH . "/modules/formulize/upload_FA.php");
+
 ?>

@@ -1,9 +1,8 @@
-<?php
+<?
+
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
 ##                    Copyright (c) 2004 Freeform Solutions                  ##
-##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
-##                       <http://www.brandycoke.com/>                        ##
 ###############################################################################
 ##                    XOOPS - PHP Content Management System                  ##
 ##                       Copyright (c) 2000 XOOPS.org                        ##
@@ -28,13 +27,52 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions and NS Tai (aka tuff) and others ##
-##  URL: http://www.brandycoke.com/                                          ##
+##  Author of this file: Freeform Solutions 					     ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
+//============ start of sorting handling that sends info to template (and excludes multiple entry form elements (ie: checkboxes))
+//Filter the reqFieldsJwe for the fields we allow sorting on.
+$sortq = "SELECT ele_caption, ele_value FROM ". $xoopsDB->prefix("form") . " WHERE id_form = $id_form AND (ele_type = \"checkbox\" OR (ele_type = \"select\" AND ele_value REGEXP \"^.{19}1\")) ORDER BY ele_order";
+$ressortq = mysql_query($sortq);
+$sortarrayb = 0;
+while ($rowsortq = mysql_fetch_row($ressortq))
+{
+	$sortcheckarray[$sortarrayb] =  $rowsortq[0];
+	$sortarrayb++;
+}
 
-$adminmenu[0]['title'] = _MI_formulize_ADMENU0;
-$adminmenu[0]['link'] = "admin/formindex.php";
-$adminmenu[1]['title'] = _MI_formulize_ADMENU1;
-$adminmenu[1]['link'] = "admin/menu_index.php";
+//print_r($sortcheckarray);
+
+$sortarrayb = 0;
+$allowedsort = -1;
+foreach($reqFieldsJwe as $onefield)
+{
+	if(!in_array($onefield, $sortcheckarray))
+	{
+		$reqSortFields[$sortarrayb] = $onefield;
+		$allowedsort++;
+	}
+	else
+	{
+		$reqSortFields[$sortarrayb] = "";
+	}
+	$sortarrayb++;
+}
+$xoopsTpl->assign('tempcaptionssort', $reqSortFields);
+
+//set the array that has 1,2,3,4,5 etc for using in the sort priority drop downs
+	
+	$sortcreateindexer = 0;
+	array($sort_indexes);
+	for($sl=0;$sl<=$allowedsort;$sl++) // by controlling the '<=' you can control the number of sorting order options. 
+	{
+		$sort_indexes[$sortcreateindexer] = $sortcreateindexer+1;
+		$sortcreateindexer++;
+	}
+	$xoopsTpl->assign('sort_index_array', $sort_indexes);
+// ================= end of sorting handling for template
+
+
+//7th array element after exploding ele_value on means multiple select box if it starts with 1.
+//a:3:{i:0;i:1;i:1;i:0
 ?>

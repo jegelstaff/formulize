@@ -1,4 +1,37 @@
 <?php
+###############################################################################
+##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
+##                    Copyright (c) 2004 Freeform Solutions                  ##
+##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
+##                       <http://www.brandycoke.com/>                        ##
+###############################################################################
+##                    XOOPS - PHP Content Management System                  ##
+##                       Copyright (c) 2000 XOOPS.org                        ##
+##                          <http://www.xoops.org/>                          ##
+###############################################################################
+##  This program is free software; you can redistribute it and/or modify     ##
+##  it under the terms of the GNU General Public License as published by     ##
+##  the Free Software Foundation; either version 2 of the License, or        ##
+##  (at your option) any later version.                                      ##
+##                                                                           ##
+##  You may not change or alter any portion of this comment or credits       ##
+##  of supporting developers from this source code or any supporting         ##
+##  source code which is considered copyrighted (c) material of the          ##
+##  original comment or credit authors.                                      ##
+##                                                                           ##
+##  This program is distributed in the hope that it will be useful,          ##
+##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
+##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
+##  GNU General Public License for more details.                             ##
+##                                                                           ##
+##  You should have received a copy of the GNU General Public License        ##
+##  along with this program; if not, write to the Free Software              ##
+##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
+###############################################################################
+##  Author of this file: Freeform Solutions and NS Tai (aka tuff) and others ##
+##  URL: http://www.brandycoke.com/                                          ##
+##  Project: Formulize                                                       ##
+###############################################################################
 
 include("admin_header.php");
 
@@ -98,9 +131,10 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	echo '<tr><td class="head" ALIGN=center>'._FORM_CREAT.'</td>
 	      <td class="odd"><A HREF="mailindex.php">
 	      <center><img src="../images/filenew2.png" alt='._FORM_NEW.'>  </center></a></td></tr>';
-	echo '<tr><td class="head" ALIGN=center>'._FORM_EXPORT.'</td>
-	      <td class="odd"><A HREF="export.php">
-	      <center><img src="../images/xls.png" alt='._FORM_ALT_EXPORT.'>  </center></a></td></tr>';
+	//old export section, not used any more
+	//echo '<tr><td class="head" ALIGN=center>'._FORM_EXPORT.'</td>
+	//      <td class="odd"><A HREF="export.php">
+	//      <center><img src="../images/xls.png" alt='._FORM_ALT_EXPORT.'>  </center></a></td></tr>';
 	echo '<tr><td class="head" ALIGN=center>'._FORM_MODPERM.'</td>
 	      <td class="odd"><A HREF="formindex.php?op=permform">
 	      <center><img src="../images/perm.png" alt='._FORM_PERM.'> </center></a></td></tr>';
@@ -120,7 +154,8 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	   
 	   echo '<A HREF="formindex.php?title='.$id.'&op=modform">  <img src="../images/kedit.png" alt='._FORM_MODIF.'>  </a>';
 	   
-	   echo '<A HREF="formindex.php?title='.$id.'&op=showform">  <img src="../images/kfind.png" alt='._FORM_SHOW.'>  </a>';	   
+	   //old display entries section, not used anymore 
+	   //echo '<A HREF="formindex.php?title='.$id.'&op=showform">  <img src="../images/kfind.png" alt='._FORM_SHOW.'>  </a>';	   
 
 	   echo '<A HREF="mailindex.php?title='.$titre.'">  <img src="../images/xfmail.png" alt='._FORM_ADD.'>  </a></td>';	   
 	}
@@ -388,7 +423,7 @@ function permform()
 		print "	}\n";
 		print "//--></script>\n\n";
 
-	print "<table class='outer' cellspacing='1'><tr><td class=head><center><form name=permselect action=formindex.php?op=permform method=post>\n";
+	print "<table><tr><td valign=top><table class='outer' cellspacing='1'><tr><td class=head><center><form name=permselect action=formindex.php?op=permform method=post>\n";
 	print "<p><b>" . _AM_FORM_CURPERM . "</b><br>";
 	print "<SELECT name=currentperm size=1 onChange='redrawpage(document.permselect.currentperm.value)'>\n";
 	print "<option value=view";
@@ -410,6 +445,10 @@ function permform()
 	}
 	print ">" . _AM_FORM_PERMADMIN . "</option>\n";
 	print "</SELECT></p></form></center></td></tr></table>\n";
+
+	print '</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td valign=top>';
+	print '<center><a href="../admin/formindex.php">' . _AM_GOTO_MAIN . ' <br><img src="../images/formulize.gif" height=35></a></center></td></tr></table>';
+
 
 	$title_of_form = "";
 	$perm_name = $currentperm;

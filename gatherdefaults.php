@@ -1,9 +1,8 @@
-<?php
+<?
+
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
 ##                    Copyright (c) 2004 Freeform Solutions                  ##
-##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
-##                       <http://www.brandycoke.com/>                        ##
 ###############################################################################
 ##                    XOOPS - PHP Content Management System                  ##
 ##                       Copyright (c) 2000 XOOPS.org                        ##
@@ -28,13 +27,44 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions and NS Tai (aka tuff) and others ##
-##  URL: http://www.brandycoke.com/                                          ##
+##  Author of this file: Freeform Solutions 					     ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-$adminmenu[0]['title'] = _MI_formulize_ADMENU0;
-$adminmenu[0]['link'] = "admin/formindex.php";
-$adminmenu[1]['title'] = _MI_formulize_ADMENU1;
-$adminmenu[1]['link'] = "admin/menu_index.php";
+// gather the default values if needed
+//print "**viewentry check: $viewentry";
+if($viewentry)
+{
+
+//replicate the veuid generation from above:
+// print "Viewentry: $viewentry<br>";
+// get the uid that belongs to the entry
+$getveuid = "SELECT uid FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req=$viewentry GROUP BY id_req";
+$resgetveuid = $xoopsDB->query($getveuid);
+$rowgetveuid = $xoopsDB->fetchRow($resgetveuid);
+$veuid = $rowgetveuid[0]; // the uid that belongs to the entry
+//print "VEUID is set: $veuid<br>";
+
+
+$viewqueryjwe = "SELECT ele_caption, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req=$viewentry";
+// print $viewqueryjwe; // debug line
+$resultViewQueryJwe = mysql_query($viewqueryjwe);
+
+array ($reqCaptionsJwe);
+array ($reqValuesJwe);
+
+while ($rowjwe = mysql_fetch_assoc($resultViewQueryJwe))
+{
+	//print_r($rowjwe);
+	$reqCaptionsJwe[] = $rowjwe["ele_caption"];
+	$reqValuesJwe[] = $rowjwe["ele_value"];
+}
+
+} // end of gathering the default values
+// end of the ELSE is way at the bottom of the page, to encompass the other conditions.
+
+
+
+// ---------------------------- end jwe mod
+
 ?>

@@ -1,4 +1,37 @@
 <?php
+###############################################################################
+##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
+##                    Copyright (c) 2004 Freeform Solutions                  ##
+##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
+##                       <http://www.brandycoke.com/>                        ##
+###############################################################################
+##                    XOOPS - PHP Content Management System                  ##
+##                       Copyright (c) 2000 XOOPS.org                        ##
+##                          <http://www.xoops.org/>                          ##
+###############################################################################
+##  This program is free software; you can redistribute it and/or modify     ##
+##  it under the terms of the GNU General Public License as published by     ##
+##  the Free Software Foundation; either version 2 of the License, or        ##
+##  (at your option) any later version.                                      ##
+##                                                                           ##
+##  You may not change or alter any portion of this comment or credits       ##
+##  of supporting developers from this source code or any supporting         ##
+##  source code which is considered copyrighted (c) material of the          ##
+##  original comment or credit authors.                                      ##
+##                                                                           ##
+##  This program is distributed in the hope that it will be useful,          ##
+##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
+##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
+##  GNU General Public License for more details.                             ##
+##                                                                           ##
+##  You should have received a copy of the GNU General Public License        ##
+##  along with this program; if not, write to the Free Software              ##
+##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
+###############################################################################
+##  Author of this file: Freeform Solutions and NS Tai (aka tuff) and others ##
+##  URL: http://www.brandycoke.com/                                          ##
+##  Project: Formulize                                                       ##
+###############################################################################
 include_once ("admin_header.php");
 include_once '../../../include/cp_header.php';
 
@@ -43,9 +76,10 @@ if( $_POST['op'] != 'save' ){
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=radio">'._AM_ELE_RADIO.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=yn">'._AM_ELE_YN.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=date">'._AM_ELE_DATE.'</a></td></tr>
-	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=sep">'._AM_ELE_SEP.'</a></td></tr>
-	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=upload">'._AM_ELE_UPLOAD.'</a></td></tr>
-	</table>';
+	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=sep">'._AM_ELE_SEP.'</a></td></tr>';
+	// upload not yet enabled in formulize (redisplay of file info not supported, upload itself not tested)
+	//<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=upload">'._AM_ELE_UPLOAD.'</a></td></tr>
+	echo '</table>';
 
 	echo ' <table class="outer" cellspacing="1" width="98%">
 		<tr>
@@ -71,10 +105,10 @@ if( $_POST['op'] != 'save' ){
 		$check_req = new XoopsFormCheckBox('', 'ele_req['.$id.']', $req);
 		$check_req->addOption(1, ' ');
 		//if( $ele_type == 'checkbox' || $ele_type == 'radio' || $ele_type == 'yn' || $ele_type == 'select' || $ele_type == 'date' || $ele_type== 'areamodif' || $ele_type == 'upload' || $ele_type == 'areamodif' || $ele_type == 'sep'){
-			$check_req->setExtra('disabled="disabled"');
+			$check_req->setExtra('disabled="disabled"'); 
 		//}
 		$order = $i->getVar('ele_order');
-		$text_order = new XoopsFormText('', 'ele_order['.$id.']', 3, 2, $order);
+		$text_order = new XoopsFormText('', 'ele_order['.$id.']', 3, 3, $order); // switched to 3 wide, jwe 01/06/05
 		$display = $i->getVar('ele_display');
 		$check_display = new XoopsFormCheckBox('', 'ele_display['.$id.']', $display);
 		$check_display->addOption(1, ' ');
@@ -93,7 +127,7 @@ if( $_POST['op'] != 'save' ){
 		echo '</tr>';
 	}
 	
-	$submit = new XoopsFormButton('', 'submit', _AM_REORD, 'submit');
+	$submit = new XoopsFormButton('', 'submit', _AM_SAVE_CHANGES, 'submit');
 	echo '
 		<tr>
 			<td class="foot" colspan="3"></td>
@@ -111,13 +145,18 @@ if( $_POST['op'] != 'save' ){
 	$error = '';
 	foreach( $ele_id as $id ){
 		$element =& $formulize_mgr->get($id);
-		$req = !empty($ele_req[$id]) ? 1 : 0;
-		$element->setVar('ele_req', $req);
+// required field not yet available for all types of elements, so we don't check for it here.
+//		$req = !empty($ele_req[$id]) ? 1 : 0;
+//		$element->setVar('ele_req', $req);
 		$order = !empty($ele_order[$id]) ? intval($ele_order[$id]) : 0;
 		$element->setVar('ele_order', $order);
 		$display = !empty($ele_display[$id]) ? 1 : 0;
 		$element->setVar('ele_display', $display);
-		$type = $element->getVar('ele_type');
+
+
+// COMMENTED ALL THE CODE BELOW THAT REWRITES ALL SETTINGS FOR AN ELEMENT, SINCE ALL WE WANT TO REWRITE IS THE SORT ORDER AND DISPLAY SETTINGS, AS CONTROLED ABOVE
+// jwe 12/21/04
+/*		$type = $element->getVar('ele_type');
 		$value = $element->getVar('ele_value');
 		if ($type == 'areamodif') $ele_value = $element->getVar('ele_value');
 		$ele_value[0] = eregi_replace("'", "`", $ele_value[0]);
@@ -227,20 +266,29 @@ if( $_POST['op'] != 'save' ){
 			break;
 		}
 		$element->setVar('ele_value', $value);
-		$element->setVar('id_form', $id_form);
+		$element->setVar('id_form', $id_form);*/
+// END OF COMMENTED CODE
+
+
 		if( !$formulize_mgr->insert($element) ){
 			$error .= $element->getHtmlErrors();
 		}
 	}
 	if( empty($error) ){
-		redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);
+//		redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);
+		redirect_header("index.php?title=$title", 0, _AM_SAVING_CHANGES);
 	}else{
 		xoops_cp_header();
 		echo error;
 	}
 }
 
-	echo '<center><a href="../index.php?title='.$title.'" target="_blank">Afficher le formulize <br><img src="../images/kdict.png"></a></center>';
+	echo '<center><table><tr><td valign=top><center><a href="../index.php?title='.$title.'" target="_blank">' . _AM_VIEW_FORM . ' <br><img src="../images/kfind.png"></a></center></td>';
+	echo '<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>';
+	echo '<td valign=top><center><a href="../admin/formindex.php">' . _AM_GOTO_MAIN . ' <br><img src="../images/formulize.gif" height=35></a></center></td>';
+	echo '<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>';
+	echo '<td valign=top><center><a href="../admin/mailindex.php?title='.$title.'">' . _AM_GOTO_PARAMS . ' <br><img src="../images/xfmail.png"></a><br>' . _AM_PARAMS_EXTRA . '</center></td>';
+	echo '</tr></table></center>';
 
 	//echo '<br><br>lien a insérer : &lt;a href&nbsp;="'.XOOPS_URL.'/modules/formulize/index.php?title='.$title.'">'.$title.'&lt;/a><br><br>';   
 

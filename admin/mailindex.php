@@ -1,4 +1,37 @@
 <?php
+###############################################################################
+##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
+##                    Copyright (c) 2004 Freeform Solutions                  ##
+##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
+##                       <http://www.brandycoke.com/>                        ##
+###############################################################################
+##                    XOOPS - PHP Content Management System                  ##
+##                       Copyright (c) 2000 XOOPS.org                        ##
+##                          <http://www.xoops.org/>                          ##
+###############################################################################
+##  This program is free software; you can redistribute it and/or modify     ##
+##  it under the terms of the GNU General Public License as published by     ##
+##  the Free Software Foundation; either version 2 of the License, or        ##
+##  (at your option) any later version.                                      ##
+##                                                                           ##
+##  You may not change or alter any portion of this comment or credits       ##
+##  of supporting developers from this source code or any supporting         ##
+##  source code which is considered copyrighted (c) material of the          ##
+##  original comment or credit authors.                                      ##
+##                                                                           ##
+##  This program is distributed in the hope that it will be useful,          ##
+##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
+##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
+##  GNU General Public License for more details.                             ##
+##                                                                           ##
+##  You should have received a copy of the GNU General Public License        ##
+##  along with this program; if not, write to the Free Software              ##
+##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
+###############################################################################
+##  Author of this file: Freeform Solutions and NS Tai (aka tuff) and others ##
+##  URL: http://www.brandycoke.com/                                          ##
+##  Project: Formulize                                                       ##
+###############################################################################
 
 include("admin_header.php");
 include_once '../../../include/cp_header.php';
@@ -101,10 +134,13 @@ if( $_POST['op'] != 'upform' && $op != 'addform'){
 		
 		echo '<table class="outer" cellspacing="1" width="100%">
 		<th colspan="4">'._FORM_MODIF.'</th>';
-		echo '
-		<tr><td class="head" ><center>'._FORM_EMAIL.'</center></td>
+		
+
+// old formulaire options that are not used anymore...
+/*
+		echo '<tr><td class="head" ><center>'._FORM_EMAIL.'</center></td>
 		<td class="even"><input maxlength="255" size="30" id="email" name="email" type="text" value='.$email.'></td></tr>';
-	}
+*/	}
 	else {
 		echo '
 		<form action="mailindex.php?op=addform" method="post">
@@ -118,25 +154,16 @@ if( $_POST['op'] != 'upform' && $op != 'addform'){
 		
 		<tr><td class="head" ><center>'._FORM_TITLE.'</center></td>
 		<td class="even"><input maxlength="255" size="30" id="newtitle" name="newtitle" type="text"></td></tr>';
-	
-/*	// Affichage des droits du formulize
-		echo '<tr><td class="head"><center>'._FORM_DROIT.'</center></td>
-			<td class="even"><select name="auto" size="4">';
-		for($i=0;$i<$m;$i++) {
-			echo '        <option value='.$tab[$i].''; 
-			if($title != '' && $tab[$i]==$groupe) {echo " SELECTED";}  
-			echo '>';
-					echo $tab2[$i];
-			echo '</option>';
-		}		
-		echo '</select></td></tr>';*/
-			
-		echo '
+
+// old formulaire options that are not used anymore...
+/*		echo '
 		<tr><td class="head" ><center>'._FORM_EMAIL.'</center></td>
 		<td class="even"><input maxlength="255" size="30" id="email" name="email" type="text"></td></tr>';
-
+*/
 	}		
 
+// old formulaire options that are not used anymore...
+/*
 echo '	<tr><td class="head"><center>'._FORM_GROUP.'</center></td><td class="even"><select name="groupe" size="4">';
 	
 for($i=0;$i<$m;$i++) {
@@ -163,7 +190,7 @@ echo '
 	<input name="expe" type="checkbox" id="expe" checked></td>';}
 	else {echo '
 	<input name="expe" type="checkbox" id="expe" ></td>';}
-
+*/
 // *******
 // added new form params to enable new features (single-entry and group-scope) -- jwe 7/25/04
 // *******
@@ -196,14 +223,15 @@ echo '</tr>';
 
 echo '</tr>';
 
-	echo '<tr>
+// Max entries feature not implemented yet
+/*	echo '<tr>
 	<td class="head"><center>'._FORM_MAXENTRIES.'</center></td><td class="even">';
 	if ($title != '' && $maxentries) {echo '
 	<input name="maxentries" type="textbox" id="maxentries" size=5 value=' . $maxentries . '></td>';}
 	else {echo '
 	<input name="maxentries" type="textbox" id="maxentries" size=5 value=0></td>';}
 
-echo '</tr>';
+echo '</tr>';*/
 
 // add in the even/odd colour override controls for report writing page -- added by jwe 9/02/04
 
@@ -379,6 +407,17 @@ echo '</table>
 	
 	echo '</form>';
 
+	// navigation elements for bottom of page -- jwe 01/06/05
+	echo '<center><table><tr>';
+	
+	if($title != '') { 
+		echo '<center><table><tr><td valign=top><center><a href="../admin/index.php?title='.$title.'" target="_blank">' . _AM_EDIT_ELEMENTS . ' <br><img src="../images/kedit.png"></a></center></td>';
+		echo '<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>';
+	}		
+	
+	echo '<td valign=top><center><a href="../admin/formindex.php">' . _AM_GOTO_MAIN . ' <br><img src="../images/formulize.gif" height=35></a></center></td>';
+	echo '</tr></table></center>';
+
 }
 
 
@@ -516,6 +555,8 @@ case "addform":
 	addform();
 	break;
 }
+
+
 
 include 'footer.php';
 xoops_cp_footer();
