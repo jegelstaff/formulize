@@ -1,0 +1,31 @@
+Module Formulaire :
+
+C’est un générateur de formulaire. Il permet ainsi de gérer plusieurs formulaires. 
+
+Partie administrateur. On trouve deux pages : les préférences et la page de gestion des formulaires.
+
+La page de gestion des formulaires contient quatre éléments : Créer un formulaire, Renommer un formulaire, Supprimer un formulaire et Modifier un formulaire.
+
+Lorsque l’on crée un formulaire, on lui donne un nom sur la page de gestion, on saisit une adresse email, on choisit ensuite si on envoie le mail uniquement à l’administrateur et on choisit le groupe à qui envoyer puis on appuie sur le bouton soumettre. 
+
+On arrive alors sur une deuxième page. On trouve alors un rappel du formulaire sur lequel on travaille. Il est possible d'ajouter des éléments et de visualiser le formulaire aussitôt. 
+On trouve en bas de la page un lien direct vers la page utilisateur permettant de remplir le formulaire et de l’envoyer.
+
+Traitement pour l'envoi du mail : si l'on décide de n'envoyer le mail qu'à l'administrateur, il ne sera envoyé qu'à lui même si un groupe est sélectionné et qu'il y a une adresse email saisie, sinon, on envoie à la fois au groupe choisi et à l'adresse saisie (à part si un des champs est vide, dans ce cas le mail n'est envoyé qu'à celui rempli).
+Au moins un destinataire doit être saisi.
+
+Il est possible d’ajouter 6 types d’éléments : des test box (courte zone de texte), des text area (grande zone de texte avec plusieurs lignes possibles pour la réponse), des select box (boite de sélection), des check boxes (cases carrées à cocher), des radio buttons (boutons ronds à cocher) et enfin des boutons oui/non.
+Chaque élément peut être configuré. Il est ainsi possible de mettre un titre c’est à dire ce à quoi l’élément correspond (ex : nom, prénom …), de configurer la taille de l’élément (nombre de ligne), de mettre des valeurs par défaut, d’afficher l’élément ou non, de le rendre obligatoire, de choisir dans quel ordre les éléments vont devoir être affichés.
+De plus pour les select box, on peut autoriser la sélection multiple.
+Pour les radio buttons et les check boxes, il est possible d’afficher plusieurs cases à cocher pour un seul élément. On peut ainsi en ajouter autant que l’on veut et chacun a aussi son propre titre.
+
+Pour renommer un formulaire, on a un champ texte dans lequel on tape le nouveau nom du formulaire et une liste déroulante dans laquelle on trouve tous les formulaires présents. Une fois ceci rempli, il suffit d’appuyer sur le bouton soumettre.
+
+Ensuite pour supprimer un formulaire, on le sélectionne dans la liste déroulante et on valide. A ce moment là, le formulaire est effacé dans la table des formulaires mais on supprime aussi tous les éléments qui correspondaient à ce formulaire dans la seconde table ainsi que l'élément dans le menu.
+
+Enfin après avoir crée un formulaire, il est possible de revenir dessus pour le modifier. Pour cela, on sélectionne le formulaire dans une liste déroulante et on valide. On arrive alors sur une nouvelle page. Cette page permet de modifier les choix au niveau des envois de mails. Une fois ceci validé, on retrouve la page d’ajout des éléments et de visualisation du formulaire avec possibilité d’ajouter des éléments ou de modifier ceux déjà présents.
+Préférences pour le module. Il est possible de configurer la taille par défaut des différents éléments et de choisir le moyen d'envoi des formulaires (message privé ou email). 
+
+Partie utilisateur, on trouve des liens dans un sous menu vers chaque formulaire.
+Chaque lien amène donc au formulaire sélectionné. Il y a donc affichage des différents champs. L’utilisateur rempli ou sélectionne ce qu’il veut. Une fois terminé, il soumet le formulaire en appuyant sur le bouton soumettre. Le formulaire est alors envoyé et un message indiquant le bon traitement du formulaire est affiché à l’écran.
+

@@ -1,0 +1,50 @@
+Problème d'accès pour les anonymes :
+
+- Mettre à 0 (caché) le module formulaire dans la page de gestion des modules.
+- Donner l'accès (Droit d'accès des modules) via la gestion des groupes aux anonymes.
+
+
+les problèmes du calendrier sont dûs à xoops et non au module.
+en effet le formulaire utilise les classes de xoops ce qui cause bien des soucis. 
+Les fichiers langues de xoops ne modifient pas les formats de date de ce calendrier.
+de la même manière l'affichage au format anglais et sa mauvaise interpretation viennent du script.
+
+Pour corriger cela il faut modifier xoops.
+dans /include/calendarjs.php il faut modifier le format à la fin du fichier :
+// date formatsCalendar._TT["DEF_DATE_FORMAT"] = "y-mm-dd";Calendar._TT["TT_DATE_FORMAT"] = "y-mm-dd";de la manière classique en français
+// date formatsCalendar._TT["DEF_DATE_FORMAT"] = "dd-mm-y";Calendar._TT["TT_DATE_FORMAT"] = "dd-mm-y";
+
+Il faut aussi modifier le fichier langue associé pour résoudre les problème d'accent :
+<?php// $Id: calendar.php,v 1.2 2003/02/20 14:14:24 w4z004 Exp $
+//%%%%%		Time Zone	%%%%
+define("_CAL_SUNDAY", "Dimanche");
+define("_CAL_MONDAY", "Lundi");
+define("_CAL_TUESDAY", "Mardi");
+define("_CAL_WEDNESDAY", "Mercredi");
+define("_CAL_THURSDAY", "Jeudi");
+define("_CAL_FRIDAY", "Vendredi");
+define("_CAL_SATURDAY", "Samedi");
+define("_CAL_JANUARY", "Janvier");
+define("_CAL_FEBRUARY", "Février");
+define("_CAL_MARCH", "Mars");
+define("_CAL_APRIL", "Avril");
+define("_CAL_MAY", "Mai");
+define("_CAL_JUNE", "Juin");
+define("_CAL_JULY", "Juillet");
+define("_CAL_AUGUST", "Août");
+define("_CAL_SEPTEMBER", "Septembre");
+define("_CAL_OCTOBER", "Octobre");
+define("_CAL_NOVEMBER", "Novembre");
+define("_CAL_DECEMBER", "Décembre");
+define("_CAL_TGL1STD", "Basculer le premier jour de semaine");
+define("_CAL_PREVYR", "Année précédente (Maintenir pour le menu)");
+define("_CAL_PREVMNTH", "Mois précédent (Maintenir pour le menu)");d
+efine("_CAL_GOTODAY", "Aller à aujourd'hui");
+define("_CAL_NXTMNTH", "Mois suivant (Maintenir pour le menu)");
+define("_CAL_NEXTYR", "Année suivante (Maintenir pour le menu)");
+define("_CAL_SELDATE", "Sélectionner une date");
+define("_CAL_DRAGMOVE", "Glisser pour déplacer");
+define("_CAL_TODAY", "Aujourd'hui");define("_CAL_DISPM1ST", "Afficher Lundi en premier");
+define("_CAL_DISPS1ST", "Afficher Dimanche en premier");?>
+
+Ces problèmes sont donc externes au module en lui même... 

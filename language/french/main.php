@@ -1,0 +1,60 @@
+<?php
+define("_FORMULAIRE_FORM_TITLE","Contactez nous en remplissant ce formulaire.");
+//define("_FORMULAIRE_MSG_SUBJECT",$xoopsConfig['sitename'].' - Contact Us Form');
+define("_FORMULAIRE_MSG_SUBJECT", '['.$xoopsConfig['sitename'].'] -');
+define("_FORMULAIRE_MSG_FORM", ' Formulaire : ');
+define("_FORMULAIRE_MSG_SENT","Votre message a été envoyé.");
+define("_FORMULAIRE_MSG_THANK","<br />Merci pour vos commentaires.");
+define("_FORMULAIRE_MSG_SUP","<br /> Attention les enregistrements de ce formulaire ont été supprimés");
+define("_FORMULAIRE_MSG_UNSENT","Veuillez joindre un fichier de taille inférieure à ");
+define("_FORMULAIRE_MSG_BIG","Le fichier à joindre est trop gros pour être envoyé.");
+define("_FORMULAIRE_MSG_UNTYPE","Vous ne pouvez pas joindre de fichier de ce type.<br>Les types autorisés sont : ");
+
+define("_FORMULAIRE_NEWFORMADDED","Nouveau formulaire ajouté avec succès!");
+define("_FORMULAIRE_FORMMOD","Titre de formulaire modifié avec succès!");
+define("_FORMULAIRE_FORMDEL","Formulaire effacé avec succès!");
+define("_FORMULAIRE_FORMCHARG","Chargement du formulaire");
+define("_FORMULAIRE_FORMCREA","Formulaire créé avec succès!");
+
+define("_FORMULAIRE_NOTSHOW","Le formulaire ");
+define("_FORMULAIRE_NOTSHOW2"," ne contient pas de requêtes enregistrées.");
+define("_FORMULAIRE_FORMSHOW","Résultats du formulaire : ");
+define("_FORMULAIRE_FORMTITRE","Paramètres d'envoi du formulaire modifiés avec succès");
+
+define("_MD_ERRORTITLE","Erreur ! Vous n'avez pas rentré de titre de formulaire !!!!");
+define("_MD_ERROREMAIL","Erreur ! L'adresse e-mail n'est pas valide !!!!");
+define("_MD_ERRORMAIL","Erreur ! Vous n'avez pas rentré de destinataire pour le formulaire !!!!");
+define("_ERROR_PERM","Vous n'avez pas le droit d'accéder à ce formulaire");
+
+define("_FORM_ACT","Action");
+define("_FORM_CREAT","Créer un nouveau formulaire");
+define("_FORM_RENOM","Renommer");
+define("_FORM_RENOM_IMG","<img src='../images/attach.png'>");
+define("_FORM_SUP", "Supprimer");
+define("_FORM_ADD","Paramètres d'envoi");
+define("_FORM_SHOW","Consulter les résultats");
+define("_FORM_MODIF","Modifier");
+define("_FORM_TITLE","Titre du formulaire : ");
+define("_FORM_EMAIL","Adresse E-mail :");
+define("_FORM_ADMIN","Envoyer uniquement à l'admin :");
+define("_FORM_EXPE","Recevoir le formulaire rempli :");
+define("_FORM_GROUP","Envoyer au groupe :");
+define("_FORM_DELTITLE","Titre du formulaire à effacer :");
+define("_FORM_NEW","Nouveau formulaire");
+define("_FORM_NOM","Entrer le nouveau nom du formulaire");
+define("_FORM_OPT","Options");
+define("_FORM_MENU","Consulter le menu");
+define("_FORM_PREF","Consulter les préférences");
+define("_AM_FORMUL","Formulaires : ");
+define("_FORM_EXPORT","Exporter au format CSV");
+define("_FORM_ALT_EXPORT","Exporter");
+define("_FORM_DROIT","Groupes autorisés à utiliser ce formulaire");
+define("_FORM_MODPERM","Modifier les permissions d'accès aux formulaires");
+define("_FORM_PERM","Permissions");
+define("_AM_FORM","Formulaire : ");
+
+define("_AM_FORM_SELECT","Sélection du formulaire");
+define("_MD_FILEERROR","Erreur d'envoi du fichier");
+
+define("_FORM_EXP_CREE","Le fichier a été exporté avec succès");
+?>

@@ -1,0 +1,19 @@
+<{$formulaire.javascript}>
+<form name="<{$formulaire.name}>" action="<{$formulaire.action}>" method="<{$formulaire.method}>" <{$formulaire.extra}>>
+	<table cellspacing="1" class="outer"  width=98%>
+		<tr><th colspan="2"><{$formulaire.title}></th></tr>
+		<{foreach item=element from=$formulaire.elements}>
+		<{if $element.hidden != true}>
+		<tr>
+			<td class="head"><{$element.caption}></td>
+			<td class="<{cycle values="even,odd"}>"><{$element.body}></td>
+		</tr>
+		<{/if}>
+		<{/foreach}>
+	</table>
+	<{foreach item=element from=$formulaire.elements}>
+	<{if $element.hidden == true}>
+		<{$element.body}>
+	<{/if}>
+	<{/foreach}>
+</form>

@@ -1,0 +1,25 @@
+Formulaire;Requete;Titre;;;;Valeur
+;;;;;;
+
+1;1;Text area;;;;Voici un texte quelconque
+;;date de création;;;;10-06-2004
+;;Text box : nom de l`utilisateur;;;;marie
+;;Text box : adresse e-mail de l`utilisateur;;;;maire@dubuis.com 
+;;Radio button : un seul bouton peut être coché;;;;second bouton
+;;Check boxes;;;;:1ère option:3ème option:5ème option
+
+4;4;{SEPAR};;;;article
+;;fichier;;;;
+;;qualité;;;;jaune
+;;joui ou non;;;;1
+
+1;3;Text area;;;;Voici un texte quelconque
+;;date de création;;;;23-05-2004
+;;Text box : nom de l`utilisateur;;;;marie
+;;Text box : adresse e-mail de l`utilisateur;;;;maire@dubuis.com 
+;;Radio button : un seul bouton peut être coché;;;;second bouton
+;;Check boxes;;;;:1ère option:2ème option:3ème option:4ème option:5ème option
+;;Fichier joint;;;;
+;;Simple oui/ non radio buttons;;;;1
+;;{SEPAR};;;;Les informations commencent ici
+;;Texte area non modifiable;;;;Le champ suivant permet de créer autant d`options souhaitées. Elles sont ensuite à cocher par l`utilisateur
