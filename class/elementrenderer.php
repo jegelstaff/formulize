@@ -321,7 +321,7 @@ if($pguidq) { $pguidq .= ")"; } // close the pguidq if it has been started
 				//print "<br>" . strtotime("") . "<br>";
 				//print "<br>" . strtotime("now") . "<br>";
 
-				if($ele_value[0] == "") // if there's no value (ie: it's blank) ...
+				if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
 				{
 					//print "Bad date";
 				$form_ele = new XoopsFormTextDateSelect (

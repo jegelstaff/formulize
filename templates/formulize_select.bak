@@ -237,7 +237,6 @@
 		<td class=head valign=middle>
 		<center><h3><b><{$reportexporting}></b></h3>
 		<p><input type=submit name=export value=<{$exportreportbutton}>></p>
-		<input type=hidden name=reportselector value=<{$reportname}>>
 		</center>
 		</td><td class=even><p><{$exportexplanation}></p>
 		<p><b><{$filedeltitle}></b></p>
@@ -272,14 +271,7 @@
 		<tr>
 			<td class=head valign=middle>
 			<center><h4><b><{$searchterms}></b></h4>
-				<{if $globalandor == "or"}>
-				<p class=comDate><{$andortitle}><br><br><nobr><input type=radio name="globalandor" value=and><{$and}>&nbsp;&nbsp;
-				<input type=radio name="globalandor" value=or checked><{$or}></nobr></p>
-				<{else}>
-				<p class=comDate><{$andortitle}><br><br><nobr><input type=radio name="globalandor" value=and checked><{$and}>&nbsp;&nbsp;
-				<input type=radio name="globalandor" value=or><{$or}></nobr></p>
-				<{/if}>
-			<{* <p class=comDate><{$searchhelp}></p> *}></center>
+			<p class=comDate><{$searchhelp}></p></center>
 			</td>
 
 			<{assign var=counthack value=-1}>
@@ -456,7 +448,7 @@
 		 <tr>
 			<td class=head valign=middle>
 			<center><h4><b><{$sortingorder}></b></h4>
-			<{* <p class=comDate><{$sorthelp}></p> *}></center>
+			<p class=comDate><{$sorthelp}></p></center>
 			</td>
 			
 			<{assign var=counthack value=-1}>

@@ -222,8 +222,6 @@ function delform()
 	$perm_name = 'Permission des catégories';
 	//xoops_groupperm_deletebymoditem ($module_id>$perm_name>$id_form) ;
 
-	xoops_notification_deletebyitem ($module_id, "form", $id_form); // added by jwe-10/10/04 to handle removing notifications for a form once it's gone
-
 	redirect_header("formindex.php",3,_formulize_FORMDEL._formulize_MSG_SUP);
 }
 
@@ -265,12 +263,12 @@ function permlinks()
 
 	// NEED TO GATHER ALL LINKS INTO ARRAYS FOR DRAWING TO THE SELECTION BOX
 	$getlinksq = "SELECT id_form, ele_caption, ele_id FROM " . $xoopsDB->prefix("form") . " WHERE ele_type=\"select\" AND ele_value LIKE '%#*=:*%'";
-	// print "$getlinksq<br>";
+	print "$getlinksq<br>";
 	$resgetlinksq = $xoopsDB->query($getlinksq);
 	while ($rowlinksq = $xoopsDB->fetchRow($resgetlinksq))
 	{
-		//print_r($rowlinksq);
-		//print "<br>";
+		print_r($rowlinksq);
+		print "<br>";
 		$linkformids[] = $rowlinksq[0];
 		$linkcaptions[] = $rowlinksq[1];
 		$linkeleids[] = $rowlinksq[2];

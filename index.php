@@ -340,7 +340,6 @@ if(!$report)
 {
 	$report = $_GET['reportname'];
 }
-
 $showscope = 1; // controls display of the scope selection box.
 //if there is no groupscope, then do not showscope on reporting pages (unless the user is an admin)
 if(!$hasgroupscope AND !$isadmin)
@@ -377,6 +376,7 @@ if(isset($_POST['reportdelete']))
 }
 
 // GET A LIST OF AVAILABLE REPORTS
+// NOTE:  this code should be moved after the check for whether a report is allowed for the user (or that check should happen first) otherwise a report can be selected in the box which the user doesn't have perm for.  OR... the check below for isallowed could be done prior to reading the report and the check that is currently after could be deleted.  Code has to be checked closely before that change is made.
 //$userreportq = "SELECT report_id, report_name, report_groupids FROM " . $xoopsDB->prefix("form_reports") . " WHERE report_id_form=$id_form AND (report_uid=$uid OR report_ispublished=1) GROUP BY report_id ORDER BY report_id";
 $userreportq = "SELECT report_id, report_name FROM " . $xoopsDB->prefix("form_reports") . " WHERE report_id_form=$id_form AND (report_uid=$uid OR report_ispublished>0) GROUP BY report_id ORDER BY report_id";
 $resuserreportq = mysql_query($userreportq);
@@ -494,6 +494,7 @@ if($selectjwe) // if we're selecting entries...check to see that this form reall
 		$selectjwe = 1;
 	}
 }*/
+
 if($selectjwe) // if we're really selecting entries (cause we checked that they didn't just hack the URL)
 {
 
@@ -587,22 +588,31 @@ if($report) // if a report was specified...
 
 	$reportallowed = 0;
 	$candeletereport = 0;
-	if($report_uid == $uid) // if it's their own report...
+	if($report_uid == $uid OR $ismoduleadmin) // if it's their own report, or they're a module admin...
 	{
 		$reportallowed = 1;
 		$candeletereport = 1;
 	}
 	else
 	{
-		foreach($groupuser as $anothergid)
+		foreach($report_groupids as $anothergid)
 		{
-			if(in_array($anothergid, $report_groupids))
+			if(in_array($anothergid, $groupuser))
 			{
 				$reportallowed = 1;
 				break;
 			}
 		}
+//		foreach($groupuser as $anothergid)
+//		{
+//			if(in_array($anothergid, $report_groupids))
+//			{
+//				$reportallowed = 1;
+//				break;
+//			}
+//		}
 	}
+
 
 if($reportallowed)
 {
@@ -632,6 +642,16 @@ if($reportallowed)
 else
 {
 	$report=0;
+	// blank all settings derived from the report, due to user not having perm on the report
+	$reqFieldsJwe = "";
+	$ascdscArray = "";
+	$search_typeArray = "";
+	$search_textArray = "";
+	$andorArray = "";
+	$calc_typeArray = "";
+	$sort_orderArray = "";
+	$globalandor = "";
+
 }
 
 } // END OF if-A-REPORT HAS BEEN REQUESTED...
@@ -2006,6 +2026,40 @@ for($i=0;$i<=$totalentriesindex;$i++)
 	$selvals = $tempValsJwe;
 
 //=================
+
+array (entereduids);
+	// GET UIDS AND NAMES FROM THE FORM_FORM TABLE...
+	foreach($finalselectidreq as $finalreqs)
+	{
+		$queryfornames = "SELECT uid, date, proxyid FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req=$finalreqs ORDER BY id_req";
+		$resqfornames = mysql_query($queryfornames);
+		$rowqfornames = mysql_fetch_row($resqfornames);
+		$entereduids[] = $rowqfornames[0];
+		$entereddates[] = $rowqfornames[1];
+		// set proxy flags
+		if($rowqfornames[2]) // if there is a proxy entry
+		{
+			//print "proxy!<br>";
+			$proxystatus[] = _formulize_PROXYFLAG;
+		}
+		else
+		{
+			$proxystatus[] = "";
+		}
+		// set can delete flags
+		if($isadmin OR $uid == $rowqfornames[0])
+		{
+			$tempcandel[] = "1";
+		}
+		else
+		{
+			$tempcandel[] = "";
+		}
+	}
+	
+	//print_r($proxystatus);
+
+
 //perform summary calculations...
 //put data into columns...
 
@@ -2518,38 +2572,7 @@ if($calccolscounter) // now do the calculations...
 					$calcoutput .= "<ul><li>" . _formulize_MAXIMUM_TEXT . " $maxval</li></ul>";
 					$maxval = "";
 				}
-				/*if(strstr($thiscalcArray, "count"))
-				{
-					$countvals = count(${$colarrayname[$v]});
-					$multicount = 0;
-					$noblankscounter = 0;
-					foreach(${$colarrayname[$v]} as $thisreqsval)
-					{
-						if($thisreqsval)
-						{
-							$noblankscounter++;
-						}
-						if(strstr($thisreqsval, "*=+*:")) // if it's a multi...
-						{
-							$thismultival = explode("*=+*:", $thisreqsval);
-							$extra = count($thismultival);
-							$extra--;
-							$multicount = $multicount + $extra;
-						}
-					}
-					$countvals = $countvals + $multicount;
-					$nonblanks = $noblankscounter+$multicount;
-					$percentcount = round(($nonblanks/$countvals)*100, 2);
-	
 
-					$calcoutput .= "<h4>" . _formulize_COUNT . ":</h4>";
-					$calcoutput .= "<ul><li>" . _formulize_COUNT_INCLBLANKS . " $countvals</li>";
-					$calcoutput .= "<li>" . _formulize_COUNT_EXCLBLANKS . " $nonblanks</li>";
-					$calcoutput .= "<li>" . _formulize_COUNT_PERCENTBLANKS . " $percentcount%</li></ul>";				
-					$countvals = "";
-					$nonblanks = "";
-					$percentcount = "";
-				}*/
 				if(strstr($thiscalcArray, "percent") OR strstr($thiscalcArray, "count"))
 				{
 					array($valdist);
@@ -2571,7 +2594,6 @@ if($calccolscounter) // now do the calculations...
 						}
 					}
 					arsort($valdist);
-					// ==== duplicated from COUNT above
 					$countvals = count(${$colarrayname[$v]});
 					$multicount = 0;
 					$noblankscounter = 0;
@@ -2591,7 +2613,6 @@ if($calccolscounter) // now do the calculations...
 					}
 					$countvals = $countvals + $multicount;
 					$nonblanks = $noblankscounter+$multicount;
-					//===== end duplicated block
 
 					if(strstr($thiscalcArray, "count")) // if we're counting and NOT percentaging...
 					{
@@ -2600,15 +2621,24 @@ if($calccolscounter) // now do the calculations...
 
 					$theuniquekeys = array_keys($valdist);
 					$countuniquekeys = count($theuniquekeys);
-					
 
+					// count the unique number of users who have created entries
+					// 1. get array of user ids
+					// 2. count unique values
+					// 3. write out results to screen
+
+					$uniqueEnteredIds = array_unique($entereduids);
+					$nonuniqueCount = count($entereduids);
+					$uniqueCount = count($uniqueEnteredIds);
+			
 					$calcoutput .= "<h4>" . _formulize_COUNT . ":</h4>";
-					$calcoutput .= "<ul><li>" . _formulize_COUNT_UNIQUES . " $countuniquekeys</li>";		
+					$calcoutput .= "<ul><li>" . _formulize_COUNT_UNIQUEUSERS . " $uniqueCount<br>&nbsp;</li>";
+					$calcoutput .= "<li>" . _formulize_COUNT_ENTRIES . " $nonuniqueCount</li>";
+					$calcoutput .= "<li>" . _formulize_COUNT_NONBLANKS . " $noblankscounter<br>&nbsp;</li>";
 					$calcoutput .= "<li>" . _formulize_COUNT_INCLBLANKS . " $countvals</li>";
+					$calcoutput .= "<li>" . _formulize_COUNT_UNIQUES . " $countuniquekeys</li>";		
 					$calcoutput .= "<li>" . _formulize_COUNT_EXCLBLANKS . " $nonblanks</li>";
-					$calcoutput .= "<li>" . _formulize_COUNT_PERCENTBLANKS . " $percentcount%</li></ul>";	
-					
-
+					$calcoutput .= "<li>" . _formulize_COUNT_PERCENTBLANKS . " $percentcount%</li></ul>";
 
 					}
 					else // we're percentaging...
@@ -2676,41 +2706,10 @@ if($calccolscounter) // now do the calculations...
 		$xoopsTpl->assign('noentries', _formulize_TEMP_NOENTRIES);
 	}
 
-	array (entereduids);
-	// get uids and names from the form_form table...
-	foreach($finalselectidreq as $finalreqs)
-	{
-		$queryfornames = "SELECT uid, date, proxyid FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req=$finalreqs ORDER BY id_req";
-		$resqfornames = mysql_query($queryfornames);
-		$rowqfornames = mysql_fetch_row($resqfornames);
-		$entereduids[] = $rowqfornames[0];
-		$entereddates[] = $rowqfornames[1];
-		// set proxy flags
-		if($rowqfornames[2]) // if there is a proxy entry
-		{
-			//print "proxy!<br>";
-			$proxystatus[] = _formulize_PROXYFLAG;
-		}
-		else
-		{
-			$proxystatus[] = "";
-		}
-		// set can delete flags
-		if($isadmin OR $uid == $rowqfornames[0])
-		{
-			$tempcandel[] = "1";
-		}
-		else
-		{
-			$tempcandel[] = "";
-		}
-	}
-	
-	//print_r($proxystatus);
-	
 	if($gscopeparam) // if it's groupscope then pass the usernames to template
 	{
-foreach($entereduids as $entrduids)
+	
+	foreach($entereduids as $entrduids)
 	{
 		$queryforrealnames = "SELECT name FROM " . $xoopsDB->prefix("users") . " WHERE uid=$entrduids";
 		$resqforrealnames = mysql_query($queryforrealnames);
@@ -2873,12 +2872,14 @@ if(isset($_POST['export'])) // write a file to the server and display a download
 		$fxt = ".customDelimited";
 	}
 	$csvfile = "";
+	$runtext = ""; // a variable that holds the field header for the user's full name, if such a thing is used for this query
+	if($realusernames[0]) { $runtext = "User's Full Name" . $fd; } // if there are user full names, then make the field header
 	$headercount = 0;
 	foreach($reqFieldsJwe as $csvheader)
 	{
 		if(!$headercount)
 		{
-			$csvfile = $csvheader;
+			$csvfile =  $runtext . "Modification Date" . $fd . $csvheader;
 		}
 		else
 		{
@@ -2890,12 +2891,14 @@ if(isset($_POST['export'])) // write a file to the server and display a download
 	$csvfile .= "\r\n";
 
 	$colcounter = 0;
+	$i=0;
 	foreach($selvals as $acell)
 	{
 		$acell = str_replace("*=+*:", " ++ ", $acell); // replace the custom delimiter with ++
 		if(!$colcounter)
 		{
-			$csvfile .= $acell;
+			if($realusernames[$i]) { $csvfile .= $realusernames[$i] . $fd; }
+			$csvfile .= $entereddates[$i] . $fd . $acell;
 		}
 		else
 		{
@@ -2905,6 +2908,7 @@ if(isset($_POST['export'])) // write a file to the server and display a download
 		if($colcounter == $headercount)
 		{
 			$colcounter = 0; 
+			$i++; // increment the counter used to pull in the right names and dates
 			$csvfile .= "\r\n";
 		}
 	}
@@ -2935,7 +2939,6 @@ require(XOOPS_ROOT_PATH."/footer.php");
 } // end if that controls display of select-an-entry page -- jwe 7/24/04
 else // we're drawing the form, not select entry page...
 {
-
 
 if($issingle) // if it's a single entry form...
 {
@@ -3114,6 +3117,7 @@ include_once(XOOPS_ROOT_PATH . "/modules/formulize/upload_FA.php");
 
 
 if( empty($_POST['submit']) ){
+
 	$xoopsOption['template_main'] = 'formulize.html';
 	include_once XOOPS_ROOT_PATH.'/header.php';
 	$criteria = new Criteria('ele_display', 1);
@@ -3367,13 +3371,22 @@ if( empty($_POST['submit']) ){
 			$resproxyulistq = $xoopsDB->query($proxyulistq);
 			while ($rowproxyulistq = $xoopsDB->fetchRow($resproxyulistq))
 			{
+				$puids[] = $rowproxyulistq[0];
 				$uqueryforrealnames = "SELECT name FROM " . $xoopsDB->prefix("users") . " WHERE uid=$rowproxyulistq[0]";
 				$uresqforrealnames = $xoopsDB->query($uqueryforrealnames);
 				$urowqforrealnames = $xoopsDB->fetchRow($uresqforrealnames);
+				$punames[] = $urowqforrealnames[0];
 				//print "username: $urowqforrealnames[0]<br>";
-				$proxylist->addOption($rowproxyulistq[0], $urowqforrealnames[0]);
+				//$proxylist->addOption($rowproxyulistq[0], $urowqforrealnames[0]);
 			}
-			
+
+			// alphabetize the proxy list added 11/2/04
+			array_multisort($punames, $puids);
+			for($i=0;$i<count($puids);$i++)
+			{
+				$proxylist->addOption($puids[$i], $punames[$i]);
+			}
+
 			$submittray->addElement($proxylist);
 			$form->addElement($submittray);
 
@@ -3397,15 +3410,13 @@ if( empty($_POST['submit']) ){
 
 	$xoopsTpl->assign('theycanadd', $theycanadd);
 
-
-	$form->assign($xoopsTpl);
-
 	//added by jwe 10/10/04 -- send id_form to template for use in the notifications block which is hard coded in (since the id_form cannot be accessed by the notifications system in the normal way on account of the title and not the id_form being used in the URL
 	//send title too so the notification redirect is correct
 	$xoopsTpl->assign('id_form', $id_form);
 	$xoopsTpl->assign('title', $title);
 
-	// do our own checking for subscribed events, for the same reason...
+	// do our own checking for subscribed events, for the same reason...  // added check to see that there is a user (ie: don't do this for anons) 10/27/04
+	if($uid) {
 	$notification_handler =& xoops_gethandler('notification');
 	$subscribed_events =& $notification_handler->getSubscribedEvents("form", $id_form, $xoopsModule->getVar('mid'), $xoopsUser->getVar('uid'));
 	$subscribedNew = in_array("new_entry", $subscribed_events) ? 1 : 0;
@@ -3414,6 +3425,9 @@ if( empty($_POST['submit']) ){
 	$xoopsTpl->assign('subNew', $subscribedNew);
 	$xoopsTpl->assign('subUp', $subscribedUp);
 	$xoopsTpl->assign('subDel', $subscribedDel);
+	}
+	$form->assign($xoopsTpl);
+
 
 	include_once XOOPS_ROOT_PATH.'/footer.php';
 }else{
@@ -3690,6 +3704,12 @@ if( empty($_POST['submit']) ){
 				case 'date':
 			$msg.= "<table border=1 bordercolordark=black bordercolorlight=#C0C0C0 width=500><td><b>".$ele_caption."</b><br>";
 					$msg.= $myts->stripSlashesGPC($ele[$i])."<br></td></table><br>";
+					// code below commented/added by jwe 10/23/04 to convert dates into the proper standard format
+					if($ele[$i] != "YYYY-mm-dd" AND $ele[$i] != "") { 
+						$ele[$i] = date("Y-m-d", strtotime($ele[$i])); 
+					} else {
+						continue 2; // forget about this date element and go on to the next element in the form
+					}
 					$value = ''.$ele[$i];
 				break;
 				case 'sep':
@@ -3953,7 +3973,7 @@ if (!empty($groupe) && ($groupe != "0")){
 	// altered to change default redirect behaviour on submit by jwe 7/23/04
 	// redraw form after adding new, return to view entries page after editing an entry.
 
-}// end of if select-and-entry page or display form page - jwe 7/24/04
+}// end of if select-and-entry page or display form page - jwe 7/24/04 (actually, isn't this the end of the foreach that goes through all the elements?! -- jwe 10/24/04)
 
 // control below should only kick in the blanking logic and redirects when we're ready to leave the page -- jwe 7/25/04
 if($sent) // if $sent is set, ie we're ready to leave...

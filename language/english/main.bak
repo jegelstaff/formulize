@@ -154,7 +154,7 @@ define("_formulize_SORT_PRIORITY", "Sort Priority:");
 define("_formulize_NONE", "None");
 define("_formulize_CHANGE_COLUMNS", "Change to viewing different columns:");
 define("_formulize_CHANGE", "Change");
-define("_formulize_SEARCH_HELP", "If you specify search terms in more than one field, the Interfield AND/OR Setting determines whether to search for entries that match in all, or any, field.<br><br>Use commas to separate terms.  Use [,] to specify a comma within a term.");
+define("_formulize_SEARCH_HELP", "Use commas to separate terms.  Use [,] to specify a comma within a term.");
 define("_formulize_SORT_HELP", "You can sort by any element, except ones that accept multiple inputs, such as checkboxes.");
 define("_formulize_REPORTSCOPE", "Select the scope of the report:");
 define("_formulize_SELECTSCOPEBUTTON", "Select");
@@ -164,7 +164,6 @@ define("_formulize_GOREPORT", "Go");
 define("_formulize_REPORTSAVING", "Save this query as one of your reports:");
 define("_formulize_SAVEREPORTBUTTON", "Save");
 define("_formulize_REPORTNAME", "Report Name:");
-define("_formulize_ANDORTITLE", "Interfield AND/OR Setting:");
 
 define("_formulize_PUBLISHINGOPTIONS", "Publishing Options:");
 define("_formulize_PUBLISHREPORT", "Publish this report to other users.");
@@ -186,7 +185,7 @@ define("_formulize_FDCOMMA", "Comma");
 define("_formulize_FDTAB", "Tab");
 define("_formulize_FDCUSTOM", "Custom");
 define("_formulize_exfile", "exported_data_");
-define("_formulize_DLTEXT", "<b>Right-click on the link below and select <i>Save</i>.</b> (Ctrl-click on a Mac.)  Once the file is on your computer, you will be able to open it in a spreadsheet program.  If the fields do not align properly when you open the file, try exporting with a different delimiter.");
+define("_formulize_DLTEXT", "Right-click on the link below and select <i>Save</i>.  Once the file is on your computer, you will be able to open it in a spreadsheet program.  If the fields do not align properly when you open the file, try exporting with a different delimiter.");
 define("_formulize_DLHEADER", "Your file is ready for download.");
 
 define("_formulize_PICKAPROXY", "No Proxy User Selected");

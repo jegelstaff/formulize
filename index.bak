@@ -3691,6 +3691,16 @@ if( empty($_POST['submit']) ){
 				case 'date':
 			$msg.= "<table border=1 bordercolordark=black bordercolorlight=#C0C0C0 width=500><td><b>".$ele_caption."</b><br>";
 					$msg.= $myts->stripSlashesGPC($ele[$i])."<br></td></table><br>";
+					// code below commented/added by jwe 10/23/04 to convert dates into the proper standard format
+					if($ele[$i] != "YYYY-mm-dd" AND $ele[$i] != "") { 
+						$ele[$i] = date("Y-m-d", strtotime($ele[$i])); 
+					} else {
+						if ($viewentry) { // if we're updating an entry, then store the caption so we can blank this date later.  This code is copied from below in the write-to-db section
+							$submittedcaptions[$subcapindex] = $ele_caption;
+							$subcapindex++;	
+						}
+						continue 2; // forget about this date element and go on to the next element in the form. 
+					}
 					$value = ''.$ele[$i];
 				break;
 				case 'sep':
@@ -3954,7 +3964,7 @@ if (!empty($groupe) && ($groupe != "0")){
 	// altered to change default redirect behaviour on submit by jwe 7/23/04
 	// redraw form after adding new, return to view entries page after editing an entry.
 
-}// end of if select-and-entry page or display form page - jwe 7/24/04
+}// end of if select-and-entry page or display form page - jwe 7/24/04 (actually, isn't this the end of the foreach that goes through all the elements?! -- jwe 10/24/04)
 
 // control below should only kick in the blanking logic and redirects when we're ready to leave the page -- jwe 7/25/04
 if($sent) // if $sent is set, ie we're ready to leave...

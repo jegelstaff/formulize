@@ -59,19 +59,12 @@ define("_AM_FORM","Formulaire : ");
 define("_AM_FORM_SELECT","Sélection du formulaire");
 define("_MD_FILEERROR","Erreur d'envoi du fichier");
 define("_FORMULAIRE_TEMP_ADDENTRY", "ADD AN ENTRY");
-define("_FORMULAIRE_TEMP_VIEWENTRIES", "FR-VIEW ENTRIES");
+define("_FORMULAIRE_TEMP_VIEWENTRIES", "VIEW ENTRIES");
 define("_FORMULAIRE_TEMP_ADDINGENTRY", "ADDING AN ENTRY");
 define("_FORMULAIRE_TEMP_VIEWINGENTRIES", "VIEWING ENTRIES");
 define("_FORMULAIRE_TEMP_SELENTTITLE", "Your entries in '");
 define("_FORMULAIRE_TEMP_VIEWTHISENTRY", "View this entry");
 define("_FORMULAIRE_TEMP_EDITINGENTRY", "EDITING AN ENTRY");
-define("_FORM_SINGLEENTRY","Users can only fill in the form once:");
-define("_FORM_GROUPSCOPE","Users can view entries made by everyone in their groups:");
-define("_FORMULAIRE_TEMP_SELENTTITLE_GS", "All entries in '");
-define("_FORMULAIRE_TEMP_NOENTRIES", "No entries yet.");
-define("_FORMULAIRE_TEMP_ENTEREDBY", "Entered by: ");
-define("_FORMULAIRE_TEMP_QYES", "YES");
-define("_FORMULAIRE_TEMP_QNO", "NO");
 
 define("_FORM_EXP_CREE","Le fichier a été exporté avec succès");
 ?>
