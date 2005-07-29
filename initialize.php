@@ -36,7 +36,8 @@ include 'header.php';
 include_once XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php';
 
 global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig;
-$block = array();
+// code commented as part of switch over to new interface - July 28, 2005
+/*$block = array();
 $groupuser = array();
 
 //userobject variable gathering moved up here by jwe 7/23/04
@@ -53,12 +54,12 @@ else {
 }
 
 // print "*$realnamejwe*"; //JWE DEBUG CODE
+*/
 
-
-if(!isset($HTTP_POST_VARS['title'])){
-	$title = isset ($HTTP_GET_VARS['title']) ? $HTTP_GET_VARS['title'] : '';
+if(!isset($_POST['title'])){
+	$title = isset($_GET['title']) ? $_GET['title'] : '';
 }else {
-	$title = $HTTP_POST_VARS['title'];
+	$title = $_POST['title'];
 }
 /*
 if ($title=="") {
@@ -66,7 +67,8 @@ if ($title=="") {
 		
 */
 
-$sql=sprintf("SELECT id_form,admin,groupe,email,expe FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$title);
+// query modified to include singleentry - July 28, 2005 -- part of switch to new intnerface
+$sql=sprintf("SELECT id_form,admin,groupe,email,expe,singleentry FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$title);
 $res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$sql.'<br>'.mysql_error());
 //global $nb_fichier;
  
@@ -80,7 +82,32 @@ if ( $res ) {
     $groupe = $row['groupe'];
     $email = $row['email'];
     $expe = $row['expe'];
+    $singleentry = $row['singleentry'];
   }
 }
+
+// new logic to handle invoking new interface
+// 1. determine if the form is a single or multi
+// 1.5 if multi->displayEntries, if single...
+// 2. if single, determine if the user has group or global scope
+// 2.5 if yes->displayEntries, if no...
+// 3 displayForm
+
+// get the global or group permission
+$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+$mid = $xoopsModule->getVar('mid');
+$gperm_handler = &xoops_gethandler('groupperm');
+$view_globalscope = $gperm_handler->checkRight("view_globalscope", $id_form, $groups, $mid);
+$view_groupscope = $gperm_handler->checkRight("view_groupscope", $id_form, $groups, $mid);
+
+if(!$singleentry OR ($view_globalscope OR $view_groupscope)) {
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
+	displayEntries($id_form); // if it's a multi, or if a single and they have group or global scope
+} else {
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+	displayForm($id_form, "", "", "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope
+}
+
+
 
 ?>

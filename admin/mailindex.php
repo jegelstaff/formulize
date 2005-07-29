@@ -195,31 +195,60 @@ echo '
 // added new form params to enable new features (single-entry and group-scope) -- jwe 7/25/04
 // *******
 
-	echo '<tr>
-	<td class="head"><center>'._FORM_SHOWVIEWENTRIES.'</center></td><td class="even">';
-	if ($title != '' && $showviewentries == '') {echo '
-	<input name="showviewentries" type="checkbox" id="showviewentries"></td>';}
-	else {echo '
-	<input name="showviewentries" type="checkbox" id="showviewentries" checked></td>';}
+// NOT USED IN 2.0 -- COMMENTED JULY 28/05
+//	echo '<tr>
+//	<td class="head"><center>'._FORM_SHOWVIEWENTRIES.'</center></td><td class="even">';
+//	if ($title != '' && $showviewentries == '') {echo '
+//	<input name="showviewentries" type="checkbox" id="showviewentries"></td>';}
+//	else {echo '
+//	<input name="showviewentries" type="checkbox" id="showviewentries" checked></td>';}
 
-echo '</tr>';
+//echo '</tr>';
 
-	echo '<tr>
+	// old singleentry ui 
+	/*echo '<tr>
 	<td class="head"><center>'._FORM_SINGLEENTRY.'</center></td><td class="even">';
 	if ($title != '' && $singleentry == 'on') {echo '
 	<input name="singleentry" type="checkbox" id="singleentry" checked></td>';}
 	else {echo '
-	<input name="singleentry" type="checkbox" id="singleentry" ></td>';}
+	<input name="singleentry" type="checkbox" id="singleentry" ></td>';} */
 
-echo '</tr>
-<tr>
-	<td class="head"><center>'._FORM_GROUPSCOPE.'</center></td><td class="even">';
-	if ($title != '' && $groupscope == 'on') {echo '
-	<input name="groupscope" type="checkbox" id="groupscope" checked></td>';}
-	else {echo '
-	<input name="groupscope" type="checkbox" id="groupscope" ></td>';}
+	// new singleentry ui
+	echo '<tr>
+	<td class="head"><center>'._FORM_SINGLETYPE.'</center></td><td class="even">';
+	
+	$multiflag = 0;
+	echo '<input type=radio name=singleentry value=group' ;
+	if($title !='' && $singleentry == 'group') { 
+		echo ' CHECKED'; 
+		$multiflag = 1;
+	}
+	echo '>'._FORM_SINGLE_GROUP.'<br>';
+	
+	echo '<input type=radio name=singleentry value=on' ;
+	if($title !='' && $singleentry == 'on') { 
+		echo ' CHECKED'; 
+		$multiflag = 1;
+	}
+	echo '>'._FORM_SINGLE_ON.'<br>';
+
+	echo '<input type=radio name=singleentry value=""' ;
+	if($title !='' && $multiflag==0) { echo ' CHECKED'; }
+	echo '>'._FORM_SINGLE_MULTI;
+
+	echo '</td>'; 
+
+	
 
 echo '</tr>';
+//echo '<tr>
+//	<td class="head"><center>'._FORM_GROUPSCOPE.'</center></td><td class="even">';
+//	if ($title != '' && $groupscope == 'on') {echo '
+//	<input name="groupscope" type="checkbox" id="groupscope" checked></td>';}
+//	else {echo '
+//	<input name="groupscope" type="checkbox" id="groupscope" ></td>';}
+
+//echo '</tr>';
 
 echo '</tr>';
 
@@ -234,10 +263,11 @@ echo '</tr>';
 echo '</tr>';*/
 
 // add in the even/odd colour override controls for report writing page -- added by jwe 9/02/04
+// default colour choices removed for 2.0
 
-	include_once XOOPS_ROOT_PATH."/modules/formulize/admin/colorarrays.php";
+//	include_once XOOPS_ROOT_PATH."/modules/formulize/admin/colorarrays.php";
 
-	echo '<tr>
+/*	echo '<tr>
 	<td class="head"><center>'._FORM_COLOREVEN.'</center></td><td class="even">';
 
 	echo'<script type="text/javascript">
@@ -317,7 +347,7 @@ echo '<tr>
 
 echo '</tr>';
 
-
+*/
 
 if($title != '')
 {
@@ -364,8 +394,8 @@ echo '<tr>
 
 
 
-
-if(!$title) // if there is no title, ie: new form, then show default perm box...
+// DEFAULT PERMISSION CONTROL REMOVED, SINCE NEW PERMISSIONS ARE TOTALLY DIFFERENT -- JULY 28, 2005
+/*if(!$title) // if there is no title, ie: new form, then show default perm box...
 {
 echo '<tr>
 	<td class="head"><center>'._FORM_DEFAULTADMIN.'</center></td><td class="even">';
@@ -381,7 +411,7 @@ for($i=1;$i<$m;$i++) { // start at 1 since the first entry is a blank line.
 	echo '</select></td></tr>';
 }// end of IF that controls drawing of permission box.
 
-
+*/
 
 
 
@@ -504,7 +534,8 @@ function addform()
 
 	$sql2 = sprintf("INSERT INTO %s (itemname,itemurl) VALUES ('%s', '%s')", $xoopsDB->prefix("form_menu"), $title, XOOPS_URL.'/modules/formulize/index.php?title='.$title.'');
 	$xoopsDB->queryF($sql2) or $eh->show("error insertion 2 dans addform");
-	
+
+/* // DEFAULT PERMISSION HANDLING COMMENTED OUT	 - 7/28/05
 	// grab and write default perms... -- jwe 7/28/04
 	$defaultadmin = $myts->makeTboxData4Save($HTTP_POST_VARS["defaultadmin"]);
 
@@ -541,7 +572,7 @@ $resgetfidq = mysql_query($getfidq);
 		}
 		} // end of write each perm
 	} // end of loop for each group 
-
+*/
 	redirect_header("index.php?title=$title",1,_formulize_FORMCREA);
 }
 

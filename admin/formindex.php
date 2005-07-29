@@ -46,11 +46,17 @@ if(!isset($HTTP_POST_VARS['op'])){
 }else {
 	$op = $HTTP_POST_VARS['op'];
 }
+
+
+
 if(!isset($HTTP_POST_VARS['title'])){
 	$title = isset ($HTTP_GET_VARS['title']) ? $HTTP_GET_VARS['title'] : '0';
 }else {
 	$title = $HTTP_POST_VARS['title'];
 }
+
+if($op == "clone") { clone($title); }
+
 
 // Classe permissions
 include_once XOOPS_ROOT_PATH.'/class/xoopsform/grouppermform.php';
@@ -58,7 +64,7 @@ $module_id = $xoopsModule->getVar('mid'); // recupere le numero id du module
 
 $n = 0;
 $m = 0;
-//include "../include/functions.php";
+//include XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH."/class/xoopstree.php";
 include_once XOOPS_ROOT_PATH."/class/xoopslists.php";
 include_once XOOPS_ROOT_PATH."/include/xoopscodes.php";
@@ -81,7 +87,7 @@ if ( $res ) {
   }
 }
 
-if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform' && $op != 'permlinks'){ // permlinks condition added jwe 08/29/04
+if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform' && $op != 'permlinks' && $op != "permsub" && $op != "permeditor" && $op != "newpermform"){ // permlinks condition added jwe 08/29/04, sub and editor added May 23 2005
 	echo '
 	<table class="outer" width="100%">
 	<th><center>'._FORM_OPT.'</center></th>
@@ -92,7 +98,7 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 }
 
 /******************* Affichage des formulizes *******************/
-if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform' && $op != 'permlinks'){ // permlinks condition added jwe 08/29/04
+if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform' && $op != 'permlinks' && $op != "permsub" && $op != "permeditor" && $op != "newpermform"){ // permlinks condition added jwe 08/29/04, sub and editor added May 23 2005
 
 	// javascript to confirm deletion added by jwe 8/30/04
 
@@ -129,7 +135,7 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	
 	echo '<tr><td class="head" ALIGN=center>'._FORM_CREAT.'</td>
 	      <td class="odd"><A HREF="mailindex.php">
-	      <center><img src="../images/filenew2.png" alt='._FORM_NEW.'>  </center></a></td></tr>';
+	      <center><img src="../images/filenew2.png" title='._FORM_NEW.' alt='._FORM_NEW.'>  </center></a></td></tr>';
 	//old export section, not used any more
 	//echo '<tr><td class="head" ALIGN=center>'._FORM_EXPORT.'</td>
 	//      <td class="odd"><A HREF="export.php">
@@ -140,15 +146,20 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 
 	echo '<tr><td class="head" ALIGN=center>'._FORM_MODFRAME.'</td>
 	      <td class="odd" align=center><A HREF="modframe.php">
-	      <center><img src="../images/attach.png" alt='._FORM_FRAME.'> </center></a></td></tr>';
+	      <center><img src="../images/attach.png" title='._FORM_FRAME.' alt='._FORM_FRAME.'> </center></a></td></tr>';
+
+//	echo '<tr><td class="head" ALIGN=center>'._FORM_MODPERM.' (OLD)</td>
+//	      <td class="odd"><A HREF="formindex.php?op=permform">
+//	      <center><img src="../images/perm.png" title='._FORM_PERM.' alt='._FORM_PERM.'> </center></a></td></tr>';
 
 	echo '<tr><td class="head" ALIGN=center>'._FORM_MODPERM.'</td>
-	      <td class="odd"><A HREF="formindex.php?op=permform">
-	      <center><img src="../images/perm.png" alt='._FORM_PERM.'> </center></a></td></tr>';
+	      <td class="odd"><A HREF="formindex.php?op=newpermform">
+	      <center><img src="../images/perm.png" title='._FORM_PERM.' alt='._FORM_PERM.'> </center></a></td></tr>';
 
 	echo '<tr><td class="head" ALIGN=center>'._FORM_MODPERMLINKS.'</td>
 	      <td class="odd"><A HREF="formindex.php?op=permlinks">
-	      <center><img src="../images/perm.png" alt='._FORM_PERMLINKS.'> </center></a></td></tr>';
+	      <center><img src="../images/perm.png" title='._FORM_PERMLINKS.' alt='._FORM_PERMLINKS.'> </center></a></td></tr>';
+
 	
 	echo '</table><table class="outer" width="100%"><br>';
 
@@ -160,21 +171,125 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	   echo '<tr><td class="head" ALIGN=center>'.$titre.'</td>';
 
 	   echo '<td class="odd" align="center">  
-	         <A HREF="renom.php?title='.$id.'">  <img src="../images/signature.png" alt="'._FORM_RENOM.'">  </a>';
+	         <A HREF="renom.php?title='.$id.'">  <img src="../images/signature.png" title="'._FORM_RENOM.'" alt="'._FORM_RENOM.'">  </a>';
 
-	   echo '<A HREF="formindex.php?title='.$id.'&op=delform" onclick="return confirmdel();">  <img src="../images/editdelete.png" alt="'._FORM_SUP.'">  </a>';
+	   echo '<A HREF="formindex.php?title='.$id.'&op=delform" onclick="return confirmdel();">  <img src="../images/editdelete.png" title="'._FORM_SUP.'" alt="'._FORM_SUP.'">  </a>';
 	   
-	   echo '<A HREF="formindex.php?title='.$id.'&op=modform">  <img src="../images/kedit.png" alt="'._FORM_MODIF.'">  </a>';
+	   echo '<A HREF="formindex.php?title='.$id.'&op=modform">  <img src="../images/kedit.png" title="'._FORM_MODIF.'" alt="'._FORM_MODIF.'">  </a>';
 	   
 	   //old display entries section, not used anymore 
-	   //echo '<A HREF="formindex.php?title='.$id.'&op=showform">  <img src="../images/kfind.png" alt="'._FORM_SHOW.'">  </a>';	   
+	   //echo '<A HREF="formindex.php?title='.$id.'&op=showform">  <img src="../images/kfind.png" title="'._FORM_SHOW.'" alt="'._FORM_SHOW.'">  </a>';	   
 
-	   echo '<A HREF="mailindex.php?title='.$titre.'">  <img src="../images/xfmail.png" alt="'._FORM_ADD.'">  </a></td></tr>';	   
+	   echo '<A HREF="mailindex.php?title='.$titre.'">  <img src="../images/xfmail.png" title="'._FORM_ADD.'" alt="'._FORM_ADD.'">  </a>';
+
+	// cloning added June 17 2005
+	echo '<A HREF="formindex.php?title='.$id.'&op=clone">  <img src="../images/clone.gif" title="'._FORM_MODCLONE.'" alt="'._FORM_MODCLONE.'"></a>';
+
+	echo '</td></tr>';	   
 	}
 	echo '</table>';
 
 }
 
+// copy a form -- added June 17 2005
+function clone($title) {
+	
+	global $xoopsDB;
+	
+	// procedure:
+	// get fid based on title
+	// duplicate row for that fid in db but use next incremental fid
+	// duplicate rows in form table for that fid, but use new fid and increment ele_ids of course
+	// redraw page
+
+	$fid = $title;
+
+	$newtitle = _FORM_MODCLONED_FORM;	
+
+	$getrow = q("SELECT * FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form = $fid");
+
+	$insert_sql = "INSERT INTO " . $xoopsDB->prefix("form_id") . " (";
+	$start = 1;
+	foreach($getrow[0] as $field=>$value) {
+		if(!$start) { $insert_sql .= ", "; }
+		$start = 0;
+		$insert_sql .= $field;
+	}
+	$insert_sql .= ") VALUES (";
+	$start = 1;
+	foreach($getrow[0] as $field=>$value) {
+		if($field == "id_form") { $value = ""; }
+		if($field == "desc_form") { $value = $newtitle; }
+		if(!$start) { $insert_sql .= ", "; }
+		$start = 0;
+		$insert_sql .= "\"$value\"";
+	}
+	$insert_sql .= ")";
+	if(!$result = $xoopsDB->queryF($insert_sql)) {
+		exit("error duplicating form: '$title'<br>SQL: $insert_sql");
+	}
+
+	$newfid = $xoopsDB->getInsertId();
+
+	$getelements = q("SELECT * FROM " . $xoopsDB->prefix("form") . " WHERE id_form = $fid");
+	foreach($getelements as $ele) {
+       	$insert_sql = "INSERT INTO " . $xoopsDB->prefix("form") . " (";
+       	$start = 1;
+       	foreach($ele as $field=>$value) {
+       		if(!$start) { $insert_sql .= ", "; }
+       		$start = 0;
+       		$insert_sql .= $field;
+       	}
+       	$insert_sql .= ") VALUES (";
+       	$start = 1;
+       	foreach($ele as $field=>$value) {
+       		if($field == "id_form") { $value = "$newfid"; }
+       		if($field == "ele_id") { $value = ""; }
+       		if(!$start) { $insert_sql .= ", "; }
+       		$start = 0;
+			$value = addslashes($value);
+       		$insert_sql .= "\"$value\"";
+       	}
+       	$insert_sql .= ")";
+       	if(!$result = $xoopsDB->queryF($insert_sql)) {
+       		exit("error duplicating elements in form: '$title'<br>SQL: $insert_sql");
+       	}
+	}
+
+	$getmenu = q("SELECT * FROM " . $xoopsDB->prefix("form_menu") . " WHERE menuid=$fid");
+	foreach($getmenu as $menu) {
+       	$insert_sql = "INSERT INTO " . $xoopsDB->prefix("form_menu") . " (";
+       	$start = 1;
+       	foreach($menu as $field=>$value) {
+       		if(!$start) { $insert_sql .= ", "; }
+       		$start = 0;
+       		$insert_sql .= $field;
+       	}
+       	$insert_sql .= ") VALUES (";
+       	$start = 1;
+       	foreach($menu as $field=>$value) {
+       		if($field == "menuid") { $value = "$newfid"; }
+			if($field == "itemname") { $value = "$newtitle"; }
+       		if(!$start) { $insert_sql .= ", "; }
+       		$start = 0;
+			$value = addslashes($value);
+       		$insert_sql .= "\"$value\"";
+       	}
+       	$insert_sql .= ")";
+       	if(!$result = $xoopsDB->queryF($insert_sql)) {
+       		exit("error duplicating menu entry for form: '$title'<br>SQL: $insert_sql");
+       	}
+	}
+
+	$getCat = getMenuCat($fid); // returns the id of the cat entry
+	if($getCat > 0) { // not in the general category, therefore write this form to the array for the cat it's in (general cat is not recorded)
+		$fid_array = q("SELECT id_form_array FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id=$getCat");
+		$new_fid_array = $fid_array[0]['id_form_array'] . $newfid . ","; // add a trailing comma, since there is a comma before and after each item even the first and last
+		if(!$result = $xoopsDB->queryF("UPDATE " . $xoopsDB->prefix("formulize_menu_cats") . " SET id_form_array=\"$new_fid_array\" WHERE cat_id=$getCat")) {
+			exit("error duplicating menu category for form: '$title'<br>SQL: $insert_sql");
+		}
+	}
+}
 
 function addform()
 {
@@ -404,10 +519,420 @@ function permlinks()
 	} // end of if a link was found
 }
 
-
-
-function permform()
+// TWO FUNCTIONS BELOW BORROWED FROM MULTI-GROUP PERM CODE
+function saveList()
 {
+    global $xoopsDB;
+
+
+    $op = 'insert'; 
+
+	$name = $_POST['list_name'];
+	$id = $_POST['list_id'];
+	$groups = implode(",", $_POST['fs_groups']);  
+
+    //echo "save list: name " . $name . ", id " . $id . ", groups " . $groups;
+	if($id > 0)
+	{
+		// Get exisitng name to see if we update, or create new.	
+	    $result = $xoopsDB->query("SELECT gl_name FROM ".$xoopsDB->prefix("group_lists")." WHERE gl_id='".$id."'");
+	    if($xoopsDB->getRowsNum($result) > 0)
+	    {
+	        $entry = $xoopsDB->fetchArray($result); 
+
+			//echo $entry['gl_name'];
+			  
+            if($entry['gl_name'] == $name)
+			{ 
+				$op = 'update';
+			}				  
+	    }
+	}
+
+	//echo "op" . $op;
+	
+	switch($op)
+    {
+		case 'insert':
+	        $insert_query = "INSERT INTO ". $xoopsDB->prefix("group_lists") .
+	            " (gl_id, gl_name, gl_groups) VALUES ('', '" . $name . "', '" . $groups . "')";
+
+	        $insert_result = $xoopsDB->queryf($insert_query);
+	        
+	        return $xoopsDB->getInsertId();
+						   
+		case 'update':
+	        $update_query = "UPDATE ". $xoopsDB->prefix("group_lists") .
+	            " SET gl_groups = '" . $groups . "' WHERE gl_id='" . $id . "'";
+
+	        $update_result = $xoopsDB->queryf($update_query);
+			
+			//echo $update_result . "-----" . $xoopsDB->error();  
+	        
+	        return $id;
+	}        
+}
+
+
+function deleteList()
+{
+    global $xoopsDB;
+
+	$id = $_POST['list_id'];
+    
+	//echo "Removing " . $id;
+
+    
+	if($id)
+    {
+	    $delete_query = "DELETE FROM ".$xoopsDB->prefix("group_lists") .
+	        " WHERE gl_id='" . $id . "'";
+
+	    $delete_result = $xoopsDB->queryf($delete_query);
+	}        
+}
+
+
+
+function drawGroupList($list_id="") {
+
+global $xoopsDB;
+include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
+
+$form = new XoopsThemeForm(_formulize_MODFORM_TITLE, "groupform", "formindex.php?op=permsub");
+
+$list_op = $_POST['list_op'];
+$list_name = $_POST['list_name'];
+global $new_list_id;
+if(isset($new_list_id))
+{
+	//echo "new id " . $new_list_id;
+	$list_id = $new_list_id;
+}
+else
+{
+	$list_id = $_POST['list_id'];
+} 
+
+	 
+// Permissions
+$fs_form_group_perms = new XoopsSimpleForm("", "fs_grouppermsform", "javascript:;");
+
+$fs_select_groups = new XoopsFormSelect(_AM_MULTI_PERMISSIONS, 'fs_groups', null, 10, true);
+
+if($list_op == 'select')
+{
+	if(isset($list_id))
+	{
+	    $saved_group_list_results = $xoopsDB->query("SELECT gl_groups FROM ".$xoopsDB->prefix("group_lists")." WHERE gl_id='" . $list_id . "'");
+	    if($xoopsDB->getRowsNum($saved_group_list_results) > 0)
+	    {
+	        $saved_group_list_rowset = $xoopsDB->fetchArray($saved_group_list_results);
+	        //echo $saved_group_list_rowset['gl_groups'];  
+	        $saved_group_list_ids = explode(",", $saved_group_list_rowset['gl_groups']);
+	        
+	        $fs_select_groups->setValue($saved_group_list_ids);  
+	    }
+	}
+	
+	$list_op = '';  
+}
+else if($list_op == 'delete')
+{
+}
+else if(isset($_POST['fs_groups']))
+{
+	$fs_groups = $_POST['fs_groups'];
+	$saved_group_list_ids = $fs_groups;  
+	
+    $fs_select_groups->setValue($fs_groups);  
+}
+
+
+if($_POST['groupsubmit'] == $submit_value)
+{	
+	$modification_type = $_POST['fs_groupmodificationtype'];
+
+	/*foreach ($saved_group_list_ids as $saved_group_list_id) 
+	{
+		//echo 'updating' . $saved_group_list_id;
+		modifyMultiGroupItem($saved_group_list_id, $s_cat_value, $a_mod_value, $r_mod_value, $r_block_value, $modification_type);
+	} */
+}
+
+
+$fs_member_handler =& xoops_gethandler('member');
+$fs_xoops_groups =& $fs_member_handler->getGroups();
+
+$fs_count = count($fs_xoops_groups);
+for($i = 0; $i < $fs_count; $i++) 
+{
+	$fs_select_groups->addOption($fs_xoops_groups[$i]->getVar('groupid'), $fs_xoops_groups[$i]->getVar('name'));	 
+}
+
+$fs_permsorder = (isset($_POST['fs_permsorder'])) ? $_POST['fs_permsorder'] : 0;
+
+if($fs_permsorder == 1)
+{
+	asort($fs_select_groups->_options);
+	reset($fs_select_groups->_options);
+}
+
+$form->addElement($fs_select_groups);
+
+$fs_select_groups_order = new XoopsFormRadio("", 'fs_permsorder', $fs_permsorder);
+$fs_select_groups_order->addOptionArray(array('0' => _AM_MULTI_CREATION_ORDER, '1' => _AM_MULTI_ALPHABETICAL_ORDER));
+$form->addElement($fs_select_groups_order);
+
+// Lists
+$fs_select_lists = new XoopsFormSelect(_AM_MULTI_GROUP_LISTS, 'fs_grouplistnames');
+$fs_select_lists->addOption('0', _AM_MULTI_GROUP_LISTS_NOSELECT);
+
+if(isset($list_id))
+{
+	$fs_select_lists->setValue($list_id); 
+}
+
+$result = $xoopsDB->query("SELECT gl_id, gl_name FROM ".$xoopsDB->prefix("group_lists")." ORDER BY gl_name");
+if($xoopsDB->getRowsNum($result) > 0)
+{
+    while($group_list = $xoopsDB->fetchArray($result)) 
+    {
+        $fs_select_lists->addOption($group_list['gl_id'], $group_list['gl_name']);
+    }
+}
+
+$form->addElement($fs_select_lists);
+
+$fs_button_group = new XoopsFormElementTray("");
+
+$fs_button_save_list = new XoopsFormButton("", "save_list", _AM_MULTI_SAVE_LIST, "submit");
+$fs_button_group->addElement($fs_button_save_list);
+
+$fs_button_delete_list = new XoopsFormButton("", "delete_list", _AM_MULTI_DELETE_LIST, "submit");
+$fs_button_group->addElement($fs_button_delete_list);
+
+$form->addElement($fs_button_group);
+
+$list_op_hidden = new XoopsFormHidden("list_op", $list_op);
+$form->addElement($list_op_hidden);
+$list_name_hidden = new XoopsFormHidden("list_name", $list_name);
+$form->addElement($list_name_hidden);
+$list_id_hidden = new XoopsFormHidden("list_id", $list_id);
+$form->addElement($list_id_hidden);
+
+// Form list goes here:
+
+	$form_list = new XoopsFormSelect(_formulize_FORM_LIST, 'fs_forms', null, 10, true);
+	$sql="SELECT id_form,desc_form FROM ".$xoopsDB->prefix("form_id") . " ORDER BY desc_form";
+	$res = mysql_query ( $sql );
+	if ( $res ) {
+		$tab = array();
+		while ( $row = mysql_fetch_array ( $res ) ) {
+			$form_list->addOption($row['id_form'], $row['desc_form']);
+		  }
+	}
+	$form->addElement($form_list);
+
+
+$submit_button = new XoopsFormButton("", "groupsubmit", _formulize_SHOW_PERMS, "submit");
+$form->addElement($submit_button);
+$form->display();
+
+
+
+
+/*
+ * Freeform Solutions -begin 
+ */
+?>
+<script language="javascript">
+<!--
+	debug = false;
+
+
+    function ChangeOrder()
+    {
+		if(debug) alert("Changing Order");
+
+        document.groupform.submit(); 
+    }
+
+
+    function SelectList()
+    {
+		if(debug) alert("Selected " + document.groupform.elements[3].selectedIndex);
+		 
+		document.groupform.list_op.value = "select";
+		document.groupform.list_id.value = document.groupform.elements[3].options[document.groupform.elements[3].selectedIndex].value;		  
+		document.groupform.submit(); 
+	}
+	
+
+    function SaveList()
+    {
+		default_value = "";
+
+        if(document.groupform.elements[3].selectedIndex > 0)
+		{
+			default_value = document.groupform.elements[3].options[document.groupform.elements[3].selectedIndex].text; 		
+		}   
+		
+		if(result = prompt("<? echo _AM_MULTI_GROUP_LIST_NAME ?>", default_value))
+        {
+            if(debug) alert("Adding " + result);
+            
+	        document.groupform.list_op.value = "save";
+	        document.groupform.list_name.value = result;
+	        document.groupform.list_id.value = document.groupform.elements[3].options[document.groupform.elements[3].selectedIndex].value;
+
+			return true;  
+        }
+		
+		return false;  
+	}
+	
+
+    function DeleteList()
+    {
+		if(document.groupform.elements[3].selectedIndex > 0)
+        {
+	        if(confirm("<? echo _AM_MULTI_GROUP_LIST_DELETE ?> '" + 
+	            document.groupform.elements[3].options[document.groupform.elements[3].selectedIndex].text + "'?"))
+	        {
+	            if(debug) alert("Removing " + 
+                	document.groupform.elements[3].options[document.groupform.elements[3].selectedIndex].value);
+
+	            document.groupform.list_op.value = "delete";
+	            document.groupform.list_name.value = document.groupform.elements[3].options[document.groupform.elements[3].selectedIndex].value;
+				
+				return true;  
+	        }
+		}            
+		
+		return false;  
+	}
+	 	  
+
+    document.groupform.elements[1].onclick = ChangeOrder;  
+    document.groupform.elements[2].onclick = ChangeOrder;  
+
+    document.groupform.elements[3].onchange = SelectList;  
+
+	document.groupform.save_list.onclick = SaveList;  
+	document.groupform.delete_list.onclick = DeleteList;  
+
+
+-->
+</script>
+<?
+/*
+ * Freeform Solutions -end 
+ */
+
+
+}
+
+function getFormulizePerms() {
+	$formulize_perms = array("view_form", "add_own_entry", "update_own_entry", "delete_own_entry", "update_other_entries", "delete_other_entries", "add_proxy_entries", "view_groupscope", "view_globalscope", "create_reports", "update_own_reports", "delete_own_reports", "update_other_reports", "delete_other_reports", "publish_reports", "publish_globalscope", "edit_form", "delete_form", "include_in_framework");
+	return $formulize_perms;
+}
+
+
+function newpermform($group_list="", $form_list="")
+{
+
+	print '<table><tr><td><center><p><a href="../admin/formindex.php">' . _AM_GOTO_MAIN . ' <br><img src="../images/formulize.gif" height=35></a></p></center></td></tr></table>';
+
+	// carry on with drawing of the permissions list, if groups and forms are specified
+	if(is_array($group_list) AND is_array($form_list) AND (isset($_POST['groupsubmit']) OR isset($_POST['apply']))) {
+
+		global $xoopsDB, $xoopsModule;
+
+		$formulize_perms = getFormulizePerms();
+
+		$module_id = $xoopsModule->getVar('mid');
+
+		$gperm_handler = &xoops_gethandler('groupperm');
+
+		print "<h4>" . _formulize_MODPERM_TITLE . "</h4>";
+		print "<form action=\"formindex.php?op=permeditor\" method = post>";
+		print "<table width='100%' class='outer' cellpadding = 1>";		
+
+		foreach($group_list as $group_id) {
+			print "<input type=hidden name='hidden_group_" . $group_id . "' value='" . $group_id . "'>";
+			// get groupname
+			$group_name = $xoopsDB->query("SELECT name, description FROM " . $xoopsDB->prefix("groups") . " WHERE groupid=$group_id");	
+			$gn = $xoopsDB->fetchArray($group_name);
+			if($class == 'even') {
+				$class = 'odd';
+			} else {
+				$class = 'even';
+			}
+			print "<tr><td valign=top class=head><p><b>" . $gn['name'] . "</b><br><br>" . $gn['description'] . "</p>";
+			//description of permissions added July 28/05
+			$perm_desc[0] = "view_form -- allows access to a form, and to your own entry or entries in it.";
+			$perm_desc[1] = "add_own_entry -- allows people to create entries of their own.";
+			$perm_desc[2] = "update_own_entry -- allows people to edit entries they make.";
+			$perm_desc[3] = "delete_own_entry -- allows people to delete entries they make.";
+			$perm_desc[4] = "update_other_entries -- allows people to update entries made by other people.";
+			$perm_desc[5] = "delete_other_entries -- allows people to delete entries made by other people.";
+			$perm_desc[6] = "add_proxy_entries -- allows people to make entries on behalf of other people.";
+			$perm_desc[7] = "view_groupscope -- allows access to entries made by everyone in the same group(s).";
+			$perm_desc[8] = "view_globalscope -- allows access to entries made by everyone in all groups.";
+			$perm_desc[9] = "create_reports -- currently has no effect.  Everyone can make saved views.";
+			$perm_desc[10] = "update_own_reports -- currently has no effect.  Everyone can update their own views.";
+			$perm_desc[11] = "delete_own_reports -- currently has no effect.  Everyone can delete their own views.";
+			$perm_desc[12] = "update_other_reports -- allows someone to make changes to published views.";
+			$perm_desc[13] = "delete_other_reports -- allows someone to delete a published view.";
+			$perm_desc[14] = "publish_reports -- allows someone to publish a saved view to their group(s).";
+			$perm_desc[15] = "publish_globalscope -- allows someone to publish a saved view to any group.";
+			$perm_desc[16] = "edit_form -- currently has no effect.";
+			$perm_desc[17] = "delete_form -- currently has no effect.";
+			$perm_desc[18] = "include_in_framework -- currently has no effect.";
+			print "</td><td class=$class valign=top>";
+			print "<table><tr>";
+			$colcounter = 0;
+			$hidden_once = 0;
+			foreach($form_list as $form_id) {
+				if(!$hidden_once) { print "<input type=hidden name='hidden_form_" . $form_id . "' value='" . $form_id . "'>"; }
+				if($colcounter == "5") {
+					$colcounter = 0;
+					print "</tr><tr>";
+				}
+				// get formname
+				$form_name = $xoopsDB->query("SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$form_id");
+				$fn = $xoopsDB->fetchArray($form_name);
+				$plistsize = count($formulize_perms);
+				print "<td valign=bottom class=$class><p><b>" . $fn['desc_form'] . "</b><br><select size=$plistsize multiple='multiple' name='" . $group_id . "-" . $form_id . "[]'>";
+				$i = 0;
+				foreach($formulize_perms as $perm) {
+					print "<option title='" . $perm_desc[$i] . "' value='$perm'" ; 
+					$i++;
+					if($gperm_handler->checkRight($perm, $form_id, $group_id, $module_id)) {
+						print " selected='selected'";	
+					} 
+					print ">$perm</option>";
+				}
+				print "</select></p></td>";		
+				$colcounter++;
+			}
+			print "</tr></table></td></tr>";
+			$hidden_once = 1;
+		}
+
+		print "<tr><td class=foot></td><td class=foot><input type=submit name=apply value='" . _formulize_SUBMITTEXT . "'>&nbsp;&nbsp;&nbsp;<input type=reset name=reset value='" . _formulize_RESETBUTTON . "'>&nbsp;&nbsp;&nbsp;<input type=submit name=done value='" . _AM_FRAME_DONEBUTTON . "'></td></tr>";
+
+		print "</table></form>";
+
+	} else {
+		drawGroupList();
+	}
+
+}
+
+function permform() {
+
 	global $xoopsDB, $xoopsModule;
 	$module_id = $xoopsModule->getVar('mid');
 
@@ -469,8 +994,231 @@ function permform()
 	foreach($tab as $item_id => $item_name) {
 		if($item_name != "") $form->addItem($item_id, $item_name);
 	} 
-	echo $form->render();
+	echo $form->render(); 
 
+
+}
+
+// FUNCTION DELETES PERMISSIONS FOR A FORM FOR A SPECIFIC GROUP
+// Have to do this via DB since no method exists to do it for us
+function updatePermsDB($mid, $gid, $fid, $perm, $add="") {
+	global $xoopsDB;
+	if($add) {
+		// check if it exists
+		$result = $xoopsDB->query("SELECT * FROM  " . $xoopsDB->prefix("group_permission") . " WHERE gperm_groupid='$gid' AND gperm_itemid='$fid' AND gperm_modid='$mid' AND gperm_name='$perm'");
+		$res = $xoopsDB->getRowsNum($result);
+		if($res == 0) {
+			//print "Adding $perm<br>";
+			$res2 = $xoopsDB->query("INSERT INTO " . $xoopsDB->prefix("group_permission") . " (gperm_modid, gperm_groupid, gperm_itemid, gperm_name) VALUES (\"$mid\", \"$gid\", \"$fid\", \"$perm\")");
+		}
+	} else {
+		//print "Deleting $perm<br>";
+		$result = $xoopsDB->query("DELETE FROM " . $xoopsDB->prefix("group_permission") . " WHERE gperm_groupid='$gid' AND gperm_itemid='$fid' AND gperm_modid='$mid' AND gperm_name='$perm'");
+	}
+}
+
+function updateperms() {
+
+	global $xoopsDB, $xoopsModule;
+	$formulize_perms = getFormulizePerms();
+	$module_id = $xoopsModule->getVar('mid');
+	$gperm_handler = &xoops_gethandler('groupperm');
+
+	foreach($_POST as $k=>$v) {
+		if(strstr($k, "hidden_group_")) { // find list of groups
+
+			$group_list[] = $v; 
+		} elseif (strstr($k, "hidden_form_")) { // find list of forms
+			$form_list[] = $v;
+		}
+	}
+	foreach($group_list as $gid) {
+		foreach($form_list as $fid) {
+			$perm_key = $gid . "-" . $fid;
+			if($_POST[$perm_key]) { // if perms were sent for this form for this group...
+				//print "<br>";
+				//print_r($_POST[$perm_key]);
+				foreach($formulize_perms as $perm) {
+					if(in_array($perm, $_POST[$perm_key])) { // if the perm was selected
+						updatePermsDB($module_id, $gid, $fid, $perm, 1); // last value is the add flag
+					} else {
+						updatePermsDB($module_id, $gid, $fid, $perm, 0); // last value is the add flag
+					}
+				}
+			} else { // no perms sent for this form at all
+				foreach($formulize_perms as $perm) {
+					updatePermsDB($module_id, $gid, $fid, $perm, 0); // last value is the add flag
+				}
+			}
+		}
+	}
+}
+
+// FUNCTION ACTUALLY SETS NEW PERMISSIONS, CALLED BY MIGRATEperms FUNCTION
+function setNewPerms($oldperm, $form, $group, $module_id) {
+	//print "<br>Perm: $oldperm ... Form: $form ... Group: $group ... Module: $module_id";
+	$gperm_handler = &xoops_gethandler('groupperm');	
+	switch($oldperm) {
+		case "view":
+			$result = $gperm_handler->addRight("view_form", $form, $group, $module_id);
+			break;
+		case "add":
+			$gperm_handler->addRight('add_own_entry', $form, $group, $module_id);
+			$gperm_handler->addRight('update_own_entry', $form, $group, $module_id);
+			$gperm_handler->addRight('delete_own_entry', $form, $group, $module_id);
+			$gperm_handler->addRight('create_reports', $form, $group, $module_id);
+			$gperm_handler->addRight('update_own_reports', $form, $group, $module_id);
+			$gperm_handler->addRight('delete_own_reports', $form, $group, $module_id);
+			break;
+		case "admin":
+			$gperm_handler->addRight('update_other_entries', $form, $group, $module_id);
+			$gperm_handler->addRight('delete_other_entries', $form, $group, $module_id);
+			$gperm_handler->addRight('view_groupscope', $form, $group, $module_id);
+			$gperm_handler->addRight('add_proxy_entries', $form, $group, $module_id);
+			$gperm_handler->addRight('update_other_reports', $form, $group, $module_id);
+			$gperm_handler->addRight('delete_other_reports', $form, $group, $module_id);
+			$gperm_handler->addRight('publish_reports', $form, $group, $module_id);
+			break;
+	}
+}
+
+// FUNCTION TAKES OLD STYLE PERMS (VIEW, ADD, ADMIN) AND UPDATES THEM TO THE NEW PERM SYSTEM
+// does not delete old perms, just adds new ones to roughly correspond to old functionality
+function migratePerms() {
+
+	if(!isset($_POST['migrateperms'])) {
+		print "<form action=\"formindex.php?op=migrateperms\" method=post>";
+		print "<input type = submit name=migrateperms value=\"Migrate Perms\">";
+		print "</form>";
+	} else {
+
+	global $xoopsDB, $xoopsModule;
+	$module_id = $xoopsModule->getVar('mid'); // get module id
+
+	$gperm_handler = &xoops_gethandler('groupperm');
+	$fs_member_handler =& xoops_gethandler('member');
+	$groups =& $fs_member_handler->getGroups(); // get groups (big object)
+	$sql="SELECT id_form FROM ".$xoopsDB->prefix("form_id") . " ORDER BY desc_form";
+	$res = $xoopsDB->query( $sql );
+	while ($array = $xoopsDB->fetchArray($res)) {
+		$forms[] = $array['id_form']; // get forms
+	}
+
+	foreach($groups as $group) {
+		$gid = $group->getVar('groupid');
+		foreach($forms as $form) {
+		
+			if($gperm_handler->checkRight('add', $form, $gid, $module_id)) {
+				//print "Setting add perm...$form...$gid...$module_id";
+				setNewPerms("add", $form, $gid, $module_id);
+			}
+			if($gperm_handler->checkRight('view', $form, $gid, $module_id)) {
+				setNewPerms("view", $form, $gid, $module_id);
+			}
+			if($gperm_handler->checkRight('admin', $form, $gid, $module_id)) {
+				setNewPerms("admin", $form, $gid, $module_id);
+			}
+		}
+	}
+
+	print "Migration of Permissions Completed";
+	}
+}
+
+// THIS FUNCTION CONVERTS THE UID/PROXYID DATA STORAGE CONVENTION FROM THE OLD TO THE NEW
+// previously, last modification user was the uid, unless there was a proxy id present.
+// now, uid is the creator and proxy id is the modifier.  Period, in all cases.
+// this function copies the uid to the proxyid field if the proxyid field is currently equal to zero.
+// data writing functions have been modified to comply with this new standard.
+function migrateIds() {
+
+	if(!isset($_POST['migrateids'])) {
+		print "<form action=\"formindex.php?op=migrateids\" method=post>";
+		print "<input type = submit name=migrateids value=\"Migrate Modification Uids\">";
+		print "</form>";
+	} else {
+		// put logic here.
+		global $xoopsDB;
+		$sql = "UPDATE " . $xoopsDB->prefix("form_form") . " SET proxyid = uid WHERE proxyid = 0";
+		if(!$result = $xoopsDB->query($sql)) {
+			exit("Error:  Migration of Ids failed!  Please contact Freeform Solutions for assistance.");
+		}
+		print "Migration of Ids Completed";
+	}
+}
+
+// THIS FUNCTION PROVIDES THE DB UPDATES FROM 1.6 RC TO 2.0 BETA
+function migratedb() {
+
+	if(!isset($_POST['migratedb'])) {
+		print "<form action=\"formindex.php?op=migratedb\" method=post>";
+		print "<input type = submit name=migratedb value=\"Migrate Database\">";
+		print "</form>";
+	} else {
+		global $xoopsDB;
+		// put logic here
+		$sql[0] = "ALTER TABLE " . $xoopsDB->prefix("form_id") . " CHANGE `desc_form` `desc_form` VARCHAR( 255 ) NOT NULL"; 
+		$sql[1] = "ALTER TABLE " . $xoopsDB->prefix("form_form") . " CHANGE `ele_id` `ele_id` INT( 5 ) UNSIGNED NOT NULL AUTO_INCREMENT";
+		$sql[2] = "ALTER TABLE " . $xoopsDB->prefix("form_form") . " ADD `creation_date` DATE NOT NULL";
+		$sql[3] = "ALTER TABLE " . $xoopsDB->prefix("form_form") . " ADD INDEX `i_id_req` ( `id_req` )";
+		$sql[4] = "ALTER TABLE " . $xoopsDB->prefix("form_form") . " ADD INDEX `i_id_form` ( `id_form` )";
+		$sql[5] = "ALTER TABLE " . $xoopsDB->prefix("form_form") . " ADD INDEX `i_ele_caption` ( `ele_caption` )";
+		$sql[6] = "ALTER TABLE " . $xoopsDB->prefix("form_form") . " ADD INDEX `i_ele_value` ( `ele_value` ( 20 ) )";
+		$sql[7] = "ALTER TABLE " . $xoopsDB->prefix("form_form") . " ADD INDEX `i_uid` ( `uid` )";
+		$sql[8] = "CREATE TABLE " . $xoopsDB->prefix("formulize_saved_views") . " (
+  sv_id smallint(5) NOT NULL auto_increment,
+  sv_name varchar(255) default NULL,
+  sv_pubgroups varchar(255) default NULL,
+  sv_owner_uid int(5),
+  sv_mod_uid int(5),
+  sv_formframe varchar(255) default NULL,
+  sv_mainform varchar(255) default NULL,
+  sv_lockcontrols tinyint(1),
+  sv_hidelist tinyint(1),
+  sv_hidecalc tinyint(1),
+  sv_asearch varchar(255) default NULL,
+  sv_sort varchar(255) default NULL,
+  sv_order varchar(30) default NULL,
+  sv_oldcols varchar(255) default NULL,
+  sv_currentview varchar(255) default NULL,
+  sv_calc_cols varchar(255) default NULL,
+  sv_calc_calcs varchar(255) default NULL,
+  sv_calc_blanks varchar(255) default NULL,
+  sv_calc_grouping varchar(255) default NULL,
+  sv_quicksearches varchar(255) default NULL,
+  PRIMARY KEY (sv_id)
+) TYPE=MyISAM;";
+		$sql[9] = "CREATE TABLE " . $xoopsDB->prefix("group_lists") . " (
+  gl_id smallint(5) unsigned NOT NULL auto_increment,
+  gl_name varchar(255) NOT NULL default '',
+  gl_groups text default '',
+  PRIMARY KEY (gl_id),
+  UNIQUE gl_name_id (gl_name)
+) TYPE=MyISAM;";
+
+		$sql[10] = "CREATE TABLE " . $xoopsDB->prefix("formulize_onetoone_links") . " (
+  link_id smallint(5) NOT NULL auto_increment,
+  main_form int(5),
+  link_form int(5),
+  PRIMARY KEY (`link_id`)
+) TYPE=MyISAM;";
+
+		$sql[11] = "CREATE TABLE " . $xoopsDB->prefix("formulize_menu_cats") . " (
+  cat_id smallint(5) NOT NULL auto_increment,
+  cat_name varchar(255) default NULL,
+  id_form_array varchar(255) default NULL,
+  PRIMARY KEY (`cat_id`)
+) TYPE=MyISAM;";
+
+// END OF SQL 
+
+		for($i=0;$i<12;$i++) {
+			if(!$result = $xoopsDB->query($sql[$i])) {
+				exit("Error migrating DB from 1.6rc to 2.0beta.  SQL dump: " . $sql[$i]);
+			}
+		} 
+		print "Migration of DB completed.";
+	}
 }
 
 
@@ -498,6 +1246,57 @@ case "permform":
 case "permlinks":
 	permlinks();
 	break;
+// added jwe May 23, 2005
+
+case "permsub":
+	if(isset($_POST['list_op']))
+		{
+			$list_op = $_POST['list_op']; 
+
+			switch ($list_op) {
+   				case "save":
+					$new_list_id = saveList(); 
+					break;
+   				case "delete":
+					deleteList(); 
+					break;
+			} 
+		}
+	newpermform($_POST['fs_groups'], $_POST['fs_forms']);
+	break;
+
+case "permeditor":
+	updateperms();
+	if(isset($_POST['done'])) {
+		newpermform();
+	} else {
+		foreach($_POST as $k=>$v) {
+			if(strstr($k, "hidden_group_")) { // find list of groups
+				$group_list[] = $v; 
+			} elseif (strstr($k, "hidden_form_")) { // find list of forms
+				$form_list[] = $v;
+			}
+		}
+		newpermform($group_list, $form_list);
+	}
+	break;
+
+case "newpermform":
+	newpermform();
+	break;
+
+case "migrateperms":
+	migratePerms();
+	break;
+
+case "migrateids":
+	migrateIds();
+	break;
+
+case "migratedb":
+	migratedb();
+	break;
+
 
 }
 

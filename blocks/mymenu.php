@@ -27,77 +27,45 @@ function block_formulizeMENU_show() {
         $block = array();
         $groups = array();
         $block['title'] = ""; //_MB_formulizeMENU_TITLE;
-	  // following line added jwe 7/23/04 -- part of the form menu redrawing to look like main menu
         $block['content'] = "<table cellspacing='0' border='0'><tr><td id=mainmenu>";
 
-        $result = $xoopsDB->query("SELECT menuid, position, indent, itemname, margintop, marginbottom, itemurl, bold, membersonly, mainmenu, status FROM ".$xoopsDB->prefix("form_menu")." ORDER BY position");
-       
-        // Gestion des permissions 
-	include_once XOOPS_ROOT_PATH.'/class/xoopsform/grouppermform.php';
+	// MODIFIED April 25/05 to handle menu categories
 
-	$res4 = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulize'");
-	if ($res4) {
-		while ($row = mysql_fetch_row($res4))
-			$module_id = $row[0];
+	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+
+	$cats = fetchCats();
+
+	// GENERATE THE ID_FORM
+	if(!isset($_POST['title'])){
+		$title = isset ($_GET['title']) ? $_GET['title'] : '';
+	} else {
+		$title = $_POST['title'];
 	}
-	
-	//$module_id = $xoopsModule->getVar('mid'); // récupère le numéro id du module
-
-	$perm_name = 'Permission des catégories';
-	//if ($xoopsUser) { $groups = $xoopsUser->getGroups(); } else { $groups = XOOPS_GROUP_ANONYMOUS; }
-	if ($xoopsUser) {$uid = $xoopsUser->getVar("uid");} else { $groupuser[0] = XOOPS_GROUP_ANONYMOUS; }
-	$res = $xoopsDB->query("SELECT groupid FROM ".$xoopsDB->prefix("groups_users_link")." WHERE uid= ".$uid);
-	if ( $res ) {
-  	  while ( $row = mysql_fetch_row ( $res ) ) {
-  		$groupuser[] = $row[0];
-
-  	  }
+	if($title) {
+		$sql=q("SELECT id_form FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form=\"$title\"");
+		$id_form = $sql[0]['id_form'];
+	} else {
+		$id_form = 0;
 	}
-	$gperm_handler =& xoops_gethandler('groupperm');
 
-// SQL updated to look at view permission specifically -- jwe 7/28/04
-        while (list($menuid, $position, $indent, $itemname, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status) = $xoopsDB->fetchRow($result)) {
-  		//echo $itemname." <br>".$status."<br>".$menuid;
-  		                if ( $status == 1 ) {
-	                $groupid = array();
-//	                $res2 = $xoopsDB->query("SELECT gperm_groupid, gperm_itemid FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_itemid= ".$menuid." AND gperm_modid=".$module_id " AND gperm_name=\"view\"");
+	$allowedForms = allowedForms();
 
-			$res2q = "SELECT gperm_groupid, gperm_itemid FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_itemid=$menuid AND gperm_modid=$module_id AND gperm_name=\"view\"";
-			$res2 = mysql_query($res2q);
+	$topwritten = 0;
 
-			if ( $res2 ) {
-		  	  while ( $row = mysql_fetch_row ( $res2 ) ) {
-		  		$groupid[] = $row[0];
-		  	  }
-			}
-	
-	   	$display = 0;
-			$perm_itemid = $menuid; //intval($_GET['category_id']);
-			$itemname = $myts->displayTarea($itemname);
-		      foreach ($groupid as $gr){
-	                	if ( in_array ($gr, $groupuser) && $display != 1) {
+	$force_open = 0;
+	$allowedCats = allowedCats($cats, $allowedForms);
 
-//does not seem to be used so commented out... jwe 7/23/04
-//	                		if ($bold == 1) 
-//	                		$block['content'] .= "<a class=menuMain href='$itemurl'>$itemname</a>";
-//	                		else
+	if(count($allowedCats)<2 AND (!isset($_GET['cat']) AND !isset($_GET['title']))) { $force_open = 1; } // if only one category, then force it to open up
+	foreach($cats as $thisid=>$thiscat) {
+		$temp = drawMenu($thisid, $thiscat, $allowedForms, $id_form, $topwritten, $force_open);
+		if($temp != "") {
+			$block['content'] .= $temp;
+			$topwritten = 1;
+		}
+	}
+	if(count($allowedCats) == 1) { $force_open = 0; } // if a previous category was already displayed, do not open up general forms too (but open general forms if there are no previous categories)
+	$block['content'] .= drawMenu(0, _AM_CATGENERAL, $allowedForms, $id_form, $topwritten, $force_open);
 
-//if check added to put menuTop class on first element... jwe 7/23/04
-					if ($topwritten != 1) {
-						$block['content'] .= "<a class=menuTop href='$itemurl'>$itemname</a>";
-						$topwritten = 1;
-					}
-					else
-					{
-	                		$block['content'] .= "<a class=menuMain href='$itemurl'>$itemname</a>";
-					}
-	                		$display = 1;
-	                	}
-	                
-	        	}
-        	}
-        }
-	  // following line added jwe 7/23/04
 	  $block['content'] .= "</td></tr></table>";
         return $block;
 }

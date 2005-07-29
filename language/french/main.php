@@ -74,4 +74,24 @@ define("_formulize_TEMP_QYES", "YES");
 define("_formulize_TEMP_QNO", "NO");
 
 define("_FORM_EXP_CREE","Le fichier a été exporté avec succès");
+
+// added July 17 2005 and onwards...
+
+define("_formulize_DONE", "Tous Fini");
+define("_formulize_SAVE", "Enregistrez");
+define("_formulize_TEMP_ON", "sur"); 
+define("_FORM_ANON_USER","Quelqu'un sur l'Internet");
+define("_formulize_FD_ABOUT", "Détails de cette information:");
+define("_formulize_FD_CREATED", "Créé par: ");
+define("_formulize_FD_MODIFIED", "Modifié par: ");
+define("_formulize_FD_NEWENTRY", "C'est nouvelle information qui n'a deja été enregistrée.");
+define("_formulize_INFO_SAVED", "Votre information a été enregistrée.");
+define("_formulize_INFO_DONE1", "Si vous êtes finis, cliquetez le bouton <i>");
+define("_formulize_INFO_DONE2", "</i>.");
+define("_formulize_INFO_CONTINUE1", "Vous pouvez mettre à jour votre information ci-dessous.");
+define("_formulize_INFO_CONTINUE2", "Vous pouvez enregistrer des autre information en complétant la formulaire encore.");
+define("_formulize_INFO_SAVEBUTTON", "Pour enregistrer vos changements, cliquetez le bouton <i>" . _formulize_SAVE . "</i>.");
+define("_formulize_INFO_MAKENEW", "Vous pouvez enregistrer nouvelle information en complétant la formulaire ci-dessous.");
+
+
 ?>

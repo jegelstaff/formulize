@@ -1,3 +1,49 @@
+CREATE TABLE formulize_saved_views (
+  sv_id smallint(5) NOT NULL auto_increment,
+  sv_name varchar(255) default NULL,
+  sv_pubgroups varchar(255) default NULL,
+  sv_owner_uid int(5),
+  sv_mod_uid int(5),
+  sv_formframe varchar(255) default NULL,
+  sv_mainform varchar(255) default NULL,
+  sv_lockcontrols tinyint(1),
+  sv_hidelist tinyint(1),
+  sv_hidecalc tinyint(1),
+  sv_asearch varchar(255) default NULL,
+  sv_sort varchar(255) default NULL,
+  sv_order varchar(30) default NULL,
+  sv_oldcols varchar(255) default NULL,
+  sv_currentview varchar(255) default NULL,
+  sv_calc_cols varchar(255) default NULL,
+  sv_calc_calcs varchar(255) default NULL,
+  sv_calc_blanks varchar(255) default NULL,
+  sv_calc_grouping varchar(255) default NULL,
+  sv_quicksearches varchar(255) default NULL,
+  PRIMARY KEY (sv_id)
+) TYPE=MyISAM;
+
+CREATE TABLE group_lists (
+  gl_id smallint(5) unsigned NOT NULL auto_increment,
+  gl_name varchar(255) NOT NULL default '',
+  gl_groups text default '',
+  PRIMARY KEY (gl_id),
+  UNIQUE gl_name_id (gl_name)
+) TYPE=MyISAM;
+
+CREATE TABLE formulize_onetoone_links (
+  link_id smallint(5) NOT NULL auto_increment,
+  main_form int(5),
+  link_form int(5),
+  PRIMARY KEY (`link_id`)
+) TYPE=MyISAM;
+
+CREATE TABLE formulize_menu_cats (
+  cat_id smallint(5) NOT NULL auto_increment,
+  cat_name varchar(255) default NULL,
+  id_form_array varchar(255) default NULL,
+  PRIMARY KEY (`cat_id`)
+) TYPE=MyISAM;
+
 CREATE TABLE formulize_frameworks (
   frame_id smallint(5) NOT NULL auto_increment,
   frame_name varchar(255) default NULL,
@@ -77,7 +123,7 @@ CREATE TABLE form_chains_entries (
 
 CREATE TABLE form_id (
   id_form smallint(5) NOT NULL auto_increment,
-  desc_form varchar(60) NOT NULL default '',
+  desc_form varchar(255) NOT NULL default '',
   admin varchar(5) default NULL,
   groupe varchar(255) default NULL,
   email varchar(255) default NULL,
@@ -126,13 +172,19 @@ CREATE TABLE form_menu (
 CREATE TABLE form_form (
   id_form int(5) NOT NULL default '0',
   id_req smallint(5) ,
-  ele_id smallint(5) unsigned NOT NULL auto_increment,
+  ele_id int(5) unsigned NOT NULL auto_increment,
   ele_type varchar(10) NOT NULL default '',
   ele_caption varchar(255) NOT NULL default '',
   ele_value text NOT NULL,
   date Date NOT NULL default '2004-06-03',
   uid int(10) default '0',
   proxyid int(10) NULL ,
+  creation_date Date NOT NULL, 
   PRIMARY KEY  (`ele_id`),
-  KEY `ele_id` (`ele_id`)
+  KEY `ele_id` (`ele_id`),
+  INDEX i_id_req (id_req),
+  INDEX i_id_form (id_form),
+  INDEX i_ele_caption (ele_caption),
+  INDEX i_ele_value (ele_value(20)),
+  INDEX i_uid (uid)
 ) TYPE=MyISAM;

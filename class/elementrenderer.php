@@ -45,6 +45,16 @@ class formulizeElementRenderer{
 		global $xoopsUser, $xoopsModuleConfig, $separ, $myts;
 		$myts =& MyTextSanitizer::getInstance();
 		
+		// added July 6 2005.
+		if(!$xoopsModuleConfig['delimeter']) {
+			// assume that we're accessing a form from outside the Formulize module, therefore the Formulize delimiter setting is not available, so we have to query for it directly.
+			global $xoopsDB;
+			$delimq = q("SELECT conf_value FROM " . $xoopsDB->prefix("config") . ", " . $xoopsDB->prefix("modules") . " WHERE " . $xoopsDB->prefix("modules") . ".mid=" . $xoopsDB->prefix("config") . ".conf_modid AND " . $xoopsDB->prefix("modules") . ".dirname=\"formulize\" AND " . $xoopsDB->prefix("config") . ".conf_name=\"delimeter\"");
+			$delimSetting = $delimq[0]['conf_value'];
+		} else {
+			$delimSetting = $xoopsModuleConfig['delimeter'];
+		}
+
 		$id_form = $this->_ele->getVar('id_form');
 		$ele_caption = $this->_ele->getVar('ele_caption', 'e');
 		$ele_caption = preg_replace('/\{SEPAR\}/', '', $ele_caption);
@@ -57,6 +67,9 @@ class formulizeElementRenderer{
         $ele_caption = $myts->displayTarea($ele_caption);
 
 		switch ($e){
+			case 'ib':
+				$form_ele = $ele_value; // an array, item 0 is the contents of the break, item 1 is the class of the table cell (for when the form is table rendered)
+				break;
 			case 'text':
 				$ele_value[2] = stripslashes($ele_value[2]);
 //        $ele_value[2] = $myts->displayTarea($ele_value[2]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
@@ -247,11 +260,26 @@ if($pguidq) { $pguidq .= ")"; } // close the pguidq if it has been started
 					$opt_count = 1;
 				}	
 				while( $i = each($ele_value[2]) ){
-					$options[$opt_count] = $myts->stripSlashesGPC($i['key']);
-					if( $i['value'] > 0 ){
-						$selected[] = $opt_count;
+
+					// handle requests for full names or usernames -- will only kick in if there is no saved value (otherwise ele_value will have been rewritten by the loadValues function in the form display
+					// note: if the user is about to make a proxy entry, then the list of users displayed will be from their own groups, but not from the groups of the user they are about to make a proxy entry for.  ie: until the proxy user is known, the choice of users for this list can only be based on the current user.  This could lead to confusing or buggy situations, such as users being selected who are outside the groups of the proxy user (who will become the owner) and so there will be an invalid value stored for this element in the db.
+					if($i['key'] == "{FULLNAMES}" OR $i['key'] == "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
+						if($i['key'] == "{FULLNAMES}") { $nametype = "name"; }
+						if($i['key'] == "{USERNAMES}") { $nametype = "uname"; }
+						global $xoopsUser;
+						$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+						$namelist = gatherNames($groups, $nametype);
+						foreach($namelist as $aname) {
+							$options[$opt_count] = $aname;
+							$opt_count++;
+						}
+					} else { // regular selection list....
+						$options[$opt_count] = $myts->stripSlashesGPC($i['key']);
+						if( $i['value'] > 0 ){
+							$selected[] = $opt_count;
+						}
+						$opt_count++;
 					}
-				$opt_count++;
 				}
 				$form_ele = new XoopsFormSelect(
 					$ele_caption,
@@ -275,7 +303,8 @@ if($pguidq) { $pguidq .= ")"; } // close the pguidq if it has been started
 					}
 					$opt_count++;
 				}
-				switch($xoopsModuleConfig['delimeter']){
+
+				switch($delimSetting){
 					case 'br':
 						$form_ele = new XoopsFormElementTray($ele_caption, '<br />');
 						while( $o = each($options) ){
@@ -285,6 +314,7 @@ if($pguidq) { $pguidq .= ")"; } // close the pguidq if it has been started
 								$selected
 							);
 							$t->addOption($o['key'], $o['value']);
+							$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 							$form_ele->addElement($t);
 						}
 					break;
@@ -320,7 +350,7 @@ if($pguidq) { $pguidq .= ")"; } // close the pguidq if it has been started
 					}
 					$opt_count++;
 				}
-				switch($xoopsModuleConfig['delimeter']){
+				switch($delimSetting){
 					case 'br':
 						$form_ele = new XoopsFormElementTray($ele_caption, '<br />');
 						while( $o = each($options) ){
@@ -330,6 +360,7 @@ if($pguidq) { $pguidq .= ")"; } // close the pguidq if it has been started
 								$selected
 							);
 							$t->addOption($o['key'], $o['value']);
+							$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 							$form_ele->addElement($t);
 						}
 					break;

@@ -56,5 +56,5 @@ define("_MI_formulizeMENU_DESC","Displays an individually configurable menu in a
 define("_MI_formulizeMENU_BNAME","Form Menu");
 
 // Version
-define("_MI_VERSION","1.6");
+define("_MI_VERSION","2.0b");
 ?>

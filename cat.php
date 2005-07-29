@@ -1,8 +1,7 @@
-<?
-
+<?php
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) 2004 Freeform Solutions                  ##
+##                    Copyright (c) 2005 Freeform Solutions                  ##
 ###############################################################################
 ##                    XOOPS - PHP Content Management System                  ##
 ##                       Copyright (c) 2000 XOOPS.org                        ##
@@ -31,78 +30,26 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// THE ACTUAL QUERY OF DATA FROM THE DATABASE TO DISPLAY ENTRIES
-// apply the groupscope param to the query (query with the whole userlist)
-if($gscopeparam)
-{
-	$queryjwe = "SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND ($gscopeparam) $userreportingquery ORDER BY id_req";
-}
-else
-{
-	$queryjwe = "SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$id_form AND uid=$uid $userreportingquery ORDER BY id_req";
-}
-//print "initial req query: $queryjwe<br>";
-$recordsjwe = mysql_query($queryjwe);
+include 'header.php';
+
+$xoopsOption['template_main'] = 'formulize_cat.html';
+
+require(XOOPS_ROOT_PATH."/header.php");
+
+global $xoopsDB;
+
+$cat_id = $_GET['cat'];
+$cat_name_q = q("SELECT cat_name FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$cat_id'");
+$cat_name = $cat_name_q[0]['cat_name'];
+if(!$cat_name) { $cat_name = _AM_CATGENERAL; }
+
+$formsInCat = fetchFormsInCat($cat_id);
+$formNames = fetchFormNames($formsInCat);
+
+$xoopsTpl->assign("cat_name", $cat_name);
+$xoopsTpl->assign("formNames", $formNames);
 
 
-$previndex = "none";
-array ($totalresultarray);
-$totalentriesindex = 0;
-while ($rowjwe = mysql_fetch_row($recordsjwe)) // go through result row by row.
-{
-//		$totalresultarray[$totalentriesindex] = $rowjwe;
-		$finalselectidreq[$totalentriesindex] = $rowjwe[0];
-//		$finalselectidele[$totalentriesindex] = $rowjwe[0];
-		$totalentriesindex++;
-}
-
-// redo the query this time going only by id_req!
-// first make a query expression out of all the reqids...
-
-$finalreqq = "";
-
-//remove duplicates from arrays to give us a count of the number of records to loop through
-$finalselectidreq = array_unique($finalselectidreq);
-//	print_r($finalselectidreq);
-
-$atleastonereq = 0;
-if($finalselectidreq[0]) // if there is at least one entry found...
-{
-$atleastonereq = 1;
-$freq = 0;
-foreach($finalselectidreq as $thisfinalreq)
-{
-	if($freq == 0)
-	{
-		$finalreqq .= "id_req=$thisfinalreq"; 
-	}
-	else
-	{
-		$finalreqq .= " OR id_req=$thisfinalreq"; 
-	}
-	$freq++;
-}
-
-$totalentriesindex = 0;
-$realqueryjwe = "SELECT id_req, ele_caption, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE $finalreqq ORDER BY id_req";
-
-//print "<br>realquery: $realqueryjwe<br>";
-
-$realrecordsjwe = mysql_query($realqueryjwe);
-
-while($realrowjwe = mysql_fetch_row($realrecordsjwe))
-{
-		$totalresultarray[$totalentriesindex] = $realrowjwe;
-		$finalselectidreq[$totalentriesindex] = $realrowjwe[0];
-
-		$totalentriesindex++;
-}
-
-$finalselectidreq = array_unique($finalselectidreq);
-sort($finalselectidreq);
-/*print "totalresultarray:<br>";
-print_r($totalresultarray);
-print "<br>totalentriesindex = $totalentriesindex<br>";*/
-} // end of if-there-is-at-least-one-entry-found
+require(XOOPS_ROOT_PATH."/footer.php");
 
 ?>

@@ -1,4 +1,4 @@
-<?
+<?php
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
 ##                    Copyright (c) 2004 Freeform Solutions                  ##
@@ -32,38 +32,13 @@
 ##  URL: http://www.brandycoke.com/                                          ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
-
-
-
-	$myts =& MyTextSanitizer::getInstance();
-	$msg = '';
-	$i=0;
-	unset($_POST['submit']);
-	foreach( $_POST as $k => $v ){
-		if( preg_match('/ele_/', $k)){
-			$n = explode("_", $k);
-			$ele[$n[1]] = $v;
-			$id[$n[1]] = $n[1];
-		}
-		if($k == 'xoops_upload_file'){
-			$tmp = $k;
-			$k = $v[0];			
-			$v = $tmp;
-			$n = explode("_", $k);
-			$ele[$n[1]] = $v;
-			$id[$n[1]] = $n[1];
-		}
-	}
-	
-	$sql = $xoopsDB->query("SELECT id_req from " . $xoopsDB->prefix("form_form")." order by id_req DESC");
-	list($id_req) = $xoopsDB->fetchRow($sql);
-	if ($id_req == 0) { $num_id = 1; }
-	else if ($num_id <= $id_req) $num_id = $id_req + 1;
-
-
-	$up = array();
-	$desc_form = array();
-	$value = null;
+if( !preg_match("/elements.php/", $_SERVER['PHP_SELF']) ){
+	exit("Access Denied");
+}
+$ibcontent = new XoopsFormTextArea(_AM_ELE_INSERTBREAK, 'ele_value[0]', stripslashes($value[0]), 5, 35);
+$ibcontent->setDescription(_AM_ELE_IB_DESC);
+$ibclass = new XoopsFormSelect(_AM_ELE_IB_CLASS, 'ele_value[1]', $value[1], 1, false);
+$ibclass->addOption("head", "head");
+$form->addElement($ibcontent);
+$form->addElement($ibclass);
 ?>
-	
-

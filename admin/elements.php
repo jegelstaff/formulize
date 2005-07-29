@@ -228,6 +228,9 @@ switch($op){
 			case 'areamodif':
 				include 'ele_modif.php';
 			break;
+			case 'ib': // added June 20 2005
+				include 'ele_insertbreak.php';
+			break;
 			case 'select':
 				include 'ele_select.php';
 			break;
@@ -361,6 +364,10 @@ switch($op){
 				}else{
 					$value[] = $xoopsModuleConfig['ta_cols'];
 				}
+			break;
+			case 'ib': // added June 20 2005
+				$value[] = $ele_value[0];
+				$value[] = $ele_value[1];
 			break;
 			case 'checkbox':
 				$value = array();

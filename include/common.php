@@ -42,4 +42,7 @@ if( !defined("formulize_ROOT_PATH") ){
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 $formulize_mgr =& xoops_getmodulehandler('elements');
 include_once formulize_ROOT_PATH.'class/elementrenderer.php';
+
+include_once formulize_ROOT_PATH.'include/functions.php';
+
 ?>

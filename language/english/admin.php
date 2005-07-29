@@ -22,7 +22,11 @@ define("_AM_ELE_DISPLAY","Display");
 define("_AM_ELE_TEXT","Text box");
 define("_AM_ELE_TEXT_DESC","{NAME} will print full name;<br />{UNAME} will print user name;<br />{EMAIL} will print user email");
 define("_AM_ELE_TAREA","Text area");
-define("_AM_ELE_MODIF","Text for display");
+define("_AM_ELE_MODIF","Text for display (two columns)");
+define("_AM_ELE_MODIF_ONE","Text for display (one column)");
+define("_AM_ELE_INSERTBREAK","HTML content for this break:");
+define("_AM_ELE_IB_DESC","The caption will not display.  Only the text in this box will appear on screen, in a single row spanning both columns of the form.");
+define("_AM_ELE_IB_CLASS","CSS class for the row:");
 define("_AM_ELE_SELECT","Select box");
 define("_AM_ELE_CHECK","Check boxes");
 define("_AM_ELE_RADIO","Radio buttons");
@@ -92,7 +96,7 @@ define("_AM_ADDMENUITEM","Add menu item");
 define("_AM_CHANGEMENUITEM","Modify menu item");
 define("_AM_SITENAMET","Site Name:");
 define("_AM_URLT","URL:");
-define("_AM_Font","Font:");
+define("_AM_FONT","Font:");
 define("_AM_STATUST","Status:");
 define("_AM_MEMBERSONLY","Authorized users");
 define("_AM_MEMBERSONLY_SHORT","Reg.<br>only");
@@ -128,4 +132,18 @@ define("_AM_CLEAR_DEFAULT", "Clear Default");
 
 define("_AM_SAVING_CHANGES", "Saving Changes");
 define("_AM_EDIT_ELEMENTS", "Edit the form's elements");
+
+define("_AM_CONFIRM_DELCAT", "You are about to delete a Menu Category!  Please confirm.");
+define("_AM_MENUCATEGORIES", "Menu Categories");
+define("_AM_MENUCATNAME", "Name:");
+define("_AM_MENUSAVEADD", "Add/Save");
+define("_AM_MENUNOCATS", "No Categories");
+define("_AM_MENUEDIT", "Edit");
+define("_AM_MENUDEL", "Delete");
+define("_AM_MENUCATLIST", "Categories:");
+define("_AM_CATSHORT", "Category");
+define("_AM_CATGENERAL", "General Forms");
+
+define("_AM_CANCEL", "Cancel");
+
 ?>

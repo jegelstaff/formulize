@@ -70,7 +70,8 @@ if( $_POST['op'] != 'save' ){
 	<th><center>'._AM_ELE_CREATE.'</center></th>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=text">'._AM_ELE_TEXT.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=textarea">'._AM_ELE_TAREA.'</a></td></tr>
-	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=areamodif">'._AM_ELE_MODIF.'</a></td></tr>
+	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=areamodif">'._AM_ELE_MODIF.'</a></td></tr> 
+	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=ib">'._AM_ELE_MODIF_ONE.'</a></td></tr> 
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=select">'._AM_ELE_SELECT.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=checkbox">'._AM_ELE_CHECK.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=radio">'._AM_ELE_RADIO.'</a></td></tr>
@@ -83,9 +84,9 @@ if( $_POST['op'] != 'save' ){
 
 	echo ' <table class="outer" cellspacing="1" width="98%">
 		<tr>
-			<th>'._AM_ELE_CAPTION.'</th>
-			<th>'._AM_ELE_DEFAULT.'</th>
-			<th>'._AM_ELE_REQ.'</th>
+			<th>'._AM_ELE_CAPTION.'</th>';
+			//<th>'._AM_ELE_DEFAULT.'</th>
+			echo '<th>'._AM_ELE_REQ.'</th>
 			<th>'._AM_ELE_ORDER.'</th>
 			<th>'._AM_ELE_DISPLAY.'</th>
 			<th colspan="3">&nbsp;</th>
@@ -117,7 +118,11 @@ if( $_POST['op'] != 'save' ){
 
 		echo '<tr>';
 		echo '<td class="even">'.$i->getVar('ele_caption')."</td>\n";
-		echo '<td class="even">'.$ele_value->render()."</td>\n";
+/*		if(is_object($ele_value)) {
+			echo '<td class="even">'.$ele_value[0]."</td>\n";
+		} else {
+			echo '<td class="even">'.$ele_value->render()."</td>\n";
+		}*/
 		echo '<td class="even" align="center">'.$check_req->render()."</td>\n";
 		echo '<td class="even" align="center">'.$text_order->render()."</td>\n";
 		echo '<td class="even" align="center">'.$check_display->render().$hidden_id->render()."</td>\n";
@@ -130,7 +135,7 @@ if( $_POST['op'] != 'save' ){
 	$submit = new XoopsFormButton('', 'submit', _AM_SAVE_CHANGES, 'submit');
 	echo '
 		<tr>
-			<td class="foot" colspan="3"></td>
+			<td class="foot" colspan="2"></td>
 			<td class="foot" colspan="2" align="center">'.$submit->render().'</td>
 			<td class="foot" colspan="3"></td>
 		</tr>

@@ -27,7 +27,9 @@
 
 include_once("admin_header.php");
 
-function MyMenuAdmin() {
+include_once "../include/functions.php";
+
+function MyMenuAdmin($cat_id="") { // modified to accept passing of category names APRIL 25/05
         global $xoopsDB, $xoopsConfig, $xoopsModule;
         xoops_cp_header();
         OpenTable();
@@ -107,6 +109,77 @@ function MyMenuAdmin() {
         <br />";
 */
 
+// ADDED MENU CATEGORY UI -- April 25/05
+
+	// javascript to confirm deletion 
+
+	print "<script type='text/javascript'>\n";
+	print "	function confirmdel() {\n";
+	print "		var answer = confirm ('" . _AM_CONFIRM_DELCAT . "')\n";
+	print "		if (answer)\n";
+	print "		{\n";
+	print "			return true;\n";
+	print "		}\n";
+	print "		else\n";
+	print "		{\n";
+	print "			return false;\n";
+	print "		}\n";
+	print "	}\n";
+	print "</script>\n";
+
+
+echo "<h4 style='text-align:left;'>"._AM_MENUCATEGORIES."</H4>
+<table><tr><td valign=top>
+<form action='menu_index.php' method='post'>
+<input type='hidden' name='op' value='menuCatEditDel'>";
+echo "<p>" . _AM_MENUCATLIST . "&nbsp;&nbsp;<SELECT name=cat_id>";
+$cats = fetchCats();
+if(count($cats)>0) {
+	foreach($cats as $catid=>$catname) {
+		$catoptions .= "<option value=$catid>$catname</option>";
+	}
+
+echo "$catoptions</SELECT>
+<br>
+<input type=submit name=edit value='" . _AM_MENUEDIT . "' id=edit>&nbsp;&nbsp;<input type=submit name=del value='" . _AM_MENUDEL . "' id=del onclick='return confirmdel();'>";
+
+} else {
+	$catoptions .= "<option value=0>" . _AM_MENUNOCATS . "</option>";
+echo "$catoptions</SELECT>";
+
+}
+
+echo "</p></form></td></tr><tr><td valign=top>
+<form action='menu_index.php' method='post'>
+<input type='hidden' name='op' value='menuCatUpdate'>";
+
+// if cat_id is zero (ie: not set) then get the next cat 
+if($cat_id == 0) {
+	$cat_id_q = q("SELECT MAX(cat_id) FROM " . $xoopsDB->prefix("formulize_menu_cats"));
+	$cat_id = $cat_id_q[0]['MAX(cat_id)'];
+	if(!$cat_id == 0) {
+		$cat_id++;
+	} else {
+		$cat_id = 0;
+	}
+	echo"<input type='hidden' name='new_cat' value=1>";
+} else { // otherwise, set the $cat_name
+	$cat_name_q = q("SELECT cat_name FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$cat_id'");
+	$cat_name = $cat_name_q[0]['cat_name'];
+}
+
+
+
+echo "<input type='hidden' name='cat_id' value='$cat_id'>
+<p>" . _AM_MENUCATNAME . "&nbsp;&nbsp;<input type=text name=cat_name value='$cat_name'><br>
+<input type=submit name=update value='" . _AM_MENUSAVEADD . "' id=update></p></form>
+</td></tr></table>";
+
+
+
+// END OF MENU CAT UI
+
+
         //*********** Menueintrag ändern/löschen ******************************************************
         echo "<h4 style='text-align:left;'>"._AM_CHANGEMENUITEM."</h4>
         <form action='menu_index.php' method='post'>
@@ -115,52 +188,44 @@ function MyMenuAdmin() {
         <td class='bg2'>
                 <table width='100%' border='0' cellpadding='4' cellspacing='1'>
                 <tr class='bg3'>
+		
+		    <td><b>"._AM_CATSHORT."</b></td>
                 <td><b>"._AM_POS_SHORT."</b></td>
                 <td><b>"._AM_ITEMNAME."</b></td>
-                <td><b>"._AM_INDENT_SHORT."</b></td>
-                <td><b>"._AM_MARGIN_TOPSHORT."</b></td>
-                <td><b>"._AM_MARGIN_BOTTOMSHORT."</b></td>
-                <td><b>"._AM_ITEMURL."</b></td>";
-                //<td><b>"._AM_MEMBERSONLY_SHORT."</b></td>
-                echo "
-                <td><b>Style</b></td>
-                <td><b>"._AM_STATUS."</b></td>
-                <td><b>"._AM_FUNCTION."</b></td>";
-                $result = $xoopsDB->query("SELECT menuid, position, itemname, indent, margintop, marginbottom, itemurl, bold, membersonly, mainmenu, status FROM ".$xoopsDB->prefix("form_menu")." ORDER BY position");
-                $myts =& MyTextSanitizer::getInstance();
-                while ( list($menuid, $position, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status) = $xoopsDB->fetchRow($result) ) {
-                        $itemname = $myts->makeTboxData4Show($itemname);
-                        $itemurl = $myts->makeTboxData4Show($itemurl);
-                        echo "<tr class='bg1'><td align='right'>$position</td>";
+                <td><b>"._AM_STATUS."</b></td></tr>";
 
-                        if ($bold == 1) {
-                                 echo "<td><b>$itemname</b></td>";
-                        } else {
-                                 echo "<td>$itemname</td>";
-                        }
-                        echo "<td>$indent</td>";
-                        echo "<td>$margintop</td>";
-                        echo "<td>$marginbottom</td>";
-                        echo "<td>$itemurl</td>";
-               /*         if ( $membersonly == 1 ) {
-                                echo "<td>"._AM_YES."</td>";
-                        } else {
-                                echo "<td> </td>";
-                        }
-                */
-                        if ( $mainmenu == 1) {
+			// CHANGED THE LOOPING HERE SO THAT ENTRIES ARE SORTED BY CATEGORY
+			$allcats = q("SELECT cat_id, cat_name, id_form_array FROM " . $xoopsDB->prefix("formulize_menu_cats") . " ORDER BY cat_name");
+			foreach($allcats as $thiscat) {
+				$formids = explode(",", trim($thiscat['id_form_array'], ",")); // note that there is a trailing and leading comma on this array
 
-                        echo "<td>"._AM_formulizeMENUSTYLE."</td>";
-                        } else {
-                        echo "<td>"._AM_MAINMENUSTYLE."</td>";
-                        }
-                        if ( $status == 1 ) {
-                                echo "<td>"._AM_ACTIVE."</td>";
-                        } else {
-                                echo "<td>"._AM_INACTIVE."</td>";
-                        }
-                echo "<td><a href='menu_index.php?op=MyMenuEdit&amp;menuid=$menuid'>"._AM_EDIT."</a></td></tr>"; // Delete link is commented, see note below.  jwe 09/03/05| <a href='menu_index.php?op=MyMenuDel&amp;menuid=$menuid&amp;ok=0'>"._AM_DELETE."</a></td>                </tr>";
-                }
+				$sortfilter = "(menuid='";
+				$sortfilter .= implode("' OR menuid='", $formids);
+				$sortfilter .= "')";
+
+
+				// do an interim query to sort the formids according to position
+				$positions = q("SELECT menuid FROM " . $xoopsDB->prefix("form_menu") . " WHERE $sortfilter ORDER BY position");
+				foreach($positions as $id=>$thispos) {
+					drawRow($thiscat['cat_name'], $thispos['menuid']);
+					$foundForms[] = $thispos['menuid'];
+                		} 
+			} // ENDS OF NEW LOOPING STRUCTURE TO SORT BY CATEGORY
+
+			// IF NO FORMS ARE FOUND, ADD A DUMMY ENTRY TO FOUNDFORMS	
+			if(count($foundForms)==0) { $foundForms[0] = ""; }
+
+			// NOW GET LIST OF ALL FORMS(MENUIDS)
+			// draw a row for each one that isn't in the foundForms array
+			$allMenuIds_q = q("SELECT menuid FROM " . $xoopsDB->prefix("form_menu"));
+			foreach($allMenuIds_q as $aMenuId) {
+				$allMenuIds[] = $aMenuId['menuid'];
+			}
+			$leftOverForms = array_diff($allMenuIds, $foundForms);			
+			foreach($leftOverForms as $thisformid) {
+				drawRow(_AM_CATGENERAL, $thisformid);
+			}
+
                 echo "</table>
         </td>
         </tr>
@@ -168,6 +233,31 @@ function MyMenuAdmin() {
         </form>";
 
         CloseTable();
+}
+
+// FUNCTION HANDLES DRAWING OF A ROW OF THE MAIN LISTING OF FORMS
+function drawRow($thiscat, $thisformid) {
+
+	global $xoopsDB;
+
+		$result = $xoopsDB->query("SELECT menuid, position, itemname, indent, margintop, marginbottom, itemurl, bold, membersonly, mainmenu, status FROM ".$xoopsDB->prefix("form_menu")." WHERE menuid = '$thisformid' ORDER BY position");
+                $myts =& MyTextSanitizer::getInstance();
+                while ( list($menuid, $position, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status) = $xoopsDB->fetchRow($result) ) {
+                        $itemname = $myts->makeTboxData4Show($itemname);
+                        $itemurl = $myts->makeTboxData4Show($itemurl);
+
+				echo "<tr class='bg1'><td>" . $thiscat . "</td>"; // added to display category names (class moved from position line below)
+                        echo "<td align='right'>$position</td>";
+
+                        echo "<td><a href='menu_index.php?op=MyMenuEdit&amp;menuid=$menuid'>$itemname</a></td>";
+                        if ( $status == 1 ) {
+                                echo "<td>"._AM_ACTIVE."</td>";
+                        } else {
+                                echo "<td>"._AM_INACTIVE."</td>";
+                        }
+				echo "</tr>";
+                }
+
 }
 
 function MyMenuEdit($menuid) {
@@ -180,78 +270,50 @@ function MyMenuEdit($menuid) {
         $itemurl   = $myts->makeTboxData4Edit($itemurl);
         OpenTable();
         echo "<big><b>"._AM_TITLE."</big></b>
-        <h4 style='text-align:left;'>"._AM_EDITMENUITEM."</h4>
+        <h4 style='text-align:left;'>"._AM_EDITMENUITEM.": $itemname</h4>
         <form action='menu_index.php' method='post'>
         <input type='hidden' name='menuid' value='$menuid' />
         <table border='0' cellpadding='0' cellspacing='0' valign='top' width='100%'>
         <tr>
         <td class='bg2'>
                 <table width='100%' border='0' cellpadding='4' cellspacing='1'>
-                <tr>
-                <td class='bg3'><b>"._AM_POS."</b></td>
+                <tr>";
+
+			// ADDED UI FOR CATEGORY NAME April 25/05
+			// 1. get categories and ids
+			// 1.5 get current category
+			// 2. format string for selectbox
+			// 3. write out HTML
+
+			$cats = fetchCats();
+			$curcat_q = q("SELECT cat_id FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE id_form_array LIKE \"%,$menuid,%\"");
+			$curcat_id = $curcat_q[0]['cat_id'];
+			$catselected = 0;
+			foreach($cats as $catid=>$catname) {
+				$catoptions .= "<option value='$catid'";
+				if($catid == $curcat_id) { 
+					$catoptions .= " selected='selected'"; 
+					$catselected = 1;
+				}
+				$catoptions .= ">$catname</option>";
+			}
+			$catoptions .= "<option value='0'";
+			if($catselected == 0) {
+				$catoptions .= " selected='selected'"; 
+			}
+			$catoptions .= ">" . _AM_CATGENERAL . "</option>";
+			
+			echo "<input type='hidden' name=old_cat value='$curcat_id'>";
+
+			echo "<td class='bg3' width=25%><b>"._AM_CATSHORT."</b></td>
+			<td class='bg1'><SELECT name=cat_id size=1 id=cat_id>$catoptions</SELECT></td>
+			</tr>
+			</tr>";
+
+
+                echo "<td class='bg3'><b>"._AM_POS."</b></td>
                 <td class='bg1'><input type='text' name='xposition' size='4' maxlength='4' value='$xposition' />&nbsp&nbsp&nbsp(0000-9999)</td>
                 </tr>
-                <tr>
-                <td class='bg3'><b>"._AM_ITEMNAME."</b></td>
-                <td class='bg1'><input type='text' name='itemname' size='50' maxlength='60' value='$itemname' /></td>
-                </tr>
-                <tr>
-                <td class='bg3'><b>"._AM_INDENT."</b></td>
-                <td class='bg1'><input type='text' name='indent' size='12' maxlength='12' value='$indent' /></td>
-                </tr>
-                <tr>
-                <td class='bg3'><b>"._AM_FONT."</b></td>
-                <td class='bg1'>";
-                if( $bold == 1 ) {
-                       $checked_bold = "checked";  $checked_normal = "";
-        } else {
-                       $checked_normal = "checked";$checked_bold = "";
-               }
-                echo "
-                <input type='radio' $checked_normal name='bold' value='0'>"._AM_NORMAL."
-                <input type='radio' $checked_bold   name='bold' value='1'>"._AM_BOLD."
-                </td>
-                </tr>
-                <tr>
-                <td class='bg3'><b>Menu-Style</b></td>
-                <td class='bg1'>";
-                if( $mainmenu == 1 ) {
-                       $checked_mymenustyle = "checked";  $checked_mainmenustyle = "";
-        } else {
-                       $checked_mainmenustyle = "checked"; $checked_mymenustyle = "";
-               }
-                echo "
-                <input type='radio' $checked_mymenustyle name='mainmenu' value='1'>"._AM_formulizeMENUSTYLE."
-                <input type='radio' $checked_mainmenustyle   name='mainmenu' value='0'>"._AM_MAINMENUSTYLE."
-                </td>
-                </tr>
-                <tr>
-                <td class='bg3'><b>"._AM_ITEMURL."</b></td>
-                <td class='bg1'><input type='text' name='itemurl' size='65' maxlength='255' value='$itemurl' /></td>
-                </tr>
-                <tr>
-                <td class='bg3'><b>"._AM_MARGINTOP."</b></td>
-                <td class='bg1'><input type='text' name='margintop' size='12' maxlength='12' value='$margintop' /></td>
-                </tr>
-                <tr>
-                <td class='bg3'><b>"._AM_MARGINBOTTOM."</b></td>
-                <td class='bg1'><input type='text' name='marginbottom' size='12' maxlength='12' value='$marginbottom' /></td>
-                </tr>";
-                /*
-                <tr>
-                <td class='bg3'><b>"._AM_MEMBERSONLY."</b></td>
-                <td class='bg1'>";
-                if( $membersonly == 1 ) {
-                           $checked_members  = "checked";$checked_allusers = "";
-               } else {
-                           $checked_allusers = "checked";$checked_members   = "";
-                      }
-                echo "
-                <input type='radio' $checked_members  name='membersonly' value='1'>"._AM_MEMBERS."
-                <input type='radio' $checked_allusers name='membersonly' value='0'>"._AM_ALL."
-                </td>
-                </tr>*/
-                echo "
                 <tr>
                 <td class='bg3'><b>"._AM_STATUS."</b></td>
                 <td class='bg1'>";
@@ -268,7 +330,7 @@ function MyMenuEdit($menuid) {
 
                 <tr>
                 <td class='bg3'>&nbsp;</td>
-                <td class='bg1'><input type='hidden' name='fct' value='mymenu' /><input type='hidden' name='op' value='MyMenuSave' /><input type='submit' value='"._AM_SAVECHANG."' /></td>
+                <td class='bg1'><input type='hidden' name='fct' value='mymenu' /><input type='hidden' name='op' value='MyMenuSave' /><input type='submit' value='"._AM_SAVECHANG."' />&nbsp;&nbsp;<input type=button name=cancel value='" . _AM_CANCEL . "' onclick='javascript:location.href=\"../admin/menu_index.php\"'></td>
                 </tr>
                 </table>
         </td>
@@ -280,17 +342,48 @@ function MyMenuEdit($menuid) {
         CloseTable();
 }
 
-function MyMenuSave($menuid, $xposition, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status) {
+function MyMenuSave($menuid, $xposition, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status, $cat_id, $old_cat) {
         global $xoopsDB;
         $myts =& MyTextSanitizer::getInstance();
    		 	$itemname  = $myts->makeTboxData4Save(trim($itemname));
     		$itemurl   = $myts->makeTboxData4Save(trim($itemurl));
-        $xoopsDB->query("UPDATE ".$xoopsDB->prefix("form_menu")." SET position=$xposition, itemname='$itemname', indent='$indent', margintop='$margintop', marginbottom='$marginbottom', itemurl='$itemurl', bold=$bold, membersonly=0, mainmenu=$mainmenu, status=$status WHERE menuid=$menuid");
+        $xoopsDB->query("UPDATE ".$xoopsDB->prefix("form_menu")." SET position=$xposition, status=$status WHERE menuid=$menuid");
+
+		// ADDED CODE TO HANDLE SAVING OF CATEGORY April 25/05
+		// 0. compare cat_id and old_cat to see if there's been a change
+		// 1. GET THE id_form_array for the cat_id
+		// 2. add the menuid to the array
+		// 3. write the new array to the db
+
+		if($cat_id != $old_cat) { 
+
+		// write to the new cat...
+		$flatarray = q("SELECT id_form_array FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$cat_id'");
+		if($flatarray[0]['id_form_array'] == ",,") {
+			$newarray = "," . $menuid . ","; // note the leading and trailing commas
+		} else {
+			$newarray = $flatarray[0]['id_form_array'] . $menuid . ",";
+		}
+		q("UPDATE " . $xoopsDB->prefix("formulize_menu_cats") . " SET id_form_array='$newarray' WHERE cat_id='$cat_id'");
+
+		//erase from the old cat...
+		$oldflatarray = q("SELECT id_form_array FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$old_cat'");
+		$oldarray = explode(",", trim($oldflatarray[0]['id_form_array'], ",")); // note the trim of commas
+		$key = array_search($menuid, $oldarray); // get the key of the old item
+		$olditem = array_splice($oldarray, $key, 1); // extract that part of the old array
+		$newarray = array_diff($oldarray, $olditem); // return the old array minus the extracted item
+		$newflatarray = ",";
+		$newflatarray .= implode(",", $newarray);
+		$newflatarray .= ",";
+		q("UPDATE " . $xoopsDB->prefix("formulize_menu_cats") . " SET id_form_array='$newflatarray' WHERE cat_id='$old_cat'");
+		} // end of if new cat not equal to old cat
+
         redirect_header("menu_index.php?op=MyMenuAdmin",1,_AM_DBUPDATED);
         exit();
 }
 
-function MyMenuAdd($xposition, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status) {
+
+function MyMenuAdd($xposition, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status, $cat_id) {
         global $xoopsDB;
         $myts =& MyTextSanitizer::getInstance();
     		$itemname  = $myts->makeTboxData4Save(trim($itemname));
@@ -298,8 +391,21 @@ function MyMenuAdd($xposition, $itemname, $indent, $margintop, $marginbottom, $i
         $newid = $xoopsDB->genId($xoopsDB->prefix("form_menu")."_menuid_seq");
         
     		$xoopsDB->query("INSERT INTO ".$xoopsDB->prefix("form_menu")." (menuid, position, itemname, indent, margintop, marginbottom, itemurl, bold, membersonly, mainmenu, status) VALUES ('$newid', '$xposition', '$itemname', '$indent', '$margintop', '$marginbottom', '$itemurl', '$bold', '0', '$mainmenu', '$status')");
+
     redirect_header("menu_index.php?op=MyMenuAdmin",1,_AM_DBUPDATED);
     exit();
+}
+
+// FUNCTION ADDED TO HANDLE SAVING OF CATEGORY CHANGES
+function menuCatUpdate($cat_id, $cat_name, $new_cat="") {
+
+	global $xoopsDB;	
+
+	if($new_cat) { // if we're adding a new category...
+		q("INSERT INTO " .$xoopsDB->prefix("formulize_menu_cats") . " (cat_id, cat_name, id_form_array) VALUES (\"\", \"$cat_name\", \",,\")");
+	} else { // we're updating an existing category...
+		q("UPDATE " .$xoopsDB->prefix("formulize_menu_cats") . " SET cat_name=\"$cat_name\" WHERE cat_id=\"$cat_id\"");
+	}
 }
 
 // jwe 09/03/05
@@ -350,12 +456,23 @@ function MyMenuAdd($xposition, $itemname, $indent, $margintop, $marginbottom, $i
                 CloseTable();
         }
 }*/
- 
+
+// FUNCTION DELETES A CATEGORY added April 25/05
+function menuCatDel($cat_id) {
+	
+	global $xoopsDB;
+
+	q("DELETE FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$cat_id'");
+}
+
+
+// April 25/05 -- changed this loop so that POST explicitly overrides GET (used to just use REQUEST)
  if (!ini_get("register_globals")){
-   foreach ($_REQUEST as $k=>$v){
-       if (!isset($GLOBALS[$k])){
-           ${$k}=$v;
-       }
+   foreach ($_GET as $k=>$v){
+     ${$k}=$v;
+   }
+   foreach ($_POST as $k=>$v){
+     ${$k}=$v;
    }
 }
  
@@ -368,10 +485,10 @@ switch($op) {
                 MyMenuDel($menuid, $ok);
                 break;
         case "MyMenuAdd":
-                MyMenuAdd($xposition, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status);
+                MyMenuAdd($xposition, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status, $cat_id); //$cat_id added April 25/05 HOWEVER THIS CASE NEVER OCCURS ANYMORE
                 break;
         case "MyMenuSave":
-                MyMenuSave($menuid, $xposition, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status);
+                MyMenuSave($menuid, $xposition, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status, $cat_id, $old_cat); // $cat_id, $old_cat added April 25/05
                 break;
         case "MyMenuAdmin":
                 MyMenuAdmin();
@@ -379,6 +496,17 @@ switch($op) {
         case "MyMenuEdit":
                 MyMenuEdit($menuid);
                 break;
+	  case "menuCatUpdate": //this case added April 25/05 to handle updates to the categories of the menu
+		    menuCatUpdate($cat_id, $cat_name, $new_cat);
+		    MyMenuAdmin();	
+		    break;
+	  case "menuCatEditDel": //this case added April 25/05 to handle updates to the categories of the menu
+		    if(isset($edit)) { MyMenuAdmin($cat_id); }
+		    if(isset($del)) { 
+			menuCatDel($cat_id); 
+			MyMenuAdmin();
+		    }
+		    break;		    
         default:
                 MyMenuAdmin();
                 break;
