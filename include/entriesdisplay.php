@@ -228,6 +228,8 @@ function displayEntries($formframe, $mainform="", $loadview="") {
 	}
 
 
+
+
 	// set currentView to group if they have groupscope permission (overridden below by value sent from form)
 	// override with loadview if that is specified
 	if($loadview AND !$_POST['currentview'] AND $_POST['advscope'] == "") {
@@ -703,8 +705,12 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 
       	print "<p><b>" . _formulize_DE_CURRENT_VIEW . "</b>&nbsp;&nbsp;<SELECT name=currentview id=currentview size=1 onchange=\"javascript:change_view(this.form, '$pickgroups', '$endstandard');\">\n";
       	print $viewoptions;
-      	print "</SELECT></p>";
+      	print "</SELECT>";
 
+		if(!$loadviewname AND strstr($currentview, ",")) { // if we're on a genuine pick-groups view (not a loaded view)...
+			print "&nbsp&nbsp;<input type=button style=\"width: 140px;\" name=pickdiffgroup value='" . _formulize_DE_PICKDIFFGROUP . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changescope.php?fid=$fid&frid=$frid&scope=$currentview');\"></input>";		
+		}
+		print "</p>";
 
 	} // end of if there's a loadview or not
      	print "</td></tr></table>";
@@ -1184,7 +1190,7 @@ function getDefaultCols($fid, $frid="") {
 
 	if($frid) { // expand the headerlist to include the other forms
 		$fids[0] = $fid;
-		$check_results = checkForLinks($frid, $fids, $fid);
+		$check_results = checkForLinks($frid, $fids, $fid, "", "", "", "", "", "", "0");
 		$fids = $check_results['fids'];
 		$sub_fids = $check_results['sub_fids'];
 		foreach($fids as $this_fid) {

@@ -485,12 +485,21 @@ function makeUidFilter($users) {
 }
 
 // function handles checking for all unified display - linking relationships for the form
-function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner) {
+function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner, $ud="1") {
+
+		// by default (ie: when called from formDisplay) only look for unified display relationships
+		// when $ud is specifically set to zero, ie: when called from displayEntries, look for any relationships in the framework
+		if($ud) {
+			$unified_display = "AND fl_unified_display = 1";
+		} else {
+			$unified_display = "";
+		}
+
 		global $xoopsDB;
 		// get one-to-one links
 		// note: we do not believe that the keys will be relevant to working out details for one-to-one forms, but we are leaving code as is for now
-		$one_q1 = q("SELECT fl_form1_id, fl_key1, fl_key2 FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 1 AND fl_unified_display = 1 AND fl_frame_id = $frid");
-		$one_q2 = q("SELECT fl_form2_id, fl_key1, fl_key2 FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 1 AND fl_unified_display = 1 AND fl_frame_id = $frid");
+		$one_q1 = q("SELECT fl_form1_id, fl_key1, fl_key2 FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 1 AND fl_frame_id = $frid $unified_display");
+		$one_q2 = q("SELECT fl_form2_id, fl_key1, fl_key2 FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 1 AND fl_frame_id = $frid $unified_display");
 		$indexer=0;
 		foreach($one_q1 as $res1) {
 			$one_to_one[$indexer]['fid'] = $res1['fl_form1_id'];
@@ -507,8 +516,9 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
 		
 		$indexer=0;
 		// get one-to-many links
-		$many_q1 = q("SELECT fl_form1_id, fl_key1, fl_key2 FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 3 AND fl_unified_display = 1 AND fl_frame_id = $frid");
-		$many_q2 = q("SELECT fl_form2_id, fl_key1, fl_key2 FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 2 AND fl_unified_display = 1 AND fl_frame_id = $frid");
+		$many_q1 = q("SELECT fl_form1_id, fl_key1, fl_key2 FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 3 AND fl_frame_id = $frid $unified_display");
+		$many_q2 = q("SELECT fl_form2_id, fl_key1, fl_key2 FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 2 AND fl_frame_id = $frid $unified_display");
+
 		foreach($many_q1 as $res1) {
 			$one_to_many[$indexer]['fid'] = $res1['fl_form1_id'];
 			$one_to_many[$indexer]['keyself'] = $res1['fl_key1'];
@@ -522,6 +532,28 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
 			$indexer++;
 		}
 		$one_to_many = array_unique($one_to_many);
+
+		// get MANY-TO-ONE links
+		$many_q3 = q("SELECT fl_form1_id, fl_key1, fl_key2 FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 2 AND fl_frame_id = $frid $unified_display");
+		$many_q4 = q("SELECT fl_form2_id, fl_key1, fl_key2 FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 3 AND fl_frame_id = $frid $unified_display");
+
+		foreach($many_q3 as $res1) {
+			$many_to_one[$indexer]['fid'] = $res1['fl_form1_id'];
+			$many_to_one[$indexer]['keyself'] = $res1['fl_key1'];
+			$many_to_one[$indexer]['keyother'] = $res1['fl_key2'];
+			$indexer++;
+		}
+		foreach($many_q4 as $res2) {
+			$many_to_one[$indexer]['fid'] = $res2['fl_form2_id'];
+			$many_to_one[$indexer]['keyother'] = $res2['fl_key1'];
+			$many_to_one[$indexer]['keyself'] = $res2['fl_key2'];
+			$indexer++;
+		}
+		$many_to_one = array_unique($many_to_one);
+
+
+		// STRONG ASSUMPTION IS THAT ONLY ONE KIND OF LINKING IS GOING TO BE FOUND!  IF A FORM IS LINKED IN MULTIPLE KINDS OF RELATIONSHIPS TO MULTIPLE OTHER FORMS, STRANGE THINGS COULD START HAPPENING...
+		// Code and output arrays should be consistent, so it's not that results of this function will be inaccurate, but other code elsewhere may in fact have difficulty handling the results since not all eventualities may yet be accounted for in the logic
 
 		// add to entries and fids array if one_to_one exists
 		foreach($one_to_one as $one_fid) {
@@ -547,10 +579,25 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
 			}
 		}
 
+      	if(!$ud) {
+      		$start = 1;
+      		foreach($many_to_one as $many_fid) {
+      			if($start) {
+      				$sub_fids = $fids;
+      				unset($fids);
+      				$start = 0;
+      			}
+      			$fids[] = $many_fid['fid'];
+      			// NOTE: no entries returned here.  assumption is that this is only used by displayEntries to handle presenting many_to_one relationship on that screen, and will never in fact be used by displayForm to put unified many_to_one relationships up for input (see the note in findLinkedEntries regarding the "mis-specified" relationship and what would have to happen in the UI to make this work over there)
+				// NOTE: explicit exclusion of this code unless ud is 0, ie: unless called from displayEntries
+      		}
+		}
+
 	$to_return['fids'] = $fids;
 	$to_return['entries'] = $entries;
 	$to_return['sub_fids'] = $sub_fids;
 	$to_return['sub_entries'] = $sub_entries;
+
 	return $to_return;
 
 		// NOTE:  IT IS POSSIBLE FOR A FORM TO BE LINKED TO OTHER FORMS IN ONE TO ONE AND ONE TO MANY RELATIONSHIPS WITHIN THE SAME FRAMEWORK.  THIS CODE WILL RETURN ALL RELATIONSHIPS FOUND IN THE GIVEN FRAMEWORK FOR THAT FORM.  BE CAREFUL OF STRANGE RESULTS!
@@ -693,7 +740,7 @@ function getAllColList($fid, $frid="") {
 	// generate the $allcols list
 	if($frid) {
 		$fids[0] = $fid;
-		$check_results = checkForLinks($frid, $fids, $fid);
+		$check_results = checkForLinks($frid, $fids, $fid, "", "", "", "", "", "", "0");
 		$fids = $check_results['fids'];
 		$sub_fids = $check_results['sub_fids'];
 //		$all_fids = array_merge($sub_fids, $fids);

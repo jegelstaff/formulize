@@ -301,6 +301,7 @@ define("_formulize_INFO_CONTINUE2", "You can make another entry by filling in th
 define("_formulize_INFO_SAVEBUTTON", "Click the <i>" . _formulize_SAVE . "</i> button to save your changes.");
 define("_formulize_INFO_MAKENEW", "You can make a new entry by filling in the form below.");
 
+define("_formulize_NOSUBNAME", "Entry: ");
 
 define("_formulize_DEL_ENTRIES", "You are about to delete the selected entries!  Please confirm.");
 
@@ -415,6 +416,7 @@ define("_formulize_DE_AVAILGROUPS", "Available groups:");
 define("_formulize_DE_USETHISSCOPE", "Use these groups as the scope");
 define("_formulize_DE_AS_ENTRIESBY", "Entries by: ");
 define("_formulize_DE_AS_PICKGROUPS", "Entries by all users in...[pick groups]");
+define("_formulize_DE_PICKDIFFGROUP", "Pick diff. groups");
 
 //SAVE VIEW:
 define("_formulize_DE_SAVEVIEW", "Options for saving this view");

@@ -317,12 +317,13 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 		$linkResults = checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner); 
 		unset($entries);
 		unset($fids);
+
 		$fids = $linkResults['fids'];
 		$entries = $linkResults['entries'];
 		$sub_fids = $linkResults['sub_fids'];
 		$sub_entries = $linkResults['sub_entries'];
 	}
-	
+
 	// need to handle submission of entries 
 	$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
 
@@ -388,6 +389,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 		$editing = is_numeric($entry); 
 		unset($owner_groups);
 		$owner_groups =& $member_handler->getGroupsByUser($owner, FALSE);
+// DON'T UNDERSTAND WHY WE'RE CHECKING FOR LINKS WHEN A SUBFORM IS LOADED (NO SUPPORT INTENDED FOR DOUBLE NESTED SUBFORMS)
+/*
 		$linkResults = checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner); 
 		unset($entries);
 		unset($fids);
@@ -395,6 +398,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 		$entries = $linkResults['entries'];
 		$sub_fids = $linkResults['sub_fids'];
 		$sub_entries = $linkResults['sub_entries'];
+*/
 		$info_received_msg = 0;// never display this message when a subform is displayed the first time.	
 		if($entry) { $info_continue = 1; }
 		if(!$scheck = security_check($fid, $entries[$fid][0], $uid, $owner, $groups, $mid, $gperm_handler, $owner_groups)) {
@@ -407,15 +411,16 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 	include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 	include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
-	/*print "Forms: ";
+/*	if($uid==1) {
+	print "Forms: ";
 	print_r($fids);
 	print "<br>Entries: ";
 	print_r($entries);
 	print "<br>Subforms: ";
 	print_r($sub_fids);
 	print "<br>Subentries: ";
-	print_r($sub_entries); // debug block */
-	
+	print_r($sub_entries); // debug block - ONLY VISIBLE TO USER 1 RIGHT NOW
+	} */
 	$title = "";
 	foreach($fids as $this_fid) {
   
@@ -438,7 +443,9 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 			drawJavascript();
 			$firstform = 1; 	      	
 			$title = getFormTitle($this_fid);
-			if(method_exists($myts, 'formatForML')) {				$title = $myts->formatForML($title);			} 
+			if(method_exists($myts, 'formatForML')) {
+				$title = $myts->formatForML($title);
+			} 
 	      	$form = new XoopsThemeForm($title, 'formulize', "$currentURL");
 			$form->setExtra("enctype='multipart/form-data'"); // impératif!
 
@@ -550,8 +557,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 		$form->addElement (new XoopsFormHidden ('go_back_form', $go_back['form']));
 		$form->addElement (new XoopsFormHidden ('go_back_entry', $go_back['entry']));
 	}
-	// todo: consider a second button BACK button to be rendered in a tray, and have a param passed to displayForm that indicates what the destination of BACK would be
-
+	
 	// draw in the submitbutton if necessary
 	if($entry) { // existing entry, if it's their own and they can update their own, or someone else's and they can update someone else's
 		if(($owner == $uid AND $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid)) OR ($owner != $uid AND $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid))) {
@@ -656,7 +662,8 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 			if(($sub_owner == $uid AND $deleteSelf) OR ($sub_owner != $uid AND $deleteOther)) {
 				$col_two .= "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>&nbsp;&nbsp;";
 			}
-			$col_two .= "<a href=\"\" onclick=\"javascript:goSub('$sub_ent', '$sfid');return false;\">" . display($data, $subHandle, 0) . "</a></p>";
+			if(!$sub_name = display($data, $subHandle, 0)) { $sub_name = _formulize_NOSUBNAME . $sub_ent; }
+			$col_two .= "<a href=\"\" onclick=\"javascript:goSub('$sub_ent', '$sfid');return false;\">$sub_name</a></p>";
 		}
 	}
 	if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] == "") {
@@ -811,7 +818,11 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 }
 
 function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups) {
+//global $xoopsUser;
+//if($xoopsUser->getVar('uid') == 1) {
+//print_r($prevEntry);
 
+//}
 			$type = $i->getVar('ele_type');
 			// going direct from the DB since if multi-language is active, getVar will translate the caption
 			//$caption = $i->getVar('ele_caption');
@@ -823,6 +834,7 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups) {
 			// two lines to mimic how captions are written to the DB...
 			$caption = eregi_replace ("&#039;", "`", $caption);
 			$caption = eregi_replace ("&quot;", "`", $caption);
+			$caption = eregi_replace ("'", "`", $caption);
 
 			$key = array_search($caption, $prevEntry['captions']);
 

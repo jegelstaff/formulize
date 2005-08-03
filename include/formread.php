@@ -144,6 +144,7 @@ $myts =& MyTextSanitizer::getInstance();
 			$ele_caption = stripslashes($ele_caption);
 			$ele_caption = eregi_replace ("&#039;", "`", $ele_caption);
 			$ele_caption = eregi_replace ("&quot;", "`", $ele_caption);
+			$ele_caption = eregi_replace ("'", "`", $ele_caption);
 			$sql = $xoopsDB->query("SELECT desc_form from ".$xoopsDB->prefix("form_id")." WHERE id_form= ".$id_form.'');
 			while ($row = mysql_fetch_array ($sql)) 
 			{	$desc_form[] = $row['desc_form']; }

@@ -276,7 +276,8 @@ function convertFinal($results, $fid, $frid="") {
 	}
 	
 
-	for($i=0;$i<count($results);$i++) {
+	$endflag = count($results);
+	for($i=0;$i<$endflag;$i++) {
 		$results[$i]['ele_value'] = prepvalues($results[$i]['ele_value'], $results[$i]['ele_type']);
 		$cap = eregi_replace ("`", "'", $results[$i]['ele_caption']);  // convert caption to _form table format so that we can get the handle from the full Handle List which has array keys drawn from that table
 		$handle = $fullHandleList[$cap];
@@ -289,6 +290,7 @@ function convertFinal($results, $fid, $frid="") {
 			// flag the current handle as found in the fullhandlelist
 			$foundHandleList[$results[$i]['id_req']][] = $handle;
 		}
+		unset($results[$i]); // free up some memory!! 
 	}
 
 
@@ -550,9 +552,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope) {
 	// call the function that does the conversion to the desired format:
 	// [formhandle][row/record][handle/fieldname][0..n] = value(s)
 	$finalresults = convertFinal($mainresults, $fid, $frid);
+	unset($mainresults);
 	if($frid) {
 		for($x=0;$x<count($linkresult);$x++) {
 			$finallinkresult{$linkresult[$x]['formid']} = convertFinal($linkresult[$x]['result'], $linkresult[$x]['formid'], $frid);
+			unset($linkresult[$x]['result']);
 		}
 	}
 // DEBUG CODE
@@ -648,8 +652,16 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope) {
 							//need handles to do this
 							for($i=0;$i<count($mainHandles);$i++) {
 								if($mainHandles[$i]['lfid'] == $fide) {
-									if($v[$linkHandles[$i]['handle']] == $values[$mainHandles[$i]['handle']]) {
+									if($v[$linkHandles[$i]['handle']] == $values[$mainHandles[$i]['handle']]) { 
 										$masterresult[$indexer][$f][$r] = $v;								
+									} elseif (count($v[$linkHandles[$i]['handle']])>1) { // look for one value inside the multiple array addresses of the other value -- assumption is that one of them must be a single value, ie: two multiples can't possibly be linked
+										if(in_array($values[$mainHandles[$i]['handle']][0], $v[$linkHandles[$i]['handle']])) {
+											$masterresult[$indexer][$f][$r] = $v;
+										}
+									} elseif (count($values[$mainHandles[$i]['handle']])>1) {
+										if(in_array($v[$linkHandles[$i]['handle']][0], $values[$mainHandles[$i]['handle']])) {
+											$masterresult[$indexer][$f][$r] = $v;
+										}
 									}
 								}
 							}			

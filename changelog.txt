@@ -1,0 +1,11 @@
+Version 2.0.1 Beta:
+--added a couple language constants
+--added better handling of many-to-one relationships in a Framework (in addition to one-to-many relationships)
+--improved display of entries in a non-unified-display Framework
+--fixed a bug in the saving of entries, which would result in data for fields which had an apostrophe in the caption to not be saved correctly (if anyone has experienced lost data due to this, please contact us for assistance recovering the data, it is not gone, just not easily accessible).
+--improved display of links to sub-forms when the key field for the link has no value
+--improved memory usage in the data extraction layer
+--added a button to the summary list UI, to allow for changing of specific group selections without having to pick a completely different kind of view first
+
+Version 2.0 Beta:
+--initial release

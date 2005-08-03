@@ -107,7 +107,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	// generate the $allcols list
 /*	if($frid) {
 		$fids[0] = $fid;
-		$check_results = checkForLinks($frid, $fids, $fid);
+		$check_results = checkForLinks($frid, $fids, $fid, "", "", "", "", "", "", "0");
 		$fids = $check_results['fids'];
 		$sub_fids = $check_results['sub_fids'];
 //		$all_fids = array_merge($sub_fids, $fids);
