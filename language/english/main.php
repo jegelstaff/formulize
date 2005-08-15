@@ -1,5 +1,6 @@
 <?php
 define("_formulize_FORM_TITLE", "Contact us by filling out this form.");
+define("_AM_CATGENERAL", "General Forms");
 //define("_formulize_MSG_SUBJECT", $xoopsConfig['sitename'].' - Contact Us Form');
 define("_formulize_MSG_SUBJECT", '['.$xoopsConfig['sitename'].'] -');
 define("_formulize_MSG_FORM", ' Form: ');
@@ -74,6 +75,7 @@ define("_FORM_MODPERM","Modify form access permissions");
 define("_FORM_PERM","Permissions");
 
 define("_FORM_MODCLONE", "Clone this form");
+define("_FORM_MODCLONEDATA", "Clone this form and data");
 define("_FORM_MODCLONED_FORM", "Cloned Form");
 
 define("_FORM_MODPERMLINKS","Modify scope of linked selectboxes");
@@ -99,7 +101,7 @@ define("_AM_FORM_PERMADMIN", "Admin");
 define("_AM_FORM_SUBMITBUTTON", "Show New Permission"); // not used
 
 define("_AM_FORMLINK_PICK", "Choose an option");
-define("_AM_CONFIRM_DEL", "You are about to delete this form!  Please confirm.");
+define("_AM_CONFIRM_DEL", "You are about to delete this form!  All data in this form will be deleted too.  Please confirm.");
 
 define("_AM_FRAME_NEW", "Create a New Framework:");
 define("_AM_FRAME_NEWBUTTON", "Create Now!");
@@ -404,6 +406,7 @@ define("_formulize_DE_AS_ADD", "Add this search to the query");
 define("_formulize_DE_AS_ADDOTHER", "Other items you can add:");
 define("_formulize_DE_AS_REMOVE", "Remove last item from the query");
 define("_formulize_DE_ADVSEARCH", "Advanced search");
+define("_formulize_DE_ADVSEARCH_ERROR", "There was a \"parse error\" in the advanced search query you specified.  Most often, this is caused by not having an AND or an OR in between two search terms.  Another common cause is not having ( ) arranged correctly, or not having an equal number of opening and closing ones.");
 define("_formulize_DE_SEARCHGO", "Perform Requested Query");
 define("_formulize_DE_AS_QUERYSOFAR", "Requested Query So Far:");
 define("_formulize_DE_CANCELASEARCH", "Cancel this search");
@@ -417,6 +420,8 @@ define("_formulize_DE_USETHISSCOPE", "Use these groups as the scope");
 define("_formulize_DE_AS_ENTRIESBY", "Entries by: ");
 define("_formulize_DE_AS_PICKGROUPS", "Entries by all users in...[pick groups]");
 define("_formulize_DE_PICKDIFFGROUP", "Pick diff. groups");
+define("_formulize_DE_NOGROUPSPICKED", "Please click on one or more groups from the list above.  Use CTRL-click to select more than one group.");
+
 
 //SAVE VIEW:
 define("_formulize_DE_SAVEVIEW", "Options for saving this view");
@@ -449,6 +454,24 @@ define("_formulize_DE_SAVE_NEWPROMPT", "Please type a name for this new view:");
 
 
 
+define("_formulize_CAL_MONTH_01", "January");
+define("_formulize_CAL_MONTH_02", "February");
+define("_formulize_CAL_MONTH_03", "March");
+define("_formulize_CAL_MONTH_04", "April");
+define("_formulize_CAL_MONTH_05", "May");
+define("_formulize_CAL_MONTH_06", "June");
+define("_formulize_CAL_MONTH_07", "July");
+define("_formulize_CAL_MONTH_08", "August");
+define("_formulize_CAL_MONTH_09", "September");
+define("_formulize_CAL_MONTH_10", "October");
+define("_formulize_CAL_MONTH_11", "November");
+define("_formulize_CAL_MONTH_12", "December");
 
-
+define("_formulize_CAL_WEEK_1", "Sunday");
+define("_formulize_CAL_WEEK_2", "Monday");
+define("_formulize_CAL_WEEK_3", "Tuesday");
+define("_formulize_CAL_WEEK_4", "Wednesday");
+define("_formulize_CAL_WEEK_5", "Thursday");
+define("_formulize_CAL_WEEK_6", "Friday");
+define("_formulize_CAL_WEEK_7", "Saturday");
 ?>

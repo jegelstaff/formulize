@@ -732,7 +732,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	$count = 0;
 	foreach( $elements as $i ){
 		$ele_value = $i->getVar('ele_value');
-	
+
 		if($prevEntry) { 
 			$ele_value = loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups); // get the value of this element for this entry as stored in the DB 
 		} elseif($go_back['form']) { // if there's a parent form...
@@ -766,6 +766,16 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 						if(array_key_exists($ov, $ele_value[2])) {
 							$ele_value[2][$ov] = 1;
 						}	
+					}
+					break;
+				case "date":
+                	// debug
+                	//var_dump($overrideValue);
+					foreach($overrideValue as $ov) {
+						//if(ereg ("([0-9]{4})-([0-9]{2})-([0-9]{2})", $ov, $regs)) {
+						if(ereg ("([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})", $ov, $regs)) {
+							$ele_value[0] = $ov;
+						}
 					}
 					break;
 			}
@@ -980,6 +990,7 @@ function writeHiddenSettings($settings, $form) {
 	$calview = $settings['calview'];
 	$calfrid = $settings['calfrid'];
 	$calfid = $settings['calfid'];
+	// plus there's the calhidden key that is handled below
 
 	// write hidden fields
 	if($form) { // write as form objects and return form
@@ -1005,6 +1016,9 @@ function writeHiddenSettings($settings, $form) {
 		$form->addElement (new XoopsFormHidden ('calview', $calview));
 		$form->addElement (new XoopsFormHidden ('calfrid', $calfrid));
 		$form->addElement (new XoopsFormHidden ('calfid', $calfid));
+		foreach($settings['calhidden'] as $chname=>$chvalue) {
+			$form->addElement (new XoopsFormHidden ($chname, $chvalue));
+		}
 		return $form;
 	} else { // write as HTML
 		print "<input type=hidden name=sort value='" . $sort . "'>";
@@ -1029,6 +1043,9 @@ function writeHiddenSettings($settings, $form) {
 		print "<input type=hidden name=calview value='" . $calview . "'>";
 		print "<input type=hidden name=calfrid value='" . $calfrid . "'>";
 		print "<input type=hidden name=calfid value='" . $calfid . "'>";
+		foreach($settings['calhidden'] as $chname=>$chvalue) {
+			print "<input type=hidden name=$chname value='" . $chvalue . "'>";
+		}
 	}
 }
 

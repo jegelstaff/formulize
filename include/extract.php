@@ -67,6 +67,15 @@ function go($query) {
 	return $result;
 }
 
+// DISPLAYS ON THE SCREEN THE CURRENT MEMORY USAGE OF THE SCRIPT FOR DEBUGGING PURPOSES
+function debug_memory($text) {
+	if($_GET['debug']) {
+		print "<br>Memory Usage: ";	
+		$mem_usage = memory_get_usage();
+		$mb_usage = round(($mem_usage/1000000), 2);
+		print "$mb_usage ($text)";
+	}
+}
 
 // FUNCTION RETURNS ALL THE VALUES IN A GIVEN FIELD FROM A RESULT SET.
 // logic is based on raw result format, not final
@@ -188,10 +197,8 @@ function printfclean($results) {
 	}
 }
 
-function prepvalues($value, $type) {
+function prepvalues(&$value, $type) {
 
-	//print "$value<br>";
-	//print "$type<br>";
 	// handle cases where the value is linked to another form 
 	if(strstr($value, "#*=:*")) {
 		$templinkedvals = explode("#*=:*", $value);
@@ -206,7 +213,6 @@ function prepvalues($value, $type) {
 		}
 	}
 	
-
 	// handle yes/no cases
 
 	if($type == "yn") { // if we've found one
@@ -226,7 +232,7 @@ function prepvalues($value, $type) {
 		$value = substr_replace($value, "", 0, 5);
 	}
 
-	return $value;
+//	return $value; // not necessary if passing by reference
 }
 
 // this function returns the framework handle for an element when given the caption (as formatted for form_form)
@@ -249,13 +255,15 @@ function handleFromId($id, $fid, $frid) {
 // $results is actual raw array
 // $fid is formid
 // $frid is framework id
-// note: $results is passed by reference.  Values are prepped, but that's the only modification made by this function
-function convertFinal($results, $fid, $frid="") {
+// note: $results is passed by reference, saves lots of memory.  
+function convertFinal(&$results, $fid, $frid="") {
 
 // prepvalues call moved to loop below for efficiency
 //	for($i=0;$i<count($results);$i++) {
 //		$results[$i]['ele_value'] = prepvalues($results[$i]['ele_value'], $results[$i]['ele_type']);
 //	}
+
+debug_memory("Start of covertFinal");
 
 	// need to get master list of expected handles
 	$fullCapList = go("SELECT ele_caption, ele_id FROM " . DBPRE . "form WHERE id_form = '$fid'");
@@ -276,9 +284,8 @@ function convertFinal($results, $fid, $frid="") {
 	}
 	
 
-	$endflag = count($results);
-	for($i=0;$i<$endflag;$i++) {
-		$results[$i]['ele_value'] = prepvalues($results[$i]['ele_value'], $results[$i]['ele_type']);
+	for($i=0;isset($results[$i]);$i++) {
+		prepvalues($results[$i]['ele_value'], $results[$i]['ele_type']);
 		$cap = eregi_replace ("`", "'", $results[$i]['ele_caption']);  // convert caption to _form table format so that we can get the handle from the full Handle List which has array keys drawn from that table
 		$handle = $fullHandleList[$cap];
 		// check to see that we haven't already stored this value for this entry (takes care of situations where the database as duplicate entries with the same id_req, causing the number of values in results array to be greater than it ought to be -- problem likely caused by users clicking on the submit button more than one time?
@@ -293,6 +300,7 @@ function convertFinal($results, $fid, $frid="") {
 		unset($results[$i]); // free up some memory!! 
 	}
 
+debug_memory("after building main array");
 
 	// add in blanks
 	// if there are missing handles, then check to see which ones were not found and add them to the array with a null value
@@ -332,6 +340,7 @@ function convertFinal($results, $fid, $frid="") {
 		$finalresults[$formHandle[0][0]][$record]['creation_date'] = $metadata[0]['creation_date'];
 	}
 
+debug_memory("before returning convertFinal results");
 	//array_values($finalresults); // don't understand what this is for
 	return $finalresults;
 }
@@ -366,6 +375,7 @@ function makeFilter($filter, $frid="", $fid, $andor) {
 					$capforfilter = getCaptionFF($filterparts[0], $frid, $fid);
 				} else { // when a plain form is passed, filters must use the full form_form captions for the first filterpart.
 					$capforfilter = $filterparts[0];
+					$capforfilter = str_replace("'", "`", $capforfilter);
 				}
 				if($capforfilter == "") {  // ignore this filter if it's not part of this form (ie: it's for another part of the framework)
 					$filterNotForThisForm++;
@@ -454,8 +464,16 @@ function makeFilter($filter, $frid="", $fid, $andor) {
 	return $filter;
 }
 
+function microtime_float()
+{
+   list($usec, $sec) = explode(" ", microtime());
+   return ((float)$usec + (float)$sec);
+}
+
 
 function dataExtraction($frame="", $form, $filter, $andor, $scope) {
+
+if($_GET['debug']) { $time_start = microtime_float(); }
 
 	// NOTE:  currently there is no ability to filter based on group, as there is in the main module logic.  Eventually, some filtering of results based on the userid (and determined group memberships) may be required.
 	// NOTE:  this function only supports one level of linking.  ie: a "subform" of a "subform" of a "mainform" will not be included, only the first sub will be.
@@ -485,12 +503,14 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope) {
 	} elseif($frame != "") {
 		$frameid = go("SELECT frame_id FROM " . DBPRE . "formulize_frameworks WHERE frame_name='$frame'");
 		$frid = $frameid[0]['frame_id'];
+		unset($frameid);
 	} 
 	if(is_numeric($form)) {
 		$fid = $form;
 	} else {
 		$formcheck = go("SELECT ff_form_id FROM " . DBPRE . "formulize_framework_forms WHERE ff_frame_id='$frid' AND ff_handle='$form'");
 		$fid = $formcheck[0]['ff_form_id'];
+		unset($formcheck);
 	}
 	if (!$fid) { 
 		print "Form Name: " . $form . "<br>";
@@ -526,17 +546,27 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope) {
 	// mainresults is the full results from main form
 	// linkresults is the full results from all linked forms, where [0..n index][formid] is the form id of the form and [0..n index][results] is the array of rows returned from that form
 	//print "SELECT id_req, ele_type, ele_caption, ele_value FROM " . DBPRE . "form_form WHERE id_form = '$fid' $mainfilter $scope ORDER BY id_req"; // DEBUG LINE
+debug_memory("Before retrieving mainresults");
 	$mainresults = go("SELECT id_req, ele_type, ele_caption, ele_value FROM " . DBPRE . "form_form WHERE id_form = '$fid' $mainfilter $scope ORDER BY id_req");
+debug_memory("After retrieving mainresults");
+
+	unset($mainfilter);
+
+	// call the function that does the conversion to the desired format:
+	// [formhandle][row/record][handle/fieldname][0..n] = value(s)
+	$finalresults = convertFinal($mainresults, $fid, $frid);
+
+debug_memory("after convertFinal");
+
+	unset($mainresults);
 
 	if($frid) {
 		$linkformids1 = fieldValues($linklist1, "fl_form2_id");
 		$linkformids2 = fieldValues($linklist2, "fl_form1_id");
 		$linkformids = array_merge($linkformids1, $linkformids2);
-		$indexer=0;
 		// here is the issue re: only one level of linking... this loop works off the linkformids array which is based on the one level links from the main form.  A recursive loop here which took all output formids and grabbed their results would produce a complete picture of the framework based on the entrypoint
 		// note however that collecting together the unified results array based on such a complete picture of the framework may be an order of magnitude (or two) more complex than the simple collection process currently used below.
 		foreach($linkformids as $lfid) {
-			$linkresult[$indexer]['formid'] = $lfid;
 			if(!is_numeric($filter)) { // do not use numeric filters, since they are for grabbing a specific id out of the main form
 				$linkfilter = makeFilter($filter, $frid, $lfid, $andor, $scope);
 			} else {
@@ -545,24 +575,20 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope) {
 			if($linkfilter) { // set a flag that counts the linkforms where there was a filter in place 
 				$lfexists[$lfid] = 1;
 			}
-			$linkresult[$indexer]['result'] = go("SELECT id_req, ele_type, ele_caption, ele_value FROM " . DBPRE . "form_form WHERE id_form = '$lfid' $linkfilter ORDER BY id_req"); // scope not used in this query for now
-			$indexer++; 
+debug_memory("Before retrieving a linkresult");
+			$linkresult = go("SELECT id_req, ele_type, ele_caption, ele_value FROM " . DBPRE . "form_form WHERE id_form = '$lfid' $linkfilter ORDER BY id_req"); // scope not used in this query for now
+			unset($linkfilter);
+debug_memory("After retrieving a linkresult");
+			$finallinkresult{$lfid} = convertFinal($linkresult, $lfid, $frid);
+			unset($linkresult);
+
 		}
 	}
-	// call the function that does the conversion to the desired format:
-	// [formhandle][row/record][handle/fieldname][0..n] = value(s)
-	$finalresults = convertFinal($mainresults, $fid, $frid);
-	unset($mainresults);
-	if($frid) {
-		for($x=0;$x<count($linkresult);$x++) {
-			$finallinkresult{$linkresult[$x]['formid']} = convertFinal($linkresult[$x]['result'], $linkresult[$x]['formid'], $frid);
-			unset($linkresult[$x]['result']);
-		}
-	}
+
 // DEBUG CODE
 //	printfclean($finalresults);
 //	foreach($linkresult as $lr) {
-//		printfclean($finallinkresult{$lr['formid']});
+//		printfclean($finallinkresult{$lr['formid']}); // this won't work now that linkresult is unset above
 //	}
 
 	if($frid) {
@@ -627,6 +653,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope) {
 	// [0][METADATA][forms][0] = volprofile
 	// BEST IDEA IS TO HAVE MASTER METADATA THAT DESCRIBES THE STRUCTURE OF THE FRAMEWORK: ALL POSSIBLE FORMS THAT FEED INTO EACH ENTRY, AND THE HANDLES THAT THEY LINK UP ON
 	// THEN METADATA FOR EACH ENTRY (FIRST INDEX IN THE ARRAY, 0..N) WHICH GIVES THE ID OF THE SPECIFIC VALUE IN THE MAIN FORM THAT IS BEING LINKED FROM AND THE RECORD ID IN THE TARGET FORM THAT IS BEING LINKED TO
+
+debug_memory("Start of compiling masterresult");
 	
 	// start the masterresult array with the complete finalresult
 	$indexer = 0;
@@ -689,7 +717,18 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope) {
 	}
 //print_r($masterresult);
 
+debug_memory("before returning result");
+
+if($_GET['debug']) { 
+	$time_end = microtime_float();
+	$time = $time_end - $time_start;
+	echo "Execution time is <b>$time</b> seconds\n"; 
+}
+
 	return $masterresult; 
+
+debug_memory("after returning result");
+
 }
 
 function getData($framework, $form, $filter="", $andor="AND", $scope="") {

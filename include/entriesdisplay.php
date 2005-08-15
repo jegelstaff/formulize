@@ -322,7 +322,7 @@ function displayEntries($formframe, $mainform="", $loadview="") {
 			}
 		}
 		$currentView = $_POST['currentview']; 
-	} elseif($_POST['advscope']) {
+	} elseif($_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
 		$currentView = $_POST['advscope'];
 	} elseif($_POST['currentview']) { // could have been unset by deletion of a view or something else, so we must check to make sure it exists before we override the default that was determined above
 		$currentView = $_POST['currentview'];
@@ -843,7 +843,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		//	$query_result = 1;
 		//}
 		
-		$query_string = "if(";
+		$query_string .= "if(";
 
 		for($i=0;$settings['as_' . $i];$i++) {
 			// save query for writing later
@@ -864,17 +864,23 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 			}
 		}
 
-		$query_string .= ") { \$query_result=1; }";
+		$query_string .= ") { \$query_result=1; } else { \$query_result=0; }";
 
 		$indexer = 0;
+		$asearch_parse_error = 0;
 		foreach($data as $entry) {
-			$query_result = 0;
+			ob_start();
 			eval($query_string); // a constructed query based on the user's input.  $query_result = 1 if it succeeds and 0 if it fails.
+			ob_end_clean();
 			if($query_result) {
 				$found_data[] = $entry;
+			} elseif(!isset($query_result)) {
+				$asearch_parse_error = 1;
+				break;
 			}
 			unset($data[$indexer]);
 			$indexer++;
+			  
 		}
 		unset($data);
 		if(count($found_data)>0) { $data = $found_data; }
@@ -984,7 +990,11 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	if($query_string) {
 		$writable_q = writableQuery($wq);
 		$minus1colspan = $count_colspan-1;
-		print "<tr><td class=head></td><td colspan=$minus1colspan class=head>" . _formulize_DE_ADVSEARCH . ": $writable_q";
+		if(!$asearch_parse_error) {
+			print "<tr><td class=head></td><td colspan=$minus1colspan class=head>" . _formulize_DE_ADVSEARCH . ": $writable_q";
+		} else {
+			print "<tr><td class=head></td><td colspan=$minus1colspan class=head><span style=\"font-weight: normal;\">" . _formulize_DE_ADVSEARCH_ERROR . "</span>";
+		}
 		if(!$settings['lockcontrols'] AND !$loadview) {
 			print "<br><input type=button style=\"width: 140px;\" name=advsearch value='" . _formulize_DE_MOD_ADVSEARCH . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
 			foreach($settings as $k=>$v) {
@@ -998,6 +1008,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		}
 		print "</td></tr>\n";
 	}
+
 	drawHeaders($headers, $cols, $sort, $order, $settings['lockcontrols']);
 	drawSearches($searches, $cols);
 

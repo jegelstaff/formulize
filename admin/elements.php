@@ -311,6 +311,7 @@ switch($op){
 		}else{
 			$element =& $formulize_mgr->get($ele_id);
 			$formulize_mgr->delete($element);
+			$formulize_mgr->deleteData($element); //added aug 14 2005 by jwe
 			redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);
 		}
 	break;
@@ -508,8 +509,10 @@ switch($op){
 			$original_caption = eregi_replace ("'", "`", $original_caption);
 			$original_caption = eregi_replace ("&quot;", "`", $original_caption);
 			$updateq = "UPDATE " . $xoopsDB->prefix("form_form") . " SET ele_caption='$ele_caption' WHERE id_form = '$id_form' AND ele_caption='$original_caption'";
-			if(!$res = $xoopsDB->query($updateq)) {
-				print "Error:  update of captions in form $id_form failed.";
+			if($ele_caption != $original_caption) {
+				if(!$res = $xoopsDB->query($updateq)) {
+					print "Error:  update of captions in form $id_form failed.";
+				}
 			}
 			// end of added code
 			redirect_header("index.php?title=$title", 1, _AM_DBUPDATED);

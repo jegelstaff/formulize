@@ -55,7 +55,9 @@ if(!isset($HTTP_POST_VARS['title'])){
 	$title = $HTTP_POST_VARS['title'];
 }
 
-if($op == "clone") { clone($title); }
+if($op == "clone") { clone($title, 0); }
+// added August 12 2005 - jpc
+if($op == "clonedata") { clone($title, 1); }
 
 
 // Classe permissions
@@ -166,33 +168,47 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 
 	echo '<th colspan=2><center>'._AM_FORMUL.'</center></th>';
 
+
+	// added August 12 2005 - jpc
+	$gperm_handler = &xoops_gethandler('groupperm');
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+
+
 	foreach($data as $id => $titre) {
+	    if($gperm_handler->checkRight("edit_form", $id, $groups, $module_id))
+        {
+	        echo '<tr><td class="head" ALIGN=center>'.$titre.'</td>';
 
-	   echo '<tr><td class="head" ALIGN=center>'.$titre.'</td>';
+	        echo '<td class="odd" align="center">  
+	             <A HREF="renom.php?title='.$id.'">  <img src="../images/signature.png" title="'._FORM_RENOM.'" alt="'._FORM_RENOM.'">  </a>';
 
-	   echo '<td class="odd" align="center">  
-	         <A HREF="renom.php?title='.$id.'">  <img src="../images/signature.png" title="'._FORM_RENOM.'" alt="'._FORM_RENOM.'">  </a>';
+	        if($gperm_handler->checkRight("delete_form", $id, $groups, $module_id))
+	        {
+	            echo '<A HREF="formindex.php?title='.$id.'&op=delform" onclick="return confirmdel();">  <img src="../images/editdelete.png" title="'._FORM_SUP.'" alt="'._FORM_SUP.'">  </a>';
+			}
+            
+	        echo '<A HREF="formindex.php?title='.$id.'&op=modform">  <img src="../images/kedit.png" title="'._FORM_MODIF.'" alt="'._FORM_MODIF.'">  </a>';
 
-	   echo '<A HREF="formindex.php?title='.$id.'&op=delform" onclick="return confirmdel();">  <img src="../images/editdelete.png" title="'._FORM_SUP.'" alt="'._FORM_SUP.'">  </a>';
-	   
-	   echo '<A HREF="formindex.php?title='.$id.'&op=modform">  <img src="../images/kedit.png" title="'._FORM_MODIF.'" alt="'._FORM_MODIF.'">  </a>';
-	   
-	   //old display entries section, not used anymore 
-	   //echo '<A HREF="formindex.php?title='.$id.'&op=showform">  <img src="../images/kfind.png" title="'._FORM_SHOW.'" alt="'._FORM_SHOW.'">  </a>';	   
+	        //old display entries section, not used anymore 
+	        //echo '<A HREF="formindex.php?title='.$id.'&op=showform">  <img src="../images/kfind.png" title="'._FORM_SHOW.'" alt="'._FORM_SHOW.'">  </a>';     
 
-	   echo '<A HREF="mailindex.php?title='.$titre.'">  <img src="../images/xfmail.png" title="'._FORM_ADD.'" alt="'._FORM_ADD.'">  </a>';
+	        echo '<A HREF="mailindex.php?title='.$titre.'">  <img src="../images/xfmail.png" title="'._FORM_ADD.'" alt="'._FORM_ADD.'">  </a>';
 
-	// cloning added June 17 2005
-	echo '<A HREF="formindex.php?title='.$id.'&op=clone">  <img src="../images/clone.gif" title="'._FORM_MODCLONE.'" alt="'._FORM_MODCLONE.'"></a>';
+	        // cloning added June 17 2005
+	        echo '<A HREF="formindex.php?title='.$id.'&op=clone">  <img src="../images/clone.gif" title="'._FORM_MODCLONE.'" alt="'._FORM_MODCLONE.'"></a>';
 
-	echo '</td></tr>';	   
+	        // added August 12 2005 - jpc
+	        echo '<A HREF="formindex.php?title='.$id.'&op=clonedata">  <img src="../images/clonedata.gif" title="'._FORM_MODCLONEDATA.'" alt="'._FORM_MODCLONEDATA.'"></a>';
+
+	        echo '</td></tr>';
+    	}	   
 	}
 	echo '</table>';
 
 }
 
 // copy a form -- added June 17 2005
-function clone($title) {
+function clone($title, $clonedata) {
 	
 	global $xoopsDB;
 	
@@ -289,6 +305,106 @@ function clone($title) {
 			exit("error duplicating menu category for form: '$title'<br>SQL: $insert_sql");
 		}
 	}
+    
+    
+	// added August 12 2005 - jpc
+	// updated by jwe Aug 14 2005
+    if($clonedata == 1)
+    {
+
+		// get the current max id_req
+		$max_id_reqq = q("SELECT MAX(id_req) FROM " . $xoopsDB->prefix("form_form"));
+		$max_id_req = $max_id_reqq[0]['MAX(id_req)'];
+
+	    $curdata = q("SELECT * FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$title ORDER BY id_req");
+
+		$prev_id_req = 0;
+	    foreach($curdata as $thisdata) {
+			if($thisdata['id_req'] != $prev_id_req) { $max_id_req++; }
+			$prev_id_req = $thisdata['id_req'];
+		    $sql = "INSERT INTO " . $xoopsDB->prefix("form_form") . " (";
+
+	       	$start = 1;
+	        foreach($thisdata as $thisfield=>$value) {
+	            // Handle the commas necessary between fields
+	            if(!$start) { $sql .= ", "; }
+	            $start = 0;
+	            $sql .= "`$thisfield`";
+	        } 
+
+	        $sql .= ") VALUES (";
+
+	       	$start = 1;
+	        foreach($thisdata as $thisfield=>$value) {
+	            // this is the key part that changes the id of the form to the new form that was just made
+	            if($thisfield == "id_form") { $value = $newfid; }
+	            if($thisfield == "id_req") { $value = $max_id_req; }
+	            if($thisfield == "ele_id") { $value = ""; }
+	            // Handle the commas necessary between fields
+	            if(!$start) { $sql .= ", "; }
+	            $start = 0;
+			$value = addslashes($value);
+	            $sql .= "\"$value\"";
+	        }
+	        $sql .= ")";
+
+	        
+//            echo $sql . "<br>";
+            
+            if(!$datares = $xoopsDB->queryF($sql)) {
+		        exit("Error cloning data for form: $title.  SQL statement that caused the error:<br>$sql<br>");
+	        }
+	    }
+/*    
+Here's a high level view of how you can use q to do the cloning of data 
+pretty easily I think...I'm skipping details obviously....
+
+The form_form table looks something like this:
+id_form, id_req, ele_id, ele_caption, ele_value....etc
+
+And q nicely returns $curdata that will look like this:
+
+$curdata[0]['id_form']
+$curdata[0]['id_req']
+$curdata[0]['ele_id']
+$curdata[0]['ele_caption']
+$curdata[0]['ele_value']
+$curdata[1]['id_form']
+$curdata[1]['id_req']
+$curdata[1]['ele_id']
+etc...
+
+I like it because it gets rid of all the low level mucking around 
+dealing with result objects from the DB, and gives me a nice two 
+dimensional table with the data I want to work with.
+
+But obviously there's lots of ways this could work and if you're more 
+comfortable with a different approach, no problem.  If you do want to 
+use this, then a rough pass at the code might be like this:
+
+$curdata = q("SELECT * FROM " . $xoopsDB->prefix("form_form") . " WHERE 
+id_form=$title);
+foreach($curdata as $thisdata) {
+$sql = "INSERT INTO xoops_form_form (";
+foreach($thisdata as $thisfield=>$value) {
+// I'm missing proper handling of the commas necessary between fields
+$sql .= "\"$thisfield\";
+} 
+$sql .= ") VALUES (";
+foreach($thisdata as $thisfield=>$value) {
+// this is the key part that changes the id of the form to the new 
+form that was just made
+if($thisfield == "id_form") { $value = $newfid; }
+// comma handling missing again
+$sql .= \"$value\";
+}
+$sql .= ")";
+if(!$datares = $xoopsDB->query($sql)) {
+exit("Error cloning data for form: $title");
+}
+}
+*/    
+    }
 }
 
 function addform()
@@ -382,10 +498,13 @@ function delform()
 
 	$sql = sprintf("DELETE FROM %s WHERE id_form = '%u'", $xoopsDB->prefix("form_form"), $title);
 	$xoopsDB->queryF($sql) or $eh->show("error supression 4 dans delform");
-	
-	$perm_name = 'Permission des catégories';
-	//xoops_groupperm_deletebymoditem ($module_id>$perm_name>$id_form) ;
 
+// PERMISSION DELETION NOT OPERATING PROPERLY RIGHT NOW	
+/*	$perms = getFormulizePerms();
+	foreach($perms as $perm_name) {
+		xoops_groupperm_deletebymoditem ($module_id,$perm_name,$id_form) ;
+	}
+*/
 	xoops_notification_deletebyitem ($module_id, "form", $id_form); // added by jwe-10/10/04 to handle removing notifications for a form once it's gone
 
 	redirect_header("formindex.php",3,_formulize_FORMDEL._formulize_MSG_SUP);
@@ -887,8 +1006,8 @@ function newpermform($group_list="", $form_list="")
 			$perm_desc[13] = "delete_other_reports -- allows someone to delete a published view.";
 			$perm_desc[14] = "publish_reports -- allows someone to publish a saved view to their group(s).";
 			$perm_desc[15] = "publish_globalscope -- allows someone to publish a saved view to any group.";
-			$perm_desc[16] = "edit_form -- currently has no effect.";
-			$perm_desc[17] = "delete_form -- currently has no effect.";
+			$perm_desc[16] = "edit_form -- allows module admins access to a form.";
+			$perm_desc[17] = "delete_form -- allows module admins to delete a form.";
 			$perm_desc[18] = "include_in_framework -- currently has no effect.";
 			print "</td><td class=$class valign=top>";
 			print "<table><tr>";

@@ -1,4 +1,22 @@
+*********************
+Version 2.0.2 Beta:
+*********************
+--added displayCalendar function for interacting with form or framework data in a calendar style view - if you experience errors with the calendar, update the module in System Admin->Modules, and try again.
+--added various language constants
+--added security checks to account for invalid groups being specified as the scope of a view
+--fixed a UI bug which could result in invalid groups being specified as the scope of a view
+--expanded $overrideValue functionality in displayForm to include date boxes, not just select boxes
+--more optimization of performance and memory usage in the extraction layer
+--added handling of parse errors if the user specifies an invalid advanced search query.  A descriptive error message is now displayed when this happens.
+--fixed bug where data in a form corresponding to a particular element was not being deleted when that element was deleted from the form
+--changed handling of linked selectboxes to allow duplicate values to be sent from the source form element.  Previously, if two different source entries had the same value in the linked field, then only the first would be passed to the target form.  This means linked fields could have two or more options in them with identical text.
+--added a new form action: clone form and data.  This will create a copy of a form, plus all the data that has been entered in the form
+--enabled the edit_form and delete_form permissions.  Now, in the administration side, users will only have access to forms for which they have edit_form permission, and will only be allowed to delete forms for which they have delete_form permission.  Webmasters have these permissions by default.
+--updated API docs with more conceptual information and lots more examples
+
+*********************
 Version 2.0.1 Beta:
+*********************
 --added a couple language constants
 --added better handling of many-to-one relationships in a Framework (in addition to one-to-many relationships)
 --improved display of entries in a non-unified-display Framework
@@ -7,5 +25,7 @@ Version 2.0.1 Beta:
 --improved memory usage in the data extraction layer
 --added a button to the summary list UI, to allow for changing of specific group selections without having to pick a completely different kind of view first
 
+*********************
 Version 2.0 Beta:
+*********************
 --initial release

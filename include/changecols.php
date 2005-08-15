@@ -54,9 +54,11 @@ function updateCols(formObj) {
 			}
 		}
 	}
-	window.opener.document.controls.newcols.value = cols;
-	window.opener.document.controls.submit();
-	window.self.close();
+	if(cols) {
+		window.opener.document.controls.newcols.value = cols;
+		window.opener.document.controls.submit();
+		window.self.close();
+	}
 
 	
 }

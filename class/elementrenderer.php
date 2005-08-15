@@ -228,7 +228,7 @@ foreach($pguid as $apuid) // setup the pguidq based on all these users
 if($pguidq) { $pguidq .= ")"; } // close the pguidq if it has been started
 
 // query below modified to include pguidq which will limit the returned values to just the ones that are allowed for this user's groups to see -- jwe 8/29/04
-					$linkedvaluesq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxproperties[1]\" $pguidq GROUP BY ele_value ORDER BY ele_value";
+					$linkedvaluesq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxproperties[1]\" $pguidq ORDER BY ele_value"; // GROUP BY ele_value ORDER BY ele_value"; // GROUP BY removed 8/12/05 in order to allow duplicate listings in linked select boxes
 					$reslinkedvaluesq = mysql_query($linkedvaluesq);
 					if($reslinkedvaluesq)
 					{

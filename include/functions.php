@@ -855,8 +855,16 @@ function buildScope($currentView, $member_handler, $uid, $groups) {
 				unset($temp_users);
 			}
 		}
+		if(!isset($all_users[0])) { // safeguard against empty or invalid grouplists
+			$all_users[] = $uid;
+		}
 		$scope = makeUidFilter($all_users);
-	} 
+	} elseif($currentView == "all") {
+		$scope = "";
+	} else { // in the case of an invalid currentView, show the user their own entries
+		$all_users[] = $uid;
+		$scope = makeUidFilter($all_users);
+	}
 	return $scope;
 }
 

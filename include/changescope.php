@@ -55,10 +55,14 @@ function updateScope(formObj) {
 			}
 		}
 	}
-	window.opener.document.controls.advscope.value = grps;
-	window.opener.document.controls.lockcontrols.value = 0;
-	window.opener.document.controls.submit();
-	window.self.close();
+	if(grps) {
+		window.opener.document.controls.advscope.value = grps;
+		window.opener.document.controls.lockcontrols.value = 0;
+		window.opener.document.controls.submit();
+		window.self.close();
+	} else {
+		alert("<? print _formulize_DE_NOGROUPSPICKED; ?>");
+	}
 
 	
 }

@@ -70,7 +70,7 @@ define("_AM_FORMLINK_NONE", "No link -- above options in effect");
 
 
 define("_AM_ELE_SELECT_NONE","No element selected.");
-define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element?");
+define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element?<br>All data associated with this form element will be deleted as well.");
 
 define("_AM_TITLE","Menu administration");
 define("_AM_ID","ID");

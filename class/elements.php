@@ -37,6 +37,9 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 
 global $xoopsDB;
 define('formulize_TABLE', $xoopsDB->prefix("form"));
+// added data table - Aug 14 2005
+define('formulize_DATATABLE', $xoopsDB->prefix("form_form"));
+
 
 class formulizeformulize extends XoopsObject {
 	function formulizeformulize(){
@@ -165,6 +168,26 @@ class formulizeElementsHandler {
         }
 		return true;
 	}
+
+	// this function added by jwe Aug 14 2005 -- deletes the data associated with a particular element in a particular form
+	function deleteData(&$element, $force = false){
+		if( get_class($this) != 'formulizeelementshandler') {
+			return false;
+		}
+		// convert the caption to form_form formatting (' becomes `)
+		$caption = $element->getVar('ele_caption');
+		$caption = str_replace("'", "`", $caption);
+		$fid = $element->getVar('id_form');
+		$sql = "DELETE FROM ".formulize_DATATABLE." WHERE id_form='$fid' AND ele_caption='$caption'";
+
+        if( false != $force ){
+            $result = $this->db->queryF($sql);
+        }else{
+            $result = $this->db->query($sql);
+        }
+		return true;
+	}
+
 
 	function &getObjects($criteria = null, $id_form , $id_as_key = false){
 		$ret = array();

@@ -72,6 +72,8 @@ $modversion['hasMain'] = 1;
 // Templates
 $modversion['templates'][1]['file'] = 'formulize_cat.html';
 $modversion['templates'][1]['description'] = '';
+$modversion['templates'][2]['file'] = 'calendar_month.html';
+$modversion['templates'][2]['description'] = '';
 
 
 //	Module Configs
