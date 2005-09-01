@@ -61,22 +61,28 @@ global $xoopsConfig;
 
 function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles, $filters, $viewPrefixes, $scopes, $hidden, $type="month", $start="") {
 
+
+
 	global $xoopsDB, $xoopsUser;
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+
+    global $xoopsTpl;
 
 	// Set some required variables
 	$mid = getFormulizeModId();
 	for($i=0;$i<count($formframes);$i++) {
 		unset($fid);
 		unset($frid);
-		if($mainforms) {
-			list($fid, $frid) = getFormFramework($formframes[$i], $mainform[$i]);
+		if($mainforms[$i]) {
+			list($fid, $frid) = getFormFramework($formframes[$i], $mainforms[$i]);
 		} else {
 			list($fid, $frid) = getFormFramework($formframes[$i]);
 		}
 		$fids[] = $fid;
 		$frids[] = $frid;
 	}
+
+
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
@@ -88,7 +94,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 			print "<p>" . _NO_PERM . "</p>";
 			return;
 		}
-	}
+	}                  
 
 	$currentURL = getCurrentURL();
 
@@ -166,13 +172,6 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 	$rights = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
 
 
-	// Layout	
-
-
-	// initialize the calendar template
-    global $calendarTemplate;
-    $calendarTemplate = (isset($_POST["template"])) ? $_POST["template"] : "calendar_month"; 
-    
 	// information to pass to the template
 	global $calendarData;
     
@@ -182,7 +181,14 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 	global $dateMonthStartDay;
 
 	$arrayMonthNames = array(_formulize_CAL_MONTH_01, _formulize_CAL_MONTH_02, _formulize_CAL_MONTH_03, _formulize_CAL_MONTH_04, _formulize_CAL_MONTH_05, _formulize_CAL_MONTH_06, _formulize_CAL_MONTH_07, _formulize_CAL_MONTH_08, _formulize_CAL_MONTH_09, _formulize_CAL_MONTH_10, _formulize_CAL_MONTH_11, _formulize_CAL_MONTH_12); 
+	if($type == "mini_month")
+    {    
+		$arrayWeekNames = array(_formulize_CAL_WEEK_1_3ABRV, _formulize_CAL_WEEK_2_3ABRV, _formulize_CAL_WEEK_3_3ABRV, _formulize_CAL_WEEK_4_3ABRV, _formulize_CAL_WEEK_5_3ABRV, _formulize_CAL_WEEK_6_3ABRV, _formulize_CAL_WEEK_7_3ABRV);
+	}
+    else
+    {    
 	$arrayWeekNames = array(_formulize_CAL_WEEK_1, _formulize_CAL_WEEK_2, _formulize_CAL_WEEK_3, _formulize_CAL_WEEK_4, _formulize_CAL_WEEK_5, _formulize_CAL_WEEK_6, _formulize_CAL_WEEK_7);
+	}
 
 	// convert string date into parts 
 	$arrayDate = getdate(strtotime($settings['calview'] . "-01"));
@@ -200,8 +206,20 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
     $dateMonthWeeks = week_in_month($dateMonthDays) + 1;
 
 
-    // intialize template information
-	if($calendarTemplate == "calendar_month")
+    // intialize MONTH template information
+    // each cell is an array:
+    // [0] - is control information, where each entry is an array:
+    //     [0] - day number
+    //     [1] - send date
+    // [1] - is an array containing all items, where each item is also an array:
+    //     [0] - $ids[0]
+    //     [1] - $frids[$i]
+    //     [2] - $fids[$i]
+    //     [3] - $textToDisplay
+
+	if($type == "month"
+		|| $type == "mini_month"
+		|| $type == "micro_month")
     {    
 	    // initialize grid: convert the data set into a grid of 7 columns for  
 	    //  days and a row for each week
@@ -233,51 +251,37 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 	                }
 	            }
 
-	            //"<p align=right>$displayDay</p>"
-	            $calendarData[$intWeeks][$intDays] = "<p align=right>";
-	            if($rights && $displayDay)
-	            {
-	                $dateToSend = $dateYear . "-" . $dateMonth . "-" . (($displayDay < 10) ? "0" . $displayDay : $displayDay);
-	                // debug
-	                //$calendarData[$intWeeks][$intDays] .= "<img src=\"../formulize/images/plus.PNG\" onclick=\"javascript:alert('$dateToSend');return false;\">&nbsp;&nbsp;";
-	                $calendarData[$intWeeks][$intDays] .= "<img src=\"../formulize/images/plus.PNG\" onclick=\"javascript:addNew('', '" . $frids[0] . "', '" . $fids[0] . "','$dateToSend');return false;\">&nbsp;&nbsp;";
-	            }
-	            $calendarData[$intWeeks][$intDays] .= "$displayDay</p>";
+	            $calendarData[$intWeeks][$intDays] = array();
+	            $calendarData[$intWeeks][$intDays][0][0] = $displayDay;
+	            $calendarData[$intWeeks][$intDays][0][1] = $dateYear . "-" . $dateMonth . "-" . (($displayDay < 10) ? "0" . $displayDay : $displayDay);
+	            //$calendarData[$intWeeks][$intDays][1] = array();
 	        }
 	    }    
+
+		// Initialize template variables
+	    $xoopsTpl->assign('previousMonth', ((($dateMonth - 1) < 1) ? ($dateYear - 1) . "-12" : $dateYear . "-" . ((($dateMonth - 1) < 10) ? "0" . ($dateMonth - 1) : ($dateMonth - 1))));
+	    $xoopsTpl->assign('nextMonth', ((($dateMonth + 1) > 12) ? ($dateYear + 1) . "-01" : $dateYear . "-" . ((($dateMonth + 1) < 10) ? "0" . ($dateMonth + 1) : ($dateMonth + 1))));
+
+	    $monthSelector = array();
+	    $numberOfMonths = count($arrayMonthNames);
+	    for($intMonth = 0; $intMonth < $numberOfMonths; $intMonth++)
+	    {
+	        $monthName = $arrayMonthNames[$intMonth];
+	        $monthSelector[((($intMonth + 1) < 10) ? "0" . ($intMonth + 1) : ($intMonth + 1))] = $monthName; 
+	    }
+	    $xoopsTpl->assign('monthSelector', $monthSelector);
+
+	    $yearSelector = array();
+	    $startYear = $dateYear - 4;
+	    $endYear = $dateYear + 3;
+	    for($intYear = $startYear; $intYear <= $endYear; $intYear++)
+	    {
+	        $yearSelector[] = $intYear;    
+	    }
+	    $xoopsTpl->assign('yearSelector', $yearSelector);
 	}
     
 
-    global $xoopsTpl;
-	$xoopsOption['template_main'] = $calendarTemplate . ".html";
-    $xoopsTpl->xoops_setCaching(0);
-    $xoopsTpl->display('db:'.$xoopsOption['template_main']);
-    $xoopsTpl->xoops_setCaching(1);
-
-	//$xoopsTpl->assign('gallery', $xoopsModule->getVar('name'));
-
-
-
-        
-	// debug
-	//print "Month: $dateMonth, Day: $dateDay, Year: $dateYear";
-	//print "<br>Start Day: $dateMonthStartDay (starts on a " . $arrayWeekNames[$dateMonthStartDay] . "), Month Days: $dateMonthDays, Month Weeks: $dateMonthWeeks";
-	//var_dump($arrayDate);
-	//var_dump($calendarData);
-
-	print "<form name=controls id=controls action=$currentURL method=post>\n";
-
-	foreach($hidden as $hidename=>$hidevalue) {
-		print "<input type=hidden name=$hidename value=$hidevalue>\n";
-	}
-
-	print "<input type=hidden name=calview id=calview value=\"" . $settings['calview'] . "\">\n";
-
-    calendarHeaderView($dateMonth, $dateYear);
-    
-	// Layout	
-
-    
 	// process data set(s)
 	for($i=0;$i<count($data);$i++) {
 		foreach($data[$i] as $id=>$entry) {
@@ -290,205 +294,72 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 			
             $currentDate = display($entry, $dateHandles[$i]);
 
-		if($viewPrefixes[$i]) {
-			$textToDisplay = $viewPrefixes[$i] . display($entry, $viewHandles[$i]);
-		} else {
-			$textToDisplay = display($entry, $viewHandles[$i]);
-		}
+	        if($viewPrefixes[$i]) {
+	            $textToDisplay = $viewPrefixes[$i] . display($entry, $viewHandles[$i]);
+	        } else {
+	            $textToDisplay = display($entry, $viewHandles[$i]);
+	        }
 
-            calendarBodyItem($currentDate, 
-            	"<p><a href=\"\" onclick=\"javascript:goDetails('" . $ids[0] . "','" . $frids[$i] . "','" . $fids[$i] . "');return false;\">$textToDisplay</a></p>\n");
-				// debug
-            	//"<p><a href=\"\" onclick=\"javascript:goDetails('" . $ids[0] . "','" . $frids[$i] . "','" . $fids[$i] . "');return false;\">" . display($entry, $viewHandles[$i]) . " - " . display($entry, $dateHandles[$i]) . "</a></p>\n");
+
+			// Layout	
+
+	        if($type == "month"
+	        	|| $type == "mini_month"
+	        	|| $type == "micro_month")
+	        {    
+	            $arrayDate = getdate(strtotime($currentDate));
+	            $dateDay = $arrayDate["mday"];
+	            $dateMonthWeekDay = $arrayDate["wday"];
+
+	            $dateMonthWeek = week_in_month($dateDay);
+
+	            // debug
+	            //print "$dateDay :: $dateMonthWeek :: $dateMonthWeekDay :: $item";
+	            
+	            $calendarDataItem = array();
+                $calendarDataItem[0] = $ids[0];
+	            $calendarDataItem[1] = $frids[$i];
+	            $calendarDataItem[2] = $fids[$i];
+	            $calendarDataItem[3] = $textToDisplay;
+
+	            $calendarData[$dateMonthWeek][$dateMonthWeekDay][1][] = $calendarDataItem;
+	        }
+
+			// Layout	
 		}
 	}
 
     
 	// Layout	
 
-	calendarBodyView($calendarData);
-	calendarFooterView();    
-    
-	print "<input type=hidden name=ventry id=ventry value=\"\">\n";
-	print "<input type=hidden name=calfid id=calfid value=\"\">\n";
-	print "<input type=hidden name=calfrid id=calfrid value=\"\">\n";
-	print "<input type=hidden name=adddate id=adddate value=\"\">\n";
+    // Initialize common template variables
+	$xoopsTpl->assign('cal_type', $type);
 
-	print "<input type=submit style=\"width: 140px; visibility: hidden;\" name=submitx value=''></input>\n"; 
+	$xoopsTpl->assign('rights', $rights);    
+	$xoopsTpl->assign('frids', $frids[0]);    
+	$xoopsTpl->assign('fids', $fids[0]);    
 
-	print "</form>\n";
-	
-	interfaceJavascript();
+	$xoopsTpl->assign('addItem', _formulize_CAL_ADD_ITEM);
+
+	$xoopsTpl->assign('rowStyleEven', true);
     
+	$xoopsTpl->assign('MonthNames', $arrayMonthNames);
+	$xoopsTpl->assign('WeekNames', $arrayWeekNames);
+
+	$xoopsTpl->assign('dateMonthZeroIndex', $dateMonth - 1);
+	$xoopsTpl->assign('dateMonth', $dateMonth);
+	$xoopsTpl->assign('dateYear', $dateYear);
+
+	$xoopsTpl->assign('currentURL', $currentURL);
+	$xoopsTpl->assign('hidden', $hidden);
+	$xoopsTpl->assign('calview', $calview);
+
+	$xoopsTpl->assign('calendarData', $calendarData);
+    
+	// force template to be drawn
+    $xoopsTpl->display("db:calendar_" . $type . ".html");
+
     // Layout
-}
-
-// this function draws in the javascript that makes the buttons and links work.
-function interfaceJavascript() {
-?>
-<script type='text/javascript'>
-
-window.document.controls.ventry.value = '';
-window.document.controls.calfid.value = '';
-window.document.controls.calfrid.value = '';
-
-function changeSelector()
-{
-	newDate = window.document.controls.yearSelector.options[
-    	window.document.controls.yearSelector.selectedIndex].value 
-        + '-' + window.document.controls.monthSelector.options[
-        window.document.controls.monthSelector.selectedIndex].value;
-
-	changeMonth(newDate);
-}
-
-function changeMonth(newDate)
-{
-	window.document.controls.calview.value = newDate;
-	window.document.controls.submit();
-}
-
-function addNew(proxy,frid,fid,date) {
-	if(proxy) {
-		window.document.controls.ventry.value = 'proxy';
-	} else {
-		window.document.controls.ventry.value = 'addnew';
-	}
-	window.document.controls.adddate.value = date;
-	window.document.controls.calfrid.value = frid;
-	window.document.controls.calfid.value = fid;
-	window.document.controls.submit();
-}
-
-function goDetails(viewentry,frid,fid) {
-	window.document.controls.ventry.value = viewentry;
-	window.document.controls.calfrid.value = frid;
-	window.document.controls.calfid.value = fid;
-	window.document.controls.submit();
-}
-
-</script>
-<?
-}
-
-
-
-// Display calendar header - month and year.
-function calendarHeaderView($dateMonth, $dateYear)
-{
-	global $arrayMonthNames;
-	global $arrayWeekNames;
-
-?>
-<table class=outer width="98%">
-<tr>
-<th><a href="#" onclick="javascript: changeMonth('<? print ((($dateMonth - 1) < 1) ? ($dateYear - 1) . "-12" : $dateYear . "-" . ((($dateMonth - 1) < 10) ? "0" . ($dateMonth - 1) : ($dateMonth - 1))) ?>');">&lt;</a></th>
-<th colspan="5">
-<table><tr><th>
-<? print $arrayMonthNames[$dateMonth - 1] . " " . $dateYear; ?>
-</th><th align=right><select id=monthSelector onchange="changeSelector()">
-<?
-	$numberOfMonths = count($arrayMonthNames);
-	for($intMonth = 0; $intMonth < $numberOfMonths; $intMonth++)
-    {
-    	$monthName = $arrayMonthNames[$intMonth];
-?>
-	<option value="<? print ((($intMonth + 1) < 10) ? "0" . ($intMonth + 1) : ($intMonth + 1)) ?>"<? if($intMonth == $dateMonth - 1) print " selected"?>><? print $monthName ?></option> 
-<?    
-    }
-?>
-</select>
-&nbsp;&nbsp;<select id=yearSelector onchange="changeSelector()">
-<?
-	$startYear = $dateYear - 4;
-	$endYear = $dateYear + 3;
-	for($intYear = $startYear; $intYear <= $endYear; $intYear++)
-    {
-?>
-	<option value="<? print $intYear ?>"<? if($intYear == $dateYear) print " selected"?>><? print $intYear ?></option> 
-<?    
-    }
-?>
-</select>
-</th></tr></table>
-</th>
-<th><a href="#" onclick="javascript: changeMonth('<? print ((($dateMonth + 1) > 12) ? ($dateYear + 1) . "-01" : $dateYear . "-" . ((($dateMonth + 1) < 10) ? "0" . ($dateMonth + 1) : ($dateMonth + 1))) ?>');">&gt;</a></th>
-</tr>
-<?
-
-	// Display calendar week day names.
-?>
-<tr>
-<?
-	for($intDay = 0; $intDay < 7; $intDay++)
-	{
-?>
-<td class=head width="14%"><? print $arrayWeekNames[$intDay]; ?></td>
-<?
-	}
-?>
-</tr>
-<?
-}
-
-
-// Display calendar body.
-function calendarBodyItem($dateDay, $item)
-{
-	global $calendarData;
-	global $dateMonthStartDay;
-    
-	$arrayDate = getdate(strtotime($dateDay));
-	$dateDay = $arrayDate["mday"];
-	$dateMonthWeekDay = $arrayDate["wday"];
-
-
-    $dateMonthWeek = week_in_month($dateDay);
-    //$dateMonthWeek = (int)((($dateMonthStartDay + 1) + $dateDay) / 7);
-    //$dateMonthWeek = ($dateMonthWeek < 0) ? 0 : $dateMonthWeek;
-
-	// debug
-	//print "$dateDay :: $dateMonthWeek :: $dateMonthWeekDay :: $item";
-    
-    $calendarData[$dateMonthWeek][$dateMonthWeekDay] .= $item;
-}
-
-
-// Display calendar body.
-function calendarBodyView($calendarData)
-{
-	$rowStyleEven = true;
-
-	foreach($calendarData as $week)
-	{
-?>
-<tr>
-<?
-	    for($intDay = 0; $intDay < 7; $intDay++)
-	    {
-?>
-<td class=<? print (($rowStyleEven) ? "even" : "odd"); ?>>
-<?
-		    print $week[$intDay];
-?>
-</td>
-<?
-	    }
-
-	    $rowStyleEven = !$rowStyleEven;
-	}
-?>
-</tr>
-<?
-}
-
-
-// Display calendar footer.
-function calendarFooterView()
-{
-?>
-</table>
-<?
 }
 
 
@@ -517,9 +388,6 @@ function week_in_month($day)
     
 	$value = (int)((($dateMonthStartDay + 1) + $day) / 7);
 
-    // debug
-    //print "<br><br>" . $dateMonthStartDay . "::" . $value . "<br><br>";
-    
     return $value;    
 }
 ?>

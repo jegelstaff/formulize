@@ -259,10 +259,44 @@ switch($op){
 		}
 
 		$form->addElement($ele_req);
-		$display = !empty($ele_id) ? $element->getVar('ele_display') : 1;
+        
+
+		// replaced - start - August 18 2005 - jpc
+		/*$display = !empty($ele_id) ? $element->getVar('ele_display') : 1;
 		$ele_display = new XoopsFormCheckBox(_AM_ELE_DISPLAY, 'ele_display', $display);
 		$ele_display->addOption(1, ' ');
+		$form->addElement($ele_display);*/
+
+		$display = !empty($ele_id) ? $element->getVar('ele_display') : "all";
+        $display = ($display == "0") ? "none" : $display;
+        $display = ($display == "1") ? "all" : $display;
+
+        $displayIsGroupList = false;
+		if(substr($display, 0, 1) == ",")
+        {
+	        $displayIsGroupList = true;
+	        $displayGroupList = explode(",", $display);
+			$ele_display = new XoopsFormSelect(_AM_ELE_DISPLAY, 'ele_display', $displayGroupList, 10, true);
+        }
+        else
+        {
+			$ele_display = new XoopsFormSelect(_AM_ELE_DISPLAY, 'ele_display', $display, 10, true);
+        } 
+
+	    $fs_member_handler =& xoops_gethandler('member');
+	    $fs_xoops_groups =& $fs_member_handler->getGroups();
+
+        $ele_display->addOption("all", "All Groups");     
+        $ele_display->addOption("none", "No Groups");     
+
+	    $fs_count = count($fs_xoops_groups);
+	    for($i = 0; $i < $fs_count; $i++) 
+	    {
+	        $ele_display->addOption($fs_xoops_groups[$i]->getVar('groupid'), $fs_xoops_groups[$i]->getVar('name'));     
+	    }
 		$form->addElement($ele_display);
+		// replaced - end - August 18 2005 - jpc
+
 		
 		// added by jwe 01/06/05 -- get the current highest order value for the form, and add up to 10 to it to reach the nearest mod 5 value
 		$highorderq = "SELECT MAX(ele_order) FROM " . $xoopsDB->prefix("form") . " WHERE id_form=$id_form";
@@ -327,7 +361,26 @@ switch($op){
 		$element->setVar('ele_req', $req);
 		$order = empty($ele_order) ? 0 : intval($ele_order);
 		$element->setVar('ele_order', $order);
-		$display = !empty($ele_display) ? 1 : 0;
+
+
+		// replaced - start - August 18 2005 - jpc
+		//$display = !empty($ele_display) ? 1 : 0;
+		if($ele_display[0] == "all")
+        {
+			$display = 1;        
+        }
+        else if($ele_display[0] == "none" || $ele_display[1] == "none")
+        {
+			$display = 0;        
+        }
+        else
+        {
+			$display = "," . implode(",", $ele_display) . ",";
+        }
+		//var_dump($ele_display); echo $display; die();
+		// replaced - end - August 18 2005 - jpc
+
+
 		$element->setVar('ele_display', $display);
 		$element->setVar('ele_type', $ele_type);
 		//$element->setVar('poids',$poids);
@@ -337,6 +390,7 @@ switch($op){
 				$value[] = !empty($ele_value[0]) ? intval($ele_value[0]) : $xoopsModuleConfig['t_width'];
 				$value[] = !empty($ele_value[1]) ? intval($ele_value[1]) : $xoopsModuleConfig['t_max'];
 				$value[] = $ele_value[2];
+				$value[] = $ele_value[3];
 			break;
 			case 'textarea':
 				$value = array();
@@ -495,6 +549,7 @@ switch($op){
 		}
 		$element->setVar('ele_value', $value);
 		$element->setVar('id_form', $id_form);
+        
 		if( !$formulize_mgr->insert($element) ){
 			xoops_cp_header();
 			echo $element->getHtmlErrors();

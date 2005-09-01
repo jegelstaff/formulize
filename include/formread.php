@@ -42,10 +42,10 @@ function writeLinks($entries, $fids) {
 	// information is written from all form's points of view, ie: entry 1, entry 2 AND entry 2, entry 1
 	foreach($fids as $fid) {
 		foreach($entries[$fid] as $one_entry) {
-			$check_q = q("SELECT link_form FROM " . $xoopsDB->prefix("formulize_onetoone_links") . " WHERE main_form = $one_entry");
-			if(count($check_q) == 0) { // entry not entered yet
-				foreach($entries as $one_forms_entries) {
-					if($one_forms_entries[0] == $one_entry) { continue; }
+			foreach($entries as $one_forms_entries) {
+				if($one_forms_entries[0] == $one_entry) { continue; } // since we're looping through all the fids twice, concurrently, we could end up with the same value being found
+				$check_q = q("SELECT link_form FROM " . $xoopsDB->prefix("formulize_onetoone_links") . " WHERE main_form = $one_entry AND link_form = " . $one_forms_entries[0]);
+				if(count($check_q) == 0) { // entry not entered yet
 					$write_q = "INSERT INTO " . $xoopsDB->prefix("formulize_onetoone_links") . " (main_form, link_form) VALUES (\"$one_entry\", \"" . $one_forms_entries[0] . "\")";
 					if(!$result = $xoopsDB->query($write_q)) {
 						exit("error writing linked entries to the database");
@@ -99,8 +99,10 @@ $myts =& MyTextSanitizer::getInstance();
 //print "<br>" .$i . ": " . $ele[$i];
 			//$pds = $element->getVar('pds');
 			$id_form = $element->getVar('id_form');
-			
+
+			// do this code block only once per form...setup things necessary for processing later
 			if(!$uids[$id_form]) {
+				$fids[] = $id_form;
 				$num_id = "";
 				$proxyid = $uid; // changed from "" to $uid July 13 2005 so that proxy id always indicates the id of the user who last made a change (it is now a real modification user field)
 				// handle the num_id for this form (the starting id_req to be used for new entries)
@@ -110,7 +112,6 @@ $myts =& MyTextSanitizer::getInstance();
 				else if ($num_id <= $id_req) $num_id = $id_req + 1;
 
 				$uids[$id_form][$num_id] = $uid;
-
 				// handle creating user ID lists in case of proxy entries
              		if(isset($_POST['proxyuser']) AND (count($_POST['proxyuser'])>1 OR (count($_POST['proxyuser']) == 1 AND $_POST['proxyuser'][0] != "noproxy")))
              		{
@@ -122,16 +123,16 @@ $myts =& MyTextSanitizer::getInstance();
              					$num_id++;
              				}
              			}
-             		}	
+	           		}	
              		elseif($entries[$id_form][0] AND $uid != $owner) // they are an admin who has updated someone's entry (could be simply a fellow member of the same groupscope)
              		{
              			$proxyid = $uid; // proxy flag set to user who updated entry
              			$uids[$id_form][$num_id] = $owner; // uid set to uid of the original entry
-             		}
+	           		}
 
 				// handle the previous entries for this form
 //				unset($prevEntry);
-				$prevEntry[$id_form] = getEntryValues($entries[$id_form][0]);
+				$prevEntry[$id_form] = getEntryValues($entries[$id_form][0], $formulize_mgr, $groups, $id_form);
 			}
 
 			$ele_id = $element->getVar('ele_id');
@@ -151,7 +152,11 @@ $myts =& MyTextSanitizer::getInstance();
 			
 			switch($ele_type){
 				case 'text':
-					$value = $ele[$i]; // trim added by jwe 9/01/04 -- removed 10/07/04
+					if($ele_value[3]) { // if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
+						$value = ereg_replace ('[^0-9.]+', '', $ele[$i]);
+					} else {
+						$value = $ele[$i]; // trim added by jwe 9/01/04 -- removed 10/07/04
+					}
 				break;
 				case 'textarea':
 					$value = $ele[$i]; // trim added by jwe 9/01/04 -- removed 10/07/04
@@ -340,17 +345,17 @@ $myts =& MyTextSanitizer::getInstance();
 		blankEntries($cs, $prevEntry[$f], $entries[$f][0]);
 	}
 
-	if(!$entries[$fid][0]) {
-		// convert uids to entries format and return
-		foreach($uids as $f=>$rs) {
-			foreach($rs as $r=>$u) {
-				$ret[$f][] = $r;
+	// need to return comprehensive list of all entries, either the entry passed, or if no entry was passed, then the num_id used
+	foreach($fids as $this_fid) {
+		if(!$entries[$this_fid][0]) {
+			unset($entries[$this_fid]);
+			// convert uids to entries format and return
+			foreach($uids[$this_fid] as $r=>$u) {
+				$entries[$this_fid][] = $r;
 			}
-		}
-		return $ret; // send back the id_reqs 
-	} else {
-		return $entries;
-	}
+		}	
+	} 
+	return $entries;
 }
 
 // THIS FUNCTION WRITES DATA TO THE DATABASE

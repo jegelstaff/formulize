@@ -111,8 +111,47 @@ if( $_POST['op'] != 'save' ){
 		$order = $i->getVar('ele_order');
 		$text_order = new XoopsFormText('', 'ele_order['.$id.']', 3, 3, $order); // switched to 3 wide, jwe 01/06/05
 		$display = $i->getVar('ele_display');
+
+		// added - start - August 25 2005 - jpc
+        $multiGroupDisplay = false;
+		if(substr($display, 0, 1) == ",")
+        {
+			$multiGroupDisplay = true;
+            
+	        $fs_member_handler =& xoops_gethandler('member');
+	        $fs_xoops_groups =& $fs_member_handler->getGroups();
+
+	        $displayGroupList = explode(",", $display);
+            
+            $check_display = '';
+
+            foreach($displayGroupList as $groupList)
+            {
+				if($groupList != "")
+                {
+		            if($check_display != '')
+                    	$check_display .= "\n";
+
+					$group_display = $fs_member_handler->getGroup($groupList);
+					$check_display .= $group_display->getVar('name');
+				}                               
+            }
+
+            $check_display = '<a class=info href="" onclick="return false;" alt="' . 
+            	$check_display . '" title="' . $check_display . '">' . 
+                _AM_FORM_DISPLAY_MULTIPLE . '</a>';
+        }
+        else
+        {
+		// added - end - August 25 2005 - jpc
+
 		$check_display = new XoopsFormCheckBox('', 'ele_display['.$id.']', $display);
 		$check_display->addOption(1, ' ');
+
+		// added - start - August 25 2005 - jpc
+        }
+		// added - end - August 25 2005 - jpc
+        
 		$hidden_id = new XoopsFormHidden('ele_id[]', $id);
 		if(is_array($ele_value))$ele_value[0] = addslashes ($ele_value[0]);
 
@@ -125,7 +164,22 @@ if( $_POST['op'] != 'save' ){
 		}*/
 		echo '<td class="even" align="center">'.$check_req->render()."</td>\n";
 		echo '<td class="even" align="center">'.$text_order->render()."</td>\n";
+
+		// added - start - August 25 2005 - jpc
+		if($multiGroupDisplay == true)
+        {
+			echo '<td class="even" align="center">'.$check_display."</td>\n";
+		}
+        else
+        {
+		// added - end - August 25 2005 - jpc
+
 		echo '<td class="even" align="center">'.$check_display->render().$hidden_id->render()."</td>\n";
+
+		// added - start - August 25 2005 - jpc
+		}
+		// added - end - August 25 2005 - jpc
+                
 		echo '<td class="even" align="center"><a href="elements.php?title='.$title.'&op=edit&amp;ele_id='.$id.'">'._EDIT.'</a></td>';
 		echo '<td class="even" align="center"><a href="elements.php?title='.$title.'&op=edit&amp;ele_id='.$id.'&clone=1">'._CLONE.'</a></td>';
 		echo '<td class="even" align="center"><a href="elements.php?title='.$title.'&op=delete&amp;ele_id='.$id.'">'._DELETE.'</a></td>';

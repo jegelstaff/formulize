@@ -1,3 +1,33 @@
+<style>
+a.info
+{
+    position: relative;
+    z-index: 24; 
+    text-decoration: none
+}
+
+a.info:hover
+{
+	z-index:25; 
+    background-color: #ffffe1; 
+}
+
+a.info span
+{
+	display: none
+}
+
+a.info:hover span
+{
+    display:block;
+    position:absolute;
+    top:2em; left:2em; width:15em;
+    background-color: #ffffe1 
+}
+</style>
+
+
+
 <form name=controls id=controls action=<{$currentURL}> method=post>
 
 <{foreach key=hidename item=hidevalue from=$hidden}>
@@ -8,54 +38,26 @@
 
 
 <!-- calendar start -->
-<table class=outer width="98%"><tr>
+<table class=outer><tr>
 	<!-- Display calendar header - month and year. -->
-    <th><a href="" onclick="javascript: changeMonth('<{ $previousMonth }>'); return false;">&lt;</a></th>
-    <th colspan="5">
-        <table><tr>
-            <th><{ $MonthNames[$dateMonthZeroIndex] }> <{ $dateYear }></th>
-            <th align=right>
-            	<select id=monthSelector onchange="changeSelector()">
-	                <{foreach key=monthKey item=monthName from=$monthSelector}>
-	                    <option value="<{ $monthKey }>" <{ if $monthKey == $dateMonth }>selected<{/if}>><{ $monthName }></option>
-	                <{/foreach}>
-	        	</select>
-	        </th>
-            <th align=right>
-	            <select id=yearSelector onchange="changeSelector()">
-	                <{foreach item=yearValue from=$yearSelector}>
-	                    <option value="<{ $yearValue }>" <{ if $yearValue == $dateYear }>selected<{/if}>><{ $yearValue }></option>
-	                <{/foreach}>
-	            </select>
-            </th>
-       </tr></table>
-	</th>
-	<th><a href="" onclick="javascript: changeMonth('<{ $nextMonth }>'); return false;">&gt;</a></th>
+    <th colspan="7">
+	    <a href="" onclick="javascript: changeMonth('<{ $previousMonth }>'); return false;">&lt;</a>&nbsp;&nbsp;&nbsp;&nbsp;    
+	    <{ $MonthNames[$dateMonthZeroIndex] }> <{ $dateYear }>
+		&nbsp;&nbsp;&nbsp;&nbsp;<a href="" onclick="javascript: changeMonth('<{ $nextMonth }>'); return false;">&gt;</a>
+    </th>
 </tr>
             
            
-<!-- Display calendar week day names. -->
-<tr>
-	<{foreach item=weekName from=$WeekNames}>
-	    <td class=head width="14%"><{$weekName}></td>
-	<{/foreach}>
-</tr>
-
-
 <!-- Display calendar body (days and weeks). -->
 <{foreach item=week from=$calendarData}>
 	<tr>
 	    <{foreach item=day from=$week}>
 	        <td class="<{ if $rowStyleEven == true }>even<{elseif $rowStyleEven == false }>odd<{/if}>">
-				<{if $rights == true && $day[0][0] != ''}>
-	                <img src="../formulize/images/plus.PNG" onclick="javascript:addNew('', '<{ $frids }>', '<{ $fids }>','<{ $day[0][1] }>');return false;" style="float: right; cursor: pointer; cursor: hand;" alt="<{ $addItem }>" title="<{ $addItem }>">
+		        <{ if count($day[1]) > 0 }>
+	                <a class=info href="" onclick="return false;"><{ $day[0][0] }><span><{foreach item=dayItem from=$day[1]}><li><{ $dayItem[3] }></li><{/foreach}></span></a>
+				<{else}>
+	                <{ $day[0][0] }>
 				<{/if}>
-
-                <{ $day[0][0] }>
-
-			    <{foreach item=dayItem from=$day[1]}>
-	                <li><a href="" onclick="javascript:goDetails('<{ $dayItem[0] }>','<{ $dayItem[1] }>','<{ $dayItem[2] }>');return false;"><{ $dayItem[3] }></a></li>
-			    <{/foreach}>
             </td>
 	    <{/foreach}>
         <{ if $rowStyleEven == true }><{ assign var="rowStyleEven" value=false }><{elseif $rowStyleEven == false }><{ assign var="rowStyleEven" value=true }><{/if}>

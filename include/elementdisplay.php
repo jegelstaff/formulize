@@ -1,9 +1,8 @@
 <?php
+
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
 ##                    Copyright (c) 2004 Freeform Solutions                  ##
-##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
-##                       <http://www.brandycoke.com/>                        ##
 ###############################################################################
 ##                    XOOPS - PHP Content Management System                  ##
 ##                       Copyright (c) 2000 XOOPS.org                        ##
@@ -28,34 +27,34 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions and NS Tai (aka tuff) and others ##
-##  URL: http://www.brandycoke.com/                                          ##
+##  Author of this file: Freeform Solutions 					     ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-if( !preg_match("/elements.php/", $_SERVER['PHP_SELF']) ){
-	exit("Access Denied");
+//THIS FILE HANDLES THE DISPLAY OF INDIVIDUAL FORM ELEMENTS.  FUNCTIONS CAN BE CALLED FROM ANYWHERE (INTENDED FOR PAGEWORKS MODULE)
+
+function displayElement($ele, $entry="new") {
+
+	include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementrenderer.php";
+
+	if(!$formulize_mgr) {
+		$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
+	}
+
+	$element =& $formulize_mgr->get($ele);
+	$renderer =& new formulizeElementRenderer($element);
+
+	$ele_value = $element->getVar('ele_value');
+	if($entry != "new") {
+		$prevEntry = getEntryValues($entry);
+	}
+	if($prevEntry) { 
+		$ele_value = loadValue($prevEntry, $element, $ele_value); // get the value of this element for this entry as stored in the DB 
+	}
+	$form_ele =& $renderer->constructElement('de_' . $entry . '_'.$element->getVar('ele_id'), $ele_value);
+	print $form_ele->render();
+
 }
-
-$size = !empty($value[0]) ? intval($value[0]) : $xoopsModuleConfig['t_width'];
-$max = !empty($value[1]) ? intval($value[1]) : $xoopsModuleConfig['t_max'];
-$size = new XoopsFormText(_AM_ELE_SIZE, 'ele_value[0]', 3, 3, $size);
-$max = new XoopsFormText(_AM_ELE_MAX_LENGTH, 'ele_value[1]', 3, 3, $max);
-$default = new XoopsFormText(_AM_ELE_DEFAULT, 'ele_value[2]', 50, 255, $value[2]);
-$default->setDescription(_AM_ELE_TEXT_DESC);
-
-// added - start - August 22 2005 - jpc
-$valueType = new XoopsFormSelect(_AM_ELE_TYPE, 'ele_value[3]', $value[3], 1, false);
-$valueType->addOption(0, _AM_ELE_TYPE_STRING);
-$valueType->addOption(1, _AM_ELE_TYPE_NUMBER);
-$valueType->setDescription(_AM_ELE_TYPE_DESC);
-// added - end - August 22 2005 - jpc
-
-$form->addElement($size, 1);
-$form->addElement($max, 1);
-$form->addElement($default);
-
-// added - start - August 22 2005 - jpc
-$form->addElement($valueType);
-// added - end - August 22 2005 - jpc
 ?>

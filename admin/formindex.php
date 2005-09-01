@@ -55,9 +55,12 @@ if(!isset($HTTP_POST_VARS['title'])){
 	$title = $HTTP_POST_VARS['title'];
 }
 
-if($op == "clone") { clone($title, 0); }
+
+// changed clone to cloneFormulize for php5 compat. August 17 2005 - jpc
+
+if($op == "clone") { cloneFormulize($title, 0); }
 // added August 12 2005 - jpc
-if($op == "clonedata") { clone($title, 1); }
+if($op == "clonedata") { cloneFormulize($title, 1); }
 
 
 // Classe permissions
@@ -208,7 +211,7 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 }
 
 // copy a form -- added June 17 2005
-function clone($title, $clonedata) {
+function cloneFormulize($title, $clonedata) {
 	
 	global $xoopsDB;
 	
@@ -1266,6 +1269,7 @@ function migrateIds() {
 	}
 }
 
+
 // THIS FUNCTION PROVIDES THE DB UPDATES FROM 1.6 RC TO 2.0 BETA
 function migratedb() {
 
@@ -1337,6 +1341,23 @@ function migratedb() {
 			}
 		} 
 		print "Migration of DB completed.";
+	}
+}
+
+// THIS FUNCTION UPDATES THE ELE_DISPLAY FIELD IN THE FORM TABLE TO A VARCHAR(255) TO HANDLE THE PER-GROUP DISPLAY OF ELEMENTS
+function patch203() {
+	if(!isset($_POST['patch203'])) {
+		print "<form action=\"formindex.php?op=patch203\" method=post>";
+		print "<input type = submit name=patch203 value=\"Apply Database Patch for Formulize 2.0.3\">";
+		print "</form>";
+	} else {
+		global $xoopsDB;
+		// put logic here
+		$sql = "ALTER TABLE " . $xoopsDB->prefix("form") . " CHANGE `ele_display` `ele_display` varchar(255) NOT NULL default '1'";
+		if(!$result = $xoopsDB->query($sql)) {
+			exit("Error patching DB for Formulize 2.0.3. SQL dump:<br>" . $sql[$i] . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+		}
+		print "Patching of DB completed.";
 	}
 }
 
@@ -1416,6 +1437,9 @@ case "migratedb":
 	migratedb();
 	break;
 
+case "patch203":
+	patch203();
+	break;
 
 }
 

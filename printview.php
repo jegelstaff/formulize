@@ -33,29 +33,30 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-if( !preg_match("/elements.php/", $_SERVER['PHP_SELF']) ){
-	exit("Access Denied");
-}
+require_once "../../mainfile.php";
+//include XOOPS_ROOT_PATH.'/header.php';
 
-$size = !empty($value[0]) ? intval($value[0]) : $xoopsModuleConfig['t_width'];
-$max = !empty($value[1]) ? intval($value[1]) : $xoopsModuleConfig['t_max'];
-$size = new XoopsFormText(_AM_ELE_SIZE, 'ele_value[0]', 3, 3, $size);
-$max = new XoopsFormText(_AM_ELE_MAX_LENGTH, 'ele_value[1]', 3, 3, $max);
-$default = new XoopsFormText(_AM_ELE_DEFAULT, 'ele_value[2]', 50, 255, $value[2]);
-$default->setDescription(_AM_ELE_TEXT_DESC);
+PRINT "<HTML>";
+PRINT "<HEAD>";
+print "<link rel='stylesheet' type='text/css' media='all' href='".getcss($xoopsConfig['theme_set'])."'>";
+PRINT "</HEAD>";
 
-// added - start - August 22 2005 - jpc
-$valueType = new XoopsFormSelect(_AM_ELE_TYPE, 'ele_value[3]', $value[3], 1, false);
-$valueType->addOption(0, _AM_ELE_TYPE_STRING);
-$valueType->addOption(1, _AM_ELE_TYPE_NUMBER);
-$valueType->setDescription(_AM_ELE_TYPE_DESC);
-// added - end - August 22 2005 - jpc
+$formframe = $_POST['formframe'];
+$ventry =  $_POST['lastentry'];
+$mainform = $_POST['mainform'];
 
-$form->addElement($size, 1);
-$form->addElement($max, 1);
-$form->addElement($default);
+//print "<p> formframe = ".$formframe."</p>";
+//print "<p> mainform = ".$mainform."</p>";
+//print "<p> ventry = ".$ventry."</p>";
 
-// added - start - August 22 2005 - jpc
-$form->addElement($valueType);
-// added - end - August 22 2005 - jpc
-?>
+print "<center>"; 
+print "<table width=100%><tr><td width=5%></td><td width=90%>";
+
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+displayForm($formframe, $ventry, $mainform, "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope
+
+print "</td><td width=5%></td></tr></table>";
+print "</center></body>";
+
+PRINT "</HTML>";
+//include XOOPS_ROOT_PATH.'/footer.php';

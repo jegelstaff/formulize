@@ -155,7 +155,7 @@ $themecss = xoops_getcss();
 //$themecss .= ".css";
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 
-print "<head>";
+print "</head>";
 print "<body><center>"; 
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 $advscope = new xoopsThemeForm(_formulize_DE_PICKASCOPE, 'advscope', XOOPS_URL."/modules/formulize/include/advscope.php?fid=$fid&frid=$frid");

@@ -127,7 +127,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 		$cols[$fid] = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$fid' ORDER BY ele_order");
 	}
 */
-	$cols = getAllColList($fid, $frid);
+	$cols = getAllColList($fid, $frid, $groups); // $groups indicates that we only want columns which are visible to the current user
 
 	$numcols = 0;
 	foreach($cols as $f=>$vs) {
@@ -160,7 +160,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 	changeColJavascript();
 
-print "<head>";
+print "</head>";
 print "<body><center>"; 
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 	print "<form name=newcolform action=\"" . XOOPS_URL . "\" method=post>\n";

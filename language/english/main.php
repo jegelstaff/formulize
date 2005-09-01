@@ -290,6 +290,8 @@ define("_formulize_FD_NEWENTRY", "This is a new entry that has not been saved ye
 define("_formulize_ADD_ONE", "Add one");
 define("_formulize_ADD_ANOTHER", "Add another");
 define("_formulize_DELETE_CHECKED", "Delete checked items");
+define("_formulize_ADD_HELP", "Click an item on the left side to view the details for that entry.");
+
 
 define("_formulize_SAVE", "Save");
 define("_formulize_DONE", "All Done");
@@ -306,6 +308,8 @@ define("_formulize_INFO_MAKENEW", "You can make a new entry by filling in the fo
 define("_formulize_NOSUBNAME", "Entry: ");
 
 define("_formulize_DEL_ENTRIES", "You are about to delete the selected entries!  Please confirm.");
+
+define("_formulize_PRINTVIEW", "Printable View");
 
 // constants related to the new display entries functions...
 
@@ -331,6 +335,7 @@ define("_formulize_DE_EXPORT", "Export data");
 define("_formulize_DE_SAVE", "Save current view");
 define("_formulize_DE_DELETE", "Delete current view");
 define("_formulize_DE_ADDENTRY", "Add a new entry");
+define("_formulize_DE_ADD_MULTIPLE_ENTRY", "Add multiple entries");
 define("_formulize_DE_PROXYENTRY", "Make a proxy entry");
 define("_formulize_DE_UPDATEENTRY", "Update your entry");
 define("_formulize_DE_DELETESEL", "Delete selected");
@@ -453,6 +458,7 @@ define("_formulize_DE_SAVE_NEWPROMPT", "Please type a name for this new view:");
 
 
 
+define("_formulize_CAL_ADD_ITEM", "Click to add a new item on this day.");
 
 define("_formulize_CAL_MONTH_01", "January");
 define("_formulize_CAL_MONTH_02", "February");
@@ -474,4 +480,11 @@ define("_formulize_CAL_WEEK_4", "Wednesday");
 define("_formulize_CAL_WEEK_5", "Thursday");
 define("_formulize_CAL_WEEK_6", "Friday");
 define("_formulize_CAL_WEEK_7", "Saturday");
+define("_formulize_CAL_WEEK_1_3ABRV", "Sun");
+define("_formulize_CAL_WEEK_2_3ABRV", "Mon");
+define("_formulize_CAL_WEEK_3_3ABRV", "Tue");
+define("_formulize_CAL_WEEK_4_3ABRV", "Wed");
+define("_formulize_CAL_WEEK_5_3ABRV", "Thu");
+define("_formulize_CAL_WEEK_6_3ABRV", "Fri");
+define("_formulize_CAL_WEEK_7_3ABRV", "Sat");
 ?>

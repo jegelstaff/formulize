@@ -32,7 +32,9 @@
 ##  URL: http://www.brandycoke.com/                                          ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
-include 'header.php';
+
+//include 'header.php'; //redundant as all the code that this calls is now called from within each function (since the functions operate on a standalone basis)
+
 include_once XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php';
 
 global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig;

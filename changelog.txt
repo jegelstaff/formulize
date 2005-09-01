@@ -1,4 +1,30 @@
 *********************
+Version 2.0.3 Beta:
+*********************
+
+IMPORTANT:  Read the readme file for this patch.  There are a couple other things to do besides overwrite your files.
+
+--Added a "Printable View" button to the bottom left of every form.  This button causes a popup window to appear with the current form in it, including all the details of the current entry as of the last time it was saved.  This window is suitable for printing since it has no header, footer, menu blocks, etc.
+--Added the ability to turn individual form elements on or off for specific groups.  The Display checkbox in the form creation/form editing interface has been changed to a listbox containing all the groups.
+--Added an option in the form creation/form editing interface for text boxes to be set to "numbers only", which will cause all non-numeric characters users might type in the box to be ignored.  This is so you can ensure that mathematical operations using the values in a text box will work correctly.
+--Added an "Add multiple entries" button to the summary list of entries.  Changed the behaviour of the "Add a new entry" button so that it only lets you add one entry to a form.  This is because the previous behaviour of the "Add a new entry" button was to redisplay a blank form after you click the "Save" button.  That was confusing if you only wanted to add one entry.
+--converted the functioning of the displayCalendar function to be fully templated using Smarty.  All the main display functions will be converted to this approach eventually.  TO USE THE CALENDAR FEATURE, UPDATE FORMULIZE IN YOUR SYSTEM ADMIN->MODULES AREA SO THE NEW TEMPLATES TAKE EFFECT.
+--added three template options for displayCalendar:  'month' is the standard one month view.  'mini_month' is an abreviated month view where event names are accessible as tooltips when hovering over the day.  'micro_month' is a very small calendar view suitable for use in a block.  THE CALENDAR FEATURE IS STILL VERY EXPERIMENTAL, FULL TESTING HAS NOT BEEN COMPLETED, AND NEW PARAMETERS COULD BE INTRODUCED THAT WILL BREAK CURRENT APPLICATIONS.  
+--Added a new parameter to displayForm called overrideSubMulti, which is used to override the default multi-entry form behaviour for subforms in a Framework.
+--Fixed a bug where the delete sub-entry confirmation box would appear after pressing Enter in a textbox, if sub-entries that could be deleted were present in the form.
+--Improved handling of forms with a one-to-one relationship in a framework.  Three or more forms in a one-to-one relationship should all work okay now, even if they are not all accessible by the same groups of users.
+--Enabled the security check in formDisplay so that all forms in a Framework are verified before being displayed (previously only the first mainform in a Framework was verified).  This allows more complex Framework scenarios where users in different groups with different permissions can interact with the some of the forms in a unified-display Framework, but not others forms.
+--Forced the text of "one column" text display elements to be non-bold.  This makes forms easier to read when the default text style for that table cell class is bold.
+--Improved the UI for saving an entry when a sub-form has been accessed and the parent form is using overrideMulti.
+--changed name of clone() function in admin-side code so as not to conflict with PHP 5.
+--Slightly improved the UI for subforms by adding some instructional text.
+--minor optimization to page loading; calls to extraneous code removed.
+--minor HTML correction in popup windows off of the summary list of entries page
+--Added code for the removal of links between entries in one-to-one related forms when one of the entries is deleted.
+--Various language constants added for the new features
+--Updated the API document called Using_Formulize-Pageworks_to_Make_Custom_Applications.pdf
+
+*********************
 Version 2.0.2 Beta:
 *********************
 --added displayCalendar function for interacting with form or framework data in a calendar style view - if you experience errors with the calendar, update the module in System Admin->Modules, and try again.

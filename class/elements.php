@@ -52,7 +52,10 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("ele_order", XOBJ_DTYPE_INT);
 		$this->initVar("ele_req", XOBJ_DTYPE_INT);
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);
-		$this->initVar("ele_display", XOBJ_DTYPE_INT);
+ 		// changed - start - August 19 2005 - jpc 		
+		//$this->initVar("ele_display", XOBJ_DTYPE_INT);
+		$this->initVar("ele_display", XOBJ_DTYPE_TXTBOX);
+		// changed - end - August 19 2005 - jpc 	
 	}
 	
 }
@@ -103,9 +106,10 @@ class formulizeElementsHandler {
 		foreach( $element->cleanVars as $k=>$v ){
 			${$k} = $v;
 		}
-		if( $element->isNew() || empty($ele_id) ){
+           		if( $element->isNew() || empty($ele_id) ){
 			$ele_id = $this->db->genId(formulize_TABLE."_ele_id_seq");
-			$sql = sprintf("INSERT INTO %s (
+            // changed - start - August 19 2005 - jpc
+			/*$sql = sprintf("INSERT INTO %s (
 				id_form, ele_id, ele_type, ele_caption, ele_order, ele_req, ele_value, ele_display
 				) VALUES (
 				%u, %u, %s, %s, %u, %u, %s, %u
@@ -119,9 +123,26 @@ class formulizeElementsHandler {
 				$ele_req,
 				$this->db->quoteString($ele_value),
 				$ele_display
-			);
-		}else{
-			$sql = sprintf("UPDATE %s SET
+			);*/
+			$sql = sprintf("INSERT INTO %s (
+				id_form, ele_id, ele_type, ele_caption, ele_order, ele_req, ele_value, ele_display
+				) VALUES (
+				%u, %u, %s, %s, %u, %u, %s, %s
+				)",
+				formulize_TABLE,
+				$id_form,
+				$ele_id,
+				$this->db->quoteString($ele_type),
+				$this->db->quoteString($ele_caption),
+				$ele_order,
+				$ele_req,
+				$this->db->quoteString($ele_value),
+				$this->db->quoteString($ele_display)
+			);            
+            // changed - end - August 19 2005 - jpc
+			}else{
+            // changed - start - August 19 2005 - jpc
+            /*$sql = sprintf("UPDATE %s SET
 				ele_type = %s,
 				ele_caption = %s,
 				ele_order = %u,
@@ -138,8 +159,27 @@ class formulizeElementsHandler {
 				$ele_display,
 				$ele_id,
 				$id_form
+			);*/
+            $sql = sprintf("UPDATE %s SET
+				ele_type = %s,
+				ele_caption = %s,
+				ele_order = %u,
+				ele_req = %u,
+				ele_value = %s,
+				ele_display = %s
+				WHERE ele_id = %u AND id_form = %u",
+				formulize_TABLE,
+				$this->db->quoteString($ele_type),
+				$this->db->quoteString($ele_caption),
+				$ele_order,
+				$ele_req,
+				$this->db->quoteString($ele_value),
+				$this->db->quoteString($ele_display),
+				$ele_id,
+				$id_form
 			);
-		}
+            // changed - end - August 19 2005 - jpc
+ 		}
         if( false != $force ){
             $result = $this->db->queryF($sql);
         }else{
@@ -177,6 +217,7 @@ class formulizeElementsHandler {
 		// convert the caption to form_form formatting (' becomes `)
 		$caption = $element->getVar('ele_caption');
 		$caption = str_replace("'", "`", $caption);
+		$caption = str_replace("&#039;", "`", $caption);
 		$fid = $element->getVar('id_form');
 		$sql = "DELETE FROM ".formulize_DATATABLE." WHERE id_form='$fid' AND ele_caption='$caption'";
 
@@ -223,10 +264,13 @@ class formulizeElementsHandler {
 	function &getObjects2($criteria = null, $id_form , $id_as_key = false){
 		$ret = array();
 		$limit = $start = 0;
-		$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE id_form='.$id_form.' AND ele_display=1';
+//		awareness of $criteria added, Sept 1 2005, jwe
+//		removal of ele_display=1 from next line and addition of the renderWhere line in the conditional below
+		$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE id_form='.$id_form;
+
 
 		if( isset($criteria) && is_subclass_of($criteria, 'criteriaelement') ){
-		//	$sql .= ' '.$criteria->renderWhere();
+			$sql .= ' AND ('.$criteria->render().')';
 			if( $criteria->getSort() != '' ){
 				$sql .= ' ORDER BY '.$criteria->getSort().' '.$criteria->getOrder();
 			}

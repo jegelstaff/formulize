@@ -207,7 +207,6 @@ function security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handle
 	if(!$gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
 		return false;
 	}
-
 	// do security check on entry in form -- note: based on the initial entry passed, does not consider entries in one-to-one linked forms which are assumed to be allowed for the user if the main entry is.
 	// allow user to see own entry
 	// any entry if they have view_globalscope
@@ -461,6 +460,11 @@ function deleteEntry($id_req) {
 	if(!$result = $xoopsDB->query($sql)) {
 		exit("Error: failed to delete entry $id_req");
 	}
+	// remove listings in one_to_one links table
+	$sql = "DELETE FROM ". $xoopsDB->prefix("formulize_onetoone_links") . " WHERE main_form='$id_req' OR link_form='$id_req'";
+	if(!$result2 = $xoopsDB->query($sql)) {
+		exit("Error: failed to delete one to one links for entry $id_req");
+	}
 }
 
 // GETS THE ID OF THE USER WHO OWNS AN ENTRY
@@ -561,7 +565,11 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
 			if($entries[$fid][0]) {
 				$findLinks_q = q("SELECT link_form FROM " . $xoopsDB->prefix("formulize_onetoone_links") . " WHERE main_form = " . $entries[$fid][0]);
 				foreach($findLinks_q as $foundLink) {
-					$entries[$one_fid['fid']][] = $foundLink['link_form'];
+					// look for the found id_req in the form_form table as part of the current fid, and only record it if found
+					$find_req = q("SELECT ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req='" . $foundLink['link_form'] . "' AND id_form='" . $one_fid['fid'] . "' LIMIT 1");
+					if($find_req[0]['ele_id']) {
+						$entries[$one_fid['fid']][] = $foundLink['link_form'];
+					}
 				}
 			} else {
 				$entries[$one_fid['fid']][] = "";
@@ -732,10 +740,23 @@ function getMetaData($entry, $member_handler) {
 // columns are the raw results from a function q query of the DB, ie: two dimensioned array, first dimension is a counter for the records returned, second dimension is the name of the db field returned
 // in this case the db fields are ele_id and ele_caption
 // $fid is required, $frid is optional
+// $groups is the grouplist of the current user.  It is optional.  If present it will limit the columns returned to the ones where display is 1 or the display includes that group
 
-function getAllColList($fid, $frid="") {
+function getAllColList($fid, $frid="", $groups="") {
 
 	global $xoopsDB;
+
+	// if $groups then build the necessary filter
+	// build query for display groups
+	$gq = "";
+	if($groups) {
+		$gq = "AND (ele_display=1";
+		foreach($groups as $thisgroup) {
+			$gq .= " OR ele_display LIKE '%,$thisgroup,%'";
+		}
+		$gq .= ")";
+	}
+
 	if(!$frid AND !$fid) { exit("Error:  list of columns requested without specifying a form or a framework."); }
 	// generate the $allcols list
 	if($frid) {
@@ -747,15 +768,15 @@ function getAllColList($fid, $frid="") {
 //		array_unique($all_fids);
 //		foreach($all_fids as $this_fid) {
 		foreach($fids as $this_fid) {
-			$c = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$this_fid' ORDER BY ele_order");
+			$c = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$this_fid' $gq ORDER BY ele_order");
 			$cols[$this_fid] = $c;
 		}
 		foreach($sub_fids as $this_fid) {
-			$c = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$this_fid' ORDER BY ele_order");
+			$c = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$this_fid' $gq ORDER BY ele_order");
 			$cols[$this_fid] = $c;
 		}
 	} else {
-		$cols[$fid] = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$fid' ORDER BY ele_order");
+		$cols[$fid] = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$fid' $gq ORDER BY ele_order");
 	}
 
 	return $cols;

@@ -464,7 +464,7 @@ function displayEntries($formframe, $mainform="", $loadview="") {
 	if($_POST['ventry']) { // user clicked on a view this entry link
 		include_once XOOPS_ROOT_PATH . '/modules/formulize/include/formdisplay.php';
 
-		if($_POST['ventry'] == "addnew") {
+		if($_POST['ventry'] == "addnew" OR $_POST['ventry'] == "single") {
 			$this_ent = "";
 		} elseif($_POST['ventry'] == "proxy") {
 			$this_ent = "proxy";
@@ -472,12 +472,22 @@ function displayEntries($formframe, $mainform="", $loadview="") {
 			$this_ent = $_POST['ventry'];
 		}
 
-		if($frid) {
-			displayForm($frid, $this_ent, $fid, $currentURL, "", $settings); // "" is the done text
-			return;
-		} else {
-			displayForm($fid, $this_ent, "", $currentURL, "", $settings); // "" is the done text
-			return;
+		if($_POST['ventry'] != "single") {
+			if($frid) {
+				displayForm($frid, $this_ent, $fid, $currentURL, "", $settings); // "" is the done text
+				return;
+			} else {
+				displayForm($fid, $this_ent, "", $currentURL, "", $settings); // "" is the done text
+				return;
+			}
+		} else { // if a single entry was requested for a form that can have multiple entries, then specifically override the multiple entry UI (which causes a blank form to appear on save)
+			if($frid) {
+				displayForm($frid, $this_ent, $fid, $currentURL, "", $settings, "", "", "1"); // "" is the done text
+				return;
+			} else {
+				displayForm($fid, $this_ent, "", $currentURL, "", $settings, "", "", "1"); // "" is the done text
+				return;
+			}
 		}
 	
 	} 
@@ -659,7 +669,8 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 
             	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
             	if($add_own_entry AND $singleMulti[0]['singleentry'] == "") {
-            		print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_ADDENTRY . "' onclick=\"javascript:addNew();\"></input>";
+            		print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_ADDENTRY . "' onclick=\"javascript:addNew('single');\"></input>";
+            		print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_ADD_MULTIPLE_ENTRY . "' onclick=\"javascript:addNew();\"></input>";
             	} elseif($add_own_entry AND $proxy = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) { // this is a single entry form, so add in the update and proxy buttons if they have proxy, otherwise, just add in update button
             		print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_UPDATEENTRY . "' onclick=\"javascript:addNew();\"></input>";
             		print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_PROXYENTRY . "' onclick=\"javascript:addNew('proxy');\"></input>";
@@ -1769,9 +1780,11 @@ function change_view(formObj, pickgroups, endstandard) {
 	}
 }
 
-function addNew(proxy) {
-	if(proxy) {
+function addNew(flag) {
+	if(flag=='proxy') {
 		window.document.controls.ventry.value = 'proxy';
+	} else if(flag=='single') {
+		window.document.controls.ventry.value = 'single';
 	} else {
 		window.document.controls.ventry.value = 'addnew';
 	}

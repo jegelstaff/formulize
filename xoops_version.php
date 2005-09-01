@@ -74,6 +74,10 @@ $modversion['templates'][1]['file'] = 'formulize_cat.html';
 $modversion['templates'][1]['description'] = '';
 $modversion['templates'][2]['file'] = 'calendar_month.html';
 $modversion['templates'][2]['description'] = '';
+$modversion['templates'][3]['file'] = 'calendar_mini_month.html';
+$modversion['templates'][3]['description'] = '';
+$modversion['templates'][4]['file'] = 'calendar_micro_month.html';
+$modversion['templates'][4]['description'] = '';
 
 
 //	Module Configs

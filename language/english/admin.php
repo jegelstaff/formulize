@@ -38,6 +38,14 @@ define("_AM_ELE_NOM_SEP","Break up name");
 define("_AM_ELE_UPLOAD","Join a file");
 define("_AM_ELE_CLR","with the color");
 
+// added - start - August 227 2005 - jpc
+define("_AM_ELE_TYPE","What should people type in this box?");
+define("_AM_ELE_TYPE_DESC","Choose 'Numbers Only' to strip non-numeric characters from the box when an entry is saved.  This ensures mathematical operations can be performed on the contents of the box.");
+define("_AM_ELE_TYPE_STRING","Anything");
+define("_AM_ELE_TYPE_NUMBER","Numbers Only");
+// added - end - August 22 2005 - jpc
+
+
 define("_AM_ELE_SIZE","Size");
 define("_AM_ELE_MAX_LENGTH","Maximum length");
 define("_AM_ELE_ROWS","Rows");
@@ -146,4 +154,8 @@ define("_AM_CATGENERAL", "General Forms");
 
 define("_AM_CANCEL", "Cancel");
 
+
+// added - start - August 25 2005 - jpc
+define("_AM_FORM_DISPLAY_MULTIPLE","Custom");
+// added - end - August 25 2005 - jpc
 ?>

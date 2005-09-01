@@ -257,7 +257,7 @@ Note:  calculation columns (difference between order date and ship date for this
 // convert URL passed calcs to $_POST array
 setURLCalcs();
 
-$cols = getAllColList($fid, $frid);
+$cols = getAllColList($fid, $frid, $groups);
 
 $deleted = handleDelete(); // returns 1 if a deletion was made, 0 if not.  
 
@@ -289,7 +289,7 @@ $themecss = xoops_getcss();
 //$themecss .= ".css";
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 
-print "<head>";
+print "</head>";
 print "<body><center>"; 
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 $pickcalc = new xoopsThemeForm(_formulize_DE_PICKCALCS, 'pickcalc', XOOPS_URL."/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid");

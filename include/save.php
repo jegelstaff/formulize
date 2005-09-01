@@ -192,7 +192,7 @@ $themecss = xoops_getcss();
 //$themecss .= ".css";
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 
-print "<head>";
+print "</head>";
 print "<body><center>"; 
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 

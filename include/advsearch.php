@@ -175,7 +175,7 @@ include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
 
 $returned = readQueryItems();
 
-$cols = getAllColList($fid, $frid);
+$cols = getAllColList($fid, $frid, $groups);
 
 $returned = handleDelete($returned[0], $returned[1]); // returns 1 if a deletion was made, 0 if not.  
 $items = $returned[0];
@@ -205,7 +205,7 @@ $themecss = xoops_getcss();
 //$themecss .= ".css";
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 
-print "<head>";
+print "</head>";
 print "<body><center>"; 
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 $advsearch = new xoopsThemeForm(_formulize_DE_BUILDQUERY, 'buildq', XOOPS_URL."/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid");

@@ -69,14 +69,27 @@ function getParentLinks($fid, $frid) {
 
 
 // this function returns the captions and values that are in the DB for an existing entry
-function getEntryValues($entry) {
+function getEntryValues($entry, $formulize_mgr, $groups, $fid) {
 
 	global $xoopsDB;
 
 	$viewquery = q("SELECT ele_caption, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req=$entry");
+
+	// build query for display groups
+	foreach($groups as $thisgroup) {
+		$gq .= " OR ele_display LIKE '%,$thisgroup,%'";
+	}
+	$allowedquery = q("SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form=$fid AND (ele_display=1 $gq)"); 
+	foreach($allowedquery as $onecap) {
+		$allowedcaps[] = str_replace("'", "`", $onecap['ele_caption']);
+	}
+
 	foreach($viewquery as $vq) {
+		// check that this caption is an allowed caption before recording the value
+		if(in_array($vq["ele_caption"], $allowedcaps)) {
 		$prevEntry['captions'][] = $vq["ele_caption"];
 		$prevEntry['values'][] = $vq["ele_value"];
+	}
 	}
 	return $prevEntry;
 	
@@ -227,7 +240,7 @@ function getSingle($fid, $uid, $groups, $member_handler) {
 
 
 
-function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_text="", $settings="", $onetooneTitles="", $overrideValue="", $overrideMulti="") {
+function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_text="", $settings="", $onetooneTitles="", $overrideValue="", $overrideMulti="", $overrideSubMulti="") {
 //syntax:
 //displayform($formframe, $entry, $mainform)
 //$formframe is the id of the form OR title of the form OR name of the framework
@@ -243,7 +256,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 	global $xoopsDB, $xoopsUser, $myts;
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
-	$original_entry = $entry;
+	$original_entry = $entry; // flag used to tell whether the function was called with an actual entry specified, ie: we're supposed to be editing this entry, versus the entry being set by coming back form a sub_form or other situation.
 
 	$mid = getFormulizeModId();
 
@@ -253,7 +266,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 
 	list($fid, $frid) = getFormFramework($formframe, $mainform);
 
-	if($_POST['deletesubs']) { // if deletion of sub entries requested
+	if($_POST['deletesubsflag']) { // if deletion of sub entries requested
 		foreach($_POST as $k=>$v) {
 			if(strstr($k, "delbox")) {
 				$subs_to_del[] = $v;
@@ -334,7 +347,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 		$info_received_msg = "1"; // flag for display of info received message
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formread.php";
 		$temp_entries = handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_groups, $groups);
-		if($single OR ($entries[$fid][0] AND ($original_entry OR $_POST[$entrykey])) OR $overrideMulti) { // if we just did a submission on a single form, or we just edited a multi, then assume the identity of the new entry
+		if($single OR ($entries[$fid][0] AND ($original_entry OR ($_POST[$entrykey] AND !$_POST['back_from_sub']))) OR $overrideMulti OR ($_POST['go_back_form'] AND $overrideSubMulti)) { // if we just did a submission on a single form, or we just edited a multi, then assume the identity of the new entry.  Can be overridden by values passed to this function, to force multi forms to redisplay the just-saved entry.  Back_from_sub is used to override the override, when we're saving after returning from a multi-which is like editing an entry since entries are saved prior to going to a sub.
 			$entry = $temp_entries[$fid][0];
 			$entries = $temp_entries;
 			$owner = getEntryOwner($entry);
@@ -344,7 +357,9 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 		} elseif(!$_POST['target_sub']) { // as long as the form was submitted and we're not going to a sub form, then display the info received message and carry on with a blank form
 			if(!$original_entry) { // if we're on a multi-form where the display form function was called without an entry, then clear the entries and behave as if we're doing a new add
 				unset($entries);
+				unset($sub_entries);
 				$entries[$fid][0] = "";
+				$sub_entries[$sub_fids[0]][0] = "";
 			}
 			$info_continue = 2;
 		}
@@ -411,28 +426,26 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 	include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 	include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
-/*	if($uid==1) {
-	print "Forms: ";
+//	if($uid==1) {
+/*	print "Forms: ";
 	print_r($fids);
 	print "<br>Entries: ";
 	print_r($entries);
 	print "<br>Subforms: ";
 	print_r($sub_fids);
 	print "<br>Subentries: ";
-	print_r($sub_entries); // debug block - ONLY VISIBLE TO USER 1 RIGHT NOW
-	} */
+	print_r($sub_entries); // debug block - ONLY VISIBLE TO USER 1 RIGHT NOW */
+//	} 
 	$title = "";
 	foreach($fids as $this_fid) {
-  
-// NOTE: SERIOUSLY NEED TO CHECK WHY THIS CHECK IS FAILING FOR HOURS LOG!    
-//		if(!$scheck = security_check($this_fid, $entries[$this_fid], $uid, $owner, $groups, $mid, $gperm_handler, $owner_groups)) {
-//			continue;
-//		}
 
+		if(!$scheck = security_check($this_fid, $entries[$this_fid][0], $uid, $owner, $groups, $mid, $gperm_handler, $owner_groups)) {
+			continue;
+		}
 
       	unset($prevEntry);
       	if($entries[$this_fid]) { 	// if there is an entry, then get the data for that entry
-      		$prevEntry = getEntryValues($entries[$this_fid][0]); 
+      		$prevEntry = getEntryValues($entries[$this_fid][0], $formulize_mgr, $groups, $this_fid); 
       	}
 
       	// display the form
@@ -522,26 +535,26 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 
       	$form = compileElements($this_fid, $form, $formulize_mgr, $prevEntry, $entries[$this_fid][0], $go_back, $parentLinks[$this_fid], $owner_groups, $groups, $overrideValue);
 
-      	// DRAW IN THE SPECIAL UI FOR A SUBFORM LINK (ONE TO MANY)		
-     		if(count($sub_fids) > 0) { // if there are subforms, then draw them in...only once we have a bonafide entry in place already
-
-      		// draw in special params for this form
-			$form->addElement (new XoopsFormHidden ('target_sub', ''));
-			$form->addElement (new XoopsFormHidden ('del_subs', ''));
-			$form->addElement (new XoopsFormHidden ('goto_sub', ''));
-			$form->addElement (new XoopsFormHidden ('goto_sfid', ''));
-
-			foreach($sub_fids as $sfid) {
-
-				$subUICols = drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid);
-
-				unset($subLinkUI);
-      			$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']);
-      			$form->addElement($subLinkUI);
-      		}
-      	} 
-
 	} // end of for each fids
+
+     	// DRAW IN THE SPECIAL UI FOR A SUBFORM LINK (ONE TO MANY)		
+    	if(count($sub_fids) > 0) { // if there are subforms, then draw them in...only once we have a bonafide entry in place already
+      	// draw in special params for this form
+		$form->addElement (new XoopsFormHidden ('target_sub', ''));
+		$form->addElement (new XoopsFormHidden ('del_subs', ''));
+		$form->addElement (new XoopsFormHidden ('goto_sub', ''));
+		$form->addElement (new XoopsFormHidden ('goto_sfid', ''));
+		foreach($sub_fids as $sfid) {
+			if(!$scheck = security_check($sfid, "", $uid, $owner, $groups, $mid, $gperm_handler, $owner_groups)) { // no entry passed so this will simply check whether they have permission for the form or not
+				continue;
+			}
+			$subUICols = drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid);
+			unset($subLinkUI);
+			$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']);
+			$form->addElement($subLinkUI);
+    		}
+     	} 
+
 
 	// draw in proxy box if necessary (only if they have permission and only on new entries, not on edits)
 	if($gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid) AND !$entries[$fid][0]) {
@@ -561,15 +574,15 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 	// draw in the submitbutton if necessary
 	if($entry) { // existing entry, if it's their own and they can update their own, or someone else's and they can update someone else's
 		if(($owner == $uid AND $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid)) OR ($owner != $uid AND $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid))) {
-			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0]);
+			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry);
 		} else {
-			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0]); // draw in just the done button
+			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry); // draw in just the done button
 		}
 	} else { // new entry
 		if($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid)) {
-			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0]);
+			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry);
 		} else {
-			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0]); // draw in just the done button
+			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry); // draw in just the done button
 		}
 	}
 
@@ -579,7 +592,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 
 
 // add the submit button to a form
-function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $done_text, $settings, $entry) {
+function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $done_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry) {
+
+	if(strstr($currentURL, "printview.php")) { // don't do anything if we're on the print view
+		return $form;
+	} else {
 	if($go_back['url'] == "" AND !isset($go_back['form'])) { // there are no back instructions at all, then make the done button go to the front page of whatever is going on in pageworks
 		print "<form name=go_parent action=\"$currentURL\" method=post>"; //onsubmit=\"javascript:verifyDone();\" method=post>";
 		if(is_array($settings)) { writeHiddenSettings($settings); }
@@ -601,19 +618,39 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $done_
 		print "</form>";
 	} 
 	if(!$done_text) { $done_text = _formulize_DONE; }
-	$buttontray = new XoopsFormElementTray("", "&nbsp;");
+
+		$printbutton = new XoopsFormButton('', 'printbutton', _formulize_PRINTVIEW, 'button');
+		$printbutton->setExtra("onclick='javascript:PrintPop();'");
+
+		$buttontray = new XoopsFormElementTray($printbutton->render(), "&nbsp;");
 	if($subButtonText == _formulize_SAVE) {
 		$saveButton = new XoopsFormButton('', 'submitx', $subButtonText, 'button'); // doesn't use name submit since that conflicts with the submit javascript function
 		$saveButton->setExtra("onclick=javascript:window.document.formulize.submit();");
 		$buttontray->addElement($saveButton);
 	}
+	
 	if($done_text != "{NOBUTTON}") {
 		$donebutton = new XoopsFormButton('', 'donebutton', $done_text, 'button');
 		$donebutton->setExtra("onclick=javascript:verifyDone();");
 		$buttontray->addElement($donebutton); 
 	}
+
+		$newcurrentURL= XOOPS_URL . "/modules/formulize/printview.php?title=" . $_GET['title'];
+		print "<form name='printview' action='".$newcurrentURL."' method=post target=_blank>\n";
+		print "<input type=hidden name=lastentry value=".$cur_entry.">";
+		if($go_back['form']) { // we're on a sub, so display this form only
+			print "<input type=hidden name=formframe value=".$fids[0].">";	
+		} else { // otherwise, display like normal
+			print "<input type=hidden name=formframe value=".$formframe.">";	
+			print "<input type=hidden name=mainform value=".$mainform.">";
+		}
+		print "</form>";
+
+		//added by Cory Aug 27, 2005 to make forms printable
+
 	$form->addElement($buttontray);
 	return $form;
+	}
 }
 
 // this function draws in the UI for sub links
@@ -632,7 +669,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	}
 	// get the title of this subform
 	$subtitle = q("SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form = $sfid");
-	$col_one = "<p>" . $subtitle[0]['desc_form'] . "</p>";
+	$col_one = "<p>" . $subtitle[0]['desc_form'] . "</p><p style=\"font-weight: normal;\">" . _formulize_ADD_HELP . "</p>";
 // add button moved to right side
 /*	if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] == "") {
 		$col_one .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$sfid');\"></p>";
@@ -642,7 +679,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		$col_one .= "<p>&nbsp;</p>"; // place holder so delete button remains in the same place when add button not drawn
 	} */
 	if(count($sub_entries[$sfid])>0 AND $sub_entries[$sfid][0] != "") {
-		$col_one .= "<p><input type=submit name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del();\"></p>";
+		$col_one .= "<input type=hidden name=deletesubsflag value=''><p><input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del();\"></p>";
 	}
 		// list the entries, including links to them and delete checkboxes
 	
@@ -725,12 +762,18 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	
 	global $xoopsDB;
 
-	$criteria = new Criteria('ele_display', 1);
+	// set criteria for matching on display
+	$criteria = new CriteriaCompo();
+	$criteria->add(new Criteria('ele_display', 1), 'OR');
+	foreach($groups as $thisgroup) {
+		$criteria->add(new Criteria('ele_display', '%,'.$thisgroup.',%', 'LIKE'), 'OR');
+	}
 	$criteria->setSort('ele_order');
 	$criteria->setOrder('ASC');
 	$elements =& $formulize_mgr->getObjects2($criteria,$fid);
 	$count = 0;
 	foreach( $elements as $i ){
+
 		$ele_value = $i->getVar('ele_value');
 
 		if($prevEntry) { 
@@ -814,14 +857,17 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			$form_ele->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 			$form->addElement($form_ele, $req);
 		} else {
-			$form->insertBreak(stripslashes($form_ele[0]), $form_ele[1]);
+			$form->insertBreak("<div style=\"font-weight: normal;\">" . stripslashes($form_ele[0]) . "</div>", $form_ele[1]);
 		}
 		$count++;
 		unset($hidden);
 	}
 	$form->addElement (new XoopsFormHidden ('counter', $count)); // not used by reading logic?
-	if($entry) {
+	if($entry) { 
 		$form->addElement (new XoopsFormHidden ('entry'.$fid, $entry));
+	}
+	if($_POST['parent_form']) { // if we just came back from a parent form, then if they click save, we DO NOT want an override condition, even though we are now technically editing an entry that was previously saved when we went to the subform in the first place.  So the override logic looks for this hidden value as an exception.
+		$form->addElement (new XoopsFormHidden ('back_from_sub', 1));
 	}
 	return $form;
 
@@ -1079,7 +1125,8 @@ print "	}\n";
 print "	function sub_del() {\n";
 print "		var answer = confirm ('" . _formulize_DEL_ENTRIES . "')\n";
 print "		if (answer) {\n";
-print "			return true;\n";
+print "			document.formulize.deletesubsflag.value=1;\n";
+print "			document.formulize.submit();\n";
 print "		} else {\n";
 print "			return false;\n";
 print "		}\n";
@@ -1091,6 +1138,15 @@ print "		document.formulize.goto_sfid.value = fid;\n";
 print "		document.formulize.submit();\n";
 print "	}\n";
 			
+//added by Cory Aug 27, 2005 to make forms printable
+
+
+print "function PrintPop() {\n";
+print "		window.document.printview.submit();\n";
+print "}\n";
+
+//added by Cory Aug 27, 2005 to make forms printable
+
 print "-->\n";
 print "</script>\n";
 }
