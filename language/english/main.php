@@ -291,8 +291,7 @@ define("_formulize_ADD_ONE", "Add one");
 define("_formulize_ADD_ANOTHER", "Add another");
 define("_formulize_DELETE_CHECKED", "Delete checked items");
 define("_formulize_ADD_HELP", "Click an item on the left side to view the details for that entry.");
-
-
+define("_formulize_ADD_HELP2", "Hover the mouse over an item for an explanation of what it is.");
 define("_formulize_SAVE", "Save");
 define("_formulize_DONE", "All Done");
 define("_formulize_CONFIRMNOSAVE", "You have not saved your changes!  Is that OK?  Click 'Cancel' to return to the form and then click 'Save' to save your changes.");
@@ -315,6 +314,7 @@ define("_formulize_PRINTVIEW", "Printable View");
 
 define("_formulize_DE_CURRENT_VIEW", "Current View: ");
 define("_formulize_DE_STANDARD_VIEWS", "STANDARD VIEWS:");
+define("_formulize_DE_NO_STANDARD_VIEWS", "No standard views available");
 define("_formulize_DE_SAVED_VIEWS", "YOUR SAVED VIEWS:");
 define("_formulize_DE_PUB_VIEWS", "PUBLISHED VIEWS:");
 define("_formulize_DE_WARNLOCK", "<p>The view that you have selected is set to <i>lock the controls</i>.  This means that you cannot change the columns, do calculations, do advanced searches, or export data.</p><p>You can perform sorting and basic searches using the controls at the top of each column.</p>");
@@ -334,7 +334,7 @@ define("_formulize_DE_CALCS", "Calculations");
 define("_formulize_DE_EXPORT", "Export data");
 define("_formulize_DE_SAVE", "Save current view");
 define("_formulize_DE_DELETE", "Delete current view");
-define("_formulize_DE_ADDENTRY", "Add a new entry");
+define("_formulize_DE_ADDENTRY", "Add one entry");
 define("_formulize_DE_ADD_MULTIPLE_ENTRY", "Add multiple entries");
 define("_formulize_DE_PROXYENTRY", "Make a proxy entry");
 define("_formulize_DE_UPDATEENTRY", "Update your entry");

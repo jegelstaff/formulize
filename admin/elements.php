@@ -45,7 +45,7 @@ if(!isset($HTTP_POST_VARS['ele_id'])){
 }else {
 	$ele_id = $HTTP_POST_VARS['ele_id'];
 }
-
+/* // commented due to title now being identical with id_form
 	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$title);
 	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
 
@@ -54,6 +54,9 @@ if ( $res ) {
     $id_form = $row[0];
   }
 }
+*/
+
+$id_form = $title;
 
 if( !empty($_POST) ){
 	foreach( $_POST as $k => $v ){
@@ -352,10 +355,15 @@ switch($op){
 	case 'save':
 		if( !empty($ele_id) ){
 			$element =& $formulize_mgr->get($ele_id);
+	//		not valid for use with multi-language, since getVar will be sanitizing the output (it seems)
+	//		$original_caption = $element->getVar('ele_caption'); // added by jwe 09/03/05, used in new code below
+			$ocq = "SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE ele_id='$ele_id'";
+			$res_ocq = $xoopsDB->query($ocq);
+			$array_ocq = $xoopsDB->fetchArray($res_ocq);
+			$original_caption = $array_ocq['ele_caption'];
 		}else{
 			$element =& $formulize_mgr->create();
 		}
-		$original_caption = $element->getVar('ele_caption'); // added by jwe 09/03/05, used in new code below
 		$element->setVar('ele_caption', $ele_caption);
 		$req = !empty($ele_req) ? 1 : 0;
 		$element->setVar('ele_req', $req);
@@ -512,7 +520,7 @@ switch($op){
 				// check to see if a link to another form was made and if so put in a marker that will be picked up at render time and handled accordingly...  -- jwe 7/29/04
 				if($_POST['formlink'] != "none")
 				{
-					$value[2] = $_POST['formlink'];
+					$value[2] = stripslashes($_POST['formlink']);
 				} 
 				else
 				{
@@ -554,22 +562,24 @@ switch($op){
 			xoops_cp_header();
 			echo $element->getHtmlErrors();
 		}else{
-			// add code here to rewrite existing captions in form_form table so that changes to the captions don't orphan all existing data! -- jwe 09/03/05
-			// get the current caption so we know what to replace
-			$ele_caption = stripslashes($ele_caption);
-			$ele_caption = eregi_replace ("&#039;", "`", $ele_caption);
-			$ele_caption = eregi_replace ("'", "`", $ele_caption);
-			$ele_caption = eregi_replace ("&quot;", "`", $ele_caption);
-			$original_caption = eregi_replace ("&#039;", "`", $original_caption);
-			$original_caption = eregi_replace ("'", "`", $original_caption);
-			$original_caption = eregi_replace ("&quot;", "`", $original_caption);
-			$updateq = "UPDATE " . $xoopsDB->prefix("form_form") . " SET ele_caption='$ele_caption' WHERE id_form = '$id_form' AND ele_caption='$original_caption'";
-			if($ele_caption != $original_caption) {
-				if(!$res = $xoopsDB->query($updateq)) {
-					print "Error:  update of captions in form $id_form failed.";
+			if($original_caption) {
+				// add code here to rewrite existing captions in form_form table so that changes to the captions don't orphan all existing data! -- jwe 09/03/05
+				// get the current caption so we know what to replace
+				$ele_caption = stripslashes($ele_caption);
+				$ele_caption = eregi_replace ("&#039;", "`", $ele_caption);
+				$ele_caption = eregi_replace ("'", "`", $ele_caption);
+				$ele_caption = eregi_replace ("&quot;", "`", $ele_caption);
+				$original_caption = eregi_replace ("&#039;", "`", $original_caption);
+				$original_caption = eregi_replace ("'", "`", $original_caption);
+				$original_caption = eregi_replace ("&quot;", "`", $original_caption);
+				$updateq = "UPDATE " . $xoopsDB->prefix("form_form") . " SET ele_caption='" . mysql_real_escape_string($ele_caption) . "' WHERE id_form = '$id_form' AND ele_caption='" . mysql_real_escape_string($original_caption) . "'";
+				if($ele_caption != $original_caption) {
+					if(!$res = $xoopsDB->query($updateq)) {
+						print "Error:  update of captions in form $id_form failed.";
+					}
 				}
+				//end of added code
 			}
-			// end of added code
 			redirect_header("index.php?title=$title", 1, _AM_DBUPDATED);
 		}
 	break;

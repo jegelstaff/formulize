@@ -47,15 +47,13 @@
 	<tr>
 	    <{foreach item=day from=$week}>
 	        <td class="<{ if $rowStyleEven == true }>even<{elseif $rowStyleEven == false }>odd<{/if}>">
+                
 				<{if $rights == true && $day[0][0] != ''}>
 	                <img src="../formulize/images/plus.PNG" onclick="javascript:addNew('', '<{ $frids }>', '<{ $fids }>','<{ $day[0][1] }>');return false;" style="float: right; cursor: pointer; cursor: hand;" alt="<{ $addItem }>" title="<{ $addItem }>">
 				<{/if}>
+			<span style=\"horizontal-align: left\"><{ $day[0][0] }></span>
 
-                <{ $day[0][0] }>
-
-			    <{foreach item=dayItem from=$day[1]}>
-	                <li><a href="" onclick="javascript:goDetails('<{ $dayItem[0] }>','<{ $dayItem[1] }>','<{ $dayItem[2] }>');return false;"><{ $dayItem[3] }></a></li>
-			    <{/foreach}>
+			    <{foreach item=dayItem from=$day[1]}><br><br>&bull;&nbsp;<a href="" onclick="javascript:goDetails('<{ $dayItem[0] }>','<{ $dayItem[1] }>','<{ $dayItem[2] }>');return false;"><{ $dayItem[3] }></a><{if $dayItem[4] == true}><nobr>&nbsp;<a href="" onclick="javascript:goDel('<{$dayItem[0]}>', '<{ $dayItem[1] }>','<{ $dayItem[2] }>');return false;"><img src="../formulize/images/x.gif" border=0 style="vertical-align: bottom;" alt="<{$delete}>" title="<{$delete}>"></a></nobr><{/if}><{/foreach}>
             </td>
 	    <{/foreach}>
         <{ if $rowStyleEven == true }><{ assign var="rowStyleEven" value=false }><{elseif $rowStyleEven == false }><{ assign var="rowStyleEven" value=true }><{/if}>
@@ -73,6 +71,10 @@
 <input type=hidden name=calfid id=calfid value="">
 <input type=hidden name=calfrid id=calfrid value="">
 <input type=hidden name=adddate id=adddate value="">
+
+<input type=hidden name=delentry id=delentry value="">
+<input type=hidden name=delfid id=delfid value="">
+<input type=hidden name=delfrid id=delfrid value="">
 
 <input type=submit style="width: 140px; visibility: hidden;" name=submitx value=''></input> 
 
@@ -120,5 +122,18 @@ function goDetails(viewentry,frid,fid) {
 	window.document.controls.calfid.value = fid;
 	window.document.controls.submit();
 }
+
+function goDel(viewentry,frid,fid) {
+	var answer = confirm ('<{$delconf}>');
+	if (answer) {
+		window.document.controls.delentry.value = viewentry;
+		window.document.controls.delfrid.value = frid;
+		window.document.controls.delfid.value = fid;
+		window.document.controls.submit();
+	} else {
+		return false;
+	}
+}
+
 
 </script>

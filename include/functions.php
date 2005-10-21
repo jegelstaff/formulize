@@ -203,7 +203,8 @@ function availReports($uid, $groups, $fid, $frid="0") {
 // security check to see if a form is allowed for the user:
 function security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handler, $owner_groups) {
 
-	// need to also allow viewing of forms if the user has rights because of a report
+	if($entry == "proxy") { $entry=""; }
+
 	if(!$gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
 		return false;
 	}
@@ -220,6 +221,20 @@ function security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handle
 				$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
 				$intersect_groups = array_intersect($owner_groups, $groups);
 				if(!$view_groupscope OR (count($intersect_groups) == 1 AND $intersect_groups[0] == XOOPS_GROUP_USERS)) {
+					// last hope...check for a unlocked view that has been published to them which covers a group that includes this entry
+					// 1. get groups for unlocked view for this user's groups where the mainform is $fid or there is no mainform and formframe is $fid
+					// 2. if group or all scope, allow it
+					// 3. or if there's an intersection on the owner_groups and the groups in an unlocked view, then allow it.
+					global $xoopsDB;
+					$unlockviews = q("SELECT sv_currentview, sv_pubgroups FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_lockcontrols=0 AND ((sv_formframe='$fid' AND sv_mainform='') OR sv_mainform='$fid')");
+					foreach($unlockviews as $thisview) {
+						$pubbedgroups = explode(",", $thisview['sv_pubgroups']);
+						if(array_intersect($pubbedgroups, $groups)) { // if this saved view has been published to the user's groups...
+							if($thisview['sv_currentview'] == "all") { return true; } // user has been published an unlocked view for which the scope is all
+							$viewgroups = explode(",", $thisview['sv_currentview']);
+							if(array_intersect($owner_groups, $viewgroups)) { return true; }
+						}
+					}					
 					return false;					
 				}
 			}
@@ -317,8 +332,11 @@ function getHeaderList ($fid) {
 				$headerlist[] = $row["ele_caption"];
 			}
 		}
-	} else { // IF there are no required fields THEN ... go with first field 
-		$firstfq = "SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$fid' ORDER BY ele_order ASC";
+	} 
+
+	if(count($headerlist) == 0) { 
+		// IF there are no required fields THEN ... go with first three fields 
+		$firstfq = "SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$fid' ORDER BY ele_order ASC LIMIT 3";
 		if($result = $xoopsDB->query($firstfq)) {
 			while ($row = $xoopsDB->fetchArray($resultfq)) {
 				$headerlist[] = $row["ele_caption"];
@@ -366,7 +384,7 @@ function allowedForms() {
 function fetchFormName($id) {
 	global $xoopsDB;
 	$title_q = q("SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form='$id'");
-	return $title_q[0]['desc_form'];
+	return trans($title_q[0]['desc_form']);
 }
 
 // THIS FUNCTION RETURNS THE NAMES OF A FORM OR FORMS WHEN GIVEN AN id OR ARRAY OF ids
@@ -442,9 +460,10 @@ function drawMenu($thisid, $thiscat, $allowedForms, $id_form, $topwritten, $forc
 			if($force_open OR (isset($_GET['cat']) AND $thisid == $_GET['cat']) OR in_array($id_form, $formsInCat)) { // if we're viewing this category or a form in this category, or this is the only category (force open)...
 
 				foreach($formsInCat as $thisform) {
+					// altered sept 8 to use IDs
 					$title = fetchFormNames($thisform);
-					$urltitle = str_replace(" ", "%20", $title);
-					$suburl = XOOPS_URL."/modules/formulize/index.php?title=$urltitle";
+					//$urltitle = str_replace(" ", "%20", $title);
+					$suburl = XOOPS_URL."/modules/formulize/index.php?fid=$thisform";
 					$block .= "<a class=menuSub href='$suburl'>$title</a>";
 				}
 			}
@@ -452,14 +471,40 @@ function drawMenu($thisid, $thiscat, $allowedForms, $id_form, $topwritten, $forc
 		return $block;
 }
 
-// THIS FUNCTION DELETES ENTRIES FROM FORM_FORM WHEN PASSED AND ID_REQ
-function deleteEntry($id_req) {
+//THIS FUNCTION ACTUALLY DOES THE DELETING OF A SPECIFIC ID_REQ
+function deleteIdReq($id_req) {
+
 	global $xoopsDB;
 	$sql = "DELETE FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req='$id_req'";
 	//print $sql . "<br>";
 	if(!$result = $xoopsDB->query($sql)) {
 		exit("Error: failed to delete entry $id_req");
 	}
+}
+
+// THIS FUNCTION DELETES ENTRIES FROM FORM_FORM WHEN PASSED AN ID_REQ
+// HANDLES FRAMEWORKS TOO -- HANDLERS AND MID TO BE PASSED IN WHEN FRAMEWORKS ARE USED
+// owner and owner_groups to be passed in when available (if called from a function where they have already been determined
+function deleteEntry($id_req, $frid="", $fid="", $gperm_handler="", $member_handler="", $mid="", $owner="", $owner_groups="") {
+
+	global $xoopsDB;
+
+	if($frid) { // if a framework is passed, then delete all items found in a unified display relationship with the base entry, in addition to the base entry itself
+		$fids[0] = $fid;
+		$entries[$fid][0] = $id_req;
+		if(!$owner) { $owner = getEntryOwner($entry); }
+		if(!$owner_groups) { $owner_groups =& $member_handler->getGroupsByUser($owner, FALSE); }
+		$linkresults = checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner);
+		foreach($linkresults['entries'] as $thisfid=>$ents) {
+			if($ents[0]) { deleteIdReq($ents[0]); }
+		}
+		foreach($linkresults['sub_entries'] as $thisfid=>$ents) {
+			if($ents[0]) { deleteIdReq($ents[0]); }
+		}
+	} else {
+		deleteIdReq($id_req);
+	} // end of if frid
+
 	// remove listings in one_to_one links table
 	$sql = "DELETE FROM ". $xoopsDB->prefix("formulize_onetoone_links") . " WHERE main_form='$id_req' OR link_form='$id_req'";
 	if(!$result2 = $xoopsDB->query($sql)) {
@@ -488,7 +533,9 @@ function makeUidFilter($users) {
 	return $uq;
 }
 
-// function handles checking for all unified display - linking relationships for the form
+// FUNCTION HANDLES CHECKING FOR ALL LINKING RELATIONSHIPS FOR THE FORM
+// returns the fids and entries passed to it, plus any others in a framework relationship
+// final param is a flag to control whether only unified display relationships are returned or all relationships
 function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner, $ud="1") {
 
 		// by default (ie: when called from formDisplay) only look for unified display relationships
@@ -714,7 +761,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title) {
 // this function returns the data to summarize the details about the entry you are looking at
 function getMetaData($entry, $member_handler) {
 	global $xoopsDB;
-	$meta = q("SELECT date, creation_date, uid, proxyid FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req = $entry GROUP BY id_req");
+	$meta = q("SELECT date, creation_date, uid, proxyid FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req = $entry ORDER BY date DESC");
 	$meta_to_return['last_update'] = $meta[0]['date'];
 	$meta_to_return['created'] = $meta[0]['creation_date'];
 	$proxy = $member_handler->getUser($meta[0]['proxyid']);
@@ -814,8 +861,14 @@ function writableQuery($items, $mod="") {
 			$term = $xoopsUser->getVar('name');
 			if(!$term) { $term = $xoopsUser->getVar('uname'); }
 			$items['as_' . $i] = $term;
-		} elseif ($items['as_' . $i] == "{TODAY}" AND $mod != 1) {
-			$items['as_' . $i] = date("Y-m-d");
+		} elseif ($items['as_' . $i] == "{BLANK}" AND $mod != 1) {
+			$items['as_' . $i] = "\" \"";
+ 		} elseif (ereg_replace("[^A-Z{}]","", $items['as_' . $i]) == "{TODAY}" AND $mod != 1) {
+			$number = ereg_replace("[^0-9+-]","", $items['as_' . $i]);
+			$items['as_' . $i] = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+//		lines below commented and replaced with the above check by dpicella which accounts for + and - numbers after {TODAY, ie: {TODAY-14}
+//		} elseif ($items['as_' . $i] == "{TODAY}" AND $mod != 1) {
+//			$items['as_' . $i] = date("Y-m-d");
 		}
 
 		$item_to_write = stripslashes($items['as_' . $i]);
@@ -887,6 +940,255 @@ function buildScope($currentView, $member_handler, $uid, $groups) {
 		$scope = makeUidFilter($all_users);
 	}
 	return $scope;
+}
+
+// THIS FUNCTION SENDS TEXT THROUGH THE TRANSLATION ROUTINE IF MARCAN'S MULTILANGUAGE HACK IS INSTALLED
+function trans($string) {
+	$myts =& MyTextSanitizer::getInstance();
+	if(method_exists($myts, 'formatForML')) {
+		$string = $myts->formatForML($string);
+	} 
+	return $string;
+}
+
+// THIS FUNCTION FIGURES OUT THE MAX ID_REQ IN USE AND RETURNS THE NEXT VALID ID_REQ
+function getMaxIdReq() {
+	global $xoopsDB;
+	$sql = $xoopsDB->query("SELECT id_req from " . $xoopsDB->prefix("form_form")." order by id_req DESC LIMIT 0,1");
+	list($id_req) = $xoopsDB->fetchRow($sql);
+	if ($id_req == 0) { $num_id = 1; }
+	else if ($num_id <= $id_req) $num_id = $id_req + 1;
+	return $num_id;
+}
+
+// THIS FUNCTION GETS THE CAPTION BASED ON A DB QUERY, NOT ON GETVAR, so the value returned is the actual full caption for the element
+function getRealCaption($ele_id) {
+	global $xoopsDB;
+	$sql = "SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE ele_id = '$ele_id'";
+	$res = $xoopsDB->query($sql);
+	list($dec) = $xoopsDB->fetchRow($res);
+	$dec = stripslashes($dec);
+	$dec = str_replace ("&#039;", "`", $dec);
+	$dec = str_replace ("&quot;", "`", $dec);
+	$dec = str_replace ("'", "`", $dec);
+	return $dec;
+}
+
+// THIS FUNCTION MASSAGES DATA RETURNED FROM A FORM SUBMISSION SO IT CAN BE PUT IN THE DATABASE
+// ******** THIS CODE DUPLICATES CODE CURRENTLY IN FORMREAD.PHP **********
+// param it takes is the element object ($element), and the passed value from the form ($ele)
+function prepDataForWrite($element, $ele) {
+
+	global $myts;
+
+	$ele_type = $element->getVar('ele_type');
+	$ele_value = $element->getVar('ele_value');
+		switch($ele_type){
+				case 'text':
+					if($ele_value[3]) { // if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
+						$value = ereg_replace ('[^0-9.]+', '', $ele);
+					} else {
+						$value = $ele; // trim added by jwe 9/01/04 -- removed 10/07/04
+					}
+				break;
+				case 'textarea':
+					$value = $ele; // trim added by jwe 9/01/04 -- removed 10/07/04
+
+				break;
+				case 'areamodif':
+					$value = $myts->stripSlashesGPC($ele);
+				break;
+				case 'radio':
+					$value = '';
+					$opt_count = 1;
+
+					while( $v = each($ele_value) ){
+						if( $opt_count == $ele ){
+							//$msg.= $myts->stripSlashesGPC($v['key']).'<br>';
+							$value = $v['key'];
+						}
+						$opt_count++;
+					}
+				break;
+				case 'yn':
+					$value = $ele;
+				break;
+				case 'checkbox':
+					$value = '';
+					$opt_count = 1;
+					while( $v = each($ele_value) ){
+						if( is_array($ele) ){
+							if( in_array($opt_count, $ele) ){
+								$value = $value.'*=+*:'.$v['key'];
+							}
+							$opt_count++;
+						}else{
+							if( !empty($ele) ){
+								$value = $value.'*=+*:'.$v['key'];
+							}
+						}						
+					}
+				break;
+				case 'select':
+					// section to handle linked select boxes differently from others...
+					$formlinktrue = 0;
+					if(is_array($ele))  // look for the formlink delimiter
+					{
+						foreach($ele as $justacheck)
+						{
+							if(strstr($justacheck, "#*=:*"))
+							{
+								$formlinktrue = 1;
+								break;
+							}
+						}
+					}
+					else
+					{
+						if(strstr($ele, "#*=:*"))
+						{
+							$formlinktrue = 1;
+						}
+					}
+					if($formlinktrue) // if we've got a formlink, then handle it here...
+					{
+						if(is_array($ele))
+						{
+							//print_r($ele);
+							array($compparts);
+							$compinit = 0;
+							$selinit = 0;
+							foreach($ele as $whatwasselected)
+							{
+							//	print "<br>$whatwasselected<br>";
+								$compparts = explode("#*=:*", $whatwasselected);
+							//	print_r($compparts);
+								if($compinit == 0)
+								{
+									$value = $compparts[0] . "#*=:*" . $compparts[1] . "#*=:*";
+									$compinit = 1;
+								}
+								if($selinit == 1)
+								{
+									$value = $value . "[=*9*:";
+								}
+								$value = $value . $compparts[2];
+								$selinit = 1;
+							}
+						}
+						else
+						{
+							$value = $ele;
+						}	
+//						print "<br>VALUE: $value";	
+						break;			
+					}
+					else
+					{
+
+
+					$value = '';
+
+
+							// The following code block is a replacement for the previous method for reading a select box which didn't work reliably -- jwe 7/26/04
+							// print_r($ele_value[2]);
+							$nametype = "";
+							$temparraykeys = array_keys($ele_value[2]);
+							if($temparraykeys[0] == "{FULLNAMES}" OR $temparraykeys[0] == "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
+								if($temparraykeys[0] == "{FULLNAMES}") { $nametype = "name"; }
+								if($temparraykeys[0] == "{USERNAMES}") { $nametype = "uname"; }
+								unset($ele_value[2]);
+								if(count($owner_groups)>0) {
+									$ele_value[2] = gatherNames($owner_groups, $nametype);
+								} else {
+									$ele_value[2] = gatherNames($groups, $nametype);
+								}
+							}
+
+							$entriesPassedBack = array_keys($ele_value[2]);
+							$keysPassedBack = array_keys($entriesPassedBack);
+							$entrycounterjwe = 0;
+							foreach($keysPassedBack as $masterentlistjwe)
+							{
+	      						if(is_array($ele))
+
+								{
+									foreach($ele as $whattheuserselected)
+									{
+										// if the user selected an entry found in the master list of all possible entries...
+										//print "internal loop $entrycounterjwe<br>userselected: $whattheuserselected<br>selectbox contained: $masterentlistjwe<br><br>";	
+										if($whattheuserselected == $masterentlistjwe)
+										{
+											//print "WE HAVE A MATCH!<BR>";
+											if($nametype) { 
+												$value .= "*=+*:" . $ele_value[2][$entriesPassedBack[$entrycounterjwe]]; 
+											} else {
+												$value = $value . "*=+*:" . $entriesPassedBack[$entrycounterjwe];
+											}
+											//print "$value<br><br>";
+										}
+									}
+									$entrycounterjwe++;
+								}
+								else
+								{
+									//print "internal loop $entrycounterjwe<br>userselected: $ele<br>selectbox contained: $masterentlistjwe<br><br>";	
+									if($ele == ($masterentlistjwe+1)) // plus 1 because single entry select boxes start their option lists at 1.
+									{
+										//print "WE HAVE A MATCH!<BR>";
+										if($nametype) { 
+											$value = $ele_value[2][$entriesPassedBack[$entrycounterjwe]]; 
+										} else {
+											$value = $entriesPassedBack[$entrycounterjwe];
+										}
+										//print "$value<br><br>";
+										break;
+									}
+									$entrycounterjwe++;
+								}
+							}
+					// print "selects: $value<br>";
+				break;
+				} // end of if that checks for a linked select box.
+				case 'areamodif':
+					$value = $ele;
+				break;
+				case 'date':
+					// code below commented/added by jwe 10/23/04 to convert dates into the proper standard format
+					if($ele != "YYYY-mm-dd" AND $ele != "") { 
+						$ele = date("Y-m-d", strtotime($ele)); 
+					} else {
+						continue 2; // forget about this date element and go on to the next element in the form
+					}
+					$value = ''.$ele;
+				break;
+				case 'sep':
+					$value = $myts->stripSlashesGPC($ele);
+				break;
+				default:
+				break;
+			}
+
+	return $value;
+
+}
+
+// FIGURES OUT IF THE CURRENT ELEMENT HAS A VALUE FOR THE CURRENT ENTRY
+function getElementValue($entry, $caption) {
+	global $xoopsDB;
+
+	$evq = "SELECT ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req='$entry' AND ele_caption='$caption'";
+	if($res = $xoopsDB->query($evq)) {
+		$array = $xoopsDB->fetchArray($res); 
+		if($array['ele_value']) {
+			return true;
+		} else {
+			return false;
+		}
+	} else {
+		return false;
+	}
+
 }
 
 

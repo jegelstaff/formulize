@@ -69,9 +69,14 @@ function getParentLinks($fid, $frid) {
 
 
 // this function returns the captions and values that are in the DB for an existing entry
-function getEntryValues($entry, $formulize_mgr, $groups, $fid) {
+function getEntryValues($entry, $formulize_mgr, $groups, $fid="") {
 
 	global $xoopsDB;
+
+	if(!$fid) {
+		$fidq = q("SELECT id_form FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req='$entry' LIMIT 0,1");
+		$fid = $fidq[0]['id_form'];
+	}
 
 	$viewquery = q("SELECT ele_caption, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req=$entry");
 
@@ -289,7 +294,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 
 	// set $entry in the case of a form_submission where we were editing an entry (just in case that entry is not what is used to call this function in the first place -- ie: we're on a subform and the mainform has no entry specified, or we're clicking submit over again on a single-entry form where we started with no entry)
 	$entrykey = "entry" . $fid;
-	if(!$entry AND $_POST[$entrykey]) { // $entrykey will only be set when *editing* an entry, not on new saves
+	if((!$entry OR $entry=="proxy") AND $_POST[$entrykey]) { // $entrykey will only be set when *editing* an entry, not on new saves
 		$entry = $_POST[$entrykey];
 	}
 
@@ -579,7 +584,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry); // draw in just the done button
 		}
 	} else { // new entry
-		if($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid)) {
+		if($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
 			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry);
 		} else {
 			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry); // draw in just the done button
@@ -635,14 +640,14 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $done_
 		$buttontray->addElement($donebutton); 
 	}
 
-		$newcurrentURL= XOOPS_URL . "/modules/formulize/printview.php?title=" . $_GET['title'];
+		$newcurrentURL= XOOPS_URL . "/modules/formulize/printview.php";
 		print "<form name='printview' action='".$newcurrentURL."' method=post target=_blank>\n";
 		print "<input type=hidden name=lastentry value=".$cur_entry.">";
 		if($go_back['form']) { // we're on a sub, so display this form only
 			print "<input type=hidden name=formframe value=".$fids[0].">";	
 		} else { // otherwise, display like normal
-			print "<input type=hidden name=formframe value=".$formframe.">";	
-			print "<input type=hidden name=mainform value=".$mainform.">";
+			print "<input type=hidden name=formframe value='".$formframe."'>";	
+			print "<input type=hidden name=mainform value='".$mainform."'>";
 		}
 		print "</form>";
 
@@ -669,7 +674,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	}
 	// get the title of this subform
 	$subtitle = q("SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form = $sfid");
-	$col_one = "<p>" . $subtitle[0]['desc_form'] . "</p><p style=\"font-weight: normal;\">" . _formulize_ADD_HELP . "</p>";
+	$col_one = "<p>" . $subtitle[0]['desc_form'] . "</p><p style=\"font-weight: normal;\">" . _formulize_ADD_HELP . "<br>" . _formulize_ADD_HELP2 . "</p>";
 // add button moved to right side
 /*	if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] == "") {
 		$col_one .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$sfid');\"></p>";
@@ -686,7 +691,12 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	// get the headerlist for the subform and convert it into handles
 	// note big assumption/restriction that we are only using the first header found (ie: only specify one header for a sub form!)
 	$subHeaderList = getHeaderList($sfid);
-	$subHandle = handle($subHeaderList[0], $sfid, $frid);
+	$subHandle1 = handle(str_replace("'", "`", $subHeaderList[0]), $sfid, $frid);
+	$subHandle2 = handle(str_replace("'", "`", $subHeaderList[1]), $sfid, $frid);
+	$subHandle3 = handle(str_replace("'", "`", $subHeaderList[2]), $sfid, $frid);
+	$sub1 = trans($subHeaderList[0]);
+	$sub2 = trans($subHeaderList[1]);
+	$sub3 = trans($subHeaderList[2]);
 	foreach($sub_entries[$sfid] as $sub_ent) {
 		if($sub_ent != "") {
 			$data = getData($frid, $sfid, $sub_ent);
@@ -699,8 +709,14 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 			if(($sub_owner == $uid AND $deleteSelf) OR ($sub_owner != $uid AND $deleteOther)) {
 				$col_two .= "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>&nbsp;&nbsp;";
 			}
-			if(!$sub_name = display($data, $subHandle, 0)) { $sub_name = _formulize_NOSUBNAME . $sub_ent; }
-			$col_two .= "<a href=\"\" onclick=\"javascript:goSub('$sub_ent', '$sfid');return false;\">$sub_name</a></p>";
+			$sub_name1 = display($data, $subHandle1, 0);
+			$sub_name2 = display($data, $subHandle2, 0);
+			$sub_name3 = display($data, $subHandle3, 0);
+			if(!$sub_name1 AND !$sub_name2 AND !$sub_name3) { $sub_name1 = _formulize_NOSUBNAME . $sub_ent; }
+			if($sub_name1) { $col_two .= "<a href=\"\" onclick=\"javascript:goSub('$sub_ent', '$sfid');return false;\" alt=\"$sub1\" title=\"$sub1\">$sub_name1</a>"; }
+			if($sub_name2) { $col_two .= ", <a href=\"\" onclick=\"javascript:goSub('$sub_ent', '$sfid');return false;\" alt=\"$sub2\" title=\"$sub2\">$sub_name2</a>"; }
+ 			if($sub_name3) { $col_two .= ", <a href=\"\" onclick=\"javascript:goSub('$sub_ent', '$sfid');return false;\" alt=\"$sub3\" title=\"$sub3\">$sub_name3</a>"; }
+			$col_two .= "</p>";
 		}
 	}
 	if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] == "") {
@@ -857,10 +873,11 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			$form_ele->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 			$form->addElement($form_ele, $req);
 		} else {
-			$form->insertBreak("<div style=\"font-weight: normal;\">" . stripslashes($form_ele[0]) . "</div>", $form_ele[1]);
+			$form->insertBreak("<div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1]);
 		}
 		$count++;
 		unset($hidden);
+		unset($form_ele); // apparently necessary for compatibility with PHP 4.4.0 -- suggested by retspoox, sept 25, 2005
 	}
 	$form->addElement (new XoopsFormHidden ('counter', $count)); // not used by reading logic?
 	if($entry) { 
@@ -1102,6 +1119,22 @@ print "\n<script type='text/javascript'>\n";
 print "<!--\n";
 
 print " var formulizechanged=0;\n";
+?>
+function showPop(url) {
+
+	if (window.popup == null) {
+		popup = window.open(url,'popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=450,screenX=0,screenY=0,top=0,left=0');
+      } else {
+		if (window.popup.closed) {
+			popup = window.open(url,'popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=450,screenX=0,screenY=0,top=0,left=0');
+            } else {
+			window.popup.location = url;              
+		}
+	}
+	window.popup.focus();
+
+}
+<?php
 
 print "	function verifyDone() {\n";
 //print "		alert(formulizechanged);\n";

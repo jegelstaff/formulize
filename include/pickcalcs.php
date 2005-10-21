@@ -267,10 +267,10 @@ foreach($cols as $f=>$vs) {
 		if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.  
 			$usedvals[] = $values['ele_id'];
 			if(!$_POST[$reqdcol] AND $_POST['column'] != $values['ele_id']) { // Also exclude columns that have been used already.
-				$options[$values['ele_id']] = printSmart($values['ele_caption']);
+				$options[$values['ele_id']] = printSmart(trans($values['ele_caption']));
 			}
 			// used for the grouping list box
-			$options2[$values['ele_id']] = "Group by: " . printSmart($values['ele_caption'], "25");
+			$options2[$values['ele_id']] = "Group by: " . printSmart(trans($values['ele_caption']), "25");
 		}
 	}		
 }

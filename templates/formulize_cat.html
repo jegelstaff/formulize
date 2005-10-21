@@ -2,11 +2,11 @@
 <table><tr><td width=25%></td><td>
 <center><h1><{$cat_name}></h1></center>
 
-<{foreach item=title from=$formNames}>
+<{foreach item=thisform from=$formData}>
 
 	
 
-	<p><a href="<{$xoops_url}>/modules/formulize/index.php?title=<{$title|replace:" ":"%20"}>"><{$title}></a></p>
+	<p><a href="<{$xoops_url}>/modules/formulize/index.php?fid=<{$thisform.fid}>"><{$thisform.title}></a></p>
 
 <{/foreach}>
 

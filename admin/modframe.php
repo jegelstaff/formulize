@@ -252,7 +252,7 @@ function modframe($cf)
 				$source_caps[] = $details[1];
 
 				//get the element ID for the source we've just found
-				$sourceq = "SELECT ele_id FROM " . $xoopsDB->prefix("form") . " WHERE ele_caption = '$details[1]' AND id_form = '$details[0]'";
+				$sourceq = "SELECT ele_id FROM " . $xoopsDB->prefix("form") . " WHERE ele_caption = '" . addslashes($details[1]) . "' AND id_form = '$details[0]'";
 				if($ressourceq = $xoopsDB->query($sourceq)) {
 					$rowsourceq = $xoopsDB->fetchRow($ressourceq);
 					$source_ele_ids[] = $rowsourceq[0];

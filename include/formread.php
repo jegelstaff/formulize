@@ -124,7 +124,7 @@ $myts =& MyTextSanitizer::getInstance();
              				}
              			}
 	           		}	
-             		elseif($entries[$id_form][0] AND $uid != $owner) // they are an admin who has updated someone's entry (could be simply a fellow member of the same groupscope)
+             		elseif($owner AND $uid != $owner) // they are an admin who has updated someone's entry (could be simply a fellow member of the same groupscope)
              		{
              			$proxyid = $uid; // proxy flag set to user who updated entry
              			$uids[$id_form][$num_id] = $owner; // uid set to uid of the original entry
@@ -341,6 +341,7 @@ $myts =& MyTextSanitizer::getInstance();
 		} // end of if there's an element
 	} // end of loop through all submitted elements
 
+	// note: you cannot completely erase an entry by blanking, because at least one element from a form needs to be sent in order for submittedcaptions array to include that form_id
 	foreach($submittedcaptions as $f=>$cs) {
 		blankEntries($cs, $prevEntry[$f], $entries[$f][0]);
 	}
@@ -400,7 +401,7 @@ if($entry) {
 	$sql="INSERT INTO ".$xoopsDB->prefix("form_form")." (id_form, id_req, ele_id, ele_type, ele_caption, ele_value, uid, proxyid, date, creation_date) VALUES (\"$id_form\", \"$num_id\", \"\", \"$ele_type\", \"$ele_caption\", \"$value\", \"$uid\", \"$proxyid\", \"$date\", \"$date\")";
 }
 
-//print $sql . "<br>";
+if($_GET['debug4']) { print $sql . "<br>"; }
 $result = $xoopsDB->query($sql);
     if ($result == false) {
         die('The following SQL statement was rejected by the database: <br>' . $sql . '<br>');

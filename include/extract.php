@@ -197,10 +197,10 @@ function printfclean($results) {
 	}
 }
 
-function prepvalues(&$value, $type) {
+function prepvalues(&$value, $type, $islinksource) {
 
 	// handle cases where the value is linked to another form 
-	if(strstr($value, "#*=:*")) {
+	if($islinksource) {
 		$templinkedvals = explode("#*=:*", $value);
 		$templinkedvals2 = explode("[=*9*:", $templinkedvals[2]);
 		/*print "templinkedvals for display: ";
@@ -232,6 +232,7 @@ function prepvalues(&$value, $type) {
 		$value = substr_replace($value, "", 0, 5);
 	}
 
+	return $templinkedvals2; // used for including in the linkfilters -- added sept 28 2005
 //	return $value; // not necessary if passing by reference
 }
 
@@ -255,8 +256,12 @@ function handleFromId($id, $fid, $frid) {
 // $results is actual raw array
 // $fid is formid
 // $frid is framework id
+// $linkkeys is an array of the the handles which this form uses to link to others -- only used to identify the linked values that a main form needs to use to limit queries in linked forms
+// $linkisparent is an array of flags that indicates whether a result set is the parent or child in a link relationship (ie: the source of the values or the receiver of the values).  For parent forms, we need to record the ele_id of the key, for child forms, we need to record the prep'd value.  The keys of this array correspond to the keys of linkkeys.
+// $linkformids is an array of the ids of the linked forms.  the keys correspond to the keys of linkkeys.
+// $linktargetids is the ele_ids of the elements in the linked form that these handles/values link up to
 // note: $results is passed by reference, saves lots of memory.  
-function convertFinal(&$results, $fid, $frid="") {
+function convertFinal(&$results, $fid, $frid="", $linkkeys="", $linkisparent="", $linkformids="", $linktargetids="") {
 
 // prepvalues call moved to loop below for efficiency
 //	for($i=0;$i<count($results);$i++) {
@@ -283,9 +288,10 @@ debug_memory("Start of covertFinal");
 		$formHandle = go("SELECT desc_form FROM " . DBPRE . "form_id WHERE id_form='$fid'");
 	}
 	
-
+	$linkindexer=0;
 	for($i=0;isset($results[$i]);$i++) {
-		prepvalues($results[$i]['ele_value'], $results[$i]['ele_type']);
+		$islinksource = strstr($results[$i]['ele_value'], "#*=:*");
+		$linkids = prepvalues($results[$i]['ele_value'], $results[$i]['ele_type'], $islinksource); // linkids is an array of the ele_ids of the values that this field links to, if it is a linked field.
 		$cap = eregi_replace ("`", "'", $results[$i]['ele_caption']);  // convert caption to _form table format so that we can get the handle from the full Handle List which has array keys drawn from that table
 		$handle = $fullHandleList[$cap];
 		// check to see that we haven't already stored this value for this entry (takes care of situations where the database as duplicate entries with the same id_req, causing the number of values in results array to be greater than it ought to be -- problem likely caused by users clicking on the submit button more than one time?
@@ -294,10 +300,24 @@ debug_memory("Start of covertFinal");
 			foreach($values as $id=>$value) {
 				$finalresults[$formHandle[0][0]][$results[$i]['id_req']][$handle][$id] = $value;
 			}
+			// store any values involved in a link so we can filter out the main queries on linked forms
+			// major performance improvement by doing this
+			if($keys = array_keys($linkkeys, $handle) AND $results[$i]['ele_value']) { // if these values are the ones the link is based on...
+				foreach($keys as $key) {
+					$linkvalue['fid'][$linkindexer] = $linkformids[$key];
+					$linkvalue['targetid'][$linkindexer] = $linktargetids[$key];
+					if($linkisparent[$key] OR $islinksource) {
+						$linkvalue['values'][$linkindexer] = $linkids;
+					} else {
+						$linkvalue['values'][$linkindexer] = $results[$i]['ele_id'];
+					}
+					$linkindexer++;
+				}
+			}
 			// flag the current handle as found in the fullhandlelist
 			$foundHandleList[$results[$i]['id_req']][] = $handle;
 		}
-		unset($results[$i]); // free up some memory!! 
+		unset($results[$i]); // free up some memory!!
 	}
 
 debug_memory("after building main array");
@@ -332,17 +352,25 @@ debug_memory("after building main array");
 
 	// assign metadata (uid, date, proxyid, creation_date) 
 	foreach($finalresults[$formHandle[0][0]] as $record=>$value) {
-		$metadata = go("SELECT uid, proxyid, date, creation_date FROM " . DBPRE . "form_form WHERE id_req='$record' LIMIT 0,1");
+		$metadata = go("SELECT uid, proxyid, date, creation_date FROM " . DBPRE . "form_form WHERE id_req='$record' ORDER BY date DESC LIMIT 0,1");
 		// NOTE: the four keys used below are "reserved terms" that cannot be used as handles for elements in the framework
 		$finalresults[$formHandle[0][0]][$record]['uid'] = $metadata[0]['uid'];
 		$finalresults[$formHandle[0][0]][$record]['mod_date'] = $metadata[0]['date'];
 		$finalresults[$formHandle[0][0]][$record]['proxyid'] = $metadata[0]['proxyid'];
 		$finalresults[$formHandle[0][0]][$record]['creation_date'] = $metadata[0]['creation_date'];
+		if($keys = array_keys($linkkeys, "")) { // find all links based on uids...
+			foreach($keys as $thiskey) {
+				$linkvalue['fid'][$linkindexer] = $linkformids[$thiskey];
+				$linkvalue['uid'][$linkindexer] = $metadata[0]['uid'];
+			}
+			$linkindexer++;
+		}
 	}
 
 debug_memory("before returning convertFinal results");
 	//array_values($finalresults); // don't understand what this is for
-	return $finalresults;
+
+	return array($finalresults, $linkvalue);
 }
 
 // This function returns the caption, formatted for form_form, based on the handle for the element
@@ -355,11 +383,58 @@ function getCaptionFF($handle, $frid, $fid) {
 	return $ffcaption;
 }
 
+function getCaptionFFbyId($id) {
+	$caption = go("SELECT ele_caption FROM " . DBPRE . "form WHERE ele_id = '$id'"); 
+	$ffcaption = eregi_replace ("&#039;", "`", $caption[0]['ele_caption']);
+	$ffcaption = eregi_replace ("&quot;", "`", $ffcaption);
+	$ffcaption = str_replace ("'", "`", $ffcaption);
+	return $ffcaption;
+}
+
+function makeFilter($filter, $frid="", $fid, $andor, $scope) {
+	if(is_array($filter)) {
+		foreach($filter as $id=>$thisfilter) {
+			// filter array syntax is:
+			// $filter[0][0] -- the andor setting to use for all the filters in array 0
+			// $filter[0][1] -- the filter in array 0
+			// check what the boolean is for this array
+			// then for remaining filters in the array, run makeFilterInternal on them and then merge the results or not depending on the andor for that array
+			// lastly, merge all the results returned from all filter arrays according to the $andor setting passed to this function
+			foreach($thisfilter as $thisid=>$thispart) {
+				if($thisid==0) {
+					$localandor = $thispart;
+					continue;
+				}
+				$thisMadeFilter[$id] = makeFilterInternal($thispart, $frid, $fid, $localandor, $scope);
+				$thisMadeFilter[$id] = substr($thisMadeFilter[$id], 5);				
+			}
+		}
+		if($andor != "AND" AND $andor != "OR") {
+			print "Unknown boolean operator requested as part of data extraction.";
+			exit;
+		}
+		$start=1;
+		$madeFilter = "";
+		foreach($thisMadeFilter as $oneFilter) {	
+			if($oneFilter == "") { continue; }
+			if($start) {
+				$madeFilter = " AND (($oneFilter)";
+				$start=0;
+			} else {
+				$madeFilter .= " $andor ($oneFilter)";
+			}
+		}
+		if(!$start) { $madeFilter .= ")"; }
+	} else {
+		$madeFilter = makeFilterInternal($filter, $frid, $fid, $andor, $scope);
+	}
+	return $madeFilter;
+}
 
 // DETERMINE THE FILTER TO USE ON THE MAIN FORM
 // NOTE: FILTER USES A LIKE QUERY TO MATCH, SO IT WILL PICKUP THE FILTER TERM ANYWHERE IN THE VALUE OF THE FIELD
 // This loop can be optimized further in the case of AND queries, by using the previously found id_reqs as part of the WHERE clause for subsequent searches
-function makeFilter($filter, $frid="", $fid, $andor) {
+function makeFilterInternal($filter, $frid="", $fid, $andor, $scope) {
 
 	$filterNotForThisForm = 0;
 	if($filter) {
@@ -371,10 +446,16 @@ function makeFilter($filter, $frid="", $fid, $andor) {
 			$filters = explode("][", $filter);
 			foreach($filters as $afilter) {
 				$filterparts = explode("/**/", $afilter);
-				if($frid) {
-					$capforfilter = getCaptionFF($filterparts[0], $frid, $fid);
-				} else { // when a plain form is passed, filters must use the full form_form captions for the first filterpart.
+				if($filterparts[0] == "uid" OR $filterparts[0] == "proxyid" OR $filterparts[0] == "creation_date" OR $filterparts[0] == "mod_date") {
 					$capforfilter = $filterparts[0];
+				} elseif($frid) {
+					$capforfilter = getCaptionFF($filterparts[0], $frid, $fid);
+				} else { // when a plain form is passed, filters must use the full form_form captions for the first filterpart, or the numeric ele_id.
+					$capforfilter = $filterparts[0];
+					if(is_numeric($capforfilter)) { // if we're receiving a number, then assume it is an ele_id and replace with the corresponding caption
+						$capq = go("SELECT ele_caption FROM " . DBPRE . "form WHERE ele_id='$capforfilter'");
+						$capforfilter = $capq[0]['ele_caption'];	
+					} 
 					$capforfilter = str_replace("'", "`", $capforfilter);
 				}
 				if($capforfilter == "") {  // ignore this filter if it's not part of this form (ie: it's for another part of the framework)
@@ -392,8 +473,9 @@ function makeFilter($filter, $frid="", $fid, $andor) {
 					if(strstr($thisLink['ele_value'], "#*=:*")) {
 						$parts = explode("#*=:*", $thisLink['ele_value']);
 						$targetCap = str_replace ("'", "`", $parts[1]);
-						//print "SELECT ele_id FROM " . DBPRE . "form_form WHERE id_form = '" . $parts[0] . "' AND ele_caption='$targetCap' AND ele_value LIKE '%" . $filterparts[1] . "%'";											
+						//if($_GET['debug1']) { print "SELECT ele_id FROM " . DBPRE . "form_form WHERE id_form = '" . $parts[0] . "' AND ele_caption='$targetCap' AND ele_value LIKE '%" . $filterparts[1] . "%'<br>"; }											
 						$targetQuery = go("SELECT ele_id FROM " . DBPRE . "form_form WHERE id_form = '" . $parts[0] . "' AND ele_caption='$targetCap' AND ele_value LIKE '%" . $filterparts[1] . "%'");											
+						//if($_GET['debug1']) { print_r($targetQuery); }
 						if(count($targetQuery) == 0) { continue 2; } // ignore this filter since no values where found
 						if(count($targetQuery) == 1) { // only one thing found, so...
 							$filterparts[1] = $targetQuery[0]['ele_id'];
@@ -408,7 +490,7 @@ function makeFilter($filter, $frid="", $fid, $andor) {
 								}
 							}
 						}
-						break;
+						break; // only deal with the first thing returned from the $checkLink query -- assume first is authoritative
 					}
 				}
 				$tempfilter = "";
@@ -417,10 +499,29 @@ function makeFilter($filter, $frid="", $fid, $andor) {
 					$limit = substr($operator, 6);
 					$tempfilter = "(ele_caption = '$capforfilter')"; 
 					$orderbyfilter = " ORDER BY ele_value DESC LIMIT 0,$limit";
+				} elseif ($capforfilter == "uid" OR $capforfilter == "proxyid" OR $capforfilter == "creation_date" OR $capforfilter == "mod_date") {
+					if($capforfilter == "mod_date") { $capforfilter = "date"; }
+					$tempfilter = "($capforfilter";
+					if($operator) {
+						$tempfilter .= $operator;
+					} else {
+						$tempfilter .= "=";
+					}
+					$tempfilter .= "'" . $filterparts[1] . "')";
+					//print "SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$fid' AND $tempfilter $scope GROUP BY id_req $orderbyfilter" . "<br><br>"; // DEBUG LINE
 				} else {
-					$tempfilter = "(ele_caption = '$capforfilter' AND ele_value LIKE '%" . $filterparts[1] . "%')";
+					$tempfilter = "(ele_caption = '$capforfilter' AND ele_value";
+					if($operator) {
+						if($operator == "NOT LIKE") {
+							$tempfilter .= " NOT LIKE '%" . $filterparts[1] . "%')";
+						} else {
+							$tempfilter .= $operator . "'" . $filterparts[1] . "')";
+						}
+					} else {
+						$tempfilter .= " LIKE '%" . $filterparts[1] . "%')";
+					}
 				}
-				//print "SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$fid' AND $tempfilter $scope GROUP BY id_req $orderbyfilter" . "<br><br>"; // DEBUG LINE
+				// if($_GET['debug1']) { print "SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$fid' AND $tempfilter $scope GROUP BY id_req $orderbyfilter" . "<br><br>"; } // DEBUG LINE
 				$prequery = go("SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$fid' AND $tempfilter $scope GROUP BY id_req $orderbyfilter");
 				// if OR, then simply append id_reqs together, if AND, then save the overlap set
 				if($andor == "OR") {
@@ -444,6 +545,7 @@ function makeFilter($filter, $frid="", $fid, $andor) {
 			}
 		} 
 	}
+
 	if(count($filterids)>0) {
 		array_unique($filterids);
 		$startfilter = 1;
@@ -470,6 +572,35 @@ function microtime_float()
    return ((float)$usec + (float)$sec);
 }
 
+function buildLinkValueCondition1($thistarget, $thesevalues) {
+	$FFcaption = getCaptionFFbyId($thistarget);
+	$linkValueCondition = "ele_caption='$FFcaption' AND (";
+	$linkValueCondition .= buildLinkValueCondition2($thesevalues);
+	$linkValueCondition .= ")";
+	return $linkValueCondition;
+}
+
+function buildLinkValueCondition2($thesevalues) {
+
+// This function produces a very loose match condition, and can produce a query which will return more id_reqs than are actually wanted.  However, that will still be less than the total id_reqs in the linked form, so there should still be a considerable improvement in speed.
+// This function produces a query that looks for a LIKE, not an =, and looks in ele_id and ele_value, so that's what produces false positives (a value that you are looking for in ele_id might also appear in ele_value, you just don't know.  And numeric values in ele_id will of course include others, ie: 100 includes 1 and 10.
+	$start = 1;
+	if(is_array($thesevalues)) {
+		foreach($thesevalues as $thisvalue) {
+			if($start) {
+				$linkValueCondition = "(ele_value LIKE '%" . mysql_real_escape_string($thisvalue) . "%' OR ele_id LIKE '%" . mysql_real_escape_string($thisvalue) . "%')";
+				$start = 0;
+			} else {
+				$linkValueCondition .= " OR (ele_value LIKE '%" . mysql_real_escape_string($thisvalue) . "%' OR ele_id LIKE '%" . mysql_real_escape_string($thisvalue) . "%')";
+			}	
+		}	
+	} else {
+		$linkValueCondition = "(ele_value LIKE '%" . mysql_real_escape_string($thesevalues) . "%' OR ele_id LIKE '%" . mysql_real_escape_string($thesevalues) . "%')";
+	}
+
+	return $linkValueCondition;
+}
+
 
 function dataExtraction($frame="", $form, $filter, $andor, $scope) {
 
@@ -494,7 +625,29 @@ if($_GET['debug']) { $time_start = microtime_float(); }
 	// 2. get form id for form based on frameid and form handle
 	// 3. get link list based on form id
 
-	if($scope) { 
+	if(is_array($scope)) { // assume any arrays are groupid arrays, and so make a valid scope string based on this.
+		$start = 1;
+		foreach($scope as $scopegroup) {
+			if($start) {
+				$scopequery = "groupid=$scopegroup";
+				$start = 0;
+			} else {
+				$scopequery .= " OR groupid=$scopegroup";
+			}
+		}
+		$scopeusers = go("SELECT uid FROM " . DBPRE . "groups_users_link WHERE $scopequery");
+		$start = 1;
+		unset($scope);
+		foreach($scopeusers as $user) {
+			if($start) {
+				$scope = "uid=" . $user['uid'];
+				$start = 0;
+			} else {
+				$scope .= " OR uid=" . $user['uid'];
+			}			
+		}
+	}
+      if($scope) { 
 		$scope = "AND (" . $scope . ")"; 
 	}
 
@@ -522,6 +675,7 @@ if($_GET['debug']) { $time_start = microtime_float(); }
 
 	$mainfilter = makeFilter($filter, $frid, $fid, $andor, $scope);
 
+
 	if($frid) {
 		// GET THE LINK INFORMATION FOR THE CURRENT FRAMEWORK BASED ON THE REQUESTED FORM
 		$linklist1 = go("SELECT fl_form2_id, fl_key1, fl_key2, fl_relationship FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form1_id = '$fid'");
@@ -545,25 +699,69 @@ if($_GET['debug']) { $time_start = microtime_float(); }
 	// RESULTS ARRAYS:
 	// mainresults is the full results from main form
 	// linkresults is the full results from all linked forms, where [0..n index][formid] is the form id of the form and [0..n index][results] is the array of rows returned from that form
-	//print "SELECT id_req, ele_type, ele_caption, ele_value FROM " . DBPRE . "form_form WHERE id_form = '$fid' $mainfilter $scope ORDER BY id_req"; // DEBUG LINE
+	// if($_GET['debug']) { print "SELECT id_req, ele_type, ele_caption, ele_value, ele_id FROM " . DBPRE . "form_form WHERE id_form = '$fid' $mainfilter $scope ORDER BY id_req"; }// DEBUG LINE
 debug_memory("Before retrieving mainresults");
-	$mainresults = go("SELECT id_req, ele_type, ele_caption, ele_value FROM " . DBPRE . "form_form WHERE id_form = '$fid' $mainfilter $scope ORDER BY id_req");
+	$mainresults = go("SELECT id_req, ele_type, ele_caption, ele_value, ele_id FROM " . DBPRE . "form_form WHERE id_form = '$fid' $mainfilter $scope ORDER BY id_req");
 debug_memory("After retrieving mainresults");
+
+	// generate the list of key fields in the current form, so we can use the values in these fields to filter the linked forms. -- sept 27 2005
+	if($frid) {
+		foreach($linklist1 as $theselinks) {
+			$linkformids1[] = $theselinks['fl_form2_id'];
+			if($theselinks['fl_key1'] != 0) {
+				$handleforlink = handleFromId($theselinks['fl_key1'], $fid, $frid);
+				$linkkeys1[] = $handleforlink;
+				$linktargetids1[] = $theselinks['fl_key2'];
+			} else {
+				$linkkeys1[] = "";
+				$linktargetids1[] = "";
+			}
+			if($theselinks['fl_relationship'] == 2) { // 2 is one to many relationship
+				$linkisparent1[] = 1;
+			} else {
+				$linkisparent1[] = 0;
+			}
+		}
+		foreach($linklist2 as $theselinks) {
+			$linkformids2[] = $theselinks['fl_form1_id'];
+			if($theselinks['fl_key2'] != 0) {
+				$handleforlink = handleFromId($theselinks['fl_key2'], $fid, $frid);
+				$linkkeys2[] = $handleforlink;
+				$linktargetids2[] = $theselinks['fl_key1'];
+			} else {
+				$linkkeys2[] = "";
+				$linktargetids2[] = "";
+			}
+			if($theselinks['fl_relationship'] == 3) { // 3 is many to one relationship
+				$linkisparent2[] = 1;
+			} else {
+				$linkisparent2[] = 0;
+			}
+		}
+		$linkkeys = array_merge($linkkeys1, $linkkeys2);
+		$linkisparent = array_merge($linkisparent1, $linkisparent2);
+		$linkformids = array_merge($linkformids1, $linkformids2);
+		$linktargetids = array_merge($linktargetids1, $linktargetids2);
+
+	}
 
 	unset($mainfilter);
 
 	// call the function that does the conversion to the desired format:
 	// [formhandle][row/record][handle/fieldname][0..n] = value(s)
-	$finalresults = convertFinal($mainresults, $fid, $frid);
+	list($finalresults, $linkvalue) = convertFinal($mainresults, $fid, $frid, $linkkeys, $linkisparent, $linkformids, $linktargetids);
 
 debug_memory("after convertFinal");
 
 	unset($mainresults);
 
 	if($frid) {
-		$linkformids1 = fieldValues($linklist1, "fl_form2_id");
-		$linkformids2 = fieldValues($linklist2, "fl_form1_id");
-		$linkformids = array_merge($linkformids1, $linkformids2);
+//		these are now set above as part of the generation of the values of the linked fields for filtering -- sept 27 2005 
+//		if(!isset($linkformids)) {
+//			$linkformids1 = fieldValues($linklist1, "fl_form2_id");
+//			$linkformids2 = fieldValues($linklist2, "fl_form1_id");
+//			$linkformids = array_merge($linkformids1, $linkformids2);
+//		}
 		// here is the issue re: only one level of linking... this loop works off the linkformids array which is based on the one level links from the main form.  A recursive loop here which took all output formids and grabbed their results would produce a complete picture of the framework based on the entrypoint
 		// note however that collecting together the unified results array based on such a complete picture of the framework may be an order of magnitude (or two) more complex than the simple collection process currently used below.
 		foreach($linkformids as $lfid) {
@@ -572,14 +770,77 @@ debug_memory("after convertFinal");
 			} else {
 				$linkfilter = "";
 			}
-			if($linkfilter) { // set a flag that counts the linkforms where there was a filter in place 
-				$lfexists[$lfid] = 1;
+			if($linkfilter) { // set a flag that counts the linkforms where there was a filter in place, but exclude  
+				$filters = explode("][", $filter);
+				foreach($filters as $afilter) {
+					$filterparts = explode("/**/", $afilter);
+					if($filterparts[0] != "uid" AND $filterparts[0] != "proxyid" AND $filterparts[0] != "creation_date" AND $filterparts[0] != "mod_date") {
+						$lfexists[$lfid] = 1; // at least one filter was not a metadata filter (which should only be applied to the main form)
+						break;
+					}
+				}
 			}
+
+			// generate a restiction based on the values in the main form that this form is linked to
+			if($foundlinks = array_keys($linkvalue['fid'], $lfid)) {
+				$startuid = 1;
+				$startvalue = 1;
+				unset($linkUidCondition);
+				unset($linkValueCondition);
+				// NOTE: THIS LOOP IS ESSENTIALLY SET UP TO ASSUME ONLY ONE KIND OF LINKING PER FORM.  IF THERE ARE TWO KINDS OF LINKS FOR A FORM, THEN THE RESULTING CONDITIONS WILL LOOK FOR ENTRIES THAT MATCH BOTH LINKS, WHICH IS OBVIOUSLY IMPOSSIBLE.  THEREFORE, THE RESULTS IN THAT CASE WILL INCLUDE NO VALUES FROM THE LINKED FORM.
+				foreach($foundlinks as $oneFoundLink) {
+					if($linkvalue['uid'][$oneFoundLink]) {
+						if($startuid) {
+							$linkUidCondition = " AND (uid=" . $linkvalue['uid'][$oneFoundLink];
+							$startuid = 0;
+						} else {
+							$linkUidCondition .= " OR uid=" . $linkvalue['uid'][$oneFoundLink];
+						}
+					} elseif($linkvalue['values'][$oneFoundLink] AND $linkvalue['targetid'][$oneFoundLink]) {
+						if($startvalue) {
+							// get the caption for the targetid
+							$linkValueCondition = " AND ((";
+							$linkValueCondition .= buildLinkValueCondition1($linkvalue['targetid'][$oneFoundLink], $linkvalue['values'][$oneFoundLink]);
+							$linkValueCondition .= ")";
+							$startvalue = 0;									
+						} else {
+							$linkValueCondition .= " OR (";
+							$linkValueCondition .= buildLinkValueCondition1($linkvalue['targetid'][$oneFoundLink], $linkvalue['values'][$oneFoundLink]);
+							$linkValueCondition .= ")";
+						}
+					}
+				}
+				if($linkUidCondition) { $linkUidCondition .= ")"; }
+				if($linkValueCondition) { $linkValueCondition .= ")"; }
+				// now prequery for id_reqs so the linkresult query can operate
+				//print "<br>SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$lfid' $linkfilter $linkUidCondition $linkValueCondition ORDER BY id_req<br>"; 
+				$prequery = go("SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$lfid' $linkfilter $linkUidCondition $linkValueCondition ORDER BY id_req");
+				$start = 1;
+				unset($linkfilter);
+				if(count($prequery)>0) {
+					foreach($prequery as $thisid) {
+						if($start) {
+							$linkfilter = " AND (id_req='" . $thisid['id_req'] . "'";
+							$start = 0;
+						} else {
+							$linkfilter .= " OR id_req='" . $thisid['id_req']  . "'";
+						}
+					}
+					$linkfilter .= ")"; // guaranteed to be something since the count of prequery is verified above.
+				} else { // no id_reqs found that match, so return nothing
+					$linkfilter = " AND (id_req='0')";
+				}
+			} else { // nothing found that links up with this form, so return nothing in the link form.
+				$linkfilter = " AND (id_req='0')";
+			}
+
 debug_memory("Before retrieving a linkresult");
+
 			$linkresult = go("SELECT id_req, ele_type, ele_caption, ele_value FROM " . DBPRE . "form_form WHERE id_form = '$lfid' $linkfilter ORDER BY id_req"); // scope not used in this query for now
+
 			unset($linkfilter);
 debug_memory("After retrieving a linkresult");
-			$finallinkresult{$lfid} = convertFinal($linkresult, $lfid, $frid);
+			list($finallinkresult{$lfid}, $linkthroughaway) = convertFinal($linkresult, $lfid, $frid); // note...must not call returned "linkvalue" anything useful since we only care about using the returned info from the main query. 
 			unset($linkresult);
 
 		}
@@ -587,8 +848,8 @@ debug_memory("After retrieving a linkresult");
 
 // DEBUG CODE
 //	printfclean($finalresults);
-//	foreach($linkresult as $lr) {
-//		printfclean($finallinkresult{$lr['formid']}); // this won't work now that linkresult is unset above
+//	foreach($linkformids as $lfid) {
+//		printfclean($finallinkresult{$lfid}); 
 //	}
 
 	if($frid) {
@@ -662,11 +923,27 @@ debug_memory("Start of compiling masterresult");
 		foreach($records as $record=>$values) {
 			$masterresult[$indexer][$form][$record] = $values;
 			if($frid) {
+				// search for links based on one-to-one relationships
+				// 1. search for this record in the one-to-one db list
+				// 2. if there are results, then if those results are part of the linkresults then add them
+				// this matching is preformed within the other two loops
+				// this query does not use "go" in order to eliminate the need for one round of looping
+				unset($onetoonecheck);
+				$onetoonecheck_sql = "SELECT link_form FROM " . DBPRE . "formulize_onetoone_links WHERE main_form='$record'";
+				$onetoonecheck_res = mysql_query($onetoonecheck_sql);
+				while ($array = mysql_fetch_array($onetoonecheck_res)) {
+					$onetoonecheck[] = $array['link_form'];
+				}
 				// search for links based on uid
 				foreach($linkformidsU as $fidu) {
 					foreach($finallinkresult{$fidu} as $f => $rs) {
 						foreach($rs as $r => $v) {
 							if($v['uid'] == $values['uid']) {
+								$masterresult[$indexer][$f][$r] = $v;
+								continue;
+							}
+							// check for onetoonelinks
+							if(in_array($r, $onetoonecheck)) {
 								$masterresult[$indexer][$f][$r] = $v;
 							}
 						}
@@ -681,18 +958,25 @@ debug_memory("Start of compiling masterresult");
 							for($i=0;$i<count($mainHandles);$i++) {
 								if($mainHandles[$i]['lfid'] == $fide) {
 									if($v[$linkHandles[$i]['handle']] == $values[$mainHandles[$i]['handle']]) { 
-										$masterresult[$indexer][$f][$r] = $v;								
+										$masterresult[$indexer][$f][$r] = $v;
+										continue;
 									} elseif (count($v[$linkHandles[$i]['handle']])>1) { // look for one value inside the multiple array addresses of the other value -- assumption is that one of them must be a single value, ie: two multiples can't possibly be linked
 										if(in_array($values[$mainHandles[$i]['handle']][0], $v[$linkHandles[$i]['handle']])) {
 											$masterresult[$indexer][$f][$r] = $v;
+											continue;
 										}
 									} elseif (count($values[$mainHandles[$i]['handle']])>1) {
 										if(in_array($v[$linkHandles[$i]['handle']][0], $values[$mainHandles[$i]['handle']])) {
 											$masterresult[$indexer][$f][$r] = $v;
+											continue;
 										}
 									}
 								}
-							}			
+							}
+							// check for onetoonelinks
+							if(in_array($r, $onetoonecheck)) {
+								$masterresult[$indexer][$f][$r] = $v;
+							}
 						}
 					}
 				}

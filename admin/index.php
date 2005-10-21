@@ -40,21 +40,32 @@ if(!isset($HTTP_POST_VARS['op'])){
 }else {
 	$op = $HTTP_POST_VARS['op'];
 }
-if(!isset($HTTP_POST_VARS['title'])){
-	$title = isset ($HTTP_GET_VARS['title']) ? $HTTP_GET_VARS['title'] : '';
-}else {
-	$title = $HTTP_POST_VARS['title'];
-}
 
+if(!is_numeric($_GET['title'])) {
+
+	if(!isset($HTTP_POST_VARS['title'])){
+		$title = isset ($HTTP_GET_VARS['title']) ? $HTTP_GET_VARS['title'] : '';
+	}else {
+		$title = $HTTP_POST_VARS['title'];
+	}
 
 	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$title);
 	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
 
-if ( $res ) {
-  while ( $row = mysql_fetch_row ( $res ) ) {
-    $id_form = $row[0];
-  }
+	if ( $res ) {
+		  while ( $row = mysql_fetch_row ( $res ) ) {
+		    $id_form = $row[0];
+  		}
+	}
+} else {
+	$id_form = $_GET['title'];
+	$title = $_GET['title'];
+	$rtsql = "SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$id_form";
+	$rtres = $xoopsDB->query($rtsql);
+	$rtarray = $xoopsDB->fetchArray($rtres);
+	$realtitle = $rtarray['desc_form'];
 }
+
  
 if( $_POST['op'] != 'save' ){
 	xoops_cp_header();
@@ -63,7 +74,7 @@ if( $_POST['op'] != 'save' ){
 	<form action="index.php?title='.$title.'" method="post">
 
 	<table class="outer" cellspacing="1" width="98%">
-	<th><center><font size=5>'._AM_FORM.$title.'<font></center></th>
+	<th><center><font size=5>'._AM_FORM.$realtitle.'<font></center></th>
 	</table>';
 
 	echo '<table class="outer" cellspacing="1" width="98%">
@@ -342,14 +353,14 @@ if( $_POST['op'] != 'save' ){
 	}
 }
 
-	echo '<center><table><tr><td valign=top><center><a href="../index.php?title='.$title.'" target="_blank">' . _AM_VIEW_FORM . ' <br><img src="../images/kfind.png"></a></center></td>';
+	echo '<center><table><tr><td valign=top><center><a href="../index.php?fid='.$title.'" target="_blank">' . _AM_VIEW_FORM . ' <br><img src="../images/kfind.png"></a></center></td>';
 	echo '<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>';
 	echo '<td valign=top><center><a href="../admin/formindex.php">' . _AM_GOTO_MAIN . ' <br><img src="../images/formulize.gif" height=35></a></center></td>';
 	echo '<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>';
 	echo '<td valign=top><center><a href="../admin/mailindex.php?title='.$title.'">' . _AM_GOTO_PARAMS . ' <br><img src="../images/xfmail.png"></a><br>' . _AM_PARAMS_EXTRA . '</center></td>';
 	echo '</tr></table></center>';
 
-	//echo '<br><br>lien a insérer : &lt;a href&nbsp;="'.XOOPS_URL.'/modules/formulize/index.php?title='.$title.'">'.$title.'&lt;/a><br><br>';   
+	//echo '<br><br>lien a insérer : &lt;a href&nbsp;="'.XOOPS_URL.'/modules/formulize/index.php?fid='.$title.'">'.$realtitle.'&lt;/a><br><br>';   
 
 
 include 'footer.php';

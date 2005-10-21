@@ -138,7 +138,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 				if(in_array($values['ele_id'], $selectedCols)) {
 					$options[$numcols] .= " selected";
 				}
-				$options[$numcols] .= ">" . $values['ele_caption'] . "</option>";
+				$options[$numcols] .= ">" . printSmart(trans($values['ele_caption']), 75) . "</option>";
 				$numcols++;
 			}
 		}		

@@ -69,7 +69,6 @@ $module_id = $xoopsModule->getVar('mid'); // recupere le numero id du module
 
 $n = 0;
 $m = 0;
-//include XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH."/class/xoopstree.php";
 include_once XOOPS_ROOT_PATH."/class/xoopslists.php";
 include_once XOOPS_ROOT_PATH."/include/xoopscodes.php";
@@ -180,7 +179,7 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	foreach($data as $id => $titre) {
 	    if($gperm_handler->checkRight("edit_form", $id, $groups, $module_id))
         {
-	        echo '<tr><td class="head" ALIGN=center>'.$titre.'</td>';
+	        echo '<tr><td class="head" ALIGN=center>'.trans($titre).'</td>';
 
 	        echo '<td class="odd" align="center">  
 	             <A HREF="renom.php?title='.$id.'">  <img src="../images/signature.png" title="'._FORM_RENOM.'" alt="'._FORM_RENOM.'">  </a>';
@@ -195,7 +194,7 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	        //old display entries section, not used anymore 
 	        //echo '<A HREF="formindex.php?title='.$id.'&op=showform">  <img src="../images/kfind.png" title="'._FORM_SHOW.'" alt="'._FORM_SHOW.'">  </a>';     
 
-	        echo '<A HREF="mailindex.php?title='.$titre.'">  <img src="../images/xfmail.png" title="'._FORM_ADD.'" alt="'._FORM_ADD.'">  </a>';
+	        echo '<A HREF="mailindex.php?title='.$id.'">  <img src="../images/xfmail.png" title="'._FORM_ADD.'" alt="'._FORM_ADD.'">  </a>';
 
 	        // cloning added June 17 2005
 	        echo '<A HREF="formindex.php?title='.$id.'&op=clone">  <img src="../images/clone.gif" title="'._FORM_MODCLONE.'" alt="'._FORM_MODCLONE.'"></a>';
@@ -464,14 +463,14 @@ function renform()
 	redirect_header("formindex.php",1,_formulize_FORMMOD);
 }
 
-function modform()
+function modform($fid)
 {
 	global $xoopsDB, $HTTP_POST_VARS, $myts, $eh, $title, $data;
 	//$title5 = $myts->makeTboxData4Save($HTTP_POST_VARS["desc_form5"]);
 	if (empty($data[$title])) {
 		redirect_header("formindex.php", 2, _MD_ERRORTITLE);
 	}
-	redirect_header("index.php?title=$data[$title]",2,_formulize_FORMCHARG);
+	redirect_header("index.php?title=$fid",2,_formulize_FORMCHARG);
 }
 
 function delform()
@@ -956,7 +955,7 @@ $form->display();
 }
 
 function getFormulizePerms() {
-	$formulize_perms = array("view_form", "add_own_entry", "update_own_entry", "delete_own_entry", "update_other_entries", "delete_other_entries", "add_proxy_entries", "view_groupscope", "view_globalscope", "create_reports", "update_own_reports", "delete_own_reports", "update_other_reports", "delete_other_reports", "publish_reports", "publish_globalscope", "edit_form", "delete_form", "include_in_framework");
+	$formulize_perms = array("view_form", "add_own_entry", "update_own_entry", "delete_own_entry", "update_other_entries", "delete_other_entries", "add_proxy_entries", "view_groupscope", "view_globalscope", "create_reports", "update_own_reports", "delete_own_reports", "update_other_reports", "delete_other_reports", "publish_reports", "publish_globalscope", "edit_form", "delete_form", "include_in_framework", "bypass_form_menu");
 	return $formulize_perms;
 }
 
@@ -1012,6 +1011,7 @@ function newpermform($group_list="", $form_list="")
 			$perm_desc[16] = "edit_form -- allows module admins access to a form.";
 			$perm_desc[17] = "delete_form -- allows module admins to delete a form.";
 			$perm_desc[18] = "include_in_framework -- currently has no effect.";
+			$perm_desc[19] = "bypass_form_menu -- permits direct access to forms for users without the form menu.";
 			print "</td><td class=$class valign=top>";
 			print "<table><tr>";
 			$colcounter = 0;
@@ -1370,7 +1370,7 @@ case "renform":
 	renform();
 	break;
 case "modform":
-	modform();
+	modform($_GET['title']);
 	break;
 case "delform":
 	delform();

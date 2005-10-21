@@ -187,7 +187,7 @@ foreach($cols as $f=>$vs) {
 		$reqdcol = 'reqdcalc_column_' . $values['ele_id'];
 		if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.  
 			$usedvals[] = $values['ele_id'];
-			$options[$values['ele_id']] = printSmart($values['ele_caption']);
+			$options[$values['ele_id']] = printSmart(trans($values['ele_caption']));
 		}
 	}		
 }

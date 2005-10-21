@@ -160,8 +160,8 @@ if($ele_value[0] == 1)
 $true_ele_id = str_replace("ele_", "", $form_ele_id);
 
 // grab the user's groups and the module id
-global $groupuser;
-global $module_id;
+$groupuser = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+$module_id = getFormulizeModId();
 global $xoopsDB;
 
 // grab the target groups for this link as specified for all the user's groups...
@@ -228,7 +228,9 @@ foreach($pguid as $apuid) // setup the pguidq based on all these users
 if($pguidq) { $pguidq .= ")"; } // close the pguidq if it has been started
 
 // query below modified to include pguidq which will limit the returned values to just the ones that are allowed for this user's groups to see -- jwe 8/29/04
-					$linkedvaluesq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxproperties[1]\" $pguidq ORDER BY ele_value"; // GROUP BY ele_value ORDER BY ele_value"; // GROUP BY removed 8/12/05 in order to allow duplicate listings in linked select boxes
+					$boxprop1_formform = str_replace("'", "`", stripslashes($boxproperties[1])); // sept 2 2005 -- convert to formform format
+if($_GET['sdebug']) { print "<br>SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxprop1_formform\" $pguidq ORDER BY ele_value"; } // GROUP BY ele_value ORDER BY ele_value";
+					$linkedvaluesq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxprop1_formform\" $pguidq ORDER BY ele_value"; // GROUP BY ele_value ORDER BY ele_value"; // GROUP BY removed 8/12/05 in order to allow duplicate listings in linked select boxes
 					$reslinkedvaluesq = mysql_query($linkedvaluesq);
 					if($reslinkedvaluesq)
 					{

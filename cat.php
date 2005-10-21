@@ -44,11 +44,17 @@ $cat_name = $cat_name_q[0]['cat_name'];
 if(!$cat_name) { $cat_name = _AM_CATGENERAL; }
 
 $formsInCat = fetchFormsInCat($cat_id);
-$formNames = fetchFormNames($formsInCat);
+// altered sept 8 to use ids instead of titles
+//$formNames = fetchFormNames($formsInCat);
+$indexer = 0;
+foreach($formsInCat as $thisform) {
+	$formData[$indexer]['fid'] = $thisform;
+	$formData[$indexer]['title'] = fetchFormNames($thisform);
+	$indexer++;
+}
 
 $xoopsTpl->assign("cat_name", $cat_name);
-$xoopsTpl->assign("formNames", $formNames);
-
+$xoopsTpl->assign("formData", $formData);
 
 require(XOOPS_ROOT_PATH."/footer.php");
 

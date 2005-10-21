@@ -44,8 +44,8 @@ global $xoopsConfig;
 // main function
 // formframes - array of forms and/or frameworks in use
 // mainforms - array of mainforms for each framework in use (must have empty places corresponding to any plain form IDs in formframes
-// viewHandles - array of the element ids or element handles (if in a framework) corresponding to the element where the data to be printed on the calendar comes from
-// dateHandles - array similar to viewHandles, but for the element that contains the data information to base the placement of the data in the calendar on
+// viewHandles - array of the element ids or element handles (if in a framework) corresponding to the element where the data to be printed on the calendar comes from .... can be an array with multiple values.  If it is an array, then the values in all fields are used, separated with commas.
+// dateHandles - array similar to viewHandles, but for the element that contains the data information to base the placement of the data in the calendar on .... can be an array with two values.  If it is an array, the first value is the start field and the second value is the end field.  This is for using a range of dates.
 // filters -- array of filters that can be passed directly to the data extraction, to support viewing only a subset of the data at any one time.
 // viewPrefixs - array of text to prepend to the beginning of the viewHandles text when displaying an entry on the calendar (meant for situations like "Booking Deadline: September Conference")
 // hidden -- array of values to be put into hidden elements in the form (so they are preserved when the user changes months)
@@ -114,7 +114,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 	$settings['calfrid'] = $_POST['calfrid'];
 	$settings['calfid'] = $_POST['calfid'];
 	$settings['calhidden'] = $hidden;
-	
+
 	// check to see if a switch to a form has been requested
 	$settings['ventry'] = $_POST['ventry'];
 	if($settings['ventry']) {
@@ -126,13 +126,18 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 		} else {
 			$this_ent = $_POST['ventry'];
 		}
-		if($frid) {
-			displayForm($_POST['calfrid'], $this_ent, $_POST['calfid'], $currentURL, "", $settings, "", $dateOverride); // "" is the done text
+		if($_POST['calfrid']) {
+			displayForm($_POST['calfrid'], $this_ent, $_POST['calfid'], $currentURL, "", $settings, "", $dateOverride, 1, 1); // first "" is the done text, second is the onetoonetitles, last two 1s are the overrides for multi form behaviour 
 			return;
 		} else {
-			displayForm($_POST['calfid'], $this_ent, "", $currentURL, "", $settings, "", $dateOverride); // "" is the done text
+			displayForm($_POST['calfid'], $this_ent, "", $currentURL, "", $settings, "", $dateOverride, 1, 1); // "" is the done text
 			return;
 		}
+	}
+
+	// handle deletion if requested, added sept 18 2005
+	if($_POST['delentry']) {
+		deleteEntry($_POST['delentry'], $_POST['delfrid'], $_POST['delfid'], $gperm_handler, $member_handler, $mid);
 	}
 
 	// get the data for all the fids
@@ -145,19 +150,47 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 		if($scopes[$i]) {
 			$scope = buildScope($scopes[$i], $member_handler, $uid, $groups);
 		}
+		if(is_array($dateHandles[$i])) {
+			$dateField = $dateHandles[$i][0];
+			$dateField2 = $dateHandles[$i][1];
+		} else {
+			$dateField = $dateHandles[$i];
+			$dateField2 = "";
+		}
 		if(!$frids[$i]) {
-			$caption = q("SELECT ele_caption FROM " . DBPRE . "form WHERE ele_id = '" . $dateHandles[$i] . "'"); 
-			$ffcaption = eregi_replace ("&#039;", "`", $caption[0]['ele_caption']);
-			$ffcaption = eregi_replace ("&quot;", "`", $ffcaption);
+			$caption = q("SELECT ele_caption FROM " . DBPRE . "form WHERE ele_id = '" . $dateField . "'"); 
+			$ffcaption = str_replace ("&#039;", "`", $caption[0]['ele_caption']);
+			$ffcaption = str_replace ("&quot;", "`", $ffcaption);
 			$ffcaption = str_replace ("'", "`", $ffcaption);
 			$filterDH = $ffcaption;
+			if($dateField2) {
+				$caption = q("SELECT ele_caption FROM " . DBPRE . "form WHERE ele_id = '" . $dateField2 . "'"); 
+				$ffcaption = str_replace ("&#039;", "`", $caption[0]['ele_caption']);
+				$ffcaption = str_replace ("&quot;", "`", $ffcaption);
+				$ffcaption = str_replace ("'", "`", $ffcaption);
+				$filterDH2 = $ffcaption;
+			} else {
+				$filterDH2 = "";
+			}
 		} else {
-			$filterDH = $dateHandles[$i];
+			$filterDH = $dateField;
+			$filterDH2 = $dateField2;
 		}
-		$filter = $filterDH . "/**/" . $settings['calview'];
-		$filter .= "][" . $filters[$i];
-		$data[$i] = getData($frids[$i], $fids[$i], $filter); //, "AND", $scope);
-		$data[$i] = resultSort($data[$i], $dateHandles[$i]);
+
+		// new, complex filter format is:
+		// $filter[0][0] -- andor setting for filter 0
+		// $filter[0][1] -- filter for filter 0
+		$filter[0][0] = "OR";
+		$filter[0][1] = $filterDH . "/**/" . $settings['calview'];
+		if($filterDH2) {
+			$filter[0][1] .= "][" . $filterDH2 . "/**/" . $settings['calview'];
+		}
+		if($filters[$i]) {
+			$filter[1][0] = "AND";
+			$filter[1][1] = $filters[$i];
+		}
+		$data[$i] = getData($frids[$i], $fids[$i], $filter, "AND", $scope);
+		$data[$i] = resultSort($data[$i], $dateField);
 	}
 	 
 	// need the formatting magic to go here, to whip it all into a nice calendar
@@ -206,6 +239,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
     $dateMonthWeeks = week_in_month($dateMonthDays) + 1;
 
 
+
     // intialize MONTH template information
     // each cell is an array:
     // [0] - is control information, where each entry is an array:
@@ -216,6 +250,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
     //     [1] - $frids[$i]
     //     [2] - $fids[$i]
     //     [3] - $textToDisplay
+    //     [4] - true/false based on user's right to delete this item (based on either delete own, or delete others permission)
 
 	if($type == "month"
 		|| $type == "mini_month"
@@ -284,45 +319,104 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 
 	// process data set(s)
 	for($i=0;$i<count($data);$i++) {
+
+		// determine if the user has the right to delete items in this form -- added September 18 2005
+		$delown = 0;
+		$delother = 0;
+		$delown = $gperm_handler->checkRight("delete_own_entry", $fids[$i], $groups, $mid);
+		$delother = $gperm_handler->checkRight("delete_other_entries", $fids[$i], $groups, $mid);
+
 		foreach($data[$i] as $id=>$entry) {
-            if(!$frids[$i]) {
-				$formhandle = getFormHandleFromEntry($entry, $viewHandles[$i]);
+	            if(!$frids[$i]) {
+				if(is_array($viewHandles[$i])) {
+					$formhandle = getFormHandleFromEntry($entry, $viewHandles[$i][0]);
+				} else {
+					$formhandle = getFormHandleFromEntry($entry, $viewHandles[$i]);
+				}
 			} else {
-				$formhandle = $fids[$i];
+				$formhandle = $mainforms[$i];
 			}
 			$ids = internalRecordIds($entry, $formhandle);
 			
-            $currentDate = display($entry, $dateHandles[$i]);
+        
+            if(is_array($viewHandles[$i])) {
+			$needsep = 0;
 
-	        if($viewPrefixes[$i]) {
-	            $textToDisplay = $viewPrefixes[$i] . display($entry, $viewHandles[$i]);
-	        } else {
-	            $textToDisplay = display($entry, $viewHandles[$i]);
-	        }
+			// make sure that no data is keep from previous processing
+	            $textToDisplay = "";
 
+			foreach($viewHandles[$i] as $thisVH) {
+				if($needsep) { $textToDisplay .= ", "; }
+				$needsep = 1;
+				$textToDisplay .= display($entry, $thisVH);
+			}
+		} else {
+			$textToDisplay = display($entry, $viewHandles[$i]);
+		}
+		if($viewPrefixes[$i]) {
+	            $textToDisplay = $viewPrefixes[$i] . $textToDisplay;
+	      } 
 
-			// Layout	
+            $calendarDataItem = array();
+            $calendarDataItem[0] = $ids[0];
+            $calendarDataItem[1] = $frids[$i];
+            $calendarDataItem[2] = $fids[$i];
+            $calendarDataItem[3] = $textToDisplay;
+		if($i==0 AND (($uid == display($entry, "uid") AND $delown) OR ($uid != display($entry, "uid") AND $delother))) {
+			$calendarDataItem[4] = true;
+		} else {
+			$calendarDataItem[4] = false;
+		}
+
+            // Layout	
 
 	        if($type == "month"
 	        	|| $type == "mini_month"
 	        	|| $type == "micro_month")
 	        {    
-	            $arrayDate = getdate(strtotime($currentDate));
-	            $dateDay = $arrayDate["mday"];
-	            $dateMonthWeekDay = $arrayDate["wday"];
+	            if(is_array($dateHandles[$i])) 
+                {
+	                $startValue = display($entry, $dateHandles[$i][0]);
+	                $endValue = display($entry, $dateHandles[$i][1]);
+                    
+                    if($startValue && $endValue)
+                    {
+                    	//echo "$startValue - $endValue (Both)<br>";
+                        
+                        $startDate = strtotime($startValue);
+                        $endDate = strtotime($endValue);
+                        for($x=$startDate;$x<=$endDate;$x=$x+86400) 
+                        {
+	                        $arrayDate = getdate($x);
+                            if($arrayDate["mon"] == $dateMonth)
+                            {
+	                            $calendarData = assignItem($arrayDate, $calendarDataItem, $calendarData);
+                            }
+                        }
+                    }
+					else if($startValue)
+                    {
+                    	//echo "$startValue (Only start)<br>";
 
-	            $dateMonthWeek = week_in_month($dateDay);
+                        $startDate = strtotime($startValue);
+	                    $arrayDate = getdate($startDate);
+	                    $calendarData = assignItem($arrayDate, $calendarDataItem, $calendarData);
+                    }
+					else
+                    {
+                    	//echo "$endValue (Only end)<br>";
 
-	            // debug
-	            //print "$dateDay :: $dateMonthWeek :: $dateMonthWeekDay :: $item";
-	            
-	            $calendarDataItem = array();
-                $calendarDataItem[0] = $ids[0];
-	            $calendarDataItem[1] = $frids[$i];
-	            $calendarDataItem[2] = $fids[$i];
-	            $calendarDataItem[3] = $textToDisplay;
-
-	            $calendarData[$dateMonthWeek][$dateMonthWeekDay][1][] = $calendarDataItem;
+                        $endDate = strtotime($endValue);
+	                    $arrayDate = getdate($endDate);
+	                    $calendarData = assignItem($arrayDate, $calendarDataItem, $calendarData);
+                    }
+	            } 
+                else 
+                {
+	                $currentDate = display($entry, $dateHandles[$i]);
+	                $arrayDate = getdate(strtotime($currentDate));
+	                $calendarData = assignItem($arrayDate, $calendarDataItem, $calendarData);
+	            }
 	        }
 
 			// Layout	
@@ -352,14 +446,32 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 
 	$xoopsTpl->assign('currentURL', $currentURL);
 	$xoopsTpl->assign('hidden', $hidden);
-	$xoopsTpl->assign('calview', $calview);
+	$xoopsTpl->assign('calview', $settings['calview']);
 
 	$xoopsTpl->assign('calendarData', $calendarData);
+
+	$xoopsTpl->assign('delete', _formulize_DELETE);
+	$xoopsTpl->assign('delconf', _formulize_DELCONF);
     
 	// force template to be drawn
     $xoopsTpl->display("db:calendar_" . $type . ".html");
 
     // Layout
+}
+
+
+// THIS FUNCTION ASSIGNS AN ITEM TO THE MASTER ARRAY THAT GETS SENT TO THE TEMPLATE
+function assignItem($arrayDate, $calendarDataItem, $calendarData) {
+	$dateDay = $arrayDate["mday"];
+	$dateMonthWeekDay = $arrayDate["wday"];
+	$dateMonthWeek = week_in_month($dateDay);
+
+	// debug
+	//print "$dateDay :: $dateMonthWeek :: $dateMonthWeekDay :: $calendarDataItem";
+
+	$calendarData[$dateMonthWeek][$dateMonthWeekDay][1][] = $calendarDataItem;
+
+	return $calendarData;
 }
 
 
@@ -386,8 +498,47 @@ function week_in_month($day)
 {
     global $dateMonthStartDay;
     
-	$value = (int)((($dateMonthStartDay + 1) + $day) / 7);
+	//$value = (int)((($dateMonthStartDay + 1) + $day) / 7);
+	$value = (int)((($dateMonthStartDay - 1) + $day) / 7);
 
+    //echo "<br>" . $dateMonthStartDay . "::" . $value . "<br>";
+    
     return $value;    
+}
+
+
+
+
+// displayFilter(2, "statusform", "statusvalue", 24, array("Choose a status" => array("Show All", "")));
+function displayFilter($page, $name, $id, $ele_id, $overrides = "")
+{
+	global $xoopsDB;		// required by q
+    
+
+    $form_element = q("SELECT ele_value FROM " . $xoopsDB->prefix("form") . " WHERE ele_id = " . $ele_id);
+    $element_value = unserialize($form_element[0]["ele_value"]);
+    $options = $element_value[2];
+
+	print "\n<p><form name=\"$name\" action=\"" . XOOPS_URL . "/modules/pageworks/index.php?page=$page\" method=\"post\">\n";
+	print "<SELECT name=\"$id\" id=\"$id\" onchange=\"window.document.$name.submit();\">\n";
+    
+    foreach($options as $option=>$option_value)
+    {
+        if(isset($overrides[$option]))
+        {
+	        $selected = ($_POST[$id] == $option) ? "selected" : ""; 
+	        print "<option value=\"" . $overrides[$option][1] . "\" $selected>" . $overrides[$option][0] . "</option>\n";
+        }
+        else
+        {
+		  $passoption = str_replace(" ", "_", $option);
+	        $selected = ($_POST[$id] == $passoption) ? "selected" : ""; 
+	        print "<option value=\"$passoption\" $selected>$option</option>\n";
+		}            
+    }
+    
+	print "</SELECT>\n";
+	print "<input type=hidden name=calview value=" . $_POST['calview'] . ">\n";
+	print "</form></p>\n";
 }
 ?>

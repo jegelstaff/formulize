@@ -166,6 +166,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	}
 
 	$getcols = $_GET['cols'];
+	$loadOnlyView = $_GET['loadonlyview'];
 	$cols = explode(",", $_GET['cols']); // what is this for?
 	$currentview = $_GET['currentview'];
 	if(strstr($_GET['currentview'], ",")) { 
@@ -243,14 +244,14 @@ if($view_groupscope OR $view_globalscope OR $specificgroups) {
 } else {
 	$scope->addOption("mine", $s1);
 }
-if($view_groupscope AND ($view_globalscope OR $specificgroups)) {
+if($view_groupscope AND ($view_globalscope OR $specificgroups) AND !$loadOnlyView) {
 	$scope->addOption("group", $s2 . "<br>"); 
-} elseif($view_groupscope) { 
+} elseif($view_groupscope AND !$loadOnlyView) { 
 	$scope->addOption("group", $s2); 
 }
-if($view_globalscope AND $specificgroups) { 
+if($view_globalscope AND $specificgroups AND !$loadOnlyView) { 
 	$scope->addOption("all", $s3 . "<br>"); 
-} elseif($view_globalscope) {
+} elseif($view_globalscope AND !$loadOnlyView) {
 	$scope->addOption("all", $s3); 
 }
 if($specificgroups) { $scope->addOption($_GET['currentview'], $s4 . printSmart($groupNames)); }
@@ -362,10 +363,10 @@ $saveoptions["new"] = _formulize_DE_SAVE_AS;
 if($s_reports[0] != "" OR $ns_reports[0] != "") { $saveoptions["x1"] = _formulize_DE_SAVED_VIEWS; }
 foreach($s_reports as $report) {
 	if($viewselection == "sold_" . $report['report_id'] OR $viewselection == "pold_" . $report['report_id']) { 
-//		$saveoptions["sold_" . $report['report_id']] = "&nbsp;&nbsp;" . _formulize_DE_SAVE_UPDATE . $report['report_name'];
+//		$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_UPDATE . $report['report_name'];
 		$defaultSave = "sold_" . $report['report_id'];
 	} //else {
-	$saveoptions["sold_" . $report['report_id']] = "&nbsp;&nbsp;" . _formulize_DE_SAVE_REPLACE . $report['report_name'];
+	$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_REPLACE . $report['report_name'];
 //	}
 	if($lastloaded == "sold_" . $report['report_id'] OR $lastloaded == "pold_" . $report['report_id']) {
 		$saveoptions["sold_" . $report['report_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")"; 
@@ -373,10 +374,10 @@ foreach($s_reports as $report) {
 }
 foreach($ns_reports as $report) {
 	if($viewselection == "s" . $report['sv_id'] OR $viewselection == "p" . $report['sv_id']) { 
-//		$saveoptions["s" . $report['sv_id']] = "&nbsp;&nbsp;" . _formulize_DE_SAVE_UPDATE . $report['sv_name'] . " (" . _formulize_DE_SAVE_LASTLOADED . ")";
+//		$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_UPDATE . $report['sv_name'] . " (" . _formulize_DE_SAVE_LASTLOADED . ")";
 		$defaultSave = "s" . $report['sv_id'];
 	} //else {
-	$saveoptions["s" . $report['sv_id']] = "&nbsp;&nbsp;" . _formulize_DE_SAVE_REPLACE . $report['sv_name'];
+	$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_REPLACE . $report['sv_name'];
 //	}
 	if($lastloaded == "s" . $report['sv_id'] OR $lastloaded == "p" . $report['sv_id']) {
 		$saveoptions["s" . $report['sv_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")"; 
@@ -385,10 +386,10 @@ foreach($ns_reports as $report) {
 if($other_p_reports[0] != "" OR $other_np_reports[0] != "") { $saveoptions["x2"] = _formulize_DE_PUB_VIEWS; }
 foreach($other_p_reports as $report) {
 	if($viewselection == "sold_" . $report['report_id'] OR $viewselection == "pold_" . $report['report_id']) { 
-//		$saveoptions["sold_" . $report['report_id']] = "&nbsp;&nbsp;" . _formulize_DE_SAVE_UPDATE . $report['report_name'] . " (" . _formulize_DE_SAVE_LASTLOADED . ")";
+//		$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_UPDATE . $report['report_name'] . " (" . _formulize_DE_SAVE_LASTLOADED . ")";
 		$defaultSave = "sold_" . $report['report_id'];
 	} //else {
-	$saveoptions["sold_" . $report['report_id']] = "&nbsp;&nbsp;" . _formulize_DE_SAVE_REPLACE . $report['report_name'];
+	$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_REPLACE . $report['report_name'];
 //	}
 	if($lastloaded == "sold_" . $report['report_id'] OR $lastloaded == "pold_" . $report['report_id']) {
 		$saveoptions["sold_" . $report['report_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")"; 
@@ -396,10 +397,10 @@ foreach($other_p_reports as $report) {
 }
 foreach($other_np_reports as $report) {
 	if($viewselection == "s" . $report['sv_id'] OR $viewselection == "p" . $report['sv_id']) { 
-//		$saveoptions["s" . $report['sv_id']] = "&nbsp;&nbsp;" . _formulize_DE_SAVE_UPDATE . $report['sv_name'] . " (" . _formulize_DE_SAVE_LASTLOADED . ")";
+//		$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_UPDATE . $report['sv_name'] . " (" . _formulize_DE_SAVE_LASTLOADED . ")";
 		$defaultSave = "s" . $report['sv_id'];
 	} //else {
-	$saveoptions["s" . $report['sv_id']] = "&nbsp;&nbsp;" . _formulize_DE_SAVE_REPLACE . $report['sv_name'];
+	$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_REPLACE . $report['sv_name'];
 //	}
 	if($lastloaded == "s" . $report['sv_id'] OR $lastloaded == "p" . $report['sv_id']) {
 		$saveoptions["s" . $report['sv_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")"; 

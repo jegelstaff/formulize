@@ -41,10 +41,29 @@ if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
 	include "../language/english/main.php";
 }
 
-if(!isset($HTTP_POST_VARS['title'])){
-	$title = isset ($HTTP_GET_VARS['title']) ? $HTTP_GET_VARS['title'] : '';
-}else {
-	$title = $HTTP_POST_VARS['title'];
+if(!is_numeric($_GET['title'])) {
+
+	if(!isset($HTTP_POST_VARS['title'])){
+		$title = isset ($HTTP_GET_VARS['title']) ? $HTTP_GET_VARS['title'] : '';
+	}else {
+		$title = $HTTP_POST_VARS['title'];
+	}
+
+	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$title);
+	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
+
+	if ( $res ) {
+		  while ( $row = mysql_fetch_row ( $res ) ) {
+		    $id_form = $row[0];
+  		}
+	}
+} else {
+	$id_form = $_GET['title'];
+	$title = $_GET['title'];
+	$rtsql = "SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$id_form";
+	$rtres = $xoopsDB->query($rtsql);
+	$rtarray = $xoopsDB->fetchArray($rtres);
+	$realtitle = $rtarray['desc_form'];
 }
 if(!isset($HTTP_POST_VARS['op'])){
 	$op = isset ($HTTP_GET_VARS['op']) ? $HTTP_GET_VARS['op'] : '';
@@ -58,7 +77,7 @@ if(!isset($_POST['op'])){ $_POST['op']=" ";}
 // query modified to call in new fields -- jwe 7/25/04. 7/28/04
 
 if ( isset ($title)) {
-	$sql=sprintf("SELECT id_form,admin,groupe,email,expe,singleentry,groupscope,headerlist,showviewentries,maxentries,even,odd FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$title);
+	$sql=sprintf("SELECT id_form,admin,groupe,email,expe,singleentry,groupscope,headerlist,showviewentries,maxentries,even,odd FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$realtitle);
 	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
 
 	if ( $res ) {
@@ -117,7 +136,7 @@ if( $_POST['op'] != 'upform' && $op != 'addform'){
 		<form name=mainform action="mailindex.php?title='.$title.'" method="post">'; // name added by jwe 9/02/04
 	
 		echo'<table class="outer" cellspacing="1" width="100%">
-		<th><center><font size=5>'._AM_FORM.$title.'<font></center></th>
+		<th><center><font size=5>'._AM_FORM.$realtitle.'<font></center></th>
 		</table>';
 		
 /*		// Affichage des droits du formulize
@@ -362,7 +381,7 @@ echo '<tr>
 
 	echo '<select name="headerlist[]" size="4" multiple>';
 
-	$getform_id ="SELECT id_form FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form=\"$title\"";
+	$getform_id ="SELECT id_form FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form=\"$realtitle\"";
 	$resultgetform = mysql_query($getform_id);
 	$resgetformrow = mysql_fetch_row($resultgetform);
 	$thisformid = $resgetformrow[0];
@@ -486,7 +505,7 @@ function upform($title)
 		redirect_header("mailindex.php?title=$title", 2, _MD_ERRORMAIL);
 	}*/
 	// sql updated with new fields -- jwe 7/25/04 , 7/28/04
-	$sql = sprintf("UPDATE %s SET admin='%s', groupe='%s', email='%s', expe='%s', singleentry='%s', groupscope='%s', headerlist='%s', showviewentries='%s', maxentries='%s', even='%s', odd='%s' WHERE desc_form='%s'", $xoopsDB->prefix("form_id"), $admin, $groupe, $email, $expe, $singleentry, $groupscope, $cheaderlist, $showviewentries, $maxentries, $coloreven, $colorodd, $title);
+	$sql = sprintf("UPDATE %s SET admin='%s', groupe='%s', email='%s', expe='%s', singleentry='%s', groupscope='%s', headerlist='%s', showviewentries='%s', maxentries='%s', even='%s', odd='%s' WHERE id_form='%s'", $xoopsDB->prefix("form_id"), $admin, $groupe, $email, $expe, $singleentry, $groupscope, $cheaderlist, $showviewentries, $maxentries, $coloreven, $colorodd, $title);
 	$xoopsDB->query($sql) or $eh->show("0013");
 	redirect_header("formindex.php",1,_formulize_FORMTITRE);
 }
@@ -532,48 +551,16 @@ function addform()
 	$sql = sprintf("INSERT INTO %s (desc_form, admin, groupe, email, expe, singleentry, groupscope, showviewentries, maxentries, even, odd) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')", $xoopsDB->prefix("form_id"), $title, $admin, $groupe, $email, $expe, $singleentry, $groupscope, $showviewentries, $maxentries, $coloreven, $colorodd);
 	$xoopsDB->queryF($sql) or $eh->show("error insertion 1 dans addform");
 
+	// need to get the new form id -- added by jwe sept 13 2005
+	$newfid = $xoopsDB->getInsertId();
+	
 	$sql2 = sprintf("INSERT INTO %s (itemname,itemurl) VALUES ('%s', '%s')", $xoopsDB->prefix("form_menu"), $title, XOOPS_URL.'/modules/formulize/index.php?title='.$title.'');
 	$xoopsDB->queryF($sql2) or $eh->show("error insertion 2 dans addform");
 
-/* // DEFAULT PERMISSION HANDLING COMMENTED OUT	 - 7/28/05
-	// grab and write default perms... -- jwe 7/28/04
-	$defaultadmin = $myts->makeTboxData4Save($HTTP_POST_VARS["defaultadmin"]);
+	// altered sept 13 2005 to use new form id
+	//redirect_header("index.php?title=$title",1,_formulize_FORMCREA);
+	redirect_header("index.php?title=$newfid",1,_formulize_FORMCREA);
 
-	//get the new form id
-	$getfidq = "SELECT id_form FROM " . $xoopsDB->prefix("form_id") . " WHERE desc_form = \"$title\"";
-$resgetfidq = mysql_query($getfidq);	
-	$rowgetfidq = mysql_fetch_row($resgetfidq);
-	//print "query: $getfidq<br>result row: ";
-	//print_r($rowgetfidq);	
-	$id_form = $rowgetfidq[0];
-
-	//get the module id
-	$res4 = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulize'");
-	if ($res4) {
-		while ($row = mysql_fetch_row($res4)) {
-			$module_id = $row[0];
-		}
-	}
-
-	array($permstowrite);
-	$permstowrite[0] = "view";
-	$permstowrite[1] = "add";
-//	$permstowrite[2] = "admin"; // ADMIN IS NOT ASSIGNED BY DEFAULT, MUST BE MANUALLY ASSIGNED
-
-	foreach($defaultadmin as $agid)
-	{
-		foreach($permstowrite as $thisperm)
-		{
-		$setpermq = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (gperm_groupid, gperm_itemid, gperm_modid, gperm_name) VALUES (\"$agid\", \"$id_form\", \"$module_id\", \"$thisperm\")";
-		$result = mysql_query($setpermq);
-		if(!$result)
-		{	
-			die("Perms NOT successfully written to DB!<br>query failed:  $setpermq");
-		}
-		} // end of write each perm
-	} // end of loop for each group 
-*/
-	redirect_header("index.php?title=$title",1,_formulize_FORMCREA);
 }
 
 

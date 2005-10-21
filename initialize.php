@@ -57,11 +57,11 @@ else {
 
 // print "*$realnamejwe*"; //JWE DEBUG CODE
 */
-
-if(!isset($_POST['title'])){
-	$title = isset($_GET['title']) ? $_GET['title'] : '';
+// altered sept 8 to use fid instead of title
+if(!isset($_POST['fid'])){
+	$fid = isset($_GET['fid']) ? $_GET['fid'] : '';
 }else {
-	$title = $_POST['title'];
+	$fid = $_POST['fid'];
 }
 /*
 if ($title=="") {
@@ -70,7 +70,7 @@ if ($title=="") {
 */
 
 // query modified to include singleentry - July 28, 2005 -- part of switch to new intnerface
-$sql=sprintf("SELECT id_form,admin,groupe,email,expe,singleentry FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$title);
+$sql=sprintf("SELECT admin,groupe,email,expe,singleentry FROM ".$xoopsDB->prefix("form_id")." WHERE id_form='$fid'");
 $res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$sql.'<br>'.mysql_error());
 //global $nb_fichier;
  
@@ -79,7 +79,7 @@ $res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$sql.'<br>'.mysql_error())
 
 if ( $res ) {
   while ( $row = mysql_fetch_array ( $res ) ) {
-    $id_form = $row['id_form'];
+    $id_form = $fid;
     $admin = $row['admin'];
     $groupe = $row['groupe'];
     $email = $row['email'];
@@ -101,6 +101,21 @@ $mid = $xoopsModule->getVar('mid');
 $gperm_handler = &xoops_gethandler('groupperm');
 $view_globalscope = $gperm_handler->checkRight("view_globalscope", $id_form, $groups, $mid);
 $view_groupscope = $gperm_handler->checkRight("view_groupscope", $id_form, $groups, $mid);
+
+// check whether user can bypass the form menu for this form.  If not, then check whether they have access to the form menu.  If not, deny access to the form
+if(!$bypass_form_menu = $gperm_handler->checkRight("bypass_form_menu", $id_form, $groups, $mid)) {
+
+	// check to see if the user has access to the Form Menu.  If they do not, then redirect to home
+	// get the block ID for the Form Menu
+	$block_sql = "SELECT bid FROM " . $xoopsDB->prefix("newblocks") . " WHERE mid=3 AND name='Form Menu'";
+	$block_res = $xoopsDB->query($block_sql);
+	$block_array = $xoopsDB->fetchArray($block_res);
+	$bid = $block_array['bid']; // assumption is there will only be one record returned
+
+	if(!$view_formmenu = $gperm_handler->checkRight("block_read", $bid, $groups, 1)) {
+		redirect_header(XOOPS_URL, 3, _formulize_NO_PERMISSION);
+	}
+}
 
 if(!$singleentry OR ($view_globalscope OR $view_groupscope)) {
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";

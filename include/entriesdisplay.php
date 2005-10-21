@@ -54,7 +54,7 @@ global $xoopsConfig;
 	}
 
 // main function
-function displayEntries($formframe, $mainform="", $loadview="") {
+function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0) {
 
 	global $xoopsDB, $xoopsUser;
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
@@ -92,7 +92,12 @@ function displayEntries($formframe, $mainform="", $loadview="") {
 		foreach($_POST as $k=>$v) {
 			if(substr($k, 0, 7) == "delete_" AND $v != "") {
 				$thisentry = substr($k, 7);
-				deleteEntry($thisentry);
+				// new syntax for deleteEntry, Sept 18 2005 -- used to handle deleting all unified display entries that are linked to this entry.  
+				if($frid) {
+					deleteEntry($thisentry, $frid, $fid, $gperm_handler, $member_handler, $mid);
+				} else {
+					deleteEntry($thisentry);
+				}
 			}
 		}
 	}
@@ -199,9 +204,9 @@ function displayEntries($formframe, $mainform="", $loadview="") {
 				$owneruid = $olduid[0]['report_uid'];
 				$moduid = $uid;
 			}
-			$savesql = "INSERT INTO " . $xoopsDB->prefix("formulize_saved_views") . " (sv_name, sv_pubgroups, sv_owner_uid, sv_mod_uid, sv_formframe, sv_mainform, sv_lockcontrols, sv_hidelist, sv_hidecalc, sv_asearch, sv_sort, sv_order, sv_oldcols, sv_currentview, sv_calc_cols, sv_calc_calcs, sv_calc_blanks, sv_calc_grouping, sv_quicksearches) VALUES (\"$savename\", \"$savegroups\", \"$owneruid\", \"$moduid\", \"$saveformframe\", \"$savemainform\", \"$savelock\", \"{$_POST['hlist']}\", \"{$_POST['hcalc']}\", \"$savesearches\", \"{$_POST['sort']}\", \"{$_POST['order']}\", \"{$_POST['oldcols']}\", \"{$_POST['savescope']}\", \"{$_POST['calc_cols']}\", \"{$_POST['calc_calcs']}\", \"{$_POST['calc_blanks']}\", \"{$_POST['calc_grouping']}\", \"$qsearches\")";
+			$savesql = "INSERT INTO " . $xoopsDB->prefix("formulize_saved_views") . " (sv_name, sv_pubgroups, sv_owner_uid, sv_mod_uid, sv_formframe, sv_mainform, sv_lockcontrols, sv_hidelist, sv_hidecalc, sv_asearch, sv_sort, sv_order, sv_oldcols, sv_currentview, sv_calc_cols, sv_calc_calcs, sv_calc_blanks, sv_calc_grouping, sv_quicksearches) VALUES (\"$savename\", \"$savegroups\", \"$owneruid\", \"$moduid\", \"$saveformframe\", \"$savemainform\", \"{$_POST['savelock']}\", \"{$_POST['hlist']}\", \"{$_POST['hcalc']}\", \"$savesearches\", \"{$_POST['sort']}\", \"{$_POST['order']}\", \"{$_POST['oldcols']}\", \"{$_POST['savescope']}\", \"{$_POST['calc_cols']}\", \"{$_POST['calc_calcs']}\", \"{$_POST['calc_blanks']}\", \"{$_POST['calc_grouping']}\", \"$qsearches\")";
 		} else {
-			$savesql = "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"$savelock\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid, 1) . "\"";
+			$savesql = "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"{$_POST['savelock']}\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid, 1) . "\"";
 		}
 
 		// save the report
@@ -234,12 +239,12 @@ function displayEntries($formframe, $mainform="", $loadview="") {
 	// override with loadview if that is specified
 	if($loadview AND !$_POST['currentview'] AND $_POST['advscope'] == "") {
 		if(substr($loadview, 0, 4) == "old_") { // this is a legacy view
-			$loadview = "s" . $loadview;
+			$loadview = "p" . $loadview;
 		} elseif(is_numeric($loadview)) { // new view id
-			$loadview = "s" . $loadview;
+			$loadview = "p" . $loadview;
 		} else { // new view name -- loading view by name -- note if two reports have the same name, then the first one created will be returned
 			$viewnameq = q("SELECT sv_id FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_name='$loadview' ORDER BY sv_id");
-			$loadview = "s" . $viewnameq[0]['sv_id'];
+			$loadview = "p" . $viewnameq[0]['sv_id'];
 		}
 		$_POST['currentview'] = $loadview;
 		$_POST['loadreport'] = 1;
@@ -252,7 +257,8 @@ function displayEntries($formframe, $mainform="", $loadview="") {
 	
 
 	// debug block to show key settings being passed back to the page
-/*	print "delview: " . $_POST['delview'] . "<br>";
+/*
+	print "delview: " . $_POST['delview'] . "<br>";
 	print "advscope: " . $_POST['advscope'] . "<br>";
 	print "asearch: " . $_POST['asearch'] . "<br>";
 	print "Hidelist: " . $_POST['hlist'] . "<br>";
@@ -365,7 +371,7 @@ function displayEntries($formframe, $mainform="", $loadview="") {
 	// generate the available views
 
 	// pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
-	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid']) = generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, $_POST['curviewid']);
+	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid']) = generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, $_POST['curviewid'], $loadOnlyView);
 
 	// this param only used in case of loading of reports via passing in the report id or name through $loadview
 	if($_POST['loadviewname']) { $settings['loadviewname'] = $_POST['loadviewname']; }
@@ -492,7 +498,7 @@ function displayEntries($formframe, $mainform="", $loadview="") {
 	
 	} 
 
-	drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview); 
+	drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView); 
 
 
 	// build filter for extraction layer
@@ -503,47 +509,55 @@ function displayEntries($formframe, $mainform="", $loadview="") {
 		$scope = buildScope($currentView, $member_handler, $uid, $groups);
 //	}
 
-	drawEntries($fid, $showcols, $_POST['sort'], $_POST['order'], $searches, $frid, $scope, "", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $loadview);
+	drawEntries($fid, $showcols, $_POST['sort'], $_POST['order'], $searches, $frid, $scope, "", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler); // , $loadview); // -- loadview not passed any longer since the lockcontrols indicator is used to handle whether things should appear or not.
 
 	
 }
 
 // return the available current view settings based on the user's permissions
-function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView="", $view_groupscope, $view_globalscope, $prevview="") {
+function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView="", $view_groupscope, $view_globalscope, $prevview="", $loadOnlyView=0) {
 	global $xoopsDB;
 
 	$options = "<option value=\"\">" . _formulize_DE_STANDARD_VIEWS . "</option>\n";
-	$vcounter = 0;
-	
-	if($currentView == "mine") {
+	$vcounter=0;
+
+	if($loadOnlyView AND $loadedView) {
+		$vcounter++;
+		$options .= "<option value=\"\">&nbsp;&nbsp;" . _formulize_DE_NO_STANDARD_VIEWS . "</option>\n";
+	}
+		
+	if($currentView == "mine" AND !$loadOnlyView) {
 		$options .= "<option value=mine selected>&nbsp;&nbsp;" . _formulize_DE_MINE . "</option>\n";
-	} else {
+		$vcounter++;	
+	} elseif(!$loadOnlyView) {
+		$vcounter++;
 		$options .= "<option value=mine>&nbsp;&nbsp;" . _formulize_DE_MINE . "</option>\n";
 	}
-	$vcounter++;
 
-	if($currentView == "group" AND $view_groupscope) {
+
+
+	if($currentView == "group" AND $view_groupscope AND !$loadOnlyView) {
 		$options .= "<option value=group selected>&nbsp;&nbsp;" . _formulize_DE_GROUP . "</option>\n";
 		$vcounter++;
-	} elseif($view_groupscope) {
+	} elseif($view_groupscope AND !$loadOnlyView) {
 		$vcounter++;
 		$options .= "<option value=group>&nbsp;&nbsp;" . _formulize_DE_GROUP . "</option>\n";
 	} 
 
-	if($currentView == "all" AND $view_globalscope) {
+	if($currentView == "all" AND $view_globalscope AND !$loadOnlyView) {
 		$options .= "<option value=all selected>&nbsp;&nbsp;" . _formulize_DE_ALL . "</option>\n";
 		$vcounter++;
-	} elseif($view_globalscope) {
+	} elseif($view_globalscope AND !$loadOnlyView) {
 		$vcounter++;
 		$options .= "<option value=all>&nbsp;&nbsp;" . _formulize_DE_ALL . "</option>\n";
 	} 
 
 	// check for pressence of advanced scope
-	if(strstr($currentView, ",") AND !$loadedView) {
+	if(strstr($currentView, ",") AND !$loadedView) { 
 		$vcounter++;
 		$groupNames = groupNameList(trim($currentView, ","));
 		$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . _formulize_DE_AS_ENTRIESBY . printSmart($groupNames) . "</option>\n";
-	} elseif($view_globalscope OR $view_groupscope) {
+	} elseif(($view_globalscope OR $view_groupscope) AND !$loadOnlyView) {
 		$vcounter++;	
 		$pickgroups = $vcounter;
 		$options .= "<option value=\"\">&nbsp;&nbsp;" . _formulize_DE_AS_PICKGROUPS . "</option>\n";
@@ -620,7 +634,7 @@ function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView
 }
 
 // this function draws in the interface parts of a display entries widget
-function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview="") {
+function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview="", $loadOnlyView=0) {
 
 	global $xoopsDB;
 	// unpack the $settings
@@ -648,7 +662,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<form name=controls id=controls action=$currentURL method=post>\n";
 
 	print "<table cellpadding=10><tr><td style=\"vertical-align: top;\">";
-	print "<h1>$title</h1>";
+	print "<h1>" . trans($title) . "</h1>";
 
 	if(strstr($_SERVER['HTTP_USER_AGENT'], "MSIE")) {
 		$submitButton = "<input type=submit name=submitx style=\"width:0px; height:0px;\" value='' ></input>\n";
@@ -656,7 +670,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		$submitButton =  "<input type=submit name=submitx style=\"visibility: hidden;\" value='' ></input>\n";
 	}
 
-	if($loadview) {
+	if($loadview AND $lockcontrols) {
 		print "<h3>" . $loadviewname . "</h3></td><td>";
 		print "<input type=hidden name=currentview id=currentview value=\"$currentview\">\n<input type=hidden name=loadviewname id=loadviewname value=\"$loadviewname\">$submitButton";
 	} else {
@@ -676,7 +690,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
             		print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_PROXYENTRY . "' onclick=\"javascript:addNew('proxy');\"></input>";
             	} elseif($add_own_entry) {
             		print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_UPDATEENTRY . "' onclick=\"javascript:addNew();\"></input>";
-            	}
+            	} elseif($proxy = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
+				print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_PROXYENTRY . "' onclick=\"javascript:addNew('proxy');\"></input>";
+			}
       		print "<br><input type=button style=\"width: 140px;\" name=changecols value='" . _formulize_DE_CHANGECOLS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colids');\"></input>";
       		print "<br><input type=button style=\"width: 140px;\" name=calculations value='" . _formulize_DE_CALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>";
       		print "<br><input type=button style=\"width: 140px;\" name=advsearch value='" . _formulize_DE_ADVSEARCH . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
@@ -699,7 +715,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
             	print "<input type=button style=\"width: 140px;\" name=resetviewbutton value='" . _formulize_DE_RESETVIEW . "' onclick=\"javascript:window.document.resetviewform.submit();\"></input>";
 
             	// there is a create reports permission, but we are currently allowing everyone to save their own views regardless of that permission.  The publishing permissions do kick in on the save popup.
-            	print "<br><input type=button style=\"width: 140px;\" name=save value='" . _formulize_DE_SAVE . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/save.php?fid=$fid&frid=$frid&lastloaded=$lastloaded&cols=$flatcols&currentview=$currentview');\"></input>";
+            	print "<br><input type=button style=\"width: 140px;\" name=save value='" . _formulize_DE_SAVE . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/save.php?fid=$fid&frid=$frid&lastloaded=$lastloaded&cols=$flatcols&currentview=$currentview&loadonlyview=$loadOnlyView');\"></input>";
 
       		// you can always create and delete your own reports right now (delete_own_reports perm has no effect).  If can delete other reports, then set $pubstart to 10000 (ie: can delete published as well as your own, because the javascript will consider everything beyond the start of 'your saved views' to be saved instead of published (published be thought to never begin))
       		if($delete_other_reports = $gperm_handler->checkRight("delete_other_reports", $fid, $groups, $mid)) { $pubstart = 10000; }
@@ -718,7 +734,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
       	print $viewoptions;
       	print "</SELECT>";
 
-		if(!$loadviewname AND strstr($currentview, ",")) { // if we're on a genuine pick-groups view (not a loaded view)...
+		if(!$loadviewname AND strstr($currentview, ",") AND !$loadOnlyView) { // if we're on a genuine pick-groups view (not a loaded view)...and the load-only-view override is not in place (which eliminates other viewing options besides the loaded view)
 			print "&nbsp&nbsp;<input type=button style=\"width: 140px;\" name=pickdiffgroup value='" . _formulize_DE_PICKDIFFGROUP . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changescope.php?fid=$fid&frid=$frid&scope=$currentview');\"></input>";		
 		}
 		print "</p>";
@@ -779,7 +795,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 }
 
 // THIS FUNCTION DRAWS IN THE RESULTS OF THE QUERY
-function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $loadview="") {
+function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
 
 	global $xoopsDB;
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
@@ -798,16 +814,21 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	$filter = "";
 	foreach($searches as $key=>$one_search) {
 		// if frid, searches contains handles, so use them.  if no frid then get ff captions with ids
+		// $key is handles for frameworks, and ele_ids for non-frameworks.
 		if(!$start) { $filter .= "]["; }
-		if($frid) {	
-			$filter .= $key . "/**/" . mysql_real_escape_string($one_search);
-		} else {
-			$caption = go("SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE ele_id = '$key'"); 
-			$ffcaption = eregi_replace ("&#039;", "`", $caption[0]['ele_caption']);
-			$ffcaption = eregi_replace ("&quot;", "`", $ffcaption);
-			$ffcaption = str_replace ("'", "`", $ffcaption);
-			$filter .= $ffcaption . "/**/" . mysql_real_escape_string($one_search);
-		}
+		$filter .= $key . "/**/" . mysql_real_escape_string($one_search);
+
+//		This code is no longer necessary, since the extraction layer converts ele_ids to captions for non-framework queries
+//		if($frid) {	
+//			$filter .= $key . "/**/" . mysql_real_escape_string($one_search);
+//		} else {
+//			$caption = go("SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE ele_id = '$key'"); 
+//			$ffcaption = eregi_replace ("&#039;", "`", $caption[0]['ele_caption']);
+//			$ffcaption = eregi_replace ("&quot;", "`", $ffcaption);
+//			$ffcaption = str_replace ("'", "`", $ffcaption);
+//			$filter .= $ffcaption . "/**/" . mysql_real_escape_string($one_search);
+//		}
+
 		$start = 0;
 	}
 	
@@ -964,7 +985,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$calc_grouping = $settings['calc_grouping'];
 
 		print "<table class=outer><tr><th colspan=2>" . _formulize_DE_CALCHEAD . "</th></tr>\n";
-		if(!$settings['lockcontrols'] AND !$loadview) {
+		if(!$settings['lockcontrols']) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
 			print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></td></tr>";
 		}
 		printResults($cresults[0], $cresults[1], $cresults[2], $frid); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings
@@ -989,7 +1010,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	$count_colspan = count($cols)+1;
 	print "<tr><th colspan=$count_colspan>" . _formulize_DE_DATAHEADING . "</th></tr>\n";
 
-	if($settings['calc_cols'] AND !$settings['lockcontrols'] AND !$loadview) {
+	if($settings['calc_cols'] AND !$settings['lockcontrols']) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
 		$calc_cols = $settings['calc_cols'];
 		$calc_calcs = $settings['calc_calcs'];
 		$calc_blanks = $settings['calc_blanks'];
@@ -1006,7 +1027,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		} else {
 			print "<tr><td class=head></td><td colspan=$minus1colspan class=head><span style=\"font-weight: normal;\">" . _formulize_DE_ADVSEARCH_ERROR . "</span>";
 		}
-		if(!$settings['lockcontrols'] AND !$loadview) {
+		if(!$settings['lockcontrols']) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
 			print "<br><input type=button style=\"width: 140px;\" name=advsearch value='" . _formulize_DE_MOD_ADVSEARCH . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
 			foreach($settings as $k=>$v) {
 				if(substr($k, 0, 3) == "as_") {
@@ -1055,7 +1076,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		// draw in the margin column where the links and metadata goes
 		print "<td class=head>\n";
 
-		if(!$settings['lockcontrols'] AND !$loadview) {
+		if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
       		print "<p><center><a href='" . $currentURL;
       		if(strstr($currentURL, "?")) { // if params are already part of the URL...
       			print "&";
@@ -1101,15 +1122,15 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 				$start = 1;
 				foreach($value as $v) {
 					if($start) {
-						print printSmart($v);
+						print printSmart(trans($v));
 						$start = 0;
 					} else {
 						print ",<br>\n";
-						print printSmart($v);
+						print printSmart(trans($v));
 					}
 				}
 			} else {
-				print printSmart($value);
+				print printSmart(trans($value));
 			}
 			print "</td>\n";
 		}
@@ -1168,7 +1189,7 @@ function drawHeaders($headers, $cols, $sort, $order) { //, $lockcontrols) {
 //		if(!$lockcontrols) {
 			print "<a href=\"\" alt=\"" . _formulize_DE_SORTTHISCOL . "\" title=\"" . _formulize_DE_SORTTHISCOL . "\" onclick=\"javascript:sort_data('" . $cols[$i] . "');return false;\">";
 //		}
-       	print printSmart($headers[$i]);
+       	print printSmart(trans($headers[$i]));
 //		if(!$lockcontrols) {
 			print "</a>\n";
 //		}
@@ -1534,9 +1555,14 @@ function evalAdvSearch($entry, $handle, $op, $term) {
 		$term = $xoopsUser->getVar('name');
 		if(!$term) { $term = $xoopsUser->getVar('uname'); }
 	}
-	if ($term == "{TODAY}") {
-		$term = date("Y-m-d");
+ 	if (ereg_replace("[^A-Z{}]","", $term) == "{TODAY}") {
+		$number = ereg_replace("[^0-9+-]","", $term);
+		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 	}
+//	code below replaced with the above check by dpicella which accounts for +/- number after {TODAY, ie: {TODAY+10}
+//	if ($term == "{TODAY}") {
+//		$term = date("Y-m-d");
+//	}
 	if ($term == "{BLANK}") {
 		$term = "";
 	}

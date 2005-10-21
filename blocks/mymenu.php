@@ -36,7 +36,12 @@ function block_formulizeMENU_show() {
 	$cats = fetchCats();
 
 	// GENERATE THE ID_FORM
-	if(!isset($_POST['title'])){
+	if(!isset($_POST['fid'])){
+		$id_form = isset ($_GET['fid']) ? $_GET['fid'] : '';
+	} else {
+		$id_form = $_POST['fid'];
+	}
+/*	if(!isset($_POST['title'])){
 		$title = isset ($_GET['title']) ? $_GET['title'] : '';
 	} else {
 		$title = $_POST['title'];
@@ -47,7 +52,7 @@ function block_formulizeMENU_show() {
 	} else {
 		$id_form = 0;
 	}
-
+*/
 	$allowedForms = allowedForms();
 
 	$topwritten = 0;
