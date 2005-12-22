@@ -455,7 +455,8 @@ define("_formulize_DE_SAVE_LOCKCONTROLS_HELP2", "<span style=\"font-weight: norm
 define("_formulize_DE_SAVE_BUTTON", "Save the current view settings with these options");
 define("_formulize_DE_SAVE_NEWPROMPT", "Please type a name for this new view:");
 
-
+//IMPORT
+define("_formulize_DE_IMPORTDATA", "Import Data");
 
 
 define("_formulize_CAL_ADD_ITEM", "Click to add a new item on this day.");

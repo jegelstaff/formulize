@@ -148,6 +148,7 @@ CREATE TABLE form (
   ele_req tinyint(1) NOT NULL default '1',
   ele_value text NOT NULL,
   ele_display varchar(255) NOT NULL default '1',
+  ele_forcehidden tinyint(1) NOT NULL default '0',
   PRIMARY KEY  (`ele_id`),
   KEY `ele_display` (`ele_display`),
   KEY `ele_order` (`ele_order`)

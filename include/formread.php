@@ -60,6 +60,11 @@ function writeLinks($entries, $fids) {
 // function handles reading of data from submitted form
 function handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_groups, $groups) {
 
+if (!$GLOBALS['xoopsSecurity']->check()) {
+	print "<b>Error: the data you submitted could not be saved in the database.</b>";
+	return;
+}
+
 global $xoopsDB;
 $myts =& MyTextSanitizer::getInstance();
 
@@ -82,9 +87,15 @@ $myts =& MyTextSanitizer::getInstance();
 			$ele[$n[1]] = $v;
 			$id[$n[1]] = $n[1];
 		}
+		if(substr($k, 0, 12) == "userprofile_") {
+			$up[substr($k, 12)] = $v;
+		}
 	}
 
-	$up = array();
+	if(isset($up)) {
+		writeUserProfile($up, $uid);
+	}
+
 	$desc_form = array();
 	$value = null;
 
@@ -411,6 +422,85 @@ $result = $xoopsDB->query($sql);
 
 }
 
+// THIS FUNCTION TAKES THE DATA PASSED BACK FROM THE USERPROFILE PART OF A FORM AND SAVES IT AS PART OF THE XOOPS USER PROFILE
+function writeUserProfile($data, $uid) {
+
+	// following code largely borrowed from edituser.php
+	// values we receive:
+	// name
+	// email
+	// viewemail
+	// timezone_offset
+	// password
+	// vpass
+
+	global $xoopsUser, $xoopsConfig;
+	$config_handler =& xoops_gethandler('config');
+	$xoopsConfigUser =& $config_handler->getConfigsByCat(XOOPS_CONF_USER);
+
+	include_once XOOPS_ROOT_PATH . "/language/" . $xoopsConfig['language'] . "/user.php";
+
+	$errors = array();
+    if (!empty($data['uid'])) {
+        $uid = intval($data['uid']);
+    }
+    if (empty($uid) || $xoopsUser->getVar('uid') != $uid) {
+        redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
+        exit();
+    }
+
+    $myts =& MyTextSanitizer::getInstance();
+    if ($xoopsConfigUser['allow_chgmail'] == 1) {
+        $email = '';
+        if (!empty($data['email'])) {
+            $email = $myts->stripSlashesGPC(trim($data['email']));
+        }
+        if ($email == '' || !checkEmail($email)) {
+            $errors[] = _US_INVALIDMAIL;
+        }
+    }
+    $password = '';
+    if (!empty($data['password'])) {
+        $password = $myts->stripSlashesGPC(trim($data['password']));
+    }
+    if ($password != '') {
+        if (strlen($password) < $xoopsConfigUser['minpass']) {
+            $errors[] = sprintf(_US_PWDTOOSHORT,$xoopsConfigUser['minpass']);
+        }
+        $vpass = '';
+        if (!empty($data['vpass'])) {
+            $vpass = $myts->stripSlashesGPC(trim($data['vpass']));
+        }
+        if ($password != $vpass) {
+            $errors[] = _US_PASSNOTSAME;
+        }
+    }
+    if (count($errors) > 0) {
+        echo '<div>';
+        foreach ($errors as $er) {
+            echo '<span style="color: #ff0000; font-weight: bold;">'.$er.'</span><br />';
+        }
+        echo '</div><br />';
+    } else {
+        $member_handler =& xoops_gethandler('member');
+        $edituser =& $member_handler->getUser($uid);
+        $edituser->setVar('name', $data['name']);
+        if ($xoopsConfigUser['allow_chgmail'] == 1) {
+            $edituser->setVar('email', $email, true);
+        }
+        $user_viewemail = (!empty($data['user_viewemail'])) ? 1 : 0;
+        $edituser->setVar('user_viewemail', $user_viewemail);
+        if ($password != '') {
+            $edituser->setVar('pass', md5($password), true);
+        }
+        $edituser->setVar('timezone_offset', $data['timezone_offset']);
+        if (!$member_handler->insertUser($edituser)) {
+            echo $edituser->getHtmlErrors();
+		exit();
+        }
+    }
+
+}
 
 // function to blank entries that the user deleted on submission
 function blankEntries($submittedcaptions, $prevEntry, $entry) {

@@ -106,30 +106,35 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 		exit;
 	}
 
-	// generate the $allcols list
-/*	if($frid) {
-		$fids[0] = $fid;
-		$check_results = checkForLinks($frid, $fids, $fid, "", "", "", "", "", "", "0");
-		$fids = $check_results['fids'];
-		$sub_fids = $check_results['sub_fids'];
-//		$all_fids = array_merge($sub_fids, $fids);
-//		array_unique($all_fids);
-//		foreach($all_fids as $this_fid) {
-		foreach($fids as $this_fid) {
-			$c = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$this_fid' ORDER BY ele_order");
-			$cols[$this_fid] = $c;
-		}
-		foreach($sub_fids as $this_fid) {
-			$c = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$this_fid' ORDER BY ele_order");
-			$cols[$this_fid] = $c;
-		}
-	} else {
-		$cols[$fid] = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$fid' ORDER BY ele_order");
-	}
-*/
 	$cols = getAllColList($fid, $frid, $groups); // $groups indicates that we only want columns which are visible to the current user
 
-	$numcols = 0;
+	// handle metadata columns
+	// UID
+	$options[0] = "<option value=\"uid\"";
+	if(in_array("uid", $selectedCols)) {
+		$options[0] .= " selected";
+	}
+	$options[0] .= ">" . _formulize_DE_CALC_CREATOR . "</option>";
+	// PROXYID
+	$options[1] = "<option value=\"proxyid\"";
+	if(in_array("proxyid", $selectedCols)) {
+		$options[1] .= " selected";
+	}
+	$options[1] .= ">" . _formulize_DE_CALC_MODIFIER . "</option>";
+	// CREATION_DATE
+	$options[2] = "<option value=\"creation_date\"";
+	if(in_array("creation_date", $selectedCols)) {
+		$options[2] .= " selected";
+	}
+	$options[2] .= ">" . _formulize_DE_CALC_CREATEDATE . "</option>";
+	// MOD_DATE
+	$options[3] = "<option value=\"mod_date\"";
+	if(in_array("mod_date", $selectedCols)) {
+		$options[3] .= " selected";
+	}
+	$options[3] .= ">" . _formulize_DE_CALC_MODDATE . "</option>";
+
+	$numcols = 4;
 	foreach($cols as $f=>$vs) {
 		foreach($vs as $row=>$values) {
 			if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.

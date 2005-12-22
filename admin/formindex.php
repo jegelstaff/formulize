@@ -955,7 +955,7 @@ $form->display();
 }
 
 function getFormulizePerms() {
-	$formulize_perms = array("view_form", "add_own_entry", "update_own_entry", "delete_own_entry", "update_other_entries", "delete_other_entries", "add_proxy_entries", "view_groupscope", "view_globalscope", "create_reports", "update_own_reports", "delete_own_reports", "update_other_reports", "delete_other_reports", "publish_reports", "publish_globalscope", "edit_form", "delete_form", "include_in_framework", "bypass_form_menu");
+	$formulize_perms = array("view_form", "add_own_entry", "update_own_entry", "delete_own_entry", "update_other_entries", "delete_other_entries", "add_proxy_entries", "view_groupscope", "view_globalscope", "create_reports", "update_own_reports", "delete_own_reports", "update_other_reports", "delete_other_reports", "publish_reports", "publish_globalscope", "import_data", "edit_form", "delete_form", "include_in_framework", "bypass_form_menu");
 	return $formulize_perms;
 }
 
@@ -1008,10 +1008,11 @@ function newpermform($group_list="", $form_list="")
 			$perm_desc[13] = "delete_other_reports -- allows someone to delete a published view.";
 			$perm_desc[14] = "publish_reports -- allows someone to publish a saved view to their group(s).";
 			$perm_desc[15] = "publish_globalscope -- allows someone to publish a saved view to any group.";
-			$perm_desc[16] = "edit_form -- allows module admins access to a form.";
-			$perm_desc[17] = "delete_form -- allows module admins to delete a form.";
-			$perm_desc[18] = "include_in_framework -- currently has no effect.";
-			$perm_desc[19] = "bypass_form_menu -- permits direct access to forms for users without the form menu.";
+			$perm_desc[16] = "import_data -- allows someone to import entries from a .csv file.";
+			$perm_desc[17] = "edit_form -- allows module admins access to a form.";
+			$perm_desc[18] = "delete_form -- allows module admins to delete a form.";
+			$perm_desc[19] = "include_in_framework -- currently has no effect.";
+			$perm_desc[20] = "bypass_form_menu -- permits direct access to forms for users without the form menu.";
 			print "</td><td class=$class valign=top>";
 			print "<table><tr>";
 			$colcounter = 0;
@@ -1360,6 +1361,22 @@ function patch203() {
 		print "Patching of DB completed.";
 	}
 }
+// THIS FUNCTION ADDS THE ELE_FORCEHIDDEN FIELD TO THE DB
+function patch205() {
+	if(!isset($_POST['patch205'])) {
+		print "<form action=\"formindex.php?op=patch205\" method=post>";
+		print "<input type = submit name=patch205 value=\"Apply Database Patch for Formulize 2.0.5\">";
+		print "</form>";
+	} else {
+		global $xoopsDB;
+		// put logic here
+		$sql = "ALTER TABLE " . $xoopsDB->prefix("form") . " ADD `ele_forcehidden` tinyint(1) NOT NULL default '0'";
+		if(!$result = $xoopsDB->query($sql)) {
+			exit("Error patching DB for Formulize 2.0.5. SQL dump:<br>" . $sql[$i] . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+		}
+		print "Patching of DB completed.";
+	}
+}
 
 
 switch ($op) {
@@ -1439,6 +1456,9 @@ case "migratedb":
 
 case "patch203":
 	patch203();
+	break;
+case "patch205":
+	patch205();
 	break;
 
 }

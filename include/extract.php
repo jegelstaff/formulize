@@ -299,6 +299,8 @@ debug_memory("Start of covertFinal");
 			$values = explode("*=+*:", $results[$i]['ele_value']);
 			foreach($values as $id=>$value) {
 				$finalresults[$formHandle[0][0]][$results[$i]['id_req']][$handle][$id] = $value;
+				// store the id_req -- not being done yet since it seems to slow things down a lot.
+				//$finalidreqs[] = $results[$i]['id_req'];
 			}
 			// store any values involved in a link so we can filter out the main queries on linked forms
 			// major performance improvement by doing this
@@ -369,8 +371,8 @@ debug_memory("after building main array");
 
 debug_memory("before returning convertFinal results");
 	//array_values($finalresults); // don't understand what this is for
-
-	return array($finalresults, $linkvalue);
+	//array_unique($finalidreqs); // finalidreqs not actually being set at the moment.
+	return array($finalresults, $linkvalue, $finalidreqs);
 }
 
 // This function returns the caption, formatted for form_form, based on the handle for the element
@@ -391,7 +393,7 @@ function getCaptionFFbyId($id) {
 	return $ffcaption;
 }
 
-function makeFilter($filter, $frid="", $fid, $andor, $scope) {
+function makeFilter($filter, $frid="", $fid, $andor, $scope, $linkform=0) {
 	if(is_array($filter)) {
 		foreach($filter as $id=>$thisfilter) {
 			// filter array syntax is:
@@ -405,7 +407,7 @@ function makeFilter($filter, $frid="", $fid, $andor, $scope) {
 					$localandor = $thispart;
 					continue;
 				}
-				$thisMadeFilter[$id] = makeFilterInternal($thispart, $frid, $fid, $localandor, $scope);
+				$thisMadeFilter[$id] = makeFilterInternal($thispart, $frid, $fid, $localandor, $scope, $linkform);
 				$thisMadeFilter[$id] = substr($thisMadeFilter[$id], 5);				
 			}
 		}
@@ -426,7 +428,7 @@ function makeFilter($filter, $frid="", $fid, $andor, $scope) {
 		}
 		if(!$start) { $madeFilter .= ")"; }
 	} else {
-		$madeFilter = makeFilterInternal($filter, $frid, $fid, $andor, $scope);
+		$madeFilter = makeFilterInternal($filter, $frid, $fid, $andor, $scope, $linkform);
 	}
 	return $madeFilter;
 }
@@ -434,7 +436,7 @@ function makeFilter($filter, $frid="", $fid, $andor, $scope) {
 // DETERMINE THE FILTER TO USE ON THE MAIN FORM
 // NOTE: FILTER USES A LIKE QUERY TO MATCH, SO IT WILL PICKUP THE FILTER TERM ANYWHERE IN THE VALUE OF THE FIELD
 // This loop can be optimized further in the case of AND queries, by using the previously found id_reqs as part of the WHERE clause for subsequent searches
-function makeFilterInternal($filter, $frid="", $fid, $andor, $scope) {
+function makeFilterInternal($filter, $frid="", $fid, $andor, $scope, $linkform) {
 
 	$filterNotForThisForm = 0;
 	if($filter) {
@@ -447,7 +449,11 @@ function makeFilterInternal($filter, $frid="", $fid, $andor, $scope) {
 			foreach($filters as $afilter) {
 				$filterparts = explode("/**/", $afilter);
 				if($filterparts[0] == "uid" OR $filterparts[0] == "proxyid" OR $filterparts[0] == "creation_date" OR $filterparts[0] == "mod_date") {
+					if(!$linkform) {
 					$capforfilter = $filterparts[0];
+					} else {
+						$capforfilter = "";
+					}
 				} elseif($frid) {
 					$capforfilter = getCaptionFF($filterparts[0], $frid, $fid);
 				} else { // when a plain form is passed, filters must use the full form_form captions for the first filterpart, or the numeric ele_id.
@@ -495,19 +501,36 @@ function makeFilterInternal($filter, $frid="", $fid, $andor, $scope) {
 				}
 				$tempfilter = "";
 				$orderbyfilter = "";
+				$uidProxyidQuery = "";
 				if(strstr($operator, "newest")) {
 					$limit = substr($operator, 6);
 					$tempfilter = "(ele_caption = '$capforfilter')"; 
 					$orderbyfilter = " ORDER BY ele_value DESC LIMIT 0,$limit";
 				} elseif ($capforfilter == "uid" OR $capforfilter == "proxyid" OR $capforfilter == "creation_date" OR $capforfilter == "mod_date") {
+					// if it's a non-numeric uid or proxy id filter, then do everything differently...
+					if(!is_numeric($filterparts[1]) AND ($capforfilter == "uid" OR $capforfilter == "proxyid")) {
+						// do a join with the user table and query based on the full name
+						$uidProxyidOverride = 1;
+						if(!$operator) { $operator = "LIKE"; }
+						$uidProxyidQuery = "SELECT id_req FROM " . DBPRE . "form_form, " . DBPRE . "users WHERE " . DBPRE . "form_form.$capforfilter=" . DBPRE . "users.uid AND " . DBPRE . "users.name $operator";
+						if($operator == "LIKE" OR $operator == "NOT LIKE") {
+							$uidProxyidQuery .= " '%" . $filterparts[1] . "%'";
+						} else {
+							$uidProxyidQuery .= " '" . $filterparts[1] . "'";
+						}
+						$prequery = go($uidProxyidQuery);					
+					}
+
+
 					if($capforfilter == "mod_date") { $capforfilter = "date"; }
 					$tempfilter = "($capforfilter";
 					if($operator) {
-						$tempfilter .= $operator;
+						$tempfilter .= $operator . "'" . $filterparts[1] . "')";
+					} elseif($capforfilter == "date") {
+						$tempfilter .= " LIKE '%" . $filterparts[1] . "%')";
 					} else {
-						$tempfilter .= "=";
+						$tempfilter .= "= '" . $filterparts[1] . "')";
 					}
-					$tempfilter .= "'" . $filterparts[1] . "')";
 					//print "SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$fid' AND $tempfilter $scope GROUP BY id_req $orderbyfilter" . "<br><br>"; // DEBUG LINE
 				} else {
 					$tempfilter = "(ele_caption = '$capforfilter' AND ele_value";
@@ -521,8 +544,10 @@ function makeFilterInternal($filter, $frid="", $fid, $andor, $scope) {
 						$tempfilter .= " LIKE '%" . $filterparts[1] . "%')";
 					}
 				}
-				// if($_GET['debug1']) { print "SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$fid' AND $tempfilter $scope GROUP BY id_req $orderbyfilter" . "<br><br>"; } // DEBUG LINE
-				$prequery = go("SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$fid' AND $tempfilter $scope GROUP BY id_req $orderbyfilter");
+				//print "SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$fid' AND $tempfilter $scope GROUP BY id_req $orderbyfilter" . "<br><br>"; // DEBUG LINE
+				if(!$uidProxyidQuery) {
+					$prequery = go("SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$fid' AND $tempfilter $scope GROUP BY id_req $orderbyfilter");
+				}
 				// if OR, then simply append id_reqs together, if AND, then save the overlap set
 				if($andor == "OR") {
 					foreach($prequery as $this) {
@@ -601,8 +626,41 @@ function buildLinkValueCondition2($thesevalues) {
 	return $linkValueCondition;
 }
 
+// THIS FUNCTION CHECKS TO SEE IF A GIVEN FORM HAS UNIFIED DISPLAY TURNED ON FOR IT IN A FRAMEWORK, and is in a onetoone relationship
+// Note: a form may exist twice in a framework and have unified display turned on only one time.  
+// That will yield strange results and is not an expected circumstance
+function checkUDAndOneToOne($thisfid, $linklist1, $linklist2) {
+	$ud = 0;
 
-function dataExtraction($frame="", $form, $filter, $andor, $scope) {
+	foreach($linklist1 as $udcheck) {
+		if($udcheck['fl_form2_id'] == $thisfid AND $udcheck['fl_unified_display'] AND $udcheck['fl_relationship'] == 1) {
+			$ud = 1;
+			break;
+		}
+	}
+	if(!$ud) {
+		foreach($linklist2 as $udcheck) {
+			if($udcheck['fl_form1_id'] == $thisfid AND $udcheck['fl_unified_display'] AND $udcheck['fl_relationship'] == 1) {
+				$ud = 1;
+				break;
+			}
+		}
+	}
+	return $ud;
+}
+
+// THIS FUNCTION RETURNS THE ID_REQS OF THE ENTRIES THAT THE $RECORD IS LINKED TO
+function getOneToOneLinks($record) {
+	$onetoonecheck_sql = "SELECT link_form FROM " . DBPRE . "formulize_onetoone_links WHERE main_form='$record'";
+	$onetoonecheck_res = mysql_query($onetoonecheck_sql);
+	while ($array = mysql_fetch_array($onetoonecheck_res)) {
+		$onetoonecheck[$array['link_form']] = $array['link_form'];
+	}
+	return $onetoonecheck;
+}
+
+
+function dataExtraction($frame="", $form, $filter, $andor, $scope, $mainFormOnly) {
 
 if($_GET['debug']) { $time_start = microtime_float(); }
 
@@ -676,10 +734,10 @@ if($_GET['debug']) { $time_start = microtime_float(); }
 	$mainfilter = makeFilter($filter, $frid, $fid, $andor, $scope);
 
 
-	if($frid) {
+	if($frid AND !$mainFormOnly) {
 		// GET THE LINK INFORMATION FOR THE CURRENT FRAMEWORK BASED ON THE REQUESTED FORM
-		$linklist1 = go("SELECT fl_form2_id, fl_key1, fl_key2, fl_relationship FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form1_id = '$fid'");
-		$linklist2 = go("SELECT fl_form1_id, fl_key1, fl_key2, fl_relationship FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form2_id = '$fid'");
+		$linklist1 = go("SELECT fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form1_id = '$fid'");
+		$linklist2 = go("SELECT fl_form1_id, fl_key1, fl_key2, fl_relationship, fl_unified_display FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form2_id = '$fid'");
 	}
 	// link list 1 is the list of form2s that the requested form links to
 	// link list 2 is the list of form1s that the requested form links to
@@ -705,7 +763,7 @@ debug_memory("Before retrieving mainresults");
 debug_memory("After retrieving mainresults");
 
 	// generate the list of key fields in the current form, so we can use the values in these fields to filter the linked forms. -- sept 27 2005
-	if($frid) {
+	if($frid AND !$mainFormOnly) {
 		foreach($linklist1 as $theselinks) {
 			$linkformids1[] = $theselinks['fl_form2_id'];
 			if($theselinks['fl_key1'] != 0) {
@@ -749,13 +807,13 @@ debug_memory("After retrieving mainresults");
 
 	// call the function that does the conversion to the desired format:
 	// [formhandle][row/record][handle/fieldname][0..n] = value(s)
-	list($finalresults, $linkvalue) = convertFinal($mainresults, $fid, $frid, $linkkeys, $linkisparent, $linkformids, $linktargetids);
+	list($finalresults, $linkvalue, $finalidreqs) = convertFinal($mainresults, $fid, $frid, $linkkeys, $linkisparent, $linkformids, $linktargetids);
 
 debug_memory("after convertFinal");
 
 	unset($mainresults);
 
-	if($frid) {
+	if($frid AND !$mainFormOnly) {
 //		these are now set above as part of the generation of the values of the linked fields for filtering -- sept 27 2005 
 //		if(!isset($linkformids)) {
 //			$linkformids1 = fieldValues($linklist1, "fl_form2_id");
@@ -766,7 +824,7 @@ debug_memory("after convertFinal");
 		// note however that collecting together the unified results array based on such a complete picture of the framework may be an order of magnitude (or two) more complex than the simple collection process currently used below.
 		foreach($linkformids as $lfid) {
 			if(!is_numeric($filter)) { // do not use numeric filters, since they are for grabbing a specific id out of the main form
-				$linkfilter = makeFilter($filter, $frid, $lfid, $andor, $scope);
+				$linkfilter = makeFilter($filter, $frid, $lfid, $andor, $scope, 1); // final 1 indicates this is a linkform
 			} else {
 				$linkfilter = "";
 			}
@@ -781,78 +839,102 @@ debug_memory("after convertFinal");
 				}
 			}
 
-			// generate a restiction based on the values in the main form that this form is linked to
-			if($foundlinks = array_keys($linkvalue['fid'], $lfid)) {
-				$startuid = 1;
-				$startvalue = 1;
-				unset($linkUidCondition);
-				unset($linkValueCondition);
-				// NOTE: THIS LOOP IS ESSENTIALLY SET UP TO ASSUME ONLY ONE KIND OF LINKING PER FORM.  IF THERE ARE TWO KINDS OF LINKS FOR A FORM, THEN THE RESULTING CONDITIONS WILL LOOK FOR ENTRIES THAT MATCH BOTH LINKS, WHICH IS OBVIOUSLY IMPOSSIBLE.  THEREFORE, THE RESULTS IN THAT CASE WILL INCLUDE NO VALUES FROM THE LINKED FORM.
-				foreach($foundlinks as $oneFoundLink) {
-					if($linkvalue['uid'][$oneFoundLink]) {
-						if($startuid) {
-							$linkUidCondition = " AND (uid=" . $linkvalue['uid'][$oneFoundLink];
-							$startuid = 0;
-						} else {
-							$linkUidCondition .= " OR uid=" . $linkvalue['uid'][$oneFoundLink];
-						}
-					} elseif($linkvalue['values'][$oneFoundLink] AND $linkvalue['targetid'][$oneFoundLink]) {
-						if($startvalue) {
-							// get the caption for the targetid
-							$linkValueCondition = " AND ((";
-							$linkValueCondition .= buildLinkValueCondition1($linkvalue['targetid'][$oneFoundLink], $linkvalue['values'][$oneFoundLink]);
-							$linkValueCondition .= ")";
-							$startvalue = 0;									
-						} else {
-							$linkValueCondition .= " OR (";
-							$linkValueCondition .= buildLinkValueCondition1($linkvalue['targetid'][$oneFoundLink], $linkvalue['values'][$oneFoundLink]);
-							$linkValueCondition .= ")";
-						}
-					}
+			$checklfid = checkUDAndOneToOne($lfid, $linklist1, $linklist2);
+			if($checklfid) {
+				$linkfilterLocal = "";
+// THIS CODE APPEARS TO BE REALLY REALLY REALLY SLOW
+/*
+				unset($onetoonecheck);
+				unset($foundidreqlinks);
+				foreach($finalidreqs as $thisidreq) {
+					$onetoonecheck = getOneToOneLinks($lfid);
+					$foundidreqlinks = array_merge($onetoonecheck, $foundidreqlinks);
 				}
-				if($linkUidCondition) { $linkUidCondition .= ")"; }
-				if($linkValueCondition) { $linkValueCondition .= ")"; }
-				// now prequery for id_reqs so the linkresult query can operate
-				//print "<br>SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$lfid' $linkfilter $linkUidCondition $linkValueCondition ORDER BY id_req<br>"; 
-				$prequery = go("SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$lfid' $linkfilter $linkUidCondition $linkValueCondition ORDER BY id_req");
 				$start = 1;
-				unset($linkfilter);
-				if(count($prequery)>0) {
-					foreach($prequery as $thisid) {
-						if($start) {
-							$linkfilter = " AND (id_req='" . $thisid['id_req'] . "'";
-							$start = 0;
-						} else {
-							$linkfilter .= " OR id_req='" . $thisid['id_req']  . "'";
+				foreach($foundidreqlinks as $thisid) {
+					if($start) {
+						$linkfilterLocal = " AND (id_req='" . $thisid . "'";
+						$start = 0;
+					} else {
+						$linkfilterLocal .= " OR id_req='" . $thisid  . "'";
+					}
+				} */
+			} else {
+
+				// generate a restiction based on the values in the main form that this form is linked to
+				if($foundlinks = array_keys($linkvalue['fid'], $lfid)) {
+
+					$startuid = 1;
+					$startvalue = 1;
+					unset($linkUidCondition);
+					unset($linkValueCondition);
+					// NOTE: THIS LOOP IS ESSENTIALLY SET UP TO ASSUME ONLY ONE KIND OF LINKING PER FORM.  IF THERE ARE TWO KINDS OF LINKS FOR A FORM, THEN THE RESULTING CONDITIONS WILL LOOK FOR ENTRIES THAT MATCH BOTH LINKS, WHICH IS OBVIOUSLY IMPOSSIBLE.  THEREFORE, THE RESULTS IN THAT CASE WILL INCLUDE NO VALUES FROM THE LINKED FORM.
+					foreach($foundlinks as $oneFoundLink) {
+						if($linkvalue['uid'][$oneFoundLink]) {
+							if($startuid) {
+								$linkUidCondition = " AND (uid=" . $linkvalue['uid'][$oneFoundLink];
+								$startuid = 0;
+							} else {
+								$linkUidCondition .= " OR uid=" . $linkvalue['uid'][$oneFoundLink];
+							}
+						} elseif($linkvalue['values'][$oneFoundLink] AND $linkvalue['targetid'][$oneFoundLink]) {
+							if($startvalue) {
+								// get the caption for the targetid
+								$linkValueCondition = " AND ((";
+								$linkValueCondition .= buildLinkValueCondition1($linkvalue['targetid'][$oneFoundLink], $linkvalue['values'][$oneFoundLink]);
+								$linkValueCondition .= ")";
+								$startvalue = 0;									
+							} else {
+								$linkValueCondition .= " OR (";
+								$linkValueCondition .= buildLinkValueCondition1($linkvalue['targetid'][$oneFoundLink], $linkvalue['values'][$oneFoundLink]);
+								$linkValueCondition .= ")";
+							}
 						}
 					}
-					$linkfilter .= ")"; // guaranteed to be something since the count of prequery is verified above.
-				} else { // no id_reqs found that match, so return nothing
-					$linkfilter = " AND (id_req='0')";
+					if($linkUidCondition) { $linkUidCondition .= ")"; }
+					if($linkValueCondition) { $linkValueCondition .= ")"; }
+					// now prequery for id_reqs so the linkresult query can operate
+					//print "<br>SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$lfid' $linkfilter $linkUidCondition $linkValueCondition ORDER BY id_req<br>"; 
+					$prequery = go("SELECT id_req FROM " . DBPRE . "form_form WHERE id_form = '$lfid' $linkfilter $linkUidCondition $linkValueCondition ORDER BY id_req");
+					$start = 1;
+					unset($linkfilterLocal);
+					if(count($prequery)>0) {
+						foreach($prequery as $thisid) {
+							if($start) {
+								$linkfilterLocal = " AND (id_req='" . $thisid['id_req'] . "'";
+								$start = 0;
+							} else {
+								$linkfilterLocal .= " OR id_req='" . $thisid['id_req']  . "'";
+							}
+						}
+						$linkfilterLocal .= ")"; // guaranteed to be something since the count of prequery is verified above.
+					} else { // no id_reqs found that match, so return nothing
+						$linkfilterLocal = " AND (id_req='0')";
+					}
+				} else { // nothing found that links up with this form, so return nothing in the link form.
+					$linkfilterLocal = " AND (id_req='0')";
 				}
-			} else { // nothing found that links up with this form, so return nothing in the link form.
-				$linkfilter = " AND (id_req='0')";
-			}
+			}// end of IF checkUDAndOneToOne
 
 debug_memory("Before retrieving a linkresult");
-
-			$linkresult = go("SELECT id_req, ele_type, ele_caption, ele_value FROM " . DBPRE . "form_form WHERE id_form = '$lfid' $linkfilter ORDER BY id_req"); // scope not used in this query for now
+			$linkresult = go("SELECT id_req, ele_type, ele_caption, ele_value FROM " . DBPRE . "form_form WHERE id_form = '$lfid' $linkfilterLocal ORDER BY id_req"); // scope not used in this query for now
 
 			unset($linkfilter);
+			unset($linkfilterLocal);
 debug_memory("After retrieving a linkresult");
-			list($finallinkresult{$lfid}, $linkthroughaway) = convertFinal($linkresult, $lfid, $frid); // note...must not call returned "linkvalue" anything useful since we only care about using the returned info from the main query. 
+			list($finallinkresult{$lfid}, $linkthrowaway, $idreqthrowaway) = convertFinal($linkresult, $lfid, $frid); // note...must not call returned "linkvalue" anything useful since we only care about using the returned info from the main query. 
 			unset($linkresult);
-
 		}
 	}
 
 // DEBUG CODE
+//if($_GET['debug']) {
 //	printfclean($finalresults);
 //	foreach($linkformids as $lfid) {
 //		printfclean($finallinkresult{$lfid}); 
 //	}
-
-	if($frid) {
+//}
+	if($frid AND !$mainFormOnly) {
 		//generate the mainHandles and linkHandles arrays
 		$indexer = 0;
 		foreach($linklist1 as $linkinfo) {
@@ -921,61 +1003,77 @@ debug_memory("Start of compiling masterresult");
 	$indexer = 0;
 	foreach($finalresults as $form=>$records) {
 		foreach($records as $record=>$values) {
+if($_GET['debug']) {
+ print "FinalResults count: " . count($records) . "<br>";
+ print "MasterResults count: " . count($masterresult) . "<br>";
+
+}
 			$masterresult[$indexer][$form][$record] = $values;
-			if($frid) {
+			if($frid AND !$mainFormOnly) {
 				// search for links based on one-to-one relationships
 				// 1. search for this record in the one-to-one db list
 				// 2. if there are results, then if those results are part of the linkresults then add them
 				// this matching is preformed within the other two loops
 				// this query does not use "go" in order to eliminate the need for one round of looping
+				// Addition - Oct 22 2005 - if it is onetoone and unified display, then the uid or element match should be ignored!
+				// 
 				unset($onetoonecheck);
-				$onetoonecheck_sql = "SELECT link_form FROM " . DBPRE . "formulize_onetoone_links WHERE main_form='$record'";
-				$onetoonecheck_res = mysql_query($onetoonecheck_sql);
-				while ($array = mysql_fetch_array($onetoonecheck_res)) {
-					$onetoonecheck[] = $array['link_form'];
-				}
+				$onetoonecheck = getOneToOneLinks($record);	
+			
 				// search for links based on uid
 				foreach($linkformidsU as $fidu) {
+
+					// check to see if the current form has unified display turned on, and if so then do not match based on UID, match only based on onetoone
+					$noUidMatch = checkUDAndOneToOne($fidu, $linklist1, $linklist2);
+
 					foreach($finallinkresult{$fidu} as $f => $rs) {
 						foreach($rs as $r => $v) {
-							if($v['uid'] == $values['uid']) {
+						
+							// check for onetoonelinks
+							if($onetoonecheck[$r]) {
 								$masterresult[$indexer][$f][$r] = $v;
 								continue;
-							}
-							// check for onetoonelinks
-							if(in_array($r, $onetoonecheck)) {
+							}	
+							if($v['uid'] == $values['uid'] AND !$noUidMatch) {
 								$masterresult[$indexer][$f][$r] = $v;
 							}
 						}
 					}	
 				}
+
 				// search for link based on elements
 				foreach($linkformidsE as $fide) {
+
+					// check to see if the current form has unified display turned on, and if so then do not match based on element values, match only based on onetoone
+					$noEleMatch = checkUDAndOneToOne($fide, $linklist1, $linklist2);
+
 					foreach($finallinkresult{$fide} as $f => $rs) {
 						foreach($rs as $r => $v) {
-							//compare the each of the values in each of the linked elements to each of the values in the main element (make arrays and then do an intersection?)
-							//need handles to do this
-							for($i=0;$i<count($mainHandles);$i++) {
-								if($mainHandles[$i]['lfid'] == $fide) {
-									if($v[$linkHandles[$i]['handle']] == $values[$mainHandles[$i]['handle']]) { 
-										$masterresult[$indexer][$f][$r] = $v;
-										continue;
-									} elseif (count($v[$linkHandles[$i]['handle']])>1) { // look for one value inside the multiple array addresses of the other value -- assumption is that one of them must be a single value, ie: two multiples can't possibly be linked
-										if(in_array($values[$mainHandles[$i]['handle']][0], $v[$linkHandles[$i]['handle']])) {
+							// check for onetoonelinks
+							if($onetoonecheck[$r]) {
+								$masterresult[$indexer][$f][$r] = $v;
+								continue;
+							} elseif(!$noEleMatch) {
+								//compare the each of the values in each of the linked elements to each of the values in the main element (make arrays and then do an intersection?)
+								//need handles to do this
+								for($i=0;$i<count($mainHandles);$i++) {
+									if($mainHandles[$i]['lfid'] == $fide) {
+										if($v[$linkHandles[$i]['handle']] == $values[$mainHandles[$i]['handle']]) { 
 											$masterresult[$indexer][$f][$r] = $v;
 											continue;
-										}
-									} elseif (count($values[$mainHandles[$i]['handle']])>1) {
-										if(in_array($v[$linkHandles[$i]['handle']][0], $values[$mainHandles[$i]['handle']])) {
-											$masterresult[$indexer][$f][$r] = $v;
-											continue;
+										} elseif (count($v[$linkHandles[$i]['handle']])>1) { // look for one value inside the multiple array addresses of the other value -- assumption is that one of them must be a single value, ie: two multiples can't possibly be linked
+											if(in_array($values[$mainHandles[$i]['handle']][0], $v[$linkHandles[$i]['handle']])) {
+												$masterresult[$indexer][$f][$r] = $v;
+												continue;
+											}
+										} elseif (count($values[$mainHandles[$i]['handle']])>1) {
+											if(in_array($v[$linkHandles[$i]['handle']][0], $values[$mainHandles[$i]['handle']])) {
+												$masterresult[$indexer][$f][$r] = $v;
+												continue;
+											}
 										}
 									}
 								}
-							}
-							// check for onetoonelinks
-							if(in_array($r, $onetoonecheck)) {
-								$masterresult[$indexer][$f][$r] = $v;
 							}
 						}
 					}
@@ -1015,8 +1113,62 @@ debug_memory("after returning result");
 
 }
 
-function getData($framework, $form, $filter="", $andor="AND", $scope="") {
-	$result = dataExtraction($framework, $form, $filter, $andor, $scope);
+
+// THIS FUNCTION QUERIES A TABLE IN THE DATABASE AND RETURNS THE RESULTS IN STANDARD getData FORMAT
+// Uses the standard filter syntax, and can use scope if a uidField name is specified
+// Filters cannot obviously use the standard metadata fields that are part of regular forms
+// At the time of writing (Nov 1 2005) supports single table queries only, no joins
+function dataExtractionDB($table, $filter, $andor, $scope, $uidField) {
+
+	// numeric filters are assumed to be queries on the primary key
+	// string filters are assumed to be WHERE clauses -- note the obvious security issues with that!
+	$describe_query = "DESCRIBE $table";
+	$res = mysql_query($describe_query);
+	if($res) {
+		while($array = mysql_fetch_array($res)) {
+			if($array['Key'] == "PRI") {
+				$primary_field = $array['Field'];
+				$break;
+			}
+		}
+	} else {
+		exit("Describe query failed for table $table");
+	}
+
+	if(is_numeric($filter)) {	
+		$where_clause = "WHERE `$primary_field`=$filter";
+	} elseif($filter) {
+		$where_clause = "WHERE $filter";	
+	} else {
+		$where_clause = "";
+	}
+
+	$sql = "SELECT * FROM $table $where_clause";
+	$res = mysql_query($sql);
+	if($res) {
+		$indexer = 0;
+		while($array = mysql_fetch_array($res)) {
+			foreach($array as $field=>$value) {
+				if(is_numeric($field)) { continue; }		
+				$masterresult[$indexer][$table][$array[$primary_field]][$field] = $value;
+			}
+			$indexer++;
+		}
+	} else {
+		exit("Database query failed: $sql");
+	}
+	return $masterresult;
+}
+
+
+// MODIFIED NOVEMBER 1 2005 -- ADDED QUERY DIRECT TO DB TABLES 
+function getData($framework, $form, $filter="", $andor="AND", $scope="", $mainFormOnly=0, $dbTableUidField="") {
+
+	if(substr($framework, 0, 3) == "db:") {
+		$result = dataExtractionDB(substr($framework, 3), $filter, $andor, $scope, $dbTableUidField);
+	} else {
+	$result = dataExtraction($framework, $form, $filter, $andor, $scope, $mainFormOnly);
+	}
 	return $result;
 }
 
@@ -1254,6 +1406,500 @@ function resultSort($data, $handle, $order="", $type="") {
 
 	return $data;
 }
+
+
+
+
+function displayMeta($entry, $spechandle, $id="NULL", $localid="NULL") {
+	if(is_int($entry))
+    {
+	    switch($spechandle) {
+	        case "uid-name":
+	            $name = go("SELECT name FROM " . DBPRE .
+	            	"users WHERE uid=$entry");
+
+	            return $name[0][0]; 
+		    break;
+		}
+    }
+
+	// evaluate spechandle to determine what the user is asking for
+	// ie:
+	// uid-name is the username of the user who created the entry
+	// uid-fullname is the full name of the user who created the entry
+	// proxyid-name is the username of the user who last modified the entry
+	// mod_date-days is the number of days since the entry was last modified
+	// etc, we could concievably have a zillion of these extra 
+	// parts-after-the-hyphen for the handles
+	// The parts before the hyphen are the standard four metadata handles 
+	// as specified in the Using Formulize pdf
+
+	// so, flow of the code...
+
+	// determine which meta handle is being used, by parsing the 
+	// $spechandle string (I guess the handle and the part-after-the-hyphen 
+	// could actually be two separate params to eliminate this step)
+	// note that I may have php syntax errors in here all over the place!
+	// $item will be the part-after-the-hyphen
+	list($handle, $item) = explode("-", $spechandle);
+
+	// use the existing display function to get the "raw" value
+	$values = display($entry, $handle, $id, $localid);
+
+
+	// using the "raw" value, do whatever is necessary to turn this into 
+	// the actual value that has been requested.
+	if(is_array($values)) {
+	    // do something here to handle arrays, ie: if there is more than one 
+	    // value that gets returned
+	    // basically, this will be the same as what happens below, just with 
+	    // some looping going on to handle the multiple values in the array
+	    // obviously, this maybe should involve the use of functions to avoid 
+	    // repeating code
+	} else {
+	    switch($item) {
+	        case "name":
+	            // some basic checking for coherence in the inputs....this could 
+	            // happen above obviously, or not at all(!)
+	            if($handle != "uid" AND $handle != "proxyid") {
+		            exit("invalid item requested for handle $handle");
+	            }
+	            // "go" works exactly like the q function, but it only exists in the 
+	            // extraction layer.
+	            // also note the use of DBPRE and not any $xoopsDB stuff
+	            $name = go("SELECT name FROM " . DBPRE .
+	            	"users WHERE uid=$values");
+
+	            return $name[0][0]; 
+		    break;
+		}
+	}        
+}
+
+
+
+function getFormId($formname)
+{
+	$sql = "SELECT id_form  " .
+		" FROM " . DBPRE . "form_id" .
+		" WHERE desc_form = '$formname';";
+
+	//die($sql);
+    
+	$id_form_results = go($sql);
+            
+	//var_dump($id_form_results);
+
+	return $id_form_results[0]['id_form']; 
+}
+
+
+function getFormElement($formframe, $handle)
+{
+	$sql = "SELECT *" .
+		" FROM " . DBPRE . "form, " . DBPRE . "formulize_frameworks, " . DBPRE . "formulize_framework_elements" .
+		" WHERE " . DBPRE . "formulize_framework_elements.fe_element_id = " . DBPRE . "form.ele_id" . 
+        " AND " . DBPRE . "formulize_frameworks.frame_name = '$formframe'" .
+		" AND " . DBPRE . "formulize_framework_elements.fe_handle = '$handle'" .
+		" AND " . DBPRE . "formulize_framework_elements.fe_frame_id = " . DBPRE . "formulize_frameworks.frame_id";
+
+	//die($sql);
+    
+	$results = go($sql);
+            
+	//var_dump($results);
+
+	return $results[0]; 
+}
+
+
+function getFrameworkElementId($formframe, $handle)
+{
+	$sql = "SELECT fe_element_id" .
+		" FROM " . DBPRE . "formulize_frameworks, " . DBPRE . "formulize_framework_elements" .
+		" WHERE " . DBPRE . "formulize_frameworks.frame_name = '$formframe'" .
+		" AND " . DBPRE . "formulize_framework_elements.fe_handle = '$handle'" .
+		" AND " . DBPRE . "formulize_framework_elements.fe_frame_id = " . DBPRE . "formulize_frameworks.frame_id";
+
+	//die($sql);
+    
+	$fe_element_id_results = go($sql);
+            
+	//var_dump($fe_element_id_results);
+
+	return $fe_element_id_results[0]['fe_element_id']; 
+}
+
+
+function getPageId($name)
+{
+	/*global $xoopsDB;
+
+	$sql = "SELECT page_id" .
+		" FROM " . $xoopsDB->prefix("pageworks_pages") .
+		" WHERE " . $xoopsDB->prefix("pageworks_pages") . ".page_name = '$name'";
+
+	//die($sql);
+    $sql_res = $xoopsDB->query($sql);
+    $sql_result = $xoopsDB->fetchRow($sql_res);
+
+	return $sql_result[0];*/ 
+
+	$sql = "SELECT page_id" .
+		" FROM " . DBPRE . "pageworks_pages" .
+		" WHERE page_name = '$name'";
+
+	//die($sql);
+    
+	$page_id_results = go($sql);
+            
+	//var_dump($page_id_results);
+
+	return $page_id_results[0]['page_id']; 
+}
+
+
+function getGroupId($groupname)
+{
+	$sql = "SELECT groupid" .
+		" FROM " . DBPRE . "groups" .
+		" WHERE name = '$groupname';";
+
+	$groupid_results = go($sql);
+            
+	return $groupid_results[0]['groupid']; 
+}
+
+
+function getGroupName($groupid)
+{
+	$sql = "SELECT name" .
+		" FROM " . DBPRE . "groups" .
+		" WHERE groupid = '$groupid';";
+
+	$name_results = go($sql);
+            
+	return $name_results[0]['name']; 
+}
+
+
+function getDataIds($sql)
+{
+	$results = go($sql);
+    
+    /*if(!$results)
+		echo "Error in <br>" . $sql . "<br>";*/
+
+	$return_results = array();
+    
+    foreach($results as $result)
+    {
+		//echo $result['id_req'] . "<br>";    
+		$return_results[] = (int)$result['id_req'];    
+    }
+            
+	return $return_results; 
+}
+
+
+function linkForm($formname)
+{
+	//require_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+
+	return XOOPS_URL . "/modules/formulize/index.php?fid=" . 
+    	getFormId($formname);
+}
+
+
+function linkPage($pagename)
+{
+	//require_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+	//require_once XOOPS_ROOT_PATH . "/modules/pageworks/include/functions.php";
+
+	return XOOPS_URL . "/modules/pageworks/index.php?page=" . 
+    	getPageId($pagename);
+}
+
+function includePage($name)
+{
+	global $includedPages;
+
+	if(!is_array($includedPages))
+    	$includedPages = array();
+
+	if(in_array($name, $includedPages))
+    {
+		//echo "$name is already an included page";    
+    }
+    else    
+	{    
+	    $sql = "SELECT page_template" .
+	        " FROM " . DBPRE . "pageworks_pages" .
+	        " WHERE page_name = '$name'";
+
+	    //die($sql);
+	    
+	    $page_id_results = go($sql);
+	            
+	    eval($page_id_results[0]['page_template']);
+        
+        $includedPages[] = $name;
+	}         
+}
+
+
+function templatePrint($arguments)
+{
+	print($arguments["message"]);
+}
+
+
+function templateExplode($arguments)
+{
+	global $xoopsTpl;
+
+    $xoopsTpl->assign($arguments["return"], 
+    	explode($arguments["seperator"], $arguments["value"]));
+}    
+
+
+function templateHas($arguments)
+{
+	global $xoopsTpl;
+
+    $xoopsTpl->assign($arguments["return"], 
+    	in_array($arguments["key"], $arguments["value"]));
+}    
+
+
+function templateConcat($arguments)
+{
+	global $xoopsTpl;
+
+    $xoopsTpl->assign($arguments["return"], 
+    	$arguments["one"] . $arguments["two"]);
+}    
+
+
+function templateInternalRecordIds($arguments)
+{
+	global $xoopsTpl;
+
+	//var_dump($arguments["entry"]);
+
+    $ids = internalRecordIds($arguments["entry"], $arguments["handle"]);
+
+	if(isset($arguments["return"]))
+    {
+	    $xoopsTpl->assign($arguments["return"], $ids[0]);
+	}
+    else    
+    {    
+		print $ids[0];
+	}             
+}
+
+
+function templateDisplay($arguments)
+{
+	global $xoopsTpl;
+    
+	if(isset($arguments["return"]))
+	{
+	    $xoopsTpl->assign($arguments["return"], 
+	        display($arguments["entry"], $arguments["handle"]));
+	}
+    else    
+    {    
+		print display($arguments["entry"], $arguments["handle"]);
+	}             
+}
+
+
+function templateDisplayButton($arguments)
+{
+	if(!isset($arguments["entry"]))
+    	$arguments["entry"] = "new";
+
+	if(!isset($arguments["action"]))
+    	$arguments["action"] = "replace";
+
+	if(!isset($arguments["buttonOrLink"]))
+    	$arguments["buttonOrLink"] = "button";
+
+	if(!isset($arguments["formframe"]))
+    	$arguments["formframe"] = "";
+
+
+	include_once XOOPS_ROOT_PATH . "/modules/pageworks/include/displayButton_HTML.php";
+	include_once XOOPS_ROOT_PATH . "/modules/pageworks/include/displayButton_Javascript.php";
+	require_once "elementdisplay.php";
+    
+	displayButton($arguments["text"], $arguments["ele"], 
+    	$arguments["value"], $arguments["entry"], $arguments["action"], 
+        $arguments["buttonOrLink"], $arguments["formframe"]);
+}
+
+function templateDisplayElement($arguments) {
+
+	if(!isset($arguments["framework"]))
+	$arguments["framework"] = "";
+
+	if(!isset($arguments["element"]))
+	$arguments["element"] = "";	
+	
+	if(!isset($arguments["entry"]))
+	$arguments["entry"] = "new";
+
+	require_once "elementdisplay.php";
+
+	displayElement($arguments["framework"], $arguments["element"], $arguments["entry"]);
+
+}
+
+function templateDisplayElementSave($arguments) {
+	if(!isset($arguments["text"]))
+	$arguments["text"] = "";
+
+	if(isset($arguments["redirect_page"]))
+    {
+	    if(!is_numeric($arguments["redirect_page"]))
+	    {
+	        $arguments["redirect_page"] = getPageId($arguments["redirect_page"]);   
+		}
+    }
+    else
+	$arguments["redirect_page"] = "";	
+
+	require_once "elementdisplay.php";
+
+	displayElementSave($arguments["text"], $arguments["redirect_page"]);
+
+}
+
+
+
+function templateDisplayForm($arguments)
+{
+	//$formframe, $entry="", $mainform="", $done_dest="", $done_text="", $settings="", $onetooneTitles="", $overrideValue="", $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0
+	if(!isset($arguments["entry"]))
+    	$arguments["entry"] = "";
+
+	if(!isset($arguments["mainform"]))
+    	$arguments["mainform"] = "";
+
+	if(!isset($arguments["done_dest"]))
+    	$arguments["done_dest"] = XOOPS_URL;
+
+	if(!isset($arguments["done_text"]))
+    	$arguments["done_text"] = "";
+
+	if(!isset($arguments["settings"]))
+    	$arguments["settings"] = "";
+
+	if(!isset($arguments["onetooneTitles"]))
+    	$arguments["onetooneTitles"] = "";
+
+	if(!isset($arguments["overrideValue"]))
+    	$arguments["overrideValue"] = "";
+
+	if(!isset($arguments["overrideMulti"]))
+    	$arguments["overrideMulti"] = "";
+
+	if(!isset($arguments["overrideSubMulti"]))
+    	$arguments["overrideSubMulti"] = "";
+
+	if(!isset($arguments["viewallforms"]))
+    	$arguments["viewallforms"] = 0;
+
+	if(!isset($arguments["profileForm"]))
+    	$arguments["profileForm"] = 0;
+
+	require_once "formdisplay.php";
+    
+	displayForm($arguments["formframe"], $arguments["entry"], 
+    	$arguments["mainform"], $arguments["done_dest"], $arguments["done_text"], 
+    	$arguments["settings"], $arguments["onetooneTitles"], $arguments["overrideValue"], 
+    	$arguments["overrideMulti"], $arguments["overrideSubMulti"], $arguments["viewallforms"], 
+        $arguments["profileForm"]);
+}
+
+
+function templateDisplayMeta($arguments)
+{
+	global $xoopsTpl;
+    
+	if(isset($arguments["return"]))
+    {
+	    $xoopsTpl->assign($arguments["return"], 
+	        displayMeta($arguments["entry"], $arguments["handle"]));
+    }
+    else
+    {    
+		print displayMeta($arguments["entry"], $arguments["handle"]);
+	}             
+}
+
+
+function templateLinkForm($arguments)
+{
+	print linkForm($arguments["name"]);
+}
+
+
+function templateLinkPage($arguments)
+{
+	print linkPage($arguments["name"]);
+}
+
+
+function templateRequestId($arguments)
+{
+  global $xoopsTpl;
+
+  $xoopsTpl->assign($arguments["return"], $arguments["uid"] . ",");
+} 
+
+
+function displayTemplate($templatename)
+{
+	global $xoopsTpl;
+
+
+	// the following line sets the user id of the current user to the smarty 
+	// variable called 'uid'
+	/*global $xoopsUser;
+	$xoopsTpl->assign("uid", $xoopsUser->getVar('uid'));
+
+	$xoopsTpl->assign("groups", 
+    	$xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS);
+        
+	$regusers = array_keys($groups, XOOPS_GROUP_USERS);
+	unset($groups[$regusers[0]]);
+	$xoopsTpl->assign("regusers", $regusers);*/
+
+    
+	$xoopsTpl->register_function("print", "templatePrint");
+	//$xoopsTpl->register_function("explode", "templateExplode");
+	$xoopsTpl->register_function("has", "templateHas");
+	//$xoopsTpl->register_function("concat", "templateConcat");
+	//$xoopsTpl->register_function("recordId", "templateInternalRecordIds");
+	$xoopsTpl->register_function("meta", "templateDisplayMeta");
+	$xoopsTpl->register_function("displayButton", "templateDisplayButton");
+	$xoopsTpl->register_function("display", "templateDisplay");
+	$xoopsTpl->register_function("displayForm", "templateDisplayForm");
+	$xoopsTpl->register_function("linkForm", "templateLinkForm");
+	$xoopsTpl->register_function("linkPage", "templateLinkPage");
+	$xoopsTpl->register_function("displayElement", "templateDisplayElement");
+	$xoopsTpl->register_function("displayElementSave", "templateDisplayElementSave");
+
+	$xoopsTpl->register_function("requestId", "templateRequestId");
+
+	$xoopsTpl->force_compile = true;
+	$xoopsTpl->display($templatename);
+}
+
+//displayTemplate(XOOPS_ROOT_PATH . "/modules/formulize/templates/freecycle.html");
 
 
 // if XOOPS has not already connected to the database, then connect to it now using user defined constants that are set in another file

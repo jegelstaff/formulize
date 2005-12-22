@@ -1,8 +1,35 @@
 *********************
-Version 2.0.4 Beta:
+Version 2.0.5 Beta:
 *********************
 
-IMPORTANT:  Read the readme file for this patch.  If you are upgrading from a version BEFORE 2.0.3, there are a couple other things to do besides overwrite your files.
+IMPORTANT:  Read the readme file for this patch.  There are other things to do besides overwrite your files.
+
+** New Features:
+
+--Added the ability to create new entries in a form by importing data from a .csv file, and added a permission to allow or disallow this ability on a per form basis.
+--Added an option to allow the default values for form elements to be saved to the database even when those elements are not visible to the current user.  This allows for situations where you need a some default data to be stored with each entry, but do not want all users to be able to interact with the form elements that control that data.  ie: someone places an order using a form, and a manager elsewhere can review the order and update its status.  The status element is accessible only to the manager so that the person placing the order cannot fiddle with the order status, but when the person places the order you still need a default status, such as "pending" to be written to the database so the order shows up with the correct status when a manager reviews it for the first time.
+--Added four metadata fields to the list of selectable columns on the "change columns" screen: user who created entry, user who last modified entry, creation data, and last modification date.  Note: if you sort by username, the result is based on user ID number and not spelling.  :-(
+--Added the displayElementSave function to give application developers control over the placement of the "Save" button when using displayElement in a Pageworks page.
+--Added an override parameter to displayForm and displayEntries which forces the display of all forms in a "unified-display framework" regardless of the user's permissions to view the individual forms.
+--Added a parameter to the getData function to force queries on a framework to work with the main form only (ignore all linked forms)
+--Added ability to use getData to query any table in the database
+--Added the displayMeta function to handle printing out the names of users based on ID numbers
+--Added the ability to access "display" functions using a smarty template in your Pageworks pages
+--Added a parameter to displayForm so that you can add some standard user account fields to the top of any form.  This allows you to have a single form where people can edit their full name, username, password, e-mail address, and time zone, plus whatever custom fields you want to have in the form.  
+--All forms now use the Xoops security token system
+--Added language constants
+
+** Changes/Fixes:
+
+--Included two bug fixes from Steve Kenow.  Thanks!!
+--Changed the displayButton and displayElement functions to use frameworks
+--Fixed a bug in the data extraction layer which caused invalid results to be returned when using a metadata filter on a framework where no entries in a linked form matched the criteria (huh?!)
+--Optimized memory usage in the extraction layer again
+--Fixed a bug that required view_groupscope permission for a form if the form was set to "one entry per group"
+
+*********************
+Version 2.0.4 Beta:
+*********************
 
 ** New Features:
 

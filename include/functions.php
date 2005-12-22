@@ -219,6 +219,12 @@ function security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handle
 		if(!$view_globalscope) {
 			if($owner != $uid) {
 				$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
+				// if no view_groupscope, then check to see if the settings for the form are "one entry per group" in which case override the groupscope setting
+				if(!$view_groupscope) { 
+					global $xoopsDB;
+					$smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$fid");
+					if($smq[0]['singleentry'] == "group") { $view_groupscope = true; }
+				}
 				$intersect_groups = array_intersect($owner_groups, $groups);
 				if(!$view_groupscope OR (count($intersect_groups) == 1 AND $intersect_groups[0] == XOOPS_GROUP_USERS)) {
 					// last hope...check for a unlocked view that has been published to them which covers a group that includes this entry
@@ -410,6 +416,7 @@ function fetchFormsInCat($thisid, $allowedForms="") {
 		if(!is_array($allowedForms)) { $allowedForms = allowedForms(); }
 
 		if($thisid == 0 ) { // GENERAL CAT...
+
 			// 1. foreach allowed form, check to see if it's in a cat
 			// 2. record each one in an array
 			// 3. make formsInCat equal the difference between found array and allowed forms

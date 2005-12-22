@@ -158,4 +158,6 @@ define("_AM_CANCEL", "Cancel");
 // added - start - August 25 2005 - jpc
 define("_AM_FORM_DISPLAY_MULTIPLE","Custom");
 // added - end - August 25 2005 - jpc
+define("_AM_FORM_DISPLAY_EXTRA", "Use this list to display certain elements in a form to only certain groups.  This is not intended as a substitute for proper permissions at the form level.  This is only meant to handle situations where users in different groups should see different parts of the same form.");
+define("_AM_FORM_FORCEHIDDEN", "Include as a hidden element for users who can't see it");
 ?>

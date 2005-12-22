@@ -54,7 +54,7 @@ global $xoopsConfig;
 	}
 
 // main function
-function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0) {
+function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0, $viewallforms=0) {
 
 	global $xoopsDB, $xoopsUser;
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
@@ -65,7 +65,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0)
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
-	$uid = $xoopsUser->getVar('uid');
+	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
 
 	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler, "")) {
 		print "<p>" . _NO_PERM . "</p>";
@@ -480,18 +480,18 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0)
 
 		if($_POST['ventry'] != "single") {
 			if($frid) {
-				displayForm($frid, $this_ent, $fid, $currentURL, "", $settings); // "" is the done text
+				displayForm($frid, $this_ent, $fid, $currentURL, "", $settings, "", "", "", "", $viewallforms); // "" is the done text
 				return;
 			} else {
-				displayForm($fid, $this_ent, "", $currentURL, "", $settings); // "" is the done text
+				displayForm($fid, $this_ent, "", $currentURL, "", $settings, "", "", "", "", $viewallforms); // "" is the done text
 				return;
 			}
 		} else { // if a single entry was requested for a form that can have multiple entries, then specifically override the multiple entry UI (which causes a blank form to appear on save)
 			if($frid) {
-				displayForm($frid, $this_ent, $fid, $currentURL, "", $settings, "", "", "1"); // "" is the done text
+				displayForm($frid, $this_ent, $fid, $currentURL, "", $settings, "", "", "1", "", $viewallforms); // "" is the done text
 				return;
 			} else {
-				displayForm($fid, $this_ent, "", $currentURL, "", $settings, "", "", "1"); // "" is the done text
+				displayForm($fid, $this_ent, "", $currentURL, "", $settings, "", "", "1", "", $viewallforms); // "" is the done text
 				return;
 			}
 		}
@@ -705,6 +705,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
       		}
       		print "');\"></input>";
       		print "<br><input type=button style=\"width: 140px;\" name=export value='" . _formulize_DE_EXPORT . "' onclick=\"javascript:runExport();\"></input>";
+
+			if($import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid)) {
+	      		print "<br><input type=button style=\"width: 140px;\" name=advsearch value='" . _formulize_DE_IMPORTDATA . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid');\"></input>"; 
+			}
+
             	print "</p></center></td><td style=\"vertical-align: bottom;\"><center><p>";
 
             	if(($del_own = $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid) OR $del_others = $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid)) AND !$settings['lockcontrols']) {
@@ -808,16 +813,16 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	// but a simpler function could be created that would just draw a scrollbox with results in it
 	}
 
-
 	// build the filter out of the searches array
 	$start = 1;
 	$filter = "";
 	foreach($searches as $key=>$one_search) {
+
+
 		// if frid, searches contains handles, so use them.  if no frid then get ff captions with ids
 		// $key is handles for frameworks, and ele_ids for non-frameworks.
 		if(!$start) { $filter .= "]["; }
 		$filter .= $key . "/**/" . mysql_real_escape_string($one_search);
-
 //		This code is no longer necessary, since the extraction layer converts ele_ids to captions for non-framework queries
 //		if($frid) {	
 //			$filter .= $key . "/**/" . mysql_real_escape_string($one_search);
@@ -922,7 +927,15 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	// get the headers
 
 	foreach($cols as $col) {
-       	if($frid) {
+		if($col == "uid") {
+			$headers[] = _formulize_DE_CALC_CREATOR;
+		} elseif($col == "proxyid") {
+			$headers[] = _formulize_DE_CALC_MODIFIER;
+		} elseif($col=="creation_date") {
+			$headers[] = _formulize_DE_CALC_CREATEDATE;
+		} elseif($col=="mod_date") {
+			$headers[] = _formulize_DE_CALC_MODDATE;
+		} elseif($frid) {
        		$headers[] = getCaption($frid, $col);
        	} else {
        		$temp_cap = go("SELECT ele_caption FROM " . DBPRE . "form WHERE ele_id = '$col'"); 
@@ -1117,7 +1130,13 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 
 		foreach($cols as $col) {
 			print "<td class=$class>\n";
-			$value = display($entry, $col);
+			if($col == "uid") {
+				$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "uid") . "\">" . displayMeta($entry, "uid-name") . "</a>";
+			} elseif($col=="proxyid") {
+				$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "proxyid") . "\">" . displayMeta($entry, "proxyid-name") . "</a>";
+			} else {
+				$value = display($entry, $col);
+			}
 			if(is_array($value)) {
 				$start = 1;
 				foreach($value as $v) {
@@ -1129,8 +1148,10 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 						print printSmart(trans($v));
 					}
 				}
-			} else {
+			} elseif($col != "uid" AND $col!= "proxyid") {
 				print printSmart(trans($value));
+			} else { // don't use printsmart for the special uid/proxyid cells
+				print $value;
 			}
 			print "</td>\n";
 		}
@@ -1153,6 +1174,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		drawSearches($searches, $cols);
 		print "</div>";
 	}
+
 	print "</form>\n"; 
 
 }
@@ -1219,8 +1241,12 @@ function convertIds($ids, $frid) {
 		$ids[0] = $temp;
 	}
 	foreach($ids as $id) {
-		$handle = q("SELECT fe_handle FROM " . $xoopsDB->prefix("formulize_framework_elements") . " WHERE fe_frame_id='$frid' AND fe_element_id='$id'");
-		$handles[] = $handle[0]['fe_handle'];
+		if($id == "uid" OR $id=="proxyid" OR $id=="creation_date" OR $id=="mod_date") {
+			$handles[] = $id;
+		} else {
+			$handle = q("SELECT fe_handle FROM " . $xoopsDB->prefix("formulize_framework_elements") . " WHERE fe_frame_id='$frid' AND fe_element_id='$id'");
+			$handles[] = $handle[0]['fe_handle'];
+		}
 	}
 	return $handles;
 }

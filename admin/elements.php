@@ -285,6 +285,8 @@ switch($op){
         {
 			$ele_display = new XoopsFormSelect(_AM_ELE_DISPLAY, 'ele_display', $display, 10, true);
         } 
+		$ele_display->setDescription(_AM_FORM_DISPLAY_EXTRA);
+	
 
 	    $fs_member_handler =& xoops_gethandler('member');
 	    $fs_xoops_groups =& $fs_member_handler->getGroups();
@@ -300,6 +302,12 @@ switch($op){
 		$form->addElement($ele_display);
 		// replaced - end - August 18 2005 - jpc
 
+		// added by jwe Nov 7 2005, a checkbox to indicate if the element should be included as a hidden element, even when the user does not have permission to view (ie: it is hidden by the display option above)
+		$fhide = !empty($ele_id) ? $element->getVar('ele_forcehidden') : 0;
+		$forcehidden = new XoopsFormCheckBox(_AM_FORM_FORCEHIDDEN, "fhide", $fhide);
+		$forcehidden->addOption(1, ' ');
+		$form->addElement($forcehidden);
+
 		
 		// added by jwe 01/06/05 -- get the current highest order value for the form, and add up to 10 to it to reach the nearest mod 5 value
 		$highorderq = "SELECT MAX(ele_order) FROM " . $xoopsDB->prefix("form") . " WHERE id_form=$id_form";
@@ -314,6 +322,7 @@ switch($op){
 		$order = !empty($ele_id) ? $element->getVar('ele_order') : $highorder;
 		$ele_order = new XoopsFormText(_AM_ELE_ORDER, 'ele_order', 3, 3, $order);
 		$form->addElement($ele_order);
+		
 		
 		$submit = new XoopsFormButton('', 'submit', _AM_SAVE, 'submit');
 		$cancel = new XoopsFormButton('', 'cancel', _CANCEL, 'button');
@@ -369,6 +378,10 @@ switch($op){
 		$element->setVar('ele_req', $req);
 		$order = empty($ele_order) ? 0 : intval($ele_order);
 		$element->setVar('ele_order', $order);
+
+		// grab the forcehidden setting -- added Nov 7 2005
+		if(!$fhide) { $fhide_checked = 0; } else { $fhide_checked = $fhide; }
+		$element->setVar('ele_forcehidden', $fhide_checked);
 
 
 		// replaced - start - August 18 2005 - jpc

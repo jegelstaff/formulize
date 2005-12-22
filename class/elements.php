@@ -52,6 +52,7 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("ele_order", XOBJ_DTYPE_INT);
 		$this->initVar("ele_req", XOBJ_DTYPE_INT);
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);
+		$this->initVar("ele_forcehidden", XOBJ_DTYPE_INT);
  		// changed - start - August 19 2005 - jpc 		
 		//$this->initVar("ele_display", XOBJ_DTYPE_INT);
 		$this->initVar("ele_display", XOBJ_DTYPE_TXTBOX);
@@ -110,9 +111,9 @@ class formulizeElementsHandler {
 			$ele_id = $this->db->genId(formulize_TABLE."_ele_id_seq");
             // changed - start - August 19 2005 - jpc
 			/*$sql = sprintf("INSERT INTO %s (
-				id_form, ele_id, ele_type, ele_caption, ele_order, ele_req, ele_value, ele_display
+				id_form, ele_id, ele_type, ele_caption, ele_order, ele_req, ele_value, ele_display, ele_forcehidden
 				) VALUES (
-				%u, %u, %s, %s, %u, %u, %s, %u
+				%u, %u, %s, %s, %u, %u, %s, %u, $u
 				)",
 				formulize_TABLE,
 				$id_form,
@@ -122,12 +123,13 @@ class formulizeElementsHandler {
 				$ele_order,
 				$ele_req,
 				$this->db->quoteString($ele_value),
-				$ele_display
+				$ele_display,
+				$ele_forcehidden
 			);*/
 			$sql = sprintf("INSERT INTO %s (
-				id_form, ele_id, ele_type, ele_caption, ele_order, ele_req, ele_value, ele_display
+				id_form, ele_id, ele_type, ele_caption, ele_order, ele_req, ele_value, ele_display, ele_forcehidden
 				) VALUES (
-				%u, %u, %s, %s, %u, %u, %s, %s
+				%u, %u, %s, %s, %u, %u, %s, %s, %u
 				)",
 				formulize_TABLE,
 				$id_form,
@@ -137,7 +139,8 @@ class formulizeElementsHandler {
 				$ele_order,
 				$ele_req,
 				$this->db->quoteString($ele_value),
-				$this->db->quoteString($ele_display)
+				$this->db->quoteString($ele_display),
+				$ele_forcehidden
 			);            
             // changed - end - August 19 2005 - jpc
 			}else{
@@ -148,7 +151,8 @@ class formulizeElementsHandler {
 				ele_order = %u,
 				ele_req = %u,
 				ele_value = %s,
-				ele_display = %u
+				ele_display = %u,
+				ele_forcehidden = %u
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),
@@ -157,6 +161,7 @@ class formulizeElementsHandler {
 				$ele_req,
 				$this->db->quoteString($ele_value),
 				$ele_display,
+				$ele_forcehidden,
 				$ele_id,
 				$id_form
 			);*/
@@ -166,7 +171,8 @@ class formulizeElementsHandler {
 				ele_order = %u,
 				ele_req = %u,
 				ele_value = %s,
-				ele_display = %s
+				ele_display = %s,
+				ele_forcehidden = %u
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),
@@ -175,6 +181,7 @@ class formulizeElementsHandler {
 				$ele_req,
 				$this->db->quoteString($ele_value),
 				$this->db->quoteString($ele_display),
+				$ele_forcehidden,
 				$ele_id,
 				$id_form
 			);
@@ -185,6 +192,7 @@ class formulizeElementsHandler {
         }else{
             $result = $this->db->query($sql);
         }
+
 		if( !$result ){
 			$this->setErrors("Could not store data in the database.<br />".mysql_error());
 			return false;

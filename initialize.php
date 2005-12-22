@@ -107,7 +107,7 @@ if(!$bypass_form_menu = $gperm_handler->checkRight("bypass_form_menu", $id_form,
 
 	// check to see if the user has access to the Form Menu.  If they do not, then redirect to home
 	// get the block ID for the Form Menu
-	$block_sql = "SELECT bid FROM " . $xoopsDB->prefix("newblocks") . " WHERE mid=3 AND name='Form Menu'";
+	$block_sql = "SELECT bid FROM " . $xoopsDB->prefix("newblocks") . " WHERE mid=$mid AND name='Form Menu'";
 	$block_res = $xoopsDB->query($block_sql);
 	$block_array = $xoopsDB->fetchArray($block_res);
 	$bid = $block_array['bid']; // assumption is there will only be one record returned
