@@ -488,4 +488,13 @@ define("_formulize_CAL_WEEK_4_3ABRV", "Wed");
 define("_formulize_CAL_WEEK_5_3ABRV", "Thu");
 define("_formulize_CAL_WEEK_6_3ABRV", "Fri");
 define("_formulize_CAL_WEEK_7_3ABRV", "Sat");
+
+// account creation
+define("_formulize_ACTDETAILS", "Account Details:");
+define("_formulize_PERSONALDETAILS", "Personal Details:");
+define("_formulize_TYPEPASSTWICE_NEW", "(type your password twice)");
+define("_formulize_CDISPLAYMODE", "Your default way of displaying comments/posts");
+define("_formulize_CSORTORDER", "Your default sort order for comments/posts");
+define("_formulize_CREATEACT", "Create My Account!");
+define("_formulize_ACTCREATED", "Your account has been created and you are being logged into the site now.");
 ?>

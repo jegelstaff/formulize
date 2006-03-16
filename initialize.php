@@ -70,13 +70,10 @@ if ($title=="") {
 */
 
 // query modified to include singleentry - July 28, 2005 -- part of switch to new intnerface
-$sql=sprintf("SELECT admin,groupe,email,expe,singleentry FROM ".$xoopsDB->prefix("form_id")." WHERE id_form='$fid'");
+$sql=sprintf("SELECT admin,groupe,email,expe,singleentry,desc_form FROM ".$xoopsDB->prefix("form_id")." WHERE id_form='$fid'");
 $res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$sql.'<br>'.mysql_error());
 //global $nb_fichier;
  
-      	$myts =& MyTextSanitizer::getInstance();
-        $title = $myts->displayTarea($title);
-
 if ( $res ) {
   while ( $row = mysql_fetch_array ( $res ) ) {
     $id_form = $fid;
@@ -85,8 +82,13 @@ if ( $res ) {
     $email = $row['email'];
     $expe = $row['expe'];
     $singleentry = $row['singleentry'];
+    $desc_form = $row['desc_form'];
   }
 }
+
+$myts =& MyTextSanitizer::getInstance();
+$title = $myts->displayTarea($desc_form);
+$xoopsTpl->assign('xoops_pagetitle', $title);
 
 // new logic to handle invoking new interface
 // 1. determine if the form is a single or multi
@@ -102,6 +104,11 @@ $gperm_handler = &xoops_gethandler('groupperm');
 $view_globalscope = $gperm_handler->checkRight("view_globalscope", $id_form, $groups, $mid);
 $view_groupscope = $gperm_handler->checkRight("view_groupscope", $id_form, $groups, $mid);
 
+// THIS CHECK TURNED OFF
+// THEORY IS THAT VIEW_FORM PERMISSION IS THE MASTER CONTROL
+// IF SOMEONE HAS VIEW_FORM, THEN NO MATTER HOW THEY GET TO THE FORM, THEY SHOULD BE ALLOWED IN
+// ADDED VIEW_FORM CHECK BELOW -- Mar 15 2006, jwe
+/*
 // check whether user can bypass the form menu for this form.  If not, then check whether they have access to the form menu.  If not, deny access to the form
 if(!$bypass_form_menu = $gperm_handler->checkRight("bypass_form_menu", $id_form, $groups, $mid)) {
 
@@ -116,8 +123,16 @@ if(!$bypass_form_menu = $gperm_handler->checkRight("bypass_form_menu", $id_form,
 		redirect_header(XOOPS_URL, 3, _formulize_NO_PERMISSION);
 	}
 }
+*/
 
-if(!$singleentry OR ($view_globalscope OR $view_groupscope)) {
+if(!$view_form = $gperm_handler->checkRight("view_form", $id_form, $groups, $mid)) {
+	redirect_header(XOOPS_URL, 3, _formulize_NO_PERMISSION);
+}
+
+// check for $xoopsUser added by skenow.  Forces anons to only see the form itself and never the list of entries view.
+// Really, we should build in better permission/configuration control so that more precise 
+// control over anon behaviour is possible
+if((!$singleentry OR ($view_globalscope OR $view_groupscope)) AND $xoopsUser) {
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
 	displayEntries($id_form); // if it's a multi, or if a single and they have group or global scope
 } else {

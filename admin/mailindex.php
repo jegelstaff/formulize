@@ -379,7 +379,7 @@ echo '<tr>
 		//print"88";
 	}	
 
-	echo '<select name="headerlist[]" size="4" multiple>';
+	echo '<select name="headerlist[]" size="10" multiple>';
 
 	$getform_id ="SELECT id_form FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form=\"$realtitle\"";
 	$resultgetform = mysql_query($getform_id);
@@ -388,13 +388,15 @@ echo '<tr>
 
 	// get a list of captions in the form (fancy SQL Join query)
 	// then draw them into the selection box
-	$sqljwe="SELECT ele_caption FROM ".$xoopsDB->prefix("form")." WHERE id_form = \"$thisformid\" ORDER BY ele_order";
+	$sqljwe="SELECT ele_caption, ele_id FROM ".$xoopsDB->prefix("form")." WHERE id_form = \"$thisformid\" ORDER BY ele_order";
 	$resjwe = mysql_query ( $sqljwe );
 	if ( $resjwe ) {
 		$loopiteration = 0;
 		while ( $rowjwe = mysql_fetch_row ( $resjwe ) ) {
-			echo "<option value=\"" . $rowjwe[0] . "\""; 
-			if($title != '' && in_array($rowjwe[0], $headlistarray)) {echo " SELECTED";}  
+			echo "<option value=\"" . $rowjwe[1] . "\"";
+			// check id and caption, since legacy systems will be using the caption
+			// caption will not match if a form has recently been translated to another language, but once the headerlist is specified from scratch now, it will always be remembered since ids are now stored 
+			if($title != '' && (in_array($rowjwe[1], $headlistarray) OR in_array($rowjwe[0], $headlistarray))) {echo " SELECTED";}  
 			echo '>';
 			echo $rowjwe[0];
 			echo '</option>';

@@ -122,6 +122,26 @@ $modversion['config'][5]['valuetype'] = 'text';
 $modversion['config'][5]['default'] = 'br';
 $modversion['config'][5]['options'] = array(_MI_formulize_DELIMETER_BR=>'br', _MI_formulize_DELIMETER_SPACE=>'space');
 
+// $xoopsModuleConfig['profileForm']
+$modversion['config'][6]['name'] = 'profileForm';
+$modversion['config'][6]['title'] = '_MI_formulize_PROFILEFORM';
+$modversion['config'][6]['description'] = '';
+$modversion['config'][6]['formtype'] = 'select';
+$modversion['config'][6]['valuetype'] = 'int';
+$modversion['config'][6]['default'] = '0';
+// get all the available forms and populate the options array
+// this is not permission controlled yet -- should make use of the edit_form permission perhaps
+global $xoopsDB;
+$getFormsSQL = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("form_id");
+$resFormsSQL = $xoopsDB->query($getFormsSQL);
+$pformoptions["-------------"] = 0;
+while($resArray = $xoopsDB->fetchArray($resFormsSQL)) {
+	$pformoptions[$resArray['desc_form']] = $resArray['id_form'];
+}
+$modversion['config'][6]['options'] = $pformoptions;
+
+
+
 //bloc
 $modversion['blocks'][1]['file'] = "mymenu.php";
 $modversion['blocks'][1]['name'] = _MI_formulizeMENU_BNAME;

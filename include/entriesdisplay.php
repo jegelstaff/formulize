@@ -417,8 +417,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				break;
 			default:
 				$viewgroups = explode(",", trim($currentView, ","));
-				$diff = array_diff($viewgroups, $groups);
-				if(!isset($diff[0]) AND $view_groupscope) { // if the scopegroups are completely included in the group membership of the user and they have groupscope (ie: they would be allowed to see all these entries anyway)
+				$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+				$diff = array_diff($viewgroups, $groupsWithAccess);
+				if(!isset($diff[0]) AND $view_groupscope) { // if the scopegroups are completely included in the user's groups that have access to the form, and they have groupscope (ie: they would be allowed to see all these entries anyway)
 					$settings['lockcontrols'] = "";
 				} elseif($view_globalscope) { // if they have global scope
 					$settings['lockcontrols'] = "";
@@ -506,7 +507,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 //	if($reportscope) {
 //		$scope = buildScope($reportscope, $member_handler, $uid, $groups);
 //	} else {
-		$scope = buildScope($currentView, $member_handler, $uid, $groups);
+		$scope = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
 //	}
 
 	drawEntries($fid, $showcols, $_POST['sort'], $_POST['order'], $searches, $frid, $scope, "", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler); // , $loadview); // -- loadview not passed any longer since the lockcontrols indicator is used to handle whether things should appear or not.

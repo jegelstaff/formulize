@@ -45,6 +45,7 @@ define("_MI_formulize_SEND_METHOD_PM","Private message");
 define("_MI_formulize_SEND_GROUP","Send to group");
 define("_MI_formulize_SEND_ADMIN","Send to site admin only");
 define("_MI_formulize_SEND_ADMIN_DESC","Settings of \"Send to group\" will be ignored");
+define("_MI_formulize_PROFILEFORM","Which form is to be used as part of the registration process and when viewing and editing accounts? (requires use of the Registration Codes module)");
 
 // The name of this module
 define("_MI_formulizeMENU_NAME","MyMenu");

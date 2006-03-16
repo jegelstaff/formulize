@@ -1463,6 +1463,8 @@ case "patch205":
 
 }
 
+print "<p>version 2.0.6</p>";
+
 include 'footer.php';
     xoops_cp_footer();
 

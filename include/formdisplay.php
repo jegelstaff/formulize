@@ -113,11 +113,14 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 	if($global_scope = $gperm_handler->checkRight("view_globalscope", $targetForm['fid'], $owner_groups, $mid)) {
 		$scope_filter = "";
 	} elseif($group_scope = $gperm_handler->checkRight("view_groupscope", $targetForm['fid'], $owner_groups, $mid)) {
+		$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $targetForm['fid'], $mid);
 		foreach($owner_groups as $grp) {
-			if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone!
-				$users = $member_handler->getUsersByGroup($grp);
-				$all_users = array_merge($users, $all_users);
-				unset($users);
+			if(in_array($grp, $groupsWithAccess)) { // include only owner_groups that have view_form permission (so exclude groups the owner is a member of which aren't able to view the form)
+				if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone!
+					$users = $member_handler->getUsersByGroup($grp);
+					$all_users = array_merge($users, $all_users);
+					unset($users);
+				}
 			}
 		}
 		$uq = makeUidFilter($all_users);
@@ -125,8 +128,6 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 	} else {
 		$scope_filter = "AND uid=$owner";
 	} 
-
-
 
 	global $xoopsDB;
 	//targetForm is a special array containing the keys as specified in the framework, and the target form
@@ -203,7 +204,8 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 
 
 // this function checks for singleentry status and returns the appropriate entry in the form if there is one
-function getSingle($fid, $uid, $groups, $member_handler) {
+// only called from within this file
+function getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid) {
 	global $xoopsDB;
 	// determine single/multi status
 	$smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$fid");
@@ -217,9 +219,11 @@ function getSingle($fid, $uid, $groups, $member_handler) {
 			} else {
 				$single['entry'] = "";	
 			}
-		} elseif($smq[0]['singleentry'] == "group") { // get the first entry belonging to anyone in their groups
-			foreach($groups as $grp) {
-				if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone!
+		} elseif($smq[0]['singleentry'] == "group") { // get the first entry belonging to anyone in their groups, excluding any groups that do not have view_form permission
+			$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+			$intersect_groups = array_intersect($groups, $groupsWithAccess);
+			foreach($intersect_groups as $grp) {
+				if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone! -- superfluous now since registered users would normally be ignored since people probably would not be handing out perms to registered users group (on the other hand, if someone wanted to, it should be allowed now, since it won't screw things up necessarily, thanks to the use of groupsWithAccess)
 					$users = $member_handler->getUsersByGroup($grp);
 					$all_users = array_merge($users, $all_users);
 					unset($users);
@@ -312,7 +316,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 
 	// main security check passed, so let's initialize flags	
 	$go_back['url'] = $done_dest;
-	$single_result = getSingle($fid, $uid, $groups, $member_handler);
+	$single_result = getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid);
 	$single = $single_result['flag'];
 	if($single AND !$entry) { // only adjust the active entry if we're not already looking at an entry
 		$entry = $single_result['entry'];
@@ -397,7 +401,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 			$entries[$new_fid][0] = $_POST['goto_sub'];
 		}
 		$entry = $entries[$new_fid][0];
-		$single_result = getSingle($fid, $uid, $groups, $member_handler);
+		$single_result = getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid);
 		$single = $single_result['flag'];
 		if($single AND !$entry) {
 			$entry = $single_result['entry'];
@@ -460,10 +464,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 		if(!$form) {
 			drawJavascript();
 			$firstform = 1; 	      	
-			$title = getFormTitle($this_fid);
-			if(method_exists($myts, 'formatForML')) {
-				$title = $myts->formatForML($title);
-			} 
+			$title = trans(getFormTitle($this_fid));
+//			if(method_exists($myts, 'formatForML')) {
+//				$title = $myts->formatForML($title);
+//			} 
 	      	$form = new XoopsThemeForm($title, 'formulize', "$currentURL", "post", true);
 			$form->setExtra("enctype='multipart/form-data'"); // impératif!
 
@@ -569,15 +573,15 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 	// draw in the submitbutton if necessary
 	if($entry) { // existing entry, if it's their own and they can update their own, or someone else's and they can update someone else's
 		if(($owner == $uid AND $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid)) OR ($owner != $uid AND $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid))) {
-			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry);
+			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm);
 		} else {
-			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry); // draw in just the done button
+			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm); // draw in just the done button
 		}
 	} else { // new entry
 		if($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
-			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry);
+			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm);
 		} else {
-			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry); // draw in just the done button
+			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm); // draw in just the done button
 		}
 	}
 
@@ -594,41 +598,127 @@ function addProfileFields($form, $profileForm) {
 	// timezone
 	// password
 
-	global $xoopsUser, $xoopsConfig;
+	global $xoopsUser, $xoopsConfig, $xoopsConfigUser;
 	$config_handler =& xoops_gethandler('config');
 	$xoopsConfigUser =& $config_handler->getConfigsByCat(XOOPS_CONF_USER);
 	$user_handler =& xoops_gethandler('user');
 	$thisUser = $user_handler->get($profileForm);
 
+	// initialize $thisUser
+	if($thisUser) {
+		$thisUser_name = $thisUser->getVar('name', 'E');
+		$thisUser_uname = $thisUser->getVar('uname');
+		$thisUser_timezone_offset = $thisUser->getVar('timezone_offset');
+		$thisUser_email = $thisUser->getVar('email');
+		$thisUser_uid = $thisUser->getVar('uid');
+		$thisUser_viewemail = $thisUser->user_viewemail();
+		$thisUser_umode = $thisUser->getVar('umode');
+		$thisUser_uorder = $thisUser->getVar('uorder');
+		$thisUser_notify_method = $thisUser->getVar('notify_method');
+		$thisUser_notify_mode = $thisUser->getVar('notify_mode');
+		$thisUser_user_sig = $thisUser->getVar('user_sig', 'E');
+		$thisUser_attachsig = $thisUser->getVar('attachsig');
+	} else { // anon user
+		$thisUser_name = urldecode($_GET['name']);
+		$thisUser_uname = urldecode($_GET['uname']);
+		$thisUser_timezone_offset = urldecode($_GET['timezone_offset']);
+		$thisUser_email = urldecode($_GET['email']);
+		$thisUser_viewemail = urldecode($_GET['viewemail']);
+		$thisUser_uid = 0;
+	}
+
 		include_once XOOPS_ROOT_PATH . "/language/" . $xoopsConfig['language'] . "/user.php";
 
+	$form->insertBreak(_formulize_ACTDETAILS, "head");
+
 	// following borrowed from edituser.php
-	$uname_label = new XoopsFormLabel(_US_NICKNAME, $thisUser->getVar('uname'));
-	$form->addElement($uname_label);
-	$name_text = new XoopsFormText(_US_REALNAME, 'userprofile_name', 30, 60, $thisUser->getVar('name', 'E'));
-	$form->addElement($name_text);
-	$email_tray = new XoopsFormElementTray(_US_EMAIL, '<br />');
-	if ($xoopsConfigUser['allow_chgmail'] == 1) {
-      	$email_text = new XoopsFormText('', 'userprofile_email', 30, 60, $thisUser->getVar('email'));
+	if($profileForm == "new") {
+		// 'new' should ONLY be coming from the modified register.php file that the registration codes module uses
+		// ie: we are assuming registration codes is installed
+		require_once XOOPS_ROOT_PATH ."/modules/reg_codes/language/".$xoopsConfig['language']."/modinfo.php";
+		$reg_code_box = new XoopsFormText("", "userprofile_regcode", 10, 10, urldecode($_GET['code'])); 
+		$reg_code_help = new XoopsFormLabel("", _REGFORM_REGCODES_HELP);
+		$reg_code_tray = new XoopsFormElementTray(_REGFORM_REGCODES_REGCODE, "<br />"); 
+		$reg_code_tray->addElement($reg_code_box, 1);
+		$reg_code_tray->addElement($reg_code_help);
+		$form->addElement($reg_code_tray, 1);
+		$uname_size = $xoopsConfigUser['maxuname'] < 25 ? $xoopsConfigUser['maxuname'] : 25;
+		$uname_label = new XoopsFormText(_US_NICKNAME, 'userprofile_uname', $uname_size, $uname_size, $thisUser_uname);
+		$form->addElement($uname_label, 1);
 	} else {
-        	$email_text = new XoopsFormLabel('', $thisUser->getVar('email'));
+		$uname_label = new XoopsFormLabel(_US_NICKNAME, $thisUser_uname);
+		$form->addElement($uname_label);
 	}
-	$email_tray->addElement($email_text);
-	$email_cbox_value = $thisUser->user_viewemail() ? 1 : 0;
+	if($profileForm == "new") {
+		$pwd_tray = new XoopsFormElementTray(_US_PASSWORD.'<br />'._formulize_TYPEPASSTWICE_NEW);
+	} else {
+		$pwd_tray = new XoopsFormElementTray(_US_PASSWORD.'<br />'._US_TYPEPASSTWICE);
+	}
+	$pwd_text = new XoopsFormPassword('', 'userprofile_password', 10, 32);
+	$pwd_text2 = new XoopsFormPassword('', 'userprofile_vpass', 10, 32);
+	$pass_required = $profileForm == "new" ? 1 : 0;
+	$pwd_tray->addElement($pwd_text, $pass_required);
+	$pwd_tray->addElement($pwd_text2, $pass_required);
+	$form->addElement($pwd_tray, $pass_required);
+	$name_text = new XoopsFormText(_US_REALNAME, 'userprofile_name', 30, 60, $thisUser_name);
+	$form->addElement($name_text, 1);
+	$email_tray = new XoopsFormElementTray(_US_EMAIL, '<br />');
+	if ($xoopsConfigUser['allow_chgmail'] == 1 OR $profileForm == "new") {
+      	$email_text = new XoopsFormText('', 'userprofile_email', 30, 60, $thisUser_email);
+		$email_tray->addElement($email_text, 1);
+	} else {
+        	$email_text = new XoopsFormLabel('', $thisUser_email);
+		$email_tray->addElement($email_text);
+	}
+	$email_cbox_value = $thisUser_viewemail ? 1 : 0;
 	$email_cbox = new XoopsFormCheckBox('', 'userprofile_user_viewemail', $email_cbox_value);
 	$email_cbox->addOption(1, _US_ALLOWVIEWEMAIL);
 	$email_tray->addElement($email_cbox);
-	$form->addElement($email_tray);
-	$timezone_select = new XoopsFormSelectTimezone(_US_TIMEZONE, 'userprofile_timezone_offset', $thisUser->getVar('timezone_offset'));
+	$form->addElement($email_tray, 1);
+	$timezone_select = new XoopsFormSelectTimezone(_US_TIMEZONE, 'userprofile_timezone_offset', $thisUser_timezone_offset);
 	$form->addElement($timezone_select);
-	$pwd_text = new XoopsFormPassword('', 'userprofile_password', 10, 32);
-	$pwd_text2 = new XoopsFormPassword('', 'userprofile_vpass', 10, 32);
-	$pwd_tray = new XoopsFormElementTray(_US_PASSWORD.'<br />'._US_TYPEPASSTWICE);
-	$pwd_tray->addElement($pwd_text);
-	$pwd_tray->addElement($pwd_text2);
-	$uid_check = new XoopsFormHidden("userprofile_uid", $thisUser->getVar('uid'));
-	$form->AddElement($uid_check);
-	$form->addElement($pwd_tray);
+
+	if($profileForm != "new") {
+      	$umode_select = new XoopsFormSelect(_formulize_CDISPLAYMODE, 'userprofile_umode', $thisUser_umode);
+      	$umode_select->addOptionArray(array('nest'=>_NESTED, 'flat'=>_FLAT, 'thread'=>_THREADED));
+      	$form->addElement($umode_select);
+      	$uorder_select = new XoopsFormSelect(_formulize_CSORTORDER, 'userprofile_uorder', $thisUser_uorder);
+      	$uorder_select->addOptionArray(array(XOOPS_COMMENT_OLD1ST => _OLDESTFIRST, XOOPS_COMMENT_NEW1ST => _NEWESTFIRST));
+      	$form->addElement($uorder_select);
+      	include_once XOOPS_ROOT_PATH . "/language/" . $xoopsConfig['language'] . '/notification.php';
+      	include_once XOOPS_ROOT_PATH . '/include/notification_constants.php';
+      	$notify_method_select = new XoopsFormSelect(_NOT_NOTIFYMETHOD, 'userprofile_notify_method', $thisUser_notify_method);
+      	$notify_method_select->addOptionArray(array(XOOPS_NOTIFICATION_METHOD_DISABLE=>_NOT_METHOD_DISABLE, XOOPS_NOTIFICATION_METHOD_PM=>_NOT_METHOD_PM, XOOPS_NOTIFICATION_METHOD_EMAIL=>_NOT_METHOD_EMAIL));
+      	$form->addElement($notify_method_select);
+      	$notify_mode_select = new XoopsFormSelect(_NOT_NOTIFYMODE, 'userprofile_notify_mode', $thisUser_notify_mode);
+      	$notify_mode_select->addOptionArray(array(XOOPS_NOTIFICATION_MODE_SENDALWAYS=>_NOT_MODE_SENDALWAYS, XOOPS_NOTIFICATION_MODE_SENDONCETHENDELETE=>_NOT_MODE_SENDONCE, XOOPS_NOTIFICATION_MODE_SENDONCETHENWAIT=>_NOT_MODE_SENDONCEPERLOGIN));
+      	$form->addElement($notify_mode_select);
+      	$sig_tray = new XoopsFormElementTray(_US_SIGNATURE, '<br />');
+      	include_once XOOPS_ROOT_PATH . '/include/xoopscodes.php';
+      	$sig_tarea = new XoopsFormDhtmlTextArea('', 'userprofile_user_sig', $thisUser_user_sig);
+      	$sig_tray->addElement($sig_tarea);
+      	$sig_cbox_value = $thisUser_attachsig ? 1 : 0;
+      	$sig_cbox = new XoopsFormCheckBox('', 'userprofile_attachsig', $sig_cbox_value);
+      	$sig_cbox->addOption(1, _US_SHOWSIG);
+      	$sig_tray->addElement($sig_cbox);
+      	$form->addElement($sig_tray);
+	} else { // display only on new account creation...
+		if ($xoopsConfigUser['reg_dispdsclmr'] != 0 && $xoopsConfigUser['reg_disclaimer'] != '') {
+			$disc_tray = new XoopsFormElementTray(_US_DISCLAIMER, '<br />');
+			$disc_text = new XoopsFormTextarea('', 'disclaimer', $xoopsConfigUser['reg_disclaimer'], 8);
+			$disc_text->setExtra('readonly="readonly"');
+			$disc_tray->addElement($disc_text);
+			$agree_chk = new XoopsFormCheckBox('', 'userprofile_agree_disc', $agree_disc);
+			$agree_chk->addOption(1, "<span style=\"font-size: 14pt;\">" . _US_IAGREE . "</span>");
+			$disc_tray->addElement($agree_chk);
+			$form->addElement($disc_tray);
+		}
+		$form->addElement(new XoopsFormHidden("op", "newuser"));
+	}
+
+	$uid_check = new XoopsFormHidden("userprofile_uid", $thisUser_uid);
+	$form->addElement($uid_check);
+	$form->insertBreak(_formulize_PERSONALDETAILS, "head");
 
 	return $form;
 
@@ -636,7 +726,7 @@ function addProfileFields($form, $profileForm) {
 
 
 // add the submit button to a form
-function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $done_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry) {
+function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $done_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm) {
 
 	if(strstr($currentURL, "printview.php")) { // don't do anything if we're on the print view
 		return $form;
@@ -661,24 +751,43 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $done_
 		print "<input type=hidden name=lastentry value=$entry>";
 		print "</form>";
 	} 
-	if(!$done_text) { $done_text = _formulize_DONE; }
+	if(!$done_text) { 
+		$done_text = _formulize_DONE; 
+	} elseif(is_array($done_text)) {
+		if(!$done_text[0]) { 
+			$done_text_temp = _formulize_DONE; 
+		} else {
+			$done_text_temp = $done_text[0];
+		}
+		if(!$done_text[1]) { 
+			$save_text_temp = _formulize_SAVE; 
+		} else {
+			$save_text_temp = $done_text[1];
+		}
+	}
 
+	if(!$profileForm) { // do not use printable button for profile forms
 		$printbutton = new XoopsFormButton('', 'printbutton', _formulize_PRINTVIEW, 'button');
 		$printbutton->setExtra("onclick='javascript:PrintPop();'");
-
 		$buttontray = new XoopsFormElementTray($printbutton->render(), "&nbsp;");
-	if($subButtonText == _formulize_SAVE) {
+	} else {
+		$buttontray = new XoopsFormElementTray("", "&nbsp;");
+	}
+	if($subButtonText == _formulize_SAVE) { // _formulize_SAVE is passed only when the save button is allowed to be drawn
+		if($save_text_temp) { $subButtonText = $save_text_temp; }
 		$saveButton = new XoopsFormButton('', 'submitx', $subButtonText, 'button'); // doesn't use name submit since that conflicts with the submit javascript function
-		$saveButton->setExtra("onclick=javascript:window.document.formulize.submit();");
+		$saveButton->setExtra("onclick=javascript:validateAndSubmit();");
 		$buttontray->addElement($saveButton);
 	}
 	
-	if($done_text != "{NOBUTTON}") {
+	if(($done_text != "{NOBUTTON}" AND !$done_text_temp) OR (isset($done_text_temp) AND $done_text_temp != "{NOBUTTON}")) {
+		if($done_text_temp) { $done_text = $done_text_temp; }
 		$donebutton = new XoopsFormButton('', 'donebutton', $done_text, 'button');
 		$donebutton->setExtra("onclick=javascript:verifyDone();");
 		$buttontray->addElement($donebutton); 
 	}
 
+	if(!$profileForm) { // do not use printable button for profile forms
 		$newcurrentURL= XOOPS_URL . "/modules/formulize/printview.php";
 		print "<form name='printview' action='".$newcurrentURL."' method=post target=_blank>\n";
 		print "<input type=hidden name=lastentry value=".$cur_entry.">";
@@ -689,8 +798,8 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $done_
 			print "<input type=hidden name=mainform value='".$mainform."'>";
 		}
 		print "</form>";
-
 		//added by Cory Aug 27, 2005 to make forms printable
+	}
 
 	$form->addElement($buttontray);
 	return $form;
@@ -705,7 +814,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 	// need to do a number of checks here, including looking for single status on subform, and not drawing in add another if there is an entry for a single
 			
-	$sub_single_result = getSingle($sfid, $uid, $groups, $member_handler);
+	$sub_single_result = getSingle($sfid, $uid, $groups, $member_handler, $gperm_handler, $mid);
 	$sub_single = $sub_single_result['flag'];
 	if($sub_single) {
 		unset($sub_entries);
@@ -1173,6 +1282,14 @@ function showPop(url) {
 	window.popup.focus();
 
 }
+
+function validateAndSubmit() {
+	var validate = xoopsFormValidate_formulize();
+	if(validate) {
+		window.document.formulize.submit(); 
+	}
+}
+
 <?php
 
 print "	function verifyDone() {\n";

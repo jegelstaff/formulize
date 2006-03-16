@@ -225,8 +225,10 @@ function security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handle
 					$smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$fid");
 					if($smq[0]['singleentry'] == "group") { $view_groupscope = true; }
 				}
-				$intersect_groups = array_intersect($owner_groups, $groups);
+				$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+				$intersect_groups = array_intersect($owner_groups, $groupsWithAccess);
 				if(!$view_groupscope OR (count($intersect_groups) == 1 AND $intersect_groups[0] == XOOPS_GROUP_USERS)) {
+					// if they have no groupscope, or if they do have groupscope, but the only point of overlap between the owner and their own groups with access is the registered users group, then..... (note that registered users will probably be an irrelevant check since the new "groups with access" checking ought to exclude registered users group in complex group setups)
 					// last hope...check for a unlocked view that has been published to them which covers a group that includes this entry
 					// 1. get groups for unlocked view for this user's groups where the mainform is $fid or there is no mainform and formframe is $fid
 					// 2. if group or all scope, allow it
@@ -328,6 +330,27 @@ function getHeaderList ($fid) {
 			$headerlist = explode("*=+*:", $row[0]); 
 			array_shift($headerlist);
 		}
+		// handling for id based headerlists added March 6 2005, by jwe
+		if(is_numeric($headerlist[0])) { // if the headerlist is using the new ID based system
+			$start = 1;
+			foreach($headerlist as $thisheaderid) {
+				if($start) {
+					$where_clause = "ele_id='$thisheaderid'";
+					$start = 0;
+				} else {
+					$where_clause .= " OR ele_id='$thisheaderid'";
+				}
+			}
+			$captionq = "SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE $where_clause ORDER BY ele_order";
+			if($rescaptionq = $xoopsDB->query($captionq)) {
+				unset($headerlist);
+				while ($row = $xoopsDB->fetchArray($rescaptionq)) {
+					$headerlist[] = $row['ele_caption'];
+				}
+			} else {
+				exit("Error returning the default list of captions.");
+			}
+		}
 	}
 
 	if(count($headerlist)==0) { // if no header fields specified, then....
@@ -359,6 +382,7 @@ function allowedCats($cats, $allowedForms) {
 		$flatFormArray = q("SELECT id_form_array FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$catid'");
 		$formsInCat = explode(",", trim($flatFormArray[0]['id_form_array'], ","));
 		if(array_intersect($formsInCat, $allowedForms)) {
+
 			$allowedCats[$catid] = $catname;
 		}  		
 	}
@@ -381,6 +405,20 @@ function allowedForms() {
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$allowedForms = $gperm_handler->getItemIds("view_form", $groups, $module_id);
+
+	// EXCLUDE THE USERPROFILE FORM UNLESS THE USER HAS VIEW_GROUPSCOPE OR VIEW_GLOBALSCOPE ON IT
+	// $xoopsModuleConfig guaranteed to be set since this is used by the cat.php file which is directly part of the module and not called from outside
+	// added Mar 15 2006, jwe
+	global $xoopsModuleConfig;
+	$pform = $xoopsModuleConfig['profileForm'];
+	$pformKey = array_search($pform, $allowedForms);
+	if(isset($pformKey)) { // if the profileForm is allowed...
+		// check if the user has view group or view global on that form....
+		if(!$pform_view_groupscope = $gperm_handler->checkRight("view_groupscope", $pform, $groups, $module_id) AND !$pform_view_globalscope = $gperm_handler->checkRight("view_globalscope", $pform, $groups, $module_id)) {
+			// if no group or global perm, then remove from array....
+			unset($allowedForms[$pformKey]);
+		}
+	}
 
 	return $allowedForms;
 
@@ -472,6 +510,7 @@ function drawMenu($thisid, $thiscat, $allowedForms, $id_form, $topwritten, $forc
 					//$urltitle = str_replace(" ", "%20", $title);
 					$suburl = XOOPS_URL."/modules/formulize/index.php?fid=$thisform";
 					$block .= "<a class=menuSub href='$suburl'>$title</a>";
+
 				}
 			}
 		}
@@ -746,6 +785,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title) {
 			$data_to_write = displayTogether($entry, $col, "\n");
 			$data_to_write = str_replace("\"", "\"\"", $data_to_write);
 			$data_to_write = "\"" . $data_to_write . "\"";
+			$data_to_write = str_replace("\r\n", "\n", $data_to_write);	
 			$csvfile .= $fd . $data_to_write;
 		}
 		$csvfile .= "\r\n"; // end of a line
@@ -913,16 +953,19 @@ function getCalcHandleText($handle, $frid="") {
 
 // this function builds the scope used for passing to the getData function
 // based on values of either mine, group, all, or a groupid string formatted with start, end and inbetween commas: ,1,3,
-function buildScope($currentView, $member_handler, $uid, $groups) {
+function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid) {
 	if($currentView == "mine" OR substr($currentView, 0, 4) == "old_") {
 		$all_users[] = $uid;
 		$scope = makeUidFilter($all_users);
 	} elseif($currentView == "group") {
+		$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
 		foreach($groups as $grp) {
-			if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone!
-				$temp_users = $member_handler->getUsersByGroup($grp);
-				$all_users = array_merge($temp_users, $all_users);
-				unset($temp_users);
+			if(in_array($grp, $groupsWithAccess)) { // include only groups that have access to view the form ($groups is the user's own groups, so this excludes groups they are a member of but which do not have access to the form -- allows for situations where two users are members of one all encompassing group (Actua National) plus also each members of their own local groups (VV and AES), and you want groupscope to cover only the local groups, so therefore you do NOT give view_form permission (or any form permissions probably) to the all encompassing group.
+				if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone!  (Note that registered users will likely be excluded now by the previous check, since a rigorously structured group system is unlikely to lead to Registered Users group being handed any form permissions.)
+					$temp_users = $member_handler->getUsersByGroup($grp);
+					$all_users = array_merge($temp_users, $all_users);
+					unset($temp_users);
+				}
 			}
 		}
 		$scope = makeUidFilter($all_users);
@@ -950,10 +993,15 @@ function buildScope($currentView, $member_handler, $uid, $groups) {
 }
 
 // THIS FUNCTION SENDS TEXT THROUGH THE TRANSLATION ROUTINE IF MARCAN'S MULTILANGUAGE HACK IS INSTALLED
+// THIS FUNCTION IS ALSO AWARE OF THE XLANGUAGE MODULE IF THAT IS INSTALLED.  
 function trans($string) {
 	$myts =& MyTextSanitizer::getInstance();
 	if(method_exists($myts, 'formatForML')) {
 		$string = $myts->formatForML($string);
+	} else {
+		if(function_exists('xlanguage_ml')) {
+			$string = xlanguage_ml($string);
+		}
 	} 
 	return $string;
 }
@@ -1187,7 +1235,7 @@ function getElementValue($entry, $caption) {
 	$evq = "SELECT ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req='$entry' AND ele_caption='$caption'";
 	if($res = $xoopsDB->query($evq)) {
 		$array = $xoopsDB->fetchArray($res); 
-		if($array['ele_value']) {
+		if(isset($array['ele_value'])) {
 			return true;
 		} else {
 			return false;

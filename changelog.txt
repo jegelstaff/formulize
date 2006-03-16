@@ -1,4 +1,35 @@
 *********************
+Version 2.0.6 Beta:
+*********************
+
+** New Features:
+
+--Changed the nature of "groupscope", ie: how "view entries by others in the same group(s)" behaves:  
+
+Before this, a user's ability to view other entries by users in the same group was determined solely based on group membership.  So if two users were a member of the same group, any group, then they would have the ability to view each other's entries.  The sole exception was Registered Users, since everyone in the system is a member of that group.
+
+Now, in addition to having membership in at least one group in common, that common group must have view_form permission for the form in question.  This affects the "one entry per group" setting on the form settings page as well.  
+
+The benefit is that you can have a National Volunteers group for everyone in your organization, and a Toronto Volunteers group and a Vancouver Volunteers group for only people local to each area, and as long as you only hand out form permissions to the local groups, then members of those groups will be limited in scope to their local area.  They can still have membership in common in the National Volunteers group, but that will no longer open up all the local entries across the country to everyone else.  Before this change, having everyone in a national group like that would have effectively meant "groupscope" was the same as "globalscope".
+
+--You can now create a custom registration/user profile form, and integrate it with the XOOPS core through use of the Registration Codes module.  See the readme file for the Registration Codes module for details.
+--Formulize is now compatible with the xLanguage module.
+--The title of the form is now used as the HTML page title (thanks to dpicella for the code)
+--You can now pass custom text for the Save button, as well as custom text for the All Done button, to the displayForm function.
+--Added the current version to the bottom of the main admin page.
+
+** Changes/Fixes:
+
+--Deprecated bypass_form_menu permission which was introduced in 2.0.4.  Previously, users required access to the Form Menu block OR bypass_form_menu permission, in order to view a form.  Now, view_form permission is all that is required, regardless of access to the Form Menu block.
+--Changed the default behaviour for anonymous users so that they never see the list of entries screen, and only ever see the form itself (change suggested by Steve Kenow)
+--Fixed a long standing bug where the "headerlist", the default columns displayed on the view entries page, would be lost if any change was made to a form, including creating new elements, reordering elements or changing any caption. --Corrected a PHP 5 compatibility issue in the data extraction layer.
+--Fixed a bug related to form titles and use of multilanguage hacks.
+--Introduced an intermediate form validation function that precedes the default XOOPS core validation function.  In future this can be used to perform any kind of verification/validation on data entered into a form, prior to it being submitted to the database.
+--included dpicella's safestrtotime function which allows date fields to handle dates prior to the origin of Unix (December 31 1969).
+--Fixed a bug in the export of data, when there were hard returns in data entered into textboxes.  The hard returns were being translated directly into the .csv instead of being treated as line breaks.
+--Fixed an obscure bug that occurred in forms created with the displayElement function, if there was a null or zero default value for the element.
+
+*********************
 Version 2.0.5 Beta:
 *********************
 

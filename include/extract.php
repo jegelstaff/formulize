@@ -550,12 +550,12 @@ function makeFilterInternal($filter, $frid="", $fid, $andor, $scope, $linkform) 
 				}
 				// if OR, then simply append id_reqs together, if AND, then save the overlap set
 				if($andor == "OR") {
-					foreach($prequery as $this) {
-						$filterids[] = $this['id_req'];
+					foreach($prequery as $thisprequery) {
+						$filterids[] = $thisprequery['id_req'];
 					}
 				} elseif ($andor == "AND") {
-					foreach($prequery as $this) {
-						$theseids[] = $this['id_req'];
+					foreach($prequery as $thisprequery) {
+						$theseids[] = $thisprequery['id_req'];
 					}
 					if(count($theseids)<1) { $theseids[] = ""; }
 					if(!isset($savedids)) { $savedids = $theseids; } // the first time through, make sure we save all the ids found so we have something to compare against on the next round

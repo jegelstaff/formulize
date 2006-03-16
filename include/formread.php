@@ -58,9 +58,11 @@ function writeLinks($entries, $fids) {
 
 
 // function handles reading of data from submitted form
-function handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_groups, $groups) {
+function handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_groups, $groups, $profileForm="") {
 
-if (!$GLOBALS['xoopsSecurity']->check()) {
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+
+if (!$GLOBALS['xoopsSecurity']->check() AND !$profileForm) {
 	print "<b>Error: the data you submitted could not be saved in the database.</b>";
 	return;
 }
@@ -327,13 +329,10 @@ $myts =& MyTextSanitizer::getInstance();
 					// print "selects: $value<br>";
 				break;
 				} // end of if that checks for a linked select box.
-				case 'areamodif':
-					$value = $ele[$i];
-				break;
 				case 'date':
 					// code below commented/added by jwe 10/23/04 to convert dates into the proper standard format
 					if($ele[$i] != "YYYY-mm-dd" AND $ele[$i] != "") { 
-						$ele[$i] = date("Y-m-d", strtotime($ele[$i])); 
+						$ele[$i] = date("Y-m-d", safestrtotime($ele[$i])); 
 					} else {
 						continue 2; // forget about this date element and go on to the next element in the form
 					}
@@ -369,6 +368,21 @@ $myts =& MyTextSanitizer::getInstance();
 	} 
 	return $entries;
 }
+
+// THIS FUNCTION CONTRIBUTED BY DPICELLA.  Added in Mar 15 2006.
+/*
+A shorter function for recognising dates before 1970 and returning a negative number is below. All it does is replaces years before 1970 with  ones 68 years later (1904 becomes 1972), and then offsets the return value by a couple billion seconds. It works back to 1/1/1902, but only on dates that have a century.
+Note that a negative number is stored the same as a really big positive number. 0x80000000 is the number of seconds between 13/12/1901 20:45:54 and 1/1/1970 00:00:00. And 1570448 is the seconds between this date and 1/1/1902 00:00:00, which is 68 years before 1/1/1970.
+*/
+function safestrtotime ($s) {
+       $basetime = 0;
+       if (preg_match (&quot;/19(\d\d)/&quot;, $s, $m) && ($m[1] &lt; 70)) {
+               $s = preg_replace (&quot;/19\d\d/&quot;, 1900 + $m[1]+68, $s);
+               $basetime = 0x80000000 + 1570448;
+       }
+       return $basetime + strtotime ($s);
+}
+
 
 // THIS FUNCTION WRITES DATA TO THE DATABASE
 function writeData($value, $entry, $uids, $prevEntry, $id_form, $ele_caption, $proxyid, $date, $ele_type) {
@@ -433,6 +447,12 @@ function writeUserProfile($data, $uid) {
 	// timezone_offset
 	// password
 	// vpass
+	// attachsig
+	// user_sig
+	// umode
+	// uorder
+	// notify_method
+	// notify_mode
 
 	global $xoopsUser, $xoopsConfig;
 	$config_handler =& xoops_gethandler('config');
@@ -460,20 +480,20 @@ function writeUserProfile($data, $uid) {
         }
     }
     $password = '';
+    $vpass = '';
     if (!empty($data['password'])) {
-        $password = $myts->stripSlashesGPC(trim($data['password']));
+     	  $password = $myts->stripSlashesGPC(trim($data['password']));
     }
     if ($password != '') {
-        if (strlen($password) < $xoopsConfigUser['minpass']) {
-            $errors[] = sprintf(_US_PWDTOOSHORT,$xoopsConfigUser['minpass']);
+     	  if (strlen($password) < $xoopsConfigUser['minpass']) {
+           	$errors[] = sprintf(_US_PWDTOOSHORT,$xoopsConfigUser['minpass']);
         }
-        $vpass = '';
-        if (!empty($data['vpass'])) {
-            $vpass = $myts->stripSlashesGPC(trim($data['vpass']));
+        if (!empty($data['vpass'])) { 
+     	      $vpass = $myts->stripSlashesGPC(trim($data['vpass']));
         }
-        if ($password != $vpass) {
+     	  if ($password != $vpass) {
             $errors[] = _US_PASSNOTSAME;
-        }
+     	  }
     }
     if (count($errors) > 0) {
         echo '<div>';
@@ -494,6 +514,14 @@ function writeUserProfile($data, $uid) {
             $edituser->setVar('pass', md5($password), true);
         }
         $edituser->setVar('timezone_offset', $data['timezone_offset']);
+        $attachsig = !empty($data['attachsig']) ? 1 : 0;
+	  $edituser->setVar('attachsig', $attachsig);
+        $edituser->setVar('user_sig', xoops_substr($data['user_sig'], 0, 255));
+        $edituser->setVar('uorder', $data['uorder']);
+        $edituser->setVar('umode', $data['umode']);
+        $edituser->setVar('notify_method', $data['notify_method']);
+        $edituser->setVar('notify_mode', $data['notify_mode']);
+
         if (!$member_handler->insertUser($edituser)) {
             echo $edituser->getHtmlErrors();
 		exit();
