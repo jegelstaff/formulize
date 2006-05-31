@@ -47,7 +47,7 @@ function block_formulizeMENU_show() {
 		$title = $_POST['title'];
 	}
 	if($title) {
-		$sql=q("SELECT id_form FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form=\"$title\"");
+		$sql=q("SELECT id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form=\"$title\"");
 		$id_form = $sql[0]['id_form'];
 	} else {
 		$id_form = 0;

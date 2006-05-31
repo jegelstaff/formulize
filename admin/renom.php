@@ -62,7 +62,7 @@ if(!isset($HTTP_POST_VARS['op'])){
 
 
 
-	$sql="SELECT desc_form FROM ".$xoopsDB->prefix("form_id")." WHERE id_form = ".$title;
+	$sql="SELECT desc_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form = ".$title;
 	$res = mysql_query ( $sql );
 
 if ( $res ) {
@@ -108,10 +108,10 @@ else
 	$title2 = eregi_replace ('"', "`", $title2);
 	$title2 = eregi_replace ('&', "_", $title2);
 	
-	$sql = sprintf("UPDATE %s SET desc_form='%s' WHERE id_form='%s'", $xoopsDB->prefix("form_id"), $title2, $title);
+	$sql = sprintf("UPDATE %s SET desc_form='%s' WHERE id_form='%s'", $xoopsDB->prefix("formulize_id"), $title2, $title);
 	$xoopsDB->queryF($sql) or $eh->show("error insertion 1 dans renform");
 	
-	$sql2 = sprintf("UPDATE %s SET itemname='%s',itemurl='%s' WHERE itemname='%s'", $xoopsDB->prefix("form_menu"), $title2, XOOPS_URL.'/modules/formulize/index.php?title='.$title2, $desc_form);
+	$sql2 = sprintf("UPDATE %s SET itemname='%s',itemurl='%s' WHERE itemname='%s'", $xoopsDB->prefix("formulize_menu"), $title2, XOOPS_URL.'/modules/formulize/index.php?title='.$title2, $desc_form);
 	$xoopsDB->query($sql2) or $eh->show("error insertion 2 dans renform");
 	redirect_header("formindex.php",1,_formulize_FORMMOD);
 }

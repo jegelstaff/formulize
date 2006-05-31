@@ -229,8 +229,8 @@ if($pguidq) { $pguidq .= ")"; } // close the pguidq if it has been started
 
 // query below modified to include pguidq which will limit the returned values to just the ones that are allowed for this user's groups to see -- jwe 8/29/04
 					$boxprop1_formform = str_replace("'", "`", stripslashes($boxproperties[1])); // sept 2 2005 -- convert to formform format
-if($_GET['sdebug']) { print "<br>SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxprop1_formform\" $pguidq ORDER BY ele_value"; } // GROUP BY ele_value ORDER BY ele_value";
-					$linkedvaluesq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxprop1_formform\" $pguidq ORDER BY ele_value"; // GROUP BY ele_value ORDER BY ele_value"; // GROUP BY removed 8/12/05 in order to allow duplicate listings in linked select boxes
+if($_GET['sdebug']) { print "<br>SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxprop1_formform\" $pguidq ORDER BY ele_value"; } // GROUP BY ele_value ORDER BY ele_value";
+					$linkedvaluesq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxprop1_formform\" $pguidq ORDER BY ele_value"; // GROUP BY ele_value ORDER BY ele_value"; // GROUP BY removed 8/12/05 in order to allow duplicate listings in linked select boxes
 					$reslinkedvaluesq = mysql_query($linkedvaluesq);
 					if($reslinkedvaluesq)
 					{

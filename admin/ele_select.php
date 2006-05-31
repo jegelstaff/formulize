@@ -138,13 +138,13 @@ array($totalcaptionlist);
 array($totalvaluelist);
 $captionlistindex = 0;
 
-$formlist = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("form_id") . " ORDER BY desc_form";
+$formlist = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id") . " ORDER BY desc_form";
 $resformlist = mysql_query($formlist);
 if($resformlist)
 {
 	while ($rowformlist = mysql_fetch_row($resformlist)) // loop through each form
 	{
-		$fieldnames = "SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form=$rowformlist[0] ORDER BY ele_order";
+		$fieldnames = "SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$rowformlist[0] ORDER BY ele_order";
 		$resfieldnames = mysql_query($fieldnames);
 		
 		while ($rowfieldnames = mysql_fetch_row($resfieldnames)) // loop through each caption in the current form

@@ -49,7 +49,7 @@ if(!is_numeric($_GET['title'])) {
 		$title = $HTTP_POST_VARS['title'];
 	}
 
-	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$title);
+	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form='%s'",$title);
 	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
 
 	if ( $res ) {
@@ -60,7 +60,7 @@ if(!is_numeric($_GET['title'])) {
 } else {
 	$id_form = $_GET['title'];
 	$title = $_GET['title'];
-	$rtsql = "SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$id_form";
+	$rtsql = "SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$id_form";
 	$rtres = $xoopsDB->query($rtsql);
 	$rtarray = $xoopsDB->fetchArray($rtres);
 	$realtitle = $rtarray['desc_form'];
@@ -144,7 +144,11 @@ if( $_POST['op'] != 'save' ){
                     	$check_display .= "\n";
 
 					$group_display = $fs_member_handler->getGroup($groupList);
-					$check_display .= $group_display->getVar('name');
+					if(is_object($group_display)) {
+						$check_display .= $group_display->getVar('name');
+					} else {
+						$check_display .= "???";
+					}
 				}                               
             }
 

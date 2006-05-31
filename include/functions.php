@@ -33,6 +33,7 @@
 // identify form or framework
 function getFormFramework($formframe, $mainform="") {
 	global $xoopsDB;
+
 	if(!empty($mainform)) { // a framework
 		if(!is_numeric($formframe)) {
 			$frameid = q("SELECT frame_id FROM " . $xoopsDB->prefix("formulize_frameworks") . " WHERE frame_name='$formframe'");
@@ -56,7 +57,7 @@ function getFormFramework($formframe, $mainform="") {
 	} else { // a form
 		$frid = "";
 		if(!is_numeric($formframe)) { // if it's a title, convert to the id
-			$formid = q("SELECT id_form FROM " . $xoopsDB->prefix("form_id") . " WHERE desc_form = '$formframe'");
+			$formid = q("SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE desc_form = '$formframe'");
 			$fid = $formid[0]['id_form'];
 		} else {
 			$fid = $formframe;
@@ -70,7 +71,7 @@ function getFormFramework($formframe, $mainform="") {
 // get the title of a form
 function getFormTitle($fid) {
 	global $xoopsDB;
-	$titleq = q("SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form ='$fid'");
+	$titleq = q("SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form ='$fid'");
 	return $titleq[0]['desc_form'];
 
 }
@@ -123,11 +124,11 @@ function availReports($uid, $groups, $fid, $frid="0") {
 	global $xoopsDB;
 
 	// get old saved reports
-      $s_reports = q("SELECT report_id, report_name FROM " . $xoopsDB->prefix("form_reports") . " WHERE report_id_form='$fid' AND report_uid='$uid'");
+      $s_reports = q("SELECT report_id, report_name FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id_form='$fid' AND report_uid='$uid'");
 
 
 	// get old published reports
-	$published_reports = q("SELECT report_id, report_name, report_groupids, report_uid FROM " . $xoopsDB->prefix("form_reports") . " WHERE report_id_form='$fid' AND report_ispublished > 0");
+	$published_reports = q("SELECT report_id, report_name, report_groupids, report_uid FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id_form='$fid' AND report_ispublished > 0");
 
 
 	// cull published reports to ones that are published to a group that the user belongs to
@@ -222,7 +223,7 @@ function security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handle
 				// if no view_groupscope, then check to see if the settings for the form are "one entry per group" in which case override the groupscope setting
 				if(!$view_groupscope) { 
 					global $xoopsDB;
-					$smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$fid");
+					$smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$fid");
 					if($smq[0]['singleentry'] == "group") { $view_groupscope = true; }
 				}
 				$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
@@ -260,6 +261,7 @@ function getFormulizeModId() {
 		while ($row = mysql_fetch_row($res4))
 			$mid = $row[0];
 	}
+
 	return $mid;
 }
 // RETURNS THE RESULTS OF AN SQL STATEMENT -- ADDED April 25/05
@@ -268,7 +270,7 @@ function getFormulizeModId() {
 function q($query) {
 
 	global $xoopsDB;
-
+	$result = array();
 	//print "$query"; // debug code
 	$res = $xoopsDB->query($query);
 	while ($array = $xoopsDB->fetchArray($res)) {
@@ -324,7 +326,7 @@ function getHeaderList ($fid) {
 
 	$headerlist = array();
 
-	$hlq = "SELECT headerlist FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form='$fid'";
+	$hlq = "SELECT headerlist FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form='$fid'";
 	if($result = $xoopsDB->query($hlq)) {
 		while ($row = $xoopsDB->fetchRow($result)) {
 			$headerlist = explode("*=+*:", $row[0]); 
@@ -341,7 +343,7 @@ function getHeaderList ($fid) {
 					$where_clause .= " OR ele_id='$thisheaderid'";
 				}
 			}
-			$captionq = "SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE $where_clause ORDER BY ele_order";
+			$captionq = "SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE $where_clause ORDER BY ele_order";
 			if($rescaptionq = $xoopsDB->query($captionq)) {
 				unset($headerlist);
 				while ($row = $xoopsDB->fetchArray($rescaptionq)) {
@@ -355,7 +357,7 @@ function getHeaderList ($fid) {
 
 	if(count($headerlist)==0) { // if no header fields specified, then....
 		// GATHER REQUIRED FIELDS FOR THIS FORM...
-		$reqfq = "SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE ele_req=1 AND id_form='$fid'";
+		$reqfq = "SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_req=1 AND id_form='$fid' ORDER BY ele_order ASC LIMIT 3";
 		if($result = $xoopsDB->query($reqfq)) {
 			while ($row = $xoopsDB->fetchArray($result)) {
 				$headerlist[] = $row["ele_caption"];
@@ -365,9 +367,9 @@ function getHeaderList ($fid) {
 
 	if(count($headerlist) == 0) { 
 		// IF there are no required fields THEN ... go with first three fields 
-		$firstfq = "SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$fid' ORDER BY ele_order ASC LIMIT 3";
+		$firstfq = "SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' ORDER BY ele_order ASC LIMIT 3";
 		if($result = $xoopsDB->query($firstfq)) {
-			while ($row = $xoopsDB->fetchArray($resultfq)) {
+			while ($row = $xoopsDB->fetchArray($result)) {
 				$headerlist[] = $row["ele_caption"];
 			}
 		}
@@ -382,6 +384,7 @@ function allowedCats($cats, $allowedForms) {
 		$flatFormArray = q("SELECT id_form_array FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$catid'");
 		$formsInCat = explode(",", trim($flatFormArray[0]['id_form_array'], ","));
 		if(array_intersect($formsInCat, $allowedForms)) {
+
 
 			$allowedCats[$catid] = $catname;
 		}  		
@@ -427,7 +430,7 @@ function allowedForms() {
 // THIS FUNCTION RETURNS THE NAME OF A FORM WHEN GIVEN THE ID (internal, not meant for public use)
 function fetchFormName($id) {
 	global $xoopsDB;
-	$title_q = q("SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form='$id'");
+	$title_q = q("SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form='$id'");
 	return trans($title_q[0]['desc_form']);
 }
 
@@ -474,7 +477,7 @@ function fetchFormsInCat($thisid, $allowedForms="") {
 
 		// exclude inactive forms, and sort
 		foreach($formsInCat1 as $thisform) {
-			$status_q = q("SELECT menuid, position FROM " . $xoopsDB->prefix("form_menu") . " WHERE menuid='$thisform' AND status=1");
+			$status_q = q("SELECT menuid, position FROM " . $xoopsDB->prefix("formulize_menu") . " WHERE menuid='$thisform' AND status=1");
 			if(count($status_q)>0 AND in_array($thisform, $allowedForms)) { // only include active forms that the user is allowed to see
 				$formpos[] = $status_q[0]['position']; 
 				$formsInCat[] = $thisform; 
@@ -495,10 +498,10 @@ function drawMenu($thisid, $thiscat, $allowedForms, $id_form, $topwritten, $forc
 		if(count($formsInCat)>0) { // user is allowed to see at least one form in this category
 			$itemurl = XOOPS_URL."/modules/formulize/cat.php?cat=$thisid";
 			if ($topwritten != 1) {
-				$block .= "<a class=menuTop href=\"$itemurl\">$thiscat</a>";
+				$block = "<a class=menuTop href=\"$itemurl\">$thiscat</a>";
 				$topwritten = 1;
 			} else {
-                		$block .= "<a class=menuMain href=\"$itemurl\">$thiscat</a>";
+                		$block = "<a class=menuMain href=\"$itemurl\">$thiscat</a>";
 			}
 
 			// check to see if current cat is active (ie: has been clicked)
@@ -521,14 +524,14 @@ function drawMenu($thisid, $thiscat, $allowedForms, $id_form, $topwritten, $forc
 function deleteIdReq($id_req) {
 
 	global $xoopsDB;
-	$sql = "DELETE FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req='$id_req'";
+	$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req='$id_req'";
 	//print $sql . "<br>";
 	if(!$result = $xoopsDB->query($sql)) {
 		exit("Error: failed to delete entry $id_req");
 	}
 }
 
-// THIS FUNCTION DELETES ENTRIES FROM FORM_FORM WHEN PASSED AN ID_REQ
+// THIS FUNCTION DELETES ENTRIES FROM formulize_FORM WHEN PASSED AN ID_REQ
 // HANDLES FRAMEWORKS TOO -- HANDLERS AND MID TO BE PASSED IN WHEN FRAMEWORKS ARE USED
 // owner and owner_groups to be passed in when available (if called from a function where they have already been determined
 function deleteEntry($id_req, $frid="", $fid="", $gperm_handler="", $member_handler="", $mid="", $owner="", $owner_groups="") {
@@ -561,7 +564,7 @@ function deleteEntry($id_req, $frid="", $fid="", $gperm_handler="", $member_hand
 // GETS THE ID OF THE USER WHO OWNS AN ENTRY
 function getEntryOwner($entry) {
 	global $xoopsDB;
-	$owner = q("SELECT uid FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req = '$entry' LIMIT 0,1");
+	$owner = q("SELECT uid FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = '$entry' LIMIT 0,1");
 	return $owner[0]['uid'];
 }
 
@@ -658,8 +661,8 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
 			if($entries[$fid][0]) {
 				$findLinks_q = q("SELECT link_form FROM " . $xoopsDB->prefix("formulize_onetoone_links") . " WHERE main_form = " . $entries[$fid][0]);
 				foreach($findLinks_q as $foundLink) {
-					// look for the found id_req in the form_form table as part of the current fid, and only record it if found
-					$find_req = q("SELECT ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req='" . $foundLink['link_form'] . "' AND id_form='" . $one_fid['fid'] . "' LIMIT 1");
+					// look for the found id_req in the formulize_form table as part of the current fid, and only record it if found
+					$find_req = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req='" . $foundLink['link_form'] . "' AND id_form='" . $one_fid['fid'] . "' LIMIT 1");
 					if($find_req[0]['ele_id']) {
 						$entries[$one_fid['fid']][] = $foundLink['link_form'];
 					}
@@ -719,7 +722,7 @@ function deleteFormEntries($array) {
 			$filter .= " OR id_req = '$id'";
 		}
 	}
-	$deleteq = "DELETE FROM " . $xoopsDB->prefix("form_form") . " WHERE ($filter)";
+	$deleteq = "DELETE FROM " . $xoopsDB->prefix("formulize_form") . " WHERE ($filter)";
 	if(!$res = $xoopsDB->query($deleteq)) {
 		exit("Error deleting entries from the database with this statement:<br>$deleteq");
 	}
@@ -808,7 +811,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title) {
 // this function returns the data to summarize the details about the entry you are looking at
 function getMetaData($entry, $member_handler) {
 	global $xoopsDB;
-	$meta = q("SELECT date, creation_date, uid, proxyid FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req = $entry ORDER BY date DESC");
+	$meta = q("SELECT date, creation_date, uid, proxyid FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = $entry ORDER BY date DESC");
 	$meta_to_return['last_update'] = $meta[0]['date'];
 	$meta_to_return['created'] = $meta[0]['creation_date'];
 	$proxy = $member_handler->getUser($meta[0]['proxyid']);
@@ -862,15 +865,15 @@ function getAllColList($fid, $frid="", $groups="") {
 //		array_unique($all_fids);
 //		foreach($all_fids as $this_fid) {
 		foreach($fids as $this_fid) {
-			$c = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$this_fid' $gq ORDER BY ele_order");
+			$c = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$this_fid' $gq ORDER BY ele_order");
 			$cols[$this_fid] = $c;
 		}
 		foreach($sub_fids as $this_fid) {
-			$c = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$this_fid' $gq ORDER BY ele_order");
+			$c = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$this_fid' $gq ORDER BY ele_order");
 			$cols[$this_fid] = $c;
 		}
 	} else {
-		$cols[$fid] = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$fid' $gq ORDER BY ele_order");
+		$cols[$fid] = q("SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' $gq ORDER BY ele_order");
 	}
 
 	return $cols;
@@ -943,7 +946,7 @@ function getCalcHandleText($handle, $frid="") {
 	} elseif($handle == "mod_date") {
 		return _formulize_DE_CALC_MODDATE;
 	} elseif(is_numeric($handle)) {
-		$caption = q("SELECT ele_caption FROM " . $xoopsDB->prefix("form"). " WHERE ele_id = '$handle'"); 
+		$caption = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize"). " WHERE ele_id = '$handle'"); 
 		return $caption[0]['ele_caption'];
 	} else { // assume framework handle
 		return getCaption($frid, $handle);
@@ -1009,7 +1012,7 @@ function trans($string) {
 // THIS FUNCTION FIGURES OUT THE MAX ID_REQ IN USE AND RETURNS THE NEXT VALID ID_REQ
 function getMaxIdReq() {
 	global $xoopsDB;
-	$sql = $xoopsDB->query("SELECT id_req from " . $xoopsDB->prefix("form_form")." order by id_req DESC LIMIT 0,1");
+	$sql = $xoopsDB->query("SELECT id_req from " . $xoopsDB->prefix("formulize_form")." order by id_req DESC LIMIT 0,1");
 	list($id_req) = $xoopsDB->fetchRow($sql);
 	if ($id_req == 0) { $num_id = 1; }
 	else if ($num_id <= $id_req) $num_id = $id_req + 1;
@@ -1019,7 +1022,7 @@ function getMaxIdReq() {
 // THIS FUNCTION GETS THE CAPTION BASED ON A DB QUERY, NOT ON GETVAR, so the value returned is the actual full caption for the element
 function getRealCaption($ele_id) {
 	global $xoopsDB;
-	$sql = "SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE ele_id = '$ele_id'";
+	$sql = "SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '$ele_id'";
 	$res = $xoopsDB->query($sql);
 	list($dec) = $xoopsDB->fetchRow($res);
 	$dec = stripslashes($dec);
@@ -1030,11 +1033,10 @@ function getRealCaption($ele_id) {
 }
 
 // THIS FUNCTION MASSAGES DATA RETURNED FROM A FORM SUBMISSION SO IT CAN BE PUT IN THE DATABASE
-// ******** THIS CODE DUPLICATES CODE CURRENTLY IN FORMREAD.PHP **********
 // param it takes is the element object ($element), and the passed value from the form ($ele)
 function prepDataForWrite($element, $ele) {
 
-	global $myts;
+	$myts =& MyTextSanitizer::getInstance();
 
 	$ele_type = $element->getVar('ele_type');
 	$ele_value = $element->getVar('ele_value');
@@ -1056,10 +1058,9 @@ function prepDataForWrite($element, $ele) {
 				case 'radio':
 					$value = '';
 					$opt_count = 1;
-
 					while( $v = each($ele_value) ){
 						if( $opt_count == $ele ){
-							//$msg.= $myts->stripSlashesGPC($v['key']).'<br>';
+							$msg.= $myts->stripSlashesGPC($v['key']).'<br>';
 							$value = $v['key'];
 						}
 						$opt_count++;
@@ -1115,9 +1116,13 @@ function prepDataForWrite($element, $ele) {
 							$selinit = 0;
 							foreach($ele as $whatwasselected)
 							{
-							//	print "<br>$whatwasselected<br>";
+								// if(isset($_GET['debug4'])) { print "<br>$whatwasselected<br>"; }
 								$compparts = explode("#*=:*", $whatwasselected);
-							//	print_r($compparts);
+								if(get_magic_quotes_gpc()) { // strip the slashes since we may be getting slashes passed in from a previous writing to the DB (caption names with apostrophes will generate slashes in the DB when magic quotes is on -- and the value passed back for formlinks is based on the current value in the DB).
+
+									$compparts[1] = stripslashes($compparts[1]);
+								}
+								// if(isset($_GET['debug4'])) { print_r($compparts); }
 								if($compinit == 0)
 								{
 									$value = $compparts[0] . "#*=:*" . $compparts[1] . "#*=:*";
@@ -1134,6 +1139,9 @@ function prepDataForWrite($element, $ele) {
 						else
 						{
 							$value = $ele;
+							if(get_magic_quotes_gpc()) { // strip the slashes since we may be getting slashes passed in from a previous writing to the DB (caption names with apostrophes will generate slashes in the DB when magic quotes is on -- and the value passed back for formlinks is based on the current value in the DB).
+								$value = stripslashes($value);
+							}							
 						}	
 //						print "<br>VALUE: $value";	
 						break;			
@@ -1205,9 +1213,6 @@ function prepDataForWrite($element, $ele) {
 					// print "selects: $value<br>";
 				break;
 				} // end of if that checks for a linked select box.
-				case 'areamodif':
-					$value = $ele;
-				break;
 				case 'date':
 					// code below commented/added by jwe 10/23/04 to convert dates into the proper standard format
 					if($ele != "YYYY-mm-dd" AND $ele != "") { 
@@ -1232,7 +1237,7 @@ function prepDataForWrite($element, $ele) {
 function getElementValue($entry, $caption) {
 	global $xoopsDB;
 
-	$evq = "SELECT ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req='$entry' AND ele_caption='$caption'";
+	$evq = "SELECT ele_value FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req='$entry' AND ele_caption='$caption'";
 	if($res = $xoopsDB->query($evq)) {
 		$array = $xoopsDB->fetchArray($res); 
 		if(isset($array['ele_value'])) {
@@ -1245,6 +1250,49 @@ function getElementValue($entry, $caption) {
 	}
 
 }
+
+// this function checks for singleentry status and returns the appropriate entry in the form if there is one
+function getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid) {
+	global $xoopsDB;
+	// determine single/multi status
+	$smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$fid");
+	if($smq[0]['singleentry'] != "") {
+		// find the entry that applies
+		$single['flag'] = 1;
+		if($smq[0]['singleentry'] == "on") { // if we're looking for a regular single, find first entry for this user
+			$entry_q = q("SELECT id_req FROM " . $xoopsDB->prefix("formulize_form") . " WHERE uid=$uid AND id_form=$fid ORDER BY id_req LIMIT 0,1");
+			if($entry_q[0]['id_req']) {
+				$single['entry'] = $entry_q[0]['id_req'];
+			} else {
+				$single['entry'] = "";	
+			}
+		} elseif($smq[0]['singleentry'] == "group") { // get the first entry belonging to anyone in their groups, excluding any groups that do not have view_form permission
+			$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+			$intersect_groups = array_intersect($groups, $groupsWithAccess);
+			foreach($intersect_groups as $grp) {
+				if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone! -- superfluous now since registered users would normally be ignored since people probably would not be handing out perms to registered users group (on the other hand, if someone wanted to, it should be allowed now, since it won't screw things up necessarily, thanks to the use of groupsWithAccess)
+					$users = $member_handler->getUsersByGroup($grp);
+					$all_users = array_merge($users, $all_users);
+					unset($users);
+				}
+			}
+			$uq = makeUidFilter($all_users);
+			$entry_q = q("SELECT id_req FROM " . $xoopsDB->prefix("formulize_form") . " WHERE ($uq) AND id_form=$fid ORDER BY id_req LIMIT 0,1");
+			if($entry_q[0]['id_req']) {
+				$single['entry'] = $entry_q[0]['id_req'];
+			} else {
+				$single['entry'] = "";	
+			}
+		} else {
+			exit("Error: invalid value found for singleentry for form $fid");
+		}
+	} else {
+		$single['flag'] = 0;
+	}
+	return $single;
+
+}
+
 
 
 ?>

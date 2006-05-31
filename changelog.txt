@@ -1,4 +1,35 @@
 *********************
+Version 2.1 RC1:
+*********************
+
+** New Features:
+
+--Added a new displayGrid function, which allows for displaying a portion of a form in a tabular, spreadsheet like way.  Useful for multiple page interfaces to a form, created in Pageworks, where certain pages require the user to fill in a table of information.
+--50% or greater improvement in the speed of queries through the extraction layer, plus massive memory usage reductions.
+--$overrideMulti param can now be used "in reverse" on a one-entry-per-user form to cause it to behave like a multiple-entries-per-user form
+--The list of proxy users is now limited to only the users in someones own group(s) unless they have view_globalscope permission for a form
+--If no default fields are specified for the "list of entries" page, and there are required fields in the form, only the first three required files are shown in the list (instead of all)
+
+** Changes/Fixes:
+
+--Changed all references to the form_ tables to formulize_ in order to make use of Formulize compatible with use of Formulaire
+--Changed the height and width of the list of entries box to better fit on 1024x768 size screens
+--Fixed a long standing bug with textarea elements, where the height and width of the box would not be remembered when going back in to edit an element (defaults were always used)
+--Fixed a long standing bug where if there were not default fields for the "list of entries" page, and no required fields in the form, then no fields would be listed on the "list of entries" page.  Now the first three fields are listed.
+--Fixed bug which caused an error when a group was deleted from the system, but some form elements had custom display options involving that group
+--Fixed a bug in the displayCalendar function that arose when forms (not frameworks) were displayed in a calendar, and the element captions were used instead of element ids
+--Fixed a bug in the displayElement function that caused an error if an invalid element was passed to the function
+--Fixed a bug that caused metadata fields to not be remembered when they were selected in the Change Columns screen, and then the user returned there to change columns again
+--Fixed a bug where the words yes and no (or oui/non, etc) could not be used in quick searches of yes/no columns on the list of entries page
+--Fixed a bug related to the reg_codes module, that caused incorrect display of the default timezone on the profile form
+--Fixed a bug that caused a problem with certain linked selectbox values
+--Fixed a bug where, in a multilanguage site, element captions were not being translated in the Calculations screen
+--Removed some duplicated code
+--Changed how users view entries in forms in a framework, when viewing the form itself, so that their own permission level takes precedence instead of the permission level of the owner of the data
+--Disabled use of strsafetotime for the time being, so there is no date handling for dates prior to December 31 1969.  There were compatibility issues with this function on different servers.  (This change was actually included, but not accurately recorded in the changelog, for 2.0.6)
+--Changes to integrate with reg_codes 2.1 RC1
+
+*********************
 Version 2.0.6 Beta:
 *********************
 

@@ -244,7 +244,7 @@ function importCsvSetup(& $importSet)
     }
 
     // 4. get the form id
-    /*$form_idq = q("SELECT id_form FROM " . $xoopsDB->prefix("form_id") . 
+    /*$form_idq = q("SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . 
         " WHERE desc_form='" . $importSet[2] . "'");
     if($form_idq == null)
     {
@@ -259,7 +259,7 @@ function importCsvSetup(& $importSet)
     // 5. get the form column ids and process linked elements
 	if($importSet[4])
     {    
-        $form_elementsq = q("SELECT * FROM " . $xoopsDB->prefix("form") . 
+        $form_elementsq = q("SELECT * FROM " . $xoopsDB->prefix("formulize") . 
         	" WHERE id_form='" . $importSet[4] . "'");
         if($form_elementsq == null)
         {
@@ -303,7 +303,7 @@ function importCsvSetup(& $importSet)
 	                                /*echo "form: " . $parts[0] . 
 	                                    "<br>element: " . $parts[1];*/
                                     
-	                                $sql = "SELECT * FROM " . $xoopsDB->prefix("form") . 
+	                                $sql = "SELECT * FROM " . $xoopsDB->prefix("formulize") . 
 	                                    " WHERE id_form='" . $parts[0] . "'" .
                                         " AND ele_caption='" . mysql_real_escape_string($parts[1]) . "'";
 									$form_elementlinkq = q($sql);
@@ -652,7 +652,7 @@ function importCsvProcess(& $importSet)
             //var_dump($row);        
                     
             // get the current max id_req
-            $max_id_reqq = q("SELECT MAX(id_req) FROM " . $xoopsDB->prefix("form_form"));
+            $max_id_reqq = q("SELECT MAX(id_req) FROM " . $xoopsDB->prefix("formulize_form"));
             $max_id_req = $max_id_reqq[0]["MAX(id_req)"] + 1;
 
             echo "line $rowCount, id $max_id_req<br>";
@@ -789,7 +789,7 @@ function importCsvProcess(& $importSet)
 	                            break;
 	                    }                            
 	                    
-	                    $insertElement = "INSERT INTO " . $xoopsDB->prefix("form_form") .  
+	                    $insertElement = "INSERT INTO " . $xoopsDB->prefix("formulize_form") .  
 	                        " (id_form, id_req, ele_type, ele_caption, ele_value," . 
 	                        " date, uid, proxyid, creation_date)" .
 	                        " VALUES ($id_form, $max_id_req, '" . 
@@ -827,7 +827,7 @@ function getRecordID($id_form, $ele_caption, $ele_value)
 {
 	global $xoopsDB;
 
-    $sql = "SELECT id_req FROM " . $xoopsDB->prefix("form_form") .  
+    $sql = "SELECT id_req FROM " . $xoopsDB->prefix("formulize_form") .  
         " WHERE id_form='" . $id_form . "'" .
         " AND ele_caption='" . mysql_real_escape_string(formformCaption($ele_caption)) . "'" .
         " AND ele_value='" . mysql_real_escape_string($ele_value) . "'";
@@ -851,7 +851,7 @@ function getElementID($id_form, $ele_caption, $ele_value)
 {
 	global $xoopsDB;
 
-    $sql = "SELECT ele_id FROM " . $xoopsDB->prefix("form_form") .  
+    $sql = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize_form") .  
         " WHERE id_form='" . $id_form . "'" .
         " AND ele_caption='" . mysql_real_escape_string(formformCaption($ele_caption)) . "'" .
         " AND ele_value='" . mysql_real_escape_string($ele_value) . "'";
@@ -875,7 +875,7 @@ function getElementOptions($id_form, $ele_caption)
 {
 	global $xoopsDB;
 
-    $sql = "SELECT ele_value FROM " . $xoopsDB->prefix("form_form") .  
+    $sql = "SELECT ele_value FROM " . $xoopsDB->prefix("formulize_form") .  
         " WHERE id_form='" . $id_form . "'" .
         " AND ele_caption='" . mysql_real_escape_string(formformCaption($ele_caption)) . "'";
 

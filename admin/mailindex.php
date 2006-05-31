@@ -49,7 +49,7 @@ if(!is_numeric($_GET['title'])) {
 		$title = $HTTP_POST_VARS['title'];
 	}
 
-	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$title);
+	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form='%s'",$title);
 	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
 
 	if ( $res ) {
@@ -60,7 +60,7 @@ if(!is_numeric($_GET['title'])) {
 } else {
 	$id_form = $_GET['title'];
 	$title = $_GET['title'];
-	$rtsql = "SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$id_form";
+	$rtsql = "SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$id_form";
 	$rtres = $xoopsDB->query($rtsql);
 	$rtarray = $xoopsDB->fetchArray($rtres);
 	$realtitle = $rtarray['desc_form'];
@@ -77,7 +77,7 @@ if(!isset($_POST['op'])){ $_POST['op']=" ";}
 // query modified to call in new fields -- jwe 7/25/04. 7/28/04
 
 if ( isset ($title)) {
-	$sql=sprintf("SELECT id_form,admin,groupe,email,expe,singleentry,groupscope,headerlist,showviewentries,maxentries,even,odd FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$realtitle);
+	$sql=sprintf("SELECT id_form,admin,groupe,email,expe,singleentry,groupscope,headerlist,showviewentries,maxentries,even,odd FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form='%s'",$realtitle);
 	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
 
 	if ( $res ) {
@@ -381,14 +381,14 @@ echo '<tr>
 
 	echo '<select name="headerlist[]" size="10" multiple>';
 
-	$getform_id ="SELECT id_form FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form=\"$realtitle\"";
+	$getform_id ="SELECT id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form=\"$realtitle\"";
 	$resultgetform = mysql_query($getform_id);
 	$resgetformrow = mysql_fetch_row($resultgetform);
 	$thisformid = $resgetformrow[0];
 
 	// get a list of captions in the form (fancy SQL Join query)
 	// then draw them into the selection box
-	$sqljwe="SELECT ele_caption, ele_id FROM ".$xoopsDB->prefix("form")." WHERE id_form = \"$thisformid\" ORDER BY ele_order";
+	$sqljwe="SELECT ele_caption, ele_id FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = \"$thisformid\" ORDER BY ele_order";
 	$resjwe = mysql_query ( $sqljwe );
 	if ( $resjwe ) {
 		$loopiteration = 0;
@@ -507,7 +507,7 @@ function upform($title)
 		redirect_header("mailindex.php?title=$title", 2, _MD_ERRORMAIL);
 	}*/
 	// sql updated with new fields -- jwe 7/25/04 , 7/28/04
-	$sql = sprintf("UPDATE %s SET admin='%s', groupe='%s', email='%s', expe='%s', singleentry='%s', groupscope='%s', headerlist='%s', showviewentries='%s', maxentries='%s', even='%s', odd='%s' WHERE id_form='%s'", $xoopsDB->prefix("form_id"), $admin, $groupe, $email, $expe, $singleentry, $groupscope, $cheaderlist, $showviewentries, $maxentries, $coloreven, $colorodd, $title);
+	$sql = sprintf("UPDATE %s SET admin='%s', groupe='%s', email='%s', expe='%s', singleentry='%s', groupscope='%s', headerlist='%s', showviewentries='%s', maxentries='%s', even='%s', odd='%s' WHERE id_form='%s'", $xoopsDB->prefix("formulize_id"), $admin, $groupe, $email, $expe, $singleentry, $groupscope, $cheaderlist, $showviewentries, $maxentries, $coloreven, $colorodd, $title);
 	$xoopsDB->query($sql) or $eh->show("0013");
 	redirect_header("formindex.php",1,_formulize_FORMTITRE);
 }
@@ -550,13 +550,13 @@ function addform()
 	$title = eregi_replace ('&', "_", $title);
 
 	// updated to handle new params -- jwe 7/25/07 , 7/28/04
-	$sql = sprintf("INSERT INTO %s (desc_form, admin, groupe, email, expe, singleentry, groupscope, showviewentries, maxentries, even, odd) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')", $xoopsDB->prefix("form_id"), $title, $admin, $groupe, $email, $expe, $singleentry, $groupscope, $showviewentries, $maxentries, $coloreven, $colorodd);
+	$sql = sprintf("INSERT INTO %s (desc_form, admin, groupe, email, expe, singleentry, groupscope, showviewentries, maxentries, even, odd) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')", $xoopsDB->prefix("formulize_id"), $title, $admin, $groupe, $email, $expe, $singleentry, $groupscope, $showviewentries, $maxentries, $coloreven, $colorodd);
 	$xoopsDB->queryF($sql) or $eh->show("error insertion 1 dans addform");
 
 	// need to get the new form id -- added by jwe sept 13 2005
 	$newfid = $xoopsDB->getInsertId();
 	
-	$sql2 = sprintf("INSERT INTO %s (itemname,itemurl) VALUES ('%s', '%s')", $xoopsDB->prefix("form_menu"), $title, XOOPS_URL.'/modules/formulize/index.php?title='.$title.'');
+	$sql2 = sprintf("INSERT INTO %s (itemname,itemurl) VALUES ('%s', '%s')", $xoopsDB->prefix("formulize_menu"), $title, XOOPS_URL.'/modules/formulize/index.php?title='.$title.'');
 	$xoopsDB->queryF($sql2) or $eh->show("error insertion 2 dans addform");
 
 	// altered sept 13 2005 to use new form id

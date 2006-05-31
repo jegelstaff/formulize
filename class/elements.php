@@ -36,9 +36,9 @@
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 
 global $xoopsDB;
-define('formulize_TABLE', $xoopsDB->prefix("form"));
+define('formulize_TABLE', $xoopsDB->prefix("formulize"));
 // added data table - Aug 14 2005
-define('formulize_DATATABLE', $xoopsDB->prefix("form_form"));
+define('formulize_DATATABLE', $xoopsDB->prefix("formulize_form"));
 
 
 class formulizeformulize extends XoopsObject {

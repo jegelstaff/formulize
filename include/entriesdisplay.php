@@ -105,7 +105,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// handle deletion of view...reset currentView
 	if($_POST['delview']) {
 		if(substr($_POST['delviewid'], 1, 4) == "old_") {
-			$sql = "DELETE FROM " . $xoopsDB->prefix("form_reports") . " WHERE report_id='" . substr($_POST['delviewid'], 5) . "'";
+			$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id='" . substr($_POST['delviewid'], 5) . "'";
 		} else {
 			$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id='" . substr($_POST['delviewid'], 1) . "'";
 		}
@@ -160,7 +160,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// put name into loadview
 		if($saveid != "new") {
 			if(strstr($saveid, "old_")) { // legacy
-				$sname = q("SELECT report_name FROM " . $xoopsDB->prefix("form_reports") . " WHERE report_id = \"" . substr($saveid, 5) . "\"");
+				$sname = q("SELECT report_name FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id = \"" . substr($saveid, 5) . "\"");
 				$savename = $sname[0]['report_name'];
 			} else {
 				$sname = q("SELECT sv_name, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = \"" . substr($saveid, 1) . "\"");
@@ -200,7 +200,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$moduid = $uid;
 			} else {
 				// get existing uid
-				$olduid = q("SELECT report_uid FROM " . $xoopsDB->prefix("form_reports") . " WHERE report_id = '" . substr($saveid, 5) . "'");
+				$olduid = q("SELECT report_uid FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id = '" . substr($saveid, 5) . "'");
 				$owneruid = $olduid[0]['report_uid'];
 				$moduid = $uid;
 			}
@@ -224,7 +224,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 		// delete legacy report if necessary
 		if(strstr($saveid, "old_")) {
-			$dellegacysql = "DELETE FROM " . $xoopsDB->prefix("form_reports") . " WHERE report_id=\"" . substr($saveid, 5) . "\"";
+			$dellegacysql = "DELETE FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id=\"" . substr($saveid, 5) . "\"";
 			if(!$result = $xoopsDB->query($dellegacysql)) {
 				exit("Error:  unable to delete legacy report: " . substr($saveid, 5));
 			}
@@ -258,6 +258,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// debug block to show key settings being passed back to the page
 /*
+	if($uid == 1) {
 	print "delview: " . $_POST['delview'] . "<br>";
 	print "advscope: " . $_POST['advscope'] . "<br>";
 	print "asearch: " . $_POST['asearch'] . "<br>";
@@ -276,6 +277,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		if(substr($k, 0, 7) == "search_" AND $v != "") {
 			print "$k: $v<br>";
 		}
+	}
 	}
 */
 
@@ -526,6 +528,7 @@ function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView
 		$vcounter++;
 		$options .= "<option value=\"\">&nbsp;&nbsp;" . _formulize_DE_NO_STANDARD_VIEWS . "</option>\n";
 	}
+
 		
 	if($currentView == "mine" AND !$loadOnlyView) {
 		$options .= "<option value=mine selected>&nbsp;&nbsp;" . _formulize_DE_MINE . "</option>\n";
@@ -644,7 +647,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	}
 
 	// get single/multi entry status of this form...
-	$singleMulti = q("SELECT singleentry FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form = $fid");
+	$singleMulti = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $fid");
 	
 	// flatten columns array and convert handles to ids so that we can send them to the change columns popup
 	if($frid) {
@@ -828,7 +831,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 //		if($frid) {	
 //			$filter .= $key . "/**/" . mysql_real_escape_string($one_search);
 //		} else {
-//			$caption = go("SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE ele_id = '$key'"); 
+//			$caption = go("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '$key'"); 
 //			$ffcaption = eregi_replace ("&#039;", "`", $caption[0]['ele_caption']);
 //			$ffcaption = eregi_replace ("&quot;", "`", $ffcaption);
 //			$ffcaption = str_replace ("'", "`", $ffcaption);
@@ -939,7 +942,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		} elseif($frid) {
        		$headers[] = getCaption($frid, $col);
        	} else {
-       		$temp_cap = go("SELECT ele_caption FROM " . DBPRE . "form WHERE ele_id = '$col'"); 
+       		$temp_cap = go("SELECT ele_caption FROM " . DBPRE . "formulize WHERE ele_id = '$col'"); 
        		$headers[] = $temp_cap[0]['ele_caption'];
        	}
 	}
@@ -947,8 +950,8 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	print "<style>\n";
 
 	print ".scrollbox {\n";
-	print "	height: 550px;\n";
-	print "	width: 820px;\n";
+	print "	height: 530px;\n";
+	print "	width: 775px;\n";
 	print "	overflow: scroll;\n";
 	print "}\n";
 
@@ -1086,7 +1089,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		// commented below is an attempt to make metadata appear in tooltip boxes, but formatting is not available and the box is of a fixed width and "dotdotdots" itself -- member_handler not currently used by drawEntries so long as this is commented (and it is not added elsewhere)
 		//$metaData = getMetaData($linkids[0], $member_handler);
 		//$metaToPrint = "<br>" . _formulize_FD_CREATED . $metaData['created_by'] . " " . _formulize_TEMP_ON . " " . $metaData['created'] . "<br>" . _formulize_FD_MODIFIED . $metaData['last_update_by'] . " " . _formulize_TEMP_ON . " " . $metaData['last_update'];
-
+		$metaToPrint = "";
 		// draw in the margin column where the links and metadata goes
 		print "<td class=head>\n";
 
@@ -1226,9 +1229,18 @@ function drawHeaders($headers, $cols, $sort, $order) { //, $lockcontrols) {
 // assume handles are unique within a framework (which they are supposed to be!)
 function convertHandles($handles, $frid) {
 	global $xoopsDB;
+	if(!is_array($handles)) { 
+		$temp = $handles;
+		unset($handles);
+		$handles[0] = $temp;
+	}
 	foreach($handles as $handle) {
-		$id = q("SELECT fe_element_id FROM " . $xoopsDB->prefix("formulize_framework_elements") . " WHERE fe_frame_id='$frid' AND fe_handle='$handle'");
-		$ids[] = $id[0]['fe_element_id'];
+		if($handle == "uid" OR $handle=="proxyid" OR $handle=="creation_date" OR $handle=="mod_date") {
+			$ids[] = $handle;
+		} else {
+			$id = q("SELECT fe_element_id FROM " . $xoopsDB->prefix("formulize_framework_elements") . " WHERE fe_frame_id='$frid' AND fe_handle='$handle'");
+			$ids[] = $id[0]['fe_element_id'];
+		}
 	}
 	return $ids;
 }
@@ -1297,7 +1309,7 @@ function convertHeadersToIds($headers, $fid) {
 	global $xoopsDB;
 	foreach($headers as $cap) {
 		$cap = addslashes($cap);
-		$ele_id = q("SELECT ele_id FROM " . $xoopsDB->prefix("form") . " WHERE id_form='$fid' AND ele_caption='$cap'");
+		$ele_id = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND ele_caption='$cap'");
 		$ele_ids[] = $ele_id[0]['ele_id'];
 	}
 	return $ele_ids;
@@ -1898,7 +1910,7 @@ function loadOldReport($id, $fid, $view_groupscope) {
 	global $xoopsDB;
 	$s = "&*=%4#";
 	// get all data from DB
-	$data = q("SELECT report_ispublished, report_scope, report_fields, report_search_typeArray, report_search_textArray, report_andorArray, report_calc_typeArray, report_sort_orderArray, report_ascdscArray, report_globalandor FROM " . $xoopsDB->prefix("form_reports") . " WHERE report_id=$id AND report_id_form=$fid");
+	$data = q("SELECT report_ispublished, report_scope, report_fields, report_search_typeArray, report_search_textArray, report_andorArray, report_calc_typeArray, report_sort_orderArray, report_ascdscArray, report_globalandor FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id=$id AND report_id_form=$fid");
 
 	// reportscope
 	$scope = explode($s, $data[0]['report_scope']);

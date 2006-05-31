@@ -44,6 +44,15 @@ PRINT "</HEAD>";
 $formframe = $_POST['formframe'];
 $ventry =  $_POST['lastentry'];
 $mainform = $_POST['mainform'];
+$ele_allowed = $_POST['elements_allowed'];
+
+if($ele_allowed) {
+	$elements_allowed = explode(",",$ele_allowed);
+	$formframetemp = $formframe;
+	unset($formframe);
+	$formframe['formframe'] = $formframetemp;
+	$formframe['elements'] = $elements_allowed;
+} 
 
 //print "<p> formframe = ".$formframe."</p>";
 //print "<p> mainform = ".$mainform."</p>";

@@ -158,13 +158,14 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 			$dateField2 = "";
 		}
 		if(!$frids[$i]) {
-			$caption = q("SELECT ele_caption FROM " . DBPRE . "form WHERE ele_id = '" . $dateField . "'"); 
+/* 			NUMERIC ELE-ID IS ACCEPTED BY EXTRACTION LAYER SO FOR REGULAR FORMS, THIS IS PREFERRED, SINCE LANGUAGE TAGS IN CAPTIONS WILL THROW OFF THE PARSING OF THE FILTER! -- April 7 2006
+			$caption = q("SELECT ele_caption FROM " . DBPRE . "formulize WHERE ele_id = '" . $dateField . "'"); 
 			$ffcaption = str_replace ("&#039;", "`", $caption[0]['ele_caption']);
 			$ffcaption = str_replace ("&quot;", "`", $ffcaption);
 			$ffcaption = str_replace ("'", "`", $ffcaption);
 			$filterDH = $ffcaption;
 			if($dateField2) {
-				$caption = q("SELECT ele_caption FROM " . DBPRE . "form WHERE ele_id = '" . $dateField2 . "'"); 
+				$caption = q("SELECT ele_caption FROM " . DBPRE . "formulize WHERE ele_id = '" . $dateField2 . "'"); 
 				$ffcaption = str_replace ("&#039;", "`", $caption[0]['ele_caption']);
 				$ffcaption = str_replace ("&quot;", "`", $ffcaption);
 				$ffcaption = str_replace ("'", "`", $ffcaption);
@@ -172,6 +173,9 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 			} else {
 				$filterDH2 = "";
 			}
+*/
+			$filterDH = $dateField;
+			$filterDH2 = $dateField2;
 		} else {
 			$filterDH = $dateField;
 			$filterDH2 = $dateField2;
@@ -189,6 +193,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 			$filter[1][0] = "AND";
 			$filter[1][1] = $filters[$i];
 		}
+
 		$data[$i] = getData($frids[$i], $fids[$i], $filter, "AND", $scope);
 		$data[$i] = resultSort($data[$i], $dateField);
 	}
@@ -515,7 +520,7 @@ function displayFilter($page, $name, $id, $ele_id, $overrides = "")
 	global $xoopsDB;		// required by q
     
 
-    $form_element = q("SELECT ele_value FROM " . $xoopsDB->prefix("form") . " WHERE ele_id = " . $ele_id);
+    $form_element = q("SELECT ele_value FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
     $element_value = unserialize($form_element[0]["ele_value"]);
     $options = $element_value[2];
 

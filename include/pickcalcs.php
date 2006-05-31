@@ -359,8 +359,8 @@ foreach($returned['rc'] as $hidden) {
 			$colname = _formulize_DE_CALC_MODDATE;
 			break;
 		default:
-			$temp_cap = q("SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE ele_id = '" . $hidden['column'] . "'"); 
-			$colname = $temp_cap[0]['ele_caption'];
+			$temp_cap = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '" . $hidden['column'] . "'"); 
+			$colname = trans($temp_cap[0]['ele_caption']);
 	}
 	$pickcalc->addElement(new xoopsFormButton($colname, "delete_" . $hidden['column'], _formulize_DE_REMOVECALC, 'submit'));
 	$calcs = explode(",", $hidden['calcs']);

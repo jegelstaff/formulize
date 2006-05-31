@@ -74,17 +74,17 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid="") {
 	global $xoopsDB;
 
 	if(!$fid) {
-		$fidq = q("SELECT id_form FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req='$entry' LIMIT 0,1");
+		$fidq = q("SELECT id_form FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req='$entry' LIMIT 0,1");
 		$fid = $fidq[0]['id_form'];
 	}
 
-	$viewquery = q("SELECT ele_caption, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req=$entry");
+	$viewquery = q("SELECT ele_caption, ele_value FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req=$entry");
 
 	// build query for display groups
 	foreach($groups as $thisgroup) {
 		$gq .= " OR ele_display LIKE '%,$thisgroup,%'";
 	}
-	$allowedquery = q("SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form=$fid AND (ele_display=1 $gq)"); 
+	$allowedquery = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$fid AND (ele_display=1 $gq)"); 
 	foreach($allowedquery as $onecap) {
 		$allowedcaps[] = str_replace("'", "`", $onecap['ele_caption']);
 	}
@@ -109,12 +109,15 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid="") {
 function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler, $owner_groups, $mid, $member_handler, $owner) {
 
 	// set scope filter -- may need to pass in some exceptions here in the case of viewing entries that are covered by reports?
-	// scope based on the owner's scope within the subform, since that is the entries that the owner would see, the entries that belong to this entry, within the subform
-	if($global_scope = $gperm_handler->checkRight("view_globalscope", $targetForm['fid'], $owner_groups, $mid)) {
+	// DEPRECATED: scope based on the owner's scope within the subform, since that is the entries that the owner would see, the entries that belong to this entry, within the subform
+	// Scope now based on user's permission level, so they can see what they should see, regardless of the owner's permission
+	global $xoopsUser;
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+	if($global_scope = $gperm_handler->checkRight("view_globalscope", $targetForm['fid'], $groups, $mid)) {
 		$scope_filter = "";
-	} elseif($group_scope = $gperm_handler->checkRight("view_groupscope", $targetForm['fid'], $owner_groups, $mid)) {
+	} elseif($group_scope = $gperm_handler->checkRight("view_groupscope", $targetForm['fid'], $groups, $mid)) {
 		$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $targetForm['fid'], $mid);
-		foreach($owner_groups as $grp) {
+		foreach($groups as $grp) {
 			if(in_array($grp, $groupsWithAccess)) { // include only owner_groups that have view_form permission (so exclude groups the owner is a member of which aren't able to view the form)
 				if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone!
 					$users = $member_handler->getUsersByGroup($grp);
@@ -132,7 +135,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 	global $xoopsDB;
 	//targetForm is a special array containing the keys as specified in the framework, and the target form
 	//keys:  fid, keyself, keyother
-	//keyself and other are the ele_id from the form table for the elements that need to be matched.  Must get captions and convert to form_form format in order to find the matching values
+	//keyself and other are the ele_id from the form table for the elements that need to be matched.  Must get captions and convert to formulize_form format in order to find the matching values
 
 	//print_r($targetForm);
 	//print "<br>$startForm<br>$startEntry<br>";
@@ -141,10 +144,10 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 	if($targetForm['keyself'] == 0) { // linking based on uid, in the case of one to one forms, assumption is that these forms are both single_entry forms (otherwise linking one_to_one based on uid doesn't make any sense)
 		// get uid of first entry
 		// look for that uid in the target form
-		$uid_q = q("SELECT uid FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form = $startForm AND id_req = $startEntry GROUP BY uid");
+		$uid_q = q("SELECT uid FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form = $startForm AND id_req = $startEntry GROUP BY uid");
 		// Question? is the error condition below valid?  Might you not have one to one linking in a multi form, in which case multiple uids returned is okay?
 		if(count($uid_q)>1) { exit("Error: more than one user id found for a single entry while trying to display a form"); }		
-		$entries_q = q("SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE uid = " . $uid_q[0]['uid'] . " AND id_form = " . $targetForm['fid'] . " $scope_filter GROUP BY id_req"); 
+		$entries_q = q("SELECT id_req FROM " . $xoopsDB->prefix("formulize_form") . " WHERE uid = " . $uid_q[0]['uid'] . " AND id_form = " . $targetForm['fid'] . " $scope_filter GROUP BY id_req"); 
 		if($entries_q[0]['id_req']) {
 			foreach($entries_q as $entry) {
 				$entries_to_return[] = $entry['id_req'];
@@ -157,14 +160,14 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 		//get value at startEntry, for the keyother caption
 		//look for that value in the target form's keyself
 
-		$caption = q("SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE ele_id = '" . $targetForm['keyother']."'"); 
+		$caption = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '" . $targetForm['keyother']."'"); 
 		$ffcaption = eregi_replace ("&#039;", "`", $caption[0]['ele_caption']);
 		$ffcaption = eregi_replace ("&quot;", "`", $ffcaption);
 		$ffcaption = str_replace ("'", "`", $ffcaption);
 
-		$sourceValue = q("SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("form_form") . " WHERE id_req = '$startEntry' AND ele_caption = '$ffcaption' AND id_form = '$startForm'");				
-		
-		$caption2 = q("SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE ele_id = '" . $targetForm['keyself']."'"); 
+		$sourceValue = q("SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = '$startEntry' AND ele_caption = '$ffcaption' AND id_form = '$startForm'");				
+
+		$caption2 = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '" . $targetForm['keyself']."'"); 
 		$ffcaption = eregi_replace ("&#039;", "`", $caption2[0]['ele_caption']);
 		$ffcaption = eregi_replace ("&quot;", "`", $ffcaption);
 		$ffcaption = str_replace ("'", "`", $ffcaption);
@@ -176,8 +179,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 			// get the ele_id from the link
 			$parts = explode("#*=:*", $sourceValue[0]['ele_value']);
 			if(strstr($parts[2], "[=*9*:")) { exit("Error: subform entry found with more than one value linked to parent form"); }
-			//print "SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form = '" . $targetForm['fid'] . "' AND ele_caption = '$ffcaption' AND ele_id = '" . $parts[2] . "' $scope_filter GROUP BY id_req";			
-			$targetValue = q("SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form = '" . $targetForm['fid'] . "' AND ele_caption = '$ffcaption' AND ele_id = '" . $parts[2] . "' $scope_filter GROUP BY id_req");				
+			$targetValue = q("SELECT id_req FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form = '" . $targetForm['fid'] . "' AND ele_caption = '$ffcaption' AND ele_id = '" . $parts[2] . "' $scope_filter GROUP BY id_req");				
 			if($targetValue[0]['id_req']) {
 				$entries_to_return[0] = $targetValue[0]['id_req'];
 			} else {
@@ -189,7 +191,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 			// instead of add buttons, you simply have a link to the one entry that corresponds to what the user has selected in the linked select box. 
 			// except the problem with that is we then have to change the link on the fly without reloading the page every time the selection in the linked selectbox is altered by the user
 			// this will hopefully never have to happen!
-			$targetValue = q("SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form = '" . $targetForm['fid'] . "' AND ele_caption = '$ffcaption' AND ele_value LIKE '%#*=:*" . $sourceValue[0]['ele_id'] . "%' $scope_filter GROUP BY id_req");
+			$targetValue = q("SELECT id_req FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form = '" . $targetForm['fid'] . "' AND ele_caption = '$ffcaption' AND ele_value LIKE '%#*=:*" . $sourceValue[0]['ele_id'] . "%' $scope_filter GROUP BY id_req");
 			if($targetValue[0]['id_req']) {
 				foreach($targetValue as $tv) {
 					$entries_to_return[] = $tv['id_req']; 
@@ -203,56 +205,15 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 }
 
 
-// this function checks for singleentry status and returns the appropriate entry in the form if there is one
-// only called from within this file
-function getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid) {
-	global $xoopsDB;
-	// determine single/multi status
-	$smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form=$fid");
-	if($smq[0]['singleentry'] != "") {
-		// find the entry that applies
-		$single['flag'] = 1;
-		if($smq[0]['singleentry'] == "on") { // if we're looking for a regular single, find first entry for this user
-			$entry_q = q("SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE uid=$uid AND id_form=$fid ORDER BY id_req LIMIT 0,1");
-			if($entry_q[0]['id_req']) {
-				$single['entry'] = $entry_q[0]['id_req'];
-			} else {
-				$single['entry'] = "";	
-			}
-		} elseif($smq[0]['singleentry'] == "group") { // get the first entry belonging to anyone in their groups, excluding any groups that do not have view_form permission
-			$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
-			$intersect_groups = array_intersect($groups, $groupsWithAccess);
-			foreach($intersect_groups as $grp) {
-				if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone! -- superfluous now since registered users would normally be ignored since people probably would not be handing out perms to registered users group (on the other hand, if someone wanted to, it should be allowed now, since it won't screw things up necessarily, thanks to the use of groupsWithAccess)
-					$users = $member_handler->getUsersByGroup($grp);
-					$all_users = array_merge($users, $all_users);
-					unset($users);
-				}
-			}
-			$uq = makeUidFilter($all_users);
-			$entry_q = q("SELECT id_req FROM " . $xoopsDB->prefix("form_form") . " WHERE ($uq) AND id_form=$fid ORDER BY id_req LIMIT 0,1");
-			if($entry_q[0]['id_req']) {
-				$single['entry'] = $entry_q[0]['id_req'];
-			} else {
-				$single['entry'] = "";	
-			}
-		} else {
-			exit("Error: invalid value found for singleentry for form $fid");
-		}
-	} else {
-		$single['flag'] = 0;
-	}
-	return $single;
-
-}
 
 
 
 
-function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_text="", $settings="", $onetooneTitles="", $overrideValue="", $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0) {
+function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_text="", $settings="", $titleOverride="", $overrideValue="", $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0) {
 //syntax:
 //displayform($formframe, $entry, $mainform)
-//$formframe is the id of the form OR title of the form OR name of the framework
+//$formframe is the id of the form OR title of the form OR name of the framework.  Can also be an array.  If it is an array, then flag 'formframe' is the $formframe variable, and flag 'elements' is an array of all the elements that are to be displayed.
+//the array option is intended for displaying only part of a form at a time
 //$entry is the numeric entry to display in the form -- if $entry is the word 'proxy' then it is meant to force a new form entry when the form is a single-entry form that the user already may have an entry in
 //$mainform is the starting form to use, if this is a framework (can be specified by form id or by handle)
 //$done_dest is the URL to go to after the form has been submitted
@@ -272,6 +233,14 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 	$currentURL = getCurrentURL();
 
 	// identify form or framework
+
+	$elements_allowed = "";
+	if(is_array($formframe)) {
+		$elements_allowed = $formframe['elements'];
+		$formframetemp = $formframe['formframe'];
+		unset($formframe);
+		$formframe = $formframetemp;
+	}
 
 	list($fid, $frid) = getFormFramework($formframe, $mainform);
 
@@ -304,12 +273,18 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+	if($profileForm === "new") { 
+		 // spoof the $groups array based on the settings for the regcode that has been validated by register.php
+		$reggroupsq = q("SELECT reg_codes_groups FROM " . XOOPS_DB_PREFIX . "_reg_codes WHERE reg_codes_code=\"" . $GLOBALS['regcode'] . "\"");
+		$groups = explode("&8(%$", $reggroupsq[0]['reg_codes_groups']);
+		$groups[] = XOOPS_GROUP_USERS;	
+	}	
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : '0';
 	$owner = getEntryOwner($entry); 
 	$member_handler =& xoops_gethandler('member');
 	$owner_groups =& $member_handler->getGroupsByUser($owner, FALSE);
 
-	if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handler, $owner_groups) AND !$viewallforms) {
+	if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handler, $owner_groups) AND !$viewallforms AND !$profileForm) {
 		print "<p>" . _NO_PERM . "</p>";
 		return;
 	}
@@ -318,7 +293,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 	$go_back['url'] = $done_dest;
 	$single_result = getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid);
 	$single = $single_result['flag'];
-	if($single AND !$entry) { // only adjust the active entry if we're not already looking at an entry
+	if($single AND !$entry AND !$overrideMulti) { // only adjust the active entry if we're not already looking at an entry, and there is no overrideMulti which can be used to display a new blank form even on a single entry form -- useful for when multiple anonymous users need to be able to enter information in a form that is "one per user" for registered users.
 		$entry = $single_result['entry'];
 		$owner = getEntryOwner($entry);
 		unset($owner_groups);
@@ -435,16 +410,16 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 	include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 	include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
-//	if($uid==1) {
-/*	print "Forms: ";
+/*	if($uid==1) {
+	print "Forms: ";
 	print_r($fids);
 	print "<br>Entries: ";
 	print_r($entries);
 	print "<br>Subforms: ";
 	print_r($sub_fids);
 	print "<br>Subentries: ";
-	print_r($sub_entries); // debug block - ONLY VISIBLE TO USER 1 RIGHT NOW */
-//	} 
+	print_r($sub_entries); // debug block - ONLY VISIBLE TO USER 1 RIGHT NOW 
+	} */
 	$title = "";
 	foreach($fids as $this_fid) {
 
@@ -478,51 +453,56 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 			// include acknowledgement that information has been updated if we have just done a submit
 			// form_meta includes: last_update, created, last_update_by, created_by
 
-			if(!$profileForm) {
-			// build the break HTML and then add the break to the form
-			$breakHTML = "<center><p><b>";
-			if($info_received_msg) { $breakHTML .= _formulize_INFO_SAVED . "&nbsp;"; }
-			if($info_continue == 1) {
-				$breakHTML .= _formulize_INFO_CONTINUE1 . "</b></p>";
-			} elseif($info_continue == 2) {
-				$breakHTML .=  _formulize_INFO_CONTINUE2 . "</b></p>";
-			} else {
-				$breakHTML .=  _formulize_INFO_MAKENEW . "</b></p>";
-			}
+			if(!$profileForm AND $titleOverride != "all") {
+      			// build the break HTML and then add the break to the form
+				if(strstr($currentURL, "printview.php")) {
+					$breakHTML = "<center>";
+				} else {
+	      			$breakHTML = "<center><p><b>";
+      				if($info_received_msg) { $breakHTML .= _formulize_INFO_SAVED . "&nbsp;"; }
+      				if($info_continue == 1) {
+      					$breakHTML .= _formulize_INFO_CONTINUE1 . "</b></p>";
+      				} elseif($info_continue == 2) {
+	      				$breakHTML .=  _formulize_INFO_CONTINUE2 . "</b></p>";
+      				} else {
+      					$breakHTML .=  _formulize_INFO_MAKENEW . "</b></p>";
+      				}
+				}
+      			$breakHTML .= "</center><table cellpadding=5 width=100%><tr><td width=50% style=\"vertical-align: bottom;\">";
 
-			$breakHTML .= "</center><table cellpadding=5 width=100%><tr><td width=50% style=\"vertical-align: bottom;\">";
+      			$breakHTML .= "<p><b>" . _formulize_FD_ABOUT . "</b><br>";
+      			
+      			if($entries[$this_fid][0]) {
+      				if(!$member_handler) { $member_handler =& xoops_gethandler('member'); }
+      				$form_meta = getMetaData($entries[$this_fid][0], $member_handler);
+      				$breakHTML .= _formulize_FD_CREATED . $form_meta['created_by'] . " " . _formulize_TEMP_ON . " " . $form_meta['created'] . "<br>" . _formulize_FD_MODIFIED . $form_meta['last_update_by'] . " " . _formulize_TEMP_ON . " " . $form_meta['last_update'] . "</p>";
+      			} else {
+      				$breakHTML .= _formulize_FD_NEWENTRY . "</p>";
+      			}
 
-			$breakHTML .= "<p><b>" . _formulize_FD_ABOUT . "</b><br>";
-			
-			if($entries[$this_fid][0]) {
-				if(!$member_handler) { $member_handler =& xoops_gethandler('member'); }
-				$form_meta = getMetaData($entries[$this_fid][0], $member_handler);
-				$breakHTML .= _formulize_FD_CREATED . $form_meta['created_by'] . " " . _formulize_TEMP_ON . " " . $form_meta['created'] . "<br>" . _formulize_FD_MODIFIED . $form_meta['last_update_by'] . " " . _formulize_TEMP_ON . " " . $form_meta['last_update'] . "</p>";
-			} else {
-				$breakHTML .= _formulize_FD_NEWENTRY . "</p>";
-			}
-
-			$breakHTML .= "</td><td width=50% style=\"vertical-align: bottom;\">"; //<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p></td><td>";
-
-			$breakHTML .= "<p>" . _formulize_INFO_SAVEBUTTON;
-			if(!$done_text) { 
-				$temptext = _formulize_DONE; 
-			} else {
-				$temptext = $done_text;
-			}
-			if($temptext != "{NOBUTTON}") {
- 				$breakHTML .= "<br>" . _formulize_INFO_DONE1 . $temptext . _formulize_INFO_DONE2;
-			}
-
-			$breakHTML .= "</p></td></tr></table>";
-			$form->insertBreak($breakHTML, "even");
-			} else {
+      			$breakHTML .= "</td><td width=50% style=\"vertical-align: bottom;\">"; //<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p></td><td>";
+				if(strstr($currentURL, "printview.php")) {
+					$breakHTML .= "<p>";
+				} else {
+            			$breakHTML .= "<p>" . _formulize_INFO_SAVEBUTTON;
+            			if(!$done_text) { 
+            				$temptext = _formulize_DONE; 
+            			} else {
+            				$temptext = $done_text;
+            			}
+            			if($temptext != "{NOBUTTON}") {
+             				$breakHTML .= "<br>" . _formulize_INFO_DONE1 . $temptext . _formulize_INFO_DONE2;
+            			}
+				}
+      			$breakHTML .= "</p></td></tr></table>";
+      			$form->insertBreak($breakHTML, "even");
+			} elseif($profileForm) {
 				// if we have a profile form, put the profile fields at the top of the form, populated based on the DB values from the _users table
 				$form = addProfileFields($form, $profileForm);
 			}
 		}
 
-		if($onetooneTitles=="1" AND !$firstform) { // set onetooneTitle flag to 1 when function invoked to force drawing of the form title over again
+		if($titleOverride=="1" AND !$firstform) { // set onetooneTitle flag to 1 when function invoked to force drawing of the form title over again
 			$title = getFormTitle($this_fid);
 			$form->insertBreak("<table><th>$title</th></table>","");
 		}
@@ -532,7 +512,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 			$parentLinks[$this_fid] = getParentLinks($this_fid, $frid);
 		}
 
-      	$form = compileElements($this_fid, $form, $formulize_mgr, $prevEntry, $entries[$this_fid][0], $go_back, $parentLinks[$this_fid], $owner_groups, $groups, $overrideValue);
+      	$form = compileElements($this_fid, $form, $formulize_mgr, $prevEntry, $entries[$this_fid][0], $go_back, $parentLinks[$this_fid], $owner_groups, $groups, $overrideValue, $elements_allowed);
 
 	} // end of for each fids
 
@@ -573,15 +553,15 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $done_t
 	// draw in the submitbutton if necessary
 	if($entry) { // existing entry, if it's their own and they can update their own, or someone else's and they can update someone else's
 		if(($owner == $uid AND $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid)) OR ($owner != $uid AND $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid))) {
-			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm);
+			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed);
 		} else {
-			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm); // draw in just the done button
+			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed); // draw in just the done button
 		}
 	} else { // new entry
 		if($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
-			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm);
+			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed);
 		} else {
-			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm); // draw in just the done button
+			$form = addSubmitButton($form, '', $go_back, $currentURL, $done_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed); // draw in just the done button
 		}
 	}
 
@@ -621,7 +601,7 @@ function addProfileFields($form, $profileForm) {
 	} else { // anon user
 		$thisUser_name = urldecode($_GET['name']);
 		$thisUser_uname = urldecode($_GET['uname']);
-		$thisUser_timezone_offset = urldecode($_GET['timezone_offset']);
+		$thisUser_timezone_offset = isset($_GET['timezone_offset']) ? urldecode($_GET['timezone_offset']) : $xoopsConfig['default_TZ'];
 		$thisUser_email = urldecode($_GET['email']);
 		$thisUser_viewemail = urldecode($_GET['viewemail']);
 		$thisUser_uid = 0;
@@ -635,13 +615,7 @@ function addProfileFields($form, $profileForm) {
 	if($profileForm == "new") {
 		// 'new' should ONLY be coming from the modified register.php file that the registration codes module uses
 		// ie: we are assuming registration codes is installed
-		require_once XOOPS_ROOT_PATH ."/modules/reg_codes/language/".$xoopsConfig['language']."/modinfo.php";
-		$reg_code_box = new XoopsFormText("", "userprofile_regcode", 10, 10, urldecode($_GET['code'])); 
-		$reg_code_help = new XoopsFormLabel("", _REGFORM_REGCODES_HELP);
-		$reg_code_tray = new XoopsFormElementTray(_REGFORM_REGCODES_REGCODE, "<br />"); 
-		$reg_code_tray->addElement($reg_code_box, 1);
-		$reg_code_tray->addElement($reg_code_help);
-		$form->addElement($reg_code_tray, 1);
+		$form->addElement(new XoopsFormHidden('userprofile_regcode', $GLOBALS['regcode']));
 		$uname_size = $xoopsConfigUser['maxuname'] < 25 ? $xoopsConfigUser['maxuname'] : 25;
 		$uname_label = new XoopsFormText(_US_NICKNAME, 'userprofile_uname', $uname_size, $uname_size, $thisUser_uname);
 		$form->addElement($uname_label, 1);
@@ -726,7 +700,7 @@ function addProfileFields($form, $profileForm) {
 
 
 // add the submit button to a form
-function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $done_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm) {
+function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $done_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="") {
 
 	if(strstr($currentURL, "printview.php")) { // don't do anything if we're on the print view
 		return $form;
@@ -797,6 +771,10 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $done_
 			print "<input type=hidden name=formframe value='".$formframe."'>";	
 			print "<input type=hidden name=mainform value='".$mainform."'>";
 		}
+		if(is_array($elements_allowed)) {
+			$ele_allowed = implode(",",$elements_allowed);
+			print "<input type=hidden name=elements_allowed value='".$ele_allowed."'>";
+		}
 		print "</form>";
 		//added by Cory Aug 27, 2005 to make forms printable
 	}
@@ -821,7 +799,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		$sub_entries[$sfid][0] = $sub_single_result['entry'];
 	}
 	// get the title of this subform
-	$subtitle = q("SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form = $sfid");
+	$subtitle = q("SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $sfid");
 	$col_one = "<p>" . $subtitle[0]['desc_form'] . "</p><p style=\"font-weight: normal;\">" . _formulize_ADD_HELP . "<br>" . _formulize_ADD_HELP2 . "</p>";
 // add button moved to right side
 /*	if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] == "") {
@@ -890,6 +868,10 @@ function addProxyList($form, $groups, $member_handler, $gperm_handler, $fid, $mi
 			$proxylist->addOption('noproxy', _formulize_PICKAPROXY);
 			
 			$add_groups = $gperm_handler->getGroupIds("add_own_entry", $fid, $mid);
+			// May 5, 2006 -- limit to the user's own groups unless the user has global scope
+			if(!$globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid)) {
+				$add_groups = array_intersect($add_groups, $groups);
+			}
 			foreach($add_groups as $grp) {
 				$add_users = $member_handler->getUsersByGroup($grp);
 				$all_add_users = array_merge($add_users, $all_add_users);
@@ -922,7 +904,7 @@ function addProxyList($form, $groups, $member_handler, $gperm_handler, $fid, $mi
 
 
 //this function takes a formid and compiles all the elements for that form
-function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_back, $parentLinks, $owner_groups, $groups, $overrideValue="") {
+function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_back, $parentLinks, $owner_groups, $groups, $overrideValue="", $elements_allowed="") {
 	
 	global $xoopsDB;
 
@@ -938,21 +920,27 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	$count = 0;
 	foreach( $elements as $i ){
 
+		$this_ele_id = $i->getVar('ele_id');
+		if(is_array($elements_allowed)) {
+			if(!in_array($this_ele_id, $elements_allowed)) {
+				continue;
+			}
+		}
+
 		$ele_value = $i->getVar('ele_value');
 
 		if($prevEntry) { 
 			$ele_value = loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups); // get the value of this element for this entry as stored in the DB 
 		} elseif($go_back['form']) { // if there's a parent form...
-			$this_ele_id = $i->getVar('ele_id');
 			// check here to see if we need to initialize the value of a linked selectbox when it is the key field for a subform
 			// although this is setup as a loop through all found parentLinks, only the last one will be used, since ele_value[2] is overwritten each time.
 			// assumption is there will only be one parent link for this form
 			for($z=0;$z<count($parentLinks['source']);$z++) {					
 				if($this_ele_id == $parentLinks['self'][$z]) { // this is the element
 					// get the caption of the parent's field
-					$pcq = q("SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE id_form='" . $go_back['form'] . "' AND ele_id='" . $parentLinks['source'][$z] . "'");				
+					$pcq = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='" . $go_back['form'] . "' AND ele_id='" . $parentLinks['source'][$z] . "'");				
 					$parentCap = str_replace ("'", "`", $pcq[0]['ele_caption']);
-					$pvq = q("SELECT ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE id_form='" . $go_back['form'] . "' AND id_req='" . $go_back['entry'] . "' AND ele_caption='$parentCap'");
+					$pvq = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form='" . $go_back['form'] . "' AND id_req='" . $go_back['entry'] . "' AND ele_caption='$parentCap'");
 					$pid = $pvq[0]['ele_id'];
 
 					// NOTE: assuming that there will only be one value in the match, ie: the link field is not a multiple select box!
@@ -1049,7 +1037,7 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups) {
 			//$caption = $i->getVar('ele_caption');
 			$ele_id = $i->getVar('ele_id');
 			global $xoopsDB;
-			$ecq = q("SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE ele_id = '$ele_id'");
+			$ecq = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '$ele_id'");
 			$caption = $ecq[0]['ele_caption'];
 	
 			// two lines to mimic how captions are written to the DB...
@@ -1295,6 +1283,7 @@ function validateAndSubmit() {
 print "	function verifyDone() {\n";
 //print "		alert(formulizechanged);\n";
 print "		if(formulizechanged==0) {\n";
+
 print "			window.document.go_parent.submit();\n";
 print "		} else {\n";
 print "			var answer = confirm (\"" . _formulize_CONFIRMNOSAVE . "\");\n";

@@ -60,6 +60,9 @@ function displayElement($formframe="", $ele, $entry="new") {
 	}
 
 	$element =& $formulize_mgr->get($element_id);
+	if(!is_object($element)) {
+		return "invalid_element";
+	}
 
 	// check if the user is normally able to view this element or not, by checking their groups against the display groups -- added Nov 7 2005
 	$display = $element->getVar('ele_display');
@@ -78,51 +81,57 @@ function displayElement($formframe="", $ele, $entry="new") {
 	
 	if($allowed) {
 
-	$renderer =& new formulizeElementRenderer($element);
+	  	$renderer =& new formulizeElementRenderer($element);
 
-	$ele_value = $element->getVar('ele_value');
-	if($entry != "new") {
-		$prevEntry = getEntryValues($entry, $formulize_mgr, $groups);
-	}
+	  	$ele_value = $element->getVar('ele_value');
+  		if($entry != "new") {
+  			$prevEntry = getEntryValues($entry, $formulize_mgr, $groups);
+	  	}
 
-	if($prevEntry) { 
-		$ele_value = loadValue($prevEntry, $element, $ele_value); // get the value of this element for this entry as stored in the DB 
-		// query to see if this particular element has a value saved in this entry
-			if($prevValueThisElement = getElementValue($entry, getRealCaption($element_id))) {
-				print "<input type=hidden name=deh_" . $entry . "_" . $element->getVar('ele_id') . " value=set>\n"; // indicates a previous value for this element
-		} else {
-				print "<input type=hidden name=deh_" . $entry . "_" . $element->getVar('ele_id') . " value=empty>\n";
-		}
+  		if($prevEntry) { 
+	  		$ele_value = loadValue($prevEntry, $element, $ele_value); // get the value of this element for this entry as stored in the DB 
+  			// query to see if this particular element has a value saved in this entry
+  				if($prevValueThisElement = getElementValue($entry, getRealCaption($element_id))) {
+  					print "<input type=hidden name=deh_" . $entry . "_" . $element->getVar('ele_id') . " value=set>\n"; // indicates a previous value for this element
+	  		} else {
+  					print "<input type=hidden name=deh_" . $entry . "_" . $element->getVar('ele_id') . " value=empty>\n";
+  			}
+	  	} else {
+  				print "<input type=hidden name=deh_" . $entry . "_" . $element->getVar('ele_id') . " value=empty>\n"; // note, $entry may be "new" in this case
+	  	}
+  		$form_ele =& $renderer->constructElement('de_' . $entry . '_'.$element->getVar('ele_id'), $ele_value);
+	  	print $form_ele->render();
+  		return "rendered";
+
+  	// or, even if the user is not supposed to see the element, put in a hidden element with its default value (only on new entries)
+  	// NOTE: YOU CANNOT HAVE DEFAULT VALUES ON A LINKED FIELD CURRENTLY
+  	// So, no handling of linked values is included here.
+  	} elseif($forcehidden = $element->getVar('ele_forcehidden') AND $entry=="new") {
+  		// get the default value for the element, different kinds of elements have their defaults in different locations in ele_value
+  		$ele_value = $element->getVar('ele_value');
+  		print "<input type=hidden name=deh_" . $entry . "_" . $element->getVar('ele_id') . " value=empty>\n";
+  		// handle only radio buttons for now.
+  		switch($element->getVar('ele_type')) {
+  			case "radio":
+  				$indexer = 1;
+  				foreach($ele_value as $k=>$v) {
+  					if($v == 1) {
+  						print "<input type=hidden name=de_" . $entry . "_" . $element->getVar('ele_id') . " id=de_" . $entry . "_" . $element->getVar('ele_id') . " value=\"$indexer\">\n";
+  					}
+  					$indexer++;
+  				}
+  				break;
+  		}
+		return "hidden";
+		
 	} else {
-			print "<input type=hidden name=deh_" . $entry . "_" . $element->getVar('ele_id') . " value=empty>\n"; // note, $entry may be "new" in this case
-	}
-	$form_ele =& $renderer->constructElement('de_' . $entry . '_'.$element->getVar('ele_id'), $ele_value);
-	print $form_ele->render();
-
-	// or, even if the user is not supposed to see the element, put in a hidden element with its default value (only on new entries)
-	// NOTE: YOU CANNOT HAVE DEFAULT VALUES ON A LINKED FIELD CURRENTLY
-	// So, no handling of linked values is included here.
-	} elseif($forcehidden = $element->getVar('ele_forcehidden') AND $entry=="new") {
-		// get the default value for the element, different kinds of elements have their defaults in different locations in ele_value
-		$ele_value = $element->getVar('ele_value');
-		print "<input type=hidden name=deh_" . $entry . "_" . $element->getVar('ele_id') . " value=empty>\n";
-		// handle only radio buttons for now.
-		switch($element->getVar('ele_type')) {
-			case "radio":
-				$indexer = 1;
-				foreach($ele_value as $k=>$v) {
-					if($v == 1) {
-						print "<input type=hidden name=de_" . $entry . "_" . $element->getVar('ele_id') . " id=de_" . $entry . "_" . $element->getVar('ele_id') . " value=\"$indexer\">\n";
-					}
-					$indexer++;
-				}
-				break;
-		}
+		return "not_allowed";
 	}
 }
 
 // THIS FUNCTION DRAWS IN A SAVE BUTTON AT THE POINT REQUESTED BY THE USER
 // The displayElementRedirect is passed back to the page and is used to override the currently specified page, so the user can go to different content upon submitting the form
+// Redirect must be a valid pageworks page number!
 // Note that the URL does not change, even though the page contents do!
 function displayElementSave($text="", $redirect_page="") {
 	if($text == "") { $text = _pageworks_SAVE_BUTTON; }

@@ -30,7 +30,7 @@
 ###############################################################################
 
 $modversion['name'] = _MI_formulize_NAME;
-$modversion['version'] = "2.0b";
+$modversion['version'] = "2.1";
 $modversion['description'] = _MI_formulize_DESC;
 $modversion['author'] = "Freeform Solutions";                                            
 $modversion['credits'] = "";
@@ -43,22 +43,19 @@ $modversion['dirname'] = "formulize";
 $modversion['sqlfile']['mysql'] = "sql/mysql.sql";
 
 // Tables created by sql file (without prefix!)
-$modversion['tables'][0] = "form";
-$modversion['tables'][1] = "form_id";
-$modversion['tables'][2] = "form_menu";
-$modversion['tables'][3] = "form_form";
-$modversion['tables'][4] = "form_reports";
-$modversion['tables'][5] = "form_chains";
-$modversion['tables'][6] = "form_chains_entries";
-$modversion['tables'][7] = "form_max_entries";
-$modversion['tables'][8] = "formulize_frameworks";
-$modversion['tables'][9] = "formulize_framework_forms";
-$modversion['tables'][10] = "formulize_framework_elements";
-$modversion['tables'][11] = "formulize_framework_links";
-$modversion['tables'][12] = "formulize_menu_cats";
-$modversion['tables'][13] = "formulize_saved_views";
-$modversion['tables'][14] = "group_lists";
-$modversion['tables'][15] = "formulize_onetoone_links";
+$modversion['tables'][0] = "formulize";
+$modversion['tables'][1] = "formulize_id";
+$modversion['tables'][2] = "formulize_menu";
+$modversion['tables'][3] = "formulize_form";
+$modversion['tables'][4] = "formulize_reports";
+$modversion['tables'][5] = "formulize_frameworks";
+$modversion['tables'][6] = "formulize_framework_forms";
+$modversion['tables'][7] = "formulize_framework_elements";
+$modversion['tables'][8] = "formulize_framework_links";
+$modversion['tables'][9] = "formulize_menu_cats";
+$modversion['tables'][10] = "formulize_saved_views";
+$modversion['tables'][11] = "group_lists";
+$modversion['tables'][12] = "formulize_onetoone_links";
 
 // Admin things
 $modversion['hasAdmin'] = 1;
@@ -132,7 +129,7 @@ $modversion['config'][6]['default'] = '0';
 // get all the available forms and populate the options array
 // this is not permission controlled yet -- should make use of the edit_form permission perhaps
 global $xoopsDB;
-$getFormsSQL = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("form_id");
+$getFormsSQL = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id");
 $resFormsSQL = $xoopsDB->query($getFormsSQL);
 $pformoptions["-------------"] = 0;
 while($resArray = $xoopsDB->fetchArray($resFormsSQL)) {

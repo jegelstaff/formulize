@@ -61,6 +61,7 @@ function writeLinks($entries, $fids) {
 function handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_groups, $groups, $profileForm="") {
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 if (!$GLOBALS['xoopsSecurity']->check() AND !$profileForm) {
 	print "<b>Error: the data you submitted could not be saved in the database.</b>";
@@ -81,17 +82,22 @@ $myts =& MyTextSanitizer::getInstance();
 			$ele[$n[1]] = $v;
 			$id[$n[1]] = $n[1];
 		}
-		if($k == 'xoops_upload_file'){ //upload feature not enabled, does not work, this legacy code may be worked on in future
+//upload feature not enabled, does not work, this legacy code may be worked on in future
+//Now superseded by integration with WF-Downloads -- jwe April 22, 2006
+/*		if($k == 'xoops_upload_file'){ 
 			$tmp = $k;
 			$k = $v[0];			
 			$v = $tmp;
 			$n = explode("_", $k);
 			$ele[$n[1]] = $v;
 			$id[$n[1]] = $n[1];
-		}
+		}*/
 		if(substr($k, 0, 12) == "userprofile_") {
 			$up[substr($k, 12)] = $v;
 		}
+
+
+
 	}
 
 	if(isset($up)) {
@@ -119,7 +125,7 @@ $myts =& MyTextSanitizer::getInstance();
 				$num_id = "";
 				$proxyid = $uid; // changed from "" to $uid July 13 2005 so that proxy id always indicates the id of the user who last made a change (it is now a real modification user field)
 				// handle the num_id for this form (the starting id_req to be used for new entries)
-				$sql = $xoopsDB->query("SELECT id_req from " . $xoopsDB->prefix("form_form")." order by id_req DESC");
+				$sql = $xoopsDB->query("SELECT id_req from " . $xoopsDB->prefix("formulize_form")." order by id_req DESC");
 				list($id_req) = $xoopsDB->fetchRow($sql);
 				if ($id_req == 0) { $num_id = 1; }
 				else if ($num_id <= $id_req) $num_id = $id_req + 1;
@@ -153,16 +159,19 @@ $myts =& MyTextSanitizer::getInstance();
 			$ele_value = $element->getVar('ele_value');
 // don't use getVar method.  Go straight from DB instead, to avoid text sanitizing if the multi-language hack is in effect
 //			$ele_caption = $element->getVar('ele_caption');
-			$ecq = q("SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE ele_id = '$ele_id'");
+			$ecq = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '$ele_id'");
 			$ele_caption = $ecq[0]['ele_caption'];
 			$ele_caption = stripslashes($ele_caption);
 			$ele_caption = eregi_replace ("&#039;", "`", $ele_caption);
 			$ele_caption = eregi_replace ("&quot;", "`", $ele_caption);
 			$ele_caption = eregi_replace ("'", "`", $ele_caption);
-			$sql = $xoopsDB->query("SELECT desc_form from ".$xoopsDB->prefix("form_id")." WHERE id_form= ".$id_form.'');
+			$sql = $xoopsDB->query("SELECT desc_form from ".$xoopsDB->prefix("formulize_id")." WHERE id_form= ".$id_form.'');
 			while ($row = mysql_fetch_array ($sql)) 
 			{	$desc_form[] = $row['desc_form']; }
-			
+
+			$value = prepDataForWrite($element, $ele[$i]);
+
+/* // CODE NOW EXISTS IN FUNCTIONS.PHP -- May 26 2006			
 			switch($ele_type){
 				case 'text':
 					if($ele_value[3]) { // if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
@@ -239,9 +248,13 @@ $myts =& MyTextSanitizer::getInstance();
 							$selinit = 0;
 							foreach($ele[$i] as $whatwasselected)
 							{
-							//	print "<br>$whatwasselected<br>";
+								// if(isset($_GET['debug4'])) { print "<br>$whatwasselected<br>"; }
 								$compparts = explode("#*=:*", $whatwasselected);
-							//	print_r($compparts);
+								if(get_magic_quotes_gpc()) { // strip the slashes since we may be getting slashes passed in from a previous writing to the DB (caption names with apostrophes will generate slashes in the DB when magic quotes is on -- and the value passed back for formlinks is based on the current value in the DB).
+
+									$compparts[1] = stripslashes($compparts[1]);
+								}
+								// if(isset($_GET['debug4'])) { print_r($compparts); }
 								if($compinit == 0)
 								{
 									$value = $compparts[0] . "#*=:*" . $compparts[1] . "#*=:*";
@@ -258,6 +271,9 @@ $myts =& MyTextSanitizer::getInstance();
 						else
 						{
 							$value = $ele[$i];
+							if(get_magic_quotes_gpc()) { // strip the slashes since we may be getting slashes passed in from a previous writing to the DB (caption names with apostrophes will generate slashes in the DB when magic quotes is on -- and the value passed back for formlinks is based on the current value in the DB).
+								$value = stripslashes($value);
+							}							
 						}	
 //						print "<br>VALUE: $value";	
 						break;			
@@ -332,7 +348,7 @@ $myts =& MyTextSanitizer::getInstance();
 				case 'date':
 					// code below commented/added by jwe 10/23/04 to convert dates into the proper standard format
 					if($ele[$i] != "YYYY-mm-dd" AND $ele[$i] != "") { 
-						$ele[$i] = date("Y-m-d", safestrtotime($ele[$i])); 
+						$ele[$i] = date("Y-m-d", strtotime($ele[$i])); 
 					} else {
 						continue 2; // forget about this date element and go on to the next element in the form
 					}
@@ -344,6 +360,8 @@ $myts =& MyTextSanitizer::getInstance();
 				default:
 				break;
 			}
+
+*/
 
 		$submittedcaptions[$id_form][] = $ele_caption;
 		writeData($value, $entries[$id_form][0], $uids[$id_form], $prevEntry[$id_form], $id_form, $ele_caption, $proxyid, $date, $ele_type);
@@ -370,19 +388,19 @@ $myts =& MyTextSanitizer::getInstance();
 }
 
 // THIS FUNCTION CONTRIBUTED BY DPICELLA.  Added in Mar 15 2006.
+// NOT USED CURRENTLY DUE TO COMPATIBILITY ISSUES WITH DIFFERENT SERVERS
 /*
 A shorter function for recognising dates before 1970 and returning a negative number is below. All it does is replaces years before 1970 with  ones 68 years later (1904 becomes 1972), and then offsets the return value by a couple billion seconds. It works back to 1/1/1902, but only on dates that have a century.
 Note that a negative number is stored the same as a really big positive number. 0x80000000 is the number of seconds between 13/12/1901 20:45:54 and 1/1/1970 00:00:00. And 1570448 is the seconds between this date and 1/1/1902 00:00:00, which is 68 years before 1/1/1970.
 */
 function safestrtotime ($s) {
        $basetime = 0;
-       if (preg_match (&quot;/19(\d\d)/&quot;, $s, $m) && ($m[1] &lt; 70)) {
-               $s = preg_replace (&quot;/19\d\d/&quot;, 1900 + $m[1]+68, $s);
+       if (preg_match ("/19(\d\d)/", $s, $m) && ($m[1] < 70)) {
+               $s = preg_replace ("/19\d\d/", 1900 + $m[1]+68, $s);
                $basetime = 0x80000000 + 1570448;
        }
        return $basetime + strtotime ($s);
 }
-
 
 // THIS FUNCTION WRITES DATA TO THE DATABASE
 function writeData($value, $entry, $uids, $prevEntry, $id_form, $ele_caption, $proxyid, $date, $ele_type) {
@@ -411,19 +429,19 @@ if($entry) {
 
 	if(in_array($ele_caption, $prevEntry['captions'])) {
 		//get the ele_id
-		$extractEleid = "SELECT ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE ele_caption=\"$ele_caption\" AND id_req=$entry";
+		$extractEleid = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE ele_caption=\"$ele_caption\" AND id_req=$entry";
 		//print "*extractEleid*". $extractEleid . "*";
 		$resultExtractEleid = mysql_query($extractEleid);
 		$finalresulteleidex = mysql_fetch_row($resultExtractEleid);
 		$ele_id = $finalresulteleidex[0];
 
-		$sql="UPDATE " .$xoopsDB->prefix("form_form") . " SET id_form=\"$id_form\", id_req=\"$entry\", ele_id=\"$ele_id\", ele_type=\"$ele_type\", ele_caption=\"$ele_caption\", ele_value=\"$value\", uid=\"$uid\", proxyid=\"$proxyid\", date=\"$date\" WHERE ele_id = $ele_id";
+		$sql="UPDATE " .$xoopsDB->prefix("formulize_form") . " SET id_form=\"$id_form\", id_req=\"$entry\", ele_id=\"$ele_id\", ele_type=\"$ele_type\", ele_caption=\"$ele_caption\", ele_value=\"$value\", uid=\"$uid\", proxyid=\"$proxyid\", date=\"$date\" WHERE ele_id = $ele_id";
 		
 	} else { // or if the caption does not exist (it was blank last time the form was filled in...make a new entry but use the current viewentry for the id_req (to tie this new entry to the other elements that are part of the same record)
-		$sql="INSERT INTO ".$xoopsDB->prefix("form_form")." (id_form, id_req, ele_id, ele_type, ele_caption, ele_value, uid, proxyid, date) VALUES (\"$id_form\", \"$entry\", \"\", \"$ele_type\", \"$ele_caption\", \"$value\", \"$uid\", \"$proxyid\", \"$date\")";
+		$sql="INSERT INTO ".$xoopsDB->prefix("formulize_form")." (id_form, id_req, ele_id, ele_type, ele_caption, ele_value, uid, proxyid, date) VALUES (\"$id_form\", \"$entry\", \"\", \"$ele_type\", \"$ele_caption\", \"$value\", \"$uid\", \"$proxyid\", \"$date\")";
 	}
 } else { // not updating an old entry
-	$sql="INSERT INTO ".$xoopsDB->prefix("form_form")." (id_form, id_req, ele_id, ele_type, ele_caption, ele_value, uid, proxyid, date, creation_date) VALUES (\"$id_form\", \"$num_id\", \"\", \"$ele_type\", \"$ele_caption\", \"$value\", \"$uid\", \"$proxyid\", \"$date\", \"$date\")";
+	$sql="INSERT INTO ".$xoopsDB->prefix("formulize_form")." (id_form, id_req, ele_id, ele_type, ele_caption, ele_value, uid, proxyid, date, creation_date) VALUES (\"$id_form\", \"$num_id\", \"\", \"$ele_type\", \"$ele_caption\", \"$value\", \"$uid\", \"$proxyid\", \"$date\", \"$date\")";
 }
 
 if($_GET['debug4']) { print $sql . "<br>"; }
@@ -559,11 +577,11 @@ function blankEntries($submittedcaptions, $prevEntry, $entry) {
 	//If there are existing captions that have not been sent for writing, then blank them.
 	foreach($missingcaptions as $ele_cap2) {
 	
-		$extractEleid2 = "SELECT ele_id FROM " . $xoopsDB->prefix("form_form") . " WHERE ele_caption=\"$ele_cap2\" AND id_req=$entry";
+		$extractEleid2 = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE ele_caption=\"$ele_cap2\" AND id_req=$entry";
 		$resultExtractEleid2 = mysql_query($extractEleid2);
 		$finalresulteleidex2 = mysql_fetch_row($resultExtractEleid2);
 		$ele_id2 = $finalresulteleidex2[0];
-		$sql="DELETE FROM " .$xoopsDB->prefix("form_form") . " WHERE ele_id = $ele_id2";
+		$sql="DELETE FROM " .$xoopsDB->prefix("formulize_form") . " WHERE ele_id = $ele_id2";
 		//print $sql . "<br>";
 		$result = $xoopsDB->query($sql);
 		if(!$result) { exit("error blanking entries while using the following SQL statement:<br>$sql"); }

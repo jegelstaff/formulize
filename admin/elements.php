@@ -46,7 +46,7 @@ if(!isset($HTTP_POST_VARS['ele_id'])){
 	$ele_id = $HTTP_POST_VARS['ele_id'];
 }
 /* // commented due to title now being identical with id_form
-	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("form_id")." WHERE desc_form='%s'",$title);
+	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form='%s'",$title);
 	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
 
 if ( $res ) {
@@ -110,7 +110,7 @@ switch($op){
 		
 		// gather captions...
 		array ($captionarray);
-		$captionquery = "SELECT ele_caption FROM ".$xoopsDB->prefix("form")." WHERE id_form=$id_form";
+		$captionquery = "SELECT ele_caption FROM ".$xoopsDB->prefix("formulize")." WHERE id_form=$id_form";
 		// note that we exclude the caption of the current element if there is one (so you're not forced to change the caption just cause you're editing).
 		if($ele_id)
 		{
@@ -310,7 +310,7 @@ switch($op){
 
 		
 		// added by jwe 01/06/05 -- get the current highest order value for the form, and add up to 10 to it to reach the nearest mod 5 value
-		$highorderq = "SELECT MAX(ele_order) FROM " . $xoopsDB->prefix("form") . " WHERE id_form=$id_form";
+		$highorderq = "SELECT MAX(ele_order) FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$id_form";
 		$reshighorderq = $xoopsDB->query($highorderq);
 		$rowhighorderq = $xoopsDB->fetchRow($reshighorderq);
 		$highorder = $rowhighorderq[0]+1;
@@ -366,7 +366,7 @@ switch($op){
 			$element =& $formulize_mgr->get($ele_id);
 	//		not valid for use with multi-language, since getVar will be sanitizing the output (it seems)
 	//		$original_caption = $element->getVar('ele_caption'); // added by jwe 09/03/05, used in new code below
-			$ocq = "SELECT ele_caption FROM " . $xoopsDB->prefix("form") . " WHERE ele_id='$ele_id'";
+			$ocq = "SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id='$ele_id'";
 			$res_ocq = $xoopsDB->query($ocq);
 			$array_ocq = $xoopsDB->fetchArray($res_ocq);
 			$original_caption = $array_ocq['ele_caption'];
@@ -585,7 +585,7 @@ switch($op){
 				$original_caption = eregi_replace ("&#039;", "`", $original_caption);
 				$original_caption = eregi_replace ("'", "`", $original_caption);
 				$original_caption = eregi_replace ("&quot;", "`", $original_caption);
-				$updateq = "UPDATE " . $xoopsDB->prefix("form_form") . " SET ele_caption='" . mysql_real_escape_string($ele_caption) . "' WHERE id_form = '$id_form' AND ele_caption='" . mysql_real_escape_string($original_caption) . "'";
+				$updateq = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET ele_caption='" . mysql_real_escape_string($ele_caption) . "' WHERE id_form = '$id_form' AND ele_caption='" . mysql_real_escape_string($original_caption) . "'";
 				if($ele_caption != $original_caption) {
 					if(!$res = $xoopsDB->query($updateq)) {
 						print "Error:  update of captions in form $id_form failed.";

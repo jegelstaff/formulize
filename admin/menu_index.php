@@ -205,7 +205,7 @@ echo "<input type='hidden' name='cat_id' value='$cat_id'>
 
 
 				// do an interim query to sort the formids according to position
-				$positions = q("SELECT menuid FROM " . $xoopsDB->prefix("form_menu") . " WHERE $sortfilter ORDER BY position");
+				$positions = q("SELECT menuid FROM " . $xoopsDB->prefix("formulize_menu") . " WHERE $sortfilter ORDER BY position");
 				foreach($positions as $id=>$thispos) {
 					drawRow($thiscat['cat_name'], $thispos['menuid']);
 					$foundForms[] = $thispos['menuid'];
@@ -217,7 +217,7 @@ echo "<input type='hidden' name='cat_id' value='$cat_id'>
 
 			// NOW GET LIST OF ALL FORMS(MENUIDS)
 			// draw a row for each one that isn't in the foundForms array
-			$allMenuIds_q = q("SELECT menuid FROM " . $xoopsDB->prefix("form_menu"));
+			$allMenuIds_q = q("SELECT menuid FROM " . $xoopsDB->prefix("formulize_menu"));
 			foreach($allMenuIds_q as $aMenuId) {
 				$allMenuIds[] = $aMenuId['menuid'];
 			}
@@ -240,30 +240,27 @@ function drawRow($thiscat, $thisformid) {
 
 	global $xoopsDB;
 
-		$result = $xoopsDB->query("SELECT menuid, position, itemname, indent, margintop, marginbottom, itemurl, bold, membersonly, mainmenu, status FROM ".$xoopsDB->prefix("form_menu")." WHERE menuid = '$thisformid' ORDER BY position");
-                $myts =& MyTextSanitizer::getInstance();
-                while ( list($menuid, $position, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status) = $xoopsDB->fetchRow($result) ) {
-                        $itemname = $myts->makeTboxData4Show($itemname);
-                        $itemurl = $myts->makeTboxData4Show($itemurl);
-
-				echo "<tr class='bg1'><td>" . $thiscat . "</td>"; // added to display category names (class moved from position line below)
-                        echo "<td align='right'>$position</td>";
-
-                        echo "<td><a href='menu_index.php?op=MyMenuEdit&amp;menuid=$menuid'>$itemname</a></td>";
-                        if ( $status == 1 ) {
-                                echo "<td>"._AM_ACTIVE."</td>";
-                        } else {
-                                echo "<td>"._AM_INACTIVE."</td>";
-                        }
-				echo "</tr>";
-                }
-
+	$result = $xoopsDB->query("SELECT menuid, position, itemname, indent, margintop, marginbottom, itemurl, bold, membersonly, mainmenu, status FROM ".$xoopsDB->prefix("formulize_menu")." WHERE menuid = '$thisformid' ORDER BY position");
+	$myts =& MyTextSanitizer::getInstance();
+	while ( list($menuid, $position, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status) = $xoopsDB->fetchRow($result) ) {
+      	$itemname = $myts->makeTboxData4Show($itemname);
+            $itemurl = $myts->makeTboxData4Show($itemurl);
+		echo "<tr class='bg1'><td>" . $thiscat . "</td>"; // added to display category names (class moved from position line below)
+		echo "<td align='right'>$position</td>";
+		echo "<td><a href='menu_index.php?op=MyMenuEdit&amp;menuid=$menuid'>$itemname</a></td>";
+		if ( $status == 1 ) {
+			echo "<td>"._AM_ACTIVE."</td>";
+		} else {
+			echo "<td>"._AM_INACTIVE."</td>";
+		}
+		echo "</tr>";
+	}
 }
 
 function MyMenuEdit($menuid) {
         global $xoopsDB, $xoopsConfig, $xoopsModule;
         xoops_cp_header();
-        $result = $xoopsDB->query("SELECT position, itemname, indent, margintop, marginbottom, itemurl, bold, membersonly, mainmenu, status FROM ".$xoopsDB->prefix("form_menu")." WHERE menuid=$menuid");
+        $result = $xoopsDB->query("SELECT position, itemname, indent, margintop, marginbottom, itemurl, bold, membersonly, mainmenu, status FROM ".$xoopsDB->prefix("formulize_menu")." WHERE menuid=$menuid");
         list($xposition, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status) = $xoopsDB->fetchRow($result);
         $myts =& MyTextSanitizer::getInstance();
         $itemname  = $myts->makeTboxData4Edit($itemname);
@@ -347,7 +344,7 @@ function MyMenuSave($menuid, $xposition, $itemname, $indent, $margintop, $margin
         $myts =& MyTextSanitizer::getInstance();
    		 	$itemname  = $myts->makeTboxData4Save(trim($itemname));
     		$itemurl   = $myts->makeTboxData4Save(trim($itemurl));
-        $xoopsDB->query("UPDATE ".$xoopsDB->prefix("form_menu")." SET position=$xposition, status=$status WHERE menuid=$menuid");
+        $xoopsDB->query("UPDATE ".$xoopsDB->prefix("formulize_menu")." SET position=$xposition, status=$status WHERE menuid=$menuid");
 
 		// ADDED CODE TO HANDLE SAVING OF CATEGORY April 25/05
 		// 0. compare cat_id and old_cat to see if there's been a change
@@ -388,9 +385,9 @@ function MyMenuAdd($xposition, $itemname, $indent, $margintop, $marginbottom, $i
         $myts =& MyTextSanitizer::getInstance();
     		$itemname  = $myts->makeTboxData4Save(trim($itemname));
     		$itemurl   = $myts->makeTboxData4Save(trim($itemurl));
-        $newid = $xoopsDB->genId($xoopsDB->prefix("form_menu")."_menuid_seq");
+        $newid = $xoopsDB->genId($xoopsDB->prefix("formulize_menu")."_menuid_seq");
         
-    		$xoopsDB->query("INSERT INTO ".$xoopsDB->prefix("form_menu")." (menuid, position, itemname, indent, margintop, marginbottom, itemurl, bold, membersonly, mainmenu, status) VALUES ('$newid', '$xposition', '$itemname', '$indent', '$margintop', '$marginbottom', '$itemurl', '$bold', '0', '$mainmenu', '$status')");
+    		$xoopsDB->query("INSERT INTO ".$xoopsDB->prefix("formulize_menu")." (menuid, position, itemname, indent, margintop, marginbottom, itemurl, bold, membersonly, mainmenu, status) VALUES ('$newid', '$xposition', '$itemname', '$indent', '$margintop', '$marginbottom', '$itemurl', '$bold', '0', '$mainmenu', '$status')");
 
     redirect_header("menu_index.php?op=MyMenuAdmin",1,_AM_DBUPDATED);
     exit();
@@ -413,13 +410,13 @@ function menuCatUpdate($cat_id, $cat_name, $new_cat="") {
 /*function MyMenuDel($menuid, $ok=0) {
         global $xoopsDB, $xoopsConfig, $xoopsModule;
         if ( $ok == 1 ) {
-                $xoopsDB->query("DELETE FROM ".$xoopsDB->prefix(form_menu)." WHERE menuid=$menuid");
+                $xoopsDB->query("DELETE FROM ".$xoopsDB->prefix(formulize_menu)." WHERE menuid=$menuid");
                 redirect_header("menu_index.php?op=MyMenuAdmin",1,_AM_DBUPDATED);
                 exit();
         } else {
                 xoops_cp_header();
                 OpenTable();
-                $result = $xoopsDB->query("SELECT position, itemname, indent, margintop, marginbottom, itemurl, bold, membersonly, mainmenu, status FROM ".$xoopsDB->prefix("form_menu")." WHERE menuid=$menuid");
+                $result = $xoopsDB->query("SELECT position, itemname, indent, margintop, marginbottom, itemurl, bold, membersonly, mainmenu, status FROM ".$xoopsDB->prefix("formulize_menu")." WHERE menuid=$menuid");
                 list($position, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status) = $xoopsDB->fetchRow($result);
                 echo "<big><b>"._AM_TITLE."</big></b>";
                 echo "<h4 style='text-align:left;'>"._AM_DELETEMENUITEM."</h4>

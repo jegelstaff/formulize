@@ -70,7 +70,7 @@ if ($title=="") {
 */
 
 // query modified to include singleentry - July 28, 2005 -- part of switch to new intnerface
-$sql=sprintf("SELECT admin,groupe,email,expe,singleentry,desc_form FROM ".$xoopsDB->prefix("form_id")." WHERE id_form='$fid'");
+$sql=sprintf("SELECT admin,groupe,email,expe,singleentry,desc_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form='$fid'");
 $res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$sql.'<br>'.mysql_error());
 //global $nb_fichier;
  

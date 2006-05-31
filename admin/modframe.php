@@ -201,7 +201,7 @@ function modframe($cf)
 
 	// retrieve the names and ids of all forms
 
-	$formsq = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("form_id");
+	$formsq = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id");
 	$res = $xoopsDB->query($formsq);
 	while($array = $xoopsDB->fetchArray($res)) {
 		$form_names[] = $array['desc_form'];
@@ -227,7 +227,7 @@ function modframe($cf)
 
 	// get a list of all the linked select boxes since we need to know if any fields in these two forms are the source for any links
 
-	$getlinksq = "SELECT id_form, ele_caption, ele_id FROM " . $xoopsDB->prefix("form") . " WHERE ele_type=\"select\" AND ele_value LIKE '%#*=:*%' ORDER BY id_form";
+	$getlinksq = "SELECT id_form, ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type=\"select\" AND ele_value LIKE '%#*=:*%' ORDER BY id_form";
 	// print "$getlinksq<br>";
 	$resgetlinksq = $xoopsDB->query($getlinksq);
 	while ($rowlinksq = $xoopsDB->fetchRow($resgetlinksq))
@@ -252,7 +252,7 @@ function modframe($cf)
 				$source_caps[] = $details[1];
 
 				//get the element ID for the source we've just found
-				$sourceq = "SELECT ele_id FROM " . $xoopsDB->prefix("form") . " WHERE ele_caption = '" . addslashes($details[1]) . "' AND id_form = '$details[0]'";
+				$sourceq = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_caption = '" . addslashes($details[1]) . "' AND id_form = '$details[0]'";
 				if($ressourceq = $xoopsDB->query($sourceq)) {
 					$rowsourceq = $xoopsDB->fetchRow($ressourceq);
 					$source_ele_ids[] = $rowsourceq[0];
@@ -349,11 +349,11 @@ function modframe($cf)
 			print "<td class=$class>";
 
 			// get names of forms in the link
-			$name1q = "SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form = '" . $link['fl_form1_id'] . "'";
+			$name1q = "SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = '" . $link['fl_form1_id'] . "'";
 			$res = $xoopsDB->query($name1q);
 			$row = $xoopsDB->fetchRow($res);
 			$form1 = $row[0];
-			$name2q = "SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form = '" . $link['fl_form2_id'] . "'";
+			$name2q = "SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = '" . $link['fl_form2_id'] . "'";
 			$res = $xoopsDB->query($name2q);
 			$row = $xoopsDB->fetchRow($res);
 			$form2 = $row[0];
@@ -568,7 +568,7 @@ function editform($fid, $cf) {
 	// 2. Complete element list for this form
 	// 3. Handle of each element for this form (in this framework)
 
-	$nameq = "SELECT desc_form FROM " . $xoopsDB->prefix("form_id") . " WHERE id_form = '" . $fid . "'";
+	$nameq = "SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = '" . $fid . "'";
 	$res = $xoopsDB->query($nameq);
 	$row = $xoopsDB->fetchRow($res);
 	$formname = $row[0];
@@ -579,7 +579,7 @@ function editform($fid, $cf) {
 	$formhandle = $row[0];
 
 	$indexer = 0;
-	$elementsq = "SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("form") . " WHERE id_form = '" . $fid . "' ORDER BY ele_order";
+	$elementsq = "SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form = '" . $fid . "' ORDER BY ele_order";
 	$res = $xoopsDB->query($elementsq);
 	while ($row = $xoopsDB->fetchRow($res)) {
 		$elements[$indexer]['caption'] = $row[0];

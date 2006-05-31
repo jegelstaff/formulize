@@ -294,7 +294,7 @@ if(count($publishgroups) > 1 ) { $pubflag = 1; }
 if($pubflag) {
 	// get lastloaded publishing option
 	if(strstr($viewselection, "old_") AND $viewselection != "new" AND $viewselection != "x1" AND $viewselection != "x2") { // legacy view
-		$lastpub = q("SELECT report_groupids, report_ispublished FROM " . $xoopsDB->prefix("form_reports") . " WHERE report_id = '" . substr($viewselection, 5). "'");
+		$lastpub = q("SELECT report_groupids, report_ispublished FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id = '" . substr($viewselection, 5). "'");
 		$lastpubgroups = explode("&*=%4#", $lastpub[0]['report_groupids']);
 		if(strstr($lastpub[0]['report_ispublished'], "3") OR strstr($lastpub[0]['report_ispublished'], "2")) {
 			$currentlock = 1;

@@ -79,15 +79,7 @@ CREATE TABLE formulize_framework_elements (
   PRIMARY KEY (`fe_id`)
 ) TYPE=MyISAM;
 
-CREATE TABLE form_max_entries (
-  max_ent_id smallint(5) NOT NULL auto_increment,
-  max_ent_id_form smallint(5),
-  max_ent_uid int(10),
-  max_ent_entcount smallint(5),
-  PRIMARY KEY (`max_ent_id`)
-) TYPE=MyISAM;
-
-CREATE TABLE form_reports (
+CREATE TABLE formulize_reports (
   report_id smallint(5) NOT NULL auto_increment,
   report_name varchar(255) default NULL,
   report_id_form smallint(5),
@@ -106,22 +98,7 @@ CREATE TABLE form_reports (
   PRIMARY KEY (`report_id`)
 ) TYPE=MyISAM;
 
-CREATE TABLE form_chains (
-  chain_id smallint(5) NOT NULL auto_increment,
-  chain_name varchar(255) default NULL,
-  chain_startform smallint(5),
-  chain_allforms varchar(255) default NULL,
-  PRIMARY KEY (`chain_id`)
-) TYPE=MyISAM;
-
-CREATE TABLE form_chains_entries (
-  chain_entry_id smallint(5) NOT NULL auto_increment,
-  chain_id smallint(5),
-  chain_reqs varchar(255) default NULL,
-  PRIMARY KEY (`chain_entry_id`)
-) TYPE=MyISAM;
-
-CREATE TABLE form_id (
+CREATE TABLE formulize_id (
   id_form smallint(5) NOT NULL auto_increment,
   desc_form varchar(255) NOT NULL default '',
   admin varchar(5) default NULL,
@@ -139,7 +116,7 @@ CREATE TABLE form_id (
   UNIQUE `desc_form_id` (`desc_form`)
 ) TYPE=MyISAM;
 
-CREATE TABLE form (
+CREATE TABLE formulize (
   id_form int(5) NOT NULL default '0',
   ele_id smallint(5) unsigned NOT NULL auto_increment,
   ele_type varchar(10) NOT NULL default '',
@@ -154,11 +131,11 @@ CREATE TABLE form (
   KEY `ele_order` (`ele_order`)
 ) TYPE=MyISAM;
 
-CREATE TABLE form_menu (
+CREATE TABLE formulize_menu (
   menuid int(4) unsigned NOT NULL auto_increment,
   position int(4) unsigned NOT NULL,
   indent int(2) unsigned NOT NULL default '0',
-  itemname varchar(60) NOT NULL default '',
+  itemname varchar(255) NOT NULL default '',
   margintop varchar(12) NOT NULL default '0px',
   marginbottom varchar(12) NOT NULL default '0px',
   itemurl varchar(255) NOT NULL default '',
@@ -170,7 +147,7 @@ CREATE TABLE form_menu (
   KEY idxmymenustatus (status)
 ) TYPE=MyISAM;
 
-CREATE TABLE form_form (
+CREATE TABLE formulize_form (
   id_form int(5) NOT NULL default '0',
   id_req smallint(5) ,
   ele_id int(5) unsigned NOT NULL auto_increment,
