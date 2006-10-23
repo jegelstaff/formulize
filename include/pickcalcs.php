@@ -108,7 +108,7 @@ print "window.opener.document.controls.calc_blanks.value = calc_blanks;\n";
 print "window.opener.document.controls.calc_grouping.value = calc_grouping;\n";
 print "window.opener.document.controls.hlist.value = 1;\n";
 print "window.opener.document.controls.hcalc.value = 0;\n";
-print "window.opener.document.controls.submit();\n";
+print "window.opener.showLoading();\n";
 print "window.self.close();\n";
 ?>
 }
@@ -267,10 +267,18 @@ foreach($cols as $f=>$vs) {
 		if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.  
 			$usedvals[] = $values['ele_id'];
 			if(!$_POST[$reqdcol] AND $_POST['column'] != $values['ele_id']) { // Also exclude columns that have been used already.
-				$options[$values['ele_id']] = printSmart(trans($values['ele_caption']));
+				if($values['ele_colhead'] != "") {
+					$options[$values['ele_id']] = printSmart(trans($values['ele_colhead']));
+				} else {
+					$options[$values['ele_id']] = printSmart(trans($values['ele_caption']));
+				}
 			}
 			// used for the grouping list box
-			$options2[$values['ele_id']] = "Group by: " . printSmart(trans($values['ele_caption']), "25");
+			if($values['ele_colhead'] != "") {
+				$options2[$values['ele_id']] = "Group by: " . printSmart(trans($values['ele_colhead']), "25");
+			} else {
+				$options2[$values['ele_id']] = "Group by: " . printSmart(trans($values['ele_caption']), "25");
+			}
 		}
 	}		
 }
@@ -309,6 +317,9 @@ if($_POST['column'] != "creation_date" AND !$_POST['reqdcalc_column_creation_dat
 }
 if($_POST['column'] != "mod_date" AND !$_POST['reqdcalc_column_mod_date']) {
 	$columns->addOption("mod_date", _formulize_DE_CALC_MODDATE);
+}
+if($_POST['column'] != "creator_email" AND !$_POST['reqdcalc_column_creator_email']) {
+	$columns->addOption("creator_email", _formulize_DE_CALC_CREATOR_EMAIL);
 }
 $columns->addOptionArray($options);
 
@@ -357,6 +368,9 @@ foreach($returned['rc'] as $hidden) {
 			break;
 		case "mod_date":
 			$colname = _formulize_DE_CALC_MODDATE;
+			break;
+		case "creator_email":
+			$colname = _formulize_DE_CALC_CREATOR_EMAIL;
 			break;
 		default:
 			$temp_cap = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '" . $hidden['column'] . "'"); 

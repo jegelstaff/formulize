@@ -1,4 +1,110 @@
 *********************
+Version 2.2 RC1:
+*********************
+
+IMPORTANT:  Read the readme file for this patch.  There are other things to do besides overwrite your files.
+
+There are over 60 changes, improvements and bug fixes in this release of Formulize, including over 30 new features!  
+
+** Major New Features (11):
+
+NOTIFICATIONS: 
+--Added a full set of notification options, richer than XOOPS default notification options.  In addition to the basics, you can set specific conditions on what form entries you want to be notified about (ie: only where "Type of Order = air mail"), you can set notifications to be delivered to all users in other groups, you can set notifications to be delivered to the user who just created/updated/deleted the entry, and you can specify a custom message template to be used if you want something different from the standard messages
+
+FULL IMPORT CAPABILITIES: 
+--Vastly improved import feature that supports updating existing entries as well as adding new entries.  Validation of options fixed and improved.  Multilingual sites supported.  It also supports batch account creation if you import entries into a designated user profile form and you're using the registration codes module.  Detailed instructions are on the import popup screen; read them carefully.  Will not work on a framework; forms only.
+
+"OTHER" TEXTBOX OPTION FOR CHECKBOXES AND RADIO BUTTONS: 
+--Added an "Other" option to radio buttons and checkboxes so that a final option with a textbox beside it can be added to such a question
+
+REAL DEFAULT PAGE AND NEW URL OPTIONS:
+--Formulize can work with the Main Menu now, since if no form is specified in the URL, then the list of forms in the "General Forms" category is displayed instead.  Plus, you can navigate directly to an entry in a form with an URL like this:  http://www.yoursite.com/modules/formulize/index.php?fid=3&ve=46  OR, navigate directly to a framework with an URL like this:  http://www.yoursite.com/modules/formulize/index.php?frid=6&fid=11
+
+MULTI-PAGE FORMS WITH SKIP LOGIC: 
+--Added a multi-page form function (displayFormPages) which can be used to display a long form as a series of pages.  Supports "skip-logic" so you can have certain pages display or not display based on the answers to previous questions.
+
+CLONE ENTRIES: 
+--Added a "Clone Entries" feature so you can quickly make multiple copies of one or more entries in a form.  Works with frameworks too, and intelligently duplicates entries in subforms
+
+DYNAMIC DEFAULTS: 
+--Added a dynamic default option for textboxes, which lets you specify default values using PHP code
+
+PRIVATE ELEMENTS: 
+--Added a "private" option for all elements, which lets you mark a question as private and only users with special permission can view other people's answers to those questions.  Useful if not everyone who has access to the entries in a form is supposed to see every single question.  Also very useful in conjunction with the Registration Codes module to create highly customized profile forms.
+
+AUTOMATIC SELECTBOXES WITH USERNAMES IN THEM: 
+--Added an option for selectboxes to populate them based on the usernames or full names of users in one or more groups
+
+FRAMEWORKS BASED ON COMMON VALUES IN ANY TWO FIELDS: 
+--Added the ability to relate forms in a framework simply on the basis of having a common value in any field.  This is very powerful in conjunction with the new "dynamic default" capability in textboxes, and the newly functional "display as hidden" option.  You can essentially embed PHP code within a form to set a customized tag for the entry at the time the user creates it, without the user seeing this or having the ability to alter the text accidentally (or maliciously).  Proper setting of such tags on different forms, plus use of this common value feature in a framework gives application designers much more flexibility over how they arrange their forms and interfaces.
+
+NEW AND IMPROVED SUBFORM UI: 
+--Completely reworked the "subform" UI, the interface users get when filling in a form that has a "unified display" form attached to it in a framework.  You can specify where in the form the new subform UI should appear.  The new UI lets users add entries in the subform, without leaving the main form.  It also lets them modify certain elements in all the entries in the subform, without leaving the main form.  The result is many fewer clicks and more visibility of the data in the subform.
+
+** Other New Features (18):
+
+--User interface improvements in the list of entries screen:  reorganized buttons to make the "fill in the form" buttons more obvious to users; added "Type search terms here" to the first quicksearch box to help explain what the boxes are for; and added a notice if there are no entries to display currently, or no entries that match the search terms
+--Added support for cookies for anonymous users making entries in a single-entry form, so when they return to the form, the information they previously entered will be available to them
+--Added a "Saving..." and "Working..." message to the user interface when saving entries in a form, or making a query in the list of entries page
+--Added option to remove the "All Done" button from the bottom of a form in certain situations
+--Added metadata columns (user who created entry, user who last modified entry, creation date and modification date) to the list of selectable default fields for the list of entries screen
+--Added "Creator's e-mail" column to the list of selectable columns in the list of entries page, so that the account e-mail address of the entry owner can be displayed along with the data in a form
+--Added a delimiter option to checkboxes and radio buttons so you can control whether they are horizontal or vertical on a question by question basis
+--Completely reworked and improved scope control over linked select boxes so you can specify from which groups entries should be gathered to make up the options in the box
+--Added a "convert" option for textboxes so you can change single line textboxes into multi line boxes and vice versa
+--Added a "description" option for all elements, which lets you put descriptive text below the question itself
+--Added a "column heading" option so you can have different text for the names of the questions on the list of entries page than on the form itself
+--Added an option in the permission control screen so you can select several groups and apply the same permission selection to all of them at once.  Saves A LOT of time in a site with lots of groups.
+--Added an "association" option for textboxes, so their contents can be compared to entries in another form.  When there is a match, the text for this box shows up as a link on the list of entries page and when clicked opens a new window with the details of the corresponding entry.
+--Added textboxes and textarea boxes to the list of elements handled by the "display as hidden" feature
+--Added awareness of the "display as hidden" option to regular forms (previously only available with displayElement)
+--Improved percentage breakdown calculations for questions where multiple answers are allowed; percentages now calculated against the total number of entries and the total number of answers.  Also added totals to the percentage breakdown.
+--Added the ability to export calculations as well as entries.  Click the export button when looking at calculations to do this.
+--Changed the redirect when users don't have permission for a form, so they are sent to the user.php page which will send them back to the form after they login
+
+** Improvements and New API Features for Application Developers (9):
+
+--Added a new sorting function, resultSortRelevance, which will sort entries in a dataset based on the prevalence of search terms in specified fields.  The importance of fields can be weighted based on the nature of the dataset.
+--Added the displayCaption function to display only the caption for an element
+--Added automatic generation of default handles for all elements in a form when updating the handles in the Frameworks section (this saves A LOT of time on a really long form, if you don't actually need to have human-readable handles; sometimes you just need handles specified since you have to query a framework and not a form)
+--Added a special value of the settings parameter in the displayForm function, {RETURNAFTERSAVE}, which will cause a form to abort drawing to the screen after a submission, allowing the application developer to carry on and display other information to the user
+--Added awareness of multi-page forms to the displayCalendar function
+--improved behaviour of resultSort function when a multiple answer field is the sorting key
+--displayElement and displayButton functions now support being passed an element object, not just an element ID or framework handle
+--internalRecordIds function improved so that an entry can be passed with no form handle specified and an array of arrays is returned, one array for each form in the entry
+--Added checkmark and circle images to complement the x image, useful if you need simple icons on a Pageworks page
+
+** General Additions/Changes/Fixes (27+):
+
+--Modified the edit form elements page, so that the new private option is displayed and can be turned on or off from there, and also the new convert option is accessible from there
+--Started a forms and frameworks classes, but they do not have a full series of properties or methods yet
+--Added extensive patching logic to correct potential errors in the database and update the structure and contents to match the current standards
+--Added style parameter to the displayElementSave function to allow passing of CSS info to the save button
+--Improved gathering of metadata about a form (user who created entry, user who last modified entry, creation date and modification date)
+--Added permissions related to the new private elements feature and new notification feature
+--Included the csstidy class (thanks to Florian Schmitz (floele at gmail dot com)) for use parsing the site's stylesheet when exporting calculations
+--Added awareness of ports to the getCurrentURL function, so Formulize behaves correctly when the XOOPS site resides at a specific port number
+--Changed how the default fields for the list of entries screen are stored so this setting is no longer lost when the fields in a form change
+--Moved handling of displayElement submissions to Formulize from Pageworks, since the new subform interface relies on displayElement
+--Changed HTTP_POST_VARS and HTTP_GET_VARS to _POST and _GET throughout
+--Changed the order value for elements to be four digits instead of three, and it is autoincremented by fives now, not tens
+--Added translation logic to exported files
+--Various language constants added for new features
+--Javascript updates throughout to remove the need for the selectbox core patch (thanks Skalpa!)
+--Now properly handle slashes in user input when magic_quotes is on
+--Better filtering of user input to protect against cross-site scripting attacks
+--Altered the data extraction layer to handle the new data storage format for HTML special characters
+--Internal improvements to the data extraction layer, including adding awareness of all new features, and protections against SQL injection
+--Fixed a bug in how the default fields on the list of entries screen were determined when no specific defaults have been set by the user.
+--Fixed a bug where the default date for dateboxes was not being set correctly
+--Fixed a race condition bug in several places, which could result in multiple entries receiving the same ID number if they were created at precisely the same moment
+--Fixed a bug in the detection of permission to view an entry
+--Fixed a bug where quicksearches would remain in effect even after their columns were no longer visible (thereby preventing them from ever being turned off)
+--Fixed a bug in the edit form elements page that caused elements with custom display options not to be updated correctly when altering settings on that page
+--Fixed a bug where the default values for textboxes were displayed when viewing an entry where the originating users had left those boxes blank
+--Various bug fixes throughout, thanks to the active community members who have posted in the forums and trackers!
+
+*********************
 Version 2.1 RC1:
 *********************
 
@@ -26,7 +132,7 @@ Version 2.1 RC1:
 --Fixed a bug where, in a multilanguage site, element captions were not being translated in the Calculations screen
 --Removed some duplicated code
 --Changed how users view entries in forms in a framework, when viewing the form itself, so that their own permission level takes precedence instead of the permission level of the owner of the data
---Disabled use of strsafetotime for the time being, so there is no date handling for dates prior to December 31 1969.  There were compatibility issues with this function on different servers.  (This change was actually included, but not accurately recorded in the changelog, for 2.0.6)
+--Disabled use of strsafetotime for the time being, so there is no date handling for dates prior to December 31 1969.  There were compatibility issues with this function on different servers.  (This change was actually included, but not accurately recorded in the changelog, for 2.0.6) *update with 2.2: handling dates prior to December 31 1969 is actually platform dependent. dpicella has an updated patch that may correct the issue on affected systems.*
 --Changes to integrate with reg_codes 2.1 RC1
 
 *********************

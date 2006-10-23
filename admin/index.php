@@ -34,19 +34,20 @@
 ###############################################################################
 include_once ("admin_header.php");
 include_once '../../../include/cp_header.php';
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-if(!isset($HTTP_POST_VARS['op'])){
-	$op = isset ($HTTP_GET_VARS['op']) ? $HTTP_GET_VARS['op'] : '';
+if(!isset($_POST['op'])){
+	$op = isset ($_GET['op']) ? $_GET['op'] : '';
 }else {
-	$op = $HTTP_POST_VARS['op'];
+	$op = $_POST['op'];
 }
 
 if(!is_numeric($_GET['title'])) {
 
-	if(!isset($HTTP_POST_VARS['title'])){
-		$title = isset ($HTTP_GET_VARS['title']) ? $HTTP_GET_VARS['title'] : '';
+	if(!isset($_POST['title'])){
+		$title = isset ($_GET['title']) ? $_GET['title'] : '';
 	}else {
-		$title = $HTTP_POST_VARS['title'];
+		$title = $_POST['title'];
 	}
 
 	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form='%s'",$title);
@@ -66,15 +67,25 @@ if(!is_numeric($_GET['title'])) {
 	$realtitle = $rtarray['desc_form'];
 }
 
- 
+
 if( $_POST['op'] != 'save' ){
 	xoops_cp_header();
+
+      // javascript for confirming conversion of elements -- added July 1 2006
+      print "<script type='text/javascript'>\n";
+
+      print "function confirmConvert() {\n";
+      print " var answer = confirm('" . _AM_CONVERT_CONFIRM . "');\n";
+      print " return answer;\n";
+      print "}\n";
+
+      print "</script>\n";
 
 	echo '
 	<form action="index.php?title='.$title.'" method="post">
 
 	<table class="outer" cellspacing="1" width="98%">
-	<th><center><font size=5>'._AM_FORM.$realtitle.'<font></center></th>
+	<th><center><font size=5>'._AM_FORM.trans($realtitle).'<font></center></th>
 	</table>';
 
 	echo '<table class="outer" cellspacing="1" width="98%">
@@ -88,7 +99,8 @@ if( $_POST['op'] != 'save' ){
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=radio">'._AM_ELE_RADIO.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=yn">'._AM_ELE_YN.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=date">'._AM_ELE_DATE.'</a></td></tr>
-	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=sep">'._AM_ELE_SEP.'</a></td></tr>';
+	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=sep">'._AM_ELE_SEP.'</a></td></tr>
+	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=subform">'._AM_ELE_SUBFORM.'</a></td></tr>';
 	// upload not yet enabled in formulize (redisplay of file info not supported, upload itself not tested)
 	//<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=upload">'._AM_ELE_UPLOAD.'</a></td></tr>
 	echo '</table>';
@@ -100,7 +112,8 @@ if( $_POST['op'] != 'save' ){
 			echo '<th>'._AM_ELE_REQ.'</th>
 			<th>'._AM_ELE_ORDER.'</th>
 			<th>'._AM_ELE_DISPLAY.'</th>
-			<th colspan="3">&nbsp;</th>
+			<th>'._AM_ELE_PRIVATE.'</th>
+			<th colspan="4">&nbsp;</th>
 		</tr>
 	';
 	$criteria = new Criteria(1,1);
@@ -116,11 +129,14 @@ if( $_POST['op'] != 'save' ){
 		$req = $i->getVar('ele_req');
 		$check_req = new XoopsFormCheckBox('', 'ele_req['.$id.']', $req);
 		$check_req->addOption(1, ' ');
+		$priv = $i->getVar('ele_private');
+		$check_priv = new XoopsFormCheckBox('', 'ele_private['.$id.']', $priv);
+		$check_priv->addOption(1, ' ');
 		//if( $ele_type == 'checkbox' || $ele_type == 'radio' || $ele_type == 'yn' || $ele_type == 'select' || $ele_type == 'date' || $ele_type== 'areamodif' || $ele_type == 'upload' || $ele_type == 'areamodif' || $ele_type == 'sep'){
 			$check_req->setExtra('disabled="disabled"'); 
 		//}
 		$order = $i->getVar('ele_order');
-		$text_order = new XoopsFormText('', 'ele_order['.$id.']', 3, 3, $order); // switched to 3 wide, jwe 01/06/05
+		$text_order = new XoopsFormText('', 'ele_order['.$id.']', 4, 4, $order); // switched to 3 wide, jwe 01/06/05 -- switched to 4 wide, September 4 2006
 		$display = $i->getVar('ele_display');
 
 		// added - start - August 25 2005 - jpc
@@ -183,7 +199,8 @@ if( $_POST['op'] != 'save' ){
 		// added - start - August 25 2005 - jpc
 		if($multiGroupDisplay == true)
         {
-			echo '<td class="even" align="center">'.$check_display."</td>\n";
+			// hidden id added to July 25 2006 so the save changes button on list of elements page works for custom display setting elements
+			echo '<td class="even" align="center">'.$check_display."</td>\n" . $hidden_id->render() . "\n";
 		}
         else
         {
@@ -194,8 +211,17 @@ if( $_POST['op'] != 'save' ){
 		// added - start - August 25 2005 - jpc
 		}
 		// added - end - August 25 2005 - jpc
+
+
+		echo '<td class="even" align="center">'.$check_priv->render()."</td>\n";
+	
                 
 		echo '<td class="even" align="center"><a href="elements.php?title='.$title.'&op=edit&amp;ele_id='.$id.'">'._EDIT.'</a></td>';
+		if($i->getVar('ele_type') == "text" OR $i->getVar('ele_type') == "textarea") {
+			echo '<td class="even" align="center"><a href="elements.php?title='.$title.'&op=convert&amp;ele_id='.$id.'" onclick="javascript:return confirmConvert();" title="'._AM_CONVERT_HELP.'" alt="'._AM_CONVERT_HELP.'">'._AM_CONVERT.'</a></td>';
+		} else {
+			echo '<td class="even" align="center">&nbsp;</td>';
+		}
 		echo '<td class="even" align="center"><a href="elements.php?title='.$title.'&op=edit&amp;ele_id='.$id.'&clone=1">'._CLONE.'</a></td>';
 		echo '<td class="even" align="center"><a href="elements.php?title='.$title.'&op=delete&amp;ele_id='.$id.'">'._DELETE.'</a></td>';
 		echo '</tr>';
@@ -205,8 +231,8 @@ if( $_POST['op'] != 'save' ){
 	echo '
 		<tr>
 			<td class="foot" colspan="2"></td>
-			<td class="foot" colspan="2" align="center">'.$submit->render().'</td>
-			<td class="foot" colspan="3"></td>
+			<td class="foot" colspan="3" align="center">'.$submit->render().'</td>
+			<td class="foot" colspan="4"></td>
 		</tr>
 	</table>
 	';
@@ -222,134 +248,21 @@ if( $_POST['op'] != 'save' ){
 // required field not yet available for all types of elements, so we don't check for it here.
 //		$req = !empty($ele_req[$id]) ? 1 : 0;
 //		$element->setVar('ele_req', $req);
+
+		$private = !empty($ele_private[$id]) ? 1 : 0;
 		$order = !empty($ele_order[$id]) ? intval($ele_order[$id]) : 0;
+		$element->setVar('ele_private', $private);
 		$element->setVar('ele_order', $order);
-		$display = !empty($ele_display[$id]) ? 1 : 0;
-		$element->setVar('ele_display', $display);
-
-
-// COMMENTED ALL THE CODE BELOW THAT REWRITES ALL SETTINGS FOR AN ELEMENT, SINCE ALL WE WANT TO REWRITE IS THE SORT ORDER AND DISPLAY SETTINGS, AS CONTROLED ABOVE
-// jwe 12/21/04
-/*		$type = $element->getVar('ele_type');
-		$value = $element->getVar('ele_value');
-		if ($type == 'areamodif') $ele_value = $element->getVar('ele_value');
-		$ele_value[0] = eregi_replace("'", "`", $ele_value[0]);
-		$ele_value[0] = stripslashes($ele_value[0]);
-		switch($type){
-			case 'text':
-				$value[2] = $ele_value[$id];
-			break;
-			case 'textarea':
-				$value[0] = $ele_value[$id];
-			break;
-			case 'select':
-				$new_vars = array();
-				$opt_count = 1;
-				if( is_array($ele_value[$id]) ){
-					while( $j = each($value[2]) ){
-						if( in_array($opt_count, $ele_value[$id]) ){
-							$new_vars[$j['key']] = 1;
-						}else{
-							$new_vars[$j['key']] = 0;
-						}
-					$opt_count++;
-					}
-				}else{
-					if( count($value[2]) > 1 ){
-						while( $j = each($value[2]) ){
-							if( $opt_count == $ele_value[$id] ){
-								$new_vars[$j['key']] = 1;
-							}else{
-								$new_vars[$j['key']] = 0;
-							}
-						$opt_count++;
-						}
-					}else{
-						while( $j = each($value[2]) ){
-							if( !empty($ele_value[$id]) ){
-								$new_vars = array($j['key']=>1);
-							}else{
-								$new_vars = array($j['key']=>0);
-							}
-						}
-					}
-				}
-				
-				$value[2] = $new_vars;
-			break;
-			case 'checkbox':
-// 				$myts =& MyTextSanitizer::getInstance();
-				$new_vars = array();
-				$opt_count = 1;
-				if( is_array($ele_value[$id]) ){
-					while( $j = each($value) ){
-						if( in_array($opt_count, $ele_value[$id]) ){
-							$new_vars[$j['key']] = 1;
-						}else{
-							$new_vars[$j['key']] = 0;
-						}
-					$opt_count++;
-					}
-				}else{
-					if( count($value) > 1 ){
-						while( $j = each($value) ){
-							$new_vars[$j['key']] = 0;
-						}
-					}else{
-						while( $j = each($value) ){
-							if( !empty($ele_value[$id]) ){
-								$new_vars = array($j['key']=>1);
-							}else{
-								$new_vars = array($j['key']=>0);
-							}
-						}
-					}
-				}
-				$value = $new_vars;
-			break;
-			case 'radio':
-			case 'yn':
-				$new_vars = array();
-				$i = 1;
-				while( $j = each($value) ){
-					if( $ele_value[$id] == $i ){
-						$new_vars[$j['key']] = 1;
-					}else{
-						$new_vars[$j['key']] = 0;
-					}
-					$i++;
-				}
-				$value = $new_vars;
-			break;
-			//Marie le 20/04/04
-			case 'date':
-				$value[0] = $ele_value[$id];
-			break; 
-			case 'areamodif':
-				$value[0] = $ele_value[0];
-			break;
-			case 'sep':
-				$value[2] = $ele_value[$id];
-			break;
-			case 'upload':
-				$value[0] = $ele_value[$id];
-				$value[1] = $ele_value[$id+1];
-				$value[2] = $ele_value[$id+2];
-			break;
-			default:
-			break;
+		if(!strstr($element->getVar('ele_display'), ",")) {
+			$display = !empty($ele_display[$id]) ? 1 : 0;
+			$element->setVar('ele_display', $display);
 		}
-		$element->setVar('ele_value', $value);
-		$element->setVar('id_form', $id_form);*/
-// END OF COMMENTED CODE
-
 
 		if( !$formulize_mgr->insert($element) ){
 			$error .= $element->getHtmlErrors();
 		}
 	}
 	if( empty($error) ){
-//		redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);
 		redirect_header("index.php?title=$title", 0, _AM_SAVING_CHANGES);
 	}else{
 		xoops_cp_header();

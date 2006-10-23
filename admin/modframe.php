@@ -189,6 +189,35 @@ function modframe($cf)
 	print "			return false;\n";
 	print "		}\n";
 	print "	}\n";
+
+	// checkForCommon added July 19 2006 -- jwe
+	print "	function checkForCommon(Obj, form1, form2, lid) {\n";
+	print "		for (var i=0; i < Obj.options.length; i++) {\n";
+	print "			if(Obj.options[i].selected && Obj.options[i].value == 'common') {\n";
+	print "				showPop('" . XOOPS_URL . "/modules/formulize/admin/frameCommonElements.php?form1=' + form1 + '&form2=' + form2 + '&lid=' + lid);\n";
+	print "			}\n";
+	print "		}\n";
+	print "	}\n";
+
+?>
+
+	function showPop(url) {
+
+	if (window.popup == null) {
+		popup = window.open(url,'popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=450,screenX=0,screenY=0,top=0,left=0');
+      } else {
+		if (window.popup.closed) {
+			popup = window.open(url,'popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=450,screenX=0,screenY=0,top=0,left=0');
+            } else {
+			window.popup.location = url;              
+		}
+	}
+	window.popup.focus();
+
+}
+
+<?php
+
 	print "</script>\n";
 
 
@@ -288,7 +317,7 @@ function modframe($cf)
 
 	// need to get list of all forms/links in the current framework
 
-	$getFrameInfoq = "SELECT fl_id, fl_form1_id, fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id = '$cf' ORDER BY fl_id";
+	$getFrameInfoq = "SELECT fl_id, fl_form1_id, fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id = '$cf' ORDER BY fl_id";
 	$res = $xoopsDB->query($getFrameInfoq);
 	while ($array = $xoopsDB->fetchArray($res)) {
 		$links[] = $array;
@@ -334,6 +363,9 @@ function modframe($cf)
 		print _AM_FRAME_NOFORMS . "</th></table>";
 	} else {
 		print _AM_FRAME_FORMSIN . "</th><form name=updateframe action='modframe.php?op=updateframe&cf=$cf' method=post>\n";
+
+		print "<input type=hidden name=common1choice value=\"\">\n";
+		print "<input type=hidden name=common2choice value=\"\">\n";
 
 		foreach($links as $link) {
 
@@ -407,6 +439,19 @@ function modframe($cf)
 
 			$linkoptions = "<option value='0+0'" . $selected . ">" . _AM_FRAME_UIDLINK . "</option>\n"; 
 
+			// common value option added July 19 2006 -- jwe
+			if($link['fl_common_value'] != 1) {
+				$linkoptions .= "<option value='common'>" . _AM_FRAME_COMMONLINK . "</option>\n";
+			} else {
+				// must retrieve the names of the fields, since they won't be in the target and source caps arrays, since those are focused only on the linked fields
+				$element_handler =& xoops_getmodulehandler('elements', 'formulize');
+				$ele1 = $element_handler->get($link['fl_key1']);
+				$ele2 = $element_handler->get($link['fl_key2']);
+				$name1 = $ele1->getVar('ele_colhead') ? printSmart($ele1->getVar('ele_colhead')) : printSmart($ele1->getVar('ele_caption'));
+				$name2 = $ele2->getVar('ele_colhead') ? printSmart($ele2->getVar('ele_colhead')) : printSmart($ele2->getVar('ele_caption'));
+				$linkoptions .= "<option value='" . $link['fl_key1'] . "+" . $link['fl_key2'] . "' selected>" . _AM_FRAME_COMMON_VALUES . "$name1 & $name2</option>\n";
+				print "<input type=hidden name=preservecommon value=" . $link['fl_key1'] . "+" . $link['fl_key2'] . ">\n";
+			}
 			$linkoptions .= writelinks($hits12, 0, $link['fl_key1'], $link['fl_key2'], $target_ele_ids, $source_ele_ids, $target_caps, $source_caps);
 			$linkoptions .= writelinks($hits21, 1, $link['fl_key1'], $link['fl_key2'], $target_ele_ids, $source_ele_ids, $target_caps, $source_caps);			
 
@@ -418,7 +463,8 @@ function modframe($cf)
 
 			print "</td><td class=$class><table><tr><td valign=middle>" . _AM_FRAME_RELATIONSHIP . "&nbsp;&nbsp;</td><td valign=middle><input type=radio name=rel" . $link['fl_id'] . " " . $rel1 . ">" . _AM_FRAME_ONETOONE . "</input><br><input type=radio name=rel" . $link['fl_id'] . " " . $rel2 . ">" . _AM_FRAME_ONETOMANY . "</input><br><input type=radio name=rel" . $link['fl_id'] . " " . $rel3 . ">" . _AM_FRAME_MANYTOONE . "</input></td></tr></table></td></tr>\n";
 
-			print "<tr><td class=$class><center>" . _AM_FRAME_LINKAGE . "<br><SELECT name=linkages" .  $link['fl_id'] . " size=1>" . $linkoptions . "</SELECT>";
+			// javascript handler for common values added July 19 2006 -- jwe
+			print "<tr><td class=$class><center>" . _AM_FRAME_LINKAGE . "<br><SELECT name=linkages" .  $link['fl_id'] . " id=linkages" . $link['fl_id'] . " size=1 onchange=\"javascript:checkForCommon(this.form.linkages" . $link['fl_id'] . ", '" . $link['fl_form1_id'] . "', '" . $link['fl_form2_id'] . "', '" . $link['fl_id'] . "');\">\n>" . $linkoptions . "</SELECT>";
 
 			print "</td><td class=$class><table><tr><td valign=middle>" . _AM_FRAME_DISPLAY . "&nbsp;&nbsp;</td><td valign=middle><input type=radio name=display" . $link['fl_id'] . " " . $dis1 . ">" . _formulize_TEMP_QYES . "</input><br><input type=radio name=display" . $link['fl_id'] .  " " . $dis2 . ">" . _formulize_TEMP_QNO . "</input></td></tr></table></td></tr>";
 			
@@ -513,7 +559,7 @@ function createformslink($fid1, $fid2, $cf) {
 
 	// write the link to the links table
 
-	$writelink = "INSERT INTO " . $xoopsDB->prefix("formulize_framework_links") . " (fl_frame_id, fl_form1_id, fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display) VALUES ('$cf', '$fid1', '$fid2', 0, 0, 1, 0)";
+	$writelink = "INSERT INTO " . $xoopsDB->prefix("formulize_framework_links") . " (fl_frame_id, fl_form1_id, fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_common_value) VALUES ('$cf', '$fid1', '$fid2', 0, 0, 1, 0, 0)";
 	if(!$res = $xoopsDB->query($writelink)) {
 		print "Error:  could not write link of $fid1 and $fid2 to the links table for framework $cf";
 	}
@@ -609,7 +655,8 @@ function editform($fid, $cf) {
 	
 	// loop through all elements and draw them in
 	for($i=0;$i<$indexer;$i++) {
-		print "<tr><td class=even>" . $elements[$i]['caption'] . "</td><td class=odd><center><INPUT type=text size=45 length=255 name=elehandle" . $elements[$i]['id'] . " value='" . $elements[$i]['handle'] . "'></center></td></tr>\n";
+		$handletext = $elements[$i]['handle'] ? $elements[$i]['handle'] : "handle-$fid-" . $elements[$i]['id'];
+		print "<tr><td class=even>" . $elements[$i]['caption'] . "</td><td class=odd><center><INPUT type=text size=45 length=255 name=elehandle" . $elements[$i]['id'] . " value='" . $handletext . "'></center></td></tr>\n";
 	}
 	
 	print "<tr><td class=head colspan=2><table><tr><td><INPUT type=submit name=updateformbutton id=updateformbutton class=formbutton value='" . _AM_FRAME_UPDATEFORMBUTTON . "'></td><td width=15%></td><td><INPUT type=submit name=updateandgo id=updateformbutton class=formbutton value='" . _AM_FRAME_UPDATEANDGO . "'></form></td></tr></table></td></tr></table>";
@@ -697,8 +744,15 @@ function updaterels($fl_id, $value) {
 
 function updatelinks($fl_id, $value) {
 	global $xoopsDB;
-	$keys = explode("+", $value);
-	$sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_key1='" . $keys[0] . "', fl_key2='" . $keys[1] . "' WHERE fl_id='$fl_id'";
+	if($value == "common") {
+		$keys[0] = $_POST['common1choice'];
+		$keys[1] = $_POST['common2choice'];
+		$common = 1;
+	} else {
+		$keys = explode("+", $value);
+		$common = $_POST['preservecommon'] == $value ? 1 : 0;
+	}
+	$sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_key1='" . $keys[0] . "', fl_key2='" . $keys[1] . "', fl_common_value='$common' WHERE fl_id='$fl_id'";
 	if(!$res = $xoopsDB->query($sql)) {
 		print "Error: could not update key fields for framework link $fl_id";
 	}

@@ -1,3 +1,37 @@
+CREATE TABLE formulize_valid_imports (
+  import_id smallint(5) NOT NULL auto_increment,
+  file varchar(255) NOT NULL default '',
+  id_reqs text NOT NULL default '',
+  PRIMARY KEY (`import_id`)
+) TYPE=MyISAM;
+
+CREATE TABLE formulize_notification_conditions (
+  not_cons_id smallint(5) NOT NULL auto_increment,
+  not_cons_fid smallint(5) NOT NULL default 0,
+  not_cons_event varchar(25) default '',
+  not_cons_uid mediumint(8) NOT NULL default 0,
+  not_cons_curuser tinyint(1),
+  not_cons_groupid smallint(5) NOT NULL default 0,
+  not_cons_con text NOT NULL,
+  not_cons_template varchar(255) default '',
+  not_cons_subject varchar(255) default '',
+  PRIMARY KEY (`not_cons_id`),
+  INDEX i_not_cons_fid (not_cons_fid),
+  INDEX i_not_cons_uid (not_cons_uid),
+  INDEX i_not_cons_groupid (not_cons_groupid),
+  INDEX i_not_cons_fidevent (not_cons_fid, not_cons_event(1))
+) TYPE=MyISAM;
+
+CREATE TABLE formulize_other (
+  other_id smallint(5) NOT NULL auto_increment,
+  id_req smallint(5),
+  ele_id int(5),
+  other_text varchar(255) default NULL,
+  PRIMARY KEY (`other_id`),
+  INDEX i_ele_id (ele_id),
+  INDEX i_id_req (id_req)
+) TYPE=MyISAM;
+
 CREATE TABLE formulize_saved_views (
   sv_id smallint(5) NOT NULL auto_increment,
   sv_name varchar(255) default NULL,
@@ -59,6 +93,7 @@ CREATE TABLE formulize_framework_links (
   fl_key2 smallint(5),
   fl_relationship smallint(5),
   fl_unified_display smallint(5),
+  fl_common_value tinyint(1) NOT NULL default '0',
   PRIMARY KEY (`fl_id`)
 ) TYPE=MyISAM;
 
@@ -107,7 +142,7 @@ CREATE TABLE formulize_id (
   expe varchar(5) default NULL,
   singleentry varchar(5) default NULL,
   groupscope varchar(5) default NULL,
-  headerlist text NOT NULL,
+  headerlist text default NULL,
   showviewentries varchar(5) default NULL,
   maxentries smallint(5) NOT NULL default '0',
   even varchar(255) default NULL,
@@ -121,11 +156,15 @@ CREATE TABLE formulize (
   ele_id smallint(5) unsigned NOT NULL auto_increment,
   ele_type varchar(10) NOT NULL default '',
   ele_caption varchar(255) NOT NULL default '',
+  ele_desc text NULL,
+  ele_colhead varchar(255) NULL default '',
   ele_order smallint(2) NOT NULL default '0',
   ele_req tinyint(1) NOT NULL default '1',
   ele_value text NOT NULL,
+  ele_delim varchar(255) NOT NULL default '',
   ele_display varchar(255) NOT NULL default '1',
   ele_forcehidden tinyint(1) NOT NULL default '0',
+  ele_private tinyint(1) NOT NULL default '0',
   PRIMARY KEY  (`ele_id`),
   KEY `ele_display` (`ele_display`),
   KEY `ele_order` (`ele_order`)
@@ -159,7 +198,6 @@ CREATE TABLE formulize_form (
   proxyid int(10) NULL ,
   creation_date Date NOT NULL, 
   PRIMARY KEY  (`ele_id`),
-  KEY `ele_id` (`ele_id`),
   INDEX i_id_req (id_req),
   INDEX i_id_form (id_form),
   INDEX i_ele_caption (ele_caption),

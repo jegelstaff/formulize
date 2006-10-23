@@ -30,7 +30,7 @@
 ###############################################################################
 
 $modversion['name'] = _MI_formulize_NAME;
-$modversion['version'] = "2.1";
+$modversion['version'] = "2.2";
 $modversion['description'] = _MI_formulize_DESC;
 $modversion['author'] = "Freeform Solutions";                                            
 $modversion['credits'] = "";
@@ -56,6 +56,9 @@ $modversion['tables'][9] = "formulize_menu_cats";
 $modversion['tables'][10] = "formulize_saved_views";
 $modversion['tables'][11] = "group_lists";
 $modversion['tables'][12] = "formulize_onetoone_links";
+$modversion['tables'][13] = "formulize_other";
+$modversion['tables'][14] = "formulize_notification_conditions";
+$modversion['tables'][15] = "formulize_valid_imports";
 
 // Admin things
 $modversion['hasAdmin'] = 1;
@@ -137,13 +140,56 @@ while($resArray = $xoopsDB->fetchArray($resFormsSQL)) {
 }
 $modversion['config'][6]['options'] = $pformoptions;
 
-
+$modversion['config'][7]['name'] = 'all_done_singles';
+$modversion['config'][7]['title'] = '_MI_formulize_ALL_DONE_SINGLES';
+$modversion['config'][7]['description'] = '_MI_formulize_SINGLESDESC';
+$modversion['config'][7]['formtype'] = 'yesno';
+$modversion['config'][7]['valuetype'] = 'int';
+$modversion['config'][7]['default'] = 1;
 
 //bloc
 $modversion['blocks'][1]['file'] = "mymenu.php";
 $modversion['blocks'][1]['name'] = _MI_formulizeMENU_BNAME;
 $modversion['blocks'][1]['description'] = "Zeigt individuelles Menu an";
 $modversion['blocks'][1]['show_func'] = "block_formulizeMENU_show";
+
+// Notifications -- added by jwe 10/10/04, removed for 2.0, reinstated for 2.2 with improved options
+$modversion['hasNotification'] = 1;
+
+$modversion['notification']['lookup_file'] = 'include/notification.inc.php';
+$modversion['notification']['lookup_func'] = 'form_item_info';
+
+$modversion['notification']['category'][1]['name'] = 'form';
+$modversion['notification']['category'][1]['title'] = _MI_formulize_NOTIFY_FORM;
+$modversion['notification']['category'][1]['description'] = _MI_formulize_NOTIFY_FORM_DESC;
+$modversion['notification']['category'][1]['subscribe_from'] = 'index.php';
+$modversion['notification']['category'][1]['item_name'] = 'fid';
+$modversion['notification']['category'][1]['allow_bookmark'] = 0;
+
+$modversion['notification']['event'][1]['name'] = 'new_entry';
+$modversion['notification']['event'][1]['category'] = 'form';
+$modversion['notification']['event'][1]['title'] = _MI_formulize_NOTIFY_NEWENTRY;
+$modversion['notification']['event'][1]['caption'] = _MI_formulize_NOTIFY_NEWENTRY_CAP;
+$modversion['notification']['event'][1]['description'] = _MI_formulize_NOTIFY_NEWENTRY_DESC;
+$modversion['notification']['event'][1]['mail_template'] = 'form_newentry';
+$modversion['notification']['event'][1]['mail_subject'] = _MI_formulize_NOTIFY_NEWENTRY_MAILSUB;
+
+$modversion['notification']['event'][2]['name'] = 'update_entry';
+$modversion['notification']['event'][2]['category'] = 'form';
+$modversion['notification']['event'][2]['title'] = _MI_formulize_NOTIFY_UPENTRY;
+$modversion['notification']['event'][2]['caption'] = _MI_formulize_NOTIFY_UPENTRY_CAP;
+$modversion['notification']['event'][2]['description'] = _MI_formulize_NOTIFY_UPENTRY_DESC;
+$modversion['notification']['event'][2]['mail_template'] = 'form_upentry';
+$modversion['notification']['event'][2]['mail_subject'] = _MI_formulize_NOTIFY_UPENTRY_MAILSUB;
+
+$modversion['notification']['event'][3]['name'] = 'delete_entry';
+$modversion['notification']['event'][3]['category'] = 'form';
+$modversion['notification']['event'][3]['title'] = _MI_formulize_NOTIFY_DELENTRY;
+$modversion['notification']['event'][3]['caption'] = _MI_formulize_NOTIFY_DELENTRY_CAP;
+$modversion['notification']['event'][3]['description'] = _MI_formulize_NOTIFY_DELENTRY_DESC;
+$modversion['notification']['event'][3]['mail_template'] = 'form_delentry';
+$modversion['notification']['event'][3]['mail_subject'] = _MI_formulize_NOTIFY_DELENTRY_MAILSUB;
+
 
 
 ?>

@@ -35,15 +35,15 @@
 
 include_once("admin_header.php");
 
-if(!isset($HTTP_POST_VARS['title'])){
-	$title = isset ($HTTP_GET_VARS['title']) ? $HTTP_GET_VARS['title'] : '';
+if(!isset($_POST['title'])){
+	$title = isset ($_GET['title']) ? $_GET['title'] : '';
 }else {
-	$title = $HTTP_POST_VARS['title'];
+	$title = $_POST['title'];
 }
-if(!isset($HTTP_POST_VARS['ele_id'])){
-	$ele_id = isset ($HTTP_GET_VARS['ele_id']) ? $HTTP_GET_VARS['ele_id'] : '';
+if(!isset($_POST['ele_id'])){
+	$ele_id = isset ($_GET['ele_id']) ? $_GET['ele_id'] : '';
 }else {
-	$ele_id = $HTTP_POST_VARS['ele_id'];
+	$ele_id = $_POST['ele_id'];
 }
 /* // commented due to title now being identical with id_form
 	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form='%s'",$title);
@@ -67,7 +67,7 @@ if( !empty($_POST) ){
 		${$k} = $v;
 	}
 }
-if( $_POST['submit'] == _AM_ELE_ADD_OPT_SUBMIT && intval($_POST['addopt']) > 0 ){
+if(( $_POST['submit'] == _AM_ELE_ADD_OPT_SUBMIT && intval($_POST['addopt']) > 0 ) OR isset($_POST['subformrefresh'])) {
 	$op = 'edit';
 }
 
@@ -77,6 +77,44 @@ $ele_id = !empty($ele_id) ? intval($ele_id) : 0;
 $myts =& MyTextSanitizer::getInstance();
 
 switch($op){
+	// convert option added for textboxes July 1 2006, by JWE.  Happy Canada Day.
+	case 'convert':
+		$element =& $formulize_mgr->get($ele_id);
+		$ele_type = $element->getVar('ele_type');
+		$new_ele_value = array();
+		if($ele_type == "text") { // converting to textarea
+			$ele_value = $element->getVar('ele_value');
+			$new_ele_value[0] = $ele_value[2]; // default value
+			$new_ele_value[1] = $xoopsModuleConfig['ta_rows'];
+			$new_ele_value[2] = $ele_value[0]; // width become cols
+			$new_ele_value[3] = $ele_value[4]; // preserve any association that is going on
+			$element->setVar('ele_value', $new_ele_value);
+			$element->setVar('ele_type', "textarea");
+			if( !$formulize_mgr->insert($element, true) ){ // true causes a forced insert (necessary when there is no POST)
+				xoops_cp_header();
+				echo $element->getHtmlErrors();
+			} else {
+				redirect_header("index.php?title=$title", 3, _AM_ELE_CONVERTED_TO_TEXTAREA);
+			}
+		} elseif($ele_type=="textarea") {
+			$ele_value = $element->getVar('ele_value');
+			$new_ele_value[0] = $ele_value[2]; // cols become width
+			$new_ele_value[1] = $xoopsModuleConfig['t_max'];
+			$new_ele_value[2] = $ele_value[0]; // default value
+			$new_ele_value[3] = 0; // allow anything (do not restrict to just numbers)
+			$new_ele_value[4] = $ele_value[3]; // preserve any association that is going on
+			$element->setVar('ele_value', $new_ele_value);
+			$element->setVar('ele_type', "text");
+			if( !$formulize_mgr->insert($element, true) ){ // true causes a forced insert (necessary when there is no POST)
+				xoops_cp_header();
+				echo $element->getHtmlErrors();
+			} else {
+				redirect_header("index.php?title=$title", 3, _AM_ELE_CONVERTED_TO_TEXTBOX);
+			}
+		} else {
+			redirect_header("index.php?title=$title", 3, _AM_ELE_CANNOT_CONVERT);
+		}
+		break;
 	case 'edit':
 		xoops_cp_header();
 		if( !empty($ele_id) ){
@@ -95,12 +133,18 @@ switch($op){
 				$ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 255, '{SEPAR}'.$ele_caption); }
 			else { $ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 255, $ele_caption); }
 			$value = $element->getVar('ele_value', 'f');
+			$ele_colhead_default = $element->getVar('ele_colhead', 'f');
+			$ele_desc_default = $element->getVar('ele_desc', 'f');
 		}else{
 			$ele_caption = $myts->makeTboxData4PreviewInForm($ele_caption);
 			// if ($addopt==1) {$ele_caption = '<h5>'.$ele_caption.'</h5>';} // jwe 01/05/05 -- deemed a bug
 			if ($ele_type=='sep') { 
 				$ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 255, '{SEPAR}'.$ele_caption); }
 			else { $ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 255, $ele_caption); }
+			$ele_colhead_default = $ele_colhead;
+			$ele_desc_default = get_magic_quotes_gpc() ? stripslashes($ele_desc) : $ele_desc;
+			unset($ele_colhead);
+			unset($ele_desc);
 		}
 
 		// added javascript validation of uniqueness of caption to the caption element -- jwe 7/27/04
@@ -217,9 +261,27 @@ switch($op){
 
 		// add function call to caption element
 		$ele_caption->setExtra("onChange='checkUnique(this.value)'");
-
 		$form->addElement($ele_caption, 1);
+
+		if($ele_type != "subform") {
+			// column heading added June 25 2006 -- jwe
+			$ele_colhead = new XoopsFormText(_AM_ELE_COLHEAD, 'ele_colhead', 50, 255, $ele_colhead_default);
+			$ele_colhead->setDescription(_AM_ELE_COLHEAD_HELP);
+			$form->addElement($ele_colhead);
+		
+
+			// descriptive text added June 6 2006 -- jwe
+			if($ele_type != "ib") {
+				$ele_desc = new XoopsFormTextArea(_AM_ELE_DESC, 'ele_desc', $ele_desc_default, 5, 35);
+				$ele_desc->setDescription(_AM_ELE_DESC_HELP);
+				$form->addElement($ele_desc);
+			}
+		}
+
 		switch($ele_type){
+			case 'subform':
+				include 'ele_subform.php';
+			break;
 			case 'text':
 				include 'ele_text.php';
 				$req = true;
@@ -291,8 +353,8 @@ switch($op){
 	    $fs_member_handler =& xoops_gethandler('member');
 	    $fs_xoops_groups =& $fs_member_handler->getGroups();
 
-        $ele_display->addOption("all", "All Groups");     
-        $ele_display->addOption("none", "No Groups");     
+        $ele_display->addOption("all", _AM_FORM_DISPLAY_ALLGROUPS);     
+        $ele_display->addOption("none", _AM_FORM_DISPLAY_NOGROUPS);     
 
 	    $fs_count = count($fs_xoops_groups);
 	    for($i = 0; $i < $fs_count; $i++) 
@@ -302,25 +364,36 @@ switch($op){
 		$form->addElement($ele_display);
 		// replaced - end - August 18 2005 - jpc
 
-		// added by jwe Nov 7 2005, a checkbox to indicate if the element should be included as a hidden element, even when the user does not have permission to view (ie: it is hidden by the display option above)
-		$fhide = !empty($ele_id) ? $element->getVar('ele_forcehidden') : 0;
-		$forcehidden = new XoopsFormCheckBox(_AM_FORM_FORCEHIDDEN, "fhide", $fhide);
-		$forcehidden->addOption(1, ' ');
-		$form->addElement($forcehidden);
 
+		if($ele_type != "subform") {
+			// added by jwe Nov 7 2005, a checkbox to indicate if the element should be included as a hidden element, even when the user does not have permission to view (ie: it is hidden by the display option above)
+			$fhide = !empty($ele_id) ? $element->getVar('ele_forcehidden') : 0;
+			$forcehidden = new XoopsFormCheckBox(_AM_FORM_FORCEHIDDEN, "fhide", $fhide);
+			$forcehidden->addOption(1, ' ');
+			$forcehidden->setDescription(_AM_FORM_FORCEHIDDEN_DESC);
+			$form->addElement($forcehidden);
+
+			// added private option July 15 2006, jwe
+			$priv = !empty($ele_id) ? $element->getVar('ele_private') : 0;
+			$private = new XoopsFormCheckBox(_AM_FORM_PRIVATE, "private", $priv);
+			$private->addOption(1, ' ');
+			$private->setDescription(_AM_FORM_PRIVATE_DESC);
+			$form->addElement($private);
+		}
 		
 		// added by jwe 01/06/05 -- get the current highest order value for the form, and add up to 10 to it to reach the nearest mod 5 value
 		$highorderq = "SELECT MAX(ele_order) FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$id_form";
 		$reshighorderq = $xoopsDB->query($highorderq);
 		$rowhighorderq = $xoopsDB->fetchRow($reshighorderq);
 		$highorder = $rowhighorderq[0]+1;
-		while($highorder % 10 != 0)
+		while($highorder % 5 != 0)
 		{
 			$highorder++;
 		}
 		
 		$order = !empty($ele_id) ? $element->getVar('ele_order') : $highorder;
-		$ele_order = new XoopsFormText(_AM_ELE_ORDER, 'ele_order', 3, 3, $order);
+		$order = $clone ? $highorder : $order;
+		$ele_order = new XoopsFormText(_AM_ELE_ORDER, 'ele_order', 4, 4, $order);
 		$form->addElement($ele_order);
 		
 		
@@ -374,6 +447,10 @@ switch($op){
 			$element =& $formulize_mgr->create();
 		}
 		$element->setVar('ele_caption', $ele_caption);
+		$ele_delim = $ele_delim=='custom' ? $ele_delim_custom : $ele_delim;
+		$element->setVar('ele_delim', $ele_delim); // only set for radio and checkbox, but cannot be put into ele_value because ele_value is not a multidimensional array for those elements, so must be treated as a separate db field for now
+		$element->setVar('ele_desc', $ele_desc);
+		$element->setVar('ele_colhead', $ele_colhead);
 		$req = !empty($ele_req) ? 1 : 0;
 		$element->setVar('ele_req', $req);
 		$order = empty($ele_order) ? 0 : intval($ele_order);
@@ -383,6 +460,9 @@ switch($op){
 		if(!$fhide) { $fhide_checked = 0; } else { $fhide_checked = $fhide; }
 		$element->setVar('ele_forcehidden', $fhide_checked);
 
+		// grab the private setting -- added July 15 2006
+		if(!$private) { $private_checked = 0; } else { $private_checked = $private; }
+		$element->setVar('ele_private', $private_checked);
 
 		// replaced - start - August 18 2005 - jpc
 		//$display = !empty($ele_display) ? 1 : 0;
@@ -412,6 +492,13 @@ switch($op){
 				$value[] = !empty($ele_value[1]) ? intval($ele_value[1]) : $xoopsModuleConfig['t_max'];
 				$value[] = $ele_value[2];
 				$value[] = $ele_value[3];
+				// formlink option added to textboxes June 20 2006 -- jwe
+				if($_POST['formlink'] != "none") {
+					$value[] = $_POST['formlink'];
+				} else {
+					$value[] = "";
+				}
+
 			break;
 			case 'textarea':
 				$value = array();
@@ -426,6 +513,13 @@ switch($op){
 				}else{
 					$value[] = $xoopsModuleConfig['ta_cols'];
 				}
+				// formlink option added to textboxes June 20 2006 -- jwe
+				if($_POST['formlink'] != "none") {
+					$value[] = $_POST['formlink'];
+				} else {
+					$value[] = "";
+				}
+				
 			break;
 			case 'areamodif':
 				$value = array();
@@ -503,6 +597,11 @@ switch($op){
 			break;
 			case 'date':
 				$value = array();
+				if($ele_value != "YYYY-mm-dd" AND $ele_value != "") { 
+					$ele_value = date("Y-m-d", strtotime($ele_value)); 
+				} else {
+					$ele_value = "";
+				}
 				$value[] = $ele_value;
 			break;
 			case 'sep':
@@ -530,17 +629,24 @@ switch($op){
 				$value = array();
 				$value[0] = $ele_value[0]>1 ? intval($ele_value[0]) : 1;
 				$value[1] = !empty($ele_value[1]) ? 1 : 0;
+				$value[3] = implode(",", $_POST['formlink_scope']); // added august 30 2006
+				$value[4] = $_POST['linkscopelimit'];
 				// check to see if a link to another form was made and if so put in a marker that will be picked up at render time and handled accordingly...  -- jwe 7/29/04
 				if($_POST['formlink'] != "none")
 				{
-					$value[2] = stripslashes($_POST['formlink']);
+					// $value[2] = stripslashes($_POST['formlink']);
+					// now receiving an ele_id due to the effects of xlanguage, so get the real caption out of the DB
+					$sql_link = "SELECT ele_caption, id_form FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
+					$res_link = $xoopsDB->query($sql_link);
+					$array_link = $xoopsDB->fetchArray($res_link);
+					$value[2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_caption'];
 				} 
 				else
 				{
 				$v2 = array();
 				$multi_flag = 1;
 				while( $v = each($ele_value[2]) ){
-					if( !empty($v['value']) ){
+					if( $v['value'] !== "" ){
 						if( $value[1] == 1 || $multi_flag ){
 							if( $checked[$v['key']] == 1 ){
 								$check = 1;
@@ -556,6 +662,11 @@ switch($op){
 				}
 				$value[2] = $v2;
 				} // end of formlink check -- jwe
+			break;
+			// subform added September 4 2006
+			case 'subform':
+				$value[0] = $_POST['subform'];
+				$value[1] = $_POST['subformelements'] ? implode(",",$_POST['subformelements']) : "";
 			break;
 			case 'upload': 
 				$value = array();

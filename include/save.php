@@ -41,25 +41,28 @@ function saveJavascript($pubflag) {
 <!--
 
 function newSaveView(formObj) {
-	for (var i=0; i < formObj.savethis.options.length; i++) {
-		if (formObj.savethis.options[i].selected) {
-			window.document.saveoptions.viewselection.value = formObj.savethis.options[i].value;
+
+	var saveElement = formObj.elements[0]; // element 0 is the save drop down box.  This will change if the form layout changes.
+	for (var i=0; i < saveElement.options.length; i++) {
+		if (saveElement.options[i].selected) {
+			window.document.saveoptions.viewselection.value = saveElement.options[i].value;
 			window.document.saveoptions.submit();
 		}
 	}
 }
 
 function saveSettings(formObj) {
-	for (var i=0; i < formObj.savethis.options.length; i++) {
-		if (formObj.savethis.options[i].selected) {
-			var newid = formObj.savethis.options[i].value;
+	var saveElement = formObj.elements[0]; // element 0 is the save drop down box.  This will change if the form layout changes.
+	for (var i=0; i < saveElement.options.length; i++) {
+		if (saveElement.options[i].selected) {
+			var newid = saveElement.options[i].value;
 			if(newid == "new") {
 				var newname = prompt("<? print _formulize_DE_SAVE_NEWPROMPT; ?>", "");
 				if(!newname) {
 					return false;
 				} 
 			} 
-			i=formObj.savethis.options.length;
+			i=saveElement.options.length;
 		}
 	}
 	if(formObj.scope.length) { // there's more than one option
@@ -77,17 +80,17 @@ function saveSettings(formObj) {
 if($pubflag) {
 ?>
 	var pubgroups;
-	if(formObj.pubgrouplist.options[0].selected) {
+	if(formObj.elements['pubgrouplist[]'].options[0].selected) {
 		pubgroups = "";
 	} else {
 		var start=1;
-		for (var i=1; i < formObj.pubgrouplist.options.length; i++) {
-			if (formObj.pubgrouplist.options[i].selected) {
+		for (var i=1; i < formObj.elements['pubgrouplist[]'].options.length; i++) {
+			if (formObj.elements['pubgrouplist[]'].options[i].selected) {
 				if(start) {
-					pubgroups = formObj.pubgrouplist.options[i].value;
+					pubgroups = formObj.elements['pubgrouplist[]'].options[i].value;
 					start = 0;
 				} else {
-					pubgroups = pubgroups + "," + formObj.pubgrouplist.options[i].value;
+					pubgroups = pubgroups + "," + formObj.elements['pubgrouplist[]'].options[i].value;
 				}
 			}
 		}
@@ -110,7 +113,7 @@ if($pubflag) {
 	if(newid == "new") { 
 		window.opener.document.controls.savename.value = newname;
 	}
-	window.opener.document.controls.submit();
+	window.opener.showLoading();
 	window.self.close();
 }
 

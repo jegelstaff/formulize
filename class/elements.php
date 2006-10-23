@@ -49,10 +49,15 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("ele_id", XOBJ_DTYPE_INT, NULL, false);
 		$this->initVar("ele_type", XOBJ_DTYPE_TXTBOX, NULL, true, 10);
 		$this->initVar("ele_caption", XOBJ_DTYPE_TXTBOX, NULL, true, 255);
+		// added descriptive text June 6 2006 -- jwe
+		$this->initVar("ele_desc", XOBJ_DTYPE_TXTAREA);
+		$this->initVar("ele_colhead", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_order", XOBJ_DTYPE_INT);
 		$this->initVar("ele_req", XOBJ_DTYPE_INT);
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);
+		$this->initVar("ele_delim", XOBJ_DTYPE_TXTBOX, NULL, true, 255);
 		$this->initVar("ele_forcehidden", XOBJ_DTYPE_INT);
+		$this->initVar("ele_private", XOBJ_DTYPE_INT);
  		// changed - start - August 19 2005 - jpc 		
 		//$this->initVar("ele_display", XOBJ_DTYPE_INT);
 		$this->initVar("ele_display", XOBJ_DTYPE_TXTBOX);
@@ -110,78 +115,54 @@ class formulizeElementsHandler {
            		if( $element->isNew() || empty($ele_id) ){
 			$ele_id = $this->db->genId(formulize_TABLE."_ele_id_seq");
             // changed - start - August 19 2005 - jpc
-			/*$sql = sprintf("INSERT INTO %s (
-				id_form, ele_id, ele_type, ele_caption, ele_order, ele_req, ele_value, ele_display, ele_forcehidden
-				) VALUES (
-				%u, %u, %s, %s, %u, %u, %s, %u, $u
-				)",
-				formulize_TABLE,
-				$id_form,
-				$ele_id,
-				$this->db->quoteString($ele_type),
-				$this->db->quoteString($ele_caption),
-				$ele_order,
-				$ele_req,
-				$this->db->quoteString($ele_value),
-				$ele_display,
-				$ele_forcehidden
-			);*/
 			$sql = sprintf("INSERT INTO %s (
-				id_form, ele_id, ele_type, ele_caption, ele_order, ele_req, ele_value, ele_display, ele_forcehidden
+				id_form, ele_id, ele_type, ele_caption, ele_desc, ele_colhead, ele_order, ele_req, ele_value, ele_delim, ele_display, ele_forcehidden, ele_private
 				) VALUES (
-				%u, %u, %s, %s, %u, %u, %s, %s, %u
+				%u, %u, %s, %s, %s, %s, %u, %u, %s, %s, %s, %u, %u
 				)",
 				formulize_TABLE,
 				$id_form,
 				$ele_id,
 				$this->db->quoteString($ele_type),
 				$this->db->quoteString($ele_caption),
+				$this->db->quoteString($ele_desc),
+				$this->db->quoteString($ele_colhead),
 				$ele_order,
 				$ele_req,
 				$this->db->quoteString($ele_value),
+				$this->db->quoteString($ele_delim),
 				$this->db->quoteString($ele_display),
-				$ele_forcehidden
+				$ele_forcehidden,
+				$ele_private
 			);            
             // changed - end - August 19 2005 - jpc
 			}else{
             // changed - start - August 19 2005 - jpc
-            /*$sql = sprintf("UPDATE %s SET
-				ele_type = %s,
-				ele_caption = %s,
-				ele_order = %u,
-				ele_req = %u,
-				ele_value = %s,
-				ele_display = %u,
-				ele_forcehidden = %u
-				WHERE ele_id = %u AND id_form = %u",
-				formulize_TABLE,
-				$this->db->quoteString($ele_type),
-				$this->db->quoteString($ele_caption),
-				$ele_order,
-				$ele_req,
-				$this->db->quoteString($ele_value),
-				$ele_display,
-				$ele_forcehidden,
-				$ele_id,
-				$id_form
-			);*/
             $sql = sprintf("UPDATE %s SET
 				ele_type = %s,
 				ele_caption = %s,
+				ele_desc = %s,
+				ele_colhead = %s,
 				ele_order = %u,
 				ele_req = %u,
 				ele_value = %s,
+				ele_delim = %s,
 				ele_display = %s,
-				ele_forcehidden = %u
+				ele_forcehidden = %u,
+				ele_private = %u
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),
 				$this->db->quoteString($ele_caption),
+				$this->db->quoteString($ele_desc),
+				$this->db->quoteString($ele_colhead),
 				$ele_order,
 				$ele_req,
 				$this->db->quoteString($ele_value),
+				$this->db->quoteString($ele_delim),
 				$this->db->quoteString($ele_display),
 				$ele_forcehidden,
+				$ele_private,
 				$ele_id,
 				$id_form
 			);
@@ -205,15 +186,26 @@ class formulizeElementsHandler {
 	}
 	
 	function delete(&$element, $force = false){
+		
 		if( get_class($this) != 'formulizeelementshandler') {
 			return false;
 		}
+
+		global $xoopsDB;
+
 		$sql = "DELETE FROM ".formulize_TABLE." WHERE ele_id=".$element->getVar("ele_id")."";
         if( false != $force ){
             $result = $this->db->queryF($sql);
         }else{
             $result = $this->db->query($sql);
         }
+		// delete from frameworks table too -- added July 27 2006
+		$sql = "DELETE FROM ". $xoopsDB->prefix('formulize_framework_elements') . " WHERE fe_element_id=".$element->getVar("ele_id");
+	        if( false != $force ){
+      	      $result = $this->db->queryF($sql);
+	        }else{
+      	      $result = $this->db->query($sql);
+	        }
 		return true;
 	}
 

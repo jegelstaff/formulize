@@ -243,7 +243,7 @@ function drawRow($thiscat, $thisformid) {
 	$result = $xoopsDB->query("SELECT menuid, position, itemname, indent, margintop, marginbottom, itemurl, bold, membersonly, mainmenu, status FROM ".$xoopsDB->prefix("formulize_menu")." WHERE menuid = '$thisformid' ORDER BY position");
 	$myts =& MyTextSanitizer::getInstance();
 	while ( list($menuid, $position, $itemname, $indent, $margintop, $marginbottom, $itemurl, $bold, $membersonly, $mainmenu, $status) = $xoopsDB->fetchRow($result) ) {
-      	$itemname = $myts->makeTboxData4Show($itemname);
+	     	$itemname = $myts->makeTboxData4Show($itemname);
             $itemurl = $myts->makeTboxData4Show($itemurl);
 		echo "<tr class='bg1'><td>" . $thiscat . "</td>"; // added to display category names (class moved from position line below)
 		echo "<td align='right'>$position</td>";
@@ -255,6 +255,7 @@ function drawRow($thiscat, $thisformid) {
 		}
 		echo "</tr>";
 	}
+
 }
 
 function MyMenuEdit($menuid) {
@@ -399,7 +400,7 @@ function menuCatUpdate($cat_id, $cat_name, $new_cat="") {
 	global $xoopsDB;	
 
 	if($new_cat) { // if we're adding a new category...
-		q("INSERT INTO " .$xoopsDB->prefix("formulize_menu_cats") . " (cat_id, cat_name, id_form_array) VALUES (\"\", \"$cat_name\", \",,\")");
+		q("INSERT INTO " .$xoopsDB->prefix("formulize_menu_cats") . " (cat_name, id_form_array) VALUES (\"$cat_name\", \",,\")");
 	} else { // we're updating an existing category...
 		q("UPDATE " .$xoopsDB->prefix("formulize_menu_cats") . " SET cat_name=\"$cat_name\" WHERE cat_id=\"$cat_id\"");
 	}

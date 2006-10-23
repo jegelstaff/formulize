@@ -59,7 +59,7 @@ global $xoopsConfig;
 // ie: formframes[2] and viewHandles[2]...that's the form or framework used for dataset 2, and the handle for the element in that dataset which should be displayed on the calendar.
 // Note about scopes: scopes must be converted to the format described for the $scope param for the getData function
 
-function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles, $filters, $viewPrefixes, $scopes, $hidden, $type="month", $start="") {
+function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles, $filters, $viewPrefixes, $scopes, $hidden, $type="month", $start="", $multiPageData="") {
 
 
 
@@ -127,10 +127,20 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 			$this_ent = $_POST['ventry'];
 		}
 		if($_POST['calfrid']) {
-			displayForm($_POST['calfrid'], $this_ent, $_POST['calfid'], $currentURL, "", $settings, "", $dateOverride, 1, 1); // first "" is the done text, second is the onetoonetitles, last two 1s are the overrides for multi form behaviour 
+			if(isset($multiPageData[$_POST['calfid']])) {
+				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
+				displayFormPages($_POST['calfrid'], $this_ent, $_POST['calfid'], $multiPageData[$_POST['calfid']]['pages'], $multiPageData[$_POST['calfid']]['conditions'], $multiPageData[$_POST['calfid']]['introtext'], $multiPageData[$_POST['calfid']]['thankstext'], $currentURL, _formulize_CAL_RETURNFROMMULTI, $settings, $dateOverride);
+			} else {
+				displayForm($_POST['calfrid'], $this_ent, $_POST['calfid'], $currentURL, "", $settings, "", $dateOverride, 1, 1); // first "" is the done text, second is the onetoonetitles, last two 1s are the overrides for multi form behaviour 
+			}
 			return;
 		} else {
-			displayForm($_POST['calfid'], $this_ent, "", $currentURL, "", $settings, "", $dateOverride, 1, 1); // "" is the done text
+			if(isset($multiPageData[$_POST['calfid']])) {
+				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
+				displayFormPages($_POST['calfid'], $this_ent, "", $multiPageData[$_POST['calfid']]['pages'], $multiPageData[$_POST['calfid']]['conditions'], $multiPageData[$_POST['calfid']]['introtext'], $multiPageData[$_POST['calfid']]['thankstext'], $currentURL, _formulize_CAL_RETURNFROMMULTI, $settings, $dateOverride);
+			} else {
+				displayForm($_POST['calfid'], $this_ent, "", $currentURL, "", $settings, "", $dateOverride, 1, 1); // "" is the done text
+			}
 			return;
 		}
 	}
@@ -517,33 +527,61 @@ function week_in_month($day)
 // displayFilter(2, "statusform", "statusvalue", 24, array("Choose a status" => array("Show All", "")));
 function displayFilter($page, $name, $id, $ele_id, $overrides = "")
 {
-	global $xoopsDB;		// required by q
-    
-
-    $form_element = q("SELECT ele_value FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
-    $element_value = unserialize($form_element[0]["ele_value"]);
-    $options = $element_value[2];
 
 	print "\n<p><form name=\"$name\" action=\"" . XOOPS_URL . "/modules/pageworks/index.php?page=$page\" method=\"post\">\n";
-	print "<SELECT name=\"$id\" id=\"$id\" onchange=\"window.document.$name.submit();\">\n";
-    
+
+	print buildFilter($id, $ele_id, "", $name, $overrides);
+
+	print "<input type=hidden name=calview value=" . $_POST['calview'] . ">\n";
+	print "</form></p>\n";
+}
+
+// THIS FUNCTION ACTUALLY BUILDS THE SELECT FORM ELEMENT AND RETURNS IT AS A STRING
+function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0=>"")) { 
+
+	global $xoopsDB;		// required by q
+
+    $form_element = q("SELECT ele_value, ele_type FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
+    $element_value = unserialize($form_element[0]["ele_value"]);
+	switch($form_element[0]["ele_type"]) {
+		case "select":
+			$options = $element_value[2];
+			break;
+		case "radio":
+		case "checkbox":
+			$options = $element_value;
+			break;
+	}
+
+
+	$filter = "<SELECT name=\"$id\" id=\"$id\"";
+	if($name) { $filter .= " onchange=\"window.document.$name.submit();\""; }
+	$filter .= ">\n";
+
+	if(!$name) { 
+		$defaulttext = $defaulttext ? $defaulttext: _AM_FORMLINK_PICK;
+		$filter .= "<option value=\"none\">".$defaulttext."</option>\n"; 
+	}
+
     foreach($options as $option=>$option_value)
     {
-        if(isset($overrides[$option]))
+
+	  if(isset($overrides[$option])) 
         {
-	        $selected = ($_POST[$id] == $option) ? "selected" : ""; 
-	        print "<option value=\"" . $overrides[$option][1] . "\" $selected>" . $overrides[$option][0] . "</option>\n";
+		        $selected = ($_POST[$id] == $option OR $_GET[$id] == $option) ? "selected" : ""; 
+		        $filter .= "<option value=\"" . $overrides[$option][1] . "\" $selected>" . $overrides[$option][0] . "</option>\n";
         }
         else
         {
+		  if(preg_match('/\{OTHER\|+[0-9]+\}/', $option)) { $option = str_replace(":", "", _formulize_OPT_OTHER); }
 		  $passoption = str_replace(" ", "_", $option);
-	        $selected = ($_POST[$id] == $passoption) ? "selected" : ""; 
-	        print "<option value=\"$passoption\" $selected>$option</option>\n";
+		  if(isset($_POST[$id]) OR isset($_GET[$id])) { $selected = ($_POST[$id] == $passoption OR $_GET[$id] == $passoption) ? "selected" : ""; } else { $selected = ""; }
+	        $filter .= "<option value=\"$passoption\" $selected>$option</option>\n";
 		}            
     }
     
-	print "</SELECT>\n";
-	print "<input type=hidden name=calview value=" . $_POST['calview'] . ">\n";
-	print "</form></p>\n";
+	$filter .= "</SELECT>\n";
+
+	return $filter;
 }
 ?>

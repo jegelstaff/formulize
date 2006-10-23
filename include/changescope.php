@@ -45,20 +45,20 @@ function updateScope(formObj) {
 
 	var grps;
 	var start=1;
-	for (var i=0; i < formObj.newscope.options.length; i++) {
-		if (formObj.newscope.options[i].selected) {
+	for (var i=0; i < formObj.elements[0].options.length; i++) {
+		if (formObj.elements[0].options[i].selected) {
 			if(start) {
-				grps = "," + formObj.newscope.options[i].value + ",";
+				grps = "," + formObj.elements[0].options[i].value + ",";
 				start = 0;
 			} else {
-				grps = grps + formObj.newscope.options[i].value + ",";
+				grps = grps + formObj.elements[0].options[i].value + ",";
 			}
 		}
 	}
 	if(grps) {
 		window.opener.document.controls.advscope.value = grps;
 		window.opener.document.controls.lockcontrols.value = 0;
-		window.opener.document.controls.submit();
+		window.opener.showLoading();
 		window.self.close();
 	} else {
 		alert("<? print _formulize_DE_NOGROUPSPICKED; ?>");

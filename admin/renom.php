@@ -42,22 +42,21 @@ if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
 }
 
 
-global $HTTP_POST_VARS;
 include_once XOOPS_ROOT_PATH."/class/xoopstree.php";
 include_once XOOPS_ROOT_PATH."/class/xoopslists.php";
 include_once XOOPS_ROOT_PATH."/include/xoopscodes.php";
 include_once XOOPS_ROOT_PATH."/class/module.errorhandler.php";
 $myts =& MyTextSanitizer::getInstance();
 
-if(!isset($HTTP_POST_VARS['title'])){
-	$title = isset ($HTTP_GET_VARS['title']) ? $HTTP_GET_VARS['title'] : '0';
+if(!isset($_POST['title'])){
+	$title = isset ($_GET['title']) ? $_GET['title'] : '0';
 }else {
-	$title = $HTTP_POST_VARS['title'];
+	$title = $_POST['title'];
 }
-if(!isset($HTTP_POST_VARS['op'])){
-	$op = isset ($HTTP_GET_VARS['op']) ? $HTTP_GET_VARS['op'] : '0';
+if(!isset($_POST['op'])){
+	$op = isset ($_GET['op']) ? $_GET['op'] : '0';
 }else {
-	$op = $HTTP_POST_VARS['op'];
+	$op = $_POST['op'];
 }
 
 
@@ -72,7 +71,7 @@ if ( $res ) {
 }
 
 xoops_cp_header();
-$op = isset ($HTTP_GET_VARS['op']) ? $HTTP_GET_VARS['op'] : '0';
+$op = isset ($_GET['op']) ? $_GET['op'] : '0';
 
 if ($op != 1) {
 	echo '	<form action="renom.php?title='.$title.'&op=1" method="post">
@@ -97,9 +96,9 @@ if ($op != 1) {
 
 else
 {
-	global $xoopsDB, $HTTP_POST_VARS, $myts, $eh, $desc_form, $title2;
-	$title2 = $myts->makeTboxData4Save($HTTP_POST_VARS["title2"]);
-	//$title3 = $myts->makeTboxData4Save($HTTP_POST_VARS["desc_form3"]);
+	global $xoopsDB, $_POST, $myts, $eh, $desc_form, $title2;
+	$title2 = $myts->makeTboxData4Save($_POST["title2"]);
+	//$title3 = $myts->makeTboxData4Save($_POST["desc_form3"]);
 	if (empty($title)) {
 		redirect_header("formindex.php", 2, _MD_ERRORTITLE);
 	}

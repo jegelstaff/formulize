@@ -1,7 +1,9 @@
 <?php
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) 2005 Freeform Solutions                  ##
+##                    Copyright (c) 2006 Freeform Solutions                  ##
+##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
+##                       <http://www.brandycoke.com/>                        ##
 ###############################################################################
 ##                    XOOPS - PHP Content Management System                  ##
 ##                       Copyright (c) 2000 XOOPS.org                        ##
@@ -26,41 +28,64 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions 					     ##
+##  Author of this file: Freeform Solutions                                  ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-include 'header.php';
+require_once XOOPS_ROOT_PATH.'/kernel/object.php';
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
-$xoopsOption['template_main'] = 'formulize_cat.html';
+class formulizeForm extends XoopsObject {
+	function formulizeForm($id_form=""){
 
-require(XOOPS_ROOT_PATH."/header.php");
+		// validate $id_form
+		global $xoopsDB;
 
-global $xoopsDB;
+		if(!is_numeric($id_form)) {
+			// set empty defaults
+			$id_form = "";
+			$formq[0]['desc_form'] = "";
+			$single = "";
+			$elements = array();
+		} else {
+			$formq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$id_form");
+			if(!isset($formq[0])) {
+				unset($formq);
+				$id_form = "";
+				$formq[0]['desc_form'] = "";
+				$single = "";
+				$elements = array();
+			} else {
+				// gather element ids for this form
+				$elementsq = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$id_form ORDER BY ele_order ASC");
+				foreach($elementsq as $row=>$value) {
+					$elements[] = $value['ele_id'];
+				}
+				// propertly format the single value
 
-$cat_id = $_GET['cat'];
-$cat_name_q = q("SELECT cat_name FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$cat_id'");
-$cat_name = $cat_name_q[0]['cat_name'];
-if(!$cat_name) { $cat_name = _AM_CATGENERAL; }
+				switch($formq[0]['singleentry']) {
+					case "group":
+						$single = "group";
+						break;
+					case "on":
+						$single = "user";
+						break;
+					case "":
+						$single = "off";
+						break;
+					default:
+						$single = "";
+						break;
+				}
+			}
+		}
 
-$formsInCat = fetchFormsInCat($cat_id);
-// altered sept 8 to use ids instead of titles
-//$formNames = fetchFormNames($formsInCat);
-$indexer = 0;
-foreach($formsInCat as $thisform) {
-	$formData[$indexer]['fid'] = $thisform;
-	$formData[$indexer]['title'] = fetchFormNames($thisform);
-	$indexer++;
+		$this->XoopsObject();
+		//initVar params: key, data_type, value, req, max, opt
+		$this->initVar("id_form", XOBJ_DTYPE_INT, $id_form, true);
+		$this->initVar("title", XOBJ_DTYPE_TXTBOX, $formq[0]['desc_form'], true, 255);
+		$this->initVar("single", XOBJ_DTYPE_TXTBOX, $single, true, 5);
+		$this->initVar("elements", XOBJ_DTYPE_ARRAY, serialize($elements));
+	}
 }
-
-$xoopsTpl->assign("cat_name", $cat_name);
-if($indexer==0) {
-	$xoopsTpl->assign("noforms", _AM_NOFORMS_AVAIL);
-} else {
-	$xoopsTpl->assign("formData", $formData);
-}
-
-
-require(XOOPS_ROOT_PATH."/footer.php");
-
 ?>

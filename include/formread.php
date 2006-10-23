@@ -58,12 +58,14 @@ function writeLinks($entries, $fids) {
 
 
 // function handles reading of data from submitted form
-function handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_groups, $groups, $profileForm="") {
+function handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_groups, $groups, $profileForm="", $elements_allowed="", $mid="") {
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-if (!$GLOBALS['xoopsSecurity']->check() AND !$profileForm) {
+// skip the security check if we're in wfdownloads/smartdownloads since that module should already be handling the security checking
+$cururl = getCurrentURL();
+if (!$GLOBALS['xoopsSecurity']->check() AND (!strstr($cururl, "modules/wfdownloads") AND !strstr($cururl, "modules/smartdownload"))) {
 	print "<b>Error: the data you submitted could not be saved in the database.</b>";
 	return;
 }
@@ -107,11 +109,16 @@ $myts =& MyTextSanitizer::getInstance();
 	$desc_form = array();
 	$value = null;
 
+	// lock the formulize_form table -- read and write
+	// read from formulize, and formulize_id
+	$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize") . " READ, " . $xoopsDB->prefix("formulize_id") . " READ, " . $xoopsDB->prefix("formulize_form") . " WRITE, " . $xoopsDB->prefix("group_permission") . " READ");    
+
 	// START LOOPING THROUGH ALL THE ELEMENTS THAT WERE RETURNED FROM THE FORM
 	foreach( $id as $i ){
 
 
 	$element =& $formulize_mgr->get($i);
+
 //print "<br>" .$i . ": " . $ele[$i];
 //		if( !empty($ele[$i]) ){
 		if(is_numeric($ele[$i]) OR $ele[$i] != "") {
@@ -134,7 +141,7 @@ $myts =& MyTextSanitizer::getInstance();
 				// handle creating user ID lists in case of proxy entries
              		if(isset($_POST['proxyuser']) AND (count($_POST['proxyuser'])>1 OR (count($_POST['proxyuser']) == 1 AND $_POST['proxyuser'][0] != "noproxy")))
              		{
-             			$proxyid = $uid; // proxy flag set to user who made entry
+            			$proxyid = $uid; // proxy flag set to user who made entry
              			unset($uids[$id_form]);
              			foreach($_POST['proxyuser'] as $puser) {
              				if($puser != "noproxy") {
@@ -143,15 +150,15 @@ $myts =& MyTextSanitizer::getInstance();
              				}
              			}
 	           		}	
-             		elseif($owner AND $uid != $owner) // they are an admin who has updated someone's entry (could be simply a fellow member of the same groupscope)
+             		elseif($entries[$id_form][0] AND (intval($owner) === 0 OR $owner > 0) AND $uid != $owner) // they are an admin who has updated someone's entry (could be simply a fellow member of the same groupscope) -- intval($owner) === 0 handles anons
              		{
              			$proxyid = $uid; // proxy flag set to user who updated entry
-             			$uids[$id_form][$num_id] = $owner; // uid set to uid of the original entry
+             			$uids[$id_form][$num_id] = intval($owner); // uid set to uid of the original entry
 	           		}
 
 				// handle the previous entries for this form
 //				unset($prevEntry);
-				$prevEntry[$id_form] = getEntryValues($entries[$id_form][0], $formulize_mgr, $groups, $id_form);
+				$prevEntry[$id_form] = getEntryValues($entries[$id_form][0], $formulize_mgr, $groups, $id_form, $elements_allowed, $mid, $uid, $owner); 
 			}
 
 			$ele_id = $element->getVar('ele_id');
@@ -162,6 +169,7 @@ $myts =& MyTextSanitizer::getInstance();
 			$ecq = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '$ele_id'");
 			$ele_caption = $ecq[0]['ele_caption'];
 			$ele_caption = stripslashes($ele_caption);
+
 			$ele_caption = eregi_replace ("&#039;", "`", $ele_caption);
 			$ele_caption = eregi_replace ("&quot;", "`", $ele_caption);
 			$ele_caption = eregi_replace ("'", "`", $ele_caption);
@@ -171,197 +179,7 @@ $myts =& MyTextSanitizer::getInstance();
 
 			$value = prepDataForWrite($element, $ele[$i]);
 
-/* // CODE NOW EXISTS IN FUNCTIONS.PHP -- May 26 2006			
-			switch($ele_type){
-				case 'text':
-					if($ele_value[3]) { // if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
-						$value = ereg_replace ('[^0-9.]+', '', $ele[$i]);
-					} else {
-						$value = $ele[$i]; // trim added by jwe 9/01/04 -- removed 10/07/04
-					}
-				break;
-				case 'textarea':
-					$value = $ele[$i]; // trim added by jwe 9/01/04 -- removed 10/07/04
-
-				break;
-				case 'areamodif':
-					$value = $myts->stripSlashesGPC($ele[$i]);
-				break;
-				case 'radio':
-					$value = '';
-					$opt_count = 1;
-					while( $v = each($ele_value) ){
-						if( $opt_count == $ele[$i] ){
-							$msg.= $myts->stripSlashesGPC($v['key']).'<br>';
-							$value = $v['key'];
-						}
-						$opt_count++;
-					}
-				break;
-				case 'yn':
-					$value = $ele[$i];
-				break;
-				case 'checkbox':
-					$value = '';
-					$opt_count = 1;
-					while( $v = each($ele_value) ){
-						if( is_array($ele[$i]) ){
-							if( in_array($opt_count, $ele[$i]) ){
-								$value = $value.'*=+*:'.$v['key'];
-							}
-							$opt_count++;
-						}else{
-							if( !empty($ele[$i]) ){
-								$value = $value.'*=+*:'.$v['key'];
-							}
-						}						
-					}
-				break;
-				case 'select':
-					// section to handle linked select boxes differently from others...
-					$formlinktrue = 0;
-					if(is_array($ele[$i]))  // look for the formlink delimiter
-					{
-						foreach($ele[$i] as $justacheck)
-						{
-							if(strstr($justacheck, "#*=:*"))
-							{
-								$formlinktrue = 1;
-								break;
-							}
-						}
-					}
-					else
-					{
-						if(strstr($ele[$i], "#*=:*"))
-						{
-							$formlinktrue = 1;
-						}
-					}
-					if($formlinktrue) // if we've got a formlink, then handle it here...
-					{
-						if(is_array($ele[$i]))
-						{
-							//print_r($ele[$i]);
-							array($compparts);
-							$compinit = 0;
-							$selinit = 0;
-							foreach($ele[$i] as $whatwasselected)
-							{
-								// if(isset($_GET['debug4'])) { print "<br>$whatwasselected<br>"; }
-								$compparts = explode("#*=:*", $whatwasselected);
-								if(get_magic_quotes_gpc()) { // strip the slashes since we may be getting slashes passed in from a previous writing to the DB (caption names with apostrophes will generate slashes in the DB when magic quotes is on -- and the value passed back for formlinks is based on the current value in the DB).
-
-									$compparts[1] = stripslashes($compparts[1]);
-								}
-								// if(isset($_GET['debug4'])) { print_r($compparts); }
-								if($compinit == 0)
-								{
-									$value = $compparts[0] . "#*=:*" . $compparts[1] . "#*=:*";
-									$compinit = 1;
-								}
-								if($selinit == 1)
-								{
-									$value = $value . "[=*9*:";
-								}
-								$value = $value . $compparts[2];
-								$selinit = 1;
-							}
-						}
-						else
-						{
-							$value = $ele[$i];
-							if(get_magic_quotes_gpc()) { // strip the slashes since we may be getting slashes passed in from a previous writing to the DB (caption names with apostrophes will generate slashes in the DB when magic quotes is on -- and the value passed back for formlinks is based on the current value in the DB).
-								$value = stripslashes($value);
-							}							
-						}	
-//						print "<br>VALUE: $value";	
-						break;			
-					}
-					else
-					{
-
-
-					$value = '';
-
-
-							// The following code block is a replacement for the previous method for reading a select box which didn't work reliably -- jwe 7/26/04
-							// print_r($ele_value[2]);
-							$nametype = "";
-							$temparraykeys = array_keys($ele_value[2]);
-							if($temparraykeys[0] == "{FULLNAMES}" OR $temparraykeys[0] == "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
-								if($temparraykeys[0] == "{FULLNAMES}") { $nametype = "name"; }
-								if($temparraykeys[0] == "{USERNAMES}") { $nametype = "uname"; }
-								unset($ele_value[2]);
-								if(count($owner_groups)>0) {
-									$ele_value[2] = gatherNames($owner_groups, $nametype);
-								} else {
-									$ele_value[2] = gatherNames($groups, $nametype);
-								}
-							}
-
-							$entriesPassedBack = array_keys($ele_value[2]);
-							$keysPassedBack = array_keys($entriesPassedBack);
-							$entrycounterjwe = 0;
-							foreach($keysPassedBack as $masterentlistjwe)
-							{
-	      						if(is_array($ele[$i]))
-
-								{
-									foreach($ele[$i] as $whattheuserselected)
-									{
-										// if the user selected an entry found in the master list of all possible entries...
-										//print "internal loop $entrycounterjwe<br>userselected: $whattheuserselected<br>selectbox contained: $masterentlistjwe<br><br>";	
-										if($whattheuserselected == $masterentlistjwe)
-										{
-											//print "WE HAVE A MATCH!<BR>";
-											if($nametype) { 
-												$value .= "*=+*:" . $ele_value[2][$entriesPassedBack[$entrycounterjwe]]; 
-											} else {
-												$value = $value . "*=+*:" . $entriesPassedBack[$entrycounterjwe];
-											}
-											//print "$value<br><br>";
-										}
-									}
-									$entrycounterjwe++;
-								}
-								else
-								{
-									//print "internal loop $entrycounterjwe<br>userselected: $ele[$i]<br>selectbox contained: $masterentlistjwe<br><br>";	
-									if($ele[$i] == ($masterentlistjwe+1)) // plus 1 because single entry select boxes start their option lists at 1.
-									{
-										//print "WE HAVE A MATCH!<BR>";
-										if($nametype) { 
-											$value = $ele_value[2][$entriesPassedBack[$entrycounterjwe]]; 
-										} else {
-											$value = $entriesPassedBack[$entrycounterjwe];
-										}
-										//print "$value<br><br>";
-										break;
-									}
-									$entrycounterjwe++;
-								}
-							}
-					// print "selects: $value<br>";
-				break;
-				} // end of if that checks for a linked select box.
-				case 'date':
-					// code below commented/added by jwe 10/23/04 to convert dates into the proper standard format
-					if($ele[$i] != "YYYY-mm-dd" AND $ele[$i] != "") { 
-						$ele[$i] = date("Y-m-d", strtotime($ele[$i])); 
-					} else {
-						continue 2; // forget about this date element and go on to the next element in the form
-					}
-					$value = ''.$ele[$i];
-				break;
-				case 'sep':
-					$value = $myts->stripSlashesGPC($ele[$i]);
-				break;
-				default:
-				break;
-			}
-
-*/
+			if($value == "{SKIPTHISDATE}") { continue; } // move on to next form element if this is a date that we don't need to process
 
 		$submittedcaptions[$id_form][] = $ele_caption;
 		writeData($value, $entries[$id_form][0], $uids[$id_form], $prevEntry[$id_form], $id_form, $ele_caption, $proxyid, $date, $ele_type);
@@ -369,38 +187,36 @@ $myts =& MyTextSanitizer::getInstance();
 		} // end of if there's an element
 	} // end of loop through all submitted elements
 
+	// unlock tables
+	$xoopsDB->query("UNLOCK TABLES");
+
 	// note: you cannot completely erase an entry by blanking, because at least one element from a form needs to be sent in order for submittedcaptions array to include that form_id
 	foreach($submittedcaptions as $f=>$cs) {
 		blankEntries($cs, $prevEntry[$f], $entries[$f][0]);
 	}
 
-	// need to return comprehensive list of all entries, either the entry passed, or if no entry was passed, then the num_id used
+	// need to return comprehensive list of all entries, either the entry passed, or if no entry was passed, then the num_id used -- num_id is the value that gets passed as the id_req for new entries, and it is stored in the uids array here
 	foreach($fids as $this_fid) {
 		if(!$entries[$this_fid][0]) {
 			unset($entries[$this_fid]);
 			// convert uids to entries format and return
 			foreach($uids[$this_fid] as $r=>$u) {
 				$entries[$this_fid][] = $r;
+				writeOtherValues($r, $this_fid);
+				if(intval($u) === 0) { // if they're an anon user who has created their own new entries, then write the id_reqs as cookies.  Only works if nothing has been output to the page yet!  With xLanguage in use and the entire output of each pageload being buffered, this cookie setting should always work.
+					setcookie('entryid_'.$this_fid, $r, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)				
+					$_COOKIE['entryid_'.$this_fid] = $r;
+				}			
 			}
-		}	
+			sendNotifications($this_fid, "new_entry", $entries[$this_fid], $mid, $groups);
+		} else {	
+			writeOtherValues($entries[$this_fid][0], $this_fid);
+			sendNotifications($this_fid, "update_entry", $entries[$this_fid], $mid, $groups);
+		}
 	} 
 	return $entries;
 }
 
-// THIS FUNCTION CONTRIBUTED BY DPICELLA.  Added in Mar 15 2006.
-// NOT USED CURRENTLY DUE TO COMPATIBILITY ISSUES WITH DIFFERENT SERVERS
-/*
-A shorter function for recognising dates before 1970 and returning a negative number is below. All it does is replaces years before 1970 with  ones 68 years later (1904 becomes 1972), and then offsets the return value by a couple billion seconds. It works back to 1/1/1902, but only on dates that have a century.
-Note that a negative number is stored the same as a really big positive number. 0x80000000 is the number of seconds between 13/12/1901 20:45:54 and 1/1/1970 00:00:00. And 1570448 is the seconds between this date and 1/1/1902 00:00:00, which is 68 years before 1/1/1970.
-*/
-function safestrtotime ($s) {
-       $basetime = 0;
-       if (preg_match ("/19(\d\d)/", $s, $m) && ($m[1] < 70)) {
-               $s = preg_replace ("/19\d\d/", 1900 + $m[1]+68, $s);
-               $basetime = 0x80000000 + 1570448;
-       }
-       return $basetime + strtotime ($s);
-}
 
 // THIS FUNCTION WRITES DATA TO THE DATABASE
 function writeData($value, $entry, $uids, $prevEntry, $id_form, $ele_caption, $proxyid, $date, $ele_type) {
@@ -408,8 +224,6 @@ function writeData($value, $entry, $uids, $prevEntry, $id_form, $ele_caption, $p
 //print "Form: $id_form" . ", Entry: $entry<br>"; // debug code
 
 global $xoopsDB;
-
-$value = addslashes ($value);
 
 //print "<br>Value about to write:  $value";
 
@@ -435,13 +249,13 @@ if($entry) {
 		$finalresulteleidex = mysql_fetch_row($resultExtractEleid);
 		$ele_id = $finalresulteleidex[0];
 
-		$sql="UPDATE " .$xoopsDB->prefix("formulize_form") . " SET id_form=\"$id_form\", id_req=\"$entry\", ele_id=\"$ele_id\", ele_type=\"$ele_type\", ele_caption=\"$ele_caption\", ele_value=\"$value\", uid=\"$uid\", proxyid=\"$proxyid\", date=\"$date\" WHERE ele_id = $ele_id";
-		
+		$sql="UPDATE " .$xoopsDB->prefix("formulize_form") . " SET id_form=\"$id_form\", id_req=\"$entry\", ele_id=\"$ele_id\", ele_type=\"$ele_type\", ele_caption=\"$ele_caption\", ele_value=\"" . mysql_real_escape_string($value) . "\", uid=\"$uid\", proxyid=\"$proxyid\", date=\"$date\" WHERE ele_id = $ele_id";
+
 	} else { // or if the caption does not exist (it was blank last time the form was filled in...make a new entry but use the current viewentry for the id_req (to tie this new entry to the other elements that are part of the same record)
-		$sql="INSERT INTO ".$xoopsDB->prefix("formulize_form")." (id_form, id_req, ele_id, ele_type, ele_caption, ele_value, uid, proxyid, date) VALUES (\"$id_form\", \"$entry\", \"\", \"$ele_type\", \"$ele_caption\", \"$value\", \"$uid\", \"$proxyid\", \"$date\")";
+		$sql="INSERT INTO ".$xoopsDB->prefix("formulize_form")." (id_form, id_req, ele_id, ele_type, ele_caption, ele_value, uid, proxyid, date) VALUES (\"$id_form\", \"$entry\", \"\", \"$ele_type\", \"$ele_caption\", \"" . mysql_real_escape_string($value) . "\", \"$uid\", \"$proxyid\", \"$date\")";
 	}
 } else { // not updating an old entry
-	$sql="INSERT INTO ".$xoopsDB->prefix("formulize_form")." (id_form, id_req, ele_id, ele_type, ele_caption, ele_value, uid, proxyid, date, creation_date) VALUES (\"$id_form\", \"$num_id\", \"\", \"$ele_type\", \"$ele_caption\", \"$value\", \"$uid\", \"$proxyid\", \"$date\", \"$date\")";
+	$sql="INSERT INTO ".$xoopsDB->prefix("formulize_form")." (id_form, id_req, ele_id, ele_type, ele_caption, ele_value, uid, proxyid, date, creation_date) VALUES (\"$id_form\", \"$num_id\", \"\", \"$ele_type\", \"$ele_caption\", \"" . mysql_real_escape_string($value) . "\", \"$uid\", \"$proxyid\", \"$date\", \"$date\")";
 }
 
 if($_GET['debug4']) { print $sql . "<br>"; }
@@ -482,9 +296,14 @@ function writeUserProfile($data, $uid) {
     if (!empty($data['uid'])) {
         $uid = intval($data['uid']);
     }
-    if (empty($uid) || $xoopsUser->getVar('uid') != $uid) {
-        redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
+    if (empty($uid)) {
+	  redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
         exit();
+    } elseif(is_object($xoopsUser)) {
+		if($xoopsUser->getVar('uid') != $uid) {
+		  redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
+	        exit();	
+		}
     }
 
     $myts =& MyTextSanitizer::getInstance();

@@ -44,19 +44,19 @@ function updateCols(formObj) {
 
 	var cols;
 	var start=1;
-	for (var i=0; i < formObj.popnewcols.options.length; i++) {
-		if (formObj.popnewcols.options[i].selected) {
+	for (var i=0; i < formObj.elements[0].options.length; i++) {
+		if (formObj.elements[0].options[i].selected) {
 			if(start) {
-				cols = formObj.popnewcols.options[i].value;
+				cols = formObj.elements[0].options[i].value;
 				start = 0;
 			} else {
-				cols = cols + "," + formObj.popnewcols.options[i].value;
+				cols = cols + "," + formObj.elements[0].options[i].value;
 			}
 		}
 	}
 	if(cols) {
 		window.opener.document.controls.newcols.value = cols;
-		window.opener.document.controls.submit();
+		window.opener.showLoading();
 		window.self.close();
 	}
 
@@ -133,8 +133,14 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 		$options[3] .= " selected";
 	}
 	$options[3] .= ">" . _formulize_DE_CALC_MODDATE . "</option>";
+	// CREATOR EMAIL -- added September 24 2006
+	$options[4] = "<option value=\"creator_email\"";
+	if(in_array("creator_email", $selectedCols)) {
+		$options[4] .= " selected";
+	}
+	$options[4] .= ">" . _formulize_DE_CALC_CREATOR_EMAIL . "</option>";
 
-	$numcols = 4;
+	$numcols = 5;
 	foreach($cols as $f=>$vs) {
 		foreach($vs as $row=>$values) {
 			if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.
@@ -143,7 +149,11 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 				if(in_array($values['ele_id'], $selectedCols)) {
 					$options[$numcols] .= " selected";
 				}
-				$options[$numcols] .= ">" . printSmart(trans($values['ele_caption']), 75) . "</option>";
+				if($values['ele_colhead'] != "") {
+					$options[$numcols] .= ">" . printSmart(trans($values['ele_colhead']), 75) . "</option>";
+				} else {
+					$options[$numcols] .= ">" . printSmart(trans($values['ele_caption']), 75) . "</option>";
+				}
 				$numcols++;
 			}
 		}		
@@ -171,14 +181,14 @@ print "<table width=100%><tr><td width=5%></td><td width=90%>";
 	print "<form name=newcolform action=\"" . XOOPS_URL . "\" method=post>\n";
 
 	print "<table class=outer><tr><th colspan=2>" . _formulize_DE_PICKNEWCOLS . "</th></tr>";
-	print "<tr><td class=head>" . _formulize_DE_AVAILCOLS . "</td><td class=odd>";
+	print "<tr><td class=head>" . _formulize_DE_AVAILCOLS . "</td><td class=even>";
 	print "<SELECT name=popnewcols[] id=popnewcols size=$size multiple>";
 	foreach($options as $option) {
 		print $option . "\n";
 	}
 	print "</SELECT>\n</td></tr>\n";
 	
-	print "<tr><td class=head></td><td class=odd><input type=button name=newcolbutton value=\"" . _formulize_DE_CHANGECOLS . "\" onclick=\"javascript:updateCols(this.form);\"></input></td></tr>\n";
+	print "<tr><td class=head></td><td class=even><input type=button name=newcolbutton value=\"" . _formulize_DE_CHANGECOLS . "\" onclick=\"javascript:updateCols(this.form);\"></input></td></tr>\n";
 
 	print "</table>\n</form>";
 print "</td><td width=5%></td></tr></table>";

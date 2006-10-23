@@ -27,7 +27,7 @@ function block_formulizeMENU_show() {
         $block = array();
         $groups = array();
         $block['title'] = ""; //_MB_formulizeMENU_TITLE;
-        $block['content'] = "<table cellspacing='0' border='0'><tr><td id=mainmenu>";
+        $block['content'] = "<table cellspacing='0' border='0'><tr><td id=\"mainmenu\">";
 
 	// MODIFIED April 25/05 to handle menu categories
 
@@ -59,7 +59,6 @@ function block_formulizeMENU_show() {
 
 	$force_open = 0;
 	$allowedCats = allowedCats($cats, $allowedForms);
-
 	if(count($allowedCats)<2 AND (!isset($_GET['cat']) AND !isset($_GET['title']))) { $force_open = 1; } // if only one category, then force it to open up
 	foreach($cats as $thisid=>$thiscat) {
 		$temp = drawMenu($thisid, $thiscat, $allowedForms, $id_form, $topwritten, $force_open);
@@ -72,6 +71,7 @@ function block_formulizeMENU_show() {
 	$block['content'] .= drawMenu(0, _AM_CATGENERAL, $allowedForms, $id_form, $topwritten, $force_open);
 
 	  $block['content'] .= "</td></tr></table>";
+
         return $block;
 }
 ?>

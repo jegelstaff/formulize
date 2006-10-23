@@ -110,9 +110,32 @@ if( empty($addopt) && !empty($ele_id) ){
 $add_opt = addOptionsTray();
 $options[] = $add_opt;
 $opt_tray = new XoopsFormElementTray(_AM_ELE_OPT, '<br />');
-$opt_tray->setDescription(_AM_ELE_OPT_DESC);
+$opt_tray->setDescription(_AM_ELE_OPT_DESC.'<br /><br />'._AM_ELE_OTHER);
 for( $i=0; $i<count($options); $i++ ){
 	$opt_tray->addElement($options[$i]);
 }
 $form->addElement($opt_tray);
+
+// delimiter option added June 7 2006 -- jwe
+$default_custom_text = ($element->getVar('ele_delim')!="br" AND $element->getVar('ele_delim')!="space" AND $element->getVar('ele_delim')!="") ? $element->getVar('ele_delim') : "";
+if(!$default_custom_text) {
+	$default_to_set = $element->getVar('ele_delim')=="" ? $default_delim = $xoopsModuleConfig['delimeter'] : $element->getVar('ele_delim');
+} else {
+	$default_to_set = 'custom';
+}
+$delim_tray = new XoopsFormElementTray(_AM_ELE_DELIM_CHOICE, '<br />');
+$delim_choice_br = new xoopsFormRadio('', 'ele_delim', $default_to_set);
+$delim_choice_br->addOption('br', _MI_formulize_DELIMETER_BR);
+$delim_tray->addElement($delim_choice_br);
+$delim_choice_space = new xoopsFormRadio('', 'ele_delim', $default_to_set);
+$delim_choice_space->addOption('space', _MI_formulize_DELIMETER_SPACE);
+$delim_tray->addElement($delim_choice_space);
+$delim_choice_custom_box = new xoopsFormText('', 'ele_delim_custom', 25, 255, $default_custom_text);
+$delim_choice_custom_box->setExtra("onfocus=\"javascript:this.form.ele_delim[2].checked = true;\"");
+$delim_choice_custom = new xoopsFormRadio('', 'ele_delim', $default_to_set);
+$delim_choice_custom->addOption('custom', _MI_formulize_DELIMETER_CUSTOM. ": " . $delim_choice_custom_box->render());
+$delim_tray->addElement($delim_choice_custom);
+
+$form->addElement($delim_tray);
+
 ?>

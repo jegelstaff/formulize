@@ -40,8 +40,14 @@ $cols = !empty($value[2]) ? $value[2] : $xoopsModuleConfig['ta_cols'];
 $rows = new XoopsFormText(_AM_ELE_ROWS, 'ele_value[1]', 3, 3, $rows);
 $cols = new XoopsFormText(_AM_ELE_COLS, 'ele_value[2]', 3, 3, $cols);
 $default = new XoopsFormTextArea(_AM_ELE_DEFAULT, 'ele_value[0]', stripslashes($value[0]), 5, 35);
+$default->setExtra('wrap=off');
+$default->setDescription(_AM_ELE_TEXT_DESC);
 $form->addElement($rows, 1);
 $form->addElement($cols, 1);
 $form->addElement($default);
+
+// added June 20 2006, jwe
+$formlink = createFieldList($value[3], true); 
+$form->addElement($formlink);
 
 ?>

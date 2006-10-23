@@ -87,6 +87,14 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// get default info and info passed to page....
 
+	// clear any default search text that has been passed (because the user didn't actually search for anything)
+	foreach($_POST as $k=>$v) {
+		if(substr($k, 0, 7) == "search_" AND $v==_formulize_DE_SEARCH_HELP) {
+			unset($_POST[$k]);
+			break; // assume this is only sent once, since the help text only appears in the first column
+		}
+	}
+
 	// check for deletion request and then delete entries
 	if($_POST['delconfirmed']) { // only gets set by clicking on the delete selected button
 		foreach($_POST as $k=>$v) {
@@ -101,6 +109,18 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 		}
 	}
+
+	// check for cloning request and if present then clone entries
+	if($_POST['cloneconfirmed']) {
+//		print $_POST['cloneconfirmed'];
+		foreach($_POST as $k=>$v) {
+			if(substr($k, 0, 7) == "delete_" AND $v != "") {
+				$thisentry = substr($k, 7);
+				cloneEntry($thisentry, $frid, $fid, $_POST['cloneconfirmed']); // cloneconfirmed is the number of copies required  
+			}
+		}
+	}
+
 
 	// handle deletion of view...reset currentView
 	if($_POST['delview']) {
@@ -346,7 +366,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$showcols = getDefaultCols($fid, $frid);
 	}
 
-
 	if($_POST['newcols']) {
 		$temp_showcols = $_POST['newcols'];
 		$showcols = explode(",", $temp_showcols);
@@ -356,7 +375,16 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$showcols = $temp_handles;
 		}
 	}
-	
+
+	$showcols = removeNotAllowedCols($fid, $frid, $showcols, $groups);
+
+
+	// clear quick searches for any columns not included now
+	foreach($_POST as $k=>$v) {
+		if(substr($k, 0, 7) == "search_" AND !in_array(substr($k, 7), $showcols)) {
+			unset($_POST[$k]);
+		}
+	}
 
 	// Create settings array to pass to form page or to other functions
 
@@ -441,11 +469,13 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 	}
 
-	if($_POST['newcols']) {
+/*	if($_POST['newcols']) {
 		$settings['oldcols'] = $_POST['newcols'];
 	} else {
 		$settings['oldcols'] = $_POST['oldcols'];
 	}
+*/
+	$settings['oldcols'] = implode(",", $showcols);
 
 	$settings['ventry'] = $_POST['ventry'];
 
@@ -658,14 +688,25 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$colids = implode(",", $ids);
 	$flatcols = implode(",", $columns);
 
-	print "<form name=resetviewform id=resetviewform action=$currentURL method=post>\n";
+	print "<form name=resetviewform id=resetviewform action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
 	print "<input type=hidden name=currentview value='$currentview'>";
 	print "</form>";
 
 
-	print "<form name=controls id=controls action=$currentURL method=post>\n";
+	print "<form name=controls id=controls action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
 
-	print "<table cellpadding=10><tr><td style=\"vertical-align: top;\">";
+
+	// working message
+	print "<div id=workingmessage style=\"display: none; position: absolute; z-level: 1; left: 50%; top: 50%;\">\n";
+	if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/working-".$xoopsConfig['language'].".gif") ) {
+		print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-" . $xoopsConfig['language'] . ".gif\">\n";
+	} else {
+		print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-english.gif\">\n";
+	}
+	print "</div><div id=listofentries>\n";
+
+
+	print "<table cellpadding=10><tr><td style=\"vertical-align: top;\" width=100%>";
 	print "<h1>" . trans($title) . "</h1>";
 
 	if(strstr($_SERVER['HTTP_USER_AGENT'], "MSIE")) {
@@ -679,25 +720,17 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		print "<input type=hidden name=currentview id=currentview value=\"$currentview\">\n<input type=hidden name=loadviewname id=loadviewname value=\"$loadviewname\">$submitButton";
 	} else {
 		print "</td>";
-		print "<td rowspan=2 style=\"vertical-align: bottom;\">";	      
+		print "<td rowspan=3 style=\"vertical-align: bottom;\">";	      
       	if(!$settings['lockcontrols']) {
       		print "<table><tr><td style=\"vertical-align: bottom;\">";
 
-            	print "<center><p>$submitButton";
+            	print "<p>$submitButton<br><b>" . _formulize_DE_ACTIONS . "</b>\n";
 
-            	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
-            	if($add_own_entry AND $singleMulti[0]['singleentry'] == "") {
-            		print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_ADDENTRY . "' onclick=\"javascript:addNew('single');\"></input>";
-            		print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_ADD_MULTIPLE_ENTRY . "' onclick=\"javascript:addNew();\"></input>";
-            	} elseif($add_own_entry AND $proxy = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) { // this is a single entry form, so add in the update and proxy buttons if they have proxy, otherwise, just add in update button
-            		print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_UPDATEENTRY . "' onclick=\"javascript:addNew();\"></input>";
-            		print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_PROXYENTRY . "' onclick=\"javascript:addNew('proxy');\"></input>";
-            	} elseif($add_own_entry) {
-            		print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_UPDATEENTRY . "' onclick=\"javascript:addNew();\"></input>";
-            	} elseif($proxy = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
-				print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_PROXYENTRY . "' onclick=\"javascript:addNew('proxy');\"></input>";
-			}
-      		print "<br><input type=button style=\"width: 140px;\" name=changecols value='" . _formulize_DE_CHANGECOLS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colids');\"></input>";
+			// need to establish these here because they are used in conditions lower down
+			$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
+			$proxy = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
+
+            	print "<br><input type=button style=\"width: 140px;\" name=changecols value='" . _formulize_DE_CHANGECOLS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colids');\"></input>";
       		print "<br><input type=button style=\"width: 140px;\" name=calculations value='" . _formulize_DE_CALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>";
       		print "<br><input type=button style=\"width: 140px;\" name=advsearch value='" . _formulize_DE_ADVSEARCH . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
       		foreach($settings as $k=>$v) {
@@ -708,20 +741,34 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
       			}
       		}
       		print "');\"></input>";
-      		print "<br><input type=button style=\"width: 140px;\" name=export value='" . _formulize_DE_EXPORT . "' onclick=\"javascript:runExport();\"></input>";
-
-			if($import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid)) {
-	      		print "<br><input type=button style=\"width: 140px;\" name=advsearch value='" . _formulize_DE_IMPORTDATA . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid');\"></input>"; 
+			if(!$hlist) {
+	      		print "<br><input type=button style=\"width: 140px;\" name=export value='" . _formulize_DE_EXPORT . "' onclick=\"javascript:runExport('comma');\"></input>";
+			} else {
+				print "<br><input type=button style=\"width: 140px;\" name=export value='" . _formulize_DE_EXPORT_CALCS . "' onclick=\"javascript:runExport('calcs');\"></input>";
 			}
 
-            	print "</p></center></td><td style=\"vertical-align: bottom;\"><center><p>";
+			if($import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid) AND !$frid) { // cannot import into a framework currently
+	      		print "<br><input type=button style=\"width: 140px;\" name=impdata value='" . _formulize_DE_IMPORTDATA . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid');\"></input>"; 
+			}
 
-            	if(($del_own = $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid) OR $del_others = $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid)) AND !$settings['lockcontrols']) {
-            		print "<input type=button style=\"width: 140px;\" name=deletesel value='" . _formulize_DE_DELETESEL . "' onclick=\"javascript:confirmDel();\"></input>";
-            		print "<br><input type=button style=\"width: 110px;\" name=sellall value='" . _formulize_DE_SELALL . "' onclick=\"javascript:selectAll(this.form);\"></input>";
-            		print "<br><input type=button style=\"width: 110px;\" name=clearall value='" . _formulize_DE_CLEARALL . "' onclick=\"javascript:clearAll(this.form);\"></input><br>";
+            	print "</p></td><td style=\"vertical-align: bottom;\"><center><p>";
+
+			if($add_own_entry AND $singleMulti[0]['singleentry'] == "") {
+				print "<input type=button style=\"width: 140px;\" name=clonesel value='" . _formulize_DE_CLONESEL . "' onclick=\"javascript:confirmClone();\"></input><br>";
+			}
+			$del_own = $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid);
+			$del_others = $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid);
+            	if(($del_own OR $del_others) AND !$settings['lockcontrols']) {
+            		print "<input type=button style=\"width: 140px;\" name=deletesel value='" . _formulize_DE_DELETESEL . "' onclick=\"javascript:confirmDel();\"></input><br>";
             	}
-            	print "<input type=button style=\"width: 140px;\" name=resetviewbutton value='" . _formulize_DE_RESETVIEW . "' onclick=\"javascript:window.document.resetviewform.submit();\"></input>";
+			if(($add_own_entry AND $singleMulti[0]['singleentry'] == "") OR (($del_own OR $del_others) AND !$settings['lockcontrols'])) {
+            		print "<input type=button style=\"width: 110px;\" name=sellall value='" . _formulize_DE_SELALL . "' onclick=\"javascript:selectAll(this.form);\"></input>";
+            		print "<br><input type=button style=\"width: 110px;\" name=clearall value='" . _formulize_DE_CLEARALL . "' onclick=\"javascript:clearAll(this.form);\"></input><br>";
+			}
+
+			print "<input type=button style=\"width: 140px;\" name=notbutton value='"._formulize_DE_NOTBUTTON . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/setnot.php?fid=$fid');\"></input>"; 
+
+            	print "<br><input type=button style=\"width: 140px;\" name=resetviewbutton value='" . _formulize_DE_RESETVIEW . "' onclick=\"javascript:showLoadingReset();\"></input>";
 
             	// there is a create reports permission, but we are currently allowing everyone to save their own views regardless of that permission.  The publishing permissions do kick in on the save popup.
             	print "<br><input type=button style=\"width: 140px;\" name=save value='" . _formulize_DE_SAVE . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/save.php?fid=$fid&frid=$frid&lastloaded=$lastloaded&cols=$flatcols&currentview=$currentview&loadonlyview=$loadOnlyView');\"></input>";
@@ -737,9 +784,37 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			print "<p>$submitButton<br>" . _formulize_DE_WARNLOCK . "</p>";;
       	} // end of if controls are locked
 
-      	print "</td></tr></table></center></td></tr><tr><td style=\"vertical-align: bottom;\">";
+      	print "</td></tr></table>\n";
 
-      	print "<p><b>" . _formulize_DE_CURRENT_VIEW . "</b>&nbsp;&nbsp;<SELECT name=currentview id=currentview size=1 onchange=\"javascript:change_view(this.form, '$pickgroups', '$endstandard');\">\n";
+		// cell for add entry buttons
+		print "<tr><td style=\"vertical-align: top;\">\n";
+
+      	if(!$settings['lockcontrols']) {
+			// added October 18 2006 -- moved add entry buttons to left side to emphasize them more
+			print "<table><tr><td style=\"vertical-align: bottom;\"><p>\n";
+
+            	if($add_own_entry AND $singleMulti[0]['singleentry'] == "") {
+				print "<b>" . _formulize_DE_FILLINFORM . "</b><br>\n";
+	            	print "<input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_ADDENTRY . "' onclick=\"javascript:addNew('single');\"></input>";
+      	      	print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_ADD_MULTIPLE_ENTRY . "' onclick=\"javascript:addNew();\"></input>";
+            	} elseif($add_own_entry AND $proxy) { // this is a single entry form, so add in the update and proxy buttons if they have proxy, otherwise, just add in update button
+				print "<b>" . _formulize_DE_FILLINFORM . "</b><br>\n";
+            		print "<input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_UPDATEENTRY . "' onclick=\"javascript:addNew();\"></input>";
+	            	print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_PROXYENTRY . "' onclick=\"javascript:addNew('proxy');\"></input>";
+      	      } elseif($add_own_entry) {
+				print "<b>" . _formulize_DE_FILLINFORM . "</b><br>\n";
+            		print "<input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_UPDATEENTRY . "' onclick=\"javascript:addNew();\"></input>";
+	            } elseif($proxy) {
+				print "<b>" . _formulize_DE_FILLINFORM . "</b><br>\n";
+				print "<input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_PROXYENTRY . "' onclick=\"javascript:addNew('proxy');\"></input>";
+			}
+
+			print "<br><br></p></td></tr></table>\n";
+		}
+
+		print "</td></tr><tr><td style=\"vertical-align: bottom;\">";
+
+      	print "<p><b>" . _formulize_DE_CURRENT_VIEW . "</b><br><SELECT style=\"width: 350px;\" name=currentview id=currentview size=1 onchange=\"javascript:change_view(this.form, '$pickgroups', '$endstandard');\">\n";
       	print $viewoptions;
       	print "</SELECT>";
 
@@ -755,6 +830,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=hidden name=oldcols id=oldcols value='$flatcols'>\n";
 	print "<input type=hidden name=ventry id=ventry value=\"\">\n";
 	print "<input type=hidden name=delconfirmed id=delconfirmed value=\"\">\n";
+	print "<input type=hidden name=cloneconfirmed id=cloneconfirmed value=\"\">\n";
 	print "<input type=hidden name=xport id=xport value=\"\">\n";
 	print "<input type=hidden name=xport_cust id=xport_cust value=\"\">\n";
 	print "<input type=hidden name=loadreport id=loadreport value=\"\">\n";
@@ -821,23 +897,9 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	$start = 1;
 	$filter = "";
 	foreach($searches as $key=>$one_search) {
-
-
-		// if frid, searches contains handles, so use them.  if no frid then get ff captions with ids
 		// $key is handles for frameworks, and ele_ids for non-frameworks.
 		if(!$start) { $filter .= "]["; }
-		$filter .= $key . "/**/" . mysql_real_escape_string($one_search);
-//		This code is no longer necessary, since the extraction layer converts ele_ids to captions for non-framework queries
-//		if($frid) {	
-//			$filter .= $key . "/**/" . mysql_real_escape_string($one_search);
-//		} else {
-//			$caption = go("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '$key'"); 
-//			$ffcaption = eregi_replace ("&#039;", "`", $caption[0]['ele_caption']);
-//			$ffcaption = eregi_replace ("&quot;", "`", $ffcaption);
-//			$ffcaption = str_replace ("'", "`", $ffcaption);
-//			$filter .= $ffcaption . "/**/" . mysql_real_escape_string($one_search);
-//		}
-
+		$filter .= $key . "/**/$one_search"; // . mysql_real_escape_string($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
 		$start = 0;
 	}
 	
@@ -929,24 +991,8 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	
 
 	// get the headers
-
-	foreach($cols as $col) {
-		if($col == "uid") {
-			$headers[] = _formulize_DE_CALC_CREATOR;
-		} elseif($col == "proxyid") {
-			$headers[] = _formulize_DE_CALC_MODIFIER;
-		} elseif($col=="creation_date") {
-			$headers[] = _formulize_DE_CALC_CREATEDATE;
-		} elseif($col=="mod_date") {
-			$headers[] = _formulize_DE_CALC_MODDATE;
-		} elseif($frid) {
-       		$headers[] = getCaption($frid, $col);
-       	} else {
-       		$temp_cap = go("SELECT ele_caption FROM " . DBPRE . "formulize WHERE ele_id = '$col'"); 
-       		$headers[] = $temp_cap[0]['ele_caption'];
-       	}
-	}
-	
+	$headers = getHeaders($cols, $frid);
+		
 	print "<style>\n";
 
 	print ".scrollbox {\n";
@@ -961,9 +1007,11 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 
 	print "</style>\n";
 
+	$filename = "";
 	if($settings['xport']) {
-		$filename = prepExport($headers, $cols, $data, $settings['xport'], $settings['xport_cust'], $settings['title']);
-		print "<center><p><a href='$filename' target=\"_blank\">" . _formulize_DE_CLICKSAVE . "</a></p></center>";
+		$filename = prepExport($headers, $cols, $data, $settings['xport'], $settings['xport_cust'], $settings['title'], false, $fid, $groups);
+		$linktext = $_POST['xport'] == "update" ? _formulize_DE_CLICKSAVE_TEMPLATE : _formulize_DE_CLICKSAVE;
+		print "<center><p><a href='$filename' target=\"_blank\">$linktext</a></p></center>";
 		print "<br>";
 	}
 
@@ -1005,7 +1053,8 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		if(!$settings['lockcontrols']) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
 			print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></td></tr>";
 		}
-		printResults($cresults[0], $cresults[1], $cresults[2], $frid); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings
+		$exportFilename = $settings['xport'] == "calcs" ? $filename : "";
+		printResults($cresults[0], $cresults[1], $cresults[2], $frid, $exportFilename, $settings['title']); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
 		print "</table>\n";
 
 //		print "</div>\n";
@@ -1058,16 +1107,19 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		print "</td></tr>\n";
 	}
 
+
 	drawHeaders($headers, $cols, $sort, $order, $settings['lockcontrols']);
 	drawSearches($searches, $cols);
 
 	// get form handles in use
-	$mainFormHandle = key($data[0]);
+	$mainFormHandle = key($data[key($data)]);
 
 	if(count($data) == 0) { // kill an empty dataset so there's no rows drawn
 		unset($data);
-	}
+	} 
+
 	$headcounter = 0;
+	$blankentries = 0;
 	foreach($data as $id=>$entry) {
 
 		if($entry != "") { // check to make sure this isn't an unset entry (ie: one that was blanked by the extraction layer just prior to sending back results
@@ -1084,7 +1136,6 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		} else {
 			$class="even";
 		}
-
 		$linkids = internalRecordIds($entry, $mainFormHandle);
 		// commented below is an attempt to make metadata appear in tooltip boxes, but formatting is not available and the box is of a fixed width and "dotdotdots" itself -- member_handler not currently used by drawEntries so long as this is commented (and it is not added elsewhere)
 		//$metaData = getMetaData($linkids[0], $member_handler);
@@ -1102,25 +1153,6 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
       		}
       		print "ve=" . $linkids[0] . "' onclick=\"javascript:goDetails('" . $linkids[0] . "');return false;\"><img src='" . XOOPS_URL . "/modules/formulize/images/detail.gif' border=0 alt=\"" . _formulize_DE_VIEWDETAILS . "$metaToPrint\" title=\"" . _formulize_DE_VIEWDETAILS . "$metaToPrint\"></a>";
 
-      		// metadata not drawn in currently.  Takes up too much space.  Available on form page.
-      		/*<br>\n";
-      		$c_uid = display($entry, 'uid');
-      		$c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
-      		$c_name = $c_name_q[0]['name'];
-      		if(!$c_name) { $c_name = $c_name_q[0]['uname']; }
-      		$c_date = display($entry, 'creation_date');
-      		$m_uid = display($entry, 'proxyid');
-      		if($m_uid) {
-      			$m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
-      			$m_name = $m_name_q[0]['name'];
-      			if(!$m_name) { $m_name = $m_name_q[0]['uname']; }
-      		} else {
-      			$m_name = $c_name;
-      		}
-      		$m_date = display($entry, 'mod_date');
-      		print "<p class=entrymeta>" . _formulize_DE_LASTMOD . " " . $m_name . " " . _formulize_DE_ON . " " . $m_date . "<br>\n";
-      		print _formulize_DE_CREATED . " " . $c_name . " " . _formulize_DE_ON . " " . $c_date; */
-
       		// put in the delete checkboxes -- check for perms delete_own_entry, delete_other_entries
       		$owner = getEntryOwner($linkids[0]);
       		// check to see if we should draw in the delete checkbox or not
@@ -1132,12 +1164,14 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		} // end of IF NO LOCKCONTROLS
 		print "</td>\n";
 
+		$column_counter = 0;
 		foreach($cols as $col) {
+
 			print "<td class=$class>\n";
 			if($col == "uid") {
-				$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "uid") . "\">" . displayMeta($entry, "uid-name") . "</a>";
+				$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "uid") . "\" target=_blank>" . displayMeta($entry, "uid-name") . "</a>";
 			} elseif($col=="proxyid") {
-				$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "proxyid") . "\">" . displayMeta($entry, "proxyid-name") . "</a>";
+				$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "proxyid") . "\" target=_blank>" . displayMeta($entry, "proxyid-name") . "</a>";
 			} else {
 				$value = display($entry, $col);
 			}
@@ -1145,29 +1179,36 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 				$start = 1;
 				foreach($value as $v) {
 					if($start) {
-						print printSmart(trans($v));
+						print checkForLink($v, $col, $frid, $currentURL); //printSmart(trans($v));
 						$start = 0;
 					} else {
 						print ",<br>\n";
-						print printSmart(trans($v));
+						print checkForLink($v, $col, $frid, $currentURL); // printSmart(trans($v));
 					}
 				}
 			} elseif($col != "uid" AND $col!= "proxyid") {
-				print printSmart(trans($value));
+				print checkForLink($value, $col, $frid, $currentURL); // printSmart(trans($value));
 			} else { // don't use printsmart for the special uid/proxyid cells
 				print $value;
 			}
 			print "</td>\n";
+			$column_counter++;
 		}
 		print "</tr>\n";
 		
+		} else { // this is a blank entry
+			$blankentries++;
 		} // end of not "" check
 	
-	}
+	} // end of foreach that draws all data
 
 	if(count($data)>20) { drawHeaders($headers, $cols, $sort, $order, $settings['lockcontrols']); }
 
 	print "</table>";
+
+	if(!$data OR count($data) == $blankentries) { // if no data was returned, or the dataset was empty...
+		print "<p><b>" . _formulize_DE_NODATAFOUND . "</b></p>\n";
+	}
 
 	print "</div>";
 
@@ -1181,6 +1222,9 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 
 	print "</form>\n"; 
 
+	print "</div>\n"; // end of the listofentries div, used to call up the working message when the page is reloading
+
+
 }
 
 
@@ -1191,7 +1235,16 @@ function drawSearches($searches, $cols) {
 	for($i=0;$i<count($cols);$i++) {
 		print "<td class=head>\n";
 		$search_text = str_replace("\"", "&quot;", $searches[$cols[$i]]);
-		print "<input type=text name='search_" . $cols[$i] . "' value=\"" . stripslashes($search_text) . "\"></input>\n";
+		$boxid = "";
+		$clear_help_javascript = "";
+		if(count($searches) == 0) {
+			if($i==0) { 
+				$search_text = _formulize_DE_SEARCH_HELP; 
+				$boxid = "id=firstbox";
+			}
+			$clear_help_javascript = "onfocus=\"javascript:clearSearchHelp(this.form, '" . _formulize_DE_SEARCH_HELP . "');\"";
+		}
+		print "<input type=text $boxid name='search_" . $cols[$i] . "' value=\"" . stripslashes($search_text) . "\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
 		print "</td>\n";
 	}
 	print "</tr>\n";
@@ -1268,20 +1321,28 @@ function convertIds($ids, $frid) {
 
 // this function returns the ele_ids of form elements to show, or the handles of the form elements to show for a framework
 function getDefaultCols($fid, $frid="") {
-	global $xoopsDB;
+	global $xoopsDB, $xoopsUser;
 
 	if($frid) { // expand the headerlist to include the other forms
 		$fids[0] = $fid;
 		$check_results = checkForLinks($frid, $fids, $fid, "", "", "", "", "", "", "0");
 		$fids = $check_results['fids'];
 		$sub_fids = $check_results['sub_fids'];
+		$gperm_handler = &xoops_gethandler('groupperm');
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
+		$mid = getFormulizeModId();
 		foreach($fids as $this_fid) {
-			$headers = getHeaderList($this_fid);
-			$ele_ids[$this_fid] = convertHeadersToIds($headers, $this_fid);
+			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
+				$ele_ids[$this_fid] = getHeaderList($this_fid, true);
+				//$ele_ids[$this_fid] = convertHeadersToIds($headers, $this_fid); // was taking $headers formerly generated from prev line
+			}
 		}
 		foreach($sub_fids as $this_fid) {
-			$headers = getHeaderList($this_fid);
-			$ele_ids[$this_fid] = convertHeadersToIds($headers, $this_fid);
+			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
+				$ele_ids[$this_fid] = getHeaderList($this_fid, true);
+				//$ele_ids[$this_fid] = convertHeadersToIds($headers, $this_fid); // was taking $headers formerly generated from prev line
+			}
 		}
 
 		array_unique($ele_ids);
@@ -1295,8 +1356,8 @@ function getDefaultCols($fid, $frid="") {
 			return $handles;
 		}
 	} else {
-		$headers = getHeaderList($fid);
-		$ele_ids = convertHeadersToIds($headers, $fid);
+		$ele_ids = getHeaderList($fid, true);
+		//$ele_ids = convertHeadersToIds($headers, $fid); // was taking $headers formerly generated from prev line
 		return $ele_ids;
 	}
 
@@ -1304,16 +1365,6 @@ function getDefaultCols($fid, $frid="") {
 
 } 
 
-// gets the ele_ids of the headerlist for a form
-function convertHeadersToIds($headers, $fid) {
-	global $xoopsDB;
-	foreach($headers as $cap) {
-		$cap = addslashes($cap);
-		$ele_id = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND ele_caption='$cap'");
-		$ele_ids[] = $ele_id[0]['ele_id'];
-	}
-	return $ele_ids;
-}
 
 
 //THIS FUNCTION PERFORMS THE REQUESTED CALCULATIONS, AND RETURNS AN html FORMATTED CHUNK FOR DISPLAY ON THE SCREEN
@@ -1369,12 +1420,12 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid)  {
 					if($g[$i][$z] == "none" OR $g[$i][$z] == "") { 
 						if(is_array($thisvalue)) {
 							foreach($thisvalue as $onevalue) {
-
 								$masterCalcs[$handles[$i]][$c[$i][$z]][0][] = $onevalue;
 							}
 						} else {
 							$masterCalcs[$handles[$i]][$c[$i][$z]][0][] = $thisvalue;
 						}
+						$groupDataCount[$handles[$i]][$c[$i][$z]][0]++; 	// count the master $data array so we have an alternate divisor to use for percentage breakdown calculations if necessary -- added August 21 2006
 					} else {
 						$thisgroup = display($entry, $g[$i][$z]);
 						$thisgroup = convertUids($thisgroup, $g[$i][$z]);
@@ -1387,6 +1438,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid)  {
 								} else {
 									$masterCalcs[$handles[$i]][$c[$i][$z]][$onegroup][] = $thisvalue;
 								}
+								$groupDataCount[$handles[$i]][$c[$i][$z]][$onegroup]++; 	// count the master $data array so we have an alternate divisor to use for percentage breakdown calculations if necessary -- added August 21 2006
 							}	
 						} else {
 							if(is_array($thisvalue)) {
@@ -1396,6 +1448,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid)  {
 							} else {
 								$masterCalcs[$handles[$i]][$c[$i][$z]][$thisgroup][] = $thisvalue;
 							}
+							$groupDataCount[$handles[$i]][$c[$i][$z]][$thisgroup]++; 	// count the master $data array so we have an alternate divisor to use for percentage breakdown calculations if necessary -- added August 21 2006
 						}
 					}
 				}
@@ -1409,6 +1462,8 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid)  {
 	unset($blanks);
 	unset($grouping);
 	// loop through the masterCalc array and perform each required calculation
+	// masterCalcs array is basically in this format:  array[handle/question in form][calculation requested on handle][grouping option]
+	// you can have several groups for a question (one key for each grouped option)
 
 	foreach($masterCalcs as $handle=>$thesecalcs) {
 		foreach($thesecalcs as $thiscalc=>$thesegroups) {
@@ -1469,13 +1524,31 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid)  {
 						$masterResults[$handle][$thiscalc][$thisgroup] = _formulize_DE_CALC_NUMENTRIES . ": $count<br>" . _formulize_DE_CALC_NUMUNIQUE . ": $count_unique";
 						break;
 					case "per":
+						$datacount = $groupDataCount[$handle][$thiscalc][$thisgroup];
 						$count = count($values);
 						$breakdown = array_count_values($values);
 						arsort($breakdown);
-						$typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENT . "</u></td></tr>\n";
+						if($count == $datacount) {
+							$typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENT . "</u></td></tr>\n";
+						} else {
+							$typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENTRESPONSES . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENTENTRIES . "</u></td></tr>\n";
+						}
+						$icountTotal = 0;
 						foreach($breakdown as $item=>$icount) {
+							$icountTotal += $icount;
 							$percentage = round(($icount/$count)*100, 2);
-							$typeout .= "<tr><td style=\"vertical-align: top;\">$item</td><td style=\"vertical-align: top;\">$icount</td><td style=\"vertical-align: top;\">$percentage%</td></tr>\n";		
+							if($count == $datacount) {
+								$typeout .= "<tr><td style=\"vertical-align: top;\">$item</td><td style=\"vertical-align: top;\">$icount</td><td style=\"vertical-align: top;\">$percentage%</td></tr>\n";		
+							} else {
+								$percentageData = round(($icount/$datacount)*100, 2);
+								$typeout .= "<tr><td style=\"vertical-align: top;\">$item</td><td style=\"vertical-align: top;\">$icount</td><td style=\"vertical-align: top;\">$percentage%</td><td style=\"vertical-align: top;\">$percentageData%</td></tr>\n";		
+							}
+						}
+						// add total line -- added May 31 2006 -- jwe
+						if($count == $datacount) {
+							$typeout .="<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>$icountTotal</td><td style=\"vertical-align: top;\"><hr>100%</td></tr>\n";
+						} else {
+							$typeout .="<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>$icountTotal " . _formulize_DE_PER_TOTALRESPONSES . "<br>$datacount " . _formulize_DE_PER_TOTALENTRIES . "</td><td style=\"vertical-align: top;\"><hr>100%</td><td style=\"vertical-align: top;\"><hr>" . round($icountTotal/$datacount, 2) . " " . _formulize_DE_PER_RESPONSESPERENTRY . "</td></tr>\n";
 						}
 						$typeout .= "</table>";
 						$masterResults[$handle][$thiscalc][$thisgroup] = $typeout;
@@ -1492,16 +1565,16 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid)  {
 
 
 //THIS FUNCTION TAKES A MASTER RESULT SET AND DRAWS IT ON THE SCREEN
-function printResults($masterResults, $blankSettings, $groupingSettings, $frid) {
+function printResults($masterResults, $blankSettings, $groupingSettings, $frid, $filename="", $title="") {
 
-
+	$output = "";
      	foreach($masterResults as $handle=>$calcs) {
-		print "<tr><td class=head colspan=2>\n";
-		print printSmart(getCalcHandleText($handle, $frid));
-		print "\n</td></tr>\n";
+		$output .= "<tr><td class=head colspan=2>\n";
+		$output .= printSmart(trans(getCalcHandleText($handle, $frid)));
+		$output .= "\n</td></tr>\n";
      		foreach($calcs as $calc=>$groups) {
 			$countGroups = count($groups);
-     			print "<tr><td class=even rowspan=$countGroups>\n";
+     			$output .= "<tr><td class=even rowspan=$countGroups>\n";
 			switch($calc) {
 				case "sum":
 					$calc_name = _formulize_DE_CALC_SUM;
@@ -1522,7 +1595,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $frid) 
 					$calc_name = _formulize_DE_CALC_PER;
 					break;
 			}
-			print "<p><b>$calc_name</b></p>\n";
+			$output .= "<p><b>$calc_name</b></p>\n";
 			switch($blankSettings[$handle][$calc]) {
 				case "all":
 					$bsetting = _formulize_DE_INCLBLANKS;
@@ -1534,19 +1607,74 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $frid) 
 					$bsetting = _formulize_DE_INCLONLYBLANKS;
 					break;
 			}
-			print "<p>$bsetting</p>\n</td>\n";
+			$output .= "<p>$bsetting</p>\n</td>\n";
 			$start = 1;
      			foreach($groups as $group=>$result) {
-				if(!$start) { print "<tr>\n"; }
+				if(!$start) { $output .= "<tr>\n"; }
 				$start=0;
-				print "<td class=odd>\n";
+				$output .= "<td class=odd>\n";
 				if(count($groups)>1) {
-					print "<p><b>" . printSmart(getCalcHandleText($groupingSettings[$handle][$calc], $frid)) . ": " . printSmart($group) . "</b></p>\n";
+					$output .= "<p><b>" . printSmart(trans(getCalcHandleText($groupingSettings[$handle][$calc], $frid))) . ": " . printSmart($group) . "</b></p>\n";
 				} 
-     				print "<p>$result</p>\n</td></tr>\n";
+     				$output .= "<p>$result</p>\n</td></tr>\n";
      			}
      		}
-     	}			
+     	}
+	print $output;
+	// addition of calculation download, August 22 2006
+	if($filename) {
+		// get the current CSS values for head, even and odd
+		global $xoopsConfig;
+		$head = "";
+		$odd = "";
+		$even = "";
+		if(file_exists(XOOPS_ROOT_PATH . "/themes/" . $xoopsConfig['theme_set'] . "/style.css")) {
+			include XOOPS_ROOT_PATH . "/modules/formulize/class/class.csstidy.php";
+			$css = new csstidy();
+			$css->set_cfg('merge_selectors',0);
+			$css->parse_from_url(XOOPS_URL . "/themes/" . $xoopsConfig['theme_set'] . "/style.css");
+			$parsed_css = $css->css;
+			// parsed_css seems to have only one key when looking at the default template
+			foreach($parsed_css as $thiscss) {
+				$head = $thiscss['.head']['background-color'];
+				$even = $thiscss['.even']['background-color'];
+				$odd = $thiscss['.odd']['background-color'];
+			}
+		} 
+		unset($css);
+		// if we couldn't find any values, use these:
+		$head = $head ? $head : "#c2cdd6";
+		$even = $even ? $even : "#dee3e7";
+		$odd = $odd ? $odd : "#E9E9E9";
+
+		// create the file
+		$outputfile = "<HTML>
+<head>
+<meta name=\"generator\" content=\"Formulize -- form creation and data management for XOOPS\" />
+<title>" . _formulize_DE_EXPORTCALC_TITLE . " '$title'</title>
+<style type=\"text/css\">
+.outer {border: 1px solid silver;}
+.head { background-color: $head; padding: 5px; font-weight: bold; }
+.even { background-color: $even; padding: 5px; }		
+.odd { background-color: $odd; padding: 5px; }
+body {color: black; background: white; margin-top: 30px; margin-bottom: 30px; margin-left: 30px; margin-right: 30px; padding: 0; font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 10pt;}
+td { vertical-align: top; }
+</style>
+</head>
+<body>
+<h1>" . _formulize_DE_EXPORTCALC_TITLE . " '$title'</h1>
+<table class=outer>
+$output
+</table>
+</body>
+</html>";		
+		// output the file
+		$exfilename = strrchr($filename, "/");
+		$wpath = XOOPS_ROOT_PATH."/modules/formulize/export$exfilename";
+		$exportfile = fopen($wpath, "w");
+		fwrite ($exportfile, $outputfile);
+		fclose ($exportfile);
+	}			
 }
 
 
@@ -1721,8 +1849,15 @@ function warnLock() {
 	return false;
 }
 
+function clearSearchHelp(formObj, defaultHelp) {
+	if(formObj.firstbox.value == defaultHelp) {
+		formObj.firstbox.value = "";
+	}
+}
+
 function showPop(url) {
 
+	window.document.controls.ventry.value = '';
 	if (window.popup == null) {
 		popup = window.open(url,'popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=450,screenX=0,screenY=0,top=0,left=0');
       } else {
@@ -1741,11 +1876,24 @@ function confirmDel() {
 	var answer = confirm ('<?php print _formulize_DE_CONFIRMDEL; ?>');
 	if (answer) {
 		window.document.controls.delconfirmed.value = 1;
-		window.document.controls.submit();
+		window.document.controls.ventry.value = '';
+		showLoading();
 	} else {
 		return false;
 	}
 }
+
+function confirmClone() {
+	var clonenumber = prompt("<? print _formulize_DE_CLONE_PROMPT; ?>", "1");
+	if(eval(clonenumber) > 0) {
+		window.document.controls.cloneconfirmed.value = clonenumber;
+		window.document.controls.ventry.value = '';
+		showLoading();
+	} else {
+		return false;
+	}
+}
+
 
 function sort_data(col) {
 	if(window.document.controls.sort.value == col) {
@@ -1759,13 +1907,15 @@ function sort_data(col) {
 		window.document.controls.order.value = 'SORT_ASC';
 	}
 	window.document.controls.sort.value = col;
-	window.document.controls.submit();
+	window.document.controls.ventry.value = '';
+	showLoading();
 }
 
 
-function runExport() {
-	window.document.controls.xport.value = "comma";
-	window.document.controls.submit();
+function runExport(type) {
+	window.document.controls.xport.value = type;
+	window.document.controls.ventry.value = '';
+	showLoading();
 
 }
 
@@ -1807,7 +1957,8 @@ function delete_view(formObj, pubstart, endstandard) {
 				var answer = confirm ('<?php print _formulize_DE_CONF_DELVIEW; ?>');
 				if (answer) {
 					window.document.controls.delview.value = 1;
-					window.document.controls.submit();
+					window.document.controls.ventry.value = '';
+					showLoading();
 				} else {
 					return false;
 				}
@@ -1838,7 +1989,8 @@ function change_view(formObj, pickgroups, endstandard) {
 						window.document.controls.curviewid.value = "";
 					}
 					window.document.controls.lockcontrols.value = 0;
-					window.document.controls.submit();
+					window.document.controls.ventry.value = '';
+					showLoading();
 				}
 			}
 		}
@@ -1868,26 +2020,42 @@ function cancelCalcs() {
 	window.document.controls.calc_grouping.value = '';
 	window.document.controls.hlist.value = 0;
 	window.document.controls.hcalc.value = 1;
-	window.document.controls.submit();
+	window.document.controls.ventry.value = '';
+	showLoading();
 }
 
 function hideList() {
 	window.document.controls.hlist.value = 1;
 	window.document.controls.hcalc.value = 0;
-	window.document.controls.submit();
+	window.document.controls.ventry.value = '';
+	showLoading();
 }
 
 function showList() {
 	window.document.controls.hlist.value = 0;
 	window.document.controls.hcalc.value = 1;
-	window.document.controls.submit();
+	window.document.controls.ventry.value = '';
+	showLoading();
 }
 
 function killSearch() {
 	window.document.controls.asearch.value = '';
+	window.document.controls.ventry.value = '';
+	showLoading();
+}
+
+function showLoading() {
+	window.document.getElementById('listofentries').style.opacity = 0.5;
+	window.document.getElementById('workingmessage').style.display = 'block';
+	window.document.controls.ventry.value = '';
 	window.document.controls.submit();
 }
 
+function showLoadingReset() {
+	window.document.getElementById('listofentries').style.opacity = 0.5;
+	window.document.getElementById('workingmessage').style.display = 'block';
+	window.document.resetviewform.submit();
+}
 
 </script>
 <?
@@ -1946,9 +2114,10 @@ function loadOldReport($id, $fid, $view_groupscope) {
 
 	// oldcols
 	$tempcols = explode($s, $data[0]['report_fields']);
-	foreach($tempcols as $col) {
-		$cols[] = str_replace("`", "'", $col);
-	}
+// This conversion now performed as part of DB query
+//	foreach($tempcols as $col) {
+//		$cols[] = str_replace("`", "'", $col);
+//	}
 	$ids = convertHeadersToIds($cols, $fid);
 	$to_return[1] = implode(",", $ids);
 
@@ -2150,6 +2319,35 @@ function loadReport($id) {
 	return $to_return;
 }
 
-
+// remove columns that the user does not have permission to view -- added June 29, 2006 -- jwe
+// this function takes a column list (handles or ids) and returns it with all columns removed that the user cannot view according to the display options on the elements
+// this function also removes columns that are private if the user does not have view_private_elements permission
+function removeNotAllowedCols($fid, $frid, $cols, $groups) {
+	$all_allowed_cols = array();
+	$allowed_cols_in_view = array();
+	// metadata columns always allowed!
+	$all_allowed_cols[] = "uid";
+	$all_allowed_cols[] = "proxyid";
+	$all_allowed_cols[] = "creation_date";
+	$all_allowed_cols[] = "mod_date";
+	$all_allowed_cols[] = "creator_email";
+	$all_allowed_cols_raw = getAllColList($fid, $frid, $groups);
+	foreach($all_allowed_cols_raw as $form_id=>$values) {
+		foreach($values as $id=>$value) {
+			if(!in_array($value['ele_id'], $all_allowed_cols)) {	$all_allowed_cols[] = $value['ele_id']; }
+		}
+	}			
+	if($frid) {
+		$all_cols_from_view = convertHandles($cols, $frid);		
+	} else {
+		$all_cols_from_view = $cols;
+	}
+	$allowed_cols_in_view = array_intersect($all_allowed_cols, $all_cols_from_view);
+	$allowed_cols_in_view = array_values($allowed_cols_in_view);
+	if($frid) {
+		$allowed_cols_in_view = convertIds($allowed_cols_in_view, $frid);
+	}
+	return $allowed_cols_in_view;
+}
 
 ?>

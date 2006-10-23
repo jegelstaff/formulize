@@ -1,0 +1,328 @@
+<?php
+
+###############################################################################
+##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
+##                    Copyright (c) 2004 Freeform Solutions                  ##
+###############################################################################
+##                    XOOPS - PHP Content Management System                  ##
+##                       Copyright (c) 2000 XOOPS.org                        ##
+##                          <http://www.xoops.org/>                          ##
+###############################################################################
+##  This program is free software; you can redistribute it and/or modify     ##
+##  it under the terms of the GNU General Public License as published by     ##
+##  the Free Software Foundation; either version 2 of the License, or        ##
+##  (at your option) any later version.                                      ##
+##                                                                           ##
+##  You may not change or alter any portion of this comment or credits       ##
+##  of supporting developers from this source code or any supporting         ##
+##  source code which is considered copyrighted (c) material of the          ##
+##  original comment or credit authors.                                      ##
+##                                                                           ##
+##  This program is distributed in the hope that it will be useful,          ##
+##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
+##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
+##  GNU General Public License for more details.                             ##
+##                                                                           ##
+##  You should have received a copy of the GNU General Public License        ##
+##  along with this program; if not, write to the Free Software              ##
+##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
+###############################################################################
+##  Author of this file: Freeform Solutions 					     ##
+##  Project: Formulize                                                       ##
+###############################################################################
+
+//THIS FILE HANDLES THE DISPLAY OF FORMS AS MULTIPLE PAGES.  
+
+global $xoopsConfig;
+// load the formulize language constants if they haven't been loaded already
+	if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+		include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+	} else {
+		include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+	}
+
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+
+function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text="", $settings="", $overrideValue="") {
+
+if(!$done_dest AND $_POST['oldcols']) { $done_dest = $_POST['oldcols']; }
+if(!$button_text AND $_POST['currentview']) { $button_text = $_POST['currentview']; }
+
+
+list($fid, $frid) = getFormFramework($formframe, $mainform);
+
+$thankstext = $thankstext ? $thankstext : _formulize_DMULTI_THANKS; 
+$introtext = $introtext ? $introtext : "";
+
+global $xoopsUser;
+
+// if this function was called without an entry specified, then assume the identity of the entry we're editing (unless this is a new save, in which case no entry has been made yet)
+if(!$entry AND $_POST['entry'.$fid]) {
+	$entry = $_POST['entry'.$fid];
+}
+
+
+$owner = getEntryOwner($entry);
+$mid = getFormulizeModId();
+$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+$gperm_handler =& xoops_gethandler('groupperm');
+$update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);
+$update_other_entries = $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid);
+
+$prevPage = isset($_POST['order']) ? $_POST['order'] : 1; // last page that the user was on, not necessarily the previous page numerically
+$currentPage = isset($_POST['sort']) ? $_POST['sort'] : 1;
+
+if($entry) {
+	if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries)) {
+		$usersCanSave = true;
+	} else {
+		$usersCanSave = false;
+	}
+} else {
+	if($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
+		$usersCanSave = true;
+	} else {
+		$usersCanSave = false;
+	}
+}
+
+if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // remember prevPage is the last page the user was on, not the previous page numerically
+	foreach($pages[$prevPage] as $element) {
+	  $save_elements[] = $element;
+	}
+
+	if(isset($_POST['form_submitted']) AND $usersCanSave) {
+
+		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formread.php";
+		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+
+		$member_handler =& xoops_gethandler('member');
+		$owner_groups =& $member_handler->getGroupsByUser($owner, FALSE);
+
+		$entries[$fid][0] = $entry;
+
+		$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
+		$entries = handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_groups, $groups, "", $save_elements); 
+
+		// if there has been no specific entry specified yet, then assume the identity of the entry that was just saved -- assumption is it will be a new save
+		// from this point forward in time, this is the only entry that should be involved, since the 'entry'.$fid condition above will put this value into $entry even if this function was called with a blank entry value
+		if(!$entry) {
+			$entry = $entries[$fid][0];
+		}
+	}
+}
+
+// Set up the javascript that we need for the form-submit functionality to work
+// note that validateAndSubmit calls the form validation function again, but obviously it will pass if it passed here.  The validation needs to be called prior to setting the pages, or else you can end up on the wrong page after clicking an ADD button in a subform when you've missed a required field.
+?>
+
+<script type='text/javascript'>
+
+function submitForm(page, prevpage) {
+	var validate = xoopsFormValidate_formulize();
+	if(validate) {
+		window.document.formulize.sort.value = page;
+		window.document.formulize.order.value = prevpage;
+		window.document.formulize.oldcols.value = '<? print $done_dest; ?>';
+		window.document.formulize.currentview.value = '<? print $button_text; ?>';
+		validateAndSubmit();
+	}
+}
+
+</script>
+<noscript>
+<h1>You do not have javascript enabled in your web browser.  This form will not work with your web browser.  Please contact the webmaster for assistance.</h1>
+</noscript>
+<?php
+
+
+
+// check to see if there are conditions on this page, and if so are they met
+// if the conditions are not met, move on to the next page and repeat the condition check
+// conditions only checked once there is an entry!
+$pagesSkipped = false;
+if(is_array($conditions) AND $entry) { 
+	$conditionsMet = false;
+	while(!$conditionsMet) {
+		if(isset($conditions[$currentPage])) { // conditions on the current page
+			$thesecons = $conditions[$currentPage];
+			$elements = $thesecons[0];
+			$ops = $thesecons[1];
+			$terms = $thesecons[2];
+			$start = 1;
+			for($i=0;$i<count($elements);$i++) {
+				if($ops[$i] == "NOT") { $ops[$i] = "!="; }
+				if($start) {
+					$filter = $entry."][".$elements[$i]."/**/".$terms[$i]."/**/".$ops[$i];
+					$start = 0;
+				} else {
+					$filter .= "][".$elements[$i]."/**/".$terms[$i]."/**/".$ops[$i];
+				}
+			}
+			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+			$data = getData("", $fid, $filter);
+			if($data[0] == "") { 
+				if($prevPage < $currentPage) {
+					$currentPage++;
+				} else {
+					$currentPage--;
+				}
+				$pagesSkipped = true;
+			} else {
+				$conditionsMet = true;
+			}
+		} else {
+			// no conditions on the current page
+			$conditionsMet = true;
+		}
+	}
+}
+
+
+
+$thanksPage = count($pages) + 1;
+
+if($currentPage > 1) {
+  $previousPage = $currentPage-1; // previous page numerically
+} else {
+  $previousPage = "none";
+}
+
+$nextPage = $currentPage+1;
+
+if($currentPage == $thanksPage) {
+	if(is_array($thankstext)) { 
+		if($thankstext[0] === "PHP") {
+			eval($thankstext[1]);
+		} else {
+			print $thankstext[1];
+		}
+	} else { // HTML
+		print "$thankstext";
+	}
+	print "<br><hr><br><p><center>\n";
+	if($pagesSkipped) {
+		print _formulize_DMULTI_SKIP . "</p><p>\n";
+	}
+	$done_dest = $done_dest ? $done_dest : getCurrentURL();
+	$button_text = $button_text ? $button_text : _formulize_DMULTI_ALLDONE;
+	if($button_text != "{NOBUTTON}") {
+		print "<a href='$done_dest'";
+		if(is_array($settings)) {
+			print " onclick=\"javascript:window.document.calreturnform.submit();return false;\"";
+		}
+		print ">" . $button_text . "</a>\n";
+	}
+	print "</p>";
+
+	if(is_array($settings)) {
+		print "<form name=calreturnform action=\"$done_dest\" method=post>\n";
+		writeHiddenSettings($settings);
+		print "</form>";
+	}
+
+
+} 
+
+$submitTextNext =  "onclick=\"javascript:submitForm($nextPage, $currentPage);return false;\"";
+$submitTextPrev =  "onclick=\"javascript:submitForm($previousPage, $currentPage);return false;\"";
+
+if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND !$_POST['goto_sfid']) { // only show intro text on first page if there's actually a form there
+  print "$introtext";
+}
+
+unset($_POST['form_submitted']);
+
+// display an HTML or PHP page if that's what this page is...
+if($currentPage != $thanksPage AND ($pages[$currentPage][0] === "HTML" OR $pages[$currentPage][0] === "PHP")) {
+	// PHP
+	if($pages[$currentPage][0] === "PHP") {
+		eval($pages[$currentPage][1]);
+	// HTML
+	} else {
+		print $pages[$currentPage][1];
+	}
+
+	// put in the form that passes the entry, sort (page we're going to) and order (page we were on)
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+	?>
+
+	<form name=formulize id=formulize action=<? print getCurrentURL(); ?> method=post>
+	<input type=hidden name=entry<? print $fid; ?> id=entry<? print $fid; ?> value=<? print $entry ?>>
+	<input type=hidden name=sort id=sort value="">
+	<input type=hidden name=order id=order value="">
+	</form>
+
+	<script type="text/javascript">
+		function validateAndSubmit() {
+			window.document.formulize.submit();
+		}
+	</script>
+
+	<?php
+
+}
+
+// display a form is that's what this page is...
+if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages[$currentPage][0] !== "PHP") {
+
+	$buttonArray = array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}");
+	foreach($pages[$currentPage] as $element) {
+	  $elements_allowed[] = $element;
+   	}
+	$forminfo['elements'] = $elements_allowed;
+	$forminfo['formframe'] = $formframe;
+	$titleOverride = "all";
+
+	$GLOBALS['nosubforms'] = true; // subforms cannot have a view button on multipage forms, since moving to a sub causes total confusion of which entry and fid you are looking at
+
+	$settings['sort'] = $currentPage;
+	$settings['order'] = $currentPage;
+
+	displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue); 
+
+}
+
+if($currentPage != $thanksPage AND !$_POST['goto_sfid']) {
+
+	print "<br><center><p>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . count($pages);
+
+	if(!$usersCanSave) {
+		print "<br>" . _formulize_INFO_NOSAVE;		
+	}
+
+	if($pagesSkipped) {
+		print "<br>". _formulize_DMULTI_SKIP;
+	}
+
+	print "</p><br><form name=pagebuttons id=pagebuttons>";
+
+	if($previousPage != "none") {
+	  print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' $submitTextPrev>\n";
+//	  print "<a href='http://www.oacasgroups.org/modules/pageworks/index.php?page=1' $submitTextPrev>< < Previous</a>";
+	} else {
+	  print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' disabled=true>\n";
+//	  print "< < Previous";
+	}
+
+	print "&nbsp;&nbsp;&nbsp;&nbsp;";
+
+	if($usersCanSave AND $nextPage==$thanksPage) {
+	  print "<input type=button name=next id=next value='" . _formulize_DMULTI_SAVE . "' $submitTextNext>\n";
+//	  print "<a href='http://www.oacasgroups.org/modules/pageworks/index.php?page=1' $submitTextNext>Save > ></a>";
+	} elseif($nextPage==$thanksPage) {
+	  print "<input type=button name=next id=next value='" . _formulize_DMULTI_NEXT . "' disabled=true>\n";
+//	  print "Next > >";
+	} else {
+	  print "<input type=button name=next id=next value='" . _formulize_DMULTI_NEXT . "' $submitTextNext>\n";
+//	  print "<a href='http://www.oacasgroups.org/modules/pageworks/index.php?page=1' $submitTextNext>Next > ></a>";
+	}
+
+	print "</form></center>";
+
+}
+
+} // end of the function!
+
+?>

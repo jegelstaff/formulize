@@ -41,7 +41,8 @@ class formulizeElementRenderer{
 	}
 
 	// function params modified to accept passing of $ele_value from index.php
-	function constructElement($form_ele_id, $ele_value, $admin=false){
+	// $entry added June 1 2006 as part of 'Other' option for radio buttons and checkboxes
+	function constructElement($form_ele_id, $ele_value, $entry){
 		global $xoopsUser, $xoopsModuleConfig, $separ, $myts;
 		$myts =& MyTextSanitizer::getInstance();
 		
@@ -65,37 +66,22 @@ class formulizeElementRenderer{
 
 //multilangue
         $ele_caption = $myts->displayTarea($ele_caption);
+		// ele_desc added June 6 2006 -- jwe
+		$ele_desc = $this->_ele->getVar('ele_desc');
 
 		switch ($e){
 			case 'ib':
+				if(get_magic_quotes_gpc()) {
+					$ele_value[0] = stripslashes($ele_value[0]);
+ 				} 
 				$form_ele = $ele_value; // an array, item 0 is the contents of the break, item 1 is the class of the table cell (for when the form is table rendered)
 				break;
 			case 'text':
 				$ele_value[2] = stripslashes($ele_value[2]);
 //        $ele_value[2] = $myts->displayTarea($ele_value[2]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
-
-				if( !is_object($xoopsUser) ){
-					$ele_value[2] = preg_replace('/\{NAME\}/', '', $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{name\}/', '', $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{UNAME\}/', '', $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{uname\}/', '', $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{EMAIL\}/', '', $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{email\}/', '', $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{MAIL\}/', '', $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{mail\}/', '', $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{DATE\}/', '', $ele_value[2]);
-				}elseif( !$admin ){
-					$ele_value[2] = preg_replace('/\{NAME\}/', $xoopsUser->getVar('name', 'e'), $ele_value[2]); // modified to call real name 9/16/04 by jwe
-					$ele_value[2] = preg_replace('/\{name\}/', $xoopsUser->getVar('name', 'e'), $ele_value[2]); // modified to call real name 9/16/04 by jwe
-					$ele_value[2] = preg_replace('/\{UNAME\}/', $xoopsUser->getVar('uname', 'e'), $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{uname\}/', $xoopsUser->getVar('uname', 'e'), $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{MAIL\}/', $xoopsUser->getVar('email', 'e'), $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{mail\}/', $xoopsUser->getVar('email', 'e'), $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{EMAIL\}/', $xoopsUser->getVar('email', 'e'), $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{email\}/', $xoopsUser->getVar('email', 'e'), $ele_value[2]);
-					$ele_value[2] = preg_replace('/\{DATE\}/', date("d-m-Y"), $ele_value[2]);
-
-				}
+				
+				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+				$ele_value[2] = getTextboxDefault($ele_value[2]);
 
 				$form_ele = new XoopsFormText(
 					$ele_caption,
@@ -109,6 +95,8 @@ class formulizeElementRenderer{
 			case 'textarea':
 				$ele_value[0] = stripslashes($ele_value[0]);
 //        $ele_value[0] = $myts->displayTarea($ele_value[0]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
+				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+				$ele_value[0] = getTextboxDefault($ele_value[0]);
 
 				$form_ele = new XoopsFormTextArea(
 					$ele_caption,
@@ -160,7 +148,16 @@ if($ele_value[0] == 1)
 $true_ele_id = str_replace("ele_", "", $form_ele_id);
 
 // grab the user's groups and the module id
-$groupuser = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+global $regcode;
+if($regcode) { // if we're dealing with a registration code, determine group membership based on the code
+	$reggroupsq = q("SELECT reg_codes_groups FROM " . XOOPS_DB_PREFIX . "_reg_codes WHERE reg_codes_code=\"$regcode\"");
+	$groupuser = explode("&8(%$", $reggroupsq[0]['reg_codes_groups']);
+	if($groupuser[0] === "") { unset($groupuser); } // if a code has no groups associated with it, then kill the null value that will be in position 0 in the groups array.
+	$groupuser[] = XOOPS_GROUP_USERS;
+	$groupuser[] = XOOPS_GROUP_ANONYMOUS;
+} else {
+	$groupuser = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+}
 $module_id = getFormulizeModId();
 global $xoopsDB;
 
@@ -183,53 +180,95 @@ foreach($groupuser as $agrp) // setup a query based on all the user's groups
 $linkscopepermq = "SELECT gperm_itemid FROM " . $xoopsDB->prefix("group_permission") . " WHERE ($agrpq) AND gperm_modid=\"$module_id\" AND gperm_name=\"$true_ele_id\"";
 //print "$linkscopepermq<br>"; // debug code
 $reslsq = $xoopsDB->query($linkscopepermq);
+$pgroups = array();
 while ($rowlsq = $xoopsDB->fetchRow($reslsq)) // loop through all the itemids (permitted groups) found and save them in an array...
 {
 	$pgroups[] = $rowlsq[0];
 }
-// Note: if no groups were found, then pguidq will be empty and so all entries will be shown, no restrictions
+
+// handle new linkscope option -- August 30 2006
+$emptylist = false;
+if($ele_value[3]) {
+	$scopegroups = explode(",",$ele_value[3]);
+	if(!in_array("all", $scopegroups)) {
+		if($ele_value[4]) { // limit by user's groups
+			foreach($groupuser as $gid) { // want to loop so we can get rid of reg users group simply
+				if($gid == XOOPS_GROUP_USERS) { continue; }
+				if(in_array($gid, $scopegroups)) { 
+					$pgroups[] = $gid;
+				}
+			}
+		} else { // just use scopegroups
+			$pgroups = $scopegroups;
+		}
+		if(count($pgroups) == 0) { // specific scope was specified, and nothing found, so we should show nothing
+			$emptylist = true;
+		}
+	} else {
+		if($ele_value[4]) { // all groups selected, but limiting by user's groups is turned on
+			foreach($groupuser as $gid) { // want to loop so we can get rid of reg users group simply
+				if($gid == XOOPS_GROUP_USERS) { continue; }
+				$pgroups[] = $gid;
+			}
+		} else { // all groups should be used
+			unset($pgroups);
+			$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups") . " WHERE groupid != " . XOOPS_GROUP_USERS);
+			foreach($allgroupsq as $thisgid) {
+				$pgroups[] = $thisgid['groupid'];
+			}
+		}
+	}
+}
+
+// Note: OLD WAY: if no groups were found, then pguidq will be empty and so all entries will be shown, no restrictions
+// NEW WAY: if a specific group(s) was specified, and no match with the current user was found, then we return an empty list
 array_unique($pgroups); // remove duplicate groups from the list
 //print_r ($pgroups); // debug code
 //print "<br>"; // debug code
-$start = 1;
-foreach($pgroups as $agrp2) // setup a query based on all these groups
-{
-	if($start)
+if(!$emptylist) {
+	$start = 1;
+	foreach($pgroups as $agrp2) // setup a query based on all these groups
 	{
-		$agrpq2 = "groupid = " . $agrp2;
-		$start=0;
+		if(isset($_GET['sdebug'])) { print "$agrp2<br>"; }
+		if($start)
+		{
+			$agrpq2 = "groupid = " . $agrp2;
+			$start=0;
+		}
+		else
+		{
+			$agrpq2 .= " OR groupid = " . $agrp2;
+		}
 	}
-	else
+	$puserq = "SELECT uid FROM " . $xoopsDB->prefix("groups_users_link") . " WHERE $agrpq2";
+	//print "$puserq<br>"; // debug code
+	$respuq = $xoopsDB->query($puserq);
+	while ($rowpuq = $xoopsDB->fetchRow($respuq)) // build the pguidq string for use in the next query...
 	{
-		$agrpq2 .= " OR groupid = " . $agrp2;
+		$pguid[] = $rowpuq[0];
 	}
-}
-$puserq = "SELECT uid FROM " . $xoopsDB->prefix("groups_users_link") . " WHERE $agrpq2";
-//print "$puserq<br>"; // debug code
-$respuq = $xoopsDB->query($puserq);
-while ($rowpuq = $xoopsDB->fetchRow($respuq)) // build the pguidq string for use in the next query...
-{
-	$pguid[] = $rowpuq[0];
-}
-array_unique($pguid); // remove duplicate users from the list
-$start = 1;
-foreach($pguid as $apuid) // setup the pguidq based on all these users
-{
-	if($start)
+	array_unique($pguid); // remove duplicate users from the list
+	$start = 1;
+	foreach($pguid as $apuid) // setup the pguidq based on all these users
 	{
-		$pguidq = "AND (uid = " . $apuid;
-		$start=0;
+		if($start)
+		{
+			$pguidq = "AND (uid = " . $apuid;
+			$start=0;
+		}
+		else
+		{
+			$pguidq .= " OR uid = " . $apuid;
+		}
 	}
-	else
-	{
-		$pguidq .= " OR uid = " . $apuid;
-	}
-}
-if($pguidq) { $pguidq .= ")"; } // close the pguidq if it has been started
+	if($pguidq) { $pguidq .= ")"; } // close the pguidq if it has been started
+} else {
+	$pguidq = "AND (uid < 0)";
+} // end of if emptylist
 
 // query below modified to include pguidq which will limit the returned values to just the ones that are allowed for this user's groups to see -- jwe 8/29/04
 					$boxprop1_formform = str_replace("'", "`", stripslashes($boxproperties[1])); // sept 2 2005 -- convert to formform format
-if($_GET['sdebug']) { print "<br>SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxprop1_formform\" $pguidq ORDER BY ele_value"; } // GROUP BY ele_value ORDER BY ele_value";
+//if($_GET['sdebug']) { print "<br>SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxprop1_formform\" $pguidq ORDER BY ele_value"; } // GROUP BY ele_value ORDER BY ele_value";
 					$linkedvaluesq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxprop1_formform\" $pguidq ORDER BY ele_value"; // GROUP BY ele_value ORDER BY ele_value"; // GROUP BY removed 8/12/05 in order to allow duplicate listings in linked select boxes
 					$reslinkedvaluesq = mysql_query($linkedvaluesq);
 					if($reslinkedvaluesq)
@@ -265,16 +304,62 @@ if($_GET['sdebug']) { print "<br>SELECT ele_value, ele_id FROM " . $xoopsDB->pre
 
 					// handle requests for full names or usernames -- will only kick in if there is no saved value (otherwise ele_value will have been rewritten by the loadValues function in the form display
 					// note: if the user is about to make a proxy entry, then the list of users displayed will be from their own groups, but not from the groups of the user they are about to make a proxy entry for.  ie: until the proxy user is known, the choice of users for this list can only be based on the current user.  This could lead to confusing or buggy situations, such as users being selected who are outside the groups of the proxy user (who will become the owner) and so there will be an invalid value stored for this element in the db.
-					if($i['key'] == "{FULLNAMES}" OR $i['key'] == "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
+					if($i['key'] === "{FULLNAMES}" OR $i['key'] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
 						if($i['key'] == "{FULLNAMES}") { $nametype = "name"; }
 						if($i['key'] == "{USERNAMES}") { $nametype = "uname"; }
-						global $xoopsUser;
-						$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
-						$namelist = gatherNames($groups, $nametype);
-						foreach($namelist as $aname) {
-							$options[$opt_count] = $aname;
-							$opt_count++;
+						if(isset($ele_value[2]['{OWNERGROUPS}'])) {
+							$groups = $ele_value[2]['{OWNERGROUPS}'];
+						} else {
+							global $regcode;
+							if($regcode) { // if we're dealing with a registration code, determine group membership based on the code
+								$reggroupsq = q("SELECT reg_codes_groups FROM " . XOOPS_DB_PREFIX . "_reg_codes WHERE reg_codes_code=\"$regcode\"");
+								$groups = explode("&8(%$", $reggroupsq[0]['reg_codes_groups']);
+								if($groups[0] === "") { unset($groups); } // if a code has no groups associated with it, then kill the null value that will be in position 0 in the groups array.
+								$groups[] = XOOPS_GROUP_USERS;
+								$groups[] = XOOPS_GROUP_ANONYMOUS;
+							} else {
+								global $xoopsUser;
+								$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+							}
 						}
+						$pgroups = array();
+						if($ele_value[3]) {
+							$scopegroups = explode(",",$ele_value[3]);
+     							if(!in_array("all", $scopegroups)) {
+								if($ele_value[4]) { // limit by users's groups
+       								foreach($groups as $gid) { // want to loop so we can get rid of reg users group simply
+       									if($gid == XOOPS_GROUP_USERS) { continue; }
+       									if(in_array($gid, $scopegroups)) {
+       										$pgroups[] = $gid;
+       									}
+       								}
+       								if(count($pgroups) > 0) { 
+       									unset($groups);
+       									$groups = $pgroups;
+       								} else {
+       									$groups = array();
+       								}
+       							} else { // don't limit by user's groups
+									$groups = $scopegroups;
+								}
+							} else { // use all
+								if(!$ele_value[4]) { // really use all (otherwise, we're just going will all user's groups, so existing value of $groups will be okay
+									unset($groups);
+									global $xoopsDB;
+									$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups") . " WHERE groupid != " . XOOPS_GROUP_USERS);
+									foreach($allgroupsq as $thisgid) {
+										$groups[] = $thisgid['groupid'];
+									}
+								} 
+							}
+						}
+						$namelist = gatherNames($groups, $nametype);
+						foreach($namelist as $auid=>$aname) {
+							$options[$auid] = $aname;
+						}
+					} elseif($i['key'] === "{SELECTEDNAMES}") { // loadValue in formDisplay will create a second option with this key that contains an array of the selected values
+						$selected = $i['value'];
+					} elseif($i['key'] === "{OWNERGROUPS}") { // do nothing with this piece of metadata that gets set in loadValue, since it's used above
 					} else { // regular selection list....
 						$options[$opt_count] = $myts->stripSlashesGPC($i['key']);
 						if( $i['value'] > 0 ){
@@ -305,28 +390,49 @@ if($_GET['sdebug']) { print "<br>SELECT ele_value, ele_id FROM " . $xoopsDB->pre
 					}
 					$opt_count++;
 				}
-
+				if($this->_ele->getVar('ele_delim') != "") {
+					$delimSetting = $this->_ele->getVar('ele_delim');
+				} 
+				$delimSetting =& $myts->undoHtmlSpecialChars($delimSetting);
+				if($delimSetting == "br") { $delimSetting = "<br />"; }
 				switch($delimSetting){
-					case 'br':
-						$form_ele = new XoopsFormElementTray($ele_caption, '<br />');
+					case 'space':
+						$form_ele = new XoopsFormCheckBox(
+							$ele_caption,
+							$form_ele_id,
+							$selected
+						);
+						$counter = 0; // counter used for javascript that works with 'Other' box
+						while( $o = each($options) ){
+							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, true);
+							if( $other != false ){
+								$form_ele->addOption($o['key'], _formulize_OPT_OTHER.$other);
+							}else{
+								$form_ele->addOption($o['key'], $o['value']);
+							}
+							$counter++;
+						}
+						$form_ele->setExtra("onchange=\"javascript:formulizechanged=1;\"");
+					break;
+					default:
+						$form_ele = new XoopsFormElementTray($ele_caption, $delimSetting);
+						$counter = 0; // counter used for javascript that works with 'Other' box
 						while( $o = each($options) ){
 							$t =& new XoopsFormCheckBox(
 								'',
 								$form_ele_id.'[]',
 								$selected
 							);
-							$t->addOption($o['key'], $o['value']);
+							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, true);
+							if( $other != false ){
+								$t->addOption($o['key'], _formulize_OPT_OTHER.$other);
+							}else{
+								$t->addOption($o['key'], $o['value']);
+							}
 							$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 							$form_ele->addElement($t);
+							$counter++;
 						}
-					break;
-					default:
-						$form_ele = new XoopsFormCheckBox(
-							$ele_caption,
-							$form_ele_id,
-							$selected
-						);
-						$form_ele->addOptionArray($options);
 					break;
 				}
 			break;
@@ -352,29 +458,56 @@ if($_GET['sdebug']) { print "<br>SELECT ele_value, ele_id FROM " . $xoopsDB->pre
 					}
 					$opt_count++;
 				}
+				if($this->_ele->getVar('ele_delim') != "") {
+					$delimSetting = $this->_ele->getVar('ele_delim');
+				} 
+				$delimSetting =& $myts->undoHtmlSpecialChars($delimSetting);
+				if($delimSetting == "br") { $delimSetting = "<br />"; }
 				switch($delimSetting){
-					case 'br':
-						$form_ele = new XoopsFormElementTray($ele_caption, '<br />');
+					case 'space':
+						$form_ele1 = new XoopsFormRadio(
+							'',
+							$form_ele_id,
+							$selected
+						);
+						$counter = 0;
+						while( $o = each($options) ){
+							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter);
+							if( $other != false ){
+								$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
+							}else{
+								$form_ele1->addOption($o['key'], $o['value']);
+							}
+							$counter++;
+						}
+						$form_ele1->setExtra("onchange=\"javascript:formulizechanged=1;\"");
+					break;
+					default:
+						$form_ele1 = new XoopsFormElementTray('', $delimSetting);
+						$counter = 0;
 						while( $o = each($options) ){
 							$t =& new XoopsFormRadio(
 								'',
 								$form_ele_id,
 								$selected
 							);
-							$t->addOption($o['key'], $o['value']);
+							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter);
+							if( $other != false ){
+								$t->addOption($o['key'], _formulize_OPT_OTHER.$other);
+							}else{
+								$t->addOption($o['key'], $o['value']);
+							}
 							$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
-							$form_ele->addElement($t);
+							$form_ele1->addElement($t);
+							$counter++;
 						}
 					break;
-					default:
-						$form_ele = new XoopsFormRadio(
-							$ele_caption,
-							$form_ele_id,
-							$selected
-						);
-						$form_ele->addOptionArray($options);
-					break;
 				}
+				$form_ele = new XoopsFormLabel(
+					$ele_caption,
+					"<nobr>" . $form_ele1->render() . "</nobr>"
+				);
+
 			break;
 			//Marie le 20/04/04
 			case 'date':
@@ -429,8 +562,43 @@ if($_GET['sdebug']) { print "<br>SELECT ele_value, ele_id FROM " . $xoopsDB->pre
 				return false;
 			break;
 		}
+		if($ele_desc != ""  AND is_object($form_ele)) { $form_ele->setDescription($myts->undoHtmlSpecialChars($ele_desc)); }
 		return $form_ele;
 	}
+
+	// THIS FUNCTION COPIED FROM LIASE 1.26, onchange control added
+	// JWE -- JUNE 1 2006
+	function optOther($s='', $id, $entry, $counter, $checkbox=false){
+		global $xoopsModuleConfig, $xoopsDB;
+		if( !preg_match('/\{OTHER\|+[0-9]+\}/', $s) ){
+			return false;
+		}
+		// deal with displayElement elements...
+		$id_parts = explode("_", $id);
+		// displayElement elements will be in the format de_{id_req}_{ele_id} (deh?)
+		// regular elements will be in the format ele_{ele_id}
+		if(count($id_parts) == 3) {
+			$ele_id = $id_parts[2];
+		} else {
+			$ele_id = $id_parts[1];
+		}
+		// gather the current value if there is one
+		$other_text = "";
+		if(is_numeric($entry)) {
+			$otherq = q("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$entry' AND ele_id='$ele_id' LIMIT 0,1");
+			$other_text = $otherq[0]['other_text'];
+		}
+		$s = explode('|', preg_replace('/[\{\}]/', '', $s));
+		$len = !empty($s[1]) ? $s[1] : $xoopsModuleConfig['t_width'];
+		$box = new XoopsFormText('', 'other[ele_'.$ele_id.']', $len, 255, $other_text);
+		if($checkbox) {
+			$box->setExtra("onchange=\"javascript:formulizechanged=1;\" onfocus=\"javascript:this.form.elements['" . $id . "[]'][$counter].checked = true;\"");
+		} else {
+			$box->setExtra("onchange=\"javascript:formulizechanged=1;\" onfocus=\"javascript:this.form." . $id . "[$counter].checked = true;\"");
+		}
+		return $box->render();
+	}
+
 
 }
 ?>

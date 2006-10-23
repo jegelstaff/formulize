@@ -1,6 +1,7 @@
 <?php
 define("_formulize_FORM_TITLE", "Contact us by filling out this form.");
 define("_AM_CATGENERAL", "General Forms");
+define("_AM_NOFORMS_AVAIL", "There are no forms currently available.");
 //define("_formulize_MSG_SUBJECT", $xoopsConfig['sitename'].' - Contact Us Form');
 define("_formulize_MSG_SUBJECT", '['.$xoopsConfig['sitename'].'] -');
 define("_formulize_MSG_FORM", ' Form: ');
@@ -9,7 +10,7 @@ define("_formulize_INFO_RECEIVED", "Your information has been received.");
 define("_formulize_NO_PERMISSION", "You do not have permission to view this form.");
 define("_formulize_MSG_SENT", "Your message has been sent.");
 define("_formulize_MSG_THANK", "<br />Thank you for your comments.");
-define("_formulize_MSG_SUP","<br /> Take care data have been erased");
+define("_formulize_MSG_SUP","<br />Data has been erased");
 define("_formulize_MSG_BIG","The join file is too big to be uploaded.");
 define("_formulize_MSG_UNSENT","Please join a file with a size down to ");
 define("_formulize_MSG_UNTYPE","You could not join this type's file.<br>Types which are authorize are : ");
@@ -21,7 +22,6 @@ define("_formulize_FORMCHARG","Form Loading");
 define("_formulize_FORMSHOW","Form results: ");
 define("_formulize_FORMTITRE","Form sent parameters have been modify with success");
 define("_formulize_NOTSHOW","Form: ");
-define("_formulize_NOTSHOW2"," does not contain any registers.");
 define("_formulize_FORMCREA","Form created with success!");
 
 define("_MD_ERRORTITLE","Error ! You did not put the form title !!!!");
@@ -78,7 +78,7 @@ define("_FORM_MODCLONE", "Clone this form");
 define("_FORM_MODCLONEDATA", "Clone this form and data");
 define("_FORM_MODCLONED_FORM", "Cloned Form");
 
-define("_FORM_MODPERMLINKS","Modify scope of linked selectboxes");
+define("_FORM_MODPERMLINKS","Modify scope of linked selectboxes (Deprecated -- edit on each selectbox's properties now)");
 define("_FORM_PERMLINKS","Linked Selectbox Scopes");
 
 define("_FORM_MODFRAME","Create or Modify a Form Framework");
@@ -137,6 +137,13 @@ define("_AM_FRAME_UIDLINK", "User ID of the person who filled them in");
 define("_AM_FRAME_UPDATEBUTTON", "Update this Framework with these settings");
 define("_AM_FRAME_UPDATEFORMBUTTON", "Update this Form with these Handles");
 define("_AM_FRAME_UPDATEANDGO", "Update, and return to previous page");
+
+//common value language constants added July 19 2006 -- jwe
+define("_AM_FRAME_COMMONLINK", "Common value in two elements [pick elements]");
+define("_AM_FRAME_WHICH_ELEMENTS", "Choose the two elements that are meant to have common values");
+define("_AM_FRAME_SELECT_COMMON", "Common element for ");
+define("_AM_FRAME_COMMON_VALUES", "Common values in: ");
+define("_AM_FRAME_COMMON_WARNING", "<b>IMPORTANT NOTE:</b> Frameworks that use the 'common value' setting are still experimental.  Not all framework features are supported for frameworks that use this setting.  Currently, this setting is only recognized by the getData function, so you can get results from queries on this framework.  However, unified display of forms, subforms, and using displayForm to present all columns in the entire framework, are not currently supported.");
 
 define("_AM_FRAME_FORMHANDLE", "Handle for this form:");
 define("_AM_FRAME_FORMELEMENTS", "Elements In This Form");
@@ -279,6 +286,8 @@ define("_AM_MULTI_GROUP_LIST_DELETE","Are you sure that you want to delete item"
 
 define("_formulize_FORM_LIST", "Modify Permissions for these Forms");
 define("_formulize_SHOW_PERMS", "Show these Permissions");
+define("_formulize_SAME_PERMS", "Set the same permissions for all the selected groups?");
+define("_formulize_SAME_PERMS_TEXT", "Choose the permissions that you want applied to all of these groups.<br>WARNING! Any existing permissions will be replaced by the permissions you select here!<br>Click 'Return to the main page' above to cancel this operation.<br><br>The groups you selected:");
 define("_formulize_MODFORM_TITLE", "Choose the Groups and Forms you want to change permissions for:");
 define("_formulize_MODPERM_TITLE", "Modify the permissions:");
 
@@ -287,11 +296,15 @@ define("_formulize_FD_CREATED", "Created by: ");
 define("_formulize_FD_MODIFIED", "Modified by: ");
 define("_formulize_FD_NEWENTRY", "This is a new entry that has not been saved yet.");
 
-define("_formulize_ADD_ONE", "Add one");
-define("_formulize_ADD_ANOTHER", "Add another");
+define("_formulize_ADD", "Add");
+define("_formulize_ADD_ONE", "Add One");
+define("_formulize_ADD_ENTRIES", "entries");
 define("_formulize_DELETE_CHECKED", "Delete checked items");
-define("_formulize_ADD_HELP", "Click an item on the left side to view the details for that entry.");
-define("_formulize_ADD_HELP2", "Hover the mouse over an item for an explanation of what it is.");
+define("_formulize_ADD_HELP", "Add an entry in this section by clicking the <i>Add</i> button.");
+define("_formulize_ADD_HELP2", "See an entire entry by clicking the <i>View</i> button.");
+define("_formulize_ADD_HELP3", "Update an entry by changing the values on the right.");
+define("_formulize_ADD_HELP4", "Delete an entry by checking the boxes and clicking the button below.");
+define("_formulize_SUBFORM_VIEW", "View");
 define("_formulize_SAVE", "Save");
 define("_formulize_DONE", "All Done");
 define("_formulize_CONFIRMNOSAVE", "You have not saved your changes!  Is that OK?  Click 'Cancel' to return to the form and then click 'Save' to save your changes.");
@@ -302,6 +315,9 @@ define("_formulize_INFO_DONE2", "</i> button if you are finished.");
 define("_formulize_INFO_CONTINUE1", "You can update your information below.");
 define("_formulize_INFO_CONTINUE2", "You can make another entry by filling in the form again.");
 define("_formulize_INFO_SAVEBUTTON", "Click the <i>" . _formulize_SAVE . "</i> button to save your changes.");
+define("_formulize_INFO_SAVE1", "Click the <i>");
+define("_formulize_INFO_SAVE2", "</i> button to save your changes.");
+define("_formulize_INFO_NOSAVE", "You can review this entry, but you <i>cannot save changes</i>.");
 define("_formulize_INFO_MAKENEW", "You can make a new entry by filling in the form below.");
 
 define("_formulize_NOSUBNAME", "Entry: ");
@@ -313,10 +329,14 @@ define("_formulize_PRINTVIEW", "Printable View");
 // constants related to the new display entries functions...
 
 define("_formulize_DE_CURRENT_VIEW", "Current View: ");
+define("_formulize_DE_FILLINFORM", "Fill In This Form: ");
+define("_formulize_DE_ACTIONS", "Actions: ");
+define("_formulize_DE_NODATAFOUND", "No entries were found in the current view that match the current search terms (if any).");
 define("_formulize_DE_STANDARD_VIEWS", "STANDARD VIEWS:");
 define("_formulize_DE_NO_STANDARD_VIEWS", "No standard views available");
 define("_formulize_DE_SAVED_VIEWS", "YOUR SAVED VIEWS:");
 define("_formulize_DE_PUB_VIEWS", "PUBLISHED VIEWS:");
+define("_formulize_DE_SEARCH_HELP", "Type search terms here");
 define("_formulize_DE_WARNLOCK", "<p>The view that you have selected is set to <i>lock the controls</i>.  This means that you cannot change the columns, do calculations, do advanced searches, or export data.</p><p>You can perform sorting and basic searches using the controls at the top of each column.</p>");
 define("_formulize_DE_MINE", "Entries by me");
 define("_formulize_DE_GROUP", "Entries by all users in my group(s)");
@@ -331,7 +351,8 @@ define("_formulize_DE_ON", "on");
 define("_formulize_DE_VIEWDETAILS", "Click to view details for this entry.");
 define("_formulize_DE_RESETVIEW", "Reset current view");
 define("_formulize_DE_CALCS", "Calculations");
-define("_formulize_DE_EXPORT", "Export data");
+define("_formulize_DE_EXPORT", "Export Entries");
+define("_formulize_DE_EXPORT_CALCS", "Export Calcs");
 define("_formulize_DE_SAVE", "Save current view");
 define("_formulize_DE_DELETE", "Delete current view");
 define("_formulize_DE_ADDENTRY", "Add one entry");
@@ -339,6 +360,8 @@ define("_formulize_DE_ADD_MULTIPLE_ENTRY", "Add multiple entries");
 define("_formulize_DE_PROXYENTRY", "Make a proxy entry");
 define("_formulize_DE_UPDATEENTRY", "Update your entry");
 define("_formulize_DE_DELETESEL", "Delete selected");
+define("_formulize_DE_CLONESEL", "Clone selected");
+define("_formulize_DE_CLONE_PROMPT", "How many copies of the selected entries do you want to make? (use numbers, not words)");
 define("_formulize_DE_SELALL", "Select all entries");
 define("_formulize_DE_CLEARALL", "Clear selection");
 define("_formulize_DE_CONFIRMDEL", "You are about to delete the selected entries.  Please confirm!");
@@ -349,6 +372,7 @@ define("_formulize_DE_XCOMMA", "Comma delimited");
 define("_formulize_DE_XTAB", "Tab delimited");
 define("_formulize_DE_XCUST", "Custom:");
 define("_formulize_DE_XF", "exported_");
+define("_formulize_DE_EXPORTCALC_TITLE", "Calculation Results for: ");
 define("_formulize_DE_CLICKSAVE", "Right click and save to download your data.");
 define("_formulize_DE_CANCELCALCS", "Cancel calculations");
 define("_formulize_DE_SHOWLIST", "Switch to entries");
@@ -380,6 +404,7 @@ define("_formulize_DE_CALC_CREATOR", "User who made entry");
 define("_formulize_DE_CALC_CREATEDATE", "Creation date");
 define("_formulize_DE_CALC_MODIFIER", "User who last modified entry");
 define("_formulize_DE_CALC_MODDATE", "Last modification date");
+define("_formulize_DE_CALC_CREATOR_EMAIL", "Creator's e-mail address");
 define("_formulize_DE_REMOVECALC", "Remove this calculation from the list");
 define("_formulize_DE_CALC_BTEXT", "Which entries?");
 define("_formulize_DE_CALC_GTEXT", "Group Results?");
@@ -401,6 +426,12 @@ define("_formulize_DE_CALC_NUMUNIQUE", "Number of Unique Values");
 define("_formulize_DE_PER_ITEM", "Item");
 define("_formulize_DE_PER_COUNT", "Count");
 define("_formulize_DE_PER_PERCENT", "Percentage");
+define("_formulize_DE_PER_PERCENTRESPONSES", "As % of responses");
+define("_formulize_DE_PER_PERCENTENTRIES", "As % of entries");
+define("_formulize_DE_PER_TOTAL", "TOTAL");
+define("_formulize_DE_PER_TOTALRESPONSES", "responses");
+define("_formulize_DE_PER_TOTALENTRIES", "entries");
+define("_formulize_DE_PER_RESPONSESPERENTRY", "response(s) / entry");
 define("_formulize_DE_DATAHEADING", "List of Entries");
 
 //ADVANCED SEARCH:
@@ -456,10 +487,11 @@ define("_formulize_DE_SAVE_BUTTON", "Save the current view settings with these o
 define("_formulize_DE_SAVE_NEWPROMPT", "Please type a name for this new view:");
 
 //IMPORT
-define("_formulize_DE_IMPORTDATA", "Import Data");
+define("_formulize_DE_IMPORTDATA", "Import Entries");
 
-
+// CALENDAR
 define("_formulize_CAL_ADD_ITEM", "Click to add a new item on this day.");
+define("_formulize_CAL_RETURNFROMMULTI", "Return to the Calendar");
 
 define("_formulize_CAL_MONTH_01", "January");
 define("_formulize_CAL_MONTH_02", "February");
@@ -492,9 +524,93 @@ define("_formulize_CAL_WEEK_7_3ABRV", "Sat");
 // account creation
 define("_formulize_ACTDETAILS", "Account Details:");
 define("_formulize_PERSONALDETAILS", "Personal Details:");
-define("_formulize_TYPEPASSTWICE_NEW", "(type your password twice)");
+define("_formulize_TYPEPASSTWICE_NEW", "(Type your password twice.  Must be at least ");
+define("_formulize_TYPEPASSTWICE_CHANGE", "(To change your password, type a new password twice.  Must be at least ");
 define("_formulize_CDISPLAYMODE", "Your default way of displaying comments/posts");
 define("_formulize_CSORTORDER", "Your default sort order for comments/posts");
 define("_formulize_CREATEACT", "Create My Account!");
 define("_formulize_ACTCREATED", "Your account has been created and you are being logged into the site now.");
+define("_formulize_USERNAME_HELP1", " (May not contain spaces.  Must be between ");
+define("_formulize_USERNAME_HELP2", " and ");
+define("_formulize_USERNAME_HELP3", " characters long)");
+define("_formulize_PASSWORD_HELP1", " characters long)");
+
+// "Other" for checkboxes and radio buttons:
+define("_formulize_OPT_OTHER", "Other: ");
+
+// Notifications
+define("_formulize_DE_NOTBUTTON", "Notifications");
+define("_formulize_DE_SETNOT", "Add a notification option for this form");
+define("_formulize_DE_SETNOT_WHEN", "Send this notification when:");
+define("_formulize_DE_SETNOT_TOME_WHEN", "Send me this notification when:");
+define("_formulize_DE_SETNOT_WHEN_NEW", "a new entry is created");
+define("_formulize_DE_SETNOT_WHEN_UPDATE", "an entry is updated");
+define("_formulize_DE_SETNOT_WHEN_DELETE", "an entry is deleted");
+define("_formulize_DE_SETNOT_WHO", "Send this notification to:");
+define("_formulize_DE_SETNOT_WHO_ME", "me");
+define("_formulize_DE_SETNOT_WHO_CURUSER", "the user who just created/updated/deleted the entry");
+define("_formulize_DE_SETNOT_WHO_GROUP", "users in this group: ");
+define("_formulize_DE_SETNOT_FOR", "Send this notification for:");
+define("_formulize_DE_SETNOT_FOR_ALL", "all entries");
+define("_formulize_DE_SETNOT_FOR_CON", "only entries that meet these conditions:");
+define("_formulize_DE_SETNOT_ADDCON", "Add another condition");
+define("_formulize_DE_SETNOT_TEMP", "Use a custom message template?  If so, type the filename here.");
+define("_formulize_DE_SETNOT_SUBJ", "Use a custom message subject line?  If so, type the subject here.");
+define("_formulize_DE_SETNOT_SAVE", "Save this notification");
+define("_formulize_DE_NOTLIST", "Current notifications");
+define("_formulize_DE_NOT_WHENTEXT", "When ");
+define("_formulize_DE_NOT_SENDTEXT", " send a notification to ");
+define("_formulize_DE_NOT_CONTEXTIF", " only if ");
+define("_formluize_DE_NOT_CONTEXTAND", ", and ");
+define("_formulize_DE_NOT_TEMPTEXT", "Use this custom template file: ");
+define("_formulize_DE_NOT_SUBJTEXT", "Use this custom subject line: ");
+
+// multi-page forms
+define("_formulize_DMULTI_THANKS", "<h1>You're done!</h1><p>Thanks for taking the time to fill in that form.  We really appreciate it.</p>");
+define("_formulize_DMULTI_NEXT", "Save and Continue >>");
+define("_formulize_DMULTI_PREV", "<< Save and Go Back");
+define("_formulize_DMULTI_SAVE", "Save and Finish >>");
+define("_formulize_DMULTI_PAGE", "Page");
+define("_formulize_DMULTI_OF", "Of");
+define("_formulize_DMULTI_SKIP", "One or more pages was skipped because they don't apply");
+define("_formulize_DMULTI_ALLDONE", "Leave this form and continue browsing the site");
+
+// import
+define("_formulize_DE_IMPORT", "Import Data");
+define("_formulize_DE_IMPORT_RESULTS", "Results...");
+define("_formulize_DE_IMPORT_STEP1", "Step 1: download a blank template file or a file with data");
+define("_formulize_DE_IMPORT_STEP2", "Step 2: modify the file you downloaded");
+define("_formulize_DE_IMPORT_STEP3", "Step 3: upload the modified file");
+define("_formulize_DE_IMPORT_FILE", "Select the file you modified and upload it.");
+define("_formulize_DE_IMPORT_GO", "Upload"); 
+define("_formulize_DE_IMPORT_INSTRUCTIONS", "<p><b>Open the file you downloaded in a spreadsheet program, like Excel, and modify it</b> so it contains the data you want to upload.  You don't have to do this right now, you can modify the file and come back later to upload it.</p>
+
+<p>When you save the file, <b>make sure you save it in .csv format.</b>  If you save it in a different format, like .xls, then the import process won't work!</p>");
+
+define("_formulize_DE_IMPORT_INSTNEWPROFILE","<p><b>If you are creating new entries in the user profile form,</b> you must include a unique username, a full name, a password, a unique e-mail address and a valid registration code for each entry.  A new user account will be created for each entry, based on the information you provide.</p>");
+
+define("_formulize_DE_IMPORT_INSTUPDATE", "<p><b>If you are updating existing entries, do not change or remove the '_1148849956' part of the file name!</b>  Do not add any other '_' characters either.  Also, <b>do not alter the ID numbers</b> in each row of the file.  All that information uniquely identifies the entries associated with each row.</p>
+
+<p><b>Every row in the spreadsheet (after the headings) represents one entry in the form.</b>  So if you want to import three entries, then you need to have three rows of data in the spreadsheet. The order of the rows does not matter. If you are updating entries and you delete rows from the spreadsheet, that <i>will not</i> delete those entries from the database.</p>
+
+<p><b>If a question has a choice of answers,</b> the information in your spreadsheet must match exactly with the options in the form. This includes spelling, capitalization and spacing.  Some questions in some forms allow you to select more than one answer; for instance, a series of checkboxes.  <b>To include multiple answers in your spreadsheet,</b> each answer must be in the same cell with a line break between them.  In Excel, press ALT-Enter after each answer to add a line break.</p>");
+
+define("_formulize_DE_IMPORT_INSTNEW", "<p><b>If you are creating new entries,</b> then the column called \"" . _formulize_DE_CALC_CREATOR . "\" can have the username or full name of the person who should be recorded as the entry's creator.  If you leave that column blank, then you will be recorded as the creator.  If you are updating existing entries, then this column is ignored.</p>");
+
+define("_formulize_DE_IMPORT_BACK", "Go Back");
+define("_formulize_DE_IMPORT_EITHEROR", "You can either add new entries to a form, or update existing entries.  You <b>cannot</b> do both at once.");
+define("_formulize_DE_IMPORT_OR", "OR");
+define("_formulize_DE_IMPORT_BLANK", "If you want to add new entries to this form...");
+define("_formulize_DE_IMPORT_BLANK2", "Right-click here and save the necessary template.");
+define("_formulize_DE_IMPORT_DATATEMP", "If you want to update entries in this form...");
+define("_formulize_DE_IMPORT_DATATEMP2", "Click here to refresh the main window.");
+define("_formulize_DE_IMPORT_DATATEMP3", "Then download the template file through the link that appears there. Templates always include all columns regardless of what columns are currently selected.  Templates only include the rows (entries) that are currently visible.  To include all entries, turn off all searches and other filters.");
+define("_formulize_DE_IMPORT_USERNAME", "Username");
+define("_formulize_DE_IMPORT_FULLNAME", "Full name");
+define("_formulize_DE_IMPORT_PASSWORD", "Password");
+define("_formulize_DE_IMPORT_EMAIL", "E-mail");
+define("_formulize_DE_IMPORT_REGCODE", "Registration Code");
+define("_formulize_DE_IMPORT_IDREQCOL", "ID number of this entry (do NOT remove or modify this column)");
+define("_formulize_DE_CLICKSAVE_TEMPLATE", "Right click and save to download your template.");
+
 ?>

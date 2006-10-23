@@ -1,4 +1,6 @@
 <?php
+define("_AM_CATGENERAL", "General Forms");
+define("_AM_NOFORMS_AVAIL", "There are no forms currently available.");
 define("_formulize_FORM_TITLE","Contactez nous en remplissant ce formulaire.");
 //define("_formulize_MSG_SUBJECT",$xoopsConfig['sitename'].' - Formulaire de contact');
 define("_formulize_MSG_SUBJECT", '['.$xoopsConfig['sitename'].'] -');
@@ -254,7 +256,84 @@ define("_formulize_INFO_DONE2", "</i>.");
 define("_formulize_INFO_CONTINUE1", "Vous pouvez mettre à jour votre information ci-dessous.");
 define("_formulize_INFO_CONTINUE2", "Vous pouvez enregistrer toute autre information en complétant le formulaire de nouveau.");
 define("_formulize_INFO_SAVEBUTTON", "Pour enregistrer vos changements, cliquez le bouton <i>" . _formulize_SAVE . "</i>.");
+define("_formulize_INFO_SAVE1", "Pour enregistrer vos changements, cliquez le bouton <i>");
+define("_formulize_INFO_SAVE2", "</i>.");
+define("_formulize_INFO_NOSAVE", "You can review this entry, but you <i>cannot save changes</i>.");
 define("_formulize_INFO_MAKENEW", "Vous pouvez enregistrer votre nouvelle information en complétant le formulaire ci-dessous.");
 
+define("_formulize_ADD", "Add");
+define("_formulize_ADD_ONE", "Add One");
+define("_formulize_ADD_ENTRIES", "entries");
+define("_formulize_DELETE_CHECKED", "Delete checked items");
+define("_formulize_ADD_HELP", "Add an entry in this section by clicking the <i>Add</i> button.");
+define("_formulize_ADD_HELP2", "See an entire entry by clicking the <i>View</i> button.");
+define("_formulize_ADD_HELP3", "Update an entry by changing the values on the right.");
+define("_formulize_ADD_HELP4", "Delete an entry by checking the boxes and clicking the button below.");
+define("_formulize_SUBFORM_VIEW", "View full entry");
+define("_formulize_CONFIRMNOSAVE", "You have not saved your changes!  Is that OK?  Click 'Cancel' to return to the form and then click 'Save' to save your changes.");
+
+
 define("_formulize_PRINTVIEW", "Version imprimable");
+
+// account creation
+define("_formulize_ACTDETAILS", "Informations sur le compte:");
+define("_formulize_PERSONALDETAILS", "Information personnelle:");
+define("_formulize_TYPEPASSTWICE_NEW", "(Entrez deux fois votre mot de passe.  Doit contenir au moins ");
+define("_formulize_TYPEPASSTWICE_CHANGE", "(Pour modifier votre mot de passe, entrez deux fois un nouveau mot de passe.  Doit contenir au moins ");
+define("_formulize_CDISPLAYMODE", "Préférences d'affichage des commentaires/inscriptions");
+define("_formulize_CSORTORDER", "Préférences de classement des commentaires/inscriptions");
+define("_formulize_CREATEACT", "Create My Account!");
+define("_formulize_ACTCREATED", "Your account has been created and you are being logged into the site now.");
+define("_formulize_USERNAME_HELP1", " (Ne doit pas contenir d'espaces.  Doit être entre ");
+define("_formulize_USERNAME_HELP2", " et ");
+define("_formulize_USERNAME_HELP3", " caractères)");
+define("_formulize_PASSWORD_HELP1", " caractères)");
+
+// "Other" for checkboxes and radio buttons:
+define("_formulize_OPT_OTHER", "Autre: ");
+
+// multi-page forms
+define("_formulize_DMULTI_THANKS", "<h1>You're done!</h1><p>Thanks for taking the time to fill in that form.  We really appreciate it.</p>");
+define("_formulize_DMULTI_NEXT", "Save and Continue >>");
+define("_formulize_DMULTI_PREV", "<< Save and Go Back");
+define("_formulize_DMULTI_SAVE", "Save and Finish >>");
+define("_formulize_DMULTI_PAGE", "Page");
+define("_formulize_DMULTI_OF", "Of");
+define("_formulize_DMULTI_SKIP", "One or more pages was skipped because they don't apply");
+define("_formulize_DMULTI_ALLDONE", "Leave this form and continue browsing the site");
+
+// CALENDAR
+define("_formulize_CAL_ADD_ITEM", "Click to add a new item on this day.");
+define("_formulize_CAL_RETURNFROMMULTI", "Return to the Calendar");
+
+define("_formulize_CAL_MONTH_01", "January");
+define("_formulize_CAL_MONTH_02", "February");
+define("_formulize_CAL_MONTH_03", "March");
+define("_formulize_CAL_MONTH_04", "April");
+define("_formulize_CAL_MONTH_05", "May");
+define("_formulize_CAL_MONTH_06", "June");
+define("_formulize_CAL_MONTH_07", "July");
+define("_formulize_CAL_MONTH_08", "August");
+define("_formulize_CAL_MONTH_09", "September");
+define("_formulize_CAL_MONTH_10", "October");
+define("_formulize_CAL_MONTH_11", "November");
+define("_formulize_CAL_MONTH_12", "December");
+
+define("_formulize_CAL_WEEK_1", "Sunday");
+define("_formulize_CAL_WEEK_2", "Monday");
+define("_formulize_CAL_WEEK_3", "Tuesday");
+define("_formulize_CAL_WEEK_4", "Wednesday");
+define("_formulize_CAL_WEEK_5", "Thursday");
+define("_formulize_CAL_WEEK_6", "Friday");
+define("_formulize_CAL_WEEK_7", "Saturday");
+define("_formulize_CAL_WEEK_1_3ABRV", "Sun");
+define("_formulize_CAL_WEEK_2_3ABRV", "Mon");
+define("_formulize_CAL_WEEK_3_3ABRV", "Tue");
+define("_formulize_CAL_WEEK_4_3ABRV", "Wed");
+define("_formulize_CAL_WEEK_5_3ABRV", "Thu");
+define("_formulize_CAL_WEEK_6_3ABRV", "Fri");
+define("_formulize_CAL_WEEK_7_3ABRV", "Sat");
+
+
+
 ?>

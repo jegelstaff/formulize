@@ -49,7 +49,7 @@ function sendSearch(formObj) {
 
 $flatItems = implode("/,%^&2", $items);
 print "window.opener.document.controls.asearch.value = '$flatItems';\n";
-print "window.opener.document.controls.submit();\n";
+print "window.opener.showLoading();\n";
 print "window.self.close();\n";
 ?>
 }
@@ -187,7 +187,11 @@ foreach($cols as $f=>$vs) {
 		$reqdcol = 'reqdcalc_column_' . $values['ele_id'];
 		if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.  
 			$usedvals[] = $values['ele_id'];
-			$options[$values['ele_id']] = printSmart(trans($values['ele_caption']));
+			if($values['ele_colhead'] != "") {
+				$options[$values['ele_id']] = printSmart(trans($values['ele_colhead']));
+			} else {
+				$options[$values['ele_id']] = printSmart(trans($values['ele_caption']));
+			}
 		}
 	}		
 }
@@ -218,6 +222,7 @@ $columns->addOption("uid", _formulize_DE_CALC_CREATOR);
 $columns->addOption("proxyid", _formulize_DE_CALC_MODIFIER);
 $columns->addOption("creation_date", _formulize_DE_CALC_CREATEDATE);
 $columns->addOption("mod_date", _formulize_DE_CALC_MODDATE);
+$columns->addOption("creator_email", _formulize_DE_CALC_CREATOR_EMAIL);
 $columns->addOptionArray($options);
 
 $opterm = new xoopsFormElementTray(_formulize_DE_AS_OPTERM, "&nbsp;&nbsp;");

@@ -35,6 +35,7 @@
 
 include("admin_header.php");
 include_once '../../../include/cp_header.php';
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
 	include "../language/".$xoopsConfig['language']."/main.php";
 } else {
@@ -43,10 +44,10 @@ if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
 
 if(!is_numeric($_GET['title'])) {
 
-	if(!isset($HTTP_POST_VARS['title'])){
-		$title = isset ($HTTP_GET_VARS['title']) ? $HTTP_GET_VARS['title'] : '';
+	if(!isset($_POST['title'])){
+		$title = isset ($_GET['title']) ? $_GET['title'] : '';
 	}else {
-		$title = $HTTP_POST_VARS['title'];
+		$title = $_POST['title'];
 	}
 
 	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form='%s'",$title);
@@ -65,10 +66,10 @@ if(!is_numeric($_GET['title'])) {
 	$rtarray = $xoopsDB->fetchArray($rtres);
 	$realtitle = $rtarray['desc_form'];
 }
-if(!isset($HTTP_POST_VARS['op'])){
-	$op = isset ($HTTP_GET_VARS['op']) ? $HTTP_GET_VARS['op'] : '';
+if(!isset($_POST['op'])){
+	$op = isset ($_GET['op']) ? $_GET['op'] : '';
 }else {
-	$op = $HTTP_POST_VARS['op'];
+	$op = $_POST['op'];
 }
 
 
@@ -136,7 +137,7 @@ if( $_POST['op'] != 'upform' && $op != 'addform'){
 		<form name=mainform action="mailindex.php?title='.$title.'" method="post">'; // name added by jwe 9/02/04
 	
 		echo'<table class="outer" cellspacing="1" width="100%">
-		<th><center><font size=5>'._AM_FORM.$realtitle.'<font></center></th>
+		<th><center><font size=5>'._AM_FORM.trans($realtitle).'<font></center></th>
 		</table>';
 		
 /*		// Affichage des droits du formulize
@@ -381,6 +382,22 @@ echo '<tr>
 
 	echo '<select name="headerlist[]" size="10" multiple>';
 
+	echo "<option value=uid";
+	if($title != '' && in_array('uid', $headlistarray)) {echo " SELECTED";}  
+	echo ">" . _formulize_DE_CALC_CREATOR . "</option>";
+
+	echo "<option value=proxyid";
+	if($title != '' && in_array('proxyid', $headlistarray)) {echo " SELECTED";}  
+	echo ">" . _formulize_DE_CALC_MODIFIER. "</option>";
+
+	echo "<option value=creation_date";
+	if($title != '' && in_array('creation_date', $headlistarray)) {echo " SELECTED";}  
+	echo ">" . _formulize_DE_CALC_CREATEDATE . "</option>";
+
+	echo "<option value=mod_date";
+	if($title != '' && in_array('mod_date', $headlistarray)) {echo " SELECTED";}  
+	echo ">" . _formulize_DE_CALC_MODDATE . "</option>";
+
 	$getform_id ="SELECT id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form=\"$realtitle\"";
 	$resultgetform = mysql_query($getform_id);
 	$resgetformrow = mysql_fetch_row($resultgetform);
@@ -388,7 +405,8 @@ echo '<tr>
 
 	// get a list of captions in the form (fancy SQL Join query)
 	// then draw them into the selection box
-	$sqljwe="SELECT ele_caption, ele_id FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = \"$thisformid\" ORDER BY ele_order";
+	// addition of column heading fields June 25 2006 -- jwe
+	$sqljwe="SELECT ele_caption, ele_id, ele_colhead FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = \"$thisformid\" AND ele_type != \"ib\" AND ele_type != \"areamodif\" ORDER BY ele_order";
 	$resjwe = mysql_query ( $sqljwe );
 	if ( $resjwe ) {
 		$loopiteration = 0;
@@ -398,7 +416,11 @@ echo '<tr>
 			// caption will not match if a form has recently been translated to another language, but once the headerlist is specified from scratch now, it will always be remembered since ids are now stored 
 			if($title != '' && (in_array($rowjwe[1], $headlistarray) OR in_array($rowjwe[0], $headlistarray))) {echo " SELECTED";}  
 			echo '>';
-			echo $rowjwe[0];
+			if($rowjwe[2] != "") {
+				echo trans($rowjwe[2]);
+			} else {
+				echo trans($rowjwe[0]);
+			}
 			echo '</option>';
 			$loopiteration++;
 		}
@@ -462,7 +484,7 @@ echo '</table>
 	echo '<center><table><tr>';
 	
 	if($title != '') { 
-		echo '<center><table><tr><td valign=top><center><a href="../admin/index.php?title='.$title.'" target="_blank">' . _AM_EDIT_ELEMENTS . ' <br><img src="../images/kedit.png"></a></center></td>';
+		echo '<td valign=top><center><a href="../admin/index.php?title='.$title.'">' . _AM_EDIT_ELEMENTS . ' <br><img src="../images/kedit.png"></a></center></td>';
 		echo '<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>';
 	}		
 	
@@ -474,16 +496,17 @@ echo '</table>
 
 function upform($title)
 {
-	global $xoopsDB, $HTTP_POST_VARS, $myts, $eh;
-	$admin = $myts->makeTboxData4Save($HTTP_POST_VARS["admin"]);
-	$groupe = $myts->makeTboxData4Save($HTTP_POST_VARS["groupe"]);
-	$email = $myts->makeTboxData4Save($HTTP_POST_VARS["email"]);
-	$expe = $myts->makeTboxData4Save($HTTP_POST_VARS["expe"]);
+	global $xoopsDB, $_POST, $myts, $eh;
+	$admin = $myts->makeTboxData4Save($_POST["admin"]);
+	$groupe = $myts->makeTboxData4Save($_POST["groupe"]);
+	$email = $myts->makeTboxData4Save($_POST["email"]);
+	$expe = $myts->makeTboxData4Save($_POST["expe"]);
 	
 	// added to handle new params -- jwe 7/25/07
-	$singleentry = $myts->makeTboxData4Save($HTTP_POST_VARS["singleentry"]);
-	$groupscope = $myts->makeTboxData4Save($HTTP_POST_VARS["groupscope"]);
-	$headerlist = $myts->makeTboxData4Save($HTTP_POST_VARS["headerlist"]);
+	$singleentry = $myts->makeTboxData4Save($_POST["singleentry"]);
+	$groupscope = $myts->makeTboxData4Save($_POST["groupscope"]);
+	$headerlist = $_POST["headerlist"];
+
 
 	foreach($headerlist as $arrayelement)
 	{
@@ -491,10 +514,10 @@ function upform($title)
 	}
 
 
-	$showviewentries = $myts->makeTboxData4Save($HTTP_POST_VARS["showviewentries"]);
-	$maxentries = $HTTP_POST_VARS["maxentries"];
-	$coloreven = $HTTP_POST_VARS["coloreven"];
-	$colorodd = $HTTP_POST_VARS["colorodd"];
+	$showviewentries = $myts->makeTboxData4Save($_POST["showviewentries"]);
+	$maxentries = $_POST["maxentries"];
+	$coloreven = $_POST["coloreven"];
+	$colorodd = $_POST["colorodd"];
 	if($coloreven == "FFFFFF") {$coloreven = "default";}
 	if($colorodd == "FFFFFF") {$colorodd = "default";}
 	
@@ -515,21 +538,21 @@ function upform($title)
 
 function addform()
 {
-	global $xoopsDB, $HTTP_POST_VARS, $myts, $eh;
-	$title = $myts->makeTboxData4Save($HTTP_POST_VARS["newtitle"]);
-	$admin = $myts->makeTboxData4Save($HTTP_POST_VARS["admin"]);
-	$groupe = $myts->makeTboxData4Save($HTTP_POST_VARS["groupe"]);
-	$email = $myts->makeTboxData4Save($HTTP_POST_VARS["email"]);
-	$expe = $myts->makeTboxData4Save($HTTP_POST_VARS["expe"]);
+	global $xoopsDB, $_POST, $myts, $eh;
+	$title = $myts->makeTboxData4Save($_POST["newtitle"]);
+	$admin = $myts->makeTboxData4Save($_POST["admin"]);
+	$groupe = $myts->makeTboxData4Save($_POST["groupe"]);
+	$email = $myts->makeTboxData4Save($_POST["email"]);
+	$expe = $myts->makeTboxData4Save($_POST["expe"]);
 	
 	// added to handle new params -- jwe 7/25/07
-	$singleentry = $myts->makeTboxData4Save($HTTP_POST_VARS["singleentry"]);
-	$groupscope = $myts->makeTboxData4Save($HTTP_POST_VARS["groupscope"]);
+	$singleentry = $myts->makeTboxData4Save($_POST["singleentry"]);
+	$groupscope = $myts->makeTboxData4Save($_POST["groupscope"]);
 	
-	$showviewentries = $myts->makeTboxData4Save($HTTP_POST_VARS["showviewentries"]);
-	$maxentries = $HTTP_POST_VARS["maxentries"];
-	$coloreven = $HTTP_POST_VARS["coloreven"];
-	$colorodd = $HTTP_POST_VARS["colorodd"];
+	$showviewentries = $myts->makeTboxData4Save($_POST["showviewentries"]);
+	$maxentries = $_POST["maxentries"];
+	$coloreven = $_POST["coloreven"];
+	$colorodd = $_POST["colorodd"];
 	if($coloreven == "FFFFFF") {$coloreven = "default";}
 	if($colorodd == "FFFFFF") {$colorodd = "default";}
 

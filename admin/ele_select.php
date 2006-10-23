@@ -43,6 +43,9 @@ $size = new XoopsFormText(_AM_ELE_SIZE, 'ele_value[0]', 3, 2, $ele_size);
 $allow_multi = empty($ele_value[1]) ? 0 : 1;
 $multiple = new XoopsFormRadioYN(_AM_ELE_MULTIPLE, 'ele_value[1]', $allow_multi);
 
+// handling of scope limit defaults -- August 30 2006
+$scopelimit = (isset($ele_value[3]) AND $ele_value[3] != 'all') ? explode(",", $ele_value[3]) : array(0=>'all');
+
 $options = array();
 $opt_count = 0;
 if( empty($addopt) && !empty($ele_id) ){
@@ -131,54 +134,35 @@ for( $i=0; $i<count($options); $i++ ){
 	$opt_tray->addElement($options[$i]);
 }
 
-// create the $formlink, the part of the selectbox form that links to another field in another form to populate the select box. -- jwe 7/29/04
-array($formids);
-array($formnames);
-array($totalcaptionlist);
-array($totalvaluelist);
-$captionlistindex = 0;
+$formlink = createFieldList($ele_value[2]);
 
-$formlist = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id") . " ORDER BY desc_form";
-$resformlist = mysql_query($formlist);
-if($resformlist)
-{
-	while ($rowformlist = mysql_fetch_row($resformlist)) // loop through each form
-	{
-		$fieldnames = "SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$rowformlist[0] ORDER BY ele_order";
-		$resfieldnames = mysql_query($fieldnames);
-		
-		while ($rowfieldnames = mysql_fetch_row($resfieldnames)) // loop through each caption in the current form
-		{
-			$totalcaptionlist[$captionlistindex] = $rowformlist[1] . ": " . $rowfieldnames[0];  // write formname: caption to the master array that will be passed to the select box.
-			$totalvaluelist[$captionlistindex] = $rowformlist[0] . "#*=:*" . $rowfieldnames[0];
-			if($ele_value[2] == $totalvaluelist[$captionlistindex]) // if this is the selected entry...
-			{
-				$defaultlinkselection = $captionlistindex;
-			}
-			$captionlistindex++;
-		}
-	}
+// scope control for linked selectboxes -- added August 30 2006 by jwe
+$linkscope = new xoopsFormSelect('', 'formlink_scope', $scopelimit, 10, true);
+$linkscope->addOption('all', _AM_ELE_FORMLINK_SCOPE_ALL);
+$fs_member_handler =& xoops_gethandler('member');
+$fs_xoops_groups =& $fs_member_handler->getGroups();
+$fs_count = count($fs_xoops_groups);
+for($i = 0; $i < $fs_count; $i++) {
+	$linkscope->addOption($fs_xoops_groups[$i]->getVar('groupid'), $fs_xoops_groups[$i]->getVar('name'));     
 }
-// make the select box and add all the options... -- jwe 7/29/04
-$formlink = new XoopsFormSelect(_AM_ELE_FORMLINK, 'formlink', '' , 1, false);
-$formlink->addOption("none", _AM_FORMLINK_NONE);
-for($i=0;$i<$captionlistindex;$i++)
-{
-	$formlink->addOption($totalvaluelist[$i], $totalcaptionlist[$i]);
-}
-if($defaultlinkselection)
-{
-	$formlink->setValue($totalvaluelist[$defaultlinkselection]);
-}
-$formlink->setDescription(_AM_ELE_FORMLINK_DESC);
 
+$linkscopetray = new xoopsFormElementTray(_AM_ELE_FORMLINK_SCOPE, "<br />");
+$linkscopetray->setDescription(_AM_ELE_FORMLINK_SCOPE_DESC);
+
+$linkscopedefault = isset($ele_value[4]) ? $ele_value[4] : 0;
+$linkscopelimit = new xoopsFormRadio('', 'linkscopelimit', $linkscopedefault);
+$linkscopelimit->addOption(0, _AM_ELE_FORMLINK_SCOPELIMIT_NO);
+$linkscopelimit->addOption(1, _AM_ELE_FORMLINK_SCOPELIMIT_YES);
+
+$linkscopetray->addElement($linkscope);
+$linkscopetray->addElement($linkscopelimit);
 
 $form->addElement($size, 1);
 $form->addElement($multiple);
 $form->addElement($opt_tray);
 // added another form element, the dynamic link to another form's field to populate the selectbox.  -- jwe 7/29/04
 $form->addElement($formlink);
-
+$form->addElement($linkscopetray);
 
 // print_r($options);
 // 	echo '<br />';

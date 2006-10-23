@@ -35,7 +35,7 @@ define("_MI_formulize_TEXT_WIDTH","Default width of text boxes");
 define("_MI_formulize_TEXT_MAX","Default maximum length of text boxes");
 define("_MI_formulize_TAREA_ROWS","Default rows of text areas");
 define("_MI_formulize_TAREA_COLS","Default columns of text areas");
-define("_MI_formulize_DELIMETER","Delimeter for check boxes and radio buttons");
+define("_MI_formulize_DELIMETER","Default delimiter for check boxes and radio buttons");
 define("_MI_formulize_DELIMETER_SPACE","White space");
 define("_MI_formulize_DELIMETER_BR","Line break");
 define("_MI_formulize_SEND_METHOD","Send method");
@@ -46,6 +46,9 @@ define("_MI_formulize_SEND_GROUP","Send to group");
 define("_MI_formulize_SEND_ADMIN","Send to site admin only");
 define("_MI_formulize_SEND_ADMIN_DESC","Settings of \"Send to group\" will be ignored");
 define("_MI_formulize_PROFILEFORM","Which form is to be used as part of the registration process and when viewing and editing accounts? (requires use of the Registration Codes module)");
+
+define("_MI_formulize_ALL_DONE_SINGLES","Should the 'All Done' button appear at the bottom of the form when editing an entry, and creating a new entry in a 'one-entry-per-user' form?");
+define("_MI_formulize_SINGLESDESC","The 'All Done' button is used to leave a form without saving the information in the form.  If you have made changes to the information in a form and then you click 'All Done' without first clicking 'Save', you get a warning that your data has not been saved.  Because of the way the 'Save' button and 'All Done' button work in tandem, there is normally no way to save information and leave a form all at once.  This bothers/confuses some users.  Set this option to 'Yes' to remove the 'All Done' button and turn the behaviour of the 'Save' button to 'save-and-leave-the-form-all-at-once'.  This option does not affect situations where the user is adding multiple entries to a form (where the form reloads blank every time you click 'Save').");
 
 // The name of this module
 define("_MI_formulizeMENU_NAME","MyMenu");
