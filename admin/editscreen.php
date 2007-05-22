@@ -1,9 +1,7 @@
 <?php
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) 2004 Freeform Solutions                  ##
-##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
-##                       <http://www.brandycoke.com/>                        ##
+##                    Copyright (c) 2007 Freeform Solutions                  ##
 ###############################################################################
 ##                    XOOPS - PHP Content Management System                  ##
 ##                       Copyright (c) 2000 XOOPS.org                        ##
@@ -28,23 +26,53 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions and NS Tai (aka tuff) and others ##
-##  URL: http://www.brandycoke.com/                                          ##
+##  Author of this file: Freeform Solutions                                  ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// SET $formulize_screen_id IN A PHP BLOCK, AND THEN INCLUDE
-// XOOPS_ROOT_PATH . "/modules/formulize/index.php" TO CALL UP
-// A SCREEN IN A BLOCK WITHOUT THE ENTIRE XOOPS TEMPLATE COMING IN
-if(isset($formulize_screen_id)) {
-    if(is_numeric($formulize_screen_id)) {
-        include 'initialize.php';        
-    }
+// THIS FILE HANDLES EDITS TO SCREENS 
+// SCREENS ARE PARTICULAR WAYS OF DISPLAYING FORMS OR THEIR DATA
+
+include("admin_header.php");
+include_once '../../../include/cp_header.php';
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
+	include "../language/".$xoopsConfig['language']."/main.php";
 } else {
-    require_once "../../mainfile.php";
-    include XOOPS_ROOT_PATH.'/header.php';
-
-    include 'initialize.php';
-
-    include XOOPS_ROOT_PATH.'/footer.php';
+	include "../language/english/main.php";
 }
+
+
+$type = $_POST['type'] ? htmlspecialchars(strip_tags($_POST['type'])) : htmlspecialchars(strip_tags($_GET['type'])); // figure out the type
+$sid = $_POST['sid'] ? intval($_POST['sid']) : intval($_GET['sid']); // get the screen id 
+$fid = $_POST['fid'] ? intval($_POST['fid']) : intval($_GET['fid']); // get the form id
+
+$screen_handler =& xoops_getmodulehandler($type.'Screen', 'formulize');
+
+if(is_numeric(intval($sid)) AND $sid>0) {
+	$screen = $screen_handler->get($sid);
+} else {
+	$screen = $screen_handler->create();
+}
+
+
+xoops_cp_header();
+
+if(isset($_POST['oneditscreen'])) {
+	// save the contents of the form 
+	// redirect to mailindex.php if we're saving because of the save button itself, not just a page refresh
+	$screen_handler->saveForm($screen, $fid);
+	
+	if(isset($_POST['savescreen'])) {
+		redirect_header("mailindex.php?title=$fid", 2, _AM_FORMULIZE_SCREEN_SAVED);
+	}
+} 
+
+// display the form with the contents of a particular screen if one has been requested
+$form = $screen_handler->editForm($screen, $fid);
+$form->addElement(new xoopsFormButton('', 'savescreen', _AM_FORMULIZE_SCREEN_SAVE, 'submit'));
+print $form->render();
+
+xoops_cp_footer();
+
+?>

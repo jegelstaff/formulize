@@ -54,6 +54,7 @@ function updateCols(formObj) {
 			}
 		}
 	}
+	
 	if(cols) {
 		window.opener.document.controls.newcols.value = cols;
 		window.opener.showLoading();
@@ -67,7 +68,7 @@ function updateCols(formObj) {
 </script>
 
 
-<?
+<?php
 
 }
 
@@ -91,8 +92,12 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 	// Set some required variables
 	$mid = getFormulizeModId();
-	$fid = $_GET['fid'];
-	$frid = $_GET['frid'];
+	$fid = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
+  $fid = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $fid ;
+
+  $frid = ((isset( $_GET['frid'])) AND is_numeric( $_GET['frid'])) ? intval( $_GET['frid']) : "" ;
+  $frid = ((isset($_POST['frid'])) AND is_numeric($_POST['frid'])) ? intval($_POST['frid']) : $frid ;
+
 	$temp_selectedCols = $_GET['cols'];
 	$selectedCols = explode(",", $temp_selectedCols);
 	$gperm_handler = &xoops_gethandler('groupperm');
@@ -152,7 +157,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 				if($values['ele_colhead'] != "") {
 					$options[$numcols] .= ">" . printSmart(trans($values['ele_colhead']), 75) . "</option>";
 				} else {
-					$options[$numcols] .= ">" . printSmart(trans($values['ele_caption']), 75) . "</option>";
+					$options[$numcols] .= ">" . printSmart(trans(strip_tags($values['ele_caption'])), 75) . "</option>";
 				}
 				$numcols++;
 			}
@@ -175,9 +180,9 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 	changeColJavascript();
 
-print "</head>";
-print "<body><center>"; 
-print "<table width=100%><tr><td width=5%></td><td width=90%>";
+  print "</head>";
+  print "<body><center>"; 
+  print "<table style=\"width: 100%;\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
 	print "<form name=newcolform action=\"" . XOOPS_URL . "\" method=post>\n";
 
 	print "<table class=outer><tr><th colspan=2>" . _formulize_DE_PICKNEWCOLS . "</th></tr>";
@@ -191,10 +196,9 @@ print "<table width=100%><tr><td width=5%></td><td width=90%>";
 	print "<tr><td class=head></td><td class=even><input type=button name=newcolbutton value=\"" . _formulize_DE_CHANGECOLS . "\" onclick=\"javascript:updateCols(this.form);\"></input></td></tr>\n";
 
 	print "</table>\n</form>";
-print "</td><td width=5%></td></tr></table>";
-print "</center></body>";
-print "</HTML>";
-
+  print "</td><td style=\"width: 5%;\"></td></tr></table>\n";
+  print "</center></body>\n";
+  print "</HTML>\n";
 
 ?>
 

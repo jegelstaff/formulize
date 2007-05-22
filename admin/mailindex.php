@@ -132,7 +132,7 @@ if( $_POST['op'] != 'upform' && $op != 'addform'){
 	  }
 	}
 
-	if ($title != '') {
+	if ($title != '') {  // put in the name of the form
 			echo '
 		<form name=mainform action="mailindex.php?title='.$title.'" method="post">'; // name added by jwe 9/02/04
 	
@@ -140,28 +140,11 @@ if( $_POST['op'] != 'upform' && $op != 'addform'){
 		<th><center><font size=5>'._AM_FORM.trans($realtitle).'<font></center></th>
 		</table>';
 		
-/*		// Affichage des droits du formulize
-		echo '<tr><td class="head"><center>'._FORM_DROIT.'</center></td>
-		<td class="even"><select name="auto" size="4">';
-		for($i=0;$i<$m;$i++) {
-			echo ' <option value='.$tab[$i].''; 
-			if($title != '' && $tab[$i]==$groupe) {echo " SELECTED";}  
-			echo '>';
-			echo $tab2[$i];
-			echo '</option>';
-		}		
-		echo '</select></td></tr>';*/
-		
 		echo '<table class="outer" cellspacing="1" width="100%">
 		<th colspan="4">'._FORM_MODIF.'</th>';
 		
 
-// old formulaire options that are not used anymore...
-/*
-		echo '<tr><td class="head" ><center>'._FORM_EMAIL.'</center></td>
-		<td class="even"><input maxlength="255" size="30" id="email" name="email" type="text" value='.$email.'></td></tr>';
-*/	}
-	else {
+	} else { // put in a box to get a name for the form
 		echo '
 		<form action="mailindex.php?op=addform" method="post">
 	
@@ -175,63 +158,8 @@ if( $_POST['op'] != 'upform' && $op != 'addform'){
 		<tr><td class="head" ><center>'._FORM_TITLE.'</center></td>
 		<td class="even"><input maxlength="255" size="30" id="newtitle" name="newtitle" type="text"></td></tr>';
 
-// old formulaire options that are not used anymore...
-/*		echo '
-		<tr><td class="head" ><center>'._FORM_EMAIL.'</center></td>
-		<td class="even"><input maxlength="255" size="30" id="email" name="email" type="text"></td></tr>';
-*/
 	}		
 
-// old formulaire options that are not used anymore...
-/*
-echo '	<tr><td class="head"><center>'._FORM_GROUP.'</center></td><td class="even"><select name="groupe" size="4">';
-	
-for($i=0;$i<$m;$i++) {
-	echo '        <option value='.$tab[$i].''; 
-	if($title != '' && $tab[$i]==$groupe) {echo " SELECTED";}  
-	echo '>';
-			echo $tab2[$i];
-	echo '	      </option>';
-}
-echo '        
-	</select></td>
-	</tr>
-	<tr>
-	<td class="head"><center>'._FORM_ADMIN.'</center></td><td class="even">';
-	if ($title != '' && $admin == 'on') {echo '
-	<input name="admin" type="checkbox" id="admin" checked></td>';}
-	else {echo '
-	<input name="admin" type="checkbox" id="admin" ></td>';}
-	
-	echo '</tr>
-	<tr>
-	<td class="head"><center>'._FORM_EXPE.'</center></td><td class="even">';
-	if ($title != '' && $expe == 'on') {echo '
-	<input name="expe" type="checkbox" id="expe" checked></td>';}
-	else {echo '
-	<input name="expe" type="checkbox" id="expe" ></td>';}
-*/
-// *******
-// added new form params to enable new features (single-entry and group-scope) -- jwe 7/25/04
-// *******
-
-// NOT USED IN 2.0 -- COMMENTED JULY 28/05
-//	echo '<tr>
-//	<td class="head"><center>'._FORM_SHOWVIEWENTRIES.'</center></td><td class="even">';
-//	if ($title != '' && $showviewentries == '') {echo '
-//	<input name="showviewentries" type="checkbox" id="showviewentries"></td>';}
-//	else {echo '
-//	<input name="showviewentries" type="checkbox" id="showviewentries" checked></td>';}
-
-//echo '</tr>';
-
-	// old singleentry ui 
-	/*echo '<tr>
-	<td class="head"><center>'._FORM_SINGLEENTRY.'</center></td><td class="even">';
-	if ($title != '' && $singleentry == 'on') {echo '
-	<input name="singleentry" type="checkbox" id="singleentry" checked></td>';}
-	else {echo '
-	<input name="singleentry" type="checkbox" id="singleentry" ></td>';} */
 
 	// new singleentry ui
 	echo '<tr>
@@ -258,116 +186,8 @@ echo '
 
 	echo '</td>'; 
 
-	
+	echo '</tr>';
 
-echo '</tr>';
-//echo '<tr>
-//	<td class="head"><center>'._FORM_GROUPSCOPE.'</center></td><td class="even">';
-//	if ($title != '' && $groupscope == 'on') {echo '
-//	<input name="groupscope" type="checkbox" id="groupscope" checked></td>';}
-//	else {echo '
-//	<input name="groupscope" type="checkbox" id="groupscope" ></td>';}
-
-//echo '</tr>';
-
-echo '</tr>';
-
-// Max entries feature not implemented yet
-/*	echo '<tr>
-	<td class="head"><center>'._FORM_MAXENTRIES.'</center></td><td class="even">';
-	if ($title != '' && $maxentries) {echo '
-	<input name="maxentries" type="textbox" id="maxentries" size=5 value=' . $maxentries . '></td>';}
-	else {echo '
-	<input name="maxentries" type="textbox" id="maxentries" size=5 value=0></td>';}
-
-echo '</tr>';*/
-
-// add in the even/odd colour override controls for report writing page -- added by jwe 9/02/04
-// default colour choices removed for 2.0
-
-//	include_once XOOPS_ROOT_PATH."/modules/formulize/admin/colorarrays.php";
-
-/*	echo '<tr>
-	<td class="head"><center>'._FORM_COLOREVEN.'</center></td><td class="even">';
-
-	echo'<script type="text/javascript">
-
-	function changeEvenSquare(col) {
-		var coltouse = "#"+col;
-		document.getElementById("evenspan").style.backgroundColor = coltouse;
-	}
-
-	</script>
-	<select name="coloreven" size=1 onchange="changeEvenSquare(this.value)">';
-	
-	for($i=0;$i<count($colorlist);$i++)
-	{
-		echo '<option value=' . $colorcode[$i];
-		if($colorcode[$i] == $coloreven)
-		{
-			echo ' selected';
-		}
-		echo '>' . $colorlist[$i]. '</option>';
-	}
-
-	echo '</select><br><br><table width=30%><tr>';
-
-	if ($coloreven)
-	{
-		echo '<td bgcolor="#' . $coloreven . '" id=evenspan width=100%>';
-	}
-	else
-	{
-		echo '<td bgcolor=white id=evenspan width=100%>';
-	}
-
-		echo '<br><br><br>';
-
-		echo '</td></tr></table></td>';
-
-echo '</tr>';
-
-echo '<tr>
-	<td class="head"><center>'._FORM_COLORODD.'</center></td><td class="even">';
-
-	echo'<script type="text/javascript">
-
-	function changeOddSquare(col) {
-		var coltouse = "#"+col;
-		document.getElementById("oddspan").style.backgroundColor = coltouse;
-	}
-
-	</script>
-	<select name="colorodd" size=1 onchange="changeOddSquare(this.value)">';
-	
-	for($i=0;$i<count($colorlist);$i++)
-	{
-		echo '<option value=' . $colorcode[$i];
-		if($colorcode[$i] == $colorodd)
-		{
-			echo ' selected';
-		}
-		echo '>' . $colorlist[$i]. '</option>';
-	}
-
-	echo '</select><br><br><table width=30%><tr>';
-
-	if ($colorodd)
-	{
-		echo '<td bgcolor="#' . $colorodd . '" id=oddspan width=100%>';
-	}
-	else
-	{
-		echo '<td bgcolor=white id=oddspan width=100%>';
-	}
-
-		echo '<br><br><br>';
-
-		echo '</td></tr></table></td>';
-
-echo '</tr>';
-
-*/
 
 if($title != '')
 {
@@ -397,6 +217,10 @@ echo '<tr>
 	echo "<option value=mod_date";
 	if($title != '' && in_array('mod_date', $headlistarray)) {echo " SELECTED";}  
 	echo ">" . _formulize_DE_CALC_MODDATE . "</option>";
+        
+        echo "<option value=creator_email";
+	if($title != '' && in_array('creator_email', $headlistarray)) {echo " SELECTED";}  
+	echo ">" . _formulize_DE_CALC_CREATOR_EMAIL . "</option>";
 
 	$getform_id ="SELECT id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form=\"$realtitle\"";
 	$resultgetform = mysql_query($getform_id);
@@ -437,24 +261,6 @@ echo '<tr>
 
 
 
-// DEFAULT PERMISSION CONTROL REMOVED, SINCE NEW PERMISSIONS ARE TOTALLY DIFFERENT -- JULY 28, 2005
-/*if(!$title) // if there is no title, ie: new form, then show default perm box...
-{
-echo '<tr>
-	<td class="head"><center>'._FORM_DEFAULTADMIN.'</center></td><td class="even">';
-echo '<select name="defaultadmin[]" size="4" multiple>';
-	
-for($i=1;$i<$m;$i++) { // start at 1 since the first entry is a blank line.
-	echo '        <option value='.$tab[$i].''; 
-	echo '>';
-			echo $tab2[$i];
-	echo '	      </option>';
-
-}
-	echo '</select></td></tr>';
-}// end of IF that controls drawing of permission box.
-
-*/
 
 
 
@@ -479,6 +285,102 @@ echo '</table>
 	}
 	
 	echo '</form>';
+
+
+// *****************
+// NEW UI FOR SCREENS
+// LET USERS SPECIFY OPTIONS FOR DIFFERENT WAYS OF DISPLAYING A FORM, OR THE INFORMATION IN THE FORM
+// January 20, 2007 -- jwe
+// *****************
+
+
+if($title != '')
+{
+
+// Future use of smartobject planned...
+/*
+// Include SmartObject framework 
+include_once XOOPS_ROOT_PATH.'/modules/smartobject/class/smartloader.php';
+include_once(SMARTOBJECT_ROOT_PATH . "class/smartobjectcategory.php");
+
+// Creating the screen handler object
+$formulize_screen_handler =& xoops_getmodulehandler('screen', 'formulize');
+
+$criteria = new CriteriaCompo();
+
+include_once SMARTOBJECT_ROOT_PATH."class/smartobjecttable.php";
+$objectTable = new SmartObjectTable($formulize_screen_handler, $criteria);
+$objectTable->addColumn(new SmartObjectColumn('title', 'left'));
+$objectTable->render();
+*/
+
+// Creating the screen handler object
+$formulize_screen_handler =& xoops_getmodulehandler('screen', 'formulize');
+
+// handle delete events coming from form below
+if($_POST['deletescreenflag']) {
+	$formulize_screen_handler->delete($_POST['deletescreenflag'], $_POST['deletescreentype']);
+}
+
+$formulizeScreens = $formulize_screen_handler->getObjects('', $id_form);
+
+// javascript required for form
+print "\n<script type='text/javascript'>\n";
+
+print "	function confirmScreenDelete(sid, type) {\n";
+print "		var answer = confirm ('" . _AM_FORMULIZE_CONFIRM_SCREEN_DELETE . "')\n";
+print "		if (answer) {\n";
+print "			document.deletescreenmanager.deletescreenflag.value=sid;\n";
+print "			document.deletescreenmanager.deletescreentype.value=type;\n";
+print "			document.deletescreenmanager.submit();\n";
+print "		} else {\n";
+print "			return false;\n";
+print "		}\n";
+print "	}\n";
+
+print "</script>\n";
+
+print "<form name=deletescreenmanager action=" . XOOPS_URL . "/modules/formulize/admin/mailindex.php?title=$id_form method=post>\n";
+print "<input type=hidden name=deletescreenflag value=''>\n";
+print "<input type=hidden name=deletescreentype value=''>\n";
+print "</form>\n";
+
+print "<form name=screenmanager action=" . XOOPS_URL . "/modules/formulize/admin/editscreen.php?fid=$id_form method=post>\n";
+print "<center><table class=outer width=100%><tr><th colspan=4>" . _AM_FORMULIZE_DEFINED_SCREENS . "</th></tr>\n";
+
+$class="odd";
+foreach($formulizeScreens as $thisScreen) {
+	$class = $class == "even" ? "odd" : "even";
+        $thisScreenType = "unknown!";
+        switch($thisScreen->getVar('type')) {
+                case "listOfEntries":
+                        $thisScreenType = _AM_FORMULIZE_SCREENTYPE_LISTOFENTRIES;
+                        break;
+                case "multiPage":
+                        $thisScreenType = _AM_FORMULIZE_SCREENTYPE_MULTIPAGE;
+                        break;
+        }
+	print "<tr><td class=$class><a href=" . XOOPS_URL . "/modules/formulize/admin/editscreen.php?sid=" . $thisScreen->getVar('sid') . "&type=" . $thisScreen->getVar('type') . "&fid=$id_form>" . $thisScreen->getVar('title') . "</a></td>\n";
+        print "<td class=$class><b>" . _AM_FORMULIZE_SCREEN_TYPE . "</b>$thisScreenType</td>\n";
+        print "<td class=$class><b>SID:</b> " . $thisScreen->getVar('sid') . "</td>\n";
+	print "<td class=$class><center><input type=button name=deletescreen value=\"" . _AM_FORMULIZE_DELETE_SCREEN . "\" onclick='javascript:return confirmScreenDelete(\"". $thisScreen->getVar('sid') . "\", \"".  strtolower($thisScreen->getVar('type')). "\");'></center></td></tr>\n";
+}
+
+print "<tr><td class=foot colspan=3><p>" . _AM_FORMULIZE_ADD_NEW_SCREEN_OF_TYPE . "&nbsp;&nbsp;<select name=type size=1>\n";
+
+// to make new types of screens, put new options here and create a corresponding class file
+print "<option value=multiPage>" . _AM_FORMULIZE_SCREENTYPE_MULTIPAGE . "</option>\n";
+print "<option value=listOfEntries>" . _AM_FORMULIZE_SCREENTYPE_LISTOFENTRIES . "</option>\n";
+print "</select></p>\n";
+
+print "</td><td class=foot><center><input type=submit name=addscreen value=\"" . _AM_FORMULIZE_ADD_SCREEN_NOW . "\"></center></td></tr>\n";
+
+print "</table></center></form>\n";
+
+} // end of if there's a title
+
+// END OF SCREENS UI
+// **********************
 
 	// navigation elements for bottom of page -- jwe 01/06/05
 	echo '<center><table><tr>';
@@ -569,6 +471,8 @@ function addform()
 	}
 	$title = stripslashes($title);
 	$title = eregi_replace ("'", "`", $title);
+	$title = eregi_replace ("&quot;", "`", $title);
+	$title = eregi_replace ("&#039;", "`", $title);
 	$title = eregi_replace ('"', "`", $title);
 	$title = eregi_replace ('&', "_", $title);
 

@@ -282,7 +282,7 @@ define("_formulize_TYPEPASSTWICE_NEW", "(Entrez deux fois votre mot de passe.  D
 define("_formulize_TYPEPASSTWICE_CHANGE", "(Pour modifier votre mot de passe, entrez deux fois un nouveau mot de passe.  Doit contenir au moins ");
 define("_formulize_CDISPLAYMODE", "Préférences d'affichage des commentaires/inscriptions");
 define("_formulize_CSORTORDER", "Préférences de classement des commentaires/inscriptions");
-define("_formulize_CREATEACT", "Create My Account!");
+define("_formulize_CREATEACT", "Créer mon compte!");
 define("_formulize_ACTCREATED", "Your account has been created and you are being logged into the site now.");
 define("_formulize_USERNAME_HELP1", " (Ne doit pas contenir d'espaces.  Doit être entre ");
 define("_formulize_USERNAME_HELP2", " et ");

@@ -38,7 +38,8 @@ require(XOOPS_ROOT_PATH."/header.php");
 
 global $xoopsDB;
 
-$cat_id = $_GET['cat'];
+$cat_id = (isset($_GET['cat'])) ? intval($_GET['cat']) : 0 ;
+//$cat_id = $_GET['cat'];
 $cat_name_q = q("SELECT cat_name FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$cat_id'");
 $cat_name = $cat_name_q[0]['cat_name'];
 if(!$cat_name) { $cat_name = _AM_CATGENERAL; }

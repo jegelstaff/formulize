@@ -60,7 +60,7 @@ function saveElements(form1choice, form2choice) {
 -->
 </script>
 
-<?
+<?php
 
 }
 

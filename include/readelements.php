@@ -44,6 +44,7 @@ if(!$myts) { $myts =& MyTextSanitizer::getInstance(); }
 $xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize") . " READ, " . $xoopsDB->prefix("formulize_form") . " WRITE, " . $xoopsDB->prefix("formulize_other") . " WRITE");
 
 $notEntriesList = array();
+$formulize_submittedElementCaptions = array(); // put into global scope and pulled down by readform.php when determining what elements have been submitted, so we don't blank data that is sent this way
 
 foreach($_POST as $k=>$v) {
 
@@ -72,7 +73,15 @@ foreach($_POST as $k=>$v) {
 			$date = date ("Y-m-d");
 			$realcap = getRealCaption($de_metadata[1]);
 			$value = prepDataForWrite($element, $value);
-			if($value == "{SKIPTHISDATE}") { continue; } // do not process this date element
+			if($value == "{SKIPTHISDATE}") {
+				if($v=="set") {
+					$_POST['de_' . $de_metadata[0] . "_" . $de_metadata[1]] = ""; // blank this date if it has an existing (set) value
+				} else {	
+					continue; // ignore this date
+				}
+			} else {
+				$formulize_submittedElementCaptions[$element->getVar('id_form')][] = $realcap; // this global array is picked up in formread.php if a regular form is part of the same page.  It needs to be set only for regular entries (ie: don't set this for skipped dates)
+			}
 			if(!$maxIdReq) { $maxIdReq = getMaxIdReq(); }
 			$GLOBALS['maxidreq'] = $maxIdReq; // last id req that would be written goes into global scope
 		}
@@ -80,21 +89,19 @@ foreach($_POST as $k=>$v) {
 		$sql = "";
 		// 2. -- new entry, with value... (assuming $v is "empty" when $de_metadata[0] is "new")
 		if($de_metadata[0] == "new" AND $_POST['de_' . $de_metadata[0] . "_" . $de_metadata[1]]) { 
-			$sql="INSERT INTO ".$xoopsDB->prefix("formulize_form")." (id_form, id_req, ele_id, ele_type, ele_caption, ele_value, uid, proxyid, date, creation_date) VALUES (\"" . $element->getVar('id_form') . "\", \"" . $maxIdReq . "\", \"\", \"" .$element->getVar('ele_type'). "\", \"$realcap\", \"$value\", \"$uid\", \"$uid\", \"$date\", \"$date\")";
+			$sql="INSERT INTO ".$xoopsDB->prefix("formulize_form")." (id_form, id_req, ele_id, ele_type, ele_caption, ele_value, uid, proxyid, date, creation_date) VALUES (\"" . $element->getVar('id_form') . "\", \"" . $maxIdReq . "\", \"\", \"" .$element->getVar('ele_type'). "\", \"$realcap\", \"" . mysql_real_escape_string($value) . "\", \"$uid\", \"$uid\", \"$date\", \"$date\")";
 			$id_reqForWritingOther = $maxIdReq;
-	
 			$notEntriesList['new_entry'][$element->getVar('id_form')][] = $maxIdReq;
 
 		// 3. -- existing entry, no value, was set (assuming $de_metadata[0] is not NEW when $v is set) -- blank the value in the DB
 		} elseif($v == "set" AND !$_POST['de_' . $de_metadata[0] . "_" . $de_metadata[1]]) { 
 			$sql="DELETE FROM " .$xoopsDB->prefix("formulize_form") . " WHERE ele_caption=\"$realcap\" AND id_req='" . $de_metadata[0] . "'";
-
 			$notEntriesList['update_entry'][$element->getVar('id_form')][] = $de_metadata[0];
+			array_pop($formulize_submittedElementCaptions[$element->getVar('id_form')]); // remove the last caption that was saved in the array, since there was no data submitted for that element (it was blanked)
 
 		// 5. -- existing entry, with value, was set (assuming $de_metadata[0] is not NEW when $v is set. -- update existing
 		} elseif($v == "set" AND $_POST['de_' . $de_metadata[0] . "_" . $de_metadata[1]]) {
-			$sql="UPDATE " .$xoopsDB->prefix("formulize_form") . " SET ele_value=\"$value\", proxyid=\"$uid\", date=\"$date\" WHERE ele_caption=\"$realcap\" AND id_req='" . $de_metadata[0] . "'";
-
+			$sql="UPDATE " .$xoopsDB->prefix("formulize_form") . " SET ele_value=\"" . mysql_real_escape_string($value) . "\", proxyid=\"$uid\", date=\"$date\" WHERE ele_caption=\"$realcap\" AND id_req='" . $de_metadata[0] . "'";
 			$notEntriesList['update_entry'][$element->getVar('id_form')][] = $de_metadata[0];
 
 		// 6. -- existing entry, with value, was empty -- insert with this $entry value
@@ -103,7 +110,7 @@ foreach($_POST as $k=>$v) {
 			$getMeta = "SELECT creation_date, uid FROM " . $xoopsDB->prefix(formulize_form) . " WHERE id_req='" . $de_metadata[0] . "' AND creation_date>0 ORDER BY creation_date DESC LIMIT 0,1";
 			$gdres = $xoopsDB->query($getMeta);
 			list($create_date, $org_uid) = $xoopsDB->fetchRow($gdres);
-			$sql="INSERT INTO ".$xoopsDB->prefix("formulize_form")." (id_form, id_req, ele_id, ele_type, ele_caption, ele_value, uid, proxyid, date, creation_date) VALUES (\"" . $element->getVar('id_form') . "\", \"" . $de_metadata[0] . "\", \"\", \"" .$element->getVar('ele_type'). "\", \"$realcap\", \"$value\", \"$org_uid\", \"$uid\", \"$date\", \"$create_date\")";
+			$sql="INSERT INTO ".$xoopsDB->prefix("formulize_form")." (id_form, id_req, ele_id, ele_type, ele_caption, ele_value, uid, proxyid, date, creation_date) VALUES (\"" . $element->getVar('id_form') . "\", \"" . $de_metadata[0] . "\", \"\", \"" .$element->getVar('ele_type'). "\", \"$realcap\", \"" . mysql_real_escape_string($value) . "\", \"$org_uid\", \"$uid\", \"$date\", \"$create_date\")";
 
 			$notEntriesList['update_entry'][$element->getVar('id_form')][] = $de_metadata[0];
 
@@ -114,6 +121,7 @@ foreach($_POST as $k=>$v) {
 			if(!$res = $xoopsDB->query($sql)) {
 				exit("Error: unable to update value of displayed element using the following SQL:<br>$sql");
 			}
+			$GLOBALS['formulize_readElementsWasRun'] = true;
 		}
 
 		writeOtherValues($id_reqForWritingOther, $element->getVar('id_form'));
@@ -125,7 +133,6 @@ foreach($_POST as $k=>$v) {
 
 // unlock tables
 $xoopsDB->query("UNLOCK TABLES");
-
 
 // process notifications
 foreach($notEntriesList as $notEvent=>$notDetails) {

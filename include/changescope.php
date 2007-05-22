@@ -61,7 +61,7 @@ function updateScope(formObj) {
 		window.opener.showLoading();
 		window.self.close();
 	} else {
-		alert("<? print _formulize_DE_NOGROUPSPICKED; ?>");
+		alert("<?php print _formulize_DE_NOGROUPSPICKED; ?>");
 	}
 
 	
@@ -69,7 +69,7 @@ function updateScope(formObj) {
 -->
 </script>
 
-<?
+<?php
 }
 
 
@@ -89,14 +89,11 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 	// Set some required variables
 	$mid = getFormulizeModId();
-	$fid="";
-	if(!$fid = $_GET['fid']) {
-		$fid = $_POST['fid'];
-	}
-	$frid = "";
-	if(!$frid = $_GET['frid']) {
-		$frid = $_POST['frid'];	
-	}
+	$fid = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
+  $fid = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $fid ;
+
+  $frid = ((isset( $_GET['frid'])) AND is_numeric( $_GET['frid'])) ? intval( $_GET['frid']) : "" ;
+  $frid = ((isset($_POST['frid'])) AND is_numeric($_POST['frid'])) ? intval($_POST['frid']) : $frid ;
 
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
@@ -155,17 +152,13 @@ $themecss = xoops_getcss();
 //$themecss .= ".css";
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 
-print "</head>";
+print "</head>\n";
 print "<body><center>"; 
-print "<table width=100%><tr><td width=5%></td><td width=90%>";
+print "<table style=\"width: 100%;\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
 $advscope = new xoopsThemeForm(_formulize_DE_PICKASCOPE, 'advscope', XOOPS_URL."/modules/formulize/include/advscope.php?fid=$fid&frid=$frid");
 
 $gcount = count($availgroups);
-if($gcount<10) {
-	$size = $gcount;
-} else {
-	$size = 10;
-}
+$size = ($gcount<10) ? $gcount : 10 ;
 $grouplist = new xoopsFormSelect(_formulize_DE_AVAILGROUPS, 'newscope', $curgroups, $size, true);
 $grouplist->addOptionArray($availgroups);
 
@@ -177,8 +170,8 @@ $advscope->addElement($doneButton);
 
 print $advscope->render();
 
-print "</td><td width=5%></td></tr></table>";
-print "</center></body>";
+print "</td><td style=\"width: 5%;\"></td></tr></table>\n";
+print "</center></body>\n";
 print "</HTML>";
 
 

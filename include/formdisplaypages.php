@@ -43,7 +43,15 @@ global $xoopsConfig;
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 
-function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text="", $settings="", $overrideValue="") {
+function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text="", $settings="", $overrideValue="", $printall=0) { // nmc 2007.03.24 - added 'printall'
+
+// extract the optional page titles from the $pages array for use in the jump to box
+// NOTE: pageTitles array must start with key 1, not 0.  Page 1 is the first page of the form
+$pageTitles = array();
+if(isset($pages['titles'])) {
+	$pageTitles = $pages['titles'];
+	unset($pages['titles']);
+}
 
 if(!$done_dest AND $_POST['oldcols']) { $done_dest = $_POST['oldcols']; }
 if(!$button_text AND $_POST['currentview']) { $button_text = $_POST['currentview']; }
@@ -56,22 +64,36 @@ $introtext = $introtext ? $introtext : "";
 
 global $xoopsUser;
 
-// if this function was called without an entry specified, then assume the identity of the entry we're editing (unless this is a new save, in which case no entry has been made yet)
-if(!$entry AND $_POST['entry'.$fid]) {
-	$entry = $_POST['entry'.$fid];
-}
-
-
-$owner = getEntryOwner($entry);
 $mid = getFormulizeModId();
 $groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 $gperm_handler =& xoops_gethandler('groupperm');
+$member_handler =& xoops_gethandler('member');
 $update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);
 $update_other_entries = $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid);
+$single_result = getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid);
+
+// if this function was called without an entry specified, then assume the identity of the entry we're editing (unless this is a new save, in which case no entry has been made yet)
+// no handling of cookies here, so anonymous multi-page surveys will not benefit from that feature
+// this emphasizes how we need to standardize a lot of these interfaces with a real class system
+if(!$entry AND $_POST['entry'.$fid]) {
+	$entry = $_POST['entry'.$fid];
+} else { // or check getSingle to see what the real entry is
+	$entry = $single_result['flag'] ? $single_result['entry'] : 0;
+}
+
+if($single_result['flag'] == "group" AND $update_own_entry AND $entry == $single_result['entry']) {
+	$update_other_entries = true;
+}
+
+$owner = getEntryOwner($entry);
+
 
 $prevPage = isset($_POST['order']) ? $_POST['order'] : 1; // last page that the user was on, not necessarily the previous page numerically
 $currentPage = isset($_POST['sort']) ? $_POST['sort'] : 1;
+
+// debug control:
+$currentPage = (isset($_GET['debugpage']) AND is_numeric($_GET['debugpage'])) ? $_GET['debugpage'] : $currentPage;
 
 if($entry) {
 	if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries)) {
@@ -97,13 +119,12 @@ if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // reme
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formread.php";
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-		$member_handler =& xoops_gethandler('member');
 		$owner_groups =& $member_handler->getGroupsByUser($owner, FALSE);
 
 		$entries[$fid][0] = $entry;
 
 		$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
-		$entries = handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_groups, $groups, "", $save_elements); 
+		$entries = handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_groups, $groups, "", $save_elements, $mid); 
 
 		// if there has been no specific entry specified yet, then assume the identity of the entry that was just saved -- assumption is it will be a new save
 		// from this point forward in time, this is the only entry that should be involved, since the 'entry'.$fid condition above will put this value into $entry even if this function was called with a blank entry value
@@ -124,14 +145,22 @@ function submitForm(page, prevpage) {
 	if(validate) {
 		window.document.formulize.sort.value = page;
 		window.document.formulize.order.value = prevpage;
-		window.document.formulize.oldcols.value = '<? print $done_dest; ?>';
-		window.document.formulize.currentview.value = '<? print $button_text; ?>';
+		window.document.formulize.oldcols.value = '<?php print $done_dest; ?>';
+		window.document.formulize.currentview.value = '<?php print $button_text; ?>';
 		validateAndSubmit();
 	}
 }
 
-</script>
-<noscript>
+function pageJump(options, prevpage) {
+	for (var i=0; i < options.length; i++) {
+		if (options[i].selected) {
+			submitForm(options[i].value, prevpage);
+			return false;
+		}
+	}
+}
+
+</script><noscript>
 <h1>You do not have javascript enabled in your web browser.  This form will not work with your web browser.  Please contact the webmaster for assistance.</h1>
 </noscript>
 <?php
@@ -248,8 +277,9 @@ if($currentPage != $thanksPage AND ($pages[$currentPage][0] === "HTML" OR $pages
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 	?>
 
-	<form name=formulize id=formulize action=<? print getCurrentURL(); ?> method=post>
-	<input type=hidden name=entry<? print $fid; ?> id=entry<? print $fid; ?> value=<? print $entry ?>>
+	
+	<form name=formulize id=formulize action=<?php print getCurrentURL(); ?> method=post>
+	<input type=hidden name=entry<?php print $fid; ?> id=entry<?php print $fid; ?> value=<?php print $entry ?>>
 	<input type=hidden name=sort id=sort value="">
 	<input type=hidden name=order id=order value="">
 	</form>
@@ -264,7 +294,7 @@ if($currentPage != $thanksPage AND ($pages[$currentPage][0] === "HTML" OR $pages
 
 }
 
-// display a form is that's what this page is...
+// display a form if that's what this page is...
 if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages[$currentPage][0] !== "PHP") {
 
 	$buttonArray = array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}");
@@ -280,49 +310,78 @@ if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages
 	$settings['sort'] = $currentPage;
 	$settings['order'] = $currentPage;
 
-	displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue); 
+	drawPageNav($usersCanSave, $pagesSkipped, $currentPage, $previousPage, $nextPage,$submitTextPrev, $submitTextNext, $pages, $thanksPage, $pageTitles, "above");
+	
+	displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, "", "", 0, 0, $printall); // nmc 2007.03.24 - added empty params & '$printall'
 
 }
 
 if($currentPage != $thanksPage AND !$_POST['goto_sfid']) {
 
-	print "<br><center><p>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . count($pages);
+	drawPageNav($usersCanSave, $pagesSkipped, $currentPage, $previousPage, $nextPage,$submitTextPrev, $submitTextNext, $pages, $thanksPage, $pageTitles, "below");
 
-	if(!$usersCanSave) {
-		print "<br>" . _formulize_INFO_NOSAVE;		
-	}
-
-	if($pagesSkipped) {
-		print "<br>". _formulize_DMULTI_SKIP;
-	}
-
-	print "</p><br><form name=pagebuttons id=pagebuttons>";
-
-	if($previousPage != "none") {
-	  print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' $submitTextPrev>\n";
-//	  print "<a href='http://www.oacasgroups.org/modules/pageworks/index.php?page=1' $submitTextPrev>< < Previous</a>";
-	} else {
-	  print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' disabled=true>\n";
-//	  print "< < Previous";
-	}
-
-	print "&nbsp;&nbsp;&nbsp;&nbsp;";
-
-	if($usersCanSave AND $nextPage==$thanksPage) {
-	  print "<input type=button name=next id=next value='" . _formulize_DMULTI_SAVE . "' $submitTextNext>\n";
-//	  print "<a href='http://www.oacasgroups.org/modules/pageworks/index.php?page=1' $submitTextNext>Save > ></a>";
-	} elseif($nextPage==$thanksPage) {
-	  print "<input type=button name=next id=next value='" . _formulize_DMULTI_NEXT . "' disabled=true>\n";
-//	  print "Next > >";
-	} else {
-	  print "<input type=button name=next id=next value='" . _formulize_DMULTI_NEXT . "' $submitTextNext>\n";
-//	  print "<a href='http://www.oacasgroups.org/modules/pageworks/index.php?page=1' $submitTextNext>Next > ></a>";
-	}
-
-	print "</form></center>";
+	print "</center>";
 
 }
 
 } // end of the function!
+
+
+function drawPageNav($usersCanSave="", $pagesSkipped="", $currentPage="", $previousPage="", $nextPage="", $submitTextPrev="", $submitTextNext="", $pages="", $thanksPage, $pageTitles, $aboveBelow) {
+
+	if($aboveBelow == "above") {
+		//navigation options above the form print like this
+		print "<br /><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\"><table><tr>\n";
+		print "<td style=\"vertical-align: middle;\"><table><tr><td><b>" . _formulize_DMULTI_YOUAREON . "</b><br />" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . count($pages) . "</td></tr></table></td>";
+		print "<td style=\"vertical-align: middle;\">";
+	if($previousPage != "none") {
+	  print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' $submitTextPrev>\n";
+	} else {
+	  print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' disabled=true>\n";
+	}
+		print "</td>";
+		print "<td style=\"vertical-align: middle;\">";
+
+	if($usersCanSave AND $nextPage==$thanksPage) {
+	  print "<input type=button name=next id=next value='" . _formulize_DMULTI_SAVE . "' $submitTextNext>\n";
+	} elseif($nextPage==$thanksPage) {
+	  print "<input type=button name=next id=next value='" . _formulize_DMULTI_NEXT . "' disabled=true>\n";
+	} else {
+	  print "<input type=button name=next id=next value='" . _formulize_DMULTI_NEXT . "' $submitTextNext>\n";
+	}
+		print "</td>";
+		print "<td style=\"vertical-align: middle;\">";
+		print _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . pageSelectionList($currentPage, count($pages), $pageTitles, $aboveBelow);
+		print "</td></tr></table></form><br />";
+} else { 
+	//navigation options below the form print like this
+	print "<br><center><p>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . count($pages);
+	if(!$usersCanSave) {print "<br>" . _formulize_INFO_NOSAVE;}
+	if($pagesSkipped) {print "<br>". _formulize_DMULTI_SKIP;}
+	print "</p><br><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\">";
+	if($previousPage != "none") {print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' $submitTextPrev>\n";} 
+	else {print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' disabled=true>\n";}
+	print "&nbsp;&nbsp;&nbsp;&nbsp;";
+	if($usersCanSave AND $nextPage==$thanksPage) {print "<input type=button name=next id=next value='" . _formulize_DMULTI_SAVE . "' $submitTextNext>\n";} 
+	elseif($nextPage==$thanksPage) {print "<input type=button name=next id=next value='" . _formulize_DMULTI_NEXT . "' disabled=true>\n";} 
+	else {print "<input type=button name=next id=next value='" . _formulize_DMULTI_NEXT . "' $submitTextNext>\n";}
+	print "<br><p>". _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . pageSelectionList($currentPage, count($pages), $pageTitles, $aboveBelow) . "</p></form>";
+}
+}
+
+function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow) {
+
+	$pageSelectionList = "";
+
+	$pageSelectionList .= "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
+	for($page=1;$page<=$countPages;$page++) {
+		$title = isset($pageTitles[$page]) ? " &mdash; " . printSmart($pageTitles[$page]) : "";
+		$pageSelectionList .= "<option value=$page";
+		$pageSelectionList .= $page == $currentPage ? " selected=true>" : ">";
+		$pageSelectionList .= $page . $title . "</option>\n";
+	}
+	$pageSelectionList .= "</select>";
+	return $pageSelectionList;
+}
 
 ?>

@@ -104,6 +104,8 @@ else
 	}
 	$title2 = stripslashes($title2);
 	$title2 = eregi_replace ("'", "`", $title2);
+	$title2 = eregi_replace ("&quot;", "`", $title2);
+	$title2 = eregi_replace ("&#039;", "`", $title2);
 	$title2 = eregi_replace ('"', "`", $title2);
 	$title2 = eregi_replace ('&', "_", $title2);
 	

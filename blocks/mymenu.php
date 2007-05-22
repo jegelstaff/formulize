@@ -36,12 +36,15 @@ function block_formulizeMENU_show() {
 	$cats = fetchCats();
 
 	// GENERATE THE ID_FORM
-	if(!isset($_POST['fid'])){
+	$id_form = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
+  $id_form = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $id_form ;
+
+/*	if(!isset($_POST['fid'])){
 		$id_form = isset ($_GET['fid']) ? $_GET['fid'] : '';
 	} else {
 		$id_form = $_POST['fid'];
 	}
-/*	if(!isset($_POST['title'])){
+	if(!isset($_POST['title'])){
 		$title = isset ($_GET['title']) ? $_GET['title'] : '';
 	} else {
 		$title = $_POST['title'];

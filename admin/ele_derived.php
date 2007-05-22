@@ -1,9 +1,7 @@
 <?php
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) 2004 Freeform Solutions                  ##
-##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
-##                       <http://www.brandycoke.com/>                        ##
+##                    Copyright (c) 2007 Freeform Solutions                  ##
 ###############################################################################
 ##                    XOOPS - PHP Content Management System                  ##
 ##                       Copyright (c) 2000 XOOPS.org                        ##
@@ -28,23 +26,41 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions and NS Tai (aka tuff) and others ##
-##  URL: http://www.brandycoke.com/                                          ##
+##  Author of this file: Freeform Solutions                                  ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// SET $formulize_screen_id IN A PHP BLOCK, AND THEN INCLUDE
-// XOOPS_ROOT_PATH . "/modules/formulize/index.php" TO CALL UP
-// A SCREEN IN A BLOCK WITHOUT THE ENTIRE XOOPS TEMPLATE COMING IN
-if(isset($formulize_screen_id)) {
-    if(is_numeric($formulize_screen_id)) {
-        include 'initialize.php';        
+// write out javascript necessary for sticking the current caption into the Formula box
+?>
+
+<script type="text/javascript">
+    function writeCaptionToBox(formElement) {
+        for (var i=0; i < formElement.options.length; i++) {
+		if (formElement.options[i].selected) {
+        		window.document.getElementById('ele_value[0]').value = window.document.getElementById('ele_value[0]').value + '"' + formElement.options[i].value + '"';
+		}
+	}
     }
-} else {
-    require_once "../../mainfile.php";
-    include XOOPS_ROOT_PATH.'/header.php';
+</script>
 
-    include 'initialize.php';
+<?php
 
-    include XOOPS_ROOT_PATH.'/footer.php';
+$options = array();
+$allColList = getAllColList($id_form);
+foreach($allColList[$id_form] as $thisCol) {
+    if($thisCol['ele_colhead'] != "") {
+	$options[trans($thisCol['ele_colhead'])] = printSmart(trans($thisCol['ele_colhead']));
+    } else {
+	$options[trans(strip_tags($thisCol['ele_caption']))] = printSmart(trans(strip_tags($thisCol['ele_caption'])));
+    }
 }
+
+$formulaBox = new XoopsFormTextArea(_AM_ELE_DERIVED_CAP, 'ele_value[0]', $value[0], 5, 35);
+$listOfElements = new XoopsFormSelect("", 'listofelements');
+$listOfElements->addOptionArray($options);
+$listOfElements_output = $listOfElements->render() . "\n<br />\n<input type=button name=addele value=\"" . _AM_ELE_DERIVED_ADD . "\" onclick=\"javascript:writeCaptionToBox(this.form.listofelements);\"></input>";
+$formulaBox->setDescription($listOfElements_output . "<br /><br />" . _AM_ELE_DERIVED_DESC);
+
+$form->addElement($formulaBox);
+
+?>

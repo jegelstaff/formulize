@@ -100,7 +100,19 @@ if( $_POST['op'] != 'save' ){
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=yn">'._AM_ELE_YN.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=date">'._AM_ELE_DATE.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=sep">'._AM_ELE_SEP.'</a></td></tr>
-	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=subform">'._AM_ELE_SUBFORM.'</a></td></tr>';
+	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=subform">'._AM_ELE_SUBFORM.'</a></td></tr>
+	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=grid">'._AM_ELE_GRID.'</a></td></tr>
+	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=derived">'._AM_ELE_DERIVED.'</a></td></tr>';
+
+	/*
+	 * Hack by Félix<INBOX International>
+	 * Adding colorpicker form element
+	 */
+	echo '<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=colorpick">'._AM_ELE_COLORPICK.'</a></td></tr>';
+	/*
+	 * End of Hack by Félix<INBOX International>
+	 * Adding colorpicker form element
+	 */
 	// upload not yet enabled in formulize (redisplay of file info not supported, upload itself not tested)
 	//<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=upload">'._AM_ELE_UPLOAD.'</a></td></tr>
 	echo '</table>';
@@ -120,6 +132,7 @@ if( $_POST['op'] != 'save' ){
 	$criteria->setSort('ele_order');
 	$criteria->setOrder('ASC');
 	$elements =& $formulize_mgr->getObjects($criteria,$id_form);
+	$class = "odd";
 	foreach( $elements as $i ){
 		$id = $i->getVar('ele_id');
 		$ele_value = $i->getVar('ele_value');
@@ -187,43 +200,44 @@ if( $_POST['op'] != 'save' ){
 		if(is_array($ele_value))$ele_value[0] = addslashes ($ele_value[0]);
 
 		echo '<tr>';
-		echo '<td class="even">'.$i->getVar('ele_caption')."</td>\n";
+		$class = $class == "even" ? "odd" : "even";
+		echo '<td class="'.$class.'">'.$i->getVar('ele_caption')."</td>\n";
 /*		if(is_object($ele_value)) {
-			echo '<td class="even">'.$ele_value[0]."</td>\n";
+			echo '<td class="'.$class.'">'.$ele_value[0]."</td>\n";
 		} else {
-			echo '<td class="even">'.$ele_value->render()."</td>\n";
+			echo '<td class="'.$class.'">'.$ele_value->render()."</td>\n";
 		}*/
-		echo '<td class="even" align="center">'.$check_req->render()."</td>\n";
-		echo '<td class="even" align="center">'.$text_order->render()."</td>\n";
+		echo '<td class="'.$class.'" align="center">'.$check_req->render()."</td>\n";
+		echo '<td class="'.$class.'" align="center">'.$text_order->render()."</td>\n";
 
 		// added - start - August 25 2005 - jpc
 		if($multiGroupDisplay == true)
         {
 			// hidden id added to July 25 2006 so the save changes button on list of elements page works for custom display setting elements
-			echo '<td class="even" align="center">'.$check_display."</td>\n" . $hidden_id->render() . "\n";
+			echo '<td class="'.$class.'" align="center">'.$check_display."</td>\n" . $hidden_id->render() . "\n";
 		}
         else
         {
 		// added - end - August 25 2005 - jpc
 
-		echo '<td class="even" align="center">'.$check_display->render().$hidden_id->render()."</td>\n";
+		echo '<td class="'.$class.'" align="center">'.$check_display->render().$hidden_id->render()."</td>\n";
 
 		// added - start - August 25 2005 - jpc
 		}
 		// added - end - August 25 2005 - jpc
 
 
-		echo '<td class="even" align="center">'.$check_priv->render()."</td>\n";
+		echo '<td class="'.$class.'" align="center">'.$check_priv->render()."</td>\n";
 	
                 
-		echo '<td class="even" align="center"><a href="elements.php?title='.$title.'&op=edit&amp;ele_id='.$id.'">'._EDIT.'</a></td>';
+		echo '<td class="'.$class.'" align="center"><a href="elements.php?title='.$title.'&op=edit&amp;ele_id='.$id.'">'._EDIT.'</a></td>';
 		if($i->getVar('ele_type') == "text" OR $i->getVar('ele_type') == "textarea") {
-			echo '<td class="even" align="center"><a href="elements.php?title='.$title.'&op=convert&amp;ele_id='.$id.'" onclick="javascript:return confirmConvert();" title="'._AM_CONVERT_HELP.'" alt="'._AM_CONVERT_HELP.'">'._AM_CONVERT.'</a></td>';
+			echo '<td class="'.$class.'" align="center"><a href="elements.php?title='.$title.'&op=convert&amp;ele_id='.$id.'" onclick="javascript:return confirmConvert();" title="'._AM_CONVERT_HELP.'" alt="'._AM_CONVERT_HELP.'">'._AM_CONVERT.'</a></td>';
 		} else {
-			echo '<td class="even" align="center">&nbsp;</td>';
+			echo '<td class="'.$class.'" align="center">&nbsp;</td>';
 		}
-		echo '<td class="even" align="center"><a href="elements.php?title='.$title.'&op=edit&amp;ele_id='.$id.'&clone=1">'._CLONE.'</a></td>';
-		echo '<td class="even" align="center"><a href="elements.php?title='.$title.'&op=delete&amp;ele_id='.$id.'">'._DELETE.'</a></td>';
+		echo '<td class="'.$class.'" align="center"><a href="elements.php?title='.$title.'&op=edit&amp;ele_id='.$id.'&clone=1">'._CLONE.'</a></td>';
+		echo '<td class="'.$class.'" align="center"><a href="elements.php?title='.$title.'&op=delete&amp;ele_id='.$id.'">'._DELETE.'</a></td>';
 		echo '</tr>';
 	}
 	

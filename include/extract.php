@@ -1,4 +1,4 @@
-<?
+<?php
 
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
@@ -57,11 +57,12 @@ function sqlfilter($list, $field) {
 }
 
 // RETURNS THE RESULTS OF AN SQL STATEMENT
+// WARNING:  HIGHLY INEFFICIENT IN TERMS OF MEMORY USAGE!
 // returns a multidimensioned array where the first index is the row of the result and the second index is the field name in that row
 function go($query, $keyfield="") {
 	//print "$query"; // debug code
 	$result = array();
-	if($res = mysql_query($query)) {
+	if($res = mysql_query($query)) { // appears to work OK inside Drupal.  Is this because there is always a previous query to the XOOPS DB before we get to this stage, and so it is pointing to the right place when this fires?  Maybe this should be rewritten to explicitly check for the pressence of $xoopsDB, and use that if it is found.
 		while ($array = mysql_fetch_array($res)) {
 			if($keyfield) {
 				$result[$array[$keyfield]] = $array;
@@ -165,6 +166,7 @@ function fieldValues($results, $field, $filter="", $single="") {
 // DEBUG FUNCTIONS, PRINTS RAW RESULTS ARRAYS IN A READABLE FORMAT
 // call with this code:
 // printclean($mainresults, $linkresult);
+// DO NOT WORK NOW THAT MAINRESULT AND LINKRESULT ARE ACTUAL QUERY RESULT OBJECTS AND NOT ARRAYS
 function pc($result) {
 	print "<br>PRINTCLEAN RESULTS:<br>";
 	for($i=0;$i<count($result);$i++) {
@@ -208,6 +210,7 @@ function isNameList($fid, $ffcaption) {
 	$caption = str_replace("`", "'", $ffcaption);
 	$evq = go("SELECT ele_value FROM " . DBPRE . "formulize WHERE id_form = " . intval($fid) . " AND ele_caption = '" . mysql_real_escape_string($caption) . "'");
 	$ele_value = unserialize($evq[0]['ele_value']);
+	if(!is_array($ele_value[2])) { return false; }
 	$key1 = key($ele_value[2]);
 	if($key1 == "{USERNAMES}" OR $key1 == "{FULLNAMES}") {
 		return $key1;
@@ -240,8 +243,8 @@ function prepvalues(&$value, $type, $islinksource, $id_req, $ffcaption, $fid) {
 	if($islinksource) {
 		$templinkedvals = explode("#*=:*", $value);
 		$templinkedvals2 = explode("[=*9*:", $templinkedvals[2]);
-		/*print "templinkedvals for display: ";
-		print_r($templinkedvals2);*/
+//		print "templinkedvals for display: ";
+//		print_r($templinkedvals2);
 		$value = "";
 		foreach($templinkedvals2 as $anentry)
 		{
@@ -253,7 +256,7 @@ function prepvalues(&$value, $type, $islinksource, $id_req, $ffcaption, $fid) {
 			}
 		}
 	}
-
+//print "<br>$value<br>";
 	// handle fullnames or usernames
 	// 1. check type, fid/caption
 	// 2. if this is a fullnames/usernames situation, then get the usernames and replace the ids with them
@@ -315,7 +318,7 @@ function handle($cap, $fid, $frid) {
 
 // this function returns the handle for an element when given the id
 function handleFromId($id, $fid, $frid) {
-	if($id === "uid" OR $id === "proxyid" OR $id === "creation_date" OR $id === "mod_date") { return $id; }
+	if($id === "uid" OR $id === "proxyid" OR $id === "creation_date" OR $id === "mod_date" OR $id === "creator_email") { return $id; }
 	$handle = go("SELECT fe_handle FROM " . DBPRE . "formulize_framework_elements WHERE fe_frame_id = '$frid' AND fe_form_id = '$fid' AND fe_element_id = '$id'");
 	return $handle[0]['fe_handle'];
 }
@@ -328,26 +331,9 @@ function handleFromId($id, $fid, $frid) {
 // $linkisparent is an array of flags that indicates whether a result set is the parent or child in a link relationship (ie: the source of the values or the receiver of the values).  For parent forms, we need to record the ele_id of the key, for child forms, we need to record the prep'd value.  The keys of this array correspond to the keys of linkkeys.
 // $linkformids is an array of the ids of the linked forms.  the keys correspond to the keys of linkkeys.
 // $linktargetids is the ele_ids of the elements in the linked form that these handles/values link up to
-// note: $results is passed by reference, saves lots of memory.  
-function convertFinal(&$results, $fid, $frid="", $linkkeys="", $linkisparent="", $linkformids="", $linktargetids="", $linkcommonvalue="") {
-
-// prepvalues call moved to loop below for efficiency
-//	for($i=0;$i<count($results);$i++) {
-//		$results[$i]['ele_value'] = prepvalues($results[$i]['ele_value'], $results[$i]['ele_type']);
-//	}
+function convertFinal($resultsRaw, $fid, $frid="", $linkkeys="", $linkisparent="", $linkformids="", $linktargetids="", $linkcommonvalue="") {
 
 debug_memory("Start of covertFinal");
-
-	// need to get master list of expected handles
-	$fullCapList = go("SELECT ele_caption, ele_id FROM " . DBPRE . "formulize WHERE id_form = '$fid'");
-	foreach($fullCapList as $acap) {
-		if($frid) {
-			$fullHandleList[$acap['ele_caption']] = handle($acap['ele_caption'], $fid, $frid);
-		} else { // use full caption if we're doing just a form
-			$fullHandleList[$acap['ele_caption']] = $acap['ele_id'];
-		}
-	}
-
 
 	// get the handle for this form, of the full name if not
 	if($frid) {
@@ -355,47 +341,65 @@ debug_memory("Start of covertFinal");
 	} else {
 		$formHandle = go("SELECT desc_form FROM " . DBPRE . "formulize_id WHERE id_form='$fid'");
 	}
+
+	// need to get master list of expected handles
+          // also store any information about derived columns for use later -- March 27 2007
+          $GLOBALS['formulize_calcDerivedColumnsData'][$fid] = array();
+	$fullCapList = go("SELECT ele_caption, ele_id, ele_value, ele_type FROM " . DBPRE . "formulize WHERE id_form = '$fid' AND ele_display != \"0\"");
+	foreach($fullCapList as $acap) {
+		if($frid) {
+			$fullHandleList[$acap['ele_caption']] = handle($acap['ele_caption'], $fid, $frid);
+		} else { // use full caption if we're doing just a form
+			$fullHandleList[$acap['ele_caption']] = $acap['ele_id'];
+		}
+                if($acap['ele_type'] == "derived") {
+                    $GLOBALS['formulize_calcDerivedColumnsData'][$fid][] = array('handle'=>$fullHandleList[$acap['ele_caption']], 'formula'=>unserialize($acap['ele_value']), 'formhandle'=>$formHandle[0][0]);
+                }
+	}
+
 	$foundHandleList = array();	
 	$finalidreqs = array();
 	$linkindexer=0;
-	for($i=0;isset($results[$i]);$i++) {
-		$islinksource = strstr($results[$i]['ele_value'], "#*=:*");
-		$linkids = prepvalues($results[$i]['ele_value'], $results[$i]['ele_type'], $islinksource, $results[$i]['id_req'], $results[$i]['ele_caption'], $fid); // linkids is an array of the ele_ids of the values that this field links to, if it is a linked field.
-		$cap = eregi_replace ("`", "'", $results[$i]['ele_caption']);  // convert caption to _formulize table format so that we can get the handle from the full Handle List which has array keys drawn from that table
+        $totalResultRows = mysql_num_rows($resultsRaw);
+        $results = array();
+	for($i=0;$i<$totalResultRows;$i++) {
+               $results = mysql_fetch_array($resultsRaw);
+               	$islinksource = strstr($results['ele_value'], "#*=:*");
+		$linkids = prepvalues($results['ele_value'], $results['ele_type'], $islinksource, $results['id_req'], $results['ele_caption'], $fid); // linkids is an array of the ele_ids of the values that this field links to, if it is a linked field.
+		$cap = eregi_replace ("`", "'", $results['ele_caption']);  // convert caption to _formulize table format so that we can get the handle from the full Handle List which has array keys drawn from that table
 		$handle = $fullHandleList[$cap];
-//		$foundHandleList[$results[$i]['id_req']] = array();
+//		$foundHandleList[$results['id_req']] = array();
 		// check to see that we haven't already stored this value for this entry (takes care of situations where the database as duplicate entries with the same id_req, causing the number of values in results array to be greater than it ought to be -- problem likely caused by users clicking on the submit button more than one time?
-		if(!isset($foundHandleList[$results[$i]['id_req']][$handle])) {
-			$values = explode("*=+*:", $results[$i]['ele_value']);
+		if(!isset($foundHandleList[$results['id_req']][$handle])) {
+			$values = explode("*=+*:", $results['ele_value']);
 			foreach($values as $id=>$value) {
-				$finalresults[$formHandle[0][0]][$results[$i]['id_req']][$handle][$id] = $value;
-				if(!isset($finalidreqs[$results[$i]['id_req']])) {
-					$finalidreqs[$results[$i]['id_req']] = $results[$i]['id_req'];
+				$finalresults[$formHandle[0][0]][$results['id_req']][$handle][$id] = $value;
+				if(!isset($finalidreqs[$results['id_req']])) {
+					$finalidreqs[$results['id_req']] = $results['id_req'];
 				}
 			}
 			// store any values involved in a link so we can filter out the main queries on linked forms
 			// major performance improvement by doing this
 			if(is_array($linkkeys)) {
-				if($keys = array_keys($linkkeys, $handle) AND $results[$i]['ele_value']) { // if these values are the ones the link is based on...
+				if($keys = array_keys($linkkeys, $handle) AND $results['ele_value']) { // if these values are the ones the link is based on...
 					foreach($keys as $key) {
 						$linkvalue['fid'][$linkindexer] = $linkformids[$key];
 						$linkvalue['targetid'][$linkindexer] = $linktargetids[$key];
 						if($linkcommonvalue[$key]) { // link by common values, so record the current value
-							$linkvalue['values'][$linkindexer] = $results[$i]['ele_value'];
+							$linkvalue['values'][$linkindexer] = $results['ele_value'];
 						} elseif($islinksource) { // link by ids related to linked selectboxes...
 							$linkvalue['values'][$linkindexer] = $linkids;
 						} else {
-							$linkvalue['values'][$linkindexer] = $results[$i]['ele_id'];
+							$linkvalue['values'][$linkindexer] = $results['ele_id'];
 						}
 						$linkindexer++;
 					}
 				}
 			} // end of if isarray
 			// flag the current handle as found in the fullhandlelist
-			$foundHandleList[$results[$i]['id_req']][$handle] = $handle;
+			$foundHandleList[$results['id_req']][$handle] = $handle;
 		}
-		unset($results[$i]); // free up some memory!!
-	}
+     }
 
 debug_memory("after building main array");
 
@@ -426,7 +430,7 @@ debug_memory("after building main array");
 		}
 		unset($foundHandleList[$idreq]);
 	}
-
+debug_memory("after adding blanks");
 	// assign metadata (uid, date, proxyid, creation_date)
 	if(isset($finalresults)) { 
 		foreach($finalresults[$formHandle[0][0]] as $record=>$value) {
@@ -542,7 +546,7 @@ function makeFilterInternal($filter, $frid="", $fid, $andor, $scope, $linkform) 
 				if(is_numeric($filterparts[0]) AND $filterparts[0] == $afilter) { // if this is a numeric value, then we must treat it specially
 					$capforfilter = "id_req";
 					$filterNotForThisForm++; // just in case nothing is found, we don't treat this as a filter that is for this form since we don't know which form it might apply to
-				} elseif($filterparts[0] == "uid" OR $filterparts[0] == "proxyid" OR $filterparts[0] == "creation_date" OR $filterparts[0] == "mod_date") {
+				} elseif($filterparts[0] == "uid" OR $filterparts[0] == "proxyid" OR $filterparts[0] == "creation_date" OR $filterparts[0] == "mod_date" OR $filterparts[0] == "creator_email") {
 					if(!$linkform) {
 					$capforfilter = $filterparts[0];
 					} else {
@@ -591,8 +595,11 @@ function makeFilterInternal($filter, $frid="", $fid, $andor, $scope, $linkform) 
 					if(strstr($thisLink['ele_value'], "#*=:*")) {
 						$parts = explode("#*=:*", $thisLink['ele_value']);
 						$targetCap = str_replace ("'", "`", $parts[1]);
+						$targetCap = str_replace ("&quot;", "`", $targetCap);
+                                                $targetCap = str_replace ("&#039;", "`", $targetCap);
 						//if(isset($_GET['debug'])) { print "SELECT ele_id FROM " . DBPRE . "formulize_form WHERE id_form = '" . $parts[0] . "' AND ele_caption='$targetCap' AND ele_value LIKE '%" . mysql_real_escape_string($filterparts[1]) . "%'<br>"; }											
-						$targetQuery = go("SELECT ele_id FROM " . DBPRE . "formulize_form WHERE id_form = '" . $parts[0] . "' AND ele_caption='$targetCap' AND ele_value LIKE '%" . mysql_real_escape_string($filterparts[1]) . "%'");											
+						$targetQuery = go("SELECT ele_id FROM " . DBPRE . "formulize_form WHERE id_form = '" . $parts[0] . "' AND ele_caption='$targetCap' AND ele_value LIKE '%" . mysql_real_escape_string($filterparts[1]) . "%'");	
+
 						//if(isset($_GET['debug'])) { print_r($targetQuery); }
 						if(count($targetQuery) == 0) { continue 1; } // ignore this filter since no values where found
 						if(count($targetQuery) == 1) { // only one thing found, so...
@@ -760,7 +767,9 @@ function makeFilterInternal($filter, $frid="", $fid, $andor, $scope, $linkform) 
 						$tempfilter .= ")";
 					}
 				}
+
 				if(isset($_GET['debug'])) { print "SELECT id_req FROM " . DBPRE . "formulize_form WHERE id_form = '$fid' AND $tempfilter $scope GROUP BY id_req $orderbyfilter" . "<br><br>"; } // DEBUG LINE
+
 				if(!$uidProxyidQuery AND !$emailQuery) {
 					$prequery = go("SELECT id_req FROM " . DBPRE . "formulize_form WHERE id_form = '$fid' AND $tempfilter $scope GROUP BY id_req $orderbyfilter");
 				}
@@ -867,6 +876,7 @@ function smartAddSlashes($text) {
 
 // THIS FUNCTION CHECKS TO SEE IF A GIVEN FORM HAS UNIFIED DISPLAY TURNED ON FOR IT IN A FRAMEWORK, and is in a onetoone relationship
 // Note: a form may exist twice in a framework and have unified display turned on only one time.  
+
 // That will yield strange results and is not an expected circumstance
 function checkUDAndOneToOne($thisfid, $linklist1, $linklist2) {
 	$ud = 0;
@@ -909,6 +919,7 @@ function getOneToOneLinks($record) {
 	} else {
 		$filter = "main_form='$record'";
 	}
+
 	$onetoonecheck_sql = "SELECT link_form FROM " . DBPRE . "formulize_onetoone_links WHERE $filter";
 	$onetoonecheck_res = mysql_query($onetoonecheck_sql);
 	while ($array = mysql_fetch_array($onetoonecheck_res)) {
@@ -918,7 +929,7 @@ function getOneToOneLinks($record) {
 }
 
 
-function dataExtraction($frame="", $form, $filter, $andor, $scope, $mainFormOnly, $includeArchived=false) {
+function dataExtraction($frame="", $form, $filter, $andor, $scope, $sortField, $sortOrder, $pageStart, $pageSize, $mainFormOnly, $includeArchived=false) {
 
 if(isset($_GET['debug'])) { $time_start = microtime_float(); }
 
@@ -1018,10 +1029,67 @@ if(isset($_GET['debug'])) { $time_start = microtime_float(); }
 	// mainresults is the full results from main form
 	// linkresults is the full results from all linked forms, where [0..n index][formid] is the form id of the form and [0..n index][results] is the array of rows returned from that form
 	//if(isset($_GET['debug'])) { print "SELECT id_req, ele_type, ele_caption, ele_value, ele_id FROM " . DBPRE . "formulize_form WHERE id_form = '$fid' $mainfilter $scope ORDER BY id_req"; }// DEBUG LINE
+        
+               
 debug_memory("Before retrieving mainresults");
 
-//	if($includeArchived) {
-		$mainresults = go("SELECT id_req, ele_type, ele_caption, ele_value, ele_id FROM " . DBPRE . "formulize_form WHERE id_form = '$fid' $mainfilter $scope ORDER BY id_req");
+//	if($includeArchived) { // INCLUSION OR EXCLUSION OF ARCHIVED ENTRIES DEFINITELY ON HOLD
+
+               if(!$frid AND $pageSize > 0) {
+                    // EXCITING NEW CODE ON HOLD FOR FRAMEWORKS, SINCE WE CANNOT SUCCESSFULLY PAGE RESULTS WHEN THERE IS A FILTER ON A FIELD IN A DIFFERENT FORM WITHIN THE FRAMEWORK
+                    // In such cases, we have to get all the entries in the other form first, and then filter our main form results based on ones that match only the found entries
+                    // ie: we need proper joins!  in a real table!               
+                    
+                    // PAGING OF RESULTS CANNOT BE DONE WHEN SOMETHING LIKE AN ADVANCED SEARCH IS APPLIED AFTERWARDS EITHER
+                    // The advanced search needs to be applied across the entire possible dataset, not just the entries shown on a particular page!
+                    
+                    // NEW CODE TO HANDLE SORTING AND PAGING RESULTS
+                    
+                    // convert a framework-based sortField to numeric
+                    $ascDesc = $sortOrder == "SORT_DESC" ? "DESC" : "ASC"; // use PHP syntax for param passed to this function, but convert to SQL syntax for inclusion in query
+                    if($sortField) {
+                         if(!is_numeric($sortField) AND $frid) {
+                              $sortFieldClause = "AND ele_caption = '" . getCaptionFF($sortField, $frid, $fid) . "'";
+                         } elseif(is_numeric($sortField)){
+                              $sortFieldClause = "AND ele_caption = '" . getCaptionFFbyId($sortField, $frid, $fid) . "'";
+                         } else {
+                              exit("Error: A column was specified for sorting the results, but no framework was specified");
+                         }
+                         $orderByClause = "ORDER BY ele_value $ascDesc";
+                    } else {
+                         $sortFieldClause = "";
+                         $orderByClause = "ORDER BY id_req $ascDesc";
+                    }
+                    if($pageSize) {
+                         $limitClause = "LIMIT $pageStart,$pageSize";
+                    } else {
+                         $limitClause = "";
+                    }
+                    // not using "go" since we want to avoid one level of looping
+                    // when integrating with Drupal, as long as the XOOPS DB connection happens second, mysql_query below should work okay.  (mysql_query uses the last opened connection by mysql_connect)
+                    $premainresultsSQL = "SELECT DISTINCT(id_req) FROM " . DBPRE . "formulize_form WHERE id_form = '$fid' $mainfilter $scope $sortFieldClause $orderByClause $limitClause";
+                    $pmrRes = mysql_query($premainresultsSQL);
+                    $id_reqsForPage = array();
+                    while($pmrArray = mysql_fetch_array($pmrRes)) {
+                         $id_reqsForPage[] = $pmrArray['id_req'];
+                    }
+                    $id_reqsForPageClause = "AND id_req IN (" . implode(",",$id_reqsForPage) . ")";
+                    
+                    // DO ONE QUERY TO COUNT THE TOTAL NUMBER OF RESULTS, SINCE WE NEED TO KNOW THAT IN ORDER TO PROVIDE PAGE NAVIGATION
+                    // Put the result in global memory space so we can pick it up again when necessary
+                    $countMainResultsSQL = "SELECT COUNT(DISTINCT(id_req)) FROM " . DBPRE . "formulize_form WHERE id_form = '$fid' $mainfilter $scope $sortFieldClause $orderByClause";
+                    $countMRRes = mysql_query($countMainResultsSQL);
+                    $countMRArray = mysql_fetch_array($countMRRes);
+                    $GLOBALS['formulize_countMainResults'] = $countMRArray['id_req'];
+                    
+               } else {
+                    $id_reqsForPageClause = "";
+               }
+               //$mainresults = go("SELECT id_req, ele_type, ele_caption, ele_value, ele_id FROM " . DBPRE . "formulize_form WHERE id_form = '$fid' $mainfilter $scope $id_reqsForPageClause ORDER BY id_req");
+               $mainresults = mysql_query("SELECT id_req, ele_type, ele_caption, ele_value, ele_id FROM " . DBPRE . "formulize_form WHERE id_form = '$fid' $mainfilter $scope $id_reqsForPageClause ORDER BY id_req");
+
+
+// THIS IS MORE CODE RELATED TO THE ARCHIVED FILTERING...               
 //	} else {
 //		$mainfilter1 = str_replace("id_req", "t1.id_req", $mainfilter);
 //		$scope1 = str_replace("uid", "t1.uid", $scope);
@@ -1033,39 +1101,55 @@ debug_memory("After retrieving mainresults");
 
 	// generate the list of key fields in the current form, so we can use the values in these fields to filter the linked forms. -- sept 27 2005
 	if($frid AND !$mainFormOnly) {
-		foreach($linklist1 as $theselinks) {
-			$linkformids1[] = $theselinks['fl_form2_id'];
-			if($theselinks['fl_key1'] != 0) {
-				$handleforlink = handleFromId($theselinks['fl_key1'], $fid, $frid);
-				$linkkeys1[] = $handleforlink;
-				$linktargetids1[] = $theselinks['fl_key2'];
-			} else {
-				$linkkeys1[] = "";
-				$linktargetids1[] = "";
+		if(count($linklist1) > 0) {
+      		foreach($linklist1 as $theselinks) {
+      			$linkformids1[] = $theselinks['fl_form2_id'];
+      			if($theselinks['fl_key1'] != 0) {
+      				$handleforlink = handleFromId($theselinks['fl_key1'], $fid, $frid);
+      				$linkkeys1[] = $handleforlink;
+      				$linktargetids1[] = $theselinks['fl_key2'];
+      			} else {
+      				$linkkeys1[] = "";
+      				$linktargetids1[] = "";
+      			}
+      			if($theselinks['fl_relationship'] == 2) { // 2 is one to many relationship
+      				$linkisparent1[] = 1;
+      			} else {
+      				$linkisparent1[] = 0;
+      			}
+      			$linkcommonvalue1[] = $theselinks['fl_common_value'];
 			}
-			if($theselinks['fl_relationship'] == 2) { // 2 is one to many relationship
-				$linkisparent1[] = 1;
-			} else {
-				$linkisparent1[] = 0;
-			}
-			$linkcommonvalue1[] = $theselinks['fl_common_value'];
+		} else {
+			$linkkeys1 = array();
+			$linkisparent1 = array();
+			$linkformids1 = array();
+			$linktargetids1 = array();
+			$linkcommonvalue1 = array();
 		}
-		foreach($linklist2 as $theselinks) {
-			$linkformids2[] = $theselinks['fl_form1_id'];
-			if($theselinks['fl_key2'] != 0) {
-				$handleforlink = handleFromId($theselinks['fl_key2'], $fid, $frid);
-				$linkkeys2[] = $handleforlink;
-				$linktargetids2[] = $theselinks['fl_key1'];
-			} else {
-				$linkkeys2[] = "";
-				$linktargetids2[] = "";
-			}
-			if($theselinks['fl_relationship'] == 3) { // 3 is many to one relationship
-				$linkisparent2[] = 1;
-			} else {
-				$linkisparent2[] = 0;
-			}
-			$linkcommonvalue2[] = $theselinks['fl_common_value'];
+		if(count($linklist2) > 0) {
+      		foreach($linklist2 as $theselinks) {
+      			$linkformids2[] = $theselinks['fl_form1_id'];
+      			if($theselinks['fl_key2'] != 0) {
+      				$handleforlink = handleFromId($theselinks['fl_key2'], $fid, $frid);
+      				$linkkeys2[] = $handleforlink;
+      				$linktargetids2[] = $theselinks['fl_key1'];
+      			} else {
+      				$linkkeys2[] = "";
+      				$linktargetids2[] = "";
+      			}
+      			if($theselinks['fl_relationship'] == 3) { // 3 is many to one relationship
+      				$linkisparent2[] = 1;
+      			} else {
+      				$linkisparent2[] = 0;
+      			}
+      			$linkcommonvalue2[] = $theselinks['fl_common_value'];
+      		}
+		} else {
+			$linkkeys2 = array();
+			$linkisparent2 = array();
+			$linkformids2 = array();
+			$linktargetids2 = array();
+			$linkcommonvalue2 = array();
 		}
 		$linkkeys = array_merge($linkkeys1, $linkkeys2);
 		$linkisparent = array_merge($linkisparent1, $linkisparent2);
@@ -1087,7 +1171,7 @@ debug_memory("After retrieving mainresults");
 	list($finalresults, $linkvalue, $finalidreqs) = convertFinal($mainresults, $fid, $frid, $linkkeys, $linkisparent, $linkformids, $linktargetids, $linkcommonvalue);
 
 debug_memory("after convertFinal");
-
+	  
 	unset($mainresults);
 	
 	if($frid AND !$mainFormOnly) {
@@ -1110,7 +1194,7 @@ debug_memory("after convertFinal");
 				$filters = explode("][", $filter);
 				foreach($filters as $afilter) {
 					$filterparts = explode("/**/", $afilter);
-					if($filterparts[0] != "uid" AND $filterparts[0] != "proxyid" AND $filterparts[0] != "creation_date" AND $filterparts[0] != "mod_date") {
+					if($filterparts[0] != "uid" AND $filterparts[0] != "proxyid" AND $filterparts[0] != "creation_date" AND $filterparts[0] != "mod_date" AND $filterparts[0] != "creator_email") {
 						$lfexists[$lfid] = 1; // at least one filter was not a metadata filter (which should only be applied to the main form)
 						break;
 					}
@@ -1149,6 +1233,7 @@ debug_memory("after convertFinal");
 					unset($linkUidCondition);
 					unset($linkValueCondition);
 					// NOTE: THIS LOOP IS ESSENTIALLY SET UP TO ASSUME ONLY ONE KIND OF LINKING PER FORM.  IF THERE ARE TWO KINDS OF LINKS FOR A FORM, THEN THE RESULTING CONDITIONS WILL LOOK FOR ENTRIES THAT MATCH BOTH LINKS, WHICH IS OBVIOUSLY IMPOSSIBLE.  THEREFORE, THE RESULTS IN THAT CASE WILL INCLUDE NO VALUES FROM THE LINKED FORM.
+
 
 					foreach($foundlinks as $oneFoundLink) {
 						if(isset($linkvalue['uid'][$oneFoundLink])) {
@@ -1203,8 +1288,8 @@ if(isset($_GET['debug'])) {
 	print_r($linkfilterLocal);
 	print "<br>";
 }
-			$linkresult = go("SELECT id_req, ele_type, ele_caption, ele_value FROM " . DBPRE . "formulize_form WHERE id_form = '$lfid' $linkfilterLocal ORDER BY id_req"); // scope not used in this query for now
-
+			//$linkresult = go("SELECT id_req, ele_type, ele_caption, ele_value FROM " . DBPRE . "formulize_form WHERE id_form = '$lfid' $linkfilterLocal ORDER BY id_req"); // scope not used in this query for now
+                         $linkresult = mysql_query("SELECT id_req, ele_type, ele_caption, ele_value FROM " . DBPRE . "formulize_form WHERE id_form = '$lfid' $linkfilterLocal ORDER BY id_req"); // scope not used in this query for now
 			unset($linkfilter);
 			unset($linkfilterLocal);
 debug_memory("After retrieving a linkresult");
@@ -1212,7 +1297,12 @@ debug_memory("After retrieving a linkresult");
 			unset($linkresult);
 		}
 	}
-
+debug_memory("Before unsetting used arrays");
+unset($linkvalue);
+unset($finalidreqs);
+unset($linkthrowaway);
+unset($idreqthrowaway);
+debug_memory("After unsetting used arrays");
 // DEBUG CODE
 if(isset($_GET['debug'])) {
 	printfclean($finalresults);
@@ -1221,7 +1311,7 @@ if(isset($_GET['debug'])) {
 	}
 }
 	if($frid AND !$mainFormOnly) {
-		//generate the mainHandles and linkHandles arrays
+                //generate the mainHandles and linkHandles arrays
 		$indexer = 0;
 		foreach($linklist1 as $linkinfo) {
 			if($linkinfo['fl_key1'] != 0) {
@@ -1246,17 +1336,26 @@ if(isset($_GET['debug'])) {
 		$linkformidsU = array();
 		$linkfids1 = fieldValues($linklist1, "fl_form2_id", "fl_key1][NOT][0");
 		$linkfids2 = fieldValues($linklist2, "fl_form1_id", "fl_key2][NOT][0");
-		if(is_array($linkfids1) OR is_array($linkfids2)) {
+		if(is_array($linkfids1) AND is_array($linkfids2)) {
 			$linkformidsE = array_merge($linkfids1, $linkfids2);
 			array_unique($linkformidsE);
+		} elseif(is_array($linkfids1)) {
+			$linkformidsE = $linkfids1;
+		} elseif(is_array($linkfids2)) {
+			$linkformidsE = $linkfids2;
 		}
 
 		$linkuids1 = fieldValues($linklist1, "fl_form2_id", "fl_key1][==][0");
 		$linkuids2 = fieldValues($linklist2, "fl_form1_id", "fl_key2][==][0");
-		if(is_array($linkuids1) OR is_array($linkuids2)) {
+		if(is_array($linkuids1) AND is_array($linkuids2)) {
 			$linkformidsU = array_merge($linkuids1, $linkuids2);
 			array_unique($linkformidsU);
+		} elseif(is_array($linkfids1)) {
+			$linkformidsU = $linkuids1;
+		} elseif(is_array($linkfids2)) {
+			$linkformidsU = $linkuids2;
 		}
+
 	} // end of if there's a frid (framework)
 
 	// mainHandles  -- THE HANDLES OF THE LINKED FIELDS IN THE REQUESTED FORM
@@ -1290,7 +1389,7 @@ debug_memory("Start of adding e-mail addresses");
 	// September 24 2006 -- go get all the e-mail addresses and store them here so we can include them intelligently
 	global $formulize_extraction_uid_list;
 	$uid_list = implode(",",$formulize_extraction_uid_list);
-	$user_emails = go("SELECT uid, email FROM " . DBPRE . "users WHERE uid IN ($uid_list)", "uid"); // last param indicates to return the results with one of the fields as the keys of the array
+	$user_emails = go("SELECT uid, email, user_viewemail FROM " . DBPRE . "users WHERE uid IN ($uid_list)", "uid"); // last param indicates to return the results with one of the fields as the keys of the array
 
 debug_memory("Start of compiling masterresult");
 	
@@ -1304,9 +1403,21 @@ debug_memory("Start of compiling masterresult");
        print "MasterResults count: " . count($masterresult) . "<br>";
 
       }
-      			$masterresult[$indexer][$form][$record] = $values;
+      			$masterresult[$indexer][$form][$record] = $values; // values contains all the data for this entry
 
-				$masterresult[$indexer][$form][$record]['creator_email'] = $user_emails[$masterresult[$indexer][$form][$record]['uid']]['email']; // add e-mail address to main form only
+                         global $xoopsUser;
+                         if(is_object($xoopsUser)) { // determine if the user is a webmaster, in order to control whether the e-mail addresses should be shown or not
+                              $is_webmaster = in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()) ? true : false;
+                              $this_userid = $xoopsUser->getVar('uid');
+                         } else {
+                              $is_webmaster = false;
+                              $this_userid = 0;
+                         } 
+                         if($is_webmaster OR $user_emails[$masterresult[$indexer][$form][$record]['uid']]['user_viewemail'] OR $masterresult[$indexer][$form][$record]['uid'] == $this_userid) {
+                              $masterresult[$indexer][$form][$record]['creator_email'] = $user_emails[$masterresult[$indexer][$form][$record]['uid']]['email']; // add e-mail address to main form only
+                         } else {
+                              $masterresult[$indexer][$form][$record]['creator_email'] = ""; // blank for non webmasters if the user flagged their e-mail as private
+                         }
 
       			if($frid AND !$mainFormOnly) {
       				// search for links based on one-to-one relationships
@@ -1327,7 +1438,6 @@ debug_memory("Start of compiling masterresult");
 
       					foreach($finallinkresult{$fidu} as $f => $rs) {
       						foreach($rs as $r => $v) {
-      						
       							// check for onetoonelinks
       							if(isset($onetoonecheck[$r])) {
       								$masterresult[$indexer][$f][$r] = $v;
@@ -1379,14 +1489,23 @@ debug_memory("Start of compiling masterresult");
       				}
       			} // end of if frid
       			$indexer++;
+                        unset($records[$record]);
       		}
+                unset($finalresults[$form]);
       	} // end foreach
 	} // end if the count is greater than 0
 
 //print_r($masterresult);
 //print "<br>";
 
+     // handle derived columns, using data collected in the convertFinal function
+     $masterresult = formulize_calcDerivedColumns($masterresult, $GLOBALS['formulize_calcDerivedColumnsData'][$fid], $frid, $fid);         
+	foreach($linkformids as $lfid) {
+		$masterresult = formulize_calcDerivedColumns($masterresult, $GLOBALS['formulize_calcDerivedColumnsData'][$lfid], $frid, $lfid);         
+	}
+
 	if(isset($lfexists)) { // remove any entries where there is no link result but there was a link filter in effect (ie: we're limiting results by hits on the link filter)
+               $reindex = false;
 		foreach($lfexists as $lid=>$flag) {
 			// look for the presence of this form in the masterresult
 			// unset any masterresult entries where it is not found
@@ -1394,11 +1513,14 @@ debug_memory("Start of compiling masterresult");
 			foreach($masterresult as $masterid=>$mres) {
 				if(!$mres[$lfhandle[0]['ff_handle']]) { // no subentry for this link form is present
 					unset($masterresult[$masterid]);
+                                        $reindex = true;
 				}		
 			}
 		}
+                if($reindex) {
+                    $masterresult = array_values($masterresult);
+                }
 	}
-//print_r($masterresult);
 
 debug_memory("before returning result");
 
@@ -1415,6 +1537,125 @@ debug_memory("after returning result");
 
 }
 
+// THIS FUNCTION LOOPS THROUGH A MASTERRESULT AND ADDS IN THE DERIVED VALUES IN ANY DERIVED COLUMNS -- March 27 2007
+// Odd results may occur when a derived column is inside a subform in a framework!
+// Derived values should always be in the mainform only?
+function formulize_calcDerivedColumns($result, $metadata, $frid, $fid) {
+     if(count($metadata) > 0) {
+          foreach($result as $id=>$entry) {
+               foreach($metadata as $thisMetaData) {
+                    $value = formulize_calcDerivedColumnValue($entry, $thisMetaData['formula'][0], $frid, $fid); // formula is an array, hence the [0]
+                    foreach($entry as $formHandle=>$record) {
+                         if($formHandle == $thisMetaData['formhandle']) {
+                              foreach($record as $recordID=>$elements) {
+                                   $result[$id][$formHandle][$recordID][$thisMetaData['handle']][0] = "$value";
+                              }
+                              break;
+                         }
+                    }          
+               }
+          }
+     }
+     return $result;    
+}
+
+// THIS FUNCTION DETERMINES HOW TO HANDLE THE FORMULA IN A DERIVED COLUMN AND THEN WORKS OUT THE VALUE BASED ON THE ENTRY IT RECEIVED
+// use a static array to cache formulas that we already have parsed
+function formulize_calcDerivedColumnValue($entry, $formula, $frid, $fid) {
+
+     static $cached_formulas = array();
+     if(!isset($cached_formulas[$formula][$frid][$fid])) {
+          $original_formula = $formula;
+          // loop through the formula and convert all quoted terms to display function calls
+          while($quotePos = strpos($formula, "\"", $quotePos+1)) {
+               // print $formula . " -- $quotePos<br>"; // debug code
+               $endQuotePos = strpos($formula, "\"", $quotePos+1);
+               $term = substr($formula, $quotePos, $endQuotePos-$quotePos+1);
+               if(!is_numeric($term) AND !formulize_validFrameworkHandle($frid, $term)) { 
+                    $newterm = formulize_convertCapOrColHeadToHandle($frid, $fid, $term);
+               }
+               $replacement = "display(\$entry, \"$newterm\")";
+               $formula = str_replace($term, $replacement, $formula);
+               $quotePos = $quotePos + 17 + strlen($newterm); // 17 is the length of the extra characters in the display function
+          }
+          $cached_formulas[$original_formula][$frid][$fid] = $formula;
+     } else {
+          $formula = $cached_formulas[$formula][$frid][$fid];
+     }
+     $addSemiColons = strstr($formula, ";") ? false : true;
+     if($addSemiColons) {
+          $formulaLines = explode("\n", $formula); // \n may be a linux specific character and other OSs may require a different split
+          foreach($formulaLines as $thisLine) {
+               $thisLine = trim($thisLine, ";"); // get rid of semi-colons if present and then add them again
+               $thisLine .= ";";
+          }
+          eval($thisLine);
+     } else {
+          eval($formula);
+     }
+     return $value; // by convention, $value is the variable that gets assigned the results of the calculation used in the derived column (ie: it is set inside the code eval'd above)
+}
+
+
+// THIS FUNCTION CHECKS TO SEE IF A GIVEN PIECE OF TEXT IS USED IN A FRAMEWORK AS AN ELEMENT HANDLE
+// use a static array to cache results
+function formulize_validFrameworkHandle($frid, $term) {
+	if(!$frid) { return false; }
+     static $results_array = array();
+     if(isset($results_array[$term][$frid])) { return $results_array[$term][$frid]; }
+     $query_result = go("SELECT * FROM " . DBPRE . "formulize_framework_elements WHERE fe_frame_id = \"$frid\" AND fe_handle = \"" . mysql_real_escape_string($term) . "\"");
+     $result = count($query_result) > 0 ? true : false;
+     $results_array[$term][$frid] = $result;
+     return $result;
+}
+     
+// THIS FUNCTION TAKES A STRING OF TEXT (CAPTION OR COLHEAD) AND DERIVES THE NECESSARY HANDLE OR ELEMENT ID FROM IT
+// use a static array to cache results
+function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
+     // first search the $fid, and then if we don't find anything, search the other forms in the $frid
+     // check first for a match in the colhead field, then in the caption field
+     // once a match is found, then return handleFromId if there's a $frid, otherwise, return the ID
+     
+     static $results_array = array();
+     static $framework_results = array();
+         
+     $handle = "";
+     $term = trim($term, "\"");
+     
+     if($term == "uid" OR $term == "proxyid" OR $term == "creation_date" OR $term == "mod_date" OR $term == "creator_email") {
+        return $term;
+     }
+     
+     if(!$frid) {
+          $formList[0]['ff_form_id'] = $fid; // mimic what the result of the framework query below would be...
+     } else {
+          if(isset($framework_results[$frid])) {
+               $formList = $framework_results[$frid];
+          } else {
+               $formList = go("SELECT ff_form_id FROM " . DBPRE . "formulize_framework_forms WHERE ff_frame_id = \"$frid\"");
+               $framework_results[$frid] = $formList;
+          }
+     }
+     foreach($formList as $form_id) {
+          if(isset($results_array[$form_id['ff_form_id']][$term][$frid])) { return $results_array[$form_id['ff_form_id']][$term][$frid]; }
+          $colhead_query = go("SELECT ele_id FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_colhead = \"" . mysql_real_escape_string($term) . "\"");
+          if(count($colhead_query) > 0) {
+               $handle = $frid ? handleFromId($colhead_query[0]['ele_id'], $form_id['ff_form_id'], $frid) : $colhead_query[0]['ele_id'];
+          } else {
+               $caption_query = go("SELECT ele_id FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_caption = \"" . mysql_real_escape_string($term) . "\"");
+               if(count($caption_query) > 0 ) {
+                    $handle = $frid ? handleFromId($caption_query[0]['ele_id'], $form_id['ff_form_id'], $frid) : $caption_query[0]['ele_id'];
+               }
+          }    
+          if($handle) {
+               $results_array[$form_id['ff_form_id']][$term][$frid] = $handle;
+               break;
+          }     
+     }
+     if(!$handle) { exit("Error: column heading or caption referred to in a derived column was not found in any form"); }
+     return $handle;
+}
+     
 
 // THIS FUNCTION QUERIES A TABLE IN THE DATABASE AND RETURNS THE RESULTS IN STANDARD getData FORMAT
 // Uses the standard filter syntax, and can use scope if a uidField name is specified
@@ -1422,13 +1663,15 @@ debug_memory("after returning result");
 // At the time of writing (Nov 1 2005) supports single table queries only, no joins
 function dataExtractionDB($table, $filter, $andor, $scope, $uidField) {
 
+	global $xoopsDB;
+
 	// numeric filters are assumed to be queries on the primary key
 	// string filters are assumed to be WHERE clauses -- note the obvious security issues with that!
 	$describe_query = "DESCRIBE $table";
-	$res = mysql_query($describe_query);
+	$res = $xoopsDB->query($describe_query);
 	if($res) {
 
-		while($array = mysql_fetch_array($res)) {
+		while($array = $xoopsDB->fetchArray($res)) {
 			if($array['Key'] == "PRI") {
 				$primary_field = $array['Field'];
 				$break;
@@ -1447,10 +1690,10 @@ function dataExtractionDB($table, $filter, $andor, $scope, $uidField) {
 	}
 
 	$sql = "SELECT * FROM $table $where_clause";
-	$res = mysql_query($sql);
+	$res = $xoopsDB->query($sql);
 	if($res) {
 		$indexer = 0;
-		while($array = mysql_fetch_array($res)) {
+		while($array = $xoopsDB->fetchArray($res)) {
 			foreach($array as $field=>$value) {
 				if(is_numeric($field)) { continue; }		
 				$masterresult[$indexer][$table][$array[$primary_field]][$field] = $value;
@@ -1465,7 +1708,7 @@ function dataExtractionDB($table, $filter, $andor, $scope, $uidField) {
 
 
 // MODIFIED NOVEMBER 1 2005 -- ADDED QUERY DIRECT TO DB TABLES 
-function getData($framework, $form, $filter="", $andor="AND", $scope="", $mainFormOnly=0, $includeArchived=false, $dbTableUidField="") {
+function getData($framework, $form, $filter="", $andor="AND", $scope="", $sortField="", $sortOrder="", $pageStart=0, $pageSize=0, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="") {
 
 	// have to check for the pressence of the Freeform Solutions archived user patch, and if present, then the includeArchived flag can be used
 	// if not present, ignore includeArchived
@@ -1482,7 +1725,7 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $mainFo
 	if(substr($framework, 0, 3) == "db:") {
 		$result = dataExtractionDB(substr($framework, 3), $filter, $andor, $scope, $dbTableUidField);
 	} else {
-	$result = dataExtraction($framework, $form, $filter, $andor, $scope, $mainFormOnly, $includeArchived);
+	$result = dataExtraction($framework, $form, $filter, $andor, $scope, $sortField, $sortOrder, $pageStart, $pageSize, $mainFormOnly, $includeArchived);
 	}
 	return $result;
 }
@@ -1562,7 +1805,9 @@ function display($entry, $handle, $id="NULL", $localid="NULL") {
 	if(is_numeric($id)) {
 		$entry = $entry[$id];
 	}
+	
 	$formhandle = getFormHandleFromEntry($entry, $handle);
+
 	if(!$formhandle) { return ""; } // return nothing if the passed handle is not part of the result set
 	foreach($entry[$formhandle] as $lid=>$elements) {
 		if($localid == "NULL" OR $lid == $localid) {
@@ -1721,7 +1966,7 @@ function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = fals
 		foreach($formhandle as $handle) {
 			foreach($entry[$handle] as $id=>$element) {
 				if($fidAsKeys) {
-					$fid = getFormIdFromHandle($handle); // note, not guaranteed to return proper fid!  handles are not unique across all frameworks, so incorrect value may be returned here.  Also, if the form is not in a framework, then no value will be returned!
+					$fid = getFormIdFromHandle($handle); // note, not guaranteed to return proper fid!  form handles are not unique across all frameworks, so incorrect value may be returned here.  Also, if the form is not in a framework, then no value will be returned!
 					$ids[$fid][] = $id;
 				} else {
 					$ids[$handle][] = $id;
@@ -2330,7 +2575,6 @@ function displayTemplate($templatename)
 // the idea is to include this file from another one
 
 global $xoopsDB, $myts;
-@ini_set('max_execution_time', '90');
 
 if(!$xoopsDB) {
 	// SET DB PREFIX -- must be done for each installation if the installation uses a prefix other than "xoops_"

@@ -59,13 +59,19 @@ class formulizeElementRenderer{
 		$id_form = $this->_ele->getVar('id_form');
 		$ele_caption = $this->_ele->getVar('ele_caption', 'e');
 		$ele_caption = preg_replace('/\{SEPAR\}/', '', $ele_caption);
-		$ele_caption = stripslashes($ele_caption);
+		// $ele_caption = stripslashes($ele_caption);
 		// next line commented out to accomodate passing of ele_value from index.php
 		// $ele_value = $this->_ele->getVar('ele_value');
 		$e = $this->_ele->getVar('ele_type');
 
-//multilangue
-        $ele_caption = $myts->displayTarea($ele_caption);
+
+		// call the text sanitizer, first try to convert HTML chars, and if there were no conversions, then do a textarea conversion to automatically make links clickable
+		$htmlCaption = $myts->undoHtmlSpecialChars($ele_caption);
+		if($htmlCaption == $ele_caption) {
+        	$ele_caption = $myts->displayTarea($ele_caption);
+		} else {
+			$ele_caption = $htmlCaption;
+		}
 		// ele_desc added June 6 2006 -- jwe
 		$ele_desc = $this->_ele->getVar('ele_desc');
 
@@ -73,7 +79,8 @@ class formulizeElementRenderer{
 			case 'ib':
 				if(get_magic_quotes_gpc()) {
 					$ele_value[0] = stripslashes($ele_value[0]);
- 				} 
+ 				}
+				if(trim($ele_value[0]) == "") { $ele_value[0] = $ele_caption; }
 				$form_ele = $ele_value; // an array, item 0 is the contents of the break, item 1 is the class of the table cell (for when the form is table rendered)
 				break;
 			case 'text':
@@ -83,6 +90,7 @@ class formulizeElementRenderer{
 				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 				$ele_value[2] = getTextboxDefault($ele_value[2]);
 
+				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added 
 				$form_ele = new XoopsFormText(
 					$ele_caption,
 					$form_ele_id,
@@ -90,6 +98,11 @@ class formulizeElementRenderer{
 					$ele_value[1],	//	max width
 					$ele_value[2]	  //	default value
 				);
+					}															// nmc 2007.03.24 - added 
+				else {															// nmc 2007.03.24 - added 
+					$form_ele = new XoopsFormLabel ($ele_caption, $ele_value[2]);	// nmc 2007.03.24 - added 
+					}
+
 			break;
 			
 			case 'textarea':
@@ -97,7 +110,7 @@ class formulizeElementRenderer{
 //        $ele_value[0] = $myts->displayTarea($ele_value[0]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
 				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 				$ele_value[0] = getTextboxDefault($ele_value[0]);
-
+				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added 
 				$form_ele = new XoopsFormTextArea(
 					$ele_caption,
 					$form_ele_id,
@@ -105,6 +118,10 @@ class formulizeElementRenderer{
 					$ele_value[1],	//	rows
 					$ele_value[2]	  //	cols
 				);
+					}															// nmc 2007.03.24 - added 
+				else {															// nmc 2007.03.24 - added 
+					$form_ele = new XoopsFormLabel ($ele_caption, $ele_value[0]);	// nmc 2007.03.24 - added 
+					}
 			break;
 			case 'areamodif':
 				$ele_value[0] =  stripslashes($ele_value[0]);
@@ -268,12 +285,14 @@ if(!$emptylist) {
 
 // query below modified to include pguidq which will limit the returned values to just the ones that are allowed for this user's groups to see -- jwe 8/29/04
 					$boxprop1_formform = str_replace("'", "`", stripslashes($boxproperties[1])); // sept 2 2005 -- convert to formform format
+					$boxprop1_formform = str_replace("&#039;", "`", $boxprop1_formform); // November 13, 2006 -- handle new HTML chars DB storage format
+					$boxprop1_formform = str_replace("&quot;", "`", $boxprop1_formform); 
 //if($_GET['sdebug']) { print "<br>SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxprop1_formform\" $pguidq ORDER BY ele_value"; } // GROUP BY ele_value ORDER BY ele_value";
 					$linkedvaluesq = "SELECT ele_value, ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=$boxproperties[0] AND ele_caption=\"$boxprop1_formform\" $pguidq ORDER BY ele_value"; // GROUP BY ele_value ORDER BY ele_value"; // GROUP BY removed 8/12/05 in order to allow duplicate listings in linked select boxes
-					$reslinkedvaluesq = mysql_query($linkedvaluesq);
+					$reslinkedvaluesq = $xoopsDB->query($linkedvaluesq);
 					if($reslinkedvaluesq)
 					{
-						while($rowlinkedvaluesq = mysql_fetch_row($reslinkedvaluesq))
+						while($rowlinkedvaluesq = $xoopsDB->fetchRow($reslinkedvaluesq))
 						{
 							$slashfreevalue = stripslashes($rowlinkedvaluesq[0]);
 							$form_ele->addOption($boxproperties[0] . "#*=:*" . $boxproperties[1] . "#*=:*" . $rowlinkedvaluesq[1], $slashfreevalue); // form_id, caption and ele_id from form_form are the value, value from form_form is name.
@@ -305,8 +324,8 @@ if(!$emptylist) {
 					// handle requests for full names or usernames -- will only kick in if there is no saved value (otherwise ele_value will have been rewritten by the loadValues function in the form display
 					// note: if the user is about to make a proxy entry, then the list of users displayed will be from their own groups, but not from the groups of the user they are about to make a proxy entry for.  ie: until the proxy user is known, the choice of users for this list can only be based on the current user.  This could lead to confusing or buggy situations, such as users being selected who are outside the groups of the proxy user (who will become the owner) and so there will be an invalid value stored for this element in the db.
 					if($i['key'] === "{FULLNAMES}" OR $i['key'] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
-						if($i['key'] == "{FULLNAMES}") { $nametype = "name"; }
-						if($i['key'] == "{USERNAMES}") { $nametype = "uname"; }
+						if($i['key'] === "{FULLNAMES}") { $nametype = "name"; }
+						if($i['key'] === "{USERNAMES}") { $nametype = "uname"; }
 						if(isset($ele_value[2]['{OWNERGROUPS}'])) {
 							$groups = $ele_value[2]['{OWNERGROUPS}'];
 						} else {
@@ -558,6 +577,37 @@ if(!$emptylist) {
 					$ele_value[1]
 				);
 			break;
+			/*
+			 * Hack by Félix<INBOX International>
+			 * Adding colorpicker form element
+			 */
+			case 'colorpick':
+
+
+				if($ele_value[0] == "") // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
+				{
+					//print "Bad date";
+				$form_ele = new XoopsFormColorPicker (
+					$ele_caption,
+					$form_ele_id,
+					""
+				);
+				}
+				else
+				{
+					//print "good date";
+				$form_ele = new XoopsFormColorPicker (
+					$ele_caption,
+					$form_ele_id,
+					$ele_value[0]
+
+				);
+				} // end of check to see if the default setting is for real
+			break;
+			/*
+			 * End of Hack by Félix<INBOX International>
+			 * Adding colorpicker form element
+			 */
 			default:
 				return false;
 			break;

@@ -424,7 +424,7 @@ function getHeaderList ($fid, $needids=false) {
 						$headerlist[] = _formulize_DE_CALC_MODDATE;
 						continue; 
 					}
-                                        if($thisheaderid == "creator_email") {
+                    if($thisheaderid == "creator_email") {
 						$headerlist[] = _formulize_DE_CALC_CREATOR_EMAIL;
 						continue; 
 					}
@@ -1042,7 +1042,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 		foreach($cols as $col) {
 			if($col == "uid" OR $col == "proxyid" OR $col=="creation_date" OR $col =="mod_date" OR $col == "creator_email") { continue; } // ignore the metadata columns if they are selected, since we already handle them better above
 			$data_to_write = displayTogether($entry, $col, "\n");
-			$data_to_write = str_replace("&quot;", "&quot;&quot;", $data_to_write);
+			$data_to_write = str_replace("\"", "\"\"", $data_to_write);
 			$data_to_write = "\"" . trans($data_to_write) . "\"";
 			$data_to_write = str_replace("\r\n", "\n", $data_to_write);
 			$csvfile .= $fd . $data_to_write;
@@ -1054,22 +1054,10 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 	// open the output file for writing
 	$wpath = XOOPS_ROOT_PATH."/modules/formulize/export/$exfilename";
 	//print $wpath;
-	$csvfile = html_entity_decode($csvfile, ENT_QUOTES);
+	$csvfile = html_entity_decode($csvfile);
 	$exportfile = fopen($wpath, "w");
 	fwrite ($exportfile, $csvfile);
 	fclose ($exportfile);
-
-        // garbage collection...delete files older than 1 day
-	$oldId = $tempfold - 86400; // the timestamp from one day ago
-	$formulize_export_files = php4_scandir(XOOPS_ROOT_PATH."/modules/formulize/export/",false, true, _formulize_DE_XF); // array of files
-	foreach($formulize_export_files as $thisFile) {
-		$fileNameParts = explode("_", $thisFile);
-                $fileNameMoreParts = explode(".", $fileNameParts[1]);
-		if($fileNameMoreParts[0] < $oldId){
-			unlink(XOOPS_ROOT_PATH."/modules/formulize/export/$thisFile");
-		}
-	}
-
 	
 	// write id_reqs and tempfold to the DB if we're making an update template
 	if($template == "update") {
@@ -2727,7 +2715,7 @@ print "$prevValue<br><br>";
                 if(!$res = $xoopsDB->query($sql)) {
                         exit("Error: unable to execute a \"displayButton\" or writeElementValue call, using the following SQL:<br>$sql<br>" . $xoopsDB->error);
                 }
-                $GLOBALS['formulize_writeElementValueWasRun'] = true;
+                
         }
         // unlock tables
         $xoopsDB->query("UNLOCK TABLES");
@@ -2762,26 +2750,6 @@ function fetchQuickMeta($entry) {
   }
   return $cachedMeta[$entry];
 }
-
-// THIS FUNCTION READS ALL THE FILES IN A DIRECTORY AND RETURNS THEIR NAMES IN AN ARRAY
-// use the optional filter param to include only files containing a certain string in their names
-// Thanks to aryel at redtwilight dot com dot br for this function, added in a comment at php.net
-// Freeform Solutions added the filter param
-function php4_scandir($dir,$listDirectories=false, $skipDots=true, $filter="") {
-    $dirArray = array();
-    if ($handle = opendir($dir)) {
-        while (false !== ($file = readdir($handle))) {
-            if (($file != "." && $file != "..") || $skipDots == true) { // handle dot dirs
-                if($listDirectories == false) { if(is_dir($file)) { continue; } } // handle normal dirs
-		if($filter AND !is_dir($file)) { if(!strstr(basename($file), $filter)) { continue; } } // apply filter to files if necessary
-                array_push($dirArray,basename($file));
-            }
-        }
-        closedir($handle);
-    }
-    return $dirArray;
-}
-
 
 
 ?>

@@ -159,7 +159,7 @@ $noNots = count($nots) == 0 ? true : false;
 if($canSetNots) {
 	$set_groups1 = $gperm_handler->getGroupIds("view_groupscope", $fid, $mid);
 	$set_groups2 = $gperm_handler->getGroupIds("view_globalscope", $fid, $mid);
-	$set_groups = array_merge($set_groups1, $set_groups2);
+	$set_groups = array_merge((array)$set_groups1, (array)$set_groups2); // type casting required for php 5
 	$group_names = $member_handler->getGroups("", true);
 	foreach($set_groups as $thisgroup) {
 		$group_options[$thisgroup] = $group_names[$thisgroup]->getVar('name');
@@ -175,7 +175,7 @@ foreach($cols as $f=>$vs) {
 		if($values['ele_colhead'] != "") {
 			$options[$values['ele_id']] = printSmart(trans($values['ele_colhead']), 20);
 		} else {
-			$options[$values['ele_id']] = printSmart(trans($values['ele_caption']), 20);
+			$options[$values['ele_id']] = printSmart(trans(strip_tags($values['ele_caption'])), 20);
 		}
 	}
 }

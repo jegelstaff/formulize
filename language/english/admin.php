@@ -27,8 +27,8 @@ define("_AM_ELE_TEXT","Text box");
 define("_AM_ELE_TEXT_DESC","{NAME} will print full name;<br />{UNAME} will print user name;<br />{EMAIL} will print user email;<br />PHP Code (ending with the line '&#36;default = &#36;something;') will be interpreted to generate the default value.");
 define("_AM_ELE_TEXT_DESC2","<br />PHP Code is the only situation where more than one line of this box will be read.");
 define("_AM_ELE_TAREA","Text area");
-define("_AM_ELE_MODIF","Text for display (two columns)");
-define("_AM_ELE_MODIF_ONE","Text for display (one column)");
+define("_AM_ELE_MODIF","Text for display (left and right cells)");
+define("_AM_ELE_MODIF_ONE","Text for display (spanning both cells)");
 define("_AM_ELE_INSERTBREAK","HTML content for this line:");
 define("_AM_ELE_IB_DESC","The caption will not display.  Only the text in this box will appear on screen, in a single row spanning both columns of the form.");
 define("_AM_ELE_IB_CLASS","CSS class for the row:");
@@ -102,6 +102,27 @@ define("_AM_ELE_SUBFORM_ELEMENTS", "Which elements should be displayed as part o
 define("_AM_ELE_SUBFORM_ELEMENTS_DESC", "About three or four elements from the subform can be displayed comfortably as part of the main form.  More than four elements starts to make the interface cluttered.  You can choose which elements you want to display by selecting them from this list.  Users can always modify all elements by clicking a button next to each subform entry that it listed in the main form.");
 define("_AM_ELE_SUBFORM_REFRESH", "Refresh elements list to match selected form");
 
+// grids
+define("_AM_ELE_GRID", "Table of existing elements (place BEFORE the elements it contains)");
+define("_AM_ELE_GRID_HEADING", "What text should appear as the heading for this table?");
+define("_AM_ELE_GRID_HEADING_USE_CAPTION", "The caption typed above");
+define("_AM_ELE_GRID_HEADING_USE_FORM", "The title of this form");
+define("_AM_ELE_GRID_HEADING_NONE", "No heading");
+define("_AM_ELE_GRID_ROW_CAPTIONS", "Enter the captions for the rows of this table");
+define("_AM_ELE_GRID_ROW_CAPTIONS_DESC", "Each table is a grid of colums and rows.  The left side of the table has one caption in each cell to start each row.  Type in the text you want to use for the captions, separated by commas.  If your captions are long, it may work best visually to put each caption on its own line.");
+define("_AM_ELE_GRID_COL_CAPTIONS", "Enter the captions for the rows of this table");
+define("_AM_ELE_GRID_COL_CAPTIONS_DESC", "Each table is a grid of colums and rows.  The top side of the table has one caption in each cell to head each column.  Type in the text you want to use for the captions, separated by commas.  If your captions are long, it may work best visually to put each caption on its own line.");
+define("_AM_ELE_GRID_BACKGROUND", "Background shading");
+define("_AM_ELE_GRID_BACKGROUND_HOR", "Alternate the shading of each row in the table");
+define("_AM_ELE_GRID_BACKGROUND_VER", "Alternate the shading of each column in the table");
+define("_AM_ELE_GRID_START", "Choose the first element, which will appear in the upper left corner of the table");
+define("_AM_ELE_GRID_START_DESC", "Each table will have a number of elements in it, equal to the rows times the columns.  ie: if you have three rows and four columns, you will have 12 elements in your table.  The first element appears in the upper left corner, and the next element after that appears in the next cell to the right.  Once the end of a row has been reached, the next element appears in the first cell of the next row.  Elements are drawn from the form according to the order currently assigned to them; if you have 12 elements in your table, then the next 11 elements after the first element will be used in your table.  Therefore, make sure all the elements you want to use in tables are consecutively ordered in your form.");
+
+// derived columns
+define("_AM_ELE_DERIVED", "Value derived from other elements");
+define("_AM_ELE_DERIVED_CAP", "Formula for generating values in this element");
+define("_AM_ELE_DERIVED_DESC", "Select an element above to add it to your formula.  You can also use element ID numbers or Framework handles in your formula, as long as they are inside double quotes.  The formula can have multiple lines, or steps, and you can use PHP code in the formula.  The last line should be of the format <i>\$value = \$something</i> where \$something is the final number or formula that you want use.<br /><br />Example:<br />\$value = \"Number of hits\" / \"Total shots\" * 100");
+define("_AM_ELE_DERIVED_ADD", "Add to Formula");
 
 define("_AM_ELE_SELECT_NONE","No element selected.");
 define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element?<br>All data associated with this form element will be deleted as well.");
@@ -201,5 +222,166 @@ define("_AM_ELE_OTHER", 'For an option of "Other", put {OTHER|*number*} in one o
 
 define("_AM_FORM_PRIVATE", "The information that users enter in this element is private");
 define("_AM_FORM_PRIVATE_DESC", "If this box is checked, the information that users enter in this element will only be visible to other users who have the view_private_elements permission.  This option is useful for making personal information only available to the appropriate managers.");
+
+//added by félix <INBOX International> for sedonde (colorpicker feature)
+define("_AM_ELE_COLORPICK","Colorpicker");
+
+// SCREENS...including multipage
+
+define("_AM_FORMULIZE_SCREEN_TYPE", "Type: ");
+
+define("_AM_FORMULIZE_DEFINED_SCREENS", "Defined Screens for This Form");
+define("_AM_FORMULIZE_DELETE_SCREEN", "Delete");
+define("_AM_FORMULIZE_ADD_NEW_SCREEN_OF_TYPE", "Add a new screen of this type:");
+define("_AM_FORMULIZE_SCREENTYPE_MULTIPAGE", "Multi Page Version of Form");
+define("_AM_FORMULIZE_SCREENTYPE_LISTOFENTRIES", "List of Entries in this Form");
+define("_AM_FORMULIZE_ADD_SCREEN_NOW", "Add it Now!");
+define("_AM_FORMULIZE_SCREEN_FORM", "Create or Modify a Screen");
+define("_AM_FORMULIZE_SCREEN_TITLE", "Title of this screen");
+define("_AM_FORMULIZE_USE_NO_FRAMEWORK", "Use this form only, no Framework");
+define("_AM_FORMULIZE_SELECT_FRAMEWORK", "Framework to use on this screen, if any");
+define("_AM_FORMULIZE_SCREEN_INTRO", "Introductory text for the first page of this form");
+define("_AM_FORMULIZE_SCREEN_THANKS", "Thank-you text for the final page of this form");
+define("_AM_FORMULIZE_SCREEN_DONEDEST", "The URL for the link users get at the end of the form");
+define("_AM_FORMULIZE_SCREEN_BUTTONTEXT", "The text of the link users get at the end of the form");
+define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable View - All Pages' button available at the end of the form"); //nmc 2007.03.24
+define("_AM_FORMULIZE_SCREEN_PRINTALL_Y", "Yes"); //nmc 2007.03.24
+define("_AM_FORMULIZE_SCREEN_PRINTALL_N", "No"); //nmc 2007.03.24
+define("_AM_FORMULIZE_DELETE_THIS_PAGE", "Delete this page");
+define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE", "Are you sure you want to delete this screen?  Please confirm!");
+define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE_PAGE", "Are you sure you want to delete this page?  Please confirm!");
+define("_AM_FORMULIZE_SCREEN_A_PAGE", "Form elements to display on page");
+define("_AM_FORMULIZE_SCREEN_ADDPAGE", "Add another page");
+define("_AM_FORMULIZE_SCREEN_SAVE", "Save this screen");
+define("_AM_FORMULIZE_SCREEN_SAVED", "The details for this screen have been saved in the database");
+define("_AM_FORMULIZE_SCREEN_PAGETITLE", "Title for page number");
+
+// LIST OF ENTRIES SCREEN
+define("_AM_FORMULIZE_SCREEN_LOE_BUTTONINTRO", "Specify which buttons you want included on this screen:");
+define("_AM_FORMULIZE_SCREEN_LOE_BUTTON1", "What text should be on the '");
+define("_AM_FORMULIZE_SCREEN_LOE_BUTTON2", "' button?");
+define("_AM_FORMULIZE_SCREEN_LOE_CONFIGINTRO", "Specify which configuration options you want to use:");
+define("_AM_FORMULIZE_SCREEN_LOE_CURRENTVIEWLIST", "What text should introduce the 'Current View' list?");
+define("_AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW", "Which published view should be used as the default view?");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW", "If you are customizing the list template, the default view will still be used to control which entries are initially included in the list.");
+define("_AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS", "If the 'Current View' list is in use, include these views:");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_LIMITVIEWS", "If you include the basic views (\"Entries by...\"), then the selected view will switch to a basic view when the user makes a change, such as a sort or Quicksearch.");
+define("_AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT", "Include all views");
+define("_AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME", "only avail. in framework: ");
+define("_AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME", "only avail. with no framework");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK", "Leave blank to turn this button off");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK_LIST", "Leave blank to turn off the list");
+define("_AM_FORMULIZE_SCREEN_LOE_NOPUBDVIEWS", "There are no published views for this form");
+define("_AM_FORMULIZE_SCREEN_LOE_NOVIEWSAVAIL", "There are no views available");
+define("_AM_FORMULIZE_SCREEN_LOE_USEWORKING", "Should the 'Working' message appear when the page is reloading?");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_USEWORKING", "If the user is likely to click the back button in your interface, turning off this message may improve usability.");
+define("_AM_FORMULIZE_SCREEN_LOE_USESCROLLBOX", "Should the list of entries be contained inside a scrolling box?");
+define("_AM_FORMULIZE_SCREEN_LOE_USESEARCHCALCMSGS", "Should the 'Advanced Search' or 'Calculations' status messages appear at the top of the list?");
+define("_AM_FORMULIZE_SCREEN_LOE_USCM_NEITHER", "use neither<br>");
+define("_AM_FORMULIZE_SCREEN_LOE_USCM_BOTH", "use both<br>");
+define("_AM_FORMULIZE_SCREEN_LOE_USCM_SEARCH", "just the 'Advanced Search' status<br>");
+define("_AM_FORMULIZE_SCREEN_LOE_USCM_CALC", "just the 'Calculations' status");
+define("_AM_FORMULIZE_SCREEN_LOE_USEHEADINGS", "Should headings appear at the top of each column?");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_USEHEADINGS", "Without headings at the top of columns, no one will be able to sort the entries in the view.");
+define("_AM_FORMULIZE_SCREEN_LOE_REPEATHEADERS", "If you are using headings, how often should they repeat within the list of entries?");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_REPEATHEADERS", "Repeating the headings makes it easier for users to know what column they are looking at when they scroll through the list.  Set to '0' to have headings only at the top of the list.");
+define("_AM_FORMULIZE_SCREEN_LOE_ENTRIESPERPAGE", "How many entries should appear on each page of the list?");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_ENTRIESPERPAGE", "Set to '0' to have all entries appear on one page.");
+define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH", "How many pixels wide should each column be?");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTH", "Set to '0' to have columns expand to their natural width.");
+define("_AM_FORMULIZE_SCREEN_LOE_TEXTWIDTH", "How many characters of text should be displayed in any cell?");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_TEXTWIDTH", "Set to '0' for no limit.");
+define("_AM_FORMULIZE_SCREEN_LOE_USESEARCH", "Should the 'Quicksearch' boxes appear at the top of each column?");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_USESEARCH", "If the 'Quicksearch' boxes are turned off, they will still be available in the Top and Bottom Templates (see below).");
+define("_AM_FORMULIZE_SCREEN_LOE_USECHECKBOXES", "Should checkboxes appear to the left of each entry, so that they can be selected by the user?");
+define("_AM_FORMULIZE_SCREEN_LOE_UCHDEFAULT", "Yes, show the checkboxes based on the user's permission to delete entries<br>");
+define("_AM_FORMULIZE_SCREEN_LOE_UCHALL", "Yes, show the checkboxes on all entries<br>");
+define("_AM_FORMULIZE_SCREEN_LOE_UCHNONE", "No, do not show the checkboxes");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_USECHECKBOXES", "If you show checkboxes on all entries, and you include the 'Delete selected' button in this screen, users will be able to select and delete entries that they otherwise would not be able to!");
+define("_AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS", "Should the 'magnifying glass links' appear to the left of each entry, so users can click through to the full details?");
+define("_AM_FORMULIZE_SCREEN_LOE_HIDDENCOLUMNS", "Select any columns where you would like the current value from each entry to be included in the list as a hidden form element.");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_HIDDENCOLUMNS", "This option is useful if you need some text on the screen to be sent back in <i>\$_POST</i> as part of the next page load.  You can use <i>gatherHiddenValue('</i>handle<i>');</i> in a custom button access the values you receive.  Any columns you choose will still be displayed normally in the list, in addition to having the hidden form elements created.");
+define("_AM_FORMULIZE_SCREEN_LOE_DECOLUMNS", "Select any columns where you would like the data displayed as a form element, rather than as text:");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_DECOLUMNS", "<b>WARNING:</b> do not enable the checkboxes above if you are displaying any checkbox elements in the list!");
+define("_AM_FORMULIZE_SCREEN_LOE_DESAVETEXT", "If you have selected any columns to display as form elements, what text should be used on a 'Submit' button below the list of entries?");
+define("_AM_FORMULIZE_SCREEN_LOE_DVMINE", "Entries by the current user");
+define("_AM_FORMULIZE_SCREEN_LOE_DVGROUP", "Entries by the current user's group(s)");
+define("_AM_FORMULIZE_SCREEN_LOE_DVALL", "Entries by all groups");
+define("_AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION1", "You can change the text on the buttons below.  Also, if you use a custom Top or Bottom Template, these buttons will be available there.");
+define("_AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION2", "You can change the text on the buttons below.  If you use a custom List Template, these buttons will not appear on the screen by default, but you can use a custom Top or Bottom Template to specifically include them.");
+define("_AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION1", "The configuration options below have an effect regardless of whether you use a custom List Template.");
+define("_AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION2", "The configuration options below have NO effect if you use a custom List Template.");
+define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO", "Specify any custom template options for this screen:");
+define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2", "<span style=\"font-weight: normal\"><p><b>Top and Bottom Templates</b></p>\n<p>If you specify any PHP code in the Top or Bottom Templates, it will be used to control the appearance of the space either above or below the list of entries.</p>\n<p><b>WARNING:</b> if you include any checkbox elements in your templates, turn off the checkboxes that appear on the left side of the list!</p>\n<p>Use this PHP code to setup your preferred layout of buttons, or include custom instructions, etc.</p>\n<p>To include buttons and controls, use these variables:</p>
+<table cellpadding=5 border=0>
+<tr>
+<td>
+<ul>
+<li>\$addButton</li>
+<li>\$addMultiButton</li>
+<li>\$addProxyButton</li>
+<li>\$exportButton</li>
+<li>\$importButton</li>
+<li>\$notifButton</li>
+<li>\$currentViewList</li>
+<li>\$changeColsButton</li>
+<li>\$saveButton (if any columns are displayed as form elements)</li>
+</ul>
+</td><td>
+<ul>
+<li>\$calcButton</li>
+<li>\$advSearchButton</li>
+<li>\$cloneButton</li>
+<li>\$deleteButton</li>
+<li>\$selectAllButton</li>
+<li>\$clearSelectButton</li>
+<li>\$resetViewButton</li>
+<li>\$saveViewButton</li>
+<li>\$deleteViewButton</li>
+<li>\$pageNavControls (if there is more than one page of entries)</li>
+</ul>
+</td>
+</tr>
+</table>
+<p>For Quicksearch boxes, use \"\$quickSearch<i>Column</i>\" where <i>Column</i> is either the element ID number, or the element handle if using a Framework.</p>\n<p>For Custom Buttons, use \"\$handle\" where <i>handle</i> is the handle you specified for that button.  You can use \"\$messageText\" to control where the clicked button's message will appear on the screen.  By default, the message appears centred at the top.</p>\n<p>If the current view list is available, you can determine which view was last selected from the list, by checking whether <i>\$The_view_name</i> is true or not.  You can also check <i>\$viewX</i> where X is a number corresponding to the position of the view in the list, 1 through n.  You can use this to put if..else clauses into your template, so it changes depending what view is selected.</p>\n<p><b>List Template</b></p>\n<p>If you specify any PHP code for the List Template, it will be used to draw in each row of the list.</p>\n<p>You do not need to create a foreach loop or any other loop structure in this template.  The PHP code you specify will be executed inside a loop that runs once for each entry.</p>\n<p>You have full access to XOOPS and Formulize objects, functions, variables and constants in this template, including <i>\$fid</i> for the form ID.  Use \$entry to refer to the current entry in the list.  For example:</p>\n<p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;display(\$entry, \"phonenumber\");</p>\n<p>That code will display the phone number recorded in that entry (assuming \"phonenumber\" is a valid element handle).</p></span>\n");
+define("_AM_FORMULIZE_SCREEN_LOE_TOPTEMPLATE", "Template for the top portion of the page, above the list:");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE", "If you turn off the scrollbox, and do not use the Export buttons, then the code you type here and in the List and Bottom Templates, will all be drawn to the screen consecutively.  This means you can start a table in the Top Template, specify the &lt;tr&gt; tags in the List Template and close the  table in the Bottom Template.  Essentially, these three Templates give you control over the entire page layout.");
+define("_AM_FORMULIZE_SCREEN_LOE_BOTTOMTEMPLATE", "Template for the bottom portion of the page, below the list:");
+define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE", "Template for each entry in the list portion of the page:");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_LISTTEMPLATE", "If you specify a List Template, certain buttons and configuration options mentioned above may be unavailable.");
+define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FRAMEWORK", "Below is a list of handles for all the form elements in this Framework.  Use them with the <i>display</i> function.");
+define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FORM", "Below is a list of element IDs for all the elements in this form. Use them with the <i>display</i> function.");
+// CUSTOM BUTTONS
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTONINTRO", "Specify any custom buttons for this screen:");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTONINTRO2", "Custom buttons can be added above, below, or inside a list, using the templates (see below).  You must specify what effects each custom button should have.  For instance, a custom button labelled 'Cancel Subscription' might update a form element called 'Subscription end date', and use today's date as the value to put there.");
+define("_AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON", "Add a new custom button");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON", "Custom button");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_HANDLE", "What handle is used to refer to this button?");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_NEW", "New Custom Button");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_BUTTONTEXT", "What text should appear on this button?");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_MESSAGETEXT", "What text should appear at the top of the screen after this button is clicked?");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_INLINE", "Should this button appear once on every line of the list of entries?");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_INLINE_DESC", "If no, then the button will be available in the Top and Bottom Templates.  If yes, the button will appear in the list, or will be available in the List Template if you use one.");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO", "Which entries should be modified when this button is clicked?");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_INLINE", "Only the entry on the line where the button is (only works if this button appears on every line)");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_SELECTED", "Only the selected entries (only works if checkboxes are enabled above)");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_ALL", "All entries in this form");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW", "The button should create a new entry in this form");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED", "The button should create a new entry in this form for each checkbox that's checked");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW_OTHER", "The button should create a new entry in the form '");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED_OTHER", "' for each checkbox that's checked");
+define("_AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON_EFFECT", "Add an effect for this button");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_DELETE", "Delete this button");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT", "Effect number");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_DESC", "Specify the element that should be affected, the action that should be performed on that element, and the value to use.  The value can contain PHP code, including <i>gatherHiddenValue('</i>handle<i>');</i> to retrieve the value of a specific field from a selected entry.  Use hidden elements above to send those values.  To use PHP code, the last line of the value should be <i>\$value = \$something;</i>");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_DELETE", "Delete this effect");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ELEMENT", "Affect which element?");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION", "Perform what action?");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_VALUE", "Use what value?");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE", "Replace the current value with the specified value");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE", "Remove the specified value from the current value");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND", "Append the specified value to the end of the current value");
+
+
 
 ?>

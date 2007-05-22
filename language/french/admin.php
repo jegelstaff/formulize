@@ -130,5 +130,6 @@ define("_AM_SAVING_CHANGES", "Sauvegarde des modifications");
 define("_AM_EDIT_ELEMENTS", "Edition des éléments du formulaire");
 
 define("_AM_ELE_OTHER", 'For an option of "Other", put {OTHER|*number*} in one of the text boxes. e.g. {OTHER|30} generates a text box with 30 chars width.');
-
+//added by félix <INBOX International> for sedonde (colorpicker feature)
+define("_AM_ELE_COLORPICK","Couleur");
 ?>

@@ -44,7 +44,7 @@ function searchJavascript($items) {
 
 function sendSearch(formObj) {
 
-<?
+<?php
 // process the $items array 
 
 $flatItems = implode("/,%^&2", $items);
@@ -58,7 +58,7 @@ print "window.self.close();\n";
 </script>
 
 
-<?
+<?php
 
 }
 
@@ -75,15 +75,34 @@ function readQueryItems() {
 	$count = count($items);
 	// read what was just sent back...
 	if($_POST['addq']) {
-		$items['as_' . $count] = "[field]" . $_POST['column'] . "[/field]";
-		$hidden[] = new xoopsFormHidden('as_' . $count, "[field]" . $_POST['column'] . "[/field]");
-		$count++;
-		$items['as_' . $count] = $_POST['op'];
-		$hidden[] = new xoopsFormHidden('as_' . $count, $_POST['op']);
-		$count++;
-		$items['as_' . $count] = $_POST['term'];
-		$thisterm = str_replace("'", "&#39;", $_POST['term']);
-		$hidden[] = new xoopsFormHidden('as_' . $count, stripslashes($thisterm));
+		$columnsProcessed = false;
+		foreach($_POST['column'] AS $selectedColumn) { 
+			if($columnsProcessed) { // handle AND/OR setting
+				switch($_POST['multi_andor']) {
+					case "1": // AND
+						$items['as_' . $count] = "AND"; 
+						$hidden[] = new xoopsFormHidden('as_' . $count, "AND");
+			      		$count++;
+						break;
+					case "2": // OR
+						$items['as_' . $count] = "OR"; 
+						$hidden[] = new xoopsFormHidden('as_' . $count, "OR");
+			      		$count++;
+						break;
+				}
+			}
+           		$items['as_' . $count] = "[field]" . $selectedColumn . "[/field]";
+      		$hidden[] = new xoopsFormHidden('as_' . $count, "[field]" . $selectedColumn . "[/field]");
+			$count++;
+			$items['as_' . $count] = $_POST['op'];
+			$hidden[] = new xoopsFormHidden('as_' . $count, $_POST['op']);
+			$count++;
+			$items['as_' . $count] = $_POST['term'];
+			$thisterm = str_replace("'", "&#39;", $_POST['term']);
+			$hidden[] = new xoopsFormHidden('as_' . $count, stripslashes($thisterm));
+			$count++;
+			$columnsProcessed = true;
+		}
 	}
 	if($_POST['openb']) { 
 		$items['as_' . $count] = "("; 
@@ -150,14 +169,13 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 	// Set some required variables
 	$mid = getFormulizeModId();
-	$fid="";
-	if(!$fid = $_GET['fid']) {
-		$fid = $_POST['fid'];
-	}
-	$frid = "";
-	if(!$frid = $_GET['frid']) {
-		$frid = $_POST['frid'];	
-	}
+
+  $fid = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
+  $fid = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $fid ;
+
+  $frid = ((isset( $_GET['frid'])) AND is_numeric( $_GET['frid'])) ? intval( $_GET['frid']) : "" ;
+  $frid = ((isset($_POST['frid'])) AND is_numeric($_POST['frid'])) ? intval($_POST['frid']) : $frid ;
+
 
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
@@ -188,9 +206,9 @@ foreach($cols as $f=>$vs) {
 		if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.  
 			$usedvals[] = $values['ele_id'];
 			if($values['ele_colhead'] != "") {
-				$options[$values['ele_id']] = printSmart(trans($values['ele_colhead']));
+				$options[$values['ele_id']] = printSmart(trans($values['ele_colhead']), 60);
 			} else {
-				$options[$values['ele_id']] = printSmart(trans($values['ele_caption']));
+				$options[$values['ele_id']] = printSmart(trans(strip_tags($values['ele_caption'])), 60);
 			}
 		}
 	}		
@@ -211,17 +229,25 @@ print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$theme
 
 print "</head>";
 print "<body><center>"; 
-print "<table width=100%><tr><td width=5%></td><td width=90%>";
+print "<table style=\"width: 100%;\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
 $advsearch = new xoopsThemeForm(_formulize_DE_BUILDQUERY, 'buildq', XOOPS_URL."/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid");
 
 //$returned = addReqdCalcs($pickcalc);
 //$pickcalc = $returned['form'];
 
-$columns = new xoopsFormSelect(_formulize_DE_AS_FIELD, 'column');
+$columns_andor = new xoopsFormElementTray('', "<br />");
+$columns_and = new xoopsFormRadio('', 'multi_andor', '1');
+$columns_and->addOption(1, _formulize_DE_AS_MULTI_AND);
+$columns_andor->addElement($columns_and);
+$columns_or = new xoopsFormRadio('', 'multi_andor', '1');
+$columns_or->addOption(2, _formulize_DE_AS_MULTI_OR);
+$columns_andor->addElement($columns_or);
+
+$columns = new xoopsFormSelect(_formulize_DE_AS_FIELD . "<br /><br />" . $columns_andor->render(), 'column', '', 5, true);
 $columns->addOption("uid", _formulize_DE_CALC_CREATOR);
 $columns->addOption("proxyid", _formulize_DE_CALC_MODIFIER);
-$columns->addOption("creation_date", _formulize_DE_CALC_CREATEDATE);
-$columns->addOption("mod_date", _formulize_DE_CALC_MODDATE);
+$columns->addOption("creation_date", _formulize_DE_CALC_CREATEDATE . ' (YYYY-mm-dd)');
+$columns->addOption("mod_date", _formulize_DE_CALC_MODDATE . ' (YYYY-mm-dd)');
 $columns->addOption("creator_email", _formulize_DE_CALC_CREATOR_EMAIL);
 $columns->addOptionArray($options);
 
@@ -260,9 +286,8 @@ foreach($hidden as $oneHidden) {
 	unset($oneHidden);
 }
 
-
-$advsearch->addElement($columns);
 $advsearch->addElement($opterm);
+$advsearch->addElement($columns); // order change April 4 2007
 $advsearch->addElement($addButton);
 $advsearch->addElement($addOtherTray);
 
@@ -272,12 +297,12 @@ if($items['as_0']) {
 	$doneButton->setExtra("onclick=\"javascript:sendSearch(this.form);return false;\"");
 	$advsearch->insertBreak("</td></tr></table><table class=outer><tr><th colspan=2>" . _formulize_DE_AS_QUERYSOFAR . "</th></tr><tr><td class=even colspan=2><center>" . $doneButton->render() . "</center>", "");
 	$qstring = writableQuery($items, 1); // 1 flag indicates to not translate special terms
-	$advsearch->insertBreak("<p>$qstring" . "<br>" . $removeButton->render() . "</p>", 'head');
+	$advsearch->insertBreak("<p>$qstring" . "<br />" . $removeButton->render() . "</p>", 'head');
 }
 
 print $advsearch->render();
 
-print "</td><td width=5%></td></tr></table>";
+print "</td><td style=\"width: 5%;\"></td></tr></table>";
 print "</center></body>";
 print "</HTML>";
 

@@ -325,6 +325,7 @@ define("_formulize_NOSUBNAME", "Entry: ");
 define("_formulize_DEL_ENTRIES", "You are about to delete the selected entries!  Please confirm.");
 
 define("_formulize_PRINTVIEW", "Printable View");
+define("_formulize_PRINTALLVIEW", "Printable View - All Pages"); // nmc 2007.03.24 - added
 
 // constants related to the new display entries functions...
 
@@ -365,7 +366,7 @@ define("_formulize_DE_CLONE_PROMPT", "How many copies of the selected entries do
 define("_formulize_DE_SELALL", "Select all entries");
 define("_formulize_DE_CLEARALL", "Clear selection");
 define("_formulize_DE_CONFIRMDEL", "You are about to delete the selected entries.  Please confirm!");
-define("_formulize_DE_DELBOXDESC", "Check this box to select/unselect this entry for deletion.");
+define("_formulize_DE_DELBOXDESC", "Check this box to select/unselect this entry.");
 define("_formulize_DE_CHOOSE_EXPORT", "Choose the export format you want");
 define("_formulize_DE_EXPORT_INST", "Choose the format you would like your data exported in.  Comma delimited should work with all data.  However, if you have especially complex combinations of quotation marks and commas within your data itself, and your exported files are not formatting correctly, you may want to try one of the other delimiters instead.");
 define("_formulize_DE_XCOMMA", "Comma delimited");
@@ -385,9 +386,9 @@ define("_formulize_DE_CONF_DELVIEW", "You are about to delete this view!  Please
 //calculations
 define("_formulize_DE_PICKCALCS", "Pick the calculations you want");
 define("_formulize_DE_MODCALCS", "Modify Calculations");
-define("_formulize_DE_CALC_COL", "Data to use for the calculations:");
+define("_formulize_DE_CALC_COL", "Column(s) to use for the calculations:");
 define("_formulize_DE_CALCSUB", "Add Calculation(s) to list");
-define("_formulize_DE_CALC_CALCS", "Calculations to perform on the column:");
+define("_formulize_DE_CALC_CALCS", "Calculations to perform on the column(s):");
 define("_formulize_DE_CALCGO", "Perform Requested Calculations");
 define("_formulize_DE_REQDCALCS", "Requested Calculations:");
 define("_formulize_DE_CALCALL", "Include blanks/zeros"); 
@@ -399,6 +400,7 @@ define("_formulize_DE_GROUPBYCREATOR", "Group by: User who made entry");
 define("_formulize_DE_GROUPBYCREATEDATE", "Group by: Creation date");
 define("_formulize_DE_GROUPBYMODIFIER", "Group by: User who last modified entry");
 define("_formulize_DE_GROUPBYMODDATE", "Group by: Last modification date");
+define("_formulize_DE_GROUPBYCREATOREMAIL", "Group by: Creator's e-mail address");
 define("_formulize_DE_CALC_LISTDISPLAY", "Only display calculations<br>(hide the list of entries)");
 define("_formulize_DE_CALC_CREATOR", "User who made entry");
 define("_formulize_DE_CALC_CREATEDATE", "Creation date");
@@ -436,8 +438,10 @@ define("_formulize_DE_DATAHEADING", "List of Entries");
 
 //ADVANCED SEARCH:
 define("_formulize_DE_BUILDQUERY", "Build your query");
-define("_formulize_DE_AS_FIELD", "Search this field:");
-define("_formulize_DE_AS_OPTERM", "With this operator and term:");
+define("_formulize_DE_AS_FIELD", "To search this field(s):");
+define("_formulize_DE_AS_MULTI_AND", "use AND between multiple fields");
+define("_formulize_DE_AS_MULTI_OR", "use OR between multiple fields");
+define("_formulize_DE_AS_OPTERM", "Use this operator and term:");
 define("_formulize_DE_AS_ADD", "Add this search to the query");
 define("_formulize_DE_AS_ADDOTHER", "Other items you can add:");
 define("_formulize_DE_AS_REMOVE", "Remove last item from the query");
@@ -574,6 +578,9 @@ define("_formulize_DMULTI_PAGE", "Page");
 define("_formulize_DMULTI_OF", "Of");
 define("_formulize_DMULTI_SKIP", "One or more pages was skipped because they don't apply");
 define("_formulize_DMULTI_ALLDONE", "Leave this form and continue browsing the site");
+define("_formulize_DMULTI_JUMPTO", "Jump to page:");
+define("_formulize_DMULTI_YOUAREON", "You are on:");
+
 
 // import
 define("_formulize_DE_IMPORT", "Import Data");
@@ -612,5 +619,10 @@ define("_formulize_DE_IMPORT_EMAIL", "E-mail");
 define("_formulize_DE_IMPORT_REGCODE", "Registration Code");
 define("_formulize_DE_IMPORT_IDREQCOL", "ID number of this entry (do NOT remove or modify this column)");
 define("_formulize_DE_CLICKSAVE_TEMPLATE", "Right click and save to download your template.");
+
+define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR", "There is an error in your template code.  Sorry, we don't know more than that.  Typos or syntax errors are the most common problems.  Also, if your template has an if...else condition around all its code, and that condition is never met, then there will be no template found which can cause this error.  To avoid that, make sure your template always outputs something, even if it's only '&amp;nbsp;'");
+define("_AM_FORMULIZE_LOE_FIRSTPAGE", "<< First");
+define("_AM_FORMULIZE_LOE_LASTPAGE", "Last >>");
+define("_AM_FORMULIZE_LOE_ONPAGE", "On Page ");
 
 ?>

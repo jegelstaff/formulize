@@ -438,6 +438,8 @@ function addform()
 	}
 	$data[$title] = stripslashes($data[$title]);
 	$data[$title] = eregi_replace ("'", "`", $data[$title]);
+	$data[$title] = eregi_replace ("&quot;", "`", $data[$title]);
+	$data[$title] = eregi_replace ("&#039;", "`", $data[$title]);
 	$data[$title] = eregi_replace ('"', "`", $data[$title]);
 	$data[$title] = eregi_replace ('&', "_", $data[$title]);
 
@@ -461,6 +463,8 @@ function renform()
 	}
 	$title2 = stripslashes($title2);
 	$title2 = eregi_replace ("'", "`", $title2);
+	$title2 = eregi_replace ("&quot;", "`", $title2);
+	$title2 = eregi_replace ("&#039;", "`", $title2);
 	$title2 = eregi_replace ('"', "`", $title2);
 	$title2 = eregi_replace ('&', "_", $title2);
 
@@ -912,7 +916,7 @@ $form->display();
 			default_value = document.groupform.elements[3].options[document.groupform.elements[3].selectedIndex].text; 		
 		}   
 		
-		if(result = prompt("<? echo _AM_MULTI_GROUP_LIST_NAME ?>", default_value))
+		if(result = prompt("<?php echo _AM_MULTI_GROUP_LIST_NAME ?>", default_value))
         {
             if(debug) alert("Adding " + result);
             
@@ -931,7 +935,7 @@ $form->display();
     {
 		if(document.groupform.elements[3].selectedIndex > 0)
         {
-	        if(confirm("<? echo _AM_MULTI_GROUP_LIST_DELETE ?> '" + 
+	        if(confirm("<?php echo _AM_MULTI_GROUP_LIST_DELETE ?> '" + 
 	            document.groupform.elements[3].options[document.groupform.elements[3].selectedIndex].text + "'?"))
 	        {
 	            if(debug) alert("Removing " + 
@@ -959,7 +963,7 @@ $form->display();
 
 -->
 </script>
-<?
+<?php
 /*
  * Freeform Solutions -end 
  */
@@ -1154,35 +1158,38 @@ function updateperms() {
 }
 
 
-function patch22() {
+function patch23() {
 
-	if(!isset($_POST['patch22'])) {
-		print "<form action=\"formindex.php?op=patch22\" method=post>";
+	if(!isset($_POST['patch23'])) {
+		print "<form action=\"formindex.php?op=patch23\" method=post>";
 		print "<h1>Warning: this patch makes several changes to the database, including detection and correction of errors and inconsistencies in your actual data.  Backup your database prior to applying this patch!</h1>";
 		print "<p>This patch may take a few minutes to apply.  Your page may take that long to reload, please be patient.</p>";
-		print "<input type = submit name=patch22 value=\"Apply Database Patch for Formulize 2.2\">";
+		print "<input type = submit name=patch23 value=\"Apply Database Patch for Formulize 2.3\">";
 		print "</form>";
 	} else {
 		global $xoopsDB;
 		// put logic here
 
 		// check to see if form table exists
+		// need to put in check to make sure we're not finding the valid 'form' table from the Formulaire module
+		$checkFormulaire = "SELECT * FROM " . $xoopsDB->prefix("modules") . " WHERE dirname='formulaire'";
+		$cfresult = $xoopsDB->query($checkFormulaire);
 		$sql = "SELECT * FROM " . $xoopsDB->prefix("form") . " LIMIT 0,1";
 		$result = $xoopsDB->query($sql);
-		if($result) {
-
+		if($xoopsDB->getRowsNum($result) AND $xoopsDB->getRowsNum($cfresult) == 0) {
+                        
 			// check to see if ele_forcehidden is in the table or not
 			$sql = "SELECT * FROM " . $xoopsDB->prefix("form") . " LIMIT 0,1";
 			$result = $xoopsDB->query($sql);
 			if(!$result) {
-				exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+				exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $sql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 			}
 			$array = $xoopsDB->fetchArray($result);
 			unset($result);
 			if(!isset($array['ele_forcehidden'])) {
 				$sql = "ALTER TABLE " . $xoopsDB->prefix("form") . " ADD `ele_forcehidden` tinyint(1) NOT NULL default '0'";
 				if(!$result = $xoopsDB->query($sql)) {
-					exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+					exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $sql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
 			} 
 			unset($sql);
@@ -1199,7 +1206,7 @@ function patch22() {
 			$sql[] = "DROP TABLE " . $xoopsDB->prefix("form_chains_entries");
 			foreach($sql as $thissql) {
 				if(!$result = $xoopsDB->query($thissql)) {
-					exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $thissql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+					exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $thissql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
 			}
 
@@ -1207,17 +1214,15 @@ function patch22() {
 
 		unset($sql);
 
-		// check about formulize_other
-//		$testsql = "SELECT * FROM " . $xoopsDB->prefix("formulize_other") . " LIMIT 0,1";
-//		$resultOther = $xoopsDB->query($testsql);
-//		if(!$resultOther) {
 
 		$testsql = "SHOW TABLES";
 		$resultst = $xoopsDB->query($testsql);
 		while($table = $xoopsDB->fetchRow($resultst)) {
 			$existingTables[] = $table[0];
 		}
+                $need22DataChecks = false;
 		if(!in_array($xoopsDB->prefix("formulize_other"), $existingTables)) {
+                        $need22DataChecks = true; // assume that if the formulize_other table is not present, then we have not patched up to 2.2 level yet
 			$sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_other") . " (
   other_id smallint(5) NOT NULL auto_increment,
   id_req smallint(5),
@@ -1252,15 +1257,92 @@ function patch22() {
 			$sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_valid_imports") . " (
   import_id smallint(5) NOT NULL auto_increment,
   file varchar(255) NOT NULL default '',
-  id_reqs text NOT NULL default '',
+  id_reqs text NOT NULL,
   PRIMARY KEY (`import_id`)
 ) TYPE=MyISAM;";
 		}
+                
+                if(!in_array($xoopsDB->prefix("formulize_screen_listofentries"), $existingTables)) {
+                        $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " (
+  listofentriesid int(11) NOT NULL auto_increment,
+  sid int(11) NOT NULL default 0,
+  useworkingmsg tinyint(1) NOT NULL,
+  repeatheaders tinyint(1) NOT NULL,
+  useaddupdate varchar(255) NOT NULL default '',
+  useaddmultiple varchar(255) NOT NULL default '',
+  useaddproxy varchar(255) NOT NULL default '',
+  usecurrentviewlist varchar(255) NOT NULL default '',
+  limitviews text NOT NULL, 
+  defaultview varchar(20) NOT NULL default '',
+  usechangecols varchar(255) NOT NULL default '',
+  usecalcs varchar(255) NOT NULL default '',
+  useadvsearch varchar(255) NOT NULL default '',
+  useexport varchar(255) NOT NULL default '',
+  useexportcalcs varchar(255) NOT NULL default '',
+  useimport varchar(255) NOT NULL default '',
+  useclone varchar(255) NOT NULL default '',
+  usedelete varchar(255) NOT NULL default '',
+  useselectall varchar(255) NOT NULL default '',
+  useclearall varchar(255) NOT NULL default '',
+  usenotifications varchar(255) NOT NULL default '',
+  usereset varchar(255) NOT NULL default '',
+  usesave varchar(255) NOT NULL default '',
+  usedeleteview varchar(255) NOT NULL default '',
+  useheadings tinyint(1) NOT NULL,
+  usesearch tinyint(1) NOT NULL, 
+  usecheckboxes tinyint(1) NOT NULL, 
+  useviewentrylinks tinyint(1) NOT NULL,
+  usescrollbox tinyint(1) NOT NULL,
+  usesearchcalcmsgs tinyint(1) NOT NULL,
+  hiddencolumns text NOT NULL,
+  decolumns text NOT NULL,
+  desavetext varchar(255) NOT NULL default '',
+  columnwidth int(1) NOT NULL,
+  textwidth int(1) NOT NULL,
+  customactions text NOT NULL, 
+  toptemplate text NOT NULL,
+  listtemplate text NOT NULL,
+  bottomtemplate text NOT NULL,
+  PRIMARY KEY (`listofentriesid`),
+  INDEX i_sid (`sid`)
+) TYPE=MyISAM;";
+                }
+                
+                if(!in_array($xoopsDB->prefix("formulize_screen_multipage"), $existingTables)) {
+                        $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " (
+  multipageid int(11) NOT NULL auto_increment,
+  sid int(11) NOT NULL default 0,
+  introtext text NOT NULL,
+  thankstext text NOT NULL,
+  donedest varchar(255) NOT NULL default '',
+  buttontext varchar(255) NOT NULL default '',
+  pages text NOT NULL,
+  pagetitles text NOT NULL,
+  conditions text NOT NULL,
+  printall tinyint(1) NOT NULL,
+  PRIMARY KEY (`multipageid`),
+  INDEX i_sid (`sid`)
+) TYPE=MyISAM;";
+                }
+                
+                if(!in_array($xoopsDB->prefix("formulize_screen"), $existingTables)) {
+                        $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen") . " (
+  sid int(11) NOT NULL auto_increment,
+  title varchar(255) NOT NULL default '',
+  fid int(11) NOT NULL default 0,
+  frid int(11) NOT NULL default 0,
+  type varchar(100) NOT NULL default '',
+  PRIMARY KEY  (`sid`)
+) TYPE=MyISAM;";
+                }
 
 		// check about altered fields
 		$testsql = "SELECT * FROM " .  $xoopsDB->prefix("formulize") . " LIMIT 0,1";
 		$result1 = $xoopsDB->query($testsql);
-		$array1 = $xoopsDB->fetchArray($result1);
+                if($xoopsDB->getRowsNum($result1) == 0) {
+                        exit("Error patching DB for Formulize 2.3.<br>No forms exist in the database.<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                }
+		$array1 = $xoopsDB->fetchArray($result1); // for 2.1 we were checking explicitly whether we needed to add these fields.  But for 2.2 we just ran the SQL and caught the error appropriately in the condition below (ie: looked for failure for 'commonvalue' and ignored it)
 		
 		if(!array_key_exists('ele_desc',$array1)) {
 			$sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_desc` text NULL";
@@ -1274,10 +1356,25 @@ function patch22() {
 		if(!array_key_exists('ele_private',$array1)) {
 			$sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_private` tinyint(1) NOT NULL default '0'";
 		}
+                // these commands can be run more than once, so no need to check them
+                $sql['entriesperpage'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `entriesperpage` int(1) NOT NULL"; // part of 2.3, but dev sites will not have it, so they must be patched up to include this
+                $sql['hiddencolumns'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `hiddencolumns` text NOT NULL"; // part of 2.3, but dev sites will not have it, so they must be patched up to include this
 		$sql['commonvalue'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_framework_links") . " ADD `fl_common_value` tinyint(1) NOT NULL default '0'";
 		$sql['dropindex'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_form") . " DROP INDEX `ele_id`";
 		$sql['deleteyyyy'] = "DELETE FROM " . $xoopsDB->prefix("formulize_form") . " WHERE ele_value =\"YYYY-mm-dd\" AND ele_type=\"date\"";
+                // change alterations not checked for success below, since they can be repeated
 		$sql['headerlist'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") .  " CHANGE `headerlist` `headerlist` text default NULL";
+		$sql['grouplist'] = "ALTER TABLE " . $xoopsDB->prefix("group_lists") .  " CHANGE `gl_groups` `gl_groups` text NOT NULL";
+                $sql['importidreqs'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_valid_imports") . " CHANGE `id_reqs` `id_reqs` text NOT NULL";
+                $sql['sv_asearch'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " CHANGE `sv_asearch` `sv_asearch` text default NULL";
+                $sql['sv_oldcols'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " CHANGE `sv_oldcols` `sv_oldcols` text default NULL";
+                $sql['sv_currentview'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " CHANGE `sv_currentview` `sv_currentview` text default NULL";
+                $sql['sv_calc_cols'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " CHANGE `sv_calc_cols` `sv_calc_cols` text default NULL";
+                $sql['sv_calc_calcs'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " CHANGE `sv_calc_calcs` `sv_calc_calcs` text default NULL";
+                $sql['sv_calc_blanks'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " CHANGE `sv_calc_blanks` `sv_calc_blanks` text default NULL";
+                $sql['sv_calc_grouping'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " CHANGE `sv_calc_grouping` `sv_calc_grouping` text default NULL";
+                $sql['sv_quicksearches'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " CHANGE `sv_quicksearches` `sv_quicksearches` text default NULL";
+                
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
 				if($key === "dropindex") {
@@ -1286,105 +1383,109 @@ function patch22() {
 					print "No redundant date values found.  result: OK<br>";
 				} elseif($key === "commonvalue") {
 					print "Common framework value already added.  result: OK<br>";
+                                } elseif($key === "entriesperpage") {
+                                        print "Entries per page option already added.  result: OK<br>";
+                                } elseif($key === "hiddencolumns") {
+                                        print "Hidden columns option already added.  result: OK<br>";
 				} else {
-					exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $thissql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+					exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $thissql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
 			}
 		}
 
-		// lock formulize_form
-		$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_form") . " WRITE, " . $xoopsDB->prefix("formulize_form") . " AS t1 READ, " . $xoopsDB->prefix("formulize_form") . " AS t2 READ");
-
-		// check for ambiguous id_reqs
-		print "Searching for ambiguous id_reqs.  Please be patient.  This may take a few minutes on a large database.<br>";
-		$findSql = "SELECT distinct(t1.id_req) FROM " . $xoopsDB->prefix("formulize_form") . " AS t1, " . $xoopsDB->prefix("formulize_form") . " AS t2 WHERE t1.uid != t2.uid AND t1.id_req = t2.id_req";
-		if(!$findRes = mysql_query($findSql)) { print "None found.<br>"; }
-		// loop through all ambiguous id_reqs and fix them
-
-		while($find = $xoopsDB->fetchArray($findRes)) {
-			print "Found ambiguous id_req: " . $find['id_req'] . "<br>";
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-			$maxIdReq = getMaxIdReq();		
-			$uidSql = "SELECT distinct(uid) FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req='" . $find['id_req'] . "'";
-			$uidRes = $xoopsDB->query($uidSql);
-			$start = 1;
-			while($uid = $xoopsDB->fetchArray($uidRes)) {
-				// ignore the first one, since one of the entries can keep the current id_req
-				if($start) {
-					print "Uid " . $uid['uid'] . " unchanged<br>";
-					$start = 0;
-					continue;
-				}
-				$fixSql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET id_req='$maxIdReq' WHERE id_req='" . $find['id_req'] . "' AND uid='" . $uid['uid'] . "'";
-				if(!$fixRes = $xoopsDB->query($fixSql)) {
-					exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $fixsql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
-				}
-				print "Uid " . $uid['uid'] . " now using id_req $maxIdReq<br>";
-				$maxIdReq++;
-			}
-		}
-
-		// repeat check, but base on id_form instead...
-		$findSql = "SELECT distinct(t1.id_req) FROM " . $xoopsDB->prefix("formulize_form") . " AS t1, " . $xoopsDB->prefix("formulize_form") . " AS t2 WHERE t1.id_form != t2.id_form AND t1.id_req = t2.id_req";
-		if(!$findRes = mysql_query($findSql)) { print "None found.<br>"; }
-		// loop through all ambiguous id_reqs and fix them
-
-		while($find = $xoopsDB->fetchArray($findRes)) {
-			print "Found ambiguous id_req: " . $find['id_req'] . "<br>";
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-			$maxIdReq = getMaxIdReq();		
-			$fidSql = "SELECT distinct(id_form) FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req='" . $find['id_req'] . "'";
-			$fidRes = $xoopsDB->query($fidSql);
-			$start = 1;
-			while($id_form = $xoopsDB->fetchArray($fidRes)) {
-				// ignore the first one, since one of the entries can keep the current id_req
-				if($start) {
-					print "Form id " . $id_form['id_form'] . " unchanged<br>";
-					$start = 0;
-					continue;
-				}
-				$fixSql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET id_req='$maxIdReq' WHERE id_req='" . $find['id_req'] . "' AND id_form='" . $id_form['id_form'] . "'";
-				if(!$fixRes = $xoopsDB->query($fixSql)) {
-					exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $fixsql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
-				}
-				print "Form id " . $id_form['id_form'] . " now using id_req $maxIdReq<br>";
-				print "EITHER ENTRY " . $find['id_req'] . " OR ENTRY $maxIdReq HAS THE WRONG OWNER (uid).  THERE IS NO WAY FOR THE SYSTEM TO TELL WHICH IS INCORRECT. YOU SHOULD CHECK THE ENTRIES AND MODIFY THE UID COLUMN IN THE DATABASE FOR THE ONE ENTRY THAT IS INCORRECT.  THE PROPER SQL SHOULD BE LIKE THIS: \"UPDATE xoops_formulize_form SET uid=123 WHERE id_req=456\" WHERE 123 IS THE CORRECT UID AND 456 IS THE ENTRY THAT CURRENTLY HAS AN INCORRECT UID.  PLEASE CONTACT FREEFORM SOLUTIONS FOR ASSISTANCE IF YOU ARE AT ALL UNSURE ABOUT THIS PROCEDURE!<br>";
-				$maxIdReq++;
-			}
-		}
-
-
-		print "Finished checking for ambiguous id_reqs.<br>";
-
-		// unlock tables
-		$xoopsDB->query("UNLOCK TABLES");
-
-		// check for old data
-		print "Checking for old data left over from deleted form elements.  This may take a few minutes on a large database<br>";
-		$formsSql = "SELECT ele_caption, id_form FROM " . $xoopsDB->prefix("formulize");
-		$formsRes = $xoopsDB->query($formsSql);
-		while($formArray = $xoopsDB->fetchArray($formsRes)) {
-			$newcap = str_replace("'", "`", $formArray['ele_caption']);
-			$formCaptions[$formArray['id_form']][$newcap] = 1;
-		}
-		$dataSql = "SELECT id_form, ele_caption FROM " . $xoopsDB->prefix("formulize_form");
-		$dataRes = $xoopsDB->query($dataSql);
-		while($dataArray = $xoopsDB->fetchArray($dataRes)) {
-			if(!isset($formCaptions[$dataArray['id_form']][$dataArray['ele_caption']])) {
-				$deleteSql = "DELETE FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=".$dataArray['id_form']." AND ele_caption=\"".mysql_real_escape_string($dataArray['ele_caption'])."\"";
-				if(!$result = $xoopsDB->query($deleteSql)) {
-					exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $deletesql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
-				}
-			}
-		}
-
-		print "Finished checking for old data.  result: OK<br>";
-
+                if($need22DataChecks) {
+                        // lock formulize_form
+                        $xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_form") . " WRITE, " . $xoopsDB->prefix("formulize_form") . " AS t1 READ, " . $xoopsDB->prefix("formulize_form") . " AS t2 READ");
+        
+                        // check for ambiguous id_reqs
+                        print "Searching for ambiguous id_reqs.  Please be patient.  This may take a few minutes on a large database.<br>";
+                        $findSql = "SELECT distinct(t1.id_req) FROM " . $xoopsDB->prefix("formulize_form") . " AS t1, " . $xoopsDB->prefix("formulize_form") . " AS t2 WHERE t1.uid != t2.uid AND t1.id_req = t2.id_req";
+                        if(!$findRes = mysql_query($findSql)) { print "None found.<br>"; }
+                        // loop through all ambiguous id_reqs and fix them
+        
+                        while($find = $xoopsDB->fetchArray($findRes)) {
+                                print "Found ambiguous id_req: " . $find['id_req'] . "<br>";
+                                include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+                                $maxIdReq = getMaxIdReq();		
+                                $uidSql = "SELECT distinct(uid) FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req='" . $find['id_req'] . "'";
+                                $uidRes = $xoopsDB->query($uidSql);
+                                $start = 1;
+                                while($uid = $xoopsDB->fetchArray($uidRes)) {
+                                        // ignore the first one, since one of the entries can keep the current id_req
+                                        if($start) {
+                                                print "Uid " . $uid['uid'] . " unchanged<br>";
+                                                $start = 0;
+                                                continue;
+                                        }
+                                        $fixSql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET id_req='$maxIdReq' WHERE id_req='" . $find['id_req'] . "' AND uid='" . $uid['uid'] . "'";
+                                        if(!$fixRes = $xoopsDB->query($fixSql)) {
+                                                exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $fixsql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                                        }
+                                        print "Uid " . $uid['uid'] . " now using id_req $maxIdReq<br>";
+                                        $maxIdReq++;
+                                }
+                        }
+        
+                        // repeat check, but base on id_form instead...
+                        $findSql = "SELECT distinct(t1.id_req) FROM " . $xoopsDB->prefix("formulize_form") . " AS t1, " . $xoopsDB->prefix("formulize_form") . " AS t2 WHERE t1.id_form != t2.id_form AND t1.id_req = t2.id_req";
+                        if(!$findRes = mysql_query($findSql)) { print "None found.<br>"; }
+                        // loop through all ambiguous id_reqs and fix them
+        
+                        while($find = $xoopsDB->fetchArray($findRes)) {
+                                print "Found ambiguous id_req: " . $find['id_req'] . "<br>";
+                                include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+                                $maxIdReq = getMaxIdReq();		
+                                $fidSql = "SELECT distinct(id_form) FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req='" . $find['id_req'] . "'";
+                                $fidRes = $xoopsDB->query($fidSql);
+                                $start = 1;
+                                while($id_form = $xoopsDB->fetchArray($fidRes)) {
+                                        // ignore the first one, since one of the entries can keep the current id_req
+                                        if($start) {
+                                                print "Form id " . $id_form['id_form'] . " unchanged<br>";
+                                                $start = 0;
+                                                continue;
+                                        }
+                                        $fixSql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET id_req='$maxIdReq' WHERE id_req='" . $find['id_req'] . "' AND id_form='" . $id_form['id_form'] . "'";
+                                        if(!$fixRes = $xoopsDB->query($fixSql)) {
+                                                exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $fixsql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                                        }
+                                        print "Form id " . $id_form['id_form'] . " now using id_req $maxIdReq<br>";
+                                        print "EITHER ENTRY " . $find['id_req'] . " OR ENTRY $maxIdReq HAS THE WRONG OWNER (uid).  THERE IS NO WAY FOR THE SYSTEM TO TELL WHICH IS INCORRECT. YOU SHOULD CHECK THE ENTRIES AND MODIFY THE UID COLUMN IN THE DATABASE FOR THE ONE ENTRY THAT IS INCORRECT.  THE PROPER SQL SHOULD BE LIKE THIS: \"UPDATE xoops_formulize_form SET uid=123 WHERE id_req=456\" WHERE 123 IS THE CORRECT UID AND 456 IS THE ENTRY THAT CURRENTLY HAS AN INCORRECT UID.  PLEASE CONTACT FREEFORM SOLUTIONS FOR ASSISTANCE IF YOU ARE AT ALL UNSURE ABOUT THIS PROCEDURE!<br>";
+                                        $maxIdReq++;
+                                }
+                        }
+                        print "Finished checking for ambiguous id_reqs.<br>";
+        
+                        // unlock tables
+                        $xoopsDB->query("UNLOCK TABLES");
+        
+                        // check for old data
+                        print "Checking for old data left over from deleted form elements.  This may take a few minutes on a large database<br>";
+                        $formsSql = "SELECT ele_caption, id_form FROM " . $xoopsDB->prefix("formulize");
+                        $formsRes = $xoopsDB->query($formsSql);
+                        while($formArray = $xoopsDB->fetchArray($formsRes)) {
+                                $newcap = str_replace("'", "`", $formArray['ele_caption']);
+                                $newcap = str_replace("&quot;", "`", $newcap);
+                                $newcap = str_replace("&#039;", "`", $newcap);
+                                $formCaptions[$formArray['id_form']][$newcap] = 1;
+                        }
+                        $dataSql = "SELECT id_form, ele_caption FROM " . $xoopsDB->prefix("formulize_form");
+                        $dataRes = $xoopsDB->query($dataSql);
+                        while($dataArray = $xoopsDB->fetchArray($dataRes)) {
+                                if(!isset($formCaptions[$dataArray['id_form']][$dataArray['ele_caption']])) {
+                                        $deleteSql = "DELETE FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=".$dataArray['id_form']." AND ele_caption=\"".mysql_real_escape_string($dataArray['ele_caption'])."\"";
+                                        if(!$result = $xoopsDB->query($deleteSql)) {
+                                                exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $deletesql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                                        }
+                                }
+                        }
+                        print "Finished checking for old data.  result: OK<br>";
+                }
 
 		print "DB updates completed.  result: OK";
-
-	}
+        } 
 }
+
 
 
 // convert data to the new no slashes, HTML special chars format
@@ -1406,12 +1507,14 @@ function patch22convertdata() {
 			print "<h1>Warning: this patch changes the formatting of data in your database, primarily to address security issues in how data is being stored.  Backup your database prior to applying this patch!</h1>";
 			print "<h1>DO NOT APPLY THIS PATCH TWICE.  If you apply this patch again after applying it once already, then some data in your database may be damaged.  So, please backup your database prior to applying this patch!  If there is an error when the patch runs, returning to a backup is the only way to ensure the integrity of your data.</h1>";
 			print "<p>This patch may take a few minutes to apply.  Your page may take that long to reload, please be patient.</p>";
-			print "<input type = submit name=patch22convertdata value=\"Apply Data Conversion Patch for Formulize 2.2\">";
+                        print "<p>If you applied this patch previously when upgrading to Formulize 2.2, DO NOT apply it again when upgrading to a higher version!</p>";
+                        print "<p>If the first version of Formulize that you installed was 2.2 or higher, you DO NOT need to apply this patch!</p>";
+			print "<input type = submit name=patch22convertdata value=\"Apply Data Conversion Patch for upgrading to Formulize 2.2 and higher\">";
 			print "</form>";
 		} else {
-			print "<h1>You do not appear to have applied 'patch22'.</h1>\n";
-			print "<p>You must apply patch22 before applying this patch.  Change the URL to this:<br><br>\n";
-			print "http://www.mysite.com/modules/formulize/admin/formindex.php?op=patch22</p>\n";
+			print "<h1>You do not appear to have applied 'patch23'.</h1>\n";
+			print "<p>You must apply patch23 before applying this patch.  Change the URL to this:<br><br>\n";
+			print "http://www.mysite.com/modules/formulize/admin/formindex.php?op=patch23</p>\n";
 		}
 	} else {
 		
@@ -1511,8 +1614,8 @@ case "migratedb":
 	migratedb();
 	break;
 
-case "patch22":
-	patch22();
+case "patch23":
+	patch23();
 	break;
 case "patch22convertdata":
 	patch22convertdata();
@@ -1520,7 +1623,7 @@ case "patch22convertdata":
 
 }
 
-print "<p>version 2.2 RC1</p>";
+print "<p>version 2.3 RC1</p>";
 
 include 'footer.php';
     xoops_cp_footer();

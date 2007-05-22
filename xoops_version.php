@@ -30,7 +30,7 @@
 ###############################################################################
 
 $modversion['name'] = _MI_formulize_NAME;
-$modversion['version'] = "2.2";
+$modversion['version'] = "2.3";
 $modversion['description'] = _MI_formulize_DESC;
 $modversion['author'] = "Freeform Solutions";                                            
 $modversion['credits'] = "";
@@ -59,6 +59,10 @@ $modversion['tables'][12] = "formulize_onetoone_links";
 $modversion['tables'][13] = "formulize_other";
 $modversion['tables'][14] = "formulize_notification_conditions";
 $modversion['tables'][15] = "formulize_valid_imports";
+$modversion['tables'][16] = "formulize_screen";
+$modversion['tables'][17] = "formulize_screen_multipage";
+$modversion['tables'][18] = "formulize_screen_listofentries";
+
 
 // Admin things
 $modversion['hasAdmin'] = 1;

@@ -472,7 +472,11 @@ function importCsvValidate(& $importSet, $id_reqs, $regfid)
             for($link = 0; $link < $links; $link++)
             {
 	            $cell_value = $row[$link];
-                
+			if(isset($importSet[5][0][$importSet[6][$link]])) { // if this is an element, then extract that element from the array
+				$element = & $importSet[5][0][$importSet[6][$link]];
+			} else {
+				$element = array();
+			}
 			if($cell_value == "") {
 				if($importSet[6][$link] == -1) { // this is not a found column in the form
 					// disallow profile metdata fields from being blank
@@ -484,6 +488,16 @@ function importCsvValidate(& $importSet, $id_reqs, $regfid)
 						$errors[] = "<li>line " . $rowCount . ",<br> <b>No ID number specified</b></li>";
 					} 
 				}
+				
+				// need to respect required setting
+				if(isset($element['ele_req'])) {
+					if($element['ele_req']) {
+						$errors[] = "<li>line " . $rowCount . 
+	                                        ", column " . $importSet[3][$link] .
+	                                        ",<br> <b>This column requires a value</b> (cell was blank)</li>";
+					}
+				}
+				
 			} else { 
 				// check columns not present in form...
 	                if($importSet[6][$link] == -1)
@@ -519,7 +533,6 @@ function importCsvValidate(& $importSet, $id_reqs, $regfid)
 				// check columns from form...
 	                else
 	                {
-	                    $element = & $importSet[5][0][$importSet[6][$link]];
 
                         switch($element["ele_type"])
 	                    {
@@ -812,7 +825,7 @@ function importCsvValidate(& $importSet, $id_reqs, $regfid)
                                 {
                                 	$yn_value = strtoupper($cell_value);
 
-                                    if(!($yn_value == strtoupper(_formulize_TEMP_QYES) || $yn_value == strtoupper(_formulize_TEMP_QNO))) // changed to use language constants, June 29, 2006
+	                            if(!($yn_value == strtoupper(_formulize_TEMP_QYES) || $yn_value == strtoupper(_formulize_TEMP_QNO))) // changed to use language constants, June 29, 2006
                                     {
 	                                    $errors[] = "<li>line " . $rowCount . 
 	                                        ", column " . $importSet[3][$link] .
@@ -821,6 +834,7 @@ function importCsvValidate(& $importSet, $id_reqs, $regfid)
 									}                                            
 								}                                                                   
 	                            break;
+				
 	                    }
 	                }
                 }
@@ -1132,7 +1146,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid)
              						if($foundit) {
              	                                    $element_value .= "*=+*:" . $item_value;
              						} elseif($hasother) {
-             							$other_values[] = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$max_id_req\", \"" . $element["ele_id"] . "\", \"" . gpcaddslashes(trim($item_value)) . "\")";
+             							$other_values[] = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$max_id_req\", \"" . $element["ele_id"] . "\", \"" . $myts->htmlSpecialChars(trim($item_value)) . "\")";
              							$element_value .= "*=+*:" . $hasother;
              						} else {
              							print "ERROR: INVALID TEXT FOUND FOR A CHECKBOX ITEM -- $item_value -- IN ROW:<BR>";
@@ -1165,7 +1179,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid)
 								}										
 							}
 							if(!$foundit AND $hasother) {
-								$other_values[] = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$max_id_req\", \"" . $element["ele_id"] . "\", \"" . gpcaddslashes(trim($row_value)) . "\")";
+								$other_values[] = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$max_id_req\", \"" . $element["ele_id"] . "\", \"" . $myts->htmlSpecialChars(trim($row_value)) . "\")";
 								$row_value = $hasother;
 							} elseif(!$foundit) {
 								print "ERROR: INVALID TEXT FOUND FOR A RADIO BUTTON ITEM -- $row_value -- IN ROW:<BR>";
@@ -1321,7 +1335,7 @@ function getElementOptions($id_form, $ele_caption)
 	return $result;
 }
 
-
+// THERE IS A BUG HERE WHICH CAUSES IT NOT TO COME UP WITH THE RIGHT ID WHEN PASSED A FULL NAME???
 function getUserID($stringName)
 {
 	global $xoopsDB, $xoopsUser;
@@ -1329,7 +1343,8 @@ function getUserID($stringName)
     $sql = "SELECT uid FROM " . $xoopsDB->prefix("users") .  
         " WHERE uname='" . $stringName . "'";
 
-    if($result = $xoopsDB->query($sql))
+	$result = $xoopsDB->query($sql);
+    if($xoopsDB->getRowsNum($result) > 0)
     {
 		$item = $xoopsDB->fetchArray($result);
         if(@$item["uid"])
@@ -1361,7 +1376,10 @@ function getUserID($stringName)
 
 function formformCaption($ele_caption)
 {
-	return str_replace("'", "`", $ele_caption);
+	$ele_caption = str_replace("'", "`", $ele_caption);
+	$ele_caption = str_replace("&quot;", "`", $ele_caption);
+	$ele_caption = str_replace("&#039;", "`", $ele_caption);
+	return $ele_caption;
 }
 
 

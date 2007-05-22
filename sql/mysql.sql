@@ -1,7 +1,76 @@
+CREATE TABLE `formulize_screen_listofentries` (
+  `listofentriesid` int(11) NOT NULL auto_increment,
+  `sid` int(11) NOT NULL default 0,
+  `useworkingmsg` tinyint(1) NOT NULL,
+  `repeatheaders` tinyint(1) NOT NULL,
+  `useaddupdate` varchar(255) NOT NULL default '',
+  `useaddmultiple` varchar(255) NOT NULL default '',
+  `useaddproxy` varchar(255) NOT NULL default '',
+  `usecurrentviewlist` varchar(255) NOT NULL default '',
+  `limitviews` text NOT NULL, 
+  `defaultview` varchar(20) NOT NULL default '',
+  `usechangecols` varchar(255) NOT NULL default '',
+  `usecalcs` varchar(255) NOT NULL default '',
+  `useadvsearch` varchar(255) NOT NULL default '',
+  `useexport` varchar(255) NOT NULL default '',
+  `useexportcalcs` varchar(255) NOT NULL default '',
+  `useimport` varchar(255) NOT NULL default '',
+  `useclone` varchar(255) NOT NULL default '',
+  `usedelete` varchar(255) NOT NULL default '',
+  `useselectall` varchar(255) NOT NULL default '',
+  `useclearall` varchar(255) NOT NULL default '',
+  `usenotifications` varchar(255) NOT NULL default '',
+  `usereset` varchar(255) NOT NULL default '',
+  `usesave` varchar(255) NOT NULL default '',
+  `usedeleteview` varchar(255) NOT NULL default '',
+  `useheadings` tinyint(1) NOT NULL,
+  `usesearch` tinyint(1) NOT NULL, 
+  `usecheckboxes` tinyint(1) NOT NULL, 
+  `useviewentrylinks` tinyint(1) NOT NULL,
+  `usescrollbox` tinyint(1) NOT NULL,
+  `usesearchcalcmsgs` tinyint(1) NOT NULL,
+  `hiddencolumns` text NOT NULL,
+  `decolumns` text NOT NULL,
+  `desavetext` varchar(255) NOT NULL default '',
+  `columnwidth` int(1) NOT NULL,
+  `textwidth` int(1) NOT NULL,
+  `customactions` text NOT NULL, 
+  `toptemplate` text NOT NULL,
+  `listtemplate` text NOT NULL,
+  `bottomtemplate` text NOT NULL,
+  `entriesperpage` int(1) NOT NULL,
+  PRIMARY KEY (`listofentriesid`),
+  INDEX i_sid (`sid`)
+) TYPE=MyISAM;
+
+CREATE TABLE `formulize_screen_multipage` (
+  `multipageid` int(11) NOT NULL auto_increment,
+  `sid` int(11) NOT NULL default 0,
+  `introtext` text NOT NULL,
+  `thankstext` text NOT NULL,
+  `donedest` varchar(255) NOT NULL default '',
+  `buttontext` varchar(255) NOT NULL default '',
+  `pages` text NOT NULL,
+  `pagetitles` text NOT NULL,
+  `conditions` text NOT NULL,
+  `printall` tinyint(1) NOT NULL,
+  PRIMARY KEY (`multipageid`),
+  INDEX i_sid (`sid`)
+) TYPE=MyISAM;
+
+CREATE TABLE `formulize_screen` (
+  `sid` int(11) NOT NULL auto_increment,
+  `title` varchar(255) NOT NULL default '',
+  `fid` int(11) NOT NULL default 0,
+  `frid` int(11) NOT NULL default 0,
+  `type` varchar(100) NOT NULL default '',
+  PRIMARY KEY  (`sid`)
+) TYPE=MyISAM;
+
 CREATE TABLE formulize_valid_imports (
   import_id smallint(5) NOT NULL auto_increment,
   file varchar(255) NOT NULL default '',
-  id_reqs text NOT NULL default '',
+  id_reqs text NOT NULL,
   PRIMARY KEY (`import_id`)
 ) TYPE=MyISAM;
 
@@ -43,23 +112,23 @@ CREATE TABLE formulize_saved_views (
   sv_lockcontrols tinyint(1),
   sv_hidelist tinyint(1),
   sv_hidecalc tinyint(1),
-  sv_asearch varchar(255) default NULL,
+  sv_asearch text default NULL,
   sv_sort varchar(255) default NULL,
   sv_order varchar(30) default NULL,
-  sv_oldcols varchar(255) default NULL,
-  sv_currentview varchar(255) default NULL,
-  sv_calc_cols varchar(255) default NULL,
-  sv_calc_calcs varchar(255) default NULL,
-  sv_calc_blanks varchar(255) default NULL,
-  sv_calc_grouping varchar(255) default NULL,
-  sv_quicksearches varchar(255) default NULL,
+  sv_oldcols text default NULL,
+  sv_currentview text default NULL,
+  sv_calc_cols text default NULL,
+  sv_calc_calcs text default NULL,
+  sv_calc_blanks text default NULL,
+  sv_calc_grouping text default NULL,
+  sv_quicksearches text default NULL,
   PRIMARY KEY (sv_id)
 ) TYPE=MyISAM;
 
 CREATE TABLE group_lists (
   gl_id smallint(5) unsigned NOT NULL auto_increment,
   gl_name varchar(255) NOT NULL default '',
-  gl_groups text default '',
+  gl_groups text NOT NULL,
   PRIMARY KEY (gl_id),
   UNIQUE gl_name_id (gl_name)
 ) TYPE=MyISAM;

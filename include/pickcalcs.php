@@ -49,13 +49,16 @@ function sendCalcs(formObj) {
 	var calc_grouping;
 	var calc_grouping = '';
 
-<?
+<?php
 // process POST to find the columns and calcs and then look at form elements directly based on requested columns
 // options can change between POSTings, but calcs and columns do not change, hence the need to go to javascript for the options.
 
 if($_POST['column']) {
-	$columns[] = $_POST['column'];
+	$numCols = count($_POST['column']);
+	for ($i = 0; $i < $numCols; $i++) {
+		$columns[] = $_POST['column'][$i];
 	$calcs[] = implode(",", $_POST['calculations']);
+		}
 /*	foreach($_POST['calculations'] as $acalc) {
 		print "calc_blanks = formObj." . $acalc . $_POST['column'] . ".value;\n";
 		print "calc_grouping = formObj.grouping_" . $acalc . "_" . $_POST['column'] . ".value;\n";
@@ -117,7 +120,7 @@ print "window.self.close();\n";
 </script>
 
 
-<?
+<?php
 
 }
 
@@ -130,13 +133,16 @@ function addReqdCalcs($form) {
 	// add the most recently submitted calc if it is necessary...
 	
 	if($_POST['submitx']) {
-		$form->addElement(new xoopsFormHidden('reqdcalc_column_' . $_POST['column'], $_POST['column']));
+		$numCols = count($_POST['column']);
+		for ($i = 0; $i < $numCols; $i++) {
+			$form->addElement(new xoopsFormHidden('reqdcalc_column_' . $_POST['column'][$i], $_POST['column'][$i]));
 		// flatten $_POST['calculation'] array
 		$hidden_calcs = implode(",", $_POST['calculations']);
-		$form->addElement(new xoopsFormHidden('reqdcalc_calcs_' . $_POST['column'], $hidden_calcs));
-		$rc[$indexer]['column'] = $_POST['column'];
+			$form->addElement(new xoopsFormHidden('reqdcalc_calcs_' . $_POST['column'][$i], $hidden_calcs));
+			$rc[$indexer]['column'] = $_POST['column'][$i];
 		$rc[$indexer]['calcs'] = $hidden_calcs;
 		$indexer++;
+	}
 	}
 
 	// get previously requested calcs
@@ -266,18 +272,18 @@ foreach($cols as $f=>$vs) {
 		$reqdcol = 'reqdcalc_column_' . $values['ele_id'];
 		if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.  
 			$usedvals[] = $values['ele_id'];
-			if(!$_POST[$reqdcol] AND $_POST['column'] != $values['ele_id']) { // Also exclude columns that have been used already.
+			if(!$_POST[$reqdcol] AND !in_array($values['ele_id'], $_POST['column'])) { // Also exclude columns that have been used already.
 				if($values['ele_colhead'] != "") {
-					$options[$values['ele_id']] = printSmart(trans($values['ele_colhead']));
+					$options[$values['ele_id']] = printSmart(trans($values['ele_colhead']), 60);
 				} else {
-					$options[$values['ele_id']] = printSmart(trans($values['ele_caption']));
+					$options[$values['ele_id']] = printSmart(trans(strip_tags($values['ele_caption'])), 60);
 				}
 			}
 			// used for the grouping list box
 			if($values['ele_colhead'] != "") {
-				$options2[$values['ele_id']] = "Group by: " . printSmart(trans($values['ele_colhead']), "25");
+				$options2[$values['ele_id']] = "Group by: " . printSmart(trans($values['ele_colhead']));
 			} else {
-				$options2[$values['ele_id']] = "Group by: " . printSmart(trans($values['ele_caption']), "25");
+				$options2[$values['ele_id']] = "Group by: " . printSmart(trans(strip_tags($values['ele_caption'])));
 			}
 		}
 	}		
@@ -305,20 +311,20 @@ $pickcalc = new xoopsThemeForm(_formulize_DE_PICKCALCS, 'pickcalc', XOOPS_URL."/
 $returned = addReqdCalcs($pickcalc);
 $pickcalc = $returned['form'];
 
-$columns = new xoopsFormSelect(_formulize_DE_CALC_COL, 'column');
-if($_POST['column'] != "uid" AND !$_POST['reqdcalc_column_uid']) {
+$columns = new xoopsFormSelect(_formulize_DE_CALC_COL, 'column', "", 10, true);
+if(!in_array("uid", $_POST['column']) AND !$_POST['reqdcalc_column_uid']) {
 	$columns->addOption("uid", _formulize_DE_CALC_CREATOR);
 }
-if($_POST['column'] != "proxyid" AND !$_POST['reqdcalc_column_proxyid']) {
+if(!in_array("proxyid", $_POST['column']) AND !$_POST['reqdcalc_column_proxyid']) {
 	$columns->addOption("proxyid", _formulize_DE_CALC_MODIFIER);
 }
-if($_POST['column'] != "creation_date" AND !$_POST['reqdcalc_column_creation_date']) {
+if(!in_array("creation_date", $_POST['column']) AND !$_POST['reqdcalc_column_creation_date']) {
 	$columns->addOption("creation_date", _formulize_DE_CALC_CREATEDATE);
 }
-if($_POST['column'] != "mod_date" AND !$_POST['reqdcalc_column_mod_date']) {
+if(!in_array("mod_date", $_POST['column']) AND !$_POST['reqdcalc_column_mod_date']) {
 	$columns->addOption("mod_date", _formulize_DE_CALC_MODDATE);
 }
-if($_POST['column'] != "creator_email" AND !$_POST['reqdcalc_column_creator_email']) {
+if(!in_array("creator_email", $_POST['column']) AND !$_POST['reqdcalc_column_creator_email']) {
 	$columns->addOption("creator_email", _formulize_DE_CALC_CREATOR_EMAIL);
 }
 $columns->addOptionArray($options);
@@ -381,7 +387,7 @@ foreach($returned['rc'] as $hidden) {
 	foreach($calcs as $calc) {
 		$tempname = $calc . $hidden['column'];
 		if(!$_POST[$tempname]) {
-			$current_val = "all";
+			$current_val = "noblanks";
 		} else {
 			$current_val = $_POST[$tempname];
 		}
@@ -417,8 +423,8 @@ foreach($returned['rc'] as $hidden) {
 		$tempcalc3->addOption("onlyblanks", _formulize_DE_CALCONLYBLANKS);
 */
 		$tempcalc1 = new xoopsFormSelect(_formulize_DE_CALC_BTEXT, $tempname, $current_val);
-		$tempcalc1->addOption("all", _formulize_DE_CALCALL);
 		$tempcalc1->addOption("noblanks", _formulize_DE_CALCNOBLANKS);
+		$tempcalc1->addOption("all", _formulize_DE_CALCALL);
 		$tempcalc1->addOption("onlyblanks", _formulize_DE_CALCONLYBLANKS);
 
 		
@@ -429,6 +435,7 @@ foreach($returned['rc'] as $hidden) {
 		$grouping->addOption("proxyid", _formulize_DE_GROUPBYMODIFIER);
 		$grouping->addOption("creation_date", _formulize_DE_GROUPBYCREATEDATE);
 		$grouping->addOption("mod_date", _formulize_DE_GROUPBYMODDATE);
+		$grouping->addOption("creator_email", _formulize_DE_GROUPBYCREATOREMAIL);
 		$grouping->addOptionArray($options2);
 
 

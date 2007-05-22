@@ -1,4 +1,88 @@
 *********************
+Version 2.3 RC1:
+*********************
+
+IMPORTANT:  Read the readme file for this version.  There are other things to do besides overwrite your files.
+
+** Major New Features (9)
+
+50% OR GREATER PERFORMANCE IMPROVEMENTS
+--Over 50% speed improvements on "list of entries" screens, thanks to caching and pagination of data.  Subsequent page loads from the cache are even faster than that.
+
+VIEW LISTS OF ENTRIES ONE PAGE AT A TIME
+--"List of entries" screens now show only ten entries at a time, and provide a navigation UI to browse through pages.
+
+NEW "SCREEN" SYSTEM
+--Added an admin side UI to provide extremely detailed control over how your "list of entries" screens look and behave.  Same for multi-page versions of forms.  For each form, you can now create multiple, customized versions of these two types of screens.  See the readme file for details.
+
+INTEGRATION WITH DRUPAL
+--You can now display forms and screens from Formulize inside your Drupal website.  See the included tutorial for details.
+
+NOW PICK MULTIPLE COLUMNS AT ONCE FOR ADVANCED SEARCHES AND CALCULATIONS
+--You can now select multiple columns at once when choosing calculations, and when specifying advanced search terms
+
+NEW "COLORPICKER" FORM ELEMENT
+--Added "colorpicker" elements, thanks to Inbox International
+
+NEW "DERIVED VALUES" FORM ELEMENT
+--Added "derived" value elements, which are fields in a form which have a value based on some math or logical operation performed on other values in the same entry.   For example, if an entry records an investment and a rate of return, you could add a derived value that calculated the actual return on the investment amount, by multiplying the investment amount by the rate of return.
+
+NEW "GRID" ELEMENTS
+--Added "grid" elements, which are simply a special way of displaying existing elements in the form in a table-like structure (based on the displayGrid function)
+
+VIEW ALL TEXT IN TEXTBOXES ON THE PRINTABLE VIEW PAGE
+--Improved handling of textboxes on the Printable View page, so that all their contents are displayed regardless of the size of the box
+
+** Other New Features/Changes (14)
+
+--"Creator's e-mail address" columns now only display the e-mail address if the user has flagged their e-mail address as visible to other users.
+--You can now have HTML content inside the captions for elements
+--Changed the default choice for "include blanks and zeros" on the calculations screen, to no blanks and zeros.
+--The import system now recognizes required fields and won't import entries that are missing required fields in the form
+--Changed the URL used in notifications based on the user profile form, if using the Registration Codes module, so the user is directed to the actual profile page, not the form entry
+--Added backwards compatibility with older versions of XOOPS without the security class
+--Improved the navigation UI in the multi page versions of forms (displayFormPages function)
+--Improved multi page versions of forms to respect single-entry form rules better
+--Average calculations rounded to two decimal places now
+--Added security token checking to the List of Entries screen
+--Changed single-cell "text for display" elements, so that the caption is used for the text if the actual contents are blank
+--Slightly improved appearance of the list of elements on the admin page where you add elements to a form, by alternating the shading of the rows.  Useful on very large forms.
+--Improved the checking for and prevention of duplicate element names within a form
+--Improved the handling of the order value when creating elements, so you don't have to manually alter the order numbers of multiple elements you might be adding "at once" through multiple tabs in your browser
+
+** Improvements and New API Features for Application Developers (9):
+
+--prevValue parameter now optional in the writeEntryValue function (this function moved here from Pageworks)
+--writeEntryValue function now works with linked selectboxes (replace action only)
+--Modified behaviour of advanced searches that start with NOT.  Assumption is that the entire search is being negated, ie: everything is inside ( ) and you are searching for things that do not match that entire expression. 
+--Internal changes to the displayFilter function, including support for linked selectbox fields, and selectbox fields based on usernames/fullnames
+--Expanded the frameworks class to include more properties
+--Added a frameworks handler class
+--Expanded the forms class to include more properties
+--Added a forms handler class
+--Changed default form displaying behaviour for anonymous users, so they see the list of entries screen just like anyone else.  Note: all anonymous users will see the entries created by all other anonymous users, since all those individuals are treated as user 0 (zero) in the XOOPS system.
+
+** General Additions/Changes/Fixes (17+):
+
+--Fixed a cross-site scripting vulnerability.  Special thanks to Rasmus Lerdorf for generously taking the time to audit a live site at the Vancouver PHP conference!
+--Various minor bug fixes throughout, thanks to the active community members who have posted in the forums and trackers!
+--Made all opening PHP tags <?php so Formulize will work when short tags are off in the .ini file
+--Added various security improvements by Zyspec (thanks!)
+--Replaced all remaining references to PHP's mysql functions with references to the $xoopsDB functions, to completely encapsulate Formulize's DB interactions inside the XOOPS DB connection instance (necessary for integration with Drupal)
+--Added a lot of caching of results in functions to provide some performance gains
+--Various language constant updates throughout
+--Fixed a magic_quotes bug related to the names of saved views
+--Fixed a bug that caused values in certain fields to be erased under certain circumstances, only when displayElement and displayForm were used on the same web page
+--Various input filtering and escaping enhancements throughout
+--HTML characters now display properly in exported data
+--Various notices and warnings cleared up throughout
+--Fixed a bug that affected anonymous users cloning entries
+--Fixed a complex bug that led to certain events not generating notifications to the right people, depending on the group memberships and group permissions of the affected users
+--Fixed a bug in the display of elements in a grid, where blank spaces would be drawn in where elements that the user is not allowed to see would normally go
+--Fixed various PHP 5 compatibility bugs
+--Added garbage collection to export system, so old exported files don't clutter up the hard drive anymore
+
+*********************
 Version 2.2 RC1:
 *********************
 

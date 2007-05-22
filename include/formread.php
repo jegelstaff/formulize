@@ -65,10 +65,24 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 // skip the security check if we're in wfdownloads/smartdownloads since that module should already be handling the security checking
 $cururl = getCurrentURL();
-if (!$GLOBALS['xoopsSecurity']->check() AND (!strstr($cururl, "modules/wfdownloads") AND !strstr($cururl, "modules/smartdownload"))) {
-	print "<b>Error: the data you submitted could not be saved in the database.</b>";
-	return;
+if(isset($GLOBALS['xoopsSecurity'])) { // avoid security check for versions of XOOPS that don't have that feature
+	if (!$GLOBALS['xoopsSecurity']->check() AND (!strstr($cururl, "modules/wfdownloads") AND !strstr($cururl, "modules/smartdownload"))) {
+		print "<b>Error: the data you submitted could not be saved in the database.</b>";
+		return;
+	}
 }
+
+// set base notification groups, either the current user's groups, or the owner's groups
+// likely not to work right in the case of a mass proxy entry creation or one-to-one unified display frameworks, but those situations are increasingly deprecated
+// reason it won't work in those situations, is that the actual $owner can be different from what is passed
+// into this function, I think.   
+if($uid != $owner AND (intval($owner) === 0 OR $owner > 0)) {
+	$base_not_groups = $owner_groups;
+} else {
+	$base_not_groups = $groups;
+}
+
+if(!$mid) { $mid = getFormulizeModId(); }
 
 global $xoopsDB;
 $myts =& MyTextSanitizer::getInstance();
@@ -119,10 +133,7 @@ $myts =& MyTextSanitizer::getInstance();
 
 	$element =& $formulize_mgr->get($i);
 
-//print "<br>" .$i . ": " . $ele[$i];
-//		if( !empty($ele[$i]) ){
 		if(is_numeric($ele[$i]) OR $ele[$i] != "") {
-//print "<br>" .$i . ": " . $ele[$i];
 			//$pds = $element->getVar('pds');
 			$id_form = $element->getVar('id_form');
 
@@ -150,7 +161,7 @@ $myts =& MyTextSanitizer::getInstance();
              				}
              			}
 	           		}	
-             		elseif($entries[$id_form][0] AND (intval($owner) === 0 OR $owner > 0) AND $uid != $owner) // they are an admin who has updated someone's entry (could be simply a fellow member of the same groupscope) -- intval($owner) === 0 handles anons
+             		elseif($entries[$id_form][0] AND (intval($owner) === 0 OR $owner > 0) AND $uid != $owner) // they are an admin who has updated someone's entry (could be simply a fellow member of the same groupscope) -- intval($owner) === 0 handles anons...important to note that $owner == "" will NOT trip this condition, so new entries without an owner will not qualify
              		{
              			$proxyid = $uid; // proxy flag set to user who updated entry
              			$uids[$id_form][$num_id] = intval($owner); // uid set to uid of the original entry
@@ -174,7 +185,7 @@ $myts =& MyTextSanitizer::getInstance();
 			$ele_caption = eregi_replace ("&quot;", "`", $ele_caption);
 			$ele_caption = eregi_replace ("'", "`", $ele_caption);
 			$sql = $xoopsDB->query("SELECT desc_form from ".$xoopsDB->prefix("formulize_id")." WHERE id_form= ".$id_form.'');
-			while ($row = mysql_fetch_array ($sql)) 
+			while ($row = $xoopsDB->fetchArray($sql)) 
 			{	$desc_form[] = $row['desc_form']; }
 
 			$value = prepDataForWrite($element, $ele[$i]);
@@ -192,7 +203,7 @@ $myts =& MyTextSanitizer::getInstance();
 
 	// note: you cannot completely erase an entry by blanking, because at least one element from a form needs to be sent in order for submittedcaptions array to include that form_id
 	foreach($submittedcaptions as $f=>$cs) {
-		blankEntries($cs, $prevEntry[$f], $entries[$f][0]);
+		blankEntries($cs, $prevEntry[$f], $entries[$f][0], $f);
 	}
 
 	// need to return comprehensive list of all entries, either the entry passed, or if no entry was passed, then the num_id used -- num_id is the value that gets passed as the id_req for new entries, and it is stored in the uids array here
@@ -208,10 +219,10 @@ $myts =& MyTextSanitizer::getInstance();
 					$_COOKIE['entryid_'.$this_fid] = $r;
 				}			
 			}
-			sendNotifications($this_fid, "new_entry", $entries[$this_fid], $mid, $groups);
+			sendNotifications($this_fid, "new_entry", $entries[$this_fid], $mid, $base_not_groups);
 		} else {	
 			writeOtherValues($entries[$this_fid][0], $this_fid);
-			sendNotifications($this_fid, "update_entry", $entries[$this_fid], $mid, $groups);
+			sendNotifications($this_fid, "update_entry", $entries[$this_fid], $mid, $base_not_groups);
 		}
 	} 
 	return $entries;
@@ -240,13 +251,14 @@ foreach($uids as $num_id=>$uid) { // added to handle multiple select proxy boxes
 if($entry) {
 
 	// check to see if the caption exists...
+	// print "$ele_caption<br>";
 
 	if(in_array($ele_caption, $prevEntry['captions'])) {
 		//get the ele_id
 		$extractEleid = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE ele_caption=\"$ele_caption\" AND id_req=$entry";
 		//print "*extractEleid*". $extractEleid . "*";
-		$resultExtractEleid = mysql_query($extractEleid);
-		$finalresulteleidex = mysql_fetch_row($resultExtractEleid);
+		$resultExtractEleid = $xoopsDB->query($extractEleid);
+		$finalresulteleidex = $xoopsDB->fetchRow($resultExtractEleid);
 		$ele_id = $finalresulteleidex[0];
 
 		$sql="UPDATE " .$xoopsDB->prefix("formulize_form") . " SET id_form=\"$id_form\", id_req=\"$entry\", ele_id=\"$ele_id\", ele_type=\"$ele_type\", ele_caption=\"$ele_caption\", ele_value=\"" . mysql_real_escape_string($value) . "\", uid=\"$uid\", proxyid=\"$proxyid\", date=\"$date\" WHERE ele_id = $ele_id";
@@ -297,12 +309,12 @@ function writeUserProfile($data, $uid) {
         $uid = intval($data['uid']);
     }
     if (empty($uid)) {
-	  redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
+	redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
         exit();
     } elseif(is_object($xoopsUser)) {
 		if($xoopsUser->getVar('uid') != $uid) {
-		  redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
-	        exit();	
+			redirect_header(XOOPS_URL,3,_US_NOEDITRIGHT);
+			exit();	
 		}
     }
 
@@ -368,13 +380,18 @@ function writeUserProfile($data, $uid) {
 }
 
 // function to blank entries that the user deleted on submission
-function blankEntries($submittedcaptions, $prevEntry, $entry) {
+function blankEntries($submittedcaptions, $prevEntry, $entry, $fid) {
 
 	global $xoopsDB;
 
 	$misscapindex = 0;
 
-	/*print "Submitted captions:<br>";
+	// the GLOBALS array below is created in readelements.php, which is called once each time formulize is called
+	if(is_array($GLOBALS['formulize_submittedElementCaptions'][$fid])) { // in PHP 5 you must check to see whether an array was sent by read elements!
+		$submittedcaptions = array_merge((array)$submittedcaptions, $GLOBALS['formulize_submittedElementCaptions'][$fid]);
+	}
+	/*
+	print "Submitted captions:<br>";
 	print_r($submittedcaptions);
 	print "<br><br>";  // debug block
 
@@ -393,12 +410,12 @@ function blankEntries($submittedcaptions, $prevEntry, $entry) {
 	print_r($missingcaptions);
 	print "<br>"; // debug block
 	*/
+	
 	//If there are existing captions that have not been sent for writing, then blank them.
 	foreach($missingcaptions as $ele_cap2) {
-	
 		$extractEleid2 = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE ele_caption=\"$ele_cap2\" AND id_req=$entry";
-		$resultExtractEleid2 = mysql_query($extractEleid2);
-		$finalresulteleidex2 = mysql_fetch_row($resultExtractEleid2);
+		$resultExtractEleid2 = $xoopsDB->query($extractEleid2);
+		$finalresulteleidex2 = $xoopsDB->fetchRow($resultExtractEleid2);
 		$ele_id2 = $finalresulteleidex2[0];
 		$sql="DELETE FROM " .$xoopsDB->prefix("formulize_form") . " WHERE ele_id = $ele_id2";
 		//print $sql . "<br>";
@@ -406,7 +423,5 @@ function blankEntries($submittedcaptions, $prevEntry, $entry) {
 		if(!$result) { exit("error blanking entries while using the following SQL statement:<br>$sql"); }
 	}
 }
-
-
 
 ?>

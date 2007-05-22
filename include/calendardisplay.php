@@ -332,6 +332,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 	}
     
 
+
 	// process data set(s)
 	for($i=0;$i<count($data);$i++) {
 
@@ -537,9 +538,34 @@ function displayFilter($page, $name, $id, $ele_id, $overrides = "")
 }
 
 // THIS FUNCTION ACTUALLY BUILDS THE SELECT FORM ELEMENT AND RETURNS IT AS A STRING
-function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0=>"")) { 
+function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0=>""), $subfilter=false, $linked_ele_id = 0, $linked_data_id=0) { 
+
+	// Changes made to allow the linking of one filter to another. This is acheieved as follows:
+	// 1. Create a formulize form for managing the Main Filter List (form M)
+	// 2. Create a formulize form for managing the Sub Filter list (form S), which includes a linked element to the data in form M, 
+	//    so that relation between the Main Filter & Sub Filter data can be specified 
+	// 3. Create a formulize form for the data that the Main & SubFilter act upon (form D)
+	///
+	// In such a case, the parameters have the following meaning:
+	//  - $id is the element id of the field to be filtered in Form D
+	//  - $ele_id is also the element id of the field to be filtered in Form D
+	//  - $subfilter specifies if this filter is a subfilter
+	//  - $linked_ele_id specifies the ele_id of the Main Filter field as it appears in Form S
+	//  - $linked_data_id specifies the ele_id of the Main Filter field as it appears in Form D
 
 	global $xoopsDB;		// required by q
+	$filter = "<SELECT name=\"$id\" id=\"$id\"";
+	if($name) { $filter .= " onchange='javascript:document.$name.submit();'"; }
+	$filter .= ">\n";
+	
+	if ($subfilter AND !(isset($_POST[$linked_data_id])) AND !(isset($_GET[$linked_data_id])))  { 
+		// If its a subfilter and the main filter is unselected, then put in 'Please select from above options first
+		$filter .= "<option value=\"none\">Please select a primary filter first</option>\n"; 
+		}
+	else {
+		// Either it is not a subfilter, or it is a subfilter with the linked values set
+		$defaulttext = $defaulttext ? $defaulttext: _AM_FORMLINK_PICK;
+		$filter .= "<option value=\"none\">".$defaulttext."</option>\n"; 
 
     $form_element = q("SELECT ele_value, ele_type FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
     $element_value = unserialize($form_element[0]["ele_value"]);
@@ -553,15 +579,80 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 			break;
 	}
 
-
-	$filter = "<SELECT name=\"$id\" id=\"$id\"";
-	if($name) { $filter .= " onchange=\"window.document.$name.submit();\""; }
-	$filter .= ">\n";
-
-	if(!$name) { 
-		$defaulttext = $defaulttext ? $defaulttext: _AM_FORMLINK_PICK;
-		$filter .= "<option value=\"none\">".$defaulttext."</option>\n"; 
+	// if the $options is from a linked selectbox, then figure that out and gather the possible values
+	// only linked selectboxes have this string in their options field
+	if(strstr($options, "#*=:*")) {
+		$boxproperties = explode("#*=:*", $options);
+		$source_form_id = $boxproperties[0];
+		$source_form_caption = $boxproperties[1];
+		// grab the values that have been submitted into that element of that form
+		// So first grab the element ID of that form caption
+		include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
+		$source_form_obj = new formulizeForm($source_form_id);
+		$source_form_caption = str_replace("'", "`", $source_form_caption);
+		$source_form_caption = str_replace("&quot;", "`", $source_form_caption);
+		$source_form_caption = str_replace("&#039;", "`", $source_form_caption);
+		$element_key = array_search($source_form_caption, $source_form_obj->getVar("elementCaptions"));
+		$source_elements_array = $source_form_obj->getVar("elements");
+		$source_element_id = $source_elements_array[$element_key];
+			if (!$subfilter) {
+		$data = getData("", $source_form_id);
+				}
+			else {
+				$getDataFilter .= $linked_ele_id . "/**/" . $_POST[$linked_data_id];
+				$data = getData("", $source_form_id, $getDataFilter);
+				}
+		unset($options);
+		foreach($data as $entry) {
+			$option_text = display($entry, $source_element_id);
+			$options[$option_text] = ""; // it's the key that gets used in the loop below
+		}
 	}
+	
+	$nametype = "";
+	if(key($options) === "{FULLNAMES}" OR key($options) === "{USERNAMES}") { // code copied from elementrender.php to make fullnames work for Drupalcamp demo
+		if(key($options) === "{FULLNAMES}") { $nametype = "name"; }
+		if(key($options) === "{USERNAMES}") { $nametype = "uname"; }
+		$pgroups = array();
+		if($element_value[3]) {
+			$scopegroups = explode(",",$element_value[3]);
+			global $xoopsUser;
+			$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+			if(!in_array("all", $scopegroups)) {
+				if($element_value[4]) { // limit by users's groups
+					foreach($groups as $gid) { // want to loop so we can get rid of reg users group simply
+						if($gid == XOOPS_GROUP_USERS) { continue; }
+						if(in_array($gid, $scopegroups)) {
+							$pgroups[] = $gid;
+						}
+					}
+					if(count($pgroups) > 0) { 
+						unset($groups);
+						$groups = $pgroups;
+      				} else {
+      					$groups = array();
+      				}
+      			} else { // don't limit by user's groups
+					$groups = $scopegroups;
+				}
+			} else { // use all
+				if(!$element_value[4]) { // really use all (otherwise, we're just going will all user's groups, so existing value of $groups will be okay
+					unset($groups);
+					global $xoopsDB;
+					$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups") . " WHERE groupid != " . XOOPS_GROUP_USERS);
+					foreach($allgroupsq as $thisgid) {
+						$groups[] = $thisgid['groupid'];
+					} 
+				}
+			}
+			$options = array();
+			$namelist = gatherNames($groups, $nametype);
+			foreach($namelist as $auid=>$aname) {
+				$options[$aname] = $auid; // backwards to how elementrenderer.php does it, since logic below to build list is different
+			}
+		}
+	}
+
 
     foreach($options as $option=>$option_value)
     {
@@ -571,15 +662,15 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 		        $selected = ($_POST[$id] == $option OR $_GET[$id] == $option) ? "selected" : ""; 
 		        $filter .= "<option value=\"" . $overrides[$option][1] . "\" $selected>" . $overrides[$option][0] . "</option>\n";
         }
-        else
-        {
+	 
+			else {
 		  if(preg_match('/\{OTHER\|+[0-9]+\}/', $option)) { $option = str_replace(":", "", _formulize_OPT_OTHER); }
-		  $passoption = str_replace(" ", "_", $option);
+		  $passoption = $nametype ? $option_value : str_replace(" ", "_", $option); // if a nametype is in effect, then use the value, otherwise, use the key
 		  if(isset($_POST[$id]) OR isset($_GET[$id])) { $selected = ($_POST[$id] == $passoption OR $_GET[$id] == $passoption) ? "selected" : ""; } else { $selected = ""; }
 	        $filter .= "<option value=\"$passoption\" $selected>$option</option>\n";
 		}            
     }
-    
+	}
 	$filter .= "</SELECT>\n";
 
 	return $filter;

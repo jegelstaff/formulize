@@ -54,7 +54,8 @@ global $xoopsConfig;
 	}
 
 // main function
-function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0, $viewallforms=0) {
+// $screen will be a screen object if present
+function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0, $viewallforms=0, $screen=null) {
 
 	global $xoopsDB, $xoopsUser;
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
@@ -70,6 +71,15 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler, "")) {
 		print "<p>" . _NO_PERM . "</p>";
 		return;
+	}
+
+	// must wrap security check in only the conditions in which it is needed, so we don't interfere with saving data in a form (which independently checks the security token)
+	if(($_POST['delconfirmed'] OR $_POST['cloneconfirmed'] OR $_POST['delview'] OR $_POST['saveid'])) {
+		if(isset($GLOBALS['xoopsSecurity'])) {
+			$formulize_LOESecurityPassed = $GLOBALS['xoopsSecurity']->check();
+		} else { // if there is no security token, then assume true -- necessary for old versions of XOOPS.
+			$formulize_LOESecurityPassed = true;
+		}
 	}
 
 	// check for group and global permissions
@@ -96,10 +106,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	// check for deletion request and then delete entries
-	if($_POST['delconfirmed']) { // only gets set by clicking on the delete selected button
+	if($_POST['delconfirmed'] AND $formulize_LOESecurityPassed) { // only gets set by clicking on the delete selected button
 		foreach($_POST as $k=>$v) {
 			if(substr($k, 0, 7) == "delete_" AND $v != "") {
 				$thisentry = substr($k, 7);
+				$GLOBALS['formulize_deletionRequested'] = true;
 				// new syntax for deleteEntry, Sept 18 2005 -- used to handle deleting all unified display entries that are linked to this entry.  
 				if($frid) {
 					deleteEntry($thisentry, $frid, $fid, $gperm_handler, $member_handler, $mid);
@@ -111,7 +122,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	// check for cloning request and if present then clone entries
-	if($_POST['cloneconfirmed']) {
+	if($_POST['cloneconfirmed'] AND $formulize_LOESecurityPassed) {
 //		print $_POST['cloneconfirmed'];
 		foreach($_POST as $k=>$v) {
 			if(substr($k, 0, 7) == "delete_" AND $v != "") {
@@ -123,7 +134,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 
 	// handle deletion of view...reset currentView
-	if($_POST['delview']) {
+	if($_POST['delview'] AND $formulize_LOESecurityPassed) {
 		if(substr($_POST['delviewid'], 1, 4) == "old_") {
 			$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id='" . substr($_POST['delviewid'], 5) . "'";
 		} else {
@@ -140,6 +151,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// users who view reports (views) that aren't locked can switch back to a basic view and retain settings.  This is so they can make changes to a view and then save the updates.  It is also a little confusing to switch from a predefined view to a basic one but have the predefined view's settings still hanging around.
 	// recommendation to users should be to lock the controls for all published views.
 	// (this routine also invoked when a view has been deleted)
+	$resetview = false;
 	if($_POST['resetview']) {
 		$resetview = $_POST['currentview'];
 		foreach($_POST as $k=>$v) {
@@ -149,7 +161,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	// handle saving of the view if that has been requested
-	if($_POST['saveid']) {
+	if($_POST['saveid'] AND $formulize_LOESecurityPassed) {
 		// gather all values
 		//$_POST['currentview'] -- from save (they might have updated/changed the scope)
 		//possible situations:
@@ -204,6 +216,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 		$savename = mysql_real_escape_string($savename);
 		$savesearches = mysql_real_escape_string($_POST['asearch']);
+		//print $_POST['asearch'] . "<br>";
+		//print "$savesearches<br>";
 		$qsearches = mysql_real_escape_string($qsearches);
 
 		if($frid) { 
@@ -226,6 +240,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 			$savesql = "INSERT INTO " . $xoopsDB->prefix("formulize_saved_views") . " (sv_name, sv_pubgroups, sv_owner_uid, sv_mod_uid, sv_formframe, sv_mainform, sv_lockcontrols, sv_hidelist, sv_hidecalc, sv_asearch, sv_sort, sv_order, sv_oldcols, sv_currentview, sv_calc_cols, sv_calc_calcs, sv_calc_blanks, sv_calc_grouping, sv_quicksearches) VALUES (\"$savename\", \"$savegroups\", \"$owneruid\", \"$moduid\", \"$saveformframe\", \"$savemainform\", \"{$_POST['savelock']}\", \"{$_POST['hlist']}\", \"{$_POST['hcalc']}\", \"$savesearches\", \"{$_POST['sort']}\", \"{$_POST['order']}\", \"{$_POST['oldcols']}\", \"{$_POST['savescope']}\", \"{$_POST['calc_cols']}\", \"{$_POST['calc_calcs']}\", \"{$_POST['calc_blanks']}\", \"{$_POST['calc_grouping']}\", \"$qsearches\")";
 		} else {
+			// print "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"{$_POST['savelock']}\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid, 1) . "\"";
 			$savesql = "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"{$_POST['savelock']}\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid, 1) . "\"";
 		}
 
@@ -254,10 +269,20 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 
 
-
+	$forceLoadView = false;
+	if($screen) {
+		$loadview = $screen->getVar('defaultview'); // flag the screen default for loading
+		if($loadview == "mine" OR $loadview == "group" OR $loadview == "all") {
+			$currentView = $loadview; // if the default is a standard view, then use that instead and don't load anything
+			unset($loadview);
+		} elseif($_POST['userClickedReset']) { // only set if the user actually clicked that button, and in that case, we want to be sure we load the default as specified for the screen
+			$forceLoadView = true; 
+		}
+	}
+		
 	// set currentView to group if they have groupscope permission (overridden below by value sent from form)
 	// override with loadview if that is specified
-	if($loadview AND !$_POST['currentview'] AND $_POST['advscope'] == "") {
+	if($loadview AND ((!$_POST['currentview'] AND $_POST['advscope'] == "") OR $forceLoadView)) {
 		if(substr($loadview, 0, 4) == "old_") { // this is a legacy view
 			$loadview = "p" . $loadview;
 		} elseif(is_numeric($loadview)) { // new view id
@@ -268,13 +293,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 		$_POST['currentview'] = $loadview;
 		$_POST['loadreport'] = 1;
-	} elseif($view_groupscope) {
+	} elseif($view_groupscope AND !$currentView) {
 		$currentView = "group";
-	} else {
+	} elseif(!$currentView) {
 		$currentView = "mine";
-	} 
-
-	
+	}
+		
 
 	// debug block to show key settings being passed back to the page
 /*
@@ -301,6 +325,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 */
 
+
 	// get control settings passed from form 
 
 	// handling change in view, and loading reports/saved views if necessary
@@ -317,19 +342,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 
 			list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols']) = loadOldReport(substr($_POST['currentview'], 5), $fid, $view_groupscope);
-/*			print "<br>Currentview: " . $_POST['currentview'] . "<br>Oldcols: ";
-			print $_POST['oldcols'] . "<br>asearch: ";
-			print $_POST['asearch'] . "<br>calc_cols: ";
-			print $_POST['calc_cols'] . "<br>calc_calcs: ";
-			print $_POST['calc_calcs'] . "<br>calc_blanks: ";
-			print $_POST['calc_blanks'] . "<br>calc_grouping: ";
-			print $_POST['calc_grouping'] . "<br>sort: ";
-			print $_POST['sort'] . "<br>order: ";
-			print $_POST['order'] . "<br>"; 
-			print $_POST['hlist'] . "<br>"; 
-			print $_POST['hcalc'] . "<br>"; 
-			print $_POST['lockcontrols'] . "<br>"; 
-*/
+
 		} elseif(is_numeric(substr($_POST['currentview'], 1))) { // saved or published view
 			$loadedView = $_POST['currentview'];
 			$settings['loadedview'] = $loadedView;
@@ -349,6 +362,20 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				}
 			}
 		}
+		
+		/*print "<br>Currentview: " . $_POST['currentview'] . "<br>Oldcols: ";
+		print $_POST['oldcols'] . "<br>asearch: ";
+		print $_POST['asearch'] . "<br>calc_cols: ";
+		print $_POST['calc_cols'] . "<br>calc_calcs: ";
+		print $_POST['calc_calcs'] . "<br>calc_blanks: ";
+		print $_POST['calc_blanks'] . "<br>calc_grouping: ";
+		print $_POST['calc_grouping'] . "<br>sort: ";
+		print $_POST['sort'] . "<br>order: ";
+		print $_POST['order'] . "<br>"; 
+		print $_POST['hlist'] . "<br>"; 
+		print $_POST['hcalc'] . "<br>"; 
+		print $_POST['lockcontrols'] . "<br>"; */
+		
 		$currentView = $_POST['currentview']; 
 	} elseif($_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
 		$currentView = $_POST['advscope'];
@@ -401,7 +428,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// generate the available views
 
 	// pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
-	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid']) = generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, $_POST['curviewid'], $loadOnlyView);
+	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, $_POST['curviewid'], $loadOnlyView, $screen, $_POST['lastloaded']);
 
 	// this param only used in case of loading of reports via passing in the report id or name through $loadview
 	if($_POST['loadviewname']) { $settings['loadviewname'] = $_POST['loadviewname']; }
@@ -418,8 +445,14 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	$settings['currentURL'] = $currentURL; 
 
-	$settings['columns'] = $showcols;	
-
+	$settings['columns'] = $showcols;
+	
+	if($frid) {
+		$settings['columnids'] = convertHandles($showcols, $frid);
+	} else {
+		$settings['columnids'] = $showcols;
+	}
+	
 	$settings['hlist'] = $_POST['hlist'];
 	$settings['hcalc'] = $_POST['hcalc'];
 
@@ -500,6 +533,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$settings['calc_blanks'] = $_POST['calc_blanks'];
 	$settings['calc_grouping'] = $_POST['calc_grouping'];
 
+	// gather id of the cached data, if any
+	$settings['formulize_cacheddata'] = strip_tags($_POST['formulize_cacheddata']);
+
 	if($_POST['ventry']) { // user clicked on a view this entry link
 		include_once XOOPS_ROOT_PATH . '/modules/formulize/include/formdisplay.php';
 
@@ -531,67 +567,119 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	
 	} 
 
-	drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView); 
+	// process a clicked custom button
+	// must do this before gathering the data!
+	$messageText = "";
+	if(isset($_POST['caid']) AND $screen) {
+		$customButtonDetails = $screen->getVar('customactions');
+		if(is_numeric($_POST['caid']) AND isset($customButtonDetails[$_POST['caid']])) {
+			list($caCode, $caElements, $caActions, $caValues, $caMessageText, $caApplyTo) = processCustomButton($_POST['caid'], $customButtonDetails[$_POST['caid']]); // just processing to get the info so we can process the click.  Actual output of this button happens lower down
+			$messageText = processClickedCustomButton($caElements, $caValues, $caActions, $caMessageText, $caApplyTo);
+		}
+	}
 
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+	$scope = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
+	// create $data and $wq (writable query)
+	list($data, $wq, $regeneratePageNumbers) = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, $screen, $currentURL);
+	$formulize_LOEPageNav = formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers);
 
-	// build filter for extraction layer
+	$formulize_buttonCodeArray = array();
+	list($formulize_buttonCodeArray) = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $messageText);
 
-//	if($reportscope) {
-//		$scope = buildScope($reportscope, $member_handler, $uid, $groups);
-//	} else {
-		$scope = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
-//	}
+	// if there is messageText and no custom top template, and no messageText variable in the bottom template, then we have to output the message text here
+	if($screen AND $messageText) {
+		if(trim($screen->getVar('toptemplate')) == "" AND !strstr($screen->getVar('bottomtemplate'), 'messageText')) {
+			print "<p><center><b>$messageText</b></center></p>\n";
+		}
+	}
 
-	drawEntries($fid, $showcols, $_POST['sort'], $_POST['order'], $searches, $frid, $scope, "", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler); // , $loadview); // -- loadview not passed any longer since the lockcontrols indicator is used to handle whether things should appear or not.
+	drawEntries($fid, $showcols, strip_tags($_POST['sort']), strip_tags($_POST['order']), $searches, $frid, $scope, "", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers); // , $loadview); // -- loadview not passed any longer since the lockcontrols indicator is used to handle whether things should appear or not.
 
 	
+	if($screen) {
+		formulize_screenLOETemplate($screen, "bottom", $formulize_buttonCodeArray, $settings);
+	} else {
+		print $formulize_LOEPageNav; // redraw page numbers if there is no screen in effect
+	}
+	if(isset($formulize_buttonCodeArray['submitButton'])) { // if a custom top template was in effect, this will have been sent back, so now we display it at the very bottom of the form so it doesn't take up a visible amount of space above (the submitButton is invisible, but does take up space)
+		print "<p>" . $formulize_buttonCodeArray['submitButton'] . "</p>";
+	}
+
+	print "</form>\n"; // end of the form started in drawInterface
+
+	print "</div>\n"; // end of the listofentries div, used to call up the working message when the page is reloading, started in drawInterface
+
 }
 
 // return the available current view settings based on the user's permissions
-function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView="", $view_groupscope, $view_globalscope, $prevview="", $loadOnlyView=0) {
+function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView="", $view_groupscope, $view_globalscope, $prevview="", $loadOnlyView=0, $screen, $lastLoaded) {
 	global $xoopsDB;
 
-	$options = "<option value=\"\">" . _formulize_DE_STANDARD_VIEWS . "</option>\n";
+	$limitViews = false;
+	$screenLimitViews = array();
+	$forceLastLoaded = false;
+	if($screen) {
+		$screenLimitViews = $screen->getVar('limitviews');
+		if(!in_array("allviews", $screenLimitViews)) {
+			$limitViews = true;
+			
+			// IF LIMIT VIEWS IS IN EFFECT, THEN CHECK FOR BASIC VIEWS BEING ENABLED, AND IF THEY ARE NOT, THEN WE NEED TO SET THE CURRENT VIEW LIST TO THE LASTLOADED
+			// Excuses....This is a future todo item.  Very complex UI issues, in that user could change options, then switch to other view, then switch back and their options are missing now
+			// Right now, without basic views enabled, the first view in the list comes up if an option is changed (since the basic scope cannot be reflected in the available views), so that's just confusing
+			// Could have 'custom' option show up at top of list instead, just to indicate to the user that things are not the options originally loaded from that view
+			
+			if((!in_array("mine", $screenLimitViews) AND !in_array("group", $screenLimitViews) AND !in_array("all", $screenLimitViews)) AND !$_POST['loadreport'] ) { // if the basic views are not present, and the user hasn't specifically changed the current view list
+				$forceLastLoaded = true;
+			} else {
+				$forceLastLoaded = false;
+			}
+			
+		}
+	}
+
+
+	$options =  !$limitViews ? "<option value=\"\">" . _formulize_DE_STANDARD_VIEWS . "</option>\n" : "";
 	$vcounter=0;
 
-	if($loadOnlyView AND $loadedView) {
+	if($loadOnlyView AND $loadedView AND !$limitViews) {
 		$vcounter++;
 		$options .= "<option value=\"\">&nbsp;&nbsp;" . _formulize_DE_NO_STANDARD_VIEWS . "</option>\n";
 	}
 
 		
-	if($currentView == "mine" AND !$loadOnlyView) {
+	if($currentView == "mine" AND !$loadOnlyView AND (!$limitViews OR in_array("mine", $screenLimitViews))) {
 		$options .= "<option value=mine selected>&nbsp;&nbsp;" . _formulize_DE_MINE . "</option>\n";
 		$vcounter++;	
-	} elseif(!$loadOnlyView) {
+	} elseif(!$loadOnlyView AND (!$limitViews OR in_array("mine", $screenLimitViews))) {
 		$vcounter++;
 		$options .= "<option value=mine>&nbsp;&nbsp;" . _formulize_DE_MINE . "</option>\n";
 	}
 
 
 
-	if($currentView == "group" AND $view_groupscope AND !$loadOnlyView) {
+	if($currentView == "group" AND $view_groupscope AND !$loadOnlyView AND (!$limitViews OR in_array("group", $screenLimitViews))) {
 		$options .= "<option value=group selected>&nbsp;&nbsp;" . _formulize_DE_GROUP . "</option>\n";
 		$vcounter++;
-	} elseif($view_groupscope AND !$loadOnlyView) {
+	} elseif($view_groupscope AND !$loadOnlyView AND (!$limitViews OR in_array("group", $screenLimitViews))) {
 		$vcounter++;
 		$options .= "<option value=group>&nbsp;&nbsp;" . _formulize_DE_GROUP . "</option>\n";
 	} 
 
-	if($currentView == "all" AND $view_globalscope AND !$loadOnlyView) {
+	if($currentView == "all" AND $view_globalscope AND !$loadOnlyView AND (!$limitViews OR in_array("all", $screenLimitViews))) {
 		$options .= "<option value=all selected>&nbsp;&nbsp;" . _formulize_DE_ALL . "</option>\n";
 		$vcounter++;
-	} elseif($view_globalscope AND !$loadOnlyView) {
+	} elseif($view_globalscope AND !$loadOnlyView AND (!$limitViews OR in_array("all", $screenLimitViews))) {
 		$vcounter++;
 		$options .= "<option value=all>&nbsp;&nbsp;" . _formulize_DE_ALL . "</option>\n";
 	} 
 
 	// check for pressence of advanced scope
-	if(strstr($currentView, ",") AND !$loadedView) { 
+	if(strstr($currentView, ",") AND !$loadedView AND !$limitViews) { 
 		$vcounter++;
 		$groupNames = groupNameList(trim($currentView, ","));
 		$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . _formulize_DE_AS_ENTRIESBY . printSmart($groupNames) . "</option>\n";
-	} elseif(($view_globalscope OR $view_groupscope) AND !$loadOnlyView) {
+	} elseif(($view_globalscope OR $view_groupscope) AND !$loadOnlyView AND !$limitViews) {
 		$vcounter++;	
 		$pickgroups = $vcounter;
 		$options .= "<option value=\"\">&nbsp;&nbsp;" . _formulize_DE_AS_PICKGROUPS . "</option>\n";
@@ -602,59 +690,67 @@ function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView
 	list($s_reports, $p_reports, $ns_reports, $np_reports) = availReports($uid, $groups, $fid, $frid);
 	$lastStandardView = $vcounter;
 
-	if(count($s_reports)>0 OR count($ns_reports)>0) { // we have saved reports...
-		$options .= "<option value=\"\">" . _formulize_DE_SAVED_VIEWS . "</option>\n";
-		$vcounter++;
-	}
-	for($i=0;$i<count($s_reports);$i++) {
-		if($loadedView == "sold_" . $s_reports[$i]['report_id'] OR $prevview == "sold_" . $s_reports[$i]['report_id']) {
+	if(!$limitViews) { // cannot pick saved views in the screen UI so these will never be available if views are being limited
+		if((count($s_reports)>0 OR count($ns_reports)>0) AND !$limitViews) { // we have saved reports...
+			$options .= "<option value=\"\">" . _formulize_DE_SAVED_VIEWS . "</option>\n";
 			$vcounter++;
-			$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . $s_reports[$i]['report_name'] . "</option>\n"; // " (id: " . $s_reports[$i]['report_id'] . ")</option>\n";
-			$loadviewname = $s_reports[$i]['report_name'];
-			$curviewid = "sold_" . $s_reports[$i]['report_id'];
-		} else {
-			$vcounter++;
-			$options .= "<option value=sold_" . $s_reports[$i]['report_id'] . ">&nbsp;&nbsp;" . $s_reports[$i]['report_name'] . "</option>\n"; // " (id: " . $s_reports[$i]['report_id'] . ")</option>\n";
 		}
-	}
-	for($i=0;$i<count($ns_reports);$i++) {
-		if($loadedView == "s" . $ns_reports[$i]['sv_id'] OR $prevview == "s" . $ns_reports[$i]['sv_id']) {
-			$vcounter++;
-			$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . $ns_reports[$i]['sv_name'] . "</option>\n"; // " (id: " . $ns_reports[$i]['sv_id'] . ")</option>\n";
-			$loadviewname = $ns_reports[$i]['sv_name'];
-			$curviewid = "s" . $ns_reports[$i]['sv_id'];
-		} else {
-			$vcounter++;
-			$options .= "<option value=s" . $ns_reports[$i]['sv_id'] . ">&nbsp;&nbsp;" . $ns_reports[$i]['sv_name'] . "</option>\n"; // " (id: " . $ns_reports[$i]['sv_id'] . ")</option>\n";
+		for($i=0;$i<count($s_reports);$i++) {
+			if($loadedView == "sold_" . $s_reports[$i]['report_id'] OR $prevview == "sold_" . $s_reports[$i]['report_id']) {
+				$vcounter++;
+				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($s_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $s_reports[$i]['report_id'] . ")</option>\n";
+				$loadviewname = $s_reports[$i]['report_name'];
+				$curviewid = "sold_" . $s_reports[$i]['report_id'];
+			} else {
+				$vcounter++;
+				$options .= "<option value=sold_" . $s_reports[$i]['report_id'] . ">&nbsp;&nbsp;" . stripslashes($s_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $s_reports[$i]['report_id'] . ")</option>\n";
+			}
 		}
-	}
+		for($i=0;$i<count($ns_reports);$i++) {
+			if($loadedView == "s" . $ns_reports[$i]['sv_id'] OR $prevview == "s" . $ns_reports[$i]['sv_id']) {
+				$vcounter++;
+				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($ns_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $ns_reports[$i]['sv_id'] . ")</option>\n";
+				$loadviewname = $ns_reports[$i]['sv_name'];
+				$curviewid = "s" . $ns_reports[$i]['sv_id'];
+			} else {
+				$vcounter++;
+				$options .= "<option value=s" . $ns_reports[$i]['sv_id'] . ">&nbsp;&nbsp;" . stripslashes($ns_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $ns_reports[$i]['sv_id'] . ")</option>\n";
+			}
+		}
+	}	
 	
 
-	if(count($p_reports)>0 OR count($np_reports)>0) { // we have saved reports...
+	if((count($p_reports)>0 OR count($np_reports)>0) AND !$limitViews) { // we have saved reports...
 		$options .= "<option value=\"\">" . _formulize_DE_PUB_VIEWS . "</option>\n";
 		$vcounter++;
 	}
 	$firstPublishedView = $vcounter + 1;
-	for($i=0;$i<count($p_reports);$i++) {
-		if($loadedView == "pold_" . $p_reports[$i]['report_id'] OR $prevview == "pold_" . $p_reports[$i]['report_id']) {
-			$vcounter++;
-			$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . $p_reports[$i]['report_name'] . "</option>\n"; // " (id: " . $p_reports[$i]['report_id'] . ")</option>\n";
-			$loadviewname = $p_reports[$i]['report_name'];
-			$curviewid = "pold_" . $p_reports[$i]['report_id'];
-		} else {
-			$vcounter++;
-			$options .= "<option value=pold_" . $p_reports[$i]['report_id'] . ">&nbsp;&nbsp;" . $p_reports[$i]['report_name'] . "</option>\n"; // " (id: " . $p_reports[$i]['report_id'] . ")</option>\n";
+	if(!$limitViews) { // old reports are not selectable in the screen UI so will never be in the limit list
+		for($i=0;$i<count($p_reports);$i++) {
+			if($loadedView == "pold_" . $p_reports[$i]['report_id'] OR $prevview == "pold_" . $p_reports[$i]['report_id']) {
+				$vcounter++;
+				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($p_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $p_reports[$i]['report_id'] . ")</option>\n";
+				$loadviewname = $p_reports[$i]['report_name'];
+				$curviewid = "pold_" . $p_reports[$i]['report_id'];
+			} else {
+				$vcounter++;
+				$options .= "<option value=pold_" . $p_reports[$i]['report_id'] . ">&nbsp;&nbsp;" . stripslashes($p_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $p_reports[$i]['report_id'] . ")</option>\n";
+			}
 		}
 	}
+	$publishedViewNames = array();
 	for($i=0;$i<count($np_reports);$i++) {
-		if($loadedView == "p" . $np_reports[$i]['sv_id'] OR $prevview == "p" . $np_reports[$i]['sv_id']) {
-			$vcounter++;
-			$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . $np_reports[$i]['sv_name'] . "</option>\n"; // " (id: " . $np_reports[$i]['sv_id'] . ")</option>\n";
-			$loadviewname = $np_reports[$i]['sv_name'];
-			$curviewid = "p" . $np_reports[$i]['sv_id'];
-		} else {
-			$vcounter++;
-			$options .= "<option value=p" . $np_reports[$i]['sv_id'] . ">&nbsp;&nbsp;" . $np_reports[$i]['sv_name'] . "</option>\n"; // " (id: " . $np_reports[$i]['sv_id'] . ")</option>\n";
+		if(!$limitViews OR in_array($np_reports[$i]['sv_id'], $screenLimitViews)) {
+			if($loadedView == "p" . $np_reports[$i]['sv_id'] OR $prevview == "p" . $np_reports[$i]['sv_id'] OR ($forceLastLoaded AND $lastLoaded == "p" . $np_reports[$i]['sv_id'])) {
+				$vcounter++;
+				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($np_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $np_reports[$i]['sv_id'] . ")</option>\n";
+				$loadviewname = $np_reports[$i]['sv_name'];
+				$curviewid = "p" . $np_reports[$i]['sv_id'];
+			} else {
+				$vcounter++;
+				$options .= "<option value=p" . $np_reports[$i]['sv_id'] . ">&nbsp;&nbsp;" . stripslashes($np_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $np_reports[$i]['sv_id'] . ")</option>\n";
+			}
+			$publishedViewNames["p" . $np_reports[$i]['sv_id']] = stripslashes($np_reports[$i]['sv_name']); // used by the screen system to create a variable for each view name, and only the last loaded view is set to true.
 		}
 	}
 	$to_return[0] = $options;
@@ -663,168 +759,271 @@ function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView
 	$to_return[3] = $pickgroups;
 	$to_return[4] = $loadviewname;
 	$to_return[5] = $curviewid;
+	$to_return[6] = $publishedViewNames;
 	return $to_return;
 
 }
 
 // this function draws in the interface parts of a display entries widget
-function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview="", $loadOnlyView=0) {
+function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview="", $loadOnlyView=0, $screen, $searches, $pageNav, $messageText) {
 
 	global $xoopsDB;
 	// unpack the $settings
 	foreach($settings as $k=>$v) {
 		${$k} = $v;
 	}
-
+	
+	
+	
 	// get single/multi entry status of this form...
 	$singleMulti = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $fid");
-	
+		
 	// flatten columns array and convert handles to ids so that we can send them to the change columns popup
-	if($frid) {
-		$ids = convertHandles($columns, $frid);
-	} else {
-		$ids = $columns;
+	$colids = implode(",", $columnids); // part of $settings
+	$flatcols = implode(",", $columns); // part of $settings (will be IDs if no framework in effect)
+
+	$useWorking = true;
+	$useDefaultInterface = true;
+	$useSearch = 1;
+	if($screen) {
+		$useWorking = !$screen->getVar('useworkingmsg') ? false : true;
+		$useDefaultInterface = $screen->getVar('toptemplate') != "" ? false : true;
+		$title = $screen->getVar('title'); // otherwise, title of the form is in the settings array for when no screen is in use
+		$useSearch = ($screen->getVar('usesearch') AND !$screen->getVar('listtemplate')) ? 1 : 0;
 	}
-	$colids = implode(",", $ids);
-	$flatcols = implode(",", $columns);
-
-	print "<form name=resetviewform id=resetviewform action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
-	print "<input type=hidden name=currentview value='$currentview'>";
-	print "</form>";
-
-
-	print "<form name=controls id=controls action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
-
-
-	// working message
-	print "<div id=workingmessage style=\"display: none; position: absolute; z-level: 1; left: 50%; top: 50%;\">\n";
-	if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/working-".$xoopsConfig['language'].".gif") ) {
-		print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-" . $xoopsConfig['language'] . ".gif\">\n";
-	} else {
-		print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-english.gif\">\n";
-	}
-	print "</div><div id=listofentries>\n";
-
-
-	print "<table cellpadding=10><tr><td style=\"vertical-align: top;\" width=100%>";
-	print "<h1>" . trans($title) . "</h1>";
-
+	
 	if(strstr($_SERVER['HTTP_USER_AGENT'], "MSIE")) {
 		$submitButton = "<input type=submit name=submitx style=\"width:0px; height:0px;\" value='' ></input>\n";
 	} else {
 		$submitButton =  "<input type=submit name=submitx style=\"visibility: hidden;\" value='' ></input>\n";
 	}
 
-	if($loadview AND $lockcontrols) {
-		print "<h3>" . $loadviewname . "</h3></td><td>";
-		print "<input type=hidden name=currentview id=currentview value=\"$currentview\">\n<input type=hidden name=loadviewname id=loadviewname value=\"$loadviewname\">$submitButton";
-	} else {
-		print "</td>";
-		print "<td rowspan=3 style=\"vertical-align: bottom;\">";	      
-      	if(!$settings['lockcontrols']) {
-      		print "<table><tr><td style=\"vertical-align: bottom;\">";
-
-            	print "<p>$submitButton<br><b>" . _formulize_DE_ACTIONS . "</b>\n";
-
-			// need to establish these here because they are used in conditions lower down
-			$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
-			$proxy = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
-
-            	print "<br><input type=button style=\"width: 140px;\" name=changecols value='" . _formulize_DE_CHANGECOLS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colids');\"></input>";
-      		print "<br><input type=button style=\"width: 140px;\" name=calculations value='" . _formulize_DE_CALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>";
-      		print "<br><input type=button style=\"width: 140px;\" name=advsearch value='" . _formulize_DE_ADVSEARCH . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
-      		foreach($settings as $k=>$v) {
-      			if(substr($k, 0, 3) == "as_") {
-      				$v = str_replace("'", "&#39;", $v);
-      				$v = stripslashes($v);
-      				print "&$k=" . urlencode($v);
-      			}
-      		}
-      		print "');\"></input>";
-			if(!$hlist) {
-	      		print "<br><input type=button style=\"width: 140px;\" name=export value='" . _formulize_DE_EXPORT . "' onclick=\"javascript:runExport('comma');\"></input>";
+	// establish text and code for buttons, whether a screen is in effect or not
+	$screenButtonText = array();
+	$screenButtonText['changeColsButton'] = _formulize_DE_CHANGECOLS;
+	$screenButtonText['calcButton'] = _formulize_DE_CALCS;
+	$screenButtonText['advSearchButton'] = _formulize_DE_ADVSEARCH;
+	$screenButtonText['exportButton'] = _formulize_DE_EXPORT;
+	$screenButtonText['exportCalcsButton'] = _formulize_DE_EXPORT_CALCS;
+	$screenButtonText['importButton'] = _formulize_DE_IMPORTDATA;
+	$screenButtonText['notifButton'] = _formulize_DE_NOTBUTTON;
+	$screenButtonText['cloneButton'] = _formulize_DE_CLONESEL;
+	$screenButtonText['deleteButton'] = _formulize_DE_DELETESEL;
+	$screenButtonText['selectAllButton'] = _formulize_DE_SELALL;
+	$screenButtonText['clearSelectButton'] = _formulize_DE_CLEARALL;
+	$screenButtonText['resetViewButton'] = _formulize_DE_RESETVIEW;
+	$screenButtonText['saveViewButton'] = _formulize_DE_SAVE;
+	$screenButtonText['deleteViewButton'] = _formulize_DE_DELETE;
+	$screenButtonText['currentViewList'] = _formulize_DE_CURRENT_VIEW;
+	$screenButtonText['saveButton'] = _formulize_SAVE;
+	$screenButtonText['addButton'] = $singleMulti[0]['singleentry'] == "" ? _formulize_DE_ADDENTRY : _formulize_DE_UPDATEENTRY;
+	$screenButtonText['addMultiButton'] = _formulize_DE_ADD_MULTIPLE_ENTRY;
+	$screenButtonText['addProxyButton'] = _formulize_DE_PROXYENTRY;
+	if($screen) {
+		$screenButtonText['addButton'] = $screen->getVar('useaddupdate');
+		$screenButtonText['addMultiButton'] = $screen->getVar('useaddmultiple');
+		$screenButtonText['addProxyButton'] = $screen->getVar('useaddproxy');
+		$screenButtonText['exportButton'] = $screen->getVar('useexport');
+		$screenButtonText['importButton'] = $screen->getVar('useimport');
+		$screenButtonText['notifButton'] = $screen->getVar('usenotifications');
+		$screenButtonText['currentViewList'] = $screen->getVar('usecurrentviewlist');
+		$screenButtonText['saveButton'] = count($screen->getVar('decolumns')) > 0 ? $screen->getVar('desavetext') : "";
+		if($screen->getVar('listtemplate') == "") {
+			// only display the following buttons if there is no customized list in effect
+			$screenButtonText['changeColsButton'] = $screen->getVar('usechangecols');
+			$screenButtonText['calcButton'] = $screen->getVar('usecalcs');
+			$screenButtonText['advSearchButton'] = $screen->getVar('useadvsearch');
+			$screenButtonText['exportCalcsButton'] = $screen->getVar('useexportcalcs');
+			// only include clone and delete if the checkboxes are in effect (2 means do not use checkboxes)
+			if($screen->getVar('usecheckboxes') != 2) {
+				$screenButtonText['cloneButton'] = $screen->getVar('useclone');
+				$screenButtonText['deleteButton'] = $screen->getVar('usedelete');
+				$screenButtonText['selectAllButton'] = $screen->getVar('useselectall');
+				$screenButtonText['clearSelectButton'] = $screen->getVar('useclearall');
 			} else {
-				print "<br><input type=button style=\"width: 140px;\" name=export value='" . _formulize_DE_EXPORT_CALCS . "' onclick=\"javascript:runExport('calcs');\"></input>";
+				$screenButtonText['cloneButton'] = "";
+				$screenButtonText['deleteButton'] = "";
+				$screenButtonText['selectAllButton'] = "";
+				$screenButtonText['clearSelectButton'] = "";
 			}
-
-			if($import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid) AND !$frid) { // cannot import into a framework currently
-	      		print "<br><input type=button style=\"width: 140px;\" name=impdata value='" . _formulize_DE_IMPORTDATA . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid');\"></input>"; 
+			// only include the reset, save, deleteview buttons if the current view list is in effect
+			if($screen->getVar('usecurrentviewlist')) {
+				$screenButtonText['resetViewButton'] = $screen->getVar('usereset');
+				$screenButtonText['saveViewButton'] = $screen->getVar('usesave');
+				$screenButtonText['deleteViewButton'] = $screen->getVar('usedeleteview');
+			} else {
+				$screenButtonText['resetViewButton'] = "";
+				$screenButtonText['saveViewButton'] = "";
+				$screenButtonText['deleteViewButton'] = "";
 			}
-
-            	print "</p></td><td style=\"vertical-align: bottom;\"><center><p>";
-
-			if($add_own_entry AND $singleMulti[0]['singleentry'] == "") {
-				print "<input type=button style=\"width: 140px;\" name=clonesel value='" . _formulize_DE_CLONESEL . "' onclick=\"javascript:confirmClone();\"></input><br>";
-			}
-			$del_own = $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid);
-			$del_others = $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid);
-            	if(($del_own OR $del_others) AND !$settings['lockcontrols']) {
-            		print "<input type=button style=\"width: 140px;\" name=deletesel value='" . _formulize_DE_DELETESEL . "' onclick=\"javascript:confirmDel();\"></input><br>";
-            	}
-			if(($add_own_entry AND $singleMulti[0]['singleentry'] == "") OR (($del_own OR $del_others) AND !$settings['lockcontrols'])) {
-            		print "<input type=button style=\"width: 110px;\" name=sellall value='" . _formulize_DE_SELALL . "' onclick=\"javascript:selectAll(this.form);\"></input>";
-            		print "<br><input type=button style=\"width: 110px;\" name=clearall value='" . _formulize_DE_CLEARALL . "' onclick=\"javascript:clearAll(this.form);\"></input><br>";
-			}
-
-			print "<input type=button style=\"width: 140px;\" name=notbutton value='"._formulize_DE_NOTBUTTON . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/setnot.php?fid=$fid');\"></input>"; 
-
-            	print "<br><input type=button style=\"width: 140px;\" name=resetviewbutton value='" . _formulize_DE_RESETVIEW . "' onclick=\"javascript:showLoadingReset();\"></input>";
-
-            	// there is a create reports permission, but we are currently allowing everyone to save their own views regardless of that permission.  The publishing permissions do kick in on the save popup.
-            	print "<br><input type=button style=\"width: 140px;\" name=save value='" . _formulize_DE_SAVE . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/save.php?fid=$fid&frid=$frid&lastloaded=$lastloaded&cols=$flatcols&currentview=$currentview&loadonlyview=$loadOnlyView');\"></input>";
-
-      		// you can always create and delete your own reports right now (delete_own_reports perm has no effect).  If can delete other reports, then set $pubstart to 10000 (ie: can delete published as well as your own, because the javascript will consider everything beyond the start of 'your saved views' to be saved instead of published (published be thought to never begin))
-      		if($delete_other_reports = $gperm_handler->checkRight("delete_other_reports", $fid, $groups, $mid)) { $pubstart = 10000; }
-            	print "<br><input type=button style=\"width: 140px;\" name=delete value='" . _formulize_DE_DELETE . "' onclick=\"javascript:delete_view(this.form, '$pubstart', '$endstandard');\"></input>";
-            	print "</p></center>";
-
-      	} else { // if lockcontrols set, then write in explanation...
-      		print "<table><tr><td style=\"vertical-align: bottom; width: 290px;\">";
-			print "<input type=hidden name=curviewid id=curviewid value=$curviewid>";
-			print "<p>$submitButton<br>" . _formulize_DE_WARNLOCK . "</p>";;
-      	} // end of if controls are locked
-
-      	print "</td></tr></table>\n";
-
-		// cell for add entry buttons
-		print "<tr><td style=\"vertical-align: top;\">\n";
-
-      	if(!$settings['lockcontrols']) {
-			// added October 18 2006 -- moved add entry buttons to left side to emphasize them more
-			print "<table><tr><td style=\"vertical-align: bottom;\"><p>\n";
-
-            	if($add_own_entry AND $singleMulti[0]['singleentry'] == "") {
-				print "<b>" . _formulize_DE_FILLINFORM . "</b><br>\n";
-	            	print "<input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_ADDENTRY . "' onclick=\"javascript:addNew('single');\"></input>";
-      	      	print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_ADD_MULTIPLE_ENTRY . "' onclick=\"javascript:addNew();\"></input>";
-            	} elseif($add_own_entry AND $proxy) { // this is a single entry form, so add in the update and proxy buttons if they have proxy, otherwise, just add in update button
-				print "<b>" . _formulize_DE_FILLINFORM . "</b><br>\n";
-            		print "<input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_UPDATEENTRY . "' onclick=\"javascript:addNew();\"></input>";
-	            	print "<br><input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_PROXYENTRY . "' onclick=\"javascript:addNew('proxy');\"></input>";
-      	      } elseif($add_own_entry) {
-				print "<b>" . _formulize_DE_FILLINFORM . "</b><br>\n";
-            		print "<input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_UPDATEENTRY . "' onclick=\"javascript:addNew();\"></input>";
-	            } elseif($proxy) {
-				print "<b>" . _formulize_DE_FILLINFORM . "</b><br>\n";
-				print "<input type=button style=\"width: 140px;\" name=addentry value='" . _formulize_DE_PROXYENTRY . "' onclick=\"javascript:addNew('proxy');\"></input>";
-			}
-
-			print "<br><br></p></td></tr></table>\n";
+		} else {
+			$screenButtonText['changeColsButton'] = "";
+			$screenButtonText['calcButton'] = "";
+			$screenButtonText['advSearchButton'] = "";
+			$screenButtonText['exportCalcsButton'] = "";
 		}
-
-		print "</td></tr><tr><td style=\"vertical-align: bottom;\">";
-
-      	print "<p><b>" . _formulize_DE_CURRENT_VIEW . "</b><br><SELECT style=\"width: 350px;\" name=currentview id=currentview size=1 onchange=\"javascript:change_view(this.form, '$pickgroups', '$endstandard');\">\n";
-      	print $viewoptions;
-      	print "</SELECT>";
-
-		if(!$loadviewname AND strstr($currentview, ",") AND !$loadOnlyView) { // if we're on a genuine pick-groups view (not a loaded view)...and the load-only-view override is not in place (which eliminates other viewing options besides the loaded view)
-			print "&nbsp&nbsp;<input type=button style=\"width: 140px;\" name=pickdiffgroup value='" . _formulize_DE_PICKDIFFGROUP . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changescope.php?fid=$fid&frid=$frid&scope=$currentview');\"></input>";		
+	} 
+	if($delete_other_reports = $gperm_handler->checkRight("delete_other_reports", $fid, $groups, $mid)) { $pubstart = 10000; }
+	$onActionButtonCounter = 0;
+	$atLeastOneActionButton = false;
+	foreach($screenButtonText as $scrButton=>$scrText) {
+		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colids, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname);
+		if($buttonCodeArray[$scrButton] AND $onActionButtonCounter < 14) { // first 14 items in the array should be the action buttons only
+			$atLeastOneActionButton = true;
 		}
-		print "</p>";
+		$onActionButtonCounter++;
+	}
+	if($hlist) { // if we're on the calc side, then the export button should be the export calcs one
+		$buttonCodeArray['exportButton'] = $buttonCodeArray['exportCalcsButton'];
+	}
+	$buttonCodeArray['pageNavControls'] = $pageNav; // put this unique UI element into the buttonCodeArray for use elsewhere if necessary
 
-	} // end of if there's a loadview or not
-     	print "</td></tr></table>";
+	if($useDefaultInterface) {
+
+		// if search is not used, generate the search boxes, check to see which ones are not referenced in either template, and then draw those in as hidden
+		if(!$useSearch OR ($calc_cols AND !$hcalc)) {
+			print "<div style=\"display: none;\"><table>"; // enclose in a table, since drawSearches puts in <tr><td> tags
+			drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks);
+			print "</table></div>";
+		}	
+	
+		print "<table cellpadding=10><tr><td style=\"vertical-align: top;\" width=100%>";
+		
+		print "<h1>" . trans($title) . "</h1>";
+	
+		if($loadview AND $lockcontrols) {
+			print "<h3>" . $loadviewname . "</h3></td><td>";
+			print "<input type=hidden name=currentview id=currentview value=\"$currentview\">\n<input type=hidden name=loadviewname id=loadviewname value=\"$loadviewname\">$submitButton";
+		} else {
+			print "</td>";
+			if(!$settings['lockcontrols']) {
+	
+				// need to establish these here because they are used in conditions lower down
+				$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
+				$proxy = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
+				
+				print "<td rowspan=3 style=\"vertical-align: bottom;\">";	      
+		
+				print "<table><tr><td style=\"vertical-align: bottom;\">";
+		
+				print "<p>$submitButton<br>";
+				if($atLeastOneActionButton) {
+					print "<b>" . _formulize_DE_ACTIONS . "</b>";
+				}
+				print "\n";
+					
+				if( $thisButtonCode = $buttonCodeArray['changeColsButton']) { print "<br>$thisButtonCode"; }
+				if( $thisButtonCode = $buttonCodeArray['calcButton']) { print "<br>$thisButtonCode"; }
+				if( $thisButtonCode = $buttonCodeArray['advSearchButton']) { print "<br>$thisButtonCode"; }
+				if( $thisButtonCode = $buttonCodeArray['exportButton']) { print "<br>$thisButtonCode"; }
+							
+				if($import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid) AND !$frid AND $thisButtonCode = $buttonCodeArray['importButton']) { // cannot import into a framework currently
+					print "<br>$thisButtonCode";
+				}
+		
+				print "</p></td><td style=\"vertical-align: bottom;\"><p style=\"text-align: center;\">";
+		
+				if($add_own_entry AND $singleMulti[0]['singleentry'] == "") {
+					if( $thisButtonCode = $buttonCodeArray['cloneButton']) { print "$thisButtonCode<br>"; }
+				}
+				$del_own = $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid);
+				$del_others = $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid);
+				if(($del_own OR $del_others) AND !$settings['lockcontrols']) {
+					if( $thisButtonCode = $buttonCodeArray['deleteButton']) { print "$thisButtonCode<br>"; }
+				}
+				if(($add_own_entry AND $singleMulti[0]['singleentry'] == "") OR (($del_own OR $del_others) AND !$settings['lockcontrols'])) {
+					if( $thisButtonCode = $buttonCodeArray['selectAllButton']) { print "$thisButtonCode"; }
+					if( $thisButtonCode = $buttonCodeArray['clearSelectButton']) { print "<br>$thisButtonCode<br>"; }
+				}
+	
+				if( $thisButtonCode = $buttonCodeArray['notifButton']) { print "$thisButtonCode"; } 
+				if( $thisButtonCode = $buttonCodeArray['resetViewButton']) { print "<br>$thisButtonCode"; }
+				// there is a create reports permission, but we are currently allowing everyone to save their own views regardless of that permission.  The publishing permissions do kick in on the save popup.
+				if( $thisButtonCode = $buttonCodeArray['saveViewButton']) { print "<br>$thisButtonCode"; }
+				// you can always create and delete your own reports right now (delete_own_reports perm has no effect).  If can delete other reports, then set $pubstart to 10000 -- which is done above -- (ie: can delete published as well as your own, because the javascript will consider everything beyond the start of 'your saved views' to be saved instead of published (published be thought to never begin))
+				if( $thisButtonCode = $buttonCodeArray['deleteViewButton']) { print "<br>$thisButtonCode"; }
+				
+				print "</p>";
+				print "</td></tr></table></td></tr>\n";
+			} else { // if lockcontrols set, then write in explanation...
+				print "<td></td></tr></table>";
+				print "<table><tr><td style=\"vertical-align: bottom;\">";
+				print "<input type=hidden name=curviewid id=curviewid value=$curviewid>";
+				print "<p>$submitButton<br>" . _formulize_DE_WARNLOCK . "</p>";
+				print "</td></tr>";
+			} // end of if controls are locked
+
+			// cell for add entry buttons
+			print "<tr><td style=\"vertical-align: top;\">\n";
+
+			if(!$settings['lockcontrols']) {
+				// added October 18 2006 -- moved add entry buttons to left side to emphasize them more
+				print "<table><tr><td style=\"vertical-align: bottom;\"><p>\n";
+	
+				$addButton = $buttonCodeArray['addButton'];
+				$addMultiButton = $buttonCodeArray['addMultiButton'];
+				$addProxyButton = $buttonCodeArray['addProxyButton'];
+			
+				if($add_own_entry AND $singleMulti[0]['singleentry'] == "" AND ($addButton OR $addMultiButton)) {
+					print "<b>" . _formulize_DE_FILLINFORM . "</b>\n";
+					if( $addButton) { print "<br>$addButton"; } // this will include proxy box if necessary
+					if( $addMultiButton) { print "<br>$addMultiButton"; }
+				} elseif($add_own_entry AND $proxy AND ($addButton OR $addProxyButton)) { // this is a single entry form, so add in the update and proxy buttons if they have proxy, otherwise, just add in update button
+					print "<b>" . _formulize_DE_FILLINFORM . "</b>\n";
+					if( $addButton) { print "<br>$addButton"; }
+					if( $addProxyButton) { print "<br>$addProxyButton"; }
+				} elseif($add_own_entry AND $addButton) {
+					print "<b>" . _formulize_DE_FILLINFORM . "</b>\n";
+					if( $addButton) { print "<br>$addButton"; }
+				} elseif($proxy AND $addProxyButton) {
+					print "<b>" . _formulize_DE_FILLINFORM . "</b>\n";
+					if( $addProxyButton) { print "<br>$addProxyButton"; }
+				}
+				print "<br><br></p></td></tr></table>\n";
+			}
+	
+			print "</td></tr><tr><td style=\"vertical-align: bottom;\">";
+	
+			if ($currentViewList = $buttonCodeArray['currentViewList']) { print $currentViewList; }
+	
+		} // end of if there's a loadview or not
+		
+		// regardless of if a view is loaded and/or controls are locked, always print the page navigation controls
+		if ($pageNavControls = $buttonCodeArray['pageNavControls']) { print $pageNavControls; }
+		
+		print "</td></tr></table>";
+	} else {
+		// IF THERE IS A CUSTOM TOP TEMPLATE IN EFFECT, DO SOMETHING COMPLETELY DIFFERENT
+	
+		if(!$screen->getVar('usecurrentviewlist') OR (!strstr($screen->getVar('toptemplate'), 'currentViewList') AND !strstr($screen->getVar('toptemplate'), 'currentViewList'))) { print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n"; } // print it even if the text is blank, it will be a hidden value in this case
+				
+		// if search is not used, generate the search boxes and make them available in the template
+		// also setup searches when calculations are in effect, or there's a custom list template
+		// (essentially, whenever the search boxes would not be drawn in for whatever reason)
+		if(!$useSearch OR ($calc_cols AND !$hcalc) OR $screen->getVar('listtemplate')) {
+			$quickSearchBoxes = drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, true); // true means we will receive back the code instead of having it output to the screen
+			$hiddenQuickSearches = array();
+			foreach($quickSearchBoxes as $handle=>$qscode) {
+				if(strstr($screen->getVar('toptemplate'), 'quickSearch' . $handle) OR strstr($screen->getVar('bottomtemplate'), 'quickSearch' . $handle)) {
+					$buttonCodeArray['quickSearch' . $handle] = $qscode; // set variables for use in the template
+				} else {
+					$hiddenQuickSearches[] = $qscode;
+				}
+			}
+			if(count($hiddenQuickSearches) > 0) {			
+				print "<div style=\"display: none;\"><table>"; // enclose in a table, since drawSearches puts in <tr><td> tags
+				foreach($hiddenQuickSearches as $qscode) {
+					print $qscode. "\n";
+				}
+				print "</table></div>";
+			}
+		}	
+	
+		formulize_screenLOETemplate($screen, "top", $buttonCodeArray, $settings, $messageText);
+		$buttonCodeArray['submitButton'] = $submitButton; // send this back so that we can put it at the bottom of the page if necessary
+		
+	}
+	
 
 	print "<input type=hidden name=newcols id=newcols value=\"\">\n";
 	print "<input type=hidden name=oldcols id=oldcols value='$flatcols'>\n";
@@ -838,6 +1037,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=hidden name=saveviewname id=saveviewname value=\"\">\n";
 	print "<input type=hidden name=saveviewoptions id=saveviewoptions value=\"\">\n";
 
+	// setup HTML to receive custom button values -- javascript function sets these based on which button is clicked
+	print "<input type=hidden name=caid id=caid value=\"\">\n";
+	print "<input type=hidden name=caentries id=caentries value=\"\">\n";
 
 	// hidden fields used by UI in the Entries section
 	print "<input type=hidden name=sort id=sort value=\"$sort\">\n";
@@ -872,141 +1074,72 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=hidden name=savelock id=savelock value=\"\">\n";
 	print "<input type=hidden name=savescope id=savescope value=\"\">\n";
 
+	interfaceJavascript($fid, $frid, $currentview, $useWorking); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
 
-//	print "</form>"; // form used to end here with the idea that drawEntries would be able to stand alone
-
-	interfaceJavascript($fid, $frid, $currentview); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
+	$returnArray = array();
+	$returnArray[0] = $buttonCodeArray; // send this back so it's available in the bottom template if necessary.  MUST USE NUMERICAL KEYS FOR list TO WORK ON RECEIVING END.
+	return $returnArray;
 
 }
 
 // THIS FUNCTION DRAWS IN THE RESULTS OF THE QUERY
-function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
+function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
 
 	global $xoopsDB;
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-
-	if($standalone) { // write in the top of the form if we're doing this on our own without the interface
-	// [code goes here]
-	// this feature not enabled yet
-	// the search and sort features in this part of the page are dependant on the logic above
-	// seems unlikely this block could realistically be used as a standalone block
-	// but a simpler function could be created that would just draw a scrollbox with results in it
-	}
-
-	// build the filter out of the searches array
-	$start = 1;
-	$filter = "";
-	foreach($searches as $key=>$one_search) {
-		// $key is handles for frameworks, and ele_ids for non-frameworks.
-		if(!$start) { $filter .= "]["; }
-		$filter .= $key . "/**/$one_search"; // . mysql_real_escape_string($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
-		$start = 0;
-	}
 	
-	// extraction could be optimized by passing the current columns and limiting returned values to those columns only
-	$data = getData($frid, $fid, $filter, "AND", $scope); // 
-	if($sort AND $order) {
-		$data = resultSort($data, $sort, $order); // sort is ele_id for form, handle for framework
-	} 
-
-
-	// perform the requested advanced search options
-	// 1. unpack the settings necessary for the search
-	// 2. loop through the data and store the results, unsetting $data as we go, and then reassigning the found array to $data at the end
-	
-	// example of as $settings:
-/*	global $xoopsUser;
-	if($xoopsUser->getVar('uid') == 'j') {
-	$settings['as_1'] = "[field]545[/field]";
-	$settings['as_2'] = "==";
-	$settings['as_3'] = "Ontario";
-	$settings['as_4'] = "AND";
-	$settings['as_5'] = "(";
-	$settings['as_6'] = "[field]557[/field]";
-	$settings['as_7'] = "==";
-	$settings['as_8'] = "visiting classrooms";
-	$settings['as_9'] = "OR";
-	$settings['as_10'] = "[field]557[/field]";
-	$settings['as_11'] = "==";
-	$settings['as_12'] = "advocacy";
-	$settings['as_13'] = ")";
-	} // end of xoopsuser check
-*/
-//	545 prov
-//	556 are you still interested, yes/no
-//	570 where vol with LTS (university name)
-//	557 which of following areas... (multi)
-
-
-
-	if($settings['as_0']) {
-		// build the query string
-		// string looks like this:
-		//if([query here]) {
-		//	$query_result = 1;
-		//}
+	$useScrollBox = true;
+	$useHeadings = true;
+	$repeatHeaders = 5;
+	$columnWidth = 0;
+	$textWidth = 35;
+	$useCheckboxes = 0;
+	$useViewEntryLinks = 1;
+	$useSearch = 1;
+	$deColumns = array();
+	$useSearchCalcMsgs = 1;
+	$listTemplate = false;
+	$inlineButtons = array();
+	$hiddenColumns = array();
+	$formulize_LOEPageSize = 10;
+	if($screen) {
+		$useScrollBox = $screen->getVar('usescrollbox');
+		$useHeadings = $screen->getVar('useheadings');
+		$repeatHeaders = $screen->getVar('repeatheaders');
+		$columnWidth = $screen->getVar('columnwidth');
+		$textWidth = $screen->getVar('textwidth');
+		if($textWidth == 0) { $textWidth = 10000; }
+		$useCheckboxes = $screen->getVar('usecheckboxes');
+		$useViewEntryLinks = $screen->getVar('useviewentrylinks');
+		$useSearch = $screen->getVar('usesearch');
+		$hiddenColumns = $screen->getVar('hiddencolumns');
+		$deColumns = $screen->getVar('decolumns');
+		$useSearchCalcMsgs = $screen->getVar('usesearchcalcmsgs');
+		$listTemplate = $screen->getVar('listtemplate');
+		foreach($screen->getVar('customactions') as $caid=>$thisCustomAction) {
+			if($thisCustomAction['appearinline'] == 1) {
+				$inlineButtons[$caid] = $thisCustomAction;
+			}
+		}
+		// process a clicked custom button if it was an inline button
+		// Since this is done above now, we don't need this code here...?
+		/*
+		if(isset($_POST['caid'])) {
+			if(is_numeric($_POST['caid']) AND isset($inlineButtons[$_POST['caid']])) {
+				list($caCode, $caElements, $caActions, $caValues, $caMessageText, $caApplyTo) = processCustomButton($_POST['caid'], $inlineButtons[$_POST['caid']]); // just processing to get the info so we can process the click.  Actual output of this button happens lower down
+				$messageText = processClickedCustomButton($caElements, $caValues, $caActions, $caMessageText, $caApplyTo);
+				// output the message text to the screen if it's not used in the custom templates somewhere
+				if($messageText AND !strstr($screen->getVar('toptemplate'), '\$messageText') AND !strstr($screen->getVar('bottomtemplate'), '\$messageText')) {
+					print "<p><center><b>$messageText</b></center></p>\n";
+				}
+			}
+		}
+		*/
+		$formulize_LOEPageSize = $screen->getVar('entriesperpage');
+	}		
 		
-		$query_string .= "if(";
-
-		for($i=0;$settings['as_' . $i];$i++) {
-			// save query for writing later
-			$wq['as_' . $i] = $settings['as_' . $i];
-			if(substr($settings['as_' . $i], 0, 7) == "[field]" AND substr($settings['as_' . $i], -8) == "[/field]") { // a field has been found, next two should be part of the query
-				$fieldLen = strlen($settings['as_' . $i]);
-				$field = substr($settings['as_' . $i], 7, $fieldLen-15); // 15 is the length of [field][/field]
-				$field = calcHandle($field, $frid);
-				$query_string .= "evalAdvSearch(\$entry, \"$field\", \"";
-				$i++;
-				$wq['as_' . $i] = $settings['as_' . $i];
-				$query_string .= $settings['as_' . $i] . "\", \"";
-				$i++;
-				$wq['as_' . $i] = $settings['as_' . $i];
-				$query_string .= $settings['as_' . $i] . "\")";
-			} else {
-				$query_string .= " " . $settings['as_' . $i] . " ";
-			}
-		}
-
-		$query_string .= ") { \$query_result=1; } else { \$query_result=0; }";
-
-		$indexer = 0;
-		$asearch_parse_error = 0;
-		foreach($data as $entry) {
-			ob_start();
-			eval($query_string); // a constructed query based on the user's input.  $query_result = 1 if it succeeds and 0 if it fails.
-			ob_end_clean();
-			if($query_result) {
-				$found_data[] = $entry;
-			} elseif(!isset($query_result)) {
-				$asearch_parse_error = 1;
-				break;
-			}
-			unset($data[$indexer]);
-			$indexer++;
-			  
-		}
-		unset($data);
-		if(count($found_data)>0) { $data = $found_data; }
-	} 
-	
-
 	// get the headers
 	$headers = getHeaders($cols, $frid);
-		
-	print "<style>\n";
-
-	print ".scrollbox {\n";
-	print "	height: 530px;\n";
-	print "	width: 775px;\n";
-	print "	overflow: scroll;\n";
-	print "}\n";
-
-	print ".entrymeta {\n";
-	print "	font-size: 8pt;\n";
-	print "}\n";
-
-	print "</style>\n";
-
+	
 	$filename = "";
 	if($settings['xport']) {
 		$filename = prepExport($headers, $cols, $data, $settings['xport'], $settings['xport_cust'], $settings['title'], false, $fid, $groups);
@@ -1015,9 +1148,19 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		print "<br>";
 	}
 
-
-	print "<div class=scrollbox id=resbox>\n";
-
+	if($useScrollBox) {
+		print "<style>\n";
+	
+		print ".scrollbox {\n";
+		//print "	height: 530px;\n"; // don't scroll height anymore since we are paging results! (finally!!)
+		print "	width: 775px;\n";
+		print "	overflow: scroll;\n";
+		print "}\n";
+	
+		print "</style>\n";
+	
+		print "<div class=scrollbox id=resbox>\n";
+	}
 
 	// perform calculations...
 	// calc_cols is the columns requested (separated by / -- ele_id for each, so needs conversion to handle if framework in effect, also metadata is indicated with uid, proxyid, creation_date, mod_date)
@@ -1029,17 +1172,17 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	// 2. loop through the array and perform all the requested calculations
 	
 	if($settings['calc_cols'] AND !$settings['hcalc']) {
-       	$ccols = explode("/", $settings['calc_cols']);
-       	$ccalcs = explode("/", $settings['calc_calcs']);
+		$ccols = explode("/", $settings['calc_cols']);
+		$ccalcs = explode("/", $settings['calc_calcs']);
 		// need to add in proper handling of long calculation results, like grouping percent breakdowns that result in many, many rows.
 		foreach($ccalcs as $onecalc) {
 			$thesecalcs = explode(",", $onecalc);
 			if(!is_array($thesecalcs)) { $thesecalcs[0] = ""; }
 			$totalalcs = $totalcalcs + count($thesecalcs);
 		}
-       	$cblanks = explode("/", $settings['calc_blanks']);
-       	$cgrouping = explode("/", $settings['calc_grouping']);
-       	$cresults = performCalcs($ccols, $ccalcs, $cblanks, $cgrouping, $data, $frid);
+		$cblanks = explode("/", $settings['calc_blanks']);
+		$cgrouping = explode("/", $settings['calc_grouping']);
+		$cresults = performCalcs($ccols, $ccalcs, $cblanks, $cgrouping, $data, $frid);
 //		print "<p><input type=button style=\"width: 140px;\" name=cancelcalcs1 value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input></p>\n";
 //		print "<div";
 //		if($totalcalcs>4) { print " class=scrollbox"; }
@@ -1050,211 +1193,319 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$calc_grouping = $settings['calc_grouping'];
 
 		print "<table class=outer><tr><th colspan=2>" . _formulize_DE_CALCHEAD . "</th></tr>\n";
-		if(!$settings['lockcontrols']) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
+		if(!$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
 			print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></td></tr>";
 		}
 		$exportFilename = $settings['xport'] == "calcs" ? $filename : "";
 		printResults($cresults[0], $cresults[1], $cresults[2], $frid, $exportFilename, $settings['title']); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
+
 		print "</table>\n";
 
-//		print "</div>\n";
-		// put in hide list/cancel calcs buttons here
-//		print "<p><input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp;";
-//		if($settings['hlist']) {
-//			print "<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></p>";
-//		} else {
-//			print "<input type=button style=\"width: 140px;\" name=hidelist value='" . _formulize_DE_HIDELIST . "' onclick=\"javascript:hideList();\"></input></p>";
-//		}
+		// NOT NECESSARY NOW BECAUSE WE DRAW IN THE SEARCH BOXES IN THE TOP AREA IF WE'RE VIEWING CALCULATIONS (?)
+		// draw in the search boxes, but hidden, just to preserve the values of the quicksearches.
+		//print "<div style=\"display: none;\"><table>"; // enclose in a table, since drawSearches puts in <tr><td> tags
+		//drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks);
+		//print "</table></div>";
 
 	}
 
 	// MASTER HIDELIST CONDITIONAL...
-	if(!$settings['hlist']) {
+	if(!$settings['hlist'] AND !$listTemplate) {
 
-	print "<table class=outer>";
-
-	$count_colspan = count($cols)+1;
-	print "<tr><th colspan=$count_colspan>" . _formulize_DE_DATAHEADING . "</th></tr>\n";
-
-	if($settings['calc_cols'] AND !$settings['lockcontrols']) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
-		$calc_cols = $settings['calc_cols'];
-		$calc_calcs = $settings['calc_calcs'];
-		$calc_blanks = $settings['calc_blanks'];
-		$calc_grouping = $settings['calc_grouping'];
-		print "<tr><td class=head colspan=$count_colspan><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=hidelist value='" . _formulize_DE_HIDELIST . "' onclick=\"javascript:hideList();\"></input></td></tr>";
-	}
-
-	// draw advanced search notification
-	if($query_string) {
-		$writable_q = writableQuery($wq);
-		$minus1colspan = $count_colspan-1;
-		if(!$asearch_parse_error) {
-			print "<tr><td class=head></td><td colspan=$minus1colspan class=head>" . _formulize_DE_ADVSEARCH . ": $writable_q";
+		print "<table class=outer>";
+	
+		$count_colspan = count($cols)+1;
+		if($useViewEntryLinks OR $useCheckboxes != 2) {
+			$count_colspan_calcs = $count_colspan;
 		} else {
-			print "<tr><td class=head></td><td colspan=$minus1colspan class=head><span style=\"font-weight: normal;\">" . _formulize_DE_ADVSEARCH_ERROR . "</span>";
+			$count_colspan_calcs = $count_colspan - 1;
 		}
-		if(!$settings['lockcontrols']) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
-			print "<br><input type=button style=\"width: 140px;\" name=advsearch value='" . _formulize_DE_MOD_ADVSEARCH . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
-			foreach($settings as $k=>$v) {
-				if(substr($k, 0, 3) == "as_") {
-					$v = str_replace("'", "&#39;", $v);
-					$v = stripslashes($v);
-					print "&$k=" . urlencode($v);
+		$count_colspan_calcs = $count_colspan_calcs + count($inlineButtons); // add to the column count for each inline custom button
+		if(!$screen) { print "<tr><th colspan=$count_colspan_calcs>" . _formulize_DE_DATAHEADING . "</th></tr>\n"; }
+	
+		if($settings['calc_cols'] AND !$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
+			$calc_cols = $settings['calc_cols'];
+			$calc_calcs = $settings['calc_calcs'];
+			$calc_blanks = $settings['calc_blanks'];
+			$calc_grouping = $settings['calc_grouping'];
+			print "<tr><td class=head colspan=$count_colspan_calcs><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=hidelist value='" . _formulize_DE_HIDELIST . "' onclick=\"javascript:hideList();\"></input></td></tr>";
+		}
+	
+		// draw advanced search notification
+		if($settings['as_0'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 2)) {
+			$writable_q = writableQuery($wq);
+			$minus1colspan = $count_colspan-1+count($inlineButtons);
+			if(!$asearch_parse_error) {
+				print "<tr>";
+				if($useViewEntryLinks OR $useCheckboxes != 2) { // only include this column if necessary
+					print "<td class=head></td>";
 				}
-			}
-		print "');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelasearch value='" . _formulize_DE_CANCELASEARCH . "' onclick=\"javascript:killSearch();\"></input>";
-		}
-		print "</td></tr>\n";
-	}
-
-
-	drawHeaders($headers, $cols, $sort, $order, $settings['lockcontrols']);
-	drawSearches($searches, $cols);
-
-	// get form handles in use
-	$mainFormHandle = key($data[key($data)]);
-
-	if(count($data) == 0) { // kill an empty dataset so there's no rows drawn
-		unset($data);
-	} 
-
-	$headcounter = 0;
-	$blankentries = 0;
-	foreach($data as $id=>$entry) {
-
-		if($entry != "") { // check to make sure this isn't an unset entry (ie: one that was blanked by the extraction layer just prior to sending back results
-
-		if($headcounter == 5) { 
-			drawHeaders($headers, $cols, $sort, $order, $settings['lockcontrols']); 
-			$headcounter = 0;
-		}
-		$headcounter++;		
-
-		print "<tr>\n";
-		if($class=="even") {
-			$class="odd";
-		} else {
-			$class="even";
-		}
-		$linkids = internalRecordIds($entry, $mainFormHandle);
-		// commented below is an attempt to make metadata appear in tooltip boxes, but formatting is not available and the box is of a fixed width and "dotdotdots" itself -- member_handler not currently used by drawEntries so long as this is commented (and it is not added elsewhere)
-		//$metaData = getMetaData($linkids[0], $member_handler);
-		//$metaToPrint = "<br>" . _formulize_FD_CREATED . $metaData['created_by'] . " " . _formulize_TEMP_ON . " " . $metaData['created'] . "<br>" . _formulize_FD_MODIFIED . $metaData['last_update_by'] . " " . _formulize_TEMP_ON . " " . $metaData['last_update'];
-		$metaToPrint = "";
-		// draw in the margin column where the links and metadata goes
-		print "<td class=head>\n";
-
-		if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
-      		print "<p><center><a href='" . $currentURL;
-      		if(strstr($currentURL, "?")) { // if params are already part of the URL...
-      			print "&";
-      		} else {
-      			print "?";
-      		}
-      		print "ve=" . $linkids[0] . "' onclick=\"javascript:goDetails('" . $linkids[0] . "');return false;\"><img src='" . XOOPS_URL . "/modules/formulize/images/detail.gif' border=0 alt=\"" . _formulize_DE_VIEWDETAILS . "$metaToPrint\" title=\"" . _formulize_DE_VIEWDETAILS . "$metaToPrint\"></a>";
-
-      		// put in the delete checkboxes -- check for perms delete_own_entry, delete_other_entries
-      		$owner = getEntryOwner($linkids[0]);
-      		// check to see if we should draw in the delete checkbox or not
-      		if(($owner == $uid AND $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid)) OR ($owner != $uid AND $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid))) {		
-      			print "<br><input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' name='delete_" . $linkids[0] . "' id='delete_" . $linkids[0] . "' value='delete_" . $linkids[0] . "'>";
-      		}
-
-      		print "</center></p>\n";	
-		} // end of IF NO LOCKCONTROLS
-		print "</td>\n";
-
-		$column_counter = 0;
-		foreach($cols as $col) {
-
-			print "<td class=$class>\n";
-			if($col == "uid") {
-				$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "uid") . "\" target=_blank>" . displayMeta($entry, "uid-name") . "</a>";
-			} elseif($col=="proxyid") {
-				$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "proxyid") . "\" target=_blank>" . displayMeta($entry, "proxyid-name") . "</a>";
+				print "<td colspan=$minus1colspan class=head>" . _formulize_DE_ADVSEARCH . ": $writable_q";
 			} else {
-				$value = display($entry, $col);
+				print "<tr>";
+				if($useViewEntryLinks OR $useCheckboxes != 2) {
+					print "<td class=head></td>";
+				}
+				print "<td colspan=$minus1colspan class=head><span style=\"font-weight: normal;\">" . _formulize_DE_ADVSEARCH_ERROR . "</span>";
 			}
-			if(is_array($value)) {
-				$start = 1;
-				foreach($value as $v) {
-					if($start) {
-						print checkForLink($v, $col, $frid, $currentURL); //printSmart(trans($v));
-						$start = 0;
-					} else {
-						print ",<br>\n";
-						print checkForLink($v, $col, $frid, $currentURL); // printSmart(trans($v));
+			if(!$settings['lockcontrols']) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
+				print "<br><input type=button style=\"width: 140px;\" name=advsearch value='" . _formulize_DE_MOD_ADVSEARCH . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
+				foreach($settings as $k=>$v) {
+					if(substr($k, 0, 3) == "as_") {
+						$v = str_replace("'", "&#39;", $v);
+						$v = stripslashes($v);
+						print "&$k=" . urlencode($v);
 					}
 				}
-			} elseif($col != "uid" AND $col!= "proxyid") {
-				print checkForLink($value, $col, $frid, $currentURL); // printSmart(trans($value));
-			} else { // don't use printsmart for the special uid/proxyid cells
-				print $value;
+			print "');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelasearch value='" . _formulize_DE_CANCELASEARCH . "' onclick=\"javascript:killSearch();\"></input>";
 			}
-			print "</td>\n";
-			$column_counter++;
+			print "</td></tr>\n";
 		}
-		print "</tr>\n";
-		
-		} else { // this is a blank entry
-			$blankentries++;
-		} // end of not "" check
 	
-	} // end of foreach that draws all data
+	
+		if($useHeadings) { drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockcontrols']); }
+		if($useSearch) {
+			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons));
+		} 
+	
+		// get form handles in use
+		$mainFormHandle = key($data[key($data)]);
+	
+		if(count($data) == 0) { // kill an empty dataset so there's no rows drawn
+			unset($data);
+		} 
+	
+		$headcounter = 0;
+		$blankentries = 0;
+		$GLOBALS['formulize_displayElement_LOE_Used'] = false;
+		$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
+		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : count($data);
+		if(isset($data)) {
+			for($entryCounter=$formulize_LOEPageStart;$entryCounter<$actualPageSize;$entryCounter++) {
+				$entry = $data[$entryCounter];
+				$id=$entryCounter;
+						
+				// check to make sure this isn't an unset entry (ie: one that was blanked by the extraction layer just prior to sending back results
+				// Since the extraction layer is unsetting entries to blank them, this condition should never be met?
+				// If this condition is ever met, it may very well screw up the paging of results!
+				// NOTE: this condition is met on the last page of a paged set of results, unless the last page as exactly the same number of entries on it as the limit of entries per page
+				if($entry != "") { 
+		
+					if($headcounter == $repeatHeaders AND $repeatHeaders > 0) { 
+						if($useHeadings) { drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockcontrols']); }
+						$headcounter = 0;
+					}
+					$headcounter++;		
+			
+					print "<tr>\n";
+					if($class=="even") {
+						$class="odd";
+					} else {
+						$class="even";
+					}
+					unset($linkids);
+					$linkids = internalRecordIds($entry, $mainFormHandle);
+					
+					// commented below is an attempt to make metadata appear in tooltip boxes, but formatting is not available and the box is of a fixed width and "dotdotdots" itself -- member_handler not currently used by drawEntries so long as this is commented (and it is not added elsewhere)
+					//$metaData = getMetaData($linkids[0], $member_handler);
+					//$metaToPrint = "<br>" . _formulize_FD_CREATED . $metaData['created_by'] . " " . _formulize_TEMP_ON . " " . $metaData['created'] . "<br>" . _formulize_FD_MODIFIED . $metaData['last_update_by'] . " " . _formulize_TEMP_ON . " " . $metaData['last_update'];
+					$metaToPrint = "";
+					// draw in the margin column where the links and metadata goes
+					if($useViewEntryLinks OR $useCheckboxes != 2) {
+						print "<td class=head>\n";
+					}
+			
+					if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
+						if($useViewEntryLinks) {
+							print "<p><center><a href='" . $currentURL;
+							if(strstr($currentURL, "?")) { // if params are already part of the URL...
+								print "&";
+							} else {
+								print "?";
+							}
+							print "ve=" . $linkids[0] . "' onclick=\"javascript:goDetails('" . $linkids[0] . "');return false;\"><img src='" . XOOPS_URL . "/modules/formulize/images/detail.gif' border=0 alt=\"" . _formulize_DE_VIEWDETAILS . "$metaToPrint\" title=\"" . _formulize_DE_VIEWDETAILS . "$metaToPrint\"></a>";
+						}
+						if($useCheckboxes != 2) { // two means none
+							// put in the delete checkboxes -- check for perms delete_own_entry, delete_other_entries
+							$owner = getEntryOwner($linkids[0]);
+							// check to see if we should draw in the delete checkbox or not
+							if(($owner == $uid AND $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid)) OR ($owner != $uid AND $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid)) OR $useCheckboxes == 1) { // 1 means all
+								if($useViewEntryLinks) {
+									print "<br>";
+								} else {
+									print "<p><center>";
+								}
+								print "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' name='delete_" . $linkids[0] . "' id='delete_" . $linkids[0] . "' value='delete_" . $linkids[0] . "'>";
+							}
+						}
+						if($useViewEntryLinks OR $useCheckboxes != 2) { // at least one of the above was used
+							print "</center></p>\n";
+						}
+					} // end of IF NO LOCKCONTROLS
+					if($useViewEntryLinks OR $useCheckboxes != 2) {
+						print "</td>\n";
+					}	
+			
+					$column_counter = 0;
+					
+					if($columnWidth) {
+						$columnWidthParam = "style=\"width: $columnWidth" . "px\"";
+					} else {
+						$columnWidthParam = "";
+					}
+			
+					for($i=0;$i<count($cols);$i++) {
+						$col = $cols[$i];
+						$colid = $settings['columnids'][$i];
+					
+						print "<td $columnWidthParam class=$class>\n";
+						if($col == "uid") {
+							$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "uid") . "\" target=_blank>" . displayMeta($entry, "uid-name") . "</a>";
+						} elseif($col=="proxyid") {
+							$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "proxyid") . "\" target=_blank>" . displayMeta($entry, "proxyid-name") . "</a>";
+						} else {
+							$value = display($entry, $col);
+						}
+						if(in_array($colid, $deColumns)) { // if we're supposed to display this column as an element...
+							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
+							if($frid) { // need to work out which form this column belongs to, and use that form's entry ID.  Need to loop through the entry to find all possible internal IDs, since a subform situation would lead to multiple values appearing in a single cell, so multiple displayElement calls would be made each with their own internal ID.
+								foreach($entry as $entryFormHandle=>$entryFormData) {
+									foreach($entryFormData as $internalID=>$entryElements) {
+										$deThisIntId = false;
+										foreach($entryElements as $entryHandle=>$values) {
+											if($entryHandle == $col) { // we found the element that we're trying to display
+												if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
+												displayElement("", $colid, $internalID);
+												$deThisIntId = true;
+											}
+										}
+									}
+								}
+							} else { // display based on the mainform entry id
+								displayElement("", $colid, $linkids[0]); // works for mainform only!  To work on elements from a framework, we need to figure out the form the element is from, and the entry ID in that form
+							}
+							$GLOBALS['formulize_displayElement_LOE_Used'] = true;
+						} elseif(is_array($value)) {
+							$start = 1;
+							foreach($value as $v) {
+								if($start) {
+									print checkForLink($v, $col, $frid, $textWidth); //printSmart(trans($v));
+									$start = 0;
+								} else {
+									print ",<br>\n";
+									print checkForLink($v, $col, $frid, $textWidth); // printSmart(trans($v));
+								}
+							}
+						} elseif($col != "uid" AND $col!= "proxyid") {
+							print checkForLink($value, $col, $frid, $textWidth); // printSmart(trans($value));
+						} else { // don't use printsmart for the special uid/proxyid cells
+							print $value;
+						}
+						// print out a hidden element if necessary
+						if(in_array($colid, $hiddenColumns)) {
+							print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$col\" value=\"" . htmlspecialchars(display($entry, $col)) . "\"></input>\n";
+						}
+						
+						
+						print "</td>\n";
+						$column_counter++;
+					}
+					
+					// handle inline custom buttons
+					
+					foreach($inlineButtons as $caid=>$thisCustomAction) {
+						list($caCode) = processCustomButton($caid, $thisCustomAction, $linkids[0]); // only bother with the code, since we already processed any clicked button above
+						print "<td $columnWidthParam class=$class>\n";
+						print "<center>$caCode</center>\n";
+						print "</td>\n";
+					}
+					
+					print "</tr>\n";
+				
+				} else { // this is a blank entry
+					$blankentries++;
+				} // end of not "" check
+			
+			} // end of for loop that draws all data
+		} // end of if there is any data to draw
+	
+		// if(count($data)>20 AND $useHeadings) { drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockcontrols']); }
+	
+		print "</table>";
 
-	if(count($data)>20) { drawHeaders($headers, $cols, $sort, $order, $settings['lockcontrols']); }
+	} elseif($listTemplate AND !$settings['hlist']) {
 
-	print "</table>";
-
-	if(!$data OR count($data) == $blankentries) { // if no data was returned, or the dataset was empty...
-		print "<p><b>" . _formulize_DE_NODATAFOUND . "</b></p>\n";
-	}
-
-	print "</div>";
+		// USING A CUSTOM LIST TEMPLATE SO DO EVERYTHING DIFFERENTLY
+		// print str_replace("\n", "<br />", $listTemplate); // debug code
+		$mainFormHandle = key($data[key($data)]);
+		foreach($data as $entry) {
+			$ids = internalRecordIds($entry, $mainFormHandle);
+			foreach($inlineButtons as $caid=>$thisCustomAction) {
+				list($caCode) = processCustomButton($caid, $thisCustomAction, $ids[0]); // only bother with the code, since we already processed any clicked button above
+				${$thisCustomAction['handle']} = $caCode; // assign the button code that was returned
+			}
+			ob_start();
+			eval(html_entity_decode($listTemplate));
+			$evalResult = ob_get_clean();
+			if($evalResult != "") {
+				print $evalResult;
+			} else {
+				print "<p>" . _AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR . "</p>";
+				break;
+			}
+		}
 
 	}// END OF MASTER HIDELIST CONDITIONAL
+	if(!$data OR count($data) == $blankentries) { // if no data was returned, or the dataset was empty...
+		print "<p><b>" . _formulize_DE_NODATAFOUND . "</b></p>\n";
+	}	
 	
-	if($settings['calc_cols'] AND !$settings['hcalc']) { // if calculations are going on above, then draw in the search boxes, but hidden, just to preserve the values of the quicksearches.
-		print "<div style=\"visibility: hidden;\">";
-		drawSearches($searches, $cols);
+	if($useScrollBox) {
 		print "</div>";
 	}
-
-	print "</form>\n"; 
-
-	print "</div>\n"; // end of the listofentries div, used to call up the working message when the page is reloading
-
-
 }
 
-
-
 // this function draws in the search box row
-function drawSearches($searches, $cols) {
-	print "<tr><td class=head>&nbsp;</td>\n";
+function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, $returnOnly=false) {
+	$quickSearchBoxes = array();
+	if(!$returnOnly) { print "<tr>"; }
+	if($useBoxes != 2 OR $useLinks) {
+		if(!$returnOnly) { print "<td class=head>&nbsp;</td>\n"; }
+	}
 	for($i=0;$i<count($cols);$i++) {
-		print "<td class=head>\n";
+		if(!$returnOnly) { print "<td class=head>\n"; }
 		$search_text = str_replace("\"", "&quot;", $searches[$cols[$i]]);
 		$boxid = "";
 		$clear_help_javascript = "";
-		if(count($searches) == 0) {
+		if(count($searches) == 0 AND !$returnOnly) {
 			if($i==0) { 
 				$search_text = _formulize_DE_SEARCH_HELP; 
 				$boxid = "id=firstbox";
 			}
 			$clear_help_javascript = "onfocus=\"javascript:clearSearchHelp(this.form, '" . _formulize_DE_SEARCH_HELP . "');\"";
 		}
-		print "<input type=text $boxid name='search_" . $cols[$i] . "' value=\"" . stripslashes($search_text) . "\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
-		print "</td>\n";
+		$quickSearchBoxes[$cols[$i]] = "<input type=text $boxid name='search_" . $cols[$i] . "' value=\"" . stripslashes($search_text) . "\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
+		if(!$returnOnly) {
+			print $quickSearchBoxes[$cols[$i]];
+			print "</td>\n";
+		}
 	}
-	print "</tr>\n";
-
+	if(!$returnOnly) {
+		for($i=0;$i<$numberOfButtons;$i++) {
+			print "<td class=head>&nbsp;</td>\n";
+		}
+		print "</tr>\n";
+	}
+	return $quickSearchBoxes;
 }
 
 // this function writes in the headers for the columns in the results box
-function drawHeaders($headers, $cols, $sort, $order) { //, $lockcontrols) {
+function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=null, $numberOfButtons) { //, $lockcontrols) {
 
-	print "<tr><td class=head>&nbsp;</td>\n";
+	print "<tr>";
+	if($useBoxes != 2 OR $useLinks) {
+		print "<td class=head>&nbsp;</td>\n";
+	}
 	for($i=0;$i<count($headers);$i++) {
        	print "<td class=head>\n";
 		if($cols[$i] == $sort) {
@@ -1268,11 +1519,14 @@ function drawHeaders($headers, $cols, $sort, $order) { //, $lockcontrols) {
 //		if(!$lockcontrols) {
 			print "<a href=\"\" alt=\"" . _formulize_DE_SORTTHISCOL . "\" title=\"" . _formulize_DE_SORTTHISCOL . "\" onclick=\"javascript:sort_data('" . $cols[$i] . "');return false;\">";
 //		}
-       	print printSmart(trans($headers[$i]));
+		print printSmart(trans($headers[$i]));
 //		if(!$lockcontrols) {
 			print "</a>\n";
 //		}
 	     	print "</td>\n";
+	}
+	for($i=0;$i<$numberOfButtons;$i++) {
+		print "<td class=head>&nbsp;</td>\n";
 	}
 	print "</tr>\n";
 }
@@ -1288,7 +1542,7 @@ function convertHandles($handles, $frid) {
 		$handles[0] = $temp;
 	}
 	foreach($handles as $handle) {
-		if($handle == "uid" OR $handle=="proxyid" OR $handle=="creation_date" OR $handle=="mod_date") {
+		if($handle == "uid" OR $handle=="proxyid" OR $handle=="creation_date" OR $handle=="mod_date" OR $handle=="creator_email") {
 			$ids[] = $handle;
 		} else {
 			$id = q("SELECT fe_element_id FROM " . $xoopsDB->prefix("formulize_framework_elements") . " WHERE fe_frame_id='$frid' AND fe_handle='$handle'");
@@ -1307,7 +1561,7 @@ function convertIds($ids, $frid) {
 		$ids[0] = $temp;
 	}
 	foreach($ids as $id) {
-		if($id == "uid" OR $id=="proxyid" OR $id=="creation_date" OR $id=="mod_date") {
+		if($id == "uid" OR $id=="proxyid" OR $id=="creation_date" OR $id=="mod_date" OR $id=="creator_email") {
 			$handles[] = $id;
 		} else {
 			$handle = q("SELECT fe_handle FROM " . $xoopsDB->prefix("formulize_framework_elements") . " WHERE fe_frame_id='$frid' AND fe_element_id='$id'");
@@ -1416,7 +1670,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid)  {
 			for($z=0;$z<count($c[$i]);$z++) {
 				$blankSettings[$handles[$i]][$c[$i][$z]] = $b[$i][$z];				
 				$groupingSettings[$handles[$i]][$c[$i][$z]] = $g[$i][$z];
-				if(($b[$i][$z] == "onlyblanks" AND $tempvalue == "") OR ($b[$i][$z] == "noblanks" AND $tempvalue != "") OR $b[$i][$z] == "all") {
+				if(($b[$i][$z] == "onlyblanks" AND ($tempvalue == "" OR $tempvalue == "0")) OR ($b[$i][$z] == "noblanks" AND ($tempvalue != "" AND $tempvalue != "0")) OR $b[$i][$z] == "all") {
 					if($g[$i][$z] == "none" OR $g[$i][$z] == "") { 
 						if(is_array($thisvalue)) {
 							foreach($thisvalue as $onevalue) {
@@ -1468,6 +1722,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid)  {
 	foreach($masterCalcs as $handle=>$thesecalcs) {
 		foreach($thesecalcs as $thiscalc=>$thesegroups) {
 			foreach($thesegroups as $thisgroup=>$values) {
+				//print_r($values);
 				switch($thiscalc) {
 					case "sum":
 						$total = array_sum($values);
@@ -1476,7 +1731,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid)  {
 					case "avg":
 						$total = array_sum($values);
 						$count = count($values);
-						$mean = $total/$count;
+						$mean = round($total/$count, 2);
 						sort($values, SORT_NUMERIC);
 						if($count%2 == 0 AND $count>1) {
 							$median = $values[($count/2)] . ", " . $values[($count/2)-1];						
@@ -1485,7 +1740,9 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid)  {
 						} else {
 							$median = $values[($count)-1];						
 						}
+						//print_r($values);
 						$breakdown = array_count_values($values);
+						//print_r($breakdown);
 						arsort($breakdown);
 						$mode_keys = array_keys($breakdown);
 						$mode = "" . $mode_keys[0] . "";
@@ -1570,7 +1827,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $frid, 
 	$output = "";
      	foreach($masterResults as $handle=>$calcs) {
 		$output .= "<tr><td class=head colspan=2>\n";
-		$output .= printSmart(trans(getCalcHandleText($handle, $frid)));
+		$output .= printSmart(trans(getCalcHandleText($handle, $frid)), 100);
 		$output .= "\n</td></tr>\n";
      		foreach($calcs as $calc=>$groups) {
 			$countGroups = count($groups);
@@ -1696,7 +1953,7 @@ function convertUids($value, $handle) {
 
 // this function returns the handle corresponding to a given column or grouping value in the requested calculations data, or advanced search query
 function calcHandle($value, $frid) {
-	if(!$frid OR ($value == "uid" OR $value == "proxyid" OR $value == "creation_date" OR $value == "mod_date")) {
+	if(!$frid OR ($value == "uid" OR $value == "proxyid" OR $value == "creation_date" OR $value == "mod_date" OR $value == "creator_email")) {
 		$handle = $value;
 	} else {
 		$thandle = convertIds($value, $frid); // convert id to handle if this is a framework (unless it's a metadata value)
@@ -1837,7 +2094,7 @@ function evalAdvSearch($entry, $handle, $op, $term) {
 
 // this function includes the javascript necessary make the interface operate properly
 // note the mandatory clearing of the ventry value upon loading of the page.  Necessary to make the back button work right (otherwise ventry setting is retained from the previous loading of the page and the form is displayed after the next submission of the controls form)
-function interfaceJavascript($fid, $frid, $currentview) {
+function interfaceJavascript($fid, $frid, $currentview, $useWorking) {
 ?>
 <script type='text/javascript'>
 
@@ -1845,7 +2102,7 @@ window.document.controls.ventry.value = '';
 window.document.controls.loadreport.value = '';
 
 function warnLock() {
-	alert('<? print _formulize_DE_WARNLOCK; ?>');
+	alert('<?php print _formulize_DE_WARNLOCK; ?>');
 	return false;
 }
 
@@ -1884,7 +2141,7 @@ function confirmDel() {
 }
 
 function confirmClone() {
-	var clonenumber = prompt("<? print _formulize_DE_CLONE_PROMPT; ?>", "1");
+	var clonenumber = prompt("<?php print _formulize_DE_CLONE_PROMPT; ?>", "1");
 	if(eval(clonenumber) > 0) {
 		window.document.controls.cloneconfirmed.value = clonenumber;
 		window.document.controls.ventry.value = '';
@@ -1923,6 +2180,8 @@ function runExport(type) {
    The selectall and clearall functions are based on a function by
    Vincent Puglia, GrassBlade Software
    site:   http://members.aol.com/grassblad
+   
+   NOTE: MUST RETROFIT THIS SO IN ADDITION TO CHECKING TYPE, WE ARE CHECKING FOR 'delete_' in the name, so we can have other checkbox elements in the screen templates!
 ------------------------------------------- */
 
 function selectAll(formObj) 
@@ -1964,7 +2223,7 @@ function delete_view(formObj, pubstart, endstandard) {
 				}
 			} else {
 				if(formObj.currentview.options[i].value != "") {
-					alert('<? print _formulize_DE_DELETE_ALERT; ?>');
+					alert('<?php print _formulize_DE_DELETE_ALERT; ?>');
 				}
 				return false;
 			}
@@ -1977,7 +2236,7 @@ function change_view(formObj, pickgroups, endstandard) {
 	for (var i=0; i < formObj.currentview.options.length; i++) {
 		if (formObj.currentview.options[i].selected) {
 			if(i == pickgroups && pickgroups != 0) {
-				<? print "showPop('" . XOOPS_URL . "/modules/formulize/include/changescope.php?fid=$fid&frid=$frid&scope=$currentview');"; ?>				
+				<?php print "showPop('" . XOOPS_URL . "/modules/formulize/include/changescope.php?fid=$fid&frid=$frid&scope=$currentview');"; ?>				
 				return false;
 			} else {
 				if ( formObj.currentview.options[i].value == "" ) {
@@ -2024,6 +2283,13 @@ function cancelCalcs() {
 	showLoading();
 }
 
+function customButtonProcess(caid, entries) {
+	window.document.controls.caid.value = caid;
+	window.document.controls.caentries.value = entries;
+	showLoading();
+}
+
+
 function hideList() {
 	window.document.controls.hlist.value = 1;
 	window.document.controls.hcalc.value = 0;
@@ -2045,20 +2311,35 @@ function killSearch() {
 }
 
 function showLoading() {
-	window.document.getElementById('listofentries').style.opacity = 0.5;
-	window.document.getElementById('workingmessage').style.display = 'block';
+	<?php
+		if($useWorking) {
+			print "window.document.getElementById('listofentries').style.opacity = 0.5;\n";
+			print "window.document.getElementById('workingmessage').style.display = 'block';\n";
+			print "window.scrollTo(0,0);\n";
+		}
+	?>
 	window.document.controls.ventry.value = '';
 	window.document.controls.submit();
 }
 
 function showLoadingReset() {
-	window.document.getElementById('listofentries').style.opacity = 0.5;
-	window.document.getElementById('workingmessage').style.display = 'block';
+	<?php
+		if($useWorking) {
+			print "window.document.getElementById('listofentries').style.opacity = 0.5;\n";
+			print "window.document.getElementById('workingmessage').style.display = 'block';\n";
+			print "window.scrollTo(0,0);\n";
+		}
+	?>
 	window.document.resetviewform.submit();
 }
 
+function pageJump(page) {
+	window.document.controls.formulize_LOEPageStart.value = page;
+	showLoading();
+}
+
 </script>
-<?
+<?php
 }
 
 //THIS FUNCTION READS A LEGACY REPORT (ONE GENERATED IN 1.6rc OR PREVIOUS)
@@ -2323,6 +2604,7 @@ function loadReport($id) {
 // this function takes a column list (handles or ids) and returns it with all columns removed that the user cannot view according to the display options on the elements
 // this function also removes columns that are private if the user does not have view_private_elements permission
 function removeNotAllowedCols($fid, $frid, $cols, $groups) {
+	
 	$all_allowed_cols = array();
 	$allowed_cols_in_view = array();
 	// metadata columns always allowed!
@@ -2349,5 +2631,573 @@ function removeNotAllowedCols($fid, $frid, $cols, $groups) {
 	}
 	return $allowed_cols_in_view;
 }
+
+// THIS FUNCTION HANDLES INTERPRETTING A LOE SCREEN TEMPLATE
+// $type is the top/bottom setting
+// $buttonCodeArray is the available buttons that have been pre-compiled by the drawInterface function
+function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings, $messageText) {
+
+	// include necessary files
+	if(strstr($screen->getVar($type.'template'), 'buildFilter(')) {
+		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/calendardisplay.php";
+	}
+
+	// setup the button variables
+	foreach($buttonCodeArray as $buttonName=>$buttonCode) {
+		${$buttonName} = $buttonCode;
+	}
+	// setup the view name variables, with true only set for the last loaded view
+	$viewNumber = 1;
+	foreach($settings['publishedviewnames'] as $id=>$thisViewName) {
+		$thisViewName = str_replace(" ", "_", $thisViewName);
+		if($id == $settings['lastloaded']) {
+			${$thisViewName} = true;
+			${'view'.$viewNumber} = true;
+		} else {
+			${$thisViewName} = false;
+			$view{'view'.$viewNumber} = false;
+		}
+		$viewNumber++;
+	}
+
+	// setup any custom buttons	
+	$atLeastOneCustomButton = false;
+	
+	$caCode = array();
+	foreach($screen->getVar('customactions') as $caid=>$thisCustomAction) {
+		if($thisCustomAction['appearinline']) { continue; } // ignore buttons that are meant to appear inline
+		$atLeastOneCustomButton = true;
+		list($caCode, $caElements, $caActions, $caValues, $caMessageText, $caApplyTo) = processCustomButton($caid, $thisCustomAction);
+		${$thisCustomAction['handle']} = $caCode; // assign the button code that was returned
+		// processing of custom buttons now happens right up top!
+		/*if(isset($_POST['caid']) AND !isset($clickedElements)) { // only process once, since clickedElements will be set after this has run
+			if($caid == intval($_POST['caid'])) { // capture information about button that was clicked
+				$clickedElements = $caElements;
+				$clickedValues = $caValues;
+				$clickedActions = $caActions;
+				$clickedMessageText = $caMessageText;
+				$clickedApplyTo = $caApplyTo;
+			}
+		}*/
+	}
+	/*
+	// processing of custom buttons now happens right up top! 
+	static $handledCustomButtons = false;
+	$messageText = "";
+	if($atLeastOneCustomButton AND !$handledCustomButtons) { // only process the results once per pageload (that's what the static handlecustombuttons is for)
+		$handledCustomButtons = true;
+		// process any custom button that was clicked on the last page load
+		if(isset($_POST['caid'])) {
+			$messageText = processClickedCustomButton($clickedElements, $clickedValues, $clickedActions, $clickedMessageText, $clickedApplyTo);
+		}
+	}
+	*/
+	// if there is no save button specified in either of the templates, but one is available, then put it in below the list
+	if($type == "bottom" AND $saveButton AND $GLOBALS['formulize_displayElement_LOE_Used'] AND !strstr($screen->getVar('toptemplate'), 'saveButton') AND !strstr($screen->getVar('bottomtemplate'), 'saveButton')) {
+		print "<p>$saveButton</p>\n";
+	}
+	
+	$thisTemplate = html_entity_decode($screen->getVar($type.'template'));
+	if($thisTemplate != "") {
+		ob_start();
+		eval($thisTemplate);
+		$evalResult = ob_get_clean();
+		if($evalResult != "") {
+			print $evalResult;
+		} else {
+			print _AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR;
+		}
+		
+		// if there are no page nav controls in either template the template, then 
+		if($type == "top" AND !strstr($screen->getVar('toptemplate'), 'pageNavControls') AND (!strstr($screen->getVar('bottomtemplate'), 'pageNavControls'))) {
+			print $pageNavControls;
+		}
+	}
+	
+	// output the message text to the screen if it's not used in the custom templates somewhere
+	if($type == "top" AND $messageText AND !strstr($screen->getVar('toptemplate'), 'messageText') AND !strstr($screen->getVar('bottomtemplate'), 'messageText')) {
+		print "<p><center><b>$messageText</b></center></p>\n";
+	}
+	
+}
+
+// THIS FUNCTION PROCESSES THE REQUESTED BUTTONS AND GENERATES HTML PLUS SENDS BACK INFO ABOUT THAT BUTTON
+// $caid is the id of this button, $thisCustomAction is all the settings for this button, $entries is optional and is a comma separated list of entries that should be modified by this button (only takes effect on inline buttons, and possible future types)
+function processCustomButton($caid, $thisCustomAction, $entries="") {
+
+	static $nameIdAddOn = 0; // used to give inline buttons unique names and ids
+	
+	$caElements = array();
+	$caActions = array();
+	$caValues = array();
+	$caCode = array();
+	foreach($thisCustomAction as $effectid=>$effectProperties) {
+		if(!is_numeric($effectid)) { continue; } // effectid, as second key, could be buttontext, messagetext, etc, so ignore those and focus on actual effects which will have numeric keys
+		$caElements[] = $effectProperties['element'];
+		$caActions[] = $effectProperties['action'];
+		$caValues[] = $effectProperties['value'];
+	}
+	$nameIdAddOn = $thisCustomAction['appearinline'] ? $nameIdAddOn+1 : "";
+	$caCode = "<input type=button style=\"width: 140px;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . $thisCustomAction['buttontext'] . "\" onclick=\"javascript:customButtonProcess('$caid', '$entries');\">\n";
+	
+	return array(0=>$caCode, 1=>$caElements, 2=>$caActions, 3=>$caValues, 4=>$thisCustomAction['messagetext'], 5=>$thisCustomAction['applyto']);
+}
+
+// THIS FUNCTION PROCESSES CLICKED CUSTOM BUTTONS
+function processClickedCustomButton($clickedElements, $clickedValues, $clickedActions, $clickedMessageText, $clickedApplyTo) {
+
+	if(!is_numeric($_POST['caid'])) { return; } // 'caid' might be set in post, but we're not processing anything unless there actually is a value there
+
+	static $gatheredSelectedEntries = false;
+	if(!$gatheredSelectedEntries) {
+		$GLOBALS['formulize_selectedEntries'] = array();
+		foreach($_POST as $k=>$v) { // gather entries list from the selected entries
+			if(substr($k, 0, 7) == "delete_" AND $v != "") {
+				$GLOBALS['formulize_selectedEntries'][substr($k, 7)] = substr($k, 7); // make sure key and value are the same, so the special function below works inside the custom button's own logic
+			}
+		}
+		$gatheredSelectedEntries = true;
+	}
+
+
+	$caEntries = array();
+	// need to handle "all" case by getting list of all entries in form
+	if($clickedApplyTo == "selected") {
+		$caEntries = $GLOBALS['formulize_selectedEntries'];
+	} elseif($clickedApplyTo == "inline") {
+		$caEntriesTemp = explode(",", htmlspecialchars(strip_tags($_POST['caentries'])));
+		foreach($caEntriesTemp as $id=>$val) {
+			$caEntries[$id] = $val; // make sure key and value are the same, so the special function below works inside the custom button's own logic (we need the $entry id to be the key).
+		}
+	} elseif(strstr($clickedApplyTo, "new_per_selected")) {
+		foreach($GLOBALS['formulize_selectedEntries'] as $id=>$val) {
+			$caEntries[$id] = "new"; // add one new entry for each box that is checked
+		}
+	} else {
+		// right now new and new_x are handled by this default case.  They both result in the same 'new' value being sent to writeElementValue -- this may have to change if the possible apply to values change as new options are added to the ui
+		$caEntries[0] = 'new';
+	}
+        // process changes to each entry
+	foreach($caEntries as $id=>$thisEntry) { // loop through all the entries this button click applies to
+		$GLOBALS['formulize_thisEntryId'] = $id; // sent up to global scope so it can be accessed by the gatherHiddenValues function without the user having to type ", $id" in the function call
+		$maxIdReq = 0;
+		for($i=0;$i<count($clickedElements);$i++) { // loop through all actions for this button
+			if($thisEntry == "new" AND $maxIdReq > 0) { $thisEntry = $maxIdReq; } // for multiple effects on the same button, when the button applies to a new entry, reuse the initial id_req that was created during the first effect
+			if(strstr($clickedValues[$i], "\$value")) {
+				eval($clickedValues[$i]);
+				$valueToWrite = $value;
+			} else {
+				$valueToWrite = $clickedValues[$i];
+			}
+			$maxIdReq = writeElementValue("", $clickedElements[$i], $thisEntry, $valueToWrite, $clickedActions[$i]);
+		}
+	}
+	return $clickedMessageText;
+}
+
+// THIS FUNCTION IS USED ONLY IN LIST OF ENTRIES SCREENS, IN THE VALUES OF CUSTOM BUTTONS
+// Use this to gather a specified hidden value for the current entry being processed
+// The key of $caEntries above MUST be set to the entry that was selected, or else this will not work
+// This function is meant to be called from inside the eval call above where the custom buttons are evaluated
+// This function is only meant to work with situations where someone has actually selected an entry (or clicked inline)
+function gatherHiddenValue($handle) {
+	global $formulize_thisEntryId;
+	global $formulize_selectedEntries;
+	if(count($formulize_selectedEntries) > 0 ) {
+		return htmlspecialchars(strip_tags($_POST["hiddencolumn_" . $formulize_thisEntryId . "_" . $handle]));
+	} else {
+		return false;
+	}
+}
+
+// THIS FUNCTION GENERATES HTML FOR ANY BUTTONS THAT ARE REQUESTED
+function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colids, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname) {
+	if($buttonText) {
+		switch ($button) {
+			case "changeColsButton":
+				return "<input type=button style=\"width: 140px;\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colids');\"></input>";
+				break;
+			case "calcButton":
+				return "<input type=button style=\"width: 140px;\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>";
+				break;
+			case "advSearchButton":
+				$buttonCode = "<input type=button style=\"width: 140px;\" name=advsearch value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
+				foreach($settings as $k=>$v) {
+					if(substr($k, 0, 3) == "as_") {
+						$v = str_replace("'", "&#39;", $v);
+						$v = stripslashes($v);
+						$buttonCode .= "&$k=" . urlencode($v);
+					}
+				}
+				$buttonCode .= "');\"></input>";
+				return $buttonCode;
+				break;
+			case "exportButton":
+				return "<input type=button style=\"width: 140px;\" name=export value='" . $buttonText . "' onclick=\"javascript:runExport('comma');\"></input>";
+				break;
+			case "exportCalcsButton":	
+				return "<input type=button style=\"width: 140px;\" name=export value='" . $buttonText . "' onclick=\"javascript:runExport('calcs');\"></input>";
+				break;
+			case "importButton":
+				return "<input type=button style=\"width: 140px;\" name=impdata value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid');\"></input>";
+				break;
+			case "addButton":
+				$addNewParam = $doNotForceSingle ? "" : "'single'"; // force the addNew behaviour to single entry unless this button is being used on a single entry form, in which case we don't need to force anything
+				return "<input type=button style=\"width: 140px;\" name=addentry value='" . $buttonText . "' onclick=\"javascript:addNew($addNewParam);\"></input>";
+				break;
+			case "addMultiButton":
+				return "<input type=button style=\"width: 140px;\" name=addentry value='" . $buttonText . "' onclick=\"javascript:addNew();\"></input>";
+				break;
+			case "addProxyButton":
+				return "<input type=button style=\"width: 140px;\" name=addentry value='" . $buttonText . "' onclick=\"javascript:addNew('proxy');\"></input>";
+				break;
+			case "notifButton":
+				return "<input type=button style=\"width: 140px;\" name=notbutton value='". $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/setnot.php?fid=$fid');\"></input>";
+				break;
+			case "cloneButton":
+				return "<input type=button style=\"width: 140px;\" name=clonesel value='" . $buttonText . "' onclick=\"javascript:confirmClone();\"></input>";
+				break;
+			case "deleteButton":
+				return "<input type=button style=\"width: 140px;\" name=deletesel value='" . $buttonText . "' onclick=\"javascript:confirmDel();\"></input>";
+				break;
+			case "selectAllButton":
+				return "<input type=button style=\"width: 110px;\" name=sellall value='" . $buttonText . "' onclick=\"javascript:selectAll(this.form);\"></input>";
+				break;
+			case "clearSelectButton":
+				return "<input type=button style=\"width: 110px;\" name=clearall value='" . $buttonText . "' onclick=\"javascript:clearAll(this.form);\"></input>";
+				break;
+			case "resetViewButton":
+				return "<input type=button style=\"width: 140px;\" name=resetviewbutton value='" . $buttonText . "' onclick=\"javascript:showLoadingReset();\"></input>";
+				break;
+			case "saveViewButton":
+				return "<input type=button style=\"width: 140px;\" name=save value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/save.php?fid=$fid&frid=$frid&lastloaded=$lastloaded&cols=$flatcols&currentview=$currentview&loadonlyview=$loadOnlyView');\"></input>";
+				break;
+			case "deleteViewButton":
+				return "<input type=button style=\"width: 140px;\" name=delete value='" . $buttonText . "' onclick=\"javascript:delete_view(this.form, '$pubstart', '$endstandard');\"></input>";
+				break;
+			case "currentViewList":
+				$currentViewList = "<b>" . $buttonText . "</b><br><SELECT style=\"width: 350px;\" name=currentview id=currentview size=1 onchange=\"javascript:change_view(this.form, '$pickgroups', '$endstandard');\">\n";
+				$currentViewList .= $viewoptions;
+				$currentViewList .= "\n</SELECT>\n";
+				if(!$loadviewname AND strstr($currentview, ",") AND !$loadOnlyView) { // if we're on a genuine pick-groups view (not a loaded view)...and the load-only-view override is not in place (which eliminates other viewing options besides the loaded view)
+					$currentViewList .= "<br><input type=button style=\"width: 140px;\" name=pickdiffgroup value='" . _formulize_DE_PICKDIFFGROUP . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changescope.php?fid=$fid&frid=$frid&scope=$currentview');\"></input>";		
+				}
+				return $currentViewList;
+				break;
+			case "saveButton":
+				return "<input type=button style=\"width: 140px;\" name=deSaveButton value='" . $buttonText . "' onclick=\"javascript:showLoading();\"></input>";
+				break;
+		}
+	} elseif($button == "currentViewList") { // must always set a currentview value in POST even if the list is not visible
+		return "<input type=hidden name=currentview value='$currentview'></input>\n";
+	} else {
+		return false;
+	}
+}
+
+// THIS FUNCTION TAKES A DATASET AND CACHES IT TO A FILE
+function formulize_cacheData($data) {
+	
+	// if there's not enough memory to serialize $data, don't attempt to cache
+	if(function_exists("memory_get_usage")) {
+		$memoryLimit = intval(ini_get("memory_limit"));
+		$memoryUsed = memory_get_usage() / 1000000;
+		if($memoryLimit > 0 AND $memoryUsed > 0) {
+			if($memoryUsed > $memoryLimit/1.6) { return ""; }
+		}
+	}
+	
+	$currentId = microtime_float();
+	$newCacheFile = fopen(XOOPS_ROOT_PATH . "/cache/$currentId" . ".formulize_cached_data", "w");
+	fwrite($newCacheFile, serialize($data));
+	fclose($newCacheFile);
+		
+	// garbage collection...delete files older than 1 day
+	$oldId = $currentId - 86400; // the timestamp from one day ago
+	$formulize_cached_files = php4_scandir(XOOPS_ROOT_PATH . "/cache/",false, true, "formulize_cached_data"); // array of files
+	foreach($formulize_cached_files as $thisFile) {
+		$fileNameParts = explode(".", $thisFile);
+		if($fileNameParts[0] < $oldId){
+			unlink(XOOPS_ROOT_PATH . "/cache/$thisFile");
+		}
+	}
+	return $currentId;
+}
+
+// THIS FUNCTION READS A CACHED DATASET FROM A FILE
+function formulize_readCachedData($cacheId) {
+	$cacheData = file_get_contents(XOOPS_ROOT_PATH . "/cache/$cacheId" . ".formulize_cached_data");
+	return unserialize($cacheData);
+}
+
+// THIS FUNCTION RUNS AN ADVANCED SEARCH FILTER ON A DATASET
+function formulize_runAdvancedSearch($query_string, $data) {
+	if($query_string) {
+		$indexer = 0;
+		$asearch_parse_error = 0;
+		foreach($data as $entry) {
+			ob_start();
+			eval($query_string); // a constructed query based on the user's input.  $query_result = 1 if it succeeds and 0 if it fails.
+			ob_end_clean();
+			if($query_result) {
+				$found_data[] = $entry;
+			} elseif(!isset($query_result)) {
+				$asearch_parse_error = 1;
+				break;
+			}
+			unset($data[$indexer]);
+			$indexer++;
+		}
+		unset($data);
+		if(count($found_data)>0) { $data = $found_data; }
+	}
+	return $data;
+}
+
+// THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
+function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen, $currentURL) {
+				 
+	// Order of operations for the requested advanced search options
+	// 1. unpack the settings necessary for the search
+	// 2. loop through the data and store the results, unsetting $data as we go, and then reassigning the found array to $data at the end
+	
+	// example of as $settings:
+/*	global $xoopsUser;
+	if($xoopsUser->getVar('uid') == 'j') {
+	$settings['as_1'] = "[field]545[/field]";
+	$settings['as_2'] = "==";
+	$settings['as_3'] = "Ontario";
+	$settings['as_4'] = "AND";
+	$settings['as_5'] = "(";
+	$settings['as_6'] = "[field]557[/field]";
+	$settings['as_7'] = "==";
+	$settings['as_8'] = "visiting classrooms";
+	$settings['as_9'] = "OR";
+	$settings['as_10'] = "[field]557[/field]";
+	$settings['as_11'] = "==";
+	$settings['as_12'] = "advocacy";
+	$settings['as_13'] = ")";
+	} // end of xoopsuser check
+*/
+//	545 prov
+//	556 are you still interested, yes/no
+//	570 where vol with LTS (university name)
+//	557 which of following areas... (multi)
+
+	$query_string = "";
+	if($settings['as_0']) {
+		// build the query string
+		// string looks like this:
+		//if([query here]) {
+		//	$query_result = 1;
+		//}
+		
+		$query_string .= "if(";
+		$firstTermNot = false;
+		for($i=0;$settings['as_' . $i];$i++) {
+			// save query for writing later
+			$wq['as_' . $i] = $settings['as_' . $i];
+			if(substr($settings['as_' . $i], 0, 7) == "[field]" AND substr($settings['as_' . $i], -8) == "[/field]") { // a field has been found, next two should be part of the query
+				$fieldLen = strlen($settings['as_' . $i]);
+				$field = substr($settings['as_' . $i], 7, $fieldLen-15); // 15 is the length of [field][/field]
+				$field = calcHandle($field, $frid);
+				$query_string .= "evalAdvSearch(\$entry, \"$field\", \"";
+				$i++;
+				$wq['as_' . $i] = $settings['as_' . $i];
+				$query_string .= $settings['as_' . $i] . "\", \"";
+				$i++;
+				$wq['as_' . $i] = $settings['as_' . $i];
+				$query_string .= $settings['as_' . $i] . "\")";
+			} else {
+				if($i==0 AND $settings['as_'.$i] == "NOT") {
+					$firstTermNot = true; // must flag initial negations and handle differently
+					continue;
+				}
+				if($firstTermNot == true AND $i==1 AND $settings['as_'.$i] != "(") {
+					$firstTermNot = false; // only actually preserve the full negation if the second term is a parenthesis
+					$query_string .= " NOT ";
+				}
+				$query_string .= " " . $settings['as_' . $i] . " ";
+			}
+		}
+
+		if($firstTermNot) { // if we are looking for the negative of the entire query...
+			$query_string .= ") { \$query_result=0; } else { \$query_result=1; }";
+		} else {
+			$query_string .= ") { \$query_result=1; } else { \$query_result=0; }";
+		}
+	}
+
+	// build the filter out of the searches array
+	$start = 1;
+	$filter = "";
+	foreach($searches as $key=>$one_search) {
+		// $key is handles for frameworks, and ele_ids for non-frameworks.
+		if(!$start) { $filter .= "]["; }
+		$filter .= $key . "/**/$one_search"; // . mysql_real_escape_string($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
+		$start = 0;
+	}
+
+// CANNOT PAGE RESULTS YET BECAUSE ADVANCED SEARCHES MUST BE DONE OVER ENTIRE RESULT SET.  ARRRRGGGHHH!!!
+/*	if(!$frid) {
+		$startEntry = $_POST['startPageEntry'] ? intval($_POST['startPageEntry']) : 0;
+		$data = getData($frid, $fid, $filter, "AND", $scope, $sort, $order, $startEntry, $entriesPerPage); // additional options for paging results not enabled due to current inability of paging successfully when filters are set on fields in the non-main form.
+		if($sort AND $order) { // because the extraction layer does not return results in order, we need to sort them afterwards (even when sort and order is passed -- extraction layer only uses them to generate the list of entries that should be gathered, but it does not gather them in order)
+			$data = resultSort($data, $sort, $order); // sort is ele_id for form, handle for framework
+		}
+*/
+	$regeneratePageNumbers = false;
+	// handle magic quotes if necessary
+	if(get_magic_quotes_gpc()) {
+		$_POST['formulize_previous_filter'] = stripslashes($_POST['formulize_previous_filter']);
+		$_POST['formulize_previous_querystring'] = stripslashes($_POST['formulize_previous_querystring']);
+	}
+	
+	if(!$settings['formulize_cacheddata'] OR isset($_POST['lastentry']) OR $GLOBALS['formulize_deletionRequested'] OR $GLOBALS['formulize_writeElementValueWasRun'] OR $GLOBALS['formulize_readElementsWasRun'] OR $filter != $_POST['formulize_previous_filter'] OR $scope != $_POST['formulize_previous_scope']) { // if we have no cached data, or if the user is coming back from modifying an entry, or if there is any new setting that is going to change the entries that are part of the underlying dataset...
+		$startTimeTest = microtime_float();
+		$data = getData($frid, $fid, $filter, "AND", $scope);
+		$endTimeTest = microtime_float();
+		$testDur = $endTimeTest - $startTimeTest;
+		//print "GetData: $testDur<br>";
+		if($sort AND $order) { // because the extraction layer does not return results in order, we need to sort them afterwards 
+			$data = resultSort($data, $sort, $order); // sort is ele_id for form, handle for framework
+		}
+		$formulize_cachedDataId = formulize_cacheData($data);
+		if($query_string) { $data = formulize_runAdvancedSearch($query_string, $data); } // must do advanced search after caching the data, so the advanced search results are not contained in the cached data.  Otherwise, we would have to rerun the base extraction every time we wanted to change just the advanced search query.  This way, advanced search changes can just hit the cache, and not the db.
+		if(!$formulize_cachedDataId) { // caching failed (most likely because of memory limit)
+			// if there is some difference between this page load and the previous one in terms of the underlying query terms, then regenerate the page numbers
+			if(($query_string != $_POST['formulize_previous_querystring'] AND $query_string != "") OR $filter != $_POST['formulize_previous_filter'] OR $scope != $_POST['formulize_previous_scope']) {
+				$regeneratePageNumbers = true;
+			}
+		} else { // caching worked, so regenerate the numbers when necessary, unless we're coming back from editing an entry
+			if(!isset($_POST['lastentry']) AND (($query_string != $_POST['formulize_previous_querystring'] AND $query_string != "") OR $filter != $_POST['formulize_previous_filter'] OR $scope != $_POST['formulize_previous_scope'])) {
+				$regeneratePageNumbers = true;
+			}
+		}
+	} else { // gather cached data 
+		$startTimeTest = microtime_float();
+		$data = formulize_readCachedData($settings['formulize_cacheddata']);
+		$endTimeTest = microtime_float();
+		$testDur = $endTimeTest - $startTimeTest;
+		//print "Cache: $testDur<br>";
+		$formulize_cachedDataId = $settings['formulize_cacheddata'];
+		if($sort AND $order AND ($sort != $_POST['formulize_previous_sort'] OR $order != $_POST['formulize_previous_order'])) { // only redo sorting if this is different from the last page load
+			$data = resultSort($data, $sort, $order); // sort is ele_id for form, handle for framework
+			$formulize_cachedDataId = formulize_cacheData($data);			
+		}
+		//print "$query_string<br>\n";
+		//print $_POST['formulize_previous_querystring'] . "<br>\n";
+		$data = formulize_runAdvancedSearch($query_string, $data); // need to reapply advanced search every time, since it's not part of the cached data
+		if($query_string != $_POST['formulize_previous_querystring'] AND $query_string != "") {
+			$regeneratePageNumbers = true;
+		}
+	}
+	
+	// must start drawing interface here, since we need to include those hidden form elements below...
+	$drawResetForm = true;
+	$useWorking = true;
+	if($screen) {
+		$drawResetForm = $screen->getVar('usereset') == "" ? false : true;
+		$useWorking = !$screen->getVar('useworkingmsg') ? false : true;
+	}
+	
+	if($drawResetForm) {
+		$currentviewResetForm = $settings['currentview'];
+		print "<form name=resetviewform id=resetviewform action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
+		if($screen) { $currentviewResetForm = $screen->getVar('defaultview'); } // override the default set by $settings...must do this here and not above, since this should only apply to the resetview form
+		print "<input type=hidden name=currentview value='$currentviewResetForm'>\n";
+		print "<input type=hidden name=userClickedReset value=1>\n";
+		print "</form>\n";
+	}
+
+	if($useWorking) {
+		// working message
+		global $xoopsConfig;
+		print "<div id=workingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px;\">\n";
+		if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/working-".$xoopsConfig['language'].".gif") ) {
+			print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-" . $xoopsConfig['language'] . ".gif\">\n";
+		} else {
+			print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-english.gif\">\n";
+		}
+		print "</div>\n";
+	}
+
+	print "<div id=listofentries>\n";
+
+	print "<form name=controls id=controls action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
+	if(isset($GLOBALS['xoopsSecurity'])) {
+		print $GLOBALS['xoopsSecurity']->getTokenHTML();
+	}		
+		
+	print "<input type=hidden name=formulize_cacheddata id=formulize_cacheddata value=\"$formulize_cachedDataId\">\n"; // set the cached data id that we might want to read on next page load
+	print "<input type=hidden name=formulize_previous_filter id=formulize_previous_filter value=\"" . htmlSpecialChars($filter) . "\">\n"; // save the filter to check for a change on next page load
+	print "<input type=hidden name=formulize_previous_scope id=formulize_previous_scope value=\"" . htmlSpecialChars($scope) . "\">\n"; // save the scope to check for a change on next page load
+	print "<input type=hidden name=formulize_previous_sort id=formulize_previous_sort value=\"$sort\">\n";
+	print "<input type=hidden name=formulize_previous_order id=formulize_previous_order value=\"$order\">\n";
+	print "<input type=hidden name=formulize_previous_querystring id=formulize_previous_querystring value=\"" . htmlSpecialChars($query_string). "\">\n"; 
+	
+	$to_return[0] = $data;
+	$to_return[1] = $wq;
+	$to_return[2] = $regeneratePageNumbers;
+	return $to_return;
+}
+
+// THIS FUNCTION CALCULATES THE NUMBER OF PAGES AND DRAWS HTML FOR NAVIGATING THEM
+function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
+	$pageNav = "";
+	//print "Passed pagestart: " . $_POST['formulize_LOEPageStart'] . "<br>";
+	$pageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0; // regenerate essentially causes the user to jump back to page 0 because something about the dataset has fundamentally changed (like a new search term or something)
+	//print "Actual pagestart: $pageStart<br>";
+	print "\n<input type=hidden name=formulize_LOEPageStart id=formulize_LOEPageStart value=\"$pageStart\">\n"; // will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens
+	$numberPerPage = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
+	if($numberPerPage == 0 OR $_POST['hlist']) { return $pageNav; } // if all entries are supposed to be on one page for this screen, then return no navigation controls.  Also return nothing if the list is hidden.
+	$allPageStarts = array();
+	$pageNumbers = 0;
+	for($i=0;$i<count($data);$i=$i+$numberPerPage) {
+		$pageNumbers++;
+		$allPageStarts[$pageNumbers] = $i;
+	}
+	$userPageNumber = $pageStart > 0 ? ($pageStart/$numberPerPage)+1 : 1;
+	if($pageNumbers > 1) {
+		if($pageNumbers > 9) {
+			if($userPageNumber < 6) {
+				$firstDisplayPage = 1;
+				$lastDisplayPage = 9;
+			} elseif($userPageNumber + 4 > $pageNumbers) { // too close to the end
+				$firstDisplayPage = $userPageNumber - 4 - ($userPageNumber+4-$pageNumbers); // the previous four, plus the difference by which we're over the end when we add 4
+				$lastDisplayPage = $pageNumbers;
+			} else { // somewhere in the middle
+				$firstDisplayPage = $userPageNumber - 4;
+				$lastDisplayPage = $userPageNumber + 4;
+			}
+		} else {
+			$firstDisplayPage = 1;
+			$lastDisplayPage = $pageNumbers;
+		}
+		$pageNav .= "<p><nobr>";
+		$pageNav .= "<b>" . _AM_FORMULIZE_LOE_ONPAGE . $userPageNumber . ".</b>&nbsp;&nbsp;[&nbsp;&nbsp;";
+		if($firstDisplayPage > 1) {
+			$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('0');return false;\">" . _AM_FORMULIZE_LOE_FIRSTPAGE . "</a>&nbsp;&nbsp;\n";
+		}
+		//print "$firstDisplayPage<br>$lastDisplayPage<br>";
+		for($i=$firstDisplayPage;$i<=$lastDisplayPage;$i++) {
+			//print "$i<br>";
+			$thisPageStart = ($i*$numberPerPage)-$numberPerPage;
+			if($thisPageStart == $pageStart) {
+				$pageNav .= "<b>$i</b>\n";
+			} else {
+				$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>\n";
+			}
+			$pageNav .= "&nbsp;&nbsp;";
+		}
+		if($lastDisplayPage < $pageNumbers) {
+			$lastPageStart = ($pageNumbers*$numberPerPage)-$numberPerPage;
+			$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('$lastPageStart');return false;\">" . _AM_FORMULIZE_LOE_LASTPAGE . "</a>&nbsp;&nbsp;\n";
+		}
+		$pageNav .= "]</nobr></p>";
+	}
+	return $pageNav;	
+}
+
 
 ?>

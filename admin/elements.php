@@ -121,14 +121,18 @@ switch($op){
 			$element =& $formulize_mgr->get($ele_id);
 			$ele_type = $element->getVar('ele_type');
 			$form_title = $clone ? _AM_ELE_CREATE : sprintf(_AM_ELE_EDIT, $element->getVar('ele_caption'));
+			$editing = $clone ? 0 : 1;
 		}else{
+			$editing = 0;
 			$element =& $formulize_mgr->create();
 			$form_title = _AM_ELE_CREATE;
 		}
 		$form = new XoopsThemeForm($form_title, 'form_ele', 'elements.php?title='.$title.'');
 		if( empty($addopt) ){
 			$nb_fichier = 0;
-			$ele_caption = $clone ? sprintf(_AM_COPIED, $element->getVar('ele_caption', 'f')) : $element->getVar('ele_caption', 'f');
+			// no longer make cloned captions have the word copy at the end, since we add it when saving if the caption is not unique
+			// $ele_caption = $clone ? sprintf(_AM_COPIED, $element->getVar('ele_caption', 'f')) : $element->getVar('ele_caption', 'f');
+			$ele_caption = $element->getVar('ele_caption', 'f');
 			if ($ele_type=='sep' && substr(0, 7, $ele_caption)=='{SEPAR}') { 
 				$ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 255, '{SEPAR}'.$ele_caption); }
 			else { $ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 255, $ele_caption); }
@@ -146,7 +150,8 @@ switch($op){
 			unset($ele_colhead);
 			unset($ele_desc);
 		}
-
+/*
+// now altering sent captions on the saving side.  More reliable anyway, and saves sending every single caption in the form to the client.
 		// added javascript validation of uniqueness of caption to the caption element -- jwe 7/27/04
 		// 1. gather existing captions for this form
 		// 2. write function to the page to check the captions
@@ -187,11 +192,11 @@ switch($op){
 				$javacaptionlist = $javacaptionlist . "\"$captionarray[$caploop]\", ";
 			}
 		}
-	
+*/	
 
 
 	//	$captionmatchalert = ;
-		
+/*		
 		// javascript function that checks the caption -- added < > 9/02/04
 		print "<script type='text/javascript'>\n";
 		print "<!--//\n";
@@ -244,6 +249,7 @@ switch($op){
 		print "			}\n";
 		print "			document.form_ele.ele_caption.value = replacement;\n";
 		print "		}\n";
+// checking of captions for uniqueness is no longer necessary, since captions are altered on saving side
 		print "		if(replacement) {caps=replacement;}\n";		
 		print "		existingcaps = new Array($javacaptionlist);\n";
 		print "		for(var i = 0;i<$maxcaps;i++)\n";
@@ -256,14 +262,19 @@ switch($op){
 		print "				break;\n";
 		print "			}\n";
 		print "		}\n";
+
 		print "	}\n";
 		print "//--></script>\n\n";
 
 		// add function call to caption element
 		$ele_caption->setExtra("onChange='checkUnique(this.value)'");
+
+*/
+
+
 		$form->addElement($ele_caption, 1);
 
-		if($ele_type != "subform") {
+		if($ele_type != "subform" AND $ele_type != "grid") {
 			// column heading added June 25 2006 -- jwe
 			$ele_colhead = new XoopsFormText(_AM_ELE_COLHEAD, 'ele_colhead', 50, 255, $ele_colhead_default);
 			$ele_colhead->setDescription(_AM_ELE_COLHEAD_HELP);
@@ -271,7 +282,7 @@ switch($op){
 		
 
 			// descriptive text added June 6 2006 -- jwe
-			if($ele_type != "ib") {
+			if($ele_type != "ib" AND $ele_type != "derived") {
 				$ele_desc = new XoopsFormTextArea(_AM_ELE_DESC, 'ele_desc', $ele_desc_default, 5, 35);
 				$ele_desc->setDescription(_AM_ELE_DESC_HELP);
 				$form->addElement($ele_desc);
@@ -314,8 +325,15 @@ switch($op){
 			case 'sep':
 				include 'ele_sep.php';
 			break;
+			case 'grid':
+				include 'ele_grid.php';
+			break;
 			case 'upload':
 				include 'ele_upload.php';
+			break;
+			// "derived columns" added March 27 2007
+			case 'derived':
+				include 'ele_derived.php';
 			break;
 		}
 		if( $req ){
@@ -365,14 +383,15 @@ switch($op){
 		// replaced - end - August 18 2005 - jpc
 
 
-		if($ele_type != "subform") {
+		if($ele_type == "radio" OR $ele_type == "text" OR $ele_type == "textarea") {
 			// added by jwe Nov 7 2005, a checkbox to indicate if the element should be included as a hidden element, even when the user does not have permission to view (ie: it is hidden by the display option above)
 			$fhide = !empty($ele_id) ? $element->getVar('ele_forcehidden') : 0;
 			$forcehidden = new XoopsFormCheckBox(_AM_FORM_FORCEHIDDEN, "fhide", $fhide);
 			$forcehidden->addOption(1, ' ');
 			$forcehidden->setDescription(_AM_FORM_FORCEHIDDEN_DESC);
 			$form->addElement($forcehidden);
-
+		}
+		if($ele_type != "subform" AND $ele_type != "grid") {
 			// added private option July 15 2006, jwe
 			$priv = !empty($ele_id) ? $element->getVar('ele_private') : 0;
 			$private = new XoopsFormCheckBox(_AM_FORM_PRIVATE, "private", $priv);
@@ -381,21 +400,20 @@ switch($op){
 			$form->addElement($private);
 		}
 		
-		// added by jwe 01/06/05 -- get the current highest order value for the form, and add up to 10 to it to reach the nearest mod 5 value
-		$highorderq = "SELECT MAX(ele_order) FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$id_form";
-		$reshighorderq = $xoopsDB->query($highorderq);
-		$rowhighorderq = $xoopsDB->fetchRow($reshighorderq);
-		$highorder = $rowhighorderq[0]+1;
-		while($highorder % 5 != 0)
-		{
-			$highorder++;
-		}
+		$highorder = formulize_getElementHighOrder($id_form);
 		
 		$order = !empty($ele_id) ? $element->getVar('ele_order') : $highorder;
 		$order = $clone ? $highorder : $order;
 		$ele_order = new XoopsFormText(_AM_ELE_ORDER, 'ele_order', 4, 4, $order);
+
+		// need to add hidden element to indicate if the order has been modified (detectable by javascript)
+		// then listen for that flag, and if order has not been modified, check again when saving to see if this is in fact the right order number, since multiple clicks on the clone link at the same time will result in multiple windows with the same order number in the box, and we don't want to have to manually alter those orders after saving -- re: OACAS HR survey project, January 22, 2007
+
+		$ele_order->setExtra("onchange='javascript:window.document.form_ele.ele_order_changed.value=1;'");
+		$ele_order_changed = new XoopsFormHidden('ele_order_changed', $editing);
+
 		$form->addElement($ele_order);
-		
+		$form->addElement($ele_order_changed);
 		
 		$submit = new XoopsFormButton('', 'submit', _AM_SAVE, 'submit');
 		$cancel = new XoopsFormButton('', 'cancel', _CANCEL, 'button');
@@ -437,8 +455,6 @@ switch($op){
 	case 'save':
 		if( !empty($ele_id) ){
 			$element =& $formulize_mgr->get($ele_id);
-	//		not valid for use with multi-language, since getVar will be sanitizing the output (it seems)
-	//		$original_caption = $element->getVar('ele_caption'); // added by jwe 09/03/05, used in new code below
 			$ocq = "SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id='$ele_id'";
 			$res_ocq = $xoopsDB->query($ocq);
 			$array_ocq = $xoopsDB->fetchArray($res_ocq);
@@ -446,6 +462,10 @@ switch($op){
 		}else{
 			$element =& $formulize_mgr->create();
 		}
+
+		$ele_caption = formulize_verifyUniqueCaption($ele_caption, $ele_id, $id_form);
+
+		$ele_caption = get_magic_quotes_gpc() ? stripslashes($ele_caption) : $ele_caption;
 		$element->setVar('ele_caption', $ele_caption);
 		$ele_delim = $ele_delim=='custom' ? $ele_delim_custom : $ele_delim;
 		$element->setVar('ele_delim', $ele_delim); // only set for radio and checkbox, but cannot be put into ele_value because ele_value is not a multidimensional array for those elements, so must be treated as a separate db field for now
@@ -454,6 +474,7 @@ switch($op){
 		$req = !empty($ele_req) ? 1 : 0;
 		$element->setVar('ele_req', $req);
 		$order = empty($ele_order) ? 0 : intval($ele_order);
+		$order = $ele_order_changed ? $order : formulize_getElementHighOrder($id_form); // if order was not modified from it's original state, then make sure we're writing the current highest order to the DB
 		$element->setVar('ele_order', $order);
 
 		// grab the forcehidden setting -- added Nov 7 2005
@@ -668,6 +689,17 @@ switch($op){
 				$value[0] = $_POST['subform'];
 				$value[1] = $_POST['subformelements'] ? implode(",",$_POST['subformelements']) : "";
 			break;
+			// grid added January 19 2007
+			case 'grid':
+				foreach($ele_value as $key=>$val) {
+					$value[$key] = get_magic_quotes_gpc() ? stripslashes($val) : $val;
+				}
+			break;
+			// derived added March 27 2007
+			case 'derived':
+				$ele_value[0] = get_magic_quotes_gpc() ? stripslashes($ele_value[0]) : $ele_value[0];
+				$value[0] = $ele_value[0];
+			break;
 			case 'upload': 
 				$value = array();
 				$v2 = array();
@@ -704,7 +736,8 @@ switch($op){
 				}
 				//end of added code
 			}
-			redirect_header("index.php?title=$title", 1, _AM_DBUPDATED);
+			//redirect_header("index.php?title=$title", 1, _AM_DBUPDATED);
+			header("Location: " . XOOPS_URL . "/modules/formulize/admin/index.php?title=$title");
 		}
 	break;
 /*	default:
@@ -753,5 +786,36 @@ function addOptionsTray(){
 	return $r;
 }
 
+function formulize_getElementHighOrder($id_form) {
+	global $xoopsDB;
+	// added by jwe 01/06/05 -- get the current highest order value for the form, and add up to 5 to it to reach the nearest mod 5 value
+	$highorderq = "SELECT MAX(ele_order) FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$id_form";
+	$reshighorderq = $xoopsDB->query($highorderq);
+	$rowhighorderq = $xoopsDB->fetchRow($reshighorderq);
+	$highorder = $rowhighorderq[0]+1;
+	while($highorder % 5 != 0)
+	{
+		$highorder++;
+	}
+	return $highorder;
+}
+
+function formulize_verifyUniqueCaption($ele_caption, $ele_id, $id_form) {
+	// check the form to see if elements of a different ID have the same caption, and if so, append "copy" to the end of the caption
+	global $xoopsDB;
+	$sql = "SELECT COUNT(*) FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($id_form) . " AND ele_id != " . intval($ele_id) . " AND ele_caption = \"" . mysql_real_escape_string($ele_caption) . "\"";
+	if(!$res = $xoopsDB->query($sql)) {
+		print "Error: could not verify uniqueness of caption";
+		return $ele_caption;
+	}
+	$row = $xoopsDB->fetchRow($res);
+	$count = $row[0];
+	if($count > 0) {
+		return sprintf(_AM_COPIED, $ele_caption);
+	} else {
+		return $ele_caption;
+	}		
+
+}
 
 ?>

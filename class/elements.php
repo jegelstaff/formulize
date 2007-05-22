@@ -84,15 +84,21 @@ class formulizeElementsHandler {
 
 	function &get($id){
 		$id = intval($id);
+		static $cachedElements = array();
+		if(isset($cachedElements[$id])) {
+			return $cachedElements[$id];
+		}	
 		if ($id > 0) {
 			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_id='.$id;
 			if (!$result = $this->db->query($sql)) {
+				$cachedElements[$id] = false;
 				return false;
 			}
 			$numrows = $this->db->getRowsNum($result);
 			if ($numrows == 1) {
 				$element = new formulizeformulize();
 				$element->assignVars($this->db->fetchArray($result));
+				$cachedElements[$id] = $element;
 				return $element;
 			}
 		}
@@ -218,6 +224,7 @@ class formulizeElementsHandler {
 		$caption = $element->getVar('ele_caption');
 		$caption = str_replace("'", "`", $caption);
 		$caption = str_replace("&#039;", "`", $caption);
+		$caption = str_replace("&quot;", "`", $caption);
 		$fid = $element->getVar('id_form');
 		$sql = "DELETE FROM ".formulize_DATATABLE." WHERE id_form='$fid' AND ele_caption='$caption'";
 
@@ -229,7 +236,7 @@ class formulizeElementsHandler {
 		return true;
 	}
 
-
+	// deprecated?
 	function &getObjects($criteria = null, $id_form , $id_as_key = false){
 		$ret = array();
 		$limit = $start = 0;
@@ -270,7 +277,7 @@ class formulizeElementsHandler {
 
 
 		if( isset($criteria) && is_subclass_of($criteria, 'criteriaelement') ){
-			$sql .= ' AND ('.$criteria->render().')';
+			$sql .= $criteria->render() ? ' AND ('.$criteria->render().')' : '';
 			if( $criteria->getSort() != '' ){
 				$sql .= ' ORDER BY '.$criteria->getSort().' '.$criteria->getOrder();
 			}

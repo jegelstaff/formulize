@@ -109,7 +109,8 @@ define("_AM_NO","No");
 define("_AM_formulizeMENUSTYLE","Stile-Menu personale");
 define("_AM_MAINMENUSTYLE","Stile-Menu principale");
 
-efine("_AM_VERSION","2.8");
+define("_AM_VERSION","2.8");
 define("_AM_REORD","Nuovo ordinamento");
-
+//added by félix <INBOX International> for sedonde (colorpicker feature)
+define("_AM_ELE_COLORPICK","Colore");
 ?>

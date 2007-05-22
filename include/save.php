@@ -57,7 +57,7 @@ function saveSettings(formObj) {
 		if (saveElement.options[i].selected) {
 			var newid = saveElement.options[i].value;
 			if(newid == "new") {
-				var newname = prompt("<? print _formulize_DE_SAVE_NEWPROMPT; ?>", "");
+				var newname = prompt("<?php print _formulize_DE_SAVE_NEWPROMPT; ?>", "");
 				if(!newname) {
 					return false;
 				} 
@@ -75,7 +75,7 @@ function saveSettings(formObj) {
 		var newscope = formObj.scope.value;
 	}
 
-<?
+<?php
 // do some PHP to control whether we draw in certain parts of this javascript function or not
 if($pubflag) {
 ?>
@@ -105,7 +105,7 @@ if($pubflag) {
 
 	window.opener.document.controls.savegroups.value = pubgroups;
 	window.opener.document.controls.savelock.value = locksetting;
-<?
+<?php
 }
 ?>
 	window.opener.document.controls.savescope.value = newscope;
@@ -121,7 +121,7 @@ if($pubflag) {
 -->
 </script>
 
-<?
+<?php
 
 }
 
@@ -369,7 +369,7 @@ foreach($s_reports as $report) {
 //		$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_UPDATE . $report['report_name'];
 		$defaultSave = "sold_" . $report['report_id'];
 	} //else {
-	$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_REPLACE . $report['report_name'];
+	$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_REPLACE . stripslashes($report['report_name']);
 //	}
 	if($lastloaded == "sold_" . $report['report_id'] OR $lastloaded == "pold_" . $report['report_id']) {
 		$saveoptions["sold_" . $report['report_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")"; 
@@ -380,7 +380,7 @@ foreach($ns_reports as $report) {
 //		$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_UPDATE . $report['sv_name'] . " (" . _formulize_DE_SAVE_LASTLOADED . ")";
 		$defaultSave = "s" . $report['sv_id'];
 	} //else {
-	$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_REPLACE . $report['sv_name'];
+	$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_REPLACE . stripslashes($report['sv_name']);
 //	}
 	if($lastloaded == "s" . $report['sv_id'] OR $lastloaded == "p" . $report['sv_id']) {
 		$saveoptions["s" . $report['sv_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")"; 
@@ -392,7 +392,7 @@ foreach($other_p_reports as $report) {
 //		$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_UPDATE . $report['report_name'] . " (" . _formulize_DE_SAVE_LASTLOADED . ")";
 		$defaultSave = "sold_" . $report['report_id'];
 	} //else {
-	$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_REPLACE . $report['report_name'];
+	$saveoptions["sold_" . $report['report_id']] = ".  " . _formulize_DE_SAVE_REPLACE . stripslashes($report['report_name']);
 //	}
 	if($lastloaded == "sold_" . $report['report_id'] OR $lastloaded == "pold_" . $report['report_id']) {
 		$saveoptions["sold_" . $report['report_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")"; 
@@ -403,7 +403,7 @@ foreach($other_np_reports as $report) {
 //		$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_UPDATE . $report['sv_name'] . " (" . _formulize_DE_SAVE_LASTLOADED . ")";
 		$defaultSave = "s" . $report['sv_id'];
 	} //else {
-	$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_REPLACE . $report['sv_name'];
+	$saveoptions["s" . $report['sv_id']] = ".  " . _formulize_DE_SAVE_REPLACE . stripslashes($report['sv_name']);
 //	}
 	if($lastloaded == "s" . $report['sv_id'] OR $lastloaded == "p" . $report['sv_id']) {
 		$saveoptions["s" . $report['sv_id']] .= " (" . _formulize_DE_SAVE_LASTLOADED . ")"; 

@@ -47,6 +47,8 @@ class formulizeForm extends XoopsObject {
 			$formq[0]['desc_form'] = "";
 			$single = "";
 			$elements = array();
+			$elementCaptions = array();
+			$elementColheads = array();
 		} else {
 			$formq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$id_form");
 			if(!isset($formq[0])) {
@@ -55,11 +57,15 @@ class formulizeForm extends XoopsObject {
 				$formq[0]['desc_form'] = "";
 				$single = "";
 				$elements = array();
+				$elementCaptions = array();
+				$elementColheads = array();
 			} else {
 				// gather element ids for this form
-				$elementsq = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$id_form ORDER BY ele_order ASC");
+				$elementsq = q("SELECT ele_id, ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$id_form AND ele_display != \"0\" ORDER BY ele_order ASC");
 				foreach($elementsq as $row=>$value) {
 					$elements[] = $value['ele_id'];
+					$elementCaptions[] = $value['ele_caption'];
+					$elementColheads[] = $value['ele_colhead'];
 				}
 				// propertly format the single value
 
@@ -78,6 +84,20 @@ class formulizeForm extends XoopsObject {
 						break;
 				}
 			}
+			$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '$id_form' OR (sv_mainform = '' AND sv_formframe = '$id_form')");
+			if(!isset($viewq[0])) {
+				$views = array();
+				$viewNames = array();
+				$viewFrids = array();
+				$viewPublished = array();
+			} else {
+				for($i=0;$i<count($viewq);$i++) {
+					$views[$i] = $viewq[$i]['sv_id'];
+					$viewNames[$i] = stripslashes($viewq[$i]['sv_name']);
+					$viewFrids[$i] = $viewq[$i]['sv_mainform'] ? $viewq[$i]['sv_formframe'] : "";
+					$viewPublished[$i] = $viewq[$i]['sv_pubgroups'] ? true : false;
+				}
+			}
 		}
 
 		$this->XoopsObject();
@@ -86,6 +106,62 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("title", XOBJ_DTYPE_TXTBOX, $formq[0]['desc_form'], true, 255);
 		$this->initVar("single", XOBJ_DTYPE_TXTBOX, $single, true, 5);
 		$this->initVar("elements", XOBJ_DTYPE_ARRAY, serialize($elements));
+		$this->initVar("elementCaptions", XOBJ_DTYPE_ARRAY, serialize($elementCaptions));
+		$this->initVar("elementColheads", XOBJ_DTYPE_ARRAY, serialize($elementColheads));
+		$this->initVar("views", XOBJ_DTYPE_ARRAY, serialize($views));
+		$this->initVar("viewNames", XOBJ_DTYPE_ARRAY, serialize($viewNames));
+		$this->initVar("viewFrids", XOBJ_DTYPE_ARRAY, serialize($viewFrids));
+		$this->initVar("viewPublished", XOBJ_DTYPE_ARRAY, serialize($viewPublished));
 	}
+}
+
+class formulizeFormsHandler {
+	var $db;
+	function formulizeFormsHandler(&$db) {
+		$this->db =& $db;
+	}
+	function &getInstance(&$db) {
+		static $instance;
+		if (!isset($instance)) {
+			$instance = new formulizeFormsHandler($db);
+		}
+		return $instance;
+	}
+	function &create() {
+		return new formulizeForm();
+	}
+	
+	function &get($fid) {
+		$fid = intval($fid);
+		static $cachedForms = array();
+		if(isset($cachedForms[$fid])) { return $cachedForms[$fid]; }
+		if($fid > 0) {
+			$cachedForms[$fid] = new formulizeForm($fid);
+			return $cachedForms[$fid];
+		}
+		return false;
+	}
+		
+	// accepts a framework object or frid
+	function getFormsByFramework($framework_Object_or_Frid) {
+		if(is_object($framework_Object_or_Frid)) {
+			if(get_class($framework_Object_or_Frid) == "formulizeFramework") {
+				$frameworkObject = $framework_Object_or_Frid;
+			} else {
+				return false;
+			}
+		} elseif(is_numeric($framework_Object_or_Frid)) {
+			include_once XOOPS_ROOT_PATH . "/modules/formulize/class/frameworks.php";
+			$frameworkObject = new formulizeFramework($frid);
+		} else {
+			return false;
+		}
+		$fids = array();
+		foreach($frameworkObject->getVar('fids') as $thisFid) {
+			$fids[] = $this->get($thisFid);
+		}
+		return $fids;
+	}
+		
 }
 ?>

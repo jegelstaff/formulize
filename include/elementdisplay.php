@@ -54,23 +54,23 @@ function displayElement($formframe="", $ele, $entry="new") {
 	}
 
 	if(!$element) {
-      	if(is_numeric($ele))
-          {
-      		$element_id = $ele;
-          }
-      	else
-          {
-      		$element_id = getFrameworkElementId($formframe, $ele);
-          }
-
-      	if(!$formulize_mgr) {
-      		$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
-      	}
-
-      	$element =& $formulize_mgr->get($element_id);
-      	if(!is_object($element)) {
-      		return "invalid_element";
-      	}
+		if(is_numeric($ele))
+		  {
+			$element_id = $ele;
+		  }
+		else
+		  {
+			$element_id = getFrameworkElementId($formframe, $ele);
+		  }
+	
+		if(!isset($formulize_mgr)) {
+			$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
+		}
+	
+		$element =& $formulize_mgr->get($element_id);
+		if(!is_object($element)) {
+			return "invalid_element";
+		}
 	}
 
 	// check if the user is normally able to view this element or not, by checking their groups against the display groups -- added Nov 7 2005
@@ -109,7 +109,7 @@ function displayElement($formframe="", $ele, $entry="new") {
 			$loadValueEntry = $entry == "new" ? "" : $entry; // loadValue expects a blank value for $entry if we are looking at a new entry.
 			$member_handler =& xoops_gethandler('member');
 			$ownerObj = $member_handler->getUser($owner);
-			$owner_groups = $ownerObj->getGroups();
+			$owner_groups = is_object($ownerObj) ? $ownerObj->getGroups() : XOOPS_GROUP_ANONYMOUS;  
 	  		$ele_value = loadValue($prevEntry, $element, $ele_value, $owner_groups, "", $loadValueEntry); // get the value of this element for this entry as stored in the DB -- "" is groups which is deprecated in that function.
   			// query to see if this particular element has a value saved in this entry
 			if($prevValueThisElement = getElementValue($entry, getRealCaption($element_id))) {
@@ -121,6 +121,7 @@ function displayElement($formframe="", $ele, $entry="new") {
   				print "<input type=hidden name=deh_" . $entry . "_" . $element->getVar('ele_id') . " value=empty>\n"; // note, $entry may be "new" in this case
 	  	}
   		$form_ele =& $renderer->constructElement('de_' . $entry . '_'.$element->getVar('ele_id'), $ele_value, $entry);
+		$form_ele->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 		if($element->getVar('ele_type') == "ib") {
 			print $form_ele[0];
 		} else {

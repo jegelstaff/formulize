@@ -1,4 +1,4 @@
-<?
+<?php
 
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##

@@ -13,7 +13,7 @@ define("_MI_formulize_ADMENU1","Menu");
 
 // notifications
 define("_MI_formulize_NOTIFY_FORM", "Form Notifications");
-define("_MI_formulize_NOTIFY_FORM", "Notifications related to the current form");
+define("_MI_formulize_NOTIFY_FORM_DESC", "Notifications related to the current form");
 define("_MI_formulize_NOTIFY_NEWENTRY", "New Entry in a Form");
 define("_MI_formulize_NOTIFY_NEWENTRY_CAP", "Notify me when someone makes a new entry in this form");
 define("_MI_formulize_NOTIFY_NEWENTRY_DESC", "A notification option that alerts users when new entries are made in a form");

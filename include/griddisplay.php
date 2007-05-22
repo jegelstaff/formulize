@@ -61,8 +61,9 @@
 //$startID -- Optional. ele_id of the first element in the form that you want to include in the grid, or the caption of that element.    This is the element that will be used in the q1 position and all subsequent elements will be drawn in their respective places after that.
 //$finalCell -- Optional. Array containing HTML to use as the last cell in each row (for totalling, etc).  Each key is for each row in order.  Expectation is the developer would have calculated some values and prepared this HTML in advance.  Must have numeric keys! Should NOT include <td> and </td>
 //$finalRow -- Optional. HTML to use as a last row in the table, to show totals, etc.  Expectation is the developer would have calculated some values and prepared this HTML in advance.  Should NOT include <tr> and </tr>
+// $calledInternal -- boolean used to indicate whether we need the xoops security token or not.  When called from inside a form using the grid element collection, there will already be a security token associated with the form.
 
-function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientation="horizontal", $startID="first", $finalCell="", $finalRow="") {
+function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientation="horizontal", $startID="first", $finalCell="", $finalRow="", $calledInternal=false) {
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/elementdisplay.php';
 	global $xoopsUser, $xoopsDB;
@@ -73,7 +74,7 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 		$numcols = $numcols+1;
 	}
 	$numrows = count($rowcaps);
-	if(!$title) {
+	if($title == "{FORMTITLE}") {
 		$title = trans(getFormTitle($fid));
 	} else {
 		$title = trans($title);
@@ -87,9 +88,11 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 	$owner_groups =& $member_handler->getGroupsByUser($owner, FALSE);
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
 
-	if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handler, $owner_groups)) {
-		print "<p>" . _NO_PERM . "</p>";
-		return;
+	if(!$calledInternal) {
+		if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handler, $owner_groups)) {
+			print "<p>" . _NO_PERM . "</p>";
+			return;
+		}
 	}
 
 	// determine if the form is a single entry form and so whether an entry already exists for this form...
@@ -107,15 +110,17 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 	}
 	$starting_order = $order_query[0]['ele_order'];
 	// gather the element IDs that are to be displayed, in order (include to the end of the form, whereas we actually only will display until we run out of cells)
-	$element_ids_query = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_order >= '$starting_order' AND id_form='$fid' ORDER BY ele_order");
+	$element_ids_query = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_order >= '$starting_order' AND id_form='$fid' AND (ele_type != 'derived' AND ele_type != 'subform') ORDER BY ele_order");
 
 	// initialize form
-	print $GLOBALS['xoopsSecurity']->getTokenHTML();
+	if(!$calledInternal) {
+		print $GLOBALS['xoopsSecurity']->getTokenHTML();
+	}
 
 	// set the title row
 	print "<table class=outer>\n";
 
-	print "<tr><th colspan='$numcols'>$title</th></tr>\n";
+	if($title) { print "<tr><th colspan='$numcols'>$title</th></tr>\n"; }
 
 	// draw top row
 	$class = "head";
@@ -147,7 +152,7 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 			$class = "head";
 		}
 		print "<tr>\n";
-		print "<td class=$class>$thiscap</td>\n";
+		print "<td class=$class>$thiscap</td>\n"; 
 		foreach($colcaps as $thiscolcap) {
 			if($orientation == "vertical" AND $class=="even") {
 				$class = "odd";
