@@ -1,0 +1,59 @@
+<h2><{$page_title}></h2>
+<hr>
+	<form name=pa_user action=<{$modurl}> method=post>
+	<input type=hidden name=addpauser_regkey value=<{$pa_regkey}>>	
+	<input type=submit name=addpauser value=<{$adduser}>>
+	&nbsp;&nbsp;&nbsp;
+	<input type=submit name=pa_cancel value=<{$cancel}>>
+	</form>
+<hr>
+
+<table cellpadding=5><tr><th colspan=6></th></tr>
+
+<tr>
+
+<td class=head>
+<p><b><{$headerUsers}></b></p>
+</td>
+
+<td class=head colspan="2">
+<p><b><{$headerActions}></b></p>
+</td>
+
+</tr>
+
+<{if $pa_id}>
+	<{section name=i loop=$pa_id}>
+		<tr>
+		<td class=<{cycle name=a values="even,odd"}>>
+			<p><{$pa_user[i]}></p>	
+		</td>
+		<td class=<{cycle name=c values="even,odd"}>>			
+			<form name=edit_pa_user action=<{$modurl}> method=post>
+			<input type=hidden name=editpauser value=<{$pa_id[i]}>>
+			<input type=submit name=editthispauser value=<{$modify}>>
+			</form>
+		</td>		
+		<td class=<{cycle name=b values="even,odd"}>>			
+			<form name=suspend_pa_user action=<{$modurl}> method=post>
+			<input type=hidden name=suspendpauser value=<{$pa_id[i]}>>
+			<input type=submit name=suspendthispauser value=<{$delete}>>
+			</form>
+		</td>		
+		</tr>
+	<{/section}>
+<{else}>
+		<tr>
+		<td class=<{cycle name=a values="even,odd"}>>
+			<p><{$pa_user_notfound}></p>	
+		</td>
+		<td class=<{cycle name=b values="even,odd"}>>
+			<form name=goback action=<{$modurl}> method=post>
+			<input type=submit name=pa_cancel value=<{$go_back}>>
+			</form>
+		</td>	
+		</tr>
+<{/if}>
+
+</table>
+<br><br>

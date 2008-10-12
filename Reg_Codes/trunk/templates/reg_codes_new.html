@@ -1,0 +1,84 @@
+
+<table cellpadding=5><tr><th><center><h3><{$page_title}></h3></center></th></tr></table>
+
+<form name=newcodeform action=<{$modurl}> method=post>
+<table>
+<tr>
+<td class=head>
+<p><{$typecode_l}></p>
+</td>
+<td class=<{cycle name=a1 values="even,odd"}>>
+<input type=textbox name=customcode value="">
+</td>
+</tr>
+
+<tr>
+<td class=head>
+<p><{$selectgroups_l}>
+</td>
+<td class=<{cycle name=b1 values="even,odd"}>>
+<select name=codegroups[] size=6 multiple>
+<{foreach from=$igroupnames item=aigroup}>
+	<option value=<{$aigroup}></option>
+<{/foreach}>
+</select>
+</p>
+</td>
+</tr>
+
+<tr>
+<td class=head>
+<p><{$expirydate_l}></p>
+</td>
+<td class=<{cycle name=c1 values="even,odd"}>>
+<input type=textbox name=expirydate value="yyyy-mm-dd">
+</td>
+</tr>
+
+<td class=head>
+<p><{$maxuses_l}></p>
+</td>
+<td class=<{cycle name=d1 values="even,odd"}>>
+<input type=textbox name=maxuses value="0">
+</td>
+</tr>
+
+<tr>
+<td class=head>
+<p><{$approval_groups_l}></p>
+</td>
+<td class=<{cycle name=e1 values="even,odd"}>>
+<select name=approvalgroups[] size=6 multiple>
+<{foreach from=$agroupnames item=agroup}>
+	<option value=<{$agroup.id}>><{$agroup.name}></option>
+<{/foreach}>
+</select>
+</td>
+</tr>
+
+<tr>
+<td class=head>
+<p><{$redirect_l}></p>
+</td>
+<td class=<{cycle name=g1 values="even,odd"}>>
+<input type=textbox name=redirect value="" size=80>
+</td>
+</tr>
+
+<tr>
+<td class=head>
+<p><{$instant_l}></p>
+</td>
+<td class=<{cycle name=h1 values="even,odd"}>>
+<input type=radio name=instant value="0" checked><{$regform}><br>
+<input type=radio name=instant value="1"><{$noregform}>
+</td>
+</tr>
+
+<tr>
+<td colspan=2>
+<input type=hidden name=thecode value="<{$ucode}>">
+<input type=submit name=savenewcode value="<{$savenew_l}>">
+</td>
+</tr>
+</table>
