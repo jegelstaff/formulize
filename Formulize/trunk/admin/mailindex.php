@@ -211,20 +211,20 @@ echo '<tr>
 
 	echo '<select name="headerlist[]" size="10" multiple>';
 	if(!isset($_GET['table'])) {
-		echo "<option value=uid";
-		if($title != '' && in_array('uid', $headlistarray)) {echo " SELECTED";}  
+		echo "<option value=creation_uid";
+		if($title != '' && (in_array('creation_uid', $headlistarray) OR in_array('uid', $headlistarray))) {echo " SELECTED";}  
 		echo ">" . _formulize_DE_CALC_CREATOR . "</option>";
 	
-		echo "<option value=proxyid";
-		if($title != '' && in_array('proxyid', $headlistarray)) {echo " SELECTED";}  
+		echo "<option value=mod_uid";
+		if($title != '' && (in_array('mod_uid', $headlistarray) OR in_array('proxyid', $headlistarray))) {echo " SELECTED";}  
 		echo ">" . _formulize_DE_CALC_MODIFIER. "</option>";
 	
-		echo "<option value=creation_date";
-		if($title != '' && in_array('creation_date', $headlistarray)) {echo " SELECTED";}  
+		echo "<option value=creation_datetime";
+		if($title != '' && (in_array('creation_datetime', $headlistarray) OR in_array('creation_date', $headlistarray))) {echo " SELECTED";}  
 		echo ">" . _formulize_DE_CALC_CREATEDATE . "</option>";
 	
-		echo "<option value=mod_date";
-		if($title != '' && in_array('mod_date', $headlistarray)) {echo " SELECTED";}  
+		echo "<option value=mod_datetime";
+		if($title != '' && (in_array('mod_datetime', $headlistarray) OR in_array('mod_date', $headlistarray))) {echo " SELECTED";}  
 		echo ">" . _formulize_DE_CALC_MODDATE . "</option>";
 					
 					echo "<option value=creator_email";
@@ -506,6 +506,13 @@ function addform()
 	}
 
 	if(!isset($_GET['table'])) {
+		
+		// July 2 2007 -- handle creation of data table
+    $form_handler =& xoops_getmodulehandler('forms', 'formulize');
+    if(!$tableCreateRes = $form_handler->createDataTable($newfid)) {
+      print "Error: could not create data table for new form";
+    }
+		
 		// altered sept 13 2005 to use new form id
 		//redirect_header("index.php?title=$title",1,_formulize_FORMCREA);
 		redirect_header("index.php?title=$newfid",1,_formulize_FORMCREA);
@@ -542,7 +549,10 @@ function addform()
 			}	
 			unset($element);
 		}
-		
+		$handleUpdateSQL = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_handle=ele_id WHERE id_form=".intval($newfid);
+    if(!$res = $xoopsDB->query($handleUpdateSQL)) {
+      print "Error: could not synchronize handles with element ids for the '".strip_tags(htmlspecialchars($_POST['tablename'])). "' form";
+    }
 		redirect_header("formindex.php",1,_formulize_FORMCREA);
 	}
 		

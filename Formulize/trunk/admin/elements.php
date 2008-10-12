@@ -140,17 +140,19 @@ switch($op){
       }
 		}
 		$form = new XoopsThemeForm($form_title, 'form_ele', 'elements.php?title='.$title.'&op=edit&ele_id='.$ele_id);
+		$form->addElement(new xoopsFormHidden('clone', intval($clone))); // will be pickedup from GET the first time through and then propogate through POST on subsequent page loads
 		// if( empty($addopt) ){// no longer need to have two different initialization processes, since we're saving even on refreshes now
 			$nb_fichier = 0;
 			// no longer make cloned captions have the word copy at the end, since we add it when saving if the caption is not unique
 			// $ele_caption = $clone ? sprintf(_AM_COPIED, $element->getVar('ele_caption', 'f')) : $element->getVar('ele_caption', 'f');
 			$ele_caption = $element->getVar('ele_caption', 'f');
 			if ($ele_type=='sep' && substr(0, 7, $ele_caption)=='{SEPAR}') { 
-				$ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 255, '{SEPAR}'.$ele_caption); }
-			else { $ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 255, $ele_caption); }
+				$ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 4096, '{SEPAR}'.$ele_caption); }
+			else { $ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 4096, $ele_caption); }
       $value = $element->getVar('ele_value');
       $ele_colhead_default = $element->getVar('ele_colhead', 'f');
 			$ele_desc_default = $element->getVar('ele_desc', 'f');
+			$ele_handle_default = $element->getVar('ele_handle', 'f');
 			// merge in the uitext if there is any -- aug 25 2007
 			$uitext = $element->getVar('ele_uitext', 'f');
 			if(is_array($uitext) AND count($uitext) > 0) { 
@@ -180,7 +182,11 @@ switch($op){
 			$ele_colhead->setDescription(_AM_ELE_COLHEAD_HELP);
 			$form->addElement($ele_colhead);
 		
-
+			// handle added April 19 2008 as part of new db structure
+			$ele_handle = new XoopsFormText(_AM_ELE_HANDLE, 'ele_handle', 30, 30, $ele_handle_default);
+			$ele_handle->setDescription(_AM_ELE_HANDLE_HELP);
+			$form->addElement($ele_handle); 
+		
 			// descriptive text added June 6 2006 -- jwe
 			if($ele_type != "ib" AND $ele_type != "derived") {
 				$ele_desc = new XoopsFormTextArea(_AM_ELE_DESC, 'ele_desc', $ele_desc_default, 5, 35);
@@ -379,8 +385,11 @@ switch($op){
 			xoops_confirm(array('op' => 'delete', 'ele_id' => $ele_id, 'ok' => 1), 'elements.php?title='.$title.'', _AM_ELE_CONFIRM_DELETE);
 		}else{
 			$element =& $formulize_mgr->get($ele_id);
+      $ele_type = $element->getVar('ele_type');
 			$formulize_mgr->delete($element);
-			$formulize_mgr->deleteData($element); //added aug 14 2005 by jwe
+      if($ele_type != "derived" AND $ele_type != "areamodif" AND $ele_type != "ib" AND $ele_type != "sep" AND $ele_type != "subform" AND $ele_type != "grid") {
+        $formulize_mgr->deleteData($element); //added aug 14 2005 by jwe  
+      }
 			redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);
 		}
 	break;
@@ -449,30 +458,7 @@ function formulize_getElementHighOrder($id_form) {
 	return $highorder;
 }
 
-function formulize_verifyUniqueCaption($ele_caption, $ele_id, $id_form) {
-	// check the form to see if elements of a different ID have the same caption, and if so, append "copy" to the end of the caption
-	global $xoopsDB;
-  
-  // remove double quotes, slashes, greater than and less than signs...not sure why we're junking all of those necessarily, but we are, since that's what we've been doing for a long time...new data model will be smarter about this stuff
-  $ele_caption = str_replace('"', "'", $ele_caption);
-  $ele_caption = str_replace('\\', "", $ele_caption);
-  $ele_caption = str_replace(">", "", $ele_caption);
-  $ele_caption = str_replace("<", "", $ele_caption);
-  
-	$sql = "SELECT COUNT(*) FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($id_form) . " AND ele_id != " . intval($ele_id) . " AND ele_caption = \"" . mysql_real_escape_string($ele_caption) . "\"";
-	if(!$res = $xoopsDB->query($sql)) {
-		print "Error: could not verify uniqueness of caption";
-		return $ele_caption;
-	}
-	$row = $xoopsDB->fetchRow($res);
-	$count = $row[0];
-	if($count > 0) {
-		return sprintf(_AM_COPIED, $ele_caption);
-	} else {
-		return $ele_caption;
-	}		
 
-}
 // THIS FUNCTION TAKES A SERIES OF VALUES TYPED IN FORM RADIO BUTTONS, CHECKBOXES OR SELECTBOX OPTIONS, AND CHECKS TO SEE IF THEY WERE ENTERED WITH A UITEXT INDICATOR, AND IF SO, SPLITS THEM INTO THEIR ACTUAL VALUE PLUS THE UI TEXT AND RETURNS BOTH
 // $values should be an array of all the options, so $ele_value for radio and checkboxes, $ele_value[2] for selectboxes
 function formulize_extractUIText($values) {

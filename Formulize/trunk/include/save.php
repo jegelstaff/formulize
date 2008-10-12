@@ -109,7 +109,7 @@ if($pubflag) {
 }
 ?>
 	window.opener.document.controls.savescope.value = newscope;
-	window.opener.document.controls.saveid.value = newid;
+	window.opener.document.controls.saveid_formulize.value = newid;
 	if(newid == "new") { 
 		window.opener.document.controls.savename.value = newname;
 	}
@@ -152,11 +152,11 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$uid = $xoopsUser->getVar('uid');
 
 
-	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler, "")) {
+	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
 		print "<p>" . _NO_PERM . "</p>";
 		exit;
 	}
@@ -285,9 +285,9 @@ if($publish_reports) {
 if($publish_globalscope) {
 	$allgroups = $member_handler->getGroups();
 	foreach($allgroups as $id=>$details) {
-		if($details->getVar('groupid') != 2) {
+		//if($details->getVar('groupid') != 2) { // in Formulize 3, we allow publishing to registered users
 			$publishgroups[$details->getVar('groupid')] = $details->getVar('name');
-		}
+		//}
 	}
 }
 

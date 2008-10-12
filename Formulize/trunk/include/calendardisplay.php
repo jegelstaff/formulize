@@ -85,12 +85,12 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$uid = $xoopsUser->getVar('uid');
 
 
 	foreach($fids as $thisFid) { // check that the user is allowed to see all the fids
-		if(!$scheck = security_check($thisFid, "", $uid, "", $groups, $mid, $gperm_handler, "")) {
+		if(!$scheck = security_check($thisFid, "", $uid, "", $groups, $mid, $gperm_handler)) {
 			print "<p>" . _NO_PERM . "</p>";
 			return;
 		}
@@ -617,17 +617,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 	if(strstr($options, "#*=:*")) {
 		$boxproperties = explode("#*=:*", $options);
 		$source_form_id = $boxproperties[0];
-		$source_form_caption = $boxproperties[1];
-		// grab the values that have been submitted into that element of that form
-		// So first grab the element ID of that form caption
-		include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
-		$source_form_obj = new formulizeForm($source_form_id);
-		$source_form_caption = str_replace("'", "`", $source_form_caption);
-		$source_form_caption = str_replace("&quot;", "`", $source_form_caption);
-		$source_form_caption = str_replace("&#039;", "`", $source_form_caption);
-		$element_key = array_search($source_form_caption, $source_form_obj->getVar("elementCaptions"));
-		$source_elements_array = $source_form_obj->getVar("elements");
-		$source_element_id = $source_elements_array[$element_key];
+		$source_element_handle = $boxproperties[1];
 		
 		// process the limits
 		$limitCondition = "";
@@ -646,7 +636,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 				}
 		unset($options);
 		foreach($data as $entry) {
-			$option_text = display($entry, $source_element_id);
+			$option_text = display($entry, $source_element_handle);
 			$options[$option_text] = ""; // it's the key that gets used in the loop below
 		}
 	}
@@ -659,7 +649,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 		if($element_value[3]) {
 			$scopegroups = explode(",",$element_value[3]);
 			global $xoopsUser;
-			$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+			$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 			if(!in_array("all", $scopegroups)) {
 				if($element_value[4]) { // limit by users's groups
 					foreach($groups as $gid) { // want to loop so we can get rid of reg users group simply

@@ -256,7 +256,7 @@ function modframe($cf)
 
 	// get a list of all the linked select boxes since we need to know if any fields in these two forms are the source for any links
 
-	$getlinksq = "SELECT id_form, ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type=\"select\" AND ele_value LIKE '%#*=:*%' ORDER BY id_form";
+	$getlinksq = "SELECT id_form, ele_caption, ele_id, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type=\"select\" AND ele_value LIKE '%#*=:*%' ORDER BY id_form";
 	// print "$getlinksq<br>";
 	$resgetlinksq = $xoopsDB->query($getlinksq);
 	while ($rowlinksq = $xoopsDB->fetchRow($resgetlinksq))
@@ -264,7 +264,7 @@ function modframe($cf)
 		//print_r($rowlinksq);
 		//print "<br>";
 		$target_form_ids[] = $rowlinksq[0];
-		$target_caps[] = $rowlinksq[1];
+		$target_captions[] = $rowlinksq[1];
 		$target_ele_ids[] = $rowlinksq[2];
 
 		// returns an object containing all the details about the form
@@ -278,13 +278,13 @@ function modframe($cf)
 				$ele_value = $e->getVar('ele_value');
 				$details = explode("#*=:*", $ele_value[2]);
 				$source_form_ids[] = $details[0];
-				$source_caps[] = $details[1];
 
 				//get the element ID for the source we've just found
-				$sourceq = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_caption = '" . addslashes($details[1]) . "' AND id_form = '$details[0]'";
+				$sourceq = "SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . mysql_real_escape_string($details[1]) . "' AND id_form = '$details[0]'";
 				if($ressourceq = $xoopsDB->query($sourceq)) {
 					$rowsourceq = $xoopsDB->fetchRow($ressourceq);
 					$source_ele_ids[] = $rowsourceq[0];
+					$source_captions[] = $rowsourceq[1];
 				} else {
 					print "Error:  Query failed.  Searching for element ID for the caption $details[1] in form $details[0]";
 				}
@@ -294,26 +294,21 @@ function modframe($cf)
 
 	// Arrays now set as follows:
 	// target_form_ids == the ID of the form where the current linked selectbox resides
-	// target_caps == the caption of the current linked selectbox
+	// target_captions == the caption of the current linked selectbox
 	// target_ele_ids == the element ID of the current linked selectbox
 	// source_form_ids == the ID of the form where the source for the current linked selectbox resides
-	// source_caps == the caption of the source for the current linked selectbox
+	// source_captions == the caption of the source for the current linked selectbox
 	// source_ele_ids == the element ID of the source for the current linked selectbox
 
 	// each index in those arrays denotes a distinct linked selectbox
 
 	// example:
 	// target_form_ids == 11
-	// target_caps == Link to Name
+	// target_captions == Link to Name
 	// target_ele_ids == 22
 	// source_form_ids == 10
-	// source_caps == Name
+	// source_captions == Name
 	// source_ele_ids == 20
-
-	// debug code:
-	//	for($i=0;$i<count($target_form_ids);$i++) {
-	//		print "Form ID: $target_form_ids[$i]<br>Caption: $target_caps[$i]<br>Element ID: $target_ele_ids[$i]<br>Source Form: $source_form_ids[$i]<br>Source Caption: $source_caps[$i]<br>Source Element ID: $source_ele_ids[$i]<br><br>";
-	//	}
 
 	// need to get list of all forms/links in the current framework
 
@@ -453,8 +448,8 @@ function modframe($cf)
 				$linkoptions .= "<option value='" . $link['fl_key1'] . "+" . $link['fl_key2'] . "' selected>" . _AM_FRAME_COMMON_VALUES . "$name1 & $name2</option>\n";
 				print "<input type=hidden name=preservecommon" . $link['fl_id'] . " value=" . $link['fl_key1'] . "+" . $link['fl_key2'] . ">\n";
 			}
-			$linkoptions .= writelinks($hits12, 0, $link['fl_key1'], $link['fl_key2'], $target_ele_ids, $source_ele_ids, $target_caps, $source_caps);
-			$linkoptions .= writelinks($hits21, 1, $link['fl_key1'], $link['fl_key2'], $target_ele_ids, $source_ele_ids, $target_caps, $source_caps);			
+			$linkoptions .= writelinks($hits12, 0, $link['fl_key1'], $link['fl_key2'], $target_ele_ids, $source_ele_ids, $target_captions, $source_captions);
+			$linkoptions .= writelinks($hits21, 1, $link['fl_key1'], $link['fl_key2'], $target_ele_ids, $source_ele_ids, $target_captions, $source_captions);			
 
 			// debug code
 			/*print $rel1 . "<br>";
@@ -494,19 +489,19 @@ function modframe($cf)
 				return $truehits;
 			}
 
-			function writelinks($links, $invert, $key1, $key2, $target_ele_ids, $source_ele_ids, $target_caps, $source_caps) {
+			function writelinks($links, $invert, $key1, $key2, $target_ele_ids, $source_ele_ids, $target_captions, $source_captions) {
 				foreach($links as $link) {
 					$selected = "";
 					if($invert) {
 						if($key1 == $source_ele_ids[$link] AND $key2 == $target_ele_ids[$link]) {
 							$selected = " selected";
 						}
-						$linkoptions .= "<option value='" . $source_ele_ids[$link] . "+" . $target_ele_ids[$link] . "'" . $selected . ">" . $source_caps[$link] . "/" . $target_caps[$link] . "</option>\n"; 
+						$linkoptions .= "<option value='" . $source_ele_ids[$link] . "+" . $target_ele_ids[$link] . "'" . $selected . ">" . printSmart($source_captions[$link],20) . "/" . printSmart($target_captions[$link],20) . "</option>\n"; 
 					} else { 
 						if($key1 == $target_ele_ids[$link] AND $key2 == $source_ele_ids[$link]) {
 							$selected = " selected";
 						}
-						$linkoptions .= "<option value='" . $target_ele_ids[$link] . "+" . $source_ele_ids[$link] . "'" . $selected . ">" . $target_caps[$link] . "/" . $source_caps[$link] . "</option>\n"; 
+						$linkoptions .= "<option value='" . $target_ele_ids[$link] . "+" . $source_ele_ids[$link] . "'" . $selected . ">" . printSmart($source_captions[$link],20) . "/" . printSmart($target_captions[$link],20) . "</option>\n"; 
 					}
 				}
 				return $linkoptions;

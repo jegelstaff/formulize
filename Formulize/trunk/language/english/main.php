@@ -8,6 +8,8 @@ define("_formulize_MSG_FORM", ' Form: ');
 //next two added by jwe 7/23/04
 define("_formulize_INFO_RECEIVED", "Your information has been received.");
 define("_formulize_NO_PERMISSION", "You do not have permission to view this form.");
+define("_formulize_NO_PERM", "You do not have permission to view this form.");
+define("_NO_PERM", "You do not have permission to view this part of the website.");
 define("_formulize_MSG_SENT", "Your message has been sent.");
 define("_formulize_MSG_THANK", "<br />Thank you for your comments.");
 define("_formulize_MSG_SUP","<br />Data has been erased");
@@ -46,6 +48,7 @@ define("_FORM_MODIF","Modify a form");
 define("_FORM_DELTITLE","Form title to erase:");
 define("_FORM_NEW","New form");
 define("_FORM_TABLE_CREAT","Create a reference to a database table");
+define("_FORM_TABLE_NEW","Create a reference to a database table");
 define("_FORM_NOM","Enter the new file name");
 define("_FORM_OPT","Options");
 define("_FORM_MENU","Modify entries in the Form Menu block");
@@ -173,6 +176,7 @@ define("_formulize_TEMP_NOENTRIES", "No entries.");
 define("_formulize_TEMP_ENTEREDBY", "Entered by: ");
 define("_formulize_TEMP_ENTEREDBYSINGLE", "Entered ");
 define("_formulize_TEMP_ON", "on");
+define("_formulize_TEMP_AT", "at");
 define("_formulize_TEMP_QYES", "Yes");
 define("_formulize_TEMP_QNO", "No");
 define("_formulize_REPORT_ON", "Turn Report Writing Mode ON");
@@ -640,5 +644,8 @@ define("_formulize_DE_LOE_LIMIT_REACHED2", "entries in the list.  It would take 
 define("_formulize_DE_LOE_LIMIT_REACHED3", "you can click here to have the system retrieve all the entries.");
        
 define("_formulize_OUTOFRANGE_DATA","Preserve non-standard value found in the database: ");
+
+define("_AM_FORMULIZE_PREVIOUS_OPTION", "Use a previous answer:");
+define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","This value will be calculated after the data is saved");
 
 ?>

@@ -63,9 +63,10 @@
 //$finalRow -- Optional. HTML to use as a last row in the table, to show totals, etc.  Expectation is the developer would have calculated some values and prepared this HTML in advance.  Should NOT include <tr> and </tr>
 // $calledInternal -- boolean used to indicate whether we need the xoops security token or not.  When called from inside a form using the grid element collection, there will already be a security token associated with the form.
 
-function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientation="horizontal", $startID="first", $finalCell="", $finalRow="", $calledInternal=false) {
+function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientation="horizontal", $startID="first", $finalCell="", $finalRow="", $calledInternal=false, $screen=null) {
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/elementdisplay.php';
+	include_once XOOPS_ROOT_PATH.'/modules/formulize/class/data.php';
 	global $xoopsUser, $xoopsDB;
 	$numcols = count($colcaps);
 	if(is_array($finalCell)) {
@@ -83,13 +84,15 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : '0';
 	$mid = getFormulizeModId();
 	$gperm_handler =& xoops_gethandler('groupperm');
-	$owner = getEntryOwner($entry); 
+	$owner = getEntryOwner($entry, $fid); 
 	$member_handler =& xoops_gethandler('member');
-	$owner_groups =& $member_handler->getGroupsByUser($owner, FALSE);
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+	//$owner_groups = $owner ? $member_handler->getGroupsByUser($owner, FALSE) : array(0=>XOOPS_GROUP_ANONYMOUS);
+	$data_handler = new formulizeDataHandler($fid);
+	$owner_groups = $owner ? $data_handler->getEntryOwnerGroups($entry) : array(0=>XOOPS_GROUP_ANONYMOUS);
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 
 	if(!$calledInternal) {
-		if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handler, $owner_groups)) {
+		if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handler)) {
 			print "<p>" . _NO_PERM . "</p>";
 			return;
 		}
@@ -163,7 +166,7 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 			// display the element starting with the initial one.  Keep trying to display something until we're successful (displaying the element might fail if the user does not have permission to view (based on which groups are allowed to view this element)
 			$rendered = "start";
 			while($rendered != "rendered" AND isset($element_ids_query[$ele_index])) {
-				$rendered = displayElement("", $element_ids_query[$ele_index]['ele_id'], $entry); 
+				$rendered = displayElement("", $element_ids_query[$ele_index]['ele_id'], $entry, false, $screen); 
 				$ele_index++;
 			}
 			if($rendered != "rendered") { print "&nbsp;"; }					

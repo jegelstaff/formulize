@@ -62,8 +62,9 @@ global $xoopsConfig;
 
 global $xoopsDB, $xoopsUser;
 
-$xoopsConfigUser =& $config_handler->getConfigsByCat(XOOPS_CONF_USER);
 $config_handler =& xoops_gethandler('config');
+$xoopsConfigUser =& $config_handler->getConfigsByCat(XOOPS_CONF_USER);
+
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
@@ -82,11 +83,11 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$uid = $xoopsUser->getVar('uid');
 
 	// additional check to see if the user has import_data permission for this form
-	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler, "") OR !$import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid)) {
+	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler) OR !$import_data = $gperm_handler->checkRight("import_data", $fid, $groups, $mid)) {
 		print "<p>" . _NO_PERM . "</p>";
 		exit;
 	}
@@ -247,6 +248,7 @@ function importCsv($csv_name, $id_reqs, $regfid, $validateOverride)
         importCsvProcess($importSet, $id_reqs, $regfid, $validateOverride);
 
 		echo "<script type=\"text/javascript\">\n";
+		echo "window.opener.document.controls.forcequery.value = 1;\n";
 		echo "window.opener.showLoading();\n";
 		echo "</script>\n";
     }
@@ -401,7 +403,7 @@ function importCsvSetup(&$importSet, $id_reqs)
 					
 					    $sql = "SELECT * FROM " . $xoopsDB->prefix("formulize") . 
 						" WHERE id_form='" . $parts[0] . "'" .
-					    " AND ele_caption='" . mysql_real_escape_string($parts[1]) . "'";
+					    " AND ele_handle='" . mysql_real_escape_string($parts[1]) . "'";
 									    $form_elementlinkq = q($sql);
 					    if($form_elementlinkq == null)
 					    {
@@ -475,7 +477,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
     
     while(!feof($importSet[1]))
     {
-        $row = fgetcsv($importSet[1], 4096);
+        $row = fgetcsv($importSet[1], 99999);
 
         if(is_array($row))
         {
@@ -496,7 +498,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 				if($importSet[6][$link] == -1) { // this is not a found column in the form
 					// disallow profile metdata fields from being blank
 					if(!is_array($id_reqs) AND $importSet[4] == $regfid) {
-						if($link == $imoprtSet[7]['username'] OR $link == $importSet[7]['fullname']  OR $link == $row[$importSet[7]['password']] OR $link == $importSet[7]['email'] OR $link == $importSet[7]['regcode']) {
+						if($link == $importSet[7]['username'] OR $link == $importSet[7]['fullname']  OR $link == $row[$importSet[7]['password']] OR $link == $importSet[7]['email'] OR $link == $importSet[7]['regcode']) {
 							$errors[] = "<li>line " . $rowCount . ", column " . $importSet[3][$link] . ",<br> <b>Field cannot be blank</b></li>";
 						}
 					} elseif(is_array($id_reqs) AND $link == $importSet[7]['idreqs']) {
@@ -566,13 +568,12 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                         //echo "Multiple options<br>";                                
 
 	                                    $items = explode("\n", $cell_value);
-							$all_valid_options = getElementOptions($linkElement[0], $linkElement[1]);
+							//$all_valid_options = getElementOptions($linkElement[0], $linkElement[1]);
+							list($all_valid_options, $all_valid_options_ids) = getElementOptions($linkElement[2]['ele_handle'], $linkElement[2]['id_form']);
 	                                    foreach($items as $item)
 	                                    {
 	                                        $item_value = trim($item);
 
-//	                                        $id_req = getRecordID($linkElement[0], $linkElement[1], $item_value);
-//	                                        if($id_req == 0)
 
 								if(!in_array($item_value, $all_valid_options)) 
 	                                        {
@@ -597,11 +598,9 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 	                                {
                                         // Single option
                                         //echo "Single option<br>";                                
-							$all_valid_options = getElementOptions($linkElement[0], $linkElement[1]);
-
-//                                        $id_req = getRecordID($linkElement[0], $linkElement[1], $cell_value);
-//                                        if($id_req == 0)
-							  	if(!in_array($cell_value, $all_valid_options)) 
+							//$all_valid_options = getElementOptions($linkElement[0], $linkElement[1]);
+							list($all_valid_options, $all_valid_options_ids) = getElementOptions($linkElement[2]['ele_handle'], $linkElement[2]['id_form']);
+						  	if(!in_array($cell_value, $all_valid_options)) 
 	                                        {
          								foreach($all_valid_options as $thisoption) {
          									if(trim($cell_value) == stripslashes(trim(trans($thisoption)))) { // stripslashes is necessary only because the data contains slashes in the database (which it should not, so this should be removed when that is fixed)
@@ -700,11 +699,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                         // Single option
                                         //echo "Single option<br>";                                
 
-							// id_req request commented, does not make any sense! Why should the prior existence of a record that contains this value have anything to do with validating the contents of the cell? -- June 29, 2006
-                                        //$id_req = getRecordID($importSet[4], $importSet[3][$link], $cell_value);
-                                        //if($id_req == 0)
-                                        //{
-                                            $options = $ele_value[2];
+							                              $options = $ele_value[2];
                                             if(!in_array($cell_value, $options, true)) // last option causes strict matching by type, June 29, 2006
                                             {
 
@@ -876,39 +871,35 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
         "<i>to</i> <b>Form</b>: <i>name</i>: " . $importSet[2] .
         ", <i>id</i>: " . $importSet[4] . "<br>";*/
 
-    $arrayDate = getdate(time());
-    $dateMonth = $arrayDate["mon"]; 
-    $dateDay = $arrayDate["mday"];
-    $dateYear = $arrayDate["year"];
-    $form_date = "$dateYear-$dateMonth-$dateDay";
-     
     $form_uid = "0"; 
     $form_proxyid = $xoopsUser->getVar('uid');
-     $form_creation_date = "$dateYear-$dateMonth-$dateDay";
+    
 
 	// lock formulize_form
 	if($regfid == $importSet[4]) { // only lockup reg codes table if we're dealing with a profile form, in which case we assume reg codes is installed and the table exists
-		$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_form") . " WRITE, ". $xoopsDB->prefix("users") . " WRITE, " . $xoopsDB->prefix("reg_codes") . " WRITE, " . $xoopsDB->prefix("group_users_link") . " WRITE, ". $xoopsDB->prefix("modules") . " READ, " . $xoopsDB->prefix("config") . " READ");
+		$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[4]) . " WRITE, ". $xoopsDB->prefix("users") . " WRITE, ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, " . $xoopsDB->prefix("reg_codes") . " WRITE, " . $xoopsDB->prefix("groups_users_link") . " WRITE, ". $xoopsDB->prefix("modules") . " READ, " . $xoopsDB->prefix("config") . " READ");
 	} else {
-		$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_form") . " WRITE, ". $xoopsDB->prefix("users") . " READ");
+		$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[4]) . " WRITE, ". $xoopsDB->prefix("users") . " READ, ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, " . $xoopsDB->prefix("groups_users_link") . " READ");
 	}
     
 
     //$rowCount = 2;
     $rowCount = 1;
     $other_values = array();
+		$usersMap = array();
+		$entriesMap = array();
     while(!feof($importSet[1]))
     {
-        $row = fgetcsv($importSet[1], 4096);
+        $row = fgetcsv($importSet[1], 99999);
 
         if(is_array($row))
         {
 
             $rowCount++;
-		$this_id_req = "";
-		if(is_array($id_reqs)) { // get the id_req if necessary.  will happen regardless of position of idreq column
-			$this_id_req = $row[$importSet[7]['idreqs']];
-		}
+						$this_id_req = "";
+						if(is_array($id_reqs)) { // get the id_req if necessary.  will happen regardless of position of idreq column
+							$this_id_req = $row[$importSet[7]['idreqs']];
+						}
 
 
             $links = count($importSet[6]);
@@ -928,13 +919,13 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
                     
             // get the current max id_req
 		if(!$this_id_req) {
-	           $max_id_reqq = q("SELECT MAX(id_req) FROM " . $xoopsDB->prefix("formulize_form"));
-      	     $max_id_req = $max_id_reqq[0]["MAX(id_req)"] + 1;
+	           $max_id_reqq = q("SELECT MAX(entry_id) FROM " . $xoopsDB->prefix("formulize_".$importSet[4]));
+      	     $max_id_req = $max_id_reqq[0]["MAX(entry_id)"] + 1;
 		} else {
 			$max_id_req = $this_id_req;
 			// get the uid and creation date too
 			$member_handler =& xoops_gethandler('member');
-			$this_metadata = getMetaData($this_id_req, $member_handler);
+			$this_metadata = getMetaData($this_id_req, $member_handler, $importSet[4]); // importSet[4] is id_form (fid)
 			$this_uid = $this_metadata['created_by_uid'];
 			$this_creation_date = $this_metadata['created'];
 		}
@@ -961,9 +952,10 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
             echo "line $rowCount, id $max_id_req<br>";
 
             $links = count($importSet[6]);
+						$fieldValues = array();
             for($link = 0; $link < $links; $link++)
             {
-			$all_valid_options = false; // used as a flag to indicate whether we're dealing with a linked selectbox or not, since if we are, that is the only case where we don't want to do HTML special chars on the value
+			$all_valid_options = false; // used as a flag to indicate whether we're dealing with a linked selectbox or not, since if we are, that is the only case where we don't want to do HTML special chars on the value // deprecated in 3.0
 
                 if($importSet[6][$link] != -1)
                 {
@@ -986,8 +978,8 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 
 	                                $linkElement = $importSet[5][1][$link];
 	                                $ele_value = unserialize($element["ele_value"]);
-						$all_valid_options = getElementOptions($linkElement[0], $linkElement[1]);
-
+						//$all_valid_options = getElementOptions($linkElement[0], $linkElement[1]);
+							list($all_valid_options, $all_valid_options_ids) = getElementOptions($linkElement[2]['ele_handle'], $linkElement[2]['id_form']);
 	                                if($ele_value[1])
 	                                {
 	                                    // Multiple options                                
@@ -998,54 +990,42 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 	                                    
 	                                    $items = explode("\n", $row_value);
 							
-                                        $is_first = true;
+                                        
+																				$row_value = ",";
 	                                    foreach($items as $item)
 	                                    {
 	                                        $item_value = trim($item);
-
-								if(!in_array($item_value, $all_valid_options)) {
-									foreach($all_valid_options as $thisoption) {
-										if(trim($item_value) == trim(trans($thisoption))) {
-											$item_value = $thisoption;
-										}
-									}
-								}		
-
-
-	                                        $ele_id = getElementID($linkElement[0], $linkElement[1], $item_value);
-	                                        
-											if($is_first)
-                                            {
-												$is_first = false;
-                                            }
-                                            else
-                                            {
-		                                        $element_value .= "[=*9*:";
-                                            }
-                                            
-	                                        $element_value .= $ele_id;
-	                                    }
-	                                    
-	                                    $row_value = $element_value;                                        
+																					if($optionIndex = array_search($item_value, $all_valid_options)) {
+																						$ele_id = $all_valid_options_ids[$optionIndex];
+																					} else {
+																						foreach($all_valid_options as $optionIndex=>$thisoption) {
+																							if(trim($item_value) == trim(trans($thisoption))) {
+																								$item_value = $thisoption;
+																								$ele_id = $all_valid_options_ids[$optionIndex];
+																								break;
+																							}
+																						}
+																					}
+																					$row_value .= $ele_id . ",";
+																			}
 	                                }
 	                                else
 	                                {
 	                                    // Single option
 	                                    //echo "Single option<br>";                                
-
-								if(!in_array($row_value, $all_valid_options)) {
-									foreach($all_valid_options as $thisoption) {
-										if(trim($row_value) == trim(trans($thisoption))) {
-											$row_value = $thisoption;
-										}
-									}
-								}
-
-
-	                                    $ele_id = getElementID($linkElement[0], $linkElement[1], $row_value);
+																					if($optionIndex = array_search($row_value, $all_valid_options)) {
+																						$ele_id = $all_valid_options_ids[$optionIndex];
+																					} else {
+																						foreach($all_valid_options as $optionIndex=>$thisoption) {
+																							if(trim($row_value) == trim(trans($thisoption))) {
+																								$row_value = $thisoption;
+																								$ele_id = $all_valid_options_ids[$optionIndex];
+																								break;
+																							}
+																						}
+																					}
 	                                    
-	                                    $row_value = $linkElement[0] . "#*=:*" . 
-	                                        $linkElement[1] . "#*=:*" . $ele_id;
+	                                    $row_value = ",".$ele_id.",";
 	                                }
 	                            }
 	                            else
@@ -1224,91 +1204,87 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 	                            break;
 	                    }                            
 
-			if($this_id_req) {
-				// NOTE ABOUT UPDATING ENTRIES:
-				// if an entry is deleted after someone has downloaded an update template, and then another entry is created and it gets the same id_req, and that entry has been created in this same form, then the upload process will overwrite the existing entry.
-				// assumption is this will never happen since only senior users will be uploading and they will be taking care that entries are not deleted!
-				$cleanFirst = "DELETE FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=$id_form AND id_req=$max_id_req AND ele_caption=\"" . mysql_real_escape_string(formformCaption($element["ele_caption"])) . "\"";
-				if(IMPORT_WRITE) {
-					if(!$result = $xoopsDB->queryF($cleanFirst)) 
-      	                  {
-            	                exit("<br><b>STOPPED</b> failed to clean data, SQL: $cleanFirst");
-                  	      }
-				}
-				$form_uid = $this_uid;
-				$form_creation_date = $this_creation_date;
-			} 
-	                    if(!$all_valid_options) { $row_value = $myts->htmlSpecialChars($row_value); }
+									// record the values for inserting as part of this record
+									$fieldValues[$element['ele_handle']] = $myts->htmlSpecialChars($row_value); // prior to 3.0 we did not do the htmlspecialchars conversion if this was a linked selectbox...don't think that's a necessary exception in 3.0 with new data structure
 
-	                    $insertElement = "INSERT INTO " . $xoopsDB->prefix("formulize_form") .  
-	                        " (id_form, id_req, ele_type, ele_caption, ele_value," . 
-	                        " date, uid, proxyid, creation_date)" .
-	                        " VALUES ($id_form, $max_id_req, '" . 
-	                        $element["ele_type"] . "', '" . 
-	                        mysql_real_escape_string(formformCaption($element["ele_caption"])) . "', '" . 
-	                        mysql_real_escape_string(trim($row_value)) . "', '" . 
-	                        $form_date . "', " .
-	                        $form_uid . ", " .
-	                        $form_proxyid . ", '" .
-	                        $form_creation_date .
-	                        "')";
+	                } // end of if there's a value in the current column
+								} // end of if this is a valid column
+            } // end of looping through $links (columns?)
+						
+						// now that we've recorded all the values, do the actual updating/inserting of this record
+						
+						if($this_id_req) { // updating an entry
+							
+							$form_uid = $this_uid;
+							
+							$updateSQL = "UPDATE " . $xoopsDB->prefix("formulize_".$id_form)." SET ";
+							$start = true;
+							foreach($fieldValues as $elementHandle=>$fieldValue) {
+								if(!$start) { $updateSQL .= ", "; } // on subsequent fields, add a comma
+								$start = false;
+								$updateSQL .= "$elementHandle = '".mysql_real_escape_string($fieldValue)."'";
+							}
+							$updateSQL .= ", mod_datetime=NOW(), mod_uid=$form_proxyid WHERE entry_id=".intval($this_id_req);
+							
+							if(IMPORT_WRITE) {
+								if(!$result = $xoopsDB->queryF($updateSQL)) {
+									exit("<br><b>STOPPED</b> failed to update data, SQL: $updateSQL");
+								}
+							}
 
-	                    if(IMPORT_WRITE)
-	                    {
-	                        if(!$result = $xoopsDB->queryF($insertElement)) 
-	                        {
-	                            exit("<br><b>STOPPED</b> failed to insert data, SQL: $insertElement");
-	                        }
+						} else { // inserting a new entry
+							
+							$fields = "";
+							$values = "";
+							foreach($fieldValues as $elementHandle=>$fieldValue) {
+									$fields .= ", `".$elementHandle."`";
+									$values .= ", '".mysql_real_escape_string($fieldValue) . "'";
+							}
+							
+							$insertElement = "INSERT INTO " . $xoopsDB->prefix("formulize_".$id_form)." (creation_datetime, mod_datetime, creation_uid, mod_uid".$fields.") VALUES (NOW(), NOW(), '" . intval($form_uid) . "', '" . intval($form_proxyid)."'".$values.")"; 
 
-	                        //echo "<i>id</i>: " . $xoopsDB->getInsertId() . "<br>";                         
-	                    }
-	                    else
-	                    {                        
-	                        echo "<br>" . $insertElement . "<br>";                        
-	                    }                                                
-	                }
-				}
-            }
-        }
-    }
+							if(IMPORT_WRITE)
+							{
+									if(!$result = $xoopsDB->queryF($insertElement)) 
+									{
+											exit("<br><b>STOPPED</b> failed to insert data, SQL: $insertElement");
+									}
+
+									//echo "<i>id</i>: " . $xoopsDB->getInsertId() . "<br>";                         
+							}
+							else
+							{                        
+									echo "<br>" . $insertElement . "<br>";                        
+							}  
+							// need to record new group ownership info too
+							$usersMap[] = $form_uid;
+							$entriesMap[] = $xoopsDB->getInsertId();
+						}
+						
+        } // end of if we have contents in this row
+    } // end of looping through each row of the file
+		
+		if(count($usersMap)>0) { // if new entries were created...
+			include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+			$data_handler = new formulizeDataHandler($id_form);
+			if(!$groupResult = $data_handler->setEntryOwnerGroups($usersMap, $entriesMap)) {
+				print "ERROR: failed to write the entry ownership information to the database.<br>";
+			}
+		}
 
 	// unlock tables
 	$xoopsDB->query("UNLOCK TABLES");
 
     // insert all the other values that were recorded
     foreach($other_values as $other) {
-		if(!$result = $xoopsDB->query($other)) {
-			print "ERROR: could not insert 'other' value: $other<br>";
-		}
+			if(!$result = $xoopsDB->query($other)) {
+				print "ERROR: could not insert 'other' value: $other<br>";
+			}
     }
 
 }
 
-// deprecated...not used currently
-function getRecordID($id_form, $ele_caption, $ele_value)
-{
-	global $xoopsDB;
-
-    $sql = "SELECT id_req FROM " . $xoopsDB->prefix("formulize_form") .  
-        " WHERE id_form='" . $id_form . "'" .
-        " AND ele_caption='" . mysql_real_escape_string(formformCaption($ele_caption)) . "'" .
-        " AND ele_value='" . mysql_real_escape_string($ele_value) . "'";
-
-    //echo $sql . "<br>";
-    
-    if($result = $xoopsDB->query($sql))
-    {
-		$item = $xoopsDB->fetchArray($result);
-        if(@$item["id_req"])
-        {
-			return $item["id_req"];
-        }                         
-    }
-        
-    return 0;
-}
-
-
+/* // not necessary in 3.0
 function getElementID($id_form, $ele_caption, $ele_value)
 {
 	static $cachedElementIDs = array();
@@ -1339,28 +1315,31 @@ function getElementID($id_form, $ele_caption, $ele_value)
 	} else {
 		return 0;
 	}
-}
+} */
 
-
-function getElementOptions($id_form, $ele_caption)
+// This function returns the saved values in the data table for the element it is passed
+// It also returns a parallel array that contains the entry ids that each value belongs to
+//function getElementOptions($id_form, $ele_caption)
+function getElementOptions($ele_handle, $fid) 
 {
 	static $cachedElementOptions = array();
-	if(!isset($cachedElementOptions[$id_form][$ele_caption])) {
+	if(!isset($cachedElementOptions[$fid][$ele_handle])) {
 		global $xoopsDB, $myts;
 		$result = array();
 		if(!$myts) { $myts =& MyTextSanitizer::getInstance(); }
 	
-	    $sql = "SELECT ele_value FROM " . $xoopsDB->prefix("formulize_form") .  
-		" WHERE id_form='" . $id_form . "'" .
-		" AND ele_caption='" . mysql_real_escape_string(formformCaption($ele_caption)) . "'";
+	    $sql = "SELECT entry_id, `".$ele_handle."` FROM " . $xoopsDB->prefix("formulize_".$fid);
 	
 		$res = $xoopsDB->query($sql);
+		$result = array();
+		$resultIDs = array();
 		while ($item = $xoopsDB->fetchArray($res)) {
-			$result[] = $myts->undoHtmlSpecialChars($item["ele_value"]);
+			$result[] = $myts->undoHtmlSpecialChars($item[$ele_handle]);
+			$resultIDs[] = $item['entry_id'];
 		}
-		$cachedElementOptions[$id_form][$ele_caption] = $result;
+		$cachedElementOptions[$fid][$ele_handle] = array(0=>$result, 1=>$resultIDs);
 	}
-	return $cachedElementOptions[$id_form][$ele_caption];
+	return $cachedElementOptions[$fid][$ele_handle];
 }
 
 // THERE IS A BUG HERE WHICH CAUSES IT NOT TO COME UP WITH THE RIGHT ID WHEN PASSED A FULL NAME???

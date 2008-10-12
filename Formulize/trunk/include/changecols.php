@@ -102,11 +102,11 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	$selectedCols = explode(",", $temp_selectedCols);
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$uid = $xoopsUser->getVar('uid');
 
 
-	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler, "")) {
+	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
 		print "<p>" . _NO_PERM . "</p>";
 		exit;
 	}
@@ -115,26 +115,26 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 	// handle metadata columns
 	// UID
-	$options[0] = "<option value=\"uid\"";
-	if(in_array("uid", $selectedCols)) {
+	$options[0] = "<option value=\"creation_uid\"";
+	if(in_array("creation_uid", $selectedCols)) {
 		$options[0] .= " selected";
 	}
 	$options[0] .= ">" . _formulize_DE_CALC_CREATOR . "</option>";
 	// PROXYID
-	$options[1] = "<option value=\"proxyid\"";
-	if(in_array("proxyid", $selectedCols)) {
+	$options[1] = "<option value=\"mod_uid\"";
+	if(in_array("mod_uid", $selectedCols)) {
 		$options[1] .= " selected";
 	}
 	$options[1] .= ">" . _formulize_DE_CALC_MODIFIER . "</option>";
 	// CREATION_DATE
-	$options[2] = "<option value=\"creation_date\"";
-	if(in_array("creation_date", $selectedCols)) {
+	$options[2] = "<option value=\"creation_datetime\"";
+	if(in_array("creation_datetime", $selectedCols)) {
 		$options[2] .= " selected";
 	}
 	$options[2] .= ">" . _formulize_DE_CALC_CREATEDATE . "</option>";
 	// MOD_DATE
-	$options[3] = "<option value=\"mod_date\"";
-	if(in_array("mod_date", $selectedCols)) {
+	$options[3] = "<option value=\"mod_datetime\"";
+	if(in_array("mod_datetime", $selectedCols)) {
 		$options[3] .= " selected";
 	}
 	$options[3] .= ">" . _formulize_DE_CALC_MODDATE . "</option>";
@@ -149,9 +149,9 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	foreach($cols as $f=>$vs) {
 		foreach($vs as $row=>$values) {
 			if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.
-				$usedvals[] = $values['ele_id'];
-				$options[$numcols] = "<option value=" . $values['ele_id'];
-				if(in_array($values['ele_id'], $selectedCols)) {
+				$usedvals[] = $values['ele_handle'];
+				$options[$numcols] = "<option value=" . $values['ele_handle'];
+				if(in_array($values['ele_handle'], $selectedCols)) {
 					$options[$numcols] .= " selected";
 				}
 				if($values['ele_colhead'] != "") {

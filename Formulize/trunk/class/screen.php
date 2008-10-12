@@ -65,16 +65,19 @@ class formulizeScreenHandler {
 	}
 
 	// returns an array of screen objects
-	// criteria is ignored for now
 	function &getObjects($criteria = null, $fid) {
-		$sql = "SELECT * FROM " . $this->db->prefix("formulize_screen") . " WHERE fid=" . intval($fid);
+		$sql = "SELECT * FROM " . $this->db->prefix("formulize_screen") . " WHERE ";
+    if(is_object($criteria)) {
+        $sql .= $criteria->render() . " AND ";
+    }
+    $sql .= "fid=" . intval($fid);
 		if(!$result = $this->db->query($sql)) {
 			return false;
 		}
 		while($array = $this->db->fetchArray($result)) {
 			$screen = $this->create();
 			$screen->assignVars($array);
-			$screens[] = $screen;
+			$screens[] = $screen;	
 			unset($screen);
 		}
 		return $screens;

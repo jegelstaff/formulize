@@ -1,4 +1,12 @@
 <?php
+
+define("_FORM_RENAME_TEXT", "Rename this form");
+define("_FORM_EDIT_ELEMENTS_TEXT", "Edit this form's elements");
+define("_FORM_EDIT_SETTINGS_TEXT", "Edit this form's settings");
+define("_FORM_CLONE_TEXT", "Clone this form");
+define("_FORM_CLONEDATA_TEXT", "Clone this form and its data");
+define("_FORM_DELETE_TEXT", "Delete this form");
+
 define("_AM_SAVE","Save");
 define("_AM_COPIED","%s copy");
 define("_AM_DBUPDATED","Database Updated Successfully!");
@@ -17,12 +25,18 @@ define("_AM_ELE_DESC","Descriptive text");
 define("_AM_ELE_DESC_HELP","Whatever you type in this box will appear below the caption, just like this text does.");
 define("_AM_ELE_COLHEAD","Column Heading (optional)");
 define("_AM_ELE_COLHEAD_HELP","If you specify a column heading, then this text will be used instead of the caption, on the <b>List of Entries</b> screen.  This is useful if the caption is very long, or if you want the captions written from a user point of view, and the column headings written from a report-consumer point of view.");
+define("_AM_ELE_HANDLE","Data handle (optional)");
+define("_AM_ELE_HANDLE_HELP","You can specify a short name for this element.  The short name will be used by the database when storing information.  If you leave this blank, the element ID number will be used.");
 define("_AM_ELE_DETAIL","Detail");
 define("_AM_ELE_REQ","Required");
 define("_AM_ELE_ORDER","Order");
 define("_AM_ELE_DISPLAY","Display this element to these groups");
 //define("_AM_ELE_DISPLAYLIST","Display this element to these groups, in the list of entries");
 define("_AM_ELE_PRIVATE","Private");
+define("_AM_ELE_HANDLE_HEADING","Data handle/ID");
+define("_AM_ELE_TYPE_HEADING","Type");
+define("_AM_ELE_DISPLAY_HEADING","Display");
+
 
 define("_AM_ELE_TEXT","Text box");
 define("_AM_ELE_TEXT_DESC","{NAME} will print full name;<br />{UNAME} will print user name;<br />{EMAIL} will print user email;<br />{ID} will cause the entry ID number of the entry to be inserted into the textbox, when the entry is first saved.<br />{SEQUENCE} will cause the values in the box to be a series of consecutive numbers.<br />PHP Code (ending with the line '&#36;default = &#36;something;') will be interpreted to generate the default value.");
@@ -91,10 +105,12 @@ define("_AM_ELE_FORMLINK_TEXTBOX", "Associate values with another form element")
 define("_AM_ELE_FORMLINK_DESC_TEXTBOX","If you select another form element here, then text that users type into this element will be compared with values entered in the other element.  If a match is found then the text users type into this element will be clickable in the \"List of Entries\" screen, and will take users to the matching entry in the other form.");
 define("_AM_FORMLINK_NONE_TEXTBOX", "No association in effect");
 define("_AM_ELE_FORMLINK_SCOPE", "If the options are linked -- or are {FULLNAMES} or {USERNAMES} -- limit them to values from the groups selected here.");
-define("_AM_ELE_FORMLINK_SCOPE_DESC", "The groups you pick define the total possible options to be used.  Optionally, you can choose to have the current user's group memberships further limit the options.  In that case, groups you select will be ignored if the current user is not also a member of the group.");
+define("_AM_ELE_FORMLINK_SCOPE_DESC", "The groups you pick define the total possible options to be used.  Optionally, you can choose to have the current user's group memberships further limit the options.  In that case, groups you select will be ignored if the current user is not also a member of the group.<br><br>Also, you can specify whether entries must be created by users who are members of all the groups, or just any one group.  Note that this option can interact powerfully with \"Use only groups that the current user is also a member of\", to let you limit the options to ones from entries created by users who are members of <b>all</b> the same groups as the current user.");
 define("_AM_ELE_FORMLINK_SCOPE_ALL", "Use all groups");
-define("_AM_ELE_FORMLINK_SCOPELIMIT_NO", "Use all these groups");
-define("_AM_ELE_FORMLINK_SCOPELIMIT_YES", "Use only groups that the current user is also a member of");
+define("_AM_ELE_FORMLINK_SCOPELIMIT_NO", "Use all these groups<br>");
+define("_AM_ELE_FORMLINK_SCOPELIMIT_YES", "Use only groups that the current user is also a member of<br><br>");
+define("_AM_ELE_FORMLINK_ANYALL_ANY", "Include entries by users who are members of any group in use<br>");
+define("_AM_ELE_FORMLINK_ANYALL_ALL", "Include entries by users who are members of all groups in use");
 
 // formlink scope filters -- feb 6 2008
 define("_AM_ELE_FORMLINK_SCOPEFILTER", "If the options are linked -- or are {FULLNAMES} OR {USERNAMES} -- filter them based on these properties of their entry in the source form.");
@@ -136,7 +152,7 @@ define("_AM_ELE_GRID_START_DESC", "Each table will have a number of elements in 
 // derived columns
 define("_AM_ELE_DERIVED", "Value derived from other elements");
 define("_AM_ELE_DERIVED_CAP", "Formula for generating values in this element");
-define("_AM_ELE_DERIVED_DESC", "Select an element above to add it to your formula.  You can also use element ID numbers or Framework handles in your formula, as long as they are inside double quotes.  The formula can have multiple lines, or steps, and you can use PHP code in the formula.  The last line should be of the format <i>\$value = \$something</i> where \$something is the final number or formula that you want use.<br /><br />Example:<br />\$value = \"Number of hits\" / \"Total shots\" * 100");
+define("_AM_ELE_DERIVED_DESC", "Select an element above to add it to your formula.  You can also use element ID numbers or Framework handles in your formula, as long as they are inside double quotes.  The formula can have multiple lines, or steps, and you can use PHP code in the formula.  The last line should be of the format <i>\$value = \$something</i> where \$something is the final number or formula that you want use.<br /><br />Example:<br />\$value = \"Number of hits\" / \"Total shots\" * 100<br /><br />Note: only use double quotes (\") to refer to a field.  If you need to use quotes in a line of PHP code, use single quotes (').");
 define("_AM_ELE_DERIVED_ADD", "Add to Formula");
 
 define("_AM_ELE_SELECT_NONE","No element selected.");
@@ -265,6 +281,12 @@ define("_AM_FORMULIZE_SELECT_FRAMEWORK", "Framework to use on this screen, if an
 define("_AM_FORMULIZE_SCREEN_SECURITY", "Use the XOOPS security token on this screen?");
 define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "The XOOPS security token is a defense against cross-site scripting attacks.  However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types.");
 
+
+define("_AM_FORMULIZE_SCREEN_PARAENTRYFORM", "Should answers from a previous entry be shown as part of this form?  If so, choose the form.");
+define("_AM_FORMULIZE_SCREEN_PARAENTRYFORM_FALSE", "No, don't show previous answers.");
+define("_AM_FORMULIZE_SCREEN_PARAENTRYRELATIONSHIP", "If previous answers are shown, what is the relationship of this form to the other form with the previous entries?");
+define("_AM_FORMULIZE_SCREEN_PARAENTRYREL_BYGROUP", "Entries belong to the same group");
+
 define("_AM_FORMULIZE_SCREEN_INTRO", "Introductory text for the first page of this form");
 define("_AM_FORMULIZE_SCREEN_THANKS", "Thank-you text for the final page of this form");
 define("_AM_FORMULIZE_SCREEN_DONEDEST", "The URL for the link users get at the end of the form");
@@ -277,6 +299,7 @@ define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE", "Are you sure you want to delete t
 define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE_PAGE", "Are you sure you want to delete this page?  Please confirm!");
 define("_AM_FORMULIZE_SCREEN_A_PAGE", "Form elements to display on page");
 define("_AM_FORMULIZE_SCREEN_ADDPAGE", "Add another page");
+define("_AM_FORMULIZE_SCREEN_INSERTPAGE", "Insert a new page here");
 define("_AM_FORMULIZE_SCREEN_SAVE", "Save this screen");
 define("_AM_FORMULIZE_SCREEN_SAVED", "The details for this screen have been saved in the database");
 define("_AM_FORMULIZE_SCREEN_PAGETITLE", "Title for page number");
@@ -318,6 +341,8 @@ define("_AM_FORMULIZE_SCREEN_LOE_REPEATHEADERS", "If you are using headings, how
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_REPEATHEADERS", "Repeating the headings makes it easier for users to know what column they are looking at when they scroll through the list.  Set to '0' to have headings only at the top of the list.");
 define("_AM_FORMULIZE_SCREEN_LOE_ENTRIESPERPAGE", "How many entries should appear on each page of the list?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_ENTRIESPERPAGE", "Set to '0' to have all entries appear on one page.");
+define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN", "What screen should be used to display individual entries when users click on them?");
+define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT", "Use the default version of this form");
 define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH", "How many pixels wide should each column be?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTH", "Set to '0' to have columns expand to their natural width.");
 define("_AM_FORMULIZE_SCREEN_LOE_TEXTWIDTH", "How many characters of text should be displayed in any cell?");
@@ -342,7 +367,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION1", "You can change the text on t
 define("_AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION2", "You can change the text on the buttons below.  If you use a custom List Template, these buttons will not appear on the screen by default, but you can use a custom Top or Bottom Template to specifically include them.");
 define("_AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION1", "The configuration options below have an effect regardless of whether you use a custom List Template.");
 define("_AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION2", "Most configuration options below have NO effect if you use a custom List Template, except as noted.");
-define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO", "Specify any custom template options for this screen:");
+define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO", "OPTIONAL - Specify any custom template options for this screen:");
 define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2", "<span style=\"font-weight: normal\"><p><b>Top and Bottom Templates</b></p>\n<p>If you specify any PHP code in the Top or Bottom Templates, it will be used to control the appearance of the space either above or below the list of entries.</p>\n<p><b>WARNING:</b> if you include any checkbox elements in your templates, turn off the checkboxes that appear on the left side of the list!</p>\n<p>Use this PHP code to setup your preferred layout of buttons, or include custom instructions, etc.</p>\n<p>To include buttons and controls, use these variables:</p>
 <table cellpadding=5 border=0>
 <tr>

@@ -232,11 +232,11 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$uid = $xoopsUser->getVar('uid');
 
 
-	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler, "")) {
+	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
 		print "<p>" . _NO_PERM . "</p>";
 		exit;
 	}
@@ -312,17 +312,17 @@ $returned = addReqdCalcs($pickcalc);
 $pickcalc = $returned['form'];
 
 $columns = new xoopsFormSelect(_formulize_DE_CALC_COL, 'column', "", 10, true);
-if(!in_array("uid", $_POST['column']) AND !$_POST['reqdcalc_column_uid']) {
-	$columns->addOption("uid", _formulize_DE_CALC_CREATOR);
+if(!in_array("creation_uid", $_POST['column']) AND !$_POST['reqdcalc_column_uid']) {
+	$columns->addOption("creation_uid", _formulize_DE_CALC_CREATOR);
 }
-if(!in_array("proxyid", $_POST['column']) AND !$_POST['reqdcalc_column_proxyid']) {
-	$columns->addOption("proxyid", _formulize_DE_CALC_MODIFIER);
+if(!in_array("mod_uid", $_POST['column']) AND !$_POST['reqdcalc_column_proxyid']) {
+	$columns->addOption("mod_uid", _formulize_DE_CALC_MODIFIER);
 }
-if(!in_array("creation_date", $_POST['column']) AND !$_POST['reqdcalc_column_creation_date']) {
-	$columns->addOption("creation_date", _formulize_DE_CALC_CREATEDATE);
+if(!in_array("creation_datetime", $_POST['column']) AND !$_POST['reqdcalc_column_creation_date']) {
+	$columns->addOption("creation_datetime", _formulize_DE_CALC_CREATEDATE);
 }
-if(!in_array("mod_date", $_POST['column']) AND !$_POST['reqdcalc_column_mod_date']) {
-	$columns->addOption("mod_date", _formulize_DE_CALC_MODDATE);
+if(!in_array("mod_datetime", $_POST['column']) AND !$_POST['reqdcalc_column_mod_date']) {
+	$columns->addOption("mod_datetime", _formulize_DE_CALC_MODDATE);
 }
 if(!in_array("creator_email", $_POST['column']) AND !$_POST['reqdcalc_column_creator_email']) {
 	$columns->addOption("creator_email", _formulize_DE_CALC_CREATOR_EMAIL);
@@ -363,16 +363,16 @@ if(count($returned['rc'])>0) {
 
 foreach($returned['rc'] as $hidden) {
 	switch($hidden['column']) {
-		case "uid":
+		case "creation_uid":
 			$colname = _formulize_DE_CALC_CREATOR;
 			break;
-		case "proxyid":
+		case "mod_uid":
 			$colname = _formulize_DE_CALC_MODIFIER;
 			break;
-		case "creation_date":
+		case "creation_datetime":
 			$colname = _formulize_DE_CALC_CREATEDATE;
 			break;
-		case "mod_date":
+		case "mod_datetime":
 			$colname = _formulize_DE_CALC_MODDATE;
 			break;
 		case "creator_email":
@@ -431,13 +431,12 @@ foreach($returned['rc'] as $hidden) {
 		// grouping option
 		$grouping = new xoopsFormSelect(_formulize_DE_CALC_GTEXT, 'grouping_' . $calc . "_" . $hidden['column'], $_POST['grouping_' . $calc . "_" . $hidden['column']]);
 		$grouping->addOption("none", _formulize_DE_NOGROUPING);
-		$grouping->addOption("uid", _formulize_DE_GROUPBYCREATOR);
-		$grouping->addOption("proxyid", _formulize_DE_GROUPBYMODIFIER);
-		$grouping->addOption("creation_date", _formulize_DE_GROUPBYCREATEDATE);
-		$grouping->addOption("mod_date", _formulize_DE_GROUPBYMODDATE);
+		$grouping->addOption("creation_uid", _formulize_DE_GROUPBYCREATOR);
+		$grouping->addOption("mod_uid", _formulize_DE_GROUPBYMODIFIER);
+		$grouping->addOption("creation_datetime", _formulize_DE_GROUPBYCREATEDATE);
+		$grouping->addOption("mod_datetime", _formulize_DE_GROUPBYMODDATE);
 		$grouping->addOption("creator_email", _formulize_DE_GROUPBYCREATOREMAIL);
 		$grouping->addOptionArray($options2);
-
 
 		$tray->addElement($tempcalc1);
 //		$tray->addElement($tempcalc2);

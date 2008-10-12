@@ -39,6 +39,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `listtemplate` text NOT NULL,
   `bottomtemplate` text NOT NULL,
   `entriesperpage` int(1) NOT NULL,
+  `viewentryscreen` INT( 11 ) NOT NULL DEFAULT '0',
   PRIMARY KEY (`listofentriesid`),
   INDEX i_sid (`sid`)
 ) TYPE=MyISAM;
@@ -54,6 +55,8 @@ CREATE TABLE `formulize_screen_multipage` (
   `pagetitles` text NOT NULL,
   `conditions` text NOT NULL,
   `printall` tinyint(1) NOT NULL,
+  `paraentryform` int(11) NOT NULL default 0,
+  `paraentryrelationship` tinyint(1) NOT NULL default 0,
   PRIMARY KEY (`multipageid`),
   INDEX i_sid (`sid`)
 ) TYPE=MyISAM;
@@ -72,6 +75,7 @@ CREATE TABLE formulize_valid_imports (
   import_id smallint(5) NOT NULL auto_increment,
   file varchar(255) NOT NULL default '',
   id_reqs text NOT NULL,
+  fid int(5),
   PRIMARY KEY (`import_id`)
 ) TYPE=MyISAM;
 
@@ -96,8 +100,8 @@ CREATE TABLE formulize_notification_conditions (
 ) TYPE=MyISAM;
 
 CREATE TABLE formulize_other (
-  other_id smallint(5) NOT NULL auto_increment,
-  id_req smallint(5),
+  other_id int(5) NOT NULL auto_increment,
+  id_req int(5),
   ele_id int(5),
   other_text varchar(255) default NULL,
   PRIMARY KEY (`other_id`),
@@ -140,7 +144,9 @@ CREATE TABLE group_lists (
 CREATE TABLE formulize_onetoone_links (
   link_id smallint(5) NOT NULL auto_increment,
   main_form int(5),
+  main_fid int(5),
   link_form int(5),
+  link_fid int(5),
   PRIMARY KEY (`link_id`)
 ) TYPE=MyISAM;
 
@@ -229,9 +235,10 @@ CREATE TABLE formulize (
   id_form int(5) NOT NULL default '0',
   ele_id smallint(5) unsigned NOT NULL auto_increment,
   ele_type varchar(10) NOT NULL default '',
-  ele_caption varchar(255) NOT NULL default '',
+  ele_caption text NOT NULL default '',
   ele_desc text NULL,
   ele_colhead varchar(255) NULL default '',
+  ele_handle varchar(30) NOT NULL default '',
   ele_order smallint(2) NOT NULL default '0',
   ele_req tinyint(1) NOT NULL default '1',
   ele_value text NOT NULL,
@@ -262,21 +269,13 @@ CREATE TABLE formulize_menu (
   KEY idxmymenustatus (status)
 ) TYPE=MyISAM;
 
-CREATE TABLE formulize_form (
-  id_form int(5) NOT NULL default '0',
-  id_req int(7) ,
-  ele_id int(5) unsigned NOT NULL auto_increment,
-  ele_type varchar(10) NOT NULL default '',
-  ele_caption varchar(255) NOT NULL default '',
-  ele_value text NOT NULL,
-  date Date NOT NULL default '2004-06-03',
-  uid int(10) default '0',
-  proxyid int(10) NULL ,
-  creation_date Date NOT NULL, 
-  PRIMARY KEY  (`ele_id`),
-  INDEX i_id_req (id_req),
-  INDEX i_id_form (id_form),
-  INDEX i_ele_caption (ele_caption),
-  INDEX i_ele_value (ele_value(20)),
-  INDEX i_uid (uid)
+CREATE TABLE formulize_entry_owner_groups (
+  owner_id int(5) unsigned NOT NULL auto_increment,
+  fid int(5) NOT NULL default '0',
+  entry_id int(7) NOT NULL default '0',
+  groupid int(5) NOT NULL default '0',
+  PRIMARY KEY (`owner_id`),
+  INDEX i_fid (fid),
+  INDEX i_entry_id (entry_id),
+  INDEX i_groupid (groupid)
 ) TYPE=MyISAM;

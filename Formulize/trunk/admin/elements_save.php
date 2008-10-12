@@ -35,28 +35,44 @@
 
 // code snippet that handles saving of data...called in the normal save operation in admin/elements.php, but also invoked in certain cases when the page reloads but the user should not have left the editing screen yet
 
-if( !empty($ele_id) ){
+$databaseElement = ($ele_type == "derived" OR $ele_type == "areamodif" OR $ele_type == "ib" OR $ele_type == "sep" OR $ele_type == "subform" OR $ele_type == "grid") ? false : true;
+
+if( !empty($ele_id) AND $clone == 0){
       
       $element = $formulize_mgr->get($ele_id);
 
-			$ocq = "SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id='$ele_id'";
+			$ocq = "SELECT ele_caption, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id='$ele_id'";
 			$res_ocq = $xoopsDB->query($ocq);
 			$array_ocq = $xoopsDB->fetchArray($res_ocq);
-			$original_caption = $array_ocq['ele_caption'];
-                        $newFieldNeeded = false;
+			//$original_caption = $array_ocq['ele_caption'];
+      $newFieldNeeded = false;
+			$original_handle = $array_ocq['ele_handle'];
+			
 		}else{
+			unset($ele_id); // just in case we're cloning something
 			$element =& $formulize_mgr->create();
-                        $newFieldNeeded = true;
+      $newFieldNeeded = $databaseElement ? true : false; // derived fields and others don't exist in the database
 		}
 
     $ele_caption = get_magic_quotes_gpc() ? stripslashes($ele_caption) : $ele_caption;
-		$ele_caption = formulize_verifyUniqueCaption($ele_caption, $ele_id, $id_form);
+		//$ele_caption = formulize_verifyUniqueCaption($ele_caption, $ele_id, $id_form);
 		
 		$element->setVar('ele_caption', $ele_caption);
 		$ele_delim = $ele_delim=='custom' ? $ele_delim_custom : $ele_delim;
 		$element->setVar('ele_delim', $ele_delim); // only set for radio and checkbox, but cannot be put into ele_value because ele_value is not a multidimensional array for those elements, so must be treated as a separate db field for now
 		$element->setVar('ele_desc', $ele_desc);
 		$element->setVar('ele_colhead', $ele_colhead);
+		// check that handle is unique
+    $ele_handle = str_replace(" ", "_", $ele_handle);
+    $ele_handle = str_replace("'", "", $ele_handle);
+    $ele_handle = str_replace("\"", "", $ele_handle);
+		if($ele_handle) {
+			$form_handler =& xoops_getmodulehandler('forms');
+			while(!$uniqueCheck = $form_handler->isHandleUnique($ele_handle, $ele_id)) {
+				$ele_handle = $ele_handle . "_copy";
+			}			
+		}
+		$element->setVar('ele_handle', $ele_handle);
 		$req = !empty($ele_req) ? 1 : 0;
 		$element->setVar('ele_req', $req);
 		$order = empty($ele_order) ? 0 : intval($ele_order);
@@ -254,6 +270,7 @@ if( !empty($ele_id) ){
 				$value[1] = !empty($ele_value[1]) ? 1 : 0;
 				$value[3] = implode(",", $_POST['formlink_scope']); // added august 30 2006
 				$value[4] = $_POST['linkscopelimit'];
+        $value[6] = $_POST['linkscopeanyall'];
         
         // check for conditions...added jwe feb 6 2008
         if((isset($_POST['formlink']) AND $_POST['formlink'] != "none") OR $ele_value[2][0] === "{FULLNAMES}" OR $ele_value[2][0] === "{USERNAMES}") {
@@ -277,10 +294,10 @@ if( !empty($ele_id) ){
 				{
 					// $value[2] = stripslashes($_POST['formlink']);
 					// now receiving an ele_id due to the effects of xlanguage, so get the real caption out of the DB
-					$sql_link = "SELECT ele_caption, id_form FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
+					$sql_link = "SELECT ele_caption, id_form, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
 					$res_link = $xoopsDB->query($sql_link);
 					$array_link = $xoopsDB->fetchArray($res_link);
-					$value[2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_caption'];
+					$value[2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
          
 				} 
 				else
@@ -343,44 +360,51 @@ if( !empty($ele_id) ){
 			xoops_cp_header();
 			echo $element->getHtmlErrors();
 		}else{
-			if($original_caption) {
-				// add code here to rewrite existing captions in form_form table so that changes to the captions don't orphan all existing data! -- jwe 09/03/05
-				// get the current caption so we know what to replace
-				$ele_caption = stripslashes($ele_caption);
-				$ele_caption = eregi_replace ("&#039;", "`", $ele_caption);
-				$ele_caption = eregi_replace ("'", "`", $ele_caption);
-				$ele_caption = eregi_replace ("&quot;", "`", $ele_caption);
-				$original_caption = eregi_replace ("&#039;", "`", $original_caption);
-				$original_caption = eregi_replace ("'", "`", $original_caption);
-				$original_caption = eregi_replace ("&quot;", "`", $original_caption);
-				$updateq = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET ele_caption='" . mysql_real_escape_string($ele_caption) . "' WHERE id_form = '$id_form' AND ele_caption='" . mysql_real_escape_string($original_caption) . "'";
-				// rewrite captions in the data for linked selectboxes too -- September 3 2007
-				$ele_cap_len = strlen($ele_caption) + 5 + strlen($id_form);
-				$orig_cap_len = strlen($original_caption) + 5 + strlen($id_form);
-				$original_cap_with_apos = mysql_real_escape_string(str_replace("`", "'", $original_caption));
-				$ele_cap_with_apos = mysql_real_escape_string(str_replace("`", "'", $ele_caption));
-				$lsbCaptionSQL = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET ele_value = REPLACE(ele_value, '$original_cap_with_apos', '$ele_cap_with_apos') WHERE ele_value LIKE '$id_form#*=:*$original_cap_with_apos%'";
-				$lsbCaptionFormDefSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = REPLACE(ele_value, 's:$orig_cap_len:\"$id_form#*=:*$original_cap_with_apos', 's:$ele_cap_len:\"$id_form#*=:*$ele_cap_with_apos') WHERE ele_value LIKE '%$id_form#*=:*$original_cap_with_apos%'"; // must include the cap lengths or else the unserialization of this info won't work right later, since ele_value is a serialized array!
-				if($ele_caption != $original_caption) {
-					//print $updateq;
-					if(!$res = $xoopsDB->query($updateq)) {
-						print "Error:  update of captions in form $id_form failed.";
-					}
-					//print "<br>".$lsbCaptionSQL;
-					if(!$res2 = $xoopsDB->query($lsbCaptionSQL)) {
-						print "Error:  update of linked selectbox data failed.";
-					}
-					if(!$res3 = $xoopsDB->query($lsbCaptionFormDefSQL)) {
+			
+      $ele_id = $element->getVar('ele_id'); // ele_id set inside the insert method after writing to database
+			// don't let ele_handle be blank
+			if($element->getVar('ele_handle') == "") {
+            $ele_handle = $ele_id;
+            $form_handler =& xoops_getmodulehandler('forms');
+            while(!$uniqueCheck = $form_handler->isHandleUnique($ele_handle, $ele_id)) {
+                  $ele_handle = $ele_handle . "_copy";
+            }	    
+						$element->setVar('ele_handle', $ele_handle); 
+						if( !$formulize_mgr->insert($element) ){
+									xoops_cp_header();
+									echo $element->getHtmlErrors();
+						}
+			}
+      
+      if($original_handle) { // rewrite references in other elements to this handle (linked selectboxes)
+				$ele_handle_len = strlen($ele_handle) + 5 + strlen($id_form);
+				$orig_handle_len = strlen($original_handle) + 5 + strlen($id_form);
+				$lsbHandleFormDefSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = REPLACE(ele_value, 's:$orig_handle_len:\"$id_form#*=:*$original_handle', 's:$ele_handle_len:\"$id_form#*=:*$ele_handle') WHERE ele_value LIKE '%$id_form#*=:*$original_handle%'"; // must include the cap lengths or else the unserialization of this info won't work right later, since ele_value is a serialized array!
+				if($ele_handle != $original_handle) {
+					if(!$res = $xoopsDB->query($lsbHandleFormDefSQL)) {
 						print "Error:  update of linked selectbox element definitions failed.";
 					}
 				}
-				
-				//end of added code
 			}
-      // need to serialize the ele_value now, since it was put into the element object as an array, but the writing operation will handle the serialization so it's ok in the DB, but meanwhile it's still an array in the object.
+
+			if($newFieldNeeded) {
+        global $xoopsDB;
+				$form_handler =& xoops_getmodulehandler('forms', 'formulize');
+        if(!$insertResult = $form_handler->insertElementField($element)) {
+          exit("Error: could not add the new element to the data table in the database.");
+        }
+      }	elseif($original_handle != $ele_handle AND $databaseElement) {
+						// need to update the name of the field in the data table
+						$form_handler =& xoops_getmodulehandler('forms', 'formulize');
+						if(!$updateResult = $form_handler->updateFieldName($element, $original_handle)) {
+									print "Error: count not update the data table field name to match the new data handle";
+						}
+			}
+			
+			// need to serialize the ele_value now, since it was put into the element object as an array, but the writing operation will handle the serialization so it's ok in the DB, but meanwhile it's still an array in the object.
       // we need to serialize it so that it will be retrieved properly later.
       $element->setVar('ele_value', serialize($value));
-			$ele_id = $element->getVar('ele_id');
+			
     }
       
 

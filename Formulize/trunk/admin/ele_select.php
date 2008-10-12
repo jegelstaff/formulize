@@ -121,8 +121,14 @@ $linkscopelimit = new xoopsFormRadio('', 'linkscopelimit', $linkscopedefault);
 $linkscopelimit->addOption(0, _AM_ELE_FORMLINK_SCOPELIMIT_NO);
 $linkscopelimit->addOption(1, _AM_ELE_FORMLINK_SCOPELIMIT_YES);
 
+$anyalldefault = isset($ele_value[6]) ? $ele_value[6] : 0;
+$linkscopeanyall = new xoopsFormRadio('', 'linkscopeanyall', $anyalldefault);
+$linkscopeanyall->addOption(0, _AM_ELE_FORMLINK_ANYALL_ANY);
+$linkscopeanyall->addOption(1, _AM_ELE_FORMLINK_ANYALL_ALL);
+
 $linkscopetray->addElement($linkscope);
 $linkscopetray->addElement($linkscopelimit);
+$linkscopetray->addElement($linkscopeanyall);
 
 // added ele_value 5...the array of conditions that control what entries in the target form to use...Feb 6 2008
 if(!is_array($ele_value[5])) {

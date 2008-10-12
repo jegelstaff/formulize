@@ -30,7 +30,7 @@
 ###############################################################################
 
 $modversion['name'] = _MI_formulize_NAME;
-$modversion['version'] = "2.4";
+$modversion['version'] = "3.0";
 $modversion['description'] = _MI_formulize_DESC;
 $modversion['author'] = "Freeform Solutions";                                            
 $modversion['credits'] = "";
@@ -46,22 +46,22 @@ $modversion['sqlfile']['mysql'] = "sql/mysql.sql";
 $modversion['tables'][0] = "formulize";
 $modversion['tables'][1] = "formulize_id";
 $modversion['tables'][2] = "formulize_menu";
-$modversion['tables'][3] = "formulize_form";
-$modversion['tables'][4] = "formulize_reports";
-$modversion['tables'][5] = "formulize_frameworks";
-$modversion['tables'][6] = "formulize_framework_forms";
-$modversion['tables'][7] = "formulize_framework_elements";
-$modversion['tables'][8] = "formulize_framework_links";
-$modversion['tables'][9] = "formulize_menu_cats";
-$modversion['tables'][10] = "formulize_saved_views";
-$modversion['tables'][11] = "group_lists";
-$modversion['tables'][12] = "formulize_onetoone_links";
-$modversion['tables'][13] = "formulize_other";
-$modversion['tables'][14] = "formulize_notification_conditions";
-$modversion['tables'][15] = "formulize_valid_imports";
-$modversion['tables'][16] = "formulize_screen";
-$modversion['tables'][17] = "formulize_screen_multipage";
-$modversion['tables'][18] = "formulize_screen_listofentries";
+$modversion['tables'][3] = "formulize_reports";
+$modversion['tables'][4] = "formulize_frameworks";
+$modversion['tables'][5] = "formulize_framework_forms";
+$modversion['tables'][6] = "formulize_framework_elements";
+$modversion['tables'][7] = "formulize_framework_links";
+$modversion['tables'][8] = "formulize_menu_cats";
+$modversion['tables'][9] = "formulize_saved_views";
+$modversion['tables'][10] = "group_lists";
+$modversion['tables'][11] = "formulize_onetoone_links";
+$modversion['tables'][12] = "formulize_other";
+$modversion['tables'][13] = "formulize_notification_conditions";
+$modversion['tables'][14] = "formulize_valid_imports";
+$modversion['tables'][15] = "formulize_screen";
+$modversion['tables'][16] = "formulize_screen_multipage";
+$modversion['tables'][17] = "formulize_screen_listofentries";
+$modversion['tables'][18] = "formulize_entry_owner_groups";
 
 
 // Admin things
@@ -158,6 +158,14 @@ $modversion['config'][8]['description'] = '_MI_formulize_LOE_limit_DESC';
 $modversion['config'][8]['formtype'] = 'textbox';
 $modversion['config'][8]['valuetype'] = 'int';
 $modversion['config'][8]['default'] = '5000';
+
+// $xoopsModuleConfig['useToken']
+$modversion['config'][9]['name'] = 'useToken';
+$modversion['config'][9]['title'] = '_MI_formulize_USETOKEN';
+$modversion['config'][9]['description'] = '_MI_formulize_USETOKENDESC';
+$modversion['config'][9]['formtype'] = 'yesno';
+$modversion['config'][9]['valuetype'] = 'int';
+$modversion['config'][9]['default'] = 1;
 
 //bloc
 $modversion['blocks'][1]['file'] = "mymenu.php";

@@ -33,7 +33,12 @@
 
 //THIS FILE HANDLES THE DISPLAY OF INDIVIDUAL FORM ELEMENTS.  FUNCTIONS CAN BE CALLED FROM ANYWHERE (INTENDED FOR PAGEWORKS MODULE)
 
-function displayElement($formframe="", $ele, $entry="new", $noSave = false) {
+include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementrenderer.php";
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+
+function displayElement($formframe="", $ele, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $profileForm) {
 
 	static $cachedPrevEntries = array();
 
@@ -41,60 +46,68 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false) {
 	if($subformCreateEntry) { $subformEntryIndex = substr($entry, -1); } // index value will only ever be one character at the end (it will be between 0 and 4
 	if($entry == "" OR $subformCreateEntry) { $entry = "new"; }
 
-	global $xoopsUser;
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
-
-	include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementrenderer.php";
-	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
-
 	$element = "";
 	if(is_object($ele)) {	
 		if(get_class($ele) == "formulizeformulize") {
 			$element = $ele;
-			$element_id = $ele->getVar('ele_id');
+		} else {
+			return "invalid_element";
 		}
 	}
 
 	if(!$element) {
-		if(is_numeric($ele))
-		  {
-			$element_id = $ele;
-		  }
-		else
-		  {
-			$element_id = getFrameworkElementId($formframe, $ele);
-		  }
-	
+		
 		if(!isset($formulize_mgr)) {
 			$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
 		}
+		
+		if(is_numeric($ele)) {
+  		$element =& $formulize_mgr->get($ele);
+		} else {
+      $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+      $frameworkObject = $framework_handler->get($formframe);
+      $frameworkElementIds = $frameworkObject->getVar('element_ids');
+      $element_id = $frameworkElementIds[$ele];
+  		$element =& $formulize_mgr->get($element_id);
+		}
 	
-		$element =& $formulize_mgr->get($element_id);
 		if(!is_object($element)) {
 			return "invalid_element";
 		}
 	}
 
+	global $xoopsUser;
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+	static $cachedEntryOwners = array();
+	if(!isset($cachedEntryOwners[$element->getVar('id_form')][$entry])) {
+		$cachedEntryOwners[$element->getVar('id_form')][$entry] = getEntryOwner($entry, $element->getVar('id_form'));
+	}
+	$owner = $cachedEntryOwners[$element->getVar('id_form')][$entry];
+	$mid = getFormulizeModId();
+
+	
+
+	if($prevEntry==null) { // preferable to pass in prevEntry!
+		$prevEntry = getEntryValues($entry, "", $groups, $element->getVar('id_form'), "", $mid, $uid, $owner);			
+	}
+
+	static $cachedViewPrivate = array();
+	if(!isset($cachedViewPrivate[$element->getVar('id_form')])) {
+		$gperm_handler =& xoops_gethandler('groupperm');
+		$cachedViewPrivate[$element->getVar('id_form')] = $gperm_handler->checkRight("view_private_elements", $element->getVar('id_form'), $groups, $mid);	
+	}
+	$view_private_elements = $cachedViewPrivate[$element->getVar('id_form')];
+	
 	// check if the user is normally able to view this element or not, by checking their groups against the display groups -- added Nov 7 2005
 	// messed up.  Private should not override the display settings.  And the $entry should be checked against the security check first to determine whether the user should even see this entry in the first place.
 	$display = $element->getVar('ele_display');
 	$private = $element->getVar('ele_private');
-	$mid = getFormulizeModId();
-	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-	$owner = getEntryOwner($entry);
 	if($private AND ($uid != $owner AND $entry != "new")) {
-		$gperm_handler =& xoops_gethandler('groupperm');
-		$view_private_elements = $gperm_handler->checkRight("view_private_elements", $element->getVar('id_form'), $groups, $mid);
 		$allowed = $view_private_elements ? 1 : 0;
 	} elseif(strstr($display, ",")) {
 		$display_groups = explode(",", $display);
-		if(array_intersect($groups, $display_groups)) {
-			$allowed = 1;
-		} else {
-			$allowed = 0;
-		}
+		$allowed = array_intersect($groups, $display_groups) ? 1 : 0;
 	} elseif($display == 1) {
 		$allowed = 1;	
 	} else {
@@ -103,83 +116,77 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false) {
 	
 	if($allowed) {
 
-	  	$renderer =& new formulizeElementRenderer($element);
-
-	  	$ele_value = $element->getVar('ele_value');
-			$prevEntry = "";
-			if(isset($cachedPrevEntries[$entry])) {
-				$prevEntry = $cachedPrevEntries[$entry];
-			} elseif($entry != "new") {
-  			$prevEntry = getEntryValues($entry, $formulize_mgr, $groups, "", "", $mid, $uid, $owner);
-				$cachedPrevEntries[$entry] = $prevEntry;
-	  	} 
-			$dehprefix = $subformCreateEntry ? "deh_subform".$subformEntryIndex."_" : "deh_";
-  		if($prevEntry and !$noSave) { 
-				$loadValueEntry = $entry == "new" ? "" : $entry; // loadValue expects a blank value for $entry if we are looking at a new entry.
-				$member_handler =& xoops_gethandler('member');
-				$ownerObj = $member_handler->getUser($owner);
-				$owner_groups = is_object($ownerObj) ? $ownerObj->getGroups() : XOOPS_GROUP_ANONYMOUS;  
-				$ele_value = loadValue($prevEntry, $element, $ele_value, $owner_groups, "", $loadValueEntry); // get the value of this element for this entry as stored in the DB -- "" is groups which is deprecated in that function.
-				// query to see if this particular element has a value saved in this entry
-				if($prevValueThisElement = getElementValue($entry, getRealCaption($element_id))) { 
-						print "<input type=hidden name='".$dehprefix . $entry . "_" . $element->getVar('ele_id') . "' value=set>\n"; // indicates a previous value for this element
-				} else {
-						print "<input type=hidden name='".$dehprefix . $entry . "_" . $element->getVar('ele_id') . "' value=empty>\n";
-				}
-	  	} elseif(!$noSave) {
-  				print "<input type=hidden name='".$dehprefix . $entry . "_" . $element->getVar('ele_id') . "' value=empty>\n"; // note, $entry may be "new" in this case
-	  	}
-		$deprefix = $noSave ? "denosave_" : "de_";
-		$deprefix = $subformCreateEntry ? "de_subform".$subformEntryIndex."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
-  		$form_ele =& $renderer->constructElement($deprefix . $entry . '_'.$element->getVar('ele_id'), $ele_value, $entry);
-		$disabled = $element->getVar('ele_disabled');
-		$disabled_groups = explode(",", $disabled);
-		$disabled_extra = "";
-		if($disabled == 1) {
-			$disabled_extra = " disabled=1";
+		$ele_disabled = $element->getVar('ele_disabled');
+		$isDisabled = false;
+		if($ele_disabled == 1) {
+			$isDisabled = true;
 		} elseif(!is_numeric($disabled)) {
+			$disabled_groups = explode(",", $ele_disabled);
 			if(array_intersect($groups, $disabled_groups)) {
-				$disabled_extra = " disabled=1";
+				$isDisabled = true;
 			}
 		}
-		if($element->getVar('ele_type') == "ib") {
-			print $form_ele[0];
-		} else {
-			$form_ele->setExtra("onchange=\"javascript:formulizechanged=1;\"" . $disabled_extra);
-		  	print $form_ele->render();
+
+	  $renderer =& new formulizeElementRenderer($element);
+  	$ele_value = $element->getVar('ele_value');
+		$ele_type = $element->getVar('ele_type');
+		$deprefix = $noSave ? "denosave_" : "de_";
+		$deprefix = $subformCreateEntry ? "desubform".$subformEntryIndex."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
+		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subform' AND $ele_type != 'grid' AND $ele_type != 'derived') {
+			$data_handler = new formulizeDataHandler($element->getVar('id_form'));
+			$ele_value = loadValue($prevEntry, $element, $ele_value, $data_handler->getEntryOwnerGroups($entry), $groups, $entry, $profileForm); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 		}
-  		return "rendered";
-
-  	// or, even if the user is not supposed to see the element, put in a hidden element with its default value (only on new entries)
-  	// NOTE: YOU CANNOT HAVE DEFAULT VALUES ON A LINKED FIELD CURRENTLY
-  	// So, no handling of linked values is included here.
-  	} elseif($forcehidden = $element->getVar('ele_forcehidden') AND $entry=="new" AND !$noSave) {
-  		// get the default value for the element, different kinds of elements have their defaults in different locations in ele_value
-  		$ele_value = $element->getVar('ele_value');
-  		print "<input type=hidden name=deh_" . $entry . "_" . $element->getVar('ele_id') . " value=empty>\n";
-  		// handle only radio buttons and textboxes for now.
-  		switch($element->getVar('ele_type')) {
-  			case "radio":
-  				$indexer = 1;
-  				foreach($ele_value as $k=>$v) {
-  					if($v == 1) {
-  						print "<input type=hidden name=de_" . $entry . "_" . $element->getVar('ele_id') . " id=de_" . $entry . "_" . $element->getVar('ele_id') . " value=\"$indexer\">\n";
-  					}
-  					$indexer++;
-  				}
-  				break;
-			case "text":
-				$myts =& MyTextSanitizer::getInstance();
-				print "<input type=hidden name=de_". $entry . "_" . $element->getVar('ele_id') . " id=de_" . $entry . "_" . $element->getVar('ele_id') . " value='" . $myts->htmlSpecialChars(getTextboxDefault($ele_value[2])) . "'>\n";
-				break;
-			case "textarea":
-				$myts =& MyTextSanitizer::getInstance();
-				print "<input type=hidden name=de_". $entry . "_" . $element->getVar('ele_id') . " id=de_" . $entry . "_" . $element->getVar('ele_id') . " value='" . $myts->htmlSpecialChars(getTextboxDefault($ele_value[0])) . "'>\n";
-				break;
-
-  		}
-		return "hidden";
+  	$form_ele =& $renderer->constructElement($deprefix . $element->getVar('id_form').'_'.$entry.'_'.$element->getVar('ele_id'), $ele_value, $entry, $isDisabled, $screen); 
 		
+		if(!$renderElement) {
+			return $form_ele;			
+		} else {
+			if($element->getVar('ele_type') == "ib") {
+				print $form_ele[0];
+				return "rendered";
+			} elseif(is_object($form_ele)) {
+					print $form_ele->render();
+          if(!empty($form_ele->customValidationCode)) {
+            $GLOBALS['formulize_renderedElementsValidationJS'][] = $form_ele->renderValidationJS();
+          } elseif($element->getVar('ele_req') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea")) {
+            $eltname    = $form_ele->getName();
+            $eltcaption = $form_ele->getCaption();
+            $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+            $eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
+            $GLOBALS['formulize_renderedElementsValidationJS'][] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
+          }
+					return "rendered";
+			}
+		}
+  		
+
+	// or, even if the user is not supposed to see the element, put in a hidden element with its default value (only on new entries)
+	// NOTE: YOU CANNOT HAVE DEFAULT VALUES ON A LINKED FIELD CURRENTLY
+	// So, no handling of linked values is included here.
+	} elseif($forcehidden = $element->getVar('ele_forcehidden') AND $entry=="new" AND !$noSave) {
+		// get the default value for the element, different kinds of elements have their defaults in different locations in ele_value
+		$ele_value = $element->getVar('ele_value');
+		// handle only radio buttons and textboxes for now.
+		switch($element->getVar('ele_type')) {
+			case "radio":
+				$indexer = 1;
+				foreach($ele_value as $k=>$v) {
+					if($v == 1) {
+						print "<input type=hidden name=de_" . $entry . "_" . $element->getVar('ele_id') . " id=de_" . $entry . "_" . $element->getVar('ele_id') . " value=\"$indexer\">\n";
+					}
+					$indexer++;
+				}
+				break;
+		case "text":
+			$myts =& MyTextSanitizer::getInstance();
+			print "<input type=hidden name=de_". $entry . "_" . $element->getVar('ele_id') . " id=de_" . $entry . "_" . $element->getVar('ele_id') . " value='" . $myts->htmlSpecialChars(getTextboxDefault($ele_value[2])) . "'>\n";
+			break;
+		case "textarea":
+			$myts =& MyTextSanitizer::getInstance();
+			print "<input type=hidden name=de_". $entry . "_" . $element->getVar('ele_id') . " id=de_" . $entry . "_" . $element->getVar('ele_id') . " value='" . $myts->htmlSpecialChars(getTextboxDefault($ele_value[0])) . "'>\n";
+			break;
+		}
+		return "hidden";
 	} else {
 		return "not_allowed";
 	}
@@ -267,7 +274,7 @@ function displayButton($text, $ele, $value, $entry="new", $append="replace", $bu
 
 	}
 
-	if($prevValueThisElement = getElementValue($entry, getRealCaption($element_id))) {
+	if($prevValueThisElement = getElementValue($entry, $element_id, $element->getVar('id_form'))) {
 		$prevValue = 1;
 	} else {
 		$prevValue = 0;

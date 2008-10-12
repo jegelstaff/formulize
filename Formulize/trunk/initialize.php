@@ -80,7 +80,7 @@ if(!isset($formulize_screen_id)) {
 // 3 displayForm
 
 // get the global or group permission
-$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 $mid = getFormulizeModId();
 $gperm_handler = &xoops_gethandler('groupperm');
@@ -93,6 +93,32 @@ $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
 if(!$view_form = $gperm_handler->checkRight("view_form", $id_form, $groups, $mid) OR ($uid == 0 AND ($id_form == $formulizeConfig['profileForm'] AND $id_form > 0))) {
 	redirect_header(XOOPS_URL . "/user.php", 3, _formulize_NO_PERMISSION);
 }
+
+// gather $_GET['sid'] (screen)
+if(isset($_GET['sid']) AND is_numeric($_GET['sid'])) {
+	$sid = $_GET['sid'];
+} elseif(isset($formulize_screen_id) AND is_numeric($formulize_screen_id)) {
+  $sid = $formulize_screen_id;
+} else {
+	$sid="";
+}
+
+// IF A SCREEN IS REQUESTED, GET DETAILS FOR THAT SCREEN AND CALL THE NECESSARY DISPLAY FUNCTION
+$rendered = false;
+$screen = false;
+if($sid) {
+
+	$screen_handler =& xoops_getmodulehandler('screen', 'formulize');
+	$thisscreen1 = $screen_handler->get($sid); // first get basic screen object to determine type
+	if(is_object($thisscreen1)) {
+		unset($screen_handler); // reset handler to that type of screen
+		$screen_handler =& xoops_getmodulehandler($thisscreen1->getVar('type').'Screen', 'formulize');
+		$screen = $screen_handler->get($sid); // get the full screen object
+    if(is_object($xoopsTpl)) {
+      $xoopsTpl->assign('xoops_pagetitle', $screen->getVar('title'));
+    }
+	}
+} 
 
 // one time only, the code to read the displayElement elements will be executed
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
@@ -110,34 +136,11 @@ if(isset($formulize_entry_id) AND is_numeric($formulize_entry_id)) {
 	$entry = "";
 }
 
-// gather $_GET['sid'] (screen)
-if(isset($_GET['sid']) AND is_numeric($_GET['sid'])) {
-	$sid = $_GET['sid'];
-} elseif(isset($formulize_screen_id) AND is_numeric($formulize_screen_id)) {
-        $sid = $formulize_screen_id;
-} else {
-	$sid="";
+if($screen) {
+  $loadThisView = (isset($formulize_screen_loadview) AND is_numeric($formulize_screen_loadview)) ? $formulize_screen_loadview : "";
+  $screen_handler->render($screen, $entry, $loadThisView);
+  $rendered = true;
 }
-
-// IF A SCREEN IS REQUESTED, GET DETAILS FOR THAT SCREEN AND CALL THE NECESSARY DISPLAY FUNCTION
-$rendered = false;
-
-
-if($sid) {
-
-	$screen_handler =& xoops_getmodulehandler('screen', 'formulize');
-	$thisscreen1 = $screen_handler->get($sid); // first get basic screen object to determine type
-	if(is_object($thisscreen1)) {
-		unset($screen_handler); // reset handler to that type of screen
-		$screen_handler =& xoops_getmodulehandler($thisscreen1->getVar('type').'Screen', 'formulize');
-		$thisscreen2 = $screen_handler->get($sid); // get the full screen object
-		$screen_handler->render($thisscreen2, $entry);
-    $rendered = true;
-    if(is_object($xoopsTpl)) {
-      $xoopsTpl->assign('xoops_pagetitle', $thisscreen2->getVar('title'));
-    }
-	}
-} 
 
 // IF NO SCREEN IS REQUESTED (or none rendered successfully, ie: a bad screen id was passed), THEN USE THE DEFAULT DISPLAY LOGIC TO DETERMINE WHAT TO SHOW THE USER
 if(!$rendered) {

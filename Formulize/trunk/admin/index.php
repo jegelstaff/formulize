@@ -121,9 +121,11 @@ if( $_POST['op'] != 'save' ){
 		<tr>
 			<th>'._AM_ELE_CAPTION.'</th>';
 			//<th>'._AM_ELE_DEFAULT.'</th>
-			echo '<th>'._AM_ELE_REQ.'</th>
+			echo '<th>'._AM_ELE_HANDLE_HEADING.'</th>
+      <th>'._AM_ELE_TYPE_HEADING.'</th>
+      <th>'._AM_ELE_REQ.'</th>
 			<th>'._AM_ELE_ORDER.'</th>
-			<th>'._AM_ELE_DISPLAY.'</th>
+			<th>'._AM_ELE_DISPLAY_HEADING.'</th>
 			<th>'._AM_ELE_PRIVATE.'</th>
 			<th colspan="4">&nbsp;</th>
 		</tr>
@@ -135,10 +137,6 @@ if( $_POST['op'] != 'save' ){
 	$class = "odd";
 	foreach( $elements as $i ){
 		$id = $i->getVar('ele_id');
-		$ele_value = $i->getVar('ele_value');
-		$ele_value[0] = stripslashes ($ele_value[0]);
-		$renderer =& new formulizeElementRenderer($i);
-		$ele_value =& $renderer->constructElement('ele_value['.$id.']', true);
 		$req = $i->getVar('ele_req');
 		$check_req = new XoopsFormCheckBox('', 'ele_req['.$id.']', $req);
 		$check_req->addOption(1, ' ');
@@ -197,16 +195,14 @@ if( $_POST['op'] != 'save' ){
 		// added - end - August 25 2005 - jpc
         
 		$hidden_id = new XoopsFormHidden('ele_id[]', $id);
-		if(is_array($ele_value))$ele_value[0] = addslashes ($ele_value[0]);
+		
 
 		echo '<tr>';
 		$class = $class == "even" ? "odd" : "even";
-		echo '<td class="'.$class.'">'.$i->getVar('ele_caption')."</td>\n";
-/*		if(is_object($ele_value)) {
-			echo '<td class="'.$class.'">'.$ele_value[0]."</td>\n";
-		} else {
-			echo '<td class="'.$class.'">'.$ele_value->render()."</td>\n";
-		}*/
+		echo '<td class="'.$class.'">'.printSmart(trans($i->getVar('ele_caption')),100)."</td>\n";
+    echo '<td class="'.$class.'">'.$i->getVar('ele_handle')."</td>\n";
+    echo '<td class="'.$class.'">'.readableType($i->getVar('ele_type'))."</td>\n";
+
 		echo '<td class="'.$class.'" align="center">'.$check_req->render()."</td>\n";
 		echo '<td class="'.$class.'" align="center">'.$text_order->render()."</td>\n";
 
@@ -244,7 +240,7 @@ if( $_POST['op'] != 'save' ){
 	$submit = new XoopsFormButton('', 'submit', _AM_SAVE_CHANGES, 'submit');
 	echo '
 		<tr>
-			<td class="foot" colspan="2"></td>
+			<td class="foot" colspan="4"></td>
 			<td class="foot" colspan="3" align="center">'.$submit->render().'</td>
 			<td class="foot" colspan="4"></td>
 		</tr>
@@ -288,7 +284,7 @@ if( $_POST['op'] != 'save' ){
 	echo '<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>';
 	echo '<td valign=top><center><a href="../admin/formindex.php">' . _AM_GOTO_MAIN . ' <br><img src="../images/formulize.gif" height=35></a></center></td>';
 	echo '<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>';
-	echo '<td valign=top><center><a href="../admin/mailindex.php?title='.$title.'">' . _AM_GOTO_PARAMS . ' <br><img src="../images/xfmail.png"></a><br>' . _AM_PARAMS_EXTRA . '</center></td>';
+	echo '<td valign=top><center><a href="../admin/mailindex.php?title='.$title.'">' . _AM_GOTO_PARAMS . ' <br><img src="../images/xfmail.png"></a></center></td>';
 	echo '</tr></table></center>';
 
 	//echo '<br><br>lien a insérer : &lt;a href&nbsp;="'.XOOPS_URL.'/modules/formulize/index.php?fid='.$title.'">'.$realtitle.'&lt;/a><br><br>';   
@@ -296,4 +292,31 @@ if( $_POST['op'] != 'save' ){
 
 include 'footer.php';
 xoops_cp_footer();
+
+function readableType($type){
+  switch($type){
+    case "areamodif":
+      return "text for display (l/r)";
+      break;
+    case "ib":
+      return "text for display (both)";
+      break;
+    case "select":
+      return "select box";
+      break;
+    case "checkbox":
+      return "check boxes";
+      break;
+    case "radio":
+      return "radio buttons";
+      break;
+    case "yn":
+      return "yes/no buttons";
+    case "colorpick";
+      return "colorpicker";
+      break;
+  }
+  return $type;
+}
+
 ?>

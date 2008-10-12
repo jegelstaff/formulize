@@ -97,7 +97,7 @@ if ( $res ) {
 
 asort($data); // sorts forms alphabetically by title (and asort, as opposed to sort, keeps key/value association in the array)
 
-if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform' && $op != 'permlinks' && $op != "permsub" && $op != "permeditor" && $op != "newpermform"){ // permlinks condition added jwe 08/29/04, sub and editor added May 23 2005
+if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform' && $op != "permsub" && $op != "permeditor" && $op != "newpermform"){ 
 	echo '
 	<table class="outer" width="100%">
 	<th><center>'._FORM_OPT.'</center></th>
@@ -108,7 +108,7 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 }
 
 /******************* Affichage des formulizes *******************/
-if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform' && $op != 'permlinks' && $op != "permsub" && $op != "permeditor" && $op != "newpermform"){ // permlinks condition added jwe 08/29/04, sub and editor added May 23 2005
+if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform' && $op != "permsub" && $op != "permeditor" && $op != "newpermform"){ 
 
 	// javascript to confirm deletion added by jwe 8/30/04
 
@@ -170,11 +170,6 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	      <td class="odd"><A HREF="formindex.php?op=newpermform">
 	      <center><img src="../images/perm.png" title='._FORM_PERM.' alt='._FORM_PERM.'> </center></a></td></tr>';
 
-	echo '<tr><td class="head" ALIGN=center>'._FORM_MODPERMLINKS.'</td>
-	      <td class="odd"><A HREF="formindex.php?op=permlinks">
-	      <center><img src="../images/perm.png" title='._FORM_PERMLINKS.' alt='._FORM_PERMLINKS.'> </center></a></td></tr>';
-
-	
 	echo '</table><table class="outer" width="100%"><br>';
 
 
@@ -183,23 +178,21 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 
 	// added August 12 2005 - jpc
 	$gperm_handler = &xoops_gethandler('groupperm');
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 
 
 	foreach($data as $id => $titre) {
 	    if($gperm_handler->checkRight("edit_form", $id, $groups, $module_id))
         {
-	        echo '<tr><td class="head" ALIGN=center>'.trans($titre).'</td>';
+	        echo '<tr><td class="head">'.trans($titre).' (id: '.$id.')</td>';
 
-	        echo '<td class="odd" align="center">  
-	             <A HREF="renom.php?title='.$id.'">  <img src="../images/signature.png" title="'._FORM_RENOM.'" alt="'._FORM_RENOM.'">  </a>';
+	        echo '<td class="odd" align="center">
+          
+                <table cellpadding=10><tr><td>
+	             <A HREF="renom.php?title='.$id.'">'._FORM_RENAME_TEXT.' <img src="../images/signature.png" title="'._FORM_RENOM.'" alt="'._FORM_RENOM.'">  </a></td>';
 
-	        if($gperm_handler->checkRight("delete_form", $id, $groups, $module_id))
-	        {
-	            echo '<A HREF="formindex.php?title='.$id.'&op=delform" onclick="return confirmdel();">  <img src="../images/editdelete.png" title="'._FORM_SUP.'" alt="'._FORM_SUP.'">  </a>';
-			}
           if($tableforms[$id] == "") {  
-						echo '<A HREF="formindex.php?title='.$id.'&op=modform">  <img src="../images/kedit.png" title="'._FORM_MODIF.'" alt="'._FORM_MODIF.'">  </a>';
+						echo '<td><A HREF="index.php?title='.$id.'">'._FORM_EDIT_ELEMENTS_TEXT.' <img src="../images/kedit.png" title="'._FORM_MODIF.'" alt="'._FORM_MODIF.'">  </a> </td>';
 					
 
 						//old display entries section, not used anymore 
@@ -207,17 +200,22 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 					}
 					
 					$tableFormsFlag = $tableforms[$id] == "" ? "" : "&table=true";	
-					echo '<A HREF="mailindex.php?title='.$id.$tableFormsFlag.'">  <img src="../images/xfmail.png" title="'._FORM_ADD.'" alt="'._FORM_ADD.'">  </a>';
+					echo '<td><A HREF="mailindex.php?title='.$id.$tableFormsFlag.'">'._FORM_EDIT_SETTINGS_TEXT.' <img src="../images/xfmail.png" title="'._FORM_ADD.'" alt="'._FORM_ADD.'">  </a></td></tr><tr>';
 					
 					if($tableforms[$id] == "") {
 						// cloning added June 17 2005
-						echo '<A HREF="formindex.php?title='.$id.'&op=clone">  <img src="../images/clone.gif" title="'._FORM_MODCLONE.'" alt="'._FORM_MODCLONE.'"></a>';
+						echo '<td><A HREF="formindex.php?title='.$id.'&op=clone">'._FORM_CLONE_TEXT.' <img src="../images/clone.gif" title="'._FORM_MODCLONE.'" alt="'._FORM_MODCLONE.'"></a> </td>';
 
 						// added August 12 2005 - jpc
-						echo '<A HREF="formindex.php?title='.$id.'&op=clonedata">  <img src="../images/clonedata.gif" title="'._FORM_MODCLONEDATA.'" alt="'._FORM_MODCLONEDATA.'"></a>';
+						echo '<td><A HREF="formindex.php?title='.$id.'&op=clonedata">'._FORM_CLONEDATA_TEXT.' <img src="../images/clonedata.gif" title="'._FORM_MODCLONEDATA.'" alt="'._FORM_MODCLONEDATA.'"></a> </td>';
 					}
 
-	        echo '</td></tr>';
+          if($gperm_handler->checkRight("delete_form", $id, $groups, $module_id))
+	        {
+	            echo '<td><A HREF="formindex.php?title='.$id.'&op=delform" onclick="return confirmdel();">'._FORM_DELETE_TEXT.' <img src="../images/editdelete.png" title="'._FORM_SUP.'" alt="'._FORM_SUP.'">  </a></td>';
+    			}
+
+	        echo '</tr></table></td></tr>';
     	}	   
 	}
 	echo '</table>';
@@ -266,29 +264,47 @@ function cloneFormulize($title, $clonedata) {
 	$newfid = $xoopsDB->getInsertId();
 
 	$getelements = q("SELECT * FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form = $fid");
-	foreach($getelements as $ele) {
-       	$insert_sql = "INSERT INTO " . $xoopsDB->prefix("formulize") . " (";
-       	$start = 1;
-       	foreach($ele as $field=>$value) {
-       		if(!$start) { $insert_sql .= ", "; }
-       		$start = 0;
-       		$insert_sql .= $field;
-       	}
-       	$insert_sql .= ") VALUES (";
-       	$start = 1;
-       	foreach($ele as $field=>$value) {
-       		if($field == "id_form") { $value = "$newfid"; }
-       		if($field == "ele_id") { $value = ""; }
-       		if(!$start) { $insert_sql .= ", "; }
-       		$start = 0;
-			$value = addslashes($value);
-       		$insert_sql .= "\"$value\"";
-       	}
-       	$insert_sql .= ")";
-       	if(!$result = $xoopsDB->queryF($insert_sql)) {
-       		exit("error duplicating elements in form: '$title'<br>SQL: $insert_sql");
-       	}
+        $oldNewEleIdMap = array();
+	foreach($getelements as $ele) { // for each element in the form....
+                $insert_sql = "INSERT INTO " . $xoopsDB->prefix("formulize") . " (";
+                $start = 1;
+                foreach($ele as $field=>$value) {
+                	if(!$start) { $insert_sql .= ", "; }
+                  $start = 0;
+                  $insert_sql .= $field;
+                }
+                $insert_sql .= ") VALUES (";
+                $start = 1;
+                foreach($ele as $field=>$value) {
+                  if($field == "id_form") { $value = "$newfid"; }
+                  if($field == "ele_id") { $value = ""; }
+                  if($field == "ele_handle") {
+                    if($value === $ele['ele_id']) {
+                      $value = "replace_with_ele_id";
+                    } else {
+                      $value .= "_cloned";
+                    }
+                    $oldNewEleIdMap[$ele['ele_handle']] = $value;
+                  }
+                  if(!$start) { $insert_sql .= ", "; }
+                  $start = 0;
+                  $value = addslashes($value);
+                  $insert_sql .= "\"$value\"";
+                }
+                $insert_sql .= ")";
+                if(!$result = $xoopsDB->queryF($insert_sql)) {
+                  exit("error duplicating elements in form: '$title'<br>SQL: $insert_sql");
+                }
+                if($oldNewEleIdMap[$ele['ele_handle']] == "replace_with_ele_id") {
+                  $oldNewEleIdMap[$ele['ele_handle']] = $xoopsDB->getInsertId();
+                }
 	}
+
+  // replace ele_id flags that need replacing
+  $replaceSQL = "UPDATE ". $xoopsDB->prefix("formulize") . " SET ele_handle=ele_id WHERE ele_handle=\"replace_with_ele_id\"";
+  if(!$result = $xoopsDB->queryF($replaceSQL)) {
+    exit("error setting the ele_handle values for the new form.");
+  }
 
 	$getmenu = q("SELECT * FROM " . $xoopsDB->prefix("formulize_menu") . " WHERE menuid=$fid");
 	foreach($getmenu as $menu) {
@@ -324,12 +340,26 @@ function cloneFormulize($title, $clonedata) {
 		}
 	}
     
+        // Need to create the new data table now -- July 1 2007
+        $formHandler =& xoops_getmodulehandler('forms', 'formulize');
+        if(!$tableCreationResult = $formHandler->createDataTable($newfid)) {
+                print "Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".  Please delete the cloned form and report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.";
+        }
+        
+          
     
 	// added August 12 2005 - jpc
 	// updated by jwe Aug 14 2005
     if($clonedata == 1)
     {
+        // July 1 2007 -- changed how cloning happens with new data structure
+        include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php"; // formulize data handler
+        $dataHandler = new formulizeDataHandler($newfid);
+        if(!$cloneResult = $dataHandler->cloneData($fid, $oldNewEleIdMap)) {
+                print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.";
+        }
 
+        /*
 	// lock formulize_form
 	$xoopsDB->queryF("LOCK TABLES " . $xoopsDB->prefix("formulize_form") . " WRITE");
 
@@ -380,6 +410,7 @@ function cloneFormulize($title, $clonedata) {
 
 		// unlock tables
 		$xoopsDB->queryF("UNLOCK TABLES");
+       */
 
 /*    
 Here's a high level view of how you can use q to do the cloning of data 
@@ -517,6 +548,15 @@ function delform()
     	$id_form = $row[0];
   		}
 	}
+        
+        // NOW WE DROP THE DATA TABLE, INSTEAD OF DELETING FROM FORMULIZE FORM
+/*
+	$sql = sprintf("DELETE FROM %s WHERE id_form = '%u'", $xoopsDB->prefix("formulize_form"), $title);
+	$xoopsDB->queryF($sql) or $eh->show("error supression 4 dans delform");
+*/
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $form_handler->dropDataTable($title);
+        
 	$sql = sprintf("DELETE FROM %s WHERE desc_form = '%s'", $xoopsDB->prefix("formulize_id"), $data[$title]);
 	$xoopsDB->queryF($sql) or $eh->show("error supression 1 dans delform");
 
@@ -526,8 +566,6 @@ function delform()
 	$sql = sprintf("DELETE FROM %s WHERE itemname = '%s'", $xoopsDB->prefix("formulize_menu"), $data[$title]);
 	$xoopsDB->queryF($sql) or $eh->show("error supression 3 dans delform");
 
-	$sql = sprintf("DELETE FROM %s WHERE id_form = '%u'", $xoopsDB->prefix("formulize_form"), $title);
-	$xoopsDB->queryF($sql) or $eh->show("error supression 4 dans delform");
 
 // PERMISSION DELETION NOT OPERATING PROPERLY RIGHT NOW	
 /*	$perms = getFormulizePerms();
@@ -540,134 +578,6 @@ function delform()
 	redirect_header("formindex.php",3,_formulize_FORMDEL._formulize_MSG_SUP);
 }
 
-// NOT IN USE ANY LONGER (? -- 99% CERTAIN)
-function showform()
-{
-	global $xoopsDB, $_POST, $myts, $eh, $title, $data;
-	//$title5 = $myts->makeTboxData4Save($_POST["desc_form5"]);
-	if (empty($data[$title])) {
-		redirect_header("formindex.php", 2, _MD_ERRORTITLE);
-	}
-	
-	$sql = "SELECT count(*) FROM ".$xoopsDB->prefix("formulize_form")." WHERE id_form= ".$title;	
-	$res = mysql_query($sql);		
-	if ($res){
-       		list($count) = mysql_fetch_row($res);
-		if ($count == 0)
-		redirect_header("formindex.php",2,_formulize_NOTSHOW.$data[$title]._formulize_NOTSHOW2);
-		else redirect_header("consult.php?form=".$title,2,_formulize_FORMSHOW.$data[$title]);
-	}
-		
-
-}
-
-//
-// ADDED BY JWE 8/29/04 TO CREATE A PERMISSION PAGE USED TO ASSIGN SCOPE TO LINKS WITH OTHER FORMS
-//
-
-function permlinks()
-{
-
-	global $xoopsDB, $xoopsModule;
-	$module_id = $xoopsModule->getVar('mid');
-
-	$currentperm = $_GET['currentperm'];
-	if(!$currentperm)
-	{
-		$currentperm = "none";
-	}
-
-	// NEED TO GATHER ALL LINKS INTO ARRAYS FOR DRAWING TO THE SELECTION BOX
-	$getlinksq = "SELECT id_form, ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type=\"select\" AND ele_value LIKE '%#*=:*%'";
-	// print "$getlinksq<br>";
-	$resgetlinksq = $xoopsDB->query($getlinksq);
-	while ($rowlinksq = $xoopsDB->fetchRow($resgetlinksq))
-	{
-		//print_r($rowlinksq);
-		//print "<br>";
-		$linkformids[] = $rowlinksq[0];
-		$linkcaptions[] = $rowlinksq[1];
-		$linkeleids[] = $rowlinksq[2];
-	}
-	// now get all the form names for each form that has a link
-
-	if($linkformids) // if a link was found...
-	{
-
-	foreach($linkformids as $aform)
-	{
-	$getlformnamesq = "SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $aform";
-	$resq = $xoopsDB->query($getlformnamesq);
-	$rowq = $xoopsDB->fetchRow($resq);
-	$linkformnames[] = $rowq[0];
-	}
-	// now the formid array is the ids
-	// cations array is the linked select box names
-	// names is the form names, 
-	// eleids is the element ids, all indexed together
-	array_multisort($linkformnames, $linkformids, $linkcaptions, $linkeleids);
-
-	// set the item array...
-	// 1. get a list of all the groups
-	// 2. put the list into the array
-
-	array($grouplist_id);
-	array($grouplist_name);
-	$grouplistq = "SELECT groupid, name FROM " . $xoopsDB->prefix("groups");
-	$resgrouplistq = $xoopsDB->query($grouplistq); 
-	while ($rowgrouplistq = $xoopsDB->fetchRow($resgrouplistq))
-	{
-		$grouplist_id[] = $rowgrouplistq[0];
-		$grouplist_name[] = $rowgrouplistq[1];
-	}
-
-	// javascript function to reload page everytime someone selects a new linkbox...
-		print "<script type='text/javascript'>\n";
-		print "<!--//\n";
-		print "	function redrawpage(perm) {\n";
-//		print "	alert(perm)\n";
-		print "		window.location = 'formindex.php?op=permlinks&currentperm=' + perm;\n";
-		print "	}\n";
-		print "//--></script>\n\n";
-
-	print "<table class='outer' cellspacing='1'><tr><td class=head><center><form name=permselect action=formindex.php?op=permlinks method=post>\n";
-	print "<p><b>" . _AM_FORM_CURPERMLINKS . "</b><br>";
-	print "<SELECT name=currentperm size=1 onChange='redrawpage(document.permselect.currentperm.value)'>\n";
-	for($i=0;$i<count($linkformnames);$i++)
-	{
-		if($currentperm == "none")
-		{
-			$currentperm = $linkeleids[$i];
-		}
-		print "<option value=\"" . $linkeleids[$i]. "\"";
-		if ($currentperm == $linkeleids[$i])
-		{
-			print " selected";
-		}
-		print ">" . $linkformnames[$i] . ": " . $linkcaptions[$i] . "</option>\n";
-	}
-
-	print "</SELECT></p></form></center></td></tr></table>\n";
-
-	$title_of_form = "";
-	$perm_name = $currentperm;
-	$perm_desc = '';
-	$form = new XoopsGroupPermForm($title_of_form, $module_id, $perm_name, $perm_desc); 
-	for($i=0;$i<count($grouplist_id);$i++)
-	{
-		$form->addItem($grouplist_id[$i], $grouplist_name[$i]);
-	}
-
-	echo $form->render();
-	
-	}
-	else // of if no link was found
-	{
-	
-		print "NO LINKS!";
-		
-	} // end of if a link was found
-}
 
 // TWO FUNCTIONS BELOW BORROWED FROM MULTI-GROUP PERM CODE
 function saveList()
@@ -1174,16 +1084,45 @@ function updateperms() {
 }
 
 
-function patch23() {
+function patch30() {
 
-	if(!isset($_POST['patch23'])) {
-		print "<form action=\"formindex.php?op=patch23\" method=post>";
+  global $xoopsDB;
+  // check if the new table structure is in place, and don't run this patch if so!
+  $patchCheckSql = "SHOW TABLES";
+	$resultPatchCheck = $xoopsDB->queryF($patchCheckSql);
+  $newStructureFound = false;
+  $formulizeFormFound = false;
+  $entryOwnerGroupFound = false;
+	while($table = $xoopsDB->fetchRow($resultPatchCheck)) {
+    $secondPart = substr($table[0], strlen($xoopsDB->prefix("formulize_")));
+    if(is_numeric($secondPart) AND strstr($table[0], "formulize_")) {
+      $newStructureFound = true;
+    }
+    if($table[0] == $xoopsDB->prefix("formulize_form")) {
+      $formulizeFormFound = true;
+    }
+    if($table[0] == $xoopsDB->prefix("formulize_entry_owner_groups")) {
+            $entryOwnerGroupFound = true;
+    }
+  }
+  if(!$formulizeFormFound AND $entryOwnerGroupFound) {
+      print "<h1>It appears you have not upgraded from a previous version of Formulize.  You do not need to apply this patch unless you are upgrading from a version prior to 3.0</h1>\n";
+      print "<p>If you did upgrade from a previous version, please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>\n";
+      return;
+  }
+  if($newStructureFound) {
+    print "<h1>You cannot run this patch again after upgrading to the 3.0 data structure.</h1>";
+    return;
+  }
+
+	if(!isset($_POST['patch30'])) {
+		print "<form action=\"formindex.php?op=patch30\" method=post>";
 		print "<h1>Warning: this patch makes several changes to the database, including detection and correction of errors and inconsistencies in your actual data.  Backup your database prior to applying this patch!</h1>";
 		print "<p>This patch may take a few minutes to apply.  Your page may take that long to reload, please be patient.</p>";
-		print "<input type = submit name=patch23 value=\"Apply Database Patch for Formulize 2.3\">";
+		print "<input type = submit name=patch30 value=\"Apply Database Patch for Formulize 3.0\">";
 		print "</form>";
 	} else {
-		global $xoopsDB;
+		
 		// put logic here
 
 		// check to see if form table exists
@@ -1198,14 +1137,14 @@ function patch23() {
 			$sql = "SELECT * FROM " . $xoopsDB->prefix("form") . " LIMIT 0,1";
 			$result = $xoopsDB->query($sql);
 			if(!$result) {
-				exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $sql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+				exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $sql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 			}
 			$array = $xoopsDB->fetchArray($result);
 			unset($result);
 			if(!isset($array['ele_forcehidden'])) {
 				$sql = "ALTER TABLE " . $xoopsDB->prefix("form") . " ADD `ele_forcehidden` tinyint(1) NOT NULL default '0'";
 				if(!$result = $xoopsDB->query($sql)) {
-					exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $sql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+					exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $sql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
 			} 
 			unset($sql);
@@ -1222,7 +1161,7 @@ function patch23() {
 			$sql[] = "DROP TABLE " . $xoopsDB->prefix("form_chains_entries");
 			foreach($sql as $thissql) {
 				if(!$result = $xoopsDB->query($thissql)) {
-					exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $thissql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+					exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $thissql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
 			}
 
@@ -1352,11 +1291,24 @@ function patch23() {
 ) TYPE=MyISAM;";
                 }
 
+if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables)) {
+	$sql[] = "CREATE TABLE ".$xoopsDB->prefix("formulize_entry_owner_groups")." (
+  owner_id int(5) unsigned NOT NULL auto_increment,
+  fid int(5) NOT NULL default '0',
+  entry_id int(7) NOT NULL default '0',
+  groupid int(5) NOT NULL default '0',
+  PRIMARY KEY (`owner_id`),
+  INDEX i_fid (fid),
+  INDEX i_entry_id (entry_id),
+  INDEX i_groupid (groupid)
+) TYPE=MyISAM;";
+}
+
 		// check about altered fields
 		$testsql = "SELECT * FROM " .  $xoopsDB->prefix("formulize") . " LIMIT 0,1";
 		$result1 = $xoopsDB->query($testsql);
                 if($xoopsDB->getRowsNum($result1) == 0) {
-                        exit("Error patching DB for Formulize 2.3.<br>No forms exist in the database.<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                        exit("Error patching DB for Formulize 3.0.<br>No forms exist in the database.<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
                 }
 		$array1 = $xoopsDB->fetchArray($result1); // for 2.1 we were checking explicitly whether we needed to add these fields.  But for 2.2 we just ran the SQL and caught the error appropriately in the condition below (ie: looked for failure for 'commonvalue' and ignored it) -- although ele_disabled was added this way...clearly we're not consistent about the patch approach!
 		
@@ -1401,13 +1353,23 @@ function patch23() {
 								$sql['fixlsbapos'] = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET `ele_value` = REPLACE(`ele_value`, '&#039;', '\'') WHERE `ele_type` = 'select' AND `ele_value` LIKE '%#*=:*%'"; // during the 2.2 patch, some apostrophes in the ele_value field would have been converted to html chars incorrectly
 		$sql['sv_pubgroups'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " CHANGE `sv_pubgroups` `sv_pubgroups` text default NULL";
                 $sql['id_req_int'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_form") . " CHANGE `id_req` `id_req` int(7)";
+                $sql['onetoone_main'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_onetoone_links") . " ADD `main_fid` int(5)";
+								$sql['onetoone_link'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_onetoone_links") . " ADD `link_fid` int(5)";
+								$sql['import_fid'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_valid_imports") . " ADD `fid` int(5)";
                 $sql['useToken'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen") . " ADD `useToken` tinyint(1) NOT NULL";
                 $sql['notCreator'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_notification_conditions") . " ADD `not_cons_creator` tinyint(1)";
                 $sql['notElementUids'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_notification_conditions") . " ADD `not_cons_elementuids` smallint(5) NOT NULL default 0";
                 $sql['notLinkCreator'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_notification_conditions") . " ADD `not_cons_linkcreator` smallint(5) NOT NULL default 0";
-                $sql['printAll'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " AADD `printall` TINYINT( 1 ) NOT NULL";
+                $sql['printAll'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `printall` TINYINT( 1 ) NOT NULL";
                 $sql['pageTitles'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `pagetitles` TEXT NOT NULL AFTER `pages`";
-                
+								$sql['paraentryform'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `paraentryform` int(11) NOT NULL default 0";
+								$sql['paraentryrel'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `paraentryrelationship` tinyint(1) NOT NULL default 0";
+                $sql['ele_handle'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_handle` varchar(30) NOT NULL default ''";
+                $sql['viewentryscreen'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `viewentryscreen` INT( 11 ) NOT NULL DEFAULT '0'";
+                $sql['otherint1'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_other") . " CHANGE `other_id` `other_id` INT(5) NOT NULL AUTO_INCREMENT";
+                $sql['otherint2'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_other") . " CHANGE `id_req` `id_req` INT(5)";
+                $sql['ele_caption_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " CHANGE `ele_caption` `ele_caption` text NOT NULL default ''";
+								
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
 				if($key === "dropindex") {
@@ -1430,9 +1392,31 @@ function patch23() {
           print "Multipage form \"print all\" option already added.  result: OK<br>";
         } elseif($key === "pageTitles") {
           print "Multipage form \"page titles\" options already added.  result: OK<br>";
-				} else {
-					exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $thissql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+				} elseif($key === "paraentryform") {
+          print "Multipage form \"parallel entry form\" option already added.  result: OK<br>";
+				} elseif($key === "paraentryrel") {
+          print "Multipage form \"parallel entry form relationship\" option already added.  result: OK<br>";
+				} elseif($key ==="onetoone_main") {
+					print "Onetoone \"main_fid\" field already added.  result: OK<br>";
+				} elseif($key === "onetoone_link") {
+					print "Onetoone \"link_fid\" field already added.  result: OK<br>";
+				} elseif($key === "import_fid") {
+					print "Form id field already added to the import table.  result: OK<br>";
+				} elseif($key === "ele_handle") {
+					print "Element handle field already added.  result: OK<br>";
+				} elseif($key === "viewentryscreen") {
+					print "viewentryscreen field already added.  result: OK<br>";
+				}else {
+					exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $thissql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
+			} elseif($key === "ele_handle") { // we just added the ele_handle field
+				
+				// use element id number for the initial element handles
+				$eh_eleid_sql = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_handle = ele_id WHERE ele_handle = ''";
+				if(!$eh_eleid_res = $xoopsDB->query($eh_eleid_sql)) {
+					exit("Error patching DB for Formulize 3.0.  SQL dump:<br>" . $eh_check_sql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+				}
+				
 			}
 		}
 
@@ -1462,7 +1446,7 @@ function patch23() {
                                         }
                                         $fixSql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET id_req='$maxIdReq' WHERE id_req='" . $find['id_req'] . "' AND uid='" . $uid['uid'] . "'";
                                         if(!$fixRes = $xoopsDB->query($fixSql)) {
-                                                exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $fixsql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                                                exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $fixsql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
                                         }
                                         print "Uid " . $uid['uid'] . " now using id_req $maxIdReq<br>";
                                         $maxIdReq++;
@@ -1492,7 +1476,7 @@ function patch23() {
                                 if(!isset($formCaptions[$dataArray['id_form']][$dataArray['ele_caption']])) {
                                         $deleteSql = "DELETE FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=".$dataArray['id_form']." AND ele_caption=\"".mysql_real_escape_string($dataArray['ele_caption'])."\"";
                                         if(!$result = $xoopsDB->query($deleteSql)) {
-                                                exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $deletesql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                                                exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $deletesql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
                                         }
                                 }
                         }
@@ -1503,12 +1487,16 @@ function patch23() {
     // check for duplicate id_reqs...this is based not based on the same criteria that is in the 22 data check above.
     // in this case we are simply looking for the same id_req being applied to different forms
     // check for ambiguous id_reqs
-    $xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_form") . " WRITE, " . $xoopsDB->prefix("formulize_form") . " AS t1 READ, " . $xoopsDB->prefix("formulize_form") . " AS t2 READ");
-    print "Searching for duplicate entry ids in use on two or more forms.  Please be patient.  This may take a few minutes on a large database.<br>";
-    correctAmbiguousIdReqsBasedOnFormIds();
-    print "Finished checking for duplicate entry ids.<br>";
-    // unlock tables
-    $xoopsDB->query("UNLOCK TABLES");
+    // only necessary if 22 checks were not done, since 22 check now includes this function call too
+    if(!$need22DataChecks) {
+      $xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_form") . " WRITE, " . $xoopsDB->prefix("formulize_form") . " AS t1 READ, " . $xoopsDB->prefix("formulize_form") . " AS t2 READ");
+      print "Searching for duplicate entry ids in use on two or more forms.  Please be patient.  This may take a few minutes on a large database.<br>";
+      correctAmbiguousIdReqsBasedOnFormIds();
+      print "Finished checking for duplicate entry ids.<br>";
+      // unlock tables
+      $xoopsDB->query("UNLOCK TABLES");  
+    }
+    
 
 		print "DB updates completed.  result: OK";
         } 
@@ -1538,7 +1526,7 @@ function correctAmbiguousIdReqsBasedOnFormIds($uidFocus = false) {
             }
             $fixSql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET id_req='$maxIdReq' WHERE id_req='" . $find['id_req'] . "' AND id_form='" . $id_form['id_form'] . "'";
             if(!$fixRes = $xoopsDB->query($fixSql)) {
-              exit("Error patching DB for Formulize 2.3. SQL dump:<br>" . $fixsql . "<br>Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+              exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $fixsql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
             }
             print "Form id " . $id_form['id_form'] . " now using id_req $maxIdReq<br>";
             if($uidFocus) { print "EITHER ENTRY " . $find['id_req'] . " OR ENTRY $maxIdReq HAS THE WRONG OWNER (uid).  THERE IS NO WAY FOR THE SYSTEM TO TELL WHICH IS INCORRECT. YOU SHOULD CHECK THE ENTRIES AND MODIFY THE UID COLUMN IN THE DATABASE FOR THE ONE ENTRY THAT IS INCORRECT.  THE PROPER SQL SHOULD BE LIKE THIS: \"UPDATE xoops_formulize_form SET uid=123 WHERE id_req=456\" WHERE 123 IS THE CORRECT UID AND 456 IS THE ENTRY THAT CURRENTLY HAS AN INCORRECT UID.  PLEASE CONTACT FREEFORM SOLUTIONS FOR ASSISTANCE IF YOU ARE AT ALL UNSURE ABOUT THIS PROCEDURE!<br>"; }
@@ -1555,7 +1543,36 @@ function correctAmbiguousIdReqsBasedOnFormIds($uidFocus = false) {
 // the search logic in the extract.php file has been modified as well to run htmlspecialchars on search terms so that matches are found properly
 function patch22convertdata() {
 
-	global $xoopsDB;
+  global $xoopsDB;
+  $patchCheckSql = "SHOW TABLES";
+	$resultPatchCheck = $xoopsDB->queryF($patchCheckSql);
+  $formulizeFormFound = false;
+  $newStructureFound = false;
+  $entryOwnerGroupFound = false;
+	while($table = $xoopsDB->fetchRow($resultPatchCheck)) {
+    $secondPart = substr($table[0], strlen($xoopsDB->prefix("formulize_")));
+    if(is_numeric($secondPart) AND strstr($table[0], "formulize_")) {
+      $newStructureFound = true;
+    }
+    if($table[0] == $xoopsDB->prefix("formulize_form")) {
+      $formulizeFormFound = true;
+    }
+    if($table[0] == $xoopsDB->prefix("formulize_entry_owner_groups")) {
+      $entryOwnerGroupFound = true;
+    }
+	}
+  if(!$formulizeFormFound AND $entryOwnerGroupFound) {
+          print "<h1>It appears you have not upgraded from a previous version of Formulize.  You do not need to apply this patch unless you are upgrading from a version prior to 3.0</h1>\n";
+          print "<p>If you did upgrade from a previous version, please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>\n";
+          return;
+  }
+  if($newStructureFound) {
+      print "<h1>You cannot run this patch after upgrading to the 3.0 data structure.</h1>";
+      print "<p>If you upgraded from Formulize 2.1 or earlier, and you did not run the \"patch22convertdata\" already, please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>";
+      return;
+  }
+
+	
 
 	if(!isset($_POST['patch22convertdata'])) {
 
@@ -1572,9 +1589,8 @@ function patch22convertdata() {
 			print "<input type = submit name=patch22convertdata value=\"Apply Data Conversion Patch for upgrading to Formulize 2.2 and higher\">";
 			print "</form>";
 		} else {
-			print "<h1>You do not appear to have applied 'patch23'.</h1>\n";
-			print "<p>You must apply patch23 before applying this patch.  Change the URL to this:<br><br>\n";
-			print "http://www.mysite.com/modules/formulize/admin/formindex.php?op=patch23</p>\n";
+			print "<h1>You do not appear to have applied 'patch30'.</h1>\n";
+			print "<p>You must apply patch30 before applying this patch.  <a href=\"" . XOOPS_URL . "/modules/formulize/admin/formindex.php?op=patch30\">Click here to run \"patch30\".</a></p>";
 		}
 	} else {
 		
@@ -1584,7 +1600,7 @@ function patch22convertdata() {
 		if(!$myts) { $myts =& MyTextSanitizer::getInstance(); }
 
 		$sansql = "SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("formulize_form") . " WHERE ele_type != \"date\" AND  ele_type != \"yn\" AND ele_type != \"areamodif\"";
-		if(!$sanres = $xoopsDB->query($sansql)) { exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>Could not collect all data for sanitizing.  Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance."); }
+		if(!$sanres = $xoopsDB->query($sansql)) { exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>Could not collect all data for sanitizing.  Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance."); }
 		while($sanArray = $xoopsDB->fetchArray($sanres)) {
 			$origvalue = $sanArray['ele_value'];
 			if(get_magic_quotes_gpc()) { $sanArray['ele_value'] = stripslashes($sanArray['ele_value']); }
@@ -1592,7 +1608,7 @@ function patch22convertdata() {
 			if($newvalue != $origvalue) {
 				$newsql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET ele_value = \"" . mysql_real_escape_string($newvalue) . "\" WHERE ele_id = " . $sanArray['ele_id'];
 				if(!$newres = $xoopsDB->query($newsql)) {
-					exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>Could not write data for sanitizing.  Please contact <a href=support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+					exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>Could not write data for sanitizing.  Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
 			}
 		}
@@ -1603,20 +1619,56 @@ function patch22convertdata() {
 
 // this patch copies the formulize_form table to separate datatables based on each form in the system
 // this should have been done three years ago!
-function patch24DataStructure($auto = false) {
+function patch30DataStructure($auto = false) {
         
+        global $xoopsDB;
+        // check for new data structure and don't run this patch if it already has been!
+        // check that patch30 has been run and don't run this patch unless it already has been!
+        // check that formulize_form table exists, or else don't run the patch
+        $patchCheckSql = "SHOW TABLES";
+        $resultPatchCheck = $xoopsDB->queryF($patchCheckSql);
+        $entryOwnerGroupFound = false;
+        $formulizeFormFound = false;
+        $newStructureFound = false;
+        while($table = $xoopsDB->fetchRow($resultPatchCheck)) {
+          $secondPart = substr($table[0], strlen($xoopsDB->prefix("formulize_")));
+          if(is_numeric($secondPart) AND strstr($table[0], "formulize_")) { // there will be a part after "formulize_" that is numeric in the new data structure
+            $newStructureFound = true;
+          }
+          if($table[0] == $xoopsDB->prefix("formulize_entry_owner_groups")) {
+            $entryOwnerGroupFound = true;
+          }
+          if($table[0] == $xoopsDB->prefix("formulize_form")) {
+            $formulizeFormFound = true;
+          }
+        }
+        if(!$formulizeFormFound AND $entryOwnerGroupFound) {
+          print "<h1>It appears you have not upgraded from a previous version of Formulize.  You do not need to apply this patch unless you are upgrading from a version prior to 3.0</h1>\n";
+          print "<p>If you did upgrade from a previous version, please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>\n";
+          return;
+        }
+        if(!$entryOwnerGroupFound) {
+          print "<h1>You must run \"patch30\" before upgrading to the 3.0 data structure.</h1>\n";
+          print "<p><a href=\"" . XOOPS_URL . "/modules/formulize/admin/formindex.php?op=patch30\">Click here to run \"patch30\".</a></p>\n";
+          return;
+        }
+        if($newStructureFound) {
+            print "<h1>You cannot run this patch after upgrading to the 3.0 data structure.</h1>";
+            return;
+        }
+
         $carryon = true;
-        if(!$auto) { // put UI control in if not called from another function
-                if(!isset($_POST['patch24datastructure'])) {
+        if(!$auto) { // put UI control in if not called from another function....not actually used; this patch must be invoked manually on its own.
+                if(!isset($_POST['patch30datastructure'])) {
                         $carryon = false;
-			print "<form action=\"formindex.php?op=patch24datastructure\" method=post>";
-			print "<h1>Warning: this patch changes the structure of the data in your database, primarily to address performance issues.  Backup your database prior to applying this patch!</h1>";
-			print "<p>This patch may take a few minutes to apply.  Your page may take that long to reload, please be patient.</p>";
-                        print "<p>If the first version of Formulize that you installed was 2.4 or higher, you DO NOT need to apply this patch!</p>";
-			print "<input type = submit name=patch24datastructure value=\"Apply Data Structure Patch for upgrading to Formulize 2.4 and higher\">";
-			print "</form>";
-		} 
-	}
+												print "<form action=\"formindex.php?op=patch30datastructure\" method=post>";
+												print "<h1>Warning: this patch completely changes the structure of the formulize data in your database.  Backup your database prior to applying this patch!</h1>";
+												print "<p>This patch may take a few minutes to apply.  Your page may take that long to reload, please be patient.</p>";
+                        print "<p>If the first version of Formulize that you installed was 3.0 or higher, you DO NOT need to apply this patch!</p>";
+												print "<input type = submit name=patch30datastructure value=\"Apply Data Structure Patch for upgrading to Formulize 3.0 and higher\">";
+												print "</form>";
+								} 
+				}
         
         if($carryon) {
                         
@@ -1625,12 +1677,13 @@ function patch24DataStructure($auto = false) {
                 // 3. create its table
                 // 4. import its data from formulize_form
                 
-                global $xoopsDB;
+                
                 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
                 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
                 $formHandler =& xoops_getmodulehandler('forms', 'formulize');
-                $allFormObjects = $formHandler->getAllForms();
+                $allFormObjects = $formHandler->getAllForms(true); // true flag causes all elements to be included in objects, not just elements that are being displayed, which are ignored in every other situation
                 foreach($allFormObjects as $thisFormObject) {
+												if($thisFormObject->getVar('tableform')) { continue; } // only process actual Formulize forms
                         if(!$tableCreationResult = $formHandler->createDataTable($thisFormObject)) {
                                 exit("Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".  Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
                         }
@@ -1642,19 +1695,32 @@ function patch24DataStructure($auto = false) {
                         // 2. get all the data organized by id_req
                         // 3. insert the data
                         
-                        $captionPlusIDsSQL = "SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form = " . $thisFormObject->getVar('id_form');
-                        $captionPlusIDsRes = $xoopsDB->query($captionPlusIDsSQL);
-                        $captionIDIndex = array();
-                        while($captionPlusIDsArray = $xoopsDB->fetchArray($captionPlusIDsRes)) {
-                                $captionIDIndex[str_replace("'", "`", $captionPlusIDsArray['ele_caption'])] = $captionPlusIDsArray['ele_id'];
+                        $captionPlusHandlesSQL = "SELECT ele_caption, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form = " . $thisFormObject->getVar('id_form');
+                        $captionPlusHandlesRes = $xoopsDB->query($captionPlusHandlesSQL);
+                        $captionHandleIndex = array();
+                        while($captionPlusHandlesArray = $xoopsDB->fetchArray($captionPlusHandlesRes)) {
+                                $captionHandleIndex[str_replace("'", "`", $captionPlusHandlesArray['ele_caption'])] = $captionPlusHandlesArray['ele_handle'];
                         }
                                                 
                         $dataSQL = "SELECT id_req, ele_caption, ele_value FROM " .$xoopsDB->prefix("formulize_form") . " WHERE id_form = " . $thisFormObject->getVar('id_form') . " ORDER BY id_req";
                         $dataRes = $xoopsDB->query($dataSQL);
                         $prevIdReq = "";
                         $insertSQL = "";
+                        unset($foundCaptions);
+                        $foundCaptions = array();
                         while($dataArray = $xoopsDB->fetchArray($dataRes)) {
+                                if(!isset($captionHandleIndex[$dataArray['ele_caption']])) {
+																	if($dataArray['ele_caption'] === '') {
+																		print "Warning: you have data saved, with no caption specified, for entry number ". $dataArray['id_req'] . " (id_req) in form ".$thisFormObject->getVar('id_form'). ".  This data will be ignored.  Please contact <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
+																		continue;
+																	} else {
+																		print "Warning: the form ". $thisFormObject->getVar('id_form') . " does not have an element with the caption '". $dataArray['ele_caption'] . "', but you have saved data associated with that caption.  This data will be ignored.  Please contact <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
+                                    continue;
+																	}
+                                }
                                 if($dataArray['id_req'] != $prevIdReq) { // we're on a new entry
+                                        unset($foundCaptions);
+                                        $foundCaptions = array(); // reset the list of captions we've found in this entry so far, since we're moving onto a different entry
                                         $prevIdReq = $dataArray['id_req'];
                                         // write whatever we just finished working on
                                         if($insertSQL) {
@@ -1665,13 +1731,41 @@ function patch24DataStructure($auto = false) {
                                         }
                                         // build the SQL for inserting this entry
                                         $insertSQL = "INSERT INTO " . $xoopsDB->prefix("formulize_" . $thisFormObject->getVar('id_form')) . " SET entry_id = \"" . $dataArray['id_req'] . "\"";
-                                        $metaData = getMetaData($dataArray['id_req']);
+                                        $metaData = getMetaData($dataArray['id_req'], "", "", true); // special last param necessary because we need to use the old meta process when doing this patch!
                                         $creation_uid = $metaData['created_by_uid'];
                                         $mod_uid = $metaData['last_update_by_uid'];
                                         $creation_datetime = $metaData['created'] == "???" ? "" : $metaData['created'];
                                         $mod_datetime = $metaData['last_update'];
                                         $insertSQL .= ", creation_datetime = \"$creation_datetime\", mod_datetime = \"$mod_datetime\", creation_uid = \"$creation_uid\", mod_uid = \"$mod_uid\"";
+																				
+																				// derive the owner groups and write them to the owner groups table
+																				$ownerGroups = array();
+																				if($creation_uid) {
+																					$member_handler =& xoops_gethandler('member');
+																					$creationUser = $member_handler->getUser($creation_uid);
+																					if(is_object($creationUser)) {
+																						$ownerGroups = $creationUser->getGroups();
+																					} else {
+																						$ownerGroups[] = XOOPS_GROUP_ANONYMOUS;
+																					}
+																				} else {
+																					$ownerGroups[] = XOOPS_GROUP_ANONYMOUS;
+																				}
+																				foreach($ownerGroups as $thisGroup) {
+																					$ownerInsertSQL = "INSERT INTO " . $xoopsDB->prefix("formulize_entry_owner_groups") . " (`fid`, `entry_id`, `groupid`) VALUES ('". intval($thisFormObject->getVar('id_form')) . "', '". intval($dataArray['id_req']) . "', '". intval($thisGroup) . "')";
+																					if(!$ownerInsertRes = $xoopsDB->query($ownerInsertSQL)) {
+																						print "Error: could not write owner information to new data structure, using this SQL:<br>$ownerInsertSQL<br>";
+																					}
+																				}
                                 }
+                                
+                                // record the caption and go through to the next one if this one already exists in this form
+                                if(isset($foundCaptions[$dataArray['ele_caption']])) {
+                                  print "Warning: you have duplicate captions, '".$dataArray['ele_caption']."', in your data, at entry number " .$dataArray['id_req'] . " (id_req) in form ".$thisFormObject->getVar('id_form').".  Only the first value found will be copied to the new data structure.  Please contact <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
+                                  continue;
+                                } else {
+                                  $foundCaptions[$dataArray['ele_caption']] = true;
+                                }                                
                                 
                                 // need to handle linked selectboxes, and convert them to a different format, and store the entry_id of the sources
                                 // We are going to store a comma separated list of entry_ids, with leading and trailing commas so a LIKE operator can be used to do a join in the database
@@ -1688,7 +1782,7 @@ function patch24DataStructure($auto = false) {
                                         $dataArray['ele_value'] .= ",";
                                 }
                                 
-                                $insertSQL .= ", element_" . $captionIDIndex[$dataArray['ele_caption']] . "=\"" . mysql_real_escape_string($dataArray['ele_value']) . "\"";
+                                $insertSQL .= ", `" . $captionHandleIndex[$dataArray['ele_caption']] . "`=\"" . mysql_real_escape_string($dataArray['ele_value']) . "\"";
                         }
                         if($insertSQL) {
                                 if(!$insertRes = $xoopsDB->query($insertSQL)) {
@@ -1697,8 +1791,65 @@ function patch24DataStructure($auto = false) {
                         }
                         print "Migrated data to new data structure for form " . $thisFormObject->getVar('id_form') . ".  result: OK<br>\n";
                 }
-                print "Data migration complete.  result: OK\n";
+      // add form ids to the onetoone table
+      // 1. lookup each entry in the one to one table
+      // 2. find its fid and make a map
+      // 3. update each entry in the one to one table
+      $sql = "SELECT * FROM " . $xoopsDB->prefix("formulize_onetoone_links");
+      $allOneToOne = $xoopsDB->query($sql);
+      $matchedFids = array();
+      while($oneToOneArray = $xoopsDB->fetchArray($allOneToOne)) {
+        // lookup the main_form and link_form ids in the formulize_form table, and get the form id (main_form and link_form are id_reqs)
+        $mainFidLookupSQL = "SELECT id_form FROM " .$xoopsDB->prefix("formulize_form"). " WHERE id_req=".intval($oneToOneArray['main_form'])." LIMIT 0,1";
+        $linkFidLookupSQL = "SELECT id_form FROM " .$xoopsDB->prefix("formulize_form"). " WHERE id_req=".intval($oneToOneArray['link_form'])." LIMIT 0,1";
+        $mainRes = $xoopsDB->fetchArray($xoopsDB->query($mainFidLookupSQL));
+        $linkRes = $xoopsDB->fetchArray($xoopsDB->query($linkFidLookupSQL));
+        $mainFidUpdateSQL = "UPDATE " . $xoopsDB->prefix("formulize_onetoone_links") . " SET main_fid = ".intval($mainRes['id_form'])." WHERE main_form=".intval($oneToOneArray['main_form']);
+        $linkFidUpdateSQL = "UPDATE " . $xoopsDB->prefix("formulize_onetoone_links") . " SET link_fid = ".intval($linkRes['id_form'])." WHERE link_form=".intval($oneToOneArray['link_form']);
+        if(!$mainRes2 = $xoopsDB->query($mainFidUpdateSQL)) {
+          exit("Error: could not update one to one table with this SQL: $mainFidUpdateSQL.  Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
         }
+        if(!$linkRes2 = $xoopsDB->query($linkFidUpdateSQL)) {
+          exit("Error: could not update one to one table with this SQL: $linkFidUpdateSQL.  Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+        }
+      }
+      print "Updated the one_to_one table with new metadata.  result: OK<br>\n";
+      
+      // convert the captions in the linked selectbox defintions to the handles for those elements
+      // 1. lookup all elements that are linked selectboxes in the formulize table (element table) -- db query for element ids
+      // 2. for each one, get the caption that is stored there -- PHP level work with element handler
+      // 3. get the handle corresponding to that caption
+      // 4. rewrite the ele_value[2] with the handle instead of caption
+      // 5. reinsert that value into the DB
+      $sql = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE '%#*=:*%'";
+      if(!$res = $xoopsDB->query($sql)) {
+        exit("Error: cound not get the element ids of the linked selectboxes.  SQL: $sql<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+      }
+      $element_handler =& xoops_getmodulehandler('elements', 'formulize');
+      while($array = $xoopsDB->fetchArray($res)) {
+        $elementObject = $element_handler->get($array['ele_id']);
+        $ele_value = $elementObject->getVar('ele_value');
+        $parts = explode("#*=:*", $ele_value[2]);
+        $sql2 = "SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_caption = '". mysql_real_escape_string($parts[1]) . "' AND id_form=". $parts[0];
+				print "$sql2<br>";
+        if(!$res2 = $xoopsDB->query($sql2)) {
+          exit("Error: could not get the handle for a linked selectbox source.  SQL: $sql2<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+        }
+        $array2 = $xoopsDB->fetchArray($res2);
+        $ele_value[2] = $parts[0]."#*=:*".$array2['ele_handle'];
+        $elementObject->setVar('ele_value', $ele_value);
+        if(!$res3 = $element_handler->insert($elementObject)) {
+          exit("Error: could not update the linked selectbox metadata. <br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+        }
+        unset($parts);
+        unset($elementObject);
+      }
+      print "Updated the linked selectbox definitions new metadata.  result: OK<br>\n";
+      
+      print "Data migration complete.  result: OK\n";
+		
+		}
+		
 }
 
 
@@ -1715,15 +1866,6 @@ case "modform":
 case "delform":
 	delform();
 	break;
-case "showform": // not in use any longer
-	showform();
-	break;
-
-// added jwe 8/29/04
-case "permlinks":
-	permlinks();
-	break;
-// added jwe May 23, 2005
 
 case "permsub":
 	if(isset($_POST['list_op']))
@@ -1774,18 +1916,18 @@ case "migratedb":
 	migratedb();
 	break;
 
-case "patch23":
-	patch23();
+case "patch30":
+	patch30();
 	break;
 case "patch22convertdata":
 	patch22convertdata();
 	break;
-case "patch24datastructure":
-        patch24DataStructure();
+case "patch30datastructure":
+        patch30DataStructure();
         break;
 }
 
-print "<p>version 2.3 RC1</p>";
+print "<p>version 3.0 RC1</p>";
 
 include 'footer.php';
     xoops_cp_footer();

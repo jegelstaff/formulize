@@ -41,13 +41,13 @@ class formulizeDataHandler  {
 
 	// $fid must be an id
 	function formulizeDataHandler($fid){
-		$this->fid = $fid;
+		$this->fid = intval($fid);
 	}
 	
 	// this function copies data from one form to another
 	// sourceFid is the ID of the form that we're copying data from
-	// elementMap is an array with keys being the IDs of the elements in the old form and the values are the corresponding IDs of the elements in the new form
-	function cloneData($sourceFid, $elementMap) {
+	// map is an array with the keys being the handles in the source form, and the values being the handle in the new cloned form
+	function cloneData($sourceFid, $map) {
 		global $xoopsDB;
 		// 1. get all the data in the source form
 		// 2. loop through it, and swap the old field names for the new ones
@@ -61,14 +61,10 @@ class formulizeDataHandler  {
 			$insertSQL = "INSERT INTO " . $xoopsDB->prefix("formulize_" . $this->fid) . " SET ";
 			
 			foreach($sourceDataArray as $field=>$value) {
-				if(substr($field, 0, 8) == "element_") {
-					$oldElementID = substr($field, 8);
-					$newElementID = $elementMap[$oldElementID];
-					$field = "element_" . $newElementID;
-				}
 				if($field == "entry_id") { $value = ""; } // use new ID numbers in the new table, in case there's ever a case where we're copying data into a table that already has data in it
+				if(isset($map[$field])) { $field = $map[$field]; } // if this field is in the map, then use the value from the map as the field name (this will match the field name in the cloned form)
 				if(!$start) { $insertSQL .= ", "; }
-				$insertSQL .= $field . " = \"" . mysql_real_escape_string($value) . "\"";
+				$insertSQL .= "`$field` = \"" . mysql_real_escape_string($value) . "\"";
 				$start = false;
 			}
 			if(!$insertResult = $xoopsDB->queryF($insertSQL)) {
@@ -78,6 +74,445 @@ class formulizeDataHandler  {
 		return true;
 	}
 
+	// this function makes a copy of an entry in one form
+	function cloneEntry($entry) {
+		if(!is_numeric($entry)) {
+			return false;
+		}
+		global $xoopsDB;
+		$sql = "SELECT * FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE entry_id = $entry";
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$data = $xoopsDB->fetchArray($res);
+		$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_".$this->fid) . " SET ";
+		$start = 1;
+		foreach($data as $field=>$value) {
+			if($field == "entry_id") { continue; }
+			if(!$start) { $sql .= ", "; }
+			$start = 0;
+			$sql .= "`$field` = \"" . mysql_real_escape_string($value) . "\"";
+		}
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		return $xoopsDB->getInsertId();
+	}
+	
+	// this function looks in a particular entry in a particular form, and finds the entries it is pointing at, and then finds the new entries that it should be pointing at, and reassigns the values to match
+	// intended to be called once per pair of linked selectboxes involved in a cloning process
+	function reassignLSB($sourceFid, $lsbElement, $entryMap) {
+		global $xoopsDB;
+		foreach($entryMap[$lsbElement->getVar('id_form')] as $originalEntry=>$newEntries) {
+			foreach($newEntries as $newEntryNum=>$thisEntry) {
+				$sql = "SELECT `".$lsbElement->getVar('ele_handle') . "` FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE entry_id=$thisEntry";
+				if(!$res = $xoopsDB->query($sql)) {
+					return false;
+				}
+				$array = $xoopsDB->fetchArray($res);
+				$sourceEntryIds = explode(",", trim($array[$lsbElement->getVar('ele_handle')], ",")); // trim is meant to remove trailing and leading commas
+				// now that we know what this entry was pointing at, we need to find those values in the map, and their corresponding new values, and write them back into this entry
+				$newIds = array();
+				foreach($sourceEntryIds as $thisId) {
+					if(isset($entryMap[$sourceFid][$thisId])) { // only make up new assignments for entries that were actually cloned, leave others alone.
+						$newIds[] = $entryMap[$sourceFid][$thisId][$newEntryNum];
+					} else {
+						$newIds[] = $thisId;
+					}
+				}
+				$sql = "UPDATE " . $xoopsDB->prefix("formulize_".$this->fid) . " SET `".$lsbElement->getVar('ele_handle')."` = \",".implode(",",$newIds).",\" WHERE entry_id=$thisEntry";
+				if(!$res = $xoopsDB->query($sql)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	// this function handles deletion of an entry in a form's datatable
+	// can take a single ID or an array of IDs
+	function deleteEntries($ids) {
+		if(!is_array($ids)) {
+			$sentID = $ids;
+			$ids = array();
+			$ids[0] = $sentID;
+		}
+		global $xoopsDB;
+		$sql = "DELETE FROM " .$xoopsDB->prefix("formulize_".$this->fid) . " WHERE entry_id = " . implode(" OR entry_id = ", $ids);
+		if(!$deleteSuccess = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=".$this->fid." AND (entry_id = " . implode(" OR entry_id = ", $ids) . ")";
+		if(!$deleteOwernshipSuccess = $xoopsDB->query($sql)) {
+			print "Error: could not delete entry ownership information for form ". $this->fid . ", entries: " . implode(", ", $ids) . ". Check the DB queries debug info for details.";
+		}
+		return true;
+	}
+	
+	// this function checks to see if a given entry exists
+	function entryExists($id) {
+		static $cachedEntryExists = array();
+		if(!isset($cachedEntryExists[$this->fid][$id])) {
+			global $xoopsDB;
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE entry_id = " . intval($id);
+			$res = $xoopsDB->query($sql);
+			$row = $xoopsDB->fetchRow($res);
+			if($row[0] > 0) {
+				$cachedEntryExists[$this->fid][$id] = true;
+			} else {
+				$cachedEntryExists[$this->fid][$id] = false;
+			}
+		}
+		return $cachedEntryExists[$this->fid][$id];
+	}
+	
+	// this function gets the metadata on an entry
+	// returns an array with keys 0 through 3, corresponding to creation datetime, mod datetime, creation uid, mod uid
+	// intended to be called like this:
+	// $data_handler = new formulizeDataHandler($fid);
+  // list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry);
+	// if $updateCache is set, then the data should be queried for fresh, and cache reupdated
+	function getEntryMeta($id, $updateCache = false) {
+		static $cachedEntryMeta = array();
+		if(!isset($cachedEntryMeta[$this->fid][$id]) OR $updateCache) {
+			global $xoopsDB;
+			$sql = "SELECT creation_datetime, mod_datetime, creation_uid, mod_uid FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE entry_id = " . intval($id);
+			if(!$res = $xoopsDB->query($sql)) {
+				$cachedEntryMeta[$this->fid][$id] = false;
+			}
+			$cachedEntryMeta[$this->fid][$id] = $xoopsDB->fetchRow($res);
+		}
+		return $cachedEntryMeta[$this->fid][$id];
+	}
+	
+	// this function returns the creation users for a series of entries
+	function getAllUsersForEntries($ids, $scope_uids=array()) {
+		$scopeFilter = $this->_buildScopeFilter($scope_uids);
+		global $xoopsDB;
+		$sql = "SELECT creation_uid FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE entry_id IN (" . implode(",", $ids) . ") $scopefilter";
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$users = array();
+		while($row = $xoopsDB->fetchRow($res)) {
+			$users[] = $row[0];
+		}
+		return $users;
+	}
+	
+	
+	// this function figures out if a given element has a value in the given entry
+	function elementHasValueInEntry($id, $element_id) {
+		if(!$element = _getElementObject($element_id)) {
+			return false;
+		}
+		global $xoopsDB;
+		$sql = "SELECT `". $element->getVar('ele_handle') . "` FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE entry_id = " . intval($id);
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$row = $xoopsDB->fetchRow($res);
+		if($row[0] != "") {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	// this function returns the value of a given element in the given entry
+	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_groups.
+	function getElementValueInEntry($id, $element_id, $scope_uids=array(), $scope_groups=array()) {
+		if(!$element = _getElementObject($element_id)) {
+			return false;
+		}
+		global $xoopsDB;
+		if(is_array($scope_uids) AND count($scope_uids)>0) {
+			$scopeFilter = $this->_buildScopeFilter($scope_uids);
+			$sql = "SELECT `". $element->getVar('ele_handle') . "` FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE entry_id = " . intval($id) . $scopeFilter;
+		} elseif(is_array($scope_groups) AND count($scope_groups)>0) {
+			$scopeFilter = $this->_buildScopeFilter("", $scope_groups);
+			$sql = "SELECT `t1.". $element->getVar('ele_handle') . "` FROM " . $xoopsDB->prefix("formulize_".$this->fid) . "AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.entry_id = " . intval($id) . $scopeFilter;
+		} else {
+			$sql = "SELECT `". $element->getVar('ele_handle') . "` FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE entry_id = " . intval($id);
+		}
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$row = $xoopsDB->fetchRow($res);
+		return $row[0];
+	}
+	
+	// this function finds all entries created by a given user in the form
+	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_groups.
+	function getAllEntriesForUsers($uids, $scope_uids=array(), $scope_groups=array()) {
+		if(!is_array($uids)) {
+			$sentID = $uids;
+			$uids = array();
+			$uids[0] = $sentID;
+		}
+		global $xoopsDB;
+		if(is_array($scope_uids) AND count($scope_uids) > 0) {
+			$scopeFilter = $this->_buildScopeFilter($scope_uids);
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", $uids) . ") $scopeFilter ORDER BY entry_id";
+		} elseif(is_array($scope_groups) AND count($scope_groups)>0) {
+			$scopeFilter = $this->_buildScopeFilter("", $scope_groups);
+			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . "AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE (t1.creation_uid = " . implode(" OR t1.creation_uid = ", $uids) . ") $scopeFilter ORDER BY t1.entry_id";
+		} else {
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", $uids) . ") ORDER BY entry_id";
+		}
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$entries = array();
+		while($row = $xoopsDB->fetchRow($res)) {
+			$entries[] = $row[0];
+		}
+		return $entries;
+	
+	}
+	// this function finds the first entry for a given user in the form
+	function getFirstEntryForUsers($uids, $scope_uids=array()) {
+		if(!is_array($uids)) {
+			$sentID = $uids;
+			$uids = array();
+			$uids[0] = $sentID;
+		}
+		$scopeFilter = $this->_buildScopeFilter($scope_uids);
+		global $xoopsDB;
+		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE (creation_uid = " . implode(" OR creation_uid = ", $uids) . ") $scopeFilter ORDER BY entry_id LIMIT 0,1";
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$row = $xoopsDB->fetchRow($res);
+		return $row[0];
+	
+	}
+	
+	// this function returns the entry ID of the first entry found in the form with the specified value in the specified element
+	function findFirstEntryWithValue($element_id, $value) {
+		if(!$element = _getElementObject($element_id)) {
+			return false;
+		}
+		global $xoopsDB;
+		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE `". $element->getVar('ele_handle') . "` = \"" . mysql_real_escape_string($value) . "\" ORDER BY entry_id LIMIT 0,1";
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$row = $xoopsDB->fetchRow($res);
+		return $row[0];
+	}
+	
+	// this function returns the entry ID of all entries found in the form with the specified value in the specified element
+	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_groups.
+	function findAllEntriesWithValue($element_id, $value, $scope_uids=array(), $scope_groups=array(), $operator="=") {
+		if(!$element = _getElementObject($element_id)) {
+			return false;
+		}
+		global $xoopsDB;
+		$queryValue = "\"" . mysql_real_escape_string($value) . "\"";
+		if($operator == "{LINKEDSEARCH}") {
+			$operator = "LIKE";
+			$queryValue = "\"%," . mysql_real_escape_string($value) . ",%\"";
+		}
+		if(is_array($scope_uids) AND count($scope_uids) > 0) {
+			$scopeFilter = $this->_buildScopeFilter($scope_uids);
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter ORDER BY entry_id";
+		} elseif(is_array($scope_groups) AND count($scope_groups)>0) {
+			$scopeFilter = $this->_buildScopeFilter("", $scope_groups);
+			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . "AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE `t1.". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter ORDER BY t1.entry_id";
+		} else {
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue ORDER BY entry_id";			
+		}
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$entries = array();
+		while($row = $xoopsDB->fetchRow($res)) {
+			$entries[] = $row[0];
+		}
+		return $entries;
+	}
+	
+	function _buildScopeFilter($scope_uids, $scope_groups) {
+		if(is_array($scope_uids)) {
+			if(count($scope_uids) > 0) {
+				$scopeFilter = " AND (creation_uid = " . implode(" OR creation_uid = ", $scope_uids) . ")";
+			} else {
+				$scopeFilter = "";
+			}
+		} elseif(is_array($scope_groups)) {
+			if(count($scope_groups) > 0) {
+			  $scopeFilter = " AND (t2.groupid IN (".implode(",", $scope_groups).") AND t2.entry_id=t1.entry_id AND t2.fid=".intval($this->fid).")";
+			} else {
+				$scopeFilter = "";
+			}
+		} else {
+			$scopeFilter = "";
+		}
+		return $scopeFilter;
+	}
+	
+	// derive the owner groups and write them to the owner groups table
+	// $uids and $entryids can be parallel arrays with multiple users and entries
+	// arrays must start with 0 key and increase sequentially (no gaps, no associative keys, etc)
+	function setEntryOwnerGroups($uids, $entryids) {
+		global $xoopsDB;
+		if(!is_array($uids)) {
+			$tempuids = $uids;
+			$uids = array();
+			$uids[] = $tempuids;
+		}
+		if(!is_array($entryids)) {
+			$tempentryids = $entryids;
+			$entryids = array();
+			$entryids[] = $tempentryids;
+		}
+		if(count($uids) != count($entryids)) {
+			return false;
+		}
+		$start = true;
+		$ownerInsertSQL = "INSERT INTO " . $xoopsDB->prefix("formulize_entry_owner_groups") . " (`fid`, `entry_id`, `groupid`) VALUES ";
+		for($i=0;$i<count($uids);$i++) { // loop through all the users
+			$ownerGroups = array();
+			if($uids[$i]) { // get the user's group
+				$member_handler =& xoops_gethandler('member');
+				$creationUser = $member_handler->getUser($uids[$i]);
+				if(is_object($creationUser)) {
+					$ownerGroups = $creationUser->getGroups();
+				} else {
+					$ownerGroups[] = XOOPS_GROUP_ANONYMOUS;
+				}
+			} else {
+				$ownerGroups[] = XOOPS_GROUP_ANONYMOUS;
+			}
+			foreach($ownerGroups as $index=>$thisGroup) { // add this user's groups and this entry id to the insert statement
+				if(!$start) { 
+					$ownerInsertSQL .= ", "; // add a comma between successive inserts
+				}
+				$start = false;
+				$ownerInsertSQL .= "('".$this->fid."', '".intval($entryids[$i])."', '".intval($thisGroup)."')";
+			}
+		}
+		if(!$ownerInsertRes = $xoopsDB->query($ownerInsertSQL)) {
+			return false;
+		}
+		return true;
+	}
+	
+	// This function returns the entry_owner_groups for the given entry
+	function getEntryOwnerGroups($entry_id) {
+		static $cachedEntryOwnerGroups = array();
+		if(!isset($cachedEntryOwnerGroups[$this->fid][$entry_id])) {
+			global $xoopsDB;
+			$sql = "SELECT groupid FROM ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid='".$this->fid."' AND entry_id='".intval($entry_id)."'";
+			if($res = $xoopsDB->query($sql)) {
+				$groupArray = array();
+				while($row = $xoopsDB->fetchRow($res)) {
+					$groupArray[] = $row[0];
+				}
+				$cachedEntryOwnerGroups[$this->fid][$entry_id]=$groupArray;
+			} else {
+				$cachedEntryOwnerGroups[$this->fid][$entry_id]=false;
+			}	
+		}
+		return $cachedEntryOwnerGroups[$this->fid][$entry_id];
+		
+	}
+	
+	// This function writes a set of values to an entry
+	// $values will be an array of element ids and prepared values
+	// $proxyUser is optional and if present will override the current xoopsuser uid as the creation user
+	function writeEntry($entry, $values, $proxyUser=false, $forceUpdate=false) {
+	
+		global $xoopsDB, $xoopsUser;
+		static $cachedMaps = array();
+		// get handle/id equivalents directly from database in one query, since we'll need them later
+		// much more efficient to do it this way than query for all the element objects, for instance.
+		if(!isset($cachedMaps[$this->fid])) {
+			$handleElementMapSQL = "SELECT ele_handle, ele_id FROM ".$xoopsDB->prefix("formulize") . " WHERE id_form=".intval($this->fid);
+			if(!$handleElementMapRes = $xoopsDB->query($handleElementMapSQL)) {
+				return false;
+			}
+			$handleElementMap = array();
+			while($handleElementMapArray = $xoopsDB->fetchArray($handleElementMapRes)) {
+				$handleElementMap[$handleElementMapArray['ele_id']] = $handleElementMapArray['ele_handle'];
+			}
+			$cachedMap[$this->fid] = $handleElementMap;
+		}
+		if(!isset($handleElementMap)) {
+			$handleElementMap = $cachedMap[$this->fid];
+		}
+		
+		// check for presence of ID or SEQUENCE and look up the values we'll need to write
+		$lockIsOn = false;
+		$idElements = array_keys($values, "{ID}", true); // true param forces === comparison, which is important!!
+		$seqElements = array_keys($values, "{SEQUENCE}", true);
+    if(count($idElements)>0 OR count($seqElements)>0) {
+      $lockIsOn = true;
+      $xoopsDB->query("LOCK TABLES ".$xoopsDB->prefix("formulize_".$this->fid)." WRITE"); // need to lock table since there are multiple operations required on it for this one write transaction
+			if(count($idElements)>0) {
+				$idMaxSQL = "SELECT MAX(entry_id) FROM " . $xoopsDB->prefix("formulize_".$this->fid);
+				if($idMaxRes = $xoopsDB->query($idMaxSQL)) {
+					$idMaxValue = $xoopsDB->fetchArray($idMaxRes);
+					foreach($idElements as $key) {
+						$values[$key] = $idMaxValue["max(entry_id)"];
+					}
+				} else {
+					exit("Error: could not determine max value to use for {ID} elements.  SQL:<br>$idMaxSQL<br>");
+				}
+			}
+			if(count($seqElements)>0) {
+				foreach($seqElements as $seqElement) {
+					$maxSQL = "SELECT MAX(`".$handleElementMap[$seqElement]."`) FROM ". $xoopsDB->prefix("formulize_".$this->fid);
+					if($maxRes = $xoopsDB->query($maxSQL)) {
+						$maxValue = $xoopsDB->fetchArray($maxRes);
+						$values[$seqElement] = $maxValue["max(".$handleElementMap[$seqElement].")"];
+					} else {
+						exit("Error: count not determin max value for use in element $seqElement.  SQL:<br>$maxSQL<br>");
+					}
+				}	
+			}
+		}
+		
+		// do the actual writing now that we have prepared all the info we need
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+		if($entry == "new") {
+			$sql = "INSERT INTO ".$xoopsDB->prefix("formulize_".$this->fid)." (`creation_datetime`, `mod_datetime`, `creation_uid`, `mod_uid`";
+			$sqlValues = "";
+			foreach($values as $id=>$value) {
+				$sql .= ", `".$handleElementMap[$id]."`";
+				$sqlValues .= ", '".mysql_real_escape_string($value)."'";
+			}
+			$creation_uid = $proxyUser ? $proxyUser : $uid;
+			$sql .= ") VALUES (NOW(), NOW(), ".intval($creation_uid).", ".intval($uid)."$sqlValues)";
+			$entry_to_return = "";
+		} else {
+			$sql = "UPDATE " . $xoopsDB->prefix("formulize_".$this->fid) .  " SET mod_datetime=NOW(), mod_uid=".intval($uid);
+			foreach($values as $id=>$value) {
+				$sql .= ", `".$handleElementMap[$id]."` = '".mysql_real_escape_string($value)."'";
+			}
+			$sql .= " WHERE entry_id=".intval($entry);
+			$entry_to_return = intval($entry);
+		}
+		
+		if($forceUpdate) {
+			if(!$res = $xoopsDB->queryF($sql)) {
+				exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.");
+			}
+		} elseif(!$res = $xoopsDB->query($sql)) {
+			exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql");
+		}
+		$lastWrittenId = $xoopsDB->getInsertId();
+		if($lockIsOn) { $xoopsDB->query("UNLOCK TABLES"); }
+		if($entry_to_return) { $this->updateCaches($entry_to_return); }
+		return $entry_to_return ? $entry_to_return : $lastWrittenId;
+	}
+	
+	// this function updates relevant caches after data has been updated in the database
+	function updateCaches($id) {
+		//so far, only metadata cache is affected
+		$this->getEntryMeta($id, true);
+	}
 	
 }
 	

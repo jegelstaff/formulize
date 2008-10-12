@@ -53,8 +53,8 @@ if(isset($pages['titles'])) {
 	unset($pages['titles']);
 }
 
-if(!$done_dest AND $_POST['oldcols']) { $done_dest = $_POST['oldcols']; }
-if(!$button_text AND $_POST['currentview']) { $button_text = $_POST['currentview']; }
+if(!$done_dest AND $_POST['formulize_doneDest']) { $done_dest = $_POST['formulize_doneDest']; }
+if(!$button_text AND $_POST['formulize_buttonText']) { $button_text = $_POST['formulize_buttonText']; }
 
 
 list($fid, $frid) = getFormFramework($formframe, $mainform);
@@ -65,7 +65,7 @@ $introtext = $introtext ? $introtext : "";
 global $xoopsUser;
 
 $mid = getFormulizeModId();
-$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 $gperm_handler =& xoops_gethandler('groupperm');
 $member_handler =& xoops_gethandler('member');
@@ -82,15 +82,21 @@ if(!$entry AND $_POST['entry'.$fid]) {
 	$entry = $single_result['flag'] ? $single_result['entry'] : 0;
 }
 
+// this is probably not necessary any more, due to architecture changes in Formulize 3
+// formulize_newEntryIds is set when saving data
+if(!$entry AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
+	$entry = $GLOBALS['formulize_newEntryIds'][$fid][0];
+}
+
 if($single_result['flag'] == "group" AND $update_own_entry AND $entry == $single_result['entry']) {
 	$update_other_entries = true;
 }
 
-$owner = getEntryOwner($entry);
+$owner = getEntryOwner($entry, $fid);
 
 
-$prevPage = isset($_POST['order']) ? $_POST['order'] : 1; // last page that the user was on, not necessarily the previous page numerically
-$currentPage = isset($_POST['sort']) ? $_POST['sort'] : 1;
+$prevPage = isset($_POST['formulize_prevPage']) ? $_POST['formulize_prevPage'] : 1; // last page that the user was on, not necessarily the previous page numerically
+$currentPage = isset($_POST['formulize_currentPage']) ? $_POST['formulize_currentPage'] : 1;
 
 // debug control:
 $currentPage = (isset($_GET['debugpage']) AND is_numeric($_GET['debugpage'])) ? $_GET['debugpage'] : $currentPage;
@@ -118,8 +124,11 @@ if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // reme
 
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formread.php";
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+		include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 
-		$owner_groups =& $member_handler->getGroupsByUser($owner, FALSE);
+		//$owner_groups =& $member_handler->getGroupsByUser($owner, FALSE);
+		$data_handler = new formulizeDataHandler($fid);
+		$owner_groups = $data_handler->getEntryOwnerGroups($entry);		
 
 		$entries[$fid][0] = $entry;
 
@@ -130,7 +139,8 @@ if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // reme
 		}
 
 		$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
-		$entries = handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_groups, $groups, "", $save_elements, $mid, $screen); 
+		//$entries = handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_groups, $groups, "", $save_elements, $mid, $screen);
+		$entries = $GLOBALS['formulize_allWrittenEntryIds']; // set in readelements.php
 
 
 		// if there has been no specific entry specified yet, then assume the identity of the entry that was just saved -- assumption is it will be a new save
@@ -152,10 +162,10 @@ if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // reme
 function submitForm(page, prevpage) {
 	var validate = xoopsFormValidate_formulize();
 	if(validate) {
-		window.document.formulize.sort.value = page;
-		window.document.formulize.order.value = prevpage;
-		window.document.formulize.oldcols.value = '<?php print $done_dest; ?>';
-		window.document.formulize.currentview.value = '<?php print $button_text; ?>';
+		window.document.formulize.formulize_currentPage.value = page;
+		window.document.formulize.formulize_prevPage.value = prevpage;
+		window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
+		window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
 		validateAndSubmit();
 	}
 }
@@ -189,17 +199,18 @@ if(is_array($conditions) AND $entry) {
 			$ops = $thesecons[1];
 			$terms = $thesecons[2];
 			$start = 1;
-			for($i=0;$i<count($elements);$i++) {
+			foreach($elements as $i=>$thisElement) {
+			//for($i=0;$i<count($elements);$i++) {
 				if($ops[$i] == "NOT") { $ops[$i] = "!="; }
 				if($start) {
-					$filter = $entry."][".$elements[$i]."/**/".$terms[$i]."/**/".$ops[$i];
+					$filter = $entry."][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
 					$start = 0;
 				} else {
-					$filter .= "][".$elements[$i]."/**/".$terms[$i]."/**/".$ops[$i];
+					$filter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
 				}
 			}
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-			$data = getData("", $fid, $filter, "AND");
+			$data = getData($frid, $fid, $filter, "AND");
 			if($data[0] == "") { 
 				if($prevPage < $currentPage) {
 					$currentPage++;
@@ -282,15 +293,15 @@ if($currentPage != $thanksPage AND ($pages[$currentPage][0] === "HTML" OR $pages
 		print $pages[$currentPage][1];
 	}
 
-	// put in the form that passes the entry, sort (page we're going to) and order (page we were on)
+	// put in the form that passes the entry, page we're going to and page we were on
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 	?>
 
 	
 	<form name=formulize id=formulize action=<?php print getCurrentURL(); ?> method=post>
 	<input type=hidden name=entry<?php print $fid; ?> id=entry<?php print $fid; ?> value=<?php print $entry ?>>
-	<input type=hidden name=sort id=sort value="">
-	<input type=hidden name=order id=order value="">
+	<input type=hidden name=formulize_currentPage id=formulize_currentPage value="">
+	<input type=hidden name=formulize_prevPage id=formulize_prevPage value="">
 	</form>
 
 	<script type="text/javascript">
@@ -316,8 +327,8 @@ if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages
 
 	$GLOBALS['nosubforms'] = true; // subforms cannot have a view button on multipage forms, since moving to a sub causes total confusion of which entry and fid you are looking at
 
-	$settings['sort'] = $currentPage;
-	$settings['order'] = $currentPage;
+	$settings['formulize_currentPage'] = $currentPage;
+	$settings['formulize_prevPage'] = $currentPage; // now that we're done everything else, we can send the current page as the previous page when initializing the form.  Javascript will set the true value prior to submission.
 
 	drawPageNav($usersCanSave, $pagesSkipped, $currentPage, $previousPage, $nextPage,$submitTextPrev, $submitTextNext, $pages, $thanksPage, $pageTitles, "above");
 	

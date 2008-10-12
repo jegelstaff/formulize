@@ -37,9 +37,6 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 
 global $xoopsDB;
 define('formulize_TABLE', $xoopsDB->prefix("formulize"));
-// added data table - Aug 14 2005
-define('formulize_DATATABLE', $xoopsDB->prefix("formulize_form"));
-
 
 class formulizeformulize extends XoopsObject {
 	function formulizeformulize(){
@@ -48,10 +45,11 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("id_form", XOBJ_DTYPE_INT, NULL, false);
 		$this->initVar("ele_id", XOBJ_DTYPE_INT, NULL, false);
 		$this->initVar("ele_type", XOBJ_DTYPE_TXTBOX, NULL, true, 10);
-		$this->initVar("ele_caption", XOBJ_DTYPE_TXTBOX, NULL, true, 255);
+		$this->initVar("ele_caption", XOBJ_DTYPE_TXTAREA);
 		// added descriptive text June 6 2006 -- jwe
 		$this->initVar("ele_desc", XOBJ_DTYPE_TXTAREA);
 		$this->initVar("ele_colhead", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+		$this->initVar("ele_handle", XOBJ_DTYPE_TXTBOX, NULL, false, 30);
 		$this->initVar("ele_order", XOBJ_DTYPE_INT);
 		$this->initVar("ele_req", XOBJ_DTYPE_INT);
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);
@@ -124,9 +122,9 @@ class formulizeElementsHandler {
 			$ele_id = $this->db->genId(formulize_TABLE."_ele_id_seq");
             // changed - start - August 19 2005 - jpc
 			$sql = sprintf("INSERT INTO %s (
-				id_form, ele_id, ele_type, ele_caption, ele_desc, ele_colhead, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private
+				id_form, ele_id, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private
 				) VALUES (
-				%u, %u, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u
+				%u, %u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u
 				)",
 				formulize_TABLE,
 				$id_form,
@@ -135,6 +133,7 @@ class formulizeElementsHandler {
 				$this->db->quoteString($ele_caption),
 				$this->db->quoteString($ele_desc),
 				$this->db->quoteString($ele_colhead),
+				$this->db->quoteString($ele_handle),
 				$ele_order,
 				$ele_req,
 				$this->db->quoteString($ele_value),
@@ -153,6 +152,7 @@ class formulizeElementsHandler {
 				ele_caption = %s,
 				ele_desc = %s,
 				ele_colhead = %s,
+				ele_handle = %s,
 				ele_order = %u,
 				ele_req = %u,
 				ele_value = %s,
@@ -168,6 +168,7 @@ class formulizeElementsHandler {
 				$this->db->quoteString($ele_caption),
 				$this->db->quoteString($ele_desc),
 				$this->db->quoteString($ele_colhead),
+				$this->db->quoteString($ele_handle),
 				$ele_order,
 				$ele_req,
 				$this->db->quoteString($ele_value),
@@ -203,7 +204,7 @@ class formulizeElementsHandler {
 	
 	function delete(&$element, $force = false){
 		
-		if( strtoupper(get_class($this)) != strtoupper('formulizeelementshandler')) {
+		if( strtolower(get_class($this)) != 'formulizeelementshandler') {
 			return false;
 		}
 
@@ -230,19 +231,11 @@ class formulizeElementsHandler {
 		if( strtoupper(get_class($this)) != strtoupper('formulizeelementshandler')) {
 			return false;
 		}
-		// convert the caption to form_form formatting (' becomes `)
-		$caption = $element->getVar('ele_caption');
-		$caption = str_replace("'", "`", $caption);
-		$caption = str_replace("&#039;", "`", $caption);
-		$caption = str_replace("&quot;", "`", $caption);
-		$fid = $element->getVar('id_form');
-		$sql = "DELETE FROM ".formulize_DATATABLE." WHERE id_form='$fid' AND ele_caption='$caption'";
-
-        if( false != $force ){
-            $result = $this->db->queryF($sql);
-        }else{
-            $result = $this->db->query($sql);
-        }
+		$form_handler =& xoops_getmodulehandler('forms', 'formulize');
+		if(!$deleteResult = $form_handler->deleteElementField($element->getVar('ele_id'))) {
+			print "Error: could not drop field from data table";
+			return false;
+		}
 		return true;
 	}
 

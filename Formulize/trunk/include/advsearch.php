@@ -179,11 +179,11 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
-	$uid = $xoopsUser->getVar('uid');
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
 
-	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler, "")) {
+	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
 		print "<p>" . _NO_PERM . "</p>";
 		exit;
 	}
@@ -244,10 +244,10 @@ $columns_or->addOption(2, _formulize_DE_AS_MULTI_OR);
 $columns_andor->addElement($columns_or);
 
 $columns = new xoopsFormSelect(_formulize_DE_AS_FIELD . "<br /><br />" . $columns_andor->render(), 'column', '', 5, true);
-$columns->addOption("uid", _formulize_DE_CALC_CREATOR);
-$columns->addOption("proxyid", _formulize_DE_CALC_MODIFIER);
-$columns->addOption("creation_date", _formulize_DE_CALC_CREATEDATE . ' (YYYY-mm-dd)');
-$columns->addOption("mod_date", _formulize_DE_CALC_MODDATE . ' (YYYY-mm-dd)');
+$columns->addOption("creation_uid", _formulize_DE_CALC_CREATOR);
+$columns->addOption("mod_uid", _formulize_DE_CALC_MODIFIER);
+$columns->addOption("creation_datetime", _formulize_DE_CALC_CREATEDATE . ' (YYYY-mm-dd)');
+$columns->addOption("mod_datetime", _formulize_DE_CALC_MODDATE . ' (YYYY-mm-dd)');
 $columns->addOption("creator_email", _formulize_DE_CALC_CREATOR_EMAIL);
 $columns->addOptionArray($options);
 
