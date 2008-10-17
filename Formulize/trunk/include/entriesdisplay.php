@@ -931,6 +931,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		}
 	} 
 	if($delete_other_reports = $gperm_handler->checkRight("delete_other_reports", $fid, $groups, $mid)) { $pubstart = 10000; }
+	if($screenButtonText['saveButton']) { $screenButtonText['submitButton'] = $screenButtonText['saveButton']; } // want this button accessible by two names, essentially, since it serves two purposes semantically/logically
 	$onActionButtonCounter = 0;
 	$atLeastOneActionButton = false;
 	foreach($screenButtonText as $scrButton=>$scrText) {
@@ -2839,7 +2840,7 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	}
 	*/
 	// if there is no save button specified in either of the templates, but one is available, then put it in below the list
-	if($type == "bottom" AND $saveButton AND $GLOBALS['formulize_displayElement_LOE_Used'] AND !strstr($screen->getVar('toptemplate'), 'saveButton') AND !strstr($screen->getVar('bottomtemplate'), 'saveButton')) {
+	if($type == "bottom" AND count($screen->getVar('decolumns')) > 0 AND $GLOBALS['formulize_displayElement_LOE_Used'] AND !strstr($screen->getVar('toptemplate'), 'saveButton') AND !strstr($screen->getVar('bottomtemplate'), 'saveButton')) {
 		print "<p>$saveButton</p>\n";
 	}
 	
@@ -3071,6 +3072,8 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				break;
 			case "saveButton":
 				return "<input type=button style=\"width: 140px;\" name=deSaveButton value='" . $buttonText . "' onclick=\"javascript:showLoading();\"></input>";
+			case "submitButton":
+				return "<input type=button style=\"width: 140px;\" name=deSubmitButton value='" . $buttonText . "' onclick=\"javascript:showLoading();\"></input>";
 				break;
 		}
 	} elseif($button == "currentViewList") { // must always set a currentview value in POST even if the list is not visible
