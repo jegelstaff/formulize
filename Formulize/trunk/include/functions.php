@@ -951,6 +951,30 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
 		}
 		$many_to_one = array_unique($many_to_one);
 
+		if(!is_array($entries)) { // no entries passed, so we don't need to figure out the entries, so return only the fids and subfids
+			foreach($one_to_one as $one_fid) {
+				$fids[] = $one_fid['fid'];
+			}
+			foreach($one_to_many as $many_fid) {
+				$sub_fids[] = $many_fid['fid'];
+			}
+			if($ud) {
+				$start = 1;
+				foreach($many_to_one as $many_fid) {
+					if($start) {
+      			$sub_fids = $fids;
+      			unset($fids);
+      			$start = 0;
+      		}
+      		$fids[] = $many_fid['fid'];
+				}
+			}
+			$to_return['fids'] = $fids;
+			$to_return['sub_fids'] = $sub_fids;
+			return $to_return;
+		}
+
+
 
 		// STRONG ASSUMPTION IS THAT ONLY ONE KIND OF LINKING IS GOING TO BE FOUND!  IF A FORM IS LINKED IN MULTIPLE KINDS OF RELATIONSHIPS TO MULTIPLE OTHER FORMS, STRANGE THINGS COULD START HAPPENING...
 		// Code and output arrays should be consistent, so it's not that results of this function will be inaccurate, but other code elsewhere may in fact have difficulty handling the results since not all eventualities may yet be accounted for in the logic
@@ -1022,7 +1046,7 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
       			}
       			$fids[] = $many_fid['fid'];
       			// NOTE: no entries returned here.  assumption is that this is only used by displayEntries to handle presenting many_to_one relationship on that screen, and will never in fact be used by displayForm to put unified many_to_one relationships up for input (see the note in findLinkedEntries regarding the "mis-specified" relationship and what would have to happen in the UI to make this work over there)
-				// NOTE: explicit exclusion of this code unless ud is 0, ie: unless called from displayEntries
+						// NOTE: explicit exclusion of this code unless ud is 0, ie: unless called from displayEntries
       		}
 		}
 
