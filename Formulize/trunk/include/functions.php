@@ -523,7 +523,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
       			} else {
       				exit("Error returning the default list of captions.");
       			}
-			}
+			} 
 		} else { // not using new ID based system, so convert to ids if needids is true
 			if($needids) {
 				$tempheaderlist = $headerlist;
@@ -570,14 +570,26 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
 		}
 	}
   if($needids AND $convertIdsToElementHandles) {
-    $sql = "SELECT ele_handle FROM ".$xoopsDB->prefix("formulize") . " WHERE ele_id IN (".implode(",",$headerlist).") ORDER BY ele_order";
-    if($res = $xoopsDB->query($sql)) {
-      $headerlist = array();
-      while($array = $xoopsDB->fetchArray($res)) {
-        $headerlist[] = $array['ele_handle'];
+    $savedMetaHeaders = array();
+    foreach($headerlist as $thisheaderkey=>$thisheaderid) { // remove non numeric headers and save them
+      if(!is_numeric($thisheaderid)) {
+        $savedMetaHeaders[] = $thisheaderid;
+        unset($headerlist[$thisheaderkey]);
       }
-    } else {
-      print "Error: could not convert Element IDs to Handles when retrieving the header list.<br>";
+    }
+    if(count($headerlist)>0) {// if there are any numeric headers, then get the handles
+      $sql = "SELECT ele_handle FROM ".$xoopsDB->prefix("formulize") . " WHERE ele_id IN (".implode(",",$headerlist).") ORDER BY ele_order";
+      if($res = $xoopsDB->query($sql)) {
+        $headerlist = array();
+        while($array = $xoopsDB->fetchArray($res)) {
+          $headerlist[] = $array['ele_handle'];
+        }
+        $headerlist = array_merge($savedMetaHeaders, $headerlist); // add the non numeric headers back in to the front
+      } else {
+        print "Error: could not convert Element IDs to Handles when retrieving the header list.  SQL error: ".mysql_error()."<br>";
+      }
+    } else { // no numeric headers, so just return the non numeric ones
+      $headerlist = $savedMetaHeaders;
     }
   }
 	return $headerlist;
