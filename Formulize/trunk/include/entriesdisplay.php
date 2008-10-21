@@ -931,7 +931,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		}
 	} 
 	if($delete_other_reports = $gperm_handler->checkRight("delete_other_reports", $fid, $groups, $mid)) { $pubstart = 10000; }
-	if($screenButtonText['saveButton']) { $screenButtonText['submitButton'] = $screenButtonText['saveButton']; } // want this button accessible by two names, essentially, since it serves two purposes semantically/logically
+	if($screenButtonText['saveButton']) { $screenButtonText['goButton'] = $screenButtonText['saveButton']; } // want this button accessible by two names, essentially, since it serves two purposes semantically/logically
 	$onActionButtonCounter = 0;
 	$atLeastOneActionButton = false;
 	foreach($screenButtonText as $scrButton=>$scrText) {
@@ -3072,7 +3072,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				break;
 			case "saveButton":
 				return "<input type=button style=\"width: 140px;\" name=deSaveButton value='" . $buttonText . "' onclick=\"javascript:showLoading();\"></input>";
-			case "submitButton":
+			case "goButton":
 				return "<input type=button style=\"width: 140px;\" name=deSubmitButton value='" . $buttonText . "' onclick=\"javascript:showLoading();\"></input>";
 				break;
 		}
