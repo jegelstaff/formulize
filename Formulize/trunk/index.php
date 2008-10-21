@@ -45,7 +45,19 @@ if(isset($formulize_screen_id)) {
     require_once "../../mainfile.php";
     include XOOPS_ROOT_PATH.'/header.php';
 
+    // uncomment these two lines to enable benchmarking of performance
+    //include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+    //$startPageTime = microtime_float();
+
     include 'initialize.php';
 
     include XOOPS_ROOT_PATH.'/footer.php';
 }
+
+function formulize_benchmark($text) {
+    if(isset($GLOBALS['startPageTime'])) {
+        $currentPageTime = microtime_float();
+        print "<br>$text -- Elapsed: ".($currentPageTime-$GLOBALS['startPageTime'])."<br>";
+    }
+}
+

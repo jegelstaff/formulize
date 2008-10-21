@@ -45,6 +45,8 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 
 function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text="", $settings="", $overrideValue="", $printall=0, $screen=null) { // nmc 2007.03.24 - added 'printall'
 
+formulize_benchmark("Start of displayFormPages.");
+
 // extract the optional page titles from the $pages array for use in the jump to box
 // NOTE: pageTitles array must start with key 1, not 0.  Page 1 is the first page of the form
 $pageTitles = array();
@@ -330,9 +332,15 @@ if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages
 	$settings['formulize_currentPage'] = $currentPage;
 	$settings['formulize_prevPage'] = $currentPage; // now that we're done everything else, we can send the current page as the previous page when initializing the form.  Javascript will set the true value prior to submission.
 
+	formulize_benchmark("Before drawing nav.");
+
 	drawPageNav($usersCanSave, $pagesSkipped, $currentPage, $previousPage, $nextPage,$submitTextPrev, $submitTextNext, $pages, $thanksPage, $pageTitles, "above");
 	
+	formulize_benchmark("After drawing nav/before displayForm.");
+	
 	displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, "", "", 0, 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
+
+	formulize_benchmark("After displayForm.");
 
 }
 
@@ -343,6 +351,9 @@ if($currentPage != $thanksPage AND !$_POST['goto_sfid']) {
 	print "</center>";
 
 }
+
+formulize_benchmark("End of displayFormPages.");
+
 
 } // end of the function!
 

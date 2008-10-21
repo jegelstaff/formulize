@@ -184,6 +184,9 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mi
 
 
 function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button_text="", $settings="", $titleOverride="", $overrideValue="", $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0, $printall=0, $screen=null) {  // nmc 2007.03.24 - added $printall
+
+formulize_benchmark("Start of formDisplay.");
+
 //syntax:
 //displayform($formframe, $entry, $mainform)
 //$formframe is the id of the form OR title of the form OR name of the framework.  Can also be an array.  If it is an array, then flag 'formframe' is the $formframe variable, and flag 'elements' is an array of all the elements that are to be displayed.
@@ -467,6 +470,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		print "<br>Subentries: ";
 		print_r($sub_entries); // debug block - ONLY VISIBLE TO USER 1 RIGHT NOW 
 		} */
+		
+		
+		formulize_benchmark("Ready to start building form.");
+		
 		$title = "";
 		foreach($fids as $this_fid) {
 	
@@ -591,8 +598,13 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			if($go_back['form'] AND !$parentLinks[$this_fid]) {
 				$parentLinks[$this_fid] = getParentLinks($this_fid, $frid);
 			}
-																															
+
+			formulize_benchmark("Before Compile Elements.");
+
 					$form = compileElements($this_fid, $form, $formulize_mgr, $prevEntry, $entries[$this_fid][0], $go_back, $parentLinks[$this_fid], $owner_groups, $groups, $overrideValue, $elements_allowed, $profileForm, $frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen);
+	
+			formulize_benchmark("After Compile Elements.");
+	
 	
 		} // end of for each fids
 	
@@ -1272,6 +1284,9 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	$count = 0;
 	$gridCounter = array();
 	$inGrid = 0;
+	
+	formulize_benchmark("Ready to loop elements.");
+	
 	foreach( $elements as $i ){
 
 		$this_ele_id = $i->getVar('ele_id');
@@ -1401,6 +1416,8 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 		unset($hidden);
 		unset($form_ele); // apparently necessary for compatibility with PHP 4.4.0 -- suggested by retspoox, sept 25, 2005
 	}
+
+	formulize_benchmark("Done looping elements.");
 
 	// add hiddenElements...
 	foreach($hiddenElements as $element_id=>$thisHiddenElement) {

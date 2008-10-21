@@ -136,7 +136,13 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 			$data_handler = new formulizeDataHandler($element->getVar('id_form'));
 			$ele_value = loadValue($prevEntry, $element, $ele_value, $data_handler->getEntryOwnerGroups($entry), $groups, $entry, $profileForm); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 		}
+		
+		formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
+		
+		
   	$form_ele =& $renderer->constructElement($deprefix . $element->getVar('id_form').'_'.$entry.'_'.$element->getVar('ele_id'), $ele_value, $entry, $isDisabled, $screen); 
+		
+		formulize_benchmark("Done rendering element.");
 		
 		if(!$renderElement) {
 			return $form_ele;			

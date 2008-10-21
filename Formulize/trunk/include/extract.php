@@ -431,7 +431,7 @@ if(is_numeric($frame)) {
                $joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
                $newJoinText = " $joinType JOIN " . DBPRE . "formulize_$linkedFid AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
                if($linkcommonvalue[$id]) { // common value
-                    $newJoinText .= " main." . $joinHandles[$linkselfids[$id]] . "=f$id." . $joinHandles[$linktargetids[$id]];
+                    $newJoinText .= " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
                } elseif($linktargetids[$id]) { // linked selectbox
                     if(formulize_isLinkedSelectBox($linktargetids[$id])) { 
                          $newJoinText .= " f$id." . $joinHandles[$linktargetids[$id]] . " LIKE CONCAT('%,',main.entry_id,',%')";
@@ -511,8 +511,11 @@ if(is_numeric($frame)) {
           print "<br>";
      }*/
      
+		 formulize_benchmark("Before query");
+		 
      $masterQueryRes = mysql_query($masterQuerySQL);
      
+		 formulize_benchmark("After query");
      
      // need to calculate the derived value metadata
      // 1. figure out which fields in the included forms have derived values
@@ -549,7 +552,9 @@ if(is_numeric($frame)) {
      $prevFormAlias = "";
      $creationUidLog = array();
      $prevMainId = "";
+		 formulize_benchmark("About to prepare results.");
      while($masterQueryArray = mysql_fetch_assoc($masterQueryRes)) {
+					formulize_benchmark("Starting one entry.");
           foreach($masterQueryArray as $field=>$value) {
                if($field == "entry_id" OR $field == "creation_uid" OR $field == "mod_uid" OR $field == "creation_datetime" OR $field == "mod_datetime" OR $field == "main_email" OR $field == "main_user_viewemail") { continue; } // ignore those plain fields, since we can only work with the ones that are properly aliased to their respective tables.  More details....Must refer to metadata fields by aliases only!  since * is included in SQL syntax, fetch_assoc will return plain column names from all forms with the values from those columns.....Also want to ignore the email fields, since the fact they're prefixed with "main" can throwoff the calculation of which entry we're currently writing
                if(strstr($field, "creation_uid") OR strstr($field, "creation_datetime") OR strstr($field, "mod_uid") OR strstr($field, "mod_datetime")) {
@@ -598,9 +603,9 @@ if(is_numeric($frame)) {
                
                // print "$curFormAlias - $field: $value<br>"; // debug line
                $valueArray = prepvalues($value, $elementHandle, $masterQueryArray[$curFormAlias . "_entry_id"]); // note...metadata fields must not be in an array for compatibility with the 'display' function...not all values returned will actually be arrays, but if there are multiple values in a cell, then those will be arrays
-               
+               formulize_benchmark("Ready to assign to array.");
                $masterResults[$masterIndexer][formulize_readFrameworkMap($frameworkMap, $curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][formulize_readFrameworkMap($frameworkMap, $curFormId, $elementHandle)] = $valueArray;
-               
+               formulize_benchmark("Done assigning to array.");
                if($elementHandle == "creation_uid" OR $elementHandle == "mod_uid" OR $elementHandle == "creation_datetime" OR $elementHandle == "mod_datetime") {
                     // add in the creator_email when we have done the creation_uid
                     if($elementHandle == "creation_uid") {
@@ -641,9 +646,11 @@ if(is_numeric($frame)) {
                     }
                     $masterResults[$masterIndexer][formulize_readFrameworkMap($frameworkMap, $curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][$old_meta] = $valueArray;
                }
-               // now that the entire entry has been processed, do the derived values for it
-               $masterResults[$masterIndexer] = formulize_calcDerivedColumns($masterResults[$masterIndexer], $derivedFieldMetadata, $frid, $fid); 
           }
+					formulize_benchmark("Done entry, ready to do derived values.");
+					// now that the entire entry has been processed, do the derived values for it
+					$masterResults[$masterIndexer] = formulize_calcDerivedColumns($masterResults[$masterIndexer], $derivedFieldMetadata, $frid, $fid);
+					formulize_benchmark("Done derived values.");
      }
 
      return $masterResults;
