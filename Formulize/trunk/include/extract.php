@@ -1073,6 +1073,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
      $derivedValueFormulaFile = fopen($fileName, "w");
      fwrite($derivedValueFormulaFile, "<?php\n\n");
      
+     $functionsToWrite = "";
      // loop through the formulas, process them, and write them to the file
      foreach($metadata as $formulaNumber=>$thisMetaData) {
           $formula = $thisMetaData['formula'];
@@ -1100,9 +1101,9 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                }
                $formula = implode("\n", $formulaLines);
           }
-          fwrite($derivedValueFormulaFile, "function derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", $formHandle))."_".$formulaNumber."(\$entry) {\n$formula\nreturn \$value;\n}\n\n");
+          $functionsToWrite .= "function derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", $formHandle))."_".$formulaNumber."(\$entry) {\n$formula\nreturn \$value;\n}\n\n";
      }
-     fwrite($derivedValueFormulaFile, "?>");
+     fwrite($derivedValueFormulaFile, $functionsToWrite. "?>");
      fclose($derivedValueFormulaFile);
      include $fileName;     
 }
