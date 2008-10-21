@@ -54,10 +54,4 @@ if(isset($formulize_screen_id)) {
     include XOOPS_ROOT_PATH.'/footer.php';
 }
 
-function formulize_benchmark($text) {
-    if(isset($GLOBALS['startPageTime'])) {
-        $currentPageTime = microtime_float();
-        print "<br>$text -- Elapsed: ".($currentPageTime-$GLOBALS['startPageTime'])."<br>";
-    }
-}
 

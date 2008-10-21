@@ -531,13 +531,13 @@ if(is_numeric($frame)) {
      $derivedFieldMetadata = array();
      if($res = mysql_query($sql)) {
           if(mysql_num_rows($res)>0) {
-               $i = 0;
+               $multipleIndexer = array();
                while($row = mysql_fetch_row($res)) {
                     $ele_value = unserialize($row[0]); // derived fields have ele_value as an array with only one element (that was done to future proof the data model, so we could add other things to ele_value if necessary)
-                    $derivedFieldMetadata[$i]['formula'] = $ele_value[0];
-                    $derivedFieldMetadata[$i]['formhandle'] = $row[1];
-                    $derivedFieldMetadata[$i]['handle'] = $row[2];
-                    $i++;
+                    if(!isset($multipleIndexer[$row[1]])) { $multipleIndexer[$row[1]] = 0; }
+                    $derivedFieldMetadata[$row[1]][$multipleIndexer[$row[1]]]['formula'] = $ele_value[0]; // use row[1] (the form handle) as the key, so we can eliminate some looping later on
+                    $derivedFieldMetadata[$row[1]][$multipleIndexer[$row[1]]]['handle'] = $row[2];
+                    $multipleIndexer[$row[1]]++;
                }
           }
      } else {
@@ -603,9 +603,9 @@ if(is_numeric($frame)) {
                
                // print "$curFormAlias - $field: $value<br>"; // debug line
                $valueArray = prepvalues($value, $elementHandle, $masterQueryArray[$curFormAlias . "_entry_id"]); // note...metadata fields must not be in an array for compatibility with the 'display' function...not all values returned will actually be arrays, but if there are multiple values in a cell, then those will be arrays
-               formulize_benchmark("Ready to assign to array.");
                $masterResults[$masterIndexer][formulize_readFrameworkMap($frameworkMap, $curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][formulize_readFrameworkMap($frameworkMap, $curFormId, $elementHandle)] = $valueArray;
-               formulize_benchmark("Done assigning to array.");
+               //$masterResults[$masterIndexer][$elementHandle][] = $valueArray; // new easier way of gathering data -- handles directly at first level of $entry, in an array because there might be more than one occurance of them
+
                if($elementHandle == "creation_uid" OR $elementHandle == "mod_uid" OR $elementHandle == "creation_datetime" OR $elementHandle == "mod_datetime") {
                     // add in the creator_email when we have done the creation_uid
                     if($elementHandle == "creation_uid") {
@@ -646,11 +646,14 @@ if(is_numeric($frame)) {
                     }
                     $masterResults[$masterIndexer][formulize_readFrameworkMap($frameworkMap, $curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][$old_meta] = $valueArray;
                }
+							 
           }
 					formulize_benchmark("Done entry, ready to do derived values.");
 					// now that the entire entry has been processed, do the derived values for it
-					$masterResults[$masterIndexer] = formulize_calcDerivedColumns($masterResults[$masterIndexer], $derivedFieldMetadata, $frid, $fid);
-					formulize_benchmark("Done derived values.");
+          if(count($derivedFieldMetadata) > 0) {
+               $masterResults[$masterIndexer] = formulize_calcDerivedColumns($masterResults[$masterIndexer], $derivedFieldMetadata, $frid, $fid);
+          }
+					
      }
 
      return $masterResults;
@@ -1038,37 +1041,41 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false) {
 // Odd results may occur when a derived column is inside a subform in a framework!
 // Derived values should always be in the mainform only?
 function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
-     if(count($metadata) > 0) {
-          //foreach($result as $id=>$entry) { // since we're calling this in the main loop that compiles the results, we don't have to loop through an entire result set one additional time any more.  :-)  Also, this ensures values are calculated in the order they appear in the form.
-               foreach($metadata as $thisMetaData) {
-                    foreach($entry as $formHandle=>$record) {
-                         if($formHandle == $thisMetaData['formhandle']) {
-                              $foundValue = false;
-                              foreach($record as $recordID=>$elements) {
-                                   if(!$foundValue) {
-                                        $value = formulize_calcDerivedColumnValue($entry, $thisMetaData['formula'], $frid, $fid); // formula is an array, hence the [0]
-                                        $foundValue = true;
-                                   }
-                                   $entry[$formHandle][$recordID][$thisMetaData['handle']][0] = "$value"; // add to the current entry so we can derive based on it if necessary               
-                                   $result[$id][$formHandle][$recordID][$thisMetaData['handle']][0] = "$value";
-                              }
-                              break;
-                         }
-                    }          
+     
+     static $parsedFormulas = array();
+     foreach($entry as $formHandle=>$record) {
+          if(isset($metadata[$formHandle])) { // if there are derived value formulas for this form...
+               if(!isset($parsedFormulas[$formHandle])) {
+                    $formulaParseResult = formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $frid, $fid);
+                    if($formulaParseResult === "Syntax Error") {
+                        print "Error: there is a syntax error in one of the derived value formulas.";
+                        return $entry;
+                    }
+                    $parsedFormulas[$formHandle] = true;
                }
-          //}
-     }
+               foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
+                    $functionName = "derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", $formHandle))."_".$formulaNumber;
+                    formulize_benchmark(" -- calling derived function.");
+                    $derivedValue = $functionName($entry);
+                    formulize_benchmark(" -- completed call.");
+                    foreach($record as $recordID=>$elements) {
+                         $entry[$formHandle][$recordID][$thisMetaData['handle']][0] = $derivedValue;
+                    }
+               }
+          }
+     }          
      return $entry;    
 }
 
-// THIS FUNCTION DETERMINES HOW TO HANDLE THE FORMULA IN A DERIVED COLUMN AND THEN WORKS OUT THE VALUE BASED ON THE ENTRY IT RECEIVED
-// use a static array to cache formulas that we already have parsed
-function formulize_calcDerivedColumnValue($entry, $formula, $frid, $fid) {
-
-     static $cached_formulas = array();
-     if(!isset($cached_formulas[$formula][$frid][$fid])) {
-          $original_formula = $formula;
-          // loop through the formula and convert all quoted terms to display function calls
+function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $fid) {
+     // open a temporary file
+     $fileName = XOOPS_ROOT_PATH."/cache/formulize_derivedValueFormulas_".str_replace(" ", "_", $formHandle).".php";
+     $derivedValueFormulaFile = fopen($fileName, "w");
+     fwrite($derivedValueFormulaFile, "<?php\n\n");
+     
+     // loop through the formulas, process them, and write them to the file
+     foreach($metadata as $formulaNumber=>$thisMetaData) {
+          $formula = $thisMetaData['formula'];
           while($quotePos = strpos($formula, "\"", $quotePos+1)) {
                // print $formula . " -- $quotePos<br>"; // debug code
                $endQuotePos = strpos($formula, "\"", $quotePos+1);
@@ -1085,29 +1092,20 @@ function formulize_calcDerivedColumnValue($entry, $formula, $frid, $fid) {
                $formula = str_replace($term, $replacement, $formula);
                $quotePos = $quotePos + 17 + strlen($newterm); // 17 is the length of the extra characters in the display function
           }
-          /*global $xoopsUser;
-          if($xoopsUser->getVar('uid') == 1) {
-               print $formula;
-               exit;
-          }*/
-          $cached_formulas[$original_formula][$frid][$fid] = $formula;
-     } else {
-          $formula = $cached_formulas[$formula][$frid][$fid];
-     }
-     $addSemiColons = strstr($formula, ";") ? false : true;
-     if($addSemiColons) {
-          $formulaLines = explode("\n", $formula); // \n may be a linux specific character and other OSs may require a different split
-          foreach($formulaLines as $thisLine) {
-               $thisLine = trim($thisLine, ";"); // get rid of semi-colons if present and then add them again
-               $thisLine .= ";";
+          $addSemiColons = strstr($formula, ";") ? false : true; // only add if we found none in the formula.
+          if($addSemiColons) {
+               $formulaLines = explode("\n", $formula); // \n may be a linux specific character and other OSs may require a different split
+               foreach($formulaLines as $formula_id=>$thisLine) {
+                    $formulaLines[$formula_id] .= ";"; // add missing semicolons
+               }
+               $formula = implode("\n", $formulaLines);
           }
-          eval($thisLine);
-     } else {
-          eval($formula);
+          fwrite($derivedValueFormulaFile, "function derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", $formHandle))."_".$formulaNumber."(\$entry) {\n$formula\nreturn \$value;\n}\n\n");
      }
-     return $value; // by convention, $value is the variable that gets assigned the results of the calculation used in the derived column (ie: it is set inside the code eval'd above)
+     fwrite($derivedValueFormulaFile, "?>");
+     fclose($derivedValueFormulaFile);
+     include $fileName;     
 }
-
 
 // THIS FUNCTION CHECKS TO SEE IF A GIVEN PIECE OF TEXT IS USED IN A FRAMEWORK AS AN ELEMENT HANDLE
 // use a static array to cache results
@@ -1364,24 +1362,15 @@ function getFormHandle($framework, $handle) {
 
 // returns the form handle for the form that the given element handle belongs to
 function getFormHandleFromEntry($entry, $handle) {
-  static $cachedFormHandles = array();
-  if(!isset($cachedFormHandles[serialize($entry)][$handle])) {
      if(is_array($entry)) {
      	 foreach($entry as $formHandle=>$record) {
      		 foreach($record as $elements) {
-     			 foreach($elements as $element=>$values) {
-     				 if($element == $handle) {
-               $cachedFormHandles[serialize($entry)][$handle] = $formHandle;
-     					 return $formHandle;
-     				 }
-     			 }
+            if(array_key_exists($handle, $elements)) { return $formHandle; }
      		 }
        }
      } else {
         return "";// exit("Error: no form handle found for element handle '$handle'");        
      }
-  }
-	return $cachedFormHandles[serialize($entry)][$handle];
 }
 
 // returns all the form handles for the given entry
@@ -1400,13 +1389,25 @@ function getFormHandlesFromEntry($entry) {
 
 function display($entry, $handle, $id="NULL", $localid="NULL") {
 
+     formulize_benchmark(" ---- start of display function");
+
 	if(is_numeric($id)) {
 		$entry = $entry[$id];
 	}
 	
-	$formhandle = getFormHandleFromEntry($entry, $handle);
+  /*if($localid==="NULL") { // no local id strangeness going on...
+     
+  
+     return $entry[$handle];
+  }
+  // if we haven't returned anything already, then continue on with the legacy code (necessary for supporting localid)*/
+  
+  formulize_benchmark(" ---- before getting form handle");
+  if(!$formhandle = getFormHandleFromEntry($entry, $handle)) { return ""; } // return nothing if handle is not part of entry
+  formulize_benchmark(" ---- after getting form handle");
 
-	if(!$formhandle) { return ""; } // return nothing if the passed handle is not part of the result set
+	//if(!$formhandle) { return ""; } // return nothing if the passed handle is not part of the result set
+  formulize_benchmark(" ---- before doing loop");
 	foreach($entry[$formhandle] as $lid=>$elements) {
 		if($localid == "NULL" OR $lid == $localid) {
 			if(is_array($elements[$handle])) {
@@ -1418,9 +1419,12 @@ function display($entry, $handle, $id="NULL", $localid="NULL") {
 			}
 		}
 	}
+  formulize_benchmark(" ---- after doing loop");
 	if(count($foundValues) == 1) {
+    formulize_benchmark(" ---- returning value");
 		return $foundValues[0];
 	} else {
+     formulize_benchmark(" ---- returning value");
 		return $foundValues;
 	}
 }
@@ -1789,6 +1793,17 @@ if(!$xoopsDB) {
  	$GLOBALS['formulize_LOE_limit'] = $formulizeModuleConfig['LOE_limit'];
         
 }
+
+function formulize_benchmark($text) {
+     global $xoopsUser;
+     if(isset($GLOBALS['startPageTime']) AND $xoopsUser) {
+          if($xoopsUser->getVar('uid') == 1) {
+               $currentPageTime = microtime_float();
+               print "<br>$text -- Elapsed: ".($currentPageTime-$GLOBALS['startPageTime'])."<br>";
+          }
+     }
+}
+
 
 if(!$myts) {
   	// setup text sanitizer too
