@@ -1222,7 +1222,9 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$xportDivText1 = "";
 		$xportDivText2 = "";
 	}
+  formulize_benchmark("before prepping export");
 	$filename = prepExport($headers, $cols, $data, $settings['xport'], $settings['xport_cust'], $settings['title'], false, $fid, $groups);
+  formulize_benchmark("after prepping export");
 	$linktext = $_POST['xport'] == "update" ? _formulize_DE_CLICKSAVE_TEMPLATE : _formulize_DE_CLICKSAVE;
 	print "$xportDivText1<center><p><a href='$filename' target=\"_blank\">$linktext</a></p></center>";
 	print "<br>$xportDivText2";
@@ -1261,7 +1263,9 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		}
 		$cblanks = explode("/", $settings['calc_blanks']);
 		$cgrouping = explode("/", $settings['calc_grouping']);
+    formulize_benchmark("before performing calcs");
 		$cresults = performCalcs($ccols, $ccalcs, $cblanks, $cgrouping, $data, $frid, $fid);
+    formulize_benchmark("after performing calcs");
 //		print "<p><input type=button style=\"width: 140px;\" name=cancelcalcs1 value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input></p>\n";
 //		print "<div";
 //		if($totalcalcs>4) { print " class=scrollbox"; }
@@ -1276,8 +1280,9 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 			print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></td></tr>";
 		}
 		$exportFilename = $settings['xport'] == "calcs" ? $filename : "";
+    formulize_benchmark("before printing results");
 		printResults($cresults[0], $cresults[1], $cresults[2], $frid, $exportFilename, $settings['title']); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
-
+    formulize_benchmark("after printing results");
 		print "</table>\n";
 
 	}
@@ -1833,7 +1838,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
 	// masterCalcs array is basically in this format:  array[handle/question in form][calculation requested on handle][grouping option]
 	// you can have several groups for a question (one key for each grouped option)
 
-	//foreach($masterCalcs as $handle=>$thesecalcs) {
+	
 	foreach($handles as $handle) { // this way the results will always be presented according to the order of the elements
 		$thesecalcs = $masterCalcs[$handle];
 		foreach($thesecalcs as $thiscalc=>$thesegroups) {
@@ -1911,10 +1916,10 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
 							$icountTotal += $icount;
 							$percentage = round(($icount/$count)*100, 2);
 							if($count == $datacount) {
-								$typeout .= "<tr><td style=\"vertical-align: top;\">" . trans($item) . "</td><td style=\"vertical-align: top;\">$icount</td><td style=\"vertical-align: top;\">$percentage%</td></tr>\n";		
+								$typeout .= "<tr><td style=\"vertical-align: top;\">" . trans(calcValuePlusText($item, $handle, $frid, $fid)) . "</td><td style=\"vertical-align: top;\">$icount</td><td style=\"vertical-align: top;\">$percentage%</td></tr>\n";		
 							} else {
 								$percentageData = round(($icount/$datacount)*100, 2);
-								$typeout .= "<tr><td style=\"vertical-align: top;\">" . trans($item) . "</td><td style=\"vertical-align: top;\">$icount</td><td style=\"vertical-align: top;\">$percentage%</td><td style=\"vertical-align: top;\">$percentageData%</td></tr>\n";		
+								$typeout .= "<tr><td style=\"vertical-align: top;\">" . trans(calcValuePlusText($item, $handle, $frid, $fid)) . "</td><td style=\"vertical-align: top;\">$icount</td><td style=\"vertical-align: top;\">$percentage%</td><td style=\"vertical-align: top;\">$percentageData%</td></tr>\n";		
 							}
 						}
 						// add total line -- added May 31 2006 -- jwe
@@ -1934,6 +1939,21 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
 	$to_return[1] = $blankSettings;
 	$to_return[2] = $groupingSettings;
 	return $to_return;
+}
+
+
+// THIS FUNCTION TAKES THE VALUE AND THE HANDLE AND THE FRID AND FIGURES OUT WHAT THE VALUE PLUS UITEXT WOULD BE
+function calcValuePlusText($value, $handle, $frid, $fid) {
+  if($frid) {
+    $id = formulize_getElementHandleAndIdFromFrameworkHandle($handle, $frid);
+  } else {
+    $id = formulize_getIdFromElementHandle($handle);
+  }
+  $element_handler = xoops_getmodulehandler('elements', 'formulize');
+  $element = $element_handler->get($id);
+  $uitexts = $element->getVar('ele_uitext');
+  $value = isset($uitexts[$value]) ? $uitexts[$value] : $value;
+  return $value;
 }
 
 
@@ -2001,19 +2021,21 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $frid, 
 		$head = "";
 		$odd = "";
 		$even = "";
+    formulize_benchmark("before reading stylesheet");
 		if(file_exists(XOOPS_ROOT_PATH . "/themes/" . $xoopsConfig['theme_set'] . "/style.css")) {
 			include XOOPS_ROOT_PATH . "/modules/formulize/class/class.csstidy.php";
 			$css = new csstidy();
 			$css->set_cfg('merge_selectors',0);
-			$css->parse_from_url(XOOPS_URL . "/themes/" . $xoopsConfig['theme_set'] . "/style.css");
+			$css->parse_from_url(XOOPS_ROOT_PATH . "/themes/" . $xoopsConfig['theme_set'] . "/style.css");
 			$parsed_css = $css->css;
-			// parsed_css seems to have only one key when looking at the default template
+			// parsed_css seems to have only one key when looking at the default template...key is the number of styles?
 			foreach($parsed_css as $thiscss) {
-				$head = $thiscss['.head']['background-color'];
-				$even = $thiscss['.even']['background-color'];
-				$odd = $thiscss['.odd']['background-color'];
+				$head = isset($thiscss['.head']['background-color']) ? $thiscss['.head']['background-color'] : isset($thiscss['.head']['background']) ? $thiscss['.head']['background'] : "";
+				$even = isset($thiscss['.even']['background-color']) ? $thiscss['.even']['background-color'] : isset($thiscss['.even']['background']) ? $thiscss['.even']['background'] : "";
+				$odd = isset($thiscss['.odd']['background-color']) ? $thiscss['.odd']['background-color'] : isset($thiscss['.odd']['background']) ? $thiscss['.odd']['background'] : "";
 			}
-		} 
+		}
+    formulize_benchmark("after reading stylesheet");
 		unset($css);
 		// if we couldn't find any values, use these:
 		$head = $head ? $head : "#c2cdd6";
@@ -2021,6 +2043,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $frid, 
 		$odd = $odd ? $odd : "#E9E9E9";
 
 		// create the file
+    formulize_benchmark("before creating file");
 		$outputfile = "<HTML>
 <head>
 <meta name=\"generator\" content=\"Formulize -- form creation and data management for XOOPS\" />
@@ -2047,7 +2070,8 @@ $output
 		$exportfile = fopen($wpath, "w");
 		fwrite ($exportfile, $outputfile);
 		fclose ($exportfile);
-	}			
+	}
+  formulize_benchmark("after creating file");
 }
 
 

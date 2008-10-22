@@ -959,7 +959,7 @@ function formulize_getElementHandleAndIdFromFrameworkHandle($handle, $frid) {
      return isset($cachedHandles[$handle][$frid]) ? $cachedHandles[$handle][$frid] : false;
 }
 
-// THIS FUNCTION TAKES A HANDLE AND FID AND RETURNS THE ELEMENT HANDLE THAT CORRESPONDS
+// THIS FUNCTION TAKES A HANDLE AND RETURNS THE ELEMENT HANDLE THAT CORRESPONDS
 function formulize_getIdFromElementHandle($handle) {
      static $cachedIds = array();
      if(!isset($cachedIds[$handle])) {
@@ -1318,7 +1318,6 @@ function parseTableFormFilter($filter, $andor, $elementsById) {
           $whereClause .= $elementsById[$filterParts[0]]['field'] . " $operator '$likeparts" . mysql_real_escape_string($filterParts[1]) . "$likeparts'";
      }
      return $whereClause;
-     
 }
 
 
@@ -1390,25 +1389,12 @@ function getFormHandlesFromEntry($entry) {
 
 function display($entry, $handle, $id="NULL", $localid="NULL") {
 
-     formulize_benchmark(" ---- start of display function");
-
-	if(is_numeric($id)) {
+  if(is_numeric($id)) {
 		$entry = $entry[$id];
 	}
 	
-  /*if($localid==="NULL") { // no local id strangeness going on...
-     
-  
-     return $entry[$handle];
-  }
-  // if we haven't returned anything already, then continue on with the legacy code (necessary for supporting localid)*/
-  
-  formulize_benchmark(" ---- before getting form handle");
   if(!$formhandle = getFormHandleFromEntry($entry, $handle)) { return ""; } // return nothing if handle is not part of entry
-  formulize_benchmark(" ---- after getting form handle");
 
-	//if(!$formhandle) { return ""; } // return nothing if the passed handle is not part of the result set
-  formulize_benchmark(" ---- before doing loop");
 	foreach($entry[$formhandle] as $lid=>$elements) {
 		if($localid == "NULL" OR $lid == $localid) {
 			if(is_array($elements[$handle])) {
@@ -1420,12 +1406,10 @@ function display($entry, $handle, $id="NULL", $localid="NULL") {
 			}
 		}
 	}
-  formulize_benchmark(" ---- after doing loop");
+  
 	if(count($foundValues) == 1) {
-    formulize_benchmark(" ---- returning value");
 		return $foundValues[0];
 	} else {
-     formulize_benchmark(" ---- returning value");
 		return $foundValues;
 	}
 }
