@@ -3104,4 +3104,172 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
 	return $to_return;
 }
 
+// THIS FUNCTION ACTUALLY BUILDS THE SELECT FORM ELEMENT AND RETURNS IT AS A STRING
+// Used to create a drop down list that can act as a filter in a user interface
+// The dropdown list is made up of the options for the specified ele_id
+// If the dropdown list is a linked selectbox, the values can be optionally limited by the "limit" params, based on values in another field in each entry that underlies the link
+// ie: build a filter with the names of all activity entries, but limit it to activity entries where the date of the activity is 2007
+function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0=>""), $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false) { 
+
+	// Changes made to allow the linking of one filter to another. This is acheieved as follows:
+	// 1. Create a formulize form for managing the Main Filter List (form M)
+	// 2. Create a formulize form for managing the Sub Filter list (form S), which includes a linked element to the data in form M, 
+	//    so that relation between the Main Filter & Sub Filter data can be specified 
+	// 3. Create a formulize form for the data that the Main & SubFilter act upon (form D)
+	///
+	// In such a case, the parameters have the following meaning:
+	//  - $id is the element id of the field to be filtered in Form D
+	//  - $ele_id is also the element id of the field to be filtered in Form D
+	//  - $subfilter specifies if this filter is a subfilter
+	//  - $linked_ele_id specifies the ele_id of the Main Filter field as it appears in Form S
+	//  - $linked_data_id specifies the ele_id of the Main Filter field as it appears in Form D
+
+	/* limit params work as follows: (a limit is some property of a field in the source entry in a linked selectbox)
+	$limit = false, or if used then it's an array with these params...
+	'ele_id' = the id of the element to pay attention to for the limit condition
+	'term' = the term used to build the condition
+	'operator' = the operator used to build the condition
+	*/
+	
+	// limits are very similar to subfilters in their effect, but subfilters are meant for situations where one filter influences another filter
+	// subfilters are kind of like dynamic limits, where the limit condition is not specified until the parent filter is chosen.
+
+	global $xoopsDB;		// required by q
+	$filter = "<SELECT name=\"$id\" id=\"$id\"";
+	if($name == "{listofentries}") {
+		$filter .= " onchange='javascript:showLoading();'"; // list of entries has a special javascript thing
+	} elseif($name) {
+		$filter .= " onchange='javascript:document.$name.submit();'";
+	}
+	$filter .= ">\n";
+	
+	if ($subfilter AND !(isset($_POST[$linked_data_id])) AND !(isset($_GET[$linked_data_id])))  { 
+		// If its a subfilter and the main filter is unselected, then put in 'Please select from above options first
+		$filter .= "<option value=\"none\">Please select a primary filter first</option>\n"; 
+		}
+	else {
+		// Either it is not a subfilter, or it is a subfilter with the linked values set
+		$defaulttext = $defaulttext ? $defaulttext: _AM_FORMLINK_PICK;
+		if($name == "{listofentries}") {
+			$filter .= "<option value=\"\">".$defaulttext."</option>\n"; // must not pass back a value when we're putting a filter on the list of entries page
+		} else {
+			$filter .= "<option value=\"none\">".$defaulttext."</option>\n";
+		}
+
+    $form_element = q("SELECT ele_value, ele_type FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
+    $element_value = unserialize($form_element[0]["ele_value"]);
+	switch($form_element[0]["ele_type"]) {
+		case "select":
+			$options = $element_value[2];
+			break;
+		case "radio":
+		case "checkbox":
+			$options = $element_value;
+			break;
+	}
+
+	// if the $options is from a linked selectbox, then figure that out and gather the possible values
+	// only linked selectboxes have this string in their options field
+	if(strstr($options, "#*=:*")) {
+		$boxproperties = explode("#*=:*", $options);
+		$source_form_id = $boxproperties[0];
+		$source_element_handle = $boxproperties[1];
+		
+		// process the limits
+		$limitCondition = "";
+		if(is_array($limit)) {
+			$limitCondition = $limit['ele_id'] . "/**/" . $limit['term'];
+			$limitCondition .= isset($limit['operator']) ? "/**/" . $limit['operator'] : "";
+		}
+		
+			if (!$subfilter) {
+		$data = getData("", $source_form_id, $limitCondition);
+				}
+			else {
+				$getDataFilter .= $linked_ele_id . "/**/" . $_POST[$linked_data_id];
+				$getDataFilter .= $limitCondition ? "][" . $limitCondition : "";
+				$data = getData("", $source_form_id, $getDataFilter);
+				}
+		unset($options);
+		foreach($data as $entry) {
+			$option_text = display($entry, $source_element_handle);
+			$options[$option_text] = ""; // it's the key that gets used in the loop below
+		}
+	}
+	
+	$nametype = "";
+	if(key($options) === "{FULLNAMES}" OR key($options) === "{USERNAMES}") { // code copied from elementrender.php to make fullnames work for Drupalcamp demo
+		if(key($options) === "{FULLNAMES}") { $nametype = "name"; }
+		if(key($options) === "{USERNAMES}") { $nametype = "uname"; }
+		$pgroups = array();
+		if($element_value[3]) {
+			$scopegroups = explode(",",$element_value[3]);
+			global $xoopsUser;
+			$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+			if(!in_array("all", $scopegroups)) {
+				if($element_value[4]) { // limit by users's groups
+					foreach($groups as $gid) { // want to loop so we can get rid of reg users group simply
+						if($gid == XOOPS_GROUP_USERS) { continue; }
+						if(in_array($gid, $scopegroups)) {
+							$pgroups[] = $gid;
+						}
+					}
+					if(count($pgroups) > 0) { 
+						unset($groups);
+						$groups = $pgroups;
+      				} else {
+      					$groups = array();
+      				}
+      			} else { // don't limit by user's groups
+					$groups = $scopegroups;
+				}
+			} else { // use all
+				if(!$element_value[4]) { // really use all (otherwise, we're just going will all user's groups, so existing value of $groups will be okay
+					unset($groups);
+					global $xoopsDB;
+					$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups") . " WHERE groupid != " . XOOPS_GROUP_USERS);
+					foreach($allgroupsq as $thisgid) {
+						$groups[] = $thisgid['groupid'];
+					} 
+				}
+			}
+			$options = array();
+			$namelist = gatherNames($groups, $nametype);
+			foreach($namelist as $auid=>$aname) {
+				$options[$aname] = $auid; // backwards to how elementrenderer.php does it, since logic below to build list is different
+			}
+		}
+	}
+
+    if($name != "{listofentries}") { ksort($options); }
+
+    $counter = 0;
+    foreach($options as $option=>$option_value) {
+      if(is_array($overrides) AND isset($overrides[$option])) {
+          $selected = ($_POST[$id] == $option OR $_GET[$id] == $option) ? "selected" : ""; 
+          $filter .= "<option value=\"" . $overrides[$option][1] . "\" $selected>" . $overrides[$option][0] . "</option>\n";
+      } else {
+        if(preg_match('/\{OTHER\|+[0-9]+\}/', $option)) { $option = str_replace(":", "", _formulize_OPT_OTHER); }
+        $passoption = $nametype ? $option_value : $option; // str_replace(" ", "_", $option); // if a nametype is in effect, then use the value, otherwise, use the key -- also, no longer swapping out spaces for underscores
+        if((isset($_POST[$id]) OR isset($_GET[$id])) AND $overrides !== false) {
+          if($name == "{listofentries}") {
+            $selected = (is_numeric($overrides) AND $overrides == $counter) ? "selected" : "";
+          } else {
+            $selected = ($_POST[$id] == $passoption OR $_GET[$id] == $passoption) ? "selected" : "";
+          }
+        } else {
+          $selected = "";
+        }
+        if($name == "{listofentries}") { $passoption = "qsf_".$counter."_$passoption"; } // need to pass this stupid thing back because we can't compare the option and the contents of $_POST...a typing problem in PHP??!!
+	      $filter .= "<option value=\"$passoption\" $selected>$option</option>\n";
+      }
+      $counter++;
+    }
+    
+	}
+	$filter .= "</SELECT>\n";
+
+	return $filter;
+}
+
 ?>

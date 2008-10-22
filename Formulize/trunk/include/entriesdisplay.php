@@ -573,7 +573,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$settings[$temp_key] = $v;
 		}
 	}
-
 	// get all requested calculations...assign to settings array.
 	$settings['calc_cols'] = $_POST['calc_cols'];	
 	$settings['calc_calcs'] = $_POST['calc_calcs'];
@@ -1063,15 +1062,22 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		// also setup searches when calculations are in effect, or there's a custom list template
 		// (essentially, whenever the search boxes would not be drawn in for whatever reason)
 		if(!$useSearch OR ($calc_cols AND !$hcalc) OR $screen->getVar('listtemplate')) {
-			$quickSearchBoxes = drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches); // true means we will receive back the code instead of having it output to the screen
+			$quickSearchBoxes = drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, $frid); // true means we will receive back the code instead of having it output to the screen
 			$quickSearchesNotInTemplate = array();
 			foreach($quickSearchBoxes as $handle=>$qscode) {
+        $foundQS = false;
 				if(strstr($screen->getVar('toptemplate'), 'quickSearch' . $handle) OR strstr($screen->getVar('bottomtemplate'), 'quickSearch' . $handle)) {
-					$buttonCodeArray['quickSearch' . $handle] = $qscode; // set variables for use in the template
-				} else {
-					$quickSearchesNotInTemplate[] = $qscode;
-				}
+					$buttonCodeArray['quickSearch' . $handle] = $qscode['search']; // set variables for use in the template
+          $foundQS = true;
+        }
+        if(strstr($screen->getVar('toptemplate'), 'quickFilter' . $handle) OR strstr($screen->getVar('bottomtemplate'), 'quickFilter' . $handle)) {
+          $buttonCodeArray['quickFilter' . $handle] = $qscode['filter']; // set variables for use in the template
+          $foundQS = true;
+        }
+        if($foundQS) { continue; } // skip next line
+				$quickSearchesNotInTemplate[] = $qscode['search']; // if it's not used in the template, then save the box version for hidden output to screen below, so searches still work
 			}
+      
 			if(count($quickSearchesNotInTemplate) > 0) {			
 				print "<div style=\"display: none;\"><table>"; // enclose in a table, since drawSearches puts in <tr><td> tags
 				foreach($quickSearchesNotInTemplate as $qscode) {
@@ -1343,7 +1349,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	
 		if($useHeadings) { drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockcontrols']); }
 		if($useSearch) {
-			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
+			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches, $frid, false); // true means draw in filters if they are available, so switch to true when we're ready to do that...can't do it now since we need textboxes for the advnaced search terms that people may have, or will need to use
 		} 
 	
 		// get form handles in use
@@ -1611,7 +1617,7 @@ function viewEntryLink($linkContents) {
 
 // this function draws in the search box row
 // returnOnly is used to return the HTML code for the boxes, and that only happens when we are gathering the boxes because a custom list template is in use
-function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, $returnOnly=false, $hiddenQuickSearches) {
+function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, $returnOnly=false, $hiddenQuickSearches, $frid=0, $filtersAllowed=false) {
 	$quickSearchBoxes = array();
 	if(!$returnOnly) { print "<tr>"; }
 	if($useBoxes != 2 OR $useLinks) {
@@ -1630,14 +1636,16 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 			}
 			$clear_help_javascript = "onfocus=\"javascript:clearSearchHelp(this.form, '" . _formulize_DE_SEARCH_HELP . "');\"";
 		}
-		$quickSearchBoxes[$cols[$i]] = "<input type=text $boxid name='search_" . $cols[$i] . "' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
-		
+		$quickSearchBoxes[$cols[$i]]['search'] = "<input type=text $boxid name='search_" . $cols[$i] . "' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
+		$quickSearchBoxes[$cols[$i]]['filter'] = formulize_buildQSFilter($cols[$i], $search_text, $frid);
+    
 		// handle all the hidden quick searches if we are on the last run through
 		if($i == count($cols)-1) {
 			foreach($hiddenQuickSearches as $thisHQS) {
 				$search_text = isset($searches[$thisHQS]) ? htmlspecialchars(strip_tags($searches[$thisHQS]), ENT_QUOTES) : "";
 				$search_text = get_magic_quotes_gpc() ? stripslashes($search_text) : $search_text;
-				$quickSearchBoxes[$thisHQS] = "<input type=text name='search_$thisHQS' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";									
+				$quickSearchBoxes[$thisHQS]['search'] = "<input type=text name='search_$thisHQS' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
+        $quickSearchBoxes[$thisHQS]['filter'] = formulize_buildQSFilter($thisHQS, $search_text, $frid);
 				if(!$returnOnly) {
 					print "<input type=hidden name='search_$thisHQS' value=\"$search_text\"></input>\n"; // note: this will cause a conflict if this particular column is included in the top or bottom templates and no custom list template is in effect...since this is only ! ! search terms, not sure why you'd ever include this as a box in the top/bottom templates...it's not type-in-able because of the ! !
 				}
@@ -1645,7 +1653,11 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 		}
 		
 		if(!$returnOnly) {
-			print $quickSearchBoxes[$cols[$i]];
+      if($filtersAllowed and $quickSearchBoxes[$cols[$i]]['filter']) {
+        print $quickSearchBoxes[$cols[$i]]['filter'];
+      } else {
+        print $quickSearchBoxes[$cols[$i]]['search'];
+      }
 			print "</td>\n";
 		}
 	}
@@ -1656,6 +1668,25 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 		print "</tr>\n";
 	}
 	return $quickSearchBoxes;
+}
+
+// THIS FUNCTION CREATES THE QUICKFILTER BOXES
+function formulize_buildQSFilter($handle, $search_text, $frid) {
+  if($frid) {
+    $resultArray = formulize_getElementHandleAndIdFromFrameworkHandle($handle, $frid);
+    $id = $resultArray[1];
+  } else {
+    $id = formulize_getIdFromElementHandle($handle);
+  }
+  $element_handler = xoops_getmodulehandler('elements', 'formulize');
+  $element = $element_handler->get($id);
+  if($element->getVar('ele_type')=="select" OR $element->getVar('ele_type')=="radio" OR $element->getVar('ele_type')=="checkbox") {
+    $qsfparts = explode("_", $search_text);
+    $counter = $qsfparts[1];
+    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $counter);
+    return $filterHTML;
+  }
+  return "";
 }
 
 // this function writes in the headers for the columns in the results box
@@ -2012,7 +2043,8 @@ function calcParseBlanksSetting($setting) {
 // THIS FUNCTION TAKES THE VALUE AND THE HANDLE AND THE FRID AND FIGURES OUT WHAT THE VALUE PLUS UITEXT WOULD BE
 function calcValuePlusText($value, $handle, $frid, $fid) {
   if($frid) {
-    $id = formulize_getElementHandleAndIdFromFrameworkHandle($handle, $frid);
+    $resultArray = formulize_getElementHandleAndIdFromFrameworkHandle($handle, $frid);
+    $id = $resultArray[1];
   } else {
     $id = formulize_getIdFromElementHandle($handle);
   }
@@ -2931,29 +2963,8 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 		$atLeastOneCustomButton = true;
 		list($caCode) = processCustomButton($caid, $thisCustomAction);
 		${$thisCustomAction['handle']} = $caCode; // assign the button code that was returned
-		// processing of custom buttons now happens right up top!
-		/*if(isset($_POST['caid']) AND !isset($clickedElements)) { // only process once, since clickedElements will be set after this has run
-			if($caid == intval($_POST['caid'])) { // capture information about button that was clicked
-				$clickedElements = $caElements;
-				$clickedValues = $caValues;
-				$clickedActions = $caActions;
-				$clickedMessageText = $caMessageText;
-				$clickedApplyTo = $caApplyTo;
-			}
-		}*/
 	}
-	/*
-	// processing of custom buttons now happens right up top! 
-	static $handledCustomButtons = false;
-	$messageText = "";
-	if($atLeastOneCustomButton AND !$handledCustomButtons) { // only process the results once per pageload (that's what the static handlecustombuttons is for)
-		$handledCustomButtons = true;
-		// process any custom button that was clicked on the last page load
-		if(isset($_POST['caid'])) {
-			$messageText = processClickedCustomButton($clickedElements, $clickedValues, $clickedActions, $clickedMessageText, $clickedApplyTo);
-		}
-	}
-	*/
+
 	// if there is no save button specified in either of the templates, but one is available, then put it in below the list
 	if($type == "bottom" AND count($screen->getVar('decolumns')) > 0 AND $GLOBALS['formulize_displayElement_LOE_Used'] AND !strstr($screen->getVar('toptemplate'), 'saveButton') AND !strstr($screen->getVar('bottomtemplate'), 'saveButton')) {
 		print "<p>$saveButton</p>\n";
@@ -2961,6 +2972,8 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	
 	$thisTemplate = html_entity_decode($screen->getVar($type.'template'));
 	if($thisTemplate != "") {
+    
+    // process the template and output results
 		ob_start();
 		$evalSuccess = eval($thisTemplate);
 		$evalResult = ob_get_clean();
@@ -2981,6 +2994,11 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 		print "<p><center><b>$messageText</b></center></p>\n";
 	}
 	
+}
+
+// THIS FUNCTION READS THE TEMPLATE AND CREATES ANY QUICKSEARCHFILTERS THAT ARE NECESSARY
+function formulize_getQuickFilters($template, $frid) {
+  
 }
 
 // THIS FUNCTION PROCESSES THE REQUESTED BUTTONS AND GENERATES HTML PLUS SENDS BACK INFO ABOUT THAT BUTTON
@@ -3347,12 +3365,18 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 	foreach($searches as $key=>$master_one_search) { // $key is handles for frameworks, and ele_handles for non-frameworks.
 		$addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms
 		
+    
 		// split search based on new split string
 		$searchArray = explode("//", $master_one_search);
 		
 		foreach($searchArray as $one_search) {
-			
 		
+      // remove the qsf_ parts to make the quickfilter searches work
+      if(substr($one_search, 0, 4)=="qsf_") {
+        $qsfparts = explode("_", $one_search);
+        $one_search = $qsfparts[2];
+      }
+	
 			// strip out any starting and ending ! that indicate that the column should not be stripped
 			if(substr($one_search, 0, 1) == "!" AND substr($one_search, -1) == "!") {
 				$one_search = substr($one_search, 1, -1);
