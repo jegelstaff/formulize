@@ -1855,12 +1855,22 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
 						$mean = round($total/$count, 2);
 						sort($values, SORT_NUMERIC);
 						if($count%2 == 0 AND $count>1) {
-							$median = $values[($count/2)] . ", " . $values[($count/2)-1];						
+							$median = $values[($count/2)-1] . ", " . $values[($count/2)];
 						} elseif($count>2) {
 							$median = $values[($count/2)-0.5];						
-						} else {
+						} else { // count is 2...would this ever occur?
 							$median = $values[($count)-1];						
 						}
+            if($count%4 == 0 AND $count>3) {
+              $median25 = $values[($count/4)-1] . ", " . $values[($count/4)];
+              $median75 = $values[(($count/4)*3)-1] . ", " . $values[(($count/4)*3)];
+            } elseif($count>4) {
+              $median25 = $values[($count/4)-0.5];
+              $median75 = $values[(($count/4)*3)-0.5];
+            } else {
+              $median25 = _formulize_DE_CALC_NO25OR75;
+              $median75 = _formulize_DE_CALC_NO25OR75;
+            }
 						//print_r($values);
 						$breakdown = array_count_values($values);
 						//print_r($breakdown);
@@ -1882,7 +1892,13 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
 								}
 							}
 						}
-						$masterResults[$handle][$thiscalc][$thisgroup] = _formulize_DE_CALC_MEAN . ": $mean<br>" . _formulize_DE_CALC_MEDIAN . ": $median<br>" . _formulize_DE_CALC_MODE . ": $mode";
+            $variance = array();
+            foreach($values as $value) {
+              $variance[] = pow($value-$mean, 2);
+            }
+            $vtotal = array_sum($variance);
+            $deviation = sqrt($vtotal/$count);             
+						$masterResults[$handle][$thiscalc][$thisgroup] = _formulize_DE_CALC_MEAN . ": $mean<br>" . _formulize_DE_CALC_STD . ": $deviation<br><br>" . _formulize_DE_CALC_MEDIAN25 . ": $median25<br>" . _formulize_DE_CALC_MEDIAN . ": $median<br>" . _formulize_DE_CALC_MEDIAN75 . ": $median75<br><br>" . _formulize_DE_CALC_MODE . ": $mode";
 						break;
 					case "min":
 						sort($values, SORT_NUMERIC);
