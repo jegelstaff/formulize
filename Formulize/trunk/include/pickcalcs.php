@@ -40,6 +40,33 @@ function calcJavascript() {
 <script type='text/javascript'>
 <!--
 
+function setCalcCustom(element) {
+	var customElement = element+'_custom';
+	for (var i=0; i < window.document.pickcalc.elements[element].options.length; i++) {
+		if (window.document.pickcalc.elements[element].options[i].selected) {
+			break;
+		}
+	}
+	if(i==0) {
+		valueToSet = "{BLANK},0";
+	}
+	if(i==1) {
+		valueToSet = "";
+	}
+	if(i==2) {
+		valueToSet = "!{BLANK},!0";
+	}
+	if(i==3) {
+		valueToSet = "{BLANK}";
+	}
+	if(i==4) {
+		valueToSet = "0";
+	}
+	if(i!=5) {
+		window.document.pickcalc.elements[customElement].value = valueToSet;
+	}
+}
+
 function sendCalcs(formObj) {
 
 	var calc_cols;
@@ -94,6 +121,11 @@ for($i=0;$i<$colcount;$i++) {
 			print "calc_grouping = calc_grouping + \",\";\n";
 		}
 		print "calc_blanks = calc_blanks + formObj." . $acalc . $columns[$i] . ".value;\n";
+		print "if(formObj.".$acalc.$columns[$i].".value=='custom') {\n";
+		print "  var customString = formObj." . $acalc . $columns[$i] . "_custom.value;\n";
+		print "  customString = customString.replace(/,/,\"!@^%*\");\n"; // commas are a separator for when there's more than one calculation on a given column
+		print "  calc_blanks = calc_blanks + customString\n";
+		print "}";
 		print "calc_grouping = calc_grouping + formObj.grouping_" . $acalc . "_" . $columns[$i] . ".value;\n";
 		$start = 0;
 	}
@@ -195,7 +227,12 @@ function setURLCalcs() {
 		$ex_blanks = explode(",", $blanks[$i]);
 		$ex_grouping = explode(",", $grouping[$i]);
 		for($z=0;$z<count($ex_calcs);$z++) {
-			$_POST[$ex_calcs[$z] . $cols[$i]] = $ex_blanks[$z];
+			if(substr($ex_blanks[$z],0,6)=="custom") {
+				$_POST[$ex_calcs[$z] . $cols[$i]] = "custom";
+				$_POST[$ex_calcs[$z] . $cols[$i]."_custom"] = substr(str_replace("!@^%*", ",", $ex_blanks[$z]),6);
+			} else {
+				$_POST[$ex_calcs[$z] . $cols[$i]] = $ex_blanks[$z];
+			}
 			$_POST['grouping_' . $ex_calcs[$z] . "_" . $cols[$i]] = $ex_grouping[$z];
 		}
 	}
@@ -391,6 +428,28 @@ foreach($returned['rc'] as $hidden) {
 		} else {
 			$current_val = $_POST[$tempname];
 		}
+		if($_POST[$tempname] === "custom") { // if custom is selected;
+			$current_val_custom = htmlspecialchars(strip_tags($_POST[$tempname."_custom"]));
+		} else {
+			switch($_POST[$tempname]) {
+				case "all": // include blanks and zeros
+					$current_val_custom = "";
+					break;
+				case "onlyblanks":
+					$current_val_custom = "!{BLANK},!0";
+					break;
+				case "justnoblanks":
+					$current_val_custom = "{BLANK}";
+					break;
+				case "justnozeros";
+					$current_val_custom = "0";
+					break;
+				case "noblanks":
+				default:
+					$current_val_custom = "{BLANK},0";
+					break;
+			}
+		}
 
 		// convert $calc to actual calculation name
 		switch($calc) {
@@ -422,11 +481,18 @@ foreach($returned['rc'] as $hidden) {
 		$tempcalc3 = new xoopsFormRadio('', $tempname, $current_val);
 		$tempcalc3->addOption("onlyblanks", _formulize_DE_CALCONLYBLANKS);
 */
-		$tempcalc1 = new xoopsFormSelect(_formulize_DE_CALC_BTEXT, $tempname, $current_val);
+		$tempcalc1 = new xoopsFormSelect("", $tempname, $current_val);
 		$tempcalc1->addOption("noblanks", _formulize_DE_CALCNOBLANKS);
 		$tempcalc1->addOption("all", _formulize_DE_CALCALL);
 		$tempcalc1->addOption("onlyblanks", _formulize_DE_CALCONLYBLANKS);
-
+		$tempcalc1->addOption("justnoblanks", _formulize_DE_CALCJUSTNOBLANKS);
+		$tempcalc1->addOption("justnozeros", _formulize_DE_CALCJUSTNOZEROS);
+		$tempcalc1->addOption("custom", _formulize_DE_CALCCUSTOM);
+		$tempcalc1->setExtra("onchange='javascript:setCalcCustom(\"".$calc.$hidden['column']."\");'");
+		
+		$tempcalcCustom = new xoopsFormText("", $tempname."_custom", 12, 255, $current_val_custom);
+		$tempcalcCustom->setExtra("onclick='javascript:window.document.pickcalc.elements[\"".$calc.$hidden['column']."\"].options[5].selected = true;'");
+		$tempcalclabel = new xoopsFormLabel("", _formulize_DE_CALC_BTEXT . " ". $tempcalc1->render(). " ".$tempcalcCustom->render());
 		
 		// grouping option
 		$grouping = new xoopsFormSelect(_formulize_DE_CALC_GTEXT, 'grouping_' . $calc . "_" . $hidden['column'], $_POST['grouping_' . $calc . "_" . $hidden['column']]);
@@ -438,7 +504,7 @@ foreach($returned['rc'] as $hidden) {
 		$grouping->addOption("creator_email", _formulize_DE_GROUPBYCREATOREMAIL);
 		$grouping->addOptionArray($options2);
 
-		$tray->addElement($tempcalc1);
+		$tray->addElement($tempcalclabel);
 //		$tray->addElement($tempcalc2);
 //		$tray->addElement($tempcalc3);
 		$tray->addElement($grouping);

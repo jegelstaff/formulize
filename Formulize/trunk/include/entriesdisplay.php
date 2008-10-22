@@ -1789,40 +1789,54 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
 			for($z=0;$z<count($c[$i]);$z++) {
 				$blankSettings[$handles[$i]][$c[$i][$z]] = $b[$i][$z];				
 				$groupingSettings[$handles[$i]][$c[$i][$z]] = $g[$i][$z];
-				if(($b[$i][$z] == "onlyblanks" AND ($tempvalue == "" OR $tempvalue == "0")) OR ($b[$i][$z] == "noblanks" AND ($tempvalue != "" AND $tempvalue != "0")) OR $b[$i][$z] == "all") {
-					if($g[$i][$z] == "none" OR $g[$i][$z] == "") { 
-						if(is_array($thisvalue)) {
-							foreach($thisvalue as $onevalue) {
-								$masterCalcs[$handles[$i]][$c[$i][$z]][0][] = $onevalue;
-							}
-						} else {
-							$masterCalcs[$handles[$i]][$c[$i][$z]][0][] = $thisvalue;
+				// now we need to handle the inclusion/exclusion logic...
+				// allowed values is an affirmative list...ie: value must be in the allowed list, if the allowed list exists
+				list($allowedValues, $excludedValues) = calcParseBlanksSetting($b[$i][$z]);
+				if(count($allowedValues)>0) {
+					$valueIsAllowed = false;
+					foreach($allowedValues as $thisAllowedValue) {
+						if($tempvalue == $thisAllowedValue) {
+							$valueIsAllowed = true;
+							break; // break this loop and continue since this value is in the allowed list
 						}
-						$groupDataCount[$handles[$i]][$c[$i][$z]][0]++; 	// count the master $data array so we have an alternate divisor to use for percentage breakdown calculations if necessary -- added August 21 2006
+					}
+					if(!$valueIsAllowed) { continue; } // continue the next iteration of the for loop since this value was never found in the allowed list
+				}
+				foreach($excludedValues as $thisAllowedValue) {
+					if($tempvalue == $thisAllowedValue) { continue 2; } // break this loop and go to the next iteration of the for loop since this value is excluded
+				}
+				if($g[$i][$z] == "none" OR $g[$i][$z] == "") { 
+					if(is_array($thisvalue)) {
+						foreach($thisvalue as $onevalue) {
+							$masterCalcs[$handles[$i]][$c[$i][$z]][0][] = $onevalue;
+						}
 					} else {
-						$thisgroup = display($entry, $g[$i][$z]);
-						$thisgroup = convertUids($thisgroup, $g[$i][$z]);
-						if(is_array($thisgroup)) {
-							foreach($thisgroup as $onegroup) {
-								if(is_array($thisvalue)) {
-									foreach($thisvalue as $onevalue) {
-										$masterCalcs[$handles[$i]][$c[$i][$z]][$onegroup][] = $onevalue;
-									}
-								} else {
-									$masterCalcs[$handles[$i]][$c[$i][$z]][$onegroup][] = $thisvalue;
-								}
-								$groupDataCount[$handles[$i]][$c[$i][$z]][$onegroup]++; 	// count the master $data array so we have an alternate divisor to use for percentage breakdown calculations if necessary -- added August 21 2006
-							}	
-						} else {
+						$masterCalcs[$handles[$i]][$c[$i][$z]][0][] = $thisvalue;
+					}
+					$groupDataCount[$handles[$i]][$c[$i][$z]][0]++; 	// count the master $data array so we have an alternate divisor to use for percentage breakdown calculations if necessary -- added August 21 2006
+				} else {
+					$thisgroup = display($entry, $g[$i][$z]);
+					$thisgroup = convertUids($thisgroup, $g[$i][$z]);
+					if(is_array($thisgroup)) {
+						foreach($thisgroup as $onegroup) {
 							if(is_array($thisvalue)) {
 								foreach($thisvalue as $onevalue) {
-									$masterCalcs[$handles[$i]][$c[$i][$z]][$thisgroup][] = $onevalue;
+									$masterCalcs[$handles[$i]][$c[$i][$z]][$onegroup][] = $onevalue;
 								}
 							} else {
-								$masterCalcs[$handles[$i]][$c[$i][$z]][$thisgroup][] = $thisvalue;
+								$masterCalcs[$handles[$i]][$c[$i][$z]][$onegroup][] = $thisvalue;
 							}
-							$groupDataCount[$handles[$i]][$c[$i][$z]][$thisgroup]++; 	// count the master $data array so we have an alternate divisor to use for percentage breakdown calculations if necessary -- added August 21 2006
+							$groupDataCount[$handles[$i]][$c[$i][$z]][$onegroup]++; 	// count the master $data array so we have an alternate divisor to use for percentage breakdown calculations if necessary -- added August 21 2006
+						}	
+					} else {
+						if(is_array($thisvalue)) {
+							foreach($thisvalue as $onevalue) {
+								$masterCalcs[$handles[$i]][$c[$i][$z]][$thisgroup][] = $onevalue;
+							}
+						} else {
+							$masterCalcs[$handles[$i]][$c[$i][$z]][$thisgroup][] = $thisvalue;
 						}
+						$groupDataCount[$handles[$i]][$c[$i][$z]][$thisgroup]++; 	// count the master $data array so we have an alternate divisor to use for percentage breakdown calculations if necessary -- added August 21 2006
 					}
 				}
 			}
@@ -1957,6 +1971,43 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
 	return $to_return;
 }
 
+// THIS FUNCTION READS THE BLANKS SETTING AND RETURNS A LIST OF VALUES THAT ARE ALLOWED AND A LIST OF VALUES THAT ARE NOT ALLOWED
+function calcParseBlanksSetting($setting) {
+	$allowed = array();
+	$excluded = array();
+	switch($setting) {
+		case "onlyblanks";
+			$allowed[] = "";
+			$allowed[] = 0;
+			break;
+		case "noblanks";
+			$excluded[] = "";
+			$excluded[] = 0;
+			break;
+		case "justnoblanks";
+			$excluded[] = "";
+			break;
+		case "justnozeros";
+			$excluded[] = 0;
+			break;
+		case "all";
+			break;
+		default: // only thing left is custom
+			$setting = explode(",",substr(str_replace("!@^%*", ",", $setting),6)); // replace back the commas and remove the word custom from the front, and explode it into an array
+			foreach($setting as $thisSetting) {
+				// does it have ! at the front, which is the "not" indicator
+				if(substr($thisSetting,0,1)=="!") {
+					$allowed[] = str_replace("{BLANK}","",substr($thisSetting,1));
+				} else {
+					$excluded[] = str_replace("{BLANK}","",$thisSetting);
+				}
+			}
+			break;
+	}
+	$to_return = array(0=>$allowed,1=>$excluded);
+	return $to_return;
+}
+
 
 // THIS FUNCTION TAKES THE VALUE AND THE HANDLE AND THE FRID AND FIGURES OUT WHAT THE VALUE PLUS UITEXT WOULD BE
 function calcValuePlusText($value, $handle, $frid, $fid) {
@@ -2014,6 +2065,30 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $frid, 
 					break;
 				case "onlyblanks":
 					$bsetting = _formulize_DE_INCLONLYBLANKS;
+					break;
+				case "justnoblanks":
+					$bsetting = _formulize_DE_EXCLONLYBLANKS;
+					break;
+				case "justnozeros":
+					$bsetting =_formulize_DE_EXCLONLYZEROS;
+					break;
+				default: // must be custom
+					$bsetting = _formulize_DE_EXCLCUSTOM;
+					$setting = explode(",",substr(str_replace("!@^%*", ",", $blankSettings[$handle][$calc]),6)); // replace back the commas and remove the word custom from the front, and explode it into an array
+					$start = 1;
+					foreach($setting as $thissetting) {
+						if(!$start) {
+							$bsetting .= ", ";
+						}
+						$start = 0;
+						if(substr($thissetting,0,1)=="!") {
+							$notText = strtolower(_formulize_NOT) ." ";
+							$thissetting = substr($thissetting,1);
+						} else {
+							$notText = "";
+						}
+						$bsetting .= $notText.$thissetting;
+					}
 					break;
 			}
 			$output .= "<p>$bsetting</p>\n</td>\n";
