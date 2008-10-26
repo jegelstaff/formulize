@@ -158,7 +158,7 @@ function prepvalues($value, $field, $entry_id) {
   }
 
   $elementArray = formulize_getElementMetaData($field, true);
-    
+  
   // check if this is fullnames/usernames box
   // wickedly inefficient to go to DB for each value!!  This loop executes once per datapoint in the result set!!
   $type = $elementArray['ele_type'];
@@ -182,7 +182,6 @@ function prepvalues($value, $field, $entry_id) {
      }   
   }
   		
-  	
 	// handle yes/no cases
 
 	if($type == "yn") { // if we've found one
@@ -209,8 +208,8 @@ function prepvalues($value, $field, $entry_id) {
     $value_other = $newValueq[0]['other_text']; // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
 		$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value); 
 	}
-	
-	return explode("*=+*:",$value); 
+
+	return explode("*=+*:",$value);
 }
 
 
@@ -422,11 +421,14 @@ if(is_numeric($frame)) {
      $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
      list($formFieldFilterMap, $whereClause, $orderByClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
      
+     formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this
+     
      if($frid) {
           $newJoinText = "";
           $countQueryJoinText = "";
           $joinText = "";
           foreach($linkformids as $id=>$linkedFid) {
+               formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
                $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
                $joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
                $newJoinText = " $joinType JOIN " . DBPRE . "formulize_$linkedFid AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
@@ -486,7 +488,7 @@ if(is_numeric($frame)) {
      
      // only drawback in this SQL right now is it does not support one to one relationships in the query, since they are essentially joins on the entry_id and form id through the one_to_one table
      $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause";
-     
+     //$masterQuerySQL = "SELECT * FROM " . DBPRE . "formulize_$fid LIMIT 0,1";
      //$afterQueryTime = microtime_float();
      
      /*global $xoopsUser;
@@ -505,7 +507,8 @@ if(is_numeric($frame)) {
      
      
      // Debug Code
-     /*global $xoopsUser;
+     /*
+     global $xoopsUser;
      if($xoopsUser->getVar('uid') == 1) {
           print $masterQuerySQL;
           print "<br>";
@@ -543,19 +546,19 @@ if(is_numeric($frame)) {
      } else {
           print "Error: could not check to see if there were derived value elements in one or more forms.  SQL:<br>$sql";
      }     
-     
+
      // loop through the found data and create the dataset array in "getData" format
-     
      $prevFieldNotMeta = true;
      $masterIndexer = -1;
      $writtenMains = array();
      $prevFormAlias = "";
      $creationUidLog = array();
      $prevMainId = "";
-		 formulize_benchmark("About to prepare results.");
+		 //formulize_benchmark("About to prepare results.");
      while($masterQueryArray = mysql_fetch_assoc($masterQueryRes)) {
-					formulize_benchmark("Starting one entry.");
+					//formulize_benchmark("Starting to process one entry.");
           foreach($masterQueryArray as $field=>$value) {
+               //formulize_benchmark("Starting to process one value");
                if($field == "entry_id" OR $field == "creation_uid" OR $field == "mod_uid" OR $field == "creation_datetime" OR $field == "mod_datetime" OR $field == "main_email" OR $field == "main_user_viewemail") { continue; } // ignore those plain fields, since we can only work with the ones that are properly aliased to their respective tables.  More details....Must refer to metadata fields by aliases only!  since * is included in SQL syntax, fetch_assoc will return plain column names from all forms with the values from those columns.....Also want to ignore the email fields, since the fact they're prefixed with "main" can throwoff the calculation of which entry we're currently writing
                if(strstr($field, "creation_uid") OR strstr($field, "creation_datetime") OR strstr($field, "mod_uid") OR strstr($field, "mod_datetime")) {
                     // dealing with a new metadata field
@@ -600,11 +603,10 @@ if(is_numeric($frame)) {
                if($curFormAlias == "main" AND isset($writtenMains[$masterQueryArray['main_entry_id']])) {
                     continue;
                } 
-               
+
                // print "$curFormAlias - $field: $value<br>"; // debug line
                $valueArray = prepvalues($value, $elementHandle, $masterQueryArray[$curFormAlias . "_entry_id"]); // note...metadata fields must not be in an array for compatibility with the 'display' function...not all values returned will actually be arrays, but if there are multiple values in a cell, then those will be arrays
                $masterResults[$masterIndexer][formulize_readFrameworkMap($frameworkMap, $curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][formulize_readFrameworkMap($frameworkMap, $curFormId, $elementHandle)] = $valueArray;
-               //$masterResults[$masterIndexer][$elementHandle][] = $valueArray; // new easier way of gathering data -- handles directly at first level of $entry, in an array because there might be more than one occurance of them
 
                if($elementHandle == "creation_uid" OR $elementHandle == "mod_uid" OR $elementHandle == "creation_datetime" OR $elementHandle == "mod_datetime") {
                     // add in the creator_email when we have done the creation_uid
@@ -646,9 +648,8 @@ if(is_numeric($frame)) {
                     }
                     $masterResults[$masterIndexer][formulize_readFrameworkMap($frameworkMap, $curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][$old_meta] = $valueArray;
                }
-							 
           }
-					formulize_benchmark("Done entry, ready to do derived values.");
+					//formulize_benchmark("Done entry, ready to do derived values.");
 					// now that the entire entry has been processed, do the derived values for it
           if(count($derivedFieldMetadata) > 0) {
                $masterResults[$masterIndexer] = formulize_calcDerivedColumns($masterResults[$masterIndexer], $derivedFieldMetadata, $frid, $fid);
@@ -739,11 +740,14 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
      } else {
           $filter = $filtertemp;
      }
+     
      global $myts;
      $numSeachExps = 0;
      foreach($filter as $filterParts) {
           // evaluate each search expression (collection of terms with a common operator inbetween
           // Use the global andor setting between expressions
+          
+          if($filterParts[1] == "") { continue; } // ignore filters that are empty...can happen if only OR filters are specified, and maybe at other times too
           
           if($numSeachExps > 0) {
                $whereClause .= $andor;
@@ -755,13 +759,13 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                               
                // evaluate each individual search term
                // Use the local andor setting ($filterParts[0]) between terms
+
+               $ifParts = explode("/**/", $indivFilter);
                
                if($numIndivFilters > 0) {
                     $whereClause .= $filterParts[0];
                }
                $whereClause .= "("; // bracket each individual component of the whereclause
-               
-               $ifParts = explode("/**/", $indivFilter);
                     
                $operator = isset($ifParts[2]) ? $ifParts[2] : "LIKE";
                if(trim($operator) == "LIKE" OR trim($operator) == "NOT LIKE") {
@@ -774,7 +778,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                } else {
                     $likebits = "";
                }
-               $quotes = (is_numeric($ifParts[1]) AND !strstr(trim(strtoupper($operator)), "LIKE"))  ? "" : "'"; // don't put quotes around numeric queries, unless they're part of a LIKE query
+               $quotes = ((is_numeric($ifParts[1]) AND !strstr(trim(strtoupper($operator)), "LIKE")) OR strstr(strtoupper($operator), "NULL"))  ? "" : "'"; // don't put quotes around numeric queries, unless they're part of a LIKE query.  Don't use quotes on the special IS NULL query either
                
                
                // FINAL NOTE ABOUT SLASHES...Oct 19 2006...patch 22 corrects this slash/magic quote mess.  However, to ensure compatibility with existing Pageworks applications, we are continuing to strip out all slashes in the filterparts[1], the filter strings that are passed in, and then we apply HTML special chars to the filter so that it can match up with the contents of the DB.  Only challenge is that extract.php is meant to be standalone, but we have to refer to the text sanitizer class in XOOPS in order to do the HTML special chars thing correctly.
@@ -1022,19 +1026,26 @@ function formulize_getJoinHandles($elementArrays) {
 
 // This function gets element data once that can be used for multiple purposes
 // first param is the id or handle being asked for, second param is a flag showing whether the first param should be interpretted as an id or a handle
-// This could be improved by calling once for the entire form, for all the forms in the query.  Do that at the beginning and cache results.  Put fid into whereclause.  Only do one query per form but still get all metadata.
-function formulize_getElementMetaData($elementOrHandle, $isHandle=false) {
+// fid param is only used when this function is called near the start of the extraction layer, when we initialize the cachedElement map for each form that is in use
+function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0) {
      static $cachedElements = array();
      $cacheType = $isHandle ? 'handles' : 'ids';
      if(!isset($cachedElements[$cacheType][$elementOrHandle])) {
-          $whereClause = $isHandle ? "ele_handle = '".mysql_real_escape_string($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
+          if($fid) {
+               $whereClause = "id_form=".intval($fid);
+          } else {
+               $whereClause = $isHandle ? "ele_handle = '".mysql_real_escape_string($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
+          }
           $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form FROM " . DBPRE . "formulize WHERE $whereClause";
           $evqRes = mysql_query($elementValueQ);
-          $evqRow = mysql_fetch_array($evqRes);
-          $cachedElements['handles'][$evqRow['ele_handle']] = $evqRow; // cached the element according to handle and id, so we don't repeat the same query later just because we're asking for info about the same element in a different way
-          $cachedElements['ids'][$evqRow['ele_id']] = $evqRow;
+          while($evqRow = mysql_fetch_array($evqRes)) {
+               $cachedElements['handles'][$evqRow['ele_handle']] = $evqRow; // cached the element according to handle and id, so we don't repeat the same query later just because we're asking for info about the same element in a different way
+               $cachedElements['ids'][$evqRow['ele_id']] = $evqRow;
+          }
      }
-     return $cachedElements[$cacheType][$elementOrHandle];
+     if(!$fid) {
+          return $cachedElements[$cacheType][$elementOrHandle];
+     }
 }
 
 // THIS FUNCTION LOOPS THROUGH AN ENTRY AND ADDS IN THE DERIVED VALUES IN ANY DERIVED COLUMNS -- March 27 2007
@@ -1328,20 +1339,34 @@ function parseTableFormFilter($filter, $andor, $elementsById) {
 // This function returns the caption, formatted for form (not formulize_form), based on the handle for the element
 // assumption is that a handle is unique within a framework
 // $colhead flag will cause the colhead to be returned instead of the caption
-function getCaption($framework, $handle, $colhead=false) {
+// $getAll will cause the entire framework to be examined at once, which speeds up the retrieval of headers if we need them all
+function getCaption($framework, $handle, $colhead=false, $getAll=false) {
 	if(is_numeric($framework)) {
 		$frid[0]['frame_id'] = $framework;
 	} else {
-		$frid = go("SELECT frame_id FROM " . DBPRE . "formulize_frameworks WHERE frame_name = '$framework'");
+		$frid = go("SELECT frame_id FROM " . DBPRE . "formulize_frameworks WHERE frame_name = '".mysql_real_escape_string($framework)."'");
 	}
-	$elementId = go("SELECT fe_element_id FROM " . DBPRE . "formulize_framework_elements WHERE fe_frame_id = '" . $frid[0]['frame_id'] . "' AND fe_handle = '$handle'");
-	$caption = go("SELECT ele_caption, ele_colhead FROM " . DBPRE . "formulize WHERE ele_id = '" . $elementId[0]['fe_element_id'] . "'"); 
-	if($colhead AND $caption[0]['ele_colhead'] != "") {
-		return $caption[0]['ele_colhead'];
+  static $cachedCaptions = array();
+  if(!isset($cachedCaptions[$frid[0]['frame_id']][$handle])) {
+     global $xoopsDB;
+     if($getAll) {
+          $sql = "SELECT t2.ele_caption, t2.ele_colhead, t1.fe_handle FROM " . DBPRE . "formulize_framework_elements as t1, ".DBPRE."formulize as t2 WHERE t1.fe_frame_id = '" . $frid[0]['frame_id'] . "' AND t1.fe_element_id=t2.ele_id";
+     } else {
+          $sql = "SELECT t2.ele_caption, t2.ele_colhead, t1.fe_handle FROM " . DBPRE . "formulize_framework_elements as t1, ".DBPRE."formulize as t2 WHERE t1.fe_frame_id = '" . $frid[0]['frame_id'] . "' AND t1.fe_handle = '".mysql_real_escape_string($handle)."' AND t1.fe_element_id=t2.ele_id";
+     }
+     if(!$elementData = $xoopsDB->query($sql)) {
+          print "Error: could not retrieve caption for element '$handle' with this SQL:<br>$sql";
+     }
+     while($array = $xoopsDB->fetchArray($elementData)) {
+          $cachedCaptions[$frid[0]['frame_id']][$array['fe_handle']]['caption'] = $array['ele_caption'];
+          $cachedCaptions[$frid[0]['frame_id']][$array['fe_handle']]['colhead'] = $array['ele_colhead'];
+     }
+  }
+	if($colhead AND $cachedCaptions[$frid[0]['frame_id']][$handle]['colhead'] != "") {
+		return $cachedCaptions[$frid[0]['frame_id']][$handle]['colhead'];
 	} else {
-		return $caption[0]['ele_caption'];
+		return $cachedCaptions[$frid[0]['frame_id']][$handle]['caption'];
 	}
-	
 }
 
 

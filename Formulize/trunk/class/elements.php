@@ -82,7 +82,7 @@ class formulizeElementsHandler {
 		return new formulizeformulize();
 	}
 
-	function &get($id){
+	function get($id){
 		$id = intval($id);
 		static $cachedElements = array();
 		if(isset($cachedElements[$id])) {

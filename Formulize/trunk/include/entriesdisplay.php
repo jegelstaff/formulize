@@ -81,8 +81,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
     $formulizeModule =& $module_handler->getByDirname("formulize");
     $formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
     $modulePrefUseToken = $formulizeConfig['useToken'];
-		$useToken = $screen ? $screen->getVar('useToken') : 1;
-		if(isset($GLOBALS['xoopsSecurity']) AND $useToken AND $modulePrefUseToken) {
+		$useToken = $screen ? $screen->getVar('useToken') : $modulePrefUseToken;
+		if(isset($GLOBALS['xoopsSecurity']) AND $useToken) {
 			$formulize_LOESecurityPassed = $GLOBALS['xoopsSecurity']->check();
 		} else { // if there is no security token, then assume true -- necessary for old versions of XOOPS.
 			$formulize_LOESecurityPassed = true;
@@ -1062,7 +1062,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		// also setup searches when calculations are in effect, or there's a custom list template
 		// (essentially, whenever the search boxes would not be drawn in for whatever reason)
 		if(!$useSearch OR ($calc_cols AND !$hcalc) OR $screen->getVar('listtemplate')) {
-			$quickSearchBoxes = drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, $frid); // true means we will receive back the code instead of having it output to the screen
+			$quickSearchBoxes = drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, $frid, true); // first true means we will receive back the code instead of having it output to the screen, second (last) true means that all allowed filters should be generated
 			$quickSearchesNotInTemplate = array();
 			foreach($quickSearchBoxes as $handle=>$qscode) {
         $foundQS = false;
@@ -1215,9 +1215,6 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$formulize_LOEPageSize = $screen->getVar('entriesperpage');
 	}		
 		
-	// get the headers
-	$headers = getHeaders($cols, $frid, true); // third param indicates we're using element headers and not ids
-	
 	$filename = "";
 	// $settings['xport'] no longer set by a page load, except if called as part of the import process to create a template for updating
 	if(!$settings['xport']) {
@@ -1228,9 +1225,10 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$xportDivText1 = "";
 		$xportDivText2 = "";
 	}
-  formulize_benchmark("before prepping export");
-	$filename = prepExport($headers, $cols, $data, $settings['xport'], $settings['xport_cust'], $settings['title'], false, $fid, $groups);
-  formulize_benchmark("after prepping export");
+  
+  // export will need to be moved out to a popup
+	//$filename = prepExport($headers, $cols, $data, $settings['xport'], $settings['xport_cust'], $settings['title'], false, $fid, $groups);
+
 	$linktext = $_POST['xport'] == "update" ? _formulize_DE_CLICKSAVE_TEMPLATE : _formulize_DE_CLICKSAVE;
 	print "$xportDivText1<center><p><a href='$filename' target=\"_blank\">$linktext</a></p></center>";
 	print "<br>$xportDivText2";
@@ -1269,9 +1267,9 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		}
 		$cblanks = explode("/", $settings['calc_blanks']);
 		$cgrouping = explode("/", $settings['calc_grouping']);
-    formulize_benchmark("before performing calcs");
+    //formulize_benchmark("before performing calcs");
 		$cresults = performCalcs($ccols, $ccalcs, $cblanks, $cgrouping, $data, $frid, $fid);
-    formulize_benchmark("after performing calcs");
+    //formulize_benchmark("after performing calcs");
 //		print "<p><input type=button style=\"width: 140px;\" name=cancelcalcs1 value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input></p>\n";
 //		print "<div";
 //		if($totalcalcs>4) { print " class=scrollbox"; }
@@ -1286,9 +1284,9 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 			print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></td></tr>";
 		}
 		$exportFilename = $settings['xport'] == "calcs" ? $filename : "";
-    formulize_benchmark("before printing results");
+    //formulize_benchmark("before printing results");
 		printResults($cresults[0], $cresults[1], $cresults[2], $frid, $exportFilename, $settings['title']); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
-    formulize_benchmark("after printing results");
+    //formulize_benchmark("after printing results");
 		print "</table>\n";
 
 	}
@@ -1346,12 +1344,13 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 			print "</td></tr>\n";
 		}
 	
-	
-		if($useHeadings) { drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockcontrols']); }
+		if($useHeadings) {
+      $headers = getHeaders($cols, $frid, true); // third param indicates we're using element headers and not ids
+      drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockcontrols']); 
+    }
 		if($useSearch) {
-			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches, $frid, false); // true means draw in filters if they are available, so switch to true when we're ready to do that...can't do it now since we need textboxes for the advnaced search terms that people may have, or will need to use
-		} 
-	
+			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches, $frid);
+		}
 		// get form handles in use
 		$mainFormHandle = key($data[key($data)]);
 	
@@ -1359,6 +1358,9 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 			unset($data);
 		} 
 	
+  
+    
+  
 		$headcounter = 0;
 		$blankentries = 0;
 		$update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);
@@ -1370,6 +1372,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : count($data);
 		if(isset($data)) {
 			for($entryCounter=$formulize_LOEPageStart;$entryCounter<$actualPageSize;$entryCounter++) {
+        formulize_benchmark("starting to draw one row of results");
 				$entry = $data[$entryCounter];
 				$id=$entryCounter;
 						
@@ -1392,6 +1395,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 						$class="even";
 					}
 					unset($linkids);
+          
 					$linkids = internalRecordIds($entry, $mainFormHandle);
 					
 					// draw in the margin column where the links and metadata goes
@@ -1411,8 +1415,8 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 						}
 						if($useCheckboxes != 2) { // two means none
 							// put in the delete checkboxes -- check for perms delete_own_entry, delete_other_entries
-							$owner = getEntryOwner($linkids[0], $fid);
-							// check to see if we should draw in the delete checkbox or not
+              $owner = getEntryOwner($linkids[0], $fid);
+              // check to see if we should draw in the delete checkbox or not
 							if(($owner == $uid AND $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid)) OR ($owner != $uid AND $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid)) OR $useCheckboxes == 1) { // 1 means all
 								if($useViewEntryLinks) {
 									print "<br>";
@@ -1437,8 +1441,8 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 					} else {
 						$columnWidthParam = "";
 					}
-			
-					for($i=0;$i<count($cols);$i++) {
+          for($i=0;$i<count($cols);$i++) {
+            //formulize_benchmark("drawing one column");
 						$col = $cols[$i];
 						$colid = $settings['columnids'][$i];
 					
@@ -1473,23 +1477,18 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 							$start = 1;
 							foreach($value as $v) {
 								if($start) {
-									print formulize_replaceLineBreaks(checkForLink($v, $col, $frid, $textWidth), $col, $frid); //printSmart(trans($v));
+									print str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth));
 									$start = 0;
 								} else {
 									print ",<br>\n";
-									print formulize_replaceLineBreaks(checkForLink($v, $col, $frid, $textWidth), $col, $frid); // printSmart(trans($v));
+									print str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth));
 								}
 							}
 						} elseif($col != "creation_uid" AND $col!= "mod_uid") {
-							print formulize_replaceLineBreaks(checkForLink($value, $col, $frid, $textWidth), $col, $frid); // printSmart(trans($value));
+							print str_replace("\n", "<br>", formatLinks($value, $col, $frid, $textWidth));
 						} else { // don't use printsmart for the special uid cells
 							print $value;
 						}
-						// print out a hidden element if necessary -- this is now down lower down to include all columns regardless of whether they are visible or not
-						/*if(in_array($colid, $hiddenColumns)) {
-							print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$col\" value=\"" . htmlspecialchars(display($entry, $col)) . "\"></input>\n";
-						}*/
-						
 						
 						print "</td>\n";
 						$column_counter++;
@@ -1523,8 +1522,6 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 			
 			} // end of for loop that draws all data
 		} // end of if there is any data to draw
-	
-		// if(count($data)>20 AND $useHeadings) { drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockcontrols']); }
 	
 		print "</table>";
 
@@ -1608,6 +1605,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	if($useScrollBox) {
 		print "</div>";
 	}
+  formulize_benchmark("We're done");
 }
 
 // this function outputs the html to view an entry, based on the value the user wants clickable, and the pre-determined view link code for the entry
@@ -1617,7 +1615,9 @@ function viewEntryLink($linkContents) {
 
 // this function draws in the search box row
 // returnOnly is used to return the HTML code for the boxes, and that only happens when we are gathering the boxes because a custom list template is in use
-function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, $returnOnly=false, $hiddenQuickSearches, $frid=0, $filtersAllowed=false) {
+// $filtersRequired can be 'true' which means include all valid filters, or it can be a list of fields (matching values in the cols array) which require filters
+function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, $returnOnly=false, $hiddenQuickSearches, $frid=0, $filtersRequired=array()) {
+  
 	$quickSearchBoxes = array();
 	if(!$returnOnly) { print "<tr>"; }
 	if($useBoxes != 2 OR $useLinks) {
@@ -1625,6 +1625,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 	}
 	for($i=0;$i<count($cols);$i++) {
 		if(!$returnOnly) { print "<td class=head>\n"; }
+    //formulize_benchmark("drawing one search");
 		$search_text = isset($searches[$cols[$i]]) ? strip_tags(htmlspecialchars($searches[$cols[$i]]), ENT_QUOTES) : "";
 		$search_text = get_magic_quotes_gpc() ? stripslashes($search_text) : $search_text;
 		$boxid = "";
@@ -1636,8 +1637,15 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 			}
 			$clear_help_javascript = "onfocus=\"javascript:clearSearchHelp(this.form, '" . _formulize_DE_SEARCH_HELP . "');\"";
 		}
+    //formulize_benchmark("finished prep of search box");
 		$quickSearchBoxes[$cols[$i]]['search'] = "<input type=text $boxid name='search_" . $cols[$i] . "' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
-		$quickSearchBoxes[$cols[$i]]['filter'] = formulize_buildQSFilter($cols[$i], $search_text, $frid);
+    //formulize_benchmark("made search box, starting filter");
+    if(is_array($filtersRequired) OR $filtersRequired === true) {
+      if($filtersRequired === true OR in_array($cols[$i], $filtersRequired)) {
+        $quickSearchBoxes[$cols[$i]]['filter'] = formulize_buildQSFilter($cols[$i], $search_text, $frid);
+      }
+    }
+    //formulize_benchmark("done filter");
     
 		// handle all the hidden quick searches if we are on the last run through
 		if($i == count($cols)-1) {
@@ -1645,7 +1653,11 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 				$search_text = isset($searches[$thisHQS]) ? htmlspecialchars(strip_tags($searches[$thisHQS]), ENT_QUOTES) : "";
 				$search_text = get_magic_quotes_gpc() ? stripslashes($search_text) : $search_text;
 				$quickSearchBoxes[$thisHQS]['search'] = "<input type=text name='search_$thisHQS' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
-        $quickSearchBoxes[$thisHQS]['filter'] = formulize_buildQSFilter($thisHQS, $search_text, $frid);
+        if(is_array($filtersRequired) OR $filtersRequired === true) {
+          if($filtersRequired === true OR in_array($thisHQS, $filtersRequired)) {
+            $quickSearchBoxes[$thisHQS]['filter'] = formulize_buildQSFilter($thisHQS, $search_text, $frid);
+          }
+        }
 				if(!$returnOnly) {
 					print "<input type=hidden name='search_$thisHQS' value=\"$search_text\"></input>\n"; // note: this will cause a conflict if this particular column is included in the top or bottom templates and no custom list template is in effect...since this is only ! ! search terms, not sure why you'd ever include this as a box in the top/bottom templates...it's not type-in-able because of the ! !
 				}
@@ -1667,20 +1679,20 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 		}
 		print "</tr>\n";
 	}
+  
 	return $quickSearchBoxes;
 }
 
 // THIS FUNCTION CREATES THE QUICKFILTER BOXES
 function formulize_buildQSFilter($handle, $search_text, $frid) {
+  formulize_benchmark("start of building filter");
   if($frid) {
     $resultArray = formulize_getElementHandleAndIdFromFrameworkHandle($handle, $frid);
-    $id = $resultArray[1];
+    $elementMetaData = formulize_getElementMetaData($resultArray[1], false);
   } else {
-    $id = formulize_getIdFromElementHandle($handle);
+    $elementMetaData = formulize_getElementMetaData($handle, true);
   }
-  $element_handler = xoops_getmodulehandler('elements', 'formulize');
-  $element = $element_handler->get($id);
-  if($element->getVar('ele_type')=="select" OR $element->getVar('ele_type')=="radio" OR $element->getVar('ele_type')=="checkbox") {
+  if($elementMetaData['ele_type']=="select" OR $elementMetaData['ele_type']=="radio" OR $elementMetaData['ele_type']=="checkbox") {
     $qsfparts = explode("_", $search_text);
     $counter = $qsfparts[1];
     $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $counter);
@@ -2048,7 +2060,10 @@ function calcValuePlusText($value, $handle, $frid, $fid) {
   } else {
     $id = formulize_getIdFromElementHandle($handle);
   }
-  $element_handler = xoops_getmodulehandler('elements', 'formulize');
+  static $element_handler;
+  if(!is_object($element_handler)) {
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+  }
   $element = $element_handler->get($id);
   $uitexts = $element->getVar('ele_uitext');
   $value = isset($uitexts[$value]) ? $uitexts[$value] : $value;
@@ -2996,11 +3011,6 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	
 }
 
-// THIS FUNCTION READS THE TEMPLATE AND CREATES ANY QUICKSEARCHFILTERS THAT ARE NECESSARY
-function formulize_getQuickFilters($template, $frid) {
-  
-}
-
 // THIS FUNCTION PROCESSES THE REQUESTED BUTTONS AND GENERATES HTML PLUS SENDS BACK INFO ABOUT THAT BUTTON
 // $caid is the id of this button, $thisCustomAction is all the settings for this button, $entries is optional and is a comma separated list of entries that should be modified by this button (only takes effect on inline buttons, and possible future types)
 // $entries is the entry ID that should be altered when this button is clicked.  Only sent for inline buttons.
@@ -3363,9 +3373,7 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 	$ORstart = 1;
 	$ORfilter = "";
 	foreach($searches as $key=>$master_one_search) { // $key is handles for frameworks, and ele_handles for non-frameworks.
-		$addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms
-		
-    
+
 		// split search based on new split string
 		$searchArray = explode("//", $master_one_search);
 		
@@ -3383,7 +3391,7 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 			}
 			
 			// look for OR indicators...if all caps OR is at the front, then that means that this search is to put put into a separate set of OR filters that gets appended as a set to the main set of AND filters
-			
+      $addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms			
 			if(substr($one_search, 0, 2) == "OR" AND strlen($one_search) > 2) {
 				$addToORFilter = true;
 				$one_search = substr($one_search, 2);
@@ -3397,10 +3405,10 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 				// operator found, check to see if it's <= or >= and set start point for term accordingly
 				$startpoint = (substr($one_search, 0, 2) == ">=" OR substr($one_search, 0, 2) == "<=" OR substr($one_search, 0, 2) == "!=" OR substr($one_search, 0, 2) == "<>") ? 2 : 1;
 				$operator = substr($one_search, 0, $startpoint);
+        if($operator == "!") { $operator = "NOT LIKE"; }
 				$one_search = substr($one_search, $startpoint);
 				
 			}
-			
 			
 			// look for { } and transform special terms into what they should be for the filter
 			if(substr($one_search, 0, 1) == "{" AND substr($one_search, -1) == "}") {
@@ -3416,6 +3424,17 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 					} else {
 						$one_search = 0;
 					}
+        } elseif($searchgetkey == "BLANK") { // special case, we need to construct a special OR here that will look for "" OR IS NULL
+          if($operator == "!=" OR $operator == "NOT LIKE") {
+            $blankOp1 = "!=";
+            $blankOp2 = " IS NOT NULL ";
+          } else {
+            $addToORFilter = true;
+            $blankOp1 = "=";
+            $blankOp2 = " IS NULL ";
+          }
+          $one_search = "/**/$blankOp1][$key/**//**/$blankOp2";
+          $operator = ""; // don't use an operator, we've specially constructed the one_search string to have all the info we need
 				} elseif(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
 					$one_search = $_POST[$searchgetkey] ? htmlspecialchars(strip_tags($_POST[$searchgetkey])) : "";
 					$one_search = (!$one_search AND $_GET[$searchgetkey]) ? htmlspecialchars(strip_tags($_GET[$searchgetkey])) : $one_search;

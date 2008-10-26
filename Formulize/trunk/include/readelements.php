@@ -155,8 +155,8 @@ if(count($formulize_elementData) > 0 ) { // do security check if it looks like w
   $formulizeModule =& $module_handler->getByDirname("formulize");
   $formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
   $modulePrefUseToken = $formulizeConfig['useToken'];
-	$useToken = $screen ? $screen->getVar('useToken') : 1; 
-	if(isset($GLOBALS['xoopsSecurity']) AND $useToken AND $modulePrefUseToken) { // avoid security check for versions of XOOPS that don't have that feature
+	$useToken = $screen ? $screen->getVar('useToken') : $modulePrefUseToken; 
+	if(isset($GLOBALS['xoopsSecurity']) AND $useToken) { // avoid security check for versions of XOOPS that don't have that feature, or for when it's turned off
 		if (!$GLOBALS['xoopsSecurity']->check() AND (!strstr($cururl, "modules/wfdownloads") AND !strstr($cururl, "modules/smartdownload"))) { // skip the security check if we're in wfdownloads/smartdownloads since that module should already be handling the security checking
 			print "<b>Error: the data you submitted could not be saved in the database.</b>";
 			return false;

@@ -421,16 +421,6 @@ formulize_benchmark("Start of formDisplay.");
 		//$owner_groups =& $member_handler->getGroupsByUser($owner, FALSE);
 		$newFidData_handler = new formulizeDataHandler($new_fid);
 		$owner_groups = $newFidData_handler->getEntryOwnerGroups($entries[$new_fid][0]);
-// DON'T UNDERSTAND WHY WE'RE CHECKING FOR LINKS WHEN A SUBFORM IS LOADED (NO SUPPORT INTENDED FOR DOUBLE NESTED SUBFORMS)
-/*
-		$linkResults = checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner); 
-		unset($entries);
-		unset($fids);
-		$fids = $linkResults['fids'];
-		$entries = $linkResults['entries'];
-		$sub_fids = $linkResults['sub_fids'];
-		$sub_entries = $linkResults['sub_entries'];
-*/
 		$info_received_msg = 0;// never display this message when a subform is displayed the first time.	
 		if($entry) { $info_continue = 1; }
 		if(!$scheck = security_check($fid, $entries[$fid][0], $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms) {
