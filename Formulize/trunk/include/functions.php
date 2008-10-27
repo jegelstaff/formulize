@@ -1376,7 +1376,7 @@ function writableQuery($items, $mod="") {
 }
 
 
-// THIS FUNCTION TAKES A HANDLE FROM THE CALCULATIONS RESULT AND RETURNS THE TEXT TO PUT ON THE SCREEN THAT CORRESPONDS TO IT
+// THIS FUNCTION TAKES A ID FROM THE CALCULATIONS RESULT AND RETURNS THE TEXT TO PUT ON THE SCREEN THAT CORRESPONDS TO IT
 // Also used for advanced searches
 function getCalcHandleText($handle, $frid="") {
 	global $xoopsDB;
@@ -3231,6 +3231,17 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 	$filter .= "</SELECT>\n";
 
 	return $filter;
+}
+
+// THIS FUNCTION TAKES A VALUE AND THE UITEXT FOR THE ELEMENT, AND RETURNS THE UITEXT IN PLACE OF THE "DATA" TEXT
+function formulize_swapUIText($value, $uitexts) {
+  // if value is an array, it has a key called 'value', which needs to be swapped
+  if(is_array($value)) {
+    $value['value'] = isset($uitexts[$value['value']]) ? $uitexts[$value['value']] : $value['value'];
+  } else {
+    $value = isset($uitexts[$value]) ? $uitexts[$value] : $value;
+  }
+  return $value;
 }
 
 ?>

@@ -407,6 +407,8 @@ if(is_numeric($frame)) {
 		$linkcommonvalue = "";
 	}
 
+     $GLOBALS['formulize_linkformidsForCalcs'] = $linkformids;
+
 	 // now that we have the full details from the framework, figure out the full SQL necessary to get the entire dataset
      // This whole approach is predicated on being able to do reliable joins between the key fields of each form
      
@@ -509,6 +511,8 @@ if(is_numeric($frame)) {
      
      // only drawback in this SQL right now is it does not support one to one relationships in the query, since they are essentially joins on the entry_id and form id through the one_to_one table
      $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause $limitClause";
+     $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
+     
      //$masterQuerySQL = "SELECT * FROM " . DBPRE . "formulize_$fid LIMIT 0,1";
      //$afterQueryTime = microtime_float();
      
@@ -1057,7 +1061,7 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
           } else {
                $whereClause = $isHandle ? "ele_handle = '".mysql_real_escape_string($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
           }
-          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form FROM " . DBPRE . "formulize WHERE $whereClause";
+          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext FROM " . DBPRE . "formulize WHERE $whereClause";
           $evqRes = mysql_query($elementValueQ);
           while($evqRow = mysql_fetch_array($evqRes)) {
                $cachedElements['handles'][$evqRow['ele_handle']] = $evqRow; // cached the element according to handle and id, so we don't repeat the same query later just because we're asking for info about the same element in a different way

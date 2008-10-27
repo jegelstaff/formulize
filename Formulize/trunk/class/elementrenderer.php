@@ -33,6 +33,8 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+
 class formulizeElementRenderer{
 	var $_ele;
 
@@ -132,7 +134,6 @@ class formulizeElementRenderer{
 				$ele_value[2] = stripslashes($ele_value[2]);
 //        $ele_value[2] = $myts->displayTarea($ele_value[2]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
 				
-				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 				$ele_value[2] = getTextboxDefault($ele_value[2]);
 
 				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added
@@ -153,7 +154,6 @@ class formulizeElementRenderer{
 			case 'textarea':
 				$ele_value[0] = stripslashes($ele_value[0]);
 //        $ele_value[0] = $myts->displayTarea($ele_value[0]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
-				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 				$ele_value[0] = getTextboxDefault($ele_value[0]);
 				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added 
 					$form_ele = new XoopsFormTextArea(
@@ -919,17 +919,6 @@ class formulizeElementRenderer{
 		$newElement->addElement($element);
 		
 		return $newElement;
-	}
-
-	// THIS FUNCTION TAKES A VALUE AND THE UITEXT FOR THE ELEMENT, AND RETURNS THE UITEXT IN PLACE OF THE "DATA" TEXT
-	function formulize_swapUIText($value, $uitexts) {
-		// if value is an array, it has a key valled 'value', which needs to be swapped
-		if(is_array($value)) {
-			$value['value'] = isset($uitexts[$value['value']]) ? $uitexts[$value['value']] : $value['value'];
-		} else {
-			$value = isset($uitexts[$value]) ? $uitexts[$value] : $value;
-		}
-		return $value;
 	}
 
 	// this function creates the previous values drop down that people can use to set the value of an element

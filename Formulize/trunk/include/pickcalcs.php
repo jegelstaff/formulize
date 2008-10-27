@@ -474,13 +474,6 @@ foreach($returned['rc'] as $hidden) {
 		}		
 
 		$tray = new xoopsFormElementTray("&nbsp;&nbsp&nbsp;" . $calc_name, "<br>");
-/*		$tempcalc1 = new xoopsFormRadio('', $tempname, $current_val);
-		$tempcalc1->addOption("all", _formulize_DE_CALCALL);
-		$tempcalc2 = new xoopsFormRadio('', $tempname, $current_val);
-		$tempcalc2->addOption("noblanks", _formulize_DE_CALCNOBLANKS);
-		$tempcalc3 = new xoopsFormRadio('', $tempname, $current_val);
-		$tempcalc3->addOption("onlyblanks", _formulize_DE_CALCONLYBLANKS);
-*/
 		$tempcalc1 = new xoopsFormSelect("", $tempname, $current_val);
 		$tempcalc1->addOption("noblanks", _formulize_DE_CALCNOBLANKS);
 		$tempcalc1->addOption("all", _formulize_DE_CALCALL);
@@ -505,14 +498,12 @@ foreach($returned['rc'] as $hidden) {
 		$grouping->addOptionArray($options2);
 
 		$tray->addElement($tempcalclabel);
-//		$tray->addElement($tempcalc2);
-//		$tray->addElement($tempcalc3);
 		$tray->addElement($grouping);
 
 		$pickcalc->addElement($tray);
 		unset($tempcalc1);
-//		unset($tempcalc2);
-//		unset($tempcalc3);
+		unset($tempcalcCustom);
+		unset($tempcalclabel);
 		unset($grouping);
 		unset($tray);
 	}

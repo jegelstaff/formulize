@@ -1783,121 +1783,204 @@ function getDefaultCols($fid, $frid="") {
 
 } 
 
+// THIS FUNCTION RETURNS THE ELEMENT HANDLE AND FORM ALIAS IN THE CURRENT GETDATA QUERY, WHEN GIVEN THE ELEMENT ID NUMBER
+function getCalcHandleAndFidAlias($id, $fid) {
+  $elementMetaData = formulize_getElementMetaData($id, false);
+  $handle = $elementMetaData['ele_handle'];
+  $handleFid = $elementMetaData['id_form'];
+  if($handleFid == $fid) {
+       $handleFidAlias = "main";
+  } else {
+       $handleFidAlias = array_keys($GLOBALS['formulize_linkformidsForCalcs'], $handleFid); // position of this form in the linking relationships is important for identifying which form alias to use
+       $handleFidAlias = "f".$handleFidAlias[0];
+  }
+  return array(0=>$handle, 1=>$handleFidAlias, 2=>$handleFid);
+}
 
 
 //THIS FUNCTION PERFORMS THE REQUESTED CALCULATIONS, AND RETURNS AN html FORMATTED CHUNK FOR DISPLAY ON THE SCREEN
 function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
 	
-	// figure out all the handles that we need to grab for calculating
-	// plus the calcs requested for each, plus the blank options plus the grouping handle
-	for($i=0;$i<count($cols);$i++) {
-		$handles[$i] = calcHandle($cols[$i], $frid, $fid);
-		unset($ex_calcs);
-		unset($ex_blanks);
-		unset($ex_grouping);
-		if(strstr($calcs[$i], ",")) {
-			$ex_calcs = explode(",", $calcs[$i]);
-		} else {
-			$ex_calcs[0] = $calcs[$i];
-		}
-		if(strstr($blanks[$i], ",")) {
-			$ex_blanks = explode(",", $blanks[$i]);
-		} else {
-			$ex_blanks[0] = $blanks[$i];
-		}
-		if(strstr($grouping[$i], ",")) {
-			$ex_grouping = explode(",", $grouping[$i]);
-		} else {
-			$ex_grouping[0] = $grouping[$i];
-		}
-		for($z=0;$z<count($ex_calcs);$z++) {
-			$c[$i][$z] = $ex_calcs[$z];
-			$b[$i][$z] = $ex_blanks[$z];
-			$g[$i][$z] = calcHandle($ex_grouping[$z], $frid, $fid);
-		}
-	}
+  // determine which fields have which calculations and exculsion options
+  // calculations that are simple, with the same exclusion options, can be done in the same query
+  // percentage distribution is not simple, nor is percentile calculation (part of averages), nor is mode (part of averages), but all others are simple and can be done in one query
+  
+  global $xoopsDB;
+  $masterResults = array();
+  $blankSettings = array();
+  $groupSettings = array();
+  $baseQuery = $GLOBALS['formulize_queryForCalcs'];
+  for($i=0;$i<count($cols);$i++) {
+    // convert to element handle from element id
+    list($handle, $fidAlias, $handleFid) = getCalcHandleAndFidAlias($cols[$i], $fid); // returns ELEMENT handles for use in query
+    
+    // get the exclude and grouping values for this column
+    $excludes = explode(",", $blanks[$i]);
+    $groupings = explode(",", $grouping[$i]);
+    
+    // need to figure out if it's a derived value column, and if so, do something completely different here:
+    
+    
+    
+    
+    // build the select statement
+    foreach(explode(",", $calcs[$i]) as $cid=>$calc) {
+      
+      // figure out what to ask for for this calculation      
+      switch($calc) {
+        case "sum":
+          $select = "SELECT sum($fidAlias.`$handle`) as $fidAlias$handle";
+          break;
+        case "min":
+          $select = "SELECT min($fidAlias.`$handle`) as $fidAlias$handle";
+          break;
+        case "max":
+          $select = "SELECT max($fidAlias.`$handle`) as $fidAlias$handle";
+          break;
+        case "count":
+          $select = "SELECT count($fidAlias.`$handle`) as count$fidAlias$handle, count(distinct($fidAlias.`$handle`)) as distinct$fidAlias$handle";
+          break;
+        case "avg":
+          
+          break;
+        case "per":
+          
+          break;
+        default:
+          
+          break;
+      }
+            
+      // figure out the special where clause conditions that need to be added for this calculation
+      list($allowedValues, $excludedValues) = calcParseBlanksSetting($excludes[$cid]);
+        
+      $allowedWhere = "";  
+      if(count($allowedValues)>0) {
+        $start = true;
+        foreach($allowedValues as $value) {
+          if($start) {
+            $allowedWhere = " AND (";
+            $start = false;
+          } else {
+            $allowedWhere .= " OR ";
+          }
+          if($value === "{BLANK}") {
+            $allowedWhere .= "($fidAlias.`$handle`='' OR $fidAlias.`$handle` IS NULL)";
+          } else {
+            $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
+            $allowedWhere .= "$fidAlias.`$handle`='$value'";  
+          }
+        }
+        if($allowedWhere) {
+          $allowedWhere .= ")";
+          // replace any LEFT JOIN on this form in the query with an INNER JOIN, since there are now search criteria for this form
+          $baseQuery = str_replace("LEFT JOIN " . DBPRE . "formulize_$handleFid", "INNER JOIN " . DBPRE . "formulize_$handleFid", $baseQuery);
+        }
+      }
+      
+      $excludedWhere = "";
+      if(count($excludedValues)>0) {
+        $start = true;
+        foreach($excludedValues as $value) {
+          if($start) {
+            $excludedWhere = " AND (";
+            $start = false;
+          } else {
+            $excludedWhere .= " AND ";
+          }
+          if($value === "{BLANK}") {
+            $excludedWhere .= "($fidAlias.`$handle`!='' AND $fidAlias.`$handle` IS NOT NULL)";
+          } else {
+            $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
+            $excludedWhere .= "$fidAlias.`$handle`!='$value'";  
+          }
+        }
+        if($excludedWhere) {
+          $excludedWhere .= ")";
+          // replace any LEFT JOIN on this form in the query with an INNER JOIN, since there are now search criteria for this form
+          $baseQuery = str_replace("LEFT JOIN " . DBPRE . "formulize_$handleFid", "INNER JOIN " . DBPRE . "formulize_$handleFid", $baseQuery);
+        }
+      }
+      
+      // figure out the group by clause (grouping is expressed as element ids right now)
+      $theseGroupings = explode("!@^%*", $groupings[$cid]);
+      $groupByClause = "";
+      $start = true;
+      foreach($theseGroupings as $thisGrouping) {
+        if($thisGrouping == "none" OR $thisGrouping == "") { continue; }
+        if($start) {
+          $groupByClause = " GROUP BY ";
+          $start = false;
+        } else {
+          $groupByClause .= ", ";
+        }
+        list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+        $groupByClause .= "$galias.`$ghandle`";
+        $select .= ", $galias.`$ghandle` as $galias$ghandle";
+      }
+    
+      // do the query
+      $calcResult = array();
+      $calcResultSQL = "$select $baseQuery $allowedWhere $excludedWhere $groupByClause";
+      //print "$calcResultSQL<br>";
+      $calcResultRes = $xoopsDB->query($calcResultSQL);
+      while($calcResultArray = $xoopsDB->fetchArray($calcResultRes)) {
+        $calcResult[] = $calcResultArray;
+      }
+      
+      
+      // package up the result into the results array that gets passed to the output function that dumps data to screen (suitable for templating at a later date)
+      $blankSettings[calcHandle($cols[$i], $frid, $fid)][$calc] = $excludes[$cid];
+      $groupingSettings[calcHandle($cols[$i], $frid, $fid)][$calc] = $groupings[$cid];
 
-/*	print_r($handles);
-	print "<br>";
-	print_r($c);
-	print "<br>";
-	print_r($b);
-	print "<br>";
-	print_r($g);
-*/
-	// loop through all the data.  For each entry, store it as necessary for every calculation that needs to happen.
-
-	foreach($data as $entry) {
-		for($i=0;$i<count($handles);$i++)  {
-			$tempvalue = display($entry, $handles[$i]);
-			$thisvalue = convertUids($tempvalue, $handles[$i]); // also converts blanks to [blank]
-			for($z=0;$z<count($c[$i]);$z++) {
-				$blankSettings[$handles[$i]][$c[$i][$z]] = $b[$i][$z];				
-				$groupingSettings[$handles[$i]][$c[$i][$z]] = $g[$i][$z];
-				// now we need to handle the inclusion/exclusion logic...
-				// allowed values is an affirmative list...ie: value must be in the allowed list, if the allowed list exists
-				list($allowedValues, $excludedValues) = calcParseBlanksSetting($b[$i][$z]);
-				if(count($allowedValues)>0) {
-					$valueIsAllowed = false;
-					foreach($allowedValues as $thisAllowedValue) {
-						if($tempvalue == $thisAllowedValue) {
-							$valueIsAllowed = true;
-							break; // break this loop and continue since this value is in the allowed list
-						}
-					}
-					if(!$valueIsAllowed) { continue; } // continue the next iteration of the for loop since this value was never found in the allowed list
-				}
-				foreach($excludedValues as $thisAllowedValue) {
-					if($tempvalue == $thisAllowedValue) { continue 2; } // break this loop and go to the next iteration of the for loop since this value is excluded
-				}
-				if($g[$i][$z] == "none" OR $g[$i][$z] == "") { 
-					if(is_array($thisvalue)) {
-						foreach($thisvalue as $onevalue) {
-							$masterCalcs[$handles[$i]][$c[$i][$z]][0][] = $onevalue;
-						}
-					} else {
-						$masterCalcs[$handles[$i]][$c[$i][$z]][0][] = $thisvalue;
-					}
-					$groupDataCount[$handles[$i]][$c[$i][$z]][0]++; 	// count the master $data array so we have an alternate divisor to use for percentage breakdown calculations if necessary -- added August 21 2006
-				} else {
-					$thisgroup = display($entry, $g[$i][$z]);
-					$thisgroup = convertUids($thisgroup, $g[$i][$z]);
-					if(is_array($thisgroup)) {
-						foreach($thisgroup as $onegroup) {
-							if(is_array($thisvalue)) {
-								foreach($thisvalue as $onevalue) {
-									$masterCalcs[$handles[$i]][$c[$i][$z]][$onegroup][] = $onevalue;
-								}
-							} else {
-								$masterCalcs[$handles[$i]][$c[$i][$z]][$onegroup][] = $thisvalue;
-							}
-							$groupDataCount[$handles[$i]][$c[$i][$z]][$onegroup]++; 	// count the master $data array so we have an alternate divisor to use for percentage breakdown calculations if necessary -- added August 21 2006
-						}	
-					} else {
-						if(is_array($thisvalue)) {
-							foreach($thisvalue as $onevalue) {
-								$masterCalcs[$handles[$i]][$c[$i][$z]][$thisgroup][] = $onevalue;
-							}
-						} else {
-							$masterCalcs[$handles[$i]][$c[$i][$z]][$thisgroup][] = $thisvalue;
-						}
-						$groupDataCount[$handles[$i]][$c[$i][$z]][$thisgroup]++; 	// count the master $data array so we have an alternate divisor to use for percentage breakdown calculations if necessary -- added August 21 2006
-					}
-				}
-			}
-		}
-	}
-
-	unset($data); // clears memory?
-	unset($cols);
-	unset($calcs);
-	unset($blanks);
-	unset($grouping);
-	// loop through the masterCalc array and perform each required calculation
-	// masterCalcs array is basically in this format:  array[handle/question in form][calculation requested on handle][grouping option]
-	// you can have several groups for a question (one key for each grouped option)
-
-	
+      foreach($theseGroupings as $gid=>$thisGrouping) {
+          
+        foreach($calcResult as $thisResult) {
+          
+          print "<br>";
+          
+          switch($calc) {
+            case "sum":
+              if($thisGrouping != "none" AND $thisGrouping != "") {
+                list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+                $masterResults[calcHandle($cols[$i], $frid, $fid)][$calc][$thisResult["$galias$ghandle"]] = _formulize_DE_CALC_SUM . ": ".$thisResult["$fidAlias$handle"];
+              } else {
+                $masterResults[calcHandle($cols[$i], $frid, $fid)][$calc][0] = _formulize_DE_CALC_SUM . ": ".$thisResult["$fidAlias$handle"];
+              }
+              break;
+            case "min":
+              if($thisGrouping != "none" AND $thisGrouping != "") {
+                list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+                $masterResults[calcHandle($cols[$i], $frid, $fid)][$calc][$thisResult["$galias$ghandle"]] = _formulize_DE_CALC_MIN . ": ".$thisResult["$fidAlias$handle"];
+              } else {
+                $masterResults[calcHandle($cols[$i], $frid, $fid)][$calc][0] = _formulize_DE_CALC_MIN . ": ".$thisResult["$fidAlias$handle"];
+              }
+              break;
+            case "max":
+              if($thisGrouping != "none" AND $thisGrouping != "") {
+                list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+                $masterResults[calcHandle($cols[$i], $frid, $fid)][$calc][$thisResult["$galias$ghandle"]] = _formulize_DE_CALC_MAX . ": ".$thisResult["$fidAlias$handle"];
+              } else {
+                $masterResults[calcHandle($cols[$i], $frid, $fid)][$calc][0] = _formulize_DE_CALC_MAX . ": ".$thisResult["$fidAlias$handle"];
+              }
+              break;
+            case "count":
+              if($thisGrouping != "none" AND $thisGrouping != "") {
+                list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+                $masterResults[calcHandle($cols[$i], $frid, $fid)][$calc][$thisResult["$galias$ghandle"]] = _formulize_DE_CALC_NUMENTRIES . ": ".$thisResult["count$fidAlias$handle"]."<br>"._formulize_DE_CALC_NUMUNIQUE . ": " .$thisResult["distinct$fidAlias$handle"];
+              } else {
+                $masterResults[calcHandle($cols[$i], $frid, $fid)][$calc][0] = _formulize_DE_CALC_NUMENTRIES . ": ".$thisResult["count$fidAlias$handle"]."<br>"._formulize_DE_CALC_NUMUNIQUE . ": " .$thisResult["distinct$fidAlias$handle"];
+              }
+              break;
+          }
+        }
+      }
+    }
+    
+    
+  }
+  //print_r($masterResults);
+  /*
 	foreach($handles as $handle) { // this way the results will always be presented according to the order of the elements
 		$thesecalcs = $masterCalcs[$handle];
 		foreach($thesecalcs as $thiscalc=>$thesegroups) {
@@ -2009,7 +2092,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
 				}
 			}
 		}
-	}
+	}*/
 	$to_return[0] = $masterResults;
 	$to_return[1] = $blankSettings;
 	$to_return[2] = $groupingSettings;
@@ -2042,9 +2125,9 @@ function calcParseBlanksSetting($setting) {
 			foreach($setting as $thisSetting) {
 				// does it have ! at the front, which is the "not" indicator
 				if(substr($thisSetting,0,1)=="!") {
-					$allowed[] = str_replace("{BLANK}","",substr($thisSetting,1));
+  				$allowed[] = mysql_real_escape_string(substr($thisSetting,1));
 				} else {
-					$excluded[] = str_replace("{BLANK}","",$thisSetting);
+					$excluded[] = mysql_real_escape_string($thisSetting);
 				}
 			}
 			break;
@@ -2147,6 +2230,8 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $frid, 
 				$start=0;
 				$output .= "<td class=odd>\n";
 				if(count($groups)>1) {
+          $elementMetaData = formulize_getElementMetaData($groupingSettings[$handle][$calc], false);
+          $group = formulize_swapUIText($group, unserialize($elementMetaData['ele_uitext']));
 					$output .= "<p><b>" . printSmart(trans(getCalcHandleText($groupingSettings[$handle][$calc], $frid))) . ": " . printSmart($group) . "</b></p>\n";
 				} 
      				$output .= "<p>$result</p>\n</td></tr>\n";
@@ -2243,6 +2328,24 @@ function calcHandle($value, $frid, $fid) {
 	return $handle;				
 }
 
+
+// THIS FUNCTION PARSES OUT THE {USER} AND {TODAY} KEYWORDS INTO THEIR LITERAL VALUES
+function parseUserAndToday($term) {
+  if ($term === "{USER}") {
+		global $xoopsUser;
+		if($xoopsUser) {
+			$term = $xoopsUser->getVar('name');
+			if(!$term) { $term = $xoopsUser->getVar('uname'); }
+		} else {
+			$term = 0;
+		}
+	}
+ 	if (ereg_replace("[^A-Z{}]","", $term) === "{TODAY}") {
+		$number = ereg_replace("[^0-9+-]","", $term);
+		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+	}
+  return $term;
+}
 
 
 // this function evaluates a basic part of an advanced search.
@@ -3624,27 +3727,27 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 			$firstDisplayPage = 1;
 			$lastDisplayPage = $pageNumbers;
 		}
-		$pageNav .= "<p><nobr>";
+		$pageNav .= "\n<p><nobr>";
 		$pageNav .= "<b>" . _AM_FORMULIZE_LOE_ONPAGE . $userPageNumber . ".</b>&nbsp;&nbsp;[&nbsp;&nbsp;";
 		if($firstDisplayPage > 1) {
-			$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('0');return false;\">" . _AM_FORMULIZE_LOE_FIRSTPAGE . "</a>&nbsp;&nbsp;\n";
+			$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('0');return false;\">" . 1 . "</a>&nbsp;&nbsp;...&nbsp;&nbsp;";
 		}
 		//print "$firstDisplayPage<br>$lastDisplayPage<br>";
 		for($i=$firstDisplayPage;$i<=$lastDisplayPage;$i++) {
 			//print "$i<br>";
 			$thisPageStart = ($i*$numberPerPage)-$numberPerPage;
 			if($thisPageStart == $pageStart) {
-				$pageNav .= "<b>$i</b>\n";
+				$pageNav .= "<b>$i</b>";
 			} else {
-				$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>\n";
+				$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>";
 			}
 			$pageNav .= "&nbsp;&nbsp;";
 		}
 		if($lastDisplayPage < $pageNumbers) {
 			$lastPageStart = ($pageNumbers*$numberPerPage)-$numberPerPage;
-			$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('$lastPageStart');return false;\">" . _AM_FORMULIZE_LOE_LASTPAGE . "</a>&nbsp;&nbsp;\n";
+			$pageNav .= "...&nbsp;&nbsp;<a href=\"\" onclick=\"javascript:pageJump('$lastPageStart');return false;\">" . $pageNumbers . "</a>&nbsp;&nbsp;";
 		}
-		$pageNav .= "]</nobr></p>";
+		$pageNav .= "]</nobr></p>\n";
 	}
 	return $pageNav;	
 }
