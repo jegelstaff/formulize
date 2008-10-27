@@ -1967,7 +1967,7 @@ function formatLinks($matchtext, $handle, $frid, $textWidth=35) {
     } else {
       $elementMetaData = formulize_getElementMetaData($handle, true);
     }
-    $ele_value = $elementMetaData['ele_value'];
+    $ele_value = unserialize($elementMetaData['ele_value']);
     $ele_type = $elementMetaData['ele_type'];
     if(!$ele_value) { return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth); }
     if(!isset($ele_value[4])) { $ele_value[4] = 0; }
@@ -2028,8 +2028,8 @@ function formatLinks($matchtext, $handle, $frid, $textWidth=35) {
 		} else { // no id_req found
 			return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
 		}
-	} elseif($ele_type =='select' AND (key($ele_value[2]) === "{USERNAMES}" OR key($ele_value[2]) === "{FULLNAMES}")) {
-		$nametype = key($ele_value[2]) == "{USERNAMES}" ? "uname" : "name";
+	} elseif($ele_type =='select' AND (isset($ele_value[2]['{USERNAMES}']) OR isset($ele_value[2]['{FULLNAMES}']))) {
+		$nametype = isset($ele_value[2]['{USERNAMES}']) ? "uname" : "name";
 		$archiveFilter = $GLOBALS['formulize_archived_available'] ? " AND archived = 0" : "";
                 static $cachedUidResults = array();
                 if(isset($cachedUidResults[$matchtext])) {

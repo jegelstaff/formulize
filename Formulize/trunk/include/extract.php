@@ -233,7 +233,7 @@ function microtime_float()
    return ((float)$usec + (float)$sec);
 }
 
-function getData($framework, $form, $filter="", $andor="AND", $scope="", $forceQuery=false, $sortField="", $sortOrder="", $pageStart=0, $pageSize=0, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false) { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
+function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false) { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
 
 	// have to check for the pressence of the Freeform Solutions archived user patch, and if present, then the includeArchived flag can be used
 	// if not present, ignore includeArchived
@@ -255,20 +255,22 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $forceQ
           $isTableForm = $tableFormRow[0] == "" ? false : true;
      }
      
-     
+     // handle old style sort and order values...
+     $sortOrder = ($sortOrder == "SORT_ASC" OR $sortOrder == "ASC") ? "" : $sortOrder;
+     $sortOrder = ($sortOrder == "SORT_DESC") ? "DESC" : $sortOrder;
           
   if($isTableForm) {
-     $result = dataExtractionTableForm($tableFormRow[0], $tableFormRow[1], $form, $filter, $andor);
+     $result = dataExtractionTableForm($tableFormRow[0], $tableFormRow[1], $form, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder);
   }elseif(substr($framework, 0, 3) == "db:") { // deprecated...tableforms are preferred approach now for direct table access
 		$result = dataExtractionDB(substr($framework, 3), $filter, $andor, $scope, $dbTableUidField);
 	} else {
-	$result = dataExtraction($framework, $form, $filter, $andor, $scope, $forceQuery, $sortField, $sortOrder, $pageStart, $pageSize, $mainFormOnly, $includeArchived, $id_reqsOnly);
+	$result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly);
 	}
 	return $result;
 }
 
 
-function dataExtraction($frame="", $form, $filter, $andor, $scope, $forceQuery, $sortField, $sortOrder, $pageStart, $pageSize, $mainFormOnly, $includeArchived=false, $id_reqsOnly=false) {
+function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived=false, $id_reqsOnly=false) {
 
 if(isset($_GET['debug'])) { $time_start = microtime_float(); }
 
@@ -421,11 +423,18 @@ if(is_numeric($frame)) {
      $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
      list($formFieldFilterMap, $whereClause, $orderByClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
      
+     $limitClause = "";
+     if($limitSize) {
+          $limitClause = " LIMIT $limitStart, $limitSize ";
+     }
+     if($whereClause) {
+          $whereClause = "AND $whereClause";
+     }     
+     
      formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this
      
      if($frid) {
           $newJoinText = "";
-          $countQueryJoinText = "";
           $joinText = "";
           foreach($linkformids as $id=>$linkedFid) {
                formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
@@ -444,24 +453,34 @@ if(is_numeric($frame)) {
                     $newJoinText .= " main.creation_uid=f$id.creation_uid";
                }
                $joinText .= $newJoinText;
-               if($joinType == "INNER") {
-                    $countQueryJoinText .= $newJoinText;
-               }
-          }
+         }
      }
      
      // specify the join info for user table (depending whether there's a query on creator_email or not)
      $userJoinType = $formFieldFilterMap['creator_email'] ? "INNER" : "LEFT";
      $userJoinText = " $userJoinType JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid";
      
-     if($whereClause) {
-          $whereClause = "AND $whereClause";
-     }
-     
-     if(!$orderByClause) {
+     if(!$orderByClause AND $sortField) {
+          if($frid) {
+               $elementHandleAndId = formulize_getElementHandleAndIdFromFrameworkHandle($sortField, $frid);
+               $elementMetaData = formulize_getElementMetaData($elementHandleAndId[1]);
+               $sortField = $elementHandleAndId[0]; // use the element handle for the sort field, instead of the framework handle
+          } else {
+               $elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...               
+          }
+          $sortFid = $elementMetaData['id_form'];
+          if($sortFid == $fid) {
+               $sortFidAlias = "main";
+          } else {
+               $sortFidAlias = array_keys($linkformids, $sortFid); // position of this form in the linking relationships is important for identifying which form alias to use
+               $sortFidAlias = "f".$sortFidAlias[0];
+          }
+          $orderByClause = " ORDER BY $sortFidAlias.`$sortField` $sortOrder ";
+     } elseif(!$orderByClause) {
           $orderByClause = "ORDER BY main.entry_id";
      }
-     
+
+          
      debug_memory("Before retrieving mainresults");
      
      //$beforeQueryTime = microtime_float();
@@ -469,25 +488,27 @@ if(is_numeric($frame)) {
 
      // If there's an LOE Limit in place, check that we're not over it first
      global $formulize_LOE_limit;
-     if($formulize_LOE_limit AND !$forceQuery) {
-          $countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_$fid AS main ";
-          if($userJointType == "INNER") {
-               $countMasterResults .= "$userJoinText ";
-          }
-          $countMasterResults .= "$scopeJoinText $countQueryJoinText WHERE main.entry_id>0 $whereClause $scopeFilter";
-          if($countMasterResultsRes = mysql_query($countMasterResults)) {
-               $countMasterResultsRow = mysql_fetch_row($countMasterResultsRes);
-               if($countMasterResultsRow[0] > $formulize_LOE_limit) {
-                    return $countMasterResultsRow[0];
-               }
-          } else {
-               exit("Error: could not count master results.  SQL:$countMasterResults<br>");
-          }
+
+     $countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_$fid AS main ";
+     if($userJointType == "INNER") {
+          $countMasterResults .= "$userJoinText ";
      }
+     $countMasterResults .= "$scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter";
+     if($countMasterResultsRes = mysql_query($countMasterResults)) {
+          $countMasterResultsRow = mysql_fetch_row($countMasterResultsRes);
+          if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
+               return $countMasterResultsRow[0];
+          } else {
+               $GLOBALS['formulize_countMasterResults'] = $countMasterResultsRow[0]; // put this in the global space so we can pick it up later when determining how many page numbers to create
+          }
+     } else {
+          exit("Error: could not count master results.  SQL:$countMasterResults<br>");
+     }
+
      
      
      // only drawback in this SQL right now is it does not support one to one relationships in the query, since they are essentially joins on the entry_id and form id through the one_to_one table
-     $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause";
+     $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause $limitClause";
      //$masterQuerySQL = "SELECT * FROM " . DBPRE . "formulize_$fid LIMIT 0,1";
      //$afterQueryTime = microtime_float();
      
@@ -507,11 +528,11 @@ if(is_numeric($frame)) {
      
      
      // Debug Code
-     /*
-     global $xoopsUser;
+     
+     /*global $xoopsUser;
      if($xoopsUser->getVar('uid') == 1) {
-          print $masterQuerySQL;
-          print "<br>";
+          print "<br>Count query: $countMasterResults<br>";
+          print "Master query: $masterQuerySQL<br>";
      }*/
      
 		 formulize_benchmark("Before query");
@@ -1241,7 +1262,7 @@ function dataExtractionDB($table, $filter, $andor, $scope, $uidField) {
 }
 
 // THIS FUNCTION DOES A SIMPLE QUERY AGAINST A TABLE IN THE DATABASE AND RETURNS THE RESULT IN STANDARD "GETDATA" FORMAT
-function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor) {
+function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder) {
 
      // 2. parse the filter
      // 3. construct the where clause based on the filter and andor

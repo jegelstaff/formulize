@@ -636,7 +636,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 	$scope = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
 	// create $data and $wq (writable query)
-	list($data, $wq, $regeneratePageNumbers) = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, $screen, $currentURL, intval($_POST['forcequery']));
+	list($data, $wq, $regeneratePageNumbers) = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, $screen, $currentURL, $screen, intval($_POST['forcequery']));
 	$formulize_LOEPageNav = formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers);
 
 	$formulize_buttonCodeArray = array();
@@ -1368,13 +1368,14 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$GLOBALS['formulize_displayElement_LOE_Used'] = false;
 		$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
 		// adjust formulize_LOEPageSize if the actual count of entries is less than the page size
-		$formulize_LOEPageSize = count($data) < $formulize_LOEPageSize ? count($data) : $formulize_LOEPageSize;
-		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : count($data);
+		$formulize_LOEPageSize = $GLOBALS['formulize_countMasterResults'] < $formulize_LOEPageSize ? $GLOBALS['formulize_countMasterResults'] : $formulize_LOEPageSize;
+		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : $GLOBALS['formulize_countMasterResults'];
 		if(isset($data)) {
-			for($entryCounter=$formulize_LOEPageStart;$entryCounter<$actualPageSize;$entryCounter++) {
+			//for($entryCounter=$formulize_LOEPageStart;$entryCounter<$actualPageSize;$entryCounter++) {
+      foreach($data as $id=>$entry) {
         formulize_benchmark("starting to draw one row of results");
-				$entry = $data[$entryCounter];
-				$id=$entryCounter;
+				//$entry = $data[$entryCounter];
+				//$id=$entryCounter;
 						
 				// check to make sure this isn't an unset entry (ie: one that was blanked by the extraction layer just prior to sending back results
 				// Since the extraction layer is unsetting entries to blank them, this condition should never be met?
@@ -1520,7 +1521,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 					$blankentries++;
 				} // end of not "" check
 			
-			} // end of for loop that draws all data
+			} // end of foreach data as entry
 		} // end of if there is any data to draw
 	
 		print "</table>";
@@ -1531,11 +1532,12 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		// print str_replace("\n", "<br />", $listTemplate); // debug code
 		$mainFormHandle = key($data[key($data)]);
 		$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
-		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : count($data);
+		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : $GLOBALS['formulize_countMasterResults'];
 		if(isset($data)) {
-			for($entryCounter=$formulize_LOEPageStart;$entryCounter<$actualPageSize;$entryCounter++) {
-				$entry = $data[$entryCounter];
-				$id=$entryCounter;
+			//for($entryCounter=$formulize_LOEPageStart;$entryCounter<$actualPageSize;$entryCounter++) {
+      foreach($data as $id=>$entry) {
+				//$entry = $data[$entryCounter];
+				//$id=$entryCounter;
 						
 				// check to make sure this isn't an unset entry (ie: one that was blanked by the extraction layer just prior to sending back results
 				// Since the extraction layer is unsetting entries to blank them, this condition should never be met?
@@ -1665,7 +1667,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 		}
 		
 		if(!$returnOnly) {
-      if($filtersAllowed and $quickSearchBoxes[$cols[$i]]['filter']) {
+      if(isset($quickSearchBoxes[$cols[$i]]['filter'])) {
         print $quickSearchBoxes[$cols[$i]]['filter'];
       } else {
         print $quickSearchBoxes[$cols[$i]]['search'];
@@ -3286,7 +3288,7 @@ function formulize_runAdvancedSearch($query_string, $data) {
 }
 
 // THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
-function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen, $currentURL, $forcequery = 0) {
+function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen, $currentURL, $screen, $forcequery = 0) {
 
 	// setup "flatscope" so we can compare arrays of groups that make up the scope, from page load to pageload
 	if(is_array($scope)) {
@@ -3524,47 +3526,21 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 	}*/
 	
 	
-	if(!$settings['formulize_cacheddata'] OR $forcequery OR isset($_POST['lastentry']) OR $GLOBALS['formulize_deletionRequested'] OR $GLOBALS['formulize_writeElementValueWasRun'] OR $readElementsWasRunOnAForm OR $filterToCompare != $_POST['formulize_previous_filter'] OR $flatscope != $_POST['formulize_previous_scope']) { // if we have no cached data, or if the user is coming back from modifying an entry, or if there is any new setting that is going to change the entries that are part of the underlying dataset...
-		$startTimeTest = microtime_float();
-		$data = getData($frid, $fid, $filter, "AND", $scope, $forcequery);
-		$endTimeTest = microtime_float();
-		$testDur = $endTimeTest - $startTimeTest;
-		//print "GetData: $testDur<br>";
-		if($sort AND $order) { // because the extraction layer does not return results in order, we need to sort them afterwards
-			$data = resultSort($data, $sort, $order); // sort is ele_id for form, handle for framework
-		}
-		$formulize_cachedDataId = formulize_cacheData($data);
-		if($query_string AND is_array($data)) { $data = formulize_runAdvancedSearch($query_string, $data); } // must do advanced search after caching the data, so the advanced search results are not contained in the cached data.  Otherwise, we would have to rerun the base extraction every time we wanted to change just the advanced search query.  This way, advanced search changes can just hit the cache, and not the db.
-		if(!$formulize_cachedDataId) { // caching failed (most likely because of memory limit)
-			// if there is some difference between this page load and the previous one in terms of the underlying query terms, then regenerate the page numbers
-			if(($query_string != $_POST['formulize_previous_querystring'] AND $query_string != "") OR $filterToCompare != $_POST['formulize_previous_filter'] OR $flatscope != $_POST['formulize_previous_scope']) {
-				$regeneratePageNumbers = true;
-			}
-		} else { // caching worked, so regenerate the numbers when necessary, unless we're coming back from editing an entry
-			if(!isset($_POST['lastentry']) AND (($query_string != $_POST['formulize_previous_querystring'] AND $query_string != "") OR $filterToCompare != $_POST['formulize_previous_filter'] OR $flatscope != $_POST['formulize_previous_scope'])) {
-				$regeneratePageNumbers = true;
-			}
-		}
-	} else { // gather cached data 
-		$startTimeTest = microtime_float();
-		$data = formulize_readCachedData($settings['formulize_cacheddata']);
-		$endTimeTest = microtime_float();
-		$testDur = $endTimeTest - $startTimeTest;
-		//print "Cache: $testDur<br>";
-		$formulize_cachedDataId = $settings['formulize_cacheddata'];
-		if($sort AND $order AND ($sort != $_POST['formulize_previous_sort'] OR $order != $_POST['formulize_previous_order'])) { // only redo sorting if this is different from the last page load
-			$data = resultSort($data, $sort, $order); // sort is ele_id for form, handle for framework
-			$formulize_cachedDataId = formulize_cacheData($data);			
-		}
-		//print "$query_string<br>\n";
-		//print $_POST['formulize_previous_querystring'] . "<br>\n";
-		if(is_array($data)) {
-			$data = formulize_runAdvancedSearch($query_string, $data); // need to reapply advanced search every time, since it's not part of the cached data
-		}
-		if($query_string != $_POST['formulize_previous_querystring'] AND $query_string != "") {
+    // if something changed, then we need to redo the page numbers
+    if(!isset($_POST['lastentry']) AND (($query_string != $_POST['formulize_previous_querystring'] AND $query_string != "") OR $filterToCompare != $_POST['formulize_previous_filter'] OR $flatscope != $_POST['formulize_previous_scope'])) {
 			$regeneratePageNumbers = true;
 		}
-	}
+    $formulize_LOEPageSize = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
+    if($formulize_LOEPageSize) {
+      $limitStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
+      $limitSize = $formulize_LOEPageSize;
+    } else {
+      $limitStart = 0;
+      $limitSize = 0;
+    }
+		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
+		if($query_string AND is_array($data)) { $data = formulize_runAdvancedSearch($query_string, $data); } // must do advanced search after caching the data, so the advanced search results are not contained in the cached data.  Otherwise, we would have to rerun the base extraction every time we wanted to change just the advanced search query.  This way, advanced search changes can just hit the cache, and not the db.
+
 	
 	// must start drawing interface here, since we need to include those hidden form elements below...
 	$drawResetForm = true;
@@ -3627,7 +3603,7 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 	if($numberPerPage == 0 OR $_POST['hlist']) { return $pageNav; } // if all entries are supposed to be on one page for this screen, then return no navigation controls.  Also return nothing if the list is hidden.
 	$allPageStarts = array();
 	$pageNumbers = 0;
-	for($i=0;$i<count($data);$i=$i+$numberPerPage) {
+	for($i=0;$i<$GLOBALS['formulize_countMasterResults'];$i=$i+$numberPerPage) {
 		$pageNumbers++;
 		$allPageStarts[$pageNumbers] = $i;
 	}
