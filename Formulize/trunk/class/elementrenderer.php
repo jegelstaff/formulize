@@ -440,7 +440,7 @@ class formulizeElementRenderer{
 	
 					// must check the options for uitext before adding to the element -- aug 25, 2007
 					foreach($options as $okey=>$ovalue) {
-						$options[$okey] = $this->formulize_swapUIText($ovalue, $this->_ele->getVar('ele_uitext'));
+						$options[$okey] = formulize_swapUIText($ovalue, $this->_ele->getVar('ele_uitext'));
 					}
 					$form_ele1->addOptionArray($options);
 	
@@ -509,7 +509,7 @@ class formulizeElementRenderer{
 						);
 						$counter = 0; // counter used for javascript that works with 'Other' box
 						while( $o = each($options) ){
-							$o = $this->formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
+							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
 							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, true);
 							if( $other != false ){
 								$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
@@ -527,7 +527,7 @@ class formulizeElementRenderer{
 						$form_ele1 = new XoopsFormElementTray($ele_caption, $delimSetting);
 						$counter = 0; // counter used for javascript that works with 'Other' box
 						while( $o = each($options) ){
-							$o = $this->formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
+							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
 							$t =& new XoopsFormCheckBox(
 								'',
 								$form_ele_id.'[]',
@@ -602,7 +602,7 @@ class formulizeElementRenderer{
 						);
 						$counter = 0;
 						while( $o = each($options) ){
-							$o = $this->formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
+							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
 							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter);
 							if( $other != false ){
 								$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
@@ -628,7 +628,7 @@ class formulizeElementRenderer{
 						$form_ele1 = new XoopsFormElementTray('', $delimSetting);
 						$counter = 0;
 						while( $o = each($options) ){
-							$o = $this->formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
+							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
 							$t =& new XoopsFormRadio(
 								'',
 								$form_ele_id,
