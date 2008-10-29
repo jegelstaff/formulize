@@ -127,6 +127,9 @@ for($i=0;$i<$colcount;$i++) {
 		print "  calc_blanks = calc_blanks + customString\n";
 		print "}";
 		print "calc_grouping = calc_grouping + formObj.grouping_" . $acalc . "_" . $columns[$i] . ".value;\n";
+		print "if(formObj.grouping2_" . $acalc . "_" . $columns[$i] . ".value) {\n"; // added Oct 29 2008 to handle double level grouping
+		print "  calc_grouping = calc_grouping + '!@^%*' + formObj.grouping2_" . $acalc . "_" . $columns[$i] . ".value;\n";
+		print "}\n";
 		$start = 0;
 	}
 
@@ -168,13 +171,13 @@ function addReqdCalcs($form) {
 		$numCols = count($_POST['column']);
 		for ($i = 0; $i < $numCols; $i++) {
 			$form->addElement(new xoopsFormHidden('reqdcalc_column_' . $_POST['column'][$i], $_POST['column'][$i]));
-		// flatten $_POST['calculation'] array
-		$hidden_calcs = implode(",", $_POST['calculations']);
+			// flatten $_POST['calculation'] array
+			$hidden_calcs = implode(",", $_POST['calculations']);
 			$form->addElement(new xoopsFormHidden('reqdcalc_calcs_' . $_POST['column'][$i], $hidden_calcs));
 			$rc[$indexer]['column'] = $_POST['column'][$i];
-		$rc[$indexer]['calcs'] = $hidden_calcs;
-		$indexer++;
-	}
+			$rc[$indexer]['calcs'] = $hidden_calcs;
+			$indexer++;
+		}
 	}
 
 	// get previously requested calcs
@@ -487,8 +490,18 @@ foreach($returned['rc'] as $hidden) {
 		$tempcalcCustom->setExtra("onclick='javascript:window.document.pickcalc.elements[\"".$calc.$hidden['column']."\"].options[5].selected = true;'");
 		$tempcalclabel = new xoopsFormLabel("", _formulize_DE_CALC_BTEXT . " ". $tempcalc1->render(). " ".$tempcalcCustom->render());
 		
+		$groupingDefaults = explode("!@^%*", $_POST['grouping_' . $calc . "_" . $hidden['column']]); // get the individual grouping settings from the one value that has been passed back
+		$groupingDefaults1 = $groupingDefaults[0];
+		if(isset($_POST['grouping2_' . $calc . "_" . $hidden['column']])) {
+			$groupingDefaults2 = $_POST['grouping2_' . $calc . "_" . $hidden['column']];
+		} elseif(isset($groupingDefaults[1])) {
+			$groupingDefaults2 = $groupingDefaults[1];
+		} else {
+			$groupingDefaults2 = "";
+		}
+		
 		// grouping option
-		$grouping = new xoopsFormSelect(_formulize_DE_CALC_GTEXT, 'grouping_' . $calc . "_" . $hidden['column'], $_POST['grouping_' . $calc . "_" . $hidden['column']]);
+		$grouping = new xoopsFormSelect(_formulize_DE_CALC_GTEXT, 'grouping_' . $calc . "_" . $hidden['column'], $groupingDefaults1);
 		$grouping->addOption("none", _formulize_DE_NOGROUPING);
 		$grouping->addOption("creation_uid", _formulize_DE_GROUPBYCREATOR);
 		$grouping->addOption("mod_uid", _formulize_DE_GROUPBYMODIFIER);
@@ -497,14 +510,27 @@ foreach($returned['rc'] as $hidden) {
 		$grouping->addOption("creator_email", _formulize_DE_GROUPBYCREATOREMAIL);
 		$grouping->addOptionArray($options2);
 
+		// grouping option
+		$grouping2 = new xoopsFormSelect(_formulize_DE_CALC_GTEXT2, 'grouping2_' . $calc . "_" . $hidden['column'], $groupingDefaults2);
+		$grouping2->addOption("none", _formulize_DE_NOGROUPING);
+		$grouping2->addOption("creation_uid", _formulize_DE_GROUPBYCREATOR);
+		$grouping2->addOption("mod_uid", _formulize_DE_GROUPBYMODIFIER);
+		$grouping2->addOption("creation_datetime", _formulize_DE_GROUPBYCREATEDATE);
+		$grouping2->addOption("mod_datetime", _formulize_DE_GROUPBYMODDATE);
+		$grouping2->addOption("creator_email", _formulize_DE_GROUPBYCREATOREMAIL);
+		$grouping2->addOptionArray($options2);
+
+
 		$tray->addElement($tempcalclabel);
 		$tray->addElement($grouping);
+		$tray->addElement($grouping2);
 
 		$pickcalc->addElement($tray);
 		unset($tempcalc1);
 		unset($tempcalcCustom);
 		unset($tempcalclabel);
 		unset($grouping);
+		unset($grouping2);
 		unset($tray);
 	}
 }

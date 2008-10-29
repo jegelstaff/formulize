@@ -1821,6 +1821,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
     
     // need to figure out if it's a derived value column, and if so, do something completely different here:
     
+    // also need to support metadata columns, which currently are not available for calculations
     
     
     

@@ -420,6 +420,7 @@ define("_formulize_DE_CALC_CREATOR_EMAIL", "Creator's e-mail address");
 define("_formulize_DE_REMOVECALC", "Remove this calculation from the list");
 define("_formulize_DE_CALC_BTEXT", "Exclude which entries?");
 define("_formulize_DE_CALC_GTEXT", "Group Results?");
+define("_formulize_DE_CALC_GTEXT2", "2nd level Grouping?");
 define("_formulize_DE_CALCHEAD", "Calculation Results");
 define("_formulize_DE_CALC_SUM", "Sum Total");
 define("_formulize_DE_CALC_AVG", "Averages");
