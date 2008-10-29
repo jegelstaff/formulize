@@ -1910,7 +1910,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
       }
       
       // figure out the group by clause (grouping is expressed as element ids right now)
-      $groupings[$cid] .= "!@^%*17461!@^%*9402";
+      //$groupings[$cid] .= "!@^%*17461!@^%*9402";
       $theseGroupings = explode("!@^%*", $groupings[$cid]);
       $groupByClause = "";
       $groupByClauseMode = "";
