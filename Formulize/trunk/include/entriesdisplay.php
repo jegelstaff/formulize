@@ -1346,7 +1346,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	
 		if($useHeadings) {
       $headers = getHeaders($cols, $frid, true); // third param indicates we're using element headers and not ids
-      drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockcontrols']); 
+      drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $frid); 
     }
 		if($useSearch) {
 			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches, $frid);
@@ -1384,7 +1384,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 				if($entry != "") { 
 		
 					if($headcounter == $repeatHeaders AND $repeatHeaders > 0) { 
-						if($useHeadings) { drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockcontrols']); }
+						if($useHeadings) { drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $frid); }
 						$headcounter = 0;
 					}
 					$headcounter++;		
@@ -1704,14 +1704,15 @@ function formulize_buildQSFilter($handle, $search_text, $frid) {
 }
 
 // this function writes in the headers for the columns in the results box
-function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=null, $numberOfButtons) { //, $lockcontrols) {
+function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=null, $numberOfButtons, $frid) { //, $lockcontrols) {
 
 	print "<tr>";
 	if($useBoxes != 2 OR $useLinks) {
 		print "<td class=head>&nbsp;</td>\n";
 	}
 	for($i=0;$i<count($headers);$i++) {
-       	print "<td class=head>\n";
+   	print "<td class=head>\n";
+    print "<div style=\"float: right;\"><a href=\"\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=".$cols[$i]."&frid=$frid');return false;\" title=\""._formulize_DE_MOREINFO."\">[?]</a></div>\n";
 		if($cols[$i] == $sort) {
 			if($order == "SORT_DESC") {
 				$imagename = "desc.gif";
@@ -1720,14 +1721,10 @@ function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=n
 			}
 			print "<img src='" . XOOPS_URL . "/modules/formulize/images/$imagename' align=left>";
 		}
-//		if(!$lockcontrols) {
-			print "<a href=\"\" alt=\"" . _formulize_DE_SORTTHISCOL . "\" title=\"" . _formulize_DE_SORTTHISCOL . "\" onclick=\"javascript:sort_data('" . $cols[$i] . "');return false;\">";
-//		}
+		print "<a href=\"\" alt=\"" . _formulize_DE_SORTTHISCOL . "\" title=\"" . _formulize_DE_SORTTHISCOL . "\" onclick=\"javascript:sort_data('" . $cols[$i] . "');return false;\">";
 		print printSmart(trans($headers[$i]));
-//		if(!$lockcontrols) {
-			print "</a>\n";
-//		}
-	     	print "</td>\n";
+  	print "</a>\n";
+   	print "</td>\n";
 	}
 	for($i=0;$i<$numberOfButtons;$i++) {
 		print "<td class=head>&nbsp;</td>\n";
@@ -2297,6 +2294,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
             $output .= "<p><b>";
             $start2 = true;
             foreach(explode("!@^%*", $groupingSettings[$handle][$calc]) as $id=>$thisGroupSetting) {
+              if($thisGroupSetting === "none") { continue; }
               if(!$start2) {
                 $output .= "<br>\n";
               }
@@ -2304,7 +2302,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
               
               $elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
               $groupText = formulize_swapUIText($groupingValues[$handle][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
-              $output .= printSmart(trans(getCalcHandleText($thisGroupSetting, $frid))) . ": " . printSmart($groupText) . "\n";
+              $output .= printSmart(trans(getCalcHandleText($thisGroupSetting, $frid, true))) . ": " . printSmart($groupText) . "\n";
             }
             $output .= "</b></p>\n";
           }

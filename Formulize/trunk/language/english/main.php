@@ -386,6 +386,10 @@ define("_formulize_DE_CANCELCALCS", "Cancel calculations");
 define("_formulize_DE_SHOWLIST", "Switch to entries");
 define("_formulize_DE_HIDELIST", "Switch to calcs.");
 define("_formulize_DE_SORTTHISCOL", "Click to sort entries by this column");
+define("_formulize_DE_MOREINFO", "Click for more info about this column");
+define("_formulize_DE_MOREINFO_TITLE", "More info about this form element");
+define("_formulize_DE_MOREINFO_QUESTION", "Text for this question as it appears in the form:");
+define("_formulize_DE_MOREINFO_OPTIONS", "Options for answering this question:");
 
 define("_formulize_DE_DELETE_ALERT", "You are not allowed to delete that view from the list.");
 define("_formulize_DE_CONF_DELVIEW", "You are about to delete this view!  Please confirm.");

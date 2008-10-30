@@ -1061,7 +1061,7 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
           } else {
                $whereClause = $isHandle ? "ele_handle = '".mysql_real_escape_string($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
           }
-          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext FROM " . DBPRE . "formulize WHERE $whereClause";
+          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_caption FROM " . DBPRE . "formulize WHERE $whereClause";
           $evqRes = mysql_query($elementValueQ);
           while($evqRow = mysql_fetch_array($evqRes)) {
                $cachedElements['handles'][$evqRow['ele_handle']] = $evqRow; // cached the element according to handle and id, so we don't repeat the same query later just because we're asking for info about the same element in a different way

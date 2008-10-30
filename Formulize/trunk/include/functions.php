@@ -1329,7 +1329,7 @@ function writableQuery($items, $mod="") {
 		if(substr($items['as_' . $i], 0, 7) == "[field]" AND substr($items['as_' . $i], -8) == "[/field]") { // a field has been found
 			$fieldLen = strlen($items['as_' . $i]);
 			$items['as_' . $i] = substr($items['as_' . $i], 7, $fieldLen-15); // 15 is the length of [field][/field]
-			$temp_text = getCalcHandleText($items['as_' . $i]);
+			$temp_text = getCalcHandleText($items['as_' . $i], "", true); // last param forces colhead
 			if(strlen($temp_text)>20) {
 				$items['as_' . $i] = "<a href=\"\" alt=\"" . trans($temp_text) . "\" title=\"" . trans($temp_text) . "\" onclick=\"javascript:return false;\">" . printSmart(trans($temp_text), "20") ."</a>";
 			} else {
@@ -1378,7 +1378,7 @@ function writableQuery($items, $mod="") {
 
 // THIS FUNCTION TAKES A ID FROM THE CALCULATIONS RESULT AND RETURNS THE TEXT TO PUT ON THE SCREEN THAT CORRESPONDS TO IT
 // Also used for advanced searches
-function getCalcHandleText($handle, $frid="") {
+function getCalcHandleText($handle, $frid="", $forceColhead=false) {
 	global $xoopsDB;
 	if($handle == "creation_uid") {
 		return _formulize_DE_CALC_CREATOR;
@@ -1391,8 +1391,8 @@ function getCalcHandleText($handle, $frid="") {
 	} elseif($handle == "creator_email") {
 		return _formulize_DE_CALC_CREATOR_EMAIL;
 	} elseif(is_numeric($handle)) {
-		$caption = q("SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize"). " WHERE ele_id = '$handle'"); 
-		if($caption[0]['ele_colhead'] != "") {
+		$caption = q("SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize"). " WHERE ele_id = '$handle'");
+		if($forceColhead AND $caption[0]['ele_colhead'] != "") {
 			return $caption[0]['ele_colhead'];			
 		} else {
 			return $caption[0]['ele_caption'];
