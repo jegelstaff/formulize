@@ -7,7 +7,7 @@
 * Translation version 3.0 by GibaPhp - http://br.impresscms.org   
 * -------------------------------------------------------------------- 
 */
-
+// Module main
 define("_formulize_FORM_TITLE", "Formulários");
 define("_AM_CATGENERAL", "Formulários Gerais");
 define("_AM_NOFORMS_AVAIL", "Não há formulários atualmente disponíveis.");
@@ -395,6 +395,10 @@ define("_formulize_DE_CANCELCALCS", "Cancelar cálculos");
 define("_formulize_DE_SHOWLIST", "Alternar para entradas");
 define("_formulize_DE_HIDELIST", "Alternar para cálculos");
 define("_formulize_DE_SORTTHISCOL", "Clique para classificar as entradas por esta coluna");
+define("_formulize_DE_MOREINFO", "Click for more info about this column");
+define("_formulize_DE_MOREINFO_TITLE", "More info about this form element");
+define("_formulize_DE_MOREINFO_QUESTION", "Text for this question as it appears in the form:");
+define("_formulize_DE_MOREINFO_OPTIONS", "Options for answering this question:");
 
 define("_formulize_DE_DELETE_ALERT", "Você não está autorizado a excluir esta visão da lista.");
 define("_formulize_DE_CONF_DELVIEW", "Você está prestes a excluir esta visão! Por favor, confirme.");
@@ -429,6 +433,7 @@ define("_formulize_DE_CALC_CREATOR_EMAIL", "Endereço de e-mail do criador");
 define("_formulize_DE_REMOVECALC", "Remover este cálculo da lista");
 define("_formulize_DE_CALC_BTEXT", "Quais entradas?");
 define("_formulize_DE_CALC_GTEXT", "Agrupar resultados?");
+define("_formulize_DE_CALC_GTEXT2", "2nd level Grouping?");
 define("_formulize_DE_CALCHEAD", "Resultados dos cálculos");
 define("_formulize_DE_CALC_SUM", "Soma Total");
 define("_formulize_DE_CALC_AVG", "Média");

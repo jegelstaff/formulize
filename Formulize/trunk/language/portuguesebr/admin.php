@@ -1,5 +1,4 @@
 <?php
-
 /**
 * --------------------------------------------------------------------
 *      Portuguese Translation by Paulo Sergio de Araujo alias Gopala
@@ -8,6 +7,7 @@
 * Translation version 3.0 by GibaPhp - http://br.impresscms.org   
 * -------------------------------------------------------------------- 
 */
+// Admin
 define("_FORM_RENAME_TEXT", "Rename this form"); //GibaPhp 3.0
 define("_FORM_EDIT_ELEMENTS_TEXT", "Edit this form's elements"); //GibaPhp 3.0
 define("_FORM_EDIT_SETTINGS_TEXT", "Edit this form's settings"); //GibaPhp 3.0
@@ -452,8 +452,6 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE", "Substitui
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE", "Remover o valor especificado do valor atual");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND", "Acrescentar o valor especificado no final do valor atual");
 
-//movido aqui temporariamente até descobrir o motivo do problema....
-//<p>Para Caixas de Busca Rápida, use \"\$quickSearch<i>Coluna</i>\", onde <i>Coluna</i> é o número ID do elemento, ou do manipulador elemento, se estiver usando um Formulário Estruturado.</p>\n
-//<p>Para Botões Personalizados, use \"\$quickFilter\", onde <i>manipulador</i> é o manipulador que você especificou para aquele botão. Você pode usar \"\$messageText\" para controlar onde a mensagem do botão clicado aparecerá na tela. Por padrão, a mensagem aparecerá no alto, centralizada.</p>\n
-//<p>Se a lista de visões atuais estiver disponível, a partir dela você poderá saber qual visão foi selecionada por último, verificando se <i>\$The_view_name</i> é verdadeiro ou falso. Lá também encontrará <i>\$viewX</i>, onde X é o número correspondente à posição da visão na lista, de 1 até n. Você pode usar isso em cláusulas if..else em seu modelo, para alterá-lo de acordo com a visão que for selecionada.</p>\n<p><b>Modelo de Lista</b></p>\n<p>Se você especificar algum código PHP para o Modelo de Lista, ele será usado para criar alterações em cada linha da lista.</p>\n<p>Não é necessário criar um loop foreach ou qualquer outra estrutura de repetição em seu modelo. O código PHP que você especificar será executado dentro do loop que roda uma vez para cada entrada.</p>\n<p>Neste modelo, você tem pleno acesso aos objetos, funções, variáveis e constantes do Formulize e do Xoops, incluindo <i>\$fid</i> para o ID do formulário. Use \$entry para referir-se à entrada atual na lista. Por exemplo:</p>\n<p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;display(\$entry, \"fone\");</p>\n<p>Este código exibirá o número de telefone gravado nesta entrada (assumindo que \"fone\" é um manipulador de elemento válido).</p></span>\n");
+
+
 ?>
