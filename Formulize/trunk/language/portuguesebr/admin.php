@@ -8,12 +8,12 @@
 * -------------------------------------------------------------------- 
 */
 // Admin
-define("_FORM_RENAME_TEXT", "Rename this form"); //GibaPhp 3.0
-define("_FORM_EDIT_ELEMENTS_TEXT", "Edit this form's elements"); //GibaPhp 3.0
-define("_FORM_EDIT_SETTINGS_TEXT", "Edit this form's settings"); //GibaPhp 3.0
-define("_FORM_CLONE_TEXT", "Clone this form"); //GibaPhp 3.0
-define("_FORM_CLONEDATA_TEXT", "Clone this form and its data"); //GibaPhp 3.0
-define("_FORM_DELETE_TEXT", "Delete this form"); //GibaPhp 3.0
+define("_FORM_RENAME_TEXT", "Renomear este formulário"); //GibaPhp 3.0
+define("_FORM_EDIT_ELEMENTS_TEXT", "Editar elementos do formulário"); //GibaPhp 3.0
+define("_FORM_EDIT_SETTINGS_TEXT", "Editar as configurações do formulário"); //GibaPhp 3.0
+define("_FORM_CLONE_TEXT", "Clone este formulário"); //GibaPhp 3.0
+define("_FORM_CLONEDATA_TEXT", "Clone este formulário e seus dados"); //GibaPhp 3.0
+define("_FORM_DELETE_TEXT", "Excluir este formulário"); //GibaPhp 3.0
 
 define("_AM_SAVE","Salvar");
 define("_AM_COPIED","%s copiado");
@@ -41,9 +41,9 @@ define("_AM_ELE_ORDER","Ordem");
 define("_AM_ELE_DISPLAY","Exibir");
 //define("_AM_ELE_DISPLAYLIST","Display this element to these groups, in the list of entries");
 define("_AM_ELE_PRIVATE","Privado");
-define("_AM_ELE_HANDLE_HEADING","Data handle/ID"); //GibaPhp 3.0
-define("_AM_ELE_TYPE_HEADING","Type"); //GibaPhp 3.0
-define("_AM_ELE_DISPLAY_HEADING","Display"); //GibaPhp 3.0
+define("_AM_ELE_HANDLE_HEADING","Manipulador de Dados/ID"); //GibaPhp 3.0
+define("_AM_ELE_TYPE_HEADING","Tipo"); //GibaPhp 3.0
+define("_AM_ELE_DISPLAY_HEADING","Mostrar"); //GibaPhp 3.0
 
 
 define("_AM_ELE_TEXT","Caixa de texto");
@@ -117,16 +117,16 @@ define("_AM_ELE_FORMLINK_SCOPE_DESC", "Os grupos que você escolheu definem o to
 define("_AM_ELE_FORMLINK_SCOPE_ALL", "Usar todos os grupos");
 define("_AM_ELE_FORMLINK_SCOPELIMIT_NO", "Usar todos esses grupos");
 define("_AM_ELE_FORMLINK_SCOPELIMIT_YES", "Usar somente os grupos dos quais o usuário atual é membro");
-define("_AM_ELE_FORMLINK_ANYALL_ANY", "Include entries by users who are members of any group in use<br>"); //GibaPhp 3.0
-define("_AM_ELE_FORMLINK_ANYALL_ALL", "Include entries by users who are members of all groups in use"); //GibaPhp 3.0
+define("_AM_ELE_FORMLINK_ANYALL_ANY", "Incluir entradas de usuários que são membros de algum grupo em uso<br>"); //GibaPhp 3.0
+define("_AM_ELE_FORMLINK_ANYALL_ALL", "Incluir entradas de usuários que são membros de todos os grupos em uso"); //GibaPhp 3.0
 
 // formlink scope filters -- feb 6 2008
-define("_AM_ELE_FORMLINK_SCOPEFILTER", "If the options are linked -- or are {FULLNAMES} OR {USERNAMES} -- filter them based on these properties of their entry in the source form."); //GibaPhp 3.0
-define("_AM_ELE_FORMLINK_SCOPEFILTER_DESC", "When you link to values in another form, you may wish to limit the values included in the list based on certain properties of the entries in the other form.  For example, if you are linking to the names of tasks in a task form, you might want to list only tasks that are incomplete.  If there's a question in the task form that asks if the task is complete, you could specify a filter like: \"Task is complete = No\".<br><br>If the options are {FULLNAMES} or {USERNAMES}, and you are using a custom profile form in conjunction with the Registration Codes module, you can filter the names based on the profile form."); //GibaPhp 3.0
-define("_AM_ELE_FORMLINK_SCOPEFILTER_ALL", "No filter in effect (select this to clear existing filters)."); //GibaPhp 3.0
-define("_AM_ELE_FORMLINK_SCOPEFILTER_CON", "Filter the options based on this/these conditions:"); //GibaPhp 3.0
-define("_AM_ELE_FORMLINK_SCOPEFILTER_ADDCON", "Add another condition"); //GibaPhp 3.0
-define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(If the first list here is empty, click the 'Add another condition' button to refresh it.)"); //GibaPhp 3.0
+define("_AM_ELE_FORMLINK_SCOPEFILTER", "Caso as opções sejam ligadas -- ou estão {FULLNAMES} OR {USERNAMES} -- filtro baseia-las sobre estas propriedades de sua entrada na fonte do formulário."); //GibaPhp 3.0
+define("_AM_ELE_FORMLINK_SCOPEFILTER_DESC", "Quando você faz um link para os valores de outro formulário, talvez você queira limitar os valores incluídos na lista com base em certas propriedades das entradas no outro formulário. Por exemplo, se você está ligando para os nomes das tarefas em uma tarefa do formulário, você pode querer listar apenas tarefas que estão incompletas. Se há uma pergunta no formulário da tarefa que lhe pergunta se a tarefa está concluída, você poderia especificar um filtro como:\"Task is complete = No\".<br><br> Se as opções são {FULLNAMES} or {USERNAMES} , E você estiver usando um formulário de perfil personalizado em conjunto com o módulo Registrador de Códigos para o registro, você pode filtrar os nomes baseados no perfil formulário."); //GibaPhp 3.0
+define("_AM_ELE_FORMLINK_SCOPEFILTER_ALL", "Nenhum filtro em vigor (para selecionar este, limpe os filtros existentes)."); //GibaPhp 3.0
+define("_AM_ELE_FORMLINK_SCOPEFILTER_CON", "Filtrar as opções baseadas neste/nestas condições:"); //GibaPhp 3.0
+define("_AM_ELE_FORMLINK_SCOPEFILTER_ADDCON", "Adicionar outra condição"); //GibaPhp 3.0
+define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(Se a primeira lista aqui está vazia, clique no link 'Adicionar outra condição' para atualizar isto.)"); //GibaPhp 3.0
        
        
   
@@ -139,7 +139,7 @@ define("_AM_ELE_SUBFORM_NONE", "Nenhum subformulário disponível - defina um fo
 define("_AM_ELE_SUBFORM_ELEMENTS", "Quais elementos devem ser exibidos como parte da interface do subformulário?");
 define("_AM_ELE_SUBFORM_ELEMENTS_DESC", "Aproximadamente três ou quatro elementos de um subformulário podem ser exibidos confortavelmente como parte do formulário principal. Mais de quatro elementos e a interface começa a se tornar abarrotada. Você pode escolher quais elementos quer exibir ao selecioná-los nesta lista. Usuários podem sempre modificar os elementos por clicar no botão próximo a cada entrada do subformulário que for listada no formulário principal.");
 define("_AM_ELE_SUBFORM_REFRESH", "Atualizar a lista de elementos para combinar o formulário selecionado");
-define("_AM_ELE_SUBFORM_BLANKS", "How many blank spaces should be shown for this subform when the page first loads?"); //GibaPhp 3.0
+define("_AM_ELE_SUBFORM_BLANKS", "Quantos espaços em branco devem ser indicados neste sub-formulário quando a primeira página for carregada?"); //GibaPhp 3.0
 
 // grids
 define("_AM_ELE_GRID", "Tabela de elementos existentes (coloque ANTES os elementos que ela contém)");
@@ -203,8 +203,8 @@ define("_AM_SAVECHANG","Salvar alterações");
 define("_AM_WANTDEL","Você realmente quer excluir este item do menu?");
 define("_AM_YES","Sim");
 define("_AM_NO","Não");
-define("_AM_formulizeMENUSTYLE","MyMenu-Style"); //GibaPhp 3.0 - verificar ????
-define("_AM_MAINMENUSTYLE","MainMenu-Style"); //GibaPhp 3.0
+define("_AM_formulizeMENUSTYLE","MyMenu-Style"); //GibaPhp 3.0 - verificar nos testes ????
+define("_AM_MAINMENUSTYLE","MainMenu-Style"); //GibaPhp 3.0- verificar nos testes????
 
 define("_AM_VERSION","1.0");
 define("_AM_REORD","Nova classificação");
@@ -258,10 +258,10 @@ define("_AM_FORM_FORCEHIDDEN", "Incluir como um elemento oculto para usuários q
 define("_AM_FORM_FORCEHIDDEN_DESC", "Atualmente, somente afeta botões de rádio e caixas de texto. Esta opção cria um elemento oculto ao invés da série de botões de rádio ou da caixa de texto, e o valor desse elemento oculto será o valor padrão especificado acima. Útil quando um valor padrão precisa ser definido sempre, em cada entrada do formulário, mas nem todos os grupos vêem normalmente este elemento.");
 define("_AM_FORM_FORCEHIDDEN_DESC", "Currently only affects radio buttons and textboxes.  This option will cause a hidden form element to be created instead of the radio button series or textbox, and the value of the hidden element will be the default value specified above.  Useful when you always need a default value set in every form entry, but not all groups normally see this element.");
 
-define("_AM_ELE_DISABLED", "Disable this element for any groups?"); //GibaPhp 3.0
-define("_AM_FORM_DISABLED_EXTRA", "Use this option to make this element inactive for certain groups.  The element will still be shown to users according to the display option above, but you can use this option to disable the element so users cannot change its value.  This option currently works only for textboxes and textarea boxes."); //GibaPhp 3.0
-define("_AM_FORM_DISABLED_ALLGROUPS", "Disable for all groups"); //GibaPhp 3.0
-define("_AM_FORM_DISABLED_NOGROUPS", "Disable for no groups"); //GibaPhp 3.0
+define("_AM_ELE_DISABLED", "Desativar este elemento para quaisquer grupos?"); //GibaPhp 3.0
+define("_AM_FORM_DISABLED_EXTRA", "Use essa opção para tornar este elemento inativo para determinados grupos. O elemento ainda serão mostrados aos usuários de acordo com a opção mostrada acima, mas você pode usar essa opção para desabilitar o elemento para que os usuários não possam alterar o seu valor. Esta opção atualmente funciona apenas para as caixas de texto e nas áreas de texto."); //GibaPhp 3.0
+define("_AM_FORM_DISABLED_ALLGROUPS", "Desabilitar para todos os grupos"); //GibaPhp 3.0
+define("_AM_FORM_DISABLED_NOGROUPS", "Nenhum grupo Desabilitado"); //GibaPhp 3.0
 
 
 define("_AM_ELE_OTHER", 'Para a opção "Outro", coloque {OTHER|*número*} em uma das caixas de texto. Isto é: {OTHER|30} gera uma caixa de texto com 30 caracteres de largura');
@@ -286,14 +286,14 @@ define("_AM_FORMULIZE_SCREEN_FORM", "Criar ou modificar um tela");
 define("_AM_FORMULIZE_SCREEN_TITLE", "Título desta tela");
 define("_AM_FORMULIZE_USE_NO_FRAMEWORK", "Usar somente este formulário, não a Estrutura");
 define("_AM_FORMULIZE_SELECT_FRAMEWORK", "Estrutura para usar nesta tela, se alguma");
-define("_AM_FORMULIZE_SCREEN_SECURITY", "Use the XOOPS security token on this screen?"); //GibaPhp 3.0
-define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "The XOOPS security token is a defense against cross-site scripting attacks.  However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types."); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_SECURITY", "Use the security token on this screen?"); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "The security token is a defense against cross-site scripting attacks.  However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types."); //GibaPhp 3.0
 
 
-define("_AM_FORMULIZE_SCREEN_PARAENTRYFORM", "Should answers from a previous entry be shown as part of this form?  If so, choose the form."); //GibaPhp 3.0
-define("_AM_FORMULIZE_SCREEN_PARAENTRYFORM_FALSE", "No, don't show previous answers."); //GibaPhp 3.0
-define("_AM_FORMULIZE_SCREEN_PARAENTRYRELATIONSHIP", "If previous answers are shown, what is the relationship of this form to the other form with the previous entries?"); //GibaPhp 3.0
-define("_AM_FORMULIZE_SCREEN_PARAENTRYREL_BYGROUP", "Entries belong to the same group"); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_PARAENTRYFORM", "Devem as respostas de uma entrada anterior serem apresentadas como parte deste formulário? Em caso afirmativo, escolher um formulário."); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_PARAENTRYFORM_FALSE", "Não, não mostrar respostas anteriores."); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_PARAENTRYRELATIONSHIP", "Se as respostas anteriores são mostradas, qual é a relação deste formulário para o outro e as suas entradas anteriores?"); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_PARAENTRYREL_BYGROUP", "Entradas pertencem ao mesmo grupo"); //GibaPhp 3.0
 
 define("_AM_FORMULIZE_SCREEN_INTRO", "Texto introdutório para a primeira página deste formulário");
 define("_AM_FORMULIZE_SCREEN_THANKS", "Texto de agradecimento para a última página deste formulário");
@@ -311,11 +311,11 @@ define("_AM_FORMULIZE_SCREEN_INSERTPAGE", "Insert a new page here");
 define("_AM_FORMULIZE_SCREEN_SAVE", "Salvar esta tela");
 define("_AM_FORMULIZE_SCREEN_SAVED", "Os detalhes para esta tela foram salvos na Base de Dados");
 define("_AM_FORMULIZE_SCREEN_PAGETITLE", "Título para o número de página");
-define("_AM_FORMULIZE_SCREEN_CONS_PAGE", "Conditions in which to display page"); //GibaPhp 3.0
-define("_AM_FORMULIZE_SCREEN_CONS_NONE", "Always display this page"); //GibaPhp 3.0
-define("_AM_FORMULIZE_SCREEN_CONS_YES", "Only display when the following conditions are true:"); //GibaPhp 3.0
-define("_AM_FORMULIZE_SCREEN_CONS_ADDCON", "Add an another condition"); //GibaPhp 3.0
-define("_AM_FORMULIZE_SCREEN_CONS_HELP", "Conditions are useful if a page should only appear based on answers to questions in a previous page.  Select the questions from the previous page and specify the answers that should result in this page being displayed."); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_CONS_PAGE", "Condições em que a página será exibida"); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_CONS_NONE", "Sempre exibir esta página"); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_CONS_YES", "Exibir apenas quando as seguintes condições forem verdadeiras:"); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_CONS_ADDCON", "Incluir uma outra condição"); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_CONS_HELP", "Condições são úteis se uma página deve ser exibida somente com base em respostas a perguntas em uma página anterior. Selecione a partir da página anterior perguntas e respostas que devem especificar o resultado a ser exibido nesta página."); //GibaPhp 3.0
 
 // LIST OF ENTRIES SCREEN
 define("_AM_FORMULIZE_SCREEN_LOE_BUTTONINTRO", "Especifique quais botões você quer incluir nesta tela:");
@@ -349,8 +349,8 @@ define("_AM_FORMULIZE_SCREEN_LOE_REPEATHEADERS", "Se você está usando cabeçal
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_REPEATHEADERS", "Repetir os cabeçalhos torna mais fácil para os usuários saber qual coluna estão olhando quando rolam a lista. Deixe em '0' para ter cabeçalhos somente no topo da lista");
 define("_AM_FORMULIZE_SCREEN_LOE_ENTRIESPERPAGE", "Quantas entradas devem aparecer em cada página de uma lista?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_ENTRIESPERPAGE", "Deixe em '0' para ter todas as entradas aparecendo em uma única página.");
-define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN", "What screen should be used to display individual entries when users click on them?"); //GibaPhp 3.0
-define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT", "Use the default version of this form"); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN", "Qual tela deve ser utilizada para exibir entradas individuais quando os usuários clicam nelas?"); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT", "Use a versão padrão deste formulário"); //GibaPhp 3.0
 define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH", "Quantos pixels de largura cada coluna deve ter?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTH", "Deixe em '0' para ter as colunas expandidas a sua largura natural.");
 define("_AM_FORMULIZE_SCREEN_LOE_TEXTWIDTH", "Quantos caracteres de texto devem ser exibidos em uma célula?");
@@ -407,9 +407,9 @@ define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2", "<span style=\"font-weight: no
 </td>
 </tr>
 </table>
-<p>For Quicksearch boxes, use \"\$quickSearch<i>Column</i>\" where <i>Column</i> is either the element ID number, or the element handle if using a Framework.</p>\n
-<p>You can also make Quickfilter dropdown boxes, by using \"\$quickFilter<i>Column</i>\".  This only works for selectboxes, radio buttons and checkboxes.</p>\n
-<p>For Custom Buttons, use \"\$handle\" where <i>handle</i> is the handle you specified for that button.  You can use \"\$messageText\" to control where the clicked button's message will appear on the screen.  By default, the message appears centred at the top.</p>\n<p>If the current view list is available, you can determine which view was last selected from the list, by checking whether <i>\$The_view_name</i> is true or not.  You can also check <i>\$viewX</i> where X is a number corresponding to the position of the view in the list, 1 through n.  You can use this to put if..else clauses into your template, so it changes depending what view is selected.</p>\n<p><b>List Template</b></p>\n<p>If you specify any PHP code for the List Template, it will be used to draw in each row of the list.</p>\n<p>You do not need to create a foreach loop or any other loop structure in this template.  The PHP code you specify will be executed inside a loop that runs once for each entry.</p>\n<p>You have full access to XOOPS and Formulize objects, functions, variables and constants in this template, including <i>\$fid</i> for the form ID.  Use \$entry to refer to the current entry in the list.  For example:</p>\n<p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;display(\$entry, \"phonenumber\");</p>\n<p>That code will display the phone number recorded in that entry (assuming \"phonenumber\" is a valid element handle).</p><p>You can use \"\$selectionCheckbox\" to display the special checkbox used to select an entry.</p><p>You can use a special function called \"viewEntryLink\" to create a link to the entry so users can edit it.  This function takes one parameter, which is the text that will be clickable.  Examples:</p><p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;print viewEntryLink(\"Click to view this entry\");<br>&nbsp;&nbsp;&nbsp;print viewEntryLink(display(\$entry, \"taskname\"));<br>&nbsp;&nbsp;&nbsp;print viewEntryLink(\"&lt;img src='\" . XOOPS_ROOT_PATH . \"/images/button.jpg'&gt;\");</p></span>\n"); //GibaPhp 3.0
+<p>Para as caixas de Pesquisa Rápida, use \"\$quickSearch<i>Coluna</i>\" where <i>Coluna</i> ou é o número do ID do elemento, ou se estiver usando um elemento manipulado do FrameWork.</p>\n
+<p>Você também pode fazer uma caixa de Filtro Rápido suspensa, utilizando \"\$quickFilter<i>Coluna</i>\".  Isto só funciona para caixas de seleção, botões e caixas de verificação.</p>\n
+<p>Para os botões personalizados, utilize \"\$handle\" where <i>handle</i> é o que você especificou para lidar com esse botão.  Você pode usar \"\$messageText\" para controlar quando você clicar no botão da mensagem que aparecer na tela. Por padrão, a mensagem aparece centralizada no topo.</p>\n<p>Se a visão atual da lista está disponível, você pode determinar qual a opinião foi selecionada a partir da última lista, por verificar se <i>\$The_view_name</i> é verdadeiro ou não.  Você pode também verificar <i>\$viewX</i> onde X é um número correspondente à posição do ponto de vista na lista, de 1 para n.  Você pode usá-la para colocar if..else cláusulas em seu modelo, assim ele muda conforme o que for selecionado na visão.</p>\n<p><b>Listar Modelo</b></p>\n<p>Se você especificar qualquer código PHP para a Lista do  Modelo, este será usado para desenhar em cada linha da lista.</p>\n<p>Você não precisa criar um laço foreach loop ou qualquer outra estrutura neste modelo.  O código PHP vai precisar ser executado dentro de um circuito fechado que é executado uma vez para cada entrada.</p>\n<p>Você tem pleno acesso a XOOPS/ImpressCMS e objetos do Formulize, funções, variáveis e constantes neste template (modelo), incluindo <i>\$fid</i> para o ID do formulário.  Usar \$entry para remeter à entrada atual na lista.  Por examplo:</p>\n<p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;display(\$entry, \"phonenumber\");</p>\n<p>Este código exibirá o número de telefone gravado nesta entrada (supondo \"phonenumber\" é um elemento válido do manipulador).</p><p>Você pode usar \"\$selectionCheckbox\" para exibir uma caixa especial usada para selecionar uma entrada.</p><p>Você pode usar uma função especial chamando \"viewEntryLink\" para criar um link para a entrada de modo que os usuários podem editá-lo.  Essa função tem um parâmetro, que é o texto que será clicável.  Examplos:</p><p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;print viewEntryLink(\"Clique para ver esta entrada\");<br>&nbsp;&nbsp;&nbsp;print viewEntryLink(display(\$entry, \"taskname\"));<br>&nbsp;&nbsp;&nbsp;print viewEntryLink(\"&lt;img src='\" . XOOPS_ROOT_PATH . \"/images/button.jpg'&gt;\");</p></span>\n"); //GibaPhp 3.0
 define("_AM_FORMULIZE_SCREEN_LOE_TOPTEMPLATE", "Modelo para a porção superior da página, acima da lista:");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE", "Se você destivar as barras de rolagem e não usar os botões de exportação, então o resultado do código que você digitar aqui (e nos Modelos de Lista e de Botões) será exibido na tela consecutivamente. Isto significa que voc pode começar uma tabela no Modelo de Topo, especificar as tags &lt;tr&gt; no Modelo de Lista e fechar a tabela no Modelo de Base. Essencialmente, esses três modelos dão a você controle sobre o layout da página toda.");
 define("_AM_FORMULIZE_SCREEN_LOE_BOTTOMTEMPLATE", "Modelo para a porção inferior da página, abaixo da lista:");
@@ -432,8 +432,8 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO", "Quais entradas serão m
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_INLINE", "Somente a entrada na linha onde o botão se encontra (somente funciona se o botão aparece em cada linha)");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_SELECTED", "Somente as entradas selecionadas (somente funciona se as caixas de verificação forem habilitadas acima)");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_ALL", "Todas as entradas neste formulário");
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_CODE", "None.  Run custom PHP code when this button is clicked."); //GibaPhp 3.0
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_HTML", "None.  Use PHP to render some HTML wherever this button would appear."); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_CODE", "Nenhum.  Executar código PHP personalizado quando este botão é clicado."); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_HTML", "Nenhum.  Use PHP para retornar alguns HTMLs onde seria exibido neste botão."); //GibaPhp 3.0
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW", "O botão deve criar uma nova entrada neste formulário");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED", "O botão deve criar uma nova entrada neste formulário para cada caixa de verificação que estiver marcada");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW_OTHER", "O botão deve criar uma nova entrada no formulário '");
@@ -442,8 +442,8 @@ define("_AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON_EFFECT", "Adicionar um efeito p
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_DELETE", "Excluir este botão");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT", "Efeito número");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_DESC", "Especifique o elemento que deve ser afetado, a ação que deve ser executada no elemento, e o valor a ser usado. O valor pode conter código PHP, incluindo <i>gatherHiddenValue('</i>manipulador<i>');</i> para recuperar o valor de um campo específico de uma entrada selecionada. Use os elementos ocultos abaixo para enviar esses valores. Para usar código PHP, a última linha do valor deve ser <i>\$value = \$algumacoisa;</i>");
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_CODE_DESC", "Enter the PHP code that should be executed when this button is clicked.  You can use the global variable \$formulize_thisEntryId to access the entry ID number of the line on which the button was clicked, of if the button does not appear on each line of the list this PHP code will be run once for each checkbox that was checked, and \$formulize_thisEntryId will contain the ID of a different checkbox each time.  If the button is not inline and no checkboxes were checked, then the code will be run once and \$formulize_thisEntryId will be blank.  You can use <i>gatherHiddenValue('</i>handle<i>');</i> to retrieve the value of a specific field from a selected entry.  Use hidden elements above to send those values."); //GibaPhp 3.0
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_HTML_DESC", "Enter the PHP code that should be executed to render this \"button\".  This is useful in conjunction with the \"appear on every line\" setting, so you can insert some HTML into a column of the list.  Use <i>display(\$entry, \$handle);</i> to include the value of any field form the current entry."); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_CODE_DESC", "Introduza o código PHP que deverá ser executado quando este botão for clicado. Você pode usar a variável global \$formulize_thisEntryId para acessar o número do ID da entrada da linha em que o botão foi clicado, se o botão não aparecer em cada linha do código PHP nesta lista vai ser executado uma vez para cada opção que for verificada, e \$formulize_thisEntryId irá conter o ID de uma opção diferente para cada vez.  Se o botão não é por linha e nenhuma caixa de seleção foi marcada, em seguida, o código será executado uma vez e \$formulize_thisEntryId ficarão em branco.  Você pode usar <i>gatherHiddenValue('</i>handle<i>');</i> para recuperar o valor de um campo específico a partir de uma entrada selecionada.  Use elementos escondidos para enviar esses valores."); //GibaPhp 3.0
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_HTML_DESC", "Introduza o código PHP que devem ser executadas para retornar este \"button\".  Isso é útil em conjunto com o \"appear on every line\" configuração, assim você pode inserir alguns códigos HTML em uma coluna da lista.  Use <i>display(\$entry, \$handle);</i> para incluir o valor de qualquer campo do formulário na entrada atual."); //GibaPhp 3.0
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_DELETE", "Excluir este efeito");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ELEMENT", "Afetar qual elemento?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION", "Executar qual ação?");
