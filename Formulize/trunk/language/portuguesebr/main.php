@@ -17,8 +17,8 @@ define("_formulize_MSG_FORM", ' Formulário: ');
 //next two added by jwe 7/23/04
 define("_formulize_INFO_RECEIVED", "Sua informação foi recebida.");
 define("_formulize_NO_PERMISSION", "Você não tem permissão para ver este formulário.");
-define("_formulize_NO_PERM", "You do not have permission to view this form.");
-define("_NO_PERM", "You do not have permission to view this part of the website.");
+define("_formulize_NO_PERM", "Você não tem permissão para visualizar este formulário.");
+define("_NO_PERM", "Você não tem permissão para visualizar essa parte do site.");
 define("_formulize_MSG_SENT", "Sua informação foi enviada.");
 define("_formulize_MSG_THANK", "<br />Obrigado.");
 define("_formulize_MSG_SUP","<br />Os dados foram excluídos");
@@ -56,14 +56,14 @@ define("_FORM_GROUP","Enviar para um grupo:");
 define("_FORM_MODIF","Modificar um formulário");
 define("_FORM_DELTITLE","Título do formulário que será excluído:");
 define("_FORM_NEW","Novo formulário");
-define("_FORM_TABLE_CREAT","Create a reference to a database table");
-define("_FORM_TABLE_NEW","Create a reference to a database table");
+define("_FORM_TABLE_CREAT","Criar uma referência a uma tabela de dados"); //GibaPhp 3.0
+define("_FORM_TABLE_NEW","Criar uma referência a uma tabela de dados"); //GibaPhp 3.0
 define("_FORM_NOM","Entre com o nome novo do arquivo");
 define("_FORM_OPT","Opções");
 define("_FORM_MENU","Modificar entradas no bloco Menu de Formulários");
 define("_FORM_PREF","Modificar as preferências");
 
-define("_FORM_TABLE_CONNECTION", "What is the name of the table you want to reference for this \"form\"?<br><br>It must be part of the XOOPS database.  Include the XOOPS prefix, ie: type the entire table name."); //GibaPhp 3.0
+define("_FORM_TABLE_CONNECTION", "Qual é o nome da tabela que deseja fazer uma referência no \"form\"?<br><br>Ela deve fazer parte da base de dados deste CMS.  Incluir o prefixo, ou seja: escreva o nome tabela inteira."); //GibaPhp 3.0
 
 //next section added by jwe 7/25/07
 define("_FORM_SINGLEENTRY","Este formulário permite somente uma entrada por usuário (preenche novamente o formulário atualiza a mesma entrada):");
@@ -185,7 +185,7 @@ define("_formulize_TEMP_NOENTRIES", "Nenhuma entrada.");
 define("_formulize_TEMP_ENTEREDBY", "Entrada por: ");
 define("_formulize_TEMP_ENTEREDBYSINGLE", "Entrada ");
 define("_formulize_TEMP_ON", "em");
-define("_formulize_TEMP_AT", "at"); //GibaPhp 3.0
+define("_formulize_TEMP_AT", "em"); //GibaPhp 3.0
 define("_formulize_TEMP_QYES", "Sim");
 define("_formulize_TEMP_QNO", "Não");
 define("_formulize_REPORT_ON", "Ativar Modo de Escrita de Relatório");
@@ -195,7 +195,7 @@ define("_formulize_NOREPORTSAVAIL", "Visão Padrão");
 define("_formulize_CHOOSEREPORT", "Visão Padrão");
 define("_formulize_REPORTING_OPTION", "Opções de relatório");
 define("_formulize_SUBMITTEXT", "Aplicar");
-define("_formulize_RESETBUTTON", "RESET");
+define("_formulize_RESETBUTTON", "LIMPAR"); //GibaPhp 3.0
 define("_formulize_QUERYCONTROLS", "Controles de Consulta");
 define("_formulize_SEARCH_TERMS", "Termos para pesquisar:");
 define("_formulize_STERMS", "Termos:");
@@ -349,7 +349,7 @@ define("_formulize_DE_CURRENT_VIEW", "Visão corrente: ");
 define("_formulize_DE_FILLINFORM", "Preencher este formulário: ");
 define("_formulize_DE_ACTIONS", "Ações: ");
 define("_formulize_DE_NODATAFOUND", "Não foram encontradas entradas na visão atual coincidentes com os atuais termos de busca (se indicados).");
-define("_formulize_DE_STANDARD_VIEWS", "VISÕES PADRÃO:");
+define("_formulize_DE_STANDARD_VIEWS", "VISÕES PADRONIZADAS:"); //revisão
 define("_formulize_DE_NO_STANDARD_VIEWS", "Não há visões padrão disponíveis");
 define("_formulize_DE_SAVED_VIEWS", "SUAS VISÕES SALVAS:");
 define("_formulize_DE_PUB_VIEWS", "VISÕES PUBLICADAS:");
@@ -395,10 +395,10 @@ define("_formulize_DE_CANCELCALCS", "Cancelar cálculos");
 define("_formulize_DE_SHOWLIST", "Alternar para entradas");
 define("_formulize_DE_HIDELIST", "Alternar para cálculos");
 define("_formulize_DE_SORTTHISCOL", "Clique para classificar as entradas por esta coluna");
-define("_formulize_DE_MOREINFO", "Click for more info about this column");
-define("_formulize_DE_MOREINFO_TITLE", "More info about this form element");
-define("_formulize_DE_MOREINFO_QUESTION", "Text for this question as it appears in the form:");
-define("_formulize_DE_MOREINFO_OPTIONS", "Options for answering this question:");
+define("_formulize_DE_MOREINFO", "Clique para obter mais informações sobre esta coluna"); //GibaPhp 3.0
+define("_formulize_DE_MOREINFO_TITLE", "Mais informação sobre esta o elemento deste formulário"); //GibaPhp 3.0
+define("_formulize_DE_MOREINFO_QUESTION", "Texto para esta pergunta como ele aparece no formulário:"); //GibaPhp 3.0
+define("_formulize_DE_MOREINFO_OPTIONS", "Opções para responder a esta pergunta:"); //GibaPhp 3.0
 
 define("_formulize_DE_DELETE_ALERT", "Você não está autorizado a excluir esta visão da lista.");
 define("_formulize_DE_CONF_DELVIEW", "Você está prestes a excluir esta visão! Por favor, confirme.");
@@ -414,9 +414,9 @@ define("_formulize_DE_REQDCALCS", "Solicitar cálculos:");
 define("_formulize_DE_CALCALL", "Incluir brancos/zeros"); 
 define("_formulize_DE_CALCNOBLANKS", "Excluir brancos/zeros");
 define("_formulize_DE_CALCONLYBLANKS", "Incluir somente brancos/zeros");
-define("_formulize_DE_CALCJUSTNOBLANKS", "Exclude blanks"); //GibaPhp 3.0
-define("_formulize_DE_CALCJUSTNOZEROS", "Exclude zeros"); //GibaPhp 3.0
-define("_formulize_DE_CALCCUSTOM", "Exclude custom list:"); //GibaPhp 3.0
+define("_formulize_DE_CALCJUSTNOBLANKS", "Excluir brancos"); //GibaPhp 3.0
+define("_formulize_DE_CALCJUSTNOZEROS", "Excluir zeros"); //GibaPhp 3.0
+define("_formulize_DE_CALCCUSTOM", "Excluir lista personalizada:"); //GibaPhp 3.0
 define("_formulize_DE_CALC_GROUPING", "Agrupar resultados por...");
 define("_formulize_DE_NOGROUPING", "Não agrupe os resultados");
 define("_formulize_DE_GROUPBYCREATOR", "Agrupar por: usuários que fizeram entradas");
@@ -444,16 +444,16 @@ define("_formulize_DE_CALC_PER", "Repartição percentual");
 define("_formulize_DE_EXCLBLANKS", "Excluir brancos/zeros");
 define("_formulize_DE_INCLBLANKS", "Incluir brancos/zeros");
 define("_formulize_DE_INCLONLYBLANKS", "Incluir <i>somente</i> brancos/zeros");
-define("_formulize_DE_EXCLONLYBLANKS", "Excludes blanks"); //GibaPhp 3.0
-define("_formulize_DE_EXCLONLYZEROS", "Excludes zeros"); //GibaPhp 3.0
-define("_formulize_DE_EXCLCUSTOM", "Excludes these items: "); //GibaPhp 3.0
+define("_formulize_DE_EXCLONLYBLANKS", "Exclui os espaços em branco"); //GibaPhp 3.0
+define("_formulize_DE_EXCLONLYZEROS", "Exclui zeros"); //GibaPhp 3.0
+define("_formulize_DE_EXCLCUSTOM", "Excluir esses itens: "); //GibaPhp 3.0
 define("_formulize_DE_CALC_MEAN", "Tendência");
-define("_formulize_DE_CALC_STD", "Standard Deviation"); //GibaPhp 3.0
+define("_formulize_DE_CALC_STD", "Desvio Padrão"); //GibaPhp 3.0
 define("_formulize_DE_CALC_MEDIAN", "Mediana");
-define("_formulize_DE_CALC_MEDIAN25", "25th Percentile"); //GibaPhp 3.0
-define("_formulize_DE_CALC_MEDIAN75", "75th Percentile"); //GibaPhp 3.0
+define("_formulize_DE_CALC_MEDIAN25", "25 '%' Porcento"); //GibaPhp 3.0
+define("_formulize_DE_CALC_MEDIAN75", "75 '%' Porcento"); //GibaPhp 3.0
 define("_formulize_DE_CALC_MODE", "Moda");
-define("_formulize_DE_CALC_NO25OR75", "Not enough values to calculate this"); //GibaPhp 3.0
+define("_formulize_DE_CALC_NO25OR75", "Não o suficiente para calcular esses valores"); //GibaPhp 3.0
 define("_formulize_DE_CALC_NUMENTRIES", "Número de entradas");
 define("_formulize_DE_CALC_NUMUNIQUE", "Número de valores únicos");
 define("_formulize_DE_PER_ITEM", "Ítem");
@@ -584,11 +584,11 @@ define("_formulize_DE_SETNOT_WHEN_DELETE", "uma entrada é excluída");
 define("_formulize_DE_SETNOT_WHO", "Enviar esta notificação para:");
 define("_formulize_DE_SETNOT_WHO_ME", "mim");
 define("_formulize_DE_SETNOT_WHO_CURUSER", "o usuário que simplesmente criou, atualizou, excluiu a entrada");
-define("_formulize_DE_SETNOT_WHO_CREATOR", "the user who created the entry"); //GibaPhp 3.0
-define("_formulize_DE_SETNOT_WHO_ELEMENTUIDS", "the user(s) selected in: "); //GibaPhp 3.0
-define("_formulize_DE_SETNOT_NOELEMENTOPTIONS", "No user lists in this form"); //GibaPhp 3.0
-define("_formulize_DE_SETNOT_WHO_LINKCREATOR", "the user who created the selected item(s) in this element: "); //GibaPhp 3.0
-define("_formulize_DE_SETNOT_NOLINKCREATOROPTIONS", "No linked elements in this form"); //GibaPhp 3.0
+define("_formulize_DE_SETNOT_WHO_CREATOR", "o usuário que criou a informação"); //GibaPhp 3.0
+define("_formulize_DE_SETNOT_WHO_ELEMENTUIDS", "usuário(s) selecionado em: "); //GibaPhp 3.0
+define("_formulize_DE_SETNOT_NOELEMENTOPTIONS", "Nenhum usuário listado neste formulário"); //GibaPhp 3.0
+define("_formulize_DE_SETNOT_WHO_LINKCREATOR", "o usuário que criou o item selecionado neste elemento: "); //GibaPhp 3.0
+define("_formulize_DE_SETNOT_NOLINKCREATOROPTIONS", "Nenhum elemento ligado a este formulário"); //GibaPhp 3.0
 define("_formulize_DE_SETNOT_WHO_GROUP", "usuários neste grupo: ");
 define("_formulize_DE_SETNOT_FOR", "Enviar esta notificação para:");
 define("_formulize_DE_SETNOT_FOR_ALL", "todas as entradas");
@@ -627,7 +627,7 @@ define("_formulize_DE_IMPORT_STEP2", "Passo 2: modifique o arquivo que você bai
 define("_formulize_DE_IMPORT_STEP3", "Passo 3: suba o arquivo modificado");
 define("_formulize_DE_IMPORT_FILE", "Selecione o arquivo que você modificou e importe-o.");
 define("_formulize_DE_IMPORT_GO", "Importar"); 
-define("_formulize_DE_IMPORT_VALIDATEDATA", "Automatically validate the structure and data in the .csv file before actually importing (highly recommended!)"); //GibaPhp 3.0
+define("_formulize_DE_IMPORT_VALIDATEDATA", "Validar automaticamente a estrutura e os dados contidos no arquivo .csv antes de realmente fazer a importação (altamente recomendado!)"); //GibaPhp 3.0
 define("_formulize_DE_IMPORT_INSTRUCTIONS", "<p><b>Abra o arquivo que você baixou em um programa de planilha eletrônica tal como o Excel, e modifique-o</b> de forma que ele contenha os dados que você quer importar. Você não tem que fazer isso de imediato: modifique o arquivo e, mais tarde, retorne aqui para importá-lo.</p>
 
 <p>Quando você salvar o arquivo, <b>tenha certeza de salvá-lo no formato '.csv'.</b>  Se você salvá-lo em um formato diferente, tal como '.xls', o processo de importação não funcionará.</p>");
@@ -663,15 +663,15 @@ define("_AM_FORMULIZE_LOE_FIRSTPAGE", "<< Primeira");
 define("_AM_FORMULIZE_LOE_LASTPAGE", "Última >>");
 define("_AM_FORMULIZE_LOE_ONPAGE", "Na página ");
 
-define("_formulize_DE_LOE_LIMIT_REACHED1", "There are"); //GibaPhp 3.0
-define("_formulize_DE_LOE_LIMIT_REACHED2", "entries in the list.  It would take a long time to retrieve them.  You can use search terms to limit the number of entries, or"); //GibaPhp 3.0
-define("_formulize_DE_LOE_LIMIT_REACHED3", "you can click here to have the system retrieve all the entries."); //GibaPhp 3.0
+define("_formulize_DE_LOE_LIMIT_REACHED1", "Lá estão"); //GibaPhp 3.0
+define("_formulize_DE_LOE_LIMIT_REACHED2", "entradas na lista. Seria preciso um longo tempo para recuperá-los. Você pode usar termos de pesquisa para limitar o número de entradas, ou"); //GibaPhp 3.0
+define("_formulize_DE_LOE_LIMIT_REACHED3", "você pode clicar aqui para que o sistema possa recuperar todas as entradas."); //GibaPhp 3.0
        
-define("_formulize_OUTOFRANGE_DATA","Preserve non-standard value found in the database: "); //GibaPhp 3.0
+define("_formulize_OUTOFRANGE_DATA","Preservar valor não-padrão encontrado na base de dados: "); //GibaPhp 3.0
 
-define("_AM_FORMULIZE_PREVIOUS_OPTION", "Use a previous answer:"); //GibaPhp 3.0
-define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","This value will be calculated after the data is saved"); //GibaPhp 3.0
+define("_AM_FORMULIZE_PREVIOUS_OPTION", "Use uma resposta anterior:"); //GibaPhp 3.0
+define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","Este valor será calculado após a gravação de dados"); //GibaPhp 3.0
 
-define("_formulize_QSF_DefaultText", "Search for:"); //GibaPhp 3.0
+define("_formulize_QSF_DefaultText", "Procurar por:"); //GibaPhp 3.0
 
 ?>
