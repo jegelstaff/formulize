@@ -1,5 +1,5 @@
 <?php
-
+// Admin
 define("_FORM_RENAME_TEXT", "Rename this form");
 define("_FORM_EDIT_ELEMENTS_TEXT", "Edit this form's elements");
 define("_FORM_EDIT_SETTINGS_TEXT", "Edit this form's settings");

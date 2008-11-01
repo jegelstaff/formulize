@@ -1,4 +1,5 @@
 <?php
+// Module main
 define("_formulize_FORM_TITLE", "Contact us by filling out this form.");
 define("_AM_CATGENERAL", "General Forms");
 define("_AM_NOFORMS_AVAIL", "There are no forms currently available.");
