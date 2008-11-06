@@ -126,12 +126,18 @@ if( !empty($ele_id) AND $clone == 0){
 				$value[] = !empty($ele_value[1]) ? intval($ele_value[1]) : $xoopsModuleConfig['t_max'];
 				$value[] = $ele_value[2];
 				$value[] = $ele_value[3];
+				
 				// formlink option added to textboxes June 20 2006 -- jwe
 				if($_POST['formlink'] != "none") {
 					$value[] = $_POST['formlink'];
 				} else {
 					$value[] = "";
 				}
+
+			  $value[] = $ele_value[5];
+				$value[] = $ele_value[6];
+				$value[] = $ele_value[7];
+				$value[] = $ele_value[8];
 
 			break;
 			case 'textarea':
@@ -339,6 +345,11 @@ if( !empty($ele_id) AND $clone == 0){
 			case 'derived':
 				$ele_value[0] = get_magic_quotes_gpc() ? stripslashes($ele_value[0]) : $ele_value[0];
 				$value[0] = $ele_value[0];
+				// Added for number formatting values 2008-10-31 kw
+				$value[1] = $ele_value[1];
+				$value[2] = $ele_value[2];
+				$value[3] = $ele_value[3];
+				$value[4] = $ele_value[4];	
 			break;
 			case 'upload': 
 				$value = array();

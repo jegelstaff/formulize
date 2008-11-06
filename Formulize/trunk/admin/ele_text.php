@@ -52,6 +52,26 @@ $valueType->addOption(1, _AM_ELE_TYPE_NUMBER);
 $valueType->setDescription(_AM_ELE_TYPE_DESC);
 // added - end - August 22 2005 - jpc
 
+// need to add another option for number of decimal places
+// and rounding (up, down, off) 
+// and prefix for display
+// and separator for thousands
+
+$decimalDefault = $value[5] ? $value[5] : 0;
+$prefixDefault = $value[6] ? $value[6] : '';
+$decsepDefault = $value[7] ? $value[7] : '.';
+$sepDefault = $value[8] ? $value[8] : '';
+$numberOptions = new XoopsFormElementTray(_AM_ELE_NUMBER_OPTS, '<br /><br />');
+$numberOptions->setDescription(_AM_ELE_NUMBER_OPTS_DESC);
+$decimalOption = new xoopsFormText(_AM_ELE_NUMBER_OPTS_DEC, 'ele_value[5]', 2, 2, $decimalDefault);
+$prefixOption = new XoopsFormText(_AM_ELE_NUMBER_OPTS_PREFIX, 'ele_value[6]', 5, 255, $prefixDefault);
+$decsepOption = new XoopsFormText(_AM_ELE_NUMBER_OPTS_DECSEP, 'ele_value[7]', 5, 255, $decsepDefault);
+$sepOption = new XoopsFormText(_AM_ELE_NUMBER_OPTS_SEP, 'ele_value[8]', 5, 255, $sepDefault);
+$numberOptions->addElement($decimalOption);
+$numberOptions->addElement($prefixOption);
+$numberOptions->addElement($decsepOption);
+$numberOptions->addElement($sepOption);
+
 // added June 20 2006, jwe
 $formlink = createFieldList($value[4], true); 
 
@@ -62,6 +82,7 @@ $form->addElement($default);
 // added - start - August 22 2005 - jpc
 $form->addElement($valueType);
 // added - end - August 22 2005 - jpc
-
+$form->addElement($numberOptions);
 $form->addElement($formlink);
+
 ?>

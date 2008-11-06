@@ -61,6 +61,24 @@ $listOfElements->addOptionArray($options);
 $listOfElements_output = $listOfElements->render() . "\n<br />\n<input type=button name=addele value=\"" . _AM_ELE_DERIVED_ADD . "\" onclick=\"javascript:writeCaptionToBox(this.form.listofelements);\"></input>";
 $formulaBox->setDescription($listOfElements_output . "<br /><br />" . _AM_ELE_DERIVED_DESC);
 
+// Copied from ele_text.php to add number formatting options. kw 2008-10-31
+$decimalDefault = $value[1] ? $value[1] : 0;
+$prefixDefault = $value[2] ? $value[2] : '';
+$decsepDefault = $value[3] ? $value[3] : '.';
+$sepDefault = $value[4] ? $value[4] : '';
+$numberOptions = new XoopsFormElementTray(_AM_ELE_DERIVED_NUMBER_OPTS, '<br /><br />');
+$numberOptions->setDescription(_AM_ELE_NUMBER_OPTS_DESC);
+$decimalOption = new xoopsFormText(_AM_ELE_NUMBER_OPTS_DEC, 'ele_value[1]', 2, 2, $decimalDefault);
+$prefixOption = new XoopsFormText(_AM_ELE_NUMBER_OPTS_PREFIX, 'ele_value[2]', 5, 255, $prefixDefault);
+$decsepOption = new XoopsFormText(_AM_ELE_NUMBER_OPTS_DECSEP, 'ele_value[3]', 5, 255, $decsepDefault);
+$sepOption = new XoopsFormText(_AM_ELE_NUMBER_OPTS_SEP, 'ele_value[4]', 5, 255, $sepDefault);
+$numberOptions->addElement($decimalOption);
+$numberOptions->addElement($prefixOption);
+$numberOptions->addElement($decsepOption);
+$numberOptions->addElement($sepOption);
+// end
+
 $form->addElement($formulaBox);
+$form->addElement($numberOptions);
 
 ?>

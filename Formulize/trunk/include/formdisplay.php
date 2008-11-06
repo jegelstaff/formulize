@@ -1688,7 +1688,7 @@ function formulize_formatDateTime($dt) {
 	// needs to figure out daylight savings time correctly...ie: is the user's timezone one that has daylight savings, and if so, if they are currently in a different dst condition than they were when the entry was created, add or subtract an hour from the seconds offset, so that the time information is displayed correctly.
 	global $xoopsConfig, $xoopsUser;
 	$serverTimeZone = $xoopsConfig['server_TZ'];
-	$userTimeZone = $xoopsUser->getVar('timezone_offset');
+	$userTimeZone = $xoopsUser ? $xoopsUser->getVar('timezone_offset') : $serverTimeZone;
 	$tzDiff = $userTimeZone - $serverTimeZone;
 	$tzDiffSeconds = $tzDiff*3600;
 	

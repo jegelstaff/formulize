@@ -1478,15 +1478,15 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 							$start = 1;
 							foreach($value as $v) {
 								if($start) {
-									print str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth));
+									print formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth)), $col, $frid);
 									$start = 0;
 								} else {
 									print ",<br>\n";
-									print str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth));
+									print formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth)), $col, $frid);
 								}
 							}
 						} elseif($col != "creation_uid" AND $col!= "mod_uid") {
-							print str_replace("\n", "<br>", formatLinks($value, $col, $frid, $textWidth));
+							print formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $frid, $textWidth)), $col, $frid);
 						} else { // don't use printsmart for the special uid cells
 							print $value;
 						}

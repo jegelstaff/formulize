@@ -58,6 +58,15 @@ define("_AM_ELE_NOM_SEP","Break up name");
 define("_AM_ELE_UPLOAD","Join a file");
 define("_AM_ELE_CLR","with the color");
 
+// number options for textboxes
+define("_AM_ELE_NUMBER_OPTS","If only numbers are allowed...");
+define("_AM_ELE_NUMBER_OPTS_DESC","You can set these options to control how decimals are handled, and how numbers are formatted on screen.");
+define("_AM_ELE_NUMBER_OPTS_DEC","Number of decimal places:");
+define("_AM_ELE_NUMBER_OPTS_PREFIX","Display numbers with this prefix (ie: '$'):");
+define("_AM_ELE_NUMBER_OPTS_DECSEP","Separate decimals with this character (ie: '.'):");
+define("_AM_ELE_NUMBER_OPTS_SEP","Separate thousands with this character (ie: ','):");
+define("_AM_ELE_DERIVED_NUMBER_OPTS","If this formula produces a number ...");
+
 // added - start - August 227 2005 - jpc
 define("_AM_ELE_TYPE","What should people type in this box?");
 define("_AM_ELE_TYPE_DESC","Choose 'Numbers Only' to strip non-numeric characters from the box when an entry is saved.  This ensures mathematical operations can be performed on the contents of the box.");

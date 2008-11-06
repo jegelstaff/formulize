@@ -941,7 +941,6 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
     $one_to_many[$indexer]['common'] = $res2['fl_common_value'];
     $indexer++;
   }
-  // $one_to_many = array_unique($one_to_many); // appears to be causing a bug when multiple one to many links are in a single framework
 
   // get MANY-TO-ONE links
   $many_q3 = q("SELECT fl_form1_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 2 AND fl_frame_id = $frid $unified_display");
@@ -961,7 +960,6 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
     $many_to_one[$indexer]['common'] = $res2['fl_common_value'];
     $indexer++;
   }
-  $many_to_one = array_unique($many_to_one);
 
   if(!is_array($entries)) { // no entries passed, so we don't need to figure out the entries, so return only the fids and subfids
     foreach($one_to_one as $one_fid) {
@@ -3242,6 +3240,28 @@ function formulize_swapUIText($value, $uitexts) {
     $value = isset($uitexts[$value]) ? $uitexts[$value] : $value;
   }
   return $value;
+}
+
+function formulize_numberFormat($value, $handle, $frid) {
+	if(!is_numeric($value)) { return $value; }
+	if($frid) {
+    $resultArray = formulize_getElementHandleAndIdFromFrameworkHandle($handle, $frid);
+    $id = $resultArray[1];
+  } else {
+    $id = formulize_getIdFromElementHandle($handle);
+  }
+	$elementMetaData = formulize_getElementMetaData($id, false);
+	if($elementMetaData['ele_type'] == "text") {
+		$ele_value = unserialize($elementMetaData['ele_value']);
+		return '<div style="float: right;">'. $ele_value[6] . number_format($value, $ele_value[5], $ele_value[7], $ele_value[8]) .'</div>';
+	} elseif($elementMetaData['ele_type'] == "derived") {
+		$ele_value = unserialize($elementMetaData['ele_value']);
+		return '<div style="float: right;">'. $ele_value[2] . number_format($value, $ele_value[1], $ele_value[3], $ele_value[4]) .'</div>';	
+	}	else {
+		return $value;
+	}
+
+	
 }
 
 ?>
