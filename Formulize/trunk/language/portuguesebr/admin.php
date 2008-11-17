@@ -33,13 +33,13 @@ define("_AM_ELE_DESC","Texto descritivo");
 define("_AM_ELE_DESC_HELP","O que você digitar nesta caixa aparecerá abaixo da legenda, da mesma forma que faz este texto.");
 define("_AM_ELE_COLHEAD","Cabeçalho de coluna (opcional)");
 define("_AM_ELE_COLHEAD_HELP","Se você especificar um cabeçalho de coluna, esse texto será usado no lugar da legenda, na tela <b>Lista de Entradas</b>. Isso é útil quando a legenda é muito longa, ou se você quer as legendas escritas do ponto de vista do usuário, e os cabeçalhos de coluna escritos do ponto de vista do leitor do relatório.");
-define("_AM_ELE_HANDLE","Data handle (optional)");
+define("_AM_ELE_HANDLE","Manipular dados (opcional)");
 define("_AM_ELE_HANDLE_HELP","You can specify a short name for this element.  The short name will be used by the database when storing information.  If you leave this blank, the element ID number will be used."); //GibaPhp 3.0
 define("_AM_ELE_DETAIL","Detalhe");
 define("_AM_ELE_REQ","Obrigatório");
 define("_AM_ELE_ORDER","Ordem");
 define("_AM_ELE_DISPLAY","Exibir");
-//define("_AM_ELE_DISPLAYLIST","Display this element to these groups, in the list of entries");
+//define("_AM_ELE_DISPLAYLIST","Mostrar este elemento para estes grupos, na lista de entradas");
 define("_AM_ELE_PRIVATE","Privado");
 define("_AM_ELE_HANDLE_HEADING","Manipulador de Dados/ID"); //GibaPhp 3.0
 define("_AM_ELE_TYPE_HEADING","Tipo"); //GibaPhp 3.0
@@ -66,7 +66,16 @@ define("_AM_ELE_NOM_SEP","Nome da separação");
 define("_AM_ELE_UPLOAD","Junte um arquivo");
 define("_AM_ELE_CLR","com a cor");
 
-// added - start - August 22 2005 - jpc
+// number options for textboxes
+define("_AM_ELE_NUMBER_OPTS","Se apenas os números são permitidos ...");
+define("_AM_ELE_NUMBER_OPTS_DESC","Você pode definir estas opções para controlar o modo como são manipulados os decimais, e como os números são formatados na tela.");
+define("_AM_ELE_NUMBER_OPTS_DEC","Número de casas decimais:");
+define("_AM_ELE_NUMBER_OPTS_PREFIX","Mostrar números com esse prefixo (ex: '$'):");
+define("_AM_ELE_NUMBER_OPTS_DECSEP","Separe os decimais com esse caráter (ex: '.'):");
+define("_AM_ELE_NUMBER_OPTS_SEP","Separe os milhares com o carácter (ex: ','):");
+define("_AM_ELE_DERIVED_NUMBER_OPTS","Se essa fórmula produz uma série ...");
+
+// added - start - August 227 2005 - jpc
 define("_AM_ELE_TYPE","O que as pessoas devem digitar nesta caixa?");
 define("_AM_ELE_TYPE_DESC","Escolha 'Somente números' para excluir caracteres não-numéricos desta caixa quando uma entrada for salva. Isto assegura que operações matemáticas poderão ser executadas com o conteúdo digitado");
 define("_AM_ELE_TYPE_STRING","Qualquer coisa");
@@ -256,7 +265,7 @@ define("_AM_FORM_DISPLAY_ALLGROUPS", "Todos os grupos com permissão para este f
 define("_AM_FORM_DISPLAY_NOGROUPS", "Nenhum grupo");
 define("_AM_FORM_FORCEHIDDEN", "Incluir como um elemento oculto para usuários que não podem vê-lo");
 define("_AM_FORM_FORCEHIDDEN_DESC", "Atualmente, somente afeta botões de rádio e caixas de texto. Esta opção cria um elemento oculto ao invés da série de botões de rádio ou da caixa de texto, e o valor desse elemento oculto será o valor padrão especificado acima. Útil quando um valor padrão precisa ser definido sempre, em cada entrada do formulário, mas nem todos os grupos vêem normalmente este elemento.");
-define("_AM_FORM_FORCEHIDDEN_DESC", "Currently only affects radio buttons and textboxes.  This option will cause a hidden form element to be created instead of the radio button series or textbox, and the value of the hidden element will be the default value specified above.  Useful when you always need a default value set in every form entry, but not all groups normally see this element.");
+define("_AM_FORM_FORCEHIDDEN_DESC", "Atualmente, somente afeta botões e caixas. Esta opção irá causar uma forma oculta do elemento a ser criado em vez do botão de rádio ou campos numéricos, e o valor do elemento será ocultado o valor padrão especificado acima. Sempre será útil quando você precisar definir um valor padrão em todos os formulários de entrada de dados, mas nem todos os grupos normalmente poderão ver este elemento.");
 
 define("_AM_ELE_DISABLED", "Desativar este elemento para quaisquer grupos?"); //GibaPhp 3.0
 define("_AM_FORM_DISABLED_EXTRA", "Use essa opção para tornar este elemento inativo para determinados grupos. O elemento ainda serão mostrados aos usuários de acordo com a opção mostrada acima, mas você pode usar essa opção para desabilitar o elemento para que os usuários não possam alterar o seu valor. Esta opção atualmente funciona apenas para as caixas de texto e nas áreas de texto."); //GibaPhp 3.0
@@ -307,7 +316,7 @@ define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE", "Você tem certeza de que quer exc
 define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE_PAGE", "Você tem certeza de que quer excluir esta página? Por favor, confirme!");
 define("_AM_FORMULIZE_SCREEN_A_PAGE", "Elementos do formulário para exibir na página");
 define("_AM_FORMULIZE_SCREEN_ADDPAGE", "Adicionar outra página");
-define("_AM_FORMULIZE_SCREEN_INSERTPAGE", "Insert a new page here");
+define("_AM_FORMULIZE_SCREEN_INSERTPAGE", "Inserir uma nova página aqui");
 define("_AM_FORMULIZE_SCREEN_SAVE", "Salvar esta tela");
 define("_AM_FORMULIZE_SCREEN_SAVED", "Os detalhes para esta tela foram salvos na Base de Dados");
 define("_AM_FORMULIZE_SCREEN_PAGETITLE", "Título para o número de página");

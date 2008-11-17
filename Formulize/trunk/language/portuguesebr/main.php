@@ -433,7 +433,7 @@ define("_formulize_DE_CALC_CREATOR_EMAIL", "Endereço de e-mail do criador");
 define("_formulize_DE_REMOVECALC", "Remover este cálculo da lista");
 define("_formulize_DE_CALC_BTEXT", "Quais entradas?");
 define("_formulize_DE_CALC_GTEXT", "Agrupar resultados?");
-define("_formulize_DE_CALC_GTEXT2", "2nd level Grouping?");
+define("_formulize_DE_CALC_GTEXT2", "Agrupamento de 2º nível?");
 define("_formulize_DE_CALCHEAD", "Resultados dos cálculos");
 define("_formulize_DE_CALC_SUM", "Soma Total");
 define("_formulize_DE_CALC_AVG", "Média");
