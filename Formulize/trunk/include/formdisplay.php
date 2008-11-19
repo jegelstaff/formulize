@@ -1199,6 +1199,8 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/elementdisplay.php';
 	
+	$entryForDEElements = is_numeric($entry) ? $entry : "new"; // if there is no entry, ie: a new entry, then $entry is "" so when writing the entry value into decue_ and other elements that go out to the HTML form, we need to use the keyword "new"
+	
 	global $xoopsDB, $xoopsUser;
 
 	// find hidden elements first...
@@ -1228,7 +1230,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 						$indexer = 1;
 							foreach($ni->getVar('ele_value') as $k=>$v) {
 								if($v == 1) {
-								$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$ni->getVar('ele_id'), $indexer);
+								$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $indexer);
 							}
 							$indexer++;
 						}
@@ -1238,14 +1240,14 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 					if(!$entry) {
 						$ele_value = $ni->getVar('ele_value');
 						$yesNoValue = $ele_value['_YES'] == 1 ? 1 : 2; // check to see if Yes is the value, and if so, set 1, otherwise, set 2.  2 is the value used when No is the selected option in YN radio buttons
-						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$ni->getVar('ele_id'), $yesNoValue);
+						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $yesNoValue);
 					}
 	        break;				
 				case "text":
 					global $myts;
 					if(!$myts){ $myts =& MyTextSanitizer::getInstance(); }
 					$ele_value = $ni->getVar('ele_value');
-					$hiddenName = $entry ? "hidden_".$ni->getVar('ele_id') : 'de_'.$fid.'_'.$entry.'_'.$ni->getVar('ele_id'); // if there is an existing entry, need to give this a different name so it will not be saved...we are only using this as a cue, to be picked up by the subform system if it needs to write a common value to the DB to establish a link in a new subform entry!
+					$hiddenName = $entry ? "hidden_".$ni->getVar('ele_id') : 'de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'); // if there is an existing entry, need to give this a different name so it will not be saved...we are only using this as a cue, to be picked up by the subform system if it needs to write a common value to the DB to establish a link in a new subform entry!
 					$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden($hiddenName, $myts->htmlSpecialChars(getTextboxDefault($ele_value[2])));
 					break;
 				case "textarea":
@@ -1253,7 +1255,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 						global $myts;
 						if(!$myts){ $myts =& MyTextSanitizer::getInstance(); }
 						$ele_value = $ni->getVar('ele_value');
-						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$ni->getVar('ele_id'), $myts->htmlSpecialChars(getTextboxDefault($ele_value[0])));
+						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $myts->htmlSpecialChars(getTextboxDefault($ele_value[0])));
 					}
 					break;
 			}
@@ -1411,7 +1413,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 
 	// add hiddenElements...
 	foreach($hiddenElements as $element_id=>$thisHiddenElement) {
-		$form->addElement(new xoopsFormHidden("decue_".$fid."_".$entry."_".$element_id, 1));
+		$form->addElement(new xoopsFormHidden("decue_".$fid."_".$entryForDEElements."_".$element_id, 1));
 		$form->addElement($thisHiddenElement);
 	}
 

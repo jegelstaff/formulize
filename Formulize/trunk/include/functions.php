@@ -1411,20 +1411,6 @@ function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups
 		$scope = makeUidFilter($all_users);
 	} elseif($currentView == "group") {
 		$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
-		/*$all_users = array();
-		foreach($groups as $grp) {
-			if(in_array($grp, $groupsWithAccess)) { // include only groups that have access to view the form ($groups is the user's own groups, so this excludes groups they are a member of but which do not have access to the form -- allows for situations where two users are members of one all encompassing group (Actua National) plus also each members of their own local groups (VV and AES), and you want groupscope to cover only the local groups, so therefore you do NOT give view_form permission (or any form permissions probably) to the all encompassing group.
-				if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone!  (Note that registered users will likely be excluded now by the previous check, since a rigorously structured group system is unlikely to lead to Registered Users group being handed any form permissions.)
-					if(!$GLOBALS['formulize_archived_available']) {
-						$temp_users = $member_handler->getUsersByGroup($grp);
-					} else {
-						$temp_users = $member_handler->getUsersByGroup($grp, false, 0, 0, true); // final true param will include archived users
-					}
-					$all_users = array_merge((array)$temp_users, $all_users);
-					unset($temp_users);
-				}
-			}
-		}*/
     $scopeGroups = array_intersect($groupsWithAccess, $groups);
     if(count($scopeGroups)==0) { // safeguard against empty or invalid grouplists
 		//if(!isset($all_users[0])) { 
@@ -1436,22 +1422,6 @@ function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups
 		
 	} elseif(strstr($currentView, ",")) { // advanced scope, or oldscope
 		$grouplist = explode("," , trim($currentView, ","));
-		/*$all_users = array();
-		foreach($grouplist as $grp) {
-			if($grp == XOOPS_GROUP_ANONYMOUS) { 
-				$all_users[] = 0; 
-				continue;
-			}
-			if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone!
-				if(!$GLOBALS['formulize_archived_available']) {
-					$temp_users = $member_handler->getUsersByGroup($grp);
-				} else {
-					$temp_users = $member_handler->getUsersByGroup($grp, false, 0, 0, true); // final true param will include archived users
-				}
-				$all_users = array_merge((array)$temp_users, $all_users);
-				unset($temp_users);
-			}
-		}*/
     if(count($grouplist)==0) { // safeguard against empty or invalid grouplists
 		//if(!isset($all_users[0])) { 
 			$all_users[] = "";
@@ -1751,8 +1721,8 @@ function getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid) {
 		if($smq[0]['singleentry'] == "on") { // if we're looking for a regular single, find first entry for this user
       $data_handler = new formulizeDataHandler($fid);
       $single['entry'] = $data_handler->getFirstEntryForUsers($uid); 
-		} elseif($smq[0]['singleentry'] == "group") { // get the first entry belonging to anyone in their groups, excluding any groups that do not have view_form permission
-			$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+		} elseif($smq[0]['singleentry'] == "group") { // get the first entry belonging to anyone in their groups, excluding any groups that do not have add_own_entry permission
+			$groupsWithAccess = $gperm_handler->getGroupIds("add_own_entry", $fid, $mid);
 			$intersect_groups = array_intersect($groups, $groupsWithAccess);
 			$all_users = array();
       global $formulize_archived_available;
@@ -2105,7 +2075,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
     $all_users = ""; // deprecated, now using groups
     $all_groups = "";
 	} elseif($group_scope = $gperm_handler->checkRight("view_groupscope", $targetForm['fid'], $groups, $mid)) {
-		$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $targetForm['fid'], $mid);
+		$groupsWithAccess = $gperm_handler->getGroupIds("add_own_entry", $targetForm['fid'], $mid);
     $all_groups = array_intersect($groups, $groupsWithAccess);
     $all_users = "";
 		/*$all_users = array(); // deprecated, now using groups

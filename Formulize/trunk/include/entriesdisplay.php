@@ -1690,9 +1690,11 @@ function formulize_buildQSFilter($handle, $search_text, $frid) {
   formulize_benchmark("start of building filter");
   if($frid) {
     $resultArray = formulize_getElementHandleAndIdFromFrameworkHandle($handle, $frid);
-    $elementMetaData = formulize_getElementMetaData($resultArray[1], false);
+    $id = $resultArray[1];
+    $elementMetaData = formulize_getElementMetaData($id);
   } else {
-    $elementMetaData = formulize_getElementMetaData($handle, true);
+    $elementMetaData = formulize_getElementMetaData($handle, true); // true means this is a handle
+    $id = $elementMetaData['ele_id'];
   }
   if($elementMetaData['ele_type']=="select" OR $elementMetaData['ele_type']=="radio" OR $elementMetaData['ele_type']=="checkbox") {
     $qsfparts = explode("_", $search_text);

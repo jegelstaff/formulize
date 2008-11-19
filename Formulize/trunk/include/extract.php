@@ -1084,7 +1084,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
                if(!isset($parsedFormulas[$formHandle])) {
                     $formulaParseResult = formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $frid, $fid);
                     if($formulaParseResult === "Syntax Error") {
-                        print "Error: there is a syntax error in one of the derived value formulas.";
+                        print "Error: there is an error in one of the derived value fields.  It could be a syntax error in the formula, or a reference to a form element is not valid.";
                         return $entry;
                     }
                     $parsedFormulas[$formHandle] = true;
@@ -1194,7 +1194,12 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
           // first check if this is a handle
           $handle_query = go("SELECT ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id'] . " AND ele_handle = \"".mysql_real_escape_string($term)."\"");
           if(count($handle_query) > 0) {
-               $handle = $term;
+               if(XOOPS_ROOT_PATH != "") {
+                    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+                    $handle = $frid ? convertElementHandlesToFrameworkHandles($term, $frid): $term;
+               } else {
+                    $handle = $term; // can only do the conversion of element handles to framework handles if we are in the full stack, not if we are including extract.php from outside 
+               }
           } else {
                $colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_colhead = \"" . mysql_real_escape_string($term) . "\"");
                if(count($colhead_query) > 0) {

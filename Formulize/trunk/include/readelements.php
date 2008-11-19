@@ -170,7 +170,7 @@ foreach($formulize_elementData as $fid=>$entryData) { // for every form we found
 	$add_proxy_entries = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
 	$update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);
 	$update_other_entries = $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid);
-	
+
 	foreach($entryData as $entry=>$values) { // for every entry in the form...
 		if(substr($entry, 0 , 3) == "new") { // handle entries in the form that are new...if there is more than one new entry in a dataset, they will be listed as new1, new2, new3, etc
 			if(strlen($entry) > 3) { $entry = "new"; } // remove the number from the end of any new entry flags that have numbers
