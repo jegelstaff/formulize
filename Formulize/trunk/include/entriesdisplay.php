@@ -1478,15 +1478,15 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 							$start = 1;
 							foreach($value as $v) {
 								if($start) {
-									print formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth)), $col, $frid);
+									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth)), $col, $frid) . '</div>';
 									$start = 0;
 								} else {
 									print ",<br>\n";
-									print formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth)), $col, $frid);
+									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth)), $col, $frid). '</div>';
 								}
 							}
 						} elseif($col != "creation_uid" AND $col!= "mod_uid") {
-							print formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $frid, $textWidth)), $col, $frid);
+							print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $frid, $textWidth)), $col, $frid). '</div>';
 						} else { // don't use printsmart for the special uid cells
 							print $value;
 						}
@@ -1978,7 +1978,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
                   $groupingValues[$cols[$i]][$calc][$calcId][] = $thisResult["$galias$ghandle"];
                 }
               }
-              $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_SUM . ": ".$thisResult["$fidAlias$handle"];
+              $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_SUM . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
               break;
             case "min":
               foreach($theseGroupings as $gid=>$thisGrouping) {
@@ -1987,7 +1987,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
                   $groupingValues[$cols[$i]][$calc][$calcId][] = $thisResult["$galias$ghandle"];
                 }
               }
-              $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MIN . ": ".$thisResult["$fidAlias$handle"];
+              $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MIN . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
               break;
             case "max":
               foreach($theseGroupings as $gid=>$thisGrouping) {
@@ -1996,7 +1996,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
                   $groupingValues[$cols[$i]][$calc][$calcId][] = $thisResult["$galias$ghandle"];
                 }
               }
-              $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MAX . ": ".$thisResult["$fidAlias$handle"];
+              $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MAX . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
               break;
             case "count":
               foreach($theseGroupings as $gid=>$thisGrouping) {
@@ -2014,7 +2014,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
                   $groupingValues[$cols[$i]][$calc][$calcId][] = $thisResult["$galias$ghandle"];
                 }
               }
-              $masterResults[$cols[$i]][$calc][$calcId] =  _formulize_DE_CALC_MEAN . ": ".$thisResult["avg$fidAlias$handle"]."<br>" . _formulize_DE_CALC_STD . ": ".$thisResult["std$fidAlias$handle"]."<br><br>";
+              $masterResults[$cols[$i]][$calc][$calcId] =  _formulize_DE_CALC_MEAN . ": ".formulize_numberFormat($thisResult["avg$fidAlias$handle"], $handle)."<br>" . _formulize_DE_CALC_STD . ": ".formulize_numberFormat($thisResult["std$fidAlias$handle"], $handle)."<br><br>";
               break;
             case "per":
               // per entries/per responses not relevant for Eman, so not doing this yet
@@ -2087,7 +2087,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
             } else {
               $modeCounts[$modeIndexer]['none'] = 'none';
             }
-            $masterResults[$cols[$i]][$calc][$modeIndexer] .= "REPLACE WITH MEDIAN"._formulize_DE_CALC_MODE . ": ".$modeData["$fidAlias$handle"];
+            $masterResults[$cols[$i]][$calc][$modeIndexer] .= "REPLACE WITH MEDIAN"._formulize_DE_CALC_MODE . ": ".formulize_numberFormat($modeData["$fidAlias$handle"], $handle);
             $modeIndexer++;
           } 
         }
@@ -2125,7 +2125,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
           while($per25Array = $xoopsDB->fetchArray($per25Res)) {
               if(!$start) { $medianResults .= ", "; }
               $start = false;
-              $medianResults .= $per25Array["$fidAlias$handle"];
+              $medianResults .= formulize_numberFormat($per25Array["$fidAlias$handle"], $handle);
           }
           $medianResults .= "<br>";
           $medianResults .= _formulize_DE_CALC_MEDIAN.": ";
@@ -2133,7 +2133,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
           while($medianArray = $xoopsDB->fetchArray($medianRes)) {
               if(!$start) { $medianResults .= ", "; }
               $start = false;
-              $medianResults .= $medianArray["$fidAlias$handle"];
+              $medianResults .= formulize_numberFormat($medianArray["$fidAlias$handle"], $handle);
           }
           $medianResults .= "<br>";
           $medianResults .= _formulize_DE_CALC_MEDIAN75.": ";
@@ -2141,7 +2141,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
           while($per75Array = $xoopsDB->fetchArray($per75Res)) {
               if(!$start) { $medianResults .= ", "; }
               $start = false;
-              $medianResults .= $per75Array["$fidAlias$handle"];
+              $medianResults .= formulize_numberFormat($per75Array["$fidAlias$handle"], $handle);
           }
           $medianResults .= "<br><br>";
           //print $medianResults."<br><br>";

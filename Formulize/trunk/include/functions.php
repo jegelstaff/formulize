@@ -1948,6 +1948,7 @@ function formatLinks($matchtext, $handle, $frid, $textWidth=35) {
   }
 	formulize_benchmark("got element info");
 	if(($ele_value[4] > 0 AND $ele_type=='text') OR ($ele_value[3] > 0 AND $ele_type=='textarea')) { // dealing with a textbox where an associated element has been set
+		$formulize_mgr = xoops_getmodulehandler('elements', 'formulize');
 		if($ele_type == 'text') {
 			$target_element = $formulize_mgr->get($ele_value[4]);
 		} else {
@@ -1987,6 +1988,7 @@ function formatLinks($matchtext, $handle, $frid, $textWidth=35) {
                   $id_req = $cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$matchtext];
                 } else {
                   $element_id_q = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='" . $boxproperties[0] . "' AND ele_handle='" . mysql_real_escape_string($boxproperties[1]) . "' LIMIT 0,1"); // should only be one match anyway, so limit 0,1 ought to be unnecessary
+									$formulize_mgr = xoops_getmodulehandler('elements', 'formulize');
                   $target_element =& $formulize_mgr->get($element_id_q[0]['ele_id']);
                   $id_req = findMatchingIdReq($target_element, $target_fid, $matchtext);
                   $cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$matchtext] = $id_req;
@@ -3223,10 +3225,10 @@ function formulize_numberFormat($value, $handle, $frid) {
 	$elementMetaData = formulize_getElementMetaData($id, false);
 	if($elementMetaData['ele_type'] == "text") {
 		$ele_value = unserialize($elementMetaData['ele_value']);
-		return '<div style="float: right;">'. $ele_value[6] . number_format($value, $ele_value[5], $ele_value[7], $ele_value[8]) .'</div>';
+		return $ele_value[6] . number_format($value, $ele_value[5], $ele_value[7], $ele_value[8]);
 	} elseif($elementMetaData['ele_type'] == "derived") {
 		$ele_value = unserialize($elementMetaData['ele_value']);
-		return '<div style="float: right;">'. $ele_value[2] . number_format($value, $ele_value[1], $ele_value[3], $ele_value[4]) .'</div>';	
+		return $ele_value[2] . number_format($value, $ele_value[1], $ele_value[3], $ele_value[4]);	
 	}	else {
 		return $value;
 	}
