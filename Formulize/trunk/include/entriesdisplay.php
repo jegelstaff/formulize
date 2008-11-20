@@ -403,6 +403,13 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$_POST['oldcols'] = implode(",",$colsforsearches); // need to reconstruct this in case any columns were removed because of persistent searches on a hidden column
 		}
 		
+    // if there is a screen with a top template in effect, then do not lock the controls even if the saved view says we should.  Assume that the screen author has compensated for any permission issues.
+    if($screen AND $_POST['lockcontrols']) {
+      if($screen->getVar('toptemplate') != "") {
+        $_POST['lockcontrols'] = 0;
+      }
+    }
+    
 		/*print "<br>Currentview: " . $_POST['currentview'] . "<br>Oldcols: ";
 		print $_POST['oldcols'] . "<br>asearch: ";
 		print $_POST['asearch'] . "<br>calc_cols: ";
