@@ -316,12 +316,12 @@ class formulizeDataHandler  {
 		}
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids);
-			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter ORDER BY entry_id";
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter GROUP BY entry_id ORDER BY entry_id";
 		} elseif(is_array($scope_groups) AND count($scope_groups)>0) {
 			$scopeFilter = $this->_buildScopeFilter("", $scope_groups);
-			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . "AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE `t1.". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter ORDER BY t1.entry_id";
+			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.`". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter GROUP BY t1.entry_id ORDER BY t1.entry_id";
 		} else {
-			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue ORDER BY entry_id";			
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$this->fid) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue GROUP BY entry_id ORDER BY entry_id";			
 		}
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
