@@ -145,18 +145,18 @@ if($screen) {
 // IF NO SCREEN IS REQUESTED (or none rendered successfully, ie: a bad screen id was passed), THEN USE THE DEFAULT DISPLAY LOGIC TO DETERMINE WHAT TO SHOW THE USER
 if(!$rendered) {
       if(isset($frid) AND is_numeric($frid) AND isset($id_form) AND is_numeric($id_form)) {
-      	if((!$singleentry OR $view_globalscope OR ($view_groupscope AND $singleentry != "group")) AND $xoopsUser AND !$entry) {
+      	if(((!$singleentry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleentry != "group")) AND !$entry) { // if it's multientry and there's a xoopsUser, or the user has globalscope, or the user has groupscope and it's not a one-per-group form, and after all that, no entry has been requested, then show the list (note that anonymous users default to the form view...to provide them lists of their own entries....well you can't, but groupscope and globalscope will show them all entries by anons or by everyone)
       		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
       		displayEntries($frid, $id_form); // if it's a multi, or if a single and they have group or global scope
-      	} else {
+      	} else { // otherwise, show the form
       		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
       		displayForm($frid, $entry, $id_form, "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope, OR if an entry was specified in particular
       	}
       } elseif(isset($id_form) AND is_numeric($id_form)) {
-      	if((!$singleentry OR $view_globalscope OR ($view_groupscope AND $singleentry != "group")) AND !$entry) {
+      	if(((!$singleentry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleentry != "group")) AND !$entry) { // if it's multientry and there's a xoopsUser, or the user has globalscope, or the user has groupscope and it's not a one-per-group form, and after all that, no entry has been requested, then show the list (note that anonymous users default to the form view...to provide them lists of their own entries....well you can't, but groupscope and globalscope will show them all entries by anons or by everyone)
       		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
       		displayEntries($id_form); // if it's a multi, or if a single and they have group or global scope
-      	} else {
+      	} else { // otherwise, show the form
       		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
       		displayForm($id_form, $entry, "", "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope, OR if an entry was specified in particular
       	}
