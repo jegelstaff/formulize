@@ -1702,7 +1702,7 @@ function patch30DataStructure($auto = false) {
                                 $captionHandleIndex[str_replace("'", "`", $captionPlusHandlesArray['ele_caption'])] = $captionPlusHandlesArray['ele_handle'];
                         }
                                                 
-                        $dataSQL = "SELECT id_req, ele_caption, ele_value FROM " .$xoopsDB->prefix("formulize_form") . " WHERE id_form = " . $thisFormObject->getVar('id_form') . " ORDER BY id_req";
+                        $dataSQL = "SELECT id_req, ele_caption, ele_value FROM " .$xoopsDB->prefix("formulize_form") . " WHERE id_form = " . $thisFormObject->getVar('id_form') . " AND ele_type != \"areamodif\" ORDER BY id_req"; // for some reason areamodif is stored in some really old data
                         $dataRes = $xoopsDB->query($dataSQL);
                         $prevIdReq = "";
                         $insertSQL = "";
