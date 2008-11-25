@@ -1725,7 +1725,7 @@ function patch30DataStructure($auto = false) {
                                         // write whatever we just finished working on
                                         if($insertSQL) {
                                                 if(!$insertRes = $xoopsDB->query($insertSQL)) {
-                                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.<br>".mysql_error()."Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+                                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
                                                 }
                                                 $insertSQL = "";
                                         }
