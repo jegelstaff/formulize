@@ -258,7 +258,7 @@ function cloneFormulize($title, $clonedata) {
 	}
 	$insert_sql .= ")";
 	if(!$result = $xoopsDB->queryF($insert_sql)) {
-		exit("error duplicating form: '$title'<br>SQL: $insert_sql");
+		exit("error duplicating form: '$title'<br>SQL: $insert_sql<br>".mysql_error());
 	}
 
 	$newfid = $xoopsDB->getInsertId();
@@ -293,7 +293,7 @@ function cloneFormulize($title, $clonedata) {
                 }
                 $insert_sql .= ")";
                 if(!$result = $xoopsDB->queryF($insert_sql)) {
-                  exit("error duplicating elements in form: '$title'<br>SQL: $insert_sql");
+                  exit("error duplicating elements in form: '$title'<br>SQL: $insert_sql<br>".mysql_error());
                 }
                 if($oldNewEleIdMap[$ele['ele_handle']] == "replace_with_ele_id") {
                   $oldNewEleIdMap[$ele['ele_handle']] = $xoopsDB->getInsertId();
@@ -303,7 +303,7 @@ function cloneFormulize($title, $clonedata) {
   // replace ele_id flags that need replacing
   $replaceSQL = "UPDATE ". $xoopsDB->prefix("formulize") . " SET ele_handle=ele_id WHERE ele_handle=\"replace_with_ele_id\"";
   if(!$result = $xoopsDB->queryF($replaceSQL)) {
-    exit("error setting the ele_handle values for the new form.");
+    exit("error setting the ele_handle values for the new form.<br>".mysql_error());
   }
 
 	$getmenu = q("SELECT * FROM " . $xoopsDB->prefix("formulize_menu") . " WHERE menuid=$fid");
@@ -327,7 +327,7 @@ function cloneFormulize($title, $clonedata) {
        	}
        	$insert_sql .= ")";
        	if(!$result = $xoopsDB->queryF($insert_sql)) {
-       		exit("error duplicating menu entry for form: '$title'<br>SQL: $insert_sql");
+       		exit("error duplicating menu entry for form: '$title'<br>SQL: $insert_sql<br>".mysql_error());
        	}
 	}
 
@@ -336,14 +336,14 @@ function cloneFormulize($title, $clonedata) {
 		$fid_array = q("SELECT id_form_array FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id=$getCat");
 		$new_fid_array = $fid_array[0]['id_form_array'] . $newfid . ","; // add a trailing comma, since there is a comma before and after each item even the first and last
 		if(!$result = $xoopsDB->queryF("UPDATE " . $xoopsDB->prefix("formulize_menu_cats") . " SET id_form_array=\"$new_fid_array\" WHERE cat_id=$getCat")) {
-			exit("error duplicating menu category for form: '$title'<br>SQL: $insert_sql");
+			exit("error duplicating menu category for form: '$title'<br>SQL: $insert_sql<br>".mysql_error());
 		}
 	}
     
         // Need to create the new data table now -- July 1 2007
         $formHandler =& xoops_getmodulehandler('forms', 'formulize');
         if(!$tableCreationResult = $formHandler->createDataTable($newfid)) {
-                print "Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".  Please delete the cloned form and report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.";
+                print "Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".  Please delete the cloned form and report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
         }
         
           
@@ -356,7 +356,7 @@ function cloneFormulize($title, $clonedata) {
         include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php"; // formulize data handler
         $dataHandler = new formulizeDataHandler($newfid);
         if(!$cloneResult = $dataHandler->cloneData($fid, $oldNewEleIdMap)) {
-                print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.";
+                print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
         }
 
         /*
@@ -403,7 +403,7 @@ function cloneFormulize($title, $clonedata) {
 //            echo $sql . "<br>";
             
             if(!$datares = $xoopsDB->queryF($sql)) {
-		        exit("Error cloning data for form: $title.  SQL statement that caused the error:<br>$sql<br>");
+		        exit("Error cloning data for form: $title.  SQL statement that caused the error:<br>$sql<br>".mysql_error());
 	        }
 
 	    }
@@ -457,7 +457,7 @@ $sql .= \"$value\";
 }
 $sql .= ")";
 if(!$datares = $xoopsDB->query($sql)) {
-exit("Error cloning data for form: $title");
+exit("Error cloning data for form: $title<br>".mysql_error());
 }
 }
 */    
@@ -1600,7 +1600,7 @@ function patch22convertdata() {
 		if(!$myts) { $myts =& MyTextSanitizer::getInstance(); }
 
 		$sansql = "SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("formulize_form") . " WHERE ele_type != \"date\" AND  ele_type != \"yn\" AND ele_type != \"areamodif\"";
-		if(!$sanres = $xoopsDB->query($sansql)) { exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>Could not collect all data for sanitizing.  Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance."); }
+		if(!$sanres = $xoopsDB->query($sansql)) { exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>".mysql_error()."<br>Could not collect all data for sanitizing.  Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance."); }
 		while($sanArray = $xoopsDB->fetchArray($sanres)) {
 			$origvalue = $sanArray['ele_value'];
 			if(get_magic_quotes_gpc()) { $sanArray['ele_value'] = stripslashes($sanArray['ele_value']); }
@@ -1608,7 +1608,7 @@ function patch22convertdata() {
 			if($newvalue != $origvalue) {
 				$newsql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET ele_value = \"" . mysql_real_escape_string($newvalue) . "\" WHERE ele_id = " . $sanArray['ele_id'];
 				if(!$newres = $xoopsDB->query($newsql)) {
-					exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>Could not write data for sanitizing.  Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+					exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>".mysql_error()."<br>Could not write data for sanitizing.  Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
 			}
 		}
@@ -1685,7 +1685,7 @@ function patch30DataStructure($auto = false) {
                 foreach($allFormObjects as $thisFormObject) {
 												if($thisFormObject->getVar('tableform')) { continue; } // only process actual Formulize forms
                         if(!$tableCreationResult = $formHandler->createDataTable($thisFormObject)) {
-                                exit("Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".  Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+                                exit("Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
                         }
                         
                         print "Created data table formulize_" . $thisFormObject->getVar('id_form') . ".  result: OK<br>\n";
@@ -1725,7 +1725,7 @@ function patch30DataStructure($auto = false) {
                                         // write whatever we just finished working on
                                         if($insertSQL) {
                                                 if(!$insertRes = $xoopsDB->query($insertSQL)) {
-                                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.  Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+                                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.<br>".mysql_error()."Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
                                                 }
                                                 $insertSQL = "";
                                         }
@@ -1754,7 +1754,7 @@ function patch30DataStructure($auto = false) {
 																				foreach($ownerGroups as $thisGroup) {
 																					$ownerInsertSQL = "INSERT INTO " . $xoopsDB->prefix("formulize_entry_owner_groups") . " (`fid`, `entry_id`, `groupid`) VALUES ('". intval($thisFormObject->getVar('id_form')) . "', '". intval($dataArray['id_req']) . "', '". intval($thisGroup) . "')";
 																					if(!$ownerInsertRes = $xoopsDB->query($ownerInsertSQL)) {
-																						print "Error: could not write owner information to new data structure, using this SQL:<br>$ownerInsertSQL<br>";
+																						print "Error: could not write owner information to new data structure, using this SQL:<br>$ownerInsertSQL<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.";
 																					}
 																				}
                                 }
@@ -1786,7 +1786,7 @@ function patch30DataStructure($auto = false) {
                         }
                         if($insertSQL) {
                                 if(!$insertRes = $xoopsDB->query($insertSQL)) {
-                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.  Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
                                 }
                         }
                         print "Migrated data to new data structure for form " . $thisFormObject->getVar('id_form') . ".  result: OK<br>\n";
@@ -1807,10 +1807,10 @@ function patch30DataStructure($auto = false) {
         $mainFidUpdateSQL = "UPDATE " . $xoopsDB->prefix("formulize_onetoone_links") . " SET main_fid = ".intval($mainRes['id_form'])." WHERE main_form=".intval($oneToOneArray['main_form']);
         $linkFidUpdateSQL = "UPDATE " . $xoopsDB->prefix("formulize_onetoone_links") . " SET link_fid = ".intval($linkRes['id_form'])." WHERE link_form=".intval($oneToOneArray['link_form']);
         if(!$mainRes2 = $xoopsDB->query($mainFidUpdateSQL)) {
-          exit("Error: could not update one to one table with this SQL: $mainFidUpdateSQL.  Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+          exit("Error: could not update one to one table with this SQL: $mainFidUpdateSQL.<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
         }
         if(!$linkRes2 = $xoopsDB->query($linkFidUpdateSQL)) {
-          exit("Error: could not update one to one table with this SQL: $linkFidUpdateSQL.  Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+          exit("Error: could not update one to one table with this SQL: $linkFidUpdateSQL.<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
         }
       }
       print "Updated the one_to_one table with new metadata.  result: OK<br>\n";
