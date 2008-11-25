@@ -1095,7 +1095,7 @@ function patch30() {
   $entryOwnerGroupFound = false;
 	while($table = $xoopsDB->fetchRow($resultPatchCheck)) {
     $secondPart = substr($table[0], strlen($xoopsDB->prefix("formulize_")));
-    if(is_numeric($secondPart) AND strstr($table[0], "formulize_")) {
+    if(is_numeric($secondPart) AND strstr($table[0], $xoopsDB->prefix("formulize_"))) {
       $newStructureFound = true;
     }
     if($table[0] == $xoopsDB->prefix("formulize_form")) {
@@ -1137,14 +1137,14 @@ function patch30() {
 			$sql = "SELECT * FROM " . $xoopsDB->prefix("form") . " LIMIT 0,1";
 			$result = $xoopsDB->query($sql);
 			if(!$result) {
-				exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $sql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+				exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $sql . "<br>".mysql_error()."<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 			}
 			$array = $xoopsDB->fetchArray($result);
 			unset($result);
 			if(!isset($array['ele_forcehidden'])) {
 				$sql = "ALTER TABLE " . $xoopsDB->prefix("form") . " ADD `ele_forcehidden` tinyint(1) NOT NULL default '0'";
 				if(!$result = $xoopsDB->query($sql)) {
-					exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $sql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+					exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $sql . "<br>".mysql_error()."<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
 			} 
 			unset($sql);
@@ -1161,7 +1161,7 @@ function patch30() {
 			$sql[] = "DROP TABLE " . $xoopsDB->prefix("form_chains_entries");
 			foreach($sql as $thissql) {
 				if(!$result = $xoopsDB->query($thissql)) {
-					exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $thissql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+					exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
 			}
 
@@ -1308,7 +1308,7 @@ if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables))
 		$testsql = "SELECT * FROM " .  $xoopsDB->prefix("formulize") . " LIMIT 0,1";
 		$result1 = $xoopsDB->query($testsql);
                 if($xoopsDB->getRowsNum($result1) == 0) {
-                        exit("Error patching DB for Formulize 3.0.<br>No forms exist in the database.<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                        exit("Error patching DB for Formulize 3.0.<br>No forms exist in the database.<br>".mysql_error()."<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
                 }
 		$array1 = $xoopsDB->fetchArray($result1); // for 2.1 we were checking explicitly whether we needed to add these fields.  But for 2.2 we just ran the SQL and caught the error appropriately in the condition below (ie: looked for failure for 'commonvalue' and ignored it) -- although ele_disabled was added this way...clearly we're not consistent about the patch approach!
 		
@@ -1407,14 +1407,14 @@ if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables))
 				} elseif($key === "viewentryscreen") {
 					print "viewentryscreen field already added.  result: OK<br>";
 				}else {
-					exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $thissql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+					exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
 			} elseif($key === "ele_handle") { // we just added the ele_handle field
 				
 				// use element id number for the initial element handles
 				$eh_eleid_sql = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_handle = ele_id WHERE ele_handle = ''";
 				if(!$eh_eleid_res = $xoopsDB->query($eh_eleid_sql)) {
-					exit("Error patching DB for Formulize 3.0.  SQL dump:<br>" . $eh_check_sql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+					exit("Error patching DB for Formulize 3.0.  SQL dump:<br>" . $eh_check_sql . "<br>".mysql_error()."<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
 				
 			}
@@ -1446,7 +1446,7 @@ if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables))
                                         }
                                         $fixSql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET id_req='$maxIdReq' WHERE id_req='" . $find['id_req'] . "' AND uid='" . $uid['uid'] . "'";
                                         if(!$fixRes = $xoopsDB->query($fixSql)) {
-                                                exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $fixsql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                                                exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $fixsql . "<br>".mysql_error()."<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
                                         }
                                         print "Uid " . $uid['uid'] . " now using id_req $maxIdReq<br>";
                                         $maxIdReq++;
@@ -1476,7 +1476,7 @@ if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables))
                                 if(!isset($formCaptions[$dataArray['id_form']][$dataArray['ele_caption']])) {
                                         $deleteSql = "DELETE FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=".$dataArray['id_form']." AND ele_caption=\"".mysql_real_escape_string($dataArray['ele_caption'])."\"";
                                         if(!$result = $xoopsDB->query($deleteSql)) {
-                                                exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $deletesql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                                                exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $deletesql . "<br>".mysql_error()."<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
                                         }
                                 }
                         }
@@ -1526,7 +1526,7 @@ function correctAmbiguousIdReqsBasedOnFormIds($uidFocus = false) {
             }
             $fixSql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET id_req='$maxIdReq' WHERE id_req='" . $find['id_req'] . "' AND id_form='" . $id_form['id_form'] . "'";
             if(!$fixRes = $xoopsDB->query($fixSql)) {
-              exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $fixsql . "<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+              exit("Error patching DB for Formulize 3.0. SQL dump:<br>" . $fixsql . "<br>".mysql_error()."<br>Please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
             }
             print "Form id " . $id_form['id_form'] . " now using id_req $maxIdReq<br>";
             if($uidFocus) { print "EITHER ENTRY " . $find['id_req'] . " OR ENTRY $maxIdReq HAS THE WRONG OWNER (uid).  THERE IS NO WAY FOR THE SYSTEM TO TELL WHICH IS INCORRECT. YOU SHOULD CHECK THE ENTRIES AND MODIFY THE UID COLUMN IN THE DATABASE FOR THE ONE ENTRY THAT IS INCORRECT.  THE PROPER SQL SHOULD BE LIKE THIS: \"UPDATE xoops_formulize_form SET uid=123 WHERE id_req=456\" WHERE 123 IS THE CORRECT UID AND 456 IS THE ENTRY THAT CURRENTLY HAS AN INCORRECT UID.  PLEASE CONTACT FREEFORM SOLUTIONS FOR ASSISTANCE IF YOU ARE AT ALL UNSURE ABOUT THIS PROCEDURE!<br>"; }
@@ -1823,7 +1823,7 @@ function patch30DataStructure($auto = false) {
       // 5. reinsert that value into the DB
       $sql = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE '%#*=:*%'";
       if(!$res = $xoopsDB->query($sql)) {
-        exit("Error: cound not get the element ids of the linked selectboxes.  SQL: $sql<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+        exit("Error: cound not get the element ids of the linked selectboxes.  SQL: $sql<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
       }
       $element_handler =& xoops_getmodulehandler('elements', 'formulize');
       while($array = $xoopsDB->fetchArray($res)) {
@@ -1833,13 +1833,13 @@ function patch30DataStructure($auto = false) {
         $sql2 = "SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_caption = '". mysql_real_escape_string($parts[1]) . "' AND id_form=". $parts[0];
 				print "$sql2<br>";
         if(!$res2 = $xoopsDB->query($sql2)) {
-          exit("Error: could not get the handle for a linked selectbox source.  SQL: $sql2<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+          exit("Error: could not get the handle for a linked selectbox source.  SQL: $sql2<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
         }
         $array2 = $xoopsDB->fetchArray($res2);
         $ele_value[2] = $parts[0]."#*=:*".$array2['ele_handle'];
         $elementObject->setVar('ele_value', $ele_value);
         if(!$res3 = $element_handler->insert($elementObject)) {
-          exit("Error: could not update the linked selectbox metadata. <br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+          exit("Error: could not update the linked selectbox metadata. <br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
         }
         unset($parts);
         unset($elementObject);
