@@ -1664,6 +1664,7 @@ function patch30DataStructure($auto = false) {
 												print "<form action=\"formindex.php?op=patch30datastructure\" method=post>";
 												print "<h1>Warning: this patch completely changes the structure of the formulize data in your database.  Backup your database prior to applying this patch!</h1>";
 												print "<p>This patch may take a few minutes to apply.  Your page may take that long to reload, please be patient.</p>";
+                        print "<p>You may need to increase the memory limit and/or max execution time in PHP, if you have a large database (100,000 records or more, depending on the size of your forms).</p>";
                         print "<p>If the first version of Formulize that you installed was 3.0 or higher, you DO NOT need to apply this patch!</p>";
 												print "<input type = submit name=patch30datastructure value=\"Apply Data Structure Patch for upgrading to Formulize 3.0 and higher\">";
 												print "</form>";
@@ -1682,7 +1683,7 @@ function patch30DataStructure($auto = false) {
                 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
                 $formHandler =& xoops_getmodulehandler('forms', 'formulize');
                 $allFormObjects = $formHandler->getAllForms(true); // true flag causes all elements to be included in objects, not just elements that are being displayed, which are ignored in every other situation
-                foreach($allFormObjects as $thisFormObject) {
+                foreach($allFormObjects as $formObjectId=>$thisFormObject) {
 												if($thisFormObject->getVar('tableform')) { continue; } // only process actual Formulize forms
                         if(!$tableCreationResult = $formHandler->createDataTable($thisFormObject)) {
                                 exit("Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
@@ -1779,7 +1780,9 @@ function patch30DataStructure($auto = false) {
                                         while($sourceIdReqArray = $xoopsDB->fetchArray($sourceIdReqRes)) {
                                                 $dataArray['ele_value'] .=  "," . $sourceIdReqArray['id_req'];
                                         }
-                                        $dataArray['ele_value'] .= ",";
+                                        if($dataArray['ele_value']) {
+                                          $dataArray['ele_value'] .= ",";  
+                                        }
                                 }
                                 
                                 $insertSQL .= ", `" . $captionHandleIndex[$dataArray['ele_caption']] . "`=\"" . mysql_real_escape_string($dataArray['ele_value']) . "\"";
@@ -1790,6 +1793,7 @@ function patch30DataStructure($auto = false) {
                                 }
                         }
                         print "Migrated data to new data structure for form " . $thisFormObject->getVar('id_form') . ".  result: OK<br>\n";
+                        unset($allFormObjects[$formObjectId]); // attempt to free up some memory
                 }
       // add form ids to the onetoone table
       // 1. lookup each entry in the one to one table

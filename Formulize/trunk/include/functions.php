@@ -523,7 +523,19 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
       			} else {
       				exit("Error returning the default list of captions.");
       			}
-			} 
+			} else { // if getting ids, need to convert old metadata values to new ones
+        foreach($headerlist as $headerListIndex=>$thisheaderid) {
+					if($thisheaderid == "uid") {
+            $headerlist[$headerListIndex] = "creation_uid";
+          } elseif($thisheaderid == "proxyid") {
+            $headerlist[$headerListIndex] = "mod_uid";
+          } elseif($thisheaderid == "creation_date") {
+            $headerlist[$headerListIndex] = "creation_datetime";
+          } elseif($thisheaderid == "mod_date") {
+            $headerlist[$headerListIndex] = $thisheaderid == "mod_datetime";
+          }
+        }
+      }
 		} else { // not using new ID based system, so convert to ids if needids is true
 			if($needids) {
 				$tempheaderlist = $headerlist;
