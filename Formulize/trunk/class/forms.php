@@ -218,13 +218,13 @@ class formulizeFormsHandler {
 		// build SQL for new table
                 $newTableSQL = "CREATE TABLE " . $xoopsDB->prefix("formulize_" . $fid->getVar('id_form')) . " (";
                 $newTableSQL .= "entry_id int(7) unsigned NOT NULL auto_increment,";
-                $newTableSQL .= "creation_datetime Datetime NOT NULL , ";
-                $newTableSQL .= "mod_datetime Datetime NOT NULL , ";
+                $newTableSQL .= "creation_datetime Datetime NULL default NULL, ";
+                $newTableSQL .= "mod_datetime Datetime NULL default NULL, ";
                 $newTableSQL .= "creation_uid int(7) default '0',";
                 $newTableSQL .= "mod_uid int(7) default '0',";
                 foreach($fid->getVar('elementHandles') as $elementId=>$thisHandle) {
 												if($elementTypes[$elementId] == "derived" OR $elementTypes[$elementId] == "areamodif" OR $elementTypes[$elementId] == "ib" OR $elementTypes[$elementId] == "sep" OR $elementTypes[$elementId] == "grid" OR $elementTypes[$elementId] == "subform") { continue; } // do not attempt to create derived values as fields!
-                        $newTableSQL .= "`$thisHandle` text NOT NULL,";
+                        $newTableSQL .= "`$thisHandle` text NULL default NULL,";
                 }
                 $newTableSQL .= "PRIMARY KEY (`entry_id`),";
                 $newTableSQL .= "INDEX i_creation_uid (creation_uid)";
@@ -281,7 +281,7 @@ class formulizeFormsHandler {
 			return false;
 		}
 		global $xoopsDB;
-		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " ADD `" . $element->getVar('ele_handle') . "` text NOT NULL";
+		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " ADD `" . $element->getVar('ele_handle') . "` text NULL default NULL";
 		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
 			return false;
 		}
@@ -294,7 +294,7 @@ class formulizeFormsHandler {
 			return false;
 		}
 		global $xoopsDB;
-		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " CHANGE `".$oldname."` `".$element->getVar('ele_handle')."` text NOT NULL";
+		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " CHANGE `".$oldname."` `".$element->getVar('ele_handle')."` text NULL default NULL";
 		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
 			return false;
 		}
