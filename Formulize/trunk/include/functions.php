@@ -3226,7 +3226,9 @@ function formulize_swapUIText($value, $uitexts) {
   return $value;
 }
 
-function formulize_numberFormat($value, $handle, $frid) {
+// formats numbers according to options users have specified
+// decimalOverride is used to provide decimal values if specified format has no decimals (added for use in calculations)
+function formulize_numberFormat($value, $handle, $frid="", $decimalOverride=0) {
 	if(!is_numeric($value)) { return $value; }
 	if($frid) {
     $resultArray = formulize_getElementHandleAndIdFromFrameworkHandle($handle, $frid);
@@ -3237,9 +3239,15 @@ function formulize_numberFormat($value, $handle, $frid) {
 	$elementMetaData = formulize_getElementMetaData($id, false);
 	if($elementMetaData['ele_type'] == "text") {
 		$ele_value = unserialize($elementMetaData['ele_value']);
+    if(($ele_value[5] === "" OR !isset($ele_value[5])) AND $decimalOverride) { $ele_value[5] = $decimalOverride; }
+    if($ele_value[7] === "" OR !isset($ele_value[7])) { $ele_value[7] = "."; }
+    if($ele_value[8] === "" OR !isset($ele_value[8])) { $ele_value[8] = ","; }
 		return $ele_value[6] . number_format($value, $ele_value[5], $ele_value[7], $ele_value[8]);
 	} elseif($elementMetaData['ele_type'] == "derived") {
 		$ele_value = unserialize($elementMetaData['ele_value']);
+    if(($ele_value[1] === "" OR !isset($ele_value[1])) AND $decimalOverride) { $ele_value[1] = $decimalOverride; }
+    if($ele_value[3] === "" OR !isset($ele_value[3])) { $ele_value[3] = "."; }
+    if($ele_value[4] === "" OR !isset($ele_value[4])) { $ele_value[4] = ","; }
 		return $ele_value[2] . number_format($value, $ele_value[1], $ele_value[3], $ele_value[4]);	
 	}	else {
 		return $value;

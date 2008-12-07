@@ -2099,6 +2099,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
           } 
         }
         // work out the percentiles including median
+        // calculating percentiles logic based on formula described here: http://onlinestatbook.com/chapter1/percentiles.html
         // modeGrouping is the value that we are grouping by, modeHandle is the field to look for that value in
         foreach($modeCounts as $thisGid=>$thisModeGrouping) {
           $groupingWhere = "";
@@ -2112,47 +2113,83 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
           $countRes = $xoopsDB->query($countSQL);
           $countArray = $xoopsDB->fetchArray($countRes);
           $countValue = $countArray["count$fidAlias$handle"];
-          $per25Limit = floor($countValue/4);
-          $per25Size = $countValue % 4 == 0 ? 1 : 2;
-          $per75Limit = floor(($countValue/4)*3);
+          $per25Limit = floor(($countValue+1)/4);
+          $per25Fraction = (($countValue+1)/4)-$per25Limit;
+          $per25Limit = $per25Limit-1; // since Limit statements interpret rank orders as starting from 0, must subtract 1
+          $per25Size = ($countValue+1) % 4 == 0 ? 1 : 2;
+          $per75Limit = floor((($countValue+1)*3)/4);
+          $per75Fraction = ((($countValue+1)*3)/4)-$per75Limit;
+          $per75Limit = $per75Limit-1; // since Limit statements interpret rank orders as starting from 0, must subtract 1
           $per75Size = $per25Size;
-          $medianLimit = floor($countValue/2);
-          $medianSize = $countValue % 2 == 0 ? 1 : 2;
+          $per50Limit = floor(($countValue+1)/2);
+          $per50Fraction = (($countValue+1)/2)-$per50Limit;
+          $per50Limit = $per50Limit-1; // since Limit statements interpret rank orders as starting from 0, must subtract 1
+          $per50Size = ($countValue+1) % 2 == 0 ? 1 : 2;
           $per25SQL = "SELECT $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per25Limit,$per25Size";
           //print "$per25SQL<Br><Br>";
           $per75SQL = "SELECT $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per75Limit,$per75Size";
           //print "$per75SQL<Br><Br>";
-          $medianSQL = "SELECT $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $medianLimit,$medianSize";
-          //print "$medianSQL<Br><Br>";
+          $per50SQL = "SELECT $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per50Limit,$per50Size";
+          //print "$per50SQL<Br><Br>";
           $per25Res = $xoopsDB->query($per25SQL);
           $per75Res = $xoopsDB->query($per75SQL);
-          $medianRes = $xoopsDB->query($medianSQL);
-          $medianResults = _formulize_DE_CALC_MEDIAN25.": ";
+          $per50Res = $xoopsDB->query($per50SQL);
+          $allPerResults = _formulize_DE_CALC_MEDIAN25.": ";
+          $per25Results = "";
+          $per75Results = "";
+          $per50Results = "";
           $start = true;
+          $perPair = array();
           while($per25Array = $xoopsDB->fetchArray($per25Res)) {
-              if(!$start) { $medianResults .= ", "; }
+              $perPair[] = $per25Array["$fidAlias$handle"];
+              if(!$start) { $per25Results .= ", "; }
               $start = false;
-              $medianResults .= formulize_numberFormat($per25Array["$fidAlias$handle"], $handle);
+              $per25Results .= formulize_numberFormat($per25Array["$fidAlias$handle"], $handle);
           }
-          $medianResults .= "<br>";
-          $medianResults .= _formulize_DE_CALC_MEDIAN.": ";
+          if(count($perPair) < 2) {
+            $allPerResults .= $per25Results;
+          } elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percentile point, so figure out the weighted average
+            $allPerResults .= formulize_numberFormat(($per25Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per25Results)";
+          } else { // multiple, equal values at median/percentile point
+            $allPerResults .= formulize_numberFormat($perPair[0], $handle);
+          }
+          $allPerResults .= "<br>";
+          $allPerResults .= _formulize_DE_CALC_MEDIAN.": ";
           $start = true;
-          while($medianArray = $xoopsDB->fetchArray($medianRes)) {
-              if(!$start) { $medianResults .= ", "; }
+          $perPair = array();
+          while($per50Array = $xoopsDB->fetchArray($per50Res)) {
+              $perPair[] = $per50Array["$fidAlias$handle"];
+              if(!$start) { $per50Results .= ", "; }
               $start = false;
-              $medianResults .= formulize_numberFormat($medianArray["$fidAlias$handle"], $handle);
+              $per50Results .= formulize_numberFormat($per50Array["$fidAlias$handle"], $handle);
           }
-          $medianResults .= "<br>";
-          $medianResults .= _formulize_DE_CALC_MEDIAN75.": ";
+          if(count($perPair) < 2) {
+            $allPerResults .= $per50Results;
+          } elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percentile point, so figure out the average
+            $allPerResults .= formulize_numberFormat(($per50Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per50Results)";
+          } else { // multiple, equal values at median/percentile point
+            $allPerResults .= formulize_numberFormat($perPair[0], $handle);
+          }
+          $allPerResults .= "<br>";
+          $allPerResults .= _formulize_DE_CALC_MEDIAN75.": ";
           $start = true;
+          $perPair = array();
           while($per75Array = $xoopsDB->fetchArray($per75Res)) {
-              if(!$start) { $medianResults .= ", "; }
+              $perPair[] = $per75Array["$fidAlias$handle"];
+              if(!$start) { $per75Results .= ", "; }
               $start = false;
-              $medianResults .= formulize_numberFormat($per75Array["$fidAlias$handle"], $handle);
+              $per75Results .= formulize_numberFormat($per75Array["$fidAlias$handle"], $handle);
           }
-          $medianResults .= "<br><br>";
+          if(count($perPair) < 2) {
+            $allPerResults .= $per75Results;
+          } elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percential point, so figure out the average
+            $allPerResults .= formulize_numberFormat(($per75Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per75Results)";
+          } else { // multiple, equal values at median/percentile point
+            $allPerResults .= formulize_numberFormat($perPair[0], $handle);
+          }
+          $allPerResults .= "<br><br>";
           //print $medianResults."<br><br>";
-          $masterResults[$cols[$i]][$calc][$thisGid] = str_replace("REPLACE WITH MEDIAN", $medianResults, $masterResults[$cols[$i]][$calc][$thisGid]);
+          $masterResults[$cols[$i]][$calc][$thisGid] = str_replace("REPLACE WITH MEDIAN", $allPerResults, $masterResults[$cols[$i]][$calc][$thisGid]);
           
         }
       } elseif($calc=="per") { // draw in the last end of the tables for the percentage breakdown calc type

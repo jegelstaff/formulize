@@ -123,7 +123,7 @@ for($i=0;$i<$colcount;$i++) {
 		print "calc_blanks = calc_blanks + formObj." . $acalc . $columns[$i] . ".value;\n";
 		print "if(formObj.".$acalc.$columns[$i].".value=='custom') {\n";
 		print "  var customString = formObj." . $acalc . $columns[$i] . "_custom.value;\n";
-		print "  customString = customString.replace(/,/,\"!@^%*\");\n"; // commas are a separator for when there's more than one calculation on a given column
+		print "  customString = customString.replace(/,/g,\"!@^%*\");\n"; // commas are a separator for when there's more than one calculation on a given column
 		print "  calc_blanks = calc_blanks + customString\n";
 		print "}";
 		print "calc_grouping = calc_grouping + formObj.grouping_" . $acalc . "_" . $columns[$i] . ".value;\n";
@@ -487,7 +487,7 @@ foreach($returned['rc'] as $hidden) {
 		$tempcalc1->setExtra("onchange='javascript:setCalcCustom(\"".$calc.$hidden['column']."\");'");
 		
 		$tempcalcCustom = new xoopsFormText("", $tempname."_custom", 12, 255, $current_val_custom);
-		$tempcalcCustom->setExtra("onclick='javascript:window.document.pickcalc.elements[\"".$calc.$hidden['column']."\"].options[5].selected = true;'");
+		$tempcalcCustom->setExtra("onclick='javascript:window.document.pickcalc.elements[\"".$calc.$hidden['column']."\"].options[5].selected = true;window.document.pickcalc.elements[\"".$calc.$hidden['column']."\"].value=\"custom\"'");
 		$tempcalclabel = new xoopsFormLabel("", _formulize_DE_CALC_BTEXT . " ". $tempcalc1->render(). " ".$tempcalcCustom->render());
 		
 		$groupingDefaults = explode("!@^%*", $_POST['grouping_' . $calc . "_" . $hidden['column']]); // get the individual grouping settings from the one value that has been passed back
