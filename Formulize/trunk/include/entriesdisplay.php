@@ -433,7 +433,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	// get columns for this form/framework or use columns sent from interface
-	// ele_ids for a form, handles for a framework, includes handles of all unified display forms
+	// ele_handles for a form, handles for a framework, includes handles of all unified display forms 
 	if($_POST['oldcols']) {
 		$showcols = explode(",", $_POST['oldcols']); 
 	} else { // or use the defaults
@@ -1233,12 +1233,16 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$xportDivText2 = "";
 	}
   
-  // export will need to be moved out to a popup
-	//$filename = prepExport($headers, $cols, $data, $settings['xport'], $settings['xport_cust'], $settings['title'], false, $fid, $groups);
+	// export of Data is moved out to a popup
+	// Calculations still handled in the old way for now
+	if($settings['xport'] == "calcs") {
+		$filename = prepExport($headers, $cols, $data, $settings['xport'], $settings['xport_cust'], $settings['title'], false, $fid, $groups);
+		$linktext = $_POST['xport'] == "update" ? _formulize_DE_CLICKSAVE_TEMPLATE : _formulize_DE_CLICKSAVE;
+		print "$xportDivText1<center><p><a href='$filename' target=\"_blank\">$linktext</a></p></center>";
+		print "<br>$xportDivText2";
+	}
 
-	$linktext = $_POST['xport'] == "update" ? _formulize_DE_CLICKSAVE_TEMPLATE : _formulize_DE_CLICKSAVE;
-	print "$xportDivText1<center><p><a href='$filename' target=\"_blank\">$linktext</a></p></center>";
-	print "<br>$xportDivText2";
+	
 	
 	if($useScrollBox AND count($data) > 0) {
 		print "<style>\n";
@@ -1482,15 +1486,15 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 							}
 							$GLOBALS['formulize_displayElement_LOE_Used'] = true;
 						} elseif(is_array($value)) {
-							$start = 1;
+							$counter = 1;
+							$countOfValue = count($value);
 							foreach($value as $v) {
-								if($start) {
-									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth)), $col, $frid) . '</div>';
-									$start = 0;
+								if($counter<$countOfValue) {
+									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth)), $col, $frid) . ',</div><br>';
 								} else {
-									print ",<br>\n";
 									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth)), $col, $frid). '</div>';
 								}
+								$counter++;
 							}
 						} elseif($col != "creation_uid" AND $col!= "mod_uid") {
 							print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $frid, $textWidth)), $col, $frid). '</div>';
@@ -1791,6 +1795,16 @@ function getDefaultCols($fid, $frid="") {
 
 // THIS FUNCTION RETURNS THE ELEMENT HANDLE AND FORM ALIAS IN THE CURRENT GETDATA QUERY, WHEN GIVEN THE ELEMENT ID NUMBER
 function getCalcHandleAndFidAlias($id, $fid) {
+  if($id == "uid") { $id = "creation_uid"; }
+  if($id == "proxyid") { $id = "mod_uid"; }
+  if($id == "creation_date") { $id = "mod_datetime"; }
+  if($id == "mod_date") { $id = "mod_datetime"; }
+  if($id == "creation_uid" OR $id == "mod_uid" OR $id == "mod_datetime" OR $id == "creation_datetime") {
+    return array(0=>$id, 1=>"main", 2=>$fid);
+  }
+  if($id == "creator_email") {
+    return array(0=>"email", 1=>"usertable", 2=>"xoopsusertable"); // special handlefid so we can pickup e-mail field correctly, this flag is used to construct the allowed/excluded statements correctly.
+  }
   $elementMetaData = formulize_getElementMetaData($id, false);
   $handle = $elementMetaData['ele_handle'];
   $handleFid = $elementMetaData['id_form'];
@@ -1805,6 +1819,7 @@ function getCalcHandleAndFidAlias($id, $fid) {
 
 
 //THIS FUNCTION PERFORMS THE REQUESTED CALCULATIONS, AND RETURNS AN html FORMATTED CHUNK FOR DISPLAY ON THE SCREEN
+// note: cols is elementids!!
 function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
 	
   // determine which fields have which calculations and exculsion options
@@ -1826,10 +1841,6 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
     $groupings = explode(",", $grouping[$i]);
     
     // need to figure out if it's a derived value column, and if so, do something completely different here:
-    
-    // also need to support metadata columns, which currently are not available for calculations
-    
-    
     
     // build the select statement
     foreach(explode(",", $calcs[$i]) as $cid=>$calc) {
@@ -1857,6 +1868,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
           break;
         case "per":
           $select = "SELECT $fidAlias.`$handle` as $fidAlias$handle, count($fidAlias.`$handle`) as percount$fidAlias$handle";
+	  include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php"; // need a function here later on
           break;
         default:
           
@@ -1881,13 +1893,18 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
           } else {
             $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
             $allowedWhere .= "$fidAlias.`$handle`=";
-            $allowedWhere .= is_numeric($value) ? $value : "'$value'";
+            $allowedWhere .= (is_numeric($value) AND $value !=0) ? $value : "'$value'";
           }
         }
         if($allowedWhere) {
           $allowedWhere .= ")";
           // replace any LEFT JOIN on this form in the query with an INNER JOIN, since there are now search criteria for this form
-          $thisBaseQuery = str_replace("LEFT JOIN " . DBPRE . "formulize_$handleFid", "INNER JOIN " . DBPRE . "formulize_$handleFid", $thisBaseQuery);
+          if($handleFid =="xoopsusertable") {
+            $replacementTable = DBPRE . "users";
+          } else {
+            $replacementTable = DBPRE . "formulize_$handleFid";
+          }
+          $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable, "INNER JOIN " . $replacementTable, $thisBaseQuery);
         }
       }
       
@@ -1906,13 +1923,18 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
           } else {
             $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
             $excludedWhere .= "$fidAlias.`$handle`!=";
-            $excludedWhere .= is_numeric($value) ? $value : "'$value'";
+            $excludedWhere .= (is_numeric($value) AND $value !=0) ? $value : "'$value'";
           }
         }
         if($excludedWhere) {
           $excludedWhere .= ")";
+          if($handleFid =="xoopsusertable") {
+            $replacementTable = DBPRE . "users";
+          } else {
+            $replacementTable = DBPRE . "formulize_$handleFid";
+          }
           // replace any LEFT JOIN on this form in the query with an INNER JOIN, since there are now search criteria for this form
-          $thisBaseQuery = str_replace("LEFT JOIN " . DBPRE . "formulize_$handleFid", "INNER JOIN " . DBPRE . "formulize_$handleFid", $thisBaseQuery);
+          $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable, "INNER JOIN " . $replacementTable, $thisBaseQuery);
         } 
       }
       
@@ -1966,13 +1988,12 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
       // package up the result into the results array that gets passed to the output function that dumps data to screen (suitable for templating at a later date)
       $blankSettings[$cols[$i]][$calc] = $excludes[$cid];
       $groupingSettings[$cols[$i]][$calc] = $groupings[$cid];
-      $groupingValues[$cols[$i]][$calc] = array(); // this is an array to store 
+      $groupingValues[$cols[$i]][$calc] = array(); // this is an array to store
 
       if($calc == "per") {
-        $typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENT . "</u></td></tr>\n";
-        $groupCounts = array(); 
+        $groupCounts = array();
+	$indivCounts = array();
         $perindexer = -1;
-        $start = true;
       }
 
       foreach($calcResult as $calcId=>$thisResult) { // this needs to be moved inside or lower down in order to support two level grouping?  
@@ -1985,12 +2006,13 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
                   $groupingValues[$cols[$i]][$calc][$calcId][] = $thisResult["$galias$ghandle"];
                 }
               }
-              $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_SUM . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
+              $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_SUM . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);                
               break;
             case "min":
               foreach($theseGroupings as $gid=>$thisGrouping) {
                 if($thisGrouping != "none" AND $thisGrouping != "") {
                   list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+                  
                   $groupingValues[$cols[$i]][$calc][$calcId][] = $thisResult["$galias$ghandle"];
                 }
               }
@@ -2049,17 +2071,28 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
                 $countValue = $countArray["count$fidAlias$handle"];
                 $indexerToUse = $perindexer;
                 $groupCounts[$groupingWhere]['countValue'] = $countValue;
-                $groupCounts[$groupingWhere]['indexerToUse'] = $indexerToUse;
+		$groupCounts[$groupingWhere]['indexerToUse'] = $indexerToUse;
                 $start = true;
               } else {
-                $countValue = $groupCounts[$groupingWhere]['countValue'];
                 $indexerToUse = $groupCounts[$groupingWhere]['indexerToUse'];
+		$countValue = $groupCounts[$groupingWhere]['countValue'];
               }
-              if($start) {
-                $masterResults[$cols[$i]][$calc][$indexerToUse] = $typeout;
-                $start = false;
-              }
-              $masterResults[$cols[$i]][$calc][$indexerToUse] .= "<tr><td style=\"vertical-align: top;\">" . trans(calcValuePlusText($thisResult["$fidAlias$handle"], $handle)) . "</td><td style=\"vertical-align: top;\">".$thisResult["percount$fidAlias$handle"]."</td><td style=\"vertical-align: top;\">".round(($thisResult["percount$fidAlias$handle"]/$countValue)*100,2)."%</td></tr>\n";
+	      // need to figure out the individual counts of the constituent parts of this result
+	      if(strstr($thisResult["$fidAlias$handle"], "*=+*:")) {
+		$rawIndivValues = explode("*=+*:", $thisResult["$fidAlias$handle"]);
+		array_shift($rawIndivValues); // current convention is to have the separator at the beginning of the string, so the exploded array will have a blank value at the beginning
+	      } elseif($linkedMetaData = formulize_isLinkedSelectBox($cols[$i])) {
+		// convert the pointers for the linked selectbox values, to their source values
+		$sourceMeta = explode("#*=:*", $linkedMetaData[2]);
+		$data_handler = new formulizeDataHandler($sourceMeta[0]);
+		$rawIndivValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($thisResult["$fidAlias$handle"], ","))); // trip opening and closing commas and split by comma into an array
+	      } else {
+		$rawIndivValues = array(0=>$thisResult["$fidAlias$handle"]);
+	      }
+	      foreach($rawIndivValues as $thisIndivValue) {
+		$indivCounts[$cols[$i]][$calc][$indexerToUse][trans(calcValuePlusText($thisIndivValue, $handle))] += $thisResult["percount$fidAlias$handle"]; // add this count to the total count for this particular item
+		$groupCounts[$groupingWhere]['responseCountValue'] += $thisResult["percount$fidAlias$handle"]; // add this count to the total count for all items
+	      }
               break;
           }
         
@@ -2192,9 +2225,29 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
           $masterResults[$cols[$i]][$calc][$thisGid] = str_replace("REPLACE WITH MEDIAN", $allPerResults, $masterResults[$cols[$i]][$calc][$thisGid]);
           
         }
-      } elseif($calc=="per") { // draw in the last end of the tables for the percentage breakdown calc type
+      } elseif($calc=="per") { // output the percentage breakdowns, since we'll be done counting everything we need now
         foreach($groupCounts as $groupCountData) {
-          $masterResults[$cols[$i]][$calc][$groupCountData['indexerToUse']] .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['countValue']."</td><td style=\"vertical-align: top;\"><hr>100%</td></tr>\n</table>\n";
+		$start = true;
+		arsort($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']]);
+		if($groupCountData['countValue'] == $groupCountData['responseCountValue'] AND $start) {
+			$typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENT . "</u></td></tr>\n";
+		} else {
+			$typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENTRESPONSES . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENTENTRIES . "</u></td></tr>\n";
+		}
+		$start = false;
+		foreach($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']] as $indivText=>$indivTotal) {
+			if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
+				$typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['countValue'])*100,2)."%</td></tr>\n";
+			} else {
+				$typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['responseCountValue'])*100,2)."%</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['countValue'])*100,2)."%</td></tr>\n";						
+			}					
+		}
+		if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
+			$typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['countValue']."</td><td style=\"vertical-align: top;\"><hr>100%</td></tr>\n</table>\n";			
+		} else {
+			$typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['responseCountValue']. " " ._formulize_DE_PER_TOTALRESPONSES."<br>".$groupCountData['countValue']. " " ._formulize_DE_PER_TOTALENTRIES."</td><td style=\"vertical-align: top;\"><hr>100%</td><td style=\"vertical-align: top;\"><hr>" . round($groupCountData['responseCountValue']/$groupCountData['countValue'], 2) . " " . _formulize_DE_PER_RESPONSESPERENTRY . "</td></tr>\n";
+		}
+		$masterResults[$cols[$i]][$calc][$groupCountData['indexerToUse']] = $typeout;		
         }
       }
     }
@@ -2206,7 +2259,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
 	$to_return[0] = $masterResults;
 	$to_return[1] = $blankSettings;
 	$to_return[2] = $groupingSettings;
-  $to_return[3] = $groupingValues;
+	$to_return[3] = $groupingValues;
 	return $to_return;
 }
 
@@ -2250,6 +2303,16 @@ function calcParseBlanksSetting($setting) {
 
 // THIS FUNCTION TAKES THE VALUE AND THE HANDLE AND THE FRID AND FIGURES OUT WHAT THE VALUE PLUS UITEXT WOULD BE
 function calcValuePlusText($value, $handle) {
+	
+  if($handle=="creation_date" OR $handle == "mod_date" OR $handle == "creation_datetime" OR $handle == "mod_datetime" OR $handle == "creator_email") {
+    return $value;    
+  }
+  if($handle == "uid" OR $handle=="proxyid" OR $handle == "creation_uid" OR $handle == "mod_uid") {
+    return displayMeta($value, "creation_uid-name");
+  }
+  if($handle == "email" AND strstr($value, "@")) { // creator e-mail metadata field will be treated as having handle "email" in the calculation SQL, so we need this special condition
+	return $value;
+  }
   $id = formulize_getIdFromElementHandle($handle);
   static $element_handler;
   if(!is_object($element_handler)) {
@@ -3388,12 +3451,36 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				$buttonCode .= "');\"></input>";
 				return $buttonCode;
 				break;
-			case "exportButton":
 			case "exportCalcsButton":
 				return "<input type=button style=\"width: 140px;\" name=export value='" . $buttonText . "' onclick=\"javascript:showExport();\"></input>";
 				break;
+			case "exportButton":
 			case "importButton":
-				return "<input type=button style=\"width: 140px;\" name=impdata value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid');\"></input>";
+				// need to write the query to the cache folder so it can be picked up when needed
+				$exportTime = time();
+				
+				$queryForExportFile = fopen(XOOPS_ROOT_PATH . "/cache/exportQuery_".$exportTime.".formulize_cached_query_for_export", "w");
+				fwrite($queryForExportFile, $fid."\n");
+				global $xoopsUser;
+				$exportUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+				fwrite($queryForExportFile, $exportUid."\n");
+				fwrite($queryForExportFile, $GLOBALS['formulize_queryForExport']);
+				fclose($queryForExportFile);
+				// cleanup old export files
+				$oldTime = $exportTime - 86400; // the timestamp from one day ago
+				$formulize_export_cache_files = php4_scandir(XOOPS_ROOT_PATH."/cache/",false, true, "exportQuery"); // array of files
+				foreach($formulize_export_cache_files as $thisFile) {
+				$fileNameParts = explode("_", $thisFile);
+			                $fileNameMoreParts = explode(".", $fileNameParts[1]);
+					if($fileNameMoreParts[0] < $oldTime){
+						unlink(XOOPS_ROOT_PATH."/cache/$thisFile");
+					}
+				}
+				if($button == "exportButton") {
+					return "<input type=button style=\"width: 140px;\" name=export value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/export.php?fid=$fid&frid=$frid&cols=$colids&eq=$exportTime');\"></input>";
+				} else {
+					return "<input type=button style=\"width: 140px;\" name=impdata value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=$exportTime');\"></input>";
+				}
 				break;
 			case "addButton":
 				$addNewParam = $doNotForceSingle ? "" : "'single'"; // force the addNew behaviour to single entry unless this button is being used on a single entry form, in which case we don't need to force anything

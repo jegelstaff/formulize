@@ -42,6 +42,7 @@ if($res = $xoopsDB->query($sql)) {
 }
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 
 
 // identify form or framework
@@ -1106,7 +1107,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 	}
 	foreach($headers as $header)
 	{
-		if($header == _formulize_DE_CALC_CREATOR OR $header == _formulize_DE_CALC_MODIFIER OR $header==_formulize_DE_CALC_CREATEDATE OR $header ==_formulize_DE_CALC_MODDATE) { continue; } // ignore the metadata columns if they are selected, since we already handle them better above
+		if($header == "" OR $header == _formulize_DE_CALC_CREATOR OR $header == _formulize_DE_CALC_MODIFIER OR $header==_formulize_DE_CALC_CREATEDATE OR $header ==_formulize_DE_CALC_MODDATE) { continue; } // ignore the metadata columns if they are selected, since we already handle them better above
 		$header = str_replace("\"", "\"\"", $header);
 		$header = "\"" . trans($header) . "\"";
 		$csvfile .= $fd . $header;
@@ -1183,8 +1184,8 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 	// write id_reqs and tempfold to the DB if we're making an update template
 	if($template == "update") {
 		$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_valid_imports") . " (file, id_reqs) VALUES (\"$tempfold\", \"" . serialize($id_req) . "\")";
-		if(!$res = $xoopsDB->query($sql)) {
-			exit("Error: could not write import information to the database.  SQL: $sql");
+		if(!$res = $xoopsDB->queryF($sql)) {
+			exit("Error: could not write import information to the database.  SQL: $sql<br>".mysql_error());
 		}
 	}
 

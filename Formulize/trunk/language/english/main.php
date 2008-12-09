@@ -361,6 +361,11 @@ define("_formulize_DE_VIEWDETAILS", "Click to view details for this entry.");
 define("_formulize_DE_RESETVIEW", "Reset current view");
 define("_formulize_DE_CALCS", "Calculations");
 define("_formulize_DE_EXPORT", "Export Entries");
+
+// new constants related to the export popup
+define("_formulize_DE_EXPORT_FILE_ERROR", "Sorry!  There is an error with the query file.  Please close this window, reload the list of entries page, and try exporting again.");
+define("_formulize_DE_EXPORTTITLE", "Download your file:");
+       
 define("_formulize_DE_EXPORT_CALCS", "Export Calcs");
 define("_formulize_DE_SAVE", "Save current view");
 define("_formulize_DE_DELETE", "Delete current view");
@@ -640,8 +645,10 @@ define("_formulize_DE_IMPORT_OR", "OR");
 define("_formulize_DE_IMPORT_BLANK", "If you want to add new entries to this form...");
 define("_formulize_DE_IMPORT_BLANK2", "Right-click here and save the necessary template.");
 define("_formulize_DE_IMPORT_DATATEMP", "If you want to update entries in this form...");
-define("_formulize_DE_IMPORT_DATATEMP2", "Click here to refresh the main window.");
-define("_formulize_DE_IMPORT_DATATEMP3", "Then download the template file through the link that appears there. Templates always include all columns regardless of what columns are currently selected.  Templates only include the rows (entries) that are currently visible.  To include all entries, turn off all searches and other filters.");
+define("_formulize_DE_IMPORT_DATATEMP2", "Click here to get a template with your entries in it.");
+define("_formulize_DE_IMPORT_DATATEMP3", "Templates always include all columns regardless of what columns are currently selected.  Templates only include the rows (entries) that are currently visible.  To include all entries, turn off all searches and other filters.");
+define("_formulize_DE_IMPORT_DATATEMP4", "After you have downloaded the template, and made your changes,");
+define("_formulize_DE_IMPORT_DATATEMP5", "go back to the import page and upload your template.");
 define("_formulize_DE_IMPORT_USERNAME", "Username");
 define("_formulize_DE_IMPORT_FULLNAME", "Full name");
 define("_formulize_DE_IMPORT_PASSWORD", "Password");

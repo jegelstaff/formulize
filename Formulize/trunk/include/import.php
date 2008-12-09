@@ -186,8 +186,7 @@ print "<p><b>" . _formulize_DE_IMPORT_EITHEROR . "</b><p>";
 
 print "<ul><li>" . _formulize_DE_IMPORT_BLANK . "<br><a href=$blank_template target=_blank>" . _formulize_DE_IMPORT_BLANK2 . "</a></li></ul>\n";
 print "<Center><p><b>" . _formulize_DE_IMPORT_OR . "</b></p></center>";
-print "<ul><li>" . _formulize_DE_IMPORT_DATATEMP . "<br><a href=\"\" onclick=\"javascript:window.opener.runExport('update');window.opener.focus();return false;\">" . _formulize_DE_IMPORT_DATATEMP2 . "</a><br>" . _formulize_DE_IMPORT_DATATEMP3;
-
+print "<ul><li>" . _formulize_DE_IMPORT_DATATEMP . "<br><a href=\"\" onclick=\"javascript:window.opener.showPop('" . XOOPS_URL . "/modules/formulize/include/export.php?fid=$fid&frid=&colids=&eq=".intval($_GET['eq'])."&type=update');return false;\">" . _formulize_DE_IMPORT_DATATEMP2 . "</a>";
 print "</li></ul></td></tr>\n";
 print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP2 . "</p></td><td class=even>" . _formulize_DE_IMPORT_INSTRUCTIONS;
 
@@ -1222,7 +1221,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 							foreach($fieldValues as $elementHandle=>$fieldValue) {
 								if(!$start) { $updateSQL .= ", "; } // on subsequent fields, add a comma
 								$start = false;
-								$updateSQL .= "$elementHandle = '".mysql_real_escape_string($fieldValue)."'";
+								$updateSQL .= "`$elementHandle` = '".mysql_real_escape_string($fieldValue)."'";
 							}
 							$updateSQL .= ", mod_datetime=NOW(), mod_uid=$form_proxyid WHERE entry_id=".intval($this_id_req);
 							

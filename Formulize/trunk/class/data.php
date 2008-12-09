@@ -333,6 +333,36 @@ class formulizeDataHandler  {
 		return $entries;
 	}
 	
+	// this function returns all the values of a given field, for the entries that are passed to it
+	function findAllValuesForEntries($handle, $entries) {
+		if(!is_array($entries)) {
+			if(is_numeric($entries)) {
+				$tempEntries = $entries;
+				unset($entries);
+				$entries = array(0=>$tempEntries);
+			} else {
+				return false;
+			}
+		}
+		static $cachedValues = array();
+		$resultArray = array();
+		global $xoopsDB;
+		foreach($entries as $entry) {
+			if(!isset($cachedValues[$field][$entry])) {
+				$sql = "SELECT `$handle` FROM ".$xoopsDB->prefix("formulize_".$this->fid). " WHERE entry_id = ".intval($entry);
+				if($res = $xoopsDB->query($sql)) {
+					$array = $xoopsDB->fetchArray($res);
+					$cachedValues[$field][$entry] = $array[$handle];
+				} else {
+					$cachedValues[$field][$entry] = false;
+				}
+			} 
+			$resultArray[] = $cachedValues[$field][$entry];
+		}
+		return $resultArray;
+	}
+	
+		
 	function _buildScopeFilter($scope_uids, $scope_groups) {
 		if(is_array($scope_uids)) {
 			if(count($scope_uids) > 0) {

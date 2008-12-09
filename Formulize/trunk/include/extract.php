@@ -235,6 +235,12 @@ function microtime_float()
 
 function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false) { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
 
+     if(substr($filter, 0, 7) == "SELECT ") { // a proper SQL statement has been passed in so use that instead of constructing one...initially added for the new export feature
+	  $result = dataExtraction(intval($framework), intval($form), $filter);
+	  return $result;
+     }
+
+
 	// have to check for the pressence of the Freeform Solutions archived user patch, and if present, then the includeArchived flag can be used
 	// if not present, ignore includeArchived
 /*	static $archres = array();
@@ -272,250 +278,256 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
 
 function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived=false, $id_reqsOnly=false) {
 
-if(isset($_GET['debug'])) { $time_start = microtime_float(); }
 
-	if($scope == "uid=\"blankscope\"") { return array(); }
-
-if(is_numeric($frame)) {
-		$frid = $frame;
-	} elseif($frame != "") {
-		$frameid = go("SELECT frame_id FROM " . DBPRE . "formulize_frameworks WHERE frame_name='$frame'");
-		$frid = $frameid[0]['frame_id'];
-		unset($frameid);
-	} else {
-		$frid = "";
-	}
-	if(is_numeric($form)) {
-		$fid = $form;
-	} else {
-		$formcheck = go("SELECT ff_form_id FROM " . DBPRE . "formulize_framework_forms WHERE ff_frame_id='$frid' AND ff_handle='$form'");
-		$fid = $formcheck[0]['ff_form_id'];
-		unset($formcheck);
-	}
-	if (!$fid) { 
-		print "Form Name: " . $form . "<br>";
-		print "Form id: " . $fid . "<br>";
-		print "Frame Name: " . $frame . "<br>";
-		print "Frame id: " . $frid . "<br>";
-		exit("selected form does not exist in framework"); 
-	}
-
-  $scopeJoinText = "";
-  $scopeFilter = "";
-	if(is_array($scope)) { // assume any arrays are groupid arrays, and so make a valid scope string based on this.  Use the new entry owner table.
-     if(count($scope) > 0 ) {
-          $start = true;
-          foreach($scope as $groupid) { // need to loop through the array, and not use implode, so we can sanitize the values
-               if(!$start) {
-                    $scopeFilter .= " OR scope.groupid=".intval($groupid);
-               } else {
-                    $start = false;
-                    $scopeFilter = " AND (scope.groupid=".intval($groupid);
-               }
-          }
-          $scopeFilter .= ") ";
-          $scopeJoinText = " INNER JOIN ".DBPRE."formulize_entry_owner_groups AS scope ON (scope.entry_id=main.entry_id AND scope.fid=".intval($fid).")";
-     } else { // no valid entries found, so show no entries
-          $scopeFilter = " AND main.entry_id<0 ";
+     if(isset($_GET['debug'])) { $time_start = microtime_float(); }
+     
+	     if($scope == "uid=\"blankscope\"") { return array(); }
+     
+     if(is_numeric($frame)) {
+		     $frid = $frame;
+	     } elseif($frame != "") {
+		     $frameid = go("SELECT frame_id FROM " . DBPRE . "formulize_frameworks WHERE frame_name='$frame'");
+		     $frid = $frameid[0]['frame_id'];
+		     unset($frameid);
+	     } else {
+		     $frid = "";
+	     }
+	     if(is_numeric($form)) {
+		     $fid = $form;
+	     } else {
+		     $formcheck = go("SELECT ff_form_id FROM " . DBPRE . "formulize_framework_forms WHERE ff_frame_id='$frid' AND ff_handle='$form'");
+		     $fid = $formcheck[0]['ff_form_id'];
+		     unset($formcheck);
+	     }
+	     if (!$fid) { 
+		     print "Form Name: " . $form . "<br>";
+		     print "Form id: " . $fid . "<br>";
+		     print "Frame Name: " . $frame . "<br>";
+		     print "Frame id: " . $frid . "<br>";
+		     exit("selected form does not exist in framework"); 
+	     }
+     
+       
+	     if($frid AND !$mainFormOnly) {
+		     // GET THE LINK INFORMATION FOR THE CURRENT FRAMEWORK BASED ON THE REQUESTED FORM
+		     $linklist1 = go("SELECT fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_common_value FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form1_id = '$fid'");
+		     $linklist2 = go("SELECT fl_form1_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_common_value FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form2_id = '$fid'");
+	     }
+       
+	     // link list 1 is the list of form2s that the requested form links to
+	     // link list 2 is the list of form1s that the requested form links to
+	     // ie: the link list number denotes the position of the requested form in the pair
+	     
+     //	print "Frame: $frame ($frid)<br>";
+     //	print "Form: $form ($fid)<br>";
+	     
+     
+	     // generate the list of key fields in the current form, so we can use the values in these fields to filter the linked forms. -- sept 27 2005
+			     $linkkeys1 = array();
+			     $linkisparent1 = array();
+			     $linkformids1 = array();
+			     $linktargetids1 = array();
+	   $linkselfids1 = array();
+			     $linkcommonvalue1 = array();
+	   $linkkeys2 = array();
+			     $linkisparent2 = array();
+			     $linkformids2 = array();
+			     $linktargetids2 = array();
+	   $linkselfids2 = array();
+			     $linkcommonvalue2 = array();
+     
+	     if($frid AND !$mainFormOnly) {
+		     if(count($linklist1) > 0) {
+		     foreach($linklist1 as $theselinks) {
+			     $linkformids1[] = $theselinks['fl_form2_id'];
+			     if($theselinks['fl_key1'] != 0) {
+				     $handleforlink = handleFromId($theselinks['fl_key1'], $fid, $frid);
+				     $linkkeys1[] = $handleforlink;
+				     $linktargetids1[] = $theselinks['fl_key2'];
+				     $linkselfids1[] = $theselinks['fl_key1'];
+			     } else {
+				     $linkkeys1[] = "";
+				     $linktargetids1[] = "";
+			     }
+			     if($theselinks['fl_relationship'] == 2) { // 2 is one to many relationship...this does not appear to be referenced anywhere in the extraction layer!
+				     $linkisparent1[] = 1;
+			     } else {
+				     $linkisparent1[] = 0;
+			     }
+			     $linkcommonvalue1[] = $theselinks['fl_common_value'];
+		     }
+		     }
+		     
+		     if(count($linklist2) > 0) {
+		     foreach($linklist2 as $theselinks) {
+			     $linkformids2[] = $theselinks['fl_form1_id'];
+			     if($theselinks['fl_key2'] != 0) {
+				     $handleforlink = handleFromId($theselinks['fl_key2'], $fid, $frid);
+				     $linkkeys2[] = $handleforlink;
+				     $linktargetids2[] = $theselinks['fl_key1'];
+				     $linkselfids2[] = $theselinks['fl_key2'];
+			     } else {
+				     $linkkeys2[] = "";
+				     $linktargetids2[] = "";
+			     }
+			     if($theselinks['fl_relationship'] == 3) { // 3 is many to one relationship...this does not appear to be referenced anywhere in the extraction layer!
+				     $linkisparent2[] = 1;
+			     } else {
+				     $linkisparent2[] = 0;
+			     }
+			     $linkcommonvalue2[] = $theselinks['fl_common_value'];
+		     }
+		     }
+		     $linkkeys = array_merge($linkkeys1, $linkkeys2);
+		     $linkisparent = array_merge($linkisparent1, $linkisparent2);
+		     $linkformids = array_merge($linkformids1, $linkformids2);
+		     $linktargetids = array_merge($linktargetids1, $linktargetids2);
+	 $linkselfids = array_merge($linkselfids1, $linkselfids2);
+		     $linkcommonvalue = array_merge($linkcommonvalue1, $linkcommonvalue2);
+	     } else {
+		     $linkkeys = "";
+		     $linkisparent = "";
+		     $linkformids = "";
+		     $linktargetids = "";
+	 $linkselfids = "";
+		     $linkcommonvalue = "";
+	     }
+     
+	  $GLOBALS['formulize_linkformidsForCalcs'] = $linkformids;
+     
+	      // now that we have the full details from the framework, figure out the full SQL necessary to get the entire dataset
+	  // This whole approach is predicated on being able to do reliable joins between the key fields of each form
+	  
+	  // Structure of the SQL should be...
+	  // SELECT main.entry_id, main.creation_uid, main.mod_uid, main.creation_datetime, main.mod_datetime, main.handle1...main.handleN, f2.entry_id, f2.1..f2.n, etc FROM formulize_A AS main [join syntax] WHERE main.handle1 = "whatever" AND/OR f2.handle1 = "whatever"
+	  // Join syntax:  if there are query terms on the f2 or subsequent forms, then use INNER JOIN formulize_B AS f2 ON main.1 LIKE CONCAT('%,', f2.entry_id, ',%')
+	  // If there are no query terms on the f2 or subsequent forms, then use LEFT JOIN
+	  
+	  // establish the join type and all that
+	  
+	  $joinText = "";
+	  $linkSelect = "";
+	  
+	  formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this
+	  if(substr($filter, 0, 6) != "SELECT") { // if the filter is not itself a fully formed select statement...
+	       
+	       $scopeJoinText = "";
+	       $scopeFilter = "";
+	       if(is_array($scope)) { // assume any arrays are groupid arrays, and so make a valid scope string based on this.  Use the new entry owner table.
+		    if(count($scope) > 0 ) {
+			 $start = true;
+			 foreach($scope as $groupid) { // need to loop through the array, and not use implode, so we can sanitize the values
+			      if(!$start) {
+				   $scopeFilter .= " OR scope.groupid=".intval($groupid);
+			      } else {
+				   $start = false;
+				   $scopeFilter = " AND (scope.groupid=".intval($groupid);
+			      }
+			 }
+			 $scopeFilter .= ") ";
+			 $scopeJoinText = " INNER JOIN ".DBPRE."formulize_entry_owner_groups AS scope ON (scope.entry_id=main.entry_id AND scope.fid=".intval($fid).")";
+		    } else { // no valid entries found, so show no entries
+			 $scopeFilter = " AND main.entry_id<0 ";
+		    }
+	       } elseif($scope) { // need to handle old "uid = X OR..." syntax
+		    $scopeFilter = " AND (".str_replace("uid", "main.creation_uid", $scope).") ";
+	       }
+	       
+	       list($formFieldFilterMap, $whereClause, $orderByClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
+	       
+	       $limitClause = "";
+	       if($limitSize) {
+		    $limitClause = " LIMIT $limitStart, $limitSize ";
+	       }
+	       if($whereClause) {
+		    $whereClause = "AND $whereClause";
+	       }     
+	       
+	       
+	       
+	       if($frid) {
+		    $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
+		    $newJoinText = "";
+		    $joinText = "";
+		    foreach($linkformids as $id=>$linkedFid) {
+			 formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
+			 $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
+			 $joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
+			 $newJoinText = " $joinType JOIN " . DBPRE . "formulize_$linkedFid AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
+			 if($linkcommonvalue[$id]) { // common value
+			      $newJoinText .= " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
+			 } elseif($linktargetids[$id]) { // linked selectbox
+			      if(formulize_isLinkedSelectBox($linktargetids[$id])) { 
+				   $newJoinText .= " f$id." . $joinHandles[$linktargetids[$id]] . " LIKE CONCAT('%,',main.entry_id,',%')";
+			      } else {
+				   $newJoinText .= " main." . $joinHandles[$linkselfids[$id]] . " LIKE CONCAT('%,',f$id.entry_id,',%')";
+			      }
+			 } else { // join by uid
+			      $newJoinText .= " main.creation_uid=f$id.creation_uid";
+			 }
+			 $joinText .= $newJoinText;
+		   }
+	       }
+	       
+	       // specify the join info for user table (depending whether there's a query on creator_email or not)
+	       $userJoinType = $formFieldFilterMap['creator_email'] ? "INNER" : "LEFT";
+	       $userJoinText = " $userJoinType JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid";
+	       
+	       if(!$orderByClause AND $sortField) {
+		    if($frid) {
+			 $elementHandleAndId = formulize_getElementHandleAndIdFromFrameworkHandle($sortField, $frid);
+			 $elementMetaData = formulize_getElementMetaData($elementHandleAndId[1]);
+			 $sortField = $elementHandleAndId[0]; // use the element handle for the sort field, instead of the framework handle
+		    } else {
+			 $elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...               
+		    }
+		    $sortFid = $elementMetaData['id_form'];
+		    if($sortFid == $fid) {
+			 $sortFidAlias = "main";
+		    } else {
+			 $sortFidAlias = array_keys($linkformids, $sortFid); // position of this form in the linking relationships is important for identifying which form alias to use
+			 $sortFidAlias = "f".$sortFidAlias[0];
+		    }
+		    $orderByClause = " ORDER BY $sortFidAlias.`$sortField` $sortOrder ";
+	       } elseif(!$orderByClause) {
+		    $orderByClause = "ORDER BY main.entry_id";
+	       }
+	  		    
+	       debug_memory("Before retrieving mainresults");
+	       
+	       //$beforeQueryTime = microtime_float();
+	       
+	  
+	       // If there's an LOE Limit in place, check that we're not over it first
+	       global $formulize_LOE_limit;
+	  
+	       $countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_$fid AS main ";
+	       if($userJointType == "INNER") {
+		    $countMasterResults .= "$userJoinText ";
+	       }
+	       $countMasterResults .= "$userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter";
+	       if($countMasterResultsRes = mysql_query($countMasterResults)) {
+		    $countMasterResultsRow = mysql_fetch_row($countMasterResultsRes);
+		    if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
+			 return $countMasterResultsRow[0];
+		    } else {
+			 $GLOBALS['formulize_countMasterResults'] = $countMasterResultsRow[0]; // put this in the global space so we can pick it up later when determining how many page numbers to create
+		    }
+	       } else {
+		    exit("Error: could not count master results.  SQL:$countMasterResults<br>");
+	       }
+	  
+	  // only drawback in this SQL right now is it does not support one to one relationships in the query, since they are essentially joins on the entry_id and form id through the one_to_one table
+	  $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause $limitClause";
+	  $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
+	  $GLOBALS['formulize_queryForExport'] = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause";
+     
+	  //$masterQuerySQL = "SELECT * FROM " . DBPRE . "formulize_$fid LIMIT 0,1";
+	  //$afterQueryTime = microtime_float();
+     
+     } else { // end of if the filter has a SELECT in it
+	  $masterQuerySQL = $filter;
      }
-	} elseif($scope) { // need to handle old "uid = X OR..." syntax
-     $scopeFilter = " AND (".str_replace("uid", "main.creation_uid", $scope).") ";
-  }
-
-	if($frid AND !$mainFormOnly) {
-		// GET THE LINK INFORMATION FOR THE CURRENT FRAMEWORK BASED ON THE REQUESTED FORM
-		$linklist1 = go("SELECT fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_common_value FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form1_id = '$fid'");
-		$linklist2 = go("SELECT fl_form1_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_common_value FROM " . DBPRE . "formulize_framework_links WHERE fl_frame_id = '$frid' AND fl_form2_id = '$fid'");
-	}
-  
-	// link list 1 is the list of form2s that the requested form links to
-	// link list 2 is the list of form1s that the requested form links to
-	// ie: the link list number denotes the position of the requested form in the pair
-	
-//	print "Frame: $frame ($frid)<br>";
-//	print "Form: $form ($fid)<br>";
-	
-
-	// generate the list of key fields in the current form, so we can use the values in these fields to filter the linked forms. -- sept 27 2005
-			$linkkeys1 = array();
-			$linkisparent1 = array();
-			$linkformids1 = array();
-			$linktargetids1 = array();
-      $linkselfids1 = array();
-			$linkcommonvalue1 = array();
-      $linkkeys2 = array();
-			$linkisparent2 = array();
-			$linkformids2 = array();
-			$linktargetids2 = array();
-      $linkselfids2 = array();
-			$linkcommonvalue2 = array();
-
-	if($frid AND !$mainFormOnly) {
-		if(count($linklist1) > 0) {
-      		foreach($linklist1 as $theselinks) {
-      			$linkformids1[] = $theselinks['fl_form2_id'];
-      			if($theselinks['fl_key1'] != 0) {
-      				$handleforlink = handleFromId($theselinks['fl_key1'], $fid, $frid);
-      				$linkkeys1[] = $handleforlink;
-      				$linktargetids1[] = $theselinks['fl_key2'];
-                                $linkselfids1[] = $theselinks['fl_key1'];
-      			} else {
-      				$linkkeys1[] = "";
-      				$linktargetids1[] = "";
-      			}
-      			if($theselinks['fl_relationship'] == 2) { // 2 is one to many relationship...this does not appear to be referenced anywhere in the extraction layer!
-      				$linkisparent1[] = 1;
-      			} else {
-      				$linkisparent1[] = 0;
-      			}
-      			$linkcommonvalue1[] = $theselinks['fl_common_value'];
-	        }
-		}
-                
-		if(count($linklist2) > 0) {
-      		foreach($linklist2 as $theselinks) {
-      			$linkformids2[] = $theselinks['fl_form1_id'];
-      			if($theselinks['fl_key2'] != 0) {
-      				$handleforlink = handleFromId($theselinks['fl_key2'], $fid, $frid);
-      				$linkkeys2[] = $handleforlink;
-      				$linktargetids2[] = $theselinks['fl_key1'];
-                                $linkselfids2[] = $theselinks['fl_key2'];
-      			} else {
-      				$linkkeys2[] = "";
-      				$linktargetids2[] = "";
-      			}
-      			if($theselinks['fl_relationship'] == 3) { // 3 is many to one relationship...this does not appear to be referenced anywhere in the extraction layer!
-      				$linkisparent2[] = 1;
-      			} else {
-      				$linkisparent2[] = 0;
-      			}
-      			$linkcommonvalue2[] = $theselinks['fl_common_value'];
-      		}
-		}
-		$linkkeys = array_merge($linkkeys1, $linkkeys2);
-		$linkisparent = array_merge($linkisparent1, $linkisparent2);
-		$linkformids = array_merge($linkformids1, $linkformids2);
-		$linktargetids = array_merge($linktargetids1, $linktargetids2);
-    $linkselfids = array_merge($linkselfids1, $linkselfids2);
-		$linkcommonvalue = array_merge($linkcommonvalue1, $linkcommonvalue2);
-	} else {
-		$linkkeys = "";
-		$linkisparent = "";
-		$linkformids = "";
-		$linktargetids = "";
-    $linkselfids = "";
-		$linkcommonvalue = "";
-	}
-
-     $GLOBALS['formulize_linkformidsForCalcs'] = $linkformids;
-
-	 // now that we have the full details from the framework, figure out the full SQL necessary to get the entire dataset
-     // This whole approach is predicated on being able to do reliable joins between the key fields of each form
-     
-     // Structure of the SQL should be...
-     // SELECT main.entry_id, main.creation_uid, main.mod_uid, main.creation_datetime, main.mod_datetime, main.handle1...main.handleN, f2.entry_id, f2.1..f2.n, etc FROM formulize_A AS main [join syntax] WHERE main.handle1 = "whatever" AND/OR f2.handle1 = "whatever"
-     // Join syntax:  if there are query terms on the f2 or subsequent forms, then use INNER JOIN formulize_B AS f2 ON main.1 LIKE CONCAT('%,', f2.entry_id, ',%')
-     // If there are no query terms on the f2 or subsequent forms, then use LEFT JOIN
-     
-     // establish the join type and all that
-     
-     $joinText = "";
-     $linkSelect = "";
-     
-     $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
-     list($formFieldFilterMap, $whereClause, $orderByClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
-     
-     $limitClause = "";
-     if($limitSize) {
-          $limitClause = " LIMIT $limitStart, $limitSize ";
-     }
-     if($whereClause) {
-          $whereClause = "AND $whereClause";
-     }     
-     
-     formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this
-     
-     if($frid) {
-          $newJoinText = "";
-          $joinText = "";
-          foreach($linkformids as $id=>$linkedFid) {
-               formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
-               $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
-               $joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
-               $newJoinText = " $joinType JOIN " . DBPRE . "formulize_$linkedFid AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
-               if($linkcommonvalue[$id]) { // common value
-                    $newJoinText .= " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
-               } elseif($linktargetids[$id]) { // linked selectbox
-                    if(formulize_isLinkedSelectBox($linktargetids[$id])) { 
-                         $newJoinText .= " f$id." . $joinHandles[$linktargetids[$id]] . " LIKE CONCAT('%,',main.entry_id,',%')";
-                    } else {
-                         $newJoinText .= " main." . $joinHandles[$linkselfids[$id]] . " LIKE CONCAT('%,',f$id.entry_id,',%')";
-                    }
-               } else { // join by uid
-                    $newJoinText .= " main.creation_uid=f$id.creation_uid";
-               }
-               $joinText .= $newJoinText;
-         }
-     }
-     
-     // specify the join info for user table (depending whether there's a query on creator_email or not)
-     $userJoinType = $formFieldFilterMap['creator_email'] ? "INNER" : "LEFT";
-     $userJoinText = " $userJoinType JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid";
-     
-     if(!$orderByClause AND $sortField) {
-          if($frid) {
-               $elementHandleAndId = formulize_getElementHandleAndIdFromFrameworkHandle($sortField, $frid);
-               $elementMetaData = formulize_getElementMetaData($elementHandleAndId[1]);
-               $sortField = $elementHandleAndId[0]; // use the element handle for the sort field, instead of the framework handle
-          } else {
-               $elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...               
-          }
-          $sortFid = $elementMetaData['id_form'];
-          if($sortFid == $fid) {
-               $sortFidAlias = "main";
-          } else {
-               $sortFidAlias = array_keys($linkformids, $sortFid); // position of this form in the linking relationships is important for identifying which form alias to use
-               $sortFidAlias = "f".$sortFidAlias[0];
-          }
-          $orderByClause = " ORDER BY $sortFidAlias.`$sortField` $sortOrder ";
-     } elseif(!$orderByClause) {
-          $orderByClause = "ORDER BY main.entry_id";
-     }
-
-          
-     debug_memory("Before retrieving mainresults");
-     
-     //$beforeQueryTime = microtime_float();
-     
-
-     // If there's an LOE Limit in place, check that we're not over it first
-     global $formulize_LOE_limit;
-
-     $countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_$fid AS main ";
-     if($userJointType == "INNER") {
-          $countMasterResults .= "$userJoinText ";
-     }
-     $countMasterResults .= "$scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter";
-     if($countMasterResultsRes = mysql_query($countMasterResults)) {
-          $countMasterResultsRow = mysql_fetch_row($countMasterResultsRes);
-          if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
-               return $countMasterResultsRow[0];
-          } else {
-               $GLOBALS['formulize_countMasterResults'] = $countMasterResultsRow[0]; // put this in the global space so we can pick it up later when determining how many page numbers to create
-          }
-     } else {
-          exit("Error: could not count master results.  SQL:$countMasterResults<br>");
-     }
-
-     
-     
-     // only drawback in this SQL right now is it does not support one to one relationships in the query, since they are essentially joins on the entry_id and form id through the one_to_one table
-     $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause $limitClause";
-     $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
-     
-     //$masterQuerySQL = "SELECT * FROM " . DBPRE . "formulize_$fid LIMIT 0,1";
-     //$afterQueryTime = microtime_float();
-     
      /*global $xoopsUser;
      if($xoopsUser->getVar('uid') == 1) {
           $queryTime = $afterQueryTime - $beforeQueryTime;
@@ -621,9 +633,8 @@ if(is_numeric($frame)) {
                     $prevFieldNotMeta = true;
                     $elementHandle = $field;
                } else { // it's an e-mail related or entry_id field
-										continue;
-							 }
-               
+		    continue;
+	       }               
                // Check to see if this is a main entry that has already been catalogued, and if so, then skip it
                if($curFormAlias == "main" AND isset($writtenMains[$masterQueryArray['main_entry_id']])) {
                     continue;
@@ -863,6 +874,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                          $element_id = formulize_getIDFromElementHandle($ifParts[0]);
                     }
                     
+                    // add ` ` around ifParts[0]...
+                    $ifParts[0] = "`".$ifParts[0]."`";
+                    
                     // identify the form that the element is associated with and put it in the map
                     list($formFieldFilterMap, $mappedForm) = formulize_mapFormFieldFilter($element_id, $formFieldFilterMap);
                     /*print "map: <br>";
@@ -1010,6 +1024,7 @@ function formulize_getElementHandleFromID($element_id) {
 
 // THIS FUNCTION figureS out if AN ELEMENT in this form is the source of the linked selectbox
 // takes element ID, or handle (second param indicates if it's a handle or not)
+// returns the ele_value array for this element if it is a linked selectbox
 function formulize_isLinkedSelectBox($elementOrHandle, $isHandle=false) {
      static $cachedElements = array();
      if(!isset($cachedElements[$elementOrHandle])) {
@@ -1061,7 +1076,7 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
           } else {
                $whereClause = $isHandle ? "ele_handle = '".mysql_real_escape_string($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
           }
-          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_caption FROM " . DBPRE . "formulize WHERE $whereClause";
+          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_caption, ele_colhead FROM " . DBPRE . "formulize WHERE $whereClause";
           $evqRes = mysql_query($elementValueQ);
           while($evqRow = mysql_fetch_array($evqRes)) {
                $cachedElements['handles'][$evqRow['ele_handle']] = $evqRow; // cached the element according to handle and id, so we don't repeat the same query later just because we're asking for info about the same element in a different way
@@ -1702,13 +1717,17 @@ function countHits($entry, $handle, $word) {
 }
 
 function displayMeta($entry, $spechandle, $id="NULL", $localid="NULL") {
-	if(is_int($entry))
+     static $cachedDisplayMeta = array();
+     if(isset($cachedDisplayMeta[$entry][$spechandle][$id][$localid])) {
+          return $cachedDisplayMeta[$entry][$spechandle][$id][$localid];
+     }
+	if(is_numeric($entry))
     {
 	    switch($spechandle) {
 	        case "creation_uid-name":
 	            $name = go("SELECT name FROM " . DBPRE .
 	            	"users WHERE uid=$entry");
-
+               $cachedDisplayMeta[$entry][$spechandle][$id][$localid] = $name[0][0];
 	            return $name[0][0]; 
 		    break;
 		}
@@ -1760,7 +1779,7 @@ function displayMeta($entry, $spechandle, $id="NULL", $localid="NULL") {
 	            // also note the use of DBPRE and not any $xoopsDB stuff
 	            $name = go("SELECT name FROM " . DBPRE .
 	            	"users WHERE uid=$values");
-
+               $cachedDisplayMeta[$entry][$spechandle][$id][$localid] = $name[0][0];
 	            return $name[0][0]; 
 		    break;
 		}
