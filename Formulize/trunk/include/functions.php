@@ -3257,4 +3257,123 @@ function formulize_numberFormat($value, $handle, $frid="", $decimalOverride=0) {
 	
 }
 
+// This function will print out the specific calculation requested, from the saved view specified
+// $savedView can be the id number of a saved view, or it can be the typed name
+// $formframe is the framework or form id, and $mainform is the form id if framework is used
+// $handle is the element that you want to get the calculation for, or elements (can be an array or handles)
+// $type is the type of calculation for that element that you want to get, default is get all types
+// $grouping is the grouping option you want to get for that element/type pair, default is all grouping options
+// $type and $grouping not yet enabled!!
+function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $type="all", $grouping="all") {
+
+  list($fid, $frid) = getFormFramework($formframe, $mainform);
+  
+  static $cachedResults = array();
+  if(!isset($cachedResults[$frid][$fid][$savedView])) {
+  
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
+  
+    // load the saved view requested, and get everything ready for calling gatherDataSet
+    list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport($savedView);
+    // explode quicksearches into the search_ values
+    $allqsearches = explode("&*=%4#", $quicksearches);
+    $colsforsearches = explode(",", $_POST['oldcols']);
+    for($i=0;$i<count($allqsearches);$i++) {
+      if($allqsearches[$i] != "") {
+        $_POST["search_" . str_replace("hiddencolumn_", "", $colsforsearches[$i])] = $allqsearches[$i]; // need to remove the hiddencolumn indicator if it is present
+        if(strstr($colsforsearches[$i], "hiddencolumn_")) {
+          unset($colsforsearches[$i]); // remove columns that were added to the column list just so we would know the name of the hidden searches
+        }
+      }
+    }
+    foreach($_POST as $k=>$v) {
+      if(substr($k, 0, 7) == "search_" AND $v != "") {
+        $thiscol = substr($k, 7);
+        $searches[$thiscol] = $v;
+      }
+    }
+    global $xoopsUser;
+    $mid = getFormulizeModId();
+    $gperm_handler =& xoops_gethandler('groupperm');
+    $member_handler =& xoops_gethandler('member');
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+    $uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
+    $scope = buildScope($_POST['currentview'], $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
+    
+    // by calling this, we will set the base query that needs to be used in order to generate the calculations
+    // special flag is used to force return once base query is set
+    $GLOBALS['formulize_returnAfterSettingBaseQuery'] = true;
+    formulize_gatherDataSet(array(), $searches, "", "", $frid, $fid, $scope);
+    unset($GLOBALS['formulize_returnAfterSettingBaseQuery']);
+    
+    $ccols = explode("/", $_POST['calc_cols']);
+		$ccalcs = explode("/", $_POST['calc_calcs']);
+		// need to add in proper handling of long calculation results, like grouping percent breakdowns that result in many, many rows.
+		foreach($ccalcs as $onecalc) {
+			$thesecalcs = explode(",", $onecalc);
+			if(!is_array($thesecalcs)) { $thesecalcs[0] = ""; }
+			$totalalcs = $totalcalcs + count($thesecalcs);
+		}
+		$cblanks = explode("/", $_POST['calc_blanks']);
+		$cgrouping = explode("/", $_POST['calc_grouping']);
+    //formulize_benchmark("before performing calcs");
+		$cachedResults[$frid][$fid][$savedView] = performCalcs($ccols, $ccalcs, $cblanks, $cgrouping, $frid, $fid);
+    
+  }
+  $calcResults = $cachedResults[$frid][$fid][$savedView];
+
+  // individual handle requested, so convert to array
+  $origHandle = $handle;
+  if($handle!="all" AND !is_array($handle)) {
+    $handles[0] = $handle;
+  } elseif(is_array($handle)) {
+    $handles = $handle;
+  } else {
+    $handles = array_keys($calcResults[0]); // all the handles in the result array
+  }
+  
+  foreach($handles as $handle) {
+  
+    if($grouping != "all") {
+      $groupingTypeMap = array();
+      foreach($calcResults[3][$handle] as $groupType=>$values) {
+        if($groupType == $type OR $type == "all") {
+          foreach($values as $groupingId=>$theseValues) {
+            if(array_search($grouping, $theseValues) !== false) {
+              $groupingTypeMap[$groupType][$groupingId] = true; // this is a grouping selection for this type that we need to return
+            }
+          }
+        }
+      }
+    }
+    $indexer = 0;
+    foreach($calcResults[0][$handle] as $calcType=>$results) {
+      if($type == $calcType OR $type == "all") {
+        foreach($results as $groupingId=>$thisResult) {
+          if(isset($groupingTypeMap[$calcType][$groupingId]) OR $grouping == "all") {
+            $resultArray[$handle][$calcType][$indexer]['result'] = $thisResult;
+            $resultArray[$handle][$calcType][$indexer]['grouping'] = $calcResults[3][$handle][$calcType][$groupingId];
+            $indexer++;
+          }
+        }
+      }
+    }
+    
+  }
+  /*if($origHandle != "all" AND !is_array($origHandle)) {
+    if($type == "all") {
+      return $resultArray[$origHandle]; // specific handle requested, so return all types for that handle
+    } else {
+      if(count($resultArray[$origHandle][$type]) == 1) {
+        return $resultArray[$origHandle][$type][0]['result']; // specific type on a specific handle requested and there's only one grouping result, so just return the plain result
+      } else {
+        return $resultArray[$origHandle][$type]; // specific type on a specific handle requested, so return all groupings and results
+      }
+    }
+  }*/
+  return $resultArray; // multiple handles requested so return everything
+  
+  
+  
+}
 ?>

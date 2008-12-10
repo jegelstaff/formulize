@@ -53,17 +53,18 @@ global $xoopsConfig;
 		include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
 	}
 
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+
 // main function
 // $screen will be a screen object if present
 function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0, $viewallforms=0, $screen=null) {
 
 	global $xoopsDB, $xoopsUser;
-	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 	// Set some required variables
 	$mid = getFormulizeModId();
 	list($fid, $frid) = getFormFramework($formframe, $mainform);
-	$gperm_handler = &xoops_gethandler('groupperm');
+	$gperm_handler =& xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
@@ -643,7 +644,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 	$scope = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
 	// create $data and $wq (writable query)
-	list($data, $wq, $regeneratePageNumbers) = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, $screen, $currentURL, $screen, intval($_POST['forcequery']));
+	list($data, $wq, $regeneratePageNumbers) = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, $screen, $currentURL, intval($_POST['forcequery']));
 	$formulize_LOEPageNav = formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers);
 
 	$formulize_buttonCodeArray = array();
@@ -1279,7 +1280,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$cblanks = explode("/", $settings['calc_blanks']);
 		$cgrouping = explode("/", $settings['calc_grouping']);
     //formulize_benchmark("before performing calcs");
-		$cresults = performCalcs($ccols, $ccalcs, $cblanks, $cgrouping, $data, $frid, $fid);
+		$cResults = performCalcs($ccols, $ccalcs, $cblanks, $cgrouping, $frid, $fid);
     //formulize_benchmark("after performing calcs");
 //		print "<p><input type=button style=\"width: 140px;\" name=cancelcalcs1 value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input></p>\n";
 //		print "<div";
@@ -1290,13 +1291,14 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$calc_blanks = $settings['calc_blanks'];
 		$calc_grouping = $settings['calc_grouping'];
 
-		print "<table class=outer><tr><th colspan=2>" . _formulize_DE_CALCHEAD . "</th></tr>\n";
-		if(!$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
-			print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></td></tr>";
-		}
+ 		print "<table class=outer><tr><th colspan=2>" . _formulize_DE_CALCHEAD . "</th></tr>\n";
+ 		if(!$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
+ 			print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></td></tr>";
+ 		}
+
 		$exportFilename = $settings['xport'] == "calcs" ? $filename : "";
     //formulize_benchmark("before printing results");
-		printResults($cresults[0], $cresults[1], $cresults[2], $cresults[3], $frid, $exportFilename, $settings['title']); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
+    printResults($cResults[0], $cResults[1], $cResults[2], $cResults[3], $frid, $exportFilename, $settings['title']); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
     //formulize_benchmark("after printing results");
 		print "</table>\n";
 
@@ -1820,7 +1822,7 @@ function getCalcHandleAndFidAlias($id, $fid) {
 
 //THIS FUNCTION PERFORMS THE REQUESTED CALCULATIONS, AND RETURNS AN html FORMATTED CHUNK FOR DISPLAY ON THE SCREEN
 // note: cols is elementids!!
-function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
+function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	
   // determine which fields have which calculations and exculsion options
   // calculations that are simple, with the same exclusion options, can be done in the same query
@@ -1832,6 +1834,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
   $groupingSettings = array();
   $groupingValues = array();
   $baseQuery = $GLOBALS['formulize_queryForCalcs'];
+  
   for($i=0;$i<count($cols);$i++) {
     // convert to element handle from element id
     list($handle, $fidAlias, $handleFid) = getCalcHandleAndFidAlias($cols[$i], $fid); // returns ELEMENT handles for use in query
@@ -1841,6 +1844,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
     $groupings = explode(",", $grouping[$i]);
     
     // need to figure out if it's a derived value column, and if so, do something completely different here:
+    // need to properly handle "other" values also
     
     // build the select statement
     foreach(explode(",", $calcs[$i]) as $cid=>$calc) {
@@ -2245,7 +2249,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $data, $frid, $fid)  {
 		if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
 			$typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['countValue']."</td><td style=\"vertical-align: top;\"><hr>100%</td></tr>\n</table>\n";			
 		} else {
-			$typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['responseCountValue']. " " ._formulize_DE_PER_TOTALRESPONSES."<br>".$groupCountData['countValue']. " " ._formulize_DE_PER_TOTALENTRIES."</td><td style=\"vertical-align: top;\"><hr>100%</td><td style=\"vertical-align: top;\"><hr>" . round($groupCountData['responseCountValue']/$groupCountData['countValue'], 2) . " " . _formulize_DE_PER_RESPONSESPERENTRY . "</td></tr>\n";
+			$typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['responseCountValue']. " " ._formulize_DE_PER_TOTALRESPONSES."<br>".$groupCountData['countValue']. " " ._formulize_DE_PER_TOTALENTRIES."</td><td style=\"vertical-align: top;\"><hr>100%</td><td style=\"vertical-align: top;\"><hr>" . round($groupCountData['responseCountValue']/$groupCountData['countValue'], 2) . " " . _formulize_DE_PER_RESPONSESPERENTRY . "</td></tr>\n</table>";
 		}
 		$masterResults[$cols[$i]][$calc][$groupCountData['indexerToUse']] = $typeout;		
         }
@@ -2321,6 +2325,7 @@ function calcValuePlusText($value, $handle) {
   $element = $element_handler->get($id);
   $uitexts = $element->getVar('ele_uitext');
   $value = isset($uitexts[$value]) ? $uitexts[$value] : $value;
+  if(substr($value, 0, 6)=="{OTHER") { $value = _formulize_OPT_OTHER; }
   return $value;
 }
 
@@ -3164,7 +3169,15 @@ function loadOldReport($id, $fid, $view_groupscope) {
 // THIS FUNCTION LOADS A SAVED VIEW
 function loadReport($id) {
 	global $xoopsDB;
-	$thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id='$id'");
+  if(is_numeric($id)) {
+    $thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id='$id'");
+  } else {
+    $thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_name='".mysql_real_escape_string($id)."'");
+  }
+  if(!isset($thisview[0]['sv_currentview'])) {
+    print "Error: could not load the specified saved view: '".strip_tags(htmlspecialchars($id))."'";
+    return false;
+  }
 	$to_return[0] = $thisview[0]['sv_currentview']; 
 	$to_return[1] = $thisview[0]['sv_oldcols'];
 	$to_return[2] = $thisview[0]['sv_asearch'];
@@ -3598,7 +3611,7 @@ function formulize_runAdvancedSearch($query_string, $data) {
 }
 
 // THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
-function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen, $currentURL, $screen, $forcequery = 0) {
+function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order="", $frid, $fid, $scope, $screen="", $currentURL="", $forcequery = 0) {
 
 	// setup "flatscope" so we can compare arrays of groups that make up the scope, from page load to pageload
 	if(is_array($scope)) {
@@ -3849,6 +3862,8 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
       $limitSize = 0;
     }
 		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
+    if($currentURL=="") { return array(0=>"", 1=>"", 2=>""); } //current URL should only be "" if this is called directly by the special formulize_getCalcs function
+    
 		if($query_string AND is_array($data)) { $data = formulize_runAdvancedSearch($query_string, $data); } // must do advanced search after caching the data, so the advanced search results are not contained in the cached data.  Otherwise, we would have to rerun the base extraction every time we wanted to change just the advanced search query.  This way, advanced search changes can just hit the cache, and not the db.
 
 	
