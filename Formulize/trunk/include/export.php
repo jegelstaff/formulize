@@ -71,25 +71,30 @@ $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS)
 if(trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $exportUid) { // query fid must match passed fid in URL, and the current user id must match the userid at the time the export file was created
     print "<center><h1>"._formulize_DE_EXPORTTITLE."</h1></center>\n";
     $data = getData($frid, $fid, $queryData[2]);
-    if($_GET['type']=="update") {
-        $cols = explode(",",$_GET['cols']);
-        $headers = array();
-        foreach($cols as $thiscol) {
-            if($frid) {
-                $colMeta = formulize_getElementMetaData(convertFrameworkHandlesToElementHandles($thiscol, $frid), true);
-            } else {
-                $colMeta = formulize_getElementMetaData($thiscol, $true);
-            }
-            $headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
-        }
-        $fdchoice = "update";
-        $linkText = _formulize_DE_CLICKSAVE_TEMPLATE;
-    } else {
-        $linkText = _formulize_DE_CLICKSAVE;
-        $fdchoice = "comma";
-        $cols = array();
-        $headers = array();
+    
+    $cols = explode(",",$_GET['cols']);
+    $headers = array();
+    foreach($cols as $thiscol) {
+			if($frid) {
+				$colMeta = formulize_getElementMetaData(convertFrameworkHandlesToElementHandles($thiscol, $frid), true);
+			} else {
+				$colMeta = formulize_getElementMetaData($thiscol, true);
+			}
+			$headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
     }
+		if($_GET['type'] == "update") {
+			$fdchoice = "update";
+			$linkText = _formulize_DE_CLICKSAVE_TEMPLATE;
+		} else {
+			$linkText = _formulize_DE_CLICKSAVE;
+			$fdchoice = "comma";
+			//$cols = array();
+			//$headers = array();
+		}
+		/*print "<pre>";
+		print_r($cols);
+		print_r($headers);
+		print "</pre>";*/
     $filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
     print "<center><p><a href=\"$filename\">$linkText</a></p></center>\n";
     
