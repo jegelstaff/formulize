@@ -2007,7 +2007,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
               foreach($theseGroupings as $gid=>$thisGrouping) {
                 if($thisGrouping != "none" AND $thisGrouping != "") {
                   list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
-                  $groupingValues[$cols[$i]][$calc][$calcId][] = $thisResult["$galias$ghandle"];
+                  $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
                 }
               }
               $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_SUM . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);                
@@ -2017,7 +2017,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
                 if($thisGrouping != "none" AND $thisGrouping != "") {
                   list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
                   
-                  $groupingValues[$cols[$i]][$calc][$calcId][] = $thisResult["$galias$ghandle"];
+                  $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $handle, true);
                 }
               }
               $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MIN . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
@@ -2026,7 +2026,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
               foreach($theseGroupings as $gid=>$thisGrouping) {
                 if($thisGrouping != "none" AND $thisGrouping != "") {
                   list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
-                  $groupingValues[$cols[$i]][$calc][$calcId][] = $thisResult["$galias$ghandle"];
+                  $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $handle, true);
                 }
               }
               $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MAX . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
@@ -2035,7 +2035,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
               foreach($theseGroupings as $gid=>$thisGrouping) {
                 if($thisGrouping != "none" AND $thisGrouping != "") {
                   list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
-                  $groupingValues[$cols[$i]][$calc][$calcId][] = $thisResult["$galias$ghandle"];
+                  $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
                 }
               }
               $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_NUMENTRIES . ": ".$thisResult["count$fidAlias$handle"]."<br>"._formulize_DE_CALC_NUMUNIQUE . ": " .$thisResult["distinct$fidAlias$handle"];
@@ -2044,7 +2044,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
               foreach($theseGroupings as $gid=>$thisGrouping) {
                 if($thisGrouping != "none" AND $thisGrouping != "") {
                   list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
-                  $groupingValues[$cols[$i]][$calc][$calcId][] = $thisResult["$galias$ghandle"];
+                  $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
                 }
               }
               $masterResults[$cols[$i]][$calc][$calcId] =  _formulize_DE_CALC_MEAN . ": ".formulize_numberFormat($thisResult["avg$fidAlias$handle"], $handle)."<br>" . _formulize_DE_CALC_STD . ": ".formulize_numberFormat($thisResult["std$fidAlias$handle"], $handle)."<br><br>";
@@ -2068,7 +2068,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
               }
               if(!isset($groupCounts[$groupingWhere])) { // need to figure out the total count for this grouping setting
                 $perindexer++;
-                $groupingValues[$cols[$i]][$calc][$perindexer] = $groupingValuesFound;
+                $groupingValues[$cols[$i]][$calc][$perindexer] = convertRawValuesToRealValues($groupingValuesFound, $ghandle, true);
                 $countSQL = "SELECT count($fidAlias.`$handle`) as count$fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere";
                 $countRes = $xoopsDB->query($countSQL);
                 $countArray = $xoopsDB->fetchArray($countRes);
@@ -2265,6 +2265,24 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	$to_return[2] = $groupingSettings;
 	$to_return[3] = $groupingValues;
 	return $to_return;
+}
+
+// this function converts raw values from the database to their actual values users should see
+// currently only handles linked selectboxes
+// this could be made into a replacement for the prepvalues function in the extract.php file that does the same kind of thing when preparing a dataset
+// returnFlat is a flag to cause multiple values to be returned as comma separated strings
+function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
+  if($linkedMetaData = formulize_isLinkedSelectBox($handle, true)) {
+		// convert the pointers for the linked selectbox values, to their source values
+		$sourceMeta = explode("#*=:*", $linkedMetaData[2]);
+		$data_handler = new formulizeDataHandler($sourceMeta[0]);
+		$realValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($value, ","))); // trip opening and closing commas and split by comma into an array
+    // findAllValuesForEntries method returns an array, so convert to a single value
+    if(is_array($realValues) AND $returnFlat) {
+      $realValues = implode(", ", $realValues);
+    }
+  }
+  return $realValues;
 }
 
 // THIS FUNCTION READS THE BLANKS SETTING AND RETURNS A LIST OF VALUES THAT ARE ALLOWED AND A LIST OF VALUES THAT ARE NOT ALLOWED

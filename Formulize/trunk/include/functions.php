@@ -3273,6 +3273,11 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
   
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
   
+    foreach($_POST as $k=>$v) {
+      if(substr($k, 0, 7) == "search_") {
+        unset($_POST[$k]);
+      }
+    }
     // load the saved view requested, and get everything ready for calling gatherDataSet
     list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport($savedView);
     // explode quicksearches into the search_ values
@@ -3332,6 +3337,8 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
     $handles = array_keys($calcResults[0]); // all the handles in the result array
   }
   
+  
+    
   foreach($handles as $handle) {
   
     if($grouping != "all") {
@@ -3351,6 +3358,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
       if($type == $calcType OR $type == "all") {
         foreach($results as $groupingId=>$thisResult) {
           if(isset($groupingTypeMap[$calcType][$groupingId]) OR $grouping == "all") {
+            //print "found $handle ... $calcType ... $groupingId<br>";
             $resultArray[$handle][$calcType][$indexer]['result'] = $thisResult;
             $resultArray[$handle][$calcType][$indexer]['grouping'] = $calcResults[3][$handle][$calcType][$groupingId];
             $indexer++;
