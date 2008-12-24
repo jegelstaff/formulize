@@ -249,7 +249,7 @@ class formulizeElementRenderer{
 						}
 						$pgroupsfilter .= ")";
 					} elseif(count($pgroups) > 0) {
-						$pgroupsfilter = " t2.groupid IN (".implode(",",$pgroups).") AND t2.entry_id=t1.entry_id AND t2.fid=$sourceFid";
+						$pgroupsfilter = " t2.groupid IN (".mysql_real_escape_string(implode(",",$pgroups)).") AND t2.entry_id=t1.entry_id AND t2.fid=$sourceFid";
 					} else {
 						$pgroupsfilter = "";
 					}
@@ -275,7 +275,7 @@ class formulizeElementRenderer{
 								$likebits = "";
 								$quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
 							}
-							$conditionsfilter .= "t1.".$filterElements[$filterId]." ".$filterOps[$filterId]." ".$quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
+							$conditionsfilter .= "t1.`".$filterElements[$filterId]."` ".$filterOps[$filterId]." ".$quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
 						}
 						$conditionsfilter .= $conditionsfilter ? ")" : "";
 					} 
@@ -283,11 +283,11 @@ class formulizeElementRenderer{
 					static $cachedSourceValuesQ = array();
 
 					if($pgroupsfilter) { // if there is a groups filter, then join to the group ownership table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.".$sourceHandle." FROM ".$xoopsDB->prefix("formulize_".$sourceFid)." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 WHERE $pgroupsfilter $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.$sourceHandle";					
+						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFid)." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 WHERE $pgroupsfilter $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
 					} else { // otherwise just query the source table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.".$sourceHandle." FROM ".$xoopsDB->prefix("formulize_".$sourceFid)." AS t1 WHERE t1.entry_id>0 $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.$sourceHandle";					
+						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFid)." AS t1 WHERE t1.entry_id>0 $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
 					}
-					
+					//print "$sourceValuesQ<br><br>";
 					$form_ele = new XoopsFormSelect($ele_caption, $form_ele_id, '', $ele_value[0], $ele_value[1]);
 					// add the initial default entry, singular or plural based on whether the box is one line or not.
 					if($ele_value[0] == 1) {

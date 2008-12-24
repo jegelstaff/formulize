@@ -76,7 +76,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// must wrap security check in only the conditions in which it is needed, so we don't interfere with saving data in a form (which independently checks the security token)
 	$formulize_LOESecurityPassed = false;
-	if(($_POST['delconfirmed'] OR $_POST['cloneconfirmed'] OR $_POST['delview_formulize'] OR $_POST['saveid_formulize'] OR is_numeric($_POST['caid']))) {
+	if(($_POST['delconfirmed'] OR $_POST['cloneconfirmed'] OR $_POST['delviewid_formulize'] OR $_POST['saveid_formulize'] OR is_numeric($_POST['caid']))) {
 		$module_handler =& xoops_gethandler('module');
 		$config_handler =& xoops_gethandler('config');
     $formulizeModule =& $module_handler->getByDirname("formulize");
@@ -157,6 +157,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		} else {
 			$delviewid_formulize = substr($_POST['delviewid_formulize'], 1);
 		}
+    
 		if($delete_other_reports OR $xoopsUser->getVar('uid') == getSavedViewOwner($delviewid_formulize)) { // "get saved view owner" only works with new saved view format in 2.0 or greater, but since that is 2.5 years old now, should be good to go!
 			if(substr($_POST['delviewid_formulize'], 1, 4) == "old_") {
 				$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id='" . $delviewid_formulize . "'";
@@ -389,7 +390,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					unset($_POST[$k]);
 				}
 			}
-			list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport(substr($_POST['currentview'], 1));
+			list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
 			// explode quicksearches into the search_ values
 			$allqsearches = explode("&*=%4#", $quicksearches);
 			$colsforsearches = explode(",", $_POST['oldcols']);
@@ -1983,7 +1984,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
       // do the query
       $calcResult = array();
       $calcResultSQL = "$select $thisBaseQuery $allowedWhere $excludedWhere $groupByClause $orderByClause";
-      //print "$calcResultSQL<br>";
+      //print "$calcResultSQL<br><br>";
       $calcResultRes = $xoopsDB->query($calcResultSQL);
       while($calcResultArray = $xoopsDB->fetchArray($calcResultRes)) {
         $calcResult[] = $calcResultArray;
@@ -2336,14 +2337,20 @@ function calcValuePlusText($value, $handle) {
 	return $value;
   }
   $id = formulize_getIdFromElementHandle($handle);
-  static $element_handler;
-  if(!is_object($element_handler)) {
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-  }
+  $element_handler =& xoops_getmodulehandler('elements', 'formulize');
   $element = $element_handler->get($id);
   $uitexts = $element->getVar('ele_uitext');
   $value = isset($uitexts[$value]) ? $uitexts[$value] : $value;
   if(substr($value, 0, 6)=="{OTHER") { $value = _formulize_OPT_OTHER; }
+  if($element->getVar('ele_type')=='yn') {
+    if($value == "1") {
+			$value = _formulize_TEMP_QYES;
+		} elseif($value == "2") {
+			$value = _formulize_TEMP_QNO;
+		} else {
+			$value = "";
+		} 
+  }
   return $value;
 }
 
@@ -3185,12 +3192,20 @@ function loadOldReport($id, $fid, $view_groupscope) {
 
 
 // THIS FUNCTION LOADS A SAVED VIEW
-function loadReport($id) {
+// fid and frid are only used if a report is being asked for by name
+function loadReport($id, $fid, $frid) {
 	global $xoopsDB;
   if(is_numeric($id)) {
     $thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id='$id'");
   } else {
-    $thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_name='".mysql_real_escape_string($id)."'");
+    if($frid) {
+      $formframe = intval($frid);
+      $mainform = intval($fid);
+    } else {
+      $formframe = intval($fid);
+      $mainform = "''";
+    }
+    $thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_name='".mysql_real_escape_string($id)."' AND sv_formframe = $formframe AND sv_mainform = $mainform");
   }
   if(!isset($thisview[0]['sv_currentview'])) {
     print "Error: could not load the specified saved view: '".strip_tags(htmlspecialchars($id))."'";

@@ -172,14 +172,18 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	$loadOnlyView = $_GET['loadonlyview'];
 	$cols = explode(",", $_GET['cols']); // what is this for?
 	$currentview = $_GET['currentview'];
-	if(strstr($_GET['currentview'], ",")) { 
-		$specificgroups = explode(",", trim($_GET['currentview'], ",")); 
-		$groupNames = groupNameList(trim($_GET['currentview'], ","));
-	}
 	$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
 	$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
 	$publish_reports = $gperm_handler->checkRight("publish_reports", $fid, $groups, $mid);
 	$publish_globalscope = $gperm_handler->checkRight("publish_globalscope", $fid, $groups, $mid);
+	if(strstr($_GET['currentview'], ",")) { 
+		$specificgroups = explode(",", trim($_GET['currentview'], ","));
+		if($publish_reports OR $publish_globalscope) {
+			$groupNames = groupNameList(trim($_GET['currentview'], ","), false); // false forces all groups to be got even if the "onlymembergroups" flag is present
+		} else {
+			$groupNames = groupNameList(trim($_GET['currentview'], ","));
+		}
+	}
 	
 
 // main body of page goes here...
@@ -236,6 +240,7 @@ if($publish_reports OR $publish_globalscope) {
 	$s2 = _formulize_DE_SAVE_SCOPE2;
 	$s3 = _formulize_DE_SAVE_SCOPE3;
 	$s4 = _formulize_DE_SAVE_SCOPE4;
+	$s5 = _formulize_DE_SAVE_SCOPE5;
 } else {
 	$s1 = _formulize_DE_SAVE_SCOPE1_SELF;
 	$s2 = _formulize_DE_SAVE_SCOPE2_SELF;
@@ -257,7 +262,25 @@ if($view_globalscope AND $specificgroups AND !$loadOnlyView) {
 } elseif($view_globalscope AND !$loadOnlyView) {
 	$scope->addOption("all", $s3); 
 }
-if($specificgroups) { $scope->addOption($_GET['currentview'], $s4 . printSmart($groupNames)); }
+if($specificgroups) {
+	if(substr($_GET['currentview'], 0, 17) == ",onlymembergroups") {
+		if(!$publish_reports AND !$publish_globalscope) { // publishing permission is taken to be all that we need, but it's actually the disused update report permissions that should probably be trotted out for this
+			$plainSpecGroups = ",".implode(",",array_intersect($groups, $specificgroups)).",";
+		} else {
+			$plainSpecGroups = substr($_GET['currentview'], 17);			
+		}
+		$memberonlySpecGroups = $_GET['currentview'];
+	} else {
+		$plainSpecGroups = $_GET['currentview'];
+		$memberonlySpecGroups = ",onlymembergroups".$_GET['currentview'];
+	}
+	if($publish_reports OR $publish_globalscope) {
+		$scope->addOption($plainSpecGroups, $s4 . printSmart($groupNames, 100) . "<br>");
+		$scope->addOption($memberonlySpecGroups, $s5 . printSmart($groupNames, 100)); // add special flag that is used to control whether to include only groups that the viewer is a member of
+	} else {
+		$scope->addOption($plainSpecGroups, $s4 . printSmart($groupNames, 100));
+	}
+}
 
 //$scopeoptions->addElement($scope1);
 //if($scope2) { $scopeoptions->addElement($scope2); }

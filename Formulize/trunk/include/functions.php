@@ -193,18 +193,27 @@ function getCurrentURL() {
 }
 
 // this function returns a human readable, comma separated list of group names, given a string of comma separated group ids
-function groupNameList($list) {
+function groupNameList($list, $obeyMemberOnlyFlag = true) {
 	global $xoopsDB;
-	$grouplist = explode(",", $list);
+	$grouplist = explode(",", trim($list, ","));
+  if($grouplist[0] == "onlymembergroups") { // first group might be a special key to tell us to limit the selected groups
+    unset($grouplist[0]);
+    global $xoopsUser;
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+  } else {
+    $obeyMemberOnlyFlag = false; // no memberonly flag in effect, so we can ignore this operation later on
+  }
 	$start = 1;
 	foreach($grouplist as $gid) {
-		$groupnames = q("SELECT name FROM " . $xoopsDB->prefix("groups") . " WHERE groupid='$gid'");
-		if($start) {
-			$names = $groupnames[0]['name'];
-			$start = 0;
-		} else {
-			$names .= ", " . $groupnames[0]['name'];
-		}
+    if(!$obeyMemberOnlyFlag OR in_array($gid, $groups)) {
+      $groupnames = q("SELECT name FROM " . $xoopsDB->prefix("groups") . " WHERE groupid='$gid'");
+      if($start) {
+      	$names = $groupnames[0]['name'];
+      	$start = 0;
+      } else {
+      	$names .= ", " . $groupnames[0]['name'];
+      }
+    }
 	}
 	return $names;
 }
@@ -1435,6 +1444,12 @@ function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups
 		
 	} elseif(strstr($currentView, ",")) { // advanced scope, or oldscope
 		$grouplist = explode("," , trim($currentView, ","));
+    if($grouplist[0] == "onlymembergroups") { // first key may be a special flag to cause the scope to be handled differently
+      global $xoopsUser;
+      $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+      unset($grouplist[0]);
+      $grouplist = array_intersect($groups, $grouplist);
+    }
     if(count($grouplist)==0) { // safeguard against empty or invalid grouplists
 		//if(!isset($all_users[0])) { 
 			$all_users[] = "";
@@ -3279,7 +3294,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
       }
     }
     // load the saved view requested, and get everything ready for calling gatherDataSet
-    list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport($savedView);
+    list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport($savedView, $fid, $frid);
     // explode quicksearches into the search_ values
     $allqsearches = explode("&*=%4#", $quicksearches);
     $colsforsearches = explode(",", $_POST['oldcols']);
@@ -3303,7 +3318,13 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
     $member_handler =& xoops_gethandler('member');
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
     $uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
+    //print_r($_POST['currentview']);
     $scope = buildScope($_POST['currentview'], $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
+    /*print "Saved View: $savedView<br>";
+    print "Currentview setting: " . $_POST['currentview'] . "<br>";
+    print "Scope generated for view: ";
+    print_r($scope);
+    print "<br><br>";*/
     
     // by calling this, we will set the base query that needs to be used in order to generate the calculations
     // special flag is used to force return once base query is set

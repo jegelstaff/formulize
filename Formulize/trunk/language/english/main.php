@@ -505,6 +505,7 @@ define("_formulize_DE_SAVE_SCOPE1", "The person viewing it and no one else");
 define("_formulize_DE_SAVE_SCOPE2", "Everyone in the viewer's groups");
 define("_formulize_DE_SAVE_SCOPE3", "Everyone in all groups (no limit)");
 define("_formulize_DE_SAVE_SCOPE4", "Everyone in: ");
+define("_formulize_DE_SAVE_SCOPE5", "Everyone in these groups, if the viewer is a member of the group too: ");
 define("_formulize_DE_SAVE_SCOPE1_SELF", "Me");
 define("_formulize_DE_SAVE_SCOPE2_SELF", "Everyone in my groups");
 define("_formulize_DE_SAVE_SCOPE3_SELF", "Everyone in all groups (no limit)");

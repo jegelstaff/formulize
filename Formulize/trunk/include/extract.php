@@ -421,11 +421,13 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 				   $scopeFilter .= " OR scope.groupid=".intval($groupid);
 			      } else {
 				   $start = false;
-				   $scopeFilter = " AND (scope.groupid=".intval($groupid);
+				   //$scopeFilter = " AND (scope.groupid=".intval($groupid); // going with an exists statement for the scope, since it's not really an inner join we care about, and the fact there can be a one to many relationship between the main table and the scope table can screw up results.
+           $scopeFilter = " AND EXISTS(SELECT 1 FROM ".DBPRE."formulize_entry_owner_groups AS scope WHERE (scope.entry_id=main.entry_id AND scope.fid=".intval($fid).") AND (scope.groupid=".intval($groupid);
 			      }
 			 }
-			 $scopeFilter .= ") ";
-			 $scopeJoinText = " INNER JOIN ".DBPRE."formulize_entry_owner_groups AS scope ON (scope.entry_id=main.entry_id AND scope.fid=".intval($fid).")";
+			 //$scopeFilter .= ") ";
+       $scopeFilter .= ")) "; // need two closing brackets for the exists statement and its where clause
+			 //$scopeJoinText = " INNER JOIN ".DBPRE."formulize_entry_owner_groups AS scope ON (scope.entry_id=main.entry_id AND scope.fid=".intval($fid).")"; // no need for a join text now
 		    } else { // no valid entries found, so show no entries
 			 $scopeFilter = " AND main.entry_id<0 ";
 		    }
