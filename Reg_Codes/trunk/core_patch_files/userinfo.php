@@ -123,7 +123,6 @@ if (is_object($xoopsUser)) {
 	$formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
 	$fid = $formulizeConfig['profileForm'];
 	$mid = getFormulizeModId();
-	//$uid = $xoopsUser->getVar('uid');
 	$ownerObj = $member_handler->getUser($uid);
 	$owner_groups = $ownerObj->getGroups(); 
 	$singleInfo = getSingle($fid, $uid, $owner_groups, $member_handler, $gperm_handler, $mid);
