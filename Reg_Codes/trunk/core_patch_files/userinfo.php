@@ -66,7 +66,7 @@ if($regcodesConfig['limit_by_groups']) {
 
 $myts =& MyTextSanitizer::getInstance();
 $gperm_handler = & xoops_gethandler( 'groupperm' );
-$groups = is_object($xoopsUser) ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS;
+$groups = is_object($xoopsUser) ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 
 $isAdmin = $gperm_handler->checkRight( 'system_admin', XOOPS_SYSTEM_USER, $groups);         // isadmin is true if user has 'edit users' admin rights
 
@@ -123,9 +123,10 @@ if (is_object($xoopsUser)) {
 	$formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
 	$fid = $formulizeConfig['profileForm'];
 	$mid = getFormulizeModId();
-	$uid = $xoopsUser->getVar('uid');
-	$groups = $xoopsUser->getGroups();
-	$singleInfo = getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid);
+	//$uid = $xoopsUser->getVar('uid');
+	$ownerObj = $member_handler->getUser($uid);
+	$owner_groups = $ownerObj->getGroups(); 
+	$singleInfo = getSingle($fid, $uid, $owner_groups, $member_handler, $gperm_handler, $mid);
 	$id_req = $singleInfo['entry'];
 	$upformq = "SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form='$fid' LIMIT 0,1";
 	$upformres = $xoopsDB->query($upformq);
@@ -133,10 +134,7 @@ if (is_object($xoopsUser)) {
 		$desc_form = $upformarray['desc_form'];
       	// query the form for its data
       	$data = getData("", $fid, $id_req);
-		// include only elements that are visible to the user's groups in the DB query below
-		// $groups = $xoopsUser ? $xoopsUser->getGroups() : XOOPS_GROUP_ANONYMOUS; // already defined above
-		$ownerObj = $member_handler->getUser($uid);
-		$owner_groups = $ownerObj->getGroups(); 
+				// include only elements that are visible to the user's groups in the DB query below
       	$start = 1;
       	foreach($owner_groups as $thisgroup) {
       		if($start) {
@@ -162,7 +160,6 @@ if (is_object($xoopsUser)) {
 		$pq = (!$view_private_elements = $gperm_handler->checkRight("view_private_elements", $fid, $groups, $formulizeModule->getVar('mid')) AND $currentUserID != $uid) ? "AND ele_private=0" : "";
 		if($pq == "" AND $currentUserID != $uid) { // if this is someone else's entry, and they do have view_private_elements permission, then check to see if they have permission to view this entry in this form before actually showing the private data
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-			// $uid_object = $member_handler->getUser($uid); // owner object now defined above, along with groups
 			$pq = security_check($fid, $id_req, $currentUserID, $uid, $groups, $formulizeModule->getVar('mid'), $gperm_handler, $owner_groups) ? "" : "AND ele_private=0";
 		}
 	     	// get the captions for the elements that are visible to the user's groups
