@@ -1,5 +1,5 @@
 <?php
-
+// Admin
 define("_FORM_RENAME_TEXT", "Rename this form");
 define("_FORM_EDIT_ELEMENTS_TEXT", "Edit this form's elements");
 define("_FORM_EDIT_SETTINGS_TEXT", "Edit this form's settings");
@@ -8,7 +8,7 @@ define("_FORM_CLONEDATA_TEXT", "Clone this form and its data");
 define("_FORM_DELETE_TEXT", "Delete this form");
 
 define("_AM_SAVE","Speichern");
-define("_AM_COPIED","%s copy");
+define("_AM_COPIED","%s kopieren");
 define("_AM_DBUPDATED","Database Updated Successfully!");
 define("_AM_ELE_CREATE","Create form elements");
 define("_AM_ELE_EDIT","Edit form element: %s");
