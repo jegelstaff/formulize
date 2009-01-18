@@ -270,7 +270,7 @@ define("_AM_ELE_OTHER", 'For an option of "Other", put {OTHER|*number*} in one o
 define("_AM_FORM_PRIVATE", "The information that users enter in this element is private");
 define("_AM_FORM_PRIVATE_DESC", "If this box is checked, the information that users enter in this element will only be visible to other users who have the view_private_elements permission.  This option is useful for making personal information only available to the appropriate managers.");
 
-//added by félix <INBOX International> for sedonde (colorpicker feature)
+//added by fï¿½lix <INBOX International> for sedonde (colorpicker feature)
 define("_AM_ELE_COLORPICK","Colorpicker");
 
 // SCREENS...including multipage
@@ -452,7 +452,4 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_VALUE", "Use what value?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE", "Replace the current value with the specified value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE", "Remove the specified value from the current value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND", "Append the specified value to the end of the current value");
-
-
-
 ?>
