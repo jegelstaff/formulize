@@ -80,8 +80,9 @@ $xv = <TEMP>;
 close TEMP;
 
 $xv =~ s/imenu/$nn/g;
+$xv =~ s/iMenu/$nn/g;
+$xv =~ s/IMENU/$nn/g;
 $xv =~ s/drawLink/drawLink_$nn/g;
-
 
 open(OUTF,">./blocks/imenu.php") or print "Error: blocks/imenu.php file save failed.";
 print OUTF $xv;
@@ -135,6 +136,7 @@ open (TEMP, "<./language/english/blocks.php") or print "Error: language/english/
 $xv = <TEMP>;
 close TEMP;
 
+$xv =~ s/IMENU/$nn/g;
 $xv =~ s/iMenu/$realname/g;
 
 open(OUTF,">./language/english/blocks.php") or print "Error: language/english/blocks.php file save failed.";
