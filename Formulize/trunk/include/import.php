@@ -1347,7 +1347,7 @@ function getUserID($stringName)
 	global $xoopsDB, $xoopsUser;
 
     $sql = "SELECT uid FROM " . $xoopsDB->prefix("users") .  
-        " WHERE uname='" . $stringName . "'";
+        " WHERE uname='" . mysql_real_escape_string($stringName) . "'";
 
 	$result = $xoopsDB->query($sql);
     if($xoopsDB->getRowsNum($result) > 0)
@@ -1361,7 +1361,7 @@ function getUserID($stringName)
     else // or, if no username match found, get the first matching full name -- added June 29, 2006
     {
 	    $sql = "SELECT uid FROM " . $xoopsDB->prefix("users") .  
-        " WHERE name='" . $stringName . "'";
+        " WHERE name='" . mysql_real_escape_string($stringName) . "'";
 
 	    if($result = $xoopsDB->query($sql))
 	    {
@@ -1372,6 +1372,10 @@ function getUserID($stringName)
 		        }                         
 	    }
     }
+
+		if(is_numeric($stringName)) {
+			return $stringName;
+		}
 
 	// instead of returning 0, return the current user's ID -- added June 29, 2006
     return $xoopsUser->getVar('uid');

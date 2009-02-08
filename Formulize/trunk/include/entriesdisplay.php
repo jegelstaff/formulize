@@ -503,10 +503,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$settings['columns'] = $showcols;
 	
 	if($frid) {
-		// column ids will actually be column handles!!
-		$settings['columnids'] = convertFrameworkHandlesToElementHandles($showcols, $frid);
+		$settings['columnhandles'] = convertFrameworkHandlesToElementHandles($showcols, $frid);
 	} else {
-		$settings['columnids'] = $showcols;
+		$settings['columnhandles'] = $showcols;
 	}
 	
 	$settings['hlist'] = $_POST['hlist'];
@@ -606,7 +605,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			// only multipage screens supported at the moment
 			$multiPageScreen_handler = xoops_getmodulehandler('multipagescreen', 'formulize');
 			$displayScreen = $multiPageScreen_handler->get($screen->getVar('viewentryscreen'));
-			$displayScreen->render($displayScreen, $this_ent, $settings);
+			$multiPageScreen_handler->render($displayScreen, $this_ent, $settings);
+      return;
 		} else {
 
 			if($_POST['ventry'] != "single") {
@@ -843,7 +843,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$singleMulti = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $fid");
 		
 	// flatten columns array and convert handles to ids so that we can send them to the change columns popup
-	$colids = implode(",", $columnids); // part of $settings // now with handles in 3.0 there is no difference between columnids and columns?
+	$colhandles = implode(",", $columnhandles); // part of $settings 
 	$flatcols = implode(",", $columns); // part of $settings (will be IDs if no framework in effect)
 
 	$useWorking = true;
@@ -943,7 +943,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$onActionButtonCounter = 0;
 	$atLeastOneActionButton = false;
 	foreach($screenButtonText as $scrButton=>$scrText) {
-		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colids, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname);
+		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname);
 		if($buttonCodeArray[$scrButton] AND $onActionButtonCounter < 14) { // first 14 items in the array should be the action buttons only
 			$atLeastOneActionButton = true;
 		}
@@ -1384,6 +1384,9 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		// adjust formulize_LOEPageSize if the actual count of entries is less than the page size
 		$formulize_LOEPageSize = $GLOBALS['formulize_countMasterResults'] < $formulize_LOEPageSize ? $GLOBALS['formulize_countMasterResults'] : $formulize_LOEPageSize;
 		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : $GLOBALS['formulize_countMasterResults'];
+    /*print "start: $formulize_LOEPageStart<br>";
+    print "size: $formulize_LOEPageSize<br>";
+    print "actualsize: $actualPageSize<br>";*/
 		if(isset($data)) {
 			//for($entryCounter=$formulize_LOEPageStart;$entryCounter<$actualPageSize;$entryCounter++) {
       foreach($data as $id=>$entry) {
@@ -1459,7 +1462,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
           for($i=0;$i<count($cols);$i++) {
             //formulize_benchmark("drawing one column");
 						$col = $cols[$i];
-						$colid = $settings['columnids'][$i];
+						$colhandle = $settings['columnhandles'][$i];
 					
 						print "<td $columnWidthParam class=$class>\n";
 						if($col == "creation_uid") {
@@ -1469,7 +1472,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 						} else {
 							$value = display($entry, $col);
 						}
-						if(in_array($colid, $deColumns) AND ($update_other_entries OR ($update_own_entry AND $uid == getEntryOwner($entry, $fid)))) { // if we're supposed to display this column as an element... (only show it if they have permission to update this entry)
+						if(in_array($colhandle, $deColumns) AND ($update_other_entries OR ($update_own_entry AND $uid == getEntryOwner($entry, $fid)))) { // if we're supposed to display this column as an element... (only show it if they have permission to update this entry)
 							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 							if($frid) { // need to work out which form this column belongs to, and use that form's entry ID.  Need to loop through the entry to find all possible internal IDs, since a subform situation would lead to multiple values appearing in a single cell, so multiple displayElement calls would be made each with their own internal ID.
 								foreach($entry as $entryFormHandle=>$entryFormData) {
@@ -1478,14 +1481,14 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 										foreach($entryElements as $entryHandle=>$values) {
 											if($entryHandle == $col) { // we found the element that we're trying to display
 												if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
-												displayElement("", $colid, $internalID);
+												displayElement("", $colhandle, $internalID);
 												$deThisIntId = true;
 											}
 										}
 									}
 								}
 							} else { // display based on the mainform entry id
-								displayElement("", $colid, $linkids[0]); // works for mainform only!  To work on elements from a framework, we need to figure out the form the element is from, and the entry ID in that form
+								displayElement("", $colhandle, $linkids[0]); // works for mainform only!  To work on elements from a framework, we need to figure out the form the element is from, and the entry ID in that form
 							}
 							$GLOBALS['formulize_displayElement_LOE_Used'] = true;
 						} elseif(is_array($value)) {
@@ -2058,8 +2061,15 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
               foreach($theseGroupings as $gid=>$thisGrouping) {
                 if($thisGrouping != "none" AND $thisGrouping != "") {
                   list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
-                  $groupingValuesFound[] = $thisResult["$galias$ghandle"];
-                  $groupingWhere[] = "$galias.`$ghandle` = '".$thisResult["$galias$ghandle"]."'";
+                  //print $thisResult["$galias$ghandle"] . "<br>";
+                  if($thisResult["$galias$ghandle"] == "") {
+                    $groupingWhere[] = "($galias.`$ghandle` = '".$thisResult["$galias$ghandle"]."' OR $galias.`$ghandle` IS NULL)";
+                    $groupingValuesFound[] = _formulize_BLANK_KEYWORD;
+                  } else {
+                    $groupingWhere[] = "$galias.`$ghandle` = '".$thisResult["$galias$ghandle"]."'";
+                    $groupingValuesFound[] = $thisResult["$galias$ghandle"];
+                  }
+                  
                 }
               }
               if(count($groupingWhere)>0) {
@@ -2071,6 +2081,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
                 $perindexer++;
                 $groupingValues[$cols[$i]][$calc][$perindexer] = convertRawValuesToRealValues($groupingValuesFound, $ghandle, true);
                 $countSQL = "SELECT count($fidAlias.`$handle`) as count$fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere";
+                //print "$countSQL<br>";
                 $countRes = $xoopsDB->query($countSQL);
                 $countArray = $xoopsDB->fetchArray($countRes);
                 $countValue = $countArray["count$fidAlias$handle"];
@@ -2273,6 +2284,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 // this could be made into a replacement for the prepvalues function in the extract.php file that does the same kind of thing when preparing a dataset
 // returnFlat is a flag to cause multiple values to be returned as comma separated strings
 function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
+  
   if($linkedMetaData = formulize_isLinkedSelectBox($handle, true)) {
 		// convert the pointers for the linked selectbox values, to their source values
 		$sourceMeta = explode("#*=:*", $linkedMetaData[2]);
@@ -2282,8 +2294,11 @@ function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
     if(is_array($realValues) AND $returnFlat) {
       $realValues = implode(", ", $realValues);
     }
+    return $realValues;
+  } else {
+    return $value;
   }
-  return $realValues;
+  
 }
 
 // THIS FUNCTION READS THE BLANKS SETTING AND RETURNS A LIST OF VALUES THAT ARE ALLOWED AND A LIST OF VALUES THAT ARE NOT ALLOWED
@@ -3476,11 +3491,11 @@ function gatherHiddenValue($handle) {
 }
 
 // THIS FUNCTION GENERATES HTML FOR ANY BUTTONS THAT ARE REQUESTED
-function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colids, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname) {
+function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname) {
 	if($buttonText) {
 		switch ($button) {
 			case "changeColsButton":
-				return "<input type=button style=\"width: 140px;\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colids');\"></input>";
+				return "<input type=button style=\"width: 140px;\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";
 				break;
 			case "calcButton":
 				return "<input type=button style=\"width: 140px;\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>";
@@ -3523,7 +3538,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 					}
 				}
 				if($button == "exportButton") {
-					return "<input type=button style=\"width: 140px;\" name=export value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/export.php?fid=$fid&frid=$frid&cols=$colids&eq=$exportTime');\"></input>";
+					return "<input type=button style=\"width: 140px;\" name=export value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/export.php?fid=$fid&frid=$frid&cols=$colhandles&eq=$exportTime');\"></input>";
 				} else {
 					return "<input type=button style=\"width: 140px;\" name=impdata value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=$exportTime');\"></input>";
 				}
@@ -3894,6 +3909,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
       $limitStart = 0;
       $limitSize = 0;
     }
+    //print "limitStart: $limitStart<br>limitSize: $limitSize<br>";
 		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
     if($currentURL=="") { return array(0=>"", 1=>"", 2=>""); } //current URL should only be "" if this is called directly by the special formulize_getCalcs function
     

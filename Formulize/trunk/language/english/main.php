@@ -673,4 +673,6 @@ define("_AM_FORMULIZE_PREVIOUS_OPTION", "Use a previous answer:");
 define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","This value will be calculated after the data is saved");
 
 define("_formulize_QSF_DefaultText", "Search for:");
+define("_formulize_BLANK_KEYWORD", "{BLANK}");
+
 ?>

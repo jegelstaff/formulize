@@ -176,7 +176,7 @@ switch($op){
 
 		$form->addElement($ele_caption, 1);
 
-		if($ele_type != "subform" AND $ele_type != "grid") {
+		if($ele_type != "subform" AND $ele_type != "grid" AND $ele_type != "ib") {
 			// column heading added June 25 2006 -- jwe
 			$ele_colhead = new XoopsFormText(_AM_ELE_COLHEAD, 'ele_colhead', 50, 255, $ele_colhead_default);
 			$ele_colhead->setDescription(_AM_ELE_COLHEAD_HELP);

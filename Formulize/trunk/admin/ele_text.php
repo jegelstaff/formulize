@@ -60,7 +60,7 @@ $valueType->setDescription(_AM_ELE_TYPE_DESC);
 $decimalDefault = $value[5] ? $value[5] : 0;
 $prefixDefault = $value[6] ? $value[6] : '';
 $decsepDefault = $value[7] ? $value[7] : '.';
-$sepDefault = $value[8] ? $value[8] : '';
+$sepDefault = $value[8] ? $value[8] : ',';
 $numberOptions = new XoopsFormElementTray(_AM_ELE_NUMBER_OPTS, '<br /><br />');
 $numberOptions->setDescription(_AM_ELE_NUMBER_OPTS_DESC);
 $decimalOption = new xoopsFormText(_AM_ELE_NUMBER_OPTS_DEC, 'ele_value[5]', 2, 2, $decimalDefault);

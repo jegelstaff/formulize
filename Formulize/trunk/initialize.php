@@ -137,7 +137,9 @@ if(isset($formulize_entry_id) AND is_numeric($formulize_entry_id)) {
 }
 
 if($screen) {
+	$formulize_screen_loadview = (!isset($formulize_screen_loadview) OR !is_numeric($formulize_screen_loadview)) ? intval($_GET['loadview']) : $formulize_screen_loadview;
   $loadThisView = (isset($formulize_screen_loadview) AND is_numeric($formulize_screen_loadview)) ? $formulize_screen_loadview : "";
+	if(!$loadThisView) { $loadThisView = ""; } // a 0 could possibly screw things up, so change to ""
   $screen_handler->render($screen, $entry, $loadThisView);
   $rendered = true;
 }

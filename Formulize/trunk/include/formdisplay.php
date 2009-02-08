@@ -41,6 +41,7 @@ global $xoopsConfig;
 		include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
 	}
 
+include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
 // this function gets the element that is linked from a form to its parent form
 // returns the ele_ids from form table

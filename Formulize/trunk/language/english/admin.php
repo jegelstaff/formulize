@@ -59,7 +59,7 @@ define("_AM_ELE_UPLOAD","Join a file");
 define("_AM_ELE_CLR","with the color");
 
 // number options for textboxes
-define("_AM_ELE_NUMBER_OPTS","If only numbers are allowed...");
+define("_AM_ELE_NUMBER_OPTS","If a number is typed...");
 define("_AM_ELE_NUMBER_OPTS_DESC","You can set these options to control how decimals are handled, and how numbers are formatted on screen.");
 define("_AM_ELE_NUMBER_OPTS_DEC","Number of decimal places:");
 define("_AM_ELE_NUMBER_OPTS_PREFIX","Display numbers with this prefix (ie: '$'):");
@@ -217,7 +217,7 @@ define("_formulize_CAPTION_SLASH", "Captions cannot have backslashes. They have 
 define("_formulize_CAPTION_LT", "Captions cannot have < signs. They have been removed.");
 define("_formulize_CAPTION_GT", "Captions cannot have > signs. They have been removed.");
 
-define("_AM_VIEW_FORM", "View the form");
+define("_AM_VIEW_FORM", "View this form");
 define("_AM_GOTO_PARAMS", "Edit the form's settings");
 define("_AM_PARAMS_EXTRA", "(Specify what elements appear<br>on the <i>View Entries</i> page)");
 define("_AM_GOTO_MAIN", "Return to main page");
@@ -270,7 +270,7 @@ define("_AM_ELE_OTHER", 'For an option of "Other", put {OTHER|*number*} in one o
 define("_AM_FORM_PRIVATE", "The information that users enter in this element is private");
 define("_AM_FORM_PRIVATE_DESC", "If this box is checked, the information that users enter in this element will only be visible to other users who have the view_private_elements permission.  This option is useful for making personal information only available to the appropriate managers.");
 
-//added by f�lix <INBOX International> for sedonde (colorpicker feature)
+//added by felix <INBOX International> for sedonde (colorpicker feature)
 define("_AM_ELE_COLORPICK","Colorpicker");
 
 // SCREENS...including multipage

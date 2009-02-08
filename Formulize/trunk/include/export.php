@@ -75,11 +75,7 @@ if(trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $expor
     $cols = explode(",",$_GET['cols']);
     $headers = array();
     foreach($cols as $thiscol) {
-			if($frid) {
-				$colMeta = formulize_getElementMetaData(convertFrameworkHandlesToElementHandles($thiscol, $frid), true);
-			} else {
-				$colMeta = formulize_getElementMetaData($thiscol, true);
-			}
+			$colMeta = formulize_getElementMetaData($thiscol, true);
 			$headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
     }
 		if($_GET['type'] == "update") {
@@ -95,7 +91,11 @@ if(trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $expor
 		print_r($cols);
 		print_r($headers);
 		print "</pre>";*/
-    $filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
+		if($frid) {
+			$filename = prepExport($headers, convertElementHandlesToFrameworkHandles($cols, $frid), $data, $fdchoice, "", "", false, $fid, $groups);
+		} else {
+			$filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
+		}
     print "<center><p><a href=\"$filename\">$linkText</a></p></center>\n";
     
     if($_GET['type']=="update") {

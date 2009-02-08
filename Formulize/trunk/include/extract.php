@@ -139,12 +139,14 @@ function prepvalues($value, $field, $entry_id) {
      return $value;
   }
 
-	// handle cases where the value is linked to another form 
+	// handle cases where the value is linked to another form
+  
+  
   if($source_ele_value = formulize_isLinkedSelectBox($field, true)) {
      // value is an entry id in another form
      // need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
      $sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
-     if($value) {
+     if($value AND $sourceMeta[1]) {
           $sql = "SELECT `".$sourceMeta[1]."` FROM ".DBPRE."formulize_".$sourceMeta[0]." WHERE entry_id IN (".trim($value, ",").") ORDER BY entry_id";
           if(!$res = mysql_query($sql)) {
                print "Error: could not retrieve the source values for a linked selectbox during data extraction.  SQL:<br>$sql<br>";
@@ -154,6 +156,8 @@ function prepvalues($value, $field, $entry_id) {
                     $value .= "*=+*:" . $array[$sourceMeta[1]];
                }
           }
+     } elseif($value) {
+          $value = ""; // if there was no sourceMeta[1], which is the handle for the field in the source form, then the value should be empty, ie: we cannot make a link...this probably only happens in cases where there's a really old element that had its caption changed, and that happened before Formulize automatically updated all the linked selectboxes that rely on that element's caption, back when captions mattered in the pre F3 days
      }
   }
 
@@ -475,25 +479,28 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       $userJoinType = $formFieldFilterMap['creator_email'] ? "INNER" : "LEFT";
 	       $userJoinText = " $userJoinType JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid";
 	       
-	       if(!$orderByClause AND $sortField) {
-		    if($frid) {
-			 $elementHandleAndId = formulize_getElementHandleAndIdFromFrameworkHandle($sortField, $frid);
-			 $elementMetaData = formulize_getElementMetaData($elementHandleAndId[1]);
-			 $sortField = $elementHandleAndId[0]; // use the element handle for the sort field, instead of the framework handle
-		    } else {
-			 $elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...               
-		    }
-		    $sortFid = $elementMetaData['id_form'];
-		    if($sortFid == $fid) {
-			 $sortFidAlias = "main";
-		    } else {
-			 $sortFidAlias = array_keys($linkformids, $sortFid); // position of this form in the linking relationships is important for identifying which form alias to use
-			 $sortFidAlias = "f".$sortFidAlias[0];
-		    }
-		    $orderByClause = " ORDER BY $sortFidAlias.`$sortField` $sortOrder ";
-	       } elseif(!$orderByClause) {
-		    $orderByClause = "ORDER BY main.entry_id";
-	       }
+          if(!$orderByClause AND $sortField) {
+               
+               // if($sortField == "creation_uid" OR $sortField ) // need to add handling for metadata fields here, including creator's e-mail address.
+               
+               if($frid) {
+                    $elementHandleAndId = formulize_getElementHandleAndIdFromFrameworkHandle($sortField, $frid);
+                    $elementMetaData = formulize_getElementMetaData($elementHandleAndId[1]);
+                    $sortField = $elementHandleAndId[0]; // use the element handle for the sort field, instead of the framework handle
+               } else {
+                    $elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...               
+               }
+               $sortFid = $elementMetaData['id_form'];
+               if($sortFid == $fid) {
+                    $sortFidAlias = "main";
+               } else {
+                    $sortFidAlias = array_keys($linkformids, $sortFid); // position of this form in the linking relationships is important for identifying which form alias to use
+                    $sortFidAlias = "f".$sortFidAlias[0];
+               }
+               $orderByClause = " ORDER BY $sortFidAlias.`$sortField` $sortOrder ";
+          } elseif(!$orderByClause) {
+               $orderByClause = "ORDER BY main.entry_id";
+          }
 	  		    
 	       debug_memory("Before retrieving mainresults");
 	       
@@ -548,11 +555,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      // Debug Code
      
-     /*global $xoopsUser;
-     if($xoopsUser->getVar('uid') == 1) {
-          print "<br>Count query: $countMasterResults<br>";
-          print "Master query: $masterQuerySQL<br>";
-     }*/
+     //global $xoopsUser;
+     //if($xoopsUser->getVar('uid') == 1) {
+          //print "<br>Count query: $countMasterResults<br>";
+          //print "Master query: $masterQuerySQL<br>";
+     //}
      
 		 formulize_benchmark("Before query");
 		 
@@ -603,7 +610,6 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                if(strstr($field, "creation_uid") OR strstr($field, "creation_datetime") OR strstr($field, "mod_uid") OR strstr($field, "mod_datetime")) {
                     // dealing with a new metadata field
                     $fieldNameParts = explode("_", $field);
-                    
                     // We account for a mainform entry appearing multiple times in the list, because when there are multiple entries in a subform, and SQL returns one row per subform,  we need to not change the main form and internal record until we pass to a new mainform entry
                                         
                     if($prevFieldNotMeta) { // only do once for each form
@@ -918,7 +924,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // usernames/fullnames boxes
                     } elseif($listtype = $formFieldFilterMap[$mappedForm][$element_id]['isnamelist'] AND $ifParts[1] !== "") {
                          $listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
-                         $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE " . $listtype . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes;
+                         if(!is_numeric($ifParts[1])) {
+                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE " . $listtype . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes;
+                         } else {
+                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uid ".$operator.$quotes.$likebits.$ifParts[1].$likebits.$quotes;
+                         }
                          $preSearchResult = mysql_query($preSearch);
                          if(mysql_num_rows($preSearchResult)>0) {
 															$nameSearchStart = true;
@@ -933,7 +943,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                    } else {
                                         $whereClause .= " $elementPrefix.".$ifParts[0]." = " . $preSearchArray['uid'] . " ";
                                    }
-                              }     
+                              }
                          } else {
                               $whereClause .= "main.entry_id<0"; // no matches, so result set should be empty, so set a where clause that will return zero results
                          }
@@ -1108,7 +1118,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
                     $parsedFormulas[$formHandle] = true;
                }
                foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
-                    $functionName = "derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", $formHandle))."_".$formulaNumber;
+                    $functionName = "derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", str_replace("/", "", str_replace("\\", "", $formHandle))))."_".$formulaNumber;
                     formulize_benchmark(" -- calling derived function.");
                     $derivedValue = $functionName($entry);
                     formulize_benchmark(" -- completed call.");
@@ -1123,7 +1133,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
 
 function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $fid) {
      // open a temporary file
-     $fileName = XOOPS_ROOT_PATH."/cache/formulize_derivedValueFormulas_".str_replace(" ", "_", $formHandle).".php";
+     $fileName = XOOPS_ROOT_PATH."/cache/formulize_derivedValueFormulas_".str_replace(" ", "_", str_replace("/", "", str_replace("\\", "", $formHandle))).".php";
      $derivedValueFormulaFile = fopen($fileName, "w");
      fwrite($derivedValueFormulaFile, "<?php\n\n");
      
@@ -1155,7 +1165,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                }
                $formula = implode("\n", $formulaLines);
           }
-          $functionsToWrite .= "function derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", $formHandle))."_".$formulaNumber."(\$entry) {\n$formula\nreturn \$value;\n}\n\n";
+          $functionsToWrite .= "function derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", str_replace("/", "", str_replace("\\", "", $formHandle))))."_".$formulaNumber."(\$entry) {\n$formula\nreturn \$value;\n}\n\n";
      }
      fwrite($derivedValueFormulaFile, $functionsToWrite. "?>");
      fclose($derivedValueFormulaFile);

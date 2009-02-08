@@ -184,36 +184,46 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	foreach($data as $id => $titre) {
 	    if($gperm_handler->checkRight("edit_form", $id, $groups, $module_id))
         {
-	        echo '<tr><td class="head">'.trans($titre).' (id: '.$id.')</td>';
+	        echo '<tr><td class="head">'.trans($titre).'<br>(id: '.$id.')</td>';
 
 	        echo '<td class="odd" align="center">
           
-                <table cellpadding=10><tr><td>
-	             <A HREF="renom.php?title='.$id.'">'._FORM_RENAME_TEXT.' <img src="../images/signature.png" title="'._FORM_RENOM.'" alt="'._FORM_RENOM.'">  </a></td>';
+                <table cellpadding=10><tr>
+								<td rowspan=3><nobr><a href="../index.php?fid='.$id.'" target="_blank">' . _AM_VIEW_FORM . ' <img src="../images/kfind.png" title="'._AM_VIEW_FORM.'" alt="'._AM_VIEW_FORM.'"></a></nobr></td>
+								<td><nobr><A HREF="renom.php?title='.$id.'">'._FORM_RENAME_TEXT.' <img src="../images/signature.png" title="'._FORM_RENOM.'" alt="'._FORM_RENOM.'">  </a></nobr></td>';
+								
+					if($gperm_handler->checkRight("delete_form", $id, $groups, $module_id))
+	        {
+	            echo '<td><nobr><A HREF="formindex.php?title='.$id.'&op=delform" onclick="return confirmdel();">'._FORM_DELETE_TEXT.' <img src="../images/editdelete.png" title="'._FORM_SUP.'" alt="'._FORM_SUP.'">  </a></nobr></td></tr>';
+    			} else {
+						echo '<td></td></tr>';
+					}
+								
 
           if($tableforms[$id] == "") {  
-						echo '<td><A HREF="index.php?title='.$id.'">'._FORM_EDIT_ELEMENTS_TEXT.' <img src="../images/kedit.png" title="'._FORM_MODIF.'" alt="'._FORM_MODIF.'">  </a> </td>';
+						echo '<tr><td><nobr><A HREF="index.php?title='.$id.'">'._FORM_EDIT_ELEMENTS_TEXT.' <img src="../images/kedit.png" title="'._FORM_MODIF.'" alt="'._FORM_MODIF.'">  </a></nobr> </td>';
 					
 
 						//old display entries section, not used anymore 
 						//echo '<A HREF="formindex.php?title='.$id.'&op=showform">  <img src="../images/kfind.png" title="'._FORM_SHOW.'" alt="'._FORM_SHOW.'">  </a>';     
+					} else {
+						echo '<tr>';
 					}
 					
 					$tableFormsFlag = $tableforms[$id] == "" ? "" : "&table=true";	
-					echo '<td><A HREF="mailindex.php?title='.$id.$tableFormsFlag.'">'._FORM_EDIT_SETTINGS_TEXT.' <img src="../images/xfmail.png" title="'._FORM_ADD.'" alt="'._FORM_ADD.'">  </a></td></tr><tr>';
+					echo '<td><nobr><A HREF="mailindex.php?title='.$id.$tableFormsFlag.'">'._FORM_EDIT_SETTINGS_TEXT.' <img src="../images/xfmail.png" title="'._FORM_ADD.'" alt="'._FORM_ADD.'">  </a></nobr></td></tr><tr>';
 					
 					if($tableforms[$id] == "") {
 						// cloning added June 17 2005
-						echo '<td><A HREF="formindex.php?title='.$id.'&op=clone">'._FORM_CLONE_TEXT.' <img src="../images/clone.gif" title="'._FORM_MODCLONE.'" alt="'._FORM_MODCLONE.'"></a> </td>';
+						echo '<td><nobr><A HREF="formindex.php?title='.$id.'&op=clone">'._FORM_CLONE_TEXT.' <img src="../images/clone.gif" title="'._FORM_MODCLONE.'" alt="'._FORM_MODCLONE.'"></a></nobr> </td>';
 
 						// added August 12 2005 - jpc
-						echo '<td><A HREF="formindex.php?title='.$id.'&op=clonedata">'._FORM_CLONEDATA_TEXT.' <img src="../images/clonedata.gif" title="'._FORM_MODCLONEDATA.'" alt="'._FORM_MODCLONEDATA.'"></a> </td>';
+						echo '<td><nobr><A HREF="formindex.php?title='.$id.'&op=clonedata">'._FORM_CLONEDATA_TEXT.' <img src="../images/clonedata.gif" title="'._FORM_MODCLONEDATA.'" alt="'._FORM_MODCLONEDATA.'"></a></nobr> </td></tr>';
+					} else {
+						echo '</tr>';
 					}
 
-          if($gperm_handler->checkRight("delete_form", $id, $groups, $module_id))
-	        {
-	            echo '<td><A HREF="formindex.php?title='.$id.'&op=delform" onclick="return confirmdel();">'._FORM_DELETE_TEXT.' <img src="../images/editdelete.png" title="'._FORM_SUP.'" alt="'._FORM_SUP.'">  </a></td>';
-    			}
+          
 
 	        echo '</tr></table></td></tr>';
     	}	   
@@ -1840,6 +1850,9 @@ function patch30DataStructure($auto = false) {
           exit("Error: could not get the handle for a linked selectbox source.  SQL: $sql2<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
         }
         $array2 = $xoopsDB->fetchArray($res2);
+        if($array2['ele_handle'] == "") {
+          print "Warning: a handle could not be identified for this caption: '".$parts[1]."', in form ".$parts[0]."  This breaks linked selectboxes for element number ".$array['ele_id'].".  This is most likely caused by an old caption that was changed for the element, in an old version of Formulize.<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.<br>";
+        }
         $ele_value[2] = $parts[0]."#*=:*".$array2['ele_handle'];
         $elementObject->setVar('ele_value', $ele_value);
         if(!$res3 = $element_handler->insert($elementObject)) {

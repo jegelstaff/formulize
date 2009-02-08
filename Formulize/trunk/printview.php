@@ -62,6 +62,7 @@ print "<center>";
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php"; // needed to get the benchmark function available
 displayForm($formframe, $ventry, $mainform, "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope
 
 print "</td><td width=5%></td></tr></table>";

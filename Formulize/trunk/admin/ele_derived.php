@@ -65,7 +65,7 @@ $formulaBox->setDescription($listOfElements_output . "<br /><br />" . _AM_ELE_DE
 $decimalDefault = $value[1] ? $value[1] : 0;
 $prefixDefault = $value[2] ? $value[2] : '';
 $decsepDefault = $value[3] ? $value[3] : '.';
-$sepDefault = $value[4] ? $value[4] : '';
+$sepDefault = $value[4] ? $value[4] : ',';
 $numberOptions = new XoopsFormElementTray(_AM_ELE_DERIVED_NUMBER_OPTS, '<br /><br />');
 $numberOptions->setDescription(_AM_ELE_NUMBER_OPTS_DESC);
 $decimalOption = new xoopsFormText(_AM_ELE_NUMBER_OPTS_DEC, 'ele_value[1]', 2, 2, $decimalDefault);

@@ -2192,7 +2192,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 
 // this function takes an entry and makes copies of it
 // can take an entry in a framework and make copies of all relevant entries in all relevant forms
-// note that the same relative linked selectbox relationships are preserved in cloned framework entries, but links based on common values and uids are not modified at all
+// note that the same relative linked selectbox relationships are preserved in cloned framework entries, but links based on common values and uids are not modified at all...this might not be desired behaviour in all cases!!!
 // entries in single-entry forms are never cloned
 
 function cloneEntry($entry, $frid, $fid, $copies) {
@@ -2229,7 +2229,6 @@ function cloneEntry($entry, $frid, $fid, $copies) {
 	} else {
 		$entries_to_clone[$fid][] = $entry;
 	}
-
 	$dataHandlers = array();
 	for($copy_counter = 0; $copy_counter<$copies; $copy_counter++) {
 
@@ -2243,7 +2242,9 @@ function cloneEntry($entry, $frid, $fid, $copies) {
             if(!isset($dataHandlers[$fid])) {
               $dataHandlers[$fid] = new formulizeDataHandler($fid);
             }
-            $entryMap[$fid][$thisentry][] = $dataHandlers[$fid]->cloneEntry($thisentry);
+            $clonedEntryId = $dataHandlers[$fid]->cloneEntry($thisentry);
+            $dataHandlers[$fid]->setEntryOwnerGroups(getEntryOwner($thisentry, $fid), $clonedEntryId);
+            $entryMap[$fid][$thisentry][] = $clonedEntryId;
             
       }
     }
@@ -3278,7 +3279,36 @@ function formulize_numberFormat($value, $handle, $frid="", $decimalOverride=0) {
 // $handle is the element that you want to get the calculation for, or elements (can be an array or handles)
 // $type is the type of calculation for that element that you want to get, default is get all types
 // $grouping is the grouping option you want to get for that element/type pair, default is all grouping options
-// $type and $grouping not yet enabled!!
+
+// example of how you can traverse the result array:
+/*
+ 
+// Function to display data from saved view with formatting
+// $calcs is the result of a call to the formulize_getCalcs function
+function printCalcResult($calcs) {
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	foreach($calcs as $handle=>$thisCalcData) {
+		$elementObject = $element_handler->get($handle); // only works when handle and ele_id are the same
+		$caption = $elementObject->getVar('ele_caption');
+		print "<h3>$caption</h3>\n";
+		foreach($thisCalcData as $type=>$results) {
+			if(count($results)>1) {
+				foreach($results as $result) {
+					print "<p><b>Grouped By: ".implode(",",$result['grouping'])."</b></p>\n";
+					print $result['result'];
+				}
+			}	 
+			else {
+				print $results[0]['result'];
+			}
+		}
+	}
+}
+*/
+
+// NOTE, THIS FUNCTION ASSIGNS IDS INSTEAD OF HANDLES TO RESULT ARRAY.  THIS NEEDS TO BE LOOKED INTO
+
+
 function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $type="all", $grouping="all") {
 
   list($fid, $frid) = getFormFramework($formframe, $mainform);
