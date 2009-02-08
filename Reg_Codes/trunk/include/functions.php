@@ -100,9 +100,13 @@ function loginUser($uname, $pass) {
 			//$user =& $member_handler->loginUser(addslashes($myts->stripSlashesGPC($uname)), addslashes($myts->stripSlashesGPC($pass)));
       include_once XOOPS_ROOT_PATH.'/class/auth/authfactory.php';
       include_once XOOPS_ROOT_PATH.'/language/'.$xoopsConfig['language'].'/auth.php';
-      $xoopsAuth =& XoopsAuthFactory::getAuthConnection($myts->addSlashes($uname));
-      $user = $xoopsAuth->authenticate($myts->addSlashes($uname), $myts->addSlashes($pass));
-
+			if(class_exists(XoopsAuthFactory)) { // newer versions of XOOPS do it this way:
+				$xoopsAuth =& XoopsAuthFactory::getAuthConnection($myts->addSlashes($uname));
+	      $user = $xoopsAuth->authenticate($myts->addSlashes($uname), $myts->addSlashes($pass));
+			} else {
+				$user =& $member_handler->loginUser(addslashes($myts->stripSlashesGPC($uname)), addslashes($myts->stripSlashesGPC($pass)));
+			}
+      
 			if (false != $user) {
 				if (0 == $user->getVar('level')) {
 					redirect_header(XOOPS_URL.'/index.php', 5, _US_NOACTTPADM);
