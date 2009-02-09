@@ -1412,10 +1412,10 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 
 	formulize_benchmark("Done looping elements.");
 
-	// add hiddenElements...
 	foreach($hiddenElements as $element_id=>$thisHiddenElement) {
 		$form->addElement(new xoopsFormHidden("decue_".$fid."_".$entryForDEElements."_".$element_id, 1));
 		$form->addElement($thisHiddenElement);
+		unset($thisHiddenElement); // some odd reference thing going on here...$thisHiddenElement is being added by reference or something like that, so that when $thisHiddenElement changes in the next run through, every previous element that was created by adding it is updated to point to the next element.  So if you unset at the end of the loop, it forces each element to be added as you would expect.
 	}
 
 	$form->addElement (new XoopsFormHidden ('counter', $count)); // not used by reading logic?

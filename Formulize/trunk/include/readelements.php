@@ -92,6 +92,8 @@ foreach($_POST as $k=>$v) {
 		
 	} elseif(substr($k, 0, 9) == "desubform") { // handle blank subform elements
 		$elementMetaData = explode("_", $k);
+		$elementObject = $element_handler->get($elementMetaData[3]);
+		$v = prepDataForWrite($elementObject, $v);
 		if($v == "{SKIPTHISDATE}") { $v = ""; }
 		if($v === "" AND $elementMetaData[2] == "new") { continue; } // don't store blank values for new entries, we don't want to write those (if desubform is used only for blank defaults, then it will always be "new" but we'll keep this as is for now, can't hurt)
 		$blankSubformCounter = trim(substr($k, 9, 2), "_"); // grab up to two spaces after the "desubform" text, since that will have the unique identifier of this new entry (ie: which blank subform entry this value belongs to)

@@ -1642,7 +1642,7 @@ function patch30DataStructure($auto = false) {
         $newStructureFound = false;
         while($table = $xoopsDB->fetchRow($resultPatchCheck)) {
           $secondPart = substr($table[0], strlen($xoopsDB->prefix("formulize_")));
-          if(is_numeric($secondPart) AND strstr($table[0], "formulize_")) { // there will be a part after "formulize_" that is numeric in the new data structure
+          if(is_numeric($secondPart) AND strstr($table[0], $xoopsDB->prefix("formulize_"))) { // there will be a part after "formulize_" that is numeric in the new data structure
             $newStructureFound = true;
           }
           if($table[0] == $xoopsDB->prefix("formulize_entry_owner_groups")) {
