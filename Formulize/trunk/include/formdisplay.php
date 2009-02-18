@@ -1283,13 +1283,13 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	foreach( $elements as $i ){
 
 		$this_ele_id = $i->getVar('ele_id');
-		
+
 		if(is_array($elements_allowed)) {
 			if(!in_array($this_ele_id, $elements_allowed)) {
 				continue;
 			}
 		}
-	
+
 		// check if this element is included in a grid, and if so, skip it
 		// $inGrid will be a number indicating how many times we have to skip things
 		if($inGrid OR isset($gridCounter[$this_ele_id])) {
@@ -1361,7 +1361,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			// false is "nosave" param...only used to force element to not be picked up by readelements.php after saving
 			// $screen is the screen object
 			// false means don't print it out to screen, return it here
-			$form_ele = displayElement("", $i, $entry, false, $screen, $prevEntry, false, $profileForm);
+			$form_ele = displayElement("", $i, $entry, false, $screen, $prevEntry, false, $profileForm, $groups);
 			if($form_ele == "not_allowed" OR $form_ele == "hidden") { continue; }
 		}
 		

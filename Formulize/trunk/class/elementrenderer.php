@@ -911,10 +911,16 @@ class formulizeElementRenderer{
 				$hiddenValue = date("Y-m-d", $element->getValue());
 				break;
 			default:
-				//$hiddenValue = $element->getValue();
-				$hiddenValue = 1;
+				$hiddenValue = $element->getValue();
 		}
-		$newElement->addElement(new xoopsFormHidden($element->getName(), $hiddenValue));
+		if(is_array($hiddenValue)) {
+			foreach($hiddenValue as $value) {
+				$newElement->addElement(new xoopsFormHidden($element->getName()."[]", $value));
+				unset($value);
+			}
+		} else {
+			$newElement->addElement(new xoopsFormHidden($element->getName(), $hiddenValue));	
+		}
 		$element->setName('disabled_'.$element->getName());
 		$newElement->addElement($element);
 		
@@ -962,6 +968,25 @@ class formulizeElementRenderer{
 		$previousCaptions = $previousForm->getVar('elementCaptions');
 		$previousElementHandle = array_search($captionToMatch, $previousCaptions);
 		if(!$previousElementHandle) { return ""; }
+		$elementName = $de ? "de_".$fid."_".$entryId."_".$element_id : "ele_".$element_id; // displayElement elements have different names from regular elements
+		$previousElementId = formulize_getIdFromElementHandle($previousElementHandle); // function is in extract.php
+		// setup the javascript based on the type of question, and setup other data that is required
+		switch($type) {
+			case "text":
+			case "date":
+				$javascript = "onchange='javascript:this.form.".$elementName.".value=this.form.prev_".$element_id.".value;'";
+				break;
+			case "radio":
+				// need to get the options of the question so we know what to match
+				$prevElementMetaData = formulize_getElementMetaData($previousElementId); // use this function in extract instead of the get element method in handler, since this is guaranteed to be already be cached in memory
+				$prevElement_ele_value = unserialize($prevElementMetaData['ele_value']);
+				$prevElementOptions = array_keys($prevElement_ele_value);
+				$javascript = "onchange='javascript:if(this.form.prev_".$element_id.".value !== \"\") { this.form.".$elementName."[this.form.prev_".$element_id.".value].checked=true; }'";
+				break;
+			case "yn":
+				$javascript = "onchange='javascript:if(this.form.prev_".$element_id.".value !== \"\") { this.form.".$elementName."[this.form.prev_".$element_id.".value].checked=true; }'";
+				break;
+		}
 		$previousOptions = array();
 		$prevOptionsExist = false;
 		foreach($entries as $id=>$entry) {
@@ -971,18 +996,31 @@ class formulizeElementRenderer{
 			}
 			if(trim($value) === "") { continue; }
 			$prevOptionsExist = true;
-			$previousOptions[$value] = $value;
+			switch($type) {
+				case "text":
+				case "date":
+					$previousOptions[$value] = $value;
+					break;
+				case "radio":
+					$prevElementPosition = array_search($value, $prevElementOptions); // need to figure out which option matches the text of the value
+					if($prevElementPosition !== false) {
+						$previousOptions[$prevElementPosition] = $value; // for radio buttons, we need to pass the position of the option
+					}
+					break;
+				case "yn":
+					if($value == _formulize_TEMP_QYES) {
+						$previousOptions[0] = $value;
+					} elseif($value == _formulize_TEMP_QNO) {
+						$previousOptions[1] = $value;
+					}
+					break;
+					
+			}
 		}
 		if(!$prevOptionsExist) { return ""; }
 		$prevUI = new xoopsFormSelect('', 'prev_'.$element_id, '123qweasdzxc', 1, false); // 123qweasdzxc is meant to be a unique value that will never be selected, since we don't ever want a previous selection showing by default
 		$prevUI->addOption('', _AM_FORMULIZE_PREVIOUS_OPTION);
 		$prevUI->addOptionArray($previousOptions);
-		$elementName = $de ? "de_".$fid."_".$entryId."_".$element_id : "ele_".$element_id; // displayElement elements have different names from regular elements
-		switch($type) {
-			case("text"):
-				$javascript = "onchange='javascript:this.form.".$elementName.".value=this.form.prev_".$element_id.".value;'";
-				break;
-		}
 		$prevUI->setExtra($javascript);
 		return $prevUI;
 	}

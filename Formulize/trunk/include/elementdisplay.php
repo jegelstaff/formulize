@@ -38,7 +38,8 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementrenderer.php";
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
-function displayElement($formframe="", $ele, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $profileForm) {
+// $groups is optional and can be passed in to override getting the user's groups.  This is necessary for the registration form to work with custom displayed elements
+function displayElement($formframe="", $ele, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $profileForm, $groups="") {
 
 	static $cachedPrevEntries = array();
 
@@ -77,7 +78,9 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	}
 
 	global $xoopsUser;
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+  if(!$groups) { // groups might be passed in, which covers the case of the registration form and getting the groups from the registration code
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+  }
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 	static $cachedEntryOwners = array();
 	if(!isset($cachedEntryOwners[$element->getVar('id_form')][$entry])) {

@@ -172,6 +172,9 @@ foreach($formulize_elementData as $fid=>$entryData) { // for every form we found
 	$add_proxy_entries = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
 	$update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);
 	$update_other_entries = $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid);
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formulize_formObject = $form_handler->get($fid);
+	$oneEntryPerGroupForm = $formulize_formObject->getVar('single') == "group" ? true : false;
 
 	foreach($entryData as $entry=>$values) { // for every entry in the form...
 		if(substr($entry, 0 , 3) == "new") { // handle entries in the form that are new...if there is more than one new entry in a dataset, they will be listed as new1, new2, new3, etc
@@ -195,7 +198,7 @@ foreach($formulize_elementData as $fid=>$entryData) { // for every form we found
 			}
 		} else { // handle existing entries...
 			$owner = getEntryOwner($entry, $fid);
-			if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries)) { // only proceed if the user has the right permissions
+			if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND ($update_other_entries OR ($update_own_entry AND $oneEntryPerGroupForm)))) { // only proceed if the user has the right permissions
 				$writtenEntryId = formulize_writeEntry($values, $entry);
 				$formulize_allWrittenEntryIds[$fid][] = $writtenEntryId; // log the written id
 				$notEntriesList['update_entry'][$fid][] = $writtenEntryId; // log the notification info

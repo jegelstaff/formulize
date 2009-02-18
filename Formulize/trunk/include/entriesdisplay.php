@@ -59,6 +59,8 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 // $screen will be a screen object if present
 function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0, $viewallforms=0, $screen=null) {
 
+  formulize_benchmark("start of drawing list");
+
 	global $xoopsDB, $xoopsUser;
 
 	// Set some required variables
@@ -645,9 +647,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 	$scope = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
 	// create $data and $wq (writable query)
+  formulize_benchmark("before gathering dataset");
 	list($data, $wq, $regeneratePageNumbers) = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, $screen, $currentURL, intval($_POST['forcequery']));
+  formulize_benchmark("after gathering dataset/before generating nav");
 	$formulize_LOEPageNav = formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers);
-
+  formulize_benchmark("after nav/before interface");
 	$formulize_buttonCodeArray = array();
 	list($formulize_buttonCodeArray) = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $messageText, $hiddenQuickSearches);
 
@@ -657,9 +661,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			print "<p><center><b>$messageText</b></center></p>\n";
 		}
 	}
-
+  formulize_benchmark("before entries");
 	drawEntries($fid, $showcols, strip_tags($_POST['sort']), strip_tags($_POST['order']), $searches, $frid, $scope, "", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches); // , $loadview); // -- loadview not passed any longer since the lockcontrols indicator is used to handle whether things should appear or not.
-
+  formulize_benchmark("after entries");
 
 	if($screen) {
 		formulize_screenLOETemplate($screen, "bottom", $formulize_buttonCodeArray, $settings);

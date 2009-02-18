@@ -481,9 +481,21 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       
           if(!$orderByClause AND $sortField) {
                
-               // if($sortField == "creation_uid" OR $sortField ) // need to add handling for metadata fields here, including creator's e-mail address.
-               
-               if($frid) {
+               if($sorField == "creation_uid" OR "mod_uid" OR "creation_datetime" OR "mod_datetime") {
+                    $elementMetaData['id_form'] = $fid;
+               } elseif($sortField == "uid") {
+                    $sortField = "creation_uid";
+                    $elementMetaData['id_form'] = $fid;
+               } elseif($sortField == "proxyid") {
+                    $sortField = "mod_uid";
+                    $elementMetaData['id_form'] = $fid;
+               } elseif($sortField == "creation_date") {
+                    $sortField = "creation_datetime";
+                    $elementMetaData['id_form'] = $fid;
+               } elseif($sortField == "mod_date") {
+                    $sortField = "mod_datetime";
+                    $elementMetaData['id_form'] = $fid;
+               } elseif($frid) {
                     $elementHandleAndId = formulize_getElementHandleAndIdFromFrameworkHandle($sortField, $frid);
                     $elementMetaData = formulize_getElementMetaData($elementHandleAndId[1]);
                     $sortField = $elementHandleAndId[0]; // use the element handle for the sort field, instead of the framework handle
@@ -539,7 +551,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  $masterQuerySQL = $filter;
      }
      /*global $xoopsUser;
-     if($xoopsUser->getVar('uid') == 1) {
+     if($xoopsUser->getVar('uid') == 4613) {
           $queryTime = $afterQueryTime - $beforeQueryTime;
           print "Query time: " . $queryTime . "<br>";
      }*/
@@ -555,11 +567,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      // Debug Code
      
-     //global $xoopsUser;
-     //if($xoopsUser->getVar('uid') == 1) {
-          //print "<br>Count query: $countMasterResults<br>";
-          //print "Master query: $masterQuerySQL<br>";
-     //}
+     /*global $xoopsUser;
+     if($xoopsUser->getVar('uid') == 1) {
+          print "<br>Count query: $countMasterResults<br><br>";
+          print "Master query: $masterQuerySQL<br>";
+     }*/
      
 		 formulize_benchmark("Before query");
 		 
@@ -1869,7 +1881,7 @@ if(!$xoopsDB) {
 function formulize_benchmark($text) {
      global $xoopsUser;
      if(isset($GLOBALS['startPageTime']) AND $xoopsUser) {
-          if($xoopsUser->getVar('uid') == 1) {
+          if($xoopsUser->getVar('uid') == 4613) {
                $currentPageTime = microtime_float();
                print "<br>$text -- Elapsed: ".($currentPageTime-$GLOBALS['startPageTime'])."<br>";
           }
