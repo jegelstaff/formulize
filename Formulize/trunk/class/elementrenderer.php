@@ -935,6 +935,7 @@ class formulizeElementRenderer{
 		
 		// 1. need to get and cache the values of the entry for this screen
 		// 2. need to put the values into a dropdown list with an onchange event that populates the actual form element
+		// this should be cached in some other way, since every instance of the renderer will need to cache this.  If it were a GLOBAL or this whole thing were in some other function, that would work.
 		static $cachedEntries = array();
 		if(!isset($cachedEntries[$screen->getVar('sid')])) {
 			// identify the entry belonging to this user's group(s) in the other form.  Currently only group correspondence is supported.

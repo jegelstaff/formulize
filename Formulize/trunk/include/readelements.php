@@ -65,7 +65,7 @@ if(!isset($mid)) {
 if(!$myts) { $myts =& MyTextSanitizer::getInstance(); }
 
 //$formulize_submittedElementCaptions = array(); // put into global scope and pulled down by readform.php when determining what elements have been submitted, so we don't blank data that is sent this way
-
+global $xoopsUser;
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS); // for some reason, even though this is set in pageworks index.php file, depending on how/when this file gets executed, it can have no value (in cases where there are pageworks blocks on pageworks pages, for instance?!)
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 $uid = isset($GLOBALS['userprofile_uid']) ? $GLOBALS['userprofile_uid'] : $uid; // if the userprofile form is in play and a new user has been set, then use that uid
@@ -131,7 +131,6 @@ if(count($formulize_up)>0) {
 }
 
 // figure out proxy user situation
-global $xoopsUser;
 $creation_users = array();
 if(isset($_POST['proxyuser'])) {
 	foreach($_POST['proxyuser'] as $puser) {
