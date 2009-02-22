@@ -475,20 +475,26 @@ class formulizeDataHandler  {
 		
 		// check for presence of ID or SEQUENCE and look up the values we'll need to write
 		$lockIsOn = false;
-		$idElements = array_keys($values, "{ID}", true); // true param forces === comparison, which is important!!
-		$seqElements = array_keys($values, "{SEQUENCE}", true);
+		$idElements = array_keys($values, "{ID}");
+		$seqElements = array_keys($values, "{SEQUENCE}");
     if(count($idElements)>0 OR count($seqElements)>0) {
       $lockIsOn = true;
       $xoopsDB->query("LOCK TABLES ".$xoopsDB->prefix("formulize_".$this->fid)." WRITE"); // need to lock table since there are multiple operations required on it for this one write transaction
 			if(count($idElements)>0) {
-				$idMaxSQL = "SELECT MAX(entry_id) FROM " . $xoopsDB->prefix("formulize_".$this->fid);
-				if($idMaxRes = $xoopsDB->query($idMaxSQL)) {
-					$idMaxValue = $xoopsDB->fetchArray($idMaxRes);
-					foreach($idElements as $key) {
-						$values[$key] = $idMaxValue["max(entry_id)"];
+				if($entry == "new") {
+					$idMaxSQL = "SELECT MAX(entry_id) FROM " . $xoopsDB->prefix("formulize_".$this->fid);
+					if($idMaxRes = $xoopsDB->query($idMaxSQL)) {
+						$idMaxValue = $xoopsDB->fetchArray($idMaxRes);
+						foreach($idElements as $key) {
+							$values[$key] = $idMaxValue["MAX(entry_id)"] + 1;
+						}
+					} else {
+						exit("Error: could not determine max value to use for {ID} elements.  SQL:<br>$idMaxSQL<br>");
 					}
 				} else {
-					exit("Error: could not determine max value to use for {ID} elements.  SQL:<br>$idMaxSQL<br>");
+					foreach($idElements as $key) {
+						$values[$key] = $entry;
+					}
 				}
 			}
 			if(count($seqElements)>0) {
@@ -496,9 +502,9 @@ class formulizeDataHandler  {
 					$maxSQL = "SELECT MAX(`".$handleElementMap[$seqElement]."`) FROM ". $xoopsDB->prefix("formulize_".$this->fid);
 					if($maxRes = $xoopsDB->query($maxSQL)) {
 						$maxValue = $xoopsDB->fetchArray($maxRes);
-						$values[$seqElement] = $maxValue["max(".$handleElementMap[$seqElement].")"];
+						$values[$seqElement] = $maxValue["MAX(`".$handleElementMap[$seqElement]."`)"] + 1;
 					} else {
-						exit("Error: count not determin max value for use in element $seqElement.  SQL:<br>$maxSQL<br>");
+						exit("Error: count not determine max value for use in element $seqElement.  SQL:<br>$maxSQL<br>");
 					}
 				}	
 			}

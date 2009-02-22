@@ -2693,17 +2693,19 @@ print "$prevValue<br><br>";
         }
         
         $lockIsOn = false;
-        if($value == "{ID}" OR $value == "{SEQUENCE}") {
+        if(($value == "{ID}" AND $entry == "new") OR $value == "{SEQUENCE}") {
                   $lockIsOn = true;
                   $xoopsDB->query("LOCK TABLES ".$xoopsDB->prefix("formulize_".$element->getVar('id_form'))." WRITE"); // need to lock table since there are multiple operations required on it for this one write transaction
                   $fromField = $value == "{ID}" ? "entry_id" : $element->getVar('ele_handle');
-                  $maxValueSQL = "SELECT MAX($fromField) FROM " . $xoopsDB->prefix("formulize_".$element->getVar('id_form'));
+                  $maxValueSQL = "SELECT MAX(`$fromField`) FROM " . $xoopsDB->prefix("formulize_".$element->getVar('id_form'));
                   if($maxValueRes = $xoopsDB->query($maxValueSQL)) {
                     $maxValueArray = $xoopsDB->fetchArray($maxValueRes);
-                    $value = $maxValueArray["max($fromfield)"] + 1;
+                    $value = $maxValueArray["MAX(`$fromfield`)"] + 1;
                   } else {
                     exit("Error: could not determine max value to use for $value.  SQL:<br>$maxValueSQL<br>");
                   }
+        } elseif($value == "{ID}" AND $entry != "new") {
+          $value = $entry;
         }
         
         
