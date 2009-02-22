@@ -2049,7 +2049,8 @@ function formatLinks($matchtext, $handle, $frid, $textWidth=35) {
 
 // THIS FUNCTION INTERPRETS A TEXTBOX'S DEFAULT VALUE AND RETURNS THE CORRECT STRING
 // Takes $ele_value[2] as the input (third position in ele_value array from element object)
-function getTextboxDefault($ele_value) {
+// $form_id and $entry_id are passed in so they can be accessible within the eval'd code if necessary
+function getTextboxDefault($ele_value, $form_id, $entry_id) {
 
 	global $xoopsUser;
 

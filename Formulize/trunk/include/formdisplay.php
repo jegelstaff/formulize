@@ -1249,14 +1249,14 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 					if(!$myts){ $myts =& MyTextSanitizer::getInstance(); }
 					$ele_value = $ni->getVar('ele_value');
 					$hiddenName = $entry ? "hidden_".$ni->getVar('ele_id') : 'de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'); // if there is an existing entry, need to give this a different name so it will not be saved...we are only using this as a cue, to be picked up by the subform system if it needs to write a common value to the DB to establish a link in a new subform entry!
-					$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden($hiddenName, $myts->htmlSpecialChars(getTextboxDefault($ele_value[2])));
+					$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden($hiddenName, $myts->htmlSpecialChars(getTextboxDefault($ele_value[2], $ni->getVar('id_form'), $entry)));
 					break;
 				case "textarea":
 					if(!$entry) {
 						global $myts;
 						if(!$myts){ $myts =& MyTextSanitizer::getInstance(); }
 						$ele_value = $ni->getVar('ele_value');
-						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $myts->htmlSpecialChars(getTextboxDefault($ele_value[0])));
+						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $myts->htmlSpecialChars(getTextboxDefault($ele_value[0], $ni->getVar('id_form'), $entry)));
 					}
 					break;
 			}

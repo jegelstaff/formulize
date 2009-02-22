@@ -134,7 +134,7 @@ class formulizeElementRenderer{
 				$ele_value[2] = stripslashes($ele_value[2]);
 //        $ele_value[2] = $myts->displayTarea($ele_value[2]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
 				
-				$ele_value[2] = getTextboxDefault($ele_value[2]);
+				$ele_value[2] = getTextboxDefault($ele_value[2], $id_form, $entry);
 
 				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added
 					
@@ -154,7 +154,7 @@ class formulizeElementRenderer{
 			case 'textarea':
 				$ele_value[0] = stripslashes($ele_value[0]);
 //        $ele_value[0] = $myts->displayTarea($ele_value[0]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
-				$ele_value[0] = getTextboxDefault($ele_value[0]);
+				$ele_value[0] = getTextboxDefault($ele_value[0], $id_form, $entry);
 				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added 
 					$form_ele = new XoopsFormTextArea(
 						$ele_caption,
