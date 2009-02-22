@@ -1174,7 +1174,7 @@ function addProxyList($form, $groups, $member_handler, $gperm_handler, $fid, $mi
 				$uqueryforrealnames = "SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=$uid";
 				$uresqforrealnames = $xoopsDB->query($uqueryforrealnames);
 				$urowqforrealnames = $xoopsDB->fetchRow($uresqforrealnames);
-				$punames[] = $urowqforrealnames[0] ? $$urowqforrealnames[0] : $urowqforrealnames[1]; // use the uname if there is no full name
+				$punames[] = $urowqforrealnames[0] ? $urowqforrealnames[0] : $urowqforrealnames[1]; // use the uname if there is no full name
 				//print "username: $urowqforrealnames[0]<br>"; // debug code
 			}
 
