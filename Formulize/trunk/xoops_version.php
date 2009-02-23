@@ -30,7 +30,7 @@
 ###############################################################################
 
 $modversion['name'] = _MI_formulize_NAME;
-$modversion['version'] = "3.0";
+$modversion['version'] = "3.1";
 $modversion['description'] = _MI_formulize_DESC;
 $modversion['author'] = "Freeform Solutions";                                            
 $modversion['credits'] = "";
@@ -54,14 +54,13 @@ $modversion['tables'][7] = "formulize_framework_links";
 $modversion['tables'][8] = "formulize_menu_cats";
 $modversion['tables'][9] = "formulize_saved_views";
 $modversion['tables'][10] = "group_lists";
-$modversion['tables'][11] = "formulize_onetoone_links";
-$modversion['tables'][12] = "formulize_other";
-$modversion['tables'][13] = "formulize_notification_conditions";
-$modversion['tables'][14] = "formulize_valid_imports";
-$modversion['tables'][15] = "formulize_screen";
-$modversion['tables'][16] = "formulize_screen_multipage";
-$modversion['tables'][17] = "formulize_screen_listofentries";
-$modversion['tables'][18] = "formulize_entry_owner_groups";
+$modversion['tables'][11] = "formulize_other";
+$modversion['tables'][12] = "formulize_notification_conditions";
+$modversion['tables'][13] = "formulize_valid_imports";
+$modversion['tables'][14] = "formulize_screen";
+$modversion['tables'][15] = "formulize_screen_multipage";
+$modversion['tables'][16] = "formulize_screen_listofentries";
+$modversion['tables'][17] = "formulize_entry_owner_groups";
 
 
 // Admin things

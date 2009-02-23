@@ -1094,45 +1094,37 @@ function updateperms() {
 }
 
 
-function patch30() {
+function patch31() {
 
   global $xoopsDB;
   // check if the new table structure is in place, and don't run this patch if so!
   $patchCheckSql = "SHOW TABLES";
 	$resultPatchCheck = $xoopsDB->queryF($patchCheckSql);
-  $newStructureFound = false;
-  $formulizeFormFound = false;
   $entryOwnerGroupFound = false;
 	while($table = $xoopsDB->fetchRow($resultPatchCheck)) {
-    $secondPart = substr($table[0], strlen($xoopsDB->prefix("formulize_")));
-    if(is_numeric($secondPart) AND strstr($table[0], $xoopsDB->prefix("formulize_"))) {
-      $newStructureFound = true;
-    }
-    if($table[0] == $xoopsDB->prefix("formulize_form")) {
-      $formulizeFormFound = true;
-    }
     if($table[0] == $xoopsDB->prefix("formulize_entry_owner_groups")) {
-            $entryOwnerGroupFound = true;
+      $entryOwnerGroupFound = true;
     }
-  }
-  if(!$formulizeFormFound AND $entryOwnerGroupFound) {
-      print "<h1>It appears you have not upgraded from a previous version of Formulize.  You do not need to apply this patch unless you are upgrading from a version prior to 3.0</h1>\n";
-      print "<p>If you did upgrade from a previous version, please contact <a href=mailto:support@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>\n";
-      return;
-  }
-  if($newStructureFound) {
-    print "<h1>You cannot run this patch again after upgrading to the 3.0 data structure.</h1>";
-    return;
   }
 
-	if(!isset($_POST['patch30'])) {
-		print "<form action=\"formindex.php?op=patch30\" method=post>";
-		print "<h1>Warning: this patch makes several changes to the database, including detection and correction of errors and inconsistencies in your actual data.  Backup your database prior to applying this patch!</h1>";
+	if(!isset($_POST['patch31'])) {
+		print "<form action=\"formindex.php?op=patch31\" method=post>";
+		print "<h1>Warning: this patch makes several changes to the database.  Backup your database prior to applying this patch!</h1>";
 		print "<p>This patch may take a few minutes to apply.  Your page may take that long to reload, please be patient.</p>";
-		print "<input type = submit name=patch30 value=\"Apply Database Patch for Formulize 3.0\">";
+		print "<input type = submit name=patch31 value=\"Apply Database Patch for Formulize 3.1\">";
 		print "</form>";
 	} else {
 		
+    // if entryownergroupfound, then only do the 3.1 upgrade, otherwise, do the entire upgrade
+    if($entryOwnerGroupFound) {
+      if($derivedResult = formulize_createDerivedValueFieldsInDB()) {
+        print "Created derived value fields in database.  result: OK<br>\n";
+        print "DB updates completed.  result: OK";
+      } else {
+        print "Unable to create derived value fields in database.  result: failed.  contact <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
+      }
+      return;
+    }
 		// put logic here
 
 		// check to see if form table exists
@@ -1363,8 +1355,6 @@ if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables))
 								$sql['fixlsbapos'] = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET `ele_value` = REPLACE(`ele_value`, '&#039;', '\'') WHERE `ele_type` = 'select' AND `ele_value` LIKE '%#*=:*%'"; // during the 2.2 patch, some apostrophes in the ele_value field would have been converted to html chars incorrectly
 		$sql['sv_pubgroups'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " CHANGE `sv_pubgroups` `sv_pubgroups` text default NULL";
                 $sql['id_req_int'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_form") . " CHANGE `id_req` `id_req` int(7)";
-                $sql['onetoone_main'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_onetoone_links") . " ADD `main_fid` int(5)";
-								$sql['onetoone_link'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_onetoone_links") . " ADD `link_fid` int(5)";
 								$sql['import_fid'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_valid_imports") . " ADD `fid` int(5)";
                 $sql['useToken'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen") . " ADD `useToken` tinyint(1) NOT NULL";
                 $sql['notCreator'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_notification_conditions") . " ADD `not_cons_creator` tinyint(1)";
@@ -1510,6 +1500,49 @@ if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables))
 
 		print "DB updates completed.  result: OK";
         } 
+}
+
+// this function reads all the derived value fields in the elements list and makes sure there is a field in the data tables for each one
+function formulize_createDerivedValueFieldsInDB() {
+  
+  // 1. gather a list of all the derived elements, including their form ids (so we can reference the tables), and handles (so we know what the field should be called)
+  // 2. foreach table, get a list of columns, and if the field name is not represented, then create it
+  global $xoopsDB;
+  $form_handler =& xoops_getmodulehandler('forms', 'formulize');
+  $element_handler =& xoops_getmodulehandler('elements', 'formulize');
+  $sql = "SELECT id_form, ele_handle, ele_id FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'derived' ORDER BY id_form";
+  if($result = $xoopsDB->query($sql)) {
+    $fieldMap = array();
+    while($array = $xoopsDB->fetchArray($result)) {
+      $fieldMap[$array['id_form']][] = array(0=>$array['ele_handle'], 1=>$array['ele_id']);
+    }
+    foreach($fieldMap as $fid=>$fields) {
+      $sql2 = "SHOW COLUMNS FROM ".$xoopsDB->prefix("formulize_".$fid);
+      if($result2 = $xoopsDB->query($sql2)) {
+        $existingFields = array();
+        while($array2 = $xoopsDB->fetchArray($result2)) {
+          $existingFields[] = $array2['Field']; // show columns returns Field Type Null Key Default Extra
+        }
+      } else {
+        return false;
+      }
+      foreach($fields as $thisFieldInfo) {
+        if(!in_array($thisFieldInfo[0], $existingFields)) { // 0 is the handle
+          if(!$insertResult = $form_handler->insertElementField($element_handler->get($thisFieldInfo[1]))) { // 1 is the id
+            exit("Error: could not add the derived value field, $thisFieldInfo[1], to the data table.");
+          }
+        }
+      }
+    }
+    
+    // now that we know we have fields for all the derived value elements, tell the user to populate them with the correct data
+    print "Before you can do calculations or sort lists based on derived values, you will have to go to every page in each list of entries that has derived values.  Going to each page will cause the derived values to be cached in the database, so that calculations and sorts based on the derived values will work.<br>\n";
+    
+    return true;
+  } else {
+    return false;
+  }
+  
 }
 
 // this function handles the checking for ambiguous id_reqs based on the form id
@@ -1805,29 +1838,12 @@ function patch30DataStructure($auto = false) {
                         print "Migrated data to new data structure for form " . $thisFormObject->getVar('id_form') . ".  result: OK<br>\n";
                         unset($allFormObjects[$formObjectId]); // attempt to free up some memory
                 }
-      // add form ids to the onetoone table
-      // 1. lookup each entry in the one to one table
-      // 2. find its fid and make a map
-      // 3. update each entry in the one to one table
-      $sql = "SELECT * FROM " . $xoopsDB->prefix("formulize_onetoone_links");
-      $allOneToOne = $xoopsDB->query($sql);
-      $matchedFids = array();
-      while($oneToOneArray = $xoopsDB->fetchArray($allOneToOne)) {
-        // lookup the main_form and link_form ids in the formulize_form table, and get the form id (main_form and link_form are id_reqs)
-        $mainFidLookupSQL = "SELECT id_form FROM " .$xoopsDB->prefix("formulize_form"). " WHERE id_req=".intval($oneToOneArray['main_form'])." LIMIT 0,1";
-        $linkFidLookupSQL = "SELECT id_form FROM " .$xoopsDB->prefix("formulize_form"). " WHERE id_req=".intval($oneToOneArray['link_form'])." LIMIT 0,1";
-        $mainRes = $xoopsDB->fetchArray($xoopsDB->query($mainFidLookupSQL));
-        $linkRes = $xoopsDB->fetchArray($xoopsDB->query($linkFidLookupSQL));
-        $mainFidUpdateSQL = "UPDATE " . $xoopsDB->prefix("formulize_onetoone_links") . " SET main_fid = ".intval($mainRes['id_form'])." WHERE main_form=".intval($oneToOneArray['main_form']);
-        $linkFidUpdateSQL = "UPDATE " . $xoopsDB->prefix("formulize_onetoone_links") . " SET link_fid = ".intval($linkRes['id_form'])." WHERE link_form=".intval($oneToOneArray['link_form']);
-        if(!$mainRes2 = $xoopsDB->query($mainFidUpdateSQL)) {
-          exit("Error: could not update one to one table with this SQL: $mainFidUpdateSQL.<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
-        }
-        if(!$linkRes2 = $xoopsDB->query($linkFidUpdateSQL)) {
-          exit("Error: could not update one to one table with this SQL: $linkFidUpdateSQL.<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
-        }
+      
+      if($derivedResult = formulize_createDerivedValueFieldsInDB()) {
+        print "Created derived value fields in database.  result: OK<br>\n";
+      } else {
+        print "Unable to create derived value fields in database.  result: failed.  contact <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
       }
-      print "Updated the one_to_one table with new metadata.  result: OK<br>\n";
       
       // convert the captions in the linked selectbox defintions to the handles for those elements
       // 1. lookup all elements that are linked selectboxes in the formulize table (element table) -- db query for element ids
@@ -1933,8 +1949,8 @@ case "migratedb":
 	migratedb();
 	break;
 
-case "patch30":
-	patch30();
+case "patch31":
+	patch31();
 	break;
 case "patch22convertdata":
 	patch22convertdata();
@@ -1944,7 +1960,7 @@ case "patch30datastructure":
         break;
 }
 
-print "<p>version 3.0 RC1</p>";
+print "<p>version 3.1 RC1</p>";
 
 include 'footer.php';
     xoops_cp_footer();

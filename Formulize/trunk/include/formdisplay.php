@@ -1354,7 +1354,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			}
 		}
 
-		if($ele_type != "subform" AND $ele_type != 'grid') { // AND $ele_type != 'derived') { // derived now handled in renderer
+		if($ele_type != "subform" AND $ele_type != 'grid') { 
 			// "" is framework, ie: not applicable
 			// $i is element object
 			// $entry is entry_id
@@ -1485,13 +1485,20 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 				if($dataFromUser) {
 					$value = $dataFromUser;
 				}
-			} 
+			}
 
 			if(!$value) {
 	     			global $xoopsDB;
      				$ecq = q("SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '$ele_id'");
      				$handle = $ecq[0]['ele_handle'];
-	     			$key = array_search($handle, $prevEntry['handles']);
+						$key = "";
+	     			$keysFound = array_keys($prevEntry['handles'], $handle);
+						foreach($keysFound as $thisKeyFound) {
+							if("xyz".$prevEntry['handles'][$thisKeyFound] == "xyz".$handle) { // do a comparison with a prefixed string to avoid problems comparing numbers to numbers plus text, ie: "1669" and "1669_copy" since the loose typing in PHP will not interpret those as intended
+								$key = $thisKeyFound;
+								break;
+							}
+						}
      				// if the caption was not found in the existing values for this entry, then return the ele_value, unless we're looking at an existing entry, and then we need to clear defaults first
      				if(!is_numeric($key) AND $key=="") { 
      					if($entry) {
@@ -1505,8 +1512,10 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
      						}
      					} 
 	     				return $ele_value; 
-     				} 
-     				$value = $prevEntry['values'][$key];
+     				}
+						if($key !== "") {
+							$value = $prevEntry['values'][$key];
+						}
 			}
 
 			/*print_r($ele_value);
@@ -1514,6 +1523,9 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 			*/
 			switch ($type)
 			{
+				case "derived":
+					$ele_value[5] = $value;	// there is not a number 5 position in ele_value for derived values...we add the value to print in this position so we don't mess up any other information that might need to be carried around
+					break;
 				case "text":
 					$ele_value[2] = $value;				
 					$ele_value[2] = eregi_replace("'", "&#039;", $ele_value[2]);				

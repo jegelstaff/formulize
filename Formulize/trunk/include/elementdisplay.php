@@ -135,7 +135,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$ele_type = $element->getVar('ele_type');
 		$deprefix = $noSave ? "denosave_" : "de_";
 		$deprefix = $subformCreateEntry ? "desubform".$subformEntryIndex."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
-		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subform' AND $ele_type != 'grid' AND $ele_type != 'derived') {
+		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subform' AND $ele_type != 'grid') {
 			$data_handler = new formulizeDataHandler($element->getVar('id_form'));
 			$ele_value = loadValue($prevEntry, $element, $ele_value, $data_handler->getEntryOwnerGroups($entry), $groups, $entry, $profileForm); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 		}

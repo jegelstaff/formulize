@@ -194,6 +194,9 @@ foreach($formulize_elementData as $fid=>$entryData) { // for every form we found
 						$_COOKIE['entryid_'.$fid] = $writtenEntryId;
 					}
 				}
+				if(isset($id_form)) { // id_form is set in initialize...so we're only doing this updating, when included by Formulize as part of a regular page load...we need to rely on the original form id value and not the $fid defined in this loop, since if a framework is in effect, then the mainform is important for doing the right extraction and derivation
+					formulize_updateDerivedValues($writtenEntryId, $id_form, $frid); // frid set in initialize.php	
+				}
 			}
 		} else { // handle existing entries...
 			$owner = getEntryOwner($entry, $fid);
@@ -202,6 +205,9 @@ foreach($formulize_elementData as $fid=>$entryData) { // for every form we found
 				$formulize_allWrittenEntryIds[$fid][] = $writtenEntryId; // log the written id
 				$notEntriesList['update_entry'][$fid][] = $writtenEntryId; // log the notification info
 				writeOtherValues($writtenEntryId, $fid); // write the other values for this entry
+				if(isset($id_form)) { // id_form is set in initialize...so we're only doing this updating, when included by Formulize as part of a regular page load...we need to rely on the original form id value and not the $fid defined in this loop, since if a framework is in effect, then the mainform is important for doing the right extraction and derivation
+					formulize_updateDerivedValues($writtenEntryId, $id_form, $frid); // frid set in initialize.php	
+				}
 			}
 		}
 	}
@@ -212,8 +218,6 @@ foreach($formulize_newEntryIds as $fid=>$entries){
 	$data_handler_for_owner_groups->setEntryOwnerGroups($formulize_newEntryUsers[$fid],$formulize_newEntryIds[$fid]);
 	unset($data_handler_for_owner_groups);
 }
-// blank values that need blanking
-// need to send cues in $_POST about entries that were on screen, and for any that we don't have a value for, set the value to "" and they will simply be set to null when the entry is written, presto.
 
 // send notifications
 foreach($notEntriesList as $notEvent=>$notDetails) {
@@ -232,6 +236,14 @@ $GLOBALS['formulize_allWrittenEntryIds'] = $formulize_allWrittenEntryIds;
 $GLOBALS['formulize_readElementsWasRun'] = $formulize_readElementsWasRun;
 
 return $formulize_allWrittenEntryIds;
+
+// this could be done a whole lot smarter, if we make a good way of figuring out if there's derived value elements in the form, and also if there are any formulas in the form/framework that use any of the elements that we have just saved values for
+// but that's a whole lot of inspection we're not going to do right now.
+function formulize_updateDerivedValues($entry, $fid, $frid) {
+	$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+	getData($frid, $fid, $entry);
+	unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+}
 
 
 // THIS FUNCTION TAKES THE DATA PASSED BACK FROM THE USERPROFILE PART OF A FORM AND SAVES IT AS PART OF THE XOOPS USER PROFILE

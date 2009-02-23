@@ -35,7 +35,7 @@
 
 // code snippet that handles saving of data...called in the normal save operation in admin/elements.php, but also invoked in certain cases when the page reloads but the user should not have left the editing screen yet
 
-$databaseElement = ($ele_type == "derived" OR $ele_type == "areamodif" OR $ele_type == "ib" OR $ele_type == "sep" OR $ele_type == "subform" OR $ele_type == "grid") ? false : true;
+$databaseElement = ($ele_type == "areamodif" OR $ele_type == "ib" OR $ele_type == "sep" OR $ele_type == "subform" OR $ele_type == "grid") ? false : true;
 
 if( !empty($ele_id) AND $clone == 0){
       
@@ -51,7 +51,7 @@ if( !empty($ele_id) AND $clone == 0){
 		}else{
 			unset($ele_id); // just in case we're cloning something
 			$element =& $formulize_mgr->create();
-      $newFieldNeeded = $databaseElement ? true : false; // derived fields and others don't exist in the database
+      $newFieldNeeded = $databaseElement ? true : false; // some fields don't exist in the database
 		}
 
     $ele_caption = get_magic_quotes_gpc() ? stripslashes($ele_caption) : $ele_caption;

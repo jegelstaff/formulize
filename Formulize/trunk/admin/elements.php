@@ -188,7 +188,7 @@ switch($op){
 			$form->addElement($ele_handle); 
 		
 			// descriptive text added June 6 2006 -- jwe
-			if($ele_type != "ib" AND $ele_type != "derived") {
+			if($ele_type != "ib") {
 				$ele_desc = new XoopsFormTextArea(_AM_ELE_DESC, 'ele_desc', $ele_desc_default, 5, 35);
 				$ele_desc->setDescription(_AM_ELE_DESC_HELP);
 				$form->addElement($ele_desc);
@@ -387,7 +387,7 @@ switch($op){
 			$element =& $formulize_mgr->get($ele_id);
       $ele_type = $element->getVar('ele_type');
 			$formulize_mgr->delete($element);
-      if($ele_type != "derived" AND $ele_type != "areamodif" AND $ele_type != "ib" AND $ele_type != "sep" AND $ele_type != "subform" AND $ele_type != "grid") {
+      if($ele_type != "areamodif" AND $ele_type != "ib" AND $ele_type != "sep" AND $ele_type != "subform" AND $ele_type != "grid") {
         $formulize_mgr->deleteData($element); //added aug 14 2005 by jwe  
       }
 			redirect_header("index.php?title=$title", 0, _AM_DBUPDATED);

@@ -141,15 +141,6 @@ CREATE TABLE group_lists (
   UNIQUE gl_name_id (gl_name)
 ) TYPE=MyISAM;
 
-CREATE TABLE formulize_onetoone_links (
-  link_id smallint(5) NOT NULL auto_increment,
-  main_form int(5),
-  main_fid int(5),
-  link_form int(5),
-  link_fid int(5),
-  PRIMARY KEY (`link_id`)
-) TYPE=MyISAM;
-
 CREATE TABLE formulize_menu_cats (
   cat_id smallint(5) NOT NULL auto_increment,
   cat_name varchar(255) default NULL,

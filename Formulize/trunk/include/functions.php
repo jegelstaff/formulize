@@ -788,18 +788,11 @@ function deleteFormEntries($array, $fid) {
 }
 
 // THIS FUNCTION REMOVES ENTRIES FROM THE OTHER TABLE BASED ON AN IDREQ
-// ALSO REMOVED ENTRIES FROM THE ONE TO ONE TABLE
-
 function deleteMaintenance($id_req, $fid) {
 
 	global $xoopsDB;
 
-	// remove listings in one_to_one links table
-	$sql = "DELETE FROM ". $xoopsDB->prefix("formulize_onetoone_links") . " WHERE (main_form='$id_req' AND main_fid='$fid') OR (link_form='$id_req' AND link_fid='$fid')";
-	if(!$result2 = $xoopsDB->query($sql)) {
-		exit("Error: failed to delete one to one links for entry $id_req");
-	}
-
+	
 	// remove entries in the formulize_other table
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$formObject = $form_handler->get($fid);
@@ -3438,4 +3431,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
   
   
 }
+
+
+
 ?>

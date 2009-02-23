@@ -453,7 +453,7 @@ class formulizeDataHandler  {
 	// $values will be an array of element ids and prepared values
 	// $proxyUser is optional and if present will override the current xoopsuser uid as the creation user
 	function writeEntry($entry, $values, $proxyUser=false, $forceUpdate=false) {
-	
+
 		global $xoopsDB, $xoopsUser;
 		static $cachedMaps = array();
 		// get handle/id equivalents directly from database in one query, since we'll need them later
@@ -477,6 +477,16 @@ class formulizeDataHandler  {
 		$lockIsOn = false;
 		$idElements = array_keys($values, "{ID}");
 		$seqElements = array_keys($values, "{SEQUENCE}");
+		foreach($idElements as $idKey=>$thisIdElement) { // on some versions of PHP, you cannot use the third boolean param with array_keys and get a strict match, so we do a double check on what we found this way to enforce strict matching
+			if($values[$thisIdElement] !== "{ID}") {
+				unset($idElements[$idKey]);
+			}
+		}
+		foreach($seqElements as $seqKey=>$thisSeqElement) {
+			if($values[$thisSeqElement] !== "{SEQUENCE}") {
+				unset($seqElements[$seqKey]);
+			}
+		}
     if(count($idElements)>0 OR count($seqElements)>0) {
       $lockIsOn = true;
       $xoopsDB->query("LOCK TABLES ".$xoopsDB->prefix("formulize_".$this->fid)." WRITE"); // need to lock table since there are multiple operations required on it for this one write transaction
@@ -509,7 +519,7 @@ class formulizeDataHandler  {
 				}	
 			}
 		}
-		
+
 		// do the actual writing now that we have prepared all the info we need
 		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 		if($entry == "new") {

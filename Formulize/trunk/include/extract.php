@@ -228,9 +228,6 @@ function handleFromId($id, $fid, $frid) {
         return $handles[$id][$fid][$frid];
 }
 
-
-
-
 function microtime_float()
 {
    list($usec, $sec) = explode(" ", microtime());
@@ -718,6 +715,24 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 
 } // end of dataExtraction function
 
+// this function returns the form id when given the form name, or the form handle and a framework id
+function formulize_getFormIdFromNameOrHandle($nameHandle, $frid=0) {
+     static $cachedFormIds = array();
+     if(!isset($cachedFormIds[$nameHandle][$frid])) {
+          if($frid) {
+               $formIdData = go("SELECT ff_form_id FROM ".DBPRE."formulize_framework_forms WHERE ff_handle = '".mysql_real_escape_string($nameHandle)."' AND ff_frame_id = ".intval($frid));
+               $cachedFormIds[$nameHandle][$frid] = $formIdData[0]['ff_form_id'];
+          } else {
+               $formIdData = go("SELECT id_form FROM ".DBPRE."formulize_id WHERE desc_form = '".mysql_real_escape_string($nameHandle)."'");
+               $cachedFormIds[$nameHandle][$frid] = $formIdData[0]['id_form'];
+          }
+     }
+     return $cachedFormIds[$nameHandle][$frid];
+}
+
+
+
+
 // THIS FUNCTION RETURNS THE FORM HANDLE NECESSARY FOR THE MASTER RESULT, BASED ON THE FRAMEWORK MAP IN EFFECT, IF ANY
 function formulize_readFrameworkMap($frameworkMap, $form_id, $elementHandle=false) {
      if($elementHandle == false) {
@@ -1118,6 +1133,7 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
 // Derived values should always be in the mainform only?
 function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
      
+     global $xoopsDB; // just used as a cue to see if XOOPS is active
      static $parsedFormulas = array();
      foreach($entry as $formHandle=>$record) {
           if(isset($metadata[$formHandle])) { // if there are derived value formulas for this form...
@@ -1130,12 +1146,27 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
                     $parsedFormulas[$formHandle] = true;
                }
                foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
-                    $functionName = "derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", str_replace("/", "", str_replace("\\", "", $formHandle))))."_".$formulaNumber;
-                    formulize_benchmark(" -- calling derived function.");
-                    $derivedValue = $functionName($entry);
-                    formulize_benchmark(" -- completed call.");
-                    foreach($record as $recordID=>$elements) {
-                         $entry[$formHandle][$recordID][$thisMetaData['handle']][0] = $derivedValue;
+                    
+                    if($entry[$formHandle][key($record)][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
+                         $functionName = "derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", str_replace("/", "", str_replace("\\", "", $formHandle))))."_".$formulaNumber;
+                         formulize_benchmark(" -- calling derived function.");
+                         $derivedValue = $functionName($entry);
+                         formulize_benchmark(" -- completed call.");
+                         foreach($record as $recordID=>$elements) {
+                              $entry[$formHandle][$recordID][$thisMetaData['handle']][0] = $derivedValue;
+                              // write value to database if XOOPS is active
+                              if($xoopsDB) {
+                                   include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+                                   $data_handler = $data_handler = new formulizeDataHandler(formulize_getFormIdFromNameOrHandle($formHandle, $frid));
+                                   if($frid) {
+                                        $elementHandleAndId = formulize_getElementHandleAndIdFromFrameworkHandle($thisMetaData['handle'], $frid);
+                                        $elementID = formulize_getIdFromElementHandle($elementHandleAndId[0]);
+                                   } else {
+                                        $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
+                                   }
+                                   $data_handler->writeEntry($recordID, array($elementID=>$derivedValue), false, true); // false is no proxy user, true is force the update even on get requests
+                              }
+                         }
                     }
                }
           }
@@ -1259,6 +1290,7 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
      if(!$handle) { $handle = "{nonefound}"; }
      return $handle;
 }
+
 
 // THIS FUNCTION QUERIES A TABLE IN THE DATABASE AND RETURNS THE RESULTS IN STANDARD getData FORMAT
 // Uses the standard filter syntax, and can use scope if a uidField name is specified

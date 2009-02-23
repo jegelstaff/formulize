@@ -104,7 +104,13 @@ class formulizeElementRenderer{
 	
 		switch ($e){
 			case 'derived':
-				if($entry !== "new") {
+				if($entry != "new") {
+					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), $ele_value[5]);
+				} else {
+					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE);
+				}
+				
+				/*if($entry !== "new") {
 					// quick hack to get these in for elementdisplay.php which relies on the element renderer.
 					// does not work with Frameworks
 					static $derivedValueData = array();
@@ -120,7 +126,7 @@ class formulizeElementRenderer{
 					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), "<div class=\"formulize_derived\">".display($derivedValueData[$baseEntryForDerivation][0], $elementHandle)."</div>");
 				} else {
 					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE);
-				}
+				}*/
 				break;
 
 			case 'ib':

@@ -56,7 +56,7 @@ $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.mysql_e
  
 if ( $res ) {
   while ( $row = $xoopsDB->fetchArray ( $res ) ) {
-    $id_form = $fid;
+    $id_form = $fid; // this is important because we use $id_form in the readelements.php file to trigger the updating of the derived values.  This value will be preserved regardless of other logic in readelements.php, so we always will know what the original form id called was.
     $admin = $row['admin'];
     $groupe = $row['groupe'];
     $email = $row['email'];
@@ -117,11 +117,16 @@ if($sid) {
     if(is_object($xoopsTpl)) {
       $xoopsTpl->assign('xoops_pagetitle', $screen->getVar('title'));
     }
+		$frid = $screen->getVar('frid'); // set these here just in case it's needed in readelements.php
+		$id_form = $screen->getVar('fid'); // set these here just in case it's needed in readelements.php
 	}
 } 
 
 // one time only, the code to read the displayElement elements will be executed
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
+// note...$fid is not reliable after this file is included!!
+
+
 
 // check for $xoopsUser added by skenow.  Forces anons to only see the form itself and never the list of entries view.
 // Really, we should build in better permission/configuration control so that more precise 

@@ -223,7 +223,7 @@ class formulizeFormsHandler {
                 $newTableSQL .= "creation_uid int(7) default '0',";
                 $newTableSQL .= "mod_uid int(7) default '0',";
                 foreach($fid->getVar('elementHandles') as $elementId=>$thisHandle) {
-												if($elementTypes[$elementId] == "derived" OR $elementTypes[$elementId] == "areamodif" OR $elementTypes[$elementId] == "ib" OR $elementTypes[$elementId] == "sep" OR $elementTypes[$elementId] == "grid" OR $elementTypes[$elementId] == "subform") { continue; } // do not attempt to create derived values as fields!
+												if($elementTypes[$elementId] == "areamodif" OR $elementTypes[$elementId] == "ib" OR $elementTypes[$elementId] == "sep" OR $elementTypes[$elementId] == "grid" OR $elementTypes[$elementId] == "subform") { continue; } // do not attempt to create certain types of fields since they don't live in the db!
                         $newTableSQL .= "`$thisHandle` text NULL default NULL,";
                 }
                 $newTableSQL .= "PRIMARY KEY (`entry_id`),";

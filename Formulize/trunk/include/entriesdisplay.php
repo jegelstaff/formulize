@@ -605,7 +605,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 		if($screen AND $screen->getVar("viewentryscreen")) {
 			// only multipage screens supported at the moment
-			$multiPageScreen_handler = xoops_getmodulehandler('multipagescreen', 'formulize');
+			$multiPageScreen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 			$displayScreen = $multiPageScreen_handler->get($screen->getVar('viewentryscreen'));
 			$multiPageScreen_handler->render($displayScreen, $this_ent, $settings);
       return;
@@ -1298,7 +1298,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 
  		print "<table class=outer><tr><th colspan=2>" . _formulize_DE_CALCHEAD . "</th></tr>\n";
  		if(!$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
- 			print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></td></tr>";
+ 			print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL ."/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></td></tr>";
  		}
 
 		$exportFilename = $settings['xport'] == "calcs" ? $filename : "";
@@ -1851,8 +1851,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
     $excludes = explode(",", $blanks[$i]);
     $groupings = explode(",", $grouping[$i]);
     
-    // need to figure out if it's a derived value column, and if so, do something completely different here:
-    // need to properly handle "other" values also
+    // need to properly handle "other" values 
     
     // build the select statement
     foreach(explode(",", $calcs[$i]) as $cid=>$calc) {
@@ -3502,7 +3501,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				return "<input type=button style=\"width: 140px;\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";
 				break;
 			case "calcButton":
-				return "<input type=button style=\"width: 140px;\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping');\"></input>";
+				return "<input type=button style=\"width: 140px;\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."');\"></input>";
 				break;
 			case "advSearchButton":
 				$buttonCode = "<input type=button style=\"width: 140px;\" name=advsearch value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
