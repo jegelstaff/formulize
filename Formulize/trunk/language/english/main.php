@@ -466,6 +466,7 @@ define("_formulize_DE_DATAHEADING", "List of Entries");
 
 //ADVANCED SEARCH:
 define("_formulize_DE_BUILDQUERY", "Build your query");
+define("_formulize_DE_AS_DEPRECATED", "The \"Advanced Search\" feature is not recommended any more.  Searches you do here will not be reflected in any calculations.  Searches you do here are applied to each page of results after the page has been built, so some pages will have less than the normal number of entries.  Some pages may have no entries left after the search is done.  This can be very confusing.<br><br><a href=\"".XOOPS_URL."/modules/formulize/docs/search_help.xhtml\">Read about the many different kinds of searches you can do using the \"Quicksearch\" boxes at the top of each column.</a>");
 define("_formulize_DE_AS_FIELD", "To search this field(s):");
 define("_formulize_DE_AS_MULTI_AND", "use AND between multiple fields");
 define("_formulize_DE_AS_MULTI_OR", "use OR between multiple fields");
@@ -667,7 +668,7 @@ define("_formulize_DE_LOE_LIMIT_REACHED1", "There are");
 define("_formulize_DE_LOE_LIMIT_REACHED2", "entries in the list.  It would take a long time to retrieve them.  You can use search terms to limit the number of entries, or");
 define("_formulize_DE_LOE_LIMIT_REACHED3", "you can click here to have the system retrieve all the entries.");
        
-define("_formulize_OUTOFRANGE_DATA","Preserve non-standard value found in the database: ");
+define("_formulize_OUTOFRANGE_DATA","Keep this other value found in the database: ");
 
 define("_AM_FORMULIZE_PREVIOUS_OPTION", "Use a previous answer:");
 define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","This value will be calculated after the data is saved");

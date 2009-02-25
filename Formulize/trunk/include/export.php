@@ -75,8 +75,12 @@ if(trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $expor
     $cols = explode(",",$_GET['cols']);
     $headers = array();
     foreach($cols as $thiscol) {
-			$colMeta = formulize_getElementMetaData($thiscol, true);
-			$headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
+			if($thiscol == "creator_email") {
+				$headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
+			} else {
+				$colMeta = formulize_getElementMetaData($thiscol, true);
+				$headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
+			}
     }
 		if($_GET['type'] == "update") {
 			$fdchoice = "update";

@@ -286,6 +286,7 @@ foreach($hidden as $oneHidden) {
 	unset($oneHidden);
 }
 
+$advsearch->insertBreak("<div style=\"font-weight: normal;\">" . _formulize_DE_AS_DEPRECATED . "</div>", "head"); // advanced search officially deprecated with work on version 3.1
 $advsearch->addElement($opterm);
 $advsearch->addElement($columns); // order change April 4 2007
 $advsearch->addElement($addButton);
