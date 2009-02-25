@@ -936,8 +936,8 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	
 	static $addXEntriesDone = false;
 	$target_sub_to_use = (isset($_POST['target_sub']) AND !$addXEntriesDone AND $_POST['target_sub'] != 0) ? $_POST['target_sub'] : $sfid; 
-	// element_to_write is used below in writing results of "add x entries" clicks, plus it is used for defaultblanks on first drawing blank entries
 	$elementq = q("SELECT fl_key1, fl_key2, fl_common_value, fl_form2_id FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=" . intval($frid) . " AND fl_form2_id=" . intval($fid) . " AND fl_form1_id=" . intval($target_sub_to_use));
+	// element_to_write is used below in writing results of "add x entries" clicks, plus it is used for defaultblanks on first drawing blank entries
 	if(count($elementq) > 0) {
 		$element_to_write = $elementq[0]['fl_key1'];
 		$value_source = $elementq[0]['fl_key2'];

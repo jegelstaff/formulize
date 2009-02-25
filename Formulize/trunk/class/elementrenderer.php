@@ -797,7 +797,7 @@ class formulizeElementRenderer{
 				$previousEntryUIRendered = "";
 			}
 			// $e is the type value...only put in a cue for certain kinds of elements, and definitely not for blank subforms
-			if(substr(trim($form_ele_id,"de_"), 0, 7) != "subform" AND ($e == "text" OR $e == "textarea" OR $e == "select" OR $e=="radio" OR $e=="checkbox" OR $e=="date" OR $e=="colorpick" OR $e=="yn")) {
+			if(substr($form_ele_id, 0, 9) != "desubform" AND ($e == "text" OR $e == "textarea" OR $e == "select" OR $e=="radio" OR $e=="checkbox" OR $e=="date" OR $e=="colorpick" OR $e=="yn")) {
 				$elementCue = "\n<input type=\"hidden\" name=\"decue_".trim($form_ele_id,"de_")."\" value=1>\n";
 			} else {
 				$elementCue = "";
@@ -812,7 +812,7 @@ class formulizeElementRenderer{
 			return $form_ele_new;
 		} elseif(is_object($form_ele) AND $isDisabled) { // element is disabled
 			$form_ele = $this->formulize_disableElement($form_ele, $e);
-			if($e == "text" OR $e == "textarea" OR $e == "select" OR $e=="radio" OR $e=="checkbox" OR $e=="date" OR $e=="colorpick" OR $e=="yn") {
+			if(substr($form_ele_id, 0, 9) != "desubform" AND ($e == "text" OR $e == "textarea" OR $e == "select" OR $e=="radio" OR $e=="checkbox" OR $e=="date" OR $e=="colorpick" OR $e=="yn")) {
 				$form_ele->addElement(new xoopsFormHidden("decue_".trim($form_ele_id,"de_"), 1));
 			}
 			return $form_ele;
