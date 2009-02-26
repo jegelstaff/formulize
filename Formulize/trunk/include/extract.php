@@ -478,7 +478,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       
           if(!$orderByClause AND $sortField) {
                
-               if($sorField == "creation_uid" OR "mod_uid" OR "creation_datetime" OR "mod_datetime") {
+               if($sortField == "creation_uid" OR $sortField == "mod_uid" OR $sortField == "creation_datetime" OR $sortField == "mod_datetime") {
                     $elementMetaData['id_form'] = $fid;
                } elseif($sortField == "uid") {
                     $sortField = "creation_uid";
