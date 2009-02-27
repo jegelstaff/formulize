@@ -186,6 +186,8 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mi
 
 function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button_text="", $settings="", $titleOverride="", $overrideValue="", $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0, $printall=0, $screen=null) {  // nmc 2007.03.24 - added $printall
 
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/extract.php';
 formulize_benchmark("Start of formDisplay.");
 
 //syntax:
@@ -202,7 +204,6 @@ formulize_benchmark("Start of formDisplay.");
 //4. drawform with data if necessary
 
 	global $xoopsDB, $xoopsUser, $myts;
-	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 	$GLOBALS['sfidsDrawn'] = array();
 
