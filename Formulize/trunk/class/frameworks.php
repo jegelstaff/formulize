@@ -112,6 +112,44 @@ class formulizeFramework extends XoopsObject {
 		return $ret;
 	}
 
+	// this method returns either "one" or "many" or "onetoone" to indicate if a given handle is on a one side or a many side of the relationship in the framework
+	function whatSideIsHandleOn($key) {
+		static $cachedHandles = array();
+		if(!isset($cachedHandles[$key])) {
+			foreach($this->getVar('links') as $thisLink) {
+				if($thisLink->getVar('key1') == $key) {
+					switch($thisLink->getVar('relationship')) {
+						case 1:
+							$cachedHandles[$key] = "onetoone";
+							break;
+						case 2:
+							$cachedHandles[$key] = "one";
+							break;
+						case 3:
+							$cachedHandles[$key] = "many";
+							break;
+					}
+				} elseif($thisLink->getVar('key2') == $key) {
+					switch($thisLink->getVar('relationship')) { // when the form is the second one listed, then 1 and 3 (one to one and many to one) result in "one" being the correct response, while 2 (one to many) results in "many"
+						case 1:
+							$cachedHandles[$key] = "onetoone";
+							break;
+						case 2:
+							$cachedHandles[$key] = "many";
+							break;
+						case 3:
+							$cachedHandles[$key] = "one";
+							break;
+					}
+				}
+				if(isset($cachedHandles[$key])) {
+					break;
+				}
+			}
+		}
+		return $cachedHandles[$key];
+	}
+
 }
 
 class formulizeFrameworkLink extends XoopsObject {
@@ -164,6 +202,9 @@ class formulizeFrameworkLink extends XoopsObject {
 		$this->initVar("relationship", XOBJ_DTYPE_INT, $relationship, true);
 		$this->initVar("unifiedDisplay", XOBJ_DTYPE_INT, $unified_display, true);
 	}
+	
+	
+	
 }
 
 class formulizeFrameworksHandler {
@@ -216,6 +257,9 @@ class formulizeFrameworksHandler {
 		return $ret;
 
 	}
+
+  
+
 
 }
 ?>

@@ -436,7 +436,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    $scopeFilter = " AND (".str_replace("uid", "main.creation_uid", $scope).") ";
 	       }
 	       
-	       list($formFieldFilterMap, $whereClause, $orderByClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
+	       list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
 	       
 	       $limitClause = "";
 	       if($limitSize) {
@@ -449,27 +449,40 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       
 	       
 	       if($frid) {
-		    $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
-		    $newJoinText = "";
-		    $joinText = "";
-		    foreach($linkformids as $id=>$linkedFid) {
-			 formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
-			 $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
-			 $joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
-			 $newJoinText = " $joinType JOIN " . DBPRE . "formulize_$linkedFid AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
-			 if($linkcommonvalue[$id]) { // common value
-			      $newJoinText .= " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
-			 } elseif($linktargetids[$id]) { // linked selectbox
-			      if(formulize_isLinkedSelectBox($linktargetids[$id])) { 
-				   $newJoinText .= " f$id." . $joinHandles[$linktargetids[$id]] . " LIKE CONCAT('%,',main.entry_id,',%')";
-			      } else {
-				   $newJoinText .= " main." . $joinHandles[$linkselfids[$id]] . " LIKE CONCAT('%,',f$id.entry_id,',%')";
-			      }
-			 } else { // join by uid
-			      $newJoinText .= " main.creation_uid=f$id.creation_uid";
-			 }
-			 $joinText .= $newJoinText;
-		   }
+           $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
+           $newJoinText = "";
+           $newOneSideJoinText = "";
+           $joinText = "";
+           $oneSideJoinText = "";
+           foreach($linkformids as $id=>$linkedFid) {
+             formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
+             $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
+             $joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
+             $newJoinText = " $joinType JOIN " . DBPRE . "formulize_$linkedFid AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
+             $newOneSideJoinText = $oneSideJoinText ? " $andor " : "";
+             $newOneSideJoinText = " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_$linkedFid AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it 
+             if($linkcommonvalue[$id]) { // common value
+               $newJoinText .= " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
+             } elseif($linktargetids[$id]) { // linked selectbox
+               if(formulize_isLinkedSelectBox($linktargetids[$id])) { 
+                 $newJoinText .= " f$id." . $joinHandles[$linktargetids[$id]] . " LIKE CONCAT('%,',main.entry_id,',%')";
+               } else {
+                 $newJoinText .= " main." . $joinHandles[$linkselfids[$id]] . " LIKE CONCAT('%,',f$id.entry_id,',%')";
+               }
+             } else { // join by uid
+               $newJoinText .= " main.creation_uid=f$id.creation_uid";
+             }
+             $joinText .= $newJoinText;
+             $oneSideJoinText .= $newOneSideJoinText . $newJoinText;
+             if(count($oneSideFilters[$linkedFid])>0) {
+               $oneSideJoinText .= " AND (";
+               foreach($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
+                $oneSideJoinText .= $thisOneSideFilter;
+               }
+               $oneSideJoinText .= ") ";
+             }
+             $oneSideJoinText .= ") "; // close the exists clause
+           }
 	       }
 	       
 	       // specify the join info for user table (depending whether there's a query on creator_email or not)
@@ -537,7 +550,19 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  
 	  // only drawback in this SQL right now is it does not support one to one relationships in the query, since they are essentially joins on the entry_id and form id through the one_to_one table
 	  $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause $limitClause";
+    
+    // if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
+    $oneSideSQL = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText WHERE $oneSideJoinText AND main.entry_id>0 $scopeFilter ";
+    if($oneSideJoinText OR count($oneSideFilters[$fid])>0) {
+      $oneSideSQL .= " $andor ( "; // properly introduce these filters
+      $oneSideSQL .= $oneSideJoinText ? " $oneSideJoinText " : ""; // add any one side join text that we need, if it exists  
+      if(count($oneSideFilters[$fid])>0) {
+          $oneSideSQL .= $oneSideJoinText ? " $andor ( ".implode(" ", $oneSideFilters[$fid]) . ") )" : implode(" ", $oneSideFilters[$fid]) . ")"; // if there are other forms, then we assume that we have to separate the main form's queries from the others...might not always be true...this split up structure may in fact go against the andor intentions of complicated queries...but there's nothing we can do about that.  In either case, close off with a final ) to match the one made three lines above
+      }        
+    }
+    
 	  $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
+    $GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
     if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
 	  $GLOBALS['formulize_queryForExport'] = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause";
      
@@ -798,7 +823,6 @@ function formulize_mapFramework($frid) {
 
 // THIS FUNCTION BREAKS DOWN THE FILTER STRING INTO ITS COMPONENTS.  TAKES EVERYTHING UP TO THE TOP LEVEL ARRAY SYNTAX.
 // $linkfids is the linked fids in order that they appear in the SQL query
-// needs work...and must handle one to one
 function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
      
      if($filtertemp == "") { return array(0=>array(), "", ""); }
@@ -806,6 +830,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
      $formFieldFilterMap = array();
      $whereClause = "";
      $orderByClause = "";
+     
+     $oneSideFilters = array(); // we need to capture each filter individually, just in case we need to apply them individually to each part of the query for calculations.  Filters for calculations will not work right if the combination of filter terms is excessively complex, ie: includes OR'd terms across different forms in a framework, certain other complicated types of bracketing
      
      if(!is_array($filtertemp)) {
           $filter = array(0=>array(0=>$andor, 1=>$filtertemp));
@@ -816,7 +842,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
      global $myts;
      $numSeachExps = 0;
      foreach($filter as $filterParts) {
-          // evaluate each search expression (collection of terms with a common operator inbetween
+          // evaluate each search expression (collection of terms with a common boolean inbetween
           // Use the global andor setting between expressions
           
           if($filterParts[1] == "") { continue; } // ignore filters that are empty...can happen if only OR filters are specified, and maybe at other times too
@@ -835,7 +861,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                $ifParts = explode("/**/", $indivFilter);
                
                if($numIndivFilters > 0) {
-                    $whereClause .= $filterParts[0];
+                    $whereClause .= $filterParts[0]; // apply local andor setting
                }
                $whereClause .= "("; // bracket each individual component of the whereclause
                     
@@ -942,12 +968,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // instead of doing a subquery, this could probably be redone similarly to creator_email and then we would have the "other" value in the raw query result, and then the process in prepValues would not need to requery the other table
                     if($formFieldFilterMap[$mappedForm][$element_id]['hasother']) {
                          $subquery = "(SELECT id_req FROM " . DBPRE . "formulize_other WHERE ele_id=" . intval($element_id) . " AND other_text " . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . ")";
-                         $whereClause .= "(($elementPrefix.entry_id = ANY $subquery)OR("."$elementPrefix." . $ifParts[0] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes."))"; // need to look in the other box and the main field, and return values that match in either case
-                    
+                         $newWhereClause = "(($elementPrefix.entry_id = ANY $subquery)OR("."$elementPrefix." . $ifParts[0] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes."))"; // need to look in the other box and the main field, and return values that match in either case
                     // handle linked selectboxes
                     } elseif($sourceMeta = $formFieldFilterMap[$mappedForm][$element_id]['islinked']) {
                          // Neal's suggestion:  use EXISTS...other forms of subquery using field IN subquery or subquery LIKE field, and a CONCAT in the subquery, failed in various conditions.  IN did not work with multiple selection boxes, and LIKE did not work with search terms too general to return only one match in the source form.  Exists works in all cases.  :-)
-                         $whereClause .= " EXISTS (SELECT 1 FROM ".DBPRE."formulize_".$sourceMeta[0]." AS source WHERE $elementPrefix.".$ifParts[0]." LIKE CONCAT('%,',source.entry_id,',%') AND source.".$sourceMeta[1] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . ")";
+                         $newWhereClause = " EXISTS (SELECT 1 FROM ".DBPRE."formulize_".$sourceMeta[0]." AS source WHERE $elementPrefix.".$ifParts[0]." LIKE CONCAT('%,',source.entry_id,',%') AND source.".$sourceMeta[1] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . ")";
                     // usernames/fullnames boxes
                     } elseif($listtype = $formFieldFilterMap[$mappedForm][$element_id]['isnamelist'] AND $ifParts[1] !== "") {
                          $listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
@@ -961,23 +986,31 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 															$nameSearchStart = true;
                               while($preSearchArray = mysql_fetch_array($preSearchResult)) {
 																	 if(!$nameSearchStart) {
-																				$whereClause .= "OR";
+																				$newWhereClause = "OR";
 																	 } else {
 																				$nameSearchStart = false;
 																	 }
                                    if(formulize_selectboxAllowsMultipleSelections($element_id)) {
-                                        $whereClause .= " (($elementPrefix.".$ifParts[0]." LIKE '%*=+*:" . $preSearchArray['uid'] . "*=+*:%' OR $elementPrefix.".$ifParts[0]." LIKE '%*=+*:" . $preSearchArray['uid'] . "') OR $elementPrefix.".$ifParts[0]." = " . $preSearchArray['uid'] . ") "; // could this be further optimized to remove the = condition, and only use the LIKEs?  We need to check if a multiselection-capable box still uses the delimiter string when only one value is selected...I think it does.
+                                        $newWhereClause = " (($elementPrefix.".$ifParts[0]." LIKE '%*=+*:" . $preSearchArray['uid'] . "*=+*:%' OR $elementPrefix.".$ifParts[0]." LIKE '%*=+*:" . $preSearchArray['uid'] . "') OR $elementPrefix.".$ifParts[0]." = " . $preSearchArray['uid'] . ") "; // could this be further optimized to remove the = condition, and only use the LIKEs?  We need to check if a multiselection-capable box still uses the delimiter string when only one value is selected...I think it does.
                                    } else {
-                                        $whereClause .= " $elementPrefix.".$ifParts[0]." = " . $preSearchArray['uid'] . " ";
+                                        $newWhereClause = " $elementPrefix.".$ifParts[0]." = " . $preSearchArray['uid'] . " ";
                                    }
                               }
                          } else {
-                              $whereClause .= "main.entry_id<0"; // no matches, so result set should be empty, so set a where clause that will return zero results
+                              $newWhereClause = "main.entry_id<0"; // no matches, so result set should be empty, so set a where clause that will return zero results
+                              
                          }
                     // regular whereclause
                     } else {
                          // could/should put better handling in here of multiple value boxes, so = operators actually only look for matches within the individual values??  Is that possible?
-                         $whereClause .= "$elementPrefix." . $ifParts[0] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes;
+                         $newWhereClause = "$elementPrefix." . $ifParts[0] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes;
+                    }
+                    
+                    $whereClause .= $newWhereClause;
+                    if(count($oneSideFilters[$mappedForm]) == 0) {
+                         $oneSideFilters[$mappedForm][] = " $newWhereClause ";   // don't add the local andor on the first term for a form  
+                    } else {
+                         $oneSideFilters[$mappedForm][] = $filterParts[0] . " $newWhereClause ";     
                     }
                     
                }
@@ -990,7 +1023,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
           $numSeachExps++;
      }
                          
-     return array(0=>$formFieldFilterMap, 1=>$whereClause, 2=>$orderByClause);    
+     return array(0=>$formFieldFilterMap, 1=>$whereClause, 2=>$orderByClause, 3=>$oneSideFilters);    
 }
 
 // THIS FUNCTION TAKES AN ELEMENT AND COMPILES THE FORM, ELEMENT MAP, NECESSARY FOR KNOWING ALL WE NEED TO KNOW ABOUT THE ELEMENT

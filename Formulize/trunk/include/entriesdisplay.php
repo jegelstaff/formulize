@@ -1842,6 +1842,12 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
   $groupingSettings = array();
   $groupingValues = array();
   $baseQuery = $GLOBALS['formulize_queryForCalcs'];
+  $oneSideBaseQuery = $GLOBALS['formulize_queryForOneSideCalcs'];
+  
+  if($frid) {
+    $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
+    $frameworkObject = $framework_handler->get($frid);
+  }
   
   for($i=0;$i<count($cols);$i++) {
     // convert to element handle from element id
@@ -1857,7 +1863,17 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
     foreach(explode(",", $calcs[$i]) as $cid=>$calc) {
       
       // set the base query to use:
-      $thisBaseQuery = $baseQuery;
+      // if this calculation is being done on a field that is on the one side of a one to many relationship, then we need to use a special version of the baseQuery
+      if($frid) {
+        if($frameworkObject->whatSideIsHandleOn($cols[$i]) == "one") {
+          $thisBaseQuery = $oneSideBaseQuery;
+        } else {
+          $thisBaseQuery = $baseQuery;
+        }
+      } else {
+        $thisBaseQuery = $baseQuery;
+      }
+      
       
       // figure out what to ask for for this calculation      
       switch($calc) {
