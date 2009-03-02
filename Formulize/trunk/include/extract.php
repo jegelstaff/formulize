@@ -450,38 +450,37 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       
 	       if($frid) {
            $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
-           $newJoinText = "";
+           $newJoinText = ""; // "new" variables initilized in each loop
            $newOneSideJoinText = "";
-           $joinText = "";
+           $joinText = ""; // not "new" variables persist (with .= operator)
            $oneSideJoinText = "";
            foreach($linkformids as $id=>$linkedFid) {
              formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
              $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
              $joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
-             $newJoinText = " $joinType JOIN " . DBPRE . "formulize_$linkedFid AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
+             $joinText .= " $joinType JOIN " . DBPRE . "formulize_$linkedFid AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
              $newOneSideJoinText = $oneSideJoinText ? " $andor " : "";
              $newOneSideJoinText = " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_$linkedFid AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it 
              if($linkcommonvalue[$id]) { // common value
-               $newJoinText .= " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
+               $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
              } elseif($linktargetids[$id]) { // linked selectbox
                if(formulize_isLinkedSelectBox($linktargetids[$id])) { 
-                 $newJoinText .= " f$id." . $joinHandles[$linktargetids[$id]] . " LIKE CONCAT('%,',main.entry_id,',%')";
+                 $newJoinText = " f$id." . $joinHandles[$linktargetids[$id]] . " LIKE CONCAT('%,',main.entry_id,',%')";
                } else {
-                 $newJoinText .= " main." . $joinHandles[$linkselfids[$id]] . " LIKE CONCAT('%,',f$id.entry_id,',%')";
+                 $newJoinText = " main." . $joinHandles[$linkselfids[$id]] . " LIKE CONCAT('%,',f$id.entry_id,',%')";
                }
              } else { // join by uid
-               $newJoinText .= " main.creation_uid=f$id.creation_uid";
+               $newJoinText = " main.creation_uid=f$id.creation_uid";
              }
              $joinText .= $newJoinText;
-             $oneSideJoinText .= $newOneSideJoinText . $newJoinText;
-             if(count($oneSideFilters[$linkedFid])>0) {
+             if(count($oneSideFilters[$linkedFid])>0) { // only setup the oneSideJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
+               $oneSideJoinText .= $newOneSideJoinText . $newJoinText;
                $oneSideJoinText .= " AND (";
                foreach($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
                 $oneSideJoinText .= $thisOneSideFilter;
                }
-               $oneSideJoinText .= ") ";
+               $oneSideJoinText .= ")) "; // close the where clause and the exists clause itself
              }
-             $oneSideJoinText .= ") "; // close the exists clause
            }
 	       }
 	       
@@ -552,13 +551,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause $limitClause";
     
     // if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
-    $oneSideSQL = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText WHERE $oneSideJoinText AND main.entry_id>0 $scopeFilter ";
-    if($oneSideJoinText OR count($oneSideFilters[$fid])>0) {
-      $oneSideSQL .= " $andor ( "; // properly introduce these filters
-      $oneSideSQL .= $oneSideJoinText ? " $oneSideJoinText " : ""; // add any one side join text that we need, if it exists  
-      if(count($oneSideFilters[$fid])>0) {
-          $oneSideSQL .= $oneSideJoinText ? " $andor ( ".implode(" ", $oneSideFilters[$fid]) . ") )" : implode(" ", $oneSideFilters[$fid]) . ")"; // if there are other forms, then we assume that we have to separate the main form's queries from the others...might not always be true...this split up structure may in fact go against the andor intentions of complicated queries...but there's nothing we can do about that.  In either case, close off with a final ) to match the one made three lines above
-      }        
+    // note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
+    $oneSideSQL = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText WHERE main.entry_id>0 $scopeFilter ";
+    $oneSideSQL .= $oneSideJoinText ? " AND ($oneSideJoinText) " : "";
+    if(count($oneSideFilters[$fid])>0) {
+      $oneSideSQL .= " $andor ( " . implode(" ", $oneSideFilters[$fid]) . ")"; // properly introduce these filters
     }
     
 	  $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";

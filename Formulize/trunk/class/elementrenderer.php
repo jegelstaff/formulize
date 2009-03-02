@@ -261,6 +261,7 @@ class formulizeElementRenderer{
 					}
 					
 					// determine the filter conditions if any, and make the conditionsfilter
+					$conditionsfilter = "";
 					if(is_array($ele_value[5])) {
 						$filterElements = convertElementIdsToElementHandles($ele_value[5][0], $sourceFid);
 						$filterOps = $ele_value[5][1];
