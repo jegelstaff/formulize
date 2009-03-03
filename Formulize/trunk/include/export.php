@@ -55,61 +55,82 @@ print "</head>";
 print "<body><center>"; 
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 
-// 1. need to pickup the full query that was used for the dataset on the page where the button was clicked
-// 2. need to run that query and make a complete dataset
-// 3. need to send that dataset to the prepexport function to make the spreadsheet
-// 4. need to provide a link to the finished file
-// 5. need to make sure import templates are created appropriately
+// 1. need to make a form that can be used to pick metadata columns or no metadata columns
+// 2. need to reload this page with same URL and provide the download file as normal, but this time, pass in the no metadata flag if it was picked
 
-// read the query data from the cached file
-$queryData = file(XOOPS_ROOT_PATH."/cache/exportQuery_".intval($_GET['eq']).".formulize_cached_query_for_export");
-global $xoopsUser;
-$exportUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-$fid = intval($_GET['fid']);
-$frid = intval($_GET['frid']);
-$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-if(trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $exportUid) { // query fid must match passed fid in URL, and the current user id must match the userid at the time the export file was created
-    print "<center><h1>"._formulize_DE_EXPORTTITLE."</h1></center>\n";
-    $data = getData($frid, $fid, $queryData[2]);
-    
-    $cols = explode(",",$_GET['cols']);
-    $headers = array();
-    foreach($cols as $thiscol) {
-			if($thiscol == "creator_email") {
-				$headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
-			} else {
-				$colMeta = formulize_getElementMetaData($thiscol, true);
-				$headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
-			}
-    }
-		if($_GET['type'] == "update") {
-			$fdchoice = "update";
-			$linkText = _formulize_DE_CLICKSAVE_TEMPLATE;
-		} else {
-			$linkText = _formulize_DE_CLICKSAVE;
-			$fdchoice = "comma";
-			//$cols = array();
-			//$headers = array();
-		}
-		/*print "<pre>";
-		print_r($cols);
-		print_r($headers);
-		print "</pre>";*/
-		if($frid) {
-			$filename = prepExport($headers, convertElementHandlesToFrameworkHandles($cols, $frid), $data, $fdchoice, "", "", false, $fid, $groups);
-		} else {
-			$filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
-		}
-    print "<center><p><a href=\"$filename\">$linkText</a></p></center>\n";
-    
-    if($_GET['type']=="update") {
-        print "<p>"._formulize_DE_IMPORT_DATATEMP4." <a href=\"\" onclick=\"javascript:window.opener.showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=".intval($_GET['eq'])."');return false;\">"._formulize_DE_IMPORT_DATATEMP5."</a></p>\n";
-        print "<p>"._formulize_DE_IMPORT_DATATEMP3."</p>\n";
-    }
-    
+if(!isset($_POST['metachoice'])) {
+
+	print "<form name=\"metachoiceform\" action=\"".getCurrentURL() . "\" method=\"post\">\n";
+	print "<center>\n";
+	print "<h1>"._formulize_DE_EXPORT_METATITLE."</h1>\n<br>\n";
+	print "</center>\n";
+	print "<input type=\"radio\" name=\"metachoice\" value=\"1\">"._formulize_DB_EXPORT_METAYES."</input>\n<br>\n";
+	print "<input type=\"radio\" name=\"metachoice\" value=\"0\" checked>"._formulize_DB_EXPORT_METANO."</input>\n<br><br>\n";
+	print "<center>\n";
+	print "<input type=\"submit\" name=\"exportsubmit\" value=\""._formulize_DE_EXPORT_MAKEFILE."\">\n";
+	print "</center>\n";
+	print "</form>";
+
 } else {
-    print _formulize_DE_EXPORT_FILE_ERROR;
-}
+
+	// 1. need to pickup the full query that was used for the dataset on the page where the button was clicked
+	// 2. need to run that query and make a complete dataset
+	// 3. need to send that dataset to the prepexport function to make the spreadsheet
+	// 4. need to provide a link to the finished file
+	// 5. need to make sure import templates are created appropriately
+	
+	// read the query data from the cached file
+	$queryData = file(XOOPS_ROOT_PATH."/cache/exportQuery_".intval($_GET['eq']).".formulize_cached_query_for_export");
+	global $xoopsUser;
+	$exportUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+	$fid = intval($_GET['fid']);
+	$frid = intval($_GET['frid']);
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+	if(trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $exportUid) { // query fid must match passed fid in URL, and the current user id must match the userid at the time the export file was created
+			print "<center><h1>"._formulize_DE_EXPORTTITLE."</h1></center>\n";
+			$data = getData($frid, $fid, $queryData[2]);
+			
+			$cols = explode(",",$_GET['cols']);
+			$headers = array();
+			foreach($cols as $thiscol) {
+				if($thiscol == "creator_email") {
+					$headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
+				} else {
+					$colMeta = formulize_getElementMetaData($thiscol, true);
+					$headers[] = $colMeta['ele_colhead'] ? trans($colMeta['ele_colhead']) : trans($colMeta['ele_caption']);
+				}
+			}
+			if($_GET['type'] == "update") {
+				$fdchoice = "update";
+				$linkText = _formulize_DE_CLICKSAVE_TEMPLATE;
+			} else {
+				$linkText = _formulize_DE_CLICKSAVE;
+				$fdchoice = "comma";
+				//$cols = array();
+				//$headers = array();
+			}
+			/*print "<pre>";
+			print_r($cols);
+			print_r($headers);
+			print "</pre>";*/
+			if($frid) {
+				$filename = prepExport($headers, convertElementHandlesToFrameworkHandles($cols, $frid), $data, $fdchoice, "", "", false, $fid, $groups);
+			} else {
+				$filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
+			}
+			print "<center><p><a href=\"$filename\">$linkText</a></p></center>\n";
+			
+			if($_GET['type']=="update") {
+					print "<p>"._formulize_DE_IMPORT_DATATEMP4." <a href=\"\" onclick=\"javascript:window.opener.showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=".intval($_GET['eq'])."');return false;\">"._formulize_DE_IMPORT_DATATEMP5."</a></p>\n";
+					print "<p>"._formulize_DE_IMPORT_DATATEMP3."</p>\n";
+			}
+			
+	} else {
+			print _formulize_DE_EXPORT_FILE_ERROR;
+	}
+
+} // end of "if the metachoice form has been submitted"
+
 
 print "</td><td width=5%></td></tr></table>";
 print "</center></body>";

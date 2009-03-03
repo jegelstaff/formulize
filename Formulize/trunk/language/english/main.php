@@ -365,6 +365,11 @@ define("_formulize_DE_EXPORT", "Export Entries");
 // new constants related to the export popup
 define("_formulize_DE_EXPORT_FILE_ERROR", "Sorry!  There is an error with the query file.  Please close this window, reload the list of entries page, and try exporting again.");
 define("_formulize_DE_EXPORTTITLE", "Download your file:");
+define("_formulize_DE_EXPORT_METATITLE", "Export options:");
+define("_formulize_DB_EXPORT_METAYES", "Include all metadata columns (user who created the entry, last modification time, etc)");
+define("_formulize_DB_EXPORT_METANO", "Do not include metadata columns");
+define("_formulize_DE_EXPORT_MAKEFILE", "Create the data file with these options");
+
        
 define("_formulize_DE_EXPORT_CALCS", "Export Calcs");
 define("_formulize_DE_SAVE", "Save current view");

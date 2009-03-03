@@ -1094,25 +1094,54 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 		if(!$fd) { $fd = "**"; }
 		$fxt = ".customDelimited";
 	}
+  $lineStarted = false;
 	if($template) {
 		if($template == "blankprofile") { // add in other profile fields -- username, realname, e-mail, password, registration code
-			$csvfile = "\"" . _formulize_DE_IMPORT_USERNAME . "\"$fd\"" . _formulize_DE_IMPORT_FULLNAME . "\"$fd\"" . _formulize_DE_IMPORT_PASSWORD . "\"$fd\"" . _formulize_DE_IMPORT_EMAIL . "\"$fd\"" . 	_formulize_DE_IMPORT_REGCODE . "\"";					
+			$csvfile = "\"" . _formulize_DE_IMPORT_USERNAME . "\"$fd\"" . _formulize_DE_IMPORT_FULLNAME . "\"$fd\"" . _formulize_DE_IMPORT_PASSWORD . "\"$fd\"" . _formulize_DE_IMPORT_EMAIL . "\"$fd\"" . 	_formulize_DE_IMPORT_REGCODE . "\"";
+      $lineStarted = true;
 		} else {
 			if($template == "update") {
 				$csvfile = "\"" . _formulize_DE_IMPORT_IDREQCOL . "\"$fd\"" . _formulize_DE_CALC_CREATOR . "\"";
+        $lineStarted = true;
 			} else {
 				$csvfile = "\"" . _formulize_DE_CALC_CREATOR . "\"";
+        $lineStarted = true;
 			}
 		}
-	} else {
+	} elseif($_POST['metachoice'] == 1) { // only include metadata columns if the user requested them
 		$csvfile =  "\"" . _formulize_DE_CALC_CREATOR . "\"$fd\"" . _formulize_DE_CALC_CREATEDATE . "\"$fd\"" . _formulize_DE_CALC_MODIFIER . "\"$fd\"" . _formulize_DE_CALC_MODDATE . "\"";
-	}
+    $lineStarted = true;
+	} else {
+      if(in_array("uid", $cols) OR in_array("creation_uid", $cols)) {
+        $csvfile .= "\"" . _formulize_DE_CALC_CREATOR . "\"";
+        $lineStarted = true;
+      }
+      if(in_array("creation_date", $cols) OR in_array("creation_datetime", $cols)) {
+        $csvfile .= $lineStarted ? $fd : "";
+        $csvfile .= "\"" . _formulize_DE_CALC_CREATEDATE . "\"";
+        $lineStarted = true;
+      }
+      if(in_array("proxyid", $cols) OR in_array("mod_uid", $cols)) {
+        $csvfile .= $lineStarted ? $fd : "";
+        $csvfile .= "\"" . _formulize_DE_CALC_MODIFIER . "\"";
+        $lineStarted = true;
+      }
+      if(in_array("mod_date", $cols) OR in_array("mod_datetime", $cols)) {
+        $csvfile .= $lineStarted ? $fd : "";
+        $csvfile .= "\"" . _formulize_DE_CALC_MODDATE . "\"";
+        $lineStarted = true;
+      }
+  }
 	foreach($headers as $header)
 	{
-		if($header == "" OR $header == _formulize_DE_CALC_CREATOR OR $header == _formulize_DE_CALC_MODIFIER OR $header==_formulize_DE_CALC_CREATEDATE OR $header ==_formulize_DE_CALC_MODDATE) { continue; } // ignore the metadata columns if they are selected, since we already handle them better above
+		if($header == "" OR ($_POST['metachoice'] == 1 AND ($header == _formulize_DE_CALC_CREATOR OR $header == _formulize_DE_CALC_MODIFIER OR $header==_formulize_DE_CALC_CREATEDATE OR $header ==_formulize_DE_CALC_MODDATE))) { continue; } // ignore the metadata columns if they are selected, since we already handle them better above...as long as the user requested that they be included
 		$header = str_replace("\"", "\"\"", $header);
 		$header = "\"" . trans($header) . "\"";
-		$csvfile .= $fd . $header;
+    if($lineStarted) {
+      $csvfile .= $fd;
+    }
+		$csvfile .= $header;
+    $lineStarted = true;
 	}
 	
 	$csvfile .= "\r\n";
@@ -1145,20 +1174,27 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 		$m_date = display($entry, 'mod_datetime');
 
 		// write in metadata
+    $lineStarted = false;
 		if($template) { // will be update only, since blank ones have no data
 			$csvfile .= $id . $fd . "\"$c_name\"";
-		} else {
+      $lineStarted = true;
+		} elseif($_POST['metachoice'] == 1) {
 			$csvfile .= "\"$c_name\"" . $fd . "\"$c_date\"" . $fd . "\"$m_name\"" . $fd . "\"$m_date\"";
-		}
+      $lineStarted = true;
+		} 
 		
 		// write in data
 		foreach($cols as $col) {
-			if($col == "uid" OR $col == "proxyid" OR $col=="creation_date" OR $col =="mod_date" OR $col == "creation_uid" OR $col == "mod_uid" OR $col == "creation_datetime" OR $col == "mod_datetime") { continue; } // ignore the metadata columns if they are selected, since we already handle them better above
+			if(($col == "uid" OR $col == "proxyid" OR $col=="creation_date" OR $col =="mod_date" OR $col == "creation_uid" OR $col == "mod_uid" OR $col == "creation_datetime" OR $col == "mod_datetime") AND $_POST['metachoice'] == 1) { continue; } // ignore the metadata columns if they are selected, since we already handle them better above
 			$data_to_write = displayTogether($entry, $col, "\n");
 			$data_to_write = str_replace("&quot;", "&quot;&quot;", $data_to_write);
 			$data_to_write = "\"" . trans($data_to_write) . "\"";
 			$data_to_write = str_replace("\r\n", "\n", $data_to_write);
-			$csvfile .= $fd . $data_to_write;
+      if($lineStarted) {
+        $csvfile .= $fd;
+      }
+			$csvfile .= $data_to_write;
+      $lineStarted = true;
 		}
 		$csvfile .= "\r\n"; // end of a line
 	}
