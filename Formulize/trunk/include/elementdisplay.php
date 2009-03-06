@@ -204,7 +204,25 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 // THIS FUNCTION RETURNS THE CAPTION FOR AN ELEMENT 
 // added June 25 2006 -- jwe
 function displayCaption($formframe="", $ele) {
-	$element = "";
+	$element = _formulize_returnElement($ele, $formframe);
+  if(!is_object($element)) {
+    return "invalid_element";
+  }
+	return $element->getVar('ele_caption');
+}
+
+// THIS FUNCTION RETURNS THE description FOR AN ELEMENT 
+function displayDescription($formframe="", $ele) {
+	$element = _formulize_returnElement($ele, $formframe);
+  if(!is_object($element)) {
+    return "invalid_element";
+  }
+	return $element->getVar('ele_desc');
+}
+
+// this function takes an element object, or an element id number, or framework handle (which requires the frid)
+function _formulize_returnElement($ele, $formframe="") {
+  $element = "";
 	if(is_object($ele)) {	
 		if(get_class($ele) == "formulizeformulize") {
 			$element = $ele;
@@ -218,7 +236,7 @@ function displayCaption($formframe="", $ele) {
           }
       	else
           {
-      		$element_id = getFrameworkElementId($formframe, $ele);
+      		// $element_id = getFrameworkElementId($formframe, $ele); // broken - no such function exists anymore
           }
 
       	if(!$formulize_mgr) {
@@ -230,9 +248,7 @@ function displayCaption($formframe="", $ele) {
       		return "invalid_element";
       	}
 	}
-
-	return $element->getVar('ele_caption');
-
+  return $element;
 }
 
 // THIS FUNCTION DRAWS IN A SAVE BUTTON AT THE POINT REQUESTED BY THE USER
@@ -269,7 +285,7 @@ function displayButton($text, $ele, $value, $entry="new", $append="replace", $bu
           }
       	else
           {
-      		$element_id = getFrameworkElementId($formframe, $ele);
+      		//$element_id = getFrameworkElementId($formframe, $ele); // broken...no such function exists
           }
 
       	if(!$formulize_mgr) {
