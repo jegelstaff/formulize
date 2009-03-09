@@ -950,7 +950,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		$value_source_form = $elementq[0]['fl_form1_id'];		
 	}
 
-	
+
 	// check for adding of a sub entry, and handle accordingly -- added September 4 2006
 	if($_POST['target_sub'] AND !$addXEntriesDone AND $_POST['target_sub'] == $sfid) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid)
 		
@@ -972,8 +972,32 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 				$value_to_write = ",".$entry.","; 
 			}
 			$sub_entry_new = "";
-			for($i=0;$i<$_POST['numsubents'];$i++) {
-				$sub_entry_written[] = writeElementValue($_POST['target_sub'], $element_to_write, "new", $value_to_write, "", "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
+			for($i=0;$i<$_POST['numsubents'];$i++) { // actually goahead and create the requested number of new sub entries...start with the key field, and then do all textboxes with defaults too...
+				$subEntWritten = writeElementValue($_POST['target_sub'], $element_to_write, "new", $value_to_write, "", "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
+				if(!isset($elementsForDefaults)) {
+					$element_handler = xoops_getmodulehandler('elements', 'formulize');
+					$criteria = new CriteriaCompo();
+					$criteria->add(new Criteria('ele_type', 'text'), 'OR');
+					$criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
+					$elementsForDefaults = $element_handler->getObjects2($criteria,$_POST['target_sub']); // get all the text or textarea elements in the form 
+				}
+				foreach($elementsForDefaults as $thisDefaultEle) {
+					// need to write in any default values for any text boxes or text areas that are in the subform.  Perhaps other elements could be included too, but that would take too much work right now. (March 9 2009)
+					$defaultTextToWrite = "";
+					$ele_value_for_default = $thisDefaultEle->getVar('ele_value');
+					switch($thisDefaultEle->getVar('ele_type')) {
+						case "text":
+							$defaultTextToWrite = getTextboxDefault($ele_value_for_default[2], $_POST['target_sub'], $subEntWritten); // position 2 is default value for text boxes
+							break;
+						case "textarea":
+							$defaultTextToWrite = getTextboxDefault($ele_value_for_default[0], $_POST['target_sub'], $subEntWritten); // position 0 is default value for text boxes
+							break;
+					}
+					if($defaultTextToWrite) {
+						writeElementValue($_POST['target_sub'], $thisDefaultEle->getVar('ele_id'), $subEntWritten, $defaultTextToWrite);
+					}
+				}
+				$sub_entry_written[] = $subEntWritten;
 			}
 			$addXEntriesDone = true; // only want to do this once in the case of having multiple subforms on one mainform
 		} else {
@@ -1040,7 +1064,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		$elementsToDraw[] = $subHeaderList1[0];
 		$elementsToDraw[] = $subHeaderList1[1];
 		$elementsToDraw[] = $subHeaderList1[2];
-	}
+	}	
 
 	$need_delete = 0;
 	$drawnHeadersOnce = false;
