@@ -175,7 +175,7 @@ class formulizeElementRenderer{
 			break;
 			case 'areamodif':
 				$ele_value[0] =  stripslashes($ele_value[0]);
-        $ele_value[0] = $myts->displayTarea($ele_value[0]);
+        $ele_value[0] = $ele_value[0];
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
 					$ele_value[0]
