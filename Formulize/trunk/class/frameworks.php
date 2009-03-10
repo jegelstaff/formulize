@@ -116,8 +116,15 @@ class formulizeFramework extends XoopsObject {
 	function whatSideIsHandleOn($key) {
 		static $cachedHandles = array();
 		if(!isset($cachedHandles[$key])) {
+			
+			// 1. figure out the form of the $key that was passed
+			// 2. check the form1 and form2 properties of the links to see which side that form is on
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$elementObject = $element_handler->get($key);
+			$targetFid = $elementObject->getVar('id_form');
+			
 			foreach($this->getVar('links') as $thisLink) {
-				if($thisLink->getVar('key1') == $key) {
+				if($thisLink->getVar('form1') == $targetFid) {
 					switch($thisLink->getVar('relationship')) {
 						case 1:
 							$cachedHandles[$key] = "onetoone";
@@ -129,7 +136,7 @@ class formulizeFramework extends XoopsObject {
 							$cachedHandles[$key] = "many";
 							break;
 					}
-				} elseif($thisLink->getVar('key2') == $key) {
+				} elseif($thisLink->getVar('form2') == $targetFid) {
 					switch($thisLink->getVar('relationship')) { // when the form is the second one listed, then 1 and 3 (one to one and many to one) result in "one" being the correct response, while 2 (one to many) results in "many"
 						case 1:
 							$cachedHandles[$key] = "onetoone";

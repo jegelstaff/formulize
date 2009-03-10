@@ -2006,7 +2006,10 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
       // do the query
       $calcResult = array();
       $calcResultSQL = "$select $thisBaseQuery $allowedWhere $excludedWhere $groupByClause $orderByClause";
-      //print "$calcResultSQL<br><br>";
+      global $xoopsUser;
+      /*if($xoopsUser->getVar('uid') == 1) {
+        print "$calcResultSQL<br><br>";
+      }*/
       $calcResultRes = $xoopsDB->query($calcResultSQL);
       while($calcResultArray = $xoopsDB->fetchArray($calcResultRes)) {
         $calcResult[] = $calcResultArray;

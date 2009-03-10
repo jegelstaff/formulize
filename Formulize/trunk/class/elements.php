@@ -83,24 +83,29 @@ class formulizeElementsHandler {
 	}
 
 	function get($id){
-		$id = intval($id);
 		static $cachedElements = array();
 		if(isset($cachedElements[$id])) {
 			return $cachedElements[$id];
 		}	
-		if ($id > 0) {
+		if ($id > 0 AND is_numeric($id)) {
 			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_id='.$id;
 			if (!$result = $this->db->query($sql)) {
 				$cachedElements[$id] = false;
 				return false;
 			}
-			$numrows = $this->db->getRowsNum($result);
-			if ($numrows == 1) {
-				$element = new formulizeformulize();
-				$element->assignVars($this->db->fetchArray($result));
-				$cachedElements[$id] = $element;
-				return $element;
+		} else {
+			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_handle="'.mysql_real_escape_string($id).'"';
+			if (!$result = $this->db->query($sql)) {
+				$cachedElements[$id] = false;
+				return false;
 			}
+		}
+		$numrows = $this->db->getRowsNum($result);
+		if ($numrows == 1) {
+			$element = new formulizeformulize();
+			$element->assignVars($this->db->fetchArray($result));
+			$cachedElements[$id] = $element;
+			return $element;
 		}
 		return false;
 	}
