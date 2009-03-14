@@ -84,7 +84,7 @@ if($caughtfirst) {
 	
 	$formtouse = $ele_value[0] ? $ele_value[0] : $firstform; // use the user's selection, unless there isn't one, then use the first form found
 
-	$elementsq = q("SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"ib\" AND ele_type != \"subform\" AND ele_type != \"areamodif\" ORDER BY ele_order");
+	$elementsq = q("SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
 	foreach($elementsq as $oneele) {
 		$elements_array[$oneele['ele_id']] = $oneele['ele_caption'];
 	}

@@ -323,7 +323,8 @@ formulize_benchmark("Start of formDisplay.");
 	} else {
 		$entries[$fid][0] = "";
 	}
-	
+
+
 	if($frid) { 
 		$linkResults = checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner); 
 		unset($entries);
@@ -334,6 +335,7 @@ formulize_benchmark("Start of formDisplay.");
 		$sub_fids = $linkResults['sub_fids'];
 		$sub_entries = $linkResults['sub_entries'];
 	}
+
 
 	// need to handle submission of entries 
 	$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
@@ -594,7 +596,7 @@ formulize_benchmark("Start of formDisplay.");
 			formulize_benchmark("Before Compile Elements.");
 
 					$form = compileElements($this_fid, $form, $formulize_mgr, $prevEntry, $entries[$this_fid][0], $go_back, $parentLinks[$this_fid], $owner_groups, $groups, $overrideValue, $elements_allowed, $profileForm, $frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen);
-	
+
 			formulize_benchmark("After Compile Elements.");
 	
 	
@@ -1008,7 +1010,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	}	
 
 	// need to do a number of checks here, including looking for single status on subform, and not drawing in add another if there is an entry for a single
-			
+
 	$sub_single_result = getSingle($sfid, $uid, $groups, $member_handler, $gperm_handler, $mid);
 	$sub_single = $sub_single_result['flag'];
 	if($sub_single) {
@@ -1064,14 +1066,16 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		$elementsToDraw[] = $subHeaderList1[0];
 		$elementsToDraw[] = $subHeaderList1[1];
 		$elementsToDraw[] = $subHeaderList1[2];
-	}	
+	}
+	
 
 	$need_delete = 0;
 	$drawnHeadersOnce = false;
 	$col_two = "<table>";
+
+	$deFrid = $frid ? $frid : ""; // need to set this up so we can pass it as part of the displayElement function, necessary to establish the framework in case this is a framework and no subform element is being used, just the default draw-in-the-one-to-many behaviour
 	
 	// if there's been no form submission, and there's no sub_entries, and there are default blanks to show, then do everything differently -- sept 8 2007
-	
 	
 	if(!$_POST['form_submitted'] AND count($sub_entries[$sfid]) == 0 AND $defaultblanks > 0) {
 	
@@ -1099,7 +1103,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 				foreach($elementsToDraw as $thisele) {
 					if($thisele) { 
 						ob_start();
-						displayElement("", $thisele, "subformCreateEntry_".$i); 
+						displayElement($deFrid, $thisele, "subformCreateEntry_".$i); 
 						$col_two_temp = ob_get_contents();
 						ob_end_clean();
 						if($col_two_temp) { // only draw in a cell if there actually is an element rendered
@@ -1140,7 +1144,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 				foreach($elementsToDraw as $thisele) {
 					if($thisele) { 
 						ob_start();
-						displayElement("", $thisele, $sub_ent); 
+						displayElement($deFrid, $thisele, $sub_ent); 
 						$col_two_temp = ob_get_contents();
 						ob_end_clean();
 						if($col_two_temp) { // only draw in a cell if there actually is an element rendered

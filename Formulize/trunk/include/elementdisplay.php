@@ -143,8 +143,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
 		
 		
-  	$form_ele =& $renderer->constructElement($deprefix . $element->getVar('id_form').'_'.$entry.'_'.$element->getVar('ele_id'), $ele_value, $entry, $isDisabled, $screen); 
-		
+  	$form_ele =& $renderer->constructElement($deprefix . $element->getVar('id_form').'_'.$entry.'_'.$element->getVar('ele_id'), $ele_value, $entry, $isDisabled, $screen);
 		formulize_benchmark("Done rendering element.");
 		
 		if(!$renderElement) {

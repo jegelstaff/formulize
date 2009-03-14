@@ -271,6 +271,7 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
   }elseif(substr($framework, 0, 3) == "db:") { // deprecated...tableforms are preferred approach now for direct table access
 		$result = dataExtractionDB(substr($framework, 3), $filter, $andor, $scope, $dbTableUidField);
 	} else {
+     
 	$result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly);
 	}
 	return $result;
@@ -292,21 +293,21 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		     unset($frameid);
 	     } else {
 		     $frid = "";
-	     }
-	     if(is_numeric($form)) {
+	   }
+	   if(is_numeric($form)) {
 		     $fid = $form;
 	     } else {
 		     $formcheck = go("SELECT ff_form_id FROM " . DBPRE . "formulize_framework_forms WHERE ff_frame_id='$frid' AND ff_handle='$form'");
 		     $fid = $formcheck[0]['ff_form_id'];
 		     unset($formcheck);
-	     }
-	     if (!$fid) { 
+	   }
+	   if (!$fid) { 
 		     print "Form Name: " . $form . "<br>";
 		     print "Form id: " . $fid . "<br>";
 		     print "Frame Name: " . $frame . "<br>";
 		     print "Frame id: " . $frid . "<br>";
 		     exit("selected form does not exist in framework"); 
-	     }
+	   }
      
        
 	     if($frid AND !$mainFormOnly) {
@@ -465,9 +466,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
              } elseif($linktargetids[$id]) { // linked selectbox
                if(formulize_isLinkedSelectBox($linktargetids[$id])) { 
-                 $newJoinText = " f$id." . $joinHandles[$linktargetids[$id]] . " LIKE CONCAT('%,',main.entry_id,',%')";
+                 $newJoinText = " f$id.`" . $joinHandles[$linktargetids[$id]] . "` LIKE CONCAT('%,',main.entry_id,',%')";
                } else {
-                 $newJoinText = " main." . $joinHandles[$linkselfids[$id]] . " LIKE CONCAT('%,',f$id.entry_id,',%')";
+                 $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "` LIKE CONCAT('%,',f$id.entry_id,',%')";
                }
              } else { // join by uid
                $newJoinText = " main.creation_uid=f$id.creation_uid";
@@ -587,7 +588,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      // Debug Code
      
      /*global $xoopsUser;
-     if($xoopsUser->getVar('uid') == 1) {
+     if($xoopsUser->getVar('uid') == 350) {
           print "<br>Count query: $countMasterResults<br><br>";
           print "Master query: $masterQuerySQL<br>";
      }*/

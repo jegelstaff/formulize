@@ -492,25 +492,31 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
 		if(is_numeric($headerlist[0]) OR $headerlist[0] == "uid" OR $headerlist[0] == "proxyid" OR $headerlist[0] == "creation_date" OR $headerlist[0] == "mod_date" OR $headerlist[0] == "creator_email" OR $headerlist[0] == "creation_uid" OR $headerlist[0] == "mod_uid" OR $headerlist[0] == "creation_datetime" OR $headerlist[0] == "mod_datetime") { // if the headerlist is using the new ID based system
 			if(!$needids) { // if we want actual text headers, convert ids to text...
       			$start = 1;
-      			foreach($headerlist as $thisheaderid) {
+						$metaHeaderlist = array();
+      			foreach($headerlist as $headerid=>$thisheaderid) {
 					if($thisheaderid == "uid" OR $thisheaderid == "creation_uid") {
-						$headerlist[] = _formulize_DE_CALC_CREATOR;
+						$metaHeaderlist[] = _formulize_DE_CALC_CREATOR;
+						unset($headerlist[$headerid]);
 						continue; 
 					}
 					if($thisheaderid == "proxyid" OR $thisheaderid == "mod_uid") {
-						$headerlist[] = _formulize_DE_CALC_MODIFIER;
+						$metaHeaderlist[] = _formulize_DE_CALC_MODIFIER;
+						unset($headerlist[$headerid]);
 						continue; 
 					}
 					if($thisheaderid == "creation_date" OR $thisheaderid == "creation_datetime") {
-						$headerlist[] = _formulize_DE_CALC_CREATEDATE;
+						$metaHeaderlist[] = _formulize_DE_CALC_CREATEDATE;
+						unset($headerlist[$headerid]);
 						continue; 
 					}
 					if($thisheaderid == "mod_date" OR $thisheaderid == "mod_datetime") {
-						$headerlist[] = _formulize_DE_CALC_MODDATE;
+						$metaHeaderlist[] = _formulize_DE_CALC_MODDATE;
+						unset($headerlist[$headerid]);
 						continue; 
 					}
                                         if($thisheaderid == "creator_email") {
-						$headerlist[] = _formulize_DE_CALC_CREATOR_EMAIL;
+						$metaHeaderlist[] = _formulize_DE_CALC_CREATOR_EMAIL;
+						unset($headerlist[$headerid]);
 						continue; 
 					}
       				if($start) {
@@ -523,6 +529,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
       			$captionq = "SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $where_clause AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order";
       			if($rescaptionq = $xoopsDB->query($captionq)) {
       				unset($headerlist);
+							$headerlist = $metaHeaderlist;
       				while ($row = $xoopsDB->fetchArray($rescaptionq)) {
      						if($row['ele_colhead'] != "") {
      							$headerlist[] = $row['ele_colhead'];						
@@ -2197,7 +2204,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $startElement = $element_handler->get($targetForm['keyother']);
     $startEleValue = $startElement->getVar('ele_value');
-    if(strstr("#*=:*", $startEleValue[2])) { // option 2, start form is the linked selectbox
+    if(strstr($startEleValue[2], "#*=:*")) { // option 2, start form is the linked selectbox
       // so look in the startEntry for the values in its linked field and return them.  They will be a comma separated list of entry ids in the target form.
       $data_handler_start = new formulizeDataHandler($startForm);
       $foundValue = $data_handler_start->getElementValueInEntry($startEntry, $targetForm['keyother'], $all_users, $all_groups);
