@@ -21,6 +21,8 @@ define("_AM_PARA_FORM","Form parameters");
 define("_AM_ELE_CAPTION","Caption");
 define("_AM_ELE_CAPTION_DESC","<br /></b>{SEPAR} permit you to not display the element name");
 define("_AM_ELE_DEFAULT","Default value");
+define("_AM_ELE_LEFTRIGHT_TEXT","Contents of the left side");
+define("_AM_ELE_LEFTRIGHT_DESC","Any text or HTML code that you type here will appear on the left beside the caption.  You can use PHP code instead of text or HTML, just make sure it contains '&#36;value = &#36;something;' and Formulize will read this text as PHP code.");
 define("_AM_ELE_DESC","Descriptive text");
 define("_AM_ELE_DESC_HELP","Whatever you type in this box will appear below the caption, just like this text does.");
 define("_AM_ELE_COLHEAD","Column Heading (optional)");

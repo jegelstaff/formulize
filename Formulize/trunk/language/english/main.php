@@ -681,4 +681,5 @@ define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","This value will be calc
 define("_formulize_QSF_DefaultText", "Search for:");
 define("_formulize_BLANK_KEYWORD", "{BLANK}");
 
+define("_formulize_ERROR_IN_LEFTRIGHT", "There appears to be an error in the PHP code that generates the text for this space.  Please notify the webmaster.");
 ?>

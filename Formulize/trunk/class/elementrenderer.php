@@ -174,8 +174,16 @@ class formulizeElementRenderer{
 				}
 			break;
 			case 'areamodif':
-				$ele_value[0] =  stripslashes($ele_value[0]);
-        $ele_value[0] = $ele_value[0];
+				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
+					$form_id = $id_form;
+					$entry_id = $entry;
+					$evalResult = eval($ele_value[0]);
+					if($evalResult === false) {
+						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
+					} else {
+						$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
+					}
+				} 
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
 					$ele_value[0]

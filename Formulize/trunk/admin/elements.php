@@ -176,7 +176,7 @@ switch($op){
 
 		$form->addElement($ele_caption, 1);
 
-		if($ele_type != "subform" AND $ele_type != "grid" AND $ele_type != "ib") {
+		if($ele_type != "subform" AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
 			// column heading added June 25 2006 -- jwe
 			$ele_colhead = new XoopsFormText(_AM_ELE_COLHEAD, 'ele_colhead', 50, 255, $ele_colhead_default);
 			$ele_colhead->setDescription(_AM_ELE_COLHEAD_HELP);
@@ -195,6 +195,8 @@ switch($op){
 			}
 		}
 
+		$req = false;
+		$useDisable = false;
 		switch($ele_type){
 			case 'subform':
 				include 'ele_subform.php';
@@ -202,10 +204,12 @@ switch($op){
 			case 'text':
 				include 'ele_text.php';
 				$req = true;
-			break;
+				$useDisable = true;
+				break;
 			case 'textarea':
 				include 'ele_tarea.php';
 				$req = true;
+				$useDisable = true;
 			break;
 			case 'areamodif':
 				include 'ele_modif.php';
@@ -216,19 +220,24 @@ switch($op){
 			case 'select':
 				include 'ele_select.php';
         $req = true;
+				$useDisable = true;
 			break;
 			case 'checkbox':
 				include 'ele_check.php';
+				$useDisable = true;
 			break;
 			case 'radio':
 				include 'ele_radio.php';
         $req = true;
+				$useDisable = true;
 			break;
 			case 'yn':
 				include 'ele_yn.php';
+				$useDisable = true;
 			break;
 			case 'date':
 				include 'ele_date.php';
+				$useDisable = true;
         $req = true;
 			break;
 			case 'sep':
@@ -281,45 +290,48 @@ switch($op){
         $ele_display->addOption("all", _AM_FORM_DISPLAY_ALLGROUPS);     
         $ele_display->addOption("none", _AM_FORM_DISPLAY_NOGROUPS);     
 
-	    $fs_count = count($fs_xoops_groups);
-	    for($i = 0; $i < $fs_count; $i++) 
-	    {
-	        $ele_display->addOption($fs_xoops_groups[$i]->getVar('groupid'), $fs_xoops_groups[$i]->getVar('name'));     
-	    }
-            $form->addElement($ele_display);
-            
-            // create second group list for disabled option
-            
-        $disabled = !empty($ele_id) ? $element->getVar('ele_disabled') : "none";
-        $disabled = ($disabled == "0") ? "none" : $disabled;
-        $disabled = ($disabled == "1") ? "all" : $disabled;
 
-        $disabledIsGroupList = false;
-		if(substr($disabled, 0, 1) == ",")
-        {
-	        $disabledIsGroupList = true;
-	        $disabledGroupList = explode(",", $disabled);
-			$ele_disabled = new XoopsFormSelect(_AM_ELE_DISABLED, 'ele_disabled', $disabledGroupList, 10, true);
-        }
-        else
-        {
-			$ele_disabled = new XoopsFormSelect(_AM_ELE_DISABLED, 'ele_disabled', $disabled, 10, true);
-        } 
-		$ele_disabled->setDescription(_AM_FORM_DISABLED_EXTRA);
+			$fs_count = count($fs_xoops_groups);
+			for($i = 0; $i < $fs_count; $i++) 
+			{
+					$ele_display->addOption($fs_xoops_groups[$i]->getVar('groupid'), $fs_xoops_groups[$i]->getVar('name'));     
+			}
+						$form->addElement($ele_display);
 
-        $ele_disabled->addOption("all", _AM_FORM_DISABLED_ALLGROUPS);     
-        $ele_disabled->addOption("none", _AM_FORM_DISABLED_NOGROUPS);     
-
-	    $fs_count = count($fs_xoops_groups);
-	    for($i = 0; $i < $fs_count; $i++) 
-	    {
-	        $ele_disabled->addOption($fs_xoops_groups[$i]->getVar('groupid'), $fs_xoops_groups[$i]->getVar('name'));     
-	    }
-        
-            
-		$form->addElement($ele_disabled);
-		// replaced - end - August 18 2005 - jpc
-
+			if($useDisable) {
+								
+								// create second group list for disabled option
+								
+						$disabled = !empty($ele_id) ? $element->getVar('ele_disabled') : "none";
+						$disabled = ($disabled == "0") ? "none" : $disabled;
+						$disabled = ($disabled == "1") ? "all" : $disabled;
+		
+						$disabledIsGroupList = false;
+				if(substr($disabled, 0, 1) == ",")
+						{
+							$disabledIsGroupList = true;
+							$disabledGroupList = explode(",", $disabled);
+					$ele_disabled = new XoopsFormSelect(_AM_ELE_DISABLED, 'ele_disabled', $disabledGroupList, 10, true);
+						}
+						else
+						{
+					$ele_disabled = new XoopsFormSelect(_AM_ELE_DISABLED, 'ele_disabled', $disabled, 10, true);
+						} 
+				$ele_disabled->setDescription(_AM_FORM_DISABLED_EXTRA);
+		
+						$ele_disabled->addOption("all", _AM_FORM_DISABLED_ALLGROUPS);     
+						$ele_disabled->addOption("none", _AM_FORM_DISABLED_NOGROUPS);     
+		
+					$fs_count = count($fs_xoops_groups);
+					for($i = 0; $i < $fs_count; $i++) 
+					{
+							$ele_disabled->addOption($fs_xoops_groups[$i]->getVar('groupid'), $fs_xoops_groups[$i]->getVar('name'));     
+					}
+						
+								
+				$form->addElement($ele_disabled);
+				// replaced - end - August 18 2005 - jpc
+			}
 
 		if($ele_type == "radio" OR $ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "yn") {
 			// added by jwe Nov 7 2005, a checkbox to indicate if the element should be included as a hidden element, even when the user does not have permission to view (ie: it is hidden by the display option above)
@@ -329,7 +341,7 @@ switch($op){
 			$forcehidden->setDescription(_AM_FORM_FORCEHIDDEN_DESC);
 			$form->addElement($forcehidden);
 		}
-		if($ele_type != "subform" AND $ele_type != "grid") {
+		if($ele_type != "subform" AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
 			// added private option July 15 2006, jwe
 			$priv = !empty($ele_id) ? $element->getVar('ele_private') : 0;
 			$private = new XoopsFormCheckBox(_AM_FORM_PRIVATE, "private", $priv);

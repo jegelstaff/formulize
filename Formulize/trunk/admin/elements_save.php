@@ -161,21 +161,11 @@ if( !empty($ele_id) AND $clone == 0){
 				}
 				
 			break;
-			case 'areamodif':
+			case 'areamodif': // leftright display
 				$value = array();
 				$value[] = $ele_value[0];
-				if( intval($ele_value[1]) != 0 ){
-					$value[] = intval($ele_value[1]);
-				}else{
-					$value[] = $xoopsModuleConfig['ta_rows'];
-				}
-				if( intval($ele_value[2]) != 0 ){
-					$value[] = intval($ele_value[2]);
-				}else{
-					$value[] = $xoopsModuleConfig['ta_cols'];
-				}
 			break;
-			case 'ib': // added June 20 2005
+			case 'ib': // added June 20 2005 -- span both column display
 				$value[] = $ele_value[0];
 				$value[] = $ele_value[1];
 			break;
