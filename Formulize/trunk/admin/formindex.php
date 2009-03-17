@@ -1861,7 +1861,7 @@ function patch30DataStructure($auto = false) {
         $ele_value = $elementObject->getVar('ele_value');
         $parts = explode("#*=:*", $ele_value[2]);
         $sql2 = "SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_caption = '". mysql_real_escape_string($parts[1]) . "' AND id_form=". $parts[0];
-				print "$sql2<br>";
+				//print "$sql2<br>";
         if(!$res2 = $xoopsDB->query($sql2)) {
           exit("Error: could not get the handle for a linked selectbox source.  SQL: $sql2<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
         }

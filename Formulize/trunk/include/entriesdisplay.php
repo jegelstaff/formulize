@@ -320,6 +320,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		
 	// set currentView to group if they have groupscope permission (overridden below by value sent from form)
 	// override with loadview if that is specified
+  
 	if($loadview AND ((!$_POST['currentview'] AND $_POST['advscope'] == "") OR $forceLoadView)) {
 		if(substr($loadview, 0, 4) == "old_") { // this is a legacy view
 			$loadview = "p" . $loadview;
@@ -413,8 +414,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
         $_POST['lockcontrols'] = 0;
       }
     }
-    
-		/*print "<br>Currentview: " . $_POST['currentview'] . "<br>Oldcols: ";
+    /*
+    print "<br>Currentview: " . $_POST['currentview'] . "<br>Oldcols: ";
 		print $_POST['oldcols'] . "<br>asearch: ";
 		print $_POST['asearch'] . "<br>calc_cols: ";
 		print $_POST['calc_cols'] . "<br>calc_calcs: ";
@@ -425,7 +426,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		print $_POST['order'] . "<br>"; 
 		print $_POST['hlist'] . "<br>"; 
 		print $_POST['hcalc'] . "<br>"; 
-		print $_POST['lockcontrols'] . "<br>"; */
+		print $_POST['lockcontrols'] . "<br>";
+    */
 		
 		$currentView = $_POST['currentview']; 
 	} elseif($_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
@@ -3808,6 +3810,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 			// look for { } and transform special terms into what they should be for the filter
 			if(substr($one_search, 0, 1) == "{" AND substr($one_search, -1) == "}") {
 				$searchgetkey = substr($one_search, 1, -1);
+        
 				if (ereg_replace("[^A-Z]","", $searchgetkey) == "TODAY") {
 					$number = ereg_replace("[^0-9+-]","", $searchgetkey);
 					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
