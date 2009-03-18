@@ -3002,7 +3002,7 @@ function convertElementIdsToElementHandles($ids, $fid) {
 // assume handles are unique within a framework (which they are supposed to be!)
 // reverse flag is used only when this is called from the opposite function, which is really just a wrapper for calling this and asking for things the other way around...element handles converted to framework handles
 // This function essentially makes a framework handle/element handle map for the entire framework, and caches it, so once a framework is mapped, we never hit the database again.  Then we just call the function to return the values we are looking for.
-// Ids is a flag that will cause ids to be returned instead of handles
+// Ids is a flag that will cause framework handles to be returned when element ids are passed
 // fid is the form id for use when going from element ids to handles
 function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $fid=false) {
 	
@@ -3064,22 +3064,27 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
 			}
 			
 			// populate the to return array, to save us going through all the handles again, since we're doing that right now
+			// use array_search and assign the values to the same position in the return array, to preserve order
 			if($fid) {
-				if(in_array($thisIdRow['ele_id'], $handles)) {
-					$to_return[] = $thisIdRow['ele_handle'];
+				$foundKey = array_search($thisIdRow['ele_id'], $handles);
+				if($foundKey !== false) {
+					$to_return[$foundKey] = $thisIdRow['ele_handle'];
 				}
 			} elseif($ids) {
-				if(in_array($thisIdRow['ele_id'],$handles)) { // handles could be an array of ids
-					$to_return[] = $thisIdRow['fe_handle'];	
+				$foundKey = array_search($thisIdRow['ele_id'],$handles); // handles could be an array of ids
+				if($foundKey !== false) { 
+					$to_return[$foundKey] = $thisIdRow['fe_handle'];	
 				}
 			} else {
 				if($reverse) { // element handles to framework handles
-					if(in_array($thisIdRow['ele_handle'],$handles)) {
-						$to_return[] = $thisIdRow['fe_handle'];	
+					$foundKey = array_search($thisIdRow['ele_handle'],$handles);
+					if($foundKey !== false) {
+						$to_return[$foundKey] = $thisIdRow['fe_handle'];	
 					}
 				} else { // framework handles to element handles
-					if(in_array($thisIdRow['fe_handle'],$handles)) { // if this is a handle we're being asked for
-						$to_return[] = $thisIdRow['ele_handle'];
+					$foundKey = array_search($thisIdRow['fe_handle'],$handles); // if this is a handle we're being asked for
+					if($foundKey !== false) { 
+						$to_return[$foundKey] = $thisIdRow['ele_handle'];
 					}
 				}	
 			}
