@@ -416,10 +416,10 @@ class formulizeElementRenderer{
 										$groups = $scopegroups;
 									}
 								} else { // use all
-									if(!$ele_value[4]) { // really use all (otherwise, we're just going will all user's groups, so existing value of $groups will be okay
+									if(!$ele_value[4]) { // really use all (otherwise, we're just going with all user's groups, so existing value of $groups will be okay
 										unset($groups);
 										global $xoopsDB;
-										$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups") . " WHERE groupid != " . XOOPS_GROUP_USERS);
+										$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups")); //  . " WHERE groupid != " . XOOPS_GROUP_USERS); // removed exclusion of registered users group March 18 2009, since it doesn't make sense in this situation.  All groups should mean everyone, period.
 										foreach($allgroupsq as $thisgid) {
 											$groups[] = $thisgid['groupid'];
 										}
