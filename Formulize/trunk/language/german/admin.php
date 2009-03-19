@@ -1,15 +1,15 @@
 <?php
 // Admin
-define("_FORM_RENAME_TEXT", "Rename this form");
-define("_FORM_EDIT_ELEMENTS_TEXT", "Edit this form's elements");
-define("_FORM_EDIT_SETTINGS_TEXT", "Edit this form's settings");
-define("_FORM_CLONE_TEXT", "Clone this form");
+define("_FORM_RENAME_TEXT", "Formular umbenennen");
+define("_FORM_EDIT_ELEMENTS_TEXT", "Elemente des Formulars bearbeiten");
+define("_FORM_EDIT_SETTINGS_TEXT", "Einstellungen des Formulars bearbeiten");
+define("_FORM_CLONE_TEXT", "Formular klonen");
 define("_FORM_CLONEDATA_TEXT", "Clone this form and its data");
-define("_FORM_DELETE_TEXT", "Delete this form");
+define("_FORM_DELETE_TEXT", "Dieses Formular löschen");
 
 define("_AM_SAVE","Speichern");
 define("_AM_COPIED","%s kopieren");
-define("_AM_DBUPDATED","Database Updated Successfully!");
+define("_AM_DBUPDATED","Datenbank erfolgreich aktualisiert!");
 define("_AM_ELE_CREATE","Create form elements");
 define("_AM_ELE_EDIT","Edit form element: %s");
 define("_AM_FORM","Form : ");
@@ -21,6 +21,8 @@ define("_AM_PARA_FORM","Form parameters");
 define("_AM_ELE_CAPTION","Caption");
 define("_AM_ELE_CAPTION_DESC","<br /></b>{SEPAR} permit you to not display the element name");
 define("_AM_ELE_DEFAULT","Default value");
+define("_AM_ELE_LEFTRIGHT_TEXT","Contents of the left side");
+define("_AM_ELE_LEFTRIGHT_DESC","Any text or HTML code that you type here will appear on the left beside the caption.  You can use PHP code instead of text or HTML, just make sure it contains '&#36;value = &#36;something;' and Formulize will read this text as PHP code.");
 define("_AM_ELE_DESC","Descriptive text");
 define("_AM_ELE_DESC_HELP","Whatever you type in this box will appear below the caption, just like this text does.");
 define("_AM_ELE_COLHEAD","Column Heading (optional)");
@@ -59,7 +61,7 @@ define("_AM_ELE_UPLOAD","Join a file");
 define("_AM_ELE_CLR","with the color");
 
 // number options for textboxes
-define("_AM_ELE_NUMBER_OPTS","If only numbers are allowed...");
+define("_AM_ELE_NUMBER_OPTS","If a number is typed...");
 define("_AM_ELE_NUMBER_OPTS_DESC","You can set these options to control how decimals are handled, and how numbers are formatted on screen.");
 define("_AM_ELE_NUMBER_OPTS_DEC","Number of decimal places:");
 define("_AM_ELE_NUMBER_OPTS_PREFIX","Display numbers with this prefix (ie: '$'):");
@@ -197,13 +199,13 @@ define("_AM_MEMBERSONLY","Authorized users");
 define("_AM_MEMBERSONLY_SHORT","Reg.<br>only");
 define("_AM_MEMBERS","members only");
 define("_AM_ALL","all users");
-define("_AM_ADD","Add");
+define("_AM_ADD","Hinzufügen");
 define("_AM_EDITMENUITEM","Edit menu item");
 define("_AM_DELETEMENUITEM","Delete menu item");
 define("_AM_SAVECHANG","Save changes");
 define("_AM_WANTDEL","Do you really want to delete this menu item?");
-define("_AM_YES","Yes");
-define("_AM_NO","No");
+define("_AM_YES","Ja");
+define("_AM_NO","Nein");
 define("_AM_formulizeMENUSTYLE","MyMenu-Style");
 define("_AM_MAINMENUSTYLE","MainMenu-Style");
 
@@ -217,7 +219,7 @@ define("_formulize_CAPTION_SLASH", "Captions cannot have backslashes. They have 
 define("_formulize_CAPTION_LT", "Captions cannot have < signs. They have been removed.");
 define("_formulize_CAPTION_GT", "Captions cannot have > signs. They have been removed.");
 
-define("_AM_VIEW_FORM", "View the form");
+define("_AM_VIEW_FORM", "View this form");
 define("_AM_GOTO_PARAMS", "Edit the form's settings");
 define("_AM_PARAMS_EXTRA", "(Specify what elements appear<br>on the <i>View Entries</i> page)");
 define("_AM_GOTO_MAIN", "Return to main page");
@@ -270,7 +272,7 @@ define("_AM_ELE_OTHER", 'For an option of "Other", put {OTHER|*number*} in one o
 define("_AM_FORM_PRIVATE", "The information that users enter in this element is private");
 define("_AM_FORM_PRIVATE_DESC", "If this box is checked, the information that users enter in this element will only be visible to other users who have the view_private_elements permission.  This option is useful for making personal information only available to the appropriate managers.");
 
-//added by f�lix <INBOX International> for sedonde (colorpicker feature)
+//added by felix <INBOX International> for sedonde (colorpicker feature)
 define("_AM_ELE_COLORPICK","Colorpicker");
 
 // SCREENS...including multipage
