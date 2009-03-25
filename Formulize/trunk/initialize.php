@@ -49,6 +49,12 @@ $fid = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['f
 $frid = ((isset( $_GET['frid'])) AND is_numeric( $_GET['frid'])) ? intval( $_GET['frid']) : "" ;
 $frid = ((isset($_POST['frid'])) AND is_numeric($_POST['frid'])) ? intval($_POST['frid']) : $frid ;
 
+// set the flag to force derived value updates, if it is in the URL
+if(isset($_GET['forceDerivedValueUpdate'])) {
+	$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+}
+
+
 // query modified to include singleentry - July 28, 2005 -- part of switch to new intnerface
 $sql=sprintf("SELECT admin,groupe,email,expe,singleentry,desc_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form='$fid'");
 $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.mysql_error());

@@ -294,12 +294,17 @@ class formulizeFormsHandler {
 			return false;
 		}
 		global $xoopsDB;
-		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " CHANGE `".$oldname."` `".$element->getVar('ele_handle')."` text NULL default NULL";
-		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
+		// first get its current state:
+		$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) ." WHERE field = '".$oldname."'";
+		if(!$fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
 			return false;
+		}
+		$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
+		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " CHANGE `".$oldname."` `".$element->getVar('ele_handle')."` ". $fieldStateData['Type']; 
+		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
+		  return false;
 		}
 		return true;
 	}
-	
-}
-?>
+				
+

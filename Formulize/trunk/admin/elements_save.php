@@ -398,7 +398,7 @@ if( !empty($ele_id) AND $clone == 0){
 						// need to update the name of the field in the data table
 						$form_handler =& xoops_getmodulehandler('forms', 'formulize');
 						if(!$updateResult = $form_handler->updateFieldName($element, $original_handle)) {
-									print "Error: count not update the data table field name to match the new data handle";
+									print "Error: could not update the data table field name to match the new data handle";
 						}
 			}
 			

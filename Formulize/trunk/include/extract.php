@@ -1179,7 +1179,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
                foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
                     
                     if($entry[$formHandle][key($record)][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
-                         $functionName = "derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", str_replace("/", "", str_replace("\\", "", $formHandle))))."_".$formulaNumber;
+                         $functionName = "derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", str_replace("/", "", str_replace("\\", "", trans($formHandle)))))."_".$formulaNumber;
                          formulize_benchmark(" -- calling derived function.");
                          $derivedValue = $functionName($entry);
                          formulize_benchmark(" -- completed call.");
@@ -1207,7 +1207,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
 
 function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $fid) {
      // open a temporary file
-     $fileName = XOOPS_ROOT_PATH."/cache/formulize_derivedValueFormulas_".str_replace(" ", "_", str_replace("/", "", str_replace("\\", "", $formHandle))).".php";
+     $fileName = XOOPS_ROOT_PATH."/cache/formulize_derivedValueFormulas_".str_replace(" ", "_", str_replace("/", "", str_replace("\\", "", trans($formHandle)))).".php";
      $derivedValueFormulaFile = fopen($fileName, "w");
      fwrite($derivedValueFormulaFile, "<?php\n\n");
      
@@ -1239,7 +1239,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                }
                $formula = implode("\n", $formulaLines);
           }
-          $functionsToWrite .= "function derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", str_replace("/", "", str_replace("\\", "", $formHandle))))."_".$formulaNumber."(\$entry) {\n$formula\nreturn \$value;\n}\n\n";
+          $functionsToWrite .= "function derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", str_replace("/", "", str_replace("\\", "", trans($formHandle)))))."_".$formulaNumber."(\$entry) {\n$formula\nreturn \$value;\n}\n\n";
      }
      fwrite($derivedValueFormulaFile, $functionsToWrite. "?>");
      fclose($derivedValueFormulaFile);

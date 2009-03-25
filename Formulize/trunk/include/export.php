@@ -111,6 +111,7 @@ if(!isset($_POST['metachoice'])) {
 			}
 			/*print "<pre>";
 			print_r($cols);
+			print_r(convertElementHandlesToFrameworkHandles($cols, $frid));
 			print_r($headers);
 			print "</pre>";*/
 			if($frid) {
@@ -118,6 +119,7 @@ if(!isset($_POST['metachoice'])) {
 			} else {
 				$filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
 			}
+			
 			print "<center><p><a href=\"$filename\">$linkText</a></p></center>\n";
 			
 			if($_GET['type']=="update") {

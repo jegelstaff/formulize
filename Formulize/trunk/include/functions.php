@@ -3089,6 +3089,7 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
 				}	
 			}
 		}
+    ksort($to_return); // to_return is built with the keys from $handles, but in an arbitrary order depending on the order the elements were returned in the DB query above, so we need to put them into the correct order here to correspond with $handles
 	}
 	if(count($to_return)==0) { // if to_return was not set already, ie: when doing a database query, then loop through handles to get the values we need from the cached values array
 		foreach($handles as $handle) {
