@@ -82,6 +82,7 @@ if($refreshing) {
 
 switch($op){
 	// convert option added for textboxes July 1 2006, by JWE.  Happy Canada Day.
+	// updated March 27 2009 to include radio buttons and checkboxes
 	case 'convert':
 		$element =& $formulize_mgr->get($ele_id);
 		$ele_type = $element->getVar('ele_type');
@@ -114,6 +115,34 @@ switch($op){
 				echo $element->getHtmlErrors();
 			} else {
 				redirect_header("index.php?title=$title", 3, _AM_ELE_CONVERTED_TO_TEXTBOX);
+			}
+		} elseif($ele_type=="radio") {
+			$element->setVar('ele_type', "checkbox"); // just need to change type, ele_value format is the same
+			if( !$formulize_mgr->insert($element, true) ){ // true causes a forced insert (necessary when there is no POST)
+				xoops_cp_header();
+				echo $element->getHtmlErrors();
+			} else {
+				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+				$data_handler = new formulizeDataHandler($element->getVar('id_form'));
+				if(!$data_handler->convertRadioDataToCheckbox($element)) {
+					redirect_header("index.php?title=$title", 6, _AM_ELE_CHECKBOX_DATA_NOT_READY);
+				} else {
+					redirect_header("index.php?title=$title", 3, _AM_ELE_CONVERTED_TO_CHECKBOX);
+				}
+			}
+		} elseif($ele_type=="checkbox") {
+			$element->setVar('ele_type', "radio");  // just need to change type, ele_value format is the same
+			if( !$formulize_mgr->insert($element, true) ){ // true causes a forced insert (necessary when there is no POST)
+				xoops_cp_header();
+				echo $element->getHtmlErrors();
+			} else {
+				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+				$data_handler = new formulizeDataHandler($element->getVar('id_form'));
+				if(!$data_handler->convertCheckboxDataToRadio($element)) {
+					redirect_header("index.php?title=$title", 6, _AM_ELE_RADIO_DATA_NOT_READY);
+				} else {
+					redirect_header("index.php?title=$title", 3, _AM_ELE_CONVERTED_TO_RADIO);
+				}
 			}
 		} else {
 			redirect_header("index.php?title=$title", 3, _AM_ELE_CANNOT_CONVERT);
@@ -474,13 +503,14 @@ function formulize_getElementHighOrder($id_form) {
 // THIS FUNCTION TAKES A SERIES OF VALUES TYPED IN FORM RADIO BUTTONS, CHECKBOXES OR SELECTBOX OPTIONS, AND CHECKS TO SEE IF THEY WERE ENTERED WITH A UITEXT INDICATOR, AND IF SO, SPLITS THEM INTO THEIR ACTUAL VALUE PLUS THE UI TEXT AND RETURNS BOTH
 // $values should be an array of all the options, so $ele_value for radio and checkboxes, $ele_value[2] for selectboxes
 function formulize_extractUIText($values) {
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 	// values are the text that was typed in
 	// keys should remain unchanged
 	$uitext = array();
 	foreach($values as $key=>$value) {
 		//print "<br>original value: $value<br>";
 		//print "key: $key<br>";
-		if(strstr($value, "|") AND substr($value, 0, 7) != "{OTHER|") { // check for the pressence of the uitext deliminter, the "pipe" character
+		if(strstr($value, "|") AND substr(trans($value), 0, 7) != "{OTHER|") { // check for the pressence of the uitext deliminter, the "pipe" character
 			$pipepos = strpos($value, "|");
 			//print "pipe found: $pipepos<br>";
 			$uivalue = substr($value, $pipepos+1);

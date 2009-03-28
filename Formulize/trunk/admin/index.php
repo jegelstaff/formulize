@@ -74,8 +74,19 @@ if( $_POST['op'] != 'save' ){
       // javascript for confirming conversion of elements -- added July 1 2006
       print "<script type='text/javascript'>\n";
 
-      print "function confirmConvert() {\n";
-      print " var answer = confirm('" . _AM_CONVERT_CONFIRM . "');\n";
+      print "function confirmConvert(type) {\n";
+			print " if(type == 'text') {\n";
+      print " var answer = confirm('" . _AM_CONVERTTEXT_CONFIRM . "');\n";
+			print " }\n";
+			print " if(type == 'textarea') {\n";
+      print " var answer = confirm('" . _AM_CONVERTTEXTAREA_CONFIRM . "');\n";
+			print " }\n";
+			print " if(type == 'radio') {\n";
+      print " var answer = confirm('" . _AM_CONVERTRADIO_CONFIRM . "');\n";
+			print " }\n";
+			print " if(type == 'checkbox') {\n";
+      print " var answer = confirm('" . _AM_CONVERTCHECKBOX_CONFIRM . "');\n";
+			print " }\n";
       print " return answer;\n";
       print "}\n";
 
@@ -227,8 +238,14 @@ if( $_POST['op'] != 'save' ){
 	
                 
 		echo '<td class="'.$class.'" align="center"><a href="elements.php?title='.$title.'&op=edit&amp;ele_id='.$id.'">'._EDIT.'</a></td>';
-		if($i->getVar('ele_type') == "text" OR $i->getVar('ele_type') == "textarea") {
-			echo '<td class="'.$class.'" align="center"><a href="elements.php?title='.$title.'&op=convert&amp;ele_id='.$id.'" onclick="javascript:return confirmConvert();" title="'._AM_CONVERT_HELP.'" alt="'._AM_CONVERT_HELP.'">'._AM_CONVERT.'</a></td>';
+		if($i->getVar('ele_type') == "text") {
+			echo '<td class="'.$class.'" align="center"><a href="elements.php?title='.$title.'&op=convert&amp;ele_id='.$id.'" onclick="javascript:return confirmConvert(\'text\');" title="'._AM_CONVERTTEXT_HELP.'" alt="'._AM_CONVERTTEXT_HELP.'">'._AM_CONVERTTEXT.'</a></td>';
+		} elseif($i->getVar('ele_type') == "textarea") {
+			echo '<td class="'.$class.'" align="center"><a href="elements.php?title='.$title.'&op=convert&amp;ele_id='.$id.'" onclick="javascript:return confirmConvert(\'textarea\');" title="'._AM_CONVERTTEXTAREA_HELP.'" alt="'._AM_CONVERTTEXTAREA_HELP.'">'._AM_CONVERTTEXTAREA.'</a></td>';
+		} elseif($i->getVar('ele_type') == "radio") {
+			echo '<td class="'.$class.'" align="center"><a href="elements.php?title='.$title.'&op=convert&amp;ele_id='.$id.'" onclick="javascript:return confirmConvert(\'radio\');" title="'._AM_CONVERTRADIO_HELP.'" alt="'._AM_CONVERTRADIO_HELP.'">'._AM_CONVERTRADIO.'</a></td>';
+		} elseif($i->getVar('ele_type') == "checkbox") {
+      echo '<td class="'.$class.'" align="center"><a href="elements.php?title='.$title.'&op=convert&amp;ele_id='.$id.'" onclick="javascript:return confirmConvert(\'checkbox\');" title="'._AM_CONVERTCHECKBOX_HELP.'" alt="'._AM_CONVERTCHECKBOX_HELP.'">'._AM_CONVERTCHECKBOX.'</a></td>';			
 		} else {
 			echo '<td class="'.$class.'" align="center">&nbsp;</td>';
 		}

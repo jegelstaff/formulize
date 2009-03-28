@@ -243,12 +243,25 @@ define("_AM_CATGENERAL", "General Forms");
 
 define("_AM_CANCEL", "Cancel");
 
-define("_AM_CONVERT", "Convert");
-define("_AM_CONVERT_HELP", "Convert this textbox from a single to a multi-line box (or vice versa)");
+define("_AM_CONVERTTEXT", "Convert to text area");
+define("_AM_CONVERTTEXTAREA", "Convert to text box");
+define("_AM_CONVERTRADIO", "Convert to check boxes");
+define("_AM_CONVERTCHECKBOX", "Convert to radio buttons");
+define("_AM_CONVERTTEXT_HELP", "Convert this text box to a multi-line text area box");
+define("_AM_CONVERTTEXTAREA_HELP", "Convert this text area box to a single-line text box");
+define("_AM_CONVERTRADIO_HELP", "Convert these radio buttons to check boxes");
+define("_AM_CONVERTCHECKBOX_HELP", "Convert these check boxes to radio buttons");
 define("_AM_ELE_CANNOT_CONVERT", "There are no conversion options for this type of element");
-define("_AM_CONVERT_CONFIRM", "Do you want to convert this textbox from a single to a multi-line box (or vice versa)?");
+define("_AM_CONVERTTEXT_CONFIRM", "Do you want to convert this text box to a multi-line text area box?");
+define("_AM_CONVERTTEXTAREA_CONFIRM", "Do you want to convert this text area box to a single-line text box?");
+define("_AM_CONVERTRADIO_CONFIRM", "Do you want to convert these radio buttons to check boxes?");
+define("_AM_CONVERTCHECKBOX_CONFIRM", "Do you want to convert these check boxes to radio buttons?");
 define("_AM_ELE_CONVERTED_TO_TEXTBOX", "This multi-line textbox has been converted to a single-line textbox.");
 define("_AM_ELE_CONVERTED_TO_TEXTAREA", "This single-line textbox has been converted to a multi-line textbox.");
+define("_AM_ELE_CONVERTED_TO_RADIO", "These check boxes have been coverted to radio buttons.");
+define("_AM_ELE_CONVERTED_TO_CHECKBOX", "These radio buttons have been converted to check boxes.");
+define("_AM_ELE_CHECKBOX_DATA_NOT_READY", "These radio buttons were converted, but the data people have submitted was not updated for use in the check boxes.  Contact <a href=\"mailto:support@freeformsolutions.ca\">support@freeformsolutions.ca</a> for assistance.");
+define("_AM_ELE_RADIO_DATA_NOT_READY", "These check boxes were converted, but the data people have submitted was not updated for use in the radio buttons.  Contact <a href=\"mailto:support@freeformsolutions.ca\">support@freeformsolutions.ca</a> for assistance.");
 
 
 // added - start - August 25 2005 - jpc

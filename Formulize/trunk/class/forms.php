@@ -307,4 +307,5 @@ class formulizeFormsHandler {
 		return true;
 	}
 				
+}
 

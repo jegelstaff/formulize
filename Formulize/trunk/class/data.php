@@ -452,7 +452,8 @@ class formulizeDataHandler  {
 	// This function writes a set of values to an entry
 	// $values will be an array of element ids and prepared values
 	// $proxyUser is optional and if present will override the current xoopsuser uid as the creation user
-	function writeEntry($entry, $values, $proxyUser=false, $forceUpdate=false) {
+	// $updateMetadata is a flag to allow us to skip updating the modification user and time.  Introduced for when we update derived values and the mod user and time should not change.
+	function writeEntry($entry, $values, $proxyUser=false, $forceUpdate=false, $updateMetadata=true) {
 
 		global $xoopsDB, $xoopsUser;
 		static $cachedMaps = array();
@@ -533,9 +534,18 @@ class formulizeDataHandler  {
 			$sql .= ") VALUES (NOW(), NOW(), ".intval($creation_uid).", ".intval($uid)."$sqlValues)";
 			$entry_to_return = "";
 		} else {
-			$sql = "UPDATE " . $xoopsDB->prefix("formulize_".$this->fid) .  " SET mod_datetime=NOW(), mod_uid=".intval($uid);
+			$sql = "UPDATE " . $xoopsDB->prefix("formulize_".$this->fid) .  " SET ";
+			$needComma = false;
+			if($updateMetadata) {
+				$sql .= "mod_datetime=NOW(), mod_uid=".intval($uid);
+				$needComma = true;
+			} 
 			foreach($values as $id=>$value) {
-				$sql .= ", `".$handleElementMap[$id]."` = '".mysql_real_escape_string($value)."'";
+				if($needComma) {
+					$sql .= ", ";
+				}
+				$sql .= "`".$handleElementMap[$id]."` = '".mysql_real_escape_string($value)."'";
+				$needComma = true;
 			}
 			$sql .= " WHERE entry_id=".intval($entry);
 			$entry_to_return = intval($entry);
@@ -560,6 +570,39 @@ class formulizeDataHandler  {
 		$this->getEntryMeta($id, true);
 	}
 	
+	// change radio button data to checkbox format
+	// added to handle the situations where the radio button elements are converted to checkboxes
+	// $element can be an id or an object
+	function convertRadioDataToCheckbox($element) {
+		if(!$element = _getElementObject($element)) {
+			return false;
+		}
+		global $xoopsDB;
+		// need to add *=+*: to the front of all the options
+		$sql = "UPDATE ".$xoopsDB->prefix("formulize_".$this->fid). " SET `".$element->getVar('ele_handle')."` = CONCAT(\"*=+*:\", `".$element->getVar('ele_handle')."`)";
+		if(!$res = $xoopsDB->queryF($sql)) {
+			return false;
+		}
+		return true;
+	}
+	
+  // change checkbox data to radio button format
+	// added to handle the situations where the radio button elements are converted to checkboxes
+	// $element can be an id or an object
+	function convertCheckboxDataToRadio($element) {
+		if(!$element = _getElementObject($element)) {
+			return false;
+		}
+		global $xoopsDB;
+		// need to remove *=+*: from the options, and put a comma in there instead, so it's one string and the "out of range" handling will pick it up and show it on screen
+		// replace *=+*: in the field with ", " but only on the part of the string after the first five characters (which will omit the *=+*: that preceeds all items)
+    $sql = "UPDATE ".$xoopsDB->prefix("formulize_".$this->fid). " SET `".$element->getVar('ele_handle')."` = REPLACE(RIGHT(`".$element->getVar('ele_handle')."`, CHAR_LENGTH(`".$element->getVar('ele_handle')."`)-5), \"*=+*:\", \", \")";
+		if(!$res = $xoopsDB->queryF($sql)) {
+			return false;
+		}
+		return true;
+	}
+	
+	
 }
 	
-?>

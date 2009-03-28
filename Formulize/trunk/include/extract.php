@@ -149,7 +149,7 @@ function prepvalues($value, $field, $entry_id) {
      if($value AND $sourceMeta[1]) {
           $sql = "SELECT `".$sourceMeta[1]."` FROM ".DBPRE."formulize_".$sourceMeta[0]." WHERE entry_id IN (".trim($value, ",").") ORDER BY entry_id";
           if(!$res = mysql_query($sql)) {
-               print "Error: could not retrieve the source values for a linked selectbox during data extraction.  SQL:<br>$sql<br>";
+               print "Error: could not retrieve the source values for a linked selectbox during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
           } else {
                $value = "";
                while($array = mysql_fetch_array($res)) {
@@ -1195,7 +1195,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
                                    } else {
                                         $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
                                    }
-                                   $data_handler->writeEntry($recordID, array($elementID=>$derivedValue), false, true); // false is no proxy user, true is force the update even on get requests
+                                   $data_handler->writeEntry($recordID, array($elementID=>$derivedValue), false, true, false); // false is no proxy user, true is force the update even on get requests, false is do not update the metadata (modification user)
                               }
                          }
                     }
