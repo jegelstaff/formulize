@@ -436,17 +436,18 @@ formulize_benchmark("Start of formDisplay.");
 	// set the alldoneoverride if necessary -- August 22 2006
 	$config_handler =& xoops_gethandler('config');
 	$formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
-	// remove the all done button if the config option says 'no', and we're on a single-entry form, or we're looking at an existing entry, or we're on an overridden Multi-entry form
-	$allDoneOverride = (!$formulizeConfig['all_done_singles'] AND !$profileForm AND (($single OR $overrideMulti OR $entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
+	// remove the all done button if the config option says 'no', and we're on a single-entry form, or the function was called to look at an existing entry, or we're on an overridden Multi-entry form
+	$allDoneOverride = (!$formulizeConfig['all_done_singles'] AND !$profileForm AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
 	
 	if($allDoneOverride AND $_POST['form_submitted']) {
 		drawGoBackForm($go_back, $currentURL, $settings, $entry);
 		print "<script type=\"text/javascript\">window.document.go_parent.submit();</script>\n";
+		return;
 	} else {
 		// only do all this stuff below, the normal form displaying stuff, if we are not leaving this page now due to the all done button being overridden
 		
 		// we cannot have the back logic above invoked when dealing with a subform, but if the override is supposed to be in place, then we need to invoke it
-		if(!$allDoneOverride AND !$formulizeConfig['all_done_singles'] AND !$profileForm AND ($_POST['target_sub'] OR $_POST['goto_sfid'] OR $_POST['deletesubsflag'] OR $_POST['parent_form']) AND ($single OR $entry OR $overrideMulti)) {
+		if(!$allDoneOverride AND !$formulizeConfig['all_done_singles'] AND !$profileForm AND ($_POST['target_sub'] OR $_POST['goto_sfid'] OR $_POST['deletesubsflag'] OR $_POST['parent_form']) AND ($single OR $original_entry OR $overrideMulti)) {
 			$allDoneOverride = true;
 		}
 	
@@ -963,8 +964,6 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 				// grab the value from the parent element -- assume that it is a textbox of some kind!
 				if (isset($_POST['de_'.$value_source_form.'_'.$entry.'_'.$value_source])) {
 					$value_to_write = $_POST['de_'.$value_source_form.'_'.$entry.'_'.$value_source];
-				} elseif(isset($_POST['hidden_'.$value_source])) {  // special hidden flag is used when rendering hidden textboxes in entries that have been saved.  "hidden_" is only used to pickup the value on the page load, for uses like this.
-					$value_to_write = $_POST['hidden_'.$value_source];
 				} else {
 					// get this entry and see what the source value is
 					$data_handler = new formulizeDataHandler($value_source_form);
@@ -1277,8 +1276,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 					global $myts;
 					if(!$myts){ $myts =& MyTextSanitizer::getInstance(); }
 					$ele_value = $ni->getVar('ele_value');
-					$hiddenName = $entry ? "hidden_".$ni->getVar('ele_id') : 'de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'); // if there is an existing entry, need to give this a different name so it will not be saved...we are only using this as a cue, to be picked up by the subform system if it needs to write a common value to the DB to establish a link in a new subform entry!
-					$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden($hiddenName, $myts->htmlSpecialChars(getTextboxDefault($ele_value[2], $ni->getVar('id_form'), $entry)));
+					$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $myts->htmlSpecialChars(getTextboxDefault($ele_value[2], $ni->getVar('id_form'), $entry)));
 					break;
 				case "textarea":
 					if(!$entry) {

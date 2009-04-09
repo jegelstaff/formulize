@@ -2908,9 +2908,7 @@ function synchSubformBlankDefaults($fid, $entry) {
         $elementPostHandle = "de_".$_POST['formulize_subformValueSourceForm_'.$sfid]."_".$_POST['formulize_subformValueSourceEntry_'.$sfid]."_".$_POST['formulize_subformValueSource_'.$sfid];
         // grab the value from the parent element -- assume that it is a textbox of some kind!
         if (isset($_POST[$elementPostHandle])) {
-          $value_to_write = $_POST[$elementPostHandle];
-        } elseif(isset($_POST['hidden_'.$_POST['formulize_subformValueSource_'.$sfid]])) {  // special hidden flag is used when rendering hidden textboxes in entries that have been saved.  "hidden_" is only used to pickup the value on the page load, for uses like this.
-          $value_to_write = $_POST['hidden_'.$_POST['formulize_subformValueSource_'.$sfid]];
+          $value_to_write = $_POST[$elementPostHandle]; // get the value right out of the posted submission if it's present
         } else {
           // get this entry and see what the source value is
           $data_handler = new formulizeDataHandler($_POST['formulize_subformValueSourceForm_'.$sfid]);

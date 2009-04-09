@@ -450,28 +450,42 @@ class formulizeDataHandler  {
 	}
 	
 	// This function writes a set of values to an entry
-	// $values will be an array of element ids and prepared values
+	// $values will be an array of element ids and prepared values, or handles and prepared values.  Array must use all ids as keys or all handles as keys!
 	// $proxyUser is optional and if present will override the current xoopsuser uid as the creation user
 	// $updateMetadata is a flag to allow us to skip updating the modification user and time.  Introduced for when we update derived values and the mod user and time should not change.
 	function writeEntry($entry, $values, $proxyUser=false, $forceUpdate=false, $updateMetadata=true) {
 
 		global $xoopsDB, $xoopsUser;
 		static $cachedMaps = array();
+		$mapIDs = true; // assume we're mapping elements based on their IDs, because the values array is based on ids as keys
+		foreach(array_keys($values) as $thisKey) { // check the values array keys
+			if(!is_numeric($thisKey)) { // if we find a non numeric key, then we must map based on handles instead
+				$mapIDs = false;
+				break;
+			}
+		}
 		// get handle/id equivalents directly from database in one query, since we'll need them later
 		// much more efficient to do it this way than query for all the element objects, for instance.
-		if(!isset($cachedMaps[$this->fid])) {
+		if(!isset($cachedMaps[$this->fid][$mapIDs])) {
 			$handleElementMapSQL = "SELECT ele_handle, ele_id FROM ".$xoopsDB->prefix("formulize") . " WHERE id_form=".intval($this->fid);
 			if(!$handleElementMapRes = $xoopsDB->query($handleElementMapSQL)) {
 				return false;
 			}
 			$handleElementMap = array();
 			while($handleElementMapArray = $xoopsDB->fetchArray($handleElementMapRes)) {
-				$handleElementMap[$handleElementMapArray['ele_id']] = $handleElementMapArray['ele_handle'];
+				switch($mapIDs) {
+					case true:
+						$handleElementMap[$handleElementMapArray['ele_id']] = $handleElementMapArray['ele_handle'];
+						break;
+					case false:
+						$handleElementMap[$handleElementMapArray['ele_handle']] = $handleElementMapArray['ele_handle'];
+						break;
+				}
 			}
-			$cachedMap[$this->fid] = $handleElementMap;
+			$cachedMap[$this->fid][$mapIDs] = $handleElementMap;
 		}
 		if(!isset($handleElementMap)) {
-			$handleElementMap = $cachedMap[$this->fid];
+			$handleElementMap = $cachedMap[$this->fid][$mapIDs];
 		}
 		
 		// check for presence of ID or SEQUENCE and look up the values we'll need to write

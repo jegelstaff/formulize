@@ -587,11 +587,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      // Debug Code
      
-     /*global $xoopsUser;
-     if($xoopsUser->getVar('uid') == 350) {
-          print "<br>Count query: $countMasterResults<br><br>";
-          print "Master query: $masterQuerySQL<br>";
-     }*/
+     //global $xoopsUser;
+     //if($xoopsUser->getVar('uid') == 350) {
+     //     print "<br>Count query: $countMasterResults<br><br>";
+     //     print "Master query: $masterQuerySQL<br>";
+     //}
      
 		 formulize_benchmark("Before query");
 		 
@@ -729,6 +729,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 					//formulize_benchmark("Done entry, ready to do derived values.");
 					// now that the entire entry has been processed, do the derived values for it
           if(count($derivedFieldMetadata) > 0) {
+               //print "fid: $fid<br>";
+               //print "frid: $frid<br>";
                $masterResults[$masterIndexer] = formulize_calcDerivedColumns($masterResults[$masterIndexer], $derivedFieldMetadata, $frid, $fid);
           }
 					
@@ -1267,7 +1269,6 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
      
      static $results_array = array();
      static $framework_results = array();
-         
      $handle = "";
      $term = trim($term, "\"");
      
@@ -1286,6 +1287,7 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
           if(isset($framework_results[$frid])) {
                $formList = $framework_results[$frid];
           } else {
+               //print "SELECT ff_form_id FROM " . DBPRE . "formulize_framework_forms WHERE ff_frame_id = \"$frid\"<br>";
                $formList = go("SELECT ff_form_id FROM " . DBPRE . "formulize_framework_forms WHERE ff_frame_id = \"$frid\"");
                $framework_results[$frid] = $formList;
           }
@@ -1303,10 +1305,12 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
                     $handle = $term; // can only do the conversion of element handles to framework handles if we are in the full stack, not if we are including extract.php from outside 
                }
           } else {
+               //print "SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_colhead = \"" . mysql_real_escape_string($term) . "\"<br>";
                $colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_colhead = \"" . mysql_real_escape_string($term) . "\"");
                if(count($colhead_query) > 0) {
                     $handle = $frid ? handleFromId($colhead_query[0]['ele_id'], $form_id['ff_form_id'], $frid) : $colhead_query[0]['ele_handle'];
                } else {
+                    //print "SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_caption = \"" . mysql_real_escape_string($term) . "\"<br>";
                     $caption_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_caption = \"" . mysql_real_escape_string($term) . "\"");
                     if(count($caption_query) > 0 ) {
                          $handle = $frid ? handleFromId($caption_query[0]['ele_id'], $form_id['ff_form_id'], $frid) : $caption_query[0]['ele_handle'];

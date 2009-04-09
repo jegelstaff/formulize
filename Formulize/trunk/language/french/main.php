@@ -261,11 +261,11 @@ define("_formulize_INFO_SAVE2", "</i>.");
 define("_formulize_INFO_NOSAVE", "You can review this entry, but you <i>cannot save changes</i>.");
 define("_formulize_INFO_MAKENEW", "Vous pouvez enregistrer votre nouvelle information en complétant le formulaire ci-dessous.");
 
-define("_formulize_ADD", "Add");
+define("_formulize_ADD", "Ajouter");
 define("_formulize_ADD_ONE", "Add One");
-define("_formulize_ADD_ENTRIES", "entries");
+define("_formulize_ADD_ENTRIES", "ligne(s)");
 define("_formulize_DELETE_CHECKED", "Delete checked items");
-define("_formulize_ADD_HELP", "Add an entry in this section by clicking the <i>Add</i> button.");
+define("_formulize_ADD_HELP", "Pour ajouter des cases, appuyez sur le bouton <i>Ajouter</i>.");
 define("_formulize_ADD_HELP2", "See an entire entry by clicking the <i>View</i> button.");
 define("_formulize_ADD_HELP3", "Update an entry by changing the values on the right.");
 define("_formulize_ADD_HELP4", "Delete an entry by checking the boxes and clicking the button below.");
@@ -500,5 +500,7 @@ define("_formulize_DE_NOT_CONTEXTIF", " only if ");
 define("_formluize_DE_NOT_CONTEXTAND", ", and ");
 define("_formulize_DE_NOT_TEMPTEXT", "Use this custom template file: ");
 define("_formulize_DE_NOT_SUBJTEXT", "Use this custom subject line: ");
+
+define("_formulize_DE_IMPORTDATA", "Importer des données");
 
 ?>
