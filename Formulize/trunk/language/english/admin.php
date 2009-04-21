@@ -367,6 +367,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_ENTRIESPERPAGE", "How many entries should appea
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_ENTRIESPERPAGE", "Set to '0' to have all entries appear on one page.");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN", "What screen should be used to display individual entries when users click on them?");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT", "Use the default version of this form");
+define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYPAGEWORKS", "Pageworks page");
 define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH", "How many pixels wide should each column be?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTH", "Set to '0' to have columns expand to their natural width.");
 define("_AM_FORMULIZE_SCREEN_LOE_TEXTWIDTH", "How many characters of text should be displayed in any cell?");

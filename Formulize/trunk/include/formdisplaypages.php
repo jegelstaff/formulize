@@ -406,7 +406,7 @@ function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow) 
 
 	$pageSelectionList .= "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
 	for($page=1;$page<=$countPages;$page++) {
-		$title = isset($pageTitles[$page]) ? " &mdash; " . printSmart($pageTitles[$page]) : "";
+		$title = isset($pageTitles[$page]) ? " &mdash; " . trans($pageTitles[$page]) : "";
 		$pageSelectionList .= "<option value=$page";
 		$pageSelectionList .= $page == $currentPage ? " selected=true>" : ">";
 		$pageSelectionList .= $page . $title . "</option>\n";

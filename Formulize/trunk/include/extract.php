@@ -986,14 +986,14 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 															$nameSearchStart = true;
                               while($preSearchArray = mysql_fetch_array($preSearchResult)) {
 																	 if(!$nameSearchStart) {
-																				$newWhereClause = "OR";
+																				$newWhereClause .= "OR";
 																	 } else {
 																				$nameSearchStart = false;
 																	 }
                                    if(formulize_selectboxAllowsMultipleSelections($element_id)) {
-                                        $newWhereClause = " (($elementPrefix.".$ifParts[0]." LIKE '%*=+*:" . $preSearchArray['uid'] . "*=+*:%' OR $elementPrefix.".$ifParts[0]." LIKE '%*=+*:" . $preSearchArray['uid'] . "') OR $elementPrefix.".$ifParts[0]." = " . $preSearchArray['uid'] . ") "; // could this be further optimized to remove the = condition, and only use the LIKEs?  We need to check if a multiselection-capable box still uses the delimiter string when only one value is selected...I think it does.
+                                        $newWhereClause .= " (($elementPrefix.".$ifParts[0]." LIKE '%*=+*:" . $preSearchArray['uid'] . "*=+*:%' OR $elementPrefix.".$ifParts[0]." LIKE '%*=+*:" . $preSearchArray['uid'] . "') OR $elementPrefix.".$ifParts[0]." = " . $preSearchArray['uid'] . ") "; // could this be further optimized to remove the = condition, and only use the LIKEs?  We need to check if a multiselection-capable box still uses the delimiter string when only one value is selected...I think it does.
                                    } else {
-                                        $newWhereClause = " $elementPrefix.".$ifParts[0]." = " . $preSearchArray['uid'] . " ";
+                                        $newWhereClause .= " $elementPrefix.".$ifParts[0]." = " . $preSearchArray['uid'] . " ";
                                    }
                               }
                          } else {

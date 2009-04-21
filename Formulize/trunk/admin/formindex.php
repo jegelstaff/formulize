@@ -1119,6 +1119,15 @@ function patch31() {
     if($entryOwnerGroupFound) {
       if($derivedResult = formulize_createDerivedValueFieldsInDB()) {
         print "Created derived value fields in database.  result: OK<br>\n";
+        $sql = array();
+        $sql['ves_to_varchar'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `viewentryscreen` `viewentryscreen` varchar(10) NOT NULL DEFAULT ''";
+        foreach($sql as $key=>$thissql) {
+          if(!$result = $xoopsDB->query($thissql)) {
+          	if($key === "ves_to_carchar") {
+          		print "viewentryscreen param already converted to varchar.  result: OK<br>";
+            }
+          }
+        }
         print "DB updates completed.  result: OK";
       } else {
         print "Unable to create derived value fields in database.  result: failed.  contact <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";

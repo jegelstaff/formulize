@@ -39,7 +39,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `listtemplate` text NOT NULL,
   `bottomtemplate` text NOT NULL,
   `entriesperpage` int(1) NOT NULL,
-  `viewentryscreen` INT( 11 ) NOT NULL DEFAULT '0',
+  `viewentryscreen` varchar(10) NOT NULL DEFAULT '',
   PRIMARY KEY (`listofentriesid`),
   INDEX i_sid (`sid`)
 ) TYPE=MyISAM;

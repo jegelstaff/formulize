@@ -466,7 +466,11 @@ function addOption($id1, $id2, $text, $type='check', $checked=null){
 		$c->addOption(1, ' ');
 	}
 	else{
-		$c = new XoopsFormRadio('', 'checked', $checked);
+		if($checked!==null) {
+			$c = new XoopsFormRadio('', 'checked', $checked);
+		} else {
+			$c = new XoopsFormRadio('', 'checked', 7845689); // need to set some number value that will never be actually used, as the selected value, to ensure that no default selection is shown.  The first radio button option will have 0 as its value and so null or other normal empty values will cause the 0 to be selected.  So this way, nothing, not even 0, will match the selection value.  Crude but effective.
+		}
 		$c->addOption($id2, ' ');
 	}
 	$t = new XoopsFormElementTray('');
