@@ -188,7 +188,7 @@ function getCurrentURL() {
 	$url_parts = parse_url(XOOPS_URL);
 	$url = $url_parts['scheme'] . "://" . $url_parts['host']; 
 	$url = isset($url_parts['port']) ? $url . ":" . $url_parts['port'] : $url;
-	$url .= htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])); 
+	$url .= str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])));  // strip html tags, convert special chars to htmlchar equivalents, then convert back ampersand htmlchars to regular ampersands, so the URL doesn't bust on certain servers
 	return $url;
 }
 
@@ -2715,8 +2715,8 @@ print "$prevValue<br><br>";
           if(count($searchForValues) > 0) {
               $entry_id_q = q("SELECT `entry_id`, `".$boxproperties[1]."` FROM " . $xoopsDB->prefix("formulize_".$boxproperties[0]) . " WHERE `".$boxproperties[1]."` = '".implode("' OR `".$boxproperties[1]."` = '", $searchForValues) . "'");
               foreach($entry_id_q as $thisEntryId) {
-                $cachedEntryIds[$boxproperties[0]][$boxproperties[1]][$thisEntryId[$boxproperties[1]]] = $thisEntryId[0]['entry_id'];
-                $foundEntryIds[] = $thisEntryId[0]['entry_id'];
+                $cachedEntryIds[$boxproperties[0]][$boxproperties[1]][$thisEntryId[$boxproperties[1]]] = $thisEntryId['entry_id'];
+                $foundEntryIds[] = $thisEntryId['entry_id'];
               }
           }
           if(count($foundEntryIds)>0) {
