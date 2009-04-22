@@ -413,7 +413,6 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this
 	  if(substr($filter, 0, 6) != "SELECT") { // if the filter is not itself a fully formed select statement...
 	       
-	       $scopeJoinText = "";
 	       $scopeFilter = "";
 	       if(is_array($scope)) { // assume any arrays are groupid arrays, and so make a valid scope string based on this.  Use the new entry owner table.
 		    if(count($scope) > 0 ) {
@@ -423,13 +422,10 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 				   $scopeFilter .= " OR scope.groupid=".intval($groupid);
 			      } else {
 				   $start = false;
-				   //$scopeFilter = " AND (scope.groupid=".intval($groupid); // going with an exists statement for the scope, since it's not really an inner join we care about, and the fact there can be a one to many relationship between the main table and the scope table can screw up results.
            $scopeFilter = " AND EXISTS(SELECT 1 FROM ".DBPRE."formulize_entry_owner_groups AS scope WHERE (scope.entry_id=main.entry_id AND scope.fid=".intval($fid).") AND (scope.groupid=".intval($groupid);
 			      }
 			 }
-			 //$scopeFilter .= ") ";
        $scopeFilter .= ")) "; // need two closing brackets for the exists statement and its where clause
-			 //$scopeJoinText = " INNER JOIN ".DBPRE."formulize_entry_owner_groups AS scope ON (scope.entry_id=main.entry_id AND scope.fid=".intval($fid).")"; // no need for a join text now
 		    } else { // no valid entries found, so show no entries
 			 $scopeFilter = " AND main.entry_id<0 ";
 		    }
@@ -438,7 +434,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       }
 	       
 	       list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
-	       
+	       $mainFormWhereClause = isset($oneSideFilters[$fid]) ? " AND " . implode("", $oneSideFilters[$fid]) : ""; // useful in the count query         
+         
 	       $limitClause = "";
 	       if($limitSize) {
 		    $limitClause = " LIMIT $limitStart, $limitSize ";
@@ -452,16 +449,16 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       if($frid) {
            $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
            $newJoinText = ""; // "new" variables initilized in each loop
-           $newOneSideJoinText = "";
+           $newexistsJoinText = "";
            $joinText = ""; // not "new" variables persist (with .= operator)
-           $oneSideJoinText = "";
+           $existsJoinText = "";
            foreach($linkformids as $id=>$linkedFid) {
              formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
              $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
              $joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
              $joinText .= " $joinType JOIN " . DBPRE . "formulize_$linkedFid AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
-             $newOneSideJoinText = $oneSideJoinText ? " $andor " : "";
-             $newOneSideJoinText = " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_$linkedFid AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it 
+             $newexistsJoinText = $existsJoinText ? " $andor " : "";
+             $newexistsJoinText .= " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_$linkedFid AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it 
              if($linkcommonvalue[$id]) { // common value
                $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
              } elseif($linktargetids[$id]) { // linked selectbox
@@ -474,13 +471,13 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                $newJoinText = " main.creation_uid=f$id.creation_uid";
              }
              $joinText .= $newJoinText;
-             if(count($oneSideFilters[$linkedFid])>0) { // only setup the oneSideJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
-               $oneSideJoinText .= $newOneSideJoinText . $newJoinText;
-               $oneSideJoinText .= " AND (";
+             if(count($oneSideFilters[$linkedFid])>0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
+               $existsJoinText .= $newexistsJoinText . $newJoinText;
+               $existsJoinText .= " AND (";
                foreach($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
-                $oneSideJoinText .= $thisOneSideFilter;
+                $existsJoinText .= $thisOneSideFilter;
                }
-               $oneSideJoinText .= ")) "; // close the where clause and the exists clause itself
+               $existsJoinText .= ")) "; // close the where clause and the exists clause itself
              }
            }
 	       }
@@ -534,35 +531,53 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  
 	       $countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_$fid AS main ";
 	       if($userJointType == "INNER") {
-		    $countMasterResults .= "$userJoinText ";
+          $countMasterResults .= "$userJoinText ";
 	       }
-	       $countMasterResults .= "$userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter";
+	       $countMasterResults .= "$userJoinText WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter";
+         $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
 	       if($countMasterResultsRes = mysql_query($countMasterResults)) {
-		    $countMasterResultsRow = mysql_fetch_row($countMasterResultsRes);
-		    if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
-			 return $countMasterResultsRow[0];
-		    } else {
-			 $GLOBALS['formulize_countMasterResults'] = $countMasterResultsRow[0]; // put this in the global space so we can pick it up later when determining how many page numbers to create
-		    }
+           $countMasterResultsRow = mysql_fetch_row($countMasterResultsRes);
+           if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
+             return $countMasterResultsRow[0];
+           } else {
+             $GLOBALS['formulize_countMasterResults'] = $countMasterResultsRow[0]; // put this in the global space so we can pick it up later when determining how many page numbers to create
+           }
 	       } else {
-		    exit("Error: could not count master results.  SQL:$countMasterResults<br>");
+		       exit("Error: could not count master results.<br>".mysql_error()."<br>SQL:$countMasterResults<br>");
 	       }
+         
+         // now, if there's framework in effect, get the entry ids of the entries in the main form that match the criteria, so we can use a specific query for them instead of the order clause in the master query
+         $limitByEntryId = "";
+         if($frid) {
+              $limitByEntryId = " AND (";
+              $entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id", $countMasterResults); // don't count the entries, select their id numbers
+              $entryIdQuery .= $limitClause;
+              $entryIdResult = mysql_query($entryIdQuery);
+              $start = true;
+              while($entryIdValue = mysql_fetch_array($entryIdResult)) {
+                    $limitByEntryId .= !$start ? " OR " : "";
+                    $limitByEntryId .= "main.entry_id = " . $entryIdValue['main_entry_id'];
+                    $start = false;
+              }
+              $limitByEntryId .= ") ";
+              $limitClause = ""; // nullify the existing limitClause since we don't want to use it in the actual query
+         }         
 	  
 	  // only drawback in this SQL right now is it does not support one to one relationships in the query, since they are essentially joins on the entry_id and form id through the one_to_one table
-	  $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause $limitClause";
+	  $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $limitByEntryId $orderByClause $limitClause";
     
     // if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
     // note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
-    $oneSideSQL = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText WHERE main.entry_id>0 $scopeFilter ";
-    $oneSideSQL .= $oneSideJoinText ? " AND ($oneSideJoinText) " : "";
+    $oneSideSQL = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested.
+    $oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
     if(count($oneSideFilters[$fid])>0) {
       $oneSideSQL .= " $andor ( " . implode(" ", $oneSideFilters[$fid]) . ")"; // properly introduce these filters
     }
     
-	  $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
+	  $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
     $GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
     if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
-	  $GLOBALS['formulize_queryForExport'] = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $scopeJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause";
+	  $GLOBALS['formulize_queryForExport'] = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause";
      
 	  //$masterQuerySQL = "SELECT * FROM " . DBPRE . "formulize_$fid LIMIT 0,1";
 	  //$afterQueryTime = microtime_float();
@@ -653,6 +668,13 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                          }
                          //print "curFormAlias: $curFormAlias<br>prevMainId: $prevMainId<br>current main id: ". $masterQueryArray['main_entry_id'] . "<br><br>";
                          if($curFormAlias == "main" AND $prevMainId != $masterQueryArray['main_entry_id']) {
+                              //formulize_benchmark("Done entry, ready to do derived values.");
+                    					// now that the entire entry has been processed, do the derived values for it
+                              if(count($derivedFieldMetadata) > 0 AND $masterIndexer > -1) { // if there is derived value info for this data set and we have started to create values...
+                                   //print "fid: $fid<br>";
+                                   //print "frid: $frid<br>";
+                                   $masterResults[$masterIndexer] = formulize_calcDerivedColumns($masterResults[$masterIndexer], $derivedFieldMetadata, $frid, $fid);
+                              }
                               $masterIndexer++; // If this is a new main entry, then increment the masterIndexer, since the masterIndexer is used to uniquely identify each main entry
                               $prevMainId = $masterQueryArray['main_entry_id']; // if the current form is a main, then store it's ID for use later when we're on a new form
                          }
@@ -726,14 +748,12 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                     $masterResults[$masterIndexer][formulize_readFrameworkMap($frameworkMap, $curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][$old_meta] = $valueArray;
                }
           }
-					//formulize_benchmark("Done entry, ready to do derived values.");
-					// now that the entire entry has been processed, do the derived values for it
-          if(count($derivedFieldMetadata) > 0) {
-               //print "fid: $fid<br>";
-               //print "frid: $frid<br>";
-               $masterResults[$masterIndexer] = formulize_calcDerivedColumns($masterResults[$masterIndexer], $derivedFieldMetadata, $frid, $fid);
-          }
-					
+     }
+     
+     if(count($derivedFieldMetadata) > 0 AND $masterIndexer > -1) { // if there is derived value info for this data set and we have started to create values...need to do this one more time for the last value that we would have gathered data for...
+          //print "fid: $fid<br>";
+          //print "frid: $frid<br>";
+          $masterResults[$masterIndexer] = formulize_calcDerivedColumns($masterResults[$masterIndexer], $derivedFieldMetadata, $frid, $fid);
      }
 
      return $masterResults;
@@ -1165,7 +1185,6 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
 // Odd results may occur when a derived column is inside a subform in a framework!
 // Derived values should always be in the mainform only?
 function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
-     
      global $xoopsDB; // just used as a cue to see if XOOPS is active
      static $parsedFormulas = array();
      foreach($entry as $formHandle=>$record) {
@@ -1179,7 +1198,6 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
                     $parsedFormulas[$formHandle] = true;
                }
                foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
-                    
                     if($entry[$formHandle][key($record)][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
                          $functionName = "derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", str_replace("/", "", str_replace("\\", "", trans($formHandle)))))."_".$formulaNumber;
                          formulize_benchmark(" -- calling derived function.");
