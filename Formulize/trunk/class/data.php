@@ -464,6 +464,7 @@ class formulizeDataHandler  {
 				break;
 			}
 		}
+		
 		// get handle/id equivalents directly from database in one query, since we'll need them later
 		// much more efficient to do it this way than query for all the element objects, for instance.
 		if(!isset($cachedMaps[$this->fid][$mapIDs])) {

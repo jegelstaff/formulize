@@ -530,10 +530,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       global $formulize_LOE_limit;
 	  
 	       $countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_$fid AS main ";
-	       if($userJointType == "INNER") {
-          $countMasterResults .= "$userJoinText ";
-	       }
-	       $countMasterResults .= "$userJoinText WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter";
+	       $countMasterResults .= "$userJoinText WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter"; 
          $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
 	       if($countMasterResultsRes = mysql_query($countMasterResults)) {
            $countMasterResultsRow = mysql_fetch_row($countMasterResultsRes);
@@ -550,7 +547,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
          $limitByEntryId = "";
          if($frid) {
               $limitByEntryId = " AND (";
-              $entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id", $countMasterResults); // don't count the entries, select their id numbers
+              $entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id", $countMasterResults) . $orderByClause; // don't count the entries, select their id numbers
               $entryIdQuery .= $limitClause;
               $entryIdResult = mysql_query($entryIdQuery);
               $start = true;
@@ -914,7 +911,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                
                if(is_numeric($ifParts[0]) AND $ifParts[0] == $indivFilter) {
                     // if this is a numeric value, then we must treat it specially
-                    $whereClause .= "main.entry_id=" . $ifParts[0];
+                    $newWhereClause = "main.entry_id=" . $ifParts[0];
+                    $mappedForm = $fid;
                } elseif($ifParts[0] == "creation_uid" OR $ifParts[0]  == "mod_uid" OR $ifParts[0]  == "creation_datetime" OR $ifParts[0]  == "mod_datetime") {
                     // if this is a user id field, then treat it specially 
                     if(($ifParts[0] == "creation_uid" OR $ifParts[0] == "mod_uid") AND !is_numeric($ifParts[1])) {
@@ -932,16 +930,12 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                          $ifParts[1] = mysql_real_escape_string($ifParts[1]);
 												 
                     }
-                    $whereClause .= "main.".$ifParts[0]  . $operator . $quotes . $likebits . $ifParts[1] . $likebits . $quotes;
+                    $newWhereClause = "main.".$ifParts[0]  . $operator . $quotes . $likebits . $ifParts[1] . $likebits . $quotes;
+                    $mappedForm = $fid;
                } elseif($ifParts[0] == "creator_email") {
                     $formFieldFilterMap['creator_email'] = true;
-                    /*$ifParts[1] = "(SELECT uid FROM " . DBPRE . "users WHERE email $operator $quotes $likebits " . mysql_real_escape_string($ifParts[1]) . " $likebits $quotes)";
-                    $ifParts[0] = "creation_uid";
-                    $quotes = "";
-                    $operator = "= ANY";
-                    $likebits = "";
-                    $whereClause .= "main.".$ifParts[0] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes;*/
-                    $whereClause .= "usertable.email" . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes;
+                    $newWhereClause = "usertable.email" . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes;
+                    $mappedForm = $fid; 
                } else {
                     
                     // do non-metadata queries
@@ -1026,13 +1020,13 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                          $newWhereClause = "$elementPrefix." . $ifParts[0] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes;
                     }
                     
-                    $whereClause .= $newWhereClause;
-                    if(count($oneSideFilters[$mappedForm]) == 0) {
-                         $oneSideFilters[$mappedForm][] = " $newWhereClause ";   // don't add the local andor on the first term for a form  
-                    } else {
-                         $oneSideFilters[$mappedForm][] = $filterParts[0] . " $newWhereClause ";     
-                    }
-                    
+               }
+
+               $whereClause .= $newWhereClause;
+               if(count($oneSideFilters[$mappedForm]) == 0) {
+                    $oneSideFilters[$mappedForm][] = " $newWhereClause ";   // don't add the local andor on the first term for a form  
+               } else {
+                    $oneSideFilters[$mappedForm][] = $filterParts[0] . " $newWhereClause ";     
                }
                
                $whereClause .= ")";
@@ -1042,7 +1036,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
           $whereClause .= ")";
           $numSeachExps++;
      }
-                         
+
      return array(0=>$formFieldFilterMap, 1=>$whereClause, 2=>$orderByClause, 3=>$oneSideFilters);    
 }
 
