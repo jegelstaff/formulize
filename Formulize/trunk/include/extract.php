@@ -449,6 +449,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       if($frid) {
            $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
            $newJoinText = ""; // "new" variables initilized in each loop
+           $joinTextIndex = array();
            $newexistsJoinText = "";
            $joinText = ""; // not "new" variables persist (with .= operator)
            $existsJoinText = "";
@@ -470,6 +471,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
              } else { // join by uid
                $newJoinText = " main.creation_uid=f$id.creation_uid";
              }
+             $joinTextIndex[$linkedFid] = $newJoinText;
              $joinText .= $newJoinText;
              if(count($oneSideFilters[$linkedFid])>0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
                $existsJoinText .= $newexistsJoinText . $newJoinText;
@@ -486,6 +488,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       $userJoinType = $formFieldFilterMap['creator_email'] ? "INNER" : "LEFT";
 	       $userJoinText = " $userJoinType JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid";
 	       
+          $sortIsOnMain = true;
           if(!$orderByClause AND $sortField) {
                
                if($sortField == "creation_uid" OR $sortField == "mod_uid" OR $sortField == "creation_datetime" OR $sortField == "mod_datetime") {
@@ -515,6 +518,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                } else {
                     $sortFidAlias = array_keys($linkformids, $sortFid); // position of this form in the linking relationships is important for identifying which form alias to use
                     $sortFidAlias = "f".$sortFidAlias[0];
+                    $sortIsOnMain = false;
                }
                $orderByClause = " ORDER BY $sortFidAlias.`$sortField` $sortOrder ";
           } elseif(!$orderByClause) {
@@ -547,8 +551,14 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
          $limitByEntryId = "";
          if($frid) {
               $limitByEntryId = " AND (";
-              $entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id", $countMasterResults) . $orderByClause; // don't count the entries, select their id numbers
-              $entryIdQuery .= $limitClause;
+              $entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id", $countMasterResults); // don't count the entries, select their id numbers
+              if(!$sortIsOnMain) {
+                 $entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT (SELECT `$sortField` FROM ".DBPRE."formulize_$sortFid as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. ") as usethissort, main.entry_id as main_entry_id ", $entryIdQuery);
+                 $thisOrderByClause = " ORDER BY usethissort ";
+              } else {
+                 $thisOrderByClause = $orderByClause;
+              }
+              $entryIdQuery .= " $thisOrderByClause $limitClause";
               $entryIdResult = mysql_query($entryIdQuery);
               $start = true;
               while($entryIdValue = mysql_fetch_array($entryIdResult)) {

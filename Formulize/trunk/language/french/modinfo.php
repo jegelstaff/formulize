@@ -54,7 +54,3 @@ define("_MI_formulizeMENU_DESC","Montrer un menu individuel configurable dans un
 
 // Names of blocks for this module (Not all module has blocks)
 define("_MI_formulizeMENU_BNAME","Menu de Formulaire");
-
-// Version
-define("_MI_VERSION","2.0");
-?>

@@ -414,20 +414,26 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
         $_POST['lockcontrols'] = 0;
       }
     }
-    /*
-    print "<br>Currentview: " . $_POST['currentview'] . "<br>Oldcols: ";
-		print $_POST['oldcols'] . "<br>asearch: ";
-		print $_POST['asearch'] . "<br>calc_cols: ";
-		print $_POST['calc_cols'] . "<br>calc_calcs: ";
-		print $_POST['calc_calcs'] . "<br>calc_blanks: ";
-		print $_POST['calc_blanks'] . "<br>calc_grouping: ";
-		print $_POST['calc_grouping'] . "<br>sort: ";
-		print $_POST['sort'] . "<br>order: ";
-		print $_POST['order'] . "<br>"; 
-		print $_POST['hlist'] . "<br>"; 
-		print $_POST['hcalc'] . "<br>"; 
-		print $_POST['lockcontrols'] . "<br>";
-    */
+    /*global $xoopsUser;
+    if($xoopsUser->getVar('uid')==1) {
+      print "<br>Currentview: " . $_POST['currentview'] . "<br>Oldcols: ";
+  		print $_POST['oldcols'] . "<br>asearch: ";
+  		print $_POST['asearch'] . "<br>calc_cols: ";
+  		print $_POST['calc_cols'] . "<br>calc_calcs: ";
+  		print $_POST['calc_calcs'] . "<br>calc_blanks: ";
+  		print $_POST['calc_blanks'] . "<br>calc_grouping: ";
+  		print $_POST['calc_grouping'] . "<br>sort: ";
+  		print $_POST['sort'] . "<br>order: ";
+  		print $_POST['order'] . "<br>"; 
+  		print $_POST['hlist'] . "<br>"; 
+  		print $_POST['hcalc'] . "<br>"; 
+  		print $_POST['lockcontrols'] . "<br>";
+      foreach($_POST as $k=>$v) {
+        if(strstr($k, "search_")) {
+          print "$k: $v<br>";
+        }
+      }
+    }*/
 		
 		$currentView = $_POST['currentview']; 
 	} elseif($_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
@@ -585,6 +591,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$settings[$temp_key] = $v;
 		}
 	}
+  
 	// get all requested calculations...assign to settings array.
 	$settings['calc_cols'] = $_POST['calc_cols'];	
 	$settings['calc_calcs'] = $_POST['calc_calcs'];
@@ -1678,7 +1685,15 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
     }
     //formulize_benchmark("done filter");
     
-		// handle all the hidden quick searches if we are on the last run through
+		if(!$returnOnly) {
+      if(isset($quickSearchBoxes[$cols[$i]]['filter'])) {
+        print $quickSearchBoxes[$cols[$i]]['filter'];
+      } else {
+        print $quickSearchBoxes[$cols[$i]]['search'];
+      }
+		}
+    
+    // handle all the hidden quick searches if we are on the last run through...must be done here, last thing in the loop, after the last box has been drawn in!!  Order of columns and searches must be in synch...adding hidden ones in between columns can cause hard-to-find problems
 		if($i == count($cols)-1) {
 			foreach($hiddenQuickSearches as $thisHQS) {
 				$search_text = isset($searches[$thisHQS]) ? htmlspecialchars(strip_tags($searches[$thisHQS]), ENT_QUOTES) : "";
@@ -1694,16 +1709,12 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 				}
 			}
 		}
-		
-		if(!$returnOnly) {
-      if(isset($quickSearchBoxes[$cols[$i]]['filter'])) {
-        print $quickSearchBoxes[$cols[$i]]['filter'];
-      } else {
-        print $quickSearchBoxes[$cols[$i]]['search'];
-      }
-			print "</td>\n";
-		}
+    
+    if(!$returnOnly) {
+      print "</td>\n";      
+    }
 	}
+  
 	if(!$returnOnly) {
 		for($i=0;$i<$numberOfButtons;$i++) {
 			print "<td class=head>&nbsp;</td>\n";
@@ -3911,9 +3922,10 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		$readElementsWasRunOnAForm = isset($GLOBALS['formulize_allWrittenEntryIds'][$fid]) ? true : false;
 	}
 	
-	/*global $xoopsUser;
+  /*
+	global $xoopsUser;
 	if($xoopsUser) {
-		if($xoopsUser->getVar('uid') == 307) {
+		if($xoopsUser->getVar('uid') == 1) {
 			print "<br>formulize cacheddata: ". $settings['formulize_cacheddata'];
 			print "<br>forcequery: $forcequery";
 			print "<br>lastentry: ".$_POST['lastentry'];

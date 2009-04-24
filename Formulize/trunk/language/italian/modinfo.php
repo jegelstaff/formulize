@@ -42,7 +42,3 @@ define("_MI_formulizeMENU_DESC","Visualizza in un blocco il menu individuale con
 
 // Names of blocks for this module (Not all module has blocks)
 define("_MI_formulizeMENU_BNAME","Form");
-
-// Version
-define("_MI_VERSION","2.8");
-?>
