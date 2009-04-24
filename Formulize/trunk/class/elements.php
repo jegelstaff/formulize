@@ -49,7 +49,7 @@ class formulizeformulize extends XoopsObject {
 		// added descriptive text June 6 2006 -- jwe
 		$this->initVar("ele_desc", XOBJ_DTYPE_TXTAREA);
 		$this->initVar("ele_colhead", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-		$this->initVar("ele_handle", XOBJ_DTYPE_TXTBOX, NULL, false, 30);
+		$this->initVar("ele_handle", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_order", XOBJ_DTYPE_INT);
 		$this->initVar("ele_req", XOBJ_DTYPE_INT);
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);

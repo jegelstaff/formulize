@@ -96,7 +96,7 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
                 $this->initVar("listtemplate", XOBJ_DTYPE_TXTAREA);
                 $this->initVar("bottomtemplate", XOBJ_DTYPE_TXTAREA);
                 $this->initVar("entriesperpage", XOBJ_DTYPE_INT);
-                $this->initVar("viewentryscreen", XOBJ_DTYPE_INT);
+                $this->initVar("viewentryscreen", XOBJ_DTYPE_TXTBOX, NULL, false, 10);
 	}
 }
 

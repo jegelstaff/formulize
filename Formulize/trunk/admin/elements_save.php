@@ -63,13 +63,19 @@ if( !empty($ele_id) AND $clone == 0){
 		$element->setVar('ele_desc', $ele_desc);
 		$element->setVar('ele_colhead', $ele_colhead);
 		// check that handle is unique
-    $ele_handle = str_replace(" ", "_", $ele_handle);
+    $ele_handle = str_replace(" ", "_", strtolower($ele_handle));
     $ele_handle = str_replace("'", "", $ele_handle);
     $ele_handle = str_replace("\"", "", $ele_handle);
 		if($ele_handle) {
 			$form_handler =& xoops_getmodulehandler('forms');
+			$firstUniqueCheck = true;
 			while(!$uniqueCheck = $form_handler->isHandleUnique($ele_handle, $ele_id)) {
-				$ele_handle = $ele_handle . "_copy";
+						if($firstUniqueCheck) {
+									$ele_handle = $ele_handle . "_".$id_form;
+									$firstUniqueCheck = false;
+						} else {
+									$ele_handle = $ele_handle . "_copy";
+						}
 			}			
 		}
 		$element->setVar('ele_handle', $ele_handle);
@@ -352,7 +358,7 @@ if( !empty($ele_id) AND $clone == 0){
 				$value[] = $v2;
 			break;
 		}
-    
+		
 		$element->setVar('ele_uitext', $uitext);
 		$element->setVar('ele_value', $value);
 		$element->setVar('id_form', $id_form);
@@ -402,9 +408,10 @@ if( !empty($ele_id) AND $clone == 0){
 						}
 			}
 			
-			// need to serialize the ele_value now, since it was put into the element object as an array, but the writing operation will handle the serialization so it's ok in the DB, but meanwhile it's still an array in the object.
+			// need to serialize the ele_value and uitext now, since it was put into the element object as an array, but the writing operation will handle the serialization so it's ok in the DB, but meanwhile it's still an array in the object.
       // we need to serialize it so that it will be retrieved properly later.
       $element->setVar('ele_value', serialize($value));
+			$element->setVar('ele_uitext', serialize($uitext));
 			
     }
       

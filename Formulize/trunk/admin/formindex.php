@@ -1121,10 +1121,14 @@ function patch31() {
         print "Created derived value fields in database.  result: OK<br>\n";
         $sql = array();
         $sql['ves_to_varchar'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `viewentryscreen` `viewentryscreen` varchar(10) NOT NULL DEFAULT ''";
+        $sql['handlelength'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " CHANGE `ele_handle` `ele_handle` varchar(255) NOT NULL default ''";
         foreach($sql as $key=>$thissql) {
           if(!$result = $xoopsDB->query($thissql)) {
           	if($key === "ves_to_carchar") {
           		print "viewentryscreen param already converted to varchar.  result: OK<br>";
+            }
+            if($key === "handlelength") {
+              print "Length of element handles already extended.  result OK<br>";
             }
           }
         }

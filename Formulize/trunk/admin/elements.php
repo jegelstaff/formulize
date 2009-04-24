@@ -183,7 +183,7 @@ switch($op){
 			$ele_desc_default = $element->getVar('ele_desc', 'f');
 			$ele_handle_default = $element->getVar('ele_handle', 'f');
 			// merge in the uitext if there is any -- aug 25 2007
-			$uitext = $element->getVar('ele_uitext', 'f');
+			$uitext = $element->getVar('ele_uitext');
 			if(is_array($uitext) AND count($uitext) > 0) { 
 				if($ele_type == "select") {
 					$value[2] = formulize_mergeUIText($value[2], $uitext);
@@ -191,17 +191,6 @@ switch($op){
 					$value = formulize_mergeUIText($value, $uitext);
 				}
 			}
-		/*}else{
-			$ele_caption = $myts->makeTboxData4PreviewInForm($ele_caption);
-			// if ($addopt==1) {$ele_caption = '<h5>'.$ele_caption.'</h5>';} // jwe 01/05/05 -- deemed a bug
-			if ($ele_type=='sep') { 
-				$ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 255, '{SEPAR}'.$ele_caption); }
-			else { $ele_caption = new XoopsFormText(_AM_ELE_CAPTION, 'ele_caption', 50, 255, $ele_caption); }
-			$ele_colhead_default = $ele_colhead;
-			$ele_desc_default = get_magic_quotes_gpc() ? stripslashes($ele_desc) : $ele_desc;
-			unset($ele_colhead);
-			unset($ele_desc);
-		}*/
 
 		$form->addElement($ele_caption, 1);
 
@@ -212,7 +201,8 @@ switch($op){
 			$form->addElement($ele_colhead);
 		
 			// handle added April 19 2008 as part of new db structure
-			$ele_handle = new XoopsFormText(_AM_ELE_HANDLE, 'ele_handle', 30, 30, $ele_handle_default);
+			$ele_handle_default = $clone ? "" : $ele_handle_default;
+			$ele_handle = new XoopsFormText(_AM_ELE_HANDLE, 'ele_handle', 50, 50, $ele_handle_default);
 			$ele_handle->setDescription(_AM_ELE_HANDLE_HELP);
 			$form->addElement($ele_handle); 
 		

@@ -229,7 +229,7 @@ CREATE TABLE formulize (
   ele_caption text NOT NULL default '',
   ele_desc text NULL,
   ele_colhead varchar(255) NULL default '',
-  ele_handle varchar(30) NOT NULL default '',
+  ele_handle varchar(255) NOT NULL default '',
   ele_order smallint(2) NOT NULL default '0',
   ele_req tinyint(1) NOT NULL default '1',
   ele_value text NOT NULL,
