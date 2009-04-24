@@ -210,7 +210,7 @@ function updatePage($page_name, $page_title, $page_template, $page_id, $page_sea
      $sql = "UPDATE " . $xoopsDB->prefix("pageworks_pages") . 
      	" SET page_name = '" . $page_name . "', page_title = '" . $page_title . 
         "', page_template = '" . $myts->htmlSpecialChars($page_template) . 
-	  "', page_searchable = '" . $page_searchable . "'" .
+	  "', page_searchable = '" . $page_searchable . "', page_html_from_db = '" . $page_html_from_db . "'".
         " WHERE page_id = " . $page_id . ";";
 
 	$xoopsDB->query($sql);         

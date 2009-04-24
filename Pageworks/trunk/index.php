@@ -283,12 +283,11 @@ if(strstr($pagedata[0]['page_template'], "displayElement(") OR strstr($pagedata[
 
 // 10. run PHP code from template 
 
-$myts = new MyTextSanitizer();
 ob_start();
-eval($myts->undoHTMLSpecialChars($pagedata[0]['page_template']));
+$result = eval(htmlspecialchars_decode($pagedata[0]['page_template'], ENT_QUOTES));
 $page_contents = ob_get_clean();
 if($pagedata[0]['page_html_from_db']) { // if HTML chars from the DB are allowed for this page, then convert the output of this page so that HTML will display right on the screen
-	$page_contents = $myts->undoHTMLSpecialChars($page_contents);
+	$page_contents = htmlspecialchars_decode($page_contents); // does not decode &039; so textboxes don't break.
 }
 print $page_contents;
 
