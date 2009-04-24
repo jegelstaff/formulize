@@ -1715,16 +1715,20 @@ function displayList($entry, $handle, $type="bulleted", $id="NULL", $localid="NU
 
 // THIS FUNCTION RETURNS AN ARRAY OF ALL THE INTERNAL IDS ASSOCIATED WITH THE ENTRIES OF A PARTICULAR FORM
 // $formhandle can be an array of handles, or if not specified then all entries for all handles are returned
+// $formhandle can all just be a single handle
+// $formhandle values can be: the framework handle, or the title of the form, or the id number of the form if you're not using a framework
 // If formhandle is an array, then $ids becomes a two dimensional array:  $ids[$formhandle][] = $id
 function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = false) {
 	if(is_numeric($id)) {
 		$entry = $entry[$id];
 	}
+  
 	if(!$formhandle) {
 		$formhandle = getFormHandlesFromEntry($entry);
 	}
 	if(is_array($formhandle)) {
 		foreach($formhandle as $handle) {
+      $handle = _parseInternalRecordIdsFormHandle($handle);
 			foreach($entry[$handle] as $id=>$element) {
 				if($fidAsKeys) {
 					$fid = getFormIdFromHandle($handle); // note, not guaranteed to return proper fid!  form handles are not unique across all frameworks, so incorrect value may be returned here.  Also, if the form is not in a framework, then no value will be returned!
@@ -1735,11 +1739,25 @@ function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = fals
 			}
 		}
 	} else {
+    $formhandle =  _parseInternalRecordIdsFormHandle($formhandle);
 		foreach($entry[$formhandle] as $id=>$element) {
 			$ids[] = $id;
 		}
 	}
 	return $ids;
+}
+
+// this function takes a formhandle and if it's numeric, returns the title for that form
+function _parseInternalRecordIdsFormHandle($formhandle) {
+     if(!is_numeric($formhandle)) { return $formhandle; }
+     static $cachedDescForm = array();
+     if(!isset($cachedDescForm[$formhandle])) {
+          $sql = "SELECT desc_form FROM ".DBPRE."formulize_id WHERE id_form=".intval($formhandle);
+          $res = mysql_query($sql);
+          $array = mysql_fetch_array($res);
+          $cachedDescForm[$formhandle] = $array['desc_form'];
+     }
+     return $cachedDescForm[$formhandle];
 }
 
 // THIS FUNCTION SORTS A RESULT SET, BASED ON THE VALUES OF ONE NON-MULTI FIELD (IE: CANNOT SORT BY CHECKBOX FIELD)
