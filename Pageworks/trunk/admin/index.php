@@ -101,7 +101,7 @@ function patch30() {
         if(!isset($checkarray['page_html_from_db'])) {
       	  $sql = "ALTER TABLE " . $xoopsDB->prefix("pageworks_pages") . " ADD page_html_from_db smallint(5) default '0'";
       	  if(!$res = $xoopsDB->query($sql)) {
-      		exit("Error: could not add 'html from db' option to database.  Please contact Freeform Solutions for assistance.");
+      		  print "<p>'HTML from db' option already exists.  Result: OK</p>";
       	  }
         }
 	  print "<p>Done patching DB.  Result: OK</p>";

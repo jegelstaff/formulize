@@ -32,51 +32,51 @@ function buildPagesSummary()
     	$even = true;
 ?>
     <a href="index.php?op=addpage">
-        <? echo "Click to add a new page"; ?></a><br>
+        <?php echo "Click to add a new page"; ?></a><br>
 	<p>Click 'Name' or 'Id' to change the sorting order</p>
 	<table width="100%" class="outer">
 	<tr class="head">
-    	<td width="35%"><? print "<a href='" . XOOPS_URL . "/modules/pageworks/admin/index.php?sort=name'>Name</a>"; ?></td>
-<?
+    	<td width="35%"><?php print "<a href='" . XOOPS_URL . "/modules/pageworks/admin/index.php?sort=name'>Name</a>"; ?></td>
+<?php
 	// begin - Nov 6, 2005 - jpc - Freeform Solutions 
 ?>
-    	<td width="40%"><? echo "Title"; ?></td>
-    	<td><? print "<a href='" . XOOPS_URL . "/modules/pageworks/admin/index.php?sort=id'>Id</a>"; ?></td>
+    	<td width="40%"><?php echo "Title"; ?></td>
+    	<td><?php print "<a href='" . XOOPS_URL . "/modules/pageworks/admin/index.php?sort=id'>Id</a>"; ?></td>
         <td></td>
-<?
+<?php
 	// end - Nov 6, 2005 - jpc - Freeform Solutions 
 ?>
 	</tr>
-<?
+<?php
 		while($resultArray = $xoopsDB->fetchArray($result)) 
         {
 	        $thisPath = "index.php?page_id=" . $resultArray["page_id"];
 ?>
-	<tr class="<? echo ($even) ? "even" : "odd" ?>" valign="top">
-    	<td width="35%"><? echo $resultArray["page_name"]; ?></td>
-<?
+	<tr class="<?php echo ($even) ? "even" : "odd" ?>" valign="top">
+    	<td width="35%"><?php echo $resultArray["page_name"]; ?></td>
+<?php
 	// begin - Nov 6, 2005 - jpc - Freeform Solutions 
 ?>
-    	<td width="40%"><? echo $resultArray["page_title"]; ?></td>
-    	<td><? echo $resultArray['page_id']; ?></td>
+    	<td width="40%"><?php echo $resultArray["page_title"]; ?></td>
+    	<td><?php echo $resultArray['page_id']; ?></td>
     	<td><nobr>
-            <a href="<? echo $thisPath; ?>&op=editpage">
-        	<? echo "Edit"; ?></a>
+            <a href="<?php echo $thisPath; ?>&op=editpage">
+        	<?php echo "Edit"; ?></a>
             &nbsp;&nbsp;&nbsp; 
-        	<a href="<? echo $thisPath; ?>&op=deletepage"
+        	<a href="<?php echo $thisPath; ?>&op=deletepage"
         	onclick="if(confirm('Are you sure?')) { return true; } else { return false; }">
-        	<? echo "Delete"; ?></a>
+        	<?php echo "Delete"; ?></a>
             </nobr></td>
-<?    
+<?php    
 	// end - Nov 6, 2005 - jpc - Freeform Solutions 
 ?>
 	</tr>
-<?
+<?php
 			$even = !($even);
 		}
 ?>
 	</table>
-<?
+<?php
     }
 }
 

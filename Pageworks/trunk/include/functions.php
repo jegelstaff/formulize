@@ -1,4 +1,4 @@
-<?
+<?php
 
 ###############################################################################
 ##             Pageworks - page logic and display module for XOOPS           ##

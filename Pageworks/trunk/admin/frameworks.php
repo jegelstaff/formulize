@@ -8,8 +8,8 @@ function buildFrameworksSummary($page_id)
 	global $xoopsDB;
 
 ?>
-    <p><? echo "Frameworks used in this page:"; ?></p>
-<?
+    <p><?php echo "Frameworks used in this page:"; ?></p>
+<?php
 	$result = selectFrameworks($page_id);
     if($result)
     {
@@ -18,15 +18,15 @@ function buildFrameworksSummary($page_id)
 	<table width="100%" class="outer">
 	<tr class="head">
         <td></td>
-    	<td><? echo "Name"; ?></td>
-    	<td><? echo "Main Form"; ?></td>
-    	<td><? echo "Filters"; ?></td>
-	<td><? echo "Sort?"; ?></td>
-    	<td><? echo "Sort Field"; ?></td>
-    	<td><? echo "Output Name"; ?></td>
-	<td><? echo "Search Title"; ?></td>
+    	<td><?php echo "Name"; ?></td>
+    	<td><?php echo "Main Form"; ?></td>
+    	<td><?php echo "Filters"; ?></td>
+	<td><?php echo "Sort?"; ?></td>
+    	<td><?php echo "Sort Field"; ?></td>
+    	<td><?php echo "Output Name"; ?></td>
+	<td><?php echo "Search Title"; ?></td>
 	</tr>
-<?
+<?php
 		while($resultArray = $xoopsDB->fetchArray($result)) 
         {
 			//var_dump($resultArray);	        
@@ -40,34 +40,34 @@ function buildFrameworksSummary($page_id)
             $thisPath = "index.php?page_id=" . $page_id .
 				"&framework_id=" . $resultArray["pf_id"];            
 ?>
-	<tr class="<? echo ($even) ? "even" : "odd" ?>">
-    	<td><nobr><a href="<? echo $thisPath; ?>&op=deleteframework"
+	<tr class="<?php echo ($even) ? "even" : "odd" ?>">
+    	<td><nobr><a href="<?php echo $thisPath; ?>&op=deleteframework"
         	onclick="if(confirm('Are you sure?')) { return true; } else { return false; }">
-        	<? echo "Delete"; ?></a>&nbsp;&nbsp;&nbsp; 
-            <a href="<? echo $thisPath; ?>&op=editframework">
-        	<? echo "Edit"; ?></a></nobr></td>
-    	<td><? echo $resultArray["pf_framework_frame_name"]; ?></td>
-    	<td><? echo $resultArray["pf_mainform_ff_handle"]; ?></td>
-    	<td><? echo $resultArray["pf_filters"]; ?></td>
-	<td><? 
+        	<?php echo "Delete"; ?></a>&nbsp;&nbsp;&nbsp; 
+            <a href="<?php echo $thisPath; ?>&op=editframework">
+        	<?php echo "Edit"; ?></a></nobr></td>
+    	<td><?php echo $resultArray["pf_framework_frame_name"]; ?></td>
+    	<td><?php echo $resultArray["pf_mainform_ff_handle"]; ?></td>
+    	<td><?php echo $resultArray["pf_filters"]; ?></td>
+	<td><?php 
 		if($resultArray["pf_sortable"] == "1") { echo "Yes"; }
 		if($resultArray["pf_sortable"] == "0") { echo "No"; }
 		?></td>
-    	<td><? echo $resultArray["pf_sort_fe_handle"]; ?></td>
-    	<td><? echo $resultArray["pf_output_name"]; ?></td>
-    	<td><? echo $searchTitle; ?></td>
+    	<td><?php echo $resultArray["pf_sort_fe_handle"]; ?></td>
+    	<td><?php echo $resultArray["pf_output_name"]; ?></td>
+    	<td><?php echo $searchTitle; ?></td>
 	</tr>
-<?
+<?php
 			$even = !($even);
 		}
 ?>
 	</table>
-<?
+<?php
     }
 ?>
 	<br>
-    <a href="index.php?op=addframework&page_id=<? echo $page_id; ?>"><? echo "Add another framework"; ?></a>
-<?    
+    <a href="index.php?op=addframework&page_id=<?php echo $page_id; ?>"><?php echo "Add another framework"; ?></a>
+<?php    
 }
 
 
