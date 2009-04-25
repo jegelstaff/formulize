@@ -1122,12 +1122,12 @@ function patch31() {
         $sql = array();
         $sql['ves_to_varchar'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `viewentryscreen` `viewentryscreen` varchar(10) NOT NULL DEFAULT ''";
         $sql['handlelength'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " CHANGE `ele_handle` `ele_handle` varchar(255) NOT NULL default ''";
-        $sql['copyTableForClean'] = "CREATE TABLE temp_entry_owner_groups like ".$xoopsDB->prefix("formulize_entry_owner_groups");
+        /*$sql['copyTableForClean'] = "CREATE TABLE temp_entry_owner_groups like ".$xoopsDB->prefix("formulize_entry_owner_groups");
         $sql['lockForClean'] = "LOCK TABLES ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, temp_entry_owner_groups WRITE";
         $sql['copyDataForClean'] = "INSERT INTO temp_entry_owner_groups SELECT * FROM ".$xoopsDB->prefix("formulize_entry_owner_groups");
         $sql['cleanEntryOwnerGroups'] = "DELETE FROM ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE owner_id NOT IN (SELECT MIN(owner_id) FROM temp_entry_owner_groups GROUP BY fid, entry_id, groupid)";
         $sql['dropTempTable'] = "DROP TABLE temp_entry_owner_groups";
-        $sql['unlockForClean'] = "UNLOCK TABLES";
+        $sql['unlockForClean'] = "UNLOCK TABLES";*/ // this cleaning routine may be too intensive to unleash on unsuspecting servers
         foreach($sql as $key=>$thissql) {
           if(!$result = $xoopsDB->query($thissql)) {
           	if($key === "ves_to_carchar") {

@@ -440,6 +440,8 @@ class formulizeDataHandler  {
 				while($row = $xoopsDB->fetchRow($res)) {
 					$groupArray[] = $row[0];
 				}
+				$groupArray = array_unique($groupArray);
+				sort($groupArray);
 				$cachedEntryOwnerGroups[$this->fid][$entry_id]=$groupArray;
 			} else {
 				$cachedEntryOwnerGroups[$this->fid][$entry_id]=false;
