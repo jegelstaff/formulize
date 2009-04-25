@@ -2854,8 +2854,9 @@ function php4_scandir($dir,$listDirectories=false, $skipDots=true, $filter="") {
 // $proxyUser, if present, is meant to override the current $xoopsUser uid value
 // $action is deprecated
 // $forceUpdate will cause queryF to be used in the data handler, which will allow updates on a get request
+// $writeOwnerInfo causes the entry_owner_groups table to be updated when a new entry is written
 // NOTE: $values takes ID numbers as keys, since that's how the datahandler expects things
-function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUser=false, $forceUpdate=false) {
+function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUser=false, $forceUpdate=false, $writeOwnerInfo=true) {
   
   // get the form id from the element id of the first value in the values array
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -2871,7 +2872,9 @@ function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUs
       } else {
         $ownerForGroups = 0;
       }
-      $data_handler->setEntryOwnerGroups($ownerForGroups, $result); // result will be the ID number of the entry that was just written.
+			if($entry == "new" AND $writeOwnerInfo) {
+				$data_handler->setEntryOwnerGroups($ownerForGroups, $result); // result will be the ID number of the entry that was just written.
+			}
       return $result;
     } else {
       exit("Error: data could not be written to the database for entry $entry in form ". $elementObject->getVar('id_form').".");

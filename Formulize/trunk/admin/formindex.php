@@ -353,7 +353,7 @@ function cloneFormulize($title, $clonedata) {
         // Need to create the new data table now -- July 1 2007
         $formHandler =& xoops_getmodulehandler('forms', 'formulize');
         if(!$tableCreationResult = $formHandler->createDataTable($newfid)) {
-                print "Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".  Please delete the cloned form and report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
+                print "Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
         }
         
           
@@ -366,7 +366,7 @@ function cloneFormulize($title, $clonedata) {
         include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php"; // formulize data handler
         $dataHandler = new formulizeDataHandler($newfid);
         if(!$cloneResult = $dataHandler->cloneData($fid, $oldNewEleIdMap)) {
-                print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
+                print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
         }
 
         /*
@@ -1122,6 +1122,12 @@ function patch31() {
         $sql = array();
         $sql['ves_to_varchar'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `viewentryscreen` `viewentryscreen` varchar(10) NOT NULL DEFAULT ''";
         $sql['handlelength'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " CHANGE `ele_handle` `ele_handle` varchar(255) NOT NULL default ''";
+        $sql['copyTableForClean'] = "CREATE TABLE temp_entry_owner_groups like ".$xoopsDB->prefix("formulize_entry_owner_groups");
+        $sql['lockForClean'] = "LOCK TABLES ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, temp_entry_owner_groups WRITE";
+        $sql['copyDataForClean'] = "INSERT INTO temp_entry_owner_groups SELECT * FROM ".$xoopsDB->prefix("formulize_entry_owner_groups");
+        $sql['cleanEntryOwnerGroups'] = "DELETE FROM ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE owner_id NOT IN (SELECT MIN(owner_id) FROM temp_entry_owner_groups GROUP BY fid, entry_id, groupid)";
+        $sql['dropTempTable'] = "DROP TABLE temp_entry_owner_groups";
+        $sql['unlockForClean'] = "UNLOCK TABLES";
         foreach($sql as $key=>$thissql) {
           if(!$result = $xoopsDB->query($thissql)) {
           	if($key === "ves_to_carchar") {
@@ -1130,11 +1136,14 @@ function patch31() {
             if($key === "handlelength") {
               print "Length of element handles already extended.  result OK<br>";
             }
+            if($key === "cleanEntryOwnerGroups" OR $key === "lockForClean" OR $key === "copyTableForClean" OR $key === "copyDataForClean" OR $key === "dropTempTable" OR $key === "unlockForClean") {
+              print "Warning: could not delete duplicate entries from the entry_owner_groups table.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
+            }
           }
         }
         print "DB updates completed.  result: OK";
       } else {
-        print "Unable to create derived value fields in database.  result: failed.  contact <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
+        print "Unable to create derived value fields in database.  result: failed.  contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
       }
       return;
     }
@@ -1742,7 +1751,7 @@ function patch30DataStructure($auto = false) {
                 foreach($allFormObjects as $formObjectId=>$thisFormObject) {
 												if($thisFormObject->getVar('tableform')) { continue; } // only process actual Formulize forms
                         if(!$tableCreationResult = $formHandler->createDataTable($thisFormObject)) {
-                                exit("Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+                                exit("Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");
                         }
                         
                         print "Created data table formulize_" . $thisFormObject->getVar('id_form') . ".  result: OK<br>\n";
@@ -1768,10 +1777,10 @@ function patch30DataStructure($auto = false) {
                         while($dataArray = $xoopsDB->fetchArray($dataRes)) {
                                 if(!isset($captionHandleIndex[$dataArray['ele_caption']])) {
 																	if($dataArray['ele_caption'] === '') {
-																		print "Warning: you have data saved, with no caption specified, for entry number ". $dataArray['id_req'] . " (id_req) in form ".$thisFormObject->getVar('id_form'). ".  This data will be ignored.  Please contact <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
+																		print "Warning: you have data saved, with no caption specified, for entry number ". $dataArray['id_req'] . " (id_req) in form ".$thisFormObject->getVar('id_form'). ".  This data will be ignored.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
 																		continue;
 																	} else {
-																		print "Warning: the form ". $thisFormObject->getVar('id_form') . " does not have an element with the caption '". $dataArray['ele_caption'] . "', but you have saved data associated with that caption.  This data will be ignored.  Please contact <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
+																		print "Warning: the form ". $thisFormObject->getVar('id_form') . " does not have an element with the caption '". $dataArray['ele_caption'] . "', but you have saved data associated with that caption.  This data will be ignored.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
                                     continue;
 																	}
                                 }
@@ -1782,7 +1791,7 @@ function patch30DataStructure($auto = false) {
                                         // write whatever we just finished working on
                                         if($insertSQL) {
                                                 if(!$insertRes = $xoopsDB->query($insertSQL)) {
-                                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+                                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");
                                                 }
                                                 $insertSQL = "";
                                         }
@@ -1811,14 +1820,14 @@ function patch30DataStructure($auto = false) {
 																				foreach($ownerGroups as $thisGroup) {
 																					$ownerInsertSQL = "INSERT INTO " . $xoopsDB->prefix("formulize_entry_owner_groups") . " (`fid`, `entry_id`, `groupid`) VALUES ('". intval($thisFormObject->getVar('id_form')) . "', '". intval($dataArray['id_req']) . "', '". intval($thisGroup) . "')";
 																					if(!$ownerInsertRes = $xoopsDB->query($ownerInsertSQL)) {
-																						print "Error: could not write owner information to new data structure, using this SQL:<br>$ownerInsertSQL<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.";
+																						print "Error: could not write owner information to new data structure, using this SQL:<br>$ownerInsertSQL<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.";
 																					}
 																				}
                                 }
                                 
                                 // record the caption and go through to the next one if this one already exists in this form
                                 if(isset($foundCaptions[$dataArray['ele_caption']])) {
-                                  print "Warning: you have duplicate captions, '".$dataArray['ele_caption']."', in your data, at entry number " .$dataArray['id_req'] . " (id_req) in form ".$thisFormObject->getVar('id_form').".  Only the first value found will be copied to the new data structure.  Please contact <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
+                                  print "Warning: you have duplicate captions, '".$dataArray['ele_caption']."', in your data, at entry number " .$dataArray['id_req'] . " (id_req) in form ".$thisFormObject->getVar('id_form').".  Only the first value found will be copied to the new data structure.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> if you would like assistance cleaning this up.  This will NOT affect the upgrade to version 3.<br>";
                                   continue;
                                 } else {
                                   $foundCaptions[$dataArray['ele_caption']] = true;
@@ -1845,7 +1854,7 @@ function patch30DataStructure($auto = false) {
                         }
                         if($insertSQL) {
                                 if(!$insertRes = $xoopsDB->query($insertSQL)) {
-                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+                                        exit("Error: could not write data to the new table structure with this SQL: $insertSQL.<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");
                                 }
                         }
                         print "Migrated data to new data structure for form " . $thisFormObject->getVar('id_form') . ".  result: OK<br>\n";
@@ -1855,7 +1864,7 @@ function patch30DataStructure($auto = false) {
       if($derivedResult = formulize_createDerivedValueFieldsInDB()) {
         print "Created derived value fields in database.  result: OK<br>\n";
       } else {
-        print "Unable to create derived value fields in database.  result: failed.  contact <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
+        print "Unable to create derived value fields in database.  result: failed.  contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
       }
       
       // convert the captions in the linked selectbox defintions to the handles for those elements
@@ -1866,7 +1875,7 @@ function patch30DataStructure($auto = false) {
       // 5. reinsert that value into the DB
       $sql = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE '%#*=:*%'";
       if(!$res = $xoopsDB->query($sql)) {
-        exit("Error: cound not get the element ids of the linked selectboxes.  SQL: $sql<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+        exit("Error: cound not get the element ids of the linked selectboxes.  SQL: $sql<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");
       }
       $element_handler =& xoops_getmodulehandler('elements', 'formulize');
       while($array = $xoopsDB->fetchArray($res)) {
@@ -1876,16 +1885,16 @@ function patch30DataStructure($auto = false) {
         $sql2 = "SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_caption = '". mysql_real_escape_string($parts[1]) . "' AND id_form=". $parts[0];
 				//print "$sql2<br>";
         if(!$res2 = $xoopsDB->query($sql2)) {
-          exit("Error: could not get the handle for a linked selectbox source.  SQL: $sql2<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+          exit("Error: could not get the handle for a linked selectbox source.  SQL: $sql2<br>".mysql_error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");
         }
         $array2 = $xoopsDB->fetchArray($res2);
         if($array2['ele_handle'] == "") {
-          print "Warning: a handle could not be identified for this caption: '".$parts[1]."', in form ".$parts[0]."  This breaks linked selectboxes for element number ".$array['ele_id'].".  This is most likely caused by an old caption that was changed for the element, in an old version of Formulize.<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.<br>";
+          print "Warning: a handle could not be identified for this caption: '".$parts[1]."', in form ".$parts[0]."  This breaks linked selectboxes for element number ".$array['ele_id'].".  This is most likely caused by an old caption that was changed for the element, in an old version of Formulize.<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>";
         }
         $ele_value[2] = $parts[0]."#*=:*".$array2['ele_handle'];
         $elementObject->setVar('ele_value', $ele_value);
         if(!$res3 = $element_handler->insert($elementObject)) {
-          exit("Error: could not update the linked selectbox metadata. <br>".mysql_error()."<br>Please report this error to <a href=\"mailto:info@freeformsolutions.ca\">Freeform Solutions</a>.");
+          exit("Error: could not update the linked selectbox metadata. <br>".mysql_error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");
         }
         unset($parts);
         unset($elementObject);

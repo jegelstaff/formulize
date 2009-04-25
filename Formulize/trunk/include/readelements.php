@@ -180,7 +180,7 @@ foreach($formulize_elementData as $fid=>$entryData) { // for every form we found
 			if(strlen($entry) > 3) { $entry = "new"; } // remove the number from the end of any new entry flags that have numbers
 			foreach($creation_users as $creation_user) {
 				if(($creation_user == $uid AND $add_own_entry) OR ($creation_user != $uid AND $add_proxy_entries)) { // only proceed if the user has the right permissions
-					$writtenEntryId = formulize_writeEntry($values, $entry, "", $creation_user);
+					$writtenEntryId = formulize_writeEntry($values, $entry, "", $creation_user, "", false); // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
 					if(isset($formulize_subformBlankCues[$fid])) {
 						$GLOBALS['formulize_subformCreateEntry'][$fid][] = $writtenEntryId;
 					}
