@@ -188,7 +188,13 @@ function insertPage($page_name, $page_title, $page_template, $page_searchable, $
 
 	if($xoopsDB->queryF($sql))
     {
-		return $xoopsDB->getInsertId();    
+			$pageId = $xoopsDB->getInsertId();
+			// set permission for webmasters to view the page
+			$module_handler =& xoops_gethandler('module');
+      $pageworksModule =& $module_handler->getByDirname("pageworks");
+			$gperm_handler = &xoops_gethandler('groupperm');
+			$gperm_handler->addRight("view", $pageId, XOOPS_GROUP_ADMIN, $pageworksModule->getVar('mid'));
+			return $pageId;    
     }
     else
     {
