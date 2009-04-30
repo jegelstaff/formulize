@@ -295,8 +295,8 @@ formulize_benchmark("Start of formDisplay.");
 		}
 	}
 	$owner = ($cookie_entry AND $uid) ? $uid : getEntryOwner($entry, $fid); // if we're pulling a cookie value and there is a valid UID in effect, then assume this user owns the entry, otherwise, figure out who does own the entry
-	//$owner_groups =& $member_handler->getGroupsByUser($owner, FALSE);
 	$owner_groups = $data_handler->getEntryOwnerGroups($entry);
+	
 
 	if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms AND !$profileForm) {
 		print "<p>" . _NO_PERM . "</p>";

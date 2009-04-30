@@ -881,6 +881,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
           
           $numIndivFilters = 0;
           foreach(explode("][", $filterParts[1]) as $indivFilter) {
+
+
+               $newWhereClause = "";
                               
                // evaluate each individual search term
                // Use the local andor setting ($filterParts[0]) between terms
@@ -1012,6 +1015,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 																	 if(!$nameSearchStart) {
 																				$newWhereClause .= "OR";
 																	 } else {
+                                        $newWhereClause = " (";
 																				$nameSearchStart = false;
 																	 }
                                    if(formulize_selectboxAllowsMultipleSelections($element_id)) {
@@ -1019,6 +1023,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                    } else {
                                         $newWhereClause .= " $elementPrefix.".$ifParts[0]." = " . $preSearchArray['uid'] . " ";
                                    }
+                              }
+                              if(!$nameSearchStart) {
+                                   $newWhereClause .= ") ";
                               }
                          } else {
                               $newWhereClause = "main.entry_id<0"; // no matches, so result set should be empty, so set a where clause that will return zero results
