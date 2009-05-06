@@ -1215,16 +1215,8 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 	fwrite ($exportfile, $csvfile);
 	fclose ($exportfile);
 
-        // garbage collection...delete files older than 1 day
-	$oldId = $tempfold - 86400; // the timestamp from one day ago
-	$formulize_export_files = php4_scandir(XOOPS_ROOT_PATH."/modules/formulize/export/",false, true, _formulize_DE_XF); // array of files
-	foreach($formulize_export_files as $thisFile) {
-		$fileNameParts = explode("_", $thisFile);
-                $fileNameMoreParts = explode(".", $fileNameParts[1]);
-		if($fileNameMoreParts[0] < $oldId){
-			unlink(XOOPS_ROOT_PATH."/modules/formulize/export/$thisFile");
-		}
-	}
+  // garbage collection...delete files older than 6 hours
+	formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/export/", _formulize_DE_XF); 
 
 	// write id_reqs and tempfold to the DB if we're making an update template
 	if($template == "update") {
@@ -2831,23 +2823,39 @@ switch($entry) {
 
 
 // THIS FUNCTION READS ALL THE FILES IN A DIRECTORY AND RETURNS THEIR NAMES IN AN ARRAY
-// use the optional filter param to include only files containing a certain string in their names
-// Thanks to aryel at redtwilight dot com dot br for this function, added in a comment at php.net
-// Freeform Solutions added the filter param
-function php4_scandir($dir,$listDirectories=false, $skipDots=true, $filter="") {
-    $dirArray = array();
-    if ($handle = opendir($dir)) {
-        while (false !== ($file = readdir($handle))) {
-            if (($file != "." && $file != "..") || $skipDots == true) { // handle dot dirs
-                if($listDirectories == false) { if(is_dir($file)) { continue; } } // handle normal dirs
-		if($filter AND !is_dir($file)) { if(!strstr(basename($file), $filter)) { continue; } } // apply filter to files if necessary
-                array_push($dirArray,basename($file));
-            }
-        }
-        closedir($handle);
-    }
-    return $dirArray;
+// use the filter param to include only files containing a certain string in their names
+function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600) {
+	  return true;
+		if(!$filter) { return false; } // filter must be present
+	
+		$currentTime = time();
+		$targetTime = $currentTime - $timeWindow;
+	
+		// if it's PHP 5, then do this:
+		if(version_compare(PHP_VERSION, '5.0.0')) { // native scandir in PHP is much faster!!!
+			foreach(scandir($dir) as $fileName) {
+				 if (strstr($fileName, $filter) AND filemtime($dir.$fileName) < $targetTime) {
+						unlink($dir.$fileName);
+				 }
+			}
+		} else {
+			// if it's PHP 4, then do this:
+			if ($handle = opendir($dir)) {
+					while (false !== ($file = readdir($handle))) {
+							$fileName = basename($file);
+							if (strstr($fileName, $filter) AND filemtime($file) < $targetTime) {
+								  unlink($file);
+							}
+					}
+					closedir($handle);
+			}
+			
+		}
+		return true;
+
 }
+
+
 
 // THIS FUNCTION TAKES AN ARRAY WHERE THE KEYS ARE ELEMENT IDS AND THE VALUES ARE VALUES, AND IT WRITES THEM ALL TO A SPECIFIED ENTRY OR A NEW ENTRY
 // originally, only $values and $entry were required

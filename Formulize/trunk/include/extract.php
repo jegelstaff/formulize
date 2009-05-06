@@ -394,7 +394,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	 $linkselfids = "";
 		     $linkcommonvalue = "";
 	     }
-     
+  
 	  $GLOBALS['formulize_linkformidsForCalcs'] = $linkformids;
      
 	      // now that we have the full details from the framework, figure out the full SQL necessary to get the entire dataset
@@ -409,10 +409,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  
 	  $joinText = "";
 	  $linkSelect = "";
-	  
-	  formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this
-	  if(substr($filter, 0, 6) != "SELECT") { // if the filter is not itself a fully formed select statement...
-	       
+
+	  if(is_array($filter) OR substr($filter, 0, 6) != "SELECT") { // if the filter is not itself a fully formed select statement...
+    
 	       $scopeFilter = "";
 	       if(is_array($scope)) { // assume any arrays are groupid arrays, and so make a valid scope string based on this.  Use the new entry owner table.
 		    if(count($scope) > 0 ) {
@@ -432,7 +431,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       } elseif($scope) { // need to handle old "uid = X OR..." syntax
 		    $scopeFilter = " AND (".str_replace("uid", "main.creation_uid", $scope).") ";
 	       }
-	       
+
+	  
 	       list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
          
          // ***********************
@@ -557,7 +557,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  
 	       // If there's an LOE Limit in place, check that we're not over it first
 	       global $formulize_LOE_limit;
-	  
+
 	       $countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_$fid AS main ";
 	       $countMasterResults .= "$userJoinText WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter"; 
          $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
@@ -636,7 +636,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      // Debug Code
      
-     /*global $xoopsUser;
+     /*//global $xoopsUser;
      if($xoopsUser->getVar('uid') == 1) {
           print "<br>Count query: $countMasterResults<br><br>";
           print "Master query: $masterQuerySQL<br>";
@@ -2022,7 +2022,7 @@ if(!$xoopsDB) {
 function formulize_benchmark($text) {
      global $xoopsUser;
      if(isset($GLOBALS['startPageTime']) AND $xoopsUser) {
-          if($xoopsUser->getVar('uid') == 4613) {
+          if($xoopsUser->getVar('uid') == 1) {
                $currentPageTime = microtime_float();
                print "<br>$text -- Elapsed: ".($currentPageTime-$GLOBALS['startPageTime'])."<br>";
           }

@@ -676,9 +676,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			print "<p><center><b>$messageText</b></center></p>\n";
 		}
 	}
+
   formulize_benchmark("before entries");
 	drawEntries($fid, $showcols, strip_tags($_POST['sort']), strip_tags($_POST['order']), $searches, $frid, $scope, "", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches); // , $loadview); // -- loadview not passed any longer since the lockcontrols indicator is used to handle whether things should appear or not.
   formulize_benchmark("after entries");
+
 
 	if($screen) {
 		formulize_screenLOETemplate($screen, "bottom", $formulize_buttonCodeArray, $settings);
@@ -688,10 +690,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	if(isset($formulize_buttonCodeArray['submitButton'])) { // if a custom top template was in effect, this will have been sent back, so now we display it at the very bottom of the form so it doesn't take up a visible amount of space above (the submitButton is invisible, but does take up space)
 		print "<p class=\"formulize_customTemplateSubmitButton\">" . $formulize_buttonCodeArray['submitButton'] . "</p>";
 	}
-
 	print "</form>\n"; // end of the form started in drawInterface
 
 	print "</div>\n"; // end of the listofentries div, used to call up the working message when the page is reloading, started in drawInterface
+
 
 }
 
@@ -962,7 +964,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$onActionButtonCounter = 0;
 	$atLeastOneActionButton = false;
 	foreach($screenButtonText as $scrButton=>$scrText) {
+    formulize_benchmark("before creating button: ".$scrButton);
 		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname);
+    formulize_benchmark("button done");
 		if($buttonCodeArray[$scrButton] AND $onActionButtonCounter < 14) { // first 14 items in the array should be the action buttons only
 			$atLeastOneActionButton = true;
 		}
@@ -1090,7 +1094,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		// also setup searches when calculations are in effect, or there's a custom list template
 		// (essentially, whenever the search boxes would not be drawn in for whatever reason)
 		if(!$useSearch OR ($calc_cols AND !$hcalc) OR $screen->getVar('listtemplate')) {
+      formulize_benchmark("before calling draw searches");
 			$quickSearchBoxes = drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, $frid, true); // first true means we will receive back the code instead of having it output to the screen, second (last) true means that all allowed filters should be generated
+      formulize_benchmark("after calling draw searches");
 			$quickSearchesNotInTemplate = array();
 			foreach($quickSearchBoxes as $handle=>$qscode) {
         $foundQS = false;
@@ -1115,7 +1121,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			}
 		}	
 	
+    formulize_benchmark("before rendering top template");
 		formulize_screenLOETemplate($screen, "top", $buttonCodeArray, $settings, $messageText);
+    formulize_benchmark("after rendering top template");
 		$buttonCodeArray['submitButton'] = $submitButton; // send this back so that we can put it at the bottom of the page if necessary
 		
 	}
@@ -3533,6 +3541,7 @@ function gatherHiddenValue($handle) {
 
 // THIS FUNCTION GENERATES HTML FOR ANY BUTTONS THAT ARE REQUESTED
 function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname) {
+  static $importExportCleanupDone = false;
 	if($buttonText) {
 		switch ($button) {
 			case "changeColsButton":
@@ -3569,15 +3578,12 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				fwrite($queryForExportFile, $GLOBALS['formulize_queryForExport']);
 				fclose($queryForExportFile);
 				// cleanup old export files
-				$oldTime = $exportTime - 86400; // the timestamp from one day ago
-				$formulize_export_cache_files = php4_scandir(XOOPS_ROOT_PATH."/cache/",false, true, "exportQuery"); // array of files
-				foreach($formulize_export_cache_files as $thisFile) {
-				$fileNameParts = explode("_", $thisFile);
-			                $fileNameMoreParts = explode(".", $fileNameParts[1]);
-					if($fileNameMoreParts[0] < $oldTime){
-						unlink(XOOPS_ROOT_PATH."/cache/$thisFile");
-					}
-				}
+        if(!$importExportCleanupDone) {
+          formulize_benchmark("before scandir during export/import button creation");
+          formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "exportQuery"); 
+          formulize_benchmark("after scandir during export/import button creation. ".count($formulize_export_cache_files)." files found");
+          $importExportCleanupDone = true;
+        }
 				if($button == "exportButton") {
 					return "<input type=button style=\"width: 140px;\" name=export value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/export.php?fid=$fid&frid=$frid&cols=$colhandles&eq=$exportTime');\"></input>";
 				} else {
@@ -3638,41 +3644,6 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 	} else {
 		return false;
 	}
-}
-
-// THIS FUNCTION TAKES A DATASET AND CACHES IT TO A FILE
-function formulize_cacheData($data) {
-	
-	// if there's not enough memory to serialize $data, don't attempt to cache
-	if(function_exists("memory_get_usage")) {
-		$memoryLimit = intval(ini_get("memory_limit"));
-		$memoryUsed = memory_get_usage() / 1000000;
-		if($memoryLimit > 0 AND $memoryUsed > 0) {
-			if($memoryUsed > $memoryLimit/1.6) { return ""; }
-		}
-	}
-	
-	$currentId = microtime_float();
-	$newCacheFile = fopen(XOOPS_ROOT_PATH . "/cache/$currentId" . ".formulize_cached_data", "w");
-	fwrite($newCacheFile, serialize($data));
-	fclose($newCacheFile);
-		
-	// garbage collection...delete files older than 1 day
-	$oldId = $currentId - 86400; // the timestamp from one day ago
-	$formulize_cached_files = php4_scandir(XOOPS_ROOT_PATH . "/cache/",false, true, "formulize_cached_data"); // array of files
-	foreach($formulize_cached_files as $thisFile) {
-		$fileNameParts = explode(".", $thisFile);
-		if($fileNameParts[0] < $oldId){
-			unlink(XOOPS_ROOT_PATH . "/cache/$thisFile");
-		}
-	}
-	return $currentId;
-}
-
-// THIS FUNCTION READS A CACHED DATASET FROM A FILE
-function formulize_readCachedData($cacheId) {
-	$cacheData = file_get_contents(XOOPS_ROOT_PATH . "/cache/$cacheId" . ".formulize_cached_data");
-	return unserialize($cacheData);
 }
 
 // THIS FUNCTION RUNS AN ADVANCED SEARCH FILTER ON A DATASET
@@ -3940,6 +3911,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	}*/
 	
 	
+
     // if something changed, then we need to redo the page numbers
     if(!isset($_POST['lastentry']) AND (($query_string != $_POST['formulize_previous_querystring'] AND $query_string != "") OR $filterToCompare != $_POST['formulize_previous_filter'] OR $flatscope != $_POST['formulize_previous_scope'])) {
 			$regeneratePageNumbers = true;
@@ -3953,7 +3925,9 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
       $limitSize = 0;
     }
     //print "limitStart: $limitStart<br>limitSize: $limitSize<br>";
+    
 		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
+    
     if($currentURL=="") { return array(0=>"", 1=>"", 2=>""); } //current URL should only be "" if this is called directly by the special formulize_getCalcs function
     
 		if($query_string AND is_array($data)) { $data = formulize_runAdvancedSearch($query_string, $data); } // must do advanced search after caching the data, so the advanced search results are not contained in the cached data.  Otherwise, we would have to rerun the base extraction every time we wanted to change just the advanced search query.  This way, advanced search changes can just hit the cache, and not the db.
