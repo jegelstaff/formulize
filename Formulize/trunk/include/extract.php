@@ -434,7 +434,33 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       }
 	       
 	       list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
-	       $mainFormWhereClause = isset($oneSideFilters[$fid]) ? " AND " . implode("", $oneSideFilters[$fid]) : ""; // useful in the count query         
+         
+         // ***********************
+         // NOTE:  the oneSideFilters are divided into two sections, the AND filters and OR filters for a given form
+         // These will need to be constructed differently if we are ever to support OR filters that are spread across forms.
+         // Right now, oneSideFilters get rendered with all other filters for their form, which is fine if the OR filters all belong to the same form
+         // But if there are OR filters on two different forms, then we will need to do some kind of much more complex handling of the OR filters, or else the count query, and the queries for calculations, will be screwed up
+         // The proper approach to this would be to have the AND oneSideFilters divided by form, like now, but for the ORs, we would need to loop through all ORs on all forms at once, and concatenate them somehow, ie:
+         // foreach($oneSideFilters as $thisOneSideFid=>$oneSideFilterData) {
+         //   foreach($oneSideFilterData as $oneSideAndOr=>$thisOneSideFilter) {
+         //     if($oneSideAndOr == "and") { // note, it's forced to lowercase in the parseFilter function
+         //       // then add this filter to the exists/other construction/whatever for this particular form
+         //     } else {
+         //       // then add this filter to a more complex exists/other construction/whatever that contains all the ORs, grouped by form, with ORs in between them
+         //       // ie, the final output would be like:  AND ( exists(select 1 from table1 where field11=x or field12=y) OR exists(select 1 from table2 where field21 LIKE '%t%') OR (exists(select 1 from table3 where field31 > 23) )
+         //       // And this entire construction would be then added to queries, to account properly for all the OR operators that had been requested
+         //     }
+         //   }
+         // }
+         // ***********************
+         
+         if(isset($oneSideFilters[$fid])) {
+               foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
+                    $mainFormWhereClause .= " AND ( $thisOneSideFilter ) ";
+               }
+         } else {
+               $mainFormWhereClause = "";
+         }
          
 	       $limitClause = "";
 	       if($limitSize) {
@@ -475,11 +501,10 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
              $joinText .= $newJoinText;
              if(count($oneSideFilters[$linkedFid])>0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
                $existsJoinText .= $newexistsJoinText . $newJoinText;
-               $existsJoinText .= " AND (";
                foreach($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
-                $existsJoinText .= $thisOneSideFilter;
+                    $existsJoinText .= " AND ( $thisOneSideFilter ) ";
                }
-               $existsJoinText .= ")) "; // close the where clause and the exists clause itself
+               $existsJoinText .= ") "; // close the exists clause itself
              }
            }
 	       }
@@ -578,7 +603,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
     $oneSideSQL = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested.
     $oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
     if(count($oneSideFilters[$fid])>0) {
-      $oneSideSQL .= " $andor ( " . implode(" ", $oneSideFilters[$fid]) . ")"; // properly introduce these filters
+       foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
+          $oneSideSQL .= " $andor ( $thisOneSideFilter ) ";  // properly introduce these filters...need to move $andor to a higher level and put this inside ( ) ?? or maybe this just all gets redone if/when the OR bug is fixed (see big note up where oneSideFilters are first received from parseFilter function)
+       }
     }
     
 	  $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
@@ -609,11 +636,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      // Debug Code
      
-     //global $xoopsUser;
-     //if($xoopsUser->getVar('uid') == 350) {
-     //     print "<br>Count query: $countMasterResults<br><br>";
-     //     print "Master query: $masterQuerySQL<br>";
-     //}
+     /*global $xoopsUser;
+     if($xoopsUser->getVar('uid') == 1) {
+          print "<br>Count query: $countMasterResults<br><br>";
+          print "Master query: $masterQuerySQL<br>";
+     }*/
      
 		 formulize_benchmark("Before query");
 		 
@@ -859,7 +886,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
      $orderByClause = "";
      
      $oneSideFilters = array(); // we need to capture each filter individually, just in case we need to apply them individually to each part of the query for calculations.  Filters for calculations will not work right if the combination of filter terms is excessively complex, ie: includes OR'd terms across different forms in a framework, certain other complicated types of bracketing
-     
+          
      if(!is_array($filtertemp)) {
           $filter = array(0=>array(0=>$andor, 1=>$filtertemp));
      } else {
@@ -873,7 +900,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
           // Use the global andor setting between expressions
           
           if($filterParts[1] == "") { continue; } // ignore filters that are empty...can happen if only OR filters are specified, and maybe at other times too
-          
+
           if($numSeachExps > 0) {
                $whereClause .= $andor;
           }
@@ -882,9 +909,6 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
           $numIndivFilters = 0;
           foreach(explode("][", $filterParts[1]) as $indivFilter) {
 
-
-               $newWhereClause = "";
-                              
                // evaluate each individual search term
                // Use the local andor setting ($filterParts[0]) between terms
 
@@ -893,6 +917,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                if($numIndivFilters > 0) {
                     $whereClause .= $filterParts[0]; // apply local andor setting
                }
+               
+               $newWhereClause = ""; // tracks just the current iteration of this loop, so we can capture this filter and add it to the record of filters for this form lower down
+               
                $whereClause .= "("; // bracket each individual component of the whereclause
                     
                $operator = isset($ifParts[2]) ? $ifParts[2] : "LIKE";
@@ -1040,10 +1067,10 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                }
 
                $whereClause .= $newWhereClause;
-               if(count($oneSideFilters[$mappedForm]) == 0) {
-                    $oneSideFilters[$mappedForm][] = " $newWhereClause ";   // don't add the local andor on the first term for a form  
+               if(count($oneSideFilters[$mappedForm][strtolower(trim($filterParts[0]))]) == 0) {
+                    $oneSideFilters[$mappedForm][strtolower(trim($filterParts[0]))] = " $newWhereClause ";   // don't add the local andor on the first term for a form  
                } else {
-                    $oneSideFilters[$mappedForm][] = $filterParts[0] . " $newWhereClause ";     
+                    $oneSideFilters[$mappedForm][strtolower(trim($filterParts[0]))] .= " ". $filterParts[0] . " $newWhereClause ";
                }
                
                $whereClause .= ")";

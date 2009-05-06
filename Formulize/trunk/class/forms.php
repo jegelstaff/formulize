@@ -295,7 +295,7 @@ class formulizeFormsHandler {
 		}
 		global $xoopsDB;
 		// first get its current state:
-		$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) ." WHERE field = '".$oldname."'";
+		$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) ." LIKE '".$oldname."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
 		if(!$fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
 			return false;
 		}

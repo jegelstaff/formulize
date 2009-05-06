@@ -63,7 +63,7 @@ if( !empty($ele_id) AND $clone == 0){
 		$element->setVar('ele_desc', $ele_desc);
 		$element->setVar('ele_colhead', $ele_colhead);
 		// check that handle is unique
-    $ele_handle = str_replace(" ", "_", strtolower($ele_handle));
+    $ele_handle = str_replace(" ", "_", $ele_handle);
     $ele_handle = str_replace("'", "", $ele_handle);
     $ele_handle = str_replace("\"", "", $ele_handle);
 		if($ele_handle) {
