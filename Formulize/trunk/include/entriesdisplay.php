@@ -233,6 +233,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 		} else {
 			$savename = $_POST['savename'];
+			if(get_magic_quotes_gpc()) {
+				$savename = stripslashes($savename);
+			}
 		}
 
 		// flatten quicksearches -- one value in the array for every column in the view
@@ -1486,11 +1489,11 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 					} else {
 						$columnWidthParam = "";
 					}
+					
           for($i=0;$i<count($cols);$i++) {
             //formulize_benchmark("drawing one column");
 						$col = $cols[$i];
 						$colhandle = $settings['columnhandles'][$i];
-					
 						print "<td $columnWidthParam class=$class>\n";
 						if($col == "creation_uid") {
 							$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "creation_uid") . "\" target=_blank>" . displayMeta($entry, "creation_uid-name") . "</a>";

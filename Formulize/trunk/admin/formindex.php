@@ -245,7 +245,22 @@ function cloneFormulize($title, $clonedata) {
 
 	$fid = $title;
 
-	$newtitle = _FORM_MODCLONED_FORM;	
+
+  // check if the default title is already in use as the name of a form...keep looking for the title and add numbers onto the end, until we don't find a match any longer
+  $foundTitle = 1;
+  $titleCounter = 0;
+  while($foundTitle) {
+    if(!isset($titleSearchingFor)) {
+      $titleSearchingFor = _FORM_MODCLONED_FORM;
+    } else {
+      $titleCounter++;
+      $titleSearchingFor = _FORM_MODCLONED_FORM." $titleCounter";
+    }
+    $titleCheckSQL = "SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE desc_form = '$titleSearchingFor'";
+    $titleCheckResult = $xoopsDB->query($titleCheckSQL);
+    $foundTitle = $xoopsDB->getRowsNum($titleCheckResult);
+  }
+  $newtitle = $titleSearchingFor;	// use whatever the last searched for title is (because it was not found)
 
 	$getrow = q("SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $fid");
 
@@ -368,110 +383,21 @@ function cloneFormulize($title, $clonedata) {
         if(!$cloneResult = $dataHandler->cloneData($fid, $oldNewEleIdMap)) {
                 print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
         }
-
-        /*
-	// lock formulize_form
-	$xoopsDB->queryF("LOCK TABLES " . $xoopsDB->prefix("formulize_form") . " WRITE");
-
-		// get the current max id_req
-		$max_id_reqq = q("SELECT MAX(id_req) FROM " . $xoopsDB->prefix("formulize_form"));
-		$max_id_req = $max_id_reqq[0]['MAX(id_req)'];
-
-	    $curdata = q("SELECT * FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=$title ORDER BY id_req");
-
-		$prev_id_req = 0;
-	    foreach($curdata as $thisdata) {
-			if($thisdata['id_req'] != $prev_id_req) { $max_id_req++; }
-			$prev_id_req = $thisdata['id_req'];
-		    $sql = "INSERT INTO " . $xoopsDB->prefix("formulize_form") . " (";
-
-	       	$start = 1;
-	        foreach($thisdata as $thisfield=>$value) {
-	            // Handle the commas necessary between fields
-	            if(!$start) { $sql .= ", "; }
-	            $start = 0;
-	            $sql .= "`$thisfield`";
-	        } 
-
-	        $sql .= ") VALUES (";
-
-	       	$start = 1;
-	        foreach($thisdata as $thisfield=>$value) {
-	            // this is the key part that changes the id of the form to the new form that was just made
-	            if($thisfield == "id_form") { $value = $newfid; }
-	            if($thisfield == "id_req") { $value = $max_id_req; }
-	            if($thisfield == "ele_id") { $value = ""; }
-	            // Handle the commas necessary between fields
-	            if(!$start) { $sql .= ", "; }
-	            $start = 0;
-			$value = mysql_real_escape_string($value);
-	            $sql .= "\"$value\"";
-	        }
-	        $sql .= ")";
-
-	        
-//            echo $sql . "<br>";
-            
-            if(!$datares = $xoopsDB->queryF($sql)) {
-		        exit("Error cloning data for form: $title.  SQL statement that caused the error:<br>$sql<br>".mysql_error());
-	        }
-
-	    }
-
-		// unlock tables
-		$xoopsDB->queryF("UNLOCK TABLES");
-       */
-
-/*    
-Here's a high level view of how you can use q to do the cloning of data 
-pretty easily I think...I'm skipping details obviously....
-
-The formulize_form table looks something like this:
-id_form, id_req, ele_id, ele_caption, ele_value....etc
-
-And q nicely returns $curdata that will look like this:
-
-$curdata[0]['id_form']
-$curdata[0]['id_req']
-$curdata[0]['ele_id']
-$curdata[0]['ele_caption']
-$curdata[0]['ele_value']
-$curdata[1]['id_form']
-$curdata[1]['id_req']
-$curdata[1]['ele_id']
-etc...
-
-I like it because it gets rid of all the low level mucking around 
-dealing with result objects from the DB, and gives me a nice two 
-dimensional table with the data I want to work with.
-
-But obviously there's lots of ways this could work and if you're more 
-comfortable with a different approach, no problem.  If you do want to 
-use this, then a rough pass at the code might be like this:
-
-$curdata = q("SELECT * FROM " . $xoopsDB->prefix("formulize_form") . " WHERE 
-id_form=$title);
-foreach($curdata as $thisdata) {
-$sql = "INSERT INTO xoops_formulize_form (";
-foreach($thisdata as $thisfield=>$value) {
-// I'm missing proper handling of the commas necessary between fields
-$sql .= "\"$thisfield\";
-} 
-$sql .= ") VALUES (";
-foreach($thisdata as $thisfield=>$value) {
-// this is the key part that changes the id of the form to the new 
-form that was just made
-if($thisfield == "id_form") { $value = $newfid; }
-// comma handling missing again
-$sql .= \"$value\";
-}
-$sql .= ")";
-if(!$datares = $xoopsDB->query($sql)) {
-exit("Error cloning data for form: $title<br>".mysql_error());
-}
-}
-*/    
     }
+    
+    // replicate permissions of the original form on the new cloned form
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+    $criteria = new CriteriaCompo();
+    $criteria->add(new Criteria('gperm_itemid', $fid), 'AND');
+    $criteria->add(new Criteria('gperm_modid', getFormulizeModId()), 'AND');
+    $gperm_handler = xoops_gethandler('groupperm');
+    $oldFormPerms = $gperm_handler->getObjects($criteria);
+    foreach($oldFormPerms as $thisOldPerm) {
+      // do manual inserts, since addRight uses the xoopsDB query method, which won't do updates/inserts on GET requests
+      $sql = "INSERT INTO ".$xoopsDB->prefix("group_permission"). " (gperm_name, gperm_itemid, gperm_groupid, gperm_modid) VALUES ('".$thisOldPerm->getVar('gperm_name')."', $newfid, ".$thisOldPerm->getVar('gperm_groupid').", ".getFormulizeModId().")";
+      $res = $xoopsDB->queryF($sql);
+    }
+    
 }
 
 function addform()

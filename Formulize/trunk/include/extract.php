@@ -141,7 +141,6 @@ function prepvalues($value, $field, $entry_id) {
 
 	// handle cases where the value is linked to another form
   
-  
   if($source_ele_value = formulize_isLinkedSelectBox($field, true)) {
      // value is an entry id in another form
      // need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
@@ -162,7 +161,7 @@ function prepvalues($value, $field, $entry_id) {
   }
 
   $elementArray = formulize_getElementMetaData($field, true);
-  
+
   // check if this is fullnames/usernames box
   // wickedly inefficient to go to DB for each value!!  This loop executes once per datapoint in the result set!!
   $type = $elementArray['ele_type'];
@@ -689,6 +688,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                //formulize_benchmark("Starting to process one value");
                if($field == "entry_id" OR $field == "creation_uid" OR $field == "mod_uid" OR $field == "creation_datetime" OR $field == "mod_datetime" OR $field == "main_email" OR $field == "main_user_viewemail") { continue; } // ignore those plain fields, since we can only work with the ones that are properly aliased to their respective tables.  More details....Must refer to metadata fields by aliases only!  since * is included in SQL syntax, fetch_assoc will return plain column names from all forms with the values from those columns.....Also want to ignore the email fields, since the fact they're prefixed with "main" can throwoff the calculation of which entry we're currently writing
                if(strstr($field, "creation_uid") OR strstr($field, "creation_datetime") OR strstr($field, "mod_uid") OR strstr($field, "mod_datetime")) {
+                    //formulize_benchmark("Starting to process metadata");
                     // dealing with a new metadata field
                     $fieldNameParts = explode("_", $field);
                     // We account for a mainform entry appearing multiple times in the list, because when there are multiple entries in a subform, and SQL returns one row per subform,  we need to not change the main form and internal record until we pass to a new mainform entry
@@ -707,7 +707,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                               if(count($derivedFieldMetadata) > 0 AND $masterIndexer > -1) { // if there is derived value info for this data set and we have started to create values...
                                    //print "fid: $fid<br>";
                                    //print "frid: $frid<br>";
+                                   formulize_benchmark("before doing derived...");
                                    $masterResults[$masterIndexer] = formulize_calcDerivedColumns($masterResults[$masterIndexer], $derivedFieldMetadata, $frid, $fid);
+                                   formulize_benchmark("after doing derived");
                               }
                               $masterIndexer++; // If this is a new main entry, then increment the masterIndexer, since the masterIndexer is used to uniquely identify each main entry
                               $prevMainId = $masterQueryArray['main_entry_id']; // if the current form is a main, then store it's ID for use later when we're on a new form
@@ -738,9 +740,10 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                } 
 
                // print "$curFormAlias - $field: $value<br>"; // debug line
+               formulize_benchmark("preping value...");
                $valueArray = prepvalues($value, $elementHandle, $masterQueryArray[$curFormAlias . "_entry_id"]); // note...metadata fields must not be in an array for compatibility with the 'display' function...not all values returned will actually be arrays, but if there are multiple values in a cell, then those will be arrays
+               formulize_benchmark("done preping value");
                $masterResults[$masterIndexer][formulize_readFrameworkMap($frameworkMap, $curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][formulize_readFrameworkMap($frameworkMap, $curFormId, $elementHandle)] = $valueArray;
-
                if($elementHandle == "creation_uid" OR $elementHandle == "mod_uid" OR $elementHandle == "creation_datetime" OR $elementHandle == "mod_datetime") {
                     // add in the creator_email when we have done the creation_uid
                     if($elementHandle == "creation_uid") {

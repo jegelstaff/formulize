@@ -54,6 +54,19 @@ if($ele_allowed) {
 	$formframe['elements'] = $elements_allowed;
 } 
 
+$module_handler =& xoops_gethandler('module');
+$config_handler =& xoops_gethandler('config');
+$formulizeModule =& $module_handler->getByDirname("formulize");
+$formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+$modulePrefUseToken = $formulizeConfig['useToken'];
+$useToken = $screen ? $screen->getVar('useToken') : $modulePrefUseToken;  // screen type for regular forms doesn't yet exist, but when it does, this check will be relevant
+if(isset($GLOBALS['xoopsSecurity']) AND $useToken) { // avoid security check for versions of XOOPS that don't have that feature, or for when it's turned off
+	if (!$GLOBALS['xoopsSecurity']->check()) { 
+	  print "<b>Error: it appears you should not be viewing this page.  Please contact the webmaster for assistance.</b>";
+		return false;
+	}
+}
+
 //print "<p> formframe = ".$formframe."</p>";
 //print "<p> mainform = ".$mainform."</p>";
 //print "<p> ventry = ".$ventry."</p>";

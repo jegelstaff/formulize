@@ -664,7 +664,7 @@ formulize_benchmark("Start of formDisplay.");
 		} else {
 			print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
 		}
-		print "</div>\n<div id=formulizeform>".$form->render()."</div>";
+		print "</div>\n<div id=formulizeform>".$form->render()."</div>"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
 		// if we're in Drupal, include the main XOOPS js file, so the calendar will work if present...
 		// assumption is that the calendar javascript has already been included by the datebox due to no
 		// $xoopsTpl being in effect in Drupal -- this assumption will fail if Drupal is displaying a pageworks
@@ -883,6 +883,12 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 	if(!$profileForm) { // do not use printable button for profile forms
 		$newcurrentURL= XOOPS_URL . "/modules/formulize/printview.php";
 		print "<form name='printview' action='".$newcurrentURL."' method=post target=_blank>\n";
+		
+		// add security token
+		if(isset($GLOBALS['xoopsSecurity'])) {
+			print $GLOBALS['xoopsSecurity']->getTokenHTML();
+		}
+		
 		print "<input type=hidden name=lastentry value=".$cur_entry.">";
 		if($go_back['form']) { // we're on a sub, so display this form only
 			print "<input type=hidden name=formframe value=".$fids[0].">";	
