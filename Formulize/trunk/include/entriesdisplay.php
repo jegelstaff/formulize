@@ -1678,6 +1678,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 		$search_text = isset($searches[$cols[$i]]) ? strip_tags(htmlspecialchars($searches[$cols[$i]]), ENT_QUOTES) : "";
 		$search_text = get_magic_quotes_gpc() ? stripslashes($search_text) : $search_text;
 		$boxid = "";
+		$helpText = "";
 		$clear_help_javascript = "";
 		if(count($searches) == 0 AND !$returnOnly) {
 			if($i==0) { 
@@ -1685,6 +1686,9 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 				$boxid = "id=firstbox";
 			}
 			$clear_help_javascript = "onfocus=\"javascript:clearSearchHelp(this.form, '" . _formulize_DE_SEARCH_HELP . "');\"";
+		}
+		if($i==0) {
+			$helpText = "\n&nbsp;<a href=\"\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/docs/search_help.xhtml'); return false;\" title=\""._formulize_DE_SEARCH_POP_HELP."\">[?]<a>\n";
 		}
     //formulize_benchmark("finished prep of search box");
 		$quickSearchBoxes[$cols[$i]]['search'] = "<input type=text $boxid name='search_" . $cols[$i] . "' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
@@ -1696,11 +1700,12 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
     }
     //formulize_benchmark("done filter");
     
+		// print out the boxes if we are supposed to (ie: if we're not just returning the arrays)
 		if(!$returnOnly) {
       if(isset($quickSearchBoxes[$cols[$i]]['filter'])) {
         print $quickSearchBoxes[$cols[$i]]['filter'];
       } else {
-        print $quickSearchBoxes[$cols[$i]]['search'];
+        print "<nobr>".$quickSearchBoxes[$cols[$i]]['search']."$helpText</nobr>";
       }
 		}
     
@@ -2784,10 +2789,10 @@ function showPop(url) {
 
 	window.document.controls.ventry.value = '';
 	if (window.popup == null) {
-		popup = window.open(url,'popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=450,screenX=0,screenY=0,top=0,left=0');
+		popup = window.open(url,'popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
       } else {
 		if (window.popup.closed) {
-			popup = window.open(url,'popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=450,screenX=0,screenY=0,top=0,left=0');
+			popup = window.open(url,'popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
             } else {
 			window.popup.location = url;              
 		}

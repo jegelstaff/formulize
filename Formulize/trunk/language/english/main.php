@@ -346,6 +346,7 @@ define("_formulize_DE_NO_STANDARD_VIEWS", "No standard views available");
 define("_formulize_DE_SAVED_VIEWS", "YOUR SAVED VIEWS:");
 define("_formulize_DE_PUB_VIEWS", "PUBLISHED VIEWS:");
 define("_formulize_DE_SEARCH_HELP", "Type search terms here");
+define("_formulize_DE_SEARCH_POP_HELP", "Click here for info about the search terms");
 define("_formulize_DE_WARNLOCK", "<p>The view that you have selected is set to <i>lock the controls</i>.  This means that you cannot change the columns, do calculations, do advanced searches, or export data.</p><p>You can perform sorting and basic searches using the controls at the top of each column.</p>");
 define("_formulize_DE_MINE", "Entries by me");
 define("_formulize_DE_GROUP", "Entries by all users in my group(s)");

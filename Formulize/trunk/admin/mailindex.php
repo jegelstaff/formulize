@@ -165,7 +165,9 @@ if( $_POST['op'] != 'upform' && $op != 'addform'){
 	if(!isset($_GET['table'])) {
 		// new singleentry ui
 		echo '<tr>
-		<td class="head"><center>'._FORM_SINGLETYPE.'</center></td><td class="even">';
+		<td class="head"><center>'._FORM_SINGLETYPE.'</center>';
+    
+    echo '<br><br><span style="font-weight: normal;">'._FORM_NUM_ENTRIES_ANON_HELP.'</span></td><td class="even" style="vertical-align: top;">';
 		
 		$multiflag = 0;
 		echo '<input type=radio name=singleentry value=group' ;
