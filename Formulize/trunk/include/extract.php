@@ -431,7 +431,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    $scopeFilter = " AND (".str_replace("uid", "main.creation_uid", $scope).") ";
 	       }
 
-	  
+         formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this 
 	       list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
          
          // ***********************
