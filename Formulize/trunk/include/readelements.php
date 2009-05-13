@@ -194,9 +194,6 @@ foreach($formulize_elementData as $fid=>$entryData) { // for every form we found
 						$_COOKIE['entryid_'.$fid] = $writtenEntryId;
 					}
 				}
-				if(isset($id_form)) { // id_form is set in initialize...so we're only doing this updating, when included by Formulize as part of a regular page load...we need to rely on the original form id value and not the $fid defined in this loop, since if a framework is in effect, then the mainform is important for doing the right extraction and derivation
-					formulize_updateDerivedValues($writtenEntryId, $id_form, $frid); // frid set in initialize.php	
-				}
 			}
 		} else { // handle existing entries...
 			$owner = getEntryOwner($entry, $fid);
@@ -205,9 +202,6 @@ foreach($formulize_elementData as $fid=>$entryData) { // for every form we found
 				$formulize_allWrittenEntryIds[$fid][] = $writtenEntryId; // log the written id
 				$notEntriesList['update_entry'][$fid][] = $writtenEntryId; // log the notification info
 				writeOtherValues($writtenEntryId, $fid); // write the other values for this entry
-				if(isset($id_form)) { // id_form is set in initialize...so we're only doing this updating, when included by Formulize as part of a regular page load...we need to rely on the original form id value and not the $fid defined in this loop, since if a framework is in effect, then the mainform is important for doing the right extraction and derivation
-					formulize_updateDerivedValues($writtenEntryId, $id_form, $frid); // frid set in initialize.php	
-				}
 			}
 		}
 	}
@@ -217,6 +211,17 @@ foreach($formulize_newEntryIds as $fid=>$entries){
 	$data_handler_for_owner_groups = new formulizeDataHandler($fid);
 	$data_handler_for_owner_groups->setEntryOwnerGroups($formulize_newEntryUsers[$fid],$formulize_newEntryIds[$fid]);
 	unset($data_handler_for_owner_groups);
+}
+
+// update the derived values for all forms that we saved data for, now that we've saved all the data from all the forms
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+foreach($formulize_allWrittenEntryIds as $fid=>$entries) {
+	$formObject = $form_handler->get($fid);
+	if(array_search("derived", $formObject->getVar('elementTypes'))) { // only bother if there is a derived value in the form
+		foreach($entries as $thisEntry) {
+			formulize_updateDerivedValues($thisEntry, $fid, $frid);
+		}
+	}
 }
 
 // send notifications
