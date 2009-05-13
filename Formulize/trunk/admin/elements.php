@@ -60,10 +60,28 @@ $id_form = $title;
 
 if( !empty($_POST) ){
 	foreach( $_POST as $k => $v ){
+		if(get_magic_quotes_gpc()) {
+			if(is_array($v)) {
+				foreach($v as $vk=>$vv) {
+					$v[$vk] = stripslashes($vv);
+				}
+			} else {
+				$v = stripslashes($v);
+			}
+		}
 		${$k} = $v;
 	}
 }elseif( !empty($_GET) ){
 	foreach( $_GET as $k => $v ){
+		if(get_magic_quotes_gpc()) {
+			if(is_array($v)) {
+				foreach($v as $vk=>$vv) {
+					$v[$vk] = stripslashes($vv);
+				}
+			} else {
+				$v = stripslashes($v);
+			}
+		}
 		${$k} = $v;
 	}
 }
