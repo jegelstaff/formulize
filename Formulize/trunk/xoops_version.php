@@ -166,6 +166,36 @@ $modversion['config'][9]['formtype'] = 'yesno';
 $modversion['config'][9]['valuetype'] = 'int';
 $modversion['config'][9]['default'] = 1;
 
+// number formatting options
+$modversion['config'][10]['name'] = 'number_decimals';
+$modversion['config'][10]['title'] = '_MI_formulize_NUMBER_DECIMALS';
+$modversion['config'][10]['description'] = '_MI_formulize_NUMBER_DECIMALS_DESC';
+$modversion['config'][10]['formtype'] = 'textbox';
+$modversion['config'][10]['valuetype'] = 'int';
+$modversion['config'][10]['default'] = 0;
+
+$modversion['config'][11]['name'] = 'number_prefix';
+$modversion['config'][11]['title'] = '_MI_formulize_NUMBER_PREFIX';
+$modversion['config'][11]['description'] = '_MI_formulize_NUMBER_PREFIX_DESC';
+$modversion['config'][11]['formtype'] = 'textbox';
+$modversion['config'][11]['valuetype'] = 'text';
+$modversion['config'][11]['default'] = "";
+
+$modversion['config'][12]['name'] = 'number_decimalsep';
+$modversion['config'][12]['title'] = '_MI_formulize_NUMBER_DECIMALSEP';
+$modversion['config'][12]['description'] = '';
+$modversion['config'][12]['formtype'] = 'textbox';
+$modversion['config'][12]['valuetype'] = 'text';
+$modversion['config'][12]['default'] = ".";
+
+$modversion['config'][13]['name'] = 'number_sep';
+$modversion['config'][13]['title'] = '_MI_formulize_NUMBER_SEP';
+$modversion['config'][13]['description'] = '';
+$modversion['config'][13]['formtype'] = 'textbox';
+$modversion['config'][13]['valuetype'] = 'text';
+$modversion['config'][13]['default'] = ",";
+
+
 //bloc
 $modversion['blocks'][1]['file'] = "mymenu.php";
 $modversion['blocks'][1]['name'] = _MI_formulizeMENU_BNAME;

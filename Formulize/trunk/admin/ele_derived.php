@@ -62,10 +62,28 @@ $listOfElements_output = $listOfElements->render() . "\n<br />\n<input type=butt
 $formulaBox->setDescription($listOfElements_output . "<br /><br />" . _AM_ELE_DERIVED_DESC);
 
 // Copied from ele_text.php to add number formatting options. kw 2008-10-31
-$decimalDefault = $value[1] ? $value[1] : 0;
-$prefixDefault = $value[2] ? $value[2] : '';
-$decsepDefault = $value[3] ? $value[3] : '.';
-$sepDefault = $value[4] ? $value[4] : ',';
+$config_handler = $config_handler =& xoops_gethandler('config');
+$formulizeConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId());
+if(isset($value[1])) {
+	$decimalDefault = $value[1];
+} else {
+	$decimalDefault = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
+}
+if(isset($value[2])) {
+	$prefixDefault = $value[2];
+} else {
+	$prefixDefault = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';	
+}
+if(isset($value[3])) {
+	$decsepDefault = $value[3];
+} else {
+	$decsepDefault = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+}
+if(isset($value[4])) {
+	$sepDefault =  $value[4];
+} else {
+	$sepDefault = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+}
 $numberOptions = new XoopsFormElementTray(_AM_ELE_DERIVED_NUMBER_OPTS, '<br /><br />');
 $numberOptions->setDescription(_AM_ELE_NUMBER_OPTS_DESC);
 $decimalOption = new xoopsFormText(_AM_ELE_NUMBER_OPTS_DEC, 'ele_value[1]', 2, 2, $decimalDefault);

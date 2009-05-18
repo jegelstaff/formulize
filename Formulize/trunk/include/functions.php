@@ -3315,22 +3315,37 @@ function formulize_numberFormat($value, $handle, $frid="", $decimalOverride=0) {
 	$elementMetaData = formulize_getElementMetaData($id, false);
 	if($elementMetaData['ele_type'] == "text") {
 		$ele_value = unserialize($elementMetaData['ele_value']);
-    if(($ele_value[5] === "" OR !isset($ele_value[5])) AND $decimalOverride) { $ele_value[5] = $decimalOverride; }
-    if($ele_value[7] === "" OR !isset($ele_value[7])) { $ele_value[7] = "."; }
-    if($ele_value[8] === "" OR !isset($ele_value[8])) { $ele_value[8] = ","; }
-		return $ele_value[6] . number_format($value, $ele_value[5], $ele_value[7], $ele_value[8]);
+		return _formulize_numberFormat($value, $decimalOverride, $ele_value[5], isset($ele_value[7]), $ele_value[7], isset($ele_value[8]), $ele_value[8], isset($ele_value[6]), $ele_value[6]); // value, decimaloverride, decimals, decsep exists, decsep, sep exists, sep, prefix exists, prefix
 	} elseif($elementMetaData['ele_type'] == "derived") {
 		$ele_value = unserialize($elementMetaData['ele_value']);
-    if(($ele_value[1] === "" OR !isset($ele_value[1])) AND $decimalOverride) { $ele_value[1] = $decimalOverride; }
-    if($ele_value[3] === "" OR !isset($ele_value[3])) { $ele_value[3] = "."; }
-    if($ele_value[4] === "" OR !isset($ele_value[4])) { $ele_value[4] = ","; }
-		return $ele_value[2] . number_format($value, $ele_value[1], $ele_value[3], $ele_value[4]);	
+		return _formulize_numberFormat($value, $decimalOverride, $ele_value[1], isset($ele_value[3]), $ele_value[3], isset($ele_value[4]), $ele_value[4], isset($ele_value[2]), $ele_value[2]); // value, decimaloverride, decimals, decsep exists, decsep, sep exists, sep, prefix exists, prefix    if(($ele_value[1] === "" OR !isset($ele_value[1])) AND $decimalOverride) { $ele_value[1] = $decimalOverride; }
 	}	else {
 		return $value;
 	}
-
-	
 }
+
+// internal function used by formulize_numberFormat to actually do the formatting
+// different element types have different parts of ele_value where the number values are stored, so that's the reason for abstracting this out one level
+function _formulize_numberFormat($value, $decimalOverride, $decimals="", $decSepExists=false, $decsep="", $sepExists=false, $sep="", $prefixExists=false, $prefix="") {
+	$config_handler =& xoops_gethandler('config');
+	$formulizeConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId());
+	if($decimalOverride) {
+		$decimals = $decimalOverride; // use the override if it's present
+	} elseif(!is_numeric($decimals)) { // if there is no decimal value passed in for this element
+		$decimals = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0; // or else use the module pref, and if there isn't one, use 0
+	}
+	if($decsep == "" AND !$decSepExists) {
+		$decsep = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : "."; 
+	}
+	if($sep == "" AND !$sepExists) {
+		$sep = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ","; 
+	}
+	if($prefix == "" AND !$prefixExists) {
+		$prefix = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : ""; // if no prefix actually is specified for the element, then use module pref if one is set, otherwise use ""
+	}
+	return $prefix . number_format($value, $decimals, $decsep, $sep);
+}
+
 
 // This function will print out the specific calculation requested, from the saved view specified
 // $savedView can be the id number of a saved view, or it can be the typed name

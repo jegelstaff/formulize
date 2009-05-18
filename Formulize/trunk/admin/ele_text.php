@@ -57,10 +57,28 @@ $valueType->setDescription(_AM_ELE_TYPE_DESC);
 // and prefix for display
 // and separator for thousands
 
-$decimalDefault = $value[5] ? $value[5] : 0;
-$prefixDefault = $value[6] ? $value[6] : '';
-$decsepDefault = $value[7] ? $value[7] : '.';
-$sepDefault = $value[8] ? $value[8] : ',';
+$config_handler = $config_handler =& xoops_gethandler('config');
+$formulizeConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId());
+if(isset($value[5])) {
+	$decimalDefault = $value[5];
+} else {
+	$decimalDefault = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
+}
+if(isset($value[6])) {
+	$prefixDefault = $value[6];
+} else {
+	$prefixDefault = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';	
+}
+if(isset($value[7])) {
+	$decsepDefault = $value[7];
+} else {
+	$decsepDefault = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+}
+if(isset($value[8])) {
+	$sepDefault =  $value[8];
+} else {
+	$sepDefault = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+}
 $numberOptions = new XoopsFormElementTray(_AM_ELE_NUMBER_OPTS, '<br /><br />');
 $numberOptions->setDescription(_AM_ELE_NUMBER_OPTS_DESC);
 $decimalOption = new xoopsFormText(_AM_ELE_NUMBER_OPTS_DEC, 'ele_value[5]', 2, 2, $decimalDefault);

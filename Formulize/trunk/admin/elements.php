@@ -34,6 +34,8 @@
 ###############################################################################
 
 include_once("admin_header.php");
+include_once(XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php");
+
 
 if(!isset($_POST['title'])){
 	$title = isset ($_GET['title']) ? $_GET['title'] : '';
