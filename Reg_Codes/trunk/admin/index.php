@@ -42,7 +42,7 @@ import_request_variables("gp", "param_");
 
 xoops_cp_header();
 
-print "<p><a href=" . XOOPS_URL . "/modules/reg_codes/admin/index.php>" . _MI_REG_CODES_MENU_MAIN . "</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=" . XOOPS_URL . "/modules/reg_codes/admin/index.php?op=manager>" . _MI_REG_CODES_MENU_USERMANAGER . "</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=" . XOOPS_URL . "/modules/system/admin.php?fct=preferences&op=showmod&mod=".$xoopsModule->getVar('mid').">" . _PREFERENCES . "</a></p><hr>\n";
+print "<p><a href=" . XOOPS_URL . "/modules/reg_codes/admin/index.php>" . _MI_REG_CODES_MENU_MAIN . "</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=" . XOOPS_URL . "/modules/reg_codes/admin/index.php?op=manager>" . _MI_REG_CODES_MENU_USERMANAGER . "</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=" . XOOPS_URL . "/modules/reg_codes/index.php>" . _MI_REG_CODES_MENU_MANAGECODES . "</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=" . XOOPS_URL . "/modules/system/admin.php?fct=preferences&op=showmod&mod=".$xoopsModule->getVar('mid').">" . _PREFERENCES . "</a></p><hr>\n";
 
 
 

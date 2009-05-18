@@ -90,6 +90,8 @@ define("_MI_REG_CODES_MENU_MAIN", "Main");
 define("_MI_REG_CODES_MENU_MAIN_DESC", "Control permissions for issuing Registration Codes");
 define("_MI_REG_CODES_MENU_USERMANAGER", "User Manager");
 define("_MI_REG_CODES_MENU_USERMANAGER_DESC", "Move or copy users from group(s) to group(s)");
+define("_MI_REG_CODES_MENU_MANAGECODES", "Create and Manage Registration Codes");
+define("_MI_REG_CODES_MENU_MANAGECODES_DESC", "Switch to the user side of the website to make new codes, or manage existing ones.");
 
 define("_MI_REG_CODES_MENU_EDIT", "Edit");
 define("_MI_REG_CODES_MENU_EDIT_DESC", "Edit a Database Table in Registration Codes");

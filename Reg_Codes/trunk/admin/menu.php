@@ -36,4 +36,11 @@ $adminmenu[1]['title'] = _MI_REG_CODES_MENU_USERMANAGER;
 $adminmenu[1]['link'] = "admin/index.php?op=manager";
 $adminmenu[1]['desc'] = _MI_REG_CODES_MENU_MAIN_USERMANAGER_DESC;
 
+$adminmenu[2]['title'] = _MI_REG_CODES_MENU_MANAGECODES;
+$adminmenu[2]['link'] = "index.php";
+$adminmenu[2]['desc'] = _MI_REG_CODES_MENU_MAIN_MANAGECODES_DESC;
+
+
+
+
 ?>
