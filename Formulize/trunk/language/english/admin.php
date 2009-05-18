@@ -152,6 +152,9 @@ define("_AM_ELE_GRID_HEADING", "What text should appear as the heading for this 
 define("_AM_ELE_GRID_HEADING_USE_CAPTION", "The caption typed above");
 define("_AM_ELE_GRID_HEADING_USE_FORM", "The title of this form");
 define("_AM_ELE_GRID_HEADING_NONE", "No heading");
+define("_AM_ELE_GRID_HEADING_SIDEORTOP", "If there is a heading, where should it appear?");
+define("_AM_ELE_GRID_HEADING_SIDE", "Heading should be at the side like a regular element");
+define("_AM_ELE_GRID_HEADING_TOP", "Heading should be above the grid, and the grid will span both columns of the form");
 define("_AM_ELE_GRID_ROW_CAPTIONS", "Enter the captions for the rows of this table");
 define("_AM_ELE_GRID_ROW_CAPTIONS_DESC", "Each table is a grid of colums and rows.  The left side of the table has one caption in each cell to start each row.  Type in the text you want to use for the captions, separated by commas.  If your captions are long, it may work best visually to put each caption on its own line.");
 define("_AM_ELE_GRID_COL_CAPTIONS", "Enter the captions for the columns of this table");

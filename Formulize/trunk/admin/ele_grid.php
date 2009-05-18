@@ -59,6 +59,16 @@ $grid_heading->addElement($grid_heading_use_caption);
 $grid_heading->addElement($grid_heading_use_form);
 $grid_heading->addElement($grid_heading_none);
 
+// 1a. how to handle heading
+$grid_heading_sideOrTop = new XoopsFormElementTray(_AM_ELE_GRID_HEADING_SIDEORTOP, "<br>");
+$grid_heading_side = new XoopsFormRadio('', 'ele_value[5]', $ele_value[5]);
+$grid_heading_side->addOption('1', _AM_ELE_GRID_HEADING_SIDE);
+$grid_heading_top = new XoopsFormRadio('', 'ele_value[5]', $ele_value[5]);
+$grid_heading_top->addOption('', _AM_ELE_GRID_HEADING_TOP);
+$grid_heading_sideOrTop->addElement($grid_heading_side);
+$grid_heading_sideOrTop->addElement($grid_heading_top);
+
+
 // 2. row captions
 
 $grid_row_captions = new XoopsFormTextArea(_AM_ELE_GRID_ROW_CAPTIONS, 'ele_value[1]', $ele_value[1]);
@@ -99,6 +109,7 @@ $grid_start->setDescription(_AM_ELE_GRID_START_DESC);
 // rollup elements into form
 
 $form->addElement($grid_heading);
+$form->addElement($grid_heading_sideOrTop);
 $form->addElement($grid_row_captions);
 $form->addElement($grid_col_captions);
 $form->addElement($grid_background);

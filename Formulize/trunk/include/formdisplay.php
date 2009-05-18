@@ -1427,12 +1427,14 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/griddisplay.php";
 			list($grid_title, $grid_row_caps, $grid_col_caps, $grid_background, $grid_start, $grid_count) = compileGrid($ele_value, $title, $i);
+			$headingAtSide = ($ele_value[5] AND $grid_title) ? true : false; // if there is a value for ele_value[5], then the heading should be at the side, otherwise, grid spans form width as it's own chunk of HTML
 			$gridCounter[$grid_start] = $grid_count;
-			ob_start();
-			displayGrid($fid, $entry, $grid_row_caps, $grid_col_caps, $grid_title, $grid_background, $grid_start, "", "", true, $screen);
-			$gridContents = ob_get_contents();
-			ob_end_clean();
-			$form->insertBreak($gridContents, "head"); // head is the css class of the cell
+			$gridContents = displayGrid($fid, $entry, $grid_row_caps, $grid_col_caps, $grid_title, $grid_background, $grid_start, "", "", true, $screen, $headingAtSide);
+			if($headingAtSide) { // grid contents is the two bits for the xoopsformlabel when heading is at side, otherwise, it's just the contents for the break
+				$form->addElement(new XoopsFormLabel($gridContents[0], $gridContents[1]));
+			} else {
+				$form->insertBreak($gridContents, "head"); // head is the css class of the cell				
+			}
 		} elseif($ele_type == "ib") {// if it's a break, handle it differently...
 			$form->insertBreak("<div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1]);
 		} else {

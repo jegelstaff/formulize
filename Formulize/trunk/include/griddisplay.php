@@ -63,7 +63,7 @@
 //$finalRow -- Optional. HTML to use as a last row in the table, to show totals, etc.  Expectation is the developer would have calculated some values and prepared this HTML in advance.  Should NOT include <tr> and </tr>
 // $calledInternal -- boolean used to indicate whether we need the xoops security token or not.  When called from inside a form using the grid element collection, there will already be a security token associated with the form.
 
-function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientation="horizontal", $startID="first", $finalCell="", $finalRow="", $calledInternal=false, $screen=null) {
+function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientation="horizontal", $startID="first", $finalCell="", $finalRow="", $calledInternal=false, $screen=null, $headingAtSide="") {
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/elementdisplay.php';
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/class/data.php';
@@ -120,21 +120,33 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 		print $GLOBALS['xoopsSecurity']->getTokenHTML();
 	}
 
-	// set the title row
-	print "<table class=outer>\n";
+	// start buffering the output
+	ob_start();
 
-	if($title) { print "<tr><th colspan='$numcols'>$title</th></tr>\n"; }
+	// set the title row
+	if($headingAtSide) {
+		$gridContents[0] = $title;
+		$class = "even";
+		print "<table class='outer'>\n<tr><td class=head></td>";
+	} else {
+		print "<table class=outer>\n";
+		$class = "head";
+		if($title) { print "<tr><th colspan='$numcols'>$title</th></tr>\n"; }
+		print "<tr>\n<td class=\"head\">&nbsp;</td>\n";
+	}
 
 	// draw top row
-	$class = "head";
-	print "<tr>\n<td class=$class>&nbsp;</td>\n";
 	foreach($colcaps as $thiscap) {
-		if($orientation == "vertical" AND $class=="even") {
-			$class = "odd";
-		} elseif($orientation == "vertical") {
-			$class = "even";
+		if($headingAtSide) {
+			print "<td class=head>$thiscap</td>\n";
+		} else {
+		  if($orientation == "vertical" AND $class=="even" AND !$headingAtSide) { // only alternate rows
+				$class = "odd";
+			} elseif($orientation == "vertical") {
+				$class = "even";
+			}
+			print "<td class=$class>$thiscap</td>\n";	
 		}
-		print "<td class=$class>$thiscap</td>\n";
 	}
 	if(is_array($finalCell)) { // draw blank header for last column if there is such a thing
 		print "<td class=head>&nbsp;</td>\n";
@@ -155,7 +167,11 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 			$class = "head";
 		}
 		print "<tr>\n";
-		print "<td class=$class>$thiscap</td>\n"; 
+		if($headingAtSide) {
+			print "<td class=\"head\">$thiscap</td>\n";
+		} else {
+			print "<td class=$class>$thiscap</td>\n";
+		}
 		foreach($colcaps as $thiscolcap) {
 			if($orientation == "vertical" AND $class=="even") {
 				$class = "odd";
@@ -191,7 +207,16 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 		print "<tr>$finalRow</tr>\n";
 	}
 	print "</table>";
-
+	$gridContents[1] = trans(ob_get_clean());
+	if($headingAtSide === "") { // if $headingAtSide is "" (not false) then we print out the grid contents here.  Only pass back contents if $headingAtSide is specified as true or false (presumably by the formdisplay.php file), since otherwise for backwards compatibility we need to printout contents here because that's what the behaviour used to be.
+		print $gridContents[1];
+	} elseif($headingAtSide) {
+		return $gridContents;
+	} else {
+		return $gridContents[1];
+	}
+	
+	
 }
 
 ?>
