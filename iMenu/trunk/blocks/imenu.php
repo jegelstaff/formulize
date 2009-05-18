@@ -70,8 +70,9 @@ function b_imenu_show($options) {
 									list($execute, $executedLink) = executeLink($menuLinks['link']);
 									if($execute) {
 										eval("\$menuLinks['link'] = " . $executedLink . ";");
+									} elseif($executedLink) { // we might have just modified the link if it was missing the http part
+										$menuLinks['link'] = $executedLink;
 									}
-										
       			// end - Nov 6, 2005 - jpc - Freeform Solutions
       			
       			if(strstr($currentURL, htmlSpecialChars(strip_tags(trim($menuLinks['link']))))) { // if this link is subsumed by the current URL (must do corresponding corrections to the syntax as we do when getting the current URL, so matches can be found)
@@ -212,7 +213,9 @@ function drawLink($active, $myrow, $block, $sub="0", $options, $lastSub=false, $
             list($execute, $executedLink) = executeLink($imenu['link']);
 						if($execute) {
 							eval("\$imenu['link'] = " . $executedLink . ";");
-						}           
+						} elseif($executedLink) { // we might have just modified the link if it was missing the http part
+							$imenu['link'] = $executedLink;
+						}          
 			// end - Nov 6, 2005 - jpc - Freeform Solutions
 			
             
@@ -251,8 +254,7 @@ function b_imenu_edit($options) {
 function executeLink($link) {
 		$phptag = substr($link, 0, 5);
 		$phptag = $phptag === "<?php" ? $phptag : substr($link, 0, 2);
-		if(($phptag === "<?" OR $phptag === "<?php") OR strstr($link, "XOOPS_URL")) 
-		{
+		if(($phptag === "<?" OR $phptag === "<?php") OR strstr($link, "XOOPS_URL")) {
 			if($phptag === "<?") {
 				$endPos = strlen($link) - 4;
 				$executableLink = substr($link, 2, $endPos);
@@ -263,9 +265,13 @@ function executeLink($link) {
 				$executableLink = $link;
 			}
 			$executeIt = true;
+		} elseif(!strstr($link, "http://")) {
+			$executeIt = false;
+			$executableLink = XOOPS_URL . $link;
 		} else {
 			$executeIt = false;
-		}
+			$executableLink = "";
+		} 
 		return array(0=>$executeIt, 1=>$executableLink);
 }
 		
