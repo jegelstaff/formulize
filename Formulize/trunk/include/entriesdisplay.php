@@ -2352,7 +2352,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 }
 
 // this function converts raw values from the database to their actual values users should see
-// currently only handles linked selectboxes
+// currently handles linked selectboxes and multiple values fields (listboxes and checkboxes)
 // this could be made into a replacement for the prepvalues function in the extract.php file that does the same kind of thing when preparing a dataset
 // returnFlat is a flag to cause multiple values to be returned as comma separated strings
 function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
@@ -2367,6 +2367,8 @@ function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
       $realValues = implode(", ", $realValues);
     }
     return $realValues;
+  } elseif(strstr($value, "*=+*:")) {
+    return str_replace("*=+*:", ", ", ltrim($value, "*=+*:")); // replace the separator with commas between values
   } else {
     return $value;
   }
@@ -2538,10 +2540,9 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
                 $output .= "<br>\n";
               }
               $start2 = false;
-              
               $elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
               $groupText = formulize_swapUIText($groupingValues[$handle][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
-              $output .= printSmart(trans(getCalcHandleText($thisGroupSetting, $frid, true))) . ": " . printSmart($groupText) . "\n";
+              $output .= printSmart(trans(getCalcHandleText($thisGroupSetting, $frid, true))) . ": " . printSmart(trans($groupText)) . "\n";
             }
             $output .= "</b></p>\n";
           }
