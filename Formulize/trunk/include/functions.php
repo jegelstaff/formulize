@@ -1014,7 +1014,12 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
   foreach($one_to_one as $one_fid) {
     $fids[] = $one_fid['fid'];
     $candidateHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_fid['keyself']);
-    $candidateEntry = q("SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$one_fid['fid']) . " AS candidate, ". $xoopsDB->prefix("formulize_".$fid) . " AS main WHERE candidate.".$candidateHandle[0]['ele_handle']."=main.".$mainHandle[0]['ele_handle']." AND main.entry_id = ".intval($entries[$fid][0])." LIMIT 0,1");
+		$candidateEntry = q("SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$one_fid['fid']) . " AS candidate, ". $xoopsDB->prefix("formulize_".$fid) . " AS main WHERE candidate.".$candidateHandle[0]['ele_handle']."=main.".$mainHandle[0]['ele_handle']." AND main.entry_id = ".intval($entries[$fid][0])." LIMIT 0,1");
+		/*print "SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_fid['keyself'] . "<br><pre>";
+		print_r($candidateHandle);
+		print "</pre><br>SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$one_fid['fid']) . " AS candidate, ". $xoopsDB->prefix("formulize_".$fid) . " AS main WHERE candidate.".$candidateHandle[0]['ele_handle']."=main.".$mainHandle[0]['ele_handle']." AND main.entry_id = ".intval($entries[$fid][0])." LIMIT 0,1<br><pre>";
+		print_r($candidateEntry);
+		print "</pre>";*/
     if($candidateEntry[0]['entry_id']) {
       $entries[$one_fid['fid']][] = $candidateEntry[0]['entry_id'];
     } else {

@@ -2144,28 +2144,28 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
                 $countValue = $countArray["count$fidAlias$handle"];
                 $indexerToUse = $perindexer;
                 $groupCounts[$groupingWhere]['countValue'] = $countValue;
-		$groupCounts[$groupingWhere]['indexerToUse'] = $indexerToUse;
+                $groupCounts[$groupingWhere]['indexerToUse'] = $indexerToUse;
                 $start = true;
               } else {
                 $indexerToUse = $groupCounts[$groupingWhere]['indexerToUse'];
-		$countValue = $groupCounts[$groupingWhere]['countValue'];
+                $countValue = $groupCounts[$groupingWhere]['countValue'];
               }
-	      // need to figure out the individual counts of the constituent parts of this result
-	      if(strstr($thisResult["$fidAlias$handle"], "*=+*:")) {
-		$rawIndivValues = explode("*=+*:", $thisResult["$fidAlias$handle"]);
-		array_shift($rawIndivValues); // current convention is to have the separator at the beginning of the string, so the exploded array will have a blank value at the beginning
-	      } elseif($linkedMetaData = formulize_isLinkedSelectBox($cols[$i])) {
-		// convert the pointers for the linked selectbox values, to their source values
-		$sourceMeta = explode("#*=:*", $linkedMetaData[2]);
-		$data_handler = new formulizeDataHandler($sourceMeta[0]);
-		$rawIndivValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($thisResult["$fidAlias$handle"], ","))); // trip opening and closing commas and split by comma into an array
-	      } else {
-		$rawIndivValues = array(0=>$thisResult["$fidAlias$handle"]);
-	      }
-	      foreach($rawIndivValues as $thisIndivValue) {
-		$indivCounts[$cols[$i]][$calc][$indexerToUse][trans(calcValuePlusText($thisIndivValue, $handle))] += $thisResult["percount$fidAlias$handle"]; // add this count to the total count for this particular item
-		$groupCounts[$groupingWhere]['responseCountValue'] += $thisResult["percount$fidAlias$handle"]; // add this count to the total count for all items
-	      }
+              // need to figure out the individual counts of the constituent parts of this result
+              if(strstr($thisResult["$fidAlias$handle"], "*=+*:")) {
+              	$rawIndivValues = explode("*=+*:", $thisResult["$fidAlias$handle"]);
+              	array_shift($rawIndivValues); // current convention is to have the separator at the beginning of the string, so the exploded array will have a blank value at the beginning
+              } elseif($linkedMetaData = formulize_isLinkedSelectBox($cols[$i])) {
+                // convert the pointers for the linked selectbox values, to their source values
+                $sourceMeta = explode("#*=:*", $linkedMetaData[2]);
+                $data_handler = new formulizeDataHandler($sourceMeta[0]);
+                $rawIndivValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($thisResult["$fidAlias$handle"], ","))); // trip opening and closing commas and split by comma into an array
+              } else {
+                $rawIndivValues = array(0=>$thisResult["$fidAlias$handle"]);
+              }
+              foreach($rawIndivValues as $thisIndivValue) {
+                $indivCounts[$cols[$i]][$calc][$indexerToUse][trans(calcValuePlusText($thisIndivValue, $handle, $cols[$i], $calc, $indexerToUse))] += $thisResult["percount$fidAlias$handle"]; // add this count to the total count for this particular item
+                $groupCounts[$groupingWhere]['responseCountValue'] += $thisResult["percount$fidAlias$handle"]; // add this count to the total count for all items
+              }
               break;
           }
         
@@ -2300,27 +2300,42 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
         }
       } elseif($calc=="per") { // output the percentage breakdowns, since we'll be done counting everything we need now
         foreach($groupCounts as $groupCountData) {
-		$start = true;
-		arsort($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']]);
-		if($groupCountData['countValue'] == $groupCountData['responseCountValue'] AND $start) {
-			$typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENT . "</u></td></tr>\n";
-		} else {
-			$typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENTRESPONSES . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENTENTRIES . "</u></td></tr>\n";
-		}
-		$start = false;
-		foreach($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']] as $indivText=>$indivTotal) {
-			if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
-				$typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['countValue'])*100,2)."%</td></tr>\n";
-			} else {
-				$typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['responseCountValue'])*100,2)."%</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['countValue'])*100,2)."%</td></tr>\n";						
-			}					
-		}
-		if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
-			$typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['countValue']."</td><td style=\"vertical-align: top;\"><hr>100%</td></tr>\n</table>\n";			
-		} else {
-			$typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['responseCountValue']. " " ._formulize_DE_PER_TOTALRESPONSES."<br>".$groupCountData['countValue']. " " ._formulize_DE_PER_TOTALENTRIES."</td><td style=\"vertical-align: top;\"><hr>100%</td><td style=\"vertical-align: top;\"><hr>" . round($groupCountData['responseCountValue']/$groupCountData['countValue'], 2) . " " . _formulize_DE_PER_RESPONSESPERENTRY . "</td></tr>\n</table>";
-		}
-		$masterResults[$cols[$i]][$calc][$groupCountData['indexerToUse']] = $typeout;		
+          $start = true;
+          if($groupCountData['countValue'] == $groupCountData['responseCountValue'] AND $start) {
+            $typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENT . "</u></td></tr>\n";
+          } else {
+            $typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENTRESPONSES . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENTENTRIES . "</u></td></tr>\n";
+          }
+          // replace the indivText with a corresponding name, if we have any on file
+          $nameReplacementMap = array();
+          if(isset($GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$cols[$i]][$calc][$groupCountData['indexerToUse']]) AND $start) {
+            global $xoopsDB;
+            $nameType = $GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$cols[$i]][$calc][$groupCountData['indexerToUse']]['nametype'];
+            $userIDs = $GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$cols[$i]][$calc][$groupCountData['indexerToUse']]['values'];
+            // get a list of all the names and uids that we're dealing with
+            $nameReplacementSQL = "SELECT $nameType, uid FROM ".$xoopsDB->prefix("users") . " WHERE uid IN (". implode(", ", $userIDs). ")";
+            $nameReplacementRes = $xoopsDB->query($nameReplacementSQL);
+            while($nameReplacementArray = $xoopsDB->fetchArray($nameReplacementRes)) {
+              // map the uid and name values we found, so we can sub them in lower down when needed
+              $nameReplacementMap[$nameReplacementArray['uid']] = $nameReplacementArray[$nameType];
+            }
+          }
+          $start = false;
+          arsort($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']]);
+          foreach($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']] as $indivText=>$indivTotal) {
+            if(count($nameReplacementMap)>0) { $indivText = $nameReplacementMap[$indivText]; } // swap in a name for this user, if applicable
+            if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
+              $typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['countValue'])*100,2)."%</td></tr>\n";
+            } else {
+              $typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['responseCountValue'])*100,2)."%</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['countValue'])*100,2)."%</td></tr>\n";						
+            }					
+          }
+          if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
+            $typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['countValue']."</td><td style=\"vertical-align: top;\"><hr>100%</td></tr>\n</table>\n";			
+          } else {
+            $typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['responseCountValue']. " " ._formulize_DE_PER_TOTALRESPONSES."<br>".$groupCountData['countValue']. " " ._formulize_DE_PER_TOTALENTRIES."</td><td style=\"vertical-align: top;\"><hr>100%</td><td style=\"vertical-align: top;\"><hr>" . round($groupCountData['responseCountValue']/$groupCountData['countValue'], 2) . " " . _formulize_DE_PER_RESPONSESPERENTRY . "</td></tr>\n</table>";
+          }
+          $masterResults[$cols[$i]][$calc][$groupCountData['indexerToUse']] = $typeout;		
         }
       }
     }
@@ -2396,8 +2411,9 @@ function calcParseBlanksSetting($setting) {
 }
 
 
-// THIS FUNCTION TAKES THE VALUE AND THE HANDLE AND THE FRID AND FIGURES OUT WHAT THE VALUE PLUS UITEXT WOULD BE
-function calcValuePlusText($value, $handle) {
+// THIS FUNCTION TAKES THE VALUE AND THE HANDLE AND FIGURES OUT WHAT THE VALUE PLUS UITEXT WOULD BE
+// This is only used when determining the item values for percentage breakdown calculations
+function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
 	
   if($handle=="creation_date" OR $handle == "mod_date" OR $handle == "creation_datetime" OR $handle == "mod_datetime" OR $handle == "creator_email") {
     return $value;    
@@ -2411,6 +2427,18 @@ function calcValuePlusText($value, $handle) {
   $id = formulize_getIdFromElementHandle($handle);
   $element_handler =& xoops_getmodulehandler('elements', 'formulize');
   $element = $element_handler->get($id);
+  // check for fullnames/usernames and handle those
+  $ele_type = $element->getVar('ele_type');
+  if($ele_type == "select") {
+    $ele_value = $element->getVar('ele_value');
+    if(key($ele_value[2]) === "{USERNAMES}" OR key($ele_value[2]) === "{FULLNAMES}") {
+      if(!isset($GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$col][$calc][$groupingValue])) {
+        $GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$col][$calc][$groupingValue]['nametype'] = key($ele_value[2]) === "{USERNAMES}" ? "uname" : "name";
+      }
+      $GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$col][$calc][$groupingValue]['values'][] = $value; // flag the value for replacement later
+      return $value;
+    }
+  }
   $uitexts = $element->getVar('ele_uitext');
   $value = isset($uitexts[$value]) ? $uitexts[$value] : $value;
   if(substr($value, 0, 6)=="{OTHER") { $value = _formulize_OPT_OTHER; }
