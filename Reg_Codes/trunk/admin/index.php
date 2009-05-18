@@ -536,25 +536,28 @@ echo $form->render();
 function reg_codes_patch() {
 
 	if(!isset($_POST['migratedb'])) {
-		print "<form action=\"index.php?op=patch30\" method=post>";
+		print "<form action=\"index.php?op=patch31\" method=post>";
 		print "<input type = submit name=migratedb value=\"Update Database\">";
 		print "</form>";
 	} else {
-      	global $xoopsDB;      
+    global $xoopsDB;      
 
 		// check for existence of reg_codes_instant and if present, then skip the 2.1 update stuff
 		// not foolproof -- if no codes are in db then there will be an error
 		$checksql = "SELECT * FROM " . $xoopsDB->prefix("reg_codes") . " LIMIT 0,1";
 		$checkres = $xoopsDB->query($checksql);
+		$checkNumRows = $xoopsDB->getRowsNum($checkres);
 		$checkarray = $xoopsDB->fetchArray($checkres);
-		if(!array_key_exists('reg_codes_instant',$checkarray)) {
+		if(!array_key_exists('reg_codes_instant',$checkarray) AND $checkNumRows > 0) { // only do this if there are existing codes, so a new installation will not be affected
 	      	$sql[0] = "ALTER TABLE " . $xoopsDB->prefix("reg_codes") . " ADD reg_codes_instant tinyint(1)";
       		$sql[1] = "ALTER TABLE " . $xoopsDB->prefix("reg_codes") . " ADD reg_codes_redirect varchar(255)";
       		$sql[2] = "ALTER TABLE " . $xoopsDB->prefix("reg_codes") . " CHANGE reg_codes_code reg_codes_code varchar(100)";
 		}
-		if(!array_key_exists('reg_codes_approval',$checkarray)) {										// nmc 2007.03.22
+		if(!array_key_exists('reg_codes_approval',$checkarray) AND $checkNumRows > 0) {										// nmc 2007.03.22
 			$sql[] = "ALTER TABLE " . $xoopsDB->prefix("reg_codes") . " ADD reg_codes_approval varchar(255)";
 		}
+		
+		$sql[] = "ALTER TABLE ".$xoopsDB->prefix("users") . " CHANGE uname uname VARCHAR( 100 ) NOT NULL";
 		
 		$testsql = "SHOW TABLES";
 		$resultst = $xoopsDB->query($testsql);
@@ -579,23 +582,20 @@ function reg_codes_patch() {
 		
 		if(!in_array($xoopsDB->prefix("reg_codes_preapproved_users"), $existingTables)) {
 				$sql[] = "CREATE TABLE ".$xoopsDB->prefix("reg_codes_preapproved_users"). " (
-			reg_codes_preapproved_id int not null auto_increment,
-			reg_codes_key int not null,
-			reg_codes_preapproved varchar(255),
-			primary key (reg_codes_preapproved_id),
-			UNIQUE KEY `preapproved_key` (`reg_codes_key`,`reg_codes_preapproved`)	
-		) TYPE=MyISAM;";
-		
-				// this doesn't need to be run more than once either:
-			$sql[] = "ALTER TABLE ".$xoopsDB->prefix("users")." CHANGE uname uname VARCHAR( 100 ) NOT NULL;";
+										reg_codes_preapproved_id int not null auto_increment,
+										reg_codes_key int not null,
+										reg_codes_preapproved varchar(255),
+										primary key (reg_codes_preapproved_id),
+										UNIQUE KEY `preapproved_key` (`reg_codes_key`,`reg_codes_preapproved`)	
+									) TYPE=MyISAM;";
 		}
 
-      	for($i=0;$i<count($sql);$i++) {
-      		if(!$result = $xoopsDB->query($sql[$i])) {
-      			exit("Error in database update for Registration Codes 3.0.  SQL dump: " . $sql[$i]);
-      		}
-      	} 
-      	print "DB update completed.";
+		for($i=0;$i<count($sql);$i++) {
+			if(!$result = $xoopsDB->query($sql[$i])) {
+				exit("Error in database update for Registration Codes 3.1.  SQL dump: " . $sql[$i]."<br>".mysql_error());
+			}
+		} 
+		print "DB update completed.";
 	}
 
 }
@@ -612,7 +612,7 @@ switch ($param_op)
 	case "manager":
 		reg_codes_user_manager();
 		break;
-	case "patch30":								// nmc 2007.03.22
+	case "patch31":								// nmc 2007.03.22
 		reg_codes_patch();						// nmc 2007.03.22
 		break;									// nmc 2007.03.22
 
@@ -637,7 +637,7 @@ switch ($param_op)
 	    xoops_cp_footer();
 }
 
-	print "<p>version 3.0 RC1</p>";
+	print "<p>version 3.1 RC1</p>";
 	xoops_cp_footer();
 
 ?>

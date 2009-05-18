@@ -47,5 +47,4 @@ CREATE TABLE reg_codes_preapproved_users (
 	UNIQUE KEY `preapproved_key` (`reg_codes_key`,`reg_codes_preapproved`)	
 ) TYPE=MyISAM;
 
-# Alter Table User Table
-ALTER TABLE users CHANGE uname uname VARCHAR( 100 ) NOT NULL; 
+
