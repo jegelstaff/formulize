@@ -1,0 +1,140 @@
+<h2><{$page_title}></h2>
+
+<hr>
+<p>
+<form name=createcode action=<{$modurl}> method=post>
+<input type=submit name=createnewcode value="<{$createnewc}>">
+</form>
+</p>
+<hr>
+
+<table cellpadding=5><tr><th colspan=6></th></tr>
+
+
+<tr>
+
+<td class=head><p><b><{$headerActions}></b></p>
+</td>
+
+<td class=head>
+<p><b><{$headerStatus}></b></p>
+</td>
+
+<td class=head>
+<p><b><{$headerCode}></b></p>
+</td>
+
+<td class=head>
+<p><b><{$headerGroups}></b></p>
+</td>
+
+<td class=head>
+<p><b><{$headerExpiry}></b></p>
+</td>
+
+<td class=head>
+<p><b><{$headerMaxUses}></b></p>
+</td>
+
+<td class=head>
+<p><b><{$headerCurUses}></b></p>
+</td>
+
+<td class=head>
+<p><b><{$headerInstant}></b></p>
+</td>
+
+<td class=head>
+<p><b><{$headerApproval}></b></p>
+</td>
+
+<td class=head>
+<p><b><{$headerPAUsers}></b></p>
+</td>
+
+</tr>
+
+<{if !$nocodes}>
+	
+
+	<{foreach from=$ocodes item=id}>
+		<{math equation="x-y" x=$id y=1 assign=realid}>
+		<tr>
+		<td class=<{cycle name=a values="even,odd"}> rowspan=2>
+			<form name=deletecodef<{$codes[$realid]}> action=<{$modurl}> method=post>
+			<input type=hidden name=deletekey value=<{$ckeys[$realid]}>>
+			<input type=submit name=deletethiscode value=<{$delete}>>
+			</form>
+			<form name=editcodef<{$codes[$realid]}> action=<{$modurl}> method=post>
+			<input type=hidden name=editkey value=<{$ckeys[$realid]}>>
+			<input type=submit name=editthiscode value=<{$modify}>>
+			</form>
+		</td>
+		<td class=<{cycle name=a values="even,odd"}> rowspan=2>
+			<p><{$status[$realid]}><p>
+		</td>
+		<td class=<{cycle name=a values="even,odd"}> rowspan=2>
+<!--	original line:    <p><{$codes[$realid]}></p>   modified to display the registation code as web link   .. kw 09.12.2007  -->
+			<p><a href=<{$codeUrl}><{$codes[$realid]}>><{$codes[$realid]}></a></p>	
+		</td>
+		<td class=<{cycle name=b values="even,odd"}> rowspan=2>
+			<p><{$cgroupnames[$realid]}></p>
+		</td>	
+		<td class=<{cycle name=c values="even,odd"}>>
+			<p><{$expiries[$realid]}></p>
+		</td>	
+		<td class=<{cycle name=d values="even,odd"}>>
+			<p><{$maxuses[$realid]}></p>
+		</td>	
+		<td class=<{cycle name=d2 values="even,odd"}>>
+			<p><{$curuses[$realid]}></p>
+		</td>	
+		<td class=<{cycle name=e values="even,odd"}>>
+			<{if $instants[$realid]}>
+				<p><{$yes}></p>
+			<{else}>
+				<p><{$no}></p>
+			<{/if}>
+		</td>
+		<td class=<{cycle name=f values="even,odd"}> rowspan = 2>
+			<p><{$approvals[$realid]}></p>
+		</td>
+		<td class=<{cycle name=g values="even,odd"}> rowspan=2>
+			<form name=pamain action=<{$modurl}> method=post>
+			<input type=hidden name=pa_regkey_disp value=<{$regkey[$realid]}>>
+			<input type=submit name=displaypauser value=<{$pa_display}>>
+			</form>		
+		</td>
+		</tr>
+		<tr>
+		<td class=<{cycle name=g values="even,odd"}> colspan=4>
+			<p><{$headerRedirect}> 
+			<{if $redirects[$realid]}>
+				<{$redirects[$realid]}>
+			<{else}>
+				<{$none}>
+			<{/if}>
+		</td>
+		</tr>
+
+
+	<{/foreach}>	
+
+<{else}>
+
+	<tr>
+	<td class=even colspan=6>
+		<p><{$nocodes}></p>
+	</tr>
+
+<{/if}>
+
+</table>
+
+<!-- if $_POST  
+			<form name=deletecodef<{$codes[$realid]}> action=<{$modurl}> method=post>
+			<input type=hidden name=deletekey value=<{$ckeys[$realid]}>>
+			<input type=submit name=deletethiscode value=<{$delete}>>
+			</form>
+
+-->
