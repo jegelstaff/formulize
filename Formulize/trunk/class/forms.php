@@ -225,7 +225,11 @@ class formulizeFormsHandler {
                 $newTableSQL .= "mod_uid int(7) default '0',";
                 foreach($fid->getVar('elementHandles') as $elementId=>$thisHandle) { 
 												if($elementTypes[$elementId] == "areamodif" OR $elementTypes[$elementId] == "ib" OR $elementTypes[$elementId] == "sep" OR $elementTypes[$elementId] == "grid" OR $elementTypes[$elementId] == "subform") { continue; } // do not attempt to create certain types of fields since they don't live in the db!
-                        $newTableSQL .= "`$thisHandle` text NULL default NULL,";
+												if($elementTypes[$elementId] == "date") {
+													$newTableSQL .= "`$thisHandle` date NULL default NULL,";
+												} else {
+													$newTableSQL .= "`$thisHandle` text NULL default NULL,";
+												}
                 }
                 $newTableSQL .= "PRIMARY KEY (`entry_id`),";
                 $newTableSQL .= "INDEX i_creation_uid (creation_uid)";

@@ -1020,6 +1020,7 @@ function updateperms() {
 }
 
 
+// THE 4.0 SERIES WILL NEED A SEPARATE PATCH ROUTINE.  THERE IS TOO MUCH BAGGAGE IN HERE TO KEEP CARRYING IT AROUND.  ESPECIALLY THE DATATYPE CONVERSION STUFF.
 function patch31() {
 
   global $xoopsDB;
@@ -1067,6 +1068,59 @@ function patch31() {
             }
           }
         }
+				// need to handle datetype conversions for date fields, and making all fields accept NULL
+				// 1. get a list of all forms
+				// 2. loop through each element, getting it's metadata and datatable field data
+				// 3. switch each one to accept NULL and default to NULL
+				// 4. if it's a date field, switch its type to date
+				// 5. update 0000-00-00 to NULL for dates
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$allFids = $form_handler->getAllForms(true); // true means get all elements, even ones that are not displayed to any groups
+				foreach($allFids as $thisFid) {
+					if($thisFid->getVar('tableform') != "") { continue; } // don't do table forms obviously!
+					$dataTableInfoSQL = "SHOW COLUMNS FROM ".$xoopsDB->prefix("formulize_".$thisFid->getVar('id_form'));
+					if($dataTableInfoResult = $xoopsDB->query($dataTableInfoSQL)) {
+						$foundDateFields = array();
+						$thisFidElementHandles = $thisFid->getVar('elementHandles');
+						$thisFidElementTypes = $thisFid->getVar('elementTypes');
+						$alterTableSQL = "ALTER TABLE ".$xoopsDB->prefix("formulize_".$thisFid->getVar('id_form'));
+						$start = true;
+						while($thisFidDataTableInfo = $xoopsDB->fetchArray($dataTableInfoResult)) {
+							if($thisFidDataTableInfo['Field'] == "entry_id" OR $thisFidDataTableInfo['Field'] == "creation_datetime" OR $thisFidDataTableInfo['Field'] == "mod_datetime" OR $thisFidDataTableInfo['Field'] == "creaiton_uid" OR $thisFidDataTableInfo['Field'] == "mod_uid" OR $thisFidDataTableInfo['Type'] != "text") {
+								continue; // skip the metadata fields of course, and anything that has been manually changed from 'text'
+							}
+							if($thisFidElementTypes[array_search($thisFidDataTableInfo['Field'],$thisFidElementHandles)] == "date") { // if it's a date...
+								$foundDateFields[] = $thisFidDataTableInfo['Field'];
+								$alterTableSQL .= !$start ? "," : ""; // add comma if we're on a subsequent run through
+								$alterTableSQL .= " CHANGE `".$thisFidDataTableInfo['Field']."` `".$thisFidDataTableInfo['Field']."` date NULL default NULL";
+								$start = false;
+							} elseif(strtoupper($thisFidDataTableInfo['Null']) == "NO") {
+								$alterTableSQL .= !$start ? "," : ""; // add comma if we're on a subsequent run through
+								$alterTableSQL .= " CHANGE `".$thisFidDataTableInfo['Field']."` `".$thisFidDataTableInfo['Field']."` text NULL default NULL";
+								$start = false;
+							}
+						}
+						if($start) {
+							$alterTableSQL = ""; // blank it, so we don't actually do a query
+						}
+						if($alterTableSQL) {
+							if(!$alterTableResult = $xoopsDB->query($alterTableSQL)) {
+								exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $dataTableInfoSQL . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+							}
+						}
+						foreach($foundDateFields as $thisDateField) {
+							$dateCorrectionSQL = "UPDATE ".$xoopsDB->prefix("formulize_".$thisFid->getVar('id_form'))." SET `".$thisDateField."` = NULL WHERE `".$thisDateField."` = '0000-00-00'";
+							if(!$dateCorrectionResult = $xoopsDB->query($dateCorrectionSQL)) {
+								exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $dataTableInfoSQL . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+							}
+						}
+					} else {
+						exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $dataTableInfoSQL . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+					}
+				}
+				
+				print "<br><br><b>NOTE:</b> Although the 3.x data structure is highly optimized compared to previous versions of Formulize, there are some situations which we cannot account for automatically in the upgrade process:  if you have elements in a form and users only enter numerical data there, you should edit those elements now and give them a truly numeric data type (use the new option on the element editing page to do this).  In Formulize 3 and higher, elements that have only numbers, but which are not stored as numbers in the database, will not sort properly and some calculations will not work correctly on them either.  Unfortunately, we cannot reliably determine which numeric data type should be used for all elements, therefore you will need to make this adjustment manually.  We apologize for any inconvenience.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> if you have any questions about this process.<br><br>\n";
+				
         print "DB updates completed.  result: OK";
       } else {
         print "Unable to create derived value fields in database.  result: failed.  contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
@@ -1563,7 +1617,7 @@ function patch22convertdata() {
     }
 	}
   if(!$formulizeFormFound AND $entryOwnerGroupFound) {
-          print "<h1>It appears you have not upgraded from a previous version of Formulize.  You do not need to apply this patch unless you are upgrading from a version prior to 3.0</h1>\n";
+          print "<h1>It appears you have not upgraded from a previous version of Formulize.  You do not need to apply this patch unless you are upgrading from a version prior to 2.2</h1>\n";
           print "<p>If you did upgrade from a previous version, please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>\n";
           return;
   }
@@ -1590,8 +1644,8 @@ function patch22convertdata() {
 			print "<input type = submit name=patch22convertdata value=\"Apply Data Conversion Patch for upgrading to Formulize 2.2 and higher\">";
 			print "</form>";
 		} else {
-			print "<h1>You do not appear to have applied 'patch30'.</h1>\n";
-			print "<p>You must apply patch30 before applying this patch.  <a href=\"" . XOOPS_URL . "/modules/formulize/admin/formindex.php?op=patch30\">Click here to run \"patch30\".</a></p>";
+			print "<h1>You do not appear to have applied 'patch31'.</h1>\n";
+			print "<p>You must apply patch31 before applying this patch.  <a href=\"" . XOOPS_URL . "/modules/formulize/admin/formindex.php?op=patch31\">Click here to run \"patch31\".</a></p>";
 		}
 	} else {
 		
@@ -1649,8 +1703,8 @@ function patch30DataStructure($auto = false) {
           return;
         }
         if(!$entryOwnerGroupFound) {
-          print "<h1>You must run \"patch30\" before upgrading to the 3.0 data structure.</h1>\n";
-          print "<p><a href=\"" . XOOPS_URL . "/modules/formulize/admin/formindex.php?op=patch30\">Click here to run \"patch30\".</a></p>\n";
+          print "<h1>You must run \"patch31\" before upgrading to the 3.0 data structure.</h1>\n";
+          print "<p><a href=\"" . XOOPS_URL . "/modules/formulize/admin/formindex.php?op=patch31\">Click here to run \"patch31\".</a></p>\n";
           return;
         }
         if($newStructureFound) {
@@ -1704,7 +1758,7 @@ function patch30DataStructure($auto = false) {
                                 $captionHandleIndex[str_replace("'", "`", $captionPlusHandlesArray['ele_caption'])] = $captionPlusHandlesArray['ele_handle'];
                         }
                                                 
-                        $dataSQL = "SELECT id_req, ele_caption, ele_value FROM " .$xoopsDB->prefix("formulize_form") . " WHERE id_form = " . $thisFormObject->getVar('id_form') . " AND ele_type != \"areamodif\" ORDER BY id_req"; // for some reason areamodif is stored in some really old data
+                        $dataSQL = "SELECT id_req, ele_caption, ele_value, ele_type FROM " .$xoopsDB->prefix("formulize_form") . " WHERE id_form = " . $thisFormObject->getVar('id_form') . " AND ele_type != \"areamodif\" ORDER BY id_req"; // for some reason areamodif is stored in some really old data
                         $dataRes = $xoopsDB->query($dataSQL);
                         $prevIdReq = "";
                         $insertSQL = "";
@@ -1785,7 +1839,10 @@ function patch30DataStructure($auto = false) {
                                           $dataArray['ele_value'] .= ",";  
                                         }
                                 }
-                                
+                                if($dataArray['ele_type'] == "date" AND $dataArray['ele_value'] == "") {
+																	continue; // don't write in blank date values, let them get the default NULL value for the field
+																} 
+																
                                 $insertSQL .= ", `" . $captionHandleIndex[$dataArray['ele_caption']] . "`=\"" . mysql_real_escape_string($dataArray['ele_value']) . "\"";
                         }
                         if($insertSQL) {
@@ -1835,7 +1892,7 @@ function patch30DataStructure($auto = false) {
         unset($parts);
         unset($elementObject);
       }
-      print "Updated the linked selectbox definitions new metadata.  result: OK<br>\n";
+      print "Updated the linked selectbox definitions new metadata.  result: OK<br><br><b>NOTE:</b> Although the 3.0 data structure is highly optimized compared to previous versions of Formulize, there are some situations which we cannot account for automatically in the upgrade process:  if you have elements in a form and users only enter numerical data there, you should edit those elements now and give them a truly numeric data type (use the new option on the element editing page to do this).  In Formulize 3 and higher, elements that have only numbers, but which are not stored as numbers in the database, will not sort properly and some calculations will not work correctly on them either.  Unfortunately, we cannot reliably determine which numeric data type should be used for all elements, therefore you will need to make this adjustment manually.  We apologize for any inconvenience.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> if you have any questions about this process.<br><br>\n";
       
       print "Data migration complete.  result: OK\n";
 		
