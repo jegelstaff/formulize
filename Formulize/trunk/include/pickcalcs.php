@@ -273,7 +273,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-	$uid = $xoopsUser->getVar('uid');
+	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
 
 	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
@@ -350,6 +350,13 @@ $pickcalc = new xoopsThemeForm(_formulize_DE_PICKCALCS, 'pickcalc', XOOPS_URL."/
 
 $returned = addReqdCalcs($pickcalc);
 $pickcalc = $returned['form'];
+
+// add note for module admins to remind them of the need to set types properly for some calculations to work
+if($xoopsUser) {
+	if($gperm_handler->checkRight("module_admin", getFormulizeModId(), $xoopsUser->getGroups(), 1)) {
+		$pickcalc->insertBreak("<div style=\"font-weight: normal;\">" . _formulize_DE_CALC_NEEDDATATYPES1 . "<a href=\"".XOOPS_URL."/modules/formulize/admin/index.php?title=$fid\" target=\"_blank\">"._formulize_DE_CALC_NEEDDATATYPES2."</a></div>", "head"); // add note for module admins to remind them to set types properly for calculations to work
+	}
+}
 
 $columns = new xoopsFormSelect(_formulize_DE_CALC_COL, 'column', "", 10, true);
 if(!in_array("creation_uid", $_POST['column']) AND !$_POST['reqdcalc_column_uid']) {

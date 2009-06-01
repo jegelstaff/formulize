@@ -407,6 +407,8 @@ define("_formulize_DE_DELETE_ALERT", "You are not allowed to delete that view fr
 define("_formulize_DE_CONF_DELVIEW", "You are about to delete this view!  Please confirm.");
 
 //calculations
+define("_formulize_DE_CALC_NEEDDATATYPES1", "<b>Important:</b> certain numeric calculations will only work properly if the element's database field type has been set correctly.  You can set database field types in ");
+define("_formulize_DE_CALC_NEEDDATATYPES2", "the admin section, on the 'edit' page for each element.");
 define("_formulize_DE_PICKCALCS", "Pick the calculations you want");
 define("_formulize_DE_MODCALCS", "Modify Calculations");
 define("_formulize_DE_CALC_COL", "Column(s) to use for the calculations:");

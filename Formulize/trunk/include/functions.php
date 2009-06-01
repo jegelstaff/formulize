@@ -1606,7 +1606,7 @@ function prepDataForWrite($element, $ele) {
           
           // handle the new possible default value -- sept 7 2007
               if($ele_value[0] == 1 AND $ele == "none") { // none is the flag for the "Choose an option" default value
-                $value = "{SKIPTHISDATE}"; // this flag is used to terminate processing of this value
+                $value = "{WRITEASNULL}"; // this flag is used to terminate processing of this value
                 break;
               }
           
@@ -1718,7 +1718,7 @@ function prepDataForWrite($element, $ele) {
 					if($ele != "YYYY-mm-dd" AND $ele != "") { 
 						$ele = date("Y-m-d", strtotime($ele)); 
 					} else {
-						$ele = "{SKIPTHISDATE}"; // forget about this date element and go on to the next element in the form
+						$ele = "{WRITEASNULL}"; // forget about this date element and go on to the next element in the form
 					}
 					$value = ''.$ele;
 				break;
@@ -2076,7 +2076,7 @@ function formatLinks($matchtext, $handle, $frid, $textWidth=35) {
 		}
 	} else { // regular element
     formulize_benchmark("done formatting, about to print");
-		return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
+		return $myts->makeClickable(printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth));
 	}
 } 
 

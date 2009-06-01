@@ -204,9 +204,10 @@ class formulizeFormsHandler {
 			}
 		}
 	}
-			
+	
 	// create a data table for a form object (or form)
 	// $fid can be an id or an object
+	// Note that this method will add in fields for the elements in the form, if invoked as part of the 3.0 patch process, or when cloning forms.  Note also that all fields will be type 'text', so therefore when cloning, we should actually do something else so we can preseve the type of the original source elements.  This will require an element map to go from old elements to new elements, by ID or something like that.
 	function createDataTable($fid) {
 		if(is_numeric($fid)) {
 			$fid = $this->get($fid);
@@ -222,7 +223,7 @@ class formulizeFormsHandler {
                 $newTableSQL .= "mod_datetime Datetime NULL default NULL, ";
                 $newTableSQL .= "creation_uid int(7) default '0',";
                 $newTableSQL .= "mod_uid int(7) default '0',";
-                foreach($fid->getVar('elementHandles') as $elementId=>$thisHandle) {
+                foreach($fid->getVar('elementHandles') as $elementId=>$thisHandle) { 
 												if($elementTypes[$elementId] == "areamodif" OR $elementTypes[$elementId] == "ib" OR $elementTypes[$elementId] == "sep" OR $elementTypes[$elementId] == "grid" OR $elementTypes[$elementId] == "subform") { continue; } // do not attempt to create certain types of fields since they don't live in the db!
                         $newTableSQL .= "`$thisHandle` text NULL default NULL,";
                 }
@@ -276,12 +277,12 @@ class formulizeFormsHandler {
 	
 	// this function adds an element field to the data table
 	// $id can be numeric or an object
-	function insertElementField($element) {
+	function insertElementField($element, $dataType) {
 		if(!$element = _getElementObject($element)) {
 			return false;
 		}
 		global $xoopsDB;
-		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " ADD `" . $element->getVar('ele_handle') . "` text NULL default NULL";
+		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
 		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
 			return false;
 		}
@@ -289,18 +290,21 @@ class formulizeFormsHandler {
 	}
 	
 	// update the field name in the datatable.  $element can be an id or an object.
-	function updateFieldName($element, $oldname) {
+	function updateField($element, $oldname, $dataType=false) {
 		if(!$element = _getElementObject($element)) {
 			return false;
 		}
 		global $xoopsDB;
-		// first get its current state:
-		$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) ." LIKE '".$oldname."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
-		if(!$fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
-			return false;
-		}
-		$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
-		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " CHANGE `".$oldname."` `".$element->getVar('ele_handle')."` ". $fieldStateData['Type']; 
+		if(!$dataType) {
+			// first get its current state:
+			$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) ." LIKE '".$oldname."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+			if(!$fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
+				return false;
+			}
+			$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
+			$dataType = $fieldStateData['Type'];
+		} 
+		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " CHANGE `".$oldname."` `".$element->getVar('ele_handle')."` ". $dataType; 
 		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
 		  return false;
 		}

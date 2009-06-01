@@ -94,7 +94,6 @@ foreach($_POST as $k=>$v) {
 		$elementMetaData = explode("_", $k);
 		$elementObject = $element_handler->get($elementMetaData[3]);
 		$v = prepDataForWrite($elementObject, $v);
-		if($v == "{SKIPTHISDATE}") { $v = ""; }
 		if($v === "" AND $elementMetaData[2] == "new") { continue; } // don't store blank values for new entries, we don't want to write those (if desubform is used only for blank defaults, then it will always be "new" but we'll keep this as is for now, can't hurt)
 		$blankSubformCounter = trim(substr($k, 9, 2), "_"); // grab up to two spaces after the "desubform" text, since that will have the unique identifier of this new entry (ie: which blank subform entry this value belongs to)
 		$formulize_elementData[$elementMetaData[1]][$elementMetaData[2].$blankSubformCounter][$elementMetaData[3]] = $v;
@@ -113,10 +112,9 @@ foreach($_POST as $k=>$v) {
 		if(isset($_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]])) {
 			$elementObject = $element_handler->get($elementMetaData[3]);
 			$v = prepDataForWrite($elementObject, $_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]]);
-			if($v == "{SKIPTHISDATE}") { $v = ""; } // blank the value if something invalid was found when processing it
 			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = $v;
 		} else {
-			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = ""; // no value returned for this element that was included (cue was found) so we write it as blank to the db
+			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = "{WRITEASNULL}"; // no value returned for this element that was included (cue was found) so we write it as blank to the db
 		}		
 	
 	} elseif(substr($k, 0, 12) == "userprofile_") {

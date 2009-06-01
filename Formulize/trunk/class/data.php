@@ -545,7 +545,11 @@ class formulizeDataHandler  {
 			$sqlValues = "";
 			foreach($values as $id=>$value) {
 				$sql .= ", `".$handleElementMap[$id]."`";
-				$sqlValues .= ", '".mysql_real_escape_string($value)."'";
+				if($value === "{WRITEASNULL}") {
+					$sqlValues .= ", NULL";
+				} else {
+					$sqlValues .= ", '".mysql_real_escape_string($value)."'";
+				}
 			}
 			$creation_uid = $proxyUser ? $proxyUser : $uid;
 			$sql .= ") VALUES (NOW(), NOW(), ".intval($creation_uid).", ".intval($uid)."$sqlValues)";
@@ -561,7 +565,11 @@ class formulizeDataHandler  {
 				if($needComma) {
 					$sql .= ", ";
 				}
-				$sql .= "`".$handleElementMap[$id]."` = '".mysql_real_escape_string($value)."'";
+				if($value === "{WRITEASNULL}") {
+					$sql .= "`".$handleElementMap[$id]."` = NULL";
+				} else {
+					$sql .= "`".$handleElementMap[$id]."` = '".mysql_real_escape_string($value)."'";
+				}
 				$needComma = true;
 			}
 			$sql .= " WHERE entry_id=".intval($entry);
@@ -570,10 +578,10 @@ class formulizeDataHandler  {
 		
 		if($forceUpdate) {
 			if(!$res = $xoopsDB->queryF($sql)) {
-				exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.");
+				exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.<br>".mysql_error());
 			}
 		} elseif(!$res = $xoopsDB->query($sql)) {
-			exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql");
+			exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>".mysql_error());
 		}
 		$lastWrittenId = $xoopsDB->getInsertId();
 		if($lockIsOn) { $xoopsDB->query("UNLOCK TABLES"); }

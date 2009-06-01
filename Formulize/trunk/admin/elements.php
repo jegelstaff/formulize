@@ -389,6 +389,72 @@ switch($op){
 			$form->addElement($private);
 		}
 		
+		
+		// data type controls ... added May 31 2009, jwe 
+                // only do it for existing elements where the datatype choice is relevant 
+		if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type == "radio" OR $ele_type == "checkbox" OR $ele_type == "derived") {
+                        if(!empty($ele_id)) {
+                                // get the current type...
+                                global $xoopsDB;
+                                $elementDataSQL = "SHOW COLUMNS FROM ".$xoopsDB->prefix("formulize_".$id_form)." LIKE '".$element->getVar('ele_handle')."'";
+                                $elementDataRes = $xoopsDB->queryF($elementDataSQL);
+                                $elementDataArray = $xoopsDB->fetchArray($elementDataRes);
+                                $defaultTypeComplete = $elementDataArray['Type'];
+                                $parenLoc = strpos($defaultTypeComplete, "(");
+                                if($parenLoc) {
+                                        $defaultType = substr($defaultTypeComplete,0,$parenLoc);
+                                        $lengthOfSizeValues = strlen($defaultTypeComplete)-($parenLoc+2);
+                                        $defaultTypeSize = substr($defaultTypeComplete,($parenLoc+1),$lengthOfSizeValues);
+                                        if($defaultType == "decimal") {
+                                                $sizeParts = explode(",", $defaultTypeSize);
+                                                $defaultTypeSize = $sizeParts[1]; // second part of the comma separated value is the number of decimal places declaration
+                                        }
+                                } else {
+                                        $defaultType = $defaultTypeComplete;
+                                        $defaultTypeSize = '';
+                                }
+                                //print "defaultType: $defaultType<br>";
+                                //print "defaultTypeSize: $defaultTypeSize<br>";
+                                $form->addElement(new XoopsFormHidden('element_default_datatype', $defaultType));
+                                $form->addElement(new XoopsFormHidden('element_default_datatypesize', $defaultTypeSize));
+                        } else {
+                                $defaultType = 'text';
+                                $defaultTypeSize = '';
+                        }
+                        // setup the UI for the options...
+                        $dataTypeTray = new XoopsFormElementTray(_AM_FORM_DATATYPE_CONTROLS, '<br>');
+                        $dataTypeTray->setDescription(_AM_FORM_DATATYPE_CONTROLS_DESC);
+                        $textType = new XoopsFormRadio('', 'element_datatype', $defaultType);
+                        $textDataTypeLabel = (empty($ele_id) AND ($ele_type == 'text')) ? _AM_FORM_DATATYPE_TEXT_NEWTEXT : _AM_FORM_DATATYPE_TEXT;
+                        $textType->addOption('text', $textDataTypeLabel);
+                        $intType = new XoopsFormRadio('', 'element_datatype', $defaultType);
+                        $intType->addOption('int', _AM_FORM_DATATYPE_INT);
+                        $decimalType = new XoopsFormRadio('', 'element_datatype', $defaultType);
+                        $decimalTypeSizeDefault = ($defaultTypeSize AND $defaultType == "decimal") ? $defaultTypeSize : 2;
+                        $decimalTypeSize = new XoopsFormText('', 'element_datatype_decimalsize', 2, 2, $decimalTypeSizeDefault);
+                        $decimalType->addOption('decimal', _AM_FORM_DATATYPE_DECIMAL1.$decimalTypeSize->render()._AM_FORM_DATATYPE_DECIMAL2);
+                        $varcharType = new XoopsFormRadio('', 'element_datatype', $defaultType);
+                        $varcharTypeSizeDefault = ($defaultTypeSize AND $defaultType == 'varchar') ? $defaultTypeSize : 255;
+                        $varcharTypeSize = new XoopsFormText('', 'element_datatype_varcharsize', 3, 3, $varcharTypeSizeDefault);
+                        $varcharType->addOption('varchar', _AM_FORM_DATATYPE_VARCHAR1.$varcharTypeSize->render()._AM_FORM_DATATYPE_VARCHAR2);
+                        $charType = new XoopsFormRadio('', 'element_datatype', $defaultType);
+                        $charTypeSizeDefault = ($defaultTypeSize AND $defaultType == 'char') ? $defaultTypeSize : 255;
+                        $charTypeSize = new XoopsFormText('', 'element_datatype_charsize', 3, 3, $charTypeSizeDefault);
+                        $charType->addOption('char', _AM_FORM_DATATYPE_CHAR1.$charTypeSize->render()._AM_FORM_DATATYPE_CHAR2);
+                        if($defaultType != "text" AND $defaultType != "int" AND $defaultType != "decimal" AND $defaultType != "varchar" AND $defaultType != "char") {
+                                $otherType = new XoopsFormRadio('', 'element_datatype', $defaultType);
+                                $otherType->addOption($defaultType, _AM_FORM_DATATYPE_OTHER.$defaultType);
+                                $dataTypeTray->addElement($otherType);
+                        }
+                        $dataTypeTray->addElement($textType);
+                        $dataTypeTray->addElement($intType);
+                        $dataTypeTray->addElement($decimalType);
+                        $dataTypeTray->addElement($varcharType);
+                        $dataTypeTray->addElement($charType);
+                        $form->addElement($dataTypeTray);
+                }
+		
+		
 		$highorder = formulize_getElementHighOrder($id_form);
 		
 		$order = !empty($ele_id) ? $element->getVar('ele_order') : $highorder;

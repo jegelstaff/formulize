@@ -396,14 +396,50 @@ if( !empty($ele_id) AND $clone == 0){
 
 			if($newFieldNeeded) {
         global $xoopsDB;
+			      // figure out what the data type should be.
+			      // the rules:
+			      // date fields get 'date'
+			      // for text element types...
+			      // if 'text' is the specified type, and it's numbers only with a decimal, then use decimal with that number of spaces
+			      // if 'text' is the specified type, and it's numbers only with 0 decimals, then use int
+			      // all other cases, use the specified type
+			      switch($ele_type) {
+									case 'date':
+												$dataType = 'date';
+												break;
+									case 'text':
+												if($ele_value[3] == 1 AND $_POST['element_datatype'] == 'text') { // numbers only...and Formulize was asked to figure out the right datatype.....
+															if($datadecimals = intval($ele_value[5])) {
+																		if($datadecimals > 20) { // mysql only allows a certain number of digits in a decimal datatype, so we're making some arbitrary size limitations
+																					$datadecimals = 20;
+																		}
+																		$datadigits = $datadecimals < 10 ? 11 : $datadecimals + 1; // digits must be larger than the decimal value, but a minimum of 11
+																		$dataType = "decimal($datadigits,$datadecimals)"; 
+															} else {
+																		$dataType = 'int(10)'; // value in () is just the visible number of digits to use in a mysql console display
+															}
+												} else {
+															$dataType = getRequestedDataType();
+												}
+												break;
+									default:
+												$dataType = getRequestedDataType();
+			      }
+			   
 				$form_handler =& xoops_getmodulehandler('forms', 'formulize');
-        if(!$insertResult = $form_handler->insertElementField($element)) {
+        if(!$insertResult = $form_handler->insertElementField($element, $dataType)) {
           exit("Error: could not add the new element to the data table in the database.");
         }
-      }	elseif($original_handle != $ele_handle AND $databaseElement) {
+      }	elseif(($original_handle != $ele_handle OR (isset($_POST['element_default_datatype']) AND $_POST['element_datatype'] != $_POST['element_default_datatype'])) AND $databaseElement) {
+						// figure out if the datatype needs changing...
+						if(isset($_POST['element_default_datatype']) AND $_POST['element_datatype'] != $_POST['element_default_datatype']) {
+									$dataType = getRequestedDataType();
+						} else {
+									$dataType = false;
+						}
 						// need to update the name of the field in the data table
 						$form_handler =& xoops_getmodulehandler('forms', 'formulize');
-						if(!$updateResult = $form_handler->updateFieldName($element, $original_handle)) {
+						if(!$updateResult = $form_handler->updateField($element, $original_handle, $dataType)) {
 									print "Error: could not update the data table field name to match the new data handle";
 						}
 			}
@@ -414,6 +450,47 @@ if( !empty($ele_id) AND $clone == 0){
 			$element->setVar('ele_uitext', serialize($uitext));
 			
     }
-      
+
+
+// this function returns the datatype requested for this element
+function getRequestedDataType() {
+			switch($_POST['element_datatype']) {
+						case 'decimal':
+												if($datadecimals = intval($_POST['element_datatype_decimalsize'])) {
+															if($datadecimals > 20) {
+																		$datadecimals = 20;
+															}
+												} else {
+															$datadecimals = 2;
+												}
+												$datadigits = $datadecimals < 10 ? 11 : $datadecimals + 1; // digits must be larger than the decimal value, but a minimum of 11
+												$dataType = "decimal($datadigits,$datadecimals)";
+												break;
+									case 'int':
+												$dataType = 'int(10)';
+												break;
+									case 'varchar':
+												if(!$varcharsize = intval($_POST['element_datatype_varcharsize'])) {
+														$varcharsize = 255;  
+												}
+												$varcharsize = $varcharsize > 255 ? 255 : $varcharsize;
+												$dataType = "varchar($varcharsize)";
+												break;
+									case 'char':
+												if(!$charsize = intval($_POST['element_datatype_charsize'])) {
+														$charsize = 255;  
+												}
+												$charsize = $charsize > 255 ? 255 : $charsize;
+												$dataType = "char($charsize)";
+												break;
+									case 'text':
+												$dataType = 'text';
+												break;
+									default:
+												exit("ERROR: unrecognized datatype has been specified: ".strip_tags(htmlspecialchars($_POST['element_datatype'])));
+			}
+			return $dataType;
+}
+
 
       ?>

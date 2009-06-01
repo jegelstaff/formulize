@@ -293,6 +293,21 @@ define("_AM_FORM_PRIVATE_DESC", "If this box is checked, the information that us
 //added by felix <INBOX International> for sedonde (colorpicker feature)
 define("_AM_ELE_COLORPICK","Colorpicker");
 
+//datatype controls
+define("_AM_FORM_DATATYPE_CONTROLS","How should the data for this element by stored in the database?");
+define("_AM_FORM_DATATYPE_CONTROLS_DESC","<b>Elements that will only contain numbers should use a numeric type, so that sorting and calculations work optimally.</b><br><br>This is an advanced option that you can use to control the MySQL datatype that is used in the underlying database field for this element.  The value in ( ) shows which datatype will be used.<br><br>If you don't know what all this means, then just accept the defaults.  Formulize can intelligently select appropriate values for regular text boxes based on the 'numbers only' setting, and the number formatting options.");
+define("_AM_FORM_DATATYPE_OTHER","Continue using this datatype: ");
+define("_AM_FORM_DATATYPE_TEXT","It doesn't matter (text)");
+define("_AM_FORM_DATATYPE_TEXT_NEWTEXT","Let Formulize figure it out, based on the 'numbers only' setting, and the number formatting options");
+define("_AM_FORM_DATATYPE_INT","Store as a number with <b>no</b> decimal places (int)");
+define("_AM_FORM_DATATYPE_DECIMAL1","Store as a number with ");
+define("_AM_FORM_DATATYPE_DECIMAL2"," decimal places (decimal)");
+define("_AM_FORM_DATATYPE_VARCHAR1","Store as text, up to a maximum of ");
+define("_AM_FORM_DATATYPE_VARCHAR2"," characters (varchar)");
+define("_AM_FORM_DATATYPE_CHAR1","Store as text, exactly ");
+define("_AM_FORM_DATATYPE_CHAR2"," characters in length (char)");
+
+
 // SCREENS...including multipage
 
 define("_AM_FORMULIZE_SCREEN_TYPE", "Type: ");
