@@ -1,0 +1,126 @@
+<style>
+a.info
+{
+    position: relative;
+    z-index: 24; 
+    text-decoration: none
+}
+
+a.info:hover
+{
+	z-index:25; 
+    background-color: #ffffe1; 
+}
+
+a.info span
+{
+	display: none
+}
+
+a.info:hover span
+{
+    display:block;
+    position:absolute;
+    top:2em; left:2em; width:15em;
+    background-color: #ffffe1 
+}
+</style>
+
+
+
+<form name=controls id=controls action=<{$currentURL}> method=post>
+
+<{foreach key=hidename item=hidevalue from=$hidden}>
+	<input type=hidden name=<{$hidename}> value=<{$hidevalue}>>
+<{/foreach}>
+
+<input type=hidden name=calview id=calview value="<{$calview}>">
+
+
+<!-- calendar start -->
+<table class=outer><tr>
+	<!-- Display calendar header - month and year. -->
+    <th colspan="7">
+	    <a href="" onclick="javascript: changeMonth('<{ $previousMonth }>'); return false;">&lt;</a>&nbsp;&nbsp;&nbsp;&nbsp;    
+	    <{ $MonthNames[$dateMonthZeroIndex] }> <{ $dateYear }>
+		&nbsp;&nbsp;&nbsp;&nbsp;<a href="" onclick="javascript: changeMonth('<{ $nextMonth }>'); return false;">&gt;</a>
+    </th>
+</tr>
+            
+           
+<!-- Display calendar body (days and weeks). -->
+<{foreach item=week from=$calendarData}>
+	<tr>
+	    <{foreach item=day from=$week}>
+	        <td class="<{ if $rowStyleEven == true }>even<{elseif $rowStyleEven == false }>odd<{/if}>">
+		        <{ if count($day[1]) > 0 }>
+	                <a class=info href="" onclick="return false;"><{ $day[0][0] }><span><{foreach item=dayItem from=$day[1]}><li><{ $dayItem[3] }></li><{/foreach}></span></a>
+				<{else}>
+	                <{ $day[0][0] }>
+				<{/if}>
+            </td>
+	    <{/foreach}>
+        <{ if $rowStyleEven == true }><{ assign var="rowStyleEven" value=false }><{elseif $rowStyleEven == false }><{ assign var="rowStyleEven" value=true }><{/if}>
+    </tr>
+<{/foreach}>
+
+
+
+<!-- Display calendar footer. -->
+</table>
+
+
+
+<input type=hidden name=ventry id=ventry value="">
+<input type=hidden name=calfid id=calfid value="">
+<input type=hidden name=calfrid id=calfrid value="">
+<input type=hidden name=adddate id=adddate value="">
+
+<input type=submit style="width: 140px; visibility: hidden;" name=submitx value=''></input> 
+
+</form>
+
+
+	
+<script type='text/javascript'>
+
+window.document.controls.ventry.value = '';
+window.document.controls.calfid.value = '';
+window.document.controls.calfrid.value = '';
+
+function changeSelector()
+{
+	newDate = window.document.controls.yearSelector.options[
+    	window.document.controls.yearSelector.selectedIndex].value 
+        + '-' + window.document.controls.monthSelector.options[
+        window.document.controls.monthSelector.selectedIndex].value;
+
+	changeMonth(newDate);
+}
+
+function changeMonth(newDate)
+{
+	window.document.controls.calview.value = newDate;
+	window.document.controls.submit();
+}
+
+function addNew(proxy,frid,fid,date) {
+	if(proxy) {
+		window.document.controls.ventry.value = 'proxy';
+	} else {
+		window.document.controls.ventry.value = 'addnew';
+	}
+	window.document.controls.adddate.value = date;
+	window.document.controls.calfrid.value = frid;
+	window.document.controls.calfid.value = fid;
+	window.document.controls.submit();
+}
+
+function goDetails(viewentry,frid,fid) {
+	window.document.controls.ventry.value = viewentry;
+	window.document.controls.calfrid.value = frid;
+	window.document.controls.calfid.value = fid;
+	window.document.controls.submit();
+}
+
+</script>
