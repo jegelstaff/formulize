@@ -615,7 +615,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$this_ent = $_POST['ventry'];
 		}
 
-		if($screen AND $screen->getVar("viewentryscreen")) {
+		if($screen AND $screen->getVar("viewentryscreen") != "none" AND $screen->getVar("viewentryscreen")) {
 			// only multipage screens and pageworks pages supported at the moment
       if(strstr($screen->getVar("viewentryscreen"), "p")) { // if there's a p in the specified viewentryscreen, then it's a pageworks page -- added April 16 2009 by jwe
         $page = intval(substr($screen->getVar("viewentryscreen"), 1));
