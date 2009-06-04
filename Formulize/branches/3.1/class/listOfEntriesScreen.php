@@ -215,11 +215,12 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 $entriesperpage->setDescription(_AM_FORMULIZE_SCREEN_LOE_DESC_ENTRIESPERPAGE);
                 $configTable = addElementLOE($entriesperpage, $configTable);
                 
-                $viewentryscreenDefault = $screen->getVar('sid') ? $screen->getVar('viewentryscreen') : 0;
+                $viewentryscreenDefault = $screen->getVar('sid') ? $screen->getVar('viewentryscreen') : "none";
+								$viewentryscreenDefault = $viewentryscreenDefault === 0 ? "none" : $viewentryscreenDefault; // if the legacy value 0 is present, then convert that to "none" so the right value is selected by default in the list
                 // get the available screens
                 $screen_handler = xoops_getmodulehandler('screen', 'formulize');
                 $viewentryscreenOptionsDB = $screen_handler->getObjects(new Criteria("type", "multiPage"), $fid); 
-                $viewentryscreenOptions[0] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT;
+                $viewentryscreenOptions["none"] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT;
                 foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
                     $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
                 }
