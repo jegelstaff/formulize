@@ -44,7 +44,7 @@ define("_AM_ELE_DISPLAY_HEADING","Display");
 
 define("_AM_ELE_TEXT","Text box");
 define("_AM_ELE_TEXT_DESC","{NAME} will print full name;<br />{UNAME} will print user name;<br />{EMAIL} will print user email;<br />{ID} will cause the entry ID number of the entry to be inserted into the textbox, when the entry is first saved.<br />{SEQUENCE} will cause the values in the box to be a series of consecutive numbers.<br />PHP Code (ending with the line '&#36;default = &#36;something;') will be interpreted to generate the default value.");
-define("_AM_ELE_TEXT_DESC2","<br />PHP Code is the only situation where more than one line of this box will be read.");
+define("_AM_ELE_TEXT_DESC2","<br />PHP Code is the only situation where more than one line of this box will be read.  In your PHP code, you can use \$form_id to get the ID number of the form, and \$entry_id to get the ID number of the particular entry that the user is editing.");
 define("_AM_ELE_TAREA","Text area");
 define("_AM_ELE_MODIF","Text for display (left and right cells)");
 define("_AM_ELE_MODIF_ONE","Text for display (spanning both cells)");
