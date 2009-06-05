@@ -38,8 +38,8 @@ case "update":
 case "del":
 	im_admin_del($id, $del);
 	break;
-case "patch30":
-	patch30();
+case "patch31":
+	patch31();
 	break;
 case "move":
 
@@ -228,7 +228,7 @@ function im_admin_list() {
 	echo "<tr><td class='foot' colspan='4' align='right'>
 	<input type='submit' name='submit' value='"._IM_NEW."'>
 	</td></tr></table></form>";
-	print "<p>version 3.0 RC1</p>";
+	print "<p>version 3.1 RC1</p>";
 	xoops_cp_footer();
 
 }
@@ -278,10 +278,10 @@ function writeRow($id, $link, $title, $hide, $weight, $class, $up, $down, $prevW
 
 }
 
-function patch30() {
+function patch31() {
 	xoops_cp_header();
 	if(!isset($_POST['migratedb'])) {
-		print "<form action=\"index.php?op=patch30\" method=post>";
+		print "<form action=\"index.php?op=patch31\" method=post>";
 		print "<input type = submit name=migratedb value=\"Update Database\">";
 		print "</form>";
 	} else {
@@ -290,7 +290,7 @@ function patch30() {
 
       	for($i=0;$i<count($sql);$i++) {
       		if(!$result = $xoopsDB->query($sql[$i])) {
-      			exit("Error in database update for iMenu 3.0.  SQL dump: " . $sql[$i]);
+      			exit("Error in database update for iMenu 3.1.  SQL dump: " . $sql[$i]);
       		}
       	} 
       	print "DB update completed.";
