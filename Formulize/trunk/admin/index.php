@@ -210,7 +210,7 @@ if( $_POST['op'] != 'save' ){
 
 		echo '<tr>';
 		$class = $class == "even" ? "odd" : "even";
-		echo '<td class="'.$class.'">'.printSmart(trans($i->getVar('ele_caption')),100)."</td>\n";
+		echo '<td class="'.$class.'"><span style="text-align: left;">'.printSmart(trans($i->getVar('ele_caption')),100)."</span></td>\n";
     echo '<td class="'.$class.'">'.$i->getVar('ele_handle')."</td>\n";
     echo '<td class="'.$class.'">'.readableType($i->getVar('ele_type'))."</td>\n";
 
