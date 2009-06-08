@@ -432,14 +432,17 @@ switch($op){
                         $decimalType = new XoopsFormRadio('', 'element_datatype', $defaultType);
                         $decimalTypeSizeDefault = ($defaultTypeSize AND $defaultType == "decimal") ? $defaultTypeSize : 2;
                         $decimalTypeSize = new XoopsFormText('', 'element_datatype_decimalsize', 2, 2, $decimalTypeSizeDefault);
+												$decimalTypeSize->setExtra("style=\"width: 15px;\""); // style to force width necessary to compensate for silly forced 60% textbox widths in ICMS admin side
                         $decimalType->addOption('decimal', _AM_FORM_DATATYPE_DECIMAL1.$decimalTypeSize->render()._AM_FORM_DATATYPE_DECIMAL2);
                         $varcharType = new XoopsFormRadio('', 'element_datatype', $defaultType);
                         $varcharTypeSizeDefault = ($defaultTypeSize AND $defaultType == 'varchar') ? $defaultTypeSize : 255;
                         $varcharTypeSize = new XoopsFormText('', 'element_datatype_varcharsize', 3, 3, $varcharTypeSizeDefault);
+												$varcharTypeSize->setExtra("style=\"width: 22px;\"");
                         $varcharType->addOption('varchar', _AM_FORM_DATATYPE_VARCHAR1.$varcharTypeSize->render()._AM_FORM_DATATYPE_VARCHAR2);
                         $charType = new XoopsFormRadio('', 'element_datatype', $defaultType);
                         $charTypeSizeDefault = ($defaultTypeSize AND $defaultType == 'char') ? $defaultTypeSize : 255;
                         $charTypeSize = new XoopsFormText('', 'element_datatype_charsize', 3, 3, $charTypeSizeDefault);
+												$charTypeSize->setExtra("style=\"width: 22px;\"");
                         $charType->addOption('char', _AM_FORM_DATATYPE_CHAR1.$charTypeSize->render()._AM_FORM_DATATYPE_CHAR2);
                         if($defaultType != "text" AND $defaultType != "int" AND $defaultType != "decimal" AND $defaultType != "varchar" AND $defaultType != "char") {
                                 $otherType = new XoopsFormRadio('', 'element_datatype', $defaultType);
