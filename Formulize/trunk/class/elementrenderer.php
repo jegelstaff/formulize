@@ -89,15 +89,17 @@ class formulizeElementRenderer{
 		// ele_desc added June 6 2006 -- jwe
 		$ele_desc = $this->_ele->getVar('ele_desc');
 
+		// determine the entry owner
+		if($entry != "new") {
+					$owner = getEntryOwner($entry, $id_form);
+		} else {
+					$owner = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+		}
+
 		// setup the previous entry UI if necessary -- this is an option that can be specified for certain screens
 		$previousEntryUI = "";
 		if($screen AND $e != "derived") {
 			if($screen->getVar('paraentryform') > 0) {
-				if($entry != "new") {
-					$owner = getEntryOwner($entry, $id_form);
-				} else {
-					$owner = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-				}
 				$previousEntryUI = $this->formulize_setupPreviousEntryUI($screen, $true_ele_id, $e, $owner, $displayElementInEffect, $entry, $this->_ele->getVar('ele_handle'), $this->_ele->getVar('id_form'));
 			}
 		}
@@ -289,6 +291,13 @@ class formulizeElementRenderer{
 							} else {
 								$likebits = "";
 								$quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
+							}
+							if($filterTerms[$filterId] === "{USER}") {
+								if($entry != "new") {
+									$filterTerms[$filterId] = $owner; // use the owner of the entry if this is an existing entry, so that selected options can be preserved on saving
+								} else {
+									$filterTerms[$filterId] = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+								}
 							}
 							$conditionsfilter .= "t1.`".$filterElements[$filterId]."` ".$filterOps[$filterId]." ".$quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
 						}

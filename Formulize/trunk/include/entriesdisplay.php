@@ -2042,9 +2042,9 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
       $calcResult = array();
       $calcResultSQL = "$select $thisBaseQuery $allowedWhere $excludedWhere $groupByClause $orderByClause";
       global $xoopsUser;
-      /*if($xoopsUser->getVar('uid') == 1) {
-        print "$calcResultSQL<br><br>";
-      }*/
+      //if($xoopsUser->getVar('uid') == 1) {
+      //  print "$calcResultSQL<br><br>";
+      //}*/
       $calcResultRes = $xoopsDB->query($calcResultSQL);
       while($calcResultArray = $xoopsDB->fetchArray($calcResultRes)) {
         $calcResult[] = $calcResultArray;
@@ -2111,8 +2111,6 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
               $masterResults[$cols[$i]][$calc][$calcId] =  _formulize_DE_CALC_MEAN . ": ".formulize_numberFormat($thisResult["avg$fidAlias$handle"], $handle)."<br>" . _formulize_DE_CALC_STD . ": ".formulize_numberFormat($thisResult["std$fidAlias$handle"], $handle)."<br><br>";
               break;
             case "per":
-              // per entries/per responses not relevant for Eman, so not doing this yet
-              //$typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENTRESPONSES . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENTENTRIES . "</u></td></tr>\n";
               $groupingWhere = array();
               $groupingValuesFound = array();
               foreach($theseGroupings as $gid=>$thisGrouping) {
@@ -2126,7 +2124,6 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
                     $groupingWhere[] = "$galias.`$ghandle` = '".$thisResult["$galias$ghandle"]."'";
                     $groupingValuesFound[] = $thisResult["$galias$ghandle"];
                   }
-                  
                 }
               }
               if(count($groupingWhere)>0) {
@@ -2355,23 +2352,37 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 // currently handles linked selectboxes and multiple values fields (listboxes and checkboxes)
 // this could be made into a replacement for the prepvalues function in the extract.php file that does the same kind of thing when preparing a dataset
 // returnFlat is a flag to cause multiple values to be returned as comma separated strings
+// value can be an array, and if so, an array will be passed 
 function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
+  if(!is_array($value)) {
+		$value = array(0=>$value);
+		$arrayWasPassedIn = false;
+	} else {
+		$arrayWasPassedIn = true;
+	}
+	foreach($value as $thisValue) {
+		if($linkedMetaData = formulize_isLinkedSelectBox($handle, true)) {
+			// convert the pointers for the linked selectbox values, to their source values
+			$sourceMeta = explode("#*=:*", $linkedMetaData[2]);
+			$data_handler = new formulizeDataHandler($sourceMeta[0]);
+			$realValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($thisValue, ","))); // trip opening and closing commas and split by comma into an array
+			// findAllValuesForEntries method returns an array, so convert to a single value
+			if(is_array($realValues) AND $returnFlat) {
+				$realValues = implode(", ", $realValues);
+			}
+			$allRealValues[] = $realValues;
+		} elseif(strstr($thisValue, "*=+*:")) {
+			$allRealValues[] = str_replace("*=+*:", ", ", ltrim($thisValue, "*=+*:")); // replace the separator with commas between values
+		} else {
+			$allRealValues[] = $thisValue;
+		}
+	}
+	if($arrayWasPassedIn) {
+		return $allRealValues;
+	} else {
+		return $allRealValues[0];
+	}
   
-  if($linkedMetaData = formulize_isLinkedSelectBox($handle, true)) {
-		// convert the pointers for the linked selectbox values, to their source values
-		$sourceMeta = explode("#*=:*", $linkedMetaData[2]);
-		$data_handler = new formulizeDataHandler($sourceMeta[0]);
-		$realValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($value, ","))); // trip opening and closing commas and split by comma into an array
-    // findAllValuesForEntries method returns an array, so convert to a single value
-    if(is_array($realValues) AND $returnFlat) {
-      $realValues = implode(", ", $realValues);
-    }
-    return $realValues;
-  } elseif(strstr($value, "*=+*:")) {
-    return str_replace("*=+*:", ", ", ltrim($value, "*=+*:")); // replace the separator with commas between values
-  } else {
-    return $value;
-  }
   
 }
 
