@@ -393,9 +393,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	 $linkselfids = "";
 		     $linkcommonvalue = "";
 	     }
+			 
+			 $GLOBALS['formulize_linkformidsForCalcs'] = $linkformids; 
   
-	  $GLOBALS['formulize_linkformidsForCalcs'] = $linkformids;
-     
 	      // now that we have the full details from the framework, figure out the full SQL necessary to get the entire dataset
 	  // This whole approach is predicated on being able to do reliable joins between the key fields of each form
 	  

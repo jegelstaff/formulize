@@ -235,7 +235,8 @@ formulize_benchmark("Start of formDisplay.");
 				$subs_to_del[] = $v;
 			}
 		}
-		if(count($subs_to_del) > 0) { 
+		if(count($subs_to_del) > 0) {
+			
 			deleteFormEntries($subs_to_del, intval($_POST['deletesubsflag'])); // deletesubsflag will be the sub form id
  			sendNotifications($_POST['deletesubsflag'], "delete_entry", $subs_to_del, $mid, $groups);
 		}
@@ -1122,6 +1123,22 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	
 	} else {
 		
+		// need to figure out the proper order for the sub entries based on the properties set for this form
+		// for now, hard code to the word number field to suit the map site only
+		// if it's the word subform, then sort the entries according to the word number, then the entry id
+		/*if($sfid == 281) {
+			$sortClause = " word_number, entry_id ";
+		} else {*/
+			$sortClause = " entry_id ";
+		//}
+		$subEntriesOrderSQL = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$sfid)." WHERE entry_id IN (".implode(",", $sub_entries[$sfid]).") ORDER BY $sortClause";
+		if($subEntriesOrderRes = $xoopsDB->query($subEntriesOrderSQL)) {
+			$sub_entries[$sfid] = array();
+			while($subEntriesOrderArray = $xoopsDB->fetchArray($subEntriesOrderRes)) {
+				$sub_entries[$sfid][] = $subEntriesOrderArray['entry_id'];
+			}
+		}
+
 		foreach($sub_entries[$sfid] as $sub_ent) {
 			if($sub_ent != "") {
 				if(!$drawnHeadersOnce) {
@@ -1172,7 +1189,12 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		$col_two .=  "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$sfid', window.document.formulize.addsubentries$sfid.value);\"><input type=text name=addsubentries$sfid id=addsubentries$sfid value=1 size=2 maxlength=2>" . _formulize_ADD_ENTRIES . "</p>";
 	} 
 	if(((count($sub_entries[$sfid])>0 AND $sub_entries[$sfid][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
-		$col_one .= "<br>" . _formulize_ADD_HELP4 . "<input type=hidden name=deletesubsflag value=''></p><p><input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\">";
+		$col_one .= "<br>" . _formulize_ADD_HELP4 . "</p><p><input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\">";
+		static $deletesubsflagIncluded = false;
+		if(!$deletesubsflagIncluded) {
+			$col_one .= "\n<input type=hidden name=deletesubsflag value=''>\n";
+			$deletesubsflagIncluded = true;
+		}
 	}
 	$col_one .= "</p>";
 	$to_return['c1'] = $col_one;

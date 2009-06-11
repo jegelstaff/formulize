@@ -3196,16 +3196,36 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 		
 		// process the limits
 		$limitCondition = "";
+		// NOTE: LIMIT['ELE_ID'] MUST BE THE HANDLE OF THE ELEMENT, NOT THE ELEMENT ID...THIS OBSCURE FEATURE ONLY USED IN THE MAP SITE WAS NOT UPDATED FOR 3.1...AS LONG AS ELEMENT HANDLES ARE NOT CUSTOMIZED, THIS SHOULD NOT BE A PROBLEM
 		if(is_array($limit)) {
-			$limitCondition = $limit['ele_id'] . "/**/" . $limit['term'];
-			$limitCondition .= isset($limit['operator']) ? "/**/" . $limit['operator'] : "";
+			//$limitCondition = $limit['ele_id'] . "/**/" . $limit['term'];
+			//$limitCondition .= isset($limit['operator']) ? "/**/" . $limit['operator'] : "";
+			$limitOperator = isset($limit['operator']) ? $limit['operator'] : " LIKE ";
+			$likebits = strstr($limitOperator, "LIKE") ? "%" : "";
+			$limitCondition = " ".$limit['ele_id']." ".$limitOperator." '$likebits".mysql_real_escape_string($limit['term'])."$likebits' ";
 		}
-		
+		if($subfilter) {
+			$limitCondition .= " $linked_ele_id LIKE '%".mysql_real_escape_string($_POST[$linked_data_id])."%' ";
+		}
+		if($limitCondition) {
+			$limitCondition = " WHERE ".$limitCondition;
+		}
+		unset($options);
+		if($dataResult = $xoopsDB->query("SELECT `$source_element_handle` FROM ".$xoopsDB->prefix("formulize_".$source_form_id).$limitCondition)) {
+			while($dataArray = $xoopsDB->fetchArray($dataResult)) {
+				$options[$dataArray[$source_element_handle]] = "";
+			}
+		} else {
+			$options = array();
+		}
+			
+			
+		/*	// cannot use getData here, it screws things up when top templates are in effect and there's calculations that rely on the most recent previous getData call being the actual query for data.
 			if (!$subfilter) {
 		$data = getData("", $source_form_id, $limitCondition);
 				}
 			else {
-				$getDataFilter .= $linked_ele_id . "/**/" . $_POST[$linked_data_id];
+				$getDataFilter .= $linked_ele_id . "/ ** /" . $_POST[$linked_data_id];
 				$getDataFilter .= $limitCondition ? "][" . $limitCondition : "";
 				$data = getData("", $source_form_id, $getDataFilter);
 				}
@@ -3213,7 +3233,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 		foreach($data as $entry) {
 			$option_text = display($entry, $source_element_handle);
 			$options[$option_text] = ""; // it's the key that gets used in the loop below
-		}
+		}*/
 	}
 	
 	$nametype = "";
