@@ -88,10 +88,10 @@ function pageworks_config()
     exit();
 }
 
-function patch30() {
-  if(!$_POST['patch30']) {
-   		print "<form action=\"index.php?op=patch30\" method=post>";
-		print "<input type = submit name=patch30 value=\"Apply Database Patch for Pageworks 3.0\">";
+function patch31() {
+  if(!$_POST['patch31']) {
+   		print "<form action=\"index.php?op=patch31\" method=post>";
+		print "<input type = submit name=patch31 value=\"Apply Database Patch for Pageworks 3.1\">";
 		print "</form>";
   } else {
 	  global $xoopsDB;
@@ -116,8 +116,8 @@ xoops_cp_header();
 
 switch ($param_op) 
 {
-	case "patch30":
-		patch30();
+	case "patch31":
+		patch31();
 		break;
 	case "logs":
 		pageworks_menu();
@@ -267,7 +267,7 @@ switch ($param_op)
 		print "<h1>Unknown method requested '$param_op' in admin/index.php</h1>";
 }
 
-print "<p>version 3.0 RC1</p>";
+print "<p>version 3.1 Final</p>";
 
     xoops_cp_footer();
     exit();
