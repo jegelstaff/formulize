@@ -228,7 +228,7 @@ function im_admin_list() {
 	echo "<tr><td class='foot' colspan='4' align='right'>
 	<input type='submit' name='submit' value='"._IM_NEW."'>
 	</td></tr></table></form>";
-	print "<p>version 3.1 RC1</p>";
+	print "<p>version 3.1 Final</p>";
 	xoops_cp_footer();
 
 }
