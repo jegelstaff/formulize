@@ -637,7 +637,7 @@ switch ($param_op)
 	    xoops_cp_footer();
 }
 
-	print "<p>version 3.1 RC1</p>";
+	print "<p>version 3.1 Final</p>";
 	xoops_cp_footer();
 
 ?>
