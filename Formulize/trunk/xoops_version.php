@@ -39,7 +39,6 @@ $modversion['license'] = "GPL";
 $modversion['official'] = 0;
 $modversion['image'] = "images/formulize.gif";
 $modversion['dirname'] = "formulize";
-
 $modversion['sqlfile']['mysql'] = "sql/mysql.sql";
 
 // Tables created by sql file (without prefix!)
