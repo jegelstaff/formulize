@@ -30,7 +30,7 @@
 ###############################################################################
 
 $modversion['name'] = _MI_formulize_NAME;
-$modversion['version'] = "3.1";
+$modversion['version'] = "4.0";
 $modversion['description'] = _MI_formulize_DESC;
 $modversion['author'] = "Freeform Solutions";                                            
 $modversion['credits'] = "";
