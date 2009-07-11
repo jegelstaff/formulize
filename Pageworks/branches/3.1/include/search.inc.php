@@ -86,7 +86,7 @@ function getTitle($id_req, $pf_search_title) {
 
 
 // This function returns the caption, formatted for formulize_form, based on the handle for the element
-/*function getCaption($handle, $frid, $fid) {
+function getFFCaptionForPageworksSearch($handle, $frid, $fid) {
 	global $xoopsDB;
 	define(DBPRE, $xoopsDB->prefix('') . "_");
 	//print "SELECT fe_element_id FROM " . DBPRE . "formulize_framework_elements WHERE fe_frame_id = '$frid' AND fe_form_id = '$fid' AND fe_handle = '$handle'";
@@ -96,7 +96,7 @@ function getTitle($id_req, $pf_search_title) {
 	$ffcaption = eregi_replace ("&#039;", "`", $caption[0]['ele_caption']);
 	$ffcaption = eregi_replace ("&quot;", "`", $ffcaption);
 	return $ffcaption;
-}*/
+}
 
 function pageworks_search($queryarray, $andor, $limit, $offset, $userid) {
 
@@ -269,7 +269,7 @@ function pageworks_search($queryarray, $andor, $limit, $offset, $userid) {
 						$results[$array['id_req']]['title'][] = getTitle($array['id_req'], $search_titles[$page_id][0]); // assume only one framework per page, therefore only one search title
 					} else {
 						$filterparts = explode("/**/", $page_filters[$page_id][0]); // assume only one filter in use!
-						$capforfilter = getCaption($filterparts[0], $page_frameworks[$page_id][0], $array['id_form']); // assume only one framework per page for now too
+						$capforfilter = getFFCaptionForPageworksSearch($filterparts[0], $page_frameworks[$page_id][0], $array['id_form']); // assume only one framework per page for now too
 						$capforfilter = addslashes($capforfilter);
 						$valueforfilter = addslashes($filterparts[1]);
 						$sql="SELECT id_req FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req=" . $array['id_req'] . " AND id_form=" . $array['id_form'] . " AND (ele_caption = \"$capforfilter\" AND ele_value LIKE \"%$valueforfilter%\")";
@@ -381,7 +381,7 @@ function pageworks_search($queryarray, $andor, $limit, $offset, $userid) {
 
      			$hits[$indexer]['image'] = "images/pw_search.gif";
      			$hits[$indexer]['link'] = "index.php?page=" . $page_id . "&id=" . $id_req;
-     			$hits[$indexer]['title'] = $title . " (" . $result['count'] . " " . $hitstring . ")";
+     			$hits[$indexer]['title'] = strip_tags(html_entity_decode($title . " (" . $result['count'] . " " . $hitstring . ")"));
      			$indexer++;
 			} // end of if title
 		}

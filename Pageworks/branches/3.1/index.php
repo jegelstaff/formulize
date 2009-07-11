@@ -148,8 +148,12 @@ if(!$page AND !$_GET['block']) {
 
 // 5. determine params from previous page
 
-if(!$id = $_POST['id']) {
-	$id = $_GET['id'];
+if(!$page AND !$_GET['block']) { // only set ID if 
+	if(!$id = $_POST['id']) {
+		$id = $_GET['id'];
+	}
+} else {
+	$id = 0; // don't pay attention to the id in the URL if we're not on the body of the page
 }
 if(!$filters = $_POST['filters']) {
 	$filters = $_GET['filters'];
