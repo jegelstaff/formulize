@@ -2460,7 +2460,8 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
           $templateFileContents = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/".$thiscon['not_cons_template'].".tpl");
           if(strstr($templateFileContents, "{ELEMENT")) {
             // gather the data for this entry and make it available to the template, since it uses an element tag in the message
-            if($data === "") {
+			// Only do this getData call if we don't already have data from the database...$data[0] == "" will probably never be true in Formulize 3.0 and higher, but will evaluate as expected, with a warning about [0] being an invalid offset or something like that
+            if((is_array($data) AND $data[0] == "") OR $data == "") {
               include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
               $data = getData("", $fid, $entry); 
             }
@@ -2830,14 +2831,14 @@ switch($entry) {
 // THIS FUNCTION READS ALL THE FILES IN A DIRECTORY AND RETURNS THEIR NAMES IN AN ARRAY
 // use the filter param to include only files containing a certain string in their names
 function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600) {
-	  return true;
+	  
 		if(!$filter) { return false; } // filter must be present
 	
 		$currentTime = time();
 		$targetTime = $currentTime - $timeWindow;
 	
 		// if it's PHP 5, then do this:
-		if(version_compare(PHP_VERSION, '5.0.0')) { // native scandir in PHP is much faster!!!
+		if(function_exists("scandir")) { // native scandir in PHP is much faster!!!
 			foreach(scandir($dir) as $fileName) {
 				 if (strstr($fileName, $filter) AND filemtime($dir.$fileName) < $targetTime) {
 						unlink($dir.$fileName);
@@ -2848,8 +2849,8 @@ function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600) {
 			if ($handle = opendir($dir)) {
 					while (false !== ($file = readdir($handle))) {
 							$fileName = basename($file);
-							if (strstr($fileName, $filter) AND filemtime($file) < $targetTime) {
-								  unlink($file);
+							if (strstr($fileName, $filter) AND filemtime($dir.$fileName) < $targetTime) {
+								  unlink($dir.$fileName);
 							}
 					}
 					closedir($handle);
@@ -3202,23 +3203,22 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 			//$limitCondition .= isset($limit['operator']) ? "/**/" . $limit['operator'] : "";
 			$limitOperator = isset($limit['operator']) ? $limit['operator'] : " LIKE ";
 			$likebits = strstr($limitOperator, "LIKE") ? "%" : "";
-			$limitCondition = " ".$limit['ele_id']." ".$limitOperator." '$likebits".mysql_real_escape_string($limit['term'])."$likebits' ";
-		}
-		if($subfilter) {
-			$limitCondition .= " $linked_ele_id LIKE '%".mysql_real_escape_string($_POST[$linked_data_id])."%' ";
-		}
-		if($limitCondition) {
-			$limitCondition = " WHERE ".$limitCondition;
+			$limitCondition = " WHERE t1`".$limit['ele_id']."` ".$limitOperator." '$likebits".mysql_real_escape_string($limit['term'])."$likebits' ";
+		} elseif($subfilter) { // for subfilters, we're jumping back to another form to get the values, hence the join...
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$linkedSourceElementObject = $element_handler->get($linked_ele_id);
+			$linkedSourceElementEleValue = $linkedSourceElementObject->getVar('ele_value');
+			$linkedSourceElementEleValueParts = explode("#*=:*", $linkedSourceElementEleValue[2]); // first part will be the form id of the source form, second part will be the element handle in that form
+			$limitCondition = ", ".$xoopsDB->prefix("formulize_".$linkedSourceElementEleValueParts[0])." as t2 WHERE t1.`$linked_ele_id` LIKE CONCAT('%',t2.entry_id,'%') AND t2.`".$linkedSourceElementEleValueParts[1]."` LIKE '%".mysql_real_escape_string($_POST[$linked_data_id])."%'";
 		}
 		unset($options);
-		if($dataResult = $xoopsDB->query("SELECT `$source_element_handle` FROM ".$xoopsDB->prefix("formulize_".$source_form_id).$limitCondition)) {
+		if($dataResult = $xoopsDB->query("SELECT t1.`$source_element_handle` FROM ".$xoopsDB->prefix("formulize_".$source_form_id)." as t1 ".$limitCondition)) {
 			while($dataArray = $xoopsDB->fetchArray($dataResult)) {
 				$options[$dataArray[$source_element_handle]] = "";
 			}
 		} else {
 			$options = array();
 		}
-			
 			
 		/*	// cannot use getData here, it screws things up when top templates are in effect and there's calculations that rely on the most recent previous getData call being the actual query for data.
 			if (!$subfilter) {
