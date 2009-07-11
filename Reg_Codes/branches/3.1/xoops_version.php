@@ -29,7 +29,7 @@
 //  ------------------------------------------------------------------------ //
 
 $modversion['name'] = _MI_REG_CODES_NAME;
-$modversion['version'] = 3.0;
+$modversion['version'] = 3.1;
 $modversion['description'] = _MI_REG_CODES_DESC;
 $modversion['credits'] = "Thomas Hill http://www.worldware.com";
 $modversion['author'] = "Freeform Solutions";
