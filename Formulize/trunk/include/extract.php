@@ -139,8 +139,33 @@ function prepvalues($value, $field, $entry_id) {
      return $value;
   }
 
+  $elementArray = formulize_getElementMetaData($field, true);
+  $type = $elementArray['ele_type'];
+	
+	// handle yes/no cases
+	if($type == "yn") { // if we've found one
+		if($value == "1") {
+			$value = _formulize_TEMP_QYES;
+		} elseif($value == "2") {
+			$value = _formulize_TEMP_QNO;
+		} else {
+			$value = "";
+		}
+		return $value; // none of the further processing steps are relevant
+	}
+
+  // decrypt encrypted values...pretty inefficient to do this here, one query in the DB per value to decrypt them....but we'd need proper select statements with field names specified in them, instead of *, in order to be able to swap in the AES DECRYPT at the time the data is retrieved in the master query
+	if($elementArray['ele_encrypt']) {		 
+		 $decryptSQL = "SELECT AES_DECRYPT('".$value."', '".getAESPassword()."')";
+		 if($decryptResult = mysql_query($decryptSQL)) {
+					$decryptRow = mysql_fetch_row($decryptResult);
+					return $decryptRow[0];
+		 } else {
+					return "";
+		 }
+	}
+
 	// handle cases where the value is linked to another form
-  
   if($source_ele_value = formulize_isLinkedSelectBox($field, true)) {
      // value is an entry id in another form
      // need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
@@ -160,13 +185,13 @@ function prepvalues($value, $field, $entry_id) {
      }
   }
 
-  $elementArray = formulize_getElementMetaData($field, true);
-
-  // check if this is fullnames/usernames box
+  
+	
+	
+	// check if this is fullnames/usernames box
   // wickedly inefficient to go to DB for each value!!  This loop executes once per datapoint in the result set!!
-  $type = $elementArray['ele_type'];
-  $ele_value = unserialize($elementArray['ele_value']);
   if($type == "select") {
+		 $ele_value = unserialize($elementArray['ele_value']);
      $listtype = key($ele_value[2]);
      if($listtype === "{USERNAMES}" OR $listtype === "{FULLNAMES}") {
           $uids = explode("*=+*:", $value);
@@ -185,18 +210,6 @@ function prepvalues($value, $field, $entry_id) {
      }   
   }
   		
-	// handle yes/no cases
-
-	if($type == "yn") { // if we've found one
-		if($value == "1") {
-			$value = _formulize_TEMP_QYES;
-		} elseif($value == "2") {
-			$value = _formulize_TEMP_QNO;
-		} else {
-			$value = "";
-		}
-	}
-
 	//and remove any leading *=+*: while we're at it...
 	if(substr($value, 0, 5) == "*=+*:")	{
 		$value = substr_replace($value, "", 0, 5);
@@ -1210,7 +1223,7 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
           } else {
                $whereClause = $isHandle ? "ele_handle = '".mysql_real_escape_string($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
           }
-          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_caption, ele_colhead FROM " . DBPRE . "formulize WHERE $whereClause";
+          $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_caption, ele_colhead, ele_encrypt FROM " . DBPRE . "formulize WHERE $whereClause";
           $evqRes = mysql_query($elementValueQ);
           while($evqRow = mysql_fetch_array($evqRes)) {
                $cachedElements['handles'][$evqRow['ele_handle']] = $evqRow; // cached the element according to handle and id, so we don't repeat the same query later just because we're asking for info about the same element in a different way
@@ -1996,7 +2009,18 @@ if(!$xoopsDB) {
 		define("_formulize_TEMP_QNO", "Non");
 		define("_formulize_OPT_OTHER", "Autre: ");
 	}
-        $LOE_limit = 0;
+  $LOE_limit = 0;
+	
+	// this function gets the password for the encryption/decryption process
+  // want to has the db pass since we don't want any SQL logging processes to include the db pass as plaintext
+	// copied from functions.php, used in case any of the elements are encrypted
+  function getAESPassword() {
+		 $icmsDB = SDATA_DB_PASS;
+		 $xoopsDB = XOOPS_DB_PASS;
+		 $dbPass = $icmsDB ? $icmsDB : $xoopsDB;
+		 return sha1($dbPass."I'm a cool, cool, cool dingbat");
+  }
+	
 } else {
 	define("DBPRE", $xoopsDB->prefix('') . "_");
 	if(!defined("_formulize_OPT_OTHER")) {

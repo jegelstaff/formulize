@@ -946,8 +946,11 @@ class formulizeElementRenderer{
 			$newElement->addElement(new xoopsFormHidden($element->getName(), $hiddenValue));	
 		}
 		$element->setName('disabled_'.$element->getName());
-		$newElement->addElement($element);
-		
+		if($type == "text" OR $type == "textarea" OR $type="date") {
+			$newElement->addElement(new xoopsFormLabel('', $hiddenValue));
+		} else {
+			$newElement->addElement($element); 
+		}
 		return $newElement;
 	}
 

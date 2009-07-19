@@ -50,6 +50,8 @@ class formulizeForm extends XoopsObject {
 			$elementCaptions = array();
 			$elementColheads = array();
 			$elementHandles = array();
+			$elementTypes = array();
+			$encryptedElements = array();
 		} else {
 			$formq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$id_form");
 			if(!isset($formq[0])) {
@@ -63,17 +65,23 @@ class formulizeForm extends XoopsObject {
 				$elementColheads = array();
 				$elementHandles = array();
 				$elementTypes = array();
+				$encryptedElements = array();
 			} else {
 				// gather element ids for this form
 				$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
-				$elementsq = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle, ele_type FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$id_form $displayFilter ORDER BY ele_order ASC");
+				$elementsq = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle, ele_type, ele_encrypt FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$id_form $displayFilter ORDER BY ele_order ASC");
+				$encryptedElements = array();
 				foreach($elementsq as $row=>$value) {
 					$elements[$value['ele_id']] = $value['ele_id'];
 					$elementCaptions[$value['ele_id']] = $value['ele_caption'];
 					$elementColheads[$value['ele_id']] = $value['ele_colhead'];
 					$elementHandles[$value['ele_id']] = $value['ele_handle'];
 					$elementTypes[$value['ele_id']] = $value['ele_type'];
+					if($value['ele_encrypt']) {
+						$encryptedElements[$value['ele_id']] = $value['ele_handle'];
+					}
 				}
+				
 				// propertly format the single value
 
 				switch($formq[0]['singleentry']) {
@@ -118,6 +126,7 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("elementColheads", XOBJ_DTYPE_ARRAY, serialize($elementColheads));
 		$this->initVar("elementHandles", XOBJ_DTYPE_ARRAY, serialize($elementHandles));
 		$this->initVar("elementTypes", XOBJ_DTYPE_ARRAY, serialize($elementTypes));
+		$this->initVar("encryptedElements", XOBJ_DTYPE_ARRAY, serialize($encryptedElements));
 		$this->initVar("views", XOBJ_DTYPE_ARRAY, serialize($views));
 		$this->initVar("viewNames", XOBJ_DTYPE_ARRAY, serialize($viewNames));
 		$this->initVar("viewFrids", XOBJ_DTYPE_ARRAY, serialize($viewFrids));
@@ -294,21 +303,23 @@ class formulizeFormsHandler {
 	}
 	
 	// update the field name in the datatable.  $element can be an id or an object.
-	function updateField($element, $oldname, $dataType=false) {
+	// $newName can be used to override the current ele_handle value.  Introduced for handling the toggling of encryption on/off where we need to rename fields to something other than the ele_handle value.
+	function updateField($element, $oldName, $dataType=false, $newName="") {
 		if(!$element = _getElementObject($element)) {
 			return false;
 		}
 		global $xoopsDB;
 		if(!$dataType) {
 			// first get its current state:
-			$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) ." LIKE '".$oldname."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+			$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) ." LIKE '$oldName'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
 			if(!$fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
 				return false;
 			}
 			$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
 			$dataType = $fieldStateData['Type'];
-		} 
-		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " CHANGE `".$oldname."` `".$element->getVar('ele_handle')."` ". $dataType; 
+		}
+		$newName = $newName ? $newName : $element->getVar('ele_handle');
+		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " CHANGE `$oldName` `$newName` ". $dataType; 
 		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
 		  return false;
 		}

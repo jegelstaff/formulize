@@ -93,6 +93,21 @@ if( !empty($ele_id) AND $clone == 0){
 		// grab the private setting -- added July 15 2006
 		if(!$private) { $private_checked = 0; } else { $private_checked = $private; }
 		$element->setVar('ele_private', $private_checked);
+    
+    // grab the encrypt setting -- added July 15 2009 -- can probably pass in the intval of $encrypt, but we'll follow the convention set out three years ago for consistency/readability
+		if(!$encrypt) { $encrypt_checked = 0; } else { $encrypt_checked = $encrypt; }
+    if($ele_id AND $element->getVar('ele_encrypt') != $encrypt_checked) {
+      // if the encryption setting changed, then we need to encrypt/decrypt all the existing data
+      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+			$data_handler = new formulizeDataHandler($id_form);
+      if(!$data_handler->toggleEncryption($original_handle, $element->getVar('ele_encrypt'))) {
+        print "Warning:  unable to toggle the encryption of the '$original_handle' field on/off!";
+      }
+    }
+		$element->setVar('ele_encrypt', $encrypt_checked);
+    
+    
+    
 
 		// replaced - start - August 18 2005 - jpc
 		//$display = !empty($ele_display) ? 1 : 0;
@@ -398,37 +413,42 @@ if( !empty($ele_id) AND $clone == 0){
         global $xoopsDB;
 			      // figure out what the data type should be.
 			      // the rules:
+            // if it's encrypted, it's a BLOB, otherwise...
 			      // date fields get 'date'
             // colorpicker gets 'text'
 			      // for text element types...
 			      // if 'text' is the specified type, and it's numbers only with a decimal, then use decimal with that number of spaces
 			      // if 'text' is the specified type, and it's numbers only with 0 decimals, then use int
 			      // all other cases, use the specified type
-			      switch($ele_type) {
-									case 'date':
-												$dataType = 'date';
-												break;
-                  case 'colorpick':
-                        $dataType = 'text';
-                        break;
-									case 'text':
-												if($ele_value[3] == 1 AND $_POST['element_datatype'] == 'text') { // numbers only...and Formulize was asked to figure out the right datatype.....
-															if($datadecimals = intval($ele_value[5])) {
-																		if($datadecimals > 20) { // mysql only allows a certain number of digits in a decimal datatype, so we're making some arbitrary size limitations
-																					$datadecimals = 20;
-																		}
-																		$datadigits = $datadecimals < 10 ? 11 : $datadecimals + 1; // digits must be larger than the decimal value, but a minimum of 11
-																		$dataType = "decimal($datadigits,$datadecimals)"; 
-															} else {
-																		$dataType = 'int(10)'; // value in () is just the visible number of digits to use in a mysql console display
-															}
-												} else {
-															$dataType = getRequestedDataType();
-												}
-												break;
-									default:
-												$dataType = getRequestedDataType();
-			      }
+            if($encrypt) {
+              $dataType = 'blob';
+            } else {
+              switch($ele_type) {
+                    case 'date':
+                          $dataType = 'date';
+                          break;
+                    case 'colorpick':
+                          $dataType = 'text';
+                          break;
+                    case 'text':
+                          if($ele_value[3] == 1 AND $_POST['element_datatype'] == 'text') { // numbers only...and Formulize was asked to figure out the right datatype.....
+                                if($datadecimals = intval($ele_value[5])) {
+                                      if($datadecimals > 20) { // mysql only allows a certain number of digits in a decimal datatype, so we're making some arbitrary size limitations
+                                            $datadecimals = 20;
+                                      }
+                                      $datadigits = $datadecimals < 10 ? 11 : $datadecimals + 1; // digits must be larger than the decimal value, but a minimum of 11
+                                      $dataType = "decimal($datadigits,$datadecimals)"; 
+                                } else {
+                                      $dataType = 'int(10)'; // value in () is just the visible number of digits to use in a mysql console display
+                                }
+                          } else {
+                                $dataType = getRequestedDataType();
+                          }
+                          break;
+                    default:
+                          $dataType = getRequestedDataType();
+              }
+            }
 			   
 				$form_handler =& xoops_getmodulehandler('forms', 'formulize');
         if(!$insertResult = $form_handler->insertElementField($element, $dataType)) {

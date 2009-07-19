@@ -388,11 +388,18 @@ switch($op){
 			$private->setDescription(_AM_FORM_PRIVATE_DESC);
 			$form->addElement($private);
 		}
+		// add encrypted checkbox -- July 15 2009
+		$encryptState = !empty($ele_id) ? $element->getVar('ele_encrypt') : 0;
+		$encrypt = new XoopsFormCheckBox(_AM_FORM_ENCRYPT, "encrypt", $encryptState);
+		$encrypt->addOption(1, ' ');
+		$encrypt->setDescription(_AM_FORM_ENCRYPT_DESC);
+		$form->addElement($encrypt);
 		
 		
 		// data type controls ... added May 31 2009, jwe 
-                // only do it for existing elements where the datatype choice is relevant 
-		if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type == "radio" OR $ele_type == "checkbox" OR $ele_type == "derived") {
+    // only do it for existing elements where the datatype choice is relevant
+		// do not do it for encrypted elements
+		if(($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type == "radio" OR $ele_type == "checkbox" OR $ele_type == "derived") AND !$encryptState) {
                         if(!empty($ele_id)) {
                                 // get the current type...
                                 global $xoopsDB;
@@ -457,7 +464,7 @@ switch($op){
                         $form->addElement($dataTypeTray);
                 }
 		
-		
+			
 		$highorder = formulize_getElementHighOrder($id_form);
 		
 		$order = !empty($ele_id) ? $element->getVar('ele_order') : $highorder;

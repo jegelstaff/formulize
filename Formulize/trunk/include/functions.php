@@ -3530,6 +3530,13 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
   
 }
 
-
+// this function gets the password for the encryption/decryption process
+// want to has the db pass since we don't want any SQL logging processes to include the db pass as plaintext
+function getAESPassword() {
+	$icmsDB = SDATA_DB_PASS;
+	$xoopsDB = XOOPS_DB_PASS;
+	$dbPass = $icmsDB ? $icmsDB : $xoopsDB;
+	return sha1($dbPass."I'm a cool, cool, cool dingbat");
+}
 
 ?>

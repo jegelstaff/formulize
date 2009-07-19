@@ -1020,6 +1020,47 @@ function updateperms() {
 }
 
 
+// database patch logic for 4.0 and higher
+function patch40() {
+	// CHECK THAT THEY ARE AT 3.1 LEVEL, IF NOT, LINK TO PATCH31
+	// Check for ele_handle being 255 in formulize table
+	global $xoopsDB;
+	$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize") ." LIKE 'ele_handle'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+	if(!$fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
+		print "Error: could not determine if your Formulize database structure is up to date.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n"; 
+		return false;
+	}
+	$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
+	$dataType = $fieldStateData['Type'];
+	if($dataType != "varchar(255)") {
+		print "<h1>Your database schema is out of date.  You must run \"patch31\" before upgrading to version 4.0.</h1>\n";
+    print "<p><a href=\"" . XOOPS_URL . "/modules/formulize/admin/formindex.php?op=patch31\">Click here to run \"patch31\".</a></p>\n";
+		return;
+	}
+	
+  if(!isset($_POST['patch40'])) {
+		print "<form action=\"formindex.php?op=patch40\" method=post>";
+		print "<h1>Warning: this patch makes several changes to the database.  Backup your database prior to applying this patch!</h1>";
+		print "<input type = submit name=patch40 value=\"Apply Database Patch for Formulize 4.0\">";
+		print "</form>";
+	} else {
+		// PATCH LOGIC GOES HERE
+		$sql = array();
+		$sql['add_encrypt'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_encrypt` tinyint(1) NOT NULL default '0'";
+		foreach($sql as $key=>$thissql) {
+			if(!$result = $xoopsDB->query($thissql)) {
+				if($key === "add_encrypt") {
+					print "ele_encrypt field already added.  result: OK<br>";
+				} else {
+					exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+				}
+			} 
+		}
+		print "DB updates completed.  result: OK";
+	}
+}
+
+
 // THE 4.0 SERIES WILL NEED A SEPARATE PATCH ROUTINE.  THERE IS TOO MUCH BAGGAGE IN HERE TO KEEP CARRYING IT AROUND.  ESPECIALLY THE DATATYPE CONVERSION STUFF.
 function patch31() {
 
@@ -1031,7 +1072,7 @@ function patch31() {
 	while($table = $xoopsDB->fetchRow($resultPatchCheck)) {
     if($table[0] == $xoopsDB->prefix("formulize_entry_owner_groups")) {
       $entryOwnerGroupFound = true;
-    }
+    } 
   }
 
 	if(!isset($_POST['patch31'])) {
@@ -1059,13 +1100,13 @@ function patch31() {
           if(!$result = $xoopsDB->query($thissql)) {
           	if($key === "ves_to_carchar") {
           		print "viewentryscreen param already converted to varchar.  result: OK<br>";
-            }
-            if($key === "handlelength") {
+            } elseif($key === "handlelength") {
               print "Length of element handles already extended.  result OK<br>";
-            }
-            if($key === "cleanEntryOwnerGroups" OR $key === "lockForClean" OR $key === "copyTableForClean" OR $key === "copyDataForClean" OR $key === "dropTempTable" OR $key === "unlockForClean") {
+            } elseif($key === "cleanEntryOwnerGroups" OR $key === "lockForClean" OR $key === "copyTableForClean" OR $key === "copyDataForClean" OR $key === "dropTempTable" OR $key === "unlockForClean") {
               print "Warning: could not delete duplicate entries from the entry_owner_groups table.  Please contact <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> for assistance.<br>\n";
-            }
+            } else {
+							exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+						}
           }
         }
 				// need to handle datetype conversions for date fields, and making all fields accept NULL
@@ -1963,7 +2004,9 @@ case "migrateids":
 case "migratedb":
 	migratedb();
 	break;
-
+case "patch40":
+	patch40();
+	break;
 case "patch31":
 	patch31();
 	break;
@@ -1975,7 +2018,7 @@ case "patch30datastructure":
         break;
 }
 
-print "<p>version 3.1 Final</p>";
+print "<p>version 4.0 SVN (trunk)</p>";
 
 include 'footer.php';
     xoops_cp_footer();

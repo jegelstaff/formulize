@@ -470,18 +470,21 @@ class formulizeDataHandler  {
 		// get handle/id equivalents directly from database in one query, since we'll need them later
 		// much more efficient to do it this way than query for all the element objects, for instance.
 		if(!isset($cachedMaps[$this->fid][$mapIDs])) {
-			$handleElementMapSQL = "SELECT ele_handle, ele_id FROM ".$xoopsDB->prefix("formulize") . " WHERE id_form=".intval($this->fid);
+			$handleElementMapSQL = "SELECT ele_handle, ele_id, ele_encrypt FROM ".$xoopsDB->prefix("formulize") . " WHERE id_form=".intval($this->fid);
 			if(!$handleElementMapRes = $xoopsDB->query($handleElementMapSQL)) {
 				return false;
 			}
 			$handleElementMap = array();
+			$encryptElementMap = array();
 			while($handleElementMapArray = $xoopsDB->fetchArray($handleElementMapRes)) {
 				switch($mapIDs) {
 					case true:
 						$handleElementMap[$handleElementMapArray['ele_id']] = $handleElementMapArray['ele_handle'];
+						$encryptElementMap[$handleElementMapArray['ele_id']] = $handleElementMapArray['ele_encrypt'];
 						break;
 					case false:
 						$handleElementMap[$handleElementMapArray['ele_handle']] = $handleElementMapArray['ele_handle'];
+						$encryptElementMap[$handleElementMapArray['ele_handle']] = $handleElementMapArray['ele_encrypt'];
 						break;
 				}
 			}
@@ -547,6 +550,8 @@ class formulizeDataHandler  {
 				$sql .= ", `".$handleElementMap[$id]."`";
 				if($value === "{WRITEASNULL}") {
 					$sqlValues .= ", NULL";
+				} elseif($encryptElementMap[$id]) {
+					$sqlValues .= ", AES_ENCRYPT('".mysql_real_escape_string($value)."', '".getAESPassword()."')";
 				} else {
 					$sqlValues .= ", '".mysql_real_escape_string($value)."'";
 				}
@@ -561,12 +566,14 @@ class formulizeDataHandler  {
 				$sql .= "mod_datetime=NOW(), mod_uid=".intval($uid);
 				$needComma = true;
 			} 
-			foreach($values as $id=>$value) {
+			foreach($values as $id=>$value) { // note, id might be handle or element id...this is why we choose how we're going to map the info above (at one time, it had to be element id, hence the name)
 				if($needComma) {
 					$sql .= ", ";
 				}
 				if($value === "{WRITEASNULL}") {
 					$sql .= "`".$handleElementMap[$id]."` = NULL";
+				} elseif($encryptElementMap[$id]) {
+					$sql .= "`".$handleElementMap[$id]."` = AES_ENCRYPT('".mysql_real_escape_string($value)."', '".getAESPassword()."')";
 				} else {
 					$sql .= "`".$handleElementMap[$id]."` = '".mysql_real_escape_string($value)."'";
 				}
@@ -588,6 +595,7 @@ class formulizeDataHandler  {
 		if($entry_to_return) { $this->updateCaches($entry_to_return); }
 		return $entry_to_return ? $entry_to_return : $lastWrittenId;
 	}
+		
 	
 	// this function updates relevant caches after data has been updated in the database
 	function updateCaches($id) {
@@ -623,6 +631,43 @@ class formulizeDataHandler  {
 		// replace *=+*: in the field with ", " but only on the part of the string after the first five characters (which will omit the *=+*: that preceeds all items)
     $sql = "UPDATE ".$xoopsDB->prefix("formulize_".$this->fid). " SET `".$element->getVar('ele_handle')."` = REPLACE(RIGHT(`".$element->getVar('ele_handle')."`, CHAR_LENGTH(`".$element->getVar('ele_handle')."`)-5), \"*=+*:\", \", \")";
 		if(!$res = $xoopsDB->queryF($sql)) {
+			return false; 
+		}
+		return true;
+	}
+	
+	// this method does some operations on the database to convert the values in a field to/from encrypted status
+	// note that $elementHandle is the current value of the ele_handle, and we can't go off the element object's properties, since the element is in the middle of being updated in element_save.php when this method is called
+	function toggleEncryption($elementHandle, $currentEncryptionStatus) {
+		if(!$element = _getElementObject($elementHandle)) {
+			return false;
+		}
+		// 1. rename to the current field
+		// 2. create a new field to put this data in
+		// 3. run the encrypt/decrypt SQL to populate the new field
+		// 4. drop the old field
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!$form_handler->updateField($element, $elementHandle, false, $elementHandle."qaz")) { // false is no datatype change, last param is the new name
+			return false;
+		}
+		if($currentEncryptionStatus) {
+			$dataType = 'text';
+			$aesFunction = 'AES_DECRYPT';
+		} else {
+			$dataType = 'blob';
+			$aesFunction = 'AES_ENCRYPT';			
+		}
+		global $xoopsDB;
+		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " ADD `$elementHandle` $dataType NULL default NULL";
+		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
+			return false;
+		}
+		$toggleSQL = "UPDATE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " SET `$elementHandle` = ".$aesFunction."(".$elementHandle."qaz, '".getAESPassword()."')";
+		if(!$toggleSQLRes = $xoopsDB->queryF($toggleSQL)) {
+			return false;
+		}
+		$dropSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " DROP ".$elementHandle."qaz";
+		if(!$dropSQLRes = $xoopsDB->queryF($dropSQL)) {
 			return false;
 		}
 		return true;

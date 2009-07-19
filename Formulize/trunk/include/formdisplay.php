@@ -119,16 +119,25 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mi
 	
 		// viewquery changed in light of 3.0 data structure changes...
 		//$viewquery = q("SELECT ele_caption, ele_value FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req=$entry $element_query");
-		$viewquerydb = q("SELECT * FROM " . $xoopsDB->prefix("formulize_" . $fid) . " WHERE entry_id=$entry");
-		$viewquery = array();
+		// NEED TO CHECK THE FORM FOR ENCRYPTED ELEMENTS, AND ADD THEM AFTER THE * WITH SPECIAL ALIASES. tHEN IN THE LOOP, LOOK FOR THE ALIASES, AND SKIP PROCESSING THOSE ELEMENTS NORMALLY, BUT IF WHEN PROCESSING A NORMAL ELEMENT, IT IS IN THE LIST OF ENCRYPTED ELEMENTS, THEN GET THE ALIASED, DECRYPTED VALUE INSTEAD OF THE NORMAL ONE
+		// NEED TO ADD RETRIEVING ENCRYPTED ELEMENT LIST FROM FORM OBJECT
 		$form_handler =& xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($fid);
 		$formHandles = $formObject->getVar('elementHandles');
 		$formCaptions = $formObject->getVar('elementCaptions');
-	
+		$formEncryptedElements = $formObject->getVar('encryptedElements');
+		$encryptedSelect = "";
+		foreach($formEncryptedElements as $thisEncryptedElement) {
+			$encryptedSelect .= ", AES_DECRYPT(`".$thisEncryptedElement."`, '".getAESPassword()."') as 'decrypted_value_for_".$thisEncryptedElement."'";
+		}
+		
+		$viewquerydb = q("SELECT * $encryptedSelect FROM " . $xoopsDB->prefix("formulize_" . $fid) . " WHERE entry_id=$entry");
+		$viewquery = array();
+		
 		// need to parse the result based on the elements requested and setup the viewquery array for use later on
 		$vqindexer = 0;
 		foreach($viewquerydb[0] as $thisField=>$thisValue) {
+			if(strstr($thisField, "decrypted_value_for_")) { continue; } // don't process these values normally, instead, we just refer to them later to grab the decrypted value, if this iteration is over an encrypted element.
 			$includeElement = false;
 			if(is_array($elements)) {
 				if(in_array(array_search($thisField, $formHandles), $elements) AND $thisValue !== "") {
@@ -138,9 +147,13 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mi
 				$includeElement = true;
 			}
 			if($includeElement) {
-				$viewquery[$vqindexer]["ele_value"] = $thisValue;
 				$viewquery[$vqindexer]["ele_handle"] = $thisField;
 				$viewquery[$vqindexer]["ele_caption"] = $formCaptions[array_search($thisField, $formHandles)];
+				if(in_array($thisField, $formEncryptedElements)) {
+					$viewquery[$vqindexer]["ele_value"] = $viewquerydb[0]["decrypted_value_for_".$thisField];
+				} else {
+					$viewquery[$vqindexer]["ele_value"] = $thisValue;	
+				}
 			}
 			$vqindexer++;
 		}
