@@ -156,7 +156,7 @@ function prepvalues($value, $field, $entry_id) {
 
   // decrypt encrypted values...pretty inefficient to do this here, one query in the DB per value to decrypt them....but we'd need proper select statements with field names specified in them, instead of *, in order to be able to swap in the AES DECRYPT at the time the data is retrieved in the master query
 	if($elementArray['ele_encrypt']) {		 
-		 $decryptSQL = "SELECT AES_DECRYPT('".$value."', '".getAESPassword()."')";
+		 $decryptSQL = "SELECT AES_DECRYPT('".mysql_real_escape_string($value)."', '".getAESPassword()."')";
 		 if($decryptResult = mysql_query($decryptSQL)) {
 					$decryptRow = mysql_fetch_row($decryptResult);
 					return $decryptRow[0];
@@ -557,7 +557,13 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                     $sortFidAlias = "f".$sortFidAlias[0];
                     $sortIsOnMain = false;
                }
-               $orderByClause = " ORDER BY $sortFidAlias.`$sortField` $sortOrder ";
+							 $sortFieldMetaData = formulize_getElementMetaData($sortField, true);
+							 if($sortFieldMetaData['ele_encrypt']) {
+										$sortFieldFullValue = "AES_DECRYPT($sortFidAlias.`$sortField`, '".getAESPassword()."')"; // sorts as text, which will screw up number fields
+							 } else {
+										$sortFieldFullValue = "$sortFidAlias.`$sortField`";
+							 }
+               $orderByClause = " ORDER BY $sortFieldFullValue $sortOrder ";
           } elseif(!$orderByClause) {
                $orderByClause = "ORDER BY main.entry_id";
           }
@@ -590,8 +596,13 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
               $limitByEntryId = " AND (";
               $entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id", $countMasterResults); // don't count the entries, select their id numbers
               if(!$sortIsOnMain) {
-                 $entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT (SELECT `$sortField` FROM ".DBPRE."formulize_$sortFid as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. ") as usethissort, main.entry_id as main_entry_id ", $entryIdQuery);
-                 $thisOrderByClause = " ORDER BY usethissort ";
+										$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
+										if($sortFieldMetaData['ele_encrypt']) {
+												 $entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT (SELECT AES_DECRYPT(`$sortField`, '".getAESPassword()."') FROM ".DBPRE."formulize_$sortFid as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. ") as usethissort, main.entry_id as main_entry_id ", $entryIdQuery); // sorts as text which will screw up number fields
+										} else {
+												 $entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT (SELECT `$sortField` FROM ".DBPRE."formulize_$sortFid as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. ") as usethissort, main.entry_id as main_entry_id ", $entryIdQuery);
+										}
+		                $thisOrderByClause = " ORDER BY usethissort ";
               } else {
                  $thisOrderByClause = $orderByClause;
               }
@@ -1006,19 +1017,30 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                          $element_id = formulize_getIDFromElementHandle($ifParts[0]);
                     }
                     
-                    // add ` ` around ifParts[0]...
-                    $ifParts[0] = "`".$ifParts[0]."`";
-                    
                     // identify the form that the element is associated with and put it in the map
                     list($formFieldFilterMap, $mappedForm) = formulize_mapFormFieldFilter($element_id, $formFieldFilterMap);
                     /*print "map: <br>";
                     print_r($formFieldFilterMap);
                     print "<br>Mappedform: $mappedForm<br>";*/
                     $elementPrefix = $mappedForm == $fid ? "main" : "f" . array_search($mappedForm, $linkfids);
+										
+										// check if its encrypted or not, and setup the proper field reference
+										$queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
+										
+										// add ` ` around ifParts[0]...
+                    $ifParts[0] = "`".$ifParts[0]."`";
+										
+										if($queryElementMetaData['ele_encrypt']) {
+												 $queryElement = "AES_DECRYPT($elementPrefix.".$ifParts[0].", '".getAESPassword()."')";
+										} else {
+												 $queryElement = "$elementPrefix." . $ifParts[0];
+										}
+										
                     
                     // set order by clause for newest operator -- assume only one newest operator per query!
+										// does this need to be based on entry_id and not use $queryElement (which is based on ifParts[0]) ??
                     if(strstr($ifParts[2], "newest")) {
-                         $orderByClause = " ORDER BY $elementPrefix." . $ifParts[0] . " DESC LIMIT 0," . substr($ifParts[2], 6);
+                         $orderByClause = " ORDER BY $queryElement DESC LIMIT 0," . substr($ifParts[2], 6);
                     }
                          
                     // set query term for yes/no questions
@@ -1038,11 +1060,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // instead of doing a subquery, this could probably be redone similarly to creator_email and then we would have the "other" value in the raw query result, and then the process in prepValues would not need to requery the other table
                     if($formFieldFilterMap[$mappedForm][$element_id]['hasother']) {
                          $subquery = "(SELECT id_req FROM " . DBPRE . "formulize_other WHERE ele_id=" . intval($element_id) . " AND other_text " . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . ")";
-                         $newWhereClause = "(($elementPrefix.entry_id = ANY $subquery)OR("."$elementPrefix." . $ifParts[0] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes."))"; // need to look in the other box and the main field, and return values that match in either case
+                         $newWhereClause = "(($elementPrefix.entry_id = ANY $subquery)OR($queryElement " . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes."))"; // need to look in the other box and the main field, and return values that match in either case
                     // handle linked selectboxes
                     } elseif($sourceMeta = $formFieldFilterMap[$mappedForm][$element_id]['islinked']) {
                          // Neal's suggestion:  use EXISTS...other forms of subquery using field IN subquery or subquery LIKE field, and a CONCAT in the subquery, failed in various conditions.  IN did not work with multiple selection boxes, and LIKE did not work with search terms too general to return only one match in the source form.  Exists works in all cases.  :-)
-                         $newWhereClause = " EXISTS (SELECT 1 FROM ".DBPRE."formulize_".$sourceMeta[0]." AS source WHERE $elementPrefix.".$ifParts[0]." LIKE CONCAT('%,',source.entry_id,',%') AND source.".$sourceMeta[1] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . ")";
+                         $newWhereClause = " EXISTS (SELECT 1 FROM ".DBPRE."formulize_".$sourceMeta[0]." AS source WHERE $queryElement LIKE CONCAT('%,',source.entry_id,',%') AND source.".$sourceMeta[1] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . ")";
                     // usernames/fullnames boxes
                     } elseif($listtype = $formFieldFilterMap[$mappedForm][$element_id]['isnamelist'] AND $ifParts[1] !== "") {
                          $listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
@@ -1062,9 +1084,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 																				$nameSearchStart = false;
 																	 }
                                    if(formulize_selectboxAllowsMultipleSelections($element_id)) {
-                                        $newWhereClause .= " (($elementPrefix.".$ifParts[0]." LIKE '%*=+*:" . $preSearchArray['uid'] . "*=+*:%' OR $elementPrefix.".$ifParts[0]." LIKE '%*=+*:" . $preSearchArray['uid'] . "') OR $elementPrefix.".$ifParts[0]." = " . $preSearchArray['uid'] . ") "; // could this be further optimized to remove the = condition, and only use the LIKEs?  We need to check if a multiselection-capable box still uses the delimiter string when only one value is selected...I think it does.
+                                        $newWhereClause .= " (($queryElement LIKE '%*=+*:" . $preSearchArray['uid'] . "*=+*:%' OR $queryElement LIKE '%*=+*:" . $preSearchArray['uid'] . "') OR $queryElement = " . $preSearchArray['uid'] . ") "; // could this be further optimized to remove the = condition, and only use the LIKEs?  We need to check if a multiselection-capable box still uses the delimiter string when only one value is selected...I think it does.
                                    } else {
-                                        $newWhereClause .= " $elementPrefix.".$ifParts[0]." = " . $preSearchArray['uid'] . " ";
+                                        $newWhereClause .= " $queryElement = " . $preSearchArray['uid'] . " ";
                                    }
                               }
                               if(!$nameSearchStart) {
@@ -1077,7 +1099,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // regular whereclause
                     } else {
                          // could/should put better handling in here of multiple value boxes, so = operators actually only look for matches within the individual values??  Is that possible?
-                         $newWhereClause = "$elementPrefix." . $ifParts[0] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes;
+                         $newWhereClause = "$queryElement " . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes;
                     }
                     
                }

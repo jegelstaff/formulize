@@ -548,10 +548,11 @@ class formulizeDataHandler  {
 			$sqlValues = "";
 			foreach($values as $id=>$value) {
 				$sql .= ", `".$handleElementMap[$id]."`";
-				if($value === "{WRITEASNULL}") {
-					$sqlValues .= ", NULL";
-				} elseif($encryptElementMap[$id]) {
+				if($encryptElementMap[$id]) {
+					$value = $value === "{WRITEASNULL}" ? "" : $value;
 					$sqlValues .= ", AES_ENCRYPT('".mysql_real_escape_string($value)."', '".getAESPassword()."')";
+				} elseif($value === "{WRITEASNULL}") {
+					$sqlValues .= ", NULL";
 				} else {
 					$sqlValues .= ", '".mysql_real_escape_string($value)."'";
 				}
@@ -570,10 +571,11 @@ class formulizeDataHandler  {
 				if($needComma) {
 					$sql .= ", ";
 				}
-				if($value === "{WRITEASNULL}") {
-					$sql .= "`".$handleElementMap[$id]."` = NULL";
-				} elseif($encryptElementMap[$id]) {
+				if($encryptElementMap[$id]) {
+					$value = $value === "{WRITEASNULL}" ? "" : $value;
 					$sql .= "`".$handleElementMap[$id]."` = AES_ENCRYPT('".mysql_real_escape_string($value)."', '".getAESPassword()."')";
+				} elseif($value === "{WRITEASNULL}") {
+					$sql .= "`".$handleElementMap[$id]."` = NULL";
 				} else {
 					$sql .= "`".$handleElementMap[$id]."` = '".mysql_real_escape_string($value)."'";
 				}

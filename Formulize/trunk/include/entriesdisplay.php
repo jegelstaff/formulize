@@ -1909,27 +1909,34 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
         $thisBaseQuery = $baseQuery;
       }
       
+			// figure out if the field is encrypted, and setup the calcElement accordingly
+			$calcElementMetaData = formulize_getElementMetaData($handle, true);
+			if($calcElementMetaData['ele_encrypt']) {
+				$calcElement = "AES_DECRYPT($fidAlias.`$handle`, '".getAESPassword()."')";
+			} else {
+				$calcElement = "$fidAlias.`$handle`";
+			}
       
       // figure out what to ask for for this calculation      
       switch($calc) {
         case "sum":
-          $select = "SELECT sum($fidAlias.`$handle`) as $fidAlias$handle";
+          $select = "SELECT sum($calcElement) as $fidAlias$handle";
           break;
         case "min":
-          $select = "SELECT min($fidAlias.`$handle`) as $fidAlias$handle";
+          $select = "SELECT min($calcElement) as $fidAlias$handle";
           break;
         case "max":
-          $select = "SELECT max($fidAlias.`$handle`) as $fidAlias$handle";
+          $select = "SELECT max($calcElement) as $fidAlias$handle";
           break;
         case "count":
-          $select = "SELECT count($fidAlias.`$handle`) as count$fidAlias$handle, count(distinct($fidAlias.`$handle`)) as distinct$fidAlias$handle";
+          $select = "SELECT count($calcElement) as count$fidAlias$handle, count(distinct($calcElement)) as distinct$fidAlias$handle";
           break;
         case "avg":
-          $select = "SELECT avg($fidAlias.`$handle`) as avg$fidAlias$handle, std($fidAlias.`$handle`) as std$fidAlias$handle";
-          $selectAvgCount = "SELECT $fidAlias.`$handle` as $fidAlias$handle, count($fidAlias.`$handle`) as avgcount$fidAlias$handle";
+          $select = "SELECT avg($calcElement) as avg$fidAlias$handle, std($calcElement) as std$fidAlias$handle";
+          $selectAvgCount = "SELECT $calcElement as $fidAlias$handle, count($calcElement) as avgcount$fidAlias$handle";
           break;
         case "per":
-          $select = "SELECT $fidAlias.`$handle` as $fidAlias$handle, count($fidAlias.`$handle`) as percount$fidAlias$handle";
+          $select = "SELECT $calcElement as $fidAlias$handle, count($calcElement) as percount$fidAlias$handle";
 	  include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php"; // need a function here later on
           break;
         default:
@@ -1951,10 +1958,10 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
             $allowedWhere .= " OR ";
           }
           if($value === "{BLANK}") {
-            $allowedWhere .= "($fidAlias.`$handle`='' OR $fidAlias.`$handle` IS NULL)";
+            $allowedWhere .= "($calcElement='' OR $calcElement IS NULL)";
           } else {
             $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
-            $allowedWhere .= "$fidAlias.`$handle`=";
+            $allowedWhere .= "$calcElement=";
             $allowedWhere .= (is_numeric($value) AND $value !=0) ? $value : "'$value'";
           }
         }
@@ -1981,10 +1988,10 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
             $excludedWhere .= " AND ";
           }
           if($value === "{BLANK}") {
-            $excludedWhere .= "($fidAlias.`$handle`!='' AND $fidAlias.`$handle` IS NOT NULL)";
+            $excludedWhere .= "($calcElement!='' AND $calcElement IS NOT NULL)";
           } else {
             $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
-            $excludedWhere .= "$fidAlias.`$handle`!=";
+            $excludedWhere .= "$calcElement!=";
             $excludedWhere .= (is_numeric($value) AND $value !=0) ? $value : "'$value'";
           }
         }
@@ -2011,6 +2018,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
       foreach($theseGroupings as $thisGrouping) {
         if($thisGrouping == "none" OR $thisGrouping == "") { continue; }
         list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+				// need to add awareness of encryption in here
         if($start) {
           $start = false;
         } else {
