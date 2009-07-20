@@ -986,11 +986,18 @@ function drawformperms($form_list, $formulize_perms, $perm_desc, $group_id="all"
 
 	global $xoopsDB, $module_id;
 	$gperm_handler =& xoops_gethandler('groupperm');
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	
 
       print "</td><td class=$class valign=top>";
       print "<table><tr>";
       $colcounter = 0;
 	foreach($form_list as $form_id) {
+			$formObject = $form_handler->get(intval($form_id));
+			if($formObject->getVar('lockedform')) {
+				continue;
+			}	
+		
       	if(!$hidden_once OR $same) { print "<input type=hidden name='hidden_form_" . $form_id . "' value='" . $form_id . "'>"; }
       	if($colcounter == "5") {
       		$colcounter = 0;
@@ -1040,12 +1047,17 @@ function updateperms() {
 	$formulize_perms = getFormulizePerms();
 	$module_id = $xoopsModule->getVar('mid');
 	$gperm_handler = &xoops_gethandler('groupperm');
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 
 	foreach($_POST as $k=>$v) {
 		if(strstr($k, "hidden_group_")) { // find list of groups
 
 			$group_list[] = $v; 
 		} elseif (strstr($k, "hidden_form_")) { // find list of forms
+			$formObject = $form_handler->get(intval($v));
+			if($formObject->getVar('lockedform')) {
+					continue;
+			}
 			$form_list[] = $v;
 		}
 	}
