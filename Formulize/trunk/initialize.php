@@ -56,17 +56,13 @@ if(isset($_GET['forceDerivedValueUpdate'])) {
 
 
 // query modified to include singleentry - July 28, 2005 -- part of switch to new intnerface
-$sql=sprintf("SELECT admin,groupe,email,expe,singleentry,desc_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form='$fid'");
+$sql=sprintf("SELECT singleentry,desc_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form='$fid'");
 $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.mysql_error());
 //global $nb_fichier;
  
 if ( $res ) {
   while ( $row = $xoopsDB->fetchArray ( $res ) ) {
     $id_form = $fid; // this is important because we use $id_form in the readelements.php file to trigger the updating of the derived values.  This value will be preserved regardless of other logic in readelements.php, so we always will know what the original form id called was.
-    $admin = $row['admin'];
-    $groupe = $row['groupe'];
-    $email = $row['email'];
-    $expe = $row['expe'];
     $singleentry = $row['singleentry'];
     $desc_form = $row['desc_form'];
   }

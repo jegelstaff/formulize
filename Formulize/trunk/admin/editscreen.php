@@ -47,6 +47,12 @@ $type = $_POST['type'] ? htmlspecialchars(strip_tags($_POST['type'])) : htmlspec
 $sid = $_POST['sid'] ? intval($_POST['sid']) : intval($_GET['sid']); // get the screen id 
 $fid = $_POST['fid'] ? intval($_POST['fid']) : intval($_GET['fid']); // get the form id
 
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+$formObject = $form_handler->get(intval($fid));
+if($formObject->getVar('lockedform')) {
+	redirect_header("formindex.php",3,_NO_PERM);
+}
+
 $screen_handler =& xoops_getmodulehandler($type.'Screen', 'formulize');
 
 if(is_numeric(intval($sid)) AND $sid>0) {

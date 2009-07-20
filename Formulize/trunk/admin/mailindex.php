@@ -66,6 +66,15 @@ if(!is_numeric($_GET['title'])) {
 	$rtarray = $xoopsDB->fetchArray($rtres);
 	$realtitle = $rtarray['desc_form'];
 }
+
+if(isset($_GET['title'])) { // if we're altering a form, check that it's not locked.
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formObject = $form_handler->get(intval($id_form));
+	if($formObject->getVar('lockedform')) {
+		redirect_header("formindex.php",3,_NO_PERM);
+	}
+}
+
 if(!isset($_POST['op'])){
 	$op = isset ($_GET['op']) ? $_GET['op'] : '';
 }else {
@@ -78,7 +87,7 @@ if(!isset($_POST['op'])){ $_POST['op']=" ";}
 // query modified to call in new fields -- jwe 7/25/04. 7/28/04
 
 if ( isset ($title)) {
-	$sql=sprintf("SELECT id_form,admin,groupe,email,expe,singleentry,groupscope,headerlist,showviewentries,maxentries,even,odd FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form='%s'",$realtitle);
+	$sql=sprintf("SELECT id_form,singleentry,headerlist FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form='%s'",$realtitle);
 	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
 
 	if ( $res ) {
@@ -88,18 +97,9 @@ if ( isset ($title)) {
 		//print"<br>";
 
 	    $id_form = $row['id_form'];
-	    $admin = $row['admin'];
-	    $groupe = $row['groupe'];
-	    $email = $row['email'];
-	    $expe = $row['expe'];
 	    // added new entries -- jwe 7/25/04
 	    $singleentry = $row['singleentry'];
-	    $groupscope = $row['groupscope'];
 	    $headerlist = $row['headerlist'];
-	    $showviewentries = $row['showviewentries'];
-	    $maxentries = $row['maxentries'];
-	    $coloreven = $row['even']; // colors added 9/02/04 by jwe
-	    $colorodd = $row['odd'];
 
 	  }
 	}
@@ -418,14 +418,9 @@ print "</table></center></form>\n";
 function upform($title)
 {
 	global $xoopsDB, $_POST, $myts, $eh;
-	$admin = $myts->makeTboxData4Save($_POST["admin"]);
-	$groupe = $myts->makeTboxData4Save($_POST["groupe"]);
-	$email = $myts->makeTboxData4Save($_POST["email"]);
-	$expe = $myts->makeTboxData4Save($_POST["expe"]);
-	
+		
 	// added to handle new params -- jwe 7/25/07
 	$singleentry = $myts->makeTboxData4Save($_POST["singleentry"]);
-	$groupscope = $myts->makeTboxData4Save($_POST["groupscope"]);
 	$headerlist = $_POST["headerlist"];
 
 
@@ -435,23 +430,9 @@ function upform($title)
 	}
 
 
-	$showviewentries = $myts->makeTboxData4Save($_POST["showviewentries"]);
-	$maxentries = $_POST["maxentries"];
-	$coloreven = $_POST["coloreven"];
-	$colorodd = $_POST["colorodd"];
-	if($coloreven == "FFFFFF") {$coloreven = "default";}
-	if($colorodd == "FFFFFF") {$colorodd = "default";}
 	
-	// ========= end added code - jwe
-	// the 'if' checks below commented by jwe 8/30/04
-	/*if((!empty($email)) && (!eregi("^[_a-z0-9.-]+@[a-z0-9.-]{2,}[.][a-z]{2,3}$",$email))){
-		redirect_header("mailindex.php?title=$title", 2, _MD_ERROREMAIL);
-	}
-	if (empty($email) && empty($admin) && $groupe=="0" && empty($expe)) {
-		redirect_header("mailindex.php?title=$title", 2, _MD_ERRORMAIL);
-	}*/
 	// sql updated with new fields -- jwe 7/25/04 , 7/28/04
-	$sql = sprintf("UPDATE %s SET admin='%s', groupe='%s', email='%s', expe='%s', singleentry='%s', groupscope='%s', headerlist='%s', showviewentries='%s', maxentries='%s', even='%s', odd='%s' WHERE id_form='%s'", $xoopsDB->prefix("formulize_id"), $admin, $groupe, $email, $expe, $singleentry, $groupscope, $cheaderlist, $showviewentries, $maxentries, $coloreven, $colorodd, $title);
+	$sql = sprintf("UPDATE %s SET singleentry='%s', headerlist='%s' WHERE id_form='%s'", $xoopsDB->prefix("formulize_id"), $singleentry, $cheaderlist, $title);
 	$xoopsDB->query($sql) or $eh->show("0013");
 	redirect_header("formindex.php",1,_formulize_FORMTITRE);
 }
@@ -461,33 +442,16 @@ function addform()
 {
 	global $xoopsDB, $_POST, $myts, $eh;
 	$title = $myts->makeTboxData4Save($_POST["newtitle"]);
-	$admin = $myts->makeTboxData4Save($_POST["admin"]);
-	$groupe = $myts->makeTboxData4Save($_POST["groupe"]);
-	$email = $myts->makeTboxData4Save($_POST["email"]);
-	$expe = $myts->makeTboxData4Save($_POST["expe"]);
-	
+		
 	// added to handle new params -- jwe 7/25/07
 	$singleentry = $myts->makeTboxData4Save($_POST["singleentry"]);
-	$groupscope = $myts->makeTboxData4Save($_POST["groupscope"]);
-	
-	$showviewentries = $myts->makeTboxData4Save($_POST["showviewentries"]);
-	$maxentries = $_POST["maxentries"];
-	$coloreven = $_POST["coloreven"];
-	$colorodd = $_POST["colorodd"];
-	if($coloreven == "FFFFFF") {$coloreven = "default";}
-	if($colorodd == "FFFFFF") {$colorodd = "default";}
-
+		
 	// ============ end of added code - jwe
 
 	if (empty($title)) {
 		redirect_header("formindex.php", 2, _MD_ERRORTITLE);
 	}
-	if((!empty($email)) && (!eregi("^[_a-z0-9.-]+@[a-z0-9.-]{2,}[.][a-z]{2,3}$",$email))){
-		redirect_header("formindex.php", 2, _MD_ERROREMAIL);
-	}
-	if (empty($email) && empty($admin) && $groupe=="0" && empty($expe)) {
-		redirect_header("formindex.php", 2, _MD_ERRORMAIL);
-	}
+	
 	$title = stripslashes($title);
 	$title = eregi_replace ("'", "`", $title);
 	$title = eregi_replace ("&quot;", "`", $title);
@@ -496,7 +460,7 @@ function addform()
 	$title = eregi_replace ('&', "_", $title);
 
 	// updated to handle new params -- jwe 7/25/07 , 7/28/04
-	$sql = sprintf("INSERT INTO %s (desc_form, admin, groupe, email, expe, singleentry, groupscope, showviewentries, maxentries, even, odd, tableform) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')", $xoopsDB->prefix("formulize_id"), $title, $admin, $groupe, $email, $expe, $singleentry, $groupscope, $showviewentries, $maxentries, $coloreven, $colorodd, mysql_real_escape_string($_POST['tablename']));
+	$sql = sprintf("INSERT INTO %s (desc_form, singleentry, tableform) VALUES ('%s', '%s', '%s')", $xoopsDB->prefix("formulize_id"), $title, $singleentry, mysql_real_escape_string($_POST['tablename']));
 	$xoopsDB->queryF($sql) or $eh->show("error insertion 1 dans addform");
 
 	// need to get the new form id -- added by jwe sept 13 2005

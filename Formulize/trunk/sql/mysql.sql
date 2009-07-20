@@ -206,18 +206,10 @@ CREATE TABLE formulize_reports (
 CREATE TABLE formulize_id (
   id_form smallint(5) NOT NULL auto_increment,
   desc_form varchar(255) NOT NULL default '',
-  admin varchar(5) default NULL,
-  groupe varchar(255) default NULL,
-  email varchar(255) default NULL,
-  expe varchar(5) default NULL,
   singleentry varchar(5) default NULL,
-  groupscope varchar(5) default NULL,
   headerlist text default NULL,
-  showviewentries varchar(5) default NULL,
-  maxentries smallint(5) NOT NULL default '0',
-  even varchar(255) default NULL,
-  odd varchar(255) default NULL,
   tableform varchar(255) default NULL,
+  lockedform tinyint(1) NULL default NULL,
   PRIMARY KEY  (`id_form`),
   UNIQUE `desc_form_id` (`desc_form`)
 ) TYPE=MyISAM;

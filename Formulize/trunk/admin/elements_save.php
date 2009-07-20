@@ -35,6 +35,13 @@
 
 // code snippet that handles saving of data...called in the normal save operation in admin/elements.php, but also invoked in certain cases when the page reloads but the user should not have left the editing screen yet
 
+if(!$id_form) { return; } // this is set in admin/elements.php which is the only place elements_save.php should be called from
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+$formObject = $form_handler->get(intval($id_form));
+if($formObject->getVar('lockedform')) {
+	redirect_header("formindex.php",3,_NO_PERM);
+}
+
 $databaseElement = ($ele_type == "areamodif" OR $ele_type == "ib" OR $ele_type == "sep" OR $ele_type == "subform" OR $ele_type == "grid") ? false : true;
 
 if( !empty($ele_id) AND $clone == 0){

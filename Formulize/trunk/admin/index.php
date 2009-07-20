@@ -67,6 +67,12 @@ if(!is_numeric($_GET['title'])) {
 	$realtitle = $rtarray['desc_form'];
 }
 
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+$formObject = $form_handler->get(intval($id_form));
+if($formObject->getVar('lockedform')) {
+	redirect_header("formindex.php",3,_NO_PERM);
+}
+
 
 if( $_POST['op'] != 'save' ){
 	xoops_cp_header();

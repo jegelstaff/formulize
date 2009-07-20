@@ -6,6 +6,11 @@ define("_FORM_EDIT_SETTINGS_TEXT", "Edit this form's settings");
 define("_FORM_CLONE_TEXT", "Clone this form");
 define("_FORM_CLONEDATA_TEXT", "Clone this form and its data");
 define("_FORM_DELETE_TEXT", "Delete this form");
+define("_FORM_LOCK_TEXT", "Lockdown this form");
+define("_FORM_LOCK", "Prevent anyone from editing this form again");
+define("_AM_CONFIRM_LOCK", "If you lockdown this form, then no one, not even you, will be able to make any changes to the form or its elements.  Are you sure you want to lockdown this form?");
+define("_formulize_FORMLOCK", "This form has now been locked.  No further changes to this form will be possible.");
+define("_formulize_FORMLOCK_FAILED", "There was an error and Formulize could not lock this form.");
 define("_FORM_NUM_ENTRIES_ANON_HELP", "<b>About Anonymous Users:</b> Formulize determines entry ownership based on a user's id number, and all Anonymous Users are viewed as \"User Number 0\".  Therefore, \"One entry per user\" does not really work for anonymous users in most cases, since everyone who is not logged in will share the same entry, because they all share the same id number, 0.<br><br>Also, \"More than one entry per user\" will behave differently for Anonymous Users, since all the entries created by anyone who isn't logged in, will all belong to \"user 0\", so everyone who is not logged in, will be treated as the same person.<br><br>Formulize is designed primarily for use in a website with a strict set of usernames and groups of users, but there are ways around these issues, in some cases using the API.  Post to the <a href=\"http://www.freeformsolutions.ca/en/forums\">support forums</a> for more information.");  
 
 

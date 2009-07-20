@@ -44,6 +44,7 @@ class formulizeForm extends XoopsObject {
 		if(!is_numeric($id_form)) {
 			// set empty defaults
 			$id_form = "";
+			$lockedform = "";
 			$formq[0]['desc_form'] = "";
 			$single = "";
 			$elements = array();
@@ -57,6 +58,7 @@ class formulizeForm extends XoopsObject {
 			if(!isset($formq[0])) {
 				unset($formq);
 				$id_form = "";
+				$lockedform = "";
 				$formq[0]['desc_form'] = "";
 				$formq[0]['tableform'] = "";
 				$single = "";
@@ -83,7 +85,6 @@ class formulizeForm extends XoopsObject {
 				}
 				
 				// propertly format the single value
-
 				switch($formq[0]['singleentry']) {
 					case "group":
 						$single = "group";
@@ -118,6 +119,7 @@ class formulizeForm extends XoopsObject {
 		$this->XoopsObject();
 		//initVar params: key, data_type, value, req, max, opt
 		$this->initVar("id_form", XOBJ_DTYPE_INT, $id_form, true);
+		$this->initVar("lockedform", XOBJ_DTYPE_INT, $formq[0]['lockedform'], true);
 		$this->initVar("title", XOBJ_DTYPE_TXTBOX, $formq[0]['desc_form'], true, 255);
 		$this->initVar("tableform", XOBJ_DTYPE_TXTBOX, $formq[0]['tableform'], true, 255);
 		$this->initVar("single", XOBJ_DTYPE_TXTBOX, $single, true, 5);
@@ -193,6 +195,17 @@ class formulizeFormsHandler {
 		return $fids;
 	}
 		
+	// lock the form...set the lockedform flag to indicate that no further editing of this form is allowed
+	function lockForm($fid) {
+		global $xoopsDB;
+		$sql = "UPDATE ".$xoopsDB->prefix("formulize_id") . " SET lockedform = 1 WHERE id_form = ". intval($fid);
+		if(!$res = $xoopsDB->queryF($sql)) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
 	// check to see if a handle is unique within a form
 	function isHandleUnique($handle, $element_id="") {
 		$ucHandle = strtoupper($handle);

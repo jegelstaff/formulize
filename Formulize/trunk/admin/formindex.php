@@ -82,22 +82,25 @@ global $title2, $op, $data;
 
 
 //Sélection des formulizes
-	$sql="SELECT distinct desc_form, id_form, tableform FROM ".$xoopsDB->prefix("formulize_id");
-	$res = mysql_query ( $sql );
+
+	$sql="SELECT distinct desc_form, id_form, tableform, lockedform FROM ".$xoopsDB->prefix("formulize_id");
+	$res = $xoopsDB->query( $sql );
 
 $titlesForSort = array();
 $data = array();
 $tableforms = array();
+$lockedforms = array();
 if ( $res ) {
   while ( $row = mysql_fetch_row ( $res ) ) {
     $data[$row[1]] = trans($row[0]);
 		$tableforms[$row[1]] = $row[2];
+		$lockedforms[$row[1]] = $row[3];
   }
 }
 
 asort($data); // sorts forms alphabetically by title (and asort, as opposed to sort, keeps key/value association in the array)
 
-if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform' && $op != "permsub" && $op != "permeditor" && $op != "newpermform"){ 
+if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'lockform' && $op != 'showform' && $op != 'permform' && $op != "permsub" && $op != "permeditor" && $op != "newpermform"){ 
 	echo '
 	<table class="outer" width="100%">
 	<th><center>'._FORM_OPT.'</center></th>
@@ -108,7 +111,7 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 }
 
 /******************* Affichage des formulizes *******************/
-if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'showform' && $op != 'permform' && $op != "permsub" && $op != "permeditor" && $op != "newpermform"){ 
+if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform' && $op != 'lockform' && $op != 'showform' && $op != 'permform' && $op != "permsub" && $op != "permeditor" && $op != "newpermform"){ 
 
 	// javascript to confirm deletion added by jwe 8/30/04
 
@@ -124,6 +127,19 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	print "			return false;\n";
 	print "		}\n";
 	print "	}\n";
+	
+	print "	function confirmlock() {\n";
+	print "		var answer = confirm ('" . _AM_CONFIRM_LOCK . "')\n";
+	print "		if (answer)\n";
+	print "		{\n";
+	print "			return true;\n";
+	print "		}\n";
+	print "		else\n";
+	print "		{\n";
+	print "			return false;\n";
+	print "		}\n";
+	print "	}\n";
+	
 	print "</script>\n";
 
 
@@ -184,23 +200,42 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 	foreach($data as $id => $titre) {
 	    if($gperm_handler->checkRight("edit_form", $id, $groups, $module_id))
         {
-	        echo '<tr><td class="head">'.trans($titre).'<br>(id: '.$id.')</td>';
+	        echo '<tr><td class="head">';
+					if($lockedforms[$id]) {
+						echo '<img src="../images/perm.png" align="left">';
+					}
+					echo trans($titre).'<br>(id: '.$id.')</td>';
 
 	        echo '<td class="odd" align="center">
           
                 <table cellpadding=10><tr>
 								<td rowspan=3><nobr><a href="../index.php?fid='.$id.'" target="_blank">' . _AM_VIEW_FORM . ' <img src="../images/kfind.png" title="'._AM_VIEW_FORM.'" alt="'._AM_VIEW_FORM.'"></a></nobr></td>
-								<td><nobr><A HREF="renom.php?title='.$id.'">'._FORM_RENAME_TEXT.' <img src="../images/signature.png" title="'._FORM_RENOM.'" alt="'._FORM_RENOM.'">  </a></nobr></td>';
+								<td>';
+								
+					if(!$lockedforms[$id]) {
+							echo '<nobr><A HREF="renom.php?title='.$id.'">'._FORM_RENAME_TEXT.' <img src="../images/signature.png" title="'._FORM_RENOM.'" alt="'._FORM_RENOM.'">  </a></nobr>';
+					} else {
+						  echo "&nbsp;";
+					}
+					echo "</td>";
 								
 					if($gperm_handler->checkRight("delete_form", $id, $groups, $module_id))
 	        {
-	            echo '<td><nobr><A HREF="formindex.php?title='.$id.'&op=delform" onclick="return confirmdel();">'._FORM_DELETE_TEXT.' <img src="../images/editdelete.png" title="'._FORM_SUP.'" alt="'._FORM_SUP.'">  </a></nobr></td></tr>';
+	            echo '<td><nobr><A HREF="formindex.php?title='.$id.'&op=delform" onclick="return confirmdel();">'._FORM_DELETE_TEXT.' <img src="../images/editdelete.png" title="'._FORM_SUP.'" alt="'._FORM_SUP.'">  </a>';
+							
+							if(!$lockedforms[$id]) {
+								echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+								<A HREF="formindex.php?title='.$id.'&op=lockform" onclick="return confirmlock();">'._FORM_LOCK_TEXT.' <img src="../images/perm.png" title="'._FORM_LOCK.'" alt="'._FORM_LOCK.'">  </a>';
+							}
+							
+							echo '</nobr></td></tr>';
+							
     			} else {
 						echo '<td></td></tr>';
 					}
 								
 
-          if($tableforms[$id] == "") {  
+          if($tableforms[$id] == "" AND !$lockedforms[$id]) {  
 						echo '<tr><td><nobr><A HREF="index.php?title='.$id.'">'._FORM_EDIT_ELEMENTS_TEXT.' <img src="../images/kedit.png" title="'._FORM_MODIF.'" alt="'._FORM_MODIF.'">  </a></nobr> </td>';
 					
 
@@ -210,8 +245,12 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 						echo '<tr>';
 					}
 					
-					$tableFormsFlag = $tableforms[$id] == "" ? "" : "&table=true";	
-					echo '<td><nobr><A HREF="mailindex.php?title='.$id.$tableFormsFlag.'">'._FORM_EDIT_SETTINGS_TEXT.' <img src="../images/xfmail.png" title="'._FORM_ADD.'" alt="'._FORM_ADD.'">  </a></nobr></td></tr><tr>';
+					$tableFormsFlag = $tableforms[$id] == "" ? "" : "&table=true";
+					if(!$lockedforms[$id]) {
+						echo '<td><nobr><A HREF="mailindex.php?title='.$id.$tableFormsFlag.'">'._FORM_EDIT_SETTINGS_TEXT.' <img src="../images/xfmail.png" title="'._FORM_ADD.'" alt="'._FORM_ADD.'">  </a></nobr></td></tr><tr>';
+					} else {
+						echo '<td>&nbsp;</td></tr><tr>';
+					}
 					
 					if($tableforms[$id] == "") {
 						// cloning added June 17 2005
@@ -404,20 +443,10 @@ function addform()
 {
 	global $xoopsDB, $_POST, $myts, $eh;
 	$data[$title] = $myts->makeTboxData4Save($_POST["desc_form"]);
-	$admin = $myts->makeTboxData4Save($_POST["admin"]);
-	$groupe = $myts->makeTboxData4Save($_POST["groupe"]);
-	$email = $myts->makeTboxData4Save($_POST["email"]);
-	$expe = $myts->makeTboxData4Save($_POST["expe"]);
 	if (empty($data[$title])) {
 		redirect_header("formindex.php", 2, _MD_ERRORTITLE);
 	}
-	if((!empty($email)) && (!eregi("^[_a-z0-9.-]+@[a-z0-9.-]{2,}[.][a-z]{2,3}$",$email))){
-
-		redirect_header("formindex.php", 2, _MD_ERROREMAIL);
-	}
-	if (empty($email) && empty($admin) && $groupe=="0" && empty($expe)) {
-		redirect_header("formindex.php", 2, _MD_ERRORMAIL);
-	}
+	
 	$data[$title] = stripslashes($data[$title]);
 	$data[$title] = eregi_replace ("'", "`", $data[$title]);
 	$data[$title] = eregi_replace ("&quot;", "`", $data[$title]);
@@ -425,7 +454,7 @@ function addform()
 	$data[$title] = eregi_replace ('"', "`", $data[$title]);
 	$data[$title] = eregi_replace ('&', "_", $data[$title]);
 
-	$sql = sprintf("INSERT INTO %s (desc_form, admin, groupe, email, expe) VALUES ('%s', '%s', '%s', '%s', '%s')", $xoopsDB->prefix("formulize_id"), $data[$title], $admin, $groupe, $email, $expe);
+	$sql = sprintf("INSERT INTO %s (desc_form) VALUES ('%s')", $xoopsDB->prefix("formulize_id"), $data[$title]);
 	$xoopsDB->queryF($sql) or $eh->show("error insertion 1 dans addform");
 
 //	$sql2 = sprintf("INSERT INTO %s (itemname,itemurl) VALUES ('%s', '%s')", $xoopsDB->prefix("formulize_menu"), $title, XOOPS_URL.'/modules/formulize/index.php?title='.$data[$title].'');
@@ -468,13 +497,37 @@ function modform($fid)
 	redirect_header("index.php?title=$fid",2,_formulize_FORMCHARG);
 }
 
+
+function lockform() {
+	
+	$gperm_handler = &xoops_gethandler('groupperm');
+	global $xoopsUser, $xoopsModule;
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+	$module_id = $xoopsModule->getVar('mid');
+	if(!$gperm_handler->checkRight("delete_form", intval($_GET['title']), $groups, $module_id)) {
+		redirect_header("formindex.php",3,_NO_PERM);
+	}
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	if(!$form_handler->lockForm(intval($_GET['title']))) {
+		redirect_header("formindex.php",3,_formulize_FORMLOCK_FAILED);
+	} else {
+		redirect_header("formindex.php",3,_formulize_FORMLOCK);
+	}
+}
+
 function delform()
 {
 
-
-
-	global $xoopsDB, $_POST, $myts, $eh, $title, $data, $xoopsModule; // module ID added by JWE 10/11/04
+	$gperm_handler = &xoops_gethandler('groupperm');
+	global $xoopsUser, $xoopsModule;
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$module_id = $xoopsModule->getVar('mid');
+	if(!$gperm_handler->checkRight("delete_form", intval($_GET['title']), $groups, $module_id)) {
+		redirect_header("formindex.php",3,_NO_PERM);
+	}
+
+	global $xoopsDB, $_POST, $myts, $eh, $title, $data; 
+	$module_id = $xoopsModule->getVar('mid'); // module ID added by JWE 10/11/04
 
 	//$title4 = $myts->makeTboxData4Save($_POST["desc_form4"]);
 	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form='%s'",$data[$title]);
@@ -1033,7 +1086,7 @@ function patch40() {
 	$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
 	$dataType = $fieldStateData['Type'];
 	if($dataType != "varchar(255)") {
-		print "<h1>Your database schema is out of date.  You must run \"patch31\" before upgrading to version 4.0.</h1>\n";
+		print "<h1>Your database schema is out of date.  You must run \"patch31\" before running \"patch40\".</h1>\n";
     print "<p><a href=\"" . XOOPS_URL . "/modules/formulize/admin/formindex.php?op=patch31\">Click here to run \"patch31\".</a></p>\n";
 		return;
 	}
@@ -1047,10 +1100,24 @@ function patch40() {
 		// PATCH LOGIC GOES HERE
 		$sql = array();
 		$sql['add_encrypt'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_encrypt` tinyint(1) NOT NULL default '0'";
+		$sql['add_lockedform'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `lockedform` tinyint(1) NULL default NULL";
+		$sql['drop_from_formulize_id_admin'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `admin`";
+		$sql['drop_from_formulize_id_groupe'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `groupe`";
+		$sql['drop_from_formulize_id_email'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `email`";
+		$sql['drop_from_formulize_id_expe'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `expe`";
+		$sql['drop_from_formulize_id_maxentries'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `maxentries`";
+		$sql['drop_from_formulize_id_even'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `even`";
+		$sql['drop_from_formulize_id_odd'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `odd`";
+		$sql['drop_from_formulize_id_groupscope'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `groupscope`";
+		$sql['drop_from_formulize_id_showviewentries'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `showviewentries`";
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
 				if($key === "add_encrypt") {
 					print "ele_encrypt field already added.  result: OK<br>";
+				} elseif($key === "add_lockedform") {
+					print "lockedform field already added.  result: OK<br>";
+				} elseif(strstr($key, 'drop_from_formulize_id_')) {
+					continue;					
 				} else {
 					exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
@@ -1955,7 +2022,9 @@ case "modform":
 case "delform":
 	delform();
 	break;
-
+case "lockform":
+	lockform();
+	break;
 case "permsub":
 	if(isset($_POST['list_op']))
 		{

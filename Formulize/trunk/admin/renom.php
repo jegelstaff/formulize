@@ -59,7 +59,11 @@ if(!isset($_POST['op'])){
 	$op = $_POST['op'];
 }
 
-
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+$formObject = $form_handler->get(intval($title));
+if($formObject->getVar('lockedform')) {
+	redirect_header("formindex.php",3,_NO_PERM);
+}
 
 	$sql="SELECT desc_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form = ".$title;
 	$res = mysql_query ( $sql );
