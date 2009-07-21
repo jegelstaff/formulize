@@ -638,13 +638,22 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 									$items = array(0=>$cell_value);
 								}
 								foreach($items as $item) {
-									$uids = array_keys ($fullnamelist, $item);
-									if(count($uids) == 0) {
-										$errors[] = "<li>line " . $rowCount . 
-                                                            ", column " . $importSet[3][$link] .
-                                                            ",<br> <b>Name</b>: " . $item . 
-                                                            " <b>is not a valid name for a user</b></li>";
-										break;
+									if(is_numeric($item)) {
+										if(!isset($fullnamelist[$item])) {
+											$errors[] = "<li>line " . $rowCount . 
+												", column " . $importSet[3][$link] .
+												",<br> <b>User Id</b>: " . $item . 
+												" <b>is not a valid id for a user</b></li>";
+										}
+									} else {
+										$uids = array_keys ($fullnamelist, $item);
+										if(count($uids) == 0) {
+											$errors[] = "<li>line " . $rowCount . 
+												", column " . $importSet[3][$link] .
+												",<br> <b>Name</b>: " . $item . 
+												" <b>is not a valid name for a user</b></li>";
+											break;
+										}	
 									}
 								}
 								break;
@@ -1054,11 +1063,16 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 								$numberOfNames = 0;
 								$row_value = "";
 								foreach($items as $item) {
-									$uids = array_keys ($fullnamelist, $item);
-									foreach($uids as $uid) { // already validated so we don't have to worry about not finding the right stuff
-										$row_value .= "*=+*:" . $uid; // setup the format to simply be right for inserting into DB.
+									if(is_numeric($item)) {
+										$row_value .= "*=+*:" . $item;
 										$numberOfNames++;
-									} 
+									} else {
+										$uids = array_keys ($fullnamelist, $item);
+										foreach($uids as $uid) { // already validated so we don't have to worry about not finding the right stuff
+											$row_value .= "*=+*:" . $uid; // setup the format to simply be right for inserting into DB.
+											$numberOfNames++;
+										}
+									}
 								}
 								if($numberOfNames == 1) { // single entries are not supposed to have the separator at the front
 									$row_value = substr_replace($row_value, "", 0, 5);
