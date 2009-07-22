@@ -1049,7 +1049,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 								if($temparraykeys[0] === "{FULLNAMES}") { $nametype = "name"; }
 								if($temparraykeys[0] === "{USERNAMES}") { $nametype = "uname"; }
 								if(!isset($fullnamelist)) {
-									$fullnamelistq = q("SELECT uid, $nametype FROM " . $xoopsDB->prefix("users"));
+									$fullnamelistq = q("SELECT uid, $nametype FROM " . $xoopsDB->prefix("users") . " ORDER BY uid");
 									static $fullnamelist = array();
 									foreach($fullnamelistq as $thisname) {
 										$fullnamelist[$thisname['uid']] = $thisname[$nametype];
@@ -1068,10 +1068,14 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 										$numberOfNames++;
 									} else {
 										$uids = array_keys ($fullnamelist, $item);
-										foreach($uids as $uid) { // already validated so we don't have to worry about not finding the right stuff
+										// instead of matching on all values, like we used to, match only the first name found (lowest user id)
+										// to match other users besides the first one, use a user id number instead of a name in the import spreadsheet
+										$row_value .= "*=+*:" . $uids[0];
+										$numberOfNames++;
+										/*foreach($uids as $uid) { // already validated so we don't have to worry about not finding the right stuff
 											$row_value .= "*=+*:" . $uid; // setup the format to simply be right for inserting into DB.
 											$numberOfNames++;
-										}
+										}*/
 									}
 								}
 								if($numberOfNames == 1) { // single entries are not supposed to have the separator at the front
