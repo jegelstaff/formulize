@@ -48,9 +48,10 @@ class formulizeElementRenderer{
 		global $xoopsUser, $xoopsModuleConfig, $separ, $myts;
 		$myts =& MyTextSanitizer::getInstance();
 		
+		
 		// $form_ele_id contains the ele_id of the current link select box, but we have to remove "ele_" from the front of it.
 		//print "form_ele_id: $form_ele_id<br>"; // debug code
-		if(strstr($form_ele_id, "de_")) { // display element uses a slightly different element name so it can be distinguished on subsequent page load from regular elements
+		if(strstr($form_ele_id, "de_")) { // display element uses a slightly different element name so it can be distinguished on subsequent page load from regular elements...THIS IS NOT TRUE/NECESSARY ANYMORE SINCE FORMULIZE 3, WHERE ALL ELEMENTS ARE DISPLAY ELEMENTS
 			$true_ele_id = str_replace("de_".$this->_ele->getVar('id_form')."_".$entry."_", "", $form_ele_id);
 			$displayElementInEffect = true;
 		} else {
@@ -195,6 +196,7 @@ class formulizeElementRenderer{
 			case 'select':
 				if(strstr($ele_value[2], "#*=:*")) // if we've got a link on our hands... -- jwe 7/29/04
 				{
+					
 					// new process for handling links...May 10 2008...new datastructure for formulize 3.0
 					$boxproperties = explode("#*=:*", $ele_value[2]);
 					$sourceFid = $boxproperties[0];
@@ -312,11 +314,16 @@ class formulizeElementRenderer{
 						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFid)." AS t1 WHERE t1.entry_id>0 $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
 					}
 					//print "$sourceValuesQ<br><br>";
-					$form_ele = new XoopsFormSelect($ele_caption, $form_ele_id, '', $ele_value[0], $ele_value[1]);
-					// add the initial default entry, singular or plural based on whether the box is one line or not.
-					if($ele_value[0] == 1) {
-						$form_ele->addOption("none", _AM_FORMLINK_PICK);
+					if(!$isDisabled) {
+						$form_ele = new XoopsFormSelect($ele_caption, $form_ele_id, '', $ele_value[0], $ele_value[1]);
+						if($ele_value[0] == 1) { // add the initial default entry, singular or plural based on whether the box is one line or not.
+							$form_ele->addOption("none", _AM_FORMLINK_PICK);
+						}
+					} else {
+						$disabledHiddenValue = array();
+						$disabledOutputText = array();
 					}
+					
 					if(!isset($cachedSourceValuesQ[$sourceValuesQ])) {
 						$reslinkedvaluesq = $xoopsDB->query($sourceValuesQ);
 						if($reslinkedvaluesq) {
@@ -328,11 +335,23 @@ class formulizeElementRenderer{
 						$cachedSourceValuesQ[$sourceValuesQ] = $linkedElementOptions;
 					}
 					
-					$form_ele->addOptionArray($cachedSourceValuesQ[$sourceValuesQ]);
-					foreach($sourceEntryIds as $thisEntryId) {
-						$form_ele->setValue($thisEntryId);
+					if(!$isDisabled) {
+						$form_ele->addOptionArray($cachedSourceValuesQ[$sourceValuesQ]);
 					}
-					
+					foreach($sourceEntryIds as $thisEntryId) {
+						if(!$isDisabled) {
+							$form_ele->setValue($thisEntryId);
+						} else {
+							$disabledName = $ele_value[1] ? $form_ele_id."[]" : $form_ele_id;
+							$disabledHiddenValue[] = "<input type=hidden name=\"$disabledName\" value=\"$thisEntryId\">";
+							$disabledOutputText[] = $cachedSourceValuesQ[$sourceValuesQ][$thisEntryId]; // the text value of the option(s) that are currently selected
+						}
+					}
+					if($isDisabled) {
+						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText) . implode("\n", $disabledHiddenValue));
+						$isDisabled = false;
+					}
+
 					// THIS COMMENTED CODE WAS BASED ON THE OLD DATA SYNTAX
 					// Check to see if there's more than 50 options, and if so, render as newfangled combobox
 					// Pretty darn inefficient to do this here, we should have a flag on the element itself to indicate how it should be rendered, but
@@ -365,7 +384,9 @@ class formulizeElementRenderer{
 				{
 					$selected = array();
 					$options = array();
-					
+					$disabledOutputText	= array();
+					$disabledHiddenValue = array();
+					$disabledHiddenValues = "";
 					// add the initial default entry, singular or plural based on whether the box is one line or not.
 					if($ele_value[0] == 1)
 					{
@@ -468,6 +489,22 @@ class formulizeElementRenderer{
 					}
 					$form_ele1->addOptionArray($options);
 	
+					if($selected) {
+						if(is_array($selected)) {
+							$hiddenElementName = $ele_value[1] ? $form_ele1->getName()."[]" : $form_ele1->getName();
+							foreach($selected as $thisSelected) {
+								$disabledOutputText[] = $options[$thisSelected];
+								$disabledHiddenValue[] = "<input type=hidden name=\"$hiddenElementName\" value=\"$thisSelected\">";
+							}
+						} elseif($ele_value[1]) { // need to keep [] in the hidden element name if multiple values are expected, even if only one is chosen
+							$disabledOutputText[] = $options[$selected];
+							$disabledHiddenValue[] = "<input type=hidden name=\"".$form_ele1->getName()."[]\" value=\"$selected\">";
+						} else {
+							$disabledOutputText[] = $options[$selected];
+							$disabledHiddenValue[] = "<input type=hidden name=\"".$form_ele1->getName()."\" value=\"$selected\">";
+						}
+					}
+	
 					$renderedHoorvs = "";
 					if(count($hiddenOutOfRangeValuesToWrite) > 0) {
 						foreach($hiddenOutOfRangeValuesToWrite as $hoorKey=>$hoorValue) {
@@ -477,11 +514,18 @@ class formulizeElementRenderer{
 						}
 					}
 	
+					if($isDisabled) {
+						$disabledHiddenValues = implode("\n", $disabledHiddenValue); // glue the individual value elements together into a set of values
+						$renderedElement = implode(", ", $disabledOutputText);
+						$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
+					} else {
+						$renderedElement = $form_ele1->render();
+					}
+					
 					$form_ele = new XoopsFormLabel(
 						$ele_caption,
-						"<nobr>" . $form_ele1->render() . "</nobr>\n" . $renderedHoorvs
+						"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValues\n"
 					);
-
 				
 				} // end of if we have a link on our hands. -- jwe 7/29/04
 				
@@ -510,11 +554,15 @@ class formulizeElementRenderer{
 			case 'checkbox':
 				$selected = array();
 				$options = array();
+				$disabledHiddenValue = array();
+				$disabledHiddenValues = "";
+				$disabledOutputText = array();
 				$opt_count = 1;
 				while( $i = each($ele_value) ){
 					$options[$opt_count] = $myts->stripSlashesGPC($i['key']);
 					if( $i['value'] > 0 ){
 						$selected[] = $opt_count;
+						$disabledHiddenValue[] = "<input type=hidden name=\"".$form_ele_id."[]\" value=\"$opt_count\">";
 					}
 					$opt_count++;
 				}
@@ -537,8 +585,14 @@ class formulizeElementRenderer{
 							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, true);
 							if( $other != false ){
 								$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
+								if(in_array($o['key'], $selected)) {
+										$disabledOutputText[] = _formulize_OPT_OTHER.$other;
+								}
 							}else{
 								$form_ele1->addOption($o['key'], $o['value']);
+								if(in_array($o['key'], $selected)) {
+									$disabledOutputText[] = $o['value'];
+								}
 								if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
 									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 								}
@@ -560,8 +614,14 @@ class formulizeElementRenderer{
 							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, true);
 							if( $other != false ){
 								$t->addOption($o['key'], _formulize_OPT_OTHER.$other);
+								if(in_array($o['key'], $selected)) {
+										$disabledOutputText[] = _formulize_OPT_OTHER.$other;
+								}
 							}else{
 								$t->addOption($o['key'], $o['value']);
+								if(in_array($o['key'], $selected)) {
+										$disabledOutputText[] = $o['value'];
+								}
 								if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
 									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 								}
@@ -581,11 +641,18 @@ class formulizeElementRenderer{
 					}
 				}
 				
+				if($isDisabled) {
+					$disabledHiddenValues = implode("\n", $disabledHiddenValue); // glue the individual value elements together into a set of values
+					$renderedElement = implode(", ", $disabledOutputText);
+					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
+				} else {
+					$renderedElement = $form_ele1->render();
+				}
+				
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
-					"<nobr>" . $form_ele1->render() . "</nobr>\n" . $renderedHoorvs
+					"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValues\n"
 				);
-				// need to replicate handling of disabled elements here when element created, since labels cannot be disabled by code below!  (Just like radio buttons)
 				
 			break;
 			
@@ -630,9 +697,15 @@ class formulizeElementRenderer{
 							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter);
 							if( $other != false ){
 								$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
+								if($o['key'] == $selected) {
+									$disabledOutputText = _formulize_OPT_OTHER.$other;
+								}
 							}else{
 								$o['value'] = get_magic_quotes_gpc() ? stripslashes($o['value']) : $o['value'];
 								$form_ele1->addOption($o['key'], $o['value']);
+								if($o['key'] == $selected) {
+									$disabledOutputText = $o['value'];
+								}
 								if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
 									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 								}
@@ -640,13 +713,6 @@ class formulizeElementRenderer{
 							$counter++;
 						}
 						$form_ele1->setExtra("onchange=\"javascript:formulizechanged=1;\"");
-						if($isDisabled) {
-								if(!$disabledHiddenValue) {
-									$disabledHiddenValue = "<input type=hidden name=\"".$form_ele1->getName()."\" value=\"$selected\">\n";
-								}
-								$form_ele1->setExtra("disabled=1");
-								$form_ele1->setName("disabled_".$form_ele1->getName());
-						}
 					break;
 					default:
 						$form_ele1 = new XoopsFormElementTray('', $delimSetting);
@@ -661,21 +727,20 @@ class formulizeElementRenderer{
 							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter);
 							if( $other != false ){
 								$t->addOption($o['key'], _formulize_OPT_OTHER.$other);
+								if($o['key'] == $selected) {
+									$disabledOutputText = _formulize_OPT_OTHER.$other;
+								}
 							}else{
 								$o['value'] = get_magic_quotes_gpc() ? stripslashes($o['value']) : $o['value'];
 								$t->addOption($o['key'], $o['value']);
+								if($o['key'] == $selected) {
+									$disabledOutputText = $o['value'];
+								}
 								if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
 									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 								}
 							}
 							$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
-							if($isDisabled) {
-								if(!$disabledHiddenValue) {
-									$disabledHiddenValue = "<input type=hidden name=\"".$t->getName()."\" value=\"$selected\">\n";
-								}
-								$t->setExtra("disabled=1");
-								$t->setName("disabled_".$t->getName());
-							}
 							$form_ele1->addElement($t);
 							$counter++;
 						}
@@ -689,14 +754,18 @@ class formulizeElementRenderer{
 						unset($thisHoorv);
 					}
 				}
+				if($isDisabled) {
+					$disabledHiddenValue = "<input type=hidden name=\"".$form_ele_id."\" value=\"$selected\">\n";
+					$renderedElement = $disabledOutputText; // just text for disabled elements
+					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
+				} else {
+					$renderedElement = $form_ele1->render();
+				}
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
-					"<nobr>" . $form_ele1->render() . "</nobr>\n$renderedHoorvs\n$disabledHiddenValue"
+					"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValue\n"
 				);
-				if($isDisabled) {
-					$isDisabled = false; // need to handle the disabled stuff here in the element, and not as a "carte-blanche" at the end, because radio buttons are rendered as labels sometimes, and labels cannot be "disabled" in the normal way lower down (they're not elements, they're HTML).
-				}
-
+				
 				if($this->_ele->getVar('ele_req')) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
@@ -756,7 +825,6 @@ class formulizeElementRenderer{
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 					$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.value == \"\" || myform.{$eltname}.value == \"YYYY-mm-dd\" ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 				}
-				
 			break;
 			case 'sep':
 				//$ele_value[0] = $myts->displayTarea($ele_value[0]);
@@ -788,6 +856,7 @@ class formulizeElementRenderer{
 					$form_ele_id,
 					""
 				);
+				
 				}
 				else
 				{
@@ -798,6 +867,7 @@ class formulizeElementRenderer{
 					$ele_value[0]
 
 				);
+				
 				} // end of check to see if the default setting is for real
 			break;
 			/*
@@ -830,9 +900,6 @@ class formulizeElementRenderer{
 			return $form_ele_new;
 		} elseif(is_object($form_ele) AND $isDisabled) { // element is disabled
 			$form_ele = $this->formulize_disableElement($form_ele, $e);
-			if(substr($form_ele_id, 0, 9) != "desubform" AND ($e == "text" OR $e == "textarea" OR $e == "select" OR $e=="radio" OR $e=="checkbox" OR $e=="date" OR $e=="colorpick" OR $e=="yn")) {
-				$form_ele->addElement(new xoopsFormHidden("decue_".trim($form_ele_id,"de_"), 1));
-			}
 			return $form_ele;
 		} else { // form ele is not an object...only happens for IBs?
 			return $form_ele;
@@ -925,34 +992,35 @@ class formulizeElementRenderer{
 		return $output;
 	}
 
-	// THIS FUNCTION ADDS DISABLED=1 TO AN ELEMENT, AND CREATES A HIDDEN FIELD WITH THE CURRENT OR DEFAULT VALUE OF THE ELEMENT, SO IT IS SAVED WHEN A FORM IS SUBMITTED DESPITE BEING DISABLED
+	// creates a hidden version of the element so that it can pass its value back, but not be available to the user
+	
 	function formulize_disableElement($element, $type) {
-		$element->setExtra("disabled=1");
-		$newElement = new xoopsFormElementTray($element->getCaption(), "\n");
-		$element->setCaption('');
-		switch($type) {
-			case 'date':
-				$hiddenValue = date("Y-m-d", $element->getValue());
-				break;
-			default:
-				$hiddenValue = $element->getValue();
-		}
-		if(is_array($hiddenValue)) {
-			foreach($hiddenValue as $value) {
-				$newElement->addElement(new xoopsFormHidden($element->getName()."[]", $value));
-				unset($value);
+		if($type == "text" OR $type == "textarea" OR $type == "date" OR $type == "colorpick") {
+			$newElement = new xoopsFormElementTray($element->getCaption(), "\n");
+			switch($type) {
+				case 'date':
+					$hiddenValue = date("Y-m-d", $element->getValue());
+					break;
+				default:
+					$hiddenValue = $element->getValue(); // should work for all elements, since non-textbox type elements where the value would not be passed straight back, are handled differently at the time they are constructed
 			}
+			if(is_array($hiddenValue)) { // not sure when/if this would ever happen
+				foreach($hiddenValue as $value) {
+					$newElement->addElement(new xoopsFormHidden($element->getName()."[]", $value));
+					unset($value);
+				}
+				$newElement->addElement(new xoopsFormLabel('', implode(", ", $hiddenValue)));
+			} else {
+				$newElement->addElement(new xoopsFormHidden($element->getName(), $hiddenValue));
+				$newElement->addElement(new xoopsFormLabel('', $hiddenValue));
+			}
+			$newElement->addElement(new xoopsFormHidden("decue_".trim($element->getName(),"de_"), 1));
+			return $newElement;
 		} else {
-			$newElement->addElement(new xoopsFormHidden($element->getName(), $hiddenValue));	
+			return $element;
 		}
-		$element->setName('disabled_'.$element->getName());
-		if($type == "text" OR $type == "textarea" OR $type="date") {
-			$newElement->addElement(new xoopsFormLabel('', $hiddenValue));
-		} else {
-			$newElement->addElement($element); 
-		}
-		return $newElement;
 	}
+
 
 	// this function creates the previous values drop down that people can use to set the value of an element
 	// screen is the screen object with the data we need (form id with previous entries and rule for lining them up with current form)

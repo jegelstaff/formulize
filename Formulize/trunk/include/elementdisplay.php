@@ -70,6 +70,10 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
       $frameworkElementIds = $frameworkObject->getVar('element_ids');
       $element_id = $frameworkElementIds[$ele];
   		$element =& $formulize_mgr->get($element_id);
+			if(!is_object($element)) {
+				// then check the element data handles instead
+				$element =& $formulize_mgr->get($ele);
+			}
 		}
 	
 		if(!is_object($element)) {

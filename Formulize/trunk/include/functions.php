@@ -1614,14 +1614,20 @@ function prepDataForWrite($element, $ele) {
           $ele_value_from_object = $element->getVar('ele_value');
 					if(strstr($ele_value_from_object[2], "#*=:*")) { // if we've got a formlink, then handle it here...
 						if(is_array($ele)) {
-							//print_r($ele);
-              $value = ",";
+							$startWhatWasSelected = true;
               foreach($ele as $whatwasselected) {
+								if(!is_numeric($whatwasselected)) { continue; }
+								if($startWhatWasSelected) {
+									$value = ",";
+									$startWhatWasSelected = false;
+								}
                 $value .= $whatwasselected.",";
               }
-						} else {
+						} elseif(is_numeric($ele)) {
               $value = ",".$ele.",";
-						}	
+						}	else {
+							$value = "";
+						}
 //						print "<br>VALUE: $value";	
 						break;			
 					}
@@ -2974,7 +2980,7 @@ function formulize_replaceLineBreaks($value, $handleid, $frid) {
 			} else {
 				return $element;
 			}
-		} elseif(is_numeric($element)) {
+		} else {
 			$element_handler =& xoops_getmodulehandler('elements', 'formulize');
 			$element = $element_handler->get($element);
 			if(!is_object($element)) {
@@ -2982,9 +2988,7 @@ function formulize_replaceLineBreaks($value, $handleid, $frid) {
 			}	else {
 				return $element;
 			}
-		} else {
-			return false;
-		}
+		} 
 	}
 
 

@@ -437,6 +437,9 @@ if( !empty($ele_id) AND $clone == 0){
                     case 'colorpick':
                           $dataType = 'text';
                           break;
+									  case 'yn':
+												  $dataType = 'int'; // they are stored as 1 and 2
+													break;
                     case 'text':
                           if($ele_value[3] == 1 AND $_POST['element_datatype'] == 'text') { // numbers only...and Formulize was asked to figure out the right datatype.....
                                 if($datadecimals = intval($ele_value[5])) {
