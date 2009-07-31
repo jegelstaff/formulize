@@ -119,7 +119,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 // main body of page goes here...
 
 // check for groupscope and globalscope
-if($globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid)) { // get all groups
+if($globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid) AND 1 > 2) { // get all groups
 	// need to make option array with values as gids and text as names of groups
 	$allgroups =& $member_handler->getGroups();
 	for($i=0;$i<count($allgroups);$i++) {
@@ -128,10 +128,18 @@ if($globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, 
 		}
 	}
 } elseif($groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid)) { // get all groups the groups the user is a member of (except registered users)
-	for($i=0;$i<count($groups);$i++) {
-		$thisgroup =& $member_handler->getGroup($groups[$i]);
-		if($can_add = $gperm_handler->checkRight("add_own_entry", $fid, $groups[$i], $mid)) {
-			$availgroups[$groups[$i]] = $thisgroup->getVar('name');
+	// check permission table for the existing forced groupscope selections, if any
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
+	$formulize_permHandler = new formulizePermHandler($fid);
+	$groupScopeGroups = $formulize_permHandler->getGroupScopeGroups($groups); // returns false if none found, otherwise, array of id=>name, based on groups selected in permission UI for this form
+	if($groupScopeGroups !== false) {
+		$availgroups = $groupScopeGroups;
+	} else {
+		for($i=0;$i<count($groups);$i++) {
+			$thisgroup =& $member_handler->getGroup($groups[$i]);
+			if($can_add = $gperm_handler->checkRight("add_own_entry", $fid, $groups[$i], $mid)) {
+				$availgroups[$groups[$i]] = $thisgroup->getVar('name');
+			}
 		}
 	}
 } else {

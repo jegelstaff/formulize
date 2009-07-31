@@ -964,7 +964,7 @@ function newpermform($group_list="", $form_list="")
       			} else {
       				$class = 'even';
       			}
-				print "<tr><td valign=top class=head><p><b>" . $gn['name'] . "</b><br><br>" . $gn['description'] . "</p>";      			
+				print "<tr><td valign=top class=head><p><b>" . $gn['name'] . "</b><br><br>" . $gn['description'] . "<br><br>"._AM_FORCE_GROUPSCOPE_HELP."</p>";      			
 				drawformperms($form_list, $formulize_perms, $perm_desc, $group_id, $class, false, $hidden_once);
       			$hidden_once = 1;
       		}
@@ -1017,7 +1017,27 @@ function drawformperms($form_list, $formulize_perms, $perm_desc, $group_id="all"
       		} 
       		print ">$perm</option>";
       	}
-      	print "</select></p></td>";		
+      	print "</select></p>";
+				
+				// now add in the grouplist selection box, which can optionally be used to force groupscope to be over certain other group(s).  If no groups selected, then the user's groups with view_form are used instead. -- added July 31 2009, jwe
+				if(!$same) {
+					$groupDataQueryResult = $xoopsDB->query("SELECT groupid, name FROM " .$xoopsDB->prefix("groups"));
+					$numGroups = $xoopsDB->getRowsNum($groupDataQueryResult);
+					$glistsize = $numGroups < 10 ? $numGroups : 10;
+					include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
+					if(!isset($$formulize_permHandler{$form_id})) {
+						$formulize_permHandler{$form_id} = new formulizePermHandler($form_id);
+					}
+					$groupScopeGroupIds = $formulize_permHandler{$form_id}->getGroupScopeGroupIds($group_id);
+					print "<p><b>"._AM_FORCE_GROUPSCOPE_INTRO."</b><br><select size=$glistsize multiple='multiple' name='".$group_id."-".$form_id."-groupscope[]'>\n";
+					while($groupDataArray = $xoopsDB->fetchArray($groupDataQueryResult)) {
+						$selectedGroup = in_array($groupDataArray['groupid'], $groupScopeGroupIds) ? " selected='selected'" : "";
+						print "<option value=".$groupDataArray['groupid'] . $selectedGroup . ">".$groupDataArray['name']."</option>\n";
+					}
+					print "</select></p>";
+				}
+				
+				print "</td>";		
       	$colcounter++;
       }
       print "</tr></table></td></tr>";
@@ -1080,6 +1100,17 @@ function updateperms() {
 					updatePermsDB($module_id, $gid, $fid, $perm, 0); // last value is the add flag
 				}
 			}
+			
+			// handle groupscope groups
+			include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
+   		if(!isset($formulize_permHandler{$fid})) {
+		  	$formulize_permHandler{$fid} = new formulizePermHandler($fid);
+			}
+			if(!$formulize_permHandler{$fid}->setGroupScopeGroups($gid, $_POST[$perm_key."-groupscope"])) {
+				print "Error: could not set the groupscope groups for form $fid.<br>";
+			}
+			
+			
 		}
 	}
 }
@@ -1110,7 +1141,28 @@ function patch40() {
 		print "</form>";
 	} else {
 		// PATCH LOGIC GOES HERE
-		$sql = array();
+		
+		$testsql = "SHOW TABLES";
+		$resultst = $xoopsDB->query($testsql);
+		while($table = $xoopsDB->fetchRow($resultst)) {
+			$existingTables[] = $table[0];
+		}
+
+		$sql = array();		
+
+		if(!in_array($xoopsDB->prefix("formulize_groupscope_settings"), $existingTables)) {
+			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_groupscope_settings")."` (
+  `groupscope_id` int(11) NOT NULL auto_increment,
+  `groupid` int(11) NOT NULL default 0,
+	`fid` int(11) NOT NULL default 0,
+  `view_groupid` int(11) NOT NULL default 0,
+  PRIMARY KEY (`groupscope_id`),
+  INDEX i_groupid (`groupid`),
+	INDEX i_fid (`fid`),
+  INDEX i_view_groupid (`view_groupid`)
+) TYPE=MyISAM;";
+		}
+	
 		$sql['add_encrypt'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_encrypt` tinyint(1) NOT NULL default '0'";
 		$sql['add_lockedform'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `lockedform` tinyint(1) NULL default NULL";
 		$sql['drop_from_formulize_id_admin'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `admin`";

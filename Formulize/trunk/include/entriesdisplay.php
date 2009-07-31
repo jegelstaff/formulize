@@ -53,6 +53,7 @@ global $xoopsConfig;
 		include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
 	}
 
+include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 // main function
@@ -411,12 +412,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$_POST['oldcols'] = implode(",",$colsforsearches); // need to reconstruct this in case any columns were removed because of persistent searches on a hidden column
 		}
 		
-    // if there is a screen with a top template in effect, then do not lock the controls even if the saved view says we should.  Assume that the screen author has compensated for any permission issues.
-    if($screen AND $_POST['lockcontrols']) {
-      if($screen->getVar('toptemplate') != "") {
-        $_POST['lockcontrols'] = 0;
-      }
-    }
     /*global $xoopsUser;
     if($xoopsUser->getVar('uid')==1) {
       print "<br>Currentview: " . $_POST['currentview'] . "<br>Oldcols: ";
@@ -438,7 +433,28 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
       }
     }*/
 		
-		$currentView = $_POST['currentview']; 
+		$currentView = $_POST['currentview'];
+		
+		// need to check that the user is allowed to have this scope, unless the view is unlocked
+		// only works for the default levels of views, not specific group selections that a view might have...that would be more complicated and could be built in later
+		if($_POST['lockcontrols']) {
+			if($currentView == "all" AND !$view_globalscope) {
+				$currentView = "group";
+			}
+			if($currentView == "group" AND !$view_groupscope AND !$view_globalscope) {
+				$currentView = "mine";
+			}
+		}
+		
+		// if there is a screen with a top template in effect, then do not lock the controls even if the saved view says we should.  Assume that the screen author has compensated for any permission issues.
+		// we need to do this after rachetting down the visibility controls.  Fact is, controlling UI for users is one thing that we can trust the screen author to do, so we don't need to indicate that the controls are locked.  But we don't want the visibility to override what people can normally see, so we rachet that down above.
+    if($screen AND $_POST['lockcontrols']) {
+      if($screen->getVar('toptemplate') != "") {
+        $_POST['lockcontrols'] = 0;
+      }
+    }
+		
+		
 	} elseif($_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
 		$currentView = $_POST['advscope'];
 	} elseif($_POST['currentview']) { // could have been unset by deletion of a view or something else, so we must check to make sure it exists before we override the default that was determined above
@@ -548,7 +564,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				break;
 			default:
 				$viewgroups = explode(",", trim($currentView, ","));
-				$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+				// get the groups that the current user has specified scope for, and if none, then look at view form
+				$formulize_permHandler = new formulizePermHandler($fid);
+				$groupsWithAccess = $formulize_permHandler->getGroupScopeGroupIds($groups);
+				if($groupsWithAccess === false) {
+					$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+				}
 				$diff = array_diff($viewgroups, $groupsWithAccess);
 				if(!isset($diff[0]) AND $view_groupscope) { // if the scopegroups are completely included in the user's groups that have access to the form, and they have groupscope (ie: they would be allowed to see all these entries anyway)
 					$settings['lockcontrols'] = "";

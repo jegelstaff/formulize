@@ -42,6 +42,7 @@ if($res = $xoopsDB->query($sql)) {
 }
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 
 
@@ -337,10 +338,20 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
 	if(!$gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
 		return false;
 	}
+	
+	if(!$uid) {
+		global $xoopsUser;
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+	}
+	
+	if(!$owner) {
+		$owner = getEntryOwner($entry, $fid);
+	}
+	
 	// do security check on entry in form -- note: based on the initial entry passed, does not consider entries in one-to-one linked forms which are assumed to be allowed for the user if the main entry is.
 	// allow user to see own entry
 	// any entry if they have view_globalscope
-	// other users in same group if they have view_groupscope
+	// other users in the appropriate group if they have view_groupscope
 	// --report overrides need to be added in here for display of entries in reports
 
 	if($entry) {
@@ -354,9 +365,16 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
 					$smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$fid");
 					if($smq[0]['singleentry'] == "group") { $view_groupscope = true; }
 				}
-				$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
-        $data_handler = new formulizeDataHandler($fid);
-				$intersect_groups = array_intersect($data_handler->getEntryOwnerGroups($entry), $groupsWithAccess, $groups);
+				// get the groupscope groups if specified, otherwise, use view_form permission to determine the groups
+				$formulize_permHandler = new formulizePermHandler($fid);
+				$specificScopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groups);
+				if($specificScopeGroups === false) {
+					$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+					$data_handler = new formulizeDataHandler($fid);
+				  $intersect_groups = array_intersect($data_handler->getEntryOwnerGroups($entry), $groupsWithAccess, $groups);
+				} else {
+					$intersect_groups = array_intersect($data_handler->getEntryOwnerGroups($entry), $specificScopeGroups); // when new groupscope is in effect, the specific groups are independent of the user's groups, so don't include $groups in the intersect
+				}
 				sort($intersect_groups); // necessary to make sure that 0 will be a valid key to use below
 /*print_r($groups);
 
@@ -1465,8 +1483,12 @@ function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups
 		$all_users[] = $uid;
 		$scope = makeUidFilter($all_users);
 	} elseif($currentView == "group") {
-		$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
-    $scopeGroups = array_intersect($groupsWithAccess, $groups);
+		$formulize_permHandler = new formulizePermHandler($fid);
+		$scopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groups);
+		if($scopeGroups === false) {
+			$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+			$scopeGroups = array_intersect($groupsWithAccess, $groups);
+		}
     if(count($scopeGroups)==0) { // safeguard against empty or invalid grouplists
 		//if(!isset($all_users[0])) { 
 			$all_users[] = $uid;
@@ -1789,12 +1811,16 @@ function getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid) {
       $data_handler = new formulizeDataHandler($fid);
       $single['entry'] = $data_handler->getFirstEntryForUsers($uid); 
 		} elseif($smq[0]['singleentry'] == "group") { // get the first entry belonging to anyone in their groups, excluding any groups that do not have add_own_entry permission
-			$groupsWithAccess = $gperm_handler->getGroupIds("add_own_entry", $fid, $mid);
-			$intersect_groups = array_intersect($groups, $groupsWithAccess);
+			$formulize_permHandler = new formulizePermHandler($fid);
+			$intersect_groups = $formulize_permHandler->getGroupScopeGroupIds($groups); // use specified groups if any are available
+			if($intersect_groups === false) {			
+				$groupsWithAccess = $gperm_handler->getGroupIds("add_own_entry", $fid, $mid);
+				$intersect_groups = array_intersect($groups, $groupsWithAccess);
+			}
 			$all_users = array();
       global $formulize_archived_available;
 			foreach($intersect_groups as $grp) {
-				if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone! -- superfluous now since registered users would normally be ignored since people probably would not be handing out perms to registered users group (on the other hand, if someone wanted to, it should be allowed now, since it won't screw things up necessarily, thanks to the use of groupsWithAccess)
+				if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone! -- superfluous now since registered users would normally be ignored since people probably would not be handing out perms to registered users group (on the other hand, if someone wanted to, it should be allowed now, since it won't screw things up necessarily, thanks to the use of groupsWithAccess -- and the specified groupscope)
           if($formulize_archived_available) {
             $users = $member_handler->getUsersByGroup($grp, false, 0, 0, true);  // last param will include archived users based on the Freeform archived user core hack
           } else {
@@ -2145,19 +2171,13 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
     $all_users = ""; // deprecated, now using groups
     $all_groups = "";
 	} elseif($group_scope = $gperm_handler->checkRight("view_groupscope", $targetForm['fid'], $groups, $mid)) {
-		$groupsWithAccess = $gperm_handler->getGroupIds("add_own_entry", $targetForm['fid'], $mid);
-    $all_groups = array_intersect($groups, $groupsWithAccess);
+		$formulize_permHandler = new formulizePermHandler($fid);
+		$all_groups = $formulize_permHandler->getGroupScopeGroupIds($groups);
+		if($all_groups === false) {
+				$groupsWithAccess = $gperm_handler->getGroupIds("add_own_entry", $targetForm['fid'], $mid);
+        $all_groups = array_intersect($groups, $groupsWithAccess);
+		} 
     $all_users = "";
-		/*$all_users = array(); // deprecated, now using groups
-		foreach($groups as $grp) {
-			if(in_array($grp, $groupsWithAccess)) { // include only owner_groups that have view_form permission (so exclude groups the owner is a member of which aren't able to view the form)
-				if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone!
-					$users = $member_handler->getUsersByGroup($grp);
-					$all_users = array_merge((array)$users, $all_users);
-					unset($users);
-				}
-			}
-		}*/
 		$uq = makeUidFilter($all_users);
 		$scope_filter = "AND ($uq)"; // deprecated
 	} else {
@@ -2356,10 +2376,10 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 	// start with users who have groupscope
 	$groups_group = $gperm_handler->getGroupIds("view_groupscope", $fid, $mid);
 	$group_user_ids = formulize_getUsersByGroups($groups_group, $member_handler);
+	
 	// get groups with view_form, 
 	$groups_view = $gperm_handler->getGroupIds("view_form", $fid, $mid);
 	
-
 	$notification_handler =& xoops_gethandler('notification');
 
 	// start main loop
@@ -2370,13 +2390,34 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
       $data_handler = xoops_getmodulehandler('data', 'formulize');
     	$groups = $data_handler->getEntryOwnerGroups($entry);
     }
-    // take the intersection of groups with view form perm and the owner's groups (ie: the owner's groups that have view_form perm)
-    $owner_groups_with_view = array_intersect($groups_view, $groups);
-    // get users in the owners-groups-that-have-view_form-perm
-    $owner_groups_user_ids = formulize_getUsersByGroups($owner_groups_with_view, $member_handler);
-    // get the intersection of users in the owners-groups-that-have-view_form-perm and groups with groupscope
-    $group_uids = array_intersect($group_user_ids, $owner_groups_user_ids);
+		
+		// get the uids of all the users who are members of groups that have a specified groupscope that includes a group that is an owner group of the entry
+		if(!isset($formulize_permHandler)) {
+			$formulize_permHandler = new formulizePermHandler($fid);
+		}
+		$groups_with_specified_scope = $formulize_permHandler->getGroupsHavingSpecificScope($groups);
+		$groups_with_different_specified_scope = $formulize_permHandler->getGroupsHavingDifferentSpecificScope($groups); // gets groups that have specific scope that does not include these groups
+		$specified_group_uids = array();
+		$specified_different_group_uids = array();
+		if($groups_with_specified_scope !== false) {
+			$specified_group_uids = formulize_getUsersByGroups(array_intersect((array)$groups_with_specified_scope, (array)$groups_group), $member_handler); // array_intersect applied to groups that have groupscope permission, and the groups that have the specified scope over the ownergroups (just in case groups were picked in the perm UI, but groupscope itself was not assigned, or turned off)
+		}
+		if($groups_with_different_specified_scope !== false) {
+			$specified_different_group_uids = formulize_getUsersByGroups(array_intersect((array)$groups_with_different_specified_scope, (array)$groups_group), $member_handler);
+		}
+
+		// take the intersection of groups with view form perm and the owner's groups (ie: the owner's groups that have view_form perm)
+		$owner_groups_with_view = array_intersect($groups_view, $groups);
+		// get users in the owners-groups-that-have-view_form-perm
+		$owner_groups_user_ids = formulize_getUsersByGroups($owner_groups_with_view, $member_handler); 
+		// get the intersection of users in the owners-groups-that-have-view_form-perm and groups with groupscope
+		$group_uids = array_intersect($group_user_ids, $owner_groups_user_ids);
   
+		// remove the users from groups-with-a-specified-scope that doesn't-include-the-owner-groups, from the users that are part of dynamically generated groupscope (if a user has a specified scope, then that should override any dynamically generated scope, and if the specified scope does not include this entry's groups, then they need to be pulled)
+		$group_uids = array_diff((array)$group_uids, (array)$specified_different_group_uids);
+		
+		$group_uids = array_unique(array_merge((array)$specified_group_uids, (array)$group_uids));
+	
     $uids_complete = array();
     if(count($group_uids) > 0 AND count($global_uids) > 0) {
       $uids_complete = array_unique(array_merge((array)$group_uids, (array)$global_uids));
@@ -2460,10 +2501,11 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 		// handle custom conditions
 		foreach($saved_conditions as $thiscon) {
       if($thiscon['not_cons_template']) {
-        if(!file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/".$thiscon['not_cons_template'].".tpl")) {
+				$templateFileName = substr($thiscon['not_cons_template'], -4) == ".tpl" ? $thiscon['not_cons_template'] : $thiscon['not_cons_template'] . ".tpl";
+        if(!file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/".$templateFileName)) {
           continue;
         } else {
-          $templateFileContents = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/".$thiscon['not_cons_template'].".tpl");
+          $templateFileContents = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/".$templateFileName);
           if(strstr($templateFileContents, "{ELEMENT")) {
             // gather the data for this entry and make it available to the template, since it uses an element tag in the message
 			// Only do this getData call if we don't already have data from the database...$data[0] == "" will probably never be true in Formulize 3.0 and higher, but will evaluate as expected, with a warning about [0] being an invalid offset or something like that
@@ -2571,7 +2613,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
       $data_handler2 = new formulizeDataHandler($linkProperties[0]);
       $uids_temp = getAllUsersForEntries($entry_ids);
       if(count($uids_temp) > 0) {
-        $uids_conditions = array_merge($uids_temp, $uids_conditions); // not need for type hint (array) in this case because getAllUsersForEntries always returns an array, even if its empty
+        $uids_conditions = array_merge($uids_temp, $uids_conditions); // no need for type hint (array) in this case because getAllUsersForEntries always returns an array, even if its empty
       }
       unset($uids_temp);
     } else {

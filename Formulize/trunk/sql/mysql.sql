@@ -1,3 +1,15 @@
+CREATE TABLE `formulize_groupscope_settings` (
+  `groupscope_id` int(11) NOT NULL auto_increment,
+  `groupid` int(11) NOT NULL default 0,
+  `fid` int(11) NOT NULL default 0,
+  `view_groupid` int(11) NOT NULL default 0,
+  PRIMARY KEY (`groupscope_id`),
+  INDEX i_groupid (`groupid`),
+	INDEX i_fid (`fid`),
+  INDEX i_view_groupid (`view_groupid`)
+) TYPE=MyISAM;
+
+
 CREATE TABLE `formulize_screen_listofentries` (
   `listofentriesid` int(11) NOT NULL auto_increment,
   `sid` int(11) NOT NULL default 0,
