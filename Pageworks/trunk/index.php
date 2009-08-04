@@ -137,13 +137,6 @@ if(!$page AND !$_GET['block']) {
 		redirect_header(XOOPS_URL . "/user.php", 2, _NO_PERM);
 	}
 
-	// check the XoopsSecurityToken if necessary
-	if(strstr($pagedata[0]['page_template'], "displayGrid(") AND count($_POST) > 0) { // grid uses tokens, and submission handling is the same as for displayElement, so token must be checked here
-		if(!$GLOBALS['xoopsSecurity']->check()) {
-			exit("This page could not be displayed.");
-		}
-	}
-
 }
 
 // 5. determine params from previous page
