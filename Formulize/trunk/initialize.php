@@ -41,6 +41,13 @@ global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig;
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
+$thisRendering = microtime(); // setup a flag that is common to this instance of rendering a formulize page
+if(!isset($prevRendering)) {
+	$prevRendering = array();
+}
+$prevRendering[$thisRendering] = isset($GLOBALS['formulize_thisRendering']) ? $GLOBALS['formulize_thisRendering'] : "";
+$GLOBALS['formulize_thisRendering'] = $thisRendering;
+
 // altered sept 8 to use fid instead of title
 
 $fid = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
@@ -172,5 +179,7 @@ if(!$rendered) {
       	header("Location: " . XOOPS_URL . "/modules/formulize/cat.php");
       }
 }
+
+$GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering]; // go back to the previous rendering flag, in case this operation was nested inside something else
 
 ?>

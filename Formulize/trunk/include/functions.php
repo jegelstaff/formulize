@@ -2124,33 +2124,54 @@ function getTextboxDefault($ele_value, $form_id, $entry_id) {
 		$ele_value = $default;
 	}
 
-	$ele_value = preg_replace('/\{DATE\}/', date("Y-m-d"), $ele_value);
-	if (ereg_replace("[^A-Z{}]","", $ele_value) == "{TODAY}") {
-		$number = ereg_replace("[^0-9+-]","", $ele_value);
-		$ele_value = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+  $foundTerms = array();
+  $position = 0;
+  while($position = strpos($ele_value, "{", $position)) {
+		$closePos = strpos($ele_value, "}", $position);
+		if($closePos) {
+			$foundTerms[] = substr($ele_value, $position+1, $closePos-$position-1);
+		}
+		$position++;
 	}
 
-	if( !is_object($xoopsUser) ){
-		$ele_value = preg_replace('/\{NAME\}/', '', $ele_value);
-		$ele_value = preg_replace('/\{name\}/', '', $ele_value);
-		$ele_value = preg_replace('/\{UNAME\}/', '', $ele_value);
-		$ele_value = preg_replace('/\{uname\}/', '', $ele_value);
-		$ele_value = preg_replace('/\{EMAIL\}/', '', $ele_value);
-		$ele_value = preg_replace('/\{email\}/', '', $ele_value);
-		$ele_value = preg_replace('/\{MAIL\}/', '', $ele_value);
-		$ele_value = preg_replace('/\{mail\}/', '', $ele_value);
-	}else{
-		$ele_value = preg_replace('/\{NAME\}/', $xoopsUser->getVar('name', 'e'), $ele_value); // modified to call real name 9/16/04 by jwe
-		$ele_value = preg_replace('/\{name\}/', $xoopsUser->getVar('name', 'e'), $ele_value); // modified to call real name 9/16/04 by jwe
-		$ele_value = preg_replace('/\{UNAME\}/', $xoopsUser->getVar('uname', 'e'), $ele_value);
-		$ele_value = preg_replace('/\{uname\}/', $xoopsUser->getVar('uname', 'e'), $ele_value);
-		$ele_value = preg_replace('/\{MAIL\}/', $xoopsUser->getVar('email', 'e'), $ele_value);
-		$ele_value = preg_replace('/\{mail\}/', $xoopsUser->getVar('email', 'e'), $ele_value);
-		$ele_value = preg_replace('/\{EMAIL\}/', $xoopsUser->getVar('email', 'e'), $ele_value);
-		$ele_value = preg_replace('/\{email\}/', $xoopsUser->getVar('email', 'e'), $ele_value);
+	foreach($foundTerms as $thisTerm) {
+		$replacementValue = "";
+		$searchTerm = $thisTerm;
+		if(strtolower($thisTerm) == "date") {
+			$replacementValue = date("Y-m-d");
+		}
+		if(strstr(strtolower($thisTerm), "today")) {
+			$number = substr($thisTerm,5);
+			if(!$number) {
+				$number = 0;
+			}
+			$replacementValue = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+		}
+		if(!$xoopsUser AND !$replacementValue) {
+			$replacementValue = "";
+		} elseif(!$replacementValue) {
+			if(strtolower($thisTerm) == "mail") {
+				$thisTerm = "email";
+			}
+			$replacementValue = $xoopsUser->getVar(strtolower($thisTerm));
+			if($replacementValue == "") {
+				// need to get the profile module if XOOPS 2.3 is in effect and has that module installed
+				global $xoopsDB;
+				$sql = "SELECT isactive FROM ".$xoopsDB->prefix("modules")." WHERE dirname='profile'";
+				if($res = $xoopsDB->query($sql)) {
+					$array = $xoopsDB->fetchArray($res);
+					if($array['isactive']==1) {
+						$profile_handler = xoops_getmodulehandler('profile', 'profile'); // this line will cause an abort of the page load if it fails, so must check for existence and active status of the module first!
+						$profile = $profile_handler->get($xoopsUser->getVar('uid'));
+						$replacementValue = $profile->getVar(strtolower($thisTerm));
+					}
+				}
+			}
+		}
+		$ele_value = str_replace("{".$searchTerm."}", $replacementValue, $ele_value);
 	}
 
-        return $ele_value;
+  return $ele_value;
 }
 
 
@@ -3081,7 +3102,7 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
 		$handles[0] = $temp;
 	}
 	$to_return = array();
-	if(!isset($cachedElementHandles[$frid])) {
+	if(!isset($cachedElementHandles[$frid]) OR ($fid AND !isset($cachedElementHandlesFromElementIds[$fid]))) {
 		global $xoopsDB;
 		
 		$cachedElementHandles[$frid]['creation_uid'] = "creation_uid";

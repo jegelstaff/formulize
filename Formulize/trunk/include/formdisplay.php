@@ -1507,9 +1507,9 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	}
 	
 	// add a hidden element to carry all the validation javascript that might be associated with elements rendered with elementdisplay.php
-	if(isset($GLOBALS['formulize_renderedElementsValidationJS'])) {
+	if(isset($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']])) {
 		$formulizeHiddenValidation = new XoopsFormHidden('validation', '');
-		foreach($GLOBALS['formulize_renderedElementsValidationJS'] as $thisValidation) { // grab all the validation code we stored in the elementdisplay.php file and attach it to this element
+		foreach($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']] as $thisValidation) { // grab all the validation code we stored in the elementdisplay.php file and attach it to this element
 			foreach(explode("\n", $thisValidation) as $thisValidationLine) {
 				$formulizeHiddenValidation->customValidationCode[] = $thisValidationLine;
 			}

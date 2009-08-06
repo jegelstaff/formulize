@@ -159,13 +159,13 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 			} elseif(is_object($form_ele)) {
 					print $form_ele->render();
           if(!empty($form_ele->customValidationCode)) {
-            $GLOBALS['formulize_renderedElementsValidationJS'][] = $form_ele->renderValidationJS();
+            $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][] = $form_ele->renderValidationJS();
           } elseif($element->getVar('ele_req') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea")) {
             $eltname    = $form_ele->getName();
             $eltcaption = $form_ele->getCaption();
             $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
             $eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-            $GLOBALS['formulize_renderedElementsValidationJS'][] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
+            $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
           }
 					return "rendered";
 			}

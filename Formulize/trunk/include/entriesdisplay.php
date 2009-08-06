@@ -1137,11 +1137,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			}
       
 			if(count($quickSearchesNotInTemplate) > 0) {			
-				print "<div style=\"display: none;\"><table>"; // enclose in a table, since drawSearches puts in <tr><td> tags
+				print "<div style=\"display: none;\">"; 
 				foreach($quickSearchesNotInTemplate as $qscode) {
 					print $qscode. "\n";
 				}
-				print "</table></div>";
+				print "</div>";
 			}
 		}	
 	
@@ -1601,8 +1601,26 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$mainFormHandle = key($data[key($data)]);
 		$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
 		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : $GLOBALS['formulize_countMasterResults'];
+		if(strstr($listTemplate, "displayElement")) {
+			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
+		}
 		if(isset($data)) {
 			//for($entryCounter=$formulize_LOEPageStart;$entryCounter<$actualPageSize;$entryCounter++) {
+			
+			// setup the view name variables, with true only set for the last loaded view
+			$viewNumber = 1;
+			foreach($settings['publishedviewnames'] as $id=>$thisViewName) {
+				$thisViewName = str_replace(" ", "_", $thisViewName);
+				if($id == $settings['lastloaded']) {
+					${$thisViewName} = true;
+					${'view'.$viewNumber} = true;
+				} else {
+					${$thisViewName} = false;
+					$view{'view'.$viewNumber} = false;
+				}
+				$viewNumber++;
+			}
+			
       foreach($data as $id=>$entry) {
 				//$entry = $data[$entryCounter];
 				//$id=$entryCounter;
@@ -1615,6 +1633,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 
 					// Set up the variables for the link to the current entry, and the checkbox that can be used to select the current entry
 					$linkids = internalRecordIds($entry, $mainFormHandle);
+					$entry_id = $linkids[0]; // make a nice way of referring to this for in the eval'd code
 					if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
 						$viewEntryLinkCode = "<a href='" . $currentURL;
 						if(strstr($currentURL, "?")) { // if params are already part of the URL...
@@ -1693,6 +1712,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 	if($useBoxes != 2 OR $useLinks) {
 		if(!$returnOnly) { print "<td class=head>&nbsp;</td>\n"; }
 	}
+	
 	for($i=0;$i<count($cols);$i++) {
 		if(!$returnOnly) { print "<td class=head>\n"; }
     //formulize_benchmark("drawing one search");
