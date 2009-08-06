@@ -262,13 +262,13 @@ if(strstr($pagedata[0]['page_template'], "displayCalendar(")) {
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 }
 // Note:  using displayElement is probably incompatible with using displayForm on a page, or displayElements, or displayCalendar, since element display wraps the entire pageworks output in a form.
-if(strstr($pagedata[0]['page_template'], "displayElement(") OR strstr($pagedata[0]['page_template'], "displayButton(") OR strstr($pagedata[0]['page_template'], "displayGrid(") OR strstr($pagedata[0]['page_template'], "displayCaption(")) {
+if(strstr($pagedata[0]['page_template'], "displayElement(") OR strstr($pagedata[0]['page_template'], "displayButton(") OR strstr($pagedata[0]['page_template'], "displayGrid(") OR strstr($pagedata[0]['page_template'], "displayCaption(") OR strstr($pagedata[0]['page_template'], "displayElementSave(")) {
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 	if(strstr($pagedata[0]['page_template'], "displayButton(")) {
 		include_once XOOPS_ROOT_PATH . "/modules/pageworks/include/displayButton_HTML.php";
 	}
-	if(strstr($pagedata[0]['page_template'], "displayElement(") OR strstr($pagedata[0]['page_template'], "displayGrid(")) {
+	if((strstr($pagedata[0]['page_template'], "displayElement(") OR strstr($pagedata[0]['page_template'], "displayGrid(")) AND !strstr($pagedata[0]['page_template'], "&lt;form")) {
 		$thistime = microtime();
 		print "<form name=\"elementdisplayform_$thistime\" action=" . getCurrentUrl() . " method=post>\n";
 	}
@@ -280,6 +280,13 @@ if(strstr($pagedata[0]['page_template'], "displayElement(") OR strstr($pagedata[
 
 // 10. run PHP code from template 
 
+$thisRendering = microtime(); // setup a unique flag to idenfity this instance of rendering a page
+if(!isset($prevRendering)) {
+	$prevRendering = array();
+}
+$prevRendering[$thisRendering] = isset($GLOBALS['formulize_thisRendering']) ? $GLOBALS['formulize_thisRendering'] : "";
+$GLOBALS['formulize_thisRendering'] = $thisRendering;
+
 ob_start();
 $result = eval(htmlspecialchars_decode($pagedata[0]['page_template'], ENT_QUOTES));
 $page_contents = ob_get_clean();
@@ -290,7 +297,7 @@ print $page_contents;
 
 
 // close the elementdisplayform if necessary, including all the handling for displayButtons
-if(strstr($pagedata[0]['page_template'], "displayElement(") OR strstr($pagedata[0]['page_template'], "displayGrid(")) {
+if((strstr($pagedata[0]['page_template'], "displayElement(") OR strstr($pagedata[0]['page_template'], "displayGrid(")) AND !strstr($pagedata[0]['page_template'], "&lt;form")) {
 	if(!strstr($pagedata[0]['page_template'], "displayElementSave(")) {
 		print "<p style=\"text-align: right\"><input type=submit name=submitelementdisplayform value=\"" . _pageworks_SAVE_BUTTON . "\"></p>\n";
 	}
@@ -304,6 +311,10 @@ if(strstr($pagedata[0]['page_template'], "displayButton(")) {
 $udt = getUserDateTime();
 $page_id = ltrim($page_id, "0");
 writeLogEntry($page_id, $udt['uid'], $udt['date'], $udt['time']);
+
+
+$GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering]; // go back to the previous rendering flag, in case this operation was nested inside something else
+
 
 } // end of blank page condition...show footer
 
