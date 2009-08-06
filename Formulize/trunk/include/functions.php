@@ -1025,25 +1025,52 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
   // $entries has been passed so we do need to gather them...
 
   // add to entries and fids array if one_to_one exists
-  // ONLY WORKS WITH COMMON VALUES RIGHT NOW!!!
-  // one to one linkages using linked selectboxes would probably be very uncommon
-  $allFidsFoundChecker = array();
-  $mainHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_to_one[0]['keyother']);
   foreach($one_to_one as $one_fid) {
     $fids[] = $one_fid['fid'];
-    $candidateHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_fid['keyself']);
-		$candidateEntry = q("SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$one_fid['fid']) . " AS candidate, ". $xoopsDB->prefix("formulize_".$fid) . " AS main WHERE candidate.".$candidateHandle[0]['ele_handle']."=main.".$mainHandle[0]['ele_handle']." AND main.entry_id = ".intval($entries[$fid][0])." LIMIT 0,1");
-		/*print "SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_fid['keyself'] . "<br><pre>";
-		print_r($candidateHandle);
-		print "</pre><br>SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$one_fid['fid']) . " AS candidate, ". $xoopsDB->prefix("formulize_".$fid) . " AS main WHERE candidate.".$candidateHandle[0]['ele_handle']."=main.".$mainHandle[0]['ele_handle']." AND main.entry_id = ".intval($entries[$fid][0])." LIMIT 0,1<br><pre>";
-		print_r($candidateEntry);
-		print "</pre>";*/
-    if($candidateEntry[0]['entry_id']) {
-      $entries[$one_fid['fid']][] = $candidateEntry[0]['entry_id'];
-    } else {
-      $entries[$one_fid['fid']][] = "";
-    }
-    $allFidsFoundChecker[$one_fid['fid']] = false;
+		// figure out if these are common value links, or linked selectboxes
+		if($one_fid['common']) {
+			$mainHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_to_one[0]['keyother']);
+			$candidateHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_fid['keyself']);
+			$candidateEntry = q("SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$one_fid['fid']) . " AS candidate, ". $xoopsDB->prefix("formulize_".$fid) . " AS main WHERE candidate.".$candidateHandle[0]['ele_handle']."=main.".$mainHandle[0]['ele_handle']." AND main.entry_id = ".intval($entries[$fid][0])." LIMIT 0,1");
+			/*print "SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_fid['keyself'] . "<br><pre>";
+			print_r($candidateHandle);
+			print "</pre><br>SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$one_fid['fid']) . " AS candidate, ". $xoopsDB->prefix("formulize_".$fid) . " AS main WHERE candidate.".$candidateHandle[0]['ele_handle']."=main.".$mainHandle[0]['ele_handle']." AND main.entry_id = ".intval($entries[$fid][0])." LIMIT 0,1<br><pre>";
+			print_r($candidateEntry);
+			print "</pre>";*/
+			if($candidateEntry[0]['entry_id']) {
+				$entries[$one_fid['fid']][] = $candidateEntry[0]['entry_id'];
+			} else {
+				$entries[$one_fid['fid']][] = "";
+			}
+		} else {
+			// figure out which of the two elements is the source of the linked values
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$selfElement = $element_handler->get($one_fid['keyself']);
+			if(is_object($selfElement)) {
+				$selfEleValue = $selfElement->getVar('ele_value');
+				if(strstr($selfEleValue[2], "#*=:*")) { // self is the linked selectbox, other is the source of the values
+					// get the entry in the $one_fid['fid'] form (form with the self element), that has the intval($entries[$fid][0]) entry (the entry we are calling up already) as it's linked value (with , , around it)
+					$data_handler = new formulizeDataHandler($one_fid['fid']);
+					$foundEntry = $data_handler->findFirstEntryWithValue($selfElement, ",".intval($entries[$fid][0]).",");
+					if($foundEntry !== false) {
+						$entries[$one_fid['fid']][] = $foundEntry;
+					} else {
+						$entries[$one_fid['fid']][] = "";
+					}
+				} else { // other is the linked selectbox, self is the source of the values
+					// return the value of the $one_fid['keyother'] element in the $fid, in intval($entries[$fid][0]) entry, the minus the , ,
+					$data_handler = new formulizeDataHandler($fid);
+					$foundEntry = $data_handler->getElementValueInEntry(intval($entries[$fid][0]), $one_fid['keyother']);
+					if($foundEntry !== false) {
+						$entries[$one_fid['fid']][] = trim($foundEntry, ",");
+					} else {
+						$entries[$one_fid['fid']][] = "";
+					}
+				}
+			} else {
+				$entries[$one_fid['fid']][] = "";
+			}
+		}
   }
   
   foreach($one_to_many as $many_fid) {

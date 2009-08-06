@@ -480,7 +480,6 @@ formulize_benchmark("Start of formDisplay.");
 		print_r($sub_entries); // debug block - ONLY VISIBLE TO USER 1 RIGHT NOW 
 		} */
 		
-		
 		formulize_benchmark("Ready to start building form.");
 		
 		$title = "";
@@ -489,6 +488,45 @@ formulize_benchmark("Start of formDisplay.");
 			if(!$scheck = security_check($this_fid, $entries[$this_fid][0], $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms) {
 				continue;
 			}
+			
+			// if there is more than one form, then force the setting of the linked element after there has been a form submission
+			// do this after the security check, hence its placement here
+			static $oneToOneLinksMade = false;
+			if(!$oneToOneLinksMade AND count($fids)> 1 AND isset($GLOBALS['formulize_newEntryIds'][$this_fid])) {
+				$frameworkHandler = xoops_getmodulehandler('frameworks', 'formulize');
+				$frameworkObject = $frameworkHandler->get($frid);
+				foreach($frameworkObject->getVar('links') as $thisLink) {
+					if($thisLink->getVar('relationship') == 1) { // 1 signifies one to one relationships
+						$form1 = $thisLink->getVar('form1');
+						$form2 = $thisLink->getVar('form2');
+						$key1 = $thisLink->getVar('key1');
+						$key2 = $thisLink->getVar('key2');
+						if($thisLink->getVar('common')) {
+							if(!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") {
+								// if we don't have a value for this element, then populate it with the value from the other element
+								formulize_writeEntry(array($key1=>$_POST["de_".$form2."_new_".$key2]), $GLOBALS['formulize_newEntryIds'][$form1][0]);
+							} elseif(!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") {
+								// if we don't have a value for this element, then populate it with the value from the other element
+								formulize_writeEntry(array($key2=>$_POST["de_".$form1."_new_".$key1]), $GLOBALS['formulize_newEntryIds'][$form2][0]);
+							}
+						} else {
+							// figure out which one is on which side of the linked selectbox
+							$element_handler = xoops_getmodulehandler('elements', 'formulize');
+							$linkedElement1 = $element_handler->get($key1);
+							$linkedElement1EleValue = $linkedElement1->getVar('ele_value');
+							if(strstr($linkedElement1EleValue[2], "#*=:*")) {
+								// element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1 with , , around it
+								formulize_writeEntry(array($key1=>",".$GLOBALS['formulize_newEntryIds'][$form2][0].","), $GLOBALS['formulize_newEntryIds'][$form1][0]);
+							} else {
+								// element 2 is the linked selectbox, so get the value of entry id for what we just created in form 1 and put it in element 2 with , , around it
+								formulize_writeEntry(array($key2=>",".$GLOBALS['formulize_newEntryIds'][$form1][0].","), $GLOBALS['formulize_newEntryIds'][$form2][0]);
+							}
+						}
+					} 
+				}
+				$oneToOneLinksMade = true;
+			}
+			
 	
 					unset($prevEntry);
 					if($entries[$this_fid]) { 	// if there is an entry, then get the data for that entry
