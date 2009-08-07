@@ -245,7 +245,7 @@ class formulizeElementRenderer{
 								}
 							} else { // all groups should be used
 								unset($pgroups);
-								$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups") . " WHERE groupid != " . XOOPS_GROUP_USERS);
+								$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups")); //  . " WHERE groupid != " . XOOPS_GROUP_USERS); // use all groups now, if all groups are picked, with no restrictions on membership or anything, then use all groups
 								foreach($allgroupsq as $thisgid) {
 									$pgroups[] = $thisgid['groupid'];
 								}

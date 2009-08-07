@@ -233,20 +233,11 @@ function _formulize_returnElement($ele, $formframe="") {
 	}
 
 	if(!$element) {
-      	if(is_numeric($ele))
-          {
-      		$element_id = $ele;
-          }
-      	else
-          {
-      		// $element_id = getFrameworkElementId($formframe, $ele); // broken - no such function exists anymore
-          }
-
       	if(!$formulize_mgr) {
       		$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
       	}
 
-      	$element =& $formulize_mgr->get($element_id);
+      	$element =& $formulize_mgr->get($ele);
       	if(!is_object($element)) {
       		return "invalid_element";
       	}
