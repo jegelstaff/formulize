@@ -1266,11 +1266,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
      foreach($entry as $formHandle=>$record) {
           if(isset($metadata[$formHandle])) { // if there are derived value formulas for this form...
                if(!isset($parsedFormulas[$formHandle])) {
-                    $formulaParseResult = formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $frid, $fid);
-                    if($formulaParseResult === "Syntax Error") {
-                        print "Error: there is an error in one of the derived value fields.  It could be a syntax error in the formula, or a reference to a form element is not valid.";
-                        return $entry;
-                    }
+                    formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $frid, $fid);
                     $parsedFormulas[$formHandle] = true;
                }
                foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
@@ -1318,10 +1314,12 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                if(!is_numeric($term)) { //  AND !formulize_validFrameworkHandle($frid, $term)) { // don't need to check for a valid framework handle here, we can do it in the convert function next
                     $newterm = formulize_convertCapOrColHeadToHandle($frid, $fid, $term);
                     if($newterm == "{nonefound}") {
-                         return "Syntax Error";
+												 $formula = "\$value = \"Syntax Error\"";
+												 break;
                     } 
                } elseif($frid) { // need to convert numeric terms to framework handles if a framework is in effect
-                    return "Syntax Error";
+										$formula = "\$value = \"Syntax Error\"";
+										break;
                }
                $replacement = "display(\$entry, '$newterm')";
                $formula = str_replace($term, $replacement, $formula);
@@ -1339,7 +1337,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
      }
      fwrite($derivedValueFormulaFile, $functionsToWrite. "?>");
      fclose($derivedValueFormulaFile);
-     include $fileName;     
+     include $fileName;
 }
 
 // THIS FUNCTION CHECKS TO SEE IF A GIVEN PIECE OF TEXT IS USED IN A FRAMEWORK AS AN ELEMENT HANDLE
