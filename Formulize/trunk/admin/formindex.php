@@ -1266,7 +1266,7 @@ function patch31() {
 								$alterTableSQL .= !$start ? "," : ""; // add comma if we're on a subsequent run through
 								$alterTableSQL .= " CHANGE `".$thisFidDataTableInfo['Field']."` `".$thisFidDataTableInfo['Field']."` date NULL default NULL";
 								$start = false;
-							} elseif(strtoupper($thisFidDataTableInfo['Null']) == "NO") {
+							} elseif(strtoupper($thisFidDataTableInfo['Null']) != "YES") {
 								$alterTableSQL .= !$start ? "," : ""; // add comma if we're on a subsequent run through
 								$alterTableSQL .= " CHANGE `".$thisFidDataTableInfo['Field']."` `".$thisFidDataTableInfo['Field']."` text NULL default NULL";
 								$start = false;
