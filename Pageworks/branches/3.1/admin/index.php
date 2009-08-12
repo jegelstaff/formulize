@@ -267,7 +267,7 @@ switch ($param_op)
 		print "<h1>Unknown method requested '$param_op' in admin/index.php</h1>";
 }
 
-print "<p>version 3.1 Final</p>";
+print "<p>version 3.11 Final</p>";
 
     xoops_cp_footer();
     exit();
