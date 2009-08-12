@@ -399,6 +399,7 @@ if( !empty($ele_id) AND $clone == 0){
 			      // figure out what the data type should be.
 			      // the rules:
 			      // date fields get 'date'
+						// colorpicker gets text
 			      // for text element types...
 			      // if 'text' is the specified type, and it's numbers only with a decimal, then use decimal with that number of spaces
 			      // if 'text' is the specified type, and it's numbers only with 0 decimals, then use int
@@ -406,6 +407,12 @@ if( !empty($ele_id) AND $clone == 0){
 			      switch($ele_type) {
 									case 'date':
 												$dataType = 'date';
+												break;
+									case 'colorpick':
+                        $dataType = 'text';
+                        break;
+									case 'yn':
+												$dataType = 'int'; // they are stored as 1 and 2
 												break;
 									case 'text':
 												if($ele_value[3] == 1 AND $_POST['element_datatype'] == 'text') { // numbers only...and Formulize was asked to figure out the right datatype.....

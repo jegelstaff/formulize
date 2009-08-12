@@ -243,7 +243,7 @@ class formulizeElementRenderer{
 								}
 							} else { // all groups should be used
 								unset($pgroups);
-								$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups") . " WHERE groupid != " . XOOPS_GROUP_USERS);
+								$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups")); // . " WHERE groupid != " . XOOPS_GROUP_USERS); // use all users period, no matter what, when use all groups is selected
 								foreach($allgroupsq as $thisgid) {
 									$pgroups[] = $thisgid['groupid'];
 								}
@@ -277,6 +277,11 @@ class formulizeElementRenderer{
 						$filterOps = $ele_value[5][1];
 						$filterTerms = $ele_value[5][2];
 						$start = true;
+						if(!isset($form_handler)) {
+								$form_handler = xoops_getmodulehandler('forms', 'formulize');
+						}
+						$sourceFormObject = $form_handler->get($sourceFid);
+						$sourceFormElementTypes = $sourceFormObject->getVar('elementTypes');
 						for($filterId = 0;$filterId<count($filterElements);$filterId++) {
 							if($start) {
 								$conditionsfilter = " AND (";
@@ -298,6 +303,15 @@ class formulizeElementRenderer{
 								} else {
 									$filterTerms[$filterId] = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 								}
+							}
+							if($sourceFormElementTypes[$filterElements[$filterId]] == "yn") {
+								if(strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($filterTerms[$filterId]))) { 
+                  $filterTerms[$filterId] = 1;
+                } elseif(strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($filterTerms[$filterId]))) {
+									$filterTerms[$filterId] = 2;
+                } else {
+									$filterTerms[$filterId] = "";
+                }
 							}
 							$conditionsfilter .= "t1.`".$filterElements[$filterId]."` ".$filterOps[$filterId]." ".$quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
 						}

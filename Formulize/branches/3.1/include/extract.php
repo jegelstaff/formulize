@@ -1231,11 +1231,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
      foreach($entry as $formHandle=>$record) {
           if(isset($metadata[$formHandle])) { // if there are derived value formulas for this form...
                if(!isset($parsedFormulas[$formHandle])) {
-                    $formulaParseResult = formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $frid, $fid);
-                    if($formulaParseResult === "Syntax Error") {
-                        print "Error: there is an error in one of the derived value fields.  It could be a syntax error in the formula, or a reference to a form element is not valid.";
-                        return $entry;
-                    }
+                    formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $frid, $fid);
                     $parsedFormulas[$formHandle] = true;
                }
                foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
@@ -1283,10 +1279,12 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                if(!is_numeric($term)) { //  AND !formulize_validFrameworkHandle($frid, $term)) { // don't need to check for a valid framework handle here, we can do it in the convert function next
                     $newterm = formulize_convertCapOrColHeadToHandle($frid, $fid, $term);
                     if($newterm == "{nonefound}") {
-                         return "Syntax Error";
+                         $formula = "\$value = \"Syntax Error\"";
+												 break;
                     } 
                } elseif($frid) { // need to convert numeric terms to framework handles if a framework is in effect
-                    return "Syntax Error";
+                    $formula = "\$value = \"Syntax Error\"";
+										break;
                }
                $replacement = "display(\$entry, '$newterm')";
                $formula = str_replace($term, $replacement, $formula);
@@ -1304,7 +1302,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
      }
      fwrite($derivedValueFormulaFile, $functionsToWrite. "?>");
      fclose($derivedValueFormulaFile);
-     include $fileName;     
+     include $fileName;
 }
 
 // THIS FUNCTION CHECKS TO SEE IF A GIVEN PIECE OF TEXT IS USED IN A FRAMEWORK AS AN ELEMENT HANDLE
@@ -1356,25 +1354,33 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
           
           // first check if this is a handle
           $handle_query = go("SELECT ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id'] . " AND ele_handle = \"".mysql_real_escape_string($term)."\"");
-          if(count($handle_query) > 0) {
-               if(XOOPS_ROOT_PATH != "") {
+          if(count($handle_query) > 0) { // if this is a valid handle, then use it
+							 $handle = $term;
+               if(XOOPS_ROOT_PATH != "" AND $frid) { // if a framework is in effect, and we have the full xoops stack in effect, then try to convert this element handle to a framework handle
                     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-                    $handle = $frid ? convertElementHandlesToFrameworkHandles($term, $frid): $term;
-               } else {
-                    $handle = $term; // can only do the conversion of element handles to framework handles if we are in the full stack, not if we are including extract.php from outside 
+  									if($foundHandles = convertElementHandlesToFrameworkHandles($term, $frid)) { // only do the conversion if we actually have a result...if we don't have a result, then stick with the element handle...because the framework could be in effect as part of the pageload, but not when the form is being displayed (this is what happens when you have a screen with a framework, and it hands off display of entries to a form or pageworks page that has no framework in effect)
+												$handle = $foundHandles[0]; // convertElementHandlestoFrameworkHandles returns an array
+										}
                }
           } else {
                //print "SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_colhead = \"" . mysql_real_escape_string($term) . "\"<br>";
                $colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_colhead = \"" . mysql_real_escape_string($term) . "\"");
                if(count($colhead_query) > 0) {
-                    $handle = $frid ? handleFromId($colhead_query[0]['ele_id'], $form_id['ff_form_id'], $frid) : $colhead_query[0]['ele_handle'];
+                    $handle = $colhead_query[0]['ele_handle'];
+										$foundElementId = $colhead_query[0]['ele_id'];
                } else {
                     //print "SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_caption = \"" . mysql_real_escape_string($term) . "\"<br>";
                     $caption_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_caption = \"" . mysql_real_escape_string($term) . "\"");
                     if(count($caption_query) > 0 ) {
-                         $handle = $frid ? handleFromId($caption_query[0]['ele_id'], $form_id['ff_form_id'], $frid) : $caption_query[0]['ele_handle'];
+                         $handle = $caption_query[0]['ele_handle'];
+												 $foundElementId = $caption_query[0]['ele_id'];
                     }
                }
+							 if($frid) {
+										if($foundHandle = handleFromId($foundElementId, $form_id['ff_form_id'], $frid)) { // if there's a framework in effect, try to match this up to a framework handle and return that instead if successful
+												 $handle = $foundHandle;
+										}
+							 }
           }
           if($handle) {
                $results_array[$form_id['ff_form_id']][$term][$frid] = $handle;

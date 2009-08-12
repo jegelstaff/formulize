@@ -1116,11 +1116,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			}
       
 			if(count($quickSearchesNotInTemplate) > 0) {			
-				print "<div style=\"display: none;\"><table>"; // enclose in a table, since drawSearches puts in <tr><td> tags
+				print "<div style=\"display: none;\">"; // enclose in a table, since drawSearches puts in <tr><td> tags
 				foreach($quickSearchesNotInTemplate as $qscode) {
 					print $qscode. "\n";
 				}
-				print "</table></div>";
+				print "</div>";
 			}
 		}	
 	

@@ -65,7 +65,13 @@ if( !empty($_POST) ){
 		if(get_magic_quotes_gpc()) {
 			if(is_array($v)) {
 				foreach($v as $vk=>$vv) {
-					$v[$vk] = stripslashes($vv);
+					if(is_array($vv)) {
+						foreach($vv as $vvk=>$vvv) {
+							$v[$vk][$vvk] = stripslashes($vvv);	
+						}
+					} else {
+						$v[$vk] = stripslashes($vv);	
+					}
 				}
 			} else {
 				$v = stripslashes($v);
@@ -78,7 +84,13 @@ if( !empty($_POST) ){
 		if(get_magic_quotes_gpc()) {
 			if(is_array($v)) {
 				foreach($v as $vk=>$vv) {
-					$v[$vk] = stripslashes($vv);
+					if(is_array($vv)) {
+						foreach($vv as $vvk=>$vvv) {
+							$v[$vk][$vvk] = stripslashes($vvv);	
+						}
+					} else {
+						$v[$vk] = stripslashes($vv);	
+					}
 				}
 			} else {
 				$v = stripslashes($v);
@@ -292,6 +304,9 @@ switch($op){
 			case 'derived':
 				include 'ele_derived.php';
 			break;
+			case 'colorpick':
+				$useDisable = true;
+				break;
 		}
 		if( $req ){
 			$ele_req = new XoopsFormCheckBox(_AM_ELE_REQ, 'ele_req', $element->getVar('ele_req'));

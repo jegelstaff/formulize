@@ -49,6 +49,20 @@ $fid = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['f
 $frid = ((isset( $_GET['frid'])) AND is_numeric( $_GET['frid'])) ? intval( $_GET['frid']) : "" ;
 $frid = ((isset($_POST['frid'])) AND is_numeric($_POST['frid'])) ? intval($_POST['frid']) : $frid ;
 
+// gather $_GET['sid'] (screen)
+if(isset($formulize_screen_id) AND is_numeric($formulize_screen_id)) {
+  $sid = $formulize_screen_id;
+} elseif(isset($_GET['sid']) AND is_numeric($_GET['sid'])) {
+	$sid = $_GET['sid'];
+} else {
+	$sid="";
+}
+if($sid) {
+	$screen_handler =& xoops_getmodulehandler('screen', 'formulize');
+	$thisscreen1 = $screen_handler->get($sid); // first get basic screen object to determine type
+	$fid = is_object($thisscreen1) ? $thisscreen1->getVar('fid') : 0;
+}
+
 // set the flag to force derived value updates, if it is in the URL
 if(isset($_GET['forceDerivedValueUpdate'])) {
 	$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
@@ -96,26 +110,14 @@ $view_groupscope = $gperm_handler->checkRight("view_groupscope", $id_form, $grou
 $config_handler =& xoops_gethandler('config');
 $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
 
-if(!$view_form = $gperm_handler->checkRight("view_form", $id_form, $groups, $mid) OR ($uid == 0 AND ($id_form == $formulizeConfig['profileForm'] AND $id_form > 0))) {
-	redirect_header(XOOPS_URL . "/user.php", 3, _formulize_NO_PERMISSION);
-}
-
-// gather $_GET['sid'] (screen)
-if(isset($_GET['sid']) AND is_numeric($_GET['sid'])) {
-	$sid = $_GET['sid'];
-} elseif(isset($formulize_screen_id) AND is_numeric($formulize_screen_id)) {
-  $sid = $formulize_screen_id;
-} else {
-	$sid="";
+if(!$view_form = $gperm_handler->checkRight("view_form", $id_form, $groups, $mid) OR ($uid == 0 AND ($id_form == $formulizeConfig['profileForm'] AND $id_form > 0)) OR !$fid) {
+	redirect_header(XOOPS_URL . "/user.php?xoops_redirect=".getCurrentURL(), 3, _formulize_NO_PERMISSION);
 }
 
 // IF A SCREEN IS REQUESTED, GET DETAILS FOR THAT SCREEN AND CALL THE NECESSARY DISPLAY FUNCTION
 $rendered = false;
 $screen = false;
 if($sid) {
-
-	$screen_handler =& xoops_getmodulehandler('screen', 'formulize');
-	$thisscreen1 = $screen_handler->get($sid); // first get basic screen object to determine type
 	if(is_object($thisscreen1)) {
 		unset($screen_handler); // reset handler to that type of screen
 		$screen_handler =& xoops_getmodulehandler($thisscreen1->getVar('type').'Screen', 'formulize');

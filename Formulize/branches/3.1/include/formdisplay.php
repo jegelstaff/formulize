@@ -1301,10 +1301,16 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 					}
 	        break;				
 				case "text":
-					global $myts;
-					if(!$myts){ $myts =& MyTextSanitizer::getInstance(); }
-					$ele_value = $ni->getVar('ele_value');
-					$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $myts->htmlSpecialChars(getTextboxDefault($ele_value[2], $ni->getVar('id_form'), $entry)));
+					if(!$entry) {
+						global $myts;
+						if(!$myts){ $myts =& MyTextSanitizer::getInstance(); }
+						$ele_value = $ni->getVar('ele_value');
+						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $myts->htmlSpecialChars(getTextboxDefault($ele_value[2], $ni->getVar('id_form'), $entry)));
+					} else {
+						include_once XOOPS_ROOT_PATH . "/modules/class/data.php";
+						$data_handler = new formulizeDataHandler($ni->getVar('id_form'));
+						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $data_handler->getElementValueInEntry($entry, $ni));
+					}
 					break;
 				case "textarea":
 					if(!$entry) {
@@ -1312,6 +1318,10 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 						if(!$myts){ $myts =& MyTextSanitizer::getInstance(); }
 						$ele_value = $ni->getVar('ele_value');
 						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $myts->htmlSpecialChars(getTextboxDefault($ele_value[0], $ni->getVar('id_form'), $entry)));
+					} else {
+						include_once XOOPS_ROOT_PATH . "/modules/class/data.php";
+						$data_handler = new formulizeDataHandler($ni->getVar('id_form'));
+						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $data_handler->getElementValueInEntry($entry, $ni));
 					}
 					break;
 			}
