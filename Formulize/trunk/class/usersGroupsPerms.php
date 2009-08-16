@@ -39,13 +39,13 @@ class formulizePermHandler  {
 	}
 	
 	// this method returns an array of group names, keys are ids
-	// gids can be a group id or array of ids
+	// gids can be a group id or array of ids...it is the groupids that you are asking about, and you want to know which specific groups are selected as the scope for these groups you're passing in
 	function getGroupScopeGroups($gids) {
 		return $this->_getGroupScopeGroupsOrIds($gids, 'group_names');
 	}
 	
 	// this method returns an array of group ids
-	// gids can be a group id or array of ids
+	// gids can be a group id or array of ids...it is the groupids that you are asking about, and you want to know which specific groups are selected as the scope for these groups you're passing in
 	function getGroupScopeGroupIds($gids) {
 		return $this->_getGroupScopeGroupsOrIds($gids, 'group_ids');
 	}
@@ -132,7 +132,7 @@ class formulizePermHandler  {
 			if($res = $xoopsDB->query($sql)) {
         if($xoopsDB->getRowsNum($res) != 0) {			
 					while($array = $xoopsDB->fetchArray($res)) {
-						$cachedGroupScopeInfo[$this->fid][$gid]['group_ids'][] = $array['view_groupid'];
+						$cachedGroupScopeInfo[$this->fid][$gid]['group_ids'][$array['view_groupid']] = $array['view_groupid'];
 						$cachedGroupScopeInfo[$this->fid][$gid]['group_names'][$array['view_groupid']] = $array['name'];
 					}
 				} else { // no forced groups specified for this group
