@@ -2100,12 +2100,18 @@ function getTextboxDefault($ele_value, $form_id, $entry_id) {
 
 	$foundTerms = array();
   $position = 0;
-  while($position = strpos($ele_value, "{", $position)) {
-		$closePos = strpos($ele_value, "}", $position);
-		if($closePos) {
-			$foundTerms[] = substr($ele_value, $position+1, $closePos-$position-1);
+  $foundBracket = true;
+  while($foundBracket) {
+		$position = strpos($ele_value, "{", $position);
+		if($position !== false) {
+			$closePos = strpos($ele_value, "}", $position);
+			if($closePos) {
+				$foundTerms[] = substr($ele_value, $position+1, $closePos-$position-1);
+			}
+			$position++;
+		} else {
+			$foundBracket = false;
 		}
-		$position++;
 	}
 
 	foreach($foundTerms as $thisTerm) {
