@@ -1359,11 +1359,22 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
      // check first for a match in the colhead field, then in the caption field
      // once a match is found, then return handleFromId if there's a $frid, otherwise, return the ID
      
+		 global $xoopsDB; // just used to check if XOOPS is in effect or not (in which case extract.php is being included directly)
      static $results_array = array();
      static $framework_results = array();
+		 static $formNames = array();
      $handle = "";
      $term = trim($term, "\"");
      
+		 if(strstr($term, "\$formName") AND $xoopsDB) { 		 // setup the name of the form and replace that value in the term, only when $xoopsDB is in effect, ie: full XOOPS stack
+					if(!isset($formNames[$fid])) {
+					  $form_handler = xoops_getmodulehandler('forms', 'formulize');
+					  $formObject = $form_handler->get($fid);
+						$formNames[$fid] = $formObject->getVar('title');
+					}
+					$term = str_replace("\$formName", $formNames[$fid], $term);
+		 }
+		 
      if($term == "uid" OR $term == "proxyid" OR $term == "creation_date" OR $term == "mod_date" OR $term == "creator_email" OR $term == "creation_uid" OR $term == "mod_uid" OR $term == "creation_datetime" OR $term == "mod_datetime") {
         return $term;
      }
@@ -1391,8 +1402,7 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
           $handle_query = go("SELECT ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id'] . " AND ele_handle = \"".mysql_real_escape_string($term)."\"");
           if(count($handle_query) > 0) { // if this is a valid handle, then use it
 							 $handle = $term;
-               if(XOOPS_ROOT_PATH != "" AND $frid) { // if a framework is in effect, and we have the full xoops stack in effect, then try to convert this element handle to a framework handle
-                    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+               if($xoopsDB AND $frid) { // if a framework is in effect, and we have the full xoops stack in effect, then try to convert this element handle to a framework handle
   									if($foundHandles = convertElementHandlesToFrameworkHandles($term, $frid)) { // only do the conversion if we actually have a result...if we don't have a result, then stick with the element handle...because the framework could be in effect as part of the pageload, but not when the form is being displayed (this is what happens when you have a screen with a framework, and it hands off display of entries to a form or pageworks page that has no framework in effect)
 												$handle = $foundHandles[0]; // convertElementHandlestoFrameworkHandles returns an array
 										}
@@ -2040,14 +2050,14 @@ if(!$xoopsDB) {
   $LOE_limit = 0;
 	
 	// this function gets the password for the encryption/decryption process
-  // want to has the db pass since we don't want any SQL logging processes to include the db pass as plaintext
+  // want to hash the db pass since we don't want any SQL logging processes to include the db pass as plaintext
 	// copied from functions.php, used in case any of the elements are encrypted
   function getAESPassword() {
-		 $icmsDB = SDATA_DB_PASS;
-		 $xoopsDB = XOOPS_DB_PASS;
-		 $dbPass = $icmsDB ? $icmsDB : $xoopsDB;
-		 return sha1($dbPass."I'm a cool, cool, cool dingbat");
+		 return sha1(DBPASS."I'm a cool, cool, cool dingbat");
   }
+	
+	$basePath = str_replace("modules/formulize/include/extract.php", "", __FILE__);
+	define('XOOPS_ROOT_PATH', str_replace("modules\formulize\include\extract.php", "", $basePath));
 	
 } else {
 	define("DBPRE", $xoopsDB->prefix('') . "_");
@@ -2086,10 +2096,8 @@ function formulize_benchmark($text) {
 
 
 if(!$myts) {
-  	// setup text sanitizer too
-	$basePath = str_replace("modules/formulize/include/extract.php", "", __FILE__);
-	$basePath = str_replace("modules\formulize\include\extract.php", "", $basePath);
-	include_once $basePath."/class/module.textsanitizer.php";
+ 	// setup text sanitizer too
+	include_once XOOPS_ROOT_PATH."/class/module.textsanitizer.php";
 	$myts = new MyTextSanitizer();
 	$GLOBALS['myts'] = $myts;
 }
