@@ -368,9 +368,9 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
 				// get the groupscope groups if specified, otherwise, use view_form permission to determine the groups
 				$formulize_permHandler = new formulizePermHandler($fid);
 				$specificScopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groups);
+				$data_handler = new formulizeDataHandler($fid);
 				if($specificScopeGroups === false) {
 					$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
-					$data_handler = new formulizeDataHandler($fid);
 				  $intersect_groups = array_intersect($data_handler->getEntryOwnerGroups($entry), $groupsWithAccess, $groups);
 				} else {
 					$intersect_groups = array_intersect($data_handler->getEntryOwnerGroups($entry), $specificScopeGroups); // when new groupscope is in effect, the specific groups are independent of the user's groups, so don't include $groups in the intersect
@@ -1126,14 +1126,14 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 	if($fdchoice == "update") { // reset headers and cols to include all data -- when creating a blank template, this reset has already happened before prepexport is called
 		$fdchoice = "comma";
 		$template = "update";
-		$cols1 = getAllColList($fid, "", $groups);
+		$cols1 = getAllColList($fid, "", $groups); // $cols1 will be a multidimensional array, one "entry" per column, and for each column the entry is an assoc array with ele_id, ele_colhead, ele_caption and ele_handle.
 		unset($cols);
 		$cols = array();
 		foreach($cols1[$fid] as $col) {
-			$cols[] = $col['ele_id'];
+			$cols[] = $col['ele_handle'];
 		}
 		unset($headers);
-		$headers = getHeaders($cols);
+		$headers = getHeaders($cols, "", true); // array of element handles, frid, boolean for if the cols are handles (or ids, which is the default assumption)
 	}
 	if($fdchoice == "comma") 
 	{ 
@@ -2698,7 +2698,7 @@ function compileNotUsers2($uids_conditions, $uids_complete, $notification_handle
 }
 
 // this function takes a series of columns and gets the headers for them
-function getHeaders($cols, $frid="", $colsIsElementHeaders = false) {
+function getHeaders($cols, $frid="", $colsIsElementHandles = false) {
 	global $xoopsDB;
   
 	foreach($cols as $col) {
@@ -2715,7 +2715,7 @@ function getHeaders($cols, $frid="", $colsIsElementHeaders = false) {
 		} elseif($frid) {
           $headers[] = getCaption($frid, $col, true, true);
        	} else {
-          if($colsIsElementHeaders) {
+          if($colsIsElementHandles) {
             $whereClause = "ele_handle = '$col'";
           } else {
             $whereClause = "ele_id = '$col'";

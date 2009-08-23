@@ -58,7 +58,7 @@ print "<table width=100%><tr><td width=5%></td><td width=90%>";
 // 1. need to make a form that can be used to pick metadata columns or no metadata columns
 // 2. need to reload this page with same URL and provide the download file as normal, but this time, pass in the no metadata flag if it was picked
 
-if(!isset($_POST['metachoice'])) {
+if(!isset($_POST['metachoice']) AND !isset($_GET['type'])) {
 
 	print "<form name=\"metachoiceform\" action=\"".getCurrentURL() . "\" method=\"post\">\n";
 	print "<center>\n";
@@ -73,6 +73,10 @@ if(!isset($_POST['metachoice'])) {
 
 } else {
 
+  if(!isset($_POST['metachoice'])) {
+		$_POST['metachoice'] = 0; // just set this to zero in case it's not set, which should never matter, since if 'type' is set, and metachoice is therefore skipped above, and you're making a template for updating, the metachoice is ignored in the actual export file creation process
+	}
+ 
 	// 1. need to pickup the full query that was used for the dataset on the page where the button was clicked
 	// 2. need to run that query and make a complete dataset
 	// 3. need to send that dataset to the prepexport function to make the spreadsheet
