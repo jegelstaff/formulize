@@ -94,7 +94,7 @@ foreach($_POST as $k=>$v) {
 		$elementMetaData = explode("_", $k);
 		$elementObject = $element_handler->get($elementMetaData[3]);
 		$v = prepDataForWrite($elementObject, $v);
-		if($v === "" AND $elementMetaData[2] == "new") { continue; } // don't store blank values for new entries, we don't want to write those (if desubform is used only for blank defaults, then it will always be "new" but we'll keep this as is for now, can't hurt)
+		if(($v === "" OR $v === "{WRITEASNULL}") AND $elementMetaData[2] == "new") { continue; } // don't store blank values for new entries, we don't want to write those (if desubform is used only for blank defaults, then it will always be "new" but we'll keep this as is for now, can't hurt)
 		$blankSubformCounter = trim(substr($k, 9, 2), "_"); // grab up to two spaces after the "desubform" text, since that will have the unique identifier of this new entry (ie: which blank subform entry this value belongs to)
 		$formulize_elementData[$elementMetaData[1]][$elementMetaData[2].$blankSubformCounter][$elementMetaData[3]] = $v;
 		if(!isset($formulize_subformBlankCues[$elementMetaData[1]])) {
@@ -162,6 +162,8 @@ if(count($formulize_elementData) > 0 ) { // do security check if it looks like w
 		}
 	}
 }
+
+
 foreach($formulize_elementData as $fid=>$entryData) { // for every form we found data for...
 	
 	// figure out permissions on the forms

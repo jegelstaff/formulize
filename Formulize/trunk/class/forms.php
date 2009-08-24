@@ -229,37 +229,55 @@ class formulizeFormsHandler {
 	
 	// create a data table for a form object (or form)
 	// $fid can be an id or an object
-	// Note that this method will add in fields for the elements in the form, if invoked as part of the 3.0 patch process, or when cloning forms.  Note also that all fields will be type 'text', so therefore when cloning, we should actually do something else so we can preseve the type of the original source elements.  This will require an element map to go from old elements to new elements, by ID or something like that.
-	function createDataTable($fid) {
+	// Note that this method will add in fields for the elements in the form, if invoked as part of the 3.0 patch process, or when cloning forms.
+	// if a map is provided, then we're cloning a form and the data types of the original elements will be preserved in the new form
+	function createDataTable($fid, $clonedForm=0, $map=false) {
 		if(is_numeric($fid)) {
-			$fid = $this->get($fid);
+			$fid = $this->get($fid, true); // true forces all elements to be included, even ones that are not displayed right now
 		} elseif(!get_class($fid) == "formulizeForm") {
 			return false;
 		}
 		$elementTypes = $fid->getVar('elementTypes');
 		global $xoopsDB;
 		// build SQL for new table
-                $newTableSQL = "CREATE TABLE " . $xoopsDB->prefix("formulize_" . $fid->getVar('id_form')) . " (";
-                $newTableSQL .= "entry_id int(7) unsigned NOT NULL auto_increment,";
-                $newTableSQL .= "creation_datetime Datetime NULL default NULL, ";
-                $newTableSQL .= "mod_datetime Datetime NULL default NULL, ";
-                $newTableSQL .= "creation_uid int(7) default '0',";
-                $newTableSQL .= "mod_uid int(7) default '0',";
-                foreach($fid->getVar('elementHandles') as $elementId=>$thisHandle) { 
-												if($elementTypes[$elementId] == "areamodif" OR $elementTypes[$elementId] == "ib" OR $elementTypes[$elementId] == "sep" OR $elementTypes[$elementId] == "grid" OR $elementTypes[$elementId] == "subform") { continue; } // do not attempt to create certain types of fields since they don't live in the db!
-												if($elementTypes[$elementId] == "date") {
-													$newTableSQL .= "`$thisHandle` date NULL default NULL,";
-												} else {
-													$newTableSQL .= "`$thisHandle` text NULL default NULL,";
-												}
-                }
-                $newTableSQL .= "PRIMARY KEY (`entry_id`),";
-                $newTableSQL .= "INDEX i_creation_uid (creation_uid)";
-                $newTableSQL .= ") TYPE=MyISAM;";
-                // make the table
-                if(!$tableCreationRes = $xoopsDB->queryF($newTableSQL)) {
+		$newTableSQL = "CREATE TABLE " . $xoopsDB->prefix("formulize_" . $fid->getVar('id_form')) . " (";
+		$newTableSQL .= "entry_id int(7) unsigned NOT NULL auto_increment,";
+		$newTableSQL .= "creation_datetime Datetime NULL default NULL, ";
+		$newTableSQL .= "mod_datetime Datetime NULL default NULL, ";
+		$newTableSQL .= "creation_uid int(7) default '0',";
+		$newTableSQL .= "mod_uid int(7) default '0',";
+		foreach($fid->getVar('elementHandles') as $elementId=>$thisHandle) {
+						if($elementTypes[$elementId] == "areamodif" OR $elementTypes[$elementId] == "ib" OR $elementTypes[$elementId] == "sep" OR $elementTypes[$elementId] == "grid" OR $elementTypes[$elementId] == "subform") { continue; } // do not attempt to create certain types of fields since they don't live in the db!
+						if($map !== false) {
+							// we're cloning with data, so base the new field's datatype on the original form's datatype for the corresponding field
+							if(!isset($dataTypeMap)) {
+								$dataTypeMap = array();
+								$dataTypeSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_".$clonedForm);
+								if($dataTypeRes = $xoopsDB->queryF($dataTypeSQL)) {
+									while($dataTypeArray = $xoopsDB->fetchArray($dataTypeRes)) {
+										$dataTypeMap[$dataTypeArray['Field']] = $dataTypeArray['Type'];
+									}
+								} else {
+									print "Error: could not get column datatype information for the source form.<br>$dataTypeSQL<br>";
+									return false;
+								}
+							}
+							$newTableSQL .= "`$thisHandle` ".$dataTypeMap[array_search($thisHandle, $map)]." NULL default NULL,";
+						} else {
+							if($elementTypes[$elementId] == "date") {
+								$newTableSQL .= "`$thisHandle` date NULL default NULL,";
+							} else {
+								$newTableSQL .= "`$thisHandle` text NULL default NULL,";
+							}
+						}
+		}
+		$newTableSQL .= "PRIMARY KEY (`entry_id`),";
+		$newTableSQL .= "INDEX i_creation_uid (creation_uid)";
+		$newTableSQL .= ") TYPE=MyISAM;";
+		// make the table
+		if(!$tableCreationRes = $xoopsDB->queryF($newTableSQL)) {
 			return false;
-                }
+		}
 		return true;
 	}
 

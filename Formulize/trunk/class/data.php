@@ -56,12 +56,16 @@ class formulizeDataHandler  {
 		if(!$sourceDataRes = $xoopsDB->query($sourceDataSQL)) {
 			return false;
 		}
+		$oldNewEntryIdMap = array();
+				
 		while($sourceDataArray = $xoopsDB->fetchArray($sourceDataRes)) {
 			$start = true;
 			$insertSQL = "INSERT INTO " . $xoopsDB->prefix("formulize_" . $this->fid) . " SET ";
-			
 			foreach($sourceDataArray as $field=>$value) {
-				if($field == "entry_id") { $value = ""; } // use new ID numbers in the new table, in case there's ever a case where we're copying data into a table that already has data in it
+				if($field == "entry_id") {
+					$originalEntryId = $value;
+					$value = ""; // use new ID numbers in the new table, in case there's ever a case where we're copying data into a table that already has data in it
+				}
 				if(isset($map[$field])) { $field = $map[$field]; } // if this field is in the map, then use the value from the map as the field name (this will match the field name in the cloned form)
 				if(!$start) { $insertSQL .= ", "; }
 				$insertSQL .= "`$field` = \"" . mysql_real_escape_string($value) . "\"";
@@ -70,7 +74,64 @@ class formulizeDataHandler  {
 			if(!$insertResult = $xoopsDB->queryF($insertSQL)) {
 				return false;
 			}
+			$oldNewEntryIdMap[$originalEntryId] = $xoopsDB->getInsertId();
 		}
+		// copy the entry_owner_group info from the old form to the new form, for the corresponding entries
+		foreach($oldNewEntryIdMap as $oldEntryId=>$newEntryId) {
+			// make one SQL statement per entry id that grabs all the groupids for that old entry id and inserts them as records for the new form with the new entry id
+			$sql = "INSERT INTO ".$xoopsDB->prefix("formulize_entry_owner_groups")." (`fid`, `entry_id`, `groupid`) SELECT ".$this->fid.", ".intval($newEntryId).", groupid FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." WHERE fid=".intval($sourceFid)." AND entry_id=".intval($oldEntryId);
+			if(!$res = $xoopsDB->queryF($sql)) {
+				print "<p>Error: could not insert entry-owner-group information with this SQL:<br>$sql<br><a href=\"mailto:formulize@freeformsolutions.ca\">Please contact Freeform Solutions</a> for assistance resolving this issue.</p>\n";
+			}
+		}
+		// cache the maps of old/new fields and entry ids, so we can refer to them later if other forms are cloned with data and linked selectboxes need to have references updated
+		$cacheFile = fopen(XOOPS_ROOT_PATH . "/cache/formulize_clonedFormMaps_".$sourceFid."_to_".$this->fid,"w");
+		fwrite($cacheFile, serialize($map)."\r\n".serialize($oldNewEntryIdMap));
+		fclose($cacheFile);
+		// check of relinking of linked selectboxes was requested, and if so, grab the metadata from the new target form, and then reassign the element defintion to point there, and update all the recorded entry ids to match the corresponding entry ids in the new form
+		if(isset($_POST['relink'])) {
+			$elementsToRelink = array();
+			foreach($_POST as $k=>$v) {
+				if(substr($k,0,7)=="element") {
+					$elementsToRelink[substr($k,7)] = $v; // keys are the elements to relink, values are the forms to relink them to
+				}
+			}
+			foreach($elementsToRelink as $elementId=>$targetForm) {
+				// 1. open up the metadata for the target form
+				// 2. get and reinsert the element object after changing the ele_value[2]
+				// 3. do SQL with the replace function, to change all the recorded entry_ids to the new ones
+				
+				// figure out current source form
+				$element_handler = xoops_getmodulehandler('elements', 'formulize');
+				$elementObject = $element_handler->get($elementId); // gets the element from the old form, that the user just clicked on to make a copy of
+				$ele_value = $elementObject->getVar('ele_value');
+				$boxproperties = explode("#*=:*", $ele_value[2]); // split the linked selectbox properties into target fid and target element handle
+				$lines = file_get_contents(XOOPS_ROOT_PATH."/cache/formulize_clonedFormMaps_".$boxproperties[0]."_to_".$targetForm); // read the cached info about the cloning of the target form that happened in the past
+        list($targetHandleMap, $targetEntryMap) = explode("\r\n", $lines); // get the mapping info about that cloning
+				$targetHandleMap = unserialize($targetHandleMap);
+				$targetEntryMap = unserialize($targetEntryMap);
+				// get the corresponding element to this linked selectbox, from the form we just created in the cloning process
+				$newElement = $element_handler->get($map[$elementObject->getVar('ele_handle')]);
+				$newEleValue = $newElement->getVar('ele_value');
+				$newEleValue[2] = $targetForm."#*=:*".$targetHandleMap[$boxproperties[1]]; // change the element pointer
+				$newElement->setVar('ele_value', $newEleValue);				
+				if(!$element_handler->insert($newElement)) { // update the element properties in the database
+					print "Error: could not relink linked selectbox element ".$map[$elementObject->getVar('ele_handle')]." to the selected new target form.<br>";
+					return false;
+				}
+				// go through the process of relinking all the entry references to the new entry ids in the new form
+				// seems rather inefficient to loop through once for each pair of entries, but refactoring this to a more streamlined data approach will have to wait
+				foreach($targetEntryMap as $oldId=>$newId) {
+					$sql = "UPDATE ".$xoopsDB->prefix("formulize_".$this->fid). " SET `".$map[$elementObject->getVar('ele_handle')]."` = REPLACE(`".$map[$elementObject->getVar('ele_handle')]."`,\",$oldId,\",\",$newId,\")";
+					if(!$res = $xoopsDB->query($sql)) {
+						print "Error: could not relink entries in newly created form (".$this->fid.") to the selected target form ($targetForm)<br>";
+						return false;
+					}
+				}
+			}
+		}
+		
+		
 		return true;
 	}
 
@@ -100,7 +161,7 @@ class formulizeDataHandler  {
 	}
 	
 	// this function looks in a particular entry in a particular form, and finds the entries it is pointing at, and then finds the new entries that it should be pointing at, and reassigns the values to match
-	// intended to be called once per pair of linked selectboxes involved in a cloning process
+	// intended to be called once per pair of linked selectboxes involved in an entry cloning process
 	function reassignLSB($sourceFid, $lsbElement, $entryMap) {
 		global $xoopsDB;
 		foreach($entryMap[$lsbElement->getVar('id_form')] as $originalEntry=>$newEntries) {
@@ -385,6 +446,8 @@ class formulizeDataHandler  {
 	// derive the owner groups and write them to the owner groups table
 	// $uids and $entryids can be parallel arrays with multiple users and entries
 	// arrays must start with 0 key and increase sequentially (no gaps, no associative keys, etc)
+	// all groups the user is a member of are written to the database, regardless of their current permission on the form
+	// interpretation of permissions is to be done when reading this information, to allow for more flexibility
 	function setEntryOwnerGroups($uids, $entryids) {
 		global $xoopsDB;
 		if(!is_array($uids)) {
@@ -430,18 +493,20 @@ class formulizeDataHandler  {
 	}
 	
 	// This function returns the entry_owner_groups for the given entry
-	function getEntryOwnerGroups($entry_id) {
+	// if no entry is specified, then returns all groups that have entries on this form
+	// remember that all groups the creator was a member of at the time of creation will be returned...interpretation of which groups are important must still be performed in logic once this info has been retrieved
+	function getEntryOwnerGroups($entry_id=0) {
 		static $cachedEntryOwnerGroups = array();
+		$entry_id = intval($entry_id);
 		if(!isset($cachedEntryOwnerGroups[$this->fid][$entry_id])) {
 			global $xoopsDB;
-			$sql = "SELECT groupid FROM ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid='".$this->fid."' AND entry_id='".intval($entry_id)."'";
+			$entryFilter = $entry_id ? " AND entry_id='".intval($entry_id)."' " : ""; // when making strings that get dropped into others, good habit is to leave spaces at ends
+			$sql = "SELECT DISTINCT(groupid) FROM ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid='".$this->fid."' $entryFilter ORDER BY groupid";
 			if($res = $xoopsDB->query($sql)) {
 				$groupArray = array();
 				while($row = $xoopsDB->fetchRow($res)) {
 					$groupArray[] = $row[0];
 				}
-				$groupArray = array_unique($groupArray);
-				sort($groupArray);
 				$cachedEntryOwnerGroups[$this->fid][$entry_id]=$groupArray;
 			} else {
 				$cachedEntryOwnerGroups[$this->fid][$entry_id]=false;

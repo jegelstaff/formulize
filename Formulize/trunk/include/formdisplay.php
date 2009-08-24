@@ -311,15 +311,6 @@ formulize_benchmark("Start of formDisplay.");
 	$owner = ($cookie_entry AND $uid) ? $uid : getEntryOwner($entry, $fid); // if we're pulling a cookie value and there is a valid UID in effect, then assume this user owns the entry, otherwise, figure out who does own the entry
 	$owner_groups = $data_handler->getEntryOwnerGroups($entry);
 	
-
-	if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms AND !$profileForm) {
-		print "<p>" . _NO_PERM . "</p>";
-		return;
-	}
-
-	// main security check passed, so let's initialize flags	
-	$go_back['url'] = $done_dest;
-	
 	if($single AND !$entry AND !$overrideMulti AND $profileForm !== "new") { // only adjust the active entry if we're not already looking at an entry, and there is no overrideMulti which can be used to display a new blank form even on a single entry form -- useful for when multiple anonymous users need to be able to enter information in a form that is "one per user" for registered users. -- the pressence of a cookie on the hard drive of a user will override other settings
 		$entry = $single_result['entry'];
 		$owner = getEntryOwner($entry, $fid);
@@ -329,6 +320,15 @@ formulize_benchmark("Start of formDisplay.");
 	} 
 	if($entry == "proxy") { $entry = ""; } // convert the proxy flag to the actual null value expected for new entry situations (do this after the single check!)
 	$editing = is_numeric($entry); // will be true if there is an entry we're looking at already
+
+
+	if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms AND !$profileForm) {
+		print "<p>" . _NO_PERM . "</p>";
+		return;
+	}
+
+	// main security check passed, so let's initialize flags	
+	$go_back['url'] = $done_dest;
 
 	// set these arrays for the one form, and they are added to by the framework if it is in effect
 	$fids[0] = $fid;

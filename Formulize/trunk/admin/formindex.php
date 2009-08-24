@@ -257,7 +257,7 @@ if( $op != 'addform' && $op != 'modform' && $op != 'renform' && $op != 'delform'
 						echo '<td><nobr><A HREF="formindex.php?title='.$id.'&op=clone">'._FORM_CLONE_TEXT.' <img src="../images/clone.gif" title="'._FORM_MODCLONE.'" alt="'._FORM_MODCLONE.'"></a></nobr> </td>';
 
 						// added August 12 2005 - jpc
-						echo '<td><nobr><A HREF="formindex.php?title='.$id.'&op=clonedata">'._FORM_CLONEDATA_TEXT.' <img src="../images/clonedata.gif" title="'._FORM_MODCLONEDATA.'" alt="'._FORM_MODCLONEDATA.'"></a></nobr> </td></tr>';
+						echo '<td><nobr><A HREF="clone.php?title='.$id.'">'._FORM_CLONEDATA_TEXT.' <img src="../images/clonedata.gif" title="'._FORM_MODCLONEDATA.'" alt="'._FORM_MODCLONEDATA.'"></a></nobr> </td></tr>';
 					} else {
 						echo '</tr>';
 					}
@@ -406,8 +406,8 @@ function cloneFormulize($title, $clonedata) {
     
         // Need to create the new data table now -- July 1 2007
         $formHandler =& xoops_getmodulehandler('forms', 'formulize');
-        if(!$tableCreationResult = $formHandler->createDataTable($newfid)) { // THE CLONED FORM WILL HAVE NO DATA TYPES!  ALL FIELDS WILL BE TEXT.  WE SHOULD CREATE A MORE COMPLEX TABLE CREATION MECHANISM FOR CLONING FORMS TO THE TYPES CAN BE PRESERVED.
-                print "Error: could not make the necessary new datatable for form " . $thisFormObject->getVar('id_form') . ".  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
+        if(!$tableCreationResult = $formHandler->createDataTable($newfid, $fid, $oldNewEleIdMap)) { // THE CLONED FORM WILL HAVE NO DATA TYPES!  ALL FIELDS WILL BE TEXT.  WE SHOULD CREATE A MORE COMPLEX TABLE CREATION MECHANISM FOR CLONING FORMS TO THE TYPES CAN BE PRESERVED.
+                print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
         }
         
           

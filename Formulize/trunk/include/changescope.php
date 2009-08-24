@@ -118,12 +118,21 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 // main body of page goes here...
 
+// get all the groups that have entries in this form from the entry_owner_groups table
+// this will be the set of all groups the creators of the entries were members of at the time, regardless of form permissions
+include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+$data_handler = new formulizeDataHandler($fid);
+$groupsWithEntries = $data_handler->getEntryOwnerGroups(); 
+
+// get all the groups that have view_form permission currently
+$groupsWithViewForm = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+
 // check for groupscope and globalscope
-if($globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid) AND 1 > 2) { // get all groups
+if($globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid)) { // get all groups
 	// need to make option array with values as gids and text as names of groups
 	$allgroups =& $member_handler->getGroups();
 	for($i=0;$i<count($allgroups);$i++) {
-		if($can_add = $gperm_handler->checkRight("add_own_entry", $fid, $allgroups[$i]->getVar('groupid'), $mid)) {
+		if(in_array($allgroups[$i]->getVar('groupid'), $groupsWithEntries) AND in_array($allgroups[$i]->getVar('groupid'), $groupsWithViewForm)) {
 			$availgroups[$allgroups[$i]->getVar('groupid')] = $allgroups[$i]->getVar('name');
 		}
 	}
@@ -137,7 +146,7 @@ if($globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, 
 	} else {
 		for($i=0;$i<count($groups);$i++) {
 			$thisgroup =& $member_handler->getGroup($groups[$i]);
-			if($can_add = $gperm_handler->checkRight("add_own_entry", $fid, $groups[$i], $mid)) {
+			if(in_array($groups[$i], $groupsWithEntries) AND in_array($groups[$i], $groupsWithViewForm)) {
 				$availgroups[$groups[$i]] = $thisgroup->getVar('name');
 			}
 		}

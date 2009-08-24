@@ -1841,7 +1841,7 @@ function getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid) {
 			$formulize_permHandler = new formulizePermHandler($fid);
 			$intersect_groups = $formulize_permHandler->getGroupScopeGroupIds($groups); // use specified groups if any are available
 			if($intersect_groups === false) {			
-				$groupsWithAccess = $gperm_handler->getGroupIds("add_own_entry", $fid, $mid);
+				$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
 				$intersect_groups = array_intersect($groups, $groupsWithAccess);
 			}
 			$all_users = array();
@@ -2228,7 +2228,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 		$formulize_permHandler = new formulizePermHandler($fid);
 		$all_groups = $formulize_permHandler->getGroupScopeGroupIds($groups);
 		if($all_groups === false) {
-				$groupsWithAccess = $gperm_handler->getGroupIds("add_own_entry", $targetForm['fid'], $mid);
+				$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $targetForm['fid'], $mid);
         $all_groups = array_intersect($groups, $groupsWithAccess);
 		} 
     $all_users = "";
@@ -2930,36 +2930,47 @@ switch($entry) {
 }
 
 
-// THIS FUNCTION READS ALL THE FILES IN A DIRECTORY AND RETURNS THEIR NAMES IN AN ARRAY
+// THIS FUNCTION READS ALL THE FILES IN A DIRECTORY AND DELETES OLD ONES
 // use the filter param to include only files containing a certain string in their names
+// this function deletes old files, older than the $timeWindow specified, in seconds
+// Returns an array of the files it did find
 function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600) {
 	  
 		if(!$filter) { return false; } // filter must be present
 	
 		$currentTime = time();
 		$targetTime = $currentTime - $timeWindow;
+		$foundFiles = array();
 	
 		// if it's PHP 5, then do this:
 		if(function_exists("scandir")) { // native scandir in PHP is much faster!!!
 			foreach(scandir($dir) as $fileName) {
-				 if (strstr($fileName, $filter) AND filemtime($dir.$fileName) < $targetTime) {
+				if(strstr($fileName, $filter)) {
+					if (filemtime($dir.$fileName) < $targetTime) {
 						unlink($dir.$fileName);
-				 }
+					} else {
+						$foundFiles[] = $fileName;
+					}
+				}
 			}
 		} else {
 			// if it's PHP 4, then do this:
 			if ($handle = opendir($dir)) {
 					while (false !== ($file = readdir($handle))) {
 							$fileName = basename($file);
-							if (strstr($fileName, $filter) AND filemtime($dir.$fileName) < $targetTime) {
+							if (strstr($fileName, $filter)) {
+								if(filemtime($dir.$fileName) < $targetTime) {
 								  unlink($dir.$fileName);
+								} else {
+									$foundFiles[] = $fileName;
+								}
 							}
 					}
 					closedir($handle);
 			}
 			
 		}
-		return true;
+		return $foundFiles;
 
 }
 
