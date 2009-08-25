@@ -286,6 +286,7 @@ class formulizeFormsHandler {
 			return false;
 		}
 		global $xoopsDB;
+		$dataType = $dataType ? $dataType : "text";
 		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
 		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
 			return false;
