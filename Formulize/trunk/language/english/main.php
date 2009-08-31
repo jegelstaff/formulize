@@ -685,4 +685,10 @@ define("_formulize_QSF_DefaultText", "Search for:");
 define("_formulize_BLANK_KEYWORD", "{BLANK}");
 
 define("_formulize_ERROR_IN_LEFTRIGHT", "There appears to be an error in the PHP code that generates the text for this space.  Please notify the webmaster.");
+
+define("_formulize_GENERIC_FILTER_ALL", "No filter in effect (select this to clear existing filters)");
+define("_formulize_GENERIC_FILTER_CON", "Filter based on this/these conditions:");
+define("_formulize_GENERIC_FILTER_ADDBUTTON", "Add another condition");
+
+
 ?>

@@ -100,6 +100,8 @@ class formulizeForm extends XoopsObject {
 						break;
 				}
 			}
+			
+			// gather the view information
 			$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '$id_form' OR (sv_mainform = '' AND sv_formframe = '$id_form')");
 			if(!isset($viewq[0])) {
 				$views = array();
@@ -114,6 +116,17 @@ class formulizeForm extends XoopsObject {
 					$viewPublished[$i] = $viewq[$i]['sv_pubgroups'] ? true : false;
 				}
 			}
+			
+			// setup the filter settings
+			$filterSettingsq = q("SELECT groupid, filter FROM " . $xoopsDB->prefix("formulize_group_filters") . " WHERE fid='$id_form'");
+			if(!isset($filterSettingsq[0])) {
+				$filterSettings = array();
+			} else {
+				foreach($filterSettingsq as $filterSettingData) {
+					$filterSettings[$filterSettingData['groupid']] = unserialize($filterSettingData['filter']);
+				}
+			}
+			
 		}
 
 		$this->XoopsObject();
@@ -133,6 +146,8 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("viewNames", XOBJ_DTYPE_ARRAY, serialize($viewNames));
 		$this->initVar("viewFrids", XOBJ_DTYPE_ARRAY, serialize($viewFrids));
 		$this->initVar("viewPublished", XOBJ_DTYPE_ARRAY, serialize($viewPublished));
+		$this->initVar("filterSettings", XOBJ_DTYPE_ARRAY, serialize($filterSettings));
+		
 	}
 }
 
@@ -357,6 +372,118 @@ class formulizeFormsHandler {
 		}
 		return true;
 	}
-				
-}
+	
+	// this function updates the per group filter settings for a form
+	// $filterSettings should be an array that has keys for groups, and then an array of all the filter settings (which will be an array of three other arrays, one for elements, one for ops and one for terms, all in synch)
+	function setPerGroupFilters($filterSettings, $fid) {
+		if(!is_numeric($fid) OR !is_array($filterSettings)) {
+			return false;
+		}
+		global $xoopsDB;
+		// loop through the settings and make a query to check for what exists and needs updating, vs. inserting
+		$foundGroups = array();
+		$checkSQL = "SELECT groupid FROM ".$xoopsDB->prefix("formulize_group_filters"). " WHERE fid=".$fid;
+		$checkRes = $xoopsDB->query($checkSQL);
+		while($checkArray = $xoopsDB->fetchArray($checkRes)) {
+			$foundGroups[$checkArray['groupid']] = true;
+		}
+		$insertStart = true;
+		$insertSQL = "INSERT INTO ".$xoopsDB->prefix("formulize_group_filters")." (`fid`, `groupid`, `filter`) VALUES ";
+		$updateSQL = "UPDATE ".$xoopsDB->prefix("formulize_group_filters")." SET filter = CASE groupid ";
+		$runUpdate = false;
+		$runInsert = false;
+		foreach($filterSettings as $groupid=>$theseSettings) {
+			if(isset($foundGroups[$groupid])) {
+				// add to update query
+				$updateSQL .= "WHEN $groupid THEN '".mysql_real_escape_string(serialize($theseSettings))."' ";
+				$runUpdate = true;
+			} else {
+				// add to the insert query
+			  if(!$insertStart) { $insertSQL .= ", "; }
+				$insertSQL .= "(".$fid.", ".$groupid.", '".mysql_real_escape_string(serialize($theseSettings))."')";
+				$insertStart = false;
+			}
+			$runInsert = true;
+		}
+		$updateSQL .= " ELSE filter END WHERE fid=".$fid;
+		
+		if($runInsert) {
+			if(!$xoopsDB->query($insertSQL)) {
+				return false;
+			}
+		}
+		if($runUpdate) {
+			if(!$xoopsDB->query($updateSQL)) {
+				return false;
+			}
+		}
+		return true;
+	
+	}
+	
+	// this function clears the per group filters for a form
+	function clearPerGroupFilters($groupids, $fid) {
+		if(!is_array($groupids)) {
+			$groupids = array(0=>$groupids);
+		}
+		if(!is_numeric($fid)) {
+			return false;
+		}
+		global $xoopsDB;
+		$deleteSQL = mysql_real_escape_string("DELETE FROM ".$xoopsDB->prefix("formulize_group_filters")." WHERE fid=$fid AND groupid IN (".implode(", ",$groupids).")");
+		if(!$xoopsDB->query($deleteSQL)) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
+	// this function returns a per-group filter for the current user on the specified form, formatted as a where clause, for the specified form alias, if any
+	// if groupids is specified, then it will base the filter on those groups and not the current groups
+	function getPerGroupFilterWhereClause($fid, $formAlias="", $groupids=false) {
 
+		if(!is_numeric($fid) OR $fid < 1) {
+			return "";
+		}
+
+		if(!is_array($groupids)) {
+			global $xoopsUser;
+			$groupids = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);		
+		}
+		
+		if($formAlias) {
+			$formAlias .= "."; // add a period at the end of the alias so it will work with the field names in the query
+		}
+		
+		// get all the filters in effect for the specified groups, the process them all into a variable we can tack onto the end of any query
+		// all filters are always on the mainform only
+		global $xoopsDB;
+		$getFiltersSQL = "SELECT filter FROM ".$xoopsDB->prefix("formulize_group_filters"). " WHERE groupid IN (".implode(",",$groupids).") AND fid=$fid";
+		if(!$getFiltersRes = $xoopsDB->query($getFiltersSQL)) {
+			return false;
+		}
+		$perGroupFilter = "";
+		while($filters = $xoopsDB->fetchArray($getFiltersRes)) {
+			$filterSettings = unserialize($filters['filter']);
+			// filterSettings[0] will be the elements
+			// filterSettings[1] will be the ops
+			// filterSettings[2] will be the terms
+			for($i=0;$i<count($filterSettings[0]);$i++) {
+				if(!$perGroupFilter) { // start up the filter if this is the first time through
+					$perGroupFilter = " AND (";
+				} else { // put in an AND so we can include the next filter setting
+					$perGroupFilter .= " AND ";
+				}
+				$likeBits = strstr(strtoupper($filterSettings[1][$i]), "LIKE") ? "%" : "";
+				$termToUse = is_numeric($filterSettings[2][$i]) ? $filterSettings[2][$i] : "\"$likeBits".mysql_real_escape_string($filterSettings[2][$i])."$likeBits\"";
+				$perGroupFilter .= "$formAlias`".$filterSettings[0][$i]."` ".$filterSettings[1][$i] . " " . $termToUse;
+			}
+		}
+		if($perGroupFilter) {
+				 $perGroupFilter .= ") ";
+		}
+	
+		return $perGroupFilter;
+	}
+
+}

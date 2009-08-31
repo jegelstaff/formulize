@@ -15,6 +15,8 @@ define("_FORM_NUM_ENTRIES_ANON_HELP", "<b>About Anonymous Users:</b> Formulize d
 
 define("_AM_FORCE_GROUPSCOPE_HELP", "If view_groupscope is selected, you can pick specific groups it should apply to.  If none are selected, then when a list of entries is shown to a user, groupscope will apply to the groups they are a member of, which also have view_form permission.");
 define("_AM_FORCE_GROUPSCOPE_INTRO", "Use specific groups for groupscope?");
+
+define("_AM_PER_GROUP_FILTER_INTRO", "Filter the entries this groups can see in this form?");
        
 define("_AM_SAVE","Save");
 define("_AM_COPIED","%s copy");

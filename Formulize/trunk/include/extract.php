@@ -482,7 +482,21 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    $whereClause = "AND $whereClause";
 	       }     
 	       
-	       
+	       // create the per-group filters, if any, that apply to this user...only available when all XOOPS is invoked, not available when extract.php is being direct included
+					global $xoopsDB;
+					$perGroupFilter = "";
+					$perGroupFiltersPerForms = array(); // used with exists clauses and other per-form situations
+					if($xoopsDB) {
+							 $form_handler = xoops_getmodulehandler('forms', 'formulize');
+							 $perGroupFilter = $form_handler->getPerGroupFilterWhereClause($fid, "main");
+							 $perGroupFiltersPerForms[$fid] = $perGroupFilter;
+							 if($frid) {
+										foreach($linkformids as $id=>$thisLinkFid) {
+												 $perGroupFiltersPerForms[$thisLinkFid] = $form_handler->getPerGroupFilterWhereClause($thisLinkFid, "f".$id);
+										}
+							 }
+					}			 
+				 
 	       
 	       if($frid) {
            $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
@@ -509,12 +523,16 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
              } else { // join by uid
                $newJoinText = " main.creation_uid=f$id.creation_uid";
              }
+						 if(isset($perGroupFiltersPerForms[$linkedFid])) {
+							 $newJoinText .= $perGroupFiltersPerForms[$linkedFid];
+						 }
              $joinTextIndex[$linkedFid] = $newJoinText;
              $joinText .= $newJoinText;
              if(count($oneSideFilters[$linkedFid])>0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
                $existsJoinText .= $newexistsJoinText . $newJoinText;
                foreach($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
-                    $existsJoinText .= " AND ( $thisOneSideFilter ) ";
+										$thisLinkedFidPerGroupFilter = isset($perGroupFiltersPerForms[$linkedFid]) ? $perGroupFiltersPerForms[$linkedFid] : "";
+                    $existsJoinText .= " AND ( $thisOneSideFilter $thisLinkedFidPerGroupFilter) ";
                }
                $existsJoinText .= ") "; // close the exists clause itself
              }
@@ -569,7 +587,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
           }
 	  		    
 	       debug_memory("Before retrieving mainresults");
-	       
+					
 	       //$beforeQueryTime = microtime_float();
 	       
 	  
@@ -579,6 +597,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       $countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_$fid AS main ";
 	       $countMasterResults .= "$userJoinText WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter"; 
          $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
+				 $countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 	       if($countMasterResultsRes = mysql_query($countMasterResults)) {
            $countMasterResultsRow = mysql_fetch_row($countMasterResultsRes);
            if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
@@ -619,7 +638,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
          }         
 	  
 	  // only drawback in this SQL right now is it does not support one to one relationships in the query, since they are essentially joins on the entry_id and form id through the one_to_one table
-	  $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $limitByEntryId $orderByClause $limitClause";
+	  $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $limitByEntryId $orderByClause $limitClause";
     
     // if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
     // note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
@@ -630,11 +649,13 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
           $oneSideSQL .= " $andor ( $thisOneSideFilter ) ";  // properly introduce these filters...need to move $andor to a higher level and put this inside ( ) ?? or maybe this just all gets redone if/when the OR bug is fixed (see big note up where oneSideFilters are first received from parseFilter function)
        }
     }
+    $oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
     
 	  $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
+		$GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
     $GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
     if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
-	  $GLOBALS['formulize_queryForExport'] = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $orderByClause";
+	  $GLOBALS['formulize_queryForExport'] = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $orderByClause";
      
 	  //$masterQuerySQL = "SELECT * FROM " . DBPRE . "formulize_$fid LIMIT 0,1";
 	  //$afterQueryTime = microtime_float();
@@ -659,7 +680,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      // Debug Code
      
-     /*//global $xoopsUser;
+     /*global $xoopsUser;
      if($xoopsUser->getVar('uid') == 1) {
           print "<br>Count query: $countMasterResults<br><br>";
           print "Master query: $masterQuerySQL<br>";

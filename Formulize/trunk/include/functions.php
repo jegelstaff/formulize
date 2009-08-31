@@ -32,13 +32,19 @@
 
 // Added Oct. 16 2006
 // setup flag for whether the Freeform Solutions user archiving patch has been applied to the core
-global $xoopsDB;
+global $xoopsDB, $xoopsConfig;
 $sql = "SELECT * FROM " . $xoopsDB->prefix("users") . " LIMIT 0,1";
 if($res = $xoopsDB->query($sql)) {
   $resarray = $xoopsDB->fetchArray($res);
   $GLOBALS['formulize_archived_available'] = isset($resarray['archived']) ? true : false;
 } else {
   $GLOBALS['formulize_archived_available'] = false;
+}
+
+if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
+	include_once "../language/".$xoopsConfig['language']."/main.php";
+} else {
+	include_once "../language/english/main.php";
 }
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
@@ -407,7 +413,21 @@ print "<br>";*/
 				}
 			}
 		}
+		// check to see if the entry matches the user's per group filters, if any
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if($perGroupFilter = $form_handler->getPerGroupFilterWhereClause($fid)) {
+			global $xoopsDB;
+			$checkSQL = "SELECT count(entry_id) FROM ".$xoopsDB->prefix("formulize_".$fid)." WHERE entry_id = $entry $perGroupFilter";
+			if(!$checkRes = $xoopsDB->query($checkSQL)) {
+				return false;
+			}
+			$countRow = $xoopsDB->fetchRow($checkRes);
+			if($countRow[0] != 1) {
+				return false;
+			}
+		}
 	}
+
 	return true;
 }
 
@@ -3640,6 +3660,125 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
   
   
 }
+
+// This function creates the UI and hidden elements for a set of filter options, such as those used to create the per-group-filter options in the permission section, or could be used for selectbox filters or multipage screen "skip logic" settings
+// $filterSettings is the actual filter settings in an array, as retrieved (and unserialized) from the DB
+// $filterName is the unique name to use for this set of elements
+// $formWithSourceElements is the ID of the form to use to get the elements from to show in the filter options
+// $formName is the name of the HTML form that this filter UI is being embedded into
+// $groups is the groups to filter the elements with (only elements visible to those groups).  If no groups, then all elements are returned.
+// filterAllText is the text to use for the "all" option
+// filterConText is the text to use for the "con" option (ie: the radio button that shows there is a filter in effect)
+// $filterButtonText is the text to use for the "add" button for adding a new filter to the list of conditions
+// This function sets up a series of old_$filterName_elements hidden elements to perpetuate the ones that have been set already, and also some new_$filterName_elements that are the new ones users select
+// When other code is handling the saving of this filter information later, it will have to take both the old and the new and munge them together
+function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceElements, $formName, $groups=false, $filterAllText=_formulize_GENERIC_FILTER_ALL, $filterConText=_formulize_GENERIC_FILTER_CON, $filterButtonText=_formulize_GENERIC_FILTER_ADDBUTTON) {
+	
+	if(!$filterName OR !$formWithSourceElements OR !$formName) {
+		return false;
+	}
+	
+	// set all the elements that we want to show the user
+	$cols = "";
+	if($groups) {
+		$cols = getAllColList($formWithSourceElements, "", $groups);
+	} else {
+		$cols = getAllColList($formWithSourceElements);
+	}
+		
+	if(is_array($cols)) {
+		// setup the options array for form elements
+		foreach($cols as $f=>$vs) {
+			foreach($vs as $row=>$values) {
+				if($values['ele_colhead'] != "") {
+					$options[$values['ele_handle']] = printSmart(trans($values['ele_colhead']), 40);
+				} else {
+					$options[$values['ele_handle']] = printSmart(trans(strip_tags($values['ele_caption'])), 40);
+				}
+			}
+		}
+		
+	} else {
+		$options = array();	
+	}
+	
+	// process existing conditions...setup needed variables...
+	$conditionlist = "";
+	$oldElementsName = $filterName."_elements";
+	$oldOpsName = $filterName."_ops";
+	$oldTermsName = $filterName."_terms";
+	$newElementName = "new_".$filterName."_element";
+	$newOpName = "new_".$filterName."_op";
+	$newTermName = "new_".$filterName."_term";
+	
+	if(!isset($_POST[$oldElementsName]) AND is_array($filterSettings)) { // unpack existing conditions on the first load only
+		${$oldElementsName} = $filterSettings[0];
+		${$oldOpsName} = $filterSettings[1];
+		${$oldTermsName} = $filterSettings[2];
+	} elseif(isset($_POST[$oldElementsName]) AND $_POST[$filterName] != "all") { // unpack any values persisted from the previous pageload
+		${$oldElementsName} = $_POST[$oldElementsName];
+		${$oldOpsName} = $_POST[$oldOpsName];
+		${$oldTermsName} = $_POST[$oldTermsName];
+	}
+	// add in any new terms that have been sent...
+	if(${$newTermName} != "" AND $_POST[$filterName] != "all") {
+		${$oldElementsName}[] = ${$newElementName};
+		${$oldOpsName}[] = ${$newOpName};
+		${$oldTermsName}[] = ${$newTermName};
+	}
+	// make hidden elements for all the old conditions we found
+	for($i=0;$i<count(${$oldElementsName});$i++) {
+			$thisHiddenElement = new xoopsFormHidden($oldElementsName."[]", strip_tags(htmlspecialchars(${$oldElementsName}[$i])));
+			$thisHiddenOp = new xoopsFormHidden($oldOpsName."[]", strip_tags(htmlspecialchars(${$oldOpsName}[$i])));
+			$thisHiddenTerm = new xoopsFormHidden($oldTermsName."[]", strip_tags(htmlspecialchars(${$oldTermsName}[$i])));
+			$conditionlist .= $options[${$oldElementsName}[$i]] . " " . ${$oldOpsName}[$i] . " " . ${$oldTermsName}[$i] . "\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n<br />\n";
+	} 
+	
+	// setup the new element, operator, term boxes...
+	$new_elementOpTerm = new xoopsFormElementTray('', "&nbsp;&nbsp;");
+	$element = new xoopsFormSelect('', $newElementName);
+	$element->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
+	$element->addOptionArray($options);
+	$op = new xoopsFormSelect('', $newOpName);
+	$ops['='] = "=";
+	$ops['NOT'] = "NOT";
+	$ops['>'] = ">";
+	$ops['<'] = "<";
+	$ops['>='] = ">=";
+	$ops['<='] = "<=";
+	$ops['LIKE'] = "LIKE";
+	$ops['NOT LIKE'] = "NOT LIKE";
+	$op->addOptionArray($ops);
+	$op->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
+	$term = new xoopsFormText('', $newTermName, 10, 255);
+	$term->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
+	$new_elementOpTerm->addElement($element);
+	$new_elementOpTerm->addElement($op);
+	$new_elementOpTerm->addElement($term);
+	
+	$addcon = new xoopsFormButton('', 'addcon', $filterButtonText, 'submit');
+	$addcon->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
+	
+	$conditionui = "<br />$conditionlist" . $new_elementOpTerm->render() . "<br />" . $addcon->render();
+	
+	// setup the radio buttons for no filter, or yes use a filter
+	if((isset($_POST[$filterName]) AND $_POST[$filterName]=="all") OR (!isset($_POST[$filterName]) AND !is_array($filterSettings))) {
+		$radioSetting = 'all';
+	} else {
+		$radioSetting = 'con';
+	}
+	$radioButtons = new xoopsFormElementTray('', "<br />");
+	$radioButtonAll = new xoopsFormRadio('', $filterName, $radioSetting);
+	$radioButtonAll->addOption('all', $filterAllText);
+	$radioButtonCon = new xoopsFormRadio('' , $filterName, $radioSetting);
+	$radioButtonCon->addOption('con', $filterConText.$conditionui);
+	$radioButtons->addElement($radioButtonAll);
+	$radioButtons->addElement($radioButtonCon);
+
+  return $radioButtons;
+
+}
+
 
 // this function gets the password for the encryption/decryption process
 // want to has the db pass since we don't want any SQL logging processes to include the db pass as plaintext

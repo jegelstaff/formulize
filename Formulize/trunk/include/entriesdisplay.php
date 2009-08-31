@@ -367,8 +367,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			print "$k: $v<br>";
 		}
 	}
-	}
-*/
+	}*/
+
 
 
 	// get control settings passed from form 
@@ -411,27 +411,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 			$_POST['oldcols'] = implode(",",$colsforsearches); // need to reconstruct this in case any columns were removed because of persistent searches on a hidden column
 		}
-		
-    /*global $xoopsUser;
-    if($xoopsUser->getVar('uid')==1) {
-      print "<br>Currentview: " . $_POST['currentview'] . "<br>Oldcols: ";
-  		print $_POST['oldcols'] . "<br>asearch: ";
-  		print $_POST['asearch'] . "<br>calc_cols: ";
-  		print $_POST['calc_cols'] . "<br>calc_calcs: ";
-  		print $_POST['calc_calcs'] . "<br>calc_blanks: ";
-  		print $_POST['calc_blanks'] . "<br>calc_grouping: ";
-  		print $_POST['calc_grouping'] . "<br>sort: ";
-  		print $_POST['sort'] . "<br>order: ";
-  		print $_POST['order'] . "<br>"; 
-  		print $_POST['hlist'] . "<br>"; 
-  		print $_POST['hcalc'] . "<br>"; 
-  		print $_POST['lockcontrols'] . "<br>";
-      foreach($_POST as $k=>$v) {
-        if(strstr($k, "search_")) {
-          print "$k: $v<br>";
-        }
-      }
-    }*/
 		
 		$currentView = $_POST['currentview'];
 		

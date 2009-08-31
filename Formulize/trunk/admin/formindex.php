@@ -898,7 +898,7 @@ function newpermform($group_list="", $form_list="")
 	print '<table><tr><td><center><p><a href="../admin/formindex.php">' . _AM_GOTO_MAIN . ' <br><img src="../images/formulize.gif" height=35></a></p></center></td></tr></table>';
 
 	// carry on with drawing of the permissions list, if groups and forms are specified
-	if(is_array($group_list) AND is_array($form_list) AND (isset($_POST['groupsubmit']) OR isset($_POST['apply']))) {
+	if(is_array($group_list) AND is_array($form_list) AND (isset($_POST['groupsubmit']) OR isset($_POST['apply']) OR isset($_POST['addcon']))) {
 
 		global $xoopsDB, $xoopsModule;
 
@@ -931,7 +931,7 @@ function newpermform($group_list="", $form_list="")
 		$module_id = $xoopsModule->getVar('mid');
 
 		print "<h4>" . _formulize_MODPERM_TITLE . "</h4>";
-		print "<form action=\"formindex.php?op=permeditor\" method = post>";
+		print "<form action=\"formindex.php?op=permeditor\" name=\"permeditor\" method = \"post\">";
 		print "<table width='100%' class='outer' cellpadding = 1>";		
 
 		// set same perms for all selected groups -- added Aug 1 2006 -- jwe
@@ -1035,6 +1035,19 @@ function drawformperms($form_list, $formulize_perms, $perm_desc, $group_id="all"
 						print "<option value=".$groupDataArray['groupid'] . $selectedGroup . ">".$groupDataArray['name']."</option>\n";
 					}
 					print "</select></p>";
+					
+					// now add in the per group filter options, which can be used to limit for all time what entries certain groups see in any list of entries (these filters are applied by extract.php at all times) -- added by jwe Aug 28 2009
+					print "<p><b>"._AM_PER_GROUP_FILTER_INTRO."</b><br>";
+					// need to get the current filter settings for this group on this form, if any
+					if(!isset($form_handler)) {
+						$form_handler = xoops_getmodulehandler('forms', 'formulize');
+					}
+					$formObject = $form_handler->get($form_id);
+					$filterSettings = $formObject->getVar('filterSettings');
+					$filterSettingsToSend = isset($filterSettings[$group_id]) ? $filterSettings[$group_id] : "";
+					$filterUI = formulize_createFilterUI($filterSettingsToSend, "filter_".$form_id."_".$group_id, $form_id, "permeditor");
+					print $filterUI->render();
+					
 				}
 				
 				print "</td>";		
@@ -1085,6 +1098,7 @@ function updateperms() {
 	foreach($group_list as $gid) {
 		foreach($form_list as $fid) {
 			$perm_key = isset($_POST['all-'.$fid]) ? 'all-'.$fid : $gid . "-" . $fid;
+			$filter_key = "filter_".$fid."_".$gid;
 			if($_POST[$perm_key]) { // if perms were sent for this form for this group...
 				//print "<br>";
 				//print_r($_POST[$perm_key]);
@@ -1110,9 +1124,31 @@ function updateperms() {
 				print "Error: could not set the groupscope groups for form $fid.<br>";
 			}
 			
+			// index all the per-group form filters so we can then run queries to update this info after the looping is done
+			if($_POST[$filter_key]=="all") {
+				$groupsToClear[$fid][] = $gid;
+			} else {
+				if($_POST["new_".$filter_key."_term"] != "") {
+					$_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
+					$_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
+					$_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
+				}
+				$filterSettings[$fid][$gid][0] = $_POST[$filter_key."_elements"];
+				$filterSettings[$fid][$gid][1] = $_POST[$filter_key."_ops"];
+				$filterSettings[$fid][$gid][2] = $_POST[$filter_key."_terms"];
+			}
 			
 		}
 	}
+
+	// now update the per group filters
+	foreach($groupsToClear as $fid=>$gids) {
+		$form_handler->clearPerGroupFilters($gids, $fid);
+	}
+	foreach($filterSettings as $fid=>$groupsSettingsData) {
+		$form_handler->setPerGroupFilters($groupsSettingsData, $fid);
+	}
+	
 }
 
 
@@ -1160,6 +1196,18 @@ function patch40() {
   INDEX i_groupid (`groupid`),
 	INDEX i_fid (`fid`),
   INDEX i_view_groupid (`view_groupid`)
+) TYPE=MyISAM;";
+		}
+		
+		if(!in_array($xoopsDB->prefix("formulize_group_filters"), $existingTables)) {
+			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_group_filters")."` (
+  `filterid` int(11) NOT NULL auto_increment,
+  `fid` int(11) NOT NULL default 0,
+  `groupid` int(11) NOT NULL default 0,
+  `filter` text NOT NULL default '',
+  PRIMARY KEY (`filterid`),
+  INDEX i_fid (`fid`),
+  INDEX i_groupid (`groupid`)
 ) TYPE=MyISAM;";
 		}
 	

@@ -82,7 +82,6 @@ $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.mysql_e
  
 if ( $res ) {
   while ( $row = $xoopsDB->fetchArray ( $res ) ) {
-    $id_form = $fid; // this is important because we use $id_form in the readelements.php file to trigger the updating of the derived values.  This value will be preserved regardless of other logic in readelements.php, so we always will know what the original form id called was.
     $singleentry = $row['singleentry'];
     $desc_form = $row['desc_form'];
   }
@@ -106,13 +105,13 @@ $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS)
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 $mid = getFormulizeModId();
 $gperm_handler = &xoops_gethandler('groupperm');
-$view_globalscope = $gperm_handler->checkRight("view_globalscope", $id_form, $groups, $mid);
-$view_groupscope = $gperm_handler->checkRight("view_groupscope", $id_form, $groups, $mid);
+$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
+$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
 
 $config_handler =& xoops_gethandler('config');
 $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
 
-if(!$view_form = $gperm_handler->checkRight("view_form", $id_form, $groups, $mid) OR ($uid == 0 AND ($id_form == $formulizeConfig['profileForm'] AND $id_form > 0)) OR !$fid) {
+if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
 	redirect_header(XOOPS_URL . "/user.php?xoops_redirect=".getCurrentURL(), 3, _formulize_NO_PERMISSION);
 }
 
@@ -128,7 +127,6 @@ if($sid) {
       $xoopsTpl->assign('xoops_pagetitle', $screen->getVar('title'));
     }
 		$frid = $screen->getVar('frid'); // set these here just in case it's needed in readelements.php
-		$id_form = $screen->getVar('fid'); // set these here just in case it's needed in readelements.php
 	}
 } 
 
@@ -159,21 +157,21 @@ if($screen) {
 
 // IF NO SCREEN IS REQUESTED (or none rendered successfully, ie: a bad screen id was passed), THEN USE THE DEFAULT DISPLAY LOGIC TO DETERMINE WHAT TO SHOW THE USER
 if(!$rendered) {
-      if(isset($frid) AND is_numeric($frid) AND isset($id_form) AND is_numeric($id_form)) {
+      if(isset($frid) AND is_numeric($frid) AND isset($fid) AND is_numeric($fid)) {
       	if(((!$singleentry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleentry != "group")) AND !$entry) { // if it's multientry and there's a xoopsUser, or the user has globalscope, or the user has groupscope and it's not a one-per-group form, and after all that, no entry has been requested, then show the list (note that anonymous users default to the form view...to provide them lists of their own entries....well you can't, but groupscope and globalscope will show them all entries by anons or by everyone)
       		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
-      		displayEntries($frid, $id_form); // if it's a multi, or if a single and they have group or global scope
+      		displayEntries($frid, $fid); // if it's a multi, or if a single and they have group or global scope
       	} else { // otherwise, show the form
       		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-      		displayForm($frid, $entry, $id_form, "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope, OR if an entry was specified in particular
+      		displayForm($frid, $entry, $fid, "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope, OR if an entry was specified in particular
       	}
-      } elseif(isset($id_form) AND is_numeric($id_form)) {
+      } elseif(isset($fid) AND is_numeric($fid)) {
       	if(((!$singleentry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleentry != "group")) AND !$entry) { // if it's multientry and there's a xoopsUser, or the user has globalscope, or the user has groupscope and it's not a one-per-group form, and after all that, no entry has been requested, then show the list (note that anonymous users default to the form view...to provide them lists of their own entries....well you can't, but groupscope and globalscope will show them all entries by anons or by everyone)
       		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
-      		displayEntries($id_form); // if it's a multi, or if a single and they have group or global scope
+      		displayEntries($fid); // if it's a multi, or if a single and they have group or global scope
       	} else { // otherwise, show the form
       		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-      		displayForm($id_form, $entry, "", "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope, OR if an entry was specified in particular
+      		displayForm($fid, $entry, "", "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope, OR if an entry was specified in particular
       	}
       } else { // if no form is specified, then show the General Forms category
       	header("Location: " . XOOPS_URL . "/modules/formulize/cat.php");
