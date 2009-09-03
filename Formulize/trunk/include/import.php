@@ -362,6 +362,9 @@ function importCsvSetup(&$importSet, $id_reqs)
 				if($cell == _formulize_DE_IMPORT_REGCODE) {
 					$importSet[7]['regcode'] = $column;
 				}
+				if($cell == _formulize_DE_IMPORT_NEWENTRYID) { // columns with this exact heading will have this entry id used
+					$importSet[7]['usethisentryid'] = $column;
+				}
 			} else {
 				if($cell == _formulize_DE_IMPORT_IDREQCOL) {
 					$importSet[7]['idreqs'] = $column;
@@ -459,7 +462,8 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 	            || $importSet[3][$link] == _formulize_DE_IMPORT_PASSWORD
 	            || $importSet[3][$link] == _formulize_DE_IMPORT_EMAIL
 	            || $importSet[3][$link] == _formulize_DE_IMPORT_REGCODE
-	            || $importSet[3][$link] == _formulize_DE_IMPORT_IDREQCOL))
+	            || $importSet[3][$link] == _formulize_DE_IMPORT_IDREQCOL
+							|| $importSet[3][$link] == _formulize_DE_IMPORT_NEWENTRYID))
             {
                 $errors[] = "<li>column <b>" .
                     $importSet[3][$link] .
@@ -474,6 +478,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
     
     $currentFilePosition = ftell($importSet[1]);
     
+		$useTheseEntryIds = array(); // a container for any entry id overrides that a user has set in the spreadsheet
     while(!feof($importSet[1]))
     {
         $row = fgetcsv($importSet[1], 99999);
@@ -545,6 +550,14 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 						$errors[] = "<li>line " . $rowCount . ",<br> <b>Invalid ID number specified</b></li>";
 					}
 				}
+				
+				// check validity of entry ids if a special entry_ids column is included
+				// store the entry ids that are specified, and then we'll check for the existence of any of them after we're done looping
+				if($link = $importSet[7]['usethisentryid']) {
+					$useTheseEntryIds[] = $cell_value;
+				}
+				
+				
 	                }
 				// check columns from form...
 	                else
@@ -553,9 +566,9 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                         switch($element["ele_type"])
 	                    {
 	                        case "select":
-                                if(isset($importSet[5][1][$link])) 
+                                if(isset($importSet[5][1][$link]) AND !strstr($cell_value, ","))
                                 {
-									// Linked element
+									// Linked element, but allow entries with commas to pass through unvalidated
                                     // echo "Linked element<br>";
 
                                     $linkElement = $importSet[5][1][$link];
@@ -613,7 +626,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                         }
 	                                }
                                 }
-								else
+								elseif(!strstr($cell_value, ","))
                                 {
 									// Not-Linked element
                                     //echo "Not-Linked element<br>";                                
@@ -860,6 +873,16 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
         }
     }
 
+		// check validity of any entry ids the user has set
+		if(count($useTheseEntryIds) > 0) {
+			global $xoopsDB;
+			$checkIdsSQL = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$importSet[4]) . " WHERE entry_id IN (".implode(",",$useTheseEntryIds).")";
+			$checkIdsRes = $xoopsDB->query($checkIdsSQL);
+			while($checkIdsArray = $xoopsDB->fetchArray($checkIdsRes)) {
+				$errors[] = "<li><b>Entry id ".$checkIdsArray['entry_id']." is already in use.</b>  You cannot import new data with an existing entry id.</li>";
+			}
+		}
+
     fseek($importSet[1], $currentFilePosition);
 
     echo $output . "</ol>";
@@ -957,10 +980,9 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 		}
 		
 
-            echo "line $rowCount, id $max_id_req<br>";
-
             $links = count($importSet[6]);
 						$fieldValues = array();
+						$newEntryId = "";
             for($link = 0; $link < $links; $link++)
             {
 			$all_valid_options = false; // used as a flag to indicate whether we're dealing with a linked selectbox or not, since if we are, that is the only case where we don't want to do HTML special chars on the value // deprecated in 3.0
@@ -979,7 +1001,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 	                    switch($element["ele_type"])
 	                    {
 	                        case "select":
-	                            if($importSet[5][1][$link]) 
+	                            if($importSet[5][1][$link] AND !strstr($row_value, ","))
 	                            {
 	                                // Linked element
 	                                //echo "Linked element<br>";
@@ -1036,7 +1058,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 	                                    $row_value = ",".$ele_id.",";
 	                                }
 	                            }
-	                            else
+	                            elseif(!strstr($row_value, ","))
 	                            {
 	                                // Not-Linked element
 	                                //echo "Not-Linked element<br>";                                
@@ -1225,11 +1247,16 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 									$fieldValues[$element['ele_handle']] = $myts->htmlSpecialChars($row_value); // prior to 3.0 we did not do the htmlspecialchars conversion if this was a linked selectbox...don't think that's a necessary exception in 3.0 with new data structure
 
 	                } // end of if there's a value in the current column
+								} elseif($link == $importSet[7]['usethisentryid']) { // if this is not a valid column, but it is an entry id column, then capture the entry id from the cell
+									$newEntryId = $row[$link] ? $row[$link] : "";
 								} // end of if this is a valid column
             } // end of looping through $links (columns?)
 						
 						// now that we've recorded all the values, do the actual updating/inserting of this record
 						
+						$idToShow = $newEntryId ? $newEntryId : $max_id_req;
+            echo "line $rowCount, id $idToShow<br>";
+
 						if($this_id_req) { // updating an entry
 							
 							$form_uid = $this_uid;
@@ -1258,7 +1285,9 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 									$values .= ", '".mysql_real_escape_string($fieldValue) . "'";
 							}
 							
-							$insertElement = "INSERT INTO " . $xoopsDB->prefix("formulize_".$id_form)." (creation_datetime, mod_datetime, creation_uid, mod_uid".$fields.") VALUES (NOW(), NOW(), '" . intval($form_uid) . "', '" . intval($form_proxyid)."'".$values.")"; 
+							$entryIdFieldText = $newEntryId ? "entry_id, " : "";
+							$newEntryId .= $newEntryId ? ", " : "";
+							$insertElement = "INSERT INTO " . $xoopsDB->prefix("formulize_".$id_form)." (".$entryIdFieldText."creation_datetime, mod_datetime, creation_uid, mod_uid".$fields.") VALUES (".$newEntryId."NOW(), NOW(), '" . intval($form_uid) . "', '" . intval($form_proxyid)."'".$values.")"; 
 
 							if(IMPORT_WRITE)
 							{

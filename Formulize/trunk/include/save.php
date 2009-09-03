@@ -297,7 +297,9 @@ if($publish_reports) {
 	foreach($groups as $key=>$groupid) {
 		if($groupid != 2) {
 			$thisgroup = $member_handler->getGroup($groupid);
-			$publishgroups[$groupid] = $thisgroup->getVar('name');
+			if(is_object($thisgroup)) {
+				$publishgroups[$groupid] = $thisgroup->getVar('name');
+			}
 		}
 	}
 }

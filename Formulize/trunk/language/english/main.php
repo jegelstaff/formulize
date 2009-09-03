@@ -647,7 +647,8 @@ define("_formulize_DE_IMPORT_INSTUPDATE", "<p><b>If you are updating existing en
 
 <p><b>If a question has a choice of answers,</b> the information in your spreadsheet must match exactly with the options in the form. This includes spelling, capitalization and spacing.  Some questions in some forms allow you to select more than one answer; for instance, a series of checkboxes.  <b>To include multiple answers in your spreadsheet,</b> each answer must be in the same cell with a line break between them.  In Excel, press ALT-Enter after each answer to add a line break.</p>");
 
-define("_formulize_DE_IMPORT_INSTNEW", "<p><b>If you are creating new entries,</b> then the column called \"" . _formulize_DE_CALC_CREATOR . "\" can have the username or full name of the person who should be recorded as the entry's creator.  If you leave that column blank, then you will be recorded as the creator.  If you are updating existing entries, then this column is ignored.</p>");
+define("_formulize_DE_IMPORT_NEWENTRYID", "Use this entry id");
+define("_formulize_DE_IMPORT_INSTNEW", "<p><b>If you are creating new entries,</b> then the column called \"" . _formulize_DE_CALC_CREATOR . "\" can have the username or full name of the person who should be recorded as the entry's creator.  If you leave that column blank, then you will be recorded as the creator.  If you are updating existing entries, then this column is ignored.</p><p><b>If you are creating new entries,</b> and you want to override the primary key that the database gives to each entry, then you can include a column called \"" . _formulize_DE_IMPORT_NEWENTRYID . "\" and put the entry ids you want to use in that column.  If you don't understand what this means, then simply don't add this column to your spreadsheet.</p>");
 
 define("_formulize_DE_IMPORT_BACK", "Go Back");
 define("_formulize_DE_IMPORT_EITHEROR", "You can either add new entries to a form, or update existing entries.  You <b>cannot</b> do both at once.");
@@ -664,6 +665,7 @@ define("_formulize_DE_IMPORT_FULLNAME", "Full name");
 define("_formulize_DE_IMPORT_PASSWORD", "Password");
 define("_formulize_DE_IMPORT_EMAIL", "E-mail");
 define("_formulize_DE_IMPORT_REGCODE", "Registration Code");
+
 define("_formulize_DE_IMPORT_IDREQCOL", "ID number of this entry (do NOT remove or modify this column)");
 define("_formulize_DE_CLICKSAVE_TEMPLATE", "Right click and save to download your template.");
 
