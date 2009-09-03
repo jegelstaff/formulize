@@ -553,7 +553,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 				
 				// check validity of entry ids if a special entry_ids column is included
 				// store the entry ids that are specified, and then we'll check for the existence of any of them after we're done looping
-				if($link = $importSet[7]['usethisentryid']) {
+				if(isset($importSet[7]['usethisentryid']) AND $link == $importSet[7]['usethisentryid']) {
 					$useTheseEntryIds[] = $cell_value;
 				}
 				
@@ -1247,7 +1247,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 									$fieldValues[$element['ele_handle']] = $myts->htmlSpecialChars($row_value); // prior to 3.0 we did not do the htmlspecialchars conversion if this was a linked selectbox...don't think that's a necessary exception in 3.0 with new data structure
 
 	                } // end of if there's a value in the current column
-								} elseif($link == $importSet[7]['usethisentryid']) { // if this is not a valid column, but it is an entry id column, then capture the entry id from the cell
+								} elseif(isset($importSet[7]['usethisentryid']) AND $link == $importSet[7]['usethisentryid']) { // if this is not a valid column, but it is an entry id column, then capture the entry id from the cell
 									$newEntryId = $row[$link] ? $row[$link] : "";
 								} // end of if this is a valid column
             } // end of looping through $links (columns?)
