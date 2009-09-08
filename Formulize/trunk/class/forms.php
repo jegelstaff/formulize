@@ -387,6 +387,7 @@ class formulizeFormsHandler {
 		while($checkArray = $xoopsDB->fetchArray($checkRes)) {
 			$foundGroups[$checkArray['groupid']] = true;
 		}
+		
 		$insertStart = true;
 		$insertSQL = "INSERT INTO ".$xoopsDB->prefix("formulize_group_filters")." (`fid`, `groupid`, `filter`) VALUES ";
 		$updateSQL = "UPDATE ".$xoopsDB->prefix("formulize_group_filters")." SET filter = CASE groupid ";
@@ -402,8 +403,8 @@ class formulizeFormsHandler {
 			  if(!$insertStart) { $insertSQL .= ", "; }
 				$insertSQL .= "(".$fid.", ".$groupid.", '".mysql_real_escape_string(serialize($theseSettings))."')";
 				$insertStart = false;
+				$runInsert = true;
 			}
-			$runInsert = true;
 		}
 		$updateSQL .= " ELSE filter END WHERE fid=".$fid;
 		
@@ -446,10 +447,12 @@ class formulizeFormsHandler {
 			return "";
 		}
 
+		global $xoopsUser;
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 		if(!is_array($groupids)) {
-			global $xoopsUser;
-			$groupids = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);		
+			$groupids = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 		}
+		
 		
 		if($formAlias) {
 			$formAlias .= "."; // add a period at the end of the alias so it will work with the field names in the query
@@ -472,18 +475,17 @@ class formulizeFormsHandler {
 				if(!$perGroupFilter) { // start up the filter if this is the first time through
 					$perGroupFilter = " AND (";
 				} else { // put in an AND so we can include the next filter setting
-					$perGroupFilter .= " AND ";
+					$perGroupFilter .= " OR "; // need to make this a user configurable option
 				}
 				$likeBits = strstr(strtoupper($filterSettings[1][$i]), "LIKE") ? "%" : "";
-				$termToUse = is_numeric($filterSettings[2][$i]) ? $filterSettings[2][$i] : "\"$likeBits".mysql_real_escape_string($filterSettings[2][$i])."$likeBits\"";
-				$perGroupFilter .= "$formAlias`".$filterSettings[0][$i]."` ".$filterSettings[1][$i] . " " . $termToUse;
+				$termToUse = $filterSettings[2][$i] === "{USER}" ? $uid : $filterSettings[2][$i];
+				$termToUse = is_numeric($termToUse) ? $termToUse : "\"$likeBits".mysql_real_escape_string($termToUse)."$likeBits\"";
+				$perGroupFilter .= "$formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . $termToUse; // htmlspecialchars_decode is used because &lt;= might be the operator coming out of the DB instead of <=
 			}
 		}
 		if($perGroupFilter) {
 				 $perGroupFilter .= ") ";
 		}
-	
-		return $perGroupFilter;
 	}
 
 }

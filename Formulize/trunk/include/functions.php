@@ -3686,6 +3686,7 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
 		$cols = getAllColList($formWithSourceElements);
 	}
 		
+	$options = array('creation_uid'=>_formulize_DE_CALC_CREATOR, 'creation_datetime'=>_formulize_DE_CALC_CREATEDATE, 'mod_uid'=>_formulize_DE_CALC_MODIFIER, 'mod_datetime'=>_formulize_DE_CALC_MODDATE);
 	if(is_array($cols)) {
 		// setup the options array for form elements
 		foreach($cols as $f=>$vs) {
@@ -3697,10 +3698,7 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
 				}
 			}
 		}
-		
-	} else {
-		$options = array();	
-	}
+	} 
 	
 	// process existing conditions...setup needed variables...
 	$conditionlist = "";

@@ -680,11 +680,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      // Debug Code
      
-     /*global $xoopsUser;
-     if($xoopsUser->getVar('uid') == 1) {
-          print "<br>Count query: $countMasterResults<br><br>";
-          print "Master query: $masterQuerySQL<br>";
-     }*/
+     //global $xoopsUser;
+     //if($xoopsUser->getVar('uid') == 1) {
+     //     print "<br>Count query: $countMasterResults<br><br>";
+     //     print "Master query: $masterQuerySQL<br>";
+     //}
      
 		 formulize_benchmark("Before query");
 		 
