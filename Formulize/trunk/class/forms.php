@@ -486,6 +486,7 @@ class formulizeFormsHandler {
 		if($perGroupFilter) {
 				 $perGroupFilter .= ") ";
 		}
+		return $perGroupFilter;
 	}
 
 }
