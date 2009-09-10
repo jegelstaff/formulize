@@ -331,6 +331,24 @@ class formulizeDataHandler  {
 		return $entries;
 	
 	}
+	
+	// this function finds the first entry for a given user in the form
+	function getFirstEntryForGroups($group_ids) {
+		if(!is_array($group_ids)) {
+			$group_ids = array(0=>intval($groupids));
+		}
+		
+		global $xoopsDB;
+		$sql = "SELECT t1.entry_id FROM ". $xoopsDB->prefix("formulize_".$this->fid) . " as t1, ". $xoopsDB->prefix("formulize_entry_owner_groups") ." as t2 WHERE t1.entry_id = t2.entry_id AND t2.fid=".$this->fid." AND t2.groupid IN (".implode(",",$group_ids).") ORDER BY t1.entry_id LIMIT 0,1";
+		global $xoopsUser;
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$row = $xoopsDB->fetchRow($res);
+		return $row[0];
+	}
+	
+	
 	// this function finds the first entry for a given user in the form
 	function getFirstEntryForUsers($uids, $scope_uids=array()) {
 		if(!is_array($uids)) {
@@ -362,7 +380,7 @@ class formulizeDataHandler  {
 		$row = $xoopsDB->fetchRow($res);
 		return $row[0];
 	}
-	
+		
 	// this function returns the entry ID of all entries found in the form with the specified value in the specified element
 	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_groups.
 	function findAllEntriesWithValue($element_id, $value, $scope_uids=array(), $scope_groups=array(), $operator="=") {
