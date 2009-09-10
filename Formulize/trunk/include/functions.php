@@ -1864,21 +1864,8 @@ function getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid) {
 				$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
 				$intersect_groups = array_intersect($groups, $groupsWithAccess);
 			}
-			$all_users = array();
-      global $formulize_archived_available;
-			foreach($intersect_groups as $grp) {
-				if($grp != XOOPS_GROUP_USERS) { // exclude registered users group since that's everyone! -- superfluous now since registered users would normally be ignored since people probably would not be handing out perms to registered users group (on the other hand, if someone wanted to, it should be allowed now, since it won't screw things up necessarily, thanks to the use of groupsWithAccess -- and the specified groupscope)
-          if($formulize_archived_available) {
-            $users = $member_handler->getUsersByGroup($grp, false, 0, 0, true);  // last param will include archived users based on the Freeform archived user core hack
-          } else {
-            $users = $member_handler->getUsersByGroup($grp);  
-          }
-					$all_users = array_merge((array)$users, $all_users);
-					unset($users);
-				}
-			}
       $data_handler = new formulizeDataHandler($fid);
-      $single['entry'] = $data_handler->getFirstEntryForUsers($all_users);
+      $single['entry'] = $data_handler->getFirstEntryForGroups($intersect_groups);
 		} else {
 			exit("Error: invalid value found for singleentry for form $fid");
 		}
