@@ -240,7 +240,9 @@ function _formulize_returnElement($ele, $formframe="") {
       	$element =& $formulize_mgr->get($ele);
       	if(!is_object($element)) {
       		return "invalid_element";
-      	}
+      	} elseif($element->getVar('id_form') != $formframe AND $formframe) {
+					return "invalid_element";
+				}
 	}
   return $element;
 }
