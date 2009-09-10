@@ -1150,9 +1150,17 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 								}
 							  }
 	                                }
- 	                            }
+ 	                            } elseif(strstr($row_value, ",")) {
+																// the value is a comma separated list of linked values, so we need to add commas before and after, to adhere to the Formulize data storage spec
+																if(substr($row_value, 0, 1)!=",") {
+																	$row_value = ",".$row_value;
+																}
+																if(substr($row_value, -1)!=",") {
+																	$row_value = $row_value.",";
+																}
+															}
 	                            break;
-	                            
+	                        
 	                        case "checkbox":
                                 //echo "checkbox<br>";                                
                                 
