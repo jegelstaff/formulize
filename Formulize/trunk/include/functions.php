@@ -3330,7 +3330,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 			$limitCondition = ", ".$xoopsDB->prefix("formulize_".$linkedSourceElementEleValueParts[0])." as t2 WHERE t1.`$linked_ele_id` LIKE CONCAT('%',t2.entry_id,'%') AND t2.`".$linkedSourceElementEleValueParts[1]."` LIKE '%".mysql_real_escape_string($_POST[$linked_data_id])."%'";
 		}
 		unset($options);
-		if($dataResult = $xoopsDB->query("SELECT t1.`$source_element_handle` FROM ".$xoopsDB->prefix("formulize_".$source_form_id)." as t1 ".$limitCondition)) {
+		if($dataResult = $xoopsDB->query("SELECT distinct(t1.`$source_element_handle`) FROM ".$xoopsDB->prefix("formulize_".$source_form_id)." as t1 ".$limitCondition." ORDER BY t1.`$source_element_handle`")) {
 			while($dataArray = $xoopsDB->fetchArray($dataResult)) {
 				$options[$dataArray[$source_element_handle]] = "";
 			}
