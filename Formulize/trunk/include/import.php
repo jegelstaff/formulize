@@ -230,7 +230,7 @@ function importCsv($csv_name, $id_reqs, $regfid, $validateOverride)
 
 
 
-	if((is_array($id_reqs) AND !isset($importSet[7]['idreqs'])) OR (!is_array($id_reqs) AND !isset($importSet[7]['creator']) AND $regfid != $importSet[4]) OR ($regfid == $importSet[4] AND !is_array($id_reqs) AND (!isset($importSet[7]['username']) OR !isset($importSet[7]['fullname']) OR !isset($importSet[7]['password']) OR !isset($importSet[7]['email']) OR !isset($importSet[7]['regcode'])))) {
+	if((is_array($id_reqs) AND !isset($importSet[7]['idreqs'])) OR ($regfid == $importSet[4] AND !is_array($id_reqs) AND (!isset($importSet[7]['username']) OR !isset($importSet[7]['fullname']) OR !isset($importSet[7]['password']) OR !isset($importSet[7]['email']) OR !isset($importSet[7]['regcode'])))) {
 		// necessary metadata columns not present in file
 		echo "<br><b>csv not imported!</b><br>Required metadata columns (ie: user who made entry, ID numbers, or account information) not present in the file.";
 	} else {
@@ -1291,6 +1291,10 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 							foreach($fieldValues as $elementHandle=>$fieldValue) {
 									$fields .= ", `".$elementHandle."`";
 									$values .= ", '".mysql_real_escape_string($fieldValue) . "'";
+							}
+							
+							if($form_uid == 0) {
+								$form_uid = $form_proxyid;
 							}
 							
 							$entryIdFieldText = $newEntryId ? "entry_id, " : "";
