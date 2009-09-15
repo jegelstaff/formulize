@@ -1564,6 +1564,12 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $
      // query for the data
      $whereClause = $whereClause ? "WHERE $whereClause" : "";
      $sql = "SELECT * FROM $tablename $whereClause";
+		 if($sortField) {
+					$sql .= " ORDER BY `".$elementsById[$sortField]['field']."` $sortOrder ";
+		 }
+		 if($limitSize) {
+					$sql .= " LIMIT $limitStart,$limitSize ";
+		 }
      //print "<br>$sql<br>";
      $res = mysql_query($sql);
      $result = array();
