@@ -1563,7 +1563,8 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $
      
      // query for the data
      $whereClause = $whereClause ? "WHERE $whereClause" : "";
-     $sql = "SELECT * FROM $tablename $whereClause";
+     $basesql = "SELECT * FROM $tablename $whereClause ";
+		 $sql = $basesql;
 		 if($sortField) {
 					$sql .= " ORDER BY `".$elementsById[$sortField]['field']."` $sortOrder ";
 		 }
@@ -1583,6 +1584,13 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $
           }
           $indexer++;
      }
+		 
+		 // count master results
+		 $countSQL = str_replace("SELECT * FROM", "SELECT count(*) FROM", $basesql);
+		 $countRes = mysql_query($countSQL);
+		 $countRow = mysql_fetch_row($countRes);
+		 $GLOBALS['formulize_countMasterResults'] = $countRow[0];
+		 
      return $result;
      
      
