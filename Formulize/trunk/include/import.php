@@ -306,6 +306,9 @@ function importCsvSetup(&$importSet, $id_reqs)
         //$importSet[2] = $importSet[2][0];
         $importSet[2] = getFormTitle($fid);
         $importSet[3] = fgetcsv($importSet[1], 99999);
+				foreach($importSet[3] as $id3=>$value3) {
+					$importSet[3][$id3] = str_replace(chr(19).chr(16), "", $value3);
+				}
     }
 
     // 4. get the form id
@@ -448,6 +451,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 
 
     $links = count($importSet[6]);
+		$GLOBALS['formulize_ignoreColumnsOnImport'] = array();
     for($link = 0; $link < $links; $link++)
     {
         if($importSet[6][$link] == -1)
@@ -465,9 +469,8 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 	            || $importSet[3][$link] == _formulize_DE_IMPORT_IDREQCOL
 							|| $importSet[3][$link] == _formulize_DE_IMPORT_NEWENTRYID))
             {
-                $errors[] = "<li>column <b>" .
-                    $importSet[3][$link] .
-                    "</b> not found in form.</li>";
+                print "<p>Warning: column <b>" . $importSet[3][$link] . "</b> was not found in form.</p>";
+								$GLOBALS['formulize_ignoreColumnsOnImport'][$link] = true;
             }                    
         }
 	}
@@ -483,7 +486,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
     {
         $row = fgetcsv($importSet[1], 99999);
 
-        if(is_array($row))
+        if(is_array($row) AND count($row) > 1)
         {
             $rowCount++;
             
@@ -492,7 +495,10 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
             $links = count($importSet[6]);
             for($link = 0; $link < $links; $link++)
             {
-	            $cell_value = $row[$link];
+							if(isset($GLOBALS['formulize_ignoreColumnsOnImport'][$link])) {
+								continue;
+							}
+	            $cell_value = str_replace(chr(19).chr(16), "", $row[$link]);
 			if(isset($importSet[5][0][$importSet[6][$link]])) { // if this is an element, then extract that element from the array
 				$element = $importSet[5][0][$importSet[6][$link]];
 			} else {
@@ -908,9 +914,9 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 
 	// lock formulize_form
 	if($regfid == $importSet[4]) { // only lockup reg codes table if we're dealing with a profile form, in which case we assume reg codes is installed and the table exists
-		$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[4]) . " WRITE, ". $xoopsDB->prefix("users") . " WRITE, ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, " . $xoopsDB->prefix("reg_codes") . " WRITE, " . $xoopsDB->prefix("groups_users_link") . " WRITE, ". $xoopsDB->prefix("modules") . " READ, " . $xoopsDB->prefix("config") . " READ");
+		$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[4]) . " WRITE, ". $xoopsDB->prefix("users") . " WRITE, ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, " . $xoopsDB->prefix("reg_codes") . " WRITE, " . $xoopsDB->prefix("groups_users_link") . " WRITE, ". $xoopsDB->prefix("modules") . " READ, " . $xoopsDB->prefix("config") . " READ, " . $xoopsDB->prefix("formulize") . " READ");
 	} else {
-		$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[4]) . " WRITE, ". $xoopsDB->prefix("users") . " READ, ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, " . $xoopsDB->prefix("groups_users_link") . " READ");
+		$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[4]) . " WRITE, ". $xoopsDB->prefix("users") . " READ, ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, " . $xoopsDB->prefix("groups_users_link") . " READ, " . $xoopsDB->prefix("formulize") . " READ");
 	}
     
 
@@ -921,9 +927,10 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 		$entriesMap = array();
     while(!feof($importSet[1]))
     {
+				
         $row = fgetcsv($importSet[1], 99999);
 
-        if(is_array($row))
+        if(is_array($row) AND count($row) > 1)
         {
 
             $rowCount++;
@@ -932,10 +939,12 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 							$this_id_req = $row[$importSet[7]['idreqs']];
 						}
 
-
-            $links = count($importSet[6]);
+						$links = count($importSet[6]);
             for($link = 0; $link < $links; $link++)
             {
+							if(isset($GLOBALS['formulize_ignoreColumnsOnImport'][$link])) {
+								continue;
+							}							
                 if($importSet[6][$link] == -1)
                 {
                     if($importSet[3][$link] == _formulize_DE_CALC_CREATOR)
@@ -994,7 +1003,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 
                     $id_form = $importSet[4];
                     
-                    $row_value = $row[$link];
+                    $row_value = str_replace(chr(19).chr(16), "", $row[$link]);
      
                     if($row_value != "")
                     {
@@ -1262,9 +1271,6 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 						
 						// now that we've recorded all the values, do the actual updating/inserting of this record
 						
-						$idToShow = $newEntryId ? $newEntryId : $max_id_req;
-            echo "line $rowCount, id $idToShow<br>";
-
 						if($this_id_req) { // updating an entry
 							
 							$form_uid = $this_uid;
@@ -1288,9 +1294,14 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 							
 							$fields = "";
 							$values = "";
+							$element_handler = xoops_getmodulehandler('elements', 'formulize');
 							foreach($fieldValues as $elementHandle=>$fieldValue) {
 									$fields .= ", `".$elementHandle."`";
 									$values .= ", '".mysql_real_escape_string($fieldValue) . "'";
+									$elementObject = $element_handler->get($elementHandle);
+									if($elementObject->getVar('ele_desc')=="Primary Key") {
+										$newEntryId = $fieldValue;
+									}
 							}
 							
 							if($form_uid == 0) {
@@ -1305,19 +1316,31 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 							{
 									if(!$result = $xoopsDB->queryF($insertElement)) 
 									{
+										
+										static $duplicatesFound = false;
+										if(strstr(mysql_error(), "Duplicate entry")) {
+											if(!$duplicatesFound) {
+												print "<br><b>FAILED</b> to insert <i>some</i> data.  At least one duplicate value was found in a column that does not allow duplicate values.<br>";
+												$duplicatesFound = true;
+											}
+										} else {
 											print "<br><b>FAILED</b> to insert data, SQL: $insertElement<br>".mysql_error()."<br>";
+										}
+									} else {
+										// need to record new group ownership info too
+										$usersMap[] = $form_uid;
+										$entriesMap[] = $xoopsDB->getInsertId();
 									}
-
-									//echo "<i>id</i>: " . $xoopsDB->getInsertId() . "<br>";                         
 							}
 							else
 							{                        
 									echo "<br>" . $insertElement . "<br>";                        
 							}  
-							// need to record new group ownership info too
-							$usersMap[] = $form_uid;
-							$entriesMap[] = $xoopsDB->getInsertId();
+							
 						}
+						
+						$idToShow = $newEntryId ? $newEntryId : $max_id_req;
+            //echo "line $rowCount, id $idToShow<br>";
 						
         } // end of if we have contents in this row
     } // end of looping through each row of the file
@@ -1326,7 +1349,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 			$data_handler = new formulizeDataHandler($id_form);
 			if(!$groupResult = $data_handler->setEntryOwnerGroups($usersMap, $entriesMap)) {
-				print "ERROR: failed to write the entry ownership information to the database.<br>";
+				print "ERROR: failed to write the entry ownership information to the database.<br>".mysql_error()."<br>";
 			}
 		}
 

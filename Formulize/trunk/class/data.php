@@ -482,7 +482,9 @@ class formulizeDataHandler  {
 			return false;
 		}
 		$start = true;
-		$ownerInsertSQL = "INSERT INTO " . $xoopsDB->prefix("formulize_entry_owner_groups") . " (`fid`, `entry_id`, `groupid`) VALUES ";
+		$ownerInsertSQLArray = array();
+		$ownerInsertSQLBase = "INSERT INTO " . $xoopsDB->prefix("formulize_entry_owner_groups") . " (`fid`, `entry_id`, `groupid`) VALUES ";
+		$ownerInsertSQLCurrent = $ownerInsertSQLBase;
 		for($i=0;$i<count($uids);$i++) { // loop through all the users
 			$ownerGroups = array();
 			if($uids[$i]) { // get the user's group
@@ -498,14 +500,22 @@ class formulizeDataHandler  {
 			}
 			foreach($ownerGroups as $index=>$thisGroup) { // add this user's groups and this entry id to the insert statement
 				if(!$start) { 
-					$ownerInsertSQL .= ", "; // add a comma between successive inserts
+					$ownerInsertSQLCurrent .= ", "; // add a comma between successive inserts
 				}
 				$start = false;
-				$ownerInsertSQL .= "('".$this->fid."', '".intval($entryids[$i])."', '".intval($thisGroup)."')";
+				$ownerInsertSQLCurrent .= "('".$this->fid."', '".intval($entryids[$i])."', '".intval($thisGroup)."')";
+			}
+			if(strlen($ownerInsertSQLCurrent) > 250000) {
+				$ownerInsertSQLArray[] = $ownerInsertSQLCurrent;
+				$ownerInsertSQLCurrent = $ownerInsertSQLBase;
+				$start = true;
 			}
 		}
-		if(!$ownerInsertRes = $xoopsDB->query($ownerInsertSQL)) {
-			return false;
+		$ownerInsertSQLArray[] = $ownerInsertSQLCurrent;
+		foreach($ownerInsertSQLArray as $ownerInsertSQL) {
+			if(!$ownerInsertRes = $xoopsDB->query($ownerInsertSQL)) {
+				return false;
+			}
 		}
 		return true;
 	}
