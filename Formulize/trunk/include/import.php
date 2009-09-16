@@ -498,7 +498,13 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 							if(isset($GLOBALS['formulize_ignoreColumnsOnImport'][$link])) {
 								continue;
 							}
-	            $cell_value = str_replace(chr(19).chr(16), "", $row[$link]);
+							
+							if($link == ($link-1)) {
+								$cell_value = str_replace(chr(19).chr(16), "", $row[$link]);								
+							} else {
+								$cell_value = $row[$link];
+							}
+
 			if(isset($importSet[5][0][$importSet[6][$link]])) { // if this is an element, then extract that element from the array
 				$element = $importSet[5][0][$importSet[6][$link]];
 			} else {
@@ -1003,7 +1009,11 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 
                     $id_form = $importSet[4];
                     
-                    $row_value = str_replace(chr(19).chr(16), "", $row[$link]);
+										if($link == ($links-1)) {
+											$row_value = str_replace(chr(19).chr(16), "", $row[$link]); // remove some really odd line endings if present, only happens when dealing with legacy outputs of really old/odd systems
+										} else {
+											$row_value = $row[$link];
+										}
      
                     if($row_value != "")
                     {
