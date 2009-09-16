@@ -1233,7 +1233,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 						break;
 
 	                        case "date":
-                                $row_value = date("Y-m-d", strtotime($row_value)); 
+                                $row_value = date("Y-m-d", strtotime(str_replace("/", "-", $row_value))); 
 	                            break;
 
 	                            

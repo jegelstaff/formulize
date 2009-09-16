@@ -1276,6 +1276,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 
 	
 	
+	$scrollBoxWasSet = false;
 	if($useScrollBox AND count($data) > 0) {
 		print "<style>\n";
 	
@@ -1288,6 +1289,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		print "</style>\n";
 	
 		print "<div class=scrollbox id=resbox>\n";
+		$scrollBoxWasSet = true;
 	}
 
 	// perform calculations...
@@ -1670,7 +1672,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		print "<p>" . _formulize_DE_LOE_LIMIT_REACHED1 . " <b>" . $LOE_limit . "</b> " . _formulize_DE_LOE_LIMIT_REACHED2 . " <a href=\"\" onclick=\"javascript:forceQ();return false;\">" . _formulize_DE_LOE_LIMIT_REACHED3 . "</a></p>\n";
 	}
 	
-	if($useScrollBox) {
+	if($scrollBoxWasSet) {
 		print "</div>";
 	}
   formulize_benchmark("We're done");
