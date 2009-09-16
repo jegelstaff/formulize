@@ -1280,7 +1280,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 							
 							if(IMPORT_WRITE) {
 								if(!$result = $xoopsDB->queryF($updateSQL)) {
-									print "<br><b>FAILED</b> to update data, SQL: $updateSQL";
+									print "<br><b>FAILED</b> to update data, SQL: $updateSQL<br>".mysql_error()."<br>";
 								}
 							}
 
@@ -1305,7 +1305,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 							{
 									if(!$result = $xoopsDB->queryF($insertElement)) 
 									{
-											print "<br><b>FAILED</b> to insert data, SQL: $insertElement";
+											print "<br><b>FAILED</b> to insert data, SQL: $insertElement<br>".mysql_error()."<br>";
 									}
 
 									//echo "<i>id</i>: " . $xoopsDB->getInsertId() . "<br>";                         
