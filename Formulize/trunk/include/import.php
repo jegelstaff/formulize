@@ -578,9 +578,9 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                         switch($element["ele_type"])
 	                    {
 	                        case "select":
-                                if(isset($importSet[5][1][$link]) AND !strstr($cell_value, ","))
+                                if(isset($importSet[5][1][$link]) AND !strstr($cell_value, ",") AND (!is_numeric($cell_value) OR $cell_value < 10000000))
                                 {
-									// Linked element, but allow entries with commas to pass through unvalidated
+									// Linked element, but allow entries with commas to pass through unvalidated, and also allow through numeric values with no commas, if they are really big (assumption is big numbers are some kind of special entry_id reference, as in the case of UofT)
                                     // echo "Linked element<br>";
 
                                     $linkElement = $importSet[5][1][$link];
@@ -638,7 +638,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
                                         }
 	                                }
                                 }
-								elseif(!strstr($cell_value, ","))
+								elseif(!strstr($cell_value, ",") AND (!is_numeric($cell_value) OR $cell_value < 10000000))
                                 {
 									// Not-Linked element
                                     //echo "Not-Linked element<br>";                                
@@ -1020,7 +1020,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 	                    switch($element["ele_type"])
 	                    {
 	                        case "select":
-	                            if($importSet[5][1][$link] AND !strstr($row_value, ","))
+	                            if($importSet[5][1][$link] AND !strstr($row_value, ",") AND (!is_numeric($row_value) OR $row_value < 10000000))
 	                            {
 	                                // Linked element
 	                                //echo "Linked element<br>";
@@ -1077,7 +1077,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 	                                    $row_value = ",".$ele_id.",";
 	                                }
 	                            }
-	                            elseif(!strstr($row_value, ","))
+	                            elseif(!strstr($row_value, ",") AND (!is_numeric($row_value) OR $row_value < 10000000))
 	                            {
 	                                // Not-Linked element
 	                                //echo "Not-Linked element<br>";                                
@@ -1169,7 +1169,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 								}
 							  }
 	                                }
- 	                            } elseif(strstr($row_value, ",")) {
+ 	                            } elseif(strstr($row_value, ",") OR (is_numeric($row_value) AND $row_value > 10000000)) {
 																// the value is a comma separated list of linked values, so we need to add commas before and after, to adhere to the Formulize data storage spec
 																if(substr($row_value, 0, 1)!=",") {
 																	$row_value = ",".$row_value;
