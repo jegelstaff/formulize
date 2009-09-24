@@ -229,6 +229,7 @@ $savelist = new xoopsFormSelect(_formulize_DE_SAVE_USECURRENT, 'savethis', $defa
 $savelist->setExtra("onchange=\"javascript:newSaveView(this.form);;\"");
 $savelist->addOptionArray($saveoptions);
 
+
 $scope = new xoopsFormRadio(_formulize_DE_SAVE_SCOPE, 'scope', $_GET['currentview']);
 
 if($publish_reports OR $publish_globalscope) {

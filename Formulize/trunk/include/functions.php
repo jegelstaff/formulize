@@ -1263,10 +1263,16 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 		// write in data
 		foreach($cols as $col) {
 			if(($col == "uid" OR $col == "proxyid" OR $col=="creation_date" OR $col =="mod_date" OR $col == "creation_uid" OR $col == "mod_uid" OR $col == "creation_datetime" OR $col == "mod_datetime") AND $_POST['metachoice'] == 1) { continue; } // ignore the metadata columns if they are selected, since we already handle them better above
-			$data_to_write = displayTogether($entry, $col, "\n");
-			$data_to_write = str_replace("&quot;", "&quot;&quot;", $data_to_write);
-			$data_to_write = "\"" . trans($data_to_write) . "\"";
-			$data_to_write = str_replace("\r\n", "\n", $data_to_write);
+			if($col == "creation_uid" OR $col == "mod_uid" OR $col == "uid" OR $col == "proxyid") {
+				$name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=".intval(display($entry, $col)));
+				$data_to_write = $name_q[0]['name'];
+				if(!$data_to_write) { $data_to_write = $name_q[0]['uname']; }
+			} else {
+				$data_to_write = displayTogether($entry, $col, "\n");
+				$data_to_write = str_replace("&quot;", "&quot;&quot;", $data_to_write);
+				$data_to_write = "\"" . trans($data_to_write) . "\"";
+				$data_to_write = str_replace("\r\n", "\n", $data_to_write);
+			}
       if($lineStarted) {
         $csvfile .= $fd;
       }

@@ -211,7 +211,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 $configTable = addElementLOE($usescrollbox, $configTable);
                 
                 $entriesperpageDefault = $screen->getVar('sid') ? $screen->getVar('entriesperpage') : 10;
-                $entriesperpage = new xoopsFormText(_AM_FORMULIZE_SCREEN_LOE_ENTRIESPERPAGE, 'entriesperpage', 2, 2, $entriesperpageDefault);
+                $entriesperpage = new xoopsFormText(_AM_FORMULIZE_SCREEN_LOE_ENTRIESPERPAGE, 'entriesperpage', 4, 4, $entriesperpageDefault);
                 $entriesperpage->setDescription(_AM_FORMULIZE_SCREEN_LOE_DESC_ENTRIESPERPAGE);
                 $configTable = addElementLOE($entriesperpage, $configTable);
                 
