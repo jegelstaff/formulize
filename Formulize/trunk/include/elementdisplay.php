@@ -253,8 +253,8 @@ function _formulize_returnElement($ele, $formframe="") {
 // Note that the URL does not change, even though the page contents do!
 function displayElementSave($text="", $style="", $redirect_page="") {
 	if($text == "") { $text = _pageworks_SAVE_BUTTON; }
-	print "<input type=hidden name=displayElementRedirect value=$redirect_page>\n";
-	print "<input type=submit name=submitelementdisplayform value=\"$text\" style=\"$style\">\n";
+	print "<input type=\"hidden\" name=\"displayElementRedirect\" value=\"$redirect_page\">\n";
+	print "<input type=\"submit\" name=\"submitelementdisplayform\" id=\"submitelementdisplayform\" value=\"$text\" style=\"$style\">\n";
 }
 
 // FUNCTION FOR DISPLAYING A TEXT LINK OR BUTTON THAT APPENDS OR OVERWRITES VALUES FOR AN ELEMENT
