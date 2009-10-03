@@ -511,7 +511,9 @@ class formulizeDataHandler  {
 				$start = true;
 			}
 		}
-		$ownerInsertSQLArray[] = $ownerInsertSQLCurrent;
+		if(!$start) {
+			$ownerInsertSQLArray[] = $ownerInsertSQLCurrent;	
+		}
 		foreach($ownerInsertSQLArray as $ownerInsertSQL) {
 			if(!$ownerInsertRes = $xoopsDB->query($ownerInsertSQL)) {
 				return false;
