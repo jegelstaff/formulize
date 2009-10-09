@@ -193,7 +193,7 @@ function getCurrentURL() {
 	static $url = "";
 	if($url) { return $url; }
 	$url_parts = parse_url(XOOPS_URL);
-	$url = $url_parts['scheme'] . "://" . $url_parts['host']; 
+	$url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST']; 
 	$url = isset($url_parts['port']) ? $url . ":" . $url_parts['port'] : $url;
 	$url .= str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])));  // strip html tags, convert special chars to htmlchar equivalents, then convert back ampersand htmlchars to regular ampersands, so the URL doesn't bust on certain servers
 	return $url;

@@ -67,9 +67,11 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		} else {
       $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
       $frameworkObject = $framework_handler->get($formframe);
-      $frameworkElementIds = $frameworkObject->getVar('element_ids');
-      $element_id = $frameworkElementIds[$ele];
-  		$element =& $formulize_mgr->get($element_id);
+			if(is_object($frameworkObject)) {
+	      $frameworkElementIds = $frameworkObject->getVar('element_ids');
+	      $element_id = $frameworkElementIds[$ele];
+	  		$element =& $formulize_mgr->get($element_id);
+			}
 			if(!is_object($element)) {
 				// then check the element data handles instead
 				$element =& $formulize_mgr->get($ele);
