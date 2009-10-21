@@ -2390,8 +2390,23 @@ function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
 	} else {
 		$arrayWasPassedIn = true;
 	}
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$thisElement = $element_handler->get($handle);
+	$ele_value = $thisElement->getVar('ele_value');
+	$isLinkedSelectBox = false;
+	$isNamesList = false;
+	if(is_array($ele_value)) {
+		if(isset($ele_value[2])) {
+			if(strstr($ele_value[2], "#*=:*")) {
+				$isLinkedSelectBox = true;
+			} elseif(isset($ele_value[2]["{FULLNAMES}"]) OR isset($ele_value[2]["{USERNAMES}"]))  {
+				$isNamesList = isset($ele_value[2]["{FULLNAMES}"]) ? 'name' : 'uname';
+			}
+		}
+	}
+	$allRealValuesNames = array();
 	foreach($value as $thisValue) {
-		if($linkedMetaData = formulize_isLinkedSelectBox($handle, true)) {
+		if($isLinkedSelectBox) {
 			// convert the pointers for the linked selectbox values, to their source values
 			$sourceMeta = explode("#*=:*", $linkedMetaData[2]);
 			$data_handler = new formulizeDataHandler($sourceMeta[0]);
@@ -2403,8 +2418,28 @@ function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
 			$allRealValues[] = $realValues;
 		} elseif(strstr($thisValue, "*=+*:")) {
 			$allRealValues[] = str_replace("*=+*:", ", ", ltrim($thisValue, "*=+*:")); // replace the separator with commas between values
+		} elseif($isNamesList) {
+			$allRealValuesNames[] = $thisValue;			
 		} else {
 			$allRealValues[] = $thisValue;
+		}
+	}
+	if(count($allRealValuesNames) > 0) {
+		// convert all uids found into names with only one query
+		$user_handler = xoops_gethandler('user');
+		$criteria = new CriteriaCompo();
+		foreach($allRealValuesNames as $thisUid) {
+			if(is_numeric($thisUid)) {
+				$criteria->add(new Criteria('uid', $thisUid), 'OR');
+			}
+		}
+		$users = $user_handler->getObjects($criteria, true); // true causes key of returned array to be uids
+		foreach($allRealValuesNames as $thisUid) {
+			if(is_numeric($thisUid) AND isset($users[$thisUid])) {
+				$allRealValues[] = $users[$thisUid]->getVar($isNamesList);	
+			} else {
+				$allRealValues[] = _formulize_BLANK_KEYWORD;
+			}
 		}
 	}
 	if($arrayWasPassedIn) {

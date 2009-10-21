@@ -45,6 +45,7 @@ define("_AM_ELE_REQ","Required");
 define("_AM_ELE_ORDER","Order");
 define("_AM_ELE_DISPLAY","Display this element to these groups");
 //define("_AM_ELE_DISPLAYLIST","Display this element to these groups, in the list of entries");
+define("_AM_ELE_ELEMENTCONDITIONS","Only include this element in the form if the entry being edited meets these conditions:");
 define("_AM_ELE_PRIVATE","Private");
 define("_AM_ELE_HANDLE_HEADING","Data handle/ID");
 define("_AM_ELE_TYPE_HEADING","Type");

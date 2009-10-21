@@ -113,6 +113,19 @@ if( !empty($ele_id) AND $clone == 0){
     }
 		$element->setVar('ele_encrypt', $encrypt_checked);
     
+		// handle any conditions
+		$elementFilterSettings = array();
+		if($_POST['elementfilter']!="all") {
+			if($_POST["new_elementfilter_term"] != "") {
+				$_POST["elementfilter_elements"][] = $_POST["new_elementfilter_element"];
+				$_POST["elementfilter_ops"][] = $_POST["new_elementfilter_op"];
+				$_POST["elementfilter_terms"][] = $_POST["new_elementfilter_term"];
+			}
+			$elementFilterSettings[0] = $_POST["elementfilter_elements"];
+			$elementFilterSettings[1] = $_POST["elementfilter_ops"];
+			$elementFilterSettings[2] = $_POST["elementfilter_terms"];
+		}
+		$element->setVar('ele_filtersettings', $elementFilterSettings);
     
     
 

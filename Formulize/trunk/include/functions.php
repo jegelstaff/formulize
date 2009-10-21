@@ -3731,7 +3731,7 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
 	// setup the new element, operator, term boxes...
 	$new_elementOpTerm = new xoopsFormElementTray('', "&nbsp;&nbsp;");
 	$element = new xoopsFormSelect('', $newElementName);
-	$element->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
+	$element->setExtra(" onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\" ");
 	$element->addOptionArray($options);
 	$op = new xoopsFormSelect('', $newOpName);
 	$ops['='] = "=";

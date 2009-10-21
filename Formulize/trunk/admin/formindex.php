@@ -1222,12 +1222,15 @@ function patch40() {
 		$sql['drop_from_formulize_id_odd'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `odd`";
 		$sql['drop_from_formulize_id_groupscope'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `groupscope`";
 		$sql['drop_from_formulize_id_showviewentries'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `showviewentries`";
+		$sql['add_filtersettings'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_filtersettings` text NOT NULL";
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
 				if($key === "add_encrypt") {
 					print "ele_encrypt field already added.  result: OK<br>";
 				} elseif($key === "add_lockedform") {
 					print "lockedform field already added.  result: OK<br>";
+				} elseif($key === "add_filtersettings") {
+					print "element filtersettings field already added.  result: OK<br>";
 				} elseif(strstr($key, 'drop_from_formulize_id_')) {
 					continue;					
 				} else {

@@ -123,6 +123,51 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$allowed = 0;
 	}
 	
+	if($allowed AND count($element->getVar('ele_filtersettings')) > 0 AND $entry != "new") {
+		// need to check if there's a condition on this element that is met or not
+		static $cachedEntries = array();
+		if(!isset($cachedEntries[$element->getVar('id_form')][$entry])) {
+			$cachedEntries[$element->getVar('id_form')][$entry] = getData("", $element->getVar('id_form'), $entry);
+		}
+		$entryData = $cachedEntries[$element->getVar('id_form')][$entry];
+		$elementFilterSettings = $element->getVar('ele_filtersettings');
+		$filterElements = $elementFilterSettings[0];
+		$filterOps = $elementFilterSettings[1];
+		$filterTerms = $elementFilterSettings[2];
+		// setup evaluation condition as PHP and then eval it so we know if we should include this element or not
+		$evaluationCondition = "\$passedCondition = false;\n";
+		$evaluationCondition .= "if(";
+		for($i=0;$i<count($filterElements);$i++) {
+			if($i > 0) {
+				$evaluationCondition .= " AND ";
+			}
+			switch($filterOps[$i]) {
+				case "=";
+					$thisOp = "==";
+					break;
+				case "NOT";
+					$thisOp = "!=";
+					break;
+				default:
+					$thisOp = $filterOps[$i];
+			}
+			if($thisOp == "LIKE") {
+				$evaluationCondition .= "strstr('".addslashes(display($entryData[0], $filterElements[$i]))."', '".addslashes($filterTerms[$i])."')"; 
+			} elseif($thisOp == "NOT LIKE") {
+				$evaluationCondition .= "!strstr('".addslashes(display($entryData[0], $filterElements[$i]))."', '".addslashes($filterTerms[$i])."')";
+			} else {
+				$evaluationCondition .= "'".addslashes(display($entryData[0], $filterElements[$i]))."' $thisOp '".addslashes($filterTerms[$i])."'";
+			}
+		}
+		$evaluationCondition .= ") {\n";
+		$evaluationCondition .= "  \$passedCondition = true;\n";
+		$evaluationCondition .= "}\n";
+		eval($evaluationCondition);
+		if(!$passedCondition) {
+			$allowed = 0;
+		}
+	}
+	
 	if($allowed) {
 
 		$ele_disabled = $element->getVar('ele_disabled');

@@ -252,6 +252,7 @@ CREATE TABLE formulize (
   ele_delim varchar(255) NOT NULL default '',
   ele_display varchar(255) NOT NULL default '1',
   ele_disabled varchar(255) NOT NULL default '0',
+  ele_filtersettings text NOT NULL,
   ele_forcehidden tinyint(1) NOT NULL default '0',
   ele_private tinyint(1) NOT NULL default '0',
   PRIMARY KEY  (`ele_id`),

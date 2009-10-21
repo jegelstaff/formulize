@@ -63,6 +63,7 @@ class formulizeformulize extends XoopsObject {
 		// changed - end - August 19 2005 - jpc
 		$this->initVar("ele_disabled", XOBJ_DTYPE_TXTBOX); // added June 17 2007 by jwe
 		$this->initVar("ele_encrypt", XOBJ_DTYPE_INT); // added July 15 2009 by jwe
+		$this->initVar("ele_filtersettings", XOBJ_DTYPE_ARRAY);
 	}
 	
 }
@@ -128,9 +129,9 @@ class formulizeElementsHandler {
 			$ele_id = $this->db->genId(formulize_TABLE."_ele_id_seq");
             // changed - start - August 19 2005 - jpc
 			$sql = sprintf("INSERT INTO %s (
-				id_form, ele_id, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt
+				id_form, ele_id, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings
 				) VALUES (
-				%u, %u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u, %u
+				%u, %u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u, %u, %s
 				)",
 				formulize_TABLE,
 				$id_form,
@@ -149,7 +150,8 @@ class formulizeElementsHandler {
 				$this->db->quoteString($ele_disabled),
 				$ele_forcehidden,
 				$ele_private,
-				$ele_encrypt
+				$ele_encrypt,
+				$this->db->quoteString($ele_filtersettings)
 			);            
             // changed - end - August 19 2005 - jpc
 			}else{
@@ -169,7 +171,8 @@ class formulizeElementsHandler {
 				ele_disabled = %s,
 				ele_forcehidden = %u,
 				ele_private = %u,
-				ele_encrypt = %u
+				ele_encrypt = %u,
+				ele_filtersettings = %s
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),
@@ -187,6 +190,7 @@ class formulizeElementsHandler {
 				$ele_forcehidden,
 				$ele_private,
 				$ele_encrypt,
+				$this->db->quoteString($ele_filtersettings),
 				$ele_id,
 				$id_form
 			);
@@ -201,7 +205,7 @@ class formulizeElementsHandler {
         }
 
 		if( !$result ){
-			print "Error: this element could not be saved in the database.  SQL: $sql";
+			print "Error: this element could not be saved in the database.  SQL: $sql<br>".mysql_error();
 			return false;
 		}
 		if( empty($ele_id) ){
