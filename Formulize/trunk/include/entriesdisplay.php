@@ -2392,6 +2392,13 @@ function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
 	}
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	$thisElement = $element_handler->get($handle);
+	if(!is_object($thisElement)) {
+		if($arrayWasPassedIn) {
+			return $value;
+		} else {
+			return $value[0];
+		}
+	}
 	$ele_value = $thisElement->getVar('ele_value');
 	$isLinkedSelectBox = false;
 	$isNamesList = false;
