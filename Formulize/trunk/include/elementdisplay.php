@@ -123,7 +123,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$allowed = 0;
 	}
 	
-	if($allowed AND count($element->getVar('ele_filtersettings')) > 0 AND $entry != "new") {
+	if($allowed AND count($element->getVar('ele_filtersettings')) > 1 AND $entry != "new") {
 		// need to check if there's a condition on this element that is met or not
 		static $cachedEntries = array();
 		if(!isset($cachedEntries[$element->getVar('id_form')][$entry])) {
@@ -150,6 +150,9 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 					break;
 				default:
 					$thisOp = $filterOps[$i];
+			}
+			if($filterTerms[$i] === "{BLANK}") {
+				$filterTerms[$i] = "";
 			}
 			if($thisOp == "LIKE") {
 				$evaluationCondition .= "strstr('".addslashes(display($entryData[0], $filterElements[$i]))."', '".addslashes($filterTerms[$i])."')"; 

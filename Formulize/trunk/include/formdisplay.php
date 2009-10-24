@@ -203,6 +203,11 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/extract.php';
 formulize_benchmark("Start of formDisplay.");
 
+if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "all") {
+	$passedInTitle = $titleOverride; // we can pass in a text title for the form, and that will cause the $titleOverride "all" behaviour to be invoked, and meanwhile we will use this title for the top of the form
+	$titleOverride = "all";
+}
+
 //syntax:
 //displayform($formframe, $entry, $mainform)
 //$formframe is the id of the form OR title of the form OR name of the framework.  Can also be an array.  If it is an array, then flag 'formframe' is the $formframe variable, and flag 'elements' is an array of all the elements that are to be displayed.
@@ -540,7 +545,7 @@ formulize_benchmark("Start of formDisplay.");
 			if(!$form) {
 	
 				$firstform = 1; 	      	
-				$title = trans(getFormTitle($this_fid));
+				$title = isset($passedInTitle) ? $passedInTitle : trans(getFormTitle($this_fid));
 						$form = new XoopsThemeForm($title, 'formulize', "$currentURL", "post", true);
 				$form->setExtra("enctype='multipart/form-data'"); // impératif!
 	
@@ -877,6 +882,10 @@ function addProfileFields($form, $profileForm) {
 
 // add the submit button to a form
 function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="", $allDoneOverride=false, $printall=0) { //nmc 2007.03.24 - added $printall
+
+	if($printall == 2) { // 2 is special setting in multipage screens that means do not include any printable buttons of any kind
+		return $form;
+	}
 
 	if(strstr($currentURL, "printview.php")) { // don't do anything if we're on the print view
 		return $form;
@@ -1706,12 +1715,12 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 						$assignedSelectedValues = array();
 						foreach($temparraykeys as $k)
 						{
-							if((string)$k === (string)$value) // if there's a straight match (not a multiple selection)
+							if((string)$k === (string)html_entity_decode($value, ENT_QUOTES)) // if there's a straight match (not a multiple selection)
 							{
 								$temparray[$k] = 1;
 								$assignedSelectedValues[$k] = true;
 							}
-							elseif( is_array($selvalarray) AND in_array((string)$k, $selvalarray, TRUE) ) // or if there's a match within a multiple selection array) -- TRUE is like ===, matches type and value
+							elseif( is_array($selvalarray) AND in_array((string)htmlspecialchars($k, ENT_QUOTES), $selvalarray, TRUE) ) // or if there's a match within a multiple selection array) -- TRUE is like ===, matches type and value
 							{
 								$temparray[$k] = 1;
 								$assignedSelectedValues[$k] = true;
@@ -1728,8 +1737,9 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 								}
 							}
 						}							
-						
-						if ($type != "select")
+						if ($type == "radio" AND $entry != "new" AND empty($value) AND array_search(1, $ele_value)) { // for radio buttons, if we're looking at an entry, and we've got no value to load, but there is a default value for the radio buttons, then use that default value (it's normally impossible to unset the default value of a radio button, so we want to ensure it is used when rendering the element in these conditions)
+							$ele_value = $ele_value;
+						} elseif ($type != "select")
 						{
 							$ele_value = $temparray;
 						}

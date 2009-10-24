@@ -1854,15 +1854,19 @@ function getElementValue($entry, $element_id, $fid) {
 
 // this function checks for singleentry status and returns the appropriate entry in the form if there is one
 function getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid) {
-	global $xoopsDB;
+	global $xoopsDB, $xoopsUser;
 	// determine single/multi status
 	$smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$fid");
 	if($smq[0]['singleentry'] != "") {
 		// find the entry that applies
 		$single['flag'] = $smq[0]['singleentry'] == "on" ? 1 : "group";
 		if($smq[0]['singleentry'] == "on") { // if we're looking for a regular single, find first entry for this user
-      $data_handler = new formulizeDataHandler($fid);
-      $single['entry'] = $data_handler->getFirstEntryForUsers($uid); 
+			if(!$xoopsUser) {
+				$single['entry'] = ""; // don't set an entry for anons...they should not share the same entry in a single entry form, since user zero is actually lots of different people...cookie logic in displayform will cause their past entry to show up for them, if they have cookies working
+			} else {
+	      $data_handler = new formulizeDataHandler($fid);
+	      $single['entry'] = $data_handler->getFirstEntryForUsers($uid);
+			}
 		} elseif($smq[0]['singleentry'] == "group") { // get the first entry belonging to anyone in their groups, excluding any groups that do not have add_own_entry permission
 			$formulize_permHandler = new formulizePermHandler($fid);
 			$intersect_groups = $formulize_permHandler->getGroupScopeGroupIds($groups); // use specified groups if any are available

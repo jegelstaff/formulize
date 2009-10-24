@@ -51,8 +51,12 @@ class formulizeMultiPageScreen extends formulizeScreen {
 		$this->initVar("conditions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("printall", XOBJ_DTYPE_INT); //nmc - 2007.03.24
     $this->initVar("paraentryform", XOBJ_DTYPE_INT); 
-    $this->initVar("paraentryrelationship", XOBJ_DTYPE_INT); 
-    
+    $this->initVar("paraentryrelationship", XOBJ_DTYPE_INT);
+    $this->initVar('dohtml', XOBJ_DTYPE_INT);
+    $this->initVar('doxcode', XOBJ_DTYPE_INT);
+    $this->initVar('dosmiley', XOBJ_DTYPE_INT);
+    $this->initVar('doimage', XOBJ_DTYPE_INT);
+    $this->initVar('dobr', XOBJ_DTYPE_INT);
     
 	}
 }
@@ -96,12 +100,12 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
     $fe_paraentryrelationship->addOption(1, _AM_FORMULIZE_SCREEN_PARAENTRYREL_BYGROUP);
     $form->addElement($fe_paraentryrelationship);
     
-		$form->addElement(new xoopsFormTextArea(_AM_FORMULIZE_SCREEN_INTRO, 'introtext', $screen->getVar('introtext'), 20, 85));
-		$form->addElement(new xoopsFormTextArea(_AM_FORMULIZE_SCREEN_THANKS, 'thankstext', $screen->getVar('thankstext'), 20, 85));
+		$form->addElement(new xoopsFormTextArea(_AM_FORMULIZE_SCREEN_INTRO, 'introtext',  html_entity_decode($screen->getVar('introtext', "e")), 20, 85)); // e is for edit-mode
+		$form->addElement(new xoopsFormTextArea(_AM_FORMULIZE_SCREEN_THANKS, 'thankstext', html_entity_decode($screen->getVar('thankstext', "e")), 20, 85)); // e is for edit-mode
 		$form->addElement(new xoopsFormText(_AM_FORMULIZE_SCREEN_DONEDEST, 'donedest', 50, 255, $screen->getVar('donedest')));
 		$form->addElement(new xoopsFormText(_AM_FORMULIZE_SCREEN_BUTTONTEXT, 'buttontext', 50, 255, $screen->getVar('buttontext')));
 		$fe_printall = new XoopsFormRadio(_AM_FORMULIZE_SCREEN_PRINTALL, 'printall', $screen->getVar('printall'));  			//nmc 2007.03.24
-		$fe_printall->addOptionArray(array('1' => _AM_FORMULIZE_SCREEN_PRINTALL_Y, '0' => _AM_FORMULIZE_SCREEN_PRINTALL_N));  	//nmc 2007.03.24
+		$fe_printall->addOptionArray(array('1' => _AM_FORMULIZE_SCREEN_PRINTALL_Y, '0' => _AM_FORMULIZE_SCREEN_PRINTALL_N, '2' =>_AM_FORMULIZE_SCREEN_PRINTALL_NONE));  	//nmc 2007.03.24
 		$form->addElement($fe_printall);  																						//nmc 2007.03.24
 		
 		// javascript required for form
@@ -203,18 +207,6 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		return $form;
 	}
 
-
-
-
-
-
-
-
-
-
-
-
-
 	function saveForm(&$screen, $fid) {
 		$vars['title'] = $_POST['title'];
 		$vars['fid'] = $_POST['fid'];
@@ -296,11 +288,17 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 			return false;
 		}
 		$screen->assignVar('sid', $sid);
+		// standard flags used by xoopsobject class
+    $screen->setVar('dohtml', 0);
+    $screen->setVar('doxcode', 0);
+    $screen->setVar('dosmiley', 0);
+    $screen->setVar('doimage', 0);
+    $screen->setVar('dobr', 0);
 		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
 		if (!$update) {
-                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, donedest, buttontext, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship) VALUES (%u, %s, %s, %s, %s, %s, %s, %s, %u, %u, %u)", $this->db->prefix('formulize_screen_multipage'), $screen->getVar('sid'), $this->db->quoteString($screen->getVar('introtext')), $this->db->quoteString($screen->getVar('thankstext')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship')); //nmc 2007.03.24 added 'printall' & fixed pagetitles
+                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, donedest, buttontext, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship) VALUES (%u, %s, %s, %s, %s, %s, %s, %s, %u, %u, %u)", $this->db->prefix('formulize_screen_multipage'), $screen->getVar('sid'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship')); //nmc 2007.03.24 added 'printall' & fixed pagetitles
              } else {
-                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, donedest = %s, buttontext = %s, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext')), $this->db->quoteString($screen->getVar('thankstext')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
+                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, donedest = %s, buttontext = %s, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
              }
 		 $result = $this->db->query($sql);
              if (!$result) {
@@ -355,7 +353,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
         $conditions[$pagenumber] = array(0=>$condata['details']['elements'], 1=>$condata['details']['ops'], 2=>$condata['details']['terms']);
     }
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
-		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, $screen->getVar('introtext'), $screen->getVar('thankstext'), $screen->getVar('donedest'), $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
+		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode($screen->getVar('introtext', "e")), html_entity_decode($screen->getVar('thankstext', "e")), $screen->getVar('donedest'), $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
 	}
 
 }
