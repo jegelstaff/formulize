@@ -2197,6 +2197,12 @@ function getTextboxDefault($ele_value, $form_id, $entry_id) {
 			}
 			$replacementValue = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 		}
+		if(strtolower($thisTerm) == "id") {
+			$replacementValue = "{ID}";
+		}
+		if(strtolower($thisTerm) == "sequence") {
+			$replacementValue = "{SEQUENCE}";
+		}
 		if(!$xoopsUser AND !$replacementValue) {
 			$replacementValue = "";
 		} elseif(!$replacementValue) {
