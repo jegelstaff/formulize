@@ -173,14 +173,18 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	
 	if($allowed) {
 
-		$ele_disabled = $element->getVar('ele_disabled');
-		$isDisabled = false;
-		if($ele_disabled == 1) {
+		if(isset($GLOBALS['formulize_forceElementsDisabled']) AND $GLOBALS['formulize_forceElementsDisabled'] == true) {
 			$isDisabled = true;
-		} elseif(!is_numeric($disabled)) {
-			$disabled_groups = explode(",", $ele_disabled);
-			if(array_intersect($groups, $disabled_groups) AND !array_diff($groups, $disabled_groups)) {
+		} else {
+			$ele_disabled = $element->getVar('ele_disabled');
+			$isDisabled = false;
+			if($ele_disabled == 1) {
 				$isDisabled = true;
+			} elseif(!is_numeric($disabled)) {
+				$disabled_groups = explode(",", $ele_disabled);
+				if(array_intersect($groups, $disabled_groups) AND !array_diff($groups, $disabled_groups)) {
+					$isDisabled = true;
+				}
 			}
 		}
 
