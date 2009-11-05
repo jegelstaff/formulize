@@ -325,7 +325,7 @@ if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages
    	}
 	$forminfo['elements'] = $elements_allowed;
 	$forminfo['formframe'] = $formframe;
-	$titleOverride = is_object($screen) ? $screen->getVar('title') : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
+	$titleOverride = isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
 
 	$GLOBALS['nosubforms'] = true; // subforms cannot have a view button on multipage forms, since moving to a sub causes total confusion of which entry and fid you are looking at
 

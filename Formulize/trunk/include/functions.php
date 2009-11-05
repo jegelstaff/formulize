@@ -3322,7 +3322,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 			break;
 	}
 	foreach($temp_options as $optionKey=>$thisOption) {
-	  $options[formulize_swapUIText($optionKey, $form_element[0]["ele_uitext"])] = "";
+	  $options[formulize_swapUIText($optionKey, unserialize($form_element[0]["ele_uitext"]))] = "";
 	}
 
 	// if the $options is from a linked selectbox, then figure that out and gather the possible values

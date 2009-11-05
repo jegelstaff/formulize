@@ -1776,8 +1776,8 @@ function formulize_buildQSFilter($handle, $search_text, $frid) {
   }
   if($elementMetaData['ele_type']=="select" OR $elementMetaData['ele_type']=="radio" OR $elementMetaData['ele_type']=="checkbox") {
     $qsfparts = explode("_", $search_text);
-    $counter = strstr($search_text, "_") ? $qsfparts[1] : $search_text;
-    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $counter);
+    $search_term = strstr($search_text, "_") ? $qsfparts[1] : $search_text;
+    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $search_term);
     return $filterHTML;
   }
   return "";
