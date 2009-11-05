@@ -3312,17 +3312,17 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 
     $form_element = q("SELECT ele_value, ele_type, ele_uitext FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
     $element_value = unserialize($form_element[0]["ele_value"]);
+		$ele_uitext = unserialize($form_element[0]["ele_uitext"]);
 	switch($form_element[0]["ele_type"]) {
 		case "select":
-			$temp_options = $element_value[2];
+			$options = $element_value[2];
 			break;
 		case "radio":
 		case "checkbox":
-			$temp_options = $element_value;
+			$options = $element_value;
 			break;
-	}
-	foreach($temp_options as $optionKey=>$thisOption) {
-	  $options[formulize_swapUIText($optionKey, unserialize($form_element[0]["ele_uitext"]))] = "";
+		default:
+			$options = array();
 	}
 
 	// if the $options is from a linked selectbox, then figure that out and gather the possible values
@@ -3437,7 +3437,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
           $selected = "";
         }
         if($name == "{listofentries}") { $passoption = "qsf_".$counter."_$passoption"; } // need to pass this stupid thing back because we can't compare the option and the contents of $_POST...a typing problem in PHP??!!
-	      $filter .= "<option value=\"$passoption\" $selected>$option</option>\n";
+	      $filter .= "<option value=\"$passoption\" $selected>".formulize_swapUIText($option, $ele_uitext)."</option>\n";
       }
       $counter++;
     }
@@ -3449,7 +3449,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 }
 
 // THIS FUNCTION TAKES A VALUE AND THE UITEXT FOR THE ELEMENT, AND RETURNS THE UITEXT IN PLACE OF THE "DATA" TEXT
-function formulize_swapUIText($value, $uitexts) {
+function formulize_swapUIText($value, $uitexts=array()) {
   // if value is an array, it has a key called 'value', which needs to be swapped
   if(is_array($value)) {
     $value['value'] = isset($uitexts[$value['value']]) ? $uitexts[$value['value']] : $value['value'];
