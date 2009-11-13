@@ -3887,7 +3887,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
       // remove the qsf_ parts to make the quickfilter searches work
       if(substr($one_search, 0, 4)=="qsf_") {
         $qsfparts = explode("_", $one_search);
-        $one_search = $qsfparts[2];
+        $one_search = "=".$qsfparts[2];
       }
 	
 			// strip out any starting and ending ! that indicate that the column should not be stripped
