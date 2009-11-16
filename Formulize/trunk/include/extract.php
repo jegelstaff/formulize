@@ -2080,7 +2080,7 @@ if(!$xoopsDB) {
 	if(LANG == "French") {
 		define("_formulize_TEMP_QYES", "Oui");
 		define("_formulize_TEMP_QNO", "Non");
-		define("_formulize_OPT_OTHER", "Autre: ");
+		define("_formulize_OPT_OTHER", "Autre : ");
 	}
   $LOE_limit = 0;
 	
@@ -2100,7 +2100,7 @@ if(!$xoopsDB) {
 		global $xoopsConfig;
 		switch($xoopsConfig['language']) {
 			case "french":
-				define("_formulize_OPT_OTHER", "Autre: ");
+				define("_formulize_OPT_OTHER", "Autre : ");
 				define("_formulize_TEMP_QYES", "Oui");
 				define("_formulize_TEMP_QNO", "Non");
 				break;

@@ -468,7 +468,7 @@ define("_formulize_NOT", "NON");
 define("_formulize_NOTLIKE", "DIFFERENT DE");
 define("_formulize_NOTSHOW","Le formulaire ");
 define("_formulize_NOTSHOW2"," ne contient pas de requêtes enregistrées.");
-define("_formulize_OPT_OTHER", "Autre: ");
+define("_formulize_OPT_OTHER", "Autre : ");
 define("_formulize_OR", "OU");
 define("_formulize_PASSWORD_HELP1", " caractères)");
 define("_formulize_PERCENTAGES_COUNT", "Comptage :");
