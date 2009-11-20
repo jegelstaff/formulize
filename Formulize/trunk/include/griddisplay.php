@@ -181,11 +181,11 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 			print "<td class=$class>\n";
 			// display the element starting with the initial one.  Keep trying to display something until we're successful (displaying the element might fail if the user does not have permission to view (based on which groups are allowed to view this element)
 			$rendered = "start";
-			while($rendered != "rendered" AND isset($element_ids_query[$ele_index])) {
+			while(($rendered != "rendered" AND $rendered != "rendered-disabled") AND isset($element_ids_query[$ele_index])) {
 				$rendered = displayElement("", $element_ids_query[$ele_index]['ele_id'], $entry, false, $screen); 
 				$ele_index++;
 			}
-			if($rendered != "rendered") { print "&nbsp;"; }					
+			if($rendered != "rendered" AND $rendered != "rendered-disabled") { print "&nbsp;"; }					
 			print "</td>\n";	
 		}
 		if(is_array($finalCell)) { // draw final cell values if they exist
