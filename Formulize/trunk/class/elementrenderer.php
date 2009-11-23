@@ -1028,7 +1028,9 @@ class formulizeElementRenderer{
 				$newElement->addElement(new xoopsFormHidden($element->getName(), $hiddenValue));
 				$newElement->addElement(new xoopsFormLabel('', $hiddenValue));
 			}
-			$newElement->addElement(new xoopsFormHidden("decue_".trim($element->getName(),"de_"), 1));
+			if(substr($element->getName(), 0, 9) != "desubform") { // we should consider not having a cue at all for any disabled elements, but we're not going to pull it out just yet...more investigation of this is necessary
+				$newElement->addElement(new xoopsFormHidden("decue_".trim($element->getName(),"de_"), 1));
+			}
 			return $newElement;
 		} else {
 			return $element;
