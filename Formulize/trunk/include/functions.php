@@ -2672,7 +2672,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
     unset($uids_temp);
   } elseif($thiscon['not_cons_elementuids'] > 0) { // get the entry at issue and extract the uids from the specified element
     $data_handler = new formulizeDataHandler($fid);
-    $value = getElementValueInEntry($entry, intval($thiscon['not_cons_elementuids']));
+    $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_elementuids']));
     if($value) {
       $uids_temp = explode("*=+*:", $value);
       $uids_conditions = array_merge((array)$uids_temp, $uids_conditions);
@@ -2680,7 +2680,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
     unset($uids_temp);
   } elseif($thiscon['not_cons_linkcreator'] > 0) { // get the entry at issue and extract the uid(s) of the creator(s) of the items selected in the specified element
     $data_handler = new formulizeDataHandler($fid);
-    $value = getElementValueInEntry($entry, intval($thiscon['not_cons_linkcreator'])); // get the values in the linked fields
+    $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_linkcreator'])); // get the values in the linked fields
     $entry_ids = explode(",", trim($value, ",")); // the entry ids (in their source form) of the items selected in the linked selectbox, should always be an array of at least one value
     if(count($entry_ids) > 0) {
       // need to get the form that 'not_cons_linkcreator' is linked to
@@ -2688,7 +2688,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
       $elementObject = $element_handler->get(intval($thiscon['not_cons_linkcreator']));
       $linkProperties = explode("#*=:*", $elementObject->getVar('ele_value')); // key 0 will be the form id that is the source for the values in this linked selectbox
       $data_handler2 = new formulizeDataHandler($linkProperties[0]);
-      $uids_temp = getAllUsersForEntries($entry_ids);
+      $uids_temp = $data_handler2->getAllUsersForEntries($entry_ids);
       if(count($uids_temp) > 0) {
         $uids_conditions = array_merge($uids_temp, $uids_conditions); // no need for type hint (array) in this case because getAllUsersForEntries always returns an array, even if its empty
       }

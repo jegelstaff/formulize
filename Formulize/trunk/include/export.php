@@ -92,6 +92,7 @@ if(!isset($_POST['metachoice']) AND !isset($_GET['type'])) {
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	if(trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $exportUid) { // query fid must match passed fid in URL, and the current user id must match the userid at the time the export file was created
 			print "<center><h1>"._formulize_DE_EXPORTTITLE."</h1></center>\n";
+			$GLOBALS['formulize_doingExport'] = true;
 			$data = getData($frid, $fid, $queryData[2]);
 			
 			$cols = explode(",",$_GET['cols']);

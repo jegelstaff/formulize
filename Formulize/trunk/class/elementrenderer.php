@@ -363,7 +363,6 @@ class formulizeElementRenderer{
 					}
 					if($isDisabled) {
 						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText) . implode("\n", $disabledHiddenValue));
-						$isDisabled = false;
 					}
 
 					// THIS COMMENTED CODE WAS BASED ON THE OLD DATA SYNTAX
@@ -531,7 +530,6 @@ class formulizeElementRenderer{
 					if($isDisabled) {
 						$disabledHiddenValues = implode("\n", $disabledHiddenValue); // glue the individual value elements together into a set of values
 						$renderedElement = implode(", ", $disabledOutputText);
-						$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
 					} else {
 						$renderedElement = $form_ele1->render();
 					}
@@ -544,23 +542,27 @@ class formulizeElementRenderer{
 				} // end of if we have a link on our hands. -- jwe 7/29/04
 				
 				// set required validation code
-					if($this->_ele->getVar('ele_req')) {
-						$eltname = $form_ele_id;
-						$eltcaption = $ele_caption;
-						$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
-						$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-						if($ele_value[0] == 1) { 
-							$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.options[0].selected ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
-						} elseif($ele_value[0] > 1) {
-							$form_ele->customValidationCode[] = "selection = false;\n";
-							$form_ele->customValidationCode[] = "\nfor(i=0;i<myform.{$eltname}.options.length;i++) {\n";
-							$form_ele->customValidationCode[] = "if(myform.{$eltname}.options[i].selected) {\n";
-							$form_ele->customValidationCode[] = "selection = true;\n";
-							$form_ele->customValidationCode[] = "}\n";
-							$form_ele->customValidationCode[] = "}\n";
-							$form_ele->customValidationCode[] = "if(selection == false) { window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
-						}
+				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
+					$eltname = $form_ele_id;
+					$eltcaption = $ele_caption;
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
+					if($ele_value[0] == 1) { 
+						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.options[0].selected ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
+					} elseif($ele_value[0] > 1) {
+						$form_ele->customValidationCode[] = "selection = false;\n";
+						$form_ele->customValidationCode[] = "\nfor(i=0;i<myform.{$eltname}.options.length;i++) {\n";
+						$form_ele->customValidationCode[] = "if(myform.{$eltname}.options[i].selected) {\n";
+						$form_ele->customValidationCode[] = "selection = true;\n";
+						$form_ele->customValidationCode[] = "}\n";
+						$form_ele->customValidationCode[] = "}\n";
+						$form_ele->customValidationCode[] = "if(selection == false) { window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 					}
+				}
+				
+				if($isDisabled) {
+					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
+				}
 				
 				
 			break;
@@ -771,7 +773,6 @@ class formulizeElementRenderer{
 				if($isDisabled) {
 					$disabledHiddenValue = "<input type=hidden name=\"".$form_ele_id."\" value=\"$selected\">\n";
 					$renderedElement = $disabledOutputText; // just text for disabled elements
-					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
 				} else {
 					$renderedElement = $form_ele1->render();
 				}
@@ -780,7 +781,7 @@ class formulizeElementRenderer{
 					"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValue\n"
 				);
 				
-				if($this->_ele->getVar('ele_req')) {
+				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
 					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
@@ -794,6 +795,10 @@ class formulizeElementRenderer{
 					$form_ele->customValidationCode[] = "}\n";
 					$form_ele->customValidationCode[] = "}\n";
 					$form_ele->customValidationCode[] = "if(selection == false) { window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
+				}
+
+				if($isDisabled) {
+					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
 				}
 
 

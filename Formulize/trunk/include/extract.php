@@ -1291,7 +1291,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
                     $parsedFormulas[$formHandle] = true;
                }
                foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
-                    if($entry[$formHandle][key($record)][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
+                    if(($entry[$formHandle][key($record)][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
                          $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\"), "_", trans($formHandle))."_".$formulaNumber;
                          formulize_benchmark(" -- calling derived function.");
                          $derivedValue = $functionName($entry);
@@ -2119,14 +2119,29 @@ if(!$xoopsDB) {
         
 }
 
-function formulize_benchmark($text) {
+function formulize_benchmark($text, $dumpLog = false) {
      global $xoopsUser;
+		 static $prevPageTime = 0;
+		 static $elapsedLog = array();
      if(isset($GLOBALS['startPageTime']) AND $xoopsUser) {
           if($xoopsUser->getVar('uid') == 1) {
                $currentPageTime = microtime_float();
-               print "<br>$text -- Elapsed: ".($currentPageTime-$GLOBALS['startPageTime'])."<br>";
+							 if(!$prevPageTime) {
+										$prevPageTime = $currentPageTime;
+							 }
+               print "<br>$text --<br>\nElapsed since last: ".round($currentPageTime - $prevPageTime, 4)."<br>\n";
+							 print "Elapsed since start: ".($currentPageTime-$GLOBALS['startPageTime'])."<br>";
+							 $elapsedLog[] = round($currentPageTime - $prevPageTime, 4);
+							 $prevPageTime = $currentPageTime;
           }
      }
+		 if($dumpLog) {
+					sort($elapsedLog);
+					print "<br>DUMPING LOG DATA:<br>\nMin elapsed time: ".$elapsedLog[0]."<br>\n";
+					print "Max elapsed time: ".$elapsedLog[count($elapsedLog)-1]."<br>\n";
+					print "Average elapsed time: ".round(array_sum($elapsedLog)/count($elapsedLog),4)."<br>\n";
+					$elapsedLog = array();
+		 }
 }
 
 
