@@ -2790,10 +2790,21 @@ print "$prevValue<br><br>";
   } else {
       $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
       $frameworkObject = $framework_handler->get($formframe);
-      $frameworkElementIds = $frameworkObject->getVar('element_ids');
-      $element_id = $frameworkElementIds[$ele];
-  		$element =& $formulize_mgr->get($element_id);
+			if(is_object($frameworkObject)) {
+	      $frameworkElementIds = $frameworkObject->getVar('element_ids');
+	      $element_id = $frameworkElementIds[$ele];
+	  		$element =& $formulize_mgr->get($element_id);
+			}
+			if(!is_object($element)) {
+				// then check the element data handles instead
+				$element =& $formulize_mgr->get($ele);
+			}
   }
+
+	if(!is_object($element)) {
+		print "<b>Error: could not save the value for element: ".$ele.". Please notify your webmaster, or <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> about this error.</b>";
+		return;
+	}
 
   	$ele_value = $element->getVar('ele_value');
 
