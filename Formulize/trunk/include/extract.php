@@ -2133,15 +2133,15 @@ function formulize_benchmark($text, $dumpLog = false) {
 							 print "Elapsed since start: ".($currentPageTime-$GLOBALS['startPageTime'])."<br>";
 							 $elapsedLog[] = round($currentPageTime - $prevPageTime, 4);
 							 $prevPageTime = $currentPageTime;
-          }
+							 if($dumpLog) {
+							  		sort($elapsedLog);
+							  		print "<br>DUMPING LOG DATA:<br>\nMin elapsed time: ".$elapsedLog[0]."<br>\n";
+							  		print "Max elapsed time: ".$elapsedLog[count($elapsedLog)-1]."<br>\n";
+							  		print "Average elapsed time: ".round(array_sum($elapsedLog)/count($elapsedLog),4)."<br>\n";
+							  		$elapsedLog = array();
+							 }	
+					}
      }
-		 if($dumpLog) {
-					sort($elapsedLog);
-					print "<br>DUMPING LOG DATA:<br>\nMin elapsed time: ".$elapsedLog[0]."<br>\n";
-					print "Max elapsed time: ".$elapsedLog[count($elapsedLog)-1]."<br>\n";
-					print "Average elapsed time: ".round(array_sum($elapsedLog)/count($elapsedLog),4)."<br>\n";
-					$elapsedLog = array();
-		 }
 }
 
 
