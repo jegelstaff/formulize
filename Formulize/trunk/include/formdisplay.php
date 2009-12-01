@@ -1243,11 +1243,13 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 
 	$col_two .= "</table>";
 
-	if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] === "" AND $sub_single) {
-		$col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$sfid', 1);\"></p>";
-	} elseif(!$sub_single) {
-		$col_two .=  "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$sfid', window.document.formulize.addsubentries$sfid.value);\"><input type=text name=addsubentries$sfid id=addsubentries$sfid value=1 size=2 maxlength=2>" . _formulize_ADD_ENTRIES . "</p>";
-	} 
+	if($addSubEntry = $gperm_handler->checkRight("add_own_entry", $sfid, $groups, $mid)) {
+		if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] === "" AND $sub_single) {
+			$col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$sfid', 1);\"></p>";
+		} elseif(!$sub_single) {
+			$col_two .=  "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$sfid', window.document.formulize.addsubentries$sfid.value);\"><input type=text name=addsubentries$sfid id=addsubentries$sfid value=1 size=2 maxlength=2>" . _formulize_ADD_ENTRIES . "</p>";
+		}
+	}
 	if(((count($sub_entries[$sfid])>0 AND $sub_entries[$sfid][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
 		$col_one .= "<br>" . _formulize_ADD_HELP4 . "</p><p><input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\">";
 		static $deletesubsflagIncluded = false;
