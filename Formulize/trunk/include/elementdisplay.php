@@ -123,13 +123,16 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$allowed = 0;
 	}
 	
-	if($allowed AND count($element->getVar('ele_filtersettings')) > 1 AND $entry != "new") {
+	if($allowed AND count($element->getVar('ele_filtersettings')) > 1) {
 		// need to check if there's a condition on this element that is met or not
+		
 		static $cachedEntries = array();
-		if(!isset($cachedEntries[$element->getVar('id_form')][$entry])) {
-			$cachedEntries[$element->getVar('id_form')][$entry] = getData("", $element->getVar('id_form'), $entry);
+		if($entry != "new") {
+			if(!isset($cachedEntries[$element->getVar('id_form')][$entry])) {
+				$cachedEntries[$element->getVar('id_form')][$entry] = getData("", $element->getVar('id_form'), $entry);
+			}	
+			$entryData = $cachedEntries[$element->getVar('id_form')][$entry];
 		}
-		$entryData = $cachedEntries[$element->getVar('id_form')][$entry];
 		$elementFilterSettings = $element->getVar('ele_filtersettings');
 		$filterElements = $elementFilterSettings[0];
 		$filterOps = $elementFilterSettings[1];
@@ -154,12 +157,17 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 			if($filterTerms[$i] === "{BLANK}") {
 				$filterTerms[$i] = "";
 			}
-			if($thisOp == "LIKE") {
-				$evaluationCondition .= "strstr('".addslashes(display($entryData[0], $filterElements[$i]))."', '".addslashes($filterTerms[$i])."')"; 
-			} elseif($thisOp == "NOT LIKE") {
-				$evaluationCondition .= "!strstr('".addslashes(display($entryData[0], $filterElements[$i]))."', '".addslashes($filterTerms[$i])."')";
+			if($entry == "new") {
+				$compValue = "";
 			} else {
-				$evaluationCondition .= "'".addslashes(display($entryData[0], $filterElements[$i]))."' $thisOp '".addslashes($filterTerms[$i])."'";
+				$compValue = addslashes(display($entryData[0], $filterElements[$i]));
+			}
+			if($thisOp == "LIKE") {
+				$evaluationCondition .= "strstr('".$compValue."', '".addslashes($filterTerms[$i])."')"; 
+			} elseif($thisOp == "NOT LIKE") {
+				$evaluationCondition .= "!strstr('".$compValue."', '".addslashes($filterTerms[$i])."')";
+			} else {
+				$evaluationCondition .= "'".$compValue."' $thisOp '".addslashes($filterTerms[$i])."'";
 			}
 		}
 		$evaluationCondition .= ") {\n";

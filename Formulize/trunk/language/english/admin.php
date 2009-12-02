@@ -278,6 +278,8 @@ define("_AM_ELE_CONVERTED_TO_CHECKBOX", "These radio buttons have been converted
 define("_AM_ELE_CHECKBOX_DATA_NOT_READY", "These radio buttons were converted, but the data people have submitted was not updated for use in the check boxes.  Contact <a href=\"mailto:support@freeformsolutions.ca\">support@freeformsolutions.ca</a> for assistance.");
 define("_AM_ELE_RADIO_DATA_NOT_READY", "These check boxes were converted, but the data people have submitted was not updated for use in the radio buttons.  Contact <a href=\"mailto:support@freeformsolutions.ca\">support@freeformsolutions.ca</a> for assistance.");
 
+define("_AM_ELE_SUBFORM_VIEW", "Show <i>View</i> buttons beside each subform entry?");
+define("_AM_ELE_SUBFORM_VIEW_DESC", "The <i>View</i> buttons let users click through to the complete entry in the subform.  This may be useful when only some elements in the subform are visible in the main interface.");
 
 // added - start - August 25 2005 - jpc
 define("_AM_FORM_DISPLAY_MULTIPLE","Custom");

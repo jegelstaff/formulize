@@ -104,5 +104,13 @@ $blankdefault = isset($ele_value[2]) ? intval($ele_value[2]) : 1;
 $numblanks = new xoopsFormText(_AM_ELE_SUBFORM_BLANKS, 'subformblanks', 2, 2, $blankdefault);
 $form->addElement($numblanks);
 
+// show View buttons added Dec 2 2009
+$showViewButtonsDefault = isset($ele_value[3]) ? intval($ele_value[3]) : 1;
+$showViewButtons = new xoopsFormRadio(_AM_ELE_SUBFORM_VIEW, 'showviewbuttons', $showViewButtonsDefault);
+$showViewButtons->setDescription(_AM_ELE_SUBFORM_VIEW_DESC);
+$showViewButtons->addOption(1, _YES);
+$showViewButtons->addOption(0, _NO);
+$form->addElement($showViewButtons);
+
 
 ?>

@@ -364,7 +364,8 @@ if( !empty($ele_id) AND $clone == 0){
 			case 'subform':
 				$value[0] = $_POST['subform'];
 				$value[1] = $_POST['subformelements'] ? implode(",",$_POST['subformelements']) : "";
-        $value[2] = intval($_POST['subformblanks']); 
+        $value[2] = intval($_POST['subformblanks']);
+				$value[3] = intval($_POST['showviewbuttons']); 
 			break;
 			// grid added January 19 2007
 			case 'grid':
