@@ -1334,17 +1334,17 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                $term = substr($formula, $quotePos, $endQuotePos-$quotePos+1);
                if(!is_numeric($term)) { //  AND !formulize_validFrameworkHandle($frid, $term)) { // don't need to check for a valid framework handle here, we can do it in the convert function next
                     $newterm = formulize_convertCapOrColHeadToHandle($frid, $fid, $term);
-                    if($newterm == "{nonefound}") {
-												 $formula = "\$value = \"Syntax Error\"";
-												 break;
-                    } 
+                    if($newterm != "{nonefound}") {
+												 $replacement = "display(\$entry, '$newterm')";
+												 $quotePos = $quotePos + 17 + strlen($newterm); // 17 is the length of the extra characters in the display function
+												 $formula = str_replace($term, $replacement, $formula);
+										} else {
+												 $quotePos = $quotePos + strlen($newterm);
+										}
                } elseif($frid) { // need to convert numeric terms to framework handles if a framework is in effect
 										$formula = "\$value = \"Syntax Error\"";
 										break;
                }
-               $replacement = "display(\$entry, '$newterm')";
-               $formula = str_replace($term, $replacement, $formula);
-               $quotePos = $quotePos + 17 + strlen($newterm); // 17 is the length of the extra characters in the display function
           }
           $addSemiColons = strstr($formula, ";") ? false : true; // only add if we found none in the formula.
           if($addSemiColons) {

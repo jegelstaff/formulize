@@ -108,7 +108,7 @@ class formulizeElementRenderer{
 		switch ($e){
 			case 'derived':
 				if($entry != "new") {
-					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), $ele_value[5]);
+					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), formulize_numberFormat($ele_value[5], $this->_ele->getVar('ele_handle')));
 				} else {
 					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE);
 				}

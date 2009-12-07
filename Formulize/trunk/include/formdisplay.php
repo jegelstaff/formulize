@@ -1488,7 +1488,13 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			// false is "nosave" param...only used to force element to not be picked up by readelements.php after saving
 			// $screen is the screen object
 			// false means don't print it out to screen, return it here
-			list($form_ele, $isDisabled) = displayElement("", $i, $entry, false, $screen, $prevEntry, false, $profileForm, $groups);
+			$deReturnValue = displayElement("", $i, $entry, false, $screen, $prevEntry, false, $profileForm, $groups);
+			if(is_array($deReturnValue)) {
+				$form_ele = $deReturnValue[0];
+				$isDisabled = $deReturnValue[1];
+			} else {
+				$form_ele = $deReturnValue;
+			}
 			if($form_ele == "not_allowed" OR $form_ele == "hidden") { continue; }
 		}
 		
