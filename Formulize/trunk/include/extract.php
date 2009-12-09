@@ -1285,16 +1285,17 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
      global $xoopsDB; // just used as a cue to see if XOOPS is active
      static $parsedFormulas = array();
      foreach($entry as $formHandle=>$record) {
+					$primary_entry_id = key($record); // get this once up top, since repeated calls to key just don't seem to work nicely, even though it's not supposed to move the pointer in the array...cleaner this way anyway
           if(isset($metadata[$formHandle])) { // if there are derived value formulas for this form...
                if(!isset($parsedFormulas[$formHandle])) {
                     formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $frid, $fid);
                     $parsedFormulas[$formHandle] = true;
                }
                foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
-                    if(($entry[$formHandle][key($record)][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
+                    if(($entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
                          $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\"), "_", trans($formHandle))."_".$formulaNumber;
                          formulize_benchmark(" -- calling derived function.");
-                         $derivedValue = $functionName($entry, $fid, key($record));
+                         $derivedValue = $functionName($entry, $fid, $primary_entry_id);
                          formulize_benchmark(" -- completed call.");
                          foreach($record as $recordID=>$elements) {
                               $entry[$formHandle][$recordID][$thisMetaData['handle']][0] = $derivedValue;
