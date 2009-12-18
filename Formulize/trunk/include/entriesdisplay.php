@@ -2402,6 +2402,7 @@ function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
 		if(isset($ele_value[2])) {
 			if(strstr($ele_value[2], "#*=:*")) {
 				$isLinkedSelectBox = true;
+				$linkedMetaData = formulize_isLinkedSelectBox($thisElement->getVar('ele_id'));
 			} elseif(isset($ele_value[2]["{FULLNAMES}"]) OR isset($ele_value[2]["{USERNAMES}"]))  {
 				$isNamesList = isset($ele_value[2]["{FULLNAMES}"]) ? 'name' : 'uname';
 			}
