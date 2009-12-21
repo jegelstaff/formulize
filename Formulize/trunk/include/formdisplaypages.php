@@ -362,7 +362,7 @@ function drawPageNav($usersCanSave="", $pagesSkipped="", $currentPage="", $previ
 
 	if($aboveBelow == "above") {
 		//navigation options above the form print like this
-		print "<br /><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\"><table><tr >\n";
+		print "<br /><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\"><table><tr>\n";
 		print "<td style=\"vertical-align: middle; padding-right: 5px;\"><nobr><b>" . _formulize_DMULTI_YOUAREON . "</b></nobr><br /><nobr>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . count($pages) . "</nobr></td>";
 		print "<td style=\"vertical-align: middle; padding-right: 5px;\">";
 	if($previousPage != "none") {

@@ -213,9 +213,9 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		$vars['frid'] = $_POST['frid'];
     $vars['paraentryform'] = $_POST['paraentryform'];
     $vars['paraentryrelationship'] = $_POST['paraentryrelationship'];
-		$vars['introtext'] = $_POST['introtext'];
-		$vars['buttontext'] = $_POST['buttontext'];
-		$vars['thankstext'] = $_POST['thankstext'];
+		$vars['introtext'] = get_magic_quotes_gpc() ? stripslashes($_POST['introtext']) : $_POST['introtext'];
+		$vars['buttontext'] = get_magic_quotes_gpc() ? stripslashes($_POST['buttontext']) : $_POST['buttontext'];
+		$vars['thankstext'] = get_magic_quotes_gpc() ? stripslashes($_POST['thankstext']) : $_POST['thankstext'];
 		$vars['donedest'] = $_POST['donedest'];
 		$vars['printall'] = $_POST['printall'];
 		$vars['type'] = 'multiPage';
