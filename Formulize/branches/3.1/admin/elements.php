@@ -530,8 +530,8 @@ switch($op){
 	break;
 	case 'save':
       include XOOPS_ROOT_PATH . "/modules/formulize/admin/elements_save.php";
-			//redirect_header("index.php?title=$title", 1, _AM_DBUPDATED);
 			header("Location: " . XOOPS_URL . "/modules/formulize/admin/index.php?title=$title");
+			redirect_header("index.php?title=$title", 1, _AM_DBUPDATED);
 	break;
 /*	default:
 		xoops_cp_header();

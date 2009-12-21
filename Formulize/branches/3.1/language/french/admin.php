@@ -316,6 +316,7 @@ define("_AM_FORMULIZE_SCREEN_PARAENTRYRELATIONSHIP", "If previous answers are sh
 define("_AM_FORMULIZE_SCREEN_PRINTALL_N", "No"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_Y", "Yes"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable View - All Pages' button available at the end of the form"); //nmc 2007.03.24
+define("_AM_FORMULIZE_SCREEN_PRINTALL_NONE", "No, and not the regular 'Printable View' button either");
 define("_AM_FORMULIZE_SCREEN_SAVE", "Save this screen");
 define("_AM_FORMULIZE_SCREEN_SAVED", "The details for this screen have been saved in the database");
 define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "The XOOPS security token is a defense against cross-site scripting attacks.  However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types.");

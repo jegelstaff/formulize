@@ -1236,7 +1236,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
                }
                foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
                     if($entry[$formHandle][key($record)][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
-                         $functionName = "derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", str_replace("/", "", str_replace("\\", "", trans($formHandle)))))."_".$formulaNumber;
+                         $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\"), "_", trans($formHandle))."_".$formulaNumber;
                          formulize_benchmark(" -- calling derived function.");
                          $derivedValue = $functionName($entry);
                          formulize_benchmark(" -- completed call.");
@@ -1264,7 +1264,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
 
 function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $fid) {
      // open a temporary file
-     $fileName = XOOPS_ROOT_PATH."/cache/formulize_derivedValueFormulas_".str_replace(" ", "_", str_replace("/", "", str_replace("\\", "", trans($formHandle)))).".php";
+     $fileName = XOOPS_ROOT_PATH."/cache/formulize_derivedValueFormulas_".str_replace(array(" ", "-", "/", "'", "`", "\\"), "_", trans($formHandle)).".php";
      $derivedValueFormulaFile = fopen($fileName, "w");
      fwrite($derivedValueFormulaFile, "<?php\n\n");
      
@@ -1298,7 +1298,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                }
                $formula = implode("\n", $formulaLines);
           }
-          $functionsToWrite .= "function derivedValueFormula_".str_replace(" ", "_", str_replace("-", "", str_replace("/", "", str_replace("\\", "", trans($formHandle)))))."_".$formulaNumber."(\$entry) {\n$formula\nreturn \$value;\n}\n\n";
+          $functionsToWrite .= "function derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\"), "_", trans($formHandle))."_".$formulaNumber."(\$entry) {\n$formula\nreturn \$value;\n}\n\n";
      }
      fwrite($derivedValueFormulaFile, $functionsToWrite. "?>");
      fclose($derivedValueFormulaFile);
@@ -1497,7 +1497,14 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $
      
      // query for the data
      $whereClause = $whereClause ? "WHERE $whereClause" : "";
-     $sql = "SELECT * FROM $tablename $whereClause";
+     $basesql = "SELECT * FROM $tablename $whereClause";
+		 $sql = $basesql;
+		 if($sortField) {
+					$sql .= " ORDER BY `".$elementsById[$sortField]['field']."` $sortOrder ";
+		 }
+		 if($limitSize) {
+					$sql .= " LIMIT $limitStart,$limitSize ";
+		 }
      //print "<br>$sql<br>";
      $res = mysql_query($sql);
      $result = array();
@@ -1511,6 +1518,13 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $
           }
           $indexer++;
      }
+		 
+		 // count master results
+		 $countSQL = str_replace("SELECT * FROM", "SELECT count(*) FROM", $basesql);
+		 $countRes = mysql_query($countSQL);
+		 $countRow = mysql_fetch_row($countRes);
+		 $GLOBALS['formulize_countMasterResults'] = $countRow[0];
+		 
      return $result;
      
      
@@ -2000,7 +2014,7 @@ if(!$xoopsDB) {
 	if(LANG == "French") {
 		define("_formulize_TEMP_QYES", "Oui");
 		define("_formulize_TEMP_QNO", "Non");
-		define("_formulize_OPT_OTHER", "Autre: ");
+		define("_formulize_OPT_OTHER", "Autre : ");
 	}
         $LOE_limit = 0;
 } else {
@@ -2009,7 +2023,7 @@ if(!$xoopsDB) {
 		global $xoopsConfig;
 		switch($xoopsConfig['language']) {
 			case "french":
-				define("_formulize_OPT_OTHER", "Autre: ");
+				define("_formulize_OPT_OTHER", "Autre : ");
 				define("_formulize_TEMP_QYES", "Oui");
 				define("_formulize_TEMP_QNO", "Non");
 				break;

@@ -339,6 +339,7 @@ define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable View - All Pages' b
 define("_AM_FORMULIZE_SCREEN_PRINTALL_Y", "Yes"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_N", "No"); //nmc 2007.03.24
 define("_AM_FORMULIZE_DELETE_THIS_PAGE", "Delete this page");
+define("_AM_FORMULIZE_SCREEN_PRINTALL_NONE", "No, and not the regular 'Printable View' button either");
 define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE", "Are you sure you want to delete this screen?  Please confirm!");
 define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE_PAGE", "Are you sure you want to delete this page?  Please confirm!");
 define("_AM_FORMULIZE_SCREEN_A_PAGE", "Form elements to display on page");

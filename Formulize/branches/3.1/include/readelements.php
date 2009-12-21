@@ -94,7 +94,7 @@ foreach($_POST as $k=>$v) {
 		$elementMetaData = explode("_", $k);
 		$elementObject = $element_handler->get($elementMetaData[3]);
 		$v = prepDataForWrite($elementObject, $v);
-		if($v === "" AND $elementMetaData[2] == "new") { continue; } // don't store blank values for new entries, we don't want to write those (if desubform is used only for blank defaults, then it will always be "new" but we'll keep this as is for now, can't hurt)
+		if(($v === "" OR $v === "{WRITEASNULL}") AND $elementMetaData[2] == "new") { continue; } // don't store blank values for new entries, we don't want to write those (if desubform is used only for blank defaults, then it will always be "new" but we'll keep this as is for now, can't hurt)
 		$blankSubformCounter = trim(substr($k, 9, 2), "_"); // grab up to two spaces after the "desubform" text, since that will have the unique identifier of this new entry (ie: which blank subform entry this value belongs to)
 		$formulize_elementData[$elementMetaData[1]][$elementMetaData[2].$blankSubformCounter][$elementMetaData[3]] = $v;
 		if(!isset($formulize_subformBlankCues[$elementMetaData[1]])) {
@@ -162,15 +162,15 @@ if(count($formulize_elementData) > 0 ) { // do security check if it looks like w
 		}
 	}
 }
-foreach($formulize_elementData as $fid=>$entryData) { // for every form we found data for...
+foreach($formulize_elementData as $elementFid=>$entryData) { // for every form we found data for...
 	
 	// figure out permissions on the forms
-	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
-	$add_proxy_entries = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
-	$update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);
-	$update_other_entries = $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid);
+	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $elementFid, $groups, $mid);
+	$add_proxy_entries = $gperm_handler->checkRight("add_proxy_entries", $elementFid, $groups, $mid);
+	$update_own_entry = $gperm_handler->checkRight("update_own_entry", $elementFid, $groups, $mid);
+	$update_other_entries = $gperm_handler->checkRight("update_other_entries", $elementFid, $groups, $mid);
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
-	$formulize_formObject = $form_handler->get($fid);
+	$formulize_formObject = $form_handler->get($elementFid);
 	$oneEntryPerGroupForm = $formulize_formObject->getVar('single') == "group" ? true : false;
 
 	foreach($entryData as $entry=>$values) { // for every entry in the form...
@@ -179,45 +179,45 @@ foreach($formulize_elementData as $fid=>$entryData) { // for every form we found
 			foreach($creation_users as $creation_user) {
 				if(($creation_user == $uid AND $add_own_entry) OR ($creation_user != $uid AND $add_proxy_entries)) { // only proceed if the user has the right permissions
 					$writtenEntryId = formulize_writeEntry($values, $entry, "", $creation_user, "", false); // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
-					if(isset($formulize_subformBlankCues[$fid])) {
-						$GLOBALS['formulize_subformCreateEntry'][$fid][] = $writtenEntryId;
+					if(isset($formulize_subformBlankCues[$elementFid])) {
+						$GLOBALS['formulize_subformCreateEntry'][$elementFid][] = $writtenEntryId;
 					}
-					$formulize_newEntryIds[$fid][] = $writtenEntryId; // log new ids (and all ids) and users for recording ownership info later
-					$formulize_newEntryUsers[$fid][] = $creation_user;
-					$formulize_allWrittenEntryIds[$fid][] = $writtenEntryId;
-					$notEntriesList['new_entry'][$fid][] = $writtenEntryId; // log the notification info
-					writeOtherValues($writtenEntryId, $fid); // write the other values for this entry
+					$formulize_newEntryIds[$elementFid][] = $writtenEntryId; // log new ids (and all ids) and users for recording ownership info later
+					$formulize_newEntryUsers[$elementFid][] = $creation_user;
+					$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId;
+					$notEntriesList['new_entry'][$elementFid][] = $writtenEntryId; // log the notification info
+					writeOtherValues($writtenEntryId, $elementFid); // write the other values for this entry
 					if($creation_user == 0) { // handle cookies for anonymous users
-						setcookie('entryid_'.$fid, $writtenEntryId, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)				
-						$_COOKIE['entryid_'.$fid] = $writtenEntryId;
+						setcookie('entryid_'.$elementFid, $writtenEntryId, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)				
+						$_COOKIE['entryid_'.$elementFid] = $writtenEntryId;
 					}
 				}
 			}
 		} else { // handle existing entries...
-			$owner = getEntryOwner($entry, $fid);
+			$owner = getEntryOwner($entry, $elementFid);
 			if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND ($update_other_entries OR ($update_own_entry AND $oneEntryPerGroupForm)))) { // only proceed if the user has the right permissions
 				$writtenEntryId = formulize_writeEntry($values, $entry);
-				$formulize_allWrittenEntryIds[$fid][] = $writtenEntryId; // log the written id
-				$notEntriesList['update_entry'][$fid][] = $writtenEntryId; // log the notification info
-				writeOtherValues($writtenEntryId, $fid); // write the other values for this entry
+				$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
+				$notEntriesList['update_entry'][$elementFid][] = $writtenEntryId; // log the notification info
+				writeOtherValues($writtenEntryId, $elementFid); // write the other values for this entry
 			}
 		}
 	}
 }
 // set the ownership info of the new entries created...use a custom named handler, so we don't conflict with any other data handlers that might be using the more conventional 'data_handler' name, which can happen depending on the scope within which this file is included
-foreach($formulize_newEntryIds as $fid=>$entries){
-	$data_handler_for_owner_groups = new formulizeDataHandler($fid);
-	$data_handler_for_owner_groups->setEntryOwnerGroups($formulize_newEntryUsers[$fid],$formulize_newEntryIds[$fid]);
+foreach($formulize_newEntryIds as $newEntryFid=>$entries){
+	$data_handler_for_owner_groups = new formulizeDataHandler($newEntryFid);
+	$data_handler_for_owner_groups->setEntryOwnerGroups($formulize_newEntryUsers[$newEntryFid],$formulize_newEntryIds[$newEntryFid]);
 	unset($data_handler_for_owner_groups);
 }
 
 // update the derived values for all forms that we saved data for, now that we've saved all the data from all the forms
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
-foreach($formulize_allWrittenEntryIds as $fid=>$entries) {
-	$formObject = $form_handler->get($fid);
+foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
+	$formObject = $form_handler->get($allWrittenFid);
 	if(array_search("derived", $formObject->getVar('elementTypes'))) { // only bother if there is a derived value in the form
 		foreach($entries as $thisEntry) {
-			formulize_updateDerivedValues($thisEntry, $fid, $frid);
+			formulize_updateDerivedValues($thisEntry, $allWrittenFid, $frid);
 		}
 	}
 }

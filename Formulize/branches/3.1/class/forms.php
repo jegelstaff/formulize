@@ -210,7 +210,7 @@ class formulizeFormsHandler {
 	// Note that this method will add in fields for the elements in the form, if invoked as part of the 3.0 patch process, or when cloning forms.  Note also that all fields will be type 'text', so therefore when cloning, we should actually do something else so we can preseve the type of the original source elements.  This will require an element map to go from old elements to new elements, by ID or something like that.
 	function createDataTable($fid) {
 		if(is_numeric($fid)) {
-			$fid = $this->get($fid);
+			$fid = $this->get($fid, true); // true forces all elements to be included, even ones that are not displayed right now
 		} elseif(!get_class($fid) == "formulizeForm") {
 			return false;
 		}

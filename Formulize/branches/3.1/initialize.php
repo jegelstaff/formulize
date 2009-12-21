@@ -110,7 +110,7 @@ $view_groupscope = $gperm_handler->checkRight("view_groupscope", $id_form, $grou
 $config_handler =& xoops_gethandler('config');
 $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
 
-if(!$view_form = $gperm_handler->checkRight("view_form", $id_form, $groups, $mid) OR ($uid == 0 AND ($id_form == $formulizeConfig['profileForm'] AND $id_form > 0)) OR !$fid) {
+if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
 	redirect_header(XOOPS_URL . "/user.php?xoops_redirect=".getCurrentURL(), 3, _formulize_NO_PERMISSION);
 }
 

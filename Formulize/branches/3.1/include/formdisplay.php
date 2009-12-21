@@ -190,6 +190,11 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/extract.php';
 formulize_benchmark("Start of formDisplay.");
 
+if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "all") {
+	$passedInTitle = $titleOverride; // we can pass in a text title for the form, and that will cause the $titleOverride "all" behaviour to be invoked, and meanwhile we will use this title for the top of the form
+	$titleOverride = "all";
+}
+
 //syntax:
 //displayform($formframe, $entry, $mainform)
 //$formframe is the id of the form OR title of the form OR name of the framework.  Can also be an array.  If it is an array, then flag 'formframe' is the $formframe variable, and flag 'elements' is an array of all the elements that are to be displayed.
@@ -299,14 +304,6 @@ formulize_benchmark("Start of formDisplay.");
 	$owner_groups = $data_handler->getEntryOwnerGroups($entry);
 	
 
-	if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms AND !$profileForm) {
-		print "<p>" . _NO_PERM . "</p>";
-		return;
-	}
-
-	// main security check passed, so let's initialize flags	
-	$go_back['url'] = $done_dest;
-	
 	if($single AND !$entry AND !$overrideMulti AND $profileForm !== "new") { // only adjust the active entry if we're not already looking at an entry, and there is no overrideMulti which can be used to display a new blank form even on a single entry form -- useful for when multiple anonymous users need to be able to enter information in a form that is "one per user" for registered users. -- the pressence of a cookie on the hard drive of a user will override other settings
 		$entry = $single_result['entry'];
 		$owner = getEntryOwner($entry, $fid);
@@ -316,6 +313,14 @@ formulize_benchmark("Start of formDisplay.");
 	} 
 	if($entry == "proxy") { $entry = ""; } // convert the proxy flag to the actual null value expected for new entry situations (do this after the single check!)
 	$editing = is_numeric($entry); // will be true if there is an entry we're looking at already
+
+	if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms AND !$profileForm) {
+		print "<p>" . _NO_PERM . "</p>";
+		return;
+	}
+
+	// main security check passed, so let's initialize flags	
+	$go_back['url'] = $done_dest;
 
 	// set these arrays for the one form, and they are added to by the framework if it is in effect
 	$fids[0] = $fid;
@@ -489,7 +494,7 @@ formulize_benchmark("Start of formDisplay.");
 			if(!$form) {
 	
 				$firstform = 1; 	      	
-				$title = trans(getFormTitle($this_fid));
+				$title = isset($passedInTitle) ? $passedInTitle : trans(getFormTitle($this_fid));
 						$form = new XoopsThemeForm($title, 'formulize', "$currentURL", "post", true);
 				$form->setExtra("enctype='multipart/form-data'"); // impératif!
 	
@@ -826,6 +831,10 @@ function addProfileFields($form, $profileForm) {
 
 // add the submit button to a form
 function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="", $allDoneOverride=false, $printall=0) { //nmc 2007.03.24 - added $printall
+
+	if($printall == 2) { // 2 is special setting in multipage screens that means do not include any printable buttons of any kind
+		return $form;
+	}
 
 	if(strstr($currentURL, "printview.php")) { // don't do anything if we're on the print view
 		return $form;
@@ -1183,11 +1192,13 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 
 	$col_two .= "</table>";
 
-	if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] === "" AND $sub_single) {
-		$col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$sfid', 1);\"></p>";
-	} elseif(!$sub_single) {
-		$col_two .=  "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$sfid', window.document.formulize.addsubentries$sfid.value);\"><input type=text name=addsubentries$sfid id=addsubentries$sfid value=1 size=2 maxlength=2>" . _formulize_ADD_ENTRIES . "</p>";
-	} 
+	if($addSubEntry = $gperm_handler->checkRight("add_own_entry", $sfid, $groups, $mid)) {
+		if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] === "" AND $sub_single) {
+			$col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$sfid', 1);\"></p>";
+		} elseif(!$sub_single) {
+			$col_two .=  "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$sfid', window.document.formulize.addsubentries$sfid.value);\"><input type=text name=addsubentries$sfid id=addsubentries$sfid value=1 size=2 maxlength=2>" . _formulize_ADD_ENTRIES . "</p>";
+		}
+	}
 	if(((count($sub_entries[$sfid])>0 AND $sub_entries[$sfid][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
 		$col_one .= "<br>" . _formulize_ADD_HELP4 . "</p><p><input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\">";
 		static $deletesubsflagIncluded = false;
@@ -1426,7 +1437,13 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			// false is "nosave" param...only used to force element to not be picked up by readelements.php after saving
 			// $screen is the screen object
 			// false means don't print it out to screen, return it here
-			$form_ele = displayElement("", $i, $entry, false, $screen, $prevEntry, false, $profileForm, $groups);
+			$deReturnValue = displayElement("", $i, $entry, false, $screen, $prevEntry, false, $profileForm, $groups);
+			if(is_array($deReturnValue)) {
+				$form_ele = $deReturnValue[0];
+				$isDisabled = $deReturnValue[1];
+			} else {
+				$form_ele = $deReturnValue;
+			}
 			if($form_ele == "not_allowed" OR $form_ele == "hidden") { continue; }
 		}
 		
@@ -1655,12 +1672,12 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 						$assignedSelectedValues = array();
 						foreach($temparraykeys as $k)
 						{
-							if((string)$k === (string)$value) // if there's a straight match (not a multiple selection)
+							if((string)$k === (string)html_entity_decode($value, ENT_QUOTES)) // if there's a straight match (not a multiple selection)
 							{
 								$temparray[$k] = 1;
 								$assignedSelectedValues[$k] = true;
 							}
-							elseif( is_array($selvalarray) AND in_array((string)$k, $selvalarray, TRUE) ) // or if there's a match within a multiple selection array) -- TRUE is like ===, matches type and value
+							elseif( is_array($selvalarray) AND in_array((string)htmlspecialchars($k, ENT_QUOTES), $selvalarray, TRUE) ) // or if there's a match within a multiple selection array) -- TRUE is like ===, matches type and value
 							{
 								$temparray[$k] = 1;
 								$assignedSelectedValues[$k] = true;
@@ -1678,7 +1695,9 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 							}
 						}							
 						
-						if ($type != "select")
+						if ($type == "radio" AND $entry != "new" AND empty($value) AND array_search(1, $ele_value)) { // for radio buttons, if we're looking at an entry, and we've got no value to load, but there is a default value for the radio buttons, then use that default value (it's normally impossible to unset the default value of a radio button, so we want to ensure it is used when rendering the element in these conditions)
+							$ele_value = $ele_value;
+						} elseif ($type != "select")
 						{
 							$ele_value = $temparray;
 						}

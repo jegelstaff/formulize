@@ -526,7 +526,7 @@ define("_formulize_DE_SAVE_LOCKCONTROLS", "Lock the controls?");
 define("_formulize_DE_SAVE_LOCKCONTROLS_HELP1", "<span style=\"font-weight: bold;\">About locking the controls:</span>");
 define("_formulize_DE_SAVE_LOCKCONTROLS_HELP2", "<span style=\"font-weight: normal;\">Certain actions, such as advanced searches, calculations and changing columns, can reveal more information to the viewer than what is presented by default.  When the controls are locked, and this view is selected by viewers who don't otherwise have access to these entries, then all actions that can reveal more information are turned off.  Locking the controls has no effect on viewers who can normally view all the details by themselves.</span>");
 define("_formulize_DE_SAVE_BUTTON", "Save the current view settings with these options");
-define("_formulize_DE_SAVE_NEWPROMPT", "Please type a name for this new view:");
+define("_formulize_DE_SAVE_NEWPROMPT", "Please type a name for this view:");
 
 //IMPORT
 define("_formulize_DE_IMPORTDATA", "Import Entries");

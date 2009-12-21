@@ -107,7 +107,7 @@ class formulizeElementRenderer{
 		switch ($e){
 			case 'derived':
 				if($entry != "new") {
-					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), $ele_value[5]);
+					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), formulize_numberFormat($ele_value[5], $this->_ele->getVar('ele_handle')));
 				} else {
 					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE);
 				}
@@ -475,6 +475,10 @@ class formulizeElementRenderer{
 						$ele_value[0],	//	size
 						$ele_value[1]	  //	multiple
 					);
+					
+					if($isDisabled) {
+						$form_ele1->setExtra("disabled=1");
+					}
 	
 					// must check the options for uitext before adding to the element -- aug 25, 2007
 					foreach($options as $okey=>$ovalue) {
@@ -496,11 +500,13 @@ class formulizeElementRenderer{
 						"<nobr>" . $form_ele1->render() . "</nobr>\n" . $renderedHoorvs
 					);
 
+
+
 				
 				} // end of if we have a link on our hands. -- jwe 7/29/04
 				
 				// set required validation code
-					if($this->_ele->getVar('ele_req')) {
+					if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 						$eltname = $form_ele_id;
 						$eltcaption = $ele_caption;
 						$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
@@ -516,6 +522,10 @@ class formulizeElementRenderer{
 							$form_ele->customValidationCode[] = "}\n";
 							$form_ele->customValidationCode[] = "if(selection == false) { window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 						}
+					}
+				
+					if($isDisabled AND isset($form_ele1)) {
+						$isDisabled = false; // since we're handling disabled right here in the element, we don't want lower down logic to kick in
 					}
 				
 				
@@ -560,6 +570,9 @@ class formulizeElementRenderer{
 							$counter++;
 						}
 						$form_ele1->setExtra("onchange=\"javascript:formulizechanged=1;\"");
+						if($isDisabled) {
+							$form_ele1->setExtra("disabled=1");
+						}
 					break;
 					default:
 						$form_ele1 = new XoopsFormElementTray($ele_caption, $delimSetting);
@@ -581,6 +594,9 @@ class formulizeElementRenderer{
 								}
 							}
 							$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
+							if($isDisabled) {
+								$t->setExtra("disabled=1");
+							}	
 							$form_ele1->addElement($t);
 							$counter++;
 						}
@@ -595,11 +611,16 @@ class formulizeElementRenderer{
 					}
 				}
 				
+
+				
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
 					"<nobr>" . $form_ele1->render() . "</nobr>\n" . $renderedHoorvs
 				);
-				// need to replicate handling of disabled elements here when element created, since labels cannot be disabled by code below!  (Just like radio buttons)
+
+				if($isDisabled) {
+					$isDisabled = false;
+				}
 				
 			break;
 			
@@ -707,11 +728,9 @@ class formulizeElementRenderer{
 					$ele_caption,
 					"<nobr>" . $form_ele1->render() . "</nobr>\n$renderedHoorvs\n$disabledHiddenValue"
 				);
-				if($isDisabled) {
-					$isDisabled = false; // need to handle the disabled stuff here in the element, and not as a "carte-blanche" at the end, because radio buttons are rendered as labels sometimes, and labels cannot be "disabled" in the normal way lower down (they're not elements, they're HTML).
-				}
 
-				if($this->_ele->getVar('ele_req')) {
+
+				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
 					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
@@ -727,6 +746,9 @@ class formulizeElementRenderer{
 					$form_ele->customValidationCode[] = "if(selection == false) { window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 				}
 
+				if($isDisabled) {
+					$isDisabled = false; // need to handle the disabled stuff here in the element, and not as a "carte-blanche" at the end, because radio buttons are rendered as labels sometimes, and labels cannot be "disabled" in the normal way lower down (they're not elements, they're HTML).
+				}
 
 			break;
 			//Marie le 20/04/04

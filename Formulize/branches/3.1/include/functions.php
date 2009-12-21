@@ -186,7 +186,7 @@ function getCurrentURL() {
 	static $url = "";
 	if($url) { return $url; }
 	$url_parts = parse_url(XOOPS_URL);
-	$url = $url_parts['scheme'] . "://" . $url_parts['host']; 
+	$url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST']; 
 	$url = isset($url_parts['port']) ? $url . ":" . $url_parts['port'] : $url;
 	$url .= str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])));  // strip html tags, convert special chars to htmlchar equivalents, then convert back ampersand htmlchars to regular ampersands, so the URL doesn't bust on certain servers
 	return $url;
@@ -1081,14 +1081,14 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 	if($fdchoice == "update") { // reset headers and cols to include all data -- when creating a blank template, this reset has already happened before prepexport is called
 		$fdchoice = "comma";
 		$template = "update";
-		$cols1 = getAllColList($fid, "", $groups);
+		$cols1 = getAllColList($fid, "", $groups); // $cols1 will be a multidimensional array, one "entry" per column, and for each column the entry is an assoc array with ele_id, ele_colhead, ele_caption and ele_handle.
 		unset($cols);
 		$cols = array();
 		foreach($cols1[$fid] as $col) {
-			$cols[] = $col['ele_id'];
+			$cols[] = $col['ele_handle'];
 		}
 		unset($headers);
-		$headers = getHeaders($cols);
+		$headers = getHeaders($cols, "", true); // array of element handles, frid, boolean for if the cols are handles (or ids, which is the default assumption)
 	}
 	if($fdchoice == "comma") 
 	{ 
@@ -1198,10 +1198,16 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 		// write in data
 		foreach($cols as $col) {
 			if(($col == "uid" OR $col == "proxyid" OR $col=="creation_date" OR $col =="mod_date" OR $col == "creation_uid" OR $col == "mod_uid" OR $col == "creation_datetime" OR $col == "mod_datetime") AND $_POST['metachoice'] == 1) { continue; } // ignore the metadata columns if they are selected, since we already handle them better above
-			$data_to_write = displayTogether($entry, $col, "\n");
-			$data_to_write = str_replace("&quot;", "&quot;&quot;", $data_to_write);
-			$data_to_write = "\"" . trans($data_to_write) . "\"";
-			$data_to_write = str_replace("\r\n", "\n", $data_to_write);
+			if($col == "creation_uid" OR $col == "mod_uid" OR $col == "uid" OR $col == "proxyid") {
+				$name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=".intval(display($entry, $col)));
+				$data_to_write = $name_q[0]['name'];
+				if(!$data_to_write) { $data_to_write = $name_q[0]['uname']; }
+			} else {
+				$data_to_write = displayTogether($entry, $col, "\n");
+				$data_to_write = str_replace("&quot;", "&quot;&quot;", $data_to_write);
+				$data_to_write = "\"" . trans($data_to_write) . "\"";
+				$data_to_write = str_replace("\r\n", "\n", $data_to_write);
+			}
       if($lineStarted) {
         $csvfile .= $fd;
       }
@@ -1779,15 +1785,19 @@ function getElementValue($entry, $element_id, $fid) {
 
 // this function checks for singleentry status and returns the appropriate entry in the form if there is one
 function getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid) {
-	global $xoopsDB;
+	global $xoopsDB, $xoopsUser;
 	// determine single/multi status
 	$smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$fid");
 	if($smq[0]['singleentry'] != "") {
 		// find the entry that applies
 		$single['flag'] = $smq[0]['singleentry'] == "on" ? 1 : "group";
 		if($smq[0]['singleentry'] == "on") { // if we're looking for a regular single, find first entry for this user
-      $data_handler = new formulizeDataHandler($fid);
-      $single['entry'] = $data_handler->getFirstEntryForUsers($uid); 
+			if(!$xoopsUser) {
+				$single['entry'] = ""; // don't set an entry for anons...they should not share the same entry in a single entry form, since user zero is actually lots of different people...cookie logic in displayform will cause their past entry to show up for them, if they have cookies working
+			} else {
+				$data_handler = new formulizeDataHandler($fid);
+				$single['entry'] = $data_handler->getFirstEntryForUsers($uid);
+			}
 		} elseif($smq[0]['singleentry'] == "group") { // get the first entry belonging to anyone in their groups, excluding any groups that do not have add_own_entry permission
 			$groupsWithAccess = $gperm_handler->getGroupIds("add_own_entry", $fid, $mid);
 			$intersect_groups = array_intersect($groups, $groupsWithAccess);
@@ -2126,6 +2136,12 @@ function getTextboxDefault($ele_value, $form_id, $entry_id) {
 				$number = 0;
 			}
 			$replacementValue = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+		}
+		if(strtolower($thisTerm) == "id") {
+			$replacementValue = "{ID}";
+		}
+		if(strtolower($thisTerm) == "sequence") {
+			$replacementValue = "{SEQUENCE}";
 		}
 		if(!$xoopsUser AND !$replacementValue) {
 			$replacementValue = "";
@@ -2581,7 +2597,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
     unset($uids_temp);
   } elseif($thiscon['not_cons_elementuids'] > 0) { // get the entry at issue and extract the uids from the specified element
     $data_handler = new formulizeDataHandler($fid);
-    $value = getElementValueInEntry($entry, intval($thiscon['not_cons_elementuids']));
+    $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_elementuids']));
     if($value) {
       $uids_temp = explode("*=+*:", $value);
       $uids_conditions = array_merge((array)$uids_temp, $uids_conditions);
@@ -2589,7 +2605,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
     unset($uids_temp);
   } elseif($thiscon['not_cons_linkcreator'] > 0) { // get the entry at issue and extract the uid(s) of the creator(s) of the items selected in the specified element
     $data_handler = new formulizeDataHandler($fid);
-    $value = getElementValueInEntry($entry, intval($thiscon['not_cons_linkcreator'])); // get the values in the linked fields
+    $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_linkcreator'])); // get the values in the linked fields
     $entry_ids = explode(",", trim($value, ",")); // the entry ids (in their source form) of the items selected in the linked selectbox, should always be an array of at least one value
     if(count($entry_ids) > 0) {
       // need to get the form that 'not_cons_linkcreator' is linked to
@@ -2597,7 +2613,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
       $elementObject = $element_handler->get(intval($thiscon['not_cons_linkcreator']));
       $linkProperties = explode("#*=:*", $elementObject->getVar('ele_value')); // key 0 will be the form id that is the source for the values in this linked selectbox
       $data_handler2 = new formulizeDataHandler($linkProperties[0]);
-      $uids_temp = getAllUsersForEntries($entry_ids);
+      $uids_temp = $data_handler2->getAllUsersForEntries($entry_ids);
       if(count($uids_temp) > 0) {
         $uids_conditions = array_merge($uids_temp, $uids_conditions); // not need for type hint (array) in this case because getAllUsersForEntries always returns an array, even if its empty
       }
@@ -2630,7 +2646,7 @@ function compileNotUsers2($uids_conditions, $uids_complete, $notification_handle
 }
 
 // this function takes a series of columns and gets the headers for them
-function getHeaders($cols, $frid="", $colsIsElementHeaders = false) {
+function getHeaders($cols, $frid="", $colsIsElementHandles = false) {
 	global $xoopsDB;
   
 	foreach($cols as $col) {
@@ -2647,7 +2663,7 @@ function getHeaders($cols, $frid="", $colsIsElementHeaders = false) {
 		} elseif($frid) {
           $headers[] = getCaption($frid, $col, true, true);
        	} else {
-          if($colsIsElementHeaders) {
+          if($colsIsElementHandles) {
             $whereClause = "ele_handle = '$col'";
           } else {
             $whereClause = "ele_id = '$col'";
@@ -2699,10 +2715,21 @@ print "$prevValue<br><br>";
   } else {
       $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
       $frameworkObject = $framework_handler->get($formframe);
-      $frameworkElementIds = $frameworkObject->getVar('element_ids');
-      $element_id = $frameworkElementIds[$ele];
-  		$element =& $formulize_mgr->get($element_id);
+      if(is_object($frameworkObject)) {
+	      $frameworkElementIds = $frameworkObject->getVar('element_ids');
+	      $element_id = $frameworkElementIds[$ele];
+	  		$element =& $formulize_mgr->get($element_id);
+			}
+			if(!is_object($element)) {
+				// then check the element data handles instead
+				$element =& $formulize_mgr->get($ele);
+			}
   }
+
+	if(!is_object($element)) {
+		print "<b>Error: could not save the value for element: ".$ele.". Please notify your webmaster, or <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a> about this error.</b>";
+		return;
+	}
 
   	$ele_value = $element->getVar('ele_value');
 
@@ -3208,8 +3235,9 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 			$filter .= "<option value=\"none\">".$defaulttext."</option>\n";
 		}
 
-    $form_element = q("SELECT ele_value, ele_type FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
+    $form_element = q("SELECT ele_value, ele_type, ele_uitext FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . $ele_id);
     $element_value = unserialize($form_element[0]["ele_value"]);
+		$ele_uitext = unserialize($form_element[0]["ele_uitext"]);
 	switch($form_element[0]["ele_type"]) {
 		case "select":
 			$options = $element_value[2];
@@ -3218,6 +3246,8 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 		case "checkbox":
 			$options = $element_value;
 			break;
+		default:
+			$options = array();
 	}
 
 	// if the $options is from a linked selectbox, then figure that out and gather the possible values
@@ -3244,7 +3274,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 			$limitCondition = ", ".$xoopsDB->prefix("formulize_".$linkedSourceElementEleValueParts[0])." as t2 WHERE t1.`$linked_ele_id` LIKE CONCAT('%',t2.entry_id,'%') AND t2.`".$linkedSourceElementEleValueParts[1]."` LIKE '%".mysql_real_escape_string($_POST[$linked_data_id])."%'";
 		}
 		unset($options);
-		if($dataResult = $xoopsDB->query("SELECT t1.`$source_element_handle` FROM ".$xoopsDB->prefix("formulize_".$source_form_id)." as t1 ".$limitCondition)) {
+		if($dataResult = $xoopsDB->query("SELECT distinct(t1.`$source_element_handle`) FROM ".$xoopsDB->prefix("formulize_".$source_form_id)." as t1 ".$limitCondition." ORDER BY t1.`$source_element_handle`")) {
 			while($dataArray = $xoopsDB->fetchArray($dataResult)) {
 				$options[$dataArray[$source_element_handle]] = "";
 			}
@@ -3332,7 +3362,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
           $selected = "";
         }
         if($name == "{listofentries}") { $passoption = "qsf_".$counter."_$passoption"; } // need to pass this stupid thing back because we can't compare the option and the contents of $_POST...a typing problem in PHP??!!
-	      $filter .= "<option value=\"$passoption\" $selected>$option</option>\n";
+	      $filter .= "<option value=\"$passoption\" $selected>".formulize_swapUIText($option, $ele_uitext)."</option>\n";
       }
       $counter++;
     }
@@ -3344,7 +3374,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 }
 
 // THIS FUNCTION TAKES A VALUE AND THE UITEXT FOR THE ELEMENT, AND RETURNS THE UITEXT IN PLACE OF THE "DATA" TEXT
-function formulize_swapUIText($value, $uitexts) {
+function formulize_swapUIText($value, $uitexts=array()) {
   // if value is an array, it has a key called 'value', which needs to be swapped
   if(is_array($value)) {
     $value['value'] = isset($uitexts[$value['value']]) ? $uitexts[$value['value']] : $value['value'];

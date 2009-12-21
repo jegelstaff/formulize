@@ -219,23 +219,18 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 		// put name into loadview
 		if($saveid_formulize != "new") {
-			if(strstr($saveid_formulize, "old_")) { // legacy
-				$sname = q("SELECT report_name FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id = \"" . substr($saveid_formulize, 5) . "\"");
-				$savename = $sname[0]['report_name'];
-			} else {
+			if(!strstr($saveid_formulize, "old_")) { // if it's not a legacy report...
 				$sname = q("SELECT sv_name, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = \"" . substr($saveid_formulize, 1) . "\"");
-				$savename = $sname[0]['sv_name'];
 				if($sname[0]['sv_owner_uid'] == $uid) {
 					$loadedView = $saveid_formulize;
 				} else {
 					$loadedView =  "p" . substr($saveid_formulize, 1);
 				}
 			}
-		} else {
-			$savename = $_POST['savename'];
-			if(get_magic_quotes_gpc()) {
-				$savename = stripslashes($savename);
-			}
+		} 
+		$savename = $_POST['savename'];
+		if(get_magic_quotes_gpc()) {
+			$savename = stripslashes($savename);
 		}
 
 		// flatten quicksearches -- one value in the array for every column in the view
@@ -282,7 +277,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$savesql = "INSERT INTO " . $xoopsDB->prefix("formulize_saved_views") . " (sv_name, sv_pubgroups, sv_owner_uid, sv_mod_uid, sv_formframe, sv_mainform, sv_lockcontrols, sv_hidelist, sv_hidecalc, sv_asearch, sv_sort, sv_order, sv_oldcols, sv_currentview, sv_calc_cols, sv_calc_calcs, sv_calc_blanks, sv_calc_grouping, sv_quicksearches) VALUES (\"$savename\", \"$savegroups\", \"$owneruid\", \"$moduid\", \"$saveformframe\", \"$savemainform\", \"{$_POST['savelock']}\", \"{$_POST['hlist']}\", \"{$_POST['hcalc']}\", \"$savesearches\", \"{$_POST['sort']}\", \"{$_POST['order']}\", \"{$_POST['oldcols']}\", \"{$_POST['savescope']}\", \"{$_POST['calc_cols']}\", \"{$_POST['calc_calcs']}\", \"{$_POST['calc_blanks']}\", \"{$_POST['calc_grouping']}\", \"$qsearches\")";
 		} else {
 			// print "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"{$_POST['savelock']}\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid_formulize, 1) . "\"";
-			$savesql = "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"{$_POST['savelock']}\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid_formulize, 1) . "\"";
+			$savesql = "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_name=\"$savename\", sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"{$_POST['savelock']}\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid_formulize, 1) . "\"";
 		}
 
 		// save the report
@@ -1275,7 +1270,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	}
 
 	
-	
+	$scrollBoxWasSet = false;
 	if($useScrollBox AND count($data) > 0) {
 		print "<style>\n";
 	
@@ -1288,6 +1283,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		print "</style>\n";
 	
 		print "<div class=scrollbox id=resbox>\n";
+		$scrollBoxWasSet = true;
 	}
 
 	// perform calculations...
@@ -1651,7 +1647,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		print "<p>" . _formulize_DE_LOE_LIMIT_REACHED1 . " <b>" . $LOE_limit . "</b> " . _formulize_DE_LOE_LIMIT_REACHED2 . " <a href=\"\" onclick=\"javascript:forceQ();return false;\">" . _formulize_DE_LOE_LIMIT_REACHED3 . "</a></p>\n";
 	}
 	
-	if($useScrollBox) {
+	if($scrollBoxWasSet) {
 		print "</div>";
 	}
   formulize_benchmark("We're done");
@@ -1754,8 +1750,8 @@ function formulize_buildQSFilter($handle, $search_text, $frid) {
   }
   if($elementMetaData['ele_type']=="select" OR $elementMetaData['ele_type']=="radio" OR $elementMetaData['ele_type']=="checkbox") {
     $qsfparts = explode("_", $search_text);
-    $counter = $qsfparts[1];
-    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $counter);
+    $search_term = $qsfparts[1];
+    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, $name="{listofentries}", $search_term);
     return $filterHTML;
   }
   return "";
@@ -2360,8 +2356,33 @@ function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
 	} else {
 		$arrayWasPassedIn = true;
 	}
+	
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$thisElement = $element_handler->get($handle);
+	if(!is_object($thisElement)) {
+		if($arrayWasPassedIn) {
+			return $value;
+		} else {
+			return $value[0];
+		}
+	}
+	$ele_value = $thisElement->getVar('ele_value');
+	$isLinkedSelectBox = false;
+	$isNamesList = false;
+	if(is_array($ele_value)) {
+		if(isset($ele_value[2])) {
+			if(strstr($ele_value[2], "#*=:*")) {
+				$isLinkedSelectBox = true;
+				$linkedMetaData = formulize_isLinkedSelectBox($thisElement->getVar('ele_id'));
+			} elseif(isset($ele_value[2]["{FULLNAMES}"]) OR isset($ele_value[2]["{USERNAMES}"]))  {
+				$isNamesList = isset($ele_value[2]["{FULLNAMES}"]) ? 'name' : 'uname';
+			}
+		}
+	}
+	
+	$allRealValuesNames = array();
 	foreach($value as $thisValue) {
-		if($linkedMetaData = formulize_isLinkedSelectBox($handle, true)) {
+		if($isLinkedSelectBox) {
 			// convert the pointers for the linked selectbox values, to their source values
 			$sourceMeta = explode("#*=:*", $linkedMetaData[2]);
 			$data_handler = new formulizeDataHandler($sourceMeta[0]);
@@ -2373,10 +2394,32 @@ function convertRawValuestoRealValues($value, $handle, $returnFlat=false) {
 			$allRealValues[] = $realValues;
 		} elseif(strstr($thisValue, "*=+*:")) {
 			$allRealValues[] = str_replace("*=+*:", ", ", ltrim($thisValue, "*=+*:")); // replace the separator with commas between values
+		} elseif($isNamesList) {
+			$allRealValuesNames[] = $thisValue;
 		} else {
 			$allRealValues[] = $thisValue;
 		}
 	}
+	
+	if(count($allRealValuesNames) > 0) {
+		// convert all uids found into names with only one query
+		$user_handler = xoops_gethandler('user');
+		$criteria = new CriteriaCompo();
+		foreach($allRealValuesNames as $thisUid) {
+			if(is_numeric($thisUid)) {
+				$criteria->add(new Criteria('uid', $thisUid), 'OR');
+			}
+		}
+		$users = $user_handler->getObjects($criteria, true); // true causes key of returned array to be uids
+		foreach($allRealValuesNames as $thisUid) {
+			if(is_numeric($thisUid) AND isset($users[$thisUid])) {
+				$allRealValues[] = $users[$thisUid]->getVar($isNamesList);	
+			} else {
+				$allRealValues[] = _formulize_BLANK_KEYWORD;
+			}
+		}
+	}
+	
 	if($arrayWasPassedIn) {
 		return $allRealValues;
 	} else {
@@ -3815,7 +3858,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
       // remove the qsf_ parts to make the quickfilter searches work
       if(substr($one_search, 0, 4)=="qsf_") {
         $qsfparts = explode("_", $one_search);
-        $one_search = $qsfparts[2];
+        $one_search = "=".$qsfparts[2];
       }
 	
 			// strip out any starting and ending ! that indicate that the column should not be stripped

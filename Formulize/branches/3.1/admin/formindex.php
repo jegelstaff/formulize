@@ -1975,7 +1975,7 @@ case "patch30datastructure":
         break;
 }
 
-print "<p>version 3.11 Final</p>";
+print "<p>version 3.12 Final</p>";
 
 include 'footer.php';
     xoops_cp_footer();

@@ -57,10 +57,17 @@ function saveSettings(formObj) {
 		if (saveElement.options[i].selected) {
 			var newid = saveElement.options[i].value;
 			if(newid == "new") {
-				var newname = prompt("<?php print _formulize_DE_SAVE_NEWPROMPT; ?>", "");
-				if(!newname) {
-					return false;
-				} 
+				var oldname = "";
+			} else {
+				if(saveElement.options[i].text.indexOf('<?php print _formulize_DE_SAVE_LASTLOADED; ?>') == -1)  {
+					var oldname = saveElement.options[i].text.substring(<?php print strlen(_formulize_DE_SAVE_REPLACE); ?> + 2, saveElement.options[i].text.length);
+				} else {
+					var oldname = saveElement.options[i].text.substring(<?php print strlen(_formulize_DE_SAVE_REPLACE); ?> + 2, saveElement.options[i].text.length - <?php print strlen(_formulize_DE_SAVE_LASTLOADED); ?> - 3);
+				}
+			}
+			var newname = prompt("<?php print _formulize_DE_SAVE_NEWPROMPT; ?>", oldname);
+			if(!newname) {
+				return false; 
 			} 
 			i=saveElement.options.length;
 		}
@@ -110,9 +117,7 @@ if($pubflag) {
 ?>
 	window.opener.document.controls.savescope.value = newscope;
 	window.opener.document.controls.saveid_formulize.value = newid;
-	if(newid == "new") { 
-		window.opener.document.controls.savename.value = newname;
-	}
+	window.opener.document.controls.savename.value = newname;
 	window.opener.showLoading();
 	window.self.close();
 }
@@ -301,7 +306,9 @@ if($publish_reports) {
 	foreach($groups as $key=>$groupid) {
 		if($groupid != 2) {
 			$thisgroup = $member_handler->getGroup($groupid);
-			$publishgroups[$groupid] = $thisgroup->getVar('name');
+			if(is_object($thisgroup)) {
+				$publishgroups[$groupid] = $thisgroup->getVar('name');
+			}
 		}
 	}
 }

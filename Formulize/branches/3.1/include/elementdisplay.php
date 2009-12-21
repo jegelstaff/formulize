@@ -67,9 +67,11 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		} else {
       $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
       $frameworkObject = $framework_handler->get($formframe);
-      $frameworkElementIds = $frameworkObject->getVar('element_ids');
-      $element_id = $frameworkElementIds[$ele];
-  		$element =& $formulize_mgr->get($element_id);
+			if(is_object($frameworkObject)) {
+	      $frameworkElementIds = $frameworkObject->getVar('element_ids');
+	      $element_id = $frameworkElementIds[$ele];
+	  		$element =& $formulize_mgr->get($element_id);
+			}
 			if(!is_object($element)) {
 				// then check the element data handles instead
 				$element =& $formulize_mgr->get($ele);
@@ -151,14 +153,14 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		formulize_benchmark("Done rendering element.");
 		
 		if(!$renderElement) {
-			return $form_ele;			
+			return array(0=>$form_ele, 1=>$isDisabled);			
 		} else {
 			if($element->getVar('ele_type') == "ib") {
 				print $form_ele[0];
 				return "rendered";
 			} elseif(is_object($form_ele)) {
 					print $form_ele->render();
-          if(!empty($form_ele->customValidationCode)) {
+          if(!empty($form_ele->customValidationCode) AND !$isDisabled) {
             $GLOBALS['formulize_renderedElementsValidationJS'][] = $form_ele->renderValidationJS();
           } elseif($element->getVar('ele_req') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea")) {
             $eltname    = $form_ele->getName();
@@ -167,7 +169,11 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
             $eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
             $GLOBALS['formulize_renderedElementsValidationJS'][] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
           }
-					return "rendered";
+					if($isDisabled) {
+						return "rendered-disabled";
+					} else {
+						return "rendered";	
+					}
 			}
 		}
   		

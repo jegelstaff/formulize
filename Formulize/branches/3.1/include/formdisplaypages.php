@@ -325,7 +325,7 @@ if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages
    	}
 	$forminfo['elements'] = $elements_allowed;
 	$forminfo['formframe'] = $formframe;
-	$titleOverride = "all";
+	$titleOverride = isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
 
 	$GLOBALS['nosubforms'] = true; // subforms cannot have a view button on multipage forms, since moving to a sub causes total confusion of which entry and fid you are looking at
 
@@ -363,15 +363,15 @@ function drawPageNav($usersCanSave="", $pagesSkipped="", $currentPage="", $previ
 	if($aboveBelow == "above") {
 		//navigation options above the form print like this
 		print "<br /><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\"><table><tr>\n";
-		print "<td style=\"vertical-align: middle;\"><table><tr><td><b>" . _formulize_DMULTI_YOUAREON . "</b><br />" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . count($pages) . "</td></tr></table></td>";
-		print "<td style=\"vertical-align: middle;\">";
+		print "<td style=\"vertical-align: middle; padding-right: 5px;\"><nobr><b>" . _formulize_DMULTI_YOUAREON . "</b></nobr><br /><nobr>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . count($pages) . "</nobr></td>";
+		print "<td style=\"vertical-align: middle; padding-right: 5px;\">";
 	if($previousPage != "none") {
 	  print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' $submitTextPrev>\n";
 	} else {
 	  print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' disabled=true>\n";
 	}
 		print "</td>";
-		print "<td style=\"vertical-align: middle;\">";
+		print "<td style=\"vertical-align: middle; padding-right: 5px;\">";
 
 	if($usersCanSave AND $nextPage==$thanksPage) {
 	  print "<input type=button name=next id=next value='" . _formulize_DMULTI_SAVE . "' $submitTextNext>\n";
