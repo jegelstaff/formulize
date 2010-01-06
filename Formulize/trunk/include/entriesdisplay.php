@@ -3884,6 +3884,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
       // remove the qsf_ parts to make the quickfilter searches work
       if(substr($one_search, 0, 4)=="qsf_") {
         $qsfparts = explode("_", $one_search);
+				// need to determine if the key is a multi selection element or not.  If it is, then this should not be a straight equals!
         $one_search = "=".$qsfparts[2];
       }
 	
