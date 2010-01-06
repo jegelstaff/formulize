@@ -158,6 +158,34 @@ class formulizeElementRenderer{
 					$form_ele = new XoopsFormLabel ($ele_caption, $ele_value[2]);	// nmc 2007.03.24 - added 
 				}
 
+				// if required unique option is set, create validation javascript that will ask the database if the value is unique or not
+				if($ele_value[9]) {
+					$eltname = $form_ele_id;
+					$eltcaption = $ele_caption;
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
+					if($this->_ele->getVar('ele_req')) { // need to manually handle required setting, since only one validation routine can run for an element, so we need to include required checking in this unique checking routine, if the user selected required too
+						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.value == '' ) {\n";
+						$form_ele->customValidationCode[] = "window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n";
+						$form_ele->customValidationCode[] = "}\n";
+					}
+					$form_ele->customValidationCode[] = "if(formulize_xhr_returned_check_for_unique_value != 'notreturned') {\n"; // a value has already been returned from xhr, so let's check that out...
+					$form_ele->customValidationCode[] = "if(formulize_xhr_returned_check_for_unique_value != 'valuenotfound') {\n"; // request has come back, form has been resubmitted, but the check turned up postive, ie: value is not unique, so we have to halt submission , and reset the check for unique flag so we can check again when the user has typed again and is ready to submit
+					$form_ele->customValidationCode[] = "window.alert(\"{$eltmsgUnique}\");\n";
+					$form_ele->customValidationCode[] = "formulize_xhr_returned_check_for_unique_value = 'notreturned'\n";
+					$form_ele->customValidationCode[] = "myform.{$eltname}.focus();\n return false;\n";
+					$form_ele->customValidationCode[] = "}\n";
+					$form_ele->customValidationCode[] = "} else {\n";	 // do not submit the form, just send off the request, which will trigger a resubmission after setting the returned flag above to true so that we won't send again on resubmission
+					$form_ele->customValidationCode[] = "\nvar formulize_xhr_params = []\n";
+					$form_ele->customValidationCode[] = "formulize_xhr_params[0] = myform.{$eltname}.value;\n";
+					$form_ele->customValidationCode[] = "formulize_xhr_params[1] = ".$this->_ele->getVar('ele_id').";\n";
+					$form_ele->customValidationCode[] = "formulize_xhr_params[2] = ".$entry.";\n";
+					$form_ele->customValidationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
+					$form_ele->customValidationCode[] = "return false;\n"; 
+					$form_ele->customValidationCode[] = "}\n";
+					
+				}
+
 			break;
 			
 			case 'textarea':

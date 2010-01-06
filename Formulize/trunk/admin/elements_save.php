@@ -179,6 +179,8 @@ if( !empty($ele_id) AND $clone == 0){
 				$value[] = $ele_value[6];
 				$value[] = $ele_value[7];
 				$value[] = $ele_value[8];
+				
+				$value[] = $ele_value[9]; // require unique
 
 			break;
 			case 'textarea':

@@ -103,4 +103,10 @@ $form->addElement($valueType);
 $form->addElement($numberOptions);
 $form->addElement($formlink);
 
+// add option for require unique value - jwe Jan 5 2010
+$requireUnique = new XoopsFormRadio(_AM_ELE_REQUIREUNIQUE, 'ele_value[9]', $value[9]);
+$requireUnique->addOption(0, _NO);
+$requireUnique->addOption(1, _YES);
+$form->addElement($requireUnique);
+
 ?>

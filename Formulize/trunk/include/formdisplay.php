@@ -1959,9 +1959,12 @@ function writeHiddenSettings($settings, $form) {
 // draw in javascript for this form that is relevant to subforms
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
 function drawJavascript($nosave) {
+global $xoopsUser;
 print "\n<script type='text/javascript'>\n";
 
+print " initialize_formulize_xhr();\n";
 print " var formulizechanged=0;\n";
+print " var formulize_xhr_returned_check_for_unique_value = 'notreturned';\n";
 ?>
 function showPop(url) {
 
@@ -2058,6 +2061,67 @@ print "function PrintAllPop() {\n";									// nmc 2007.03.24 - added
 print "		window.document.printview.elements_allowed.value='';\n"; // nmc 2007.03.24 - added 
 print "		window.document.printview.submit();\n";					// nmc 2007.03.24 - added 
 print "}\n";														// nmc 2007.03.24 - added 
+
+// added xhr function Jan 5 2010
+
+
+?>
+
+function initialize_formulize_xhr() {
+	if (window.XMLHttpRequest) {
+		formulize_xhr = new XMLHttpRequest();
+	} else if (window.ActiveXObject) {
+		try {
+			formuilze_xhr = 
+				new ActiveXObject("Msxml2.XMLHTTP");
+		} catch (ex) {
+			try {
+				formulize_xhr = 
+				 new ActiveXObject("Microsoft.XMLHTTP");
+			} catch (ex) {
+			}
+		}
+	}
+}
+
+function formulize_xhr_return(op,params,response) {
+	// check that this is a valid operation we know how to handle
+  if(op != 'check_for_unique_value') {
+	  return false;
+	}
+	formulize_xhr_returned_check_for_unique_value = response;
+	validateAndSubmit();
+}
+
+function formulize_xhr_send(op,params) {
+  // check that this is a valid operation we know how to handle
+  if(op != 'check_for_unique_value') {
+	  return true;
+	}
+	// unpack the parameters
+	var key;
+	key = 1;
+	var params_for_uri;
+	params_for_uri = '';
+	params.forEach(function(i) {
+		params_for_uri += 'param' + key + '=' + encodeURIComponent(i) + '&';
+		key++;
+	});
+	//prompt('copy this','<?php print XOOPS_URL . "/modules/formulize/formulize_xhr_responder.php?"; ?>'+params_for_uri+'op='+op+'&uid=<?php print $xoopsUser ? $xoopsUser->getVar('uid') : 0; ?>'); 
+	formulize_xhr.open("GET", '<?php print XOOPS_URL . "/modules/formulize/formulize_xhr_responder.php?"; ?>'+params_for_uri+'op='+op+'&uid=<?php print $xoopsUser ? $xoopsUser->getVar('uid') : 0; ?>', true);
+	formulize_xhr.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
+	formulize_xhr.onreadystatechange = function() {
+		//alert(formulize_xhr.readyState); 
+		if(formulize_xhr.readyState == 4) {
+			//alert(formulize_xhr.responseText); 
+			formulize_xhr_return(op,params,formulize_xhr.responseText);
+		}
+  }
+  formulize_xhr.send(null);
+}
+
+<?php
+
 
 print "</script>\n";
 }

@@ -692,5 +692,6 @@ define("_formulize_GENERIC_FILTER_ALL", "No filter in effect (select this to cle
 define("_formulize_GENERIC_FILTER_CON", "Filter based on this/these conditions:");
 define("_formulize_GENERIC_FILTER_ADDBUTTON", "Add another condition");
 
+define("_formulize_REQUIRED_UNIQUE", "The value you entered for '%s' has been entered already.  You must type a unique value for that question.");
 
 ?>

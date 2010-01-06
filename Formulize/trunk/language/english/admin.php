@@ -81,6 +81,9 @@ define("_AM_ELE_NUMBER_OPTS_DECSEP","Separate decimals with this character (ie: 
 define("_AM_ELE_NUMBER_OPTS_SEP","Separate thousands with this character (ie: ','):");
 define("_AM_ELE_DERIVED_NUMBER_OPTS","If this formula produces a number ...");
 
+// require unique option for textboxes
+define("_AM_ELE_REQUIREUNIQUE", "Users must enter a unique value into this box (no duplicates allowed)");
+
 // added - start - August 227 2005 - jpc
 define("_AM_ELE_TYPE","What should people type in this box?");
 define("_AM_ELE_TYPE_DESC","Choose 'Numbers Only' to strip non-numeric characters from the box when an entry is saved.  This ensures mathematical operations can be performed on the contents of the box.");
