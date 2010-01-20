@@ -103,7 +103,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-	$uid = $xoopsUser->getVar('uid');
+	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
 
 	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {

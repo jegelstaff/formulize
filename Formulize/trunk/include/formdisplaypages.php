@@ -265,7 +265,7 @@ if($currentPage == $thanksPage) {
 		}
 		print ">" . $button_text . "</a>\n";
 	}
-	print "</p>";
+	print "</center></p>";
 
 	if(is_array($settings)) {
 		print "<form name=calreturnform action=\"$done_dest\" method=post>\n";

@@ -1185,10 +1185,14 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		
 		// need to figure out the proper order for the sub entries based on the properties set for this form
 		// for now, hard code to the word number field to suit the map site only
-		// if it's the word subform, then sort the entries according to the word number, then the entry id
+		// if it's the word subform, then sort the entries differently
 		/*if($sfid == 281) {
-			$sortClause = " word_number, entry_id ";
-		} else {*/
+			$sortClause = " fas_281, block_281, word_number ";
+		} 
+		elseif ($sfid == 283) {
+			$sortClause = " fas_283 ";
+		}
+		else {*/
 			$sortClause = " entry_id ";
 		//}
 		$subEntriesOrderSQL = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$sfid)." WHERE entry_id IN (".implode(",", $sub_entries[$sfid]).") ORDER BY $sortClause";
