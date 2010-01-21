@@ -106,6 +106,34 @@ function formulize_admin_settings() {
     '#description' => t('The full path to your Formulize installation (the mainfile.php file). For instance, "/var/www/mysite.com/xoops/mainfile.php"'),
   );
 	
+  $form['formulize']['formulize_db_user']  = array(
+    '#type' => 'textfield',
+    '#title' => t('Formulize Database user'),
+    '#default_value' => variable_get('formulize_db_user', NULL),
+    '#description' => t('The Formulize database user.'),
+  );
+	
+  $form['formulize']['formulize_db_password']  = array(
+    '#type' => 'textfield',
+    '#title' => t('Formulize Database password'),
+    '#default_value' => variable_get('formulize_db_password', NULL),
+    '#description' => t('The Formulize database password.'),
+  );
+	
+  $form['formulize']['formulize_db_host']  = array(
+    '#type' => 'textfield',
+    '#title' => t('Formulize Database host'),
+    '#default_value' => variable_get('formulize_db_host', 'localhost'),
+    '#description' => t('The Formulize database host.'),
+  );
+
+  $form['formulize']['formulize_db']  = array(
+    '#type' => 'textfield',
+    '#title' => t('Formulize Database name'),
+    '#default_value' => variable_get('formulize_db', NULL),
+    '#description' => t('The Formulize database name.'),
+  );
+	
 	$form = system_settings_form($form);
 	
 	return $form;
