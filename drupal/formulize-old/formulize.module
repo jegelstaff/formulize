@@ -1,0 +1,157 @@
+<?php
+// $Id$
+
+/** 
+ * Project:     Formulize: data management rapid application development
+ * File:        formulize.module 
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
+ */ 
+
+/**
+ * @file
+ * Allows users to access to Formulize through Drupal installations.
+ */
+
+/**
+ * Implementation of hook_help().
+ *
+ * Throughout Drupal, hook_help() is used to display help text at the top of
+ * pages.
+ */
+function formulize_help($section)
+{	
+    switch ($section) {
+    case 'admin/help#formulize':
+      $output = '<p>'. t('The Formulize module integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in Formulize. This module also ensures synchronization of the users and groups/roles between Drupal and Formulize.') .'</p>';
+      $output .= '<p>' . t('Behaviours this module supports:') . '</p>';
+      $output .= '<ul>';
+			$output .= '<li>' . t('Storing data about where Formulize is, how to connect to its database, etc') . '</li>';
+			$output .= '<li>' . t('Creating new users in Formulize when new users are created in Drupal') . '</li>';
+			$output .= '<li>' . t('Updating users in Formulize when users are updated in Drupal (ie: name change, etc)') . '</li>';
+			$output .= '<li>' . t('Deleting users in Formulize when users are deleted in Drupal') . '</li>';
+			$output .= '<li>' . t('Creating new groups in Formulize when roles are created in Drupal') . '</li>';
+			$output .= '<li>' . t('Updating groups in Formulize when roles are updated in Drupal') . '</li>';
+			$output .= '<li>' . t('Deleting groups in Formulize when roles are deleted in Drupal') . '</li>';
+			$output .= '<li>' . t('Creating new groups in Formulize when groups are created in Organic Groups, including groups for each role created within a group') . '</li>';
+			$output .= '<li>' . t('Updating groups in Formulize when groups are updated in Organic Groups, including groups for each role created within a group') . '</li>';
+			$output .= '<li>' . t('Deleting groups in Formulize when groups are deleted in Organic Groups, including groups for each role created within a group.') . '</li>';
+      $output .= '</ul>';
+      $output .= '<p>'. t('For more information please refer to the <a href="!1">Formulize web-site</a> which includes project information, documentation and support resources and more.', array('!1' => 'http://freeformsolutions.ca/en/formulize')) .'</p>';
+      return $output;
+     case 'admin/modules#description':
+         // This description is shown in the listing at admin/modules.
+         return t('The Formulize module (Formulize !1) integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in <a href="!2">Formulize</a>. This module also ensures synchronization of the users and groups/roles between Drupal and Formulize.', array('!1' => '1.0', '!2' => 'http://freeformsolutions.ca/en/formulize/'));
+    }
+}
+
+/**
+ * Implementation of hook_perm()
+ * @return array An array of valid permissions for the formulize module
+ */
+function formulize_perm() {
+  return array('create formulize forms', 'edit own formulize forms', 'edit formulize forms', 'access formulize content', 'administer formulize');
+} 
+
+/**
+ * Implementation of hook_menu().
+ */
+
+function formulize_menu() {
+  $items = array();
+
+  // Admin Settings.
+  $items['admin/settings/formulize'] = array(
+    'title' => 'Webform',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('formulize_admin_settings'),
+		'file' = 'formulize.settings.inc',
+    'file path' => drupal_get_path('module', 'content') .'/includes',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'description' => 'Global configuration of Formulize functionality.',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_node_info()
+ * Defines the Formulize node type so that Drupal knows that such a node type exists and will let people create nodes of that type
+ */
+function formulize_node_info() {
+  return array(
+    'formulize' => array(
+      'name' => t('Formulize screen'),
+      'title_label' => ('Name / Description for this screen'),
+      'module' => 'formulize',
+      'description' => t('Formulize is a data management and reporting toolkit.  You can embed data management applications inside Drupal, once you have configured them in Formulize.  See the admin area for more information.'),
+    )
+  );
+}
+
+/**
+ * Implementation of hook_form()
+ * Defines the custom fields for the editing form for the Formulize node type
+ */
+function formulize_form(&$node) {
+  $type = node_get_types('type', $node);
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => check_plain($type->title_label),
+    '#required' => TRUE,
+    '#default_value' => $node->title,
+    '#weight' => -5,
+    '#description' => t('This name will not be shown to users, but will show up in lists of nodes so you can find this node easily.')
+  );
+  $form['formulize_screen_id'] = array(
+    '#type' => 'select',
+    '#title' => t('Select the Formulize screen that you want to embed in this node'),
+    '#required' => TRUE,
+    '#default_value' => $node->formulize_screen_id,
+    '#weight' => -4,
+    '#options' => array(
+      1=>'screen 1',
+      2=>'screen 2'
+    )
+  );
+  return $form;
+}
+
+function formulize_admin() {
+  //$form = array();
+  //$form['formulize_screen']
+}
+
+function formulize_view($node, $teaser = FALSE, $page = FALSE) {
+  
+  ob_start();
+  require_once "/var/www/vhosts/freeformsolutions.ca/subdomains/demo/httpdocs/calarts/formulize/mainfile.php";
+  $formulize_screen_id = 1;
+  include XOOPS_ROOT_PATH . "/modules/formulize/index.php";
+  $contents = ob_get_clean();
+  
+  //$node = node_prepare($node, $teaser);
+  $node->content['body'] = array(
+    '#value' => $contents,
+    '#weight' => 1,
+  );
+
+  return $node;
+  
+}
+

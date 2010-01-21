@@ -1,0 +1,68 @@
+<?php
+// $Id$
+
+/** 
+ * Project:     Formulize: data management rapid application development
+ * File:        formulize_og_sync.module 
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ * 
+ */ 
+
+/**
+ * @file
+ * Syncs Organic Groups with Formulize formulize groups.
+ */
+
+
+/**
+ * Implementation of hook_help().
+ *
+ * Throughout Drupal, hook_help() is used to display help text at the top of
+ * pages.
+ */
+function formulize_help($section)
+{	
+    switch ($section) {
+    case 'admin/help#formulize':
+      $output = '<p>'. t('The Formulize OG Sync module ensures synchronization of groups/roles between Drupal and Formulize.') .'</p>';
+      $output .= '<p>'. t('For more information please refer to the <a href="!1">Formulize web-site</a> which includes project information, documentation and support resources and more.', array('!1' => 'http://freeformsolutions.ca/en/formulize')) .'</p>';
+      return $output;
+     case 'admin/modules#description':
+         // This description is shown in the listing at admin/modules.
+         return t('The Formulize module integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in Formulize. This module also ensures synchronization of the users and groups/roles between Drupal and Formulize.', array('!1' => '2.0', '!2' => 'http://freeformsolutions.ca/en/formulize/'));
+    }
+}
+
+/**
+ * Valid permissions for this module
+ * @return array An array of valid permissions for the formulize module
+ */
+function formulize_perm() {
+  return array('access formulize nodes', 'administer formulize');
+} 
+
+/**
+ * Implementation of hook_menu_alter().
+ */
+function content_menu_alter(&$items) {
+  // Customize the content types page with our own callback
+  $items['admin/content/formulize']['page callback'] = 'content_formulize_og_settings';
+  $items['admin/content/formulize']['file'] = 'formulize.og.inc';
+  $items['admin/content/formulize']['file path'] = drupal_get_path('module', 'content') .'/includes';
+}
+  
+}
+
