@@ -88,11 +88,29 @@ function formulize_menu() {
 }
 
 /**
- * Menu callback for admin/webform/settings.
+ * Menu callback for admin/formulize/settings.
  */
 function formulize_admin_settings() {
 	
+	  $form['formulize'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Formulize Connection'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  $form['formulize']['formulize_full_path']  = array(
+    '#type' => 'textfield',
+    '#title' => t('Formulize full path'),
+    '#default_value' => variable_get('formulize_full_path', NULL),
+    '#description' => t('The full path to your Formulize installation (the mainfile.php file). For instance, "/var/www/mysite.com/xoops/mainfile.php"'),
+  );
+	
+	$form = system_settings_form($form);
+	
+	return $form;
 }
+
 
 /**
  * Implementation of hook_node_info()
@@ -102,9 +120,12 @@ function formulize_node_info() {
   return array(
     'formulize' => array(
       'name' => t('Formulize screen'),
-      'title_label' => ('Name / Description for this screen'),
       'module' => 'formulize',
       'description' => t('Formulize is a data management and reporting toolkit.  You can embed data management applications inside Drupal, once you have configured them in Formulize.  See the admin area for more information.'),
+			'has_title' => TRUE,
+			'title_label' => ('Screen Name'),
+			'has_body' => TRUE,
+			'body_label' => t('Description'),
     )
   );
 }
