@@ -26,6 +26,27 @@
  * Allows users to access to Formulize through Drupal installations.
  */
 
+
+/**
+ * Internal function to establish a connection to the Formulize database
+ *
+ * This function will establish the connection to the Formulize database only once, and return that resource every time it's requested.
+ * This function should always be called as follows, to ensure the output is assigned by reference, slightly optimize memory usage in case multiple connections are requested in a single page load:
+ * $formulizeDBConnection =& _formulize_get_db_connection();
+ * Then after that, this connection should be specifically included in mysql function calls, ie:
+ * $result = mysql_query($sql, $formulizeDBConnection);
+ * This ensures we completely leave the Drupal database connection alone, and don't interfere with Formulize's own internal DB connection either.
+ */
+function _formulize_get_db_connection() {
+		static $formulize_db_connection;
+		if(!isset($formulize_db_connection)) {
+			$formulize_db_connection = mysql_connect(variable_get('formulize_db_host', NULL), variable_get('formulize_db_user', NULL), variable_get('formulize_db_pass', NULL), TRUE);
+			mysql_selectdb(variable_get('formulize_db_name', NULL), $formulize_db_connection);
+		}
+		return $formulize_db_connection;
+}
+
+
 /**
  * Implementation of hook_help().
  *
@@ -50,7 +71,7 @@ function formulize_help($section)
 			$output .= '<li>' . t('Updating groups in Formulize when groups are updated in Organic Groups, including groups for each role created within a group') . '</li>';
 			$output .= '<li>' . t('Deleting groups in Formulize when groups are deleted in Organic Groups, including groups for each role created within a group.') . '</li>';
       $output .= '</ul>';
-      $output .= '<p>'. t('For more information please refer to the <a href="!1">Formulize web-site</a> which includes project information, documentation and support resources and more.', array('!1' => 'http://freeformsolutions.ca/en/formulize')) .'</p>';
+      $output .= '<p>'. t('For more information please refer to the <a href="!1">Formulize web-site</a> which includes project information, documentation and support resources and more.', array('!1' => 'http://freeformsolutions.ca/formulize')) .'</p>';
       return $output;
      case 'admin/modules#description':
          // This description is shown in the listing at admin/modules.
@@ -103,35 +124,39 @@ function formulize_admin_settings() {
     '#type' => 'textfield',
     '#title' => t('Formulize full path'),
     '#default_value' => variable_get('formulize_full_path', NULL),
-    '#description' => t('The full path to your Formulize installation (the mainfile.php file). For instance, "/var/www/mysite.com/xoops/mainfile.php"'),
+    '#description' => t('The full path to the root of your Formulize installation. For instance, "/var/www/mysite.com/formulize/"'),
   );
-	
-  $form['formulize']['formulize_db_user']  = array(
+	$defaultHost = variable_get('formulize_db_host', NULL);
+	if(!$defaultHost) { $defaultHost = 'localhost'; }
+	$form['formulize']['formulize_db_host']  = array(
     '#type' => 'textfield',
-    '#title' => t('Formulize Database user'),
+    '#title' => t('Formulize database host'),
+    '#default_value' => $defaultHost,
+    '#description' => t('The name of the host where the Formulize database is located.  If in doubt, try "localhost"'),
+  );
+	$form['formulize']['formulize_db_name']  = array(
+    '#type' => 'textfield',
+    '#title' => t('Formulize database name'),
+    '#default_value' => variable_get('formulize_db_name', NULL),
+    '#description' => t('The name of the database where the Formulize keeps its information.'),
+  );
+	$form['formulize']['formulize_db_user']  = array(
+    '#type' => 'textfield',
+    '#title' => t('Formulize database user'),
     '#default_value' => variable_get('formulize_db_user', NULL),
-    '#description' => t('The Formulize database user.'),
+    '#description' => t('The username for accessing the Formulize database.'),
   );
-	
-  $form['formulize']['formulize_db_password']  = array(
+	$form['formulize']['formulize_db_pass']  = array(
     '#type' => 'textfield',
-    '#title' => t('Formulize Database password'),
-    '#default_value' => variable_get('formulize_db_password', NULL),
-    '#description' => t('The Formulize database password.'),
+    '#title' => t('Formulize database password'),
+    '#default_value' => variable_get('formulize_db_pass', NULL),
+    '#description' => t('The password for accessing the Formulize database.'),
   );
-	
-  $form['formulize']['formulize_db_host']  = array(
+	$form['formulize']['formulize_db_prefix']  = array(
     '#type' => 'textfield',
-    '#title' => t('Formulize Database host'),
-    '#default_value' => variable_get('formulize_db_host', 'localhost'),
-    '#description' => t('The Formulize database host.'),
-  );
-
-  $form['formulize']['formulize_db']  = array(
-    '#type' => 'textfield',
-    '#title' => t('Formulize Database name'),
-    '#default_value' => variable_get('formulize_db', NULL),
-    '#description' => t('The Formulize database name.'),
+    '#title' => t('Formulize database prefix'),
+    '#default_value' => variable_get('formulize_db_prefix', NULL),
+    '#description' => t('The prefix used for all the table names in the Formulize database.'),
   );
 	
 	$form = system_settings_form($form);
@@ -172,16 +197,33 @@ function formulize_form(&$node) {
     '#weight' => -5,
     '#description' => t('This name will not be shown to users, but will show up in lists of nodes so you can find this node easily.')
   );
+	
+	// gather the available screens from Formulize, stick them in an $options array
+	$formulizeDBConnection =& _formulize_get_db_connection(); // assign by reference (ie: =& )
+	$dbPrefix = variable_get('formulize_db_prefix', NULL);
+	$dbPrefix = substr($dbPrefix, -1) == "_" ? $dbPrefix : $dbPrefix."_"; // if there's no underscore at the end of the prefix, add one in
+	$sql = "SELECT t1.desc_form, t2.title, t2.sid FROM ".$dbPrefix."formulize_id as t1, ".$dbPrefix."formulize_screen as t2 WHERE t1.id_form = t2.fid ORDER BY t1.desc_form, t2.title";
+	$options = array();
+	if($res = mysql_query($sql, $formulizeDBConnection)) {
+		while($array = mysql_fetch_array($res)) {
+				$options[$array['sid']] = $array['desc_form'] . " - " . $array['title'];
+		}
+	} else {
+		// we should do whatever Drupal does when an error needs to be thrown...not 100% necessary for the first pass
+	}
+	if(count($options) == 0) {
+		$options[0] = t('No Formulize Screens Found');		
+	}
+	
+	// DO WE NEED TO HAVE A PLACE IN THE DATABASE TO STICK THIS?  OUR OWN DATABASE TABLE CREATED ON INSTALL OF THE MODULE?
+	// for example, not sure if the $node->formulize_screen_id is the right way to refer to the default value, let alone how we get this value elsewhere (in the formulize_view function)
   $form['formulize_screen_id'] = array(
     '#type' => 'select',
     '#title' => t('Select the Formulize screen that you want to embed in this node'),
     '#required' => TRUE,
     '#default_value' => $node->formulize_screen_id,
     '#weight' => -4,
-    '#options' => array(
-      1=>'screen 1',
-      2=>'screen 2'
-    )
+    '#options' => $options
   );
   return $form;
 }
@@ -194,11 +236,18 @@ function formulize_admin() {
 function formulize_view($node, $teaser = FALSE, $page = FALSE) {
   
   ob_start();
-  require_once "/var/www/vhosts/freeformsolutions.ca/subdomains/demo/httpdocs/calarts/formulize/mainfile.php";
+	$rootPath = variable_get('formulize_full_path', NULL);
+	$lastChar = substr($rootPath, -1);
+	if($lastChar != "\\" AND $lastChar != "/") {
+		$rootPath .= strstr($rootPath, "/") ? "/" : "\\"; // add the right kind of slash to the end of the path if it has no trailing slash
+	}
+  require_once $rootPath."mainfile.php";
+	// NEED TO ASSIGN THE SCREEN ID FROM THE NODE PROPERTIES, DOESN'T SEEM TO BE IN THE NODE OBJECT BY DEFAULT, SO WE HAVE TO BUILD OR PREPARE THE NODE BEFORE THIS POINT TO ADD IN OUR OWN PROPERTIES?
   $formulize_screen_id = 1;
-  include XOOPS_ROOT_PATH . "/modules/formulize/index.php";
+	// UNCOMMENT THE NEXT LINE ONCE WE'VE GOT THE RIGHT SCREEN ID BEING ASSIGNED FROM THE NODE PROPERTIES
+  //include XOOPS_ROOT_PATH . "/modules/formulize/index.php"; 
   $contents = ob_get_clean();
-  
+	
   //$node = node_prepare($node, $teaser);
   $node->content['body'] = array(
     '#value' => $contents,
