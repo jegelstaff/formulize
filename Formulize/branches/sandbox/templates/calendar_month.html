@@ -1,0 +1,139 @@
+<form name=controls id=controls action=<{$currentURL}> method=post>
+
+<{foreach key=hidename item=hidevalue from=$hidden}>
+	<input type=hidden name=<{$hidename}> value=<{$hidevalue}>>
+<{/foreach}>
+
+<input type=hidden name=calview id=calview value="<{$calview}>">
+
+
+<!-- calendar start -->
+<table class=outer width="98%"><tr>
+	<!-- Display calendar header - month and year. -->
+    <th><a href="" onclick="javascript: changeMonth('<{ $previousMonth }>'); return false;">&lt;</a></th>
+    <th colspan="5">
+        <table><tr>
+            <th><{ $MonthNames[$dateMonthZeroIndex] }> <{ $dateYear }></th>
+            <th align=right>
+            	<select id=monthSelector onchange="changeSelector()">
+	                <{foreach key=monthKey item=monthName from=$monthSelector}>
+	                    <option value="<{ $monthKey }>" <{ if $monthKey == $dateMonth }>selected<{/if}>><{ $monthName }></option>
+	                <{/foreach}>
+	        	</select>
+	        </th>
+            <th align=right>
+	            <select id=yearSelector onchange="changeSelector()">
+	                <{foreach item=yearValue from=$yearSelector}>
+	                    <option value="<{ $yearValue }>" <{ if $yearValue == $dateYear }>selected<{/if}>><{ $yearValue }></option>
+	                <{/foreach}>
+	            </select>
+            </th>
+       </tr></table>
+	</th>
+	<th><a href="" onclick="javascript: changeMonth('<{ $nextMonth }>'); return false;">&gt;</a></th>
+</tr>
+            
+           
+<!-- Display calendar week day names. -->
+<tr>
+	<{foreach item=weekName from=$WeekNames}>
+	    <td class=head width="14%"><{$weekName}></td>
+	<{/foreach}>
+</tr>
+
+
+<!-- Display calendar body (days and weeks). -->
+<{foreach item=week from=$calendarData}>
+	<tr>
+	    <{foreach item=day from=$week}>
+	        <td class="<{ if $rowStyleEven == true }>even<{elseif $rowStyleEven == false }>odd<{/if}>">
+                
+				<{if $rights == true && $day[0][0] != ''}>
+	                <img src="../formulize/images/plus.PNG" onclick="javascript:addNew('', '<{ $frids }>', '<{ $fids }>','<{ $day[0][1] }>');return false;" style="float: right; cursor: pointer; cursor: hand;" alt="<{ $addItem }>" title="<{ $addItem }>">
+				<{/if}>
+			<span style=\"horizontal-align: left\"><{ $day[0][0] }></span>
+
+			    <{foreach item=dayItem from=$day[1]}><br><br>&bull;&nbsp;<a href="" onclick="javascript:goDetails('<{ $dayItem[0] }>','<{ $dayItem[1] }>','<{ $dayItem[2] }>');return false;"><{ $dayItem[3] }></a><{if $dayItem[4] == true}><nobr>&nbsp;<a href="" onclick="javascript:goDel('<{$dayItem[0]}>', '<{ $dayItem[1] }>','<{ $dayItem[2] }>');return false;"><img src="../formulize/images/x.gif" border=0 style="vertical-align: bottom;" alt="<{$delete}>" title="<{$delete}>"></a></nobr><{/if}><{/foreach}>
+            </td>
+	    <{/foreach}>
+        <{ if $rowStyleEven == true }><{ assign var="rowStyleEven" value=false }><{elseif $rowStyleEven == false }><{ assign var="rowStyleEven" value=true }><{/if}>
+    </tr>
+<{/foreach}>
+
+
+
+<!-- Display calendar footer. -->
+</table>
+
+
+
+<input type=hidden name=ventry id=ventry value="">
+<input type=hidden name=calfid id=calfid value="">
+<input type=hidden name=calfrid id=calfrid value="">
+<input type=hidden name=adddate id=adddate value="">
+
+<input type=hidden name=delentry id=delentry value="">
+<input type=hidden name=delfid id=delfid value="">
+<input type=hidden name=delfrid id=delfrid value="">
+
+<input type=submit style="width: 140px; visibility: hidden;" name=submitx value=''></input> 
+
+</form>
+
+
+	
+<script type='text/javascript'>
+
+window.document.controls.ventry.value = '';
+window.document.controls.calfid.value = '';
+window.document.controls.calfrid.value = '';
+
+function changeSelector()
+{
+	newDate = window.document.controls.yearSelector.options[
+    	window.document.controls.yearSelector.selectedIndex].value 
+        + '-' + window.document.controls.monthSelector.options[
+        window.document.controls.monthSelector.selectedIndex].value;
+
+	changeMonth(newDate);
+}
+
+function changeMonth(newDate)
+{
+	window.document.controls.calview.value = newDate;
+	window.document.controls.submit();
+}
+
+function addNew(proxy,frid,fid,date) {
+	if(proxy) {
+		window.document.controls.ventry.value = 'proxy';
+	} else {
+		window.document.controls.ventry.value = 'addnew';
+	}
+	window.document.controls.adddate.value = date;
+	window.document.controls.calfrid.value = frid;
+	window.document.controls.calfid.value = fid;
+	window.document.controls.submit();
+}
+
+function goDetails(viewentry,frid,fid) {
+	window.document.controls.ventry.value = viewentry;
+	window.document.controls.calfrid.value = frid;
+	window.document.controls.calfid.value = fid;
+	window.document.controls.submit();
+}
+
+function goDel(viewentry,frid,fid) {
+	var answer = confirm ('<{$delconf}>');
+	if (answer) {
+		window.document.controls.delentry.value = viewentry;
+		window.document.controls.delfrid.value = frid;
+		window.document.controls.delfid.value = fid;
+		window.document.controls.submit();
+	} else {
+		return false;
+	}
+}
+
+
+</script>
