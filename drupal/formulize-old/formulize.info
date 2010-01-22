@@ -1,6 +1,0 @@
-; $Id$
-name = Formulize
-description = A module that integrates Drupal with the Formulize data management system
-core = 6.x
-version = 1.0
-package = Formulize
