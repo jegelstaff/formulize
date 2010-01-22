@@ -126,12 +126,10 @@ function formulize_admin_settings() {
     '#default_value' => variable_get('formulize_full_path', NULL),
     '#description' => t('The full path to the root of your Formulize installation. For instance, "/var/www/mysite.com/formulize/"'),
   );
-	$defaultHost = variable_get('formulize_db_host', NULL);
-	if(!$defaultHost) { $defaultHost = 'localhost'; }
 	$form['formulize']['formulize_db_host']  = array(
     '#type' => 'textfield',
     '#title' => t('Formulize database host'),
-    '#default_value' => $defaultHost,
+    '#default_value' => variable_get('formulize_db_host','localhost'),
     '#description' => t('The name of the host where the Formulize database is located.  If in doubt, try "localhost"'),
   );
 	$form['formulize']['formulize_db_name']  = array(
