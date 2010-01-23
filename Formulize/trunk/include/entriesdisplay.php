@@ -433,7 +433,14 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	} elseif($_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
 		$currentView = $_POST['advscope'];
 	} elseif($_POST['currentview']) { // could have been unset by deletion of a view or something else, so we must check to make sure it exists before we override the default that was determined above
-		$currentView = $_POST['currentview'];
+		if(is_numeric(substr($_POST['currentview'], 1))) {
+			// a saved view was requested as the current view, but we don't want to load the entire thing....this means that we just want to use the view to generate the scope, we don't want to load all settings.  So we have to load the view, but discard everything but the view's currentview value
+			// if we were supposed to load the whole thing, loadreport would have been set in post and the above code would have kicked in
+			$loadedViewSettings = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
+			$currentview = $loadedViewSettings[0];
+		} else {
+			$currentView = $_POST['currentview'];		 
+		}
 	} elseif($loadview) {
 		$currentView = $loadview;
 	}
