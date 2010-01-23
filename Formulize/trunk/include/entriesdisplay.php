@@ -429,6 +429,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
       }
     }
 		
+		
 	} elseif($_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
 		$currentView = $_POST['advscope'];
 	} elseif($_POST['currentview']) { // could have been unset by deletion of a view or something else, so we must check to make sure it exists before we override the default that was determined above
