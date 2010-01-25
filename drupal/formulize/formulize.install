@@ -1,0 +1,73 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Contains install and update functions for formulize.
+ */
+
+
+/**
+ * Implementation of hook_install()
+ */
+function formulize_install() {
+  drupal_install_schema('formulize');
+}
+
+/**
+ * Implementation of hook_uninstall()
+ */
+function formulize_uninstall() {
+  drupal_uninstall_schema('formulize');
+	variable_del('formulize_full_path');
+	variable_del('formulize_db_prefix');
+}
+/**
+ * Implementation of hook_schemea
+ */
+function formulize_schema() {
+  // Currently, schema 1 is the only schema we have. As we make updates,
+  // we might either create a new schema 2 or make adjustments here.
+  return formulize_schema_1();
+}
+
+/**
+ * Formulize's initial schema; separated for the purposes of updates.
+ *
+ * DO NOT MAKE CHANGES HERE. This schema version is locked.
+ */
+function formulize_schema_1() {
+  $schema['formulize'] = array(
+		'description' => t('The table for formulize data.'),
+		'fields' => array(
+      'vid' => array(
+        'type' => 'int',
+				'unsigned' => TRUE,
+        'not null' => TRUE,
+				'default' => 0
+      ),
+      'nid' => array(
+        'type' => 'int',
+				'unsigned' => TRUE,
+        'not null' => TRUE,
+				'default' => 0
+      ),
+      'screen_id' => array(
+        'type' => 'int',
+				'unsigned' => TRUE,
+        'not null' => FALSE,
+				'default' => 0,
+        'description' => 'The screen id from Formulize.'
+      ),
+		),
+		'indexes' => array(
+		  'nid' => array('nid')
+		),
+		'unique_keys' => array(
+			'nid_vid' => array('nid', 'vid'),
+			'nid' => array('nid')
+		),
+    'primary key' => array('vid'),
+  );
+  return $schema;
+}

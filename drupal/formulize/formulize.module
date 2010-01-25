@@ -27,24 +27,7 @@
  */
 
 
-/**
- * Internal function to establish a connection to the Formulize database
- *
- * This function will establish the connection to the Formulize database only once, and return that resource every time it's requested.
- * This function should always be called as follows, to ensure the output is assigned by reference, slightly optimize memory usage in case multiple connections are requested in a single page load:
- * $formulizeDBConnection =& _formulize_get_db_connection();
- * Then after that, this connection should be specifically included in mysql function calls, ie:
- * $result = mysql_query($sql, $formulizeDBConnection);
- * This ensures we completely leave the Drupal database connection alone, and don't interfere with Formulize's own internal DB connection either.
- */
-function _formulize_get_db_connection() {
-		static $formulize_db_connection;
-		if(!isset($formulize_db_connection)) {
-			$formulize_db_connection = mysql_connect(variable_get('formulize_db_host', NULL), variable_get('formulize_db_user', NULL), variable_get('formulize_db_pass', NULL), TRUE);
-			mysql_selectdb(variable_get('formulize_db_name', NULL), $formulize_db_connection);
-		}
-		return $formulize_db_connection;
-}
+//require_once(drupal_get_path('module', 'formulize') .'/formulize_base.inc');
 
 
 /**
@@ -84,8 +67,22 @@ function formulize_help($section)
  * @return array An array of valid permissions for the formulize module
  */
 function formulize_perm() {
-  return array('create formulize forms', 'edit own formulize forms', 'edit formulize forms', 'access formulize content', 'administer formulize configuration');
+  return array('create formulize content', 'edit own formulize content', 'edit formulize content', 'access formulize content', 'delete formulize content', 'administer formulize configuration');
 } 
+
+/**
+ * Implementation of hook_access()
+ */
+function formulize_access($op, $node, $account) {
+	switch ($op) {
+		case 'create' :
+			return user_access('create formulize content', $account);
+		case 'update' :
+			return user_access('edit formulize content', $account);
+		case 'delete' :
+			return user_access('delete formulize content', $account);
+	}
+}
 
 /**
  * Implementation of hook_menu().
@@ -124,39 +121,15 @@ function formulize_admin_settings() {
     '#type' => 'textfield',
     '#title' => t('Formulize full path'),
     '#default_value' => variable_get('formulize_full_path', NULL),
-    '#description' => t('The full path to the root of your Formulize installation. For instance, "/var/www/mysite.com/formulize/"'),
-  );
-	$form['formulize']['formulize_db_host']  = array(
-    '#type' => 'textfield',
-    '#title' => t('Formulize database host'),
-    '#default_value' => variable_get('formulize_db_host','localhost'),
-    '#description' => t('The name of the host where the Formulize database is located.  If in doubt, try "localhost"'),
-  );
-	$form['formulize']['formulize_db_name']  = array(
-    '#type' => 'textfield',
-    '#title' => t('Formulize database name'),
-    '#default_value' => variable_get('formulize_db_name', NULL),
-    '#description' => t('The name of the database where the Formulize keeps its information.'),
-  );
-	$form['formulize']['formulize_db_user']  = array(
-    '#type' => 'textfield',
-    '#title' => t('Formulize database user'),
-    '#default_value' => variable_get('formulize_db_user', NULL),
-    '#description' => t('The username for accessing the Formulize database.'),
-  );
-	$form['formulize']['formulize_db_pass']  = array(
-    '#type' => 'textfield',
-    '#title' => t('Formulize database password'),
-    '#default_value' => variable_get('formulize_db_pass', NULL),
-    '#description' => t('The password for accessing the Formulize database.'),
+    '#description' => t('The full path to the mainfile.php file of your Formulize installation. For instance, "/var/www/mysite.com/formulize/mainfile.php"'),
   );
 	$form['formulize']['formulize_db_prefix']  = array(
     '#type' => 'textfield',
     '#title' => t('Formulize database prefix'),
     '#default_value' => variable_get('formulize_db_prefix', NULL),
-    '#description' => t('The prefix used for all the table names in the Formulize database.'),
+    '#description' => t('The prefix used for all the table names in the Formulize database (e.g. xoops_ or formulize_).'),
   );
-	
+
 	$form = system_settings_form($form);
 	
 	return $form;
@@ -187,6 +160,7 @@ function formulize_node_info() {
  */
 function formulize_form(&$node) {
   $type = node_get_types('type', $node);
+	
   $form['title'] = array(
     '#type' => 'textfield',
     '#title' => check_plain($type->title_label),
@@ -195,35 +169,49 @@ function formulize_form(&$node) {
     '#weight' => -5,
     '#description' => t('This name will not be shown to users, but will show up in lists of nodes so you can find this node easily.')
   );
-	
-	// gather the available screens from Formulize, stick them in an $options array
-	$formulizeDBConnection =& _formulize_get_db_connection(); // assign by reference (ie: =& )
-	$dbPrefix = variable_get('formulize_db_prefix', NULL);
-	$dbPrefix = substr($dbPrefix, -1) == "_" ? $dbPrefix : $dbPrefix."_"; // if there's no underscore at the end of the prefix, add one in
-	$sql = "SELECT t1.desc_form, t2.title, t2.sid FROM ".$dbPrefix."formulize_id as t1, ".$dbPrefix."formulize_screen as t2 WHERE t1.id_form = t2.fid ORDER BY t1.desc_form, t2.title";
-	$options = array();
-	if($res = mysql_query($sql, $formulizeDBConnection)) {
-		while($array = mysql_fetch_array($res)) {
-				$options[$array['sid']] = $array['desc_form'] . " - " . $array['title'];
-		}
-	} else {
-		// we should do whatever Drupal does when an error needs to be thrown...not 100% necessary for the first pass
-	}
-	if(count($options) == 0) {
-		$options[0] = t('No Formulize Screens Found');		
-	}
-	
-	// DO WE NEED TO HAVE A PLACE IN THE DATABASE TO STICK THIS?  OUR OWN DATABASE TABLE CREATED ON INSTALL OF THE MODULE?
-	// for example, not sure if the $node->formulize_screen_id is the right way to refer to the default value, let alone how we get this value elsewhere (in the formulize_view function)
-  $form['formulize_screen_id'] = array(
+  $form['screen_id'] = array(
     '#type' => 'select',
     '#title' => t('Select the Formulize screen that you want to embed in this node'),
     '#required' => TRUE,
-    '#default_value' => $node->formulize_screen_id,
+    '#default_value' => isset($node->screen_id) ? $node->screen_id : '',
     '#weight' => -4,
-    '#options' => $options
+    '#options' => _formulize_get_screens()
   );
+
   return $form;
+}
+
+function _formulize_get_screens () {
+
+	$db_prefix_formulize = variable_get('formulize_db_prefix', NULL);
+	//This presumes there needs to be an underscore? $db_prefix_formulize = substr($db_prefix_formulize, -1) == "_" ? $db_prefix_formulize : $db_prefix_formulize . "_"; // if there's no underscore at the end of the prefix, add one in
+
+	//Switch to formulize database
+	db_set_active('formulize');
+
+	$result = db_query('SELECT 
+		fi.desc_form, 
+		fs.title, 
+		fs.sid 
+		FROM ' . $db_prefix_formulize . 'formulize_id as fi, 
+		' . $db_prefix_formulize . 'formulize_screen as fs 
+		WHERE fi.id_form = fs.fid 
+		ORDER BY fi.desc_form, fs.title');
+
+	//Switch back to the default connection when finished.
+	db_set_active('default');
+
+	$options = array();
+
+	while($row = db_fetch_object($result)) {
+		$options[$row->sid] = $row->desc_form . ' - ' . $row->title;
+	}
+
+	if(count($options) == 0) {
+		$options[0] = t('No Formulize Screens Found');		
+	}
+	return $options;
+
 }
 
 function formulize_admin() {
@@ -231,24 +219,131 @@ function formulize_admin() {
   //$form['formulize_screen']
 }
 
+/**
+ * Implementation of hook_validate().
+ *
+ * Our "quantity" field requires a number to be entered. This hook lets
+ * us ensure that the user entered an appropriate value before we try
+ * inserting anything into the database.
+ *
+ * Errors should be signaled with form_set_error().
+ */
+/*
+function formulize_validate(&$node) {
+  if ($node->screen_id) {
+    if (!is_numeric($node->screen_id)) {
+      form_set_error('screen_id', t('The screen id must be a number.'));
+    }
+  }
+  else {
+    // Let an empty field mean "zero."
+    $node->quantity = 0;
+  }
+}
+*/
+
+/**
+ * Implementation of hook_insert().
+ *
+ * As a new node is being inserted into the database, we need to do our own
+ * database inserts.
+ */
+function formulize_insert($node) {
+  db_query("INSERT INTO {formulize} (vid, nid, screen_id) VALUES (%d, %d, %d)", $node->vid, $node->nid, $node->screen_id);
+}
+
+/**
+ * Implementation of hook_update().
+ *
+ * As an existing node is being updated in the database, we need to do our own
+ * database updates.
+ */
+function formulize_update($node) {
+  // if this is a new node or we're adding a new revision,
+  if ($node->revision) {
+    formulize_insert($node);
+  }
+  else {
+    db_query("UPDATE {formulize} SET screen_id = %d WHERE vid = %d", $node->screen_id, $node->vid);
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ *
+ * When a node revision is deleted, we need to remove the corresponding record
+ * from our table. The only way to handle revision deletion is by implementing
+ * hook_nodeapi().
+ */
+function formulize_nodeapi(&$node, $op, $teaser, $page) {
+  switch ($op) {
+    case 'delete revision':
+      // Notice that we're matching a single revision based on the node's vid.
+      db_query('DELETE FROM {formulize} WHERE vid = %d', $node->vid);
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_delete().
+ *
+ * When a node is deleted, we need to remove all related records from out table.
+ */
+function formulize_delete($node) {
+  // Notice that we're matching all revision, by using the node's nid.
+  db_query('DELETE FROM {formulize} WHERE nid = %d', $node->nid);
+}
+
+/**
+ * Implementation of hook_load().
+ *
+ * Now that we've defined how to manage the node data in the database, we
+ * need to tell Drupal how to get the node back out. This hook is called
+ * every time a node is loaded, and allows us to do some loading of our own.
+ */
+function formulize_load($node) {
+  $additions = db_fetch_object(db_query('SELECT screen_id FROM {formulize} WHERE vid = %d', $node->vid));
+  return $additions;
+}
+
+/**
+ * Implementation of hook_view().
+ *
+ * This is a typical implementation that simply runs the node text through
+ * the output filters.
+ */
+/*
 function formulize_view($node, $teaser = FALSE, $page = FALSE) {
-  
-  ob_start();
-	$rootPath = variable_get('formulize_full_path', NULL);
-	$lastChar = substr($rootPath, -1);
-	if($lastChar != "\\" AND $lastChar != "/") {
-		$rootPath .= strstr($rootPath, "/") ? "/" : "\\"; // add the right kind of slash to the end of the path if it has no trailing slash
-	}
-  require_once $rootPath."mainfile.php";
+  $node = node_prepare($node, $teaser);
+  $node->content['myfield'] = array(
+    '#value' => theme('formulize_order_info', $node),
+    '#weight' => 1,
+  );
+
+  return $node;
+}
+*/
+
+function formulize_view($node, $teaser = FALSE, $page = FALSE) {
+  $node = node_prepare($node, $teaser);
+	
+	$formulize_path = variable_get('formulize_full_path', NULL);
+	//$lastChar = substr($rootPath, -1);
+	//if($lastChar != "\\" AND $lastChar != "/") {
+	//	$rootPath .= strstr($rootPath, "/") ? "/" : "\\"; // add the right kind of slash to the end of the path if it has no trailing slash
+	//}
+  //require_once $formulize_path;
+	
 	// NEED TO ASSIGN THE SCREEN ID FROM THE NODE PROPERTIES, DOESN'T SEEM TO BE IN THE NODE OBJECT BY DEFAULT, SO WE HAVE TO BUILD OR PREPARE THE NODE BEFORE THIS POINT TO ADD IN OUR OWN PROPERTIES?
-  $formulize_screen_id = 1;
+  //$formulize_screen_id = 1;
 	// UNCOMMENT THE NEXT LINE AFTER WE'VE GOT THE RIGHT SCREEN ID BEING ASSIGNED FROM THE NODE PROPERTIES
   //include XOOPS_ROOT_PATH . "/modules/formulize/index.php"; 
-  $contents = ob_get_clean();
+// ob_start();
+  //$form_contents = ob_get_clean();
 	
   //$node = node_prepare($node, $teaser);
   $node->content['body'] = array(
-    '#value' => $contents,
+    '#value' => theme('formulize_screen', $form_contents),
     '#weight' => 1,
   );
 
@@ -256,3 +351,30 @@ function formulize_view($node, $teaser = FALSE, $page = FALSE) {
   
 }
 
+/**
+ * Implementation of hook_theme().
+ *
+ * This lets us tell Drupal about our theme functions and their arguments.
+ */
+function formulize_theme() {
+  return array(
+    'formulize_screen' => array(
+      'arguments' => array('node'),
+    ),
+  );
+}
+
+/**
+ * A custom theme function.
+ *
+ * By using this function to format our node-specific information, themes
+ * can override this presentation if they wish. We also wrap the default
+ * presentation in a CSS class that is prefixed by the module name. This
+ * way, style sheets can modify the output without requiring theme code.
+ */
+function theme_formulize_screen($node) {
+  $output = '<div class="formulize_screen">';
+  $output .= $form_contents;
+  $output .= '</div>';
+  return $output;
+}
