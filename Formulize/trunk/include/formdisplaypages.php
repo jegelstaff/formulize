@@ -118,10 +118,7 @@ if($entry) {
 }
 
 if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // remember prevPage is the last page the user was on, not the previous page numerically
-	foreach($pages[$prevPage] as $element) {
-	  $save_elements[] = $element;
-	}
-
+	
 	if(isset($_POST['form_submitted']) AND $usersCanSave) {
 
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formread.php";
@@ -141,7 +138,7 @@ if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // reme
 		}
 
 		$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
-		//$entries = handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_groups, $groups, "", $save_elements, $mid, $screen);
+		
 		$entries = $GLOBALS['formulize_allWrittenEntryIds']; // set in readelements.php
 
 
