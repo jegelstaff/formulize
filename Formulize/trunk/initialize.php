@@ -39,6 +39,13 @@ include_once XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php';
 
 global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig;
 
+// load the formulize language constants if they haven't been loaded already
+	if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+		include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+	} else {
+		include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+	}
+
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 $thisRendering = microtime(); // setup a flag that is common to this instance of rendering a formulize page
@@ -112,7 +119,13 @@ $config_handler =& xoops_gethandler('config');
 $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
 
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
-	redirect_header(XOOPS_URL . "/user.php?xoops_redirect=".getCurrentURL(), 3, _formulize_NO_PERMISSION);
+	$currentURL = getCurrentURL();
+	if(strstr($currentURL, "/modules/formulize/")) { // if it's a formulize page, reload to login screen
+		redirect_header(XOOPS_URL . "/user.php?xoops_redirect=$currentURL", 3, _formulize_NO_PERMISSION);
+	} else { // if formulize is just being included elsewhere, then simply show error and end script
+		print "<p>"._formulize_NO_PERMISSION."</p>\n";
+		return;
+	}
 }
 
 // IF A SCREEN IS REQUESTED, GET DETAILS FOR THAT SCREEN AND CALL THE NECESSARY DISPLAY FUNCTION
