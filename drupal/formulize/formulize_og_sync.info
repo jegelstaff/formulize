@@ -1,0 +1,8 @@
+; $Id$
+name = Formulize OG Sync
+description = A module that synchronizes the Organic Groups groups with the groups in the Formulize data management system.
+core = 6.x
+version = 1.0
+package = Formulize
+dependencies[] = og
+dependencies[] = formulize
