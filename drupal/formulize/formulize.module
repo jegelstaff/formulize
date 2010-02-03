@@ -26,9 +26,7 @@
  * Allows users to access to Formulize through Drupal installations.
  */
 
-
 //require_once(drupal_get_path('module', 'formulize') .'/formulize_base.inc');
-
 
 /**
  * Implementation of hook_help().
@@ -87,7 +85,6 @@ function formulize_access($op, $node, $account) {
 /**
  * Implementation of hook_menu().
  */
-
 function formulize_menu() {
   $items = array();
 
@@ -135,7 +132,6 @@ function formulize_admin_settings() {
 	return $form;
 }
 
-
 /**
  * Implementation of hook_node_info()
  * Defines the Formulize node type so that Drupal knows that such a node type exists and will let people create nodes of that type
@@ -145,7 +141,7 @@ function formulize_node_info() {
     'formulize' => array(
       'name' => t('Formulize screen'),
       'module' => 'formulize',
-      'description' => t('Formulize is a data management and reporting toolkit.  You can embed data management applications inside Drupal, once you have configured them in Formulize.  See the admin area for more information.'),
+      'description' => t('Formulize is a data management and reporting toolkit.  You can embed data management applications inside Drupal, once you have configured them in Formulize.  See the <a href="/admin/settings/formulize"></a>admin settings</a> for more information.'),
 			'has_title' => TRUE,
 			'title_label' => ('Screen Name'),
 			'has_body' => TRUE,
@@ -161,19 +157,25 @@ function formulize_node_info() {
 function formulize_form(&$node) {
   $type = node_get_types('type', $node);
 	
-  $form['title'] = array(
-    '#type' => 'textfield',
-    '#title' => check_plain($type->title_label),
-    '#required' => TRUE,
-    '#default_value' => $node->title,
-    '#weight' => -5,
-    '#description' => t('This name will not be shown to users, but will show up in lists of nodes so you can find this node easily.')
-  );
+  if ($type->has_title) {
+		$form['title'] = array(
+    	'#type' => 'textfield',
+    	'#title' => check_plain($type->title_label),
+    	'#required' => TRUE,
+    	'#default_value' => $node->title,
+    	'#weight' => -5,
+    	'#description' => t('This name will not be shown to users, but will show up in lists of nodes so you can find this node easily.')
+  	);
+	}
+	if ($type->has_body) {
+    $form['body_field'] = node_body_field($node, $type->body_label, $type->min_word_count);
+  }
+	
   $form['screen_id'] = array(
     '#type' => 'select',
     '#title' => t('Select the Formulize screen that you want to embed in this node'),
     '#required' => TRUE,
-    '#default_value' => isset($node->screen_id) ? $node->screen_id : '',
+    '#default_value' => isset($node->screen_id) ? $node->screen_id : '0',
     '#weight' => -4,
     '#options' => _formulize_get_screens()
   );
@@ -214,21 +216,12 @@ function _formulize_get_screens () {
 
 }
 
-function formulize_admin() {
-  //$form = array();
-  //$form['formulize_screen']
-}
-
 /**
  * Implementation of hook_validate().
  *
- * Our "quantity" field requires a number to be entered. This hook lets
- * us ensure that the user entered an appropriate value before we try
- * inserting anything into the database.
- *
  * Errors should be signaled with form_set_error().
  */
-/*
+
 function formulize_validate(&$node) {
   if ($node->screen_id) {
     if (!is_numeric($node->screen_id)) {
@@ -237,10 +230,9 @@ function formulize_validate(&$node) {
   }
   else {
     // Let an empty field mean "zero."
-    $node->quantity = 0;
+    $node->screen_id = 0;
   }
 }
-*/
 
 /**
  * Implementation of hook_insert().
@@ -308,47 +300,29 @@ function formulize_load($node) {
 
 /**
  * Implementation of hook_view().
- *
- * This is a typical implementation that simply runs the node text through
- * the output filters.
+ * 
+ * Runs the node text through output filters.
  */
-/*
-function formulize_view($node, $teaser = FALSE, $page = FALSE) {
-  $node = node_prepare($node, $teaser);
-  $node->content['myfield'] = array(
-    '#value' => theme('formulize_order_info', $node),
-    '#weight' => 1,
-  );
-
-  return $node;
-}
-*/
-
-function formulize_view($node, $teaser = FALSE, $page = FALSE) {
-  $node = node_prepare($node, $teaser);
+function formulize_view(&$node, $teaser = FALSE, $page = FALSE) {
 	
 	$formulize_path = variable_get('formulize_full_path', NULL);
-	//$lastChar = substr($rootPath, -1);
-	//if($lastChar != "\\" AND $lastChar != "/") {
-	//	$rootPath .= strstr($rootPath, "/") ? "/" : "\\"; // add the right kind of slash to the end of the path if it has no trailing slash
-	//}
-  //require_once $formulize_path;
-	
-	// NEED TO ASSIGN THE SCREEN ID FROM THE NODE PROPERTIES, DOESN'T SEEM TO BE IN THE NODE OBJECT BY DEFAULT, SO WE HAVE TO BUILD OR PREPARE THE NODE BEFORE THIS POINT TO ADD IN OUR OWN PROPERTIES?
-  //$formulize_screen_id = 1;
-	// UNCOMMENT THE NEXT LINE AFTER WE'VE GOT THE RIGHT SCREEN ID BEING ASSIGNED FROM THE NODE PROPERTIES
-  //include XOOPS_ROOT_PATH . "/modules/formulize/index.php"; 
-// ob_start();
-  //$form_contents = ob_get_clean();
-	
-  //$node = node_prepare($node, $teaser);
-  $node->content['body'] = array(
-    '#value' => theme('formulize_screen', $form_contents),
-    '#weight' => 1,
-  );
 
+	require_once($formulize_path);
+	
+	ob_start();
+	
+	$formulize_screen_id = $node->screen_id;
+	
+	include XOOPS_ROOT_PATH . '/modules/formulize/index.php'; 
+
+  $output = ob_get_clean();
+
+  $node = node_prepare($node, $teaser); // get it ready for display
+	// Add the output to the node.
+  if (isset($output)) {
+    $node->content['formulize_screen'] = array('#value' => $output, '#weight' => 1);
+  }
   return $node;
-  
 }
 
 /**
@@ -356,14 +330,15 @@ function formulize_view($node, $teaser = FALSE, $page = FALSE) {
  *
  * This lets us tell Drupal about our theme functions and their arguments.
  */
-function formulize_theme() {
+/*function formulize_theme() {
   return array(
     'formulize_screen' => array(
       'arguments' => array('node'),
+			'template' => 'formulize-screen'
     ),
   );
 }
-
+*/
 /**
  * A custom theme function.
  *
@@ -372,9 +347,36 @@ function formulize_theme() {
  * presentation in a CSS class that is prefixed by the module name. This
  * way, style sheets can modify the output without requiring theme code.
  */
+/*
 function theme_formulize_screen($node) {
-  $output = '<div class="formulize_screen">';
-  $output .= $form_contents;
-  $output .= '</div>';
+	
+  $output = '<div class="formulize_screen"><h2>';
+  $output .= $node->screen_id . ': this is content';
+  $output .= '</h2></div>';
   return $output;
+}
+*/
+
+/**
+ * Implementatation of hook_user()
+ * 
+ * Listen for user changes, additions, deletes and synchronize with Formulize database
+ */
+
+function formulize_user($op, &$edit, &$account, $category) {
+	switch($op) {
+		case 'after_update': // if user is modified
+      // see if user profile has changed and update
+			break;
+		case 'insert': { //if it's a new user being created
+      // check the $edit for uid
+			// if user doesn't already exist in formulize then insert
+			// check if user joined a group and add to Fz group if true
+			if (isset($edit['og_register'])) { // if og_register is set then we know 
+				foreach (array_keys(array_filter($edit['og_register'])) as $gid) {
+				}
+			break;        
+		case 'delete':
+		// delete or de-activate on Fz
+		break;
 }
