@@ -67,6 +67,8 @@
 
   <?php print $content; ?>
 
+	<?php print_r($node); ?>
+
   <?php if ($terms): print $terms; endif; ?>
   <?php if ($links): print $links; endif; ?>
 
