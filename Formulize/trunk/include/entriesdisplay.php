@@ -996,6 +996,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		
 		print "<h1>" . trans($title) . "</h1>";
 	
+	
 		if($loadview AND $lockcontrols) {
 			print "<h3>" . $loadviewname . "</h3></td><td>";
 			print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n<input type=hidden name=loadviewname id=loadviewname value=\"$loadviewname\"></input>$submitButton";

@@ -100,13 +100,6 @@ if(!isset($formulize_screen_id)) {
   $xoopsTpl->assign('xoops_pagetitle', $title);
 } 
 
-// new logic to handle invoking new interface
-// 1. determine if the form is a single or multi
-// 1.5 if multi->displayEntries, if single...
-// 2. if single, determine if the user has group or global scope
-// 2.5 if yes->displayEntries, if no...
-// 3 displayForm
-
 // get the global or group permission
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
@@ -179,6 +172,14 @@ if($screen) {
 }
 
 // IF NO SCREEN IS REQUESTED (or none rendered successfully, ie: a bad screen id was passed), THEN USE THE DEFAULT DISPLAY LOGIC TO DETERMINE WHAT TO SHOW THE USER
+
+// new logic to handle invoking new interface (2005)
+// 1. determine if the form is a single or multi
+// 1.5 if multi->displayEntries, if single...
+// 2. if single, determine if the user has group or global scope
+// 2.5 if yes->displayEntries, if no...
+// 3 displayForm
+
 if(!$rendered) {
       if(isset($frid) AND is_numeric($frid) AND isset($fid) AND is_numeric($fid)) {
       	if(((!$singleentry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleentry != "group")) AND !$entry AND (!isset($_GET['iform']) OR $_GET['iform'] != "e") AND !isset($_GET['showform'])) { // if it's multientry and there's a xoopsUser, or the user has globalscope, or the user has groupscope and it's not a one-per-group form, and after all that, no entry has been requested, then show the list (note that anonymous users default to the form view...to provide them lists of their own entries....well you can't, but groupscope and globalscope will show them all entries by anons or by everyone) ..... unless there is an override in the URL that is meant to force the form itself to display .... iform is "interactive form", devised by Feratech.

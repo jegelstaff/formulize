@@ -962,6 +962,29 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 
                $ifParts = explode("/**/", $indivFilter);
                
+							 // FINAL NOTE ABOUT SLASHES...Oct 19 2006...patch 22 corrects this slash/magic quote mess.  However, to ensure compatibility with existing Pageworks applications, we are continuing to strip out all slashes in the filterparts[1], the filter strings that are passed in, and then we apply HTML special chars to the filter so that it can match up with the contents of the DB.  Only challenge is that extract.php is meant to be standalone, but we have to refer to the text sanitizer class in XOOPS in order to do the HTML special chars thing correctly.
+
+               $ifParts[1] = str_replace("\\", "", $ifParts[1]);
+               $ifParts[1] = $myts->htmlSpecialChars($ifParts[1]);
+               
+               // convert legacy metadata terms to new terms
+               $ifParts[0] = $ifParts[0] == "uid" ? "creation_uid" : $ifParts[0];
+               $ifParts[0] = $ifParts[0] == "proxyid" ? "mod_uid" : $ifParts[0];
+               $ifParts[0] = $ifParts[0] == "creation_date" ? "creation_datetime" : $ifParts[0];
+               $ifParts[0] = $ifParts[0] == "mod_date" ? "mod_datetime" : $ifParts[0];
+							 
+							 // set order by clause for newest operator -- assume only one newest operator per query!
+							 // does this need to be based on entry_id and not use $queryElement (which is based on ifParts[0]) ??
+							 if(strstr($ifParts[2], "newest")) {
+										if($ifParts[0] == "creation_datetime" OR $ifParts[0] == "mod_datetime") {
+												 $queryElement = $ifParts[0];
+										} else {
+												 list($ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement) = prepareElementMetaData($frid, $fid, $linkfids, $ifParts[0], $formFieldFilterMap);
+										}
+										$orderByClause = " ORDER BY $queryElement DESC LIMIT 0," . substr($ifParts[2], 6);
+										continue;
+							 }
+							 
                if($numIndivFilters > 0) {
                     $whereClause .= $filterParts[0]; // apply local andor setting
                }
@@ -982,18 +1005,6 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     $likebits = "";
                }
                $quotes = ((is_numeric($ifParts[1]) AND !strstr(trim(strtoupper($operator)), "LIKE")) OR strstr(strtoupper($operator), "NULL"))  ? "" : "'"; // don't put quotes around numeric queries, unless they're part of a LIKE query.  Don't use quotes on the special IS NULL query either
-               
-               
-               // FINAL NOTE ABOUT SLASHES...Oct 19 2006...patch 22 corrects this slash/magic quote mess.  However, to ensure compatibility with existing Pageworks applications, we are continuing to strip out all slashes in the filterparts[1], the filter strings that are passed in, and then we apply HTML special chars to the filter so that it can match up with the contents of the DB.  Only challenge is that extract.php is meant to be standalone, but we have to refer to the text sanitizer class in XOOPS in order to do the HTML special chars thing correctly.
-
-               $ifParts[1] = str_replace("\\", "", $ifParts[1]);
-               $ifParts[1] = $myts->htmlSpecialChars($ifParts[1]);
-               
-               // convert legacy metadata terms to new terms
-               $ifParts[0] = $ifParts[0] == "uid" ? "creation_uid" : $ifParts[0];
-               $ifParts[0] = $ifParts[0] == "proxyid" ? "mod_uid" : $ifParts[0];
-               $ifParts[0] = $ifParts[0] == "creation_date" ? "creation_datetime" : $ifParts[0];
-               $ifParts[0] = $ifParts[0] == "mod_date" ? "mod_datetime" : $ifParts[0];
                
                $formFieldFilterMap['creator_email'] = false; // can be set to true lower down, need to initalize it properly here
                
@@ -1028,42 +1039,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     
                     // do non-metadata queries
                     
-                    // first convert any handles to element Handles, and/or get the element id if necessary...element id is necessary for creating the formfieldfiltermap, since that function was written the first time we tried to do this, when there were no element handles in the mix
-                    if($frid AND !is_numeric($ifParts[0])) {
-                         list($ifParts[0], $element_id) = formulize_getElementHandleAndIdFromFrameworkHandle($ifParts[0], $frid);
-                    } elseif(is_numeric($ifParts[0])) { // using a numeric element id
-                         $element_id = $ifParts[0];
-                         $ifParts[0] = formulize_getElementHandleFromID($ifParts[0]);
-                    } else { // no framework, element handle being used...so we have to derive the element id
-                         $element_id = formulize_getIDFromElementHandle($ifParts[0]);
-                    }
+										list($ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement) = prepareElementMetaData($frid, $fid, $linkfids, $ifParts[0], $formFieldFilterMap);
                     
-                    // identify the form that the element is associated with and put it in the map
-                    list($formFieldFilterMap, $mappedForm) = formulize_mapFormFieldFilter($element_id, $formFieldFilterMap);
-                    /*print "map: <br>";
-                    print_r($formFieldFilterMap);
-                    print "<br>Mappedform: $mappedForm<br>";*/
-                    $elementPrefix = $mappedForm == $fid ? "main" : "f" . array_search($mappedForm, $linkfids);
-										
-										// check if its encrypted or not, and setup the proper field reference
-										$queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
-										
-										// add ` ` around ifParts[0]...
-                    $ifParts[0] = "`".$ifParts[0]."`";
-										
-										if($queryElementMetaData['ele_encrypt']) {
-												 $queryElement = "AES_DECRYPT($elementPrefix.".$ifParts[0].", '".getAESPassword()."')";
-										} else {
-												 $queryElement = "$elementPrefix." . $ifParts[0];
-										}
-										
-                    
-                    // set order by clause for newest operator -- assume only one newest operator per query!
-										// does this need to be based on entry_id and not use $queryElement (which is based on ifParts[0]) ??
-                    if(strstr($ifParts[2], "newest")) {
-                         $orderByClause = " ORDER BY $queryElement DESC LIMIT 0," . substr($ifParts[2], 6);
-                    }
-                         
                     // set query term for yes/no questions
                     if($formFieldFilterMap[$mappedForm][$element_id]['isyn']) {
                          if(strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($ifParts[1]))) { // since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
@@ -1135,13 +1112,63 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                $whereClause .= ")";
                $numIndivFilters++;
           }
-               
+          
+					if($whereClause == "(") { // if no contents for the whereclause where generated...make a fake contents (should only happen if the only filter term passed in is a newest operator)
+							 $whereClause .= "main.entry_id>0";
+					}
           $whereClause .= ")";
           $numSeachExps++;
      }
 
      return array(0=>$formFieldFilterMap, 1=>$whereClause, 2=>$orderByClause, 3=>$oneSideFilters);    
 }
+
+// THIS FUNCTION TAKES INPUTS ABOUT AND ELEMENT, AND RETURNS A SET OF INFORMATION THAT IS NECESSARY WHEN BUILDING VARIOUS PARTS OF THE WHERE CLAUSE
+function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formFieldFilterMap){
+
+		 // first convert any handles to element Handles, and/or get the element id if necessary...element id is necessary for creating the formfieldfiltermap, since that function was written the first time we tried to do this, when there were no element handles in the mix
+		 if($frid AND !is_numeric($ifPartsZero)) {
+					list($ifPartsZero, $element_id) = formulize_getElementHandleAndIdFromFrameworkHandle($ifPartsZero, $frid);
+		 } elseif(is_numeric($ifPartsZero)) { // using a numeric element id
+					$element_id = $ifPartsZero;
+					$ifPartsZero = formulize_getElementHandleFromID($ifPartsZero);
+		 } else { // no framework, element handle being used...so we have to derive the element id
+					$element_id = formulize_getIDFromElementHandle($ifPartsZero);
+		 }
+		 
+		 // identify the form that the element is associated with and put it in the map
+		 list($formFieldFilterMap, $mappedForm) = formulize_mapFormFieldFilter($element_id, $formFieldFilterMap);
+		 /*print "map: <br>";
+		 print_r($formFieldFilterMap);
+		 print "<br>Mappedform: $mappedForm<br>";*/
+		 $elementPrefix = $mappedForm == $fid ? "main" : "f" . array_search($mappedForm, $linkfids);
+		 
+		 // check if its encrypted or not, and setup the proper field reference
+		 $queryElementMetaData = formulize_getElementMetaData($ifPartsZero, true);
+		 
+		 // add ` ` around ifParts[0]...
+		 $ifPartsZero = "`".$ifPartsZero."`";
+		 
+		 if($queryElementMetaData['ele_encrypt']) {
+					$queryElement = "AES_DECRYPT($elementPrefix.".$ifPartsZero.", '".getAESPassword()."')";
+		 } else {
+					$queryElement = "$elementPrefix." . $ifPartsZero;
+		 }
+		 
+		 // return in this order:  $ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement
+		 $to_return = array();
+		 $to_return[] = $ifPartsZero;
+		 $to_return[] = $formFieldFilterMap;
+		 $to_return[] = $mappedForm;
+		 $to_return[] = $element_id;
+		 $to_return[] = $elementPrefix;
+		 $to_return[] = $queryElement;
+		 return $to_return;
+		 
+}
+
+
+
 
 // THIS FUNCTION TAKES AN ELEMENT AND COMPILES THE FORM, ELEMENT MAP, NECESSARY FOR KNOWING ALL WE NEED TO KNOW ABOUT THE ELEMENT
 // needs work...?  if we can pass in the element_id, it should be OK
