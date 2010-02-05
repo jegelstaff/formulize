@@ -98,6 +98,16 @@ function formulize_menu() {
     'description' => 'Global configuration of Formulize functionality.',
     'type' => MENU_NORMAL_ITEM,
   );
+	
+	$items['admin/settings/formulize/sync'] = array(
+    'title' => 'Formulize Synchronizing',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('formulize_sync'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'description' => 'Syncing between Drupal and Formulize.',
+    'type' => MENU_NORMAL_ITEM,
+  );
 
   return $items;
 }
@@ -130,6 +140,43 @@ function formulize_admin_settings() {
 	$form = system_settings_form($form);
 	
 	return $form;
+}
+
+/**
+ * Menu callback for admin/formulize/settings.
+ */
+function formulize_sync() {
+
+	$form['sync_users'] = array(
+		'#type' => 'checkbox',
+		'#title' => t('Create users'),
+		'#default_value' => 0,
+		'#weight' => '0',
+		'#description' => t('Check this when you are ready to create Formulize users for every existing Drupal user. After the initial manual sync, for every change to your Drupal user, the changes will automatically propagate to Formulize.'),
+		);
+		
+	$form['hidden'] = array('#type' => 'value', '#value' => 'is_it_here');
+  $form['submit'] = array(
+		'#type' => 'submit', 
+		'#value' => t('Sync with Formulize'),
+		'#weight' => '5'
+	);
+	
+	return $form;
+}
+
+/**
+ * Form submissions handler
+ */
+function formulize_sync_submit($form, &$form_state) {
+	
+	$form_values = $form_state['values'];
+	// take the submission and do the syncing
+	// check for conditions of syncing users (and OG groups)
+	if ($form_values['submit']) {
+		$message = t('Synced! Well maybe.');
+		drupal_set_message($message);
+	}
 }
 
 /**
@@ -368,15 +415,22 @@ function formulize_user($op, &$edit, &$account, $category) {
 		case 'after_update': // if user is modified
       // see if user profile has changed and update
 			break;
-		case 'insert': { //if it's a new user being created
+		case 'insert': //if it's a new user being created
       // check the $edit for uid
 			// if user doesn't already exist in formulize then insert
 			// check if user joined a group and add to Fz group if true
 			if (isset($edit['og_register'])) { // if og_register is set then we know 
 				foreach (array_keys(array_filter($edit['og_register'])) as $gid) {
 				}
+			}
 			break;        
 		case 'delete':
 		// delete or de-activate on Fz
 		break;
+	}
 }
+
+/**
+ * Check that Formulize is installed and working
+ */
+function formulize_exist() { return TRUE;}

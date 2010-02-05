@@ -51,22 +51,22 @@ function formulize_og_sync_perm() {
   return array('administer formulize OG groups');
 } 
 
-function formulize_og_sync_menu() {
-  $items = array();
-
-  // Admin Settings.
-  $items['admin/settings/formulize_og_sync'] = array(
-    'title' => 'Formulize Organic Group Sync',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('formulize_og_sync_admin_settings'),
-    'access callback' => 'user_access',
-    'access arguments' => array('administer formulize OG groups'),
-    'description' => 'Global configuration of Formulize OG Sync functionality.',
-    'type' => MENU_NORMAL_ITEM,
-  );
-
-  return $items;
-}  
+/**
+ * Implementation of hook_form_alter().
+ */
+function formulize_og_sync_form_alter(&$form, $form_state, $form_id) {
+	 if($form_id == 'formulize_sync') {
+		
+			$form['sync_groups'] = array(
+		'#type' => 'checkbox',
+		'#title' => t('Create groups'),
+		'#default_value' => 0,
+		'#weight' => '1',
+		'#description' => t('Check this when you are ready to create Formulize groups for every existing Drupal Organic Group. After the initial manual sync, for every change to your Drupal group, the changes will automatically propagate to Formulize.'),
+		);
+		
+	 }
+}
 
 /**
  * Implementation of hook_nodeapi().
@@ -150,8 +150,8 @@ function _formulize_og_sync_user_delete($account, $gid) {}
  * 
  * Need an equivalent for users.
  */
-function formulize_og_sync_enable() 
-{
+function formulize_og_sync_enable() {
+
     if ( ! formulize_exist( ) ) { // a module to see if formulize is installed?
         return;
     }
