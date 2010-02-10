@@ -1,0 +1,58 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Contains install and update functions for formulize OG Sync.
+ */
+
+
+/**
+ * Implementation of hook_install()
+ */
+function formulize_og_sync_install() {
+  drupal_install_schema('formulize_og_sync');
+}
+
+/**
+ * Implementation of hook_uninstall()
+ */
+function formulize_og_sync_uninstall() {
+  drupal_uninstall_schema('formulize_og_sync');
+	variable_del('formulize_og_group_node_type');
+}
+/**
+ * Implementation of hook_schemea
+ */
+function formulize_og_sync_schema() {
+  $schema['formulize_og_sync'] = array(
+		'description' => t('The table for formulize groups data.'),
+		'fields' => array(
+      'nid' => array(
+        'type' => 'int',
+				'unsigned' => TRUE,
+        'not null' => TRUE,
+				'default' => 0
+      ),
+			'form_id' => array(
+        'type' => 'int',
+				'unsigned' => TRUE,
+        'not null' => TRUE,
+				'default' => 0
+      ),
+      'form_group_type' => array(
+        'type' => 'varchar',
+				'length' => 128,
+        'description' => 'The type of multiplier group.'
+      ),
+		),
+		'indexes' => array(
+		  'nid' => array('nid')
+		),
+		'unique_keys' => array(
+			'nid_form_id' => array('nid', 'form_id'),
+		),
+    'primary key' => array('form_id'),
+  );
+  return $schema;
+}

@@ -42,15 +42,13 @@ function formulize_help($section)
       $output .= '<p>' . t('Behaviours this module supports:') . '</p>';
       $output .= '<ul>';
 			$output .= '<li>' . t('Storing data about where Formulize is, how to connect to its database, etc') . '</li>';
+			$output .= '<li>' . t('Creates a content type to allow publishing of Formulize screens within Drupal.') . '</li>';
 			$output .= '<li>' . t('Creating new users in Formulize when new users are created in Drupal') . '</li>';
 			$output .= '<li>' . t('Updating users in Formulize when users are updated in Drupal (ie: name change, etc)') . '</li>';
 			$output .= '<li>' . t('Deleting users in Formulize when users are deleted in Drupal') . '</li>';
 			$output .= '<li>' . t('Creating new groups in Formulize when roles are created in Drupal') . '</li>';
 			$output .= '<li>' . t('Updating groups in Formulize when roles are updated in Drupal') . '</li>';
 			$output .= '<li>' . t('Deleting groups in Formulize when roles are deleted in Drupal') . '</li>';
-			$output .= '<li>' . t('Creating new groups in Formulize when groups are created in Organic Groups, including groups for each role created within a group') . '</li>';
-			$output .= '<li>' . t('Updating groups in Formulize when groups are updated in Organic Groups, including groups for each role created within a group') . '</li>';
-			$output .= '<li>' . t('Deleting groups in Formulize when groups are deleted in Organic Groups, including groups for each role created within a group.') . '</li>';
       $output .= '</ul>';
       $output .= '<p>'. t('For more information please refer to the <a href="!1">Formulize web-site</a> which includes project information, documentation and support resources and more.', array('!1' => 'http://freeformsolutions.ca/formulize')) .'</p>';
       return $output;
@@ -98,6 +96,7 @@ function formulize_menu() {
     'description' => 'Global configuration of Formulize functionality.',
     'type' => MENU_NORMAL_ITEM,
   );
+	
 	
 	$items['admin/settings/formulize/sync'] = array(
     'title' => 'Formulize Synchronizing',
@@ -230,25 +229,27 @@ function formulize_form(&$node) {
   return $form;
 }
 
+/**
+ * Internal function
+ * 
+ * Get screens
+ */
 function _formulize_get_screens () {
 
 	$db_prefix_formulize = variable_get('formulize_db_prefix', NULL);
-	//This presumes there needs to be an underscore? $db_prefix_formulize = substr($db_prefix_formulize, -1) == "_" ? $db_prefix_formulize : $db_prefix_formulize . "_"; // if there's no underscore at the end of the prefix, add one in
 
-	//Switch to formulize database
-	db_set_active('formulize');
-
-	$result = db_query('SELECT 
+	$sql = 'SELECT 
 		fi.desc_form, 
 		fs.title, 
 		fs.sid 
 		FROM ' . $db_prefix_formulize . 'formulize_id as fi, 
 		' . $db_prefix_formulize . 'formulize_screen as fs 
 		WHERE fi.id_form = fs.fid 
-		ORDER BY fi.desc_form, fs.title');
+		ORDER BY fi.desc_form, fs.title';
+		
+	$formulize_db = _formulize_get_db_connection();
 
-	//Switch back to the default connection when finished.
-	db_set_active('default');
+	$result = mysql_query($sql, $formulize_db);
 
 	$options = array();
 
@@ -262,6 +263,33 @@ function _formulize_get_screens () {
 	return $options;
 
 }
+
+/**
+ * Internal function to establish formulize database connection
+ * 
+ */
+function _formulize_get_db_connection() {
+
+  static $formulize_db_connection;
+
+  if(!isset($formulize_db_connection)) {
+		$formulize_path = variable_get('formulize_full_path', NULL);
+		require_once($formulize_path);
+   $formulize_db_connection = $xoopsDB;
+  }
+  return $formulize_db_connection;
+}
+
+/**
+ * An example of calling it
+ */
+ /*
+function some_drupal_function() {
+  $formulize_DB_connection = _formulize_get_db_connection();
+  $sql = "some sql";
+  $res = mysql_query($sql, $formulize_DB_connection);
+  print XOOPS_ROOT_PATH...etc...etc;
+}*/
 
 /**
  * Implementation of hook_validate().

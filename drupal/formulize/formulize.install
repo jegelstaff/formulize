@@ -26,17 +26,6 @@ function formulize_uninstall() {
  * Implementation of hook_schemea
  */
 function formulize_schema() {
-  // Currently, schema 1 is the only schema we have. As we make updates,
-  // we might either create a new schema 2 or make adjustments here.
-  return formulize_schema_1();
-}
-
-/**
- * Formulize's initial schema; separated for the purposes of updates.
- *
- * DO NOT MAKE CHANGES HERE. This schema version is locked.
- */
-function formulize_schema_1() {
   $schema['formulize'] = array(
 		'description' => t('The table for formulize data.'),
 		'fields' => array(

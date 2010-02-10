@@ -35,6 +35,11 @@ function formulize_og_sync_help($section)
     switch ($section) {
     case 'admin/help#formulize_og_sync':
       $output = '<p>'. t('The Formulize OG Sync module ensures synchronization of groups/roles between Drupal and Formulize.') .'</p>';
+			$output .= '<ul>';
+			$output .= '<li>' . t('Creating new groups in Formulize when groups are created in Organic Groups, including groups for each role created within a group') . '</li>';
+			$output .= '<li>' . t('Updating groups in Formulize when groups are updated in Organic Groups, including groups for each role created within a group') . '</li>';
+			$output .= '<li>' . t('Deleting groups in Formulize when groups are deleted in Organic Groups, including groups for each role created within a group.') . '</li>';
+			$output .= '</ul>';
       $output .= '<p>'. t('For more information please refer to the <a href="!1">Formulize web-site</a> which includes project information, documentation and support resources and more.', array('!1' => 'http://freeformsolutions.ca/en/formulize')) .'</p>';
       return $output;
      case 'admin/modules#description':
@@ -50,6 +55,193 @@ function formulize_og_sync_help($section)
 function formulize_og_sync_perm() {
   return array('administer formulize OG groups');
 } 
+
+/**
+ * Implementation of hook_menu().
+ */
+function formulize_og_sync_menu() {
+  $items = array();
+	
+	$items['admin/settings/formulize/og'] = array(
+    'title' => 'Settings for Formulize & OG Integration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('formulize_og_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'description' => 'Syncing between Organic Groups and Formulize groups.',
+    'type' => MENU_NORMAL_ITEM,
+  );
+	
+		$items['admin/settings/formulize/group-multiplier'] = array(
+    'title' => 'Formulize group multiplier',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('formulize_og_multiplier'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'description' => 'Settings for complex Organic groups and Formulize group integration.',
+    'type' => MENU_NORMAL_ITEM,
+  );
+	
+	 return $items;
+}
+
+/**
+ * Menu callback to load settings form.
+ */
+function formulize_og_settings() {
+  // content types
+  $is_configured = count(og_get_types('group'));
+  if (!$is_configured) {
+    form_set_error('formulize_og_settings', t('You must designate at least one content type to act as a group node. <a href="!create">Create new content type</a> if needed.', array('!create' => url('admin/content/types/add', array('query' => drupal_get_destination())))));
+  }
+	
+	$options = array();
+  foreach (node_get_types() as $type) {
+    $usage = variable_get('og_content_type_usage_'. $type->type, 'omitted');
+
+		if ($usage == 'group') {
+    	$options[$type->type] = $type->name;
+		}
+  }
+	
+	$form['formulize_og_settings'] = array(
+  	'#type' => 'radios',
+    '#title' => t('Select the group node that you want to sync with Formulize'),
+    '#required' => FALSE,
+    '#default_value' => variable_get('formulize_og_group_node_type', NULL),
+    '#weight' => 0,
+    '#options' => $options
+  );
+  $form['submit'] = array(
+		'#type' => 'submit', 
+		'#value' => t('Use group node for Formulize syncing'),
+		'#weight' => '5'
+	);
+
+  return $form;
+}
+
+/**
+ * Form submissions handler
+ */
+function formulize_og_settings_submit($form, &$form_state) {
+	
+	$form_values = $form_state['values'];
+
+	if ($form_values['submit']) {
+		variable_set('formulize_og_group_node_type', $form_values['formulize_og_settings']);
+		$message = $form_values['formulize_og_settings'] . t(' set as Formulize group.');
+		drupal_set_message($message);
+	}
+}
+
+/**
+ * Get list of OG groups
+ */
+function _formulize_get_og_list() {}
+
+/**
+ * Menu callback for admin/formulize/og/group-multiplier
+ */
+function formulize_og_multiplier() {
+	
+  $form['formulize_group']  = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Choose the groups where you will need special Director and Instructor groups in Formulize'),
+    '#description' => t('This version of the module will include two multiplier groups - Director and Instructor, as per the client\'s needs. You choices here will mean there will be three groups in Formulize. E.g. A "Summer Science Camp" group chosen here will create a "Summer Science Camp Directors" group and a "Summer Science Camp Instructor" group as well.'),
+		'#options' => _formulize_get_group_list()
+  );
+
+	$form['submit'] = array(
+		'#type' => 'submit', 
+		'#value' => t('Create multiples in Formulize'),
+		'#weight' => '5'
+	);
+	//dsm($form);
+	
+	return $form;
+}
+
+/**
+ * Get list of group nodes
+ * We want to assign some group nodes as "multipliers" for advanced permissions
+ */
+function _formulize_get_group_list() {
+	
+	$formulize_og_group_node_type = variable_get('formulize_og_group_node_type', NULL);
+	
+	$result = db_query("SELECT * FROM {node} n where n.type = '%s'", $formulize_og_group_node_type);
+	
+	$group_node_list = array();
+	while($row = db_fetch_object($result)) {
+		$group_node_list[$row->nid] = $row->title;
+	}
+	
+	if(count($group_node_list) == 0) {
+		$message = t('No group nodes found for !group. You need to !create.', array('!group' => $formulize_og_group_node_type, '!create' => l(t('create new content first'),'node/add/' . $formulize_og_group_node_type)));
+		drupal_set_message($message);
+	}
+	
+	return $group_node_list;
+}
+
+/**
+ * Group Multiplier Form validation
+ */
+function formulize_og_multiplier_validate($form, &$form_state) {
+  if ($form_state['values']['nid'] == '') {
+    //form_set_error('', t('Do something.'));
+  }
+}
+
+/**
+ * Group Multiplier Form submissions handler
+ * 
+ * The extra Formulize groups are hard-wired, and there is no checking if the Formulize group already exists.
+ * Next to do is also create the Formulize groups based on the translation table.
+ */
+function formulize_og_multiplier_submit($form, &$form_state) {
+	
+	$form_values = $form_state['values'];
+	
+	if ($form_values['submit']) {
+		
+		//dsm($form_values);
+		
+		$group = array();
+		
+		foreach($form_values['formulize_group'] as $key => $value) {
+				
+			if ($value != 0) {
+				
+				$i = 1;
+				$nid = $key;
+				$form_id = $nid;
+				$form_group_type = 'main';
+				
+				while ($i < 4) {
+					switch ($i) {
+						case 1:
+							$form_group_type = 'main';
+						break;
+						case 2:
+							$form_group_type = 'directors';
+						break;
+						case 3:
+							$form_group_type = 'instructors';
+						break;
+					}
+					
+					db_query("INSERT INTO {formulize_og_sync} (nid, form_id, form_group_type) VALUES (%d, %d, '%s')", $nid, $form_id, $form_group_type);
+					$i++;
+					$form_id++;
+				}
+			}
+			$message = $form_values['formulize_og_settings'] . t(' set as Formulize group.');
+			drupal_set_message($message);
+		}
+	}
+}
 
 /**
  * Implementation of hook_form_alter().
