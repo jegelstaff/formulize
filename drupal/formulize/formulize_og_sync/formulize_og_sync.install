@@ -34,13 +34,13 @@ function formulize_og_sync_schema() {
         'not null' => TRUE,
 				'default' => 0
       ),
-			'form_id' => array(
+			'formulize_groupid' => array(
         'type' => 'int',
 				'unsigned' => TRUE,
         'not null' => TRUE,
 				'default' => 0
       ),
-      'form_group_type' => array(
+      'formulize_group_kind' => array(
         'type' => 'varchar',
 				'length' => 128,
         'description' => 'The type of multiplier group.'
@@ -50,7 +50,7 @@ function formulize_og_sync_schema() {
 		  'nid' => array('nid')
 		),
 		'unique_keys' => array(
-			'nid_form_id' => array('nid', 'form_id'),
+			'nid_formulize_groupid' => array('nid', 'formulize_groupid'),
 		),
     'primary key' => array('form_id'),
   );

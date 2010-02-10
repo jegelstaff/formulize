@@ -236,29 +236,31 @@ function formulize_form(&$node) {
  */
 function _formulize_get_screens () {
 
-	$db_prefix_formulize = variable_get('formulize_db_prefix', NULL);
+	//$db_prefix_formulize = variable_get('formulize_db_prefix', NULL);
 
+	$formulize_db = _formulize_get_connection();
+	
 	$sql = 'SELECT 
 		fi.desc_form, 
 		fs.title, 
 		fs.sid 
-		FROM ' . $db_prefix_formulize . 'formulize_id as fi, 
-		' . $db_prefix_formulize . 'formulize_screen as fs 
+		FROM ' . $formulize_db->prefix('formulize_id') . ' as fi, 
+		' . $formulize_db->prefix('formulize_screen') . ' as fs 
 		WHERE fi.id_form = fs.fid 
 		ORDER BY fi.desc_form, fs.title';
-		
-	$formulize_db = _formulize_get_db_connection();
-
-	$result = mysql_query($sql, $formulize_db);
-
+	
 	$options = array();
-
-	while($row = db_fetch_object($result)) {
+		
+	if($result = $formulize_db->query($sql)) {
+		
+		while($row = db_fetch_object($result)) {
 		$options[$row->sid] = $row->desc_form . ' - ' . $row->title;
+	}
 	}
 
 	if(count($options) == 0) {
-		$options[0] = t('No Formulize Screens Found');		
+		$options[0] = t('No Formulize Screens Found');
+		drupal_set_message(t('No screens found at this time.'));
 	}
 	return $options;
 
@@ -268,28 +270,17 @@ function _formulize_get_screens () {
  * Internal function to establish formulize database connection
  * 
  */
-function _formulize_get_db_connection() {
+function _formulize_get_connection() {
 
-  static $formulize_db_connection;
+  static $formulize_connection;
 
-  if(!isset($formulize_db_connection)) {
+  if(!isset($formulize_connection)) {
 		$formulize_path = variable_get('formulize_full_path', NULL);
 		require_once($formulize_path);
-   $formulize_db_connection = $xoopsDB;
+		$formulize_connection = $xoopsDB;
   }
-  return $formulize_db_connection;
+  return $formulize_connection;
 }
-
-/**
- * An example of calling it
- */
- /*
-function some_drupal_function() {
-  $formulize_DB_connection = _formulize_get_db_connection();
-  $sql = "some sql";
-  $res = mysql_query($sql, $formulize_DB_connection);
-  print XOOPS_ROOT_PATH...etc...etc;
-}*/
 
 /**
  * Implementation of hook_validate().
@@ -437,7 +428,6 @@ function theme_formulize_screen($node) {
  * 
  * Listen for user changes, additions, deletes and synchronize with Formulize database
  */
-
 function formulize_user($op, &$edit, &$account, $category) {
 	switch($op) {
 		case 'after_update': // if user is modified
@@ -446,11 +436,6 @@ function formulize_user($op, &$edit, &$account, $category) {
 		case 'insert': //if it's a new user being created
       // check the $edit for uid
 			// if user doesn't already exist in formulize then insert
-			// check if user joined a group and add to Fz group if true
-			if (isset($edit['og_register'])) { // if og_register is set then we know 
-				foreach (array_keys(array_filter($edit['og_register'])) as $gid) {
-				}
-			}
 			break;        
 		case 'delete':
 		// delete or de-activate on Fz
