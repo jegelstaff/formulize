@@ -52,7 +52,7 @@ function formulize_og_sync_schema() {
 		'unique_keys' => array(
 			'nid_formulize_groupid' => array('nid', 'formulize_groupid'),
 		),
-    'primary key' => array('form_id'),
+    'primary key' => array('formulize_groupid'),
   );
   return $schema;
 }
