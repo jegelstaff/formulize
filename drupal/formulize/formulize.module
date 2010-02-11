@@ -168,13 +168,26 @@ function formulize_sync() {
  * Form submissions handler
  */
 function formulize_sync_submit($form, &$form_state) {
-	
 	$form_values = $form_state['values'];
 	// take the submission and do the syncing
 	// check for conditions of syncing users (and OG groups)
 	if ($form_values['submit']) {
-		$message = t('Synced! Well maybe.');
-		drupal_set_message($message);
+		global $user;
+
+		if($user->uid!=1) {
+			drupal_set_message('Create users/groups can only be run by the first user.','error');
+			return;
+		}
+
+		if($form_values['sync_users']) {
+			_formulize_sync_users( );
+			drupal_set_message(t('Synced Users.'));
+		}
+
+		if($form_values['sync_groups']) {
+			_formulize_sync_groups( );
+			drupal_set_message(t('Synced Groups.'));
+		}
 	}
 }
 
@@ -431,14 +444,17 @@ function theme_formulize_screen($node) {
 function formulize_user($op, &$edit, &$account, $category) {
 	switch($op) {
 		case 'after_update': // if user is modified
-      // see if user profile has changed and update
+			// see if user profile has changed and update
+			_formulize_update_user( $account );
 			break;
 		case 'insert': //if it's a new user being created
-      // check the $edit for uid
+			// check the $edit for uid
 			// if user doesn't already exist in formulize then insert
+			_formulize_insert_user( $account );
 			break;        
 		case 'delete':
-		// delete or de-activate on Fz
+			// delete or de-activate on Fz
+			_formulize_delete_user( $account );
 		break;
 	}
 }
@@ -447,3 +463,114 @@ function formulize_user($op, &$edit, &$account, $category) {
  * Check that Formulize is installed and working
  */
 function formulize_exist() { return TRUE;}
+
+/**
+ * Sync Drupal users with XOOPS
+ */
+function _formulize_sync_users( )
+{
+	$results = db_query("SELECT u.uid FROM {users} u WHERE u.status <> 0 AND u.access <> 0 AND u.uid > 1 ORDER BY u.uid");
+	while($result = db_fetch_array($results)) {
+		_formulize_insert_user(user_load(array('uid'=>$result['uid'])));
+	}
+}
+
+/**
+ * Insert a Drupal user into XOOPS
+ */
+function _formulize_insert_user( $drupal )
+{
+	$db = _formulize_get_connection();
+
+	$member_handler =& xoops_gethandler('member');
+
+        $xoops_user = $member_handler->createUser();
+	$xoops_user->setVar('uid',$drupal->uid);
+	$xoops_user->setVar('uname',$drupal->name);
+	$xoops_user->setVar('name',$drupal->name);
+	$xoops_user->setVar('pass',$drupal->pass);
+	$xoops_user->setVar('email',$drupal->mail);
+	$xoops_user->setVar('timezone_offset',$drupal->timezone/60/60);
+	$xoops_user->setVar('language',_formulize_convert_language($drupal->language));
+
+	$xoops_user->setVar('user_avatar','blank.gif');
+	$xoops_user->setVar('theme','impresstheme');
+	$xoops_user->setVar('level',1);
+
+	// Normally you would use: $member_handler->insertUser( $xoops_user );
+	// We recreate some of the functionaly from kernel/user.php::insertUser because we do
+	// not want XOOPS to generate and ID, it is supplied by Drupal
+
+	$sql = sprintf("INSERT INTO %s (uid, uname, name, email, url, user_avatar, user_regdate, user_icq, user_from, user_sig, user_viewemail, actkey, user_aim, user_yim, user_msnm, pass, posts, attachsig, rank, level, theme, timezone_offset, last_login, umode, uorder, notify_method, notify_mode, user_occ, bio, user_intrest, user_mailok, language, openid, salt, user_viewoid, pass_expired, enc_type) VALUES ('%u', %s, %s, %s, %s, %s, '%u', %s, %s, %s, '%u', %s, %s, %s, %s, %s, '%u', '%u', '%u', '%u', %s, %s, '%u', %s, '%u', '%u', '%u', %s, %s, %s, '%u', %s, %s, %s, '%u', '%u', '%u')",
+		$db->prefix('users'), intval($xoops_user->getVar('uid')),
+		$db->quoteString($xoops_user->getVar('uname')), $db->quoteString($xoops_user->getVar('name')),
+		$db->quoteString($xoops_user->getVar('email')), $db->quoteString($xoops_user->getVar('url')),
+		$db->quoteString($xoops_user->getVar('user_avatar')), time(),
+		$db->quoteString($xoops_user->getVar('user_icq')), $db->quoteString($xoops_user->getVar('user_from')),
+		$db->quoteString($xoops_user->getVar('user_sig')), intval($xoops_user->getVar('user_viewemail')),
+		$db->quoteString($xoops_user->getVar('actkey')), $db->quoteString($xoops_user->getVar('user_aim')),
+		$db->quoteString($xoops_user->getVar('user_yim')), $db->quoteString($xoops_user->getVar('user_msnm')),
+		$db->quoteString($xoops_user->getVar('pass')), intval($xoops_user->getVar('posts')),
+		intval($xoops_user->getVar('attachsig')), intval($xoops_user->getVar('rank')),
+		intval($xoops_user->getVar('level')), $db->quoteString($xoops_user->getVar('theme')),
+		$db->quoteString(floatval($xoops_user->getVar('timezone_offset'))), 0,
+		$db->quoteString($xoops_user->getVar('umode')), intval($xoops_user->getVar('uorder')),
+		intval($xoops_user->getVar('notify_method')), intval($xoops_user->getVar('notify_mode')),
+		$db->quoteString($xoops_user->getVar('user_occ')), $db->quoteString($xoops_user->getVar('bio')),
+		$db->quoteString($xoops_user->getVar('user_intrest')), intval($xoops_user->getVar('user_mailok')),
+		$db->quoteString($xoops_user->getVar('language')), $db->quoteString($xoops_user->getVar('openid')),
+		$db->quoteString($xoops_user->getVar('salt')), intval($xoops_user->getVar('user_viewoid')),
+		intval($xoops_user->getVar('pass_expired')), intval($xoops_user->getVar('enc_type')));
+
+	$db->query($sql);
+
+	// 2 constant is the Registered Users Group
+	$member_handler->addUserToGroup(2,$xoops_user->getVar('uid'));
+}
+
+/**
+ * When a Drupal user changes, update in XOOPS
+ */
+function _formulize_update_user( $drupal )
+{
+	$db = _formulize_get_connection();
+
+	$member_handler =& xoops_gethandler('member');
+
+        $xoops_user = $member_handler->getUser($drupal->uid);
+	$xoops_user->setVar('uname',$drupal->name);
+	$xoops_user->setVar('name',$drupal->name);
+	$xoops_user->setVar('pass',$drupal->pass);
+	$xoops_user->setVar('email',$drupal->mail);
+	$xoops_user->setVar('timezone_offset',$drupal->timezone/60/60);
+	$xoops_user->setVar('language',_formulize_convert_language($drupal->language));
+
+	$member_handler->insertUser( $xoops_user );
+}
+
+/**
+ * When a Drupal user is removed, delete in XOOPS
+ */
+function _formulize_delete_user( $drupal )
+{
+	$db = _formulize_get_connection();
+
+	$member_handler =& xoops_gethandler('member');
+
+        $xoops_user = $member_handler->getUser($drupal->uid);
+
+	$member_handler->deleteUser( $xoops_user );
+}
+
+/**
+ * Convert language format of Drupal to XOOPS
+ */
+function _formulize_convert_language( $drupal )
+{
+	$languages = array('en'=>'english','fr'=>'french');
+
+	if(array_key_exists($drupal,$languages))
+		return $languages[$drupal];
+
+	return 'english';
+}
