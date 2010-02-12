@@ -44,7 +44,10 @@ function formulize_og_sync_help($section)
       return $output;
      case 'admin/modules#description':
          // This description is shown in the listing at admin/modules.
-         return t('The Formulize OG Sync module integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in Formulize. This module also ensures synchronization of the users and groups/roles between Drupal and Formulize.', array('!1' => '2.0', '!2' => 'http://freeformsolutions.ca/en/formulize/'));
+         return t('The Formulize OG Sync module integrates the Organic Groups and subscribers with Formulize groups.');
+			case 'admin/settings/formulize':
+         // This description is shown in the listing at admin/modules.
+         return t('The Formulize OG Sync module integrates the Organic Groups and subscribers with Formulize groups.');
     }
 }
 
@@ -63,11 +66,12 @@ function formulize_og_sync_menu() {
   $items = array();
 	
 	$items['admin/settings/formulize/og'] = array(
-    'title' => 'Settings for Formulize & OG Integration',
+    'title' => 'Formulize & OG Integration',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('formulize_og_settings'),
     'access callback' => 'user_access',
     'access arguments' => array('administer site configuration'),
+		'weight' => -1,
     'description' => 'Syncing between Organic Groups and Formulize groups.',
     'type' => MENU_NORMAL_ITEM,
   );
@@ -78,6 +82,7 @@ function formulize_og_sync_menu() {
     'page arguments' => array('formulize_og_multiplier'),
     'access callback' => 'user_access',
     'access arguments' => array('administer site configuration'),
+		'weight' => 0,
     'description' => 'Settings for complex Organic groups and Formulize group integration.',
     'type' => MENU_NORMAL_ITEM,
   );
@@ -109,12 +114,13 @@ function formulize_og_settings() {
     '#title' => t('Select the group node that you want to sync with Formulize'),
     '#required' => FALSE,
     '#default_value' => variable_get('formulize_og_group_node_type', NULL),
+		'#description' => t('Select from the given list of Organic groups which one will synchronize with Formulize groups.'),
     '#weight' => 0,
     '#options' => $options
   );
   $form['submit'] = array(
 		'#type' => 'submit', 
-		'#value' => t('Use group node for Formulize syncing'),
+		'#value' => t('Select'),
 		'#weight' => '5'
 	);
 
@@ -149,13 +155,13 @@ function formulize_og_multiplier() {
     '#type' => 'checkboxes',
     '#title' => t('Choose the groups where you will need special Director and Instructor groups in Formulize'),
     '#description' => t('This version of the module will include two multiplier groups - Director and Instructor, as per the client\'s needs. You choices here will mean there will be three groups in Formulize. E.g. A "Summer Science Camp" group chosen here will create a "Summer Science Camp Directors" group and a "Summer Science Camp Instructor" group as well.'),
-//		'#default_value' => _formulize_get_group_multiplier_list(),
+		'#default_value' => _formulize_get_multiplier_group_list(),
 		'#options' => _formulize_get_group_list()
   );
 
 	$form['submit'] = array(
 		'#type' => 'submit', 
-		'#value' => t('Create multiples in Formulize'),
+		'#value' => t('Set Formulize multiples'),
 		'#weight' => '5'
 	);
 	//dsm($form);
@@ -166,19 +172,19 @@ function formulize_og_multiplier() {
 /**
  * Get existing list of multiplier group nodes
  */
-/*
+
 function _formulize_get_multiplier_group_list() {
 	
 	$result = db_query("SELECT DISTINCT(nid) FROM {formulize_og_sync} fos");
 	
 	$multiplier_group_node_list = array();
 	while($row = db_fetch_object($result)) {
-		$multiplier_group_node_list[$row->nid] = $row->title;
+		$multiplier_group_node_list[$row->nid] = $row->nid;
 	}
 	
 	return $multiplier_group_node_list;
 }
-*/
+
 /**
  * Get list of group nodes
  * We want to assign some group nodes as "multipliers" for advanced permissions
@@ -231,6 +237,9 @@ function formulize_og_multiplier_submit($form, &$form_state) {
 
 				$message = $name . t(' set as Formulize group.');
 				drupal_set_message($message);
+			}
+			elseif ($key && $value == 0) {
+				//TODO: if we get a blank key then we need to check if we need to remove the duplicates in Formulize
 			}
 		}
 	}
@@ -303,13 +312,13 @@ function formulize_og_sync_nodeapi(&$node, $op, $teaser, $page) {
 		case 'insert': // $node object should be available
 			// get nid and create Fz group if one with same id doesn't already exist
 			drupal_set_message(t('A corresponding Formulize group has been created'));
-			_formulize_insert_group($node->nid,$name,$description);
+			_formulize_insert_group($node->nid, $name, $description);
 
 			//drupal_set_message(t('sync_nodeapi::insert'));
 			//drupal_set_message($name . t(' inserted.'));
 			break;
 		case 'update':
-			_formulize_update_group($node->nid,$name,$description);
+			_formulize_update_group($node->nid, $name, $description);
 
 			//drupal_set_message(t('sync_nodeapi::update'));
 			//drupal_set_message($name . t(' updated.'));
@@ -334,26 +343,26 @@ function formulize_og_sync_nodeapi(&$node, $op, $teaser, $page) {
 function formulize_og_sync_og($op, $gid, $uid, $args) {
   switch ($op) {
     case 'user insert':
-	if($args['is_active'])
-	{
-		//drupal_set_message(t('sync_og::user insert:') . $gid . ':' . $uid);
-		_formulize_add_user_to_group($gid,$uid);
-	}
+			if($args['is_active'])
+			{
+				//drupal_set_message(t('sync_og::user insert:') . $gid . ':' . $uid);
+				_formulize_add_user_to_group($gid,$uid);
+			}
       break;
     case 'user delete':
-	//drupal_set_message(t('sync_og::user delete:') . $gid . ':' . $uid);
-	_formulize_remove_user_from_group($gid,$uid);
+			//drupal_set_message(t('sync_og::user delete:') . $gid . ':' . $uid);
+			_formulize_remove_user_from_group($gid,$uid);
       break;
     case 'user request':
       break;
     case 'user approve':
-	//drupal_set_message(t('sync_og::user approve:') . $gid . ':' . $uid);
-	_formulize_add_user_to_group($gid,$uid);
+			//drupal_set_message(t('sync_og::user approve:') . $gid . ':' . $uid);
+			_formulize_add_user_to_group($gid,$uid);
       break;
     case 'admin create':
     case 'admin new':
     case 'user broadcast':
-		// not sure if we need to do anything with these triggers
+			// not sure if we need to do anything with these triggers
       break;
   }
 }
@@ -381,50 +390,6 @@ function formulize_og_sync_user($op, &$edit, &$account, $category) {
 		// delete or de-activate on Fz
 		break;
 	}
-}
-
-
-/**
- * Implemenation of hook_enable. Called every time module is enabled. Use to synchronise with pre-existing groups
- * @return 
- * 
- * This might be better to require users to confirm Formulize install settings and then create a button for manual syncing of OG groups with Formulize groups.
- * 
- * Need an equivalent for users.
- */
-function formulize_og_sync_enable() {
-
-    if ( ! formulize_exist( ) ) { // a module to see if formulize is installed?
-        return;
-    }
-    
-    // get OG content types
-    $og_types_str = implode("', '", og_get_types('group'));
-    //build the query
-    $results = db_query("SELECT n.nid FROM {node} n WHERE n.type IN ('%s')", $og_types_str);
-    
-    while ($result = db_fetch_array($results)) {
-        $node = node_load(array('nid' => $result['nid']));
-        
-        $title  = trim( $node->title );
-        $params = array( 'name'        => $title,
-                         'title'       => $title,
-                         'description' => trim( $node->og_description ),
-                         'is_active'   => 1,
-                         'og_id'       => $node->nid );
-        
-        // add the group
-				// create a Formulize group for each existing OG group
-        
-        // add the subscribers
-        $subscribers = db_query(og_list_users_sql(1), $node->nid);
-        while ($subscriber = db_fetch_array($subscribers)) {
-            $uid = $subscriber['uid'];
-            $is_admin = $subscriber['is_admin'];
-						// add user to the Formulize group if they are part of OG group
-						// Example:  civicrm_og_sync_og( 'user update', $node->nid, $uid, array( 'is_admin' => $is_admin, 'is_active' => 1 ) );
-        }
-    }
 }
 
 /**
@@ -506,7 +471,7 @@ function _formulize_insert_group_multipliers($nid,$name,$description)
 }
 
 /**
- * When a Drupal group changes, update in XOOPS
+ * When a Drupal OG group changes, update in XOOPS
  */
 function _formulize_update_group($nid,$name,$description)
 {
@@ -533,16 +498,17 @@ function _formulize_update_group($nid,$name,$description)
 }
 
 /**
- * When a Drupal group is removed, delete in XOOPS
+ * When a Drupal OG group is removed, delete in XOOPS
  */
-function _formulize_delete_group($drupal)
-{
+function _formulize_delete_group($og_group) {
+	//TODO: delete duplicate groups when removing main group and remove entries from formulize_og_sync
+	
 	$db = _formulize_get_connection();
 
 	$member_handler =& xoops_gethandler('member');
 
 	// delete multipliers
-	$results = db_query("SELECT * FROM {formulize_og_sync} WHERE nid=%d AND NOT formulize_group_kind='%s'",$drupal->nid,'');
+	$results = db_query("SELECT * FROM {formulize_og_sync} WHERE nid=%d AND NOT formulize_group_kind='%s'",$og_group->nid,'');
 	while($result = db_fetch_array($results)) {
 		$xoops_group = $member_handler->getGroup($result['formulize_groupid']);
 		$xoops_group->setVar('name',_formulize_convert_group_name($name,$result['formulize_group_kind']));
@@ -551,10 +517,11 @@ function _formulize_delete_group($drupal)
 		$member_handler->deleteGroup( $xoops_group );
 	}
 
-	$result = db_fetch_array(db_query("SELECT * FROM {formulize_og_sync} WHERE nid=%d AND formulize_group_kind='%s'",$drupal->nid,''));
+	$result = db_fetch_array(db_query("SELECT * FROM {formulize_og_sync} WHERE nid=%d AND formulize_group_kind='%s'",$og_group->nid,''));
   $xoops_group = $member_handler->getGroup($result['formulize_groupid']);
 
 	$member_handler->deleteGroup( $xoops_group );
+	
 }
 
 

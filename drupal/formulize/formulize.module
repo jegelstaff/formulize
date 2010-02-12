@@ -55,6 +55,12 @@ function formulize_help($section)
      case 'admin/modules#description':
          // This description is shown in the listing at admin/modules.
          return t('The Formulize module (Formulize !1) integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in <a href="!2">Formulize</a>. This module also ensures synchronization of the users and roles between Drupal and Formulize.', array('!1' => '1.0', '!2' => 'http://freeformsolutions.ca/en/formulize/'));
+			case 'admin/settings/formulize':
+      	// This description is shown on the main Formulize page.
+      	return t('The settings for the Formulize module allows you to set up the integration with Formulize. It assumes you have installed Formulize and have created forms and screens. First go to the Formulize settings to set up the full path to Formulize.');
+			case 'admin/settings/formulize/path':
+      	// This description is shown on the Formulize path.
+      	return t('Define the full path to the Formulize mainfile.php.');
     }
 }
 
@@ -86,13 +92,25 @@ function formulize_access($op, $node, $account) {
 function formulize_menu() {
   $items = array();
 
-  // Admin Settings.
+  // Admin user pages
   $items['admin/settings/formulize'] = array(
-    'title' => 'Formulize Settings',
+    'title' => 'Formulize',
+    'description' => 'Setting up integration with Formulize.',
+    'position' => 'left',
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+  );
+
+  // Admin Settings.
+  $items['admin/settings/formulize/path'] = array(
+    'title' => 'Formulize Path',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('formulize_admin_settings'),
     'access callback' => 'user_access',
     'access arguments' => array('administer site configuration'),
+		'weight' => -5,
     'description' => 'Global configuration of Formulize functionality.',
     'type' => MENU_NORMAL_ITEM,
   );
@@ -104,6 +122,7 @@ function formulize_menu() {
     'page arguments' => array('formulize_sync'),
     'access callback' => 'user_access',
     'access arguments' => array('administer site configuration'),
+		'weight' => -3,
     'description' => 'Syncing between Drupal and Formulize.',
     'type' => MENU_NORMAL_ITEM,
   );
@@ -115,25 +134,12 @@ function formulize_menu() {
  * Menu callback for admin/formulize/settings.
  */
 function formulize_admin_settings() {
-	
-	  $form['formulize'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Formulize Connection'),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-  );
 
-  $form['formulize']['formulize_full_path']  = array(
+  $form['formulize_full_path']  = array(
     '#type' => 'textfield',
     '#title' => t('Formulize full path'),
     '#default_value' => variable_get('formulize_full_path', NULL),
     '#description' => t('The full path to the mainfile.php file of your Formulize installation. For instance, "/var/www/mysite.com/formulize/mainfile.php"'),
-  );
-	$form['formulize']['formulize_db_prefix']  = array(
-    '#type' => 'textfield',
-    '#title' => t('Formulize database prefix'),
-    '#default_value' => variable_get('formulize_db_prefix', NULL),
-    '#description' => t('The prefix used for all the table names in the Formulize database (e.g. xoops_ or formulize_).'),
   );
 
 	$form = system_settings_form($form);
@@ -484,20 +490,20 @@ function _formulize_sync_users( )
 /**
  * Insert a Drupal user into XOOPS
  */
-function _formulize_insert_user( $drupal )
+function _formulize_insert_user( $drupal_user )
 {
 	$db = _formulize_get_connection();
 
 	$member_handler =& xoops_gethandler('member');
 
   $xoops_user = $member_handler->createUser();
-	$xoops_user->setVar('uid',$drupal->uid);
-	$xoops_user->setVar('uname',$drupal->name);
-	$xoops_user->setVar('name',$drupal->name);
-	$xoops_user->setVar('pass',$drupal->pass);
-	$xoops_user->setVar('email',$drupal->mail);
-	$xoops_user->setVar('timezone_offset',$drupal->timezone/60/60);
-	$xoops_user->setVar('language',_formulize_convert_language($drupal->language));
+	$xoops_user->setVar('uid',$drupal_user->uid);
+	$xoops_user->setVar('uname',$drupal_user->name);
+	$xoops_user->setVar('name',$drupal_user->name);
+	$xoops_user->setVar('pass',$drupal_user->pass);
+	$xoops_user->setVar('email',$drupal_user->mail);
+	$xoops_user->setVar('timezone_offset',$drupal_user->timezone/60/60);
+	$xoops_user->setVar('language',_formulize_convert_language($drupal_user->language));
 
 	$xoops_user->setVar('user_avatar','blank.gif');
 	$xoops_user->setVar('theme','impresstheme');
@@ -537,19 +543,19 @@ function _formulize_insert_user( $drupal )
 /**
  * When a Drupal user changes, update in XOOPS
  */
-function _formulize_update_user( $drupal )
+function _formulize_update_user( $drupal_user )
 {
 	$db = _formulize_get_connection();
 
 	$member_handler =& xoops_gethandler('member');
 
-  $xoops_user = $member_handler->getUser($drupal->uid);
-	$xoops_user->setVar('uname',$drupal->name);
-	$xoops_user->setVar('name',$drupal->name);
-	$xoops_user->setVar('pass',$drupal->pass);
-	$xoops_user->setVar('email',$drupal->mail);
-	$xoops_user->setVar('timezone_offset',$drupal->timezone/60/60);
-	$xoops_user->setVar('language',_formulize_convert_language($drupal->language));
+  $xoops_user = $member_handler->getUser($drupal_user->uid);
+	$xoops_user->setVar('uname',$drupal_user->name);
+	$xoops_user->setVar('name',$drupal_user->name);
+	$xoops_user->setVar('pass',$drupal_user->pass);
+	$xoops_user->setVar('email',$drupal_user->mail);
+	$xoops_user->setVar('timezone_offset',$drupal_user->timezone/60/60);
+	$xoops_user->setVar('language',_formulize_convert_language($drupal_user->language));
 
 	$member_handler->insertUser( $xoops_user );
 }
@@ -557,13 +563,13 @@ function _formulize_update_user( $drupal )
 /**
  * When a Drupal user is removed, delete in XOOPS
  */
-function _formulize_delete_user( $drupal )
+function _formulize_delete_user( $drupal_user )
 {
 	$db = _formulize_get_connection();
 
 	$member_handler =& xoops_gethandler('member');
 
-        $xoops_user = $member_handler->getUser($drupal->uid);
+        $xoops_user = $member_handler->getUser($drupal_user->uid);
 
 	$member_handler->deleteUser( $xoops_user );
 }
@@ -571,12 +577,12 @@ function _formulize_delete_user( $drupal )
 /**
  * Convert language format of Drupal to XOOPS
  */
-function _formulize_convert_language( $drupal )
+function _formulize_convert_language( $drupal_user )
 {
 	$languages = array('en'=>'english','fr'=>'french');
 
-	if(array_key_exists($drupal,$languages))
-		return $languages[$drupal];
+	if(array_key_exists($drupal_user,$languages))
+		return $languages[$drupal_user];
 
 	return 'english';
 }
