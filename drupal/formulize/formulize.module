@@ -38,7 +38,7 @@ function formulize_help($section)
 {	
     switch ($section) {
     case 'admin/help#formulize':
-      $output = '<p>'. t('The Formulize module integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in Formulize. This module also ensures synchronization of the users and groups/roles between Drupal and Formulize.') .'</p>';
+      $output = '<p>'. t('The Formulize module integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in Formulize. This module also ensures synchronization of the users and roles between Drupal and Formulize.') .'</p>';
       $output .= '<p>' . t('Behaviours this module supports:') . '</p>';
       $output .= '<ul>';
 			$output .= '<li>' . t('Storing data about where Formulize is, how to connect to its database, etc') . '</li>';
@@ -54,7 +54,7 @@ function formulize_help($section)
       return $output;
      case 'admin/modules#description':
          // This description is shown in the listing at admin/modules.
-         return t('The Formulize module (Formulize !1) integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in <a href="!2">Formulize</a>. This module also ensures synchronization of the users and groups/roles between Drupal and Formulize.', array('!1' => '1.0', '!2' => 'http://freeformsolutions.ca/en/formulize/'));
+         return t('The Formulize module (Formulize !1) integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in <a href="!2">Formulize</a>. This module also ensures synchronization of the users and roles between Drupal and Formulize.', array('!1' => '1.0', '!2' => 'http://freeformsolutions.ca/en/formulize/'));
     }
 }
 
@@ -170,24 +170,23 @@ function formulize_sync() {
 function formulize_sync_submit($form, &$form_state) {
 	$form_values = $form_state['values'];
 	// take the submission and do the syncing
-	// check for conditions of syncing users (and OG groups)
+	// check for conditions of syncing users
 	if ($form_values['submit']) {
 		global $user;
 
-		if($user->uid!=1) {
-			drupal_set_message('Create users/groups can only be run by the first user.','error');
+// Regular Drupal access control should mean they won't be able to submit anyway
+/*		if($user->uid!=1) {
+			drupal_set_message(t('Create users/groups can only be run by the first user.'),'error');
 			return;
 		}
-
+		*/
+		
 		if($form_values['sync_users']) {
 			_formulize_sync_users( );
-			drupal_set_message(t('Synced Users.'));
+			drupal_set_message(t('Users have been synced with Formulize.'));
 		}
 
-		if($form_values['sync_groups']) {
-			_formulize_sync_groups( );
-			drupal_set_message(t('Synced Groups.'));
-		}
+
 	}
 }
 
@@ -238,6 +237,11 @@ function formulize_form(&$node) {
     '#weight' => -4,
     '#options' => _formulize_get_screens()
   );
+	
+	/*$form['formulize_screen'] = array(
+    '#prefix' => '<div class="formulize-screen-wrapper">',
+    '#suffix' => '</div>',
+  );*/
 
   return $form;
 }
@@ -276,7 +280,6 @@ function _formulize_get_screens () {
 		drupal_set_message(t('No screens found at this time.'));
 	}
 	return $options;
-
 }
 
 /**
@@ -384,57 +387,60 @@ function formulize_load($node) {
  */
 function formulize_view(&$node, $teaser = FALSE, $page = FALSE) {
 	
+		//sconnect to Formulize session
 	$formulize_path = variable_get('formulize_full_path', NULL);
-
 	require_once($formulize_path);
 	
-	ob_start();
+	ob_start(); // start capturing output from Formulize screens
 	
 	$formulize_screen_id = $node->screen_id;
 	
 	include XOOPS_ROOT_PATH . '/modules/formulize/index.php'; 
 
   $output = ob_get_clean();
-
+	
   $node = node_prepare($node, $teaser); // get it ready for display
-	// Add the output to the node.
-  if (isset($output)) {
-    $node->content['formulize_screen'] = array('#value' => $output, '#weight' => 1);
-  }
+  $node->content['formulize_screen'] = array(
+    '#value' => theme('formulize_display_screen', $output),
+    '#weight' => 0,
+  );
+
   return $node;
 }
 
-/**
- * Implementation of hook_theme().
- *
- * This lets us tell Drupal about our theme functions and their arguments.
+/*
+ * Implement hook_theme()
  */
-/*function formulize_theme() {
+function formulize_theme() {
   return array(
-    'formulize_screen' => array(
-      'arguments' => array('node'),
-			'template' => 'formulize-screen'
+    'formulize_display_screen' => array(
+      'arguments' => array('fz_screen' => NULL),
     ),
   );
 }
-*/
+
 /**
- * A custom theme function.
+ * Theme a Formulize screen
  *
- * By using this function to format our node-specific information, themes
- * can override this presentation if they wish. We also wrap the default
- * presentation in a CSS class that is prefixed by the module name. This
- * way, style sheets can modify the output without requiring theme code.
+ * @param $fz_screen
+ * The screen as an html dump.
+ * @return
+ * An HTML themed string.
  */
-/*
-function theme_formulize_screen($node) {
+
+function theme_formulize_display_screen($fz_screen) {
 	
-  $output = '<div class="formulize_screen"><h2>';
-  $output .= $node->screen_id . ': this is content';
-  $output .= '</h2></div>';
-  return $output;
+	$module_path = drupal_get_path('module', 'formulize');
+	$full_path = $module_path .'/formulize.css';
+	drupal_add_css($full_path);
+
+	$output = '<div id="formulize-screen">';
+	$output .= $fz_screen;
+	$output .= '</div>';
+
+	return $output;
 }
-*/
+
 
 /**
  * Implementatation of hook_user()
@@ -484,7 +490,7 @@ function _formulize_insert_user( $drupal )
 
 	$member_handler =& xoops_gethandler('member');
 
-        $xoops_user = $member_handler->createUser();
+  $xoops_user = $member_handler->createUser();
 	$xoops_user->setVar('uid',$drupal->uid);
 	$xoops_user->setVar('uname',$drupal->name);
 	$xoops_user->setVar('name',$drupal->name);
@@ -499,7 +505,7 @@ function _formulize_insert_user( $drupal )
 
 	// Normally you would use: $member_handler->insertUser( $xoops_user );
 	// We recreate some of the functionaly from kernel/user.php::insertUser because we do
-	// not want XOOPS to generate and ID, it is supplied by Drupal
+	// not want XOOPS to generate an ID, it is supplied by Drupal
 
 	$sql = sprintf("INSERT INTO %s (uid, uname, name, email, url, user_avatar, user_regdate, user_icq, user_from, user_sig, user_viewemail, actkey, user_aim, user_yim, user_msnm, pass, posts, attachsig, rank, level, theme, timezone_offset, last_login, umode, uorder, notify_method, notify_mode, user_occ, bio, user_intrest, user_mailok, language, openid, salt, user_viewoid, pass_expired, enc_type) VALUES ('%u', %s, %s, %s, %s, %s, '%u', %s, %s, %s, '%u', %s, %s, %s, %s, %s, '%u', '%u', '%u', '%u', %s, %s, '%u', %s, '%u', '%u', '%u', %s, %s, %s, '%u', %s, %s, %s, '%u', '%u', '%u')",
 		$db->prefix('users'), intval($xoops_user->getVar('uid')),
@@ -537,7 +543,7 @@ function _formulize_update_user( $drupal )
 
 	$member_handler =& xoops_gethandler('member');
 
-        $xoops_user = $member_handler->getUser($drupal->uid);
+  $xoops_user = $member_handler->getUser($drupal->uid);
 	$xoops_user->setVar('uname',$drupal->name);
 	$xoops_user->setVar('name',$drupal->name);
 	$xoops_user->setVar('pass',$drupal->pass);

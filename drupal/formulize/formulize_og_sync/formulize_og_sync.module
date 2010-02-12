@@ -149,6 +149,7 @@ function formulize_og_multiplier() {
     '#type' => 'checkboxes',
     '#title' => t('Choose the groups where you will need special Director and Instructor groups in Formulize'),
     '#description' => t('This version of the module will include two multiplier groups - Director and Instructor, as per the client\'s needs. You choices here will mean there will be three groups in Formulize. E.g. A "Summer Science Camp" group chosen here will create a "Summer Science Camp Directors" group and a "Summer Science Camp Instructor" group as well.'),
+//		'#default_value' => _formulize_get_group_multiplier_list(),
 		'#options' => _formulize_get_group_list()
   );
 
@@ -162,6 +163,22 @@ function formulize_og_multiplier() {
 	return $form;
 }
 
+/**
+ * Get existing list of multiplier group nodes
+ */
+/*
+function _formulize_get_multiplier_group_list() {
+	
+	$result = db_query("SELECT DISTINCT(nid) FROM {formulize_og_sync} fos");
+	
+	$multiplier_group_node_list = array();
+	while($row = db_fetch_object($result)) {
+		$multiplier_group_node_list[$row->nid] = $row->title;
+	}
+	
+	return $multiplier_group_node_list;
+}
+*/
 /**
  * Get list of group nodes
  * We want to assign some group nodes as "multipliers" for advanced permissions
@@ -206,7 +223,7 @@ function formulize_og_multiplier_submit($form, &$form_state) {
 	if ($form_values['submit']) {
 		foreach($form_values['formulize_group'] as $key => $value) {
 			if ($value != 0) {
-			        $node = node_load(array('nid' => $key));
+			  $node = node_load(array('nid' => $key));
  				$name  = trim( $node->title );
 				$description = trim( $node->og_description );
 
@@ -225,7 +242,7 @@ function formulize_og_multiplier_submit($form, &$form_state) {
 function formulize_og_sync_form_alter(&$form, $form_state, $form_id) {
 	 if($form_id == 'formulize_sync') {
 		
-			$form['sync_groups'] = array(
+		$form['sync_groups'] = array(
 		'#type' => 'checkbox',
 		'#title' => t('Create groups'),
 		'#default_value' => 0,
@@ -233,7 +250,36 @@ function formulize_og_sync_form_alter(&$form, $form_state, $form_id) {
 		'#description' => t('Check this when you are ready to create Formulize groups for every existing Drupal Organic Group. After the initial manual sync, for every change to your Drupal group, the changes will automatically propagate to Formulize.'),
 		);
 		
+		$form['#submit'] = array ('formulize_og_sync_groups_submit');
 	 }
+}
+
+/*
+ * Override formulize_sync_submit()
+ */
+
+function formulize_og_sync_groups_submit($form, &$form_state) {
+	$form_values = $form_state['values'];
+	// take the submission and do the syncing
+	// check for conditions of syncing users
+	if ($form_values['submit']) {
+		global $user;
+
+// Access control is already set in menu callback, no need to check again here
+/*		if($user->uid!=1) {
+			drupal_set_message(t('Create users/groups can only be run by the first user.'),'error');
+			return;
+		}
+		*/
+		if($form_values['sync_users']) {
+			_formulize_sync_users( );
+			drupal_set_message(t('Users have been synced with Formulize.'));
+		}
+		if($form_values['sync_groups']) {
+			_formulize_og_sync_groups( );
+			drupal_set_message(t('Organic groups have been synced with Formulize.'));
+		}
+	}
 }
 
 /**
@@ -256,23 +302,23 @@ function formulize_og_sync_nodeapi(&$node, $op, $teaser, $page) {
 		switch ($op) {
 		case 'insert': // $node object should be available
 			// get nid and create Fz group if one with same id doesn't already exist
-			//drupal_set_message(t('A corresponding Fz group has been created'));
+			drupal_set_message(t('A corresponding Formulize group has been created'));
 			_formulize_insert_group($node->nid,$name,$description);
 
 			//drupal_set_message(t('sync_nodeapi::insert'));
-			//drupal_set_message($name.t(' inserted.'));
+			//drupal_set_message($name . t(' inserted.'));
 			break;
 		case 'update':
 			_formulize_update_group($node->nid,$name,$description);
 
 			//drupal_set_message(t('sync_nodeapi::update'));
-			//drupal_set_message($name.t(' updated.'));
+			//drupal_set_message($name . t(' updated.'));
 			break;
 		case 'delete':
 			_formulize_delete_group($node);
 
 			//drupal_set_message(t('sync_nodeapi::delete'));
-			//drupal_set_message($name.t(' deleted.'));
+			//drupal_set_message($name . t(' deleted.'));
 			break;
 		case 'delete revision':
 			//drupal_set_message(t('sync_nodeapi::delete revision'));
@@ -290,18 +336,18 @@ function formulize_og_sync_og($op, $gid, $uid, $args) {
     case 'user insert':
 	if($args['is_active'])
 	{
-		//drupal_set_message('sync_og::user insert:'.$gid.':'.$uid);
+		//drupal_set_message(t('sync_og::user insert:') . $gid . ':' . $uid);
 		_formulize_add_user_to_group($gid,$uid);
 	}
       break;
     case 'user delete':
-	//drupal_set_message('sync_og::user delete:'.$gid.':'.$uid);
+	//drupal_set_message(t('sync_og::user delete:') . $gid . ':' . $uid);
 	_formulize_remove_user_from_group($gid,$uid);
       break;
     case 'user request':
       break;
     case 'user approve':
-	//drupal_set_message('sync_og::user approve:'.$gid.':'.$uid);
+	//drupal_set_message(t('sync_og::user approve:') . $gid . ':' . $uid);
 	_formulize_add_user_to_group($gid,$uid);
       break;
     case 'admin create':
@@ -384,7 +430,7 @@ function formulize_og_sync_enable() {
 /**
  * Sync Drupal groups with XOOPS
  */
-function _formulize_sync_groups( )
+function _formulize_og_sync_groups( )
 {
 	$db = _formulize_get_connection();
 
@@ -415,7 +461,7 @@ function _formulize_insert_group($nid,$name,$description,$formulize_group_kind='
 
 	$member_handler =& xoops_gethandler('member');
 
-        $xoops_group = $member_handler->createGroup();
+  $xoops_group = $member_handler->createGroup();
 	$xoops_group->setVar('name',_formulize_convert_group_name($name,$formulize_group_kind));
 	$xoops_group->setVar('description',$description);
 
@@ -479,7 +525,7 @@ function _formulize_update_group($nid,$name,$description)
 	}
 
 	$result = db_fetch_array(db_query("SELECT * FROM {formulize_og_sync} WHERE nid=%d AND formulize_group_kind='%s'",$nid,''));
-        $xoops_group = $member_handler->getGroup($result['formulize_groupid']);
+  $xoops_group = $member_handler->getGroup($result['formulize_groupid']);
 	$xoops_group->setVar('name',_formulize_convert_group_name($name,''));
 	$xoops_group->setVar('description',$description);
 
@@ -506,7 +552,7 @@ function _formulize_delete_group($drupal)
 	}
 
 	$result = db_fetch_array(db_query("SELECT * FROM {formulize_og_sync} WHERE nid=%d AND formulize_group_kind='%s'",$drupal->nid,''));
-        $xoops_group = $member_handler->getGroup($result['formulize_groupid']);
+  $xoops_group = $member_handler->getGroup($result['formulize_groupid']);
 
 	$member_handler->deleteGroup( $xoops_group );
 }

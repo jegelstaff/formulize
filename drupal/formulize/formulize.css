@@ -1,0 +1,35 @@
+
+/* Formulize css */
+
+#formulize-screen {
+	
+}
+
+div#listofentries {}
+
+form#controls {}
+
+div.formulize {}
+
+div.formulize table.outer {}
+
+div.formulize table.outer td.head {}
+
+div.formulize table.outer td.head input {
+	border: 1px solid #999;
+	background: #eee;
+}
+
+div.formulize table.outer a {
+	text-decoration: none;
+}
+
+div.formulize table.outer tr {
+	border: 0;
+}
+
+div.formulize table.outer td.even {
+	background: #eee;
+}
+
+div.formulize table.outer td.odd {}
