@@ -20,7 +20,6 @@ function formulize_install() {
 function formulize_uninstall() {
   drupal_uninstall_schema('formulize');
 	variable_del('formulize_full_path');
-	variable_del('formulize_db_prefix');
 }
 /**
  * Implementation of hook_schemea

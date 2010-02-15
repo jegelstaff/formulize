@@ -34,20 +34,17 @@ function formulize_og_sync_help($section)
 {	
     switch ($section) {
     case 'admin/help#formulize_og_sync':
-      $output = '<p>'. t('The Formulize OG Sync module ensures synchronization of groups/roles between Drupal and Formulize.') .'</p>';
+      $output = '<p>'. t('The Formulize OG Sync module ensures synchronization of OG groups between Drupal and Formulize.') .'</p>';
 			$output .= '<ul>';
-			$output .= '<li>' . t('Creating new groups in Formulize when groups are created in Organic Groups, including groups for each role created within a group') . '</li>';
-			$output .= '<li>' . t('Updating groups in Formulize when groups are updated in Organic Groups, including groups for each role created within a group') . '</li>';
-			$output .= '<li>' . t('Deleting groups in Formulize when groups are deleted in Organic Groups, including groups for each role created within a group.') . '</li>';
+			$output .= '<li>' . t('Creating new groups in Formulize when groups are created in Organic Groups') . '</li>';
+			$output .= '<li>' . t('Updating groups in Formulize when groups are updated in Organic Groups') . '</li>';
+			$output .= '<li>' . t('Deleting groups in Formulize when groups are deleted in Organic Groups') . '</li>';
 			$output .= '</ul>';
-      $output .= '<p>'. t('For more information please refer to the <a href="!1">Formulize web-site</a> which includes project information, documentation and support resources and more.', array('!1' => 'http://freeformsolutions.ca/en/formulize')) .'</p>';
+      $output .= '<p>'. t('For more information please refer to the <a href="!1">Formulize web-site</a> which includes project information, documentation and support resources and more.', array('!1' => 'http://freeformsolutions.ca/formulize')) .'</p>';
       return $output;
      case 'admin/modules#description':
-         // This description is shown in the listing at admin/modules.
-         return t('The Formulize OG Sync module integrates the Organic Groups and subscribers with Formulize groups.');
-			case 'admin/settings/formulize':
-         // This description is shown in the listing at admin/modules.
-         return t('The Formulize OG Sync module integrates the Organic Groups and subscribers with Formulize groups.');
+      // This description is shown in the listing at admin/modules.
+      return t('The Formulize OG Sync module integrates the Organic Groups and subscribers with Formulize groups.');
     }
 }
 
@@ -440,10 +437,9 @@ function _formulize_insert_group($nid,$name,$description,$formulize_group_kind='
 function _formulize_get_multipliers()
 {
 	// 8 is a constant of the Directors nid
-	// ? is a constant of the Instructors nid
-	//$multipliers = array(array('Directors',8),array('Instructors',?));
-	$multipliers = array(array('Directors',8));
-
+	// 123 is a constant of the Instructors nid
+	$multipliers = array(array('Directors',8),array('Instructors',123));
+	
 	return $multipliers;
 }
 
@@ -589,7 +585,7 @@ function _formulize_remove_user_from_group($nid,$uid)
 		if($result) {
 			$result = db_fetch_array(db_query("SELECT * FROM {formulize_og_sync} WHERE nid=%d AND formulize_group_kind='%s'",$nid,$multiplier[0]));
 			if($result) {
-				$member_handler->addUserToGroup($result['formulize_groupid'],$user_ids);
+				$member_handler->removeUsersFromGroup($result['formulize_groupid'],$user_ids);
 			}
 		}
 	}

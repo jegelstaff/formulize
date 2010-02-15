@@ -26,8 +26,6 @@
  * Allows users to access to Formulize through Drupal installations.
  */
 
-//require_once(drupal_get_path('module', 'formulize') .'/formulize_base.inc');
-
 /**
  * Implementation of hook_help().
  *
@@ -38,26 +36,23 @@ function formulize_help($section)
 {	
     switch ($section) {
     case 'admin/help#formulize':
-      $output = '<p>'. t('The Formulize module integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in Formulize. This module also ensures synchronization of the users and roles between Drupal and Formulize.') .'</p>';
+      $output = '<p>'. t('The Formulize module integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in Formulize. This module also ensures synchronization of the users and groups/roles between Drupal and Formulize.') .'</p>';
       $output .= '<p>' . t('Behaviours this module supports:') . '</p>';
       $output .= '<ul>';
 			$output .= '<li>' . t('Storing data about where Formulize is, how to connect to its database, etc') . '</li>';
-			$output .= '<li>' . t('Creates a content type to allow publishing of Formulize screens within Drupal.') . '</li>';
-			$output .= '<li>' . t('Creating new users in Formulize when new users are created in Drupal') . '</li>';
-			$output .= '<li>' . t('Updating users in Formulize when users are updated in Drupal (ie: name change, etc)') . '</li>';
-			$output .= '<li>' . t('Deleting users in Formulize when users are deleted in Drupal') . '</li>';
-			$output .= '<li>' . t('Creating new groups in Formulize when roles are created in Drupal') . '</li>';
-			$output .= '<li>' . t('Updating groups in Formulize when roles are updated in Drupal') . '</li>';
-			$output .= '<li>' . t('Deleting groups in Formulize when roles are deleted in Drupal') . '</li>';
+			$output .= '<li>' . t('Displaying data management screens from Formulize, inside Drupal') . '</li>';
+			$output .= '<li>' . t('Automatically synchronizing users with Drupal') . '</li>';
+			$output .= '<li>' . t('With the Formulize Organic Groups Synchronization module, automatically synchronizing Drupal organic groups with Formulize groups') . '</li>';
+			$output .= '<li>' . t('With the Formulize Roles Synchronization module, automatically synchronizing Drupal roles with Formulize groups') . '</li>';
       $output .= '</ul>';
-      $output .= '<p>'. t('For more information please refer to the <a href="!1">Formulize web-site</a> which includes project information, documentation and support resources and more.', array('!1' => 'http://freeformsolutions.ca/formulize')) .'</p>';
+      $output .= '<p>'. t('For more information please refer to the <a href="!1">Formulize website</a> which includes project information, support forum, documentation, and more.', array('!1' => 'http://freeformsolutions.ca/formulize')) .'</p>';
       return $output;
      case 'admin/modules#description':
          // This description is shown in the listing at admin/modules.
-         return t('The Formulize module (Formulize !1) integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in <a href="!2">Formulize</a>. This module also ensures synchronization of the users and roles between Drupal and Formulize.', array('!1' => '1.0', '!2' => 'http://freeformsolutions.ca/en/formulize/'));
+         return t('The Formulize module (Formulize !1) integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in <a href="!2">Formulize</a>. This module also ensures synchronization of the users and groups/roles between Drupal and Formulize.', array('!1' => '1.0', '!2' => 'http://freeformsolutions.ca/formulize/'));
 			case 'admin/settings/formulize':
       	// This description is shown on the main Formulize page.
-      	return t('The settings for the Formulize module allows you to set up the integration with Formulize. It assumes you have installed Formulize and have created forms and screens. First go to the Formulize settings to set up the full path to Formulize.');
+      	return t('The settings for the Formulize module allow you to tell Drupal where Formulize is.  So you must have already installed Formulize in your website.  Once you have, then you can tell Drupal the full path to Formulize so Drupal can display Formulize content inside your website, and synchronize users and groups/roles.');
 			case 'admin/settings/formulize/path':
       	// This description is shown on the Formulize path.
       	return t('Define the full path to the Formulize mainfile.php.');
@@ -123,7 +118,7 @@ function formulize_menu() {
     'access callback' => 'user_access',
     'access arguments' => array('administer site configuration'),
 		'weight' => -3,
-    'description' => 'Syncing between Drupal and Formulize.',
+    'description' => 'Synchronizing between Drupal and Formulize.',
     'type' => MENU_NORMAL_ITEM,
   );
 
@@ -157,13 +152,13 @@ function formulize_sync() {
 		'#title' => t('Create users'),
 		'#default_value' => 0,
 		'#weight' => '0',
-		'#description' => t('Check this when you are ready to create Formulize users for every existing Drupal user. After the initial manual sync, for every change to your Drupal user, the changes will automatically propagate to Formulize.'),
+		'#description' => t('Check this when you are ready to create Formulize users for every existing Drupal user. After the initial manual sync, for every change to your Drupal users, the changes will automatically propagate to Formulize.'),
 		);
 		
 	$form['hidden'] = array('#type' => 'value', '#value' => 'is_it_here');
   $form['submit'] = array(
 		'#type' => 'submit', 
-		'#value' => t('Sync with Formulize'),
+		'#value' => t('Synchronize with Formulize'),
 		'#weight' => '5'
 	);
 	
@@ -180,18 +175,10 @@ function formulize_sync_submit($form, &$form_state) {
 	if ($form_values['submit']) {
 		global $user;
 
-// Regular Drupal access control should mean they won't be able to submit anyway
-/*		if($user->uid!=1) {
-			drupal_set_message(t('Create users/groups can only be run by the first user.'),'error');
-			return;
-		}
-		*/
-		
 		if($form_values['sync_users']) {
 			_formulize_sync_users( );
-			drupal_set_message(t('Users have been synced with Formulize.'));
+			drupal_set_message(t('Users have been synchronized with Formulize.'));
 		}
-
 
 	}
 }
@@ -205,11 +192,9 @@ function formulize_node_info() {
     'formulize' => array(
       'name' => t('Formulize screen'),
       'module' => 'formulize',
-      'description' => t('Formulize is a data management and reporting toolkit.  You can embed data management applications inside Drupal, once you have configured them in Formulize.  See the <a href="/admin/settings/formulize"></a>admin settings</a> for more information.'),
+      'description' => t('Formulize is a data management and reporting system.  You can embed data management applications inside Drupal, once you have configured them in Formulize.  See the <a href="/admin/settings/formulize"></a>admin settings</a> for more information.'),
 			'has_title' => TRUE,
-			'title_label' => ('Screen Name'),
-			'has_body' => TRUE,
-			'body_label' => t('Description'),
+			'title_label' => ('Screen Name')
     )
   );
 }
@@ -231,10 +216,7 @@ function formulize_form(&$node) {
     	'#description' => t('This name will not be shown to users, but will show up in lists of nodes so you can find this node easily.')
   	);
 	}
-	if ($type->has_body) {
-    $form['body_field'] = node_body_field($node, $type->body_label, $type->min_word_count);
-  }
-	
+		
   $form['screen_id'] = array(
     '#type' => 'select',
     '#title' => t('Select the Formulize screen that you want to embed in this node'),
@@ -243,11 +225,6 @@ function formulize_form(&$node) {
     '#weight' => -4,
     '#options' => _formulize_get_screens()
   );
-	
-	/*$form['formulize_screen'] = array(
-    '#prefix' => '<div class="formulize-screen-wrapper">',
-    '#suffix' => '</div>',
-  );*/
 
   return $form;
 }
@@ -258,8 +235,6 @@ function formulize_form(&$node) {
  * Get screens
  */
 function _formulize_get_screens () {
-
-	//$db_prefix_formulize = variable_get('formulize_db_prefix', NULL);
 
 	$formulize_db = _formulize_get_connection();
 	
@@ -275,16 +250,16 @@ function _formulize_get_screens () {
 	$options = array();
 		
 	if($result = $formulize_db->query($sql)) {
-		
-		while($row = db_fetch_object($result)) {
-		$options[$row->sid] = $row->desc_form . ' - ' . $row->title;
-	}
+		while($row = $formulize_db->fetchArray($result)) {
+			$options[$row['sid']] = $row['desc_form'] . ' - ' . $row['title'];
+		}
 	}
 
 	if(count($options) == 0) {
 		$options[0] = t('No Formulize Screens Found');
 		drupal_set_message(t('No screens found at this time.'));
 	}
+	
 	return $options;
 }
 
@@ -420,8 +395,8 @@ function formulize_view(&$node, $teaser = FALSE, $page = FALSE) {
 function formulize_theme() {
   return array(
     'formulize_display_screen' => array(
-      'arguments' => array('fz_screen' => NULL),
-    ),
+      'arguments' => array('formulize_screen_output' => NULL)
+		)
   );
 }
 
@@ -434,14 +409,14 @@ function formulize_theme() {
  * An HTML themed string.
  */
 
-function theme_formulize_display_screen($fz_screen) {
+function theme_formulize_display_screen($formulize_screen_output) {
 	
 	$module_path = drupal_get_path('module', 'formulize');
 	$full_path = $module_path .'/formulize.css';
 	drupal_add_css($full_path);
 
 	$output = '<div id="formulize-screen">';
-	$output .= $fz_screen;
+	$output .= $formulize_screen_output;
 	$output .= '</div>';
 
 	return $output;
@@ -456,16 +431,12 @@ function theme_formulize_display_screen($fz_screen) {
 function formulize_user($op, &$edit, &$account, $category) {
 	switch($op) {
 		case 'after_update': // if user is modified
-			// see if user profile has changed and update
 			_formulize_update_user( $account );
 			break;
-		case 'insert': //if it's a new user being created
-			// check the $edit for uid
-			// if user doesn't already exist in formulize then insert
+		case 'insert': // if it's a new user being created
 			_formulize_insert_user( $account );
 			break;        
-		case 'delete':
-			// delete or de-activate on Fz
+		case 'delete': // if a user is being deleted
 			_formulize_delete_user( $account );
 		break;
 	}
@@ -477,18 +448,18 @@ function formulize_user($op, &$edit, &$account, $category) {
 function formulize_exist() { return TRUE;}
 
 /**
- * Sync Drupal users with XOOPS
+ * Sync Drupal users with Formulize
  */
 function _formulize_sync_users( )
 {
-	$results = db_query("SELECT u.uid FROM {users} u WHERE u.status <> 0 AND u.access <> 0 AND u.uid > 1 ORDER BY u.uid");
+	$results = db_query("SELECT u.uid FROM {users} u WHERE u.status = 1 AND u.uid > 1 ORDER BY u.uid");
 	while($result = db_fetch_array($results)) {
 		_formulize_insert_user(user_load(array('uid'=>$result['uid'])));
 	}
 }
 
 /**
- * Insert a Drupal user into XOOPS
+ * Insert a Drupal user into Formulize
  */
 function _formulize_insert_user( $drupal_user )
 {

@@ -43,7 +43,7 @@ function formulize_og_sync_schema() {
       'formulize_group_kind' => array(
         'type' => 'varchar',
 				'length' => 128,
-        'description' => 'The type of multiplier group.'
+        'description' => 'The type of group.'
       ),
 		),
 		'indexes' => array(

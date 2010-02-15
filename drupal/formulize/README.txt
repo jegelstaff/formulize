@@ -8,48 +8,38 @@ formulize (Formulize integration for Drupal-6.x)
 FEATURES
 --------
 
-The Formulize module integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in Formulize. This module also ensures synchronization of the users and groups/roles between Drupal and Formulize.
+The Formulize module integrates with the Formulize data management system and lets you create nodes in your Drupal website that are based on screens defined in Formulize. This module also ensures synchronization of the users and groups/roles between Drupal and Formulize.
 
 Behaviours this module supports:
 
 * Storing data about where Formulize is, how to connect to its database, etc
-* Creating new users in Formulize when new users are created in Drupal
-* Updating users in Formulize when users are updated in Drupal (ie: name change, etc)
-* Deleting users in Formulize when users are deleted in Drupal
-* Creating new groups in Formulize when roles are created in Drupal
-* Updating groups in Formulize when roles are updated in Drupal
-* Deleting groups in Formulize when roles are deleted in Drupal
-* Creating new groups in Formulize when groups are created in Organic Groups, including groups for each role created within a group
-* Updating groups in Formulize when groups are updated in Organic Groups, including groups for each role created within a group
-* Deleting groups in Formulize when groups are deleted in Organic Groups, including groups for each role created within a group.
+* Displaying data management screens from Formulize, inside Drupal
+* Automatically synchronizing users with Drupal
+* With the Formulize Organic Groups Synchronization module, automatically synchronizing Drupal organic groups with Formulize groups
+* With the Formulize Roles Synchronization module, automatically synchronizing Drupal roles with Formulize groups
+
 
 REQUIREMENTS
 ------------
 Drupal 6.x
 MySQL >= 4.1
-XOOPS
-Formulize
+Formulize (standalone version)
+
 
 INSTALL/CONFIG
 --------------
-1. Download and install XOOPS from
+1. Download and install Formulize from http://www.freeformsolutions.ca/formulize
 
-2. Download and install Formulize from 
+2. Copy the Formulize drupal module folder into your modules directory like you would any other module.
 
-2. Move this folder into your modules directory like you would any other module.
+3. Enable formulize module from administer >> modules.
 
-3. Set your $db_url in /path/to/drupal/sites/default/settings.php like this:
-   $db_url['default']   = mysql://user:pass@host/dbname
-   $db_url['formulize'] = mysql://user:pass@host/dbname
+4. Go to 'admin/settings/formulize' and setup the full path to the "mainfile.php" file where Formulize
+   is installed. ( example: /public_html/formulize/mainfile.php )
 
-4. Enable formulize module from administer >> modules.
+5. In the admin area, go to the Synchronize page and copy all your Drupal users into Formulize
 
-5. Go to 'admin/settings/formulize' and setup the full path where Formulize
-   is installed. ( example: /public_html/xoops/mainfile.php )
-
-
-6. The formulize module is available now.
-
+6. Create screens in Formulize to control how you want forms and data to be displayed.  Then create Formulize nodes in Drupal that display those screens.
 
 
 UNINSTALL
