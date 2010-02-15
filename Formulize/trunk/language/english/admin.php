@@ -104,6 +104,7 @@ define("_AM_ELE_OPT_DESC2","Select the default value by checking the radio butto
 define("_AM_ELE_OPT_UITEXT", "The text visible to the user can be different from what is stored in the database.  This is useful if you want to have numbers saved in the database, but text visible to the user so they can make their selection.  To do this, use the \"pipe\" character (usually above the Enter key) like this:  \"10|It has been 10 days since I visited this website\"");
 define("_AM_ELE_ADD_OPT","Add %s options");
 define("_AM_ELE_ADD_OPT_SUBMIT","Add");
+define("_AM_ELE_OPT_CHANGEUSERVALUES", "When saving changes to these options, also change the values users have made in the form to match the new options (ie: where users had selected the old first option, replace their selection with the new first option instead)");
 define("_AM_ELE_SELECTED","Selected");
 define("_AM_ELE_CHECKED","Checked");
 define("_AM_ELE_MULTIPLE","Allow multiple selections");

@@ -770,6 +770,79 @@ class formulizeDataHandler  {
 		return true;
 	}
 	
+	// this function changes selected options that users have made in radio buttons, checkboxes or selectboxes so that they match new options specified by the user...ie: old first option converted to new first option, etc
+	// newValues is the array that is about to be passed in as the new $ele_value[2], which is the array of options
+	// element_id_or_handle is the element we're working with, cannot pass in object!
+	// this function must be called prior to the new values actually being inserted to the element in the DB, since this function retrieves the current options for the element from the db in order to make a comparison
+	function changeUserSubmittedValues($element_id_or_handle, $newValues) {
+		if(!$element = _getElementObject($element_id_or_handle)) {
+			return false;
+		}
+		
+		// multiple selection elements have data saved with the special prefix to separate values in the cell:  *=+*:
+		// we need to determine if this element allows multiple values and prepare to handle it
+		$ele_type = $element->getVar('ele_type');
+		$ele_value = $element->getVar('ele_value');
+		switch($ele_type) {
+			case "check":
+			case "radio":
+				$oldValues = array_keys($ele_value);
+				break;
+			case "select":
+				$oldValues = array_keys($ele_value[2]);
+				// special check...if this is a linked selectbox or a fullnames/usernames selectbox, then fail
+				if(!is_array($ele_value[2]) OR isset($ele_value[2]["{FULLNAMES}"]) OR isset($ele_value[2]["{USERNAMES}"])) {
+					return false;
+				}
+				break;
+		}
+		$prefix = ($ele_type == "check" OR ($ele_type == "select" AND $ele_value[1])) ? "#*=:*" : ""; // multiple selection possible? if so, setup prefix
+		$newValues = array_keys($newValues);
+		global $xoopsDB;
+		$sql = "SELECT `entry_id`, `".$element->getVar('ele_handle')."` FROM ".$xoopsDB->prefix("formulize_".$this->fid);
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$updateSql = array();
+		while($array = $xoopsDB->fetchArray($res)) {
+			// do a search/replace inside the returned value, then construct one insert for each (yuck)
+			// necessary to do the search/replace inside PHP where we have more control, since the possible matching conditions when multiple options can be selected, are prohibitively difficult (impossible?) to capture.
+			if($prefix) {
+				$currentValues = explode($prefix, ltrim($array[$element->getVar('ele_handle')], $prefix)); // since prefix is at the beginning of the string, we need to remove it before doing the explode
+			} else {
+				$currentValues = array(0=>$array[$element->getVar('ele_handle')]);				
+			}
+			for($i=0;$i<count($newValues);$i++) {
+				if($newValues[$i] === $oldValues[$i]) { // ignore values that haven't changed
+					continue;
+				}
+				$foundIndex = array();
+				$key = array_search($oldValues[$i], $currentValues);
+				if($key !== false AND !isset($foundIndex[$key])) { // if we find one of the old values in the current values, then swap in the new value it should have
+					$currentValues[$key] = $newValues[$i];
+					$foundIndex[$key] = true;
+					if(count($foundIndex)==count($currentValues)) {
+						break; // all currentValues have been replaced, so let's move on
+					}
+				}
+			}
+			if($prefix) {
+				$replacementString = $prefix . implode($prefix,$currentValues); // put prefix back at the beginning after the implode
+			} else {
+				$replacementString = $currentValues[0];
+			}
+			$updateSql[] = "UPDATE ".$xoopsDB->prefix("formulize_".$this->fid)." SET `".$element->getVar('ele_handle')."` = '".mysql_real_escape_string($replacementString)."' WHERE entry_id = ".$array['entry_id'];
+		}
+		if(count($updateSql) > 0) { // if we have some SQL generated, then run it.
+			foreach($updateSql as $thisSql) {
+				//print $thisSql."<br>";
+				if(!$res = $xoopsDB->query($thisSql)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 	
 }
 	

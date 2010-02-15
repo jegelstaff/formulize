@@ -397,6 +397,27 @@ if( !empty($ele_id) AND $clone == 0){
 			break;
 		}
 		
+		// check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
+		if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
+			if(!isset($data_handler)) {
+				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+				$data_handler = new formulizeDataHandler($id_form);
+			}
+			switch($ele_type) {
+				case "radio":
+				case "check":
+					$newValues = $value;
+					break;
+				case "select":
+					$newValues = $value[2];
+					break;
+			}
+			if(!$changeResult = $data_handler->changeUserSubmittedValues($ele_id, $newValues)) {
+				print "Error updating user submitted values for the options in element $ele_id";
+			}
+		}
+		
+		
 		$element->setVar('ele_uitext', $uitext);
 		$element->setVar('ele_value', $value);
 		$element->setVar('id_form', $id_form);

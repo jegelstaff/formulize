@@ -103,6 +103,11 @@ $opt_tray->addElement($clearDefault);
 $addoptionstray_temp = addOptionsTray();
 $opt_tray->addElement($addoptionstray_temp);
 
+// add setting to flag whether to change corresponding values in people's entries, when webmaster changes options for questions
+$changeUserValues = new xoopsFormCheckbox('', 'changeuservalues');
+$changeUserValues->addOption(1, _AM_ELE_OPT_CHANGEUSERVALUES);
+$opt_tray->addElement($changeUserValues);
+
 $form->addElement($opt_tray);
 
 // delimiter option added June 7 2006 -- jwe

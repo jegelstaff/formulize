@@ -90,6 +90,11 @@ for( $i=0; $i<count($options); $i++ ){
 	$opt_tray->addElement($options[$i]);
 }
 
+// add setting to flag whether to change corresponding values in people's entries, when webmaster changes options for questions
+$changeUserValues = new xoopsFormCheckbox('', 'changeuservalues');
+$changeUserValues->addOption(1, _AM_ELE_OPT_CHANGEUSERVALUES);
+$opt_tray->addElement($changeUserValues);
+
 list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]); // two values passed back by this function when called from a selectbox
 // if there's no selected element, then if FULLNAMES or USERNAMES are in effect, then use the profile form if one is specified in the module config options
 $selectedLinkFormId = "";
