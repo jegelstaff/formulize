@@ -78,6 +78,8 @@ function formulize_access($op, $node, $account) {
 			return user_access('edit formulize content', $account);
 		case 'delete' :
 			return user_access('delete formulize content', $account);
+		case 'view' :
+		  return user_access('access formulize content', $account);
 	}
 }
 
