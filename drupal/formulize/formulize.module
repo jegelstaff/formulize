@@ -192,7 +192,7 @@ function formulize_sync_submit($form, &$form_state) {
 function formulize_node_info() {
   return array(
     'formulize' => array(
-      'name' => t('Formulize screen'),
+      'name' => t('Form'),
       'module' => 'formulize',
       'description' => t('Formulize is a data management and reporting system.  You can embed data management applications inside Drupal, once you have configured them in Formulize.  See the <a href="/admin/settings/formulize"></a>admin settings</a> for more information.'),
 			'has_title' => TRUE,
