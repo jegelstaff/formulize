@@ -1,3 +1,20 @@
+CREATE TABLE `formulize_applications` {
+  `appid` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL default '',
+  `description` text NOT NULL,
+  PRIMARY KEY (`appid`)
+} TYPE=MyISAM;
+
+CREATE TABLE `formulize_application_form_link` (
+  `linkid` int(11) NOT NULL auto_increment,
+  `appid` int(11) NOT NULL default 0,
+  `fid` int(11) NOT NULL default 0
+  PRIMARY KEY (`linkid`),
+  INDEX i_fid (`fid`),
+  INDEX i_appid (`appid`)
+) TYPE=MyISAM;
+
+
 CREATE TABLE `formulize_group_filters` (
   `filterid` int(11) NOT NULL auto_increment,
   `fid` int(11) NOT NULL default 0,
@@ -239,7 +256,7 @@ CREATE TABLE formulize_id (
 CREATE TABLE formulize (
   id_form int(5) NOT NULL default '0',
   ele_id smallint(5) unsigned NOT NULL auto_increment,
-  ele_type varchar(10) NOT NULL default '',
+  ele_type varchar(100) NOT NULL default '',
   ele_caption text NOT NULL default '',
   ele_desc text NULL,
   ele_colhead varchar(255) NULL default '',

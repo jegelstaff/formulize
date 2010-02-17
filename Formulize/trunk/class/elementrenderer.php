@@ -368,11 +368,22 @@ class formulizeElementRenderer{
 					}
 					
 					if(!isset($cachedSourceValuesQ[$sourceValuesQ])) {
+						$element_handler = xoops_getmodulehandler('elements', 'formulize');
+						$sourceElementObject = $element_handler->get($boxproperties[1]);
+						if($sourceElementObject->isLinked) {
+							// need to jump one more level back to get value that this value is pointing at
+							$sourceEleValue = $sourceElementObject->getVar('ele_value');
+							$originalSource = explode("#*=:*", $sourceEleValue[2]);
+							include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+							$data_handler = new formulizeDataHandler($originalSource[0]);
+						}
 						$reslinkedvaluesq = $xoopsDB->query($sourceValuesQ);
 						if($reslinkedvaluesq) {
 							while($rowlinkedvaluesq = $xoopsDB->fetchRow($reslinkedvaluesq)) {
-								$slashfreevalue = stripslashes($rowlinkedvaluesq[0]);
-								$linkedElementOptions[$rowlinkedvaluesq[0]] = htmlspecialchars(strip_tags($rowlinkedvaluesq[1]));
+								if($sourceElementObject->isLinked) {
+									$rowlinkedvaluesq[1] = $data_handler->getElementValueInEntry(trim($rowlinkedvaluesq[1], ","), $originalSource[1]);
+								}
+								$linkedElementOptions[$rowlinkedvaluesq[0]] = strip_tags($rowlinkedvaluesq[1]);
 							}
 						}
 						$cachedSourceValuesQ[$sourceValuesQ] = $linkedElementOptions;
@@ -923,7 +934,12 @@ class formulizeElementRenderer{
 			 * Adding colorpicker form element
 			 */
 			default:
-				return false;
+				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$e.".php")) {
+					$elementTypeHandler = xoops_getmodulehandler($e);
+					$form_ele = $elementTypeHandler->render($this->_ele, $form_ele_id, $isDisabled); // form is the form object, $value is the element-specific values that we have loaded, $ele_id is the element id
+				} else {
+					return false;
+				}
 			break;
 		}
 		if(is_object($form_ele) AND !$isDisabled) {

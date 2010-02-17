@@ -313,6 +313,12 @@ switch($op){
 			case 'colorpick':
 				$useDisable = true;
 				break;
+			default:
+				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type.".php")) {
+					$elementTypeHandler = xoops_getmodulehandler($ele_type);
+					$form = $elementTypeHandler->adminUI($form, $value, $ele_id); // form is the form object, $value is the element-specific values that we have loaded, $ele_id is the element id
+				}
+				break;
 		}
 		if( $req ){
 			$ele_req = new XoopsFormCheckBox(_AM_ELE_REQ, 'ele_req', $element->getVar('ele_req'));
@@ -426,7 +432,7 @@ switch($op){
 		// data type controls ... added May 31 2009, jwe 
     // only do it for existing elements where the datatype choice is relevant
 		// do not do it for encrypted elements
-		if(($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type == "radio" OR $ele_type == "checkbox" OR $ele_type == "derived") AND !$encryptState) {
+		if(($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type == "radio" OR $ele_type == "checkbox" OR $ele_type == "derived" OR (isset($elementTypeHandler) AND $elementTypeHandler->needsDataType)) AND !$encryptState) {
                         if(!empty($ele_id)) {
                                 // get the current type...
                                 global $xoopsDB;

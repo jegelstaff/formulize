@@ -60,6 +60,8 @@ $modversion['tables'][14] = "formulize_screen";
 $modversion['tables'][15] = "formulize_screen_multipage";
 $modversion['tables'][16] = "formulize_screen_listofentries";
 $modversion['tables'][17] = "formulize_entry_owner_groups";
+$modversion['tables'][18] = "formulize_application_form_link";
+$modversion['tables'][19] = "formulize_applications";
 
 
 // Admin things
@@ -80,6 +82,18 @@ $modversion['templates'][3]['file'] = 'calendar_mini_month.html';
 $modversion['templates'][3]['description'] = '';
 $modversion['templates'][4]['file'] = 'calendar_micro_month.html';
 $modversion['templates'][4]['description'] = '';
+$modversion['templates'][5]['file'] = 'admin/ui.html';
+$modversion['templates'][5]['description'] = '';
+$modversion['templates'][6]['file'] = 'admin/ui-tabs.html';
+$modversion['templates'][6]['description'] = '';
+$modversion['templates'][7]['file'] = 'admin/ui-accordion.html';
+$modversion['templates'][7]['description'] = '';
+$modversion['templates'][8]['file'] = 'admin/application_settings.html';
+$modversion['templates'][8]['description'] = '';
+$modversion['templates'][9]['file'] = 'admin/application_forms.html';
+$modversion['templates'][9]['description'] = '';
+$modversion['templates'][10]['file'] = 'admin/application_forms_accordion_sections.html';
+$modversion['templates'][10]['description'] = '';
 
 
 //	Module Configs

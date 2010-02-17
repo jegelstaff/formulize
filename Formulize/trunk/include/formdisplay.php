@@ -1964,6 +1964,10 @@ function writeHiddenSettings($settings, $form) {
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
 function drawJavascript($nosave) {
 global $xoopsUser;
+
+// Left in for possible future use by the rankOrderList element type or other elements that might use jQuery
+//print "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-1.3.2.min.js\"></script><script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-ui-1.7.2.custom.min.js\"></script>";
+//$GLOBALS['formulize_jQuery_included'] = true;
 print "\n<script type='text/javascript'>\n";
 
 print " initialize_formulize_xhr();\n";

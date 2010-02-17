@@ -114,8 +114,9 @@ if( $_POST['op'] != 'save' ){
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=select">'._AM_ELE_SELECT.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=checkbox">'._AM_ELE_CHECK.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=radio">'._AM_ELE_RADIO.'</a></td></tr>
-	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=yn">'._AM_ELE_YN.'</a></td></tr>
-	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=date">'._AM_ELE_DATE.'</a></td></tr>
+	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=yn">'._AM_ELE_YN.'</a></td></tr>';
+	//<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=rankOrderList">'._AM_ELE_RANKORDERLIST.'</a></td></tr> // this is an experiment on doing a "class-based" element, but the complexities of the data storage for the envisioned type mean it has been put on indefinite hold.  The necessary rough-ins are still in the code to support class-based elements though in the future.
+	echo '<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=date">'._AM_ELE_DATE.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=sep">'._AM_ELE_SEP.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=subform">'._AM_ELE_SUBFORM.'</a></td></tr>
 	<tr><td class="even"><li><a href="elements.php?title='.$title.'&op=edit&amp;ele_type=grid">'._AM_ELE_GRID.'</a></td></tr>
@@ -150,7 +151,7 @@ if( $_POST['op'] != 'save' ){
 	$criteria = new Criteria(1,1);
 	$criteria->setSort('ele_order');
 	$criteria->setOrder('ASC');
-	$elements =& $formulize_mgr->getObjects($criteria,$id_form);
+	$elements =& $formulize_mgr->getObjects2($criteria,$id_form);
 	$class = "odd";
 	foreach( $elements as $i ){
 		$id = $i->getVar('ele_id');

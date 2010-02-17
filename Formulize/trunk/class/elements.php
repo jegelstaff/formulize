@@ -39,12 +39,15 @@ global $xoopsDB;
 define('formulize_TABLE', $xoopsDB->prefix("formulize"));
 
 class formulizeformulize extends XoopsObject {
+	
+	var $isLinked;
+	
 	function formulizeformulize(){
 		$this->XoopsObject();
 	//	key, data_type, value, req, max, opt
 		$this->initVar("id_form", XOBJ_DTYPE_INT, NULL, false);
 		$this->initVar("ele_id", XOBJ_DTYPE_INT, NULL, false);
-		$this->initVar("ele_type", XOBJ_DTYPE_TXTBOX, NULL, true, 10);
+		$this->initVar("ele_type", XOBJ_DTYPE_TXTBOX, NULL, true, 100);
 		$this->initVar("ele_caption", XOBJ_DTYPE_TXTAREA);
 		// added descriptive text June 6 2006 -- jwe
 		$this->initVar("ele_desc", XOBJ_DTYPE_TXTAREA);
@@ -64,6 +67,7 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("ele_disabled", XOBJ_DTYPE_TXTBOX); // added June 17 2007 by jwe
 		$this->initVar("ele_encrypt", XOBJ_DTYPE_INT); // added July 15 2009 by jwe
 		$this->initVar("ele_filtersettings", XOBJ_DTYPE_ARRAY);
+		
 	}
 	
 }
@@ -106,6 +110,13 @@ class formulizeElementsHandler {
 		if ($numrows == 1) {
 			$element = new formulizeformulize();
 			$element->assignVars($this->db->fetchArray($result));
+			$element->isLinked = false;
+			if($element->getVar('ele_type')=="select") {
+				$ele_value = $element->getVar('ele_value');
+				if(!is_array($ele_value[2])) {
+					$element->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
+				}
+			} 
 			$cachedElements[$id] = $element;
 			return $element;
 		}
@@ -252,38 +263,6 @@ class formulizeElementsHandler {
 		return true;
 	}
 
-	// deprecated?
-	function &getObjects($criteria = null, $id_form , $id_as_key = false){
-		$ret = array();
-		$limit = $start = 0;
-		$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE id_form='.$id_form;
-
-		if( isset($criteria) && is_subclass_of($criteria, 'criteriaelement') ){
-		//	$sql .= ' '.$criteria->renderWhere();
-			if( $criteria->getSort() != '' ){
-				$sql .= ' ORDER BY '.$criteria->getSort().' '.$criteria->getOrder();
-			}
-			$limit = $criteria->getLimit();
-			$start = $criteria->getStart();
-		}
-		$result = $this->db->query($sql, $limit, $start);
-
-		if( !$result ){
-			return false;
-		}
-		while( $myrow = $this->db->fetchArray($result) ){
-			$elements = new formulizeformulize();
-			$elements->assignVars($myrow);
-			if( !$id_as_key ){
-				$ret[] =& $elements;
-			}else{
-				$ret[$myrow['ele_id']] =& $elements;
-			}
-			unset($elements);
-		}
-		return $ret;
-	}
-
 	function &getObjects2($criteria = null, $id_form , $id_as_key = false){
 		$ret = array();
 		$limit = $start = 0;
@@ -308,6 +287,13 @@ class formulizeElementsHandler {
 		while( $myrow = $this->db->fetchArray($result) ){
 			$elements = new formulizeformulize();
 			$elements->assignVars($myrow);
+			$elements->isLinked = false;
+			if($elements->getVar('ele_type')=="select") {
+				$ele_value = $elements->getVar('ele_value');
+				if(!is_array($ele_value[2])) {
+					$elements->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
+				}
+			}
 			if( !$id_as_key ){
 				$ret[] =& $elements;
 			}else{

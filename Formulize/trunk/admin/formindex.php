@@ -406,7 +406,7 @@ function cloneFormulize($title, $clonedata) {
     
         // Need to create the new data table now -- July 1 2007
         $formHandler =& xoops_getmodulehandler('forms', 'formulize');
-        if(!$tableCreationResult = $formHandler->createDataTable($newfid, $fid, $oldNewEleIdMap)) { // THE CLONED FORM WILL HAVE NO DATA TYPES!  ALL FIELDS WILL BE TEXT.  WE SHOULD CREATE A MORE COMPLEX TABLE CREATION MECHANISM FOR CLONING FORMS TO THE TYPES CAN BE PRESERVED.
+        if(!$tableCreationResult = $formHandler->createDataTable($newfid, $fid, $oldNewEleIdMap)) { 
                 print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
         }
         
@@ -1223,6 +1223,8 @@ function patch40() {
 		$sql['drop_from_formulize_id_groupscope'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `groupscope`";
 		$sql['drop_from_formulize_id_showviewentries'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `showviewentries`";
 		$sql['add_filtersettings'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_filtersettings` text NOT NULL";
+		$sql['ele_type_100'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " CHANGE `ele_type` `ele_type` varchar(100) NOT NULL default ''";
+
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
 				if($key === "add_encrypt") {

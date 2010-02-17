@@ -108,7 +108,6 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false)
 	$all_users = array();
   $usersByGroup = array();
 	foreach($groups as $group) {
-		if($group == XOOPS_GROUP_USERS) { continue; }
 		$groupusers = $member_handler->getUsersByGroup($group, true);
 		if(!$requireAllGroups) {
 			$all_users = array_merge((array)$groupusers, $all_users);
@@ -2464,7 +2463,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
     
     // user list is potentially different for each entry...ignore anything that was passed in for $groups
     if(count($groups) == 0) { // if no groups specified as the owner of the current entry, then let's get that from the table
-      $data_handler = xoops_getmodulehandler('data', 'formulize');
+      $data_handler = new formulizeDataHandler($fid);
     	$groups = $data_handler->getEntryOwnerGroups($entry);
     }
 		

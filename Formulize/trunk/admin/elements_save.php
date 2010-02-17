@@ -395,6 +395,12 @@ if( !empty($ele_id) AND $clone == 0){
 				}
 				$value[] = $v2;
 			break;
+			default:
+			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type.".php")) {
+				$elementTypeHandler = xoops_getmodulehandler($ele_type);
+				list($value, $uitext) = $elementTypeHandler->adminSave($ele_value);
+			}
+			break;
 		}
 		
 		// check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
