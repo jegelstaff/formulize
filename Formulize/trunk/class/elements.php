@@ -274,10 +274,15 @@ class formulizeElementsHandler {
 		if( isset($criteria) && is_subclass_of($criteria, 'criteriaelement') ){
 			$sql .= $criteria->render() ? ' AND ('.$criteria->render().')' : '';
 			if( $criteria->getSort() != '' ){
-				$sql .= ' ORDER BY '.$criteria->getSort().' '.$criteria->getOrder();
+				$criteriaByClause = ' ORDER BY '.$criteria->getSort().' '.$criteria->getOrder();
 			}
 			$limit = $criteria->getLimit();
 			$start = $criteria->getStart();
+		}
+		if(!isset($criteriaByClause)) {
+			$sql .= " ORDER BY ele_order ASC";
+		} else {
+			$sql .= $criteriaByClause;
 		}
 		$result = $this->db->query($sql, $limit, $start);
 

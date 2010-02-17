@@ -2,19 +2,29 @@
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/jquery/jquery-ui-1.7.2.custom.min.js"></script>
 
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/jquery/css/start/jquery-ui-1.7.2.custom.css">
+<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/admin/ui.css">
 
 <div class="admin-ui">
 
 <{if $breadcrumbtrail}>
 <p>
+
 <{counter start=0 assign=crumbcount print=false}>
 <{foreach from=$breadcrumbtrail item=crumb}>
+
 <{if $crumbcount}>
  >
 <{/if}>
-<a href="ui.php?<{$crumb.url}>"><{$crumb.text}></a>
+
+<{if $crumb.url}>
+ <a href="ui.php?<{$crumb.url}>"><{$crumb.text}></a>
+<{else}>
+ <{$crumb.text}>
+<{/if}>
+  
 <{counter}>
 <{/foreach}>
+
 </p>
 <{/if}>
 
@@ -23,3 +33,19 @@
 <{/if}>
   
 </div><!-- End admin-ui -->
+
+<script type="text/javascript">
+
+  $(".savebutton").click(function() {
+    $.post("save.php", $($(this).attr("name")).serialize(), function(data) {
+        if(data) {
+          alert(data);
+        }
+    });
+  });
+
+  $().ajaxError(function () {
+    alert("There was an error when saving your data.  Please try again.");
+  });
+  
+</script>

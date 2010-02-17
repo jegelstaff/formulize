@@ -29,39 +29,68 @@
 
 // this file gets all the data about applications, so we can display the Settings/forms/relationships tabs for applications
 
+include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
+
 // need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
 $aid = intval($_GET['aid']);
 $appName = "All forms"; // needs to be set based on aid in future
-$form_handler = xoops_getmodulehandler('forms', 'formulize');
-$formObjects = $form_handler->getAllForms(); // returns array of objects
-
-// $forms array is going to be used to populate accordion sections, so it must contain the following:
-// a 'name' key and a 'content' key for each form that is found
-// Name will be the heading of the section, content is data used in the template for each section
-$forms = array();
-$i = 1; 
-foreach($formObjects as $thisForm) {
-  $forms[$i]['name'] = $thisForm->getVar('title');
-  $forms[$i]['content']['fid'] = $thisForm->getVar('id_form');
-  $i++;
+$elements = array();
+if($_GET['fid'] != "new") {
+  $fid = intval($_GET['fid']);
+  $form_handler = xoops_getmodulehandler('forms', 'formulize');
+  $formObject = $form_handler->get($fid);
+  $formName = $formObject->getVar('title');
+  $singleentry = $formObject->getVar('singleentry');
+  $element_handler = xoops_getmodulehandler('elements', 'formulize');
+  $elementObjects = $element_handler->getObjects2(null, $fid);
+  // $elements array is going to be used to populate accordion sections, so it must contain the following:
+  // a 'name' key and a 'content' key for each form that is found
+  // Name will be the heading of the section, content is data used in the template for each section
+  $i = 1; 
+  foreach($elementObjects as $thisElement) {
+    $elements[$i]['name'] = printSmart($thisElement->getVar('ele_caption'));
+    $elements[$i]['content']['ele_id'] = $thisElement->getVar('ele_id');
+    $i++;
+  }
+} else {
+  $fid = $_GET['fid'];
 }
 
-$common['aid'] = $aid;
 
-// adminPage tabs sections must contain a name, template and content key
-// content is the data the is available in the tab as $content.foo
-// any declared sub key of $content, such as 'forms' will be assigned to accordions
-// accordion content is available as $sectionContent.foo
-$adminPage['tabs'][1]['name'] = "Forms";
-$adminPage['tabs'][1]['template'] = "db:admin/application_forms.html";
+// common values should be assigned to all tabs
+$common['name'] = $formName;
+$common['fid'] = $fid;
+
+$permissions = array();
+$permissions['hello'] = "Hello Permission World";
+
+// need to get screen data so this can be populated properly
+$screens = array();
+$screens['hello'] = "Hello Screen World";
+
+$settings = array();
+$settings['singleentry'] = $singleentry ? $singleentry : "empty"; // this value can be nothing, ie: "", but we need to pass something to the template so it can react properly to the "" setting
+
+$adminPage['tabs'][1]['name'] = "Elements";
+$adminPage['tabs'][1]['template'] = "db:admin/form_elements.html";
 $adminPage['tabs'][1]['content'] = $common;
-$adminPage['tabs'][1]['content']['forms'] = $forms; 
+$adminPage['tabs'][1]['content']['elements'] = $elements;
 
-$adminPage['tabs'][2]['name'] = "Settings";
-$adminPage['tabs'][2]['template'] = "db:admin/application_settings.html";
-$adminPage['tabs'][2]['content'] = $common;
+$adminPage['tabs'][2]['name'] = "Permissions";
+$adminPage['tabs'][2]['template'] = "db:admin/form_permissions.html";
+$adminPage['tabs'][2]['content'] = $permissions + $common; 
+
+$adminPage['tabs'][3]['name'] = "Screens";
+$adminPage['tabs'][3]['template'] = "db:admin/form_screens.html";
+$adminPage['tabs'][3]['content'] = $screens + $common;
+
+$adminPage['tabs'][4]['name'] = "Settings";
+$adminPage['tabs'][4]['template'] = "db:admin/form_settings.html";
+$adminPage['tabs'][4]['content'] = $settings + $common;
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
+$breadcrumbtrail[2]['url'] = "page=application&aid=$aid";
 $breadcrumbtrail[2]['text'] = $appName;
+$breadcrumbtrail[3]['text'] = $formName;
 

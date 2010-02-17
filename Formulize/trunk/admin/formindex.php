@@ -1211,6 +1211,26 @@ function patch40() {
 ) TYPE=MyISAM;";
 		}
 	
+		if(!in_array($xoopsDB->prefix("formulize_applications"), $existingTables)) {
+			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_applications")."` {
+  `appid` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL default '',
+  `description` text NOT NULL,
+  PRIMARY KEY (`appid`)
+} TYPE=MyISAM;";
+		}
+
+		if(!in_array($xoopsDB->prefix("formulize_application_form_link"), $existingTables)) {
+			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_application_form_link")."` (
+  `linkid` int(11) NOT NULL auto_increment,
+  `appid` int(11) NOT NULL default 0,
+  `fid` int(11) NOT NULL default 0
+  PRIMARY KEY (`linkid`),
+  INDEX i_fid (`fid`),
+  INDEX i_appid (`appid`)
+) TYPE=MyISAM;";
+		}
+	
 		$sql['add_encrypt'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_encrypt` tinyint(1) NOT NULL default '0'";
 		$sql['add_lockedform'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `lockedform` tinyint(1) NULL default NULL";
 		$sql['drop_from_formulize_id_admin'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `admin`";

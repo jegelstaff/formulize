@@ -50,7 +50,10 @@ if(isset($_GET['op'])) {
 $adminPage = array();
 switch($_GET['page']) {
   case "application":
-    include ("application.php"); 
+    include "application.php"; 
+    break;
+  case "form":
+    include "form.php";
     break;
 }
 
@@ -58,7 +61,8 @@ switch($_GET['page']) {
 if(isset($_GET['tab'])) {
   foreach($adminPage['tabs'] as $selected=>$tabData) {
     if(strtolower($tabData['name']) == $_GET['tab']) {
-      $adminPage['tabs']['selected'] = $selected-1;
+      $adminPage['tabselected'] = $selected-1;
+      break;
     }
   }
 }

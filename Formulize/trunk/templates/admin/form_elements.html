@@ -1,0 +1,4 @@
+<h1>Add an element to the form <i><{$content.name}></i></h1>
+<p>Need to put list of elements here that we can click on to add to the form</p>
+<h1>Manage the elements in the form <i><{$content.name}></i></h1>
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_accordion_sections.html" sections=$content.elements}>

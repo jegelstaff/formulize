@@ -1,0 +1,22 @@
+<h1>Settings for the form <i><{$content.name}></i></h1>
+<form id="form-<{$number}>">
+<{* form elements must be named with their table name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a field in the database to update *}>
+<p>Name: <input type="text" name="formulize_id-desc_form" type="text" value="<{$content.name}>"></input></p>
+<p>How many entries are allowed in this form?</p>
+<blockquote>
+  <p><input type="radio" id="group" name="formulize_id-singleentry" value="group">&nbsp;&nbsp;One entry per <b>group</b><br />
+  <input type="radio" id="on" name="formulize_id-singleentry" value="on">&nbsp;&nbsp;One entry per <b>user</b><br />
+  <input type="radio" id="empty" name="formulize_id-singleentry" value="">&nbsp;&nbsp;<b>More than one entry</b> per user</p>
+</blockquote>
+<input type="hidden" name="fid" value="<{$content.fid}>"></input>
+<{* a hidden element with the table name will be used to determine the field in the table that the where clause should point to *}>
+<input type="hidden" name="formulize_id" value="id_form"></input>
+<{* a hidden element with the table name and _id appended is the value to use in the where clause *}>
+<input type="hidden" name="formulize_id_id" value="<{$content.fid}>"></input>
+<{* form submission buttons must have the class savebutton and the name the same as the form they are submitting *}>
+<p><input type="button" class="savebutton" name="#form-<{$number}>" value="Save"></input></p>
+</form>
+<script type="text/javascript">
+  $("#<{$content.singleentry}>").attr('checked', true);
+</script>

@@ -94,6 +94,16 @@ $modversion['templates'][9]['file'] = 'admin/application_forms.html';
 $modversion['templates'][9]['description'] = '';
 $modversion['templates'][10]['file'] = 'admin/application_forms_accordion_sections.html';
 $modversion['templates'][10]['description'] = '';
+$modversion['templates'][11]['file'] = 'admin/form_settings.html';
+$modversion['templates'][11]['description'] = '';
+$modversion['templates'][12]['file'] = 'admin/form_permissions.html';
+$modversion['templates'][12]['description'] = '';
+$modversion['templates'][13]['file'] = 'admin/form_screens.html';
+$modversion['templates'][13]['description'] = '';
+$modversion['templates'][14]['file'] = 'admin/form_elements.html';
+$modversion['templates'][14]['description'] = '';
+$modversion['templates'][15]['file'] = 'admin/form_elements_accordion_sections.html';
+$modversion['templates'][15]['description'] = '';
 
 
 //	Module Configs
