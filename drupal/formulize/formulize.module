@@ -39,7 +39,7 @@ function formulize_help($section)
       $output = '<p>'. t('The Formulize module integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in Formulize. This module also ensures synchronization of the users and groups/roles between Drupal and Formulize.') .'</p>';
       $output .= '<p>' . t('Behaviours this module supports:') . '</p>';
       $output .= '<ul>';
-			$output .= '<li>' . t('Storing data about where Formulize is, how to connect to its database, etc') . '</li>';
+			$output .= '<li>' . t('Storing the location of Formulize') . '</li>';
 			$output .= '<li>' . t('Displaying data management screens from Formulize, inside Drupal') . '</li>';
 			$output .= '<li>' . t('Automatically synchronizing users with Drupal') . '</li>';
 			$output .= '<li>' . t('With the Formulize Organic Groups Synchronization module, automatically synchronizing Drupal organic groups with Formulize groups') . '</li>';
@@ -64,24 +64,34 @@ function formulize_help($section)
  * @return array An array of valid permissions for the formulize module
  */
 function formulize_perm() {
-  return array('create formulize content', 'edit own formulize content', 'edit formulize content', 'access formulize content', 'delete formulize content', 'administer formulize configuration');
+  return array('create form content', 'edit own form content', 'edit any form content', 'access formulize content', 'delete own form content', 'delete any form content');
 } 
 
 /**
  * Implementation of hook_access()
  */
 function formulize_access($op, $node, $account) {
-	switch ($op) {
-		case 'create' :
-			return user_access('create formulize content', $account);
-		case 'update' :
-			return user_access('edit formulize content', $account);
-		case 'delete' :
-			return user_access('delete formulize content', $account);
-		case 'view' :
-		  return user_access('access formulize content', $account);
+  if ($op == 'create') {
+    return user_access('create form content', $account);
+  }
+
+  if ($op == 'update') {
+    if (user_access('edit any form content', $account) || (user_access('edit own form content', $account) && ($account->uid == $node->uid))) {
+      return TRUE;
+    }
+  }
+
+  if ($op == 'delete') {
+    if (user_access('delete any form content', $account) || (user_access('delete own form content', $account) && ($account->uid == $node->uid))) {
+      return TRUE;
+    }
+  }
+
+	if ($op == 'view') {
+		return user_access('access form content', $account);
 	}
 }
+
 
 /**
  * Implementation of hook_menu().
@@ -542,7 +552,7 @@ function _formulize_delete_user( $drupal_user )
 
 	$member_handler =& xoops_gethandler('member');
 
-        $xoops_user = $member_handler->getUser($drupal_user->uid);
+  $xoops_user = $member_handler->getUser($drupal_user->uid);
 
 	$member_handler->deleteUser( $xoops_user );
 }

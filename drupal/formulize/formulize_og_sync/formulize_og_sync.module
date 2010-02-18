@@ -49,14 +49,6 @@ function formulize_og_sync_help($section)
 }
 
 /**
- * Valid permissions for this module
- * @return array An array of valid permissions for the formulize module
- */
-function formulize_og_sync_perm() {
-  return array('administer formulize OG groups');
-} 
-
-/**
  * Implementation of hook_menu().
  */
 function formulize_og_sync_menu() {
