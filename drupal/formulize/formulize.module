@@ -64,7 +64,7 @@ function formulize_help($section)
  * @return array An array of valid permissions for the formulize module
  */
 function formulize_perm() {
-  return array('create form content', 'edit own form content', 'edit any form content', 'access formulize content', 'delete own form content', 'delete any form content');
+  return array('create form content', 'edit own form content', 'edit any form content', 'access form content', 'delete own form content', 'delete any form content');
 } 
 
 /**
