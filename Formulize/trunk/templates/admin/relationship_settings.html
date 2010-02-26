@@ -25,22 +25,16 @@
 		</fieldset>
 	</div>
 	<div class="form-item">
-		<label for="database_table">Existing table reference</label>
-		<input type="text" id="database_table" name="database_table" value=""/>
-		<div class="description">
-			<p>If you want to reference an existing database table, type in the exact name.</p>
-		</div>
+			<label for="database_table">Existing table reference</label>
+			<input type="text" id="database_table" name="database_table" value=""/>
+			<div class="description">
+				<p>If you want to reference an existing database table, type in the exact name.</p>
+			</div>
 	</div>
-	<div class="form-item"><input type="submit" class="savebutton" name="#form-<{$number}>" value="Save"/></div>
+	<div class="form-item"><input type="button" class="savebutton" name="#form-<{$number}>" value="Save"/></div>
+
 </fieldset>
-<input type="hidden" name="fid" value="<{$content.fid}>"/>
-<{* a hidden element with the table name will be used to determine the field in the table that the where clause should point to *}>
-<input type="hidden" name="formulize_id" value="id_form"/>
-<{* a hidden element with the table name and _id appended is the value to use in the where clause *}>
-<input type="hidden" name="formulize_id_id" value="<{$content.fid}>"/>
-<{* form submission buttons must have the class savebutton and the name the same as the form they are submitting *}>
+
 </form>
-<script type="text/javascript">
-  $("#<{$content.singleentry}>").attr('checked', true);
-</script>
+
 </div> <!--// end content -->

@@ -17,7 +17,7 @@
 		<{/foreach}>
 	</ul>
 	<{foreach from=$tabs key=number item=tab}>
-	<div id="tabs-<{$number}>">
+	<div id="tabs-<{$number}>" class="tab-content">
 		<{include file=$tab.template content=$tab.content}>
 	</div>
 	<{/foreach}>

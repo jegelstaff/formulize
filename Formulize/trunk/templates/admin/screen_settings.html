@@ -1,0 +1,52 @@
+<div class="panel-content content">
+
+<form id="form-screen-<{$number}>">
+
+<fieldset>
+<legend>Settings for the Screen <em><{$content.name}></em></legend>
+
+	<div class="form-item">
+		<label for="formulize_id-desc_form">Name</label>
+		<input type="text" id="formulize_id-desc_form" name="formulize_id-desc_form" value="<{$content.name}>"/>
+		<div class="description">Enter the name of the screen.</div>
+	</div>
+	<div class="form-item">
+		<label for="rel">Relationship</label>
+		<select id="rel" name="rel">
+			<option>None</option>
+			<option>Relationship 1</option>
+			<option>Relationship 2</option>
+		</select>
+		<div class="description">Select a relationship required for this screen.</div>
+	</div>
+	<div class="form-item">
+		<fieldset>
+			<legend>Menu</legend>
+			<label for="imenu"><input type="radio" id="imenu" name="menu" value="imenu"/>Use iMenu</label>
+			<label for="internal"><input type="radio" id="internal" name="menu" value="internal"/>Use internal menu</label>
+			<div class="description">Choose whether you will use XOOPS iMenu for assigning menu items or the internal menu.</div>
+		</fieldset>
+	</div>
+	<div class="form-item">
+		<fieldset>
+			<legend>XOOPS Security Token</legend>
+			<label for="token-yes"><input type="radio" id="token-yes" name="token" value="yes"/>Yes</label>
+			<label for="token-no"><input type="radio" id="token-no" name="token" value="no"/>No</label>
+			<div class="description">The XOOPS security token is a defense against cross-site scripting attacks. However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types.</div>
+		</fieldset>
+	</div>
+	<div class="form-item">
+		<fieldset>
+		<legend>Sample PHP Code</legend>
+					<textarea name="code"/></textarea>
+					<input type="submit" class="copybutton" name="copy-code" value="Copy code"/>
+					<div class="description">Copy this sample PHP code somewhere.</div>
+		</fieldset>
+	</div>
+	<div class="form-item"><input type="submit" class="savebutton" name="#form-<{$number}>" value="Save settings"/></div>
+
+</fieldset>
+
+</form>
+
+</div> <!--// end content -->

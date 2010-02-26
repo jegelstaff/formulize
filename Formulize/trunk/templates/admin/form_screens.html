@@ -1,2 +1,58 @@
-<h1>Screens for the form <i><{$content.name}></i></h1>
-<{$content.hello}>
+<div class="panel-content content">
+<h1>Screens: <em><{$content.name}></em></h1>
+
+<!--<{$content.hello}>-->
+
+<h2><a href="ui.php?page=screen&tab=settings&aid=<{$content.aid}>&fid=1&sid=new">Create a new screen</a></h2>
+
+<{* include form if exist screens exist *}>
+<form>
+<h2>Form Screens</h2>
+<div class="form-item">
+<table>
+	<tr>
+		<th>Name</th>
+		<th>Type</th>
+		<th>Default</th>
+	</tr>
+	<tr>
+		<td><label for="screen-four"><a href="ui.php?page=screen&tab=settings&aid=<{$content.aid}>&fid=1&sid=4">Screen Four</a></label></td>
+		<td>Multi</td>
+		<td><div class="form-radios"><input type="radio" id="screen-four" value="screen-four" name="default_form" /></div></td>
+	</tr>
+	<tr>
+		<td><label for="screen-five"><a href="">Screen Five</a></label></td>
+		<td>Form</td>
+		<td><div class="form-radios"><input type="radio" id="screen-four" value="screen-four" name="default_form" /></div></td>
+	</tr>
+	<tr>
+		<td><label for="screen-four"><a href="">Screen Four</a></label></td>
+		<td>Multi</td>
+		<td><div class="form-radios"><input type="radio" id="screen-four" value="screen-four" name="default_form" /></div></td>
+	</tr>
+</table>
+</div>
+<h2>List Screens</h2>
+<div class="form-item">
+<table>
+	<tr>
+		<th>Name</th>
+		<th>Default</th>
+	</tr>
+	<tr>
+		<td><label for="screen-four"><a href="">Screen One</a></label></td>
+		<td><div class="form-radios"><input type="radio" id="screen-one" value="screen-one" name="default_list" /></div></td>
+	</tr>
+	<tr>
+		<td><label for="screen-four"><a href="">Screen Two</a></label></td>
+		<td><div class="form-radios"><input type="radio" id="screen-two" value="screen-two" name="default_list" /></div></td>
+	</tr>
+	<tr>
+		<td><label for="screen-four"><a href="">Screen Three</a></label></td>
+		<td><div class="form-radios"><input type="radio" id="screen-three" value="screen-three" name="default_list" /></div></td>
+	</tr>
+</table>
+</div>
+<div class="form-item"><input type="submit" class="savebutton" name="#form-<{$number}>" value="Save defaults"/></div>
+</form>
+</div> <!--// end content -->

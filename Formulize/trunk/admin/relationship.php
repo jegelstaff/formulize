@@ -27,61 +27,33 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// initialize the ImpressCMS admin page template
-include_once("admin_header.php");
-xoops_cp_header();
+// this file gets all the data about applications, so we can display the Settings/forms/relationships tabs for applications
 
-// setup a smarty object that we can use for templating our own pages
-require_once XOOPS_ROOT_PATH.'/class/template.php';
-require_once XOOPS_ROOT_PATH.'/class/theme.php';
-require_once XOOPS_ROOT_PATH.'/class/theme_blocks.php';
-$xoopsThemeFactory =& new xos_opal_ThemeFactory();
-$xoTheme =& $xoopsThemeFactory->createInstance();
-$xoopsTpl =& $xoTheme->template;
+include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
-// handle any operations requested as part of this page load
-if(isset($_GET['op'])) {
-  include_once "op.php";
+// need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
+$aid = intval($_GET['aid']);
+$appName = "All forms"; // needs to be set based on aid in future
+$elements = array();
+if($_GET['frid'] != "new") {
+  $frid = intval($_GET['frid']);
+  $framework_handler = xoops_getmodulehandler('framework', 'formulize');
+  $relationshipObject = $framework_handler->get($frid);
+  $relationshipName = $formObject->getVar('title');
 }
 
 
-// create the contents that we want to display for the currently selected page
-// the included php files create the values for $adminPage that are used for this page
-$adminPage = array();
-switch($_GET['page']) {
-  case "application":
-    include "application.php"; 
-    break;
-  case "form":
-    include "form.php";
-    break;
-	case "screen":
-		include "screen.php";
-		break;
-	case "relationship":
-		include "relationship.php";
-		break;
-	case "element":
-		include "element.php";
-		break;
-}
+// common values should be assigned to all tabs
+$common['name'] = $relationshipName;
+$common['frid'] = $frid;
 
-// assign the default selected tab, if any:
-if(isset($_GET['tab'])) {
-  foreach($adminPage['tabs'] as $selected=>$tabData) {
-    if(strtolower($tabData['name']) == $_GET['tab']) {
-      $adminPage['tabselected'] = $selected-1;
-      break;
-    }
-  }
-}
+$adminPage['tabs'][1]['name'] = "Settings";
+$adminPage['tabs'][1]['template'] = "db:admin/relationship_settings.html";
+$adminPage['tabs'][1]['content'] = $settings + $common;
 
-// assign the contents to the template and display
-$xoopsTpl->assign('adminPage', $adminPage);
-$xoopsTpl->assign('breadcrumbtrail', $breadcrumbtrail);
-$xoopsTpl->display("db:admin/ui.html");
-
-include 'footer.php';
-xoops_cp_footer();
-
+$breadcrumbtrail[1]['url'] = "page=home";
+$breadcrumbtrail[1]['text'] = "Home";
+$breadcrumbtrail[2]['url'] = "page=application&aid=$aid";
+$breadcrumbtrail[2]['text'] = $appName;
+$breadcrumbtrail[3]['text'] = $formName;
 

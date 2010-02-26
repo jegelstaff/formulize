@@ -56,44 +56,33 @@ if($_GET['fid'] != "new") {
   $fid = $_GET['fid'];
 }
 
-
 // common values should be assigned to all tabs
 $common['name'] = $formName;
 $common['fid'] = $fid;
-
-$permissions = array();
-$permissions['hello'] = "Hello Permission World";
-
-// need to get screen data so this can be populated properly
-$screens = array();
-$screens[1]['name'] = "dummy screen 1";
-$screens[1]['content']['hello'] = "hello screen 1 world";
-$screens[2]['name'] = "dummy screen 2";
-$screens[2]['content']['hello'] = "hello screen 2 world";
 
 $settings = array();
 $settings['singleentry'] = $singleentry ? $singleentry : "empty"; // this value can be nothing, ie: "", but we need to pass something to the template so it can react properly to the "" setting
 
 $adminPage['tabs'][1]['name'] = "Settings";
-$adminPage['tabs'][1]['template'] = "db:admin/form_settings.html";
+$adminPage['tabs'][1]['template'] = "db:admin/element_settings.html";
 $adminPage['tabs'][1]['content'] = $settings + $common;
 
-$adminPage['tabs'][2]['name'] = "Elements";
-$adminPage['tabs'][2]['template'] = "db:admin/form_elements.html";
-$adminPage['tabs'][2]['content'] = $common;
-$adminPage['tabs'][2]['content']['elements'] = $elements;
+$adminPage['tabs'][2]['name'] = "Data handling";
+$adminPage['tabs'][2]['template'] = "db:admin/element_handling.html";
+$adminPage['tabs'][2]['content'] = $settings + $common;
+
+$adminPage['tabs'][2]['name'] = "Display";
+$adminPage['tabs'][2]['template'] = "db:admin/element_display.html";
+$adminPage['tabs'][2]['content'] = $display + $common;
 
 $adminPage['tabs'][3]['name'] = "Permissions";
-$adminPage['tabs'][3]['template'] = "db:admin/form_permissions.html";
+$adminPage['tabs'][3]['template'] = "db:admin/element_permissions.html";
 $adminPage['tabs'][3]['content'] = $permissions + $common; 
-
-$adminPage['tabs'][4]['name'] = "Screens";
-$adminPage['tabs'][4]['template'] = "db:admin/form_screens.html";
-$adminPage['tabs'][4]['content'] = $screens + $common;
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['url'] = "page=application&aid=$aid";
 $breadcrumbtrail[2]['text'] = $appName;
 $breadcrumbtrail[3]['text'] = $formName;
+$breadcrumbtrail[4]['text'] = $elementName;
 

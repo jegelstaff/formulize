@@ -41,59 +41,52 @@ if($_GET['fid'] != "new") {
   $formObject = $form_handler->get($fid);
   $formName = $formObject->getVar('title');
   $singleentry = $formObject->getVar('single');
-  $element_handler = xoops_getmodulehandler('elements', 'formulize');
-  $elementObjects = $element_handler->getObjects2(null, $fid);
-  // $elements array is going to be used to populate accordion sections, so it must contain the following:
-  // a 'name' key and a 'content' key for each form that is found
-  // Name will be the heading of the section, content is data used in the template for each section
-  $i = 1; 
-  foreach($elementObjects as $thisElement) {
-    $elements[$i]['name'] = printSmart($thisElement->getVar('ele_caption'));
-    $elements[$i]['content']['ele_id'] = $thisElement->getVar('ele_id');
-    $i++;
-  }
+  //$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 } else {
   $fid = $_GET['fid'];
 }
 
-
 // common values should be assigned to all tabs
-$common['name'] = $formName;
-$common['fid'] = $fid;
+$common['name'] = $screenName;
+$common['sid'] = $sid;
 
-$permissions = array();
-$permissions['hello'] = "Hello Permission World";
-
-// need to get screen data so this can be populated properly
-$screens = array();
-$screens[1]['name'] = "dummy screen 1";
-$screens[1]['content']['hello'] = "hello screen 1 world";
-$screens[2]['name'] = "dummy screen 2";
-$screens[2]['content']['hello'] = "hello screen 2 world";
-
+// screen settings data
 $settings = array();
-$settings['singleentry'] = $singleentry ? $singleentry : "empty"; // this value can be nothing, ie: "", but we need to pass something to the template so it can react properly to the "" setting
+$settings['hello'] = "Hello Screen settings World";
 
+// display data
+$display = array();
+$display['hello'] = "Hello Screen Display World";
+
+// custom button data
+$custom = array();
+$custom['hello'] = "Hello Custom button World";
+
+// conditions data
+$conditions = array();
+$conditions['hello'] = "Hello Conditions World";
+
+// define tabs for screen sub-page
 $adminPage['tabs'][1]['name'] = "Settings";
-$adminPage['tabs'][1]['template'] = "db:admin/form_settings.html";
+$adminPage['tabs'][1]['template'] = "db:admin/screen_settings.html";
 $adminPage['tabs'][1]['content'] = $settings + $common;
 
-$adminPage['tabs'][2]['name'] = "Elements";
-$adminPage['tabs'][2]['template'] = "db:admin/form_elements.html";
-$adminPage['tabs'][2]['content'] = $common;
-$adminPage['tabs'][2]['content']['elements'] = $elements;
+$adminPage['tabs'][2]['name'] = "Display";
+$adminPage['tabs'][2]['template'] = "db:admin/screen_display.html";
+$adminPage['tabs'][2]['content'] = $display + $common;
 
-$adminPage['tabs'][3]['name'] = "Permissions";
-$adminPage['tabs'][3]['template'] = "db:admin/form_permissions.html";
-$adminPage['tabs'][3]['content'] = $permissions + $common; 
+$adminPage['tabs'][3]['name'] = "Conditions";
+$adminPage['tabs'][3]['template'] = "db:admin/screen_conditions.html";
+$adminPage['tabs'][3]['content'] = $conditions + $common;
 
-$adminPage['tabs'][4]['name'] = "Screens";
-$adminPage['tabs'][4]['template'] = "db:admin/form_screens.html";
-$adminPage['tabs'][4]['content'] = $screens + $common;
+$adminPage['tabs'][4]['name'] = "Custom buttons";
+$adminPage['tabs'][4]['template'] = "db:admin/screen_custom.html";
+$adminPage['tabs'][4]['content'] = $custom + $common;
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['url'] = "page=application&aid=$aid";
 $breadcrumbtrail[2]['text'] = $appName;
 $breadcrumbtrail[3]['text'] = $formName;
+$breadcrumbtrail[4]['text'] = $screenName;
 

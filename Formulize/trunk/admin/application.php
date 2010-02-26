@@ -32,19 +32,36 @@
 // need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
 $aid = intval($_GET['aid']);
 $appName = "All forms"; // needs to be set based on aid in future
+$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObjects = $form_handler->getAllForms(); // returns array of objects
+
 
 // $forms array is going to be used to populate accordion sections, so it must contain the following:
 // a 'name' key and a 'content' key for each form that is found
 // Name will be the heading of the section, content is data used in the template for each section
 $forms = array();
+$allRelationships = array();
 $i = 1; 
 foreach($formObjects as $thisForm) {
+	$fid = $thisForm->getVar('id_form');
   $forms[$i]['name'] = $thisForm->getVar('title');
-  $forms[$i]['content']['fid'] = $thisForm->getVar('id_form');
+  $forms[$i]['content']['fid'] = $fid;
   $i++;
+	$allRelationships = array_merge($allRelationships, $framework_handler->getFrameworksByForm($fid)); // returns array of objects
 }
+$relationships = array();
+$relationshipIndex = array();
+$i = 1;
+foreach($allRelationships as $thisRelationship) {
+	$frid = $thisRelationship->getVar('frid');
+	if(isset($relationshipIndex[$frid])) { continue; }
+	$relationships[$i]['name'] = $thisRelationship->getVar('name');
+	$relationships[$i]['content']['frid'] = $frid;
+	$relationshipIndex[$frid] = true;
+	$i++;
+}
+
 
 $common['aid'] = $aid;
 
@@ -60,6 +77,12 @@ $adminPage['tabs'][1]['content']['forms'] = $forms;
 $adminPage['tabs'][2]['name'] = "Settings";
 $adminPage['tabs'][2]['template'] = "db:admin/application_settings.html";
 $adminPage['tabs'][2]['content'] = $common;
+
+$adminPage['tabs'][3]['name'] = "Relationships";
+$adminPage['tabs'][3]['template'] = "db:admin/application_relationships.html";
+$adminPage['tabs'][3]['content'] = $common;
+$adminPage['tabs'][3]['content']['relationships'] = $relationships; 
+
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";

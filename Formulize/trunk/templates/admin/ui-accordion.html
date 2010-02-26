@@ -31,7 +31,7 @@
 	<{foreach from=$sections key=sectionNumber item=section}>
 	<div id="drawer-<{$number}>-<{$sectionNumber}>">
     <h3><a href="#"><{$section.name}></a></h3>
-		<div>
+		<div class="accordion-content content">
 			<{include file=$sectionTemplate sectionContent=$section.content}>
 		</div>
 	</div>

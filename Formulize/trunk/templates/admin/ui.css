@@ -1,3 +1,90 @@
-.floatrightbox {
-  float: right;
+/* page for tabs */
+.ui-tabs-panel {}
+
+/* header */
+.ui-widget-header {}
+
+
+div.accordion-box {
+  float: left;
+	width: 300px;
+}
+
+.ui-tabs-panel .content a {
+	font-weight: normal;
+	color: blue;
+}
+
+.ui-tabs-panel .content a:hover {
+	background: #eee;
+}
+
+.ui-tabs-panel .content table {
+	width: 60em;
+}
+
+/* Develop a consistent style for forms */
+/* form > fieldset > ol > li > fieldset or input or select */
+/* Using http://www.alistapart.com/articles/prettyaccessibleforms/ */
+
+form fieldset {
+  margin-bottom: 10px;
+	padding: 6px;
+}
+form legend {
+  padding: 0 2px;
+  font-weight: bold;
+}
+form div.form-item {
+	margin: 6px;
+}
+form label {
+/*  display: inline-block; */
+  line-height: 1.8;
+  vertical-align: top;
+	padding: 0 4px 0 0;
+}
+
+form fieldset fieldset {
+/*  border: none; 
+  margin: 3px 0 0 0;
+	padding: 0;*/
+}
+form fieldset fieldset legend {
+  /*padding: 0 0 5px;
+  font-weight: normal;*/
+}
+form fieldset fieldset label {
+/*  display: block;
+  width: auto; */
+}
+form em {
+  font-weight: bold;
+  font-style: normal;
+/*  color: #f00; */
+}
+form label {
+/*  width: 160px; /* Width of labels */
+}
+form fieldset fieldset label {
+/*  margin-left: 163px; /* Width plus 3 (html space) */
+}
+
+form div.description {
+  font-style: italic;
+  color: #666;
+	margin: 6px;
+}
+
+input:focus, select:focus, textarea:focus {
+	background: #FFFCCF;
+}
+
+form fieldset ol {
+  margin: 0;
+  padding: 0;
+}
+form fieldset li {
+  padding: 5px;
+  margin: 0;
 }

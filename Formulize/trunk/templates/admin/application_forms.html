@@ -1,5 +1,10 @@
+<div class="panel-content content">
 <h1>Add Forms to this application</h1>
-<p><a href="ui.php?page=form&tab=settings&aid=<{$content.aid}>&fid=new">Create a new form</a></p>
-<p><a href="ui.php?page=application_addform&aid=<{$content.aid}>">Add an existing form</a></p>
-<h1>Manage the Forms in this application:</h1>
-<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/application_forms_accordion_sections.html" sections=$content.forms}>
+<ul>
+	<li><a href="ui.php?page=form&tab=settings&aid=<{$content.aid}>&fid=new">Create a new form</a></li>
+	<li><a href="ui.php?page=addform&aid=<{$content.aid}>">Add an existing form</a></li>
+</ul>
+
+<h1>Manage the Forms in this application</h1>
+</div>
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/app_forms_accordion_sections.html" sections=$content.forms}>

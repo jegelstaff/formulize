@@ -1,2 +1,77 @@
-<h1>Permissions for the form <i><{$content.name}></i></h1>
+<div class="panel-content content">
+<h1>Permissions: <em><{$content.name}></em></h1>
 <{$content.hello}>
+
+
+<form id="form-<{$number}>">
+<{* form elements must be named with their table name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a field in the database to update *}>
+
+<fieldset>
+	<legend>Permissions settings</legend>
+	<div class="form-item">
+		<fieldset>
+		<legend>Select groups to modify permissions</legend>
+			<div class="form-checkboxes">
+				<label for="one"><input type="checkbox" name="groups" id="one" value="one" />One</label>
+			</div>
+			<div class="form-checkboxes">
+				<label for="two"><input type="checkbox" name="groups" id="two" value="two" />Two</label>
+			</div>
+			<div class="form-checkboxes">
+				<label for="donkey"><input type="checkbox" name="groups" id="donkey" value="donkey" />Donkey</label>
+			</div>
+			<div class="form-checkboxes">
+				<label for="citizen"><input type="checkbox" name="groups" id="citizen" value="citizen" />citizen</label>
+			</div>
+			<div class="form-checkboxes">
+				<label for="treehouse"><input type="checkbox" name="groups" id="treehouse" value="treehouse" />Treehouse</label>
+			</div>
+		</fieldset>
+	</div>
+	<div class="form-item">
+		<fieldset>
+		<legend>Set same permissions for all selected groups</legend>
+			<div class="form-radios">
+				<label id="yes"><input type="radio" id="yes" name="same_permissions" value="yes"/>Yes</label>
+			</div>
+			<div class="form-radios">
+				<label id="no"><input type="radio" id="no" name="same_permissions" value="no"/>No</label>
+			</div>
+		</fieldset>
+	</div>
+	<div class="form-item">
+		<input type="submit" class="savebutton" name="#form-<{$number}>" value="Modify permissions"/>
+	</div>
+
+</fieldset>
+<input type="hidden" name="fid" value="<{$content.fid}>"/>
+
+</form>
+
+
+<!-- We may need another set up tabs or a two-step process: first select groups, then 1. save as a list, 2. edit permissions. But I'm not sure where to put the group list editing/deleting
+<form id="form-<{$number}>">
+<{* form elements must be named with their table name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a field in the database to update *}>
+<fieldset>
+<legend>Save selection or edit existing group list</legend>
+<div class="form-item">
+		<select name ="" value="">
+		<option value="new">New</option>
+		<option value="one">One</option>
+		<option value="two">two</option>
+		<option value="three">three</option>
+	</select>
+</div>
+<div class="form-item">
+	<input type="button" class="savebutton" name="#form-<{$number}>" value="Save list"/>
+	<input type="button" class="editbutton" name="#form-<{$number}>" value="Edit list"/>
+	<input type="button" class="deletebutton" name="#form-<{$number}>" value="Delete list"/>
+</div>
+</fieldset>
+
+</form>
+</div>
+-->
+</div> <!--// end content -->

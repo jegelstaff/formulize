@@ -1,0 +1,6 @@
+<div class="panel-content content">
+<h1>Relationships</h1>
+<p><a href="ui.php?page=relationship&tab=settings&aid=<{$content.aid}>&frid=new">Create a new relationship</a></p>
+<h1>Manage the relationships in this application:</h1>
+</div>
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/app_relationships_accordion_sections.html" sections=$content.relationships}>

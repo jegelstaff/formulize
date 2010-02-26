@@ -92,7 +92,7 @@ $modversion['templates'][8]['file'] = 'admin/application_settings.html';
 $modversion['templates'][8]['description'] = '';
 $modversion['templates'][9]['file'] = 'admin/application_forms.html';
 $modversion['templates'][9]['description'] = '';
-$modversion['templates'][10]['file'] = 'admin/application_forms_accordion_sections.html';
+$modversion['templates'][10]['file'] = 'admin/app_forms_accordion_sections.html';
 $modversion['templates'][10]['description'] = '';
 $modversion['templates'][11]['file'] = 'admin/form_settings.html';
 $modversion['templates'][11]['description'] = '';
@@ -104,6 +104,18 @@ $modversion['templates'][14]['file'] = 'admin/form_elements.html';
 $modversion['templates'][14]['description'] = '';
 $modversion['templates'][15]['file'] = 'admin/form_elements_accordion_sections.html';
 $modversion['templates'][15]['description'] = '';
+$modversion['templates'][16]['file'] = 'admin/application_relationships.html';
+$modversion['templates'][16]['description'] = '';
+$modversion['templates'][17]['file'] = 'admin/app_relationships_accordion_sections.html';
+$modversion['templates'][17]['description'] = '';
+$modversion['templates'][18]['file'] = 'admin/relationships_settings.html';
+$modversion['templates'][18]['description'] = '';
+$modversion['templates'][19]['file'] = 'admin/screen_settings.html';
+$modversion['templates'][19]['description'] = '';
+$modversion['templates'][20]['file'] = 'admin/screen_display.html';
+$modversion['templates'][20]['description'] = '';
+$modversion['templates'][21]['file'] = 'admin/screen_custom.html';
+$modversion['templates'][21]['description'] = '';
 
 
 //	Module Configs

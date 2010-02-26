@@ -1,4 +1,23 @@
-<h1>Add an element to the form <i><{$content.name}></i></h1>
-<p>Need to put list of elements here that we can click on to add to the form</p>
-<h1>Manage the elements in the form <i><{$content.name}></i></h1>
+<div class="panel-content content">
+<h1>Manage the elements in form: <em><{$content.name}></em></h1>
+</div>
 <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_accordion_sections.html" sections=$content.elements}>
+<div class="panel-content content">
+<h1>Add an element to form: <em><{$content.name}></em></h1>
+<p>Click on an element to add to form</p>
+<ul>
+	<li><a href="">Text box</a></li>
+	<li><a href="">Text area</a></li>
+	<li><a href="">Text for display (left and right cells)</a></li>
+	<li><a href="">Select box</a></li>
+	<li><a href="">Check boxes</a></li>
+	<li><a href="">Radio buttons</a></li>
+	<li><a href="">Simple yes/no radio buttons</a></li>
+	<li><a href="">Date</a></li>
+	<li><a href="">Break up line</a></li>
+	<li><a href="">Subform (from a form relationship)</a></li>
+	<li><a href="">Table of existing elements (place before the elements it contains)</a></li>
+	<li><a href="">Value derived from other elements</a></li>
+	<li><a href="">Colorpicker</a></li>
+</ul>
+</div>
