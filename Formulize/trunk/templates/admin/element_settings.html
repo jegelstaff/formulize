@@ -1,0 +1,46 @@
+<div class="panel-content content">
+
+<form id="form-<{$number}>">
+<{* form elements must be named with their table name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a field in the database to update *}>
+<fieldset>
+<legend>Settings for the text element</legend>
+
+	<div class="form-item required">
+		<label for="caption">Caption<em>*</em></label>
+		<input type="text" id="caption" name="caption" value="<{$content.name}>"/>
+	</div>
+	<div class="form-item">
+		<label for="col">Column Heading</label>
+		<input type="text" id="col" name="col" value="<{$content.name}>"/>
+		<div class="description">
+			Optional. If you specify a column heading, then this text will be used instead of the caption, on the List of Entries screen. This is useful if the caption is very long, or if you want the captions written from a user point of view, and the column headings written from a report-consumer point of view.
+		</div>
+	</div>
+	<div class="form-item">
+		<label for="handle">Data Handle</label>
+		<input type="text" id="handle" name="handle" value="<{$content.name}>"/>
+		<div class="description">
+			Optional. You can specify a short name for this element. The short name will be used by the database when storing information. If you leave this blank, the element ID number will be used.
+		</div>
+	</div>
+	<div class="form-item required">
+		<label for="description">Description<em>*</em></label>
+		<textarea id="description" name="description"></textarea>
+		<div class="description">
+			<p>Whatever you type in this box will appear below the caption, just like this text does.</p>
+		</div>
+	</div>
+	<div class="form-item">
+		<label for="order">Order</label>
+		<input type="text" id="order" name="order" value=""/>
+		<div class="description">
+			The order of the element in relation to other elements in the form.
+		</div>
+	</div>
+	<div class="form-item"><input type="submit" class="savebutton" name="#form-<{$number}>" value="Save"/></div>
+</fieldset>
+
+</form>
+
+</div> <!--// end content -->

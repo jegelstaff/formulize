@@ -116,6 +116,14 @@ $modversion['templates'][20]['file'] = 'admin/screen_display.html';
 $modversion['templates'][20]['description'] = '';
 $modversion['templates'][21]['file'] = 'admin/screen_custom.html';
 $modversion['templates'][21]['description'] = '';
+$modversion['templates'][22]['file'] = 'admin/element_settings.html';
+$modversion['templates'][22]['description'] = '';
+$modversion['templates'][23]['file'] = 'admin/element_handling.html';
+$modversion['templates'][23]['description'] = '';
+$modversion['templates'][24]['file'] = 'admin/element_display.html';
+$modversion['templates'][24]['description'] = '';
+$modversion['templates'][25]['file'] = 'admin/element_permissions.html';
+$modversion['templates'][25]['description'] = '';
 
 
 //	Module Configs

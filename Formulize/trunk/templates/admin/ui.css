@@ -58,10 +58,10 @@ form fieldset fieldset label {
 /*  display: block;
   width: auto; */
 }
-form em {
+form .required em {
   font-weight: bold;
   font-style: normal;
-/*  color: #f00; */
+  color: #f00;
 }
 form label {
 /*  width: 160px; /* Width of labels */
@@ -72,8 +72,13 @@ form fieldset fieldset label {
 
 form div.description {
   font-style: italic;
+  font-size: 94%;
   color: #666;
 	margin: 6px;
+}
+
+form textarea {
+	width: 80%;
 }
 
 input:focus, select:focus, textarea:focus {

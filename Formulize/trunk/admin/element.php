@@ -34,34 +34,32 @@ include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 // need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
 $aid = intval($_GET['aid']);
 $appName = "All forms"; // needs to be set based on aid in future
-$elements = array();
-if($_GET['fid'] != "new") {
-  $fid = intval($_GET['fid']);
-  $form_handler = xoops_getmodulehandler('forms', 'formulize');
-  $formObject = $form_handler->get($fid);
-  $formName = $formObject->getVar('title');
-  $singleentry = $formObject->getVar('single');
+
+/*
+if($_GET['ele_id'] != "new") {
+  $ele_id = intval($_GET['ele_id']);
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
-  $elementObjects = $element_handler->getObjects2(null, $fid);
-  // $elements array is going to be used to populate accordion sections, so it must contain the following:
-  // a 'name' key and a 'content' key for each form that is found
-  // Name will be the heading of the section, content is data used in the template for each section
-  $i = 1; 
-  foreach($elementObjects as $thisElement) {
-    $elements[$i]['name'] = printSmart($thisElement->getVar('ele_caption'));
-    $elements[$i]['content']['ele_id'] = $thisElement->getVar('ele_id');
-    $i++;
   }
 } else {
-  $fid = $_GET['fid'];
+  $ele_id = $_GET['ele_id'];
 }
+*/
 
 // common values should be assigned to all tabs
-$common['name'] = $formName;
-$common['fid'] = $fid;
+$common['name'] = '';
+$common['ele_id'] = $ele_id;
 
 $settings = array();
-$settings['singleentry'] = $singleentry ? $singleentry : "empty"; // this value can be nothing, ie: "", but we need to pass something to the template so it can react properly to the "" setting
+$settings['hello'] = 'hello';
+
+$data = array();
+$data['hello'] = 'hello';
+
+$display = array();
+$display['hello'] = 'hello';
+
+$permissions = array();
+$permissions['hello'] = 'hello';
 
 $adminPage['tabs'][1]['name'] = "Settings";
 $adminPage['tabs'][1]['template'] = "db:admin/element_settings.html";
@@ -71,13 +69,13 @@ $adminPage['tabs'][2]['name'] = "Data handling";
 $adminPage['tabs'][2]['template'] = "db:admin/element_handling.html";
 $adminPage['tabs'][2]['content'] = $settings + $common;
 
-$adminPage['tabs'][2]['name'] = "Display";
-$adminPage['tabs'][2]['template'] = "db:admin/element_display.html";
-$adminPage['tabs'][2]['content'] = $display + $common;
+$adminPage['tabs'][3]['name'] = "Display";
+$adminPage['tabs'][3]['template'] = "db:admin/element_display.html";
+$adminPage['tabs'][3]['content'] = $display + $common;
 
-$adminPage['tabs'][3]['name'] = "Permissions";
-$adminPage['tabs'][3]['template'] = "db:admin/element_permissions.html";
-$adminPage['tabs'][3]['content'] = $permissions + $common; 
+$adminPage['tabs'][4]['name'] = "Permissions";
+$adminPage['tabs'][4]['template'] = "db:admin/element_permissions.html";
+$adminPage['tabs'][4]['content'] = $permissions + $common; 
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";

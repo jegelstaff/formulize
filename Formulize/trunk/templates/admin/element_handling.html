@@ -1,0 +1,74 @@
+<div class="panel-content content">
+
+<form id="form-handling-<{$number}>">
+
+<fieldset>
+<legend>Data handling for text element</legend>
+	<div class="form-item">
+		<label for="default">Default value</label>
+		<textarea id="default" name="default"></textarea>
+		<div class="description">
+			<ul>
+				<li>{NAME} will print full name</li>
+			<li>{UNAME} will print user name</li>
+			<li>{EMAIL} will print user email</li>
+			<li>{ID} will cause the entry ID number of the entry to be inserted into the textbox, when the entry is first saved.</li>
+			<li>{SEQUENCE} will cause the values in the box to be a series of consecutive numbers.</li>
+			<li>PHP Code (ending with the line '$default = $something;') will be interpreted to generate the default value. PHP Code is the only situation where more than one line of this box will be read. In your PHP code, you can use $form_id to get the ID number of the form, and $entry_id to get the ID number of the particular entry that the user is editing.</li>
+			</ul>
+		</div>
+	</div>
+	<div class="form-item">
+		<label for="association">Association</label>
+		<select id="association">
+				<option value="none">None</option>
+				<option value="form 1">Name: Clients</option>
+				<option value="something">Something: Address</option>
+			</select>
+			<div class="description">
+			<p>If you select another form element here, then text that users type into this element will be compared with values entered in the other element. If a match is found then the text users type into this element will be clickable in the "List of Entries" screen, and will take users to the matching entry in the other form.</p>
+			</div>
+	</div>
+	<div class="form-item">
+		<fieldset>
+			<legend>Unique value</legend>
+			<label for="entry-yes"><input type="radio" id="entry-yes" name="entry" value="yes"/>Yes</label>
+			<label for="entry-no"><input type="radio" id="entry-no" name="entry" value="no"/>No</label>
+			<div class="description">
+				<p>Users must enter a unique value into this box (no duplicates allowed).</p>
+			</div>
+		</fieldset>
+	</div>
+	<div class="form-item">
+		<fieldset>
+			<legend>Required field</legend>
+			<label for="required"><input type="checkbox" id="required" name="required" value="required"/>Required</label>
+			<div class="description">
+				<p>Users will be required to enter a value for this field.</p>
+			</div>
+		</fieldset>
+	</div>
+	<div class="form-item">
+		<fieldset>
+			<legend>Database storage of element</legend>
+			<div class="form-radios"><label for="let"><input type="radio" id="let" name="storage" value="let"/>Numbers (storage type determined automatically)</label></div>
+			<div class="form-radios">
+			<label for="no"><input type="radio" id="let" name="storage" value="no"/>Number: no decimal places</label></div>
+			<div class="form-radios"><label for="deci"><input type="radio" id="deci" name="storage" value="deci"/>Number: <input type="text"/> decimal places</label></div>
+			<div class="form-radios"><label for="text"><input type="radio" id="text" name="storage" value="text"/>Text: maximum <input type="text"/> characters</label></div>
+			<div class="form-radios"><label for="exact"><input type="radio" id="exact" name="storage" value="let"/>Text: exactly <input type="text"/> characters</label></div>
+			<div class="description">
+				<p>Elements that will only contain numbers should use a numeric type, so that sorting and calculations work optimally.</p>
+				<p>This is an advanced option that you can use to control the MySQL datatype that is used in the underlying database field for this element. The value in ( ) shows which datatype will be used.</p>
+				<p>If you don't know what all this means, then just accept the defaults. Formulize can intelligently select appropriate values for regular text boxes based on the 'numbers only' setting, and the number formatting options.</p>
+			</div>
+		</fieldset>
+	</div>
+	<div class="form-item">
+		<input type="submit" class="savebutton" name="#form-custom-<{$number}>" value="Save custom button"/></div>
+
+</fieldset>
+
+</form>
+
+</div> <!--// end content -->
