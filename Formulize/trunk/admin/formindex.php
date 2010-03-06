@@ -1212,19 +1212,19 @@ function patch40() {
 		}
 	
 		if(!in_array($xoopsDB->prefix("formulize_applications"), $existingTables)) {
-			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_applications")."` {
+			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_applications")."` (
   `appid` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL default '',
   `description` text NOT NULL,
   PRIMARY KEY (`appid`)
-} TYPE=MyISAM;";
+) TYPE=MyISAM;";
 		}
 
 		if(!in_array($xoopsDB->prefix("formulize_application_form_link"), $existingTables)) {
 			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_application_form_link")."` (
   `linkid` int(11) NOT NULL auto_increment,
   `appid` int(11) NOT NULL default 0,
-  `fid` int(11) NOT NULL default 0
+  `fid` int(11) NOT NULL default 0,
   PRIMARY KEY (`linkid`),
   INDEX i_fid (`fid`),
   INDEX i_appid (`appid`)
