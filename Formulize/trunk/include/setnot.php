@@ -45,8 +45,8 @@ function handleDelete($uid, $fid, $mid) {
 			if(!$result = $xoopsDB->query($sql)) {
 				exit("Error:  could not remove notification info.  SQL:<br>$sql</br>");
 			}
-			// check if the current user has any items left for a this event, and if not, then unsub from that event
-			$anyleft = q("SELECT * FROM " . $xoopsDB->prefix("formulize_notification_conditions") . " WHERE not_cons_uid=$uid AND not_cons_event=\"".$event[0]['not_cons_event']."\"");
+			// check if the current user has any items left for a this event on this form, and if not, then unsub from that event 
+			$anyleft = q("SELECT * FROM " . $xoopsDB->prefix("formulize_notification_conditions") . " WHERE not_cons_uid=".intval($uid)." AND not_cons_fid = ".intval($fid)." AND not_cons_event=\"".$event[0]['not_cons_event']."\"");
 			if(count($anyleft) == 0) {
 				$notification_handler =& xoops_gethandler('notification');
 				$notification_handler->unsubscribe('form', $fid, $event[0]['not_cons_event'], $mid, $uid);
