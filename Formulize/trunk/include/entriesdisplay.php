@@ -2650,7 +2650,9 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 		$even = "";
     formulize_benchmark("before reading stylesheet");
 		if(file_exists(XOOPS_ROOT_PATH . "/themes/" . $xoopsConfig['theme_set'] . "/style.css")) {
-			include XOOPS_ROOT_PATH . "/modules/formulize/class/class.csstidy.php";
+			if( !class_exists('csstidy') ) {
+				include XOOPS_ROOT_PATH . "/modules/formulize/class/class.csstidy.php";
+			}
 			$css = new csstidy();
 			$css->set_cfg('merge_selectors',0);
 			$css->parse_from_url(XOOPS_ROOT_PATH . "/themes/" . $xoopsConfig['theme_set'] . "/style.css");
@@ -3919,6 +3921,11 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
         if($operator == "!") { $operator = "NOT LIKE"; }
 				$one_search = substr($one_search, $startpoint);
 				
+			}
+			
+			// look for blank search terms and convert them to {BLANK} so they are handled properly
+			if($one_search === "") {
+				$one_search = "{BLANK}";
 			}
 			
 			// look for { } and transform special terms into what they should be for the filter
