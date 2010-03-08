@@ -1156,7 +1156,7 @@ class formulizeElementRenderer{
 			if(is_array($value)) {
 				$value = printSmart(implode(", ", $value));
 			}
-			if(trim($value) === "") { continue; }
+			if(trim($value) === "" OR trim($value) == "0000-00-00") { continue; }
 			$prevOptionsExist = true;
 			switch($type) {
 				case "text":

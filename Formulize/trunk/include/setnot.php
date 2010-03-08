@@ -32,7 +32,7 @@
 
 // this file generates the set notifications popup
 
-// delete calculations from request list
+// delete notifications 
 function handleDelete($uid, $fid, $mid) {
 	global $xoopsDB;
 	$delete = 0;
