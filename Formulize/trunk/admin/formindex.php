@@ -1124,6 +1124,7 @@ function updateperms() {
 				print "Error: could not set the groupscope groups for form $fid.<br>";
 			}
 			
+			/* ALTERED - 20100316 - freeform - jeff/julian - start */
 			// index all the per-group form filters so we can then run queries to update this info after the looping is done
 			if($_POST[$filter_key]=="all") {
 				$groupsToClear[$fid][] = $gid;
@@ -1132,12 +1133,21 @@ function updateperms() {
 					$_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
 					$_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
 					$_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
+					$_POST[$filter_key."_types"][] = "all";
+				}
+				if($_POST["new_".$filter_key."_oom_term"] != "") {
+					$_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
+					$_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
+					$_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
+					$_POST[$filter_key."_types"][] = "oom";
 				}
 				$filterSettings[$fid][$gid][0] = $_POST[$filter_key."_elements"];
 				$filterSettings[$fid][$gid][1] = $_POST[$filter_key."_ops"];
 				$filterSettings[$fid][$gid][2] = $_POST[$filter_key."_terms"];
+				$filterSettings[$fid][$gid][3] = $_POST[$filter_key."_types"];
 			}
-			
+			/* ALTERED - 20100316 - freeform - jeff/julian - stop */
+		
 		}
 	}
 
