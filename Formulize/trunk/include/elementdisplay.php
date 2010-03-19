@@ -137,42 +137,46 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$filterElements = $elementFilterSettings[0];
 		$filterOps = $elementFilterSettings[1];
 		$filterTerms = $elementFilterSettings[2];
+		/* ALTERED - 20100316 - freeform - jeff/julian - start */
+		$filterTypes = $elementFilterSettings[3];
+
+		// find the filter indexes for 'match all' and 'match one or more'
+		$filterElementsAll = array();
+		$filterElementsOOM = array();
+		for($i=0;$i<count($filterTypes);$i++) {
+			if($filterTypes[$i] == "all") {
+				$filterElementsAll[] = $i;
+			} else {
+				$filterElementsOOM[] = $i;
+			}
+		}
+		/* ALTERED - 20100316 - freeform - jeff/julian - stop */
+
 		// setup evaluation condition as PHP and then eval it so we know if we should include this element or not
 		$evaluationCondition = "\$passedCondition = false;\n";
 		$evaluationCondition .= "if(";
-		for($i=0;$i<count($filterElements);$i++) {
-			if($i > 0) {
-				$evaluationCondition .= " AND ";
-			}
-			switch($filterOps[$i]) {
-				case "=";
-					$thisOp = "==";
-					break;
-				case "NOT";
-					$thisOp = "!=";
-					break;
-				default:
-					$thisOp = $filterOps[$i];
-			}
-			if($filterTerms[$i] === "{BLANK}") {
-				$filterTerms[$i] = "";
-			}
-			if($entry == "new") {
-				$compValue = "";
+
+		/* ALTERED - 20100316 - freeform - jeff/julian - start */
+		$evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
+		$evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
+
+		$evaluationCondition .= $evaluationConditionAND;
+		if( $evaluationConditionOR ) {
+			if( $evaluationConditionAND ) {
+				$evaluationCondition .= " AND (" . $evaluationConditionOR . ")";
+				//$evaluationCondition .= " OR (" . $evaluationConditionOR . ")";
 			} else {
-				$compValue = addslashes(display($entryData[0], $filterElements[$i]));
-			}
-			if($thisOp == "LIKE") {
-				$evaluationCondition .= "strstr('".$compValue."', '".addslashes($filterTerms[$i])."')"; 
-			} elseif($thisOp == "NOT LIKE") {
-				$evaluationCondition .= "!strstr('".$compValue."', '".addslashes($filterTerms[$i])."')";
-			} else {
-				$evaluationCondition .= "'".$compValue."' $thisOp '".addslashes($filterTerms[$i])."'";
+				$evaluationCondition .= $evaluationConditionOR;
 			}
 		}
+		/* ALTERED - 20100316 - freeform - jeff/julian - stop */
+
 		$evaluationCondition .= ") {\n";
 		$evaluationCondition .= "  \$passedCondition = true;\n";
 		$evaluationCondition .= "}\n";
+
+		//print( $evaluationCondition );
+
 		eval($evaluationCondition);
 		if(!$passedCondition) {
 			$allowed = 0;
@@ -269,6 +273,47 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		return "not_allowed";
 	}
 }
+
+/* ALTERED - 20100316 - freeform - jeff/julian - start */
+function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData)
+{
+	$evaluationCondition = "";
+
+	for($io=0;$io<count($indexes);$io++) {
+		$i = $indexes[$io];
+		if(!($evaluationCondition == "")) {
+			$evaluationCondition .= " $match ";
+		}
+		switch($filterOps[$i]) {
+			case "=";
+				$thisOp = "==";
+				break;
+			case "NOT";
+				$thisOp = "!=";
+				break;
+			default:
+				$thisOp = $filterOps[$i];
+		}
+		if($filterTerms[$i] === "{BLANK}") {
+			$filterTerms[$i] = "";
+		}
+		if($entry == "new") {
+			$compValue = "";
+		} else {
+			$compValue = addslashes(display($entryData[0], $filterElements[$i]));
+		}
+		if($thisOp == "LIKE") {
+			$evaluationCondition .= "strstr('".$compValue."', '".addslashes($filterTerms[$i])."')"; 
+		} elseif($thisOp == "NOT LIKE") {
+			$evaluationCondition .= "!strstr('".$compValue."', '".addslashes($filterTerms[$i])."')";
+		} else {
+			$evaluationCondition .= "'".$compValue."' $thisOp '".addslashes($filterTerms[$i])."'";
+		}
+	}
+
+	return $evaluationCondition;
+}
+/* ALTERED - 20100316 - freeform - jeff/julian - stop */
 
 // THIS FUNCTION RETURNS THE CAPTION FOR AN ELEMENT 
 // added June 25 2006 -- jwe
