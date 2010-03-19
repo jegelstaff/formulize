@@ -691,6 +691,10 @@ define("_formulize_ERROR_IN_LEFTRIGHT", "There appears to be an error in the PHP
 define("_formulize_GENERIC_FILTER_ALL", "No filter in effect (select this to clear existing filters)");
 define("_formulize_GENERIC_FILTER_CON", "Filter based on this/these conditions:");
 define("_formulize_GENERIC_FILTER_ADDBUTTON", "Add another condition");
+/* ALTERED - 20100315 - freeform - jeff - start */
+define("_formulize_GENERIC_FILTER_MATCH_ALL", "Match all of these:");
+define("_formulize_GENERIC_FILTER_MATCH_ONEORMORE", "Match one or more of these:");
+/* ALTERED - 20100315 - freeform - jeff - stop */
 
 define("_formulize_REQUIRED_UNIQUE", "The value you entered for '%s' has been entered already.  You must type a unique value for that question.");
 
