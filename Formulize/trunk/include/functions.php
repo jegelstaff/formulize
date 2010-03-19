@@ -3688,111 +3688,158 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
 // $filterButtonText is the text to use for the "add" button for adding a new filter to the list of conditions
 // This function sets up a series of old_$filterName_elements hidden elements to perpetuate the ones that have been set already, and also some new_$filterName_elements that are the new ones users select
 // When other code is handling the saving of this filter information later, it will have to take both the old and the new and munge them together
+/* ALTERED - 20100315 - freeform - jeff/julian - start - commented match all, and
+	added match one or more */
 function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceElements, $formName, $groups=false, $filterAllText=_formulize_GENERIC_FILTER_ALL, $filterConText=_formulize_GENERIC_FILTER_CON, $filterButtonText=_formulize_GENERIC_FILTER_ADDBUTTON) {
-	
-	if(!$filterName OR !$formWithSourceElements OR !$formName) {
-		return false;
-	}
-	
-	// set all the elements that we want to show the user
-	$cols = "";
-	if($groups) {
-		$cols = getAllColList($formWithSourceElements, "", $groups);
-	} else {
-		$cols = getAllColList($formWithSourceElements);
-	}
-		
-	$options = array('creation_uid'=>_formulize_DE_CALC_CREATOR, 'creation_datetime'=>_formulize_DE_CALC_CREATEDATE, 'mod_uid'=>_formulize_DE_CALC_MODIFIER, 'mod_datetime'=>_formulize_DE_CALC_MODDATE);
-	if(is_array($cols)) {
-		// setup the options array for form elements
-		foreach($cols as $f=>$vs) {
-			foreach($vs as $row=>$values) {
-				if($values['ele_colhead'] != "") {
-					$options[$values['ele_handle']] = printSmart(trans($values['ele_colhead']), 40);
-				} else {
-					$options[$values['ele_handle']] = printSmart(trans(strip_tags($values['ele_caption'])), 40);
-				}
-			}
-		}
-	} 
-	
-	// process existing conditions...setup needed variables...
-	$conditionlist = "";
-	$oldElementsName = $filterName."_elements";
-	$oldOpsName = $filterName."_ops";
-	$oldTermsName = $filterName."_terms";
-	$newElementName = "new_".$filterName."_element";
-	$newOpName = "new_".$filterName."_op";
-	$newTermName = "new_".$filterName."_term";
-	
-	if(!isset($_POST[$oldElementsName]) AND is_array($filterSettings)) { // unpack existing conditions on the first load only
-		${$oldElementsName} = $filterSettings[0];
-		${$oldOpsName} = $filterSettings[1];
-		${$oldTermsName} = $filterSettings[2];
-	} elseif(isset($_POST[$oldElementsName]) AND $_POST[$filterName] != "all") { // unpack any values persisted from the previous pageload
-		${$oldElementsName} = $_POST[$oldElementsName];
-		${$oldOpsName} = $_POST[$oldOpsName];
-		${$oldTermsName} = $_POST[$oldTermsName];
-	}
-	// add in any new terms that have been sent...
-	if(${$newTermName} != "" AND $_POST[$filterName] != "all") {
-		${$oldElementsName}[] = ${$newElementName};
-		${$oldOpsName}[] = ${$newOpName};
-		${$oldTermsName}[] = ${$newTermName};
-	}
-	// make hidden elements for all the old conditions we found
-	for($i=0;$i<count(${$oldElementsName});$i++) {
-			$thisHiddenElement = new xoopsFormHidden($oldElementsName."[]", strip_tags(htmlspecialchars(${$oldElementsName}[$i])));
-			$thisHiddenOp = new xoopsFormHidden($oldOpsName."[]", strip_tags(htmlspecialchars(${$oldOpsName}[$i])));
-			$thisHiddenTerm = new xoopsFormHidden($oldTermsName."[]", strip_tags(htmlspecialchars(${$oldTermsName}[$i])));
-			$conditionlist .= $options[${$oldElementsName}[$i]] . " " . ${$oldOpsName}[$i] . " " . ${$oldTermsName}[$i] . "\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n<br />\n";
-	} 
-	
-	// setup the new element, operator, term boxes...
-	$new_elementOpTerm = new xoopsFormElementTray('', "&nbsp;&nbsp;");
-	$element = new xoopsFormSelect('', $newElementName);
-	$element->setExtra(" onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\" ");
-	$element->addOptionArray($options);
-	$op = new xoopsFormSelect('', $newOpName);
-	$ops['='] = "=";
-	$ops['NOT'] = "NOT";
-	$ops['>'] = ">";
-	$ops['<'] = "<";
-	$ops['>='] = ">=";
-	$ops['<='] = "<=";
-	$ops['LIKE'] = "LIKE";
-	$ops['NOT LIKE'] = "NOT LIKE";
-	$op->addOptionArray($ops);
-	$op->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
-	$term = new xoopsFormText('', $newTermName, 10, 255);
-	$term->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
-	$new_elementOpTerm->addElement($element);
-	$new_elementOpTerm->addElement($op);
-	$new_elementOpTerm->addElement($term);
-	
-	$addcon = new xoopsFormButton('', 'addcon', $filterButtonText, 'submit');
-	$addcon->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
-	
-	$conditionui = "<br />$conditionlist" . $new_elementOpTerm->render() . "<br />" . $addcon->render();
-	
-	// setup the radio buttons for no filter, or yes use a filter
-	if((isset($_POST[$filterName]) AND $_POST[$filterName]=="all") OR (!isset($_POST[$filterName]) AND !is_array($filterSettings))) {
-		$radioSetting = 'all';
-	} else {
-		$radioSetting = 'con';
-	}
-	$radioButtons = new xoopsFormElementTray('', "<br />");
-	$radioButtonAll = new xoopsFormRadio('', $filterName, $radioSetting);
-	$radioButtonAll->addOption('all', $filterAllText);
-	$radioButtonCon = new xoopsFormRadio('' , $filterName, $radioSetting);
-	$radioButtonCon->addOption('con', $filterConText.$conditionui);
-	$radioButtons->addElement($radioButtonAll);
-	$radioButtons->addElement($radioButtonCon);
+
+ if(!$filterName OR !$formWithSourceElements OR !$formName) {
+  return false;
+ }
+ 
+ // set all the elements that we want to show the user
+ $cols = "";
+ if($groups) {
+  $cols = getAllColList($formWithSourceElements, "", $groups);
+ } else {
+  $cols = getAllColList($formWithSourceElements);
+ }
+  
+ $options = array('creation_uid'=>_formulize_DE_CALC_CREATOR, 'creation_datetime'=>_formulize_DE_CALC_CREATEDATE, 'mod_uid'=>_formulize_DE_CALC_MODIFIER, 'mod_datetime'=>_formulize_DE_CALC_MODDATE);
+ if(is_array($cols)) {
+  // setup the options array for form elements
+  foreach($cols as $f=>$vs) {
+   foreach($vs as $row=>$values) {
+    if($values['ele_colhead'] != "") {
+     $options[$values['ele_handle']] = printSmart(trans($values['ele_colhead']), 40);
+    } else {
+     $options[$values['ele_handle']] = printSmart(trans(strip_tags($values['ele_caption'])), 40);
+    }
+   }
+  }
+ }
+
+ // process existing conditions...setup needed variables...
+ $oldElementsName = $filterName."_elements";
+ $oldOpsName = $filterName."_ops";
+ $oldTermsName = $filterName."_terms";
+ $oldTypesName = $filterName."_types";
+
+ if(!isset($_POST[$oldElementsName]) AND is_array($filterSettings)) { // unpack existing conditions on the first load only
+   ${$oldElementsName} = $filterSettings[0];
+   ${$oldOpsName} = $filterSettings[1];
+   ${$oldTermsName} = $filterSettings[2];
+   if(isset($filterSettings[3])) {
+     ${$oldTypesName} = $filterSettings[3];
+   } else {
+     for($i=0;$i<count($filterSettings[0]);$i++) {
+	   ${$oldTypesName}[] = "all";
+     }
+   }
+ } elseif(isset($_POST[$oldElementsName]) AND $_POST[$filterName] != "all") { // unpack any values persisted from the previous pageload
+  ${$oldElementsName} = $_POST[$oldElementsName];
+  ${$oldOpsName} = $_POST[$oldOpsName];
+  ${$oldTermsName} = $_POST[$oldTermsName];
+  ${$oldTypesName} = $_POST[$oldTypesName];
+ }
+
+  // setup needed variables for the all or oom ui
+ // > match all of these
+ $conditionlist = "";
+ $newElementName = "new_".$filterName."_element";
+ $newOpName = "new_".$filterName."_op";
+ $newTermName = "new_".$filterName."_term";
+ // > match one or more of these
+ $conditionlistOOM = "";
+ $newElementNameOOM = "new_".$filterName."_oom_element";
+ $newOpNameOOM = "new_".$filterName."_oom_op";
+ $newTermNameOOM = "new_".$filterName."_oom_term";
+
+ // add in any new terms that have been sent...
+ // > match all of these
+ if(${$newTermName} != "" AND $_POST[$filterName] != "all") {
+  ${$oldElementsName}[] = ${$newElementName};
+  ${$oldOpsName}[] = ${$newOpName};
+  ${$oldTermsName}[] = ${$newTermName};
+  ${$oldTypesName}[] = "all";
+ }
+ // > match one or more of these
+ if(${$newTermNameOOM} != "" AND $_POST[$filterName] != "all") {
+  ${$oldElementsName}[] = ${$newElementNameOOM};
+  ${$oldOpsName}[] = ${$newOpNameOOM};
+  ${$oldTermsName}[] = ${$newTermNameOOM};
+  ${$oldTypesName}[] = "oom";
+ }
+
+ // make hidden elements for all the old conditions we found
+ for($i=0;$i<count(${$oldElementsName});$i++) {
+   $thisHiddenElement = new xoopsFormHidden($oldElementsName."[]", strip_tags(htmlspecialchars(${$oldElementsName}[$i])));
+   $thisHiddenOp = new xoopsFormHidden($oldOpsName."[]", strip_tags(htmlspecialchars(${$oldOpsName}[$i])));
+   $thisHiddenTerm = new xoopsFormHidden($oldTermsName."[]", strip_tags(htmlspecialchars(${$oldTermsName}[$i])));
+   $thisHiddenType = new xoopsFormHidden($oldTypesName."[]", strip_tags(htmlspecialchars(${$oldTypesName}[$i])));
+   if(${$oldTypesName}[$i] == "all") {
+        $conditionlist .= $options[${$oldElementsName}[$i]] . " " . ${$oldOpsName}[$i] . " " . ${$oldTermsName}[$i] . "\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
+   } else {
+        $conditionlistOOM .= $options[${$oldElementsName}[$i]] . " " . ${$oldOpsName}[$i] . " " . ${$oldTermsName}[$i] . "\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
+   }
+ }
+ // setup the new element, operator, term boxes...
+ // > match all of these
+ $conditionui = "<br /><b>" . _formulize_GENERIC_FILTER_MATCH_ALL . "</b>";
+ $conditionui .= formulize_createFilterUIMatch($newElementName,$formName,$filterName,$options,$newOpName,$newTermName,$conditionlist);
+ // > match one or more of these
+ $conditionui .= "<br /><b>" . _formulize_GENERIC_FILTER_MATCH_ONEORMORE . "</b>";
+ $conditionui .= formulize_createFilterUIMatch($newElementNameOOM,$formName,$filterName,$options,$newOpNameOOM,$newTermNameOOM,$conditionlistOOM);
+
+ // build add another condition button
+ $addcon = new xoopsFormButton('', 'addcon', $filterButtonText, 'submit');
+ $addcon->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
+ 
+ $conditionui .= "<br />" . $addcon->render();
+
+ // setup the radio buttons for no filter, or yes use a filter
+ if((isset($_POST[$filterName]) AND $_POST[$filterName]=="all") OR (!isset($_POST[$filterName]) AND !is_array($filterSettings))) {
+  $radioSetting = 'all';
+ } else {
+  $radioSetting = 'con';
+ }
+ $radioButtons = new xoopsFormElementTray('', "<br />");
+ $radioButtonAll = new xoopsFormRadio('', $filterName, $radioSetting);
+ $radioButtonAll->addOption('all', $filterAllText);
+ $radioButtonCon = new xoopsFormRadio('' , $filterName, $radioSetting);
+ $radioButtonCon->addOption('con', $filterConText.$conditionui);
+ $radioButtons->addElement($radioButtonAll);
+ $radioButtons->addElement($radioButtonCon);
 
   return $radioButtons;
 
 }
 
+function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$options,$newOpName,$newTermName,$conditionlist) {
+ // setup the new element, operator, term boxes...
+ $new_elementOpTerm = new xoopsFormElementTray('', "&nbsp;&nbsp;");
+ $element = new xoopsFormSelect('', $newElementName);
+ $element->setExtra(" onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\" ");
+ $element->addOptionArray($options);
+ $op = new xoopsFormSelect('', $newOpName);
+ $ops['='] = "=";
+ $ops['NOT'] = "NOT";
+ $ops['>'] = ">";
+ $ops['<'] = "<";
+ $ops['>='] = ">=";
+ $ops['<='] = "<=";
+ $ops['LIKE'] = "LIKE";
+ $ops['NOT LIKE'] = "NOT LIKE";
+ $op->addOptionArray($ops);
+ $op->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
+ $term = new xoopsFormText('', $newTermName, 10, 255);
+ $term->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
+ $new_elementOpTerm->addElement($element);
+ $new_elementOpTerm->addElement($op);
+ $new_elementOpTerm->addElement($term);
+ 
+ return "<br />$conditionlist" . $new_elementOpTerm->render();
+}
+/* ALTERED - 20100315 - freeform - jeff/julian - stop */
 
 // this function gets the password for the encryption/decryption process
 // want to has the db pass since we don't want any SQL logging processes to include the db pass as plaintext
