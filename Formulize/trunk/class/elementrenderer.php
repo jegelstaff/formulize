@@ -377,33 +377,51 @@ class formulizeElementRenderer{
 							include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 							$data_handler = new formulizeDataHandler($originalSource[0]);
 						}
+						/* ALTERED - 20100318 - freeform - jeff/julian - start */
+						$autocompleteRowsAt = 10;//30
 						$reslinkedvaluesq = $xoopsDB->query($sourceValuesQ);
-						if($reslinkedvaluesq) {
-							while($rowlinkedvaluesq = $xoopsDB->fetchRow($reslinkedvaluesq)) {
-								if($sourceElementObject->isLinked) {
-									$rowlinkedvaluesq[1] = $data_handler->getElementValueInEntry(trim($rowlinkedvaluesq[1], ","), $originalSource[1]);
+						$numberOfRows = $xoopsDB->getRowsNum($reslinkedvaluesq);
+						if(!$isDisabled && $numberOfRows > $autocompleteRowsAt) {
+							// do autocomplete rendering logic here
+
+							//$renderedComboBox = $this->formulize_renderAutoCompleteBox($form_ele_id, $id_form, $boxproperties[0] . "#*=:*" . $boxproperties[1] . "#*=:*", $getIdFromCapRow[0], $boxproperties[0], $getSelValRow[0], $selectedvalues[0]);
+							$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $id_form, $boxproperties[0] . "#*=:*" . $boxproperties[1] . "#*=:*", $getIdFromCapRow[0], $boxproperties[0], $getSelValRow[0], $selectedvalues[0]);
+							$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
+						} else {
+							if($reslinkedvaluesq) {
+								while($rowlinkedvaluesq = $xoopsDB->fetchRow($reslinkedvaluesq)) {
+									if($sourceElementObject->isLinked) {
+										$rowlinkedvaluesq[1] = $data_handler->getElementValueInEntry(trim($rowlinkedvaluesq[1], ","), $originalSource[1]);
+									}
+									$linkedElementOptions[$rowlinkedvaluesq[0]] = strip_tags($rowlinkedvaluesq[1]);
 								}
-								$linkedElementOptions[$rowlinkedvaluesq[0]] = strip_tags($rowlinkedvaluesq[1]);
 							}
+							$cachedSourceValuesQ[$sourceValuesQ] = $linkedElementOptions;
 						}
-						$cachedSourceValuesQ[$sourceValuesQ] = $linkedElementOptions;
 					}
 					
-					if(!$isDisabled) {
+					// only do this if we're rendering a normal element, that is not disabled
+					if(!$isDisabled && $numberOfRows <= $autocompleteRowsAt) {
 						$form_ele->addOptionArray($cachedSourceValuesQ[$sourceValuesQ]);
 					}
-					foreach($sourceEntryIds as $thisEntryId) {
-						if(!$isDisabled) {
-							$form_ele->setValue($thisEntryId);
-						} else {
-							$disabledName = $ele_value[1] ? $form_ele_id."[]" : $form_ele_id;
-							$disabledHiddenValue[] = "<input type=hidden name=\"$disabledName\" value=\"$thisEntryId\">";
-							$disabledOutputText[] = $cachedSourceValuesQ[$sourceValuesQ][$thisEntryId]; // the text value of the option(s) that are currently selected
+
+					// only do this if we're rendering a normal element (may be disabled)
+					if($numberOfRows <= $autocompleteRowsAt) {
+						foreach($sourceEntryIds as $thisEntryId) {
+							if(!$isDisabled) {
+								$form_ele->setValue($thisEntryId);
+							} else {
+								$disabledName = $ele_value[1] ? $form_ele_id."[]" : $form_ele_id;
+								$disabledHiddenValue[] = "<input type=hidden name=\"$disabledName\" value=\"$thisEntryId\">";
+								$disabledOutputText[] = $cachedSourceValuesQ[$sourceValuesQ][$thisEntryId]; // the text value of the option(s) that are currently selected
+							}
 						}
 					}
+
 					if($isDisabled) {
 						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText) . implode("\n", $disabledHiddenValue));
 					}
+					/* ALTERED - 20100318 - freeform - jeff/julian - stop */
 
 					// THIS COMMENTED CODE WAS BASED ON THE OLD DATA SYNTAX
 					// Check to see if there's more than 50 options, and if so, render as newfangled combobox
@@ -1055,6 +1073,26 @@ class formulizeElementRenderer{
 
 		return $output;
 	}
+
+
+	/* ALTERED - 20100318 - freeform - jeff/julian - start */
+	function formulize_renderQuickSelect($form_ele_id, $form_id, $passBackIdPrefix, $source_element_id, $source_form_id, $default_value, $default_ele_id) {
+		$output = "<!-- Dependencies -->\n
+<script type=\"text/javascript\" src=\"jquery/jquery-1.4.2.min.js\"></script>\n
+<script type=\"text/javascript\" src=\"jquery/quicksilver.js\"></script>\n
+<script type=\"text/javascript\" src=\"jquery/jquery.quickselect.min.js\"></script>\n
+<link rel=\"stylesheet\" type=\"text/css\" media=\"all\" href=\"jquery/css/start/jquery.quickselect.css\"/>\n
+		";
+
+		$output .= "<input type='text' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='off'>";
+		$output .= "<input type='hidden' name='${form_ele_id}' id = '${form_ele_id}'>";
+		$output .= "<script type='text/javascript'>";
+		$output .= '$(function(){$("#'.$form_ele_id.'_user'.'").quickselect({ajax: "'.XOOPS_URL.'/modules/formulize/include/formulize_quickselect.php",match:"substring",mustMatch:true,additionalFields: $("#'.$form_ele_id.'")});});';
+		$output .= "</script>";
+
+		return $output;
+	}
+	/* ALTERED - 20100318 - freeform - jeff/julian - stop */
 
 	// creates a hidden version of the element so that it can pass its value back, but not be available to the user
 	

@@ -438,7 +438,8 @@ class formulizeFormsHandler {
 			return true;
 		}
 	}
-	
+
+
 	// this function returns a per-group filter for the current user on the specified form, formatted as a where clause, for the specified form alias, if any
 	// if groupids is specified, then it will base the filter on those groups and not the current groups
 	function getPerGroupFilterWhereClause($fid, $formAlias="", $groupids=false) {
@@ -471,22 +472,64 @@ class formulizeFormsHandler {
 			// filterSettings[0] will be the elements
 			// filterSettings[1] will be the ops
 			// filterSettings[2] will be the terms
-			for($i=0;$i<count($filterSettings[0]);$i++) {
-				if(!$perGroupFilter) { // start up the filter if this is the first time through
-					$perGroupFilter = " AND (";
-				} else { // put in an AND so we can include the next filter setting
-					$perGroupFilter .= " OR "; // need to make this a user configurable option
+			/* ALTERED - 20100317 - freeform - jeff/julian - start */
+			// filterSettings[3] will be the types
+
+			// find the filter indexes for 'match all' and 'match one or more'
+			$filterAll = array();
+			$filterOOM = array();
+			for($i=0;$i<count($filterSettings[3]);$i++) {
+				if($filterSettings[3][$i] == "all") {
+					$filterAll[] = $i;
+				} else {
+					$filterOOM[] = $i;
 				}
-				$likeBits = strstr(strtoupper($filterSettings[1][$i]), "LIKE") ? "%" : "";
-				$termToUse = $filterSettings[2][$i] === "{USER}" ? $uid : $filterSettings[2][$i];
-				$termToUse = is_numeric($termToUse) ? $termToUse : "\"$likeBits".mysql_real_escape_string($termToUse)."$likeBits\"";
-				$perGroupFilter .= "$formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . $termToUse; // htmlspecialchars_decode is used because &lt;= might be the operator coming out of the DB instead of <=
 			}
+
+			$perGroupFilterAND = $this->buildPerGroupFilterWhereClause("AND",$filterAll,$filterSettings,$uid,$formAlias);
+			$perGroupFilterOR = $this->buildPerGroupFilterWhereClause("OR",$filterOOM,$filterSettings,$uid,$formAlias);
+
+			if( $perGroupFilterAND || $perGroupFilterOR ) {
+					$perGroupFilter = " AND (";
+			}
+
+			$perGroupFilter .= $perGroupFilterAND;
+			if( $perGroupFilterOR ) {
+				if( $perGroupFilterAND ) {
+					$perGroupFilter .= " AND (" . $perGroupFilterOR . ")";
+					//$perGroupFilter .= " OR (" . $perGroupFilterOR . ")";
+				} else {
+					$perGroupFilter .= $perGroupFilterOR;
+				}
+			}
+			/* ALTERED - 20100317 - freeform - jeff/julian - stop */
 		}
+
 		if($perGroupFilter) {
-				 $perGroupFilter .= ") ";
+			$perGroupFilter .= ") ";
 		}
+
+		//print( $perGroupFilter );
+
 		return $perGroupFilter;
 	}
 
+
+	function buildPerGroupFilterWhereClause($match,$indexes,$filterSettings,$uid,$formAlias) {
+		$perGroupFilter = "";
+
+		for($io=0;$io<count($indexes);$io++) {
+			$i = $indexes[$io];
+			if(!($perGroupFilter == "")) {
+				$perGroupFilter .= " $match ";
+			}
+
+			$likeBits = strstr(strtoupper($filterSettings[1][$i]), "LIKE") ? "%" : "";
+			$termToUse = $filterSettings[2][$i] === "{USER}" ? $uid : $filterSettings[2][$i];
+			$termToUse = is_numeric($termToUse) ? $termToUse : "\"$likeBits".mysql_real_escape_string($termToUse)."$likeBits\"";
+			$perGroupFilter .= "$formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . $termToUse; // htmlspecialchars_decode is used because &lt;= might be the operator coming out of the DB instead of <=
+		}
+
+		return $perGroupFilter;
+	}
 }
