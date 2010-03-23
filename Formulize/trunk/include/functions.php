@@ -3682,6 +3682,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
 // $filterName is the unique name to use for this set of elements
 // $formWithSourceElements is the ID of the form to use to get the elements from to show in the filter options
 // $formName is the name of the HTML form that this filter UI is being embedded into
+// $defaultTypeIfNoFilterTypeGiven is the value ("all" or "oom") that should be used for the filter type, if no filter type is specified...this happens when old installations are upgraded to the new version that is type-aware for these filters, no filter type will be specified for all the conditions.  Therefore, we have to assume what it should be, and that is potentially different for each place this function is called, since the logic reading these filters for each of those places will have assumed one or the other.
 // $groups is the groups to filter the elements with (only elements visible to those groups).  If no groups, then all elements are returned.
 // filterAllText is the text to use for the "all" option
 // filterConText is the text to use for the "con" option (ie: the radio button that shows there is a filter in effect)
@@ -3690,7 +3691,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
 // When other code is handling the saving of this filter information later, it will have to take both the old and the new and munge them together
 /* ALTERED - 20100315 - freeform - jeff/julian - start - commented match all, and
 	added match one or more */
-function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceElements, $formName, $groups=false, $filterAllText=_formulize_GENERIC_FILTER_ALL, $filterConText=_formulize_GENERIC_FILTER_CON, $filterButtonText=_formulize_GENERIC_FILTER_ADDBUTTON) {
+function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceElements, $formName, $defaultTypeIfNoFilterTypeGiven="all", $groups=false, $filterAllText=_formulize_GENERIC_FILTER_ALL, $filterConText=_formulize_GENERIC_FILTER_CON, $filterButtonText=_formulize_GENERIC_FILTER_ADDBUTTON) {
 
  if(!$filterName OR !$formWithSourceElements OR !$formName) {
   return false;
@@ -3732,7 +3733,7 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
      ${$oldTypesName} = $filterSettings[3];
    } else {
      for($i=0;$i<count($filterSettings[0]);$i++) {
-	   ${$oldTypesName}[] = "all";
+			 ${$oldTypesName}[] = $defaultTypeIfNoFilterTypeGiven;
      }
    }
  } elseif(isset($_POST[$oldElementsName]) AND $_POST[$filterName] != "all") { // unpack any values persisted from the previous pageload

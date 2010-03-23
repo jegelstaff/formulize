@@ -1045,7 +1045,7 @@ function drawformperms($form_list, $formulize_perms, $perm_desc, $group_id="all"
 					$formObject = $form_handler->get($form_id);
 					$filterSettings = $formObject->getVar('filterSettings');
 					$filterSettingsToSend = isset($filterSettings[$group_id]) ? $filterSettings[$group_id] : "";
-					$filterUI = formulize_createFilterUI($filterSettingsToSend, "filter_".$form_id."_".$group_id, $form_id, "permeditor");
+					$filterUI = formulize_createFilterUI($filterSettingsToSend, "filter_".$form_id."_".$group_id, $form_id, "permeditor", "oom");
 					print $filterUI->render();
 					
 				}
