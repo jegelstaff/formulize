@@ -224,8 +224,7 @@ function formulize_form(&$node) {
     	'#title' => check_plain($type->title_label),
     	'#required' => TRUE,
     	'#default_value' => $node->title,
-    	'#weight' => -5,
-    	'#description' => t('This name will not be shown to users, but will show up in lists of nodes so you can find this node easily.')
+    	'#weight' => -5
   	);
 	}
 		
