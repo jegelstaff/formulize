@@ -1790,13 +1790,26 @@ function formulize_buildQSFilter($handle, $search_text, $frid) {
 // this function writes in the headers for the columns in the results box
 function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=null, $numberOfButtons, $frid) { //, $lockcontrols) {
 
+	static $checkedHelpLink = false;
+	static $headingHelpLink;
+	if(!$checkedHelpLink) {
+		$module_handler =& xoops_gethandler('module');
+		$config_handler =& xoops_gethandler('config');
+		$formulizeModule =& $module_handler->getByDirname("formulize");
+		$formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+		$headingHelpLink = $formulizeConfig['heading_help_link'];
+		$checkedHelpLink = true;
+	}
+
 	print "<tr>";
 	if($useBoxes != 2 OR $useLinks) {
 		print "<td class=head>&nbsp;</td>\n";
 	}
 	for($i=0;$i<count($headers);$i++) {
    	print "<td class=head>\n";
-    print "<div style=\"float: right;\"><a href=\"\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=".$cols[$i]."&frid=$frid');return false;\" title=\""._formulize_DE_MOREINFO."\">[?]</a></div>\n";
+		if($headingHelpLink) {
+			print "<div style=\"float: right;\"><a href=\"\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=".$cols[$i]."&frid=$frid');return false;\" title=\""._formulize_DE_MOREINFO."\">[?]</a></div>\n";
+		}
 		if($cols[$i] == $sort) {
 			if($order == "SORT_DESC") {
 				$imagename = "desc.gif";

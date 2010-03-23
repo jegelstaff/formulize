@@ -63,6 +63,10 @@ define("_MI_formulize_NUMBER_PREFIX_DESC", "For example, if your entire site onl
 define("_MI_formulize_NUMBER_DECIMALSEP", "By default, if decimals are used, what punctuation should separate them from the rest of the number?");
 define("_MI_formulize_NUMBER_SEP", "By default, what punctuation should be used to separate thousands in numbers?");
 
+define("_MI_formulize_HEADING_HELP_LINK", "Should the help link ([?]) appear at the top of each column in a list of entries?");
+define("_MI_formulize_HEADING_HELP_LINK_DESC", "This link provides a popup window that shows details about the question in the form, such as the full text of the question, the choice of options if the question is a radio button, etc.");
+
+
 // The name of this module
 define("_MI_formulizeMENU_NAME","MyMenu");
 

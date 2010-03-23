@@ -238,6 +238,12 @@ $modversion['config'][13]['formtype'] = 'textbox';
 $modversion['config'][13]['valuetype'] = 'text';
 $modversion['config'][13]['default'] = ",";
 
+$modversion['config'][14]['name'] = 'heading_help_link';
+$modversion['config'][14]['title'] = '_MI_formulize_HEADING_HELP_LINK';
+$modversion['config'][14]['description'] = '_MI_formulize_HEADING_HELP_LINK_DESC';
+$modversion['config'][14]['formtype'] = 'yesno';
+$modversion['config'][14]['valuetype'] = 'int';
+$modversion['config'][14]['default'] = 1;
 
 //bloc
 $modversion['blocks'][1]['file'] = "mymenu.php";
