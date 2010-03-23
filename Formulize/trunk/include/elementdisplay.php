@@ -254,7 +254,8 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 				$indexer = 1;
 				foreach($ele_value as $k=>$v) {
 					if($v == 1) {
-						print "<input type=hidden name=de_" . $entry . "_" . $element->getVar('ele_id') . " id=de_" . $entry . "_" . $element->getVar('ele_id') . " value=\"$indexer\">\n";
+						print "<input type=hidden name=decue_" . $element->getVar('id_form') . "_" . $entry . "_" . $element->getVar('ele_id') . " id=decue_" . $element->getVar('id_form') . "_" . $entry . "_" . $element->getVar('ele_id') . " value=\"1\">\n";
+						print "<input type=hidden name=de_" . $element->getVar('id_form') . "_" . $entry . "_" . $element->getVar('ele_id') . " id=de_" . $element->getVar('id_form') . "_" . $entry . "_" . $element->getVar('ele_id') . " value=\"$indexer\">\n";
 					}
 					$indexer++;
 				}
