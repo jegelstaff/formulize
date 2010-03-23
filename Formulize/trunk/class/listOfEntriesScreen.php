@@ -159,7 +159,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 // setup an option list of all views, as well as one just for the currently selected Framework setting
                 $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
                 $form_handler =& xoops_getmodulehandler('forms', 'formulize');
-                $formObj = $form_handler->get($fid);
+                $formObj = $form_handler->get($fid, true); // true causes all elements to be included even if they're not visible.
                 $frameworks = $framework_handler->getFrameworksByForm($fid);
                 $selectedFramework = isset($_POST['frid']) ? $_POST['frid'] : $screen->getVar('frid');
                 $views = $formObj->getVar('views');
@@ -300,7 +300,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                     if($fid == $thisFid) {
                         $thisFidObj = $formObj;
                     } else {
-                        $thisFidObj = $form_handler->get($thisFid);
+                        $thisFidObj = $form_handler->get($thisFid, true); // true causes all elements to be included, even if they're not visible
                     }
                     $allFidObjs[$thisFid] = $thisFidObj; // for use later on
                     $thisFidElements = $thisFidObj->getVar('elements');
