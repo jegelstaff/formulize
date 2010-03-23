@@ -1,16 +1,21 @@
 <?php
-if( $_GET['q'] == 'a' )
-	print '[["Azilda",9]]';
-else if( $_GET['q'] == 'b' )
-	print '[["Bracebridge",18],["Brampton",13],["Burlington",17]]';
-else if( $_GET['q'] == 'c' )
-	print '[["Cambridge",15],["Chelmsford",8],["Coppercliff",16]]';
-else if( $_GET['q'] == 'd' )
-	print '[["Dowling",11]]';
-else if( $_GET['q'] == 'g' )
-	print '[[Guelph"",5]]';
-else if( $_GET['q'] == 'h' )
-	print '[["Hamilton",2]]';
-else if( $_GET['q'] == 'l' )
-	print '[["Lively",10],[London"",6]]';
-?>
+
+$cache = strstr($_GET['cache'], ".") ? "" : $_GET['cache']; // don't allow inclusion of badly formed cache filenames, could be hacking attempt
+$term = $_GET['q'];
+$found = array();
+
+include "../../../cache/".$cache;
+
+if(count($found) == 0) {
+  include_once "../../../mainfile.php";
+  global $xoopsConfig;
+  if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
+  	include_once "../language/".$xoopsConfig['language']."/main.php";
+  } else {
+  	include_once "../language/english/main.php";
+  }
+  $found[]='["'._formulize_NO_MATCH_FOUND.'","none"]';
+}
+
+print "[".implode(",", $found)."]";
+

@@ -698,4 +698,6 @@ define("_formulize_GENERIC_FILTER_MATCH_ONEORMORE", "Match one or more of these:
 
 define("_formulize_REQUIRED_UNIQUE", "The value you entered for '%s' has been entered already.  You must type a unique value for that question.");
 
+define("_formulize_NO_MATCH_FOUND", "No match found");
+
 ?>

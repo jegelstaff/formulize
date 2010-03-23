@@ -377,36 +377,49 @@ class formulizeElementRenderer{
 							include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 							$data_handler = new formulizeDataHandler($originalSource[0]);
 						}
-						/* ALTERED - 20100318 - freeform - jeff/julian - start */
-						$autocompleteRowsAt = 10;//30
 						$reslinkedvaluesq = $xoopsDB->query($sourceValuesQ);
-						$numberOfRows = $xoopsDB->getRowsNum($reslinkedvaluesq);
-						if(!$isDisabled && $numberOfRows > $autocompleteRowsAt) {
-							// do autocomplete rendering logic here
-
-							//$renderedComboBox = $this->formulize_renderAutoCompleteBox($form_ele_id, $id_form, $boxproperties[0] . "#*=:*" . $boxproperties[1] . "#*=:*", $getIdFromCapRow[0], $boxproperties[0], $getSelValRow[0], $selectedvalues[0]);
-							$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $id_form, $boxproperties[0] . "#*=:*" . $boxproperties[1] . "#*=:*", $getIdFromCapRow[0], $boxproperties[0], $getSelValRow[0], $selectedvalues[0]);
-							$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
-						} else {
-							if($reslinkedvaluesq) {
-								while($rowlinkedvaluesq = $xoopsDB->fetchRow($reslinkedvaluesq)) {
-									if($sourceElementObject->isLinked) {
-										$rowlinkedvaluesq[1] = $data_handler->getElementValueInEntry(trim($rowlinkedvaluesq[1], ","), $originalSource[1]);
-									}
-									$linkedElementOptions[$rowlinkedvaluesq[0]] = strip_tags($rowlinkedvaluesq[1]);
+						if($reslinkedvaluesq) {
+							while($rowlinkedvaluesq = $xoopsDB->fetchRow($reslinkedvaluesq)) {
+								if($sourceElementObject->isLinked) {
+									$rowlinkedvaluesq[1] = $data_handler->getElementValueInEntry(trim($rowlinkedvaluesq[1], ","), $originalSource[1]);
 								}
+								$linkedElementOptions[$rowlinkedvaluesq[0]] = strip_tags($rowlinkedvaluesq[1]);
 							}
-							$cachedSourceValuesQ[$sourceValuesQ] = $linkedElementOptions;
 						}
+						$cachedSourceValuesQ[$sourceValuesQ] = $linkedElementOptions;
+						/* ALTERED - 20100318 - freeform - jeff/julian - start */
+						$autocompleteRowsAt = 30;
+						$numberOfRows = $xoopsDB->getRowsNum($reslinkedvaluesq);
+						if(!$isDisabled AND $numberOfRows > $autocompleteRowsAt AND $ele_value[0] == 1) {
+							// do autocomplete rendering logic here
+							if($boxproperties[2]) {
+								$default_value = trim($boxproperties[2], ",");
+								$data_handler_autocomplete = new formulizeDataHandler($boxproperties[0]);
+								$default_value_user = $data_handler_autocomplete->getElementValueInEntry(trim($boxproperties[2], ","), $boxproperties[1]);
+							}
+							// write the possible values to a cached file so we can look them up easily when we need them, don't want to actually send them to the browser, since it could be huge, but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
+							$cachedLinkedOptionsFileName = "formulize_linkedOptions_".time();
+							formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_linkedOptions_");
+							$cachedLinkedOptions = fopen(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName","w");
+							fwrite($cachedLinkedOptions, "<?php\n\r");
+							foreach($linkedElementOptions as $id=>$text) {
+								$quotedText = "\"".str_replace("\"", "\\\"", $text)."\"";
+								fwrite($cachedLinkedOptions,"if(stristr($quotedText, \$term)){ \$found[]='[$quotedText,$id]'; }\n\r");
+							}
+							fwrite($cachedLinkedOptions, "?>");
+							fclose($cachedLinkedOptions);
+							$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFileName, $default_value, $default_value_user);
+							$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
+						} 
 					}
 					
 					// only do this if we're rendering a normal element, that is not disabled
-					if(!$isDisabled && $numberOfRows <= $autocompleteRowsAt) {
+					if(!$isDisabled AND ($numberOfRows <= $autocompleteRowsAt OR $ele_value[0] > 1)) {
 						$form_ele->addOptionArray($cachedSourceValuesQ[$sourceValuesQ]);
 					}
 
 					// only do this if we're rendering a normal element (may be disabled)
-					if($numberOfRows <= $autocompleteRowsAt) {
+					if($numberOfRows <= $autocompleteRowsAt OR $ele_value[0] > 1) {
 						foreach($sourceEntryIds as $thisEntryId) {
 							if(!$isDisabled) {
 								$form_ele->setValue($thisEntryId);
@@ -1025,69 +1038,20 @@ class formulizeElementRenderer{
 		return $box->render();
 	}
 
-	function formulize_renderAutoCompleteBox($form_ele_id, $form_id, $passBackIdPrefix, $source_element_id, $source_form_id, $default_value, $default_ele_id) {
-		static $numberOfBoxes = 0;
-		if(!$numberOfBoxes) {
-			$output .= "<!-- Dependencies -->\n
-<script type=\"text/javascript\" src=\"http://yui.yahooapis.com/2.2.2/build/yahoo-dom-event/yahoo-dom-event.js\"></script>\n
-<!-- OPTIONAL: Connection (required only if using XHR DataSource) -->\n
-<script type=\"text/javascript\" src=\"http://yui.yahooapis.com/2.2.2/build/connection/connection-min.js\"></script>\n
-<!-- OPTIONAL: Animation (required only if enabling animation) -->\n
-<script type=\"text/javascript\" src=\"http://yui.yahooapis.com/2.2.2/build/animation/animation-min.js\"></script>\n
-<!-- OPTIONAL: External JSON parser from http://www.json.org/ (enables JSON validation) -->\n
-<script type=\"text/javascript\" src=\"http://www.json.org/json.js\"></script>\n
-<!-- Source file -->\n
-<script type=\"text/javascript\" src=\"http://yui.yahooapis.com/2.2.2/build/autocomplete/autocomplete-min.js\"></script>\n";
-		}
-		$numberOfBoxes++;
-		// end of stuff that happens once
-		// start of rendering of each specific combobox
-
-		$output .= "<style>\n
-#autoCompleteBox$numberOfBoxes {width:300px;}\n
-#autoCompleteContainer$numberOfBoxes {position:absolute;z-index:9050;}\n
-#autoCompleteContainer$numberOfBoxes .yui-ac-content {position:absolute;left:0;top:0;width:300px;border:1px solid #404040;background:#fff;overflow:hidden;text-align:left;z-index:9050;}\n
-#autoCompleteContainer$numberOfBoxes ul {padding:5px 0;width:100%;}\n
-#autoCompleteContainer$numberOfBoxes li {padding:0 5px;cursor:default;white-space:nowrap;font-family:arial,helvetica,sans-serif;font-size:12pt;list-style: none;}\n
-#autoCompleteContainer$numberOfBoxes li.yui-ac-highlight {background:lightgrey;}\n
-</style>\n";
-		
-		$output .= "<input id=\"autoCompleteBox$numberOfBoxes\" type=\"text\" value=\"$default_value\" onchange=\"javascript:formulizechanged=1;\">\n";
-		$output .= "<div id=\"autoCompleteContainer$numberOfBoxes\"></div>\n";
-		$output .= "<input id=\"autoCompleteValueBox$numberOfBoxes\" name=\"$form_ele_id\" value=\"$passBackIdPrefix$default_ele_id\" type=\"hidden\">\n";
-
-		$output .= "<script type=\"text/javascript\">\n
- var myServer$numberOfBoxes = \"" . XOOPS_URL . "/modules/formulize/include/formulize_autoCompleteBox.php\";\n
- var mySchema$numberOfBoxes = [\"resultSet.result\", \"value\", \"id\"];\n 
- var myDataSource$numberOfBoxes = new YAHOO.widget.DS_XHR(myServer$numberOfBoxes, mySchema$numberOfBoxes);\n
- myDataSource$numberOfBoxes.scriptQueryAppend = \"ele_id=$source_element_id&form_id=$source_form_id\";\n
- \n
- var myAutoComp$numberOfBoxes = new YAHOO.widget.AutoComplete(\"autoCompleteBox$numberOfBoxes\",\"autoCompleteContainer$numberOfBoxes\", myDataSource$numberOfBoxes);\n
- myAutoComp$numberOfBoxes.forceSelection = false;\n
- \n
- // when an item is selected, stick it's ID into the right place\n
- myAutoComp$numberOfBoxes.itemSelectEvent.fire = function(oSelf, elItem, oData) {\n
-    window.document.getElementById('autoCompleteValueBox$numberOfBoxes').value = '$passBackIdPrefix'+oData[1];\n
- }\n
-</script>\n";
-
-		return $output;
-	}
-
-
 	/* ALTERED - 20100318 - freeform - jeff/julian - start */
-	function formulize_renderQuickSelect($form_ele_id, $form_id, $passBackIdPrefix, $source_element_id, $source_form_id, $default_value, $default_ele_id) {
-		$output = "<!-- Dependencies -->\n
-<script type=\"text/javascript\" src=\"jquery/jquery-1.4.2.min.js\"></script>\n
-<script type=\"text/javascript\" src=\"jquery/quicksilver.js\"></script>\n
-<script type=\"text/javascript\" src=\"jquery/jquery.quickselect.min.js\"></script>\n
-<link rel=\"stylesheet\" type=\"text/css\" media=\"all\" href=\"jquery/css/start/jquery.quickselect.css\"/>\n
+	function formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFilename, $default_value='', $default_value_user='none') {
+		// quickselect-formulize has a change in it so that "none" is an allowed value for matches, so that we can give the user good UI when something wrong is happening
+		$output = "<!-- Dependencies - note: quickselect-formulize has a change in it so that \"none\" is an allowed value for matches, so that we can give the user good UI when something wrong is happening -->\n
+<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-1.4.2.min.js\"></script>\n
+<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/quicksilver.js\"></script>\n
+<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery.quickselect-formulize.min.js\"></script>\n
+<link rel=\"stylesheet\" type=\"text/css\" media=\"all\" href=\"".XOOPS_URL."/modules/formulize/jquery/css/jquery.quickselect.css\"/>\n
 		";
 
-		$output .= "<input type='text' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='off'>";
-		$output .= "<input type='hidden' name='${form_ele_id}' id = '${form_ele_id}'>";
+		$output .= "<input type='text' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='on' value='$default_value_user' />";
+		$output .= "<input type='hidden' name='${form_ele_id}' id = '${form_ele_id}' value='$default_value' />";
 		$output .= "<script type='text/javascript'>";
-		$output .= '$(function(){$("#'.$form_ele_id.'_user'.'").quickselect({ajax: "'.XOOPS_URL.'/modules/formulize/include/formulize_quickselect.php",match:"substring",mustMatch:true,additionalFields: $("#'.$form_ele_id.'")});});';
+		$output .= '$(function(){$("#'.$form_ele_id.'_user'.'").quickselect({ajax: "'.XOOPS_URL.'/modules/formulize/include/formulize_quickselect.php",ajaxParams:{cache:"'.$cachedLinkedOptionsFilename.'"},maxVisibleItems:12,additionalFields: $("#'.$form_ele_id.'")});});';
 		$output .= "</script>";
 
 		return $output;
