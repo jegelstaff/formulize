@@ -45,6 +45,9 @@ class formulizeElementRenderer{
 	// function params modified to accept passing of $ele_value from index.php
 	// $entry added June 1 2006 as part of 'Other' option for radio buttons and checkboxes
 	function constructElement($form_ele_id, $ele_value, $entry, $isDisabled=false, $screen=null){
+		if (strstr(getCurrentURL(),"printview.php")) {
+			$isDisabled = true; // disabled all elements if we're on the printable view
+		} 
 		global $xoopsUser, $xoopsModuleConfig, $separ, $myts;
 		$myts =& MyTextSanitizer::getInstance();
 		
