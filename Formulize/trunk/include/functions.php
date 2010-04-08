@@ -2057,7 +2057,7 @@ function findMatchingIdReq($element, $fid, $value) {
 // THIS FUNCTION OUTPUTS THE TEXT THAT GOES ON THE SCREEN IN THE LIST OF ENTRIES TABLE
 // It intelligently outputs links if the text should be a link (because of textbox associations, or linked selectboxes)
 // $handle is the form or framework handle
-function formatLinks($matchtext, $handle, $frid, $textWidth=35) {
+function formatLinks($matchtext, $handle, $frid, $textWidth=35, $entryBeingFormatted) {
   formulize_benchmark("start of formatlinks");
 	global $xoopsDB, $myts;
   static $cachedValues = array();
@@ -2120,14 +2120,23 @@ function formatLinks($matchtext, $handle, $frid, $textWidth=35) {
 			return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
 		}
                 static $cachedQueryResults = array();
-                if(isset($cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$matchtext])) {
-                  $id_req = $cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$matchtext];
+                if(isset($cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entryBeingFormatted][$handle])) {
+                  $id_req = $cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entryBeingFormatted][$handle];
                 } else {
                   $element_id_q = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='" . $boxproperties[0] . "' AND ele_handle='" . mysql_real_escape_string($boxproperties[1]) . "' LIMIT 0,1"); // should only be one match anyway, so limit 0,1 ought to be unnecessary
 									$formulize_mgr = xoops_getmodulehandler('elements', 'formulize');
                   $target_element =& $formulize_mgr->get($element_id_q[0]['ele_id']);
-                  $id_req = findMatchingIdReq($target_element, $target_fid, $matchtext);
-                  $cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$matchtext] = $id_req;
+									// get the targetEntry by checking in the entry we're processing, for the actual value recorded in the DB for the entry id we're pointing to
+									$elementHandle = $frid ? convertFrameworkHandlesToElementHandles($handle, $frid) : $handle;
+									if(is_array($elementHandle)) {
+										$elementHandle = $elementHandle[0];
+									}
+									$currentElementObject = $formulize_mgr->get($elementHandle);
+									$currentFormId = $currentElementObject->getVar('id_form');
+									$data_handler = new formulizeDataHandler($currentFormId);
+									$matchEntryList = explode(",", trim($data_handler->getElementValueInEntry($entryBeingFormatted, $elementHandle), ","));
+									$id_req = $matchEntryList[0];
+                  $cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entryBeingFormatted][$handle] = $id_req;
                 }
 		if($id_req) {
 			return "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth) . "</a>";
@@ -2758,7 +2767,8 @@ function getHeaders($cols, $frid="", $colsIsElementHandles = false) {
 //function writeElementValue($ele, $entry, $value, $append, $prevValue) {
 // DEPRECATED...VERY INEFFICIENT, SINCE IT ONLY UPDATES ONE FIELD AT A TIME.  BETTER TO USE formulize_writeEntry, except in cases where you actually need to only update one field.  In most cases you want to update multiple fields in an entry, so don't use this inside a loop...it will generate more queries than you need
 // prevValue is now completely not required.  lvoverride is only used if you want to pass in a pre-formatted ,1,3,15,17, style string for inserting into a linked selectbox field.
-function writeElementValue($formframe = "", $ele, $entry, $value, $append, $prevValue=null, $lvoverride=false) {
+// linkedTargetHint is used if we are writing to a linked selectbox element, and we have some indication from the UI what the entry is that we're supposed to link to.  This allows for disambiguation of target values that we might be trying to link to, that might occur in more than one entry.
+function writeElementValue($formframe = "", $ele, $entry, $value, $append, $prevValue=null, $lvoverride=false, $linkedTargetHint = "") {
 
 /*
 print "$formframe<br>";
@@ -2842,15 +2852,34 @@ print "$prevValue<br><br>";
             if(isset($cachedEntryIds[$boxproperties[0]][$boxproperties[1]][$thisValue])) {
               $foundEntryIds[] = $cachedEntryIds[$boxproperties[0]][$boxproperties[1]][$thisValue];
             } else {
-              $searchForValues[] = $thisValue;
+              $searchForValues[] = mysql_real_escape_string($thisValue);
             }
           }
+					
+					// need to check for link to a link, and change target if that's what we're dealing with
+					$element_handler = xoops_getmodulehandler('elements', 'formulize');
+					$sourceElement = $element_handler->get($boxproperties[1]);
+					if(is_object($sourceElement)) {
+						$sourceEleValue = $sourceElement->getVar('ele_value');
+						if(strstr($sourceEleValue[2], "#*=:*")) {
+							$sourceParts = explode("#*=:*", $sourceEleValue[2]);
+							$linkQueryResult = q("SELECT `entry_id` FROM " . $xoopsDB->prefix("formulize_".$sourceParts[0]) . " WHERE `".$sourceParts[1]."` = '".implode("' OR `".$sourceParts[1]."` = '", $searchForValues) . "'");
+							unset($searchForValues);
+							foreach($linkQueryResult as $linkedEntryId) {
+								$searchForValues[] = ",".$linkedEntryId['entry_id'].",";
+							}
+							if($linkedTargetHint) {
+								$linkedTargetHint = " AND `entry_id` = $linkedTargetHint";
+							}
+						}
+					}
+					
           if(count($searchForValues) > 0) {
-              $entry_id_q = q("SELECT `entry_id`, `".$boxproperties[1]."` FROM " . $xoopsDB->prefix("formulize_".$boxproperties[0]) . " WHERE `".$boxproperties[1]."` = '".implode("' OR `".$boxproperties[1]."` = '", $searchForValues) . "'");
-              foreach($entry_id_q as $thisEntryId) {
-                $cachedEntryIds[$boxproperties[0]][$boxproperties[1]][$thisEntryId[$boxproperties[1]]] = $thisEntryId['entry_id'];
-                $foundEntryIds[] = $thisEntryId['entry_id'];
-              }
+						$entry_id_q = q("SELECT `entry_id`, `".$boxproperties[1]."` FROM " . $xoopsDB->prefix("formulize_".$boxproperties[0]) . " WHERE `".$boxproperties[1]."` = '".implode("' OR `".$boxproperties[1]."` = '", $searchForValues) . "' $linkedTargetHint");
+						foreach($entry_id_q as $thisEntryId) {
+							$cachedEntryIds[$boxproperties[0]][$boxproperties[1]][$thisEntryId[$boxproperties[1]]] = $thisEntryId['entry_id'];
+							$foundEntryIds[] = $thisEntryId['entry_id'];
+						}
           }
           if(count($foundEntryIds)>0) {
             $foundEntryIdString = ",".implode(",", $foundEntryIds).",";

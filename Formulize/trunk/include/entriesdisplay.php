@@ -660,8 +660,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	if(isset($_POST['caid']) AND $screen AND $formulize_LOESecurityPassed) {
 		$customButtonDetails = $screen->getVar('customactions');
 		if(is_numeric($_POST['caid']) AND isset($customButtonDetails[$_POST['caid']])) {
-			list($caCode, $caElements, $caActions, $caValues, $caMessageText, $caApplyTo, $caPHP) = processCustomButton($_POST['caid'], $customButtonDetails[$_POST['caid']]); // just processing to get the info so we can process the click.  Actual output of this button happens lower down
-			$messageText = processClickedCustomButton($caElements, $caValues, $caActions, $caMessageText, $caApplyTo, $caPHP);
+			list($caCode, $caElements, $caActions, $caValues, $caMessageText, $caApplyTo, $caPHP, $caInline) = processCustomButton($_POST['caid'], $customButtonDetails[$_POST['caid']]); // just processing to get the info so we can process the click.  Actual output of this button happens lower down
+			$messageText = processClickedCustomButton($caElements, $caValues, $caActions, $caMessageText, $caApplyTo, $caPHP, $caInline);
 		}
 	}
 
@@ -1241,20 +1241,6 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 				$inlineButtons[$caid] = $thisCustomAction;
 			}
 		}
-		// process a clicked custom button if it was an inline button
-		// Since this is done above now, we don't need this code here...?
-		/*
-		if(isset($_POST['caid'])) {
-			if(is_numeric($_POST['caid']) AND isset($inlineButtons[$_POST['caid']])) {
-				list($caCode, $caElements, $caActions, $caValues, $caMessageText, $caApplyTo) = processCustomButton($_POST['caid'], $inlineButtons[$_POST['caid']]); // just processing to get the info so we can process the click.  Actual output of this button happens lower down
-				$messageText = processClickedCustomButton($caElements, $caValues, $caActions, $caMessageText, $caApplyTo);
-				// output the message text to the screen if it's not used in the custom templates somewhere
-				if($messageText AND !strstr($screen->getVar('toptemplate'), '\$messageText') AND !strstr($screen->getVar('bottomtemplate'), '\$messageText')) {
-					print "<p><center><b>$messageText</b></center></p>\n";
-				}
-			}
-		}
-		*/
 		$formulize_LOEPageSize = $screen->getVar('entriesperpage');
 	}		
 		
@@ -1508,6 +1494,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 						} else {
 							$value = display($entry, $col);
 						}
+						$currentColumnLocalId = $GLOBALS['formulize_mostRecentLocalId']; // set in the display function, corresponds to the entry id of the record in the form where the current value was retrieved from.  If there is more than one local entry id, because of a one to many framework, then this will be an array that corresponds to the order of the values returned by display.
 						if(in_array($colhandle, $deColumns) AND ($update_other_entries OR ($update_own_entry AND $uid == getEntryOwner($entry, $fid)))) { // if we're supposed to display this column as an element... (only show it if they have permission to update this entry)
 							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 							if($frid) { // need to work out which form this column belongs to, and use that form's entry ID.  Need to loop through the entry to find all possible internal IDs, since a subform situation would lead to multiple values appearing in a single cell, so multiple displayElement calls would be made each with their own internal ID.
@@ -1530,16 +1517,16 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 						} elseif(is_array($value)) {
 							$counter = 1;
 							$countOfValue = count($value);
-							foreach($value as $v) {
+							foreach($value as $valueId=>$v) {
 								if($counter<$countOfValue) {
-									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth)), $col, $frid) . ',</div><br>';
+									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth, $currentColumnLocalId[$valueId])), $col, $frid) . ',</div><br>';
 								} else {
-									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth)), $col, $frid). '</div>';
+									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth, $currentColumnLocalId[$valueId])), $col, $frid). '</div>';
 								}
 								$counter++;
 							}
 						} elseif($col != "creation_uid" AND $col!= "mod_uid") {
-							print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $frid, $textWidth)), $col, $frid). '</div>';
+							print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $frid, $textWidth, $currentColumnLocalId)), $col, $frid). '</div>';
 						} else { // don't use printsmart for the special uid cells
 							print $value;
 						}
@@ -3585,11 +3572,11 @@ function processCustomButton($caid, $thisCustomAction, $entries="", $entry) {
 		$caCode = "<input type=button style=\"width: 140px;\" name=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" id=\"" . $thisCustomAction['handle'] . "$nameIdAddOn\" value=\"" . $thisCustomAction['buttontext'] . "\" onclick=\"javascript:customButtonProcess('$caid', '$entries');\">\n";
 	}
 	
-	return array(0=>$caCode, 1=>$caElements, 2=>$caActions, 3=>$caValues, 4=>$thisCustomAction['messagetext'], 5=>$thisCustomAction['applyto'], 6=>$caPHP);
+	return array(0=>$caCode, 1=>$caElements, 2=>$caActions, 3=>$caValues, 4=>$thisCustomAction['messagetext'], 5=>$thisCustomAction['applyto'], 6=>$caPHP, 7=>$thisCustomAction['appearinline']);
 }
 
 // THIS FUNCTION PROCESSES CLICKED CUSTOM BUTTONS
-function processClickedCustomButton($clickedElements, $clickedValues, $clickedActions, $clickedMessageText, $clickedApplyTo, $caPHP) {
+function processClickedCustomButton($clickedElements, $clickedValues, $clickedActions, $clickedMessageText, $clickedApplyTo, $caPHP, $caInline) {
 
 	if(!is_numeric($_POST['caid'])) { return; } // 'caid' might be set in post, but we're not processing anything unless there actually is a value there
 
@@ -3627,26 +3614,37 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 		}
 	} else {
 	
-		$caEntries = array();
+		$caEntries = array(); // click applied entries, ie: which entry does the button affect
+		$csEntries = array(); // click source entries, ie: which entry do we gather hidden values from
 		// need to handle "all" case by getting list of all entries in form
 		if($clickedApplyTo == "selected") {
 			$caEntries = $GLOBALS['formulize_selectedEntries'];
+			$csEntries = $caEntries;
 		} elseif($clickedApplyTo == "inline") {
 			$caEntriesTemp = explode(",", htmlspecialchars(strip_tags($_POST['caentries'])));
 			foreach($caEntriesTemp as $id=>$val) {
 				$caEntries[$id] = $val; // make sure key and value are the same, so the special function below works inside the custom button's own logic (we need the $entry id to be the key).
 			}
+			$csEntries = $caEntries;
 		} elseif(strstr($clickedApplyTo, "new_per_selected")) {
 			foreach($GLOBALS['formulize_selectedEntries'] as $id=>$val) {
 				$caEntries[$id] = "new"; // add one new entry for each box that is checked
+				$csEntries[$id] = $val;
 			}
 		} else {
-			// right now new and new_x are handled by this default case.  They both result in the same 'new' value being sent to writeElementValue -- this may have to change if the possible apply to values change as new options are added to the ui
+			// Default for 'new' and 'new_x' results in the same 'new' value being sent to writeElementValue -- this may have to change if the possible apply to values change as new options are added to the ui
 			$caEntries[0] = 'new';
+			if($caInline) {
+				$csEntriesTemp = explode(",", htmlspecialchars(strip_tags($_POST['caentries'])));
+				$csEntries[0] = $csEntriesTemp[0];
+			} else {
+				$csEntries = $GLOBALS['formulize_selectedEntries'];
+			}
 		}
+		
 		// process changes to each entry
 		foreach($caEntries as $id=>$thisEntry) { // loop through all the entries this button click applies to
-			$GLOBALS['formulize_thisEntryId'] = $thisEntry; // sent up to global scope so it can be accessed by the gatherHiddenValues function without the user having to type ", $id" in the function call
+  		$GLOBALS['formulize_thisEntryId'] = $csEntries[$id]; // sent up to global scope so it can be accessed by the gatherHiddenValues function without the user having to type ", $id" in the function call
 			$maxIdReq = 0;
 			// don't use "i" in this loop, since it's a common variable name and would potentially conflict with names in the eval'd scope
 			// same is true of "thisentry" and other variables here!
@@ -3658,7 +3656,7 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 				} else {
 					$valueToWrite = $clickedValues[$ixz];
 				}
-				$maxIdReq = writeElementValue("", $clickedElements[$ixz], $thisEntry, $valueToWrite, $clickedActions[$ixz]);
+				$maxIdReq = writeElementValue("", $clickedElements[$ixz], $thisEntry, $valueToWrite, $clickedActions[$ixz], "", "", $csEntries[$id]);
 			}
 		}
 	}
@@ -3973,6 +3971,9 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 					if(!$one_search) {
 						$operator = ""; // need to force no operator so that we don't get = "" which would severely restrict the result set.  Note: this makes it impossible to actually search for "" through a passed in variable!
 					}
+				} elseif($searchgetkey == "PERGROUPFILTER") {
+					$one_search = $searchgetkey;
+					$operator = "";					
 				} else {
 					$one_search = "";
 					$operator = "";
