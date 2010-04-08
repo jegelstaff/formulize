@@ -339,9 +339,9 @@ class formulizeElementRenderer{
 								}
 							}
 							if($sourceFormElementTypes[$filterElements[$filterId]] == "yn") {
-								if(strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($filterTerms[$filterId]))) { // since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
+								if(strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($filterTerms[$filterId])) OR strtoupper($filterTerms[$filterId]) == "YES") { // since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
                   $filterTerms[$filterId] = 1;
-                } elseif(strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($filterTerms[$filterId]))) {
+                } elseif(strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($filterTerms[$filterId])) OR strtoupper($filterTerms[$filterId]) == "NO") {
 									$filterTerms[$filterId] = 2;
                 } else {
 									$filterTerms[$filterId] = "";
