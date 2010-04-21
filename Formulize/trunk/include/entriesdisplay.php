@@ -1606,6 +1606,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 					// Set up the variables for the link to the current entry, and the checkbox that can be used to select the current entry
 					$linkids = internalRecordIds($entry, $mainFormHandle);
 					$entry_id = $linkids[0]; // make a nice way of referring to this for in the eval'd code
+					$form_id = $fid; // make a nice way of referring to this for in the eval'd code
 					if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
 						$viewEntryLinkCode = "<a href='" . $currentURL;
 						if(strstr($currentURL, "?")) { // if params are already part of the URL...
@@ -3954,6 +3955,13 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 					} else {
 						$one_search = 0;
 					}
+				} elseif($searchgetkey == "USERNAME") {
+					global $xoopsUser;
+					if($xoopsUser) {
+						$one_search = $xoopsUser->getVar('uname');
+					} else {
+						$one_search = "";
+					}
         } elseif($searchgetkey == "BLANK") { // special case, we need to construct a special OR here that will look for "" OR IS NULL
           if($operator == "!=" OR $operator == "NOT LIKE") {
             $blankOp1 = "!=";
@@ -3973,7 +3981,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 					}
 				} elseif($searchgetkey == "PERGROUPFILTER") {
 					$one_search = $searchgetkey;
-					$operator = "";					
+					$operator = "";
 				} else {
 					$one_search = "";
 					$operator = "";

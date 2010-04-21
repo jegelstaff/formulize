@@ -92,10 +92,9 @@ function getFormFramework($formframe, $mainform="") {
 
 // get the title of a form
 function getFormTitle($fid) {
-	global $xoopsDB;
-	$titleq = q("SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form ='$fid'");
-	return $titleq[0]['desc_form'];
-
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formObject = $form_handler->get($fid);
+	return $formObject->getVar('title');
 }
 
 //this function returns the list of all the user's full names for all the users in the specified group(s)
@@ -2242,18 +2241,31 @@ function getTextboxDefault($ele_value, $form_id, $entry_id) {
 // this function returns the entry ids of entries in one form that are linked to another
 // IMPORTANT:  assume $startEntry is valid for the user(security check has already been executed by now)
 // therefore just need to know the allowable uids (scope) in the $targetForm
-// $owner_groups appears to be deprecated and not used in this function any longer...see DEPRECATED note below
+// targetForm is a special array containing the keys as specified in the framework, and the target form
+// keys:  fid, keyself, keyother
+// keyself and other are the ele_id from the form table for the elements that need to be matched.
+// $owner_groups appears to be deprecated and not used in this function any longer
+// $owner is deprecated...the logic clearly assumes that the user we're searching for entries for, is the current $xoopsUser
+// SHOULD BE REFACTORED TO BE AWARE OF A FRID SO IT CAN DETERMINE THE CORRECT DIRECTION OF LINKING, AND THEN HANDLE DOUBLE LINKED SELECTBOXES
 function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler, $owner_groups, $mid, $member_handler, $owner) {
+
+	if(!$mid) {
+		$mid = getFormulizeModId();
+	}
+	if(!$gperm_handler) {
+		$gperm_handler = xoops_gethandler('groupperm');
+	}
+	if(!$member_handler) {
+		$member_handler = xoops_gethandler('member');
+	}
 
 
 	// set scope filter -- may need to pass in some exceptions here in the case of viewing entries that are covered by reports?
-	// DEPRECATED: scope based on the owner's scope within the subform, since that is the entries that the owner would see, the entries that belong to this entry, within the subform
-	// Scope now based on user's permission level, so they can see what they should see, regardless of the owner's permission
 	global $xoopsUser;
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+	$owner = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 	if($global_scope = $gperm_handler->checkRight("view_globalscope", $targetForm['fid'], $groups, $mid)) {
-		$scope_filter = ""; // deprecated
-    $all_users = ""; // deprecated, now using groups
+    $all_users = ""; 
     $all_groups = "";
 	} elseif($group_scope = $gperm_handler->checkRight("view_groupscope", $targetForm['fid'], $groups, $mid)) {
 		$formulize_permHandler = new formulizePermHandler($fid);
@@ -2264,9 +2276,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 		} 
     $all_users = "";
 		$uq = makeUidFilter($all_users);
-		$scope_filter = "AND ($uq)"; // deprecated
 	} else {
-		$scope_filter = "AND uid=$owner"; // deprecated
     $all_users = array(0=>$owner);
     $all_groups = "";
 	} 
@@ -2308,7 +2318,6 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
     return $entries_to_return;
 	// else we're looking at a classic "shared value" which is really a linked selectbox
 	} else { // linking based on a shared value.  in the case of one to one forms assumption is that the shared value does not appear more than once in either form's field (otherwise this will be a defacto one to many link)
-		
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $startElement = $element_handler->get($targetForm['keyother']);
     $startEleValue = $startElement->getVar('ele_value');

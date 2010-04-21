@@ -552,7 +552,7 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				if($single == "group" AND $update_own_entry AND $entry == $single_result['entry']) {
 					$update_other_entries = true;
 				}
-	
+
 				if(is_array($settings)) { $form = writeHiddenSettings($settings, $form); }
 				$form->addElement (new XoopsFormHidden ('ventry', $settings['ventry'])); // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
 	
