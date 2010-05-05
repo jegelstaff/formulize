@@ -257,7 +257,7 @@ CREATE TABLE formulize (
   id_form int(5) NOT NULL default '0',
   ele_id smallint(5) unsigned NOT NULL auto_increment,
   ele_type varchar(100) NOT NULL default '',
-  ele_caption text NOT NULL default '',
+  ele_caption text NOT NULL,
   ele_desc text NULL,
   ele_colhead varchar(255) NULL default '',
   ele_handle varchar(255) NOT NULL default '',
@@ -267,13 +267,13 @@ CREATE TABLE formulize (
   ele_value text NOT NULL,
   ele_uitext text NOT NULL,
   ele_delim varchar(255) NOT NULL default '',
-  ele_display varchar(255) NOT NULL default '1',
-  ele_disabled varchar(255) NOT NULL default '0',
+  ele_display text NOT NULL,
+  ele_disabled text NOT NULL,
   ele_filtersettings text NOT NULL,
   ele_forcehidden tinyint(1) NOT NULL default '0',
   ele_private tinyint(1) NOT NULL default '0',
   PRIMARY KEY  (`ele_id`),
-  KEY `ele_display` (`ele_display`),
+  KEY `ele_display` (`ele_display` ( 255 ) ),
   KEY `ele_order` (`ele_order`)
 ) TYPE=MyISAM;
 
