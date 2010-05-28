@@ -718,6 +718,7 @@ class formulizeElementRenderer{
 							}
 							$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 							$form_ele1->addElement($t);
+							unset($t);
 							$counter++;
 						}
 					break;
@@ -832,6 +833,7 @@ class formulizeElementRenderer{
 							}
 							$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 							$form_ele1->addElement($t);
+							unset($t);
 							$counter++;
 						}
 					break;
