@@ -115,24 +115,6 @@ class formulizeElementRenderer{
 				} else {
 					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE);
 				}
-				
-				/*if($entry !== "new") {
-					// quick hack to get these in for elementdisplay.php which relies on the element renderer.
-					// does not work with Frameworks
-					static $derivedValueData = array();
-					$baseEntryForDerivation = $entry ? $entry : "new";
-					//print $this->_ele->getVar('ele_caption') . " -- $baseEntryForDerivation<br>";
-					if(!isset($derivedValueData[$baseEntryForDerivation])) {
-						include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-						$GLOBALS['formulize_onForm'] = true;
-						$derivedValueData[$baseEntryForDerivation] = getData($frid, $id_form, $baseEntryForDerivation);
-						$GLOBALS['formulize_onForm'] = false;
-					}
-					$elementHandle = $frid ? handleFromId($this->_ele->getVar('ele_id'), $fid, $frid) : $this->_ele->getVar('ele_handle');
-					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), "<div class=\"formulize_derived\">".display($derivedValueData[$baseEntryForDerivation][0], $elementHandle)."</div>");
-				} else {
-					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE);
-				}*/
 				break;
 
 			case 'ib':
@@ -347,7 +329,17 @@ class formulizeElementRenderer{
 									$filterTerms[$filterId] = "";
                 }
 							}
-							$conditionsfilter .= "t1.`".$filterElements[$filterId]."` ".$filterOps[$filterId]." ".$quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
+							$parentFormFrom = "";
+							$conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
+							if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") { // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
+								$parentFormFrom = ", ".$xoopsDB->prefix("formulize_".$id_form)." AS t3 ";
+								if($likebits == "%") {
+									$conditionsFilterComparisonValue = " CONCAT('%',t3.`".substr($filterTerms[$filterId],1,-1)."`,'%') AND t3.`entry_id`=$entry ";
+								} else {
+									$conditionsFilterComparisonValue = " t3.`".substr($filterTerms[$filterId],1,-1)."` AND t3.`entry_id`=$entry ";
+								}
+							}
+							$conditionsfilter .= "t1.`".$filterElements[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue;
 						}
 						$conditionsfilter .= $conditionsfilter ? ")" : "";
 					} 
@@ -355,9 +347,9 @@ class formulizeElementRenderer{
 					static $cachedSourceValuesQ = array();
 
 					if($pgroupsfilter) { // if there is a groups filter, then join to the group ownership table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFid)." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 WHERE $pgroupsfilter $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
+						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFid)." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 $parentFormFrom WHERE $pgroupsfilter $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
 					} else { // otherwise just query the source table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFid)." AS t1 WHERE t1.entry_id>0 $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
+						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFid)." AS t1 $parentFormFrom WHERE t1.entry_id>0 $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
 					}
 					//print "$sourceValuesQ<br><br>";
 					if(!$isDisabled) {
@@ -438,33 +430,6 @@ class formulizeElementRenderer{
 						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText) . implode("\n", $disabledHiddenValue));
 					}
 					/* ALTERED - 20100318 - freeform - jeff/julian - stop */
-
-					// THIS COMMENTED CODE WAS BASED ON THE OLD DATA SYNTAX
-					// Check to see if there's more than 50 options, and if so, render as newfangled combobox
-					// Pretty darn inefficient to do this here, we should have a flag on the element itself to indicate how it should be rendered, but
-					// this will suffice for the time being
-					// Only works for dropdown boxes!!!
-					// turned off for now until the UI (and bugs?) are better worked out
-					/*if($xoopsDB->getRowsNum($reslinkedvaluesq) > 50) {
-						unset($form_ele);
-						// must figure out element ID of the linked field, through the caption
-						$getIdFromCap = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_caption = \"" . mysql_real_escape_string($boxproperties[1]) . "\" AND id_form=" . $boxproperties[0] . " LIMIT 0,1";
-						$getIdFromCapRes = $xoopsDB->query($getIdFromCap);
-						$getIdFromCapRow = $xoopsDB->fetchRow($getIdFromCapRes);
-						// must get current value to put in box as default
-						if($selectedvalues[0]) {
-							$getSelVal = "SELECT ele_value FROM " .$xoopsDB->prefix("formulize_form") . " WHERE ele_id=" . intval($selectedvalues[0]) . " LIMIT 0,1";
-							$getSelValRes = $xoopsDB->query($getSelVal);
-							$getSelValRow = $xoopsDB->fetchRow($getSelValRes);
-						} else {
-							$getSelValRow = array(0=>"");
-						}
-						$renderedComboBox = $this->formulize_renderAutoCompleteBox($form_ele_id, $id_form, $boxproperties[0] . "#*=:*" . $boxproperties[1] . "#*=:*", $getIdFromCapRow[0], $boxproperties[0], $getSelValRow[0], $selectedvalues[0]);
-						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
-			
-					} else {
-					
-					}// the end of the commented condition above where the auto-complete box is */
 					
 				} 
 				else // or if we don't have a link...
