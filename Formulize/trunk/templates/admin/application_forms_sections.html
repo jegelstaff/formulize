@@ -1,0 +1,23 @@
+<div class="accordion-box">
+<ul>
+<li><a href="../index.php?fid=<{$sectionContent.fid}>" target="_blank"><img src="../images/kfind.png"> View form</a></li>
+<li><a href="ui.php?page=form&tab=elements&fid=<{$sectionContent.fid}>"><img src="../images/kedit.png"> Edit form elements</a></li>
+<li><a href="ui.php?page=form&tab=settings&fid=<{$sectionContent.fid}>"><img src="../images/xfmail.png"> Edit form settings</a></li>
+</ul>
+</div>
+<div class="accordion-box">
+<ul>
+<li><a href="ui.php?page=application&tab=forms&op=clone&aid=<{$content.aid}>&fid=<{$sectionContent.fid}>"><img src="../images/clone.gif"> Clone form</a></li>
+<li><a href="ui.php?page=application&tab=forms&op=clonedata&aid=<{$content.aid}>&fid=<{$sectionContent.fid}>"><img src="../images/clonedata.gif"> Clone form and data</a></li>
+<li><a href="ui.php?page=application&tab=forms&op=lockdown&aid=<{$content.aid}>&fid=<{$sectionContent.fid}>" onclick="javascript: return confirm('If you lockdown this form, then no one, not even you, will be able to make any changes to the form or its elements.  Are you sure you want to lockdown this form?');"><img src="../images/perm.png"> Lockdown form</a></li>
+<li><a href="ui.php?page=application&tab=forms&op=delete&aid=<{$content.aid}>&fid=<{$sectionContent.fid}>" onclick="javascript:return confirm('Are you sure you want to delete this form?  All data anyone has ever entered in it will be lost!');"><img src="../images/editdelete.png"> Delete form</a></li>
+</ul>
+</div>
+<div class="accordion-box">
+<ul>
+<li><a href="">Remove from application</a></li>
+<li><a href="">Create screen</a></li>
+<li><a href="">View screens</a></li>
+</ul>
+</div>
+

@@ -1,0 +1,14 @@
+<div>
+<ul>
+<li><a href="ui.php?page=relationship&tab=settings&frid=<{$sectionContent.frid}>">Edit settings</a></li>
+<li><a href="ui.php?page=relationship&op=delete&frid=<{$sectionContent.frid}>">Delete</a></li>
+</ul>
+</div>
+<br>
+<div>
+  <ul>
+	  <{foreach from=$sectionContent.links key=linkNumber item=link}>
+      <li><{$link.form1}> + <{$link.form2}> - <{$link.relationship}></li>
+  	<{/foreach}>
+  </ul>
+</div>

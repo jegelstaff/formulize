@@ -1,0 +1,75 @@
+<script type='text/javascript'>
+function saveElements(form1choice, form2choice, lid) {
+  for(var i=0; i < form1choice.options.length; i++) {
+    if(form1choice.options[i].selected) {
+      document.updateframe.common1choice.value = form1choice.options[i].value;
+      break;
+    }
+  }
+  for(var i=0; i < form2choice.options.length; i++) {
+    if(form2choice.options[i].selected) {
+      document.updateframe.common2choice.value = form2choice.options[i].value;
+      break;
+    }
+  }
+  document.updateframe.common_fl_id.value = lid;
+  //document.updateframe.submit();
+
+  $("#dialog-common-values").dialog('close');
+  return false;
+}
+</script>
+
+
+<div class="panel-content content">
+  <form id='whichElements' name='whichElements'>
+    <table align="center" width="80%">
+      <!--<tr align="center">
+        <th colspan="2">
+          <{$smarty.const._AM_FRAME_SELECT_COMMON}>
+        </th>
+        <th rowspan="2">
+          Action
+        </th>
+      </tr>
+      <tr align="center">
+        <th>
+          <{$content.form1.name}>
+        </th>
+        <th>
+          <{$content.form2.name}>
+        </th>
+      </tr>-->
+      <tr>
+        <th>
+          <{$content.form1.name}>
+        </th>
+        <th>
+          <{$content.form2.name}>
+        </th>
+        <th>
+          Action
+        </th>
+      </tr>
+      <tr>
+        <td class=even>
+          <select id=form1choice name=form1choice size=1>
+            <{foreach from=$content.form1.elements key=elementNumber item=element}>
+              <option value="<{$elementNumber}>"><{$element}></option>
+            <{/foreach}>
+          </select>
+        </td>
+        <td class=even>
+          <select id=form2choice name=form2choice size=1>
+            <{foreach from=$content.form2.elements key=elementNumber item=element}>
+              <option value="<{$elementNumber}>"><{$element}></option>
+            <{/foreach}>
+          </select>
+        </td>
+        <td class=head>
+          <input type=submit class=formbutton name=submitx id=submitx value='<{$smarty.const._SUBMIT}>' onclick="javascript:return saveElements(this.form.elements[0], this.form.elements[1], <{$content.lid}>);">
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>
