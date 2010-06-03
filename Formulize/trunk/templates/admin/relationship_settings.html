@@ -1,40 +1,142 @@
+<script type='text/javascript'>
+  $(document).ready(function() {
+    $("#dialog-common-values").dialog({ autoOpen: false, modal: true, width: 700, height: 200 });
+  });
+
+  $.ajaxSetup({  
+    cache: false  
+  });  
+
+  function checkForCommon(Obj, form1, form2, lid) {
+    for (var i=0; i < Obj.options.length; i++) {
+      if(Obj.options[i].selected && Obj.options[i].value == 'common') {
+        $("#dialog-common-values").dialog('open');
+        $("#dialog-common-values-content").load('<{$smarty.const.XOOPS_URL}>/modules/formulize/admin/frameCommonElements1.php?form1=' + form1 + '&form2=' + form2 + '&lid=' + lid);
+      }
+    }
+  }
+</script>
+
+<div id="dialog-common-values" title="<{$smarty.const._AM_FRAME_WHICH_ELEMENTS}>" style='display:none'><div id="dialog-common-values-content"></div></div>
+
 <div class="panel-content content">
+  <form id='modframe' name='modframe' action='modframe.php?op=addlink&cf=<{$cf}>' method=post>
+    <fieldset>
+      <legend><{$smarty.const._AM_FRAME_ADDFORM}></legend>
+      <table>
+        <tr>
+          <th>
+            <{$smarty.const._AM_FRAME_AVAILFORMS1}>
+          </th>
+          <th>
+            <{$smarty.const._AM_FRAME_AVAILFORMS2}>
+          </th>
+          <th>
+            Action
+          </th>
+        </th>
+        <tr>
+          <td class=even valign=top>
+            <select name=fid1 size=1>
+              <{foreach from=$content.formoptions key=linkNumber item=formoption}>
+                <option value="<{$formoption.value}>"><{$formoption.name}></option>
+              <{/foreach}>
+            </select>
+          </td>
+          <td class=even valign=top>
+            <select name=fid2 size=1>
+              <{foreach from=$content.formoptions key=formoptionNumber item=formoption}>
+                <option value="<{$formoption.value}>"><{$formoption.name}></option>
+              <{/foreach}>
+            </select>
+          </td>
+          <td class=head valign=top>
+            <input type=submit class=formbutton name=addlink id=addlink value='<{$smarty.const._AM_FRAME_NEWFORMBUTTON}>'>
+          </td>
+        </tr>
+      </table>
+    </fieldset>
+  </form>
 
-<form id="form-<{$number}>">
-<{* form elements must be named with their table name hyphen field name *}>
-<{* no other elements should have hyphens, since that tells the saving system that this is a field in the database to update *}>
-<fieldset>
-<legend>Settings for the form <em><{$content.name}></em></legend>
+  <br>
 
-	<div class="form-item">
-		<label for="formulize_id-desc_form">Name</label>
-		<input type="text" id="formulize_id-desc_form" name="formulize_id-desc_form" value="<{$content.name}>"/>
-	</div>
-	<div class="form-item">
-		<fieldset>
-			<legend>How many entries are allowed in this form?</legend>
-			<div class="form-radios">
-				<label for="group"><input type="radio" id="group" name="formulize_id-singleentry" value="group"/>One entry per <b>group</b></label>
-			</div>
-			<div class="form-radios">
-				<label for="on"><input type="radio" id="on" name="formulize_id-singleentry" value="on"/>One entry per <b>user</b></label>
-			</div>
-			<div class="form-radios">
-				<label for="empty"><input type="radio" id="empty" name="formulize_id-singleentry" value=""><b>More than one entry</b> per user</label>
-			</div>
-		</fieldset>
-	</div>
-	<div class="form-item">
-			<label for="database_table">Existing table reference</label>
-			<input type="text" id="database_table" name="database_table" value=""/>
-			<div class="description">
-				<p>If you want to reference an existing database table, type in the exact name.</p>
-			</div>
-	</div>
-	<div class="form-item"><input type="button" class="savebutton" name="#form-<{$number}>" value="Save"/></div>
-
-</fieldset>
-
-</form>
-
-</div> <!--// end content -->
+  <{if count($content.links) lt 1}>
+    <fieldset>
+      <legend><{$smarty.const._AM_FRAME_NOFORMS}></legend>
+    </fieldset>
+  <{else}>
+    <form id=updateframe name=updateframe action='modframe.php?op=updateframe&cf=<{$cf}>' method=post>
+      <input type=hidden name=common1choice value="">
+      <input type=hidden name=common2choice value="">
+      <input type=hidden name=common_fl_id value="">
+      <fieldset>
+        <legend><{$smarty.const._AM_FRAME_FORMSIN}></legend>
+        <table>
+          <tr>
+            <th>
+              <nobr><{$smarty.const._AM_FRAME_AVAILFORMS1}></nobr>
+            </th>
+            <th>
+              <nobr><{$smarty.const._AM_FRAME_AVAILFORMS2}></nobr>
+            </th>
+            <th>
+              <nobr><{$smarty.const._AM_FRAME_LINKAGE}></nobr>
+            </th>
+            <th>
+              <nobr><{$smarty.const._AM_FRAME_RELATIONSHIP}></nobr>
+            </th>
+            <th>
+              <nobr><{$smarty.const._AM_FRAME_DISPLAY}></nobr>
+            </th>
+            <th>
+              Action
+            </th>
+          </tr>
+  	      <{foreach from=$content.links key=linkNumber item=link}>
+            <tr class="<{cycle values='even,odd'}>">
+              <td>
+                <{$link.form1}>
+              </td>
+              <td>
+                <{$link.form2}>
+              </td>
+              <td>
+                <select name=linkages<{$link.lid}> id=linkages<{$link.lid}> size=1 onchange="javascript:checkForCommon(this.form.linkages<{$link.lid}>, '<{$link.form1_id}>', '<{$link.form2_id}>', '<{$link.lid}>');">
+                  <option value='0+0'<{if $link.key1 eq 0 and $link.key2 eq 0}> selected="selected"<{/if}>><{$smarty.const._AM_FRAME_UIDLINK}></option>
+                  <{if $link.common neq 1}>
+                    <option value='common'><{$smarty.const._AM_FRAME_COMMONLINK}></option>
+                  <{else}>
+                    <{foreach from=$link.linkoptions key=linkoptionNumber item=linkoption}>
+                      <option value="<{$linkoption.value}>"<{if $linkoption.value eq ($link.key1 and '+' and $link.key2)}> selected="selected"<{/if}>><{$linkoption.name}></option>
+                    <{/foreach}>
+                  <{/if}>
+                </select>
+                <{if $link.common eq 1}>
+                  <input type=hidden name=preservecommon<{$link.lid}> value=<{$link.key1}>+<{$link.key2}>>
+                <{/if}>
+              </td>
+              <td>
+                <select name=rel<{$link.lid}> size=1>
+                  <option value="1"<{if $link.relationship eq 1}> selected="selected"<{/if}>><{$smarty.const._AM_FRAME_ONETOONE}></option>
+                  <option value="2"<{if $link.relationship eq 2}> selected="selected"<{/if}>><{$smarty.const._AM_FRAME_ONETOMANY}></option>
+                  <option value="3"<{if $link.relationship eq 3}> selected="selected"<{/if}>><{$smarty.const._AM_FRAME_MANYTOONE}></option>
+                </select>
+              </td>
+              <td align="center">
+                <input type="checkbox"<{if $link.unifiedDisplay}> checked="checked"<{/if}> value="1" name="display<{$link.lid}>">
+              </td>
+              <td class=head>
+                <input type=submit class=formbutton name=delform<{$link.lid}> onclick='return confirmdel();' id=delform<{$link.lid}> value='<{$smarty.const._AM_FRAME_DELFORM}>'>
+              </td>
+            </tr>
+  	      <{/foreach}>
+          <tr>
+            <td class=head colspan=6>
+              <center><input type=submit name=updateframebutton id=updateframebutton class=formbutton value='<{$smarty.const._AM_FRAME_UPDATEBUTTON}>'></center>
+            </td>
+          </tr>
+        </table>
+      </fieldset>
+    </form>
+  <{/if}>
+</div>

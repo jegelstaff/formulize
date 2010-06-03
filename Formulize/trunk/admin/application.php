@@ -58,6 +58,40 @@ foreach($allRelationships as $thisRelationship) {
 	if(isset($relationshipIndex[$frid])) { continue; }
 	$relationships[$i]['name'] = $thisRelationship->getVar('name');
 	$relationships[$i]['content']['frid'] = $frid;
+
+  $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+  $relationshipObject = $framework_handler->get($frid);
+  $relationshipLinks = $relationshipObject->getVar('links');
+  $li = 1;
+  foreach($relationshipLinks as $relationshipLink) {
+    // get names of forms in the link
+    $name1q = "SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = '" . $relationshipLink->getVar('form1') . "'";
+    $res = $xoopsDB->query($name1q);
+    $row = $xoopsDB->fetchRow($res);
+    $form1 = $row[0];
+    $name2q = "SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = '" . $relationshipLink->getVar('form2') . "'";
+    $res = $xoopsDB->query($name2q);
+    $row = $xoopsDB->fetchRow($res);
+    $form2 = $row[0];
+    $links[$li]['form1'] = printSmart($form1);
+    $links[$li]['form2'] = printSmart($form2);
+    // get the name of the relationship
+    switch($relationshipLink->getVar('relationship')) {
+      case 1:
+        $relationship = _AM_FRAME_ONETOONE;
+        break;
+      case 2:
+        $relationship = _AM_FRAME_ONETOMANY;
+        break;
+      case 3:
+        $relationship = _AM_FRAME_MANYTOONE;
+        break;
+    }
+    $links[$li]['relationship'] = printSmart($relationship);
+    $li++;
+  }
+	$relationships[$i]['content']['links'] = $links;
+
 	$relationshipIndex[$frid] = true;
 	$i++;
 }

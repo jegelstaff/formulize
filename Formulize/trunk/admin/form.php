@@ -49,7 +49,12 @@ if($_GET['fid'] != "new") {
   $i = 1; 
   foreach($elementObjects as $thisElement) {
     $elements[$i]['name'] = printSmart($thisElement->getVar('ele_caption'));
-    $elements[$i]['content']['ele_id'] = $thisElement->getVar('ele_id');
+    $elements[$i]['content']['ele_id'] = printSmart($thisElement->getVar('ele_id'));
+    $elements[$i]['content']['ele_handle'] = printSmart($thisElement->getVar('ele_handle'));
+    $elements[$i]['content']['ele_type'] = printSmart($thisElement->getVar('ele_type'));
+    $elements[$i]['content']['ele_req'] = printSmart($thisElement->getVar('ele_req'));
+    $elements[$i]['content']['ele_display'] = printSmart($thisElement->getVar('ele_display'));
+    $elements[$i]['content']['ele_private'] = printSmart($thisElement->getVar('ele_private'));
     $i++;
   }
 } else {

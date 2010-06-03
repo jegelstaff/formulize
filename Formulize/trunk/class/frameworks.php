@@ -166,6 +166,7 @@ class formulizeFrameworkLink extends XoopsObject {
 		global $xoopsDB;
 		if(!is_numeric($lid)) {
 			// set empty defaults
+			$lid = "";
 			$frid = "";
 			$form1 = "";
 			$form2 = "";
@@ -178,6 +179,7 @@ class formulizeFrameworkLink extends XoopsObject {
 			$link_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_id=\"" . mysql_real_escape_string($lid). "\"");
 			if(!isset($link_q[0])) {
 				// set empty defaults
+  			$lid = "";
 				$frid = "";
 				$form1 = "";
 				$form2 = "";
@@ -187,6 +189,7 @@ class formulizeFrameworkLink extends XoopsObject {
 				$relationship = "";
 				$unified_display = "";
 			} else {
+  			$lid = $lid;
 				$frid = $link_q[0]['fl_frame_id'];
 				$form1 = $link_q[0]['fl_form1_id'];
 				$form2 = $link_q[0]['fl_form2_id'];
@@ -200,6 +203,7 @@ class formulizeFrameworkLink extends XoopsObject {
 
 		$this->XoopsObject();
 		//initVar params: key, data_type, value, req, max, opt
+		$this->initVar("lid", XOBJ_DTYPE_INT, $lid, true);
 		$this->initVar("frid", XOBJ_DTYPE_INT, $frid, true);
 		$this->initVar("form1", XOBJ_DTYPE_INT, $form1, true);
 		$this->initVar("form2", XOBJ_DTYPE_INT, $form2, true);

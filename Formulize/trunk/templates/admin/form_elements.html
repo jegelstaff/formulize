@@ -1,8 +1,4 @@
 <div class="panel-content content">
-<h1>Manage the elements in form: <em><{$content.name}></em></h1>
-</div>
-<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_accordion_sections.html" sections=$content.elements}>
-<div class="panel-content content">
 <h1>Add an element to form: <em><{$content.name}></em></h1>
 <p>Click on an element to add to form</p>
 <ul>
@@ -20,4 +16,8 @@
 	<li><a href="">Value derived from other elements</a></li>
 	<li><a href="">Colorpicker</a></li>
 </ul>
+</div><div class="panel-content content">
+<h1>Manage the elements in form: <em><{$content.name}></em></h1>
 </div>
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.elements}>
+
