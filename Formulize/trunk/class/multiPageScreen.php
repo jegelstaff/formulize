@@ -408,7 +408,6 @@ function drawPageUI($pageNumber, $pageTitle, $elements, $conditions, $form, $opt
 
     $conditionlist = "";
     foreach($conditions['details']['elements'] as $conIndex=>$elementValue) {
-    //for($z=0;$z<count($conditions['details']['elements']);$z++) {
         $form->addElement(new xoopsFormHidden('pageelements'.$pageNumber.'[]', $elementValue));
         $form->addElement(new xoopsFormHidden('pageops'.$pageNumber.'[]', $conditions['details']['ops'][$conIndex]));
         $form->addElement(new xoopsFormHidden('pageterms'.$pageNumber.'[]', $conditions['details']['terms'][$conIndex]));

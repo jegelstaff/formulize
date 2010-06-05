@@ -319,7 +319,7 @@ if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages
 	$buttonArray = array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}");
 	foreach($pages[$currentPage] as $element) {
 	  $elements_allowed[] = $element;
-   	}
+  }
 	$forminfo['elements'] = $elements_allowed;
 	$forminfo['formframe'] = $formframe;
 	$titleOverride = isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form

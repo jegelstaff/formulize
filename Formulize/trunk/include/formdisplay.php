@@ -95,28 +95,6 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mi
 			$owner = getEntryOwner($entry, $fid); // if there is no owner, then get the owner for this entry in this form
 		}
 		
-	/*	$element_query = "";
-		if(is_array($elements)) {
-			$start = 1;
-			foreach($elements as $element) {
-				if($start) {
-					$captionq = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '$element'"); 
-					$caption = eregi_replace ("'", "`", $captionq[0]['ele_caption']);
-					$caption = eregi_replace ("&quot;", "`", $caption);
-					$caption = eregi_replace ("&#039;", "`", $caption);
-					$element_query = " AND (ele_caption='$caption'";
-					$start = 0;
-				} else {
-					$captionq = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '$element'"); 
-					$caption = eregi_replace ("'", "`", $captionq[0]['ele_caption']);
-					$caption = eregi_replace ("&quot;", "`", $caption);
-					$caption = eregi_replace ("&#039;", "`", $caption);
-					$element_query .= " OR ele_caption='$caption'";
-				}
-			}
-			$element_query .= ")";
-		}*/
-	
 		// viewquery changed in light of 3.0 data structure changes...
 		//$viewquery = q("SELECT ele_caption, ele_value FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req=$entry $element_query");
 		// NEED TO CHECK THE FORM FOR ENCRYPTED ELEMENTS, AND ADD THEM AFTER THE * WITH SPECIAL ALIASES. tHEN IN THE LOOP, LOOK FOR THE ALIASES, AND SKIP PROCESSING THOSE ELEMENTS NORMALLY, BUT IF WHEN PROCESSING A NORMAL ELEMENT, IT IS IN THE LIST OF ENCRYPTED ELEMENTS, THEN GET THE ALIASED, DECRYPTED VALUE INSTEAD OF THE NORMAL ONE

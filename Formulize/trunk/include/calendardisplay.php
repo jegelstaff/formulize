@@ -181,22 +181,6 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 			$dateField2 = "";
 		}
 		if(!$frids[$i]) {
-/* 			NUMERIC ELE-ID IS ACCEPTED BY EXTRACTION LAYER SO FOR REGULAR FORMS, THIS IS PREFERRED, SINCE LANGUAGE TAGS IN CAPTIONS WILL THROW OFF THE PARSING OF THE FILTER! -- April 7 2006
-			$caption = q("SELECT ele_caption FROM " . DBPRE . "formulize WHERE ele_id = '" . $dateField . "'"); 
-			$ffcaption = str_replace ("&#039;", "`", $caption[0]['ele_caption']);
-			$ffcaption = str_replace ("&quot;", "`", $ffcaption);
-			$ffcaption = str_replace ("'", "`", $ffcaption);
-			$filterDH = $ffcaption;
-			if($dateField2) {
-				$caption = q("SELECT ele_caption FROM " . DBPRE . "formulize WHERE ele_id = '" . $dateField2 . "'"); 
-				$ffcaption = str_replace ("&#039;", "`", $caption[0]['ele_caption']);
-				$ffcaption = str_replace ("&quot;", "`", $ffcaption);
-				$ffcaption = str_replace ("'", "`", $ffcaption);
-				$filterDH2 = $ffcaption;
-			} else {
-				$filterDH2 = "";
-			}
-*/
 			$filterDH = $dateField;
 			$filterDH2 = $dateField2;
 		} else {
