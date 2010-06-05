@@ -1274,6 +1274,81 @@ function patch40() {
 				}
 			} 
 		}
+		
+		// if there is a framework handles table present, then we need to check for a few things to ensure the integrity of code and our ability to disambiguate inputs to the API
+		if(in_array($xoopsDB->prefix("formulize_framework_elements"), $existingTables)) {
+			
+			// need to change rules...framework handles must now be globally unique, so we can disambiguate them from each other when we are passed just a framework handle
+			$uniqueSQL = "SELECT elements.ele_caption, elements.ele_id, elements.ele_handle, handles.fe_handle, handles.fe_frame_id FROM ".$xoopsDB->prefix("formulize")." as elements, ".$xoopsDB->prefix("formulize_framework_elements")." as handles WHERE EXISTS (SELECT 1 FROM ".$xoopsDB->prefix("formulize_framework_elements")." as checkhandles WHERE handles.fe_handle = checkhandles.fe_handle AND handles.fe_element_id != checkhandles.fe_element_id) AND handles.fe_element_id = elements.ele_id AND handles.fe_handle != \"\" ORDER BY handles.fe_handle";
+			$uniqueRes = $xoopsDB->query($uniqueSQL);
+			$haveWarning = false;
+			$warningIdentifier = array();
+			$warningContents = array();
+			if($xoopsDB->getRowsNum($uniqueRes)) {
+				$haveWarning = true;
+				$warningIdentifier[] = "<li>You have some \"framework handles\" which are the same between different frameworks.</li>";
+				ob_start();
+				print "<ul>";
+				$prevHandle = "";
+				while($uniqueArray = $xoopsDB->fetchArray($uniqueRes)) {
+					if($uniqueArray['fe_handle'] != $prevHandle) {
+						if($prevHandle != "") {
+							// need to finish previous set and print out what's missing
+							print "</li>";
+						}
+						print "<li>Framework handle: <b>".$uniqueArray['fe_handle']."</b> is used in more than one place:<br>";
+					}
+					$prevHandle = $uniqueArray['fe_handle'];
+					print "&nbsp;&nbsp;&nbsp;&nbsp;In framework ".$uniqueArray['fe_frame_id'].", it is used for element ".$uniqueArray['ele_id']." (".$uniqueArray['ele_caption'].")<br>";
+					if($uniqueArray['fe_handle'] != $uniqueArray['ele_handle']) {
+						print "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For element ".$uniqueArray['ele_id'].", use the element's data handle instead: <b>".$uniqueArray['ele_handle']."</b><br>";
+					}
+				}
+				// dump the last stuff we had found in the loop
+				print "</li>";
+				print "</ul>";
+				$warningContents[] = ob_get_clean();
+			}
+			
+			// need to disambiguate framework handles and elements' data handles.
+			// no framework handle can be identical to the text of any data handle, unless they refer to the same element
+			// So look up all the elements that have a data handle that matches a framework handle, which is not referring to the same element
+			
+			$handleSQL = "SELECT elements.ele_id, elements.ele_caption, elements.ele_handle, handles.fe_frame_id, handles.fe_handle, handles.fe_element_id, e2.ele_caption as handlecap, e2.ele_handle as newhandle FROM ".$xoopsDB->prefix("formulize")." AS elements, ".$xoopsDB->prefix("formulize_framework_elements")." AS handles, ".$xoopsDB->prefix("formulize")." AS e2 WHERE elements.ele_handle = handles.fe_handle AND handles.fe_element_id != elements.ele_id AND handles.fe_element_id = e2.ele_id ORDER BY elements.id_form, elements.ele_order";
+			$handleRes = $xoopsDB->query($handleSQL);
+			if($xoopsDB->getRowsNum($handleRes) > 0) {
+				$haveWarning = true;
+				$warningIdentifier[] = "<li>You have some \"data handles\" which are identical to the \"framework handles\" of other elements.</li>";
+				ob_start();
+				print "<ul>";
+				while($handleArray = $xoopsDB->fetchArray($handleRes)) {
+					print "<li>".$handleArray['handlecap']." (element ".$handleArray['fe_element_id'].") &mdash framework handle: <b>".$handleArray['fe_handle']."</b> in framework ".$handleArray['fe_frame_id']."<br>";
+					print "&nbsp;&nbsp;&nbsp;&nbsp;Use the element's data handle instead: <b>".$handleArray['newhandle']."</b></li>";
+				}
+				print "</ul>";
+				$warningContents[] = ob_get_clean();
+			}
+		}
+		
+		if($haveWarning) {
+			print "<hr><p>MAJOR WARNING:</p>";
+			print "<ol>";
+			print implode("\n", $warningIdentifier);
+			print "</ol>";
+			print "<p>Framework handles are deprecated in Formulize 4, and having framework handles that are not entirely unique can now lead to serious errors in some situations.  However, we cannot automatically fix this situation for you, because you may have used the framework handles in programming code in your website.  If we try an automatic fix, we could break some other parts of your website.</p><p>Recommended actions:</p><p>1. Note down the following framework handles for the following elements (copy this information to a file, print this page, etc):<br>";
+			print implode("\n", $warningContents);
+			print "</p><p>2. Determine if you have any saved views based on a framework, that include the elements (columns) mentioned above.</p>";
+			print "<p>3. For any elements mentioned above that are included in framework-based saved views, change their framework handles as suggested above.</p>";
+			print "<p>4. Open up the affected saved views, and re-add the changed elements (columns) to them.  Search terms on changed columns will need to be respecified too, as well as sorting options.  Then re-save the view.  <b>Your users will need to do this too, if they have personal saved views which you cannot access.</b></p>";
+			print "<p>5. Determine where you may be using the <b>framework handles</b> mentioned above in any programming code in your website.</p>";
+			print "<p>6. For any elements where you are using the framework handles in programming code, change those framework handles as suggested above. You will need to make these changes in the framework configuration settings, as well as in the actual programming code where you are referring to the handle.</p>";
+			print "<p> --- </p>";
+			print "<p><b>You probably don't need to make all of the changes suggested above!</b>  You only need to make changes in places where there are saved views and/or programming code that uses the elements mentioned above.  For some websites, that will mean you don't have to make any changes (ie: if there are no saved views based on a framework, and you have no programming code referring to frameworks).</p>";
+			print "<p> --- </p>";
+			print "<p><b>You can re-run this patch after making changes.  If you do not get this warning, then your site should be OK.</b></p>";
+			print "<p>If you have any questions about this upgrade issue, please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>";
+		}
+
 		print "DB updates completed.  result: OK";
 	}
 }

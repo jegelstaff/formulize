@@ -399,7 +399,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$colsforsearches = explode(",", $_POST['oldcols']);
 			for($i=0;$i<count($allqsearches);$i++) {
 				if($allqsearches[$i] != "") {
-					$_POST["search_" . str_replace("hiddencolumn_", "", $colsforsearches[$i])] = $allqsearches[$i]; // need to remove the hiddencolumn indicator if it is present
+					$_POST["search_" . str_replace("hiddencolumn_", "", dealWithDeprecatedFrameworkHandles($colsforsearches[$i], $frid))] = $allqsearches[$i]; // need to remove the hiddencolumn indicator if it is present
 					if(strstr($colsforsearches[$i], "hiddencolumn_")) {
 						unset($colsforsearches[$i]); // remove columns that were added to the column list just so we would know the name of the hidden searches
 					}
@@ -456,16 +456,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	if($_POST['newcols']) {
 		$temp_showcols = $_POST['newcols'];
 		$showcols = explode(",", $temp_showcols);
-		if($frid) { // convert ids to form handles for a framework
-			$temp_handles = convertElementHandlesToFrameworkHandles($showcols, $frid);
-			unset($showcols);
-			$showcols = $temp_handles;
-		}
 	}
 	
+	// convert framework handles to element handles if necessary
+	$showcols = dealWithDeprecatedFrameworkHandles($showcols, $frid);	
+	
 	$showcols = removeNotAllowedCols($fid, $frid, $showcols, $groups); // converts old format metadata fields to new ones too if necessary
-
-
 
 	// clear quick searches for any columns not included now
 	$hiddenQuickSearches = array(); // array used to indicate quick searches that should be present even if the column is not displayed to the user
@@ -511,14 +507,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	$settings['currentURL'] = $currentURL; 
 
+	// no need for both these values now, since framework handles are deprecated
 	$settings['columns'] = $showcols;
-	
-	if($frid) {
-		$settings['columnhandles'] = convertFrameworkHandlesToElementHandles($showcols, $frid);
-	} else {
-		$settings['columnhandles'] = $showcols;
-	}
-	
+	$settings['columnhandles'] = $showcols;
+		
 	$settings['hlist'] = $_POST['hlist'];
 	$settings['hcalc'] = $_POST['hcalc'];
 
@@ -573,18 +565,13 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 	}
 
-/*	if($_POST['newcols']) {
-		$settings['oldcols'] = $_POST['newcols'];
-	} else {
-		$settings['oldcols'] = $_POST['oldcols'];
-	}
-*/
 	$settings['oldcols'] = implode(",", $showcols);
 
 	$settings['ventry'] = $_POST['ventry'];
 
 	// get sort and order options
 
+	$_POST['sort'] = dealWithDeprecatedFrameworkHandles($_POST['sort'], $frid);
 	$settings['sort'] = $_POST['sort'];
 	$settings['order'] = $_POST['order'];
 
@@ -870,6 +857,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$singleMulti = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $fid");
 		
 	// flatten columns array and convert handles to ids so that we can send them to the change columns popup
+	// Since 4.0 columns and columnhandles are identical...this is a cleanup job for later
 	$colhandles = implode(",", $columnhandles); // part of $settings 
 	$flatcols = implode(",", $columns); // part of $settings (will be IDs if no framework in effect)
 
@@ -1102,7 +1090,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		// (essentially, whenever the search boxes would not be drawn in for whatever reason)
 		if(!$useSearch OR ($calc_cols AND !$hcalc) OR $screen->getVar('listtemplate')) {
       formulize_benchmark("before calling draw searches");
-			$quickSearchBoxes = drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, $frid, true); // first true means we will receive back the code instead of having it output to the screen, second (last) true means that all allowed filters should be generated
+			$quickSearchBoxes = drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, true); // first true means we will receive back the code instead of having it output to the screen, second (last) true means that all allowed filters should be generated
       formulize_benchmark("after calling draw searches");
 			$quickSearchesNotInTemplate = array();
 			foreach($quickSearchBoxes as $handle=>$qscode) {
@@ -1283,7 +1271,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	}
 
 	// perform calculations...
-	// calc_cols is the columns requested (separated by / -- ele_id for each, so needs conversion to handle if framework in effect, also metadata is indicated with uid, proxyid, creation_date, mod_date)
+	// calc_cols is the columns requested (separated by / -- ele_id for each, also metadata is indicated with uid, proxyid, creation_date, mod_date)
 	// calc_calcs is the calcs for each column, columns separated by / and calcs for a column separated by ,. possible calcs are sum, avg, min, max, count, per
 	// calc_blanks is the blank setting for each calculation, setup the same way as the calcs, possible settings are all,  noblanks, onlyblanks
 	// calc_grouping is the grouping option.  same format as calcs.  possible values are ele_ids or the uid, proxyid, creation_date and mod_date metadata terms
@@ -1321,7 +1309,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 
 		$exportFilename = $settings['xport'] == "calcs" ? $filename : "";
     //formulize_benchmark("before printing results");
-    printResults($cResults[0], $cResults[1], $cResults[2], $cResults[3], $frid, $exportFilename, $settings['title']); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
+    printResults($cResults[0], $cResults[1], $cResults[2], $cResults[3], $exportFilename, $settings['title']); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
     //formulize_benchmark("after printing results");
 		print "</table>\n";
 
@@ -1381,11 +1369,11 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		}
 	
 		if($useHeadings) {
-      $headers = getHeaders($cols, $frid, true); // third param indicates we're using element headers and not ids
-      drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $frid); 
+      $headers = getHeaders($cols, true); // second param indicates we're using element headers and not ids
+      drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons)); 
     }
 		if($useSearch) {
-			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches, $frid);
+			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
 		}
 		// get form handles in use
 		$mainFormHandle = key($data[key($data)]);
@@ -1423,7 +1411,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 				if($entry != "") { 
 		
 					if($headcounter == $repeatHeaders AND $repeatHeaders > 0) { 
-						if($useHeadings) { drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $frid); }
+						if($useHeadings) { drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons)); }
 						$headcounter = 0;
 					}
 					$headcounter++;		
@@ -1511,7 +1499,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 									}
 								}
 							} else { // display based on the mainform entry id
-								displayElement("", $colhandle, $linkids[0]); // works for mainform only!  To work on elements from a framework, we need to figure out the form the element is from, and the entry ID in that form
+								displayElement("", $colhandle, $linkids[0]); // works for mainform only!  To work on elements from a framework, we need to figure out the form the element is from, and the entry ID in that form, which is done above
 							}
 							$GLOBALS['formulize_displayElement_LOE_Used'] = true;
 						} elseif(is_array($value)) {
@@ -1519,14 +1507,14 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 							$countOfValue = count($value);
 							foreach($value as $valueId=>$v) {
 								if($counter<$countOfValue) {
-									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth, $currentColumnLocalId[$valueId])), $col, $frid) . ',</div><br>';
+									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col) . ',</div><br>';
 								} else {
-									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $frid, $textWidth, $currentColumnLocalId[$valueId])), $col, $frid). '</div>';
+									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col). '</div>';
 								}
 								$counter++;
 							}
 						} elseif($col != "creation_uid" AND $col!= "mod_uid") {
-							print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $frid, $textWidth, $currentColumnLocalId)), $col, $frid). '</div>';
+							print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $textWidth, $currentColumnLocalId)), $col). '</div>';
 						} else { // don't use printsmart for the special uid cells
 							print $value;
 						}
@@ -1545,14 +1533,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 					
 					// handle hidden elements for passing back to custom buttons
 					foreach($hiddenColumns as $thisHiddenCol) {
-						//$hiddenHandle = $frid ? handleFromId($thisHiddenCol, $fid, $frid) : $thisHiddenCol;
-						if($frid) {
-							$tempHiddenHandle = convertElementHandlesToFrameworkHandles($thisHiddenCol, $frid) ;
-							$hiddenHandle = $tempHiddenHandle[0];
-						} else {
-							$hiddenHandle = $thisHiddenCol;
-						}
-						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$hiddenHandle\" value=\"" . htmlspecialchars(display($entry, $hiddenHandle)) . "\"></input>\n";
+						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$thisHiddenCol\" value=\"" . htmlspecialchars(display($entry, $thisHiddenCol)) . "\"></input>\n";
 					}				
 					
 					print "</tr>\n";
@@ -1634,14 +1615,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 					
 					// handle hidden elements for passing back to custom buttons
 					foreach($hiddenColumns as $thisHiddenCol) {
-						//$hiddenHandle = $frid ? handleFromId($thisHiddenCol, $fid, $frid) : $thisHiddenCol;
-						if($frid) {
-							$tempHiddenHandle = convertElementHandlesToFrameworkHandles($thisHiddenCol, $frid) ;
-							$hiddenHandle = $tempHiddenHandle[0];
-						} else {
-							$hiddenHandle = $thisHiddenCol;
-						}
-						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$hiddenHandle\" value=\"" . htmlspecialchars(display($entry, $hiddenHandle)) . "\"></input>\n";
+						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$thisHiddenCol\" value=\"" . htmlspecialchars(display($entry, $thisHiddenCol)) . "\"></input>\n";
 					}
 					
 					ob_start();
@@ -1678,7 +1652,7 @@ function viewEntryLink($linkContents) {
 // this function draws in the search box row
 // returnOnly is used to return the HTML code for the boxes, and that only happens when we are gathering the boxes because a custom list template is in use
 // $filtersRequired can be 'true' which means include all valid filters, or it can be a list of fields (matching values in the cols array) which require filters
-function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, $returnOnly=false, $hiddenQuickSearches, $frid=0, $filtersRequired=array()) {
+function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, $returnOnly=false, $hiddenQuickSearches, $filtersRequired=array()) {
   
 	$quickSearchBoxes = array();
 	if(!$returnOnly) { print "<tr>"; }
@@ -1709,7 +1683,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
     //formulize_benchmark("made search box, starting filter");
     if(is_array($filtersRequired) OR $filtersRequired === true) {
       if($filtersRequired === true OR in_array($cols[$i], $filtersRequired)) {
-        $quickSearchBoxes[$cols[$i]]['filter'] = formulize_buildQSFilter($cols[$i], $search_text, $frid);
+        $quickSearchBoxes[$cols[$i]]['filter'] = formulize_buildQSFilter($cols[$i], $search_text);
       }
     }
     //formulize_benchmark("done filter");
@@ -1731,7 +1705,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 				$quickSearchBoxes[$thisHQS]['search'] = "<input type=text name='search_$thisHQS' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
         if(is_array($filtersRequired) OR $filtersRequired === true) {
           if($filtersRequired === true OR in_array($thisHQS, $filtersRequired)) {
-            $quickSearchBoxes[$thisHQS]['filter'] = formulize_buildQSFilter($thisHQS, $search_text, $frid);
+            $quickSearchBoxes[$thisHQS]['filter'] = formulize_buildQSFilter($thisHQS, $search_text);
           }
         }
 				if(!$returnOnly) {
@@ -1756,16 +1730,10 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 }
 
 // THIS FUNCTION CREATES THE QUICKFILTER BOXES
-function formulize_buildQSFilter($handle, $search_text, $frid) {
+function formulize_buildQSFilter($handle, $search_text) {
   formulize_benchmark("start of building filter");
-  if($frid) {
-    $resultArray = formulize_getElementHandleAndIdFromFrameworkHandle($handle, $frid);
-    $id = $resultArray[1];
-    $elementMetaData = formulize_getElementMetaData($id);
-  } else {
-    $elementMetaData = formulize_getElementMetaData($handle, true); // true means this is a handle
-    $id = $elementMetaData['ele_id'];
-  }
+  $elementMetaData = formulize_getElementMetaData($handle, true); // true means this is a handle
+  $id = $elementMetaData['ele_id'];
   if($elementMetaData['ele_type']=="select" OR $elementMetaData['ele_type']=="radio" OR $elementMetaData['ele_type']=="checkbox") {
     $qsfparts = explode("_", $search_text);
     $search_term = strstr($search_text, "_") ? $qsfparts[1] : $search_text;
@@ -1776,7 +1744,7 @@ function formulize_buildQSFilter($handle, $search_text, $frid) {
 }
 
 // this function writes in the headers for the columns in the results box
-function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=null, $numberOfButtons, $frid) { //, $lockcontrols) {
+function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=null, $numberOfButtons) { //, $lockcontrols) {
 
 	static $checkedHelpLink = false;
 	static $headingHelpLink;
@@ -1796,7 +1764,7 @@ function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=n
 	for($i=0;$i<count($headers);$i++) {
    	print "<td class=head>\n";
 		if($headingHelpLink) {
-			print "<div style=\"float: right;\"><a href=\"\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=".$cols[$i]."&frid=$frid');return false;\" title=\""._formulize_DE_MOREINFO."\">[?]</a></div>\n";
+			print "<div style=\"float: right;\"><a href=\"\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=".$cols[$i]."');return false;\" title=\""._formulize_DE_MOREINFO."\">[?]</a></div>\n";
 		}
 		if($cols[$i] == $sort) {
 			if($order == "SORT_DESC") {
@@ -1832,36 +1800,27 @@ function getDefaultCols($fid, $frid="") {
 		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
 		$mid = getFormulizeModId();
+		$ele_handles = array();
+		$processedFids = array();
 		foreach($fids as $this_fid) {
-			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
-				$ele_ids[$this_fid] = getHeaderList($this_fid, true);
-				//$ele_ids[$this_fid] = convertHeadersToIds($headers, $this_fid); // was taking $headers formerly generated from prev line
+			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
+				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
+				$processedFids[$this_fid] = true;
 			}
 		}
 		foreach($sub_fids as $this_fid) {
-			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
-				$ele_ids[$this_fid] = getHeaderList($this_fid, true);
-				//$ele_ids[$this_fid] = convertHeadersToIds($headers, $this_fid); // was taking $headers formerly generated from prev line
+			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
+				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
+				$processedFids[$this_fid] = true;
 			}
 		}
 
-		array_unique($ele_ids);
-		
-		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-		foreach($ele_ids as $this_fid=>$ids) {
-			foreach($ids as $id) {
-				$handles[] = handleFromId($id, $this_fid, $frid);
-			}
-		}
-		return $handles;
+		return $ele_handles;
 		
 	} else {
 		$ele_handles = getHeaderList($fid, true, true); // third param causes element handles to be returned instead of IDs
-		//$ele_ids = convertHeadersToIds($headers, $fid); // was taking $headers formerly generated from prev line
 		return $ele_handles;
 	}
-
-
 
 } 
 
@@ -2547,12 +2506,12 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
 
 
 //THIS FUNCTION TAKES A MASTER RESULT SET AND DRAWS IT ON THE SCREEN
-function printResults($masterResults, $blankSettings, $groupingSettings, $groupingValues, $frid, $filename="", $title="") {
+function printResults($masterResults, $blankSettings, $groupingSettings, $groupingValues, $filename="", $title="") {
 
 	$output = "";
   foreach($masterResults as $handle=>$calcs) {
 		$output .= "<tr><td class=head colspan=2>\n";
-		$output .= printSmart(trans(getCalcHandleText($handle, $frid)), 100);
+		$output .= printSmart(trans(getCalcHandleText($handle)), 100);
 		$output .= "\n</td></tr>\n";
     foreach($calcs as $calc=>$groups) {
 			$countGroups = count($groups);
@@ -2631,7 +2590,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
               $start2 = false;
               $elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
               $groupText = formulize_swapUIText($groupingValues[$handle][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
-              $output .= printSmart(trans(getCalcHandleText($thisGroupSetting, $frid, true))) . ": " . printSmart(trans($groupText)) . "\n";
+              $output .= printSmart(trans(getCalcHandleText($thisGroupSetting, true))) . ": " . printSmart(trans($groupText)) . "\n";
             }
             $output .= "</b></p>\n";
           }
@@ -2722,17 +2681,10 @@ function convertUids($value, $handle) {
 }
 
 // this function returns the handle corresponding to a given column or grouping value in the requested calculations data, or advanced search query
-function calcHandle($value, $frid, $fid) {
-	if(!$frid) {
-		$thandle = convertElementIdsToElementHandles($value, $fid);
-		$handle = $thandle[0];
-	} else {
-		$thandle = convertElementIdsToFrameworkHandles($value, $frid); // convert id to handle if this is a framework (unless it's a metadata value)
-		$handle = $thandle[0];	
-	}
-	return $handle;				
+function calcHandle($value, $fid) {
+	$handle = convertElementIdsToElementHandles($value, $fid);
+	return $handle[0];
 }
-
 
 // THIS FUNCTION PARSES OUT THE {USER} AND {TODAY} KEYWORDS INTO THEIR LITERAL VALUES
 function parseUserAndToday($term) {
@@ -3453,17 +3405,11 @@ function removeNotAllowedCols($fid, $frid, $cols, $groups) {
 			if(!in_array($value['ele_handle'], $all_allowed_cols)) {	$all_allowed_cols[] = $value['ele_handle']; }
 		}
 	}			
-	if($frid) {
-		$all_cols_from_view = convertFrameworkHandlesToElementHandles($cols, $frid);	
-	} else {
-		$all_cols_from_view = $cols;
-	}
+	$all_cols_from_view = $cols;
 	
 	$allowed_cols_in_view = array_intersect($all_allowed_cols, $all_cols_from_view);
 	$allowed_cols_in_view = array_values($allowed_cols_in_view);
-	if($frid) {
-		$allowed_cols_in_view = convertElementHandlesToFrameworkHandles($allowed_cols_in_view, $frid);		
-	}
+
 	return $allowed_cols_in_view;
 }
 
@@ -3863,7 +3809,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 			if(substr($settings['as_' . $i], 0, 7) == "[field]" AND substr($settings['as_' . $i], -8) == "[/field]") { // a field has been found, next two should be part of the query
 				$fieldLen = strlen($settings['as_' . $i]);
 				$field = substr($settings['as_' . $i], 7, $fieldLen-15); // 15 is the length of [field][/field]
-				$field = calcHandle($field, $frid, $fid);
+				$field = calcHandle($field, $fid);
 				$query_string .= "evalAdvSearch(\$entry, \"$field\", \"";
 				$i++;
 				$wq['as_' . $i] = $settings['as_' . $i];
@@ -4016,15 +3962,6 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		$filterToCompare = $filter;
 	}
 	
-
-// CANNOT PAGE RESULTS YET BECAUSE ADVANCED SEARCHES MUST BE DONE OVER ENTIRE RESULT SET.  ARRRRGGGHHH!!!
-/*	if(!$frid) {
-		$startEntry = $_POST['startPageEntry'] ? intval($_POST['startPageEntry']) : 0;
-		$data = getData($frid, $fid, $filter, "AND", $scope, $sort, $order, $startEntry, $entriesPerPage); // additional options for paging results not enabled due to current inability of paging successfully when filters are set on fields in the non-main form.
-		if($sort AND $order) { // because the extraction layer does not return results in order, we need to sort them afterwards (even when sort and order is passed -- extraction layer only uses them to generate the list of entries that should be gathered, but it does not gather them in order)
-			$data = resultSort($data, $sort, $order); // sort is ele_id for form, handle for framework
-		}
-*/
 	$regeneratePageNumbers = false;
 	// handle magic quotes if necessary
 	if(get_magic_quotes_gpc()) {

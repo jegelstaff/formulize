@@ -45,17 +45,18 @@ class formulizeFramework extends XoopsObject {
 			// set empty defaults
 			$notAFramework = true;
 		} else {
-			$frame_elements_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_elements") . " WHERE fe_frame_id=$frid");
-			if(isset($frame_elements_q[0])) { // elements are not a required part of a framework...well, they should be, but if they're not defined, that doesn't mean the rest of the data is invalid, so don't call NotAFramework on this framework
-				$handles = array();
-				$element_ids = array();
-				foreach($frame_elements_q as $row=>$value) {
-					$handles[$value['fe_element_id']] = $value['fe_handle'];
-					$element_ids[$value['fe_handle']] = $value['fe_element_id'];
+			// check if framework_elements table exists first, since in 4.0 and higher, it should not.
+			// but we'll keep it around if it did exist (prior to an upgrade) so we can check framework handles first when necessary
+			$handles = array();
+			$element_ids = array();
+			if($GLOBALS['formulize_versionFourOrHigher'] == false) {
+				$frame_elements_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_elements") . " WHERE fe_frame_id=$frid");
+				if(isset($frame_elements_q[0])) { // elements are not a required part of a framework...well, they should be, but if they're not defined, that doesn't mean the rest of the data is invalid, so don't call NotAFramework on this framework
+					foreach($frame_elements_q as $row=>$value) {
+						$handles[$value['fe_element_id']] = $value['fe_handle'];
+						$element_ids[$value['fe_handle']] = $value['fe_element_id'];
+					}
 				}
-			} else {
-				$handles = array();
-				$element_ids = array();
 			}
 			$frame_links_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=\"" . mysql_real_escape_string($frid). "\"");
 			if(!isset($frame_links_q[0])) {
@@ -75,14 +76,17 @@ class formulizeFramework extends XoopsObject {
 			if(!isset($frame_name_q[0])) {
 				$notAFramework = true;
 			}
-			$frame_form_handles_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_forms") . " WHERE ff_frame_id=$frid");
-			if(!isset($frame_form_handles_q[0])) {
-				$notAFramework = true;
-			} else {
-				$formHandles = array();
-				foreach($frame_form_handles_q as $row=>$value) {
-					if($fidKey = array_search($value['ff_form_id'], $fids)) { // find this form in the fids array, and use that fid as the key to access this form's handle.  Remember, not all forms in this table are actually in the Framework, so we have to check.
-						$formHandles[$fids[$fidKey]] = $value['ff_handle'];
+			$formHandles = array();
+			if(in_array($xoopsDB->prefix("formulize_framework_forms"), $existingTables)) {
+				$frame_form_handles_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_forms") . " WHERE ff_frame_id=$frid");
+				if(!isset($frame_form_handles_q[0])) {
+					$notAFramework = true;
+				} else {
+					$formHandles = array();
+					foreach($frame_form_handles_q as $row=>$value) {
+						if($fidKey = array_search($value['ff_form_id'], $fids)) { // find this form in the fids array, and use that fid as the key to access this form's handle.  Remember, not all forms in this table are actually in the Framework, so we have to check.
+							$formHandles[$fids[$fidKey]] = $value['ff_handle'];
+						}
 					}
 				}
 			}

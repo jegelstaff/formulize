@@ -114,16 +114,8 @@ if(!isset($_POST['metachoice']) AND !isset($_GET['type'])) {
 				//$cols = array();
 				//$headers = array();
 			}
-			/*print "<pre>";
-			print_r($cols);
-			print_r(convertElementHandlesToFrameworkHandles($cols, $frid));
-			print_r($headers);
-			print "</pre>";*/
-			if($frid) {
-				$filename = prepExport($headers, convertElementHandlesToFrameworkHandles($cols, $frid), $data, $fdchoice, "", "", false, $fid, $groups);
-			} else {
-				$filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
-			}
+			
+			$filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
 			
 			print "<center><p><a href=\"$filename\">$linkText</a></p></center>\n";
 			

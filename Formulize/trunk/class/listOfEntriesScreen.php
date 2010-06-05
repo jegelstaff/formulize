@@ -284,11 +284,8 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 //also, collect the handles from a framework if any, and prep the list of possible handles/ids for the list template
                 if($selectedFramework) {
                     $allFids = $frameworks[$selectedFramework]->getVar('fids');
-                    $allHandles = $frameworks[$selectedFramework]->getVar('handles');
-                    $helpWidth = 20;
                 } else {
                     $allFids = array(0=>$fid);
-                    $helpWidth = 30;
                 }
                 $thisFidObj = "";
                 $allFidObjs = array();
@@ -312,9 +309,8 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                         $elementHeading = $thisFidColheads[$i] ? $thisFidColheads[$i] : $thisFidCaptions[$i];
                         $elementOptions[$thisFidHandles[$i]] = printSmart(trans(strip_tags($elementHeading)), 75);
                         $elementOptionsFid[$thisFid][$thisFidElement] = printSmart(trans(strip_tags($elementHeading)), 75); // for passing to custom button logic, so we know all the element options for each form in framework
-                        $handleOrId = $selectedFramework ? $allHandles[$thisFidElement] : $thisFidHandles[$i];
                         $class = $class == "even" ? "odd" : "even";
-                        $listTemplateHelp[] = "<tr><td class=$class><nobr><b>" . printSmart(trans(strip_tags($elementHeading)), $helpWidth) . "</b></nobr></td><td class=$class><nobr>$handleOrId</nobr></td></tr>";
+                        $listTemplateHelp[] = "<tr><td class=$class><nobr><b>" . printSmart(trans(strip_tags($elementHeading))) . "</b></nobr></td><td class=$class><nobr>".$thisFidHandles[$i]."</nobr></td></tr>";
                     }
                 }
                 

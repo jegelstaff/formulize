@@ -40,12 +40,7 @@ if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['la
   include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
 } 
 
-if($_GET['frid']) {
-  $resultArray = formulize_getElementHandleAndIdFromFrameworkHandle($_GET['col'], intval($_GET['frid']));
-  $elementMetaData = formulize_getElementMetaData($resultArray[0], true);
-} else {
-  $elementMetaData = formulize_getElementMetaData($_GET['col'], true);
-}
+$elementMetaData = formulize_getElementMetaData($_GET['col'], true);
 
 print "<HTML>";
 print "<head>";

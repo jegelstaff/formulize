@@ -31,7 +31,9 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file contains functions for interfacing with the Formulize database by using the handles and the relationships between forms described in a Framework
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+
+// this file contains the functions for gathering a dataset from the database and interacting with the dataset
 
 function connect($host, $username, $password, $db) {
      $connect = mysql_connect($host, $username, $password)
@@ -68,50 +70,6 @@ function debug_memory($text) {
 		$mem_usage = memory_get_usage();
 		$mb_usage = round(($mem_usage/1000000), 2);
 		print "$mb_usage ($text)";
-	}
-}
-
-
-
-// DEBUG FUNCTIONS, PRINTS RAW RESULTS ARRAYS IN A READABLE FORMAT
-// call with this code:
-// printclean($mainresults, $linkresult);
-// DO NOT WORK NOW THAT MAINRESULT AND LINKRESULT ARE ACTUAL QUERY RESULT OBJECTS AND NOT ARRAYS
-function pc($result) {
-	print "<br>PRINTCLEAN RESULTS:<br>";
-	for($i=0;$i<count($result);$i++) {
-			print "Now printing result row $i:<br>";
-			print_r($result[$i]);
-			print "<br>";
-	}
-}
-function printclean($mainresults, $linkresult) {
-	print "<br>MAINRESULT:";
-	pc($mainresults);
-	for($i=0;$i<count($linkresult);$i++) {
-		print "<br>LINKRESULT for form: " . $linkresult[$i]['formid'];
-		pc($linkresult[$i]['result']);
-	}
-}
-
-//ANOTHER DEBUG FUNCTION, THIS ONE FOR LOOKING AT FINAL RESULTS IN READABLE FORMAT
-function printfclean($results) {
-	
-	$keys = array_keys($results);
-	print "FORM HANDLE: ";
-	print_r($keys);
-	print "<br>";
-
-	foreach($results as $result) {
-		print "RECORD IDS: ";
-		$keys = array_keys($result);
-		print_r($keys);
-		print "<br>";
-		foreach($result as $k => $row) {
-			print "<br>RECORD $k: ";
-			print_r($row);
-		}
-		print "<br><br>";
 	}
 }
 
@@ -234,18 +192,6 @@ function prepvalues($value, $field, $entry_id) {
 	return explode("*=+*:",$value);
 }
 
-
-// this function returns the handle for an element when given the id
-function handleFromId($id, $fid, $frid) {
-	if($id === "uid" OR $id === "proxyid" OR $id === "creation_date" OR $id === "mod_date" OR $id === "creator_email" OR $id === "creation_uid" OR $id === "mod_uid" OR $id === "creation_datetime" OR $id === "mod_datetime") { return $id; }
-        static $handles = array();
-        if(!isset($handles[$id][$fid][$frid])) {
-          $handle = go("SELECT fe_handle FROM " . DBPRE . "formulize_framework_elements WHERE fe_frame_id = '$frid' AND fe_form_id = '$fid' AND fe_element_id = '$id'");
-          $handles[$id][$fid][$frid] = $handle[0]['fe_handle'];
-        }
-        return $handles[$id][$fid][$frid];
-}
-
 function microtime_float()
 {
    list($usec, $sec) = explode(" ", microtime());
@@ -258,7 +204,8 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
 	  $result = dataExtraction(intval($framework), intval($form), $filter);
 	  return $result;
      }
-
+		 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+		 $sortField = dealWithDeprecatedFrameworkHandles($sortField, $framework);
 
 	// have to check for the pressence of the Freeform Solutions archived user patch, and if present, then the includeArchived flag can be used
 	// if not present, ignore includeArchived
@@ -314,7 +261,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	   }
 	   if(is_numeric($form)) {
 		     $fid = $form;
-	     } else {
+	   } elseif($GLOBALS['formulize_versionFourOrHigher'] == false) {
 		     $formcheck = go("SELECT ff_form_id FROM " . DBPRE . "formulize_framework_forms WHERE ff_frame_id='$frid' AND ff_handle='$form'");
 		     $fid = $formcheck[0]['ff_form_id'];
 		     unset($formcheck);
@@ -326,7 +273,6 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		     print "Frame id: " . $frid . "<br>";
 		     exit("selected form does not exist in framework"); 
 	   }
-     
        
 	     if($frid AND !$mainFormOnly) {
 		     // GET THE LINK INFORMATION FOR THE CURRENT FRAMEWORK BASED ON THE REQUESTED FORM
@@ -361,7 +307,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		     foreach($linklist1 as $theselinks) {
 			     $linkformids1[] = $theselinks['fl_form2_id'];
 			     if($theselinks['fl_key1'] != 0) {
-				     $handleforlink = handleFromId($theselinks['fl_key1'], $fid, $frid);
+				     $handleforlink = formulize_getElementHandleFromID($theselinks['fl_key1']);
 				     $linkkeys1[] = $handleforlink;
 				     $linktargetids1[] = $theselinks['fl_key2'];
 				     $linkselfids1[] = $theselinks['fl_key1'];
@@ -382,7 +328,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		     foreach($linklist2 as $theselinks) {
 			     $linkformids2[] = $theselinks['fl_form1_id'];
 			     if($theselinks['fl_key2'] != 0) {
-				     $handleforlink = handleFromId($theselinks['fl_key2'], $fid, $frid);
+				     $handleforlink = formulize_getElementHandleFromID($theselinks['fl_key2']);
 				     $linkkeys2[] = $handleforlink;
 				     $linktargetids2[] = $theselinks['fl_key1'];
 				     $linkselfids2[] = $theselinks['fl_key2'];
@@ -568,10 +514,6 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                } elseif($sortField == "mod_date") {
                     $sortField = "mod_datetime";
                     $elementMetaData['id_form'] = $fid;
-               } elseif($frid) {
-                    $elementHandleAndId = formulize_getElementHandleAndIdFromFrameworkHandle($sortField, $frid);
-                    $elementMetaData = formulize_getElementMetaData($elementHandleAndId[1]);
-                    $sortField = $elementHandleAndId[0]; // use the element handle for the sort field, instead of the framework handle
                } else {
                     $elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...               
                }
@@ -679,13 +621,6 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      debug_memory("After retrieving mainresults");
      
-     if($frid) {
-          $frameworkMap = formulize_mapFramework($frid);
-     } else {
-          $frameworkMap = false;
-     }
-     
-     
      // Debug Code
      
      //global $xoopsUser;
@@ -706,11 +641,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      // -- metadata should be: formhandle (title or framework formhandle), formula, handle (element handle or framework handle)
      // 3. call the derived value function from inside the main loop
      
-     if($frid) {
-          $sql = "SELECT t1.ele_value, t2.ff_handle, t3.fe_handle FROM ".DBPRE."formulize as t1, ".DBPRE."formulize_framework_forms as t2, ".DBPRE."formulize_framework_elements as t3 WHERE t1.ele_type='derived' AND (t1.id_form='$fid' OR t1.id_form IN (".implode(",",$linkformids).")) AND t1.ele_id=t3.fe_element_id AND t3.fe_frame_id='$frid' AND t1.id_form=t2.ff_form_id AND t2.ff_frame_id='$frid' ORDER BY t1.ele_order";
-     } else {
-          $sql = "SELECT t1.ele_value, t2.desc_form, t1.ele_handle FROM ".DBPRE."formulize as t1, ".DBPRE."formulize_id as t2 WHERE t1.ele_type='derived' AND t1.id_form='$fid' AND t1.id_form=t2.id_form ORDER BY t1.ele_order";     
-     }
+     $sql = "SELECT t1.ele_value, t2.desc_form, t1.ele_handle FROM ".DBPRE."formulize as t1, ".DBPRE."formulize_id as t2 WHERE t1.ele_type='derived' AND t1.id_form='$fid' AND t1.id_form=t2.id_form ORDER BY t1.ele_order";     
+     
      $derivedFieldMetadata = array();
      if($res = mysql_query($sql)) {
           if(mysql_num_rows($res)>0) {
@@ -796,7 +728,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                formulize_benchmark("preping value...");
                $valueArray = prepvalues($value, $elementHandle, $masterQueryArray[$curFormAlias . "_entry_id"]); // note...metadata fields must not be in an array for compatibility with the 'display' function...not all values returned will actually be arrays, but if there are multiple values in a cell, then those will be arrays
                formulize_benchmark("done preping value");
-               $masterResults[$masterIndexer][formulize_readFrameworkMap($frameworkMap, $curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][formulize_readFrameworkMap($frameworkMap, $curFormId, $elementHandle)] = $valueArray;
+               $masterResults[$masterIndexer][getFormTitle($curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][$elementHandle] = $valueArray;
                if($elementHandle == "creation_uid" OR $elementHandle == "mod_uid" OR $elementHandle == "creation_datetime" OR $elementHandle == "mod_datetime") {
                     // add in the creator_email when we have done the creation_uid
                     if($elementHandle == "creation_uid") {
@@ -814,9 +746,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                               }
                          }
                          if($is_webmaster OR $view_private_fields OR $masterQueryArray['main_user_viewemail'] OR $masterQueryArray['main_creation_uid'] == $this_userid) {
-                              $masterResults[$masterIndexer][formulize_readFrameworkMap($frameworkMap, $curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]]['creator_email'] = $masterQueryArray['main_email'];
+                              $masterResults[$masterIndexer][getFormTitle($curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]]['creator_email'] = $masterQueryArray['main_email'];
                          } else {
-                              $masterResults[$masterIndexer][formulize_readFrameworkMap($frameworkMap, $curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]]['creator_email'] = "";
+                              $masterResults[$masterIndexer][getFormTitle($curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]]['creator_email'] = "";
                          }
                     }
                     
@@ -835,7 +767,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                               $old_meta = "mod_date";
                               break;
                     }
-                    $masterResults[$masterIndexer][formulize_readFrameworkMap($frameworkMap, $curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][$old_meta] = $valueArray;
+                    $masterResults[$masterIndexer][getFormTitle($curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][$old_meta] = $valueArray;
                }
           }
      }
@@ -850,86 +782,15 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 
 } // end of dataExtraction function
 
-// this function returns the form id when given the form name, or the form handle and a framework id
-function formulize_getFormIdFromNameOrHandle($nameHandle, $frid=0) {
+// this function returns the form id when given the form name
+function formulize_getFormIdFromName($nameHandle) {
      static $cachedFormIds = array();
-     if(!isset($cachedFormIds[$nameHandle][$frid])) {
-          if($frid) {
-               $formIdData = go("SELECT ff_form_id FROM ".DBPRE."formulize_framework_forms WHERE ff_handle = '".mysql_real_escape_string($nameHandle)."' AND ff_frame_id = ".intval($frid));
-               $cachedFormIds[$nameHandle][$frid] = $formIdData[0]['ff_form_id'];
-          } else {
-               $formIdData = go("SELECT id_form FROM ".DBPRE."formulize_id WHERE desc_form = '".mysql_real_escape_string($nameHandle)."'");
-               $cachedFormIds[$nameHandle][$frid] = $formIdData[0]['id_form'];
-          }
+     if(!isset($cachedFormIds[$nameHandle])) {
+          $formIdData = go("SELECT id_form FROM ".DBPRE."formulize_id WHERE desc_form = '".mysql_real_escape_string($nameHandle)."'");
+          $cachedFormIds[$nameHandle] = $formIdData[0]['id_form'];
      }
-     return $cachedFormIds[$nameHandle][$frid];
+     return $cachedFormIds[$nameHandle];
 }
-
-
-
-
-// THIS FUNCTION RETURNS THE FORM HANDLE NECESSARY FOR THE MASTER RESULT, BASED ON THE FRAMEWORK MAP IN EFFECT, IF ANY
-function formulize_readFrameworkMap($frameworkMap, $form_id, $elementHandle=false) {
-     if($elementHandle == false) {
-          // returning form handles or titles
-          if($frameworkMap != false) {
-               return $frameworkMap[$form_id]['handle'];
-          } else {
-               static $cachedTitles = array();
-               if(!isset($cachedTitles[$form_id])) {
-                    // must fetch the full title for the form
-                    $sql = "SELECT desc_form FROM " . DBPRE . "formulize_id WHERE id_form = " . intval($form_id);
-                    $res = mysql_query($sql);
-                    $array = mysql_fetch_assoc($res);
-                    $cachedTitles[$form_id] = $array['desc_form'];                    
-               }
-               return $cachedTitles[$form_id];
-          }
-     }
-     
-     // returning element ids or handles
-     if($elementHandle == "creation_uid" OR $elementHandle == "mod_uid" OR $elementHandle == "creation_datetime" OR $elementHandle == "mod_datetime") {
-          return $elementHandle; // always return metadata handles as is
-     }
-     
-     if($frameworkMap != false) {
-          return $frameworkMap[$form_id]['elements'][$elementHandle];
-     } else {
-          return $elementHandle;
-     }
-}
-     
-// THIS FUNCTION RETURNS AN ARRAY WITH ALL THE FORM HANDLES AND ELEMENT HANDLES IN AN ARRAY
-// Because the extraction layer must be call-able from outside XOOPS, we cannot use the framework class :-(
-// $frameworkMap[fid]['handle'] = formHandle
-// $frameworkMap[fid]['elements'] = array where keys are element handles, values are framework handles
-function formulize_mapFramework($frid) {
-     $frameworkMap = array();
-     $sql = "SELECT * FROM " . DBPRE . "formulize_framework_forms WHERE ff_frame_id=" . intval($frid);
-     $res = mysql_query($sql);
-     while($array = mysql_fetch_array($res)) {
-          $frameworkMap[$array['ff_form_id']]['handle'] = $array['ff_handle'];
-     }
-     $currentForm = 0;
-     $previousForm = 0;
-     $elementMap = array();
-     $sql = "SELECT t1.fe_form_id, t2.ele_handle, t1.fe_handle FROM " . DBPRE . "formulize_framework_elements as t1, ".DBPRE."formulize as t2 WHERE t1.fe_frame_id=" . intval($frid) . " AND t1.fe_element_id=t2.ele_id ORDER BY t1.fe_form_id"; // order by the form id so we know we will loop through all handles for a form in one chunk in the while loop
-     $res = mysql_query($sql);
-     while($array = mysql_fetch_array($res)) {
-          if($currentForm != $array['fe_form_id']) {
-               if($currentForm > 0) {
-                    $previousForm = $currentForm;
-                    $frameworkMap[$previousForm]['elements'] = $elementMap;
-                    $elementMap = array();
-               }
-               $currentForm = $array['fe_form_id'];
-          }
-          $elementMap[$array['ele_handle']] = $array['fe_handle'];
-     }
-     $frameworkMap[$currentForm]['elements'] = $elementMap; // assign the elements for the last form we found
-     return $frameworkMap;
-}
-
 
 // THIS FUNCTION BREAKS DOWN THE FILTER STRING INTO ITS COMPONENTS.  TAKES EVERYTHING UP TO THE TOP LEVEL ARRAY SYNTAX.
 // $linkfids is the linked fids in order that they appear in the SQL query
@@ -1154,7 +1015,8 @@ function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formField
 
 		 // first convert any handles to element Handles, and/or get the element id if necessary...element id is necessary for creating the formfieldfiltermap, since that function was written the first time we tried to do this, when there were no element handles in the mix
 		 if($frid AND !is_numeric($ifPartsZero)) {
-					list($ifPartsZero, $element_id) = formulize_getElementHandleAndIdFromFrameworkHandle($ifPartsZero, $frid);
+					$ifPartsZero = dealWithDeprecatedFrameworkHandles($ifPartsZero, $frid); // will convert a framework handle if necessary
+					$element_id = formulize_getIdFromElementHandle($ifPartsZero);
 		 } elseif(is_numeric($ifPartsZero)) { // using a numeric element id
 					$element_id = $ifPartsZero;
 					$ifPartsZero = formulize_getElementHandleFromID($ifPartsZero);
@@ -1193,9 +1055,6 @@ function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formField
 		 
 }
 
-
-
-
 // THIS FUNCTION TAKES AN ELEMENT AND COMPILES THE FORM, ELEMENT MAP, NECESSARY FOR KNOWING ALL WE NEED TO KNOW ABOUT THE ELEMENT
 // needs work...?  if we can pass in the element_id, it should be OK
 function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap) {
@@ -1230,19 +1089,6 @@ function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap) {
           $foundForm = $array['id_form'];
      }
      return array(0=>$formFieldFilterMap, 1=>$foundForm);
-}
-
-// THIS FUNCTION TAKES A FRAMEWORK HANDLE AND FRID AND RETURNS THE ELEMENT HANDLE -- framework handles must be unique within a framework!
-function formulize_getElementHandleAndIdFromFrameworkHandle($handle, $frid) {
-     static $cachedHandles = array();
-     if(!isset($cachedHandles[$handle][$frid])) {
-          $sql = "SELECT t2.ele_handle, t2.ele_id FROM " . DBPRE . "formulize_framework_elements as t1, " . DBPRE . "formulize as t2 WHERE t1.fe_frame_id=" . intval($frid) . " AND t1.fe_handle = \"". mysql_real_escape_string($handle) . "\" AND t1.fe_element_id = t2.ele_id";
-          $res = mysql_query($sql);
-          while($array = mysql_fetch_array($res)) {
-               $cachedHandles[$handle][$frid] = array(0=>$array['ele_handle'], 1=>$array['ele_id']);
-          }
-     }
-     return isset($cachedHandles[$handle][$frid]) ? $cachedHandles[$handle][$frid] : false;
 }
 
 // THIS FUNCTION TAKES A HANDLE AND RETURNS THE ELEMENT HANDLE THAT CORRESPONDS
@@ -1355,13 +1201,8 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
                               // write value to database if XOOPS is active
                               if($xoopsDB) {
                                    include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-                                   $data_handler = $data_handler = new formulizeDataHandler(formulize_getFormIdFromNameOrHandle($formHandle, $frid));
-                                   if($frid) {
-                                        $elementHandleAndId = formulize_getElementHandleAndIdFromFrameworkHandle($thisMetaData['handle'], $frid);
-                                        $elementID = formulize_getIdFromElementHandle($elementHandleAndId[0]);
-                                   } else {
-                                        $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
-                                   }
+                                   $data_handler = new formulizeDataHandler(formulize_getFormIdFromName($formHandle));
+                                   $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
                                    $data_handler->writeEntry($recordID, array($elementID=>$derivedValue), false, true, false); // false is no proxy user, true is force the update even on get requests, false is do not update the metadata (modification user)
                               }
                          }
@@ -1386,7 +1227,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                // print $formula . " -- $quotePos<br>"; // debug code
                $endQuotePos = strpos($formula, "\"", $quotePos+1);
                $term = substr($formula, $quotePos, $endQuotePos-$quotePos+1);
-               if(!is_numeric($term)) { //  AND !formulize_validFrameworkHandle($frid, $term)) { // don't need to check for a valid framework handle here, we can do it in the convert function next
+               if(!is_numeric($term)) { 
                     $newterm = formulize_convertCapOrColHeadToHandle($frid, $fid, $term);
                     if($newterm != "{nonefound}") {
 												 $replacement = "display(\$entry, '$newterm')";
@@ -1395,10 +1236,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 										} else {
 												 $quotePos = $quotePos + strlen($newterm);
 										}
-               } elseif($frid) { // need to convert numeric terms to framework handles if a framework is in effect
-										$formula = "\$value = \"Syntax Error\"";
-										break;
-               }
+               } 
           }
           $addSemiColons = strstr($formula, ";") ? false : true; // only add if we found none in the formula.
           if($addSemiColons) {
@@ -1415,24 +1253,12 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
      include $fileName;
 }
 
-// THIS FUNCTION CHECKS TO SEE IF A GIVEN PIECE OF TEXT IS USED IN A FRAMEWORK AS AN ELEMENT HANDLE
-// use a static array to cache results
-function formulize_validFrameworkHandle($frid, $term) {
-	if(!$frid) { return false; }
-     static $results_array = array();
-     if(isset($results_array[$term][$frid])) { return $results_array[$term][$frid]; }
-     $query_result = go("SELECT * FROM " . DBPRE . "formulize_framework_elements WHERE fe_frame_id = \"$frid\" AND fe_handle = \"" . mysql_real_escape_string($term) . "\"");
-     $result = count($query_result) > 0 ? true : false;
-     $results_array[$term][$frid] = $result;
-     return $result;
-}
-     
 // THIS FUNCTION TAKES A STRING OF TEXT (CAPTION OR COLHEAD) AND DERIVES THE NECESSARY HANDLE OR ELEMENT ID FROM IT
 // use a static array to cache results
 function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
      // first search the $fid, and then if we don't find anything, search the other forms in the $frid
      // check first for a match in the colhead field, then in the caption field
-     // once a match is found, then return handleFromId if there's a $frid, otherwise, return the ID
+     // once a match is found return the handle
      
 		 global $xoopsDB; // just used to check if XOOPS is in effect or not (in which case extract.php is being included directly)
      static $results_array = array();
@@ -1455,55 +1281,45 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
      }
      
      if(!$frid) {
-          $formList[0]['ff_form_id'] = $fid; // mimic what the result of the framework query below would be...
+          $formList[] = $fid; // mimic what the result of the framework query below would be...
      } else {
           
-          if(formulize_validFrameworkHandle($frid, $term)) {
-               return $term;
+					$termAfterDeal = dealWithDeprecatedFrameworkHandles($term, $frid);
+					if($termAfterDeal != $term) { // if the terms was found and converted to an element handle, then return that.
+               return $termAfterDeal;
           }
-          
+					
           if(isset($framework_results[$frid])) {
                $formList = $framework_results[$frid];
           } else {
-               //print "SELECT ff_form_id FROM " . DBPRE . "formulize_framework_forms WHERE ff_frame_id = \"$frid\"<br>";
-               $formList = go("SELECT ff_form_id FROM " . DBPRE . "formulize_framework_forms WHERE ff_frame_id = \"$frid\"");
-               $framework_results[$frid] = $formList;
+               $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+							 $frameworkObject = $framework_handler->get($frid);
+							 $formList = $frameworkObject->getVar('fids');
+							 $framework_results[$frid] = $formList;
           }
      }
      foreach($formList as $form_id) {
-          if(isset($results_array[$form_id['ff_form_id']][$term][$frid])) { return $results_array[$form_id['ff_form_id']][$term][$frid]; }
+          if(isset($results_array[$form_id][$term][$frid])) { return $results_array[$form_id][$term][$frid]; }
           
           // first check if this is a handle
-          $handle_query = go("SELECT ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id'] . " AND ele_handle = \"".mysql_real_escape_string($term)."\"");
+          $handle_query = go("SELECT ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_handle = \"".mysql_real_escape_string($term)."\"");
           if(count($handle_query) > 0) { // if this is a valid handle, then use it
 							 $handle = $term;
-               if($xoopsDB AND $frid) { // if a framework is in effect, and we have the full xoops stack in effect, then try to convert this element handle to a framework handle
-  									if($foundHandles = convertElementHandlesToFrameworkHandles($term, $frid)) { // only do the conversion if we actually have a result...if we don't have a result, then stick with the element handle...because the framework could be in effect as part of the pageload, but not when the form is being displayed (this is what happens when you have a screen with a framework, and it hands off display of entries to a form or pageworks page that has no framework in effect)
-												$handle = $foundHandles[0]; // convertElementHandlestoFrameworkHandles returns an array
-										}
-               }
           } else {
-               //print "SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_colhead = \"" . mysql_real_escape_string($term) . "\"<br>";
-               $colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_colhead = \"" . mysql_real_escape_string($term) . "\"");
+               $colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_colhead = \"" . mysql_real_escape_string($term) . "\"");
                if(count($colhead_query) > 0) {
 										$handle = $colhead_query[0]['ele_handle'];
 										$foundElementId = $colhead_query[0]['ele_id'];
                } else {
-                    //print "SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_caption = \"" . mysql_real_escape_string($term) . "\"<br>";
-                    $caption_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id['ff_form_id']. " AND ele_caption = \"" . mysql_real_escape_string($term) . "\"");
+                    $caption_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_caption = \"" . mysql_real_escape_string($term) . "\"");
                     if(count($caption_query) > 0 ) {
 												 $handle = $caption_query[0]['ele_handle'];
 												 $foundElementId = $caption_query[0]['ele_id'];
                     }
                }
-							 if($frid) {
-										if($foundHandle = handleFromId($foundElementId, $form_id['ff_form_id'], $frid)) { // if there's a framework in effect, try to match this up to a framework handle and return that instead if successful
-												 $handle = $foundHandle;
-										}
-							 }
           }
           if($handle) {
-               $results_array[$form_id['ff_form_id']][$term][$frid] = $handle;
+               $results_array[$form_id][$term][$frid] = $handle;
                break;
           }     
      }
@@ -1672,55 +1488,6 @@ function parseTableFormFilter($filter, $andor, $elementsById) {
 // FUNCTIONS BELOW ARE FOR PROCESSING RESULTS
 // *******************************
 
-// This function returns the caption, formatted for form (not formulize_form), based on the handle for the element
-// assumption is that a handle is unique within a framework
-// $colhead flag will cause the colhead to be returned instead of the caption
-// $getAll will cause the entire framework to be examined at once, which speeds up the retrieval of headers if we need them all
-function getCaption($framework, $handle, $colhead=false, $getAll=false) {
-	if(is_numeric($framework)) {
-		$frid[0]['frame_id'] = $framework;
-	} else {
-		$frid = go("SELECT frame_id FROM " . DBPRE . "formulize_frameworks WHERE frame_name = '".mysql_real_escape_string($framework)."'");
-	}
-  static $cachedCaptions = array();
-  if(!isset($cachedCaptions[$frid[0]['frame_id']][$handle])) {
-     global $xoopsDB;
-     if($getAll) {
-          $sql = "SELECT t2.ele_caption, t2.ele_colhead, t1.fe_handle FROM " . DBPRE . "formulize_framework_elements as t1, ".DBPRE."formulize as t2 WHERE t1.fe_frame_id = '" . $frid[0]['frame_id'] . "' AND t1.fe_element_id=t2.ele_id";
-     } else {
-          $sql = "SELECT t2.ele_caption, t2.ele_colhead, t1.fe_handle FROM " . DBPRE . "formulize_framework_elements as t1, ".DBPRE."formulize as t2 WHERE t1.fe_frame_id = '" . $frid[0]['frame_id'] . "' AND t1.fe_handle = '".mysql_real_escape_string($handle)."' AND t1.fe_element_id=t2.ele_id";
-     }
-     if(!$elementData = $xoopsDB->query($sql)) {
-          print "Error: could not retrieve caption for element '$handle' with this SQL:<br>$sql";
-     }
-     while($array = $xoopsDB->fetchArray($elementData)) {
-          $cachedCaptions[$frid[0]['frame_id']][$array['fe_handle']]['caption'] = $array['ele_caption'];
-          $cachedCaptions[$frid[0]['frame_id']][$array['fe_handle']]['colhead'] = $array['ele_colhead'];
-     }
-  }
-	if($colhead AND $cachedCaptions[$frid[0]['frame_id']][$handle]['colhead'] != "") {
-		return $cachedCaptions[$frid[0]['frame_id']][$handle]['colhead'];
-	} else {
-		return $cachedCaptions[$frid[0]['frame_id']][$handle]['caption'];
-	}
-}
-
-
-// returns the form handle for the form that the given handle belongs to for the given framework
-// DEPRECATED, USE getFormHandleFromEntry instead
-// Iterating through the $entry array a couple times is ten times faster than hitting the database over and over again (according to one set of test data, presumably benefit would decrease as datasets get more complex and looping requires more iterations)
-function getFormHandle($framework, $handle) {
-	if(is_numeric($framework)) {
-		$frid = $framework;
-	} else {
-		$frid_q = go("SELECT frame_id FROM " . DBPRE . "formulize_frameworks WHERE frame_name = '$framework'");
-		$frid = $frid_q[0]['frame_id'];
-	}
-	$fid = go("SELECT fe_form_id FROM " . DBPRE . "formulize_framework_elements WHERE fe_frame_id = '$frid' AND fe_handle='$handle'");
-	$formhandle = go("SELECT ff_handle FROM " . DBPRE . "formulize_framework_forms WHERE ff_frame_id = '$frid' AND ff_form_id='" . $fid[0]['fe_form_id'] . "'");
-	return $formhandle[0]['ff_handle'];
-}
-
 // returns the form handle for the form that the given element handle belongs to
 function getFormHandleFromEntry($entry, $handle) {
      if(is_array($entry)) {
@@ -1753,6 +1520,8 @@ function display($entry, $handle, $id="NULL", $localid="NULL") {
   if(is_numeric($id)) {
 		$entry = $entry[$id];
 	}
+	
+	$handle = dealWithDeprecatedFrameworkHandles($handle);
 	
   if(!$formhandle = getFormHandleFromEntry($entry, $handle)) { return ""; } // return nothing if handle is not part of entry
 
@@ -1878,7 +1647,6 @@ function displayPara($entry, $handle, $id="NULL", $parasToReturn="NULL") {
 
 // this function returns the contents of a text are with a BR between each line
 function displayBR($entry, $handle, $id="NULL") {
-
 	$values = display($entry, $handle, $id);
 	if(is_array($values)) {
 		foreach($values as $value) {
@@ -1907,8 +1675,9 @@ function displayList($entry, $handle, $type="bulleted", $id="NULL", $localid="NU
 // THIS FUNCTION RETURNS AN ARRAY OF ALL THE INTERNAL IDS ASSOCIATED WITH THE ENTRIES OF A PARTICULAR FORM
 // $formhandle can be an array of handles, or if not specified then all entries for all handles are returned
 // $formhandle can all just be a single handle
-// $formhandle values can be: the framework handle, or the title of the form, or the id number of the form if you're not using a framework
+// $formhandle values can be: the title of the form, or the id number of the form
 // If formhandle is an array, then $ids becomes a two dimensional array:  $ids[$formhandle][] = $id
+// Crazy in efficiencies going on here in terms of how ids and titles are getting converted back and forth and back and forth.  And using form titles in the data array is the last bit of general stupidity that should be squeezed out, but its a backwards compatibility issue now.
 function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = false) {
 	if(is_numeric($id)) {
 		$entry = $entry[$id];
@@ -1916,13 +1685,16 @@ function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = fals
   
 	if(!$formhandle) {
 		$formhandle = getFormHandlesFromEntry($entry);
+	} else {
+		 // need to convert possible legacy framework form handles to form ids
+		 $formhandle = dealWithDeprecatedFormHandles($formhandle);
 	}
 	if(is_array($formhandle)) {
 		foreach($formhandle as $handle) {
       $handle = _parseInternalRecordIdsFormHandle($handle);
 			foreach($entry[$handle] as $id=>$element) {
 				if($fidAsKeys) {
-					$fid = getFormIdFromHandle($handle); // note, not guaranteed to return proper fid!  form handles are not unique across all frameworks, so incorrect value may be returned here.  Also, if the form is not in a framework, then no value will be returned!
+					$fid = formulize_getFormIdFromName($handle); 
 					$ids[$fid][] = $id;
 				} else {
 					$ids[$handle][] = $id;
@@ -1930,7 +1702,7 @@ function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = fals
 			}
 		}
 	} else {
-    $formhandle =  _parseInternalRecordIdsFormHandle($formhandle);
+    $formhandle = _parseInternalRecordIdsFormHandle($formhandle);
 		foreach($entry[$formhandle] as $id=>$element) {
 			$ids[] = $id;
 		}
@@ -2100,25 +1872,11 @@ function displayMeta($entry, $spechandle, $id="NULL", $localid="NULL") {
 }
 
 
-function getFormIdFromHandle($handle)
-{
-	$sql = "SELECT t1.id_form  " .
-		" FROM " . DBPRE . "formulize_id AS t1, " . DBPRE . "formulize_framework_forms AS t2" .
-		" WHERE t1.id_form = t2.ff_form_id AND t2.ff_handle = '$handle';";
 
-	//die($sql);
-    
-	$id_form_results = go($sql);
-	if(count($id_form_results) == 0) { // look for the fid based on the desc_form
-		$sql = "SELECT id_form FROM " . DBPRE . "formulize_id WHERE desc_form = \"" . mysql_real_escape_string($handle) . "\"";
-		$id_form_results = go($sql);
-	}
-            
-	//var_dump($id_form_results);
+// DEPRECATED -- this file used to be rigorously written so you could include it from another code base and access all functions in order to interact with form data
+// That architectural approach is now fully deprecated.  This file should not be preferenced directly.
 
-	return $id_form_results[0]['id_form']; 
-}
-
+// Nonetheless, in accordance with the historical practice, for now, we will invoke certain objects and settings if this file appears to be launching outside the XOOPS core.  Watch for refactoring here in the future.
 
 // if XOOPS has not already connected to the database, then connect to it now using user defined constants that are set in another file
 // the idea is to include this file from another one
@@ -2170,7 +1928,6 @@ if(!$xoopsDB) {
 				break;
 		} 
 	}
-        include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
         $config_handler =& xoops_gethandler('config');
 	$formulizeModuleConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId()); // get the *Formulize* module config settings
  	$GLOBALS['formulize_LOE_limit'] = $formulizeModuleConfig['LOE_limit'];

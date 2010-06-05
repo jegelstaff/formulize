@@ -41,6 +41,16 @@ if($res = $xoopsDB->query($sql)) {
   $GLOBALS['formulize_archived_available'] = false;
 }
 
+$testsql = "SHOW TABLES";
+$resultst = $xoopsDB->queryF($testsql);
+$GLOBALS['formulize_versionFourOrHigher'] = true;
+while($table = $xoopsDB->fetchRow($resultst)) {
+	if($table[0] == $xoopsDB->prefix("formulize_framework_elements")) {
+		$GLOBALS['formulize_versionFourOrHigher'] = false;
+		break;
+	}
+}
+
 if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
 	include_once "../language/".$xoopsConfig['language']."/main.php";
 } else {
@@ -64,8 +74,17 @@ function getFormFramework($formframe, $mainform="") {
 			$frid = $formframe;
 		}
 		if(!is_numeric($mainform)) {
-			$formcheck = q("SELECT ff_form_id FROM " . $xoopsDB->prefix("formulize_framework_forms") . " WHERE ff_frame_id='$frid' AND ff_handle='" . mysql_real_escape_string($mainform) . "'");
-			$fid = $formcheck[0]['ff_form_id'];
+			// only a deprecated framework form handle would apply in this situation
+			if($GLOBALS['formulize_versionFourOrHigher'] == false) {
+				$formcheck = q("SELECT ff_form_id FROM " . $xoopsDB->prefix("formulize_framework_forms") . " WHERE ff_frame_id='$frid' AND ff_handle='" . mysql_real_escape_string($mainform) . "'");
+				if(isset($formcheck[0]['ff_form_id'])) {
+					$fid = $formcheck[0]['ff_form_id'];
+				} else {
+					exit("Cannot identify mainform using this text '".strip_tags(htmlspecialchars($mainform))."'");
+				}
+			} else {
+				exit("Cannot identify mainform using this text '".strip_tags(htmlspecialchars($mainform))."'");
+			}
 		} else {
 			$fid = $mainform;
 		}
@@ -1151,7 +1170,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 			$cols[] = $col['ele_handle'];
 		}
 		unset($headers);
-		$headers = getHeaders($cols, "", true); // array of element handles, frid, boolean for if the cols are handles (or ids, which is the default assumption)
+		$headers = getHeaders($cols, true); // array of element handles, boolean for if the cols are handles (or ids, which is the default assumption)
 	}
 	if($fdchoice == "comma") 
 	{ 
@@ -1451,7 +1470,7 @@ function writableQuery($items, $mod="") {
 		if(substr($items['as_' . $i], 0, 7) == "[field]" AND substr($items['as_' . $i], -8) == "[/field]") { // a field has been found
 			$fieldLen = strlen($items['as_' . $i]);
 			$items['as_' . $i] = substr($items['as_' . $i], 7, $fieldLen-15); // 15 is the length of [field][/field]
-			$temp_text = getCalcHandleText($items['as_' . $i], "", true); // last param forces colhead
+			$temp_text = getCalcHandleText($items['as_' . $i], true); // last param forces colhead
 			if(strlen($temp_text)>20) {
 				$items['as_' . $i] = "<a href=\"\" alt=\"" . trans($temp_text) . "\" title=\"" . trans($temp_text) . "\" onclick=\"javascript:return false;\">" . printSmart(trans($temp_text), "20") ."</a>";
 			} else {
@@ -1500,7 +1519,7 @@ function writableQuery($items, $mod="") {
 
 // THIS FUNCTION TAKES A ID FROM THE CALCULATIONS RESULT AND RETURNS THE TEXT TO PUT ON THE SCREEN THAT CORRESPONDS TO IT
 // Also used for advanced searches
-function getCalcHandleText($handle, $frid="", $forceColhead=false) {
+function getCalcHandleText($handle, $forceColhead=false) {
 	global $xoopsDB;
 	if($handle == "creation_uid") {
 		return _formulize_DE_CALC_CREATOR;
@@ -1519,8 +1538,8 @@ function getCalcHandleText($handle, $frid="", $forceColhead=false) {
 		} else {
 			return $caption[0]['ele_caption'];
 		}
-	} else { // assume framework handle
-		return getCaption($frid, $handle, true); // true flag turns on returning of colhead if present
+	} else { // something strange has happened
+		return "Could not identify the column name";
 	}
 }
 
@@ -2055,8 +2074,8 @@ function findMatchingIdReq($element, $fid, $value) {
 
 // THIS FUNCTION OUTPUTS THE TEXT THAT GOES ON THE SCREEN IN THE LIST OF ENTRIES TABLE
 // It intelligently outputs links if the text should be a link (because of textbox associations, or linked selectboxes)
-// $handle is the form or framework handle
-function formatLinks($matchtext, $handle, $frid, $textWidth=35, $entryBeingFormatted) {
+// $handle is the data handle for the element
+function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
   formulize_benchmark("start of formatlinks");
 	global $xoopsDB, $myts;
   static $cachedValues = array();
@@ -2064,12 +2083,7 @@ function formatLinks($matchtext, $handle, $frid, $textWidth=35, $entryBeingForma
 	$matchtext = $myts->undoHtmlSpecialChars($matchtext);
 	if($handle == "uid" OR $handle=="proxyid" OR $handle=="creation_date" OR $handle == "mod_date" OR $handle == "creator_email" OR $handle == "creation_uid" OR $handle == "mod_uid" OR $handle == "creation_datetime" OR $handle == "mod_datetime") { return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth); }
   if(!isset($cachedValues[$handle])) {
-    if($frid) {
-      $resultArray = formulize_getElementHandleAndIdFromFrameworkHandle($handle, $frid);
-      $elementMetaData = formulize_getElementMetaData($resultArray[1], false);
-    } else {
-      $elementMetaData = formulize_getElementMetaData($handle, true);
-    }
+    $elementMetaData = formulize_getElementMetaData($handle, true);
     $ele_value = unserialize($elementMetaData['ele_value']);
     $ele_type = $elementMetaData['ele_type'];
     if(!$ele_value) { return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth); }
@@ -2126,7 +2140,7 @@ function formatLinks($matchtext, $handle, $frid, $textWidth=35, $entryBeingForma
 									$formulize_mgr = xoops_getmodulehandler('elements', 'formulize');
                   $target_element =& $formulize_mgr->get($element_id_q[0]['ele_id']);
 									// get the targetEntry by checking in the entry we're processing, for the actual value recorded in the DB for the entry id we're pointing to
-									$elementHandle = $frid ? convertFrameworkHandlesToElementHandles($handle, $frid) : $handle;
+									$elementHandle = $handle;
 									if(is_array($elementHandle)) {
 										$elementHandle = $elementHandle[0];
 									}
@@ -2145,13 +2159,13 @@ function formatLinks($matchtext, $handle, $frid, $textWidth=35, $entryBeingForma
 	} elseif($ele_type =='select' AND (isset($ele_value[2]['{USERNAMES}']) OR isset($ele_value[2]['{FULLNAMES}']))) {
 		$nametype = isset($ele_value[2]['{USERNAMES}']) ? "uname" : "name";
 		$archiveFilter = $GLOBALS['formulize_archived_available'] ? " AND archived = 0" : "";
-                static $cachedUidResults = array();
-                if(isset($cachedUidResults[$matchtext])) {
-                  $uids = $cachedUidResults[$matchtext];
-                } else {
-                  $uids = q("SELECT uid FROM " . $xoopsDB->prefix("users") . " WHERE $nametype = '" . mysql_real_escape_string($myts->htmlSpecialChars($matchtext)) . "' $archiveFilter");
-                  $cachedUidResults[$matchtext] = $uids;
-                }
+		static $cachedUidResults = array();
+		if(isset($cachedUidResults[$matchtext])) {
+			$uids = $cachedUidResults[$matchtext];
+		} else {
+			$uids = q("SELECT uid FROM " . $xoopsDB->prefix("users") . " WHERE $nametype = '" . mysql_real_escape_string($myts->htmlSpecialChars($matchtext)) . "' $archiveFilter");
+			$cachedUidResults[$matchtext] = $uids;
+		}
 		if(count($uids) == 1) {
 			return "<a href='" . XOOPS_URL . "/userinfo.php?uid=" . $uids[0]['uid'] . "' target=_blank>" . printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth) . "</a>";
 		} else {
@@ -2738,7 +2752,8 @@ function compileNotUsers2($uids_conditions, $uids_complete, $notification_handle
 }
 
 // this function takes a series of columns and gets the headers for them
-function getHeaders($cols, $frid="", $colsIsElementHandles = false) {
+
+function getHeaders($cols, $colsIsElementHandles = false) {
 	global $xoopsDB;
   
 	foreach($cols as $col) {
@@ -2752,15 +2767,13 @@ function getHeaders($cols, $frid="", $colsIsElementHandles = false) {
 			$headers[] = _formulize_DE_CALC_MODDATE;
 		} elseif($col=="creator_email") {
 			$headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
-		} elseif($frid) {
-          $headers[] = getCaption($frid, $col, true, true);
-       	} else {
-          if($colsIsElementHandles) {
-            $whereClause = "ele_handle = '$col'";
-          } else {
-            $whereClause = "ele_id = '$col'";
-          }
-       		$temp_cap = q("SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $whereClause"); 
+		} else {
+			if($colsIsElementHandles) {
+				$whereClause = "ele_handle = '$col'";
+			} else {
+				$whereClause = "ele_id = '$col'";
+			}
+			$temp_cap = q("SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $whereClause"); 
 			if($temp_cap[0]['ele_colhead'] != "") {
 				$headers[] = $temp_cap[0]['ele_colhead'];
 			} else {
@@ -2810,8 +2823,10 @@ print "$prevValue<br><br>";
       $frameworkObject = $framework_handler->get($formframe);
 			if(is_object($frameworkObject)) {
 	      $frameworkElementIds = $frameworkObject->getVar('element_ids');
-	      $element_id = $frameworkElementIds[$ele];
-	  		$element =& $formulize_mgr->get($element_id);
+				if(isset($frameworkElementIds[$ele])) {
+					$element_id = $frameworkElementIds[$ele];
+		  		$element =& $formulize_mgr->get($element_id);
+				}
 			}
 			if(!is_object($element)) {
 				// then check the element data handles instead
@@ -3083,20 +3098,6 @@ function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUs
 } 
 
 
-// THIS FUNCTION RETURNS A NUMBER BASED ON THE PREVIOUS MAXIMUM NUMBER IN A GIVEN FIELD IN A FORM
-function formulize_getMaxValue($cap, $fid) {
-  global $xoopsDB;
-  $sql = "SELECT ele_value FROM " . $xoopsDB->prefix("formulize_form") . " WHERE ele_caption = \"" . mysql_real_escape_string($cap) . "\" AND id_form = " . intval($fid) . " ORDER BY (ele_value+0) DESC LIMIT 0,1"; // order by field+0 forces the sorting to be based on numeric values, since it performs math on each cell and therefore sorts by the numerical result of that expression
-  print "$sql<br>";
-  $res = $xoopsDB->query($sql);
-  $array = $xoopsDB->fetchArray($res);
-  $value = $array['ele_value'];
-  print "$value<br>";
-  $value = is_numeric($value) ? intval($value) + 1 : $value;
-  print "$value<br>";
-  return $value;
-}
-
 //  THIS FUNCTION SYNCHS ENTRIES WRITTEN IN BLANK DEFAULTS IN A SUBFORM, WITH THE PARENT FORM.  GETS EXECUTED IN FORMDISPLAY.PHP AND FORMDISPLAYPAGES.PHP AFTER A FORM SUBMISSION
 function synchSubformBlankDefaults($fid, $entry) {
   // handle creating linked/common values when default blank entries have been filled in on a subform -- sept 8 2007
@@ -3129,27 +3130,6 @@ function synchSubformBlankDefaults($fid, $entry) {
   return $ids_to_return;
 }  
 
-// THIS FUNCTION TAKES SOME TEXT AND REPLACES CARRIAGE RETURNS WITH <BR> TAGS FOR OUTPUT TO THE SCREEN, IF THE $handleid IS A TEXTAREA BOX
-function formulize_replaceLineBreaks($value, $handleid, $frid) {
-	if($handleid == "uid" OR $handleid=="proxyid" OR $handleid=="creation_date" OR $handleid == "mod_date" OR $handleid == "creator_email" OR $handleid == "creation_uid" OR $handleid == "mod_uid" OR $handleid == "creation_datetime" OR $handleid == "mod_datetime") { return $value; }
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/frameworks.php";
-	if(is_numeric($frid) and $frid!=0) {
-		$framework = new formulizeFramework($frid);
-		$element_ids = $framework->getVar('element_ids');
-		$element_id = $element_ids[$handleid]; 
-	} else {
-		$element_id = $handleid;
-	}
-	// based on that element_id, we need to get the target element id where we should be doing the checking
-	$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
-	$element =& $formulize_mgr->get($element_id);
-	if(!is_object($element)) { return $value; }
-	$ele_type = $element->getVar('ele_type');
-	if($ele_type != "textarea") { return $value; }
-	$value = str_replace("\n", "<br>", $value);
-	return $value;
-}
-
 // internal function that retrieves an element object if necessary
 	function _getElementObject($element) {
 		if(is_object($element)) {
@@ -3169,26 +3149,132 @@ function formulize_replaceLineBreaks($value, $handleid, $frid) {
 		} 
 	}
 
-
-// this function takes element handles and converts them to framework handles
-function convertElementHandlesToFrameworkHandles($handles, $frid) {
-	$elementsToFrameworks = true;
-	$idsToFrameworks = false;
-	return convertAllHandlesAndIds($handles, $frid, $elementsToFrameworks, $idsToFrameworks); // true is a "Reverse" flag that changes how the function works
+// This function takes a string and checks to see if it's a framework form handle, and if so, returns the ID, otherwise returns the string as is
+function dealWithDeprecatedFormHandles($handle) {
+	if(is_numeric($handle) OR $GLOBALS['formulize_versionFourOrHigher'] == true) {
+		return $handle;
+	}
+	global $xoopsDB;
+	static $cachedHandles = array();
+	if(!isset($cachedHandles[$handle])) {
+		$sql = "SELECT ff_form_id FROM ".$xoopsDB->prefix("formulize_framework_forms")." WHERE ff_handle = '".mysql_real_escape_string($handle)."'";
+		if($res = $xoopsDB->query($sql)) {
+			$numRows = $xoopsDB->getRowsNum($res);
+			if($numRows == 0) {
+				$cachedHandles[$handle] = $handle;
+			} elseif($numRows == 1) {
+				$array = $xoopsDB->fetchArray($res);
+				$cachedHandles[$handle] = $array['ff_form_id'];
+			} else {
+				while($array = $xoopsDB->fetchArray($res)) {
+					if(isset($prevFormId)) {
+						$prevFormId = $form_id; // cache previous if we're on a second run through
+					}
+					$form_id = $array['ff_form_id'];
+					if(!isset($prevFormId)) {
+						$prevFormId = $form_id; // initialize prev value if we're on the first run through
+					} 
+					if($prevFormId != $form_id) {
+						exit("Error: could not determine the form id from this ambiguous framework form handle: $handle.  If you update your API code so it uses form IDs instead of deprecated framework form handles, then this problem should go away.");
+					}
+				}
+				$cachedHandles[$handle] = $form_id;
+			}
+		}
+	}
+	return $cachedHandles[$handle];
 }
 
-function convertFrameworkHandlesToElementHandles($handles, $frid) {
-	$elementsToFrameworks = false;
-	$idsToFrameworks = false;
-	return convertAllHandlesAndIds($handles, $frid, $elementsToFrameworks, $idsToFrameworks);
-}
 
-function convertElementIdsToFrameworkHandles($ids, $frid) {
-	$elementsToFrameworks = false;
-	$idsToFrameworks = true;
-	return convertAllHandlesAndIds($ids, $frid, $elementsToFrameworks, $idsToFrameworks);
+// This function figures out if the handles passed are framework handles for the specified framework, and if so, it converts them to element handles and returns
+// $handles is a single handle or an array of handles
+// $frid is the ID of the framework
+// $frid can be boolean false, which means that rather than there being no framework in effect, we do not know if there is a framework, and so we have to match based on handle alone
+function dealWithDeprecatedFrameworkHandles($handles, $frid=false) {
+	if((!$frid AND $frid !== false) OR $GLOBALS['formulize_versionFourOrHigher'] == true) {
+		return $handles;
+	}
+	
+	$workingHandles = array();	
+	if(is_array($handles)) {
+		$workingHandles = $handles;
+	} else {
+		$workingHandles[0] = $handles;
+	}
+	
+	static $cachedHandles = array();
+	$serializedWorkingHandles = serialize($workingHandles);
+	if(isset($cachedHandles[$serializedWorkingHandles])) {
+		return $cachedHandles[$serializedWorkingHandles];
+	}
+	global $xoopsDB;
+	$handleSQL = "SELECT elements.ele_handle, handles.fe_handle FROM ".$xoopsDB->prefix("formulize")." as elements, ".$xoopsDB->prefix("formulize_framework_elements")." as handles WHERE (handles.fe_handle = '".implode("' OR handles.fe_handle = '",$workingHandles)."') AND handles.fe_element_id = elements.ele_id";
+	if($handleRes = $xoopsDB->query($handleSQL)) {
+		while($handleArray = $xoopsDB->fetchArray($handleRes)) {
+			$foundKey = array_search($handleArray['fe_handle'],$workingHandles);
+			if($foundKey !== false) {
+				$workingHandles[$foundKey] = $handleArray['ele_handle'];
+			}
+		}
+		if(is_array($handles)) {
+			$cachedHandles[$serializedWorkingHandles] = $workingHandles;
+		} else {
+			$cachedHandles[$serializedWorkingHandles] = $workingHandles[0];
+		}
+		return $cachedHandles[$serializedWorkingHandles];
+	}
+	return $handles;
 }
+	
+	/*
+	 // alternate code that could be used to gather element handles, but it relies on the frid, which may not always be available
+	static $cachedHandles = array();
+	if(isset($cachedHandles[$frid][serialize($workingHandles)])) {
+		return $cachedHandles[$frid][serialize($workingHandles)];
+	}
+	
+	$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+	$frameworkObject = $framework_handler->get($frid);
+	if(is_object($frameworkObject)) {
+		if(count(($frameworkObject->getVar('element_ids'))) > 0) {
+			$frameworkHandles = $frameworkObject->getVar('element_ids');
+		} else {
+			$frameworkHandles = "";
+		}
+	} else {
+		$frameworkHandles = "";
+	}
+	
+	if(!$frameworkHandles) {
+		$cachedHandles[$frid][serialize($workingHandles)] = $handles;
+		return $handles;
+	}
+	
+	$foundHandles = array();
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	foreach($workingHandles as $i=>$thisHandle) {
+		if(isset($frameworkHandles[$thisHandle])) {
+			$elementObject = $element_handler->get($frameworkHandles[$thisHandle]);
+			if(is_object($elementObject)) {
+				$foundHandles[$i] = $elementObject->getVar('ele_handle');
+			} else {
+				$foundHandles[$i] = $thisHandle;
+			}
+		} else {
+			$foundHandles[$i] = $thisHandle;
+		}
+	}
+	if(is_array($handles)) {
+		$cachedHandles[$frid][serialize($workingHandles)] = $foundHandles;
+	} else {
+		$cachedHandles[$frid][serialize($workingHandles)] = $foundHandles[0];
+	}
+	return $cachedHandles[$frid][serialize($workingHandles)];
+	
+}*/
 
+
+// still in use but could/should be refactored
 function convertElementIdsToElementHandles($ids, $fid) {
 	$elementsToFrameworks = false;
 	$idsToFrameworks = false;
@@ -3509,15 +3595,10 @@ function formulize_swapUIText($value, $uitexts=array()) {
 
 // formats numbers according to options users have specified
 // decimalOverride is used to provide decimal values if specified format has no decimals (added for use in calculations)
-function formulize_numberFormat($value, $handle, $frid="", $decimalOverride=0) {
+function formulize_numberFormat($value, $handle, $decimalOverride=0) {
 	if(!is_numeric($value)) { return $value; }
-	if($frid) {
-    $resultArray = formulize_getElementHandleAndIdFromFrameworkHandle($handle, $frid);
-    $id = $resultArray[1];
-  } else {
-    $id = formulize_getIdFromElementHandle($handle);
-  }
-	$elementMetaData = formulize_getElementMetaData($id, false);
+	$id = formulize_getIdFromElementHandle($handle);
+  $elementMetaData = formulize_getElementMetaData($id, false);
 	if($elementMetaData['ele_type'] == "text") {
 		$ele_value = unserialize($elementMetaData['ele_value']);
 		return _formulize_numberFormat($value, $decimalOverride, $ele_value[5], isset($ele_value[7]), $ele_value[7], isset($ele_value[8]), $ele_value[8], isset($ele_value[6]), $ele_value[6]); // value, decimaloverride, decimals, decsep exists, decsep, sep exists, sep, prefix exists, prefix
@@ -3567,7 +3648,7 @@ function _formulize_numberFormat($value, $decimalOverride, $decimals="", $decSep
 function printCalcResult($calcs) {
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	foreach($calcs as $handle=>$thisCalcData) {
-		$elementObject = $element_handler->get($handle); // only works when handle and ele_id are the same
+		$elementObject = $element_handler->get($handle); 
 		$caption = $elementObject->getVar('ele_caption');
 		print "<h3>$caption</h3>\n";
 		foreach($thisCalcData as $type=>$results) {

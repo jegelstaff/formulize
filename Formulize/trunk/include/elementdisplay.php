@@ -47,42 +47,11 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	if($subformCreateEntry) { $subformEntryIndex = substr($entry, -1); } // index value will only ever be one character at the end (it will be between 0 and 4
 	if($entry == "" OR $subformCreateEntry) { $entry = "new"; }
 
-	$element = "";
-	if(is_object($ele)) {	
-		if(get_class($ele) == "formulizeformulize") {
-			$element = $ele;
-		} else {
-			return "invalid_element";
-		}
+	$element = _formulize_returnElement($ele, $formframe);
+	if(!is_object($element)) {
+		return "invalid_element";
 	}
-
-	if(!$element) {
-		
-		if(!isset($formulize_mgr)) {
-			$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
-		}
-		
-		if(is_numeric($ele)) {
-  		$element =& $formulize_mgr->get($ele);
-		} else {
-      $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-      $frameworkObject = $framework_handler->get($formframe);
-			if(is_object($frameworkObject)) {
-	      $frameworkElementIds = $frameworkObject->getVar('element_ids');
-	      $element_id = $frameworkElementIds[$ele];
-	  		$element =& $formulize_mgr->get($element_id);
-			}
-			if(!is_object($element)) {
-				// then check the element data handles instead
-				$element =& $formulize_mgr->get($ele);
-			}
-		}
 	
-		if(!is_object($element)) {
-			return "invalid_element";
-		}
-	}
-
 	global $xoopsUser;
   if(!$groups) { // groups might be passed in, which covers the case of the registration form and getting the groups from the registration code
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
@@ -335,26 +304,39 @@ function displayDescription($formframe="", $ele) {
 	return $element->getVar('ele_desc');
 }
 
-// this function takes an element object, or an element id number, or framework handle (which requires the frid)
+// this function takes an element object, or an element id number or handle (or framework handle with framework id, but that's deprecated)
 function _formulize_returnElement($ele, $formframe="") {
   $element = "";
 	if(is_object($ele)) {	
 		if(get_class($ele) == "formulizeformulize") {
 			$element = $ele;
+		} else {
+			return "invalid_element";
 		}
 	}
-
 	if(!$element) {
-      	if(!$formulize_mgr) {
-      		$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
-      	}
-
-      	$element =& $formulize_mgr->get($ele);
-      	if(!is_object($element)) {
-      		return "invalid_element";
-      	} elseif($element->getVar('id_form') != $formframe AND $formframe) {
-					return "invalid_element";
+		if(!$formulize_mgr) {
+			$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
+		}
+		if(is_numeric($ele)) {
+			$element =& $formulize_mgr->get($ele);
+		} else {
+			$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+			$frameworkObject = $framework_handler->get($formframe);
+			if(is_object($frameworkObject)) {
+				$frameworkElementIds = $frameworkObject->getVar('element_ids');
+				if(isset($frameworkElementIds[$ele])) {
+					$element_id = $frameworkElementIds[$ele];
+					$element =& $formulize_mgr->get($element_id);
 				}
+			}
+			if(!is_object($element)) {
+				$element =& $formulize_mgr->get($ele);
+			}
+		}
+		if(!is_object($element)) {
+			return "invalid_element";
+		}
 	}
   return $element;
 }
@@ -377,37 +359,12 @@ function displayButton($text, $ele, $value, $entry="new", $append="replace", $bu
 
 	// 1. check for button or link
 	// 2. write out the element
-
-	$element = "";
-	if(is_object($ele)) {	
-		if(get_class($ele) == "formulizeformulize") {
-			$element = $ele;
-			$element_id = $element->getVar('ele_id');
-		}
-	}
-
-	if(!$element) {
-      	if(is_numeric($ele))
-          {
-      		$element_id = $ele;
-          }
-      	else
-          {
-      		//$element_id = getFrameworkElementId($formframe, $ele); // broken...no such function exists
-          }
-
-      	if(!$formulize_mgr) {
-      		$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
-      	}
-
-      	$element =& $formulize_mgr->get($element_id);
-      	if(!is_object($element)) {
-      		return "invalid_element";
-      	}
-
-	}
-
-	if($prevValueThisElement = getElementValue($entry, $element_id, $element->getVar('id_form'))) {
+  $element = _formulize_returnElement($ele, $formframe);
+  if(!is_object($element)) {
+    print "invalid_element";
+  }
+	
+	if($prevValueThisElement = getElementValue($entry, $element->getVar('ele_id'), $element->getVar('id_form'))) {
 		$prevValue = 1;
 	} else {
 		$prevValue = 0;

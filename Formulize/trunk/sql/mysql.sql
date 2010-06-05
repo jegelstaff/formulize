@@ -206,42 +206,6 @@ CREATE TABLE formulize_framework_links (
   PRIMARY KEY (`fl_id`)
 ) TYPE=MyISAM;
 
-CREATE TABLE formulize_framework_forms (
-  ff_id smallint(5) NOT NULL auto_increment,
-  ff_frame_id smallint(5),
-  ff_form_id smallint(5),
-  ff_handle varchar(255) default NULL,
-  PRIMARY KEY (`ff_id`)
-) TYPE=MyISAM;
-
-CREATE TABLE formulize_framework_elements (
-  fe_id smallint(5) NOT NULL auto_increment,
-  fe_frame_id smallint(5),
-  fe_form_id smallint(5),
-  fe_element_id smallint(5),
-  fe_handle varchar(255) default NULL,
-  PRIMARY KEY (`fe_id`)
-) TYPE=MyISAM;
-
-CREATE TABLE formulize_reports (
-  report_id smallint(5) NOT NULL auto_increment,
-  report_name varchar(255) default NULL,
-  report_id_form smallint(5),
-  report_uid int(10),
-  report_ispublished tinyint(1) NOT NULL default '0',
-  report_groupids text NOT NULL,
-  report_scope text NOT NULL,
-  report_fields text NOT NULL,
-  report_search_typeArray text NOT NULL,
-  report_search_textArray text NOT NULL,
-  report_andorArray text NOT NULL,
-  report_calc_typeArray text NOT NULL,
-  report_sort_orderArray text NOT NULL,
-  report_ascdscArray text NOT NULL,
-  report_globalandor varchar(10) default NULL,
-  PRIMARY KEY (`report_id`)
-) TYPE=MyISAM;
-
 CREATE TABLE formulize_id (
   id_form smallint(5) NOT NULL auto_increment,
   desc_form varchar(255) NOT NULL default '',
