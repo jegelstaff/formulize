@@ -30,84 +30,33 @@
 // This file receives ajax form submissions from the new admin UI
 
 include_once "../../../mainfile.php";
+ob_end_clean();
 global $xoopsUser;
-if(!$xoopsUser) {
-  print "not a user";
+if(!$xoopsUser OR $GLOBALS['xoopsSecurity']->check()) {
+  print "Error: you do not have permission to save this data";
   return;
 }
+$gperm_handler = xoops_gethandler('groupperm');
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-$fid = $_POST['fid'];
 $groups = $xoopsUser->getGroups();
 $mid = getFormulizeModId();
-$gperm_handler = xoops_gethandler('groupperm');
-if($fid == "new") {
-  $permissionToCheck = "module_admin";
-  $itemToCheck = $mid;
-  $moduleToCheck = 1; // system module
-  $operation = "INSERT INTO";
-} else {
-  $permissionToCheck = "edit_form";
-  $itemToCheck = $fid;
-  $moduleToCheck = $mid;
-  $operation = "UPDATE";
-}
+$permissionToCheck = "module_admin";
+$itemToCheck = $mid;
+$moduleToCheck = 1; // system module
 if(!$gperm_handler->checkRight($permissionToCheck, $itemToCheck, $groups, $moduleToCheck)) {
-  print "no permission";
+  print "Error: you do not have permission to save this data";
   return;
 }
 
-// there is a logged in user and they have permission to edit this form...
-// so read in all the submitted form values, and write them to the database
-global $xoopsDB;
-$sql = array();
-$sqlFieldCue = array();
-foreach($_POST as $k=>$value) {
+// process all the submitted form values, looking for ones that can be immediately assigned to objects
+$processedValues = array();
+foreach($_POST as $k=>$v) {
   if(!strstr($k, "-")) { continue; } // ignore fields with no hyphen
-  list($table, $field) = explode("-", $k);
-  $table = mysql_real_escape_string($table);
-  $field = mysql_real_escape_string($field);
-  if(!isset($sql[$table])) {
-    switch($operation) {
-      case "INSERT INTO":
-        $sql[$table] = $operation ." ".$xoopsDB->prefix($table) . " (";
-        break;
-      case "UPDATE":
-        $sql[$table] = $operation ." ".$xoopsDB->prefix($table) . " SET ";
-        break;
-    }
-    if($_POST[$table] AND $_POST[$table."_id"]) {
-      $whereClause[$table] = " WHERE `".mysql_real_escape_string($_POST[$table])."` = ".mysql_real_escape_string($_POST[$table."_id"]);
-    } else {
-      print "no data for where clause"; // no data for where clause
-      return;
-    }
-  }
-  if(isset($sqlFieldCue[$table])) {
-    $sql[$table] .= ", ";
-    $sqlValues[$table] .= ", ";
-  }
-  switch($operation) {
-    case "INSERT INTO":
-      $sql[$table] .= "`$field`";
-      $sqlValues[$table] .= "'".mysql_real_escape_string($value)."'";
-      break;
-    case "UPDATE":
-      $sql[$table] .= "`$field` = '".mysql_real_escape_string($value)."'";
-      break;
-  }
-  $sqlFieldCue[$table] = true;
-}
-foreach($sql as $table=>$thisSql) {
-  if($operation == "INSERT INTO") {
-    $thisSql .= ") VALUES (".$sqlValues[$table].")";
-  } else {
-    $thisSql .= $whereClause[$table];
-  }
-  if(!$res = $xoopsDB->query($thisSql)) {
-    print "this SQL failed: ".$thisSql;
-    return;
-  }
+  list($class, $property) = explode("-", $k);
+  $processedValues[$class][$property] = $v;
 }
 
-// when inserting new forms we must also create the datatable for the form
-
+// include the form-specific handler to invoke the necessary objects and insert them all in the DB
+if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save.php")) {
+  include XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save.php";
+}

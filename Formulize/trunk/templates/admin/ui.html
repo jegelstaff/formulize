@@ -27,21 +27,48 @@
 
 </p>
 <{/if}>
+  
+<h1><{$adminPage.pagetitle}></h1>  
+
+<{if $adminPage.needsave}>
+<div id=savebutton><input type="button" class="savebutton" value="Save your changes"/></div><div id="savewarning">You have unsaved changes!</div>
+<{/if}>
+
+<{if $adminPage.template}>
+<{include file=$adminPage.template}>  
+<{/if}>
 
 <{if $adminPage.tabs}>  
 <{include file="db:admin/ui-tabs.html" tabs=$adminPage.tabs}>
 <{/if}>
-  
+
 </div><!-- End admin-ui -->
 
 <script type="text/javascript">
 
-  $(".savebutton").click(function() {
-    $.post("save.php", $($(this).attr("name")).serialize(), function(data) {
-        if(data) {
-          alert(data);
-        }
+  $("input").change(function() {
+    window.document.getElementById('savewarning').style.display = 'block';
     });
+  $("select").change(function() {
+    window.document.getElementById('savewarning').style.display = 'block';
+    });
+  $("textarea").change(function() {
+    window.document.getElementById('savewarning').style.display = 'block';
+    });
+
+  $(".savebutton").click(function() {
+    var formulize_formlist = window.document.getElementsByName("formulize-admin-form");
+    for( var i in formulize_formlist) {
+      if(typeof(formulize_formlist[i]) == 'object') { // for some crazy reason, non-form stuff can be pulled in by getElementsByName with that param...I hate javascript
+        $.post("save.php", $(formulize_formlist[i]).serialize(), function(data) {
+          if(data) {
+            alert(data);
+          }
+        });
+      }
+    }
+    window.document.getElementById('savewarning').style.display = 'none';
+    $(".savebutton").blur();
   });
 
   $().ajaxError(function () {

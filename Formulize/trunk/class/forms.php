@@ -53,6 +53,7 @@ class formulizeForm extends XoopsObject {
 			$elementHandles = array();
 			$elementTypes = array();
 			$encryptedElements = array();
+			$headerlist = array();
 		} else {
 			$formq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$id_form");
 			if(!isset($formq[0])) {
@@ -68,6 +69,7 @@ class formulizeForm extends XoopsObject {
 				$elementHandles = array();
 				$elementTypes = array();
 				$encryptedElements = array();
+				$headerlist = array();
 			} else {
 				// gather element ids for this form
 				$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
@@ -99,6 +101,8 @@ class formulizeForm extends XoopsObject {
 						$single = "";
 						break;
 				}
+				// setup the headerlist -- note...it's still in screwed up string format and must be processed after this by the user code that gets it
+				$headerlist = $formq[0]['headerlist'];
 			}
 			
 			// gather the view information
@@ -135,7 +139,7 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("lockedform", XOBJ_DTYPE_INT, $formq[0]['lockedform'], true);
 		$this->initVar("title", XOBJ_DTYPE_TXTBOX, $formq[0]['desc_form'], true, 255);
 		$this->initVar("tableform", XOBJ_DTYPE_TXTBOX, $formq[0]['tableform'], true, 255);
-		$this->initVar("single", XOBJ_DTYPE_TXTBOX, $single, true, 5);
+		$this->initVar("single", XOBJ_DTYPE_TXTBOX, $single, false, 5);
 		$this->initVar("elements", XOBJ_DTYPE_ARRAY, serialize($elements));
 		$this->initVar("elementCaptions", XOBJ_DTYPE_ARRAY, serialize($elementCaptions));
 		$this->initVar("elementColheads", XOBJ_DTYPE_ARRAY, serialize($elementColheads));
@@ -147,6 +151,7 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("viewFrids", XOBJ_DTYPE_ARRAY, serialize($viewFrids));
 		$this->initVar("viewPublished", XOBJ_DTYPE_ARRAY, serialize($viewPublished));
 		$this->initVar("filterSettings", XOBJ_DTYPE_ARRAY, serialize($filterSettings));
+		$this->initVar("headerlist", XOBJ_DTYPE_TXTAREA, $headerlist);
 		
 	}
 }
@@ -209,6 +214,96 @@ class formulizeFormsHandler {
 			$fids[] = $this->get($thisFid);
 		}
 		return $fids;
+	}
+
+	function getFormsByApplication($application_object_or_id) {
+		if(is_numeric($application_object_or_id)) {
+			$application_handler = xoops_getmodulehandler('applications','formulize');
+			$application_object_or_id = $application_handler->get($application_object_or_id);
+		}
+		if(is_object($application_object_or_id)) {
+			if(get_class($application_object_or_id) == 'formulizeApplication') {
+				$applicationObject = $application_object_or_id;
+			} else {
+				return false;
+			}
+		}
+		$fids = array();
+		foreach($applicationObject->getVar('forms') as $thisFid) {
+			$fids[] = $this->get($thisFid);
+		}
+		return $fids;
+	}
+
+	function insert(&$formObject, $force=false) {
+		if( get_class($formObject) != 'formulizeForm'){
+            return false;
+        }
+        if( !$formObject->isDirty() ){
+            return true;
+        }
+        if( !$formObject->cleanVars() ){
+            return false;
+        }
+				foreach( $formObject->cleanVars as $k=>$v ){
+					${$k} = $v;
+				}
+				if($formObject->isNew() || empty($id_form)) {
+					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform` ) VALUES (".$this->db->quoteString($title).", ".$this->db->quoteString($single).", ".$this->db->quoteString($tableform).")";
+				} else {
+					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).", `singleentry` = ".$this->db->quoteString($single).", `headerlist` = ".$this->db->quoteString($headerlist)." WHERE id_form = ".intval($id_form);
+				}
+				
+				if( false != $force ){
+            $result = $this->db->queryF($sql);
+        }else{
+            $result = $this->db->query($sql);
+        }
+
+				if( !$result ){
+					print "Error: this form could not be saved in the database.  SQL: $sql<br>".mysql_error();
+					return false;
+				}
+				if( empty($id_form) ){
+					$id_form = $this->db->getInsertId();
+				}
+        $formObject->assignVar('id_form', $id_form);
+				return $id_form;
+				
+	}
+
+	function createTableFormElements($targetTableName, $fid) {
+		
+		$result = $this->db->query("SHOW COLUMNS FROM " . mysql_real_escape_string($_POST['tablename']));
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$element_order = 0;
+		while($row = mysql_fetch_row($result)) {
+			$element =& $element_handler->create();
+			$element->setVar('ele_caption', str_replace("_", " ", $row[0])); 
+			$element->setVar('ele_desc', "");
+			$element->setVar('ele_colhead', "");
+			$element->setVar('ele_req', 0);
+			$element->setVar('ele_order', $element_order);
+			$element_order = $element_order + 5;
+			$element->setVar('ele_forcehidden', 0);
+			$element->setVar('ele_uitext', "");
+			$element->setVar('ele_value', array(0=>"", 1=>$xoopsModuleConfig['ta_rows'], 2=>$xoopsModuleConfig['ta_cols'], 3=>"")); // 0 is default, 1 is rows, 2 is cols, 3 is association to another element -- not sure the xoopsModuleConfig is actually being picked up
+			$element->setVar('id_form', $fid);
+			$element->setVar('ele_private', 0);
+			$element->setVar('ele_display', 1);
+      $element->setVar('ele_disabled', 0);
+			$element->setVar('ele_type', 'textarea');
+			if( !$element_handler->insert($element) ){
+				return false;
+			}	
+			unset($element);
+		}
+		$handleUpdateSQL = "UPDATE ".$this->db->prefix("formulize")." SET ele_handle=ele_id WHERE id_form=".intval($fid);
+    if(!$res = $this->db->query($handleUpdateSQL)) {
+      print "Error: could not synchronize handles with element ids for the '".strip_tags(htmlspecialchars($_POST['tablename'])). "' form";
+			return false;
+    }
+		return true;
 	}
 		
 	// lock the form...set the lockedform flag to indicate that no further editing of this form is allowed

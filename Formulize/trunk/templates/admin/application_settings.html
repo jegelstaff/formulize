@@ -4,8 +4,6 @@
 <{* form elements must be named with their table name hyphen field name *}>
 <{* no other elements should have hyphens, since that tells the saving system that this is a field in the database to update *}>
 
-<fieldset>
-	<legend>Application Settings</legend>
 	<div class="form-item"><label for="formulize_id-app_name">Name</label>
 		<input type="text" id="formulize_id-app_name" name="formulize_id-app_name" value="<{$content.name}>"/>
 	</div>
@@ -14,8 +12,6 @@
 		<textarea name="formulize_id-app_description" rows="6" cols="50"></textarea>
 	</div>
 	<div class="form-item"><input type="submit" class="savebutton" name="#form-<{$number}>" value="Save"/></div>
-
-</fieldset>
 
 </form>
 

@@ -33,7 +33,17 @@ include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
 // need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
 $aid = intval($_GET['aid']);
-$appName = "All forms"; // needs to be set based on aid in future
+$application_handler = xoops_getmodulehandler('applications','formulize');
+// get a list of all applications
+$allApps = $application_handler->getAllApplications();
+
+if($aid == 0) {
+	$appName = "Forms with no app"; 
+} else {
+	$appObject = $application_handler->get($aid);
+	$appName = $appObject->getVar('name');
+}
+
 $elements = array();
 if($_GET['fid'] != "new") {
   $fid = intval($_GET['fid']);
@@ -41,26 +51,61 @@ if($_GET['fid'] != "new") {
   $formObject = $form_handler->get($fid);
   $formName = $formObject->getVar('title');
   $singleentry = $formObject->getVar('single');
+  $tableform = $formObject->getVar('tableform');
+  $headerlist = $formObject->getVar('headerlist');
+  $headerlistArray = explode("*=+*:",trim($headerlist,"*=+*:"));
+  
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
   $elementObjects = $element_handler->getObjects2(null, $fid);
+  $elements = array();
+  $elementHeadings = array();
+  $formApplications = array();
   // $elements array is going to be used to populate accordion sections, so it must contain the following:
   // a 'name' key and a 'content' key for each form that is found
   // Name will be the heading of the section, content is data used in the template for each section
   $i = 1; 
   foreach($elementObjects as $thisElement) {
-    $elements[$i]['name'] = printSmart($thisElement->getVar('ele_caption'));
-    $elements[$i]['content']['ele_id'] = printSmart($thisElement->getVar('ele_id'));
-    $elements[$i]['content']['ele_handle'] = printSmart($thisElement->getVar('ele_handle'));
-    $elements[$i]['content']['ele_type'] = printSmart($thisElement->getVar('ele_type'));
-    $elements[$i]['content']['ele_req'] = printSmart($thisElement->getVar('ele_req'));
-    $elements[$i]['content']['ele_display'] = printSmart($thisElement->getVar('ele_display'));
-    $elements[$i]['content']['ele_private'] = printSmart($thisElement->getVar('ele_private'));
+    $elementCaption = printSmart($thisElement->getVar('ele_caption'),75);
+    $ele_id = $thisElement->getVar('ele_id');
+    $elements[$i]['name'] = $elementCaption;
+    $elements[$i]['content']['ele_id'] = $ele_id;
+    $elements[$i]['content']['ele_handle'] = $thisElement->getVar('ele_handle');
+    $elements[$i]['content']['ele_type'] = $thisElement->getVar('ele_type');
+    $elements[$i]['content']['ele_req'] = $thisElement->getVar('ele_req');
+    $elements[$i]['content']['ele_display'] = $thisElement->getVar('ele_display');
+    $elements[$i]['content']['ele_private'] = $thisElement->getVar('ele_private');
+    $colhead = printSmart($thisElement->getVar('ele_caption'),75);
+    $elementHeadings[$i]['text'] = $colhead ? $colhead : printSmart($thisElement->getVar('ele_caption'));
+    $elementHeadings[$i]['ele_id'] = $ele_id;
+    $elementHeadings[$i]['selected'] = in_array($ele_id, $headerlistArray) ? " selected" : "";
     $i++;
+  }
+  // get a list of applications this form is involved with
+  $thisFormApplications = $application_handler->getApplicationsByForm($fid);
+  foreach($thisFormApplications as $thisApp) {
+    $formApplications[] = $thisApp->getVar('appid');
   }
 } else {
   $fid = $_GET['fid'];
+  if($_GET['tableform']) {
+    $newtableform = true;
+  }
+  $formName = "New form";
+  $singleentry = "off"; // need to send a default for this
 }
 
+$i = 1;
+$applications = array();
+foreach($allApps as $thisApp) {
+  $applications[$i]['appid'] = $thisApp->getVar('appid');
+  $applications[$i]['text'] = printSmart($thisApp->getVar('name'),50);
+  if(isset($formApplications)) {
+    $applications[$i]['selected'] = in_array($thisApp->getVar('appid'),$formApplications) ? " selected" : "";
+  } else {
+    $applications[$i]['selected'] = "";
+  }
+  $i++;
+}
 
 // common values should be assigned to all tabs
 $common['name'] = $formName;
@@ -77,16 +122,27 @@ $screens[2]['name'] = "dummy screen 2";
 $screens[2]['content']['hello'] = "hello screen 2 world";
 
 $settings = array();
-$settings['singleentry'] = $singleentry ? $singleentry : "empty"; // this value can be nothing, ie: "", but we need to pass something to the template so it can react properly to the "" setting
+$settings['singleentry'] = $singleentry;
+$settings['istableform'] = $tableform OR $newtableform ? true : false;
+
 
 $adminPage['tabs'][1]['name'] = "Settings";
 $adminPage['tabs'][1]['template'] = "db:admin/form_settings.html";
 $adminPage['tabs'][1]['content'] = $settings + $common;
+$adminPage['tabs'][1]['content']['applications'] = $applications;
+if(isset($elementHeadings)) {
+  $adminPage['tabs'][1]['content']['elementheadings'] = $elementHeadings;
+}
+if(isset($formApplications)) {
+  $adminPage['tabs'][1]['content']['formapplications'] = $formApplications;
+}
 
 $adminPage['tabs'][2]['name'] = "Elements";
 $adminPage['tabs'][2]['template'] = "db:admin/form_elements.html";
 $adminPage['tabs'][2]['content'] = $common;
-$adminPage['tabs'][2]['content']['elements'] = $elements;
+if(isset($elements)) {
+  $adminPage['tabs'][2]['content']['elements'] = $elements;
+}
 
 $adminPage['tabs'][3]['name'] = "Permissions";
 $adminPage['tabs'][3]['template'] = "db:admin/form_permissions.html";
@@ -95,6 +151,9 @@ $adminPage['tabs'][3]['content'] = $permissions + $common;
 $adminPage['tabs'][4]['name'] = "Screens";
 $adminPage['tabs'][4]['template'] = "db:admin/form_screens.html";
 $adminPage['tabs'][4]['content'] = $screens + $common;
+
+$adminPage['pagetitle'] = "Form: ".$formName;
+$adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";

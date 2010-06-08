@@ -31,6 +31,9 @@
 include_once("admin_header.php");
 xoops_cp_header();
 
+// include necessary Formulize files/functions
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+
 // setup a smarty object that we can use for templating our own pages
 require_once XOOPS_ROOT_PATH.'/class/template.php';
 require_once XOOPS_ROOT_PATH.'/class/theme.php';
@@ -64,7 +67,13 @@ switch($_GET['page']) {
 	case "element":
 		include "element.php";
 		break;
+	default:
+	case "home":
+		include "home.php";
+		break;
+
 }
+
 
 // assign the default selected tab, if any:
 if(isset($_GET['tab'])) {
@@ -80,6 +89,9 @@ if(isset($_GET['tab'])) {
 $xoopsTpl->assign('adminPage', $adminPage);
 $xoopsTpl->assign('breadcrumbtrail', $breadcrumbtrail);
 $xoopsTpl->display("db:admin/ui.html");
+
+// assign a security token in case we need one
+$xoopsTpl->assign('securitytoken', $GLOBALS['xoopsSecurity']->getTokenHTML());
 
 include 'footer.php';
 xoops_cp_footer();

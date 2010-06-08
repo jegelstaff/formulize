@@ -33,7 +33,14 @@ include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
 // need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
 $aid = intval($_GET['aid']);
-$appName = "All forms"; // needs to be set based on aid in future
+$application_handler = xoops_getmodulehandler('applications','formulize');
+if($aid == 0) {
+	$appName = "Forms with no app"; 
+} else {
+	$appObject = $application_handler->get($aid);
+	$appName = $appObject->getVar('name');
+}
+
 $elements = array();
 if($_GET['frid'] != "new") {
   $frid = intval($_GET['frid']);

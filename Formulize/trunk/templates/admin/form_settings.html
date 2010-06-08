@@ -1,46 +1,104 @@
 <div class="panel-content content">
 
-<form id="form-<{$number}>">
-<{* form elements must be named with their table name hyphen field name *}>
-<{* no other elements should have hyphens, since that tells the saving system that this is a field in the database to update *}>
-<fieldset>
-<legend>Settings for the form <em><{$content.name}></em></legend>
 
-	<div class="form-item">
-		<label for="formulize_id-desc_form">Name</label>
-		<input type="text" id="formulize_id-desc_form" name="formulize_id-desc_form" value="<{$content.name}>"/>
-	</div>
-	<div class="form-item">
-		<fieldset>
-			<legend>How many entries are allowed in this form?</legend>
-			<div class="form-radios">
-				<label for="group"><input type="radio" id="group" name="formulize_id-singleentry" value="group"/>One entry per <b>group</b></label>
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" name="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="form_settings">
+<input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
+
+
+	<div class="accordion-box">
+		<div class="form-item">
+			<label for="forms-title" class="question">What is the name of the form?</label>
+			<input type="text" id="forms-title" name="forms-title" value="<{$content.name}>"/>
+		</div>
+	
+		<{if $content.istableform == true && $content.fid == "new"}>
+			<div class="form-item">
+				<label for="database_table" class="question">Which database table should this "form" point to?</label>
+				<input type="text" id="forms-tableform" name="forms-tableform" value=""/>
+				<div class="description">
+					<p>Type the exact name, including the prefix, ie: mysite_groups</p>
+				</div>
 			</div>
-			<div class="form-radios">
-				<label for="on"><input type="radio" id="on" name="formulize_id-singleentry" value="on"/>One entry per <b>user</b></label>
-			</div>
-			<div class="form-radios">
-				<label for="empty"><input type="radio" id="empty" name="formulize_id-singleentry" value=""><b>More than one entry</b> per user</label>
-			</div>
-		</fieldset>
-	</div>
-	<div class="form-item">
-		<label for="database_table">Existing table reference</label>
-		<input type="text" id="database_table" name="database_table" value=""/>
-		<div class="description">
-			<p>If you want to reference an existing database table, type in the exact name.</p>
+		<{/if}>
+	
+		<{if $content.istableform == false}>
+		<div class="form-item">
+			<label class="question">How many entries are allowed in this form?</label>
+				<div class="form-radios">
+					<label for="group"><input type="radio" id="group" name="forms-single" value="group"/>One entry per <b>group</b></label>
+				</div>
+				<div class="form-radios">
+					<label for="on"><input type="radio" id="user" name="forms-single" value="on"/>One entry per <b>user</b></label>
+				</div>
+				<div class="form-radios">
+					<label for="empty"><input type="radio" id="off" name="forms-single" value=""><b>More than one entry</b> per user</label>
+				</div>
 		</div>
 	</div>
-	<div class="form-item"><input type="submit" class="savebutton" name="#form-<{$number}>" value="Save"/></div>
-</fieldset>
-<input type="hidden" name="fid" value="<{$content.fid}>"/>
-<{* a hidden element with the table name will be used to determine the field in the table that the where clause should point to *}>
-<input type="hidden" name="formulize_id" value="id_form"/>
-<{* a hidden element with the table name and _id appended is the value to use in the where clause *}>
-<input type="hidden" name="formulize_id_id" value="<{$content.fid}>"/>
-<{* form submission buttons must have the class savebutton and the name the same as the form they are submitting *}>
+	
+	<{if $content.fid != "new" && $content.elementheadings|@count}>
+	<div class="accordion-box">
+		<div class="form-item">
+			<label class="question">When showing a list of entries in this form, which elements should be displayed by default?</label> 
+			<select name=headerlist[] size=10 multiple>
+				<{foreach from=$content.elementheadings item=element}>
+				<option value=<{$element.ele_id}><{$element.selected}>><{$element.text}></option>
+				<{/foreach}>
+			</select>
+		</div>
+	</div>
+	<{/if}>
+	
+	<{else}>
+	<{* need to end first accordion box if this is a tableform *}>
+	</div>
+	<{/if}>
+	
+	<{if $content.applications|@count > 0}>
+	<div class="accordion-box">
+		<div class="form-item">
+			<label class="question">Which applications is this form part of?</label>
+			<select name="apps[]" id="apps" size=10 multiple>
+				<{foreach from=$content.applications item=application}>
+					<option value=<{$application.appid}><{$application.selected}>><{$application.text}></option>
+				<{/foreach}>
+			</select>
+		</div>
+	</div>
+	<{/if}>
+	<div class="accordion-box">
+		<div class="form-item">
+			<label class="question">Create a new application for this form to be part of?</label>
+			<div class="form-radios">
+				<label for="yes"><input type="radio" id="new-app-yes" name="new_app_yes_no" value="yes"/>Yes</label>
+			</div>
+			<div class="form-radios">
+				<label for="yes"><input type="radio" id="new-app-no" name="new_app_yes_no" value="no" checked/>No</label>
+			</div>
+		</div>
+		<div class="form-item" id="new-application-box" style="display: none;">
+			<label class="question">What is the name of the new application?</label>
+			<input type="text" id="applications-name" name="applications-name" value="" />
+		</div>
+	</div> 
+
 </form>
 <script type="text/javascript">
   $("#<{$content.singleentry}>").attr('checked', true);
+	$('input:radio[name=new_app_yes_no]').change(function(){
+		if($('input:radio[name=new_app_yes_no]:checked').val() == 'yes') {
+			window.document.getElementById("new-application-box").style.display = 'block';
+		} else {
+			window.document.getElementById("new-application-box").style.display = 'none';
+		}
+		});
 </script>
+<div style="clear: both"></div>
 </div> <!--// end content -->

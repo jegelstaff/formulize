@@ -133,20 +133,17 @@ class formulizeElementsHandler {
         if( !$element->cleanVars() ){
             return false;
         }
-		foreach( $element->cleanVars as $k=>$v ){
-			${$k} = $v;
-		}
-           		if( $element->isNew() || empty($ele_id) ){
-			$ele_id = $this->db->genId(formulize_TABLE."_ele_id_seq");
-            // changed - start - August 19 2005 - jpc
-			$sql = sprintf("INSERT INTO %s (
-				id_form, ele_id, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings
+				foreach( $element->cleanVars as $k=>$v ){
+					${$k} = $v;
+				}
+   		if( $element->isNew() || empty($ele_id)){
+				$sql = sprintf("INSERT INTO %s (
+				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings
 				) VALUES (
 				%u, %u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u, %u, %s
 				)",
 				formulize_TABLE,
 				$id_form,
-				$ele_id,
 				$this->db->quoteString($ele_type),
 				$this->db->quoteString($ele_caption),
 				$this->db->quoteString($ele_desc),

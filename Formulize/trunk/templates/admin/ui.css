@@ -8,9 +8,14 @@
 div.accordion-box {
   float: left;
 	width: 300px;
+	margin-right: 30px;
 }
 
-.ui-tabs-panel .content a {
+.ui-accordion, #tabs {
+	clear: both;
+}
+
+.admin-ui a {
 	font-weight: normal;
 	color: blue;
 }
@@ -21,6 +26,17 @@ div.accordion-box {
 
 .ui-tabs-panel .content table {
 	width: 60em;
+}
+
+#savebutton {
+	float: left;
+	margin-bottom: 15px;
+	margin-right: 15px;
+}
+#savewarning {
+	display: none;
+	color: red;
+	
 }
 
 /* Develop a consistent style for forms */
@@ -40,7 +56,6 @@ form div.form-item {
 }
 form label {
 /*  display: inline-block; */
-  line-height: 1.8;
   vertical-align: top;
 	padding: 0 4px 0 0;
 }
@@ -63,8 +78,10 @@ form .required em {
   font-style: normal;
   color: #f00;
 }
-form label {
-/*  width: 160px; /* Width of labels */
+label.question{
+	margin-left: -20px;
+	margin-bottom: 10px;
+	
 }
 form fieldset fieldset label {
 /*  margin-left: 163px; /* Width plus 3 (html space) */

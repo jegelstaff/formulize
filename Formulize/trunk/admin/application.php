@@ -31,11 +31,17 @@
 
 // need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
 $aid = intval($_GET['aid']);
-$appName = "All forms"; // needs to be set based on aid in future
 $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
-$formObjects = $form_handler->getAllForms(); // returns array of objects
-
+$application_handler = xoops_getmodulehandler('applications','formulize');
+if($aid == 0) {
+	$appName = "Forms with no app"; 
+	$formObjects = $form_handler->getAllForms(); // returns array of objects
+} else {
+	$appObject = $application_handler->get($aid);
+	$appName = $appObject->getVar('name');
+	$formObjects = $form_handler->getFormsByApplication($appObject);
+}
 
 // $forms array is going to be used to populate accordion sections, so it must contain the following:
 // a 'name' key and a 'content' key for each form that is found
@@ -65,16 +71,8 @@ foreach($allRelationships as $thisRelationship) {
   $li = 1;
   foreach($relationshipLinks as $relationshipLink) {
     // get names of forms in the link
-    $name1q = "SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = '" . $relationshipLink->getVar('form1') . "'";
-    $res = $xoopsDB->query($name1q);
-    $row = $xoopsDB->fetchRow($res);
-    $form1 = $row[0];
-    $name2q = "SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = '" . $relationshipLink->getVar('form2') . "'";
-    $res = $xoopsDB->query($name2q);
-    $row = $xoopsDB->fetchRow($res);
-    $form2 = $row[0];
-    $links[$li]['form1'] = printSmart($form1);
-    $links[$li]['form2'] = printSmart($form2);
+    $links[$li]['form1'] = printSmart(getFormTitle($relationshipLink->getVar('form1')));
+    $links[$li]['form2'] = printSmart(getFormTitle($relationshipLink->getVar('form2')));
     // get the name of the relationship
     switch($relationshipLink->getVar('relationship')) {
       case 1:
@@ -96,27 +94,33 @@ foreach($allRelationships as $thisRelationship) {
 	$i++;
 }
 
-
 $common['aid'] = $aid;
 
 // adminPage tabs sections must contain a name, template and content key
 // content is the data the is available in the tab as $content.foo
 // any declared sub key of $content, such as 'forms' will be assigned to accordions
 // accordion content is available as $sectionContent.foo
-$adminPage['tabs'][1]['name'] = "Forms";
-$adminPage['tabs'][1]['template'] = "db:admin/application_forms.html";
-$adminPage['tabs'][1]['content'] = $common;
-$adminPage['tabs'][1]['content']['forms'] = $forms; 
 
-$adminPage['tabs'][2]['name'] = "Settings";
-$adminPage['tabs'][2]['template'] = "db:admin/application_settings.html";
-$adminPage['tabs'][2]['content'] = $common;
+$i=1;
+$adminPage['tabs'][$i]['name'] = "Forms";
+$adminPage['tabs'][$i]['template'] = "db:admin/application_forms.html";
+$adminPage['tabs'][$i]['content'] = $common;
+$adminPage['tabs'][$i]['content']['forms'] = $forms; 
 
-$adminPage['tabs'][3]['name'] = "Relationships";
-$adminPage['tabs'][3]['template'] = "db:admin/application_relationships.html";
-$adminPage['tabs'][3]['content'] = $common;
-$adminPage['tabs'][3]['content']['relationships'] = $relationships; 
+if($aid > 0) {
+	$i++;
+	$adminPage['tabs'][$i]['name'] = "Settings";
+	$adminPage['tabs'][$i]['template'] = "db:admin/application_settings.html";
+	$adminPage['tabs'][$i]['content'] = $common;
+}
 
+$i++;
+$adminPage['tabs'][$i]['name'] = "Relationships";
+$adminPage['tabs'][$i]['template'] = "db:admin/application_relationships.html";
+$adminPage['tabs'][$i]['content'] = $common;
+$adminPage['tabs'][$i]['content']['relationships'] = $relationships; 
+
+$adminPage['pagetitle'] = $appName;
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";

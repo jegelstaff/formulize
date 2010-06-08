@@ -2,8 +2,8 @@
 <form>
 <table>
 	<tr>
-		<th>Data handle</th>
 		<th>Type</th>
+		<th>Data handle</th>
 		<th>Required</th>
 		<th>Display</th>
 		<th>Private</th>
@@ -11,8 +11,8 @@
 		<th colspan="3">Actions</th>
 	</tr>
 	<tr>
-		<td><{$sectionContent.ele_handle}></td>
 		<td><{$sectionContent.ele_type}></td>
+		<td><{$sectionContent.ele_handle}></td>
 		<td align="center"><input type="checkbox" disabled="disabled" value="<{$sectionContent.ele_req}>" name="ele_req[<{$sectionContent.ele_id}>]"></td>
 		<td align="center"><input type="checkbox" <{if $sectionContent.ele_display}>checked="checked"<{/if}> value="<{$sectionContent.ele_display}>" name="ele_display[<{$sectionContent.ele_id}>]"></td>
 		<td align="center"><input type="checkbox" <{if $sectionContent.ele_private}>checked="checked"<{/if}>  value="<{$sectionContent.ele_private}>" name="ele_private[<{$sectionContent.ele_id}>]"></td>
