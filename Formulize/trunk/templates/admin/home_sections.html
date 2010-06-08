@@ -1,0 +1,25 @@
+<{if $sectionContent.aid > 0}>
+<p><a href="ui.php?page=application&aid=<{$sectionContent.aid}>">Configure this application</a></p>
+<{/if}>
+
+<p><{$sectionContent.description}></p>
+
+<p>Click a form name or screen name to configure it</p>
+
+<blockquote>
+<{foreach from=$sectionContent.forms item=form}>
+<div class="accordion-box">
+  <p>Form: <a href="ui.php?page=form&fid=<{$form.fid}>"><{$form.name}></a>
+  <ul>
+  <{foreach from=$form.screens item=screen}>
+    <li>Screen: <a href="ui.php?page=screen&sid=<{$screen.sid}>"><{$screen.name}></a></li>
+  <{/foreach}>
+  </ul>
+  </p>
+</div>
+<{/foreach}>
+</blockquote>
+  
+<{if $sectionContent.aid == 0}>
+<p style="clear: both;"><a href="ui.php?page=application&aid=<{$sectionContent.aid}>&tab=relationships">Configure relationships (frameworks) for these forms</a></p>
+<{/if}>

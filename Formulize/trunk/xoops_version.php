@@ -126,6 +126,11 @@ $modversion['templates'][25]['file'] = 'admin/element_display.html';
 $modversion['templates'][25]['description'] = '';
 $modversion['templates'][26]['file'] = 'admin/element_permissions.html';
 $modversion['templates'][26]['description'] = '';
+$modversion['templates'][27]['file'] = 'admin/home.html';
+$modversion['templates'][27]['description'] = '';
+$modversion['templates'][28]['file'] = 'admin/home_sections.html';
+$modversion['templates'][28]['description'] = '';
+
 
 
 //	Module Configs
