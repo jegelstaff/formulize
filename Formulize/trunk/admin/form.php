@@ -75,11 +75,27 @@ if($_GET['fid'] != "new") {
     $elements[$i]['content']['ele_display'] = $thisElement->getVar('ele_display');
     $elements[$i]['content']['ele_private'] = $thisElement->getVar('ele_private');
     $colhead = printSmart($thisElement->getVar('ele_caption'),75);
-    $elementHeadings[$i]['text'] = $colhead ? $colhead : printSmart($thisElement->getVar('ele_caption'));
+    $elementHeadings[$i]['text'] = $colhead ? $colhead : printSmart($thisElement->getVar('ele_caption'),75);
     $elementHeadings[$i]['ele_id'] = $ele_id;
     $elementHeadings[$i]['selected'] = in_array($ele_id, $headerlistArray) ? " selected" : "";
     $i++;
   }
+  // add in the metadata headers
+  $creator_email_selected = (in_array('creator_email', $headerlistArray)) ? " selected" : "";
+  array_unshift($elementHeadings,array('text'=>_formulize_DE_CALC_CREATOR_EMAIL, 'ele_id'=>'creator_email', 'selected'=>$creator_email_selected));
+
+  $mod_datetime_selected = (in_array('mod_datetime', $headerlistArray) OR in_array('mod_date', $headerlistArray)) ? " selected" : "";
+  array_unshift($elementHeadings,array('text'=>_formulize_DE_CALC_MODDATE, 'ele_id'=>'mod_date', 'selected'=>$mod_datetime_selected));
+  
+  $creation_datetime_selected = (in_array('creation_datetime', $headerlistArray) OR in_array('creation_date', $headerlistArray)) ? " selected" : "";
+  array_unshift($elementHeadings,array('text'=>_formulize_DE_CALC_CREATEDATE, 'ele_id'=>'creation_datetime', 'selected'=>$creation_datetime_selected));
+
+  $mod_uid_selected = (in_array('mod_uid', $headerlistArray) OR in_array('proxyid', $headerlistArray)) ? " selected" : "";
+  array_unshift($elementHeadings,array('text'=>_formulize_DE_CALC_MODIFIER, 'ele_id'=>'mod_uid', 'selected'=>$mod_uid_selected));
+ 
+  $creation_uid_selected = (in_array('creation_uid', $headerlistArray) OR in_array('uid', $headerlistArray)) ? " selected" : "";
+  array_unshift($elementHeadings,array('text'=>_formulize_DE_CALC_CREATOR, 'ele_id'=>'creation_uid', 'selected'=>$creation_uid_selected));
+  
   // get a list of applications this form is involved with
   $thisFormApplications = $application_handler->getApplicationsByForm($fid);
   foreach($thisFormApplications as $thisApp) {

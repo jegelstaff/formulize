@@ -80,14 +80,33 @@ if($newAppObject) {
   }
 }
 
+// get the applications this form is assigned to
+$assignedAppsForThisForm = $application_handler->getApplicationsByForm($fid);
+
 // assign this form as required to the selected applications
 foreach($selectedAppObjects as $thisAppObject) {
+  $selectedAppIds[] = $thisAppObject->getVar('appid');
   $thisAppForms = $thisAppObject->getVar('forms');
   if(!in_array($fid, $thisAppForms)) {
     $thisAppForms[] = $fid;
     $thisAppObject->setVar('forms', serialize($thisAppForms));
     if(!$application_handler->insert($thisAppObject)) {
       print "Error: could not add the form to one of the applications properly: ".mysql_error();
+    }
+  }
+}
+
+// now remove the form from any applications it used to be assigned to, which were not selected
+foreach($assignedAppsForThisForm as $assignedApp) {
+  if(!in_array($assignedApp->getVar('appid'), $selectedAppIds)) {
+    // the form is no longer assigned to this app, so remove it from the apps form list
+    $assignedAppForms = $assignedApp->getVar('forms');
+    $key = array_search($fid, $assignedAppForms);
+    unset($assignedAppForms[$key]);
+    sort($assignedAppForms); // resets all the keys so there's no gaps
+    $assignedApp->setVar('forms',serialize($assignedAppForms));
+    if(!$application_handler->insert($assignedApp)) {
+      print "Error: could not update one of the applications this form used to be assigned to, so that it's not assigned anymore.";
     }
   }
 }
