@@ -140,7 +140,7 @@ class formulizeElementsHandler {
 				$sql = sprintf("INSERT INTO %s (
 				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings
 				) VALUES (
-				%u, %u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u, %u, %s
+				%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u, %u, %s
 				)",
 				formulize_TABLE,
 				$id_form,
