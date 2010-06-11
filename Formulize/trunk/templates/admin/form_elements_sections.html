@@ -1,5 +1,4 @@
 <div class="panel-content content">
-<form>
 <table>
 	<tr>
 		<th>Type</th>
@@ -13,14 +12,13 @@
 	<tr>
 		<td><{$sectionContent.ele_type}></td>
 		<td><{$sectionContent.ele_handle}></td>
-		<td align="center"><input type="checkbox" disabled="disabled" value="<{$sectionContent.ele_req}>" name="ele_req[<{$sectionContent.ele_id}>]"></td>
-		<td align="center"><input type="checkbox" <{if $sectionContent.ele_display}>checked="checked"<{/if}> value="<{$sectionContent.ele_display}>" name="ele_display[<{$sectionContent.ele_id}>]"></td>
-		<td align="center"><input type="checkbox" <{if $sectionContent.ele_private}>checked="checked"<{/if}>  value="<{$sectionContent.ele_private}>" name="ele_private[<{$sectionContent.ele_id}>]"></td>
+		<td align="center"><input type="checkbox" disabled="disabled" <{if $sectionContent.ele_req}>checked="checked"<{/if}> value="1" name="elements-ele_req[<{$sectionContent.ele_id}>]"></td>
+		<td align="center"><input type="checkbox" <{if $sectionContent.ele_display}>checked="checked"<{/if}> value="1" name="elements-ele_display[<{$sectionContent.ele_id}>]"></td>
+		<td align="center"><input type="checkbox" <{if $sectionContent.ele_private}>checked="checked"<{/if}>  value="1" name="elements-ele_private[<{$sectionContent.ele_id}>]"></td>
 		<td><a href="">Convert to text area</a></td>
 		<td><a href="ui.php?page=element&tab=settings&aid=1&ele_id=<{$sectionContent.ele_id}>">Edit</a></td>
 		<td><a href="">Clone</a></td>
 		<td><a href="">Delete</a></td>
 	</tr>
 </table>
-</form>
 </div>

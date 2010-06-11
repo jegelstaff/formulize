@@ -62,7 +62,10 @@
       if(typeof(formulize_formlist[i]) == 'object') { // for some crazy reason, non-form stuff can be pulled in by getElementsByName with that param...I hate javascript
         $.post("save.php", $(formulize_formlist[i]).serialize(), function(data) {
           if(data) {
-            alert(data);
+            if(data.substr(0,10)=="/* eval */") {
+              eval(data);
+            } else
+              alert(data);
           }
         });
       }
