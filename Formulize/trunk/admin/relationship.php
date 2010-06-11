@@ -193,6 +193,7 @@ $adminPage['tabs'][1]['name'] = "Settings";
 $adminPage['tabs'][1]['template'] = "db:admin/relationship_settings.html";
 //$adminPage['tabs'][1]['content'] = $settings + $common;
 $adminPage['tabs'][1]['content'] = $common;
+$adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
@@ -222,7 +223,7 @@ function findlink($targetform, $sourceform, $target_form_ids, $source_form_ids) 
 	return $truehits;
 }
 
-function buildlinkoptions($links, $invert, $key1, $key2, $target_ele_ids, $source_ele_ids, $target_captions, $source_captions, $linkoptions, $loi) {
+function buildlinkoptions($links, $invert, $key1, $key2, $target_ele_ids, $source_ele_ids, $target_captions, $source_captions, &$linkoptions, $loi) {
 	foreach($links as $link) {
 		if($invert) {
 			$linkoptions[$loi]['value'] = $source_ele_ids[$link] . "+" . $target_ele_ids[$link];
