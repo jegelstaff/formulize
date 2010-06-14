@@ -1,52 +1,74 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-admin-form" name="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_settings">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+<input type="hidden" name="formulize_admin_fid" value="<{$content.fid}>">
+
+
 <div class="panel-content content">
+  <fieldset>
+    <legend>Settings for the Screen: <em><{$content.title}></em></legend>
 
-<form id="form-screen-<{$number}>">
+	  <div class="form-item">
+		  <label for="screens-title">Name</label>
+		  <input type="text" id="screens-title" name="screens-title" value="<{$content.title}>"/>
+		  <div class="description">Enter the name of the screen.</div>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-type">Type</label>
+	    <select id="screens-type" name="screens-type" size="1"<{if $content.sid neq 'new'}> disabled<{/if}>>
+		    <option value="listOfEntries"<{if $content.type eq 'listOfEntries'}> selected="selected"<{/if}>>List of entries form</option>
+		    <option value="form"<{if $content.type eq 'form'}> selected="selected"<{/if}>>Form</option>
+		    <option value="multiPage"<{if $content.type eq 'multiPage'}> selected="selected"<{/if}>>Multi page form</option>
+	    </select>
+	    <div class="description">Select the type for this screen.</div>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-frid">Relationship</label>
+		  <select id="screens-frid" name="screens-frid">
+			  <option value="0"<{if $content.frid eq 0}> selected="selected"<{/if}>>None</option>
+	      <{foreach from=$content.links key=linkNumber item=link}>
+          <option value="<{$link.id}>"<{if $content.frid eq $link.id}> selected="selected"<{/if}>><{$link.name}></option>
+      	<{/foreach}>
+		  </select>
+		  <div class="description">Select a relationship required for this screen.</div>
+	  </div>
+  </fieldset>
 
-<fieldset>
-<legend>Settings for the Screen <em><{$content.name}></em></legend>
+  <!--<fieldset>
+	  <legend>Menu</legend>
 
-	<div class="form-item">
-		<label for="formulize_id-desc_form">Name</label>
-		<input type="text" id="formulize_id-desc_form" name="formulize_id-desc_form" value="<{$content.name}>"/>
-		<div class="description">Enter the name of the screen.</div>
-	</div>
-	<div class="form-item">
-		<label for="rel">Relationship</label>
-		<select id="rel" name="rel">
-			<option>None</option>
-			<option>Relationship 1</option>
-			<option>Relationship 2</option>
-		</select>
-		<div class="description">Select a relationship required for this screen.</div>
-	</div>
-	<div class="form-item">
-		<fieldset>
-			<legend>Menu</legend>
-			<label for="imenu"><input type="radio" id="imenu" name="menu" value="imenu"/>Use iMenu</label>
-			<label for="internal"><input type="radio" id="internal" name="menu" value="internal"/>Use internal menu</label>
-			<div class="description">Choose whether you will use XOOPS iMenu for assigning menu items or the internal menu.</div>
-		</fieldset>
-	</div>
-	<div class="form-item">
-		<fieldset>
-			<legend>XOOPS Security Token</legend>
-			<label for="token-yes"><input type="radio" id="token-yes" name="token" value="yes"/>Yes</label>
-			<label for="token-no"><input type="radio" id="token-no" name="token" value="no"/>No</label>
-			<div class="description">The XOOPS security token is a defense against cross-site scripting attacks. However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types.</div>
-		</fieldset>
-	</div>
-	<div class="form-item">
-		<fieldset>
-		<legend>Sample PHP Code</legend>
-					<textarea name="code"/></textarea>
-					<input type="submit" class="copybutton" name="copy-code" value="Copy code"/>
-					<div class="description">Copy this sample PHP code somewhere.</div>
-		</fieldset>
-	</div>
-	<div class="form-item"><input type="submit" class="savebutton" name="#form-<{$number}>" value="Save settings"/></div>
+    <div class="form-item">
+	    <label for="imenu"><input type="radio" id="imenu" name="menu" value="imenu"/>Use iMenu</label>
+	    <label for="internal"><input type="radio" id="internal" name="menu" value="internal"/>Use internal menu</label>
+	    <div class="description">Choose whether you will use XOOPS iMenu for assigning menu items or the internal menu.</div>
+	  </div>
+  </fieldset>-->
 
-</fieldset>
+  <fieldset>
+	  <legend>XOOPS Security Token</legend>
+
+	  <div class="form-item">
+	    <label for="screens-useToken-yes"><input type="radio" id="screens-useToken" name="screens-useToken" value="1"<{if $content.useToken eq 1}> checked<{/if}>/>Yes</label>
+	    <label for="screens-useToken-no"><input type="radio" id="screens-useToken" name="screens-useToken" value="0"<{if $content.useToken eq 0}> checked<{/if}>/>No</label>
+	    <div class="description">The XOOPS security token is a defense against cross-site scripting attacks. However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types.</div>
+	  </div>
+  </fieldset>
+
+  <!--<fieldset>
+	  <legend>Sample PHP Code</legend>
+
+	  <div class="form-item">
+		  <textarea name="code"/></textarea>
+		  <input type="submit" class="copybutton" name="copy-code" value="Copy code"/>
+		  <div class="description">Copy this sample PHP code somewhere.</div>
+	  </div>
+  </fieldset>-->
+</div>
 
 </form>
-
-</div> <!--// end content -->

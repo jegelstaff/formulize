@@ -123,6 +123,7 @@ foreach($allApps as $thisApp) {
   $i++;
 }
 
+
 // common values should be assigned to all tabs
 $common['name'] = $formName;
 $common['fid'] = $fid;
@@ -132,10 +133,25 @@ $permissions['hello'] = "Hello Permission World";
 
 // need to get screen data so this can be populated properly
 $screens = array();
-$screens[1]['name'] = "dummy screen 1";
-$screens[1]['content']['hello'] = "hello screen 1 world";
-$screens[2]['name'] = "dummy screen 2";
-$screens[2]['content']['hello'] = "hello screen 2 world";
+$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
+$criteria_object->add(new Criteria('type','form'), 'OR');
+$mulitPageAndFormScreens = $screen_handler->getObjects($criteria_object,$fid);
+$i = 1;
+foreach($mulitPageAndFormScreens as $screen) {
+  $screens['screens'][$i]['sid'] = $screen->getVar('sid');
+  $screens['screens'][$i]['title'] = $screen->getVar('title');
+  $screens['screens'][$i]['type'] = $screen->getVar('type');
+  $i++;
+}
+$listOfEntriesScreens = $screen_handler->getObjects(new Criteria('type','listOfEntries'),$fid);
+$i = 1;
+foreach($listOfEntriesScreens as $screen) {
+  $screens['listOfEntries'][$i]['sid'] = $screen->getVar('sid');
+  $screens['listOfEntries'][$i]['title'] = $screen->getVar('title');
+  $i++;
+}
+
 
 $settings = array();
 $settings['singleentry'] = $singleentry;

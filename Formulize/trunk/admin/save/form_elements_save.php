@@ -27,7 +27,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file handles saving of submissions from the form_settings page of the new admin UI
+// this file handles saving of submissions from the form_elements page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {

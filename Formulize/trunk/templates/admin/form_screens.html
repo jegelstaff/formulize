@@ -1,58 +1,56 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-admin-form" name="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="form_screens">
+<input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
+
+
 <div class="panel-content content">
-<h1>Screens: <em><{$content.name}></em></h1>
+  <h1>Screens: <em><{$content.name}></em></h1>
 
-<!--<{$content.hello}>-->
+  <h2><a href="ui.php?page=screen&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=new">Create a new screen</a></h2>
 
-<h2><a href="ui.php?page=screen&tab=settings&aid=<{$content.aid}>&fid=1&sid=new">Create a new screen</a></h2>
+  <{* include form if exist screens exist *}>
 
-<{* include form if exist screens exist *}>
-<form>
-<h2>Form Screens</h2>
-<div class="form-item">
-<table>
-	<tr>
-		<th>Name</th>
-		<th>Type</th>
-		<th>Default</th>
-	</tr>
-	<tr>
-		<td><label for="screen-four"><a href="ui.php?page=screen&tab=settings&aid=<{$content.aid}>&fid=1&sid=4">Screen Four</a></label></td>
-		<td>Multi</td>
-		<td><div class="form-radios"><input type="radio" id="screen-four" value="screen-four" name="default_form" /></div></td>
-	</tr>
-	<tr>
-		<td><label for="screen-five"><a href="">Screen Five</a></label></td>
-		<td>Form</td>
-		<td><div class="form-radios"><input type="radio" id="screen-four" value="screen-four" name="default_form" /></div></td>
-	</tr>
-	<tr>
-		<td><label for="screen-four"><a href="">Screen Four</a></label></td>
-		<td>Multi</td>
-		<td><div class="form-radios"><input type="radio" id="screen-four" value="screen-four" name="default_form" /></div></td>
-	</tr>
-</table>
+  <h2>Form Screens</h2>
+  <div class="form-item">
+    <table>
+	    <tr>
+		    <th>Name</th>
+		    <th>Type</th>
+		    <th>Default</th>
+		    <th>Action</th>
+	    </tr>
+      <{foreach from=$content.screens item=screen}>
+	      <tr class="<{cycle values='even,odd'}>">
+		      <td><label for="screens-default[<{$screen.sid}>]"><a href="ui.php?page=screen&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$screen.sid}>"><{$screen.title}></a></label></td>
+		      <td><{if $screen.type eq 'multiPage'}>Multi<{else}>Form<{/if}></td>
+		      <td><div class="form-radios"><input type="radio" id="screens-fornDefault" name="screens-fornDefault" value="<{$screen.sid}>"/></div></td>
+  		    <td class="head">Remove</td>
+	      </tr>
+      <{/foreach}>
+    </table>
+  </div>
+
+  <h2>List Screens</h2>
+  <div class="form-item">
+    <table>
+	    <tr>
+		    <th>Name</th>
+		    <th>Default</th>
+		    <th>Action</th>
+	    </tr>
+      <{foreach from=$content.listOfEntries item=screen}>
+	      <tr class="<{cycle values='even,odd' reset=true}>">
+		      <td><label for="screens-default[<{$screen.sid}>]"><a href="ui.php?page=screen&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$screen.sid}>"><{$screen.title}></a></label></td>
+		      <td><div class="form-radios"><input type="radio" id="screens-listDefault" name="screens-listDefault" value="<{$screen.sid}>"/></div></td>
+  		    <td class="head">Remove</td>
+	      </tr>
+      <{/foreach}>
+    </table>
+  </div>
 </div>
-<h2>List Screens</h2>
-<div class="form-item">
-<table>
-	<tr>
-		<th>Name</th>
-		<th>Default</th>
-	</tr>
-	<tr>
-		<td><label for="screen-four"><a href="">Screen One</a></label></td>
-		<td><div class="form-radios"><input type="radio" id="screen-one" value="screen-one" name="default_list" /></div></td>
-	</tr>
-	<tr>
-		<td><label for="screen-four"><a href="">Screen Two</a></label></td>
-		<td><div class="form-radios"><input type="radio" id="screen-two" value="screen-two" name="default_list" /></div></td>
-	</tr>
-	<tr>
-		<td><label for="screen-four"><a href="">Screen Three</a></label></td>
-		<td><div class="form-radios"><input type="radio" id="screen-three" value="screen-three" name="default_list" /></div></td>
-	</tr>
-</table>
-</div>
-<div class="form-item"><input type="submit" class="savebutton" name="#form-<{$number}>" value="Save defaults"/></div>
-</form>
-</div> <!--// end content -->

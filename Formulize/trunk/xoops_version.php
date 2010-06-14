@@ -62,6 +62,7 @@ $modversion['tables'][16] = "formulize_screen_listofentries";
 $modversion['tables'][17] = "formulize_entry_owner_groups";
 $modversion['tables'][18] = "formulize_application_form_link";
 $modversion['tables'][19] = "formulize_applications";
+$modversion['tables'][20] = "formulize_screen_form";
 
 
 // Admin things
@@ -114,9 +115,9 @@ $modversion['templates'][19]['file'] = 'admin/relationship_common_values.html';
 $modversion['templates'][19]['description'] = '';
 $modversion['templates'][20]['file'] = 'admin/screen_settings.html';
 $modversion['templates'][20]['description'] = '';
-$modversion['templates'][21]['file'] = 'admin/screen_display.html';
+$modversion['templates'][21]['file'] = 'admin/screen_list_display.html';
 $modversion['templates'][21]['description'] = '';
-$modversion['templates'][22]['file'] = 'admin/screen_custom.html';
+$modversion['templates'][22]['file'] = 'admin/screen_list_custom.html';
 $modversion['templates'][22]['description'] = '';
 $modversion['templates'][23]['file'] = 'admin/element_settings.html';
 $modversion['templates'][23]['description'] = '';
@@ -130,7 +131,14 @@ $modversion['templates'][27]['file'] = 'admin/home.html';
 $modversion['templates'][27]['description'] = '';
 $modversion['templates'][28]['file'] = 'admin/home_sections.html';
 $modversion['templates'][28]['description'] = '';
-
+$modversion['templates'][29]['file'] = 'admin/screen_form_options.html';
+$modversion['templates'][29]['description'] = '';
+$modversion['templates'][30]['file'] = 'admin/screen_list_buttons.html';
+$modversion['templates'][30]['description'] = '';
+$modversion['templates'][31]['file'] = 'admin/screen_list_view.html';
+$modversion['templates'][31]['description'] = '';
+$modversion['templates'][32]['file'] = 'admin/screen_list_headings.html';
+$modversion['templates'][32]['description'] = '';
 
 
 //	Module Configs
@@ -144,6 +152,7 @@ $modversion['config'][1]['default'] = '30';
 
 // $xoopsModuleConfig['t_max']
 $modversion['config'][2]['name'] = 't_max';
+
 $modversion['config'][2]['title'] = '_MI_formulize_TEXT_MAX';
 $modversion['config'][2]['description'] = '';
 $modversion['config'][2]['formtype'] = 'textbox';

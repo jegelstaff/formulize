@@ -100,6 +100,18 @@ CREATE TABLE `formulize_screen_multipage` (
   INDEX i_sid (`sid`)
 ) TYPE=MyISAM;
 
+CREATE TABLE `formulize_screen_form` (
+  `formid` int(11) NOT NULL auto_increment,
+  `sid` int(11) NOT NULL default 0,
+  `donedest` varchar(255) NOT NULL default '',
+  `savebuttontext` varchar(255) NOT NULL default '',
+  `alldonebuttontext` varchar(255) NOT NULL default '',
+  `displayheading` tinyint(1) NOT NULL default 0,
+  `reloadblank` tinyint(1) NOT NULL default 0,
+  PRIMARY KEY (`formid`),
+  INDEX i_sid (`sid`)
+) TYPE=MyISAM;
+
 CREATE TABLE `formulize_screen` (
   `sid` int(11) NOT NULL auto_increment,
   `title` varchar(255) NOT NULL default '',
