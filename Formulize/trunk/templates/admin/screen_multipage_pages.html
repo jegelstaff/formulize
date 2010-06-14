@@ -1,0 +1,35 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-admin-form" name="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_multipage_pages">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+<input type="hidden" name="formulize_admin_op" value="">
+<input type="hidden" name="formulize_admin_index" value="">
+
+
+<div class="panel-content content">
+  <fieldset>
+    <legend>Pages for the Multi page form: <em><{$content.title}></em></legend>
+
+    <!--<p><a href="ui.php?page=screen&tab=pages&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$content.sid}>&op=new">Create a new page</a></p>-->
+    <p><a name="addpage" href="#" onclick="javascript: return appPage(this);">Create a new page</a></p>
+
+    <h2>Manage the pages in this screen:</h2>
+  </fieldset>
+</div>
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/screen_multipage_pages_sections.html" sections=$content.pages}>
+
+</form>
+
+
+<script type='text/javascript'>
+function appPage( element ) {
+  $("[name=formulize_admin_op]").val('addpage');
+  $(".savebutton").click();
+  return false;
+}
+</script>

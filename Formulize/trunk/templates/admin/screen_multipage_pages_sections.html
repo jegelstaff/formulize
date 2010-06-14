@@ -1,0 +1,29 @@
+<div class="panel-content content">
+    <p><a name="delpage" href="#" index="<{$sectionContent.index}>" onclick="javascript: return confirmDelete(this);">Delete this page</a></p>
+
+	  <div class="form-item">
+		  <label for="screens-pagetitle_<{$sectionContent.index}>"><{$smarty.const._AM_FORMULIZE_SCREEN_PAGETITLE}> <{$sectionContent.number}></label>
+      <input type="text" id="screens-pagetitle_<{$sectionContent.index}>" name="screens-pagetitle_<{$sectionContent.index}>" value="<{$sectionContent.title}>" size="50" maxlength="255"/>
+		  <div class="description"></div>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-page<{$sectionContent.index}>"><{$smarty.const._AM_FORMULIZE_SCREEN_A_PAGE}> <{$sectionContent.number}></label>
+	    <select id="screens-page<{$sectionContent.index}>[]" name="screens-page<{$sectionContent.index}>[]" size="10" multiple>
+        <{html_options options=$sectionContent.options selected=$sectionContent.elements}>
+	    </select>
+		  <div class="description"></div>
+	  </div>
+</div>
+
+
+<script type='text/javascript'>
+function confirmDelete( element ) {
+	var answer = confirm('<{$smarty.const._AM_FORMULIZE_DELETE_THIS_PAGE}>');
+	if (answer)	{
+    $("[name=formulize_admin_op]").val('delpage');
+    $("[name=formulize_admin_index]").val(element.getAttribute('index'));
+    $(".savebutton").click();
+	}
+  return false;
+}
+</script>

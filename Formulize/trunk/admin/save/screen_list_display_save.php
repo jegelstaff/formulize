@@ -48,9 +48,9 @@ $screens = $processedValues['screens'];
 $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 $screen = $screen_handler->get($sid);
 
-$screen->setVar('toptemplate',$screens['toptemplate']);
-$screen->setVar('bottomtemplate',$screens['bottomtemplate']);
-$screen->setVar('listtemplate',$screens['listtemplate']);
+$screen->setVar('toptemplate',htmlspecialchars(trim($screens['toptemplate'])));
+$screen->setVar('bottomtemplate',htmlspecialchars(trim($screens['bottomtemplate'])));
+$screen->setVar('listtemplate',htmlspecialchars(trim($screens['listtemplate'])));
 
 
 if(!$screen_handler->insert($screen)) {

@@ -139,6 +139,14 @@ $modversion['templates'][31]['file'] = 'admin/screen_list_view.html';
 $modversion['templates'][31]['description'] = '';
 $modversion['templates'][32]['file'] = 'admin/screen_list_headings.html';
 $modversion['templates'][32]['description'] = '';
+$modversion['templates'][33]['file'] = 'admin/screen_multipage_options.html';
+$modversion['templates'][33]['description'] = '';
+$modversion['templates'][34]['file'] = 'admin/screen_multipage_text.html';
+$modversion['templates'][34]['description'] = '';
+$modversion['templates'][35]['file'] = 'admin/screen_multipage_pages.html';
+$modversion['templates'][35]['description'] = '';
+$modversion['templates'][36]['file'] = 'admin/screen_multipage_pages_sections.html';
+$modversion['templates'][36]['description'] = '';
 
 
 //	Module Configs

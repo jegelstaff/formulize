@@ -27,7 +27,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file handles saving of submissions from the screen_list_headings_view page of the new admin UI
+// this file handles saving of submissions from the screen_multipage_text page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
@@ -41,20 +41,11 @@ $sid = $_POST['formulize_admin_key'];
 $screens = $processedValues['screens'];
 
 
-$screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 $screen = $screen_handler->get($sid);
 
-$screen->setVar('useheadings',(array_key_exists('useheadings',$screens))?$screens['useheadings']:0);
-$screen->setVar('repeatheaders',$screens['repeatheaders']);
-$screen->setVar('usesearchcalcmsgs',$screens['usesearchcalcmsgs']);
-$screen->setVar('usesearch',(array_key_exists('usesearch',$screens))?$screens['usesearch']:0);
-$screen->setVar('columnwidth',$screens['columnwidth']);
-$screen->setVar('textwidth',$screens['textwidth']);
-$screen->setVar('usecheckboxes',$screens['usecheckboxes']);
-$screen->setVar('useviewentrylinks',(array_key_exists('useviewentrylinks',$screens))?$screens['useviewentrylinks']:0);
-$screen->setVar('hiddencolumns',serialize($screens['hiddencolumns']));
-$screen->setVar('decolumns',serialize($screens['decolumns']));
-$screen->setVar('desavetext',$screens['desavetext']);
+$screen->setVar('introtext',get_magic_quotes_gpc() ? stripslashes($screens['introtext']) : $screens['introtext']);
+$screen->setVar('thankstext',get_magic_quotes_gpc() ? stripslashes($screens['thankstext']) : $screens['thankstext']);
 
 
 if(!$screen_handler->insert($screen)) {

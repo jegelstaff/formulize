@@ -30,16 +30,16 @@
     <div class="form-item">
       <label for="screens-usesearchcalcmsgs"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USESEARCHCALCMSGS}></label>
 		  <div class="form-radios">
-			  <label for="0"><input type="radio" id="usesearchcalcmsgs" name="usesearchcalcmsgs"<{if $content.usesearchcalcmsgs eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USCM_NEITHER}></label>
+			  <label for="0"><input type="radio" id="screens-usesearchcalcmsgs" name="screens-usesearchcalcmsgs"<{if $content.usesearchcalcmsgs eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USCM_NEITHER}></label>
 		  </div>
 		  <div class="form-radios">
-			  <label for="1"><input type="radio" id="usesearchcalcmsgs" name="usesearchcalcmsgs"<{if $content.usesearchcalcmsgs eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USCM_BOTH}></label>
+			  <label for="1"><input type="radio" id="screens-usesearchcalcmsgs" name="screens-usesearchcalcmsgs"<{if $content.usesearchcalcmsgs eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USCM_BOTH}></label>
 		  </div>
 		  <div class="form-radios">
-			  <label for="2"><input type="radio" id="usesearchcalcmsgs" name="usesearchcalcmsgs"<{if $content.usesearchcalcmsgs eq 2}> checked="checked"<{/if}> value="2"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USCM_SEARCH}></label>
+			  <label for="2"><input type="radio" id="screens-usesearchcalcmsgs" name="screens-usesearchcalcmsgs"<{if $content.usesearchcalcmsgs eq 2}> checked="checked"<{/if}> value="2"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USCM_SEARCH}></label>
 		  </div>
 		  <div class="form-radios">
-			  <label for="3"><input type="radio" id="usesearchcalcmsgs" name="usesearchcalcmsgs"<{if $content.usesearchcalcmsgs eq 3}> checked="checked"<{/if}> value="2"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USCM_CALC}></label>
+			  <label for="3"><input type="radio" id="screens-usesearchcalcmsgs" name="screens-usesearchcalcmsgs"<{if $content.usesearchcalcmsgs eq 3}> checked="checked"<{/if}> value="2"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USCM_CALC}></label>
 		  </div>
       <div class="description"></div>
     </div>                
@@ -50,7 +50,7 @@
     </div>
     <div class="form-item">
       <label for="screens-columnwidth"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH}></label>
-      <input type="text" id="screens-columnwidth" name="screens-columnwidth" value="<{$content.usecurrentviewlist}>" size="3" maxlength="3"/>
+      <input type="text" id="screens-columnwidth" name="screens-columnwidth" value="<{$content.columnwidth}>" size="3" maxlength="3"/>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTH}></div>
     </div>
     <div class="form-item">
@@ -59,15 +59,15 @@
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TEXTWIDTH}></div>
     </div>
     <div class="form-item">
-      <label for="screens-usecheckboxes"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USECHECKBOXES}></label>
+      <label for="screens-usecheckboxes"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USECHECKBOXES}> <{$content.usecheckboxes}></label>
 		  <div class="form-radios">
-			  <label for="0"><input type="radio" id="usecheckboxes" name="usecheckboxes"<{if $content.usecheckboxes eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_UCHDEFAULT}></label>
+			  <label for="0"><input type="radio" id="screens-usecheckboxes" name="screens-usecheckboxes"<{if $content.usecheckboxes eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_UCHDEFAULT}></label>
 		  </div>
 		  <div class="form-radios">
-			  <label for="1"><input type="radio" id="usecheckboxes" name="usecheckboxes"<{if $content.usecheckboxes eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_UCHALL}></label>
+			  <label for="1"><input type="radio" id="screens-usecheckboxes" name="screens-usecheckboxes"<{if $content.usecheckboxes eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_UCHALL}></label>
 		  </div>
 		  <div class="form-radios">
-			  <label for="2"><input type="radio" id="usecheckboxes" name="usecheckboxes"<{if $content.usecheckboxes eq 2}> checked="checked"<{/if}> value="2"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_UCHNONE}></label>
+			  <label for="2"><input type="radio" id="screens-usecheckboxes" name="screens-usecheckboxes"<{if $content.usecheckboxes eq 2}> checked="checked"<{/if}> value="2"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_UCHNONE}></label>
 		  </div>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USECHECKBOXES}></div>
     </div>

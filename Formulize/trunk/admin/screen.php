@@ -237,8 +237,67 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
 }
 
 if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
-  // conditions data
-  $conditions = array();
+  // parallel entry options for showing previous entries in another form (or entries of some other defined type, but previous entries are what this was made for)
+  // Previous entries are meant to be in another form.  To begin with, that form must have the same captions as this form does, but later on there will be some broader capabilities to specify the parallel elements.
+  $fe_paraentryform = new xoopsFormSelect(_AM_FORMULIZE_SCREEN_PARAENTRYFORM, 'paraentryform', $screen->getVar('paraentryform'), 1, false);
+  $formHandler =& xoops_getmodulehandler('forms');
+  $allFormObjects = $formHandler->getAllForms();
+  $allFormOptions = array();
+  foreach($allFormObjects as $thisFormObject) {
+    $allFormOptions[$thisFormObject->getVar('id_form')] = printSmart($thisFormObject->getVar('title'));
+  }
+
+	// setup all the elements in this form for use in the listboxes
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
+	$options = multiPageScreen_addToOptionsList($fid, array());
+	
+	// add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
+	// added March 20 2008, by jwe
+	$frid = $screen->getVar("frid");
+	if($frid) {
+			$framework_handler =& xoops_getModuleHandler('frameworks');
+			$frameworkObject = $framework_handler->get($frid);
+			foreach($frameworkObject->getVar("links") as $thisLinkObject) {
+					if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
+							$thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
+							$options = multiPageScreen_addToOptionsList($thisFid, $options);
+					}
+			}
+	}
+		
+	// get page titles
+  $pageTitles = $screen->getVar("pagetitles");
+  $elements = $screen->getVar("pages");
+  $conditions = $screen->getVar("conditions");
+  // group entries
+  $pages = array();
+	for($i=0;$i<(count($pageTitles)+$pageCounterOffset);$i++) {
+    $pages[$i]['name'] = $pageTitles[$i];
+    $pages[$i]['content']['index'] = $i;
+    $pages[$i]['content']['number'] = $i+1;
+    $pages[$i]['content']['title'] = $pageTitles[$i];
+    $pages[$i]['content']['options'] = $options;
+    $pages[$i]['content']['elements'] = $elements[$i];
+    $pages[$i]['content']['conditions'] = $conditions[$i];
+  }
+
+  // options data
+  $multipageOptions = array();
+  $multipageOptions['allformoptions'] = $allFormOptions;
+  $multipageOptions['paraentryform'] = $screen->getVar('paraentryform');
+  $multipageOptions['paraentryrelationship'] = $screen->getVar('paraentryrelationship');
+  $multipageOptions['donedest'] = $screen->getVar('donedest');
+  $multipageOptions['buttontext'] = $screen->getVar('buttontext');
+  $multipageOptions['printall'] = $screen->getVar('printall');
+
+  // text data
+  $multipageText = array();
+  $multipageText['introtext'] = $screen->getVar('introtext');
+  $multipageText['thankstext'] = $screen->getVar('thankstext');
+
+  // pages data
+  $multipagePages = array();
+  $multipagePages['pages'] = $pages;
 }
 
 if($_GET['sid'] != "new" && $settings['type'] == 'form') {
@@ -263,9 +322,17 @@ if($_GET['sid'] != "new" && $settings['type'] == 'form') {
 }
 
 if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
-  $adminPage['tabs'][3]['name'] = "Conditions";
-  $adminPage['tabs'][3]['template'] = "db:admin/screen_conditions.html";
-  $adminPage['tabs'][3]['content'] = $conditions + $common;
+  $adminPage['tabs'][2]['name'] = "Options";
+  $adminPage['tabs'][2]['template'] = "db:admin/screen_multipage_options.html";
+  $adminPage['tabs'][2]['content'] = $multipageOptions + $common;
+
+  $adminPage['tabs'][3]['name'] = "Text";
+  $adminPage['tabs'][3]['template'] = "db:admin/screen_multipage_text.html";
+  $adminPage['tabs'][3]['content'] = $multipageText + $common;
+
+  $adminPage['tabs'][4]['name'] = "Pages";
+  $adminPage['tabs'][4]['template'] = "db:admin/screen_multipage_pages.html";
+  $adminPage['tabs'][4]['content'] = $multipagePages + $common;
 }
 
 if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
@@ -298,4 +365,3 @@ $breadcrumbtrail[2]['url'] = "page=application&aid=$aid";
 $breadcrumbtrail[2]['text'] = $appName;
 $breadcrumbtrail[3]['text'] = $formName;
 $breadcrumbtrail[4]['text'] = $screenName;
-
