@@ -1,0 +1,45 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+sdsad
+<form id="form-admin-form" name="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_form_options">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+
+
+<div class="panel-content content">
+  <fieldset>
+    <legend>Options for the Form <em><{$content.title}></em></legend>
+
+	  <div class="form-item">
+		  <label for="screens-donedest">Done destination</label>
+		  <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>"/>
+		  <div class="description">Where the user is sent when they are done filling in the form.</div>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-savebuttontext">Save button</label>
+		  <input type="text" id="screens-savebuttontext" name="screens-savebuttontext" value="<{$content.savebuttontext}>"/>
+		  <div class="description">The text to display on the button.</div>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-alldonebuttontext">All done button</label>
+		  <input type="text" id="screens-alldonebuttontext" name="screens-alldonebuttontext" value="<{$content.alldonebuttontext}>"/>
+		  <div class="description">The text to display on the button.</div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="screens-displayheading">Display heading</label>
+		  <input type="checkbox" id="screens-displayheading" name="screens-displayheading"<{if $content.displayheading}> checked="checked"<{/if}> value="1"/>
+		  <div class="description">Should the heading text be included on the form?</div>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-reloadblank">Reload blank</label>
+		  <input type="checkbox" id="screens-reloadblank" name="screens-reloadblank"<{if $content.reloadblank}> checked="checked"<{/if}> value="1"/>
+		  <div class="description">On new entries, should the form reload blank, or with the created entry?</div>
+	  </div>
+  </fieldset>
+</div>
+
+</form>
