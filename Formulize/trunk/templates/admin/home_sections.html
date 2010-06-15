@@ -1,25 +1,45 @@
-<{if $sectionContent.aid > 0}>
-<p><a href="ui.php?page=application&aid=<{$sectionContent.aid}>">Configure this application</a></p>
-<{/if}>
-
 <p><{$sectionContent.description}></p>
 
-<p>Click a form name or screen name to configure it</p>
+<{if $sectionContent.aid > 0}>
+<p><a href="ui.php?page=application&aid=<{$sectionContent.aid}>"><img src="../images/kedit.png">&nbsp;&nbsp;Configure this application and the relationships of its forms</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="deleteapplink" target="<{$sectionContent.aid}>" href=""><img src="../images/editdelete.gif">&nbsp;&nbsp;Delete this application</a></p>
+<{/if}>
+	
+<{if $sectionContent.aid == 0}>
+<p style="clear: both;"><a href="ui.php?page=application&aid=<{$sectionContent.aid}>&tab=relationships"><img src="../images/kedit.png">&nbsp;&nbsp;Configure relationships (frameworks) for these forms</a></p>
+<{/if}>
 
 <blockquote>
 <{foreach from=$sectionContent.forms item=form}>
 <div class="accordion-box">
-  <p>Form: <a href="ui.php?page=form&fid=<{$form.fid}>"><{$form.name}></a>
-  <ul>
-  <{foreach from=$form.screens item=screen}>
-    <li>Screen: <a href="ui.php?page=screen&sid=<{$screen.sid}>"><{$screen.name}></a></li>
-  <{/foreach}>
-  </ul>
-  </p>
+  <p class="form-name ui-corner-top"><{if $form.lockedform == ""}><a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>" class="form-name-icon"><{/if}>Form: <{$form.name}> (id: <{$form.fid}>)<{if $form.lockedform == ""}></a><{/if}></p>
+  <div class="form-screen-list ui-corner-bottom">
+		<p class="formbox-title">Actions:</p>
+		<div class="formactions-list">
+		<{if $form.lockedform == ""}>
+		<a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction">Configure</div></a><br />
+		<{/if}>
+		<a class="cloneform" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clone.gif"></div><div class="formaction">Clone</div></a><br />
+		<a class="cloneformdata" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clonedata.gif"></div><div class="formaction">Clone with data</div></a><br />
+		<{if $form.lockedform == "" && $form.hasdelete}>
+		<a class="lockdown" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/perm.png"></div><div class="formaction">Lockdown</div></a><br />
+		<a class="deletelink" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/editdelete.gif"></div><div class="formaction">Delete</div></a><br />
+		<{/if}>
+		</div>
+		
+  	<p class="formbox-title">Screens:</p>
+    <ul>
+    <{foreach from=$form.screens item=screen}>
+      <li><a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=<{$screen.sid}>"><{$screen.name}></a></li>
+    <{/foreach}>      
+    </ul>
+    <{if !$form.screens}>
+    	<p><a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=new">Create a new screen</a></p>
+    <{/if}>
+  </div>
 </div>
 <{/foreach}>
 </blockquote>
   
-<{if $sectionContent.aid == 0}>
-<p style="clear: both;"><a href="ui.php?page=application&aid=<{$sectionContent.aid}>&tab=relationships">Configure relationships (frameworks) for these forms</a></p>
-<{/if}>
+
+	
+

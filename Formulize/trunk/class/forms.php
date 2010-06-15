@@ -186,7 +186,7 @@ class formulizeFormsHandler {
 
 	function getAllForms($includeAllElements=false) {
 		global $xoopsDB;
-		$allFidsQuery = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id");
+		$allFidsQuery = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " ORDER BY desc_form";
 		$allFidsRes = $xoopsDB->query($allFidsQuery);
 		$foundFids = array();
 		while($allFidsArray = $xoopsDB->fetchArray($allFidsRes)) {
@@ -217,20 +217,28 @@ class formulizeFormsHandler {
 	}
 
 	function getFormsByApplication($application_object_or_id) {
-		if(is_numeric($application_object_or_id)) {
+		if(is_numeric($application_object_or_id) AND $application_object_or_id > 0) {
 			$application_handler = xoops_getmodulehandler('applications','formulize');
 			$application_object_or_id = $application_handler->get($application_object_or_id);
 		}
+		$fids = array();
 		if(is_object($application_object_or_id)) {
 			if(get_class($application_object_or_id) == 'formulizeApplication') {
 				$applicationObject = $application_object_or_id;
+				foreach($applicationObject->getVar('forms') as $thisFid) {
+					$fids[] = $this->get($thisFid);
+				}
 			} else {
 				return false;
 			}
-		}
-		$fids = array();
-		foreach($applicationObject->getVar('forms') as $thisFid) {
-			$fids[] = $this->get($thisFid);
+		} else {
+			// no application specified, so get forms that do not belong to an application
+			$sql = "SELECT id_form FROM ".$this->db->prefix("formulize_id")." as formtable WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.fid=formtable.id_form) ORDER BY formtable.desc_form";
+			if($res = $this->db->query($sql)) {
+				while($array = $this->db->fetchArray($res)) {
+					$fids[] = $this->get($array['id_form']);
+				}
+			}
 		}
 		return $fids;
 	}
@@ -337,6 +345,59 @@ class formulizeFormsHandler {
 			}
 		}
 	}
+
+	function delete($fid) {
+		if(is_object($fid)) {
+			if(!get_class("formulizeForm")) {
+				return false;
+			}
+			$fid = $fid->getVar('id_form');
+		} elseif(!is_numeric($fid)) {
+			return false;
+		}
+		$isError = false;
+		global $xoopsDB;
+		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form = $fid";
+		if(!$xoopsDB->query($sql)) {
+			print "Error: could not delete form $fid";
+			$isError = true;
+		}
+		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
+		if(!$xoopsDB->query($sql)) {
+			print "Error: could not delete elements for form $fid";
+			$isError = true;
+		}
+		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_framework_links"). " WHERE fl_form1_id = $fid OR fl_form2_id = $fid";
+		if(!$xoopsDB->query($sql)) {
+			print "Error: could not delete relationship links for form $fid";
+			$isError = true;
+		}
+		$sql = "SELECT sid, type FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=$fid";
+		if($res = $xoopsDB->query($sql)) {
+			while($array = $xoopsDB->fetchArray($res)) {
+				$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_screen_".strtolower($array['type']))." WHERE sid=".intval($array['sid']);
+				if(!$xoopsDB->query($sql)) {
+					print "Error: could not delete screen ".htmlspecialchars(strip_tags($array['sid']))." for form $fid";
+					$isError = true;
+				}
+			}
+			$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=$fid";
+			if(!$xoopsDB->query($sql)) {
+				print "Error: could not delete screens for form $fid";
+				$isError = true;
+			}
+		}
+		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_application_form_link")." WHERE fid=$fid";
+		if(!$xoopsDB->query($sql)) {
+			print "Error: could not delete form $fid from its applications";
+			$isError = true;
+		}
+		if(!$this->dropDataTable($fid)) {
+			$isError = true;
+		}
+		return $isError ? false : true;
+	}
+
 	
 	// create a data table for a form object (or form)
 	// $fid can be an id or an object
@@ -628,4 +689,131 @@ class formulizeFormsHandler {
 
 		return $perGroupFilter;
 	}
+	
+	function cloneForm($fid, $clonedata=false) {
+		if(is_object($fid)) {
+			if(!get_class("formulizeForm")) {
+				return false;
+			}
+			$fid = $fid->getVar('id_form');
+		} elseif(!is_numeric($fid)) {
+			return false;
+		}
+		// procedure:
+		// duplicate row for that fid in db but use next incremental fid
+		// duplicate rows in form table for that fid, but use new fid and increment ele_ids of course
+		// redraw page
+
+	  // check if the default title is already in use as the name of a form...keep looking for the title and add numbers onto the end, until we don't find a match any longer
+	  $foundTitle = 1;
+	  $titleCounter = 0;
+	  while($foundTitle) {
+	    if(!isset($titleSearchingFor)) {
+	      $titleSearchingFor = _FORM_MODCLONED_FORM;
+	    } else {
+	      $titleCounter++;
+	      $titleSearchingFor = _FORM_MODCLONED_FORM." $titleCounter";
+	    }
+	    $titleCheckSQL = "SELECT desc_form FROM " . $this->db->prefix("formulize_id") . " WHERE desc_form = '$titleSearchingFor'";
+	    $titleCheckResult = $this->db->query($titleCheckSQL);
+	    $foundTitle = $this->db->getRowsNum($titleCheckResult);
+	  }
+		$newtitle = $titleSearchingFor;	// use whatever the last searched for title is (because it was not found)
+
+		$getrow = q("SELECT * FROM " . $this->db->prefix("formulize_id") . " WHERE id_form = $fid");
+		$insert_sql = "INSERT INTO " . $this->db->prefix("formulize_id") . " (";
+		$start = 1;
+		foreach($getrow[0] as $field=>$value) {
+			if(!$start) { $insert_sql .= ", "; }
+			$start = 0;
+			$insert_sql .= $field;
+		}
+		$insert_sql .= ") VALUES (";
+		$start = 1;
+		foreach($getrow[0] as $field=>$value) {
+		if($field == "id_form") { $value = ""; }
+			if($field == "desc_form") { $value = $newtitle; }
+			if($field == "headerlist") { $value = ""; }
+			if(!$start) { $insert_sql .= ", "; }
+			$start = 0;
+			$insert_sql .= "\"$value\"";
+		}
+		$insert_sql .= ")";
+		if(!$result = $this->db->query($insert_sql)) {
+			exit("error duplicating form: '$title'<br>SQL: $insert_sql<br>".mysql_error());
+		}
+
+		$newfid = $this->db->getInsertId();
+	
+		$getelements = q("SELECT * FROM " . $this->db->prefix("formulize") . " WHERE id_form = $fid");
+    $oldNewEleIdMap = array();
+		foreach($getelements as $ele) { // for each element in the form....
+			$insert_sql = "INSERT INTO " . $this->db->prefix("formulize") . " (";
+			$start = 1;
+			foreach($ele as $field=>$value) {
+				if(!$start) { $insert_sql .= ", "; }
+				$start = 0;
+				$insert_sql .= $field;
+			}
+			$insert_sql .= ") VALUES (";
+			$start = 1;
+			foreach($ele as $field=>$value) {
+				if($field == "id_form") { $value = "$newfid"; }
+				if($field == "ele_id") { $value = ""; }
+				if($field == "ele_handle") {
+					if($value === $ele['ele_id']) {
+						$value = "replace_with_ele_id";
+					} else {
+						$value .= "_cloned";
+					}
+					$oldNewEleIdMap[$ele['ele_handle']] = $value;
+				}
+				if(!$start) { $insert_sql .= ", "; }
+				$start = 0;
+				$value = addslashes($value);
+				$insert_sql .= "\"$value\"";
+			}
+			$insert_sql .= ")";
+			if(!$result = $this->db->query($insert_sql)) {
+				exit("error duplicating elements in form: '$title'<br>SQL: $insert_sql<br>".mysql_error());
+			}
+			if($oldNewEleIdMap[$ele['ele_handle']] == "replace_with_ele_id") {
+				$oldNewEleIdMap[$ele['ele_handle']] = $this->db->getInsertId();
+			}
+		}
+
+		// replace ele_id flags that need replacing
+		$replaceSQL = "UPDATE ". $this->db->prefix("formulize") . " SET ele_handle=ele_id WHERE ele_handle=\"replace_with_ele_id\"";
+		if(!$result = $this->db->queryF($replaceSQL)) {
+		  exit("error setting the ele_handle values for the new form.<br>".mysql_error());
+		}
+
+	  // Need to create the new data table now -- July 1 2007
+    if(!$tableCreationResult = $this->createDataTable($newfid, $fid, $oldNewEleIdMap)) { 
+      print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
+    }
+        
+  
+    if($clonedata) {
+        // July 1 2007 -- changed how cloning happens with new data structure
+        include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php"; // formulize data handler
+        $dataHandler = new formulizeDataHandler($newfid);
+        if(!$cloneResult = $dataHandler->cloneData($fid, $oldNewEleIdMap)) {
+          print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
+        }
+    }
+    
+    // replicate permissions of the original form on the new cloned form
+    $criteria = new CriteriaCompo();
+    $criteria->add(new Criteria('gperm_itemid', $fid), 'AND');
+    $criteria->add(new Criteria('gperm_modid', getFormulizeModId()), 'AND');
+    $gperm_handler = xoops_gethandler('groupperm');
+    $oldFormPerms = $gperm_handler->getObjects($criteria);
+    foreach($oldFormPerms as $thisOldPerm) {
+      // do manual inserts, since addRight uses the xoopsDB query method, which won't do updates/inserts on GET requests
+      $sql = "INSERT INTO ".$this->db->prefix("group_permission"). " (gperm_name, gperm_itemid, gperm_groupid, gperm_modid) VALUES ('".$thisOldPerm->getVar('gperm_name')."', $newfid, ".$thisOldPerm->getVar('gperm_groupid').", ".getFormulizeModId().")";
+      $res = $this->db->queryF($sql);
+    }
+	}
+	
 }

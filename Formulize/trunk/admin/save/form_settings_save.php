@@ -45,6 +45,17 @@ if($_POST['formulize_admin_key'] == "new") {
   $fid = intval($_POST['formulize_admin_key']);
   $formObject = $form_handler->get($fid);
 }
+
+// Check if the form is locked down
+if($formObject->getVar('lockedform')) {
+  return;
+}
+
+// check if the user has permission to edit the form
+if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
+  return;
+}
+
 if(($_POST['new_app_yes_no'] == "yes" AND $_POST['applications-name'])) {
   $newAppObject = $application_handler->create();  
 } 
@@ -69,6 +80,7 @@ if($_POST['formulize_admin_key'] == "new") {
   }
 }
 
+$selectedAppIds = array();
 if($newAppObject) {
   // assign the form id to this new application
   $processedValues['applications']['forms'] = serialize(array($fid));
@@ -78,6 +90,7 @@ if($newAppObject) {
   if(!$application_handler->insert($newAppObject)) {
     print "Error: could not save the new application properly: ".mysql_error();
   }
+  $selectedAppIds[] = $newAppObject->getVar('appid');
 }
 
 // get the applications this form is assigned to
@@ -98,7 +111,7 @@ foreach($selectedAppObjects as $thisAppObject) {
 
 // now remove the form from any applications it used to be assigned to, which were not selected
 foreach($assignedAppsForThisForm as $assignedApp) {
-  if(!in_array($assignedApp->getVar('appid'), $selectedAppIds)) {
+  if(!in_array($assignedApp->getVar('appid'), $selectedAppIds)){
     // the form is no longer assigned to this app, so remove it from the apps form list
     $assignedAppForms = $assignedApp->getVar('forms');
     $key = array_search($fid, $assignedAppForms);
@@ -116,6 +129,16 @@ if(isset($_POST['forms-tableform'])) {
   if(!$form_handler->createTableFormElements($_POST['forms-tableform'], $fid)) {
     print "Error: could not create all the placeholder elements for the tableform";
   }
+}
+
+// if the form name was changed, then force a reload of the page...reload will be the application id
+if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $newAppObject OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $selectedAppIds))) {
+  if(!in_array($_POST['application_url_id'], $selectedAppIds)) {
+    $appidToUse = intval($selectedAppIds[0]);
+  } else {
+    $appidToUse = intval($_POST['application_url_id']);
+  }
+  print "/* eval */ window.location = '". XOOPS_URL ."/modules/formulize/admin/ui.php?page=form&aid=$appidToUse&fid=$fid';";
 }
 
 // need to do some other stuff here later to setup defaults for...

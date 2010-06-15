@@ -181,7 +181,7 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false)
     $found_names = $real_found_names;
   } 
   
-  natsort($found_names);	
+  natcasesort($found_names);	
 	return $found_names;
 
 // recoded above to use $member_handler, and that will intelligently take archived users into account if the Freeform archive patch is in effect.
@@ -3800,7 +3800,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
 // $filterSettings is the actual filter settings in an array, as retrieved (and unserialized) from the DB
 // $filterName is the unique name to use for this set of elements
 // $formWithSourceElements is the ID of the form to use to get the elements from to show in the filter options
-// $formName is the name of the HTML form that this filter UI is being embedded into
+// $formName is the name of the HTML form that this filter UI is being embedded into - ID really, not the name
 // $defaultTypeIfNoFilterTypeGiven is the value ("all" or "oom") that should be used for the filter type, if no filter type is specified...this happens when old installations are upgraded to the new version that is type-aware for these filters, no filter type will be specified for all the conditions.  Therefore, we have to assume what it should be, and that is potentially different for each place this function is called, since the logic reading these filters for each of those places will have assumed one or the other.
 // $groups is the groups to filter the elements with (only elements visible to those groups).  If no groups, then all elements are returned.
 // filterAllText is the text to use for the "all" option
@@ -3844,7 +3844,7 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
  $oldTermsName = $filterName."_terms";
  $oldTypesName = $filterName."_types";
 
- if(!isset($_POST[$oldElementsName]) AND is_array($filterSettings)) { // unpack existing conditions on the first load only
+ if(is_array($filterSettings)) { // unpack existing conditions
    ${$oldElementsName} = $filterSettings[0];
    ${$oldOpsName} = $filterSettings[1];
    ${$oldTermsName} = $filterSettings[2];
@@ -3855,12 +3855,12 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
 			 ${$oldTypesName}[] = $defaultTypeIfNoFilterTypeGiven;
      }
    }
- } elseif(isset($_POST[$oldElementsName]) AND $_POST[$filterName] != "all") { // unpack any values persisted from the previous pageload
+ } /*elseif(isset($_POST[$oldElementsName])) { // unpack any values persisted from the previous pageload
   ${$oldElementsName} = $_POST[$oldElementsName];
   ${$oldOpsName} = $_POST[$oldOpsName];
   ${$oldTermsName} = $_POST[$oldTermsName];
   ${$oldTypesName} = $_POST[$oldTypesName];
- }
+ }*/
 
   // setup needed variables for the all or oom ui
  // > match all of these
@@ -3874,21 +3874,23 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
  $newOpNameOOM = "new_".$filterName."_oom_op";
  $newTermNameOOM = "new_".$filterName."_oom_term";
 
+ /*
+ // STRONG PREMISE IS THAT WE ALWAYS RELOAD FROM DATABASE AFTER STATE CHANGE IN NEW UI
  // add in any new terms that have been sent...
  // > match all of these
- if(${$newTermName} != "" AND $_POST[$filterName] != "all") {
-  ${$oldElementsName}[] = ${$newElementName};
-  ${$oldOpsName}[] = ${$newOpName};
-  ${$oldTermsName}[] = ${$newTermName};
+ if($_POST[$newTermName] != "") {
+  ${$oldElementsName}[] = $_POST[$newElementName];
+  ${$oldOpsName}[] = $_POST[$newOpName];
+  ${$oldTermsName}[] = $_POST[$newTermName];
   ${$oldTypesName}[] = "all";
  }
  // > match one or more of these
- if(${$newTermNameOOM} != "" AND $_POST[$filterName] != "all") {
-  ${$oldElementsName}[] = ${$newElementNameOOM};
-  ${$oldOpsName}[] = ${$newOpNameOOM};
-  ${$oldTermsName}[] = ${$newTermNameOOM};
+ if($_POST[$newTermNameOOM] != "") {
+  ${$oldElementsName}[] = $_POST[$newElementNameOOM];
+  ${$oldOpsName}[] = $_POST[$newOpNameOOM];
+  ${$oldTermsName}[] = $_POST[$newTermNameOOM];
   ${$oldTypesName}[] = "oom";
- }
+ }*/
 
  // make hidden elements for all the old conditions we found
  for($i=0;$i<count(${$oldElementsName});$i++) {
@@ -3897,40 +3899,23 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
    $thisHiddenTerm = new xoopsFormHidden($oldTermsName."[]", strip_tags(htmlspecialchars(${$oldTermsName}[$i])));
    $thisHiddenType = new xoopsFormHidden($oldTypesName."[]", strip_tags(htmlspecialchars(${$oldTypesName}[$i])));
    if(${$oldTypesName}[$i] == "all") {
-        $conditionlist .= $options[${$oldElementsName}[$i]] . " " . ${$oldOpsName}[$i] . " " . ${$oldTermsName}[$i] . "\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
+        $conditionlist .= $options[${$oldElementsName}[$i]] . " " . ${$oldOpsName}[$i] . " " . ${$oldTermsName}[$i] . "&nbsp;&nbsp;<a class='conditionsdelete' title='Delete' target='".$filterName."_".$i."' href=''>X</a>\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
    } else {
-        $conditionlistOOM .= $options[${$oldElementsName}[$i]] . " " . ${$oldOpsName}[$i] . " " . ${$oldTermsName}[$i] . "\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
+        $conditionlistOOM .= $options[${$oldElementsName}[$i]] . " " . ${$oldOpsName}[$i] . " " . ${$oldTermsName}[$i] . "&nbsp;&nbsp;<a class='conditionsdelete' title='Delete' target='".$filterName."_".$i."' href=''>X</a>\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
    }
  }
  // setup the new element, operator, term boxes...
  // > match all of these
- $conditionui = "<br /><b>" . _formulize_GENERIC_FILTER_MATCH_ALL . "</b>";
+ $conditionui = "<i>" . _formulize_GENERIC_FILTER_MATCH_ALL . "</i>";
  $conditionui .= formulize_createFilterUIMatch($newElementName,$formName,$filterName,$options,$newOpName,$newTermName,$conditionlist);
  // > match one or more of these
- $conditionui .= "<br /><b>" . _formulize_GENERIC_FILTER_MATCH_ONEORMORE . "</b>";
+ $conditionui .= "<br /><i>" . _formulize_GENERIC_FILTER_MATCH_ONEORMORE . "</i>";
  $conditionui .= formulize_createFilterUIMatch($newElementNameOOM,$formName,$filterName,$options,$newOpNameOOM,$newTermNameOOM,$conditionlistOOM);
-
+ $conditionui .= "<br />";
  // build add another condition button
- $addcon = new xoopsFormButton('', 'addcon', $filterButtonText, 'submit');
- $addcon->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
- 
- $conditionui .= "<br />" . $addcon->render();
-
- // setup the radio buttons for no filter, or yes use a filter
- if((isset($_POST[$filterName]) AND $_POST[$filterName]=="all") OR (!isset($_POST[$filterName]) AND !is_array($filterSettings))) {
-  $radioSetting = 'all';
- } else {
-  $radioSetting = 'con';
- }
- $radioButtons = new xoopsFormElementTray('', "<br />");
- $radioButtonAll = new xoopsFormRadio('', $filterName, $radioSetting);
- $radioButtonAll->addOption('all', $filterAllText);
- $radioButtonCon = new xoopsFormRadio('' , $filterName, $radioSetting);
- $radioButtonCon->addOption('con', $filterConText.$conditionui);
- $radioButtons->addElement($radioButtonAll);
- $radioButtons->addElement($radioButtonCon);
-
-  return $radioButtons;
+ $addcon = new xoopsFormButton('', 'addcon', $filterButtonText, 'button');
+  
+ return $conditionui . $addcon->render();
 
 }
 
@@ -3938,7 +3923,6 @@ function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$op
  // setup the new element, operator, term boxes...
  $new_elementOpTerm = new xoopsFormElementTray('', "&nbsp;&nbsp;");
  $element = new xoopsFormSelect('', $newElementName);
- $element->setExtra(" onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\" ");
  $element->addOptionArray($options);
  $op = new xoopsFormSelect('', $newOpName);
  $ops['='] = "=";
@@ -3950,9 +3934,7 @@ function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$op
  $ops['LIKE'] = "LIKE";
  $ops['NOT LIKE'] = "NOT LIKE";
  $op->addOptionArray($ops);
- $op->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
  $term = new xoopsFormText('', $newTermName, 10, 255);
- $term->setExtra("onfocus=\"javascript:window.document.".$formName.".".$filterName."[1].checked=true\"");
  $new_elementOpTerm->addElement($element);
  $new_elementOpTerm->addElement($op);
  $new_elementOpTerm->addElement($term);

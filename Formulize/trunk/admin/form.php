@@ -30,6 +30,7 @@
 // this file gets all the data about applications, so we can display the Settings/forms/relationships tabs for applications
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
+global $xoopsDB;
 
 // need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
 $aid = intval($_GET['aid']);
@@ -65,17 +66,65 @@ if($_GET['fid'] != "new") {
   // Name will be the heading of the section, content is data used in the template for each section
   $i = 1; 
   foreach($elementObjects as $thisElement) {
-    $elementCaption = printSmart($thisElement->getVar('ele_caption'),75);
+    $elementCaption = printSmart(strip_tags($thisElement->getVar('ele_caption')),75);
     $ele_id = $thisElement->getVar('ele_id');
     $elements[$i]['name'] = $elementCaption;
     $elements[$i]['content']['ele_id'] = $ele_id;
     $elements[$i]['content']['ele_handle'] = $thisElement->getVar('ele_handle');
-    $elements[$i]['content']['ele_type'] = $thisElement->getVar('ele_type');
-    $elements[$i]['content']['ele_req'] = $thisElement->getVar('ele_req');
-    $elements[$i]['content']['ele_display'] = $thisElement->getVar('ele_display');
+    $ele_type = $thisElement->getVar('ele_type');
+    switch($ele_type) {
+      case("text"):
+        $converttext = "Convert to multi-line text box";
+        $linktype = "textarea";
+        break;
+      case("textarea"):
+        $converttext = "Convert to single-line text box";
+        $linktype = "text";
+        break;
+      case("radio"):
+        $converttext = "Convert to check boxes";
+        $linktype = "checkbox";
+        break;
+      case("checkbox"):
+        $converttext = "Convert to radio buttons";
+        $linktype = "radio";
+        break;
+      default:
+        $converttext = "";
+        $linktype = "";
+    }
+    print $converttext;
+    $elements[$i]['content']['converttext'] = $converttext;
+    $elements[$i]['content']['linktype'] = $linktype;
+    $elements[$i]['content']['ele_type'] = convertTypeToText($thisElement->getVar('ele_type'), $ele_type);
+    $elements[$i]['content']['ele_req'] = removeNotApplicableRequireds($thisElement->getVar('ele_type'), $thisElement->getVar('ele_req'));
+    $ele_display = $thisElement->getVar('ele_display');
+    $multiGroupDisplay = false;
+		if(substr($ele_display, 0, 1) == ",") {
+			$multiGroupDisplay = true;
+      $fs_member_handler =& xoops_gethandler('member');
+      $fs_xoops_groups =& $fs_member_handler->getGroups();
+      $displayGroupList = explode(",", trim($ele_display, ","));
+      $check_display = '';
+      foreach($displayGroupList as $groupList) {
+				if($groupList != "") {
+		      if($check_display != '') { $check_display .= ", "; }
+					$group_display = $fs_member_handler->getGroup($groupList);
+					if(is_object($group_display)) {
+						$check_display .= $group_display->getVar('name');
+					} else {
+						$check_display .= "???";
+					}
+				}                               
+      }
+      $check_display = '<a class=info href="" onclick="return false;" alt="' . $check_display . '" title="' . $check_display . '">' . _AM_FORM_DISPLAY_MULTIPLE . '</a>';
+    } else {
+      $check_display = $ele_display;
+    }
+    $elements[$i]['content']['ele_display'] = $check_display;
     $elements[$i]['content']['ele_private'] = $thisElement->getVar('ele_private');
-    $colhead = printSmart($thisElement->getVar('ele_caption'),75);
-    $elementHeadings[$i]['text'] = $colhead ? $colhead : printSmart($thisElement->getVar('ele_caption'),75);
+    $colhead = $thisElement->getVar('ele_colhead');
+    $elementHeadings[$i]['text'] = $colhead ? printSmart($colhead, 75) : printSmart($thisElement->getVar('ele_caption'),75);
     $elementHeadings[$i]['ele_id'] = $ele_id;
     $elementHeadings[$i]['selected'] = in_array($ele_id, $headerlistArray) ? " selected" : "";
     $i++;
@@ -101,6 +150,91 @@ if($_GET['fid'] != "new") {
   foreach($thisFormApplications as $thisApp) {
     $formApplications[] = $thisApp->getVar('appid');
   }
+  
+  // get permission data for this form
+  // get group lists
+  $groupListSQL = "SELECT gl_id, gl_name, gl_groups FROM ".$xoopsDB->prefix("group_lists")." ORDER BY gl_name";
+  $grouplists = array();
+  if(isset($_POST['grouplistname']) AND $_POST['grouplistname']) {
+    $selectedGroupList = $_POST['grouplistname'];
+  } elseif(isset($_POST['loadthislist']) AND $_POST['loadthislist']) {
+    $selectedGroupList = intval($_POST['loadthislist']);
+  } elseif(isset($_POST['useselection'])) {
+    $selectedGroupList = 0;
+  } elseif(isset($_POST['grouplists'])) {
+    $selectedGroupList = intval($_POST['grouplists']);
+  }
+  $grouplists[0]['id'] = 0;
+  $grouplists[0]['name'] = "No group list selected";
+  $grouplists[0]['selected'] = $selectedGroupList ? "" : " selected";
+  if($result = $xoopsDB->query($groupListSQL)) {
+    while($array = $xoopsDB->fetchArray($result)) {
+      $grouplists[$array['gl_id']]['id'] = $array['gl_id'];
+      $grouplists[$array['gl_id']]['name'] = $array['gl_name'];
+      if((is_numeric($selectedGroupList) AND $array['gl_id'] == $selectedGroupList) OR $array['gl_name'] === $selectedGroupList) {
+        $glSelectedText = " selected";
+        $selectedGroups = explode(",",$array['gl_groups']);
+      } else {
+        $glSelectedText = "";
+      }
+      $grouplists[$array['gl_id']]['selected'] = $glSelectedText;
+    }
+  }
+  
+  // get the list of groups
+  $member_handler = xoops_gethandler('member');
+  $allGroups = $member_handler->getGroups();
+  $groups = array();
+  if(!isset($selectedGroups)) {
+    $selectedGroups = isset($_POST['groups']) ? $_POST['groups'] : array();  
+  }
+  $orderGroups = isset($_POST['order']) ? $_POST['order'] : "creation";
+  foreach($allGroups as $thisGroup) {
+    $groups[$thisGroup->getVar('name')]['id'] = $thisGroup->getVar('groupid');
+    $groups[$thisGroup->getVar('name')]['name'] = $thisGroup->getVar('name');
+    $groups[$thisGroup->getVar('name')]['selected'] = in_array($thisGroup->getVar('groupid'), $selectedGroups) ? " selected" : "";
+  }
+  if($orderGroups == "alpha") {  
+  	ksort($groups);
+  }
+  
+  // get all the permissions for the selected groups for this form
+  $gperm_handler =& xoops_gethandler('groupperm');
+  $formulize_permHandler = new formulizePermHandler($fid);
+  $filterSettings = $formObject->getVar('filterSettings');
+  $groupperms = array();
+  $groupfilters = array();
+  $i = 0;
+  foreach($selectedGroups as $thisGroup) {
+    // get all the permissions this group has on this form
+  		$criteria = new CriteriaCompo(new Criteria('gperm_groupid', $thisGroup));
+  		$criteria->add(new Criteria('gperm_itemid', $fid));
+  		$criteria->add(new Criteria('gperm_modid', getFormulizeModId()));
+  		$perms = $gperm_handler->getObjects($criteria, true);
+      $groupObject = $member_handler->getGroup($thisGroup);
+      $groupperms[$i]['name'] = $groupObject->getVar('name');
+      $groupperms[$i]['id'] = $groupObject->getVar('groupid');
+  		foreach($perms as $perm) {
+        $groupperms[$i][$perm->getVar('gperm_name')] = " checked";
+  		}
+      // group-specific-scope
+      $scopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groupObject->getVar('groupid'));
+      if($scopeGroups===false) {
+        $groupperms[$i]['groupscope_choice'][0] = " selected";
+      } else {
+        foreach($scopeGroups as $thisScopeGroupId) {
+          $groupperms[$i]['groupscope_choice'][$thisScopeGroupId] = " selected";
+        }
+      }
+      // per-group-filters
+      $filterSettingsToSend = isset($filterSettings[$thisGroup]) ? $filterSettings[$thisGroup] : "";
+      $htmlFormId = $tableform ? "form-2" : "form-3"; // the form id will vary depending on the tabs, and tableforms have no elements tab
+      $groupperms[$i]['groupfilter'] = formulize_createFilterUI($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, "oom");
+      $groupperms[$i]['hasgroupfilter'] = $filterSettingsToSend ? " checked" : "";
+      $i++;
+  		unset($criteria);
+  }
+
 } else {
   $fid = $_GET['fid'];
   if($_GET['tableform']) {
@@ -123,10 +257,10 @@ foreach($allApps as $thisApp) {
   $i++;
 }
 
-
 // common values should be assigned to all tabs
 $common['name'] = $formName;
 $common['fid'] = $fid;
+$common['aid'] = $aid;
 
 $permissions = array();
 $permissions['hello'] = "Hello Permission World";
@@ -157,32 +291,48 @@ $settings = array();
 $settings['singleentry'] = $singleentry;
 $settings['istableform'] = $tableform OR $newtableform ? true : false;
 
-
-$adminPage['tabs'][1]['name'] = "Settings";
-$adminPage['tabs'][1]['template'] = "db:admin/form_settings.html";
-$adminPage['tabs'][1]['content'] = $settings + $common;
-$adminPage['tabs'][1]['content']['applications'] = $applications;
+$i = 1;
+$adminPage['tabs'][$i]['name'] = "Settings";
+$adminPage['tabs'][$i]['template'] = "db:admin/form_settings.html";
+$adminPage['tabs'][$i]['content'] = $settings + $common;
+$adminPage['tabs'][$i]['content']['applications'] = $applications;
 if(isset($elementHeadings)) {
-  $adminPage['tabs'][1]['content']['elementheadings'] = $elementHeadings;
+  $adminPage['tabs'][$i]['content']['elementheadings'] = $elementHeadings;
 }
 if(isset($formApplications)) {
-  $adminPage['tabs'][1]['content']['formapplications'] = $formApplications;
+  $adminPage['tabs'][$i]['content']['formapplications'] = $formApplications;
 }
+$i++;
 
-$adminPage['tabs'][2]['name'] = "Elements";
-$adminPage['tabs'][2]['template'] = "db:admin/form_elements.html";
-$adminPage['tabs'][2]['content'] = $common;
-if(isset($elements)) {
-  $adminPage['tabs'][2]['content']['elements'] = $elements;
+if($fid != "new") {
+  
+  if(!$tableform AND !$newtableform) {
+    $adminPage['tabs'][$i]['name'] = "Elements";
+    $adminPage['tabs'][$i]['template'] = "db:admin/form_elements.html";
+    $adminPage['tabs'][$i]['content'] = $common;
+    if(isset($elements)) {
+      $adminPage['tabs'][$i]['content']['elements'] = $elements;
+    }
+    $i++;
+  }
+  
+  $adminPage['tabs'][$i]['name'] = "Permissions";
+  $adminPage['tabs'][$i]['template'] = "db:admin/form_permissions.html";
+  $adminPage['tabs'][$i]['content'] = $common;
+  $adminPage['tabs'][$i]['content']['groups'] = $groups;
+  $adminPage['tabs'][$i]['content']['grouplists'] = $grouplists;
+  $adminPage['tabs'][$i]['content']['order'] = $orderGroups;
+  $adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "same" ? "same" : "different";
+  $adminPage['tabs'][$i]['content']['groupperms'] = $groupperms;
+  
+  $i++;
+  
+  $adminPage['tabs'][$i]['name'] = "Screens";
+  $adminPage['tabs'][$i]['template'] = "db:admin/form_screens.html";
+  $adminPage['tabs'][$i]['content'] = $screens + $common;
+  $i++;
+  
 }
-
-$adminPage['tabs'][3]['name'] = "Permissions";
-$adminPage['tabs'][3]['template'] = "db:admin/form_permissions.html";
-$adminPage['tabs'][3]['content'] = $permissions + $common; 
-
-$adminPage['tabs'][4]['name'] = "Screens";
-$adminPage['tabs'][4]['template'] = "db:admin/form_screens.html";
-$adminPage['tabs'][4]['content'] = $screens + $common;
 
 $adminPage['pagetitle'] = "Form: ".$formName;
 $adminPage['needsave'] = true;
@@ -193,3 +343,50 @@ $breadcrumbtrail[2]['url'] = "page=application&aid=$aid";
 $breadcrumbtrail[2]['text'] = $appName;
 $breadcrumbtrail[3]['text'] = $formName;
 
+function convertTypeToText($type, $ele_value) {
+  switch($type) {
+    case "text":
+      return "Textbox";
+    case "textarea":
+      return "Multi-line text box";
+    case "areamodif":
+      return "Text for display (left and right cells)";
+    case "ib":
+      return "Text for display (spanning both cells)";
+    case "select":
+      if($ele_value[0] == 1) {
+        return "Dropdown box";
+      } else {
+        return "List box";
+      }
+    case "checkbox":
+      return "Check boxes";
+    case "radio":
+      return "Radio buttons";
+    case "yn":
+      return "Yes/No radio buttons";
+    case "date":
+      return "Date box";
+    case "subform":
+      return "Subform (another form with a relationship to this one)";
+    case "grid":
+      return "Table of existing elements (place BEFORE the elements it contains)";
+    case "derived":
+      return "Value derived from other elements";
+    case "colorpick":
+      return "Color picker";
+  }
+  
+}
+
+function removeNotApplicableRequireds($type, $req) {
+  switch($type) {
+    case "text":
+    case "textarea":
+    case "select":
+    case "radio":
+    case "date":
+      return $req;
+  }
+  return false;
+}

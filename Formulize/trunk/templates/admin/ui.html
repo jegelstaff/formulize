@@ -1,10 +1,23 @@
-<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/jquery/jquery-1.3.2.min.js"></script>
-<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/jquery/jquery-ui-1.7.2.custom.min.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/jquery/jquery-1.4.2.min.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/jquery/jquery-ui-1.8.2.custom.min.js"></script>
 
-<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/jquery/css/start/jquery-ui-1.7.2.custom.css">
-<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/admin/ui.css">
+<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/jquery/css/start/jquery-ui-1.8.2.custom.css">
+<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/admin/css/ui.css">
+<script type="text/javascript">
+ var pagehasaccordion = new Array();
+</script>
+
+<!--[if IE 6]> 
+	<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/admin/css/ie6.css" />
+<![endif]-->
 
 <div class="admin-ui">
+
+<form name="scrollposition" method="post">
+  <input type="hidden" name="scrollx" value="">
+  <input type="hidden" name="tabs_selected" value="">
+  <input type="hidden" name="accordion_active" value="">
+</form>
 
 <{if $breadcrumbtrail}>
 <p>
@@ -28,11 +41,16 @@
 </p>
 <{/if}>
   
-<h1><{$adminPage.pagetitle}></h1>  
+<div id="formulize-logo"><img src="<{$xoops_url}><{$adminPage.logo}>" align="<{$adminPage.pagetitle}>" title="<{$adminPage.pagetitle}>" /></div>
+
+<{if $adminPage.pagetitle}>
+<h1><{$adminPage.pagetitle}></h1>
+<{/if}>
 
 <{if $adminPage.needsave}>
-<div id=savebutton><input type="button" class="savebutton" value="Save your changes"/></div><div id="savewarning">You have unsaved changes!</div>
+<div id=savebutton><input type="button" class="savebutton" value="Save your changes"/></div>
 <{/if}>
+<div id="savewarning">You have unsaved changes!</div>
 
 <{if $adminPage.template}>
 <{include file=$adminPage.template}>  
@@ -46,36 +64,104 @@
 
 <script type="text/javascript">
 
+  var saveCounter = 0;
+  var saveTarget = 0;
+  var redirect = "";
+  var formdata = new Array();
+
   $("input").change(function() {
+    window.document.getElementById('savewarning').style.display = 'block';
+    });
+  $("input[type=text]").keydown(function() {
     window.document.getElementById('savewarning').style.display = 'block';
     });
   $("select").change(function() {
     window.document.getElementById('savewarning').style.display = 'block';
     });
-  $("textarea").change(function() {
+  $("textarea").keydown(function() {
     window.document.getElementById('savewarning').style.display = 'block';
     });
 
   $(".savebutton").click(function() {
+    if(validateRequired()) {
+      runSaveEvent();
+    }
+  });
+
+  function runSaveEvent() {
+    $(".admin-ui").fadeTo(1,0.5);
     var formulize_formlist = window.document.getElementsByName("formulize-admin-form");
+    saveCounter = 0;
+    saveTarget = 0;
+    redirect = "";
+    formdata = new Array();
     for( var i in formulize_formlist) {
       if(typeof(formulize_formlist[i]) == 'object') { // for some crazy reason, non-form stuff can be pulled in by getElementsByName with that param...I hate javascript
-        $.post("save.php", $(formulize_formlist[i]).serialize(), function(data) {
-          if(data) {
-            if(data.substr(0,10)=="/* eval */") {
-              eval(data);
-            } else
-              alert(data);
-          }
-        });
+        formdata[saveTarget] = formulize_formlist[i];
+        saveTarget = saveTarget + 1;
       }
     }
-    window.document.getElementById('savewarning').style.display = 'none';
-    $(".savebutton").blur();
-  });
+    if(saveTarget > 0) {
+      sendFormData(formdata[0]); // send the first form's data 
+    }
+  }
+  
+  function sendFormData(thisformdata) {
+    $.post("save.php", $(thisformdata).serialize(), function(data) {
+      saveCounter = saveCounter + 1;
+      if(data) {
+        if(data.substr(0,10)=="/* eval */") {
+          redirect = data;
+        } else {
+          alert(data);
+        }
+      }
+      if(saveCounter == saveTarget) { // if we've received a response for all the forms...
+        window.document.getElementById('savewarning').style.display = 'none';
+        $(".savebutton").blur();
+        if(redirect) {
+          eval(redirect);
+        } else {
+          $(".admin-ui").fadeTo(1,1);
+        }
+      } else { // if there's still forms to do, then send the next one...must do sequentially to avoid race conditions
+        sendFormData(formdata[saveCounter]);
+      }
+    });
+  }
+  
+  function reloadWithScrollPosition() {
+    window.document.scrollposition.scrollx.value = $(window).scrollTop();
+    var tabs_selected = "";
+    <{if $adminPage.tabs}> 
+    tabs_selected = $("#tabs").tabs("option","selected");
+    window.document.scrollposition.tabs_selected.value = tabs_selected;
+    tabs_selected = tabs_selected+1;
+    <{/if}>
+    if(pagehasaccordion["accordion-"+tabs_selected]) {
+      var accordion_active = $("#accordion-"+tabs_selected).accordion( "option", "active" );
+      accordion_active = accordion_active;
+    }
+    window.document.scrollposition.accordion_active.value = accordion_active;
+    window.document.scrollposition.submit();
+  }
+
+  function validateRequired() {
+    var requiredok = true;
+    $(".required_formulize_element").each(function () {
+      if(($(this).val().length) == 0) {
+        requiredok = false;
+      }
+    });
+    return requiredok;
+  }
 
   $().ajaxError(function () {
     alert("There was an error when saving your data.  Please try again.");
+  });
+  
+  $(window).load(function () {
+    $(window).scrollTop(<{$scrollx}>);
   });
   
 </script>

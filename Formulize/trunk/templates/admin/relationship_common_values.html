@@ -1,3 +1,20 @@
+<script type='text/javascript'>
+var lid=<{$content.lid}>;
+
+$("[name=submitx]").click(function () {
+  var form1choice = $("#form1choice").find(':selected');
+  var form2choice = $("#form2choice").find(':selected');
+
+  var sourceLink = $("#linkages"+lid).find(':selected');
+
+  sourceLink.val( form1choice.val() + '+' + form2choice.val() );
+  sourceLink.text( '<{$smarty.const._AM_FRAME_COMMON_VALUES}>' + form1choice.text() + ' & ' + form2choice.text() );
+
+  $("#dialog-common-values").dialog('close');
+
+  return false;
+});
+</script>
 <div class="panel-content content">
   <table align="center" width="80%">
     <tr>
@@ -32,22 +49,3 @@
     </tr>
   </table>
 </div>
-
-
-<script type='text/javascript'>
-var lid=<{$content.lid}>;
-
-$("[name=submitx]").click(function () {
-  var form1choice = $("#form1choice").find(':selected');
-  var form2choice = $("#form2choice").find(':selected');
-
-  var sourceLink = $("#linkages"+lid).find(':selected');
-
-  sourceLink.val( form1choice.val() + '+' + form2choice.val() );
-  sourceLink.text( '<{$smarty.const._AM_FRAME_COMMON_VALUES}>' + form1choice.text() + ' & ' + form2choice.text() );
-
-  $("#dialog-common-values").dialog('close');
-
-  return false;
-});
-</script>

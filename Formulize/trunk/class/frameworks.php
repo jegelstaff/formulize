@@ -255,18 +255,14 @@ class formulizeFrameworksHandler {
 		static $cachedResults = array();
 		if(isset($cachedResults[$fid])) { return $cachedResults[$fid]; }
 		$ret = array();
-		$sql = 'SELECT * FROM '.$this->db->prefix("formulize_framework_forms").' WHERE ff_form_id='.intval($fid);
+		$sql = 'SELECT DISTINCT(fl_frame_id) FROM '.$this->db->prefix("formulize_framework_links").' WHERE fl_form1_id='.intval($fid).' OR fl_form2_id='.intval($fid);
 
 		$result = $this->db->query($sql);
 
-		$foundFrameworks = array();
 		while( $myrow = $this->db->fetchArray($result) ){
-			if(!isset($foundFrameworks[$myrow['ff_frame_id']])) { // check for duplicate entries, although there shouldn't be any given how the framework system logic is written
-				$foundFrameworks[$myrow['ff_frame_id']] = true;
-				$framework = new formulizeFramework($myrow['ff_frame_id']);
-				$ret[$framework->getVar('frid')] =& $framework;
-				unset($framework);
-			}
+			$framework = new formulizeFramework($myrow['fl_frame_id']);
+			$ret[$framework->getVar('frid')] =& $framework;
+			unset($framework);
 		}
 		$cachedResults[$fid] = $ret;
 		return $ret;

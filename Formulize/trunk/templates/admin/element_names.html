@@ -1,0 +1,73 @@
+<div class="panel-content content">
+
+<form id="form-<{$number}>" name="formulize-admin-form">
+<input type="hidden" name="formulize_admin_handler" value="element_names">
+<input type="hidden" name="formulize_admin_key" value="<{$content.ele_id}>">
+
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_caption" class="question">What is the text that users see when this element appears on a form?</label></legend>
+			<input type="text" name="elements-ele_caption" class="required_formulize_element" value="<{$content.ele_caption}>">
+		</fieldset>
+	</div>
+</div>
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_colhead" class="question">What is the text that users see when this element appears at the top of a column in a list?</label></legend>
+			<input type="text" name="elements-ele_colhead" value="<{$content.ele_colhead}>">
+			<div class="description">
+				<p>Optional</p>
+			</div>
+		</fieldset>
+	</div>
+</div>
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_handle" class="question">What name will you use to refer to this element in programming code and in the database?</label></legend>
+			<input type="text" name="elements-ele_handle" value="<{$content.ele_handle}>">
+			<div class="description">
+				<p>Optional</p>
+			</div>
+		</fieldset>
+	</div>
+</div>
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_desc" class="question">What description or help text should accompany the element?</label></legend>
+			<textarea name="elements-ele_desc"><{$content.ele_desc}></textarea>
+			<div class="description">
+				<p>Optional</p>
+			</div>
+		</fieldset>
+	</div>
+</div>
+<{if $content.ele_req_on}>
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_req" class="question">Make this element "required" so users must give a response:</label></legend>
+			<p><input type="radio" name="elements-ele_req" value=1<{$content.ele_req_yes_on}>> Yes</p>
+			<p><input type="radio" name="elements-ele_req" value=0<{$content.ele_req_no_on}>> No</p>
+		</fieldset>
+	</div>
+</div>
+<{/if}>
+
+</form>
+<div style="clear: both;"></div>
+</div> <!--// end content -->
+
+<script type="text/javascript">
+$(".savebutton").click(function() {
+  if($("[name=elements-ele_caption]").val() == "") {
+		alert("Elements must have a caption!");
+		$("[name=elements-ele_caption]").focus();
+	}
+});
+
+
+</script>

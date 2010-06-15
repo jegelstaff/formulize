@@ -27,39 +27,21 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// This file receives ajax form submissions from the new admin UI
+// this file handles saving of submissions from the application_settings page of the new admin UI
 
-include_once "../../../mainfile.php";
-ob_end_clean();
-global $xoopsUser;
-if(!$xoopsUser) {
-  print "Error: you are not logged in";
-  return;
-}
-$gperm_handler = xoops_gethandler('groupperm');
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-$groups = $xoopsUser->getGroups();
-$mid = getFormulizeModId();
-$permissionToCheck = "module_admin";
-$itemToCheck = $mid;
-$moduleToCheck = 1; // system module
-if(!$gperm_handler->checkRight($permissionToCheck, $itemToCheck, $groups, $moduleToCheck)) {
-  print "Error: you do not have permission to save this data";
+// if we aren't coming from what appears to be save.php, then return nothing
+if(!isset($processedValues)) {
   return;
 }
 
-// process all the submitted form values, looking for ones that can be immediately assigned to objects
-$processedValues = array();
-foreach($_POST as $k=>$v) {
-  if(!strstr($k, "-")) { continue; } // ignore fields with no hyphen
-  list($class, $property) = explode("-", $k);
-  if(is_array($v)) {
-    $v = serialize($v);
-  }
-  $processedValues[$class][$property] = $v;
+$application_handler = xoops_getmodulehandler('applications', 'formulize');
+$appObject = $application_handler->get($_POST['formulize_admin_key']);
+foreach($processedValues['applications'] as $property=>$value) {
+  $appObject->setVar($property, $value);
 }
+$application_handler->insert($appObject);
 
-// include the form-specific handler to invoke the necessary objects and insert them all in the DB
-if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save.php")) {
-  include XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save.php";
+// if the form name was changed, then force a reload of the page...reload will be the application id
+if(isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) {
+  print "/* eval */ window.location = window.location;";
 }

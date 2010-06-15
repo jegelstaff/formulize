@@ -1046,7 +1046,7 @@ function drawformperms($form_list, $formulize_perms, $perm_desc, $group_id="all"
 					$filterSettings = $formObject->getVar('filterSettings');
 					$filterSettingsToSend = isset($filterSettings[$group_id]) ? $filterSettings[$group_id] : "";
 					$filterUI = formulize_createFilterUI($filterSettingsToSend, "filter_".$form_id."_".$group_id, $form_id, "permeditor", "oom");
-					print $filterUI->render();
+					print $filterUI;
 					
 				}
 				
@@ -1240,6 +1240,21 @@ function patch40() {
   INDEX i_appid (`appid`)
 ) TYPE=MyISAM;";
 		}
+		
+		if(!in_array($xoopsDB->prefix("formulize_screen_form"), $existingTables)) {
+			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_screen_form")."` (
+  `formid` int(11) NOT NULL auto_increment,
+  `sid` int(11) NOT NULL default 0,
+  `donedest` varchar(255) NOT NULL default '',
+  `savebuttontext` varchar(255) NOT NULL default '',
+  `alldonebuttontext` varchar(255) NOT NULL default '',
+  `displayheading` tinyint(1) NOT NULL default 0,
+  `reloadblank` tinyint(1) NOT NULL default 0,
+  PRIMARY KEY (`formid`),
+  INDEX i_sid (`sid`)
+) TYPE=MyISAM;";
+		}
+		
 	
 		$sql['add_encrypt'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_encrypt` tinyint(1) NOT NULL default '0'";
 		$sql['add_lockedform'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `lockedform` tinyint(1) NULL default NULL";
@@ -1258,6 +1273,7 @@ function patch40() {
 		$sql['ele_display_dropindex'] = "ALTER TABLE ". $xoopsDB->prefix("formulize") ." DROP INDEX `ele_display`";
 		$sql['ele_display_text'] = "ALTER TABLE ". $xoopsDB->prefix("formulize") ." CHANGE `ele_display` `ele_display` text NOT NULL ";
 		$sql['ele_display_addindex'] = "ALTER TABLE ". $xoopsDB->prefix("formulize") ." ADD INDEX `ele_display` ( `ele_display` ( 255 ) )";
+		$sql['sep_to_areamodif'] = "UPDATE ". $xoopsDB->prefix("formulize") ." SET ele_type='areamodif' WHERE ele_type='sep'";
 
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {

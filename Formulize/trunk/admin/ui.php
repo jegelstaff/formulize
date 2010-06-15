@@ -73,25 +73,27 @@ switch($_GET['page']) {
 		break;
 
 }
-
+$adminPage['logo'] = "/modules/formulize/images/formulize-logo.png";
 
 // assign the default selected tab, if any:
-if(isset($_GET['tab'])) {
+if(isset($_GET['tab']) AND (!isset($_POST['tabs_selected']) OR $_POST['tabs_selected'] === "")) {
   foreach($adminPage['tabs'] as $selected=>$tabData) {
     if(strtolower($tabData['name']) == $_GET['tab']) {
       $adminPage['tabselected'] = $selected-1;
       break;
     }
   }
+} elseif($_POST['tabs_selected'] !== "") {
+	$adminPage['tabselected']  = intval($_POST['tabs_selected']);
 }
 
 // assign the contents to the template and display
 $xoopsTpl->assign('adminPage', $adminPage);
 $xoopsTpl->assign('breadcrumbtrail', $breadcrumbtrail);
+$xoopsTpl->assign('scrollx', intval($_POST['scrollx']));
+$accordion_active = isset($_POST['accordion_active']) ? intval($_POST['accordion_active']) : "false";
+$xoopsTpl->assign('accordion_active', $accordion_active);
 $xoopsTpl->display("db:admin/ui.html");
-
-// assign a security token in case we need one
-$xoopsTpl->assign('securitytoken', $GLOBALS['xoopsSecurity']->getTokenHTML());
 
 include 'footer.php';
 xoops_cp_footer();

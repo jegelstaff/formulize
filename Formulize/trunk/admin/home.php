@@ -32,22 +32,47 @@
 $application_handler = xoops_getmodulehandler('applications', 'formulize');
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $screen_handler = xoops_getmodulehandler('screen','formulize');
+$gperm_handler = xoops_gethandler('groupperm');
 $appObjects = $application_handler->getAllApplications();
 $apps = array();
 $foundForms = array();
-$i = 1;
+
 foreach($appObjects as $thisAppObject) {
-  $aid = $thisAppObject->getVar('appid');
-  $apps[$i]['name'] = $thisAppObject->getVar('name');
+  $apps = readApplicationData($thisAppObject->getVar('appid'), $apps);
+}
+$apps = readApplicationData(0,$apps); // lastly, get forms that don't have an application
+
+$adminPage['apps'] = $apps;
+$adminPage['template'] = "db:admin/home.html";
+
+$breadcrumbtrail[1]['text'] = "Home";
+
+function readApplicationData($aid, $apps) {
+  static $i = 1;
+  global $form_handler, $application_handler, $gperm_handler, $screen_handler, $xoopsUser;
+  $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+  if($aid == 0) {
+    $apps[$i]['name'] = "Forms that don't belong to an application";
+    $apps[$i]['content']['description'] = "";
+  } else {
+    $thisAppObject = $application_handler->get($aid);
+    $apps[$i]['name'] = "Application: ".$thisAppObject->getVar('name');
+    $apps[$i]['content']['description'] = $thisAppObject->getVar('description');
+  }
   $apps[$i]['content']['aid'] = $aid;
-  $apps[$i]['content']['description'] = $thisAppObject->getVar('description');
-  $formObjects = $form_handler->getFormsByApplication($thisAppObject);
+  $formObjects = $form_handler->getFormsByApplication($aid);
   $x = 0;
   foreach($formObjects as $thisFormObject) {
     $fid = $thisFormObject->getVar('id_form');
-    $foundForms[] = $fid; // mark this as found, so we don't get it later
+    // check if the user has edit permission on this form
+    if(!$gperm_handler->checkRight("edit_form", $fid, $groups, getFormulizeModId())) {
+      continue;
+    }
+    $hasDelete = $gperm_handler->checkRight("delete_form", $fid, $groups, getFormulizeModId());
     $apps[$i]['content']['forms'][$x]['fid'] = $fid;
     $apps[$i]['content']['forms'][$x]['name'] = $thisFormObject->getVar('title');
+    $apps[$i]['content']['forms'][$x]['hasdelete'] = $hasDelete;
+    $apps[$i]['content']['forms'][$x]['lockedform'] = $thisFormObject->getVar('lockedform');
     $screenObjects = $screen_handler->getObjects(null,$fid);
     $y = 0;
     foreach($screenObjects as $thisScreenObject) {
@@ -59,39 +84,5 @@ foreach($appObjects as $thisAppObject) {
     $x++;
   }
   $i++;
+  return $apps;
 }
-
-// now we need to make a placeholder application for all forms not mentioned elsewhere
-// figure out the forms that are missing above
-global $xoopsDB;
-$forms = array();
-$whereClause = count($foundForms) > 0 ? " WHERE id_form NOT IN (".implode(",",$foundForms).")" : "";
-$sql = "SELECT id_form, desc_form FROM ".$xoopsDB->prefix("formulize_id").$whereClause." ORDER BY desc_form";
-if($res = $xoopsDB->query($sql)) {
-  $x = 0;
-  while($array = $xoopsDB->fetchArray($res)) {
-    $forms[$x]['fid'] = $array['id_form'];
-    $forms[$x]['name'] = $array['desc_form'];
-    $screenObjects = $screen_handler->getObjects(null,$array['id_form']);
-    $y = 0;
-    foreach($screenObjects as $thisScreenObject) {
-      $sid = $thisScreenObject->getVar('sid');
-      $forms[$x]['screens'][$y]['sid'] = $sid;
-      $forms[$x]['screens'][$y]['name'] = $thisScreenObject->getVar('title');
-      $y++;
-    }
-    $x++;
-  }
-}
-if(count($forms) > 0) {
-  $apps[$i]['name'] = "Forms that don't belong to an application";
-  $apps[$i]['content']['aid'] = 0;
-  $apps[$i]['content']['description'] = "";
-  $apps[$i]['content']['forms'] = $forms; 
-}
-
-$adminPage['apps'] = $apps;
-$adminPage['pagetitle'] = "Formulize 4";
-$adminPage['template'] = "db:admin/home.html";
-
-$breadcrumbtrail[1]['text'] = "Home";

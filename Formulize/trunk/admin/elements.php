@@ -403,7 +403,7 @@ switch($op){
 		$elementFilterSettings = $element->getVar('ele_filtersettings');
 		$elementFilterSettingsToSend = count($elementFilterSettings) > 0 ? $elementFilterSettings : "";
 		$elementFilterUI = formulize_createFilterUI($elementFilterSettingsToSend, "elementfilter", $id_form, "form_ele");
-		$form->addElement(new XoopsFormLabel(_AM_ELE_ELEMENTCONDITIONS, $elementFilterUI->render()));
+		$form->addElement(new XoopsFormLabel(_AM_ELE_ELEMENTCONDITIONS, $elementFilterUI)); //$elementFilterUI->render()));
 
 		if($ele_type == "radio" OR $ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "yn") {
 			// added by jwe Nov 7 2005, a checkbox to indicate if the element should be included as a hidden element, even when the user does not have permission to view (ie: it is hidden by the display option above)

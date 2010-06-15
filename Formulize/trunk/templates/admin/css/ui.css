@@ -1,0 +1,267 @@
+/* page for tabs */
+.ui-tabs-panel {}
+
+/* header */
+.ui-widget-header {}
+
+/* logo */
+#formulize-logo {
+	margin-bottom: 20px;
+}
+
+
+.deleteicon {
+	float: right;
+	margin-top: 5px;
+	margin-right: 5px;
+	
+}
+
+.form-screen-list .imageicon {
+	float: left;
+}
+
+.form-screen-list .formaction {
+	padding-left: 38px;
+}
+
+/* override blockquote container */
+.ui-accordion-content blockquote {
+	margin: 0.5em 0;
+	padding: 0;
+	overflow: auto;
+	font-style: normal;
+}
+
+div.accordion-box {
+  float: left;
+	width: 300px;
+	margin: 0 1.5em 1.5em 0;
+	padding-left: 2.5em;
+}
+
+div.accordion-box-wide {
+  float: left;
+	width: 500px;
+	margin: 0 1.5em 1.5em 0;
+	padding-left: 2.5em;
+}
+
+div.accordion-box .form-name {
+	margin: 0;
+	padding: 0.5em;
+	font-weight: bold;
+	background-color: #0085b6;
+	border:1px solid #94daf2;
+	border-bottom: 0;
+}
+
+div.accordion-box .form-name a {
+	display: block;
+	margin: 0;
+	/*padding-left: 35px;
+	min-height: 30px;
+	background-image: url(../../../images/kedit.gif); 
+	background-repeat: no-repeat;	*/
+	line-height: 1.2em;
+	color: #FFF;
+	text-decoration: none;
+}
+
+div.accordion-box .form-name a:hover {
+	color: #aee7f9;
+	text-decoration: none;
+}
+
+div.accordion-box .form-screen-list {
+	margin: 0;
+	padding: 0.5em;
+	border:1px solid #94daf2;
+	border-top: 0;
+}
+
+.formbox-title {
+	font-weight: bold;
+}
+
+.formactions-list {
+	margin-top: 1em;
+	margin-left: 2em;
+	
+}
+
+div.accordion-box .form-screen-list ul {
+	margin: 0.5em;
+}
+
+div.accordion-box .form-screen-list p {
+	margin: 0;
+}
+
+div.accordion-box .no-bullets {
+	list-style-type: none;
+}
+
+/* table overrides */
+
+.ui-tabs-panel .content table {
+	width: 80%;
+	border: 1px solid #0085b6;
+	border-collapse: collapse;
+}
+.ui-tabs-panel .content table th {
+	font-weight: normal;
+	background-color: #0085b6 !important;
+}
+
+.ui-tabs-panel .content table th, .ui-tabs-panel .content table td {
+	padding: 0.2em 0.3em;
+	text-align: left;
+}
+
+.ui-tabs-panel .content table td a img{
+	vertical-align: top;
+}
+
+.ui-accordion, #tabs {
+	clear: both;
+}
+
+.admin-ui a {
+	font-weight: normal;
+	color: blue;
+}
+
+.ui-tabs-panel .content a:hover {
+	background: #eee;
+}
+
+.ui-tabs-panel .content table {
+	/*width: 60em;*/
+}
+
+#savebutton input {
+	float: left;
+	margin-bottom: 15px;
+	margin-right: 15px;
+	font-size: 1.1em;
+}
+#savewarning {
+	display: none;
+	color: red;
+	
+}
+
+/* Develop a consistent style for forms */
+/* form > fieldset > ol > li > fieldset or input or select */
+/* Using http://www.alistapart.com/articles/prettyaccessibleforms/ */
+
+form fieldset {
+  margin-bottom: 10px;
+	border: 1px solid #0085b6;
+	/*padding: 6px;*/
+	padding: 0.5em;
+}
+form legend {
+  padding: 0 2px;
+  font-weight: bold;
+  color: #0085b6;
+  white-space: normal;
+}
+form div.form-item {
+	margin: 0 0 1.5em 0;
+}
+form label {
+/*  display: inline-block; */
+  vertical-align: top;
+	padding: 0 4px 0 0;
+}
+
+form fieldset fieldset {
+/*  border: none; 
+  margin: 3px 0 0 0;
+	padding: 0;*/
+}
+form fieldset fieldset legend {
+  /*padding: 0 0 5px;
+  font-weight: normal;*/
+}
+form fieldset fieldset label {
+/*  display: block;
+  width: auto; */
+}
+form .required em {
+  font-weight: bold;
+  font-style: normal;
+  color: #f00;
+}
+label.question{
+	margin: 0.5em 0;
+	display: block;
+	text-align: left !important;
+}
+form fieldset fieldset label {
+/*  margin-left: 163px; /* Width plus 3 (html space) */
+}
+
+div.description {
+	clear: both;
+  font-style: italic;
+  font-size: 80%;
+  color: #666;
+	padding-top: 10px;
+	text-align: left !important;
+}
+
+form textarea {
+	width: 80%;
+}
+
+form .input-text {
+	border:1px solid #0085b6;
+	/*margin: 0.5em 0 0.5em 1em;*/
+	width: 270px;
+}
+
+input:focus, select:focus, textarea:focus {
+	background: #FFFCCF;
+}
+
+form .form-radios, form .form-multiple-select {
+	/*margin: 0.5em 0 0.25em 1em;*/
+}
+
+form .radio-inline {
+	float: left;
+}
+
+form fieldset ol {
+  margin: 0;
+  padding: 0;
+}
+form fieldset li {
+  padding: 5px;
+  margin: 0;
+}
+
+form .groupselectionbox, form .permissiongroup {
+	margin-left: 30px;
+}
+
+form .groupselectionbox {
+	margin-bottom: 20px;
+}
+
+.conditionsdelete {
+	color: red !important;
+	font-weight: bold;
+}
+
+#elements-list .ui-accordion-header a:hover {
+	cursor: move !important;
+}
+.accordion-name {
+	cursor: hand !important;
+	cursor: pointer !important;
+}
+ 

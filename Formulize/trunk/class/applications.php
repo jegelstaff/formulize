@@ -249,6 +249,28 @@ class formulizeApplicationsHandler {
     }
 	}
   
+  function delete($appid) {
+    if(is_object($appid)) {
+			if(!get_class("formulizeApplication")) {
+				return false;
+			}
+			$appid = $appid->getVar('appid');
+		} elseif(!is_numeric($appid)) {
+			return false;
+		}
+    global $xoopsDB;
+    $isError = false;
+    $sql[] = "DELETE FROM ".$xoopsDB->prefix("formulize_applications")." WHERE appid=$appid";
+    $sql[] = "DELETE FROM ".$xoopsDB->prefix("formulize_application_form_link")." WHERE appid=$appid";
+    foreach($sql as $thisSql) {
+      if(!$xoopsDB->query($thisSql)) {
+        print "Error: could not complete the deletion of application ".$appid;
+        $isError = true;
+      }
+    }
+    return $isError ? false : true;
+  }
+  
 }
 
 

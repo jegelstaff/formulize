@@ -171,7 +171,7 @@ if($canSetNots) {
 	foreach($set_groups as $thisgroup) {
 		$group_options[$thisgroup] = $group_names[$thisgroup]->getVar('name');
 	}
-	natsort($group_options);
+	natcasesort($group_options);
 	
 	// gather the list of elements that have user names
 	$sql = "SELECT ele_id, ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form = " . intval($fid) . " AND ele_type = \"select\" AND (ele_value LIKE \"%{FULLNAMES}%\" OR ele_value LIKE \"%{USERNAMES}%\")";

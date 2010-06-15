@@ -27,7 +27,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file handles saving of submissions from the form_elements page of the new admin UI
+// this file handles saving of submissions from the elements names page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
@@ -96,7 +96,7 @@ foreach($elements as $element) {
 // handle any operations
 if($_POST['convertelement']) {
   global $xoopsModuleConfig;
-  $element =& $element_handler->get($_POST['convertelement']);
+  $element =& $element_handler->get($_POST['cloneelement']);
 		$ele_type = $element->getVar('ele_type');
 		$new_ele_value = array();
 		if($ele_type == "text") { // converting to textarea

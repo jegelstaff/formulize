@@ -84,6 +84,7 @@ class formulizePermHandler  {
 		$insertSQL = "INSERT INTO ".$xoopsDB->prefix("formulize_groupscope_settings"). " (`groupid`, `fid`, `view_groupid`) VALUES ";
 		$start = true;
 		foreach($groupsToInsert as $thisInsertGroup) {
+			if($thisInsertGroup === 0) { continue; }
 			if(!$start) { $insertSQL .= ", "; }
 			$insertSQL .= "($gid, ".$this->fid.", $thisInsertGroup)";
 			$start = false;
