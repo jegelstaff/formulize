@@ -1,0 +1,66 @@
+<div class="panel-content content">
+  <fieldset>
+    <legend><{$smarty.const._AM_ELE_GRID}></legend>
+
+    <div class="form-item">
+	    <fieldset>
+	    <legend><{$smarty.const._AM_ELE_GRID_HEADING}></legend>
+		    <div class="form-radios">
+			    <label for="caption"><input type="radio" id="caption" name="element-heading" value="caption"/><{$smarty.const._AM_ELE_GRID_HEADING_USE_CAPTION}></label>
+		    </div>
+		    <div class="form-radios">
+			    <label for="form"><input type="radio" id="form" name="element-NONE" value="form"/><{$smarty.const._AM_ELE_GRID_HEADING_USE_FORM}></label>
+		    </div>
+		    <div class="form-radios">
+			    <label for="none"><input type="radio" id="none" name="element-NONE" value="none"/><{$smarty.const._AM_ELE_GRID_HEADING_NONE}></label>
+		    </div>
+	    </fieldset>
+    </div>
+    <div class="form-item">
+	    <fieldset>
+	    <legend><{$smarty.const._AM_ELE_GRID_HEADING_SIDEORTOP}></legend>
+		    <div class="form-radios">
+			    <label for="anything"><input type="radio" id="anything" name="element-position" value="1"/><{$smarty.const._AM_ELE_GRID_HEADING_SIDE}></label>
+		    </div>
+		    <div class="form-radios">
+			    <label for="numbers"><input type="radio" id="numbers" name="element-position" value=""/><{$smarty.const._AM_ELE_GRID_HEADING_TOP}></label>
+		    </div>
+	    </fieldset>
+    </div>
+    <div class="form-item required">
+	    <label for="element-row"><{$smarty.const._AM_ELE_GRID_ROW_CAPTIONS}><em>*</em></label>
+	    <input type="text" id="element-row" name="element-row" value="" size="3" maxlength="3"/>
+	    <textarea id="element-row" name="element-row" rows="5" cols="50"></textarea>
+	    <div class="description">
+		    <{$smarty.const._AM_ELE_GRID_ROW_CAPTIONS_DESC}>
+	    </div>
+    </div>
+    <div class="form-item required">
+	    <label for="element-col"><{$smarty.const._AM_ELE_GRID_COL_CAPTIONS}><em>*</em></label>
+	    <textarea id="element-col" name="element-col" rows="5" cols="50"></textarea>
+	    <div class="description">
+		    <{$smarty.const._AM_ELE_GRID_COL_CAPTIONS_DESC}>
+	    </div>
+    </div>
+    <div class="form-item">
+	    <fieldset>
+	    <legend><{$smarty.const._AM_ELE_GRID_BACKGROUND}></legend>
+		    <div class="form-radios">
+			    <label for="horizontal"><input type="radio" id="horizontal" name="element-background" value="0"/><{$smarty.const._AM_ELE_GRID_BACKGROUND_HOR}></label>
+		    </div>
+		    <div class="form-radios">
+			    <label for="vertical"><input type="radio" id="vertical" name="element-background" value="1"/><{$smarty.const._AM_ELE_GRID_BACKGROUND_VER}></label>
+		    </div>
+	    </fieldset>
+    </div>
+    <div class="form-item">
+	    <label for="element-grid_start_option"><{$smarty.const._AM_ELE_GRID_START}></label>
+	    <select id="element-grid_start_option" name="element-grid_start_option" size="1">
+        <{html_options options=$content.grid_start_options selected=$content.grid_start_option}>
+	    </select>
+	    <div class="description">
+		    <{$smarty.const._AM_ELE_GRID_START_DESC}>
+	    </div>
+    </div>
+  </fieldset>
+</div>

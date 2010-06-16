@@ -54,6 +54,7 @@ if($_GET['ele_id'] != "new") {
   $fid = $elementObject->getVar('id_form');
   $colhead = $elementObject->getVar('ele_colhead');
   $caption = $elementObject->getVar('ele_caption');
+  $ele_type = $elementObject->getVar('ele_type');
   $elementName = $colhead ? printSmart($colhead,30) : printSmart($caption,30);
   $names['ele_caption'] = $caption;
   $names['ele_colhead'] = $colhead;
@@ -116,16 +117,38 @@ $formObject = $form_handler->get($fid);
 $formName = printSmart($formObject->getVar('title'), 30);
 
 
-
 // common values should be assigned to all tabs
 $common['name'] = '';
 $common['ele_id'] = $ele_id;
 
-
 $names['hello'] = 'hello';
 
 $options = array();
-$options['hello'] = 'hello';
+$options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
+
+if($ele_type=='text'||$ele_type=='textarea'||$ele_type=='select') {
+  $formlink = createFieldList($val, true);
+  $options['formlink'] = $formlink->render();
+} else if($ele_type=='sep') {
+  $options['options'] = array('centre'=>_AM_ELE_CTRE, 'souligné'=>_AM_ELE_SOUL, 'italique'=>_AM_ELE_ITALIQ);
+  //$options['colors'] = array ("Noir"=>"#000000", "Marron"=>"#97694F", "Bleu"=>"#7093DB", "Rouge"=>"#e00000", "Vert"=>"#4A766E", "Rose"=>"#9F5F9F", "Jaune"=>"#ffff00", "Blanc"=>"#ffffff");
+  $options['colors'] = array ('#000000'=>'Noir','#97694F'=>'Marron','#7093DB'=>'Bleu','#e00000'=>'Rouge','#4A766E'=>'Vert','#9F5F9F'=>'Rose','#ffff00'=>'Jaune','#ffffff'=>'Blanc');
+} else if($ele_type=='derived') {
+  $derivedOptions = array();
+  $allColList = getAllColList($fid);
+  foreach($allColList[$fid] as $thisCol) {
+    if($thisCol['ele_colhead'] != "") {
+      $derivedOptions[trans($thisCol['ele_colhead'])] = printSmart(trans($thisCol['ele_colhead']));
+    } else {
+      $derivedOptions[trans(strip_tags($thisCol['ele_caption']))] = printSmart(trans(strip_tags($thisCol['ele_caption'])));
+    }
+  }
+
+  $listOfElements = new XoopsFormSelect("", 'listofelementsoptions');
+  $listOfElements->addOptionArray($derivedOptions);
+  $options['listofelementsoptions'] = $listOfElements->render();
+}
+
 
 $member_handler = xoops_gethandler('member');
 $allGroups = $member_handler->getGroups();
@@ -137,23 +160,25 @@ foreach($allGroups as $thisGroup) {
 $display['groups'] = $groups;
 
 
+$tabindex = 1;
+$adminPage['tabs'][$tabindex]['name'] = "Names & Settings";
+$adminPage['tabs'][$tabindex]['template'] = "db:admin/element_names.html";
+$adminPage['tabs'][$tabindex]['content'] = $names + $common;
 
-$adminPage['tabs'][1]['name'] = "Names & Settings";
-$adminPage['tabs'][1]['template'] = "db:admin/element_names.html";
-$adminPage['tabs'][1]['content'] = $names + $common;
+if($ele_type!='colorpick') {
+  $adminPage['tabs'][++$tabindex]['name'] = "Options";
+  $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_options.html";
+  $adminPage['tabs'][$tabindex]['content'] = $options + $common;
+}
 
-$adminPage['tabs'][2]['name'] = "Options";
-$adminPage['tabs'][2]['template'] = "db:admin/element_options.html";
-$adminPage['tabs'][2]['content'] = $options + $common;
-
-$adminPage['tabs'][3]['name'] = "Display Settings";
-$adminPage['tabs'][3]['template'] = "db:admin/element_display.html";
-$adminPage['tabs'][3]['content'] = $display + $common;
+$adminPage['tabs'][++$tabindex]['name'] = "Display Settings";
+$adminPage['tabs'][$tabindex]['template'] = "db:admin/element_display.html";
+$adminPage['tabs'][$tabindex]['content'] = $display + $common;
 
 if($advanced['datatypeui'] OR $advanced['ele_encrypt_show']) {
-  $adminPage['tabs'][4]['name'] = "Advanced";
-  $adminPage['tabs'][4]['template'] = "db:admin/element_advanced.html";
-  $adminPage['tabs'][4]['content'] = $advanced + $common;
+  $adminPage['tabs'][++$tabindex]['name'] = "Advanced";
+  $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_advanced.html";
+  $adminPage['tabs'][$tabindex]['content'] = $advanced + $common;
 }
 
 $adminPage['pagetitle'] = "Element: ".$elementName;

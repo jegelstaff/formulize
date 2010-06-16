@@ -1,0 +1,17 @@
+<div class="panel-content content">
+  <fieldset>
+    <legend><{$smarty.const._AM_ELE_DATE}></legend>
+
+    <div class="form-item">
+	    <input type="text" id="element-date" name="element-date" value="YYYY-mm-dd" size="15" maxlength="15"/>
+    </div>
+  </fieldset>
+</div>
+
+
+<script type='text/javascript'>
+$(function()
+{
+  $('#element-date').datepicker({dateFormat: 'yy-mm-dd'});
+});
+</script>

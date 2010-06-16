@@ -1,0 +1,24 @@
+<div class="panel-content content">
+  <fieldset>
+    <legend><{$smarty.const._AM_ELE_SUBFORM}></legend>
+
+    <div class="form-item">
+	    <label for="element-subform"><{$smarty.const._AM_ELE_SUBFORM_FORM}></label>
+	    <select id="element-subform" name="element-subform" size="1">
+        <{html_options options=$content.subforms selected=$content.subform}>
+	    </select>
+	    <div class="description">
+		    <{$smarty.const._AM_ELE_SUBFORM_DESC}>
+	    </div>
+    </div>
+    <div class="form-item">
+	    <label for="element-subformblanks"><{$smarty.const._AM_ELE_SUBFORM_BLANKS}></label>
+	    <input type="text" id="element-subformblanks" name="element-subformblanks" value="" size="2" maxlength="2"/>
+    </div>
+	  <div class="form-item">
+		  <label for="screens-showviewbuttons"><{$smarty.const._AM_ELE_SUBFORM_VIEW}></label>
+		  <input type="checkbox" id="screens-showviewbuttons" name="screens-showviewbuttons"<{if $content.showviewbuttons}> checked="checked"<{/if}> value="1"/>
+		  <div class="description"><{$smarty.const._AM_ELE_SUBFORM_VIEW_DESC}></div>
+	  </div>
+  </fieldset>
+</div>
