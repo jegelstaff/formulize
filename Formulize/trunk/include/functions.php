@@ -1597,13 +1597,17 @@ function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups
 // THIS FUNCTION SENDS TEXT THROUGH THE TRANSLATION ROUTINE IF MARCAN'S MULTILANGUAGE HACK IS INSTALLED
 // THIS FUNCTION IS ALSO AWARE OF THE XLANGUAGE MODULE IF THAT IS INSTALLED.  
 function trans($string) {
-	$myts =& MyTextSanitizer::getInstance();
-  if(function_exists('xlanguage_ml')) {
-		$string = xlanguage_ml($string);
+  $myts =& MyTextSanitizer::getInstance();
+  if(function_exists('easiestml')) {
+    global $easiestml_lang;
+    $easiestml_lang = isset($_GET['lang'])?$_GET['lang']:$easiestml_lang;   // this is required when linked with a Drupal install
+    $string = easiestml($string);
+  } elseif(function_exists('xlanguage_ml')) {
+    $string = xlanguage_ml($string);
   } elseif(method_exists($myts, 'formatForML')) {
-		$string = $myts->formatForML($string);
-	} 
-	return $string;
+    $string = $myts->formatForML($string);
+  }
+  return $string;
 }
 
 // THIS FUNCTION FIGURES OUT THE MAX ID_REQ IN USE AND RETURNS THE NEXT VALID ID_REQ
