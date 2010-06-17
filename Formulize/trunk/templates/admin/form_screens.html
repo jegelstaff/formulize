@@ -24,7 +24,7 @@
 
   <{* include form if exist screens exist *}>
 
-  <h2>Form Screens</h2>
+  <h2>Form Screens <{$content.defaultform}></h2>
   <div class="form-item">
     <table>
 	    <tr>
@@ -36,17 +36,17 @@
 	    </tr>
       <{foreach from=$content.screens item=screen}>
 	      <tr class="<{cycle values='even,odd'}>">
-		      <td><label for="screens-formdefault-<{$screen.sid}>"><a class="configscreen" target="<{$screen.sid}>" href=""><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
+		      <td><label for="screens-defaultform-<{$screen.sid}>"><a class="configscreen" target="<{$screen.sid}>" href=""><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
 					<td><{$screen.sid}></td>
 		      <td><{if $screen.type eq 'multiPage'}>Multi page<{else}>Regular<{/if}></td>
-		      <td><div class="form-radios"><input type="radio" name="screens-formdefault-<{$screen.sid}>" value="<{$screen.sid}>"/></div></td>
+		      <td><div class="form-radios"><input type="radio" id="screens-defaultform-<{$screen.sid}>" name="screens-defaultform" value="<{$screen.sid}>"<{if $screen.sid eq $content.defaultform}> checked="checked"<{/if}>/></div></td>
   		    <td class="head"><a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
 	      </tr>
       <{/foreach}>
     </table>
   </div>
 
-  <h2>List Screens</h2>
+  <h2>List Screens <{$content.defaultlist}></h2>
   <div class="form-item">
     <table>
 	    <tr>
@@ -57,9 +57,9 @@
 	    </tr>
       <{foreach from=$content.listOfEntries item=screen}>
 	      <tr class="<{cycle values='even,odd' reset=true}>">
-		      <td><label for="screens-listdefault-<{$screen.sid}>"><a class="configscreen" target="<{$screen.sid}>" href=""><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
+		      <td><label for="screens-defaultlist-<{$screen.sid}>"><a class="configscreen" target="<{$screen.sid}>" href=""><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
 					<td><{$screen.sid}></td>
-		      <td><div class="form-radios"><input type="radio" id="screens-listdefault-<{$screen.sid}>" name="screens-listdefault" value="<{$screen.sid}>"/></div></td>
+		      <td><div class="form-radios"><input type="radio" id="screens-defaultlist-<{$screen.sid}>" name="screens-defaultlist" value="<{$screen.sid}>"<{if $screen.sid eq $content.defaultlist}> checked="checked"<{/if}>/></div></td>
   		    <td class="head"><a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</td>
 	      </tr>
       <{/foreach}>

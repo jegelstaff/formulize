@@ -54,6 +54,8 @@ class formulizeForm extends XoopsObject {
 			$elementTypes = array();
 			$encryptedElements = array();
 			$headerlist = array();
+			$defaultform = "";
+			$defaultlist = "";
 		} else {
 			$formq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$id_form");
 			if(!isset($formq[0])) {
@@ -70,6 +72,8 @@ class formulizeForm extends XoopsObject {
 				$elementTypes = array();
 				$encryptedElements = array();
 				$headerlist = array();
+			  $defaultform = "";
+			  $defaultlist = "";
 			} else {
 				// gather element ids for this form
 				$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
@@ -130,7 +134,9 @@ class formulizeForm extends XoopsObject {
 					$filterSettings[$filterSettingData['groupid']] = unserialize($filterSettingData['filter']);
 				}
 			}
-			
+
+			$defaultform = $formq[0]['defaultform'];
+			$defaultlist = $formq[0]['defaultlist'];			
 		}
 
 		$this->XoopsObject();
@@ -152,7 +158,8 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("viewPublished", XOBJ_DTYPE_ARRAY, serialize($viewPublished));
 		$this->initVar("filterSettings", XOBJ_DTYPE_ARRAY, serialize($filterSettings));
 		$this->initVar("headerlist", XOBJ_DTYPE_TXTAREA, $headerlist);
-		
+		$this->initVar("defaultform", XOBJ_DTYPE_INT, $defaultform, true);
+		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);		
 	}
 }
 
@@ -257,9 +264,9 @@ class formulizeFormsHandler {
 					${$k} = $v;
 				}
 				if($formObject->isNew() || empty($id_form)) {
-					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform` ) VALUES (".$this->db->quoteString($title).", ".$this->db->quoteString($single).", ".$this->db->quoteString($tableform).")";
+					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, `defaultlist` ) VALUES (".$this->db->quoteString($title).", ".$this->db->quoteString($single).", ".$this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).")";
 				} else {
-					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).", `singleentry` = ".$this->db->quoteString($single).", `headerlist` = ".$this->db->quoteString($headerlist)." WHERE id_form = ".intval($id_form);
+					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).", `singleentry` = ".$this->db->quoteString($single).", `headerlist` = ".$this->db->quoteString($headerlist).", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist)." WHERE id_form = ".intval($id_form);
 				}
 				
 				if( false != $force ){

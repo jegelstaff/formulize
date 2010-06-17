@@ -55,6 +55,8 @@ if($_GET['fid'] != "new") {
   $tableform = $formObject->getVar('tableform');
   $headerlist = $formObject->getVar('headerlist');
   $headerlistArray = explode("*=+*:",trim($headerlist,"*=+*:"));
+  $defaultform = $formObject->getVar('defaultform');
+  $defaultlist = $formObject->getVar('defaultlist');
   
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
   $elementObjects = $element_handler->getObjects2(null, $fid);
@@ -241,6 +243,8 @@ if($_GET['fid'] != "new") {
   }
   $formName = "New form";
   $singleentry = "off"; // need to send a default for this
+  $defaultform = 0;
+  $defaultlist = 0;
 }
 
 $i = 1;
@@ -260,6 +264,8 @@ foreach($allApps as $thisApp) {
 $common['name'] = $formName;
 $common['fid'] = $fid;
 $common['aid'] = $aid;
+$common['defaultform'] = $defaultform;
+$common['defaultlist'] = $defaultlist;
 
 $permissions = array();
 $permissions['hello'] = "Hello Permission World";
