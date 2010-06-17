@@ -156,6 +156,10 @@ div.accordion-box .no-bullets {
 /* form > fieldset > ol > li > fieldset or input or select */
 /* Using http://www.alistapart.com/articles/prettyaccessibleforms/ */
 
+.floatleft {
+	float: left;
+}
+
 form fieldset {
   margin-bottom: 10px;
 	border: 1px solid #0085b6;
@@ -169,7 +173,7 @@ form legend {
   white-space: normal;
 }
 form div.form-item {
-	margin: 0 0 1.5em 0;
+	margin: 0 0 2.5em 0;
 }
 form label {
 /*  display: inline-block; */
@@ -257,11 +261,10 @@ form .groupselectionbox {
 	font-weight: bold;
 }
 
-#elements-list .ui-accordion-header a:hover {
+#sortable-list .ui-accordion-header a:hover {
 	cursor: move !important;
 }
 .accordion-name {
-	cursor: hand !important;
 	cursor: pointer !important;
 }
  

@@ -37,39 +37,30 @@ if(!isset($processedValues)) {
 
 $aid = intval($_POST['aid']);
 $sid = $_POST['formulize_admin_key'];
-$fid = $_POST['formulize_admin_fid'];
-
-$isNew = ($sid=='new');
+$fid = intval($_POST['formulize_admin_fid']);
 
 $screens = $processedValues['screens'];
 
+$isNew = ($sid=='new');
 
-if($sid=='new') {
+if($screens['type'] == 'multiPage') {
+  $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+} else if($screens['type'] == 'listOfEntries') {
+  $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+} else if($screens['type'] == 'form') {
+  $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+}
+
+
+if($isNew) {
+  $screen = $screen_handler->create();
   if($screens['type'] == 'multiPage') {
-    $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-    $screen = $screen_handler->create();
+    $screen->setVar('pagetitles',serialize(array(0=>'New page')));
+    $screen->setVar('pages', serialize(array(0=>array())));
   } else if($screens['type'] == 'listOfEntries') {
-    $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
-    $screen = $screen_handler->create();
-  } else if($screens['type'] == 'form') {
-    $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
-    $screen = $screen_handler->create();
-  }
-} else {
-  $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-  $screen = $screen_handler->get($sid);
-
-  $type = $screen->getVar('type');
-
-  if($type == 'multiPage') {
-    $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-    $screen = $screen_handler->get($sid);
-  } else if($type == 'listOfEntries') {
-    $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
-    $screen = $screen_handler->get($sid);
 
     // set the defaults for the new screen
-    if( $isNew ) {
+    
       // View
       $screen->setVar('defaultview','blank');
       $screen->setVar('usecurrentviewlist',_formulize_DE_CURRENT_VIEW);
@@ -106,13 +97,19 @@ if($sid=='new') {
       $screen->setVar('usereset',_formulize_DE_RESETVIEW);
       $screen->setVar('usesave',_formulize_DE_SAVE);
       $screen->setVar('usedeleteview',_formulize_DE_DELETE);
-    }
-  } else if($type == 'form') {
-    $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
-    $screen = $screen_handler->get($sid);
-  }
-}
+    
+  } else if($screens['type'] == 'form') {
+      $screen->setVar('displayheading', 1);
+      $screen->setVar('reloadblank', 0);
+      $screen->setVar('savebuttontext', _formulize_SAVE);
+      $screen->setVar('alldonebuttontext', _formulize_DONE);
+  } 
 
+} else {
+  
+
+  $screen = $screen_handler->get($sid);
+}
 
 $screen->setVar('title',$screens['title']);
 $screen->setVar('fid',$fid);
@@ -120,14 +117,13 @@ $screen->setVar('frid',$screens['frid']);
 $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);
 
-
 if(!$sid = $screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".mysql_error();
 }
 
 if($isNew) {
   // send code to client that will to be evaluated
-  $url = 'http://'.$_SERVER['SERVER_NAME'].'/modules/formulize/admin/ui.php?page=screen&tab=settings&aid='.$aid.'&fid='.$fid.'&sid='.$sid;
+  $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&tab=settings&aid=".$aid.'&fid='.$fid.'&sid='.$sid;
   print '/* eval */ window.location = "'.$url.'";';
 }
 ?>

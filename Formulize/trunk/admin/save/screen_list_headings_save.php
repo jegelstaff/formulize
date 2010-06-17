@@ -43,7 +43,16 @@ $screens = $processedValues['screens'];
 
 $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 $screen = $screen_handler->get($sid);
-
+// CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+$formObject = $form_handler->get($screen->getVar('fid'));
+if($formObject->getVar('lockedform')) {
+  return;
+}
+// check if the user has permission to edit the form
+if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
+  return;
+}
 $screen->setVar('useheadings',(array_key_exists('useheadings',$screens))?$screens['useheadings']:0);
 $screen->setVar('repeatheaders',$screens['repeatheaders']);
 $screen->setVar('usesearchcalcmsgs',$screens['usesearchcalcmsgs']);
@@ -52,8 +61,8 @@ $screen->setVar('columnwidth',$screens['columnwidth']);
 $screen->setVar('textwidth',$screens['textwidth']);
 $screen->setVar('usecheckboxes',$screens['usecheckboxes']);
 $screen->setVar('useviewentrylinks',(array_key_exists('useviewentrylinks',$screens))?$screens['useviewentrylinks']:0);
-$screen->setVar('hiddencolumns',serialize($screens['hiddencolumns']));
-$screen->setVar('decolumns',serialize($screens['decolumns']));
+$screen->setVar('hiddencolumns',$screens['hiddencolumns']);
+$screen->setVar('decolumns',$screens['decolumns']);
 $screen->setVar('desavetext',$screens['desavetext']);
 
 

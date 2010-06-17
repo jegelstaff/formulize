@@ -330,6 +330,10 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	// $screen is a screen object
 	function render($screen, $entry, $settings = "") { // $settings is used internally to pass list of entries settings back and forth to editing screens
     
+		if(!is_array($settings)) {
+				$settings = "";
+		}
+		
     // standard flags used by xoopsobject class
     $screen->setVar('dohtml', 0);
     $screen->setVar('doxcode', 0);
@@ -345,13 +349,20 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		array_unshift($pagetitles, ""); 
 		$pages['titles'] = $pagetitles;
     unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
+		unset($pagetitles[0]);
     // setup the conditions array
-    // it must be of the format $conditions[1] = array(0=>$elementsArray, 1=>$opsArray, 2=>$termsArray);
+    // old format: $conditions[1] = array(0=>$elementsArray, 1=>$opsArray, 2=>$termsArray);
     // the key must be the numerical page number (start at 1)
-    foreach($screen->getVar('conditions') as $pageid=>$condata) {
-        $pagenumber = $pageid+1;
-        $conditions[$pagenumber] = array(0=>$condata['details']['elements'], 1=>$condata['details']['ops'], 2=>$condata['details']['terms']);
-    }
+		$conditions = $screen->getVar('conditions');
+		if(isset($conditions[0]['details'])) {
+		    foreach($screen->getVar('conditions') as $pageid=>$condata) {
+		        $pagenumber = $pageid+1;
+		        $conditions[$pagenumber] = array(0=>$condata['details']['elements'], 1=>$condata['details']['ops'], 2=>$condata['details']['terms']);
+		    }
+		} else {
+				array_unshift($conditions, "");
+				unset($conditions[0]);
+		}
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
 		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode($screen->getVar('introtext', "e")), html_entity_decode($screen->getVar('thankstext', "e")), $screen->getVar('donedest'), $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
 	}

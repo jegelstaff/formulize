@@ -3,23 +3,27 @@
 <{* securitytoken should be part of the form *}>
 <{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
 
-<form id="form-admin-form" name="formulize-admin-form">
+<form id="form-<{$number}>" name="formulize-admin-form">
 <{$securitytoken}>
 <input type="hidden" name="formulize_admin_handler" value="screen_list_headings">
 <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
 
 
 <div class="panel-content content">
+	<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION2}></p>
   <fieldset>
-    <legend>Headings for the Form <em><{$content.title}></em></legend>
+    <legend>Options for the headings and interface elements of the list</legend>
 
-    <div class="description">
-	    <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION2}></p>
-    </div>
+    
 
     <div class="form-item">
       <label for="screens-useheadings"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USEHEADINGS}></label>
-      <input type="checkbox" id="screens-useheadings" name="screens-useheadings"<{if $content.useheadings}> checked="checked"<{/if}> value="1"/>
+			<div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-useheadings" name="screens-useheadings"<{if $content.useheadings eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-useheadings" name="screens-useheadings"<{if $content.useheadings eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
+		  </div>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USEHEADINGS}></div>
     </div>
     <div class="form-item">
@@ -45,7 +49,12 @@
     </div>                
     <div class="form-item">
       <label for="screens-usesearch"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USESEARCH}></label>
-      <input type="checkbox" id="screens-usesearch" name="screens-usesearch"<{if $content.usesearch}> checked="checked"<{/if}> value="1"/>
+      <div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-usesearch" name="screens-usesearch"<{if $content.usesearch eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-usesearch" name="screens-usesearch"<{if $content.usesearch eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
+		  </div>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USESEARCH}></div>
     </div>
     <div class="form-item">
@@ -73,7 +82,12 @@
     </div>
     <div class="form-item">
       <label for="screens-useviewentrylinks"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS}></label>
-      <input type="checkbox" id="screens-useviewentrylinks" name="screens-useviewentrylinks"<{if $content.useviewentrylinks}> checked="checked"<{/if}> value="1"/>
+      <div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-useviewentrylinks" name="screens-useviewentrylinks"<{if $content.useworkingmsg eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-useviewentrylinks" name="screens-useviewentrylinks"<{if $content.useworkingmsg eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
+		  </div>
       <div class="description"></div>
     </div>
     <div class="form-item">

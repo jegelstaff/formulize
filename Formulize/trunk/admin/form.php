@@ -93,7 +93,6 @@ if($_GET['fid'] != "new") {
         $converttext = "";
         $linktype = "";
     }
-    print $converttext;
     $elements[$i]['content']['converttext'] = $converttext;
     $elements[$i]['content']['linktype'] = $linktype;
     $elements[$i]['content']['ele_type'] = convertTypeToText($thisElement->getVar('ele_type'), $ele_type);

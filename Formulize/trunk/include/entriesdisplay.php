@@ -606,15 +606,16 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 
 		if($screen AND $screen->getVar("viewentryscreen") != "none" AND $screen->getVar("viewentryscreen")) {
-			// only multipage screens and pageworks pages supported at the moment
       if(strstr($screen->getVar("viewentryscreen"), "p")) { // if there's a p in the specified viewentryscreen, then it's a pageworks page -- added April 16 2009 by jwe
         $page = intval(substr($screen->getVar("viewentryscreen"), 1));
         include XOOPS_ROOT_PATH . "/modules/pageworks/index.php";
         return;
       } else {
-  			$multiPageScreen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-  			$displayScreen = $multiPageScreen_handler->get(intval($screen->getVar('viewentryscreen')));
-  			$multiPageScreen_handler->render($displayScreen, $this_ent, $settings);
+				$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+				$viewEntryScreenObject = $screen_handler->get(intval($screen->getVar('viewentryscreen')));
+				$viewEntryScreen_handler = xoops_getmodulehandler($viewEntryScreenObject->getVar('type').'Screen', 'formulize');
+  			$displayScreen = $viewEntryScreen_handler->get(intval($screen->getVar('viewentryscreen')));
+  			$viewEntryScreen_handler->render($displayScreen, $this_ent, $settings);
         return;
       }
 		} else {

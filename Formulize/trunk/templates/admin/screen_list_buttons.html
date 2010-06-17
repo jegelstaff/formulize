@@ -3,22 +3,19 @@
 <{* securitytoken should be part of the form *}>
 <{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
 
-<form id="form-admin-form" name="formulize-admin-form">
+<form id="form-<{$number}>" name="formulize-admin-form">
 <{$securitytoken}>
 <input type="hidden" name="formulize_admin_handler" value="screen_list_buttons">
 <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
 
 
 <div class="panel-content content">
+	<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION1}></p>
   <fieldset>
-    <legend>Buttons for the Form <em><{$content.title}></em></legend>
+    <legend>Text for the action buttons</legend>
 
-		  <fieldset>
-        <legend>Top or Bottom Template</legend>
-
-		    <div class="description">
-			    <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION1}></p>
-        </div>
+		    
+        
 
 	      <div class="form-item">
 		      <label for="screens-useaddupdate"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_ADDENTRY}>/<{$smarty.const._formulize_DE_UPDATEENTRY}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
@@ -50,10 +47,6 @@
 		      <input type="text" id="screens-usenotifications" name="screens-usenotifications" value="<{$content.usenotifications}>" size="20" maxlength="255"/>
 		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
 	      </div>
-      </fieldset>
-
-      <fieldset>
-        <legend>List Template</legend>
 
 		    <div class="description">
 			    <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION2}></p>
@@ -114,7 +107,7 @@
 		      <input type="text" id="screens-usedeleteview" name="screens-usedeleteview" value="<{$content.usedeleteview}>" size="20" maxlength="255"/>
 		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
 	      </div>
-      </fieldset>
+      
     </fieldset>
 </div>
 

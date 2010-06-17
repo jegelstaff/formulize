@@ -197,19 +197,44 @@ if(is_array($conditions) AND $entry) {
 			$elements = $thesecons[0];
 			$ops = $thesecons[1];
 			$terms = $thesecons[2];
+			$types = $thesecons[3]; // indicates if the term is part of a must or may set, ie: boolean and or or
 			$start = 1;
+			$oomstart = 1;
+			$filter = "";
+			$oomfilter = "";
 			foreach($elements as $i=>$thisElement) {
-			//for($i=0;$i<count($elements);$i++) {
 				if($ops[$i] == "NOT") { $ops[$i] = "!="; }
-				if($start) {
-					$filter = $entry."][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
-					$start = 0;
+				if($types[$i] == "oom") {
+					if($oomstart) {
+						$oomfilter = $entry."][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
+						$oomstart = 0;
+					} else {
+						$oomfilter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
+					}
 				} else {
-					$filter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
+					if($start) {
+						$filter = $entry."][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
+						$start = 0;
+					} else {
+						$filter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
+					}
 				}
 			}
+			if($oomfilter AND $filter) {
+				$finalFilter = array();
+				$finalFilter[0][0] = "AND";
+				$finalFilter[0][1] = $filter;
+				$finalFilter[1][0] = "OR";
+				$finalFilter[1][1] = $oomfilter;
+			} elseif($oomfilter) {
+				$finalFilter = $oomfilter;
+				$masterBoolean = "OR";
+			} else {
+				$finalFilter = $filter;
+				$masterBoolean = "AND";
+			}
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-			$data = getData($frid, $fid, $filter, "AND");
+			$data = getData($frid, $fid, $finalFilter, $masterBoolean);
 			if($data[0] == "") { 
 				if($prevPage < $currentPage) {
 					$currentPage++;

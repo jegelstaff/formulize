@@ -114,7 +114,37 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 	// THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN
 	// $screen is a screen object
 	function render($screen, $entry, $settings = "") { // $settings is used internally to pass list of entries settings back and forth to editing screens
-
+		if(!is_array($settings)) {
+				$settings = "";
+		}
+		$formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
+		$mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
+		$donedest = $screen->getVar("donedest");
+		$savebuttontext = $screen->getVar("savebuttontext");
+		$savebuttontext = $savebuttontext ? $savebuttontext : _formulize_SAVE;
+		$alldonebuttontext = $screen->getVar("alldonebuttontext");
+		$alldonebuttontext = $alldonebuttontext ? $alldonebuttontext : "{NOBUTTON}";
+    $displayheading = $screen->getVar('displayheading');
+		$displayheading = $displayheading ? "" : "all"; // if displayheading is off, then need to pass the "all" keyword to supress all the headers
+    $reloadblank = $screen->getVar('reloadblank');
+		// figure out the form's properties...
+		// if it's more than one entry per user, and we have requested reload blank, then override multi is 0, otherwise 1
+		// if it's one entry per user, and we have requested reload blank, then override multi is 1, otherwise 0
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($screen->getVar('fid'));
+		if($formObject->getVar('single')=="off" AND $reloadblank) { 
+				$overrideMulti = 0;
+		} elseif($formObject->getVar('single')=="off" AND !$reloadblank) {
+				$overrideMulti = 1;
+		} elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND $reloadblank) {
+				$overrideMulti = 1;
+		} elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND !$reloadblank) {
+				$overrideMulti = 0;
+		} else {
+				$overrideMulti = 0;
+		}
+		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+		displayForm($formframe, $entry, $mainform, $donedest, array(0=>$alldonebuttontext, 1=>$savebuttontext), $settings, $displayheading, "", $overrideMulti);
 	}
 }
 ?>

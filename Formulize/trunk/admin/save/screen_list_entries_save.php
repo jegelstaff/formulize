@@ -27,16 +27,12 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file handles saving of submissions from the screen_list_display page of the new admin UI
+// this file handles saving of submissions from the screen_list_view page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
   return;
 }
-
-
-//print_r($_POST);
-//print_r($processedValues);
 
 
 $aid = intval($_POST['aid']);
@@ -48,9 +44,14 @@ $screens = $processedValues['screens'];
 $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 $screen = $screen_handler->get($sid);
 
-$screen->setVar('toptemplate',htmlspecialchars(trim($screens['toptemplate'])));
-$screen->setVar('bottomtemplate',htmlspecialchars(trim($screens['bottomtemplate'])));
-$screen->setVar('listtemplate',htmlspecialchars(trim($screens['listtemplate'])));
+
+$screen->setVar('defaultview',$screens['defaultview']);
+$screen->setVar('usecurrentviewlist',$screens['usecurrentviewlist']);
+$screen->setVar('limitviews',$screens['limitviews']);
+$screen->setVar('useworkingmsg',(array_key_exists('useworkingmsg',$screens))?$screens['useworkingmsg']:0);
+$screen->setVar('usescrollbox',(array_key_exists('usescrollbox',$screens))?$screens['usescrollbox']:0);
+$screen->setVar('entriesperpage',$screens['entriesperpage']);
+$screen->setVar('viewentryscreen',$screens['viewentryscreen']);
 
 
 if(!$screen_handler->insert($screen)) {

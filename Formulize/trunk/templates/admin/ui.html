@@ -139,6 +139,7 @@
     tabs_selected = tabs_selected+1;
     <{/if}>
     if(pagehasaccordion["accordion-"+tabs_selected]) {
+      <{* // not really the active accordion we want, it's the current position of the active accordion, since accordion sections are sortable! - this is a semi-rare bug that needs fixing, cross reference the active position with the results of a toArray call on the sortable element *}>
       var accordion_active = $("#accordion-"+tabs_selected).accordion( "option", "active" );
       accordion_active = accordion_active;
     }

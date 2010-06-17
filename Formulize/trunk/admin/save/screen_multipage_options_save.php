@@ -44,6 +44,18 @@ $screens = $processedValues['screens'];
 $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 $screen = $screen_handler->get($sid);
 
+// CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+$formObject = $form_handler->get($screen->getVar('fid'));
+if($formObject->getVar('lockedform')) {
+  return;
+}
+// check if the user has permission to edit the form
+if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
+  return;
+}
+
+
 $screen->setVar('paraentryform',$screens['paraentryform']);
 $screen->setVar('paraentryrelationship',$screens['paraentryrelationship']);
 $screen->setVar('donedest',$screens['donedest']);

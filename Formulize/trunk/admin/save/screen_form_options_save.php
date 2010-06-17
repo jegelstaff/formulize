@@ -47,12 +47,21 @@ $screens = $processedValues['screens'];
 
 $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
 $screen = $screen_handler->get($sid);
-
+// CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+$formObject = $form_handler->get($screen->getVar('fid'));
+if($formObject->getVar('lockedform')) {
+  return;
+}
+// check if the user has permission to edit the form
+if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
+  return;
+}
 $screen->setVar('donedest',$screens['donedest']);
 $screen->setVar('savebuttontext',$screens['savebuttontext']);
 $screen->setVar('alldonebuttontext',$screens['alldonebuttontext']);
 $screen->setVar('displayheading',array_key_exists('displayheading',$screens)?1:0);
-$screen->setVar('reloadblank',array_key_exists('reloadblank',$screens)?1:0);
+$screen->setVar('reloadblank',$screens['reloadblank']);
 
 
 if(!$screen_handler->insert($screen)) {

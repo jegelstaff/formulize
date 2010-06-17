@@ -549,31 +549,31 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
       			$start = 1;
 						$metaHeaderlist = array();
       			foreach($headerlist as $headerid=>$thisheaderid) {
-					if($thisheaderid == "uid" OR $thisheaderid == "creation_uid") {
-						$metaHeaderlist[] = _formulize_DE_CALC_CREATOR;
-						unset($headerlist[$headerid]);
-						continue; 
-					}
-					if($thisheaderid == "proxyid" OR $thisheaderid == "mod_uid") {
-						$metaHeaderlist[] = _formulize_DE_CALC_MODIFIER;
-						unset($headerlist[$headerid]);
-						continue; 
-					}
-					if($thisheaderid == "creation_date" OR $thisheaderid == "creation_datetime") {
-						$metaHeaderlist[] = _formulize_DE_CALC_CREATEDATE;
-						unset($headerlist[$headerid]);
-						continue; 
-					}
-					if($thisheaderid == "mod_date" OR $thisheaderid == "mod_datetime") {
-						$metaHeaderlist[] = _formulize_DE_CALC_MODDATE;
-						unset($headerlist[$headerid]);
-						continue; 
-					}
-                                        if($thisheaderid == "creator_email") {
-						$metaHeaderlist[] = _formulize_DE_CALC_CREATOR_EMAIL;
-						unset($headerlist[$headerid]);
-						continue; 
-					}
+								if($thisheaderid == "uid" OR $thisheaderid == "creation_uid") {
+									$metaHeaderlist[] = _formulize_DE_CALC_CREATOR;
+									unset($headerlist[$headerid]);
+									continue; 
+								}
+								if($thisheaderid == "proxyid" OR $thisheaderid == "mod_uid") {
+									$metaHeaderlist[] = _formulize_DE_CALC_MODIFIER;
+									unset($headerlist[$headerid]);
+									continue; 
+								}
+								if($thisheaderid == "creation_date" OR $thisheaderid == "creation_datetime") {
+									$metaHeaderlist[] = _formulize_DE_CALC_CREATEDATE;
+									unset($headerlist[$headerid]);
+									continue; 
+								}
+								if($thisheaderid == "mod_date" OR $thisheaderid == "mod_datetime") {
+									$metaHeaderlist[] = _formulize_DE_CALC_MODDATE;
+									unset($headerlist[$headerid]);
+									continue; 
+								}
+								if($thisheaderid == "creator_email") {
+									$metaHeaderlist[] = _formulize_DE_CALC_CREATOR_EMAIL;
+									unset($headerlist[$headerid]);
+									continue; 
+								}
       				if($start) {
       					$where_clause = "ele_id='$thisheaderid'";
       					$start = 0;
@@ -581,20 +581,22 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
       					$where_clause .= " OR ele_id='$thisheaderid'";
       				}
       			}
-      			$captionq = "SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $where_clause AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order";
-      			if($rescaptionq = $xoopsDB->query($captionq)) {
-      				unset($headerlist);
-							$headerlist = $metaHeaderlist;
-      				while ($row = $xoopsDB->fetchArray($rescaptionq)) {
-     						if($row['ele_colhead'] != "") {
-     							$headerlist[] = $row['ele_colhead'];						
-     						} else {
-     							$headerlist[] = $row['ele_caption'];
-     						}
-      				}
-      			} else {
-      				exit("Error returning the default list of captions.");
-      			}
+						if($where_clause) {
+							$captionq = "SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $where_clause AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order";
+							if($rescaptionq = $xoopsDB->query($captionq)) {
+								unset($headerlist);
+								$headerlist = $metaHeaderlist;
+								while ($row = $xoopsDB->fetchArray($rescaptionq)) {
+									if($row['ele_colhead'] != "") {
+										$headerlist[] = $row['ele_colhead'];						
+									} else {
+										$headerlist[] = $row['ele_caption'];
+									}
+								}
+							} else {
+								exit("Error returning the default list of captions.");
+							}
+						}
 			} else { // if getting ids, need to convert old metadata values to new ones
         foreach($headerlist as $headerListIndex=>$thisheaderid) {
 					if($thisheaderid == "uid") {
@@ -3935,6 +3937,7 @@ function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$op
  $ops['NOT LIKE'] = "NOT LIKE";
  $op->addOptionArray($ops);
  $term = new xoopsFormText('', $newTermName, 10, 255);
+ $term->setExtra(" class=\"condition_term\" ");
  $new_elementOpTerm->addElement($element);
  $new_elementOpTerm->addElement($op);
  $new_elementOpTerm->addElement($term);

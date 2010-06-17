@@ -11,12 +11,12 @@
 <blockquote>
 <{foreach from=$sectionContent.forms item=form}>
 <div class="accordion-box">
-  <p class="form-name ui-corner-top"><{if $form.lockedform == ""}><a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>" class="form-name-icon"><{/if}>Form: <{$form.name}> (id: <{$form.fid}>)<{if $form.lockedform == ""}></a><{/if}></p>
+  <p class="form-name ui-corner-top"><{if $form.lockedform == ""}><a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=elements" class="form-name-icon"><{/if}>Form: <{$form.name}> (id: <{$form.fid}>)<{if $form.lockedform == ""}></a><{/if}></p>
   <div class="form-screen-list ui-corner-bottom">
 		<p class="formbox-title">Actions:</p>
 		<div class="formactions-list">
 		<{if $form.lockedform == ""}>
-		<a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction">Configure</div></a><br />
+		<a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=elements"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction">Configure</div></a><br />
 		<{/if}>
 		<a class="cloneform" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clone.gif"></div><div class="formaction">Clone</div></a><br />
 		<a class="cloneformdata" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clonedata.gif"></div><div class="formaction">Clone with data</div></a><br />

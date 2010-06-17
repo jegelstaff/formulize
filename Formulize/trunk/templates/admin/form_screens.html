@@ -7,12 +7,20 @@
 <{$securitytoken}>
 <input type="hidden" name="formulize_admin_handler" value="form_screens">
 <input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
+<input type="hidden" name="formulize_admin_aid" value="<{$content.aid}>">
+<input type="hidden" name="gotoscreen" value="">
+<input type="hidden" name="deletescreen" value="">
+	
+	
 
 
 <div class="panel-content content">
-  <h1>Screens: <em><{$content.name}></em></h1>
 
-  <h2><a href="ui.php?page=screen&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=new">Create a new screen</a></h2>
+	<p><i>Screens</i> let you show users different versions of the form, and the entries people have made in the form.  One screen might be a list of entries, another might be a control panel for administrators to edit and delete entries, another might be a multi-page version of a form.  You can have as many different screens as you want, all based on the same underlying form.</p>
+	<p>Each screen has its own URL, and can have one or more menu entries in this website.  Screens can also be embedded in any PHP web page, anywhere on your web server, even inside other software like Wordpress or Drupal.  See the <i>Settings</i> page of each screen for details.</p>
+	<p>When someone visits a Formulize form, but no specific screen has been requested in the URL, then the user will get either the default list of entries screen, or the default form screen.  Formulize will figure out what the user should see, based on the configuration and permission settings for the form.</p>
+
+  <h2><a href="ui.php?page=screen&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=new"><img src="../images/filenew2.png"> Create a new screen</a></h2>
 
   <{* include form if exist screens exist *}>
 
@@ -21,16 +29,18 @@
     <table>
 	    <tr>
 		    <th>Name</th>
+				<th>id</th>
 		    <th>Type</th>
 		    <th>Default</th>
 		    <th>Action</th>
 	    </tr>
       <{foreach from=$content.screens item=screen}>
 	      <tr class="<{cycle values='even,odd'}>">
-		      <td><label for="screens-default[<{$screen.sid}>]"><a href="ui.php?page=screen&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$screen.sid}>"><{$screen.title}></a></label></td>
-		      <td><{if $screen.type eq 'multiPage'}>Multi<{else}>Form<{/if}></td>
-		      <td><div class="form-radios"><input type="radio" id="screens-fornDefault" name="screens-fornDefault" value="<{$screen.sid}>"/></div></td>
-  		    <td class="head">Remove</td>
+		      <td><label for="screens-formdefault-<{$screen.sid}>"><a class="configscreen" target="<{$screen.sid}>" href=""><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
+					<td><{$screen.sid}></td>
+		      <td><{if $screen.type eq 'multiPage'}>Multi page<{else}>Regular<{/if}></td>
+		      <td><div class="form-radios"><input type="radio" name="screens-formdefault-<{$screen.sid}>" value="<{$screen.sid}>"/></div></td>
+  		    <td class="head"><a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
 	      </tr>
       <{/foreach}>
     </table>
@@ -41,16 +51,34 @@
     <table>
 	    <tr>
 		    <th>Name</th>
+				<th>id</th>
 		    <th>Default</th>
 		    <th>Action</th>
 	    </tr>
       <{foreach from=$content.listOfEntries item=screen}>
 	      <tr class="<{cycle values='even,odd' reset=true}>">
-		      <td><label for="screens-default[<{$screen.sid}>]"><a href="ui.php?page=screen&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$screen.sid}>"><{$screen.title}></a></label></td>
-		      <td><div class="form-radios"><input type="radio" id="screens-listDefault" name="screens-listDefault" value="<{$screen.sid}>"/></div></td>
-  		    <td class="head">Remove</td>
+		      <td><label for="screens-listdefault-<{$screen.sid}>"><a class="configscreen" target="<{$screen.sid}>" href=""><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
+					<td><{$screen.sid}></td>
+		      <td><div class="form-radios"><input type="radio" id="screens-listdefault-<{$screen.sid}>" name="screens-listdefault" value="<{$screen.sid}>"/></div></td>
+  		    <td class="head"><a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</td>
 	      </tr>
       <{/foreach}>
     </table>
   </div>
 </div>
+
+<script type="text/javascript">
+
+$(".configscreen").click(function() {
+	$("[name=gotoscreen]").val($(this).attr('target'));
+	$(".savebutton").click();
+	return false;
+})
+
+$(".deletescreen").click(function() {
+	$("[name=deletescreen]").val($(this).attr('target'));
+	$(".savebutton").click();
+	return false;
+})
+
+</script>

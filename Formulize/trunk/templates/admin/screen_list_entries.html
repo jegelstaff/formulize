@@ -3,19 +3,15 @@
 <{* securitytoken should be part of the form *}>
 <{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
 
-<form id="form-admin-form" name="formulize-admin-form">
+<form id="form-<{$number}>" name="formulize-admin-form">
 <{$securitytoken}>
-<input type="hidden" name="formulize_admin_handler" value="screen_list_view">
+<input type="hidden" name="formulize_admin_handler" value="screen_list_entries">
 <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
 
 
 <div class="panel-content content">
   <fieldset>
-    <legend>View for the Form <em><{$content.title}></em></legend>
-
-    <div class="description">
-	    <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION1}></p>
-    </div>
+    <legend>How entries should be displayed</legend>
 
     <div class="form-item">
       <label for="screens-defaultview"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW}></label>
@@ -38,12 +34,22 @@
     </div>
     <div class="form-item">
       <label for="screens-useworkingmsg"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USEWORKING}></label>
-      <input type="checkbox" id="screens-useworkingmsg" name="screens-useworkingmsg"<{if $content.useworkingmsg}> checked="checked"<{/if}> value="1"/>
+			<div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-useworkingmsg" name="screens-useworkingmsg"<{if $content.useworkingmsg eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-useworkingmsg" name="screens-useworkingmsg"<{if $content.useworkingmsg eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
+		  </div>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USEWORKING}></div>
     </div>
     <div class="form-item">
       <label for="screens-usescrollbox"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USESCROLLBOX}></label>
-      <input type="checkbox" id="screens-usescrollbox" name="screens-usescrollbox"<{if $content.usescrollbox}> checked="checked"<{/if}> value="1"/>
+						<div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-usescrollbox" name="screens-usescrollbox"<{if $content.usescrollbox eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-usescrollbox" name="screens-usescrollbox"<{if $content.usescrollbox eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
+		  </div>
       <div class="description"></div>
     </div>
     <div class="form-item">

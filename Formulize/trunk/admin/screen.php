@@ -33,7 +33,13 @@ include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
 // need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
 $aid = intval($_GET['aid']);
-$appName = "All forms"; // needs to be set based on aid in future
+if($aid == 0) {
+	$appName = "Forms with no app"; 
+} else {
+  $application_handler = xoops_getmodulehandler('applications','formulize');
+	$appObject = $application_handler->get($aid);
+	$appName = $appObject->getVar('name');
+}
 $elements = array();
 if($_GET['fid'] != "new") {
   $fid = intval($_GET['fid']);
@@ -60,20 +66,17 @@ if ($res) {
 }
 
 
-// common values should be assigned to all tabs
-$common['name'] = $screenName;
-$common['sid'] = $sid;
-$common['fid'] = $fid;
+
 
 // screen settings data
 $settings = array();
 $settings['links'] = $links;
 
 if($_GET['sid'] == "new") {
-  $settings['title'] = '';
   $settings['type'] = 'listOfEntries';
   $settings['frid'] = 0;
   $settings['useToken'] = 1;
+  $screenName = "New screen";
 } else {
   $screen_handler = xoops_getmodulehandler('screen', 'formulize');
   $screen = $screen_handler->get($sid);
@@ -90,18 +93,18 @@ if($_GET['sid'] == "new") {
   }
 
   $screen = $screen_handler->get($sid);
-
-  $common['title'] = $screen->getVar('title');
+  $screenName = $screen->getVar('title');
+  
 }
 
 
 // prepare data for sub-page
 if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   // display data
-  $display = array();
-  $display['toptemplate'] = $screen->getVar('toptemplate');
-  $display['bottomtemplate'] = $screen->getVar('bottomtemplate');
-  $display['listtemplate'] = $screen->getVar('listtemplate');
+  $templates = array();
+  $templates['toptemplate'] = $screen->getVar('toptemplate');
+  $templates['bottomtemplate'] = $screen->getVar('bottomtemplate');
+  $templates['listtemplate'] = $screen->getVar('listtemplate');
 
   // view data
   // gather all the available views
@@ -135,7 +138,9 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   unset($limitViewOptions['blank']);
   // get the available screens
   $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-  $viewentryscreenOptionsDB = $screen_handler->getObjects(new Criteria("type", "multiPage"), $fid); 
+  $criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
+  $criteria_object->add(new Criteria('type','form'), 'OR');
+  $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $fid); 
   $viewentryscreenOptions["none"] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT;
   foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
       $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
@@ -151,17 +156,17 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
 			}
 	}
   // create the template information
-  $view = array();
-  $view['defaultviewoptions'] = $defaultViewOptions;
-  $view['defaultview'] = $screen->getVar('defaultview');
-  $view['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
-  $view['limitviewoptions'] = $limitViewOptions;
-  $view['limitviews'] = $screen->getVar('limitviews');
-  $view['useworkingmsg'] = $screen->getVar('useworkingmsg');
-  $view['usescrollbox'] = $screen->getVar('usescrollbox');
-  $view['entriesperpage'] = $screen->getVar('entriesperpage');
-  $view['viewentryscreenoptions'] = $viewentryscreenOptions;
-  $view['viewentryscreen'] = $screen->getVar('viewentryscreen');
+  $entries = array();
+  $entries['defaultviewoptions'] = $defaultViewOptions;
+  $entries['defaultview'] = $screen->getVar('defaultview');
+  $entries['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
+  $entries['limitviewoptions'] = $limitViewOptions;
+  $entries['limitviews'] = $screen->getVar('limitviews');
+  $entries['useworkingmsg'] = $screen->getVar('useworkingmsg');
+  $entries['usescrollbox'] = $screen->getVar('usescrollbox');
+  $entries['entriesperpage'] = $screen->getVar('entriesperpage');
+  $entries['viewentryscreenoptions'] = $viewentryscreenOptions;
+  $entries['viewentryscreen'] = $screen->getVar('viewentryscreen');
 
   // headings data
   //set options for all elements in entire framework
@@ -197,7 +202,8 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
           $listTemplateHelp[] = "<tr><td class=$class><nobr><b>" . printSmart(trans(strip_tags($elementHeading))) . "</b></nobr></td><td class=$class><nobr>".$thisFidHandles[$i]."</nobr></td></tr>";
       }
   }
-  // create the template information
+  $templates['listtemplatehelp'] = $listTemplateHelp;
+  
   $headings = array();
   $headings['useheadings'] = $screen->getVar('useheadings');
   $headings['repeatheaders'] = $screen->getVar('repeatheaders');
@@ -269,6 +275,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
   $pageTitles = $screen->getVar("pagetitles");
   $elements = $screen->getVar("pages");
   $conditions = $screen->getVar("conditions");
+
   // group entries
   $pages = array();
 	for($i=0;$i<(count($pageTitles)+$pageCounterOffset);$i++) {
@@ -278,7 +285,15 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
     $pages[$i]['content']['title'] = $pageTitles[$i];
     $pages[$i]['content']['options'] = $options;
     $pages[$i]['content']['elements'] = $elements[$i];
-    $pages[$i]['content']['conditions'] = $conditions[$i];
+    $filterSettingsToSend = count($conditions[$i] > 0) ? $conditions[$i] : "";
+    if(isset($filterSettingsToSend['details'])) { // if this is in the old format (pre-version 4, these conditions used a non-standard syntax), convert it!
+      $newFilterSettingsToSend = array();
+      $newFilterSettingsToSend[0] = $filterSettingsToSend['details']['elements'];
+      $newFilterSettingsToSend[1] = $filterSettingsToSend['details']['ops'];
+      $newFilterSettingsToSend[2] = $filterSettingsToSend['details']['terms'];
+      $filterSettingsToSend = $newFilterSettingsToSend;      
+    }
+    $pages[$i]['content']['conditions'] = formulize_createFilterUI($filterSettingsToSend, "pagefilter_".$i, $fid, "form-4");
   }
 
   // options data
@@ -292,8 +307,8 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
 
   // text data
   $multipageText = array();
-  $multipageText['introtext'] = $screen->getVar('introtext');
-  $multipageText['thankstext'] = $screen->getVar('thankstext');
+  $multipageText['introtext'] = html_entity_decode($screen->getVar('introtext'));
+  $multipageText['thankstext'] = html_entity_decode($screen->getVar('thankstext'));
 
   // pages data
   $multipagePages = array();
@@ -306,9 +321,15 @@ if($_GET['sid'] != "new" && $settings['type'] == 'form') {
   $options['savebuttontext'] = $screen->getVar('savebuttontext');
   $options['alldonebuttontext'] = $screen->getVar('alldonebuttontext');
   $options['displayheading'] = $screen->getVar('displayheading');
-  $options['reloadblank'] = $screen->getVar('reloadblank');
-}
+  $options['reloadblank'] = $screen->getVar('reloadblank') ? "blank" : "entry";
+} 
 
+// common values should be assigned to all tabs
+$common['name'] = $screenName;
+$common['title'] = $screenName; // oops, we've got two copies of this data floating around...standardize sometime
+$common['sid'] = $sid;
+$common['fid'] = $fid;
+$common['aid'] = $aid;
 
 // define tabs for screen sub-page
 $adminPage['tabs'][1]['name'] = "Settings";
@@ -336,32 +357,35 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
 }
 
 if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
-  $adminPage['tabs'][2]['name'] = "Display";
-  $adminPage['tabs'][2]['template'] = "db:admin/screen_list_display.html";
-  $adminPage['tabs'][2]['content'] = $display + $common;
+  $adminPage['tabs'][2]['name'] = "Entries to Display";
+  $adminPage['tabs'][2]['template'] = "db:admin/screen_list_entries.html";
+  $adminPage['tabs'][2]['content'] = $entries + $common;
 
-  $adminPage['tabs'][3]['name'] = "View";
-  $adminPage['tabs'][3]['template'] = "db:admin/screen_list_view.html";
-  $adminPage['tabs'][3]['content'] = $view + $common;
+  $adminPage['tabs'][3]['name'] = "Headings and Interface";
+  $adminPage['tabs'][3]['template'] = "db:admin/screen_list_headings.html";
+  $adminPage['tabs'][3]['content'] = $headings + $common;
 
-  $adminPage['tabs'][4]['name'] = "Headings";
-  $adminPage['tabs'][4]['template'] = "db:admin/screen_list_headings.html";
-  $adminPage['tabs'][4]['content'] = $headings + $common;
+  $adminPage['tabs'][4]['name'] = "Action Buttons";
+  $adminPage['tabs'][4]['template'] = "db:admin/screen_list_buttons.html";
+  $adminPage['tabs'][4]['content'] = $buttons + $common;
 
-  $adminPage['tabs'][5]['name'] = "Buttons";
-  $adminPage['tabs'][5]['template'] = "db:admin/screen_list_buttons.html";
-  $adminPage['tabs'][5]['content'] = $buttons + $common;
+  $adminPage['tabs'][5]['name'] = "Custom buttons";
+  $adminPage['tabs'][5]['template'] = "db:admin/screen_list_custom.html";
+  $adminPage['tabs'][5]['content'] = $custom + $common;
+  
+  $adminPage['tabs'][6]['name'] = "Templates";
+  $adminPage['tabs'][6]['template'] = "db:admin/screen_list_templates.html";
+  $adminPage['tabs'][6]['content'] = $templates + $common;
 
-  $adminPage['tabs'][6]['name'] = "Custom buttons";
-  $adminPage['tabs'][6]['template'] = "db:admin/screen_list_custom.html";
-  $adminPage['tabs'][6]['content'] = $custom + $common;
 }
 
+$adminPage['pagetitle'] = "Screen: ".$screenName;
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['url'] = "page=application&aid=$aid";
 $breadcrumbtrail[2]['text'] = $appName;
+$breadcrumbtrail[3]['url'] = "page=form&aid=$aid&fid=$fid&tab=screens";
 $breadcrumbtrail[3]['text'] = $formName;
 $breadcrumbtrail[4]['text'] = $screenName;

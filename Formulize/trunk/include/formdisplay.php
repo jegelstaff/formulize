@@ -311,7 +311,7 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 	}
 
 	// main security check passed, so let's initialize flags	
-	$go_back['url'] = $done_dest;
+	$go_back['url'] = substr($done_dest, 0, 1) == "/" ? XOOPS_URL . $done_dest : $done_dest;
 
 	// set these arrays for the one form, and they are added to by the framework if it is in effect
 	$fids[0] = $fid;
