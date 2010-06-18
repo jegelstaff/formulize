@@ -3,7 +3,7 @@
     <legend><{$smarty.const._AM_ELE_DATE}></legend>
 
     <div class="form-item">
-	    <input type="text" id="element-date" name="element-date" value="YYYY-mm-dd" size="15" maxlength="15"/>
+	    <input type="text" id="element-date" name="element-date" value="<{if $content.ele_value[0] eq ''}>YYYY-mm-dd<{else}><{$content.ele_value[0]}><{/if}>" size="15" maxlength="15"/>
     </div>
   </fieldset>
 </div>

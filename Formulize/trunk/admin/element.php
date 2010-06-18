@@ -55,6 +55,8 @@ if($_GET['ele_id'] != "new") {
   $colhead = $elementObject->getVar('ele_colhead');
   $caption = $elementObject->getVar('ele_caption');
   $ele_type = $elementObject->getVar('ele_type');
+  $ele_value = $elementObject->getVar('ele_value');
+  $ele_delim = $elementObject->getVar('ele_delim');
   $elementName = $colhead ? printSmart($colhead,30) : printSmart($caption,30);
   $names['ele_caption'] = $caption;
   $names['ele_colhead'] = $colhead;
@@ -124,10 +126,18 @@ $common['ele_id'] = $ele_id;
 $names['hello'] = 'hello';
 
 $options = array();
+$options['ele_value'] = $ele_value;
+$options['ele_delim'] = $ele_delim;
 $options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
 
-if($ele_type=='text'||$ele_type=='textarea'||$ele_type=='select') {
-  $formlink = createFieldList($val, true);
+if($ele_type=='text') {
+  $formlink = createFieldList($ele_value[4], true);
+  $options['formlink'] = $formlink->render();
+} else if($ele_type=='textarea') {
+  $formlink = createFieldList($ele_value[3], true);
+  $options['formlink'] = $formlink->render();
+} else if($ele_type=='select') {
+  $formlink = createFieldList($ele_value[2], true);
   $options['formlink'] = $formlink->render();
 } else if($ele_type=='sep') {
   $options['options'] = array('centre'=>_AM_ELE_CTRE, 'souligné'=>_AM_ELE_SOUL, 'italique'=>_AM_ELE_ITALIQ);

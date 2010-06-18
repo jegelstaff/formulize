@@ -3,16 +3,16 @@
     <legend><{$smarty.const._AM_ELE_TAREA}></legend>
 
     <div class="form-item required">
-	    <label for="element-rows"><{$smarty.const._AM_ELE_ROWS}><em>*</em></label>
-	    <input type="text" id="element-rows" name="element-rows" value="" size="3" maxlength="3"/>
+	    <label for="element-ele_value[1]"><{$smarty.const._AM_ELE_ROWS}><em>*</em></label>
+	    <input type="text" id="element-ele_value[1]" name="element-ele_value[1]" value="<{$content.ele_value[1]}>" size="3" maxlength="3"/>
     </div>
     <div class="form-item required">
-	    <label for="element-cols"><{$smarty.const._AM_ELE_COLS}><em>*</em></label>
-	    <input type="text" id="element-cols" name="element-cols" value="" size="3" maxlength="3"/>
+	    <label for="element-ele_value[2]"><{$smarty.const._AM_ELE_COLS}><em>*</em></label>
+	    <input type="text" id="element-ele_value[2]" name="element-ele_value[2]" value="<{$content.ele_value[2]}>" size="3" maxlength="3"/>
     </div>
     <div class="form-item">
-	    <label for="element-default"><{$smarty.const._AM_ELE_DEFAULT}></label>
-	    <textarea id="element-default" name="element-default" rows="5" cols="35"></textarea>
+	    <label for="element-ele_value[0]"><{$smarty.const._AM_ELE_DEFAULT}></label>
+	    <textarea id="element-ele_value[0]" name="element-ele_value[0]" rows="5" cols="35"><{$content.ele_value[0]}></textarea>
 	    <div class="description">
           <p><{$smarty.const._AM_ELE_TEXT_DESC}><{$smarty.const._AM_ELE_TEXT_DESC2}></p>
       </div>

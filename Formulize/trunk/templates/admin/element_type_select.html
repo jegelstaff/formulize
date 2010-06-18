@@ -3,12 +3,12 @@
     <legend><{$smarty.const._AM_ELE_SELECT}></legend>
 
     <div class="form-item required">
-	    <label for="element-size"><{$smarty.const._AM_ELE_SIZE}><em>*</em></label>
-	    <input type="text" id="element-size" name="element-size" value="" size="3" maxlength="2"/>
+	    <label for="element-ele_value[0]"><{$smarty.const._AM_ELE_SIZE}><em>*</em></label>
+	    <input type="text" id="element-ele_value[0]" name="element-ele_value[0]" value="<{$content.ele_value[0]}>" size="3" maxlength="2"/>
     </div>
 	  <div class="form-item">
-		  <label for="element-multiple"><{$smarty.const._AM_ELE_MULTIPLE}></label>
-		  <input type="checkbox" id="element-multiple" name="element-multiple"<{if $content.multiple}> checked="checked"<{/if}> value="1"/>
+		  <label for="element-ele_value[1]"><{$smarty.const._AM_ELE_MULTIPLE}></label>
+		  <input type="checkbox" id="element-ele_value[1]" name="element-ele_value[1]"<{if $content.ele_value[1] eq 1}> checked="checked"<{/if}> value="1"/>
 	  </div>
 
 	  <div class="form-item">
@@ -43,18 +43,18 @@
         <br/><br/>
         <fieldset>
 	        <div class="form-radios">
-		        <label for="linkscopelimit-0"><input type="radio" id="linkscopelimit-0" name="element-linkscopelimit" value="0"/><{$smarty.const._AM_ELE_FORMLINK_SCOPELIMIT_NO}></label>
+		        <label for="element-ele_value[4]-0"><input type="radio" id="element-ele_value[4]-0" name="element-ele_value[4]" value="0"<{if $content.ele_value[4] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_SCOPELIMIT_NO}></label>
 	        </div>
 	        <div class="form-radios">
-		        <label for="linkscopelimit-1"><input type="radio" id="linkscopelimit-1" name="element-linkscopelimit" value="1"/><{$smarty.const._AM_ELE_FORMLINK_SCOPELIMIT_YES}></label>
+		        <label for="element-ele_value[4]-1"><input type="radio" id="element-ele_value[4]-1" name="element-ele_value[4]" value="1"<{if $content.ele_value[4] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_SCOPELIMIT_YES}></label>
 	        </div>
         </fieldset>
 	      <fieldset>
 		      <div class="form-radios">
-			      <label for="linkscopeanyall-0"><input type="radio" id="linkscopeanyall-0" name="element-linkscopeanyall" value="0"/><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ANY}></label>
+			      <label for="element-ele_value[6]-0"><input type="radio" id="element-ele_value[6]-0" name="element-ele_value[6]" value="0"<{if $content.ele_value[6] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ANY}></label>
 		      </div>
 		      <div class="form-radios">
-			      <label for="linkscopeanyall-1"><input type="radio" id="linkscopeanyall-1" name="element-linkscopeanyall" value="1"/><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ALL}></label>
+			      <label for="element-ele_value[6]-1"><input type="radio" id="element-ele_value[6]-1" name="element-ele_value[6]" value="1"<{if $content.ele_value[6] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ALL}></label>
 		      </div>
 	      </fieldset>
 	      <div class="description">
