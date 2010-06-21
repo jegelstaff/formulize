@@ -3,16 +3,16 @@
     <legend><{$smarty.const._AM_ELE_MODIF_ONE}></legend>
 
     <div class="form-item">
-	    <label for="element-ele_value[0]"><{$smarty.const._AM_ELE_INSERTBREAK}></label>
-	    <textarea id="element-ele_value[0]" name="element-ele_value[0]" rows="5" cols="35"><{$content.ele_value[0]}></textarea>
+	    <label for="elements-ele_value[0]"><{$smarty.const._AM_ELE_INSERTBREAK}></label>
+	    <textarea id="elements-ele_value[0]" name="elements-ele_value[0]" rows="5" cols="35"><{$content.ele_value[0]}></textarea>
 	    <div class="description">
           <p><{$smarty.const._AM_ELE_IB_DESC}></p>
       </div>
     </div>
     <div class="form-item">
-	    <label for="element-ele_value[1]"><{$smarty.const._AM_ELE_INSERTBREAK}></label>
-      <select name="css" id="css" size=1>
-        <option value="head"<{if $content.ele_value[1] eq 'head'}> selected="seleced"<{/if}>>head</option>
+	    <label for="elements-ele_value[1]"><{$smarty.const._AM_ELE_INSERTBREAK}></label>
+      <select name="elements-ele_value[1]" id="css" size=1>
+        <option value="head">head</option>
       </select>
     </div>
   </fieldset>

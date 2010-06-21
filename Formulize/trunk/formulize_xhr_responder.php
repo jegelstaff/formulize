@@ -47,7 +47,7 @@ if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $s
 $op = $_GET['op'];
 
 // validate op
-if($op != "check_for_unique_value") {
+if($op != "check_for_unique_value" AND $op != "get_element_option_list") {
   exit();
 }
 
@@ -72,6 +72,19 @@ switch($op) {
     } else {
       print 'invalidelement';
     }
+    break;
+  case 'get_element_option_list':
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+  	$elementsq = q("SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($_GET['fid']) . " AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
+    $json = "{ \"options\": [";
+    $start = true;
+  	foreach($elementsq as $oneele) {
+      if(!$start) { $json .= ", "; }
+      $json .= "{\"id\": \"".$oneele['ele_id']."\", \"value\": \"".printSmart($oneele['ele_caption'])."\"}";
+      $start = false;
+  	}
+    $json .= "]}";
+    print $json;
     break;
 }
 

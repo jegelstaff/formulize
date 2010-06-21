@@ -50,7 +50,6 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 
 // do saving of defaults here
 $screens = $processedValues['screens'];
-$form_handler = xoops_getmodulehandler('forms', 'formulize');
 $form = $form_handler->get($fid);
 $form->setVar('defaultform',intval($screens['defaultform']));
 $form->setVar('defaultlist',intval($screens['defaultlist']));

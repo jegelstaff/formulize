@@ -39,6 +39,17 @@ $aid = intval($_POST['aid']);
 $sid = $_POST['formulize_admin_key'];
 $fid = intval($_POST['formulize_admin_fid']);
 
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+$formObject = $form_handler->get($fid);
+if($formObject->getVar('lockedform')) {
+  return;
+}
+// check if the user has permission to edit the form
+if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
+  return;
+}
+
+
 $screens = $processedValues['screens'];
 
 $isNew = ($sid=='new');

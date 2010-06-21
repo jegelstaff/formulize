@@ -12,48 +12,33 @@
 <input type="hidden" name="aid" value="<{$content.aid}>">	
 <input type="hidden" name="elementorder" value="">	
 	
-<div class="panel-content content">
+<div class="accordion-box">
 	<h2>Add elements to the form</h2>
-<div class="form-item">
-	<fieldset>
-		<legend><label class="question">Click an element name to add it</label></legend>
-		<div class="accordion-box">
-		<ul>
-			<li><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text">Text box</a></li>
-			<li><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea">Multi-line text box</a></li>
-			<li><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=areamodif">Text for display (left and right cells)</a></li>
-			<li><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=ib">Text for display (spanning both cells)</a></li>
-		</ul>
-		</div>
-		<div class="accordion-box">
-			<ul>
-				<li><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=select">Select box (dropdowns and list boxes)</a></li>
-				<li><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkbox">Check boxes</a></li>
-				<li><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=radio">Radio buttons</a></li>
-				<li><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=yn">Yes/No radio buttons</a></li>
-				<li><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=date">Date box</a></li>
-			</ul>
-		</div>
-		<div class="accordion-box">
-			<ul>		
-				<li><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subform">Subform (another form with a relationship to this one)</a></li>
-				<li><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=grid">Table of existing elements (place BEFORE the elements it contains)</a></li>
-				<li><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived">Value derived from other elements</a></li>
-				<li><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick">Color picker</a></li>
-			</ul>
-		</div>
-	</fieldset>
+	<p>Click an element name to add it</p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><img src="../images/filenew2.png"> Text box</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea"><img src="../images/filenew2.png"> Multi-line text box</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=areamodif"><img src="../images/filenew2.png"> Text for display (left and right cells)</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=ib"><img src="../images/filenew2.png"> Text for display (spanning both cells)</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=select"><img src="../images/filenew2.png"> Select box (dropdowns and list boxes)</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkbox"><img src="../images/filenew2.png"> Check boxes</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=radio"><img src="../images/filenew2.png"> Radio buttons</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=yn"><img src="../images/filenew2.png"> Yes/No radio buttons</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=date"><img src="../images/filenew2.png"> Date box</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subform"><img src="../images/filenew2.png"> Subform (another form with a relationship to this one)</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=grid"><img src="../images/filenew2.png"> Table of existing elements (place BEFORE the elements it contains)</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived"><img src="../images/filenew2.png"> Value derived from other elements</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick"><img src="../images/filenew2.png"> Color picker</a></p>
 </div>
 
-</div>
-
+<div class="accordion-box-wide">
 <h2>Manage the elements in the form</h2>
-
-<div id="sortable-list">
+<p>Click and drag the elements to re-order them</p>
+		<div id="sortable-list">
 <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.elements}>
+		</div>
 </div>
 </form>
-
+<div style="clear: both;"></div>
 <script type="text/javascript">
 
 $(".clonelink").click(function () {

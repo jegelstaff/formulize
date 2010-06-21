@@ -156,8 +156,18 @@ div.accordion-box .no-bullets {
 /* form > fieldset > ol > li > fieldset or input or select */
 /* Using http://www.alistapart.com/articles/prettyaccessibleforms/ */
 
-.floatleft {
-	float: left;
+.smallhead {
+	margin-top: -0.5em;
+	font-size: 10pt;	
+}
+
+
+.addeffectbutton {
+	margin-bottom: 1.5em;
+}
+
+div.customeffect {
+	padding-left: 1em;
 }
 
 form fieldset {

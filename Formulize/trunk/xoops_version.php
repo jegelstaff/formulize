@@ -154,6 +154,8 @@ $modversion['templates'][++$tindex]['file'] = 'admin/screen_list_display.html';
 $modversion['templates'][$tindex]['description'] = '';
 $modversion['templates'][++$tindex]['file'] = 'admin/screen_list_custom.html';
 $modversion['templates'][$tindex]['description'] = '';
+$modversion['templates'][++$tindex]['file'] = 'admin/screen_list_custom_sections.html';
+$modversion['templates'][$tindex]['description'] = '';
 $modversion['templates'][++$tindex]['file'] = 'admin/screen_form_options.html';
 $modversion['templates'][$tindex]['description'] = '';
 $modversion['templates'][++$tindex]['file'] = 'admin/screen_list_buttons.html';
@@ -170,6 +172,9 @@ $modversion['templates'][++$tindex]['file'] = 'admin/screen_multipage_pages.html
 $modversion['templates'][$tindex]['description'] = '';
 $modversion['templates'][++$tindex]['file'] = 'admin/screen_multipage_pages_sections.html';
 $modversion['templates'][$tindex]['description'] = '';
+$modversion['templates'][++$tindex]['file'] = 'admin/element_optionlist.html';
+$modversion['templates'][$tindex]['description'] = '';
+
 
 
 //	Module Configs

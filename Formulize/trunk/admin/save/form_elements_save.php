@@ -161,7 +161,8 @@ if($_POST['cloneelement']) {
   // create a new element, and then direct them to the page for editing that element
   $thisElementObject = $element_handler->get($_POST['cloneelement']);
   $oldHandle = $thisElementObject->getVar('ele_handle');
-  $thisElementObject->setVar('ele_id', '');
+  $thisElementObject->setVar('ele_id', 0);
+  $thisElementObject->setVar('ele_handle', "");
   $sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
   $res = $xoopsDB->query($sql);
   $array = $xoopsDB->fetchArray($res);
@@ -169,12 +170,11 @@ if($_POST['cloneelement']) {
   $ele_caption = $thisElementObject->getVar('ele_caption');
   $ele_colhead = $thisElementObject->getVar('ele_colhead');
   $thisElementObject->setVar('ele_caption', $ele_caption . " copy");
-  $thisElementObject->setVar('ele_colhead', $ele_colhead . " copy");
+  if($ele_colhead) {
+    $thisElementObject->setVar('ele_colhead', $ele_colhead . " copy");
+  }
   $element_handler->insert($thisElementObject);
   $ele_id = $thisElementObject->getVar('ele_id');
-  $thisElementObject->setVar('ele_handle', $ele_id);
-  $element_handler->insert($thisElementObject); // insert a second time to update the handle to match the id by default
-  // figure out the data type of the old field
   $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $thisElementObject->getVar('id_form')) ." LIKE '$oldHandle'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
 	if(!$fieldStateRes = $xoopsDB->query($fieldStateSQL)) {
 		$dataType = "text";

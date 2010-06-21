@@ -14,7 +14,7 @@
 <input type="hidden" id="reload_settings" name="reload_settings" value="<{if $content.fid == 'new'}>1<{/if}>">
 
 	<div class="accordion-box">
-		<div class="form-item">
+		<div class="form-item required">
         	<fieldset>
                 <legend><label for="forms-title" class="question">What is the name of the form?</label></legend>
                 <input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" class="input-text" />
@@ -41,10 +41,10 @@
 					<label for="group"><input type="radio" id="group" name="forms-single" value="group" />One entry per <b>group</b></label>
 				</div>
 				<div class="form-radios">
-					<label for="on"><input type="radio" id="user" name="forms-single" value="on" />One entry per <b>user</b></label>
+					<label for="on"><input type="radio" id="user" name="forms-single" value="user" />One entry per <b>user</b></label>
 				</div>
 				<div class="form-radios">
-					<label for="empty"><input type="radio" id="off" name="forms-single" value="" /><b>More than one entry</b> per user</label>
+					<label for="empty"><input type="radio" id="off" name="forms-single" value="off" /><b>More than one entry</b> per user</label>
 				</div>
              </fieldset>
 		</div>

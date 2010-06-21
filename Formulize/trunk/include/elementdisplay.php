@@ -92,7 +92,8 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$allowed = 0;
 	}
 	
-	if($allowed AND count($element->getVar('ele_filtersettings')) > 1) {
+	$elementFilterSettings = $element->getVar('ele_filtersettings');
+	if($allowed AND count($elementFilterSettings[0]) > 0) {
 		// need to check if there's a condition on this element that is met or not
 		
 		static $cachedEntries = array();
@@ -102,7 +103,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 			}	
 			$entryData = $cachedEntries[$element->getVar('id_form')][$entry];
 		}
-		$elementFilterSettings = $element->getVar('ele_filtersettings');
+		
 		$filterElements = $elementFilterSettings[0];
 		$filterOps = $elementFilterSettings[1];
 		$filterTerms = $elementFilterSettings[2];

@@ -288,60 +288,108 @@ class formulizeElementRenderer{
 					
 					// determine the filter conditions if any, and make the conditionsfilter
 					$conditionsfilter = "";
+					$conditionsfilter_oom = "";
 					if(is_array($ele_value[5])) {
 						$filterElements = convertElementIdsToElementHandles($ele_value[5][0], $sourceFid);
 						$filterOps = $ele_value[5][1];
 						$filterTerms = $ele_value[5][2];
+						$filterTypes = $ele_value[5][3];
 						$start = true;
+						$start_oom = true;
 						if(!isset($form_handler)) {
 								$form_handler = xoops_getmodulehandler('forms', 'formulize');
 						}
 						$sourceFormObject = $form_handler->get($sourceFid);
 						$sourceFormElementTypes = $sourceFormObject->getVar('elementTypes');
 						for($filterId = 0;$filterId<count($filterElements);$filterId++) {
-							if($start) {
-								$conditionsfilter = " AND (";
-								$start = false;
-							} else {
-								$conditionsfilter .= " AND ";
-							}
-							if($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
-							if(strstr(strtoupper($filterOps[$filterId]), "LIKE")) {
-								$likebits = "%";
-								$quotes = "'";
-							} else {
-								$likebits = "";
-								$quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
-							}
-							if($filterTerms[$filterId] === "{USER}") {
-								if($entry != "new") {
-									$filterTerms[$filterId] = $owner; // use the owner of the entry if this is an existing entry, so that selected options can be preserved on saving
+							if($filterTypes[$filterId] != "oom") {
+								if($start) {
+									$conditionsfilter = " AND (";
+									$start = false;
 								} else {
-									$filterTerms[$filterId] = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+									$conditionsfilter .= " AND ";
 								}
-							}
-							if($sourceFormElementTypes[$filterElements[$filterId]] == "yn") {
-								if(strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($filterTerms[$filterId])) OR strtoupper($filterTerms[$filterId]) == "YES") { // since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
-                  $filterTerms[$filterId] = 1;
-                } elseif(strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($filterTerms[$filterId])) OR strtoupper($filterTerms[$filterId]) == "NO") {
-									$filterTerms[$filterId] = 2;
-                } else {
-									$filterTerms[$filterId] = "";
-                }
-							}
-							$parentFormFrom = "";
-							$conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
-							if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") { // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
-								$parentFormFrom = ", ".$xoopsDB->prefix("formulize_".$id_form)." AS t3 ";
-								if($likebits == "%") {
-									$conditionsFilterComparisonValue = " CONCAT('%',t3.`".substr($filterTerms[$filterId],1,-1)."`,'%') AND t3.`entry_id`=$entry ";
+								if($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
+								if(strstr(strtoupper($filterOps[$filterId]), "LIKE")) {
+									$likebits = "%";
+									$quotes = "'";
 								} else {
-									$conditionsFilterComparisonValue = " t3.`".substr($filterTerms[$filterId],1,-1)."` AND t3.`entry_id`=$entry ";
+									$likebits = "";
+									$quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
 								}
+								if($filterTerms[$filterId] === "{USER}") {
+									if($entry != "new") {
+										$filterTerms[$filterId] = $owner; // use the owner of the entry if this is an existing entry, so that selected options can be preserved on saving
+									} else {
+										$filterTerms[$filterId] = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+									}
+								}
+								if($sourceFormElementTypes[$filterElements[$filterId]] == "yn") {
+									if(strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($filterTerms[$filterId])) OR strtoupper($filterTerms[$filterId]) == "YES") { // since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
+										$filterTerms[$filterId] = 1;
+									} elseif(strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($filterTerms[$filterId])) OR strtoupper($filterTerms[$filterId]) == "NO") {
+										$filterTerms[$filterId] = 2;
+									} else {
+										$filterTerms[$filterId] = "";
+									}
+								}
+								$parentFormFrom = "";
+								$conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
+								if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") { // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
+									$parentFormFrom = ", ".$xoopsDB->prefix("formulize_".$id_form)." AS t3 ";
+									if($likebits == "%") {
+										$conditionsFilterComparisonValue = " CONCAT('%',t3.`".substr($filterTerms[$filterId],1,-1)."`,'%') AND t3.`entry_id`=$entry ";
+									} else {
+										$conditionsFilterComparisonValue = " t3.`".substr($filterTerms[$filterId],1,-1)."` AND t3.`entry_id`=$entry ";
+									}
+								}
+								$conditionsfilter .= "t1.`".$filterElements[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue;
+							} else { // MUST ABSTRACT THESE OUT TO A FUNCTION INTEAD OF DUPLICATING!!!
+								if($start) {
+									$conditionsfilter_oom = " AND (";
+									$start = false;
+								} else {
+									$conditionsfilter_oom .= " OR ";
+								}
+								if($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
+								if(strstr(strtoupper($filterOps[$filterId]), "LIKE")) {
+									$likebits = "%";
+									$quotes = "'";
+								} else {
+									$likebits = "";
+									$quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
+								}
+								if($filterTerms[$filterId] === "{USER}") {
+									if($entry != "new") {
+										$filterTerms[$filterId] = $owner; // use the owner of the entry if this is an existing entry, so that selected options can be preserved on saving
+									} else {
+										$filterTerms[$filterId] = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+									}
+								}
+								if($sourceFormElementTypes[$filterElements[$filterId]] == "yn") {
+									if(strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($filterTerms[$filterId])) OR strtoupper($filterTerms[$filterId]) == "YES") { // since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
+										$filterTerms[$filterId] = 1;
+									} elseif(strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($filterTerms[$filterId])) OR strtoupper($filterTerms[$filterId]) == "NO") {
+										$filterTerms[$filterId] = 2;
+									} else {
+										$filterTerms[$filterId] = "";
+									}
+								}
+								$parentFormFrom = "";
+								$conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
+								if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") { // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
+									$parentFormFrom = ", ".$xoopsDB->prefix("formulize_".$id_form)." AS t3 ";
+									if($likebits == "%") {
+										$conditionsFilterComparisonValue = " CONCAT('%',t3.`".substr($filterTerms[$filterId],1,-1)."`,'%') AND t3.`entry_id`=$entry ";
+									} else {
+										$conditionsFilterComparisonValue = " t3.`".substr($filterTerms[$filterId],1,-1)."` AND t3.`entry_id`=$entry ";
+									}
+								}
+								$conditionsfilter_oom .= "t1.`".$filterElements[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue;
 							}
-							$conditionsfilter .= "t1.`".$filterElements[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue;
 						}
 						$conditionsfilter .= $conditionsfilter ? ")" : "";
+						$conditionsfilter_oom .= $conditionsfilter_oom ? ")" : "";
 					} 
 
 					static $cachedSourceValuesQ = array();

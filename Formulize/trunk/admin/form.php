@@ -348,42 +348,6 @@ $breadcrumbtrail[2]['url'] = "page=application&aid=$aid";
 $breadcrumbtrail[2]['text'] = $appName;
 $breadcrumbtrail[3]['text'] = $formName;
 
-function convertTypeToText($type, $ele_value) {
-  switch($type) {
-    case "text":
-      return "Textbox";
-    case "textarea":
-      return "Multi-line text box";
-    case "areamodif":
-      return "Text for display (left and right cells)";
-    case "ib":
-      return "Text for display (spanning both cells)";
-    case "select":
-      if($ele_value[0] == 1) {
-        return "Dropdown box";
-      } else {
-        return "List box";
-      }
-    case "checkbox":
-      return "Check boxes";
-    case "radio":
-      return "Radio buttons";
-    case "yn":
-      return "Yes/No radio buttons";
-    case "date":
-      return "Date box";
-    case "subform":
-      return "Subform (another form with a relationship to this one)";
-    case "grid":
-      return "Table of existing elements (place BEFORE the elements it contains)";
-    case "derived":
-      return "Value derived from other elements";
-    case "colorpick":
-      return "Color picker";
-  }
-  
-}
-
 function removeNotApplicableRequireds($type, $req) {
   switch($type) {
     case "text":

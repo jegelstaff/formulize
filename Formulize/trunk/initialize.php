@@ -71,8 +71,8 @@ if(isset($formulize_screen_id) AND is_numeric($formulize_screen_id)) {
 } else {
 	$sid="";
 }
+$screen_handler =& xoops_getmodulehandler('screen', 'formulize');
 if($sid) {
-	$screen_handler =& xoops_getmodulehandler('screen', 'formulize');
 	$thisscreen1 = $screen_handler->get($sid); // first get basic screen object to determine type
 	$fid = is_object($thisscreen1) ? $thisscreen1->getVar('fid') : 0;
 }
@@ -153,10 +153,11 @@ if(isset($formulize_entry_id) AND is_numeric($formulize_entry_id)) {
 	$entry = "";
 }
 
+$formulize_screen_loadview = (!isset($formulize_screen_loadview) OR !is_numeric($formulize_screen_loadview)) ? intval($_GET['loadview']) : $formulize_screen_loadview;
+$loadThisView = (isset($formulize_screen_loadview) AND is_numeric($formulize_screen_loadview)) ? $formulize_screen_loadview : "";
+if(!$loadThisView) { $loadThisView = ""; } // a 0 could possibly screw things up, so change to ""
+
 if($screen) {
-	$formulize_screen_loadview = (!isset($formulize_screen_loadview) OR !is_numeric($formulize_screen_loadview)) ? intval($_GET['loadview']) : $formulize_screen_loadview;
-  $loadThisView = (isset($formulize_screen_loadview) AND is_numeric($formulize_screen_loadview)) ? $formulize_screen_loadview : "";
-	if(!$loadThisView) { $loadThisView = ""; } // a 0 could possibly screw things up, so change to ""
 	if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
 		if($screen->getVar('frid')) {
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
@@ -183,19 +184,37 @@ if($screen) {
 if(!$rendered) {
       if(isset($frid) AND is_numeric($frid) AND isset($fid) AND is_numeric($fid)) {
       	if(((!$singleentry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleentry != "group")) AND !$entry AND (!isset($_GET['iform']) OR $_GET['iform'] != "e") AND !isset($_GET['showform'])) { // if it's multientry and there's a xoopsUser, or the user has globalscope, or the user has groupscope and it's not a one-per-group form, and after all that, no entry has been requested, then show the list (note that anonymous users default to the form view...to provide them lists of their own entries....well you can't, but groupscope and globalscope will show them all entries by anons or by everyone) ..... unless there is an override in the URL that is meant to force the form itself to display .... iform is "interactive form", devised by Feratech.
-      		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
-      		displayEntries($frid, $fid); // if it's a multi, or if a single and they have group or global scope
+					include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
+					displayEntries($frid, $fid); // if it's a multi, or if a single and they have group or global scope
       	} else { // otherwise, show the form
       		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
       		displayForm($frid, $entry, $fid, "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope, OR if an entry was specified in particular
       	}
       } elseif(isset($fid) AND is_numeric($fid)) {
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$formObject = $form_handler->get($fid);
+				$defaultFormScreen = $formObject->getVar('defaultform');
+				$defaultListScreen = $formObject->getVar('defaultlist');
       	if(((!$singleentry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleentry != "group")) AND !$entry AND (!isset($_GET['iform']) OR $_GET['iform'] != "e") AND !isset($_GET['showform'])) { // if it's multientry and there's a xoopsUser, or the user has globalscope, or the user has groupscope and it's not a one-per-group form, and after all that, no entry has been requested, then show the list (note that anonymous users default to the form view...to provide them lists of their own entries....well you can't, but groupscope and globalscope will show them all entries by anons or by everyone) ..... unless there is an override in the URL that is meant to force the form itself to display .... iform is "interactive form", devised by Feratech.
-      		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
-      		displayEntries($fid); // if it's a multi, or if a single and they have group or global scope
+					if($defaultListScreen) {
+					  $basescreenObject = $screen_handler->get($defaultListScreen);
+						$finalscreen_handler = xoops_getmodulehandler($basescreenObject->getVar('type').'Screen', 'formulize');
+						$finalscreenObject = $finalscreen_handler->get($defaultListScreen);
+					  $finalscreen_handler->render($finalscreenObject, $entry, $loadThisView);
+					} else {
+						include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
+						displayEntries($fid); // if it's a multi, or if a single and they have group or global scope
+					}
       	} else { // otherwise, show the form
-      		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-      		displayForm($fid, $entry, "", "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope, OR if an entry was specified in particular
+					if($defaultFormScreen) {
+					  $basescreenObject = $screen_handler->get($defaultFormScreen);
+						$finalscreen_handler = xoops_getmodulehandler($basescreenObject->getVar('type').'Screen', 'formulize');
+						$finalscreenObject = $finalscreen_handler->get($defaultFormScreen);
+					  $finalscreen_handler->render($finalscreenObject, $entry);
+					} else {
+	      		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+	      		displayForm($fid, $entry, "", "", "{NOBUTTON}"); // if it's a single and they don't have group or global scope, OR if an entry was specified in particular
+					}
       	}
       } else { // if no form is specified, then show the General Forms category
       	header("Location: " . XOOPS_URL . "/modules/formulize/cat.php");

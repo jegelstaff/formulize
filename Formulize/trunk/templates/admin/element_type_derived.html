@@ -1,11 +1,9 @@
 <div class="panel-content content">
-  <fieldset>
-    <legend><{$smarty.const._AM_ELE_DERIVED}></legend>
 
     <div class="form-item">
 	    <fieldset>
 		    <legend><{$smarty.const._AM_ELE_DERIVED_CAP}></legend>
-	      <textarea id="element-ele_value[0]" name="element-ele_value[0]" rows="5" cols="35"><{$content.ele_value[0]}></textarea>
+	      <textarea id="elements-ele_value" name="elements-ele_value[0]" rows="5" cols="35"><{$content.ele_value[0]}></textarea>
 	      <div class="description">
           <p><{$content.listofelementsoptions}> <input type=button name=addele value="<{$smarty.const._AM_ELE_DERIVED_ADD}>"></p>
           <p><{$smarty.const._AM_ELE_DERIVED_DESC}></p>
@@ -17,23 +15,23 @@
 	    <fieldset>
 		    <legend><{$smarty.const._AM_ELE_DERIVED_NUMBER_OPTS}></legend>
 		    <div class="form-item">
-			    <label for="element-ele_value[1]"><{$smarty.const._AM_ELE_NUMBER_OPTS_DEC}></label><input type="text" id="element-ele_value[1]" name="element-ele_value[1]" value="<{$content.ele_value[1]}>" size="2" maxlength="2"/>
+			    <label for="elements-ele_value[1]"><{$smarty.const._AM_ELE_NUMBER_OPTS_DEC}></label><input type="text" id="elements-ele_value[1]" name="elements-ele_value[1]" value="<{$content.ele_value.1}>" size="2" maxlength="2"/>
 		    </div>
 		    <div class="form-item">
-			    <label for="element-ele_value[2]"><{$smarty.const._AM_ELE_NUMBER_OPTS_PREFIX}></label><input type="text" id="element-ele_value[2]" name="element-ele_value[2]" value="<{$content.ele_value[2]}>" size="5" maxlength="255"/>
+			    <label for="elements-ele_value[2]"><{$smarty.const._AM_ELE_NUMBER_OPTS_PREFIX}></label><input type="text" id="elements-ele_value[2]" name="elements-ele_value[2]" value="<{$content.ele_value.2}>" size="5" maxlength="255"/>
 		    </div>
 		    <div class="form-item">
-			    <label for="element-ele_value[3]"><{$smarty.const._AM_ELE_NUMBER_OPTS_DECSEP}></label><input type="text" id="element-ele_value[3]" name="element-ele_value[3]" value="<{$content.ele_value[3]}>" size="5" maxlength="255"/>
+			    <label for="elements-ele_value[3]"><{$smarty.const._AM_ELE_NUMBER_OPTS_DECSEP}></label><input type="text" id="elements-ele_value[3]" name="elements-ele_value[3]" value="<{$content.ele_value.3}>" size="5" maxlength="255"/>
 		    </div>
 		    <div class="form-item">
-			    <label for="element-ele_value[4]"><{$smarty.const._AM_ELE_NUMBER_OPTS_SEP}></label><input type="text" id="element-ele_value[4]" name="element-ele_value[4]" value="<{$content.ele_value[4]}>" size="5" maxlength="255"/>
+			    <label for="elements-ele_value[4]"><{$smarty.const._AM_ELE_NUMBER_OPTS_SEP}></label><input type="text" id="elements-ele_value[4]" name="elements-ele_value[4]" value="<{$content.ele_value.4}>" size="5" maxlength="255"/>
 		    </div>
 		    <div class="description">
 			    <{$smarty.const._AM_ELE_NUMBER_OPTS_DESC}>
 		    </div>
 	    </fieldset>
     </div>
-  </fieldset>
+  
 </div>
 
 
@@ -101,9 +99,9 @@
 
 
 $("[name=addele]").click(function () {
-  //$("#element-ele_value[0]").val( $("#element-ele_value[0]").val() + '"' + $("#listofelementsoptions").find(':selected').val() + '"' );
+  //$("#elements-ele_value[0]").val( $("#elements-ele_value[0]").val() + '"' + $("#listofelementsoptions").find(':selected').val() + '"' );
 
-  var input = $("#element-ele_value[0]");
+  var input = $("#elements-ele_value");
   var range = input.caret();
   var value = input.val();
   var text = '"' + $("#listofelementsoptions").find(':selected').val() + '"';

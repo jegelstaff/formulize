@@ -136,7 +136,7 @@ class formulizeElementsHandler {
 				foreach( $element->cleanVars as $k=>$v ){
 					${$k} = $v;
 				}
-   		if( $element->isNew() || empty($ele_id)){
+   		if( $element->isNew() || $ele_id == 0){
 				$sql = sprintf("INSERT INTO %s (
 				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings
 				) VALUES (
@@ -216,10 +216,23 @@ class formulizeElementsHandler {
 			print "Error: this element could not be saved in the database.  SQL: $sql<br>".mysql_error();
 			return false;
 		}
-		if( empty($ele_id) ){
+		if( $ele_id == 0 ){ // only occurs for new elements
 			$ele_id = $this->db->getInsertId();
+			$element->setVar('ele_id', $ele_id);
+			if(!$element->getVar('ele_handle')) { // set the handle same as the element id on new elements, as long as the handle wasn't actually passed in with the element
+				$element->setVar('ele_handle', $ele_id);
+				$this->insert($element); 
+			}
 		}
-        $element->assignVar('ele_id', $ele_id);
+		if($ele_handle === "") {
+			$form_handler =& xoops_getmodulehandler('forms', 'formulize');
+			$ele_handle = $ele_id;
+      while(!$uniqueCheck = $form_handler->isHandleUnique($ele_handle, $ele_id)) {
+        $ele_handle = $ele_handle . "_copy";
+      }	    
+			$element->setVar('ele_handle', $ele_handle); 
+			$this->insert($element);
+		}
 		return $ele_id;
 	}
 	

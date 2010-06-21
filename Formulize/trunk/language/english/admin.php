@@ -32,8 +32,8 @@ define("_AM_PARA_FORM","Form parameters");
 define("_AM_ELE_CAPTION","Caption");
 define("_AM_ELE_CAPTION_DESC","<br /></b>{SEPAR} permit you to not display the element name");
 define("_AM_ELE_DEFAULT","Default value");
-define("_AM_ELE_LEFTRIGHT_TEXT","Contents of the left side");
-define("_AM_ELE_LEFTRIGHT_DESC","Any text or HTML code that you type here will appear on the left beside the caption.  You can use PHP code instead of text or HTML, just make sure it contains '&#36;value = &#36;something;' and Formulize will read this text as PHP code.");
+define("_AM_ELE_LEFTRIGHT_TEXT","Contents of the right side");
+define("_AM_ELE_LEFTRIGHT_DESC","Any text or HTML code that you type here will appear on the right beside the caption.  You can use PHP code instead of text or HTML, just make sure it contains '&#36;value = &#36;something;' and Formulize will read this text as PHP code.");
 define("_AM_ELE_DESC","Descriptive text");
 define("_AM_ELE_DESC_HELP","Whatever you type in this box will appear below the caption, just like this text does.");
 define("_AM_ELE_COLHEAD","Column Heading (optional)");
@@ -136,10 +136,10 @@ define("_AM_FORMLINK_NONE_TEXTBOX", "No association in effect");
 define("_AM_ELE_FORMLINK_SCOPE", "If the options are linked -- or are {FULLNAMES} or {USERNAMES} -- limit them to values from the groups selected here.");
 define("_AM_ELE_FORMLINK_SCOPE_DESC", "The groups you pick define the total possible options to be used.  Optionally, you can choose to have the current user's group memberships further limit the options.  In that case, groups you select will be ignored if the current user is not also a member of the group.<br><br>Also, you can specify whether entries must be created by users who are members of all the groups, or just any one group.  Note that this option can interact powerfully with \"Use only groups that the current user is also a member of\", to let you limit the options to ones from entries created by users who are members of <b>all</b> the same groups as the current user.");
 define("_AM_ELE_FORMLINK_SCOPE_ALL", "Use all groups");
-define("_AM_ELE_FORMLINK_SCOPELIMIT_NO", "Use all these groups<br>");
-define("_AM_ELE_FORMLINK_SCOPELIMIT_YES", "Use only groups that the current user is also a member of<br><br>");
-define("_AM_ELE_FORMLINK_ANYALL_ANY", "Include entries by users who are members of any group in use<br>");
-define("_AM_ELE_FORMLINK_ANYALL_ALL", "Include entries by users who are members of all groups in use");
+define("_AM_ELE_FORMLINK_SCOPELIMIT_NO", "Use all these groups");
+define("_AM_ELE_FORMLINK_SCOPELIMIT_YES", "Use only groups that the current user is also a member of");
+define("_AM_ELE_FORMLINK_ANYALL_ANY", "Include entries by users who are members of any selected group");
+define("_AM_ELE_FORMLINK_ANYALL_ALL", "Include entries by users who are members of all selected groups");
 
 // formlink scope filters -- feb 6 2008
 define("_AM_ELE_FORMLINK_SCOPEFILTER", "If the options are linked -- or are {FULLNAMES} OR {USERNAMES} -- filter them based on these properties of their entry in the source form.");

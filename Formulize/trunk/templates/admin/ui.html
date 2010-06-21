@@ -13,7 +13,7 @@
 
 <div class="admin-ui">
 
-<form name="scrollposition" method="post">
+<form name="scrollposition" method="post" action="">
   <input type="hidden" name="scrollx" value="">
   <input type="hidden" name="tabs_selected" value="">
   <input type="hidden" name="accordion_active" value="">
@@ -45,6 +45,7 @@
 
 <{if $adminPage.pagetitle}>
 <h1><{$adminPage.pagetitle}></h1>
+<p class="smallhead"><{$adminPage.pagesubtitle}></p>
 <{/if}>
 
 <{if $adminPage.needsave}>
@@ -106,12 +107,15 @@
     }
   }
   
-  function sendFormData(thisformdata) {
-    $.post("save.php", $(thisformdata).serialize(), function(data) {
+  function sendFormData(thisformdata, ele_id) {
+    if(!ele_id) { ele_id = 0 }
+    $.post("save.php?ele_id="+ele_id, $(thisformdata).serialize(), function(data) {
       saveCounter = saveCounter + 1;
       if(data) {
         if(data.substr(0,10)=="/* eval */") {
           redirect = data;
+        } else if(data.substr(0,13)=="/* evalnow */") {
+          eval(data);
         } else {
           alert(data);
         }
@@ -119,18 +123,24 @@
       if(saveCounter == saveTarget) { // if we've received a response for all the forms...
         window.document.getElementById('savewarning').style.display = 'none';
         $(".savebutton").blur();
+        if(newhandle) {
+          $("[name=original_handle]").val(newhandle);
+        }
         if(redirect) {
           eval(redirect);
         } else {
           $(".admin-ui").fadeTo(1,1);
         }
       } else { // if there's still forms to do, then send the next one...must do sequentially to avoid race conditions
-        sendFormData(formdata[saveCounter]);
+        sendFormData(formdata[saveCounter], ele_id);
       }
     });
   }
   
-  function reloadWithScrollPosition() {
+  function reloadWithScrollPosition(url) {
+    if(url) {
+      $("[name=scrollposition]").attr('action', url);
+    }
     window.document.scrollposition.scrollx.value = $(window).scrollTop();
     var tabs_selected = "";
     <{if $adminPage.tabs}> 
@@ -138,10 +148,10 @@
     window.document.scrollposition.tabs_selected.value = tabs_selected;
     tabs_selected = tabs_selected+1;
     <{/if}>
+    var accordion_active = "";
     if(pagehasaccordion["accordion-"+tabs_selected]) {
       <{* // not really the active accordion we want, it's the current position of the active accordion, since accordion sections are sortable! - this is a semi-rare bug that needs fixing, cross reference the active position with the results of a toArray call on the sortable element *}>
-      var accordion_active = $("#accordion-"+tabs_selected).accordion( "option", "active" );
-      accordion_active = accordion_active;
+      accordion_active = $("#accordion-"+tabs_selected).accordion( "option", "active" );
     }
     window.document.scrollposition.accordion_active.value = accordion_active;
     window.document.scrollposition.submit();

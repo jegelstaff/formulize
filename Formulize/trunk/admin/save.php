@@ -53,12 +53,11 @@ $processedValues = array();
 foreach($_POST as $k=>$v) {
   if(!strstr($k, "-")) { continue; } // ignore fields with no hyphen
   list($class, $property) = explode("-", $k);
-  if(is_array($v)) {
+  if(is_array($v) AND $class != "elements") { // elements class is written using cleanVars so arrays are serialized automagically
     $v = serialize($v);
   }
   $processedValues[$class][$property] = $v;
 }
-
 // include the form-specific handler to invoke the necessary objects and insert them all in the DB
 if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save.php")) {
   include XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save.php";

@@ -1,24 +1,24 @@
 <div class="panel-content content">
+	<p><a href="ui.php?page=element&aid=<{$content.aid}>&ele_id=<{$sectionContent.ele_id}>"><img src="../images/kedit.png"> Configure</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="" class="clonelink" target="<{$sectionContent.ele_id}>"><img src="../images/clone.gif"> Clone</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="" class="deletelink" target="<{$sectionContent.ele_id}>"><img src="../images/editdelete.gif"> Delete</a></p>
+	
 <table>
 	<tr>
-		<th colspan="3">Actions</th>
-		<th>Type</th>
 		<th>Data handle</th>
+		<th>Type</th>
 		<th>Required</th>
 		<th>Display</th>
 		<th>Private</th>
-		<th>Conversions</th>
 	</tr>
 	<tr>
-		<td><a href="ui.php?page=element&aid=<{$content.aid}>&ele_id=<{$sectionContent.ele_id}>"><img src="../images/kedit.png"> Configure</a></td>
-		<td><a href="" class="clonelink" target="<{$sectionContent.ele_id}>"><img src="../images/clone.gif"> Clone</a></td>
-		<td><a href="" class="deletelink" target="<{$sectionContent.ele_id}>"><img src="../images/editdelete.gif"> Delete</a></td>
-		<td><{$sectionContent.ele_type}></td>
 		<td><{$sectionContent.ele_handle}></td>
+		<td><{$sectionContent.ele_type}></td>
 		<td align="center"><input type="checkbox" <{if $sectionContent.ele_req}>checked="checked"<{/if}><{if $sectionContent.ele_req === false}>disabled<{/if}> value="1" name="elements-ele_req[<{$sectionContent.ele_id}>]"></td>
 		<td align="center"><{if is_numeric($sectionContent.ele_display)}><input type="checkbox" <{if $sectionContent.ele_display}>checked="checked"<{/if}> value="1" name="elements-ele_display[<{$sectionContent.ele_id}>]"><{else}><{$sectionContent.ele_display}><{/if}></td>
 		<td align="center"><input type="checkbox" <{if $sectionContent.ele_private}>checked="checked"<{/if}>  value="1" name="elements-ele_private[<{$sectionContent.ele_id}>]"></td>
-		<td><{if $sectionContent.converttext}><a href="" class="convertto<{$sectionContent.linktype}>" target="<{$sectionContent.ele_id}>"><{$sectionContent.converttext}></a><{/if}></td>
 	</tr>
 </table>
+<{if $sectionContent.converttext}>
+	<p><a href="" class="convertto<{$sectionContent.linktype}>" target="<{$sectionContent.ele_id}>"><{$sectionContent.converttext}></a></p>
+<{/if}>
+
 </div>

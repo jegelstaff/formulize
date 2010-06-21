@@ -107,6 +107,8 @@ class formulizeForm extends XoopsObject {
 				}
 				// setup the headerlist -- note...it's still in screwed up string format and must be processed after this by the user code that gets it
 				$headerlist = $formq[0]['headerlist'];
+				$defaultform = $formq[0]['defaultform'];
+				$defaultlist = $formq[0]['defaultlist'];
 			}
 			
 			// gather the view information
@@ -135,8 +137,7 @@ class formulizeForm extends XoopsObject {
 				}
 			}
 
-			$defaultform = $formq[0]['defaultform'];
-			$defaultlist = $formq[0]['defaultlist'];			
+			
 		}
 
 		$this->XoopsObject();
@@ -263,10 +264,24 @@ class formulizeFormsHandler {
 				foreach( $formObject->cleanVars as $k=>$v ){
 					${$k} = $v;
 				}
+				
+				$singleToWrite = "";
+				switch($single) {
+					case('user'):
+						$singleToWrite = "on";
+						break;
+					case('off'):
+						$singleToWrite = "";
+						break;
+					default:
+					case('group'):
+						$singleToWrite = "group";
+						break;
+				}
 				if($formObject->isNew() || empty($id_form)) {
-					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, `defaultlist` ) VALUES (".$this->db->quoteString($title).", ".$this->db->quoteString($single).", ".$this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).")";
+					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, `defaultlist` ) VALUES (".$this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".$this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).")";
 				} else {
-					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).", `singleentry` = ".$this->db->quoteString($single).", `headerlist` = ".$this->db->quoteString($headerlist).", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist)." WHERE id_form = ".intval($id_form);
+					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).", `singleentry` = ".$this->db->quoteString($singleToWrite).", `headerlist` = ".$this->db->quoteString($headerlist).", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist)." WHERE id_form = ".intval($id_form);
 				}
 				
 				if( false != $force ){

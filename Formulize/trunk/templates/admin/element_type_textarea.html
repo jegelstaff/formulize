@@ -1,20 +1,18 @@
 <div class="panel-content content">
-  <fieldset>
-    <legend><{$smarty.const._AM_ELE_TAREA}></legend>
 
     <div class="form-item required">
-	    <label for="element-ele_value[1]"><{$smarty.const._AM_ELE_ROWS}><em>*</em></label>
-	    <input type="text" id="element-ele_value[1]" name="element-ele_value[1]" value="<{$content.ele_value[1]}>" size="3" maxlength="3"/>
+	    <label for="elements-ele_value[1]"><{$smarty.const._AM_ELE_ROWS}><em>*</em></label>
+	    <input type="text" id="elements-ele_value[1]" name="elements-ele_value[1]" value="<{$content.ele_value[1]}>" size="3" maxlength="3"/>
     </div>
     <div class="form-item required">
-	    <label for="element-ele_value[2]"><{$smarty.const._AM_ELE_COLS}><em>*</em></label>
-	    <input type="text" id="element-ele_value[2]" name="element-ele_value[2]" value="<{$content.ele_value[2]}>" size="3" maxlength="3"/>
+	    <label for="elements-ele_value[2]"><{$smarty.const._AM_ELE_COLS}><em>*</em></label>
+	    <input type="text" id="elements-ele_value[2]" name="elements-ele_value[2]" value="<{$content.ele_value[2]}>" size="3" maxlength="3"/>
     </div>
     <div class="form-item">
-	    <label for="element-ele_value[0]"><{$smarty.const._AM_ELE_DEFAULT}></label>
-	    <textarea id="element-ele_value[0]" name="element-ele_value[0]" rows="5" cols="35"><{$content.ele_value[0]}></textarea>
+	    <label for="elements-ele_value[0]"><{$smarty.const._AM_ELE_DEFAULT}></label>
+	    <textarea id="elements-ele_value[0]" name="elements-ele_value[0]" rows="5" cols="35"><{$content.ele_value[0]}></textarea>
 	    <div class="description">
-          <p><{$smarty.const._AM_ELE_TEXT_DESC}><{$smarty.const._AM_ELE_TEXT_DESC2}></p>
+          <p><{$smarty.const._AM_ELE_TEXT_DESC}></p>
       </div>
     </div>
     <div class="form-item">
@@ -24,5 +22,5 @@
 		    <{$smarty.const._AM_ELE_FORMLINK_DESC_TEXTBOX}>
 	    </div>
     </div>
-  </fieldset>
+
 </div>

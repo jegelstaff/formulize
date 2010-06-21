@@ -1,10 +1,13 @@
 <div class="panel-content content">
   <fieldset>
-    <legend><{$smarty.const._AM_ELE_DATE}></legend>
+    <legend>What date should appear in this box by default?</legend>
 
     <div class="form-item">
-	    <input type="text" id="element-date" name="element-date" value="<{if $content.ele_value[0] eq ''}>YYYY-mm-dd<{else}><{$content.ele_value[0]}><{/if}>" size="15" maxlength="15"/>
+	    <input type="text" id="element-date" name="elements-ele_value[0]" value="<{if $content.ele_value[0] eq ''}>YYYY-mm-dd<{else}><{$content.ele_value[0]}><{/if}>" size="15" maxlength="15"/>
     </div>
+		<div class="description">
+			<p>Leave as "YYYY-mm-dd" if you do not want to have a specific date show up as the default.</p>
+		</div>
   </fieldset>
 </div>
 
@@ -12,6 +15,6 @@
 <script type='text/javascript'>
 $(function()
 {
-  $('#element-date').datepicker({dateFormat: 'yy-mm-dd'});
+  $('#element-date').datepicker({dateFormat: 'yy-mm-dd', constrainInput: false});
 });
 </script>

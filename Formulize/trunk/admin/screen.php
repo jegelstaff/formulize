@@ -240,6 +240,43 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
 
   // custom button data
   $custom = array();
+  $applyToOptions = array('inline'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_INLINE, 'selected'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_SELECTED, 'all'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_ALL, 'new'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW, 'new_per_selected'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED);
+  if(count($allFids) > 1) {
+    foreach ($allFids as $i=>$thisFid) {
+      if($thisFid == $fid) { continue; } // don't treat the current form as if it's an 'other' form
+      $applyToOptions['new_'.$thisFid] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW_OTHER . printSmart($allFidObjs[$thisFid]->getVar('title'), 20) . "'";
+      $applyToOptions['new_per_selected_'.$thisFid] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW_OTHER . printSmart($allFidObjs[$thisFid]->getVar('title'), 20) . _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED_OTHER;
+    }
+  }
+  $applyToOptions['custom_code'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_CODE;
+  $applyToOptions['custom_html'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_HTML;
+  $custom['applytoOptions'] = $applyToOptions;
+  foreach($screen->getVar('customactions') as $buttonId=>$buttonData) {
+    $custom['custombuttons'][$buttonId]['content'] = $buttonData;
+    $custom['custombuttons'][$buttonId]['content']['id'] = $buttonId; // add id to the date for the template
+    $custom['custombuttons'][$buttonId]['name'] = $buttonData['handle'];
+    foreach($buttonData as $key=>$value) {
+      if(is_numeric($key)) { // effects have numeric keys
+        if($buttonData['applyto'] == 'custom_code') {
+          $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_CODE_DESC;
+        } elseif($buttonData['applyto'] == 'custom_html') {
+          $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_HTML_DESC;
+        } else {
+          if(strstr($buttonData['applyto'], "new_per_selected_")) {
+            $thisEffectFid = substr($buttonData['applyto'], 17);            
+          } elseif(strstr($buttonData['applyto'], "new_")) {
+            $thisEffectFid = substr($buttonData['applyto'], 4);
+          } else {
+            $thisEffectFid = $fid;
+          }
+          $custom['custombuttons'][$buttonId]['content'][$key]['elementOptions'] = $elementOptionsFid[$thisEffectFid]; // add element options from the appropriate form to each effect, for passing to the template
+          $custom['custombuttons'][$buttonId]['content'][$key]['actionOptions'] = array('replace'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE, 'remove'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE, 'append'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND); // add the apply to options to each effect for sending to the template
+          $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_DESC;
+        }
+      }
+    }
+  }
+ 
 }
 
 if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {

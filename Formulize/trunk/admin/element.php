@@ -36,6 +36,8 @@ $aid = intval($_GET['aid']);
 $application_handler = xoops_getmodulehandler('applications','formulize');
 $form_handler = xoops_getmodulehandler('forms','formulize');
 $element_handler = xoops_getmodulehandler('elements', 'formulize');
+$config_handler = $config_handler =& xoops_gethandler('config');
+$formulizeConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId());
 
 if($aid == 0) {
 	$appName = "Forms with no app"; 
@@ -48,6 +50,15 @@ $names = array();
 $display = array();
 $advanced = array();
 
+$member_handler = xoops_gethandler('member');
+$allGroups = $member_handler->getGroups();
+$groups = array();
+foreach($allGroups as $thisGroup) {
+  $groups[$thisGroup->getVar('name')]['id'] = $thisGroup->getVar('groupid');
+  $groups[$thisGroup->getVar('name')]['name'] = $thisGroup->getVar('name');
+  $formlinkGroups[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name');
+}
+
 if($_GET['ele_id'] != "new") {
   $ele_id = intval($_GET['ele_id']);
   $elementObject = $element_handler->get($ele_id);
@@ -57,15 +68,19 @@ if($_GET['ele_id'] != "new") {
   $ele_type = $elementObject->getVar('ele_type');
   $ele_value = $elementObject->getVar('ele_value');
   $ele_delim = $elementObject->getVar('ele_delim');
+  if($ele_delim != "br" AND $ele_delim != "space" AND ele_delim != "") {
+    $ele_delim_custom_value = $ele_delim;
+    $ele_delim = "custom";
+  }
   $elementName = $colhead ? printSmart($colhead,30) : printSmart($caption,30);
   $names['ele_caption'] = $caption;
   $names['ele_colhead'] = $colhead;
   $names['ele_handle'] = $elementObject->getVar('ele_handle');
   $names['ele_desc'] = $elementObject->getVar('ele_desc');
   $ele_req = $elementObject->getVar('ele_req');
-  $names['ele_req_on'] = removeNotApplicableRequireds($ele_type, $ele_req);
-  $names['ele_req_no_on'] = $ele_req ? "" : " selected";
-  $names['ele_req_yes_on'] = $ele_req ? " selected" : "";
+  $names['ele_req_on'] = removeNotApplicableRequireds($ele_type);
+  $names['ele_req_no_on'] = $ele_req ? "" : " checked";
+  $names['ele_req_yes_on'] = $ele_req ? " checked" : "";
   $ele_display = $elementObject->getVar('ele_display');
   if(strstr($ele_display,",")) {
     foreach(explode(",",trim($ele_display,",")) as $displayGroup) {
@@ -73,6 +88,8 @@ if($_GET['ele_id'] != "new") {
     }
   } elseif($ele_display == 1) {
     $display['ele_display']['all'] = " selected"; 
+  } elseif($ele_display == 0) {
+    $display['ele_display']['none'] = " selected"; 
   }
   $ele_disabled = $elementObject->getVar('ele_disabled');
   if(strstr($ele_disabled,",")) {
@@ -81,6 +98,8 @@ if($_GET['ele_id'] != "new") {
     }
   } elseif($ele_disabled == 1) {
     $display['ele_disabled']['all'] = " selected"; 
+  } elseif($ele_disabled == 0) {
+    $display['ele_disabled']['none'] = " selected"; 
   }
   $ele_filtersettings = $elementObject->getVar('ele_filtersettings');
   $filterSettingsToSend = count($ele_filtersettings > 0) ? $ele_filtersettings : "";
@@ -89,10 +108,42 @@ if($_GET['ele_id'] != "new") {
   $display['ele_private'] = $elementObject->getVar('ele_private') ? " checked" : "";
   $ele_encrypt = $elementObject->getVar('ele_encrypt');
   if($ele_type != "subform" AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
-    $advanced['ele_encrypt_no_on'] = $ele_encrypt ? "" : " selected";
-    $advanced['ele_encrypt_yes_on'] = $ele_encrypt ? " selected" : "";
+    $advanced['ele_encrypt_no_on'] = $ele_encrypt ? "" : " checked";
+    $advanced['ele_encrypt_yes_on'] = $ele_encrypt ? " checked" : "";
     $advanced['ele_encrypt_show'] = true;
+    $advanced['original_handle'] = $elementObject->getVar('ele_handle');
   }
+  
+  if($type == "text") { // set values for text number options, in case they haven't been set yet for this element
+    if(!isset($ele_value[5])) {
+      $ele_value[5] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
+    }
+    if(!isset($ele_value[6])) {
+      $ele_value[6] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
+    }
+    if(!isset($ele_value[7])) {
+      $ele_value[7] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+    }
+    if(!isset($ele_value[8])) {
+      $ele_value[8] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+    }
+  }
+  if($type=="derived") {
+    if(!isset($ele_value[1])) {
+      $ele_value[1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
+    }
+    if(!isset($ele_value[2])) {
+      $ele_value[2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
+    }
+    if(!isset($ele_value[3])) {
+      $ele_value[3] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+    }
+    if(!isset($ele_value[4])) {
+      $ele_value[4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+    }
+  }
+  
+  $ele_uitext = $elementObject->getVar('ele_uitext');
   
 } else {
   $fid = intval($_GET['fid']);
@@ -100,16 +151,54 @@ if($_GET['ele_id'] != "new") {
   $elementObject = false;
   $names['ele_caption'] = $elementName;
   $ele_type = $_GET['type'];
-  $names['ele_req_on'] = removeNotApplicableRequireds($ele_type, true);
-  $names['ele_req_no_on'] = " selected";
+  $ele_value = array();
+  $ele_delim = "br";
+  $ele_uitext = "";
+  global $xoopsModuleConfig;
+  switch($ele_type) {
+    case("text"):
+      $ele_value[0] = $xoopsModuleConfig['t_width'];
+      $ele_value[1] = $xoopsModuleConfig['t_max'];
+      $ele_value[3] = 0;
+      $ele_value[5] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
+      $ele_value[6] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
+      $ele_value[7] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+      $ele_value[8] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+      break;
+    case("textarea"):
+      $ele_value[1] = $xoopsModuleConfig['ta_rows'];
+      $ele_value[2] = $xoopsModuleConfig['ta_cols'];
+      break;  
+    case "derived":
+      $ele_value[1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
+      $ele_value[2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
+      $ele_value[3] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+      $ele_value[4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+      break;
+    case "subform":
+      $ele_value[2] = 1;
+      $ele_value[3] = 1;
+      break;
+    case "grid":
+      $ele_value[3] = "horizontal";
+      $ele_value[5] = 1;
+      $ele_value[0] = "caption";
+      break;
+     
+     
+  }
+    
+  $names['ele_req_on'] = removeNotApplicableRequireds($ele_type);
+  $names['ele_req_no_on'] = " checked";
   $display['ele_display']['all'] = " selected";
-  $display['ele_disabled']['all'] = " selected";
+  $display['ele_disabled']['none'] = " selected";
   $display['filtersettings'] = formulize_createFilterUI("", "elementfilter", $fid, "form-3");
   $ele_encrypt = 0;
   if ($ele_type != "subform" AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
-    $advanced['ele_encrypt_no_on'] = " selected";
+    $advanced['ele_encrypt_no_on'] = " checked";
     $advanced['ele_encrypt_show'] = true;
   }
+  $ele_id = "new";
   
 }
 
@@ -122,27 +211,28 @@ $formName = printSmart($formObject->getVar('title'), 30);
 // common values should be assigned to all tabs
 $common['name'] = '';
 $common['ele_id'] = $ele_id;
+$common['fid'] = $fid;
+$common['aid'] = $aid;
+$common['type'] = $ele_type;
+$common['uid'] = $xoopsUser->getVar('uid');
 
 $names['hello'] = 'hello';
 
 $options = array();
-$options['ele_value'] = $ele_value;
 $options['ele_delim'] = $ele_delim;
+$options['ele_delim_custom_value'] = $ele_delim_custom_value;
+$options['ele_uitext'] = $ele_uitext;
 $options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
 
+// setup various special things per element, including ele_value
 if($ele_type=='text') {
   $formlink = createFieldList($ele_value[4], true);
   $options['formlink'] = $formlink->render();
+
 } else if($ele_type=='textarea') {
   $formlink = createFieldList($ele_value[3], true);
   $options['formlink'] = $formlink->render();
-} else if($ele_type=='select') {
-  $formlink = createFieldList($ele_value[2], true);
-  $options['formlink'] = $formlink->render();
-} else if($ele_type=='sep') {
-  $options['options'] = array('centre'=>_AM_ELE_CTRE, 'souligné'=>_AM_ELE_SOUL, 'italique'=>_AM_ELE_ITALIQ);
-  //$options['colors'] = array ("Noir"=>"#000000", "Marron"=>"#97694F", "Bleu"=>"#7093DB", "Rouge"=>"#e00000", "Vert"=>"#4A766E", "Rose"=>"#9F5F9F", "Jaune"=>"#ffff00", "Blanc"=>"#ffffff");
-  $options['colors'] = array ('#000000'=>'Noir','#97694F'=>'Marron','#7093DB'=>'Bleu','#e00000'=>'Rouge','#4A766E'=>'Vert','#9F5F9F'=>'Rose','#ffff00'=>'Jaune','#ffffff'=>'Blanc');
+
 } else if($ele_type=='derived') {
   $derivedOptions = array();
   $allColList = getAllColList($fid);
@@ -153,20 +243,124 @@ if($ele_type=='text') {
       $derivedOptions[trans(strip_tags($thisCol['ele_caption']))] = printSmart(trans(strip_tags($thisCol['ele_caption'])));
     }
   }
-
   $listOfElements = new XoopsFormSelect("", 'listofelementsoptions');
   $listOfElements->addOptionArray($derivedOptions);
   $options['listofelementsoptions'] = $listOfElements->render();
+
+} elseif($ele_type == "yn") {
+  $options['ele_value_yes'] = $ele_value['_YES'];
+  $options['ele_value_no'] = $ele_value['_NO'];
+
+} elseif($ele_type == "subform") {
+  
+  $ele_value[1] = explode(",",$ele_value[1]);
+  global $xoopsDB;
+  $validForms1 = q("SELECT t1.fl_form1_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form2_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form1_id=t2.id_form");
+  $validForms2 = q("SELECT t1.fl_form2_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form1_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form2_id=t2.id_form");
+  $caughtfirst = false;
+  foreach($validForms1 as $vf1) {
+  	$validForms[$vf1['fl_form1_id']] = $vf1['desc_form'];
+  	if(!$caughtfirst) { 
+  		$firstform = $vf1['fl_form1_id']; 
+  		$caughtfirst = true;
+  	}
+  }
+  foreach($validForms2 as $vf2) {
+  	if(!isset($validForms[$vf2['fl_form2_id']])) {
+  		$validForms[$vf2['fl_form2_id']] = $vf2['desc_form'];
+  		if(!$caughtfirst) { 
+  			$firstform = $vf2['fl_form2_id']; 
+  			$caughtfirst = true;
+  		}
+  	}
+  }
+  if(count($validForms) == 0) { $validForms['none'] = _AM_ELE_SUBFORM_NONE; }
+  $options['subforms'] = $validForms;
+  if($caughtfirst) {
+    $formtouse = $ele_value[0] ? $ele_value[0] : $firstform; // use the user's selection, unless there isn't one, then use the first form found
+  	$elementsq = q("SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
+  	foreach($elementsq as $oneele) {
+  		$options['subformelements'][$oneele['ele_id']] = printSmart($oneele['ele_caption']);
+  	}
+  } else {
+    $options['subformelements'][0] = "";
+  }
+
+} elseif($ele_type == "grid") {
+  $options['background'] = $ele_value[3];
+  $options['heading'] = $ele_value[0];
+  $options['sideortop'] = $ele_value[5] == 1 ? "side" : "above";
+  $grid_elements_criteria = new Criteria();
+  $grid_elements_criteria->setSort('ele_order');
+  $grid_elements_criteria->setOrder('ASC');
+  $grid_elements = $element_handler->getObjects2($grid_elements_criteria, $fid);
+  foreach($grid_elements as $this_element) {
+    $grid_start_options[$this_element->getVar('ele_id')] = $this_element->getVar('ele_colhead') ? printSmart(trans($this_element->getVar('ele_colhead'))) : printSmart(trans($this_element->getVar('ele_caption')));
+  }
+  $options['grid_start_options'] = $grid_start_options;
+
+} elseif($ele_type=="radio") {
+ 	$ele_value = formulize_mergeUIText($ele_value, $ele_uitext);
+  $options['useroptions'] = $ele_value;
+ 
+} elseif($ele_type=="checkbox") {
+ 	$ele_value = formulize_mergeUIText($ele_value, $ele_uitext);
+  $options['useroptions'] = $ele_value;
+  
+} elseif($ele_type=="select") {
+  if($ele_id == "new") {
+    $options['listordd'] = 0;
+    $options['multiple'] = 0;
+    $ele_value[0] = 6;
+    $options['islinked'] = 0;
+    $options['formlink_scope'] = array(0=>'all');
+  } else {
+    $options['listordd'] = $ele_value[0] == 1 ? 0 : 1;
+    $options['multiple'] = $ele_value[1];
+    if(!is_array($ele_value[2])) {
+      $options['islinked'] = 1;
+    } else {
+      $options['islinked'] = 0;
+      if(is_array($ele_uitext) AND count($ele_uitext) > 0) { 
+       	$ele_value[2] = formulize_mergeUIText($ele_value[2], $ele_uitext);
+      } 
+      $options['useroptions'] = $ele_value[2];
+    }
+    
+    $options['formlink_scope'] = explode(",",$ele_value[3]); 
+  }
+
+  list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
+  $options['linkedoptions'] = $formlink->render();
+
+  // setup group list:
+  $options['formlink_scope_options'] = array('all'=>_AM_ELE_FORMLINK_SCOPE_ALL) + $formlinkGroups;
+  
+  // setup conditions:
+  $selectedLinkFormId = "";
+  if(isset($ele_value[2]['{FULLNAMES}']) OR isset($ele_value[2]['{USERNAMES}'])) {
+  	if($formulizeConfig['profileForm']) {
+  		$selectedLinkFormId = $formulizeConfig['profileForm'];
+  	}
+  }
+
+  if($selectedLinkElementId) {
+    $selectedElementObject = $element_handler->get($selectedLinkElementId);
+    if($selectedElementObject) {
+      $options['formlinkfilter'] = formulize_createFilterUI($ele_value[5], "formlinkfilter", $selectedElementObject->getVar('id_form'), "form-2");      
+    }
+  } elseif($selectedLinkFormId) { // if usernames or fullnames is in effect, we'll have the profile form fid instead
+	  $options['formlinkfilter'] = formulize_createFilterUI($ele_value[5], "formlinkfilter", $selectedLinkFormId, "form-2");
+  }
+  if(!$options['formlinkfilter']) {
+    $options['formlinkfilter'] = "<p>The options are not linked.</p>";
+  }
+ 
 }
+$options['ele_value'] = $ele_value;
 
 
-$member_handler = xoops_gethandler('member');
-$allGroups = $member_handler->getGroups();
-$groups = array();
-foreach($allGroups as $thisGroup) {
-  $groups[$thisGroup->getVar('name')]['id'] = $thisGroup->getVar('groupid');
-  $groups[$thisGroup->getVar('name')]['name'] = $thisGroup->getVar('name');
-}
+
 $display['groups'] = $groups;
 
 
@@ -180,11 +374,11 @@ if($ele_type!='colorpick') {
   $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_options.html";
   $adminPage['tabs'][$tabindex]['content'] = $options + $common;
 }
-
+  
 $adminPage['tabs'][++$tabindex]['name'] = "Display Settings";
 $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_display.html";
 $adminPage['tabs'][$tabindex]['content'] = $display + $common;
-
+  
 if($advanced['datatypeui'] OR $advanced['ele_encrypt_show']) {
   $adminPage['tabs'][++$tabindex]['name'] = "Advanced";
   $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_advanced.html";
@@ -192,13 +386,18 @@ if($advanced['datatypeui'] OR $advanced['ele_encrypt_show']) {
 }
 
 $adminPage['pagetitle'] = "Element: ".$elementName;
+if($ele_id == "new") {
+  $adminPage['pagesubtitle'] = "(Dropdown box or List box)";
+} else {
+  $adminPage['pagesubtitle'] = "(".convertTypeToText($ele_type, $ele_value).")";
+}
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['url'] = "page=application&aid=$aid";
 $breadcrumbtrail[2]['text'] = $appName;
-$breadcrumbtrail[3]['url'] = "page=form&aid=$aid&fid=$fid";
+$breadcrumbtrail[3]['url'] = "page=form&aid=$aid&fid=$fid&tab=elements";
 $breadcrumbtrail[3]['text'] = $formName;
 $breadcrumbtrail[4]['text'] = $elementName;
 
@@ -209,7 +408,7 @@ function removeNotApplicableRequireds($type, $req) {
     case "select":
     case "radio":
     case "date":
-      return $req;
+      return true;
   }
   return false;
 }
@@ -284,4 +483,18 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
       $renderedUI .= $dataTypeTray->render();
   }
   return $renderedUI;
+}
+
+// THIS FUNCTION TAKES THE VALUES USED IN THE DB, PLUS THE UITEXT FOR THOSE VALUES, AND CONSTRUCTS AN ARRAY SUITABLE FOR USE WHEN EDITING ELEMENTS, SO THE UITEXT IS VISIBLE INLINE WITH THE VALUES, SEPARATED BY A PIPE (|)
+function formulize_mergeUIText($values, $uitext) {
+  if(strstr($values, "#*=:*")) { return $values; } // don't alter linked selectbox properties
+	$newvalues = array();
+	foreach($values as $key=>$value) {
+		if(isset($uitext[$key])) {
+			$newvalues[$key . "|" . $uitext[$key]] = $value;
+		} else {
+			$newvalues[$key] = $value;
+		}
+	}
+	return $newvalues;
 }

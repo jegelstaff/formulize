@@ -47,7 +47,10 @@ if(!isset($_POST['op'])){
 	$op = $_POST['op'];
 }
 
-
+if($op=="main") {
+	header('Location: '.XOOPS_URL.'/modules/formulize/admin/ui.php');
+	exit();
+}
 
 if(!isset($_POST['title'])){
 	$title = isset ($_GET['title']) ? $_GET['title'] : '0';

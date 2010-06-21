@@ -91,7 +91,7 @@ if(isset($_GET['tab']) AND (!isset($_POST['tabs_selected']) OR $_POST['tabs_sele
 $xoopsTpl->assign('adminPage', $adminPage);
 $xoopsTpl->assign('breadcrumbtrail', $breadcrumbtrail);
 $xoopsTpl->assign('scrollx', intval($_POST['scrollx']));
-$accordion_active = isset($_POST['accordion_active']) ? intval($_POST['accordion_active']) : "false";
+$accordion_active = (isset($_POST['accordion_active']) AND $_POST['accordion_active'] !== "" AND $_POST['accordion_active'] !== "false") ? intval($_POST['accordion_active']) : "false";
 $xoopsTpl->assign('accordion_active', $accordion_active);
 $xoopsTpl->display("db:admin/ui.html");
 
