@@ -6,8 +6,8 @@ $("[name=submitx]").click(function () {
   var form2choice = $("#form2choice").find(':selected');
 
   var sourceLink = $("#linkages"+lid).find(':selected');
-
-  sourceLink.val( form1choice.val() + '+' + form2choice.val() );
+  
+  sourceLink.val( form1choice.val() + '+' + form2choice.val() + '+common' );
   sourceLink.text( '<{$smarty.const._AM_FRAME_COMMON_VALUES}>' + form1choice.text() + ' & ' + form2choice.text() );
 
   $("#dialog-common-values").dialog('close');

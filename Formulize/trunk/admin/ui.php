@@ -75,6 +75,8 @@ switch($_GET['page']) {
 }
 $adminPage['logo'] = "/modules/formulize/images/formulize-logo.png";
 
+
+
 // assign the default selected tab, if any:
 if(isset($_GET['tab']) AND (!isset($_POST['tabs_selected']) OR $_POST['tabs_selected'] === "")) {
   foreach($adminPage['tabs'] as $selected=>$tabData) {

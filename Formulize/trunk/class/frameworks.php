@@ -238,6 +238,40 @@ class formulizeFrameworksHandler {
 		return new formulizeFramework();
 	}
 
+	function insert(&$framework) {
+		if(!is_object($framework) OR get_class($framework) != 'formulizeFramework') { return false; }
+		if(!$framework->getVar('frid')) {
+			$sql = "INSERT INTO ".$this->db->prefix("formulize_frameworks")." (`frame_name`) VALUES (".$this->db->quoteString($framework->getVar('name')).")";
+			if(!$res = $this->db->query($sql)) {
+				return false;
+			}
+			$frid = $this->db->getInsertId();
+			$framework->setVar('frame_id',$frid);
+		} else {
+			$sql = "UPDATE ".$this->db->prefix("formulize_frameworks")." SET `frame_name` = ".$this->db->quoteString($framework->getVar('name'))." WHERE `frame_id` = ".intval($framework->getVar('frid'));
+			if(!$res = $this->db->query($sql)) {
+				return false;
+			}
+			$frid = $framework->getVar('frid');
+		}
+		return $frid;
+	}
+
+	function delete($framework) {
+		if(!is_object($framework) OR get_class($framework) != 'formulizeFramework') { return false; }
+		$sql = array();
+		$sql[] = "DELETE FROM ".$this->db->prefix("formulize_frameworks")." WHERE `frame_id` = ".intval($framework->getVar('frid'));
+		$sql[] = "DELETE FROM ".$this->db->prefix("formulize_framework_links")." WHERE `fl_frame_id` = ".intval($framework->getVar('frid'));
+		$success = true;
+		foreach($sql as $thisSql) {
+			if(!$res = $this->db->query($thisSql)) {
+				$success = false;
+			}
+		}
+		return $success;
+	}
+
+
 	function get($frid) {
 		$frid = intval($frid);
 		static $cachedFrameworks = array();

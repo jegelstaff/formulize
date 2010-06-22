@@ -86,59 +86,57 @@
       <table>
         <tr>
           <th>
-            <nobr><{$smarty.const._AM_FRAME_AVAILFORMS1}></nobr>
           </th>
           <th>
-            <nobr><{$smarty.const._AM_FRAME_AVAILFORMS2}></nobr>
+            <{$smarty.const._AM_FRAME_AVAILFORMS1}>
           </th>
           <th>
-            <nobr><{$smarty.const._AM_FRAME_LINKAGE}></nobr>
+            <{$smarty.const._AM_FRAME_AVAILFORMS2}>
           </th>
           <th>
-            <nobr><{$smarty.const._AM_FRAME_RELATIONSHIP}></nobr>
+            <{$smarty.const._AM_FRAME_RELATIONSHIP}>
           </th>
           <th>
-            <nobr><{$smarty.const._AM_FRAME_DISPLAY}></nobr>
+            <{$smarty.const._AM_FRAME_LINKAGE}>
           </th>
           <th>
-            Action
+            <{$smarty.const._AM_FRAME_DISPLAY}>
           </th>
         </tr>
 	      <{foreach from=$content.links key=linkNumber item=link}>
           <tr class="<{cycle values='even,odd'}>">
+            <td>
+              <a href="" class="deletethislink" target="<{$link.lid}>"><img src="../images/editdelete.gif"></a>
+            </td>
             <td>
               <{$link.form1}>
             </td>
             <td>
               <{$link.form2}>
             </td>
-            <td>
-              <select name=relationships-linkages<{$link.lid}> id=linkages<{$link.lid}> size=1 onchange="javascript:checkForCommon(this.form.linkages<{$link.lid}>, '<{$link.form1_id}>', '<{$link.form2_id}>', '<{$link.lid}>');">
-                <option value='0+0'<{if $link.key1 eq 0 and $link.key2 eq 0}> selected="selected"<{/if}>><{$smarty.const._AM_FRAME_UIDLINK}></option>
-                <{if $link.common neq 1}>
-                  <option value='common'><{$smarty.const._AM_FRAME_COMMONLINK}></option>
-                <{else}>
-                  <{foreach from=$link.linkoptions key=linkoptionNumber item=linkoption}>
-                    <option value="<{$linkoption.value}>"<{if $linkoption.value eq ($link.key1 and '+' and $link.key2)}> selected="selected"<{/if}>><{$linkoption.name}></option>
-                  <{/foreach}>
-                <{/if}>
-              </select>
-              <{if $link.common eq 1}>
-                <input type=hidden name=relationships-preservecommon<{$link.lid}> value=<{$link.key1}>+<{$link.key2}>>
-              <{/if}>
-            </td>
-            <td>
+             <td>
               <select name=relationships-rel<{$link.lid}> size=1>
                 <option value="1"<{if $link.relationship eq 1}> selected="selected"<{/if}>><{$smarty.const._AM_FRAME_ONETOONE}></option>
                 <option value="2"<{if $link.relationship eq 2}> selected="selected"<{/if}>><{$smarty.const._AM_FRAME_ONETOMANY}></option>
                 <option value="3"<{if $link.relationship eq 3}> selected="selected"<{/if}>><{$smarty.const._AM_FRAME_MANYTOONE}></option>
               </select>
             </td>
-            <td align="center">
-              <input type="checkbox"<{if $link.unifiedDisplay}> checked="checked"<{/if}> value="1" name="relationships-display<{$link.lid}>">
+            <td>
+              <select name=relationships-linkages<{$link.lid}> id=linkages<{$link.lid}> size=1 onchange="javascript:checkForCommon(this.form.linkages<{$link.lid}>, '<{$link.form1_id}>', '<{$link.form2_id}>', '<{$link.lid}>');">
+                <option value='0+0'<{if $link.key1 eq 0 and $link.key2 eq 0}> selected="selected"<{/if}>><{$smarty.const._AM_FRAME_UIDLINK}></option>
+                <{if $link.common neq 1}>
+                  <option value='common'><{$smarty.const._AM_FRAME_COMMONLINK}></option>
+                <{/if}>
+                <{foreach from=$link.linkoptions key=linkoptionNumber item=linkoption}>
+                  <option value="<{$linkoption.value}>"<{if $linkoption.value == $link.linkselected}> selected="selected"<{/if}>><{$linkoption.name}></option>
+                <{/foreach}>
+              </select>
+              <{if $link.common eq 1}>
+                <input type=hidden name=relationships-preservecommon<{$link.lid}> value=<{$link.key1}>+<{$link.key2}>>
+              <{/if}>
             </td>
-            <td class=head>
-              <input type=submit class=formbutton name=dellink lid=<{$link.lid}> value='<{$smarty.const._AM_FRAME_DELFORM}>'>
+            <td align="center" class="checkbox-table-cell">
+              <input type="checkbox"<{if $link.unifiedDisplay}> checked="checked"<{/if}> value="1" name="relationships-display<{$link.lid}>">
             </td>
           </tr>
 	      <{/foreach}>
@@ -157,11 +155,11 @@ $("[name=addlink]").click(function () {
   return false;
 });
 
-$("[name=dellink]").click(function () {
+$(".deletethislink").click(function () {
 	var answer = confirm ('<{$smarty.const._AM_CONFIRM_DEL_FF_FORM}>');
 	if (answer)	{
     $("[name=formulize_admin_op]").val('dellink');
-    $("[name=formulize_admin_lid]").val($(this).attr('lid'));
+    $("[name=formulize_admin_lid]").val($(this).attr('target'));
     $(".savebutton").click();
 	}
   return false;

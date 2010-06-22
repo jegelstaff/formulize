@@ -38,6 +38,18 @@ if(!isset($processedValues)) {
 $op = $_POST['formulize_admin_op'];
 $frid = $_POST['formulize_admin_key'];
 
+if($frid == "new") {
+	// create the framework first
+	$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+	$frameworkObject = $framework_handler->create();
+	$form_handler = xoops_getmodulehandler('forms','formulize');
+	$form1Object = $form_handler->get($processedValues['relationships']['fid1']);
+	$form2Object = $form_handler->get($processedValues['relationships']['fid2']);
+	$frameworkObject->setVar('name',printSmart($form1Object->getVar('title'))." + ".printSmart($form2Object->getVar('title')));
+	if(!$frid = $framework_handler->insert($frameworkObject)) {
+		print "Error: could not create the framework";
+	}
+}
 
 // save all changes, the user could have modified links and then clicked add or
 // remove which causes a page reload, so preserve all user changes
@@ -49,18 +61,17 @@ switch ($op) {
 		$fid2 = $processedValues['relationships']['fid2'];
 		if(addlink($fid1, $fid2, $frid)) {
       // send code to client that will to be evaluated
-      print "/* eval */ window.location = window.location;";
+      print "/* eval */ reloadWithScrollPosition();";
     }
 		break;
 	case "dellink":
     $lid = $_POST['formulize_admin_lid'];
     if(deletelink($lid, $frid)) {
       // send code to client that will to be evaluated
-      print "/* eval */ window.location = window.location;";
+      print "/* eval */ reloadWithScrollPosition();";
     }
 		break;
 }
-
 
 function addlink($fid1, $fid2, $cf) {
 	global $xoopsDB;
@@ -157,20 +168,13 @@ function updaterels($fl_id, $value) {
 function updatelinks($fl_id, $value) {
   global $xoopsDB, $processedValues;
 
-	/*if($value == "common" AND $_POST['common_fl_id'] == $fl_id) {
-		$keys[0] = $_POST['common1choice'];
-		$keys[1] = $_POST['common2choice'];
+	$keys = explode("+", $value);
+	if(isset($keys[2]) AND $keys[2] == "common") {
 		$common = 1;
-	} else {*/
-		$keys = explode("+", $value);
-		//$common = $_POST['preservecommon'.$fl_id] == $value ? 1 : 0;
+	} else {
 		$common = $processedValues['relationships']['preservecommon'.$fl_id] == $value ? 1 : 0;
-	//}
-
-  if(intval($keys[0]) > 0 && intval($keys[1]) > 0 && $common == 0) {
-    $common = 1;
-  }
-
+	}
+	
 	$sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_key1='" . $keys[0] . "', fl_key2='" . $keys[1] . "', fl_common_value='$common' WHERE fl_id='$fl_id'";
 	if(!$res = $xoopsDB->query($sql)) {
 		print "Error: could not update key fields for framework link $fl_id";

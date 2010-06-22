@@ -54,7 +54,7 @@ if($aid == 0) {
 
 $allRelationships = array();
 foreach($formObjects as $thisForm) {
-	$allRelationships = array_merge($allRelationships, $framework_handler->getFrameworksByForm($thisForm->getVar('fid'))); // returns array of objects
+	$allRelationships = array_merge($allRelationships, $framework_handler->getFrameworksByForm($thisForm->getVar('id_form'))); // returns array of objects
 	if($aid) {
 		// package up the info we need for drawing the list of forms in the app
 		$formsInApp[$thisForm->getVar('id_form')]['selected'] = " selected";
@@ -106,8 +106,8 @@ $common['name'] = $appName;
 // any declared sub key of $content, such as 'forms' will be assigned to accordions
 // accordion content is available as $sectionContent.foo
 
+$i=1;
 if($aid > 0) {
-	$i++;
 	$adminPage['tabs'][$i]['name'] = "Settings";
 	$adminPage['tabs'][$i]['template'] = "db:admin/application_settings.html";
 	$adminPage['tabs'][$i]['content'] = $common;

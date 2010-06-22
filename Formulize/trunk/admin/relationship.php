@@ -42,13 +42,8 @@ if($aid == 0) {
 }
 
 $elements = array();
-if($_GET['frid'] != "new") {
-  $frid = intval($_GET['frid']);
-  $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-  $relationshipObject = $framework_handler->get($frid);
-  $relationshipName = $relationshipObject->getVar('name');
 
-	// retrieve the names and ids of all forms, and create the form options for the Add Form section
+// retrieve the names and ids of all forms, and create the form options for the Add Form section
 	$formsq = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id") . " ORDER BY desc_form";
 	$res = $xoopsDB->query($formsq);
   $i = 0;
@@ -57,6 +52,13 @@ if($_GET['frid'] != "new") {
 		$common['formoptions'][$i]['name'] = $array['desc_form'];
     $i++;
 	}
+
+
+if($_GET['frid'] != "new") {
+  $frid = intval($_GET['frid']);
+  $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+  $relationshipObject = $framework_handler->get($frid);
+  $relationshipName = $relationshipObject->getVar('name');
 
 
 	// **************
@@ -139,12 +141,13 @@ if($_GET['frid'] != "new") {
     $form2 = $row[0];
     $links[$li]['form1'] = printSmart($form1);
     $links[$li]['form2'] = printSmart($form2);
-    $links[$li]['key1'] = printSmart($relationshipLink->getVar('key1'));
-    $links[$li]['key2'] = printSmart($relationshipLink->getVar('key2'));
+    $links[$li]['key1'] = $relationshipLink->getVar('key1');
+    $links[$li]['key2'] = $relationshipLink->getVar('key2');
     $links[$li]['relationship'] = printSmart($relationshipLink->getVar('relationship'));
     $links[$li]['unifiedDisplay'] = printSmart($relationshipLink->getVar('unifiedDisplay'));
     $links[$li]['common'] = printSmart($relationshipLink->getVar('common'));
     $links[$li]['lid'] = printSmart($relationshipLink->getVar('lid'));
+		$links[$li]['linkselected'] = $relationshipLink->getVar('key1')."+".$relationshipLink->getVar('key2');
 
 
 		//determine the contents of the linkage box
@@ -172,7 +175,7 @@ if($_GET['frid'] != "new") {
 			$name1 = $ele1->getVar('ele_colhead') ? printSmart($ele1->getVar('ele_colhead')) : printSmart($ele1->getVar('ele_caption'));
 			$name2 = $ele2->getVar('ele_colhead') ? printSmart($ele2->getVar('ele_colhead')) : printSmart($ele2->getVar('ele_caption'));
       $links[$li]['linkoptions'][$loi]['value'] = $links[$li]['key1'] . "+" . $links[$li]['key2'];
-      $links[$li]['linkoptions'][$loi]['name'] = _AM_FRAME_COMMON_VALUES . $name1 . " & " . $name2;
+      $links[$li]['linkoptions'][$loi]['name'] = _AM_FRAME_COMMON_VALUES . printSmart($name1,20) . " & " . printSmart($name2,20);
       $loi++;
 		}
 		buildlinkoptions($hits12, 0, $links[$li]['key1'], $links[$li]['key2'], $target_ele_ids, $source_ele_ids, $target_captions, $source_captions, $links[$li]['linkoptions'], $loi);
@@ -197,7 +200,7 @@ $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
-$breadcrumbtrail[2]['url'] = "page=application&aid=$aid";
+$breadcrumbtrail[2]['url'] = "page=application&aid=$aid&tab=relationships";
 $breadcrumbtrail[2]['text'] = $appName;
 $breadcrumbtrail[3]['text'] = $relationshipName;
 
@@ -227,10 +230,10 @@ function buildlinkoptions($links, $invert, $key1, $key2, $target_ele_ids, $sourc
 	foreach($links as $link) {
 		if($invert) {
 			$linkoptions[$loi]['value'] = $source_ele_ids[$link] . "+" . $target_ele_ids[$link];
-      $linkoptions[$loi]['name'] = printSmart($source_captions[$link],20) . "/" . printSmart($target_captions[$link],20);
+      $linkoptions[$loi]['name'] = "Linked elements: ".printSmart($source_captions[$link],20) . " & " . printSmart($target_captions[$link],20);
 		} else { 
 			$linkoptions[$loi]['value'] = $target_ele_ids[$link] . "+" . $source_ele_ids[$link];
-      $linkoptions[$loi]['name'] = printSmart($source_captions[$link],20) . "/" . printSmart($target_captions[$link],20);
+      $linkoptions[$loi]['name'] = "Linked elements: ".printSmart($source_captions[$link],20) . " & " . printSmart($target_captions[$link],20);
 		}
     $loi++;
 	}
