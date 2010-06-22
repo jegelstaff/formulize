@@ -42,6 +42,20 @@
 	  </div>
   </fieldset>
 
+	<fieldset>
+		<legend>URL for this screen</legend>
+		<p>To give people access to this screen, send them to this URL:</p>
+		<blockquote><{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}></blockquote>
+	</fieldset>
+	
+	<fieldset>
+		<legend>PHP code for including this screen anywhere</legend>
+		<p>You can embed this screen in any PHP application or web page that is running on the same web server.<br />Use this snippet of PHP code to include it:</p>
+		<blockquote class="code">include_once "<{$smarty.const.XOOPS_ROOT_PATH}>/mainfile.php";<br/>
+$formulize_screen_id = <{$content.sid}>;<br/>
+include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockquote>
+	</fieldset>
+
   <!--<fieldset>
 	  <legend>Menu</legend>
 

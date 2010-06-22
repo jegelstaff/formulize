@@ -73,9 +73,9 @@ if($isNew) {
     // set the defaults for the new screen
     
       // View
-      $screen->setVar('defaultview','blank');
+      $screen->setVar('defaultview','all');
       $screen->setVar('usecurrentviewlist',_formulize_DE_CURRENT_VIEW);
-      $screen->setVar('limitviews','allviews');
+      $screen->setVar('limitviews',serialize(array(0=>'allviews')));
       $screen->setVar('useworkingmsg',1);
       $screen->setVar('usescrollbox',1);
       $screen->setVar('entriesperpage',10);

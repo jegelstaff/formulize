@@ -67,6 +67,7 @@ if(isset($_POST['apps']) AND count($_POST['apps']) > 0) {
 
 // interpret form object values that were submitted and need special handling
 $processedValues['forms']['headerlist'] = "*=+*:".implode("*=+*:",$_POST['headerlist']);
+
 foreach($processedValues['forms'] as $property=>$value) {
   $formObject->setVar($property, $value);
 }
@@ -77,6 +78,73 @@ $fid = $formObject->getVar('id_form');
 if($_POST['formulize_admin_key'] == "new") {
   if(!$tableCreateRes = $form_handler->createDataTable($fid)) {
     print "Error: could not create data table for new form";
+  }
+  global $xoopsDB;
+  // create the default screens for this form
+  $formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
+  $defaultFormScreen = $formScreenHandler->create();
+  $defaultFormScreen->setVar('displayheading', 1);
+  $defaultFormScreen->setVar('reloadblank', 0);
+  $defaultFormScreen->setVar('savebuttontext', _formulize_SAVE);
+  $defaultFormScreen->setVar('alldonebuttontext', _formulize_DONE);
+  $defaultFormScreen->setVar('title','Standard form screen');
+  $defaultFormScreen->setVar('fid',$fid);
+  $defaultFormScreen->setVar('frid',0);
+  $defaultFormScreen->setVar('type','form');
+  $defaultFormScreen->setVar('useToken',1);
+  if(!$defaultFormScreenId = $formScreenHandler->insert($defaultFormScreen)) {
+    print "Error: could not create default form screen";
+  }
+  $listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+  $screen = $listScreenHandler->create();
+  // View
+  $screen->setVar('defaultview','all');
+  $screen->setVar('usecurrentviewlist',_formulize_DE_CURRENT_VIEW);
+  $screen->setVar('limitviews',serialize(array(0=>'allviews')));
+  $screen->setVar('useworkingmsg',1);
+  $screen->setVar('usescrollbox',1);
+  $screen->setVar('entriesperpage',10);
+  $screen->setVar('viewentryscreen',$defaultFormScreenId);
+  // Headings
+  $screen->setVar('useheadings',1);
+  $screen->setVar('repeatheaders',5);
+  $screen->setVar('usesearchcalcmsgs',1);
+  $screen->setVar('usesearch',1);
+  $screen->setVar('columnwidth',0);
+  $screen->setVar('textwidth',35);
+  $screen->setVar('usecheckboxes',0);
+  $screen->setVar('useviewentrylinks',1);
+  $screen->setVar('desavetext',_formulize_SAVE);
+  // Buttons
+  $screen->setVar('useaddupdate',_formulize_DE_ADDENTRY);
+  $screen->setVar('useaddmultiple',_formulize_DE_ADD_MULTIPLE_ENTRY);
+  $screen->setVar('useaddproxy',_formulize_DE_PROXYENTRY);
+  $screen->setVar('useexport',_formulize_DE_EXPORT);
+  $screen->setVar('useimport',_formulize_DE_IMPORT);
+  $screen->setVar('usenotifications',_formulize_DE_NOTBUTTON);
+  $screen->setVar('usechangecols',_formulize_DE_CHANGECOLS);
+  $screen->setVar('usecalcs',_formulize_DE_CALCS);
+  $screen->setVar('useexportcalcs',_formulize_DE_EXPORT_CALCS);
+  $screen->setVar('useadvsearch',_formulize_DE_ADVSEARCH);
+  $screen->setVar('useclone',_formulize_DE_CLONESEL);
+  $screen->setVar('usedelete',_formulize_DE_DELETESEL);
+  $screen->setVar('useselectall',_formulize_DE_SELALL);
+  $screen->setVar('useclearall',_formulize_DE_CLEARALL);
+  $screen->setVar('usereset',_formulize_DE_RESETVIEW);
+  $screen->setVar('usesave',_formulize_DE_SAVE);
+  $screen->setVar('usedeleteview',_formulize_DE_DELETE);
+  $screen->setVar('title','Standard list screen');
+  $screen->setVar('fid',$fid);
+  $screen->setVar('frid',0);
+  $screen->setVar('type','listOfEntries');
+  $screen->setVar('useToken',1);
+  if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
+    print "Error: could not create default list screen";
+  }
+  $formObject->setVar('defaultform', $defaultFormScreenId);
+  $formObject->setVar('defaultlist', $defaultListScreenId);
+  if(!$form_handler->insert($formObject)) {
+    print "Error: could not update form object with default screen ids: ".mysql_error();
   }
 }
 

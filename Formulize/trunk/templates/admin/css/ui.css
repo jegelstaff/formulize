@@ -156,6 +156,11 @@ div.accordion-box .no-bullets {
 /* form > fieldset > ol > li > fieldset or input or select */
 /* Using http://www.alistapart.com/articles/prettyaccessibleforms/ */
 
+
+.code {
+	font-family: "Courier New", Courier, monospace;
+}
+
 .checkbox-table-cell input {
 	margin-right: 8em;
 }

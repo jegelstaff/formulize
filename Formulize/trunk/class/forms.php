@@ -74,6 +74,7 @@ class formulizeForm extends XoopsObject {
 				$headerlist = array();
 			  $defaultform = "";
 			  $defaultlist = "";
+				$formq[0]['menutext'] = "";
 			} else {
 				// gather element ids for this form
 				$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
@@ -160,7 +161,8 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("filterSettings", XOBJ_DTYPE_ARRAY, serialize($filterSettings));
 		$this->initVar("headerlist", XOBJ_DTYPE_TXTAREA, $headerlist);
 		$this->initVar("defaultform", XOBJ_DTYPE_INT, $defaultform, true);
-		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);		
+		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);
+		$this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], true, 255);
 	}
 }
 
@@ -279,9 +281,9 @@ class formulizeFormsHandler {
 						break;
 				}
 				if($formObject->isNew() || empty($id_form)) {
-					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, `defaultlist` ) VALUES (".$this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".$this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).")";
+					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, `defaultlist`, `menutext`) VALUES (".$this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".$this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).", ".$this->db->quoteString($menutext).")";
 				} else {
-					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).", `singleentry` = ".$this->db->quoteString($singleToWrite).", `headerlist` = ".$this->db->quoteString($headerlist).", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist)." WHERE id_form = ".intval($id_form);
+					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).", `singleentry` = ".$this->db->quoteString($singleToWrite).", `headerlist` = ".$this->db->quoteString($headerlist).", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist).", `menutext` = ".$this->db->quoteString($menutext)." WHERE id_form = ".intval($id_form);
 				}
 				
 				if( false != $force ){

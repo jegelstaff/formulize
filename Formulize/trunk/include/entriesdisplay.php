@@ -340,7 +340,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$currentView = "mine";
 	}
 		
-
 	// debug block to show key settings being passed back to the page
 /*
 	if($uid == 1) {

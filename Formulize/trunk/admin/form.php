@@ -57,6 +57,7 @@ if($_GET['fid'] != "new") {
   $headerlistArray = explode("*=+*:",trim($headerlist,"*=+*:"));
   $defaultform = $formObject->getVar('defaultform');
   $defaultlist = $formObject->getVar('defaultlist');
+  $menutext = $formObject->getVar('menutext');
   
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
   $elementObjects = $element_handler->getObjects2(null, $fid);
@@ -245,6 +246,7 @@ if($_GET['fid'] != "new") {
   $singleentry = "off"; // need to send a default for this
   $defaultform = 0;
   $defaultlist = 0;
+  $menutext = "Use the form's title";
 }
 
 $i = 1;
@@ -294,6 +296,7 @@ foreach($listOfEntriesScreens as $screen) {
 
 $settings = array();
 $settings['singleentry'] = $singleentry;
+$settings['menutext'] = $menutext;
 $settings['istableform'] = $tableform OR $newtableform ? true : false;
 
 $i = 1;

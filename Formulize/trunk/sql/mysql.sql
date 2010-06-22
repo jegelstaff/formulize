@@ -227,6 +227,7 @@ CREATE TABLE formulize_id (
   lockedform tinyint(1) NULL default NULL,
   defaultform int(11) NOT NULL default 0,
   defaultlist int(11) NOT NULL default 0,
+  menutext varchar(255) default NULL,
   PRIMARY KEY  (`id_form`),
   UNIQUE `desc_form_id` (`desc_form`)
 ) TYPE=MyISAM;

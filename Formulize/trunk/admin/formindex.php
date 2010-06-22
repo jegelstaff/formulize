@@ -1279,6 +1279,8 @@ function patch40() {
 		$sql['sep_to_areamodif'] = "UPDATE ". $xoopsDB->prefix("formulize") ." SET ele_type='areamodif' WHERE ele_type='sep'";
 		$sql['add_defaultform'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `defaultform` int(11) NOT NULL default 0";
 		$sql['add_defaultlist'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `defaultlist` int(11) NOT NULL default 0";
+		$sql['add_menutext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `menutext` varchar(255) default NULL";
+ 
 
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
@@ -1292,6 +1294,8 @@ function patch40() {
 					print "defaultform field already added.  result: OK<br>";
 				} elseif($key === "add_defaultlist") {
 					print "defaultlist field already added.  result: OK<br>";
+				} elseif($key === "add_menutext") {
+					print "menutext field already added.  result: OK<br>";
 				} elseif(strstr($key, 'drop_from_formulize_id_')) {
 					continue;					
 				} else {

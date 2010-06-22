@@ -394,6 +394,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
 }
 
 if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
+  
   $adminPage['tabs'][2]['name'] = "Entries to Display";
   $adminPage['tabs'][2]['template'] = "db:admin/screen_list_entries.html";
   $adminPage['tabs'][2]['content'] = $entries + $common;

@@ -17,11 +17,17 @@
 		<div class="form-item required">
         	<fieldset>
                 <legend><label for="forms-title" class="question">What is the name of the form?</label></legend>
-                <input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" class="input-text" />
+                <p>Form title: <input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" /></p>
+								<p>Menu entry: <input type="text" id="forms-menutext" name="forms-menutext" value="<{$content.menutext}>"  /></p>
+								<div class="description">
+									Leave the "menu entry" blank to remove this form from the default menu block
+								</div>
             </fieldset>
 		</div>
+	</div>
 	
 		<{if $content.istableform == true && $content.fid == "new"}>
+		<div class="accordion-box">
 			<div class="form-item">
 				<fieldset>
                     <legend><label for="database_table" class="question">Which database table should this "form" point to?</label></legend>
@@ -31,12 +37,16 @@
                     </div>
                 </fieldset>
 			</div>
+		</div>
+		<div style="clear: both;"></div>
 		<{/if}>
 	
 		<{if $content.istableform == false}>
-		<div class="form-item">
+		<div class="accordion-box">
+			<div class="form-item">
         	<fieldset>
 				<legend><label class="question">How many entries are allowed in this form?</label></legend>
+				
 				<div class="form-radios">
 					<label for="group"><input type="radio" id="group" name="forms-single" value="group" />One entry per <b>group</b></label>
 				</div>
@@ -49,25 +59,23 @@
              </fieldset>
 		</div>
 	</div>
+	<div style="clear: both;"></div>
 	
-	<{if $content.fid != "new" && $content.elementheadings|@count}>
-	<div class="accordion-box">
-		<div class="form-item">
-			<fieldset>
-                <legend><label class="question">When showing a list of entries in this form, which elements should be displayed by default?</label></legend>
-                <select name=headerlist[] size=10 multiple class="form-multiple-select">
-                    <{foreach from=$content.elementheadings item=element}>
-                    <option value=<{$element.ele_id}><{$element.selected}>><{$element.text}></option>
-                    <{/foreach}>
-                </select>
-            </fieldset>
+		<{if $content.fid != "new" && $content.elementheadings|@count}>
+		<div class="accordion-box">
+			<div class="form-item">
+				<fieldset>
+									<legend><label class="question">When showing a list of entries in this form, which elements should be displayed by default?</label></legend>
+									<select name=headerlist[] size=10 multiple class="form-multiple-select">
+											<{foreach from=$content.elementheadings item=element}>
+											<option value=<{$element.ele_id}><{$element.selected}>><{$element.text}></option>
+											<{/foreach}>
+									</select>
+							</fieldset>
+			</div>
 		</div>
-	</div>
-	<{/if}>
+		<{/if}>
 	
-	<{else}>
-	<{* need to end first accordion box if this is a tableform *}>
-	</div>
 	<{/if}>
 	
 	<{if $content.applications|@count > 0}>
