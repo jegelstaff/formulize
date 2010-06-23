@@ -170,7 +170,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 			}
 		}
 
-	  $renderer =& new formulizeElementRenderer($element);
+	  $renderer = new formulizeElementRenderer($element);
   	$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
 		$deprefix = $noSave ? "denosave_" : "de_";

@@ -709,7 +709,7 @@ class formulizeElementRenderer{
 						$counter = 0; // counter used for javascript that works with 'Other' box
 						while( $o = each($options) ){
 							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
-							$t =& new XoopsFormCheckBox(
+							$t = new XoopsFormCheckBox(
 								'',
 								$form_ele_id.'[]',
 								$selected
@@ -823,7 +823,7 @@ class formulizeElementRenderer{
 						$counter = 0;
 						while( $o = each($options) ){
 							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
-							$t =& new XoopsFormRadio(
+							$t = new XoopsFormRadio(
 								'',
 								$form_ele_id,
 								$selected
