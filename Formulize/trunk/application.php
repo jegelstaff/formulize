@@ -1,7 +1,11 @@
 <?php
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) 2010 Freeform Solutions                  ##
+##                    Copyright (c) 2005 Freeform Solutions                  ##
+###############################################################################
+##                    XOOPS - PHP Content Management System                  ##
+##                       Copyright (c) 2000 XOOPS.org                        ##
+##                          <http://www.xoops.org/>                          ##
 ###############################################################################
 ##  This program is free software; you can redistribute it and/or modify     ##
 ##  it under the terms of the GNU General Public License as published by     ##
@@ -22,45 +26,49 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.freeformsolutions.ca/formulize                           ##
+##  Author of this file: Freeform Solutions 					     ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// This file receives ajax form submissions from the new admin UI
+include 'header.php';
 
-include_once "../../../mainfile.php";
-ob_end_clean();
-global $xoopsUser;
-if(!$xoopsUser) {
-  print "Error: you are not logged in";
-  return;
-}
-$gperm_handler = xoops_gethandler('groupperm');
+$xoopsOption['template_main'] = 'formulize_application.html';
+
+require(XOOPS_ROOT_PATH."/header.php");
+
+global $xoopsDB;
+
+$aid = (isset($_GET['id'])) ? intval($_GET['id']) : 0 ;
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+$application_handler = xoops_getmodulehandler('applications', 'formulize');
+$forms = $form_handler->getFormsByApplication($aid, true);
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-$groups = $xoopsUser->getGroups();
-$mid = getFormulizeModId();
-$permissionToCheck = "module_admin";
-$itemToCheck = $mid;
-$moduleToCheck = 1; // system module
-if(!$gperm_handler->checkRight($permissionToCheck, $itemToCheck, $groups, $moduleToCheck)) {
-  print "Error: you do not have permission to save this data";
-  return;
+$allowedForms = allowedForms();
+$formsToShow = array_intersect($forms, $allowedForms);
+$formsToSend = array();
+$i=0;
+foreach($formsToShow as $thisForm) {
+	$thisFormObject = $form_handler->get($thisForm);
+	if($thisFormObject->getVar('menutext')) {
+		$formsToSend[$i]['fid'] = $thisFormObject->getVar('id_form');
+		$formsToSend[$i]['title'] = html_entity_decode($thisFormObject->getVar('menutext'), ENT_QUOTES) == "Use the form's title" ? $thisFormObject->getVar('title') : $thisFormObject->getVar('menutext');
+		$i++;
+	}
+}
+if($aid) {
+	$application = $application_handler->get($aid);
+	$app_name = $application->getVar('name');
+} else {
+	$app_name = _AM_CATGENERAL;
+}
+if(count($formsToSend)==0) {
+	$noforms =  _AM_NOFORMS_AVAIL;
+} else {
+	$noforms = 0;
 }
 
-// process all the submitted form values, looking for ones that can be immediately assigned to objects
-$processedValues = array();
-foreach($_POST as $k=>$v) {
-  if(!strstr($k, "-")) { continue; } // ignore fields with no hyphen
-  list($class, $property) = explode("-", $k);
-  $v = recursive_stripslashes($v);
-  if(is_array($v) AND $class != "elements") { // elements class is written using cleanVars so arrays are serialized automagically
-    $v = serialize($v);
-  } 
-  $processedValues[$class][$property] = $v;
-}
-// include the form-specific handler to invoke the necessary objects and insert them all in the DB
-if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save.php")) {
-  include XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save.php";
-}
+$xoopsTpl->assign("app_name", $app_name);
+$xoopsTpl->assign("noforms", $noforms);
+$xoopsTpl->assign("formData", $formsToSend);
 
+require(XOOPS_ROOT_PATH."/footer.php");

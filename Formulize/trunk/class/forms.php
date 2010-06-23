@@ -226,7 +226,7 @@ class formulizeFormsHandler {
 		return $fids;
 	}
 
-	function getFormsByApplication($application_object_or_id) {
+	function getFormsByApplication($application_object_or_id, $returnIds=false) {
 		if(is_numeric($application_object_or_id) AND $application_object_or_id > 0) {
 			$application_handler = xoops_getmodulehandler('applications','formulize');
 			$application_object_or_id = $application_handler->get($application_object_or_id);
@@ -236,7 +236,11 @@ class formulizeFormsHandler {
 			if(get_class($application_object_or_id) == 'formulizeApplication') {
 				$applicationObject = $application_object_or_id;
 				foreach($applicationObject->getVar('forms') as $thisFid) {
-					$fids[] = $this->get($thisFid);
+					if($returnIds) {
+						$fids[] = $thisFid;
+					} else {
+						$fids[] = $this->get($thisFid);
+					}
 				}
 			} else {
 				return false;
@@ -246,7 +250,11 @@ class formulizeFormsHandler {
 			$sql = "SELECT id_form FROM ".$this->db->prefix("formulize_id")." as formtable WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.fid=formtable.id_form) ORDER BY formtable.desc_form";
 			if($res = $this->db->query($sql)) {
 				while($array = $this->db->fetchArray($res)) {
-					$fids[] = $this->get($array['id_form']);
+					if($returnIds) {
+						$fids[] = $array['id_form'];
+					} else {
+						$fids[] = $this->get($array['id_form']);
+					}
 				}
 			}
 		}

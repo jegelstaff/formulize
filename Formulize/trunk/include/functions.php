@@ -3994,4 +3994,13 @@ function convertTypeToText($type, $ele_value) {
   
 }
 
-?>
+function recursive_stripslashes($value) {
+	if(!get_magic_quotes_gpc()){
+		return $value;
+	}
+	$value = is_array($value) ?
+                array_map('recursive_stripslashes', $value) :
+                stripslashes($value);
+  return $value;
+}
+

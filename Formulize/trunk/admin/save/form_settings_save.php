@@ -133,7 +133,7 @@ if($_POST['formulize_admin_key'] == "new") {
   $screen->setVar('usereset',_formulize_DE_RESETVIEW);
   $screen->setVar('usesave',_formulize_DE_SAVE);
   $screen->setVar('usedeleteview',_formulize_DE_DELETE);
-  $screen->setVar('title','Standard list screen');
+  $screen->setVar('title',"Entries in '".$formObject->getVar('title')."'");
   $screen->setVar('fid',$fid);
   $screen->setVar('frid',0);
   $screen->setVar('type','listOfEntries');
