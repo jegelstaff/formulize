@@ -1,0 +1,8 @@
+<ul>
+  <{foreach from=$menus key=key item=menu}> 
+    <li<{if $block.showsubs && $menu.hassubs}> class="menuparent"<{/if}>>
+      <a class="menuMain" href="<{$xoops_url}>/modules/content/content.php?page=<{$menu.menu}>"><{$menu.title}></a>
+      <{if $block.showsubs && $menu.hassubs}><{includeq file='db:content_content_menu_structure.html' menus=$menu.subs}><{/if}> 
+    </li> 
+  <{/foreach}>
+</ul>

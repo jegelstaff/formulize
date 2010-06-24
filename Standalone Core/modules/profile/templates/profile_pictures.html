@@ -1,0 +1,52 @@
+<{include file="db:profile_header.html"}>
+<{if $profile_picturesform}>
+<{if $hideForm}>
+<div class="profile-form outer">
+  <h2 class="head">
+    <a href="#" onclick ="jQuery().find('div.profile-pictures-form').toggle(400);"><img src="images/toggle.gif" alt="" /></a>&nbsp;<{$lang_picturesform_title}>
+  </h2>
+  <div class="profile-pictures-form" style="display: none">
+    <{includeq file='db:system_common_form.html' form=$profile_picturesform}>
+  </div>
+</div>
+<{else}>
+<{includeq file='db:system_common_form.html' form=$profile_picturesform}>
+<{/if}>
+<{/if}>
+<{if $profile_picture}>
+
+<{/if}>
+<{if $profile_pictures}>
+<div id="profile-pictures-container">
+  <{foreach name=pictures item=picture from=$profile_pictures}>
+  <div class="profile-pictures-picture">
+    <{$picture.picture_content}>
+    <br /><{$picture.title}><br />
+    <{if $picture.userCanEditAndDelete}>
+    <{$picture.editItemLink}><{$picture.deleteItemLink}>
+    <{/if}>
+    <{if $allow_avatar_upload}>
+    <form action="<{$icms_url}>/modules/profile/pictures.php" method="post" id="avatarform" class="profile-quickform">
+      <div>
+      <input type="hidden" value="<{$picture.pictures_id}>" name="pictures_id" />
+      <input type="hidden" value="setavatar" name="op" />
+      <{$token}>
+      <input name="submit" type="image" alt="<{$lang_avatar}>" title="<{$lang_avatar}>" src="<{$icms_url}>/modules/profile/images/avatar.gif" style="vertical-align:middle" />
+      </div>
+    </form>
+    <{/if}>
+    <{if $picture.private}><img src="<{$icms_url}>/modules/profile/images/lock.gif" style="vertical-align:middle" alt="" /><{/if}>
+  </div>
+  <{if $smarty.foreach.pictures.iteration is div by 4 || $smarty.foreach.pictures.last == TRUE}>
+  <div class="clear"></div>
+  <{/if}>
+  <{/foreach}>
+  <{if $profile_pictures_pagenav}>
+  <div class="pagination"><{$profile_pictures_pagenav}></div>
+  <{/if}>
+</div>
+<{/if}>
+<{if $icmspersistable_delete_confirm}>
+<{$icmspersistable_delete_confirm}>
+<{/if}>
+<{if $lang_nocontent}><div id="profile-nocontent" class="outer"><p class="odd"><{$lang_nocontent}></p></div><{/if}>

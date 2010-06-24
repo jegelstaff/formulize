@@ -1,0 +1,17 @@
+<{include file="db:profile_header.html"}>
+<div style = "width:200px">
+<h1 style='text-align:center'>Users list</h1>
+<table>
+	<{foreach item=user key=key from=$u_array}>
+		<tr>
+			<{if $avatar}>
+				<td><{$user.avatar}></td>
+			<{/if}>
+			<td style="vertical-align:bottom; font-weight:bold;"><a href="<{$xoops_url}>/modules/<{$xoops_dirname}>/userinfo.php?uid=<{$key}>"><{$user.uname}></a></td>
+		</tr>
+	<{/foreach}>
+</table>
+<{$navbar}>
+
+</div>
+<{include file="db:profile_footer.html"}>

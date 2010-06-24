@@ -1,0 +1,68 @@
+<script type="text/javascript" src="<{$xoops_url}>/modules/system/admin/images/js/imanager.js"></script>
+<script type="text/javascript">
+  var Filters=new Array();
+  <{foreach from=$filters item=filter key=key}>
+    var filter = new Array();
+    filter['title'] = '<{$filter.title}>';
+    filter['value'] = '<{$filter.value}>';
+    filter['descr'] = '<{$filter.descr}>';
+    var args = new Array();
+    <{foreach from=$filter.args item=arg key=key1}>
+      var arg = new Array();
+      arg['title'] = '<{$arg.title}>';
+      arg['value'] = '<{$arg.value}>';
+      arg['descr'] = '<{$arg.descr}>';
+      args[<{$key1}>] = arg;
+    <{/foreach}>
+    filter['args'] = args;
+    Filters[<{$key}>] = filter;
+  <{/foreach}>
+</script>
+<div class="CPbigTitle" style="background-image: url(<{$xoops_url}>/modules/system/admin/images/images/images_big.png)"><{$lang_imanager_title}></div><br />
+<p style="margin-top:0;"><{$admnav}></p>
+<table width="100%" celpadding="0" cellspacing="1" class="outer">
+  <tr>
+    <th align="center"><{$lang_imanager_catmsize}></th>
+    <th align="center"><{$lang_imanager_catmwidth}></th>
+    <th align="center"><{$lang_imanager_catmheight}></th>
+    <th align="center" width="5%"><{$lang_imanager_catsubs}></th>
+    <th align="center"><{$lang_imanager_catqtde}></th>
+    <th align="center"><{$lang_imanager_catoptions}></th>
+  </tr>
+  <tr class="odd">
+    <td align="center"><{$cat_maxsize}></td>
+    <td align="center"><{$cat_maxwidth}>px</td>
+    <td align="center"><{$cat_maxheight}>px</td>
+    <td align="center">
+    <{if $cat_subs > 0}>
+      <{$cat_subs}> <a href="?op=list&imgcat_id=<{$cat_id}>&target=<{$target}>&type=<{$type}>" title="View Sub-categories"><img src="<{$xoops_url}>/modules/system/images/viewsubs.gif" align="absmiddle" /></a>
+    <{else}>
+      <{$cat_subs}>
+    <{/if}>
+    </td>
+    <td align="center"><{$imgcount}><{if $simgcount > 0}> (+<{$simgcount}>)<{/if}></td>
+    <td align="center">
+      <a href="#" onclick="showDiv('addimgform',''); document.anchors.item('addimgform').scrollIntoView(); return false;" title="<{$lang_imanager_cat_addimg}>"><img src="<{$xoops_url}>/modules/system/images/add.png" /></a>
+    </td>
+  </tr>
+</table>
+<div style="border: 2px solid #C2CDD6; padding: 5px; vertical-align: middle; background-color: #E6E6E6; width:55%; float:right; margin-top:5px;" align="right">
+  <form action="<{if $type == "tiny"}>xoopsimagebrowser.php<{else}>formimage_browse.php<{/if}>?op=listimg&imgcat_id=<{$cat_id}>&target=<{$target}>&type=<{$type}>" method="POST">
+    <b><{$lang_search_title}>:</b>
+    <input type="text" name="query" id="query" size="20" value="<{$query}>" style="min-width:280px;" />
+    <input type="submit" name="btn" value="<{$lang_search}>" />
+    <input type="submit" name="btn1" value="<{$lang_cancel}>" onclick="document.getElementById('query').value='';" />
+  </form>
+</div>
+<br style="clear:right;" />
+<{foreach from=$images item=image key=key}>
+  <{include file="$icms_root_path/modules/system/templates/admin/images/system_popup_imagemanager_img.html" image=$image i=$key}>
+<{/foreach}>
+<br style="clear:both;" />
+<{foreach from=$images item=image key=key}>
+  <{include file="$icms_root_path/modules/system/templates/admin/images/system_popup_imagemanager_editimg.html" image=$image i=$key}>
+  <{include file="$icms_root_path/modules/system/templates/admin/images/system_popup_imagemanager_cloneimg.html" image=$image i=$key}>
+<{/foreach}>
+<div id="addimgform" class="opt_divs" style="display:none; padding:5px; margin:5px;"><{$addimgform}></div>
+<a name="addimgform"></a>
+<{$pag}>

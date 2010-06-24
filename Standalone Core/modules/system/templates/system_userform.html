@@ -1,0 +1,81 @@
+<{if $lang_reset !== 1}>
+<div style="position: relative;">
+	<div>
+		<fieldset style="padding: 10px;">
+			<legend style="font-weight: bold;"><{$lang_login}></legend>
+<div id="icms_block_login_form">
+			<form action="user.php" method="post">
+		    	<div><{$lang_username}><input type="text" class="uname" name="uname" size="21" maxlength="25" value="<{$usercookie}>" />
+		    	<br />
+			    <br /></div>
+		    	<div><{$lang_password}><input type="password" name="pass" size="21" maxlength="32" /><br /></div>
+			    <{if $rememberme }>
+			    	<div><input type="checkbox" name="rememberme" value="On" /><{$lang_rememberme}><br /></div>
+			    <{/if}>
+			    <div><input type="hidden" name="op" value="login" /></div>
+		    	<div><input type="hidden" name="xoops_redirect" value="<{$redirect_page}>"/>
+			    <br />
+		    	<input type="submit" value="<{$lang_login}>" /></div>
+			</form>
+  <{if $auth_openid}>
+<br />
+	  <div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="#" onclick="xoopsGetElementById('icms_openid-verify-form2').style.display = 'block'; xoopsGetElementById('icms_block_login_form').style.display = 'none'; return false;"><{$lang_login_oid}></a></div>
+  <{/if}>
+</div>
+<{if $auth_openid}>
+	<div id="icms_openid-verify-form2" style="display: none;">
+	  <form method="get" action="<{$xoops_url}>/try_auth.php">
+	    <{$lang_youoid}>
+	    <input type="hidden" name="action" value="verify" />
+	    <input type="text" class="openid_url" name="openid_identifier" size="12" value="" />
+	    <input type="submit" value="<{$lang_login}>" />
+	  </form>
+<br />
+	  <div style="text-align: <{$smarty.const._GLOBAL_LEFT}>;"><a href="#" onclick="xoopsGetElementById('icms_block_login_form').style.display = 'block'; xoopsGetElementById('icms_openid-verify-form2').style.display = 'none'; return false;"><{$lang_back2normoid}></a></div>
+	</div>
+<br />
+<{/if}>
+			<a name="lost"></a>
+			<{if $allow_registration }>
+				<div style="text-align: <{$smarty.const._GLOBAL_RIGHT}>;"><{$lang_notregister}><br /></div>
+			<{/if}>
+		</fieldset>
+	</div>
+
+	<div>
+		<fieldset style="padding: 10px;">
+			<legend style="font-weight: bold;"><{$lang_lostpassword}></legend>
+			<div>
+				<{$lang_noproblem}>
+			</div>
+			<form action="lostpass.php" method="post">
+				<div><br /><{$lang_youremail}> <input type="text" name="email" size="26" maxlength="60" />&nbsp;&nbsp;<input type="hidden" name="op" value="mailpasswd" /><input type="hidden" name="t" value="<{$mailpasswd_token}>" />
+		    	<br />
+		    	<br />
+		     	<input type="submit" value="<{$lang_sendpassword}>" /></div>
+			</form>
+		</fieldset>
+	</div>
+</div>
+<{else}>
+<div style="position: relative;height: 250px;">
+	<div style="float: <{$smarty.const._GLOBAL_LEFT}>; width: 80% ">
+		<fieldset style="padding: 10px;">
+			<legend style="font-weight: bold;"><{$smarty.const._US_RESETPASSWORD}></legend>
+			<h1><{$smarty.const._US_RESETPASSTITLE}></h1>
+			<div><{$smarty.const._US_RESETPASSINFO}></div>
+			<br />
+			<form action="resetpass.php" method="post">
+				<{$lang_youremail}> <input type="text" name="email" size="26" maxlength="100" /><br />
+				<{$lang_username}> <input type="username" name="username" size="26" maxlength="60" value="<{$lang_uname}>"/><br />
+				<{$lang_currentpass}> <input type="password" name="c_password" size="26" maxlength="255" /><br />
+				<{$lang_newpass}> <input type="password" name="password" size="26" maxlength="255" /><br />
+				<{$lang_newpass2}> <input type="password" name="password2" size="26" maxlength="255" />&nbsp;&nbsp;<input type="hidden" name="op" value="resetpass" /><input type="hidden" name="t" value="<{$resetpassword_token}>" />
+		    	<br />
+		    	<br />
+		     	<input type="submit" value="<{$smarty.const._US_RESETPASSWORD}>" />
+			</form>
+		</fieldset>
+	</div>
+</div>
+<{/if}>

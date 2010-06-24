@@ -1,0 +1,23 @@
+  <{if $block.showgroups == true}>
+    <div class="outer">
+  <!-- start group loop -->
+  <{foreach item=group from=$block.groups}>
+  <div style="text-align:center;"><strong><{$group.name}></strong></div>
+  <div class="clear"></div>
+
+  <!-- start group member loop -->
+  <{foreach item=user from=$group.users}>
+  <div class="<{cycle values="even,odd"}>" style="margin: 0 auto; text-align:center;"><img src="<{$user.avatar}>" alt="<{$user.name}>'s avatar" width="32px" /><br /><a href="<{$xoops_url}>/userinfo.php?uid=<{$user.id}>" title="<{$user.name}>"><{$user.name}></a>&nbsp;<{$user.msglink}></div>
+   <div class="clear"></div>
+  <{/foreach}>
+  <!-- end group member loop -->
+
+  <{/foreach}>
+  <!-- end group loop -->
+</div>
+<{/if}>
+  <div class="clear"></div>
+
+<div style="margin: 3px; text-align:center;">
+  <img src="<{$block.logourl}>" alt="<{$xoops_sitename}>" /><br /><{$block.recommendlink}>
+</div>

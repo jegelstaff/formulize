@@ -1,0 +1,37 @@
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <{if $systemadm}>
+      <{if $modulesadm}>
+        <td width="50%" class="CPindexOptions">
+      <{else}>
+        <td width="100%" class="CPindexOptions">
+      <{/if}>
+	  <div class="CPbigTitle" style="background-image: url(<{$xoops_imageurl}>modules/system/images/cp.png); "><{$lang_cp}></div><br />
+	  <div class="cpicon">
+		<{foreach item=mod from=$sysmod}>
+		  <a href="<{$mod.link}>" title="<{$mod.title}>"><img src="<{if $mod.image != ''}><{$mod.image}><{else}><{$xoops_url}>/modules/system/images/modules.png<{/if}>" alt="<{$mod.title}>" />
+		  <span><{$mod.title}></span></a>
+		<{/foreach}>
+	  </div>
+	</td>
+	<{/if}>
+	<{if $systemadm && $modulesadm}>
+      <td>&nbsp;</td>
+    <{/if}>
+    <{if $modulesadm}>
+      <{if $systemadm}>
+        <td width="48%" class="CPindexOptions">
+      <{else}>
+        <td width="100%" class="CPindexOptions">
+      <{/if}>
+  	  <div class="CPbigTitle" style="background-image: url(<{$xoops_imageurl}>modules/system/images/modules.png)"><{$lang_insmodules}></div><br />
+	  <div class="cpicon">
+		<{foreach item=mod from=$modules}>
+		  <a href="<{$mod.link}>" title="<{$mod.title}>"><img src="<{if $mod.iconbig != ''}><{$mod.iconbig}><{else}><{$xoops_url}>/modules/system/images/modules.png<{/if}>" alt="<{$mod.title}>" />
+		  <span><{$mod.title}></span></a>
+		<{/foreach}>
+	  </div>
+	</td>
+	<{/if}>
+  </tr>
+</table>

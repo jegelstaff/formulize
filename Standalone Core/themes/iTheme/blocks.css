@@ -1,0 +1,69 @@
+/* ------ Left column / Right column content------ */
+#xo-canvas-leftcolumn .xo-block, #xo-canvas-rightcolumn .xo-block {
+	margin-bottom:	10px;
+}
+
+#xo-canvas-leftcolumn .xo-blocktitle {
+	padding: 3px;
+	text-align: left;
+}
+#xo-canvas-leftcolumn .xo-blocktitle h3 {
+	color: #F3AC03;
+	font-weight: bold;
+	margin: 0;
+	padding: 0;
+	border-bottom: 1px dashed #8DBDE1;
+}
+
+#xo-canvas-rightcolumn .xo-blocktitle {
+	padding: 3px;
+	text-align: right;
+}
+#xo-canvas-rightcolumn .xo-blocktitle h3 {
+	color: #F3AC03;
+	font-weight: bold;
+	margin: 0;
+	padding: 0;
+	border-bottom: 1px dashed #8DBDE1;
+}
+
+#xo-canvas-leftcolumn .xo-blockcontent, #xo-canvas-rightcolumn .xo-blockcontent {
+	padding: 0.5em;
+}
+
+#xo-canvas-leftcolumn .xo-block.system .xo-blockcontent {
+	padding: 0;
+}
+
+#xo-canvas-leftcolumn th, #xo-canvas-rightcolumn th {
+	color: #F3AC03;
+	font-size: 90%;
+}
+
+/* ------ Center column content ------ */
+#xo-page th {
+	color: #0066CC;
+}
+
+#xo-page .xo-block {
+	margin-bottom: 5px;
+}
+
+#xo-page .xo-blocktitle {
+	padding: .2em;
+	margin: 0 .5em;
+	text-align: center;
+}
+
+#xo-page .xo-blocktitle h3 {
+	color: #0066CC;
+	font-weight: bold;
+	padding: 0;
+	margin: 0;
+}
+
+#xo-page .xo-blockcontent {
+	padding: .5em;
+	background-color: #F2F2F2;
+	border-top: 4px solid #F3AC03;
+}

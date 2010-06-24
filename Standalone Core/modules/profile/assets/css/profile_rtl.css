@@ -1,0 +1,461 @@
+/* Caution! Ensure accessibility in print and other media types... */
+@media projection, screen { /* Use class for showing/hiding tab content, so that visibility can be better controlled in different media types... */
+    .tabs-hide {
+        display: none;
+    }
+}
+
+/* Hide useless elements in print layouts... */
+@media print {
+    .tabs-nav {
+        display: none;
+    }
+}
+
+/* Skin */
+.tabs-nav {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 4px;
+}
+.tabs-nav:after { /* clearing without presentational markup, IE gets extra treatment */
+    display: block;
+    clear: both;
+    content: " ";
+}
+.tabs-nav li {
+    float: right;
+    margin: 0 0 0 1px;
+    min-width: 64px; /* be nice to Opera */
+	list-style:none;
+}
+.tabs-nav a, .tabs-nav a span {
+    display: block;
+    padding: 0 10px;
+    background: url(../images/tab.png) no-repeat;
+}
+.tabs-nav a {
+    position: relative;
+    top: 1px;
+    z-index: 2;
+    padding-left: 0;
+    color: #27537a;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap; /* required in IE 6 */    
+}
+.tabs-nav .tabs-selected a {
+    color: #000;
+}
+.tabs-nav .tabs-selected a, .tabs-nav a:hover, .tabs-nav a:focus, .tabs-nav a:active {
+    background-position: 100% -150px;
+    outline: 0; /* prevent dotted border in Firefox */
+}
+.tabs-nav a, .tabs-nav .tabs-disabled a:hover, .tabs-nav .tabs-disabled a:focus, .tabs-nav .tabs-disabled a:active {
+    background-position: 100% -100px;
+}
+.tabs-nav a span {
+    width: 64px; /* IE 6 treats width as min-width */
+    min-width: 64px;
+    height: 18px; /* IE 6 treats height as min-height */
+    min-height: 18px;
+    padding-top: 6px;
+    padding-right: 0;
+}
+*>.tabs-nav a span { /* hide from IE 6 */
+    width: auto;
+    height: auto;
+}
+.tabs-nav .tabs-selected a span {
+    padding-top: 7px;
+}
+.tabs-nav .tabs-selected a span, .tabs-nav a:hover span, .tabs-nav a:focus span, .tabs-nav a:active span {
+    background-position: 0 -50px;
+}
+.tabs-nav a span, .tabs-nav .tabs-disabled a:hover span, .tabs-nav .tabs-disabled a:focus span, .tabs-nav .tabs-disabled a:active span {
+    background-position: 0 0;
+}
+.tabs-nav .tabs-selected a:link, .tabs-nav .tabs-selected a:visited, .tabs-nav .tabs-disabled a:link, .tabs-nav .tabs-disabled a:visited { /* @ Opera, use pseudo classes otherwise it confuses cursor... */
+    cursor: text;
+}
+.tabs-nav a:hover, .tabs-nav a:focus, .tabs-nav a:active { /* @ Opera, we need to be explicit again here now... */
+    cursor: pointer;
+}
+.tabs-nav .tabs-disabled {
+    opacity: .4;
+}
+.tabs-container {
+    border-top: 1px solid #97a5b0;
+    padding: 1em 8px;
+    
+}
+.tabs-loading em {
+    padding: 0 0 0 20px;
+    background: url(../images/loading.gif) no-repeat 0 50%;
+}
+/*
+General properties
+*/
+
+div.profile-profile-group1{
+float:right;
+width:49%;
+margin-bottom:15px;
+}
+
+div.profile-profile-group2{
+float:right;
+width:49%;
+margin-bottom:15px;
+}
+
+div#profile-suspension {
+float:left;
+}
+
+img#profile-suspensiontools {
+	cursor: pointer;
+}
+
+.present{
+background-color:#FFFFCC;
+}
+
+
+div#profile-nav-bar{
+margin:3px;
+width:95%;
+padding:1px;
+}
+
+div#profile-footer{
+margin:3px;
+float:right;
+padding:1px;
+width:95%;
+overflow:hidden;
+text-align:left;
+}
+
+p#breadcrumbs {
+	display:block;
+	margin:0px;
+	border-bottom: 2px solid;
+	margin-bottom: 5px;
+	padding:2px;
+}
+
+div.clear {
+clear:both;
+}
+
+div.pagination {
+text-align:left;
+}
+
+form.profile-quickform {
+display: inline;
+}
+
+/*
+CONFIGS
+*/
+
+form#form_configs input {
+
+
+}
+
+form#form_configs label{
+
+}
+
+form#form_configs fieldset{
+display:inline;
+width:90%;
+}
+
+
+
+/* 
+Profile
+*/
+
+div#profile-profile-petition {
+margin:3px;
+}
+
+div#profile-profile-petition img {
+margin:15px 3px;
+float:right;
+}
+
+div#profile-profile-visitors, div#profile-profile-search-results, div#profile-profile-visual, div#profile-profile-statistics, div.profile-profile-details {
+margin:3px 0px 3px;
+float:right;
+padding:1px;
+width:100%;
+overflow:hidden;
+}
+
+div#profile-profile-tribes, div#profile-profile-friends, div#profile-profile-pictures, div#profile-profile-audio, div#profile-profile-videos {
+margin:3px 0;
+margin-left: -2px;
+padding: 1px;
+overflow:hidden;
+text-align:center;
+width:100%;
+}
+
+div#profile-profile-tribes h3, div#profile-profile-friends h3, div#profile-profile-pictures h3, div#profile-profile-audio h3, div#profile-profile-videos h3 {
+text-align:right;
+}
+
+div#profile-profile-tribes ul, div#profile-profile-friends ul {
+margin-left: 30px;
+}
+
+div#profile-profile-tribes ul input.image, div#profile-profile-friends ul input.image {
+width:12px;
+height:12px;
+}
+
+td.profile-profile-picture, td.profile-profile-friend {
+vertical-align:middle;
+border-bottom: none;
+}
+
+div#profile-profile-avatar {
+margin-top:5px;
+margin-bottom:5px;
+width:100%;
+text-align:center;
+}
+
+div#profile-profile-mainvideo{
+margin:1px;
+width:45%;
+float:right;
+}
+
+
+span.profile-profileinfo-label {
+margin:1px 5px;
+font-weight:bold;
+width:60px;
+min-width:60px;
+display:inline;
+}
+
+span.profile-profileinfo-value {
+margin:1px 5px;
+}
+p.profile-profileinfo-valuebigtext {
+text-align:justify;
+margin:1px 5px;
+}
+
+div.profile-form h2,
+div#profile-profile-pictures h3,
+div#profile-profile-audio h3,
+div#profile-profile-visitors h3,
+div#profile-profile-tribes h3,
+div#profile-profile-search-results p,
+div#profile-profile-statistics p,
+div.profile-profile-details p,
+div#profile-profile-search-results h3,
+div#profile-profile-search-results h4,
+div#profile-profile-friends h3,
+div#profile-profile-visual h3,
+div#profile-profile-statistics h3,
+div.profile-profile-details h3,
+div#profile-profile-videos h3 {
+margin:0px;
+}
+
+div.profile-form table {
+border:none;
+}
+
+/* **********************************************************************************************************
+Videos
+*/
+
+div#profile-video-container {
+margin-top:15px;
+}
+
+div#profile-video-container td {
+vertical-align:middle;
+}
+
+
+/***************************************************************************************************************** 
+Audio
+*/
+
+div#profile-audio-container {
+margin-top:15px;
+}
+
+div#profile-audio-container td {
+vertical-align:middle;
+}
+
+/***************************************************************************************************************** 
+Friends
+*/
+
+div.profile-friendships-container {
+padding:0px;
+margin:0px;
+margin-top:15px;
+width:100%;
+}
+
+div.profile-friendships-friend {
+margin:0px;
+margin-top:15px;
+margin-bottom:25px;
+width:20%;
+float:right;
+text-align:center;
+}
+
+div.profile-friendships-container h2 {
+margin: 0px;
+}
+
+/*****************************************************************************************************************
+Pictures
+*/
+div#profile-pictures-form{
+width:100%
+}
+
+div#profile-pictures-form h2 {
+margin: 0px;
+}
+
+div#profile-pictures-container{
+padding:0px;
+margin:0px;
+margin-top:15px;
+width:100%;
+}
+
+div.profile-pictures-picture {
+margin:0px;
+margin-bottom: 10px;
+width:25%;
+float:right;
+text-align:center;
+}
+
+/*********************************************************************************************************
+tribes
+*/
+
+div.profile-tribes-container h2, div#profile-tribes-container-single h2 {
+margin: 0px;
+}
+
+div.profile-tribes-container {
+padding:0px;
+margin:0px;
+margin-top:15px;
+width:100%;
+}
+
+div.profile-tribes-tribe {
+margin:0px;
+margin-top:15px;
+margin-bottom:20px;
+width:25%;
+float:left;
+text-align:center;
+}
+
+div#profile-tribes-container-single {
+margin-right:240px;
+margin-top:15px;
+}
+
+div#profile-tribes-left {
+width:100%;
+float:left;
+}
+
+div.profile-tribes-members-member {
+width:25%;
+float:left;
+text-align:center;
+margin:0px;
+margin-top:10px;
+margin-bottom:5px;
+}
+
+div#profile-tribes-right {
+position:relative;
+width:230px;
+float:right;
+margin-right:-239px;
+right:-1px
+}
+
+div#profile-tribes-picture {
+text-align:center;
+margin-bottom:15px;
+}
+
+div#profile-tribes-description, div#profile-tribes-members, div#profile-tribes-discussions {
+margin-bottom:15px;
+}
+
+div#profile-tribes-search {
+padding:5px;
+vertical-align:middle;
+float:right;
+width:auto;
+margin-right:-2px;
+margin-top:10px;
+}
+
+/*********************************************************************************************************
+Others
+*/
+
+.yogerrors {color:#FF0000; background-color:#FFEAF4; border-color:#FF0000; border-width:thick;}
+
+fieldset.myconfigs-fieldset {
+	border: 1px dotted #80021A;
+	padding: 10px;
+}
+
+legend.myconfigs-legend {
+	color: #80021a;
+	font-size: 1.5em;
+}
+p.alert {
+	background-color: #ffc;
+	border: 2px solid #fc6;
+	padding: 10px;
+	margin-bottom: 10px;
+}
+
+
+
+div#nav{
+	margin-right:auto;
+	margin-left:auto;
+	width:100px;
+	page-break-after: always;
+	
+	
+	}
+#profile_header {padding: 0; margin: 0; margin-bottom: 10px;font-size:20px;font-weight: bold;text-align:right;}
+div#profile-nocontent {margin-top:15px;width:100%;text-align:center;font-weight:bold;}
+div#profile-nocontent p {border-bottom:none;padding:15px;}

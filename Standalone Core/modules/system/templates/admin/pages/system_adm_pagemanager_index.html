@@ -1,0 +1,14 @@
+<{if $icms_page_title}>
+	<div class="CPbigTitle" style="background-image: url(<{$xoops_url}>/modules/system/admin/pages/images/pages_big.png)"><{$icms_page_title}></div><br />
+<{/if}>
+<{if $icms_page_info}>
+	<p><{$icms_page_info}></p>
+<{/if}>
+
+<{if $icms_page_table}>
+	<{$icms_page_table}>
+<{/if}>
+
+<{if $addpage}>
+	<{includeq file='db:system_common_form.html' form=$addpage}>
+<{/if}>

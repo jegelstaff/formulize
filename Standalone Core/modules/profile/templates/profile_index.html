@@ -1,0 +1,290 @@
+<{include file="db:profile_header.html"}>
+<{if $profile_friendshipform}>
+<{if $hideForm}>
+<div class="profile-form outer">
+  <h2 class="head">
+    <a href="#" onclick ="jQuery().find('div.profile-friendship-form').toggle(400);"><img src="images/toggle.gif" alt="" /></a>&nbsp;<{$lang_friendshipform_title}>
+  </h2>
+  <div class="profile-friendship-form" style="display: none">
+    <{includeq file='db:system_common_form.html' form=$profile_friendshipform}>
+  </div>
+</div>
+<{else}>
+<{includeq file='db:system_common_form.html' form=$profile_friendshipform}>
+<{/if}>
+<{/if}>
+<{if $user_name_header || $isOwner || $allow_profile_general || $allow_profile_contact || $allow_profile_stats || ($allow_profile_usercontributions && $modules|count > 0)}>
+<div class="profile-profile-group1">
+  <{if $user_name_header}>
+  <div id="profile-profile-visual" class="outer">
+    <h3 class="profile-profile-title head"><{if $isOwner}><a href="configs.php?uid=<{$uid_owner}>"><img class="profile-nav-bar-icon" src="images/configs.gif" alt="" /></a>&nbsp;<{/if}><{$user_name_header}></h3>
+    <{if $allow_pictures}>
+    <div id="profile-profile-avatar">
+      <{if $user_avatar}>
+      <img src="<{$user_avatar}>" alt="" />
+      <{if $isOwner && !$gravatar}>
+      <br />
+      <form action="<{$icms_url}>/modules/profile/pictures.php" method="post" id="avatarform" class="profile-quickform">
+        <input type="hidden" value="delavatar" name="op" />
+        <{$token}>
+        <input name="submit" type="image" alt="<{$lang_delete}>" title="<{$lang_delete}>" src="<{$icms_url}>/images/crystal/actions/editdelete.png" style="vertical-align:middle" />
+      </form>
+      <{elseif $gravatar && $allow_avatar_upload}>
+      <p><{$lang_selectavatar}></p>
+      <{/if}>
+      <{else}>
+      <img src="images/noavatar.gif" alt="" />
+      <{if $isOwner && $allow_avatar_upload}><p><{$lang_selectavatar}></p><{/if}>
+      <{/if}>
+    </div>
+    <{/if}>
+  </div>
+  <{/if}>
+  <{if $isOwner}>
+  <div id="profile-profile-visitors" class="outer">
+    <h3 class="head"><{$lang_visitors}></h3>
+    <{if $visitors}>
+    <{cycle values='even,odd' print=false reset=true advance=false}>
+    <{section name=i loop=$visitors}>
+    <p class="<{cycle values='even,odd'}>">&raquo; <a href=index.php?uid=<{$visitors[i].uid}>><{$visitors[i].uname}></a> <small>(<{$visitors[i].time}>)</small></p>
+    <{/section}>
+    <{/if}>
+  </div>
+  <{/if}>
+  <{if $allow_profile_general}>
+  <div class="profile-profile-details outer">
+    <{cycle values='even,odd' print=false reset=true advance=false}>
+    <h3 class="profile-profile-title head"><{if $isOwner}><a href="edituser.php" title="<{$lang_editprofile}>" ><img src="images/edit.gif" alt="" /></a>&nbsp;<{/if}><{$lang_detailsinfo}></h3>
+    <{if $show_empty || $user_uname}><p class="<{cycle values='even,odd'}>"><img src="images/username.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_uname}>:</span><span class="profile-profileinfo-value"><{$user_uname}></span></p><{/if}>
+    <{if $show_empty || $user_realname}><p class="<{cycle values='even,odd'}>"><img src="images/username.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_realname}>:</span><span class="profile-profileinfo-value"><{$user_realname}></span></p><{/if}>
+    <{if $show_empty || $openid}><p class="<{cycle values='even,odd'}>"><img src="images/openid.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_openid}>:</span><span class="profile-profileinfo-value"><{$openid}></span></p><{/if}>
+    <{if $show_empty || $user_location}><p class="<{cycle values='even,odd'}>"><img src="images/house.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_location}>:</span><span class="profile-profileinfo-value"><{$user_location}></span><a href="http://maps.google.com/?q=<{$user_location}>" target="_blank" ><img src="images/mapsgoogle.gif" alt="" /></a></p><{/if}>
+    <{if $show_empty || $user_occupation}><p class="<{cycle values='even,odd'}>"><img src="images/occ.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_occupation}>:</span><span class="profile-profileinfo-value"><{$user_occupation}></span></p><{/if}>
+    <{if $show_empty || $user_interest}><p class="<{cycle values='even,odd'}>"><img src="images/interests.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_interest}>:</span><span class="profile-profileinfo-value"><{$user_interest}></span></p><{/if}>
+    <{if $show_empty || $user_extrainfo}><p class="<{cycle values='even,odd'}>"><img src="images/bio.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_extrainfo}>:</span></p><{/if}>
+    <{if $user_extrainfo}><p class="profile-profileinfo-valuebigtext <{cycle values='even,odd'}>"><{$user_extrainfo}></p><{/if}>
+  </div>
+  <{/if}>
+  <{if $allow_profile_contact}>
+  <div class="profile-profile-details outer">
+    <{cycle values='even,odd' print=false reset=true advance=false}>
+    <h3 class="profile-profile-title head"><{if $isOwner}><a href="edituser.php" title="<{$lang_editprofile}>" ><img src="images/edit.gif" alt="" /></a>&nbsp;<{/if}><{$lang_contactinfo}></h3>
+    <{if $show_empty || $user_websiteurl}><p class="<{cycle values='even,odd'}>"><img src="images/url.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_website}>:</span><span class="profile-profileinfo-value"><{$user_websiteurl}></span></p><{/if}>
+    <{if $isAnonym!=1 && $user_email}><p class="<{cycle values='even,odd'}>"><img src="images/email.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_email}>:</span><span class="profile-profileinfo-value"><{mailto address=$user_email encode="javascript"}></span></p><{/if}>
+    <{if $isAnonym!=1 && $isOwner!=1}><p class="<{cycle values='even,odd'}>"><img src="images/email.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_privmsg}>:</span><span class="profile-profileinfo-value"><a href="javascript:openWithSelfMain('<{$icms_url}>/pmlite.php?send2=1&amp;to_userid=<{$uid_owner}>', 'pmlite', 450, 380);"><img src="<{$icms_url}>/images/icons/pm.gif" alt="Send Private Message" /></a></span></p><{/if}>
+    <{if $show_empty || $user_aim}><p class="<{cycle values='even,odd'}>"><img src="images/aim.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_aim}>:</span><span class="profile-profileinfo-value"><{$user_aim}></span></p><{/if}>
+    <{if $show_empty || $user_icq}><p class="<{cycle values='even,odd'}>"><img src="images/icq.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_icq}>:</span><span class="profile-profileinfo-value"><{$user_icq}></span><img src="http://status.icq.com/online.gif?icq=<{$user_icq}>&img=21" alt="" /></p><{/if}>
+    <{if $show_empty || $user_msnm}><p class="<{cycle values='even,odd'}>"><img src="images/amsn.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_msnm}>:</span><span class="profile-profileinfo-value"><{$user_msnm}></span></p><{/if}>
+    <{if $show_empty || $user_yim}><p class="<{cycle values='even,odd'}>"><img src="images/ym.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_yim}>:</span><span class="profile-profileinfo-value"><{$user_yim}></span></p><{/if}>
+  </div>
+  <{/if}>
+  <{if $allow_profile_stats}>
+  <div id="profile-profile-statistics" class="outer">
+    <{cycle values='even,odd' print=false reset=true advance=false}>
+    <h3 class="profile-profiletitle head"><{$lang_statistics}></h3>
+    <p class="<{cycle values='even,odd' reset=true}>"><img src="images/birthday.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_membersince}>:</span><span class="profile-profileinfo-value"><{$user_joindate}></span></p>
+    <p class="<{cycle values='even,odd'}>"><img src="images/rank.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_rank}>:</span><span class="profile-profileinfo-value"><{$user_rankimage}> <{$user_ranktitle}></span></p>
+    <p class="<{cycle values='even,odd'}>"><img src="images/comments.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_posts}>:</span><span class="profile-profileinfo-value"><{$user_posts}></span></p>
+    <{if $show_empty || $user_lastlogin}><p class="<{cycle values='even,odd'}>"><img src="images/clock.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_lastlogin}>:</span><span class="profile-profileinfo-value"><{$user_lastlogin}></span></p><{/if}>
+    <{if $show_empty || $user_signature}><p class="<{cycle values='even,odd'}>"><img src="images/signature.gif" alt="" /><span class="profile-profileinfo-label"><{$lang_signature}>:</span></p><{/if}>
+    <{if $user_signature}><p class="profile-profileinfo-valuebigtext <{cycle values='even,odd'}>"><{$user_signature}></p><{/if}>
+  </div>
+  <{/if}>
+  <{if $allow_profile_usercontributions && $modules|count > 0}>
+  <div id="profile-profile-search-results" class="outer">
+    <h3 class="profile-profiletitle head"><{$lang_usercontributions}></h3>
+    <{foreach item=module from=$modules name="search_results"}>
+    <div class="profile-profile-search-module" id="profile-profile-search-module-<{$smarty.foreach.search_results.iteration}>" >
+      <h4 class="profile-profiletitle head">
+        <a class="profile-profile-search-module-title" id="profile-profile-search-module-title-<{$smarty.foreach.search_results.iteration}>" onclick ="$('#profile-profile-search-module-results-<{$smarty.foreach.search_results.iteration}>').toggle(400);" style="cursor:pointer;"><img src="images/toggle.gif" alt="" /></a>
+        <{$module.name}>
+      </h4>
+      <div class="profile-profile-search-module-results" id="profile-profile-search-module-results-<{$smarty.foreach.search_results.iteration}>">
+        <{cycle values='even,odd' print=false reset=true advance=false}>
+        <{foreach item=result from=$module.results}>
+        <p class="<{cycle values='even,odd'}>">
+          <img src="<{$icms_url}>/<{$result.image}>" alt="<{$module.name}>" />
+          <strong><a href="<{$result.link}>"><{$result.title}></a></strong>
+          <small>(<{$result.time}>)</small>
+        </p>
+        <{/foreach}>
+        <p><{$module.showall_link}></p>
+      </div>
+    </div>
+    <{/foreach}>
+  </div>
+  <{/if}>
+</div>
+<{/if}>
+<{if $allow_pictures || $allow_audio || $allow_videos || $allow_friendship || $allow_tribes}>
+<div class="profile-profile-group2">
+  <{if $allow_pictures}>
+  <div id="profile-profile-pictures" class="outer">
+    <h3 class="profile-profiletitle head">
+      <a href="pictures.php?uid=<{$uid_owner}>"><img src="images/lphoto.gif" alt="<{$lang_pictures_goto}>" /></a>
+      <{$lang_photos}>
+    </h3>
+    <{if $pictures|@count > 0}>
+    <{cycle values='even,odd' print=false reset=true advance=false}>
+    <table cellspacing="1" cellpadding="0"><tr>
+    <{section name=i loop=$pictures}>
+    <td class="profile-profile-picture <{cycle values="even,odd"}>">
+      <{$pictures[i].content}>
+    </td>
+    <{/section}>
+    </tr></table>
+    <div style="clear:both;"></div>
+    <{/if}>
+  </div>
+  <{/if}>
+  <{if $allow_tribes}>
+  <div id="profile-profile-tribes" class="outer">
+    <h3 class="head">
+      <a href="tribes.php?uid=<{$uid_owner}>"><img src="images/tribes.gif" alt="<{$lang_tribes_goto}>" /></a>
+      <{$lang_tribes}>
+    </h3>
+    <{if $tribes|@count > 0}>
+    <ul>
+      <{section name=i loop=$tribes}>
+      <li><{$tribes[i].itemLink}></li>
+      <{/section}>
+    </ul>
+    <{/if}>
+    <{if $tribes_approvals|@count > 0}>
+    <h3 class="head"><{$lang_approvals}></h3>
+    <ul>
+      <{section name=i loop=$tribes_approvals}>
+      <li>
+        <form action="<{$icms_url}>/modules/profile/tribes.php?tribes_id=<{$tribes_approvals[i].tribes_id}>" method="post" class="profile-quickform">
+          <input type="hidden" value="<{$tribes_approvals[i].tribeuser_id}>" name="tribeuser_id" />
+          <input type="hidden" value="approved" name="action" />
+          <input type="hidden" value="1" name="store" />
+          <input type="hidden" value="edittribeuser" name="op" />
+          <{$token}>
+          <input class="image" name="submit" type="image" alt="<{$lang_approve}>" title="<{$lang_approve}>" src="<{$image_ok}>" style="vertical-align:middle" />
+        </form>
+        <form action="<{$icms_url}>/modules/profile/tribes.php?tribes_id=<{$tribes_approvals[i].tribes_id}>" method="post" class="profile-quickform">
+          <input type="hidden" value="<{$tribes_approvals[i].tribeuser_id}>" name="tribeuser_id" />
+          <input type="hidden" value="approved" name="action" />
+          <input type="hidden" value="0" name="store" />
+          <input type="hidden" value="edittribeuser" name="op" />
+          <{$token}>
+          <input class="image" name="submit" type="image" alt="<{$lang_delete}>" title="<{$lang_delete}>" src="<{$image_cancel}>" style="vertical-align:middle" />
+        </form>
+        <{$tribes_approvals[i].uname}> (<{$tribes_approvals[i].tribe_itemLink}>)
+      </li>
+      <{/section}>
+    </ul>
+    <{/if}>
+    <{if $tribes_invitations|@count > 0}>
+    <h3 class="head"><{$lang_invitations}></h3>
+    <ul>
+      <{section name=i loop=$tribes_invitations}>
+      <li>
+        <form action="<{$icms_url}>/modules/profile/tribes.php?tribes_id=<{$tribes_invitations[i].tribes_id}>" method="post" class="profile-quickform">
+          <input type="hidden" value="<{$tribes_invitations[i].tribeuser_id}>" name="tribeuser_id" />
+          <input type="hidden" value="accepted" name="action" />
+          <input type="hidden" value="1" name="store" />
+          <input type="hidden" value="edittribeuser" name="op" />
+          <{$token}>
+          <input class="image" name="submit" type="image" alt="<{$lang_accept}>" title="<{$lang_accept}>" src="<{$image_ok}>" style="vertical-align:middle" />
+        </form>
+        <form action="<{$icms_url}>/modules/profile/tribes.php?tribes_id=<{$tribes_invitations[i].tribes_id}>" method="post" class="profile-quickform">
+          <input type="hidden" value="<{$tribes_invitations[i].tribeuser_id}>" name="tribeuser_id" />
+          <input type="hidden" value="accepted" name="action" />
+          <input type="hidden" value="0" name="store" />
+          <input type="hidden" value="edittribeuser" name="op" />
+          <{$token}>
+          <input class="image" name="submit" type="image" alt="<{$lang_delete}>" title="<{$lang_delete}>" src="<{$image_cancel}>" style="vertical-align:middle" />
+        </form>
+        <{$tribes_invitations[i].itemLink}>
+      </li>
+      <{/section}>
+    </ul>
+    <{/if}>
+  </div>
+  <{/if}>
+  <{if $allow_friendship}>
+  <div id="profile-profile-friends" class="outer">
+    <h3 class="head">
+      <a href="friendship.php?uid=<{$uid_owner}>"><img src="images/friends.gif" alt="<{$lang_friends_goto}>" /></a>
+      <{$lang_friends}>
+    </h3>
+    <{if $friends|@count > 0}>
+    <{cycle values='even,odd' print=false reset=true advance=false}>
+    <table cellspacing="1" cellpadding="0"><tr>
+    <{section name=i loop=$friends}>
+    <td class="profile-profile-friend <{cycle values="even,odd"}>">
+      <{if $friends[i].user_avatar}><{$friends[i].user_avatar}><br /><{/if}><{$friends[i].uname}>
+    <{/section}>
+    </tr></table>
+    <{/if}>
+    <{if $friends_pending|@count > 0}>
+    <h3 class="head"><{$lang_friends_pending}></h3>
+    <ul>
+      <{section name=i loop=$friends_pending}>
+      <li>
+        <form action="<{$icms_url}>/modules/profile/index.php?uid=<{$uid}>" method="post" class="profile-quickform">
+          <input type="hidden" value="<{$friends_pending[i].friendship_id}>" name="friendship_id" />
+          <input type="hidden" value="2" name="status" />
+          <input type="hidden" value="editfriendship" name="op" />
+          <{$token}>
+          <input class="image" name="submit" type="image" alt="<{$lang_friendship_accept}>" title="<{$lang_friendship_accept}>" src="<{$image_ok}>" style="vertical-align:middle" />
+        </form>
+        <form action="<{$icms_url}>/modules/profile/index.php?uid=<{$uid}>" method="post" class="profile-quickform">
+          <input type="hidden" value="<{$friends_pending[i].friendship_id}>" name="friendship_id" />
+          <input type="hidden" value="3" name="status" />
+          <input type="hidden" value="editfriendship" name="op" />
+          <{$token}>
+          <input class="image" name="submit" type="image" alt="<{$lang_friendship_reject}>" title="<{$lang_friendship_reject}>" src="<{$image_cancel}>" style="vertical-align:middle" />
+        </form>
+        <{$friends_pending[i].uname}>
+      </li>
+      <{/section}>
+    </ul>
+    <{/if}>
+  </div>
+  <{/if}>
+  <{if $allow_audio}>
+  <div id="profile-profile-audio" class="outer">
+    <h3 class="head">
+      <a href="audio.php?uid=<{$uid_owner}>"><img src="images/audio.gif" alt="<{$lang_audio_goto}>" /></a>
+      <{$lang_audio}>
+    </h3>
+    <{if $audio}>
+    <div class="profile-profile-audio even">
+      <{$audio.content}>
+    </div>
+    <{/if}>
+  </div>
+  <{/if}>
+  <{if $allow_videos}>
+  <div id="profile-profile-videos" class="outer">
+    <h3 class="head">
+      <a href="videos.php?uid=<{$uid_owner}>"><img src="images/video.gif" alt="<{$lang_video_goto}>" /></a>
+      <{$lang_videos}>
+    </h3>
+    <div id="profile-profile-video">
+    <{if $video}>
+    <div class="profile-profile-video even">
+      <{$video.content}>
+    </div>
+    <{/if}>
+    </div>
+  </div>
+  <{/if}>
+</div>
+<{/if}>
+<{if $user_name_header || $isOwner || $allow_profile_general || $allow_profile_contact || $allow_profile_stats || ($allow_profile_usercontributions && $modules|count > 0) || $allow_pictures || $allow_audio || $allow_videos || $allow_friendship || $allow_tribes}>
+<br style="clear:both;" />
+<{/if}>
+<{if $module_is_socialmode}>
+<div style="text-align:center;"><{$commentsnav}><{$lang_notice}></div>
+<{if $comment_mode == "flat"}>
+<{include file="db:system_comments_flat.html"}>
+<{elseif $comment_mode == "thread"}>
+<{include file="db:system_comments_thread.html"}>
+<{elseif $comment_mode == "nest"}>
+<{include file="db:system_comments_nest.html"}>
+<{/if}>
+<{/if}>

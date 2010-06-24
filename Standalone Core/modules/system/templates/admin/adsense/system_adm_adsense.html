@@ -1,0 +1,16 @@
+<div class="CPbigTitle" style="background-image: url(<{$xoops_url}>/modules/system/admin/adsense/images/adsense_big.png)"><{$smarty.const._CO_ICMS_ADSENSE}></div><br />
+
+<{if $icms_adsense_explain}>
+	<h1><{$smarty.const._CO_ICMS_ADSENSE_EXPLAIN_TITLE}></h1>
+	<p><{$smarty.const._CO_ICMS_ADSENSE_EXPLAIN}></p>
+<{/if}>
+
+<p><{$icms_adsense_title}></p>
+
+<{if $icms_adsense_table}>
+	<{$icms_adsense_table}>
+<{/if}>
+
+<{if $addadsense}>
+	<{includeq file='db:system_common_form.html' form=$addadsense}>
+<{/if}>

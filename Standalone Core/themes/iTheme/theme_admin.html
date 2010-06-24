@@ -1,0 +1,237 @@
+<{php}>
+	if( ! empty( $_SESSION['redirect_message'] ) ) {
+		$this->_tpl_vars['site_msg'] = $_SESSION['redirect_message'];
+		unset( $_SESSION['redirect_message'] ) ;
+	}
+<{/php}>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<{$icms_langcode}>">
+<head>
+<!-- Center block custom positioning -->
+	<{* Center blocks display order
+		valid values are:  lrc (left right / center) lcr (left center right) clr (center / left right)
+	*}>
+	<{assign var=theme_top_order value=lrc}>
+	<{assign var=theme_bottom_order value=lcr}>
+
+<!-- Theme name -->
+	<{assign var=theme_name value=$xoTheme->folderName}>
+
+<!-- Title and meta -->
+	<title><{$smarty.const._IMPRESSCMS_ADMIN}> <{$icms_sitename}></title>
+	<meta http-equiv="content-type" content="text/html; charset=<{$icms_charset}>" />
+	<meta name="robots" content="<{$icms_meta_robots}>" />
+	<meta name="keywords" content="<{$icms_meta_keywords}>" />
+	<meta name="description" content="<{$icms_meta_description}>" />
+	<meta name="rating" content="<{$icms_meta_rating}>" />
+	<meta name="author" content="<{$icms_meta_author}>" />
+	<meta name="copyright" content="<{$icms_meta_copyright}>" />
+	<meta name="generator" content="ImpressCMS" />
+
+<!-- Favicon -->
+	<link rel="shortcut icon" type="image/ico" href="<{xoImgUrl icons/favicon.ico}>" />
+	<link rel="icon" type="image/png" href="<{xoImgUrl icons/icon.png}>" />
+
+<!-- Module Header -->
+		<{$icms_module_header}>
+
+<!-- Sheet Css -->
+	<link rel="stylesheet" type="text/css" media="all" href="<{$icms_url}>/modules/system/style<{if $icms_rtl}>_rtl<{/if}>.css" />
+	<link rel="stylesheet" type="text/css" media="all" title="Style sheet" href="<{$icms_imageurl}><{if $icms_rtl}>rtl/<{/if}>style_admin.css" />
+
+<!-- If You want to have messages and errors in the admin menu, you should add this part to each admin them. -->
+<{if $site_msg}>
+<script type="text/javascript" src="<{$icms_url}>/libraries/jquery/jgrowl.js">
+</script>
+<link rel="stylesheet" media="screen" href="<{$icms_url}>/libraries/jquery/jgrowl.css" type="text/css" />
+<script type="text/javascript">
+if (!window.console || !console.firebug) {
+	var names = ["log", "debug", "info", "warn", "error", "assert", "dir", "dirxml", "group", "groupEnd", "time", "timeEnd", "count", "trace", "profile", "profileEnd"];
+	window.console = {};
+	for (var i = 0; i < names.length; ++i) window.console[names[i]] = function() {};
+}
+(function($){
+	$(document).ready(function(){
+		$.jGrowl("<{$site_msg}>", {  life:5000 , position: "center", speed: "slow" });
+	});
+})(jQuery);
+</script>
+<{/if}>
+
+</head>
+
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}>">
+<{if $xoBlocks.canvas_left_admin and $xoBlocks.canvas_right_admin}>
+<{assign var=columns_layout value='threecolumns-layout'}>
+<{elseif $xoBlocks.canvas_left_admin}>
+<{assign var=columns_layout value='leftcolumn-layout'}>
+<{elseif $xoBlocks.canvas_right_admin}>
+<{assign var=columns_layout value='rightcolumn-layout'}>
+<{/if}>
+<div id="xo-canvas"<{if $columns_layout}> class="<{$columns_layout}>"<{/if}>>
+	<!-- Header -->
+
+<div id="logoHead">
+	<span class="<{$smarty.const._GLOBAL_LEFT}>">
+		<{if $adm_left_logo == ''}>&nbsp;<{else}>
+		    <{if  $adm_left_logo_url != ''}>
+			    <a href="<{$adm_left_logo_url}>" title="<{if $adm_left_logo_alt != ''}><{$adm_left_logo_alt}><{else}>ImpressCMS<{/if}>">
+			<{/if}>
+			<img src="<{$icms_url}><{$adm_left_logo}>" alt="<{if $adm_left_logo_alt != ''}><{$adm_left_logo_alt}><{else}>ImpressCMS<{/if}>"/>
+		    <{if  $adm_left_logo_url != ''}>
+			    </a>
+			<{/if}>
+		<{/if}>
+	</span>
+	<span class="<{$smarty.const._GLOBAL_RIGHT}>">
+		<{if $adm_right_logo == ''}>&nbsp;<{else}>
+		    <{if  $adm_right_logo_url != ''}>
+			    <a href="<{$adm_right_logo_url}>" title="<{if $adm_right_logo_alt != ''}><{$adm_right_logo_alt}><{else}>ImpressCMS<{/if}>">
+			<{/if}>
+			<img src="<{$icms_url}><{$adm_right_logo}>" alt="<{if $adm_right_logo_alt != ''}><{$adm_right_logo_alt}><{else}>ImpressCMS<{/if}>"/>
+		    <{if  $adm_right_logo_url != ''}>
+			    </a>
+			<{/if}>
+		<{/if}>
+	</span>
+	<div class="clear"></div>
+</div>
+<div id="navbarCP">
+  <ul id="nav">
+    <{foreach item=item from=$navitems}>
+      <{if ($systemadm || $item.id != 'opsystem') && ($item.id != 'news' || $show_impresscms_menu)}>
+        <{if $modulesadm || $item.id != 'modules'}>
+	      <li><a href="<{$item.link}>"><img src="<{$icms_url}>/modules/system/images/arrow1.gif" alt="arrow"/>&nbsp;<{$item.text}></a>
+	        <ul>
+		      <{foreach item=sub from=$item.menu}>
+                <{if $item.id == 'cphome'}>
+		          <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{else}><{$icms_url}>/modules/system/images/imagesarrow1.gif<{/if}>);"><{$sub.title}></a></li>
+                <{elseif $item.id == 'opsystem'}>
+		          <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$icms_url}>/modules/system/<{$sub.small}><{/if}>);"><{$sub.title}></a>
+    		      <{if $sub.hassubs}>
+	    	        <ul>
+		              <{foreach item=subitem from=$sub.subs}>
+		                <li><a href="<{$subitem.link}>"><{$subitem.title}></a></li>
+		              <{/foreach}>
+		            </ul>
+		          <{/if}>
+		          </li>
+                <{elseif $item.id == 'modules'}>
+		          <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{else}><{$icms_url}>/modules/system/images/modulesitem.png<{/if}>);"><{$sub.title}></a>
+    		      <{if $sub.hassubs}>
+	    	        <ul>
+		              <{foreach item=subitem from=$sub.subs}>
+		                <li><a href="<{$subitem.link}>"><{$subitem.title}></a></li>
+		              <{/foreach}>
+		            </ul>
+		          <{/if}>
+		          </li>
+                <{elseif $item.id == 'news' && $show_impresscms_menu}>
+    		      <li><a rel="external" href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{/if}>);"><{$sub.title}></a></li>
+                <{/if}>
+		      <{/foreach}>
+		    </ul>
+	      </li>
+	    <{/if}>
+	  <{/if}>
+    <{/foreach}>
+  </ul>
+  <{if $ml_is_enabled}>
+	<span id="nav-change-language">[mlimg]</span>
+  <{/if}>
+</div>
+<{ if $modname != '' }>
+  <div id="navOptionsCP">
+	<div class="modname">
+	  <{$modname}>
+	</div>
+	<{foreach item=op from=$mod_options}>
+	  <a href="<{$op.link}>" title="<{$op.title}>">
+        <{if $op.title == $lang_prefs && $moddir!='system'}>
+          <img src="<{$icms_url}>/modules/system/images/prefs.png" alt="<{$lang_preferences}>" />
+        <{else}>
+          <img src="<{if $op.icon==''}><{$icms_url}>/images/icon_options.png<{else}><{$modpath}>/<{$op.icon}><{/if}>" alt="<{$op.title}>" />
+        <{/if}>
+      </a>
+	<{/foreach}>
+  </div>
+<{/if}>
+
+<!-- Help Bar -->
+<!--<{if $icms_dirname =='system'}>-->
+<!--<{if $smarty.get.op !='showmod'}>-->
+<!--<{if $smarty.get.fct != ''}>-->
+<!--<div id="helpbar"><a href="http://wiki.impresscms.org/index.php?title=Admin_<{$smarty.get.fct}>">?</a></div>-->
+<!--<{else}>-->
+<!--<div id="helpbar"><a href="http://wiki.impresscms.org/index.php?title=Category:System">?</a></div>-->
+<!--<{/if}>-->
+<!--<{/if}>-->
+<!--<{/if}>-->
+<!-- to be enabled at later date -->
+	<!-- Content -->
+	<div style="width: 100%; height: 11px; background: transparent; clear: both;">&nbsp;</div>
+	<div id="xo-canvas-content">
+		<div id="xo-canvas-columns">
+			<!-- Left column -->
+				<{if $icms_rtl}>
+			<{if $xoBlocks.canvas_right_admin}>
+			<{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_right_admin
+				zoneClass='xo-canvas-column' zoneId='xo-canvas-rightcolumn'
+			}>
+			<{/if}>
+			<{else}>
+			<{if $xoBlocks.canvas_left_admin}>
+			<{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left_admin
+				zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
+			}>
+			<{/if}>
+			<{/if}>
+			<!-- Center column / page -->
+			<div id="xo-page">
+				<!-- Top blocks -->
+				<{if $xoBlocks.page_topleft_admin or $xoBlocks.page_topcenter_admin or $xoBlocks.page_topright_admin}>
+				<div class="xo-blockszone xo-<{$theme_top_order}>pageblocks" id="xo-page-topblocks">
+					<{includeq file="$theme_name/centerblocks_admin.html" topbottom=top lcr=$theme_top_order|substr:0:1}>
+					<{includeq file="$theme_name/centerblocks_admin.html" topbottom=top lcr=$theme_top_order|substr:1:1}>
+					<{includeq file="$theme_name/centerblocks_admin.html" topbottom=top lcr=$theme_top_order|substr:2:1}>
+				</div>
+				<{/if}>
+				<!-- Module content -->
+				<{if $icms_contents}>
+				<div id="xo-content"><{$icms_contents}></div>
+				<{/if}>
+				<!-- Bottom blocks -->
+				<{if $xoBlocks.page_bottomleft_admin or $xoBlocks.page_bottomcenter_admin or $xoBlocks.page_bottomright_admin}>
+				<div class="xo-blockszone xo-<{$theme_bottom_order}>pageblocks" id="xo-page-bottomblocks">
+					<{includeq file="$theme_name/centerblocks_admin.html" topbottom=bottom lcr=$theme_bottom_order|substr:0:1}>
+					<{includeq file="$theme_name/centerblocks_admin.html" topbottom=bottom lcr=$theme_bottom_order|substr:1:1}>
+					<{includeq file="$theme_name/centerblocks_admin.html" topbottom=bottom lcr=$theme_bottom_order|substr:2:1}>
+				</div>
+				<{/if}>
+			</div>
+			<!-- Right column -->
+				<{if $icms_rtl}>
+			<{if $xoBlocks.canvas_left_admin}>
+			<{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left_admin
+				zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
+			}>
+			<{/if}>
+			<{else}>
+			<{if $xoBlocks.canvas_right_admin}>
+			<{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_right_admin
+				zoneClass='xo-canvas-column' zoneId='xo-canvas-rightcolumn'
+			}>
+			<{/if}>
+			<{/if}>
+		</div>
+	</div>
+</div>
+	<!-- Footer -->
+	<div id="xo-footer">
+	<div id="banner" style="margin-left: auto; margin-right: auto;"><{$icms_banner}>
+	<br />
+	<{$icms_footadm}>
+	</div>
+	</div>
+</body>
+</html>

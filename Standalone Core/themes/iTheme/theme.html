@@ -1,0 +1,144 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<{$icms_langcode}>">
+<head>
+<!-- Center block custom positioning -->
+	<{* Center blocks display order
+		valid values are:  lrc (left right / center) lcr (left center right) clr (center / left right)
+	*}>
+	<{assign var=theme_top_order value=lrc}>
+	<{assign var=theme_bottom_order value=lcr}>
+	
+<!-- Theme name -->
+	<{assign var=theme_name value=$xoTheme->folderName}>
+
+<!-- Title and meta -->
+	<title><{if $icms_pagetitle !=''}><{$icms_pagetitle}> : <{/if}><{$icms_sitename}></title>
+	<meta http-equiv="content-type" content="text/html; charset=<{$icms_charset}>" />	
+	<meta name="robots" content="<{$icms_meta_robots}>" />
+	<meta name="keywords" content="<{$icms_meta_keywords}>" />
+	<meta name="description" content="<{$icms_meta_description}>" />
+	<meta name="rating" content="<{$icms_meta_rating}>" />
+	<meta name="author" content="<{$icms_meta_author}>" />
+	<meta name="copyright" content="<{$icms_meta_copyright}>" />
+	<meta name="generator" content="ImpressCMS" />
+
+<!-- Module Header -->
+<{$icms_module_header}>
+	
+<!-- Favicon -->
+	<link rel="shortcut icon" type="image/ico" href="<{xoImgUrl icons/favicon.ico}>" />
+	<link rel="icon" type="image/png" href="<{xoImgUrl icons/icon.png}>" />
+	
+<!-- Sheet Css -->
+	<link rel="stylesheet" type="text/css" media="all" href="<{$icms_imageurl}>/<{if $icms_rtl}>rtl/<{/if}>style.css" />
+	<link rel="alternate stylesheet" type="text/css" media="all" title="blue" href="<{$icms_imageurl}>/<{if $icms_rtl}>rtl/<{/if}>blue.css" />
+	<link rel="alternate stylesheet" type="text/css" media="all" title="corp" href="<{$icms_imageurl}>/<{if $icms_rtl}>rtl/<{/if}>corp.css" />
+	<link rel="alternate stylesheet" type="text/css" media="all" title="green" href="<{$icms_imageurl}>/<{if $icms_rtl}>rtl/<{/if}>green.css" />
+	<link rel="alternate stylesheet" type="text/css" media="all" title="pink" href="<{$icms_imageurl}>/<{if $icms_rtl}>rtl/<{/if}>pink.css" />
+	<link rel="alternate stylesheet" type="text/css" media="all" title="sunset" href="<{$icms_imageurl}>/<{if $icms_rtl}>rtl/<{/if}>sunset.css" />
+<!-- Scripts -->
+	<script src="<{$icms_imageurl}>scripts/styleswitcher.js" type="text/javascript"></script>
+</head>
+
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}>">
+<{if $xoBlocks.canvas_left and $xoBlocks.canvas_right}>
+<{assign var=columns_layout value='threecolumns-layout'}>
+<{elseif $xoBlocks.canvas_left}>
+<{assign var=columns_layout value='leftcolumn-layout'}>
+<{elseif $xoBlocks.canvas_right}>
+<{assign var=columns_layout value='rightcolumn-layout'}>
+<{/if}>
+<div id="xo-canvas"<{if $columns_layout}> class="<{$columns_layout}>"<{/if}>>
+	<!-- Header -->
+    <div id="xo-header">
+	    <div id="xo-headerlogo"><a href="<{xoAppUrl /}>" title=""><img src="<{$icms_imageurl}>/img/logo.png" alt="<{$icms_sitename}>" /></a></div>
+	    <div id="xo-headerbanner">
+	<!-- Header menu (optional) -->
+	<div id="xo-globalnav">
+		  <a href="<{$icms_url}>" title="<{$icms_sitename}>"><{$smarty.const.THEME_HOME}></a>
+		  <a href="#" title="Link 2"><{$smarty.const.THEME_MODULE1}></a>
+		  <a href="#" title="Link 3"><{$smarty.const.THEME_MODULE2}></a>
+		  <a href="#" title="Link 4"><{$smarty.const.THEME_MODULE3}></a>
+		  <a href="#" title="Link 5"><{$smarty.const.THEME_MODULE4}></a>
+	</div>
+	</div>
+    </div>
+
+	<!-- Content -->
+	<div id="xo-canvas-content">
+		<div id="xo-canvas-columns">
+			<!-- Left column -->
+				<{if $icms_rtl}>
+			<{if $xoBlocks.canvas_right}>
+			<{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_right
+				zoneClass='xo-canvas-column' zoneId='xo-canvas-rightcolumn'
+			}>
+			<{/if}>
+			<{else}>
+			<{if $xoBlocks.canvas_left}>
+			<{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left
+				zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
+			}>
+			<{/if}>
+			<{/if}>
+			<!-- Center column / page -->
+			<div id="xo-page">
+				<div id="controlbar">
+					<div style="margin-<{$smarty.const._GLOBAL_LEFT}>: auto; text-align: <{$smarty.const._GLOBAL_RIGHT}>;">
+
+					<a href="#" onclick="setActiveStyleSheet('blue'); return false;"><img src="<{$icms_imageurl}>img/icons/blue_icon.jpg" alt="Select Blue Style" /></a>
+					<a href="#" onclick="setActiveStyleSheet('green'); return false;"><img src="<{$icms_imageurl}>img/icons/green_icon.jpg" alt="Select Green Style" /></a>
+					<a href="#" onclick="setActiveStyleSheet('pink'); return false;"><img src="<{$icms_imageurl}>img/icons/pink_icon.jpg" alt="Select Pink Style" /></a>
+					<a href="#" onclick="setActiveStyleSheet('sunset'); return false;"><img src="<{$icms_imageurl}>img/icons/sunset_icon.jpg" alt="Select Sunset Style" /></a>
+					<a href="#" onclick="setActiveStyleSheet('corp'); return false;"><img src="<{$icms_imageurl}>img/icons/corp_icon.jpg" alt="Select Corp Style" /></a>
+
+					<div class="clear"></div>
+					</div>					
+				</div>
+				<!-- Top blocks -->
+				<{if $xoBlocks.page_topleft or $xoBlocks.page_topcenter or $xoBlocks.page_topright}>
+				<div class="xo-blockszone xo-<{$theme_top_order}>pageblocks" id="xo-page-topblocks">
+					<{includeq file="$theme_name/centerblocks.html" topbottom=top lcr=$theme_top_order|substr:0:1}>
+					<{includeq file="$theme_name/centerblocks.html" topbottom=top lcr=$theme_top_order|substr:1:1}>
+					<{includeq file="$theme_name/centerblocks.html" topbottom=top lcr=$theme_top_order|substr:2:1}>
+				</div>
+				<{/if}>
+				<!-- Module content -->
+				<{if $icms_contents}>
+				<div id="xo-content"><{$icms_contents}></div>
+				<{/if}>
+				<!-- Bottom blocks -->
+				<{if $xoBlocks.page_bottomleft or $xoBlocks.page_bottomcenter or $xoBlocks.page_bottomright}>
+				<div class="xo-blockszone xo-<{$theme_bottom_order}>pageblocks" id="xo-page-bottomblocks">
+					<{includeq file="$theme_name/centerblocks.html" topbottom=bottom lcr=$theme_bottom_order|substr:0:1}>
+					<{includeq file="$theme_name/centerblocks.html" topbottom=bottom lcr=$theme_bottom_order|substr:1:1}>
+					<{includeq file="$theme_name/centerblocks.html" topbottom=bottom lcr=$theme_bottom_order|substr:2:1}>
+				</div>
+				<{/if}>
+			</div>
+			<!-- Right column -->
+				<{if $icms_rtl}>
+			<{if $xoBlocks.canvas_left}>
+			<{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left
+				zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
+			}>
+			<{/if}>
+			<{else}>
+			<{if $xoBlocks.canvas_right}>
+			<{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_right
+				zoneClass='xo-canvas-column' zoneId='xo-canvas-rightcolumn'
+			}>
+			<{/if}>
+			<{/if}>
+		</div>
+	</div>
+</div>
+	<!-- Footer -->
+	<div id="xo-footer">
+	<div id="banner" style="margin-left: auto; margin-right: auto;"><{$icms_banner}>
+	<br />
+	<{$icms_footer}>
+	</div>
+	</div>
+</body>
+</html>

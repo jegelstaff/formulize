@@ -1,0 +1,22 @@
+<{$form.javascript}>
+<form id="<{$form.name}>" action="<{$form.action}>" method="<{$form.method}>" <{$form.extra}>>
+  <table style="width: 100%" class="outer" cellspacing="1">
+    <{if $form.title}><tr><th colspan="2"><{$form.title}></th></tr><{/if}>
+    <!-- start of form elements loop -->
+    <{foreach item=element from=$form.elements}>
+      <{if $element.hidden != true}>
+      <tr id="<{$element.name}>_row">
+        <td class="head"><label for='<{$element.name}>'><{$element.caption}> <{if $element.required}> <span style='color:#f00'>*</span><{/if}></label>
+        <{if $element.description}>
+        	<div style="font-weight: normal"><{$element.description}></div>
+        <{/if}>
+        </td>
+        <td class="<{cycle values="even,odd"}>"><{$element.body}></td>
+      </tr>
+      <{else}>
+      <{$element.body}>
+      <{/if}>
+    <{/foreach}>
+    <!-- end of form elements loop -->
+  </table>
+</form>

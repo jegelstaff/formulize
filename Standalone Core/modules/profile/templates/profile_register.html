@@ -1,0 +1,50 @@
+<{include file="db:profile_header.html"}>
+
+<!-- Do we really need to list the steps.... //-->
+<!-- 
+<{if count($steps) > 1}>
+    <div>
+        <{foreach item=step from=$steps key=stepno name=steploop}>
+            <b><{$step.step_name}></b>
+            <{if !$smarty.foreach.steploop.last}>
+                &nbsp;&raquo;
+            <{/if}>
+        <{/foreach}>
+    </div>
+<{/if}>
+//-->
+<{if $stop}>
+    <div class='errorMsg'><{$stop}></div>
+    <br clear='both'>
+<{/if}>
+
+<{if $confirm}>
+    <{foreach item=msg from=$confirm}>
+        <div class='confirmMsg'><{$msg}></div>
+        <br clear='both'>
+    <{/foreach}>
+<{/if}>
+
+<{if $regform}>
+    <{$regform.javascript}>
+    <form id="<{$regform.name}>" action="<{$regform.action}>" method="<{$regform.method}>" <{$regform.extra}> >
+        <table>
+            <{foreach item=element from=$regform.elements name=eleloop}>
+                <{if !$element.hidden}>
+                    <tr>
+                        <td class="head"><strong><{$element.caption}></strong><{if !$smarty.foreach.eleloop.first && $element.required}> *<{/if}><{if $element.description != ""}><br /><{$element.description}><{/if}></td>
+                        <td class="<{cycle values='odd, even'}>"><{$element.body}></td>
+                    </tr>
+                <{/if}>
+            <{/foreach}>
+        </table>
+        <{if $regform.requiredcount > 0}><div>* = <{$smarty.const._PROFILE_MA_REQUIRED}></div><{/if}>
+        <{foreach item=element from=$regform.elements}>
+            <{if $element.hidden}>
+                <{$element.body}>
+            <{/if}>
+        <{/foreach}>
+    </form>
+<{/if}>
+
+<{include file="db:profile_footer.html"}>

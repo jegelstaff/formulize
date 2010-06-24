@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<{$icms_langcode}>">
+<head>
+<!-- Center block custom positioning -->
+	<{* Center blocks display order
+		valid values are:  lrc (left right / center) lcr (left center right) clr (center / left right)
+	*}>
+	<{assign var=theme_top_order value=lrc}>
+	<{assign var=theme_bottom_order value=lcr}>
+	
+<!-- Theme name -->
+	<{assign var=theme_name value=$xoTheme->folderName}>
+
+<!-- Title and meta -->
+	<title><{if $xoops_pagetitle !=''}><{$icms_pagetitle}> : <{/if}><{$icms_sitename}></title>
+	<meta http-equiv="content-type" content="text/html; charset=<{$icms_charset}>" />
+	<meta name="robots" content="<{$icms_meta_robots}>" />
+	<meta name="keywords" content="<{$icms_meta_keywords}>" />
+	<meta name="description" content="<{$icms_meta_description}>" />
+	<meta name="rating" content="<{$icms_meta_rating}>" />
+	<meta name="author" content="<{$icms_meta_author}>" />
+	<meta name="copyright" content="<{$icms_meta_copyright}>" />
+	<meta name="generator" content="ImpressCMS" />
+
+<!-- Module Header -->
+<{$icms_module_header}>
+	
+<!-- Favicon -->
+	<link rel="shortcut icon" type="image/ico" href="<{xoImgUrl icons/favicon.ico}>" />
+	<link rel="icon" type="image/png" href="<{xoImgUrl icons/icon.png}>" />
+	
+<!-- Sheet Css -->
+	<link rel="stylesheet" type="text/css" media="all" title="Style sheet" href="<{$icms_imageurl}>/<{if $icms_rtl}>rtl/<{/if}>style.css" />
+</head>
+
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}>">
+<{if $xoBlocks.canvas_left and $xoBlocks.canvas_right}>
+<{assign var=columns_layout value='threecolumns-layout'}>
+<{elseif $xoBlocks.canvas_left}>
+<{assign var=columns_layout value='leftcolumn-layout'}>
+<{elseif $xoBlocks.canvas_right}>
+<{assign var=columns_layout value='rightcolumn-layout'}>
+<{/if}>
+<div id="icms-canvas"<{if $columns_layout}> class="<{$columns_layout}>"<{/if}>>
+	<!-- Header -->
+    <div id="icms-header">
+	    <div id="icms-headerlogo"><a href="<{xoAppUrl /}>" title=""><img src="<{xoImgUrl img/logo.png}>" alt="<{$icms_sitename}>" /></a></div>
+	    <div id="icms-headerbanner"><{$icms_banner}></div>
+    </div>
+	<!-- Header menu (optional) -->
+	<div id="icms-globalnav">
+		<ul>
+		  <li><a href="http://www.impresscms.org/" title="<{$smarty.const.THEME_ImpressCMS_DESC}>"><{$smarty.const._IMPRESSCMS_HOME}></a></li>
+		  <li><a href="http://community.impresscms.org/" title="<{$smarty.const.THEME_Community_DESC}>"><{$smarty.const._IMPRESSCMS_COMMUNITY}></a></li>
+		  <li><a href="http://addons.impresscms.org/" title="<{$smarty.const.THEME_Addons_DESC}>"><{$smarty.const._IMPRESSCMS_ADDONS}></a></li>
+		  <li><a href="http://wiki.impresscms.org/" title="<{$smarty.const.THEME_Wiki_DESC}>"><{$smarty.const._IMPRESSCMS_WIKI}></a></li>
+		  <li><a href="http://blog.impresscms.org/" title="<{$smarty.const.THEME_Blogs_DESC}>"><{$smarty.const._IMPRESSCMS_BLOG}></a></li>
+		  <li><a href="http://www.impresscms.org/donations/" title="<{$smarty.const.THEME_Support_DESC}>"><{$smarty.const._IMPRESSCMS_Support}></a></li>
+	  </ul>
+	</div>
+	<!-- Content -->
+	<div id="icms-canvas-content">
+		<div id="icms-canvas-columns">
+			<!-- Left column -->
+				<{if $icms_rtl}>
+			<{if $xoBlocks.canvas_right}>
+			<{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_right
+				zoneClass='icms-canvas-column' zoneId='icms-canvas-rightcolumn'
+			}>
+			<{/if}>
+			<{else}>
+			<{if $xoBlocks.canvas_left}>
+			<{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left
+				zoneClass='icms-canvas-column' zoneId='icms-canvas-leftcolumn'
+			}>
+			<{/if}>
+			<{/if}>
+			<!-- Center column / page -->
+			<div id="icms-page">
+				<!-- Top blocks -->
+				<{if $xoBlocks.page_topleft or $xoBlocks.page_topcenter or $xoBlocks.page_topright}>
+				<div class="icms-blockszone icms-<{$theme_top_order}>pageblocks" id="icms-page-topblocks">
+					<{includeq file="$theme_name/centerblocks.html" topbottom=top lcr=$theme_top_order|substr:0:1}>
+					<{includeq file="$theme_name/centerblocks.html" topbottom=top lcr=$theme_top_order|substr:1:1}>
+					<{includeq file="$theme_name/centerblocks.html" topbottom=top lcr=$theme_top_order|substr:2:1}>
+				</div>
+				<{/if}>
+				<!-- Module content -->
+				<{if $xoops_contents}>
+				<div id="icms-content"><{$icms_contents}></div>
+				<{/if}>
+				<!-- Bottom blocks -->
+				<{if $xoBlocks.page_bottomleft or $xoBlocks.page_bottomcenter or $xoBlocks.page_bottomright}>
+				<div class="icms-blockszone icms-<{$theme_bottom_order}>pageblocks" id="icms-page-bottomblocks">
+					<{includeq file="$theme_name/centerblocks.html" topbottom=bottom lcr=$theme_bottom_order|substr:0:1}>
+					<{includeq file="$theme_name/centerblocks.html" topbottom=bottom lcr=$theme_bottom_order|substr:1:1}>
+					<{includeq file="$theme_name/centerblocks.html" topbottom=bottom lcr=$theme_bottom_order|substr:2:1}>
+				</div>
+				<{/if}>
+			</div>
+			<!-- Right column -->
+				<{if $icms_rtl}>
+			<{if $xoBlocks.canvas_left}>
+			<{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left
+				zoneClass='icms-canvas-column' zoneId='icms-canvas-leftcolumn'
+			}>
+			<{/if}>
+			<{else}>
+			<{if $xoBlocks.canvas_right}>
+			<{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_right
+				zoneClass='icms-canvas-column' zoneId='icms-canvas-rightcolumn'
+			}>
+			<{/if}>
+			<{/if}>
+		</div>
+	</div>
+	<!-- Footer -->
+	<div id="icms-footer">
+    <{$icms_footer}>
+	</div>
+</div>
+
+</body>
+</html>

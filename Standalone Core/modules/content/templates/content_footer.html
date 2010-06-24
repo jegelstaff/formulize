@@ -1,0 +1,28 @@
+<{if $content_is_admin}>
+	<div class="content_adminlinks"><{$content_adminpage}></div>
+<{/if}>
+
+
+<{if $content_content_comment}>
+ 	<table id="comments_container" border="0" width="100%" cellspacing="1" cellpadding="0" >
+   		<tr>
+		    <td colspan="3" align ="left">
+		    	<div style="text-align: center; padding: 3px; margin:3px;"> <{$commentsnav}> <{$lang_notice}></div>
+      		  	<div style="margin:3px; padding: 3px;">
+			        <!-- start comments loop -->
+			        <{if $comment_mode == "flat"}>
+			        	<{include file="db:system_comments_flat.html"}>
+			        <{elseif $comment_mode == "thread"}>
+			        	<{include file="db:system_comments_thread.html"}>
+			        <{elseif $comment_mode == "nest"}>
+			        	<{include file="db:system_comments_nest.html"}>
+			        <{/if}>
+			        <!-- end comments loop -->
+		      	</div>
+			</td>
+   		</tr>
+  </table>
+<{/if}>
+
+
+<{includeq file='db:system_notification_select.html'}>

@@ -1,0 +1,71 @@
+/**
+* Specific CSS for the module
+*
+* @copyright	http://smartfactory.ca The SmartFactory
+* @license		http://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License (GPL)
+* @since		1.0
+* @author		marcan aka Marc-André Lanciault <marcan@smartfactory.ca>
+* @version		$Id$
+*/
+
+.content_headertable {padding: 0; margin: 0; border-bottom: 1px solid; margin-bottom: 10px;}
+.content_modulename {font-size: 0.8em; text-align: left; font-weight: bold; padding-right: 0.3em;	line-height: 18px;}
+.content_breadcrumb {font-size: 0.8em; line-height: 18px;}
+.content_adminlinks {padding-top: 15px; padding-bottom: 5px; font-size: 0.8em; text-align: center; line-height: 18px;}
+
+.content_content_container {
+	margin-bottom: 35px;
+}
+	.content_content_container h1 {
+		margin-top: 20px;
+		margin-bottom:1px;
+		padding-bottom:3px;
+	}
+.content_content_info {
+	line-height:22px;
+	margin:0 0 0 0px;
+	font-size: 80%;
+}
+.content_content_content {clear:both;margin:0; overflow:hidden;text-align:justify;}
+.content_content_categories {
+	background: url(images/category.png) no-repeat left center;
+	padding: 0px 20px;
+	display: block;
+	float: left;
+}
+.left_main {
+	padding: 0 10px 8px 0;
+	display:block;
+	float: left;
+	width:100%;
+	line-height:17px;
+	height:15px;
+	text-align:right;
+	vertical-align:top;
+}
+.content_content_filed_under {
+	float: left;
+}
+#content_content_comments_container {}
+.content_content_comments {
+	background-image: url(images/comments.gif);
+	background-repeat: no-repeat;
+	margin:5px 0 0 0;
+	padding-left: 15px;
+	font-size: 80%;
+	float: left;
+}
+.content_content_more {
+	margin:5px 0 0 0;
+	font-size: 80%;
+}
+.content_admin_links {
+	margin:5px 0 0 0;
+}
+#content_navbar {
+	text-align: center;
+}
+#content_rss {
+	text-align: center;
+	padding-top: 10px;
+}

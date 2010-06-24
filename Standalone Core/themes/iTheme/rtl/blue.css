@@ -1,0 +1,222 @@
+@import url(layout.css);
+@import url(blocks.css);
+@import url(content.css);
+
+
+/* ------ General styles ------ */
+
+html, body {
+	color: #000;
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 10pt;
+	background: url(../img/body_bg.jpg) no-repeat;
+}
+
+#xo-canvas {
+	background: inherit;
+	background: url(../img/right_bg.jpg);
+	background-repeat: no-repeat;
+	background-position: top right;
+	float: right;
+}
+
+table {
+	width: 100%;
+}
+
+table td {
+	padding: 0;
+	border-width: 0;
+	vertical-align: top;
+}
+
+img {
+	border: 0;
+}
+
+a {
+	color: #666;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+a:hover {
+	color: #8e8e8e;
+}
+
+h1 {font-size: 1.4em; }
+h2 {font-size: 1.2em;}
+h3 {font-size: 1em;}
+h4 {font-size: 1em;}
+h5 {font-size: .9em;}
+h6 {font-size: .8em;}
+
+/* ------ Header rules ------ */
+
+#xo-header {
+	clear: both;
+	height: 78px;
+	position: relative;
+	background: url(../img/header_bg.jpg) repeat-x;
+	margin-left: 35px;
+	margin-right: 35px;
+}
+
+#xo-headerlogo {
+	float: right;
+}
+
+#xo-headerbanner {
+	position:relative;
+	top:10px;
+	left:120px;
+	float: left;
+}
+
+/* ------ Header top menu navigation rules ------ */
+
+#xo-globalnav {
+	clear: both;
+	padding-left: 11px;
+	margin-top: 40px;
+	padding-bottom: 7px;
+}
+
+#xo-globalnav a {
+	text-decoration: none;
+	text-align: center;
+	display: inline;
+	padding-right: 10px;
+	padding-left: 10px;
+	background-color: #8bbcdd;
+	padding-bottom: 7px;
+	padding-top: 2px;
+}
+
+#xo-globalnav a:hover {
+	color: #fff;
+	border-top: 4px solid #F3AC03;
+}
+
+#controlbar {
+	color: #F3AC03;
+	font-weight: bold;
+	padding-bottom: 3px;
+	border-bottom: 1px dashed #8DBDE1;
+	
+}
+
+/* ---------- Column left/right rules ---------- */
+
+#xo-canvas-rightcolumn {}
+#xo-canvas-rightcolumn a {}
+#xo-canvas-rightcolumn a:hover {}
+
+#xo-canvas-leftcolumn {}
+#xo-canvas-leftcolumn a {}
+#xo-canvas-leftcolumn a:hover {}
+
+/* ------ Main content ------ */
+
+#xo-canvas-content {	
+	line-height: 1.3em;
+
+}
+
+/* lists */
+#xo-canvas-content ul {margin: 5px; padding: 2px; list-style: decimal inside; text-align: left;}
+#xo-canvas-content li {margin-left: 5px; color: #000; background-color: inherit; line-height: 1.4em; list-style: circle;}
+
+#xo-page {
+	padding: 0 .5em;
+}
+
+/* ---------- Module display rules ---------- */
+
+#xo-content {
+	padding: 15px 1%;
+}
+
+/* ---------- Redirect ------------ */
+#xo-redirect {
+	margin: 40px 0;
+	margin-left: auto;
+	margin-right: auto;
+	width: 85%;
+	background-color: #F2F2F2;
+	color: #222;
+	text-align: center;
+	font-weight: bold;
+	padding: 10px;
+	text-align: center;
+	border: 2px solid #DDDDFF;
+}
+/* ---------- Site close ------------ */
+#xo-siteclose-login {
+	width: 270px;
+	margin-left: auto;
+	margin-right: auto; 	
+	border:1px solid #DDDDFF;	
+	margin-top: 40px;
+	margin-bottom: 20px;
+}
+#xo-siteclose-login h2 {
+	background-color: #f2f2f2;
+	font-weight: bold;
+	font-size: 1em; 
+	color: white;
+	padding: 2px;	
+	margin-top: 0px;
+	margin-bottom: 0px;
+	text-align: center;	
+}
+#xo-siteclose-login form {
+	padding: 0px;
+	margin: 0px;	
+}
+#xo-siteclose-login div{
+	padding: 6px;
+}
+#xo-siteclose-login span.left {
+	float: left;
+	padding-bottom: 3px;
+}
+#xo-siteclose-login span.right {
+	float: right;
+	padding-right: 3px;
+	padding-bottom: 3px;
+}
+#xo-siteclose-login div.button {
+	text-align: right;
+	clear: both;	
+	padding-right: 0px;
+}
+/* ---------- Footer rules ---------- */
+.spacer {margin: 5px auto;}
+#xo-footer {
+	padding-top: 10px;
+	text-align: center;
+	font-size: 70%;
+	color: #666;
+	margin-top: 5px;
+	background: url(../img/foot_bg.jpg) repeat-x;
+	background-color: #59b9e4;
+	width: 100%;
+}
+
+#xo-footer a {
+	color: #333;
+}
+
+#xo-footer a:hover {
+	color: #fff;
+}
+
+/* ----------  mode debug  ---------- */
+
+#xo-logger-output {
+	font-size:			80%;
+}
