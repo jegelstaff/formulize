@@ -53,7 +53,7 @@ $element_handler = xoops_getmodulehandler('elements','formulize');
 // group elements by id
 $processedElements = array();
 foreach($processedValues['elements'] as $property=>$values) {
-  foreach(unserialize($values) as $key=>$value) {
+  foreach($values as $key=>$value) {
     $processedElements[$key][$property] = $value;
   }
 }

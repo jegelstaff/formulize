@@ -34,13 +34,7 @@ xoops_cp_header();
 // include necessary Formulize files/functions
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-// setup a smarty object that we can use for templating our own pages
-require_once XOOPS_ROOT_PATH.'/class/template.php';
-require_once XOOPS_ROOT_PATH.'/class/theme.php';
-require_once XOOPS_ROOT_PATH.'/class/theme_blocks.php';
-$xoopsThemeFactory =& new xos_opal_ThemeFactory();
-$xoTheme =& $xoopsThemeFactory->createInstance();
-$xoopsTpl =& $xoTheme->template;
+global $xoopsTpl;
 
 // handle any operations requested as part of this page load
 if(isset($_GET['op'])) {

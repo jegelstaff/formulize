@@ -38,6 +38,7 @@ div.accordion-box {
 	width: 300px;
 	margin: 0 1.5em 1.5em 0;
 	padding-left: 2.5em;
+	padding-right: 1.3em;
 }
 
 div.accordion-box-wide {
@@ -112,6 +113,8 @@ div.accordion-box .no-bullets {
 .ui-tabs-panel .content table th {
 	font-weight: normal;
 	background-color: #0085b6 !important;
+	color: white !important;
+	background: none;
 }
 
 .ui-tabs-panel .content table th, .ui-tabs-panel .content table td {
@@ -127,9 +130,25 @@ div.accordion-box .no-bullets {
 	clear: both;
 }
 
+div.admin-ui, p.versionnumber {
+	margin-top: 2em;
+}
+
 .admin-ui a {
 	font-weight: normal;
 	color: blue;
+}
+
+.admin-ui p {
+	margin-top: 0.75em;
+}
+
+.admin-ui blockquote {
+	text-align: left;
+}
+
+div#tabs li {
+	list-style-type: none;
 }
 
 .ui-tabs-panel .content a:hover {
@@ -142,11 +161,13 @@ div.accordion-box .no-bullets {
 
 #savebutton input {
 	float: left;
+	margin-top: 1em;
 	margin-bottom: 15px;
 	margin-right: 15px;
 	font-size: 1.1em;
 }
 #savewarning {
+	margin-top: 1.75em;
 	display: none;
 	color: red;
 	

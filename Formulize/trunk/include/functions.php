@@ -540,8 +540,10 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
 	$hlq = "SELECT headerlist FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form='$fid'";
 	if($result = $xoopsDB->query($hlq)) {
 		while ($row = $xoopsDB->fetchRow($result)) {
-			$headerlist = explode("*=+*:", $row[0]); 
-			array_shift($headerlist);
+			if($somethingLeft = str_replace("*=+*:", "", $row[0])) { // check to see if there is actually any real data specified in this string, make sure it's not all separators.
+				$headerlist = explode("*=+*:", $row[0]); 
+				array_shift($headerlist);
+			}
 		}
 		// handling for id based headerlists added March 6 2005, by jwe
 		if(is_numeric($headerlist[0]) OR $headerlist[0] == "uid" OR $headerlist[0] == "proxyid" OR $headerlist[0] == "creation_date" OR $headerlist[0] == "mod_date" OR $headerlist[0] == "creator_email" OR $headerlist[0] == "creation_uid" OR $headerlist[0] == "mod_uid" OR $headerlist[0] == "creation_datetime" OR $headerlist[0] == "mod_datetime") { // if the headerlist is using the new ID based system

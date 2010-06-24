@@ -386,7 +386,7 @@ if($advanced['datatypeui'] OR $advanced['ele_encrypt_show']) {
 }
 
 $adminPage['pagetitle'] = "Element: ".$elementName;
-if($ele_id == "new") {
+if($ele_id == "new" AND $ele_type == "select") {
   $adminPage['pagesubtitle'] = "(Dropdown box or List box)";
 } else {
   $adminPage['pagesubtitle'] = "(".convertTypeToText($ele_type, $ele_value).")";

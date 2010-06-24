@@ -614,6 +614,13 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$viewEntryScreenObject = $screen_handler->get(intval($screen->getVar('viewentryscreen')));
 				$viewEntryScreen_handler = xoops_getmodulehandler($viewEntryScreenObject->getVar('type').'Screen', 'formulize');
   			$displayScreen = $viewEntryScreen_handler->get(intval($screen->getVar('viewentryscreen')));
+				if($displayScreen->getVar('type')=="form") {
+					if($_POST['ventry'] != "single") {
+						$displayScreen->setVar('reloadblank', 1); // if the user clicked the add multiple button, then specifically override that screen setting so they can make multiple entries
+					} else {
+						$displayScreen->setVar('reloadblank', 0); // otherwise, if they did click the single button, make sure the form reloads with their entry
+					}
+				}
   			$viewEntryScreen_handler->render($displayScreen, $this_ent, $settings);
         return;
       }
