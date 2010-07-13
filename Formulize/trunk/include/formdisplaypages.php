@@ -43,7 +43,7 @@ global $xoopsConfig;
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 
-function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text="", $settings="", $overrideValue="", $printall=0, $screen=null) { // nmc 2007.03.24 - added 'printall'
+function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text="", $settings="", $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null) { // nmc 2007.03.24 - added 'printall'
 
 formulize_benchmark("Start of displayFormPages.");
 
@@ -55,6 +55,7 @@ if(isset($pages['titles'])) {
 	unset($pages['titles']);
 }
 
+if(!$saveAndContinueButtonText AND isset($_POST['formulize_saveAndContinueButtonText'])) { $saveAndContinueButtonText = unserialize($_POST['formulize_saveAndContinueButtonText']); }
 if(!$done_dest AND $_POST['formulize_doneDest']) { $done_dest = $_POST['formulize_doneDest']; }
 if(!$button_text AND $_POST['formulize_buttonText']) { $button_text = $_POST['formulize_buttonText']; }
 
@@ -274,7 +275,7 @@ if($currentPage == $thanksPage) {
 	} else { // HTML
 		print html_entity_decode($thankstext);
 	}
-	print "<br><hr><br><p><center>\n";
+	print "<br><hr><br><div id=\"thankYouNavigation\"><p><center>\n";
 	if($pagesSkipped) {
 		print _formulize_DMULTI_SKIP . "</p><p>\n";
 	}
@@ -287,7 +288,7 @@ if($currentPage == $thanksPage) {
 		}
 		print ">" . $button_text . "</a>\n";
 	}
-	print "</center></p>";
+	print "</center></p></div>";
 
 	if(is_array($settings)) {
 		print "<form name=calreturnform action=\"$done_dest\" method=post>\n";
@@ -356,7 +357,7 @@ if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages
 
 	formulize_benchmark("Before drawing nav.");
 
-	drawPageNav($usersCanSave, $pagesSkipped, $currentPage, $previousPage, $nextPage,$submitTextPrev, $submitTextNext, $pages, $thanksPage, $pageTitles, "above");
+	drawPageNav($usersCanSave, $pagesSkipped, $currentPage, $previousPage, $nextPage,$submitTextPrev, $submitTextNext, $pages, $thanksPage, $pageTitles, "above", $saveAndContinueButtonText);
 	
 	formulize_benchmark("After drawing nav/before displayForm.");
 	
@@ -368,7 +369,7 @@ if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages
 
 if($currentPage != $thanksPage AND !$_POST['goto_sfid']) {
 
-	drawPageNav($usersCanSave, $pagesSkipped, $currentPage, $previousPage, $nextPage,$submitTextPrev, $submitTextNext, $pages, $thanksPage, $pageTitles, "below");
+	drawPageNav($usersCanSave, $pagesSkipped, $currentPage, $previousPage, $nextPage,$submitTextPrev, $submitTextNext, $pages, $thanksPage, $pageTitles, "below", $saveAndContinueButtonText);
 
 	print "</center>";
 
@@ -380,45 +381,49 @@ formulize_benchmark("End of displayFormPages.");
 } // end of the function!
 
 
-function drawPageNav($usersCanSave="", $pagesSkipped="", $currentPage="", $previousPage="", $nextPage="", $submitTextPrev="", $submitTextNext="", $pages="", $thanksPage, $pageTitles, $aboveBelow) {
+function drawPageNav($usersCanSave="", $pagesSkipped="", $currentPage="", $previousPage="", $nextPage="", $submitTextPrev="", $submitTextNext="", $pages="", $thanksPage, $pageTitles, $aboveBelow, $saveAndContinueButtonText=null) {
+
+	$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButton'])) ? $saveAndContinueButtonText['previousButton'] : _formulize_DMULTI_PREV;
+	$saveButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['saveButton'])) ? $saveAndContinueButtonText['saveButton'] : _formulize_DMULTI_SAVE;
+	$nextButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['nextButton'])) ? $saveAndContinueButtonText['nextButton'] : _formulize_DMULTI_NEXT;
 
 	if($aboveBelow == "above") {
 		//navigation options above the form print like this
-		print "<br /><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\"><table><tr>\n";
+		print "<br /><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\"><div id=\"pageNavTable\"><table><tr>\n";
 		print "<td style=\"vertical-align: middle; padding-right: 5px;\"><nobr><b>" . _formulize_DMULTI_YOUAREON . "</b></nobr><br /><nobr>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . count($pages) . "</nobr></td>";
 		print "<td style=\"vertical-align: middle; padding-right: 5px;\">";
 	if($previousPage != "none") {
-	  print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' $submitTextPrev>\n";
+	  print "<input type=button name=prev id=prev value='" . $previousButtonText . "' $submitTextPrev>\n";
 	} else {
-	  print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' disabled=true>\n";
+	  print "<input type=button name=prev id=prev value='" . $previousButtonText . "' disabled=true>\n";
 	}
 		print "</td>";
 		print "<td style=\"vertical-align: middle; padding-right: 5px;\">";
 
 	if($usersCanSave AND $nextPage==$thanksPage) {
-	  print "<input type=button name=next id=next value='" . _formulize_DMULTI_SAVE . "' $submitTextNext>\n";
+	  print "<input type=button name=next id=next value='" . $saveButtonText . "' $submitTextNext>\n";
 	} elseif($nextPage==$thanksPage) {
-	  print "<input type=button name=next id=next value='" . _formulize_DMULTI_NEXT . "' disabled=true>\n";
+	  print "<input type=button name=next id=next value='" . $nextButtonText . "' disabled=true>\n";
 	} else {
-	  print "<input type=button name=next id=next value='" . _formulize_DMULTI_NEXT . "' $submitTextNext>\n";
+	  print "<input type=button name=next id=next value='" . $nextButtonText . "' $submitTextNext>\n";
 	}
 		print "</td>";
 		print "<td style=\"vertical-align: middle;\">";
 		print _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . pageSelectionList($currentPage, count($pages), $pageTitles, $aboveBelow);
-		print "</td></tr></table></form><br />";
+		print "</td></tr></table></div></form><br />";
 } else { 
 	//navigation options below the form print like this
-	print "<br><center><p>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . count($pages);
+	print "<br><div id=\"bottomPageNumber\"><center><p>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . count($pages);
 	if(!$usersCanSave) {print "<br>" . _formulize_INFO_NOSAVE;}
 	if($pagesSkipped) {print "<br>". _formulize_DMULTI_SKIP;}
-	print "</p><br><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\">";
-	if($previousPage != "none") {print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' $submitTextPrev>\n";} 
-	else {print "<input type=button name=prev id=prev value='" . _formulize_DMULTI_PREV . "' disabled=true>\n";}
+	print "</p></center></div><br><center><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\">";
+	if($previousPage != "none") {print "<input type=button name=prev id=prev value='" . $previousButtonText . "' $submitTextPrev>\n";} 
+	else {print "<input type=button name=prev id=prev value='" . $previousButtonText . "' disabled=true>\n";}
 	print "&nbsp;&nbsp;&nbsp;&nbsp;";
-	if($usersCanSave AND $nextPage==$thanksPage) {print "<input type=button name=next id=next value='" . _formulize_DMULTI_SAVE . "' $submitTextNext>\n";} 
-	elseif($nextPage==$thanksPage) {print "<input type=button name=next id=next value='" . _formulize_DMULTI_NEXT . "' disabled=true>\n";} 
-	else {print "<input type=button name=next id=next value='" . _formulize_DMULTI_NEXT . "' $submitTextNext>\n";}
-	print "<br><p>". _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . pageSelectionList($currentPage, count($pages), $pageTitles, $aboveBelow) . "</p></form>";
+	if($usersCanSave AND $nextPage==$thanksPage) {print "<input type=button name=next id=next value='" . $saveButtonText . "' $submitTextNext>\n";} 
+	elseif($nextPage==$thanksPage) {print "<input type=button name=next id=next value='" . $nextButtonText . "' disabled=true>\n";} 
+	else {print "<input type=button name=next id=next value='" . $nextButtonText . "' $submitTextNext>\n";}
+	print "</center><br><div id=\"bottomJumpList\"><p>". _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . pageSelectionList($currentPage, count($pages), $pageTitles, $aboveBelow) . "</p></div></form>";
 }
 }
 

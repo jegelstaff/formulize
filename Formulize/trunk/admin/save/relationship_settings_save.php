@@ -49,6 +49,7 @@ if($frid == "new") {
 	if(!$frid = $framework_handler->insert($frameworkObject)) {
 		print "Error: could not create the framework";
 	}
+	$redirectionURL = XOOPS_URL . "/modules/formulize/admin/ui.php?page=relationship&aid=".intval($_GET['aid'])."&frid=$frid";
 }
 
 // save all changes, the user could have modified links and then clicked add or
@@ -61,7 +62,12 @@ switch ($op) {
 		$fid2 = $processedValues['relationships']['fid2'];
 		if(addlink($fid1, $fid2, $frid)) {
       // send code to client that will to be evaluated
-      print "/* eval */ reloadWithScrollPosition();";
+			if(isset($redirectionURL)) {
+				print "/* eval */ reloadWithScrollPosition('$redirectionURL');";
+			} else {
+				print "/* eval */ reloadWithScrollPosition();";
+			}
+      
     }
 		break;
 	case "dellink":
@@ -82,19 +88,6 @@ function addlink($fid1, $fid2, $cf) {
 	$forms = array();
 	$forms[] = $fid1;
 	$forms[] = $fid2;
-
-	// check that the forms are new and if so add them to the forms table
-	foreach($forms as $fid) {
-		$checkq = "SELECT ff_id FROM " . $xoopsDB->prefix("formulize_framework_forms") . " WHERE ff_form_id='$fid' AND ff_frame_id = '$cf'";
-		$res=$xoopsDB->query($checkq);
-		if($xoopsDB->getRowsNum($res)==0) {
-			$writeform = "INSERT INTO " . $xoopsDB->prefix("formulize_framework_forms") . " (ff_frame_id, ff_form_id) VALUES ('$cf', '$fid')";
-			if(!$res = $xoopsDB->query($writeform)) {
-				print "Error: could not add form: $fid to framework: $cf";
-        $success = false;
-			}
-		}		
-	}
 
 	// write the link to the links table
 	$writelink = "INSERT INTO " . $xoopsDB->prefix("formulize_framework_links") . " (fl_frame_id, fl_form1_id, fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_common_value) VALUES ('$cf', '$fid1', '$fid2', 0, 0, 1, 0, 0)";

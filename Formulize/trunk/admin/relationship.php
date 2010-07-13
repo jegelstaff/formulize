@@ -185,6 +185,9 @@ if($_GET['frid'] != "new") {
     $li++;
   }
 	$common['links'] = $links;
+} else {
+	// new framework
+	$frid = "new";
 }
 
 
