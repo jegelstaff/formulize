@@ -681,7 +681,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	drawEntries($fid, $showcols, strip_tags($_POST['sort']), strip_tags($_POST['order']), $searches, $frid, $scope, "", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches); // , $loadview); // -- loadview not passed any longer since the lockcontrols indicator is used to handle whether things should appear or not.
   formulize_benchmark("after entries");
 
-
 	if($screen) {
 		formulize_screenLOETemplate($screen, "bottom", $formulize_buttonCodeArray, $settings);
 	} else {
@@ -1399,8 +1398,8 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$GLOBALS['formulize_displayElement_LOE_Used'] = false;
 		$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
 		// adjust formulize_LOEPageSize if the actual count of entries is less than the page size
-		$formulize_LOEPageSize = $GLOBALS['formulize_countMasterResults'] < $formulize_LOEPageSize ? $GLOBALS['formulize_countMasterResults'] : $formulize_LOEPageSize;
-		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : $GLOBALS['formulize_countMasterResults'];
+		$formulize_LOEPageSize = $GLOBALS['formulize_countMasterResultsForPageNumbers'] < $formulize_LOEPageSize ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $formulize_LOEPageSize;
+		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
     /*print "start: $formulize_LOEPageStart<br>";
     print "size: $formulize_LOEPageSize<br>";
     print "actualsize: $actualPageSize<br>";*/
@@ -1560,7 +1559,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		// print str_replace("\n", "<br />", $listTemplate); // debug code
 		$mainFormHandle = key($data[key($data)]);
 		$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
-		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : $GLOBALS['formulize_countMasterResults'];
+		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
 		if(strstr($listTemplate, "displayElement")) {
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 		}
@@ -4025,6 +4024,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
     }
     //print "limitStart: $limitStart<br>limitSize: $limitSize<br>";
     
+		$GLOBALS['formulize_getCountForPageNumbers'] = true; // flag used to trigger setting of the count of entries in the dataset
 		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
     
     if($currentURL=="") { return array(0=>"", 1=>"", 2=>""); } //current URL should only be "" if this is called directly by the special formulize_getCalcs function
@@ -4093,7 +4093,7 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 	if($numberPerPage == 0 OR $_POST['hlist']) { return $pageNav; } // if all entries are supposed to be on one page for this screen, then return no navigation controls.  Also return nothing if the list is hidden.
 	$allPageStarts = array();
 	$pageNumbers = 0;
-	for($i=0;$i<$GLOBALS['formulize_countMasterResults'];$i=$i+$numberPerPage) {
+	for($i=0;$i<$GLOBALS['formulize_countMasterResultsForPageNumbers'];$i=$i+$numberPerPage) {
 		$pageNumbers++;
 		$allPageStarts[$pageNumbers] = $i;
 	}

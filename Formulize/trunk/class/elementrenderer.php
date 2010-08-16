@@ -93,6 +93,23 @@ class formulizeElementRenderer{
 		// ele_desc added June 6 2006 -- jwe
 		$ele_desc = $this->_ele->getVar('ele_desc');
 
+		// replace { } terms with data handle values from the current entry, if any exist
+		if(strstr($ele_caption, "}") AND strstr($ele_caption, "{")) {
+			static $cachedEntryData = array();
+			if(!isset($cachedEntryData[$entry])) {
+				$cachedEntryData[$entry] = getData("", $id_form, $entry);
+			}
+			$bracketPos = 0;
+			while($bracketPos = strpos($ele_caption, "{", $bracketPos+1)) {
+        $endBracketPos = strpos($ele_caption, "}", $bracketPos+1);
+				$term = substr($ele_caption, $bracketPos+1, $endBracketPos-$bracketPos-1);
+				$replacementTerm = display($cachedEntryData[$entry][0], $term);
+				$replacementTerm = $replacementTerm === "" ? "{".$term."}" : $replacementTerm; // don't replace terms that have no replacement
+				$ele_caption = str_replace("{".$term."}",$replacementTerm,$ele_caption);
+				$bracketPos = $bracketPos + strlen($replacementTerm); // move ahead the length of what we replaced
+      }
+		}
+
 		// determine the entry owner
 		if($entry != "new") {
 					$owner = getEntryOwner($entry, $id_form);

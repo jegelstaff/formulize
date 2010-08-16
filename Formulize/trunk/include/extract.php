@@ -553,7 +553,12 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
            if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
              return $countMasterResultsRow[0];
            } else {
-             $GLOBALS['formulize_countMasterResults'] = $countMasterResultsRow[0]; // put this in the global space so we can pick it up later when determining how many page numbers to create
+					   $GLOBALS['formulize_countMasterResults'] = $countMasterResultsRow[0]; // put this in the global space so we can pick it up later when determining how many page numbers to create
+					   // if we're in a getData call from displayEntries, put the count in an additional special place for use in generating page numbers
+					   if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
+							 $GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countMasterResultsRow[0]; 
+							 unset($GLOBALS['formulize_getCountForPageNumbers']);
+						 } 
            }
 	       } else {
 		       exit("Error: could not count master results.<br>".mysql_error()."<br>SQL:$countMasterResults<br>");
@@ -1194,7 +1199,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
                     if(($entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
                          $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ","), "_", trans($formHandle))."_".$formulaNumber;
                          formulize_benchmark(" -- calling derived function.");
-                         $derivedValue = $functionName($entry, $fid, $primary_entry_id);
+                         $derivedValue = $functionName($entry, $fid, $primary_entry_id, $frid);
                          formulize_benchmark(" -- completed call.");
                          foreach($record as $recordID=>$elements) {
                               $entry[$formHandle][$recordID][$thisMetaData['handle']][0] = $derivedValue;
@@ -1223,6 +1228,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
      // loop through the formulas, process them, and write them to the file
      foreach($metadata as $formulaNumber=>$thisMetaData) {
           $formula = $thisMetaData['formula'];
+					$quotePos = 0;
           while($quotePos = strpos($formula, "\"", $quotePos+1)) {
                // print $formula . " -- $quotePos<br>"; // debug code
                $endQuotePos = strpos($formula, "\"", $quotePos+1);
@@ -1234,7 +1240,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 												 $quotePos = $quotePos + 17 + strlen($newterm); // 17 is the length of the extra characters in the display function
 												 $formula = str_replace($term, $replacement, $formula);
 										} else {
-												 $quotePos = $quotePos + strlen($newterm);
+												 $quotePos = $quotePos + strlen($term) + 2; // move ahead the length of the text we did not find, plus its quotes
 										}
                } 
           }
@@ -1246,7 +1252,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                }
                $formula = implode("\n", $formulaLines);
           }
-          $functionsToWrite .= "function derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ","), "_", trans($formHandle))."_".$formulaNumber."(\$entry, \$form_id, \$entry_id) {\n$formula\nreturn \$value;\n}\n\n";
+          $functionsToWrite .= "function derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ","), "_", trans($formHandle))."_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {\n$formula\nreturn \$value;\n}\n\n";
      }
      fwrite($derivedValueFormulaFile, $functionsToWrite. "?>");
      fclose($derivedValueFormulaFile);
@@ -1460,6 +1466,10 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $
 		 $countRes = mysql_query($countSQL);
 		 $countRow = mysql_fetch_row($countRes);
 		 $GLOBALS['formulize_countMasterResults'] = $countRow[0];
+		 if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
+					$GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countRow[0]; 
+		      unset($GLOBALS['formulize_getCountForPageNumbers']);
+		 }
 		 
      return $result;
      
