@@ -1153,6 +1153,8 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 						ob_end_clean();
 						if($col_two_temp) { // only draw in a cell if there actually is an element rendered
 							$col_two .= "<td>$col_two_temp</td>\n";
+						} else {
+							$col_two .= "<td></td>";
 						}
 					}
 				}
@@ -1214,6 +1216,8 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 						ob_end_clean();
 						if($col_two_temp) { // only draw in a cell if there actually is an element rendered
 							$col_two .= "<td>$col_two_temp</td>\n";
+						} else {
+							$col_two .= "<td></td>";
 						}
 					}
 				}

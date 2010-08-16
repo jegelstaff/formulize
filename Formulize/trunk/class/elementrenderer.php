@@ -90,25 +90,11 @@ class formulizeElementRenderer{
 		} else {
 			$ele_caption = $htmlCaption;
 		}
+		
+		$ele_caption = $this->formulize_replaceCurlyBracketVariables($ele_caption, $entry, $id_form);
+		
 		// ele_desc added June 6 2006 -- jwe
 		$ele_desc = $this->_ele->getVar('ele_desc');
-
-		// replace { } terms with data handle values from the current entry, if any exist
-		if(strstr($ele_caption, "}") AND strstr($ele_caption, "{")) {
-			static $cachedEntryData = array();
-			if(!isset($cachedEntryData[$entry])) {
-				$cachedEntryData[$entry] = getData("", $id_form, $entry);
-			}
-			$bracketPos = 0;
-			while($bracketPos = strpos($ele_caption, "{", $bracketPos+1)) {
-        $endBracketPos = strpos($ele_caption, "}", $bracketPos+1);
-				$term = substr($ele_caption, $bracketPos+1, $endBracketPos-$bracketPos-1);
-				$replacementTerm = display($cachedEntryData[$entry][0], $term);
-				$replacementTerm = $replacementTerm === "" ? "{".$term."}" : $replacementTerm; // don't replace terms that have no replacement
-				$ele_caption = str_replace("{".$term."}",$replacementTerm,$ele_caption);
-				$bracketPos = $bracketPos + strlen($replacementTerm); // move ahead the length of what we replaced
-      }
-		}
 
 		// determine the entry owner
 		if($entry != "new") {
@@ -139,6 +125,7 @@ class formulizeElementRenderer{
 					$ele_value[0] = stripslashes($ele_value[0]);
  				}
 				if(trim($ele_value[0]) == "") { $ele_value[0] = $ele_caption; }
+				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry, $id_form);
 				$form_ele = $ele_value; // an array, item 0 is the contents of the break, item 1 is the class of the table cell (for when the form is table rendered)
 				break;
 			case 'text':
@@ -217,7 +204,11 @@ class formulizeElementRenderer{
 					} else {
 						$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
 					}
-				} 
+					$entryData = formulize_getCachedEntryData($id_form, $entry);
+					$creation_datetime = display($entryData[$entry], "creation_datetime"); 
+				}
+				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry, $id_form);
+				$ele_caption = $this->formulize_replaceCurlyBracketVariables($ele_caption, $entry, $id_form);
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
 					$ele_value[0]
@@ -1071,6 +1062,32 @@ class formulizeElementRenderer{
 			$box->setExtra("onchange=\"javascript:formulizechanged=1;\" onfocus=\"javascript:this.form." . $id . "[$counter].checked = true;\"");
 		}
 		return $box->render();
+	}
+
+  // replace { } terms with data handle values from the current entry, if any exist
+	function formulize_replaceCurlyBracketVariables($text, $entry, $id_form) {
+		if(strstr($text, "}") AND strstr($text, "{")) {
+			$entryData = $this->formulize_getCachedEntryData($id_form, $entry);
+			$bracketPos = 0;
+			while($bracketPos = strpos($text, "{", $bracketPos+1)) {
+        $endBracketPos = strpos($text, "}", $bracketPos+1);
+				$term = substr($text, $bracketPos+1, $endBracketPos-$bracketPos-1);
+				$replacementTerm = display($entryData, $term);
+				$replacementTerm = $replacementTerm === "" ? "{".$term."}" : $replacementTerm; // don't replace terms that have no replacement
+				$text = str_replace("{".$term."}",$replacementTerm,$text);
+				$bracketPos = $bracketPos + strlen($replacementTerm); // move ahead the length of what we replaced
+      }
+		}
+		return $text;
+	}
+
+	// gather an entry when required...this should really be abstracted out to the data handler class, which also needs a proper getter in a handler of its own, so we don't keep creating new instances of the data handler and it can store the cached info about entries that we want it to.
+	function formulize_getCachedEntryData($id_form, $entry) {
+		static $cachedEntryData = array();
+		if(!isset($cachedEntryData[$entry])) {
+			$cachedEntryData[$entry] = getData("", $id_form, $entry);
+		}
+		return $cachedEntryData[$entry][0];
 	}
 
 	/* ALTERED - 20100318 - freeform - jeff/julian - start */
