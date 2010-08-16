@@ -36,6 +36,34 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 global $xoopsTpl;
 
+if(!isset($xoopsTpl)) {
+	global $xoopsOption, $xoopsConfig, $xoopsModule;
+
+  $xoopsOption['theme_use_smarty'] = 1;
+
+  // include Smarty template engine and initialize it
+  require_once XOOPS_ROOT_PATH . '/class/template.php';
+  require_once XOOPS_ROOT_PATH . '/class/theme.php';
+  require_once XOOPS_ROOT_PATH . '/class/theme_blocks.php';
+
+	if ( @$xoopsOption['template_main'] ) {
+		if ( false === strpos( $xoopsOption['template_main'], ':' ) ) {
+			$xoopsOption['template_main'] = 'db:' . $xoopsOption['template_main'];
+		}
+	}
+	$xoopsThemeFactory =& new xos_opal_ThemeFactory();
+  $xoopsThemeFactory->allowedThemes = $xoopsConfig['theme_set_allowed'];
+  $xoopsThemeFactory->defaultTheme = $xoopsConfig['theme_set'];
+
+  $xoTheme =& $xoopsThemeFactory->createInstance( array(
+  	'contentTemplate' => @$xoopsOption['template_main'],
+  ) );
+  $xoopsTpl =& $xoTheme->template;
+
+	//$xoTheme->addScript( '/include/xoops.js', array( 'type' => 'text/javascript' ) );
+	//$xoTheme->addScript( '/include/linkexternal.js', array( 'type' => 'text/javascript' ) );
+}
+
 // handle any operations requested as part of this page load
 if(isset($_GET['op'])) {
   include_once "op.php";
@@ -60,6 +88,9 @@ switch($_GET['page']) {
 		break;
 	case "element":
 		include "element.php";
+		break;
+	case "advanced-calculation":
+		include "advanced_calculation.php";
 		break;
 	default:
 	case "home":

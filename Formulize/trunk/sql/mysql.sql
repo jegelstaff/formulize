@@ -1,3 +1,16 @@
+CREATE TABLE `formulize_advanced_calculations` (
+  `acid` int(11) NOT NULL auto_increment,
+  `fid` int(11) NOT NULL default '0',
+  `name` varchar(20) NOT NULL default '',
+  `description` text NOT NULL,
+  `input` text NOT NULL,
+  `output` text NOT NULL,
+  `steps` text NOT NULL,
+  `steptitles` text NOT NULL,
+  PRIMARY KEY  (`acid`),
+  KEY `i_fid` (`fid`)
+) TYPE=MyISAM; 
+
 CREATE TABLE `formulize_applications` (
   `appid` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL default '',

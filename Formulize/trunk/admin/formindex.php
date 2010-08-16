@@ -1258,6 +1258,21 @@ function patch40() {
 ) TYPE=MyISAM;";
 		}
 		
+		if(!in_array($xoopsDB->prefix("formulize_advanced_calculations"), $existingTables)) {
+			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_advanced_calculations")."` (
+  `acid` int(11) NOT NULL auto_increment,
+  `fid` int(11) NOT NULL default '0',
+  `name` varchar(20) NOT NULL default '',
+  `description` text NOT NULL,
+  `input` text NOT NULL,
+  `output` text NOT NULL,
+  `steps` text NOT NULL,
+  `steptitles` text NOT NULL,
+  PRIMARY KEY  (`acid`),
+  KEY `i_fid` (`fid`)
+) TYPE=MyISAM;";
+		}
+		
 	
 		$sql['add_encrypt'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_encrypt` tinyint(1) NOT NULL default '0'";
 		$sql['add_lockedform'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `lockedform` tinyint(1) NULL default NULL";

@@ -104,6 +104,8 @@ $modversion['templates'][++$tindex]['file'] = 'admin/form_elements.html';
 $modversion['templates'][$tindex]['description'] = '';
 $modversion['templates'][++$tindex]['file'] = 'admin/form_elements_sections.html';
 $modversion['templates'][$tindex]['description'] = '';
+$modversion['templates'][++$tindex]['file'] = 'admin/form_advanced_calculations.html';
+$modversion['templates'][$tindex]['description'] = '';
 $modversion['templates'][++$tindex]['file'] = 'admin/application_relationships.html';
 $modversion['templates'][$tindex]['description'] = '';
 $modversion['templates'][++$tindex]['file'] = 'admin/application_relationships_sections.html';
@@ -176,7 +178,14 @@ $modversion['templates'][++$tindex]['file'] = 'admin/screen_multipage_pages_sect
 $modversion['templates'][$tindex]['description'] = '';
 $modversion['templates'][++$tindex]['file'] = 'admin/element_optionlist.html';
 $modversion['templates'][$tindex]['description'] = '';
-
+$modversion['templates'][++$tindex]['file'] = 'admin/advanced_calculation_settings.html';
+$modversion['templates'][$tindex]['description'] = '';
+$modversion['templates'][++$tindex]['file'] = 'admin/advanced_calculation_input_output.html';
+$modversion['templates'][$tindex]['description'] = '';
+$modversion['templates'][++$tindex]['file'] = 'admin/advanced_calculation_steps.html';
+$modversion['templates'][$tindex]['description'] = '';
+$modversion['templates'][++$tindex]['file'] = 'admin/advanced_calculation_steps_sections.html';
+$modversion['templates'][$tindex]['description'] = '';
 
 
 //	Module Configs

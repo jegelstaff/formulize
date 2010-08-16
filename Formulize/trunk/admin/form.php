@@ -98,7 +98,7 @@ if($_GET['fid'] != "new") {
     }
     $elements[$i]['content']['converttext'] = $converttext;
     $elements[$i]['content']['linktype'] = $linktype;
-    $elements[$i]['content']['ele_type'] = convertTypeToText($thisElement->getVar('ele_type'), $ele_type);
+    $elements[$i]['content']['ele_type'] = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
     $elements[$i]['content']['ele_req'] = removeNotApplicableRequireds($thisElement->getVar('ele_type'), $thisElement->getVar('ele_req'));
     $ele_display = $thisElement->getVar('ele_display');
     $multiGroupDisplay = false;
@@ -293,6 +293,9 @@ foreach($listOfEntriesScreens as $screen) {
   $i++;
 }
 
+$advanced_calculations = array();
+$advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
+$advanced_calculations['advanced_calculations'] = $advanced_calculation_handler->getList($fid);
 
 $settings = array();
 $settings['singleentry'] = $singleentry;
@@ -340,6 +343,11 @@ if($fid != "new") {
   $adminPage['tabs'][$i]['content'] = $screens + $common;
   $i++;
   
+	$adminPage['tabs'][$i]['name'] = "Advanced<br>Calculations";
+  $adminPage['tabs'][$i]['template'] = "db:admin/form_advanced_calculations.html";
+  $adminPage['tabs'][$i]['content'] = $advanced_calculations + $common;
+  $i++;
+	
 }
 
 $adminPage['pagetitle'] = "Form: ".$formName;

@@ -648,6 +648,7 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 			$form->addElement (new XoopsFormHidden ('del_subs', ''));
 			$form->addElement (new XoopsFormHidden ('goto_sub', ''));
 			$form->addElement (new XoopsFormHidden ('goto_sfid', ''));
+			
 			foreach($sub_fids as $sfid) {
 				// only draw in the subform UI if the subform hasn't been drawn in previously, courtesy of a subform element in the form.
 				// Subform elements are recommended since they provide 1. specific placement, 2. custom captions, 3. direct choice of form elements to include

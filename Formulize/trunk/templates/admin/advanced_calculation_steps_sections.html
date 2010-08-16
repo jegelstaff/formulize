@@ -1,0 +1,39 @@
+
+    <p><a name="delstep" href="" target="<{$sectionContent.index}>"><img src="../images/editdelete.gif"> Delete this step</a></p>
+
+	  <div class="form-item required">
+		  <label for="advcalc-steptitle_<{$sectionContent.index}>">Title for step number <{$sectionContent.number}></label>
+      <input type="text" class="required_formulize_element" id="advcalc-steptitle_<{$sectionContent.index}>" name="advcalc-steptitle_<{$sectionContent.index}>" value="<{$sectionContent.title}>" size="30" maxlength="255"/>
+		  <div class="description"></div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="input">Description</label>
+	    <textarea id="advcalc-description_<{$sectionContent.index}>" name="advcalc-description_<{$sectionContent.index}>" rows="5" cols="35"><{$sectionContent.steps.description}></textarea>
+		  <div class="description"></div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="input">Sql</label>
+	    <textarea id="advcalc-sql_<{$sectionContent.index}>" name="advcalc-sql_<{$sectionContent.index}>" rows="6" cols="80"><{$sectionContent.steps.sql}></textarea>
+		  <div class="description"></div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="input">PHP to execute before processing the query</label>
+	    <textarea id="advcalc-preCalculate_<{$sectionContent.index}>" name="advcalc-preCalculate_<{$sectionContent.index}>" rows="4" cols="80"><{$sectionContent.steps.preCalculate}></textarea>
+		  <div class="description"></div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="input">PHP to execute for processing the query</label>
+	    <textarea id="advcalc-calculate_<{$sectionContent.index}>" name="advcalc-calculate_<{$sectionContent.index}>" rows="8" cols="80"><{$sectionContent.steps.calculate}></textarea>
+		  <div class="description"></div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="input">PHP to execute after processing the query</label>
+	    <textarea id="advcalc-postCalculate_<{$sectionContent.index}>" name="advcalc-postCalculate_<{$sectionContent.index}>" rows="4" cols="80"><{$sectionContent.steps.postCalculate}></textarea>
+		  <div class="description"></div>
+	  </div>
+
