@@ -1084,10 +1084,10 @@ class formulizeElementRenderer{
 	// gather an entry when required...this should really be abstracted out to the data handler class, which also needs a proper getter in a handler of its own, so we don't keep creating new instances of the data handler and it can store the cached info about entries that we want it to.
 	function formulize_getCachedEntryData($id_form, $entry) {
 		static $cachedEntryData = array();
-		if(!isset($cachedEntryData[$entry])) {
-			$cachedEntryData[$entry] = getData("", $id_form, $entry);
+		if(!isset($cachedEntryData[$id_form][$entry])) {
+			$cachedEntryData[$id_form][$entry] = getData("", $id_form, $entry);
 		}
-		return $cachedEntryData[$entry][0];
+		return $cachedEntryData[$id_form][$entry][0];
 	}
 
 	/* ALTERED - 20100318 - freeform - jeff/julian - start */
