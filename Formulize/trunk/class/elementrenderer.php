@@ -204,7 +204,7 @@ class formulizeElementRenderer{
 					} else {
 						$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
 					}
-					$entryData = formulize_getCachedEntryData($id_form, $entry);
+					$entryData = $this->formulize_getCachedEntryData($id_form, $entry);
 					$creation_datetime = display($entryData, "creation_datetime"); 
 				}
 				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry, $id_form);
