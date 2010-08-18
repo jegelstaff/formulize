@@ -138,8 +138,6 @@ if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // reme
 			$entries = $linkResults['entries'];
 		}
 
-		$formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
-		
 		$entries = $GLOBALS['formulize_allWrittenEntryIds']; // set in readelements.php
 
 
@@ -192,6 +190,7 @@ function pageJump(options, prevpage) {
 $pagesSkipped = false;
 if(is_array($conditions) AND $entry) { 
 	$conditionsMet = false;
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	while(!$conditionsMet) {
 		if(isset($conditions[$currentPage]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
 			$thesecons = $conditions[$currentPage];
@@ -203,6 +202,7 @@ if(is_array($conditions) AND $entry) {
 			$oomstart = 1;
 			$filter = "";
 			$oomfilter = "";
+			$mainFormOnly = true;
 			foreach($elements as $i=>$thisElement) {
 				if($ops[$i] == "NOT") { $ops[$i] = "!="; }
 				if($types[$i] == "oom") {
@@ -220,6 +220,11 @@ if(is_array($conditions) AND $entry) {
 						$filter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
 					}
 				}
+				// check if $elements[$i] is in the main form
+				$elementObject = $element_handler->get($elements[$i]);
+				if($elementObject->getVar('id_form') != $fid) {
+					$mainFormOnly = false;
+				}
 			}
 			if($oomfilter AND $filter) {
 				$finalFilter = array();
@@ -235,7 +240,11 @@ if(is_array($conditions) AND $entry) {
 				$masterBoolean = "AND";
 			}
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-			$data = getData($frid, $fid, $finalFilter, $masterBoolean);
+			if($mainFormOnly) {
+				$data = getData("", $fid, $finalFilter, $masterBoolean);
+			} else {
+				$data = getData($frid, $fid, $finalFilter, $masterBoolean);
+			}
 			if($data[0] == "") { 
 				if($prevPage < $currentPage) {
 					$currentPage++;
