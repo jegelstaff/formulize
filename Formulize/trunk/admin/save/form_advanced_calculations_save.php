@@ -60,5 +60,6 @@ if(intval($_POST['deleteadvanced_calculations'])) {
 
 // if the form name was changed, then force a reload of the page...reload will be the application id
 if($_POST['gotoadvanced_calculations']) {
-  print "/* eval */ window.location = '". XOOPS_URL ."/modules/formulize/admin/ui.php?page=advanced-calculation&aid=$aid&fid=$fid&acid=".intval($_POST['gotoadvanced_calculations'])."'";
+  $gotoacid = $_POST['gotoadvanced_calculations'] === "new" ? "new" : intval($_POST['gotoadvanced_calculations']);
+  print "/* eval */ window.location = '". XOOPS_URL ."/modules/formulize/admin/ui.php?page=advanced-calculation&aid=$aid&fid=$fid&acid=$gotoacid'";
 }

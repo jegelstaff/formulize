@@ -56,7 +56,8 @@ class formulizeAdvancedCalculation extends xoopsObject {
 \$sql = "{$calculation['sql']}";
 \$res = mysql_query(\$sql);
 {$calculation['preCalculate']}
-while(\$row = mysql_fetch_row(\$res)) {
+while(\$array = mysql_fetch_array(\$res)) {
+  \$row = \$array;
 {$calculation['calculate']}
 }
 {$calculation['postCalculate']}
@@ -88,15 +89,16 @@ EOD;
 
     $code = <<<EOD
 \$sqlBase = "{$foreachSqlPre}";
-\$sql = \$sqlBase;
+\$sql = \$sqlBase . "(";
 \$start = true;
 \$chunk = 0;
 foreach({$foreachCriteria}) {
   if(strlen(\$sql) > 500000) {
+		\$sql .= ")";
     \$res[\$chunk] = mysql_query(\$sql);
     \$chunk++;
     \$start = true;
-    \$sql = \$sqlbase;
+    \$sql = \$sqlBase  . "(";
   }
   if(!\$start) {
     \$sql .= " {$foreachMatch} ";
@@ -104,10 +106,12 @@ foreach({$foreachCriteria}) {
   \$sql .= " {$foreachSqlItem} ";
   \$start = false;
 }
+\$sql .= ")";
 \$res[\$chunk] = mysql_query(\$sql);
 {$calculation['preCalculate']}
 foreach(\$res as \$thisRes) {
-  while(\$row = mysql_fetch_row(\$thisRes)) {
+  while(\$array = mysql_fetch_array(\$thisRes)) {
+	  \$row = \$array;
 {$calculation['calculate']}
   }
 }
@@ -214,9 +218,7 @@ class formulizeAdvancedCalculationHandler {
 
 
   function calculate( $advCalcObject ) {
-    $thisBaseQuery = $GLOBALS['formulize_queryForCalcs'];
-
-    $ob_current = ob_get_contents(); ob_clean();
+    $fromBaseQuery = $GLOBALS['formulize_queryForCalcs'];
 
     ob_start();
 
@@ -238,10 +240,8 @@ class formulizeAdvancedCalculationHandler {
 
     eval( $output );
 
-    $ob_calc = ob_get_contents(); ob_clean();
-
-    print $ob_current;
-
+    $ob_calc = ob_get_clean();
+		
     return $ob_calc;
   }
 }

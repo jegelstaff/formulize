@@ -13,15 +13,15 @@
 
 <div class="panel-content content">
   <fieldset>
-    <legend>Input/Output for the Advanced Calculation: <em><{$content.name}></em></legend>
+    <legend>Input/Output for the Procedure: <em><{$content.name}></em></legend>
 
 	  <div class="form-item">
-		  <label for="input">HTML for the input UI:</label>
+		  <label for="input">PHP code for defining any initial values (before the steps are evaluated)</label><br />
 	    <textarea id="advcalc-input" name="advcalc-input" rows="5" cols="35"><{$content.input}></textarea>
 	  </div>
 
 	  <div class="form-item">
-		  <label for="output">HTML for the output UI:</label>
+		  <label for="output">PHP code for outputing results to the screen</label><br />
 	    <textarea id="advcalc-output" name="advcalc-output" rows="10" cols="35"><{$content.output}></textarea>
 	  </div>
   </fieldset>

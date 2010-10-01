@@ -14,13 +14,13 @@
 
 <div class="panel-content content">
 
-	<p><i>Advanced Calculations</i> let you ... </p>
+	<p><i>Procedures</i> let you create a series of queries and logical steps, that get carried out on the data that users have submitted in the form.  You can use Procedures for advanced, multi-step calculations, or any other situation where a single query or single operation is not enough to get to the outcome you want.</p>
 
-  <h2><a href="ui.php?page=advanced-calculation&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&acid=new"><img src="../images/filenew2.png"> Create a new advanced calculation</a></h2>
+  <h2><a name="newprocedure" href="ui.php?page=advanced-calculation&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&acid=new"><img src="../images/filenew2.png"> Create a new Procedure</a></h2>
 
   <{* include form if exist advanced_calculations exist *}>
 
-  <h2>Form Calculations</h2>
+  <h2>Procedures</h2>
   <div class="form-item">
     <table>
 	    <tr>
@@ -41,6 +41,12 @@
 
 $(".configadvanced_calculation").click(function() {
 	$("[name=gotoadvanced_calculations]").val($(this).attr('target'));
+	$(".savebutton").click();
+	return false;
+})
+
+$("[name=newprocedure]").click(function() {
+	$("[name=gotoadvanced_calculations]").val('new');
 	$(".savebutton").click();
 	return false;
 })

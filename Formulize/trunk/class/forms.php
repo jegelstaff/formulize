@@ -162,7 +162,7 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("headerlist", XOBJ_DTYPE_TXTAREA, $headerlist);
 		$this->initVar("defaultform", XOBJ_DTYPE_INT, $defaultform, true);
 		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);
-		$this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], true, 255);
+		$this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
 	}
 }
 

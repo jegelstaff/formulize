@@ -343,7 +343,7 @@ if($fid != "new") {
   $adminPage['tabs'][$i]['content'] = $screens + $common;
   $i++;
   
-	$adminPage['tabs'][$i]['name'] = "Advanced<br>Calculations";
+	$adminPage['tabs'][$i]['name'] = "Procedures";
   $adminPage['tabs'][$i]['template'] = "db:admin/form_advanced_calculations.html";
   $adminPage['tabs'][$i]['content'] = $advanced_calculations + $common;
   $i++;

@@ -17,6 +17,10 @@
 	
 }
 
+label {
+	text-align: left;
+}
+
 .form-screen-list .imageicon {
 	float: left;
 }

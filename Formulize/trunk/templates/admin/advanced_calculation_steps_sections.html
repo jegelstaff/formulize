@@ -8,31 +8,31 @@
 	  </div>
 
 	  <div class="form-item">
-		  <label for="input">Description</label>
+		  <label for="input">Description of this step</label><br />
 	    <textarea id="advcalc-description_<{$sectionContent.index}>" name="advcalc-description_<{$sectionContent.index}>" rows="5" cols="35"><{$sectionContent.steps.description}></textarea>
 		  <div class="description"></div>
 	  </div>
 
 	  <div class="form-item">
-		  <label for="input">Sql</label>
+		  <label for="input">Use this SQL to get data from the database</label><br />
 	    <textarea id="advcalc-sql_<{$sectionContent.index}>" name="advcalc-sql_<{$sectionContent.index}>" rows="6" cols="80"><{$sectionContent.steps.sql}></textarea>
-		  <div class="description"></div>
+		  <div class="description">You can use any previously defined PHP variable in the SQL, including ones defined in previous steps.  Use $fromBaseQuery instead of "FROM tablename WHERE" to have your query use the current search and filtering settings that the user has specified in Formulize -- if you do this you MUST NOT use WHERE in the SQL ($fromBaseQuery already includes it) and you MUST start your own where clause statement(s) with AND (since they will be appended to the end of the Formulize base query's where clause).  Use "{foreach $array as $key=>$value; BOOLEAN }SQL INCLUDING $key AND/OR $value{/foreach}" to add a certain piece of SQL once for every value in a previously defined array.  The BOOLEAN can be AND or OR, depending on which you want used between each instance of the SQL.</div>
 	  </div>
 
 	  <div class="form-item">
-		  <label for="input">PHP to execute before processing the query</label>
+		  <label for="input">Run this PHP code before the SQL</label><br />
 	    <textarea id="advcalc-preCalculate_<{$sectionContent.index}>" name="advcalc-preCalculate_<{$sectionContent.index}>" rows="4" cols="80"><{$sectionContent.steps.preCalculate}></textarea>
 		  <div class="description"></div>
 	  </div>
 
 	  <div class="form-item">
-		  <label for="input">PHP to execute for processing the query</label>
-	    <textarea id="advcalc-calculate_<{$sectionContent.index}>" name="advcalc-calculate_<{$sectionContent.index}>" rows="8" cols="80"><{$sectionContent.steps.calculate}></textarea>
-		  <div class="description"></div>
+			<label>Run this PHP code to process each record returned by the SQL</label><br />
+		  <textarea id="advcalc-calculate_<{$sectionContent.index}>" name="advcalc-calculate_<{$sectionContent.index}>" rows="8" cols="80"><{$sectionContent.steps.calculate}></textarea>
+		  <div class="description">use $row[X] or $array[fieldname] to refer to the values in the record.  X would be the order of the fields starting at 0, ie: use 2 to refer to the third field selected in the SQL.  fieldname would be the actual name of the field as selected in the SQL.</div>
 	  </div>
 
 	  <div class="form-item">
-		  <label for="input">PHP to execute after processing the query</label>
+		  <label for="input">Run this PHP code after processing all the records</label><br />
 	    <textarea id="advcalc-postCalculate_<{$sectionContent.index}>" name="advcalc-postCalculate_<{$sectionContent.index}>" rows="4" cols="80"><{$sectionContent.steps.postCalculate}></textarea>
 		  <div class="description"></div>
 	  </div>

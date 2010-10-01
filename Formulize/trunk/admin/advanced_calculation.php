@@ -111,19 +111,19 @@ if(!$isNew) {
   $adminPage['tabs'][2]['template'] = "db:admin/advanced_calculation_input_output.html";
   $adminPage['tabs'][2]['content'] = $advCalc + $common;
 
-  $adminPage['tabs'][3]['name'] = "Calculation Steps";
+  $adminPage['tabs'][3]['name'] = "Steps";
   $adminPage['tabs'][3]['template'] = "db:admin/advanced_calculation_steps.html";
   $adminPage['tabs'][3]['content'] = $advCalc + $common;
 }
 
-$adminPage['pagetitle'] = "Advanced Calculation: ".$calcName;
+$adminPage['pagetitle'] = "Procedure: ".$advCalc['name'];
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['url'] = "page=application&aid=$aid";
 $breadcrumbtrail[2]['text'] = $appName;
-$breadcrumbtrail[3]['url'] = "page=form&aid=$aid&fid=$fid&tab=advanced<br>calculations";
+$breadcrumbtrail[3]['url'] = "page=form&aid=$aid&fid=$fid&tab=procedures";
 $breadcrumbtrail[3]['text'] = $formName;
-$breadcrumbtrail[4]['text'] = $calcName;
+$breadcrumbtrail[4]['text'] = $advCalc['name'];
 ?>
