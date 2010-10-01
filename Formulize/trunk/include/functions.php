@@ -4006,3 +4006,18 @@ function recursive_stripslashes($value) {
   return $value;
 }
 
+
+
+/*
+ * Returns the HTML formatted results of the calculation process
+ *
+ * $results = formulize_runAdvancedCalculation($acid);
+ * print $results;
+ */
+function formulize_runAdvancedCalculation( $acid ) {
+  //require_once "../../mainfile.php";
+  //include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+  $advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
+  $advCalcObject = $advanced_calculation_handler->get($acid);
+  return $advanced_calculation_handler->calculate($advCalcObject);
+}

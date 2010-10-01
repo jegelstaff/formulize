@@ -368,6 +368,7 @@ define("_formulize_DE_ON", "em");
 define("_formulize_DE_VIEWDETAILS", "Clique para ver os detalhes desta entrada.");
 define("_formulize_DE_RESETVIEW", "Restaurar a visão atual");
 define("_formulize_DE_CALCS", "Cálculos");
+define("_formulize_DE_ADVCALCS", "Procedures");
 define("_formulize_DE_EXPORT", "Exportar entradas");
 define("_formulize_DE_EXPORT_CALCS", "Exportar cálculos");
 define("_formulize_DE_SAVE", "Salvar a visão atual");

@@ -361,6 +361,7 @@ define("_formulize_DE_ON", "on");
 define("_formulize_DE_VIEWDETAILS", "Click to view details for this entry.");
 define("_formulize_DE_RESETVIEW", "Reset current view");
 define("_formulize_DE_CALCS", "Calculations");
+define("_formulize_DE_ADVCALCS", "Procedures");
 define("_formulize_DE_EXPORT", "Export Entries");
 
 // new constants related to the export popup

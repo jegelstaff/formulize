@@ -63,6 +63,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `defaultview` varchar(20) NOT NULL default '',
   `usechangecols` varchar(255) NOT NULL default '',
   `usecalcs` varchar(255) NOT NULL default '',
+  `useadvcalcs` varchar(255) NOT NULL default '',
   `useadvsearch` varchar(255) NOT NULL default '',
   `useexport` varchar(255) NOT NULL default '',
   `useexportcalcs` varchar(255) NOT NULL default '',

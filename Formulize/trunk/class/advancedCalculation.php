@@ -51,45 +51,6 @@ class formulizeAdvancedCalculation extends xoopsObject {
 	}
 
 
-  function calculate() {
-    //echo 'Calculating...<br>';
-
-    $steps = $this->getVar('steps');
-    //$input = $this->getVar('input');  // formats the text for html output (html_entities?)
-    $input = $this->vars['input']['value'];
-    //$output = $this->getVar('output');  // formats the text for html output (html_entities?)
-    $output = $this->vars['output']['value'];
-
-    // copy parameter values into the context
-    //$context = new stdClass();
-    /*foreach( $_POST as $key => $value ) {
-      if( ! ( $key == 'calculate' ) ) {
-        //$context->$key = $value;
-        ${$key} = $value;
-      }
-    }*/
-    //print_r( $context );
-
-    //print( $input );
-    eval( $input );
-
-    foreach( $steps as $step ) {
-      if( strpos( $step['sql'], '{foreach' ) > 0 ) {
-        //echo $step['sql'] . "<br>\n" . $this->genForeach( $step ) . "<br><br>";
-        $code = $this->genForeach( $step );
-      } else {
-        //echo $step['sql'] . "<br>\n" . $this->genBasic( $step ) . "<br><br>";
-        $code = $this->genBasic( $step );
-      }
-      //print( $code );
-      //eval( 'print_r( $context );' . $code );
-      eval( $code );
-    }
-
-    //print( $output );
-    eval( $output );
-  }
-
   function genBasic( $calculation ) {
     $code = <<<EOD
 \$sql = "{$calculation['sql']}";
@@ -249,6 +210,39 @@ class formulizeAdvancedCalculationHandler {
       $list[] = $row;
     }
     return $list;
-  } 
+  }
+
+
+  function calculate( $advCalcObject ) {
+    $thisBaseQuery = $GLOBALS['formulize_queryForCalcs'];
+
+    $ob_current = ob_get_contents(); ob_clean();
+
+    ob_start();
+
+    $steps = $advCalcObject->getVar('steps');
+    $input = $advCalcObject->vars['input']['value'];
+    $output = $advCalcObject->vars['output']['value'];
+
+    eval( $input );
+
+    foreach( $steps as $step ) {
+      if( strpos( $step['sql'], '{foreach' ) > 0 ) {
+        $code = $advCalcObject->genForeach( $step );
+      } else {
+        $code = $advCalcObject->genBasic( $step );
+      }
+
+      eval( $code );
+    }
+
+    eval( $output );
+
+    $ob_calc = ob_get_contents(); ob_clean();
+
+    print $ob_current;
+
+    return $ob_calc;
+  }
 }
 ?>

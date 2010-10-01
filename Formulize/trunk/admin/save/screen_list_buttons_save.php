@@ -62,6 +62,7 @@ $screen->setVar('useimport',$screens['useimport']);
 $screen->setVar('usenotifications',$screens['usenotifications']);
 $screen->setVar('usechangecols',$screens['usechangecols']);
 $screen->setVar('usecalcs',$screens['usecalcs']);
+$screen->setVar('useadvcalcs',$screens['useadvcalcs']);
 $screen->setVar('useexportcalcs',$screens['useexportcalcs']);
 $screen->setVar('useadvsearch',$screens['useadvsearch']);
 $screen->setVar('useclone',$screens['useclone']);

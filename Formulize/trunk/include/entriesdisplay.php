@@ -893,6 +893,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$screenButtonText = array();
 	$screenButtonText['changeColsButton'] = _formulize_DE_CHANGECOLS;
 	$screenButtonText['calcButton'] = _formulize_DE_CALCS;
+	$screenButtonText['advCalcButton'] = _formulize_DE_ADVCALCS;
 	$screenButtonText['advSearchButton'] = _formulize_DE_ADVSEARCH;
 	$screenButtonText['exportButton'] = _formulize_DE_EXPORT;
 	$screenButtonText['exportCalcsButton'] = _formulize_DE_EXPORT_CALCS;
@@ -930,6 +931,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		$screenButtonText['saveButton'] = $screen->getVar('desavetext');
 		$screenButtonText['changeColsButton'] = $screen->getVar('usechangecols');
 		$screenButtonText['calcButton'] = $screen->getVar('usecalcs');
+		$screenButtonText['advCalcButton'] = $screen->getVar('useadvcalcs');
 		$screenButtonText['advSearchButton'] = $screen->getVar('useadvsearch');
 		$screenButtonText['exportCalcsButton'] = $screen->getVar('useexportcalcs');
 		// only include clone and delete if the checkboxes are in effect (2 means do not use checkboxes)
@@ -1010,6 +1012,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 					
 				if( $thisButtonCode = $buttonCodeArray['changeColsButton']) { print "<br>$thisButtonCode"; }
 				if( $thisButtonCode = $buttonCodeArray['calcButton']) { print "<br>$thisButtonCode"; }
+				if( $thisButtonCode = $buttonCodeArray['advCalcButton']) { print "<br>$thisButtonCode"; }
 				if( $thisButtonCode = $buttonCodeArray['advSearchButton']) { print "<br>$thisButtonCode"; }
 				if( $thisButtonCode = $buttonCodeArray['exportButton']) { print "<br>$thisButtonCode"; }
 							
@@ -1160,6 +1163,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=hidden name=calc_calcs id=calc_calcs value=\"$calc_calcs\"></input>\n";
 	print "<input type=hidden name=calc_blanks id=calc_blanks value=\"$calc_blanks\"></input>\n";
 	print "<input type=hidden name=calc_grouping id=calc_grouping value=\"$calc_grouping\"></input>\n";
+
+  // advanced calculations
+	print "<input type=hidden name=advcalc_acid id=advcalc_acid value=\"$advcalc_acid\"></input>\n";
 
 	// advanced search
 	$asearch = str_replace("\"", "&quot;", $asearch);
@@ -1319,7 +1325,13 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
     //formulize_benchmark("after printing results");
 		print "</table>\n";
 
-	}
+	} else if( @$_POST['advcalc_acid'] ) {
+    $acid = @$_POST['advcalc_acid'];
+    if( $acid > 0 ) {
+      $result = formulize_runAdvancedCalculation( $acid );
+      print "<br/>" . $result . "<br/><br/>";
+    }
+  }
 
 	// MASTER HIDELIST CONDITIONAL...
 	if(!$settings['hlist'] AND !$listTemplate) {
@@ -3641,6 +3653,9 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 			case "calcButton":
 				return "<input type=button style=\"width: 140px;\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."');\"></input>";
 				break;
+      case "advCalcButton":
+	      return "<input type=button style=\"width: 140px;\" name=advcalculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickadvcalcs.php?fid=$fid&frid=$frid');\"></input>";
+	      break;
 			case "advSearchButton":
 				$buttonCode = "<input type=button style=\"width: 140px;\" name=advsearch value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
 				foreach($settings as $k=>$v) {

@@ -228,6 +228,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   $buttons['usenotifications'] = $screen->getVar('usenotifications');
   $buttons['usechangecols'] = $screen->getVar('usechangecols');
   $buttons['usecalcs'] = $screen->getVar('usecalcs');
+  $buttons['useadvcalcs'] = $screen->getVar('useadvcalcs');
   $buttons['useexportcalcs'] = $screen->getVar('useexportcalcs');
   $buttons['useadvsearch'] = $screen->getVar('useadvsearch');
   $buttons['useclone'] = $screen->getVar('useclone');

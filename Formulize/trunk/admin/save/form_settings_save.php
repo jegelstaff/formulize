@@ -124,6 +124,7 @@ if($_POST['formulize_admin_key'] == "new") {
   $screen->setVar('usenotifications',_formulize_DE_NOTBUTTON);
   $screen->setVar('usechangecols',_formulize_DE_CHANGECOLS);
   $screen->setVar('usecalcs',_formulize_DE_CALCS);
+  $screen->setVar('useadvcalcs',_formulize_DE_ADVCALCS);
   $screen->setVar('useexportcalcs',_formulize_DE_EXPORT_CALCS);
   $screen->setVar('useadvsearch',_formulize_DE_ADVSEARCH);
   $screen->setVar('useclone',_formulize_DE_CLONESEL);

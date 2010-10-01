@@ -235,6 +235,7 @@ define("_formulize_DE_CALCHEAD", "Calculation Results");
 define("_formulize_DE_CALCNOBLANKS", "Exclude blanks/zeros");
 define("_formulize_DE_CALCONLYBLANKS", "Include only blanks/zeros");
 define("_formulize_DE_CALCS", "Calculs");
+define("_formulize_DE_ADVCALCS", "Procedures");
 define("_formulize_DE_CALCSUB", "Add Calculation(s) to list");
 define("_formulize_DE_CANCELASEARCH", "Cancel this search");
 define("_formulize_DE_CANCELCALCS", "Annuler les calculs");
