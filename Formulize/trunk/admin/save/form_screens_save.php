@@ -43,6 +43,7 @@ $formObject = $form_handler->get($fid);
 if($formObject->getVar('lockedform')) {
   return;
 }
+
 // check if the user has permission to edit the form
 if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;

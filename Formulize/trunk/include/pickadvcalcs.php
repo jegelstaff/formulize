@@ -82,8 +82,6 @@ $list = $advanced_calculation_handler->getList($fid);
     <script>
     function selectAdvCalc( acid ) {
       window.opener.document.controls.advcalc_acid.value = acid;
-      window.opener.document.controls.hlist.value = 1;
-      window.opener.document.controls.hcalc.value = 0;
       window.opener.showLoading();
       window.self.close();
     }

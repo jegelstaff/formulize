@@ -589,6 +589,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$settings['calc_calcs'] = $_POST['calc_calcs'];
 	$settings['calc_blanks'] = $_POST['calc_blanks'];
 	$settings['calc_grouping'] = $_POST['calc_grouping'];
+	
+	// set the requested procedure, if any
+	$settings['advcalc_acid'] = $_POST['advcalc_acid'];
 
 	// gather id of the cached data, if any
 	$settings['formulize_cacheddata'] = strip_tags($_POST['formulize_cacheddata']);
@@ -1255,6 +1258,14 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$xportDivText2 = "";
 	}
   
+	if( @$_POST['advcalc_acid'] ) {
+    $acid = @$_POST['advcalc_acid'];
+    if( $acid > 0 ) {
+      $result = formulize_runAdvancedCalculation( $acid );
+      print "<br/>" . $result . "<br/><br/>";
+    }
+  }
+	
 	// export of Data is moved out to a popup
 	// Calculations still handled in the old way for now
 	if($settings['xport'] == "calcs") {
@@ -1325,14 +1336,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
     //formulize_benchmark("after printing results");
 		print "</table>\n";
 
-	} else if( @$_POST['advcalc_acid'] ) {
-    $acid = @$_POST['advcalc_acid'];
-    if( $acid > 0 ) {
-      $result = formulize_runAdvancedCalculation( $acid );
-      print "<br/>" . $result . "<br/><br/>";
-    }
-  }
-
+	} 
 	// MASTER HIDELIST CONDITIONAL...
 	if(!$settings['hlist'] AND !$listTemplate) {
 
