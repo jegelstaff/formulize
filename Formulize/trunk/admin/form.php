@@ -69,11 +69,15 @@ if($_GET['fid'] != "new") {
   // Name will be the heading of the section, content is data used in the template for each section
   $i = 1; 
   foreach($elementObjects as $thisElement) {
-    $elementCaption = printSmart(strip_tags($thisElement->getVar('ele_caption')),75);
+    $elementCaption = strip_tags($thisElement->getVar('ele_caption'));
+		$colhead = strip_tags($thisElement->getVar('ele_colhead'));
+		$cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
     $ele_id = $thisElement->getVar('ele_id');
-    $elements[$i]['name'] = $elementCaption;
+		$ele_handle = $thisElement->getVar('ele_handle');
+		$nameText = $colhead ? printSmart($colhead,55) : printSmart($elementCaption,55);
+    $elements[$i]['name'] = "$nameText - $cleanType - $ele_handle";
     $elements[$i]['content']['ele_id'] = $ele_id;
-    $elements[$i]['content']['ele_handle'] = $thisElement->getVar('ele_handle');
+    $elements[$i]['content']['ele_handle'] = $ele_handle;
     $ele_type = $thisElement->getVar('ele_type');
     switch($ele_type) {
       case("text"):
@@ -98,7 +102,7 @@ if($_GET['fid'] != "new") {
     }
     $elements[$i]['content']['converttext'] = $converttext;
     $elements[$i]['content']['linktype'] = $linktype;
-    $elements[$i]['content']['ele_type'] = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
+    $elements[$i]['content']['ele_type'] = $cleanType;
     $elements[$i]['content']['ele_req'] = removeNotApplicableRequireds($thisElement->getVar('ele_type'), $thisElement->getVar('ele_req'));
     $ele_display = $thisElement->getVar('ele_display');
     $multiGroupDisplay = false;
@@ -125,8 +129,7 @@ if($_GET['fid'] != "new") {
     }
     $elements[$i]['content']['ele_display'] = $check_display;
     $elements[$i]['content']['ele_private'] = $thisElement->getVar('ele_private');
-    $colhead = $thisElement->getVar('ele_colhead');
-    $elementHeadings[$i]['text'] = $colhead ? printSmart($colhead, 75) : printSmart($thisElement->getVar('ele_caption'),75);
+    $elementHeadings[$i]['text'] = $colhead ? printSmart($colhead, 75) : printSmart($elementCaption,75);
     $elementHeadings[$i]['ele_id'] = $ele_id;
     $elementHeadings[$i]['selected'] = in_array($ele_id, $headerlistArray) ? " selected" : "";
     $i++;
@@ -293,10 +296,6 @@ foreach($listOfEntriesScreens as $screen) {
   $i++;
 }
 
-$advanced_calculations = array();
-$advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
-$advanced_calculations['advanced_calculations'] = $advanced_calculation_handler->getList($fid);
-
 $settings = array();
 $settings['singleentry'] = $singleentry;
 $settings['menutext'] = $menutext;
@@ -317,6 +316,10 @@ $i++;
 
 if($fid != "new") {
   
+	$advanced_calculations = array();
+	$advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
+	$advanced_calculations['advanced_calculations'] = $advanced_calculation_handler->getList($fid);
+	
   if(!$tableform AND !$newtableform) {
     $adminPage['tabs'][$i]['name'] = "Elements";
     $adminPage['tabs'][$i]['template'] = "db:admin/form_elements.html";

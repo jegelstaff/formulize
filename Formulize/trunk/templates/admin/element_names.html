@@ -8,47 +8,48 @@
 <input type="hidden" name="element_type" value="<{$content.type}>">
 <input type="hidden" name="reload_names_page" value="">
 
-<div class="accordion-box">
+
 	<div class="form-item required">
    	<fieldset>
-      <legend><label for="elements-ele_caption" class="question">What is the text that users see when this element appears on a form?</label></legend>
-			<input type="text" name="elements-ele_caption" class="required_formulize_element" value="<{$content.ele_caption}>">
-		</fieldset>
-	</div>
-</div>
-<div class="accordion-box">
-	<div class="form-item">
-   	<fieldset>
-      <legend><label for="elements-ele_colhead" class="question">What is the text that users see when this element appears at the top of a column in a list?</label></legend>
-			<input type="text" name="elements-ele_colhead" value="<{$content.ele_colhead}>">
+      <legend><label for="elements-ele_caption" class="question">Caption</label></legend>
+			<input type="text" name="elements-ele_caption" class="required_formulize_element" value="<{$content.ele_caption}>" size=70>
 			<div class="description">
-				<p>Optional</p>
+				<p>The text that users see when this element appears on a form.</p>
 			</div>
 		</fieldset>
 	</div>
-</div>
-<div class="accordion-box">
+
 	<div class="form-item">
    	<fieldset>
-      <legend><label for="elements-ele_handle" class="question">What name will you use to refer to this element in programming code and in the database?</label></legend>
-			<input type="text" name="elements-ele_handle" value="<{$content.ele_handle}>">
+      <legend><label for="elements-ele_colhead" class="question">Column Heading</label></legend>
+			<input type="text" name="elements-ele_colhead" value="<{$content.ele_colhead}>" size=70>
 			<div class="description">
-				<p>Optional</p>
+				<p>Optional. The text that users see when this element appears at the top of a column in a list.</p>
 			</div>
 		</fieldset>
 	</div>
-</div>
-<div class="accordion-box">
+
 	<div class="form-item">
    	<fieldset>
-      <legend><label for="elements-ele_desc" class="question">What description or help text should accompany the element?</label></legend>
-			<textarea name="elements-ele_desc"><{$content.ele_desc}></textarea>
+      <legend><label for="elements-ele_desc" class="question">Help text</label></legend>
+			<textarea name="elements-ele_desc" rows=4 cols=70><{$content.ele_desc}></textarea>
 			<div class="description">
-				<p>Optional</p>
+				<p>Optional. Descriptive or explanatory text that accompanies the element.</p>
 			</div>
 		</fieldset>
 	</div>
-</div>
+
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_handle" class="question">Data handle</label></legend>
+			<input type="text" name="elements-ele_handle" value="<{$content.ele_handle}>" size=70>
+			<div class="description">
+				<p>Optional. The name used to refer to this element in programming code and in the database.</p>
+			</div>
+		</fieldset>
+	</div>
+
+
 <div class="accordion-box">
 	<div class="form-item">
    	<fieldset>
