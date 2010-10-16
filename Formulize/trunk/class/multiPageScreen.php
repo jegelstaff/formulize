@@ -345,7 +345,9 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		$mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
 		$pages = $screen->getVar('pages');
 		$pagetitles = $screen->getVar('pagetitles');
-		array_unshift($pages, ""); // displayFormPages looks for the page array to start with [1] and not [0], for readability when manually using the API.
+		ksort($pages); // make sure the arrays are sorted by key, ie: page number
+		ksort($pagetitles);
+		array_unshift($pages, ""); // displayFormPages looks for the page array to start with [1] and not [0], for readability when manually using the API, so we bump up all the numbers by one by adding something to the front of the array
 		array_unshift($pagetitles, ""); 
 		$pages['titles'] = $pagetitles;
     unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
@@ -355,11 +357,14 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
     // the key must be the numerical page number (start at 1)
 		$conditions = $screen->getVar('conditions');
 		if(isset($conditions[0]['details'])) {
+				unset($conditions);
 		    foreach($screen->getVar('conditions') as $pageid=>$condata) {
 		        $pagenumber = $pageid+1;
 		        $conditions[$pagenumber] = array(0=>$condata['details']['elements'], 1=>$condata['details']['ops'], 2=>$condata['details']['terms']);
 		    }
+				ksort($conditions);
 		} else {
+				ksort($conditions);
 				array_unshift($conditions, "");
 				unset($conditions[0]);
 		}

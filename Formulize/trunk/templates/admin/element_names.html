@@ -49,6 +49,18 @@
 		</fieldset>
 	</div>
 </div>
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="orderpref" class="question">Position of this element</label></legend>
+			<select name="orderpref" size=1>
+				<option value="bottom">At the end of the form</option>
+				<option value="top"<{$content.firstelementorder}>>At the beginning of the form</option>
+				<{html_options options=$content.orderoptions selected=$content.defaultorder}>
+			</select>
+		</fieldset>
+	</div>
+</div>
 <{if $content.ele_req_on}>
 <div class="accordion-box">
 	<div class="form-item">

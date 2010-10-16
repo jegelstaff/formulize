@@ -657,10 +657,14 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				}
 				$subUICols = drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry);
 				unset($subLinkUI);
-				$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']);
-				$form->addElement($subLinkUI);
-					}
-				} 
+				if(isset($subUICols['single'])) {
+					$form->insertBreak($subUICols['single'], "even");
+				} else {
+					$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']);
+					$form->addElement($subLinkUI);
+				}
+			}
+		} 
 	
 	
 		// draw in proxy box if necessary (only if they have permission and only on new entries, not on edits)
@@ -1079,16 +1083,17 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 
 	if(!$customCaption) {
 		// get the title of this subform
+		// help text removed for F4.0 RC2, this is an experiment
 		$subtitle = q("SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $sfid");
-		$col_one = "<p>" . trans($subtitle[0]['desc_form']) . "</p><p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
+		$col_one = "<p><b>" . trans($subtitle[0]['desc_form']) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
 	} else {
-		$col_one = "<p>" . trans($customCaption) . "</p><p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
+		$col_one = "<p><b>" . trans($customCaption) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
 	}
 
-	if(intval($sub_entries[$sfid][0]) != 0 OR $sub_entry_new OR is_array($sub_entry_written)) {
+	/*if(intval($sub_entries[$sfid][0]) != 0 OR $sub_entry_new OR is_array($sub_entry_written)) {
 		if(!$nosubforms) { $col_one .= "<br>" . _formulize_ADD_HELP2; }
 		$col_one .= "<br>" . _formulize_ADD_HELP3;
-	} 
+	} */
 
 	// list the entries, including links to them and delete checkboxes
 	
@@ -1116,7 +1121,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 
 	$need_delete = 0;
 	$drawnHeadersOnce = false;
-	$col_two = "<table>";
+	$col_two = "<table style=\"width: 10%\">";
 
 	$deFrid = $frid ? $frid : ""; // need to set this up so we can pass it as part of the displayElement function, necessary to establish the framework in case this is a framework and no subform element is being used, just the default draw-in-the-one-to-many behaviour
 	
@@ -1153,8 +1158,6 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 						ob_end_clean();
 						if($col_two_temp) { // only draw in a cell if there actually is an element rendered
 							$col_two .= "<td>$col_two_temp</td>\n";
-						} else {
-							$col_two .= "<td></td>";
 						}
 					}
 				}
@@ -1189,12 +1192,12 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 				if(!$drawnHeadersOnce) {
 					$col_two .= "<tr><td></td>\n";
 					foreach($headersToDraw as $thishead) {
-						if($thishead) { $col_two .= "<td><p><b>$thishead</b></p></td>\n"; }
+						if($thishead) { $col_two .= "<td style=\"width: 10%;\"><p><b>$thishead</b></p></td>\n"; }
 					}
 					$col_two .= "</tr>\n";
 					$drawnHeadersOnce = true;
 				}
-				$col_two .= "<tr>\n<td>";
+				$col_two .= "<tr>\n<td style=\"width: 10%;\">";
 				// check to see if we draw a delete box or not
 				if($sub_ent !== "new") {
 					$deleteSelf = $gperm_handler->checkRight("delete_own_entry", $sfid, $groups, $mid);
@@ -1216,8 +1219,6 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 						ob_end_clean();
 						if($col_two_temp) { // only draw in a cell if there actually is an element rendered
 							$col_two .= "<td>$col_two_temp</td>\n";
-						} else {
-							$col_two .= "<td></td>";
 						}
 					}
 				}
@@ -1238,7 +1239,9 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		}
 	}
 	if(((count($sub_entries[$sfid])>0 AND $sub_entries[$sfid][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
-		$col_one .= "<br>" . _formulize_ADD_HELP4 . "</p><p><input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\">";
+		// $col_one .= "<br>" . _formulize_ADD_HELP4 . "</p><p><input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\">";
+		// re-org of the "columns" means we want this button in the second button in the bottom row now...
+		$col_two = str_replace("maxlength=2>" . _formulize_ADD_ENTRIES . "</p>", "maxlength=2>" . _formulize_ADD_ENTRIES . "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\"></p>", $col_two);
 		static $deletesubsflagIncluded = false;
 		if(!$deletesubsflagIncluded) {
 			$col_one .= "\n<input type=hidden name=deletesubsflag value=''>\n";
@@ -1248,7 +1251,8 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	$col_one .= "</p>";
 	$to_return['c1'] = $col_one;
 	$to_return['c2'] = $col_two;
-	return $to_return;
+	//return $to_return; // now returning a single set of HTML, which should be a configurable option, and will be in the next official commit
+	return array('single'=>$col_one . $col_two);
 
 }
 
@@ -1338,6 +1342,27 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 								if($v == 1) {
 								$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $indexer);
 							}
+							$indexer++;
+						}
+					}
+					break;
+				case "checkbox":
+					if(!$entry) {
+						$indexer = 1;
+							foreach($ni->getVar('ele_value') as $k=>$v) {
+								if($v == 1) {
+								$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id')."[]", $indexer);
+							}
+							$indexer++;
+						}
+					} else {
+						$data_handler = new formulizeDataHandler($ni->getVar('id_form'));
+						$checkBoxOptions = $data_handler->getElementValueInEntry($entry, $ni);
+						$indexer = 1;
+						foreach($ni->getVar('ele_value') as $k=>$v) {
+							if(strstr($checkBoxOptions, $k)) {
+								$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id')."[]", $indexer);
+							} 
 							$indexer++;
 						}
 					}
@@ -1503,8 +1528,12 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$customCaption = $i->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
 				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3]); // 2 is the number of default blanks, 3 is whether to show the view button or not
-				$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']);
-				$form->addElement($subLinkUI);
+				if(isset($subUICols['single'])) {
+					$form->insertBreak($subUICols['single'], "even");
+				} else {
+					$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']);
+					$form->addElement($subLinkUI);
+				}
 				unset($subLinkUI);
 			}
 		} elseif($ele_type == "grid") {

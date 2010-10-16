@@ -163,7 +163,7 @@ div#tabs li {
 	/*width: 60em;*/
 }
 
-#savebutton input {
+#savebutton input, #popupsavebutton input {
 	float: left;
 	margin-top: 1em;
 	margin-bottom: 15px;
@@ -174,7 +174,12 @@ div#tabs li {
 	margin-top: 1.75em;
 	display: none;
 	color: red;
-	
+}
+
+#popupsavewarning {
+	padding-top: 1.75em;
+	display: none;
+	color: red;
 }
 
 /* Develop a consistent style for forms */

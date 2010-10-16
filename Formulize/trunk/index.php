@@ -37,6 +37,10 @@
 // XOOPS_ROOT_PATH . "/modules/formulize/index.php" TO CALL UP
 // A SCREEN IN A BLOCK WITHOUT THE ENTIRE XOOPS TEMPLATE COMING IN
 
+// uncomment these two lines to enable benchmarking of performance...depends also on the user id specified in formulize_benchmark in include/extract.php
+//include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+//$GLOBALS['startPageTime'] = microtime_float();
+
 if(isset($formulize_screen_id)) {
     if(is_numeric($formulize_screen_id)) {
         include 'initialize.php';        
@@ -44,10 +48,6 @@ if(isset($formulize_screen_id)) {
 } else {
     require_once "../../mainfile.php";
     include XOOPS_ROOT_PATH.'/header.php';
-
-    // uncomment these two lines to enable benchmarking of performance
-    //include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-    //$startPageTime = microtime_float();
 
     include 'initialize.php';
 

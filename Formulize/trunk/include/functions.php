@@ -2170,7 +2170,7 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
 		if(isset($cachedUidResults[$matchtext])) {
 			$uids = $cachedUidResults[$matchtext];
 		} else {
-			$uids = q("SELECT uid FROM " . $xoopsDB->prefix("users") . " WHERE $nametype = '" . mysql_real_escape_string($myts->htmlSpecialChars($matchtext)) . "' $archiveFilter");
+			$uids = q("SELECT uid FROM " . $xoopsDB->prefix("users") . " WHERE $nametype = '" . mysql_real_escape_string($matchtext) . "' $archiveFilter");
 			$cachedUidResults[$matchtext] = $uids;
 		}
 		if(count($uids) == 1) {
@@ -3286,7 +3286,17 @@ function convertElementIdsToElementHandles($ids, $fid) {
 	$elementsToFrameworks = false;
 	$idsToFrameworks = false;
 	$frid = 0;
-	return convertAllHandlesAndIds($ids, $frid, $elementsToFrameworks, $idsToFrameworks, $fid);
+	$needToConvert = false;
+	foreach($ids as $id) {
+		if(is_numeric($id)) {
+			$needToConvert = true;
+		}
+	}
+	if($needToConvert) {
+		return convertAllHandlesAndIds($ids, $frid, $elementsToFrameworks, $idsToFrameworks, $fid);
+	} else {
+		return $ids;
+	}
 }
 
 // assume handles are unique within a framework (which they are supposed to be!)
@@ -3901,10 +3911,11 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
 
  // make hidden elements for all the old conditions we found
  for($i=0;$i<count(${$oldElementsName});$i++) {
-   $thisHiddenElement = new xoopsFormHidden($oldElementsName."[]", strip_tags(htmlspecialchars(${$oldElementsName}[$i])));
-   $thisHiddenOp = new xoopsFormHidden($oldOpsName."[]", strip_tags(htmlspecialchars(${$oldOpsName}[$i])));
-   $thisHiddenTerm = new xoopsFormHidden($oldTermsName."[]", strip_tags(htmlspecialchars(${$oldTermsName}[$i])));
-   $thisHiddenType = new xoopsFormHidden($oldTypesName."[]", strip_tags(htmlspecialchars(${$oldTypesName}[$i])));
+	 // need to add [$i] to the generation of the hidden values here, so the hidden condition keys equal the flag on the deletion X
+   $thisHiddenElement = new xoopsFormHidden($oldElementsName."[$i]", strip_tags(htmlspecialchars(${$oldElementsName}[$i])));
+   $thisHiddenOp = new xoopsFormHidden($oldOpsName."[$i]", strip_tags(htmlspecialchars(${$oldOpsName}[$i])));
+   $thisHiddenTerm = new xoopsFormHidden($oldTermsName."[$i]", strip_tags(htmlspecialchars(${$oldTermsName}[$i])));
+   $thisHiddenType = new xoopsFormHidden($oldTypesName."[$i]", strip_tags(htmlspecialchars(${$oldTypesName}[$i])));
    if(${$oldTypesName}[$i] == "all") {
         $conditionlist .= $options[${$oldElementsName}[$i]] . " " . ${$oldOpsName}[$i] . " " . ${$oldTermsName}[$i] . "&nbsp;&nbsp;<a class='conditionsdelete' title='Delete' target='".$filterName."_".$i."' href=''>X</a>\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
    } else {

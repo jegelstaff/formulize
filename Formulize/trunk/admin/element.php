@@ -59,10 +59,15 @@ foreach($allGroups as $thisGroup) {
   $formlinkGroups[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name');
 }
 
+$firstElementOrder = "";
 if($_GET['ele_id'] != "new") {
   $ele_id = intval($_GET['ele_id']);
-  $elementObject = $element_handler->get($ele_id);
-  $fid = $elementObject->getVar('id_form');
+	$elementObject = $element_handler->get($ele_id);
+	$fid = $elementObject->getVar('id_form');
+	$defaultOrder = $element_handler->getPreviousElement($elementObject->getVar('ele_order'), $fid);
+	if(!$defaultOrder) {
+		$firstElementOrder = " selected";
+	}
   $colhead = $elementObject->getVar('ele_colhead');
   $caption = $elementObject->getVar('ele_caption');
   $ele_type = $elementObject->getVar('ele_type');
@@ -148,6 +153,7 @@ if($_GET['ele_id'] != "new") {
 } else {
   $fid = intval($_GET['fid']);
   $elementName = "New element";
+	$defaultOrder = "bottom";
   $elementObject = false;
   $names['ele_caption'] = $elementName;
   $ele_type = $_GET['type'];
@@ -207,6 +213,19 @@ $advanced['datatypeui'] = createDataTypeUI($ele_type, $elementObject,$fid,$ele_e
 $formObject = $form_handler->get($fid);
 $formName = printSmart($formObject->getVar('title'), 30);
 
+// package up the elements into a list for ordering purposes
+$orderOptions = array();
+$ele_colheads = $formObject->getVar('elementColheads');
+$ele_captions = $formObject->getVar('elementCaptions');
+foreach($formObject->getVar('elements') as $elementId) {
+	$elementTextToDisplay = $ele_colheads[$elementId] ? printSmart($ele_colheads[$elementId]) : printSmart($ele_captions[$elementId]);
+	if($ele_id != $elementId) {
+		$orderOptions[$elementId] = "After: ".$elementTextToDisplay;
+	}
+}
+$names['orderoptions'] = $orderOptions;
+$names['defaultorder'] = $defaultOrder;
+$names['firstelementorder'] = $firstElementOrder;
 
 // common values should be assigned to all tabs
 $common['name'] = '';
@@ -216,7 +235,6 @@ $common['aid'] = $aid;
 $common['type'] = $ele_type;
 $common['uid'] = $xoopsUser->getVar('uid');
 
-$names['hello'] = 'hello';
 
 $options = array();
 $options['ele_delim'] = $ele_delim;
@@ -367,7 +385,7 @@ $display['groups'] = $groups;
 $tabindex = 1;
 $adminPage['tabs'][$tabindex]['name'] = "Names & Settings";
 $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_names.html";
-$adminPage['tabs'][$tabindex]['content'] = $names + $common;
+$adminPage['tabs'][$tabindex]['content'] = $names+$common;
 
 if($ele_type!='colorpick') {
   $adminPage['tabs'][++$tabindex]['name'] = "Options";

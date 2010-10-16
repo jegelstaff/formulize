@@ -125,6 +125,18 @@ class formulizeElementRenderer{
 					$ele_value[0] = stripslashes($ele_value[0]);
  				}
 				if(trim($ele_value[0]) == "") { $ele_value[0] = $ele_caption; }
+				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
+					$form_id = $id_form;
+					$entry_id = $entry;
+					$entryData = $this->formulize_getCachedEntryData($id_form, $entry);
+					$creation_datetime = display($entryData, "creation_datetime");
+					$evalResult = eval($ele_value[0]);
+					if($evalResult === false) {
+						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
+					} else {
+						$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
+					}
+				}
 				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry, $id_form);
 				$form_ele = $ele_value; // an array, item 0 is the contents of the break, item 1 is the class of the table cell (for when the form is table rendered)
 				break;
@@ -208,7 +220,6 @@ class formulizeElementRenderer{
 					}
 				}
 				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry, $id_form);
-				$ele_caption = $this->formulize_replaceCurlyBracketVariables($ele_caption, $entry, $id_form);
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
 					$ele_value[0]
@@ -304,6 +315,7 @@ class formulizeElementRenderer{
 						$filterTypes = $ele_value[5][3];
 						$start = true;
 						$start_oom = true;
+						$parentFormFrom = "";
 						if(!isset($form_handler)) {
 								$form_handler = xoops_getmodulehandler('forms', 'formulize');
 						}
@@ -341,7 +353,6 @@ class formulizeElementRenderer{
 										$filterTerms[$filterId] = "";
 									}
 								}
-								$parentFormFrom = "";
 								$conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
 								if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") { // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
 									$parentFormFrom = ", ".$xoopsDB->prefix("formulize_".$id_form)." AS t3 ";
@@ -431,6 +442,7 @@ class formulizeElementRenderer{
 						$reslinkedvaluesq = $xoopsDB->query($sourceValuesQ);
 						if($reslinkedvaluesq) {
 							while($rowlinkedvaluesq = $xoopsDB->fetchRow($reslinkedvaluesq)) {
+								if($rowlinkedvaluesq[1]==="") { continue; }
 								if($sourceElementObject->isLinked) {
 									$rowlinkedvaluesq[1] = $data_handler->getElementValueInEntry(trim($rowlinkedvaluesq[1], ","), $originalSource[1]);
 								}
@@ -1068,8 +1080,10 @@ class formulizeElementRenderer{
 	function formulize_replaceCurlyBracketVariables($text, $entry, $id_form) {
 		if(strstr($text, "}") AND strstr($text, "{")) {
 			$entryData = $this->formulize_getCachedEntryData($id_form, $entry);
-			$bracketPos = 0;
-			while($bracketPos = strpos($text, "{", $bracketPos+1)) {
+			$bracketPos = -1;
+			$start = true; // flag used to force the loop to execute, even if the 0th position has the {
+			while($bracketPos = strpos($text, "{", $bracketPos+1) OR $start == true) {
+				$start = false;
         $endBracketPos = strpos($text, "}", $bracketPos+1);
 				$term = substr($text, $bracketPos+1, $endBracketPos-$bracketPos-1);
 				$replacementTerm = display($entryData, $term);

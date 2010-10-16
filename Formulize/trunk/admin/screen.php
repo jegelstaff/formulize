@@ -321,17 +321,9 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
     $pages[$i]['content']['index'] = $i;
     $pages[$i]['content']['number'] = $i+1;
     $pages[$i]['content']['title'] = $pageTitles[$i];
-    $pages[$i]['content']['options'] = $options;
-    $pages[$i]['content']['elements'] = $elements[$i];
-    $filterSettingsToSend = count($conditions[$i] > 0) ? $conditions[$i] : "";
-    if(isset($filterSettingsToSend['details'])) { // if this is in the old format (pre-version 4, these conditions used a non-standard syntax), convert it!
-      $newFilterSettingsToSend = array();
-      $newFilterSettingsToSend[0] = $filterSettingsToSend['details']['elements'];
-      $newFilterSettingsToSend[1] = $filterSettingsToSend['details']['ops'];
-      $newFilterSettingsToSend[2] = $filterSettingsToSend['details']['terms'];
-      $filterSettingsToSend = $newFilterSettingsToSend;      
-    }
-    $pages[$i]['content']['conditions'] = formulize_createFilterUI($filterSettingsToSend, "pagefilter_".$i, $fid, "form-4");
+		foreach($elements[$i] as $thisElement) {
+			$pages[$i]['content']['elements'][] = $options[$thisElement];
+		}
   }
 
   // options data

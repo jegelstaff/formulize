@@ -48,10 +48,6 @@ if($_POST['formulize_admin_key'] == "new") {
   $element->setVar('ele_disabled', 0);
   $element->setVar('ele_req', 0);
   $element->setVar('ele_encrypt', 0);
-  $sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
-  $res = $xoopsDB->query($sql);
-  $array = $xoopsDB->fetchArray($res);
-  $element->setVar('ele_order', $array['new_order'] + 1);
   $original_handle = "";
 } else {
   $ele_id = intval($_POST['formulize_admin_key']);
@@ -59,6 +55,8 @@ if($_POST['formulize_admin_key'] == "new") {
   $fid = $element->getVar('id_form');
   $original_handle = $element->getVar('ele_handle');
 }
+
+$element->setVar('ele_order', figureOutOrder($_POST['orderpref'], $element->getVar('ele_order'), $fid));
 
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($fid);
@@ -115,4 +113,29 @@ if($_POST['reload_names_page'] OR $isNew) {
     $ele_id_to_send = $ele_id;
   } 
   print "/* evalnow */ ele_id = $ele_id_to_send; redirect = \"reloadWithScrollPosition('$url');\";";
+}
+
+function figureOutOrder($orderChoice, $oldOrder, $fid) {
+	global $xoopsDB;
+	if($orderChoice === "bottom") {
+		$sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
+	  $res = $xoopsDB->query($sql);
+	  $array = $xoopsDB->fetchArray($res);
+		$orderChoice = $array['new_order'] + 1;
+	} elseif($orderChoice === "top") {
+		$orderChoice = 0;
+	} else {
+		// convert the orderpref from the element ID to the order
+		$sql = "SELECT ele_order FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id = $orderChoice AND id_form = $fid";
+		$res = $xoopsDB->query($sql);
+	  $array = $xoopsDB->fetchArray($res);
+		$orderChoice = $array['ele_order'];
+	}
+	$orderValue = $orderChoice + 1;
+	if($oldOrder != $orderValue) {
+		// and we need to reorder all the elements equal to and higher than the current element
+		$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= $orderValue AND id_form = $fid";
+		$res = $xoopsDB->query($sql);
+	}
+	return $orderValue;
 }

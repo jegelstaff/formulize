@@ -190,7 +190,6 @@ function pageJump(options, prevpage) {
 $pagesSkipped = false;
 if(is_array($conditions) AND $entry) { 
 	$conditionsMet = false;
-	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	while(!$conditionsMet) {
 		if(isset($conditions[$currentPage]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
 			$thesecons = $conditions[$currentPage];
@@ -202,12 +201,11 @@ if(is_array($conditions) AND $entry) {
 			$oomstart = 1;
 			$filter = "";
 			$oomfilter = "";
-			$mainFormOnly = true;
 			foreach($elements as $i=>$thisElement) {
 				if($ops[$i] == "NOT") { $ops[$i] = "!="; }
 				if($types[$i] == "oom") {
 					if($oomstart) {
-						$oomfilter = $entry."][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
+						$oomfilter = $elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
 						$oomstart = 0;
 					} else {
 						$oomfilter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
@@ -220,11 +218,6 @@ if(is_array($conditions) AND $entry) {
 						$filter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
 					}
 				}
-				// check if $elements[$i] is in the main form
-				$elementObject = $element_handler->get($elements[$i]);
-				if($elementObject->getVar('id_form') != $fid) {
-					$mainFormOnly = false;
-				}
 			}
 			if($oomfilter AND $filter) {
 				$finalFilter = array();
@@ -232,19 +225,21 @@ if(is_array($conditions) AND $entry) {
 				$finalFilter[0][1] = $filter;
 				$finalFilter[1][0] = "OR";
 				$finalFilter[1][1] = $oomfilter;
+				$masterBoolean = "AND";
 			} elseif($oomfilter) {
-				$finalFilter = $oomfilter;
-				$masterBoolean = "OR";
+				// need to add the $entry as a separate filter from the oom, so the entry and oom get an AND in between them
+				$finalFilter = array();
+				$finalFilter[0][0] = "AND";
+				$finalFilter[0][1] = $entry;
+				$finalFilter[1][0] = "OR";
+				$finalFilter[1][1] = $oomfilter;
+				$masterBoolean = "AND";
 			} else {
 				$finalFilter = $filter;
 				$masterBoolean = "AND";
 			}
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-			if($mainFormOnly) {
-				$data = getData("", $fid, $finalFilter, $masterBoolean);
-			} else {
-				$data = getData($frid, $fid, $finalFilter, $masterBoolean);
-			}
+			$data = getData($frid, $fid, $finalFilter, $masterBoolean);
 			if($data[0] == "") { 
 				if($prevPage < $currentPage) {
 					$currentPage++;
@@ -392,9 +387,9 @@ formulize_benchmark("End of displayFormPages.");
 
 function drawPageNav($usersCanSave="", $pagesSkipped="", $currentPage="", $previousPage="", $nextPage="", $submitTextPrev="", $submitTextNext="", $pages="", $thanksPage, $pageTitles, $aboveBelow, $saveAndContinueButtonText=null) {
 
-	$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButton'])) ? $saveAndContinueButtonText['previousButton'] : _formulize_DMULTI_PREV;
-	$saveButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['saveButton'])) ? $saveAndContinueButtonText['saveButton'] : _formulize_DMULTI_SAVE;
-	$nextButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['nextButton'])) ? $saveAndContinueButtonText['nextButton'] : _formulize_DMULTI_NEXT;
+	$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButtonText'])) ? $saveAndContinueButtonText['previousButtonText'] : _formulize_DMULTI_PREV;
+	$saveButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['saveButtonText'])) ? $saveAndContinueButtonText['saveButtonText'] : _formulize_DMULTI_SAVE;
+	$nextButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['nextButtonText'])) ? $saveAndContinueButtonText['nextButtonText'] : _formulize_DMULTI_NEXT;
 
 	if($aboveBelow == "above") {
 		//navigation options above the form print like this

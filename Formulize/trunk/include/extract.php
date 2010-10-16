@@ -198,7 +198,7 @@ function microtime_float()
    return ((float)$usec + (float)$sec);
 }
 
-function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false) { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
+function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $cacheKey="") { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
 
      if(substr($filter, 0, 7) == "SELECT ") { // a proper SQL statement has been passed in so use that instead of constructing one...initially added for the new export feature
 	  $result = dataExtraction(intval($framework), intval($form), $filter);
@@ -239,7 +239,21 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
      
 	$result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly);
 	}
+	
+	if($cacheKey) {
+		 $GLOBALS['formulize_cachedGetDataResults'][$cacheKey] = $result;
+	}
+	
 	return $result;
+}
+
+function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false) {
+		 if(isset($GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())])) {
+					return $GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())];
+		 } else {
+					$cacheKey = serialize(func_get_args());
+					return getData($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $cacheKey);
+		 }
 }
 
 
@@ -1028,12 +1042,13 @@ function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formField
 		 } else { // no framework, element handle being used...so we have to derive the element id
 					$element_id = formulize_getIDFromElementHandle($ifPartsZero);
 		 }
-		 
+	 
 		 // identify the form that the element is associated with and put it in the map
 		 list($formFieldFilterMap, $mappedForm) = formulize_mapFormFieldFilter($element_id, $formFieldFilterMap);
 		 /*print "map: <br>";
 		 print_r($formFieldFilterMap);
-		 print "<br>Mappedform: $mappedForm<br>";*/
+		 print "<br>Mappedform: $mappedForm<br>";
+		 print "<br>fid: $fid";*/
 		 $elementPrefix = $mappedForm == $fid ? "main" : "f" . array_search($mappedForm, $linkfids);
 		 
 		 // check if its encrypted or not, and setup the proper field reference
@@ -1197,7 +1212,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
                }
                foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
                     if(($entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
-                         $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "("), "_", trans($formHandle))."_".$formulaNumber;
+                         $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
                          formulize_benchmark(" -- calling derived function.");
                          $derivedValue = $functionName($entry, $fid, $primary_entry_id, $frid);
                          formulize_benchmark(" -- completed call.");
@@ -1220,17 +1235,16 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
 
 function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $fid) {
      // open a temporary file
-     $fileName = XOOPS_ROOT_PATH."/cache/formulize_derivedValueFormulas_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "("), "_", trans($formHandle)).".php";
-     $derivedValueFormulaFile = fopen($fileName, "w");
+     $fileName = XOOPS_ROOT_PATH."/cache/formulize_derivedValueFormulas_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle).".php";
+	   $derivedValueFormulaFile = fopen($fileName, "w");
      fwrite($derivedValueFormulaFile, "<?php\n\n");
-     
      $functionsToWrite = "";
      // loop through the formulas, process them, and write them to the file
      foreach($metadata as $formulaNumber=>$thisMetaData) {
           $formula = $thisMetaData['formula'];
 					$quotePos = 0;
           while($quotePos = strpos($formula, "\"", $quotePos+1)) {
-               // print $formula . " -- $quotePos<br>"; // debug code
+               //print $formula . " -- $quotePos<br>"; // debug code
                $endQuotePos = strpos($formula, "\"", $quotePos+1);
                $term = substr($formula, $quotePos, $endQuotePos-$quotePos+1);
                if(!is_numeric($term)) { 
@@ -1240,9 +1254,9 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 												 $quotePos = $quotePos + 17 + strlen($newterm); // 17 is the length of the extra characters in the display function
 												 $formula = str_replace($term, $replacement, $formula);
 										} else {
-												 $quotePos = $quotePos + strlen($term) + 2; // move ahead the length of the text we did not find, plus its quotes
+												 $quotePos = $quotePos + strlen($term) + 2; // move ahead the length of the found term, plus its quotes
 										}
-               } 
+               }
           }
           $addSemiColons = strstr($formula, ";") ? false : true; // only add if we found none in the formula.
           if($addSemiColons) {
@@ -1252,7 +1266,9 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                }
                $formula = implode("\n", $formulaLines);
           }
-          $functionsToWrite .= "function derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "("), "_", trans($formHandle))."_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {\n$formula\nreturn \$value;\n}\n\n";
+					// replace any getData( calls in the formula with getDataCached( so we don't have quite so many run throughs of all the data...this may cause synchronization issues if people are doing really strange things to modify data during a pageload, which should not be happening!
+					$formula = str_replace("getData(", "getDataCached(", $formula);
+          $functionsToWrite .= "function derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {\n$formula\nreturn \$value;\n}\n\n";
      }
      fwrite($derivedValueFormulaFile, $functionsToWrite. "?>");
      fclose($derivedValueFormulaFile);
@@ -1308,15 +1324,18 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
           if(isset($results_array[$form_id][$term][$frid])) { return $results_array[$form_id][$term][$frid]; }
           
           // first check if this is a handle
+					//print "hq: SELECT ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_handle = \"".mysql_real_escape_string($term)."\"";
           $handle_query = go("SELECT ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_handle = \"".mysql_real_escape_string($term)."\"");
           if(count($handle_query) > 0) { // if this is a valid handle, then use it
 							 $handle = $term;
           } else {
+							 //print "chq: SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_colhead = \"" . mysql_real_escape_string($term) . "\"";
                $colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_colhead = \"" . mysql_real_escape_string($term) . "\"");
                if(count($colhead_query) > 0) {
 										$handle = $colhead_query[0]['ele_handle'];
 										$foundElementId = $colhead_query[0]['ele_id'];
                } else {
+										//print "capq: SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_caption = \"" . mysql_real_escape_string($term) . "\"";
                     $caption_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_caption = \"" . mysql_real_escape_string($term) . "\"");
                     if(count($caption_query) > 0 ) {
 												 $handle = $caption_query[0]['ele_handle'];
@@ -1469,7 +1488,7 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $
 		 if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
 					$GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countRow[0]; 
 		      unset($GLOBALS['formulize_getCountForPageNumbers']);
-		 }
+		 } 
 		 
      return $result;
      

@@ -71,7 +71,6 @@ if(count($elements) != count($newOrder)) {
 	return;
 }
 
-
 // modify elements
 $oldOrderNumber = 1;
 foreach($elements as $element) {
@@ -79,7 +78,6 @@ foreach($elements as $element) {
 
   // reset elements to deault
   $element->setVar('ele_req',0);
-  $element->setVar('ele_display',0);
   $element->setVar('ele_private',0);
   $newOrderNumber = array_search($oldOrderNumber,$newOrder);
   $element->setVar('ele_order',$newOrderNumber);
@@ -92,6 +90,11 @@ foreach($elements as $element) {
   foreach($processedElements[$ele_id] as $property=>$value) {
     $element->setVar($property,$value);
   }
+	
+	// if there was no display property sent, and there was no custom flag sent, then blank the display settings
+	if(!isset($processedElements[$ele_id]['ele_display']) AND !isset($_POST['customDisplayFlag'][$ele_id])) {
+		$element->setVar('ele_display',0);
+	}
 
   // presist changes
   if(!$element_handler->insert($element)) {

@@ -1,24 +1,10 @@
 
     <p><a name="delpage" href="" target="<{$sectionContent.index}>"><img src="../images/editdelete.gif"> Delete this page</a></p>
+		<p><a name="editpage" href="" target="<{$sectionContent.index}>"><img src="../images/kedit.png"> Edit this page</a></p>
+		<p>Form Elements on this page:</p>
+		<ul>
+			<{foreach from=$sectionContent.elements item=thiselement}>
+			<li><{$thiselement}></li>	
+			<{/foreach}>
+		</ul>
 
-
-		<div class="accordion-box">
-	  <div class="form-item required">
-		  <label for="screens-pagetitle_<{$sectionContent.index}>"><{$smarty.const._AM_FORMULIZE_SCREEN_PAGETITLE}> <{$sectionContent.number}></label>
-      <input type="text" class="required_formulize_element" id="screens-pagetitle_<{$sectionContent.index}>" name="screens-pagetitle_<{$sectionContent.index}>" value="<{$sectionContent.title}>" size="30" maxlength="255"/>
-		  <div class="description"></div>
-	  </div>
-	  <div class="form-item">
-		  <label for="screens-page<{$sectionContent.index}>"><{$smarty.const._AM_FORMULIZE_SCREEN_A_PAGE}> <{$sectionContent.number}></label>
-	    <select id="screens-page<{$sectionContent.index}>" name="screens-page<{$sectionContent.index}>[]" size="10" multiple>
-        <{html_options options=$sectionContent.options selected=$sectionContent.elements}>
-	    </select>
-		  <div class="description"></div>
-	  </div>
-		</div>
-		
-		<div class="accordion-box">
-				<p>What conditions are there on the display of this page?</p>
-				<{$sectionContent.conditions}>
-				<div class="description"><p>If you don't specify any conditions, the page will always be included in the form.</p></div>
-		</div>
