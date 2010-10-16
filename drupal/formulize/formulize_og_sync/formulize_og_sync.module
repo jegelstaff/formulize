@@ -72,7 +72,7 @@ function formulize_og_sync_menu() {
     'access callback' => 'user_access',
     'access arguments' => array('administer site configuration'),
 		'weight' => 0,
-    'description' => 'Settings for complex Organic groups and Formulize group integration.',
+    'description' => 'Settings for complex Organic groups and Formulize group integration (FOR ACTUA ONLY!).',
     'type' => MENU_NORMAL_ITEM,
   );
 	
@@ -142,8 +142,8 @@ function formulize_og_multiplier() {
 	
   $form['formulize_group']  = array(
     '#type' => 'checkboxes',
-    '#title' => t('Choose the groups where you will need special Director and Instructor groups in Formulize'),
-    '#description' => t('This version of the module will include two multiplier groups - Director and Instructor, as per the client\'s needs. You choices here will mean there will be three groups in Formulize. E.g. A "Summer Science Camp" group chosen here will create a "Summer Science Camp Directors" group and a "Summer Science Camp Instructor" group as well.'),
+    '#title' => t('If you are Actua, choose the groups where you will need special Director and Instructor groups in Formulize'),
+    '#description' => t('If you are Actua, this version of the module will include two multiplier groups - Director and Instructor, as per Actua\'s needs. Your choices here will mean there will be three groups in Formulize. E.g. A "Summer Science Camp" group chosen here will create a "Summer Science Camp Directors" group and a "Summer Science Camp Instructor" group as well.'),
 		'#default_value' => _formulize_get_multiplier_group_list(),
 		'#options' => _formulize_get_group_list()
   );
