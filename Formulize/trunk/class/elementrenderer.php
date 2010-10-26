@@ -1087,7 +1087,14 @@ class formulizeElementRenderer{
         $endBracketPos = strpos($text, "}", $bracketPos+1);
 				$term = substr($text, $bracketPos+1, $endBracketPos-$bracketPos-1);
 				$replacementTerm = display($entryData, $term);
-				$replacementTerm = $replacementTerm === "" ? "{".$term."}" : $replacementTerm; // don't replace terms that have no replacement
+				if($replacementTerm !== "") {
+					// get the uitext value if necessary
+					$element_handler = xoops_getmodulehandler('elements', 'formulize');
+					$elementObject = $element_handler->get($term);
+					$replacementTerm = formulize_swapUIText($replacementTerm, $elementObject->getVar('ele_uitext'));
+				} else {
+					$replacementTerm = "{".$term."}";
+				}
 				$text = str_replace("{".$term."}",$replacementTerm,$text);
 				$bracketPos = $bracketPos + strlen($replacementTerm); // move ahead the length of what we replaced
       }

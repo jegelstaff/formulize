@@ -73,14 +73,16 @@ function readApplicationData($aid, $apps) {
     $apps[$i]['content']['forms'][$x]['name'] = $thisFormObject->getVar('title');
     $apps[$i]['content']['forms'][$x]['hasdelete'] = $hasDelete;
     $apps[$i]['content']['forms'][$x]['lockedform'] = $thisFormObject->getVar('lockedform');
-    $screenObjects = $screen_handler->getObjects(null,$fid);
-    $y = 0;
-    foreach($screenObjects as $thisScreenObject) {
-      $sid = $thisScreenObject->getVar('sid');
-      $apps[$i]['content']['forms'][$x]['screens'][$y]['sid'] = $sid;
-      $apps[$i]['content']['forms'][$x]['screens'][$y]['name'] = $thisScreenObject->getVar('title');
-      $y++;
-    }
+    $defaultFormScreen = $thisFormObject->getVar('defaultform');
+    $defaultListScreen = $thisFormObject->getVar('defaultlist');
+    $defaultFormObject = $screen_handler->get($defaultFormScreen);
+    $defaultFormName = $defaultFormObject->getVar('title');
+    $defaultListObject = $screen_handler->get($defaultListScreen);
+    $defaultListName = $defaultListObject->getVar('title');
+    $apps[$i]['content']['forms'][$x]['defaultformscreenid'] = $defaultFormScreen;
+    $apps[$i]['content']['forms'][$x]['defaultlistscreenid'] = $defaultListScreen;
+    $apps[$i]['content']['forms'][$x]['defaultformscreenname'] = $defaultFormName;
+    $apps[$i]['content']['forms'][$x]['defaultlistscreenname'] = $defaultListName;
     $x++;
   }
   $i++;

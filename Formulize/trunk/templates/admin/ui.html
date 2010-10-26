@@ -31,6 +31,8 @@
 
 <{if $crumb.url}>
  <a href="ui.php?<{$crumb.url}>"><{$crumb.text}></a>
+ <{assign var='lasturl' value=$crumb.url}>
+ <{assign var='lasttext' value=$crumb.text}>
 <{else}>
  <{$crumb.text}>
 <{/if}>
@@ -46,6 +48,9 @@
 <{if $adminPage.pagetitle}>
 <h1><{$adminPage.pagetitle}></h1>
 <p class="smallhead"><{$adminPage.pagesubtitle}></p>
+<{if $lasturl}>
+<p><a href="ui.php?<{$lasturl}>">Go Back to <i><{$lasttext}></i></a></p>
+<{/if}>
 <{/if}>
 
 <{if $adminPage.needsave}>

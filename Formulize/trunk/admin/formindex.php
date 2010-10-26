@@ -1262,7 +1262,7 @@ function patch40() {
 			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_advanced_calculations")."` (
   `acid` int(11) NOT NULL auto_increment,
   `fid` int(11) NOT NULL default '0',
-  `name` varchar(20) NOT NULL default '',
+  `name` varchar(255) NOT NULL default '',
   `description` text NOT NULL,
   `input` text NOT NULL,
   `output` text NOT NULL,

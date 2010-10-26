@@ -3658,7 +3658,14 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				return "<input type=button style=\"width: 140px;\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."');\"></input>";
 				break;
       case "advCalcButton":
-	      return "<input type=button style=\"width: 140px;\" name=advcalculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickadvcalcs.php?fid=$fid&frid=$frid');\"></input>";
+				// only if any procedures (advanced calculations) are defined for this form
+				$procedureHandler = xoops_getmodulehandler('advancedCalculation','formulize');
+				$procList = $procedureHandler->getList($fid);
+				if(is_array($procList) AND count($procList) > 0) {
+				  return "<input type=button style=\"width: 140px;\" name=advcalculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickadvcalcs.php?fid=$fid&frid=$frid');\"></input>";
+				} else {
+					return false;
+				}
 	      break;
 			case "advSearchButton":
 				$buttonCode = "<input type=button style=\"width: 140px;\" name=advsearch value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";

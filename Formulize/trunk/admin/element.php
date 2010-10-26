@@ -413,7 +413,7 @@ $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
-$breadcrumbtrail[2]['url'] = "page=application&aid=$aid";
+$breadcrumbtrail[2]['url'] = "page=application&aid=$aid&tab=forms";
 $breadcrumbtrail[2]['text'] = $appName;
 $breadcrumbtrail[3]['url'] = "page=form&aid=$aid&fid=$fid&tab=elements";
 $breadcrumbtrail[3]['text'] = $formName;

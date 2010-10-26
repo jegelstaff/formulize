@@ -9,38 +9,8 @@
 <{/if}>
 
 <blockquote>
-<{foreach from=$sectionContent.forms item=form}>
-<div class="accordion-box">
-  <p class="form-name ui-corner-top"><{if $form.lockedform != 1}><a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=elements" class="form-name-icon"><{/if}>Form: <{$form.name}> (id: <{$form.fid}>)<{if $form.lockedform != 1}></a><{/if}></p>
-  <div class="form-screen-list ui-corner-bottom">
-		<p class="formbox-title">Actions:</p>
-		<div class="formactions-list">
-		<{if $form.lockedform != 1}>
-		<a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=elements"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction">Configure</div></a><br />
-		<a href="../index.php?fid=<{$form.fid}>" target="_blank"><div class="imageicon"><img src="../images/kfind.png"></div><div class="formaction">View</div></a><br />
-		<{/if}>
-		<a class="cloneform" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clone.gif"></div><div class="formaction">Clone</div></a><br />
-		<a class="cloneformdata" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clonedata.gif"></div><div class="formaction">Clone with data</div></a><br />
-		<{if $form.lockedform != 1 && $form.hasdelete}>
-		<a class="lockdown" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/perm.png"></div><div class="formaction">Lockdown</div></a><br />
-		<a class="deletelink" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/editdelete.gif"></div><div class="formaction">Delete</div></a><br />
-		<{/if}>
-		</div>
-		
-  	<p class="formbox-title">Screens:</p>
-    <ul>
-    <{foreach from=$form.screens item=screen}>
-      <li><a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=<{$screen.sid}>"><{$screen.name}></a></li>
-    <{/foreach}>      
-    </ul>
-    <{if !$form.screens}>
-    	<p><a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=new">Create a new screen</a></p>
-    <{/if}>
-  </div>
-</div>
-<{/foreach}>
-</blockquote>
-  
+<{include file="db:admin/form_listing.html"}>
+</blockquote>  
 
 	
 

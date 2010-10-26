@@ -1,0 +1,31 @@
+<{foreach from=$sectionContent.forms item=form}>
+<div class="accordion-box">
+  <p class="form-name ui-corner-top"><{if $form.lockedform != 1}><a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=elements" class="form-name-icon"><{/if}>Form: <{$form.name}> (id: <{$form.fid}>)<{if $form.lockedform != 1}></a><{/if}></p>
+  <div class="form-screen-list ui-corner-bottom">
+		<p class="formbox-title">Actions:</p>
+		<div class="formactions-list">
+		<{if $form.lockedform != 1}>
+		<a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=elements"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction">Configure</div></a><br />
+		<a href="../index.php?fid=<{$form.fid}>" target="_blank"><div class="imageicon"><img src="../images/kfind.png"></div><div class="formaction">View</div></a><br />
+		<{/if}>
+		<a class="cloneform" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clone.gif"></div><div class="formaction">Clone</div></a><br />
+		<a class="cloneformdata" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clonedata.gif"></div><div class="formaction">Clone with data</div></a><br />
+		<{if $form.lockedform != 1 && $form.hasdelete}>
+		<a class="lockdown" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/perm.png"></div><div class="formaction">Lockdown</div></a><br />
+		<a class="deletelink" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/editdelete.gif"></div><div class="formaction">Delete</div></a><br />
+		<{/if}>
+		</div>
+		
+		<{if !$form.defaultlistscreenid}>
+    <p><a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=new"><div class="imageicon"><img src="..images/filenew2.png"></div><div class="formaction">Create a new screen</div></a></p>
+		<{else}>
+		<p class="formbox-title">Default Screens:</p>
+		<div class="formactions-list">
+		<a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=<{$form.defaultlistscreenid}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction"><{$form.defaultlistscreenname}></div></a><br />
+		<a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=<{$form.defaultformscreenid}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction"><{$form.defaultformscreenname}></div></a><br />
+		<a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=screens"><div class="formaction"><i>...more screens</i></div></a>
+		</div>	
+    <{/if}>
+	</div>
+</div>
+<{/foreach}>

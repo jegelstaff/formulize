@@ -43,21 +43,43 @@ if($aid == 0) {
 	$appObject = $application_handler->get($aid);
 	$appName = $appObject->getVar('name');
 	$appDesc = $appObject->getVar('description');
-	$formObjects = $form_handler->getFormsByApplication($appObject);
+	$formObjects = $form_handler->getFormsByApplication($aid);
 	// get list of all the forms
 	$allFormObjects = $form_handler->getAllForms();
 	foreach($allFormObjects as $thisFormObject) {
-		$formsInApp[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
-		$formsInApp[$thisFormObject->getVar('id_form')]['id'] = $thisFormObject->getVar('id_form');
+		$allForms[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
+		$allForms[$thisFormObject->getVar('id_form')]['id'] = $thisFormObject->getVar('id_form'); // settings tab uses id
 	}
 }
+$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+$gperm_handler = xoops_gethandler('groupperm');
+global $xoopsUser;
+foreach($formObjects as $thisFormObject) {
+	$formsInApp[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
+	$formsInApp[$thisFormObject->getVar('id_form')]['fid'] = $thisFormObject->getVar('id_form'); // forms tab uses fid
+	$hasDelete = $gperm_handler->checkRight("delete_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId());
+	$formsInApp[$thisFormObject->getVar('id_form')]['hasdelete'] = $hasDelete;
+	// get the default screens for each form too
+	$defaultFormScreen = $thisFormObject->getVar('defaultform');
+	$defaultListScreen = $thisFormObject->getVar('defaultlist');
+	$defaultFormObject = $screen_handler->get($defaultFormScreen);
+	$defaultFormName = $defaultFormObject->getVar('title');
+	$defaultListObject = $screen_handler->get($defaultListScreen);
+	$defaultListName = $defaultListObject->getVar('title');
+	$formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenid'] = $defaultFormScreen;
+	$formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenid'] = $defaultListScreen;
+	$formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenname'] = $defaultFormName;
+	$formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenname'] = $defaultListName;
+	$formsInApp[$thisFormObject->getVar('id_form')]['lockedform'] = $thisFormObject->getVar('lockedform');		
+}
+
 
 $allRelationships = array();
 foreach($formObjects as $thisForm) {
 	$allRelationships = array_merge($allRelationships, $framework_handler->getFrameworksByForm($thisForm->getVar('id_form'))); // returns array of objects
 	if($aid) {
 		// package up the info we need for drawing the list of forms in the app
-		$formsInApp[$thisForm->getVar('id_form')]['selected'] = " selected";
+		$allForms[$thisForm->getVar('id_form')]['selected'] = " selected";
 	}
 }
 $relationships = array();
@@ -106,14 +128,21 @@ $common['name'] = $appName;
 // any declared sub key of $content, such as 'forms' will be assigned to accordions
 // accordion content is available as $sectionContent.foo
 
-$i=1;
+$i=0;
 if($aid > 0) {
+	$i++;
 	$adminPage['tabs'][$i]['name'] = "Settings";
 	$adminPage['tabs'][$i]['template'] = "db:admin/application_settings.html";
 	$adminPage['tabs'][$i]['content'] = $common;
 	$adminPage['tabs'][$i]['content']['description'] = $appDesc;
-	$adminPage['tabs'][$i]['content']['forms'] = $formsInApp;
+	$adminPage['tabs'][$i]['content']['forms'] = $allForms;
 }
+
+$i++;
+$adminPage['tabs'][$i]['name'] = "Forms";
+$adminPage['tabs'][$i]['template'] = "db:admin/application_forms.html";
+$adminPage['tabs'][$i]['content'] = $common;
+$adminPage['tabs'][$i]['content']['forms'] = $formsInApp; 
 
 $i++;
 $adminPage['tabs'][$i]['name'] = "Relationships";

@@ -87,7 +87,7 @@ if($_POST['formulize_admin_key'] == "new") {
   $defaultFormScreen->setVar('reloadblank', 0);
   $defaultFormScreen->setVar('savebuttontext', _formulize_SAVE);
   $defaultFormScreen->setVar('alldonebuttontext', _formulize_DONE);
-  $defaultFormScreen->setVar('title','Standard form screen');
+  $defaultFormScreen->setVar('title',"Regular '".$formObject->getVar('title')."'");
   $defaultFormScreen->setVar('fid',$fid);
   $defaultFormScreen->setVar('frid',0);
   $defaultFormScreen->setVar('type','form');
@@ -126,7 +126,7 @@ if($_POST['formulize_admin_key'] == "new") {
   $screen->setVar('usecalcs',_formulize_DE_CALCS);
   $screen->setVar('useadvcalcs',_formulize_DE_ADVCALCS);
   $screen->setVar('useexportcalcs',_formulize_DE_EXPORT_CALCS);
-  $screen->setVar('useadvsearch',_formulize_DE_ADVSEARCH);
+  $screen->setVar('useadvsearch','');
   $screen->setVar('useclone',_formulize_DE_CLONESEL);
   $screen->setVar('usedelete',_formulize_DE_DELETESEL);
   $screen->setVar('useselectall',_formulize_DE_SELALL);

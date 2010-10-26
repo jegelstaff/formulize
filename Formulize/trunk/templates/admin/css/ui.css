@@ -29,6 +29,10 @@ label {
 	padding-left: 38px;
 }
 
+#formlisting {
+	overflow: hidden;
+}
+
 /* override blockquote container */
 .ui-accordion-content blockquote {
 	margin: 0.5em 0;
