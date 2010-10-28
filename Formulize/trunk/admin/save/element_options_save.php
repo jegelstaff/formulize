@@ -93,10 +93,10 @@ if($ele_type == "subform") {
 }
 
 if($ele_type == "radio") {
-  $checked = $_POST['defaultoption'];
+  $checked = is_numeric($_POST['defaultoption']) ? intval($_POST['defaultoption']) : "";
   list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
   foreach($_POST['ele_value'] as $id=>$text) {
-    $processedValues['elements']['ele_value'][$text] = $id === $checked ? 1 : 0;
+    $processedValues['elements']['ele_value'][$text] = intval($id) === $checked ? 1 : 0;
   }
 }
 

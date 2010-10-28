@@ -53,6 +53,14 @@ if($formObject->getVar('lockedform')) {
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
   return;
 }
+
+if($screens['decolumns']=="") {
+  $screens['decolumns'] = serialize(array());
+}
+if($screens['hiddencolumns']=="") {
+  $screens['hiddencolumns'] = serialize(array());
+}
+
 $screen->setVar('useheadings',(array_key_exists('useheadings',$screens))?$screens['useheadings']:0);
 $screen->setVar('repeatheaders',$screens['repeatheaders']);
 $screen->setVar('usesearchcalcmsgs',$screens['usesearchcalcmsgs']);
@@ -64,7 +72,6 @@ $screen->setVar('useviewentrylinks',(array_key_exists('useviewentrylinks',$scree
 $screen->setVar('hiddencolumns',$screens['hiddencolumns']);
 $screen->setVar('decolumns',$screens['decolumns']);
 $screen->setVar('desavetext',$screens['desavetext']);
-
 
 if(!$screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".mysql_error();

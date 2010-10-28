@@ -2527,22 +2527,19 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 		$owner_groups_user_ids = formulize_getUsersByGroups($owner_groups_with_view, $member_handler); 
 		// get the intersection of users in the owners-groups-that-have-view_form-perm and groups with groupscope
 		$group_uids = array_intersect($group_user_ids, $owner_groups_user_ids);
-  
+
 		// remove the users from groups-with-a-specified-scope that doesn't-include-the-owner-groups, from the users that are part of dynamically generated groupscope (if a user has a specified scope, then that should override any dynamically generated scope, and if the specified scope does not include this entry's groups, then they need to be pulled)
 		$group_uids = array_diff((array)$group_uids, (array)$specified_different_group_uids);
-		
 		$group_uids = array_unique(array_merge((array)$specified_group_uids, (array)$group_uids));
-	
-    $uids_complete = array();
+
+    $uids_complete = array(0=>getEntryOwner($entry,$fid));
     if(count($group_uids) > 0 AND count($global_uids) > 0) {
-      $uids_complete = array_unique(array_merge((array)$group_uids, (array)$global_uids));
+      $uids_complete = array_unique(array_merge((array)$group_uids, (array)$global_uids, $uids_complete));
     } elseif(count($group_uids) > 0) {
-      $uids_complete = $group_uids;
+      $uids_complete = array_unique(array_merge((array)$group_uids, $uids_complete));
     } elseif(count($global_uids) > 0) {
-      $uids_complete = $global_uids;
-    } else {
-      continue; // no possible notification users found
-    }
+      $uids_complete = array_unique(array_merge((array)$global_uids, $uids_complete));
+    } 
 
 		$uids_conditions = array();
 		$saved_conditions = array();
@@ -2577,7 +2574,6 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 		} // end of each condition
 
 		// intersect all possible uids with the ones valid for this condition, and handle subscribing necessary users
-
 		$uids_real = compileNotUsers2($uids_conditions, $uids_complete, $notification_handler, $fid, $event, $mid);
 		// cannot bug out (return) if $uids_real is empty, since there are still the custom conditions to evaluate below
 

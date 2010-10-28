@@ -255,7 +255,6 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 	if((!$entry OR $entry=="proxy") AND $_POST[$entrykey]) { // $entrykey will only be set when *editing* an entry, not on new saves
 		$entry = $_POST[$entrykey];
 	}
-
 	// this is probably not necessary any more, due to architecture changes in Formulize 3
 	// formulize_newEntryIds is set when saving data
 	if(!$entry AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
@@ -293,17 +292,17 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 	}
 	$owner = ($cookie_entry AND $uid) ? $uid : getEntryOwner($entry, $fid); // if we're pulling a cookie value and there is a valid UID in effect, then assume this user owns the entry, otherwise, figure out who does own the entry
 	$owner_groups = $data_handler->getEntryOwnerGroups($entry);
-	
+
 	if($single AND !$entry AND !$overrideMulti AND $profileForm !== "new") { // only adjust the active entry if we're not already looking at an entry, and there is no overrideMulti which can be used to display a new blank form even on a single entry form -- useful for when multiple anonymous users need to be able to enter information in a form that is "one per user" for registered users. -- the pressence of a cookie on the hard drive of a user will override other settings
 		$entry = $single_result['entry'];
 		$owner = getEntryOwner($entry, $fid);
 		unset($owner_groups);
 		//$owner_groups =& $member_handler->getGroupsByUser($owner, FALSE);
 		$owner_groups = $data_handler->getEntryOwnerGroups($entry);
-	} 
+	}
+
 	if($entry == "proxy") { $entry = ""; } // convert the proxy flag to the actual null value expected for new entry situations (do this after the single check!)
 	$editing = is_numeric($entry); // will be true if there is an entry we're looking at already
-
 
 	if(!$scheck = security_check($fid, $entry, $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms AND !$profileForm) {
 		print "<p>" . _NO_PERM . "</p>";
@@ -377,6 +376,9 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 		foreach($synched_ids as $synched_id) {
 			$sub_entries[$synched_sfid][] = $synched_id;
 		}
+	}
+	if(count($sub_entries_synched)>0) {
+		formulize_updateDerivedValues($entry, $fid, $frid);
 	}
 
 	// special use of $settings added August 2 2006 -- jwe -- break out of form if $settings so indicates
@@ -1335,6 +1337,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 		foreach($notAllowedElements as $ni) {
 			// display these elements as hidden elements with the default value
 			switch($ni->getVar('ele_type')) {
+
 				case "radio":
 					if(!$entry) {
 						$indexer = 1;

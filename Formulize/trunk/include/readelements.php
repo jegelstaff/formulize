@@ -175,12 +175,12 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 	$formulize_formObject = $form_handler->get($elementFid);
 	$oneEntryPerGroupForm = $formulize_formObject->getVar('single') == "group" ? true : false;
 
-	foreach($entryData as $entry=>$values) { // for every entry in the form...
-		if(substr($entry, 0 , 3) == "new") { // handle entries in the form that are new...if there is more than one new entry in a dataset, they will be listed as new1, new2, new3, etc
-			if(strlen($entry) > 3) { $entry = "new"; } // remove the number from the end of any new entry flags that have numbers
+	foreach($entryData as $currentEntry=>$values) { // for every entry in the form...
+		if(substr($currentEntry, 0 , 3) == "new") { // handle entries in the form that are new...if there is more than one new entry in a dataset, they will be listed as new1, new2, new3, etc
+			if(strlen($currentEntry) > 3) { $currentEntry = "new"; } // remove the number from the end of any new entry flags that have numbers
 			foreach($creation_users as $creation_user) {
 				if(($creation_user == $uid AND $add_own_entry) OR ($creation_user != $uid AND $add_proxy_entries)) { // only proceed if the user has the right permissions
-					$writtenEntryId = formulize_writeEntry($values, $entry, "", $creation_user, "", false); // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
+					$writtenEntryId = formulize_writeEntry($values, $currentEntry, "", $creation_user, "", false); // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
 					if(isset($formulize_subformBlankCues[$elementFid])) {
 						$GLOBALS['formulize_subformCreateEntry'][$elementFid][] = $writtenEntryId;
 					}
@@ -196,9 +196,9 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 				}
 			}
 		} else { // handle existing entries...
-			$owner = getEntryOwner($entry, $elementFid);
+			$owner = getEntryOwner($currentEntry, $elementFid);
 			if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND ($update_other_entries OR ($update_own_entry AND $oneEntryPerGroupForm)))) { // only proceed if the user has the right permissions
-				$writtenEntryId = formulize_writeEntry($values, $entry);
+				$writtenEntryId = formulize_writeEntry($values, $currentEntry);
 				$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
 				$notEntriesList['update_entry'][$elementFid][] = $writtenEntryId; // log the notification info
 				writeOtherValues($writtenEntryId, $elementFid); // write the other values for this entry
