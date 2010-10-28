@@ -13,12 +13,12 @@
 
 	 <div class="form-item">
 	<fieldset>
-		<legend>Are the options linked from another form?</legent>
+		<legend>What are the options the user can choose from?</legent>
 			<div class="form-radios">
-			      <input type="radio" id="yes" name="linked_yesno" value="1"<{if $content.islinked eq 1}> checked="checked"<{/if}>/>Yes, from this element in this form: <{$content.linkedoptions}>
+			      <input type="radio" id="yes" name="linked_yesno" value="1"<{if $content.islinked eq 1}> checked="checked"<{/if}>/>Use the values that people have entered in this form element: <{$content.linkedoptions}>
 		      </div>
 		      <div class="form-radios">
-			      <input type="radio" id="no" name="linked_yesno" value="0"<{if $content.islinked eq 0}> checked="checked"<{/if}>/>No, use the options specified below:
+			      <input type="radio" id="no" name="linked_yesno" value="0"<{if $content.islinked eq 0}> checked="checked"<{/if}>/>Use the options specified below:
 		      </div>
 				<{include file="db:admin/element_optionlist.html"}>					
 	</div>

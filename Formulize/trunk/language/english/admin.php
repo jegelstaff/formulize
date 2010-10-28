@@ -129,7 +129,7 @@ define("_MI_formulize_DELIMETER_CUSTOM","Custom HTML");
 //added to handle the formlink part of the selectbox element -- jwe 7/29/04
 define("_AM_ELE_FORMLINK", "Options linked from another form");
 define("_AM_ELE_FORMLINK_DESC","Select a field in another form and use those entries for the options in this Select Box. (This setting overrides any options specified above.)");
-define("_AM_FORMLINK_NONE", "No link -- above options in effect");
+define("_AM_FORMLINK_NONE", "No link -- options below are in effect");
 define("_AM_ELE_FORMLINK_TEXTBOX", "Associate values with another form element");
 define("_AM_ELE_FORMLINK_DESC_TEXTBOX","If you select another form element here, then text that users type into this element will be compared with values entered in the other element.  If a match is found then the text users type into this element will be clickable in the \"List of Entries\" screen, and will take users to the matching entry in the other form.");
 define("_AM_FORMLINK_NONE_TEXTBOX", "No association in effect");
