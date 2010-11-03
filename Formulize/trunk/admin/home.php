@@ -76,13 +76,17 @@ function readApplicationData($aid, $apps) {
     $defaultFormScreen = $thisFormObject->getVar('defaultform');
     $defaultListScreen = $thisFormObject->getVar('defaultlist');
     $defaultFormObject = $screen_handler->get($defaultFormScreen);
-    $defaultFormName = $defaultFormObject->getVar('title');
     $defaultListObject = $screen_handler->get($defaultListScreen);
-    $defaultListName = $defaultListObject->getVar('title');
-    $apps[$i]['content']['forms'][$x]['defaultformscreenid'] = $defaultFormScreen;
-    $apps[$i]['content']['forms'][$x]['defaultlistscreenid'] = $defaultListScreen;
-    $apps[$i]['content']['forms'][$x]['defaultformscreenname'] = $defaultFormName;
-    $apps[$i]['content']['forms'][$x]['defaultlistscreenname'] = $defaultListName;
+    if(is_object($defaultFormObject)) {
+      $defaultFormName = $defaultFormObject->getVar('title');
+      $apps[$i]['content']['forms'][$x]['defaultformscreenid'] = $defaultFormScreen;
+      $apps[$i]['content']['forms'][$x]['defaultformscreenname'] = $defaultFormName;
+    }
+    if(is_object($defaultListObject)) {
+      $defaultListName = $defaultListObject->getVar('title');
+      $apps[$i]['content']['forms'][$x]['defaultlistscreenid'] = $defaultListScreen;
+      $apps[$i]['content']['forms'][$x]['defaultlistscreenname'] = $defaultListName;
+    }
     $x++;
   }
   $i++;
