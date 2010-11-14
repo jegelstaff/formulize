@@ -84,7 +84,7 @@ class formulizeElementRenderer{
 
 		// call the text sanitizer, first try to convert HTML chars, and if there were no conversions, then do a textarea conversion to automatically make links clickable
 		$ele_caption = trans($ele_caption); 
-		$htmlCaption = $myts->undoHtmlSpecialChars($ele_caption);
+		$htmlCaption = htmlspecialchars_decode($myts->undoHtmlSpecialChars($ele_caption)); // do twice, because we need to handle &amp;lt; and other stupid stuff...do first time through XOOPS myts just because it might be doing a couple extra things that are useful...can probably just use PHP's own filter twice, not too big a deal
 		if($htmlCaption == $ele_caption) {
         	$ele_caption = $myts->displayTarea($ele_caption);
 		} else {

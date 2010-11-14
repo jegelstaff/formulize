@@ -983,7 +983,7 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 }
 
 // this function draws in the UI for sub links
-function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption="", $customElements="", $defaultblanks = 0, $showViewButtons = 1) {
+function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption="", $customElements="", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings=0) {
 
 	global $xoopsDB, $nosubforms;
 	$GLOBALS['framework'] = $frid;
@@ -1107,7 +1107,11 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		foreach($customElements as $custEle) {
 			$elementsToDraw[] = $custEle;
 			$headerq = q("SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id=" . intval($custEle));
-			$headersToDraw[] = $headerq[0]['ele_colhead'] ? $headerq[0]['ele_colhead'] : $headerq[0]['ele_caption'];
+			if($captionsForHeadings) {
+				$headersToDraw[] = $headerq[0]['ele_caption'];
+			} else {
+				$headersToDraw[] = $headerq[0]['ele_colhead'] ? $headerq[0]['ele_colhead'] : $headerq[0]['ele_caption'];
+			}
 		}
 	} else {
 		$subHeaderList = getHeaderList($sfid);
@@ -1530,7 +1534,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$GLOBALS['sfidsDrawn'][] = $thissfid;
 				$customCaption = $i->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
-				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3]); // 2 is the number of default blanks, 3 is whether to show the view button or not
+				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not
 				if(isset($subUICols['single'])) {
 					$form->insertBreak($subUICols['single'], "even");
 				} else {

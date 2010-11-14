@@ -1330,13 +1330,13 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
 							 $handle = $term;
           } else {
 							 //print "chq: SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_colhead = \"" . mysql_real_escape_string($term) . "\"";
-               $colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_colhead = \"" . mysql_real_escape_string($term) . "\"");
+               $colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_colhead = \"" . mysql_real_escape_string($term) . "\" OR ele_colhead LIKE '%]".mysql_real_escape_string($term)."[/%')");
                if(count($colhead_query) > 0) {
 										$handle = $colhead_query[0]['ele_handle'];
 										$foundElementId = $colhead_query[0]['ele_id'];
                } else {
 										//print "capq: SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_caption = \"" . mysql_real_escape_string($term) . "\"";
-                    $caption_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_caption = \"" . mysql_real_escape_string($term) . "\"");
+                    $caption_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_caption = \"" . mysql_real_escape_string($term) . "\" OR ele_caption LIKE '%]".mysql_real_escape_string($term)."[/%')");
                     if(count($caption_query) > 0 ) {
 												 $handle = $caption_query[0]['ele_handle'];
 												 $foundElementId = $caption_query[0]['ele_id'];

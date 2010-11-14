@@ -160,6 +160,9 @@ define("_AM_ELE_SUBFORM_NONE", "No subforms available - define a framework first
 define("_AM_ELE_SUBFORM_ELEMENTS", "Which elements should be displayed as part of the subform interface?");
 define("_AM_ELE_SUBFORM_ELEMENTS_DESC", "About three or four elements from the subform can be displayed comfortably as part of the main form.  More than four elements starts to make the interface cluttered.  You can choose which elements you want to display by selecting them from this list.  Users can always modify all elements by clicking a button next to each subform entry that it listed in the main form.<br><br>You do not need to choose the element that joins the subform to the mainform; Formulize will automatically populate that element with the correct values for you.");
 define("_AM_ELE_SUBFORM_REFRESH", "Refresh elements list to match selected form");
+define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS", "Should each element be labeled with its column heading or caption?");
+define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS", "Column heading (captions will be used for elements with no column heading");
+define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS", "Caption");
 define("_AM_ELE_SUBFORM_BLANKS", "How many blank spaces should be shown for this subform when the page first loads?");
 
 // grids

@@ -96,14 +96,18 @@ if($ele_type == "radio") {
   $checked = is_numeric($_POST['defaultoption']) ? intval($_POST['defaultoption']) : "";
   list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
   foreach($_POST['ele_value'] as $id=>$text) {
-    $processedValues['elements']['ele_value'][$text] = intval($id) === $checked ? 1 : 0;
+		if($text !== "") {
+			$processedValues['elements']['ele_value'][$text] = intval($id) === $checked ? 1 : 0;
+		}
   }
 }
 
 if($ele_type == "checkbox") {
   list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
   foreach($_POST['ele_value'] as $id=>$text) {
-    $processedValues['elements']['ele_value'][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
+		if($text !== "") {
+      $processedValues['elements']['ele_value'][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
+		}
   }
 }
 
@@ -117,11 +121,10 @@ if($ele_type == "select") {
   } else {
     list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
     foreach($_POST['ele_value'] as $id=>$text) {
-			if($text) {
+			if($text !== "") {
 				$processedValues['elements']['ele_value'][2][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
 			}
     }
-    
   }
   if($_POST['elements_listordd']) {
     $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0] > 1 ? intval($processedValues['elements']['ele_value'][0]) : 1;

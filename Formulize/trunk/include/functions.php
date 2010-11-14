@@ -3597,12 +3597,16 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 
 // THIS FUNCTION TAKES A VALUE AND THE UITEXT FOR THE ELEMENT, AND RETURNS THE UITEXT IN PLACE OF THE "DATA" TEXT
 function formulize_swapUIText($value, $uitexts=array()) {
+	$originalValue = $value;
   // if value is an array, it has a key called 'value', which needs to be swapped
   if(is_array($value)) {
     $value['value'] = isset($uitexts[$value['value']]) ? $uitexts[$value['value']] : $value['value'];
   } else {
     $value = isset($uitexts[$value]) ? $uitexts[$value] : $value;
   }
+	if($value === "") {
+		$value = $originalValue; // don't return "";
+	}
   return $value;
 }
 

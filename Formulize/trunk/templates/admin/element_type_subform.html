@@ -15,6 +15,15 @@
 			</select>
 			<div class="description"><{$smarty.const._AM_ELE_SUBFORM_ELEMENTS_DESC}></div>
 		</div>
+		<div class="form-item">
+	    <label for="element-ele_value[4]"><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS}></label>
+			<div class="form-radios">
+				<label for="elements-ele_value[4]-0"><input type="radio" id="elements-ele_value[4]-0" name="elements-ele_value[4]" value="0"<{if $content.ele_value[4] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS}></label>
+			</div>
+			<div class="form-radios">
+				<label for="elements-ele_value[4]-1"><input type="radio" id="elements-ele_value[4]-1" name="elements-ele_value[4]" value="1"<{if $content.ele_value[4] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS}></label>
+			</div>
+    </div>
     <div class="form-item">
 	    <label for="element-subformblanks"><{$smarty.const._AM_ELE_SUBFORM_BLANKS}></label>
 	    <input type="text" id="element-subformblanks" name="elements-ele_value[2]" value="<{$content.ele_value[2]}>" size="2" maxlength="2"/>
