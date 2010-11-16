@@ -99,10 +99,6 @@
 
   function runSaveEvent() {
     $(".admin-ui").fadeTo(1,0.5);
-    $("#tabs").fadeTo(1,0.5);
-    $(".tab-content").fadeTo(1,0.5);
-    $(".ui-tabs-nav").fadeTo(1,0.5);
-    $(".ui-tabs-nav li").fadeTo(1,0.5);
     var formulize_formlist = $(".formulize-admin-form");
     saveCounter = 0;
     saveTarget = 0;
@@ -142,10 +138,6 @@
           eval(redirect);
         } else {
           $(".admin-ui").fadeTo(1,1);
-	  $("#tabs").fadeTo(1,1);
-	  $(".tab-content").fadeTo(1,1);
-	  $(".ui-tabs-nav").fadeTo(1,1);
-	  $(".ui-tabs-nav li").fadeTo(1,1);
         }
       } else { // if there's still forms to do, then send the next one...must do sequentially to avoid race conditions
         sendFormData(formdata[saveCounter], ele_id);
