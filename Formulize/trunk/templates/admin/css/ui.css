@@ -140,6 +140,7 @@ div.accordion-box .no-bullets {
 
 div.admin-ui, p.versionnumber {
 	margin-top: 2em;
+	position: static;
 }
 
 .admin-ui a {
@@ -153,6 +154,10 @@ div.admin-ui, p.versionnumber {
 
 .admin-ui blockquote {
 	text-align: left;
+}
+
+#tabs, .tab-content, .ui-tabs-nav, .ui-tabs-nav li {
+	position: static;
 }
 
 div#tabs li {

@@ -3,7 +3,7 @@
 <{* securitytoken should be part of the form *}>
 <{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
 
-<form id="form-<{$number}>" name="formulize-admin-form">
+<form id="form-<{$number}>" class="formulize-admin-form">
 <{$securitytoken}>
 <input type="hidden" name="formulize_admin_handler" value="screen_form_options">
 <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">

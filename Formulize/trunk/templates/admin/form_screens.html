@@ -3,7 +3,7 @@
 <{* securitytoken should be part of the form *}>
 <{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
 
-<form name="formulize-admin-form">
+<form class="formulize-admin-form">
 <{$securitytoken}>
 <input type="hidden" name="formulize_admin_handler" value="form_screens">
 <input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
@@ -78,8 +78,11 @@ $(".configscreen").click(function() {
 })
 
 $(".deletescreen").click(function() {
-	$("[name=deletescreen]").val($(this).attr('target'));
-	$(".savebutton").click();
+	var answer = confirm("Are you sure you want to delete this screen?  All configuration settings for this screen will be lost!");
+	if(answer) {
+		$("[name=deletescreen]").val($(this).attr('target'));
+		$(".savebutton").click();
+	}
 	return false;
 })
 
