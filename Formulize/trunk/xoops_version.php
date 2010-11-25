@@ -356,6 +356,3 @@ $modversion['notification']['event'][3]['description'] = _MI_formulize_NOTIFY_DE
 $modversion['notification']['event'][3]['mail_template'] = 'form_delentry';
 $modversion['notification']['event'][3]['mail_subject'] = _MI_formulize_NOTIFY_DELENTRY_MAILSUB;
 
-
-
-?>
