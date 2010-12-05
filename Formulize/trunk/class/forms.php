@@ -317,7 +317,7 @@ class formulizeFormsHandler {
 		$result = $this->db->query("SHOW COLUMNS FROM " . mysql_real_escape_string($_POST['tablename']));
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$element_order = 0;
-		while($row = mysql_fetch_row($result)) {
+		while($row = $xoopsDB->fetchRow($result)) {
 			$element =& $element_handler->create();
 			$element->setVar('ele_caption', str_replace("_", " ", $row[0])); 
 			$element->setVar('ele_desc', "");
@@ -445,11 +445,11 @@ class formulizeFormsHandler {
 		global $xoopsDB;
 		// build SQL for new table
 		$newTableSQL = "CREATE TABLE " . $xoopsDB->prefix("formulize_" . $fid->getVar('id_form')) . " (";
-		$newTableSQL .= "entry_id int(7) unsigned NOT NULL auto_increment,";
-		$newTableSQL .= "creation_datetime Datetime NULL default NULL, ";
-		$newTableSQL .= "mod_datetime Datetime NULL default NULL, ";
-		$newTableSQL .= "creation_uid int(7) default '0',";
-		$newTableSQL .= "mod_uid int(7) default '0',";
+		$newTableSQL .= "`entry_id` int(7) unsigned NOT NULL auto_increment,";
+		$newTableSQL .= "`creation_datetime` Datetime NULL default NULL, ";
+		$newTableSQL .= "`mod_datetime` Datetime NULL default NULL, ";
+		$newTableSQL .= "`creation_uid` int(7) default '0',";
+		$newTableSQL .= "`mod_uid` int(7) default '0',";
 		foreach($fid->getVar('elementHandles') as $elementId=>$thisHandle) {
 						if($elementTypes[$elementId] == "areamodif" OR $elementTypes[$elementId] == "ib" OR $elementTypes[$elementId] == "sep" OR $elementTypes[$elementId] == "grid" OR $elementTypes[$elementId] == "subform") { continue; } // do not attempt to create certain types of fields since they don't live in the db!
 						if($map !== false) {

@@ -54,7 +54,7 @@ if(!is_numeric($_GET['title'])) {
 	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
 
 	if ( $res ) {
-		  while ( $row = mysql_fetch_row ( $res ) ) {
+		  while ( $row = $xoopsDB->fetchRow ( $res ) ) {
 		    $id_form = $row[0];
   		}
 	}

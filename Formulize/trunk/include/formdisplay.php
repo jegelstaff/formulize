@@ -72,9 +72,13 @@ function getParentLinks($fid, $frid) {
 // this function returns the captions and values that are in the DB for an existing entry
 // $elements is used to specify a shortlist of elements to display.  Used in conjunction with the array option for $formform
 // $formulize_mgr is not required any longer!
-function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mid, $uid, $owner) {
+function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mid, $uid, $owner, $groupEntryWithUpdateRights) {
 
 	if(!$fid) { // fid is required
+		return "";
+	}
+	
+	if(!is_numeric($entry) OR !$entry) {
 		return "";
 	}
 
@@ -142,16 +146,16 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mi
 			//$dgq .= " AND ele_disabled NOT LIKE '%,$thisgroup,%'"; // not sure that this is necessary
 		}
 	
-		// exclude private elements unless the user has view_private_elements permission
+		// exclude private elements unless the user has view_private_elements permission, or update_entry permission on a one-entry-per group entry
 		$private_filter = "";
 		$gperm_handler =& xoops_gethandler('groupperm');
 		$view_private_elements = $gperm_handler->checkRight("view_private_elements", $fid, $groups, $mid);
 	
-		if(!$view_private_elements AND $uid != $owner) { 
+		if(!$view_private_elements AND $uid != $owner AND !$groupEntryWithUpdateRights) {
 			$private_filter = " AND ele_private=0";
 		} 
 	
-		$allowedquery = q("SELECT ele_caption, ele_disabled, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$fid AND (ele_display=1 $gq) $private_filter"); // AND (ele_disabled != 1 $dgq)"); // not sure that filtering for disabled elements is necessary
+		$allowedquery = q("SELECT ele_caption, ele_disabled, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$fid AND (ele_display='1' $gq) $private_filter"); // AND (ele_disabled != 1 $dgq)"); // not sure that filtering for disabled elements is necessary
 		$allowedDisabledStatus = array();
 		$allowedhandles = array();
 		foreach($allowedquery as $onecap) {
@@ -218,6 +222,8 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 	$elements_allowed = "";
 	if(is_array($formframe)) {
 		$elements_allowed = $formframe['elements'];
+		$printViewPages = isset($formframe['pages']) ? $formframe['pages'] : "";
+		$printViewPageTitles = isset($formframe['pagetitles']) ? $formframe['pagetitles'] : "";
 		$formframetemp = $formframe['formframe'];
 		unset($formframe);
 		$formframe = $formframetemp;
@@ -512,15 +518,21 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				$oneToOneLinksMade = true;
 			}
 			
+
+				if($single == "group" AND $update_own_entry AND $entry == $single_result['entry']) {
+					$groupEntryWithUpdateRights = true;
+					$update_other_entries = true;
+				}
+
 	
-					unset($prevEntry);
-					if($entries[$this_fid]) { 	// if there is an entry, then get the data for that entry
-						$prevEntry = getEntryValues($entries[$this_fid][0], $formulize_mgr, $groups, $this_fid, $elements_allowed, $mid, $uid, $owner); 
-					}
-	
-					// display the form
-	
-					//get the form title: (do only once)
+				unset($prevEntry);
+				if($entries[$this_fid]) { 	// if there is an entry, then get the data for that entry
+					$prevEntry = getEntryValues($entries[$this_fid][0], $formulize_mgr, $groups, $this_fid, $elements_allowed, $mid, $uid, $owner, $groupEntryWithUpdateRights); 
+				}
+
+				// display the form
+
+				//get the form title: (do only once)
 			$firstform = 0;
 			if(!$form) {
 	
@@ -529,10 +541,6 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 						$form = new XoopsThemeForm($title, 'formulize', "$currentURL", "post", true);
 				$form->setExtra("enctype='multipart/form-data'"); // impératif!
 	
-				if($single == "group" AND $update_own_entry AND $entry == $single_result['entry']) {
-					$update_other_entries = true;
-				}
-
 				if(is_array($settings)) { $form = writeHiddenSettings($settings, $form); }
 				$form->addElement (new XoopsFormHidden ('ventry', $settings['ventry'])); // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
 	
@@ -633,7 +641,7 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 
 			formulize_benchmark("Before Compile Elements.");
 
-					$form = compileElements($this_fid, $form, $formulize_mgr, $prevEntry, $entries[$this_fid][0], $go_back, $parentLinks[$this_fid], $owner_groups, $groups, $overrideValue, $elements_allowed, $profileForm, $frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen);
+					$form = compileElements($this_fid, $form, $formulize_mgr, $prevEntry, $entries[$this_fid][0], $go_back, $parentLinks[$this_fid], $owner_groups, $groups, $overrideValue, $elements_allowed, $profileForm, $frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen, $printViewPages, $printViewPageTitles);
 
 			formulize_benchmark("After Compile Elements.");
 	
@@ -687,15 +695,15 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 		// draw in the submitbutton if necessary
 		if($entry) { // existing entry, if it's their own and they can update their own, or someone else's and they can update someone else's
 			if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries)) {
-				$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall); //nmc 2007.03.24 - added $printall
+				$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
 			} else {
-				$form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall); //nmc 2007.03.24 - added $printall
+				$form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
 			}
 		} else { // new entry
 			if($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
-				$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall); //nmc 2007.03.24 - added $printall
+				$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
 			} else {
-				$form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall); //nmc 2007.03.24 - added $printall
+				$form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
 			}
 		}
 	
@@ -866,7 +874,7 @@ function addProfileFields($form, $profileForm) {
 
 
 // add the submit button to a form
-function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="", $allDoneOverride=false, $printall=0) { //nmc 2007.03.24 - added $printall
+function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="", $allDoneOverride=false, $printall=0, $screen=null) { //nmc 2007.03.24 - added $printall
 
 	if($printall == 2) { // 2 is special setting in multipage screens that means do not include any printable buttons of any kind
 		return $form;
@@ -935,6 +943,19 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 			print $GLOBALS['xoopsSecurity']->getTokenHTML();
 		}
 		
+		$currentPage = "";
+		$screenid = "";
+    if($screen) {
+		  $screenid = $screen->getVar('sid');
+			// check for a current page setting
+			if(isset($settings['formulize_currentPage'])) {
+				$currentPage = $settings['formulize_currentPage'];
+			}
+		}
+    
+		print "<input type=hidden name=screenid value=".$screenid.">";
+		print "<input type=hidden name=currentpage value=".$currentPage.">";
+
 		print "<input type=hidden name=lastentry value=".$cur_entry.">";
 		if($go_back['form']) { // we're on a sub, so display this form only
 			print "<input type=hidden name=formframe value=".$fids[0].">";	
@@ -1311,7 +1332,7 @@ function addProxyList($form, $groups, $member_handler, $gperm_handler, $fid, $mi
 //this function takes a formid and compiles all the elements for that form
 //elements_allowed is NOT based off the display values.  It is based off of the elements that are specifically designated for the current displayForm function (used to display parts of forms at once)
 // $title is the title of a grid that is being displayed
-function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_back, $parentLinks, $owner_groups, $groups, $overrideValue="", $elements_allowed="", $profileForm="", $frid="", $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen=null) {
+function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_back, $parentLinks, $owner_groups, $groups, $overrideValue="", $elements_allowed="", $profileForm="", $frid="", $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen=null, $printViewPages="", $printViewPageTitles="") {
 	
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/elementdisplay.php';
 	
@@ -1419,14 +1440,39 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	}
 	$criteria->setSort('ele_order');
 	$criteria->setOrder('ASC');
-	$elements =& $formulize_mgr->getObjects2($criteria,$fid);
+	$elements =& $formulize_mgr->getObjects2($criteria,$fid,true); // true makes the keys of the returned array be the element ids
 	$count = 0;
 	$gridCounter = array();
 	$inGrid = 0;
 	
 	formulize_benchmark("Ready to loop elements.");
+
+	// set the array to be used as the structure of the loop, either the passed in elements in order, or the elements as gathered from the DB	
+	if(!is_array($elements_allowed)) {
+		$element_order_array = $elements;
+	} else {
+		$element_order_array = $elements_allowed;
+	}
 	
-	foreach( $elements as $i ){
+	// if this is a printview page,  
+	
+	
+	foreach($element_order_array as $thisElement) {
+		if(is_numeric($thisElement)) { // if we're doing the order based on passed in element ids...
+			if(isset($elements[$thisElement])) {
+				$i = $elements[$thisElement]; // set the element object for this iteration of the loop
+			} else {
+				continue; // do not try to render elements that don't exist in the form!! (they might have been deleted from a multipage definition, or who knows what)
+			}
+			$this_ele_id = $thisElement; // set the element ID number
+		} else { // else...we're just looping through the elements directly from the DB
+			$i = $thisElement; // set the element object
+			$this_ele_id = $i->getVar('ele_id'); // get the element ID number
+		}
+	
+	/*
+	 // old code that is superseded by the new element_order_array stuff above
+	 foreach( $elements as $i ){
 
 		$this_ele_id = $i->getVar('ele_id');
 
@@ -1435,7 +1481,21 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				continue;
 			}
 		}
-
+  */
+	
+		// check if we're at the start of a page, when doing a printable view of all pages (only situation when printViewPageTitles and printViewPages will be present), and if we are, then put in a break for the page titles
+		if($printViewPages) {
+			if(!$currentPrintViewPage) {
+				$currentPrintViewPage = 1;
+			}
+			while(!in_array($this_ele_id, $printViewPages[$currentPrintViewPage]) AND $currentPrintViewPage <= count($printViewPages)) {
+				$currentPrintViewPage++;
+			}
+			if($this_ele_id == $printViewPages[$currentPrintViewPage][0]) {
+				$form->insertBreak("<div id=\"formulize-printpreview-pagetitle\">" . $printViewPageTitles[$currentPrintViewPage] . "</div>", "head");
+			}
+		}
+	
 		// check if this element is included in a grid, and if so, skip it
 		// $inGrid will be a number indicating how many times we have to skip things
 		if($inGrid OR isset($gridCounter[$this_ele_id])) {

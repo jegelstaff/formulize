@@ -49,10 +49,11 @@ function connect($host, $username, $password, $db) {
 // WARNING:  HIGHLY INEFFICIENT IN TERMS OF MEMORY USAGE!
 // returns a multidimensioned array where the first index is the row of the result and the second index is the field name in that row
 function go($query, $keyfield="") {
+	global $xoopsDB;
 	//print "$query"; // debug code
 	$result = array();
-	if($res = mysql_query($query)) { // appears to work OK inside Drupal.  Is this because there is always a previous query to the XOOPS DB before we get to this stage, and so it is pointing to the right place when this fires?  Maybe this should be rewritten to explicitly check for the pressence of $xoopsDB, and use that if it is found.
-		while ($array = mysql_fetch_array($res)) {
+	if($res = $xoopsDB->query($query)) { // appears to work OK inside Drupal.  Is this because there is always a previous query to the XOOPS DB before we get to this stage, and so it is pointing to the right place when this fires?  Maybe this should be rewritten to explicitly check for the pressence of $xoopsDB, and use that if it is found.
+		while ($array = $xoopsDB->fetchArray($res)) {
 			if($keyfield) {
 				$result[$array[$keyfield]] = $array;
 			} else {
@@ -92,6 +93,8 @@ function extract_makeUidFilter($users) {
 // id_req and ffcaption only used for converting 'other' values
 function prepvalues($value, $field, $entry_id) { 
 
+  global $xoopsDB;
+
   // return metadata values without putting them in an array
   if($field == "creation_uid" OR $field == "mod_uid" OR $field == "creation_datetime" OR $field == "mod_datetime" OR $field=="email" OR $field=="user_viewemail") {
      return $value;
@@ -115,8 +118,8 @@ function prepvalues($value, $field, $entry_id) {
   // decrypt encrypted values...pretty inefficient to do this here, one query in the DB per value to decrypt them....but we'd need proper select statements with field names specified in them, instead of *, in order to be able to swap in the AES DECRYPT at the time the data is retrieved in the master query
 	if($elementArray['ele_encrypt']) {		 
 		 $decryptSQL = "SELECT AES_DECRYPT('".mysql_real_escape_string($value)."', '".getAESPassword()."')";
-		 if($decryptResult = mysql_query($decryptSQL)) {
-					$decryptRow = mysql_fetch_row($decryptResult);
+		 if($decryptResult = $xoopsDB->query($decryptSQL)) {
+					$decryptRow = $xoopsDB->fetchRow($decryptResult);
 					return $decryptRow[0];
 		 } else {
 					return "";
@@ -136,11 +139,11 @@ function prepvalues($value, $field, $entry_id) {
 					} else {
 							 $sql = "SELECT `".$sourceMeta[1]."` FROM ".DBPRE."formulize_".$sourceMeta[0]." WHERE entry_id IN (".trim($value, ",").") ORDER BY entry_id";		 
 					}
-          if(!$res = mysql_query($sql)) {
+          if(!$res = $xoopsDB->query($sql)) {
                print "Error: could not retrieve the source values for a linked selectbox during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
           } else {
                $value = "";
-               while($row = mysql_fetch_array($res)) {
+               while($row = $xoopsDB->fetchArray($res)) {
                     $value .= "*=+*:" . $row[0];
                }
           }
@@ -200,6 +203,8 @@ function microtime_float()
 
 function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $cacheKey="") { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
 
+     global $xoopsDB;
+
      if(substr($filter, 0, 7) == "SELECT ") { // a proper SQL statement has been passed in so use that instead of constructing one...initially added for the new export feature
 	  $result = dataExtraction(intval($framework), intval($form), $filter);
 	  return $result;
@@ -222,8 +227,8 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
      // check to see if this form is a "tableform", ie: a reference to plain db table
      $isTableForm = false;
      if(is_numeric($form)) {
-          $checkTableForm = mysql_query("SELECT tableform, desc_form FROM ".DBPRE."formulize_id WHERE id_form=$form");
-          $tableFormRow = mysql_fetch_row($checkTableForm);
+          $checkTableForm = $xoopsDB->query("SELECT tableform, desc_form FROM ".DBPRE."formulize_id WHERE id_form=$form");
+          $tableFormRow = $xoopsDB->fetchRow($checkTableForm);
           $isTableForm = $tableFormRow[0] == "" ? false : true;
      }
      
@@ -259,6 +264,7 @@ function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $
 
 function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived=false, $id_reqsOnly=false) {
 
+     global $xoopsDB;
 
      if(isset($_GET['debug'])) { $time_start = microtime_float(); }
      
@@ -562,8 +568,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       $countMasterResults .= "$userJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause "; 
          $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
 				 $countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
-	       if($countMasterResultsRes = mysql_query($countMasterResults)) {
-           $countMasterResultsRow = mysql_fetch_row($countMasterResultsRes);
+	       if($countMasterResultsRes = $xoopsDB->query($countMasterResults)) {
+           $countMasterResultsRow = $xoopsDB->fetchRow($countMasterResultsRes);
            if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
              return $countMasterResultsRow[0];
            } else {
@@ -575,7 +581,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 						 } 
            }
 	       } else {
-		       exit("Error: could not count master results.<br>".mysql_error()."<br>SQL:$countMasterResults<br>");
+		       exit("Error: could not count master results.<br>".$xoopsDB->error()."<br>SQL:$countMasterResults<br>");
 	       }
          
          // now, if there's framework in effect, get the entry ids of the entries in the main form that match the criteria, so we can use a specific query for them instead of the order clause in the master query
@@ -595,15 +601,20 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                  $thisOrderByClause = $orderByClause;
               }
               $entryIdQuery .= " $thisOrderByClause $limitClause";
-              $entryIdResult = mysql_query($entryIdQuery);
+              $entryIdResult = $xoopsDB->query($entryIdQuery);
               $start = true;
-              while($entryIdValue = mysql_fetch_array($entryIdResult)) {
+              while($entryIdValue = $xoopsDB->fetchArray($entryIdResult)) {
                     $limitByEntryId .= !$start ? " OR " : "";
                     $limitByEntryId .= "main.entry_id = " . $entryIdValue['main_entry_id'];
                     $start = false;
               }
               $limitByEntryId .= ") ";
-              $limitClause = ""; // nullify the existing limitClause since we don't want to use it in the actual query
+	      if(!$start) {
+		    $limitClause = ""; // nullify the existing limitClause since we don't want to use it in the actual query 
+	      } else {
+		    $limitByEntryId = "";
+	      }
+              
          }         
 	  
 	  // only drawback in this SQL right now is it does not support one to one relationships in the query, since they are essentially joins on the entry_id and form id through the one_to_one table
@@ -650,7 +661,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
 		 formulize_benchmark("Before query");
 		 
-     $masterQueryRes = mysql_query($masterQuerySQL);
+     $masterQueryRes = $xoopsDB->query($masterQuerySQL);
      
 		 formulize_benchmark("After query");
      
@@ -663,10 +674,10 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      $sql = "SELECT t1.ele_value, t2.desc_form, t1.ele_handle FROM ".DBPRE."formulize as t1, ".DBPRE."formulize_id as t2 WHERE t1.ele_type='derived' AND t1.id_form='$fid' AND t1.id_form=t2.id_form ORDER BY t1.ele_order";     
      
      $derivedFieldMetadata = array();
-     if($res = mysql_query($sql)) {
-          if(mysql_num_rows($res)>0) {
+     if($res = $xoopsDB->query($sql)) {
+          if($xoopsDB->getRowsNum($res)>0) {
                $multipleIndexer = array();
-               while($row = mysql_fetch_row($res)) {
+               while($row = $xoopsDB->fetchRow($res)) {
                     $ele_value = unserialize($row[0]); // derived fields have ele_value as an array with only one element (that was done to future proof the data model, so we could add other things to ele_value if necessary)
                     if(!isset($multipleIndexer[$row[1]])) { $multipleIndexer[$row[1]] = 0; }
                     $derivedFieldMetadata[$row[1]][$multipleIndexer[$row[1]]]['formula'] = $ele_value[0]; // use row[1] (the form handle) as the key, so we can eliminate some looping later on
@@ -686,7 +697,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      $creationUidLog = array();
      $prevMainId = "";
 		 //formulize_benchmark("About to prepare results.");
-     while($masterQueryArray = mysql_fetch_assoc($masterQueryRes)) {
+     while($masterQueryArray = $xoopsDB->fetchArray($masterQueryRes)) {
 					//formulize_benchmark("Starting to process one entry.");
           foreach($masterQueryArray as $field=>$value) {
                //formulize_benchmark("Starting to process one value");
@@ -814,7 +825,7 @@ function formulize_getFormIdFromName($nameHandle) {
 // THIS FUNCTION BREAKS DOWN THE FILTER STRING INTO ITS COMPONENTS.  TAKES EVERYTHING UP TO THE TOP LEVEL ARRAY SYNTAX.
 // $linkfids is the linked fids in order that they appear in the SQL query
 function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
-     
+     global $xoopsDB;
      if($filtertemp == "") { return array(0=>array(), "", ""); }
      
      $formFieldFilterMap = array();
@@ -975,10 +986,10 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                          } else {
                               $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uid ".$operator.$quotes.$likebits.$ifParts[1].$likebits.$quotes;
                          }
-                         $preSearchResult = mysql_query($preSearch);
-                         if(mysql_num_rows($preSearchResult)>0) {
+                         $preSearchResult = $xoopsDB->query($preSearch);
+                         if($xoopsDB->getRowsNum($preSearchResult)>0) {
 															$nameSearchStart = true;
-                              while($preSearchArray = mysql_fetch_array($preSearchResult)) {
+                              while($preSearchArray = $xoopsDB->fetchArray($preSearchResult)) {
 																	 if(!$nameSearchStart) {
 																				$newWhereClause .= "OR";
 																	 } else {
@@ -1078,6 +1089,7 @@ function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formField
 // THIS FUNCTION TAKES AN ELEMENT AND COMPILES THE FORM, ELEMENT MAP, NECESSARY FOR KNOWING ALL WE NEED TO KNOW ABOUT THE ELEMENT
 // needs work...?  if we can pass in the element_id, it should be OK
 function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap) {
+     global $xoopsDB;
      $foundForm = false;
      foreach($formFieldFilterMap as $fid=>$formData) { // check if the element has already been mapped and if so, what is the form
           if(isset($formData[$element_id])) {
@@ -1086,8 +1098,8 @@ function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap) {
      }
      if(!$foundForm) {
           //$sql = "SELECT id_form, ele_value, ele_type FROM " . DBPRE . "formulize WHERE ele_id = " . intval($element_id);
-          //$res = mysql_query($sql);
-          //$array = mysql_fetch_array($res);
+          //$res = $xoopsDB->query($sql);
+          //$array = $xoopsDB->fetchArray($res);
           $array = formulize_getElementMetaData($element_id);
           if(strstr($array['ele_value'], "#*=:*")) {
                $ele_value = unserialize($array['ele_value']);
@@ -1177,6 +1189,7 @@ function formulize_getJoinHandles($elementArrays) {
 // first param is the id or handle being asked for, second param is a flag showing whether the first param should be interpretted as an id or a handle
 // fid param is only used when this function is called near the start of the extraction layer, when we initialize the cachedElement map for each form that is in use
 function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0) {
+     global $xoopsDB;
      static $cachedElements = array();
      $cacheType = $isHandle ? 'handles' : 'ids';
      if(!isset($cachedElements[$cacheType][$elementOrHandle])) {
@@ -1186,8 +1199,8 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
                $whereClause = $isHandle ? "ele_handle = '".mysql_real_escape_string($elementOrHandle)."'" : "ele_id = ".intval($elementOrHandle);
           }
           $elementValueQ = "SELECT ele_value, ele_type, ele_id, ele_handle, id_form, ele_uitext, ele_caption, ele_colhead, ele_encrypt FROM " . DBPRE . "formulize WHERE $whereClause";
-          $evqRes = mysql_query($elementValueQ);
-          while($evqRow = mysql_fetch_array($evqRes)) {
+          $evqRes = $xoopsDB->query($elementValueQ);
+          while($evqRow = $xoopsDB->fetchArray($evqRes)) {
                $cachedElements['handles'][$evqRow['ele_handle']] = $evqRow; // cached the element according to handle and id, so we don't repeat the same query later just because we're asking for info about the same element in a different way
                $cachedElements['ids'][$evqRow['ele_id']] = $evqRow;
           }
@@ -1406,6 +1419,8 @@ function dataExtractionDB($table, $filter, $andor, $scope, $uidField) {
 // THIS FUNCTION DOES A SIMPLE QUERY AGAINST A TABLE IN THE DATABASE AND RETURNS THE RESULT IN STANDARD "GETDATA" FORMAT
 function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder) {
 
+     global $xoopsDB;
+
      // 2. parse the filter
      // 3. construct the where clause based on the filter and andor
      // 4. do the query
@@ -1414,11 +1429,11 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $
 
      // setup a translation table for the formulize records of the fields, so we can use that lower down in several places
      $sql = "SELECT ele_id, ele_caption FROM ".DBPRE."formulize WHERE id_form=".intval($fid);
-     $res = mysql_query($sql);
+     $res = $xoopsDB->query($sql);
      $elementsById = array();
      $elementsByCaption = array();
      $elementsByField = array();
-     while($array = mysql_fetch_array($res)) {
+     while($array = $xoopsDB->fetchArray($res)) {
           $field = str_replace(" " , "_", str_replace("`", "'", $array['ele_caption']));
           $id = $array['ele_id'];
           $caption = $array['ele_caption'];
@@ -1467,13 +1482,13 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $
 					$sql .= " LIMIT $limitStart,$limitSize ";
 		 }
      //print "<br>$sql<br>";
-     $res = mysql_query($sql);
+     $res = $xoopsDB->query($sql);
      $result = array();
      $indexer = 0;
      // result syntax is:
      // [id][title of form][primary id -- meaningless in tableforms, until we need to edit entries][formulize element id][value id]
      // package up data in the format we need it
-     while($array = mysql_fetch_array($res)) {
+     while($array = $xoopsDB->fetchArray($res)) {
           foreach($elementsByField as $field=>$fieldDetails) {
                $result[$indexer][$formname][$indexer][$elementsByField[$field]['id']][] = $array[$field];
           }
@@ -1482,8 +1497,8 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter, $andor, $
 		 
 		 // count master results
 		 $countSQL = str_replace("SELECT * FROM", "SELECT count(*) FROM", $basesql);
-		 $countRes = mysql_query($countSQL);
-		 $countRow = mysql_fetch_row($countRes);
+		 $countRes = $xoopsDB->query($countSQL);
+		 $countRow = $xoopsDB->fetchRow($countRes);
 		 $GLOBALS['formulize_countMasterResults'] = $countRow[0];
 		 if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
 					$GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countRow[0]; 
@@ -1741,12 +1756,13 @@ function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = fals
 
 // this function takes a formhandle and if it's numeric, returns the title for that form
 function _parseInternalRecordIdsFormHandle($formhandle) {
+     global $xoopsDB;
      if(!is_numeric($formhandle)) { return $formhandle; }
      static $cachedDescForm = array();
      if(!isset($cachedDescForm[$formhandle])) {
           $sql = "SELECT desc_form FROM ".DBPRE."formulize_id WHERE id_form=".intval($formhandle);
-          $res = mysql_query($sql);
-          $array = mysql_fetch_array($res);
+          $res = $xoopsDB->query($sql);
+          $array = $xoopsDB->fetchArray($res);
           $cachedDescForm[$formhandle] = $array['desc_form'];
      }
      return $cachedDescForm[$formhandle];

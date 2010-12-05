@@ -262,15 +262,15 @@ function availReports($uid, $groups, $fid, $frid="0") {
 	global $xoopsDB;
 
 	// get old saved reports
-      $s_reports = q("SELECT report_id, report_name FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id_form='$fid' AND report_uid='$uid'");
+      //$s_reports = q("SELECT report_id, report_name FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id_form='$fid' AND report_uid='$uid'");
 
 
 	// get old published reports
-	$published_reports = q("SELECT report_id, report_name, report_groupids, report_uid FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id_form='$fid' AND report_ispublished > 0");
+	//$published_reports = q("SELECT report_id, report_name, report_groupids, report_uid FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id_form='$fid' AND report_ispublished > 0");
 
 
 	// cull published reports to ones that are published to a group that the user belongs to
-	$indexer = 0;
+	/*$indexer = 0;
 	for($i=0;$i<count($published_reports);$i++) {
 		$report_groups = explode("&*=%4#", $published_reports[$i]['report_groupids']);
 		if(array_intersect($groups, $report_groups)) {
@@ -279,7 +279,7 @@ function availReports($uid, $groups, $fid, $frid="0") {
 			$p_reports[$indexer]['report_uid'] = $published_reports[$i]['report_uid'];
 			$indexer++;
 		}
-	}
+	}*/
 
 	//--------------repeat for saved views (new system): ------------------------
 
@@ -1418,7 +1418,7 @@ function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
 	// build query for display groups
 	$gq = "";
 	if($groups) {
-		$gq = "AND (ele_display=1";
+		$gq = "AND (ele_display='1'";
 		foreach($groups as $thisgroup) {
 			$gq .= " OR ele_display LIKE '%,$thisgroup,%'";
 		}
@@ -2129,7 +2129,7 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
 			$start = 0;
 		}
 		return $printText;
-	} elseif($ele_type=='select' AND strstr($ele_value[2], "#*=:*")) { // dealing with a linked selectbox
+	} elseif($ele_type=='select' AND strstr($ele_value[2], "#*=:*") AND $ele_value[7] == 1) { // dealing with a linked selectbox
 		$boxproperties = explode("#*=:*", $ele_value[2]);
 		// NOTE:
 		// boxproperties[0] is form_id
@@ -2163,7 +2163,7 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
 		} else { // no id_req found
 			return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
 		}
-	} elseif($ele_type =='select' AND (isset($ele_value[2]['{USERNAMES}']) OR isset($ele_value[2]['{FULLNAMES}']))) {
+	} elseif($ele_type =='select' AND (isset($ele_value[2]['{USERNAMES}']) OR isset($ele_value[2]['{FULLNAMES}'])) AND $ele_value[7] == 1) {
 		$nametype = isset($ele_value[2]['{USERNAMES}']) ? "uname" : "name";
 		$archiveFilter = $GLOBALS['formulize_archived_available'] ? " AND archived = 0" : "";
 		static $cachedUidResults = array();

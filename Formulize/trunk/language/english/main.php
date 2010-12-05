@@ -383,7 +383,7 @@ define("_formulize_DE_UPDATEENTRY", "Update your entry");
 define("_formulize_DE_DELETESEL", "Delete selected");
 define("_formulize_DE_CLONESEL", "Clone selected");
 define("_formulize_DE_CLONE_PROMPT", "How many copies of the selected entries do you want to make? (use numbers, not words)");
-define("_formulize_DE_SELALL", "Select all entries");
+define("_formulize_DE_SELALL", "Select all");
 define("_formulize_DE_CLEARALL", "Clear selection");
 define("_formulize_DE_CONFIRMDEL", "You are about to delete the selected entries.  Please confirm!");
 define("_formulize_DE_DELBOXDESC", "Check this box to select/unselect this entry.");

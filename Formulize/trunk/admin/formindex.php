@@ -94,7 +94,7 @@ $data = array();
 $tableforms = array();
 $lockedforms = array();
 if ( $res ) {
-  while ( $row = mysql_fetch_row ( $res ) ) {
+  while ( $row = $xoopsDB->fetchRow( $res ) ) {
     $data[$row[1]] = trans($row[0]);
 		$tableforms[$row[1]] = $row[2];
 		$lockedforms[$row[1]] = $row[3];
@@ -534,9 +534,9 @@ function delform()
 
 	//$title4 = $myts->makeTboxData4Save($_POST["desc_form4"]);
 	$sql=sprintf("SELECT id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form='%s'",$data[$title]);
-	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
+	$res = $xoopsDB->query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
 	if ( $res ) {
-  	while ( $row = mysql_fetch_row ( $res ) ) {
+  	while ( $row = $xoopsDB->fetchRow ( $res ) ) {
     	$id_form = $row[0];
   		}
 	}
@@ -1820,7 +1820,7 @@ if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables))
                         // check for ambiguous id_reqs
                         print "Searching for ambiguous id_reqs.  Please be patient.  This may take a few minutes on a large database.<br>";
                         $findSql = "SELECT distinct(t1.id_req) FROM " . $xoopsDB->prefix("formulize_form") . " AS t1, " . $xoopsDB->prefix("formulize_form") . " AS t2 WHERE t1.uid != t2.uid AND t1.id_req = t2.id_req";
-                        if(!$findRes = mysql_query($findSql)) { print "None found.<br>"; }
+                        if(!$findRes = $xoopsDB->query($findSql)) { print "None found.<br>"; }
                         // loop through all ambiguous id_reqs and fix them
         
                         while($find = $xoopsDB->fetchArray($findRes)) {
@@ -1943,7 +1943,7 @@ function correctAmbiguousIdReqsBasedOnFormIds($uidFocus = false) {
 
   global $xoopsDB;
   $findSql = "SELECT distinct(t1.id_req) FROM " . $xoopsDB->prefix("formulize_form") . " AS t1, " . $xoopsDB->prefix("formulize_form") . " AS t2 WHERE t1.id_form != t2.id_form AND t1.id_req = t2.id_req";
-  if(!$findRes = mysql_query($findSql)) { print "None found.<br>"; }
+  if(!$findRes = $xoopsDB->query($findSql)) { print "None found.<br>"; }
   // loop through all ambiguous id_reqs and fix them
 
   while($find = $xoopsDB->fetchArray($findRes)) {

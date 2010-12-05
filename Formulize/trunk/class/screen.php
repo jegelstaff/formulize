@@ -160,8 +160,8 @@ class formulizeScreenHandler {
                  ${$k} = $v;
              }
              if ($sid == 0) {
-                 $sid = $this->db->genId($this->db->prefix('formulize_screen').'_sid_seq'); // mysql compatiblity layer just returns 0 here
-                 $sql = sprintf("INSERT INTO %s (sid, title, fid, frid, type, useToken) VALUES (%u, %s, %u, %u, %s, %u)", $this->db->prefix('formulize_screen'), $sid, $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken);
+                 //$sid = $this->db->genId($this->db->prefix('formulize_screen').'_sid_seq'); // mysql compatiblity layer just returns 0 here
+                 $sql = sprintf("INSERT INTO %s (title, fid, frid, type, useToken) VALUES (%s, %u, %u, %s, %u)", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken);
              } else {
                  $sql = sprintf("UPDATE %s SET title = %s, fid = %u, frid = %u, type = %s, useToken = %u WHERE sid = %u", $this->db->prefix('formulize_screen'), $this->db->quoteString($title), $fid, $frid, $this->db->quoteString($type), $useToken, $sid);
              }

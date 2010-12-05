@@ -94,7 +94,7 @@ class formulizeElementRenderer{
 		$ele_caption = $this->formulize_replaceCurlyBracketVariables($ele_caption, $entry, $id_form);
 		
 		// ele_desc added June 6 2006 -- jwe
-		$ele_desc = $this->_ele->getVar('ele_desc');
+		$ele_desc = $this->_ele->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
 
 		// determine the entry owner
 		if($entry != "new") {
@@ -722,7 +722,7 @@ class formulizeElementRenderer{
 							}
 							$counter++;
 						}
-						$form_ele1->setExtra("onchange=\"javascript:formulizechanged=1;\"");
+						$form_ele1->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
 					break;
 					default:
 						$form_ele1 = new XoopsFormElementTray($ele_caption, $delimSetting);
@@ -749,7 +749,7 @@ class formulizeElementRenderer{
 									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 								}
 							}
-							$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
+							$t->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
 							$form_ele1->addElement($t);
 							unset($t);
 							$counter++;
@@ -768,7 +768,6 @@ class formulizeElementRenderer{
 				if($isDisabled) {
 					$disabledHiddenValues = implode("\n", $disabledHiddenValue); // glue the individual value elements together into a set of values
 					$renderedElement = implode(", ", $disabledOutputText);
-					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
 				} else {
 					$renderedElement = $form_ele1->render();
 				}
@@ -777,6 +776,20 @@ class formulizeElementRenderer{
 					$ele_caption,
 					"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValues\n"
 				);
+				
+				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
+					$eltname = $form_ele_id;
+					$eltcaption = $ele_caption;
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
+					$form_ele->customValidationCode[] = "selection = true;\n";
+					$form_ele->customValidationCode[] = "checkboxes = $('[jquerytag={$eltname}]:checked');\n"; // need to use this made up attribute here, because there is no good way to select the checkboxes using the name or anything else that XOOPS/Impress is giving us!!
+					$form_ele->customValidationCode[] = "if(checkboxes.length == 0) { window.alert(\"{$eltmsg}\");\n $('[jquerytag={$eltname}]').focus();\n return false;\n }\n";
+				}
+			
+				if($isDisabled) {
+					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
+				}
 				
 			break;
 			
@@ -1025,7 +1038,11 @@ class formulizeElementRenderer{
 			}
 			$form_ele->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$elementCue); // reuse caption, put two spaces between element and previous entry UI
-			if($ele_desc != "") { $form_ele_new->setDescription($myts->undoHtmlSpecialChars($ele_desc)); }
+			if($ele_desc != "") {
+				$ele_desc = html_entity_decode($ele_desc,ENT_QUOTES);
+				$ele_desc = $myts->makeClickable($ele_desc);
+				$form_ele_new->setDescription($ele_desc);
+			}
 			$form_ele_new->setName($form_ele_id); // need to set this as the name, in case it is required and then the name will be picked up by any "required" checks that get done and used in the required validation javascript for textboxes
 			if(!empty($form_ele->customValidationCode)) {
 				$form_ele_new->customValidationCode = $form_ele->customValidationCode;

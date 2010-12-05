@@ -1282,9 +1282,9 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		print "<style>\n";
 	
 		print ".scrollbox {\n";
-		print "	height: 530px;\n";
-		print "	width: 698px;\n";
-		print "	overflow: scroll;\n";
+		//print "	height: 530px;\n";
+		//print "	width: 698px;\n";
+		print "	overflow: auto;\n"; //scroll
 		print "}\n";
 	
 		print "</style>\n";

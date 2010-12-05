@@ -52,12 +52,10 @@ class formulizeMultiPageScreen extends formulizeScreen {
 		$this->initVar("printall", XOBJ_DTYPE_INT); //nmc - 2007.03.24
     $this->initVar("paraentryform", XOBJ_DTYPE_INT); 
     $this->initVar("paraentryrelationship", XOBJ_DTYPE_INT);
-    $this->initVar('dohtml', XOBJ_DTYPE_INT);
-    $this->initVar('doxcode', XOBJ_DTYPE_INT);
-    $this->initVar('dosmiley', XOBJ_DTYPE_INT);
-    $this->initVar('doimage', XOBJ_DTYPE_INT);
-    $this->initVar('dobr', XOBJ_DTYPE_INT);
-    
+    $this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
+    $this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
+    $this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
+    $this->assignVar("dohtml", false);
 	}
 }
 
@@ -369,7 +367,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 				unset($conditions[0]);
 		}
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
-		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode($screen->getVar('introtext', "e")), html_entity_decode($screen->getVar('thankstext', "e")), $screen->getVar('donedest'), $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
+		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $screen->getVar('donedest'), $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
 	}
 
 }

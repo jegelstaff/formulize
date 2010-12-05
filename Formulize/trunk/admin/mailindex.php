@@ -54,7 +54,7 @@ if(!is_numeric($_GET['title'])) {
 	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
 
 	if ( $res ) {
-		  while ( $row = mysql_fetch_row ( $res ) ) {
+		  while ( $row = $xoopsDB->fetchRow( $res ) ) {
 		    $id_form = $row[0];
   		}
 	}
@@ -91,7 +91,7 @@ if ( isset ($title)) {
 	$res = mysql_query ( $sql ) or die('Erreur SQL !<br>'.$requete.'<br>'.mysql_error());
 
 	if ( $res ) {
-	  while ( $row = mysql_fetch_array ( $res ) ) {
+	  while ( $row = $xoopsDB->fetchArray ( $res ) ) {
 		//print"<br>";
 		//print_r($row);
 		//print"<br>";
@@ -120,12 +120,12 @@ $eh = new ErrorHandler;
 if( $_POST['op'] != 'upform' && $op != 'addform'){
 
 	$sql="SELECT groupid,name FROM ".$xoopsDB->prefix("groups");
-	$res = mysql_query ( $sql );
+	$res = $xoopsDB->query ( $sql );
 	if ( $res ) {
 	$tab[$m] = 0;
 	$tab2[$m] = "";
 	$m++;
-	  while ( $row = mysql_fetch_array ( $res ) ) {
+	  while ( $row = $xoopsDB->fetchArray ( $res ) ) {
 	    $tab[$m] = $row['groupid'];
 	    $tab2[$m] = $row['name'];
 	    $m++;
@@ -235,18 +235,18 @@ echo '<tr>
 	}
 
 	$getform_id ="SELECT id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE desc_form=\"$realtitle\"";
-	$resultgetform = mysql_query($getform_id);
-	$resgetformrow = mysql_fetch_row($resultgetform);
+	$resultgetform = $xoopsDB->query($getform_id);
+	$resgetformrow = $xoopsDB->fetchRow($resultgetform);
 	$thisformid = $resgetformrow[0];
 
 	// get a list of captions in the form (fancy SQL Join query)
 	// then draw them into the selection box
 	// addition of column heading fields June 25 2006 -- jwe
 	$sqljwe="SELECT ele_caption, ele_id, ele_colhead FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = \"$thisformid\" AND ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" ORDER BY ele_order";
-	$resjwe = mysql_query ( $sqljwe );
+	$resjwe = $xoopsDB->query ( $sqljwe );
 	if ( $resjwe ) {
 		$loopiteration = 0;
-		while ( $rowjwe = mysql_fetch_row ( $resjwe ) ) {
+		while ( $rowjwe = $xoopsDB->fetchRow ( $resjwe ) ) {
 			echo "<option value=\"" . $rowjwe[1] . "\"";
 			// check id and caption, since legacy systems will be using the caption
 			// caption will not match if a form has recently been translated to another language, but once the headerlist is specified from scratch now, it will always be remembered since ids are now stored 
@@ -492,7 +492,7 @@ function addform()
 		$result = $xoopsDB->query("SHOW COLUMNS FROM " . mysql_real_escape_string($_POST['tablename']));
 		static $element_order = 0;
 		$formulize_mgr =& xoops_getmodulehandler('elements');
-		while($row = mysql_fetch_row($result)) {
+		while($row = $xoopsDB->fetchRow($result)) {
 			$element =& $formulize_mgr->create();
 			$element->setVar('ele_caption', str_replace("_", " ", str_replace("'", "`", $row[0]))); // should be no apostrophes in field names, but we better make sure to follow Formulize convention!
 			//$element->setVar('ele_delim', ""); // only set for radio and checkbox, but cannot be put into ele_value because ele_value is not a multidimensional array for those elements, so must be treated as a separate db field for now

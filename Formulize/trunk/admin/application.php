@@ -63,9 +63,13 @@ foreach($formObjects as $thisFormObject) {
 	$defaultFormScreen = $thisFormObject->getVar('defaultform');
 	$defaultListScreen = $thisFormObject->getVar('defaultlist');
 	$defaultFormObject = $screen_handler->get($defaultFormScreen);
-	$defaultFormName = $defaultFormObject->getVar('title');
+	if(is_object($defaultFormObject)) {
+		$defaultFormName = $defaultFormObject->getVar('title');
+	}
 	$defaultListObject = $screen_handler->get($defaultListScreen);
-	$defaultListName = $defaultListObject->getVar('title');
+	if(is_object($defaultListObject)) {
+		$defaultListName = $defaultListObject->getVar('title');
+	}
 	$formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenid'] = $defaultFormScreen;
 	$formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenid'] = $defaultListScreen;
 	$formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenname'] = $defaultFormName;

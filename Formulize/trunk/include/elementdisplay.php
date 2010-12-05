@@ -65,23 +65,26 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	$mid = getFormulizeModId();
 
 	
-
-	if($prevEntry==null) { // preferable to pass in prevEntry!
-		$prevEntry = getEntryValues($entry, "", $groups, $element->getVar('id_form'), "", $mid, $uid, $owner);			
-	}
-
 	static $cachedViewPrivate = array();
+	static $cachedUpdateOwnEntry = array();
+	$gperm_handler = xoops_gethandler('groupperm');
 	if(!isset($cachedViewPrivate[$element->getVar('id_form')])) {
-		$gperm_handler =& xoops_gethandler('groupperm');
 		$cachedViewPrivate[$element->getVar('id_form')] = $gperm_handler->checkRight("view_private_elements", $element->getVar('id_form'), $groups, $mid);	
+		$cachedUpdateOwnEntry[$element->getVar('id_form')] = $gperm_handler->checkRight("update_own_entry", $element->getVar('id_form'), $groups, $mid);	
 	}
 	$view_private_elements = $cachedViewPrivate[$element->getVar('id_form')];
+	$update_own_entry = $cachedUpdateOwnEntry[$element->getVar('id_form')];
 	
 	// check if the user is normally able to view this element or not, by checking their groups against the display groups -- added Nov 7 2005
 	// messed up.  Private should not override the display settings.  And the $entry should be checked against the security check first to determine whether the user should even see this entry in the first place.
 	$display = $element->getVar('ele_display');
 	$private = $element->getVar('ele_private');
-	if($private AND ($uid != $owner AND $entry != "new")) {
+	$member_handler = xoops_gethandler('member');
+	$single_result = getSingle($element->getVar('id_form'), $uid, $groups, $member_handler, $gperm_handler, $mid);
+	$groupEntryWithUpdateRights = ($single_result['flag'] == "group" AND $update_own_entry AND $entry == $single_result['entry']) ? true : false;
+
+	// need to test whether the display setting should be checked first?!  Order of checks here looks wrong.  JWE Nov 25 2010
+	if($private AND $uid != $owner AND !$groupEntryWithUpdateRights AND $entry != "new") {
 		$allowed = $view_private_elements ? 1 : 0;
 	} elseif(strstr($display, ",")) {
 		$display_groups = explode(",", $display);
@@ -91,7 +94,11 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	} else {
 		$allowed = 0;
 	}
-	
+
+	if($prevEntry==null) { // preferable to pass in prevEntry!
+		$prevEntry = getEntryValues($entry, "", $groups, $element->getVar('id_form'), "", $mid, $uid, $owner, $groupEntryWithUpdateRights);			
+	}
+
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
 	if($allowed AND count($elementFilterSettings[0]) > 0) {
 		// need to check if there's a condition on this element that is met or not

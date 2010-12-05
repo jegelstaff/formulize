@@ -69,7 +69,7 @@ if($_GET['ele_id'] != "new") {
 		$firstElementOrder = " selected";
 	}
   $colhead = $elementObject->getVar('ele_colhead');
-  $caption = $elementObject->getVar('ele_caption');
+  $caption = $elementObject->getVar('ele_caption', "f"); // the f causes no stupid reformatting by the ICMS core to take place, like making clickable links, etc
   $ele_type = $elementObject->getVar('ele_type');
   $ele_value = $elementObject->getVar('ele_value');
   $ele_delim = $elementObject->getVar('ele_delim');
@@ -81,7 +81,7 @@ if($_GET['ele_id'] != "new") {
   $names['ele_caption'] = $caption;
   $names['ele_colhead'] = $colhead;
   $names['ele_handle'] = $elementObject->getVar('ele_handle');
-  $names['ele_desc'] = $elementObject->getVar('ele_desc');
+  $names['ele_desc'] = $elementObject->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
   $ele_req = $elementObject->getVar('ele_req');
   $names['ele_req_on'] = removeNotApplicableRequireds($ele_type);
   $names['ele_req_no_on'] = $ele_req ? "" : " checked";
@@ -425,6 +425,7 @@ function removeNotApplicableRequireds($type, $req) {
     case "textarea":
     case "select":
     case "radio":
+		case "checkbox":
     case "date":
       return true;
   }

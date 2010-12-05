@@ -60,7 +60,7 @@ $links = array();
 $sql = 'SELECT DISTINCT frameworks.frame_id, frameworks.frame_name FROM '.$xoopsDB->prefix("formulize_framework_links").' as links, '.$xoopsDB->prefix("formulize_frameworks").' as frameworks WHERE fl_form1_id='.intval($fid).' OR fl_form2_id='.intval($fid).' AND links.fl_frame_id=frameworks.frame_id';
 $res = $xoopsDB->query($sql);
 if ($res) {
-  while ($row = mysql_fetch_row($res)) {
+  while ($row = $xoopsDB->fetchRow($res)) {
     $links[] = array("id"=>$row[0], "name"=>$row[1]);
   }
 }
@@ -337,8 +337,8 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
 
   // text data
   $multipageText = array();
-  $multipageText['introtext'] = html_entity_decode($screen->getVar('introtext'));
-  $multipageText['thankstext'] = html_entity_decode($screen->getVar('thankstext'));
+  $multipageText['introtext'] = html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES);
+  $multipageText['thankstext'] = html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES); // need the e to make sure it doesn't convert links to clickable HTML!
 
   // pages data
   $multipagePages = array();
