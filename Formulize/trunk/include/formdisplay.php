@@ -907,7 +907,10 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 	global $nosubforms;
 	if(!$profileForm AND ($save_text_temp != "{NOBUTTON}" OR $nosubforms)) { // do not use printable button for profile forms, or forms where there is no Save button (ie: a non-standard saving process is in use and access to the normal printable option may be prohibited)
 		$printbutton = new XoopsFormButton('', 'printbutton', _formulize_PRINTVIEW, 'button');
-		$printbutton->setExtra("onclick='javascript:PrintPop();'");
+		if(is_array($elements_allowed)) {
+			$ele_allowed = implode(",",$elements_allowed);
+		}
+		$printbutton->setExtra("onclick='javascript:PrintPop(\"$ele_allowed\");'");
 		$rendered_buttons = $printbutton->render(); // nmc 2007.03.24 - added
 		if ($printall) {																					// nmc 2007.03.24 - added
 			$printallbutton = new XoopsFormButton('', 'printallbutton', _formulize_PRINTALLVIEW, 'button');	// nmc 2007.03.24 - added
@@ -2055,16 +2058,16 @@ print " var formulize_xhr_returned_check_for_unique_value = 'notreturned';\n";
 ?>
 function showPop(url) {
 
-	if (window.popup == null) {
-		popup = window.open(url,'popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
+	if (window.formulize_popup == null) {
+		formulize_popup = window.open(url,'formulize_popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
       } else {
-		if (window.popup.closed) {
-			popup = window.open(url,'popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
+		if (window.formulize_popup.closed) {
+			formulize_popup = window.open(url,'formulize_popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
             } else {
-			window.popup.location = url;              
+			window.formulize_popup.location = url;              
 		}
 	}
-	window.popup.focus();
+	window.formulize_popup.focus();
 
 }
 
@@ -2138,7 +2141,8 @@ print "	}\n";
 //added by Cory Aug 27, 2005 to make forms printable
 
 
-print "function PrintPop() {\n";
+print "function PrintPop(ele_allowed) {\n";
+print "		window.document.printview.elements_allowed.value=ele_allowed;\n"; // nmc 2007.03.24 - added 
 print "		window.document.printview.submit();\n";
 print "}\n";
 

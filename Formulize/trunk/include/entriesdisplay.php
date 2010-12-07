@@ -2882,16 +2882,16 @@ function clearSearchHelp(formObj, defaultHelp) {
 function showPop(url) {
 
 	window.document.controls.ventry.value = '';
-	if (window.popup == null) {
-		popup = window.open(url,'popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
+	if (window.formulize_popup == null) {
+		formulize_popup = window.open(url,'formulize_popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
       } else {
-		if (window.popup.closed) {
-			popup = window.open(url,'popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
+		if (window.formulize_popup.closed) {
+			formulize_popup = window.open(url,'formulize_popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
             } else {
-			window.popup.location = url;              
+			window.formulize_popup.location = url;              
 		}
 	}
-	window.popup.focus();
+	window.formulize_popup.focus();
 
 }
 

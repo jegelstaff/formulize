@@ -115,8 +115,10 @@ class formulizeElementRenderer{
 			case 'derived':
 				if($entry != "new") {
 					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), formulize_numberFormat($ele_value[5], $this->_ele->getVar('ele_handle')));
+					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				} else {
 					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE);
+					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				}
 				break;
 
@@ -473,6 +475,7 @@ class formulizeElementRenderer{
 							fclose($cachedLinkedOptions);
 							$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFileName, $default_value, $default_value_user);
 							$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
+							$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 						} 
 					}
 					
@@ -496,6 +499,7 @@ class formulizeElementRenderer{
 
 					if($isDisabled) {
 						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText) . implode("\n", $disabledHiddenValue));
+						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 					}
 					/* ALTERED - 20100318 - freeform - jeff/julian - stop */
 					
@@ -645,6 +649,7 @@ class formulizeElementRenderer{
 						$ele_caption,
 						"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValues\n"
 					);
+					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				
 				} // end of if we have a link on our hands. -- jwe 7/29/04
 				
@@ -776,6 +781,7 @@ class formulizeElementRenderer{
 					$ele_caption,
 					"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValues\n"
 				);
+				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
@@ -902,6 +908,7 @@ class formulizeElementRenderer{
 					$ele_caption,
 					"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValue\n"
 				);
+				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
@@ -1049,7 +1056,7 @@ class formulizeElementRenderer{
 			}
 			return $form_ele_new;
 		} elseif(is_object($form_ele) AND $isDisabled) { // element is disabled
-			$form_ele = $this->formulize_disableElement($form_ele, $e);
+			$form_ele = $this->formulize_disableElement($form_ele, $e, $ele_desc);
 			return $form_ele;
 		} else { // form ele is not an object...only happens for IBs?
 			return $form_ele;
@@ -1153,7 +1160,7 @@ class formulizeElementRenderer{
 
 	// creates a hidden version of the element so that it can pass its value back, but not be available to the user
 	
-	function formulize_disableElement($element, $type) {
+	function formulize_disableElement($element, $type, $ele_desc) {
 		if($type == "text" OR $type == "textarea" OR $type == "date" OR $type == "colorpick") {
 			$newElement = new xoopsFormElementTray($element->getCaption(), "\n");
 			switch($type) {
@@ -1176,6 +1183,7 @@ class formulizeElementRenderer{
 			if(substr($element->getName(), 0, 9) != "desubform") { // we should consider not having a cue at all for any disabled elements, but we're not going to pull it out just yet...more investigation of this is necessary
 				$newElement->addElement(new xoopsFormHidden("decue_".trim($element->getName(),"de_"), 1));
 			}
+			$newElement->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 			return $newElement;
 		} else {
 			return $element;

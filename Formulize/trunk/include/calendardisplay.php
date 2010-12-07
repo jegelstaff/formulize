@@ -87,7 +87,7 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 	$gperm_handler = &xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-	$uid = $xoopsUser->getVar('uid');
+	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
 
 	foreach($fids as $thisFid) { // check that the user is allowed to see all the fids
