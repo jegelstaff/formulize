@@ -16,13 +16,17 @@
 		<{/if}>
 		</div>
 		
-		<{if !$form.defaultlistscreenid}>
+		<{if !$form.defaultformscreenid && !$form.defaultlistscreenid}>
     <p><a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=new"><div class="imageicon"><img src="..images/filenew2.png"></div><div class="formaction">Create a new screen</div></a></p>
 		<{else}>
 		<p class="formbox-title">Default Screens:</p>
 		<div class="formactions-list">
+		<{if $form.defaultlistscreenid}>
 		<a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=<{$form.defaultlistscreenid}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction"><{$form.defaultlistscreenname}></div></a><br />
+		<{/if}>
+		<{if $form.defaultformscreenid}>  
 		<a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=<{$form.defaultformscreenid}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction"><{$form.defaultformscreenname}></div></a><br />
+		<{/if}>
 		<a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=screens"><div class="formaction"><i>...more screens</i></div></a>
 		</div>	
     <{/if}>
