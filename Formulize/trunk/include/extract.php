@@ -143,7 +143,7 @@ function prepvalues($value, $field, $entry_id) {
                print "Error: could not retrieve the source values for a linked selectbox during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
           } else {
                $value = "";
-               while($row = $xoopsDB->fetchArray($res)) {
+               while($row = $xoopsDB->fetchRow($res)) {
                     $value .= "*=+*:" . $row[0];
                }
           }
