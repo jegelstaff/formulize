@@ -713,7 +713,7 @@ class formulizeFormsHandler {
 				$perGroupFilter .= " $match ";
 			}
 
-			$likeBits = strstr(strtoupper($filterSettings[1][$i]), "LIKE") ? "%" : "";
+			$likeBits = (strstr(strtoupper($filterSettings[1][$i]), "LIKE") AND substr($filterSettings[2][$i], 0, 1) != "%" AND substr($filterSettings[2][$i], -1) != "%") ? "%" : "";
 			$termToUse = str_replace("{USER}", $uid, $filterSettings[2][$i]); 
 			if (ereg_replace("[^A-Z{}]","", $termToUse) === "{TODAY}") {
 				$number = ereg_replace("[^0-9+-]","", $termToUse);

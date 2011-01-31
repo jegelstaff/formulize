@@ -3486,7 +3486,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 			//$limitCondition = $limit['ele_id'] . "/**/" . $limit['term'];
 			//$limitCondition .= isset($limit['operator']) ? "/**/" . $limit['operator'] : "";
 			$limitOperator = isset($limit['operator']) ? $limit['operator'] : " LIKE ";
-			$likebits = strstr($limitOperator, "LIKE") ? "%" : "";
+			$likebits = (strstr($limitOperator, "LIKE") AND substr($limit['term'], 0, 1) != "%" AND substr($limit['term'], -1) != "%") ? "%" : "";
 			$limitCondition = " WHERE t1`".$limit['ele_id']."` ".$limitOperator." '$likebits".mysql_real_escape_string($limit['term'])."$likebits' ";
 		} elseif($subfilter) { // for subfilters, we're jumping back to another form to get the values, hence the join...
 			$element_handler = xoops_getmodulehandler('elements', 'formulize');

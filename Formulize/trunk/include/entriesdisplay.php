@@ -3627,6 +3627,19 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 				}
 				$maxIdReq = writeElementValue("", $clickedElements[$ixz], $thisEntry, $valueToWrite, $clickedActions[$ixz], "", "", $csEntries[$id]);
 			}
+			/*
+			// if you pass in $screen, you could try to do something like this...but it would increase overhead, and really, a more unified way of handling writing custom button data and updating derived values, needs to be created.
+			if($maxIdReq) {
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$element_handler = xoops_getmodulehandler('elements', 'formulize');
+				$elementObject = $element_handler->get($clickedElements[0]);
+				$formObject = $form_handler->get($elementObject->getVar('id_form'));
+				if(array_search("derived", $formObject->getVar('elementTypes'))) { // only bother if there is a derived value in the form
+					// NOTE: if there are derived values involving something other than the fid of the updated form, and the frid of the screen, then they won't be updated when this custom button is clicked!!
+					$frid = $screen ? $screen->getVar('frid') : 0;
+					formulize_updateDerivedValues($maxIdReq, $elementObject->getVar('id_form'), $frid);
+				}
+			}*/
 		}
 	}
 	return $clickedMessageText;
@@ -3874,6 +3887,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	$filter = "";
 	$ORstart = 1;
 	$ORfilter = "";
+	global $xoopsUser;
 	foreach($searches as $key=>$master_one_search) { // $key is handles for frameworks, and ele_handles for non-frameworks.
 
 		// split search based on new split string
@@ -3926,7 +3940,6 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 					$number = ereg_replace("[^0-9+-]","", $searchgetkey);
 					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 				} elseif($searchgetkey == "USER") {
-					global $xoopsUser;
 					if($xoopsUser) {
 						$one_search = $xoopsUser->getVar('name');
 						if(!$one_search) { $one_search = $xoopsUser->getVar('uname'); }
@@ -3934,23 +3947,22 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 						$one_search = 0;
 					}
 				} elseif($searchgetkey == "USERNAME") {
-					global $xoopsUser;
 					if($xoopsUser) {
 						$one_search = $xoopsUser->getVar('uname');
 					} else {
 						$one_search = "";
 					}
-        } elseif($searchgetkey == "BLANK") { // special case, we need to construct a special OR here that will look for "" OR IS NULL
-          if($operator == "!=" OR $operator == "NOT LIKE") {
-            $blankOp1 = "!=";
-            $blankOp2 = " IS NOT NULL ";
-          } else {
-            $addToORFilter = true;
-            $blankOp1 = "=";
-            $blankOp2 = " IS NULL ";
-          }
-          $one_search = "/**/$blankOp1][$key/**//**/$blankOp2";
-          $operator = ""; // don't use an operator, we've specially constructed the one_search string to have all the info we need
+				} elseif($searchgetkey == "BLANK") { // special case, we need to construct a special OR here that will look for "" OR IS NULL
+				  if($operator == "!=" OR $operator == "NOT LIKE") {
+				    $blankOp1 = "!=";
+				    $blankOp2 = " IS NOT NULL ";
+				  } else {
+				    $addToORFilter = true;
+				    $blankOp1 = "=";
+				    $blankOp2 = " IS NULL ";
+				  }
+				  $one_search = "/**/$blankOp1][$key/**//**/$blankOp2";
+				  $operator = ""; // don't use an operator, we've specially constructed the one_search string to have all the info we need
 				} elseif(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
 					$one_search = $_POST[$searchgetkey] ? htmlspecialchars(strip_tags($_POST[$searchgetkey])) : "";
 					$one_search = (!$one_search AND $_GET[$searchgetkey]) ? htmlspecialchars(strip_tags($_GET[$searchgetkey])) : $one_search;
@@ -3965,6 +3977,14 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 					$operator = "";
 				}
 			}
+			
+			// do additional search for {USERNAME} or {USER} in case they are embedded in another string
+			if($xoopsUser) {
+				$one_search = str_replace("{USER}", $xoopsUser->getVar('name'), $one_search);
+				$one_search = str_replace("{USERNAME}", $xoopsUser->getVar('uname'), $one_search);
+			}
+
+			
 			if($operator) {
 				$one_search = $one_search . "/**/" . $operator;
 			}
