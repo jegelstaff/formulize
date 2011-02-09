@@ -969,6 +969,8 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 		if(is_array($elements_allowed)) {
 			$ele_allowed = implode(",",$elements_allowed);
 			print "<input type=hidden name=elements_allowed value='".$ele_allowed."'>";
+		} else {
+			print "<input type=hidden name=elements_allowed value=''>";
 		}
 		print "</form>";
 		//added by Cory Aug 27, 2005 to make forms printable
