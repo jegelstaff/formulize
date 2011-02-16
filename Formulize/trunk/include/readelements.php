@@ -80,7 +80,12 @@ $formulize_subformBlankCues = array();
 // loop through POST and catalogue everything that we need to do something with
 foreach($_POST as $k=>$v) {
 
-	if(substr($k, 0, 9) == "denosave_") { // handle no save elements
+	if(substr($k, 0, 12) == "updateowner_" AND $v != "nochange") {
+		$updateOwnerData = explode("_", $k);
+		$updateOwnerFid = intval($updateOwnerData[1]);
+		$updateOwnerEntryId = intval($updateOwnerData[2]);
+		$updateOwnerNewOwnerId = intval($v);
+	} elseif(substr($k, 0, 9) == "denosave_") { // handle no save elements
 		$element_metadata = explode("_", $k);
 		$element =& $element_handler->get($element_metadata[3]);
 		$noSaveHandle = $element->getVar('ele_colhead') ? $element->getVar('ele_colhead') : $element->getVar('ele_caption');
@@ -214,6 +219,15 @@ foreach($formulize_newEntryIds as $newEntryFid=>$entries){
 	$data_handler_for_owner_groups->setEntryOwnerGroups($formulize_newEntryUsers[$newEntryFid],$formulize_newEntryIds[$newEntryFid]);
 	unset($data_handler_for_owner_groups);
 }
+
+// reassign entry ownership for an entry if the user requested that, and has permission
+if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership", $updateOwnerFid, $groups, $mid)) {
+	$data_handler_for_owner_updating = new formulizeDataHandler($updateOwnerFid);
+	if(!$data_handler_for_owner_updating->setEntryOwnerGroups($updateOwnerNewOwnerId, $updateOwnerEntryId, true)) { // final true causes an update, instead of a normal setting of the groups from scratch.  Entry's creation user is updated too.
+		print "<b>Error: could not update the entry ownership information.  Please report this to the webmaster right away, including which entry you were trying to update.</b>";		
+	}
+}
+
 
 // update the derived values for all forms that we saved data for, now that we've saved all the data from all the forms
 $form_handler = xoops_getmodulehandler('forms', 'formulize');

@@ -572,7 +572,6 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 							$breakHTML .= "<p><b>" . _formulize_FD_ABOUT . "</b><br>";
 							
 							if($entries[$this_fid][0]) {
-								if(!$member_handler) { $member_handler =& xoops_gethandler('member'); }
 								$form_meta = getMetaData($entries[$this_fid][0], $member_handler, $this_fid);
 								$breakHTML .= _formulize_FD_CREATED . $form_meta['created_by'] . " " . formulize_formatDateTime($form_meta['created']) . "<br>" . _formulize_FD_MODIFIED . $form_meta['last_update_by'] . " " . formulize_formatDateTime($form_meta['last_update']) . "</p>";
 							} else {
@@ -679,8 +678,9 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 	
 		// draw in proxy box if necessary (only if they have permission and only on new entries, not on edits)
 		if($gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid) AND !$entries[$fid][0]) {
-			if(!$member_handler) { $member_handler =& xoops_gethandler('member'); }
-			$form = addProxyList($form, $groups, $member_handler, $gperm_handler, $fid, $mid);
+			$form = addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid);
+		} elseif($entries[$fid][0] AND $gperm_handler->checkRight("update_entry_ownership", $fid, $groups, $mid)) {
+			$form = addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid, $entries[$fid][0]);	
 		}
 	
 		// add flag to indicate that the form has been submitted
@@ -1009,7 +1009,7 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 }
 
 // this function draws in the UI for sub links
-function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption="", $customElements="", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings=0) {
+function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption="", $customElements="", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings=0, $overrideOwnerOfNewEntries="", $mainFormOwner=0) {
 
 	global $xoopsDB, $nosubforms;
 	$GLOBALS['framework'] = $frid;
@@ -1052,7 +1052,13 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 			}
 			$sub_entry_new = "";
 			for($i=0;$i<$_POST['numsubents'];$i++) { // actually goahead and create the requested number of new sub entries...start with the key field, and then do all textboxes with defaults too...
-				$subEntWritten = writeElementValue($_POST['target_sub'], $element_to_write, "new", $value_to_write, "", "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
+				//$subEntWritten = writeElementValue($_POST['target_sub'], $element_to_write, "new", $value_to_write, "", "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
+        if($overrideOwnerOfNewEntries) {
+          $creation_user_touse = $mainFormOwner;
+        } else {
+          $creation_user_touse = "";
+        }
+        $subEntWritten = writeElementValue($_POST['target_sub'], $element_to_write, "new", $value_to_write, $creation_user_touse, "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
 				if(!isset($elementsForDefaults)) {
 					$element_handler = xoops_getmodulehandler('elements', 'formulize');
 					$criteria = new CriteriaCompo();
@@ -1129,7 +1135,6 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	// note big assumption/restriction that we are only using the first header found (ie: only specify one header for a sub form!)
 	// setup the array of elements to draw
 	if(is_array($customElements)) {
-		$keys = array_keys($subHeaderList);
 		foreach($customElements as $custEle) {
 			$elementsToDraw[] = $custEle;
 			$headerq = q("SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id=" . intval($custEle));
@@ -1190,6 +1195,8 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 						ob_end_clean();
 						if($col_two_temp) { // only draw in a cell if there actually is an element rendered
 							$col_two .= "<td>$col_two_temp</td>\n";
+						} else {
+							$col_two .= "<td>******</td>";
 						}
 					}
 				}
@@ -1251,6 +1258,8 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 						ob_end_clean();
 						if($col_two_temp) { // only draw in a cell if there actually is an element rendered
 							$col_two .= "<td>$col_two_temp</td>\n";
+						} else {
+							$col_two .= "<td>******</td>";
 						}
 					}
 				}
@@ -1290,12 +1299,9 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 
 
 // add the proxy list to a form
-function addProxyList($form, $groups, $member_handler, $gperm_handler, $fid, $mid) {
+function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid, $entry_id="") {
 
 	global $xoopsDB;
-
-			$proxylist = new XoopsFormSelect(_AM_SELECT_PROXY, 'proxyuser', 0, 5, TRUE); // made multi May 3 05
-			$proxylist->addOption('noproxy', _formulize_PICKAPROXY);
 			
 			$add_groups = $gperm_handler->getGroupIds("add_own_entry", $fid, $mid);
 			// May 5, 2006 -- limit to the user's own groups unless the user has global scope
@@ -1321,14 +1327,32 @@ function addProxyList($form, $groups, $member_handler, $gperm_handler, $fid, $mi
 
 			// alphabetize the proxy list added 11/2/04
 			array_multisort($punames, $unique_users);
-
+	
+			
+			if($entry_id) {
+				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+				$data_handler = new formulizeDataHandler($fid);
+				$entryMeta = $data_handler->getEntryMeta($entry_id);
+				$entryOwner = $entryMeta[2];
+				$entryOwnerName = $punames[array_search($entryOwner,$unique_users)]; // need to look in one array to find the key to lookup in the other array...a legacy from when corresponding arrays were a common data structure in Formulize...multidimensional arrays were not well understood in the beginning
+				$proxylist = new XoopsFormSelect(_AM_SELECT_UPDATE_OWNER, 'updateowner_'.$fid.'_'.$entry_id, 0, 1);
+				$proxylist->addOption('nochange', _AM_SELECT_UPDATE_NOCHANGE.$entryOwnerName);
+			} else {
+				$proxylist = new XoopsFormSelect(_AM_SELECT_PROXY, 'proxyuser', 0, 5, TRUE); // made multi May 3 05
+				$proxylist->addOption('noproxy', _formulize_PICKAPROXY);
+			}
+			
 			for($i=0;$i<count($unique_users);$i++)
 			{
 				$proxylist->addOption($unique_users[$i], $punames[$i]);
 			}
 
-			$proxylist->setValue('noproxy');
+			if(!$entry_id) {
+				$proxylist->setValue('noproxy');
+			} else {
+				$proxylist->setValue('nochange');
 						
+			}
 			$form->addElement($proxylist);
 			return $form;
 }
@@ -1599,7 +1623,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$GLOBALS['sfidsDrawn'][] = $thissfid;
 				$customCaption = $i->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
-				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not
+				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not
 				if(isset($subUICols['single'])) {
 					$form->insertBreak($subUICols['single'], "even");
 				} else {

@@ -334,6 +334,7 @@ if($ele_type=='text') {
     $options['formlink_scope'] = array(0=>'all');
   } else {
     $options['listordd'] = $ele_value[0] == 1 ? 0 : 1;
+    $options['listordd'] = $ele_value[8] == 1 ? 2 : $options['listordd'];
     $options['multiple'] = $ele_value[1];
     if(!is_array($ele_value[2])) {
       $options['islinked'] = 1;

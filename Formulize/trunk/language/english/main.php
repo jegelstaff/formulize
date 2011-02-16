@@ -159,6 +159,8 @@ define("_AM_FRAME_ELEMENT_HANDLES", "Handles");
 define("_AM_FRAME_HANDLESHELP", "Use this page to specify <i>Handles</i> for this form and its elements.  Handles are short names that can be used to refer to this form and its elements from outside the Formulize module.");
 
 define("_AM_SELECT_PROXY", "Is this info submitted on behalf of someone else?");
+define("_AM_SELECT_UPDATE_OWNER", "Change owner/creator of this entry?");
+define("_AM_SELECT_UPDATE_NOCHANGE", "Current owner: ");
 
 define("_FORM_EXP_CREE","File has been exported with success");
 

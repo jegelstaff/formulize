@@ -126,10 +126,14 @@ if($ele_type == "select") {
 			}
     }
   }
-  if($_POST['elements_listordd']) {
+  $processedValues['elements']['ele_value'][8] = 0;
+  if($_POST['elements_listordd'] == 2) {
+    $processedValues['elements']['ele_value'][0] = 1;
+    $processedValues['elements']['ele_value'][8] = 1;
+  } else if($_POST['elements_listordd']) {
     $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0] > 1 ? intval($processedValues['elements']['ele_value'][0]) : 1;
   } else {
-    $processedValues['elements']['ele_value'][0] =  1;
+    $processedValues['elements']['ele_value'][0] = 1;
   }
   $processedValues['elements']['ele_value'][1] = $_POST['elements_multiple'];
   

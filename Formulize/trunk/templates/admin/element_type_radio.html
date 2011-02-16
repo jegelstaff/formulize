@@ -12,8 +12,8 @@
         </div>
 	      <div class="form-radios">
 		      <label for="element-delimit-custom" style="display:inline">
-            <input type="radio" id="element-delimit-custom" name="element_delimit" value="custom"/><{$smarty.const._MI_formulize_DELIMETER_CUSTOM}></label>
-      	    <input type="text" id="element-delim_custom" name="element_delim_custom" value="" size="25" maxlength="255"/>
+            <input type="radio" id="custom" name="element_delimit" value="custom"/><{$smarty.const._MI_formulize_DELIMETER_CUSTOM}></label>
+      	    <input type="text" id="element-delim_custom" name="element_delim_custom" value="<{$content.ele_delim_custom_value}>" size="25" maxlength="255"/>
 	      </div>
       </fieldset>
     </div>
@@ -26,7 +26,7 @@ $("#element-delimit-custom").click(function () {
 });
 
 $("#element-delim_custom").click(function () {
-  $("#element-delimit-custom").attr("checked", "checked"); 
+  $("#custom").attr("checked", "checked"); 
 });
 
 

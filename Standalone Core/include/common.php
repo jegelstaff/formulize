@@ -318,7 +318,7 @@ if(is_object($user)) {
   }
   if($externalUid) {
 	
-		$xoops_user = $member_handler->getUser( $externalUid );
+    $xoops_user = $member_handler->getUser( $externalUid );
     if(is_object($xoops_user)) {
       $_SESSION['xoopsUserId'] = $xoops_user->getVar('uid');
       $_SESSION['xoopsUserGroups'] = $xoops_user->getGroups();
@@ -336,7 +336,10 @@ if(is_object($user)) {
       $icms_session_expiry = ini_get("session.gc_maxlifetime") / 60; // need to use the current maxlifetime setting, which will be coming from Drupal, so the timing of the sessions is synched.   
       setcookie($icms_session_name, $sess_id, time()+(60*$icms_session_expiry), '/', '', $cookie_secure, 0);
     }
-	}
+    if(function_exists("i18n_get_lang")) { // set icms language to match the currently active Drupal language
+	$_GET['lang'] = i18n_get_lang();
+    }
+  }
 }
 // END OF ADDED CODE
 

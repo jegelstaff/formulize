@@ -3868,16 +3868,11 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
    if(isset($filterSettings[3])) {
      ${$oldTypesName} = $filterSettings[3];
    } else {
-     for($i=0;$i<count($filterSettings[0]);$i++) {
-			 ${$oldTypesName}[] = $defaultTypeIfNoFilterTypeGiven;
+     foreach($filterSettings[0] as $i=>$thisFilterSettingsZero) {
+       ${$oldTypesName}[$i] = $defaultTypeIfNoFilterTypeGiven;
      }
    }
- } /*elseif(isset($_POST[$oldElementsName])) { // unpack any values persisted from the previous pageload
-  ${$oldElementsName} = $_POST[$oldElementsName];
-  ${$oldOpsName} = $_POST[$oldOpsName];
-  ${$oldTermsName} = $_POST[$oldTermsName];
-  ${$oldTypesName} = $_POST[$oldTypesName];
- }*/
+ } 
 
   // setup needed variables for the all or oom ui
  // > match all of these
@@ -3891,36 +3886,22 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
  $newOpNameOOM = "new_".$filterName."_oom_op";
  $newTermNameOOM = "new_".$filterName."_oom_term";
 
- /*
- // STRONG PREMISE IS THAT WE ALWAYS RELOAD FROM DATABASE AFTER STATE CHANGE IN NEW UI
- // add in any new terms that have been sent...
- // > match all of these
- if($_POST[$newTermName] != "") {
-  ${$oldElementsName}[] = $_POST[$newElementName];
-  ${$oldOpsName}[] = $_POST[$newOpName];
-  ${$oldTermsName}[] = $_POST[$newTermName];
-  ${$oldTypesName}[] = "all";
- }
- // > match one or more of these
- if($_POST[$newTermNameOOM] != "") {
-  ${$oldElementsName}[] = $_POST[$newElementNameOOM];
-  ${$oldOpsName}[] = $_POST[$newOpNameOOM];
-  ${$oldTermsName}[] = $_POST[$newTermNameOOM];
-  ${$oldTypesName}[] = "oom";
- }*/
 
  // make hidden elements for all the old conditions we found
- for($i=0;$i<count(${$oldElementsName});$i++) {
-	 // need to add [$i] to the generation of the hidden values here, so the hidden condition keys equal the flag on the deletion X
-   $thisHiddenElement = new xoopsFormHidden($oldElementsName."[$i]", strip_tags(htmlspecialchars(${$oldElementsName}[$i])));
-   $thisHiddenOp = new xoopsFormHidden($oldOpsName."[$i]", strip_tags(htmlspecialchars(${$oldOpsName}[$i])));
-   $thisHiddenTerm = new xoopsFormHidden($oldTermsName."[$i]", strip_tags(htmlspecialchars(${$oldTermsName}[$i])));
-   $thisHiddenType = new xoopsFormHidden($oldTypesName."[$i]", strip_tags(htmlspecialchars(${$oldTypesName}[$i])));
-   if(${$oldTypesName}[$i] == "all") {
-        $conditionlist .= $options[${$oldElementsName}[$i]] . " " . ${$oldOpsName}[$i] . " " . ${$oldTermsName}[$i] . "&nbsp;&nbsp;<a class='conditionsdelete' title='Delete' target='".$filterName."_".$i."' href=''>X</a>\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
+ $i=0;
+ foreach(${$oldElementsName} as $x=>$thisOldElementsName) {
+   // need to add [$i] to the generation of the hidden values here, so the hidden condition keys equal the flag on the deletion X
+   // $x will be the order based on the filter settings that were passed in, might not start at 0.  $i will always start at 0, so this way we'll catch/correct any malformed arrays as people edit/save them
+   $thisHiddenElement = new xoopsFormHidden($oldElementsName."[$i]", strip_tags(htmlspecialchars(${$oldElementsName}[$x])));
+   $thisHiddenOp = new xoopsFormHidden($oldOpsName."[$i]", strip_tags(htmlspecialchars(${$oldOpsName}[$x])));
+   $thisHiddenTerm = new xoopsFormHidden($oldTermsName."[$i]", strip_tags(htmlspecialchars(${$oldTermsName}[$x])));
+   $thisHiddenType = new xoopsFormHidden($oldTypesName."[$i]", strip_tags(htmlspecialchars(${$oldTypesName}[$x])));
+   if(${$oldTypesName}[$x] == "all") {
+        $conditionlist .= $options[${$oldElementsName}[$x]] . " " . ${$oldOpsName}[$x] . " " . ${$oldTermsName}[$x] . "&nbsp;&nbsp;<a class='conditionsdelete' title='Delete' target='".$filterName."_".$i."' href=''>X</a>\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
    } else {
-        $conditionlistOOM .= $options[${$oldElementsName}[$i]] . " " . ${$oldOpsName}[$i] . " " . ${$oldTermsName}[$i] . "&nbsp;&nbsp;<a class='conditionsdelete' title='Delete' target='".$filterName."_".$i."' href=''>X</a>\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
+        $conditionlistOOM .= $options[${$oldElementsName}[$x]] . " " . ${$oldOpsName}[$x] . " " . ${$oldTermsName}[$x] . "&nbsp;&nbsp;<a class='conditionsdelete' title='Delete' target='".$filterName."_".$i."' href=''>X</a>\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
    }
+   $i++;
  }
  // setup the new element, operator, term boxes...
  // > match all of these
@@ -3982,6 +3963,9 @@ function convertTypeToText($type, $ele_value) {
     case "ib":
       return "Text for display (spanning both cells)";
     case "select":
+      if($ele_value[8] == 1) {
+	return "Autocomplete box";
+      }
       if($ele_value[0] == 1) {
         return "Dropdown box";
       } else {

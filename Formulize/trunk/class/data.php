@@ -466,7 +466,7 @@ class formulizeDataHandler  {
 	// arrays must start with 0 key and increase sequentially (no gaps, no associative keys, etc)
 	// all groups the user is a member of are written to the database, regardless of their current permission on the form
 	// interpretation of permissions is to be done when reading this information, to allow for more flexibility
-	function setEntryOwnerGroups($uids, $entryids) {
+	function setEntryOwnerGroups($uids, $entryids, $update=false) {
 		global $xoopsDB;
 		if(!is_array($uids)) {
 			$tempuids = $uids;
@@ -481,6 +481,25 @@ class formulizeDataHandler  {
 		if(count($uids) != count($entryids)) {
 			return false;
 		}
+		if($update) { // clear the ownership records for these entries first...
+		  $ownerClearSQL = "DELETE FROM	".$xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE `fid` = ".$this->fid." AND `entry_id` IN (";
+		  $start = true;
+		  foreach($entryids as $thisEntryId) {
+			$ownerClearSQL .= $start ? intval($thisEntryId) : ", ".intval($thisEntryId);
+			$start = false;
+		  }
+		  $ownerClearSQL .= ")";
+		  if(!$clearResult = $xoopsDB->queryF($ownerClearSQL)) {
+			return false;
+		  }
+		  // update the entry's creation and modification user ids
+		  for($i=0;$i<count($uids);$i++) { // loop through all the users
+			$uidUpdateSQL = "UPDATE ".$xoopsDB->prefix("formulize_").$this->fid. " SET `creation_uid` = ".intval($uids[$i])." WHERE `entry_id` = ".intval($entryids[$i]);
+			if(!$uidUpdateResult = $xoopsDB->queryF($uidUpdateSQL)) {
+				return false;
+			}
+		  }
+		} 
 		$start = true;
 		$ownerInsertSQLArray = array();
 		$ownerInsertSQLBase = "INSERT INTO " . $xoopsDB->prefix("formulize_entry_owner_groups") . " (`fid`, `entry_id`, `groupid`) VALUES ";
