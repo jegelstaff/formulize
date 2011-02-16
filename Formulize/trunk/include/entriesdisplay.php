@@ -3619,13 +3619,14 @@ function processClickedCustomButton($clickedElements, $clickedValues, $clickedAc
 			// same is true of "thisentry" and other variables here!
 			for($ixz=0;$ixz<count($clickedElements);$ixz++) { // loop through all actions for this button
 				if($thisEntry == "new" AND $maxIdReq > 0) { $thisEntry = $maxIdReq; } // for multiple effects on the same button, when the button applies to a new entry, reuse the initial id_req that was created during the first effect
+				$formulize_lvoverride = false;
 				if(strstr($clickedValues[$ixz], "\$value")) {
 					eval($clickedValues[$ixz]);
 					$valueToWrite = $value;
 				} else {
 					$valueToWrite = $clickedValues[$ixz];
 				}
-				$maxIdReq = writeElementValue("", $clickedElements[$ixz], $thisEntry, $valueToWrite, $clickedActions[$ixz], "", "", $csEntries[$id]);
+				$maxIdReq = writeElementValue("", $clickedElements[$ixz], $thisEntry, $valueToWrite, $clickedActions[$ixz], "", $formulize_lvoverride, $csEntries[$id]);
 			}
 			/*
 			// if you pass in $screen, you could try to do something like this...but it would increase overhead, and really, a more unified way of handling writing custom button data and updating derived values, needs to be created.

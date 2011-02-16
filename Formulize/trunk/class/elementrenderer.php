@@ -453,7 +453,6 @@ class formulizeElementRenderer{
 						}
 						$cachedSourceValuesQ[$sourceValuesQ] = $linkedElementOptions;
 						/* ALTERED - 20100318 - freeform - jeff/julian - start */
-						$autocompleteRowsAt = 30;
 						$numberOfRows = $xoopsDB->getRowsNum($reslinkedvaluesq);
 						if(!$isDisabled AND $ele_value[8] == 1) {
 							// do autocomplete rendering logic here
@@ -468,8 +467,10 @@ class formulizeElementRenderer{
 							$cachedLinkedOptions = fopen(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName","w");
 							fwrite($cachedLinkedOptions, "<?php\n\r");
 							foreach($linkedElementOptions as $id=>$text) {
+								$text = str_replace("\$", "\\\$", $text);
 								$quotedText = "\"".str_replace("\"", "\\\"", $text)."\"";
-								fwrite($cachedLinkedOptions,"if(stristr($quotedText, \$term)){ \$found[]='[$quotedText,$id]'; }\n\r");
+								$singleQuotedText = str_replace("'", "\'", "[$quotedText,$id]");
+								fwrite($cachedLinkedOptions,"if(stristr($quotedText, \$term)){ \$found[]='".$singleQuotedText."'; }\n");
 							}
 							fwrite($cachedLinkedOptions, "?>");
 							fclose($cachedLinkedOptions);
@@ -1170,7 +1171,7 @@ class formulizeElementRenderer{
 <link rel=\"stylesheet\" type=\"text/css\" media=\"all\" href=\"".XOOPS_URL."/modules/formulize/jquery/css/jquery.quickselect.css\"/>\n
 		";
 
-		$output .= "<input type='text' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='on' value='$default_value_user' />";
+		$output .= "<div class=\"formulize_autocomplete\" style=\"padding-right: 10px;\"><input type='text' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='on' value='$default_value_user' style=\"width: 100%;\"/></div>";
 		$output .= "<input type='hidden' name='${form_ele_id}' id = '${form_ele_id}' value='$default_value' />";
 		$output .= "<script type='text/javascript'>";
 		$output .= '$(function(){$("#'.$form_ele_id.'_user'.'").quickselect({ajax: "'.XOOPS_URL.'/modules/formulize/include/formulize_quickselect.php",ajaxParams:{cache:"'.$cachedLinkedOptionsFilename.'"},maxVisibleItems:12,additionalFields: $("#'.$form_ele_id.'")});});';

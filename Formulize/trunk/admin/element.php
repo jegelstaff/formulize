@@ -73,7 +73,7 @@ if($_GET['ele_id'] != "new") {
   $ele_type = $elementObject->getVar('ele_type');
   $ele_value = $elementObject->getVar('ele_value');
   $ele_delim = $elementObject->getVar('ele_delim');
-  if($ele_delim != "br" AND $ele_delim != "space" AND ele_delim != "") {
+  if($ele_delim != "br" AND $ele_delim != "space" AND $ele_delim != "") {
     $ele_delim_custom_value = $ele_delim;
     $ele_delim = "custom";
   }
