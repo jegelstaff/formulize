@@ -205,8 +205,6 @@ function formulize_node_info() {
       'name' => t('Form'),
       'module' => 'formulize',
       'description' => t('Formulize is a data management and reporting system.  You can embed data management applications inside Drupal, once you have configured them in Formulize.  See the <a href="/admin/settings/formulize"></a>admin settings</a> for more information.'),
-			'has_title' => TRUE,
-			'title_label' => ('Screen Name')
     )
   );
 }
@@ -224,16 +222,26 @@ function formulize_form(&$node) {
     	'#title' => check_plain($type->title_label),
     	'#required' => TRUE,
     	'#default_value' => $node->title,
-    	'#weight' => -5
+    	'#description' => t('This name will not be shown to users, but will show up in lists of nodes so you can find this node easily.')
   	);
 	}
+	
+  if ($type->has_body) {
+		/*$form['body_filter']['body'] = array(
+		'#type' => 'textarea',
+		'#title' => check_plain($type->body_label),
+		'#default_value' => $node->body,
+		'#required' => FALSE
+		);
+		$form['body_filter']['filter'] = filter_form($node->format);*/
+    $form['body_field'] = node_body_field($node, $type->body_label, $type->min_word_count);
+	}		
 		
   $form['screen_id'] = array(
     '#type' => 'select',
     '#title' => t('Select the Formulize screen that you want to embed in this node'),
     '#required' => TRUE,
     '#default_value' => isset($node->screen_id) ? $node->screen_id : '0',
-    '#weight' => -4,
     '#options' => _formulize_get_screens()
   );
 
@@ -394,7 +402,6 @@ function formulize_view(&$node, $teaser = FALSE, $page = FALSE) {
   $node = node_prepare($node, $teaser); // get it ready for display
   $node->content['formulize_screen'] = array(
     '#value' => theme('formulize_display_screen', $output),
-    '#weight' => 0,
   );
 
   return $node;
@@ -532,14 +539,18 @@ function _formulize_update_user( $drupal_user )
 	$member_handler =& xoops_gethandler('member');
 
   $xoops_user = $member_handler->getUser($drupal_user->uid);
-	$xoops_user->setVar('uname',$drupal_user->name);
-	$xoops_user->setVar('name',$drupal_user->name);
-	$xoops_user->setVar('pass',$drupal_user->pass);
-	$xoops_user->setVar('email',$drupal_user->mail);
-	$xoops_user->setVar('timezone_offset',$drupal_user->timezone/60/60);
-	$xoops_user->setVar('language',_formulize_convert_language($drupal_user->language));
+  if( $xoops_user ) {
+	  $xoops_user->setVar('uname',$drupal_user->name);
+	  $xoops_user->setVar('name',$drupal_user->name);
+	  $xoops_user->setVar('pass',$drupal_user->pass);
+	  $xoops_user->setVar('email',$drupal_user->mail);
+	  $xoops_user->setVar('timezone_offset',$drupal_user->timezone/60/60);
+	  $xoops_user->setVar('language',_formulize_convert_language($drupal_user->language));
 
-	$member_handler->insertUser( $xoops_user );
+	  $member_handler->insertUser( $xoops_user );
+  } else {
+    _formulize_insert_user( $drupal_user );
+  }
 }
 
 /**
