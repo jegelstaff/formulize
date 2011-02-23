@@ -337,8 +337,8 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
 
   // text data
   $multipageText = array();
-  $multipageText['introtext'] = html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES);
-  $multipageText['thankstext'] = html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES); // need the e to make sure it doesn't convert links to clickable HTML!
+  $multipageText['introtext'] = undoAllHTMLChars($screen->getVar('introtext', "e"));
+  $multipageText['thankstext'] = undoAllHTMLChars($screen->getVar('thankstext', "e")); // need the e to make sure it doesn't convert links to clickable HTML!
 
   // pages data
   $multipagePages = array();

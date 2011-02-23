@@ -4016,3 +4016,11 @@ function formulize_runAdvancedCalculation( $acid ) {
   $advCalcObject = $advanced_calculation_handler->get($acid);
   return $advanced_calculation_handler->calculate($advCalcObject);
 }
+
+function undoAllHTMLChars($text,$quotes=ENT_QUOTES) {
+  $text = html_entity_decode($text,$quotes);
+  while(strstr($text,"&amp;")) {
+    $text = html_entity_decode($text,$quotes);
+  }
+  return $text;
+}

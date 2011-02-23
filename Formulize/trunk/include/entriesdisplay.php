@@ -3664,6 +3664,7 @@ function gatherHiddenValue($handle) {
 function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname) {
   static $importExportCleanupDone = false;
 	if($buttonText) {
+		$buttonText = trans($buttonText);
 		switch ($button) {
 			case "changeColsButton":
 				return "<input type=button style=\"width: 140px;\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";

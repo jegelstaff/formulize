@@ -71,7 +71,6 @@ $(".conditionsdelete").click(function () {
 
 	$(".savebuttonpopup").click(function() {
     if(validateRequired()) {
-			$("dialog-page-settings").fadeTo(1,0.5);
 			var pagedata = window.document.getElementsByName("popupform");
 			$.post("save.php?popupsave=1", $(pagedata).serialize(), function(data) {
 				if(data) {
@@ -79,18 +78,17 @@ $(".conditionsdelete").click(function () {
 						eval(data);
 					} else {
 						alert(data);
-						$("dialog-page-settings").fadeTo(1,1);
 					}
 				}
 				window.document.getElementById('popupsavewarning').style.display = 'none';
-				$(".savebutton").blur();
+				
 			});
     }
+    $(".savebuttonpopup").blur();
   });
 		
 	function reloadPopup() {
 		$("#dialog-page-settings-content").load('<{$smarty.const.XOOPS_URL}>/modules/formulize/admin/screen_multipage_pages_settings.php?page=<{$pageIndex}>&sid=<{$sid}>');
-		$("dialog-page-settings").fadeTo(1,1);
 	}
 
 </script>

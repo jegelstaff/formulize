@@ -36,7 +36,8 @@
 require_once "../../mainfile.php";
 //include XOOPS_ROOT_PATH.'/header.php';
 
-PRINT "<HTML>";
+PRINT "<HTML>
+<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />";
 PRINT "<HEAD>";
 print "<link rel='stylesheet' type='text/css' media='all' href='".getcss($xoopsConfig['theme_set'])."'>\n";
 // figure out if this is XOOPS or ICMS
