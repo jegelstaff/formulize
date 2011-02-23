@@ -453,7 +453,6 @@ class formulizeElementRenderer{
 						}
 						$cachedSourceValuesQ[$sourceValuesQ] = $linkedElementOptions;
 						/* ALTERED - 20100318 - freeform - jeff/julian - start */
-						$numberOfRows = $xoopsDB->getRowsNum($reslinkedvaluesq);
 						if(!$isDisabled AND $ele_value[8] == 1) {
 							// do autocomplete rendering logic here
 							if($boxproperties[2]) {
