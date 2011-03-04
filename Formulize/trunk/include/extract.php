@@ -53,7 +53,7 @@ function go($query, $keyfield="") {
 	//print "$query"; // debug code
 	$result = array();
 	if($res = $xoopsDB->query($query)) { // appears to work OK inside Drupal.  Is this because there is always a previous query to the XOOPS DB before we get to this stage, and so it is pointing to the right place when this fires?  Maybe this should be rewritten to explicitly check for the pressence of $xoopsDB, and use that if it is found.
-		while ($array = $xoopsDB->fetchArray($res)) {
+		while ($array = $xoopsDB->fetchBoth($res)) {
 			if($keyfield) {
 				$result[$array[$keyfield]] = $array;
 			} else {
@@ -112,7 +112,6 @@ function prepvalues($value, $field, $entry_id) {
 		} else {
 			$value = "";
 		}
-		return $value; // none of the further processing steps are relevant
 	}
 
   // decrypt encrypted values...pretty inefficient to do this here, one query in the DB per value to decrypt them....but we'd need proper select statements with field names specified in them, instead of *, in order to be able to swap in the AES DECRYPT at the time the data is retrieved in the master query
@@ -125,6 +124,10 @@ function prepvalues($value, $field, $entry_id) {
 					return "";
 		 }
 	}
+
+        if($type == "derived" OR $type == "yn" OR $type == "text" OR $type == "textarea" OR $type == "date") {
+	  return $value; // none of the further processing steps are relevant
+        }
 
 	// handle cases where the value is linked to another form
   if($source_ele_value = formulize_isLinkedSelectBox($field, true)) {
