@@ -1858,10 +1858,10 @@ function displayMeta($entry, $spechandle, $id="NULL", $localid="NULL") {
     {
 	    switch($spechandle) {
 	        case "creation_uid-name":
-	            $name = go("SELECT name FROM " . DBPRE .
+	            $name = go("SELECT name, uname FROM " . DBPRE .
 	            	"users WHERE uid=$entry");
-               $cachedDisplayMeta[$entry][$spechandle][$id][$localid] = $name[0][0];
-	            return $name[0][0]; 
+               $cachedDisplayMeta[$entry][$spechandle][$id][$localid] = $name[0][0] ? $name[0][0] : $name[0][1];
+	            return $cachedDisplayMeta[$entry][$spechandle][$id][$localid]; 
 		    break;
 		}
     }
@@ -1910,10 +1910,10 @@ function displayMeta($entry, $spechandle, $id="NULL", $localid="NULL") {
 	            // "go" works exactly like the q function, but it only exists in the 
 	            // extraction layer.
 	            // also note the use of DBPRE and not any $xoopsDB stuff
-	            $name = go("SELECT name FROM " . DBPRE .
+	            $name = go("SELECT name, uname FROM " . DBPRE .
 	            	"users WHERE uid=$values");
-               $cachedDisplayMeta[$entry][$spechandle][$id][$localid] = $name[0][0];
-	            return $name[0][0]; 
+		    $cachedDisplayMeta[$entry][$spechandle][$id][$localid] = $name[0][0] ? $name[0][0] : $name[0][1];
+	            return $cachedDisplayMeta[$entry][$spechandle][$id][$localid]; 
 		    break;
 		}
 	}        
