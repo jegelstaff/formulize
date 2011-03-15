@@ -3107,13 +3107,14 @@ function synchSubformBlankDefaults($fid, $entry) {
 	$ids_to_return = array();
 	if(isset($GLOBALS['formulize_subformCreateEntry'])) {
     foreach($GLOBALS['formulize_subformCreateEntry'] as $sfid=>$sfid_id_reqs) {
+      $sourceEntryId = $_POST['formulize_subformValueSourceEntry_'.$sfid] ? $_POST['formulize_subformValueSourceEntry_'.$sfid] : "new";
       global $xoopsDB;
       // first, figure out the value we need to write in the subform entry
       if($_POST['formulize_subformSourceType_'.$sfid]) { // true if the source is a common value
-        $elementPostHandle = "de_".$_POST['formulize_subformValueSourceForm_'.$sfid]."_".$_POST['formulize_subformValueSourceEntry_'.$sfid]."_".$_POST['formulize_subformValueSource_'.$sfid];
+        $elementPostHandle = "de_".$_POST['formulize_subformValueSourceForm_'.$sfid]."_".$sourceEntryId."_".$_POST['formulize_subformValueSource_'.$sfid];
         // grab the value from the parent element -- assume that it is a textbox of some kind!
         if (isset($_POST[$elementPostHandle])) {
-          $value_to_write = $_POST[$elementPostHandle]; // get the value right out of the posted submission if it's present
+          $value_to_write = $_POST[$elementPostHandle] === "{ID}" ? $GLOBALS['formulize_newEntryIds'][$_POST['formulize_subformValueSourceForm_'.$sfid]][0] : $_POST[$elementPostHandle]; // get the value right out of the posted submission if it's present, unless it's {ID} and then we need to get the new value that was written for that form -- assume the first written new entry is the one we want!!
         } else {
           // get this entry and see what the source value is
           $data_handler = new formulizeDataHandler($_POST['formulize_subformValueSourceForm_'.$sfid]);

@@ -1163,9 +1163,12 @@ class formulizeElementRenderer{
 	/* ALTERED - 20100318 - freeform - jeff/julian - start */
 	function formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFilename, $default_value='', $default_value_user='none') {
 		// quickselect-formulize has a change in it so that "none" is an allowed value for matches, so that we can give the user good UI when something wrong is happening
-		$output = "<!-- Dependencies - note: quickselect-formulize has a change in it so that \"none\" is an allowed value for matches, so that we can give the user good UI when something wrong is happening -->\n
-<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-1.4.2.min.js\"></script>\n
-<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/quicksilver.js\"></script>\n
+		$output = "<!-- Dependencies - note: quickselect-formulize has a change in it so that \"none\" is an allowed value for matches, so that we can give the user good UI when something wrong is happening -->\n";
+
+    if( ! defined( "FORMULIZE_DONT_INCLUDE_JQUERY" ) )
+  		$output .= "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-1.4.2.min.js\"></script>\n";
+
+		$output .= "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/quicksilver.js\"></script>\n
 <script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery.quickselect-formulize.min.js\"></script>\n
 <link rel=\"stylesheet\" type=\"text/css\" media=\"all\" href=\"".XOOPS_URL."/modules/formulize/jquery/css/jquery.quickselect.css\"/>\n
 		";
@@ -1173,8 +1176,11 @@ class formulizeElementRenderer{
 		$output .= "<div class=\"formulize_autocomplete\" style=\"padding-right: 10px;\"><input type='text' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='on' value='$default_value_user' style=\"width: 100%;\"/></div>";
 		$output .= "<input type='hidden' name='${form_ele_id}' id = '${form_ele_id}' value='$default_value' />";
 		$output .= "<script type='text/javascript'>";
+		$output .= "if( window.on_".$form_ele_id." )\n";
+		$output .= '$(function(){$("#'.$form_ele_id.'_user'.'").quickselect({ajax: "'.XOOPS_URL.'/modules/formulize/include/formulize_quickselect.php",ajaxParams:{cache:"'.$cachedLinkedOptionsFilename.'"},maxVisibleItems:12,additionalFields: $("#'.$form_ele_id.'"),onItemSelect: on_'.$form_ele_id.'});});';
+		$output .= "\nelse\n";
 		$output .= '$(function(){$("#'.$form_ele_id.'_user'.'").quickselect({ajax: "'.XOOPS_URL.'/modules/formulize/include/formulize_quickselect.php",ajaxParams:{cache:"'.$cachedLinkedOptionsFilename.'"},maxVisibleItems:12,additionalFields: $("#'.$form_ele_id.'")});});';
-		$output .= "</script>";
+		$output .= "\n</script>";
 
 		return $output;
 	}
