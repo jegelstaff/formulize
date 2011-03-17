@@ -1156,7 +1156,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 	// come up with a filename and then return it
 	// rest of logic in entriesdisplay.php will take the filename and create a file with the calculations in it once they are performed
 	if($fdchoice == "calcs") { 
-		$tempfold = time();
+		$tempfold = microtime(true);
 		$exfilename = _formulize_DE_XF . $tempfold . ".html";
 		return XOOPS_URL . "/modules/formulize/export/$exfilename";
 	}
@@ -1302,7 +1302,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 		}
 		$csvfile .= "\r\n"; // end of a line
 	}
-	$tempfold = time();
+	$tempfold = microtime(true);
 	$exfilename = _formulize_DE_XF . $tempfold . $fxt;
 	// open the output file for writing
 	$wpath = XOOPS_ROOT_PATH."/modules/formulize/export/$exfilename";
