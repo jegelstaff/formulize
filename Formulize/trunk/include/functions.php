@@ -2178,6 +2178,8 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
 		} else {
 			return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
 		}
+	} elseif($ele_type == 'derived') {
+		return $myts->makeClickable(printSmart(trans($matchtext), $textWidth)); // allow HTML codes in derived values
 	} else { // regular element
     formulize_benchmark("done formatting, about to print");
 		return $myts->makeClickable(printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth));
