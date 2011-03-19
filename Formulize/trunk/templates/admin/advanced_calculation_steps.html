@@ -79,10 +79,10 @@ $(".conditionsdelete").click(function () {
 	});
 
   $(".savebutton").click(function () {
-  	$("[name=steporder]").val($("#accordion-4").sortable('serialize')); 
+  	$("[name=steporder]").val($("#accordion-3").sortable('serialize')); 
   });
 
-  $("#accordion-4").bind( "sortupdate", function(event, ui) {
+  $("#accordion-3").bind( "sortupdate", function(event, ui) {
     window.document.getElementById('savewarning').style.display = 'block';
   });
 

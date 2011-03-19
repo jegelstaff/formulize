@@ -54,9 +54,9 @@ class formulizeAdvancedCalculation extends xoopsObject {
   function genBasic( $calculation ) {
     $code = <<<EOD
 \$sql = "{$calculation['sql']}";
-\$res = $xoopsDB->query(\$sql);
+\$res = \$xoopsDB->query(\$sql);
 {$calculation['preCalculate']}
-while(\$array = $xoopsDB->fetchArray(\$res)) {
+while(\$array = \$xoopsDB->fetchBoth(\$res)) {
   \$row = \$array;
 {$calculation['calculate']}
 }
@@ -92,10 +92,11 @@ EOD;
 \$sql = \$sqlBase . "(";
 \$start = true;
 \$chunk = 0;
+\$res = array();
 foreach({$foreachCriteria}) {
   if(strlen(\$sql) > 500000) {
 		\$sql .= ")";
-    \$res[\$chunk] = $xoopsDB->query(\$sql);
+    \$res[\$chunk] = \$xoopsDB->query(\$sql);
     \$chunk++;
     \$start = true;
     \$sql = \$sqlBase  . "(";
@@ -107,10 +108,10 @@ foreach({$foreachCriteria}) {
   \$start = false;
 }
 \$sql .= ")";
-\$res[\$chunk] = $xoopsDB->query(\$sql);
+\$res[\$chunk] = \$xoopsDB->query(\$sql);
 {$calculation['preCalculate']}
 foreach(\$res as \$thisRes) {
-  while(\$array = $xoopsDB->fetchArray(\$thisRes)) {
+  while(\$array = \$xoopsDB->fetchBoth(\$thisRes)) {
 	  \$row = \$array;
 {$calculation['calculate']}
   }
@@ -221,26 +222,28 @@ class formulizeAdvancedCalculationHandler {
     $fromBaseQuery = $GLOBALS['formulize_queryForCalcs'];
 
     global $xoopsDB;
-
     ob_start();
 
     $steps = $advCalcObject->getVar('steps');
+    $steptitles = $advCalcObject->getVar('steptitles');
     $input = $advCalcObject->vars['input']['value'];
     $output = $advCalcObject->vars['output']['value'];
 
-    eval( $input );
+    //formulize_includeEval( $input );
+    eval($input);
 
-    foreach( $steps as $step ) {
+    foreach( $steps as $stepKey => $step ) {
       if( strpos( $step['sql'], '{foreach' ) > 0 ) {
         $code = $advCalcObject->genForeach( $step );
       } else {
         $code = $advCalcObject->genBasic( $step );
       }
-
-      eval( $code );
+      //formulize_includeEval( $code );
+      eval($code);
     }
 
-    eval( $output );
+    //formulize_includeEval( $output, true, array("\$xoopsDB")); // second param forces all the passed code to be evaluated now, third param is all the global variables that should be available in this scope
+    eval($output);
 
     $ob_calc = ob_get_clean();
 		

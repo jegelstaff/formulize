@@ -99,8 +99,8 @@ foreach($advcalc as $k=>$v) {
 
 
 //print_r( $_POST['steporder'] );
-/*
-// get the new order of the elements...
+
+// get the new order of the steps...
 $newOrder = explode("drawer-3[]=", str_replace("&", "", $_POST['steporder']));
 unset($newOrder[0]);
 // newOrder will have keys corresponding to the new order, and values corresponding to the old order
@@ -123,7 +123,7 @@ if($stepsHaveBeenReordered) {
 	$steps = $newsteps;
 	$steptitles = $newsteptitles;
 }
-*/
+
 
 // alter the information based on a user add or delete
 switch ($op) {
