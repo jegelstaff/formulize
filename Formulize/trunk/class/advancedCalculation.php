@@ -58,6 +58,7 @@ class formulizeAdvancedCalculation extends xoopsObject {
 {$calculation['preCalculate']}
 while(\$array = \$xoopsDB->fetchBoth(\$res)) {
   \$row = \$array;
+  \$field = \$array;
 {$calculation['calculate']}
 }
 {$calculation['postCalculate']}
@@ -113,6 +114,7 @@ foreach({$foreachCriteria}) {
 foreach(\$res as \$thisRes) {
   while(\$array = \$xoopsDB->fetchBoth(\$thisRes)) {
 	  \$row = \$array;
+	  \$field = \$array;
 {$calculation['calculate']}
   }
 }
@@ -246,8 +248,120 @@ class formulizeAdvancedCalculationHandler {
     eval($output);
 
     $ob_calc = ob_get_clean();
+
+    // remove any temporary tables we used to generate this procedure
+    $this->destroyTables();
 		
     return $ob_calc;
   }
+  
+  // this function removes temp tables created by the createProceduresTable on this pageload
+  function destroyTables() {
+    global $xoopsDB;
+    $sql = "DROP TABLE `".implode("`, `",$GLOBALS['formulize_procedures_tablenames'])."`;";
+    if(!$res = $xoopsDB->query($sql)) {
+	print "Error: could not drop the temporary tables created by this procedure.<br>".mysql_error()."<br>$sql";
+    }
+  }
+  
 }
+
+//This function takes an array and makes a table in the database for it
+//Each item in the array has a series of second level keys which are the field names, followed by a value for that field, or an array of multiple values
+// ie:
+// $array[$id1]['field1']=$value1;
+// $array[$id1]['field2']=array($value2, value3);
+// $array[$id2]['field1']=$valuex;
+// $array[$id2]['field2']=array($valuey, valuez);
+
+// Results in a table like this:
+// field1|field2
+// $value1|$value2
+// $value1|$value3
+// $valuex|$valuey
+// $valuex|$valuez
+
+// this function can only support one field that has an array of values.  All other fields must be atomic, single values.
+
+function createProceduresTable($array) {
+    $tablename = "procedures_table_".str_replace(".","_",microtime(true));
+    $sql = "CREATE TABLE `$tablename` (";
+    $indexList = array();
+    $fieldList = array();
+    foreach($array[key($array)] as $fieldName=>$values) { // loop through the first element to see all the fields we're dealing with
+	if(!is_array($values)) {
+	    $values = array($values);
+	}
+	if(is_numeric($values[0])) {
+	    $fieldType = "bigint(20) default '0'";
+	    $indexList[] = "INDEX i_".$fieldName." ($fieldName)";
+	} elseif(strtotime($values[0])) {
+	    $fieldType = "date NULL default NULL";
+	    $indexList[] = "INDEX i_".$fieldName." ($fieldName)";
+	} else {
+	    $fieldType = "text NULL default NULL";	    
+	}
+	$sql .= "`$fieldName` $fieldType,";
+	$fieldList[]  = $fieldName;
+    }
+    $sql .= implode(",", $indexList);
+    $sql .= ") TYPE=MyISAM;";
+    global $xoopsDB;
+    if(!$res = $xoopsDB->query($sql)) {
+	print "Error: could not create table for the Procedure.<br>".mysql_error()."<br>$sql";
+    } else {
+	$GLOBALS['formulize_procedures_tablenames'][] = $tablename;
+    }
+    $sql = "INSERT INTO $tablename (`".implode("`, `",$fieldList)."`) VALUES ";
+    $start = true;
+    foreach($array as $fieldData) {
+	$sql .= $start ? "" : ", ";
+	$values = array();
+	$thisDataMultipleCount = 0;
+	$thisDataMultipleField = "";
+	foreach($fieldList as $fieldName) {
+	    if(is_array($fieldData[$fieldName])) {
+		$index = 0;
+		foreach($fieldData[$fieldName] as $thisValue) {
+		    $values[$index][$fieldName] = $thisValue;
+		    $index++;
+		}
+		$thisDataMultipleCount = count($values);
+		$thisDataMultipleField = $fieldName;
+	    } else {
+		$values[0][$fieldName] = $fieldData[$fieldName];
+	    }
+	}
+	if($thisDataMultipleCount > 1) {
+	    foreach($fieldList as $fieldName) {
+		if($fieldName == $thisDataMultipleField) { continue; }
+		$originalValue = $values[0][$fieldName];
+		for($i=1;$i<$thisDataMultipleCount;$i++) {
+		    $values[$i][$fieldName] = $originalValue;
+		}
+	    }
+	}
+	
+	$recordStart = true;
+	foreach($values as $record=>$data) {
+	    $sql .= $recordStart ? "" : ", ";
+	    $sql .= "(";
+	    $fieldStart = true;
+	    foreach($fieldList as $fieldName) {
+		$sql .= $fieldStart ? "" : ", ";
+		$sql .= "'".$data[$fieldName]."'";
+		$fieldStart = false;
+	    }
+	    $sql .= ")";
+	    $recordStart = false;
+	}
+	$start = false;
+    }
+    if(!$res = $xoopsDB->query($sql)) {
+	print "Error: could not insert values into the table for the Procedure.<br>".mysql_error()."<br>$sql";
+    }
+    
+    return $tablename;
+}
+
 ?>
