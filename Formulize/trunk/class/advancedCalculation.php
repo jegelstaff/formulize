@@ -58,6 +58,7 @@ class formulizeAdvancedCalculation extends xoopsObject {
 {$calculation['preCalculate']}
 while(\$array = \$xoopsDB->fetchBoth(\$res)) {
   \$row = \$array;
+  \$field = \$array;
 {$calculation['calculate']}
 }
 {$calculation['postCalculate']}
@@ -113,6 +114,7 @@ foreach({$foreachCriteria}) {
 foreach(\$res as \$thisRes) {
   while(\$array = \$xoopsDB->fetchBoth(\$thisRes)) {
 	  \$row = \$array;
+	  \$field = \$array;
 {$calculation['calculate']}
   }
 }
@@ -250,4 +252,116 @@ class formulizeAdvancedCalculationHandler {
     return $ob_calc;
   }
 }
+
+//This function takes an array and makes a table in the database for it
+//Each item in the array has a series of second level keys which are the field names, followed by a value for that field, or an array of multiple values
+// ie:
+// $array[$id1]['field1']=$value1;
+// $array[$id1]['field2']=array($value2, value3);
+// $array[$id2]['field1']=$valuex;
+// $array[$id2]['field2']=array($valuey, valuez);
+
+// Results in a table like this:
+// field1|field2
+// $value1|$value2
+// $value1|$value3
+// $valuex|$valuey
+// $valuex|$valuez
+
+// this function can only support one field that has an array of values.  All other fields must be atomic, single values.
+
+function createProceduresTable($array) {
+    $tablename = "procedures_table_".str_replace(".","_",microtime(true));
+    $sql = "CREATE TABLE `$tablename` (";
+    $indexList = array();
+    $fieldList = array();
+    foreach($array[key($array)] as $fieldName=>$values) { // loop through the first element to see all the fields we're dealing with
+	if(!is_array($values)) {
+	    $values = array($values);
+	}
+	if(is_numeric($values[0])) {
+	    $fieldType = "bigint(20) default '0'";
+	    $indexList[] = "INDEX i_".$fieldName." ($fieldName)";
+	} elseif(strtotime($values[0])) {
+	    $fieldType = "date NULL default NULL";
+	    $indexList[] = "INDEX i_".$fieldName." ($fieldName)";
+	} else {
+	    $fieldType = "text NULL default NULL";	    
+	}
+	$sql .= "`$fieldName` $fieldType,";
+	$fieldList[]  = $fieldName;
+    }
+    $sql .= implode(",", $indexList);
+    $sql .= ") TYPE=MyISAM;";
+    global $xoopsDB;
+    if(!$res = $xoopsDB->query($sql)) {
+	print "Error: could not create table for the Procedure.<br>".mysql_error()."<br>$sql";
+    }
+    $sql = "INSERT INTO $tablename (`".implode("`, `",$fieldList)."`) VALUES ";
+    $start = true;
+    foreach($array as $fieldData) {
+	$sql .= $start ? "" : ", ";
+        $sql .= "(";
+	$fieldStart = true;
+	$values = array();
+	$thisDataMultipleCount = 0;
+	$thisDataMultipleField = "";
+	foreach($fieldList as $fieldName) {
+	    if(is_array($fieldData[$fieldName])) {
+		foreach($fieldData[$fieldName] as $thisValue) {
+		    $values[$fieldName][] = $thisValue;    
+		}
+		$thisDataMultipleCount = count($values[$fieldName]);
+		$thisDataMultipleField = $fieldName;
+	    } else {
+		$values[$fieldName] = $fieldData[$fieldName];
+	    }
+	}
+	if($thisDataMultipleCount > 1) {
+	    foreach($fieldList as $fieldName) {
+		if($fieldName = $thisDataMultipleField) { continue; }
+		$originalValue = $values[$fieldName];
+		$values[$fieldName] = array();
+		for($i=0;$i<$thisDataMultipleCount;$i++) {
+		    $values[$fieldName][] = $originalValue;
+		}
+	    }
+	}
+	foreach($values as $fieldName=>$data) {
+	    
+	}
+	}
+	    $values[] = $fieldData[$fieldName];
+	    $sql .= $fieldStart ? "" : ", ";    
+	    if(is_array($fieldData[$fieldName])) {
+		foreach($fieldData[$fieldName] as )
+		$sql .= "'".$fieldData[$fieldname][0]."'";
+		// prepare other value groups for the other values in this array
+		for($i=1;$i<count($fieldData[$fieldName]);$i++) {
+		    $otherValues = 
+		}
+	    } else {
+		$sql .= "'".$fieldData[$fieldname]."'";
+	    }
+	    
+	    $sql .= ")";
+	    $fieldStart = false;
+	}
+	$start = false;
+	    print "<br>fd: ";
+	print_r($fieldData);
+	foreach($fieldData as $values) {
+	//print "<br>values: ";
+	 //  print_r($values);
+	}
+	   /* $sql .= $start ? "" : ", ";
+	    $sql .= "(";
+	    if()
+	    $sql .= ")";
+	    $start = false;
+	}*/
+    }
+    return $tablename;
+}
+
 ?>
