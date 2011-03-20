@@ -1,14 +1,15 @@
+<{foreach item=appData from=$allAppData}>
 
 <table><tr><td width=25%></td><td>
-<h1><{$app_name}></h1>
+<h1><{$appData.app_name}></h1>
 
-<{if $noforms}>
+<{if $appData.noforms}>
 
-	<p><{$noforms}></p>
+	<p><{$appData.noforms}></p>
 
 <{else}>
 
-<{foreach item=thisform from=$formData}>
+<{foreach item=thisform from=$appData.formData}>
 
 	<p><a href="<{$xoops_url}>/modules/formulize/index.php?fid=<{$thisform.fid}>"><{$thisform.title}></a></p>
 
@@ -17,5 +18,7 @@
 <{/if}>
 
 </td><td width=25%></td></tr></table>
+
+<{/foreach}>
 
 

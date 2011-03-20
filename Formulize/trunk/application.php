@@ -38,37 +38,62 @@ require(XOOPS_ROOT_PATH."/header.php");
 
 global $xoopsDB;
 
-$aid = (isset($_GET['id'])) ? intval($_GET['id']) : 0 ;
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $application_handler = xoops_getmodulehandler('applications', 'formulize');
-$forms = $form_handler->getFormsByApplication($aid, true);
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 $allowedForms = allowedForms();
-$formsToShow = array_intersect($forms, $allowedForms);
-$formsToSend = array();
-$i=0;
-foreach($formsToShow as $thisForm) {
-	$thisFormObject = $form_handler->get($thisForm);
-	if($thisFormObject->getVar('menutext')) {
-		$formsToSend[$i]['fid'] = $thisFormObject->getVar('id_form');
-		$formsToSend[$i]['title'] = html_entity_decode($thisFormObject->getVar('menutext'), ENT_QUOTES) == "Use the form's title" ? $thisFormObject->getVar('title') : $thisFormObject->getVar('menutext');
-		$i++;
-	}
-}
-if($aid) {
-	$application = $application_handler->get($aid);
-	$app_name = $application->getVar('name');
+
+if(isset($_GET['id']) AND $_GET['id'] === "all") {
+	$applicationsToDraw = $application_handler->getAllApplications();
+	$applicationsToDraw[] = 0; // add in forms with no app at the end of the list
 } else {
-	$app_name = _AM_CATGENERAL;
-}
-if(count($formsToSend)==0) {
-	$noforms =  _AM_NOFORMS_AVAIL;
-} else {
-	$noforms = 0;
+	$aid = (isset($_GET['id'])) ? intval($_GET['id']) : 0 ;
+	$applicationsToDraw = array($aid);
 }
 
-$xoopsTpl->assign("app_name", $app_name);
-$xoopsTpl->assign("noforms", $noforms);
-$xoopsTpl->assign("formData", $formsToSend);
+$allAppData = array();
+foreach($applicationsToDraw as $aid) {
+	if(is_object($aid)) {
+		$aid = $aid->getVar('appid'); // when 'all' is requested, the array will be of objects, not ids
+	}
+
+	$forms = $form_handler->getFormsByApplication($aid, true);
+	$formsToShow = array_intersect($forms, $allowedForms);
+	$formsToSend = getNavDataForForms($formsToShow, $form_handler);
+	if($aid) {
+		$application = $application_handler->get($aid);
+		$app_name = $application->getVar('name');
+	} else {
+		$app_name = _AM_CATGENERAL;
+	}
+	if(count($formsToSend)==0) {
+		$noforms =  _AM_NOFORMS_AVAIL;
+	} else {
+		$noforms = 0;
+	}
+	$allAppData[] = array('app_name'=>$app_name, 'noforms'=>$noforms, 'formData'=>$formsToSend);
+
+}
+
+$xoopsTpl->assign("allAppData", $allAppData);
 
 require(XOOPS_ROOT_PATH."/footer.php");
+
+// $forms must be an array of form ids
+function getNavDataForForms($forms, $form_handler) {
+	$formsToSend = array();
+	$i=0;
+	foreach($forms as $thisForm) {
+		$thisFormObject = $form_handler->get($thisForm);
+		if($thisFormObject->getVar('menutext')) {
+			$title = html_entity_decode($thisFormObject->getVar('menutext'), ENT_QUOTES) == "Use the form's title" ? $thisFormObject->getVar('title') : $thisFormObject->getVar('menutext');
+			if($title) {
+				$formsToSend[$i]['fid'] = $thisFormObject->getVar('id_form');
+				$formsToSend[$i]['title'] = $title;
+				$i++;
+			}
+		}
+	}
+	return $formsToSend;
+}
+

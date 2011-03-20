@@ -30,38 +30,6 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-include 'header.php';
+include "header.php";
 
-$xoopsOption['template_main'] = 'formulize_cat.html';
-
-require(XOOPS_ROOT_PATH."/header.php");
-
-global $xoopsDB;
-
-$cat_id = (isset($_GET['cat'])) ? intval($_GET['cat']) : 0 ;
-//$cat_id = $_GET['cat'];
-$cat_name_q = q("SELECT cat_name FROM " . $xoopsDB->prefix("formulize_menu_cats") . " WHERE cat_id='$cat_id'");
-$cat_name = $cat_name_q[0]['cat_name'];
-if(!$cat_name) { $cat_name = _AM_CATGENERAL; }
-
-$formsInCat = fetchFormsInCat($cat_id);
-// altered sept 8 to use ids instead of titles
-//$formNames = fetchFormNames($formsInCat);
-$indexer = 0;
-foreach($formsInCat as $thisform) {
-	$formData[$indexer]['fid'] = $thisform;
-	$formData[$indexer]['title'] = fetchFormNames($thisform);
-	$indexer++;
-}
-
-$xoopsTpl->assign("cat_name", $cat_name);
-if($indexer==0) {
-	$xoopsTpl->assign("noforms", _AM_NOFORMS_AVAIL);
-} else {
-	$xoopsTpl->assign("formData", $formData);
-}
-
-
-require(XOOPS_ROOT_PATH."/footer.php");
-
-?>
+header("location: ".XOOPS_URL."/modules/formulize/application.php?id=all");
