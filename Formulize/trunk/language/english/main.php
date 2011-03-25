@@ -605,7 +605,7 @@ define("_formulize_DE_SETNOT_FOR_ALL", "all entries");
 define("_formulize_DE_SETNOT_FOR_CON", "only entries that meet these conditions:");
 define("_formulize_DE_SETNOT_ADDCON", "Add another condition");
 define("_formulize_DE_SETNOT_TEMP", "Use a custom message template?  If so, type the filename here.");
-define("_formulize_DE_SETNOT_TEMP_DESC", "Upload your custom message template file into the 'modules/formulize/english/mail_template/' folder.");
+define("_formulize_DE_SETNOT_TEMP_DESC", "Upload your custom message template file into the 'modules/formulize/language/english/mail_template/' folder.");
 define("_formulize_DE_SETNOT_SUBJ", "Use a custom message subject line?  If so, type the subject here.");
 define("_formulize_DE_SETNOT_SAVE", "Save this notification");
 define("_formulize_DE_NOTLIST", "Current notifications");

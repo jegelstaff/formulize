@@ -677,10 +677,12 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 	
 	
 		// draw in proxy box if necessary (only if they have permission and only on new entries, not on edits)
-		if($gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid) AND !$entries[$fid][0]) {
-			$form = addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid);
-		} elseif($entries[$fid][0] AND $gperm_handler->checkRight("update_entry_ownership", $fid, $groups, $mid)) {
-			$form = addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid, $entries[$fid][0]);	
+		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+			if($gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid) AND !$entries[$fid][0]) {
+				$form = addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid);
+			} elseif($entries[$fid][0] AND $gperm_handler->checkRight("update_entry_ownership", $fid, $groups, $mid)) {
+				$form = addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid, $entries[$fid][0]);	
+			}
 		}
 	
 		// add flag to indicate that the form has been submitted

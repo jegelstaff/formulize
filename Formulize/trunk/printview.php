@@ -100,7 +100,7 @@ if( ! is_array( $formframe ) && $screenid && !$ele_allowed) { // no element list
 
     $elements = array();
     foreach( $pages as $currentPage=>$page ) {
-      if( canViewPage( $ventry, $currentPage+1, $conditions, $formframe ) ) {
+      if( canViewPage( $ventry, $currentPage+1, $conditions, $formframe, $mainform ) ) {
         foreach( $page as $element ) {
           $elements[] = $element;
         }
@@ -157,7 +157,7 @@ print "</center></body>";
 PRINT "</HTML>";
 //include XOOPS_ROOT_PATH.'/footer.php';
 
-function canViewPage( $entry, $currentPage, $conditions, $formframe ) {
+function canViewPage( $entry, $currentPage, $conditions, $formframe, $mainform ) {
   // start: taken from include/formdisplaypages.php
   // check to see if there are conditions on this page, and if so are they met
   // if the conditions are not met, move on to the next page and repeat the condition check
@@ -218,7 +218,11 @@ function canViewPage( $entry, $currentPage, $conditions, $formframe ) {
 			}
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 			//$data = getData($frid, $fid, $finalFilter, $masterBoolean);
-			$data = getData("", $formframe, $finalFilter, $masterBoolean);
+			if($formframe) {
+				$data = getData($formframe, $mainform, $finalFilter, $masterBoolean);
+			} else {
+				$data = getData("", $formframe, $finalFilter, $masterBoolean);
+			}
 			if($data[0] == "") { 
 				$pagesSkipped = true;
 			} else {
