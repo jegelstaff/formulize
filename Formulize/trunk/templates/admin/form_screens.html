@@ -35,12 +35,12 @@
 		    <th>Action</th>
 	    </tr>
       <{foreach from=$content.screens item=screen}>
-	      <tr class="<{cycle values='even,odd'}>">
+	      <tr>
 		      <td><label for="screens-defaultform-<{$screen.sid}>"><a class="configscreen" target="<{$screen.sid}>" href=""><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
 					<td><{$screen.sid}></td>
 		      <td><{if $screen.type eq 'multiPage'}>Multi page<{else}>Regular<{/if}></td>
 		      <td><div class="form-radios"><input type="radio" id="screens-defaultform-<{$screen.sid}>" name="screens-defaultform" value="<{$screen.sid}>"<{if $screen.sid eq $content.defaultform}> checked="checked"<{/if}>/></div></td>
-  		    <td class="head"><a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
+  		    <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;<a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
 	      </tr>
       <{/foreach}>
     </table>
@@ -56,11 +56,11 @@
 		    <th>Action</th>
 	    </tr>
       <{foreach from=$content.listOfEntries item=screen}>
-	      <tr class="<{cycle values='even,odd' reset=true}>">
+	      <tr>
 		      <td><label for="screens-defaultlist-<{$screen.sid}>"><a class="configscreen" target="<{$screen.sid}>" href=""><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
 					<td><{$screen.sid}></td>
 		      <td><div class="form-radios"><input type="radio" id="screens-defaultlist-<{$screen.sid}>" name="screens-defaultlist" value="<{$screen.sid}>"<{if $screen.sid eq $content.defaultlist}> checked="checked"<{/if}>/></div></td>
-  		    <td class="head"><a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</td>
+  		    <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;<a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
 	      </tr>
       <{/foreach}>
     </table>

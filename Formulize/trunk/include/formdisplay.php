@@ -1011,7 +1011,9 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 }
 
 // this function draws in the UI for sub links
-function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption="", $customElements="", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings=0, $overrideOwnerOfNewEntries="", $mainFormOwner=0) {
+function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption="", $customElements="", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings=0, $overrideOwnerOfNewEntries="", $mainFormOwner=0, $hideaddentries) {
+
+	$hideaddentries = $hideaddentries === 'hideaddentries' ? 1 : 0; // only the text value is a valid flag for hiding the entries...because we need an affirmative hide flag, we can't use null, blank, etc, since older subforms will have no value for this flag
 
 	global $xoopsDB, $nosubforms;
 	$GLOBALS['framework'] = $frid;
@@ -1274,7 +1276,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 
 	$col_two .= "</table>";
 
-	if($addSubEntry = $gperm_handler->checkRight("add_own_entry", $sfid, $groups, $mid)) {
+	if($addSubEntry = $gperm_handler->checkRight("add_own_entry", $sfid, $groups, $mid) AND !$hideaddentries) {
 		if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] === "" AND $sub_single) {
 			$col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$sfid', 1);\"></p>";
 		} elseif(!$sub_single) {
@@ -1625,7 +1627,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$GLOBALS['sfidsDrawn'][] = $thissfid;
 				$customCaption = $i->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
-				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not
+				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not
 				if(isset($subUICols['single'])) {
 					$form->insertBreak($subUICols['single'], "even");
 				} else {
