@@ -459,7 +459,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	
 	// convert framework handles to element handles if necessary
 	$showcols = dealWithDeprecatedFrameworkHandles($showcols, $frid);	
-	
+
 	$showcols = removeNotAllowedCols($fid, $frid, $showcols, $groups); // converts old format metadata fields to new ones too if necessary
 
 	// clear quick searches for any columns not included now
@@ -1241,7 +1241,10 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$listTemplate = $screen->getVar('listtemplate');
 		foreach($screen->getVar('customactions') as $caid=>$thisCustomAction) {
 			if($thisCustomAction['appearinline'] == 1) {
-				$inlineButtons[$caid] = $thisCustomAction;
+				list($caCode) = processCustomButton($caid, $thisCustomAction);
+				if($caCode) {
+					$inlineButtons[$caid] = $thisCustomAction;
+				}
 			}
 		}
 		$formulize_LOEPageSize = $screen->getVar('entriesperpage');
@@ -1548,9 +1551,11 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 					// handle inline custom buttons
 					foreach($inlineButtons as $caid=>$thisCustomAction) {
 						list($caCode) = processCustomButton($caid, $thisCustomAction, $linkids[0], $entry); // only bother with the code, since we already processed any clicked button above
-						print "<td $columnWidthParam class=$class>\n";
-						print "<center>$caCode</center>\n";
-						print "</td>\n";
+						if($caCode) {
+							print "<td $columnWidthParam class=$class>\n";
+							print "<center>$caCode</center>\n";
+							print "</td>\n";
+						}
 					}
 					
 					// handle hidden elements for passing back to custom buttons
@@ -1632,7 +1637,9 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 					$ids = internalRecordIds($entry, $mainFormHandle);
 					foreach($inlineButtons as $caid=>$thisCustomAction) {
 						list($caCode) = processCustomButton($caid, $thisCustomAction, $ids[0], $entry); // only bother with the code, since we already processed any clicked button above
-						${$thisCustomAction['handle']} = $caCode; // assign the button code that was returned
+						if($caCode) {
+							${$thisCustomAction['handle']} = $caCode; // assign the button code that was returned
+						}
 					}
 					
 					// handle hidden elements for passing back to custom buttons
@@ -3471,7 +3478,9 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 		if($thisCustomAction['appearinline']) { continue; } // ignore buttons that are meant to appear inline
 		$atLeastOneCustomButton = true;
 		list($caCode) = processCustomButton($caid, $thisCustomAction);
-		${$thisCustomAction['handle']} = $caCode; // assign the button code that was returned
+		if($caCode) {
+			${$thisCustomAction['handle']} = $caCode; // assign the button code that was returned
+		}
 	}
 
 	// if there is no save button specified in either of the templates, but one is available, then put it in below the list
@@ -3510,6 +3519,13 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 // $entries is the entry ID that should be altered when this button is clicked.  Only sent for inline buttons.
 // $entry is only sent from inline buttons, so that any PHP/HTML to be rendered inline has access to all the values of the current entry
 function processCustomButton($caid, $thisCustomAction, $entries="", $entry) {
+
+	global $xoopsUser;
+	$userGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+	$groupOverlap = array_intersect(unserialize($thisCustomAction['groups']), $userGroups);
+	if(count($groupOverlap) == 0) {
+		return array();
+	}
 
 	static $nameIdAddOn = 0; // used to give inline buttons unique names and ids
 	

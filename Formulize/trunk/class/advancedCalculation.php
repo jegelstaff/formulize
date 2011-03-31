@@ -258,9 +258,11 @@ class formulizeAdvancedCalculationHandler {
   // this function removes temp tables created by the createProceduresTable on this pageload
   function destroyTables() {
     global $xoopsDB;
-    $sql = "DROP TABLE `".implode("`, `",$GLOBALS['formulize_procedures_tablenames'])."`;";
-    if(!$res = $xoopsDB->query($sql)) {
-	print "Error: could not drop the temporary tables created by this procedure.<br>".mysql_error()."<br>$sql";
+    if(isset($GLOBALS['formulize_procedures_tablenames'])) {
+        $sql = "DROP TABLE `".implode("`, `",$GLOBALS['formulize_procedures_tablenames'])."`;";
+        if(!$res = $xoopsDB->query($sql)) {
+        	print "Error: could not drop the temporary tables created by this procedure.<br>".mysql_error()."<br>$sql";
+        }
     }
   }
   

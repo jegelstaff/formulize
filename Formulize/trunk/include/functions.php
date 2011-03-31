@@ -51,10 +51,10 @@ while($table = $xoopsDB->fetchRow($resultst)) {
 	}
 }
 
-if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
-	include_once "../language/".$xoopsConfig['language']."/main.php";
+if ( file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['language']."/main.php";
 } else {
-	include_once "../language/english/main.php";
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/language/english/main.php";
 }
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
@@ -1128,7 +1128,20 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
     }
   }
 
-  // don't bother getting entries from many to one relationships...it is not expected to ever be necessary
+  foreach($many_to_one as $manyToOneFid) {
+    array_unshift($fids, $manyToOneFid['fid']);
+    if(isset($entries[$fid][0])) {
+      if($thisent = $entries[$fid][0]) { // for some reason PHP 5 won't let us evaluate this directly
+        $entries_found = findLinkedEntries($fid, $manyToOneFid, $entries[$fid][0], $gperm_handler, $owner_groups, $mid, $member_handler, $owner);
+        foreach($entries_found as $many_entry) {
+          $entries[$manyToOneFid['fid']][] = $many_entry;
+        }
+      }
+    } else {
+      $entries[$manyToOneFid['fid']][] = "";
+    }
+  }
+  
 
 	$to_return['fids'] = $fids;
 	$to_return['entries'] = $entries;
@@ -2575,6 +2588,10 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 			list($uids_conditions, $omit_user) = compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, false, $entry, $fid);
 		} // end of each condition
 
+		if(isset($GLOBALS['formulize_notification_email'])) {
+		  $uids_complete[] = -1; // if we are notifying an arbitrary e-mail address, then this uid will have been added to the uids_conditions array, so let's add it to the complete array, so that our notification doesn't get ignored as being "out of scope" based on uids
+		}
+
 		// intersect all possible uids with the ones valid for this condition, and handle subscribing necessary users
 		$uids_real = compileNotUsers2($uids_conditions, $uids_complete, $notification_handler, $fid, $event, $mid);
 		// cannot bug out (return) if $uids_real is empty, since there are still the custom conditions to evaluate below
@@ -2607,6 +2624,12 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 		$extra_tags['ENTRYID'] = $entry;			
 
 		if(count($uids_real) > 0) {
+			if(in_array(-1, $uids_real)) {
+			  sendNotificationToEmail($GLOBALS['formulize_notification_email'], $event, $extra_tags);
+			  unset($uids_real[array_search(-1, $uids_real)]); // now remove the special flag before triggering the event
+			  unset($uids_complete[array_search(-1, $uids_complete)]); // now remove the special flag before triggering the event
+			  unset($GLOBALS['formulize_notification_email']);
+			}
 			$notification_handler->triggerEvent("form", $fid, $event, $extra_tags, $uids_real, $mid, $omit_user);
 		}
 		unset($uids_real);
@@ -2638,10 +2661,13 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
       }
 			$uids_cust_con = array();
 			list($uids_cust_con, $omit_user) = compileNotUsers($uids_cust_con, $thiscon, $uid, $member_handler, true, $entry, $fid);
-			$uids_cust_real = compileNotUsers2($uids_cust_con, $uids_complete, $notification_handler, $fid, $event, $mid);			
+			if(isset($GLOBALS['formulize_notification_email'])) {
+		          $uids_complete[] = -1; // if we are notifying an arbitrary e-mail address, then this uid will have been added to the uids_conditions array, so let's add it to the complete array, so that our notification doesn't get ignored as being "out of scope" based on uids
+			}
+			$uids_cust_real = compileNotUsers2($uids_cust_con, $uids_complete, $notification_handler, $fid, $event, $mid);
 			// set the custom template and subject
 	            $module_handler =& xoops_gethandler('module');
-      	      $module =& $module_handler->get($mid);
+		    $module =& $module_handler->get($mid);
 			$not_config =& $module->getInfo('notification');
 			switch($event) {
 				case "new_entry":
@@ -2660,6 +2686,12 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 			$not_config['event'][$evid]['mail_subject'] = $thiscon['not_cons_subject'] == "" ? $not_config['event'][$evid]['mail_subject'] : $thiscon['not_cons_subject'];
 			// trigger the event
 			if(count($uids_cust_real) > 0) {
+				if(in_array(-1, $uids_cust_real)) {
+	  			  sendNotificationToEmail($GLOBALS['formulize_notification_email'], "cust", $extra_tags, $not_config['event'][$evid]['mail_subject'], $not_config['event'][$evid]['mail_template']);
+	  			  unset($uids_cust_real[array_search(-1, $uids_cust_real)]); // now remove the special flag before triggering the event
+	  			  unset($uids_complete[array_search(-1, $uids_complete)]); // now remove the special flag before triggering the event
+	  			  unset($GLOBALS['formulize_notification_email']);
+	  			}
 				$notification_handler->triggerEvent("form", $fid, $event, $extra_tags, $uids_cust_real, $mid, $omit_user);
 			}
 			$not_config['event'][$evid]['mail_subject'] = $oldsubject;
@@ -2672,6 +2704,62 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 		unset($saved_conditions);
 	} // end of each entry
   
+}
+
+// $template should include .tpl on the end
+function sendNotificationToEmail($email, $event, $tags, $subject, $template) {
+  
+  $module_handler = xoops_gethandler('module');
+  $module = $module_handler->get(getFormulizeModId());
+  
+  $tags['X_ITEM_NAME'] = '[' . _NOT_ITEMNAMENOTAVAILABLE . ']';
+  $tags['X_ITEM_URL']  = '[' . _NOT_ITEMURLNOTAVAILABLE . ']';
+  $tags['X_ITEM_TYPE'] = '[' . _NOT_ITEMTYPENOTAVAILABLE . ']';
+  $tags['X_MODULE'] = $module->getVar('name');
+  $tags['X_MODULE_URL'] = XOOPS_URL . '/modules/' . $module->getVar('dirname') . '/';
+  $tags['X_NOTIFY_CATEGORY'] = $category;
+  $tags['X_NOTIFY_EVENT'] = $event;
+  
+  global $xoopsConfig;
+  if( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/form_newentry.tpl")) {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/modinfo.php";
+    $templateDir = XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/";
+  } else {
+    $templateDir = XOOPS_ROOT_PATH."/modules/formulize/language/english/mail_template/";
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/modinfo.php";
+  }
+  
+  switch($event) {
+    case("new_entry"):
+      $template = 'form_newentry.tpl';
+      $subject = _MI_formulize_NOTIFY_NEWENTRY_MAILSUB;
+      break;
+    case("update_entry"):
+      $template = 'form_upentry.tpl';
+      $subject = _MI_formulize_NOTIFY_UPENTRY_MAILSUB;
+      break;
+    case("delete_entry"):
+      $template = 'form_delentry.tpl';
+      $subject = _MI_formulize_NOTIFY_DELENTRY_MAILSUB;
+      break;
+  }
+  
+  $xoopsMailer =& getMailer();
+  include_once XOOPS_ROOT_PATH . '/include/notification_constants.php';
+  $xoopsMailer->useMail();
+  foreach ($tags as $k=>$v) {
+    $xoopsMailer->assign($k, preg_replace("/&amp;/i", '&', $v));
+  }
+  // Set up the mailer
+  $xoopsMailer->setTemplateDir($templateDir);
+  $xoopsMailer->setTemplate($template.".tpl");
+  $xoopsMailer->setToEmails($email);
+  //global $icmsConfig;
+  //$xoopsMailer->setFromEmail($icmsConfig['adminmail']);
+  //$xoopsMailer->setFromName($icmsConfig['sitename']);
+  $xoopsMailer->setSubject($subject);
+  $success = $xoopsMailer->send();
+  return $success;
 }
 
 function formulize_getUsersByGroups($groups, $member_handler="") {
@@ -2692,6 +2780,7 @@ function formulize_getUsersByGroups($groups, $member_handler="") {
 
 // this function can be called from within a loop, and will merge uids_conditions with all previously recorded values
 function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $reinitialize=false, $entry, $fid) {
+  
 	static $omit_user = null;
 	if($reinitialize) { $omit_user = null; } // need to do this when handling saved conditions, since each time we call this function it's a new "event" that we're dealing with
 	if($thiscon['not_cons_uid'] > 0) {
@@ -2732,6 +2821,13 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
     } else {
       $uids_conditions = array();
     }
+  } elseif($thiscon['not_cons_elementemail'] > 0) { // get the element at issue and extract the e-mail address from it
+    $data_handler = new formulizeDataHandler($fid);
+    $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_elementemail']));
+    if($value) {
+      $GLOBALS['formulize_notification_email'] = $value;
+      $uids_conditions = array_merge(array(-1), $uids_conditions);
+    }
   }
   if(in_array($uid, $uids_conditions)) { // in Formulize, users are always notified of things, even things they do themselves.
     $omit_user = 0;
@@ -2751,6 +2847,7 @@ function compileNotUsers2($uids_conditions, $uids_complete, $notification_handle
 	}		
 	$uids_not_subd = array_diff($uids_real, $uids_subd);
 	foreach($uids_not_subd as $thisuid) {
+		if($thisuid <= 0) { continue; }
 		$notification_handler->subscribe("form", $fid, $event, XOOPS_NOTIFICATION_MODE_SENDONCETHENDELETE, $mid, $thisuid);
 	}
 	return $uids_real;	

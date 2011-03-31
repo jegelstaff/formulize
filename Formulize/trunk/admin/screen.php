@@ -256,6 +256,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
     $custom['custombuttons'][$buttonId]['content'] = $buttonData;
     $custom['custombuttons'][$buttonId]['content']['id'] = $buttonId; // add id to the date for the template
     $custom['custombuttons'][$buttonId]['name'] = $buttonData['handle'];
+    $custom['custombuttons'][$buttonId]['groups'] = unserialize($buttonData['groups']);
     foreach($buttonData as $key=>$value) {
       if(is_numeric($key)) { // effects have numeric keys
         if($buttonData['applyto'] == 'custom_code') {
@@ -360,6 +361,15 @@ $common['title'] = $screenName; // oops, we've got two copies of this data float
 $common['sid'] = $sid;
 $common['fid'] = $fid;
 $common['aid'] = $aid;
+
+// generate a group list for use with the custom buttons
+$sql = "SELECT name, groupid FROM ".$xoopsDB->prefix("groups")." ORDER BY groupid";
+if($res = $xoopsDB->query($sql)) {
+	while($array = $xoopsDB->fetchArray($res)) {
+		$common['grouplist'][$array['groupid']] = $array['name'];
+	}
+}
+
 
 // define tabs for screen sub-page
 $adminPage['tabs'][1]['name'] = "Settings";

@@ -84,6 +84,7 @@ foreach($_POST as $k=>$v) {
     $buttonData[$buttonId]['messagetext'] = $_POST['messagetext_'.$buttonId];
     $buttonData[$buttonId]['appearinline'] = $_POST['appearinline_'.$buttonId];
     $buttonData[$buttonId]['applyto'] = $_POST['applyto_'.$buttonId];
+    $buttonData[$buttonId]['groups'] = serialize($_POST['groups_'.$buttonId]);
     if(isset($_POST['code_'.$buttonId])) {
       foreach($_POST['code_'.$buttonId] as $effectId=>$code) { 
         if((string)$effectId === (string)$removeEffect[1] AND (string)$buttonId === (string)$removeEffect[0]) { continue; }
