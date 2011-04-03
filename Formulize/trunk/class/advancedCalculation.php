@@ -53,6 +53,7 @@ class formulizeAdvancedCalculation extends xoopsObject {
 
   function genBasic( $calculation ) {
     $code = <<<EOD
+\$totalNumberOfRecords = 0;
 \$sql = "{$calculation['sql']}";
 \$res = \$xoopsDB->query(\$sql);
 {$calculation['preCalculate']}
@@ -61,6 +62,7 @@ while(\$array = \$xoopsDB->fetchBoth(\$res)) {
   \$field = \$array;
 {$calculation['calculate']}
 }
+\$totalNumberOfRecords = mysql_numrows(\$res);
 {$calculation['postCalculate']}
 EOD;
 
@@ -89,6 +91,7 @@ EOD;
     //print $foreachExpression . '<hr>' . $foreachCriteria . '<hr>' . $foreachMatch . '<hr>';
 
     $code = <<<EOD
+\$totalNumberOfRecords = 0;
 \$sqlBase = "{$foreachSqlPre}";
 \$sql = \$sqlBase . "(";
 \$start = true;
@@ -117,6 +120,7 @@ foreach(\$res as \$thisRes) {
 	  \$field = \$array;
 {$calculation['calculate']}
   }
+  $totalNumberOfRecords += mysql_numrows(\$thisRes);
 }
 {$calculation['postCalculate']}
 EOD;
@@ -203,6 +207,17 @@ class formulizeAdvancedCalculationHandler {
     return $isError ? false : true;
   } 
   
+  function cloneProcedure($acid) {
+    global $xoopsDB;
+    $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_advanced_calculations")." (fid, name, description, input, output, steps, steptitles) SELECT fid, CONCAT(name,' - copy'), description, input, output, steps, steptitles FROM ".$xoopsDB->prefix("formulize_advanced_calculations")." WHERE acid=".intval($acid);
+    if(!$res = $xoopsDB->queryF($sql)) {
+	print "Error: cloning procedure SQL failed. ".mysql_error()."<br>SQL:<br>$sql";
+	return false;
+    } else {
+	return true;
+    }
+  }
+
 
   function getList($fid) {
     global $xoopsDB;
@@ -231,8 +246,17 @@ class formulizeAdvancedCalculationHandler {
     $input = $advCalcObject->vars['input']['value'];
     $output = $advCalcObject->vars['output']['value'];
 
+    // establish whether the timer is on or not
+    if(strstr($input,"timerOn();")) {
+	$GLOBALS['formulize_procedureTimerOn'] = true;
+	$input = str_replace("timerOn();","",$input);
+    }
+
+    reportProceduresTime("Start of Procedure");    
     //formulize_includeEval( $input );
     eval($input);
+    
+    reportProceduresTime("Finished processing the input instructions");
 
     foreach( $steps as $stepKey => $step ) {
       if( strpos( $step['sql'], '{foreach' ) > 0 ) {
@@ -242,10 +266,13 @@ class formulizeAdvancedCalculationHandler {
       }
       //formulize_includeEval( $code );
       eval($code);
+      reportProceduresTime("Finished processing step '".$steptitles[$stepKey]."'", $totalNumberOfRecords);  
     }
 
     //formulize_includeEval( $output, true, array("\$xoopsDB")); // second param forces all the passed code to be evaluated now, third param is all the global variables that should be available in this scope
     eval($output);
+    
+    reportProceduresTime("Finished processing the output instructions");
 
     $ob_calc = ob_get_clean();
 
@@ -268,6 +295,37 @@ class formulizeAdvancedCalculationHandler {
   
 }
 
+//This function displays the processing time since the last time it was called, with a label for the current unit that was just completed
+//Optionally, a number can be passed representing the number of event/items/actions/loop iterations that have happened since the last time this was called, which will cause an average time to be displayed as well as elapsed time
+function reportProceduresTime($label, $averageOverThisNumber=0) {
+    if(!isset($GLOBALS['formulize_procedureTimerOn'])) { return; }
+    static $time; 
+    static $totalTime;
+    if(!$time) {
+	$time = round(microtime(true),8);
+	$currentTime = $time;
+	$elapsedTime = 0;
+	$totalTime = 0;
+    } else {
+	$currentTime = round(microtime(true),8);
+	$elapsedTime = round($currentTime - $time,8);
+	$totalTime += $elapsedTime;
+	$time = $currentTime;
+    }
+    if($averageOverThisNumber) {
+	$averageTime = round($elapsedTime / $averageOverThisNumber,8);;
+    } else {
+	$averageTime = 0;
+    }
+    print "<br>** $label<br>";
+    print "$elapsedTime -- elapsed time since last report<br>";
+    if($averageTime) {
+	print "$averageTime -- average time for each of $averageOverThisNumber operations since last report<br>";
+    }
+    print "$totalTime -- total time since start<br>";
+   
+}
+
 //This function takes an array and makes a table in the database for it
 //Each item in the array has a series of second level keys which are the field names, followed by a value for that field, or an array of multiple values
 // ie:
@@ -285,8 +343,8 @@ class formulizeAdvancedCalculationHandler {
 
 // this function can only support one field that has an array of values.  All other fields must be atomic, single values.
 
-function createProceduresTable($array) {
-    $tablename = "procedures_table_".str_replace(".","_",microtime(true));
+function createProceduresTable($array, $permTableName = "") {
+    $tablename = $permTableName ? $permTableName."_".str_replace(".","_",microtime(true)) : "procedures_table_".str_replace(".","_",microtime(true));
     $sql = "CREATE TABLE `$tablename` (";
     $indexList = array();
     $fieldList = array();
@@ -311,7 +369,7 @@ function createProceduresTable($array) {
     global $xoopsDB;
     if(!$res = $xoopsDB->query($sql)) {
 	print "Error: could not create table for the Procedure.<br>".mysql_error()."<br>$sql";
-    } else {
+    } elseif(!$permTableName) {
 	$GLOBALS['formulize_procedures_tablenames'][] = $tablename;
     }
     $sql = "INSERT INTO $tablename (`".implode("`, `",$fieldList)."`) VALUES ";
