@@ -489,6 +489,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_HANDLE", "What handle is used to r
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_NEW", "New Custom Button");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_BUTTONTEXT", "What text should appear on this button?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_MESSAGETEXT", "What text should appear at the top of the screen after this button is clicked?");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_GROUPS", "For which groups should this custom button appear?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_INLINE", "Should this button appear once on every line of the list of entries?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_INLINE_DESC", "If no, then the button will be available in the Top and Bottom Templates.  If yes, the button will appear in the list, or will be available in the List Template if you use one.");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO", "Which entries should be modified when this button is clicked?");
