@@ -2566,14 +2566,32 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 				$ops = unserialize($thesecons[1]);
 				$terms = unserialize($thesecons[2]);
 				$start = 1;
+				$blankFilters = array();
 				for($i=0;$i<count($elements);$i++) {
 					if($ops[$i] == "NOT") { $ops[$i] = "!="; }
+					if($terms[$i]=="{BLANK}") {
+					  $blankFilter = $elements[$i]."/**//**/".$ops[$i]."][".$elements[$i]."/**//**/";
+					  if($ops[$i] == "!=" OR $ops[$i] == "NOT LIKE") {
+						  $blankFilters['and'][] = $blankFilter." IS NOT NULL ";
+  					  } else {
+					    $blankFilters['or'][] = $blankFilter." IS NULL ";
+					  }
+					  continue;
+					}
 					if($start) {
 						$filter = $entry."][".$elements[$i]."/**/".$terms[$i]."/**/".$ops[$i];
 						$start = 0;
 					} else {
 						$filter .= "][".$elements[$i]."/**/".$terms[$i]."/**/".$ops[$i];
 					}
+				}
+				if(isset($blankFilters['and'])) {
+				  foreach($blankFilters['and'] as $thisAndFilter) {
+				    $filter .= "][".$thisAndFilter;
+				  }  
+				}
+				if(isset($blankFilters['or'])) {
+				  $filter = array(0=>array(0=>"and",1=>$filter), 1=>array(0=>"or",1=>implode("][",$blankFilters['or'])));
 				}
 				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 				$data = getData("", $fid, $filter);
