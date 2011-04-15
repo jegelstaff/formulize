@@ -128,7 +128,7 @@
           alert(data);
         }
       }
-      if(saveCounter == saveTarget) { // if we've received a response for all the forms...
+      if(saveCounter >= saveTarget) { // if we've received a response for all the forms...
         window.document.getElementById('savewarning').style.display = 'none';
         $(".savebutton").blur();
         if(newhandle) {
