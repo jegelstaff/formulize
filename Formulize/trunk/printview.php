@@ -218,7 +218,7 @@ function canViewPage( $entry, $currentPage, $conditions, $formframe, $mainform )
 			}
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 			//$data = getData($frid, $fid, $finalFilter, $masterBoolean);
-			if($formframe) {
+			if($mainform) {
 				$data = getData($formframe, $mainform, $finalFilter, $masterBoolean);
 			} else {
 				$data = getData("", $formframe, $finalFilter, $masterBoolean);
