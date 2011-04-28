@@ -350,8 +350,8 @@ $sess_handler->salt_key = XOOPS_DB_SALT;
 $sess_handler->enableRegenerateId = true;
 $sess_handler->icms_sessionOpen(); */
 
-// Remove expired session for xoopsUserId
-if ( $icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '' && !isset($_COOKIE[$icmsConfig['session_name']]) && !empty($_SESSION['xoopsUserId']) ) {
+// Remove expired session for xoopsUserId -- $externalUid check added by FREEFORM SOLUTIONS - Mar 28 2011 - prevents loss of session due to cookie writing failure
+if ( !$externalUid && $icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '' && !isset($_COOKIE[$icmsConfig['session_name']]) && !empty($_SESSION['xoopsUserId']) ) {
 	unset( $_SESSION['xoopsUserId'] );
 }
 
