@@ -1115,6 +1115,10 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
           $buttonCodeArray['quickFilter' . $handle] = $qscode['filter']; // set variables for use in the template
           $foundQS = true;
         }
+	if(strstr($screen->getVar('toptemplate'), 'quickDateRange' . $handle) OR strstr($screen->getVar('bottomtemplate'), 'quickDateRange' . $handle)) {
+          $buttonCodeArray['quickDateRange' . $handle] = $qscode['dateRange']; // set variables for use in the template
+          $foundQS = true;
+        }
         if($foundQS) { continue; } // skip next line
 				$quickSearchesNotInTemplate[] = $qscode['search']; // if it's not used in the template, then save the box version for hidden output to screen below, so searches still work
 			}
@@ -1531,15 +1535,29 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 							$counter = 1;
 							$countOfValue = count($value);
 							foreach($value as $valueId=>$v) {
+								// Added by Steph, April 11, 2011
+								if(is_numeric($value)) {
+									$elstyle = 'style="text-align: right;"';
+								}
 								if($counter<$countOfValue) {
-									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col) . ',</div><br>';
+									// Modified by Steph, April 11, 2011
+									// print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col) . ',</div><br>';
+									print '<span'.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col) . ',</span><br>';
 								} else {
-									print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col). '</div>';
+									// Modified by Steph, April 11, 2011
+									//print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col). '</div>';
+									print '<span'.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col). '</span>';
 								}
 								$counter++;
 							}
 						} elseif($col != "creation_uid" AND $col!= "mod_uid") {
-							print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $textWidth, $currentColumnLocalId)), $col). '</div>';
+							// Added by Steph, April 11, 2011
+							if(is_numeric($value)) {
+								$elstyle = 'style="text-align: right;"';
+							}
+							// Modified by Steph, April 11, 2011
+							//print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $textWidth, $currentColumnLocalId)), $col). '</div>';
+							print '<div'.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $textWidth, $currentColumnLocalId)), $col). '</div>';
 						} else { // don't use printsmart for the special uid cells
 							print $value;
 						}
@@ -1713,6 +1731,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
     if(is_array($filtersRequired) OR $filtersRequired === true) {
       if($filtersRequired === true OR in_array($cols[$i], $filtersRequired)) {
         $quickSearchBoxes[$cols[$i]]['filter'] = formulize_buildQSFilter($cols[$i], $search_text);
+	$quickSearchBoxes[$cols[$i]]['dateRange'] = formulize_buildDateRangeFilter($cols[$i], $search_text);
       }
     }
     //formulize_benchmark("done filter");
@@ -1735,6 +1754,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
         if(is_array($filtersRequired) OR $filtersRequired === true) {
           if($filtersRequired === true OR in_array($thisHQS, $filtersRequired)) {
             $quickSearchBoxes[$thisHQS]['filter'] = formulize_buildQSFilter($thisHQS, $search_text);
+	    $quickSearchBoxes[$thisHQS]['dateRange'] = formulize_buildDateRangeFilter($thisHQS, $search_text);
           }
         }
 				if(!$returnOnly) {
@@ -1770,6 +1790,55 @@ function formulize_buildQSFilter($handle, $search_text) {
     return $filterHTML;
   }
   return "";
+}
+
+// THIS FUNCTION CREATES THE HTML FOR A DATE RANGE FILTER
+function formulize_buildDateRangeFilter($handle, $search_text) {
+   $elementMetaData = formulize_getElementMetaData($handle, true); // true means this is a handle
+   if($elementMetaData['ele_type']=="date") {
+	// split any search_text into start and end values
+	if(strstr($search_text, "//")) {
+		$startEnd = explode("//",$search_text);
+		$startText = isset($startEnd[0]) ? parseUserAndToday(substr(htmlspecialchars_decode($startEnd[0]), 2)) : _formulize_QSdateRange_startText;
+		$endText = isset($startEnd[1]) ? parseUserAndToday(substr(htmlspecialchars_decode($startEnd[1]), 2)) : _formulize_QSdateRange_endText;
+	} else {
+		$startText = "";
+		$endText = "";
+	}
+	include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
+	$startDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_sta_'.$handle, 15, strtotime($startText));
+	$startDateElement->setExtra("class='formulize_daterange'");
+	$endDateElement = new XoopsFormTextDateSelect ('', 'formulize_daterange_end_'.$handle, 15, strtotime($endText));
+	$endDateElement->setExtra("class='formulize_daterange' target='$handle'");
+	static $js;
+	if($js) { // only need to include this code once!
+		$js = "";
+	} else {
+		$js = "<script type='text/javascript'>
+		if (typeof jQuery == 'undefined') { 
+				var head = document.getElementsByTagName('head')[0];
+				script = document.createElement('script');
+				script.id = 'jQuery';
+				script.type = 'text/javascript';
+				script.src = '".XOOPS_URL."/modules/formulize/jquery/jquery-1.4.2.min.js';
+				head.appendChild(script);
+		}
+		$().click(function() {
+			$('.formulize_daterange').change();	
+		});
+		$('.formulize_daterange').change(function() {
+			var id = new String($(this).attr('id'));
+			var handle = id.substr(24);
+			var start = $('#formulize_daterange_sta_'+handle).val();
+			var end = $('#formulize_daterange_end_'+handle).val();
+			$('#formulize_hidden_daterange_'+handle).val('>='+start+'//'+'<='+end);
+		});
+		</script>";
+	}
+	return $startDateElement->render() . " ". _formulize_QDR_to . " " . $endDateElement->render() . " <input type=button name=qdrGoButton value='" . _formulize_QDR_go . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".$search_text."' ></input>\n$js";
+   } else {
+	return "";
+   }
 }
 
 // this function writes in the headers for the columns in the results box
@@ -2041,8 +2110,13 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
         }
         $allGroupings[] = "$galias$ghandle";
         $groupByClause .= "$galias$ghandle";
-        $select .= ", $galias.`$ghandle` as $galias$ghandle";
-        $selectAvgCount .= ", $galias.`$ghandle` as $galias$ghandle";
+	if($ghandle == "creation_uid" OR $ghandle == "mod_uid") {
+		$select .= ", (SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".".$ghandle.") as $galias$ghandle";
+		$selectAvgCount .= ", (SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".".$ghandle.") as $galias$ghandle";
+	} else {
+		$select .= ", $galias.`$ghandle` as $galias$ghandle";
+	        $selectAvgCount .= ", $galias.`$ghandle` as $galias$ghandle";
+	}
       }
       if($groupByClause) {
         if($calc == "avg") {
@@ -2608,7 +2682,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
           if(!$start) { $output .= "<tr>\n"; }
           $start=0;
           $output .= "<td class=odd>\n";
-          if(count($groups)>1) { // OR count($groups)>1) { // output the heading section for this group of results
+          //if(count($groups)>1) { // OR count($groups)>1) { // output the heading section for this group of results
             $output .= "<p><b>";
             $start2 = true;
             foreach(explode("!@^%*", $groupingSettings[$handle][$calc]) as $id=>$thisGroupSetting) {
@@ -2622,7 +2696,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
               $output .= printSmart(trans(getCalcHandleText($thisGroupSetting, true))) . ": " . printSmart(trans($groupText)) . "\n";
             }
             $output .= "</b></p>\n";
-          }
+          //}
           $output .= "<p>$result</p>\n";
           $output .= "</td></tr>\n";
         //}

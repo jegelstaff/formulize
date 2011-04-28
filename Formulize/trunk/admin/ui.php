@@ -115,6 +115,7 @@ if(isset($_GET['tab']) AND (!isset($_POST['tabs_selected']) OR $_POST['tabs_sele
 }
 
 // assign the contents to the template and display
+$adminPage['formulizeModId'] = getFormulizeModId();
 $xoopsTpl->assign('adminPage', $adminPage);
 $xoopsTpl->assign('breadcrumbtrail', $breadcrumbtrail);
 $xoopsTpl->assign('scrollx', intval($_POST['scrollx']));

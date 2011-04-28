@@ -126,6 +126,7 @@ if($_POST['save']) {
 	$not_cons_creator = 0;
 	$not_cons_elementuids = 0;
 	$not_cons_linkcreator = 0;
+	$not_cons_elementemail = 0;
 
 	if($_POST['setwho'] === "curuser") {
 		$not_cons_curuser = 1;
@@ -137,6 +138,8 @@ if($_POST['save']) {
 		$not_cons_elementuids = intval($_POST['ele_id']);
 	} elseif($_POST['setwho'] === "linkcreator" AND intval($_POST['lc_ele_id']) > 0) {
 		$not_cons_linkcreator = intval($_POST['lc_ele_id']);
+	} elseif($_POST['setwho'] === "elementemail" AND intval($_POST['email_ele_id']) > 0) {
+		$not_cons_elementemail = intval($_POST['email_ele_id']);
 	} else {
 		$not_cons_uid = $uid;
 		// since this is a user specific notification, set a subscription for it
@@ -147,7 +150,7 @@ if($_POST['save']) {
 	$not_cons_con = ($_POST['setfor'] == "all" OR count($_POST['terms']) == 0) ? "all" : serialize(array(serialize($_POST['elements']), serialize($_POST['ops']), serialize($_POST['terms'])));
 	
 	$template_filename = strstr($_POST['template'], ".tpl") ? str_replace(".tpl", "", $_POST['template']) : $_POST['template']; // strip .tpl out of the template name if it's present
-	$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_notification_conditions") . " (not_cons_fid, not_cons_event, not_cons_uid, not_cons_curuser, not_cons_groupid, not_cons_creator, not_cons_elementuids, not_cons_linkcreator, not_cons_con, not_cons_template, not_cons_subject) VALUES (\"$fid\", \"".mysql_real_escape_string($_POST['setwhen'])."\", \"$not_cons_uid\", \"$not_cons_curuser\", \"$not_cons_groupid\", \"$not_cons_creator\", \"$not_cons_elementuids\", \"$not_cons_linkcreator\", \"".mysql_real_escape_string($not_cons_con)."\", \"".mysql_real_escape_string($template_filename)."\", \"".mysql_real_escape_string($_POST['subject'])."\")";
+	$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_notification_conditions") . " (not_cons_fid, not_cons_event, not_cons_uid, not_cons_curuser, not_cons_groupid, not_cons_creator, not_cons_elementuids, not_cons_linkcreator, not_cons_elementemail, not_cons_con, not_cons_template, not_cons_subject) VALUES (\"$fid\", \"".mysql_real_escape_string($_POST['setwhen'])."\", \"$not_cons_uid\", \"$not_cons_curuser\", \"$not_cons_groupid\", \"$not_cons_creator\", \"$not_cons_elementuids\", \"$not_cons_linkcreator\", \"$not_cons_elementemail\", \"".mysql_real_escape_string($not_cons_con)."\", \"".mysql_real_escape_string($template_filename)."\", \"".mysql_real_escape_string($_POST['subject'])."\")";
 	if(!$result = $xoopsDB->query($sql)) {
 		exit("Error:  notification could not be saved.  SQL:<br>$sql<br>");
 	}
@@ -180,6 +183,10 @@ if($canSetNots) {
 	// gather the list of elements that are linked selectboxes
 	$sql = "SELECT ele_id, ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize")  . " WHERE id_form = " . intval($fid) . " AND ele_type = \"select\" AND ele_value LIKE \"%#*=:*%\"";
 	$linkcreator_options = buildNotOptionList($sql, "linkcreator");
+	
+	// gather the list of all elements that are not grid, subform, areamodif, ib
+	$sql = "SELECT ele_id, ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize")  . " WHERE id_form = " . intval($fid) . " AND ele_type != \"subform\" AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"areamodif\"";
+	$elementemail_options = buildNotOptionList($sql, "elementemail");
 	
 } else {
 	$set_groups = array();
@@ -260,8 +267,15 @@ if($canSetNots) {
 	$setwho_linkcreator = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
 	$setwho_linkcreator->addOption('linkcreator', _formulize_DE_SETNOT_WHO_LINKCREATOR."<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".$linkcreatorlist);
 	
+	$setwho_elementemaillist = new xoopsFormSelect('', 'email_ele_id', $_POST['email_ele_id'], 1);
+	$setwho_elementemaillist->setExtra("onfocus=\"javascript:window.document.setnot.setwho[5].checked=true\"");
+	$setwho_elementemaillist->addOptionArray($elementemail_options);
+	$elementemaillist = $setwho_elementemaillist->render();
+	$setwho_elementemail = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
+	$setwho_elementemail->addOption('elementemail', _formulize_DE_SETNOT_WHO_ELEMENTEMAIL.$elementemaillist);
+	
 	$setwho_grouplist = new xoopsFormSelect('', 'gid', $_POST['gid'], 1);
-	$setwho_grouplist->setExtra("onfocus=\"javascript:window.document.setnot.setwho[5].checked=true\"");
+	$setwho_grouplist->setExtra("onfocus=\"javascript:window.document.setnot.setwho[6].checked=true\"");
 	$setwho_grouplist->addOptionArray($group_options);
 	$grouplist = $setwho_grouplist->render();
 	$setwho_group = new xoopsFormRadio('', 'setwho', $_POST['setwho']);
@@ -271,6 +285,7 @@ if($canSetNots) {
 	$setwho->addElement($setwho_creator);
 	$setwho->addElement($setwho_elementuids);
 	$setwho->addElement($setwho_linkcreator);
+	$setwho->addElement($setwho_elementemail);
 	$setwho->addElement($setwho_group);
 	$setnot->addElement($setwho);
 }
@@ -377,6 +392,12 @@ if(!$noNots) {
 			// figure out the element name
 			if(!$element_handler) { $element_handler = xoops_getmodulehandler('elements', 'formulize'); }
 			$elementObject = $element_handler->get($thisnot['not_cons_linkcreator']);
+			$text .= $elementObject->getVar('ele_colhead') ? printSmart(trans($elementObject->getVar('ele_colhead'))) : printSmart(trans($elementObject->getVar('ele_caption'))); 
+		} elseif($thisnot['not_cons_elementemail'] > 0) {
+			$text .= _formulize_DE_SETNOT_WHO_ELEMENTEMAIL;
+			// figure out the element name
+			if(!$element_handler) { $element_handler = xoops_getmodulehandler('elements', 'formulize'); }
+			$elementObject = $element_handler->get($thisnot['not_cons_elementemail']);
 			$text .= $elementObject->getVar('ele_colhead') ? printSmart(trans($elementObject->getVar('ele_colhead'))) : printSmart(trans($elementObject->getVar('ele_caption'))); 
 		}
 		

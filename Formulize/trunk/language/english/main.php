@@ -596,6 +596,7 @@ define("_formulize_DE_SETNOT_WHO_ME", "me");
 define("_formulize_DE_SETNOT_WHO_CURUSER", "the user who just created/updated/deleted the entry");
 define("_formulize_DE_SETNOT_WHO_CREATOR", "the user who created the entry");
 define("_formulize_DE_SETNOT_WHO_ELEMENTUIDS", "the user(s) selected in: ");
+define("_formulize_DE_SETNOT_WHO_ELEMENTEMAIL", "the e-mail address specified in the form element: ");
 define("_formulize_DE_SETNOT_NOELEMENTOPTIONS", "No user lists in this form");
 define("_formulize_DE_SETNOT_WHO_LINKCREATOR", "the user who created the selected item(s) in this element: ");
 define("_formulize_DE_SETNOT_NOLINKCREATOROPTIONS", "No linked elements in this form");
@@ -687,6 +688,8 @@ define("_AM_FORMULIZE_PREVIOUS_OPTION", "Use a previous answer:");
 define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","This value will be calculated after the data is saved");
 
 define("_formulize_QSF_DefaultText", "Search for:");
+define("_formulize_QDR_to", "to");
+define("_formulize_QDR_go", "Go");
 define("_formulize_BLANK_KEYWORD", "{BLANK}");
 
 define("_formulize_ERROR_IN_LEFTRIGHT", "There appears to be an error in the PHP code that generates the text for this space.  Please notify the webmaster.");
