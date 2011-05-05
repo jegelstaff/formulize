@@ -1,3 +1,45 @@
+<{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
+<form class="formulize-admin-form">
+<input type="hidden" name="formulize_admin_handler" value="application_forms">
+<input type="hidden" name="deleteform" value="">
+<input type="hidden" name="cloneform" value="">
+<input type="hidden" name="cloneformdata" value="">
+<input type="hidden" name="lockdown" value="">
 <div id="formlisting">
 	<{include file="db:admin/form_listing.html" sectionContent=$content}>
 </div>
+</form>
+
+<script type="text/javascript">
+
+$(".deletelink").click(function () {
+	answer = confirm("Are you sure you want to delete this form?  All data associated with this form will be lost.");
+	if(answer) {
+		$("[name=deleteform]").val($(this).attr('target'));
+		runSaveEvent();
+	}
+	return false;
+});
+
+$(".cloneform").click(function () {
+	$("[name=cloneform]").val($(this).attr('target'));
+	runSaveEvent();
+	return false;
+});
+
+$(".cloneformdata").click(function () {
+	$("[name=cloneformdata]").val($(this).attr('target'));
+	runSaveEvent();
+	return false;
+});
+
+$(".lockdown").click(function () {
+	answer = confirm("Are you sure you want to lockdown this form?  You will be unable to change any of the configuration settings for the form or its elements once the form is locked down.");
+	if(answer) {
+		$("[name=lockdown]").val($(this).attr('target'));
+		runSaveEvent();
+	}
+	return false;
+});
+
+</script>
