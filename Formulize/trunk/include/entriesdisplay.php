@@ -1291,6 +1291,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		print ".scrollbox {\n";
 		//print "	height: 530px;\n";
 		//print "	width: 698px;\n";
+		print " border: 1px solid;";
 		print "	overflow: auto;\n"; //scroll
 		print "}\n";
 	
@@ -1457,7 +1458,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 					
 					// draw in the margin column where the links and metadata goes
 					if($useViewEntryLinks OR $useCheckboxes != 2) {
-						print "<td class=head>\n";
+						print "<td class=\"head formulize-controls\">\n";
 					}
 			
 					if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
@@ -1503,7 +1504,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
             //formulize_benchmark("drawing one column");
 						$col = $cols[$i];
 						$colhandle = $settings['columnhandles'][$i];
-						print "<td $columnWidthParam class=$class>\n";
+						print "<td $columnWidthParam class=\"$class\">\n";
 						if($col == "creation_uid") {
 							$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "creation_uid") . "\" target=_blank>" . displayMeta($entry, "creation_uid-name") . "</a>";
 						} elseif($col=="mod_uid") {
@@ -1542,11 +1543,11 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 								if($counter<$countOfValue) {
 									// Modified by Steph, April 11, 2011
 									// print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col) . ',</div><br>';
-									print '<span'.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col) . ',</span><br>';
+									print '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col) . ',</span><br>';
 								} else {
 									// Modified by Steph, April 11, 2011
 									//print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col). '</div>';
-									print '<span'.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col). '</span>';
+									print '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col). '</span>';
 								}
 								$counter++;
 							}
@@ -1557,7 +1558,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 							}
 							// Modified by Steph, April 11, 2011
 							//print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $textWidth, $currentColumnLocalId)), $col). '</div>';
-							print '<div'.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $textWidth, $currentColumnLocalId)), $col). '</div>';
+							print '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $textWidth, $currentColumnLocalId)), $col). '</span>';
 						} else { // don't use printsmart for the special uid cells
 							print $value;
 						}

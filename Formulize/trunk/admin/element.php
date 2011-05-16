@@ -375,6 +375,9 @@ if($ele_type=='text') {
     $options['formlinkfilter'] = "<p>The options are not linked.</p>";
   }
  
+} elseif($ele_type=="ib") {
+  $options['ib_style_options']['head'] = "head";
+  $options['ib_style_options']['form-heading'] = "form-heading";
 }
 $options['ele_value'] = $ele_value;
 

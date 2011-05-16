@@ -1139,9 +1139,11 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	// note big assumption/restriction that we are only using the first header found (ie: only specify one header for a sub form!)
 	// setup the array of elements to draw
 	if(is_array($customElements)) {
+		$headingDescriptions = array();
 		foreach($customElements as $custEle) {
 			$elementsToDraw[] = $custEle;
-			$headerq = q("SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id=" . intval($custEle));
+			$headerq = q("SELECT ele_caption, ele_colhead, ele_desc FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id=" . intval($custEle));
+			$headingDescriptions[]  = $headerq[0]['ele_desc'] ? $headerq[0]['ele_desc'] : "";
 			if($captionsForHeadings) {
 				$headersToDraw[] = $headerq[0]['ele_caption'];
 			} else {
@@ -1182,8 +1184,12 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformSourceType_$sfid\" value=\"".$elementq[0]['fl_common_value']."\">\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformId_$sfid\" value=\"$sfid\">\n"; // this is probably redundant now that we're tracking sfid in the names of the other elements
 					$col_two .= "</td>\n";
-					foreach($headersToDraw as $thishead) {
-						if($thishead) { $col_two .= "<td><p><b>$thishead</b></p></td>\n"; }
+					foreach($headersToDraw as $i=>$thishead) {
+						if($thishead) {
+							$headerHelpLinkPart1 = $headingDescriptions[$i] ? "<a href=\"#\" onclick=\"return false;\" alt=\"".$headingDescriptions[$i]."\" title=\"".$headingDescriptions[$i]."\">" : "";
+							$headerHelpLinkPart2 = $headerHelpLinkPart1 ? "</a>" : "";
+							$col_two .= "<td style=\"width: 10%;\"><p>$headerHelpLinkPart1<b>$thishead</b>$headerHelpLinkPart2</p></td>\n";
+						}
 					}
 					$col_two .= "</tr>\n";
 					$drawnHeadersOnce = true;
@@ -1234,8 +1240,12 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 			if($sub_ent != "") {
 				if(!$drawnHeadersOnce) {
 					$col_two .= "<tr><td></td>\n";
-					foreach($headersToDraw as $thishead) {
-						if($thishead) { $col_two .= "<td style=\"width: 10%;\"><p><b>$thishead</b></p></td>\n"; }
+					foreach($headersToDraw as $i=>$thishead) {
+						if($thishead) {
+							$headerHelpLinkPart1 = $headingDescriptions[$i] ? "<a href=\"#\" onclick=\"return false;\" alt=\"".$headingDescriptions[$i]."\" title=\"".$headingDescriptions[$i]."\">" : "";
+							$headerHelpLinkPart2 = $headerHelpLinkPart1 ? "</a>" : "";
+							$col_two .= "<td style=\"width: 10%;\"><p>$headerHelpLinkPart1<b>$thishead</b>$headerHelpLinkPart2</p></td>\n";
+						}
 					}
 					$col_two .= "</tr>\n";
 					$drawnHeadersOnce = true;

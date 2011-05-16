@@ -12,7 +12,7 @@
     <div class="form-item">
 	    <label for="elements-ele_value[1]"><{$smarty.const._AM_ELE_INSERTBREAK}></label>
       <select name="elements-ele_value[1]" id="css" size=1>
-        <option value="head">head</option>
+	<{html_options options=$content.ib_style_options selected=$content.ele_value[1]}>
       </select>
     </div>
   </fieldset>
