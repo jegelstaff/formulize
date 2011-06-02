@@ -78,24 +78,7 @@ if( ! is_array( $formframe ) && $screenid && !$ele_allowed) { // no element list
   if( $screen_type == 'multiPage' ) {
     $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
     $multiPageScreen = $screen_handler->get($screenid);
-
-    // start: taken from class/multiPageScreen.php
-		$conditions = $multiPageScreen->getVar('conditions');
-		if(isset($conditions[0]['details'])) {
-				unset($conditions);
-		    foreach($multiPageScreen->getVar('conditions') as $pageid=>$condata) {
-		        $pagenumber = $pageid+1;
-		        $conditions[$pagenumber] = array(0=>$condata['details']['elements'], 1=>$condata['details']['ops'], 2=>$condata['details']['terms']);
-		    }
-				ksort($conditions);
-		} else {
-				ksort($conditions);
-				array_unshift($conditions, "");
-				unset($conditions[0]);
-		}
-    //print_r( $conditions ); //exit();
-    // stop
-
+    $conditions = $multiPageScreen->getConditions();
     $pages = $multiPageScreen->getVar('pages');
 
     $elements = array();

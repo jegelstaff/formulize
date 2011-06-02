@@ -57,6 +57,25 @@ class formulizeMultiPageScreen extends formulizeScreen {
     $this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
     $this->assignVar("dohtml", false);
 	}
+	
+	// setup the conditions array...format has changed over time...
+	// old format: $conditions[1] = array(pagecons=>yes, details=>array(elements=>$elementsArray, ops=>$opsArray, terms=>$termsArray));
+	// the key must be the numerical page number (start at 1)
+	function getConditions() {
+	    $conditions = $this->getVar('conditions');
+	    $processedConditions = array();
+	    foreach($conditions as $pageid=>$thisCondition) {
+		$pagenumber = $pageid+1;
+		if(isset($thisCondition['details'])) {
+		    $processedConditions[$pagenumber] = array(0=>$thisCondition['details']['elements'], 1=>$thisCondition['details']['ops'], 2=>$thisCondition['details']['terms']);
+		} else {
+		    $processedConditions[$pagenumber] = $thisCondition;
+		}
+	    }
+	    ksort($processedConditions);
+	    return $processedConditions;
+	}
+	
 }
 
 class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
@@ -348,25 +367,10 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		array_unshift($pages, ""); // displayFormPages looks for the page array to start with [1] and not [0], for readability when manually using the API, so we bump up all the numbers by one by adding something to the front of the array
 		array_unshift($pagetitles, ""); 
 		$pages['titles'] = $pagetitles;
-    unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
+		unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
 		unset($pagetitles[0]);
-    // setup the conditions array
-    // old format: $conditions[1] = array(0=>$elementsArray, 1=>$opsArray, 2=>$termsArray);
-    // the key must be the numerical page number (start at 1)
-		$conditions = $screen->getVar('conditions');
-		if(isset($conditions[0]['details'])) {
-				unset($conditions);
-		    foreach($screen->getVar('conditions') as $pageid=>$condata) {
-		        $pagenumber = $pageid+1;
-		        $conditions[$pagenumber] = array(0=>$condata['details']['elements'], 1=>$condata['details']['ops'], 2=>$condata['details']['terms']);
-		    }
-				ksort($conditions);
-		} else {
-				ksort($conditions);
-				array_unshift($conditions, "");
-				unset($conditions[0]);
-		}
-		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
+		$conditions = $this->_getConditions($screen);
+    		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
 		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $screen->getVar('donedest'), $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
 	}
 
