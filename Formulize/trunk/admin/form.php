@@ -250,6 +250,7 @@ if($_GET['fid'] != "new") {
   $defaultform = 0;
   $defaultlist = 0;
   $menutext = "Use the form's title";
+  $form_handle = "";
 }
 
 $i = 1;
@@ -299,7 +300,8 @@ foreach($listOfEntriesScreens as $screen) {
 $settings = array();
 $settings['singleentry'] = $singleentry;
 $settings['menutext'] = $menutext;
-$settings['istableform'] = $tableform OR $newtableform ? true : false;
+$settings['form_handle'] = $form_handle;
+$settings['istableform'] = ($tableform OR $newtableform) ? true : false;
 
 $i = 1;
 $adminPage['tabs'][$i]['name'] = "Settings";

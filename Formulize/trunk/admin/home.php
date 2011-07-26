@@ -73,6 +73,7 @@ function readApplicationData($aid, $apps) {
     $apps[$i]['content']['forms'][$x]['name'] = $thisFormObject->getVar('title');
     $apps[$i]['content']['forms'][$x]['hasdelete'] = $hasDelete;
     $apps[$i]['content']['forms'][$x]['lockedform'] = $thisFormObject->getVar('lockedform');
+    $apps[$i]['content']['forms'][$x]['istableform'] = $thisFormObject->getVar('tableform');
     $defaultFormScreen = $thisFormObject->getVar('defaultform');
     $defaultListScreen = $thisFormObject->getVar('defaultlist');
     $defaultFormObject = $screen_handler->get($defaultFormScreen);

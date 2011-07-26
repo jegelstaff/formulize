@@ -314,10 +314,10 @@ class formulizeFormsHandler {
 
 	function createTableFormElements($targetTableName, $fid) {
 		
-		$result = $this->db->query("SHOW COLUMNS FROM " . mysql_real_escape_string($_POST['tablename']));
+		$result = $this->db->query("SHOW COLUMNS FROM " . mysql_real_escape_string($targetTableName));
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$element_order = 0;
-		while($row = $xoopsDB->fetchRow($result)) {
+		while($row = $this->db->fetchRow($result)) {
 			$element =& $element_handler->create();
 			$element->setVar('ele_caption', str_replace("_", " ", $row[0])); 
 			$element->setVar('ele_desc', "");

@@ -1,11 +1,18 @@
 <{foreach from=$sectionContent.forms item=form}>
+  
+<{if $form.istableform}>
+<{assign var="defaulttab" value="settings"}>
+<{else}>
+<{assign var="defaulttab" value="elements"}>    
+<{/if}>
+  
 <div class="accordion-box">
-  <p class="form-name ui-corner-top"><{if $form.lockedform != 1}><a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=elements" class="form-name-icon"><{/if}>Form: <{$form.name}> (id: <{$form.fid}>)<{if $form.lockedform != 1}></a><{/if}></p>
+  <p class="form-name ui-corner-top"><{if $form.lockedform != 1}><a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=<{$defaulttab}>" class="form-name-icon"><{/if}>Form: <{$form.name}> (id: <{$form.fid}>)<{if $form.lockedform != 1}></a><{/if}></p>
   <div class="form-screen-list ui-corner-bottom">
 		<p class="formbox-title">Actions:</p>
 		<div class="formactions-list">
 		<{if $form.lockedform != 1}>
-		<a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=elements"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction">Configure</div></a><br />
+		<a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=<{$defaulttab}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction">Configure</div></a><br />
 		<a href="../index.php?fid=<{$form.fid}>" target="_blank"><div class="imageicon"><img src="../images/kfind.png"></div><div class="formaction">View</div></a><br />
 		<{/if}>
 		<a class="cloneform" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clone.gif"></div><div class="formaction">Clone</div></a><br />
