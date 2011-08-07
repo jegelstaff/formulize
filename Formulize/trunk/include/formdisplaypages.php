@@ -433,11 +433,21 @@ function drawPageNav($usersCanSave="", $pagesSkipped="", $currentPage="", $previ
 
 function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow) {
 
-	$pageSelectionList = "";
+	static $pageSelectionList = "";
+	
+	if($pageSelectionList) {
+		return $pageSelectionList;
+	}
 
 	$pageSelectionList .= "<select name=\"pageselectionlist_$aboveBelow\" id=\"pageselectionlist_$aboveBelow\" size=\"1\" onchange=\"javascript:pageJump(this.form.pageselectionlist_$aboveBelow.options, $currentPage);\">\n";
 	for($page=1;$page<=$countPages;$page++) {
-		$title = isset($pageTitles[$page]) ? " &mdash; " . trans($pageTitles[$page]) : "";
+		if(isset($pageTitle[$page]) AND strstr($pageTitles[$page], "[")) {
+			$title = " &mdash; " . trans($pageTitles[$page]); // translation can be expensive, so only do it if we have to (regular expression matching is not pretty)
+		} elseif(isset($pageTitles[$page])) {
+			$title = " &mdash; " . $pageTitles[$page];
+		} else {
+			$title = "";
+		}
 		$pageSelectionList .= "<option value=$page";
 		$pageSelectionList .= $page == $currentPage ? " selected=true>" : ">";
 		$pageSelectionList .= $page . $title . "</option>\n";

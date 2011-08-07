@@ -208,6 +208,8 @@ function microtime_float()
 
 function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $cacheKey="") { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
 
+     if(!$cacheKey) { return getDataCached($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly); }
+
      global $xoopsDB;
 
      if(substr($filter, 0, 7) == "SELECT ") { // a proper SQL statement has been passed in so use that instead of constructing one...initially added for the new export feature
@@ -1243,9 +1245,16 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
                foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
                     if(($entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
                          $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
-                         formulize_benchmark(" -- calling derived function.");
+                         // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
+			 $resetDerviedValueFlag = false;
+			 if(isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
+		           unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+			   $resetDerivedValueFlag = true;
+			 }
                          $derivedValue = $functionName($entry, $fid, $primary_entry_id, $frid);
-                         formulize_benchmark(" -- completed call.");
+                         if($resetDerivedValueFlag) {
+			   $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+			 }
                          foreach($record as $recordID=>$elements) {
                               $entry[$formHandle][$recordID][$thisMetaData['handle']][0] = $derivedValue;
                               // write value to database if XOOPS is active
