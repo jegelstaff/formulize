@@ -135,6 +135,15 @@ switch ($op) {
     array_splice($steps, $index, 1);
     array_splice($steptitles, $index, 1);
 		break;
+  case "clonestep":
+    $step = $steps[$index];
+    $newStep = array();
+    foreach( $step as $key => $value ) {
+      $newStep[$key] = $value;
+    }
+    $steps[]=$newStep;
+    $steptitles[]=$steptitles[$index].' copy';
+    break;
 }
 
 
@@ -150,7 +159,7 @@ if(!$advanced_calculation_handler->insert($advCalcObject)) {
 }
 
 // reload the step if the state has changed
-if($op == "addstep" OR $op=="delstep" OR $_POST['reload_advance_calculation_steps']) {
+if($op == "addstep" OR $op=="delstep" OR $op=="clonestep" OR $_POST['reload_advance_calculation_steps']) {
     print "/* eval */ reloadWithScrollPosition();";
 }
 ?>

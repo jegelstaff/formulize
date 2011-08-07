@@ -7,6 +7,8 @@ CREATE TABLE `formulize_advanced_calculations` (
   `output` text NOT NULL,
   `steps` text NOT NULL,
   `steptitles` text NOT NULL,
+  `fltr_grps` text NOT NULL,
+  `fltr_grptitles` text NOT NULL,
   PRIMARY KEY  (`acid`),
   KEY `i_fid` (`fid`)
 ) TYPE=MyISAM; 
@@ -243,6 +245,7 @@ CREATE TABLE formulize_id (
   defaultform int(11) NOT NULL default 0,
   defaultlist int(11) NOT NULL default 0,
   menutext varchar(255) default NULL,
+  form_handle varchar(255) NOT NULL default '',
   PRIMARY KEY  (`id_form`),
   UNIQUE `desc_form_id` (`desc_form`)
 ) TYPE=MyISAM;

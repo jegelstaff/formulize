@@ -369,7 +369,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		$pages['titles'] = $pagetitles;
 		unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
 		unset($pagetitles[0]);
-		$conditions = $this->_getConditions($screen);
+		$conditions = $screen->getConditions();
     		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
 		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $screen->getVar('donedest'), $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
 	}

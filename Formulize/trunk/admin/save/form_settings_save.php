@@ -68,6 +68,12 @@ if(isset($_POST['apps']) AND count($_POST['apps']) > 0) {
 // interpret form object values that were submitted and need special handling
 $processedValues['forms']['headerlist'] = "*=+*:".implode("*=+*:",$_POST['headerlist']);
 
+// form_handle can not be blank, default to form id if blank
+if( $processedValues['forms']['form_handle'] == "" ) {
+  $processedValues['forms']['form_handle'] = $fid;
+}
+$old_form_handle = $formObject->getVar( "form_handle" );
+
 foreach($processedValues['forms'] as $property=>$value) {
   $formObject->setVar($property, $value);
 }
@@ -146,6 +152,11 @@ if($_POST['formulize_admin_key'] == "new") {
   $formObject->setVar('defaultlist', $defaultListScreenId);
   if(!$form_handler->insert($formObject)) {
     print "Error: could not update form object with default screen ids: ".mysql_error();
+  }
+} else if( $old_form_handle && $formObject->getVar( "form_handle" ) != $old_form_handle ) {
+  //print "rename from $old_form_handle to " . $formObject->getVar( "form_handle" );
+  if(!$renameResult = $form_handler->renameDataTable($old_form_handle, $formObject->getVar( "form_handle" ))) {
+   exit("Error: could not rename the data table in the database.");
   }
 }
 

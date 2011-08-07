@@ -25,7 +25,19 @@
             </fieldset>
 		</div>
 	</div>
-	
+
+  <div class="accordion-box">
+	  <div class="form-item">
+     	<fieldset>
+        <legend><label for="forms-form_handle" class="question">Form handle</label></legend>
+			  <input type="text" name="forms-form_handle" value="<{$content.form_handle}>">
+			  <div class="description">
+				  <p>Optional. The name will you use to refer to this form in programming code and in the database. Defaults to the form ID number.</p>
+			  </div>
+		  </fieldset>
+	  </div>
+  </div>
+
 		<{if $content.istableform == true && $content.fid == "new"}>
 		<div class="accordion-box">
 			<div class="form-item">

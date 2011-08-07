@@ -432,9 +432,10 @@ print "<br>";*/
 		}
 		// check to see if the entry matches the user's per group filters, if any
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($fid);
 		if($perGroupFilter = $form_handler->getPerGroupFilterWhereClause($fid)) {
 			global $xoopsDB;
-			$checkSQL = "SELECT count(entry_id) FROM ".$xoopsDB->prefix("formulize_".$fid)." WHERE entry_id = $entry $perGroupFilter";
+			$checkSQL = "SELECT count(entry_id) FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WHERE entry_id = $entry $perGroupFilter";
 			if(!$checkRes = $xoopsDB->query($checkSQL)) {
 				return false;
 			}
@@ -1066,13 +1067,16 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
   // $entries has been passed so we do need to gather them...
 
   // add to entries and fids array if one_to_one exists
+  $form_handler = xoops_getmodulehandler('forms', 'formulize');
   foreach($one_to_one as $one_fid) {
     $fids[] = $one_fid['fid'];
 		// figure out if these are common value links, or linked selectboxes
 		if($one_fid['common']) {
+   		        $oneFormObject = $form_handler->get($one_fid['fid']);
+			$formObject = $form_handler->get($fid);
 			$mainHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_to_one[0]['keyother']);
 			$candidateHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_fid['keyself']);
-			$candidateEntry = q("SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$one_fid['fid']) . " AS candidate, ". $xoopsDB->prefix("formulize_".$fid) . " AS main WHERE candidate.".$candidateHandle[0]['ele_handle']."=main.".$mainHandle[0]['ele_handle']." AND main.entry_id = ".intval($entries[$fid][0])." LIMIT 0,1");
+			$candidateEntry = q("SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$oneFormObject->getVar('form_handle')) . " AS candidate, ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS main WHERE candidate.".$candidateHandle[0]['ele_handle']."=main.".$mainHandle[0]['ele_handle']." AND main.entry_id = ".intval($entries[$fid][0])." LIMIT 0,1");
 			/*print "SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_fid['keyself'] . "<br><pre>";
 			print_r($candidateHandle);
 			print "</pre><br>SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$one_fid['fid']) . " AS candidate, ". $xoopsDB->prefix("formulize_".$fid) . " AS main WHERE candidate.".$candidateHandle[0]['ele_handle']."=main.".$mainHandle[0]['ele_handle']." AND main.entry_id = ".intval($entries[$fid][0])." LIMIT 0,1<br><pre>";
@@ -2999,6 +3003,8 @@ print "$prevValue<br><br>";
               $searchForValues[] = mysql_real_escape_string($thisValue);
             }
           }
+	  
+	  $form_handler = xoops_getmodulehandler('forms', 'formulize');
 					
 					// need to check for link to a link, and change target if that's what we're dealing with
 					$element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -3007,7 +3013,8 @@ print "$prevValue<br><br>";
 						$sourceEleValue = $sourceElement->getVar('ele_value');
 						if(strstr($sourceEleValue[2], "#*=:*")) {
 							$sourceParts = explode("#*=:*", $sourceEleValue[2]);
-							$linkQueryResult = q("SELECT `entry_id` FROM " . $xoopsDB->prefix("formulize_".$sourceParts[0]) . " WHERE `".$sourceParts[1]."` = '".implode("' OR `".$sourceParts[1]."` = '", $searchForValues) . "'");
+							$sourceFormObject = $form_handler->get($sourceParts[0]);
+							$linkQueryResult = q("SELECT `entry_id` FROM " . $xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle')) . " WHERE `".$sourceParts[1]."` = '".implode("' OR `".$sourceParts[1]."` = '", $searchForValues) . "'");
 							unset($searchForValues);
 							foreach($linkQueryResult as $linkedEntryId) {
 								$searchForValues[] = ",".$linkedEntryId['entry_id'].",";
@@ -3019,7 +3026,8 @@ print "$prevValue<br><br>";
 					}
 					
           if(count($searchForValues) > 0) {
-						$entry_id_q = q("SELECT `entry_id`, `".$boxproperties[1]."` FROM " . $xoopsDB->prefix("formulize_".$boxproperties[0]) . " WHERE `".$boxproperties[1]."` = '".implode("' OR `".$boxproperties[1]."` = '", $searchForValues) . "' $linkedTargetHint");
+					        $boxFormObject = $form_handler->get($boxproperties[0]);
+						$entry_id_q = q("SELECT `entry_id`, `".$boxproperties[1]."` FROM " . $xoopsDB->prefix("formulize_".$boxFormObject->getVar('form_handle')) . " WHERE `".$boxproperties[1]."` = '".implode("' OR `".$boxproperties[1]."` = '", $searchForValues) . "' $linkedTargetHint");
 						foreach($entry_id_q as $thisEntryId) {
 							$cachedEntryIds[$boxproperties[0]][$boxproperties[1]][$thisEntryId[$boxproperties[1]]] = $thisEntryId['entry_id'];
 							$foundEntryIds[] = $thisEntryId['entry_id'];
@@ -3034,13 +3042,15 @@ print "$prevValue<br><br>";
           $value = $foundEntryIdString;
           $append = "replace";
         }
+	
+	$elementFormObject = $form_handler->get($element->getVar('id_form'));
         
         $lockIsOn = false;
         if(($value == "{ID}" AND $entry == "new") OR $value == "{SEQUENCE}") {
                   $lockIsOn = true;
-                  $xoopsDB->query("LOCK TABLES ".$xoopsDB->prefix("formulize_".$element->getVar('id_form'))." WRITE"); // need to lock table since there are multiple operations required on it for this one write transaction
+                  $xoopsDB->query("LOCK TABLES ".$xoopsDB->prefix("formulize_".$elementFormObject->getVar('form_handle'))." WRITE"); // need to lock table since there are multiple operations required on it for this one write transaction
                   $fromField = $value == "{ID}" ? "entry_id" : $element->getVar('ele_handle');
-                  $maxValueSQL = "SELECT MAX(`$fromField`) FROM " . $xoopsDB->prefix("formulize_".$element->getVar('id_form'));
+                  $maxValueSQL = "SELECT MAX(`$fromField`) FROM " . $xoopsDB->prefix("formulize_".$elementFormObject->getVar('form_handle'));
                   if($maxValueRes = $xoopsDB->query($maxValueSQL)) {
                     $maxValueArray = $xoopsDB->fetchArray($maxValueRes);
                     $value = $maxValueArray["MAX(`$fromfield`)"] + 1;
@@ -3057,19 +3067,19 @@ print "$prevValue<br><br>";
                 $owner = is_numeric($append) ? $append : $uid; // for new entries, a numeric "action" indicates an owner for the entry that is different from the current user, ie: this is a proxy entry
                 // no handling as yet for an array of values, which would be required for replacing the selections in a checkbox series or selectbox series.
                 // radio buttons would also need to be massaged?
-                $sql="INSERT INTO ".$xoopsDB->prefix("formulize_".$element->getVar('id_form'))." (creation_datetime, mod_datetime, creation_uid, mod_uid, `".$element->getVar('ele_handle')."`) VALUES (NOW(), NOW(), \"$owner\", \"$uid\", '".mysql_real_escape_string($value)."')";
+                $sql="INSERT INTO ".$xoopsDB->prefix("formulize_".$elementFormObject->getVar('form_handle'))." (creation_datetime, mod_datetime, creation_uid, mod_uid, `".$element->getVar('ele_handle')."`) VALUES (NOW(), NOW(), \"$owner\", \"$uid\", '".mysql_real_escape_string($value)."')";
                 $needToSetOwner = true;
         } else {
           // not new entry, so update the existing entry
           if($append=="remove") {
-            $prevValue = q("SELECT `".$element->getVar('ele_handle')."` FROM ".$xoopsDB->prefix("formulize_".$element->getVar('id_form'))." WHERE entry_id=".intval($entry));
+            $prevValue = q("SELECT `".$element->getVar('ele_handle')."` FROM ".$xoopsDB->prefix("formulize_".$elementFormObject->getVar('form_handle'))." WHERE entry_id=".intval($entry));
             if(strstr($prevValue[0]['ele_value'], "*=+*:")) {
                     $valueToWrite = str_replace("*=+*:" . $value, "", $prevValue[0]['ele_value']);
             } else {
                     $valueToWrite = str_replace($value, "", $prevValue[0]['ele_value']);
             }
           } elseif($append=="append") {
-            $prevValue = q("SELECT `".$element->getVar('ele_handle')."` FROM ".$xoopsDB->prefix("formulize_".$element->getVar('id_form'))." WHERE entry_id=".intval($entry));
+            $prevValue = q("SELECT `".$element->getVar('ele_handle')."` FROM ".$xoopsDB->prefix("formulize_".$elementFormObject->getVar('form_handle'))." WHERE entry_id=".intval($entry));
             switch($element->getVar('ele_type')) {
                     case "checkbox":
                             $valueToWrite = $prevValue[0]['ele_value'] . "*=+*:" . $value;
@@ -3096,7 +3106,7 @@ print "$prevValue<br><br>";
           } else { // append == "replace" or all other settings for append
               $valueToWrite = $value;
           }
-          $sql = "UPDATE ".$xoopsDB->prefix("formulize_".$element->getVar('id_form'))." SET `".$element->getVar('ele_handle')."` = '".mysql_real_escape_string($valueToWrite)."' WHERE entry_id=".intval($entry);
+          $sql = "UPDATE ".$xoopsDB->prefix("formulize_".$elementFormObject->getVar('form_handle'))." SET `".$element->getVar('ele_handle')."` = '".mysql_real_escape_string($valueToWrite)."' WHERE entry_id=".intval($entry);
         }
         if($sql) { // run the query
                 //print $sql . "<br>";
@@ -3554,6 +3564,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 	// subfilters are kind of like dynamic limits, where the limit condition is not specified until the parent filter is chosen.
 
 	global $xoopsDB;		// required by q
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$filter = "<SELECT name=\"$id\" id=\"$id\"";
 	if($name == "{listofentries}") {
 		$filter .= " onchange='javascript:showLoading();'"; // list of entries has a special javascript thing
@@ -3611,10 +3622,12 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
 			$linkedSourceElementObject = $element_handler->get($linked_ele_id);
 			$linkedSourceElementEleValue = $linkedSourceElementObject->getVar('ele_value');
 			$linkedSourceElementEleValueParts = explode("#*=:*", $linkedSourceElementEleValue[2]); // first part will be the form id of the source form, second part will be the element handle in that form
-			$limitCondition = ", ".$xoopsDB->prefix("formulize_".$linkedSourceElementEleValueParts[0])." as t2 WHERE t1.`$linked_ele_id` LIKE CONCAT('%',t2.entry_id,'%') AND t2.`".$linkedSourceElementEleValueParts[1]."` LIKE '%".mysql_real_escape_string($_POST[$linked_data_id])."%'";
+			$linkedFormObject = $form_handler->get($linkedSourceElementEleValueParts[0]);
+			$limitCondition = ", ".$xoopsDB->prefix("formulize_".$linkedFormObject->getVar('form_handle'))." as t2 WHERE t1.`$linked_ele_id` LIKE CONCAT('%',t2.entry_id,'%') AND t2.`".$linkedSourceElementEleValueParts[1]."` LIKE '%".mysql_real_escape_string($_POST[$linked_data_id])."%'";
 		}
 		unset($options);
-		if($dataResult = $xoopsDB->query("SELECT distinct(t1.`$source_element_handle`) FROM ".$xoopsDB->prefix("formulize_".$source_form_id)." as t1 ".$limitCondition." ORDER BY t1.`$source_element_handle`")) {
+		$sourceFormObject = $form_handler->get($source_form_id);
+		if($dataResult = $xoopsDB->query("SELECT distinct(t1.`$source_element_handle`) FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 ".$limitCondition." ORDER BY t1.`$source_element_handle`")) {
 			while($dataArray = $xoopsDB->fetchArray($dataResult)) {
 				$options[$dataArray[$source_element_handle]] = "";
 			}
@@ -4141,4 +4154,53 @@ function undoAllHTMLChars($text,$quotes=ENT_QUOTES) {
     $text = html_entity_decode($text,$quotes);
   }
   return $text;
+}
+
+
+// this function takes some code and instead of using eval to deal with it, it writes it to a file, includes it, and then deletes the file
+// this may be faster in some cases than eval, although it is not currently used
+// $execute needs to be set to true, so that the code will be run.  You can pass in multiple snippets of code at different times, and then run them all at once.  The snippets will be remembered between calls.
+// $globals is an array of the names of global variables that you want included in the code
+// $filterNames is an array of global variable names that you want in this scope (the filters from Procedures is what this was intended to support)
+function formulize_includeEval($code, $execute=false, $globals=array(), $filterNames=array()) {
+  static $codeParts = array();
+  $codeParts[] = $code;
+  if($execute) {
+    foreach($filterNames as $thisFilterName) {
+	${$thisFilterName} = $GLOBALS[$thisFilterName];
+    }
+    $fileName = XOOPS_ROOT_PATH."/cache/formulize_includeEval_".microtime(true);
+    $fileHandle = fopen($fileName,"w");
+    fwrite($fileHandle,"<?php \n global $".implode(", $",$globals).";\n");
+    foreach($codeParts as $thisCode) {
+      fwrite($fileHandle,$thisCode);  
+    }
+    fclose($fileHandle);
+    include $fileName;
+    unlink($fileName);
+  }
+}
+
+function formulize_addProcedureChoicesToPost($choices) {
+  $choices = $_POST['advcalc_acid'];
+	if(!strstr($choices,"&amp;")) {
+		$choices = strip_tags(htmlspecialchars($choices)); // just in case this wasn't done prior to passing in
+	}
+	$acid_temp_parameters = explode( "&amp;", $choices );
+	$acid_parameters = array();
+	if($acid_temp_parameters) {
+		foreach( $acid_temp_parameters as $parameter ) {
+			$temp_pair = explode( "=", $parameter );
+			//if(strstr($temp_pair[0],"_groupingchoices")) {
+			if(strpos($temp_pair[0],"[")) {
+				$bracketPos = strpos($temp_pair[0],"[");
+				$bracketPosEnd = strpos($temp_pair[0],"]",$bracketPos);
+				//print "{$temp_pair[0]}::\$_POST[".substr($temp_pair[0],0,$bracketPos)."][{$temp_pair[1]}::".substr($temp_pair[0],$bracketPos+1,$bracketPosEnd-$bracketPos)."] = {$temp_pair[1]};<br>";
+				$_POST[substr($temp_pair[0],0,$bracketPos)][substr($temp_pair[0],$bracketPos+1,$bracketPosEnd-$bracketPos-1)] = $temp_pair[1];
+			} else {
+				//print "{$temp_pair[0]}::\$_POST[ {$temp_pair[0]} ] = {$temp_pair[1]};<br>";
+				$_POST[ $temp_pair[0] ] = $temp_pair[1];
+			}
+		}
+	} 
 }

@@ -7,6 +7,26 @@
  var pagehasaccordion = new Array();
 </script>
 
+<!-- jquery for floating admin bar, added by S.Gray, April 11, 2011 -->
+<script type="text/javascript">
+$(document).ready(function() {
+	var offset = $('#admin_toolbar').offset();
+	
+	  $(window).scroll(function () {
+		var scrollTop = $(window).scrollTop();
+		if (offset.top<scrollTop) {
+		  $('#admin_toolbar').addClass('toolbar_fixed');
+		  $('#admin_toolbar').addClass('ui-corner-all');
+		} else {
+		  $('#admin_toolbar').removeClass('toolbar_fixed');
+		  $('#admin_toolbar').removeClass('ui-corner-all');
+		};
+	  });
+		
+	});
+</script>
+<!-- end jquery -->
+
 <!--[if IE 6]> 
 	<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/admin/css/ie6.css" />
 <![endif]-->
@@ -53,10 +73,13 @@
 <{/if}>
 <{/if}>
 
+<!-- modified by Freeform Solutions, S.Gray, April 11, 2011 -->
+<div id="admin_toolbar">
 <{if $adminPage.needsave}>
 <div id=savebutton><input type="button" class="savebutton" value="Save your changes"/></div>
 <{/if}>
-<div id="savewarning">You have unsaved changes!</div>
+<div id="savewarning" class="ui-corner-all">You have unsaved changes!</div>
+</div> <!-- /admin_toolbar -->
 
 <{if $adminPage.template}>
 <{include file=$adminPage.template}>  

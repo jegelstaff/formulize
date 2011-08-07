@@ -58,6 +58,7 @@ if($_GET['fid'] != "new") {
   $defaultform = $formObject->getVar('defaultform');
   $defaultlist = $formObject->getVar('defaultlist');
   $menutext = $formObject->getVar('menutext');
+  $form_handle = $formObject->getVar('form_handle');
   
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
   $elementObjects = $element_handler->getObjects2(null, $fid);

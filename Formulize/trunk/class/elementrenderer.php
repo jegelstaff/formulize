@@ -110,6 +110,9 @@ class formulizeElementRenderer{
 				$previousEntryUI = $this->formulize_setupPreviousEntryUI($screen, $true_ele_id, $e, $owner, $displayElementInEffect, $entry, $this->_ele->getVar('ele_handle'), $this->_ele->getVar('id_form'));
 			}
 		}
+		
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($id_form);
 	
 		switch ($e){
 			case 'derived':
@@ -357,7 +360,7 @@ class formulizeElementRenderer{
 								}
 								$conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
 								if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") { // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
-									$parentFormFrom = ", ".$xoopsDB->prefix("formulize_".$id_form)." AS t3 ";
+									$parentFormFrom = ", ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t3 ";
 									if($likebits == "%") {
 										$conditionsFilterComparisonValue = " CONCAT('%',t3.`".substr($filterTerms[$filterId],1,-1)."`,'%') AND t3.`entry_id`=$entry ";
 									} else {
@@ -399,7 +402,7 @@ class formulizeElementRenderer{
 								$parentFormFrom = "";
 								$conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
 								if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") { // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
-									$parentFormFrom = ", ".$xoopsDB->prefix("formulize_".$id_form)." AS t3 ";
+									$parentFormFrom = ", ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t3 ";
 									if($likebits == "%") {
 										$conditionsFilterComparisonValue = " CONCAT('%',t3.`".substr($filterTerms[$filterId],1,-1)."`,'%') AND t3.`entry_id`=$entry ";
 									} else {
@@ -415,10 +418,12 @@ class formulizeElementRenderer{
 
 					static $cachedSourceValuesQ = array();
 
+					$sourceFormObject = $form_handler->get($sourceFid);
+
 					if($pgroupsfilter) { // if there is a groups filter, then join to the group ownership table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFid)." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 $parentFormFrom WHERE $pgroupsfilter $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
+						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 $parentFormFrom WHERE $pgroupsfilter $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
 					} else { // otherwise just query the source table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFid)." AS t1 $parentFormFrom WHERE t1.entry_id>0 $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
+						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1 $parentFormFrom WHERE t1.entry_id>0 $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
 					}
 					//print "$sourceValuesQ<br><br>";
 					if(!$isDisabled) {

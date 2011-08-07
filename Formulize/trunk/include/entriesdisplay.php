@@ -591,7 +591,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$settings['calc_grouping'] = $_POST['calc_grouping'];
 	
 	// set the requested procedure, if any
-	$settings['advcalc_acid'] = $_POST['advcalc_acid'];
+  $settings['advcalc_acid'] = strip_tags(htmlspecialchars($_POST['advcalc_acid']));
+  formulize_addProcedureChoicesToPost($settings['advcalc_acid']);
 
 	// gather id of the cached data, if any
 	$settings['formulize_cacheddata'] = strip_tags($_POST['formulize_cacheddata']);
@@ -970,7 +971,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$atLeastOneActionButton = false;
 	foreach($screenButtonText as $scrButton=>$scrText) {
     formulize_benchmark("before creating button: ".$scrButton);
-		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname);
+		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid);
     formulize_benchmark("button done");
 		if($buttonCodeArray[$scrButton] AND $onActionButtonCounter < 14) { // first 14 items in the array should be the action buttons only
 			$atLeastOneActionButton = true;
@@ -1106,7 +1107,8 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
       formulize_benchmark("after calling draw searches");
 			$quickSearchesNotInTemplate = array();
 			foreach($quickSearchBoxes as $handle=>$qscode) {
-        $foundQS = false;
+				$handle = str_replace("-","_",$handle);
+				$foundQS = false;
 				if(strstr($screen->getVar('toptemplate'), 'quickSearch' . $handle) OR strstr($screen->getVar('bottomtemplate'), 'quickSearch' . $handle)) {
 					$buttonCodeArray['quickSearch' . $handle] = $qscode['search']; // set variables for use in the template
           $foundQS = true;
@@ -1266,10 +1268,10 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	}
   
 	if( @$_POST['advcalc_acid'] ) {
-    $acid = @$_POST['advcalc_acid'];
-    if( $acid > 0 ) {
-      $result = formulize_runAdvancedCalculation( $acid );
-      print "<br/>" . $result . "<br/><br/>";
+    
+    if( $_POST['acid'] > 0 ) {
+      $result = formulize_runAdvancedCalculation( intval($_POST['acid'] )); // result will be an array with two or three keys: 'text' and 'output', and possibly 'groupingMap'.  Text is for display on screen "raw" and Output is a variable that can be used by a dev.  The output variable will be an array if groupings are in effect.  The keys of the array will be the various grouping values in effect.  The groupingMap will be present if there's a set of groupings in effect.  It is an array that contains all the grouping choices, their text equivalents and their data values (which are the keys in the output array) -- groupingMap is still to be developed/added to the mix....will be necessary when we are integrating with Drupal or other API uses.
+      print "<br/>" . $result['text'] . "<br/><br/>";
     }
   }
 	
@@ -1969,9 +1971,12 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
     $frameworkObject = $framework_handler->get($frid);
   }
   
+  $form_handler = xoops_getmodulehandler('forms', 'formulize');
+  
   for($i=0;$i<count($cols);$i++) {
     // convert to element handle from element id
     list($handle, $fidAlias, $handleFid) = getCalcHandleAndFidAlias($cols[$i], $fid); // returns ELEMENT handles for use in query
+    $handleFormObject = $form_handler->get($handleFid);
     
     // get the exclude and grouping values for this column
     $excludes = explode(",", $blanks[$i]);
@@ -2056,7 +2061,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
           if($handleFid =="xoopsusertable") {
             $replacementTable = DBPRE . "users";
           } else {
-            $replacementTable = DBPRE . "formulize_$handleFid";
+            $replacementTable = DBPRE . "formulize_".$handleFormObject->getVar('form_handle');
           }
           $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable, "INNER JOIN " . $replacementTable, $thisBaseQuery);
         }
@@ -2085,7 +2090,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
           if($handleFid =="xoopsusertable") {
             $replacementTable = DBPRE . "users";
           } else {
-            $replacementTable = DBPRE . "formulize_$handleFid";
+            $replacementTable = DBPRE . "formulize_".$handleFormObject->getVar('form_handle');
           }
           // replace any LEFT JOIN on this form in the query with an INNER JOIN, since there are now search criteria for this form
           $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable, "INNER JOIN " . $replacementTable, $thisBaseQuery);
@@ -3752,7 +3757,7 @@ function gatherHiddenValue($handle) {
 }
 
 // THIS FUNCTION GENERATES HTML FOR ANY BUTTONS THAT ARE REQUESTED
-function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname) {
+function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid) {
   static $importExportCleanupDone = false;
 	if($buttonText) {
 		$buttonText = trans($buttonText);
@@ -3768,7 +3773,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				$procedureHandler = xoops_getmodulehandler('advancedCalculation','formulize');
 				$procList = $procedureHandler->getList($fid);
 				if(is_array($procList) AND count($procList) > 0) {
-				  return "<input type=button style=\"width: 140px;\" name=advcalculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickadvcalcs.php?fid=$fid&frid=$frid');\"></input>";
+				  return "<input type=button style=\"width: 140px;\" name=advcalculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickadvcalcs.php?fid=$fid&frid=$frid&$advcalc_acid');\"></input>";
 				} else {
 					return false;
 				}

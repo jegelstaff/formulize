@@ -436,7 +436,7 @@ switch($op){
                         if(!empty($ele_id)) {
                                 // get the current type...
                                 global $xoopsDB;
-                                $elementDataSQL = "SHOW COLUMNS FROM ".$xoopsDB->prefix("formulize_".$id_form)." LIKE '".$element->getVar('ele_handle')."'";
+				$elementDataSQL = "SHOW COLUMNS FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." LIKE '".$element->getVar('ele_handle')."'";
                                 $elementDataRes = $xoopsDB->queryF($elementDataSQL);
                                 $elementDataArray = $xoopsDB->fetchArray($elementDataRes);
                                 $defaultTypeComplete = $elementDataArray['Type'];

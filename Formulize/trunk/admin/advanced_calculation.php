@@ -95,6 +95,32 @@ if($isNew) {
   }
 
   $advCalc['steps'] = $steps;
+
+
+	// get filters and grouping titles
+  $fltr_grpTitles = $advCalcObject->getVar('fltr_grptitles');
+  $fltr_grpElements = $advCalcObject->getVar('fltr_grps');
+
+  // group entries
+  $fltr_grps = array();
+	//for($i=0;$i<(count($fltr_grpTitles)+$fltr_grpCounterOffset);$i++) {
+	for($i=0;$i<(count($fltr_grpTitles));$i++) {
+    $fltr_grps[$i]['name'] = $fltr_grpTitles[$i];
+    $fltr_grps[$i]['content']['index'] = $i;
+    $fltr_grps[$i]['content']['number'] = $i+1;
+    $fltr_grps[$i]['content']['title'] = $fltr_grpTitles[$i];
+    $fltr_grps[$i]['content']['fltr_grps'] = $fltr_grpElements[$i];
+    //print_r( $fltr_grps[$i]['content']['fltr_grps'] );
+    $elementList = createFieldList("", true);
+    $elementList->setName('advcalc-form_'.$i);
+    $elementList->setValue($fltr_grpElements[$i]['form']);
+    $fltr_grps[$i]['content']['form_html'] = $elementList->render();
+  }
+  if($fltr_grps[0]['name'] == "") {
+	$fltr_grps[0]['name'] = "New filter";
+  }
+
+  $advCalc['fltr_grps'] = $fltr_grps;
 }
 
 $common['acid'] = $acid;
@@ -114,6 +140,10 @@ if(!$isNew) {
   $adminPage['tabs'][3]['name'] = "Steps";
   $adminPage['tabs'][3]['template'] = "db:admin/advanced_calculation_steps.html";
   $adminPage['tabs'][3]['content'] = $advCalc + $common;
+
+  $adminPage['tabs'][4]['name'] = "Filters and Grouping";
+  $adminPage['tabs'][4]['template'] = "db:admin/advanced_calculation_fltr_grp.html";
+  $adminPage['tabs'][4]['content'] = $advCalc + $common;
 }
 
 $adminPage['pagetitle'] = "Procedure: ".$advCalc['name'];

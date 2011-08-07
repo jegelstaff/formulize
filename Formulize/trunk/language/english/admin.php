@@ -297,7 +297,7 @@ define("_AM_FORM_DISPLAY_EXTRA", "Use this list to display certain elements to o
 //define("_AM_FORM_DISPLAYLIST_EXTRA", "Use this list to display certain elements to only certain groups when the list of entries is shown.  Meant for situations where users in different groups should see different data from the same form.  Normally, you can leave this on 'All groups'.");
 define("_AM_FORM_DISPLAY_ALLGROUPS", "All groups with permission for this form");
 define("_AM_FORM_DISPLAY_NOGROUPS", "No groups");
-define("_AM_FORM_FORCEHIDDEN", "Include as a hidden element for users who can't see it");
+define("_AM_FORM_FORCEHIDDEN", "Include as a hidden element for users who cannot see it");
 define("_AM_FORM_FORCEHIDDEN_DESC", "Currently only affects radio buttons and textboxes.  This option will cause a hidden form element to be created instead of the radio button series or textbox, and the value of the hidden element will be the default value specified above.  Useful when you always need a default value set in every form entry, but not all groups normally see this element.");
 
 define("_AM_ELE_DISABLED", "Disable this element for any groups?");

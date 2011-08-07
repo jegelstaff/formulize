@@ -113,7 +113,7 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mi
 			$encryptedSelect .= ", AES_DECRYPT(`".$thisEncryptedElement."`, '".getAESPassword()."') as 'decrypted_value_for_".$thisEncryptedElement."'";
 		}
 		
-		$viewquerydb = q("SELECT * $encryptedSelect FROM " . $xoopsDB->prefix("formulize_" . $fid) . " WHERE entry_id=$entry");
+		$viewquerydb = q("SELECT * $encryptedSelect FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " WHERE entry_id=$entry");
 		$viewquery = array();
 		
 		// need to parse the result based on the elements requested and setup the viewquery array for use later on
@@ -926,7 +926,7 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 	if($subButtonText == _formulize_SAVE) { // _formulize_SAVE is passed only when the save button is allowed to be drawn
 		if($save_text_temp) { $subButtonText = $save_text_temp; }
 		if($subButtonText != "{NOBUTTON}") {
-			$saveButton = new XoopsFormButton('', 'submitx', $subButtonText, 'button'); // doesn't use name submit since that conflicts with the submit javascript function
+			$saveButton = new XoopsFormButton('', 'submitx', trans($subButtonText), 'button'); // doesn't use name submit since that conflicts with the submit javascript function
 			$saveButton->setExtra("onclick=javascript:validateAndSubmit();");
 			$buttontray->addElement($saveButton);
 		}
@@ -934,7 +934,7 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 	
 	if((($button_text != "{NOBUTTON}" AND !$done_text_temp) OR (isset($done_text_temp) AND $done_text_temp != "{NOBUTTON}")) AND !$allDoneOverride) { 
 		if($done_text_temp) { $button_text = $done_text_temp; }
-		$donebutton = new XoopsFormButton('', 'donebutton', $button_text, 'button');
+		$donebutton = new XoopsFormButton('', 'donebutton', trans($button_text), 'button');
 		$donebutton->setExtra("onclick=javascript:verifyDone();");
 		$buttontray->addElement($donebutton); 
 	}
@@ -1228,7 +1228,10 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		else {*/
 			$sortClause = " entry_id ";
 		//}
-		$subEntriesOrderSQL = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$sfid)." WHERE entry_id IN (".implode(",", $sub_entries[$sfid]).") ORDER BY $sortClause";
+		
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$sformObject = $form_handler->get($sfid);
+		$subEntriesOrderSQL = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$sformObject->getVar('form_handle'))." WHERE entry_id IN (".implode(",", $sub_entries[$sfid]).") ORDER BY $sortClause";
 		if($subEntriesOrderRes = $xoopsDB->query($subEntriesOrderSQL)) {
 			$sub_entries[$sfid] = array();
 			while($subEntriesOrderArray = $xoopsDB->fetchArray($subEntriesOrderRes)) {

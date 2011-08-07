@@ -172,8 +172,16 @@ if($_GET['frid'] != "new") {
 			$element_handler =& xoops_getmodulehandler('elements', 'formulize');
 			$ele1 = $element_handler->get($links[$li]['key1']);
 			$ele2 = $element_handler->get($links[$li]['key2']);
-			$name1 = $ele1->getVar('ele_colhead') ? printSmart($ele1->getVar('ele_colhead')) : printSmart($ele1->getVar('ele_caption'));
-			$name2 = $ele2->getVar('ele_colhead') ? printSmart($ele2->getVar('ele_colhead')) : printSmart($ele2->getVar('ele_caption'));
+			if(is_object($ele1)) {
+				$name1 = $ele1->getVar('ele_colhead') ? printSmart($ele1->getVar('ele_colhead')) : printSmart($ele1->getVar('ele_caption'));
+			} else {
+				$name1 = '';
+			}
+			if(is_object($ele2)) {
+				$name2 = $ele2->getVar('ele_colhead') ? printSmart($ele2->getVar('ele_colhead')) : printSmart($ele2->getVar('ele_caption'));
+			} else {
+				$name2 = '';				
+			}
       $links[$li]['linkoptions'][$loi]['value'] = $links[$li]['key1'] . "+" . $links[$li]['key2'];
       $links[$li]['linkoptions'][$loi]['name'] = _AM_FRAME_COMMON_VALUES . printSmart($name1,20) . " & " . printSmart($name2,20);
       $loi++;

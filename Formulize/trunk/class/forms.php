@@ -75,6 +75,7 @@ class formulizeForm extends XoopsObject {
 			  $defaultform = "";
 			  $defaultlist = "";
 				$formq[0]['menutext'] = "";
+				$formq[0]['form_handle'] = "";
 			} else {
 				// gather element ids for this form
 				$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
@@ -163,6 +164,7 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("defaultform", XOBJ_DTYPE_INT, $defaultform, true);
 		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);
 		$this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
+		$this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
 	}
 }
 
@@ -192,6 +194,16 @@ class formulizeFormsHandler {
 			return $cachedForms[$fid][$includeAllElements];
 		}
 		return false;
+	}
+	
+	function getByHandle($handle) {
+		global $xoopsDB;
+		$sql = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_handle = '".mysql_real_escape_string($handle) . "'";
+		if($res = $xoopsDB->query($sql)) {
+			$array = $xoopsDB->fetchArray($res);
+			return $this->get($array['id_form']);
+		}
+		
 	}
 
 	function getAllForms($includeAllElements=false) {
@@ -289,9 +301,9 @@ class formulizeFormsHandler {
 						break;
 				}
 				if($formObject->isNew() || empty($id_form)) {
-					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, `defaultlist`, `menutext`) VALUES (".$this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".$this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).", ".$this->db->quoteString($menutext).")";
+					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, `defaultlist`, `menutext`, `form_handle`) VALUES (".$this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".$this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).")";
 				} else {
-					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).", `singleentry` = ".$this->db->quoteString($singleToWrite).", `headerlist` = ".$this->db->quoteString($headerlist).", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist).", `menutext` = ".$this->db->quoteString($menutext)." WHERE id_form = ".intval($id_form);
+					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).", `singleentry` = ".$this->db->quoteString($singleToWrite).", `headerlist` = ".$this->db->quoteString($headerlist).", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist).", `menutext` = ".$this->db->quoteString($menutext).", `form_handle` = ".$this->db->quoteString($form_handle)." WHERE id_form = ".intval($id_form);
 				}
 				
 				if( false != $force ){
@@ -441,10 +453,12 @@ class formulizeFormsHandler {
 		} elseif(!get_class($fid) == "formulizeForm") {
 			return false;
 		}
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$clonedFormObject = $form_handler->get($clonedForm);
 		$elementTypes = $fid->getVar('elementTypes');
 		global $xoopsDB;
 		// build SQL for new table
-		$newTableSQL = "CREATE TABLE " . $xoopsDB->prefix("formulize_" . $fid->getVar('id_form')) . " (";
+		$newTableSQL = "CREATE TABLE " . $xoopsDB->prefix("formulize_" . $fid->getVar('form_handle')) . " (";
 		$newTableSQL .= "`entry_id` int(7) unsigned NOT NULL auto_increment,";
 		$newTableSQL .= "`creation_datetime` Datetime NULL default NULL, ";
 		$newTableSQL .= "`mod_datetime` Datetime NULL default NULL, ";
@@ -456,7 +470,7 @@ class formulizeFormsHandler {
 							// we're cloning with data, so base the new field's datatype on the original form's datatype for the corresponding field
 							if(!isset($dataTypeMap)) {
 								$dataTypeMap = array();
-								$dataTypeSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_".$clonedForm);
+								$dataTypeSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_".$clonedFormObject->getVar('form_handle'));
 								if($dataTypeRes = $xoopsDB->queryF($dataTypeSQL)) {
 									while($dataTypeArray = $xoopsDB->fetchArray($dataTypeRes)) {
 										$dataTypeMap[$dataTypeArray['Field']] = $dataTypeArray['Type'];
@@ -493,11 +507,16 @@ class formulizeFormsHandler {
 				return false;
 			}
 			$fid = $fid->getVar('id_form');
+			$form_handle = $fid->getVar('form_handle');
 		} elseif(!is_numeric($fid)) {
 			return false;
+		} else {
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$formObject = $form_handler->get($fid);
+			$form_handle = $formObject->getVar('form_handle');
 		}
 		global $xoopsDB;
-		$dropSQL = "DROP TABLE " . $xoopsDB->prefix("formulize_" . $fid);
+		$dropSQL = "DROP TABLE " . $xoopsDB->prefix("formulize_" . $form_handle);
 		if(!$dropRes = $xoopsDB->queryF($dropSQL)) {
 			return false;
 		}
@@ -516,7 +535,9 @@ class formulizeFormsHandler {
 			return false;
 		}
 		global $xoopsDB;
-		$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " DROP `" . $element->getVar('ele_handle') . "`";
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($element->getVar('id_form'));
+		$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " DROP `" . $element->getVar('ele_handle') . "`";
 		if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
 			return false;
 		}
@@ -530,8 +551,10 @@ class formulizeFormsHandler {
 			return false;
 		}
 		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($element->getVar('id_form'));
 		$dataType = $dataType ? $dataType : "text";
-		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
+		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
 		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
 			return false;
 		}
@@ -545,9 +568,11 @@ class formulizeFormsHandler {
 			return false;
 		}
 		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($element->getVar('id_form'));
 		if(!$dataType) {
 			// first get its current state:
-			$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) ." LIKE '$oldName'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+			$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '$oldName'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
 			if(!$fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
 				return false;
 			}
@@ -555,7 +580,7 @@ class formulizeFormsHandler {
 			$dataType = $fieldStateData['Type'];
 		}
 		$newName = $newName ? $newName : $element->getVar('ele_handle');
-		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $element->getVar('id_form')) . " CHANGE `$oldName` `$newName` ". $dataType; 
+		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " CHANGE `$oldName` `$newName` ". $dataType; 
 		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
 		  return false;
 		}
@@ -852,4 +877,16 @@ class formulizeFormsHandler {
     }
 	}
 	
+
+	function renameDataTable($oldName, $newName) {
+		global $xoopsDB;
+
+		$renameSQL = "RENAME TABLE " . $xoopsDB->prefix("formulize_" . $oldName) . " TO " . $xoopsDB->prefix("formulize_" . $newName) . ";";
+    //print $renameSQL;
+		if(!$renameRes = $xoopsDB->queryF($renameSQL)) {
+		  return false;
+		}
+		return true;
+	}
+
 }

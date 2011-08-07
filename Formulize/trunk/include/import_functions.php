@@ -36,6 +36,8 @@
 //	[2] formulize form id 
 //	[3] formulize form elements
 //	[4] (array) column headings to formulize form elements
+//      [8] formulize form handle
+
 //function importCsv(& $importSets, $id_reqs, $regfid)
 function importCsv($csv_name, $id_reqs, $regfid, $validateOverride)
 {
@@ -146,6 +148,10 @@ function importCsvSetup(&$importSet, $id_reqs)
         $importSet[4] = $form_idq[0]["id_form"];
     }*/
     $importSet[4] = $fid;
+    
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $formObject = $form_handler->get($fid);
+    $importSet[8] = $formObject->getVar('form_handle');
     
     // 5. get the form column ids and process linked elements
 	if($importSet[4])
@@ -711,7 +717,7 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 		// check validity of any entry ids the user has set
 		if(count($useTheseEntryIds) > 0) {
 			global $xoopsDB;
-			$checkIdsSQL = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$importSet[4]) . " WHERE entry_id IN (".implode(",",$useTheseEntryIds).")";
+			$checkIdsSQL = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$importSet[8]) . " WHERE entry_id IN (".implode(",",$useTheseEntryIds).")";
 			$checkIdsRes = $xoopsDB->query($checkIdsSQL);
 			while($checkIdsArray = $xoopsDB->fetchArray($checkIdsRes)) {
 				$errors[] = "<li><b>Entry id ".$checkIdsArray['entry_id']." is already in use.</b>  You cannot import new data with an existing entry id.</li>";
@@ -737,15 +743,22 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
         "<i>to</i> <b>Form</b>: <i>name</i>: " . $importSet[2] .
         ", <i>id</i>: " . $importSet[4] . "<br>";*/
 
-    $form_uid = "0"; 
-    $form_proxyid = $xoopsUser->getVar('uid');
-    
+
+    $form_uid = "0";
+
+    global $override_import_proxyid;
+    if( $override_import_proxyid ) {
+      $form_proxyid = $override_import_proxyid;
+    } else {
+      $form_proxyid = $xoopsUser->getVar('uid');
+    }
+    //print $override_import_proxyid . ',' . $form_proxyid; exit();
 
 	// lock formulize_form
 	if($regfid == $importSet[4]) { // only lockup reg codes table if we're dealing with a profile form, in which case we assume reg codes is installed and the table exists
-		$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[4]) . " WRITE, ". $xoopsDB->prefix("users") . " WRITE, ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, " . $xoopsDB->prefix("reg_codes") . " WRITE, " . $xoopsDB->prefix("groups_users_link") . " WRITE, ". $xoopsDB->prefix("modules") . " READ, " . $xoopsDB->prefix("config") . " READ, " . $xoopsDB->prefix("formulize") . " READ");
+		$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[8]) . " WRITE, ". $xoopsDB->prefix("users") . " WRITE, ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, " . $xoopsDB->prefix("reg_codes") . " WRITE, " . $xoopsDB->prefix("groups_users_link") . " WRITE, ". $xoopsDB->prefix("modules") . " READ, " . $xoopsDB->prefix("config") . " READ, " . $xoopsDB->prefix("formulize") . " READ");
 	} else {
-		$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[4]) . " WRITE, ". $xoopsDB->prefix("users") . " READ, ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, " . $xoopsDB->prefix("groups_users_link") . " READ, " . $xoopsDB->prefix("formulize") . " READ");
+		$xoopsDB->query("LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[8]) . " WRITE, ". $xoopsDB->prefix("users") . " READ, ".$xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, " . $xoopsDB->prefix("groups_users_link") . " READ, " . $xoopsDB->prefix("formulize") . " READ");
 	}
     
 
@@ -788,7 +801,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
                     
             // get the current max id_req
 		if(!$this_id_req) {
-	           $max_id_reqq = q("SELECT MAX(entry_id) FROM " . $xoopsDB->prefix("formulize_".$importSet[4]));
+	           $max_id_reqq = q("SELECT MAX(entry_id) FROM " . $xoopsDB->prefix("formulize_".$importSet[8]));
       	     $max_id_req = $max_id_reqq[0]["MAX(entry_id)"] + 1;
 		} else {
 			$max_id_req = $this_id_req;
@@ -1108,7 +1121,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 							
 							$form_uid = $this_uid;
 							
-							$updateSQL = "UPDATE " . $xoopsDB->prefix("formulize_".$id_form)." SET ";
+							$updateSQL = "UPDATE " . $xoopsDB->prefix("formulize_".$importSet[8])." SET ";
 							$start = true;
 							foreach($fieldValues as $elementHandle=>$fieldValue) {
 								if(!$start) { $updateSQL .= ", "; } // on subsequent fields, add a comma
@@ -1143,7 +1156,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 							
 							$entryIdFieldText = $newEntryId ? "entry_id, " : "";
 							$newEntryId .= $newEntryId ? ", " : "";
-							$insertElement = "INSERT INTO " . $xoopsDB->prefix("formulize_".$id_form)." (".$entryIdFieldText."creation_datetime, mod_datetime, creation_uid, mod_uid".$fields.") VALUES (".$newEntryId."NOW(), NOW(), '" . intval($form_uid) . "', '" . intval($form_proxyid)."'".$values.")"; 
+							$insertElement = "INSERT INTO " . $xoopsDB->prefix("formulize_".$importSet[8])." (".$entryIdFieldText."creation_datetime, mod_datetime, creation_uid, mod_uid".$fields.") VALUES (".$newEntryId."NOW(), NOW(), '" . intval($form_uid) . "', '" . intval($form_proxyid)."'".$values.")"; 
 
 							if(IMPORT_WRITE)
 							{
@@ -1239,10 +1252,12 @@ function getElementOptions($ele_handle, $fid)
 	static $cachedElementOptions = array();
 	if(!isset($cachedElementOptions[$fid][$ele_handle])) {
 		global $xoopsDB, $myts;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($fid);
 		$result = array();
 		if(!$myts) { $myts =& MyTextSanitizer::getInstance(); }
 	
-	    $sql = "SELECT entry_id, `".$ele_handle."` FROM " . $xoopsDB->prefix("formulize_".$fid);
+	    $sql = "SELECT entry_id, `".$ele_handle."` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
 	
 		$res = $xoopsDB->query($sql);
 		$result = array();

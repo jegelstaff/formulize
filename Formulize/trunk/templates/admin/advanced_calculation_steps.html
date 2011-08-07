@@ -32,7 +32,7 @@
 
 $(".savebutton").click(function() {
   $(".required_formulize_element").each(function() {
-    if($(this).val() == "") {
+    if($(this).val() == "" && $(this).hasClass('steptitle')) {
       alert("Steps must have names!");
       $(this).focus();
     }
@@ -76,6 +76,13 @@ $(".conditionsdelete").click(function () {
 		    $(".savebutton").click();
 			}
 		  return false;
+	});
+  
+	$("[name=clonestep]").click(function () {
+    $("[name=formulize_admin_op]").val('clonestep');
+    $("[name=formulize_admin_index]").val($(this).attr('target'));
+    $(".savebutton").click();
+    return false;
 	});
 
   $(".savebutton").click(function () {

@@ -137,9 +137,12 @@ function prepvalues($value, $field, $entry_id) {
 					// check if this is a link to a link
 					if($second_source_ele_value = formulize_isLinkedSelectBox($sourceMeta[1], true)) {
 							 $secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
-							 $sql = "SELECT t1.`".$secondSourceMeta[1]."` FROM ".DBPRE."formulize_".$secondSourceMeta[0]." as t1, ".DBPRE."formulize_".$sourceMeta[0]. " as t2 WHERE t2.`entry_id` IN (".trim($value, ",").") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$sourceMeta[1]."`)) ORDER BY t2.`entry_id`";
+							 $form_handler = xoops_getmodulehandler('forms', 'formulize');
+						         $secondFormObject = $form_handler->get($secondSourceMeta[0]);
+						         $sourceFormObject = $form_handler->get($sourceMeta[0]);
+							 $sql = "SELECT t1.`".$secondSourceMeta[1]."` FROM ".DBPRE."formulize_".$secondFormObject->getVar('form_handle')." as t1, ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle'). " as t2 WHERE t2.`entry_id` IN (".trim($value, ",").") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$sourceMeta[1]."`)) ORDER BY t2.`entry_id`";
 					} else {
-							 $sql = "SELECT `".$sourceMeta[1]."` FROM ".DBPRE."formulize_".$sourceMeta[0]." WHERE entry_id IN (".trim($value, ",").") ORDER BY entry_id";		 
+							 $sql = "SELECT `".$sourceMeta[1]."` FROM ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." WHERE entry_id IN (".trim($value, ",").") ORDER BY entry_id";		 
 					}
           if(!$res = $xoopsDB->query($sql)) {
                print "Error: could not retrieve the source values for a linked selectbox during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
@@ -295,6 +298,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		     print "Frame id: " . $frid . "<br>";
 		     exit("selected form does not exist in framework"); 
 	   }
+       
+	  $form_handler = xoops_getmodulehandler('forms', 'formulize');
+	  $formObject = $form_handler->get($fid);
        
 	     if($frid AND !$mainFormOnly) {
 		     // GET THE LINK INFORMATION FOR THE CURRENT FRAMEWORK BASED ON THE REQUESTED FORM
@@ -480,38 +486,43 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
            $joinText = ""; // not "new" variables persist (with .= operator)
            $existsJoinText = "";
            foreach($linkformids as $id=>$linkedFid) {
-             formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
-             $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
-             $joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
-             $joinText .= " $joinType JOIN " . DBPRE . "formulize_$linkedFid AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
-             $newexistsJoinText = $existsJoinText ? " $andor " : "";
-             $newexistsJoinText .= " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_$linkedFid AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it 
-             if($linkcommonvalue[$id]) { // common value
-               $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
-             } elseif($linktargetids[$id]) { // linked selectbox
-               if(formulize_isLinkedSelectBox($linktargetids[$id])) { 
-                 $newJoinText = " f$id.`" . $joinHandles[$linktargetids[$id]] . "` LIKE CONCAT('%,',main.entry_id,',%')";
-								 //$newJoinText = " main.entry_id IN (TRIM(',' FROM f$id.`" . $joinHandles[$linktargetids[$id]] . "`)) "; // IN should be a lot faster than LIKE ?
-               } else {
-                 $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "` LIKE CONCAT('%,',f$id.entry_id,',%')";
-								 //$newJoinText = " f$id.entry_id IN (TRIM(',' FROM main.`" . $joinHandles[$linkselfids[$id]] . "`)) "; // IN should be a lot faster than LIKE ?
-               }
-             } else { // join by uid
-               $newJoinText = " main.creation_uid=f$id.creation_uid";
-             }
-						 if(isset($perGroupFiltersPerForms[$linkedFid])) {
-							 $newJoinText .= $perGroupFiltersPerForms[$linkedFid];
-						 }
-             $joinTextIndex[$linkedFid] = $newJoinText;
-             $joinText .= $newJoinText;
-             if(count($oneSideFilters[$linkedFid])>0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
-               $existsJoinText .= $newexistsJoinText . $newJoinText;
-               foreach($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
-										$thisLinkedFidPerGroupFilter = isset($perGroupFiltersPerForms[$linkedFid]) ? $perGroupFiltersPerForms[$linkedFid] : "";
-                    $existsJoinText .= " AND ( $thisOneSideFilter $thisLinkedFidPerGroupFilter) ";
-               }
-               $existsJoinText .= ") "; // close the exists clause itself
-             }
+	       // validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
+	       if(($joinHandles[$linkselfids[$id]] AND $joinHandles[$linktargetids[$id]]) OR ($linkselfids[$id] == '' AND $linktargetids[$id] == '')) { 
+		   
+			formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
+		    $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
+		    $joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
+		    $linkedFormObject = $form_handler->get($linkedFid);
+		    $joinText .= " $joinType JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
+		    $newexistsJoinText = $existsJoinText ? " $andor " : "";
+		    $newexistsJoinText .= " EXISTS(SELECT 1 FROM ". DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it 
+		    if($linkcommonvalue[$id]) { // common value
+		      $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
+		    } elseif($linktargetids[$id]) { // linked selectbox
+		      if(formulize_isLinkedSelectBox($linktargetids[$id])) { 
+			$newJoinText = " f$id.`" . $joinHandles[$linktargetids[$id]] . "` LIKE CONCAT('%,',main.entry_id,',%')";
+									//$newJoinText = " main.entry_id IN (TRIM(',' FROM f$id.`" . $joinHandles[$linktargetids[$id]] . "`)) "; // IN should be a lot faster than LIKE ?
+		      } else {
+			$newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "` LIKE CONCAT('%,',f$id.entry_id,',%')";
+									//$newJoinText = " f$id.entry_id IN (TRIM(',' FROM main.`" . $joinHandles[$linkselfids[$id]] . "`)) "; // IN should be a lot faster than LIKE ?
+		      }
+		    } else { // join by uid
+		      $newJoinText = " main.creation_uid=f$id.creation_uid";
+		    }
+							if(isset($perGroupFiltersPerForms[$linkedFid])) {
+								$newJoinText .= $perGroupFiltersPerForms[$linkedFid];
+							}
+		    $joinTextIndex[$linkedFid] = $newJoinText;
+		    $joinText .= $newJoinText;
+		    if(count($oneSideFilters[$linkedFid])>0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
+		      $existsJoinText .= $newexistsJoinText . $newJoinText;
+		      foreach($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
+										       $thisLinkedFidPerGroupFilter = isset($perGroupFiltersPerForms[$linkedFid]) ? $perGroupFiltersPerForms[$linkedFid] : "";
+			   $existsJoinText .= " AND ( $thisOneSideFilter $thisLinkedFidPerGroupFilter) ";
+		      }
+		      $existsJoinText .= ") "; // close the exists clause itself
+		    }
+	       }
            }
 	       }
 	       
@@ -566,7 +577,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       // If there's an LOE Limit in place, check that we're not over it first
 	       global $formulize_LOE_limit;
 
-	       $countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_$fid AS main ";
+	       $countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main ";
 	       $countMasterResults .= "$userJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause "; 
          $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
 				 $countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
@@ -594,9 +605,10 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
               if(!$sortIsOnMain) {
 										$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
 										if($sortFieldMetaData['ele_encrypt']) {
-												 $entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT (SELECT AES_DECRYPT(`$sortField`, '".getAESPassword()."') FROM ".DBPRE."formulize_$sortFid as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. ") as usethissort, main.entry_id as main_entry_id ", $entryIdQuery); // sorts as text which will screw up number fields
+										$sortFormObject = $form_handler->get($sortFid);
+												 $entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT (SELECT AES_DECRYPT(`$sortField`, '".getAESPassword()."') FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. ") as usethissort, main.entry_id as main_entry_id ", $entryIdQuery); // sorts as text which will screw up number fields
 										} else {
-												 $entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT (SELECT `$sortField` FROM ".DBPRE."formulize_$sortFid as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. ") as usethissort, main.entry_id as main_entry_id ", $entryIdQuery);
+												 $entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT (SELECT `$sortField` FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. ") as usethissort, main.entry_id as main_entry_id ", $entryIdQuery);
 										}
 		                $thisOrderByClause = " ORDER BY usethissort ";
               } else {
@@ -620,11 +632,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
          }         
 	  
 	  // only drawback in this SQL right now is it does not support one to one relationships in the query, since they are essentially joins on the entry_id and form id through the one_to_one table
-	  $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
+	  $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
     
     // if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
     // note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
-    $oneSideSQL = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested.
+    $oneSideSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested.
     $oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
     if(count($oneSideFilters[$fid])>0) {
        foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
@@ -633,11 +645,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
     }
     $oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
     
-	  $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_$fid AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
+	  $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
 		$GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
     $GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
     if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
-	  $GLOBALS['formulize_queryForExport'] = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_$fid AS main $userJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $orderByClause";
+	  $GLOBALS['formulize_queryForExport'] = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $orderByClause";
      
 	  //$masterQuerySQL = "SELECT * FROM " . DBPRE . "formulize_$fid LIMIT 0,1";
 	  //$afterQueryTime = microtime_float();
@@ -844,6 +856,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
           $filter = $filtertemp;
      }
      
+     $form_handler = xoops_getmodulehandler('forms', 'formulize');
+     
      global $myts;
      $numSeachExps = 0;
      foreach($filter as $filterParts) {
@@ -964,6 +978,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                          $newWhereClause = "(($elementPrefix.entry_id = ANY $subquery)OR($queryElement " . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes."))"; // need to look in the other box and the main field, and return values that match in either case
                     // handle linked selectboxes
                     } elseif($sourceMeta = $formFieldFilterMap[$mappedForm][$element_id]['islinked']) {
+			 $sourceFormObject = $form_handler->get($sourceMeta[0]);
 												 if($ifParts[1] == "PERGROUPFILTER") {
 															// invoke the per group filter that applies to the form that we are pointing to...if XOOPS is in effect (ie: we're not included directly in other code as per Formulize 1)
 															global $xoopsDB;
@@ -971,14 +986,14 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 																	 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 																	 $otherpgfCount = count($otherPerGroupFilterJoins) + 1;
 																	 $otherPerGroupFilterWhereClause[] = $form_handler->getPerGroupFilterWhereClause($sourceMeta[0], "otherpgf".$otherpgfCount);
-																	 $tempOtherPGFJoin = " LEFT JOIN ".DBPRE."formulize_".$sourceMeta[0]." AS otherpgf".$otherpgfCount." ON ";
+																	 $tempOtherPGFJoin = " LEFT JOIN ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." AS otherpgf".$otherpgfCount." ON ";
 																	 $tempOtherPGFJoin .= " otherpgf".$otherpgfCount.".entry_id IN (TRIM(',' FROM $queryElement)) "; 
 																	 $otherPerGroupFilterJoins[] = $tempOtherPGFJoin;
 															}
 															$newWhereClause = "1";
 												 } else {
 															// Neal's suggestion:  use EXISTS...other forms of subquery using field IN subquery or subquery LIKE field, and a CONCAT in the subquery, failed in various conditions.  IN did not work with multiple selection boxes, and LIKE did not work with search terms too general to return only one match in the source form.  Exists works in all cases.  :-)
-		                          $newWhereClause = " EXISTS (SELECT 1 FROM ".DBPRE."formulize_".$sourceMeta[0]." AS source WHERE $queryElement LIKE CONCAT('%,',source.entry_id,',%') AND source.".$sourceMeta[1] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . ")";
+		                          $newWhereClause = " EXISTS (SELECT 1 FROM ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." AS source WHERE $queryElement LIKE CONCAT('%,',source.entry_id,',%') AND source.".$sourceMeta[1] . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . ")";
 												 }
                     // usernames/fullnames boxes
                     } elseif($listtype = $formFieldFilterMap[$mappedForm][$element_id]['isnamelist'] AND $ifParts[1] !== "") {

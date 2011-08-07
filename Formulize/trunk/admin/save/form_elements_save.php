@@ -184,8 +184,8 @@ if($_POST['cloneelement']) {
   }
   $element_handler->insert($thisElementObject);
   $ele_id = $thisElementObject->getVar('ele_id');
-  $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $thisElementObject->getVar('id_form')) ." LIKE '$oldHandle'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
-	if(!$fieldStateRes = $xoopsDB->query($fieldStateSQL)) {
+  $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $thisElementObject->getVar('form_handle')) ." LIKE '$oldHandle'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+  	if(!$fieldStateRes = $xoopsDB->query($fieldStateSQL)) {
 		$dataType = "text";
 	} else {
 		$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
