@@ -256,6 +256,12 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/advanced_calculation_steps_sections.html',
 	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/advanced_calculation_fltr_grp.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/advanced_calculation_fltr_grp_sections.html',
+	'description' => '');
 
 
 //	Module Configs
