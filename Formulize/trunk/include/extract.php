@@ -134,12 +134,12 @@ function prepvalues($value, $field, $entry_id) {
      // need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
      $sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
      if($value AND $sourceMeta[1]) {
+					$form_handler = xoops_getmodulehandler('forms', 'formulize');
+					$sourceFormObject = $form_handler->get($sourceMeta[0]);
 					// check if this is a link to a link
 					if($second_source_ele_value = formulize_isLinkedSelectBox($sourceMeta[1], true)) {
 							 $secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
-							 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 						         $secondFormObject = $form_handler->get($secondSourceMeta[0]);
-						         $sourceFormObject = $form_handler->get($sourceMeta[0]);
 							 $sql = "SELECT t1.`".$secondSourceMeta[1]."` FROM ".DBPRE."formulize_".$secondFormObject->getVar('form_handle')." as t1, ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle'). " as t2 WHERE t2.`entry_id` IN (".trim($value, ",").") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$sourceMeta[1]."`)) ORDER BY t2.`entry_id`";
 					} else {
 							 $sql = "SELECT `".$sourceMeta[1]."` FROM ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." WHERE entry_id IN (".trim($value, ",").") ORDER BY entry_id";		 
