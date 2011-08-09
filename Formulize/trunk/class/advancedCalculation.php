@@ -258,17 +258,20 @@ class formulizeAdvancedCalculationHandler {
 
     // figure out groupings
     $groups = array();
+    $savedCheckboxValue = array();
     foreach($filtersAndGroupings as $index => $thisGrouping) {
       if($thisGrouping['is_group']) {
         if( $thisGrouping['type']['kind'] == 3 ) {    // Checkboxes
           // if more then one is selected then do the grouping, else just do the grouping
           //print isset($_POST[$acid."_groupingchoices"][$index])." AND ".array_key_exists( $acid . "_" .$thisGrouping['handle'], $_POST )." AND ".is_array( $_POST[$acid . "_" .$thisGrouping['handle']] )." AND ".count( $_POST[$acid . "_" .$thisGrouping['handle']] );
           if( isset($_POST[$acid."_groupingchoices"][$index]) AND ( (is_array( $_POST[$acid . "_" .$thisGrouping['handle']] ) AND count( $_POST[$acid . "_" .$thisGrouping['handle']] ) != 1 ) OR !is_array($_POST[$acid . "_" .$thisGrouping['handle']]) ) )  {
-            $groups[] = $index;
+	    $savedGroupingFilterValue[$thisGrouping['handle']] = $_POST[$acid . "_" .$thisGrouping['handle']]; // save this value so we can use it again after
+	    $groups[] = $index;
           }
         } else {
-	        // if no filter value for this was specified, and it was checked off as a grouping option, then let's record it, otherwise we won't group by it
+	  // if no filter value for this was specified, and it was checked off as a grouping option, then let's record it, otherwise we won't group by it
           if( $_POST[$acid . "_" .$thisGrouping['handle']] == "" AND $_POST[$acid . "_" .$thisGrouping['handle']] !== 0 AND isset($_POST[$acid."_groupingchoices"][$index])) {
+	    $savedGroupingFilterValue[$thisGrouping['handle']] = $_POST[$acid . "_" .$thisGrouping['handle']]; // save this value so we can use it again after
             $groups[] = $index;
           }
         }
@@ -295,6 +298,7 @@ class formulizeAdvancedCalculationHandler {
     // process the stack
     while( count( $stack ) > 0 ) {
       // get the next item to process from the stack
+      $item = null; // just to make sure there's nothing left over from the previous iteration
       $item = array_pop( $stack );
 
       $packedFormFilters = array();
@@ -303,7 +307,7 @@ class formulizeAdvancedCalculationHandler {
 
       if( $hasGroups ) {
         // if the item is the root, then don't process
-        if( $item[1] != null ) {
+        if( $item[1] !== null ) {
           // set the filter
 	  // $item[0] is the key from $groups array, which has the value that is the key in the filtersAndGroupings array, where this filter's handle is contained
 	  // $item[1] is the value that we need to set for that filter
@@ -312,6 +316,7 @@ class formulizeAdvancedCalculationHandler {
 	  // if it's a checkbox filter, than we need to use $item[1] as the additional key in the post array, and 1 is simply the flag value
 	  
 	  if($filtersAndGroupings[$groups[$item[0]]]['type']['kind'] == 3) {
+	    
 	    $_POST[$acid."_".$filtersAndGroupings[$groups[$item[0]]]['handle']] = array($item[1] => 1);
 	    // figure out what the correct value is for the active groupings...it should be the value used in SQL, not the item[1] which will be the key position in the checkbox options array
 	    $activeOption = $filtersAndGroupings[$groups[$item[0]]]['type']['options'][$item[1]];
@@ -330,9 +335,7 @@ class formulizeAdvancedCalculationHandler {
 
           // if the last level has been reached, then we need to calculate
           if( $item[0] == count( $groups ) - 1 ) {
-            //print "{$item[0]}:{$item[1]}: calculate\n";
             $doCalc = true;
-            //$item[3][$item[1]] = 1234;
           }
 
           // adjust the level
@@ -350,7 +353,6 @@ class formulizeAdvancedCalculationHandler {
       }
 
       if( $doCalc ) {
-        ob_start();
         $steps = $advCalcObject->getVar('steps');
         $steptitles = $advCalcObject->getVar('steptitles');
         $input = $advCalcObject->vars['input']['value'];
@@ -373,7 +375,7 @@ class formulizeAdvancedCalculationHandler {
 		$filterNames[] = $filterHandle;
 	    }
 	}
-
+	ob_start();
         // establish whether the timer is on or not
         if(strstr($input,"timerOn();")) {
 	    $GLOBALS['formulize_procedureTimerOn'] = true;
@@ -407,11 +409,10 @@ class formulizeAdvancedCalculationHandler {
         if( $hasGroups ) {
           $item[3][$item[1]] = $calculationResult ? $calculationResult : $calculationText; // assigns by reference back to the group combinations array
         }
-	
-      }
+
+      } // end of $docalc
 
       // clean-up
-      $item = null;
       foreach($filterNames as $thisName) {
 	unset(${$thisName});
       }
@@ -422,10 +423,21 @@ class formulizeAdvancedCalculationHandler {
     $this->destroyTables();
 
     if($hasGroups) {
-	$calculationResult = $groupCombinations; // now that all groups have been processed, then we need to use the original groupCombinations array, where the individual results were assigned by reference, as the result that we're going to send back.
+	if(count($savedGroupingFilterValue)>0) {
+            $calculationResult = serialize($groupCombinations); // now that all groups have been processed, then we need to use the original groupCombinations array, where the individual results were assigned by reference, as the result that we're going to send back.
+            $calculationResult = unserialize($calculationResult); // this is the stupid thing we have to do if checkbox selections are involved, since there's some deep reference involving POST, which screws up the results when we reset it to the user's original choice.  So we cannot assign the value here in a normal way, we have to munge the reference that is in place by converting the array to a string!!
+	} else {
+	    $calculationResult = $groupCombinations;
+	}
+    }
+    
+    // reset any checkbox filter values to what the user selected for them (while processing, we will have set these values to something else if there is grouping going on)
+    // NEED TO DO THIS LAST BECAUSE THERE'S SOME PASS BY REFERENCE STRANGENESS GOING ON THAT AFFECTS groupCombinations! See comment above about serialize/unserialize when getting groupcombinations
+    foreach($savedGroupingFilterValue as $handle=>$value) {
+	$_POST[$acid . "_" .$handle] = $value;
     }
 
-    return array('text'=>$calculationText, 'result'=>$calculationResult);
+    return array('text'=>$calculationText, 'result'=>$calculationResult, 'groups'=>$activeGroupings);
     
   }
 
@@ -440,20 +452,24 @@ class formulizeAdvancedCalculationHandler {
 
   // this method returns the text value of a particular filter's data value, if different from the data value
   function filterTextValue($filterData, $dataValue) {
-    $allOptions = $filterData["type"]["options"];
-    foreach($allOptions as $thisOption) {
-	if(strstr($thisOption, "|")) {
-	    $optionParts = explode("|", $thisOption);
-	    if(trim($optionParts[0]) == trim($dataValue)) {
-		return $optionParts[1];
+    static $cachedValues;
+    $serializedFilterData = serialize($filterData);
+    if(!isset($cachedValues[$serializedFilterData][$dataValue])) {
+        $allOptions = $filterData["type"]["options"];
+        foreach($allOptions as $thisOption) {
+	    if(strstr($thisOption, "|")) {
+		$optionParts = explode("|", $thisOption);
+		if(trim($optionParts[0]) == trim($dataValue)) {
+		    $cachedValues[$serializedFilterData][$dataValue] = $optionParts[1];
+		}
+	    } else {
+		if($thisOption == $dataValue) {
+		    $cachedValues[$serializedFilterData][$dataValue] = $thisOption;
+		}
 	    }
-	} else {
-	    if($thisOption == $dataValue) {
-		return $thisOption;
-	    }
-	}
+        }
     }
-    return $dataValue;
+    return $cachedValues[$serializedFilterData][$dataValue];
   }
   
   
@@ -540,8 +556,12 @@ class formulizeAdvancedCalculationHandler {
   function getFilter($acid, $filterHandle, $datesAsHidden=false) {
     include_once XOOPS_ROOT_PATH.'/class/xoopsform/formelement.php'; //dependency
     include_once XOOPS_ROOT_PATH.'/class/xoopsform/formtext.php'; //dependency
+    include_once XOOPS_ROOT_PATH.'/class/xoopsform/formhidden.php'; //dependency
     include_once XOOPS_ROOT_PATH.'/class/xoopsform/formtextdateselect.php';
     include_once XOOPS_ROOT_PATH.'/class/xoopsform/formselect.php';
+    
+    $hideLabel = false;
+    
 
     // load the advanced calculation (procedure)
     $acObject = $this->get($acid);
@@ -573,6 +593,7 @@ class formulizeAdvancedCalculationHandler {
       $elementName = $acid . "_" . $fltr_grp["handle"];
       $dateValue = (isset($_POST[$elementName])) ? strtotime($_POST[$elementName]) : ( (isset($_GET[$elementName])) ? strtotime($_GET[$elementName]) : "" );
       if($datesAsHidden) {
+	$hideLabel = true;
 	$form_ele = new XoopsFormHidden($elementName, $dateValue);
       } else {
 	$form_ele = new XoopsFormTextDateSelect("", $elementName, 15, $dateValue);
@@ -643,7 +664,9 @@ class formulizeAdvancedCalculationHandler {
       }
     }
 
-    return array( "label"=>$fltr_grp["fltr_label"], "html"=>$html );
+    $labelText = $hideLabel ? "" : $fltr_grp["fltr_label"];
+
+    return array( "label"=>$labelText, "html"=>$html );
   }
 
   function getGrouping($acid, $filterHandle) {
