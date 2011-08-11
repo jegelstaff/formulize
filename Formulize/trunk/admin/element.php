@@ -446,7 +446,7 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
               // get the current type...
               global $xoopsDB;
 	      $form_handler = xoops_getmodulehandler('forms', 'formulize');
-              $formObject = $form_handler->get($fid);
+              $formObject = $form_handler->get($id_form);
               $elementDataSQL = "SHOW COLUMNS FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." LIKE '".$element->getVar('ele_handle')."'";
               $elementDataRes = $xoopsDB->queryF($elementDataSQL);
               $elementDataArray = $xoopsDB->fetchArray($elementDataRes);

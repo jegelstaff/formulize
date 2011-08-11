@@ -319,7 +319,13 @@ class formulizeFormsHandler {
 				if( empty($id_form) ){
 					$id_form = $this->db->getInsertId();
 				}
-        $formObject->assignVar('id_form', $id_form);
+				$formObject->assignVar('id_form', $id_form);
+				
+				if( $form_handle == "" ){ // only occurs when forms have no handles specified by the user, which is probably only new forms, because non-new forms would default to the fid (but for new forms, fid is not known yet when insert is called)
+					$formObject->setVar('form_handle', $id_form);
+					$this->insert($formObject, $force); 
+				}
+				
 				return $id_form;
 				
 	}
