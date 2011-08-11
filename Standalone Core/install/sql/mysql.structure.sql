@@ -712,12 +712,14 @@ CREATE TABLE system_autotasks (
 CREATE TABLE `formulize_advanced_calculations` (
   `acid` int(11) NOT NULL auto_increment,
   `fid` int(11) NOT NULL default '0',
-  `name` varchar(20) NOT NULL default '',
+  `name` varchar(255) NOT NULL default '',
   `description` text NOT NULL,
   `input` text NOT NULL,
   `output` text NOT NULL,
   `steps` text NOT NULL,
   `steptitles` text NOT NULL,
+  `fltr_grps` text NOT NULL,
+  `fltr_grptitles` text NOT NULL,
   PRIMARY KEY  (`acid`),
   KEY `i_fid` (`fid`)
 ) TYPE=MyISAM; 
@@ -865,6 +867,7 @@ CREATE TABLE formulize_notification_conditions (
   not_cons_creator tinyint(1),
   not_cons_elementuids smallint(5) NOT NULL default 0,
   not_cons_linkcreator smallint(5) NOT NULL default 0,
+  not_cons_elementemail smallint(5) NOT NULL default 0,
   not_cons_con text NOT NULL,
   not_cons_template varchar(255) default '',
   not_cons_subject varchar(255) default '',
@@ -953,6 +956,7 @@ CREATE TABLE formulize_id (
   defaultform int(11) NOT NULL default 0,
   defaultlist int(11) NOT NULL default 0,
   menutext varchar(255) default NULL,
+  form_handle varchar(255) NOT NULL default '',
   PRIMARY KEY  (`id_form`),
   UNIQUE `desc_form_id` (`desc_form`)
 ) TYPE=MyISAM;
