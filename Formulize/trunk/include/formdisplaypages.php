@@ -239,8 +239,8 @@ if(is_array($conditions) AND $entry) {
 				$masterBoolean = "AND";
 			}
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-			$data = getData($frid, $fid, $finalFilter, $masterBoolean);
-			if($data[0] == "") { 
+			$data = getData($frid, $fid, $finalFilter, $masterBoolean, "", "", "", "", "", false, 0, false, "", false, true);
+			if(!$data) { 
 				if($prevPage < $currentPage) {
 					$currentPage++;
 				} else {

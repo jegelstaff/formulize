@@ -206,9 +206,9 @@ function microtime_float()
    return ((float)$usec + (float)$sec);
 }
 
-function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $cacheKey="") { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
+function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $resultOnly=false, $cacheKey="") { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
 
-     if(!$cacheKey) { return getDataCached($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly); }
+     if(!$cacheKey) { return getDataCached($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly); }
 
      global $xoopsDB;
 
@@ -249,7 +249,7 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
 		$result = dataExtractionDB(substr($framework, 3), $filter, $andor, $scope, $dbTableUidField);
 	} else {
      
-	$result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly);
+	$result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly, $resultOnly);
 	}
 	
 	if($cacheKey) {
@@ -259,17 +259,17 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
 	return $result;
 }
 
-function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false) {
+function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $resultOnly=false) {
 		 if(isset($GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())])) {
 					return $GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())];
 		 } else {
 					$cacheKey = serialize(func_get_args());
-					return getData($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $cacheKey);
+					return getData($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly, $cacheKey);
 		 }
 }
 
 
-function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived=false, $id_reqsOnly=false) {
+function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived=false, $id_reqsOnly=false, $resultOnly=false) {
 
      global $xoopsDB;
 
@@ -678,7 +678,17 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		 formulize_benchmark("Before query");
 		 
      $masterQueryRes = $xoopsDB->query($masterQuerySQL);
-     
+
+    if($resultOnly) {
+      if($masterQueryRes) {
+        if($xoopsDB->getRowsNum($masterQueryRes)>0) {
+          return $masterQueryRes;
+        } else {
+          return false;
+        }
+      }
+    }
+
 		 formulize_benchmark("After query");
      
      // need to calculate the derived value metadata

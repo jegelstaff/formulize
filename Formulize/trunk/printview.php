@@ -202,11 +202,11 @@ function canViewPage( $entry, $currentPage, $conditions, $formframe, $mainform )
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 			//$data = getData($frid, $fid, $finalFilter, $masterBoolean);
 			if($mainform) {
-				$data = getData($formframe, $mainform, $finalFilter, $masterBoolean);
+				$data = getData($formframe, $mainform, $finalFilter, $masterBoolean, "", "", "", "", "", false, 0, false, "", false, true);
 			} else {
-				$data = getData("", $formframe, $finalFilter, $masterBoolean);
+				$data = getData("", $formframe, $finalFilter, $masterBoolean, "", "", "", "", "", false, 0, false, "", false, true);
 			}
-			if($data[0] == "") { 
+			if(!$data) { 
 				$pagesSkipped = true;
 			} else {
 				$conditionsMet = true;
