@@ -417,6 +417,7 @@ class formulizeElementRenderer{
 					} 
 
 					static $cachedSourceValuesQ = array();
+					static $cachedSourceValuesAutocompleteFile = array();
 
 					$sourceFormObject = $form_handler->get($sourceFid);
 
@@ -459,14 +460,8 @@ class formulizeElementRenderer{
 						$cachedSourceValuesQ[$sourceValuesQ] = $linkedElementOptions;
 						/* ALTERED - 20100318 - freeform - jeff/julian - start */
 						if(!$isDisabled AND $ele_value[8] == 1) {
-							// do autocomplete rendering logic here
-							if($boxproperties[2]) {
-								$default_value = trim($boxproperties[2], ",");
-								$data_handler_autocomplete = new formulizeDataHandler($boxproperties[0]);
-								$default_value_user = $data_handler_autocomplete->getElementValueInEntry(trim($boxproperties[2], ","), $boxproperties[1]);
-							}
 							// write the possible values to a cached file so we can look them up easily when we need them, don't want to actually send them to the browser, since it could be huge, but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
-							$cachedLinkedOptionsFileName = "formulize_linkedOptions_".time();
+							$cachedLinkedOptionsFileName = "formulize_linkedOptions_".str_replace(".","",microtime(true));
 							formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_linkedOptions_");
 							$cachedLinkedOptions = fopen(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName","w");
 							fwrite($cachedLinkedOptions, "<?php\n\r");
@@ -478,10 +473,21 @@ class formulizeElementRenderer{
 							}
 							fwrite($cachedLinkedOptions, "?>");
 							fclose($cachedLinkedOptions);
-							$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFileName, $default_value, $default_value_user);
-							$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
-							$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+							$cachedSourceValuesAutocompleteFile[$sourceValuesQ] = $cachedLinkedOptionsFileName;
 						} 
+					}
+					
+					// if we're rendering an autocomplete box
+					if(!$isDisabled AND $ele_value[8] == 1) {
+						// do autocomplete rendering logic here
+						if($boxproperties[2]) {
+							$default_value = trim($boxproperties[2], ",");
+							$data_handler_autocomplete = new formulizeDataHandler($boxproperties[0]);
+							$default_value_user = $data_handler_autocomplete->getElementValueInEntry(trim($boxproperties[2], ","), $boxproperties[1]);
+						}
+						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedSourceValuesAutocompleteFile[$sourceValuesQ], $default_value, $default_value_user);
+						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
+						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 					}
 					
 					// only do this if we're rendering a normal element, that is not disabled
@@ -649,7 +655,7 @@ class formulizeElementRenderer{
           } elseif($ele_value[8] == 1) {
             // autocomplete construction: make sure that $renderedElement is the final output of this chunk of code
             // write the possible values to a cached file so we can look them up easily when we need them, don't want to actually send them to the browser, since it could be huge, but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
-            $cachedOptionsFileName = "formulize_Options_".time();
+            $cachedOptionsFileName = "formulize_Options_".str_replace(".","",microtime(true));
             formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_Options_");
             $cachedOptions = fopen(XOOPS_ROOT_PATH."/cache/$cachedOptionsFileName","w");
             fwrite($cachedOptions, "<?php\n\r");
