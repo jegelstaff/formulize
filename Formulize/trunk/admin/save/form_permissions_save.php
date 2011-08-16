@@ -56,10 +56,10 @@ if($_POST['grouplistname']) {
   $groupListGroups = mysql_real_escape_string(implode(",",$_POST['groups']));
   $name = mysql_real_escape_string($_POST['grouplistname']);
   // are we inserting or updating? 
-  $newList = $groupid == 0 ? true : false;
+  $newList = $groupListId == 0 ? true : false;
   if(!$newList) {
 	  // Get exisitng name to see if we update, or create new.	
-	  $result = $xoopsDB->query("SELECT gl_name FROM ".$xoopsDB->prefix("group_lists")." WHERE gl_id='".intval($groupid)."'");
+	  $result = $xoopsDB->query("SELECT gl_name FROM ".$xoopsDB->prefix("group_lists")." WHERE gl_id='".intval($groupListId)."'");
 	  if($xoopsDB->getRowsNum($result) > 0) {
       $entry = $xoopsDB->fetchArray($result); 
       if($entry['gl_name'] != $name) { 
