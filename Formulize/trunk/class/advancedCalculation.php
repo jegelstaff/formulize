@@ -246,11 +246,6 @@ class formulizeAdvancedCalculationHandler {
 
     $fromBaseQuery = $GLOBALS['formulize_queryForCalcs'];
 
-    // construct output return value structure
-    $calcOutput = array( "html" => null,
-      "procedure-raw" => null, "procedure-html" => null,
-      "grouping-raw" => null, "grouping-raw" => null );
-
     //print "<pre>POST<br>"; print_r( $_POST ); print "<br>Filters and Groupings<br>"; print_r( $filtersAndGroupings ); print "</pre>"; exit();
 
     // get the filters and groupings information
@@ -276,6 +271,11 @@ class formulizeAdvancedCalculationHandler {
           }
         }
       }
+    }
+    
+    // set a flag to indicate if there is time-based grouping going on (a special feature of the OCANDS website) -- jwe Aug 18 2011
+    if(isset($_POST['ocandsDateGrouping']) AND ($_POST['ocandsDateGrouping'] == "year" OR $_POST['ocandsDateGrouping'] == "quarter")) {
+	$groups[] = $_POST['ocandsDateGrouping'];
     }
     $groupCombinations = $this->groupBy( $acid, $filtersAndGroupings, $groups );
 
@@ -312,10 +312,16 @@ class formulizeAdvancedCalculationHandler {
 	  // $item[0] is the key from $groups array, which has the value that is the key in the filtersAndGroupings array, where this filter's handle is contained
 	  // $item[1] is the value that we need to set for that filter
 	  // set the proper value in $_POST so that when we package up the filters, everything works as expected
-	  
+
+	  // if we're in a date grouping for OCANDS, then we need to do things a bit differently...
+	  // in this case $item[1] will be the label for the timeframe
+	  if($groups[$item[0]] == "year" OR $groups[$item[0]] == "quarter") {
+	    $_POST[$acid."_startDate"] = $this->convertOcandsDateLabelToDate($item[1], $groups[$item[0]], 'start');
+	    $_POST[$acid."_endDate"] = $this->convertOcandsDateLabelToDate($item[1], $groups[$item[0]], 'end');
+	    $activeGroupings[$groups[$item[0]]] = array('metadata'=>$groups[$item[0]],'value'=>$item[1]);
+
 	  // if it's a checkbox filter, than we need to use $item[1] as the additional key in the post array, and 1 is simply the flag value
-	  
-	  if($filtersAndGroupings[$groups[$item[0]]]['type']['kind'] == 3) {
+	  } elseif($filtersAndGroupings[$groups[$item[0]]]['type']['kind'] == 3) {
 	    
 	    $_POST[$acid."_".$filtersAndGroupings[$groups[$item[0]]]['handle']] = array($item[1] => 1);
 	    // figure out what the correct value is for the active groupings...it should be the value used in SQL, not the item[1] which will be the key position in the checkbox options array
@@ -329,8 +335,6 @@ class formulizeAdvancedCalculationHandler {
 	    $_POST[$acid."_".$filtersAndGroupings[$groups[$item[0]]]['handle']] = $item[1];
 	    $activeGroupings[$groups[$item[0]]] = array('metadata'=>$filtersAndGroupings[$groups[$item[0]]], 'value'=>$item[1]);
 	  }
-	  
-	  
 	  
 
           // if the last level has been reached, then we need to calculate
@@ -444,7 +448,14 @@ class formulizeAdvancedCalculationHandler {
   // this method grabs the output to screen and sticks a grouping label in front of it
   function captureGroupedOutput($activeGroupings) {
     foreach($activeGroupings as $thisGrouping) {
-	$groupingLabel .= " <p class='proc-grouping-label'>".$thisGrouping['metadata']['fltr_label'] . " &mdash; ".$this->filterTextValue($thisGrouping['metadata'], $thisGrouping['value'])."</p>";
+	if(is_array($thisGrouping['metadata'])) {
+	    $label = $thisGrouping['metadata']['fltr_label'];
+	    $value = $this->filterTextValue($thisGrouping['metadata'], $thisGrouping['value']);
+	} elseif($thisGrouping['metadata'] == "year" OR $thisGrouping['metadata'] == "quarter") {
+	    $label = ucfirst($thisGrouping['metadata']);
+	    $value = $thisGrouping['value'];
+	}
+	$groupingLabel .= " <p class='proc-grouping-label'>".$label. " &mdash; ".$value."</p>";
     }
     $output = ob_get_clean();
     return "<div class='formulize-proc-text'><div class='formulize-proc-labels'>$groupingLabel</div><div class='formulize-proc-output'><blockquote>$output</blockquote></div></div>";
@@ -480,11 +491,28 @@ class formulizeAdvancedCalculationHandler {
     $groupsCount = count( $groups );
 
     $group = $groups[ $level ];
-    $fltr_grp = $filtersAndGroupings[ $group ];
+    if($group == "year" OR $group == "quarter") {
+	$fltr_grp = "ocandsDateGrouping";
+    } else {
+	$fltr_grp = $filtersAndGroupings[ $group ];
+    }
 
     //print str_repeat( ' ', $level * 2 ) . '> ' . $fltr_grp['handle'] . "\n";
+    
+    if($fltr_grp == "ocandsDateGrouping") { // always guaranteed to be the final level
 
-    if( $fltr_grp['type']['kind'] == 2 AND $_POST[ $acid."_".$fltr_grp['handle'] ] == '' AND $_POST[ $acid."_".$fltr_grp['handle'] ] !== 0 ) { // Select
+	// since this is always going to be the bottom level, throw error if we're not
+	if($level+1 != $groupsCount) {
+	    print "Error: Ocands Date Grouping is not the bottom level of grouping!";
+	} else {
+	    $currentDate = $_POST[$acid."_startDate"];
+	    while($currentDate < $_POST[$acid."_endDate"]) {
+		$groupCombinations[$this->getOcandsDateLabel($currentDate, $group)] = null; // group will be year or quarter;
+		$currentDate = $this->nextOcandsDate($currentDate, $group);
+	    }
+	}
+
+    } elseif( $fltr_grp['type']['kind'] == 2 AND $_POST[ $acid."_".$fltr_grp['handle'] ] == '' AND $_POST[ $acid."_".$fltr_grp['handle'] ] !== 0 ) { // Select
       foreach( $fltr_grp['type']['options'] as $option ) {
         $value = explode( "|", $option );
         if( count( $value ) == 2 ) {
@@ -535,10 +563,90 @@ class formulizeAdvancedCalculationHandler {
         $index++;
       }
     }
-
     return $groupCombinations;
   }
 
+  // this function returns the correct label for a date, based on the fiscal/calendar setting for quarters if applicable
+  function getOcandsDateLabel($date, $groupType) {
+    $offset = $_POST['ocandsDateOffset']; // get fiscal/calendar setting
+    switch($groupType) {
+	case "year":
+	    $year = date("Y",strtotime($date)); // return the four digit year of the date
+	    if($offset == "fiscal") {
+		$month = date("n",strtotime($date)); // return the number of the month in the date
+		if($month <= 3) { // first calendar quarter is considered fourth quarter of previous year
+		    $year--;
+		}
+	    }
+	    return $year;
+	    break;
+	case "quarter":
+	    $month = date("n",strtotime($date)); // return the number of the month in the date
+	    $year = date("Y",strtotime($date)); // return the four digit year of the date
+	    if($month > 9) {
+		$quarter = 4;
+	    } elseif($month > 6) {
+		$quarter = 3;
+	    } elseif($month > 3) {
+		$quarter = 2;
+	    } else {
+		$quarter = 1;
+	    }
+	    if($offset == "fiscal") {
+		$quarter--;
+		if($quarter == 0) { // first calendar quarter is considered fourth quarter of previous year
+		    $quarter = 4;
+		    $year--;
+		} 
+	    }
+	    return "Q$quarter $year";
+	    break;
+    }
+  }
+  
+  // this function advances to the start date of the next quarter or year
+  function nextOcandsDate($date, $groupType) {
+    switch($groupType) {
+	case "year":
+	    return date("Y-m-d", strtotime('+1 year',strtotime($date))); // add one year to the current date (as below for months, just +1 year instead)
+	    break;
+	case "quarter":
+	    return date("Y-m-d", strtotime('+3 months',strtotime($date))); // add three months to a timestamp based on the passed in date, and then format that new timestamp as Y-m-d
+	    break;
+    }
+  }
+
+  // this function returns the start or end date of a time period, given the label and the groupingType
+  function convertOcandsDateLabelToDate($label, $groupType, $startEnd) {
+    $offset = $_POST['ocandsDateOffset']; // get fiscal/calendar setting
+    switch($groupType) {
+	case "year":
+	    if($offset == "fiscal") {
+		$endYear = $label+1;
+		$dates = array('start'=>$label."-04-01", 'end'=>$endYear."-03-31");
+	    } else {
+		$dates = array('start'=>$label."-01-01", 'end'=>$label."-12-31");
+	    }
+	    break;
+	case "quarter":
+	    $quarterStarts = array(1=>'-01-01',2=>'-04-01',3=>'-07-01',4=>'-10-01');
+	    $quarterEnds = array(1=>'-03-31',2=>'-06-30',3=>'-09-30',4=>'-12-31');
+	    $labelParts = explode(" ",$label); // label will be "Q1 2007" for example
+	    $year = $labelParts[1];
+	    $quarterNumber = substr($labelParts[0],1); // get second character, ie: the number
+	    if($offset == "fiscal") {
+		$quarterNumber++;
+		if($quarterNumber == 5) { // last quarter is in first part of next calendar year for fiscal years
+		    $quarterNumber = 1;
+		    $year++;
+		}
+	    }
+	    $dates = array('start'=>$year.$quarterStarts[$quarterNumber], 'end'=>$year.$quarterEnds[$quarterNumber]);
+	    break;
+    }
+    return $dates[$startEnd];
+  }
+  
   // this function removes temp tables created by the createProceduresTable on this pageload
   function destroyTables() {
     global $xoopsDB;
