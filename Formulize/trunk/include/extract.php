@@ -206,9 +206,8 @@ function microtime_float()
    return ((float)$usec + (float)$sec);
 }
 
-function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $resultOnly=false, $cacheKey="") { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
-
-     if(!$cacheKey) { return getDataCached($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly); }
+function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $resultOnly=false, $filterElements=null, $cacheKey="") { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
+     if(!$cacheKey) { return getDataCached($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly, $filterElements); }
 
      global $xoopsDB;
 
@@ -249,7 +248,7 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
 		$result = dataExtractionDB(substr($framework, 3), $filter, $andor, $scope, $dbTableUidField);
 	} else {
      
-	$result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly, $resultOnly);
+	$result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly, $resultOnly, $filterElements);
 	}
 	
 	if($cacheKey) {
@@ -259,18 +258,17 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
 	return $result;
 }
 
-function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $resultOnly=false) {
+function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $resultOnly=false, $filterElements=null) {
 		 if(isset($GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())])) {
 					return $GLOBALS['formulize_cachedGetDataResults'][serialize(func_get_args())];
 		 } else {
 					$cacheKey = serialize(func_get_args());
-					return getData($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly, $cacheKey);
+					return getData($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly, $filterElements, $cacheKey);
 		 }
 }
 
 
-function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived=false, $id_reqsOnly=false, $resultOnly=false) {
-
+function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived=false, $id_reqsOnly=false, $resultOnly=false, $filterElements=null) {
      global $xoopsDB;
 
      if(isset($_GET['debug'])) { $time_start = microtime_float(); }
@@ -300,7 +298,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		     print "Frame id: " . $frid . "<br>";
 		     exit("selected form does not exist in framework"); 
 	   }
-       
+
 	  $form_handler = xoops_getmodulehandler('forms', 'formulize');
 	  $formObject = $form_handler->get($fid);
        
@@ -388,7 +386,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	 $linkselfids = "";
 		     $linkcommonvalue = "";
 	     }
-			 
+			 //print_r( $linkformids );
 			 $GLOBALS['formulize_linkformidsForCalcs'] = $linkformids; 
   
 	      // now that we have the full details from the framework, figure out the full SQL necessary to get the entire dataset
@@ -632,9 +630,33 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	      }
               
          }         
-	  
+
+    $sqlFilterElements = array();
+    if( $filterElements ) {
+      //print_r( $filterElements );
+      //print_r( $linkformids );
+      foreach($filterElements as $passedForm=>$passedElements) {
+        if($passedForm == $fid) {
+           $formAlias = "main";
+        } else {
+           $keys = array_keys( $linkformids, $passedForm );
+           //print_r( $keys );
+           $formAlias = "f" . $keys[0];
+        }
+        foreach($passedElements as $thisPassedElement) {
+          $sqlFilterElements[] = $formAlias . ".`" . mysql_real_escape_string($thisPassedElement) . "`";
+        }
+      }
+    }
+    if( count( $sqlFilterElements ) > 0 ) {
+      $selectClause = implode( ",", $sqlFilterElements );
+    } else {
+      $selectClause = "main.*";
+    }
+
 	  // only drawback in this SQL right now is it does not support one to one relationships in the query, since they are essentially joins on the entry_id and form id through the one_to_one table
-	  $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
+	  $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, $selectClause $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
+
     
     // if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
     // note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
@@ -651,7 +673,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		$GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
     $GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
     if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
-	  $GLOBALS['formulize_queryForExport'] = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $orderByClause";
+	  $GLOBALS['formulize_queryForExport'] = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, $selectClause $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $orderByClause";
      
 	  //$masterQuerySQL = "SELECT * FROM " . DBPRE . "formulize_$fid LIMIT 0,1";
 	  //$afterQueryTime = microtime_float();
@@ -676,7 +698,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      //}
      
 		 formulize_benchmark("Before query");
-		 
+
+     //print $masterQuerySQL;
      $masterQueryRes = $xoopsDB->query($masterQuerySQL);
 
     if($resultOnly) {
