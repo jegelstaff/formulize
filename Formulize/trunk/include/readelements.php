@@ -231,11 +231,25 @@ if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership
 
 // update the derived values for all forms that we saved data for, now that we've saved all the data from all the forms
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
+$mainFormObject = $form_handler->get($fid);
+$mainFormHasDerived = array_search("derived", $mainFormObject->getVar('elementTypes'));
+$mainFormEntriesUpdatedForDerived = array();
 foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 	$formObject = $form_handler->get($allWrittenFid);
 	if(array_search("derived", $formObject->getVar('elementTypes'))) { // only bother if there is a derived value in the form
 		foreach($entries as $thisEntry) {
 			formulize_updateDerivedValues($thisEntry, $allWrittenFid, $frid);
+		}
+	}
+	if($frid AND $mainFormHasDerived AND !isset($formulize_allWrittenEntryIds[$fid])) { // if there is a framework in effect, and the main form has derived values and the mainform did not have data sent back from the user, then we should update derived values in the main form ($fid) that corresponds to each entry that was sent back
+		foreach($entries as $thisEntry) {
+			$foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
+			foreach($foundEntries['entries'][$fid] as $mainFormEntry) {
+				if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived)) {
+					formulize_updateDerivedValues($mainFormEntry, $fid, $frid);
+					$mainFormEntriesUpdatedForDerived[] = $mainFormEntry;
+				}
+			}
 		}
 	}
 }
