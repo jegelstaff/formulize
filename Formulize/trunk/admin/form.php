@@ -252,6 +252,9 @@ if($_GET['fid'] != "new") {
   $defaultlist = 0;
   $menutext = "Use the form's title";
   $form_handle = "";
+  if($_GET['aid']) {
+	$formApplications = array(intval($_GET['aid']));
+  } 
 }
 
 $i = 1;

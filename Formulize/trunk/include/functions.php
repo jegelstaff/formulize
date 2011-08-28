@@ -3515,7 +3515,8 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
 		}
     ksort($to_return); // to_return is built with the keys from $handles, but in an arbitrary order depending on the order the elements were returned in the DB query above, so we need to put them into the correct order here to correspond with $handles
 	}
-	if(count($to_return)==0) { // if to_return was not set already, ie: when doing a database query, then loop through handles to get the values we need from the cached values array
+	if(count($to_return)==0 OR count($to_return) != count($handles)) { // if to_return was not set already, ie: when doing a database query, then loop through handles to get the values we need from the cached values array.  Also if the to_return array is not as big as we need it to be (probably because of duplicate ids/handles in the original handles array)
+		$to_return = array();
 		foreach($handles as $handle) {
 			if($fid) {
 				$to_return[] = $cachedElementHandlesFromElementIds[$fid][$handle];

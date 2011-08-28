@@ -310,6 +310,8 @@ class formulizeElementRenderer{
 						$pgroupsfilter = "";
 					}
 					
+					$sourceFormObject = $form_handler->get($sourceFid);
+										
 					// determine the filter conditions if any, and make the conditionsfilter
 					$conditionsfilter = "";
 					$conditionsfilter_oom = "";
@@ -324,7 +326,9 @@ class formulizeElementRenderer{
 						if(!isset($form_handler)) {
 								$form_handler = xoops_getmodulehandler('forms', 'formulize');
 						}
-						$sourceFormObject = $form_handler->get($sourceFid);
+						if(!isset($element_handler)) {
+							$element_handler = xoops_getmodulehandler('elements', 'formulize');
+						}
 						$sourceFormElementTypes = $sourceFormObject->getVar('elementTypes');
 						for($filterId = 0;$filterId<count($filterElements);$filterId++) {
 							if($filterTypes[$filterId] != "oom") {
@@ -358,7 +362,23 @@ class formulizeElementRenderer{
 										$filterTerms[$filterId] = "";
 									}
 								}
-								$conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
+								$conditionsFilterComparisonValue = "";
+								if($sourceFormElementTypes[$filterElements[$filterId]] == "select") {
+									// check for whether the source element is a linked selectbox, and if so, figure out the entry id of the record in the source of that linked selectbox which matches the filter term instead
+									$sourceElementObject = $element_handler->get($filterElements[$filterId]);
+									if($sourceElementObject->isLinked) {
+										$sourceElementEleValue = $sourceElementObject->getVar('ele_value'); // get the properties of the source element
+										$sourceElementEleValueProperties = explode("#*=:*", $sourceElementEleValue[2]); // split them up to get the properties of the linked selectbox that the source element is pointing at
+										$sourceSourceFid = $sourceElementEleValueProperties[0]; // get the Fid that the source element is point at (the source of the source)
+										$sourceSourceFormObject = $form_handler->get($sourceSourceFid); // get the form object based on that fid (we'll need the form handle later)
+										$sourceSourceHandle = $sourceElementEleValueProperties[1]; // get the element handle in the source source form
+										// now build a comparison value that contains a subquery on the source source form, instead of a literal match to the source form
+										$conditionsFilterComparisonValue = " CONCAT('$likebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$sourceSourceFormObject->getVar('form_handle'))." AS ss WHERE `$sourceSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes."),',$likebits') ";
+									}
+								}
+								if(!$conditionsFilterComparisonValue) {
+									$conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
+								}
 								if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") { // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
 									$parentFormFrom = ", ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t3 ";
 									if($likebits == "%") {
@@ -369,9 +389,9 @@ class formulizeElementRenderer{
 								}
 								$conditionsfilter .= "t1.`".$filterElements[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue;
 							} else { // MUST ABSTRACT THESE OUT TO A FUNCTION INTEAD OF DUPLICATING!!!
-								if($start) {
+								if($start_oom) {
 									$conditionsfilter_oom = " AND (";
-									$start = false;
+									$start_oom = false;
 								} else {
 									$conditionsfilter_oom .= " OR ";
 								}
@@ -399,8 +419,23 @@ class formulizeElementRenderer{
 										$filterTerms[$filterId] = "";
 									}
 								}
-								$parentFormFrom = "";
-								$conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
+								$conditionsFilterComparisonValue = "";
+								if($sourceFormElementTypes[$filterElements[$filterId]] == "select") {
+									// check for whether the source element is a linked selectbox, and if so, figure out the entry id of the record in the source of that linked selectbox which matches the filter term instead
+									$sourceElementObject = $element_handler->get($filterElements[$filterId]);
+									if($sourceElementObject->isLinked) {
+										$sourceElementEleValue = $sourceElementObject->getVar('ele_value'); // get the properties of the source element
+										$sourceElementEleValueProperties = explode("#*=:*", $sourceElementEleValue[2]); // split them up to get the properties of the linked selectbox that the source element is pointing at
+										$sourceSourceFid = $sourceElementEleValueProperties[0]; // get the Fid that the source element is point at (the source of the source)
+										$sourceSourceFormObject = $form_handler->get($sourceSourceFid); // get the form object based on that fid (we'll need the form handle later)
+										$sourceSourceHandle = $sourceElementEleValueProperties[1]; // get the element handle in the source source form
+										// now build a comparison value that contains a subquery on the source source form, instead of a literal match to the source form
+										$conditionsFilterComparisonValue = " CONCAT('$likebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$sourceSourceFormObject->getVar('form_handle'))." AS ss WHERE `$sourceSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes."),',$likebits') ";
+									}
+								}
+								if(!$conditionsFilterComparisonValue) {
+									$conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
+								}
 								if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") { // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
 									$parentFormFrom = ", ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t3 ";
 									if($likebits == "%") {
@@ -419,12 +454,10 @@ class formulizeElementRenderer{
 					static $cachedSourceValuesQ = array();
 					static $cachedSourceValuesAutocompleteFile = array();
 
-					$sourceFormObject = $form_handler->get($sourceFid);
-
 					if($pgroupsfilter) { // if there is a groups filter, then join to the group ownership table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 $parentFormFrom WHERE $pgroupsfilter $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
+						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 $parentFormFrom WHERE $pgroupsfilter $conditionsfilter $conditionsfilter_oom GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
 					} else { // otherwise just query the source table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1 $parentFormFrom WHERE t1.entry_id>0 $conditionsfilter GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
+						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1 $parentFormFrom WHERE t1.entry_id>0 $conditionsfilter $conditionsfilter_oom GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
 					}
 					//print "$sourceValuesQ<br><br>";
 					if(!$isDisabled) {

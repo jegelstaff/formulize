@@ -6,7 +6,10 @@
 <input type="hidden" name="cloneformdata" value="">
 <input type="hidden" name="lockdown" value="">
 <div id="formlisting">
+<p><a href="ui.php?page=form&tab=settings&fid=new&aid=<{$content.aid}>"><img src="../images/filenew2.png"> Create a new form</a></p>
+<blockquote>
 	<{include file="db:admin/form_listing.html" sectionContent=$content}>
+</blockquote>
 </div>
 </form>
 
