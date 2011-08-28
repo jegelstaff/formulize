@@ -129,10 +129,20 @@ if($sid) {
 		unset($screen_handler); // reset handler to that type of screen
 		$screen_handler =& xoops_getmodulehandler($thisscreen1->getVar('type').'Screen', 'formulize');
 		$screen = $screen_handler->get($sid); // get the full screen object
+		
+		if($_POST['ventry'] AND $screen->getVar('type') == 'listOfEntries' AND $screen->getVar("viewentryscreen") != "none" AND $screen->getVar("viewentryscreen") AND !strstr($screen->getVar("viewentryscreen"), "p")) { // if the user is viewing an entry off a list, then check what screen gets used to display entries instead, since that's what we're doing (but only if there is a screen specified, and it's not a pageworks page)
+			// do all this to set the Frid properly. That's it. Otherwise, no change. Frid affects behaviour in readelements.php
+			$base_screen_handler = xoops_getmodulehandler('screen', 'formulize');
+			$viewEntryScreenObject = $base_screen_handler->get(intval($screen->getVar('viewentryscreen')));
+			$frid = $viewEntryScreenObject->getVar('frid');
+		} else {
+			$frid = $screen->getVar('frid'); // set these here just in case it's needed in readelements.php
+		}
+		
     if(is_object($xoopsTpl)) {
       $xoopsTpl->assign('xoops_pagetitle', $screen->getVar('title'));
     }
-		$frid = $screen->getVar('frid'); // set these here just in case it's needed in readelements.php
+		
 	}
 } 
 
