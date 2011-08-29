@@ -633,7 +633,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 
     $selectClause = "";
     $sqlFilterElements = array();
-    if( $filterElements ) {
+    if( $filterElements ) { // THIS IS HIGHLY EXPERIMENTAL...BECAUSE THE PROCESSING OF DATASETS RELIES RIGHT NOW ON METADATA BEING PRESENT AT THE FRONT OF EACH SET OF FIELDS, THERE IS FURTHER WORK REQUIRED TO MAKE THIS FUNCTION WITH THE CODE THAT PROCESSES ENTRIES
       //print_r( $filterElements );
       //print_r( $linkformids );
       foreach($filterElements as $passedForm=>$passedElements) {
