@@ -164,22 +164,22 @@ function prepvalues($value, $field, $entry_id) {
   // wickedly inefficient to go to DB for each value!!  This loop executes once per datapoint in the result set!!
   if($type == "select") {
 		 $ele_value = unserialize($elementArray['ele_value']);
-     $listtype = key($ele_value[2]);
-     if($listtype === "{USERNAMES}" OR $listtype === "{FULLNAMES}") {
-          $uids = explode("*=+*:", $value);
-          if(count($uids) > 0) {
-               if(count($uids) > 1) { array_shift($uids); }
-               $uidFilter = extract_makeUidFilter($uids);
-               $listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
-               $names = go("SELECT $listtype FROM " . DBPRE . "users WHERE $uidFilter ORDER BY $listtype");
-               $value = "";
-               foreach($names as $thisname) {
-                 $value .= "*=+*:" . $thisname[$listtype];
-               }     
-          } else {
-               $value = "";
-          }
-     }   
+     	  $listtype = key($ele_value[2]);
+	  if($listtype === "{USERNAMES}" OR $listtype === "{FULLNAMES}") {
+	       $uids = explode("*=+*:", $value);
+	       if(count($uids) > 0) {
+		    if(count($uids) > 1) { array_shift($uids); }
+		    $uidFilter = extract_makeUidFilter($uids);
+		    $listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
+		    $names = go("SELECT $listtype FROM " . DBPRE . "users WHERE $uidFilter ORDER BY $listtype");
+		    $value = "";
+		    foreach($names as $thisname) {
+		      $value .= "*=+*:" . $thisname[$listtype];
+		    }     
+	       } else {
+		    $value = "";
+	       }
+	  }
   }
   		
 	//and remove any leading *=+*: while we're at it...
@@ -489,7 +489,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       // validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
 	       if(($joinHandles[$linkselfids[$id]] AND $joinHandles[$linktargetids[$id]]) OR ($linkselfids[$id] == '' AND $linktargetids[$id] == '')) { 
 		   
-			formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
+		    formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
 		    $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
 		    $joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
 		    $linkedFormObject = $form_handler->get($linkedFid);
@@ -631,6 +631,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
               
          }         
 
+    $selectClause = "";
     $sqlFilterElements = array();
     if( $filterElements ) {
       //print_r( $filterElements );
@@ -651,11 +652,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
     if( count( $sqlFilterElements ) > 0 ) {
       $selectClause = implode( ",", $sqlFilterElements );
     } else {
-      $selectClause = "main.*";
+      $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect";
     }
 
 	  // only drawback in this SQL right now is it does not support one to one relationships in the query, since they are essentially joins on the entry_id and form id through the one_to_one table
-	  $masterQuerySQL = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, $selectClause $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
+	  $masterQuerySQL = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
 
     
     // if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
@@ -673,7 +674,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		$GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
     $GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
     if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
-	  $GLOBALS['formulize_queryForExport'] = "SELECT main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, $selectClause $linkSelect, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $orderByClause";
+	  $GLOBALS['formulize_queryForExport'] = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $orderByClause";
      
 	  //$masterQuerySQL = "SELECT * FROM " . DBPRE . "formulize_$fid LIMIT 0,1";
 	  //$afterQueryTime = microtime_float();
