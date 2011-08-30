@@ -1315,7 +1315,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
 function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $fid) {
      // open a temporary file
      $fileName = XOOPS_ROOT_PATH."/cache/formulize_derivedValueFormulas_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle).".php";
-	   $derivedValueFormulaFile = fopen($fileName, "w");
+     $derivedValueFormulaFile = fopen($fileName, "w");
      fwrite($derivedValueFormulaFile, "<?php\n\n");
      $functionsToWrite = "";
      // loop through the formulas, process them, and write them to the file
@@ -1345,8 +1345,6 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                }
                $formula = implode("\n", $formulaLines);
           }
-					// replace any getData( calls in the formula with getDataCached( so we don't have quite so many run throughs of all the data...this may cause synchronization issues if people are doing really strange things to modify data during a pageload, which should not be happening!
-					$formula = str_replace("getData(", "getDataCached(", $formula);
           $functionsToWrite .= "function derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {\n$formula\nreturn \$value;\n}\n\n";
      }
      fwrite($derivedValueFormulaFile, $functionsToWrite. "?>");

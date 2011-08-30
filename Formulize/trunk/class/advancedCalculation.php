@@ -273,6 +273,11 @@ class formulizeAdvancedCalculationHandler {
       }
     }
     
+    // set a flag for age range grouping if the user has requested it
+    if(isset($_POST['ocandsAgeGrouping']) AND $_POST['ocandsAgeGrouping'] == "ocandsAgeGrouping") {
+	$groups[] = $_POST['ocandsAgeGrouping'];
+    }
+        
     // set a flag to indicate if there is time-based grouping going on (a special feature of the OCANDS website) -- jwe Aug 18 2011
     if(isset($_POST['ocandsDateGrouping']) AND ($_POST['ocandsDateGrouping'] == "year" OR $_POST['ocandsDateGrouping'] == "quarter")) {
 	$groups[] = $_POST['ocandsDateGrouping'];
@@ -313,9 +318,15 @@ class formulizeAdvancedCalculationHandler {
 	  // $item[1] is the value that we need to set for that filter
 	  // set the proper value in $_POST so that when we package up the filters, everything works as expected
 
+	  // check if we're grouping by Age...
+	  if($groups[$item[0]] == "ocandsAgeGrouping") {
+	    $_POST[$acid."_minAge"] = $this->getNextAgeRange($item[1], 'min');
+	    $_POST[$acid."_maxAge"] = $this->getNextAgeRange($item[1], 'max');
+	    $activeGroupings[$groups[$item[0]]] = array('metadata'=>$groups[$item[0]],'value'=>$item[1]);
+
 	  // if we're in a date grouping for OCANDS, then we need to do things a bit differently...
 	  // in this case $item[1] will be the label for the timeframe
-	  if($groups[$item[0]] == "year" OR $groups[$item[0]] == "quarter") {
+	  } elseif($groups[$item[0]] == "year" OR $groups[$item[0]] == "quarter") {
 	    $_POST[$acid."_startDate"] = $this->convertOcandsDateLabelToDate($item[1], $groups[$item[0]], 'start');
 	    $_POST[$acid."_endDate"] = $this->convertOcandsDateLabelToDate($item[1], $groups[$item[0]], 'end');
 	    $activeGroupings[$groups[$item[0]]] = array('metadata'=>$groups[$item[0]],'value'=>$item[1]);
@@ -451,7 +462,7 @@ class formulizeAdvancedCalculationHandler {
 	if(is_array($thisGrouping['metadata'])) {
 	    $label = $thisGrouping['metadata']['fltr_label'];
 	    $value = $this->filterTextValue($thisGrouping['metadata'], $thisGrouping['value']);
-	} elseif($thisGrouping['metadata'] == "year" OR $thisGrouping['metadata'] == "quarter") {
+	} else { // age or date grouping...
 	    $label = ucfirst($thisGrouping['metadata']);
 	    $value = $thisGrouping['value'];
 	}
@@ -493,6 +504,8 @@ class formulizeAdvancedCalculationHandler {
     $group = $groups[ $level ];
     if($group == "year" OR $group == "quarter") {
 	$fltr_grp = "ocandsDateGrouping";
+    } elseif($group == "ocandsAgeGrouping") {
+	$fltr_grp = $group;
     } else {
 	$fltr_grp = $filtersAndGroupings[ $group ];
     }
@@ -511,6 +524,27 @@ class formulizeAdvancedCalculationHandler {
 		$currentDate = $this->nextOcandsDate($currentDate, $group);
 	    }
 	}
+
+    } elseif($fltr_grp == "ocandsAgeGrouping") {
+	$ageGroups = array(
+	  "<1",
+	  "1-2",
+	  "3-5",
+	  "6-10",
+	  "11-15",
+	  "16+"
+	);
+	foreach($ageGroups as $thisAgeGroup) {
+	    if( $level + 1 < $groupsCount ) {
+	      $groupCombinations[$thisAgeGroup] = $this->groupBy( $acid, $filtersAndGroupings, $groups, $level + 1 );
+	    } else {
+	      if( $level == $groupsCount ) {
+		$groupCombinations[$thisAgeGroup] = null;
+	      } else {
+		$groupCombinations[$thisAgeGroup] = array();
+	      }
+	    }
+	}	
 
     } elseif( $fltr_grp['type']['kind'] == 2 AND $_POST[ $acid."_".$fltr_grp['handle'] ] == '' AND $_POST[ $acid."_".$fltr_grp['handle'] ] !== 0 ) { // Select
       foreach( $fltr_grp['type']['options'] as $option ) {
@@ -564,6 +598,28 @@ class formulizeAdvancedCalculationHandler {
       }
     }
     return $groupCombinations;
+  }
+
+  // this function returns the correct min or max value for an age range, when passed the official label for that age range
+  function getNextAgeRange($ageRange, $minMax) {
+    $keyRange = array("<1",
+	  "1-2",
+	  "3-5",
+	  "6-10",
+	  "11-15",
+	  "16+"
+	  );
+    $mins = array(0,1.001,3,6,11,16);
+    $maxes = array(1,2.999,5.999,10.999,15.999,99);
+    switch($minMax) {
+	case "min":
+	    $value = $mins[array_search($ageRange, $keyRange)];
+	    break;
+	case "max":
+	    $value = $maxes[array_search($ageRange, $keyRange)];
+	    break;
+    }
+    return $value;
   }
 
   // this function returns the correct label for a date, based on the fiscal/calendar setting for quarters if applicable
