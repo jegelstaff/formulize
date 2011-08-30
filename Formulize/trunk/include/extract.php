@@ -207,6 +207,12 @@ function microtime_float()
 }
 
 function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $resultOnly=false, $filterElements=null, $cacheKey="") { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
+     
+     if($framework == "") { $framework = 0; } // we want to afirmatively make this a zero and not a null or anything else, for purposes of having consistent cacheKeys
+     if(is_numeric($framework)) { $framework = intval($framework); } // further standardization, to make cachekeys work better....
+     if(is_numeric($form)) { $form = intval($form); }
+     if(is_numeric($filter)) { $filter = intval($filter); }
+     
      if(!$cacheKey) { return getDataCached($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $dbTableUidField, $id_reqsOnly, $resultOnly, $filterElements); }
 
      global $xoopsDB;
