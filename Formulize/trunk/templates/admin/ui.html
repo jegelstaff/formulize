@@ -74,12 +74,13 @@ $(document).ready(function() {
 <{/if}>
 
 <!-- modified by Freeform Solutions, S.Gray, April 11, 2011 -->
-<div id="admin_toolbar">
 <{if $adminPage.needsave}>
+<div id="admin_toolbar">
 <div id=savebutton><input type="button" class="savebutton" value="Save your changes"/></div>
-<{/if}>
 <div id="savewarning" class="ui-corner-all">You have unsaved changes!</div>
 </div> <!-- /admin_toolbar -->
+<{/if}>
+
 
 <{if $adminPage.template}>
 <{include file=$adminPage.template}>  
