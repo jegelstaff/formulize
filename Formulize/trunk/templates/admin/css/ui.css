@@ -196,6 +196,7 @@ div#tabs li {
 	width: 150px;
 	text-align: center;
 	margin-bottom: 1em;
+  font-weight: normal;
 }
 #savewarning {
 	display: none;
@@ -365,4 +366,63 @@ form .groupselectionbox {
 .accordion-name {
 	cursor: pointer !important;
 }
- 
+
+
+/* remove the horizontal scroll-bar */
+#icms-page {
+  padding: 0;
+}
+
+/* remove full justification */
+.admin-ui .content {
+    text-align: left;
+}
+
+
+/* tooltips */
+/* blue: #0085B6 */
+/* yellow: #FFFFAA */
+#tooltip {
+	position:absolute;
+	z-index:9999;
+	width:240px;
+	color:#FFFFFF;
+  background:#0085B6;
+}
+
+#tooltip .tipHeader {
+  height:8px;
+  -moz-border-radius-topleft: 75px;
+  border-top-left-radius: 75px;
+  -moz-border-radius-topright: 75px;
+  border-top-right-radius: 75px;
+  -moz-border-radius-bottomleft: 0px;
+  border-bottom-left-radius: 0px;
+  -moz-border-radius-bottomright: 0px;
+  border-bottom-right-radius: 0px;
+}
+
+#tooltip .tipBody {
+  padding-left:8px;
+  padding-right:8px;
+  -moz-border-radius-topleft: 0px;
+  border-top-left-radius: 0px;
+  -moz-border-radius-topright: 0px;
+  border-top-right-radius: 0px;
+  -moz-border-radius-bottomleft: 0px;
+  border-bottom-left-radius: 0px;
+  -moz-border-radius-bottomright: 0px;
+  border-bottom-right-radius: 0px;
+}
+
+#tooltip .tipFooter {
+  height:8px;
+  -moz-border-radius-topleft: 0px;
+  border-top-left-radius: 0px;
+  -moz-border-radius-topright: 0px;
+  border-top-right-radius: 0px;
+  -moz-border-radius-bottomleft: 75px;
+  border-bottom-left-radius: 75px;
+  -moz-border-radius-bottomright: 75px;
+  border-bottom-right-radius: 75px;
+}

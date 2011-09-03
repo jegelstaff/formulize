@@ -130,7 +130,7 @@ if($_GET['fid'] != "new") {
     }
     $elements[$i]['content']['ele_display'] = $check_display;
     $elements[$i]['content']['ele_private'] = $thisElement->getVar('ele_private');
-    $elementHeadings[$i]['text'] = $colhead ? printSmart($colhead, 75) : printSmart($elementCaption,75);
+    $elementHeadings[$i]['text'] = $colhead ? printSmart($colhead) : printSmart($elementCaption);
     $elementHeadings[$i]['ele_id'] = $ele_id;
     $elementHeadings[$i]['selected'] = in_array($ele_id, $headerlistArray) ? " selected" : "";
     $i++;

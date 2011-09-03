@@ -1,3 +1,7 @@
+<{if $sectionContent.aid == 0}>
+<div class="description">To assign a form to an application, look on the Settings tab when configuring the form.</div><br>
+<{/if}>
+
 <{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
 <form class="formulize-admin-form">
 <input type="hidden" name="formulize_admin_handler" value="application_forms">

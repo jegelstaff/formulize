@@ -12,14 +12,14 @@
 		<p class="formbox-title">Actions:</p>
 		<div class="formactions-list">
 		<{if $form.lockedform != 1}>
-		<a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=<{$defaulttab}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction">Configure</div></a><br />
-		<a href="../index.php?fid=<{$form.fid}>" target="_blank"><div class="imageicon"><img src="../images/kfind.png"></div><div class="formaction">View</div></a><br />
+		<a rel="tooltip" title="Modify settings to change the form's behaviour" href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=<{$defaulttab}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction">Configure</div></a><br />
+		<a rel="tooltip" title="Display the information collected" title="This is a jQuery example, <b>that will process html</b>" href="../index.php?fid=<{$form.fid}>" target="_blank"><div class="imageicon"><img src="../images/kfind.png"></div><div class="formaction">View</div></a><br />
 		<{/if}>
-		<a class="cloneform" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clone.gif"></div><div class="formaction">Clone</div></a><br />
-		<a class="cloneformdata" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clonedata.gif"></div><div class="formaction">Clone with data</div></a><br />
+		<a rel="tooltip" title="Copy the structure of an existing form into a new form with a different name (none of the information collected is copied)" class="cloneform" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clone.gif"></div><div class="formaction">Clone</div></a><br />
+		<a rel="tooltip" title="Copy the structure of an existing form into a new form with a different name (the new form is populated with the existing information collected)" class="cloneformdata" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clonedata.gif"></div><div class="formaction">Clone with data</div></a><br />
 		<{if $form.lockedform != 1 && $form.hasdelete}>
-		<a class="lockdown" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/perm.png"></div><div class="formaction">Lockdown</div></a><br />
-		<a class="deletelink" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/editdelete.gif"></div><div class="formaction">Delete</div></a><br />
+		<a rel="tooltip" title="You will be unable to change any of the configuration settings for the form or its elements after (this action cannot be undone)" class="lockdown" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/perm.png"></div><div class="formaction">Lockdown</div></a><br />
+		<a rel="tooltip" title="Delete a form's structure and information (this action cannot be undone)" class="deletelink" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/editdelete.gif"></div><div class="formaction">Delete</div></a><br />
 		<{/if}>
 		</div>
 		
