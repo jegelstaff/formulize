@@ -117,21 +117,25 @@ $list = $advanced_calculation_handler->getList($fid);
       var form_inputs = form.getElementsByTagName( "input" );
       var form_selects = form.getElementsByTagName( "select" );
 
-      for( var index in form_inputs ) {
+      index = 0;
+      while(form_inputs[index] != null) {
         var form_input = form_inputs[ index ];
         if( form_input.type == "text" || ( form_input.type == "checkbox" && form_input.checked ) ) {
           //alert( form_input.id + " = " + form_input.value );
           output += "&" + form_input.id + "=" + encodeURI( form_input.value )
         }
+	index++;
       }
 
-      for( var index in form_selects ) {
+      index = 0
+      while(form_selects[index] != null ) {
         var form_select = form_selects[ index ];
         if( form_select.id ) {
           var option = form_select.options[ form_select.selectedIndex ].value;
           //alert( form_select.id + " = " + option );
           output += "&" + form_select.id + "=" + encodeURI( option )
         }
+	index++;
       }
 
       //alert( output );

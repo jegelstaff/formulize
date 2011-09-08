@@ -231,8 +231,11 @@ if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership
 
 // update the derived values for all forms that we saved data for, now that we've saved all the data from all the forms
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
-$mainFormObject = $form_handler->get($fid);
-$mainFormHasDerived = array_search("derived", $mainFormObject->getVar('elementTypes'));
+$mainFormHasDerived = false;
+if($fid) {
+	$mainFormObject = $form_handler->get($fid);
+	$mainFormHasDerived = array_search("derived", $mainFormObject->getVar('elementTypes'));
+}
 $mainFormEntriesUpdatedForDerived = array();
 foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 	$formObject = $form_handler->get($allWrittenFid);
