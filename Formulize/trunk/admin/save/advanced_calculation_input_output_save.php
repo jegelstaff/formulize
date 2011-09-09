@@ -48,6 +48,11 @@ $advCalc = $processedValues['advcalc'];
 $advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
 $advCalcObject = $advanced_calculation_handler->get($acid);
 
+// check if the user has permission to edit the form
+if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
+  return;
+}
+
 // apply user changes
 $advCalcObject->setVar('input',$advCalc['input']);
 $advCalcObject->setVar('output',$advCalc['output']);

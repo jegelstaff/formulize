@@ -44,6 +44,11 @@ $screens = $processedValues['screens'];
 $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 $screen = $screen_handler->get($sid);
 
+// check if the user has permission to edit the form
+if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
+  return;
+}
+
 
 $screen->setVar('defaultview',$screens['defaultview']);
 $screen->setVar('usecurrentviewlist',$screens['usecurrentviewlist']);
