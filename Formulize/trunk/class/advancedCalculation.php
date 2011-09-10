@@ -275,6 +275,8 @@ class formulizeAdvancedCalculationHandler {
     
     // set a flag for age range grouping if the user has requested it
     if(isset($_POST['ocandsAgeGrouping']) AND $_POST['ocandsAgeGrouping'] == "ocandsAgeGrouping") {
+	$savedGroupingFilterValue['minAge'] = $_POST[$acid . "_minAge"]; // save this value so we can use it again after
+	$savedGroupingFilterValue['maxAge'] = $_POST[$acid . "_maxAge"]; // save this value so we can use it again after
 	$groups[] = $_POST['ocandsAgeGrouping'];
     }
         
@@ -320,8 +322,8 @@ class formulizeAdvancedCalculationHandler {
 
 	  // check if we're grouping by Age...
 	  if($groups[$item[0]] == "ocandsAgeGrouping") {
-	    $_POST[$acid."_minAge"] = $this->getNextAgeRange($item[1], 'min');
-	    $_POST[$acid."_maxAge"] = $this->getNextAgeRange($item[1], 'max');
+	    $_POST[$acid."_minAge"] = $this->getNextAgeRange($item[1], 'min', $savedGroupingFilterValue['minAge']);
+	    $_POST[$acid."_maxAge"] = $this->getNextAgeRange($item[1], 'max', $savedGroupingFilterValue['maxAge']);
 	    $activeGroupings[$groups[$item[0]]] = array('metadata'=>$groups[$item[0]],'value'=>$item[1]);
 
 	  // if we're in a date grouping for OCANDS, then we need to do things a bit differently...
@@ -528,13 +530,16 @@ class formulizeAdvancedCalculationHandler {
     } elseif($fltr_grp == "ocandsAgeGrouping") {
 	$ageGroups = array(
 	  "<1",
-	  "1-2",
-	  "3-5",
-	  "6-10",
-	  "11-15",
+	  "1-5",
+	  "6-12",
+	  "13-15",
 	  "16+"
 	);
-	foreach($ageGroups as $thisAgeGroup) {
+	$mins = array(0,1,6,13,16);
+	$maxes = array(0.999,5.999,12.999,15.999,99);
+	foreach($ageGroups as $i=>$thisAgeGroup) {
+	    if($maxes[$i] < $_POST[$acid."_minAge"]) { continue; }
+	    if($mins[$i] > $_POST[$acid."_maxAge"]) { continue; }
 	    if( $level + 1 < $groupsCount ) {
 	      $groupCombinations[$thisAgeGroup] = $this->groupBy( $acid, $filtersAndGroupings, $groups, $level + 1 );
 	    } else {
@@ -601,22 +606,24 @@ class formulizeAdvancedCalculationHandler {
   }
 
   // this function returns the correct min or max value for an age range, when passed the official label for that age range
-  function getNextAgeRange($ageRange, $minMax) {
-    $keyRange = array("<1",
-	  "1-2",
-	  "3-5",
-	  "6-10",
-	  "11-15",
+  function getNextAgeRange($ageRange, $minMax, $boundaryValue) {
+    $keyRange = array(
+	  "<1",
+	  "1-5",
+	  "6-12",
+	  "13-15",
 	  "16+"
-	  );
-    $mins = array(0,1.001,3,6,11,16);
-    $maxes = array(1,2.999,5.999,10.999,15.999,99);
+	);
+    $mins = array(0,1,6,13,16);
+    $maxes = array(0.999,5.999,12.999,15.999,99);
     switch($minMax) {
 	case "min":
 	    $value = $mins[array_search($ageRange, $keyRange)];
+	    $value = $value < $boundaryValue ? $boundaryValue : $value;
 	    break;
 	case "max":
 	    $value = $maxes[array_search($ageRange, $keyRange)];
+	    $value = $value > $boundaryValue ? $boundaryValue : $value;
 	    break;
     }
     return $value;
@@ -749,6 +756,8 @@ class formulizeAdvancedCalculationHandler {
     $kind = $fltr_grp["type"]["kind"];
     $form = $fltr_grp["form"];
 
+    $elementUnderlyingField = $form ? "element".$form : "no-underlying-element"; 
+
     if( $kind == 1 ) {
       // first param is caption, we can skip that because the front end person will embed this somewhere with a caption of their own attached
       // $elementName is the name that gets attached to the HTML element
@@ -758,9 +767,16 @@ class formulizeAdvancedCalculationHandler {
       $dateValue = (isset($_POST[$elementName])) ? strtotime($_POST[$elementName]) : ( (isset($_GET[$elementName])) ? strtotime($_GET[$elementName]) : "" );
       if($datesAsHidden) {
 	$hideLabel = true;
+	if($elementName == $acid."_minAge") {
+	    $dateValue = 0;
+	}
+	if($elementName == $acid."_maxAge") {
+	    $dateValue = 99;
+	}
 	$form_ele = new XoopsFormHidden($elementName, $dateValue);
       } else {
 	$form_ele = new XoopsFormTextDateSelect("", $elementName, 15, $dateValue);
+	$form_ele->setExtra(' class="'. $elementUnderlyingField . '" ');
       }
     } else if( $kind == 2 ) {
       // $selectedValue is the value in the option list that should be selected by default...
@@ -793,6 +809,7 @@ class formulizeAdvancedCalculationHandler {
         }
       }
       $form_ele->addOptionArray($options);
+      $form_ele->setExtra(' class="'. $elementUnderlyingField . '" ');
     } else if( $kind == 3 ) {
       $elementName = $acid . "_" . $fltr_grp["handle"];
       $tmp_html = "";
@@ -808,10 +825,10 @@ class formulizeAdvancedCalculationHandler {
         }
         $option_value = explode( "|", $definedOption );
         if( count( $option_value ) == 2 ) {
-          $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
+          $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
           $tmp_html .= $option_value[1] . "<br>";
         } else {
-          $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
+          $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
           $tmp_html .= $definedOption . "<br>";
         }
         $index++;
@@ -861,7 +878,8 @@ class formulizeAdvancedCalculationHandler {
     } else {
       $checked = '';
     }
-    $html = '<input type="checkbox" id="' . $elementArrayName . '" name="' . $elementArrayName . '" value="' . $fltr_grp_index . '"' . $checked . '>';
+    $elementUnderlyingField = $fltr_grp["form"] ? "element".$fltr_grp["form"] : "no-underlying-element"; 
+    $html = '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . '" name="' . $elementArrayName . '" value="' . $fltr_grp_index . '"' . $checked . '>';
 
     return array( "label"=>$fltr_grp["grp_label"], "html"=>$html );
   }
