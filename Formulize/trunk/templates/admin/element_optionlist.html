@@ -42,7 +42,7 @@
     $(".useroptions:last").append('&nbsp;&nbsp;');
     $(".useroptions:last").append(appendContents2);
     $("[name=addoption]").blur();
-    window.document.getElementById('savewarning').style.display = 'block';
+    setDisplay('savewarning','block');
   });
   
   <{if $content.type == "radio"}>

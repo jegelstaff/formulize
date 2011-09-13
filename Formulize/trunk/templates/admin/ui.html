@@ -136,16 +136,16 @@ $(document).ready(function() {
   var formdata = new Array();
 
   $("input").change(function() {
-    window.document.getElementById('savewarning').style.display = 'block';
+    setDisplay('savewarning','block');
     });
   $("input[type=text]").keydown(function() {
-    window.document.getElementById('savewarning').style.display = 'block';
+    setDisplay('savewarning','block');
     });
   $("select").change(function() {
-    window.document.getElementById('savewarning').style.display = 'block';
+    setDisplay('savewarning','block');
     });
   $("textarea").keydown(function() {
-    window.document.getElementById('savewarning').style.display = 'block';
+    setDisplay('savewarning','block');
     });
 
   $(".savebutton").click(function() {
@@ -186,7 +186,7 @@ $(document).ready(function() {
         }
       }
       if(saveCounter >= saveTarget) { // if we've received a response for all the forms...
-        window.document.getElementById('savewarning').style.display = 'none';
+        setDisplay('savewarning','none');
         $(".savebutton").blur();
         if(newhandle) {
           $("[name=original_handle]").val(newhandle);
@@ -239,5 +239,12 @@ $(document).ready(function() {
   $(window).load(function () {
     $(window).scrollTop(<{$scrollx}>);
   });
+
+  function setDisplay( elementId, styleDisplay ) {
+    var element = window.document.getElementById( elementId );
+    if( element ) {
+      element.style.display = styleDisplay;
+    }
+  }
   
 </script>

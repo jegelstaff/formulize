@@ -191,14 +191,6 @@ if($ele_type == "select") {
   }
 }
 
-foreach($processedValues['elements'] as $property=>$value) {
-  $element->setVar($property, $value);
-}
-
-if(!$ele_id = $element_handler->insert($element)) {
-  print "Error: could not save the options for element: ".mysql_error();
-}
-
 		// check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
 		if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
       include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
@@ -216,6 +208,14 @@ if(!$ele_id = $element_handler->insert($element)) {
 				print "Error updating user submitted values for the options in element $ele_id";
 			}
 		}
+
+foreach($processedValues['elements'] as $property=>$value) {
+  $element->setVar($property, $value);
+}
+
+if(!$ele_id = $element_handler->insert($element)) {
+  print "Error: could not save the options for element: ".mysql_error();
+}
 
 if($_POST['reload_option_page']) {
   print "/* evalnow */ if(redirect=='') { redirect = 'reloadWithScrollPosition();'; }";

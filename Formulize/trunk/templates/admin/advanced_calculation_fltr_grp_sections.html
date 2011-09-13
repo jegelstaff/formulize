@@ -121,6 +121,6 @@
 
     appendContents2 = '<input type="text" name="advcalc-type_options_' + section + '_' + kind + '['+number+']"></input>';
     $("#optionlist_" + section + "_" + kind ).append('<p class="useroptions" id="useroptions_' + section + '_' + kind + '" name="' + number + '" section="' + section + '" kind="' + kind + '">' + appendContents2 + '</p>');
-    window.document.getElementById('savewarning').style.display = 'block';
+    setDisplay('savewarning','block');
   }
 </script>
