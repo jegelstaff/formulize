@@ -50,7 +50,7 @@ if(isset($_POST['deleteform']) AND $_POST['deleteform'] > 0 AND $gperm_handler->
 if(isset($_POST['deleteapp']) AND $_POST['deleteapp'] > 0) {
   $application_handler = xoops_getmodulehandler('applications', 'formulize');
   $application_handler->delete(intval($_POST['deleteapp']));
-  print "/* eval */ reloadWithScrollPosition()";
+  print "/* evalnow */ reloadWithScrollPosition()";
 }
 
 if((isset($_POST['cloneform']) AND $_POST['cloneform'] > 0) OR (isset($_POST['cloneformdata']) AND $_POST['cloneformdata'] > 0)) {
@@ -58,7 +58,7 @@ if((isset($_POST['cloneform']) AND $_POST['cloneform'] > 0) OR (isset($_POST['cl
   $cloneData = (isset($_POST['cloneform']) AND $_POST['cloneform'] > 0) ? false : true;
   $form_handler = xoops_getmodulehandler('forms', 'formulize');
   $form_handler->cloneForm($formToClone, $cloneData);
-  print "/* eval */ reloadWithScrollPosition()";
+  print "/* evalnow */ reloadWithScrollPosition()";
 }
 
 if(isset($_POST['lockdown']) AND $_POST['lockdown'] > 0 AND $gperm_handler->checkRight("delete_form", intval($_POST['lockdown']), $xoopsUser->getGroups(), getFormulizeModId())) {
@@ -68,7 +68,7 @@ if(isset($_POST['lockdown']) AND $_POST['lockdown'] > 0 AND $gperm_handler->chec
     if(!$form_handler->lockForm(intval($_POST['lockdown']))) {
     	print "Error: could not lock the form";
     } else {
-    	print "/* eval */ reloadWithScrollPosition()";
+    	print "/* evalnow */ reloadWithScrollPosition()";
     }
   } else {
     print "Error: this form is locked!";

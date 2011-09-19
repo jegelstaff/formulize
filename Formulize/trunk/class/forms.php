@@ -801,6 +801,10 @@ class formulizeFormsHandler {
 		if($field == "id_form") { $value = ""; }
 			if($field == "desc_form") { $value = $newtitle; }
 			if($field == "headerlist") { $value = ""; }
+			if($field == "form_handle") {
+				$oldFormHandle = $value;
+				$value = "replace_with_handle_and_id";
+			}
 			if(!$start) { $insert_sql .= ", "; }
 			$start = 0;
 			$insert_sql .= "\"$value\"";
@@ -811,6 +815,12 @@ class formulizeFormsHandler {
 		}
 
 		$newfid = $this->db->getInsertId();
+		
+		// replace formhandle of the new form
+		$replaceSQL = "UPDATE ". $this->db->prefix("formulize_id") . " SET form_handle='".mysql_real_escape_string($oldFormHandle."_".$newfid)."' WHERE form_handle=\"replace_with_handle_and_id\"";
+		if(!$result = $this->db->queryF($replaceSQL)) {
+		  exit("error setting the form_handle for the new form.<br>".mysql_error());
+		}		
 	
 		$getelements = q("SELECT * FROM " . $this->db->prefix("formulize") . " WHERE id_form = $fid");
     $oldNewEleIdMap = array();
