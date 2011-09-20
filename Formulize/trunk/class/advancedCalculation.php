@@ -122,7 +122,7 @@ foreach(\$res as \$thisRes) {
 	  \$field = \$array;
 {$calculation['calculate']}
   }
-  $totalNumberOfRecords += mysql_numrows(\$thisRes);
+  \$totalNumberOfRecords += mysql_numrows(\$thisRes);
 }
 {$calculation['postCalculate']}
 EOD;
@@ -238,11 +238,24 @@ class formulizeAdvancedCalculationHandler {
 
 
   function calculate( $advCalcObject ) {
-    global $xoopsDB;
+    global $xoopsDB, $xoopsUser;
     if(!is_object($advCalcObject)) {
 	$advCalcObject = $this->get($advCalcObject);
     }
     $acid = $advCalcObject->getVar('acid');
+
+    // check to see if there is already a cached version of the request
+    $newPost = unserialize( serialize( $_POST ) );
+    unset( $newPost['XOOPS_TOKEN_REQUEST'] );
+    unset( $newPost['formulize_cacheddata'] );
+    //print "<pre>"; var_export( $_POST ); var_export( $newPost ); var_export( $xoopsUser->getGroups() ); print "</pre>";
+    $key = md5( serialize( $newPost ) . serialize( $xoopsUser->getGroups() ) );
+    $fileName = XOOPS_ROOT_PATH."/cache/formulize_advancedCalculation_".$acid."_".$key.".php";
+    if( file_exists( $fileName ) ) {
+      // cached version found
+      return unserialize( file_get_contents( $fileName ) );
+    }
+    // cached version was not found, so create it
 
     $fromBaseQuery = $GLOBALS['formulize_queryForCalcs'];
 
@@ -454,7 +467,10 @@ class formulizeAdvancedCalculationHandler {
 	$_POST[$acid . "_" .$handle] = $value;
     }
 
-    return array('text'=>$calculationText, 'result'=>$calculationResult, 'groups'=>$activeGroupings);
+    $output = array('text'=>$calculationText, 'result'=>$calculationResult, 'groups'=>$activeGroupings);
+    file_put_contents( $fileName, serialize( $output ) );
+
+    return $output;
     
   }
 
@@ -718,6 +734,7 @@ class formulizeAdvancedCalculationHandler {
         if(!$res = $xoopsDB->query($sql)) {
         	print "Error: could not drop the temporary tables created by this procedure.<br>".mysql_error()."<br>$sql";
         }
+        unset( $GLOBALS['formulize_procedures_tablenames'] );
     }
   }
 
