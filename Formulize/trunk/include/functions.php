@@ -2984,6 +2984,8 @@ print "$prevValue<br><br>";
         }
       }
 
+      $form_handler = xoops_getmodulehandler('forms', 'formulize');
+
     	if($foundit = strstr($ele_value[2], "#*=:*") AND !$lvoverride) { // completely rejig things for a linked selectbox
           $boxproperties = explode("#*=:*", $ele_value[2]);
           // NOTE:
@@ -3004,8 +3006,6 @@ print "$prevValue<br><br>";
             }
           }
 	  
-	  $form_handler = xoops_getmodulehandler('forms', 'formulize');
-					
 					// need to check for link to a link, and change target if that's what we're dealing with
 					$element_handler = xoops_getmodulehandler('elements', 'formulize');
 					$sourceElement = $element_handler->get($boxproperties[1]);
