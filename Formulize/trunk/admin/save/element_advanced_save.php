@@ -42,7 +42,14 @@ if(!$ele_id = intval($_GET['ele_id'])) { // on new element saves, new ele_id can
     return;
   }
 }
+
+// get the element object with the right handler, ie: check if it's a custom type
 $element = $element_handler->get($ele_id);
+$ele_type = $element->getVar('ele_type');
+if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+  $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+  $element = $customTypeHandler->get($ele_id);
+}
 $fid = $element->getVar('id_form');
 
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -55,11 +62,9 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
 
-$ele_type = $element->getVar('ele_type');
 $ele_value = $element->getVar('ele_value');
 $ele_encrypt = $_POST['elements-ele_encrypt'];
-$databaseElement = ($ele_type == "areamodif" OR $ele_type == "ib" OR $ele_type == "sep" OR $ele_type == "subform" OR $ele_type == "grid") ? false : true;
-
+$databaseElement = ($ele_type == "areamodif" OR $ele_type == "ib" OR $ele_type == "sep" OR $ele_type == "subform" OR $ele_type == "grid" OR (property_exists($element,'hasData') AND $element->hasData == false) ) ? false : true; 
 $reloadneeded = false;    
 if($ele_encrypt != $element->getVar('ele_encrypt') AND $databaseElement AND !$_GET['ele_id']) { // the setting has changed on this pageload, and it's a database element, and it's not new
   $reloadneeded = true; // display of data type goes on/off when encryption is off/on
@@ -111,7 +116,13 @@ if($databaseElement AND $_GET['ele_id']) { // ele_id is only in the URL when we'
             }
             break;
       default:
-            $dataType = getRequestedDataType();
+            // check for custom type and if there's a database type override specified
+            // if not, then get requested type
+            if(property_exists($element, 'overrideDataType') AND $element->overrideDataType != "") {
+              $dataType = $element->overrideDataType;
+            } else {
+              $dataType = getRequestedDataType();
+            }
     }
   }
   

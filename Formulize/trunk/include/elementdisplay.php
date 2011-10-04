@@ -316,7 +316,7 @@ function displayDescription($formframe="", $ele) {
 function _formulize_returnElement($ele, $formframe="") {
   $element = "";
 	if(is_object($ele)) {	
-		if(get_class($ele) == "formulizeformulize") {
+		if(get_class($ele) == "formulizeformulize" OR is_subclass_of($ele, 'formulizeformulize')) {
 			$element = $ele;
 		} else {
 			return "invalid_element";

@@ -1914,6 +1914,11 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 					$ele_value[0] = $value;
 
 					break;
+				default:
+					if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
+						$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
+						return $customTypeHandler->loadValue($value, $ele_value, $i);
+					} 
 			} // end switch
 
 			/*print_r($ele_value);
@@ -2229,16 +2234,23 @@ function initialize_formulize_xhr() {
 
 function formulize_xhr_return(op,params,response) {
 	// check that this is a valid operation we know how to handle
-  if(op != 'check_for_unique_value') {
-	  return false;
+	if(op == 'check_for_unique_value') {
+		formulize_xhr_returned_check_for_unique_value = response;
+		validateAndSubmit();	
 	}
-	formulize_xhr_returned_check_for_unique_value = response;
-	validateAndSubmit();
+	if(op == 'delete_uploaded_file') {
+		if(response) {
+			formulize_delete_successful(response);
+		} else {
+			formulize_delete_failed();
+		}
+	}
+	return false;
 }
 
 function formulize_xhr_send(op,params) {
   // check that this is a valid operation we know how to handle
-  if(op != 'check_for_unique_value') {
+  if(op != 'check_for_unique_value' && op != 'delete_uploaded_file') {
 	  return true;
 	}
 	// unpack the parameters

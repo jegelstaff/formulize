@@ -108,8 +108,16 @@ class formulizeElementsHandler {
 		}
 		$numrows = $this->db->getRowsNum($result);
 		if ($numrows == 1) {
-			$element = new formulizeformulize();
-			$element->assignVars($this->db->fetchArray($result));
+			// instantiate the right kind of element, depending on the type
+			$array = $this->db->fetchArray($result);
+			$ele_type = $array['ele_type'];
+			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+				$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+				$element = $customTypeHandler->create();
+			} else {
+				$element = new formulizeformulize();
+			}
+			$element->assignVars($array);
 			$element->isLinked = false;
 			if($element->getVar('ele_type')=="select") {
 				$ele_value = $element->getVar('ele_value');
@@ -124,7 +132,7 @@ class formulizeElementsHandler {
 	}
 
 	function insert(&$element, $force = false){
-        if( get_class($element) != 'formulizeformulize'){
+        if( get_class($element) != 'formulizeformulize' AND is_subclass_of($element, 'formulizeformulize') == false){
             return false;
         }
         if( !$element->isDirty() ){
@@ -300,7 +308,14 @@ class formulizeElementsHandler {
 			return false;
 		}
 		while( $myrow = $this->db->fetchArray($result) ){
-			$elements = new formulizeformulize();
+			// instantiate the right kind of element, depending on the type
+			$ele_type = $myrow['ele_type'];
+			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+				$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+				$elements = $customTypeHandler->create();
+			} else {
+				$elements = new formulizeformulize();
+			}
 			$elements->assignVars($myrow);
 			$elements->isLinked = false;
 			if($elements->getVar('ele_type')=="select") {
@@ -355,6 +370,22 @@ class formulizeElementsHandler {
 		} else {
 			return false;
 		}
+	}
+	
+	// this method is used by custom elements, to do final output from the "local" formatDataForList method, so the custom element developer can simply set booleans there, and they will be enforced here
+	function formatDataForList($value) {
+		global $myts;
+		if($this->length == 0) {
+			$this->length = 35;
+		}
+		if($this->striphtml !== false) { // want to do this all the time, no matter what, unless the user specifically turns it off, because it's a security precaution
+			$value = $myts->htmlSpecialChars($value, ENT_QUOTES);
+		}
+		$value = printSmart(trans($value),$this->length);
+		if($this->clickable) {
+			$value = $myts->makeClickable($value);
+		}
+		return $value;
 	}
 	
 }

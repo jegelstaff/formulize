@@ -82,6 +82,19 @@ $modversion['hasMain'] = 1;
 
 
 // Templates
+
+// Need to include templates for any custom element types first
+// custom element classes must contain "Element.php" as the final part of the filename
+$classFiles = scandir(XOOPS_ROOT_PATH."/modules/formulize/class/");
+$customElements = array();
+foreach($classFiles as $thisFile) {
+	if(substr($thisFile, -11)=="Element.php") {
+		$customType = substr($thisFile, 0, strpos($thisFile, "Element.php"));
+		$modversion['templates'][] = array('file' => 'admin/element_type_'.$customType.'.html',
+                                                   'description'=>'');
+	}
+}
+
 $modversion['templates'][] = array(
 	'file' => 'formulize_cat.html', 
 	'description' => '');

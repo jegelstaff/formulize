@@ -381,7 +381,12 @@ if($ele_type=='text') {
 }
 $options['ele_value'] = $ele_value;
 
-
+// if this is a custom element, then get any additional values that we need to send to the template
+$customValues = array();
+if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+	$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+	$customValues = $customTypeHandler->adminPrepare($elementObject);
+}
 
 $display['groups'] = $groups;
 
@@ -394,7 +399,11 @@ $adminPage['tabs'][$tabindex]['content'] = $names+$common;
 if($ele_type!='colorpick') {
   $adminPage['tabs'][++$tabindex]['name'] = "Options";
   $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_options.html";
-  $adminPage['tabs'][$tabindex]['content'] = $options + $common;
+  if(count($customValues)>0) {
+	$adminPage['tabs'][$tabindex]['content'] = $options + $common + $customValues;	
+  } else {
+	$adminPage['tabs'][$tabindex]['content'] = $options + $common;
+  }
 }
   
 $adminPage['tabs'][++$tabindex]['name'] = "Display Settings";
@@ -423,25 +432,22 @@ $breadcrumbtrail[3]['url'] = "page=form&aid=$aid&fid=$fid&tab=elements";
 $breadcrumbtrail[3]['text'] = $formName;
 $breadcrumbtrail[4]['text'] = $elementName;
 
-function removeNotApplicableRequireds($type, $req) {
-  switch($type) {
-    case "text":
-    case "textarea":
-    case "select":
-    case "radio":
-		case "checkbox":
-    case "date":
-      return true;
-  }
-  return false;
-}
-
 function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
   // data type controls ... added May 31 2009, jwe 
     // only do it for existing elements where the datatype choice is relevant
 		// do not do it for encrypted elements
     $renderedUI = "";
-		if(($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type == "radio" OR $ele_type == "checkbox" OR $ele_type == "derived") AND !$ele_encrypt) {
+    
+    // check if there's a special class file for this element type, and if so, instantiate an element object of that kind, so we can check if it needs a datatype UI or not
+    $customTypeNeedsUI = false;
+    if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+	$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+	$customTypeObject = $customTypeHandler->create();
+	$customTypeNeedsUI = $customTypeObject->needsDataType;
+    }
+      
+    
+		if(($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type == "radio" OR $ele_type == "checkbox" OR $ele_type == "derived" OR $customTypeNeedsUI) AND !$ele_encrypt) {
       if($element) {
               // get the current type...
               global $xoopsDB;

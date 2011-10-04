@@ -197,6 +197,12 @@ function prepvalues($value, $field, $entry_id) {
 		$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value); 
 	}
 
+	  if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
+	       $elementTypeHandler = xoops_getmodulehandler($type."Element", "formulize");
+	       $value = $elementTypeHandler->prepareDataForDataset($value, $field, $entry_id);
+	  }
+
+
 	return explode("*=+*:",$value);
 }
 

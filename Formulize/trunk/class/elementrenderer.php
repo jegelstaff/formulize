@@ -72,7 +72,8 @@ class formulizeElementRenderer{
 		} else {
 			$delimSetting = $xoopsModuleConfig['delimeter'];
 		}
-
+	
+		$customElementHasData = false;
 		$id_form = $this->_ele->getVar('id_form');
 		$ele_caption = $this->_ele->getVar('ele_caption', 'e');
 		$ele_caption = preg_replace('/\{SEPAR\}/', '', $ele_caption);
@@ -1089,9 +1090,18 @@ class formulizeElementRenderer{
 			 * Adding colorpicker form element
 			 */
 			default:
-				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$e.".php")) {
-					$elementTypeHandler = xoops_getmodulehandler($e);
-					$form_ele = $elementTypeHandler->render($this->_ele, $form_ele_id, $isDisabled); // form is the form object, $value is the element-specific values that we have loaded, $ele_id is the element id
+				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$e."Element.php")) {
+					$elementTypeHandler = xoops_getmodulehandler($e."Element", "formulize");
+					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $form_ele_id, $isDisabled, $this->_ele, $entry); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to
+					if(!$isDisabled AND ($this->_ele->getVar('ele_req') OR $this->_ele->alwaysValidateInputs)) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
+						$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $form_ele_id, $this->_ele);
+					}
+					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+					$isDisabled = false; // the render method must handle providing a disabled output, so as far as the rest of the logic here goes, the element is not disabled but should be rendered as is
+					$baseCustomElementObject = $elementTypeHandler->create();
+					if($baseCustomElementObject->hasData) {
+						$customElementHasData = true;
+					}
 				} else {
 					return false;
 				}
@@ -1104,8 +1114,8 @@ class formulizeElementRenderer{
 				$previousEntryUIRendered = "";
 			}
 			// $e is the type value...only put in a cue for certain kinds of elements, and definitely not for blank subforms
-			if(substr($form_ele_id, 0, 9) != "desubform" AND ($e == "text" OR $e == "textarea" OR $e == "select" OR $e=="radio" OR $e=="checkbox" OR $e=="date" OR $e=="colorpick" OR $e=="yn")) {
-				$elementCue = "\n<input type=\"hidden\" name=\"decue_".trim($form_ele_id,"de_")."\" value=1>\n";
+			if(substr($form_ele_id, 0, 9) != "desubform" AND ($e == "text" OR $e == "textarea" OR $e == "select" OR $e=="radio" OR $e=="checkbox" OR $e=="date" OR $e=="colorpick" OR $e=="yn" OR $customElementHasData)) {
+				$elementCue = "\n<input type=\"hidden\" id=\"decue_".trim($form_ele_id,"de_")."\" name=\"decue_".trim($form_ele_id,"de_")."\" value=1>\n";
 			} else {
 				$elementCue = "";
 			}

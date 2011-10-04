@@ -191,6 +191,14 @@ if($ele_type == "select") {
   }
 }
 
+if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+  $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+  $changed = $customTypeHandler->adminSave($element, $processedValues['elements']['ele_value']); // cannot use getVar to retrieve ele_value from element, due to limitation of the base object class, when dealing with set values that are arrays and not being gathered directly from the database (it wants to unserialize them instead of treating them as literals)
+  if($changed) {
+    $_POST['reload_option_page'] = true; // force a reload, since the developer probably changed something the user did in the form, so we should reload to show the effect of this change
+  }
+}
+
 		// check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
 		if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
       include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";

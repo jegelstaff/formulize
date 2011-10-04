@@ -257,6 +257,24 @@ if($_GET['fid'] != "new") {
   } 
 }
 
+// get a list of all the custom element types that are present
+// cusotm element classes must contain "Element.php" as the final part of the filename
+$classFiles = scandir(XOOPS_ROOT_PATH."/modules/formulize/class/");
+$customElements = array();
+$i = 0;
+foreach($classFiles as $thisFile) {
+	if(substr($thisFile, -11)=="Element.php") {
+		$customType = substr($thisFile, 0, strpos($thisFile, "Element.php"));
+		$customElementHandler = xoops_getmodulehandler($customType."Element", "formulize");
+		$customElementObject = $customElementHandler->create();
+		$customElements[$i]['type'] = $customType;
+		$customElements[$i]['name'] = $customElementObject->name;
+		$i++;
+	}
+}
+
+
+
 $i = 1;
 $applications = array();
 foreach($allApps as $thisApp) {
@@ -333,6 +351,9 @@ if($fid != "new") {
     if(isset($elements)) {
       $adminPage['tabs'][$i]['content']['elements'] = $elements;
     }
+    if(count($customElements)>0) {
+	$adminPage['tabs'][$i]['content']['customElements'] = $customElements;
+    }
     $i++;
   }
   
@@ -368,15 +389,3 @@ $breadcrumbtrail[2]['url'] = "page=application&aid=$aid&tab=forms";
 $breadcrumbtrail[2]['text'] = $appName;
 $breadcrumbtrail[3]['text'] = $formName;
 
-function removeNotApplicableRequireds($type, $req) {
-  switch($type) {
-    case "text":
-    case "textarea":
-    case "select":
-    case "radio":
-		case "checkbox":
-    case "date":
-      return $req;
-  }
-  return false;
-}

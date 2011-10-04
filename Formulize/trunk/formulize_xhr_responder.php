@@ -47,7 +47,7 @@ if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $s
 $op = $_GET['op'];
 
 // validate op
-if($op != "check_for_unique_value" AND $op != "get_element_option_list") {
+if($op != "check_for_unique_value" AND $op != "get_element_option_list" AND $op != 'delete_uploaded_file') {
   exit();
 }
 
@@ -85,6 +85,24 @@ switch($op) {
   	}
     $json .= "]}";
     print $json;
+    break;
+  case 'delete_uploaded_file':
+    $folderName = $_GET['param1'];
+    $element_id = $_GET['param2'];
+    $entry_id = $_GET['param3'];
+    $element_handler = xoops_getmodulehandler('elements','formulize');
+    $elementObject = $element_handler->get($element_id);
+    $fid = $elementObject->getVar('id_form');
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+    $data_handler = new formulizeDataHandler($fid);
+    $fileInfo = $data_handler->getElementValueInEntry($entry_id, $elementObject);
+    $fileInfo = unserialize($fileInfo);
+    $filePath = XOOPS_ROOT_PATH."/uploads/$folderName/".$fileInfo['name'];
+    $result = unlink($filePath);
+    if($result) {
+      $data_handler->writeEntry($entry_id, array($elementObject->getVar('ele_handle')=>''), false, true); // erase the recorded values for this file in the database, false is proxy user, true is force update (on a GET request)
+      print $element_id;
+    }
     break;
 }
 

@@ -1860,7 +1860,10 @@ function prepDataForWrite($element, $ele) {
 				 * Adding colorpicker form element
 				 */
 				default:
-				break;
+				    if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+						$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+						return $customTypeHandler->prepareDataForSaving($ele, $element);
+					} 
 			}
 
 	return $value;
@@ -2199,7 +2202,14 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
 		return $myts->makeClickable(printSmart(trans($matchtext), $textWidth)); // allow HTML codes in derived values
 	} else { // regular element
     formulize_benchmark("done formatting, about to print");
-		return $myts->makeClickable(printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth));
+    
+	  if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+	       $elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
+	       $matchtext = $elementTypeHandler->formatDataForList($matchtext, $handle, $entryBeingFormatted);
+	       return $matchtext;
+	  } else {
+	    return $myts->makeClickable(printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth));	    
+	  }
 	}
 } 
 
@@ -3264,7 +3274,7 @@ function synchSubformBlankDefaults($fid, $entry) {
 // internal function that retrieves an element object if necessary
 	function _getElementObject($element) {
 		if(is_object($element)) {
-			if(get_class($element) != "formulizeformulize") { // the silly historical name of the element class
+			if(get_class($element) != "formulizeformulize" AND is_subclass_of($element, 'formulizeformulize') == false) { // the silly historical name of the element class
 				return false;
 			} else {
 				return $element;
@@ -4119,6 +4129,11 @@ function convertTypeToText($type, $ele_value) {
       return "Value derived from other elements";
     case "colorpick":
       return "Color picker";
+    default:
+      // must be a custom element type...
+      $customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
+      $customTypeObject = $customTypeHandler->create();
+      return $customTypeObject->name;
   }
   
 }
@@ -4204,4 +4219,23 @@ function formulize_addProcedureChoicesToPost($choices) {
 			}
 		}
 	} 
+}
+
+// used in the admin UI
+function removeNotApplicableRequireds($type, $req) {
+  switch($type) {
+    case "text":
+    case "textarea":
+    case "select":
+    case "radio":
+    case "checkbox":
+    case "date":
+      return $req;
+  }
+  if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
+	$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
+	$customTypeElement = $customTypeHandler->create();
+	return $customTypeElement->adminCanMakeRequired;
+  }
+  return false;
 }

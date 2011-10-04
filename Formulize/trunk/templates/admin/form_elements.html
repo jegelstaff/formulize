@@ -28,6 +28,9 @@
 			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=grid"><img src="../images/filenew2.png"> Table of existing elements (place BEFORE the elements it contains)</a></p>
 			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived"><img src="../images/filenew2.png"> Value derived from other elements</a></p>
 			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick"><img src="../images/filenew2.png"> Color picker</a></p>
+			<{foreach item=customElement from=$content.customElements}>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=<{$customElement.type}>"><img src="../images/filenew2.png"> <{$customElement.name}></a></p>	
+			<{/foreach}>
 </div>
 
 <div class="accordion-box-wide">
