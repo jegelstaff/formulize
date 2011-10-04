@@ -263,6 +263,7 @@ class formulizeAdvancedCalculationHandler {
 
     // get the filters and groupings information
     $filtersAndGroupings = $advCalcObject->getVar('fltr_grps');
+    $filtersAndGroupingsTitles = $advCalcObject->getVar('fltr_grptitles');
 
     // figure out groupings
     $groups = array();
@@ -357,9 +358,11 @@ class formulizeAdvancedCalculationHandler {
 		$activeOption = $activeOptionParts[0];
 	    } 
 	    $activeGroupings[$groups[$item[0]]] = array('metadata'=>$filtersAndGroupings[$groups[$item[0]]], 'value'=>$activeOption);
+	    $activeGroupings[$groups[$item[0]]]['metadata']['title'] = $filtersAndGroupingsTitles[$groups[$item[0]]];
 	  } else {
 	    $_POST[$acid."_".$filtersAndGroupings[$groups[$item[0]]]['handle']] = $item[1];
 	    $activeGroupings[$groups[$item[0]]] = array('metadata'=>$filtersAndGroupings[$groups[$item[0]]], 'value'=>$item[1]);
+	    $activeGroupings[$groups[$item[0]]]['metadata']['title'] = $filtersAndGroupingsTitles[$groups[$item[0]]];
 	  }
 	  
 
@@ -373,7 +376,7 @@ class formulizeAdvancedCalculationHandler {
         }
 
         // put the children items on the stack for processing
-        if( $item[0] != count( $groupCombinations ) - 1 ) {
+        if( $item[0] != count( $groups ) - 1 ) {
           foreach( $item[2] as $key => & $value ) {
             array_push( $stack, array( $item[0] + 1, $key, & $value, & $item[2] ) );
           }
@@ -973,7 +976,10 @@ class formulizeAdvancedCalculationHandler {
 		    $options[] = is_numeric($optionValue) ? $optionValue : "'".mysql_real_escape_string($optionValue)."'";
 		}
 		if(count($options) > 0) {
-		    $filterValue .= implode(", ",$options).")";
+		    $filterValue .= implode(", ",$options);
+		    if($thisFilter['form'] AND is_numeric($thisFilter['form'])) {
+			$filterValue .= ")";
+		    }
 		} else {
 		    $filterValue = " 1 ";
 		}
@@ -1075,7 +1081,7 @@ function createProceduresTable($array, $permTableName = "") {
 	    $fieldType = "bigint(20) default '0'";
 	    $indexList[] = "INDEX i_".$fieldName." ($fieldName)";
 	} elseif(strtotime($values[0])) {
-	    $fieldType = "date NULL default NULL";
+	    $fieldType = "datetime NULL default NULL";
 	    $indexList[] = "INDEX i_".$fieldName." ($fieldName)";
 	} else {
 	    $fieldType = "text NULL default NULL";	    
