@@ -42,18 +42,15 @@ label {
 }
 
 div.accordion-box {
-  float: left;
-	width: 300px;
-	margin: 0 1.5em 1.5em 0;
-	padding-left: 2.5em;
-	padding-right: 1.3em;
+  	float: left;
+	width: 385px;
+	margin: 0 2em 1.5em 0;
 }
 
 div.accordion-box-wide {
-  float: left;
+  	float: left;
 	width: 500px;
-	margin: 0 1.5em 1.5em 0;
-	padding-left: 2.5em;
+	margin: 0 2em 1.5em 0;
 }
 
 div.accordion-box .form-name {
