@@ -26,6 +26,10 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+// THIS FILE SHOWS ALL THE METHODS THAT CAN BE PART OF CUSTOM ELEMENT TYPES IN FORMULIZE
+// TO SEE THIS ELEMENT IN ACTION, RENAME THE FILE TO dummyElement.php
+// There is a corresponding admin template for this element type in the templates/admin folder
+
 class formulizeDummyElement extends formulizeformulize {
     
     var $needsDataType;
@@ -149,6 +153,15 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
         return mysql_real_escape_string($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
     }
     
+    // this method will handle any final actions that have to happen after data has been saved
+    // this is typically required for modifications to new entries, after the entry ID has been assigned, because before now, the entry ID will have been "new"
+    // value is the value that was just saved
+    // element_id is the id of the element that just had data saved
+    // entry_id is the entry id that was just saved
+    // ALSO, $GLOBALS['formulize_afterSavingLogicRequired']['elementId'] = type , must be declared in the prepareDataForSaving step if further action is required now -- see fileUploadElement.php for an example
+    function afterSavingLogic($value, $handle, $entry_id) {
+    }
+    
     // this method will prepare a raw data value from the database, to be included in a dataset when formulize generates a list of entries or the getData API call is made
     // in the standard elements, this particular step is where multivalue elements, like checkboxes, get converted from a string that comes out of the database, into an array, for example
     // $value is the raw value that has been found in the database
@@ -156,6 +169,12 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle, $entry_id) {
         return $value; // we're not making any modifications for this element type
+    }
+    
+    // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
+    // this would be where a Yes value would be converted to a 1, for example, in the case of a yes/no element, since 1 is how yes is represented in the database for that element type
+    function prepareLiteralTextForDB($value, $element) {
+        return $value;
     }
     
     // this method will format a dataset value for display on screen when a list of entries is prepared

@@ -44,7 +44,11 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	static $cachedPrevEntries = array();
 
 	$subformCreateEntry = strstr($entry, "subformCreateEntry") ? true : false; // check for this special flag, which is mostly like a "new" situation, except for the deh hidden flag that gets passed back, since we don't want the standard readelements logic to pickup these elements!
-	if($subformCreateEntry) { $subformEntryIndex = substr($entry, -1); } // index value will only ever be one character at the end (it will be between 0 and 4
+	if($subformCreateEntry) {
+		$subformMetaData = explode("_", $entry);
+		$subformEntryIndex = $subformMetaData[1];
+		$subformElementId = $subformMetaData[2];
+	} 
 	if($entry == "" OR $subformCreateEntry) { $entry = "new"; }
 
 	$element = _formulize_returnElement($ele, $formframe);
@@ -181,7 +185,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
   	$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
 		$deprefix = $noSave ? "denosave_" : "de_";
-		$deprefix = $subformCreateEntry ? "desubform".$subformEntryIndex."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
+		$deprefix = $subformCreateEntry ? "desubform".$subformEntryIndex."x".$subformElementId."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
 		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subform' AND $ele_type != 'grid') {
 			$data_handler = new formulizeDataHandler($element->getVar('id_form'));
 			$ele_value = loadValue($prevEntry, $element, $ele_value, $data_handler->getEntryOwnerGroups($entry), $groups, $entry, $profileForm); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry

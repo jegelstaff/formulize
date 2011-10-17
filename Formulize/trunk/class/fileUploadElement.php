@@ -190,6 +190,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     }
     
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
+    // You can return {WRITEASNULL} to cause a null value to be saved in the database
     // $value is what the user submitted
     // $element is the element object
     function prepareDataForSaving($value, $element) {
@@ -226,6 +227,9 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                         $value['isfile'] = true; // second array position will indicate that we have a real file here
                         $value['type'] = $_FILES[$fileKey]['type']; // save the mime type for later use
                         $value['size'] = $_FILES[$fileKey]['size']; // save the size for later use
+                        if(strstr($folderLocation, "_new_")) {
+                            $GLOBALS['formulize_afterSavingLogicRequired'][$element->getVar('ele_id')] = $element->getVar('ele_type'); // set the flag that will trigger a post-save operation when we can rename the folder where the file resides to match the newly assigned entry id
+                        }
                     } else {
                         $value = "Your file was uploaded, but could not be moved to a permanent location on the server.  Please try again.  If this happens again, please inform the webmaster about this error.";
                         print "<p><b>$value</b></p>";    
@@ -269,6 +273,19 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         return serialize($value); 
     }
     
+    // this method will handle any final actions that have to happen after data has been saved
+    // this is typically required for modifications to new entries, after the entry ID has been assigned, because before now, the entry ID will have been "new"
+    // value is the value that was just saved
+    // element_id is the id of the element that just had data saved
+    // entry_id is the entry id that was just saved
+    // ALSO, $GLOBALS['formulize_afterSavingLogicRequired']['elementId'] = type must be declared in the prepareDataForSaving step if further action is required now -- see fileUploadElement.php for an example
+    function afterSavingLogic($value, $element_id, $entry_id) {
+        // we need to update the folder path so that "_new_" is replaced with the _entryid_ and the file can then be accessible.
+        $element_handler = xoops_getmodulehandler('elements','formulize');
+        $elementObject = $element_handler->get($element_id);
+        rename(XOOPS_ROOT_PATH."/uploads/formulize_".$elementObject->getVar('id_form')."_new_".$element_id,XOOPS_ROOT_PATH."/uploads/formulize_".$elementObject->getVar('id_form')."_".$entry_id."_".$element_id);
+    }
+    
     // this method will prepare a raw data value from the database, to be included in a dataset when formulize generates a list of entries or the getData API call is made
     // in the standard elements, this particular step is where multivalue elements, like checkboxes, get converted from a string that comes out of the database, into an array, for example
     // $value is the raw value that has been found in the database
@@ -278,20 +295,22 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         return $value;
     }
     
+    // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
+    // this would be where a Yes value would be converted to a 1, for example, in the case of a yes/no element, since 1 is how yes is represented in the database for that element type
+    function prepareLiteralTextForDB($value, $element) {
+        return $value;
+    }
+    
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle, $entry_id) {
         $this->clickable = false; // make urls clickable
         $this->striphtml = false; // remove html tags as a security precaution
-        $this->length = 1000; // truncate to a maximum of 100 characters, and append ... on the end
-        
-        $value = unserialize($value); // it will be up to four array keys all serialized together, name isfile type size
-
+        $this->length = 1000; // truncate to a maximum of 1000 characters, and append ... on the end
+        $value = unserialize($value); // file upload elements have a serialized array as their data value, and there's not a lot we can do with that except unserialize it here.  Without putting a hook of some kind in the display function, we have no way of knowing when we should be unserializing the values that we are packaging up when the display function is called.
         $displayName = $this->getFileDisplayName($value['name']);
-        
         $value = $value['isfile'] ? $this->createDownloadLink($this->get($handle), $entry_id, $value['name'], $displayName) : $value['name'];
-        
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
     

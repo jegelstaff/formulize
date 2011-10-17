@@ -1862,13 +1862,53 @@ function prepDataForWrite($element, $ele) {
 				default:
 				    if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
 						$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-						return $customTypeHandler->prepareDataForSaving($ele, $element);
+						$value = $customTypeHandler->prepareDataForSaving($ele, $element);
 					} 
 			}
 
 	return $value;
 
 }
+
+// this function takes a literal text value and converts it to a value that is valid for storing in the database.
+// it is similiar to prepdataforwrite except pdfw takes values submitted through a form and converts them for storage, and this takes literal values that people might have typed into a box somewhere, like in the conditions boxes
+// curly brackey entry is the id number for the entry that we're supposed to check { } terms against .... although currently only USER is supported, and all we really care about is whether this is "new" or not
+// userComparisonId is the ID of the user that should be used for {USER} when the entry is new - optional, will default to the current user's id
+function prepareLiteralTextForDB($elementObject, $value, $curlyBracketEntry, $userComparisonId = "") {
+  global $xoopsUser;
+  if($userComparisonId === "") {
+    $userComparisonId = $xoopsUser ? $xoopsUser->getVar('uid') : 0;  
+  }
+  $ele_type = $elementObject->getVar('ele_type');
+  switch($ele_type) {
+    case "checkbox":
+      $value = "*=+*:".$value;
+      break;
+    case "yn":
+      if(strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($value)) OR strtoupper($value) == "YES") { // since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
+	$value = 1;
+      } elseif(strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($value)) OR strtoupper($value) == "NO") {
+	$value = 2;
+      } else {
+	$value = "";
+      }
+      break;
+    default:
+      if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+	      $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+	      $value = $customTypeHandler->prepareLiteralTextForDB($value, $elementObject);
+      } 
+  }
+  if($value == "{USER}") {
+    if($curlyBracketEntry != "new") {
+      $value = $userComparisonId; // use the defined value for USER if this is an existing entry, and one was passed in (if none was passed in, this is set to match the current user at the top of this function.
+    } else {
+      $value = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+    }
+  }
+  return $value;
+}
+
 
 // THIS FUNCTION CONTRIBUTED BY DPICELLA.  Added in Mar 15 2006.
 // Not currently in use due to current version of PHP natively supporting this feature.
@@ -3263,6 +3303,23 @@ function synchSubformBlankDefaults($fid, $entry) {
       // actually write the linked/common values...
       foreach($sfid_id_reqs as $id_req_to_write) {
         writeElementValue($sfid, $_POST['formulize_subformElementToWrite_'.$sfid], $id_req_to_write, $value_to_write, "replace", "", true); // Last param is override that allows direct writing to linked selectboxes if we have prepped the value first!
+	
+	// need to also enforce any equals conditions that are on the subform element, if any, and assign those values to the entries that were just added
+	$element_handler = xoops_getmodulehandler('elements','formulize');
+	$subformElement = $element_handler->get($GLOBALS['formulize_newSubformBlankElementIds'][$sfid][$id_req_to_write]);
+	$subformEle_Value = $subformElement->getVar('ele_value');
+	$subformConditions = $subformEle_Value[7];
+	if(is_array($subformConditions)) {
+		foreach($subformConditions[1] as $i=>$thisOp) {
+			if($thisOp == "=" AND $subformConditions[3][$i] != "oom") {
+				$conditionElementObject = $element_handler->get($subformConditions[0][$i]);
+				$filterValues[$subformConditions[0][$i]] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i]); 
+			}
+		}
+		formulize_writeEntry($filterValues,$id_req_to_write);	
+	}
+	
+	
         $ids_to_return[$sfid][] = $id_req_to_write; // add the just synched up entry to the list of entries in the subform
       }
 		}
@@ -4238,4 +4295,160 @@ function removeNotApplicableRequireds($type, $req) {
 	return $customTypeElement->adminCanMakeRequired;
   }
   return false;
+}
+
+// used to handle filter conditions being saved in the admin UI
+// returns $processedValues with the conditions values properly structured
+// $filter_key is the name of this conditions UI's values in POST
+// $delete_key is the name of the flag that is sent in POST when the user clicks an X to delete a condition
+// $processedValues is the array of data gathered so far in the admin UI
+// $ele_value_position is the number in the ele_value array of the key where the conditions should be saved
+function parseSubmittedConditions($filter_key, $delete_key, $processedValues, $ele_value_position) {
+
+  if($_POST["new_".$filter_key."_term"] != "") {
+    $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
+    $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
+    $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
+    $_POST[$filter_key."_types"][] = "all";
+  }
+  if($_POST["new_".$filter_key."_oom_term"] != "") {
+    $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
+    $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
+    $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
+    $_POST[$filter_key."_types"][] = "oom";
+  }
+  // then remove any that we need to
+  
+  $conditionsDeleteParts = explode("_", $_POST[$delete_key]);
+  $deleteTarget = $conditionsDeleteParts[1];
+  if($_POST[$delete_key]) { 
+    // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
+    // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
+    $originalCount = count($_POST[$filter_key."_elements"]);
+    for($i=$deleteTarget;$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
+      if($i>$deleteTarget) {
+        $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
+        $_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
+        $_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
+        $_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
+      }
+      if($i==$deleteTarget OR $i+1 == $originalCount) {
+        // first time through or last time through, unset things
+        unset($_POST[$filter_key."_elements"][$i]);
+        unset($_POST[$filter_key."_ops"][$i]);
+        unset($_POST[$filter_key."_terms"][$i]);
+        unset($_POST[$filter_key."_types"][$i]);
+      }
+    }	
+  }
+  if(count($_POST[$filter_key."_elements"]) > 0){
+    $processedValues['elements']['ele_value'][$ele_value_position][0] = $_POST[$filter_key."_elements"];
+    $processedValues['elements']['ele_value'][$ele_value_position][1] = $_POST[$filter_key."_ops"];
+    $processedValues['elements']['ele_value'][$ele_value_position][2] = $_POST[$filter_key."_terms"];
+    $processedValues['elements']['ele_value'][$ele_value_position][3] = $_POST[$filter_key."_types"];
+  } else {
+    $processedValues['elements']['ele_value'][$ele_value_position] = "";
+  }
+  
+  return $processedValues;
+}
+
+
+// this function will build a SQL ready string based on a conditions UI data array that gets passed in, plus parameters like the table it's supposed to look in
+// conditions is the set of data from the conditions UI (ie: what the user chose)
+// targetFormId is the id of the form that the conditions are supposed to apply to
+// curlyBracketEntry is the id of the entry that we should be evaluating { } terms against.  "new" for a new entry that hasn't been saved.
+// userComparisonId is the id that should be used to compare {USER} to when $entry is not "new".  In some cases we may want to pass in the owner of the entry rather than the current user.  When entry is "new" then the current user is always used.
+// curlyBracketForm is either the id or the form object for the form that should be used as the source form for any { } terms, ie: if the term is = {handleX} then this param is the form that handleX would be part of
+// targetAlias is the alias used in SQL to refer to the table that the conditions should apply to.  This is optional.
+function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $targetAlias="") {
+  $conditionsfilter = "";
+  $conditionsfilter_oom = "";
+  $curlyBracketFormFrom = "";
+  if(is_array($conditions)) {
+	  $filterElementHandles = convertElementIdsToElementHandles($conditions[0], $targetFormId);
+	  $filterElementIds = $conditions[0];
+	  $filterOps = $conditions[1];
+	  $filterTerms = $conditions[2];
+	  $filterTypes = $conditions[3];
+	  $start = true;
+	  $start_oom = true;
+	  $form_handler = xoops_getmodulehandler('forms', 'formulize');
+	  if(is_numeric($curlyBracketForm)) {
+	    $curlyBracketForm = $form_handler->get($curlyBracketForm);
+	  }
+	  $targetFormObject = $form_handler->get($targetFormId);
+	  $element_handler = xoops_getmodulehandler('elements', 'formulize');
+	  $targetFormElementTypes = $targetFormObject->getVar('elementTypes');
+	  $targetAlias .= $targetAlias ? "." : ""; // add a period to the end of the alias, if there is one, so it will work in the sql statement
+	  for($filterId = 0;$filterId<count($filterElementHandles);$filterId++) {
+		  if($filterTypes[$filterId] != "oom") {
+			  if($start) {
+				  $conditionsfilter = " AND (";
+				  $start = false;
+			  } else {
+				  $conditionsfilter .= " AND ";
+			  }
+			  list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
+			  $conditionsfilter .= "$targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue;
+		  } else { 
+			  if($start_oom) {
+				  $conditionsfilter_oom = " AND (";
+				  $start_oom = false;
+			  } else {
+				  $conditionsfilter_oom .= " OR ";
+			  }
+			  list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);			  
+			  $conditionsfilter_oom .= "$targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue;
+		  }
+		  $curlyBracketFormFrom = $thisCurlyBracketFormFrom ? $thisCurlyBracketFormFrom : $curlyBracketFormFrom; // if something was returned, use it, otherwise, stick with what we've got
+	  }
+	  $conditionsfilter .= $conditionsfilter ? ")" : "";
+	  $conditionsfilter_oom .= $conditionsfilter_oom ? ")" : "";
+  } 
+
+  return array($conditionsfilter, $conditionsfilter_oom, $curlyBracketFormFrom);
+}
+
+// this function takes the info from the above function, and actually builds the parts of the SQL statement by analyzing the current situation
+function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
+  global $xoopsUser, $xoopsDB;
+  $conditionsFilterComparisonValue = "";
+  $curlyBracketFormFrom = "";
+  if($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
+  if(strstr(strtoupper($filterOps[$filterId]), "LIKE")) {
+	  $likebits = "%";
+	  $quotes = "'";
+  } else {
+	  $likebits = "";
+	  $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
+  }
+  if($targetFormElementTypes[$filterElementIds[$filterId]] == "select") {
+	  // check for whether the source element is a linked selectbox, and if so, figure out the entry id of the record in the source of that linked selectbox which matches the filter term instead
+	  $targetElementObject = $element_handler->get($filterElementIds[$filterId]);
+	  if($targetElementObject->isLinked) {
+		  $targetElementEleValue = $targetElementObject->getVar('ele_value'); // get the properties of the source element
+		  $targetElementEleValueProperties = explode("#*=:*", $targetElementEleValue[2]); // split them up to get the properties of the linked selectbox that the source element is pointing at
+		  $targetSourceFid = $targetElementEleValueProperties[0]; // get the Fid that the source element is point at (the source of the source)
+		  $targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
+		  $targetSourceHandle = $targetElementEleValueProperties[1]; // get the element handle in the source source form
+		  // now build a comparison value that contains a subquery on the source source form, instead of a literal match to the source form
+		  $conditionsFilterComparisonValue = " CONCAT('$likebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE `$targetSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes."),',$likebits') ";
+	  }
+  }
+  if($filterOps[$filterId] == "=") {
+    $filterTerms[$filterId] = prepareLiteralTextForDB($element_handler->get($filterElementIds[$filterId]), $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
+  }
+  if(!$conditionsFilterComparisonValue) {
+	  $conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
+  }
+  if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") { // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
+	  $curlyBracketFormFrom = ", ".$xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
+	  if($likebits == "%") {
+		  $conditionsFilterComparisonValue = " CONCAT('%',curlybracketform.`".substr($filterTerms[$filterId],1,-1)."`,'%') AND curlybracketform.`entry_id`=$curlyBracketEntry ";
+	  } else {
+		  $conditionsFilterComparisonValue = " curlybracketform.`".substr($filterTerms[$filterId],1,-1)."` AND curlybracketform.`entry_id`=$curlyBracketEntry ";
+	  }
+  }
+  return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
 }

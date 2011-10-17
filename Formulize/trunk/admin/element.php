@@ -303,6 +303,9 @@ if($ele_type=='text') {
   } else {
     $options['subformelements'][0] = "";
   }
+  
+  // setup the UI for the subform conditions filter
+   $options['subformfilter'] = formulize_createFilterUI($ele_value[7], "subformfilter", $ele_value[0], "form-2");
 
 } elseif($ele_type == "grid") {
   $options['background'] = $ele_value[3];

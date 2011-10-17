@@ -38,7 +38,7 @@
 
 // also out there...
 // denosave_ which should be catalogued and then ignored
-// desubformX_ where X is 0 through n, a number indicating which of the subform blank default entries this was
+// desubformXxY_ where X is 0 through n, a number indicating which of the subform blank default entries this was, and Y is the element ID of the subform element that this blank came from, or 0 if it is not from an actual subform element (subforms will be drawn in by default at the end of the form whenever a framework/relationship is in effect, if no subform element involving that that subform has been drawn in the form already)
 // userprofile_ sent back when a user profile form is being displayed (because regcodes has been applied to the system)
 
 // proxy entries are indicated by the proxy entry box
@@ -100,8 +100,11 @@ foreach($_POST as $k=>$v) {
 		$elementObject = $element_handler->get($elementMetaData[3]);
 		$v = prepDataForWrite($elementObject, $v);
 		if(($v === "" OR $v === "{WRITEASNULL}") AND $elementMetaData[2] == "new") { continue; } // don't store blank values for new entries, we don't want to write those (if desubform is used only for blank defaults, then it will always be "new" but we'll keep this as is for now, can't hurt)
-		$blankSubformCounter = trim(substr($k, 9, 2), "_"); // grab up to two spaces after the "desubform" text, since that will have the unique identifier of this new entry (ie: which blank subform entry this value belongs to)
-		$formulize_elementData[$elementMetaData[1]][$elementMetaData[2].$blankSubformCounter][$elementMetaData[3]] = $v;
+		$subformElementKeyParts = explode("_", $k);
+		$subformMetaDataParts = explode("x",substr($subformElementKeyParts[0], 9)); // the blank counter, and the subform element id number will be separated by an x, at the end of the first part of the key in POST, ie: desubform9x231
+		$blankSubformCounter = $subformMetaDataParts[0];
+		$blankSubformElementId = $subformMetaDataParts[1];
+		$formulize_elementData[$elementMetaData[1]][$elementMetaData[2].$blankSubformCounter."x".$blankSubformElementId][$elementMetaData[3]] = $v;
 		if(!isset($formulize_subformBlankCues[$elementMetaData[1]])) {
 			$formulize_subformBlankCues[$elementMetaData[1]] = $elementMetaData[1]; // we will watch for entries being written to this form, and store the resulting entries in global space so we can synch them later
 		}
@@ -151,6 +154,7 @@ if(count($creation_users) == 0) { // no proxy users specified
 $formulize_newEntryIds = array();
 $formulize_newEntryUsers = array();
 $formulize_allWrittenEntryIds = array();
+$formulize_newSubformBlankElementIds = array();
 $notEntriesList = array();
 if(count($formulize_elementData) > 0 ) { // do security check if it looks like we're going to be writing things...
 	$cururl = getCurrentURL();
@@ -184,7 +188,12 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 
 	foreach($entryData as $currentEntry=>$values) { // for every entry in the form...
 		if(substr($currentEntry, 0 , 3) == "new") { // handle entries in the form that are new...if there is more than one new entry in a dataset, they will be listed as new1, new2, new3, etc
-			if(strlen($currentEntry) > 3) { $currentEntry = "new"; } // remove the number from the end of any new entry flags that have numbers
+			$subformElementId = 0;
+			if(strstr($currentEntry, "x")) {
+				$subformMetaDataParts = explode("x",$currentEntry);
+				$subformElementId = $subformMetaDataParts[1];
+			}
+			if(strlen($currentEntry) > 3) { $currentEntry = "new"; } // remove the number from the end of any new entry flags that have numbers, which will be subform blanks (and not anything else?)
 			foreach($creation_users as $creation_user) {
 				if(($creation_user == $uid AND $add_own_entry) OR ($creation_user != $uid AND $add_proxy_entries)) { // only proceed if the user has the right permissions
 					$writtenEntryId = formulize_writeEntry($values, $currentEntry, "", $creation_user, "", false); // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
@@ -194,12 +203,14 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 					$formulize_newEntryIds[$elementFid][] = $writtenEntryId; // log new ids (and all ids) and users for recording ownership info later
 					$formulize_newEntryUsers[$elementFid][] = $creation_user;
 					$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId;
+					$formulize_newSubformBlankElementIds[$elementFid][$writtenEntryId] = $subformElementId;
 					$notEntriesList['new_entry'][$elementFid][] = $writtenEntryId; // log the notification info
 					writeOtherValues($writtenEntryId, $elementFid); // write the other values for this entry
 					if($creation_user == 0) { // handle cookies for anonymous users
 						setcookie('entryid_'.$elementFid, $writtenEntryId, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)				
 						$_COOKIE['entryid_'.$elementFid] = $writtenEntryId;
 					}
+					afterSavingLogic($values, $writtenEntryId);
 				}
 			}
 		} else { // handle existing entries...
@@ -209,10 +220,14 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 				$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
 				$notEntriesList['update_entry'][$elementFid][] = $writtenEntryId; // log the notification info
 				writeOtherValues($writtenEntryId, $elementFid); // write the other values for this entry
+				afterSavingLogic($values, $writtenEntryId);
 			}
 		}
 	}
 }
+
+unset($GLOBALS['formulize_afterSavingLogicRequired']); // now that saving is done, we don't need this any longer, so clean up
+
 // set the ownership info of the new entries created...use a custom named handler, so we don't conflict with any other data handlers that might be using the more conventional 'data_handler' name, which can happen depending on the scope within which this file is included
 foreach($formulize_newEntryIds as $newEntryFid=>$entries){
 	$data_handler_for_owner_groups = new formulizeDataHandler($newEntryFid);
@@ -226,6 +241,7 @@ if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership
 	if(!$data_handler_for_owner_updating->setEntryOwnerGroups($updateOwnerNewOwnerId, $updateOwnerEntryId, true)) { // final true causes an update, instead of a normal setting of the groups from scratch.  Entry's creation user is updated too.
 		print "<b>Error: could not update the entry ownership information.  Please report this to the webmaster right away, including which entry you were trying to update.</b>";		
 	}
+	$data_handler_for_owner_updating->updateCaches($updateOwnerEntryId);
 }
 
 
@@ -271,9 +287,22 @@ $formulize_readElementsWasRun = true; // flag that will prevent this from runnin
 $GLOBALS['formulize_newEntryIds'] = $formulize_newEntryIds;
 $GLOBALS['formulize_newEntryUsers'] = $formulize_newEntryUsers;
 $GLOBALS['formulize_allWrittenEntryIds'] = $formulize_allWrittenEntryIds;
+$GLOBALS['formulize_newSubformBlankElementIds'] = $formulize_newSubformBlankElementIds;
 $GLOBALS['formulize_readElementsWasRun'] = $formulize_readElementsWasRun;
 
 return $formulize_allWrittenEntryIds;
+
+// this function handles triggering the after Saving Logic of custom elements after each entry is written to the database
+// values are the element handle->data value pairs that were written to the database
+// entry_id is the entry id that was just written to the database
+function afterSavingLogic($values,$entry_id) {
+	if(isset($GLOBALS['formulize_afterSavingLogicRequired'])) { // elements must declare at the prepDataForWrite stage if they have after saving logic required
+		foreach($GLOBALS['formulize_afterSavingLogicRequired'] as $elementId=>$thisAfterSavingRequestType) {
+			$elementTypeHandler = xoops_getmodulehandler($thisAfterSavingRequestType."Element", "formulize");
+			$elementTypeHandler->afterSavingLogic($values[$elementId],$elementId,$entry_id);
+		}
+	}
+}
 
 // this could be done a whole lot smarter, if we make a good way of figuring out if there's derived value elements in the form, and also if there are any formulas in the form/framework that use any of the elements that we have just saved values for
 // but that's a whole lot of inspection we're not going to do right now.

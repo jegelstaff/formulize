@@ -116,7 +116,7 @@
  });
 
 	$("div#filterdiv > a.conditionsdelete").click(function () {
-		$(".selectconditionsdelete").val($(this).attr('target'));
+		$(".optionsconditionsdelete").val($(this).attr('target'));
 		$("[name=reload_option_page]").val(1);
 	  $(".savebutton").click();
 		return false;

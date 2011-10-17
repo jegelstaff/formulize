@@ -1507,10 +1507,10 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 						$col = $cols[$i];
 						$colhandle = $settings['columnhandles'][$i];
 						print "<td $columnWidthParam class=\"$class\">\n";
-						if($col == "creation_uid") {
-							$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "creation_uid") . "\" target=_blank>" . displayMeta($entry, "creation_uid-name") . "</a>";
-						} elseif($col=="mod_uid") {
-							$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, "mod_uid") . "\" target=_blank>" . displayMeta($entry, "mod_uid-name") . "</a>";
+						if($col == "creation_uid" OR $col == "mod_uid") {
+							$userObject = $member_handler->getUser(display($entry, $col));
+							$nameToDisplay = $userObject->getVar('name') ? $userObject->getVar('name') : $userObject->getVar('uname');
+							$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, $col) . "\" target=_blank>" . $nameToDisplay . "</a>";
 						} else {
 							$value = display($entry, $col);
 						}
@@ -1535,6 +1535,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 							}
 							$GLOBALS['formulize_displayElement_LOE_Used'] = true;
 						} elseif(is_array($value)) {
+							
 							$counter = 1;
 							$countOfValue = count($value);
 							foreach($value as $valueId=>$v) {
@@ -2578,7 +2579,10 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
     return $value;    
   }
   if($handle == "uid" OR $handle=="proxyid" OR $handle == "creation_uid" OR $handle == "mod_uid") {
-    return displayMeta($value, "creation_uid-name");
+    $member_handler = xoops_gethandler('member');
+    $userObject = $member_handler->getUser(display($entry, $handle));
+    $nameToDisplay = $userObject->getVar('name') ? $userObject->getVar('name') : $userObject->getVar('uname');
+    return $nameToDisplay;
   }
   if($handle == "email" AND strstr($value, "@")) { // creator e-mail metadata field will be treated as having handle "email" in the calculation SQL, so we need this special condition
 	return $value;

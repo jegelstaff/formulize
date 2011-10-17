@@ -91,6 +91,7 @@ if($ele_type == "subform") {
   }
   $processedValues['elements']['ele_value'][1] = implode(",",$_POST['elements_ele_value_1']);
   $processedValues['elements']['ele_value'][6] = !isset($processedValues['elements']['ele_value'][6]) ? 'hideaddentries' : 1;
+  $processedValues = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete', $processedValues, 7); // post key, delete key, processedValues, ele_value key for conditions
 }
 
 if($ele_type == "radio") {
@@ -159,9 +160,9 @@ if($ele_type == "select") {
   }
   // then remove any that we need to
   
-  $conditionsDeleteParts = explode("_", $_POST['selectconditionsdelete']);
+  $conditionsDeleteParts = explode("_", $_POST['optionsconditionsdelete']);
   $deleteTarget = $conditionsDeleteParts[1];
-  if($_POST['selectconditionsdelete']) { 
+  if($_POST['optionsconditionsdelete']) { 
     // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
     // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
     $originalCount = count($_POST[$filter_key."_elements"]);
