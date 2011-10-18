@@ -245,15 +245,22 @@ class formulizeAdvancedCalculationHandler {
     $acid = $advCalcObject->getVar('acid');
 
     // check to see if there is already a cached version of the request
-    $newPost = unserialize( serialize( $_POST ) );
-    unset( $newPost['XOOPS_TOKEN_REQUEST'] );
-    unset( $newPost['formulize_cacheddata'] );
-    //print "<pre>"; var_export( $_POST ); var_export( $newPost ); var_export( $xoopsUser->getGroups() ); print "</pre>";
-    $key = md5( serialize( $newPost ) . serialize( $xoopsUser->getGroups() ) );
-    $fileName = XOOPS_ROOT_PATH."/cache/formulize_advancedCalculation_".$acid."_".$key.".php";
-    if( file_exists( $fileName ) ) {
-      // cached version found
-      return unserialize( file_get_contents( $fileName ) );
+    $module_handler =& xoops_gethandler('module');
+    $config_handler =& xoops_gethandler('config');
+    $formulizeModule =& $module_handler->getByDirname("formulize");
+    $formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+    $modulePrefUseCache = $formulizeConfig['useCache'];
+    if( $modulePrefUseCache ) {
+      $newPost = unserialize( serialize( $_POST ) );
+      unset( $newPost['XOOPS_TOKEN_REQUEST'] );
+      unset( $newPost['formulize_cacheddata'] );
+      //print "<pre>"; var_export( $_POST ); var_export( $newPost ); var_export( $xoopsUser->getGroups() ); print "</pre>";
+      $key = md5( serialize( $newPost ) . serialize( $xoopsUser->getGroups() ) );
+      $fileName = XOOPS_ROOT_PATH."/cache/formulize_advancedCalculation_".$acid."_".$key.".php";
+      if( file_exists( $fileName ) ) {
+        // cached version found
+        return unserialize( file_get_contents( $fileName ) );
+      }
     }
     // cached version was not found, so create it
 

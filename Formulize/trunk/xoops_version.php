@@ -424,6 +424,16 @@ $modversion['config'][] = array(
 	'default' => 1,
 );
 
+// control if caching is on or off
+$modversion['config'][] = array(
+	'name' => 'useCache',
+	'title' => '_MI_formulize_USECACHE',
+	'description' => '_MI_formulize_USECACHEDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 1,
+);
+
 //bloc
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",
