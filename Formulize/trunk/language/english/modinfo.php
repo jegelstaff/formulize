@@ -66,7 +66,7 @@ define("_MI_formulize_NUMBER_SEP", "By default, what punctuation should be used 
 define("_MI_formulize_HEADING_HELP_LINK", "Should the help link ([?]) appear at the top of each column in a list of entries?");
 define("_MI_formulize_HEADING_HELP_LINK_DESC", "This link provides a popup window that shows details about the question in the form, such as the full text of the question, the choice of options if the question is a radio button, etc.");
        
-define("_MI_formulize_USECACHE", "Use the cache to speed up data requests?");
+define("_MI_formulize_USECACHE", "Use caching to speed up Procedures?");
 define("_MI_formulize_USECACHEDESC", "By default, caching is on.");
 
 
