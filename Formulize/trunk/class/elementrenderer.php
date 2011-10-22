@@ -657,7 +657,7 @@ class formulizeElementRenderer{
 						$options[$okey] = formulize_swapUIText($ovalue, $this->_ele->getVar('ele_uitext'));
 					}
 					$form_ele1->addOptionArray($options);
-	
+
 					if($selected) {
 						if(is_array($selected)) {
 							$hiddenElementName = $ele_value[1] ? $form_ele1->getName()."[]" : $form_ele1->getName();
@@ -697,6 +697,7 @@ class formulizeElementRenderer{
               //$quotedText = "\"".str_replace("\"", "\\\"", trim($text))."\"";
               $quotedText = "\"".str_replace("\"", "\\\"", $text)."\"";
               fwrite($cachedOptions,"if(stristr($quotedText, \$term)){ \$found[]='[$quotedText,$id]'; }\n\r");
+
             }
             fwrite($cachedOptions, "?>");
             fclose($cachedOptions);
@@ -741,7 +742,13 @@ class formulizeElementRenderer{
 				if($isDisabled) {
 					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
 				}
-				
+
+        // this is a hack because the size attribute is private and only has a getSize and not a setSize, setting the size can only be done through the constructor
+        $count = count( $form_ele->getOptions() );
+        $size = $form_ele->_size;
+        $new_size = ( $count < $size ) ? $count : $size;
+        $form_ele->_size = $new_size;
+        //$form_ele->addOption('test', "size: " . $size . ", count: " . $count . ", new_size: " . $new_size );
 				
 			break;
 			
