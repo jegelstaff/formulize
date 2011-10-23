@@ -214,6 +214,8 @@ function microtime_float()
 
 function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $resultOnly=false, $filterElements=null, $cacheKey="") { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
      
+     
+     
      if($framework == "") { $framework = 0; } // we want to afirmatively make this a zero and not a null or anything else, for purposes of having consistent cacheKeys
      if(is_numeric($framework)) { $framework = intval($framework); } // further standardization, to make cachekeys work better....
      if(is_numeric($form)) { $form = intval($form); }
@@ -457,6 +459,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
          //     }
          //   }
          // }
+	 
+	 // NOTE: Oct 17 2011 -- since we are now splitting multiform queries into may different individual collections of entries, it may be possible to do what's suggested above more easily. However, we still need the full where clause at our disposal in the main query that gets the main form entry ids, or else we'll have an incorrect master list of entry ids to return.  :-(
+	 
          // ***********************
          
          if(isset($oneSideFilters[$fid])) {
@@ -617,35 +622,38 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
          
          // now, if there's framework in effect, get the entry ids of the entries in the main form that match the criteria, so we can use a specific query for them instead of the order clause in the master query
          $limitByEntryId = "";
+	 $useAsSortSubQuery = "";
          if($frid) {
               $limitByEntryId = " AND (";
               $entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id", $countMasterResults); // don't count the entries, select their id numbers
               if(!$sortIsOnMain) {
 										$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
-										if($sortFieldMetaData['ele_encrypt']) {
 										$sortFormObject = $form_handler->get($sortFid);
-												 $entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT (SELECT AES_DECRYPT(`$sortField`, '".getAESPassword()."') FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. ") as usethissort, main.entry_id as main_entry_id ", $entryIdQuery); // sorts as text which will screw up number fields
+										if($sortFieldMetaData['ele_encrypt']) {
+										     $useAsSortSubQuery = "(SELECT max(AES_DECRYPT(`$sortField`, '".getAESPassword()."')) as subsort FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. " ORDER BY subsort $sortOrder) as usethissort";
 										} else {
-												 $entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT (SELECT `$sortField` FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. ") as usethissort, main.entry_id as main_entry_id ", $entryIdQuery);
+										     $useAsSortSubQuery = "(SELECT max(`$sortField`) as subsort FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. " ORDER BY subsort $sortOrder) as usethissort";
 										}
-		                $thisOrderByClause = " ORDER BY usethissort ";
+										$entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT $useAsSortSubQuery, main.entry_id as main_entry_id ", $entryIdQuery); // sorts as text which will screw up number fields
+										
+		                $thisOrderByClause = " ORDER BY usethissort $sortOrder ";
               } else {
                  $thisOrderByClause = $orderByClause;
               }
               $entryIdQuery .= " $thisOrderByClause $limitClause";
-              $entryIdResult = $xoopsDB->query($entryIdQuery);
-              $start = true;
-              while($entryIdValue = $xoopsDB->fetchArray($entryIdResult)) {
-                    $limitByEntryId .= !$start ? " OR " : "";
-                    $limitByEntryId .= "main.entry_id = " . $entryIdValue['main_entry_id'];
-                    $start = false;
-              }
-              $limitByEntryId .= ") ";
-	      if(!$start) {
-		    $limitClause = ""; // nullify the existing limitClause since we don't want to use it in the actual query 
-	      } else {
-		    $limitByEntryId = "";
-	      }
+	       $entryIdResult = $xoopsDB->query($entryIdQuery);
+	       $start = true;
+	       while($entryIdValue = $xoopsDB->fetchArray($entryIdResult)) {
+		     $limitByEntryId .= !$start ? " OR " : "";
+		     $limitByEntryId .= "main.entry_id = " . $entryIdValue['main_entry_id'];
+		     $start = false;
+	       }
+	       $limitByEntryId .= ") ";
+	       if(!$start) {
+			$limitClause = ""; // nullify the existing limitClause since we don't want to use it in the actual query 
+	       } else {
+			$limitByEntryId = "";
+	       }
               
          }         
 
@@ -673,17 +681,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
       $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect";
     }
 
-     if(count($linkformids)>1) { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
-	  // so let's build a temp table with the unique entry ids in the forms that we care about, and then query each linked form separately for its records, so that we end up processing as few result rows as possible
-	  $selectClauseToUse = "INSERT INTO ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP SELECT DISTINCT(main.entry_id)";
-     } else {
-	  $selectClauseToUse = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail";
-     }
-     $masterQuerySQL = "$selectClauseToUse FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";     
 
     // if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
     // note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
-    $oneSideSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested.
+    // NOTE: Oct 17 2011 - the $oneSideSQL is also used when there are multiple linked subforms, since the exists structure is efficient compared to multiple joins
+    $oneSideSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
     $oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
     if(count($oneSideFilters[$fid])>0) {
        foreach($oneSideFilters[$fid] as $thisOneSideFilter) {
@@ -691,24 +693,45 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
        }
     }
     $oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
-    
-	  $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
-		$GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
-    $GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
-    if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
-	  $GLOBALS['formulize_queryForExport'] = "$selectClauseToUse FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";     
+
+
+     $restOfTheSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";     
+     if(count($linkformids)>1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
+       if(!$sortIsOnMain) {
+	    $orderByToUse = " ORDER BY usethissort $sortOrder ";
+	    $useAsSortSubQuery = " @rownum:=@rownum+1, $useAsSortSubQuery,"; // need to add a counter as the first field, used as the master sorting key
+       } else {
+	    $orderByToUse = $orderByClause;
+	    $useAsSortSubQuery = "  @rownum:=@rownum+1, "; // need to add a counter as the first field, used as the master sorting key
+       }
+       $oneSideSQLToUse = str_replace(" AS main $userJoinText"," AS main JOIN (SELECT @rownum := 0) as r $userJoinText",$oneSideSQL); // need to add the initialization of the rownum, which is what we use as the master sorting key
+       $masterQuerySQL = "SELECT $useAsSortSubQuery main.entry_id $oneSideSQLToUse $limitByEntryId $orderByToUse $limitClause";
+       if(!$resultOnly) {
+	    // so let's build a temp table with the unique entry ids in the forms that we care about, and then query each linked form separately for its records, so that we end up processing as few result rows as possible
+	    $masterQuerySQL = "INSERT INTO ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQL ";	     
+       }
+     } else { 
+	  $masterQuerySQL = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail $restOfTheSQL";
+     }
+     
+
+     $GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
+     $GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
+     $GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
+     if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
+	  $GLOBALS['formulize_queryForExport'] = $masterQuerySQL; // "$selectClauseToUse FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";     
      
 	  //$masterQuerySQL = "SELECT * FROM " . DBPRE . "formulize_$fid LIMIT 0,1";
 	  //$afterQueryTime = microtime_float();
      
-     } else { // end of if the filter has a SELECT in it
+  } else { // end of if the filter has a SELECT in it
 	  if(strstr($filter," -- SEPARATOR FOR EXPORT QUERIES -- ")) {
 	       $exportOverrideQueries = explode(" -- SEPARATOR FOR EXPORT QUERIES -- ",$filter);
 	       $masterQuerySQL = $exportOverrideQueries[0];
 	  } else {
 	       $masterQuerySQL = $filter; // need to split this based on some separator, because export ends up passing in a series of statements     
 	  }
-     }
+  }
      /*global $xoopsUser;
      if($xoopsUser->getVar('uid') == 4613) {
           $queryTime = $afterQueryTime - $beforeQueryTime;
@@ -727,12 +750,18 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
 		 formulize_benchmark("Before query");
 
-     if(count($linkformids)>1) { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
+     if(count($linkformids)>1) { // AND $dummy=="never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
+	  
          if($resultOnly) {
-	       $masterQueryRes = $xoopsDB->query(str_replace($selectClauseToUse, "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail", $masterQuerySQL));
+	       $masterQueryRes = $xoopsDB->query($masterQuerySQL);
 	 } else {
-	         $timestamp = str_replace(".","",microtime(true));		    
-                 $createTableRes = $xoopsDB->queryF("CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `entry_id` BIGINT(11), INDEX i_entry_id (`entry_id`) ) TYPE=MyISAM;");
+	         $timestamp = str_replace(".","",microtime(true));
+		 if(!$sortIsOnMain) {
+		    $creatTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `throwaway_sort_values` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) TYPE=MyISAM;"; // when the sort is not on the main form, then we are including a special field in the select statement that we sort it by, so that the order is correct, and so it has to have a place to get inserted here
+		 } else {
+		    $creatTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) TYPE=MyISAM;";
+		 }
+		 $createTableRes = $xoopsDB->queryF($creatTableSQL);
 		 $gatherIdsRes = $xoopsDB->queryF(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$masterQuerySQL));
 		 $linkQueryRes = array();
 	         if(isset($exportOverrideQueries[1])) {
@@ -740,6 +769,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 			 $linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$exportOverrideQueries[$i]));
 		    }
 		 } else {
+		    // FURTHER OPTIMIZATIONS ARE POSSIBLE HERE...WE COULD NOT INCLUDE THE MAIN FORM AGAIN IN ALL THE SELECTS, THAT WOULD IMPROVE THE PROCESSING TIME A BIT, BUT WE WOULD HAVE TO CAREFULLY REFACTOR MORE OF THE LOOPING CODE BELOW THAT PARSES THE ENTRIES, BECAUSE RIGHT NOW IT'S ASSUMING THE FULL MAIN ENTRY IS PRESENT.  AT LEAST THE MAIN ENTRY ID WOULD NEED TO STILL BE USED, SINCE WE USE THAT TO SYNCH UP ALL THE ENTRIES FROM THE OTHER FORMS.
 		    foreach($linkformids as $linkId=>$thisLinkFid) {
 			  
 			  $linkQuery = "SELECT
@@ -749,7 +779,17 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
    .DBPRE."formulize_" . $formObject->getVar('form_handle') . " AS main
    LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
    LEFT JOIN ".$joinTextTableRef[$thisLinkFid] . $joinTextIndex[$thisLinkFid]."
-    WHERE main.entry_id IN (SELECT entry_id FROM ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP) $orderByClause";
+   INNER JOIN ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
+			 $start = true;
+			 foreach($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
+			      if(!$start) {
+				   $linkQuery .= " AND ( $thisOneSideFilter ) ";
+			      } else {
+				   $linkQuery .= " WHERE ( $thisOneSideFilter ) ";
+				   $start = false;
+			      }
+			 }
+			 $linkQuery .= " ORDER BY sort_and_limit_table.mastersort";
 			  $linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery));
 			  $GLOBALS['formulize_queryForExport'] .= " -- SEPARATOR FOR EXPORT QUERIES -- ".$linkQuery;
 		    }
@@ -797,8 +837,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
           print "Error: could not check to see if there were derived value elements in one or more forms.  SQL:<br>$sql";
      }     
 
-
-     if(count($linkformids)>1) {
+     if(count($linkformids)>1) { // AND $dummy == "never") {
 	  
 	  // this is a refactoring of the original code that is in the else part of this structure.
 	  // it's virtually the same, except for the part that sets the $masterIndexer, since we will need to reuse masterindex positions when parsing subsequent queries, so we don't just increment the $masterIndexer
@@ -814,7 +853,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  $writtenMains = array();
 	  $masterQueryArrayIndex = array();
 
-	  foreach($linkQueryRes as $thisRes) {
+	  foreach($linkQueryRes as $thisRes) {     
 	  
 	       // loop through the found data and create the dataset array in "getData" format
 	       $prevFieldNotMeta = true;
@@ -822,7 +861,6 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       $prevMainId = "";
 	       
 	       while($masterQueryArray = $xoopsDB->fetchArray($thisRes)) {
-		    $loopCounter++;
 		    foreach($masterQueryArray as $field=>$value) {
 			 if($field == "entry_id" OR $field == "creation_uid" OR $field == "mod_uid" OR $field == "creation_datetime" OR $field == "mod_datetime" OR $field == "main_email" OR $field == "main_user_viewemail") { continue; } // ignore those plain fields, since we can only work with the ones that are properly aliased to their respective tables.  More details....Must refer to metadata fields by aliases only!  since * is included in SQL syntax, fetch_assoc will return plain column names from all forms with the values from those columns.....Also want to ignore the email fields, since the fact they're prefixed with "main" can throwoff the calculation of which entry we're currently writing
 			 if(strstr($field, "creation_uid") OR strstr($field, "creation_datetime") OR strstr($field, "mod_uid") OR strstr($field, "mod_datetime")) {
@@ -936,7 +974,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  $prevMainId = "";
 		      //formulize_benchmark("About to prepare results.");
 	  while($masterQueryArray = $xoopsDB->fetchArray($masterQueryRes)) {
-					     //formulize_benchmark("Starting to process one entry.");
+	     //formulize_benchmark("Starting to process one entry.");
 	       foreach($masterQueryArray as $field=>$value) {
 		    //formulize_benchmark("Starting to process one value");
 		    if($field == "entry_id" OR $field == "creation_uid" OR $field == "mod_uid" OR $field == "creation_datetime" OR $field == "mod_datetime" OR $field == "main_email" OR $field == "main_user_viewemail") { continue; } // ignore those plain fields, since we can only work with the ones that are properly aliased to their respective tables.  More details....Must refer to metadata fields by aliases only!  since * is included in SQL syntax, fetch_assoc will return plain column names from all forms with the values from those columns.....Also want to ignore the email fields, since the fact they're prefixed with "main" can throwoff the calculation of which entry we're currently writing

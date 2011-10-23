@@ -30,6 +30,8 @@
 // TO SEE THIS ELEMENT IN ACTION, RENAME THE FILE TO dummyElement.php
 // There is a corresponding admin template for this element type in the templates/admin folder
 
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
+
 class formulizeDummyElement extends formulizeformulize {
     
     var $needsDataType;
