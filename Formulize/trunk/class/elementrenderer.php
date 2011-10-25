@@ -766,11 +766,13 @@ class formulizeElementRenderer{
 				}
 
         // this is a hack because the size attribute is private and only has a getSize and not a setSize, setting the size can only be done through the constructor
-        $count = count( $form_ele->getOptions() );
-        $size = $form_ele->_size;
-        $new_size = ( $count < $size ) ? $count : $size;
-        $form_ele->_size = $new_size;
-        //$form_ele->addOption('test', "size: " . $size . ", count: " . $count . ", new_size: " . $new_size );
+	if($ele_value[8] == 0) { // autocomplete boxes are entirely different, so skip this for autocompletes (ele_value[8] will be 1 in that case)
+	        $count = count( $form_ele->getOptions() );
+	        $size = $form_ele->_size;
+	        $new_size = ( $count < $size ) ? $count : $size;
+	        $form_ele->_size = $new_size;
+	        //$form_ele->addOption('test', "size: " . $size . ", count: " . $count . ", new_size: " . $new_size );
+	}
 				
 			break;
 			
