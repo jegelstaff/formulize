@@ -47,7 +47,7 @@ if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $s
 $op = $_GET['op'];
 
 // validate op
-if($op != "check_for_unique_value" AND $op != "get_element_option_list" AND $op != 'delete_uploaded_file') {
+if($op != "check_for_unique_value" AND $op != "get_element_option_list" AND $op != 'delete_uploaded_file' AND $op != 'get_element_html' AND $op != 'get_element_value') {
   exit();
 }
 
@@ -103,6 +103,23 @@ switch($op) {
       $data_handler->writeEntry($entry_id, array($elementObject->getVar('ele_handle')=>''), false, true); // erase the recorded values for this file in the database, false is proxy user, true is force update (on a GET request)
       print $element_id;
     }
+    break;
+  case 'get_element_html':
+    include_once XOOPS_ROOT_PATH."/modules/formulize/include/elementdisplay.php";
+    displayElement("", mysql_real_escape_string($_GET['param1']), intval($_GET['param2']));
+    break;
+  case 'get_element_value':
+    $handle = $_GET['param1'];
+    $entryId = intval($_GET['param2']);
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+    $element_handler = xoops_getmodulehandler('elements','formulize');
+    $elementObject = $element_handler->get(mysql_real_escape_string($handle));
+    $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
+    $dbValue = $data_handler->getElementValueInEntry($entryId,$handle);
+    $preppedValue = prepvalues($dbValue,$handle,$entryId);
+    print getHTMLForList($preppedValue,$handle,$entryId,1);// 1 is a flag to include the icon for switching to an editable element
     break;
 }
 

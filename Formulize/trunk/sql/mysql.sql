@@ -86,6 +86,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `usesearchcalcmsgs` tinyint(1) NOT NULL,
   `hiddencolumns` text NOT NULL,
   `decolumns` text NOT NULL,
+  `dedisplay` int(1) NOT NULL,
   `desavetext` varchar(255) NOT NULL default '',
   `columnwidth` int(1) NOT NULL,
   `textwidth` int(1) NOT NULL,

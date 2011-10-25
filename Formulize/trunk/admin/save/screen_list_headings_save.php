@@ -71,6 +71,7 @@ $screen->setVar('usecheckboxes',$screens['usecheckboxes']);
 $screen->setVar('useviewentrylinks',(array_key_exists('useviewentrylinks',$screens))?$screens['useviewentrylinks']:0);
 $screen->setVar('hiddencolumns',$screens['hiddencolumns']);
 $screen->setVar('decolumns',$screens['decolumns']);
+$screen->setVar('dedisplay',$screens['dedisplay']);
 $screen->setVar('desavetext',$screens['desavetext']);
 
 if(!$screen_handler->insert($screen)) {

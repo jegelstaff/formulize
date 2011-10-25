@@ -52,6 +52,8 @@
 
 if(isset($formulize_readElementsWasRun)) { return false; } // intended to make sure this file is only executed once.
 
+include_once "../../../mainfile.php"; // include this if it hasn't been already!  -- we can call readelements.php directly when saving data via ajax
+
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 // if we're being called from pageworks, or elsewhere, then certain values won't be set so we'll need to check for them in other ways...

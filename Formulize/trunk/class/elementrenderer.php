@@ -452,13 +452,35 @@ class formulizeElementRenderer{
 						$conditionsfilter_oom .= $conditionsfilter_oom ? ")" : "";
 					} 
 
+					// if there is a restriction in effect, then add some SQL to reject options that have already been selected ??
+					$restrictSQL = "";
+					if($ele_value[9]) {
+						$restrictSQL = " AND NOT EXISTS (SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id != ".intval($entry);
+						switch($ele_value[9]) {
+							case 2:
+								$restrictSQL .= " AND t4.`creation_uid` = ";
+								$restrictSQL .= $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+								break;
+							case 3:
+								$gperm_handler =& xoops_gethandler('groupperm');
+								$groupsThatCanView = $gperm_handler->getGroupIds("view_form", $id_form, getFormulizeModId());
+								$groupsToLimitBy = array_intersect($groups, $groupsThatCanView);
+								$restrictSQL .= " AND EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t5 WHERE t5.groupid IN (".implode(", ",$groupsToLimitBy).") AND t5.fid=$id_form AND t5.entry_id=t4.entry_id) ";
+								break;
+						}
+						$restrictSQL .= " )";
+					}
+					
+
+
+
 					static $cachedSourceValuesQ = array();
 					static $cachedSourceValuesAutocompleteFile = array();
 
 					if($pgroupsfilter) { // if there is a groups filter, then join to the group ownership table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 $parentFormFrom WHERE $pgroupsfilter $conditionsfilter $conditionsfilter_oom GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
+						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 $parentFormFrom WHERE $pgroupsfilter $conditionsfilter $conditionsfilter_oom $restrictSQL GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
 					} else { // otherwise just query the source table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1 $parentFormFrom WHERE t1.entry_id>0 $conditionsfilter $conditionsfilter_oom GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
+						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1 $parentFormFrom WHERE t1.entry_id>0 $conditionsfilter $conditionsfilter_oom $restrictSQL GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
 					}
 					//print "$sourceValuesQ<br><br>";
 					if(!$isDisabled) {

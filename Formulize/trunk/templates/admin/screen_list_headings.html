@@ -14,8 +14,6 @@
   <fieldset>
     <legend>Options for the headings and interface elements of the list</legend>
 
-    
-
     <div class="form-item">
       <label for="screens-useheadings"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USEHEADINGS}></label>
 			<div class="form-radios">
@@ -97,13 +95,32 @@
 	    </select>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_HIDDENCOLUMNS}></div>
     </div>
-    <div class="form-item">
+  </fieldset>
+</div>
+
+<div class="panel-content content">
+  <fieldset>
+    <legend>Options for columns where you would like the data displayed as a form element</legend>
+
+   <div class="form-item">
       <label for="screens-decolumns"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DECOLUMNS}></label>
-	    <select id="screens-decolumns[]" name="screens-decolumns[]" size="10" multiple>
+      <select id="screens-decolumns[]" name="screens-decolumns[]" size="10" multiple>
         <{html_options options=$content.elementoptions selected=$content.decolumns}>
-	    </select>
+      </select>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_DECOLUMNS}></div>
     </div>
+
+    <div class="form-item">
+      <label for="screens-dedisplay">How should the form elements be displayed?</label>
+      <div class="form-radios">
+	      <label for="0"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq 0}> checked="checked"<{/if}> value="0"/>Display them all at once when the list loads</label>
+      </div>
+      <div class="form-radios">
+	      <label for="1"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq 1}> checked="checked"<{/if}> value="1"/>Display them when the user clicks an icon to activate them</label>
+      </div>
+      <div class="description"></div>
+    </div>
+
     <div class="form-item">
       <label for="screens-desavetext"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESAVETEXT}></label>
       <input type="text" id="screens-desavetext" name="screens-desavetext" value="<{$content.desavetext}>" size="20" maxlength="255"/>

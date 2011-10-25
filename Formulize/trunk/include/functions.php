@@ -4297,6 +4297,7 @@ function removeNotApplicableRequireds($type, $req) {
   return false;
 }
 
+
 // used to handle filter conditions being saved in the admin UI
 // returns $processedValues with the conditions values properly structured
 // $filter_key is the name of this conditions UI's values in POST
@@ -4451,4 +4452,100 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
 	  }
   }
   return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
+}
+// this function simply draws in the necessary xhr javascript that is used in forms sometimes, and in lists of entries sometimes
+function drawXhrJavascript() {
+global $xoopsUser;
+// added xhr function Jan 5 2010
+?>
+function initialize_formulize_xhr() {
+	if (window.XMLHttpRequest) {
+		formulize_xhr = new XMLHttpRequest();
+	} else if (window.ActiveXObject) {
+		try {
+			formuilze_xhr = 
+				new ActiveXObject("Msxml2.XMLHTTP");
+		} catch (ex) {
+			try {
+				formulize_xhr = 
+				 new ActiveXObject("Microsoft.XMLHTTP");
+			} catch (ex) {
+			}
+		}
+	}
+}
+
+function formulize_xhr_return(op,params,response) {
+	// check that this is a valid operation we know how to handle
+	if(op == 'check_for_unique_value') {
+		formulize_xhr_returned_check_for_unique_value = response;
+		validateAndSubmit();
+	} else if(op == 'get_element_html') {
+		return renderElementHtml(response,params);
+	} else if(op == 'get_element_value') {
+		return renderElementNewValue(response,params);
+	} else {
+		return false;
+	}
+}
+
+function formulize_xhr_send(op,params) {
+	
+  // check that this is a valid operation we know how to handle
+  if(op != 'check_for_unique_value' && op != 'get_element_html' && op != 'get_element_value') {
+	  return true;
+  }
+  // unpack the parameters
+  var key;
+  key = 1;
+  var params_for_uri;
+  params_for_uri = '';
+  params.forEach(function(i) {
+  	params_for_uri += 'param' + key + '=' + encodeURIComponent(i) + '&';
+	key++;
+  });
+  formulize_xhr.open("GET", '<?php print XOOPS_URL . "/modules/formulize/formulize_xhr_responder.php?"; ?>'+params_for_uri+'op='+op+'&uid=<?php print $xoopsUser ? $xoopsUser->getVar('uid') : 0; ?>', true);
+  formulize_xhr.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
+  formulize_xhr.onreadystatechange = function() {
+	//alert(formulize_xhr.readyState); 
+	if(formulize_xhr.readyState == 4) {
+		//alert(formulize_xhr.responseText); 
+		formulize_xhr_return(op,params,formulize_xhr.responseText);
+	}
+  }
+  formulize_xhr.send(null);
+}
+<?php
+
+}
+
+// this function takes a value from the database that has gone through prepvalues (so it's ready for a dataset or already part of a dataset), and makes the display HTML for a list of entries
+// we're kind of hacking this...assuming textWidth will be 200 in cases where we don't have it passed in.  With more acrobatics we could get the real text width as specified in the screen, but for columns that are rendered as elements, this is probably an OK compromise
+// deDisplay is a flag to control whether the icon for switching an element to editable mode should be present or not
+// localIds is an array of ids that will match the order of the values in the array...used to get the id for a subform entry that is being displayed in the list
+function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array()) {
+	$output = "";
+	if(!is_array($value)) {
+		$value = array($value);
+	}
+	$countOfValue = count($value);
+	$counter = 1;
+	foreach($value as $valueId=>$v) { 
+		if(is_numeric($v)) { // Added by Steph, April 11, 2011
+			$elstyle = 'style="text-align: right;"';
+		}
+		$thisEntryId = isset($localIds[$valueId]) ? $localIds[$valueId] : $entryId;
+		$output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle). '</span>';
+		if($counter<$countOfValue) {
+			$output .= ",";
+		}
+		if($counter == 1 AND $deDisplay) {
+			$output .= ' <a href="" onclick="javascript:renderElement(\''.$handle.'\', '.$thisEntryId.');return false;"><img src="'.XOOPS_URL.'/modules/formulize/images/kedit.gif" /></a>';
+		}
+		if($counter<$countOfValue) {
+			$output .= "<br>";
+		}
+		$counter++;
+	}
+	return $output;
 }

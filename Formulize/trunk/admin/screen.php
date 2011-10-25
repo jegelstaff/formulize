@@ -216,6 +216,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   $headings['elementoptions'] = $elementOptions;
   $headings['hiddencolumns'] = $screen->getVar('hiddencolumns');
   $headings['decolumns'] = $screen->getVar('decolumns');
+  $headings['dedisplay'] = $screen->getVar('dedisplay');
   $headings['desavetext'] = $screen->getVar('desavetext');
 
   // buttons data

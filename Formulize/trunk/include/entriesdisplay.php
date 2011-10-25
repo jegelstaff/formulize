@@ -1197,7 +1197,14 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	// forcequery value, perpetuates from pageload to pageload
 	print "<input type=hidden name=forcequery id=forcequery value=\"" .intval($_POST['forcequery']) . "\"></input>\n";
 
-	interfaceJavascript($fid, $frid, $currentview, $useWorking); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
+	$useXhr = false;
+	if($screen) {
+		if($screen->getVar('dedisplay')) {
+			$useXhr = true;
+		}
+	}
+
+	interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
 
 	$returnArray = array();
 	$returnArray[0] = $buttonCodeArray; // send this back so it's available in the bottom template if necessary.  MUST USE NUMERICAL KEYS FOR list TO WORK ON RECEIVING END.
@@ -1243,6 +1250,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 		$useSearch = $screen->getVar('usesearch');
 		$hiddenColumns = $screen->getVar('hiddencolumns');
 		$deColumns = $screen->getVar('decolumns');
+		$deDisplay = $screen->getVar('dedisplay');
 		$useSearchCalcMsgs = $screen->getVar('usesearchcalcmsgs');
 		$listTemplate = $screen->getVar('listtemplate');
 		foreach($screen->getVar('customactions') as $caid=>$thisCustomAction) {
@@ -1524,45 +1532,31 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 										foreach($entryElements as $entryHandle=>$values) {
 											if($entryHandle == $col) { // we found the element that we're trying to display
 												if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
-												displayElement("", $colhandle, $internalID);
+												if($deDisplay) {
+													print '<div id="deDiv_'.$colhandle.'_'.$internalID.'">';
+													print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth);
+													print "</div>";
+												} else {
+													displayElement("", $colhandle, $internalID);
+												}
 												$deThisIntId = true;
 											}
 										}
 									}
 								}
 							} else { // display based on the mainform entry id
-								displayElement("", $colhandle, $linkids[0]); // works for mainform only!  To work on elements from a framework, we need to figure out the form the element is from, and the entry ID in that form, which is done above
+								if($deDisplay) {
+									print '<div id="deDiv_'.$colhandle.'_'.$linkids[0].'">';
+									print getHTMLForList($value,$colhandle,$linkids[0], $deDisplay, $textWidth);
+									print "</div>";
+								} else {
+									displayElement("", $colhandle, $linkids[0]); // works for mainform only!  To work on elements from a framework, we need to figure out the form the element is from, and the entry ID in that form, which is done above
+								}
 							}
 							$GLOBALS['formulize_displayElement_LOE_Used'] = true;
-						} elseif(is_array($value)) {
-							
-							$counter = 1;
-							$countOfValue = count($value);
-							foreach($value as $valueId=>$v) {
-								// Added by Steph, April 11, 2011
-								if(is_numeric($value)) {
-									$elstyle = 'style="text-align: right;"';
-								}
-								if($counter<$countOfValue) {
-									// Modified by Steph, April 11, 2011
-									// print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col) . ',</div><br>';
-									print '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col) . ',</span><br>';
-								} else {
-									// Modified by Steph, April 11, 2011
-									//print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col). '</div>';
-									print '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $col, $textWidth, $currentColumnLocalId[$valueId])), $col). '</span>';
-								}
-								$counter++;
-							}
 						} elseif($col != "creation_uid" AND $col!= "mod_uid") {
-							// Added by Steph, April 11, 2011
-							if(is_numeric($value)) {
-								$elstyle = 'style="text-align: right;"';
-							}
-							// Modified by Steph, April 11, 2011
-							//print '<div style="float: right;">' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $textWidth, $currentColumnLocalId)), $col). '</div>';
-							print '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($value, $col, $textWidth, $currentColumnLocalId)), $col). '</span>';
-						} else { // don't use printsmart for the special uid cells
+							print getHTMLForList($value, $col, $linkids[0], 0, $textWidth, $currentColumnLocalId);
+						} else { // no special formatting on the uid columns:
 							print $value;
 						}
 						
@@ -2952,9 +2946,82 @@ function evalAdvSearch($entry, $handle, $op, $term) {
 
 // this function includes the javascript necessary make the interface operate properly
 // note the mandatory clearing of the ventry value upon loading of the page.  Necessary to make the back button work right (otherwise ventry setting is retained from the previous loading of the page and the form is displayed after the next submission of the controls form)
-function interfaceJavascript($fid, $frid, $currentview, $useWorking) {
+function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr) {
 ?>
 <script type='text/javascript'>
+
+<?php
+if($useXhr) {
+	print " initialize_formulize_xhr();\n";
+	drawXhrJavascript();
+	print "</script>";
+	print "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-1.4.2.min.js\"></script>\n";
+	print "<script type='text/javascript'>";
+	print "var elementStates = new Array();";
+	print "var savingNow = \"\";";
+	print "var elementActive = \"\";";
+?>
+function renderElement(handle,entryId,check) {
+	if(elementStates[handle] == undefined) {
+		elementStates[handle] = new Array();
+	}
+	if(elementStates[handle][entryId] == undefined) {
+		if(elementActive) {
+			// this is a bit cheap...we should be able to track multiple elements open at once.  But there seem to be race condition issues in the asynchronous requests that we have to track down.  This UI restriction isn't too bad though.
+			alert("You need to close the form element that is open first, before you can edit this one.");
+			return false;
+		}
+		elementActive = true;
+		elementStates[handle][entryId] = jQuery("#deDiv_"+handle+"_"+entryId).html();
+		var formulize_xhr_params = [];
+		formulize_xhr_params[0] = handle;
+		formulize_xhr_params[1] = entryId;
+		formulize_xhr_send('get_element_html',formulize_xhr_params);
+	} else {
+		if(check && savingNow == "") {
+			savingNow = true;
+			jQuery.post("<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php", jQuery("#deForm_"+handle+"_"+entryId).serialize(), function(data) {
+				if(data) {
+				   alert(data);	
+				} else {
+					// need to get the current value, and then prep it, and then format it
+					jQuery("#deForm_"+handle+"_"+entryId).fadeTo("fast",0.33);
+					var formulize_xhr_params = [];
+					formulize_xhr_params[0] = handle;
+					formulize_xhr_params[1] = entryId;
+					formulize_xhr_send('get_element_value',formulize_xhr_params);
+				}
+			});
+		} else if(check) {
+			// do nothing...only allow one saving operation at a time
+		} else {
+			jQuery("#deDiv_"+handle+"_"+entryId).html(elementStates[handle][entryId]);
+			elementStates[handle].splice(entryId, 1);
+			elementActive = "";
+		}
+	}
+}
+
+function renderElementHtml(elementHtml,params) {
+	handle = params[0];
+	entryId = params[1];
+	jQuery("#deDiv_"+handle+"_"+entryId).html("<form id=\"deForm_"+handle+"_"+entryId+"\">"+elementHtml+"<br /><a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+entryId+",1);return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/check.gif\" /></a>&nbsp;&nbsp;&nbsp;<a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+entryId+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/x-wide.gif\" /></a></form>");
+}
+
+function renderElementNewValue(elementValue,params) {
+	handle = params[0];
+	entryId = params[1];
+	jQuery("#deForm_"+handle+"_"+entryId).fadeTo("fast",1);
+	jQuery("#deDiv_"+handle+"_"+entryId).html(elementValue);
+	elementStates[handle].splice(entryId, 1);
+	savingNow = "";
+	elementActive = "";
+}
+
+<?php	
+}
+?>
+
 
 window.document.controls.ventry.value = '';
 window.document.controls.loadreport.value = '';
@@ -3568,7 +3635,7 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	}
 
 	// if there is no save button specified in either of the templates, but one is available, then put it in below the list
-	if($type == "bottom" AND count($screen->getVar('decolumns')) > 0 AND $GLOBALS['formulize_displayElement_LOE_Used'] AND !strstr($screen->getVar('toptemplate'), 'saveButton') AND !strstr($screen->getVar('bottomtemplate'), 'saveButton')) {
+	if($type == "bottom" AND count($screen->getVar('decolumns')) > 0 AND !$screen->getVar('dedisplay') AND $GLOBALS['formulize_displayElement_LOE_Used'] AND !strstr($screen->getVar('toptemplate'), 'saveButton') AND !strstr($screen->getVar('bottomtemplate'), 'saveButton')) {
 		print "<p>$saveButton</p>\n";
 	}
 	
