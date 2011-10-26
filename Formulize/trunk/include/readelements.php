@@ -157,6 +157,7 @@ $formulize_newEntryIds = array();
 $formulize_newEntryUsers = array();
 $formulize_allWrittenEntryIds = array();
 $formulize_newSubformBlankElementIds = array();
+$formulize_allWrittenFids = array();
 $notEntriesList = array();
 if(count($formulize_elementData) > 0 ) { // do security check if it looks like we're going to be writing things...
 	$cururl = getCurrentURL();
@@ -206,6 +207,9 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 					$formulize_newEntryUsers[$elementFid][] = $creation_user;
 					$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId;
 					$formulize_newSubformBlankElementIds[$elementFid][$writtenEntryId] = $subformElementId;
+					if(!isset($formulize_allWrittenFids[$elementFid])) {
+						$formulize_allWrittenFids[$elementFid] = $elementFid;
+					}
 					$notEntriesList['new_entry'][$elementFid][] = $writtenEntryId; // log the notification info
 					writeOtherValues($writtenEntryId, $elementFid); // write the other values for this entry
 					if($creation_user == 0) { // handle cookies for anonymous users
@@ -220,6 +224,9 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 			if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND ($update_other_entries OR ($update_own_entry AND $oneEntryPerGroupForm)))) { // only proceed if the user has the right permissions
 				$writtenEntryId = formulize_writeEntry($values, $currentEntry);
 				$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
+				if(!isset($formulize_allWrittenFids[$elementFid])) {
+					$formulize_allWrittenFids[$elementFid] = $elementFid;
+				}
 				$notEntriesList['update_entry'][$elementFid][] = $writtenEntryId; // log the notification info
 				writeOtherValues($writtenEntryId, $elementFid); // write the other values for this entry
 				afterSavingLogic($values, $writtenEntryId);
@@ -255,21 +262,50 @@ if($fid) {
 	$mainFormHasDerived = array_search("derived", $mainFormObject->getVar('elementTypes'));
 }
 $mainFormEntriesUpdatedForDerived = array();
+$formsUpdatedInFramework = array();
+// check all the entries that were written...
 foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
+	$derivedValueFound = false;
 	$formObject = $form_handler->get($allWrittenFid);
 	if(array_search("derived", $formObject->getVar('elementTypes'))) { // only bother if there is a derived value in the form
-		foreach($entries as $thisEntry) {
-			formulize_updateDerivedValues($thisEntry, $allWrittenFid, $frid);
+		$derivedValueFound = true;
+		if(!$frid) { // if no framework in effect, then update each form's derived values in isolation
+			foreach($entries as $thisEntry) {
+				formulize_updateDerivedValues($thisEntry, $allWrittenFid);
+			}
 		}
 	}
-	if($frid AND $mainFormHasDerived AND !isset($formulize_allWrittenEntryIds[$fid])) { // if there is a framework in effect, and the main form has derived values and the mainform did not have data sent back from the user, then we should update derived values in the main form ($fid) that corresponds to each entry that was sent back
+	if($frid AND ($mainFormHasDerived OR $derivedValueFound)) { // if there is a framework in effect, then update derived values across the entire framework...strong assumption would be that when a framework is in effect, all the forms being saved are related...if there are outliers they will not get their derived values updated!  We handle them below.
 		foreach($entries as $thisEntry) {
-			$foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
+			if($allWrittenFid == $fid) {
+				$foundEntries['entries'][$fid] = $entries;
+			} else {
+				// Since this isn't the main form, then we need to check for which mainform entries match to the entries we're updating right now
+				$foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
+			}
+			if(!isset($formsUpdatedInFramework[$allWrittenFid])) { // if the form we're on has derived values, then flag it as one of the updated forms
+				$formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
+			}
 			foreach($foundEntries['entries'][$fid] as $mainFormEntry) {
 				if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived)) {
 					formulize_updateDerivedValues($mainFormEntry, $fid, $frid);
 					$mainFormEntriesUpdatedForDerived[] = $mainFormEntry;
 				}
+			}
+			if($allWrittenFid == $fid) {
+				break; // we will now have processed all the $entries, so we can bail on this loop (when we're on the mainform, the $entries will be all the mainform entries, but when it's another form, then the entries might link to who knows what other entries in the main form.)
+			}
+		}
+	}
+}
+// check for any forms that were written, that did not have derived values updated as part of the framework
+if($frid) {
+	$notUpdatedForms = array_diff($formulize_allWrittenFids, $formsUpdatedInFramework);
+	foreach($notUpdatedForms as $thisFid) {
+		$formObject = $form_handler->get($thisFid);
+		if(array_search("derived", $formObject->getVar('elementTypes'))) {
+			foreach($formulize_allWrittenEntryIds[$thisFid] as $thisEntry) {
+				formulize_updateDerivedValues($thisEntry, $thisFid);
 			}
 		}
 	}
@@ -308,7 +344,7 @@ function afterSavingLogic($values,$entry_id) {
 
 // this could be done a whole lot smarter, if we make a good way of figuring out if there's derived value elements in the form, and also if there are any formulas in the form/framework that use any of the elements that we have just saved values for
 // but that's a whole lot of inspection we're not going to do right now.
-function formulize_updateDerivedValues($entry, $fid, $frid) {
+function formulize_updateDerivedValues($entry, $fid, $frid="") {
 	$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
 	getData($frid, $fid, $entry);
 	unset($GLOBALS['formulize_forceDerivedValueUpdate']);

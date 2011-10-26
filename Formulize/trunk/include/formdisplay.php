@@ -1232,10 +1232,10 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 				foreach($elementsToDraw as $thisele) {
 					if($thisele) { 
 						ob_start();
-						displayElement($deFrid, $thisele, "subformCreateEntry_".$i."_".$subformElementId); 
+						$renderResult = displayElement($deFrid, $thisele, "subformCreateEntry_".$i."_".$subformElementId); 
 						$col_two_temp = ob_get_contents();
 						ob_end_clean();
-						if($col_two_temp) { // only draw in a cell if there actually is an element rendered
+						if($col_two_temp OR $renderResult == "rendered") { // only draw in a cell if there actually is an element rendered (some elements might be rendered as nothing (such as derived values)
 							$col_two .= "<td>$col_two_temp</td>\n";
 						} else {
 							$col_two .= "<td>******</td>";
@@ -1301,10 +1301,10 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 				foreach($elementsToDraw as $thisele) {
 					if($thisele) { 
 						ob_start();
-						displayElement($deFrid, $thisele, $sub_ent); 
+						$renderResult = displayElement($deFrid, $thisele, $sub_ent); 
 						$col_two_temp = ob_get_contents();
 						ob_end_clean();
-						if($col_two_temp) { // only draw in a cell if there actually is an element rendered
+						if($col_two_temp OR $renderResult == "rendered") { // only draw in a cell if there actually is an element rendered (some elements might be rendered as nothing (such as derived values)
 							$col_two .= "<td>$col_two_temp</td>\n";
 						} else {
 							$col_two .= "<td>******</td>";
