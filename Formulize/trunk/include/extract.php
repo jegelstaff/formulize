@@ -819,7 +819,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      // -- metadata should be: formhandle (title or framework formhandle), formula, handle (element handle or framework handle)
      // 3. call the derived value function from inside the main loop
      
-     $sql = "SELECT t1.ele_value, t2.desc_form, t1.ele_handle FROM ".DBPRE."formulize as t1, ".DBPRE."formulize_id as t2 WHERE t1.ele_type='derived' AND t1.id_form='$fid' AND t1.id_form=t2.id_form ORDER BY t1.ele_order";     
+     $linkFormIdsFilter = "";
+     if($frid) {
+	  $linkFormIdsFilter = " OR t1.id_form IN (".implode(",",$linkformids).") ";
+     }
+     $sql = "SELECT t1.ele_value, t2.desc_form, t1.ele_handle, t2.id_form FROM ".DBPRE."formulize as t1, ".DBPRE."formulize_id as t2 WHERE t1.ele_type='derived' AND (t1.id_form='$fid' $linkFormIdsFilter ) AND t1.id_form=t2.id_form ORDER BY t1.ele_order";     
      
      $derivedFieldMetadata = array();
      if($res = $xoopsDB->query($sql)) {
@@ -830,6 +834,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                     if(!isset($multipleIndexer[$row[1]])) { $multipleIndexer[$row[1]] = 0; }
                     $derivedFieldMetadata[$row[1]][$multipleIndexer[$row[1]]]['formula'] = $ele_value[0]; // use row[1] (the form handle) as the key, so we can eliminate some looping later on
                     $derivedFieldMetadata[$row[1]][$multipleIndexer[$row[1]]]['handle'] = $row[2];
+		    $derivedFieldMetadata[$row[1]][$multipleIndexer[$row[1]]]['form_id'] = $row[3];
                     $multipleIndexer[$row[1]]++;
                }
           }
@@ -1499,36 +1504,35 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
      global $xoopsDB; // just used as a cue to see if XOOPS is active
      static $parsedFormulas = array();
      foreach($entry as $formHandle=>$record) {
-					$primary_entry_id = key($record); // get this once up top, since repeated calls to key just don't seem to work nicely, even though it's not supposed to move the pointer in the array...cleaner this way anyway
           if(isset($metadata[$formHandle])) { // if there are derived value formulas for this form...
                if(!isset($parsedFormulas[$formHandle])) {
                     formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $frid, $fid);
                     $parsedFormulas[$formHandle] = true;
                }
                foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
-                    if(($entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
-                         $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
-                         // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
-			 $resetDerviedValueFlag = false;
-			 if(isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
-		           unset($GLOBALS['formulize_forceDerivedValueUpdate']);
-			   $resetDerivedValueFlag = true;
+	  	    foreach($record as $primary_entry_id=>$elements) {
+			 if(($entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
+			      $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
+			      // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
+			      $resetDerviedValueFlag = false;
+			      if(isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
+				unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+				$resetDerivedValueFlag = true;
+			      }
+			      $derivedValue = $functionName($entry, $fid, $primary_entry_id, $frid);
+			      if($resetDerivedValueFlag) {
+				$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+			      }
+			      $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue;
+			      // write value to database if XOOPS is active
+			      if($xoopsDB) {
+				   include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+				   $data_handler = new formulizeDataHandler(formulize_getFormIdFromName($formHandle));
+				   $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
+				   $data_handler->writeEntry($primary_entry_id, array($elementID=>$derivedValue), false, true, false); // false is no proxy user, true is force the update even on get requests, false is do not update the metadata (modification user)
+			      }
 			 }
-                         $derivedValue = $functionName($entry, $fid, $primary_entry_id, $frid);
-                         if($resetDerivedValueFlag) {
-			   $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
-			 }
-                         foreach($record as $recordID=>$elements) {
-                              $entry[$formHandle][$recordID][$thisMetaData['handle']][0] = $derivedValue;
-                              // write value to database if XOOPS is active
-                              if($xoopsDB) {
-                                   include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-                                   $data_handler = new formulizeDataHandler(formulize_getFormIdFromName($formHandle));
-                                   $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
-                                   $data_handler->writeEntry($recordID, array($elementID=>$derivedValue), false, true, false); // false is no proxy user, true is force the update even on get requests, false is do not update the metadata (modification user)
-                              }
-                         }
-                    }
+		    }
                }
           }
      }          
@@ -1549,15 +1553,21 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
                //print $formula . " -- $quotePos<br>"; // debug code
                $endQuotePos = strpos($formula, "\"", $quotePos+1);
                $term = substr($formula, $quotePos, $endQuotePos-$quotePos+1);
-               if(!is_numeric($term)) { 
-                    $newterm = formulize_convertCapOrColHeadToHandle($frid, $fid, $term);
+               if(!is_numeric($term)) {
+                    list($newterm, $termFid) = formulize_convertCapOrColHeadToHandle($frid, $fid, $term);
                     if($newterm != "{nonefound}") {
-												 $replacement = "display(\$entry, '$newterm')";
-												 $quotePos = $quotePos + 17 + strlen($newterm); // 17 is the length of the extra characters in the display function
-												 $formula = str_replace($term, $replacement, $formula);
-										} else {
-												 $quotePos = $quotePos + strlen($term) + 2; // move ahead the length of the found term, plus its quotes
-										}
+			 if($frid AND $termFid == $thisMetaData['form_id'] AND $thisMetaData['form_id'] != $fid) {
+			      $replacement = "display(\$entry, '$newterm', '', \$entry_id)"; // need to pass in a "local id" since we want the value of this field in this particular entry, not in the entire framework.  If a user wants all the values for this field from the other entries in the framework, they will have to use the display function manually in the derived value formula.
+			      $numberOfChars = 34; // 34 is the number of extra characters besides the term
+			 } else {
+			      $replacement = "display(\$entry, '$newterm')";
+			      $numberOfChars = 19; // 19 is the length of the extra characters in the display function
+			 }
+			 $quotePos = $quotePos + $numberOfChars + strlen($newterm); 
+			 $formula = str_replace($term, $replacement, $formula);
+		    } else {
+			 $quotePos = $quotePos + strlen($term) + 2; // move ahead the length of the found term, plus its quotes
+		    }
                }
           }
           $addSemiColons = strstr($formula, ";") ? false : true; // only add if we found none in the formula.
@@ -1599,16 +1609,16 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
 		 }
 		 
      if($term == "uid" OR $term == "proxyid" OR $term == "creation_date" OR $term == "mod_date" OR $term == "creator_email" OR $term == "creation_uid" OR $term == "mod_uid" OR $term == "creation_datetime" OR $term == "mod_datetime") {
-        return $term;
+        return array($term, $fid);
      }
      
      if(!$frid) {
           $formList[] = $fid; // mimic what the result of the framework query below would be...
      } else {
           
-					$termAfterDeal = dealWithDeprecatedFrameworkHandles($term, $frid);
+					list($termAfterDeal, $dealFid) = dealWithDeprecatedFrameworkHandles($term, $frid, true); // true will cause it to return the form id as well when you're getting only asking for a single handle back.
 					if($termAfterDeal != $term) { // if the terms was found and converted to an element handle, then return that.
-               return $termAfterDeal;
+               return array($termAfterDeal, $dealFid);
           }
 					
           if(isset($framework_results[$frid])) {
@@ -1633,23 +1643,24 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
                $colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_colhead = \"" . mysql_real_escape_string($term) . "\" OR ele_colhead LIKE '%]".mysql_real_escape_string($term)."[/%')");
                if(count($colhead_query) > 0) {
 										$handle = $colhead_query[0]['ele_handle'];
-										$foundElementId = $colhead_query[0]['ele_id'];
                } else {
 										//print "capq: SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_caption = \"" . mysql_real_escape_string($term) . "\"";
                     $caption_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_caption = \"" . mysql_real_escape_string($term) . "\" OR ele_caption LIKE '%]".mysql_real_escape_string($term)."[/%')");
                     if(count($caption_query) > 0 ) {
 												 $handle = $caption_query[0]['ele_handle'];
-												 $foundElementId = $caption_query[0]['ele_id'];
                     }
                }
           }
           if($handle) {
-               $results_array[$form_id][$term][$frid] = $handle;
+               $results_array[$form_id][$term][$frid] = array($handle, $form_id);
                break;
           }     
      }
-     if(!$handle) { $handle = "{nonefound}"; }
-     return $handle;
+     if(!$handle) {
+	  $handle = "{nonefound}";
+	  $form_id = 0;
+     }
+     return array($handle, $form_id);
 }
 
 

@@ -3388,9 +3388,15 @@ function dealWithDeprecatedFormHandles($handle) {
 // $handles is a single handle or an array of handles
 // $frid is the ID of the framework
 // $frid can be boolean false, which means that rather than there being no framework in effect, we do not know if there is a framework, and so we have to match based on handle alone
-function dealWithDeprecatedFrameworkHandles($handles, $frid=false) {
+// $frid appears to be ignored!  But perhaps it could be used later to zero in on a specific framework...but really, the time has passed for this, so we'll probably leave this alone and never come back to it.
+// $returnFormId will cause an array to be returned with the handle and the form id in it.  Only supported when passing in a single handle, not an array.  This is off by default and probably only used when parsing handles in derived value formulas
+function dealWithDeprecatedFrameworkHandles($handles, $frid=false, $returnFormId=false) {
 	if((!$frid AND $frid !== false) OR $GLOBALS['formulize_versionFourOrHigher'] == true) {
+	  if($returnFormId AND !is_array($handles)) {
+		return array($handles, 0);
+	  } else {
 		return $handles;
+	  }
 	}
 	
 	$workingHandles = array();	
@@ -3402,11 +3408,11 @@ function dealWithDeprecatedFrameworkHandles($handles, $frid=false) {
 	
 	static $cachedHandles = array();
 	$serializedWorkingHandles = serialize($workingHandles);
-	if(isset($cachedHandles[$serializedWorkingHandles])) {
-		return $cachedHandles[$serializedWorkingHandles];
+	if(isset($cachedHandles[$serializedWorkingHandles][$returnFormId])) {
+		return $cachedHandles[$serializedWorkingHandles][$returnFormId];
 	}
 	global $xoopsDB;
-	$handleSQL = "SELECT elements.ele_handle, handles.fe_handle FROM ".$xoopsDB->prefix("formulize")." as elements, ".$xoopsDB->prefix("formulize_framework_elements")." as handles WHERE (handles.fe_handle = '".implode("' OR handles.fe_handle = '",$workingHandles)."') AND handles.fe_element_id = elements.ele_id";
+	$handleSQL = "SELECT elements.ele_handle, handles.fe_handle, elements.id_form FROM ".$xoopsDB->prefix("formulize")." as elements, ".$xoopsDB->prefix("formulize_framework_elements")." as handles WHERE (handles.fe_handle = '".implode("' OR handles.fe_handle = '",$workingHandles)."') AND handles.fe_element_id = elements.ele_id";
 	if($handleRes = $xoopsDB->query($handleSQL)) {
 		while($handleArray = $xoopsDB->fetchArray($handleRes)) {
 			$foundKey = array_search($handleArray['fe_handle'],$workingHandles);
@@ -3415,11 +3421,15 @@ function dealWithDeprecatedFrameworkHandles($handles, $frid=false) {
 			}
 		}
 		if(is_array($handles)) {
-			$cachedHandles[$serializedWorkingHandles] = $workingHandles;
+			$cachedHandles[$serializedWorkingHandles][$returnFormId] = $workingHandles;
 		} else {
-			$cachedHandles[$serializedWorkingHandles] = $workingHandles[0];
+		  if($returnFormId) {
+			$cachedHandles[$serializedWorkingHandles][$returnFormId] = array($workingHandles[0], $handleArray['id_form']); // assumption is that there would only be a record returned, or at least, the last record processed would be the one that we're returning in terms of handle anyway.
+		  } else {
+			$cachedHandles[$serializedWorkingHandles][$returnFormId] = $workingHandles[0];
+		  }
 		}
-		return $cachedHandles[$serializedWorkingHandles];
+		return $cachedHandles[$serializedWorkingHandles][$returnFormId];
 	}
 	return $handles;
 }

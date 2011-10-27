@@ -241,10 +241,10 @@ function buildlinkoptions($links, $invert, $key1, $key2, $target_ele_ids, $sourc
 	foreach($links as $link) {
 		if($invert) {
 			$linkoptions[$loi]['value'] = $source_ele_ids[$link] . "+" . $target_ele_ids[$link];
-      $linkoptions[$loi]['name'] = "Linked elements: ".printSmart($source_captions[$link],20) . " & " . printSmart($target_captions[$link],20);
+      $linkoptions[$loi]['name'] = "Linked elements: ".printSmart(htmlspecialchars(strip_tags($source_captions[$link])),20) . " & " . printSmart(htmlspecialchars(strip_tags($target_captions[$link])),20);
 		} else { 
 			$linkoptions[$loi]['value'] = $target_ele_ids[$link] . "+" . $source_ele_ids[$link];
-      $linkoptions[$loi]['name'] = "Linked elements: ".printSmart($source_captions[$link],20) . " & " . printSmart($target_captions[$link],20);
+      $linkoptions[$loi]['name'] = "Linked elements: ".printSmart(htmlspecialchars(strip_tags($source_captions[$link])),20) . " & " . printSmart(htmlspecialchars(strip_tags($target_captions[$link])),20);
 		}
     $loi++;
 	}
