@@ -757,9 +757,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	 } else {
 	         $timestamp = str_replace(".","",microtime(true));
 		 if(!$sortIsOnMain) {
-		    $creatTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `throwaway_sort_values` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) TYPE=MyISAM;"; // when the sort is not on the main form, then we are including a special field in the select statement that we sort it by, so that the order is correct, and so it has to have a place to get inserted here
+		    $creatTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `throwaway_sort_values` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;"; // when the sort is not on the main form, then we are including a special field in the select statement that we sort it by, so that the order is correct, and so it has to have a place to get inserted here
 		 } else {
-		    $creatTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) TYPE=MyISAM;";
+		    $creatTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;";
 		 }
 		 $createTableRes = $xoopsDB->queryF($creatTableSQL);
 		 $gatherIdsRes = $xoopsDB->queryF(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$masterQuerySQL));

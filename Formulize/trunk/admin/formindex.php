@@ -1209,7 +1209,7 @@ function patch40() {
   INDEX i_groupid (`groupid`),
 	INDEX i_fid (`fid`),
   INDEX i_view_groupid (`view_groupid`)
-) TYPE=MyISAM;";
+) ENGINE=MyISAM;";
 		}
 		
 		if(!in_array($xoopsDB->prefix("formulize_group_filters"), $existingTables)) {
@@ -1221,7 +1221,7 @@ function patch40() {
   PRIMARY KEY (`filterid`),
   INDEX i_fid (`fid`),
   INDEX i_groupid (`groupid`)
-) TYPE=MyISAM;";
+) ENGINE=MyISAM;";
 		}
 	
 		if(!in_array($xoopsDB->prefix("formulize_applications"), $existingTables)) {
@@ -1230,7 +1230,7 @@ function patch40() {
   `name` varchar(255) NOT NULL default '',
   `description` text NOT NULL,
   PRIMARY KEY (`appid`)
-) TYPE=MyISAM;";
+) ENGINE=MyISAM;";
 		}
 
 		if(!in_array($xoopsDB->prefix("formulize_application_form_link"), $existingTables)) {
@@ -1241,7 +1241,7 @@ function patch40() {
   PRIMARY KEY (`linkid`),
   INDEX i_fid (`fid`),
   INDEX i_appid (`appid`)
-) TYPE=MyISAM;";
+) ENGINE=MyISAM;";
 		}
 		
 		if(!in_array($xoopsDB->prefix("formulize_screen_form"), $existingTables)) {
@@ -1255,7 +1255,7 @@ function patch40() {
   `reloadblank` tinyint(1) NOT NULL default 0,
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
-) TYPE=MyISAM;";
+) ENGINE=MyISAM;";
 		}
 		
 		if(!in_array($xoopsDB->prefix("formulize_advanced_calculations"), $existingTables)) {
@@ -1272,7 +1272,7 @@ function patch40() {
   `fltr_grptitles` text NOT NULL,
   PRIMARY KEY  (`acid`),
   KEY `i_fid` (`fid`)
-) TYPE=MyISAM;";
+) ENGINE=MyISAM;";
 		}
 		
 	
@@ -1581,7 +1581,7 @@ function patch31() {
   PRIMARY KEY (`other_id`),
   INDEX i_ele_id (ele_id),
   INDEX i_id_req (id_req)
-) TYPE=MyISAM;";
+) ENGINE=MyISAM;";
 		}
 
 		if(!in_array($xoopsDB->prefix("formulize_notification_conditions"), $existingTables)) {
@@ -1600,7 +1600,7 @@ function patch31() {
   INDEX i_not_cons_uid (not_cons_uid),
   INDEX i_not_cons_groupid (not_cons_groupid),
   INDEX i_not_cons_fidevent (not_cons_fid, not_cons_event(1))
-) TYPE=MyISAM;";
+) ENGINE=MyISAM;";
 		}
 
 		if(!in_array($xoopsDB->prefix("formulize_valid_imports"), $existingTables)) {
@@ -1609,7 +1609,7 @@ function patch31() {
   file varchar(255) NOT NULL default '',
   id_reqs text NOT NULL,
   PRIMARY KEY (`import_id`)
-) TYPE=MyISAM;";
+) ENGINE=MyISAM;";
 		}
                 
                 if(!in_array($xoopsDB->prefix("formulize_screen_listofentries"), $existingTables)) {
@@ -1656,7 +1656,7 @@ function patch31() {
   bottomtemplate text NOT NULL,
   PRIMARY KEY (`listofentriesid`),
   INDEX i_sid (`sid`)
-) TYPE=MyISAM;";
+) ENGINE=MyISAM;";
                 }
                 
                 if(!in_array($xoopsDB->prefix("formulize_screen_multipage"), $existingTables)) {
@@ -1673,7 +1673,7 @@ function patch31() {
   printall tinyint(1) NOT NULL,
   PRIMARY KEY (`multipageid`),
   INDEX i_sid (`sid`)
-) TYPE=MyISAM;";
+) ENGINE=MyISAM;";
                 }
                 
                 if(!in_array($xoopsDB->prefix("formulize_screen"), $existingTables)) {
@@ -1684,7 +1684,7 @@ function patch31() {
   frid int(11) NOT NULL default 0,
   type varchar(100) NOT NULL default '',
   PRIMARY KEY  (`sid`)
-) TYPE=MyISAM;";
+) ENGINE=MyISAM;";
                 }
 
 if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables)) {
@@ -1697,7 +1697,7 @@ if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables))
   INDEX i_fid (fid),
   INDEX i_entry_id (entry_id),
   INDEX i_groupid (groupid)
-) TYPE=MyISAM;";
+) ENGINE=MyISAM;";
 }
 
 		// check about altered fields

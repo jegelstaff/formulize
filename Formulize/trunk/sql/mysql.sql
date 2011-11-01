@@ -11,14 +11,14 @@ CREATE TABLE `formulize_advanced_calculations` (
   `fltr_grptitles` text NOT NULL,
   PRIMARY KEY  (`acid`),
   KEY `i_fid` (`fid`)
-) TYPE=MyISAM; 
+) ENGINE=MyISAM; 
 
 CREATE TABLE `formulize_applications` (
   `appid` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL default '',
   `description` text NOT NULL,
   PRIMARY KEY (`appid`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE `formulize_application_form_link` (
   `linkid` int(11) NOT NULL auto_increment,
@@ -27,7 +27,7 @@ CREATE TABLE `formulize_application_form_link` (
   PRIMARY KEY (`linkid`),
   INDEX i_fid (`fid`),
   INDEX i_appid (`appid`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 
 CREATE TABLE `formulize_group_filters` (
@@ -38,7 +38,7 @@ CREATE TABLE `formulize_group_filters` (
   PRIMARY KEY (`filterid`),
   INDEX i_fid (`fid`),
   INDEX i_groupid (`groupid`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE `formulize_groupscope_settings` (
   `groupscope_id` int(11) NOT NULL auto_increment,
@@ -49,7 +49,7 @@ CREATE TABLE `formulize_groupscope_settings` (
   INDEX i_groupid (`groupid`),
 	INDEX i_fid (`fid`),
   INDEX i_view_groupid (`view_groupid`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 
 CREATE TABLE `formulize_screen_listofentries` (
@@ -98,7 +98,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `viewentryscreen` varchar(10) NOT NULL DEFAULT '',
   PRIMARY KEY (`listofentriesid`),
   INDEX i_sid (`sid`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE `formulize_screen_multipage` (
   `multipageid` int(11) NOT NULL auto_increment,
@@ -115,7 +115,7 @@ CREATE TABLE `formulize_screen_multipage` (
   `paraentryrelationship` tinyint(1) NOT NULL default 0,
   PRIMARY KEY (`multipageid`),
   INDEX i_sid (`sid`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE `formulize_screen_form` (
   `formid` int(11) NOT NULL auto_increment,
@@ -127,7 +127,7 @@ CREATE TABLE `formulize_screen_form` (
   `reloadblank` tinyint(1) NOT NULL default 0,
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE `formulize_screen` (
   `sid` int(11) NOT NULL auto_increment,
@@ -137,7 +137,7 @@ CREATE TABLE `formulize_screen` (
   `type` varchar(100) NOT NULL default '',
   `useToken` tinyint(1) NOT NULL,
   PRIMARY KEY  (`sid`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE formulize_valid_imports (
   import_id smallint(5) NOT NULL auto_increment,
@@ -145,7 +145,7 @@ CREATE TABLE formulize_valid_imports (
   id_reqs text NOT NULL,
   fid int(5),
   PRIMARY KEY (`import_id`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE formulize_notification_conditions (
   not_cons_id smallint(5) NOT NULL auto_increment,
@@ -166,7 +166,7 @@ CREATE TABLE formulize_notification_conditions (
   INDEX i_not_cons_uid (not_cons_uid),
   INDEX i_not_cons_groupid (not_cons_groupid),
   INDEX i_not_cons_fidevent (not_cons_fid, not_cons_event(1))
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE formulize_other (
   other_id int(5) NOT NULL auto_increment,
@@ -176,7 +176,7 @@ CREATE TABLE formulize_other (
   PRIMARY KEY (`other_id`),
   INDEX i_ele_id (ele_id),
   INDEX i_id_req (id_req)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE formulize_saved_views (
   sv_id smallint(5) NOT NULL auto_increment,
@@ -200,7 +200,7 @@ CREATE TABLE formulize_saved_views (
   sv_calc_grouping text default NULL,
   sv_quicksearches text default NULL,
   PRIMARY KEY (sv_id)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE group_lists (
   gl_id smallint(5) unsigned NOT NULL auto_increment,
@@ -208,20 +208,20 @@ CREATE TABLE group_lists (
   gl_groups text NOT NULL,
   PRIMARY KEY (gl_id),
   UNIQUE gl_name_id (gl_name)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE formulize_menu_cats (
   cat_id smallint(5) NOT NULL auto_increment,
   cat_name varchar(255) default NULL,
   id_form_array varchar(255) default NULL,
   PRIMARY KEY (`cat_id`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE formulize_frameworks (
   frame_id smallint(5) NOT NULL auto_increment,
   frame_name varchar(255) default NULL,
   PRIMARY KEY (`frame_id`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE formulize_framework_links (
   fl_id smallint(5) NOT NULL auto_increment,
@@ -234,7 +234,7 @@ CREATE TABLE formulize_framework_links (
   fl_unified_display smallint(5),
   fl_common_value tinyint(1) NOT NULL default '0',
   PRIMARY KEY (`fl_id`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE formulize_id (
   id_form smallint(5) NOT NULL auto_increment,
@@ -249,7 +249,7 @@ CREATE TABLE formulize_id (
   form_handle varchar(255) NOT NULL default '',
   PRIMARY KEY  (`id_form`),
   UNIQUE `desc_form_id` (`desc_form`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE formulize (
   id_form int(5) NOT NULL default '0',
@@ -273,7 +273,7 @@ CREATE TABLE formulize (
   PRIMARY KEY  (`ele_id`),
   KEY `ele_display` (`ele_display` ( 255 ) ),
   KEY `ele_order` (`ele_order`)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE formulize_menu (
   menuid int(4) unsigned NOT NULL auto_increment,
@@ -289,7 +289,7 @@ CREATE TABLE formulize_menu (
   status tinyint(1) NOT NULL default '1',
   PRIMARY KEY  (menuid),
   KEY idxmymenustatus (status)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;
 
 CREATE TABLE formulize_entry_owner_groups (
   owner_id int(5) unsigned NOT NULL auto_increment,
@@ -300,4 +300,4 @@ CREATE TABLE formulize_entry_owner_groups (
   INDEX i_fid (fid),
   INDEX i_entry_id (entry_id),
   INDEX i_groupid (groupid)
-) TYPE=MyISAM;
+) ENGINE=MyISAM;

@@ -1097,7 +1097,7 @@ function createProceduresTable($array, $permTableName = "") {
 	$fieldList[]  = $fieldName;
     }
     $sql .= implode(",", $indexList);
-    $sql .= ") TYPE=MyISAM;";
+    $sql .= ") ENGINE=MyISAM;";
     global $xoopsDB;
    //print "$sql<br>";
     if(!$res = $xoopsDB->query($sql)) {
