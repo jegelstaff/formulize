@@ -2961,7 +2961,7 @@ if($useXhr) {
 	print "var savingNow = \"\";";
 	print "var elementActive = \"\";";
 ?>
-function renderElement(handle,entryId,check) {
+function renderElement(handle,entryId,fid,check) {
 	if(elementStates[handle] == undefined) {
 		elementStates[handle] = new Array();
 	}
@@ -2976,19 +2976,21 @@ function renderElement(handle,entryId,check) {
 		var formulize_xhr_params = [];
 		formulize_xhr_params[0] = handle;
 		formulize_xhr_params[1] = entryId;
+		formulize_xhr_params[2] = fid;
 		formulize_xhr_send('get_element_html',formulize_xhr_params);
 	} else {
 		if(check && savingNow == "") {
 			savingNow = true;
-			jQuery.post("<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php", jQuery("#deForm_"+handle+"_"+entryId).serialize(), function(data) {
+			jQuery("#deDiv_"+handle+"_"+entryId).fadeTo("fast",0.33);
+			jQuery.post("<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php", jQuery("[name='de_"+fid+"_"+entryId+"_"+handle+"'],[name='decue_"+fid+"_"+entryId+"_"+handle+"']").serialize(), function(data) {
 				if(data) {
 				   alert(data);	
 				} else {
 					// need to get the current value, and then prep it, and then format it
-					jQuery("#deForm_"+handle+"_"+entryId).fadeTo("fast",0.33);
 					var formulize_xhr_params = [];
 					formulize_xhr_params[0] = handle;
 					formulize_xhr_params[1] = entryId;
+					formulize_xhr_params[2] = fid;
 					formulize_xhr_send('get_element_value',formulize_xhr_params);
 				}
 			});
@@ -3005,13 +3007,15 @@ function renderElement(handle,entryId,check) {
 function renderElementHtml(elementHtml,params) {
 	handle = params[0];
 	entryId = params[1];
-	jQuery("#deDiv_"+handle+"_"+entryId).html("<form id=\"deForm_"+handle+"_"+entryId+"\">"+elementHtml+"<br /><a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+entryId+",1);return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/check.gif\" /></a>&nbsp;&nbsp;&nbsp;<a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+entryId+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/x-wide.gif\" /></a></form>");
+	fid = params[2];
+	jQuery("#deDiv_"+handle+"_"+entryId).html(elementHtml+"<br /><a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+entryId+", "+fid+",1);return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/check.gif\" /></a>&nbsp;&nbsp;&nbsp;<a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+entryId+", "+fid+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/x-wide.gif\" /></a>");
 }
 
 function renderElementNewValue(elementValue,params) {
 	handle = params[0];
 	entryId = params[1];
-	jQuery("#deForm_"+handle+"_"+entryId).fadeTo("fast",1);
+	fid = params[2];
+	jQuery("#deDiv_"+handle+"_"+entryId).fadeTo("fast",1);
 	jQuery("#deDiv_"+handle+"_"+entryId).html(elementValue);
 	elementStates[handle].splice(entryId, 1);
 	savingNow = "";

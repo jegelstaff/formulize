@@ -116,7 +116,7 @@
 	      <label for="0"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq 0}> checked="checked"<{/if}> value="0"/>Display them all at once when the list loads</label>
       </div>
       <div class="form-radios">
-	      <label for="1"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq 1}> checked="checked"<{/if}> value="1"/>Display them when the user clicks an icon to activate them</label>
+	      <label for="1"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq 1}> checked="checked"<{/if}> value="1"/>Display them when the user clicks an icon to activate them &mdash; if users click to activate, then you should turn OFF the security token in the <a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>" target="_blank">Formulize Preferences</a></label>
       </div>
       <div class="description"></div>
     </div>

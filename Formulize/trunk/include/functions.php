@@ -4540,6 +4540,13 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 	}
 	$countOfValue = count($value);
 	$counter = 1;
+	static $cachedFormIds = array();
+	if(!isset($cachedFormIds[$handle])) {
+	  $element_handler = xoops_getmodulehandler('elements', 'formulize');
+	  $elementObject = $element_handler->get($handle);
+	  $cachedFormIds[$handle] = $elementObject->getVar('id_form');
+	}
+	$fid = $cachedFormIds[$handle];
 	foreach($value as $valueId=>$v) { 
 		if(is_numeric($v)) { // Added by Steph, April 11, 2011
 			$elstyle = 'style="text-align: right;"';
@@ -4550,7 +4557,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 			$output .= ",";
 		}
 		if($counter == 1 AND $deDisplay) {
-			$output .= ' <a href="" onclick="javascript:renderElement(\''.$handle.'\', '.$thisEntryId.');return false;"><img src="'.XOOPS_URL.'/modules/formulize/images/kedit.gif" /></a>';
+			$output .= ' <a href="" onclick="javascript:renderElement(\''.$handle.'\', '.$thisEntryId.', '.$fid.');return false;"><img src="'.XOOPS_URL.'/modules/formulize/images/kedit.gif" /></a>';
 		}
 		if($counter<$countOfValue) {
 			$output .= "<br>";
