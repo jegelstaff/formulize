@@ -1504,6 +1504,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
      global $xoopsDB; // just used as a cue to see if XOOPS is active
      static $parsedFormulas = array();
      foreach($entry as $formHandle=>$record) {
+	  $formHandle = htmlspecialchars_decode($formHandle, ENT_QUOTES);
           if(isset($metadata[$formHandle])) { // if there are derived value formulas for this form...
                if(!isset($parsedFormulas[$formHandle])) {
                     formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $frid, $fid);

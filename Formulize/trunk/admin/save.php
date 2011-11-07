@@ -31,6 +31,7 @@
 
 include_once "../../../mainfile.php";
 ob_end_clean();
+ob_end_clean(); // in some cases ther appear to be two buffers active?!  So we must try to end twice.
 global $xoopsUser;
 if(!$xoopsUser) {
   print "Error: you are not logged in";
