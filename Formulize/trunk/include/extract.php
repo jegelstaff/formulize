@@ -695,7 +695,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
     $oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 
 
-     $restOfTheSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";     
+     $restOfTheSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";     
      if(count($linkformids)>1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
        if(!$sortIsOnMain) {
 	    $orderByToUse = " ORDER BY usethissort $sortOrder ";
@@ -705,13 +705,13 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	    $useAsSortSubQuery = "  @rownum:=@rownum+1, "; // need to add a counter as the first field, used as the master sorting key
        }
        $oneSideSQLToUse = str_replace(" AS main $userJoinText"," AS main JOIN (SELECT @rownum := 0) as r $userJoinText",$oneSideSQL); // need to add the initialization of the rownum, which is what we use as the master sorting key
-       $masterQuerySQL = "SELECT $useAsSortSubQuery main.entry_id $oneSideSQLToUse $limitByEntryId $orderByToUse $limitClause";
+       $masterQuerySQL = "SELECT $useAsSortSubQuery main.entry_id $oneSideSQLToUse $limitByEntryId $orderByToUse ";
        if(!$resultOnly) {
 	    // so let's build a temp table with the unique entry ids in the forms that we care about, and then query each linked form separately for its records, so that we end up processing as few result rows as possible
 	    $masterQuerySQL = "INSERT INTO ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQL ";	     
        }
      } else { 
-	  $masterQuerySQL = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail $restOfTheSQL";
+	  $masterQuerySQL = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail $restOfTheSQL ";
      }
      
 
@@ -732,6 +732,10 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       $masterQuerySQL = $filter; // need to split this based on some separator, because export ends up passing in a series of statements     
 	  }
   }
+  
+  // after the export query has been generated, then let's put the limit on:
+  $masterQuerySQL .= $limitClause;
+  
      /*global $xoopsUser;
      if($xoopsUser->getVar('uid') == 4613) {
           $queryTime = $afterQueryTime - $beforeQueryTime;
@@ -1091,7 +1095,6 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  }	  
 	  
      } // end if if there's more the 1 linked fid
-
      return $masterResults;
 
 } // end of dataExtraction function

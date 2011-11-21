@@ -1307,7 +1307,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 				if(!$data_to_write) { $data_to_write = $name_q[0]['uname']; }
 			} else {
 				$data_to_write = displayTogether($entry, $col, "\n");
-				$data_to_write = str_replace("&quot;", "&quot;&quot;", $data_to_write);
+				$data_to_write = str_replace("&quot;", "\"\"", $data_to_write);
 				$data_to_write = "\"" . trans($data_to_write) . "\"";
 				$data_to_write = str_replace("\r\n", "\n", $data_to_write);
 			}
@@ -4533,7 +4533,8 @@ function formulize_xhr_send(op,params) {
 // we're kind of hacking this...assuming textWidth will be 200 in cases where we don't have it passed in.  With more acrobatics we could get the real text width as specified in the screen, but for columns that are rendered as elements, this is probably an OK compromise
 // deDisplay is a flag to control whether the icon for switching an element to editable mode should be present or not
 // localIds is an array of ids that will match the order of the values in the array...used to get the id for a subform entry that is being displayed in the list
-function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array()) {
+// $fid is used only in the event of a mod_datetime or creation_datetime or creator_email field being drawn
+function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid) {
 	$output = "";
 	if(!is_array($value)) {
 		$value = array($value);
@@ -4542,9 +4543,13 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 	$counter = 1;
 	static $cachedFormIds = array();
 	if(!isset($cachedFormIds[$handle])) {
-	  $element_handler = xoops_getmodulehandler('elements', 'formulize');
-	  $elementObject = $element_handler->get($handle);
-	  $cachedFormIds[$handle] = $elementObject->getVar('id_form');
+	  if($handle == "mod_datetime" OR $handle == "creation_datetime" OR $handle == "creator_email") {
+		$cachedFormIds[$handle] = $fid;
+	  } else {
+		  $element_handler = xoops_getmodulehandler('elements', 'formulize');
+		  $elementObject = $element_handler->get($handle);
+		  $cachedFormIds[$handle] = $elementObject->getVar('id_form');
+	  }
 	}
 	$fid = $cachedFormIds[$handle];
 	foreach($value as $valueId=>$v) { 

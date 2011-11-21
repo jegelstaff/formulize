@@ -1555,7 +1555,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 							}
 							$GLOBALS['formulize_displayElement_LOE_Used'] = true;
 						} elseif($col != "creation_uid" AND $col!= "mod_uid") {
-							print getHTMLForList($value, $col, $linkids[0], 0, $textWidth, $currentColumnLocalId);
+							print getHTMLForList($value, $col, $linkids[0], 0, $textWidth, $currentColumnLocalId, $fid);
 						} else { // no special formatting on the uid columns:
 							print $value;
 						}
