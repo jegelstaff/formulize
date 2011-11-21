@@ -28,6 +28,7 @@
 	    <label for="advcalc-type_<{$sectionContent.index}>_1"><input type="radio" id="advcalc-type_<{$sectionContent.index}>_1" name="advcalc-type_<{$sectionContent.index}>" value="1"<{if $sectionContent.fltr_grps.type.kind eq 1}> checked<{/if}> onClick="fltr_grp_type_select(this)"/>Datebox</label><br />
 	    <label for="advcalc-type_<{$sectionContent.index}>_2"><input type="radio" id="advcalc-type_<{$sectionContent.index}>_2" name="advcalc-type_<{$sectionContent.index}>" value="2"<{if $sectionContent.fltr_grps.type.kind eq 2}> checked<{/if}> onClick="fltr_grp_type_select(this)"/>Selectbox</label><br />
 	    <label for="advcalc-type_<{$sectionContent.index}>_3"><input type="radio" id="advcalc-type_<{$sectionContent.index}>_3" name="advcalc-type_<{$sectionContent.index}>" value="3"<{if $sectionContent.fltr_grps.type.kind eq 3}> checked<{/if}> onClick="fltr_grp_type_select(this)"/>Checkboxes</label><br />
+	    <label for="advcalc-type_<{$sectionContent.index}>_4"><input type="radio" id="advcalc-type_<{$sectionContent.index}>_4" name="advcalc-type_<{$sectionContent.index}>" value="4"<{if $sectionContent.fltr_grps.type.kind eq 4}> checked<{/if}> onClick="fltr_grp_type_select(this)"/>Textbox</label>
       <div id="advcalc-type_<{$sectionContent.index}>_1_options" style="<{if $sectionContent.fltr_grps.type.kind neq 1}>visibility: hidden; position: absolute<{/if}>">
       </div>
       <div id="advcalc-type_<{$sectionContent.index}>_2_options" style="<{if $sectionContent.fltr_grps.type.kind neq 2}>visibility: hidden; position: absolute<{/if}>">
@@ -55,6 +56,8 @@
         <{/if}>
         </div>
         <!--<p><input type="button" class="formButton" name="cleardef" value="<{$smarty.const._AM_CLEAR_DEFAULT}>"/></p>-->
+      </div>
+      <div id="advcalc-type_<{$sectionContent.index}>_4_options" style="<{if $sectionContent.fltr_grps.type.kind neq 4}>visibility: hidden; position: absolute<{/if}>">
       </div>
 
 		  <div class="description"></div>

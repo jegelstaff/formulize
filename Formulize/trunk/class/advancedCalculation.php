@@ -134,7 +134,7 @@ EOD;
 
 class formulizeAdvancedCalculationHandler {
   var $db;
-	function formulizeAdvancedCalculationHandler(&$db) {
+  	function formulizeAdvancedCalculationHandler(&$db) {
 		$this->db =& $db;
 	}
   
@@ -143,16 +143,20 @@ class formulizeAdvancedCalculationHandler {
 	}
   
   function get($id) {
-    global $xoopsDB;
-    $newAdvCalc = null;
-    $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_advanced_calculations").' WHERE acid='.$id.';';
-    if ($result = $this->db->query($sql)) {
-      $resultArray = $this->db->fetchArray($result);
-      $newAdvCalc = $this->create();
-      $newAdvCalc->assignVars($resultArray);
+    static $cachedResults = array();
+    if(!isset($cachedResults[$id])) {
+        global $xoopsDB;
+        $newAdvCalc = null;
+        $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_advanced_calculations").' WHERE acid='.$id.';';
+        if ($result = $this->db->query($sql)) {
+          $resultArray = $this->db->fetchArray($result);
+          $newAdvCalc = $this->create();
+          $newAdvCalc->assignVars($resultArray);
+        }
+	$cachedResults[$id] = $newAdvCalc;
     }
-    return $newAdvCalc;
-	}
+    return $cachedResults[$id];
+  }
   
   function insert(&$advCalcObject, $force=false) {
 		if( get_class($advCalcObject) != 'formulizeAdvancedCalculation'){
@@ -751,7 +755,7 @@ class formulizeAdvancedCalculationHandler {
   /* When constructing the HTML, we will need to listen to GET and POST to see
      if there's a value with the same name as the form element we create, so we
      can initialize this form element with the user's previous selection. */
-  function getFilter($acid, $filterHandle, $datesAsHidden=false) {
+  function getFilter($acid, $filterHandle, $boxesAsHidden=false) {
     include_once XOOPS_ROOT_PATH.'/class/xoopsform/formelement.php'; //dependency
     include_once XOOPS_ROOT_PATH.'/class/xoopsform/formtext.php'; //dependency
     include_once XOOPS_ROOT_PATH.'/class/xoopsform/formhidden.php'; //dependency
@@ -792,7 +796,7 @@ class formulizeAdvancedCalculationHandler {
       // last param is the date the user chose, note it must be passed as a timestamp into the function
       $elementName = $acid . "_" . $fltr_grp["handle"];
       $dateValue = (isset($_POST[$elementName])) ? strtotime($_POST[$elementName]) : ( (isset($_GET[$elementName])) ? strtotime($_GET[$elementName]) : "" );
-      if($datesAsHidden) {
+      if($boxesAsHidden) {
 	$hideLabel = true;
 	if($elementName == $acid."_minAge") {
 	    $dateValue = 0;
@@ -860,6 +864,15 @@ class formulizeAdvancedCalculationHandler {
         }
         $index++;
       }
+    } else if($kind == 4) { // textbox
+	$elementName = $acid . "_" . $fltr_grp["handle"];
+	$value = (isset($_POST[$elementName])) ? $_POST[$elementName] : ( (isset($_GET[$elementName])) ? $_GET[$elementName] : "" );
+	if($boxesAsHidden) {
+	    $form_ele = new XoopsFormHidden($elementName, $value);
+	} else {
+	    $form_ele = new XoopsFormText('', $elementName, 20, 255, $value);
+	    $form_ele->setExtra(' class="'. $elementUnderlyingField . '" ');
+	}
     }
 
     if( $form_ele ) {
@@ -911,19 +924,19 @@ class formulizeAdvancedCalculationHandler {
     return array( "label"=>$fltr_grp["grp_label"], "html"=>$html );
   }
 
-  function getAllFilters($acid, $datesAsHidden=false) {
-    return $this->_getAllFiltersAndGroupings($acid,true,false,$datesAsHidden);
+  function getAllFilters($acid, $boxesAsHidden=false) {
+    return $this->_getAllFiltersAndGroupings($acid,true,false,$boxesAsHidden);
   }
 
-  function getAllGroupings($acid, $datesAsHidden=false) {
-    return $this->_getAllFiltersAndGroupings($acid,false,true,$datesAsHidden);
+  function getAllGroupings($acid, $boxesAsHidden=false) {
+    return $this->_getAllFiltersAndGroupings($acid,false,true,$boxesAsHidden);
   }
 
-  function getAllFiltersAndGroupings($acid, $datesAsHidden=false) {
-    return $this->_getAllFiltersAndGroupings($acid,true,true,$datesAsHidden);
+  function getAllFiltersAndGroupings($acid, $boxesAsHidden=false) {
+    return $this->_getAllFiltersAndGroupings($acid,true,true,$boxesAsHidden);
   }
 
-  function _getAllFiltersAndGroupings($acid,$filters=false,$groupings=false,$datesAsHidden=false) {
+  function _getAllFiltersAndGroupings($acid,$filters=false,$groupings=false,$boxesAsHidden=false) {
     // load the advanced calculation (procedure)
     $acObject = $this->get($acid);
     $fltr_grps = $acObject->getVar("fltr_grps");
@@ -933,7 +946,7 @@ class formulizeAdvancedCalculationHandler {
     $_groupings = array();
     foreach( $fltr_grps as $fltr_grp ) {
       if($filters && $fltr_grp['is_filter']) {
-      	$_filters[] = $this->getFilter($acid,$fltr_grp["handle"],$datesAsHidden);
+      	$_filters[] = $this->getFilter($acid,$fltr_grp["handle"],$boxesAsHidden);
       }
       if($groupings && $fltr_grp['is_group']) {
       	$_groupings[] = $this->getGrouping($acid,$fltr_grp["handle"]);
@@ -941,6 +954,22 @@ class formulizeAdvancedCalculationHandler {
     }
 
     return array( "filters"=>$_filters, "groupings"=>$_groupings );
+  }
+  
+  function filterExists($acid,$name) {
+    static $cachedExists = array();
+    if(!isset($cachedExists[$acid][$name])) {
+        $acObject = $this->get($acid);
+        $fltr_grps = $acObject->getVar("fltr_grps");
+        foreach($fltr_grps as $fltr_grp) {
+	    if(strtoupper($fltr_grp['handle'])==strtoupper($name)) {
+		$cachedExists[$acid][$name] = true;
+	        return true;
+	    }
+	}
+	$cachedExists[$acid][$name] = false;
+    }
+    return $cachedExists[$acid][$name];
   }
   
   function setFilterVariables($filtersAndGroupings, $acid) {
