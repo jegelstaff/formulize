@@ -4393,6 +4393,11 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 	  $targetFormElementTypes = $targetFormObject->getVar('elementTypes');
 	  $targetAlias .= $targetAlias ? "." : ""; // add a period to the end of the alias, if there is one, so it will work in the sql statement
 	  for($filterId = 0;$filterId<count($filterElementHandles);$filterId++) {
+		  // convert the $filterElementId to a real id, since it's possible it could find its way in here as a handle...a legacy issue sort of
+		  if(!is_numeric($filterElementIds[$filterId])) {
+		    $elementObject = $element_handler->get($filterElementIds[$filterId]);
+		    $filterElementIds[$filterId] = $elementObject->getVar('ele_id');
+		  }
 		  if($filterTypes[$filterId] != "oom") {
 			  if($start) {
 				  $conditionsfilter = " AND (";
