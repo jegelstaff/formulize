@@ -52,7 +52,7 @@
 
 if(isset($formulize_readElementsWasRun)) { return false; } // intended to make sure this file is only executed once.
 
-if(!defined(XOOPS_ROOT_PATH)) {
+if(!defined("XOOPS_ROOT_PATH")) {
 	include_once "../../../mainfile.php"; // include this if it hasn't been already!  -- we can call readelements.php directly when saving data via ajax...jump up three levels to get it, because we assume that we're running here as the start of the process when such an ajax call is made.  But when a normal page loads, it won't find the mainfile that high up, because the root of the normal page load is the index.php file one directory higher than /include/
 	ob_end_clean();
 	ob_end_clean(); // turn off two levels of output buffering, just in case (don't want extra stuff sent back with our ajax response)!

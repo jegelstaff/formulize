@@ -3677,9 +3677,14 @@ function processCustomButton($caid, $thisCustomAction, $entries="", $entry) {
 
 	global $xoopsUser;
 	$userGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
-	$groupOverlap = array_intersect(unserialize($thisCustomAction['groups']), $userGroups);
-	if(count($groupOverlap) == 0) {
-		return array();
+	if(!is_array($thisCustomAction['groups'])) {
+		$thisCustomAction['groups'] = unserialize($thisCustomAction['groups']);	// under some circumstances, this might be serialized?  I think it's being unserialized by the getVar method before it gets this far, but anyway....
+	}
+	if(!is_array($thisCustomAction['groups'])) {
+		$groupOverlap = array_intersect($thisCustomAction['groups'], $userGroups);
+		if(count($groupOverlap) == 0) {
+			return array();
+		}
 	}
 
 	static $nameIdAddOn = 0; // used to give inline buttons unique names and ids
