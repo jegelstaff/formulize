@@ -87,6 +87,7 @@ $list = $advanced_calculation_handler->getList($fid);
 ?>
 <html>
   <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title><?php print _formulize_DE_PICKCALCS; ?></title>
 
     <link rel="stylesheet" type="text/css" media="screen" href="<?php print XOOPS_URL ?>/xoops.css" />

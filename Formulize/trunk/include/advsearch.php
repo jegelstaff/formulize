@@ -217,6 +217,7 @@ foreach($cols as $f=>$vs) {
 
 print "<HTML>";
 print "<head>";
+print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />";
 print "<title>" . _formulize_DE_BUILDQUERY . "</title>\n";
 
 searchJavascript($items);

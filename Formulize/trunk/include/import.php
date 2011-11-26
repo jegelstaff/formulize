@@ -110,6 +110,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 print "<HTML>";
 print "<head>";
+print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />";
 print "<title>" . _formulize_DE_IMPORTDATA . "</title>\n";
 
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
