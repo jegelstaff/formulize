@@ -207,7 +207,7 @@ include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
 
 print "<HTML>";
 print "<head>";
-print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />";
+print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset="._CHARSET."\" />";
 print "<title>" . _formulize_DE_SETNOT . "</title>\n";
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
 $themecss = xoops_getcss();
