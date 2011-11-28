@@ -69,6 +69,9 @@ define("_MI_formulize_HEADING_HELP_LINK_DESC", "This link provides a popup windo
 define("_MI_formulize_USECACHE", "Use caching to speed up Procedures?");
 define("_MI_formulize_USECACHEDESC", "By default, caching is on.");
 
+define("_MI_formulize_DOWNLOADDEFAULT", "When users are exporting data, make the files work with Excel by default?");
+define("_MI_formulize_DOWNLOADDEFAULT_DESC", "When users export data, they can check a box on the download page to make the resulting file compatible with Excel.  This option controls whether that checkbox is checked by default or not.");
+
 
 // The name of this module
 define("_MI_formulizeMENU_NAME","MyMenu");

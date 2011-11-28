@@ -41,41 +41,56 @@ global $xoopsConfig;
 	}
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-print "<HTML>";
-print "<head>";
-print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset="._CHARSET."\" />";
-print "<title>" . _formulize_DE_EXPORT . "</title>\n";
 
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
-$themecss = xoops_getcss();
-//$themecss = substr($themecss, 0, -6);
-//$themecss .= ".css";
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
+$fid = intval($_GET['fid']);
+$frid = intval($_GET['frid']);
 
-print "</head>";
-print "<body><center>"; 
-print "<table width=100%><tr><td width=5%></td><td width=90%>";
+if(!isset($_POST['exportsubmit'])) {
 
-// 1. need to make a form that can be used to pick metadata columns or no metadata columns
-// 2. need to reload this page with same URL and provide the download file as normal, but this time, pass in the no metadata flag if it was picked
+	print "<HTML>";
+	print "<head>";
+	print "<title>" . _formulize_DE_EXPORT . "</title>\n";
 
-if(!isset($_POST['metachoice']) AND !isset($_GET['type'])) {
-
+	print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
+	$themecss = xoops_getcss();
+	print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
+	
+	print "</head>";
+	print "<body><center>"; 
+	print "<table width=100%><tr><td width=5%></td><td width=90%>";
 	print "<form name=\"metachoiceform\" action=\"".getCurrentURL() . "\" method=\"post\">\n";
-	print "<center>\n";
-	print "<h1>"._formulize_DE_EXPORT_METATITLE."</h1>\n<br>\n";
-	print "</center>\n";
-	print "<input type=\"radio\" name=\"metachoice\" value=\"1\">"._formulize_DB_EXPORT_METAYES."</input>\n<br>\n";
-	print "<input type=\"radio\" name=\"metachoice\" value=\"0\" checked>"._formulize_DB_EXPORT_METANO."</input>\n<br><br>\n";
+	print "<center><h1>"._formulize_DE_EXPORT_TITLE."</h1><br></center>\n";
+	
+	if(!isset($_GET['type'])) {
+		print "<input type=\"radio\" name=\"metachoice\" value=\"1\">"._formulize_DB_EXPORT_METAYES."</input>\n<br>\n";
+		print "<input type=\"radio\" name=\"metachoice\" value=\"0\" checked>"._formulize_DB_EXPORT_METANO."</input>\n<br><br>\n";
+	}
+	
+	if($_GET['type']=="update") {
+		print "<p>"._formulize_DE_IMPORT_DATATEMP4." <a href=\"\" onclick=\"javascript:window.opener.showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=".intval($_GET['eq'])."');return false;\">"._formulize_DE_IMPORT_DATATEMP5."</a></p>\n";
+		print "<p>"._formulize_DE_IMPORT_DATATEMP3."</p>\n";
+	}
+	
+	$module_handler = xoops_gethandler('module');
+	$config_handler = xoops_gethandler('config');
+	$formulizeModule = $module_handler->getByDirname("formulize");
+	$formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+	$excelChecked = $formulizeConfig['downloadDefaultToExcel'] == 1 ? "checked" : "";
+	print "<label><input type=\"checkbox\" name=\"excel\" value=\"1\" $excelChecked>"._formulize_DB_EXPORT_TO_EXCEL."</input></label>\n<br><br>\n";
+
 	print "<center>\n";
 	print "<input type=\"submit\" name=\"exportsubmit\" value=\""._formulize_DE_EXPORT_MAKEFILE."\">\n";
 	print "</center>\n";
 	print "</form>";
 
+	print "</td><td width=5%></td></tr></table>";
+	print "</center></body>";
+	print "</HTML>";
+
 } else {
 
-  if(!isset($_POST['metachoice'])) {
-		$_POST['metachoice'] = 0; // just set this to zero in case it's not set, which should never matter, since if 'type' is set, and metachoice is therefore skipped above, and you're making a template for updating, the metachoice is ignored in the actual export file creation process
+	if(!isset($_POST['metachoice'])) {
+		$_POST['metachoice'] = 0; // just set this to zero in case it's not set, which should never matter, since if 'type' is set, and metachoice is therefore skipped above, and you're making a template for updating, the metachoice is ignored in the actual export file creation process when updating
 	}
  
 	// 1. need to pickup the full query that was used for the dataset on the page where the button was clicked
@@ -88,11 +103,9 @@ if(!isset($_POST['metachoice']) AND !isset($_GET['type'])) {
 	$queryData = file(XOOPS_ROOT_PATH."/cache/exportQuery_".intval($_GET['eq']).".formulize_cached_query_for_export");
 	global $xoopsUser;
 	$exportUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-	$fid = intval($_GET['fid']);
-	$frid = intval($_GET['frid']);
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	if(trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $exportUid) { // query fid must match passed fid in URL, and the current user id must match the userid at the time the export file was created
-			print "<center><h1>"._formulize_DE_EXPORTTITLE."</h1></center>\n";
+			
 			$GLOBALS['formulize_doingExport'] = true;
 			unset($queryData[0]);
 			unset($queryData[1]);
@@ -111,22 +124,48 @@ if(!isset($_POST['metachoice']) AND !isset($_GET['type'])) {
 			}
 			if($_GET['type'] == "update") {
 				$fdchoice = "update";
-				$linkText = _formulize_DE_CLICKSAVE_TEMPLATE;
 			} else {
-				$linkText = _formulize_DE_CLICKSAVE;
 				$fdchoice = "comma";
-				//$cols = array();
-				//$headers = array();
 			}
 			
 			$filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
 			
-			print "<center><p><a href=\"$filename\">$linkText</a></p></center>\n";
-			
+			$pathToFile = str_replace(XOOPS_URL,XOOPS_ROOT_PATH,$filename);
 			if($_GET['type']=="update") {
-					print "<p>"._formulize_DE_IMPORT_DATATEMP4." <a href=\"\" onclick=\"javascript:window.opener.showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=".intval($_GET['eq'])."');return false;\">"._formulize_DE_IMPORT_DATATEMP5."</a></p>\n";
-					print "<p>"._formulize_DE_IMPORT_DATATEMP3."</p>\n";
+				$fileForUser = str_replace(XOOPS_URL."/modules/formulize/export/","",$filename);
+			} else {
+				$form_handler = xoops_getmodulehandler('forms','formulize');
+				$formObject = $form_handler->get($fid);
+				if(is_object($formObject)) {
+					$formTitle = "'".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", trans($formObject->getVar('title')))."'";
+				} else {
+					$formTitle = "a_form";
+				}
+				$fileForUser = _formulize_EXPORT_FILENAME_TEXT."_".$formTitle."_".date("M_j_Y_Hi").".csv";
 			}
+			
+			header('Content-Description: File Transfer');
+			header('Content-Type: text/csv; charset='._CHARSET);
+			header('Content-Disposition: attachment; filename='.$fileForUser);
+			header('Content-Transfer-Encoding: binary');
+			header('Expires: 0');
+			header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+			header('Pragma: public');
+			header('Content-Length: '. filesize($pathToFile));
+			if(strstr(strtolower(_CHARSET),'utf') AND $_POST['excel']==1) {
+				echo "\xef\xbb\xbf"; // necessary to trigger certain versions of Excel to recognize the file as unicode
+			} elseif(strstr(strtolower(_CHARSET),'utf-8')) {
+				ob_start();
+				readfile($pathToFile);
+				$fileContents = ob_get_clean();
+				print mb_convert_encoding($fileContents,"UTF-16LE","UTF-8"); // open office really wants it in UTF-16LE before it will actually trigger an automatic unicode opening?!	
+			} else {
+				readfile($pathToFile);	
+			}
+			
+			exit();
+			
+			
 			
 	} else {
 			print _formulize_DE_EXPORT_FILE_ERROR;
@@ -135,9 +174,6 @@ if(!isset($_POST['metachoice']) AND !isset($_GET['type'])) {
 } // end of "if the metachoice form has been submitted"
 
 
-print "</td><td width=5%></td></tr></table>";
-print "</center></body>";
-print "</HTML>";
 
 
 ?>

@@ -434,6 +434,15 @@ $modversion['config'][] = array(
 	'default' => 1,
 );
 
+$modversion['config'][] = array(
+	'name' => 'downloadDefaultToExcel',
+	'title' => '_MI_formulize_DOWNLOADDEFAULT',
+	'description' => '_MI_formulize_DOWNLOADDEFAULT_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 1,
+);
+
 //bloc
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",
