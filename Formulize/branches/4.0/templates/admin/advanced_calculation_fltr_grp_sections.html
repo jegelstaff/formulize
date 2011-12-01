@@ -1,0 +1,129 @@
+
+    <p>
+      <a name="clonefltr_grp" href="" target="<{$sectionContent.index}>"><img src="../images/clone.gif"> Clone this filter and grouping option</a>
+      <a name="delfltr_grp" href="" target="<{$sectionContent.index}>"><img src="../images/editdelete.gif"> Delete this filter and grouping option</a>
+    </p>
+
+	  <div class="form-item required">
+		  <label for="advcalc-fltr_grptitle_<{$sectionContent.index}>">Name</label>
+      <input type="text" class="required_formulize_element fltr_grp" id="advcalc-fltr_grptitle_<{$sectionContent.index}>" name="advcalc-fltr_grptitle_<{$sectionContent.index}>" value="<{$sectionContent.title}>" size="30" maxlength="255"/>
+		  <div class="description"></div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="input">Description</label><br />
+	    <textarea id="advcalc-description_<{$sectionContent.index}>" name="advcalc-description_<{$sectionContent.index}>" rows="5" cols="35"><{$sectionContent.fltr_grps.description}></textarea>
+		  <div class="description"></div>
+	  </div>
+
+
+	  <div class="form-item">
+		  <label for="advcalc-handle_<{$sectionContent.index}>">Handle for this option</label><br />
+	    <input type="text" id="advcalc-handle_<{$sectionContent.index}>" name="advcalc-handle_<{$sectionContent.index}>" value="<{$sectionContent.fltr_grps.handle}>" size="30" maxlength="255"/>
+		  <div class="description">ie: 'startDate' will allow you to use $startDate in the procedure to refer to the value the user chose</div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="advcalc-type_<{$sectionContent.index}>">What type of filter element should be used</label><br />
+	    <label for="advcalc-type_<{$sectionContent.index}>_1"><input type="radio" id="advcalc-type_<{$sectionContent.index}>_1" name="advcalc-type_<{$sectionContent.index}>" value="1"<{if $sectionContent.fltr_grps.type.kind eq 1}> checked<{/if}> onClick="fltr_grp_type_select(this)"/>Datebox</label><br />
+	    <label for="advcalc-type_<{$sectionContent.index}>_2"><input type="radio" id="advcalc-type_<{$sectionContent.index}>_2" name="advcalc-type_<{$sectionContent.index}>" value="2"<{if $sectionContent.fltr_grps.type.kind eq 2}> checked<{/if}> onClick="fltr_grp_type_select(this)"/>Selectbox</label><br />
+	    <label for="advcalc-type_<{$sectionContent.index}>_3"><input type="radio" id="advcalc-type_<{$sectionContent.index}>_3" name="advcalc-type_<{$sectionContent.index}>" value="3"<{if $sectionContent.fltr_grps.type.kind eq 3}> checked<{/if}> onClick="fltr_grp_type_select(this)"/>Checkboxes</label><br />
+	    <label for="advcalc-type_<{$sectionContent.index}>_4"><input type="radio" id="advcalc-type_<{$sectionContent.index}>_4" name="advcalc-type_<{$sectionContent.index}>" value="4"<{if $sectionContent.fltr_grps.type.kind eq 4}> checked<{/if}> onClick="fltr_grp_type_select(this)"/>Textbox</label>
+      <div id="advcalc-type_<{$sectionContent.index}>_1_options" style="<{if $sectionContent.fltr_grps.type.kind neq 1}>visibility: hidden; position: absolute<{/if}>">
+      </div>
+      <div id="advcalc-type_<{$sectionContent.index}>_2_options" style="<{if $sectionContent.fltr_grps.type.kind neq 2}>visibility: hidden; position: absolute<{/if}>">
+        <div class="optionlist" id="optionlist_<{$sectionContent.index}>_2">
+	<p><input onclick="fltr_grp_addoption(this)" type="button" class="formButton" name="addoption" section="<{$sectionContent.index}>" kind="2" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> 1 option"></p>
+        <{if $sectionContent.fltr_grps.type.kind eq 2 and $sectionContent.fltr_grps.type.options|@count > 0}>
+          <{foreach from=$sectionContent.fltr_grps.type.options key=text item=value name=optionsloop}>
+          <p class="useroptions" id="useroptions_<{$sectionContent.index}>_2" section="<{$sectionContent.index}>" kind="2" name="<{$smarty.foreach.optionsloop.index}>"><input type="text" name="advcalc-type_options_<{$sectionContent.index}>_2[<{$smarty.foreach.optionsloop.index}>]" value="<{$value}>"></input></p>
+          <{/foreach}>
+        <{else}>
+          <p class="useroptions" id="useroptions_<{$sectionContent.index}>_2" section="<{$sectionContent.index}>" kind="2" name="0"><input type="text" name="advcalc-type_options_<{$sectionContent.index}>_2[0]"></input></p>
+        <{/if}>
+        </div>
+        <!--<p><input type="button" class="formButton" name="cleardef" value="<{$smarty.const._AM_CLEAR_DEFAULT}>"/></p>-->
+      </div>
+      <div id="advcalc-type_<{$sectionContent.index}>_3_options" style="<{if $sectionContent.fltr_grps.type.kind neq 3}>visibility: hidden; position: absolute<{/if}>">
+        <div class="optionlist" id="optionlist_<{$sectionContent.index}>_3">
+	<p><input onclick="fltr_grp_addoption(this)" type="button" class="formButton" name="addoption" section="<{$sectionContent.index}>" kind="3" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> 1 option"></p>
+        <{if $sectionContent.fltr_grps.type.kind eq 3 and $sectionContent.fltr_grps.type.options|@count > 0}>
+          <{foreach from=$sectionContent.fltr_grps.type.options key=text item=value name=optionsloop}>
+          <p class="useroptions" id="useroptions_<{$sectionContent.index}>_3" section="<{$sectionContent.index}>" kind="3" name="<{$smarty.foreach.optionsloop.index}>"><input type="text" name="advcalc-type_options_<{$sectionContent.index}>_3[<{$smarty.foreach.optionsloop.index}>]" value="<{$value}>"></input></p>
+          <{/foreach}>
+        <{else}>
+          <p class="useroptions" id="useroptions_<{$sectionContent.index}>_3" section="<{$sectionContent.index}>" kind="3" name="0"><input type="text" name="advcalc-type_options_<{$sectionContent.index}>_3[0]"></input></p>
+        <{/if}>
+        </div>
+        <!--<p><input type="button" class="formButton" name="cleardef" value="<{$smarty.const._AM_CLEAR_DEFAULT}>"/></p>-->
+      </div>
+      <div id="advcalc-type_<{$sectionContent.index}>_4_options" style="<{if $sectionContent.fltr_grps.type.kind neq 4}>visibility: hidden; position: absolute<{/if}>">
+      </div>
+
+		  <div class="description"></div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="advcalc-label_<{$sectionContent.index}>">Filter label text for end users</label><br />
+	    <input type="text" id="advcalc-fltr_label_<{$sectionContent.index}>" name="advcalc-fltr_label_<{$sectionContent.index}>" value="<{$sectionContent.fltr_grps.fltr_label}>" size="30" maxlength="255"/>
+		  <div class="description">This is the text that should accompany this filter when it's presented to the user, ie: "Filter by age:"</div>
+	  </div>
+	  <div class="form-item">
+		  <label for="advcalc-label_<{$sectionContent.index}>">Grouping label text for end users</label><br />
+	    <input type="text" id="advcalc-grp_label_<{$sectionContent.index}>" name="advcalc-grp_label_<{$sectionContent.index}>" value="<{$sectionContent.fltr_grps.grp_label}>" size="30" maxlength="255"/>
+		  <div class="description">This is the text that should accompany this grouping when it's presented to the user, ie: "Group by age:"</div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="advcalc-form_<{$sectionContent.index}>">Form element this option should be associated with, if any</label><br />
+      <{$sectionContent.form_html}>
+		  <div class="description">If this option applies to a specific field, select it here.  For example, if you are making a list where the user can select male or female, then select the form element where the sex is stored and the filter will be applied to that field automatically.</div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="advcalc-form_alias_<{$sectionContent.index}>">Form alias used in the SQL to refer to this form</label><br />
+	    <input type="text" id="advcalc-form_alias_<{$sectionContent.index}>" name="advcalc-form_alias_<{$sectionContent.index}>" value="<{$sectionContent.fltr_grps.form_alias}>" size="30" maxlength="255"/>
+		  <div class="description">If you are using an alias for this form in the SQL in this procedure, then enter the alias here.</div>
+	  </div>
+
+	  <div class="form-item">
+	    <label for="advcalc-is_filter_<{$sectionContent.index}>"><input type="checkbox" id="advcalc-is_filter_<{$sectionContent.index}>" name="advcalc-is_filter_<{$sectionContent.index}>" value="1"<{if $sectionContent.fltr_grps.is_filter eq 1}> checked<{/if}>/>Use as a filter option</label>
+	    <label for="advcalc-is_group_<{$sectionContent.index}>"><input type="checkbox" id="advcalc-is_group_<{$sectionContent.index}>" name="advcalc-is_group_<{$sectionContent.index}>" value="1"<{if $sectionContent.fltr_grps.is_group eq 1}> checked<{/if}>/>Use as a grouping option</label>
+		  <div class="description"></div>
+	  </div>
+
+
+<script type="text/javascript">
+  function fltr_grp_type_select(selected) {
+    var id = selected.id;
+    var base = id.substr(0,id.lastIndexOf("_")+1);
+    var name = id + "_options";
+
+    for( var type = 1; type < 4; type++ ) {
+      var current = base + type + "_options";
+      _fltr_grp_type_select = document.getElementById( current );
+      if( name == current ) {
+        _fltr_grp_type_select.style.visibility = "visible";
+        _fltr_grp_type_select.style.position = "static";
+      } else {
+        _fltr_grp_type_select.style.visibility = "hidden";
+        _fltr_grp_type_select.style.position = "absolute";
+      }
+    }
+  }
+
+  function fltr_grp_addoption( button ) {
+    section = button.getAttribute('section');
+    kind = button.getAttribute('kind');
+
+    //alert( button.name + "_" + section + "_" + kind );
+
+    element = document.getElementById( "optionlist_" + section + "_" + kind );
+    items = element.getElementsByTagName( "p" );
+    number = items.length;
+
+    appendContents2 = '<input type="text" name="advcalc-type_options_' + section + '_' + kind + '['+number+']"></input>';
+    $("#optionlist_" + section + "_" + kind ).append('<p class="useroptions" id="useroptions_' + section + '_' + kind + '" name="' + number + '" section="' + section + '" kind="' + kind + '">' + appendContents2 + '</p>');
+    setDisplay('savewarning','block');
+  }
+</script>

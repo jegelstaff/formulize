@@ -1,0 +1,26 @@
+<div class="panel-content content">
+  <fieldset>
+    <legend><{$smarty.const._AM_ELE_YN}></legend>
+
+	  <div class="form-item">
+  		<label for="max"><{$smarty.const._AM_ELE_DEFAULT}></label>
+
+	    <label for="elements-ele_value-yes"><input type="radio" id="elements-ele_value-yes" name="elements_ele_value" value="_YES"<{if $content.ele_value_yes}> checked<{/if}>/><{$smarty.const._YES}></label>
+	    <label for="elements-ele_value-no"><input type="radio" id="elements-ele_value-no" name="elements_ele_value" value="_NO"<{if $content.ele_value_no}> checked<{/if}>/><{$smarty.const._NO}></label>
+  		<input type="submit" class="formButton" name="cleardef" value="<{$smarty.const._AM_CLEAR_DEFAULT}>"/>
+	    <div class="description"></div>
+	  </div>
+  </fieldset>
+</div>
+
+
+<script type='text/javascript'>
+$("[name=cleardef]").click(function () {
+  var el_collection = document.getElementsByName("elements_ele_value");
+  for(c=0;c<el_collection.length;c++)
+    el_collection[c].checked=false;
+
+	$("[name=cleardef]").blur();
+  return false;
+});
+</script>

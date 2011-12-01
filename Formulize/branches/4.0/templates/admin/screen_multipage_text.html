@@ -1,0 +1,29 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_multipage_text">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+
+
+<div class="panel-content content">
+  <fieldset>
+    <legend>Text for Multi page form: <em><{$content.title}></em></legend>
+
+	  <div class="form-item">
+		  <label for="screens-introtext"><{$smarty.const._AM_FORMULIZE_SCREEN_INTRO}></label>
+		  <textarea name="screens-introtext" rows="20"/><{$content.introtext}></textarea>
+		  <div class="description"></div>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-thankstext"><{$smarty.const._AM_FORMULIZE_SCREEN_THANKS}></label>
+		  <textarea name="screens-thankstext" rows="20"/><{$content.thankstext}></textarea>
+		  <div class="description"></div>
+	  </div>
+  </fieldset>
+</div>
+
+</form>

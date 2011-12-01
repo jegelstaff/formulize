@@ -1,0 +1,17 @@
+<p><{$sectionContent.description}></p>
+
+<{if $sectionContent.aid > 0}>
+<p><a href="ui.php?page=application&aid=<{$sectionContent.aid}>"><img src="../images/kedit.png">&nbsp;&nbsp;Configure this application and the relationships of its forms</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="deleteapplink" target="<{$sectionContent.aid}>" href=""><img src="../images/editdelete.gif">&nbsp;&nbsp;Delete this application</a></p>
+<{/if}>
+	
+<{if $sectionContent.aid == 0}>
+<div class="description">To assign a form to an application, look on the Settings tab when configuring the form.</div><br>
+<p style="clear: both;"><a href="ui.php?page=application&aid=<{$sectionContent.aid}>&tab=relationships"><img src="../images/kedit.png">&nbsp;&nbsp;Configure relationships (frameworks) for these forms</a></p>
+<{/if}>
+
+<blockquote>
+<{include file="db:admin/form_listing.html"}>
+</blockquote>  
+
+	
+

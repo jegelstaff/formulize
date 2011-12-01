@@ -1,0 +1,58 @@
+<div class="panel-content content">
+<div style="float: right;"><p><a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>"><img src="../images/kedit.png"> Formulize Preferences</a></p></div>
+<p><a href="ui.php?page=form&tab=settings&fid=new"><img src="../images/filenew2.png"> Create a new form</a>&nbsp&nbsp&nbsp;&nbsp;&nbsp&nbsp&nbsp;&nbsp;<a href="ui.php?page=form&tab=settings&fid=new&tableform=true"><img src="../images/filenew3.gif"> Create a new reference to a datatable</a></p>
+<h2>Manage your applications</h2>
+<form class="formulize-admin-form">
+<{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
+<input type="hidden" name="formulize_admin_handler" value="home">
+<input type="hidden" name="deleteform" value="">
+<input type="hidden" name="deleteapp" value="">
+<input type="hidden" name="cloneform" value="">
+<input type="hidden" name="cloneformdata" value="">
+<input type="hidden" name="lockdown" value="">
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/home_sections.html" sections=$adminPage.apps}>
+</form>
+</div>
+
+<script type="text/javascript">
+
+$(".deletelink").click(function () {
+	answer = confirm("Are you sure you want to delete this form?  All data associated with this form will be lost.");
+	if(answer) {
+		$("[name=deleteform]").val($(this).attr('target'));
+		runSaveEvent();
+	}
+	return false;
+});
+
+$(".deleteapplink").click(function () {
+	answer = confirm("Are you sure you want to delete this application?  All the forms will be unaffected, but the application will no longer appear in the application list.");
+	if(answer) {
+		$("[name=deleteapp]").val($(this).attr('target'));
+		runSaveEvent();
+	}
+	return false;
+});
+
+$(".cloneform").click(function () {
+	$("[name=cloneform]").val($(this).attr('target'));
+	runSaveEvent();
+	return false;
+});
+
+$(".cloneformdata").click(function () {
+	$("[name=cloneformdata]").val($(this).attr('target'));
+	runSaveEvent();
+	return false;
+});
+
+$(".lockdown").click(function () {
+	answer = confirm("Are you sure you want to lockdown this form?  You will be unable to change any of the configuration settings for the form or its elements once the form is locked down.");
+	if(answer) {
+		$("[name=lockdown]").val($(this).attr('target'));
+		runSaveEvent();
+	}
+	return false;
+});
+
+</script>

@@ -1,0 +1,41 @@
+<div class="panel-content content">
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<input type="hidden" name="formulize_admin_handler" value="element_advanced">
+<input type="hidden" name="formulize_admin_key" value="<{$content.ele_id}>">
+<input type="hidden" name="original_handle" value="<{$content.original_handle}>">
+
+<{if $content.datatypeui}>
+<div class="accordion-box-wide">
+<div class="form-item">
+		<fieldset>
+			<legend><label class="question">How should the data for this element be stored in the database?</label></legend>
+			<{$content.datatypeui}>
+			<div class="description">
+				<p>Elements that will contain only numbers should use a numeric type, so that sorting and calculations work correctly.  When in doubt, leave this value on its default setting.</p>
+			</div>
+		</fieldset>
+</div>
+</div>
+<{/if}>
+
+<{if $content.ele_encrypt_show}>  
+<div class="accordion-box">
+<div class="form-item">
+		<fieldset>
+			<legend><label for="elements-ele_encrypt" class="question">Encrypt this information in the database?</label></legend>
+      <p><input type="radio" name="elements-ele_encrypt" value=1<{$content.ele_encrypt_yes_on}>> Yes</p>
+			<p><input type="radio" name="elements-ele_encrypt" value=0<{$content.ele_encrypt_no_on}>> No</p>
+      <div class="description">
+				<p>To prevent anyone who has access to the database from reading the information users submit, you can encrypt the information before it is stored in the database.  Most features of Formulize work with encrypted information, but some unusual operations, like grouping calculation results by an encrypted field, don't work.</p>
+        <p><b>Encryption is dependent on the current database password; if you change the database password, all your encrypted information will be inaccessible!</b></p>
+			</div>
+  </fieldset>
+</div>
+</div>
+<{/if}>
+  
+</form>
+
+<div style="clear: both;"></div>
+</div> <!--// end content -->

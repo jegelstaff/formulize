@@ -1,0 +1,151 @@
+<div class="panel-content content">
+
+
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
+<input type="hidden" name="formulize_admin_handler" value="form_settings">
+<input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
+<input type="hidden" name="application_url_id" value="<{$content.aid}>">
+<input type="hidden" id="reload_settings" name="reload_settings" value="<{if $content.fid == 'new'}>1<{/if}>">
+
+	<div class="accordion-box">
+		<div class="form-item required">
+        	<fieldset>
+                <legend><label for="forms-title" class="question">What is the name of the form?</label></legend>
+                <p>Form title: <input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" /></p>
+								<p>Menu entry: <input type="text" id="forms-menutext" name="forms-menutext" value="<{$content.menutext}>"  /></p>
+								<div class="description">
+									Leave the "menu entry" blank to remove this form from the default menu block
+								</div>
+            </fieldset>
+		</div>
+	</div>
+
+  <div class="accordion-box">
+	  <div class="form-item">
+     	<fieldset>
+        <legend><label for="forms-form_handle" class="question">Form handle</label></legend>
+			  <input type="text" name="forms-form_handle" value="<{$content.form_handle}>">
+			  <div class="description">
+				  <p>Optional. The name will you use to refer to this form in programming code and in the database. Defaults to the form ID number.</p>
+			  </div>
+		  </fieldset>
+	  </div>
+  </div>
+
+		<{if $content.istableform == true && $content.fid == "new"}>
+		<div class="accordion-box">
+			<div class="form-item">
+				<fieldset>
+                    <legend><label for="database_table" class="question">Which database table should this "form" point to?</label></legend>
+                    <input type="text" id="forms-tableform" name="forms-tableform" value="" />
+                    <div class="description">
+                        <p>Type the exact name, including the prefix, ie: mysite_groups</p>
+                    </div>
+                </fieldset>
+			</div>
+		</div>
+		<div style="clear: both;"></div>
+		<{/if}>
+	
+		<{if $content.istableform == false}>
+		<div class="accordion-box">
+			<div class="form-item">
+        	<fieldset>
+				<legend><label class="question">How many entries are allowed in this form?</label></legend>
+				
+				<div class="form-radios">
+					<label for="group"><input type="radio" id="group" name="forms-single" value="group" />One entry per <b>group</b></label>
+				</div>
+				<div class="form-radios">
+					<label for="on"><input type="radio" id="user" name="forms-single" value="user" />One entry per <b>user</b></label>
+				</div>
+				<div class="form-radios">
+					<label for="empty"><input type="radio" id="off" name="forms-single" value="off" /><b>More than one entry</b> per user</label>
+				</div>
+             </fieldset>
+		</div>
+	</div>
+	<div style="clear: both;"></div>
+	
+		<{if $content.fid != "new" && $content.elementheadings|@count}>
+		<div class="accordion-box">
+			<div class="form-item">
+				<fieldset>
+									<legend><label class="question">When showing a list of entries in this form, which elements should be displayed by default?</label></legend>
+									<select name=headerlist[] size=10 multiple class="form-multiple-select">
+											<{foreach from=$content.elementheadings item=element}>
+											<option value=<{$element.ele_id}><{$element.selected}>><{$element.text}></option>
+											<{/foreach}>
+									</select>
+							</fieldset>
+			</div>
+		</div>
+		<{/if}>
+	
+	<{/if}>
+	
+	<{if $content.applications|@count > 0}>
+	<div class="accordion-box">
+		<div class="form-item">
+			<fieldset>
+                <legend><label class="question">Which applications is this form part of?</label></legend>
+                <select name="apps[]" id="apps" size=10 multiple>
+                    <{foreach from=$content.applications item=application}>
+                        <option value=<{$application.appid}><{$application.selected}>><{$application.text}></option>
+                    <{/foreach}>
+                </select>
+            </fieldset>
+		</div>
+	</div>
+	<{/if}>
+	<div class="accordion-box">
+		<div class="form-item">
+			<fieldset>
+                <legend><label class="question">Create a new application for this form to be part of?</label></legend>
+                <div class="form-radios radio-inline">
+                    <label for="yes"><input type="radio" id="new-app-yes" name="new_app_yes_no" value="yes"/>Yes</label>
+                </div>
+                <div class="form-radios radio-inline">
+                    <label for="yes"><input type="radio" id="new-app-no" name="new_app_yes_no" value="no" checked/>No</label>
+                </div>
+								<br /><br />
+								<div class="form-item" id="new-application-box" style="display: none;">
+			          <label class="question">What is the name of the new application?</label>
+                <input type="text" id="applications-name" name="applications-name" value="" />
+							</div>
+            </fieldset>
+		</div>
+	</div> 
+
+</form>
+<script type="text/javascript">
+  $("#<{$content.singleentry}>").attr('checked', true);
+	
+	$("#forms-title").keydown(function () {
+		window.document.getElementById('reload_settings').value = 1;
+	});
+	
+	$('input:radio[name=new_app_yes_no]').change(function(){
+		if($('input:radio[name=new_app_yes_no]:checked').val() == 'yes') {
+			window.document.getElementById("new-application-box").style.display = 'block';
+		} else {
+			window.document.getElementById("new-application-box").style.display = 'none';
+		}
+		});
+	
+	$(".savebutton").click(function() {
+	  if($("[name=forms-title]").val() == "") {
+			alert("Forms must have a name!");
+			$("[name=forms-title]").focus();
+		}
+	});
+	
+</script>
+<div style="clear: both"></div>
+</div> <!--// end content -->

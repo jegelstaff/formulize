@@ -1,0 +1,109 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form class="formulize-admin-form">
+<input type="hidden" name="formulize_admin_handler" value="form_elements">
+<input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
+<input type="hidden" name="cloneelement" value="">
+<input type="hidden" name="deleteelement" value="">
+<input type="hidden" name="convertelement" value="">
+<input type="hidden" name="reload_elements" value="">
+<input type="hidden" name="aid" value="<{$content.aid}>">	
+<input type="hidden" name="elementorder" value="">	
+	
+<div class="accordion-box">
+	<h2>Add elements to the form</h2>
+	<p>Click an element name to add it</p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><img src="../images/filenew2.png"> Text box</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea"><img src="../images/filenew2.png"> Multi-line text box</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=areamodif"><img src="../images/filenew2.png"> Text for display (left and right cells)</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=ib"><img src="../images/filenew2.png"> Text for display (spanning both cells)</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=select"><img src="../images/filenew2.png"> Select box (dropdowns and list boxes)</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkbox"><img src="../images/filenew2.png"> Check boxes</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=radio"><img src="../images/filenew2.png"> Radio buttons</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=yn"><img src="../images/filenew2.png"> Yes/No radio buttons</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=date"><img src="../images/filenew2.png"> Date box</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subform"><img src="../images/filenew2.png"> Subform (another form with a relationship to this one)</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=grid"><img src="../images/filenew2.png"> Table of existing elements (place BEFORE the elements it contains)</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived"><img src="../images/filenew2.png"> Value derived from other elements</a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick"><img src="../images/filenew2.png"> Color picker</a></p>
+			<{foreach item=customElement from=$content.customElements}>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=<{$customElement.type}>"><img src="../images/filenew2.png"> <{$customElement.name}></a></p>	
+			<{/foreach}>
+</div>
+
+<div class="accordion-box-wide">
+<h2>Manage the elements in the form</h2>
+<p>Click and drag the elements to re-order them</p>
+		<div id="sortable-list">
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.elements}>
+		</div>
+</div>
+</form>
+<div style="clear: both;"></div>
+<script type="text/javascript">
+
+$(".clonelink").click(function () {
+	$("[name=cloneelement]").val($(this).attr('target'));
+	$(".savebutton").click();
+	return false;
+});
+
+$(".deletelink").click(function () {
+	var answer = confirm("Are you sure you want to delete this element?  All data users have entered into this element will be lost!");
+	if(answer) {
+		$("[name=deleteelement]").val($(this).attr('target'));
+		$("[name=reload_elements]").val(1);
+		$(".savebutton").click();
+	}
+	return false;
+});
+
+$(".converttotextarea").click(function () {
+	var answer = confirm("Convert this text box to a multi-line text box?");
+	if(answer) {
+		$("[name=convertelement]").val($(this).attr('target'));
+		$("[name=reload_elements]").val(1);
+		$(".savebutton").click();
+	}
+	return false;
+});
+
+$(".converttotext").click(function () {
+	var answer = confirm("Convert this multi-line text box to a single-line text box?");
+	if(answer) {
+		$("[name=convertelement]").val($(this).attr('target'));
+		$("[name=reload_elements]").val(1);
+		$(".savebutton").click();
+	}
+	return false;
+});
+$(".converttocheckbox").click(function () {
+	var answer = confirm("Convert these radio buttons to checkboxes?");
+	if(answer) {
+		$("[name=convertelement]").val($(this).attr('target'));
+		$("[name=reload_elements]").val(1);
+		$(".savebutton").click();
+	}
+	return false;
+});
+$(".converttoradio").click(function () {
+	var answer = confirm("Convert these checkboxes to radio buttons?");
+	if(answer) {
+		$("[name=convertelement]").val($(this).attr('target'));
+		$("[name=reload_elements]").val(1);
+		$(".savebutton").click();
+	}
+	return false;
+});
+
+$(".savebutton").click(function () {
+	$("[name=elementorder]").val($("#accordion-2").sortable('serialize')); 
+});
+
+$("#accordion-2").bind( "sortupdate", function(event, ui) {
+  setDisplay('savewarning','block');
+});
+
+</script>

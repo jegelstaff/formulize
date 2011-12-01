@@ -1,0 +1,30 @@
+<div class="panel-content content">
+  <fieldset>
+    <legend>Options for Dummy Element</legend>
+
+    <div class="form-item">
+	    <label for="elements-ele_value[0]">First value for the dummy element</label>
+	    <input id="elements-ele_value[0]" name="elements-ele_value[0]" type="text" value="<{$content.ele_value[0]}>"></input>
+	    <div class="description">
+            <p>For this dummy element type, we'll use this as the first part of the default value for this element.</p>
+	    <!-- additional values, like 'first', can be defined in the adminPrepare method of the custom element class -->
+	    <{if $content.first}>
+	      <p><{$content.first}></p>
+	    <{/if}>
+            </div>
+    </div>
+    
+    <div class="form-item">
+	    <label for="elements-ele_value[1]">Second value for the dummy element</label>
+	    <input id="elements-ele_value[1]" name="elements-ele_value[1]" type="text" value="<{$content.ele_value[1]}>"></input>
+	    <div class="description">
+            <p>For this dummy element type, we'll use this as the second part of the default value for this element.</p>
+	    <!-- additional values, like 'second', can be defined in the adminPrepare method of the custom element class -->
+	    <{if $content.second}>
+	      <p><{$content.second}></p>
+	    <{/if}>
+            </div>
+    </div>
+	
+  </fieldset>
+</div>

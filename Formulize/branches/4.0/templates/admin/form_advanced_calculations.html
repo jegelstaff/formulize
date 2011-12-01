@@ -1,0 +1,72 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="form_advanced_calculations">
+<input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
+<input type="hidden" name="formulize_admin_aid" value="<{$content.aid}>">
+<input type="hidden" name="gotoadvanced_calculations" value="">
+<input type="hidden" name="deleteadvanced_calculations" value="">
+<input type="hidden" name="cloneadvanced_calculations" value="">
+
+
+<div class="panel-content content">
+
+	<p><i>Procedures</i> let you create a series of queries and logical steps, that get carried out on the data that users have submitted in the form.  You can use Procedures for advanced, multi-step calculations, or any other situation where a single query or single operation is not enough to get to the outcome you want.</p>
+
+  <h2><a name="newprocedure" href="ui.php?page=advanced-calculation&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&acid=new"><img src="../images/filenew2.png"> Create a new Procedure</a></h2>
+
+  <{* include form if exist advanced_calculations exist *}>
+
+  <h2>Procedures</h2>
+  <div class="form-item">
+    <table>
+	    <tr>
+		    <th>Name</th>
+		    <th>Action</th>
+	    </tr>
+      <{foreach from=$content.advanced_calculations item=advanced_calculation}>
+	      <tr>
+		      <td><label for="advanced-calculation-defaultform-<{$advanced_calculation.acid}>"><a class="configadvanced_calculation" target="<{$advanced_calculation.acid}>" href=""><img src="../images/kedit.png"> <{$advanced_calculation.name}></a></label></td>
+  		    <td><a class="cloneadvanced_calculation" target="<{$advanced_calculation.acid}>" href=""><img src="../images/clone.gif"> Clone</a>&nbsp;&nbsp;&nbsp;&nbsp;<a class="deleteadvanced_calculation" target="<{$advanced_calculation.acid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
+	      </tr>
+      <{/foreach}>
+    </table>
+  </div>
+</div>
+
+</form>
+
+<script type="text/javascript">
+
+$(".configadvanced_calculation").click(function() {
+	$("[name=gotoadvanced_calculations]").val($(this).attr('target'));
+	$(".savebutton").click();
+	return false;
+})
+
+$("[name=newprocedure]").click(function() {
+	$("[name=gotoadvanced_calculations]").val('new');
+	$(".savebutton").click();
+	return false;
+})
+
+$(".deleteadvanced_calculation").click(function() {
+	var answer = confirm("Are you sure you want to delete this procedure?  All settings for this procedure will be lost!");
+	if(answer) {
+		$("[name=deleteadvanced_calculations]").val($(this).attr('target'));
+		$(".savebutton").click();
+	}
+	return false;
+})
+
+$(".cloneadvanced_calculation").click(function() {
+	$("[name=cloneadvanced_calculations]").val($(this).attr('target'));
+	$(".savebutton").click();
+	return false;
+})
+
+</script>

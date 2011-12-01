@@ -1,0 +1,40 @@
+
+<script type="text/javascript">
+
+	pagehasaccordion["accordion-<{$number}>"] = true;
+
+	$(function() {
+		var stop = false;
+		$("#accordion-<{$number}> h3").click(function(event) {
+			if (stop) {
+				event.stopImmediatePropagation();
+				event.preventDefault();
+				stop = false;
+			}
+		});
+		$("#accordion-<{$number}>").accordion({
+			autoHeight: false, // no fixed height for sections
+			collapsible: true, // sections can be collapsed 
+			active: <{$accordion_active}>,
+			header: "> div > h3"
+		}).sortable({
+			axis: "y",
+			handle: "h3",
+			stop: function(event, ui) {
+				stop = true;
+			}
+		});
+	});
+
+</script>
+
+<div id="accordion-<{$number}>">
+	<{foreach from=$sections key=sectionNumber item=section}>
+	<div id="drawer-<{$number}>-<{$sectionNumber}>">
+    <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
+		<div class="accordion-content content">
+			<{include file=$sectionTemplate sectionContent=$section.content}>
+		</div>
+	</div>
+	<{/foreach}>
+</div><!-- end accordion -->

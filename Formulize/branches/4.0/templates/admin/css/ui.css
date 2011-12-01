@@ -1,0 +1,426 @@
+/* page for tabs */
+.ui-tabs-panel {}
+
+/* header */
+.ui-widget-header {}
+
+/* logo */
+#formulize-logo {
+	margin-bottom: 20px;
+}
+
+
+.deleteicon {
+	float: right;
+	margin-top: 5px;
+	margin-right: 5px;
+	
+}
+
+label {
+	text-align: left !important;
+}
+
+.form-screen-list .imageicon {
+	clear: both;
+	float: left;
+}
+
+.form-screen-list .formaction {
+	padding-left: 38px;
+}
+
+#formlisting {
+	overflow: hidden;
+}
+
+/* override blockquote container */
+.ui-accordion-content blockquote {
+	margin: 0.5em 0;
+	padding: 0;
+	overflow: auto;
+	font-style: normal;
+}
+
+div.accordion-box {
+  	float: left;
+	width: 385px;
+	margin: 0 2em 1.5em 0;
+}
+
+div.accordion-box-wide {
+  	float: left;
+	width: 500px;
+	margin: 0 2em 1.5em 0;
+}
+
+div.accordion-box .form-name {
+	margin: 0;
+	padding: 0.5em;
+	font-weight: bold;
+	background-color: #0085b6;
+	border:1px solid #94daf2;
+	border-bottom: 0;
+}
+
+div.accordion-box .form-name a {
+	display: block;
+	margin: 0;
+	/*padding-left: 35px;
+	min-height: 30px;
+	background-image: url(../../../images/kedit.gif); 
+	background-repeat: no-repeat;	*/
+	line-height: 1.2em;
+	color: #FFF;
+	text-decoration: none;
+}
+
+div.accordion-box .form-name a:hover {
+	color: #aee7f9;
+	text-decoration: none;
+}
+
+div.accordion-box .form-screen-list {
+	margin: 0;
+	padding: 0.5em;
+	border:1px solid #94daf2;
+	border-top: 0;
+}
+
+.formbox-title {
+	font-weight: bold;
+}
+
+.formactions-list {
+	margin-top: 1em;
+	margin-left: 2em;
+	
+}
+
+div.accordion-box .form-screen-list ul {
+	margin: 0.5em;
+}
+
+div.accordion-box .form-screen-list p {
+	margin: 0;
+}
+
+div.accordion-box .no-bullets {
+	list-style-type: none;
+}
+
+/* table overrides */
+
+.ui-tabs-panel .content table {
+	width: 80%;
+	border: 1px solid #0085b6;
+	border-collapse: collapse;
+}
+.ui-tabs-panel .content table th {
+	font-weight: normal;
+	background-color: #0085b6 !important;
+	color: white !important;
+	background: none;
+}
+
+.ui-tabs-panel .content table th, .ui-tabs-panel .content table td {
+	padding: 0.2em 0.3em;
+	text-align: left;
+}
+
+.ui-tabs-panel .content table td a img{
+	vertical-align: top;
+}
+
+.ui-accordion, #tabs {
+	clear: both;
+}
+
+div.admin-ui, p.versionnumber {
+	margin-top: 2em;
+	position: static;
+}
+
+.admin-ui a {
+	font-weight: normal;
+	color: blue;
+}
+
+.admin-ui p {
+	margin-top: 0.75em;
+}
+
+.admin-ui blockquote {
+	text-align: left;
+}
+
+#tabs, .tab-content, .ui-tabs-nav, .ui-tabs-nav li {
+	position: static;
+}
+
+div#tabs li {
+	list-style-type: none;
+}
+
+.ui-tabs-panel .content a:hover {
+	background: #eee;
+}
+
+.ui-tabs-panel .content table {
+	/*width: 60em;*/
+}
+
+
+/* modified by S.Gray, April 11, 2011, floating save button so save button is always visible */
+/* uses jQuery, see: http://michelgotta.posterous.com/sticky-scrolling-shoppingcart-with-jquery */
+#admin_toolbar {
+	padding: 1em 1.5em;
+	margin: 1em 0;
+	background-color: #FFF;
+}
+
+#admin_toolbar.toolbar_fixed {
+	position: fixed; 
+	top: 0;
+	z-index: 100;
+	margin-top: 0;
+	margin-bottom: 0;
+	border: solid 1px #1D65A5;
+}
+
+#savebutton input, #popupsavebutton input {
+	float: left;
+	font-size: 1.1em;
+	width: 150px;
+	text-align: center;
+	margin-bottom: 1em;
+  font-weight: normal;
+}
+#savewarning {
+	display: none;
+	
+	float: left;
+	margin-bottom: 1em;
+	margin-left: 1em;
+	background-color: #FCF;
+	
+	color: #9F6000;
+    background-color: #FEEFB3;
+    background-image: url(../../../images/warning.png);
+	background-repeat: no-repeat;
+    background-position: 5px center;
+	padding:10px 5px 10px 40px;
+	border: solid 1px #9F6000;
+}
+
+#popupsavewarning {
+	padding-top: 1.75em;
+	display: none;
+	color: red;
+}
+
+
+#admin_toolbar.toolbar_fixed #savebutton input {
+	margin-bottom: 0;
+}
+
+#admin_toolbar.toolbar_fixed #savewarning {
+	float: none;
+	margin-left: 165px;
+	margin-bottom: 0;
+}
+
+/* Develop a consistent style for forms */
+/* form > fieldset > ol > li > fieldset or input or select */
+/* Using http://www.alistapart.com/articles/prettyaccessibleforms/ */
+
+
+.code {
+	font-family: "Courier New", Courier, monospace;
+}
+
+.checkbox-table-cell input {
+	margin-right: 8em;
+}
+
+.smallhead {
+	margin-top: -0.5em;
+	font-size: 10pt;	
+}
+
+
+.addeffectbutton {
+	margin-bottom: 1.5em;
+}
+
+div.customeffect {
+	padding-left: 1em;
+}
+
+form fieldset {
+  margin-bottom: 10px;
+	border: 1px solid #0085b6;
+	/*padding: 6px;*/
+	padding: 0.5em;
+}
+form legend {
+  padding: 0 2px;
+  font-weight: bold;
+  color: #0085b6;
+  white-space: normal;
+}
+form div.form-item {
+	margin: 0 0 2.5em 0;
+}
+form label {
+/*  display: inline-block; */
+  vertical-align: top;
+	padding: 0 4px 0 0;
+}
+
+form fieldset fieldset {
+/*  border: none; 
+  margin: 3px 0 0 0;
+	padding: 0;*/
+}
+form fieldset fieldset legend {
+  /*padding: 0 0 5px;
+  font-weight: normal;*/
+}
+form fieldset fieldset label {
+/*  display: block;
+  width: auto; */
+}
+form .required em {
+  font-weight: bold;
+  font-style: normal;
+  color: #f00;
+}
+label.question{
+	margin: 0.5em 0;
+	display: block;
+	text-align: left !important;
+}
+form fieldset fieldset label {
+/*  margin-left: 163px; /* Width plus 3 (html space) */
+}
+
+div.description {
+	clear: both;
+  font-style: italic;
+  font-size: 80%;
+  color: #666;
+	padding-top: 10px;
+	text-align: left !important;
+}
+
+form textarea {
+	width: 80%;
+}
+
+form .input-text {
+	border:1px solid #0085b6;
+	/*margin: 0.5em 0 0.5em 1em;*/
+	width: 270px;
+}
+
+input:focus, select:focus, textarea:focus {
+	background: #FFFCCF;
+}
+
+form .form-radios, form .form-multiple-select {
+	/*margin: 0.5em 0 0.25em 1em;*/
+}
+
+form .radio-inline {
+	float: left;
+}
+
+form fieldset ol {
+  margin: 0;
+  padding: 0;
+}
+form fieldset li {
+  padding: 5px;
+  margin: 0;
+}
+
+form .groupselectionbox, form .permissiongroup {
+	margin-left: 30px;
+}
+
+form .groupselectionbox {
+	margin-bottom: 20px;
+}
+
+.conditionsdelete {
+	color: red !important;
+	font-weight: bold;
+}
+
+#sortable-list .ui-accordion-header a:hover {
+	cursor: move !important;
+}
+.accordion-name {
+	cursor: pointer !important;
+}
+
+
+/* remove the horizontal scroll-bar */
+#icms-page {
+  padding: 0;
+}
+
+/* remove full justification */
+.admin-ui .content {
+    text-align: left;
+}
+
+
+/* tooltips */
+/* blue: #0085B6 */
+/* yellow: #FFFFAA */
+#tooltip {
+	position:absolute;
+	z-index:9999;
+	width:240px;
+	color:#FFFFFF;
+  background:#0085B6;
+}
+
+#tooltip .tipHeader {
+  height:8px;
+  -moz-border-radius-topleft: 75px;
+  border-top-left-radius: 75px;
+  -moz-border-radius-topright: 75px;
+  border-top-right-radius: 75px;
+  -moz-border-radius-bottomleft: 0px;
+  border-bottom-left-radius: 0px;
+  -moz-border-radius-bottomright: 0px;
+  border-bottom-right-radius: 0px;
+}
+
+#tooltip .tipBody {
+  padding-left:8px;
+  padding-right:8px;
+  -moz-border-radius-topleft: 0px;
+  border-top-left-radius: 0px;
+  -moz-border-radius-topright: 0px;
+  border-top-right-radius: 0px;
+  -moz-border-radius-bottomleft: 0px;
+  border-bottom-left-radius: 0px;
+  -moz-border-radius-bottomright: 0px;
+  border-bottom-right-radius: 0px;
+}
+
+#tooltip .tipFooter {
+  height:8px;
+  -moz-border-radius-topleft: 0px;
+  border-top-left-radius: 0px;
+  -moz-border-radius-topright: 0px;
+  border-top-right-radius: 0px;
+  -moz-border-radius-bottomleft: 75px;
+  border-bottom-left-radius: 75px;
+  -moz-border-radius-bottomright: 75px;
+  border-bottom-right-radius: 75px;
+}

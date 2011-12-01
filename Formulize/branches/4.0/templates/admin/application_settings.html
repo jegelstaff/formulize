@@ -1,0 +1,51 @@
+<div class="panel-content content">
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
+<input type="hidden" name="formulize_admin_handler" value="application_settings">
+<input type="hidden" name="formulize_admin_key" value="<{$content.aid}>">
+<input type="hidden" id="reload_settings" name="reload_settings" value="">
+
+	<div class="accordion-box">
+		<div class="form-item">
+        	<fieldset>
+                <legend><label for="applications-name" class="question">What is the name of this Application?</label></legend>
+                <input type="text" id="applications-name" name="applications-name" value="<{$content.name}>" class="input-text" />
+            </fieldset>
+		</div>
+
+		<div class="form-item">
+        	<fieldset>
+                <legend><label for="applications-description" class="question">Description of this application:</label></legend>
+                <textarea rows="4" id="applications-description" name="applications-description"><{$content.description}></textarea>
+            </fieldset>
+		</div>
+	
+	</div>
+	
+	<div class="accordion-box">
+		<div class="form-item">
+			<fieldset>
+				<legend><label for="applications-forms" class="question">Forms in this application:</label></legend>
+				<select id="applications-forms" name="applications-forms[]" size=6 multiple>
+					<{foreach from=$content.forms item=thisform}>
+						<option value=<{$thisform.id}><{$thisform.selected}>><{$thisform.name}></option>
+					<{/foreach}>
+				</select>
+			</fieldset>
+		</div>
+	</div>
+	
+
+</form>
+
+<div style="clear: both"></div>
+</div> <!--// end content -->
+
+<script type="text/javascript">
+
+	$("#applications-name").keydown(function () {
+		window.document.getElementById('reload_settings').value = 1;
+	});
+	
+</script>
