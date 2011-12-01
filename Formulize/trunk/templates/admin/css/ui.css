@@ -22,6 +22,7 @@ label {
 }
 
 .form-screen-list .imageicon {
+	clear: both;
 	float: left;
 }
 

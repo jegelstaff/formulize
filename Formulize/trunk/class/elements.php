@@ -289,7 +289,7 @@ class formulizeElementsHandler {
 		$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE id_form='.$id_form;
 
 
-		if( isset($criteria) && is_subclass_of($criteria, 'criteriaelement') ){
+		if( isset($criteria)) { 
 			$sql .= $criteria->render() ? ' AND ('.$criteria->render().')' : '';
 			if( $criteria->getSort() != '' ){
 				$criteriaByClause = ' ORDER BY '.$criteria->getSort().' '.$criteria->getOrder();
@@ -337,7 +337,7 @@ class formulizeElementsHandler {
 	
     function getCount($criteria = null){
 		$sql = 'SELECT COUNT(*) FROM '.formulize_TABLE;
-		if( isset($criteria) && is_subclass_of($criteria, 'criteriaelement') ){
+		if( isset($criteria) ) { 
 			$sql .= ' '.$criteria->renderWhere();
 		}
 		$result = $this->db->query($sql);
@@ -351,7 +351,7 @@ class formulizeElementsHandler {
     function deleteAll($criteria = null){
     	global $xoopsDB;
 		$sql = 'DELETE FROM '.formulize_TABLE;
-		if( isset($criteria) && is_subclass_of($criteria, 'criteriaelement') ){
+		if( isset($criteria) ) { 
 			$sql .= ' '.$criteria->renderWhere();
 		}
 		if( !$result = $this->db->query($sql) ){

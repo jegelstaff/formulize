@@ -1711,7 +1711,8 @@ function prepDataForWrite($element, $ele) {
 							}
 						}	*/					
 					}
-          while($numberOfSelectionsFound < count($ele)) { // if a value was received that was out of range...added by jwe March 2 2008...in this case we are assuming that if there are more values passed back than selections found in the valid options for the element, then there are out-of-range values we want to preserve
+
+          while($numberOfSelectionsFound < count($ele) AND $opt_count < 1000) { // if a value was received that was out of range...added by jwe March 2 2008...in this case we are assuming that if there are more values passed back than selections found in the valid options for the element, then there are out-of-range values we want to preserve
             if(in_array($opt_count, $ele)) { // keep looking for more values...get them out of the hiddenOutOfRange info
               $value = $value.'*=+*:'.$myts->htmlSpecialChars($_POST['formulize_hoorv_'.$ele_id.'_'.$opt_count]);
               $numberOfSelectionsFound++;
@@ -1817,7 +1818,7 @@ function prepDataForWrite($element, $ele) {
 							}
               // handle out of range values that are in the DB, added March 2 2008 by jwe
               if(is_array($ele)) {
-                while($numberOfSelectionsFound < count($ele)) { // if a value was received that was out of range...added by jwe March 2 2008...in this case we are assuming that if there are more values passed back than selections found in the valid options for the element, then there are out-of-range values we want to preserve
+                while($numberOfSelectionsFound < count($ele) AND $entrycounterjwe < 1000) { // if a value was received that was out of range...added by jwe March 2 2008...in this case we are assuming that if there are more values passed back than selections found in the valid options for the element, then there are out-of-range values we want to preserve
                   if(in_array($entrycounterjwe, $ele)) { // keep looking for more values...get them out of the hiddenOutOfRange info
                     $value = $value.'*=+*:'.$myts->htmlSpecialChars($_POST['formulize_hoorv_'.$ele_id.'_'.$entrycounterjwe]);
                     $numberOfSelectionsFound++;

@@ -2982,7 +2982,12 @@ function renderElement(handle,entryId,fid,check) {
 		if(check && savingNow == "") {
 			savingNow = true;
 			jQuery("#deDiv_"+handle+"_"+entryId).fadeTo("fast",0.33);
-			jQuery.post("<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php", jQuery("[name='de_"+fid+"_"+entryId+"_"+handle+"'],[name='decue_"+fid+"_"+entryId+"_"+handle+"']").serialize(), function(data) {
+			if(jQuery("[name='de_"+fid+"_"+entryId+"_"+handle+"[]']").length > 0) { 
+			  nameToUse = "[name='de_"+fid+"_"+entryId+"_"+handle+"[]']";
+			} else {
+			  nameToUse = "[name='de_"+fid+"_"+entryId+"_"+handle+"']";
+			}
+			jQuery.post("<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php", jQuery(nameToUse+",[name='decue_"+fid+"_"+entryId+"_"+handle+"']").serialize(), function(data) {
 				if(data) {
 				   alert(data);	
 				} else {

@@ -430,10 +430,10 @@ class formulizeElementRenderer{
 					if($isDisabled) {
 						$form_ele = new XoopsFormLabel($ele_caption, implode(", ", $disabledOutputText) . implode("\n", $disabledHiddenValue));
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
-					} elseif($ele_value[8] != 0) {
+					} elseif($ele_value[8] == 0) {
 						// this is a hack because the size attribute is private and only has a getSize and not a setSize, setting the size can only be done through the constructor
 					        $count = count( $form_ele->getOptions() );
-					        $size = $form_ele->_size;
+					        $size = $ele_value[0];
 					        $new_size = ( $count < $size ) ? $count : $size;
 					        $form_ele->_size = $new_size;
 					}
@@ -535,11 +535,15 @@ class formulizeElementRenderer{
 						}
 					}
 	
+					$count = count($options);
+					$size = $ele_value[0];
+					$final_size = ( $count < $size ) ? $count : $size;
+	
 					$form_ele1 = new XoopsFormSelect(
 						$ele_caption,
 						$form_ele_id,
 						$selected,
-						$ele_value[0],	//	size
+						$final_size,	//	size
 						$ele_value[1]	  //	multiple
 					);
 	
@@ -597,12 +601,7 @@ class formulizeElementRenderer{
             $renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedOptionsFileName, $defaultSelected, $options[$defaultSelected]);
             $form_ele2 = new xoopsFormLabel($ele_caption, $renderedComboBox);
             $renderedElement = $form_ele2->render();
-					} else {
-						// this is a hack because the size attribute is private and only has a getSize and not a setSize, setting the size can only be done through the constructor
-					        $count = count( $form_ele1->getOptions() );
-					        $size = $form_ele1->_size;
-						$new_size = ( $count < $size ) ? $count : $size;
-					        $form_ele1->_size = $new_size;
+					} else { // normal element
 						$renderedElement = $form_ele1->render();
 					}
 					

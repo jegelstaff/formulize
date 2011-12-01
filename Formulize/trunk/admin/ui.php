@@ -51,7 +51,7 @@ if(!isset($xoopsTpl)) {
 			$xoopsOption['template_main'] = 'db:' . $xoopsOption['template_main'];
 		}
 	}
-	$xoopsThemeFactory =& new xos_opal_ThemeFactory();
+	$xoopsThemeFactory = new xos_opal_ThemeFactory();
   $xoopsThemeFactory->allowedThemes = $xoopsConfig['theme_set_allowed'];
   $xoopsThemeFactory->defaultTheme = $xoopsConfig['theme_set'];
 
