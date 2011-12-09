@@ -1306,7 +1306,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 				$data_to_write = $name_q[0]['name'];
 				if(!$data_to_write) { $data_to_write = $name_q[0]['uname']; }
 			} else {
-				$data_to_write = displayTogether($entry, $col, "\n");
+				$data_to_write = displayTogether($entry, $col, ", ");
 				$data_to_write = str_replace("&quot;", "\"\"", $data_to_write);
 				$data_to_write = "\"" . trans($data_to_write) . "\"";
 				$data_to_write = str_replace("\r\n", "\n", $data_to_write);
