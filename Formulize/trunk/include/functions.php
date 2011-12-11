@@ -4304,6 +4304,7 @@ function formulize_addProcedureChoicesToPost($choices) {
 }
 
 // used in the admin UI
+// returns false if the element cannot be required, otherwise returns true
 function removeNotApplicableRequireds($type, $req) {
   switch($type) {
     case "text":
@@ -4312,7 +4313,7 @@ function removeNotApplicableRequireds($type, $req) {
     case "radio":
     case "checkbox":
     case "date":
-      return $req;
+      return true;
   }
   if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 	$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');

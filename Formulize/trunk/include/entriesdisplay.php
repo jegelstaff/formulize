@@ -622,6 +622,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				}
 
 				$viewEntryScreenObject = $screen_handler->get($screenToLoad);
+				if($viewEntryScreenObject->getVar('type')=="listOfEntries") {
+					exit("You're sending the user to a list of entries screen instead of some kind of form screen, when they're editing an entry.  Check what screen is defined as the screen to use for editing an entry, or what screen id you're using in the viewEntryLink or viewEntryButton functions in the template.");
+				}
 				$viewEntryScreen_handler = xoops_getmodulehandler($viewEntryScreenObject->getVar('type').'Screen', 'formulize');
   			$displayScreen = $viewEntryScreen_handler->get($viewEntryScreenObject->getVar('sid'));
 				if($displayScreen->getVar('type')=="form") {
