@@ -83,7 +83,7 @@ if($_GET['ele_id'] != "new") {
   $names['ele_handle'] = $elementObject->getVar('ele_handle');
   $names['ele_desc'] = $elementObject->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
   $ele_req = $elementObject->getVar('ele_req');
-  $names['ele_req_on'] = removeNotApplicableRequireds($ele_type);
+  $names['ele_req_on'] = removeNotApplicableRequireds($ele_type, $ele_req); // function returns false when the element cannot be required.
   $names['ele_req_no_on'] = $ele_req ? "" : " checked";
   $names['ele_req_yes_on'] = $ele_req ? " checked" : "";
   $ele_display = $elementObject->getVar('ele_display');
@@ -354,7 +354,20 @@ if($ele_type=='text') {
 
   list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
   $options['linkedoptions'] = $formlink->render();
-
+  
+  // setup the list value and export value option lists
+  if($options['islinked']) {
+	$linkedMetaDataParts = explode("#*=:*", $ele_value[2]);
+	$linkedSourceFid = $linkedMetaDataParts[0];
+	list($listValue, $selectedListValue) = createFieldList($ele_value[10], false, $linkedSourceFid, "elements-ele_value[10]", "Use the linked field selected above");
+	$options['listValue'] = $listValue->render();
+	list($exportValue, $selectedExportValue) = createFieldList($ele_value[11], false, $linkedSourceFid, "elements-ele_value[11]", "Use the value displayed in the list");
+	$options['exportValue'] = $exportValue->render();
+  } else {
+	$options['exportValue'] = "";
+	$options['listValue'] = "";
+  }
+  
   // setup group list:
   $options['formlink_scope_options'] = array('all'=>_AM_ELE_FORMLINK_SCOPE_ALL) + $formlinkGroups;
   

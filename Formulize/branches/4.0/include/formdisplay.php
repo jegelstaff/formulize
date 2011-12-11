@@ -2094,6 +2094,9 @@ function writeHiddenSettings($settings, $form) {
 			$form->addElement( new XoopsFormHidden ('formulize_doneDest', $settings['formulize_doneDest']));
 			$form->addElement( new XoopsFormHidden ('formulize_buttonText', $settings['formulize_buttonText']));
 		}
+		if($_POST['overridescreen']) {
+			$form->addElement( new XoopsFormHidden ('overridescreen', intval($_POST['overridescreen'])));
+		}
 		return $form;
 	} else { // write as HTML
 		print "<input type=hidden name=sort value='" . $sort . "'>";
@@ -2127,6 +2130,9 @@ function writeHiddenSettings($settings, $form) {
 			print "<input type=hidden name=formulize_prevPage value='".$settings['formulize_prevPage']."'>";
 			print "<input type=hidden name=formulize_doneDest value='".$settings['formulize_doneDest']."'>";
 			print "<input type=hidden name=formulize_buttonText value='".$settings['formulize_buttonText']."'>";
+		}
+		if($_POST['overridescreen']) {
+			print "<input type=hidden name=overridescreen value='".intval($_POST['overridescreen'])."'>";
 		}
 	}
 }

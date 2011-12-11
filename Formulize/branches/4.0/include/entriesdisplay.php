@@ -608,16 +608,25 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$this_ent = $_POST['ventry'];
 		}
 
-		if($screen AND $screen->getVar("viewentryscreen") != "none" AND $screen->getVar("viewentryscreen")) {
+		if(($screen AND $screen->getVar("viewentryscreen") != "none" AND $screen->getVar("viewentryscreen")) OR $_POST['overridescreen']) {
       if(strstr($screen->getVar("viewentryscreen"), "p")) { // if there's a p in the specified viewentryscreen, then it's a pageworks page -- added April 16 2009 by jwe
         $page = intval(substr($screen->getVar("viewentryscreen"), 1));
         include XOOPS_ROOT_PATH . "/modules/pageworks/index.php";
         return;
       } else {
 				$screen_handler = xoops_getmodulehandler('screen', 'formulize');
-				$viewEntryScreenObject = $screen_handler->get(intval($screen->getVar('viewentryscreen')));
+				if($_POST['overridescreen']) {
+					$screenToLoad = intval($_POST['overridescreen']);
+				} else {
+					$screenToLoad = intval($screen->getVar('viewentryscreen'));
+				}
+
+				$viewEntryScreenObject = $screen_handler->get($screenToLoad);
+				if($viewEntryScreenObject->getVar('type')=="listOfEntries") {
+					exit("You're sending the user to a list of entries screen instead of some kind of form screen, when they're editing an entry.  Check what screen is defined as the screen to use for editing an entry, or what screen id you're using in the viewEntryLink or viewEntryButton functions in the template.");
+				}
 				$viewEntryScreen_handler = xoops_getmodulehandler($viewEntryScreenObject->getVar('type').'Screen', 'formulize');
-  			$displayScreen = $viewEntryScreen_handler->get(intval($screen->getVar('viewentryscreen')));
+  			$displayScreen = $viewEntryScreen_handler->get($viewEntryScreenObject->getVar('sid'));
 				if($displayScreen->getVar('type')=="form") {
 					if($_POST['ventry'] != "single") {
 						$displayScreen->setVar('reloadblank', 1); // if the user clicked the add multiple button, then specifically override that screen setting so they can make multiple entries
@@ -1145,6 +1154,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=hidden name=newcols id=newcols value=\"\"></input>\n";
 	print "<input type=hidden name=oldcols id=oldcols value='$flatcols'></input>\n";
 	print "<input type=hidden name=ventry id=ventry value=\"\"></input>\n";
+	print "<input type=\"hidden\" name=\"overridescreen\" id=\"overridescreen\" value=\"\"></input>\n";
 	print "<input type=hidden name=delconfirmed id=delconfirmed value=\"\"></input>\n";
 	print "<input type=hidden name=cloneconfirmed id=cloneconfirmed value=\"\"></input>\n";
 	print "<input type=hidden name=xport id=xport value=\"\"></input>\n";
@@ -1517,7 +1527,11 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 						print "<td $columnWidthParam class=\"$class\">\n";
 						if($col == "creation_uid" OR $col == "mod_uid") {
 							$userObject = $member_handler->getUser(display($entry, $col));
-							$nameToDisplay = $userObject->getVar('name') ? $userObject->getVar('name') : $userObject->getVar('uname');
+							if($userObject) {
+								$nameToDisplay = $userObject->getVar('name') ? $userObject->getVar('name') : $userObject->getVar('uname');
+							} else {
+								$nameToDisplay = _FORM_ANON_USER;
+							}
 							$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, $col) . "\" target=_blank>" . $nameToDisplay . "</a>";
 						} else {
 							$value = display($entry, $col);
@@ -1639,7 +1653,8 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 							$viewEntryLinkCode .= "?";
 						}
 						$viewEntryLinkCode .= "ve=" . $linkids[0] . "' onclick=\"javascript:goDetails('" . $linkids[0] . "');return false;\">";
-					  $GLOBALS['formulize_viewEntryLinkCode'] = $viewEntryLinkCode; // put into global scope so the function 'viewEntryLink' can pick it up if necessary
+						$GLOBALS['formulize_viewEntryId'] = $linkids[0];
+	    				        $GLOBALS['formulize_viewEntryLinkCode'] = $viewEntryLinkCode; // put into global scope so the function 'viewEntryLink' can pick it up if necessary
 						// put in the delete checkboxes -- check for perms delete_own_entry, delete_other_entries
 						$owner = getEntryOwner($linkids[0], $fid);
 						// check to see if we should draw in the delete checkbox or not
@@ -1690,9 +1705,33 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 }
 
 // this function outputs the html to view an entry, based on the value the user wants clickable, and the pre-determined view link code for the entry
-function viewEntryLink($linkContents) {
-	return $GLOBALS['formulize_viewEntryLinkCode'] . $linkContents . "</a>";
+// overrideId is an alternative ID that we should construct the link to display instead of the active entry
+// overrideScreen is the ID of the screen that the overrideID should be displayed in.  If not specified, then the current screen would be used.
+// Note: for the $overrideId, pass in 'proxy' to start a new proxy entry, 'single' to start a new entry without the "add multiple entries" behaviour, 'addnew' to start adding multiple new entries
+function viewEntryLink($linkContents, $overrideId="", $overrideScreen="") {
+	if($overrideId) {
+		$screenParam = $overrideScreen ? "', '".intval($overrideScreen) : "";
+		return "<a href=\"\" onclick=\"javascript:goDetails('" . $overrideId . $screenParam ."');return false;\">".$linkContents."</a>";
+	} else {
+		return $GLOBALS['formulize_viewEntryLinkCode'] . $linkContents . "</a>";
+	}
 }
+
+// this function outputs a clickable button that will lead to the entry when clicked, just the same as viewEntryLink above
+// overrideId is an alternative ID that we should construct the link to display instead of the active entry
+// overrideScreen is the ID of the screen that the overrideID should be displayed in.  If not specified, then the current screen would be used.
+// Note: for the $overrideId, pass in 'proxy' to start a new proxy entry, 'single' to start a new entry without the "add multiple entries" behaviour, 'addnew' to start adding multiple new entries
+function viewEntryButton($linkContents, $overrideId="", $overrideScreen="") {
+	if($overrideId) {
+		$screenParam = $overrideScreen ? "', '".intval($overrideScreen) : "";
+	} else {
+		$screenParam = "";
+		$overrideId = $GLOBALS['formulize_viewEntryId'];
+	}
+	return "<input type=\"button\" name=\"formulize_veb\" value=\"$linkContents\" onclick=\"javascript:goDetails('" . $overrideId . $screenParam ."');return false;\"></input>";
+}
+
+
 
 // this function draws in the search box row
 // returnOnly is used to return the HTML code for the boxes, and that only happens when we are gathering the boxes because a custom list template is in use
@@ -3206,8 +3245,11 @@ function addNew(flag) {
 	window.document.controls.submit();
 }
 
-function goDetails(viewentry) {
+function goDetails(viewentry, screen) {
 	window.document.controls.ventry.value = viewentry;
+	if(screen>0) {
+		window.document.controls.overridescreen.value = screen;
+	}
 	window.document.controls.submit();
 }
 

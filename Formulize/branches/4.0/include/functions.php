@@ -1306,7 +1306,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 				$data_to_write = $name_q[0]['name'];
 				if(!$data_to_write) { $data_to_write = $name_q[0]['uname']; }
 			} else {
-				$data_to_write = displayTogether($entry, $col, "\n");
+				$data_to_write = displayTogether($entry, $col, ", ");
 				$data_to_write = str_replace("&quot;", "\"\"", $data_to_write);
 				$data_to_write = "\"" . trans($data_to_write) . "\"";
 				$data_to_write = str_replace("\r\n", "\n", $data_to_write);
@@ -2044,7 +2044,7 @@ function writeOtherValues($id_req, $fid) {
 // THIS FUNCTION CREATES A SERIES OF ARRAYS THAT CONTAIN ALL THE INFORMATION NECESSARY FOR THE LIST OF ELEMENTS THAT GETS DISPLAYED ON THE ADMIN SIDE WHEN CREATING OR EDITING CERTAIN FORM ELEMENTS
 // new use with textboxes triggers a different value to be used -- just the ele_id from the 'formulize' table, which is all that is necessary to uniquely identify the element
 // note that ele_value has different contents for textboxes and selectboxes
-function createFieldList($val, $textbox=false) {
+function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $firstValue="") {
 
 	global $xoopsDB;
       array($formids);
@@ -2053,7 +2053,18 @@ function createFieldList($val, $textbox=false) {
       array($totalvaluelist);
       $captionlistindex = 0;
 
-      $formlist = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id") . " ORDER BY desc_form";
+      if($limitToForm) {
+	$limitToForm = " WHERE id_form = ".intval($limitToForm);
+      } else {
+	$limitToForm = "";
+      }
+      if(!$name) {
+	$name = 'formlink';
+      }
+      
+
+      $formlist = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id") . " $limitToForm ORDER BY desc_form";
+      
       $resformlist = $xoopsDB->query($formlist);
       if($resformlist)
       {
@@ -2090,9 +2101,12 @@ function createFieldList($val, $textbox=false) {
 		$am_formlink_none = _AM_FORMLINK_NONE;
 		$am_ele_formlink_desc = _AM_ELE_FORMLINK_DESC;
 	}
+	if($firstValue) { // let a passed in value override the defaults
+	  $am_formlink_none = $firstValue;
+	}
 
 	// make the select box and add all the options... -- jwe 7/29/04
-	$formlink = new XoopsFormSelect($am_ele_formlink, 'formlink', '' , 1, false);
+	$formlink = new XoopsFormSelect($am_ele_formlink, $name, '' , 1, false);
 	$formlink->addOption("none", $am_formlink_none);
 	for($i=0;$i<$captionlistindex;$i++)
 	{
@@ -4290,6 +4304,7 @@ function formulize_addProcedureChoicesToPost($choices) {
 }
 
 // used in the admin UI
+// returns false if the element cannot be required, otherwise returns true
 function removeNotApplicableRequireds($type, $req) {
   switch($type) {
     case "text":
@@ -4298,7 +4313,7 @@ function removeNotApplicableRequireds($type, $req) {
     case "radio":
     case "checkbox":
     case "date":
-      return $req;
+      return true;
   }
   if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 	$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');

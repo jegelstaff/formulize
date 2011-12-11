@@ -440,7 +440,7 @@ $modversion['config'][] = array(
 	'description' => '_MI_formulize_DOWNLOADDEFAULT_DESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
-	'default' => 1,
+	'default' => 0,
 );
 
 //bloc
