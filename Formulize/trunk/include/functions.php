@@ -2044,7 +2044,7 @@ function writeOtherValues($id_req, $fid) {
 // THIS FUNCTION CREATES A SERIES OF ARRAYS THAT CONTAIN ALL THE INFORMATION NECESSARY FOR THE LIST OF ELEMENTS THAT GETS DISPLAYED ON THE ADMIN SIDE WHEN CREATING OR EDITING CERTAIN FORM ELEMENTS
 // new use with textboxes triggers a different value to be used -- just the ele_id from the 'formulize' table, which is all that is necessary to uniquely identify the element
 // note that ele_value has different contents for textboxes and selectboxes
-function createFieldList($val, $textbox=false) {
+function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $firstValue="") {
 
 	global $xoopsDB;
       array($formids);
@@ -2053,7 +2053,18 @@ function createFieldList($val, $textbox=false) {
       array($totalvaluelist);
       $captionlistindex = 0;
 
-      $formlist = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id") . " ORDER BY desc_form";
+      if($limitToForm) {
+	$limitToForm = " WHERE id_form = ".intval($limitToForm);
+      } else {
+	$limitToForm = "";
+      }
+      if(!$name) {
+	$name = 'formlink';
+      }
+      
+
+      $formlist = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id") . " $limitToForm ORDER BY desc_form";
+      
       $resformlist = $xoopsDB->query($formlist);
       if($resformlist)
       {
@@ -2090,9 +2101,12 @@ function createFieldList($val, $textbox=false) {
 		$am_formlink_none = _AM_FORMLINK_NONE;
 		$am_ele_formlink_desc = _AM_ELE_FORMLINK_DESC;
 	}
+	if($firstValue) { // let a passed in value override the defaults
+	  $am_formlink_none = $firstValue;
+	}
 
 	// make the select box and add all the options... -- jwe 7/29/04
-	$formlink = new XoopsFormSelect($am_ele_formlink, 'formlink', '' , 1, false);
+	$formlink = new XoopsFormSelect($am_ele_formlink, $name, '' , 1, false);
 	$formlink->addOption("none", $am_formlink_none);
 	for($i=0;$i<$captionlistindex;$i++)
 	{

@@ -354,7 +354,20 @@ if($ele_type=='text') {
 
   list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
   $options['linkedoptions'] = $formlink->render();
-
+  
+  // setup the list value and export value option lists
+  if($options['islinked']) {
+	$linkedMetaDataParts = explode("#*=:*", $ele_value[2]);
+	$linkedSourceFid = $linkedMetaDataParts[0];
+	list($listValue, $selectedListValue) = createFieldList($ele_value[10], false, $linkedSourceFid, "elements-ele_value[10]", "Use the linked field selected above");
+	$options['listValue'] = $listValue->render();
+	list($exportValue, $selectedExportValue) = createFieldList($ele_value[11], false, $linkedSourceFid, "elements-ele_value[11]", "Use the value displayed in the list");
+	$options['exportValue'] = $exportValue->render();
+  } else {
+	$options['exportValue'] = "";
+	$options['listValue'] = "";
+  }
+  
   // setup group list:
   $options['formlink_scope_options'] = array('all'=>_AM_ELE_FORMLINK_SCOPE_ALL) + $formlinkGroups;
   

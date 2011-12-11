@@ -134,6 +134,14 @@ function prepvalues($value, $field, $entry_id) {
      // need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
      $sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
      if($value AND $sourceMeta[1]) {
+	  
+	  // need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
+	  if($GLOBALS['formulize_doingExport'] AND $source_ele_value[11] != "none") {
+	       $sourceMeta[1] = $source_ele_value[11];
+	  } elseif($source_ele_value[10] != "none") {
+	       $sourceMeta[1] = $source_ele_value[10];
+	  }
+	  
 					$form_handler = xoops_getmodulehandler('forms', 'formulize');
 					$sourceFormObject = $form_handler->get($sourceMeta[0]);
 					// check if this is a link to a link
@@ -1251,23 +1259,29 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                          $newWhereClause = "(($elementPrefix.entry_id = ANY $subquery)OR($queryElement " . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes."))"; // need to look in the other box and the main field, and return values that match in either case
                     // handle linked selectboxes
                     } elseif($sourceMeta = $formFieldFilterMap[$mappedForm][$element_id]['islinked']) {
+			 
+			 // need to check if an alternative value field has been defined for use in lists or data sets and search on that field instead 
+		    	 if($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none") {
+			      $sourceMeta[1] = $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]; // ele_value 10 is the alternate field to use for datasets and in lists
+			 }
+			 
 			 $sourceFormObject = $form_handler->get($sourceMeta[0]);
-												 if($ifParts[1] == "PERGROUPFILTER") {
-															// invoke the per group filter that applies to the form that we are pointing to...if XOOPS is in effect (ie: we're not included directly in other code as per Formulize 1)
-															global $xoopsDB;
-															if($xoopsDB) {
-																	 $form_handler = xoops_getmodulehandler('forms', 'formulize');
-																	 $otherpgfCount = count($otherPerGroupFilterJoins) + 1;
-																	 $otherPerGroupFilterWhereClause[] = $form_handler->getPerGroupFilterWhereClause($sourceMeta[0], "otherpgf".$otherpgfCount);
-																	 $tempOtherPGFJoin = " LEFT JOIN ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." AS otherpgf".$otherpgfCount." ON ";
-																	 $tempOtherPGFJoin .= " otherpgf".$otherpgfCount.".entry_id IN (TRIM(',' FROM $queryElement)) "; 
-																	 $otherPerGroupFilterJoins[] = $tempOtherPGFJoin;
-															}
-															$newWhereClause = "1";
-												 } else {
-															// Neal's suggestion:  use EXISTS...other forms of subquery using field IN subquery or subquery LIKE field, and a CONCAT in the subquery, failed in various conditions.  IN did not work with multiple selection boxes, and LIKE did not work with search terms too general to return only one match in the source form.  Exists works in all cases.  :-)
-					  $newWhereClause = " EXISTS (SELECT 1 FROM ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." AS source WHERE $queryElement LIKE CONCAT('%,',source.entry_id,',%') AND source.`".$sourceMeta[1] . "`". $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . ")";
-												 }
+			 if($ifParts[1] == "PERGROUPFILTER") {
+			    // invoke the per group filter that applies to the form that we are pointing to...if XOOPS is in effect (ie: we're not included directly in other code as per Formulize 1)
+			    global $xoopsDB;
+			    if($xoopsDB) {
+			      $form_handler = xoops_getmodulehandler('forms', 'formulize');
+			      $otherpgfCount = count($otherPerGroupFilterJoins) + 1;
+			      $otherPerGroupFilterWhereClause[] = $form_handler->getPerGroupFilterWhereClause($sourceMeta[0], "otherpgf".$otherpgfCount);
+			      $tempOtherPGFJoin = " LEFT JOIN ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." AS otherpgf".$otherpgfCount." ON ";
+			      $tempOtherPGFJoin .= " otherpgf".$otherpgfCount.".entry_id IN (TRIM(',' FROM $queryElement)) "; 
+			      $otherPerGroupFilterJoins[] = $tempOtherPGFJoin;
+			    }
+			    $newWhereClause = "1";
+			 } else {
+			    // Neal's suggestion:  use EXISTS...other forms of subquery using field IN subquery or subquery LIKE field, and a CONCAT in the subquery, failed in various conditions.  IN did not work with multiple selection boxes, and LIKE did not work with search terms too general to return only one match in the source form.  Exists works in all cases.  :-)
+			    $newWhereClause = " EXISTS (SELECT 1 FROM ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." AS source WHERE $queryElement LIKE CONCAT('%,',source.entry_id,',%') AND source.`".$sourceMeta[1] . "`". $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . ")";
+			 }
                     // usernames/fullnames boxes
                     } elseif($listtype = $formFieldFilterMap[$mappedForm][$element_id]['isnamelist'] AND $ifParts[1] !== "") {
                          $listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
@@ -1409,6 +1423,7 @@ function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap) {
                $formFieldFilterMap[$array['id_form']][$element_id]['isnamelist'] = false;
           }
           $foundForm = $array['id_form'];
+	  $formFieldFilterMap[$array['id_form']][$element_id]['ele_value'] = $ele_value; // just to be on the safe side, send the entire ele_value as well in case we need something from it
      }
      return array(0=>$formFieldFilterMap, 1=>$foundForm);
 }
