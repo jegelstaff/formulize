@@ -286,13 +286,13 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 				// Since this isn't the main form, then we need to check for which mainform entries match to the entries we're updating right now
 				$foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
 			}
-			if(!isset($formsUpdatedInFramework[$allWrittenFid])) { // if the form we're on has derived values, then flag it as one of the updated forms
-				$formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
-			}
 			foreach($foundEntries['entries'][$fid] as $mainFormEntry) {
 				if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived)) {
 					formulize_updateDerivedValues($mainFormEntry, $fid, $frid);
 					$mainFormEntriesUpdatedForDerived[] = $mainFormEntry;
+					if(!isset($formsUpdatedInFramework[$allWrittenFid])) { // if the form we're on has derived values, then flag it as one of the updated forms
+						$formsUpdatedInFramework[$allWrittenFid] = $allWrittenFid;
+					}
 				}
 			}
 			if($allWrittenFid == $fid) {
