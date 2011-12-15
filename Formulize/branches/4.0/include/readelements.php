@@ -301,6 +301,26 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 		}
 	}
 }
+
+// check for things that we should be updating based on the framework in effect for any override screen that has been declared
+if($_POST['overridescreen']) {
+	$override_screen_handler = xoops_getmodulehandler('screen', 'formulize');
+	$overrideScreenObject = $override_screen_handler->get($_POST['overridescreen']);
+	$overrideFrid = $overrideScreenObject->getVar('frid');
+	if($overrideFrid) {
+		$notUpdatedForms = array_diff($formulize_allWrittenFids, $formsUpdatedInFramework);	
+		foreach($notUpdatedForms as $thisFid) {
+			$formObject = $form_handler->get($thisFid);
+			if(array_search("derived", $formObject->getVar('elementTypes'))) {
+				foreach($formulize_allWrittenEntryIds[$thisFid] as $thisEntry) {
+					formulize_updateDerivedValues($thisEntry, $thisFid, $overrideFrid);
+					$formsUpdatedInFramework[$thisFid] = $thisFid;
+				}
+			}	
+		}
+	}
+}
+
 // check for any forms that were written, that did not have derived values updated as part of the framework
 if($frid) {
 	$notUpdatedForms = array_diff($formulize_allWrittenFids, $formsUpdatedInFramework);
