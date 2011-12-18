@@ -56,7 +56,7 @@ if(!isset($_POST['exportsubmit'])) {
 	print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 	
 	print "</head>";
-	print "<body><center>"; 
+	print "<body style=\"background: white; margin-top:20px;\"><center>"; 
 	print "<table width=100%><tr><td width=5%></td><td width=90%>";
 	print "<form name=\"metachoiceform\" action=\"".getCurrentURL() . "\" method=\"post\">\n";
 	print "<center><h1>"._formulize_DE_EXPORT_TITLE."</h1><br></center>\n";

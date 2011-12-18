@@ -229,7 +229,7 @@ $themecss = xoops_getcss();
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 
 print "</head>";
-print "<body><center>"; 
+print "<body style=\"background: white; margin-top:20px;\"><center>"; 
 print "<table style=\"width: 100%;\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
 $advsearch = new xoopsThemeForm(_formulize_DE_BUILDQUERY, 'buildq', XOOPS_URL."/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid");
 

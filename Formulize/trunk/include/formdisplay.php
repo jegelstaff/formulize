@@ -2249,6 +2249,13 @@ print "		window.document.printview.elements_allowed.value='';\n"; // nmc 2007.03
 print "		window.document.printview.submit();\n";					// nmc 2007.03.24 - added 
 print "}\n";														// nmc 2007.03.24 - added 
 
+// try and catch changes in a datebox element
+print "jQuery(window).load(function() {
+  jQuery(\"img[title='"._CALENDAR."']\").click(function() {
+	formulizechanged=1;		
+  }); 
+});
+\n";
 
 drawXhrJavascript();
 
