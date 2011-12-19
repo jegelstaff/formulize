@@ -1,0 +1,109 @@
+<ul id="nav" class="sf-menu">
+<{foreach item=item from=$navitems}>
+<li class="divider"><img src="<{$image_url}>img/divider.jpg" height="27" alt="" /></li>
+<{if ($systemadm || $item.id != 'opsystem') && ($item.id != 'news' || $show_impresscms_menu)}>
+<{if $modulesadm || $item.id != 'modules'}>
+ <li class="current"><a class="sf-with-ul <{if $item.id == 'cphome'}>noarrow<{/if}>" href="<{$item.link}>"><{if $item.id == 'cphome'}><a href="<{$url}>"><img src="<{$image_url}>img/home_icon.png" alt="" height="12" /></a><{else}><{$item.text}><{/if}></a>
+  <ul>
+  <{foreach item=sub from=$item.menu}>
+  <{if $item.id == 'cphome'}>
+   <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>"><img src="<{if $sub.small!=''}><{$sub.small}><{else}><{$icms_url}>/modules/system/images/imagesarrow1.gif<{/if}>" alt="" width="16" />&nbsp;<{$sub.title}></a></li>
+  <{elseif $item.id == 'opsystem'}>
+   <li><a <{if $sub.hassubs}>class="sf-with-ul"<{/if}> href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>"><{$sub.title}></a>
+   <{if $sub.hassubs}>
+    <ul>
+    <{foreach item=subitem from=$sub.subs}>
+     <li><a <{if $subitem.hassubs}>class="sf-with-ul"<{/if}> href="<{$subitem.link}>"><{if $subitem.small!=''}><img src="<{$icms_url}>/modules/system/<{$subitem.small}>" alt="" />&nbsp;<{/if}><{$subitem.title}></a>
+     <{if $subitem.hassubs}>
+      <ul>
+       <{foreach item=subsubitem from=$subitem.subs}>
+        <li><a href="<{$subsubitem.link}>"><{$subsubitem.title}></a></li>
+       <{/foreach}>
+      </ul>
+     <{/if}>
+     </li>
+    <{/foreach}>  
+    </ul>
+   <{/if}>
+   </li>
+  <{elseif $item.id == 'modules'}>
+   <li><a <{if $sub.hassubs}>class="sf-with-ul"<{/if}> href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>"><img src="<{if $sub.small!=''}><{$sub.small}><{else}><{$icms_url}>/modules/system/images/modulesitem.png<{/if}>" alt="" />&nbsp;<{$sub.title}></a>
+   <{if $sub.hassubs}>
+    <ul>
+    <{foreach item=subitem from=$sub.subs}>
+     <li><a href="<{$subitem.link}>"><{$subitem.title}></a></li>
+    <{/foreach}>  
+    </ul>
+   <{/if}>
+   </li>
+  <{elseif $item.id == 'news' && $show_impresscms_menu}>
+   <li><a rel="external" href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>"><img src="<{if $sub.small!=''}><{$sub.small}><{/if}>" alt="" />&nbsp;<{$sub.title}></a></li>
+  <{/if}>
+  <{/foreach}>
+  </ul>
+ </li>
+<{/if}>
+<{/if}>
+<{/foreach}>
+<li class="divider"><img src="<{$image_url}>img/divider.jpg" height="27" alt="" /></li>
+</ul>
+<ul id="fontsizer">
+<li class="divider"><img src="<{$image_url}>img/divider.jpg" height="27" alt="" /></li>
+<li><a href="javascript:void(0);" class="FontSizeInc">A+</a></li>
+<li class="divider"><img src="<{$image_url}>img/divider.jpg" height="27" alt="" /></li>
+<li><a href="javascript:void(0);" class="FontSizeDec">A-</a></li>
+<li class="divider"><img src="<{$image_url}>img/divider.jpg" height="27" alt="" /></li>
+<li><a href="javascript:void(0);" class="FontSizeReset">Aa</a></li>
+<li class="divider"><img src="<{$image_url}>img/divider.jpg" height="27" alt="" /></li>
+<{if $ml_is_enabled}>
+<li id="nav-change-language">[mlimg]</li>
+<li class="divider"><img src="<{$image_url}>img/divider.jpg" height="27" alt="" /></li>
+<{/if}>
+</ul>
+
+<script type="text/javascript">
+var sitefunctions = {
+	textresize : function(){
+		// show text resizing links
+		$(".FontSize").show();
+		var $cookie_name = "<{$site_name}>-FontSize";
+		var originalFontSize = $("html").css("font-size");
+		// if exists load saved value, otherwise store it
+		if($.cookie($cookie_name)) {
+			var $getSize = $.cookie($cookie_name);
+			$("html").css({fontSize : $getSize + ($getSize.indexOf("px")!=-1 ? "" : "px")});
+		} else {
+			$.cookie($cookie_name, originalFontSize);
+		}
+		// reset link
+		$(".FontSizeReset").bind("click", function() {
+			$("html").css("font-size", originalFontSize);
+			$.cookie($cookie_name, originalFontSize);
+		});
+		// text "+" link
+		$(".FontSizeInc").bind("click", function() {
+  		 var currentFontSize = $("html").css("font-size");
+  		 var currentFontSizeNum = parseFloat(currentFontSize, 10);
+  		 var newFontSize = currentFontSizeNum*1.2;
+  		  if (newFontSize, 11) {
+    		   $("html").css("font-size", newFontSize);
+    		   $.cookie($cookie_name, newFontSize);
+  		  }
+  		 return false;
+		});
+		$(".FontSizeDec").bind("click", function() {
+  		 var currentFontSize = $("html").css("font-size");
+  		 var currentFontSizeNum = parseFloat(currentFontSize, 10);
+  		 var newFontSize = currentFontSizeNum*0.8;
+  		  if (newFontSize, 11) {
+    		   $("html").css("font-size", newFontSize);
+    		   $.cookie($cookie_name, newFontSize);
+  		  }
+  		 return false;
+		});
+	}
+}
+$(document).ready(function(){
+		sitefunctions.textresize();	
+})
+</script>
