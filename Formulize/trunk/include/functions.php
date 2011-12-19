@@ -4305,7 +4305,7 @@ function formulize_addProcedureChoicesToPost($choices) {
 
 // used in the admin UI
 // returns false if the element cannot be required, otherwise returns the current required setting of the element
-function removeNotApplicableRequireds($type, $req) {
+function removeNotApplicableRequireds($type, $req=0) {
   switch($type) {
     case "text":
     case "textarea":
