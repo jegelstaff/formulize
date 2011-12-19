@@ -71,7 +71,7 @@ function getDbCollations($link, $charset) {
 	// ALTERED BY FREEFORM SOLUTIONS TO CORRECT A BUG IN THE DETECTION OF THE DEFAULT COLLATION FOR THE CHARSET
 	if ($result = mysql_query ( "SHOW COLLATION LIKE '" . mysql_real_escape_string ( $charset ) . "_%'", $link )) {
 		while ($row = mysql_fetch_assoc ( $result )) {
-			if(substr($row["Collation"], 0, 5) == $charset."_") {
+			if(substr($row["Collation"], 0, strlen($charset)+1) == $charset."_") {
 				$collations [$charset] [$row ["Collation"]] = $row ["Default"] ? 1 : 0;
 			}
 		}
