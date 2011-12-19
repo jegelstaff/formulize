@@ -44,14 +44,18 @@
 if(isset($formulize_screen_id)) {
     if(is_numeric($formulize_screen_id)) {
         global $xoTheme;
-        $xoTheme->addStylesheet("/modules/formulize/templates/css/style.css");
+        if($xoTheme) {
+            $xoTheme->addStylesheet("/modules/formulize/templates/css/style.css");
+        }
         include 'initialize.php';        
     }
 } else {
     require_once "../../mainfile.php";
     include XOOPS_ROOT_PATH.'/header.php';
     global $xoTheme;
-    $xoTheme->addStylesheet("/modules/formulize/templates/css/style.css");
+    if($xoTheme) {
+        $xoTheme->addStylesheet("/modules/formulize/templates/css/style.css");
+    }
     include 'initialize.php';
 
     include XOOPS_ROOT_PATH.'/footer.php';
