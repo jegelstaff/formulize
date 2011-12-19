@@ -449,10 +449,10 @@ function theme_formulize_display_screen($formulize_screen_output) {
 function formulize_user($op, &$edit, &$account, $category) {
 	switch($op) {
 		case 'after_update': // if user is modified
-			_formulize_update_user( $account );
+			_formulize_update_user( $account, $edit );
 			break;
 		case 'insert': // if it's a new user being created
-			_formulize_insert_user( $account );
+			_formulize_insert_user( $account, $edit );
 			break;        
 		case 'delete': // if a user is being deleted
 			_formulize_delete_user( $account );
@@ -464,6 +464,41 @@ function formulize_user($op, &$edit, &$account, $category) {
  * Check that Formulize is installed and working
  */
 function formulize_exist() { return TRUE;}
+
+
+/**
+ * Tap into roles
+ */
+function formulize_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == "user_admin_role" || $form_id == "user_admin_new_role") {
+    $form['#submit'][] = '_formulize_user_admin_role_submit';
+  }
+}
+
+function _formulize_user_admin_role_submit($form, &$form_state) {
+  //drupal_set_message( "<pre>" . var_export( $form, TRUE ) . "</pre>" );
+  //drupal_set_message( "<pre>" . var_export( $form_state, TRUE ) . "</pre>" );
+
+  if ($form_state['values']['op'] == t('Save role')) {
+    $rid = $form_state['values']['rid'];
+    $name = $form_state['values']['name'];
+    _formulize_update_role($rid,$name);
+    drupal_set_message( "formulize: " . $form_state['values']['op'] . ", id: " . $rid );
+  }
+  else if ($form_state['values']['op'] == t('Delete role')) {
+    $rid = $form_state['values']['rid'];
+    _formulize_delete_role($rid);
+    drupal_set_message( "formulize: " . $form_state['values']['op'] . ", id: " . $rid );
+  }
+  else if ($form_state['values']['op'] == t('Add role')) {
+    $name = $form_state['values']['name'];
+	  $result = db_fetch_array(db_query("SELECT rid FROM {role} WHERE name='%s'",$name));
+    $rid = $result['rid'];
+    _formulize_insert_role($rid,$name);
+    drupal_set_message( "formulize: " . $form_state['values']['op'] . ", id: " . $rid );
+  }
+}
+
 
 /**
  * Sync Drupal users with Formulize
@@ -479,7 +514,7 @@ function _formulize_sync_users( )
 /**
  * Insert a Drupal user into Formulize
  */
-function _formulize_insert_user( $drupal_user )
+function _formulize_insert_user( $drupal_user, $edit )
 {
 	$db = _formulize_get_connection();
 
@@ -502,37 +537,78 @@ function _formulize_insert_user( $drupal_user )
 	// We recreate some of the functionaly from kernel/user.php::insertUser because we do
 	// not want XOOPS to generate an ID, it is supplied by Drupal
 
-	$sql = sprintf("INSERT INTO %s (uid, uname, name, email, url, user_avatar, user_regdate, user_icq, user_from, user_sig, user_viewemail, actkey, user_aim, user_yim, user_msnm, pass, posts, attachsig, rank, level, theme, timezone_offset, last_login, umode, uorder, notify_method, notify_mode, user_occ, bio, user_intrest, user_mailok, language, openid, salt, user_viewoid, pass_expired, enc_type) VALUES ('%u', %s, %s, %s, %s, %s, '%u', %s, %s, %s, '%u', %s, %s, %s, %s, %s, '%u', '%u', '%u', '%u', %s, %s, '%u', %s, '%u', '%u', '%u', %s, %s, %s, '%u', %s, %s, %s, '%u', '%u', '%u')",
-		$db->prefix('users'), intval($xoops_user->getVar('uid')),
-		$db->quoteString($xoops_user->getVar('uname')), $db->quoteString($xoops_user->getVar('name')),
-		$db->quoteString($xoops_user->getVar('email')), $db->quoteString($xoops_user->getVar('url')),
-		$db->quoteString($xoops_user->getVar('user_avatar')), time(),
-		$db->quoteString($xoops_user->getVar('user_icq')), $db->quoteString($xoops_user->getVar('user_from')),
-		$db->quoteString($xoops_user->getVar('user_sig')), intval($xoops_user->getVar('user_viewemail')),
-		$db->quoteString($xoops_user->getVar('actkey')), $db->quoteString($xoops_user->getVar('user_aim')),
-		$db->quoteString($xoops_user->getVar('user_yim')), $db->quoteString($xoops_user->getVar('user_msnm')),
-		$db->quoteString($xoops_user->getVar('pass')), intval($xoops_user->getVar('posts')),
-		intval($xoops_user->getVar('attachsig')), intval($xoops_user->getVar('rank')),
-		intval($xoops_user->getVar('level')), $db->quoteString($xoops_user->getVar('theme')),
-		$db->quoteString(floatval($xoops_user->getVar('timezone_offset'))), 0,
-		$db->quoteString($xoops_user->getVar('umode')), intval($xoops_user->getVar('uorder')),
-		intval($xoops_user->getVar('notify_method')), intval($xoops_user->getVar('notify_mode')),
-		$db->quoteString($xoops_user->getVar('user_occ')), $db->quoteString($xoops_user->getVar('bio')),
-		$db->quoteString($xoops_user->getVar('user_intrest')), intval($xoops_user->getVar('user_mailok')),
-		$db->quoteString($xoops_user->getVar('language')), $db->quoteString($xoops_user->getVar('openid')),
-		$db->quoteString($xoops_user->getVar('salt')), intval($xoops_user->getVar('user_viewoid')),
-		intval($xoops_user->getVar('pass_expired')), intval($xoops_user->getVar('enc_type')));
+  $xoops_user_columns = array();
+	$results = $db->query("SHOW COLUMNS FROM ".$db->prefix('users').";");
+	while($result = $db->fetchArray($results)) {
+    $xoops_user_columns[ $result['Field'] ] = "";
+	}
 
+  $xoops_user_info = array(
+    'uid' => intval($xoops_user->getVar('uid')),
+    'uname' => $db->quoteString($xoops_user->getVar('uname')),
+    'name' => $db->quoteString($xoops_user->getVar('name')),
+    'email' => $db->quoteString($xoops_user->getVar('email')),
+    'url' => $db->quoteString($xoops_user->getVar('url')),
+    'user_avatar' => $db->quoteString($xoops_user->getVar('user_avatar')),
+    'user_regdate' => time(),
+    'user_icq' => $db->quoteString($xoops_user->getVar('user_icq')),
+    'user_from' => $db->quoteString($xoops_user->getVar('user_from')),
+    'user_sig' => $db->quoteString($xoops_user->getVar('user_sig')),
+    'user_viewemail' => intval($xoops_user->getVar('user_viewemail')),
+    'actkey' => $db->quoteString($xoops_user->getVar('actkey')),
+    'user_aim' => $db->quoteString($xoops_user->getVar('user_aim')),
+    'user_yim' => $db->quoteString($xoops_user->getVar('user_yim')),
+    'user_msnm' => $db->quoteString($xoops_user->getVar('user_msnm')),
+    'pass' => $db->quoteString($xoops_user->getVar('pass')),
+    'posts' => intval($xoops_user->getVar('posts')),
+    'attachsig' => intval($xoops_user->getVar('attachsig')),
+    'rank' => intval($xoops_user->getVar('rank')),
+    'level' => intval($xoops_user->getVar('level')),
+    'theme' => $db->quoteString($xoops_user->getVar('theme')),
+    'timezone_offset' => $db->quoteString(floatval($xoops_user->getVar('timezone_offset'))),
+    'last_login' => 0,
+    'umode' => $db->quoteString($xoops_user->getVar('umode')),
+    'uorder' => intval($xoops_user->getVar('uorder')),
+    'notify_method' => intval($xoops_user->getVar('notify_method')),
+    'notify_mode' => intval($xoops_user->getVar('notify_mode')),
+    'user_occ' => $db->quoteString($xoops_user->getVar('user_occ')),
+    'bio' => $db->quoteString($xoops_user->getVar('bio')),
+    'user_intrest' => $db->quoteString($xoops_user->getVar('user_intrest')),
+    'user_mailok' => intval($xoops_user->getVar('user_mailok')),
+    'language' => $db->quoteString($xoops_user->getVar('language')),
+    'openid' => $db->quoteString($xoops_user->getVar('openid')),
+    'salt' => $db->quoteString($xoops_user->getVar('salt')),
+    'user_viewoid' => intval($xoops_user->getVar('user_viewoid')),
+    'pass_expired' => intval($xoops_user->getVar('pass_expired')),
+    'enc_type' => intval($xoops_user->getVar('enc_type')) );
+
+  $sql_fields = "";
+  $sql_values = "";
+  foreach( $xoops_user_info as $key => $value ) {
+    if( array_key_exists( $key, $xoops_user_columns ) ) {
+      if( $sql_fields ) {
+        $sql_fields .= ", ";
+        $sql_values .= ", ";
+      }
+      $sql_fields .= $key;
+      $sql_values .= $value;
+    }
+  }
+	$sql = "INSERT INTO ".$db->prefix('users')." (".$sql_fields.") VALUES (".$sql_values.");";
+
+  //drupal_set_message( $sql );
 	$db->query($sql);
 
 	// 2 constant is the Registered Users Group
 	$member_handler->addUserToGroup(2,$xoops_user->getVar('uid'));
+
+  _formulize_sync_roles( $drupal_user, $edit );
 }
 
 /**
  * When a Drupal user changes, update in XOOPS
  */
-function _formulize_update_user( $drupal_user )
+function _formulize_update_user( $drupal_user, $edit )
 {
 	$db = _formulize_get_connection();
 
@@ -549,8 +625,9 @@ function _formulize_update_user( $drupal_user )
 
 	  $member_handler->insertUser( $xoops_user );
   } else {
-    _formulize_insert_user( $drupal_user );
+    _formulize_insert_user( $drupal_user, $edit );
   }
+  _formulize_sync_roles( $drupal_user, $edit );
 }
 
 /**
@@ -578,4 +655,121 @@ function _formulize_convert_language( $drupal_user )
 		return $languages[$drupal_user];
 
 	return 'english';
+}
+
+
+
+/**
+ * Insert a Drupal role into XOOPS
+ */
+function _formulize_insert_role($rid,$name)
+{
+	$db = _formulize_get_connection();
+
+	$member_handler =& xoops_gethandler('member');
+
+  $xoops_group = $member_handler->createGroup();
+	$xoops_group->setVar('name',$name);
+
+	$member_handler->insertGroup($xoops_group);
+
+	db_query("INSERT INTO {formulize_sync} (rid, formulize_groupid) VALUES (%d, %d)", $rid, $xoops_group->getVar('groupid'));
+
+	return $xoops_group;
+}
+
+/**
+ * When a Drupal role changes, update in XOOPS
+ */
+function _formulize_update_role($rid,$name)
+{
+	$db = _formulize_get_connection();
+
+	$member_handler =& xoops_gethandler('member');
+
+	$result = db_fetch_array(db_query("SELECT * FROM {formulize_sync} WHERE rid=%d",$rid));
+  $xoops_group = $member_handler->getGroup($result['formulize_groupid']);
+	$xoops_group->setVar('name',$name);
+
+	$member_handler->insertGroup($xoops_group);
+}
+
+/**
+ * When a Drupal role is removed, delete in XOOPS
+ */
+function _formulize_delete_role($rid) {
+	$db = _formulize_get_connection();
+
+	$member_handler =& xoops_gethandler('member');
+
+	$result = db_fetch_array(db_query("SELECT * FROM {formulize_sync} WHERE rid=%d",$rid));
+  $xoops_group = $member_handler->getGroup($result['formulize_groupid']);
+
+	$member_handler->deleteGroup( $xoops_group );
+
+  db_query('DELETE FROM {formulize_sync} WHERE rid=%d',$rid);
+}
+
+
+/**
+ * skip:
+ * 1 - anonymous user
+ * 2 - authenticated user
+ */
+function _formulize_sync_roles( $drupal_user, $edit )
+{
+  // skip: 1 - anonymous user, 2 - authenticated user
+  $drupal_roles = array();
+  //foreach( $drupal_user->roles as $key => $value ) {
+  foreach( $edit['roles'] as $key => $value ) {
+    if( $key > 2 ) {
+      $drupal_roles[] = $key;
+    }
+  }
+
+  // convert the drupal rid to xoops groupid
+  $drupal_formulize_roles = array();
+  $results = db_query("SELECT * FROM {formulize_sync} WHERE rid IN (%s)",implode(',',$drupal_roles));
+  while($result = db_fetch_array($results)) {
+    $drupal_formulize_roles[] = $result['formulize_groupid'];
+  }
+
+  $uid = $drupal_user->uid;
+	$uids=array( $uid );
+
+  $db = _formulize_get_connection();
+  $member_handler =& xoops_gethandler('member');
+  $xoops_user = $member_handler->getUser($uid);
+
+
+  // skip: 1 - Webmasters, 2 - Registered Users, 3 - Anonymous Users
+  $xoops_roles = array();
+  foreach( $member_handler->getGroupsByUser($uid) as $value ) {
+    if( $value > 3 ) {
+      $xoops_roles[] = $value;
+    }
+  }
+
+  // get all the differences
+  //http://php.net/manual/en/function.array-diff.php merlinyoda at dorproject dot net 28-Mar-2008 06:11
+  $diff_roles_union = array_merge( $drupal_formulize_roles, $xoops_roles );
+  $diff_roles_intersect = array_intersect( $drupal_formulize_roles, $xoops_roles );
+  $diff_roles = array_diff( $diff_roles_union, $diff_roles_intersect );
+  //drupal_set_message( "drupal_roles <pre>" . var_export( $drupal_roles, TRUE ) . "</pre>" );
+  //drupal_set_message( "drupal_formulize_roles <pre>" . var_export( $drupal_formulize_roles, TRUE ) . "</pre>" );
+  //drupal_set_message( "xoops_roles <pre>" . var_export( $xoops_roles, TRUE ) . "</pre>" );
+  //drupal_set_message( "diff_roles <pre>" . var_export( $diff_roles, TRUE ) . "</pre>" );
+
+  // figure out which roles are adds and removes
+  //$add_roles = array();
+  //$remove_roles = array();
+  foreach( $diff_roles as $value ) {
+    if( in_array( $value, $drupal_formulize_roles ) ) {
+      //$add_roles[] = $value;
+    	$member_handler->addUserToGroup($value,$uid);
+    }
+    if( in_array( $value, $xoops_roles ) ) {
+      //$remove_roles[] = $value;
+    	$member_handler->removeUsersFromGroup($value,$uids);
+    }
 }

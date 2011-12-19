@@ -12,12 +12,14 @@
  */
 function formulize_install() {
   drupal_install_schema('formulize');
+  drupal_install_schema('formulize_sync');
 }
 
 /**
  * Implementation of hook_uninstall()
  */
 function formulize_uninstall() {
+  drupal_uninstall_schema('formulize_sync');
   drupal_uninstall_schema('formulize');
 	variable_del('formulize_full_path');
 }
@@ -56,6 +58,34 @@ function formulize_schema() {
 			'nid' => array('nid')
 		),
     'primary key' => array('vid'),
+  );
+  return $schema;
+}
+
+function formulize_sync_schema() {
+  $schema['formulize_sync'] = array(
+		'description' => t('The table for formulize groups data.'),
+		'fields' => array(
+      'rid' => array(
+        'type' => 'int',
+				'unsigned' => TRUE,
+        'not null' => TRUE,
+				'default' => 0
+      ),
+			'formulize_groupid' => array(
+        'type' => 'int',
+				'unsigned' => TRUE,
+        'not null' => TRUE,
+				'default' => 0
+      ),
+		),
+		'indexes' => array(
+		  'rid' => array('rid')
+		),
+		'unique_keys' => array(
+			'rid_formulize_groupid' => array('rid', 'formulize_groupid'),
+		),
+    'primary key' => array('formulize_groupid'),
   );
   return $schema;
 }
