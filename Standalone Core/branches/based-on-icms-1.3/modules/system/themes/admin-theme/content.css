@@ -1,0 +1,91 @@
+
+/* Start Main Menu */
+#mainmenu {	font-size: .8em;}
+#mainmenu a {display: block; margin: 0; padding: 4px; color: #666;}
+#mainmenu a:hover { color: #f3ac03;}
+#mainmenu a.menuTop {padding-left: 3px; border-top: 1px solid #ccc; border-right: 1px solid #666; border-bottom: 1px solid #666; border-left: 1px solid #ccc;}
+#mainmenu a.menuMain {padding-left: 3px; border-right: 1px solid #666; border-bottom: 1px solid #666; border-left: 1px solid #ccc;}
+#mainmenu a.menuSub {padding-left: 17px; background-image: url(../icons/arr.gif);background-repeat: no-repeat; background-position: left; background-color: #fff; color: #666; font-size:.9em; font-style:italic; border-right: 1px solid #666; border-bottom: 1px solid #666; border-left: 1px solid #ccc;}
+#mainmenu a.menuSub:hover {color: #f3ac03;}
+/* End Main Menu */
+
+/* Start User Menu */
+#usermenu {	font-size: .8em;}
+#usermenu a {color:#666;  display: block; margin: 0; padding: 4px; border-right: 1px solid #666; border-bottom: 1px solid #666; border-left: 1px solid #ccc;}
+#usermenu a:hover {color: #f3ac03;}
+#usermenu a.menuTop {border-top: 1px solid #ccc;}
+#usermenu a.highlight {background-color: #fcc; color: #ff0000;}
+/* End User Menu */
+
+/* tables and cells */
+table {	width: 100%;}
+table td {padding: 0; border-width: 0;	vertical-align: top;}
+th {background-color: #f3ac03; color: #000; padding : 2px; vertical-align : middle;}
+.outer {border: 1px solid #ccc;}
+.head {background-color: #f5e9cd; color:inherit; padding: 5px; font-weight: bold;}
+.even {background-color: #e8e6e2; color:inherit; padding: 5px;}
+.odd {background-color: #E9E9E9; color:inherit; padding: 5px;}
+.foot {background-color: #f5e9cd; color:inherit; padding: 5px; font-weight: bold;}
+tr.even td {background-color: #e8e6e2; color:inherit; padding: 5px;}
+tr.odd td {background-color: #E9E9E9; color:inherit; padding: 5px;}
+th { background-color:#f3ac03 !important;}
+
+/* core messages */
+.errorMsg { background-color: #FFCCCC;  color:inherit; text-align: center; border-top: 1px solid #DDDDFF; border-left: 1px solid #DDDDFF; border-right: 1px solid #aaa; border-bottom: 1px solid #aaa;font-weight: bold; padding: 10px;}
+.confirmMsg { background-color: #DDFFDF; color: #136C99; text-align: center; border-top: 1px solid #DDDDFF; border-left: 1px solid #DDDDFF; border-right: 1px solid #aaa; border-bottom: 1px solid #aaa;font-weight: bold; padding: 10px;}
+.resultMsg { background-color : #bbb; color: #333; text-align: center; border-top: 1px solid #ccc; border-left: 1px solid #ccc; font-weight: bold; border-right: 1px solid #666; border-bottom: 1px solid #666; padding: 10px;}
+
+/* codes and quotes */
+.xoopsCode { background-color: #fff; color:inherit; border: 1px inset #000080; font-family: "Courier New",Courier,monospace; padding: 0 6px 6px 6px; max-height: 200px; overflow: auto;}
+.xoopsQuote { background-color: #fff; color:inherit; border: 1px inset #000080; font-family: "Courier New",Courier,monospace; font-style:italic; padding: 0 6px 6px 6px;}
+
+/* articles */
+.item {border: 1px solid #ccc;}
+.itemHead {padding: 3px; background-color: #639ACE; color: #fff;font-size: 1.1em;}
+.itemInfo {text-align: right; padding: 3px; background-color: #efefef; color:inherit;}
+.itemTitle a {font-size: 1.1em; font-weight: bold; font-variant: small-caps; color: #fff; background-color: transparent;}
+.itemPoster {font-size: .9em; font-style:italic;}
+.itemPostDate {font-size: .9em; font-style:italic;}
+.itemStats {font-size: .9em; font-style:italic;}
+.itemBody {padding-left: 5px;}
+.itemText {margin-top: 5px; margin-bottom: 5px; line-height: 1.5em;}
+.itemText:first-letter {font-size: 1.3em; font-weight: bold;}
+.itemFoot {text-align: right; padding: 3px; background-color: #efefef; color:inherit;}
+.itemAdminLink {font-size: .9em;}
+.itemPermaLink {font-size: .9em;}
+
+/* forums */
+.row1 {background-color: #FFF; color:inherit; padding: 5px;}
+.row2 {background-color: #E9E9E9; color:inherit;padding: 5px;}
+.comTitle { font-weight: bold; margin-bottom: 2px;}
+.comText {padding: 2px;}
+.comUserStat {font-size: .7em; color: #639ACE; font-weight:bold; border: 1px solid #ccc; background-color: #fff; margin: 2px; padding: 2px; border-right: 2px solid #999; border-bottom: 2px solid #999;}
+.comUserStatCaption {font-weight: normal;}
+.comUserRank {margin: 2px;}
+.comUserRankText {font-size: .8em;}
+.comUserRankImg {border: 0; vertical-align: middle;}
+.comUserStatus {float: left;}
+.comUserName {font-size: 18px;}
+.comUserName img {padding: 0;}
+
+.comUserImg {margin: 2px;}
+.comDate {font-weight: normal; font-style: italic; font-size: .8em}
+.comDateCaption {font-weight: bold; font-style: normal; font-size: .8em}
+.signature { font-size:.8em; font-style:italic;}
+#online {color:green; font-weight:700; font-size:1em;}
+#offline {color:red; font-weight:700; font-size:1em;}
+
+.forum_controls {background-color: #EEE; border-left: 1px solid #999; border-right: 1px solid #999; border-top: 1px solid #999;}
+.userrow {padding: 0;}
+.Userrow_left {}
+.Userrow_center {}
+.Userrow_right {}
+.transfer a {padding-left: 5px;}
+
+#groupform .icms_checkboxoption {width: 48.9%; padding: 2px;}
+.icms_checkboxoption {float: left;}
+.icms_checkboxoption:hover {background: #f1f2f3;}
+.icms_checkboxoption input[type=checkbox] {float: left; outline: none; background: transparent; border: 0;}
+.icms_checkboxoption label {float: left; overflow: hidden; vertical-align: middle;}
+.icms_checkboxoption label a {float: left; overflow: hidden;}
+#groupform .even b {clear: both; margin: 5px 0px; float: left; width: 99%; background: #dcdee0; padding: 3px; border-bottom: 1px solid #ccc;}

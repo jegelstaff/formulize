@@ -1,0 +1,52 @@
+<style type='text/css'>
+
+</style>
+
+<div id="wrap">
+<div id="buttontop">
+<div style="width: 100%; padding: 0;" cellspacing="0">
+	<div style="font-size: 10px; text-align: <{$smarty.const._GLOBAL_LEFT}>; color: #2F5376; padding: 0 6px; line-height: 18px;float:<{$smarty.const._GLOBAL_LEFT}>;">
+	<{foreach from=$headermenu key=itemnum item=menuitem}>
+		<a class="nobutton" href="<{$menuitem.link}>"><{$menuitem.title}></a>
+		<{if ($itemnum + 1) <> $headermenucount}>
+		 |
+		<{/if}>
+	<{/foreach}>
+	</div>
+	<div style="font-size: 10px; text-align: <{$smarty.const._GLOBAL_RIGHT}>; color: #2F5376; padding: 0 6px; line-height: 18px;float:<{$smarty.const._GLOBAL_RIGHT}>;">
+		<{$breadcrumb}>
+	</div>
+</div>
+</div>
+<div id="buttonbar">
+	<ul>
+	<{foreach from=$adminmenu key=itemnum item=menuitem}>
+	<{if $itemnum==$current}>
+			<li id="current">
+		<{else}>
+			<li>
+		<{/if}>
+		<a href="../<{$menuitem.link}>"><span><{$menuitem.title}></span></a>
+		</li>
+	<{/foreach}>
+	</ul>
+</div>
+<{if $submenus}>
+	<div id="submenuswrap">
+	<div id="submenus">
+		<{foreach from=$submenus key=itemnum item=submenuitem}>
+			<{if $itemnum==$currentsub}>
+				<div id="currentsubitem"><{$submenuitem.title}>
+			<{else}>
+				<div class="subitem"><a href="<{$submenuitem.link}>"><{$submenuitem.title}></a>
+			<{/if}>
+			<{if ($itemnum + 1) <> $submenuscount}>
+			 |
+			<{/if}>
+			</div>
+		<{/foreach}>
+	</div>
+	</div>
+<{/if}>
+</div> <!-- end wrap -->
+<br style="clear: both;" />

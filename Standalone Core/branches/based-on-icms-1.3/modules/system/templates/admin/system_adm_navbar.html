@@ -1,0 +1,93 @@
+<div id="logoHead">
+	<span class="<{$smarty.const._GLOBAL_LEFT}>">
+		<{if $adm_left_logo == ''}>&nbsp;<{else}>
+		    <{if  $adm_left_logo_url != ''}>
+			    <a href="<{$adm_left_logo_url}>" title="<{if $adm_left_logo_alt != ''}><{$adm_left_logo_alt}><{else}>ImpressCMS<{/if}>">
+			<{/if}>
+			<img src="<{$xoops_url}><{$adm_left_logo}>" alt="<{if $adm_left_logo_alt != ''}><{$adm_left_logo_alt}><{else}>ImpressCMS<{/if}>"/>
+		    <{if  $adm_left_logo_url != ''}>
+			    </a>
+			<{/if}>   
+		<{/if}>
+	</span>
+	<span class="<{$smarty.const._GLOBAL_RIGHT}>">
+		<{if $adm_right_logo == ''}>&nbsp;<{else}>
+		    <{if  $adm_right_logo_url != ''}>
+			    <a href="<{$adm_right_logo_url}>" title="<{if $adm_right_logo_alt != ''}><{$adm_right_logo_alt}><{else}>ImpressCMS<{/if}>">
+			<{/if}>
+			<img src="<{$xoops_url}><{$adm_right_logo}>" alt="<{if $adm_right_logo_alt != ''}><{$adm_right_logo_alt}><{else}>ImpressCMS<{/if}>"/>
+		    <{if  $adm_right_logo_url != ''}>
+			    </a>
+			<{/if}>   
+		<{/if}>
+	</span>
+	<div class="clear"></div>
+</div>
+<div id="navbarCP">
+  <ul id="nav">
+    <{foreach item=item from=$navitems}>
+      <{if ($systemadm || $item.id != 'opsystem') && ($item.id != 'news' || $show_impresscms_menu)}>
+        <{if $modulesadm || $item.id != 'modules'}>
+	      <li><a href="<{$item.link}>"><img src="<{$xoops_url}>/modules/system/images/arrow1.gif" alt="arrow"/>&nbsp;<{$item.text}></a>
+	        <ul>
+		      <{foreach item=sub from=$item.menu}>
+                <{if $item.id == 'cphome'}>
+		          <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$xoops_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{else}><{$xoops_url}>/modules/system/images/imagesarrow1.gif<{/if}>);"><{$sub.title}></a></li>
+                <{elseif $item.id == 'opsystem'}>
+                  <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>"><{$sub.title}></a>
+                    <{if $sub.hassubs}>
+                      <ul>
+                        <{foreach item=subitem from=$sub.subs}>
+                          <li><a href="<{$subitem.link}>" style="background-image: url(<{if $subitem.small!=''}><{$icms_url}>/modules/system/<{$subitem.small}><{else}><{$icms_url}>/modules/system/images/imagesarrow1.gif<{/if}>);"><{$subitem.title}></a>
+                            <{if $subitem.hassubs}>
+                              <ul>
+                                <{foreach item=subsubitem from=$subitem.subs}>
+                                  <li><a href="<{$subsubitem.link}>"><{$subsubitem.title}></a></li>
+                                <{/foreach}>
+                              </ul>
+                            <{/if}>
+                          </li>
+                        <{/foreach}>
+                      </ul>
+                    <{/if}>
+                  </li>
+                <{elseif $item.id == 'modules'}>
+		          <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$xoops_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{else}><{$xoops_url}>/modules/system/images/modulesitem.png<{/if}>);"><{$sub.title}></a>
+    		      <{if $sub.hassubs}>
+	    	        <ul>
+		              <{foreach item=subitem from=$sub.subs}>
+		                <li><a href="<{$subitem.link}>"><{$subitem.title}></a></li>
+		              <{/foreach}>  
+		            </ul>
+		          <{/if}>
+		          </li>
+                <{elseif $item.id == 'news' && $show_impresscms_menu}>
+    		      <li><a rel="external" href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$xoops_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{/if}>);"><{$sub.title}></a></li>
+                <{/if}>
+		      <{/foreach}>
+		    </ul>
+	      </li>
+	    <{/if}>
+	  <{/if}>
+    <{/foreach}>
+  </ul>
+  <{if $ml_is_enabled}>
+	<span id="nav-change-language">[mlimg]</span>
+  <{/if}>
+</div>
+<{ if $modname != '' }>
+  <div id="navOptionsCP">
+	<div class="modname">
+	  <{$modname}>
+	</div>
+	<{foreach item=op from=$mod_options}>
+	  <a href="<{$op.link}>" title="<{$op.title}>">
+        <{if $op.title == $lang_prefs && $moddir!='system'}>
+          <img src="<{$xoops_url}>/modules/system/images/prefs.png" alt="<{$lang_preferences}>" />
+        <{else}>  
+          <img src="<{if $op.icon==''}><{$xoops_url}>/images/icon_options.png<{else}><{$modpath}>/<{$op.icon}><{/if}>" alt="<{$op.title}>" />
+        <{/if}>
+      </a>
+	<{/foreach}>
+  </div>
+<{/if}>

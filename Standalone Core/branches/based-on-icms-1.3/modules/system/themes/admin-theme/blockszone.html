@@ -1,0 +1,11 @@
+
+<{if $blocks}>
+	<div class="icms-blockszone x2-secondary<{if $zoneClass}> <{$zoneClass}><{/if}>"<{if $zoneId}> id="<{$zoneId}>"<{/if}>>
+	<{foreach from=$blocks item=block}>
+	<div class="icms-block <{$block.module}>">
+		<{if $block.title}><div class="icms-blocktitle"><h3><{$block.title}></h3></div><{/if}>
+		<div class="icms-blockcontent"><{$block.content}></div>
+	</div>
+	<{/foreach}>
+	</div>
+<{/if}>

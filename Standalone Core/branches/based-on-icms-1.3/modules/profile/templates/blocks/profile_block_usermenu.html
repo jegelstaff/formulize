@@ -1,0 +1,5 @@
+<div id="usermenu">
+  <{foreach item=link from=$block}>
+  <a <{if $link.extra}>class="highlight"<{/if}> href="<{$link.url}>" title="<{$link.name}>"><{$link.name}><{if $link.extra}> (<{$link.extra}>)<{/if}></a>
+  <{/foreach}>
+</div>
