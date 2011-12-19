@@ -1,0 +1,61 @@
+<?php
+/**
+ * Installer final page
+ *
+ * See the enclosed file license.txt for licensing information.
+ * If you did not receive this file, get it at http://www.fsf.org/copyleft/gpl.html
+ *
+ * @copyright	The XOOPS project http://www.xoops.org/
+ * @license	  http://www.fsf.org/copyleft/gpl.html GNU General Public License (GPL)
+ * @package		installer
+ * @since		Xoops 2.3.0
+ * @author		Haruki Setoyama  <haruki@planewave.org>
+ * @author 		Kazumi Ono <webmaster@myweb.ne.jp>
+ * @author		Skalpa Keo <skalpa@xoops.org>
+ * @version		$Id: page_end.php 20098 2010-09-07 16:19:19Z skenow $
+ */
+/**
+ *
+ */
+require_once 'common.inc.php';
+if (!defined( 'XOOPS_INSTALL' ) )	exit();
+
+$success = isset($_GET['success'])?trim($_GET['success']):false;
+if ($success) {
+	if (is_dir(ICMS_ROOT_PATH.'/install')) {
+		icms_core_Filesystem::deleteRecursive(ICMS_ROOT_PATH.'/install', true);
+		header('Location: '.ICMS_URL.'/index.php');
+	}
+	$_SESSION = array();
+}
+
+$wizard->setPage( 'end' );
+$pageHasForm = false;
+$content = "";
+include "./language/$wizard->language/finish.php";
+
+// destroy all the installation session
+unset($_SESSION);
+if(isset($_COOKIE[session_name()]))
+{
+	setcookie(session_name(), '', time()-60);
+}
+session_unset();
+session_destroy();
+
+// MODIFIED BY FREEFORM SOLUTIONS TO ADD IN THE CUSTOM CONFIGURATION FOR THE FORMULIZE STANDALONE VERSION
+include_once './class/dbmanager.php';
+$dbm = new db_manager();
+$dbm->db->connect();
+$formulizeStandaloneQueries = str_replace("REPLACE_WITH_PREFIX", SDATA_DB_PREFIX, file_get_contents(ICMS_ROOT_PATH."/install/sql/mysql.formulize_standalone.sql"));
+foreach(explode(";\r",str_replace(array("\n,\n\r,\r\n"), "\r", $formulizeStandaloneQueries)) as $sql) { // convert all kinds of line breaks to \r and then split on semicolon-linebreak to get individual queries
+	if($sql) {
+		if(!$formulizeResult = mysql_query($sql)) {
+			$content = "<h3>Error:</h3><p>Some of the configuration settings were not saved properly in the database.  The website will still work, but it will behave more like a generic ImpressCMS+Formulize website, and not like a dedicated Formulize system.   Please send the following information to <a href=\"mailto:formulize@freeformsolutions.ca?subject=Formulize%20Standalone%20Install%20Error\">formulize@freeformsolutions.ca</a>:</p>
+			<p><pre>".mysql_error()."</pre></p>".$content;
+		} 
+	}
+}
+
+include '/install_tpl.php';
+?>
