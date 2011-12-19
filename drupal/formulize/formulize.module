@@ -293,7 +293,7 @@ function _formulize_get_connection() {
   if(!isset($formulize_connection)) {
 		$formulize_path = variable_get('formulize_full_path', NULL);
 		require_once($formulize_path);
-		$formulize_connection = $xoopsDB;
+		$formulize_connection = $GLOBALS['xoopsDB'];
   }
   return $formulize_connection;
 }
