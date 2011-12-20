@@ -36,6 +36,9 @@ class icms_form_elements_Date extends icms_form_elements_Text {
 		// ALTERED BY FREEFORM SOLUTIONS FOR THE DATE DEFAULT CHANGES IN FORMULIZE STANDALONE
 		if($value === "") {
 			$value = _DATE_DEFAULT;
+		} elseif(ereg_replace("[^A-Z{}]","", $value) === "{TODAY}") { // check for {TODAY}, {TODAY-14} etc
+			$number = ereg_replace("[^0-9+-]","", $value);
+			$value = mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")); 
 		} elseif(!is_numeric($value)) {
 			$value = time();
 		} else {
