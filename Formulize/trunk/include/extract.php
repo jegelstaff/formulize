@@ -136,9 +136,9 @@ function prepvalues($value, $field, $entry_id) {
      if($value AND $sourceMeta[1]) {
 	  
 	  // need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
-	  if($GLOBALS['formulize_doingExport'] AND $source_ele_value[11] != "none") {
+	  if($GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
 	       $sourceMeta[1] = $source_ele_value[11];
-	  } elseif($source_ele_value[10] != "none") {
+	  } elseif(isset($source_ele_value[10]) AND $source_ele_value[10] != "none") {
 	       $sourceMeta[1] = $source_ele_value[10];
 	  }
 	  
