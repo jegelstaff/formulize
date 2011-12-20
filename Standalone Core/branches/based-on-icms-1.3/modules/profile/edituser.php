@@ -72,6 +72,18 @@ switch ($op) {
 			$edituser->setVar('user_viewoid', isset($_POST['user_viewoid']) ? (int)$_POST['user_viewoid'] : 0);
 		}
 
+		// ALTERED BY FREEFORM SOLUTIONS TO SUPPORT USERS CHANGING THEIR OWN PASSWORDS FROM A SINGLE PROFILE PAGE
+		// A REPEAT OF THE CODE BLOCK JUST ABOVE, TO HANDLE THE CASE WHERE THE USER IS UPDATING THEIR OWN PASSWORD
+		if ($pass != '' AND $edituser->getVar('uid') == icms::$user->getVar('uid')) {
+			$icmspass = new icms_core_Password();
+			$salt = icms_core_Password::createSalt();
+			$pass = $icmspass->encryptPass($pass, $salt, $icmsConfigUser['enc_type']);
+			$edituser->setVar('pass', $pass);
+			$edituser->setVar('pass_expired', 0);
+			$edituser->setVar('enc_type', $icmsConfigUser['enc_type']);
+			$edituser->setVar('salt', $salt);
+		}
+
 		// Dynamic fields
 		$profile_handler = icms_getmodulehandler('profile', basename(dirname(__FILE__)), 'profile');
 		// Get fields
