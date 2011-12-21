@@ -43,6 +43,45 @@ global $xoopsConfig;
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
+include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
+include_once XOOPS_ROOT_PATH . "/include/functions.php";
+
+class formulize_elementsOnlyForm extends XoopsThemeForm {
+	function render() {
+		// just a slight modification of the render method so that we display only the elements and none of the extra form stuff
+		$ele_name = $this->getName();
+		$ret = "<div class='xo-theme-form'>
+			<table width='100%' class='outer' cellspacing='1'>
+			<tr><th colspan='2'>" . $this->getTitle() . "</th></tr>
+		";
+		$hidden = '';
+		$class ='even';
+		foreach ( $this->getElements() as $ele ) {
+			if (!is_object($ele)) {
+				$ret .= $ele;
+			} elseif ( !$ele->isHidden() ) {
+				$ret .= "<tr valign='top' align='" . _GLOBAL_LEFT . "'><td class='head'>";
+				if (($caption = $ele->getCaption()) != '') {
+					$ret .=
+					"<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
+						. "<span class='caption-text'>{$caption}</span>"
+						. "<span class='caption-marker'>*</span>"
+						. "</div>";
+				}
+				if (($desc = $ele->getDescription()) != '') {
+					$ret .= "<div class='xoops-form-element-help'>{$desc}</div>";
+				}
+				$ret .= "</td><td class='$class'>" . $ele->render() . "</td></tr>\n";
+			} else {
+				$hidden .= $ele->render();
+			}
+		}
+		$ret .= "</table>\n$hidden\n</div>\n";
+		$ret .= $this->renderValidationJS(true);
+		return $ret;
+	}
+}
+
 // this function gets the element that is linked from a form to its parent form
 // returns the ele_ids from form table
 // note: no enforcement of only one link to a parent form.  You can screw up your framework structure and this function will dutifully return several links to the same parent form
@@ -185,10 +224,15 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/extract.php';
 formulize_benchmark("Start of formDisplay.");
 
+$formElementsOnly = false;
+if($titleOverride == "formElementsOnly") {
+	$titleOverride = "all";
+	$formElementsOnly = true;
+}
 if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "all") {
 	$passedInTitle = $titleOverride; // we can pass in a text title for the form, and that will cause the $titleOverride "all" behaviour to be invoked, and meanwhile we will use this title for the top of the form
 	$titleOverride = "all";
-}
+} 
 
 //syntax:
 //displayform($formframe, $entry, $mainform)
@@ -205,9 +249,10 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 
 	global $xoopsDB, $xoopsUser, $myts;
 
-	$GLOBALS['sfidsDrawn'] = array();
-
 	global $sfidsDrawn;
+	if(!is_array($sfidsDrawn)) {
+		$sfidsDrawn = array();
+	}
 
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 
@@ -261,6 +306,7 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 	if((!$entry OR $entry=="proxy") AND $_POST[$entrykey]) { // $entrykey will only be set when *editing* an entry, not on new saves
 		$entry = $_POST[$entrykey];
 	}
+	
 	// this is probably not necessary any more, due to architecture changes in Formulize 3
 	// formulize_newEntryIds is set when saving data
 	if(!$entry AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
@@ -357,7 +403,7 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 		}
 		$temp_entries = $GLOBALS['formulize_allWrittenEntryIds']; // set in readelements.php
 		
-		if($single OR $_POST['target_sub'] OR ($entries[$fid][0] AND ($original_entry OR ($_POST[$entrykey] AND !$_POST['back_from_sub']))) OR $overrideMulti OR ($_POST['go_back_form'] AND $overrideSubMulti)) { // if we just did a submission on a single form, or we just edited a multi, then assume the identity of the new entry.  Can be overridden by values passed to this function, to force multi forms to redisplay the just-saved entry.  Back_from_sub is used to override the override, when we're saving after returning from a multi-which is like editing an entry since entries are saved prior to going to a sub. -- Sept 4 2006: adding an entry in a subform forces us to stay on the same page too!
+		if(!$formElementsOnly AND ($single OR $_POST['target_sub'] OR ($entries[$fid][0] AND ($original_entry OR ($_POST[$entrykey] AND !$_POST['back_from_sub']))) OR $overrideMulti OR ($_POST['go_back_form'] AND $overrideSubMulti))) { // if we just did a submission on a single form, or we just edited a multi, then assume the identity of the new entry.  Can be overridden by values passed to this function, to force multi forms to redisplay the just-saved entry.  Back_from_sub is used to override the override, when we're saving after returning from a multi-which is like editing an entry since entries are saved prior to going to a sub. -- Sept 4 2006: adding an entry in a subform forces us to stay on the same page too! -- Dec 21 2011: added check for !$formElementsOnly so that when we're getting just the elements in the form, we ignore any possible overriding, since that is an API driven situation where the called entry is the only one we want to display, period.
 			$entry = $temp_entries[$fid][0];
 			$entries = $temp_entries;
 			// also remove any fids that aren't part of the $temp_entries...added Oct 26 2011...checkforlinks now can return the mainform when we're on a sub!  It's smarter, but displayForm (and possibly other places) were not built to assume it was that smart.
@@ -459,8 +505,6 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 		}
 	
 	
-		include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
-		include_once XOOPS_ROOT_PATH . "/include/functions.php";
 	
 		/*if($uid==1) {
 		print "Forms: ";
@@ -540,7 +584,12 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 	
 				$firstform = 1; 	      	
 				$title = isset($passedInTitle) ? $passedInTitle : trans(getFormTitle($this_fid));
-						$form = new XoopsThemeForm($title, 'formulize', "$currentURL", "post", true);
+				unset($form);
+				if($formElementsOnly) {
+					$form = new formulize_elementsOnlyForm();
+				} else {
+					$form = new XoopsThemeForm($title, 'formulize', "$currentURL", "post", true);
+				}
 				$form->setExtra("enctype='multipart/form-data'"); // impératif!
 	
 				if(is_array($settings)) { $form = writeHiddenSettings($settings, $form); }
@@ -688,23 +737,14 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 			}
 		}
 	
-		// add flag to indicate that the form has been submitted
-		$form->addElement (new XoopsFormHidden ('form_submitted', "1"));
-		if($go_back['form']) { // if this is set, then we're doing a subform, so put in a flag to prevent the parent from being drawn again on submission
-			$form->addElement (new XoopsFormHidden ('sub_fid', $fid));
-			$form->addElement (new XoopsFormHidden ('sub_submitted', $entries[$fid][0]));
-			$form->addElement (new XoopsFormHidden ('go_back_form', $go_back['form']));
-			$form->addElement (new XoopsFormHidden ('go_back_entry', $go_back['entry']));
-		}
-		
 		// draw in the submitbutton if necessary
-		if($entry) { // existing entry, if it's their own and they can update their own, or someone else's and they can update someone else's
+		if($entry AND !$formElementsOnly) { // existing entry, if it's their own and they can update their own, or someone else's and they can update someone else's
 			if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries)) {
 				$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
 			} else {
 				$form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
 			}
-		} else { // new entry
+		} elseif(!$formElementsOnly) { // new entry
 			if($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
 				$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
 			} else {
@@ -712,21 +752,39 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 			}
 		}
 	
-		// saving message
-		print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px;\">\n";
-		if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
-			print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
-		} else {
-			print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
+		if(!$formElementsOnly) {
+			
+			// add flag to indicate that the form has been submitted
+			$form->addElement (new XoopsFormHidden ('form_submitted', "1"));
+			if($go_back['form']) { // if this is set, then we're doing a subform, so put in a flag to prevent the parent from being drawn again on submission
+				$form->addElement (new XoopsFormHidden ('sub_fid', $fid));
+				$form->addElement (new XoopsFormHidden ('sub_submitted', $entries[$fid][0]));
+				$form->addElement (new XoopsFormHidden ('go_back_form', $go_back['form']));
+				$form->addElement (new XoopsFormHidden ('go_back_entry', $go_back['entry']));
+			}
+			
+			// saving message
+			print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px;\">\n";
+			if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
+				print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
+			} else {
+				print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
+			}
+			print "</div>\n";
 		}
-		print "</div>\n<div id=formulizeform>".$form->render()."</div>"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
+
+		print "<div id=formulizeform>".$form->render()."</div>"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
+
+		
 		// if we're in Drupal, include the main XOOPS js file, so the calendar will work if present...
 		// assumption is that the calendar javascript has already been included by the datebox due to no
 		// $xoopsTpl being in effect in Drupal -- this assumption will fail if Drupal is displaying a pageworks
 		// page that uses the $xoopsTpl, for instance.  (Date select box file itself checks for $xoopsTpl)
 		global $user;
-		if(is_object($user)) {
+		static $includedXoopsJs = false;
+		if(is_object($user) AND !$includedXoopsJs) {
 			print "<script type=\"text/javascript\" src=\"" . XOOPS_URL . "/include/xoops.js\"></script>\n";
+			$includedXoopsJs = true;
 		}
 	}// end of if we're not going back to the prev page because of an all done button override
 }
@@ -1014,7 +1072,7 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 }
 
 // this function draws in the UI for sub links
-function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption="", $customElements="", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings=0, $overrideOwnerOfNewEntries="", $mainFormOwner=0, $hideaddentries, $subformConditions, $subformElementId=0) {
+function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption="", $customElements="", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings=0, $overrideOwnerOfNewEntries="", $mainFormOwner=0, $hideaddentries, $subformConditions, $subformElementId=0, $rowsOrForms='row') {
 
 	$hideaddentries = $hideaddentries === 'hideaddentries' ? 1 : 0; // only the text value is a valid flag for hiding the entries...because we need an affirmative hide flag, we can't use null, blank, etc, since older subforms will have no value for this flag
 
@@ -1198,7 +1256,15 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 
 	$need_delete = 0;
 	$drawnHeadersOnce = false;
-	$col_two = "<table style=\"width: 10%\">";
+	
+	if($rowsOrForms=="row" OR $rowsOrForms =='') {
+		$col_two = "<table style=\"width: 10%\">";	
+	} else {
+		$col_two = "<div id=\"subform-$subformElementId\" style=\"display: none;\">";
+		include_once XOOPS_ROOT_PATH ."/modules/formulize/class/data.php";
+		$data_handler = new formulizeDataHandler($sfid);
+		
+	}
 
 	$deFrid = $frid ? $frid : ""; // need to set this up so we can pass it as part of the displayElement function, necessary to establish the framework in case this is a framework and no subform element is being used, just the default draw-in-the-one-to-many behaviour
 	
@@ -1274,53 +1340,148 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 
 		foreach($sub_entries[$sfid] as $sub_ent) {
 			if($sub_ent != "") {
-				if(!$drawnHeadersOnce) {
-					$col_two .= "<tr><td></td>\n";
-					foreach($headersToDraw as $i=>$thishead) {
-						if($thishead) {
-							$headerHelpLinkPart1 = $headingDescriptions[$i] ? "<a href=\"#\" onclick=\"return false;\" alt=\"".$headingDescriptions[$i]."\" title=\"".$headingDescriptions[$i]."\">" : "";
-							$headerHelpLinkPart2 = $headerHelpLinkPart1 ? "</a>" : "";
-							$col_two .= "<td style=\"width: 10%;\"><p>$headerHelpLinkPart1<b>$thishead</b>$headerHelpLinkPart2</p></td>\n";
+				
+				if($rowsOrForms=='row' OR $rowsOrForms =='') {
+					
+					if(!$drawnHeadersOnce) {
+						$col_two .= "<tr><td></td>\n";
+						foreach($headersToDraw as $i=>$thishead) {
+							if($thishead) {
+								$headerHelpLinkPart1 = $headingDescriptions[$i] ? "<a href=\"#\" onclick=\"return false;\" alt=\"".$headingDescriptions[$i]."\" title=\"".$headingDescriptions[$i]."\">" : "";
+								$headerHelpLinkPart2 = $headerHelpLinkPart1 ? "</a>" : "";
+								$col_two .= "<td style=\"width: 10%;\"><p>$headerHelpLinkPart1<b>$thishead</b>$headerHelpLinkPart2</p></td>\n";
+							}
+						}
+						$col_two .= "</tr>\n";
+						$drawnHeadersOnce = true;
+					}
+					$col_two .= "<tr>\n<td style=\"width: 10%;\">";
+					// check to see if we draw a delete box or not
+					if($sub_ent !== "new") {
+						$deleteSelf = $gperm_handler->checkRight("delete_own_entry", $sfid, $groups, $mid);
+						$deleteOther = $gperm_handler->checkRight("delete_other_entries", $sfid, $groups, $mid);
+						$sub_owner = getEntryOwner($sub_ent, $sfid);
+						//print "sub_owner: $sub_owner<br>uid: $uid<br>deleteself: $deleteSelf<br>";
+						if(($sub_owner == $uid AND $deleteSelf) OR ($sub_owner != $uid AND $deleteOther)) {
+							$need_delete = 1;
+							$col_two .= "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>";
+						} 
+					}
+					$col_two .= "</td>\n";
+					include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
+					foreach($elementsToDraw as $thisele) {
+						if($thisele) { 
+							ob_start();
+							$renderResult = displayElement($deFrid, $thisele, $sub_ent); 
+							$col_two_temp = ob_get_contents();
+							ob_end_clean();
+							if($col_two_temp OR $renderResult == "rendered") { // only draw in a cell if there actually is an element rendered (some elements might be rendered as nothing (such as derived values)
+								$col_two .= "<td>$col_two_temp</td>\n";
+							} else {
+								$col_two .= "<td>******</td>";
+							}
 						}
 					}
+					if(!$nosubforms AND $showViewButtons) { $col_two .= "<td><input type=button name=view".$sub_ent." value='"._formulize_SUBFORM_VIEW."' onclick=\"javascript:goSub('$sub_ent', '$sfid');return false;\"></input></td>\n"; }
 					$col_two .= "</tr>\n";
-					$drawnHeadersOnce = true;
-				}
-				$col_two .= "<tr>\n<td style=\"width: 10%;\">";
-				// check to see if we draw a delete box or not
-				if($sub_ent !== "new") {
-					$deleteSelf = $gperm_handler->checkRight("delete_own_entry", $sfid, $groups, $mid);
-					$deleteOther = $gperm_handler->checkRight("delete_other_entries", $sfid, $groups, $mid);
-					$sub_owner = getEntryOwner($sub_ent, $sfid);
-					//print "sub_owner: $sub_owner<br>uid: $uid<br>deleteself: $deleteSelf<br>";
-					if(($sub_owner == $uid AND $deleteSelf) OR ($sub_owner != $uid AND $deleteOther)) {
-						$need_delete = 1;
-						$col_two .= "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>";
-					} 
-				}
-				$col_two .= "</td>\n";
-				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
-				foreach($elementsToDraw as $thisele) {
-					if($thisele) { 
-						ob_start();
-						$renderResult = displayElement($deFrid, $thisele, $sub_ent); 
-						$col_two_temp = ob_get_contents();
-						ob_end_clean();
-						if($col_two_temp OR $renderResult == "rendered") { // only draw in a cell if there actually is an element rendered (some elements might be rendered as nothing (such as derived values)
-							$col_two .= "<td>$col_two_temp</td>\n";
-						} else {
-							$col_two .= "<td>******</td>";
-						}
+
+				} else { // display the full form
+					$headerValues = array();
+					foreach($elementsToDraw as $thisele) {
+						$headerValues[] = htmlspecialchars(strip_tags($data_handler->getElementValueInEntry($sub_ent, $thisele)));
+					}					
+					$headerToWrite = implode(" &mdash; ", $headerValues);
+					if(str_replace(" &mdash; ", "", $headerToWrite) == "") {
+						$headerToWrite = _AM_ELE_SUBFORM_NEWENTRY_LABEL;
 					}
+					
+					// check to see if we draw a delete box or not
+					$deleteBox = "";
+					if($sub_ent !== "new") {
+						$deleteSelf = $gperm_handler->checkRight("delete_own_entry", $sfid, $groups, $mid);
+						$deleteOther = $gperm_handler->checkRight("delete_other_entries", $sfid, $groups, $mid);
+						$sub_owner = getEntryOwner($sub_ent, $sfid);
+						//print "sub_owner: $sub_owner<br>uid: $uid<br>deleteself: $deleteSelf<br>";
+						if(($sub_owner == $uid AND $deleteSelf) OR ($sub_owner != $uid AND $deleteOther)) {
+							$need_delete = 1;
+							$deleteBox = "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>&nbsp;&nbsp;";
+						} 
+					}
+					
+					
+					$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container\" id=\"subform-$sub_ent\">
+<p class=\"subform-header\"><a href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>
+	<div class=\"accordion-content content\">";
+					ob_start();
+					$renderResult = displayForm($sfid, $sub_ent, "", "",  "", "", "formElementsOnly"); 
+					$col_two_temp = ob_get_contents();
+					ob_end_clean();
+					$col_two .= $col_two_temp . "</div>\n</div>\n";
 				}
-				if(!$nosubforms AND $showViewButtons) { $col_two .= "<td><input type=button name=view".$sub_ent." value='"._formulize_SUBFORM_VIEW."' onclick=\"javascript:goSub('$sub_ent', '$sfid');return false;\"></input></td>\n"; }
-				$col_two .= "</tr>\n";
 			}
 		}
 		
 	} // end of the if condition controlling placement of blank defaults
 
-	$col_two .= "</table>";
+	
+
+	if($rowsOrForms=='row' OR $rowsOrForms =='') {
+		// complete the table if we're drawing rows
+		$col_two .= "</table>";	
+	} else {
+		$col_two .= "</div>\n";
+		static $jqueryUILoaded = false;
+		if(!$jqueryUILoaded) {
+			$col_two .= "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-ui-1.8.2.custom.min.js\"></script>\n";
+			$col_two .= "<link rel=\"stylesheet\" type=\"text/css\" href=\"".XOOPS_URL."/modules/formulize/jquery/css/start/jquery-ui-1.8.2.custom.css\">\n";
+			$jqueryUILoaded = true;
+		}
+		$col_two .= "\n
+<script type=\"text/javascript\">
+
+	jQuery(window).load(function() {
+		$(\"#subform-$subformElementId\").accordion({
+			autoHeight: false, // no fixed height for sections
+			collapsible: true, // sections can be collapsed
+			active: false,
+			header: \"> div > p.subform-header\"
+		});
+		$(\"#subform-$subformElementId\").fadeIn();
+	});
+
+</script>
+
+<style>
+
+p.subform-header {
+	font-size: 10pt !important;
+}
+.ui-accordion-content {
+	background: #80C3DD;
+	border-color: white;
+	font-size: 10pt; !important;
+}
+.ui-accordion-header {
+	border-color: white;
+}
+.subform-deletebox {
+	float: left;
+}\n";
+
+if($need_delete) {
+$col_two .= "
+.subform-entry-container {
+	margin-left: 25px;
+}
+\n";
+}
+
+$col_two .= "
+</style>
+\n";
+
+	} // end of if we're closing the subform inferface where entries are supposed to be collapsable forms
+
 
 	if($addSubEntry = $gperm_handler->checkRight("add_own_entry", $sfid, $groups, $mid) AND !$hideaddentries) {
 		if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] === "" AND $sub_single) {
@@ -1342,7 +1503,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	$col_one .= "</p>";
 	$to_return['c1'] = $col_one;
 	$to_return['c2'] = $col_two;
-	//return $to_return; // now returning a single set of HTML, which should be a configurable option, and will be in the next official commit
+	//return $to_return; // now returning a single set of HTML, which should be a configurable option
 	return array('single'=>$col_one . $col_two);
 
 }
@@ -1682,7 +1843,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$GLOBALS['sfidsDrawn'][] = $thissfid;
 				$customCaption = $i->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
-				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element
+				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form
 				if(isset($subUICols['single'])) {
 					$form->insertBreak($subUICols['single'], "even");
 				} else {
@@ -2141,6 +2302,10 @@ function writeHiddenSettings($settings, $form) {
 // draw in javascript for this form that is relevant to subforms
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
 function drawJavascript($nosave) {
+static $drawnJavascript = false;
+if($drawnJavascript) {
+	return;
+}
 global $xoopsUser;
 
 // Left in for possible future use by the rankOrderList element type or other elements that might use jQuery
@@ -2261,6 +2426,7 @@ drawXhrJavascript();
 
 
 print "</script>\n";
+$drawnJavascript = true;
 }
 
 ?>
