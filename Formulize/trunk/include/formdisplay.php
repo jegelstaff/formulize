@@ -1270,7 +1270,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	
 	// if there's been no form submission, and there's no sub_entries, and there are default blanks to show, then do everything differently -- sept 8 2007
 	
-	if(!$_POST['form_submitted'] AND count($sub_entries[$sfid]) == 0 AND $defaultblanks > 0) {
+	if(!$_POST['form_submitted'] AND count($sub_entries[$sfid]) == 0 AND $defaultblanks > 0 AND ($rowsOrForms == "row"  OR $rowsOrForms =='')) {
 	
 		for($i=0;$i<$defaultblanks;$i++) {
 	
@@ -1314,7 +1314,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 				
 		}
 	
-	} else {
+	} elseif(count($sub_entries[$sfid]) > 0) {
 		
 		// need to figure out the proper order for the sub entries based on the properties set for this form
 		// for now, hard code to the word number field to suit the map site only
