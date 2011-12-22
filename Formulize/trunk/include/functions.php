@@ -2110,7 +2110,7 @@ function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $fi
 	$formlink->addOption("none", $am_formlink_none);
 	for($i=0;$i<$captionlistindex;$i++)
 	{
-		$formlink->addOption($totalvaluelist[$i], $totalcaptionlist[$i]);
+		$formlink->addOption($totalvaluelist[$i], htmlspecialchars(strip_tags($totalcaptionlist[$i])));
 	}
         
 	if(isset($defaultlinkselection))
