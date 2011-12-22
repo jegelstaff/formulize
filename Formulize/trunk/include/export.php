@@ -107,7 +107,7 @@ if(!isset($_POST['exportsubmit'])) {
 	if(trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $exportUid) { // query fid must match passed fid in URL, and the current user id must match the userid at the time the export file was created
 			
 			$GLOBALS['formulize_doingExport'] = true;
-			unset($queryData[0]);
+			unset($queryData[0]); // get rid of the fid and userid lines
 			unset($queryData[1]);
 			$queryData = implode(" ",$queryData); // merge all remaining lines into one string to send to getData
 			$data = getData($frid, $fid, $queryData);
