@@ -1232,16 +1232,16 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	// setup the array of elements to draw
 	if(is_array($customElements)) {
 		$headingDescriptions = array();
-		foreach($customElements as $custEle) {
-			$elementsToDraw[] = $custEle;
-			$headerq = q("SELECT ele_caption, ele_colhead, ele_desc FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id=" . intval($custEle));
-			$headingDescriptions[]  = $headerq[0]['ele_desc'] ? $headerq[0]['ele_desc'] : "";
+		$headerq = q("SELECT ele_caption, ele_colhead, ele_desc, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id IN (" . implode(", ", $customElements). ") ORDER BY ele_order");
+		foreach($headerq as $thisHeaderResult) {
+			$elementsToDraw[] = $thisHeaderResult['ele_id'];
+			$headingDescriptions[]  = $thisHeaderResult['ele_desc'] ? $thisHeaderResult['ele_desc'] : "";
 			if($captionsForHeadings) {
-				$headersToDraw[] = $headerq[0]['ele_caption'];
+				$headersToDraw[] = $thisHeaderResult['ele_caption'];
 			} else {
-				$headersToDraw[] = $headerq[0]['ele_colhead'] ? $headerq[0]['ele_colhead'] : $headerq[0]['ele_caption'];
+				$headersToDraw[] = $thisHeaderResult['ele_colhead'] ? $thisHeaderResult['ele_colhead'] : $thisHeaderResult['ele_caption'];
 			}
-		}
+		}		
 	} else {
 		$subHeaderList = getHeaderList($sfid);
 		$subHeaderList1 = getHeaderList($sfid, true);
@@ -1288,7 +1288,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 						if($thishead) {
 							$headerHelpLinkPart1 = $headingDescriptions[$i] ? "<a href=\"#\" onclick=\"return false;\" alt=\"".$headingDescriptions[$x]."\" title=\"".$headingDescriptions[$x]."\">" : "";
 							$headerHelpLinkPart2 = $headerHelpLinkPart1 ? "</a>" : "";
-							$col_two .= "<td style=\"width: 10%;\"><p>$headerHelpLinkPart1<b>$thishead</b>$headerHelpLinkPart2</p></td>\n";
+							$col_two .= "<td style=\"width: 10%; text-align: center;\"><p>$headerHelpLinkPart1<b>$thishead</b>$headerHelpLinkPart2</p></td>\n";
 						}
 					}
 					$col_two .= "</tr>\n";
@@ -1349,7 +1349,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 							if($thishead) {
 								$headerHelpLinkPart1 = $headingDescriptions[$i] ? "<a href=\"#\" onclick=\"return false;\" alt=\"".$headingDescriptions[$i]."\" title=\"".$headingDescriptions[$i]."\">" : "";
 								$headerHelpLinkPart2 = $headerHelpLinkPart1 ? "</a>" : "";
-								$col_two .= "<td style=\"width: 10%;\"><p>$headerHelpLinkPart1<b>$thishead</b>$headerHelpLinkPart2</p></td>\n";
+								$col_two .= "<td style=\"width: 10%; text-align: center;\"><p>$headerHelpLinkPart1<b>$thishead</b>$headerHelpLinkPart2</p></td>\n";
 							}
 						}
 						$col_two .= "</tr>\n";
