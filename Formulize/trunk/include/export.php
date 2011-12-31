@@ -151,15 +151,18 @@ if(!isset($_POST['exportsubmit'])) {
 			header('Expires: 0');
 			header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 			header('Pragma: public');
-			header('Content-Length: '. filesize($pathToFile));
+			
 			if(strstr(strtolower(_CHARSET),'utf') AND $_POST['excel']==1) {
 				echo "\xef\xbb\xbf"; // necessary to trigger certain versions of Excel to recognize the file as unicode
-			} elseif(strstr(strtolower(_CHARSET),'utf-8')) {
+			}
+			if(strstr(strtolower(_CHARSET),'utf-8') AND $_POST['excel']!=1) {
 				ob_start();
 				readfile($pathToFile);
 				$fileContents = ob_get_clean();
-				print mb_convert_encoding($fileContents,"UTF-16LE","UTF-8"); // open office really wants it in UTF-16LE before it will actually trigger an automatic unicode opening?!	
+				header('Content-Length: '. filesize($pathToFile)*2);
+				print iconv("UTF-8","UTF-16LE//TRANSLIT",$fileContents); // open office really wants it in UTF-16LE before it will actually trigger an automatic unicode opening?! -- this seems to cause problems on very large exports?  
 			} else {
+				header('Content-Length: '. filesize($pathToFile));
 				readfile($pathToFile);	
 			}
 			
@@ -172,7 +175,6 @@ if(!isset($_POST['exportsubmit'])) {
 	}
 
 } // end of "if the metachoice form has been submitted"
-
 
 
 
