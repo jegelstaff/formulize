@@ -49,7 +49,7 @@ print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XO
 $themecss = xoops_getcss();
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 print "</head>";
-print "<body><center>"; 
+print "<body style=\"background: white; margin-top:20px;\"><center>"; 
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 ?>
 <br><br>

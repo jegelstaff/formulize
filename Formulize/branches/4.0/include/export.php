@@ -56,7 +56,7 @@ if(!isset($_POST['exportsubmit'])) {
 	print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 	
 	print "</head>";
-	print "<body><center>"; 
+	print "<body style=\"background: white; margin-top:20px;\"><center>"; 
 	print "<table width=100%><tr><td width=5%></td><td width=90%>";
 	print "<form name=\"metachoiceform\" action=\"".getCurrentURL() . "\" method=\"post\">\n";
 	print "<center><h1>"._formulize_DE_EXPORT_TITLE."</h1><br></center>\n";
@@ -107,7 +107,7 @@ if(!isset($_POST['exportsubmit'])) {
 	if(trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $exportUid) { // query fid must match passed fid in URL, and the current user id must match the userid at the time the export file was created
 			
 			$GLOBALS['formulize_doingExport'] = true;
-			unset($queryData[0]);
+			unset($queryData[0]); // get rid of the fid and userid lines
 			unset($queryData[1]);
 			$queryData = implode(" ",$queryData); // merge all remaining lines into one string to send to getData
 			$data = getData($frid, $fid, $queryData);
@@ -151,15 +151,18 @@ if(!isset($_POST['exportsubmit'])) {
 			header('Expires: 0');
 			header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 			header('Pragma: public');
-			header('Content-Length: '. filesize($pathToFile));
+			
 			if(strstr(strtolower(_CHARSET),'utf') AND $_POST['excel']==1) {
 				echo "\xef\xbb\xbf"; // necessary to trigger certain versions of Excel to recognize the file as unicode
-			} elseif(strstr(strtolower(_CHARSET),'utf-8')) {
+			}
+			if(strstr(strtolower(_CHARSET),'utf-8') AND $_POST['excel']!=1) {
 				ob_start();
 				readfile($pathToFile);
 				$fileContents = ob_get_clean();
-				print mb_convert_encoding($fileContents,"UTF-16LE","UTF-8"); // open office really wants it in UTF-16LE before it will actually trigger an automatic unicode opening?!	
+				header('Content-Length: '. filesize($pathToFile)*2);
+				print iconv("UTF-8","UTF-16LE//TRANSLIT",$fileContents); // open office really wants it in UTF-16LE before it will actually trigger an automatic unicode opening?! -- this seems to cause problems on very large exports?  
 			} else {
+				header('Content-Length: '. filesize($pathToFile));
 				readfile($pathToFile);	
 			}
 			
@@ -172,7 +175,6 @@ if(!isset($_POST['exportsubmit'])) {
 	}
 
 } // end of "if the metachoice form has been submitted"
-
 
 
 

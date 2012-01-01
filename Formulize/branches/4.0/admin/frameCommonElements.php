@@ -97,7 +97,7 @@ $themecss = xoops_getcss();
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 
 print "</head>";
-print "<body><center>"; 
+print "<body style=\"background: white; margin-top:20px;\"><center>"; 
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 
 $chooseElementsForm = new xoopsThemeForm(_AM_FRAME_WHICH_ELEMENTS, 'whichElements', XOOPS_URL."/modules/formulize/admin/frameCommonElements.php?form1=$form1&form2=$form2&lid=$lid");

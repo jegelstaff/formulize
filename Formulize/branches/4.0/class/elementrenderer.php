@@ -339,6 +339,7 @@ class formulizeElementRenderer{
 
 					static $cachedSourceValuesQ = array();
 					static $cachedSourceValuesAutocompleteFile = array();
+					static $cachedSourceValuesAutocompleteLength = array();
 
 					if($pgroupsfilter) { // if there is a groups filter, then join to the group ownership table
 						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 $parentFormFrom WHERE $pgroupsfilter $conditionsfilter $conditionsfilter_oom $restrictSQL GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
@@ -384,7 +385,10 @@ class formulizeElementRenderer{
 							formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_linkedOptions_");
 							$cachedLinkedOptions = fopen(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName","w");
 							fwrite($cachedLinkedOptions, "<?php\n\r");
+							$maxLength = 0;
 							foreach($linkedElementOptions as $id=>$text) {
+								$thisTextLength = strlen($text);
+								$maxLength = $thisTextLength > $maxLength ? $thisTextLength : $maxLength;
 								$text = str_replace("\$", "\\\$", $text);
 								$quotedText = "\"".str_replace("\"", "\\\"", $text)."\"";
 								$singleQuotedText = str_replace("'", "\'", "[$quotedText,$id]");
@@ -393,6 +397,7 @@ class formulizeElementRenderer{
 							fwrite($cachedLinkedOptions, "?>");
 							fclose($cachedLinkedOptions);
 							$cachedSourceValuesAutocompleteFile[$sourceValuesQ] = $cachedLinkedOptionsFileName;
+							$cachedSourceValuesAutocompleteLength[$sourceValuesQ] = $maxLength;
 						} 
 					}
 					
@@ -404,7 +409,7 @@ class formulizeElementRenderer{
 							$data_handler_autocomplete = new formulizeDataHandler($boxproperties[0]);
 							$default_value_user = $data_handler_autocomplete->getElementValueInEntry(trim($boxproperties[2], ","), $boxproperties[1]);
 						}
-						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedSourceValuesAutocompleteFile[$sourceValuesQ], $default_value, $default_value_user);
+						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedSourceValuesAutocompleteFile[$sourceValuesQ], $default_value, $default_value_user, $cachedSourceValuesAutocompleteLength[$sourceValuesQ]);
 						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 					}
@@ -588,7 +593,10 @@ class formulizeElementRenderer{
             formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_Options_");
             $cachedOptions = fopen(XOOPS_ROOT_PATH."/cache/$cachedOptionsFileName","w");
             fwrite($cachedOptions, "<?php\n\r");
+	    $maxLength = 0;
             foreach($options as $id=>$text) {
+	      $thisTextLength = strlen($text);
+	      $maxLength = $thisTextLength > $maxLength ? $thisTextLength : $maxLength;
               //$quotedText = "\"".str_replace("\"", "\\\"", trim($text))."\"";
               $quotedText = "\"".str_replace("\"", "\\\"", $text)."\"";
               fwrite($cachedOptions,"if(stristr($quotedText, \$term)){ \$found[]='[$quotedText,$id]'; }\n\r");
@@ -598,7 +606,7 @@ class formulizeElementRenderer{
             fclose($cachedOptions);
             //print_r($selected); print_r($options);
             $defaultSelected = is_array($selected) ? $selected[0] : $selected;
-            $renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedOptionsFileName, $defaultSelected, $options[$defaultSelected]);
+            $renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedOptionsFileName, $defaultSelected, $options[$defaultSelected], $maxLength);
             $form_ele2 = new xoopsFormLabel($ele_caption, $renderedComboBox);
             $renderedElement = $form_ele2->render();
 					} else { // normal element
@@ -1110,7 +1118,8 @@ class formulizeElementRenderer{
 	}
 
 	/* ALTERED - 20100318 - freeform - jeff/julian - start */
-	function formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFilename, $default_value='', $default_value_user='none') {
+	function formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFilename, $default_value='', $default_value_user='none', $maxLength=30) {
+		$maxLength = $maxLength > 50 ? 50 : $maxLength; // don't create giant boxes, too disruptive to the layout...though we should probably give the users a way to override this!  They can use the class attribute assigned to the 'user' box below, and CSS.
 		static $autocompleteIncluded = false;
 		if(!$autocompleteIncluded) {
 			// quickselect-formulize has a change in it so that "none" is an allowed value for matches, so that we can give the user good UI when something wrong is happening
@@ -1125,7 +1134,7 @@ class formulizeElementRenderer{
 		}
 		$autocompleteIncluded = true;
 
-		$output .= "<div class=\"formulize_autocomplete\" style=\"padding-right: 10px;\"><input type='text' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='on' value='$default_value_user' style=\"width: 100%;\"/></div>";
+		$output .= "<div class=\"formulize_autocomplete\" style=\"padding-right: 10px;\"><input type='text' class='formulize_autocomplete' name='${form_ele_id}_user' id = '${form_ele_id}_user' autocomplete='on' value='$default_value_user' size='$maxLength' /></div>";
 		$output .= "<input type='hidden' name='${form_ele_id}' id = '${form_ele_id}' value='$default_value' />";
 		$output .= "<script type='text/javascript'>";
 		// need to declare this as jQuery so that everything "just works" when being called in an environment where $ is owned by something else

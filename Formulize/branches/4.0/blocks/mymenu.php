@@ -60,7 +60,7 @@ function block_formulizeMENU_show() {
 				$menuTexts[$i]['application'] = 0;
   }
 	if(count($menuTexts) == 0) { // if no menu entries were found, return nothing
-				$block['content'] = "";
+				$block['content'] = _AM_NOFORMS_AVAIL;
 				return $block;
   }
 	$forceOpen = count($menuTexts)==1 ? true : false;

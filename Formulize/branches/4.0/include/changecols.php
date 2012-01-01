@@ -180,7 +180,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	changeColJavascript();
 
   print "</head>";
-  print "<body><center>"; 
+  print "<body style=\"background: white; margin-top:20px;\"><center>"; 
   print "<table style=\"width: 100%;\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
 	print "<form name=newcolform action=\"" . XOOPS_URL . "\" method=post>\n";
 

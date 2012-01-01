@@ -2110,7 +2110,7 @@ function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $fi
 	$formlink->addOption("none", $am_formlink_none);
 	for($i=0;$i<$captionlistindex;$i++)
 	{
-		$formlink->addOption($totalvaluelist[$i], $totalcaptionlist[$i]);
+		$formlink->addOption($totalvaluelist[$i], htmlspecialchars(strip_tags($totalcaptionlist[$i])));
 	}
         
 	if(isset($defaultlinkselection))
@@ -4304,8 +4304,8 @@ function formulize_addProcedureChoicesToPost($choices) {
 }
 
 // used in the admin UI
-// returns false if the element cannot be required, otherwise returns true
-function removeNotApplicableRequireds($type, $req) {
+// returns false if the element cannot be required, otherwise returns the current required setting of the element
+function removeNotApplicableRequireds($type, $req=0) {
   switch($type) {
     case "text":
     case "textarea":
@@ -4313,12 +4313,14 @@ function removeNotApplicableRequireds($type, $req) {
     case "radio":
     case "checkbox":
     case "date":
-      return true;
+      return $req;
   }
   if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 	$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
 	$customTypeElement = $customTypeHandler->create();
-	return $customTypeElement->adminCanMakeRequired;
+	if($customTypeElement->adminCanMakeRequired) {
+	  return $req;
+	}
   }
   return false;
 }

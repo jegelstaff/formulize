@@ -1,9 +1,7 @@
 <?php
 ###############################################################################
-##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) 2004 Freeform Solutions                  ##
-##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
-##                       <http://www.brandycoke.com/>                        ##
+##                Formulize - ad hoc form creation and reporting             ##
+##                    Copyright (c) 2012 Freeform Solutions                  ##
 ###############################################################################
 ##                    XOOPS - PHP Content Management System                  ##
 ##                       Copyright (c) 2000 XOOPS.org                        ##
@@ -28,37 +26,26 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions and NS Tai (aka tuff) and others ##
-##  URL: http://www.brandycoke.com/                                          ##
+##  Author of this file: Freeform Solutions                                  ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// SET $formulize_screen_id IN A PHP BLOCK, AND THEN INCLUDE
-// XOOPS_ROOT_PATH . "/modules/formulize/index.php" TO CALL UP
-// A SCREEN IN A BLOCK WITHOUT THE ENTIRE XOOPS TEMPLATE COMING IN
+require_once "../../mainfile.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-// uncomment these two lines to enable benchmarking of performance...depends also on the user id specified in formulize_benchmark in include/extract.php
-//include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-//$GLOBALS['startPageTime'] = microtime_float();
+// check permission on the fid, and if user has edit_form permission, then set the master override flag
+// then either way, carry on with normal rendering of the form
 
-if(isset($formulize_screen_id)) {
-    if(is_numeric($formulize_screen_id)) {
-        global $xoTheme;
-        if($xoTheme) {
-            $xoTheme->addStylesheet("/modules/formulize/templates/css/style.css");
-        }
-        include 'initialize.php';        
-    }
+$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+$mid = getFormulizeModId();
+$gperm_handler = xoops_gethandler('groupperm');
+if($gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
+    $formulize_masterUIOverride = true; // user has requested the master UI by using this URL, and they have edit_form permission, so we will give them the full default UI for the form
 } else {
-    require_once "../../mainfile.php";
-    include XOOPS_ROOT_PATH.'/header.php';
-    global $xoTheme;
-    if($xoTheme) {
-        $xoTheme->addStylesheet("/modules/formulize/templates/css/style.css");
-    }
-    include 'initialize.php';
-
-    include XOOPS_ROOT_PATH.'/footer.php';
+    $formulize_masterUIOverride = false;
 }
+
+include "index.php";
 
 

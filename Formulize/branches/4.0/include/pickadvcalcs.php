@@ -147,7 +147,7 @@ $list = $advanced_calculation_handler->getList($fid);
     }
     </script>
   </head>
-  <body>
+  <body style=\"background: white; margin-top:20px;\">
     <center>
       <table>
 <?php

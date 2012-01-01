@@ -1046,6 +1046,8 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 					if( $thisButtonCode = $buttonCodeArray['clearSelectButton']) { print "<br>$thisButtonCode<br>"; }
 				}
 	
+				print "</p></td><td style=\"vertical-align: bottom;\"><p style=\"text-align: center;\">";
+	
 				if( $thisButtonCode = $buttonCodeArray['notifButton']) { print "$thisButtonCode"; } 
 				if( $thisButtonCode = $buttonCodeArray['resetViewButton']) { print "<br>$thisButtonCode"; }
 				// there is a create reports permission, but we are currently allowing everyone to save their own views regardless of that permission.  The publishing permissions do kick in on the save popup.
@@ -3890,23 +3892,23 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 		$buttonText = trans($buttonText);
 		switch ($button) {
 			case "changeColsButton":
-				return "<input type=button style=\"width: 140px;\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";
 				break;
 			case "calcButton":
-				return "<input type=button style=\"width: 140px;\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."');\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."');\"></input>";
 				break;
       case "advCalcButton":
 				// only if any procedures (advanced calculations) are defined for this form
 				$procedureHandler = xoops_getmodulehandler('advancedCalculation','formulize');
 				$procList = $procedureHandler->getList($fid);
 				if(is_array($procList) AND count($procList) > 0) {
-				  return "<input type=button style=\"width: 140px;\" name=advcalculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickadvcalcs.php?fid=$fid&frid=$frid&$advcalc_acid');\"></input>";
+				  return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=advcalculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickadvcalcs.php?fid=$fid&frid=$frid&$advcalc_acid');\"></input>";
 				} else {
 					return false;
 				}
 	      break;
 			case "advSearchButton":
-				$buttonCode = "<input type=button style=\"width: 140px;\" name=advsearch value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
+				$buttonCode = "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=advsearch value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
 				foreach($settings as $k=>$v) {
 					if(substr($k, 0, 3) == "as_") {
 						$v = str_replace("'", "&#39;", $v);
@@ -3918,7 +3920,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				return $buttonCode;
 				break;
 			case "exportCalcsButton":
-				return "<input type=button style=\"width: 140px;\" name=export value='" . $buttonText . "' onclick=\"javascript:showExport();\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=export value='" . $buttonText . "' onclick=\"javascript:showExport();\"></input>";
 				break;
 			case "exportButton":
 			case "importButton":
@@ -3940,44 +3942,44 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
           $importExportCleanupDone = true;
         }
 				if($button == "exportButton") {
-					return "<input type=button style=\"width: 140px;\" name=export value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/export.php?fid=$fid&frid=$frid&cols=$colhandles&eq=$exportTime');\"></input>";
+					return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=export value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/export.php?fid=$fid&frid=$frid&cols=$colhandles&eq=$exportTime');\"></input>";
 				} else {
-					return "<input type=button style=\"width: 140px;\" name=impdata value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=$exportTime');\"></input>";
+					return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=impdata value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=$exportTime');\"></input>";
 				}
 				break;
 			case "addButton":
 				$addNewParam = $doNotForceSingle ? "" : "'single'"; // force the addNew behaviour to single entry unless this button is being used on a single entry form, in which case we don't need to force anything
-				return "<input type=button style=\"width: 140px;\" name=addentry value='" . $buttonText . "' onclick=\"javascript:addNew($addNewParam);\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=addentry value='" . $buttonText . "' onclick=\"javascript:addNew($addNewParam);\"></input>";
 				break;
 			case "addMultiButton":
-				return "<input type=button style=\"width: 140px;\" name=addentry value='" . $buttonText . "' onclick=\"javascript:addNew();\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=addentry value='" . $buttonText . "' onclick=\"javascript:addNew();\"></input>";
 				break;
 			case "addProxyButton":
-				return "<input type=button style=\"width: 140px;\" name=addentry value='" . $buttonText . "' onclick=\"javascript:addNew('proxy');\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=addentry value='" . $buttonText . "' onclick=\"javascript:addNew('proxy');\"></input>";
 				break;
 			case "notifButton":
-				return "<input type=button style=\"width: 140px;\" name=notbutton value='". $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/setnot.php?fid=$fid');\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=notbutton value='". $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/setnot.php?fid=$fid');\"></input>";
 				break;
 			case "cloneButton":
-				return "<input type=button style=\"width: 140px;\" name=clonesel value='" . $buttonText . "' onclick=\"javascript:confirmClone();\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=clonesel value='" . $buttonText . "' onclick=\"javascript:confirmClone();\"></input>";
 				break;
 			case "deleteButton":
-				return "<input type=button style=\"width: 140px;\" name=deletesel value='" . $buttonText . "' onclick=\"javascript:confirmDel();\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=deletesel value='" . $buttonText . "' onclick=\"javascript:confirmDel();\"></input>";
 				break;
 			case "selectAllButton":
-				return "<input type=button style=\"width: 110px;\" name=sellall value='" . $buttonText . "' onclick=\"javascript:selectAll(this.form);\"></input>";
+				return "<input type=button style=\"width: 110px;\" id=\"formulize_$button\" name=sellall value='" . $buttonText . "' onclick=\"javascript:selectAll(this.form);\"></input>";
 				break;
 			case "clearSelectButton":
-				return "<input type=button style=\"width: 110px;\" name=clearall value='" . $buttonText . "' onclick=\"javascript:clearAll(this.form);\"></input>";
+				return "<input type=button style=\"width: 110px;\" id=\"formulize_$button\" name=clearall value='" . $buttonText . "' onclick=\"javascript:clearAll(this.form);\"></input>";
 				break;
 			case "resetViewButton":
-				return "<input type=button style=\"width: 140px;\" name=resetviewbutton value='" . $buttonText . "' onclick=\"javascript:showLoadingReset();\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=resetviewbutton value='" . $buttonText . "' onclick=\"javascript:showLoadingReset();\"></input>";
 				break;
 			case "saveViewButton":
-				return "<input type=button style=\"width: 140px;\" name=save value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/save.php?fid=$fid&frid=$frid&lastloaded=$lastloaded&cols=$flatcols&currentview=$currentview&loadonlyview=$loadOnlyView');\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=save value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/save.php?fid=$fid&frid=$frid&lastloaded=$lastloaded&cols=$flatcols&currentview=$currentview&loadonlyview=$loadOnlyView');\"></input>";
 				break;
 			case "deleteViewButton":
-				return "<input type=button style=\"width: 140px;\" name=delete value='" . $buttonText . "' onclick=\"javascript:delete_view(this.form, '$pubstart', '$endstandard');\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=delete value='" . $buttonText . "' onclick=\"javascript:delete_view(this.form, '$pubstart', '$endstandard');\"></input>";
 				break;
 			case "currentViewList":
 				$currentViewList = "<b>" . $buttonText . "</b><br><SELECT style=\"width: 350px;\" name=currentview id=currentview size=1 onchange=\"javascript:change_view(this.form, '$pickgroups', '$endstandard');\">\n";
@@ -3989,9 +3991,9 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				return $currentViewList;
 				break;
 			case "saveButton":
-				return "<input type=button style=\"width: 140px;\" name=deSaveButton value='" . $buttonText . "' onclick=\"javascript:showLoading();\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=deSaveButton value='" . $buttonText . "' onclick=\"javascript:showLoading();\"></input>";
 			case "goButton":
-				return "<input type=button style=\"width: 140px;\" name=deSubmitButton value='" . $buttonText . "' onclick=\"javascript:showLoading();\"></input>";
+				return "<input type=button style=\"width: 140px;\" id=\"formulize_$button\" name=deSubmitButton value='" . $buttonText . "' onclick=\"javascript:showLoading();\"></input>";
 				break;
 		}
 	} elseif($button == "currentViewList") { // must always set a currentview value in POST even if the list is not visible

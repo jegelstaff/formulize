@@ -136,9 +136,9 @@ function prepvalues($value, $field, $entry_id) {
      if($value AND $sourceMeta[1]) {
 	  
 	  // need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
-	  if($GLOBALS['formulize_doingExport'] AND $source_ele_value[11] != "none") {
+	  if($GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
 	       $sourceMeta[1] = $source_ele_value[11];
-	  } elseif($source_ele_value[10] != "none") {
+	  } elseif(isset($source_ele_value[10]) AND $source_ele_value[10] != "none") {
 	       $sourceMeta[1] = $source_ele_value[10];
 	  }
 	  
@@ -727,15 +727,18 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      $GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
      $GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
      if($GLOBALS['formulize_returnAfterSettingBaseQuery']) { return true; } // if we are only setting up calculations, then return now that the base query is built
-	  $GLOBALS['formulize_queryForExport'] = $masterQuerySQL; // "$selectClauseToUse FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";     
+	  $sortIsOnMainFlag = $sortIsOnMain ? 1 : 0;
+	  // need to include the query first, so the SELECT or INSERT is the first thing in the string, so we catch it properly when coming back through the export process
+	  $GLOBALS['formulize_queryForExport'] = $masterQuerySQL." -- SEPARATOR FOR EXPORT QUERIES -- ".$sortIsOnMainFlag; // "$selectClauseToUse FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause $limitClause";
+	  
      
 	  //$masterQuerySQL = "SELECT * FROM " . DBPRE . "formulize_$fid LIMIT 0,1";
 	  //$afterQueryTime = microtime_float();
-     
   } else { // end of if the filter has a SELECT in it
 	  if(strstr($filter," -- SEPARATOR FOR EXPORT QUERIES -- ")) {
 	       $exportOverrideQueries = explode(" -- SEPARATOR FOR EXPORT QUERIES -- ",$filter);
 	       $masterQuerySQL = $exportOverrideQueries[0];
+	       $sortIsOnMain = $exportOverrideQueries[1];
 	  } else {
 	       $masterQuerySQL = $filter; // need to split this based on some separator, because export ends up passing in a series of statements     
 	  }
@@ -777,8 +780,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		 $gatherIdsRes = $xoopsDB->queryF(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$masterQuerySQL));
 		 $linkQueryRes = array();
 	         if(isset($exportOverrideQueries[1])) {
-		    for($i=1;$i<count($exportOverrideQueries);$i++) {
-			 $linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$exportOverrideQueries[$i]));
+		    for($i=2;$i<count($exportOverrideQueries);$i++) {
+			 $sql = str_replace("REPLACEWITHTIMESTAMP",$timestamp,$exportOverrideQueries[$i]);
+			 $linkQueryRes[] = $xoopsDB->query($sql);
 		    }
 		 } else {
 		    // FURTHER OPTIMIZATIONS ARE POSSIBLE HERE...WE COULD NOT INCLUDE THE MAIN FORM AGAIN IN ALL THE SELECTS, THAT WOULD IMPROVE THE PROCESSING TIME A BIT, BUT WE WOULD HAVE TO CAREFULLY REFACTOR MORE OF THE LOOPING CODE BELOW THAT PARSES THE ENTRIES, BECAUSE RIGHT NOW IT'S ASSUMING THE FULL MAIN ENTRY IS PRESENT.  AT LEAST THE MAIN ENTRY ID WOULD NEED TO STILL BE USED, SINCE WE USE THAT TO SYNCH UP ALL THE ENTRIES FROM THE OTHER FORMS.
@@ -833,7 +837,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      $linkFormIdsFilter = "";
      if($frid) {
-	  $linkFormIdsFilter = " OR t1.id_form IN (".implode(",",$linkformids).") ";
+	  $linkFormIdsFilter = (is_array($linkformids) AND count($linkformids)>0) ? " OR t1.id_form IN (".implode(",",$linkformids).") " : "";
      }
      $sql = "SELECT t1.ele_value, t2.desc_form, t1.ele_handle, t2.id_form FROM ".DBPRE."formulize as t1, ".DBPRE."formulize_id as t2 WHERE t1.ele_type='derived' AND (t1.id_form='$fid' $linkFormIdsFilter ) AND t1.id_form=t2.id_form ORDER BY t1.ele_order";     
      
@@ -876,8 +880,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       $prevFieldNotMeta = true;
 	       $prevFormAlias = "";
 	       $prevMainId = "";
-	       
+
 	       while($masterQueryArray = $xoopsDB->fetchArray($thisRes)) {
+		    
 		    foreach($masterQueryArray as $field=>$value) {
 			 if($field == "entry_id" OR $field == "creation_uid" OR $field == "mod_uid" OR $field == "creation_datetime" OR $field == "mod_datetime" OR $field == "main_email" OR $field == "main_user_viewemail") { continue; } // ignore those plain fields, since we can only work with the ones that are properly aliased to their respective tables.  More details....Must refer to metadata fields by aliases only!  since * is included in SQL syntax, fetch_assoc will return plain column names from all forms with the values from those columns.....Also want to ignore the email fields, since the fact they're prefixed with "main" can throwoff the calculation of which entry we're currently writing
 			 if(strstr($field, "creation_uid") OR strstr($field, "creation_datetime") OR strstr($field, "mod_uid") OR strstr($field, "mod_datetime")) {
@@ -1103,6 +1108,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  }	  
 	  
      } // end if if there's more the 1 linked fid
+     
      return $masterResults;
 
 } // end of dataExtraction function
@@ -1261,7 +1267,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     } elseif($sourceMeta = $formFieldFilterMap[$mappedForm][$element_id]['islinked']) {
 			 
 			 // need to check if an alternative value field has been defined for use in lists or data sets and search on that field instead 
-		    	 if($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none") {
+		    	 if(isset($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none") {
 			      $sourceMeta[1] = $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]; // ele_value 10 is the alternate field to use for datasets and in lists
 			 }
 			 

@@ -83,7 +83,8 @@ if($_GET['ele_id'] != "new") {
   $names['ele_handle'] = $elementObject->getVar('ele_handle');
   $names['ele_desc'] = $elementObject->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
   $ele_req = $elementObject->getVar('ele_req');
-  $names['ele_req_on'] = removeNotApplicableRequireds($ele_type, $ele_req); // function returns false when the element cannot be required.
+  $ele_req = removeNotApplicableRequireds($ele_type, $ele_req); // function returns false when the element cannot be required.
+  $names['ele_req_on'] = $ele_req === false ? false : true;
   $names['ele_req_no_on'] = $ele_req ? "" : " checked";
   $names['ele_req_yes_on'] = $ele_req ? " checked" : "";
   $ele_display = $elementObject->getVar('ele_display');
