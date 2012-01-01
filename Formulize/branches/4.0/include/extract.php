@@ -779,7 +779,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		 $createTableRes = $xoopsDB->queryF($creatTableSQL);
 		 $gatherIdsRes = $xoopsDB->queryF(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$masterQuerySQL));
 		 $linkQueryRes = array();
-	         if(isset($exportOverrideQueries[1])) {
+	         if(isset($exportOverrideQueries[2])) {
 		    for($i=2;$i<count($exportOverrideQueries);$i++) {
 			 $sql = str_replace("REPLACEWITHTIMESTAMP",$timestamp,$exportOverrideQueries[$i]);
 			 $linkQueryRes[] = $xoopsDB->query($sql);

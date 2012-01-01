@@ -216,7 +216,7 @@ define("_formulize_DE_CALC_COL", "Column(s) to use for the calculations:");
 define("_formulize_DE_CALC_COUNT", "Count Entries");
 define("_formulize_DE_CALC_CREATEDATE", "Creation date");
 define("_formulize_DE_CALC_CREATOR_EMAIL", "Creator's e-mail address");
-define("_formulize_DE_CALC_CREATOR", "Utilisateur qui a créé l’entrée");
+define("_formulize_DE_CALC_CREATOR", "Utilisateur qui a créé l'entrée");
 define("_formulize_DE_CALC_GROUPING", "Group results by...");
 define("_formulize_DE_CALC_GTEXT", "Group Results?");
 define("_formulize_DE_CALC_LISTDISPLAY", "Only display calculations<br>(hide the list of entries)");
