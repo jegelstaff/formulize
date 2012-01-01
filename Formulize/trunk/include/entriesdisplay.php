@@ -1046,6 +1046,8 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 					if( $thisButtonCode = $buttonCodeArray['clearSelectButton']) { print "<br>$thisButtonCode<br>"; }
 				}
 	
+				print "</p></td><td style=\"vertical-align: bottom;\"><p style=\"text-align: center;\">";
+	
 				if( $thisButtonCode = $buttonCodeArray['notifButton']) { print "$thisButtonCode"; } 
 				if( $thisButtonCode = $buttonCodeArray['resetViewButton']) { print "<br>$thisButtonCode"; }
 				// there is a create reports permission, but we are currently allowing everyone to save their own views regardless of that permission.  The publishing permissions do kick in on the save popup.
