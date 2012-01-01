@@ -31,7 +31,7 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "4.0",
+	'version' => "4.01",
 	'description' => _MI_formulize_DESC,
 	'author' => "Freeform Solutions",                                            
 	'credits' => "",
