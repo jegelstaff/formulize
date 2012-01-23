@@ -307,11 +307,7 @@ class formulizeAdvancedCalculationHandler {
 	$groups[] = $_POST['ocandsAgeGrouping'];
     }
         
-    // set a flag to indicate if there is time-based grouping going on (a special feature of the OCANDS website) -- jwe Aug 18 2011
-    if(isset($_POST['ocandsDateGrouping']) AND ($_POST['ocandsDateGrouping'] == "year" OR $_POST['ocandsDateGrouping'] == "quarter")) {
-	$groups[] = $_POST['ocandsDateGrouping'];
-    }
-
+    
     // re-order grouping if specified by the user
     if(isset($_POST['sortedGroupings'])) {
       parse_str( $_POST['sortedGroupings'], $sortedGroupings );
@@ -325,6 +321,12 @@ class formulizeAdvancedCalculationHandler {
       }
       $groups = $newGroupings;
     }
+
+    // set a flag to indicate if there is time-based grouping going on (a special feature of the OCANDS website) -- jwe Aug 18 2011
+    if(isset($_POST['ocandsDateGrouping']) AND ($_POST['ocandsDateGrouping'] == "year" OR $_POST['ocandsDateGrouping'] == "quarter")) {
+	$groups[] = $_POST['ocandsDateGrouping'];
+    }
+
 
     $groupCombinations = $this->groupBy( $acid, $filtersAndGroupings, $groups );
 
