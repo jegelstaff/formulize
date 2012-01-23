@@ -277,10 +277,12 @@ class formulizeAdvancedCalculationHandler {
     $filtersAndGroupingsTitles = $advCalcObject->getVar('fltr_grptitles');
 
     // figure out groupings
+    $allGroups = array();
     $groups = array();
     $savedCheckboxValue = array();
     foreach($filtersAndGroupings as $index => $thisGrouping) {
       if($thisGrouping['is_group']) {
+        $allGroups[] = $index;
         if( $thisGrouping['type']['kind'] == 3 ) {    // Checkboxes
           // if more then one is selected then do the grouping, else just do the grouping
           //print isset($_POST[$acid."_groupingchoices"][$index])." AND ".array_key_exists( $acid . "_" .$thisGrouping['handle'], $_POST )." AND ".is_array( $_POST[$acid . "_" .$thisGrouping['handle']] )." AND ".count( $_POST[$acid . "_" .$thisGrouping['handle']] );
@@ -309,6 +311,21 @@ class formulizeAdvancedCalculationHandler {
     if(isset($_POST['ocandsDateGrouping']) AND ($_POST['ocandsDateGrouping'] == "year" OR $_POST['ocandsDateGrouping'] == "quarter")) {
 	$groups[] = $_POST['ocandsDateGrouping'];
     }
+
+    // re-order grouping if specified by the user
+    if(isset($_POST['sortedGroupings'])) {
+      parse_str( $_POST['sortedGroupings'], $sortedGroupings );
+      $newGroupings = array();
+      foreach( $sortedGroupings['sortableGroupings'] as $value ) {
+        if( is_string( $value ) && in_array( $value, $groups ) ) {
+          $newGroupings[] = $value;
+        } else if( in_array( $allGroups[ $value ], $groups ) ) {
+          $newGroupings[] = $allGroups[ $value ];
+        }
+      }
+      $groups = $newGroupings;
+    }
+
     $groupCombinations = $this->groupBy( $acid, $filtersAndGroupings, $groups );
 
     // setup the processing environment
@@ -809,6 +826,7 @@ class formulizeAdvancedCalculationHandler {
 	$form_ele = new XoopsFormTextDateSelect("", $elementName, 15, $dateValue);
 	$form_ele->setExtra(' class="'. $elementUnderlyingField . '" ');
       }
+      $selected = date("Y-m-d", $dateValue);
     } else if( $kind == 2 ) {
       // $selectedValue is the value in the option list that should be selected by default...
       //   if $selectedValue is "" then the first item will be selected (ie: no selection)
@@ -835,13 +853,20 @@ class formulizeAdvancedCalculationHandler {
         $value = explode( "|", $definedOption );
         if( count( $value ) == 2 ) {
           $options[$value[0]] = $value[1];
+          if( $selectedValue == $value[0] ) {
+            $selected = trim($value[1]);
+          }
         } else {
           $options[$definedOption] = $definedOption;
+          if( $selectedValue == $definedOption ) {
+            $selected = trim($definedOption);
+          }
         }
       }
       $form_ele->addOptionArray($options);
       $form_ele->setExtra(' class="'. $elementUnderlyingField . '" ');
     } else if( $kind == 3 ) {
+      $selected = array();
       $elementName = $acid . "_" . $fltr_grp["handle"];
       $tmp_html = "";
       $index = 0;
@@ -858,11 +883,20 @@ class formulizeAdvancedCalculationHandler {
         if( count( $option_value ) == 2 ) {
           $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
           $tmp_html .= $option_value[1] . "<br>";
+          if( $value == 1 ) {
+            $selected[] = trim($option_value[1]);
+          }
         } else {
           $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
           $tmp_html .= $definedOption . "<br>";
+          if( $value == 1 ) {
+            $selected[] = trim($definedOption);
+          }
         }
         $index++;
+      }
+      if( count( $selected ) == 0 ) {
+        $selected = "All";
       }
     } else if($kind == 4) { // textbox
 	$elementName = $acid . "_" . $fltr_grp["handle"];
@@ -873,6 +907,7 @@ class formulizeAdvancedCalculationHandler {
 	    $form_ele = new XoopsFormText('', $elementName, 20, 255, $value);
 	    $form_ele->setExtra(' class="'. $elementUnderlyingField . '" ');
 	}
+      $selected = $value;
     }
 
     if( $form_ele ) {
@@ -887,7 +922,7 @@ class formulizeAdvancedCalculationHandler {
 
     $labelText = $hideLabel ? "" : $fltr_grp["fltr_label"];
 
-    return array( "label"=>$labelText, "html"=>$html );
+    return array( "label"=>$labelText, "html"=>$html, "selected"=>$selected );
   }
 
   function getGrouping($acid, $filterHandle) {

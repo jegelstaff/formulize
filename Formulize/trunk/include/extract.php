@@ -137,9 +137,9 @@ function prepvalues($value, $field, $entry_id) {
 	  
 	  // need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
 	  if($GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
-	       $sourceMeta[1] = $source_ele_value[11];
+	       list($sourceMeta[1]) = convertElementIdsToElementHandles(array($source_ele_value[11]), $sourceMeta[0]);
 	  } elseif(isset($source_ele_value[10]) AND $source_ele_value[10] != "none") {
-	       $sourceMeta[1] = $source_ele_value[10];
+	       list($sourceMeta[1]) = convertElementIdsToElementHandles(array($source_ele_value[10]), $sourceMeta[0]);
 	  }
 	  
 					$form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -1268,7 +1268,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 			 
 			 // need to check if an alternative value field has been defined for use in lists or data sets and search on that field instead 
 		    	 if(isset($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none") {
-			      $sourceMeta[1] = $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]; // ele_value 10 is the alternate field to use for datasets and in lists
+			      list($sourceMeta[1]) = convertElementIdsToElementHandles(array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]), $sourceMeta[0]); // ele_value 10 is the alternate field to use for datasets and in lists
 			 }
 			 
 			 $sourceFormObject = $form_handler->get($sourceMeta[0]);
