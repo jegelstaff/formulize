@@ -46,6 +46,8 @@ include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
+$GLOBALS['formulize_elementsOnlyForm_validationCode'] = array();
+
 class formulize_elementsOnlyForm extends XoopsThemeForm {
 	function render() {
 		// just a slight modification of the render method so that we display only the elements and none of the extra form stuff
@@ -77,8 +79,20 @@ class formulize_elementsOnlyForm extends XoopsThemeForm {
 			}
 		}
 		$ret .= "</table>\n$hidden\n</div>\n";
-		$ret .= $this->renderValidationJS(true);
 		return $ret;
+	}
+	//We need to render the validation code differently, since the form is embedded inside another..
+	public function renderValidationJS() {
+		$js = "";
+		
+		$elements = $this->getElements( true );
+		foreach ( $elements as $elt ) {
+			if ( method_exists( $elt, 'renderValidationJS' ) ) {
+				$js .= $elt->renderValidationJS();
+			}
+		}
+		
+		return $js;
 	}
 }
 
@@ -772,10 +786,9 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 			}
 			print "</div>\n";
 		}
-
+		
 		print "<div id=formulizeform>".$form->render()."</div>"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
 
-		
 		// if we're in Drupal, include the main XOOPS js file, so the calendar will work if present...
 		// assumption is that the calendar javascript has already been included by the datebox due to no
 		// $xoopsTpl being in effect in Drupal -- this assumption will fail if Drupal is displaying a pageworks
@@ -1260,7 +1273,8 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	if($rowsOrForms=="row" OR $rowsOrForms =='') {
 		$col_two = "<table style=\"width: 10%\">";	
 	} else {
-		$col_two = "<div id=\"subform-$subformElementId\" style=\"display: none;\">";
+		$col_two = "<div id=\"subform-$subformElementId\" class=\"subform-accordion-container\" subelementid=\"$subformElementId\" style=\"display: none;\">";
+		$col_two .= "<input type='hidden' name='subform_entry_".$subformElementId."_active' id='subform_entry_".$subformElementId."_active' value='' />";
 		include_once XOOPS_ROOT_PATH ."/modules/formulize/class/data.php";
 		$data_handler = new formulizeDataHandler($sfid);
 		
@@ -1443,7 +1457,13 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		$(\"#subform-$subformElementId\").accordion({
 			autoHeight: false, // no fixed height for sections
 			collapsible: true, // sections can be collapsed
-			active: false,
+			active: ";
+			if($_POST['subform_entry_'.$subformElementId.'_active']) {
+				$col_two .= intval($_POST['subform_entry_'.$subformElementId.'_active']);
+			} else {
+				$col_two .= 'false';
+			}
+			$col_two .= ",
 			header: \"> div > p.subform-header\"
 		});
 		$(\"#subform-$subformElementId\").fadeIn();
@@ -1905,6 +1925,14 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 		$form->addElement($formulizeHiddenValidation, $hiddenRequiredFlag);
 	}
 	
+	if(get_class($form) == "formulize_elementsOnlyForm") { // forms of this class are ones that we're rendering just the HTML for the elements, and we need to preserve any validation javascript to stick in the final, parent form when it's finished
+		$GLOBALS['formulize_elementsOnlyForm_validationCode'][] = $form->renderValidationJS()."\n\n";
+	} else {
+		$elementsonlyvalidation = new XoopsFormHidden('elementsonlyforms', '');
+		$elementsonlyvalidation->customValidationCode = $GLOBALS['formulize_elementsOnlyForm_validationCode'];
+		$form->addElement($elementsonlyvalidation, 1);
+	}
+	
 	return $form;
 
 }
@@ -2338,6 +2366,10 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 ?>
 	var validate = xoopsFormValidate_formulize();
 	if(validate) {
+		jQuery(".subform-accordion-container").map(function() {
+			subelementid = jQuery(this).attr('subelementid');			
+			window.document.getElementById('subform_entry_'+subelementid+'_active').value = jQuery(this).accordion( "option", "active" );
+		});
 		if(window.document.formulize.submitx) {
 			window.document.formulize.submitx.disabled=true;
 		}
@@ -2347,6 +2379,7 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 		}
 		window.document.getElementById('formulizeform').style.opacity = 0.5;
 		window.document.getElementById('savingmessage').style.display = 'block';
+		
 		window.scrollTo(0,0);
 		window.document.formulize.submit(); 
 	}
