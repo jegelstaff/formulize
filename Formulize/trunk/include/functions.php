@@ -4580,17 +4580,20 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 			$elstyle = 'style="text-align: right;"';
 		}
 		$thisEntryId = isset($localIds[$valueId]) ? $localIds[$valueId] : $entryId;
-		$output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle). '</span>';
+		if($counter == 1 AND $deDisplay) {
+			$output .= '<div style="float: left; margin-right: 5px; margin-bottom: 5px;"><a href="" onclick="javascript:renderElement(\''.$handle.'\', '.$thisEntryId.', '.$fid.');return false;"><img src="'.XOOPS_URL.'/modules/formulize/images/kedit.gif" /></a></div>';
+		}
+		$output .= '<div><span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle). '</span>';
 		if($counter<$countOfValue) {
 			$output .= ",";
-		}
-		if($counter == 1 AND $deDisplay) {
-			$output .= ' <a href="" onclick="javascript:renderElement(\''.$handle.'\', '.$thisEntryId.', '.$fid.');return false;"><img src="'.XOOPS_URL.'/modules/formulize/images/kedit.gif" /></a>';
 		}
 		if($counter<$countOfValue) {
 			$output .= "<br>";
 		}
 		$counter++;
+	}
+	if($output) {
+	  $output .= "</div>";
 	}
 	return $output;
 }
