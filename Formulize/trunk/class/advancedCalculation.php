@@ -324,6 +324,8 @@ class formulizeAdvancedCalculationHandler {
 
     // set a flag to indicate if there is time-based grouping going on (a special feature of the OCANDS website) -- jwe Aug 18 2011
     if(isset($_POST['ocandsDateGrouping']) AND ($_POST['ocandsDateGrouping'] == "year" OR $_POST['ocandsDateGrouping'] == "quarter")) {
+	$savedGroupingFilterValue['startDate'] = $_POST[$acid . "_startDate"]; // save this value so we can use it again after
+	$savedGroupingFilterValue['endDate'] = $_POST[$acid . "_endDate"]; // save this value so we can use it again after
 	$groups[] = $_POST['ocandsDateGrouping'];
     }
 

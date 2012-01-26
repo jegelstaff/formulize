@@ -432,7 +432,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS", "Should the 'magnifying gla
 define("_AM_FORMULIZE_SCREEN_LOE_HIDDENCOLUMNS", "Select any columns where you would like the current value from each entry to be included in the list as a hidden form element.");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_HIDDENCOLUMNS", "This option is useful if you need some text on the screen to be sent back in <i>\$_POST</i> as part of the next page load.  You can use <i>gatherHiddenValue('</i>handle<i>');</i> in a custom button access the values you receive.  Any columns you choose will still be displayed normally in the list, in addition to having the hidden form elements created.");
 define("_AM_FORMULIZE_SCREEN_LOE_DECOLUMNS", "Select any columns where you would like the data displayed as a form element, rather than as text:");
-define("_AM_FORMULIZE_SCREEN_LOE_DESC_DECOLUMNS", "<b>WARNING:</b> if you are displaying any checkbox elements in the list, then disabled the checkboxes to the left of each entry!");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_DECOLUMNS", "<b>WARNING:</b> if you are displaying any checkbox elements in the list, then disable the checkboxes to the left of each entry!");
 define("_AM_FORMULIZE_SCREEN_LOE_DESAVETEXT", "If you have selected any columns to display as form elements, what text should be used on a 'Submit' button below the list of entries?");
 define("_AM_FORMULIZE_SCREEN_LOE_DVMINE", "Entries by the current user");
 define("_AM_FORMULIZE_SCREEN_LOE_DVGROUP", "Entries by the current user's group(s)");
