@@ -4517,6 +4517,12 @@ function formulize_xhr_return(op,params,response) {
 		return renderElementHtml(response,params);
 	} else if(op == 'get_element_value') {
 		return renderElementNewValue(response,params);
+	} else if(op == 'delete_uploaded_file') {
+		if(response) {
+			formulize_delete_successful(response);
+		} else {
+			formulize_delete_failed();
+		}
 	} else {
 		return false;
 	}
