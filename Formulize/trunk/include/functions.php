@@ -4525,7 +4525,7 @@ function formulize_xhr_return(op,params,response) {
 function formulize_xhr_send(op,params) {
 	
   // check that this is a valid operation we know how to handle
-  if(op != 'check_for_unique_value' && op != 'get_element_html' && op != 'get_element_value') {
+  if(op != 'check_for_unique_value' && op != 'get_element_html' && op != 'get_element_value' && op != 'delete_uploaded_file') {
 	  return true;
   }
   // unpack the parameters
