@@ -1926,8 +1926,11 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	}
 	
 	if(get_class($form) == "formulize_elementsOnlyForm") { // forms of this class are ones that we're rendering just the HTML for the elements, and we need to preserve any validation javascript to stick in the final, parent form when it's finished
-		$GLOBALS['formulize_elementsOnlyForm_validationCode'][] = $form->renderValidationJS()."\n\n";
-	} else {
+		$validationJS = $form->renderValidationJS();
+		if(trim($validationJS)!="") {
+			$GLOBALS['formulize_elementsOnlyForm_validationCode'][] = $validationJS."\n\n";
+		}
+	} elseif(count($GLOBALS['formulize_elementsOnlyForm_validationCode']) > 0) {
 		$elementsonlyvalidation = new XoopsFormHidden('elementsonlyforms', '');
 		$elementsonlyvalidation->customValidationCode = $GLOBALS['formulize_elementsOnlyForm_validationCode'];
 		$form->addElement($elementsonlyvalidation, 1);
