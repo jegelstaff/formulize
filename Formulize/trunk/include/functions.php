@@ -3837,7 +3837,7 @@ function formulize_swapUIText($value, $uitexts=array()) {
 // formats numbers according to options users have specified
 // decimalOverride is used to provide decimal values if specified format has no decimals (added for use in calculations)
 function formulize_numberFormat($value, $handle, $decimalOverride=0) {
-	if(!is_numeric($value)) { return $value; }
+	if(!is_numeric($value) OR substr($value,0,1)=="0") { return $value; }
 	$id = formulize_getIdFromElementHandle($handle);
   $elementMetaData = formulize_getElementMetaData($id, false);
 	if($elementMetaData['ele_type'] == "text") {
