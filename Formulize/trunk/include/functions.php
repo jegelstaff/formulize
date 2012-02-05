@@ -4477,11 +4477,15 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
 	  $conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
   }
   if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") { // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
-	  $curlyBracketFormFrom = ", ".$xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
-	  if($likebits == "%") {
-		  $conditionsFilterComparisonValue = " CONCAT('%',curlybracketform.`".substr($filterTerms[$filterId],1,-1)."`,'%') AND curlybracketform.`entry_id`=$curlyBracketEntry ";
+	  if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][substr($filterTerms[$filterId],1,-1)])) {
+		  $conditionsFilterComparisonValue = "'".mysql_real_escape_string($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][substr($filterTerms[$filterId],1,-1)])."'";
 	  } else {
-		  $conditionsFilterComparisonValue = " curlybracketform.`".substr($filterTerms[$filterId],1,-1)."` AND curlybracketform.`entry_id`=$curlyBracketEntry ";
+		  $curlyBracketFormFrom = ", ".$xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
+		  if($likebits == "%") {
+			  $conditionsFilterComparisonValue = " CONCAT('%',curlybracketform.`".substr($filterTerms[$filterId],1,-1)."`,'%') AND curlybracketform.`entry_id`=$curlyBracketEntry ";
+		  } else {
+			  $conditionsFilterComparisonValue = " curlybracketform.`".substr($filterTerms[$filterId],1,-1)."` AND curlybracketform.`entry_id`=$curlyBracketEntry ";
+		  }
 	  }
   }
   return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);

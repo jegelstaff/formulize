@@ -349,6 +349,7 @@ class formulizeElementRenderer{
 					//print "$sourceValuesQ<br><br>";
 					if(!$isDisabled) {
 						$form_ele = new XoopsFormSelect($ele_caption, $form_ele_id, '', $ele_value[0], $ele_value[1]);
+						$form_ele->setExtra("onchange=\"javascript:formulizechanged=1;\" jquerytag='$form_ele_id'");
 						if($ele_value[0] == 1) { // add the initial default entry, singular or plural based on whether the box is one line or not.
 							$form_ele->addOption("none", _AM_FORMLINK_PICK);
 						}
@@ -551,6 +552,8 @@ class formulizeElementRenderer{
 						$final_size,	//	size
 						$ele_value[1]	  //	multiple
 					);
+	
+					$form_ele1->setExtra("onchange=\"javascript:formulizechanged=1;\" jquerytag='$form_ele_id'");
 	
 					// must check the options for uitext before adding to the element -- aug 25, 2007
 					foreach($options as $okey=>$ovalue) {

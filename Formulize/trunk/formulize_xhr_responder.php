@@ -43,11 +43,20 @@ if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $s
   exit(); 
 }
 
+$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'] = array();
+$GLOBALS['formulize_asynchronousFormDataInAPIFormat'] = array();
+
 // unpack the op 
 $op = $_GET['op'];
 
 // validate op
-if($op != "check_for_unique_value" AND $op != "get_element_option_list" AND $op != 'delete_uploaded_file' AND $op != 'get_element_html' AND $op != 'get_element_value') {
+if($op != "check_for_unique_value"
+   AND $op != "get_element_option_list"
+   AND $op != 'delete_uploaded_file'
+   AND $op != 'get_element_html'
+   AND $op != 'get_element_value'
+   AND $op != 'get_element_row_html'
+  ) {
   exit();
 }
 
@@ -121,6 +130,65 @@ switch($op) {
     $preppedValue = prepvalues($dbValue,$handle,$entryId);
     print getHTMLForList($preppedValue,$handle,$entryId,1);// 1 is a flag to include the icon for switching to an editable element
     break;
+  case 'get_element_row_html':
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+    $element_handler = xoops_getmodulehandler('elements','formulize');
+    foreach($_GET as $k=>$v) {
+      if($k == 'elementId' OR $k == 'entryId' OR $k == 'fid' ) {
+	${$k} = $v;
+      } elseif($k != 'uid' AND $k != 'op') {
+	$keyParts = explode("_", $k); // last one will be the element ID of the in-form value that is being passed back
+	$passedEntryId = $keyParts[2];
+	$passedElementId = $keyParts[3];
+	$passedElementObject = $element_handler->get($passedElementId);
+	$handle = $passedElementObject->getVar('ele_handle');
+	$databaseReadyValue = prepDataForWrite($passedElementObject, $v);
+	$databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
+	$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$handle] = $databaseReadyValue;
+	$apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array
+	if(count($apiFormatValue)==1) {
+	  $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
+	}
+	$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$handle] = $apiFormatValue;
+      }
+    }    
+    $elementObject = $element_handler->get($elementId);
+    $html = "";
+    if(security_check($fid, $entryId)) {
+      // "" is framework, ie: not applicable
+      $deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
+      if(is_array($deReturnValue)) {
+	$form_ele = $deReturnValue[0];
+	$isDisabled = $deReturnValue[1];
+	// rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
+	if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
+	  $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
+	  if ($form_ele[0]) {
+	    $html = "<td colspan='2' $class><div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div></td>"; 
+	  } else {
+	    $html = "<td colspan='2' $class>&nbsp;</td>";
+	  }
+	} else {
+	  $req = !$isDisabled ? intval($elementObject->getVar('ele_req')) : 0;
+	  $html = "<td class='head'>";
+	  if (($caption = $form_ele->getCaption()) != '') {
+	    $html .=
+	    "<div class='xoops-form-element-caption" . ($req ? "-required" : "" ) . "'>"
+		    . "<span class='caption-text'>{$caption}</span>"
+		    . "<span class='caption-marker'>*</span>"
+		    . "</div>";
+	  }
+	  if (($desc = $form_ele->getDescription()) != '') {
+		  $html .= "<div class='xoops-form-element-help'>{$desc}</div>";
+	  }
+	  $html .= "</td><td class='even'>" . $form_ele->render() . "</td>";
+	}
+	print $html;
+      } 
+    }
+    //print "de_".$fid."_".$entryId."_".$elementId."<<||>>$html";
 }
 
 

@@ -46,23 +46,78 @@ include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
-$GLOBALS['formulize_elementsOnlyForm_validationCode'] = array();
-
-class formulize_elementsOnlyForm extends XoopsThemeForm {
-	function render() {
-		// just a slight modification of the render method so that we display only the elements and none of the extra form stuff
+// NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW
+class formulize_themeForm extends XoopsThemeForm {
+	/**
+	 * Insert an empty row in the table to serve as a seperator.
+	 *
+	 * @param	string  $extra  HTML to be displayed in the empty row.
+	 * @param	string	$class	CSS class name for <td> tag
+	 * @name	string	$name	name of the element being inserted, which we keep so we can then put the right id tag into its row
+	 */
+	public function insertBreakFormulize($extra = '', $class= '', $name) {
+		$class = ($class != '') ? " class='$class'" : '';
+		//Fix for $extra tag not showing
+		if ($extra) {
+			$extra = "<td colspan='2' $class>$extra</td>"; // removed tr from here and added it below when we know the right id name to give it
+		} else {
+			$extra = "<td colspan='2' $class>&nbsp;</td>"; // removed tr from here and added it below when we know the right id name to give it
+		}
+		$ibContents = $extra."<<||>>".$name; // can only assign strings or real element objects with addElement, not arrays
+		$this->addElement($ibContents);
+	}
+	/**
+	 * create HTML to output the form as a theme-enabled table with validation.
+	 *
+	 * @return	string
+	 */
+	public function render() {
 		$ele_name = $this->getName();
-		$ret = "<div class='xo-theme-form'>
+		$ret = "<form id='" . $ele_name
+				. "' name='" . $ele_name
+				. "' action='" . $this->getAction()
+				. "' method='" . $this->getMethod()
+				. "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">
+			<div class='xo-theme-form'>
 			<table width='100%' class='outer' cellspacing='1'>
 			<tr><th colspan='2'>" . $this->getTitle() . "</th></tr>
 		";
 		$hidden = '';
+		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
+		$ret .= "</table>\n$hidden\n</div>\n</form>\n";
+		$ret .= $this->renderValidationJS(true);
+		return $ret;
+	}
+	
+	public function renderValidationJS( $withtags = true ) {
+		$js = "";
+		if ( $withtags ) {
+			$js .= "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
+		}
+		$formname = $this->getName();
+		$js .= "function xoopsFormValidate_{$formname}() { myform = window.document.{$formname}; ";
+		$js .= $this->_drawValidationJS();
+		$js .= "return true;\n}\n";
+		if ( $withtags ) {
+			$js .= "//--></script>\n<!-- End Form Vaidation JavaScript //-->\n";
+		}
+		return $js;
+	}
+	
+	private function _drawElements($elements, $ret, $hidden) {
 		$class ='even';
-		foreach ( $this->getElements() as $ele ) {
-			if (!is_object($ele)) {
-				$ret .= $ele;
+		foreach ( $elements as $ele ) {
+			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
+				if(strstr($ele, "<<||>>")) {
+					$ele = explode("<<||>>", $ele);
+					$ret .= "<tr id='formulize-".$ele[1]."'>".$ele[0]."</tr>";					
+				} elseif(substr($ele, 0, 3) != "<tr") {
+					$ret .= "<tr>$ele</tr>";	
+				} else {
+					$ret .= $ele;
+				}
 			} elseif ( !$ele->isHidden() ) {
-				$ret .= "<tr valign='top' align='" . _GLOBAL_LEFT . "'><td class='head'>";
+				$ret .= "<tr id='formulize-".$ele->getName()."' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head'>";
 				if (($caption = $ele->getCaption()) != '') {
 					$ret .=
 					"<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
@@ -78,21 +133,50 @@ class formulize_elementsOnlyForm extends XoopsThemeForm {
 				$hidden .= $ele->render();
 			}
 		}
-		$ret .= "</table>\n$hidden\n</div>\n";
-		return $ret;
+		return array($ret, $hidden);
 	}
-	//We need to render the validation code differently, since the form is embedded inside another..
-	public function renderValidationJS() {
+
+	// need to check whether the element is a standard element, if if so, add the check for whether its row exists or not	
+	function _drawValidationJS() {
 		$js = "";
 		
 		$elements = $this->getElements( true );
 		foreach ( $elements as $elt ) {
 			if ( method_exists( $elt, 'renderValidationJS' ) ) {
+				if(substr($elt->getName(),0,3)=="de_") {
+					$checkConditionalRow = true;
+				} else {
+					$checkConditionalRow = false;
+				}
+				$js .= $checkConditionalRow ? "if(window.document.getElementById('formulize-".$elt->getName()."').style.display != 'none') {\n" : "";
 				$js .= $elt->renderValidationJS();
+				$js .= $checkConditionalRow ? "\n}\n\n" : "";
 			}
 		}
 		
 		return $js;
+	}
+	
+}
+
+// SPECIAL CLASS TO HANDLE SITUATIONS WHERE WE'RE RENDERING ONLY THE ROWS FOR THE FORM, NOT THE ENTIRE FORM 
+class formulize_elementsOnlyForm extends formulize_themeForm {
+	
+	function render() {
+		// just a slight modification of the render method so that we display only the elements and none of the extra form stuff
+		$ele_name = $this->getName();
+		$ret = "<div class='xo-theme-form'>
+			<table width='100%' class='outer' cellspacing='1'>
+			<tr><th colspan='2'>" . $this->getTitle() . "</th></tr>
+		";
+		$hidden = '';
+		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
+		$ret .= "</table>\n$hidden\n</div>\n";
+		return $ret;
+	}
+	//We need to render the validation code differently, without the opening/closing part of the validation function, since the form is embedded inside another..
+	public function renderValidationJS() {
+		return $this->_drawValidationJS();
 	}
 }
 
@@ -602,7 +686,7 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				if($formElementsOnly) {
 					$form = new formulize_elementsOnlyForm();
 				} else {
-					$form = new XoopsThemeForm($title, 'formulize', "$currentURL", "post", true);
+					$form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true); // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
 				}
 				$form->setExtra("enctype='multipart/form-data'"); // impératif!
 	
@@ -688,8 +772,6 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 					// if we have a profile form, put the profile fields at the top of the form, populated based on the DB values from the _users table
 					$form = addProfileFields($form, $profileForm);
 				}
-	
-				drawJavascript($nosave);
 	
 			}
 	
@@ -785,10 +867,15 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
 			}
 			print "</div>\n";
-		}
-		
-		print "<div id=formulizeform>".$form->render()."</div>"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
 
+			drawJavascript($nosave);
+			if(count($GLOBALS['formulize_renderedElementHasConditions'])>0) {
+				drawJavascriptForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $entries, $sub_entries);
+			}
+		}
+
+		print "<div id=formulizeform>".$form->render()."</div>"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
+		
 		// if we're in Drupal, include the main XOOPS js file, so the calendar will work if present...
 		// assumption is that the calendar javascript has already been included by the datebox due to no
 		// $xoopsTpl being in effect in Drupal -- this assumption will fail if Drupal is displaying a pageworks
@@ -1842,20 +1929,38 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$isDisabled = $deReturnValue[1];
 			} else {
 				$form_ele = $deReturnValue;
+				$isDisabled = false;
 			}
-			if($form_ele == "not_allowed" OR $form_ele == "hidden") { continue; }
+			if(($form_ele == "not_allowed" OR $form_ele == "hidden")) {
+				if(isset($GLOBALS['formulize_renderedElementHasConditions']["de_".$fid."_".$entryForDEElements."_".$this_ele_id])) {
+					// need to add a tr container for elements that are not allowed, since if it was a condition that caused them to not show up, they might appear later on asynchronously, and we'll need the row to attach them to
+					if($ele_type == "ib" AND $form_ele == "not_allowed") {
+						$rowHTML = "<tr style='display: none' id='formulize-de_".$fid."_".$entryForDEElements."_".$this_ele_id."'></tr>";
+					} elseif($form_ele == "not_allowed") { 
+						$rowHTML = "<tr style='display: none' id='formulize-de_".$fid."_".$entryForDEElements."_".$this_ele_id."' valign='top' align='" . _GLOBAL_LEFT . "'></tr>";
+					}
+					// need to also get the validation code for this element, wrap it in a check for the table row being visible, and assign that to the global array that contains all the validation javascript that we need to add to the form
+					// following code follows the pattern set in elementdisplay.php for actually creating rendered element objects
+					if($ele_type != "ib") {
+						$conditionalValidationRenderer = new formulizeElementRenderer($i);
+						if($prevEntry OR $profileForm === "new") {
+							$data_handler = new formulizeDataHandler($i->getVar('id_form'));
+							$ele_value = loadValue($prevEntry, $i, $ele_value, $data_handler->getEntryOwnerGroups($entry), $groups, $entry, $profileForm); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
+						}
+						$conditionalElementForValidiationCode = $conditionalValidationRenderer->constructElement("de_".$fid."_".$entryForDEElements."_".$this_ele_id, $ele_value, $entry, $isDisabled, $screen);
+						if($js = $conditionalElementForValidiationCode->renderValidationJS()) {
+							$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$conditionalElementForValidiationCode->getName()] = "if(window.document.getElementById('formulize-".$conditionalElementForValidiationCode->getName()."').style.display != 'none') {\n".$js."\n}\n";
+						}
+						unset($conditionalElementForValidiationCode);
+						unset($conditionalValidationRenderer);
+					}
+					$form->addElement($rowHTML);
+				}
+				continue;
+			}
 		}
 		
-		// note:  in xoops 2.0.16, validation of textboxes was handled differently from validation scripts for any other kind of element, so we have to check if this is higher than 2.0.16, and if so, flag required fields one way, and if not, flag them another way.
-		// we check for the version of xoops by looking for a file that is present in 2.0.17 and not in 2.0.16.
-		// Note also, only non text elements need a custom validation script, since there is a default validation script that text and textarea elements will get when necessary
-		if(file_exists(XOOPS_ROOT_PATH."/include/findusers.php")) {
-			$formulize_xoopsVersionCheck = ">2.0.16";
-			$req = !$isDisabled ? intval($i->getVar('ele_req')) : 0; 
-		} else {
-			$formulize_xoopsVersionCheck = "<=2.0.16";
-			$req = (($ele_type == "text" OR $ele_type == "textarea") AND !$isDisabled) ? intval($i->getVar('ele_req')) : 0; 
-		}
+		$req = !$isDisabled ? intval($i->getVar('ele_req')) : 0; 
 		
 		if($ele_type == "subform") {
 			$thissfid = $ele_value[0];		
@@ -1888,7 +1993,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$form->insertBreak($gridContents, "head"); // head is the css class of the cell				
 			}
 		} elseif($ele_type == "ib") {// if it's a break, handle it differently...
-			$form->insertBreak("<div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1]);
+			$form->insertBreakFormulize("<div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1], 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id); // final param is used as id name in the table row where this element exists, so we can interact with it for showing and hiding
 		} else {
 			$form->addElement($form_ele, $req);
 		}
@@ -1913,7 +2018,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 		$form->addElement (new XoopsFormHidden ('back_from_sub', 1));
 	}
 	
-	// add a hidden element to carry all the validation javascript that might be associated with elements rendered with elementdisplay.php
+	// add a hidden element to carry all the validation javascript that might be associated with elements rendered with elementdisplay.php...only relevant for elements rendered inside subforms or grids...the validation code comes straight from the element, doesn't have a check around it for the conditional table row id, like the custom form classes at the top of the file use, since those elements won't render as hidden and show/hide in the same way
 	if(isset($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']])) {
 		$formulizeHiddenValidation = new XoopsFormHidden('validation', '');
 		foreach($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']] as $thisValidation) { // grab all the validation code we stored in the elementdisplay.php file and attach it to this element
@@ -1921,10 +2026,9 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$formulizeHiddenValidation->customValidationCode[] = $thisValidationLine;
 			}
 		}
-		$hiddenRequiredFlag = ($formulize_xoopsVersionCheck == ">2.0.16") ? 1 : 0; // don't think this is strictly necessary for addElement in this case, but it is good form to include it.  Presence of customValidationJS for this element may override the declaration of being required.
-		$form->addElement($formulizeHiddenValidation, $hiddenRequiredFlag);
+		$form->addElement($formulizeHiddenValidation, 1);
 	}
-	
+
 	if(get_class($form) == "formulize_elementsOnlyForm") { // forms of this class are ones that we're rendering just the HTML for the elements, and we need to preserve any validation javascript to stick in the final, parent form when it's finished
 		$validationJS = $form->renderValidationJS();
 		if(trim($validationJS)!="") {
@@ -2338,7 +2442,7 @@ if($drawnJavascript) {
 	return;
 }
 global $xoopsUser;
-
+$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 // Left in for possible future use by the rankOrderList element type or other elements that might use jQuery
 //print "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-1.3.2.min.js\"></script><script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-ui-1.7.2.custom.min.js\"></script>";
 //$GLOBALS['formulize_jQuery_included'] = true;
@@ -2465,4 +2569,186 @@ print "</script>\n";
 $drawnJavascript = true;
 }
 
-?>
+
+function drawJavascriptForConditionalElements($conditionalElements, $entries, $sub_entries) {
+
+global $xoopsUser;
+$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+
+// need to setup governing elements array...which is inverse of the conditional elements
+$element_handler = xoops_getmodulehandler('elements','formulize');
+$governingElements = array();
+foreach($conditionalElements as $handle=>$theseGoverningElements) {
+	foreach($theseGoverningElements as $thisGoverningElement) {
+		$elementObject = $element_handler->get($thisGoverningElement);
+		$governingElements = compileGoverningElements($entries, $governingElements, $elementObject, $handle);
+		$governingElements = compileGoverningElements($sub_entries, $governingElements, $elementObject, $handle);
+		$governingElements = compileGoverningLinkedSelectBoxSourceConditionElements($governingElements, $handle);
+		
+		// must wrap required validation javascript in some check for the pressence of the element??  
+	}
+}
+
+print "
+<script type='text/javascript'>
+
+var conditionalHTML = new Array(); // needs to be global!
+
+jQuery(window).load(function() {
+
+	// preload the current state of the HTML for any conditional elements that are currently displayed, so we can compare against what we get back when their conditions change
+	var conditionalElements = new Array('".implode("', '",array_keys($conditionalElements))."');
+	var governingElements = new Array('".implode("', '", array_keys($governingElements))."'); 
+	for(key in conditionalElements) {
+		handle = conditionalElements[key];
+		getConditionalHTML(handle); // isolate ajax call in a function to control the scope of handle so it's the same no matter the time difference when the return value gets here
+	}
+
+	jQuery(\"[name='".implode("'], [name='", array_keys($governingElements))."']\").live('change', function() { // live is necessary because it will bind events to the right DOM elements even after they've been replaced by ajax events
+		elementValuesForURL = getRelevantElementValues(governingElements);
+		for(key in conditionalElements) { // could limit this to just the elements impacted by the changed governing element? 
+			handle = conditionalElements[key];
+			checkCondition(handle, conditionalHTML[handle], elementValuesForURL);	
+		}
+	});
+});
+
+function getConditionalHTML(handle) {
+	partsArray = handle.split('_');
+	jQuery.get(\"".XOOPS_URL."/modules/formulize/formulize_xhr_responder.php?uid=".$uid."&op=get_element_row_html&elementId=\"+partsArray[3]+\"&entryId=\"+partsArray[2]+\"&fid=\"+partsArray[1], function(data) {
+		assignConditionalHTML(handle, data);
+	});
+}
+
+function assignConditionalHTML(handle, html) {
+	conditionalHTML[handle] = html; 
+}
+
+function checkCondition(handle, currentHTML, elementValuesForURL) {
+	partsArray = handle.split('_');
+	jQuery.get(\"".XOOPS_URL."/modules/formulize/formulize_xhr_responder.php?uid=".$uid."&op=get_element_row_html&elementId=\"+partsArray[3]+\"&entryId=\"+partsArray[2]+\"&fid=\"+partsArray[1]+\"\"+elementValuesForURL, function(data) {
+		if(data) {
+			// should only empty if there is a change from the current state
+			if(window.document.getElementById('formulize-'+handle).style.display == 'none' || currentHTML != data) {
+				jQuery('#formulize-'+handle).empty();
+				jQuery('#formulize-'+handle).append(data);
+				window.document.getElementById('formulize-'+handle).style.display = 'table-row';
+				ShowHideTableRow('#formulize-'+handle,false,0,function() {}); // because the newly appended row will have full opacity so immediately make it transparent
+				ShowHideTableRow('#formulize-'+handle,true,1500,function() {});
+				assignConditionalHTML(handle, data);
+			}
+		} else {
+			if( window.document.getElementById('formulize-'+handle).style.display != 'none') {
+				ShowHideTableRow('#formulize-'+handle,false,700,function() {
+					jQuery('#formulize-'+handle).empty();
+					window.document.getElementById('formulize-'+handle).style.display = 'none';
+					assignConditionalHTML(handle, data);
+				});
+			}
+		}
+		
+	});
+}
+
+function getRelevantElementValues(elements) {
+	ret = '';
+	for(key in elements) {
+		handle = elements[key];
+		if(handle.indexOf('[]')!=-1) { // grab multiple value elements from a different tag
+			nameToUse = '[jquerytag='+handle.substring(0, handle.length-2)+']';
+		} else {
+			nameToUse = '[name='+handle+']';
+		}
+		elementType = jQuery(nameToUse).attr('type');
+		if(elementType == 'radio') {
+			selected = jQuery(nameToUse+':checked').val();
+		} else if(elementType == 'checkbox') {
+			selected = new Array();
+			jQuery(nameToUse).map(function() { // need to check each one individually, because val isn't working right?!
+			  if(jQuery(this).attr('checked')) {
+				foundval = jQuery(this).attr('value');
+				selected.push(foundval);
+			  }
+			});
+		} else {
+			selected = jQuery(nameToUse).val();
+		}
+		if(jQuery.isArray(selected)) {
+			for(key in selected) {
+				ret = ret + '&'+handle+'='+encodeURIComponent(selected[key]);					
+			}
+		} else {
+			ret = ret + '&'+handle+'='+encodeURIComponent(selected);				
+		}
+
+	}
+	return ret;
+}
+
+
+function ShowHideTableRow(rowSelector, show, speed, callback)
+{
+    var childCellsSelector = jQuery(rowSelector).children('td');
+    var ubound = childCellsSelector.length - 1;
+    var lastCallback = null;
+
+    childCellsSelector.each(function(i)
+    {
+        // Only execute the callback on the last element.
+        if (ubound == i)
+            lastCallback = callback
+
+        if (show)
+        {
+            jQuery(this).fadeIn(speed, lastCallback)
+        }
+        else
+        {
+            jQuery(this).fadeOut(speed, lastCallback)
+        }
+    });
+}
+
+
+
+
+</script>";
+	
+}
+
+function compileGoverningElements($entries, $governingElements, $elementObject, $handle) {
+	$type = $elementObject->getVar('ele_type');
+	$ele_value = $elementObject->getVar('ele_value');
+	if($type == "checkbox" OR ($type == "select" AND $ele_value[1])) {
+		$additionalNameParts = "[]"; // set things up with the right [] for multiple value elements
+	} else {
+		$additionalNameParts = "";
+	}
+	if(isset($entries[$elementObject->getVar('id_form')])) {
+		foreach($entries[$elementObject->getVar('id_form')] as $thisEntry) {
+			$governingElements['de_'.$elementObject->getVar('id_form').'_'.$thisEntry.'_'.$elementObject->getVar('ele_id').$additionalNameParts][] = $handle;
+		}
+	}
+	return $governingElements;
+}
+
+function compileGoverningLinkedSelectBoxSourceConditionElements($governingElements, $handle) {
+	// figure out if the $handle is for a lsb
+	// if so, check if there are conditions on the lsb
+	// check if the terms include any { } elements and grab those
+	$handleParts = explode("_",$handle); // de, fid, entry, elementId
+	$element_handler = xoops_getmodulehandler('elements','formulize');
+	$elementObject = $element_handler->get($handleParts[3]);
+	if($elementObject->isLinked) {
+		$ele_value = $elementObject->getVar('ele_value');
+		$elementConditions = $ele_value[5];
+		foreach($elementConditions[2] as $thisTerm) {
+			if(substr($thisTerm,0,1)=="{" AND substr($thisTerm, -1) == "}") {
+				// figure out the element, which is presumably in the same form, and assume the same entry
+				$curlyBracketElement = $element_handler->get(trim($thisTerm,"{}"));
+				$governingElements['de_'.$curlyBracketElement->getVar('id_form').'_'.$handleParts[2].'_'.$curlyBracketElement->getVar('ele_id')][] = $handle;
+			}
+		}
+	} 
+	return $governingElements;
+}

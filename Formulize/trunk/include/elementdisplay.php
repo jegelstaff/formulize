@@ -38,6 +38,8 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementrenderer.php";
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
+$GLOBALS['formulize_renderedElementHasConditions'] = array();
+
 // $groups is optional and can be passed in to override getting the user's groups.  This is necessary for the registration form to work with custom displayed elements
 function displayElement($formframe="", $ele, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $profileForm, $groups="") {
 
@@ -50,6 +52,9 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$subformElementId = $subformMetaData[2];
 	} 
 	if($entry == "" OR $subformCreateEntry) { $entry = "new"; }
+
+	$deprefix = $noSave ? "denosave_" : "de_";
+	$deprefix = $subformCreateEntry ? "desubform".$subformEntryIndex."x".$subformElementId."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
 
 	$element = _formulize_returnElement($ele, $formframe);
 	if(!is_object($element)) {
@@ -105,8 +110,10 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
 	if($allowed AND count($elementFilterSettings[0]) > 0) {
-		// need to check if there's a condition on this element that is met or not
+		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
+		$GLOBALS['formulize_renderedElementHasConditions'][$deprefix.$element->getVar('id_form').'_'.$entry.'_'.$element->getVar('ele_id')] = $elementFilterSettings[0];
 		
+		// need to check if there's a condition on this element that is met or not
 		static $cachedEntries = array();
 		if($entry != "new") {
 			if(!isset($cachedEntries[$element->getVar('id_form')][$entry])) {
@@ -184,8 +191,6 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	  $renderer = new formulizeElementRenderer($element);
   	$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
-		$deprefix = $noSave ? "denosave_" : "de_";
-		$deprefix = $subformCreateEntry ? "desubform".$subformEntryIndex."x".$subformElementId."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
 		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subform' AND $ele_type != 'grid') {
 			$data_handler = new formulizeDataHandler($element->getVar('id_form'));
 			$ele_value = loadValue($prevEntry, $element, $ele_value, $data_handler->getEntryOwnerGroups($entry), $groups, $entry, $profileForm); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
@@ -206,13 +211,13 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 			} elseif(is_object($form_ele)) {
 					print $form_ele->render();
           if(!empty($form_ele->customValidationCode) AND !$isDisabled) {
-            $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][] = $form_ele->renderValidationJS();
+            $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$form_ele->getName()] = $form_ele->renderValidationJS();
           } elseif($element->getVar('ele_req') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea") AND !$isDisabled) {
             $eltname    = $form_ele->getName();
             $eltcaption = $form_ele->getCaption();
             $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
             $eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-            $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
+            $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$eltname] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
           }
 					if($isDisabled) {
 						return "rendered-disabled";
@@ -279,10 +284,23 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		if($filterTerms[$i] === "{BLANK}") {
 			$filterTerms[$i] = "";
 		}
-		if($entry == "new") {
+		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$filterElements[$i]])) {
+			$compValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$filterElements[$i]];
+		} elseif($entry == "new") {
 			$compValue = "";
 		} else {
-			$compValue = addslashes(display($entryData[0], $filterElements[$i]));
+			$compValue = display($entryData[0], $filterElements[$i]);
+		}
+		if(is_array($compValue)) {
+			if($thisOp == "=") {
+				$thisOp = "LIKE";
+			}
+			if($thisOp == "!=") {
+				$thisOp = "NOT LIKE";
+			}
+			$compValue = implode(",",$compValue);
+		} else {
+			$compValue = addslashes($compValue);
 		}
 		if($thisOp == "LIKE") {
 			$evaluationCondition .= "strstr('".$compValue."', '".addslashes($filterTerms[$i])."')"; 

@@ -37,6 +37,9 @@
 
 include_once XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php';
 
+$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'] = array();
+$GLOBALS['formulize_asynchronousFormDataInAPIFormat'] = array();
+
 global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig;
 
 // load the formulize language constants if they haven't been loaded already
