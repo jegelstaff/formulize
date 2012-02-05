@@ -1545,8 +1545,8 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 			autoHeight: false, // no fixed height for sections
 			collapsible: true, // sections can be collapsed
 			active: ";
-			if($_POST['subform_entry_'.$subformElementId.'_active']) {
-				$col_two .= intval($_POST['subform_entry_'.$subformElementId.'_active']);
+			if(is_numeric($_POST['subform_entry_'.$subformElementId.'_active'])) {
+				$col_two .= $_POST['subform_entry_'.$subformElementId.'_active'];
 			} else {
 				$col_two .= 'false';
 			}
