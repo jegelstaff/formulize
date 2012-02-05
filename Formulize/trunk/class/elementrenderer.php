@@ -1162,6 +1162,7 @@ class formulizeElementRenderer{
 	function formulize_disableElement($element, $type, $ele_desc) {
 		if($type == "text" OR $type == "textarea" OR $type == "date" OR $type == "colorpick") {
 			$newElement = new xoopsFormElementTray($element->getCaption(), "\n");
+			$newElement->setName($element->getName());
 			switch($type) {
 				case 'date':
 					$hiddenValue = date("Y-m-d", $element->getValue());

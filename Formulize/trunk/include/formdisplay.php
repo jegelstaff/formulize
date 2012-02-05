@@ -104,7 +104,7 @@ class formulize_themeForm extends XoopsThemeForm {
 		return $js;
 	}
 	
-	private function _drawElements($elements, $ret, $hidden) {
+	function _drawElements($elements, $ret, $hidden) {
 		$class ='even';
 		foreach ( $elements as $ele ) {
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
