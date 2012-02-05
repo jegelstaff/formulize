@@ -148,12 +148,12 @@ switch($op) {
 	$databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
 	$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$handle] = $databaseReadyValue;
 	$apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array
-	if(count($apiFormatValue)==1) {
+	if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
 	  $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
 	}
 	$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$handle] = $apiFormatValue;
       }
-    }    
+    }
     $elementObject = $element_handler->get($elementId);
     $html = "";
     if(security_check($fid, $entryId)) {
