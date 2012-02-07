@@ -2598,16 +2598,33 @@ jQuery(window).load(function() {
 
 	// preload the current state of the HTML for any conditional elements that are currently displayed, so we can compare against what we get back when their conditions change
 	var conditionalElements = new Array('".implode("', '",array_keys($conditionalElements))."');
-	var governingElements = new Array('".implode("', '", array_keys($governingElements))."'); 
+	var governedElements = new Array();
+	var relevantElements = new Array();
+	";
+	$topKey = 0;
+	$relevantElementArray = array();
+	foreach($governingElements as $thisGoverningElement=>$theseGovernedElements) {
+		print "governedElements['".$thisGoverningElement."'] = new Array();\n";
+		foreach($theseGovernedElements as $innerKey=>$thisGovernedElement) {
+			if(!isset($relevantElementArray[$thisGovernedElement])) {
+				print "relevantElements['".$thisGovernedElement."'] = new Array();\n";
+				$relevantElementArray[$thisGovernedElement] = true;
+			}
+			print "relevantElements['".$thisGovernedElement."'][$topKey] = '".$thisGoverningElement."';\n";
+			print "governedElements['".$thisGoverningElement."'][$innerKey] = '".$thisGovernedElement."';\n";
+		}
+		$topKey++;
+	}
+	print "
 	for(key in conditionalElements) {
-		handle = conditionalElements[key];
+		var handle = conditionalElements[key];
 		getConditionalHTML(handle); // isolate ajax call in a function to control the scope of handle so it's the same no matter the time difference when the return value gets here
 	}
 
 	jQuery(\"[name='".implode("'], [name='", array_keys($governingElements))."']\").live('change', function() { // live is necessary because it will bind events to the right DOM elements even after they've been replaced by ajax events
-		elementValuesForURL = getRelevantElementValues(governingElements);
-		for(key in conditionalElements) { // could limit this to just the elements impacted by the changed governing element? 
-			handle = conditionalElements[key];
+		for(key in governedElements[jQuery(this).attr('name')]) {
+			var handle = governedElements[jQuery(this).attr('name')][key];
+			elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
 			checkCondition(handle, conditionalHTML[handle], elementValuesForURL);	
 		}
 	});
@@ -2651,9 +2668,9 @@ function checkCondition(handle, currentHTML, elementValuesForURL) {
 }
 
 function getRelevantElementValues(elements) {
-	ret = '';
+	var ret = '';
 	for(key in elements) {
-		handle = elements[key];
+		var handle = elements[key];
 		if(handle.indexOf('[]')!=-1) { // grab multiple value elements from a different tag
 			nameToUse = '[jquerytag='+handle.substring(0, handle.length-2)+']';
 		} else {
