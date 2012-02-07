@@ -3378,6 +3378,17 @@ function toggleColumnInFloat(column) {
 	}
 }
 
+function setScrollDisplay(element) {
+	if(element.scrollLeft() > 0) {
+		var maxWidth = 0;
+		jQuery(".now-scrolling").css('display', 'none');
+		jQuery(".floating-column").css('display', 'table-cell');
+	} else {
+		jQuery(".floating-column").css('display', 'none');
+		jQuery(".now-scrolling").css('display', 'table-cell');
+	}
+}
+
 jQuery(window).load(function() {
 	
 	jQuery('.lockcolumn').click(function() {
@@ -3396,15 +3407,10 @@ jQuery(window).load(function() {
 
 	
 	jQuery('#resbox').scroll(function () {
-		if(jQuery('#resbox').scrollLeft() > 0) {
-			var maxWidth = 0;
-			jQuery(".now-scrolling").css('display', 'none');
-			jQuery(".floating-column").css('display', 'table-cell');
-		} else {
-			jQuery(".floating-column").css('display', 'none');
-			jQuery(".now-scrolling").css('display', 'table-cell');
-		}
-		
+		setScrollDisplay(jQuery('#resbox'));
+	});
+	jQuery(window).scroll(function () {
+		setScrollDisplay(jQuery(window));
 	});
 });
 
