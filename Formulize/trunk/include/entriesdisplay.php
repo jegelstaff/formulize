@@ -1526,7 +1526,12 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
             //formulize_benchmark("drawing one column");
 						$col = $cols[$i];
 						$colhandle = $settings['columnhandles'][$i];
-						print "<td $columnWidthParam class=\"$class\">\n";
+						$classToUse = $class . " column column".$i;
+						$cellRowAddress = $id+2;
+						if($i==0) {
+							print "<td $columnWidthParam class=\"$class floating-column\" id='floatingcelladdress_$cellRowAddress'>\n";
+						}
+						print "<td $columnWidthParam class=\"$classToUse\" id=\"celladdress_".$cellRowAddress."_".$i."\">\n";
 						if($col == "creation_uid" OR $col == "mod_uid") {
 							$userObject = $member_handler->getUser(display($entry, $col));
 							if($userObject) {
@@ -1550,7 +1555,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 												if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
 												if($deDisplay) {
 													print '<div id="deDiv_'.$colhandle.'_'.$internalID.'">';
-													print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth);
+													print getHTMLForList($values, $colhandle, $internalID, $deDisplay, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
 													print "</div>";
 												} else {
 													displayElement("", $colhandle, $internalID);
@@ -1563,7 +1568,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 							} else { // display based on the mainform entry id
 								if($deDisplay) {
 									print '<div id="deDiv_'.$colhandle.'_'.$linkids[0].'">';
-									print getHTMLForList($value,$colhandle,$linkids[0], $deDisplay, $textWidth);
+									print getHTMLForList($value,$colhandle,$linkids[0], $deDisplay, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
 									print "</div>";
 								} else {
 									displayElement("", $colhandle, $linkids[0]); // works for mainform only!  To work on elements from a framework, we need to figure out the form the element is from, and the entry ID in that form, which is done above
@@ -1571,7 +1576,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 							}
 							$GLOBALS['formulize_displayElement_LOE_Used'] = true;
 						} elseif($col != "creation_uid" AND $col!= "mod_uid") {
-							print getHTMLForList($value, $col, $linkids[0], 0, $textWidth, $currentColumnLocalId, $fid);
+							print getHTMLForList($value, $col, $linkids[0], 0, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
 						} else { // no special formatting on the uid columns:
 							print $value;
 						}
@@ -1747,7 +1752,15 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 	}
 	
 	for($i=0;$i<count($cols);$i++) {
-		if(!$returnOnly) { print "<td class=head>\n"; }
+		
+		
+		$classToUse = "head column column".$i;
+		if(!$returnOnly) {
+			if($i==0) {
+				print "<td class='head floating-column' id='floatingcelladdress_1'>\n";
+			}
+			print "<td class='$classToUse' id='celladdress_1_$i'><div class='main-cell-div' id='cellcontents_1_".$i."'>\n";
+		}
     //formulize_benchmark("drawing one search");
 		$search_text = isset($searches[$cols[$i]]) ? strip_tags(htmlspecialchars($searches[$cols[$i]]), ENT_QUOTES) : "";
 		$search_text = get_magic_quotes_gpc() ? stripslashes($search_text) : $search_text;
@@ -1803,7 +1816,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 		}
     
     if(!$returnOnly) {
-      print "</td>\n";      
+      print "</div></td>\n";      
     }
 	}
   
@@ -1899,8 +1912,15 @@ function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=n
 		print "<td class=head>&nbsp;</td>\n";
 	}
 	for($i=0;$i<count($headers);$i++) {
-   	print "<td class=head>\n";
+	
+	$classToUse = "head column column".$i;
+	if($i==0) {
+		print "<td class='head floating-column' id='floatingcelladdress_0'>\n";
+	}
+   	print "<td class='$classToUse' id='celladdress_0_$i'><div class='main-cell-div' id='cellcontents_0_".$i."'>\n";
+
 		if($headingHelpLink) {
+			print "<div style=\"float: right; margin-left: 3px;\"><a href=\"\" id=\"lockcolumn_$i\" class=\"lockcolumn\" title=\""._formulize_DE_FREEZECOLUMN."\">[ ]</a></div>\n";
 			print "<div style=\"float: right;\"><a href=\"\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=".$cols[$i]."');return false;\" title=\""._formulize_DE_MOREINFO."\">[?]</a></div>\n";
 		}
 		if($cols[$i] == $sort) {
@@ -1914,7 +1934,7 @@ function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=n
 		print "<a href=\"\" alt=\"" . _formulize_DE_SORTTHISCOL . "\" title=\"" . _formulize_DE_SORTTHISCOL . "\" onclick=\"javascript:sort_data('" . $cols[$i] . "');return false;\">";
 		print printSmart(trans($headers[$i]));
   	print "</a>\n";
-   	print "</td>\n";
+   	print "</div></td>\n";
 	}
 	for($i=0;$i<$numberOfButtons;$i++) {
 		print "<td class=head>&nbsp;</td>\n";
@@ -3325,6 +3345,72 @@ function pageJump(page) {
 	window.document.controls.formulize_LOEPageStart.value = page;
 	showLoading();
 }
+
+function getPaddingNumber(element,paddingType) {
+	var value = element.css(paddingType).replace(/[A-Za-z$-]/g, "");;
+	return value;
+}
+
+var floatingContents = new Array();
+
+function toggleColumnInFloat(column) {
+	jQuery('.column'+column).map(function () {
+		var columnAddress = jQuery(this).attr('id').split('_');
+		var row = columnAddress[1];
+		if(floatingContents[column] == true) {
+			jQuery('#floatingcelladdress_'+row+' #cellcontents_'+row+'_'+column).remove();
+			jQuery(this).removeClass('now-scrolling');
+		} else {
+			jQuery('#floatingcelladdress_'+row).append(jQuery(this).html());
+			var paddingTop = getPaddingNumber(jQuery(this),'padding-top');
+			var paddingBottom = getPaddingNumber(jQuery(this),'padding-bottom');
+			var paddingLeft = getPaddingNumber(jQuery(this),'padding-left');
+			var paddingRight = getPaddingNumber(jQuery(this),'padding-right');
+			jQuery('#floatingcelladdress_'+row+' #cellcontents_'+row+'_'+column).css('width', (parseInt(jQuery(this).width())+parseInt(paddingLeft)+parseInt(paddingRight)));
+			jQuery('#floatingcelladdress_'+row+' #cellcontents_'+row+'_'+column).css('height', (parseInt(jQuery(this).height())+parseInt(paddingTop)+parseInt(paddingBottom)));
+			jQuery(this).addClass('now-scrolling');
+		}
+	});
+	if(floatingContents[column] == true) {
+		floatingContents[column] = false;
+	} else {
+		floatingContents[column] = true;
+	}
+}
+
+jQuery(window).load(function() {
+	
+	jQuery('.lockcolumn').click(function() {
+		var lockData = jQuery(this).attr('id').split('_');
+		var column = lockData[1];
+		if(floatingContents[column] == true) {
+			jQuery(this).empty();
+			jQuery(this).append('[ ]');
+		} else {
+			jQuery(this).empty();
+			jQuery(this).append('[X]');
+		}
+		toggleColumnInFloat(column);
+		return false;
+	});
+
+	
+	jQuery('#resbox').scroll(function () {
+		if(jQuery('#resbox').scrollLeft() > 0) {
+			var maxWidth = 0;
+			jQuery(".now-scrolling").css('display', 'none');
+			jQuery(".floating-column").css('display', 'table-cell');
+		} else {
+			jQuery(".floating-column").css('display', 'none');
+			jQuery(".now-scrolling").css('display', 'table-cell');
+		}
+		
+	});
+});
+
+jQuery(window).scroll(function () {
+        jQuery('.floating-column').css('margin-top', ((window.pageYOffset)*-1));
+});
 
 </script>
 <?php

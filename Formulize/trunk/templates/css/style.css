@@ -1,3 +1,15 @@
 .icms_checkboxoption {
     clear: both;
 }
+.floating-column {
+    position: fixed;
+    border: 1px solid white;
+    display: none;
+    padding: 0px !important;
+}
+.floating-column .main-cell-div {
+    float: left;
+    border: 1px solid white;
+    padding: 5px;
+    
+}
