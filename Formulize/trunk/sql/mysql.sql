@@ -301,3 +301,22 @@ CREATE TABLE formulize_entry_owner_groups (
   INDEX i_entry_id (entry_id),
   INDEX i_groupid (groupid)
 ) ENGINE=MyISAM;
+
+CREATE TABLE `formulize_procedure_logs` (
+  `proc_log_id` int(11) unsigned NOT NULL auto_increment,
+  `proc_id` int(11) NOT NULL,
+  `proc_datetime` datetime NOT NULL,
+  `proc_uid` mediumint(8) unsigned NOT NULL,
+  PRIMARY KEY (`proc_log_id`),
+  INDEX i_proc_id (proc_id),
+  INDEX i_proc_uid (proc_uid)
+) ENGINE=MyISAM;
+
+CREATE TABLE `formulize_procedure_logs_params` (
+  `proc_log_param_id` int(11) unsigned NOT NULL auto_increment,
+  `proc_log_id` int(11) unsigned NOT NULL,
+  `proc_log_param` varchar(255),
+  `proc_log_value` varchar(255),
+  PRIMARY KEY (`proc_log_param_id`),
+  INDEX i_proc_log_id (proc_log_id)
+) ENGINE=MyISAM;

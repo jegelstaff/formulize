@@ -1274,8 +1274,30 @@ function patch40() {
   KEY `i_fid` (`fid`)
 ) ENGINE=MyISAM;";
 		}
-		
-	
+
+		if(!in_array($xoopsDB->prefix("formulize_procedure_logs"), $existingTables)) {
+			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_procedure_logs")."` (
+  `proc_log_id` int(11) unsigned NOT NULL auto_increment,
+  `proc_id` int(11) NOT NULL,
+  `proc_datetime` datetime NOT NULL,
+  `proc_uid` mediumint(8) unsigned NOT NULL,
+  PRIMARY KEY (`proc_log_id`),
+  INDEX i_proc_id (proc_id),
+  INDEX i_proc_uid (proc_uid)
+) ENGINE=MyISAM;";
+		}
+
+		if(!in_array($xoopsDB->prefix("formulize_procedure_logs_params"), $existingTables)) {
+			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_procedure_logs_params")."` (
+  `proc_log_param_id` int(11) unsigned NOT NULL auto_increment,
+  `proc_log_id` int(11) unsigned NOT NULL,
+  `proc_log_param` varchar(255),
+  `proc_log_value` varchar(255),
+  PRIMARY KEY (`proc_log_param_id`),
+  INDEX i_proc_log_id (proc_log_id)
+) ENGINE=MyISAM;";	
+			}
+
 		$sql['add_encrypt'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_encrypt` tinyint(1) NOT NULL default '0'";
 		$sql['add_lockedform'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `lockedform` tinyint(1) NULL default NULL";
 		$sql['drop_from_formulize_id_admin'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `admin`";

@@ -241,6 +241,30 @@ class formulizeAdvancedCalculationHandler {
   }
 
 
+  function createLog( $acid, $uid ) {
+    $sql = "INSERT INTO ".$this->db->prefix("formulize_procedure_logs") . " (`proc_id`, `proc_datetime`, `proc_uid`) VALUES (".intval($acid).", NOW(), ".intval($uid).")";
+    $result = $this->db->queryF($sql);
+
+    if( !$result ){
+      print "Error: this advanced calculation log could not be saved in the database.  SQL: $sql<br>".mysql_error();
+      return false;
+    }
+
+    return $this->db->getInsertId();
+	}
+
+  function createLogParam( $logid, $param, $value ) {
+    $sql = "INSERT INTO ".$this->db->prefix("formulize_procedure_logs_params") . " (`proc_log_id`, `proc_log_param`, `proc_log_value`) VALUES (".intval($logid).", ".$this->db->quoteString($param).", ".$this->db->quoteString($value).")";
+    $result = $this->db->queryF($sql);
+
+    if( !$result ){
+      print "Error: this advanced calculation log item could not be saved in the database.  SQL: $sql<br>".mysql_error();
+      return false;
+    }
+
+    return $this->db->getInsertId();
+	}
+
   function calculate( $advCalcObject ) {
     global $xoopsDB, $xoopsUser;
     if(!is_object($advCalcObject)) {
@@ -248,12 +272,15 @@ class formulizeAdvancedCalculationHandler {
     }
     $acid = $advCalcObject->getVar('acid');
 
-    // check to see if there is already a cached version of the request
+    // get formulize preferences
     $module_handler =& xoops_gethandler('module');
     $config_handler =& xoops_gethandler('config');
     $formulizeModule =& $module_handler->getByDirname("formulize");
     $formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
     $modulePrefUseCache = $formulizeConfig['useCache'];
+    $modulePrefLogProcedure = $formulizeConfig['logProcedure'];
+    
+    // check to see if there is already a cached version of the request
     if( $modulePrefUseCache ) {
       $newPost = unserialize( serialize( $_POST ) );
       unset( $newPost['XOOPS_TOKEN_REQUEST'] );
@@ -263,14 +290,16 @@ class formulizeAdvancedCalculationHandler {
       $fileName = XOOPS_ROOT_PATH."/cache/formulize_advancedCalculation_".$acid."_".$key.".php";
       if( file_exists( $fileName ) ) {
         // cached version found
-        return unserialize( file_get_contents( $fileName ) );
+        $cachedVersion = unserialize( file_get_contents( $fileName ) );
+        // if logging is enables, don't return right away, gather up the params and log first
+        if( ! $modulePrefLogProcedure ) {
+          return $cachedVersion;
+        }
       }
     }
     // cached version was not found, so create it
 
     $fromBaseQuery = $GLOBALS['formulize_queryForCalcs'];
-
-    //print "<pre>POST<br>"; print_r( $_POST ); print "<br>Filters and Groupings<br>"; print_r( $filtersAndGroupings ); print "</pre>"; exit();
 
     // get the filters and groupings information
     $filtersAndGroupings = $advCalcObject->getVar('fltr_grps');
@@ -327,6 +356,86 @@ class formulizeAdvancedCalculationHandler {
 	$savedGroupingFilterValue['startDate'] = $_POST[$acid . "_startDate"]; // save this value so we can use it again after
 	$savedGroupingFilterValue['endDate'] = $_POST[$acid . "_endDate"]; // save this value so we can use it again after
 	$groups[] = $_POST['ocandsDateGrouping'];
+    }
+
+
+    // check to see if logging is enabled
+    //print "<pre>POST<br>"; print_r( $_POST ); print "<br>Filters and Groupings<br>"; print_r( $filtersAndGroupings ); print "</pre>";
+    if( $modulePrefLogProcedure ) {
+      $logid = $this->createLog( $acid, $xoopsUser->uid() );
+
+      $prefix = $acid . "_";
+      $prefixLen = strlen( $prefix );
+
+      // process filters
+      foreach($filtersAndGroupings as $index => $thisFilter) {
+        if($thisFilter['is_filter']) {
+          if( $thisFilter['type']['kind'] == 2 ) {
+            if(isset($_POST[$prefix.$thisFilter['handle']])) {
+              $options = $thisFilter['type']['options'];
+              $postOptions = $_POST[$prefix.$thisFilter['handle']];
+              foreach( $options as $optionKey => $optionValue ) {
+                $option = $options[$optionKey];
+                $value = explode( "|", $option );
+                if( count( $value ) == 2 ) {
+                  if( $postOptions == $value[0] ) {
+                    //print "<br>... " . $thisFilter['fltr_label'] . " = " . $value[1];
+                    $this->createLogParam( $logid, $thisFilter['fltr_label'], $value[1] );
+                  }
+                } else {
+                  if( $postOptions == $postValue ) {
+                    //print "<br>... " . $thisFilter['fltr_label'] . " = " . $option;
+                    $this->createLogParam( $logid, $thisFilter['fltr_label'], $option );
+                  }
+                }
+              }
+            }
+          } else if( $thisFilter['type']['kind'] == 3 ) {
+            if(isset($_POST[$prefix.$thisFilter['handle']])) {
+              $options = $thisFilter['type']['options'];
+              $postOptions = $_POST[$prefix.$thisFilter['handle']];
+              foreach( $postOptions as $postKey => $postValue ) {
+                $option = $options[$postKey];
+                $value = explode( "|", $option );
+                if( count( $value ) == 2 ) {
+                  //print "<br>... " . $thisFilter['fltr_label'] . "[] = " . $value[1];
+                  $this->createLogParam( $logid, $thisFilter['fltr_label'] . "[]", $value[1] );
+                } else {
+                  //print "<br>... " . $thisFilter['fltr_label'] . "[] = " . $option;
+                  $this->createLogParam( $logid, $thisFilter['fltr_label'] . "[]", $option );
+                }
+              }
+            }
+          } else {
+            if(isset($_POST[$prefix.$thisFilter['handle']])) {
+              //print "<br>... " . $thisFilter['fltr_label'] . " = " . $_POST[$prefix.$thisFilter['handle']];
+              $this->createLogParam( $logid, $thisFilter['fltr_label'], $_POST[$prefix.$thisFilter['handle']] );
+            }
+          }
+        }
+      }
+
+      // process groups
+      foreach( $groups as $key => $value ) {
+        //print "<br>... *Grouping[" . $key . "] = " . $filtersAndGroupings[$value]['grp_label'];
+        $this->createLogParam( $logid, "*Grouping[" . $key . "]", $filtersAndGroupings[$value]['grp_label'] );
+      }
+
+      // process other values in POST
+      foreach( $_POST as $key => $value ) {
+        if( substr( $key, 0, $prefixLen ) != $prefix ) {
+          //print "<br>... *$key = $value";
+          $this->createLogParam( $logid, "*" . $key, $value );
+        }
+      }
+    }
+    //print "</pre>";
+    //exit();
+
+
+    // return the cached results
+    if( $modulePrefUseCache ) {
+      return $cachedVersion;
     }
 
 

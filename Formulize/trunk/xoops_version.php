@@ -70,6 +70,8 @@ $modversion['tables'] = array(
 	"formulize_advanced_calculations",
 	"formulize_group_filters",
 	"formulize_groupscope_settings",
+	"formulize_procedure_logs",
+	"formulize_procedure_logs_params",
 );
 
 // Admin things
@@ -438,6 +440,15 @@ $modversion['config'][] = array(
 	'name' => 'downloadDefaultToExcel',
 	'title' => '_MI_formulize_DOWNLOADDEFAULT',
 	'description' => '_MI_formulize_DOWNLOADDEFAULT_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+
+$modversion['config'][] = array(
+	'name' => 'logProcedure',
+	'title' => '_MI_formulize_LOGPROCEDURE',
+	'description' => '_MI_formulize_LOGPROCEDUREDESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
 	'default' => 0,

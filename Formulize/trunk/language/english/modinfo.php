@@ -71,6 +71,9 @@ define("_MI_formulize_USECACHEDESC", "By default, caching is on.");
 
 define("_MI_formulize_DOWNLOADDEFAULT", "When users are exporting data, use a compatibility trick for some versions of Excel by default?");
 define("_MI_formulize_DOWNLOADDEFAULT_DESC", "When users export data, they can check a box on the download page that adds a special code to the file which is necessary to make accented characters appear properly in some versions of Microsoft Excel.  This option controls whether that checkbox is checked by default or not.  You should experiment with your installation to see if exports work best with or without this option turned on.");
+       
+define("_MI_formulize_LOGPROCEDURE", "Use logging to monitor Procedures and parameters?");
+define("_MI_formulize_LOGPROCEDUREDESC", "By default, logging is off.");
 
 
 // The name of this module
