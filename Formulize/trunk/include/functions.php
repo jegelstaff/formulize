@@ -4280,7 +4280,7 @@ function formulize_includeEval($code, $execute=false, $globals=array(), $filterN
 }
 
 function formulize_addProcedureChoicesToPost($choices) {
-  $choices = $_POST['advcalc_acid'];
+	
 	if(!strstr($choices,"&amp;")) {
 		$choices = strip_tags(htmlspecialchars($choices)); // just in case this wasn't done prior to passing in
 	}
