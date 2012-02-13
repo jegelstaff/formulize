@@ -2743,6 +2743,9 @@ function compileGoverningElements($entries, $governingElements, $elementObject, 
 	}
 	if(isset($entries[$elementObject->getVar('id_form')])) {
 		foreach($entries[$elementObject->getVar('id_form')] as $thisEntry) {
+			if($thisEntry == "") {
+				$thisEntry = "new";
+			}
 			$governingElements['de_'.$elementObject->getVar('id_form').'_'.$thisEntry.'_'.$elementObject->getVar('ele_id').$additionalNameParts][] = $handle;
 		}
 	}
