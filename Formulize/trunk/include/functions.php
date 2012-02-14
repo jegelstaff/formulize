@@ -2839,7 +2839,8 @@ function sendNotificationToEmail($email, $event, $tags, $subject, $template) {
   }
   // Set up the mailer
   $xoopsMailer->setTemplateDir($templateDir);
-  $xoopsMailer->setTemplate($template.".tpl");
+  if(substr($template, -4)!=".tpl") { $template .= '.tpl'; }
+  $xoopsMailer->setTemplate($template);
   $xoopsMailer->setToEmails($email);
   //global $icmsConfig;
   //$xoopsMailer->setFromEmail($icmsConfig['adminmail']);

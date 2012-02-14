@@ -1514,7 +1514,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 <p class=\"subform-header\"><a href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>
 	<div class=\"accordion-content content\">";
 					ob_start();
-					$renderResult = displayForm($sfid, $sub_ent, "", "",  "", "", "formElementsOnly"); 
+					$renderResult = displayForm($sfid, $sub_ent, "", "",  "", "", "formElementsOnly"); // SHOULD CHANGE THIS TO USE THE DEFAULT SCREEN FOR THE FORM!!!!!!????
 					$col_two_temp = ob_get_contents();
 					ob_end_clean();
 					$col_two .= $col_two_temp . "</div>\n</div>\n";
