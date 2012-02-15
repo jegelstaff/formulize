@@ -4206,6 +4206,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	$filter = "";
 	$ORstart = 1;
 	$ORfilter = "";
+	$individualORSearches = array();
 	global $xoopsUser;
 	foreach($searches as $key=>$master_one_search) { // $key is handles for frameworks, and ele_handles for non-frameworks.
 
@@ -4213,6 +4214,8 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		$searchArray = explode("//", $master_one_search);
 		
 		foreach($searchArray as $one_search) {
+		
+			$addToItsOwnORFilter = false; // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
 		
       // remove the qsf_ parts to make the quickfilter searches work
       if(substr($one_search, 0, 4)=="qsf_") {
@@ -4276,7 +4279,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 				    $blankOp1 = "!=";
 				    $blankOp2 = " IS NOT NULL ";
 				  } else {
-				    $addToORFilter = true;
+				    $addToItsOwnORFilter = $addToORFilter ? false : true; // if this is not going into an OR filter already because the user asked for it to, then let's
 				    $blankOp1 = "=";
 				    $blankOp2 = " IS NULL ";
 				  }
@@ -4307,7 +4310,9 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 			if($operator) {
 				$one_search = $one_search . "/**/" . $operator;
 			}
-			if($addToORFilter) {
+			if($addToItsOwnORFilter) {
+				$individualORSearches[] = $key ."/**/$one_search";
+			} elseif($addToORFilter) {
 				if(!$ORstart) { $ORfilter .= "]["; }
 				$ORfilter .= $key . "/**/$one_search"; // . mysql_real_escape_string($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
 				$ORstart = 0;
@@ -4322,11 +4327,22 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	//print $filter;
 	// if there's a set of options that have been OR'd, then we need to construction a more complex filter
 	
-	if($ORfilter) {
-		$arrayFilter[0][0] = "and";
-		$arrayFilter[0][1] = $filter;
-		$arrayFilter[1][0] = "or";
-		$arrayFilter[1][1] = $ORfilter;
+	if($ORfilter OR count($individualORSearches)>0) {
+		$filterIndex = 0;
+		$arrayFilter[$filterIndex][0] = "and";
+		$arrayFilter[$filterIndex][1] = $filter;
+		if($ORfilter) {
+			$filterIndex++;
+			$arrayFilter[$filterIndex][0] = "or";
+			$arrayFilter[$filterIndex][1] = $ORfilter;
+		}
+		if(count($individualORSearches)>0) {
+			foreach($individualORSearches as $thisORfilter) {
+				$filterIndex++;
+				$arrayFilter[$filterIndex][0] = "or";
+				$arrayFilter[$filterIndex][1] = $thisORfilter;
+			}
+		}
 		$filter = $arrayFilter;
 		$filterToCompare = serialize($filter);
 	} else {
