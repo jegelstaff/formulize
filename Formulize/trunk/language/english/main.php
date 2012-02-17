@@ -362,7 +362,7 @@ define("_formulize_DE_LASTMOD", "Last modified by");
 define("_formulize_DE_CREATED", "Created by");
 define("_formulize_DE_ON", "on");
 define("_formulize_DE_VIEWDETAILS", "Click to view details for this entry.");
-define("_formulize_DE_RESETVIEW", "Reset current view");
+define("_formulize_DE_RESETVIEW", "Reset view");
 define("_formulize_DE_CALCS", "Calculations");
 define("_formulize_DE_ADVCALCS", "Procedures");
 define("_formulize_DE_EXPORT", "Export Entries");
@@ -378,8 +378,8 @@ define("_formulize_EXPORT_FILENAME_TEXT", "Exported_data_from");
 
        
 define("_formulize_DE_EXPORT_CALCS", "Export Calcs");
-define("_formulize_DE_SAVE", "Save current view");
-define("_formulize_DE_DELETE", "Delete current view");
+define("_formulize_DE_SAVE", "Save view");
+define("_formulize_DE_DELETE", "Delete view");
 define("_formulize_DE_ADDENTRY", "Add one entry");
 define("_formulize_DE_ADD_MULTIPLE_ENTRY", "Add multiple entries");
 define("_formulize_DE_PROXYENTRY", "Make a proxy entry");

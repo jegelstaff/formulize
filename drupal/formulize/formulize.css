@@ -54,4 +54,50 @@
   border-top: 0 solid white;
 }
 
+#formulize-screen #currentview {
+    width: 450px;
+    font-size: 1.2em;
+}
 
+#formulize-screen .floating-column {
+    position: fixed;
+    border: 1px solid white;
+    display: none;
+    padding: 0px !important;
+}
+#formulize-screen .floating-column .main-cell-div {
+    float: left;
+    border: 1px solid white;
+    padding: 5px;
+    
+}
+
+
+/*=== Formulize Boutons by Francois T ===*/
+#formulize-screen button, #formulize-screen input[type='submit'], #formulize-screen input[type='button'], #formulize-screen input[type='reset'] {
+	background-color: 			#F4F9FE;
+	-webkit-border-radius: 5px;
+	color: 						#2F85DC;
+	border:						1px solid;
+	border-color: 				#ccc;
+}
+#formulize-screen input:hover, #formulize-screen button:hover, #formulize-screen .xo-formbuttons:hover, #formulize-screen .formButton:hover {
+    transform: scale(1.2);  
+    box-shadow: 0 0 65px #F4F9FE inset, 0 0 20px #F4F9FE inset, 0 0 15px #333;  
+}
+#formulize-screen button:focus, #formulize-screen input[type='submit']:focus, #formulize-screen input[type='button']:focus, #formulize-screen input[type='reset']:focus, #formulize-screen .xo-formbuttons:focus, #formulize-screen .formButton:focus {
+	background-color:			#f4f4f4;
+	border-color :				#333;
+}
+
+/*=== Need to add custom images, but we don't know the relative URL which will be diff. per installation, and not sure if we can solve this with PHP like we can in XOOPS/ICMS ===*/
+#formulize-screen .formulize_button {
+    background: #2F85DC;
+    border-color: #0076a3;
+    color: #fff !important;
+    text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
+    font-size: 15px;
+    font-weight: bold;
+    height: 36px;
+    width: 173px !important;
+}
