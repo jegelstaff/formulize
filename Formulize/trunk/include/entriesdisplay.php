@@ -1377,6 +1377,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 			$count_colspan_calcs = $count_colspan - 1;
 		}
 		$count_colspan_calcs = $count_colspan_calcs + count($inlineButtons); // add to the column count for each inline custom button
+		$count_colspan_calcs++; // add one more for the hidden floating column
 		if(!$screen) { print "<tr><th colspan=$count_colspan_calcs>" . _formulize_DE_DATAHEADING . "</th></tr>\n"; }
 	
 		if($settings['calc_cols'] AND !$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
