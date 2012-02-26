@@ -57,5 +57,5 @@ foreach(explode(";\r",str_replace(array("\n,\n\r,\r\n"), "\r", $formulizeStandal
 	}
 }
 
-include '/install_tpl.php';
+include 'install_tpl.php';
 ?>
