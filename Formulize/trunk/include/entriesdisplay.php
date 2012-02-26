@@ -4078,7 +4078,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				$currentViewList .= $viewoptions;
 				$currentViewList .= "\n</SELECT>\n";
 				if(!$loadviewname AND strstr($currentview, ",") AND !$loadOnlyView) { // if we're on a genuine pick-groups view (not a loaded view)...and the load-only-view override is not in place (which eliminates other viewing options besides the loaded view)
-					$currentViewList .= "<br><input type=button class=\"formulize_button\" name=pickdiffgroup value='" . _formulize_DE_PICKDIFFGROUP . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changescope.php?fid=$fid&frid=$frid&scope=$currentview');\"></input>";		
+					$currentViewList .= "<br><input type=button name=pickdiffgroup value='" . _formulize_DE_PICKDIFFGROUP . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changescope.php?fid=$fid&frid=$frid&scope=$currentview');\"></input>";		
 				}
 				return $currentViewList;
 				break;
