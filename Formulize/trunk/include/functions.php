@@ -1567,50 +1567,61 @@ function getCalcHandleText($handle, $forceColhead=false) {
 
 // this function builds the scope used for passing to the getData function
 // based on values of either mine, group, all, or a groupid string formatted with start, end and inbetween commas: ,1,3,
+// will return the scope, plus the value of currentView, which may have been modified depending on the user's permissions
 function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid) {
+  
+	$scope = "";
         if($currentView == "blank") { // send an invalid scope
                 $scope = "uid=\"blankscope\"";
-        } elseif($currentView == "mine" OR substr($currentView, 0, 4) == "old_") {
-		$all_users[] = $uid;
-		$scope = makeUidFilter($all_users);
-	} elseif($currentView == "group") {
-		$formulize_permHandler = new formulizePermHandler($fid);
-		$scopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groups);
-		if($scopeGroups === false) {
-			$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
-			$scopeGroups = array_intersect($groupsWithAccess, $groups);
-		}
-    if(count($scopeGroups)==0) { // safeguard against empty or invalid grouplists
-		//if(!isset($all_users[0])) { 
-			$all_users[] = $uid;
-      $scope = makeUidFilter($all_users);
-		} else {
-      $scope = $scopeGroups;
-    }
-		
-	} elseif(strstr($currentView, ",")) { // advanced scope, or oldscope
+        } elseif(strstr($currentView, ",")) { // advanced scope, or oldscope
 		$grouplist = explode("," , trim($currentView, ","));
-    if($grouplist[0] == "onlymembergroups") { // first key may be a special flag to cause the scope to be handled differently
-      global $xoopsUser;
-      $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-      unset($grouplist[0]);
-      $grouplist = array_intersect($groups, $grouplist);
-    }
-    if(count($grouplist)==0) { // safeguard against empty or invalid grouplists
-		//if(!isset($all_users[0])) { 
+		if($grouplist[0] == "onlymembergroups") { // first key may be a special flag to cause the scope to be handled differently
+	            global $xoopsUser;
+	            $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+	            unset($grouplist[0]);
+	            $grouplist = array_intersect($groups, $grouplist);
+		}
+		if(count($grouplist)==0) { // safeguard against empty or invalid grouplists
+		  	//if(!isset($all_users[0])) { 
 			$all_users[] = "";
-      $scope = makeUidFilter($all_users);
+			$scope = makeUidFilter($all_users);
 		} else {
-      $scope = $grouplist;
-    }
-		
+			$scope = $grouplist;
+		}
 	} elseif($currentView == "all") {
-		$scope = "";
-	} else { // in the case of an invalid currentView, show the user their own entries
+		if($hasGlobalScope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid)) {
+		  $scope = "";
+		} elseif($hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid)) {
+		  $currentView = "group";
+		} else {
+		  $currentView = "mine";
+		}
+	} 
+	// do this second last, just in case currentview =all was passed in but not valid and defaulted back to group
+	if($currentView == "group") {
+		if(!$hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid)) {
+		  $currentView = "mine";
+		} else {
+		  $formulize_permHandler = new formulizePermHandler($fid);
+		  $scopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groups);
+		  if($scopeGroups === false) {
+		  	$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+			$scopeGroups = array_intersect($groupsWithAccess, $groups);
+		  }
+		  if(count($scopeGroups)==0) { // safeguard against empty or invalid grouplists
+		  	//if(!isset($all_users[0])) { 
+			$all_users[] = $uid;
+			$scope = makeUidFilter($all_users);
+		  } else {
+			$scope = $scopeGroups;
+		  }
+		}
+	}
+	if($currentView == "mine" OR substr($currentView, 0, 4) == "old_" OR ($scope == "" AND $currentView != "all")) { // catch all...if it's "mine" or an old view, or there's no scope yet defined, then treat it as just the user's own entries
 		$all_users[] = $uid;
 		$scope = makeUidFilter($all_users);
 	}
-	return $scope;
+	return array($scope, $currentView);
 }
 
 // THIS FUNCTION SENDS TEXT THROUGH THE TRANSLATION ROUTINE IF MARCAN'S MULTILANGUAGE HACK IS INSTALLED
@@ -3951,7 +3962,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
     $uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
     //print_r($_POST['currentview']);
-    $scope = buildScope($_POST['currentview'], $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
+    list($scope, $throwAwayCurrentView) = buildScope($_POST['currentview'], $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
     /*print "Saved View: $savedView<br>";
     print "Currentview setting: " . $_POST['currentview'] . "<br>";
     print "Scope generated for view: ";
