@@ -151,7 +151,7 @@ if($csv_name != "")
 	$filenameparts = explode("_", $_FILES['csv_name']['name']);
 	if(isset($filenameparts[1])) {
 		$fileid = substr($filenameparts[1], 0, -4);
-		$filesql = "SELECT id_reqs FROM " . $xoopsDB->prefix("formulize_valid_imports") . " WHERE file=" . intval($fileid);
+		$filesql = "SELECT id_reqs FROM " . $xoopsDB->prefix("formulize_valid_imports") . " WHERE file='" . floatval($fileid)."'";
 		$fileres = $xoopsDB->query($filesql);
 		$filerow = $xoopsDB->fetchRow($fileres);
 		if($filerow[0]) {
