@@ -265,6 +265,53 @@ class formulizeAdvancedCalculationHandler {
     return $this->db->getInsertId();
 	}
 
+  function buildCacheKey($acid, $localGroup=false) {
+    global $xoopsUser;
+    $newPost = unserialize( serialize( $_POST ) );
+    unset( $newPost['XOOPS_TOKEN_REQUEST'] );
+    unset( $newPost['formulize_cacheddata'] );
+    if($localGroup) {
+	/*if($xoopsUser->getVar('uid')==1021) {
+	    print "<pre>";
+	    print_r($_POST);
+	    print "</pre>";
+	}*/
+	// if we're doing a cache for a single grouped result, then strip more from POST so groups from different requests will get the same key
+	unset($newPost[$acid."_groupingchoices"]);
+	foreach($newPost as $thisPostedKey=>$thisPostedValue) {
+	    $keyParts = explode("_", $thisPostedKey);
+	    if(!is_array($keyParts) OR $keyParts[0] != $acid) {
+		unset($newPost[$thisPostedKey]);
+	    }
+	}
+    }
+    //print "<pre>"; var_export( $_POST ); var_export( $newPost ); var_export( $xoopsUser->getGroups() ); print "</pre>";
+    $key = md5( serialize( $newPost ) . serialize( $xoopsUser->getGroups() ) );
+    $fileName = XOOPS_ROOT_PATH."/modules/formulize/cache/formulize_advancedCalculation_".intval($acid)."_".$key.".php";
+    return $fileName;
+  }
+  
+  function getCachedResult($fileName) {
+    // check that the filename is valid
+    $namePart = str_replace(XOOPS_ROOT_PATH."/modules/formulize/cache/formulize_advancedCalculation_","",$fileName);
+    if(strstr($namePart,"/") OR strstr($namePart, "\\")) {
+	return false;
+    }
+    // for now...override...webmasters always skip cache
+    global $xoopsUser;
+    $groups = $xoopsUser->getGroups();
+    if(in_array(XOOPS_GROUP_ADMIN, $groups)) {
+	return false;
+    }    
+    if( file_exists( $fileName ) ) {
+      // cached version found
+      $cachedVersion = unserialize( file_get_contents( $fileName ) );
+    } else {
+      $cachedVersion = false;
+    }
+    return $cachedVersion;
+  }
+
   function calculate( $advCalcObject ) {
     global $xoopsDB, $xoopsUser;
     if(!is_object($advCalcObject)) {
@@ -281,17 +328,12 @@ class formulizeAdvancedCalculationHandler {
     $modulePrefLogProcedure = $formulizeConfig['logProcedure'];
     
     // check to see if there is already a cached version of the request
+    $fileName = "";
+    $cachedVersion = false;
     if( $modulePrefUseCache ) {
-      $newPost = unserialize( serialize( $_POST ) );
-      unset( $newPost['XOOPS_TOKEN_REQUEST'] );
-      unset( $newPost['formulize_cacheddata'] );
-      //print "<pre>"; var_export( $_POST ); var_export( $newPost ); var_export( $xoopsUser->getGroups() ); print "</pre>";
-      $key = md5( serialize( $newPost ) . serialize( $xoopsUser->getGroups() ) );
-      $fileName = XOOPS_ROOT_PATH."/cache/formulize_advancedCalculation_".$acid."_".$key.".php";
-      if( file_exists( $fileName ) ) {
-        // cached version found
-        $cachedVersion = unserialize( file_get_contents( $fileName ) );
-        // if logging is enables, don't return right away, gather up the params and log first
+      $fileName = $this->buildCacheKey($acid);
+      if($cachedVersion = $this->getCachedResult($fileName)) {
+	// if logging is enables, don't return right away, gather up the params and log first
         if( ! $modulePrefLogProcedure ) {
           return $cachedVersion;
         }
@@ -434,7 +476,7 @@ class formulizeAdvancedCalculationHandler {
 
 
     // return the cached results
-    if( $modulePrefUseCache ) {
+    if( $modulePrefUseCache AND $cachedVersion) {
       return $cachedVersion;
     }
 
@@ -527,10 +569,11 @@ class formulizeAdvancedCalculationHandler {
       }
 
       if( $doCalc ) {
-        $steps = $advCalcObject->getVar('steps');
-        $steptitles = $advCalcObject->getVar('steptitles');
-        $input = $advCalcObject->vars['input']['value'];
-        $output = $advCalcObject->vars['output']['value'];
+	
+	$steps = $advCalcObject->getVar('steps');
+	$steptitles = $advCalcObject->getVar('steptitles');
+	$user_defined_input = $advCalcObject->vars['input']['value'];
+	$user_defined_output = $advCalcObject->vars['output']['value'];
 
 	// setup the filters
 	$packedFormFilters = $this->setFilterVariables($filtersAndGroupings, $acid);
@@ -538,46 +581,64 @@ class formulizeAdvancedCalculationHandler {
 	$filterNames = array();
 	foreach($packedFormFilters as $formId=>$formFilters) {
 	    if($formId) { // form id 0 in packedFormFilters is the non-form filters, such as startDate, etc
-        	$formObject = $form_handler->get($formId);
-        	//$GLOBALS['filters_'.$formObject->getVar('form_handle')] = " (".implode(" AND ",$formFilters).") "; // set the packaged up filter, ie: $filters_7, $filters_Opening
+		$formObject = $form_handler->get($formId);
+		//$GLOBALS['filters_'.$formObject->getVar('form_handle')] = " (".implode(" AND ",$formFilters).") "; // set the packaged up filter, ie: $filters_7, $filters_Opening
 		${'filters_'.$formObject->getVar('form_handle')} = " (".implode(" AND ",$formFilters).") "; // set the packaged up filter, ie: $filters_7, $filters_Opening
 		$filterNames[] = "filters_".$formObject->getVar('form_handle');
 	    }
 	    foreach($formFilters as $filterHandle=>$filterValue) {
-	        //$GLOBALS[$filterHandle] = $filterValue; // set individual filters, ie: $sexFilter
+		//$GLOBALS[$filterHandle] = $filterValue; // set individual filters, ie: $sexFilter
 		${$filterHandle} = $filterValue; // set individual filters, ie: $sexFilter
 		$filterNames[] = $filterHandle;
 	    }
 	}
-	ob_start();
-        // establish whether the timer is on or not
-        if(strstr($input,"timerOn();")) {
-	    $GLOBALS['formulize_procedureTimerOn'] = true;
-	    $input = str_replace("timerOn();","",$input);
-        }
-
-        reportProceduresTime("Start of Procedure");    
-        eval($input);
-        
-        reportProceduresTime("Finished processing the input instructions");
-
-        foreach( $steps as $stepKey => $step ) {
-          if( strpos( $step['sql'], '{foreach' ) > 0 ) {
-            $code = $advCalcObject->genForeach( $step );
-          } else {
-            $code = $advCalcObject->genBasic( $step );
-          }
-          eval($code);
-          reportProceduresTime("Finished processing step '".$steptitles[$stepKey]."'", $totalNumberOfRecords);  
-        }
-
-        eval($output);
-        
-        reportProceduresTime("Finished processing the output instructions");
-
+	// check to see if there is already a cached version of this specific result (ie: local group)
+    	$localFileName = "";
+    	$cachedVersion = false;
+	if( $modulePrefUseCache ) {
+	    $localGroup = true;
+	    $localFileName = $this->buildCacheKey($acid, $localGroup);
+	    if($cachedVersion = $this->getCachedResult($localFileName)) {
+		$calculationResult = $cachedVersion[0];
+		$output = $cachedVersion[1];
+	    }
+	}
+	if(!$cachedVersion) {
+	    ob_start();
+	    // establish whether the timer is on or not
+	    if(strstr($user_defined_input,"timerOn();")) {
+		$GLOBALS['formulize_procedureTimerOn'] = true;
+		$user_defined_input = str_replace("timerOn();","",$user_defined_input);
+	    }
+    
+	    reportProceduresTime("Start of Procedure");    
+	    eval($user_defined_input);
+	    
+	    reportProceduresTime("Finished processing the input instructions");
+    
+	    foreach( $steps as $stepKey => $step ) {
+	      if( strpos( $step['sql'], '{foreach' ) > 0 ) {
+		$code = $advCalcObject->genForeach( $step );
+	      } else {
+		$code = $advCalcObject->genBasic( $step );
+	      }
+	      eval($code);
+	      reportProceduresTime("Finished processing step '".$steptitles[$stepKey]."'", $totalNumberOfRecords);  
+	    }
+    
+	    eval($user_defined_output);
+	    
+	    reportProceduresTime("Finished processing the output instructions");
+	    
+	    $calculationResult = isset($procOutput) ? $procOutput : ""; // procOutput is a conventional name for a variable that can be set in the procedure's own code, and we'll grab it as the result if it's set.
+	    $output = ob_get_clean();
+	    if($localFileName) {
+		file_put_contents($localFileName, serialize(array($calculationResult, $output)));
+	    }
+    	}
+	
 	// collect data/output from this calculation
-	$calculationResult = isset($procOutput) ? $procOutput : ""; // procOutput is a conventional name for a variable that can be set in the procedure's own code, and we'll grab it as the result if it's set.
-	$calculationTextTemp = $hasGroups ? $this->captureGroupedOutput($activeGroupings) : ob_get_clean(); // $this->captureGroupedOutput($filtersAndGroupings, $groups, $item) : ob_get_clean(); // besides any variable output, we'll grab whatever would have gone to screen, and return that as "text".  In the case of grouped results, we need to put a label before the text so we know what grouping results we're talking about.
+	$calculationTextTemp = $hasGroups ? $this->captureGroupedOutput($activeGroupings, $output) : $output; // $this->captureGroupedOutput($filtersAndGroupings, $groups, $item) : ob_get_clean(); // besides any variable output, we'll grab whatever would have gone to screen, and return that as "text".  In the case of grouped results, we need to put a label before the text so we know what grouping results we're talking about.
 	$calculationText = $calculationTextTemp . $calculationText; // since we do things in reverse order of how they're setup in the UI for the users, then we build the output text backwards too.
 
         if( $hasGroups ) {
@@ -612,14 +673,16 @@ class formulizeAdvancedCalculationHandler {
     }
 
     $output = array('text'=>$calculationText, 'result'=>$calculationResult, 'groups'=>$activeGroupings);
-    file_put_contents( $fileName, serialize( $output ) );
+    if($fileName) {
+	file_put_contents( $fileName, serialize( $output ) );
+    }
 
     return $output;
     
   }
 
   // this method grabs the output to screen and sticks a grouping label in front of it
-  function captureGroupedOutput($activeGroupings) {
+  function captureGroupedOutput($activeGroupings, $output) {
     foreach($activeGroupings as $thisGrouping) {
 	if(is_array($thisGrouping['metadata'])) {
 	    $label = $thisGrouping['metadata']['fltr_label'];
@@ -630,7 +693,6 @@ class formulizeAdvancedCalculationHandler {
 	}
 	$groupingLabel .= " <p class='proc-grouping-label'>".$label. " &mdash; ".$value."</p>";
     }
-    $output = ob_get_clean();
     return "<div class='formulize-proc-text'><div class='formulize-proc-labels'>$groupingLabel</div><div class='formulize-proc-output'><blockquote>$output</blockquote></div></div>";
   }
 
@@ -1179,7 +1241,10 @@ class formulizeAdvancedCalculationHandler {
         }
       }
     }
-    //print_r( $packedFormFilters ); exit();
+    /*global $xoopsUser;
+    if($xoopsUser->getVar('uid')==1021) {
+	print_r( $packedFormFilters );
+    }*/
     return $packedFormFilters;
   }
   
