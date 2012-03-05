@@ -286,14 +286,15 @@ class formulizeAdvancedCalculationHandler {
 	}
     }
     //print "<pre>"; var_export( $_POST ); var_export( $newPost ); var_export( $xoopsUser->getGroups() ); print "</pre>";
-    $key = md5( serialize( $newPost ) . serialize( $xoopsUser->getGroups() ) );
-    $fileName = XOOPS_ROOT_PATH."/modules/formulize/cache/formulize_advancedCalculation_".intval($acid)."_".$key.".php";
+    $userGroups = $xoopsUser->getGroups();
+    $key = md5( serialize( $newPost ) . serialize( $userGroups ) );
+    $fileName = XOOPS_ROOT_PATH."/modules/formulize/cache/formulize_advancedCalculation_procid_".intval($acid)."_groupids_".implode("_",$userGroups)."_".$key.".php";
     return $fileName;
   }
   
   function getCachedResult($fileName) {
     // check that the filename is valid
-    $namePart = str_replace(XOOPS_ROOT_PATH."/modules/formulize/cache/formulize_advancedCalculation_","",$fileName);
+    $namePart = str_replace(XOOPS_ROOT_PATH."/modules/formulize/cache/formulize_advancedCalculation_procid_","",$fileName);
     if(strstr($namePart,"/") OR strstr($namePart, "\\")) {
 	return false;
     }
