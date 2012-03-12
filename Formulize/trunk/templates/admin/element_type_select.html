@@ -68,6 +68,26 @@
 				  </div>
 			  </fieldset>
 		  </div>
+		  
+		  <div class="form-item">
+		    <fieldset>
+			    <legend>Show as links in lists of entries?</legend>
+	          <div class="form-radios">
+		          <label for="elements-ele_value[7]-1"><input type="radio" id="elements-ele_value[7]-1" name="elements-ele_value[7]" value="1" <{if $content.ele_value[7] eq 1}>checked<{/if}>/>Yes, make these values clickable in lists of entries so people can go to the source form easily</label>
+	          </div>
+	          <div class="form-radios">
+              <label for="elements-ele_value[7]-0"><input type="radio" id="elements-ele_value[7]-0" name="elements-ele_value[7]" value="0" <{if $content.ele_value[7] eq 0}>checked<{/if}>/>No, just show the selected value as text</label>
+	          </div>
+			    <div class="description">
+			    </div>
+		    </fieldset>
+	    </div>
+
+    </fieldset>
+    </div>
+    <div class="form-item">
+    <fieldset>
+	<legend>If the options are linked from another form</legend>
 
 	<div class="form-item">
 	  <fieldset>
@@ -89,21 +109,36 @@
 	  </fieldset>
 	</div>
 
-
 	    <div class="form-item">
 		    <fieldset>
-			    <legend>Show as links in lists of entries?</legend>
-	          <div class="form-radios">
-		          <label for="elements-ele_value[7]-1"><input type="radio" id="elements-ele_value[7]-1" name="elements-ele_value[7]" value="1" <{if $content.ele_value[7] eq 1}>checked<{/if}>/>Yes, make these values clickable in lists of entries so people can go to the source form easily</label>
-	          </div>
-	          <div class="form-radios">
-              <label for="elements-ele_value[7]-0"><input type="radio" id="elements-ele_value[7]-0" name="elements-ele_value[7]" value="0" <{if $content.ele_value[7] eq 0}>checked<{/if}>/>No, just show the selected value as text</label>
-	          </div>
+			    <legend>Which column in the source form should be used to sort the options?</legend>
+			    <{$content.optionSortOrder}>
 			    <div class="description">
+				By default, the linked column/element will be used, so the options will simply appear in alphabetical order.  If you select another column, then the options will be sorted according to those values in the source form instead.  For example, you might link to a list of classroom names, but rather than having them show up alphabetical by name, you want to show them according to which building they're in.  If the source form has an element to record the building, then you could sort the options by that column and they will show up in a different order.
 			    </div>
 		    </fieldset>
 	    </div>
 	    
+	    <div class="form-item">
+		    <fieldset>
+			    <legend>Which option(s) should be selected by default?</legend>
+				<select name=elements-ele_value[13][] size=10 multiple class="form-multiple-select">
+					<{foreach from=$content.optionDefaultSelection key="default_entry_id" item="default_value"}>
+						<option value=<{$default_entry_id}><{if in_array($default_entry_id, $content.optionDefaultSelectionDefaults)}> selected<{/if}>><{$default_value}></option>
+					<{/foreach}>
+				</select>
+				<div class="form-radios">
+			          <label for="elements-ele_value[14]-0"><input type="radio" id="elements-ele_value[14]-0" name="elements-ele_value[14]" value="0" <{if $content.ele_value[14] eq 0}>checked<{/if}>/>Use these defaults the first time the form is shown (when creating a new entry).</label>
+				</div>
+				<div class="form-radios">
+				  <label for="elements-ele_value[14]-1"><input type="radio" id="elements-ele_value[14]-1" name="elements-ele_value[14]" value="1" <{if $content.ele_value[14] eq 1}>checked<{/if}>/>Use these defaults the first time the form is shown, and also when editing an entry that has no value for this linked selectbox.</label>
+				</div>
+				<div class="description">
+					If you use these defaults every time an entry has no value for this linked selectbox, then if a user purposely saves an entry with no values selected, this selectbox will have the defaults showing on screen when the user edits their entry.  So they will always have to un-select the defaults in order to preserve their "no value" choice.
+				</div>
+		    </fieldset>
+	    </div>
+
 	    <div class="form-item">
 		    <fieldset>
 			    <legend>When displaying this element in a list of entries, or including it in a dataset with the API, use values from a different element in the source form:</legend>

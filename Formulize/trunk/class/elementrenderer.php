@@ -341,14 +341,30 @@ class formulizeElementRenderer{
 					static $cachedSourceValuesAutocompleteFile = array();
 					static $cachedSourceValuesAutocompleteLength = array();
 
+					// setup the sort order based on ele_value[12], which is an element id number
+					if($ele_value[12]=="none" OR !$ele_value[12]) {
+						$sortOrderClause = " ORDER BY t1.`$sourceHandle`";
+					} else {
+						list($sortHandle) = convertElementIdsToElementHandles(array($ele_value[12]), $sourceFormObject->getVar('id_form'));
+						$sortOrderClause = " ORDER BY t1.`$sortHandle`";
+					}
+
 					if($pgroupsfilter) { // if there is a groups filter, then join to the group ownership table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 $parentFormFrom WHERE $pgroupsfilter $conditionsfilter $conditionsfilter_oom $restrictSQL GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
+						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 $parentFormFrom WHERE $pgroupsfilter $conditionsfilter $conditionsfilter_oom $restrictSQL GROUP BY t1.entry_id $sortOrderClause";				
 					} else { // otherwise just query the source table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1 $parentFormFrom WHERE t1.entry_id>0 $conditionsfilter $conditionsfilter_oom $restrictSQL GROUP BY t1.entry_id ORDER BY t1.`$sourceHandle`";					
+						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1 $parentFormFrom WHERE t1.entry_id>0 $conditionsfilter $conditionsfilter_oom $restrictSQL GROUP BY t1.entry_id $sortOrderClause";					
 					}
 					//print "$sourceValuesQ<br><br>";
 					if(!$isDisabled) {
-						$form_ele = new XoopsFormSelect($ele_caption, $form_ele_id, '', $ele_value[0], $ele_value[1]);
+						// set the default selections, based on the entry_ids that have been selected as the defaults, if applicable
+						$hasNoValues = trim($boxproperties[2]) == "" ? true : false;
+						$useDefaultsWhenEntryHasNoValue = $ele_value[14];
+						if(($entry == "new" OR ($useDefaultsWhenEntryHasNoValue AND $hasNoValues)) AND ((is_array($ele_value[13]) AND count($ele_value[13]) > 0) OR $ele_value[13])) {
+							$defaultSelected = $ele_value[13];
+						} else {
+							$defaultSelected = "";
+						}
+						$form_ele = new XoopsFormSelect($ele_caption, $form_ele_id, $defaultSelected, $ele_value[0], $ele_value[1]);
 						$form_ele->setExtra("onchange=\"javascript:formulizechanged=1;\" jquerytag='$form_ele_id'");
 						if($ele_value[0] == 1) { // add the initial default entry, singular or plural based on whether the box is one line or not.
 							$form_ele->addOption("none", _AM_FORMLINK_PICK);

@@ -455,23 +455,48 @@ class formulizeDataHandler  {
 		static $cachedValues = array();
 		$resultArray = array();
 		global $xoopsDB;
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $formObject = $form_handler->get($this->fid);
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($this->fid);
 		foreach($entries as $entry) {
-			if(!isset($cachedValues[$field][$entry])) {
+			if(!isset($cachedValues[$handle][$entry])) {
 				$sql = "SELECT `$handle` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id = ".intval($entry);
 				if($res = $xoopsDB->query($sql)) {
 					$array = $xoopsDB->fetchArray($res);
-					$cachedValues[$field][$entry] = $array[$handle];
+					$cachedValues[$handle][$entry] = $array[$handle];
 				} else {
-					$cachedValues[$field][$entry] = false;
+					$cachedValues[$handle][$entry] = false;
 				}
 			} 
-			$resultArray[] = $cachedValues[$field][$entry];
+			$resultArray[] = $cachedValues[$handle][$entry];
 		}
 		return $resultArray;
 	}
 	
+	// this function returns all the values of a given field
+	function findAllValuesForField($handle, $sort="") {
+		static $cachedValues = array();
+		$resultArray = array();
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($this->fid);
+		if(!isset($cachedValues[$handle])) {
+			if($sort=="ASC") {
+				$sort = " ORDER BY `$handle` ASC";
+			} elseif($sort =="DESC") {
+				$sort = " ORDER BY `$handle` DESC";
+			}
+			$sql = "SELECT `$handle`, `entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')).$sort;
+			if($res = $xoopsDB->query($sql)) {
+				while($array = $xoopsDB->fetchArray($res)) {
+					$cachedValues[$handle][$array['entry_id']] = $array[$handle];	
+				}
+			} else {
+				$cachedValues[$handle] = false;
+			}
+		} 
+		return $cachedValues[$handle];
+	}
+		
 		
 	function _buildScopeFilter($scope_uids, $scope_groups) {
 		if(is_array($scope_uids)) {

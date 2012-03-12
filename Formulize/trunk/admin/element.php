@@ -356,7 +356,7 @@ if($ele_type=='text') {
   list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
   $options['linkedoptions'] = $formlink->render();
   
-  // setup the list value and export value option lists
+  // setup the list value and export value option lists, and the default sort order list, and the list of possible default values
   if($options['islinked']) {
 	$linkedMetaDataParts = explode("#*=:*", $ele_value[2]);
 	$linkedSourceFid = $linkedMetaDataParts[0];
@@ -364,9 +364,22 @@ if($ele_type=='text') {
 	$options['listValue'] = $listValue->render();
 	list($exportValue, $selectedExportValue) = createFieldList($ele_value[11], false, $linkedSourceFid, "elements-ele_value[11]", "Use the value displayed in the list");
 	$options['exportValue'] = $exportValue->render();
+	list($optionSortOrder, $selectedOptionsSortOrder) = createFieldList($ele_value[12], false, $linkedSourceFid, "elements-ele_value[12]", "Use the linked field itself (alphabetical sort)");
+	$options['optionSortOrder'] = $optionSortOrder->render();
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+	$linkedDataHandler = new formulizeDataHandler($linkedSourceFid);
+	$allLinkedValues = $linkedDataHandler->findAllValuesForField($linkedMetaDataParts[1], "ASC");
+	if(!is_array($ele_value[13])) {
+		$ele_value[13] = array($ele_value[13]);
+	}
+	$options['optionDefaultSelectionDefaults'] = $ele_value[13];
+	$options['optionDefaultSelection'] = $allLinkedValues; // array with keys as entry ids and values as text
   } else {
 	$options['exportValue'] = "";
 	$options['listValue'] = "";
+	$options['optionSortOrder'] = "";
+	$options['optionDefaultSelectionDefaults'] = "";
+	$options['optionDefaultSelection'] = "";
   }
   
   // setup group list:
