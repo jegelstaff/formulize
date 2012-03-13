@@ -271,11 +271,6 @@ class formulizeAdvancedCalculationHandler {
     unset( $newPost['XOOPS_TOKEN_REQUEST'] );
     unset( $newPost['formulize_cacheddata'] );
     if($localGroup) {
-	/*if($xoopsUser->getVar('uid')==1021) {
-	    print "<pre>";
-	    print_r($_POST);
-	    print "</pre>";
-	}*/
 	// if we're doing a cache for a single grouped result, then strip more from POST so groups from different requests will get the same key
 	unset($newPost[$acid."_groupingchoices"]);
 	foreach($newPost as $thisPostedKey=>$thisPostedValue) {
