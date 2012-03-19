@@ -4289,8 +4289,10 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 					$one_search = $_POST[$searchgetkey] ? htmlspecialchars(strip_tags($_POST[$searchgetkey])) : "";
 					$one_search = (!$one_search AND $_GET[$searchgetkey]) ? htmlspecialchars(strip_tags($_GET[$searchgetkey])) : $one_search;
 					if(!$one_search) {
-						$operator = ""; // need to force no operator so that we don't get = "" which would severely restrict the result set.  Note: this makes it impossible to actually search for "" through a passed in variable!
+						continue;
 					}
+				} elseif($searchgetkey) { // we were supposed to find something above, but did not, so there is a user defined search term, which has no value, ergo disregard this search term
+					continue;
 				} elseif($searchgetkey == "PERGROUPFILTER") {
 					$one_search = $searchgetkey;
 					$operator = "";
