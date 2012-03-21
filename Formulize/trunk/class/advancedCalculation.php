@@ -390,7 +390,10 @@ class formulizeAdvancedCalculationHandler {
     }
 
     // set a flag to indicate if there is time-based grouping going on (a special feature of the OCANDS website) -- jwe Aug 18 2011
-    if(isset($_POST['ocandsDateGrouping']) AND ($_POST['ocandsDateGrouping'] == "year" OR $_POST['ocandsDateGrouping'] == "quarter")) {
+    if( isset($_POST['ocandsRangeType']) AND $_POST['ocandsRangeType'] == "multi" ) { // if multiple years with the same quarter range were requested, then set grouping to year
+	$_POST['ocandsDateGrouping'] = 'year';
+    }
+    if(isset($_POST['ocandsDateGrouping']) AND ($_POST['ocandsDateGrouping'] == "year" OR $_POST['ocandsDateGrouping'] == "quarter"))  {
 	$savedGroupingFilterValue['startDate'] = $_POST[$acid . "_startDate"]; // save this value so we can use it again after
 	$savedGroupingFilterValue['endDate'] = $_POST[$acid . "_endDate"]; // save this value so we can use it again after
 	$groups[] = $_POST['ocandsDateGrouping'];
@@ -522,8 +525,8 @@ class formulizeAdvancedCalculationHandler {
 	  // if we're in a date grouping for OCANDS, then we need to do things a bit differently...
 	  // in this case $item[1] will be the label for the timeframe
 	  } elseif($groups[$item[0]] == "year" OR $groups[$item[0]] == "quarter") {
-	    $_POST[$acid."_startDate"] = $this->convertOcandsDateLabelToDate($item[1], $groups[$item[0]], 'start');
-	    $_POST[$acid."_endDate"] = $this->convertOcandsDateLabelToDate($item[1], $groups[$item[0]], 'end');
+	    $_POST[$acid."_startDate"] = $this->convertOcandsDateLabelToDate($item[1], $groups[$item[0]], 'start', $savedGroupingFilterValue);
+	    $_POST[$acid."_endDate"] = $this->convertOcandsDateLabelToDate($item[1], $groups[$item[0]], 'end', $savedGroupingFilterValue);
 	    $activeGroupings[$groups[$item[0]]] = array('metadata'=>$groups[$item[0]],'value'=>$item[1]);
 
 	  // if it's a checkbox filter, than we need to use $item[1] as the additional key in the post array, and 1 is simply the flag value
@@ -738,10 +741,21 @@ class formulizeAdvancedCalculationHandler {
 	if($level+1 != $groupsCount) {
 	    print "Error: Ocands Date Grouping is not the bottom level of grouping!";
 	} else {
-	    $currentDate = $_POST[$acid."_startDate"];
-	    while($currentDate < $_POST[$acid."_endDate"]) {
-		$groupCombinations[$this->getOcandsDateLabel($currentDate, $group)] = null; // group will be year or quarter;
-		$currentDate = $this->nextOcandsDate($currentDate, $group);
+	    if($_POST['ocandsRangeType'] == "multi") {
+		// user has specified same range across multiple years
+		$startYear = intval($_POST['ocandsDateFrom']);
+		$endYear = intval($_POST['ocandsDateTo']);
+		if(!$endYear) { $endYear = $startYear; }
+		while($startYear <= $endYear) {
+		    $groupCombinations[$startYear] = null;
+		    $startYear++;
+		}
+	    } else {
+        	    $currentDate = $_POST[$acid."_startDate"];
+        	    while($currentDate < $_POST[$acid."_endDate"]) {
+	    		$groupCombinations[$this->getOcandsDateLabel($currentDate, $group)] = null; // group will be year or quarter;
+	    		$currentDate = $this->nextOcandsDate($currentDate, $group);
+        	    }
 	    }
 	}
 
@@ -898,15 +912,21 @@ class formulizeAdvancedCalculationHandler {
   }
 
   // this function returns the start or end date of a time period, given the label and the groupingType
-  function convertOcandsDateLabelToDate($label, $groupType, $startEnd) {
+  function convertOcandsDateLabelToDate($label, $groupType, $startEnd, $savedGroupingFilterValue) {
     $offset = $_POST['ocandsDateOffset']; // get fiscal/calendar setting
     switch($groupType) {
 	case "year":
-	    if($offset == "fiscal") {
-		$endYear = $label+1;
-		$dates = array('start'=>$label."-04-01", 'end'=>$endYear."-03-31");
+	    if($_POST['ocandsRangeType'] == "multi") {
+		$startYear = $this->getCalendarYearForThisQuarterDate($savedGroupingFilterValue['startDate'], $label, $offset);
+		$endYear = $this->getCalendarYearForThisQuarterDate($savedGroupingFilterValue['endDate'], $label, $offset);
+		$dates = array('start'=>$startYear."-".$savedGroupingFilterValue['startDate'], 'end'=>$endYear."-".$savedGroupingFilterValue['endDate']);
 	    } else {
-		$dates = array('start'=>$label."-01-01", 'end'=>$label."-12-31");
+		if($offset == "fiscal") {
+		    $endYear = $label+1;
+		    $dates = array('start'=>$label."-04-01", 'end'=>$endYear."-03-31");
+		} else {
+		    $dates = array('start'=>$label."-01-01", 'end'=>$label."-12-31");
+		}
 	    }
 	    break;
 	case "quarter":
@@ -926,6 +946,17 @@ class formulizeAdvancedCalculationHandler {
 	    break;
     }
     return $dates[$startEnd];
+  }
+  
+  // this function returns the calendar year in which the passed in month-day occurs for the given year and offset (if offset is fiscal, then year will increase for Jan and March dates)
+  function getCalendarYearForThisQuarterDate($yearMonth, $year, $offset) {
+    if($offset == "fiscal") {
+	$yearMonthParts = explode("-",$yearMonth);
+	if($yearMonthParts[0]=="01" OR $yearMonthParts[0]=="03") {
+	    $year++;
+	}
+    }
+    return $year;
   }
   
   // this function removes temp tables created by the createProceduresTable on this pageload
@@ -998,6 +1029,11 @@ class formulizeAdvancedCalculationHandler {
 	$form_ele->setExtra(' class="'. $elementUnderlyingField . '" ');
       }
       $selected = date("Y-m-d", $dateValue);
+      // special catch for dates without a year, which is valid for OCANDS multi year groupings with only quarters specified
+      if($selected == "1969-12-31" AND (strstr($elementName, "_startDate") OR strstr($elementName, "_endDate")) AND $selected != $_POST[$elementName] AND $selected != $_GET[$elementName]) {
+	$selected = $_POST[$elementName];
+      }
+
     } else if( $kind == 2 ) {
       // $selectedValue is the value in the option list that should be selected by default...
       //   if $selectedValue is "" then the first item will be selected (ie: no selection)
