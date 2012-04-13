@@ -318,7 +318,9 @@ class formulizeElementRenderer{
 					// if there is a restriction in effect, then add some SQL to reject options that have already been selected ??
 					$restrictSQL = "";
 					if($ele_value[9]) {
-						$restrictSQL = " AND NOT EXISTS (SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id != ".intval($entry);
+						$restrictSQL = " AND (
+						NOT EXISTS (
+						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id != ".intval($entry);
 						switch($ele_value[9]) {
 							case 2:
 								$restrictSQL .= " AND t4.`creation_uid` = ";
@@ -331,7 +333,8 @@ class formulizeElementRenderer{
 								$restrictSQL .= " AND EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t5 WHERE t5.groupid IN (".implode(", ",$groupsToLimitBy).") AND t5.fid=$id_form AND t5.entry_id=t4.entry_id) ";
 								break;
 						}
-						$restrictSQL .= " )";
+						$restrictSQL .= " ) OR EXISTS (
+						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id != ".intval($entry).") )";
 					}
 					
 
