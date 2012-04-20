@@ -3412,7 +3412,36 @@ jQuery(window).load(function() {
 	jQuery(window).scroll(function () {
 		setScrollDisplay(jQuery(window));
 	});
+
+	var saveButtonOffset = jQuery('#floating-list-of-entries-save-button').offset();
+	floatSaveButton(saveButtonOffset);
+	jQuery(window).scroll(function () {
+		floatSaveButton(saveButtonOffset);
+	});
+	
 });
+
+function floatSaveButton(saveButtonOffset) {
+      var scrollBottom = jQuery(window).height() - jQuery(window).scrollTop();
+      if (saveButtonOffset && (saveButtonOffset.top > scrollBottom || jQuery(window).width() < jQuery(document).width())) {
+	jQuery('#floating-list-of-entries-save-button').addClass('save_button_fixed');
+	jQuery('#floating-list-of-entries-save-button').addClass('ui-corner-all');
+	if(saveButtonOffset.top <= scrollBottom) {
+		jQuery('#floating-list-of-entries-save-button').css('bottom', jQuery(window).height() - saveButtonOffset.top - jQuery('#floating-list-of-entries-save-button').height());
+	}
+	if(jQuery(window).scrollLeft() < saveButtonOffset.left) {
+		newSaveButtonOffset = saveButtonOffset.left - jQuery(window).scrollLeft();
+	} else if(jQuery(window).scrollLeft() > 0){
+		newSaveButtonOffset = 0;
+	} else {
+		newSaveButtonOffset = saveButtonOffset.left;
+	}
+	jQuery('#floating-list-of-entries-save-button').css('left', newSaveButtonOffset);
+      } else if(saveButtonOffset) {
+	jQuery('#floating-list-of-entries-save-button').removeClass('save_button_fixed');
+	jQuery('#floating-list-of-entries-save-button').removeClass('ui-corner-all');
+      };
+}
 
 jQuery(window).scroll(function () {
         jQuery('.floating-column').css('margin-top', ((window.pageYOffset)*-1));
@@ -3781,7 +3810,7 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 
 	// if there is no save button specified in either of the templates, but one is available, then put it in below the list
 	if($type == "bottom" AND count($screen->getVar('decolumns')) > 0 AND !$screen->getVar('dedisplay') AND $GLOBALS['formulize_displayElement_LOE_Used'] AND !strstr($screen->getVar('toptemplate'), 'saveButton') AND !strstr($screen->getVar('bottomtemplate'), 'saveButton')) {
-		print "<p>$saveButton</p>\n";
+		print "<div id=\"floating-list-of-entries-save-button\" class=\"\"><p>$saveButton</p></div>\n";
 	}
 	
 	$thisTemplate = html_entity_decode($screen->getVar($type.'template'));

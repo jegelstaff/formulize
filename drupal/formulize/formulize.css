@@ -1,6 +1,20 @@
 
 /* Formulize css */
 
+#formulize-screen #floating-list-of-entries-save-button {
+	padding: 1em 1.5em;
+	margin: 1em 0;
+	background-color: #FFF;
+}
+
+#formulize-screen #floating-list-of-entries-save-button.save_button_fixed {
+	position: fixed; 
+	bottom: 0;
+	z-index: 100;
+	margin-top: 0;
+	margin-bottom: 0;
+	border: solid 1px #1D65A5;
+}
 
 #formulize-screen table td {
 	padding: 0;

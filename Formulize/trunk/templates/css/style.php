@@ -7,6 +7,22 @@ header("Content-Type: text/css");
 .icms_checkboxoption {
     clear: both;
 }
+
+#floating-list-of-entries-save-button {
+	padding: 1em 1.5em;
+	margin: 1em 0;
+	background-color: #FFF;
+}
+
+#floating-list-of-entries-save-button.save_button_fixed {
+	position: fixed; 
+	bottom: 0;
+	z-index: 100;
+	margin-top: 0;
+	margin-bottom: 0;
+	border: solid 1px #1D65A5;
+}
+
 .floating-column {
     position: fixed;
     border: 1px solid white;
