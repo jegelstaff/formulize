@@ -321,24 +321,12 @@ class formulizeElementRenderer{
 						$restrictSQL = " AND (
 						NOT EXISTS (
 						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id != ".intval($entry);
-						switch($ele_value[9]) {
-							case 2:
-								$restrictSQL .= " AND t4.`creation_uid` = ";
-								$restrictSQL .= $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-								break;
-							case 3:
-								$gperm_handler =& xoops_gethandler('groupperm');
-								$groupsThatCanView = $gperm_handler->getGroupIds("view_form", $id_form, getFormulizeModId());
-								$groupsToLimitBy = array_intersect($groups, $groupsThatCanView);
-								$restrictSQL .= " AND EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t5 WHERE t5.groupid IN (".implode(", ",$groupsToLimitBy).") AND t5.fid=$id_form AND t5.entry_id=t4.entry_id) ";
-								break;
-						}
+						$restrictSQL .= $this->addEntryRestrictionSQL($ele_value[9], $id_form, $groups); // pass in the flag about restriction scope, and the form id, and the groups
 						$restrictSQL .= " ) OR EXISTS (
-						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id != ".intval($entry).") )";
+						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id = ".intval($entry);
+						$restrictSQL .= $this->addEntryRestrictionSQL($ele_value[9], $id_form, $groups);
+						$restrictSQL .= ") )";
 					}
-					
-
-
 
 					static $cachedSourceValuesQ = array();
 					static $cachedSourceValuesAutocompleteFile = array();
@@ -1064,6 +1052,29 @@ class formulizeElementRenderer{
 		}
 		
 	}
+
+	// a function that builds some SQL snippets that we use to properly scope queries related to ensuring the uniqueness of selections in linked selectboxes
+	// uniquenessFlag is the ele_value[9] property of the element, that tells us how strict the uniqueness is (per user or per group or neither)
+	// id_form is the id of the form where the data resides
+	// groups is the list of groups we're using as the membership scope in this case (probably the user's groups, but might not be)
+	function addEntryRestrictionSQL($uniquenessFlag, $id_form, $groups) {
+		$sql = "";
+		global $xoopsUser;
+		switch($uniquenessFlag) {
+			case 2:
+				$sql .= " AND t4.`creation_uid` = ";
+				$sql .= $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+				break;
+			case 3:
+				$gperm_handler =& xoops_gethandler('groupperm');
+				$groupsThatCanView = $gperm_handler->getGroupIds("view_form", $id_form, getFormulizeModId());
+				$groupsToLimitBy = array_intersect($groups, $groupsThatCanView);
+				$sql .= " AND EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t5 WHERE t5.groupid IN (".implode(", ",$groupsToLimitBy).") AND t5.fid=$id_form AND t5.entry_id=t4.entry_id) ";
+				break;
+		}
+		return $sql;
+	}
+	
 
 	// THIS FUNCTION COPIED FROM LIASE 1.26, onchange control added
 	// JWE -- JUNE 1 2006
