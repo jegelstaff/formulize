@@ -4479,7 +4479,16 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
 		  $targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
 		  $targetSourceHandle = $targetElementEleValueProperties[1]; // get the element handle in the source source form
 		  // now build a comparison value that contains a subquery on the source source form, instead of a literal match to the source form
-		  $conditionsFilterComparisonValue = " CONCAT('$likebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE `$targetSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes."),',$likebits') ";
+		  if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
+		    $filterTermToUse = " curlybracketform.`".substr($filterTerms[$filterId],1,-1)."` ";
+		    $quotes = "";
+		    $likebits = "";
+		    $curlyBracketFormFrom = ", ".$xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
+		  }
+		  $conditionsFilterComparisonValue = " CONCAT('$likebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE `$targetSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.mysql_real_escape_string($filterTermToUse).$likebits.$quotes."),',$likebits') ";
+		  if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
+		    $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntry ";
+		  }
 	  }
   }
   if($filterOps[$filterId] == "=") {
@@ -4488,7 +4497,7 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
   if(!$conditionsFilterComparisonValue) {
 	  $conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
   }
-  if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") { // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
+  if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !$targetElementObject->isLinked) { // if it's a { } term, then assume it's a data handle for a field in the form where the element is being included
 	  if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][substr($filterTerms[$filterId],1,-1)])) {
 		  $conditionsFilterComparisonValue = "'".mysql_real_escape_string($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][substr($filterTerms[$filterId],1,-1)])."'";
 	  } else {
@@ -4619,3 +4628,19 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 	}
 	return $output;
 }
+
+// THIS FUNCTION WILL CALL DISPLAY ELEMENT WITH THE RIGHT PARAMS TO RETURN THE HTML FOR AN ELEMENT THAT WILL NOT SAVE IN FORMULIZE BUT CAN BE USED TO GET THE UI FOR THE ELEMENT ON THE SCREEN
+// MEANT FOR USE IN LIST OF ENTRIES TEMPLATES AND ELSEWHERE THAT THE DEVELOPER MIGHT WANT TO HAVE AN ELEMENT RENDERED CLEANLY FOR PICKING UP THE USER'S SELECTION LATER, BUT THEY DON'T WANT THE ELEMENT ACTUALLY TIED TO THE UNDERLYING ENTRY/VALUE
+function htmlForElement($elementHandle, $nameForHTML="orphaned_formulize_element", $entry_id="new") {
+  include_once XOOPS_ROOT_PATH ."/modules/formulize/include/elementdisplay.php";
+  $renderedElementArray = displayElement("", $elementHandle, $entry_id, $nameForHTML, null, null, false); // 0 is the element HTML, 1 is the disabled flag
+  if(is_array($renderedElementArray) AND $renderedElementArray[1]) {
+    return "This form element cannot be displayed because it is disabled.";
+  } elseif(is_array($renderedElementArray)) {
+    return $renderedElementArray[0]->render();
+  } else {
+    return $renderedElementArray;
+  }
+}
+
+

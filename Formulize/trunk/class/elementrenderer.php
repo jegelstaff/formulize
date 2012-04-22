@@ -398,7 +398,7 @@ class formulizeElementRenderer{
 								$thisTextLength = strlen($text);
 								$maxLength = $thisTextLength > $maxLength ? $thisTextLength : $maxLength;
 								$text = str_replace("\$", "\\\$", $text);
-								$quotedText = "\"".str_replace("\"", "\\\"", $text)."\"";
+								$quotedText = "\"".str_replace("\"", "\\\"", html_entity_decode($text, ENT_QUOTES))."\"";
 								$singleQuotedText = str_replace("'", "\'", "[$quotedText,$id]");
 								fwrite($cachedLinkedOptions,"if(stristr($quotedText, \$term)){ \$found[]='".$singleQuotedText."'; }\n");
 							}

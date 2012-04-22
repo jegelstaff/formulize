@@ -53,12 +53,18 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	} 
 	if($entry == "" OR $subformCreateEntry) { $entry = "new"; }
 
-	$deprefix = $noSave ? "denosave_" : "de_";
-	$deprefix = $subformCreateEntry ? "desubform".$subformEntryIndex."x".$subformElementId."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
-
 	$element = _formulize_returnElement($ele, $formframe);
 	if(!is_object($element)) {
 		return "invalid_element";
+	}
+
+	$deprefix = $noSave ? "denosave_" : "de_";
+	$deprefix = $subformCreateEntry ? "desubform".$subformEntryIndex."x".$subformElementId."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
+	if($noSave AND !is_bool($noSave)) {
+		$renderedElementName = $noSave; // if we've passed a specific string with $noSave, then we want to use that to override the name of the element, because the developer wants to pick up that form value later after submission
+		$noSave = true;
+	} else {
+		$renderedElementName = $deprefix.$element->getVar('id_form').'_'.$entry.'_'.$element->getVar('ele_id');
 	}
 	
 	global $xoopsUser;
@@ -111,7 +117,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
 	if($allowed AND count($elementFilterSettings[0]) > 0) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
-		$GLOBALS['formulize_renderedElementHasConditions'][$deprefix.$element->getVar('id_form').'_'.$entry.'_'.$element->getVar('ele_id')] = $elementFilterSettings[0];
+		$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementName] = $elementFilterSettings[0];
 		
 		// need to check if there's a condition on this element that is met or not
 		static $cachedEntries = array();
@@ -198,8 +204,8 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		
 		formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
 		
-		
-  	$form_ele =& $renderer->constructElement($deprefix . $element->getVar('id_form').'_'.$entry.'_'.$element->getVar('ele_id'), $ele_value, $entry, $isDisabled, $screen);
+	  	$form_ele =& $renderer->constructElement($renderedElementName, $ele_value, $entry, $isDisabled, $screen);
+
 		formulize_benchmark("Done rendering element.");
 		
 		if(!$renderElement) {
