@@ -592,6 +592,15 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$settings['calc_blanks'] = $_POST['calc_blanks'];
 	$settings['calc_grouping'] = $_POST['calc_grouping'];
 	
+	// grab all the locked columns so we can persist them
+	if(strstr($_POST['formulize_lockedColumns'], ",")) {
+		$settings['lockedColumns'] = array_unique(explode(",",trim($_POST['formulize_lockedColumns'],",")));
+	} elseif(strlen($_POST['formulize_lockedColumns'])>0) {
+		$settings['lockedColumns'] = array(intval($_POST['formulize_lockedColumns']));
+	} else {
+		$settings['lockedColumns'] = array();
+	}
+	
 	// set the requested procedure, if any
   $settings['advcalc_acid'] = strip_tags(htmlspecialchars($_POST['advcalc_acid']));
   formulize_addProcedureChoicesToPost($settings['advcalc_acid']);
@@ -1207,6 +1216,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 
 	// forcequery value, perpetuates from pageload to pageload
 	print "<input type=hidden name=forcequery id=forcequery value=\"" .intval($_POST['forcequery']) . "\"></input>\n";
+	
+	// lockedColumns is the list of columns that the user has locked in place...however it is relative to the currently active columns...changing columns while columns are locked may have unexpected results!
+	print "<input type=hidden name=formulize_lockedColumns id=formulize_lockedColumns value=\"".implode(",",$lockedColumns)."\"></input>\n";
 
 	$useXhr = false;
 	if($screen) {
@@ -1215,7 +1227,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		}
 	}
 
-	interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
+	interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $settings['lockedColumns']); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
 
 	$returnArray = array();
 	$returnArray[0] = $buttonCodeArray; // send this back so it's available in the bottom template if necessary.  MUST USE NUMERICAL KEYS FOR list TO WORK ON RECEIVING END.
@@ -1422,7 +1434,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	
 		if($useHeadings) {
       $headers = getHeaders($cols, true); // second param indicates we're using element headers and not ids
-      drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons)); 
+      drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockedColumns']); 
     }
 		if($useSearch) {
 			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
@@ -1894,7 +1906,7 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
 }
 
 // this function writes in the headers for the columns in the results box
-function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=null, $numberOfButtons) { //, $lockcontrols) {
+function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=null, $numberOfButtons, $lockedColumns=array()) { //, $lockcontrols) {
 
 	static $checkedHelpLink = false;
 	static $headingHelpLink;
@@ -1920,7 +1932,8 @@ function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=n
    	print "<td class='$classToUse' id='celladdress_0_$i'><div class='main-cell-div' id='cellcontents_0_".$i."'>\n";
 
 		if($headingHelpLink) {
-			print "<div style=\"float: right; margin-left: 3px;\"><a href=\"\" id=\"lockcolumn_$i\" class=\"lockcolumn\" title=\""._formulize_DE_FREEZECOLUMN."\">[ ]</a></div>\n";
+			$lockedUI = in_array($i, $lockedColumns) ? "[X]" : "[ ]";
+			print "<div style=\"float: right; margin-left: 3px;\"><a href=\"\" id=\"lockcolumn_$i\" class=\"lockcolumn\" title=\""._formulize_DE_FREEZECOLUMN."\">$lockedUI</a></div>\n";
 			print "<div style=\"float: right;\"><a href=\"\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=".$cols[$i]."');return false;\" title=\""._formulize_DE_MOREINFO."\">[?]</a></div>\n";
 		}
 		if($cols[$i] == $sort) {
@@ -3007,7 +3020,7 @@ function evalAdvSearch($entry, $handle, $op, $term) {
 
 // this function includes the javascript necessary make the interface operate properly
 // note the mandatory clearing of the ventry value upon loading of the page.  Necessary to make the back button work right (otherwise ventry setting is retained from the previous loading of the page and the form is displayed after the next submission of the controls form)
-function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr) {
+function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns) {
 ?>
 <script type='text/javascript'>
 
@@ -3397,14 +3410,37 @@ jQuery(window).load(function() {
 		if(floatingContents[column] == true) {
 			jQuery(this).empty();
 			jQuery(this).append('[ ]');
+			var curColumnsArray = jQuery('#formulize_lockedColumns').val().split(',');
+			var curColumnsHTML = '';
+			for (var i=0; i < curColumnsArray.length; i++) {
+				if(curColumnsArray[i] != column) {
+					if(curColumnsHTML != '') {
+						curColummsHTML = curColumnsHTML+',';
+					}
+					curColumnsHTML = curColumnsHTML+curColumnsArray[i];
+				}
+			}
+			jQuery('#formulize_lockedColumns').val(curColumnsHTML);
 		} else {
 			jQuery(this).empty();
 			jQuery(this).append('[X]');
+			var curColumnsHTML = jQuery('#formulize_lockedColumns').val();
+			jQuery('#formulize_lockedColumns').val(curColumnsHTML+','+column);
 		}
 		toggleColumnInFloat(column);
 		return false;
 	});
 
+<?php
+
+foreach($lockedColumns as $thisColumn) {
+	if(is_numeric($thisColumn)) {
+		print "toggleColumnInFloat(".intval($thisColumn).");\n";
+	}
+}
+
+
+?>
 	
 	jQuery('#resbox').scroll(function () {
 		setScrollDisplay(jQuery('#resbox'));

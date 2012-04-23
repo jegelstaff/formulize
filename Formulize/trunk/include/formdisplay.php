@@ -2393,6 +2393,9 @@ function writeHiddenSettings($settings, $form) {
 		if($_POST['overridescreen']) {
 			$form->addElement( new XoopsFormHidden ('overridescreen', intval($_POST['overridescreen'])));
 		}
+		if(strlen($_POST['formulize_lockedColumns'])>0) {
+			$form->addElement( new XoopsFormHidden ('formulize_lockedColumns', $_POST['formulize_lockedColumns']));
+		}
 		return $form;
 	} else { // write as HTML
 		print "<input type=hidden name=sort value='" . $sort . "'>";
@@ -2429,6 +2432,9 @@ function writeHiddenSettings($settings, $form) {
 		}
 		if($_POST['overridescreen']) {
 			print "<input type=hidden name=overridescreen value='".intval($_POST['overridescreen'])."'>";
+		}
+		if(strlen($_POST['formulize_lockedColumns'])>0) {
+			print "<input type=hidden name=formulize_lockedColumns value='".$_POST['formulize_lockedColumns']."'>";
 		}
 	}
 }
