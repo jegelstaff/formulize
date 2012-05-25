@@ -299,7 +299,7 @@ class formulizeAdvancedCalculationHandler {
     if(in_array(XOOPS_GROUP_ADMIN, $groups)) {
 	return false;
     }    
-    if( file_exists( $fileName ) ) {
+    if( file_exists( $fileName ) AND !isset($_GET['formulize_bypassCachedResults']) ) {
       // cached version found
       $cachedVersion = unserialize( file_get_contents( $fileName ) );
     } else {

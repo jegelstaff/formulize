@@ -341,6 +341,14 @@ if(is_object($user)) {
     }
   }
 }
+
+// If there's no xoopsUserId set in the $_SESSION yet, and there's an ICMS session cookie present, then let's make one last attempt to load the session (could be because we're embedded in a system that doesn't have a parallel user table like what is used above)
+$icms_session_name = ($xoopsConfig['use_mysession'] && $xoopsConfig['session_name'] != '') ? $xoopsConfig['session_name'] : "ICMSSESSION";
+if(!isset($_SESSION['xoopsUserId']) AND isset($_COOKIE[$icms_session_name])) {
+	if($icms_session_data = $sess_handler->read($_COOKIE[$icms_session_name])) {
+		session_decode($icms_session_data); // put session data into $_SESSION, including the xoopsUserId if present, same as if session_start had been successful
+	}
+}
 // END OF ADDED CODE
 
 /*
