@@ -32,7 +32,7 @@ if ($success) {
 $wizard->setPage( 'end' );
 $pageHasForm = false;
 $content = "";
-include "./language/$wizard->language/finish.php";
+include __DIR__."/language/$wizard->language/finish.php";
 
 // destroy all the installation session
 unset($_SESSION);
@@ -44,7 +44,7 @@ session_unset();
 session_destroy();
 
 // MODIFIED BY FREEFORM SOLUTIONS TO ADD IN THE CUSTOM CONFIGURATION FOR THE FORMULIZE STANDALONE VERSION
-include_once './class/dbmanager.php';
+include_once __DIR__.'/class/dbmanager.php';
 $dbm = new db_manager();
 $dbm->db->connect();
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_PREFIX", SDATA_DB_PREFIX, file_get_contents(ICMS_ROOT_PATH."/install/sql/mysql.formulize_standalone.sql"));

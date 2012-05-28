@@ -43,6 +43,8 @@ class icms_core_StopSpammer {
 	public function checkForField($field, $value) {
 		$spam = false;
 
+		return $spam; // MODIFIED BY FREEFORM SOLUTIONS for compatibility with offline installs.  SUGGESTED BY SKENOW HERE: http://www.freeformsolutions.ca/en/forum/using-formulize-no-internet-access#comment-4554
+
 		$url = $this->api_url . $field . '=' . urlencode($value);
 		if (!ini_get('allow_url_fopen')) {
 			$output = '';

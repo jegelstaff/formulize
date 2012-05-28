@@ -4350,6 +4350,9 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 				  }
 				  $one_search = "/**/$blankOp1][$key/**//**/$blankOp2";
 				  $operator = ""; // don't use an operator, we've specially constructed the one_search string to have all the info we need
+				} elseif($searchgetkey == "PERGROUPFILTER") {
+					$one_search = $searchgetkey;
+					$operator = "";
 				} elseif(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
 					$one_search = $_POST[$searchgetkey] ? htmlspecialchars(strip_tags($_POST[$searchgetkey])) : "";
 					$one_search = (!$one_search AND $_GET[$searchgetkey]) ? htmlspecialchars(strip_tags($_GET[$searchgetkey])) : $one_search;
@@ -4358,9 +4361,6 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 					}
 				} elseif($searchgetkey) { // we were supposed to find something above, but did not, so there is a user defined search term, which has no value, ergo disregard this search term
 					continue;
-				} elseif($searchgetkey == "PERGROUPFILTER") {
-					$one_search = $searchgetkey;
-					$operator = "";
 				} else {
 					$one_search = "";
 					$operator = "";
