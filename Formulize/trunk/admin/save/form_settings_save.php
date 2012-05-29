@@ -155,7 +155,7 @@ if($_POST['formulize_admin_key'] == "new") {
   }
 } else if( $old_form_handle && $formObject->getVar( "form_handle" ) != $old_form_handle ) {
   //print "rename from $old_form_handle to " . $formObject->getVar( "form_handle" );
-  if(!$renameResult = $form_handler->renameDataTable($old_form_handle, $formObject->getVar( "form_handle" ))) {
+  if(!$renameResult = $form_handler->renameDataTable($old_form_handle, $formObject->getVar( "form_handle" ), $formObject)) {
    exit("Error: could not rename the data table in the database.");
   }
 }
@@ -208,6 +208,13 @@ foreach($assignedAppsForThisForm as $assignedApp) {
 if(isset($_POST['forms-tableform'])) {
   if(!$form_handler->createTableFormElements($_POST['forms-tableform'], $fid)) {
     print "Error: could not create all the placeholder elements for the tableform";
+  }
+}
+
+// if the revision history flag was on, then create the revisions history table, if it doesn't exist already
+if(isset($_POST['forms-store_revisions']) AND $_POST['forms-store_revisions'] AND !$form_handler->revisionsTableExists($formObject)) {
+  if(!$form_handler->createDataTable($fid, 0, false, true)) { // 0 is the id of a form we're cloning, false is the map of old elements to new elements when cloning so n/a here, true is the flag for making a revisions table
+    print "Error: could not create the revision history table for the form";  
   }
 }
 

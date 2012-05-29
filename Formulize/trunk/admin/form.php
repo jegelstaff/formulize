@@ -59,6 +59,7 @@ if($_GET['fid'] != "new") {
   $defaultlist = $formObject->getVar('defaultlist');
   $menutext = $formObject->getVar('menutext');
   $form_handle = $formObject->getVar('form_handle');
+  $store_revisions = $formObject->getVar('store_revisions');
   
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
   $elementObjects = $element_handler->getObjects2(null, $fid);
@@ -252,6 +253,7 @@ if($_GET['fid'] != "new") {
   $defaultlist = 0;
   $menutext = "Use the form's title";
   $form_handle = "";
+  $store_revisions = 0;
   if($_GET['aid']) {
 	$formApplications = array(intval($_GET['aid']));
   } 
@@ -323,6 +325,7 @@ $settings = array();
 $settings['singleentry'] = $singleentry;
 $settings['menutext'] = $menutext;
 $settings['form_handle'] = $form_handle;
+$settings['store_revisions'] = $store_revisions;
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
 
 $i = 1;

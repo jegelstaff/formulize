@@ -46,6 +46,7 @@ class formulizeForm extends XoopsObject {
 			$id_form = "";
 			$lockedform = "";
 			$formq[0]['desc_form'] = "";
+			$formq[0]['store_revisions'] = 0;
 			$single = "";
 			$elements = array();
 			$elementCaptions = array();
@@ -64,6 +65,7 @@ class formulizeForm extends XoopsObject {
 				$lockedform = "";
 				$formq[0]['desc_form'] = "";
 				$formq[0]['tableform'] = "";
+				$formq[0]['store_revisions'] = 0;
 				$single = "";
 				$elements = array();
 				$elementCaptions = array();
@@ -165,6 +167,7 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);
 		$this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
 		$this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
+		$this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
 	}
 }
 
@@ -301,9 +304,9 @@ class formulizeFormsHandler {
 						break;
 				}
 				if($formObject->isNew() || empty($id_form)) {
-					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, `defaultlist`, `menutext`, `form_handle`) VALUES (".$this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".$this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).")";
+					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`) VALUES (".$this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".$this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".intval($store_revisions).")";
 				} else {
-					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).", `singleentry` = ".$this->db->quoteString($singleToWrite).", `headerlist` = ".$this->db->quoteString($headerlist).", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist).", `menutext` = ".$this->db->quoteString($menutext).", `form_handle` = ".$this->db->quoteString($form_handle)." WHERE id_form = ".intval($id_form);
+					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).", `singleentry` = ".$this->db->quoteString($singleToWrite).", `headerlist` = ".$this->db->quoteString($headerlist).", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist).", `menutext` = ".$this->db->quoteString($menutext).", `form_handle` = ".$this->db->quoteString($form_handle).", `store_revisions` = ".intval($store_revisions)." WHERE id_form = ".intval($id_form);
 				}
 				
 				if( false != $force ){
@@ -398,7 +401,7 @@ class formulizeFormsHandler {
 
 	function delete($fid) {
 		if(is_object($fid)) {
-			if(!get_class("formulizeForm")) {
+			if(!get_class($fid) == "formulizeForm") {
 				return false;
 			}
 			$fid = $fid->getVar('id_form');
@@ -448,31 +451,76 @@ class formulizeFormsHandler {
 		return $isError ? false : true;
 	}
 
+	// this method figures out if the revisions history table for a form exists or not
+	// variable passed in can be a form object, a form id or the text of the form handle itself, which is used as an override if you don't want to work with the object -- necessary when tables are being renamed!
+	function revisionsTableExists($fid) {
+		if(is_object($fid)) {
+			if(!get_class($fid) == "formulizeForm") {
+				return false;
+			} else {
+				$formObject = $fid;
+				$form_handle = $formObject->getVar('form_handle');
+			}
+		} elseif(is_numeric($fid)) {
+			$formObject = $this->get($fid);
+			$form_handle = $formObject->getVar('form_handle');
+		} else {
+			$form_handle = $fid;
+		}
+		global $xoopsDB;
+		$existingTables = array();
+		if(count($existingTables)==0) {
+			$testsql = "SHOW TABLES LIKE '%_revisions'";
+			$resultst = $xoopsDB->queryF($testsql);
+			while($table = $xoopsDB->fetchRow($resultst)) {
+				$existingTables[] = $table[0];
+			}
+		}
+		$foundval = in_array($xoopsDB->prefix("formulize_".$form_handle."_revisions"), $existingTables);
+		return $foundval;
+	}
+
 	
 	// create a data table for a form object (or form)
 	// $fid can be an id or an object
 	// Note that this method will add in fields for the elements in the form, if invoked as part of the 3.0 patch process, or when cloning forms.
 	// if a map is provided, then we're cloning a form and the data types of the original elements will be preserved in the new form
-	function createDataTable($fid, $clonedForm=0, $map=false) {
+	// revisionsTable is a flag used to indicate if we're creating the revisions copy of the form table or not
+	function createDataTable($fid, $clonedForm=0, $map=false, $revisionsTable=false) {
 		if(is_numeric($fid)) {
-			$fid = $this->get($fid, true); // true forces all elements to be included, even ones that are not displayed right now
+			$formObject = $this->get($fid, true); // true forces all elements to be included, even ones that are not displayed right now
 		} elseif(!get_class($fid) == "formulizeForm") {
 			return false;
+		} else {
+			$formObject = $fid;
+		}
+		if($revisionsTable) {
+			$revisionTableName = "_revisions";
+			$clonedForm = $formObject->getVar('id_form'); // we need to clone the datatypes of the original table
+		} else {
+			$revisionTableName = "";
 		}
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$clonedFormObject = $form_handler->get($clonedForm);
-		$elementTypes = $fid->getVar('elementTypes');
+		$elementTypes = $formObject->getVar('elementTypes');
 		global $xoopsDB;
 		// build SQL for new table
-		$newTableSQL = "CREATE TABLE " . $xoopsDB->prefix("formulize_" . $fid->getVar('form_handle')) . " (";
-		$newTableSQL .= "`entry_id` int(7) unsigned NOT NULL auto_increment,";
+		$newTableSQL = "CREATE TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle') . $revisionTableName) . " (";
+		if($revisionsTable) {
+			$newTableSQL .= "`revision_id` bigint(7) unsigned NOT NULL auto_increment,";
+			$newTableSQL .= "`entry_id` int(7) unsigned NOT NULL,";
+		} else {
+			$newTableSQL .= "`entry_id` int(7) unsigned NOT NULL auto_increment,";	
+		}
 		$newTableSQL .= "`creation_datetime` Datetime NULL default NULL, ";
 		$newTableSQL .= "`mod_datetime` Datetime NULL default NULL, ";
 		$newTableSQL .= "`creation_uid` int(7) default '0',";
 		$newTableSQL .= "`mod_uid` int(7) default '0',";
-		foreach($fid->getVar('elementHandles') as $elementId=>$thisHandle) {
+		foreach($formObject->getVar('elementHandles') as $elementId=>$thisHandle) {
+						// NOTE: THIS WILL FAIL IF/WHEN SOMEONE CREATE A CUSTOM ELEMENT TYPE THAT IS NOT A DATA-STORING ELEMENT!!
+						// WE WILL NEED TO GO GET THE ELEMENT OBJECT HERE, AND CHECK IF IT'S A DATA STORING ELEMENT TYPE OR NOT.  THIS IS A PROPERTY ON THE CUSTOM ELEMENT OBJECTS, SO NOT HARD, BUT A PAIN AND ADDS QUERIES TO THE PAGE.
 						if($elementTypes[$elementId] == "areamodif" OR $elementTypes[$elementId] == "ib" OR $elementTypes[$elementId] == "sep" OR $elementTypes[$elementId] == "grid" OR $elementTypes[$elementId] == "subform") { continue; } // do not attempt to create certain types of fields since they don't live in the db!
-						if($map !== false) {
+						if($map !== false OR $revisionsTable) {
 							// we're cloning with data, so base the new field's datatype on the original form's datatype for the corresponding field
 							if(!isset($dataTypeMap)) {
 								$dataTypeMap = array();
@@ -486,7 +534,13 @@ class formulizeFormsHandler {
 									return false;
 								}
 							}
-							$newTableSQL .= "`$thisHandle` ".$dataTypeMap[array_search($thisHandle, $map)]." NULL default NULL,";
+							if($revisionsTable) {
+								// for revision tables, the handles will be exactly the same, so the lookup in the dataTypeMap is really easy
+								$newTableSQL .= "`$thisHandle` ".$dataTypeMap[$thisHandle]." NULL default NULL,";
+							} else {
+								// for cloned forms, we have to look up the handle name in the map that was passed in, since element handles will have changed in the cloning process
+								$newTableSQL .= "`$thisHandle` ".$dataTypeMap[array_search($thisHandle, $map)]." NULL default NULL,";
+							}
 						} else {
 							if($elementTypes[$elementId] == "date") {
 								$newTableSQL .= "`$thisHandle` date NULL default NULL,";
@@ -495,11 +549,19 @@ class formulizeFormsHandler {
 							}
 						}
 		}
-		$newTableSQL .= "PRIMARY KEY (`entry_id`),";
+		if($revisionsTable) {
+			$newTableSQL .= "PRIMARY KEY (`revision_id`),";
+			$newTableSQL .= "INDEX i_entry_id (entry_id),";
+		} else {
+			$newTableSQL .= "PRIMARY KEY (`entry_id`),";	
+		}
 		$newTableSQL .= "INDEX i_creation_uid (creation_uid)";
 		$newTableSQL .= ") ENGINE=MyISAM;";
 		// make the table
 		if(!$tableCreationRes = $xoopsDB->queryF($newTableSQL)) {
+			print mysql_error();
+			print "\n";
+			print $newTableSQL;
 			return false;
 		}
 		return true;
@@ -509,7 +571,7 @@ class formulizeFormsHandler {
 	// fid can be an id or object
 	function dropDataTable($fid) {
 		if(is_object($fid)) {
-			if(!get_class("formulizeForm")) {
+			if(!get_class($fid) == "formulizeForm") {
 				return false;
 			}
 			$fid = $fid->getVar('id_form');
@@ -525,6 +587,13 @@ class formulizeFormsHandler {
 		$dropSQL = "DROP TABLE " . $xoopsDB->prefix("formulize_" . $form_handle);
 		if(!$dropRes = $xoopsDB->queryF($dropSQL)) {
 			return false;
+		}
+		// remove the revisions table when the form is deleted, if it is present
+		if($this->revisionsTableExists($fid)) {
+			$dropSQL = "DROP TABLE " . $xoopsDB->prefix("formulize_" . $form_handle."_revisions");
+			if(!$dropRes = $xoopsDB->queryF($dropSQL)) {
+				print "Error: could not remove the revisions table for form $fid";
+			}	
 		}
 		// remove the entry owner groups info for that form
 		$ownershipSQL = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=$fid";
@@ -547,6 +616,11 @@ class formulizeFormsHandler {
 		if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
 			return false;
 		}
+		$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " DROP `" . $element->getVar('ele_handle') . "`";
+		if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
+			print "Error: could not remove element ".$element->getVar('ele_handle')." from the revisions table for form ". $formObject->getVar('form_handle');
+			return false;
+		}
 		return true;
 	}
 	
@@ -562,6 +636,11 @@ class formulizeFormsHandler {
 		$dataType = $dataType ? $dataType : "text";
 		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
 		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
+			return false;
+		}
+		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
+		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
+			print "Error: could not add element ".$element->getVar('ele_handle')." to the revisions table for form ". $formObject->getVar('form_handle');
 			return false;
 		}
 		return true;
@@ -588,6 +667,11 @@ class formulizeFormsHandler {
 		$newName = $newName ? $newName : $element->getVar('ele_handle');
 		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " CHANGE `$oldName` `$newName` ". $dataType; 
 		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
+		  return false;
+		}
+		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " CHANGE `$oldName` `$newName` ". $dataType; 
+		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
+		  print "Error: could not update the field name for $oldName in form ".$formObject->getVar('form_handle');
 		  return false;
 		}
 		return true;
@@ -759,7 +843,7 @@ class formulizeFormsHandler {
 	
 	function cloneForm($fid, $clonedata=false) {
 		if(is_object($fid)) {
-			if(!get_class("formulizeForm")) {
+			if(!get_class($fid) == "formulizeForm") {
 				return false;
 			}
 			$fid = $fid->getVar('id_form');
@@ -894,13 +978,20 @@ class formulizeFormsHandler {
 	}
 	
 
-	function renameDataTable($oldName, $newName) {
+	function renameDataTable($oldName, $newName, $formObject) {
 		global $xoopsDB;
 
 		$renameSQL = "RENAME TABLE " . $xoopsDB->prefix("formulize_" . $oldName) . " TO " . $xoopsDB->prefix("formulize_" . $newName) . ";";
     //print $renameSQL;
 		if(!$renameRes = $xoopsDB->queryF($renameSQL)) {
 		  return false;
+		}
+		if($this->revisionsTableExists($oldName)) { // check with the fid, which will force the method to get a cached version of the object, that will have the old name, so we can check against that name (form_settings_save.php sends the updated object with the new name)
+			$renameSQL = "RENAME TABLE " . $xoopsDB->prefix("formulize_" . $oldName."_revisions") . " TO " . $xoopsDB->prefix("formulize_" . $newName."_revisions") . ";";
+			if(!$renameRes = $xoopsDB->queryF($renameSQL)) {
+			  print "Error: could not rename the revisions table for form ".$formObject->getVar('form_handle');
+			  return false;
+			}
 		}
 		return true;
 	}

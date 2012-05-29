@@ -247,6 +247,7 @@ CREATE TABLE formulize_id (
   defaultlist int(11) NOT NULL default 0,
   menutext varchar(255) default NULL,
   form_handle varchar(255) NOT NULL default '',
+  store_revisions tinyint(1) NOT NULL default '0',
   PRIMARY KEY  (`id_form`),
   UNIQUE `desc_form_id` (`desc_form`)
 ) ENGINE=MyISAM;

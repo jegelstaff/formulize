@@ -87,6 +87,24 @@
 			</div>
 		</div>
 		<{/if}>
+			
+		<div class="accordion-box">
+			<div class="form-item">
+				<fieldset>
+					<legend><label class="question">Do you want to keep a revision history of all the changes people make to entries in this form?</label></legend>
+					<div class="form-radios">
+						<label for="store_revisions-0"><input type="radio" id="store_revisions-0" name="forms-store_revisions" value="0" />No</label>
+					</div>
+					<div class="form-radios">
+						<label for="store_revisions-1"><input type="radio" id="store_revisions-1" name="forms-store_revisions" value="1" />Yes, store revision history for this form</label>
+					</div>
+					<div class="description">
+						<p>This can increase the size of your database <b>a lot</b> if you turn on revisions for a form where entries are updated very often!</p>
+					</div>
+				</fieldset>
+			</div>
+		</div>
+					
 	
 	<{/if}>
 	
@@ -126,6 +144,7 @@
 </form>
 <script type="text/javascript">
   $("#<{$content.singleentry}>").attr('checked', true);
+  $("#store_revisions-<{$content.store_revisions}>").attr('checked', true);
 	
 	$("#forms-title").keydown(function () {
 		window.document.getElementById('reload_settings').value = 1;
