@@ -57,7 +57,7 @@ class formulizeAdvancedCalculation extends xoopsObject {
     $code = <<<EOD
 \$totalNumberOfRecords = 0;
 \$sql = "{$calculation['sql']}";
-\$res = \$xoopsDB->query(\$sql);
+\$res = \$xoopsDB->queryF(\$sql);
 {$calculation['preCalculate']}
 while(\$array = \$xoopsDB->fetchBoth(\$res)) {
   \$row = \$array;
@@ -102,7 +102,7 @@ EOD;
 foreach({$foreachCriteria}) {
   if(strlen(\$sql) > 500000) {
 		\$sql .= ")";
-    \$res[\$chunk] = \$xoopsDB->query(\$sql);
+    \$res[\$chunk] = \$xoopsDB->queryF(\$sql);
     \$chunk++;
     \$start = true;
     \$sql = \$sqlBase  . "(";
@@ -114,7 +114,7 @@ foreach({$foreachCriteria}) {
   \$start = false;
 }
 \$sql .= ")";
-\$res[\$chunk] = \$xoopsDB->query(\$sql);
+\$res[\$chunk] = \$xoopsDB->queryF(\$sql);
 {$calculation['preCalculate']}
 foreach(\$res as \$thisRes) {
   while(\$array = \$xoopsDB->fetchBoth(\$thisRes)) {
@@ -964,7 +964,7 @@ class formulizeAdvancedCalculationHandler {
     global $xoopsDB;
     if(isset($GLOBALS['formulize_procedures_tablenames'])) {
         $sql = "DROP TABLE `".implode("`, `",$GLOBALS['formulize_procedures_tablenames'])."`;";
-        if(!$res = $xoopsDB->query($sql)) {
+        if(!$res = $xoopsDB->queryF($sql)) {
         	print "Error: could not drop the temporary tables created by this procedure.<br>".mysql_error()."<br>$sql";
         }
         unset( $GLOBALS['formulize_procedures_tablenames'] );
@@ -1374,7 +1374,7 @@ function createProceduresTable($array, $permTableName = "") {
     $sql .= ") ENGINE=MyISAM;";
     global $xoopsDB;
    //print "$sql<br>";
-    if(!$res = $xoopsDB->query($sql)) {
+    if(!$res = $xoopsDB->queryF($sql)) {
 	print "Error: could not create table for the Procedure.<br>".mysql_error()."<br>$sql";
     } elseif(!$permTableName) {
 	$GLOBALS['formulize_procedures_tablenames'][] = $tablename;
@@ -1386,7 +1386,7 @@ function createProceduresTable($array, $permTableName = "") {
   if(strlen($sql) > 50000) {
     // need to do the interim query here because of the length of the query
    //print "$sql<br>";
-    if(!$res = $xoopsDB->query($sql)) {
+    if(!$res = $xoopsDB->queryF($sql)) {
 	print "Error: could not insert values into the table for the Procedure.<br>".mysql_error()."<br>$sql";
     }
     $start = true;
@@ -1435,7 +1435,7 @@ function createProceduresTable($array, $permTableName = "") {
 	$start = false;
     }
 
-    if(!$res = $xoopsDB->query($sql)) {
+    if(!$res = $xoopsDB->queryF($sql)) {
 	print "Error: could not insert values into the table for the Procedure.<br>".mysql_error()."<br>$sql";
     }
     
