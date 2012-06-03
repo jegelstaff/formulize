@@ -29,7 +29,7 @@ $wizard->setPage( 'start' );
 $pageHasForm = false;
 
 $content = "";
-include __DIR__."/language/$wizard->language/welcome.php";
+include "./language/$wizard->language/welcome.php";
 
 include 'install_tpl.php';
 ?>
