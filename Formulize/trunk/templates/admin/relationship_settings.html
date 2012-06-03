@@ -32,9 +32,17 @@
 <input type="hidden" name="formulize_admin_key" value="<{$content.frid}>">
 <input type="hidden" name="formulize_admin_op" value="">
 <input type="hidden" name="formulize_admin_lid" value="">
+<input type="hidden" name="aid" value="<{$content.aid}>">  
 
 
-<div class="panel-content content">
+<div class="pane-content content">
+  <{if $content.name}>
+  <fieldset>
+    <legend><{$smarty.const._AM_FRAME_NAME}></legend>
+    <input type="text" name="relationships-name" size="50" maxlength="255" value="<{$content.name}>" />
+  </fieldset>
+  <{/if}>
+
   <fieldset>
     <legend><{$smarty.const._AM_FRAME_ADDFORM}></legend>
     <table>

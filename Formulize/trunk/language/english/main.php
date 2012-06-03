@@ -111,6 +111,7 @@ define("_AM_FORMLINK_PICK", "Choose an option");
 define("_AM_CONFIRM_DEL", "You are about to delete this form!  All data in this form will be deleted too.  Please confirm.");
 
 define("_AM_FRAME_NEW", "Create a New Framework:");
+define("_AM_FRAME_NAME", "Relationship Name");
 define("_AM_FRAME_NEWBUTTON", "Create Now!");
 define("_AM_FRAME_EDIT", "Modify an Existing Framework:");
 define("_AM_FRAME_NONE", "No Frameworks Exist");

@@ -202,6 +202,7 @@ if($_GET['frid'] != "new") {
 // common values should be assigned to all tabs
 $common['name'] = $relationshipName;
 $common['frid'] = $frid;
+$common['aid'] = $aid;
 
 $adminPage['tabs'][1]['name'] = "Settings";
 $adminPage['tabs'][1]['template'] = "db:admin/relationship_settings.html";

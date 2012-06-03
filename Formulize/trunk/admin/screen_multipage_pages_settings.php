@@ -39,7 +39,7 @@ include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 require_once XOOPS_ROOT_PATH.'/class/template.php';
 require_once XOOPS_ROOT_PATH.'/class/theme.php';
 require_once XOOPS_ROOT_PATH.'/class/theme_blocks.php';
-$xoopsThemeFactory =& new xos_opal_ThemeFactory();
+$xoopsThemeFactory = new xos_opal_ThemeFactory();
 $xoTheme =& $xoopsThemeFactory->createInstance();
 $xoopsTpl =& $xoTheme->template;
 

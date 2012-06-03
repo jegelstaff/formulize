@@ -49,7 +49,7 @@ if($frid == "new") {
 	if(!$frid = $framework_handler->insert($frameworkObject)) {
 		print "Error: could not create the framework";
 	}
-	$redirectionURL = XOOPS_URL . "/modules/formulize/admin/ui.php?page=relationship&aid=".intval($_GET['aid'])."&frid=$frid";
+	$redirectionURL = XOOPS_URL . "/modules/formulize/admin/ui.php?page=relationship&aid=".intval($_POST['aid'])."&frid=$frid";
 }
 
 // save all changes, the user could have modified links and then clicked add or
@@ -138,6 +138,15 @@ function updateframe($cf) {
 			$fl_id = substr($key, 7);
       $links[$fl_id] = '*';
 			updatedisplays($fl_id, $value);
+		}
+		
+		if(substr($key, 0, 4) == "name") {
+		  $relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
+		  $relationship = $relationship_handler->get($cf);
+		  $relationship->setVar('name', $value);
+		  if(!$relationship_handler->insert($relationship)) {
+		    print "Error: could not update name of the relationship.";
+		  }
 		}
 	}
 
