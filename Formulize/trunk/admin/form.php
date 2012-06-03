@@ -256,7 +256,14 @@ if($_GET['fid'] != "new") {
   $store_revisions = 0;
   if($_GET['aid']) {
 	$formApplications = array(intval($_GET['aid']));
-  } 
+  }
+  $groupsCanEditDefaults = $xoopsUser->getGroups();
+  $member_handler = xoops_gethandler('member');
+  $allGroups = $member_handler->getGroups();
+  foreach($allGroups as $thisGroup) {
+	$groupsCanEditOptions[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name'); 	
+  }
+  
 }
 
 // get a list of all the custom element types that are present
@@ -327,6 +334,10 @@ $settings['menutext'] = $menutext;
 $settings['form_handle'] = $form_handle;
 $settings['store_revisions'] = $store_revisions;
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
+if(isset($groupsCanEditOptions)) {
+	$settings['groupsCanEditOptions'] = $groupsCanEditOptions;
+	$settings['groupsCanEditDefaults'] = $groupsCanEditDefaults;
+}
 
 $i = 1;
 $adminPage['tabs'][$i]['name'] = _AM_APP_SETTINGS;

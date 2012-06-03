@@ -73,6 +73,20 @@
 	</div>
 	<div style="clear: both;"></div>
 	
+		<{if $content.fid == "new"}>
+			<div class="accordion-box">
+			<div class="form-item">
+			<fieldset>
+				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_DEFAULT_GROUP_PERM}></label></legend>
+				<select name="groups_can_edit[]" multiple size=8>
+				<{html_options options=$content.groupsCanEditOptions selected=$content.groupsCanEditDefaults}>
+				</select>
+			</fieldset>
+			</div>
+			</div>
+			<div style="clear: both;"></div>
+		<{/if}>
+	
 		<{if $content.fid != "new" && $content.elementheadings|@count}>
 		<div class="accordion-box">
 			<div class="form-item">

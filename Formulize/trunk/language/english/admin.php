@@ -98,6 +98,8 @@ define("_AM_SETTINGS_FORM_ENTRIES_MORETHANONE","<b>More than one entry</b> per u
 define("_AM_SETTINGS_FORM_SHOWING_LIST","When showing a list of entries in this form, which elements should be displayed by default?");
 define("_AM_SETTINGS_FORM_APP_PART","Which applications is this form part of?");
 define("_AM_SETTINGS_FORM_APPNEW","Create a new application for this form to be part of?");
+define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have permission to alter this form's settings?");
+
 
 /*mod Language for permissions*/
 define("_AM_PERMISSIONS_CHOOSE_GROUPS","Which groups do you want to set permissions for?");
@@ -151,6 +153,7 @@ define("_AM_CALC_PROCEDURE_DESCR","Description of the Procedure:");
 define("_AM_CALC_PROCEDURE_SETTINGS","Settings for the Procedure: ");
 define("_AM_CALC_PROCEDURE_FILTER_CLONE"," Clone this filter and grouping option");
 define("_AM_CALC_PROCEDURE_FILTER_DELETE"," Delete this filter and grouping option");
+define("_AM_CALC_CREATE_NEW", "Create a new Procedure");
 
 /*mod Language for screens*/
 define("_AM_SCREEN_EXPLAIN","<p><i>Screens</i> let you show users different versions of the form, and the entries people have made in the form.  One screen might be a list of entries, another might be a control panel for administrators to edit and delete entries, another might be a multi-page version of a form.  You can have as many different screens as you want, all based on the same underlying form.</p>
