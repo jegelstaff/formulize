@@ -102,15 +102,15 @@ $(document).ready(function() {
 <h1><{$adminPage.pagetitle}></h1>
 <p class="smallhead"><{$adminPage.pagesubtitle}></p>
 <{if $lasturl}>
-<p><a href="ui.php?<{$lasturl}>">Go Back to <i><{$lasttext}></i></a></p>
+<p><a href="ui.php?<{$lasturl}>"><{$smarty.const._AM_HOME_GOBACKTO}><i><{$lasttext}></i></a></p>
 <{/if}>
 <{/if}>
 
 <!-- modified by Freeform Solutions, S.Gray, April 11, 2011 -->
 <{if $adminPage.needsave}>
 <div id="admin_toolbar">
-<div id=savebutton><input type="button" class="savebutton" value="Save your changes"/></div>
-<div id="savewarning" class="ui-corner-all">You have unsaved changes!</div>
+<div id=savebutton><input type="button" class="savebutton" value="<{$smarty.const._AM_HOME_SAVECHANGES}>"/></div>
+<div id="savewarning" class="ui-corner-all"><{$smarty.const._AM_HOME_WARNING_UNSAVED}></div>
 </div> <!-- /admin_toolbar -->
 <{/if}>
 

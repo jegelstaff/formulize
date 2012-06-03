@@ -373,55 +373,55 @@ if($res = $xoopsDB->query($sql)) {
 
 
 // define tabs for screen sub-page
-$adminPage['tabs'][1]['name'] = "Settings";
+$adminPage['tabs'][1]['name'] = _AM_APP_SETTINGS;
 $adminPage['tabs'][1]['template'] = "db:admin/screen_settings.html";
 $adminPage['tabs'][1]['content'] = $settings + $common;
 
 if($_GET['sid'] != "new" && $settings['type'] == 'form') {
-  $adminPage['tabs'][2]['name'] = "Options";
+  $adminPage['tabs'][2]['name'] = _AM_ELE_OPT;
   $adminPage['tabs'][2]['template'] = "db:admin/screen_form_options.html";
   $adminPage['tabs'][2]['content'] = $options + $common;
 }
 
 if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
-  $adminPage['tabs'][2]['name'] = "Options";
+  $adminPage['tabs'][2]['name'] = _AM_ELE_OPT;
   $adminPage['tabs'][2]['template'] = "db:admin/screen_multipage_options.html";
   $adminPage['tabs'][2]['content'] = $multipageOptions + $common;
 
-  $adminPage['tabs'][3]['name'] = "Text";
+  $adminPage['tabs'][3]['name'] = _AM_FORM_SCREEN_TEXT;
   $adminPage['tabs'][3]['template'] = "db:admin/screen_multipage_text.html";
   $adminPage['tabs'][3]['content'] = $multipageText + $common;
 
-  $adminPage['tabs'][4]['name'] = "Pages";
+  $adminPage['tabs'][4]['name'] = _AM_FORM_SCREEN_PAGES;
   $adminPage['tabs'][4]['template'] = "db:admin/screen_multipage_pages.html";
   $adminPage['tabs'][4]['content'] = $multipagePages + $common;
 }
 
 if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   
-  $adminPage['tabs'][2]['name'] = "Entries to Display";
+  $adminPage['tabs'][2]['name'] = _AM_FORM_SCREEN_ENTRIES_DISPLAY;
   $adminPage['tabs'][2]['template'] = "db:admin/screen_list_entries.html";
   $adminPage['tabs'][2]['content'] = $entries + $common;
 
-  $adminPage['tabs'][3]['name'] = "Headings and Interface";
+  $adminPage['tabs'][3]['name'] = _AM_FORM_SCREEN_HEADINGS_INTERFACE;
   $adminPage['tabs'][3]['template'] = "db:admin/screen_list_headings.html";
   $adminPage['tabs'][3]['content'] = $headings + $common;
 
-  $adminPage['tabs'][4]['name'] = "Action Buttons";
+  $adminPage['tabs'][4]['name'] = _AM_FORM_SCREEN_ACTION_BUTTONS;
   $adminPage['tabs'][4]['template'] = "db:admin/screen_list_buttons.html";
   $adminPage['tabs'][4]['content'] = $buttons + $common;
 
-  $adminPage['tabs'][5]['name'] = "Custom buttons";
+  $adminPage['tabs'][5]['name'] = _AM_FORM_SCREEN_CUSTOM_BUTTONS;
   $adminPage['tabs'][5]['template'] = "db:admin/screen_list_custom.html";
   $adminPage['tabs'][5]['content'] = $custom + $common;
   
-  $adminPage['tabs'][6]['name'] = "Templates";
+  $adminPage['tabs'][6]['name'] = _AM_FORM_SCREEN_TEMPLATES;
   $adminPage['tabs'][6]['template'] = "db:admin/screen_list_templates.html";
   $adminPage['tabs'][6]['content'] = $templates + $common;
 
 }
 
-$adminPage['pagetitle'] = "Screen: ".$screenName;
+$adminPage['pagetitle'] = _AM_FORM_SCREEN.$screenName;
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";

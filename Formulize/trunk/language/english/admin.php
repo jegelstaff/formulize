@@ -1,4 +1,191 @@
 <?php
+/*mod Language for admin side, by François T*/
+
+/*mod Language for applications*/
+define("_AM_APP_APPLICATION","Application: ");
+define("_AM_APP_SETTINGS","Settings");
+define("_AM_APP_FORMS","Forms");
+define("_AM_APP_FORM","Form: ");
+define("_AM_APP_RELATIONSHIPS_CREATE"," Create a new relationship");
+define("_AM_APP_RELATIONSHIPS_DELETE_CONFIRM","Are you sure you want to delete this relationship, and all its links?");
+define("_AM_APP_RELATIONSHIPS","Relationships");
+define("_AM_APP_FORMWITHNOAPP","Forms that don't belong to an application");
+define("_AM_APP_SCREENS","Screens");
+define("_AM_APP_NEWFORM","New form");
+define("_AM_APP_USETITLE","Use the form's title");
+define("_AM_APP_NAMEQUESTION","What is the name of this Application?");
+define("_AM_APP_DESCQUESTION","Description of this application:");
+define("_AM_APP_FORMSIN","Forms in this application:");
+define("_AM_APP_CONFIGURE","Configure");
+define("_AM_APP_VIEW_DEFAULT_SCREEN","View (with the Default Screen's options)");
+define("_AM_APP_VIEW_OPTIONS_SCREEN","View (with all screen options on)");
+define("_AM_APP_CLONE_SIMPLY","Clone");
+define("_AM_APP_CLONE_WITHDATA","Clone with data");
+define("_AM_APP_LOCKDOWN","Lockdown");
+define("_AM_APP_DELETE_FORM","Delete");
+define("_AM_APP_CREATE_NEW_SCREEN","Create a new screen");
+define("_AM_APP_DEFAULTSCREENS","Default Screens:");
+define("_AM_APP_MORESCREENS","...more screens");
+
+
+
+
+
+/*mod Language for home*/
+define("_AM_HOME_PREF"," Formulize Preferences");
+define("_AM_HOME_NEWDATATABLE"," Create a new reference to a datatable");
+define("_AM_HOME_MANAGEAPP","Manage your applications");
+define("_AM_HOME_NEWFORM"," Create a new form");
+define("_AM_HOME_CONFIRMDELETEFORM","Are you sure you want to delete this form?  All data associated with this form will be lost.");
+define("_AM_HOME_CONFIRMDELETEAPP","Are you sure you want to delete this application?  All the forms will be unaffected, but the application will no longer appear in the application list.");
+define("_AM_HOME_CONFIRMLOCKDOWN","Are you sure you want to lockdown this form?  You will be unable to change any of the configuration settings for the form or its elements once the form is locked down.");
+define("_AM_HOME_APP_CONFIG","Configure this application and the relationships of its forms");
+define("_AM_HOME_APP_DELETE","Delete this application");
+define("_AM_HOME_APP_DESC","To assign a form to an application, look on the Settings tab when configuring the form.");
+define("_AM_HOME_APP_RELATION","Configure relationships (frameworks) for these forms");
+define("_AM_HOME_GOBACKTO","Go Back to ");
+define("_AM_HOME_SAVECHANGES","Save your changes");
+define("_AM_HOME_WARNING_UNSAVED","You have unsaved changes!");
+
+
+
+
+/*mod Language for elements*/
+define("_AM_ELE_NAMEANDSETTINGS","Name & Settings");
+define("_AM_ELE_DISPLAYSETTINGS","Display Settings");
+define("_AM_ELE_CONVERT_ML", "Convert to multi-line text box");
+define("_AM_ELE_CONVERT_SL", "Convert to single-line text box");
+define("_AM_ELE_CONVERT_CB", "Convert to check boxes");
+define("_AM_ELE_CONVERT_RB", "Convert to radio buttons.");
+define("_AM_ELE_ADDINGTOFORM","Add elements to the form");
+define("_AM_ELE_MANAGINGELEFORM","Manage the elements in the form");
+define("_AM_ELE_CLICKTOADD","Click an element name to add it");
+define("_AM_ELE_CLICKDRAGANDDROP","Click and drag the elements to re-order them");
+define("_AM_ELE_MLTEXT", "Multi-line text box");
+define("_AM_ELE_DROPDORLIST", "(Dropdown box or List box)");
+define("_AM_ELE_SELECTEXPLAIN","Select box (dropdowns and list boxes)");
+define("_AM_ELE_DATEBOX","Date box");
+define("_AM_ELE_SUBFORMEXPLAIN", "Subform (another form with a relationship to this one)");
+define("_AM_ELE_LINKSELECTEDABOVE", "Use the linked field selected above");
+define("_AM_ELE_VALUEINLIST", "Use the value displayed in the list");
+define("_AM_ELE_LINKFIELD_ITSELF", "Use the linked field itself (alphabetical sort)");
+define("_AM_CONVERT_RB_CB", "Convert these radio buttons to checkboxes?");
+define("_AM_CONVERT_CB_RB", "Convert these checkboxes to radio buttons?");
+
+/*mod Language for form*/
+define("_AM_FORM_CREATE"," Create a new form");
+define("_AM_FORM_CREATE_EXPLAIN","To assign a form to an application, look on the Settings tab when configuring the form.");
+define("_AM_FORM_SCREEN","Screen: ");
+define("_AM_FORM_SCREEN_TEXT","Text");
+define("_AM_FORM_SCREEN_PAGES","Pages");
+define("_AM_FORM_SCREEN_ENTRIES_DISPLAY","Entries to display");
+define("_AM_FORM_SCREEN_HEADINGS_INTERFACE","Headings and Interface");
+define("_AM_FORM_SCREEN_ACTION_BUTTONS","Action Buttons");
+define("_AM_FORM_SCREEN_CUSTOM_BUTTONS","Custom buttons");
+define("_AM_FORM_SCREEN_TEMPLATES","Templates");
+define("_AM_SETTINGS_FORM_TITLE_QUESTION","What is the name of the form?");
+define("_AM_SETTINGS_FORM_TITLE","Form title: ");
+define("_AM_SETTINGS_MENU_ENTRY","Menu entry: ");
+define("_AM_SETTINGS_MENU_LEAVE","Leave the 'menu entry' blank to remove this form from the default menu block");
+define("_AM_SETTINGS_FORM_HANDLE","Form handle");
+define("_AM_SETTINGS_FORM_HANDLE_EXPLAIN","Optional. The name will you use to refer to this form in programming code and in the database. Defaults to the form ID number.");
+define("_AM_SETTINGS_FORM_DATABASE","Which database table should this 'form' point to?");
+define("_AM_SETTINGS_FORM_DATABASE_EXPLAIN","Type the exact name, including the prefix, ie: mysite_groups");
+define("_AM_SETTINGS_FORM_ENTRIES_ALLOWED","How many entries are allowed in this form?");
+define("_AM_SETTINGS_FORM_ENTRIES_ONEPERGROUP","One entry per <b>group</b>");
+define("_AM_SETTINGS_FORM_ENTRIES_ONEPERUSER","One entry per <b>user</b>");
+define("_AM_SETTINGS_FORM_ENTRIES_MORETHANONE","<b>More than one entry</b> per user");
+define("_AM_SETTINGS_FORM_SHOWING_LIST","When showing a list of entries in this form, which elements should be displayed by default?");
+define("_AM_SETTINGS_FORM_APP_PART","Which applications is this form part of?");
+define("_AM_SETTINGS_FORM_APPNEW","Create a new application for this form to be part of?");
+
+/*mod Language for permissions*/
+define("_AM_PERMISSIONS_CHOOSE_GROUPS","Which groups do you want to set permissions for?");
+define("_AM_PERMISSIONS_LIST_GROUPS","List groups alphabetically or in creation order?");
+define("_AM_PERMISSIONS_LIST_ALPHA","Alphabetical");
+define("_AM_PERMISSIONS_LIST_CREATION","Creation order");
+define("_AM_PERMISSIONS_LIST_ONCE","Select a list of groups at once");
+define("_AM_PERMISSIONS_LIST_SAVE","Save these groups as a list");
+define("_AM_PERMISSIONS_LIST_REMOVE","Remove the selected list");
+define("_AM_PERMISSIONS_SAME_CHECKBOX","Set the same checkboxes for all groups?");
+define("_AM_PERMISSIONS_SAME_CHECKBOX_YES","Yes, when I check a box for one group, check it for all groups");
+define("_AM_PERMISSIONS_SAME_CHECKBOX_NO","No, I will set each group individually");
+define("_AM_PERMISSIONS_SAME_CHECKBOX_EXPLAIN","You can change this setting at any time while you are adjusting the checkboxes.  Set it to <b>Yes</b>, to quickly set some checkboxes the same for all groups.  Change it to <b>No</b> when you need to set specific checkboxes for only certain groups.");
+define("_AM_PERMISSIONS_SELECT_GROUP","Select some groups to see their permissions");
+define("_AM_PERMISSIONS_DEFINE_BASIC","The basics:");
+define("_AM_PERMISSIONS_DEFINE_VIEWFORM","View the form");
+define("_AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES","Create their own entries in the form");
+define("_AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES","Update entries <i>made by themselves</i>");
+define("_AM_PERMISSIONS_DEFINE_UPDATEOTHERENTRIES","Update entries <i>made by other people</i>");
+define("_AM_PERMISSIONS_DEFINE_DELETEOWNENTRIES","Delete entries <i>made by themselves</i>");
+define("_AM_PERMISSIONS_DEFINE_DELETEOTHERENTRIES","Delete entries <i>made by other people</i>");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY","Visibility:");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_PRIVATE","View elements in the form that are marked as 'private'");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_THEIROWN","View their own entries (always on)");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL","View entries by all other users in all groups");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPONLY","View entries by other users from these groups only:");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER","All the groups the user is a member of, that can view the form");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_DISABLED","disabled");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_CONDITIONS","View only entries that meet these conditions:");
+define("_AM_PERMISSIONS_DEFINE_VIEW_CONDITIONS","Publishing 'Saved Views' of form entries:");
+define("_AM_PERMISSIONS_DEFINE_VIEW_THEIROWN","Create, update, delete their own 'saved views' (always on)");
+define("_AM_PERMISSIONS_DEFINE_VIEW_INTHEIR","Publish 'saved views' for other users <i>in their group(s)</i>");
+define("_AM_PERMISSIONS_DEFINE_VIEW_FOROTHER","Publish 'saved views' for other users <i>in any group</i>");
+define("_AM_PERMISSIONS_DEFINE_VIEW_UPDATE","Update 'saved views' that other people have published");
+define("_AM_PERMISSIONS_DEFINE_VIEW_DELETE","Delete 'saved views' that other people have published");
+define("_AM_PERMISSIONS_ADVANCED","Advanced options:");
+define("_AM_PERMISSIONS_ADVANCED_IMPORT","Import data from a spreadsheet");
+define("_AM_PERMISSIONS_ADVANCED_NOTIFICATIONS","Create notifications that get sent to other users");
+define("_AM_PERMISSIONS_ADVANCED_CREATEFOROTHER","Create entries on behalf of other users");
+define("_AM_PERMISSIONS_ADVANCED_CHANGEOWNER","Change the owner/creator of an existing entry");
+define("_AM_PERMISSIONS_ADVANCED_ALTER","Alter this form's configuration settings");
+define("_AM_PERMISSIONS_ADVANCED_DELETEFORM","Delete this form");
+
+/*mod Language for procedures*/
+define("_AM_CALC_EXPLAIN","let you create a series of queries and logical steps, that get carried out on the data that users have submitted in the form.  You can use Procedures for advanced, multi-step calculations, or any other situation where a single query or single operation is not enough to get to the outcome you want.");
+define("_AM_CALC_CLONE"," Clone");
+define("_AM_CALC_DELETE"," Delete");
+define("_AM_CALC_CONFIRM_DELETE","Are you sure you want to delete this procedure?  All settings for this procedure will be lost!");
+define("_AM_CALC_PROCEDURE_NAME","Name of the Procedure");
+define("_AM_CALC_PROCEDURE_DESCR","Description of the Procedure:");
+define("_AM_CALC_PROCEDURE_SETTINGS","Settings for the Procedure: ");
+define("_AM_CALC_PROCEDURE_FILTER_CLONE"," Clone this filter and grouping option");
+define("_AM_CALC_PROCEDURE_FILTER_DELETE"," Delete this filter and grouping option");
+
+/*mod Language for screens*/
+define("_AM_SCREEN_EXPLAIN","<p><i>Screens</i> let you show users different versions of the form, and the entries people have made in the form.  One screen might be a list of entries, another might be a control panel for administrators to edit and delete entries, another might be a multi-page version of a form.  You can have as many different screens as you want, all based on the same underlying form.</p>
+	<p>Each screen has its own URL, and can be included in any navigation structure you wish to use.  Screens can also be embedded in any PHP web page, anywhere on your web server, even inside other software like Wordpress or Drupal.  See the <i>Settings</i> page of each screen for details.</p>
+	<p>When someone visits a Formulize form, but no specific screen has been requested in the URL, then the user will get either the default list of entries screen, or the default form screen.  Formulize will figure out what the user should see, based on the configuration and permission settings for the form.</p><br>");
+define("_AM_SCREEN_CREATE"," Create a new Screen");
+define("_AM_SCREEN_FORMSCREENS","Form Screens");
+define("_AM_SCREEN_LISTSCREENS","List Screens");
+define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? All configuration settings for this screen will be lost!");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*End mod Language for admin side, by François T*/
+
 // Admin
 define("_FORM_RENAME_TEXT", "Rename this form");
 define("_FORM_EDIT_ELEMENTS_TEXT", "Edit this form's elements");
@@ -50,6 +237,8 @@ define("_AM_ELE_PRIVATE","Private");
 define("_AM_ELE_HANDLE_HEADING","Data handle/ID");
 define("_AM_ELE_TYPE_HEADING","Type");
 define("_AM_ELE_DISPLAY_HEADING","Display");
+
+
 
 
 define("_AM_ELE_TEXT","Text box");

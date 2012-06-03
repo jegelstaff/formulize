@@ -360,11 +360,11 @@ if($ele_type=='text') {
   if($options['islinked']) {
 	$linkedMetaDataParts = explode("#*=:*", $ele_value[2]);
 	$linkedSourceFid = $linkedMetaDataParts[0];
-	list($listValue, $selectedListValue) = createFieldList($ele_value[10], false, $linkedSourceFid, "elements-ele_value[10]", "Use the linked field selected above");
+	list($listValue, $selectedListValue) = createFieldList($ele_value[10], false, $linkedSourceFid, "elements-ele_value[10]", _AM_ELE_LINKSELECTEDABOVE);
 	$options['listValue'] = $listValue->render();
-	list($exportValue, $selectedExportValue) = createFieldList($ele_value[11], false, $linkedSourceFid, "elements-ele_value[11]", "Use the value displayed in the list");
+	list($exportValue, $selectedExportValue) = createFieldList($ele_value[11], false, $linkedSourceFid, "elements-ele_value[11]", _AM_ELE_VALUEINLIST);
 	$options['exportValue'] = $exportValue->render();
-	list($optionSortOrder, $selectedOptionsSortOrder) = createFieldList($ele_value[12], false, $linkedSourceFid, "elements-ele_value[12]", "Use the linked field itself (alphabetical sort)");
+	list($optionSortOrder, $selectedOptionsSortOrder) = createFieldList($ele_value[12], false, $linkedSourceFid, "elements-ele_value[12]", _AM_ELE_LINKFIELD_ITSELF);
 	$options['optionSortOrder'] = $optionSortOrder->render();
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 	$linkedDataHandler = new formulizeDataHandler($linkedSourceFid);
@@ -422,7 +422,7 @@ $display['groups'] = $groups;
 
 
 $tabindex = 1;
-$adminPage['tabs'][$tabindex]['name'] = "Names & Settings";
+$adminPage['tabs'][$tabindex]['name'] = _AM_ELE_NAMEANDSETTINGS;
 $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_names.html";
 $adminPage['tabs'][$tabindex]['content'] = $names+$common;
 
@@ -436,7 +436,7 @@ if($ele_type!='colorpick') {
   }
 }
   
-$adminPage['tabs'][++$tabindex]['name'] = "Display Settings";
+$adminPage['tabs'][++$tabindex]['name'] = _AM_ELE_DISPLAYSETTINGS;
 $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_display.html";
 $adminPage['tabs'][$tabindex]['content'] = $display + $common;
   
@@ -448,7 +448,7 @@ if($advanced['datatypeui'] OR $advanced['ele_encrypt_show']) {
 
 $adminPage['pagetitle'] = "Element: ".$elementName;
 if($ele_id == "new" AND $ele_type == "select") {
-  $adminPage['pagesubtitle'] = "(Dropdown box or List box)";
+  $adminPage['pagesubtitle'] = _AM_ELE_DROPDORLIST;
 } else {
   $adminPage['pagesubtitle'] = "(".convertTypeToText($ele_type, $ele_value).")";
 }

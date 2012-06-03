@@ -39,7 +39,7 @@ $application_handler = xoops_getmodulehandler('applications','formulize');
 $allApps = $application_handler->getAllApplications();
 
 if($aid == 0) {
-	$appName = "Forms with no app"; 
+	$appName = _AM_APP_FORMWITHNOAPP; 
 } else {
 	$appObject = $application_handler->get($aid);
 	$appName = $appObject->getVar('name');
@@ -83,19 +83,19 @@ if($_GET['fid'] != "new") {
     $ele_type = $thisElement->getVar('ele_type');
     switch($ele_type) {
       case("text"):
-        $converttext = "Convert to multi-line text box";
+        $converttext = _AM_ELE_CONVERT_ML;
         $linktype = "textarea";
         break;
       case("textarea"):
-        $converttext = "Convert to single-line text box";
+        $converttext = _AM_ELE_CONVERT_SL;
         $linktype = "text";
         break;
       case("radio"):
-        $converttext = "Convert to check boxes";
+        $converttext = _AM_ELE_CONVERT_CB;
         $linktype = "checkbox";
         break;
       case("checkbox"):
-        $converttext = "Convert to radio buttons";
+        $converttext = _AM_ELE_CONVERT_RB;
         $linktype = "radio";
         break;
       default:
@@ -247,11 +247,11 @@ if($_GET['fid'] != "new") {
   if($_GET['tableform']) {
     $newtableform = true;
   }
-  $formName = "New form";
+  $formName = _AM_APP_NEWFORM;
   $singleentry = "off"; // need to send a default for this
   $defaultform = 0;
   $defaultlist = 0;
-  $menutext = "Use the form's title";
+  $menutext = _AM_APP_USETITLE;
   $form_handle = "";
   $store_revisions = 0;
   if($_GET['aid']) {
@@ -329,7 +329,7 @@ $settings['store_revisions'] = $store_revisions;
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
 
 $i = 1;
-$adminPage['tabs'][$i]['name'] = "Settings";
+$adminPage['tabs'][$i]['name'] = _AM_APP_SETTINGS;
 $adminPage['tabs'][$i]['template'] = "db:admin/form_settings.html";
 $adminPage['tabs'][$i]['content'] = $settings + $common;
 $adminPage['tabs'][$i]['content']['applications'] = $applications;
@@ -383,7 +383,7 @@ if($fid != "new") {
 	
 }
 
-$adminPage['pagetitle'] = "Form: ".$formName;
+$adminPage['pagetitle'] = _AM_APP_FORM.$formName;
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";

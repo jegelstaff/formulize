@@ -13,29 +13,29 @@
 <input type="hidden" name="elementorder" value="">	
 	
 <div class="accordion-box">
-	<h2>Add elements to the form</h2>
-	<p>Click an element name to add it</p>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><img src="../images/filenew2.png"> Text box</a></p>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea"><img src="../images/filenew2.png"> Multi-line text box</a></p>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=areamodif"><img src="../images/filenew2.png"> Text for display (left and right cells)</a></p>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=ib"><img src="../images/filenew2.png"> Text for display (spanning both cells)</a></p>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=select"><img src="../images/filenew2.png"> Select box (dropdowns and list boxes)</a></p>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkbox"><img src="../images/filenew2.png"> Check boxes</a></p>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=radio"><img src="../images/filenew2.png"> Radio buttons</a></p>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=yn"><img src="../images/filenew2.png"> Yes/No radio buttons</a></p>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=date"><img src="../images/filenew2.png"> Date box</a></p>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subform"><img src="../images/filenew2.png"> Subform (another form with a relationship to this one)</a></p>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=grid"><img src="../images/filenew2.png"> Table of existing elements (place BEFORE the elements it contains)</a></p>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived"><img src="../images/filenew2.png"> Value derived from other elements</a></p>
-			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick"><img src="../images/filenew2.png"> Color picker</a></p>
+	<h2><{$smarty.const._AM_ELE_ADDINGTOFORM}></h2>
+	<p><{$smarty.const._AM_ELE_CLICKTOADD}></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_TEXT}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MLTEXT}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=areamodif"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MODIF}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=ib"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MODIF_ONE}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=select"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_SELECTEXPLAIN}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkbox"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_CHECK}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=radio"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_RADIO}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=yn"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_YN}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=date"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_DATEBOX}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subform"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_SUBFORMEXPLAIN}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=grid"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_GRID}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_DERIVED}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_COLORPICK}></a></p>
 			<{foreach item=customElement from=$content.customElements}>
 			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=<{$customElement.type}>"><img src="../images/filenew2.png"> <{$customElement.name}></a></p>	
 			<{/foreach}>
 </div>
 
 <div class="accordion-box-wide">
-<h2>Manage the elements in the form</h2>
-<p>Click and drag the elements to re-order them</p>
+<h2><{$smarty.const._AM_ELE_MANAGINGELEFORM}></h2>
+<p><{$smarty.const._AM_ELE_CLICKDRAGANDDROP}></p>
 		<div id="sortable-list">
 <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.elements}>
 		</div>
@@ -51,7 +51,7 @@ $(".clonelink").click(function () {
 });
 
 $(".deletelink").click(function () {
-	var answer = confirm("Are you sure you want to delete this element?  All data users have entered into this element will be lost!");
+	var answer = confirm("<{$smarty.const._AM_ELE_CONFIRM_DELETE}>");
 	if(answer) {
 		$("[name=deleteelement]").val($(this).attr('target'));
 		$("[name=reload_elements]").val(1);
@@ -61,7 +61,7 @@ $(".deletelink").click(function () {
 });
 
 $(".converttotextarea").click(function () {
-	var answer = confirm("Convert this text box to a multi-line text box?");
+	var answer = confirm("<{$smarty.const._AM_CONVERTTEXT_HELP}>");
 	if(answer) {
 		$("[name=convertelement]").val($(this).attr('target'));
 		$("[name=reload_elements]").val(1);
@@ -71,7 +71,7 @@ $(".converttotextarea").click(function () {
 });
 
 $(".converttotext").click(function () {
-	var answer = confirm("Convert this multi-line text box to a single-line text box?");
+	var answer = confirm("<{$smarty.const._AM_CONVERTTEXTAREA_HELP}>");
 	if(answer) {
 		$("[name=convertelement]").val($(this).attr('target'));
 		$("[name=reload_elements]").val(1);
@@ -80,7 +80,7 @@ $(".converttotext").click(function () {
 	return false;
 });
 $(".converttocheckbox").click(function () {
-	var answer = confirm("Convert these radio buttons to checkboxes?");
+	var answer = confirm("<{$smarty.const._AM_CONVERT_RB_CB}>");
 	if(answer) {
 		$("[name=convertelement]").val($(this).attr('target'));
 		$("[name=reload_elements]").val(1);
@@ -89,7 +89,7 @@ $(".converttocheckbox").click(function () {
 	return false;
 });
 $(".converttoradio").click(function () {
-	var answer = confirm("Convert these checkboxes to radio buttons?");
+	var answer = confirm("<{$smarty.const._AM_CONVERT_CB_RB}>");
 	if(answer) {
 		$("[name=convertelement]").val($(this).attr('target'));
 		$("[name=reload_elements]").val(1);

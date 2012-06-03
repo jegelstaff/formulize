@@ -139,7 +139,7 @@ $common['name'] = $appName;
 $i=0;
 if($aid > 0) {
 	$i++;
-	$adminPage['tabs'][$i]['name'] = "Settings";
+	$adminPage['tabs'][$i]['name'] = _AM_APP_SETTINGS;
 	$adminPage['tabs'][$i]['template'] = "db:admin/application_settings.html";
 	$adminPage['tabs'][$i]['content'] = $common;
 	$adminPage['tabs'][$i]['content']['description'] = $appDesc;
@@ -153,12 +153,12 @@ $adminPage['tabs'][$i]['content'] = $common;
 $adminPage['tabs'][$i]['content']['forms'] = $formsInApp; 
 
 $i++;
-$adminPage['tabs'][$i]['name'] = "Relationships";
+$adminPage['tabs'][$i]['name'] = _AM_APP_RELATIONSHIPS;
 $adminPage['tabs'][$i]['template'] = "db:admin/application_relationships.html";
 $adminPage['tabs'][$i]['content'] = $common;
 $adminPage['tabs'][$i]['content']['relationships'] = $relationships; 
 
-$adminPage['pagetitle'] = "Application: ".$appName;
+$adminPage['pagetitle'] = _AM_APP_APPLICATION.$appName;
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";

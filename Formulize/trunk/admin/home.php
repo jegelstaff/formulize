@@ -52,7 +52,7 @@ function readApplicationData($aid, $apps) {
   global $form_handler, $application_handler, $gperm_handler, $screen_handler, $xoopsUser;
   $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
   if($aid == 0) {
-    $apps[$i]['name'] = "Forms that don't belong to an application";
+    $apps[$i]['name'] = _AM_APP_FORMWITHNOAPP;
     $apps[$i]['content']['description'] = "";
   } else {
     $thisAppObject = $application_handler->get($aid);
