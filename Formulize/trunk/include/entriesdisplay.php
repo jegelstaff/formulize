@@ -1220,6 +1220,10 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	// lockedColumns is the list of columns that the user has locked in place...however it is relative to the currently active columns...changing columns while columns are locked may have unexpected results!
 	print "<input type=hidden name=formulize_lockedColumns id=formulize_lockedColumns value=\"".implode(",",$lockedColumns)."\"></input>\n";
 
+	// scroll x and y are used to retain the scroll position after the page reloads
+	print "<input type=hidden name=formulize_scrollx id=formulize_scrollx value=\"\"></input>\n";
+	print "<input type=hidden name=formulize_scrolly id=formulize_scrolly value=\"\"></input>\n";
+
 	$useXhr = false;
 	if($screen) {
 		if($screen->getVar('dedisplay')) {
@@ -3332,6 +3336,8 @@ function forceQ() {
 }
 
 function showLoading() {
+	window.document.controls.formulize_scrollx.value = jQuery(window).scrollTop();
+	window.document.controls.formulize_scrolly.value = jQuery(window).scrollLeft();
 	<?php
 		if($useWorking) {
 			print "window.document.getElementById('listofentries').style.opacity = 0.5;\n";
@@ -3430,6 +3436,9 @@ jQuery(window).load(function() {
 		toggleColumnInFloat(column);
 		return false;
 	});
+	
+	jQuery(window).scrollTop(<?php print intval($_POST['formulize_scrollx']); ?>);
+	jQuery(window).scrollLeft(<?php print intval($_POST['formulize_scrolly']); ?>);
 
 <?php
 

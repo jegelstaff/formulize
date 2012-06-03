@@ -70,7 +70,7 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 }
 
 /*=== Formulize Boutons by Francois T ===*/
-#formulize_addButton {
+#formulize_addButton, #formulize_addProxyButton {
     text-indent:45px;	
     background:#2F85DC url('<?php print XOOPS_URL; ?>/modules/formulize/images/contact-new.png') no-repeat 10px;
     width: 210px !important;
@@ -121,7 +121,10 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 #formulize_deleteViewButton {
     background:#61A6EE url('<?php print XOOPS_URL; ?>/modules/formulize/images/finddel.png') no-repeat 10px;
 }
-
+#formulize_saveButton {
+    background-color: #61A6EE;
+    text-indent: 0px;
+}
 
 /*=== End of Formulize Boutons ===*/
 
