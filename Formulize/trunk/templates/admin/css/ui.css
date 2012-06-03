@@ -170,6 +170,25 @@ div#tabs li {
 	/*width: 60em;*/
 }
 
+div.float-left {
+	float: left;
+}
+
+div.half-width {
+	width: 50%;
+}
+
+div.clear-both {
+	clear: both;
+}
+
+div.save-view-access {
+	margin-left: 55%;
+	margin-right: 15px;
+	border:1px solid #0085B6;
+	padding: 10px;
+}
+
 
 /* modified by S.Gray, April 11, 2011, floating save button so save button is always visible */
 /* uses jQuery, see: http://michelgotta.posterous.com/sticky-scrolling-shoppingcart-with-jquery */

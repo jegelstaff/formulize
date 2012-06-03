@@ -125,6 +125,7 @@ if($isNew) {
 
 $screen->setVar('title',$screens['title']);
 $screen->setVar('fid',$fid);
+$originalFrid = $screen->getVar('frid');
 $screen->setVar('frid',$screens['frid']);
 $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);
@@ -137,5 +138,8 @@ if($isNew) {
   // send code to client that will to be evaluated
   $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&tab=settings&aid=".$aid.'&fid='.$fid.'&sid='.$sid;
   print '/* eval */ window.location = "'.$url.'";';
+} elseif($originalFrid != $screens['frid']) {
+  print '/* eval */ reloadWithScrollPosition();';
+  
 }
 ?>

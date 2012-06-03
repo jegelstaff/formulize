@@ -581,6 +581,8 @@ define("_AM_FORMULIZE_SCREEN_LOE_BUTTON2", "' button?");
 define("_AM_FORMULIZE_SCREEN_LOE_CONFIGINTRO", "Specify which configuration options you want to use:");
 define("_AM_FORMULIZE_SCREEN_LOE_CURRENTVIEWLIST", "What text should introduce the 'Current View' list?");
 define("_AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW", "Which published view should be used as the default view?");
+define("_AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW", "Configure the available views for this screen");
+define("_AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW_DETAILS", "This link will open a new page that shows the master version of the list of entries, where you can manage the views.  If a relationship is in effect for this screen, then it will be active on the page that opens.");
 define("_AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW", "Use a blank default view (ie: display no entries)");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW", "If you are customizing the list template, the default view will still be used to control which entries are initially included in the list.");
 define("_AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS", "If the 'Current View' list is in use, include these views:");

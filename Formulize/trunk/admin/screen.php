@@ -167,6 +167,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   $entries['entriesperpage'] = $screen->getVar('entriesperpage');
   $entries['viewentryscreenoptions'] = $viewentryscreenOptions;
   $entries['viewentryscreen'] = $screen->getVar('viewentryscreen');
+  $entries['frid'] = $settings['frid'];
 
   // headings data
   //set options for all elements in entire framework
