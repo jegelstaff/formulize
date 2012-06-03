@@ -1791,7 +1791,14 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 			$clear_help_javascript = "onfocus=\"javascript:clearSearchHelp(this.form, '" . _formulize_DE_SEARCH_HELP . "');\"";
 		}
 		if($i==0) {
-			$helpText = "\n&nbsp;<a href=\"\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/docs/search_help.xhtml'); return false;\" title=\""._formulize_DE_SEARCH_POP_HELP."\">[?]<a>\n";
+			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/docs/search_help_"._LANGCODE.".html")) {
+				$search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help_"._LANGCODE.".html";
+			} elseif(file_exists(XOOPS_ROOT_PATH."/modules/formulize/docs/search_help_"._LANGCODE.".xhtml")) {
+				$search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help_"._LANGCODE.".xhtml";
+			} else {
+				$search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help.xhtml";
+			}
+			$helpText = "\n&nbsp;<a href=\"\" onclick=\"javascript:showPop('".$search_help_filepath."'); return false;\" title=\""._formulize_DE_SEARCH_POP_HELP."\">[?]<a>\n";
 		}
     //formulize_benchmark("finished prep of search box");
 		$quickSearchBoxes[$cols[$i]]['search'] = "<input type=text $boxid name='search_" . $cols[$i] . "' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
