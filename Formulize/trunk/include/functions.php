@@ -3079,7 +3079,7 @@ print "$prevValue<br><br>";
             if(isset($cachedEntryIds[$boxproperties[0]][$boxproperties[1]][$thisValue])) {
               $foundEntryIds[] = $cachedEntryIds[$boxproperties[0]][$boxproperties[1]][$thisValue];
             } else {
-              $searchForValues[] = mysql_real_escape_string($thisValue);
+              $searchForValues[] = mysql_real_escape_string(html_entity_decode($thisValue));
             }
           }
 	  
@@ -4464,9 +4464,11 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
   if($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
   if(strstr(strtoupper($filterOps[$filterId]), "LIKE")) {
 	  $likebits = "%";
+	  $origlikebits = "%";
 	  $quotes = "'";
   } else {
 	  $likebits = "";
+	  $origlikebits = "";
 	  $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
   }
   if($targetFormElementTypes[$filterElementIds[$filterId]] == "select") {
@@ -4480,12 +4482,32 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
 		  $targetSourceHandle = $targetElementEleValueProperties[1]; // get the element handle in the source source form
 		  // now build a comparison value that contains a subquery on the source source form, instead of a literal match to the source form
 		  if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
-		    $filterTermToUse = " curlybracketform.`".substr($filterTerms[$filterId],1,-1)."` ";
+		    $filterTermToUse = " curlybracketform.`".mysql_real_escape_string(substr($filterTerms[$filterId],1,-1))."` ";
+		    $curlyBracketFormFrom = ", ".$xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
+		    // figure out if the curlybracketform field is linked and pointing to the same source as the target element is pointing to
+		    // because if it is, then we don't need to do a subquery later, we just compare directly to the $filterTermToUse
+		    $curlyBracketElementObject = $element_handler->get(substr($filterTerms[$filterId],1,-1));
+		    if($curlyBracketElementObject->isLinked) {
+		      $curlyBracketTargetElementEleValue = $curlyBracketElementObject->getVar('ele_value');
+		      $curlyBracketTargetElementEleValueProperties = explode("#*=:*", $curlyBracketTargetElementEleValue[2]);
+		      $curlyBracketTargetSourceHandle = $curlyBracketTargetElementEleValueProperties[1];
+		      if($curlyBracketTargetSourceHandle == $targetSourceHandle) {
+			$conditionsFilterComparisonValue = " CONCAT('$likebits',$filterTermToUse,'$likebits') "; // filterTermToUse will already have , , around it so we don't need them in the two concat'd parts before and after
+		      }
+		    }
+		    // curlybracket term found, but it's not linked to the same source as the target, so we have to work the likebits in as part of a concat, since our term is not a literal string anymore
+		    if($likebits) {
+		      $filterTermToUse = " CONCAT('$likebits',$filterTermToUse,'$likebits') ";
+		    }
+		    // then neuter these, so they don't screw up the building of the query...note the use of origlikebits so that the higher level part of the query retains that logic if the user asked for it
 		    $quotes = "";
 		    $likebits = "";
-		    $curlyBracketFormFrom = ", ".$xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
+		  } else {
+		    $filterTermToUse = mysql_real_escape_string($filterTerms[$filterId]);
 		  }
-		  $conditionsFilterComparisonValue = " CONCAT('$likebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE `$targetSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.mysql_real_escape_string($filterTermToUse).$likebits.$quotes."),',$likebits') ";
+		  if(!$conditionsFilterComparisonValue) {
+		    $conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE `$targetSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.$filterTermToUse.$likebits.$quotes."),',$origlikebits') ";
+		  }
 		  if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
 		    $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntry ";
 		  }
