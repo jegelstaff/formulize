@@ -722,6 +722,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
        }
      } else { 
 	  $masterQuerySQL = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail $restOfTheSQL ";
+	  $masterQuerySQLForExport = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail $restOfTheSQLForExport ";
      }
      
 
