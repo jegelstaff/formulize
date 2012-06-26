@@ -669,10 +669,12 @@ class formulizeFormsHandler {
 		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
 		  return false;
 		}
-		$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " CHANGE `$oldName` `$newName` ". $dataType; 
-		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
-		  print "Error: could not update the field name for $oldName in form ".$formObject->getVar('form_handle');
-		  return false;
+		if($formObject->getVar('store_revisions')) {
+			$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " CHANGE `$oldName` `$newName` ". $dataType; 
+			if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
+			  print "Error: could not update the field name for $oldName in form ".$formObject->getVar('form_handle');
+			  return false;
+			}
 		}
 		return true;
 	}
