@@ -4423,6 +4423,13 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 	  $targetFormElementTypes = $targetFormObject->getVar('elementTypes');
 	  $targetAlias .= $targetAlias ? "." : ""; // add a period to the end of the alias, if there is one, so it will work in the sql statement
 	  for($filterId = 0;$filterId<count($filterElementHandles);$filterId++) {
+		  // if this filter term is a { } term that matches a $_GET value, then let's use that instead
+		  if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
+		    $bracketlessFilterTerm = substr($filterTerms[$filterId],1,-1);
+		    if(isset($_GET[$bracketlessFilterTerm])) {
+		      $filterTerms[$filterId] = mysql_real_escape_string($_GET[$bracketlessFilterTerm]);
+		    }
+		  }
 		  // convert the $filterElementId to a real id, since it's possible it could find its way in here as a handle...a legacy issue sort of
 		  if(!is_numeric($filterElementIds[$filterId])) {
 		    $elementObject = $element_handler->get($filterElementIds[$filterId]);
