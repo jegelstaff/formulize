@@ -638,10 +638,12 @@ class formulizeFormsHandler {
 		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
 			return false;
 		}
-		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
-		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
-			print "Error: could not add element ".$element->getVar('ele_handle')." to the revisions table for form ". $formObject->getVar('form_handle');
-			return false;
+		if($formObject->getVar('store_revisions')) {
+			$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
+			if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
+				print "Error: could not add element ".$element->getVar('ele_handle')." to the revisions table for form ". $formObject->getVar('form_handle');
+				return false;
+			}
 		}
 		return true;
 	}
@@ -886,7 +888,7 @@ class formulizeFormsHandler {
 		foreach($getrow[0] as $field=>$value) {
 		if($field == "id_form") { $value = ""; }
 			if($field == "desc_form") { $value = $newtitle; }
-			if($field == "headerlist") { $value = ""; }
+			if($field == "headerlist" OR $field == "defaultform" OR $field == "defaultlist") { $value = ""; }
 			if($field == "form_handle") {
 				$oldFormHandle = $value;
 				$value = "replace_with_handle_and_id";
@@ -897,7 +899,8 @@ class formulizeFormsHandler {
 		}
 		$insert_sql .= ")";
 		if(!$result = $this->db->query($insert_sql)) {
-			exit("error duplicating form: '$title'<br>SQL: $insert_sql<br>".mysql_error());
+			print "error duplicating form: '$title'<br>SQL: $insert_sql<br>".mysql_error();
+			return false;
 		}
 
 		$newfid = $this->db->getInsertId();
@@ -905,11 +908,12 @@ class formulizeFormsHandler {
 		// replace formhandle of the new form
 		$replaceSQL = "UPDATE ". $this->db->prefix("formulize_id") . " SET form_handle='".mysql_real_escape_string($oldFormHandle."_".$newfid)."' WHERE form_handle=\"replace_with_handle_and_id\"";
 		if(!$result = $this->db->queryF($replaceSQL)) {
-		  exit("error setting the form_handle for the new form.<br>".mysql_error());
+		  print "error setting the form_handle for the new form.<br>".mysql_error();
+		  return false;
 		}		
 	
 		$getelements = q("SELECT * FROM " . $this->db->prefix("formulize") . " WHERE id_form = $fid");
-    $oldNewEleIdMap = array();
+		$oldNewEleIdMap = array();
 		foreach($getelements as $ele) { // for each element in the form....
 			$insert_sql = "INSERT INTO " . $this->db->prefix("formulize") . " (";
 			$start = 1;
@@ -927,7 +931,16 @@ class formulizeFormsHandler {
 					if($value === $ele['ele_id']) {
 						$value = "replace_with_ele_id";
 					} else {
+						$firstUniqueCheck = true;
 						$value .= "_cloned";
+						while(!$uniqueCheck = $this->isHandleUnique($value)) {
+							if($firstUniqueCheck) {
+								$value = $value . "_".$newfid;
+								$firstUniqueCheck = false;
+							} else {
+								$value = $value . "_copy";
+							}
+						}
 					}
 					$oldNewEleIdMap[$ele['ele_handle']] = $value;
 				}
@@ -938,7 +951,8 @@ class formulizeFormsHandler {
 			}
 			$insert_sql .= ")";
 			if(!$result = $this->db->query($insert_sql)) {
-				exit("error duplicating elements in form: '$title'<br>SQL: $insert_sql<br>".mysql_error());
+				print "error duplicating elements in form: '$title'<br>SQL: $insert_sql<br>".mysql_error();
+				return false;
 			}
 			if($oldNewEleIdMap[$ele['ele_handle']] == "replace_with_ele_id") {
 				$oldNewEleIdMap[$ele['ele_handle']] = $this->db->getInsertId();
@@ -948,12 +962,14 @@ class formulizeFormsHandler {
 		// replace ele_id flags that need replacing
 		$replaceSQL = "UPDATE ". $this->db->prefix("formulize") . " SET ele_handle=ele_id WHERE ele_handle=\"replace_with_ele_id\"";
 		if(!$result = $this->db->queryF($replaceSQL)) {
-		  exit("error setting the ele_handle values for the new form.<br>".mysql_error());
+		   print "error setting the ele_handle values for the new form.<br>".mysql_error();
+		   return false;
 		}
 
 	  // Need to create the new data table now -- July 1 2007
     if(!$tableCreationResult = $this->createDataTable($newfid, $fid, $oldNewEleIdMap)) { 
       print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
+      return false;
     }
         
   
@@ -963,6 +979,7 @@ class formulizeFormsHandler {
         $dataHandler = new formulizeDataHandler($newfid);
         if(!$cloneResult = $dataHandler->cloneData($fid, $oldNewEleIdMap)) {
           print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
+	  return false;
         }
     }
     
