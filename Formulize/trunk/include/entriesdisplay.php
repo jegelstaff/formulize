@@ -3902,7 +3902,7 @@ function processCustomButton($caid, $thisCustomAction, $entries="", $entry) {
 	if(!is_array($thisCustomAction['groups'])) {
 		$thisCustomAction['groups'] = unserialize($thisCustomAction['groups']);	// under some circumstances, this might be serialized?  I think it's being unserialized by the getVar method before it gets this far, but anyway....
 	}
-	if(!is_array($thisCustomAction['groups'])) {
+	if(is_array($thisCustomAction['groups'])) {
 		$groupOverlap = array_intersect($thisCustomAction['groups'], $userGroups);
 		if(count($groupOverlap) == 0) {
 			return array();
