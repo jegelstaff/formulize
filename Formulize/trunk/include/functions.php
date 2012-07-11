@@ -1231,14 +1231,14 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
         $csvfile .= "\"" . _formulize_DE_CALC_CREATOR . "\"";
         $lineStarted = true;
       }
-      if(in_array("creation_date", $cols) OR in_array("creation_datetime", $cols)) {
-        $csvfile .= $lineStarted ? $fd : "";
-        $csvfile .= "\"" . _formulize_DE_CALC_CREATEDATE . "\"";
-        $lineStarted = true;
-      }
       if(in_array("proxyid", $cols) OR in_array("mod_uid", $cols)) {
         $csvfile .= $lineStarted ? $fd : "";
         $csvfile .= "\"" . _formulize_DE_CALC_MODIFIER . "\"";
+        $lineStarted = true;
+      }
+      if(in_array("creation_date", $cols) OR in_array("creation_datetime", $cols)) {
+        $csvfile .= $lineStarted ? $fd : "";
+        $csvfile .= "\"" . _formulize_DE_CALC_CREATEDATE . "\"";
         $lineStarted = true;
       }
       if(in_array("mod_date", $cols) OR in_array("mod_datetime", $cols)) {
