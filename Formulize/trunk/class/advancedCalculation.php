@@ -287,7 +287,10 @@ class formulizeAdvancedCalculationHandler {
     return $fileName;
   }
   
-  function getCachedResult($fileName) {
+  function getCachedResult($fileName, $debugFlag) {
+    if($debugFlag) {
+	return false;
+    }
     // check that the filename is valid
     $namePart = str_replace(XOOPS_ROOT_PATH."/modules/formulize/cache/formulize_advancedCalculation_procid_","",$fileName);
     if(strstr($namePart,"/") OR strstr($namePart, "\\")) {
@@ -308,7 +311,7 @@ class formulizeAdvancedCalculationHandler {
     return $cachedVersion;
   }
 
-  function calculate( $advCalcObject ) {
+  function calculate( $advCalcObject, $debugFlag=false ) {
     global $xoopsDB, $xoopsUser;
     if(!is_object($advCalcObject)) {
 	$advCalcObject = $this->get($advCalcObject);
@@ -328,7 +331,7 @@ class formulizeAdvancedCalculationHandler {
     $cachedVersion = false;
     if( $modulePrefUseCache ) {
       $fileName = $this->buildCacheKey($acid);
-      if($cachedVersion = $this->getCachedResult($fileName)) {
+      if($cachedVersion = $this->getCachedResult($fileName, $debugFlag)) {
 	// if logging is enables, don't return right away, gather up the params and log first
         if( ! $modulePrefLogProcedure ) {
           return $cachedVersion;
@@ -597,7 +600,7 @@ class formulizeAdvancedCalculationHandler {
 	if( $modulePrefUseCache ) {
 	    $localGroup = true;
 	    $localFileName = $this->buildCacheKey($acid, $localGroup);
-	    if($cachedVersion = $this->getCachedResult($localFileName)) {
+	    if($cachedVersion = $this->getCachedResult($localFileName, $debugFlag)) {
 		$calculationResult = $cachedVersion[0];
 		$output = $cachedVersion[1];
 	    }
@@ -1079,7 +1082,7 @@ class formulizeAdvancedCalculationHandler {
       $index = 0;
       foreach( $fltr_grp["type"]["options"] as $definedOption ) {
         $elementArrayName = $elementName . "[" . $index . "]";
-        $value = (isset($_POST[$elementName][$index])) ? $_POST[$elementName][$index] : ( (isset($_GET[$elementName][$index])) ? $_GET[$elementName][$index] : 0 );
+	$value = $this->_getFilterOptionsCheckboxStatus($fltr_grp, $index, $elementName);
         //print $value . "!!<br><br>";print_r($_POST);print_r($_GET);exit();
         if( $value == 1 ) {
           $checked = ' CHECKED';
@@ -1088,13 +1091,13 @@ class formulizeAdvancedCalculationHandler {
         }
         $option_value = explode( "|", $definedOption );
         if( count( $option_value ) == 2 ) {
-          $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
+          $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . ' ' . $elementName . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
           $tmp_html .= $option_value[1] . "<br>";
           if( $value == 1 ) {
             $selected[] = trim($option_value[1]);
           }
         } else {
-          $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
+          $tmp_html .= '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . ' ' . $elementName . '" name="' . $elementArrayName . '" value="1"' . $checked . '>';
           $tmp_html .= $definedOption . "<br>";
           if( $value == 1 ) {
             $selected[] = trim($definedOption);
@@ -1132,6 +1135,21 @@ class formulizeAdvancedCalculationHandler {
     return array( "label"=>$labelText, "html"=>$html, "selected"=>$selected );
   }
 
+  // takes the filter and grouping option settings as input and checks them and the current status to determine if the value is on or off
+  // also takes the index number of the current filter/grouping option we're evaluating
+  // also takes the name of the element that we should be listening to
+  function _getFilterOptionsCheckboxStatus($fltr_grp, $index, $elementName) {
+    $value = 0; // default to nothing selected, unless we pick up something below...
+    if(isset($_POST[$elementName][$index])) { // if selections for this filter were sent from the form...
+        $value = $_POST[$elementName][$index];    
+    } elseif(isset($_GET[$elementName][$index])) { // or if they were set in the URL...
+        $value = $_GET[$elementName][$index];
+    } elseif(count($_POST)==0 AND !isset($_GET[$elementName])) { // if no form submission at all and nothing set in the URL, gather defaults
+        $value = in_array($index, $fltr_grp["type"]["defaults"]);
+    }
+    return $value;
+  }
+
   function getGrouping($acid, $filterHandle) {
     // load the advanced calculation (procedure)
     $acObject = $this->get($acid);
@@ -1155,13 +1173,44 @@ class formulizeAdvancedCalculationHandler {
     $elementName = $acid . "_groupingchoices";
     $elementArrayName = $elementName . "[" . $fltr_grp_index . "]";
     $value = (isset($_POST[$elementName])) ? $_POST[$elementName] : ( (isset($_GET[$elementName])) ? $_GET[$elementName] : 0 );
-    if( array_key_exists( $fltr_grp_index, $value ) ) {
+    // check if more than one of the values is currently selected/active, for checkboxes
+    if($fltr_grp["type"]["kind"] == 3) {
+      $index = 0;
+      $numberChecked = 0;
+      while($index <= count($fltr_grp["type"]["options"]) AND $numberChecked < 2) {
+	if($this->_getFilterOptionsCheckboxStatus($fltr_grp, $index, $acid . "_" . $fltr_grp["handle"])) {
+	    $numberChecked++;
+	}
+	$index++;
+      }
+    }
+    if( array_key_exists( $fltr_grp_index, $value ) OR $numberChecked >= 2 ) {
       $checked = ' CHECKED';
     } else {
       $checked = '';
     }
     $elementUnderlyingField = $fltr_grp["form"] ? "element".$fltr_grp["form"] : "no-underlying-element"; 
-    $html = '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . '" name="' . $elementArrayName . '" value="' . $fltr_grp_index . '"' . $checked . '>';
+    $html = '<input type="checkbox" id="' . $elementArrayName . '" class="'. $elementUnderlyingField . ' ' .  $elementName . '_'.$fltr_grp_index.'" name="' . $elementArrayName . '" value="' . $fltr_grp_index . '"' . $checked . '>';
+
+    // for checkboxes, add some jquery so we can autoselect the grouping option if the user selects more than one choice
+    if($fltr_grp["type"]["kind"] == 3) {
+	$jQuery = "
+\n\n<script type='text/javascript'>
+
+jQuery(document).ready(function() {
+    jQuery('.".$acid . "_" . $fltr_grp["handle"]."').click(function() {
+	if(jQuery('.".$acid . "_" . $fltr_grp["handle"].":checked').length > 1) {
+	    jQuery('.".$elementName."_".$fltr_grp_index."').attr('checked','checked');
+	} else {
+	    jQuery('.".$elementName."_".$fltr_grp_index."').removeAttr('checked');
+	}
+    });
+});
+
+</script>\n\n    
+";
+	$html .= $jQuery;
+    }
 
     return array( "label"=>$fltr_grp["grp_label"], "html"=>$html );
   }
