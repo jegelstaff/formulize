@@ -76,7 +76,7 @@ $modversion['tables'] = array(
 
 // Admin things
 $modversion['hasAdmin'] = 1;
-$modversion['adminindex'] = "admin/formindex.php";
+$modversion['adminindex'] = "admin/ui.php";
 $modversion['adminmenu'] = "admin/menu.php";
 
 // Menu -- content in main menu block
