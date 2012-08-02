@@ -686,7 +686,9 @@ define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2", "<span style=\"font-weight: no
 &nbsp;&nbsp;&nbsp;to that subform entry, and will use screen 45 to display the entry (presumably<br>
 &nbsp;&nbsp;&nbsp;screen 45 is a regular form screen for form 12).<br>
 &nbsp;&nbsp;&nbsp;*/</p>
-<p>You can also use <i>viewEntryButton</i> instead of <i>viewEntryLink</i> if you want a clickable button instead of a link.</p></span>\n");
+<p>You can also use <i>viewEntryButton</i> instead of <i>viewEntryLink</i> if you want a clickable button instead of a link.</p>
+<p>You can use a special function called \"clickableSortLink\" to create a clickable element on the page, so users can control the sorting order of entries in the list.  This function takes two parameters.  The first is the element handle of the element you want to sort by.  The second is the text or HTML that you want to be clickable.  When the sort is active, a black triangle will appear next to the clickable element.  Examples:</p><p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;print clickableSortLink(\"last_name\", \"Sort by last name\");<br>&nbsp;&nbsp;&nbsp;print clickableSortLink(\"creation_datetime\", \"&lt;img src='images/clock.jpg'&gt;\");</p>
+</span>\n");
 define("_AM_FORMULIZE_SCREEN_LOE_TOPTEMPLATE", "Template for the top portion of the page, above the list:");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE", "You can type PHP code into any or all of the three template boxes below.  Code in the <i>top template</i> box will replace the default user interface above the list.  Code in the <i>list template</i> box will replace the default way that each row in the list is displayed.  Code in the <i>bottom template</i> box will be rendered below the last row in the list.");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE2", "If you turn off the scrollbox, then these three templates will all be drawn to the screen consecutively.  This means you can start a table in the <i>top template</i>, specify the &lt;tr&gt; tags in the <i>list template</i> and close the table in the <i>bottom template</i>.  Essentially, these three templates give you control over the entire page layout.");

@@ -701,7 +701,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
   formulize_benchmark("before entries");
-	drawEntries($fid, $showcols, strip_tags($_POST['sort']), strip_tags($_POST['order']), $searches, $frid, $scope, "", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches); // , $loadview); // -- loadview not passed any longer since the lockcontrols indicator is used to handle whether things should appear or not.
+	drawEntries($fid, $showcols, $searches, $frid, $scope, "", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches); // , $loadview); // -- loadview not passed any longer since the lockcontrols indicator is used to handle whether things should appear or not.
   formulize_benchmark("after entries");
 
 	if($screen) {
@@ -1240,7 +1240,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 }
 
 // THIS FUNCTION DRAWS IN THE RESULTS OF THE QUERY
-function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
+function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
 
 	// determine if the query reached a limit in the number of entries to return
 	$LOE_limit = 0;
@@ -1438,7 +1438,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 	
 		if($useHeadings) {
       $headers = getHeaders($cols, true); // second param indicates we're using element headers and not ids
-      drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockedColumns']); 
+      drawHeaders($headers, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockedColumns']); 
     }
 		if($useSearch) {
 			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
@@ -1479,7 +1479,7 @@ function drawEntries($fid, $cols, $sort="", $order="", $searches="", $frid="", $
 				if($entry != "") { 
 		
 					if($headcounter == $repeatHeaders AND $repeatHeaders > 0) { 
-						if($useHeadings) { drawHeaders($headers, $cols, $sort, $order, $useCheckboxes, $useViewEntryLinks, count($inlineButtons)); }
+						if($useHeadings) { drawHeaders($headers, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons)); }
 						$headcounter = 0;
 					}
 					$headcounter++;		
@@ -1917,7 +1917,7 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
 }
 
 // this function writes in the headers for the columns in the results box
-function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=null, $numberOfButtons, $lockedColumns=array()) { //, $lockcontrols) {
+function drawHeaders($headers, $cols, $useBoxes=null, $useLinks=null, $numberOfButtons, $lockedColumns=array()) { //, $lockcontrols) {
 
 	static $checkedHelpLink = false;
 	static $headingHelpLink;
@@ -1936,29 +1936,19 @@ function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=n
 	}
 	for($i=0;$i<count($headers);$i++) {
 	
-	$classToUse = "head column column".$i;
-	if($i==0) {
-		print "<td class='head floating-column' id='floatingcelladdress_0'>\n";
-	}
-   	print "<td class='$classToUse' id='celladdress_0_$i'><div class='main-cell-div' id='cellcontents_0_".$i."'>\n";
+		$classToUse = "head column column".$i;
+		if($i==0) {
+			print "<td class='head floating-column' id='floatingcelladdress_0'>\n";
+		}
+		print "<td class='$classToUse' id='celladdress_0_$i'><div class='main-cell-div' id='cellcontents_0_".$i."'>\n";
 
 		if($headingHelpLink) {
 			$lockedUI = in_array($i, $lockedColumns) ? "[X]" : "[ ]";
 			print "<div style=\"float: right; margin-left: 3px;\"><a href=\"\" id=\"lockcolumn_$i\" class=\"lockcolumn\" title=\""._formulize_DE_FREEZECOLUMN."\">$lockedUI</a></div>\n";
 			print "<div style=\"float: right;\"><a href=\"\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=".$cols[$i]."');return false;\" title=\""._formulize_DE_MOREINFO."\">[?]</a></div>\n";
 		}
-		if($cols[$i] == $sort) {
-			if($order == "SORT_DESC") {
-				$imagename = "desc.gif";
-			} else {
-				$imagename = "asc.gif";
-			}
-			print "<img src='" . XOOPS_URL . "/modules/formulize/images/$imagename' align=left>";
-		}
-		print "<a href=\"\" alt=\"" . _formulize_DE_SORTTHISCOL . "\" title=\"" . _formulize_DE_SORTTHISCOL . "\" onclick=\"javascript:sort_data('" . $cols[$i] . "');return false;\">";
-		print printSmart(trans($headers[$i]));
-  	print "</a>\n";
-   	print "</div></td>\n";
+		print clickableSortLink($cols[$i], printSmart(trans($headers[$i])))
+		print "</div></td>\n";
 	}
 	for($i=0;$i<$numberOfButtons;$i++) {
 		print "<td class=head>&nbsp;</td>\n";
@@ -1966,6 +1956,24 @@ function drawHeaders($headers, $cols, $sort, $order, $useBoxes=null, $useLinks=n
 	print "</tr>\n";
 }
 
+// this function wraps whatever contents are passed in, in HTML that will make it a clickable sorting link, for the specified element
+function clickableSortLink($handle, $contents) {
+	$sort = strip_tags($_POST['sort']);
+	$order = strip_tags($_POST['order']);
+	$output = "";
+	if($handle == $sort) {
+		if($order == "SORT_DESC") {
+			$imagename = "desc.gif";
+		} else {
+			$imagename = "asc.gif";
+		}
+		$output .= print "<img src='" . XOOPS_URL . "/modules/formulize/images/$imagename' align=left>";
+	}
+	$output .= "<a href=\"\" alt=\"" . _formulize_DE_SORTTHISCOL . "\" title=\"" . _formulize_DE_SORTTHISCOL . "\" onclick=\"javascript:sort_data('" . $handle . "');return false;\">";
+	$output .= $contents;
+  	$output .= "</a>\n";
+	return $output;
+}
 
 
 // this function returns the ele_ids of form elements to show, or the handles of the form elements to show for a framework
