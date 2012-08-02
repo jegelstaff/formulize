@@ -1947,7 +1947,7 @@ function drawHeaders($headers, $cols, $useBoxes=null, $useLinks=null, $numberOfB
 			print "<div style=\"float: right; margin-left: 3px;\"><a href=\"\" id=\"lockcolumn_$i\" class=\"lockcolumn\" title=\""._formulize_DE_FREEZECOLUMN."\">$lockedUI</a></div>\n";
 			print "<div style=\"float: right;\"><a href=\"\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=".$cols[$i]."');return false;\" title=\""._formulize_DE_MOREINFO."\">[?]</a></div>\n";
 		}
-		print clickableSortLink($cols[$i], printSmart(trans($headers[$i])))
+		print clickableSortLink($cols[$i], printSmart(trans($headers[$i])));
 		print "</div></td>\n";
 	}
 	for($i=0;$i<$numberOfButtons;$i++) {
@@ -1967,7 +1967,7 @@ function clickableSortLink($handle, $contents) {
 		} else {
 			$imagename = "asc.gif";
 		}
-		$output .= print "<img src='" . XOOPS_URL . "/modules/formulize/images/$imagename' align=left>";
+		$output .= "<img src='" . XOOPS_URL . "/modules/formulize/images/$imagename' align=left>";
 	}
 	$output .= "<a href=\"\" alt=\"" . _formulize_DE_SORTTHISCOL . "\" title=\"" . _formulize_DE_SORTTHISCOL . "\" onclick=\"javascript:sort_data('" . $handle . "');return false;\">";
 	$output .= $contents;
