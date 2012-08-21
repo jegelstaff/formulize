@@ -616,10 +616,12 @@ class formulizeFormsHandler {
 		if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
 			return false;
 		}
-		$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " DROP `" . $element->getVar('ele_handle') . "`";
-		if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
-			print "Error: could not remove element ".$element->getVar('ele_handle')." from the revisions table for form ". $formObject->getVar('form_handle');
-			return false;
+		if($this->revisionsTableExists($element->getVar('id_form'))) {
+			$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " DROP `" . $element->getVar('ele_handle') . "`";
+			if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
+				print "Error: could not remove element ".$element->getVar('ele_handle')." from the revisions table for form ". $formObject->getVar('form_handle');
+				return false;
+			}
 		}
 		return true;
 	}
@@ -638,7 +640,7 @@ class formulizeFormsHandler {
 		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
 			return false;
 		}
-		if($formObject->getVar('store_revisions')) {
+		if($this->revisionsTableExists($element->getVar('id_form'))) {
 			$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
 			if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
 				print "Error: could not add element ".$element->getVar('ele_handle')." to the revisions table for form ". $formObject->getVar('form_handle');
@@ -671,7 +673,7 @@ class formulizeFormsHandler {
 		if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
 		  return false;
 		}
-		if($formObject->getVar('store_revisions')) {
+		if($this->revisionsTableExists($element->getVar('id_form'))) {
 			$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " CHANGE `$oldName` `$newName` ". $dataType; 
 			if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
 			  print "Error: could not update the field name for $oldName in form ".$formObject->getVar('form_handle');
