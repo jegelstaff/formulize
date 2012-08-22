@@ -2179,7 +2179,7 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
     $elementMetaData = formulize_getElementMetaData($handle, true);
     $ele_value = unserialize($elementMetaData['ele_value']);
     $ele_type = $elementMetaData['ele_type'];
-    if(!$ele_value) { return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth); }
+    if(!$ele_value) { return _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted); } 
     if(!isset($ele_value[4])) { $ele_value[4] = 0; }
     if(!isset($ele_value[3])) { $ele_value[3] = 0; }
     $cachedValues[$handle] = $ele_value;
@@ -2267,17 +2267,23 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
 	} elseif($ele_type == 'derived') {
 		return $myts->makeClickable(printSmart(trans($matchtext), $textWidth)); // allow HTML codes in derived values
 	} else { // regular element
-    formulize_benchmark("done formatting, about to print");
-    
-	  if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-	       $elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
-	       $matchtext = $elementTypeHandler->formatDataForList($matchtext, $handle, $entryBeingFormatted);
-	       return $matchtext;
-	  } else {
-	    return $myts->makeClickable(printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth));	    
-	  }
+	  formulize_benchmark("done formatting, about to print");
+	  return _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted);
 	}
-} 
+}
+
+// this function simply handles the operations for formatLinks when a plain element has been identified (not a linked selectbox, associated textbox, etc, etc)
+function _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted) {
+  global $myts;
+  if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+    $elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
+    $matchtext = $elementTypeHandler->formatDataForList($matchtext, $handle, $entryBeingFormatted);
+    return $matchtext;
+  } else {
+    return $myts->makeClickable(printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth));	    
+  }
+}
+
 
 // THIS FUNCTION INTERPRETS A TEXTBOX'S DEFAULT VALUE AND RETURNS THE CORRECT STRING
 // Takes $ele_value[2] as the input (third position in ele_value array from element object)
