@@ -284,7 +284,7 @@ abstract class icms_form_Element {
 	 */
 	public function getExtra($encode = false) {
 		if (!$encode) {
-			return implode(' ', $this->_extra);
+			return " " . implode(' ', $this->_extra); // MODIFIED BY FREEFORM SOLUTIONS AUG 27 2012, TO FIX VALIDATION ISSUE WITH EXTRA CODE IN ELEMENTS (PREPENDED SPACE TO THE EXTRA TEXT)
 		}
 		$value = array();
 		foreach ($this->_extra as $val) {
