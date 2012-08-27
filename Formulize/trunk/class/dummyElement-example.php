@@ -161,7 +161,7 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
     // element_id is the id of the element that just had data saved
     // entry_id is the entry id that was just saved
     // ALSO, $GLOBALS['formulize_afterSavingLogicRequired']['elementId'] = type , must be declared in the prepareDataForSaving step if further action is required now -- see fileUploadElement.php for an example
-    function afterSavingLogic($value, $handle, $entry_id) {
+    function afterSavingLogic($value, $element_id, $entry_id) {
     }
     
     // this method will prepare a raw data value from the database, to be included in a dataset when formulize generates a list of entries or the getData API call is made

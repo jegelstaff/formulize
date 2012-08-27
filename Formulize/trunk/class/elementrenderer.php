@@ -1032,7 +1032,7 @@ class formulizeElementRenderer{
 			} else {
 				$elementCue = "";
 			}
-			$form_ele->setExtra("onchange=\"javascript:formulizechanged=1;\"");
+			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
 			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$elementCue); // reuse caption, put two spaces between element and previous entry UI
 			if($ele_desc != "") {
 				$ele_desc = html_entity_decode($ele_desc,ENT_QUOTES);

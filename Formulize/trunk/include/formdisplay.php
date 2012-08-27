@@ -148,9 +148,10 @@ class formulize_themeForm extends XoopsThemeForm {
 				} else {
 					$checkConditionalRow = false;
 				}
-				$js .= $checkConditionalRow ? "if(window.document.getElementById('formulize-".$elt->getName()."').style.display != 'none') {\n" : "";
-				$js .= $elt->renderValidationJS();
-				$js .= $checkConditionalRow ? "\n}\n\n" : "";
+				$js = $elt->renderValidationJS();
+				if($js AND $checkConditionalRow) {
+					$js = "if(window.document.getElementById('formulize-".$elt->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
+				}
 			}
 		}
 		
