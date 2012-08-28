@@ -48,7 +48,23 @@ include_once './class/dbmanager.php';
 $dbm = new db_manager();
 $dbm->db->connect();
 $formulizeStandaloneQueries = str_replace("REPLACE_WITH_PREFIX", SDATA_DB_PREFIX, file_get_contents(ICMS_ROOT_PATH."/install/sql/mysql.formulize_standalone.sql"));
-foreach(explode(";\r",str_replace(array("\n,\n\r,\r\n"), "\r", $formulizeStandaloneQueries)) as $sql) { // convert all kinds of line breaks to \r and then split on semicolon-linebreak to get individual queries
+
+// Check what the module ids are, and replace in the file
+include_once ICMS_ROOT_PATH."/mainfile.php";
+include_once ICMS_ROOT_PATH."/include/common.php";
+$module_handler = icms::handler('icms_module');
+$formulizeModule = $module_handler->getByDirname('formulize');
+$formulizeModuleId = $formulizeModule->getVar('mid');
+$contentModule = $module_handler->getByDirname('content');
+$contentModuleId = $contentModule->getVar('mid');
+$profileModule = $module_handler->getByDirname('profile');
+$profileModuleId = $profileModule->getVar('mid');
+
+$formulizeStandaloneQueries = str_replace("REPLACE_WITH_PROFILE_MODULE_ID", $profileModuleId, $formulizeStandaloneQueries);
+$formulizeStandaloneQueries = str_replace("REPLACE_WITH_CONTENT_MODULE_ID", $contentModuleId, $formulizeStandaloneQueries);
+$formulizeStandaloneQueries = str_replace("REPLACE_WITH_FORMULIZE_MODULE_ID", $formulizeModuleId, $formulizeStandaloneQueries);
+
+foreach(explode(";\r",str_replace(array("\n","\n\r","\r\n"), "\r", $formulizeStandaloneQueries)) as $sql) { // convert all kinds of line breaks to \r and then split on semicolon-linebreak to get individual queries
 	if($sql) {
 		if(!$formulizeResult = mysql_query($sql)) {
 			$content = "<h3>Error:</h3><p>Some of the configuration settings were not saved properly in the database.  The website will still work, but it will behave more like a generic ImpressCMS+Formulize website, and not like a dedicated Formulize system.   Please send the following information to <a href=\"mailto:formulize@freeformsolutions.ca?subject=Formulize%20Standalone%20Install%20Error\">formulize@freeformsolutions.ca</a>:</p>
@@ -56,6 +72,7 @@ foreach(explode(";\r",str_replace(array("\n,\n\r,\r\n"), "\r", $formulizeStandal
 		} 
 	}
 }
+// END OF MODIFIED CODE
 
 include 'install_tpl.php';
 ?>
