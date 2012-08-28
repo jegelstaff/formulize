@@ -552,9 +552,12 @@ define("_AM_FORMULIZE_SCREEN_PARAENTRYRELATIONSHIP", "If previous answers are sh
 define("_AM_FORMULIZE_SCREEN_PARAENTRYREL_BYGROUP", "Entries belong to the same group");
 
 define("_AM_FORMULIZE_SCREEN_INTRO", "Introductory text for the first page of this form");
-define("_AM_FORMULIZE_SCREEN_THANKS", "Thank-you text for the final page of this form");
-define("_AM_FORMULIZE_SCREEN_DONEDEST", "The URL for the link users get at the end of the form");
-define("_AM_FORMULIZE_SCREEN_BUTTONTEXT", "The text of the link users get at the end of the form");
+define("_AM_FORMULIZE_SCREEN_THANKS", "Thank-you text for the final page of this form (will be displayed only if the Thank-you page is set as the final page of the form)");
+define("_AM_FORMULIZE_SCREEN_FINISHISDONE", "The final page of the form should be...");
+define("_AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE", "<b>The Thank-you page</b>, which the user gets after clicking the \"Save and Finish\" button on the last page with questions");
+define("_AM_FORMULIZE_SCREEN_FINISHISDONE_FINISHBUTTON", "<b>The last page with questions</b>, and when the user clicks the \"Save and Finish\" button, they leave the form");
+define("_AM_FORMULIZE_SCREEN_DONEDEST", "The URL that users go to when leaving the form (Optional, Formulize will usually set this automatically when the form is displayed, based on where the user came from.  If the last page of the form has questions, then the next page the users go to should be a Formulize page or else the answers to the questions won't be saved)");
+define("_AM_FORMULIZE_SCREEN_BUTTONTEXT", "If the Thank-you page is shown, what should be used as the clickable text for the URL?");
 define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable View - All Pages' button available at the end of the form"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_Y", "Yes"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_N", "No"); //nmc 2007.03.24

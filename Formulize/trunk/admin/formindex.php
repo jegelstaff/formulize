@@ -1325,6 +1325,7 @@ function patch40() {
 		$sql['id_form_to_form_handle'] = "UPDATE " . $xoopsDB->prefix("formulize_id") . " SET form_handle = id_form WHERE form_handle IS NULL OR form_handle = ''";
 		$sql['add_dedisplay'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `dedisplay` int(1) NOT NULL";
 		$sql['add_store_revisions'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `store_revisions` tinyint(1) NOT NULL default '0'";
+		$sql['add_finishisdone'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `finishisdone` tinyint(1) NOT NULL default 0";
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
 				if($key === "add_encrypt") {
@@ -1349,6 +1350,8 @@ function patch40() {
 					print "dedisplay already added.  result: OK<br>";
 				} elseif($key === "add_store_revisions") {
 					print "store_revisions already added.  result: OK<br>";
+				} elseif($key === "add_finishisdone") {
+					print "finishisdone for multipage forms already added.  result: OK<br>";
 				} elseif(strstr($key, 'drop_from_formulize_id_')) {
 					continue;					
 				} else {

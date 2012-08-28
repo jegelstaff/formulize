@@ -151,39 +151,6 @@ if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // reme
 	}
 }
 
-// Set up the javascript that we need for the form-submit functionality to work
-// note that validateAndSubmit calls the form validation function again, but obviously it will pass if it passed here.  The validation needs to be called prior to setting the pages, or else you can end up on the wrong page after clicking an ADD button in a subform when you've missed a required field.
-?>
-
-<script type='text/javascript'>
-
-function submitForm(page, prevpage) {
-	var validate = xoopsFormValidate_formulize();
-	if(validate) {
-		window.document.formulize.formulize_currentPage.value = page;
-		window.document.formulize.formulize_prevPage.value = prevpage;
-		window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
-		window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
-		validateAndSubmit();
-	}
-}
-
-function pageJump(options, prevpage) {
-	for (var i=0; i < options.length; i++) {
-		if (options[i].selected) {
-			submitForm(options[i].value, prevpage);
-			return false;
-		}
-	}
-}
-
-</script><noscript>
-<h1>You do not have javascript enabled in your web browser.  This form will not work with your web browser.  Please contact the webmaster for assistance.</h1>
-</noscript>
-<?php
-
-
-
 // check to see if there are conditions on this page, and if so are they met
 // if the conditions are not met, move on to the next page and repeat the condition check
 // conditions only checked once there is an entry!
@@ -269,7 +236,11 @@ if($currentPage > 1) {
 
 $nextPage = $currentPage+1;
 
+$done_dest = $done_dest ? $done_dest : getCurrentURL();
+$done_dest = substr($done_dest,0,4) == "http" ? $done_dest : "http://".$done_dest;
+
 if($currentPage == $thanksPage) {
+
 	if(is_array($thankstext)) { 
 		if($thankstext[0] === "PHP") {
 			eval($thankstext[1]);
@@ -283,7 +254,6 @@ if($currentPage == $thanksPage) {
 	if($pagesSkipped) {
 		print _formulize_DMULTI_SKIP . "</p><p>\n";
 	}
-	$done_dest = $done_dest ? $done_dest : getCurrentURL();
 	$button_text = $button_text ? $button_text : _formulize_DMULTI_ALLDONE;
 	if($button_text != "{NOBUTTON}") {
 		print "<a href='$done_dest'";
@@ -311,6 +281,47 @@ if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND 
 }
 
 unset($_POST['form_submitted']);
+
+// Set up the javascript that we need for the form-submit functionality to work
+// note that validateAndSubmit calls the form validation function again, but obviously it will pass if it passed here.  The validation needs to be called prior to setting the pages, or else you can end up on the wrong page after clicking an ADD button in a subform when you've missed a required field.
+?>
+
+<script type='text/javascript'>
+
+function submitForm(page, prevpage) {
+	var validate = xoopsFormValidate_formulize();
+	if(validate) {<?php
+		if(is_object($screen) AND $screen->getVar('finishisdone') AND $currentPage+1 == $thanksPage) {
+			// neuter the ventry which is the key thing that keeps us on the form page, if in fact we just came from a list screen of some kind
+			// need to use an unusual selector, because something about selecting by id wasn't working, apparently may be related to setting actions on forms with certain versions of jQuery??
+			print "		if(page == $thanksPage) {
+				window.document.formulize.ventry.value = '';
+				jQuery('form[name=formulize]').attr('action', '$done_dest');
+			}
+			";
+		}?>
+		window.document.formulize.formulize_currentPage.value = page;
+		window.document.formulize.formulize_prevPage.value = prevpage;
+		window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
+		window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
+		validateAndSubmit();
+	}
+}
+
+function pageJump(options, prevpage) {
+	for (var i=0; i < options.length; i++) {
+		if (options[i].selected) {
+			submitForm(options[i].value, prevpage);
+			return false;
+		}
+	}
+}
+
+</script><noscript>
+<h1>You do not have javascript enabled in your web browser.  This form will not work with your web browser.  Please contact the webmaster for assistance.</h1>
+</noscript>
+<?php
+
 
 // display an HTML or PHP page if that's what this page is...
 if($currentPage != $thanksPage AND ($pages[$currentPage][0] === "HTML" OR $pages[$currentPage][0] === "PHP")) {

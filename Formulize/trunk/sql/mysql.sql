@@ -107,6 +107,7 @@ CREATE TABLE `formulize_screen_multipage` (
   `thankstext` text NOT NULL,
   `donedest` varchar(255) NOT NULL default '',
   `buttontext` varchar(255) NOT NULL default '',
+  `finishisdone` tinyint(1) NOT NULL default 0,
   `pages` text NOT NULL,
   `pagetitles` text NOT NULL,
   `conditions` text NOT NULL,

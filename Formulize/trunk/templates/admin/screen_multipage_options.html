@@ -13,6 +13,11 @@
 	<fieldset>
 		<legend>Link on the final page of the form</legend>
 	  <div class="form-item">
+		<label for="screens-finishisdone"><{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE}></label>
+		<input type="radio" id=screens-finishisdone-0 name="screens-finishisdone" value=0> <{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE}><br />
+		<input type="radio" id=screens-finishisdone-1 name="screens-finishisdone" value=1> <{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE_FINISHBUTTON}>
+	  </div>
+	  <div class="form-item">
 		  <label for="screens-donedest"><{$smarty.const._AM_FORMULIZE_SCREEN_DONEDEST}></label>
       <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>" size="50" maxlength="255"/>
 	  </div>
@@ -55,3 +60,7 @@
 </div>
 
 </form>
+
+<script type='text/javascript'>
+$("#screens-finishisdone-<{$content.finishisdone}>").attr('checked',1);
+</script>

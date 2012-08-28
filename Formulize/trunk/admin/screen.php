@@ -335,6 +335,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
   $multipageOptions['paraentryform'] = $screen->getVar('paraentryform');
   $multipageOptions['paraentryrelationship'] = $screen->getVar('paraentryrelationship');
   $multipageOptions['donedest'] = $screen->getVar('donedest');
+  $multipageOptions['finishisdone'] = $screen->getVar('finishisdone');
   $multipageOptions['buttontext'] = $screen->getVar('buttontext');
   $multipageOptions['printall'] = $screen->getVar('printall');
 

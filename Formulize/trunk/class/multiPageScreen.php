@@ -46,6 +46,7 @@ class formulizeMultiPageScreen extends formulizeScreen {
 		$this->initVar("thankstext", XOBJ_DTYPE_TXTAREA);
 		$this->initVar("donedest", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("buttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+		$this->initVar("finishisdone", XOBJ_DTYPE_INT);	
 		$this->initVar("pages", XOBJ_DTYPE_ARRAY);
 		$this->initVar("pagetitles", XOBJ_DTYPE_ARRAY);
 		$this->initVar("conditions", XOBJ_DTYPE_ARRAY);
@@ -95,6 +96,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	}
 
 	// this function handles all the admin side ui for this kind of screen
+	// EDITFORM METHOD IS DEPRECATED!!!  NOT USED IN VERSION 4 ADMIN UI
 	function editForm($screen, $fid) {
 
 		$form = parent::editForm($screen, $fid);
@@ -224,6 +226,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		return $form;
 	}
 
+	// SAVEFORM METHOD IS DEPRECATED!!!  NOT USED IN VERSION 4 ADMIN UI
 	function saveForm(&$screen, $fid) {
 		$vars['title'] = $_POST['title'];
 		$vars['fid'] = $_POST['fid'];
@@ -313,9 +316,9 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
     $screen->setVar('dobr', 0);
 		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
 		if (!$update) {
-                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, donedest, buttontext, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship) VALUES (%u, %s, %s, %s, %s, %s, %s, %s, %u, %u, %u)", $this->db->prefix('formulize_screen_multipage'), $screen->getVar('sid'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship')); //nmc 2007.03.24 added 'printall' & fixed pagetitles
+                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, donedest, buttontext, finishisdone, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship) VALUES (%u, %s, %s, %s, %s, %u, %s, %s, %s, %u, %u, %u)", $this->db->prefix('formulize_screen_multipage'), $screen->getVar('sid'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship')); //nmc 2007.03.24 added 'printall' & fixed pagetitles
              } else {
-                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, donedest = %s, buttontext = %s, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
+                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
              }
 		 $result = $this->db->query($sql);
              if (!$result) {

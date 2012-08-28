@@ -61,6 +61,7 @@ $screen->setVar('paraentryrelationship',$screens['paraentryrelationship']);
 $screen->setVar('donedest',$screens['donedest']);
 $screen->setVar('buttontext',get_magic_quotes_gpc() ? stripslashes($screens['buttontext']) : $screens['buttontext']);
 $screen->setVar('printall',$screens['printall']);
+$screen->setVar('finishisdone',$screens['finishisdone']);
 
 
 if(!$screen_handler->insert($screen)) {
