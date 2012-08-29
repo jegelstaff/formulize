@@ -292,6 +292,10 @@ function getDataCached($framework, $form, $filter="", $andor="AND", $scope="", $
 
 function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived=false, $id_reqsOnly=false, $resultOnly=false, $filterElements=null) {
      global $xoopsDB;
+     
+     $limitStart = intval($limitStart);
+     $limitSize = intval($limitSize);
+     $sortField = mysql_real_escape_string($sortField);
 
      if(isset($_GET['debug'])) { $time_start = microtime_float(); }
      
