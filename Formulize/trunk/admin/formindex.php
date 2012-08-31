@@ -1326,6 +1326,9 @@ function patch40() {
 		$sql['add_dedisplay'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `dedisplay` int(1) NOT NULL";
 		$sql['add_store_revisions'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `store_revisions` tinyint(1) NOT NULL default '0'";
 		$sql['add_finishisdone'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `finishisdone` tinyint(1) NOT NULL default 0";
+		$sql['add_toptext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `toptemplate` text NOT NULL";    
+		$sql['add_elementtext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `elementtemplate` text NOT NULL"; 
+		$sql['add_bottomtext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `bottomtemplate` text NOT NULL"; 
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
 				if($key === "add_encrypt") {
@@ -1352,6 +1355,12 @@ function patch40() {
 					print "store_revisions already added.  result: OK<br>";
 				} elseif($key === "add_finishisdone") {
 					print "finishisdone for multipage forms already added.  result: OK<br>";
+				} elseif($key === "add_toptext") {                            
+					print "toptemplate already added for multipage screens.  result: OK<br>";
+				} elseif($key === "add_elementtext") {
+					print "elementtemplate already added for multipage screens.  result: OK<br>";
+				} elseif($key === "add_bottomtext") {
+					print "bottomtemplate already added for multipage screens.  result: OK<br>";
 				} elseif(strstr($key, 'drop_from_formulize_id_')) {
 					continue;					
 				} else {

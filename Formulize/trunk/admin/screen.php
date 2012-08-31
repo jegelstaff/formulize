@@ -344,6 +344,12 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
   $multipageText['introtext'] = undoAllHTMLChars($screen->getVar('introtext', "e"));
   $multipageText['thankstext'] = undoAllHTMLChars($screen->getVar('thankstext', "e")); // need the e to make sure it doesn't convert links to clickable HTML!
 
+  // template data
+  $multipageTemplates = array();   // Added by Gordon Woodmansey, 29-08-2012
+  $multipageTemplates['toptemplate'] = $screen->getVar('toptemplate');
+  $multipageTemplates['elementtemplate'] = $screen->getVar('elementtemplate'); 
+  $multipageTemplates['bottomtemplate'] = $screen->getVar('bottomtemplate'); 
+
   // pages data
   $multipagePages = array();
   $multipagePages['pages'] = $pages;
@@ -397,6 +403,10 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
   $adminPage['tabs'][4]['name'] = _AM_FORM_SCREEN_PAGES;
   $adminPage['tabs'][4]['template'] = "db:admin/screen_multipage_pages.html";
   $adminPage['tabs'][4]['content'] = $multipagePages + $common;
+
+  $adminPage['tabs'][5]['name'] = _AM_FORM_SCREEN_TEMPLATES;  
+  $adminPage['tabs'][5]['template'] = "db:admin/screen_multipage_templates.html";  
+  $adminPage['tabs'][5]['content'] = $multipageTemplates + $common;
 }
 
 if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {

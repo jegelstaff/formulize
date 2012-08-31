@@ -553,6 +553,9 @@ define("_AM_FORMULIZE_SCREEN_PARAENTRYREL_BYGROUP", "Entries belong to the same 
 
 define("_AM_FORMULIZE_SCREEN_INTRO", "Introductory text for the first page of this form");
 define("_AM_FORMULIZE_SCREEN_THANKS", "Thank-you text for the final page of this form (will be displayed only if the Thank-you page is set as the final page of the form)");
+define("_AM_FORMULIZE_SCREEN_TOPTEMPLATE", "Template for the top part of the page, above the form");
+define("_AM_FORMULIZE_SCREEN_ELEMENTTEMPLATE", "This template will be used once for each element on the page");
+define("_AM_FORMULIZE_SCREEN_BOTTOMTEMPLATE", "Template for the bottom part of the page, below the form");
 define("_AM_FORMULIZE_SCREEN_FINISHISDONE", "The final page of the form should be...");
 define("_AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE", "<b>The Thank-you page</b>, which the user gets after clicking the \"Save and Finish\" button on the last page with questions");
 define("_AM_FORMULIZE_SCREEN_FINISHISDONE_FINISHBUTTON", "<b>The last page with questions</b>, and when the user clicks the \"Save and Finish\" button, they leave the form");
