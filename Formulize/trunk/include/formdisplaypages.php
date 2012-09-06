@@ -42,6 +42,7 @@ global $xoopsConfig;
 	}
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 
 function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text="", $settings="", $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null) { // nmc 2007.03.24 - added 'printall'
 
@@ -85,7 +86,6 @@ if(!$entry AND $_POST['entry'.$fid]) {
 	$entry = $single_result['flag'] ? $single_result['entry'] : 0;
 }
 
-// this is probably not necessary any more, due to architecture changes in Formulize 3
 // formulize_newEntryIds is set when saving data
 if(!$entry AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
 	$entry = $GLOBALS['formulize_newEntryIds'][$fid][0];
@@ -190,6 +190,15 @@ function pageJump(options, prevpage) {
 <h1>You do not have javascript enabled in your web browser.  This form will not work with your web browser.  Please contact the webmaster for assistance.</h1>
 </noscript>
 <?php
+
+
+
+
+
+
+
+
+
 
 
 
@@ -380,59 +389,113 @@ if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages
 	formulize_benchmark("Before drawing nav.");
 
 	$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButtonText'])) ? $saveAndContinueButtonText['previousButtonText'] : _formulize_DMULTI_PREV;
-    if($usersCanSave AND $nextPage==$thanksPage) {
-	$nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['saveButtonText']) ? $saveAndContinueButtonText['saveButtonText'] :  _formulize_DMULTI_SAVE;
-    } else {
-	$nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : _formulize_DMULTI_NEXT;
-    }
-    $previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $submitJavascriptPrev, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-    $nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $submitJavascriptNext, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-    $totalPages = count($pages);
-    $skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
-    
-    
-    
-    
-    if($screen AND $toptemplate = $screen->getVar('toptemplate')) {
-	ob_start();
-	$evalSuccess = eval(html_entity_decode($toptemplate)); 
-	$evalResult = ob_get_clean();
-	if($evalSuccess === false) {
-	    print "<p>"._AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR."</p>";
+	if($usersCanSave AND $nextPage==$thanksPage) {
+	    $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['saveButtonText']) ? $saveAndContinueButtonText['saveButtonText'] :  _formulize_DMULTI_SAVE;
 	} else {
-	    print $evalResult;
+	    $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : _formulize_DMULTI_NEXT;
 	}
-    } else {
-	drawPageNav($usersCanSave, $currentPage, $previousPage, $nextPage, $pages, $thanksPage, $pageTitles, "above", $nextPageButton, $previousPageButton, $skippedPageMessage);
-    }
+	$previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $submitJavascriptPrev, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+	$nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $submitJavascriptNext, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+	$totalPages = count($pages);
+	$skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
+	$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "above");   // calling for the 'above' drawPageNav 
+       
+	// setting up the basic templateVars for all templates
+	// templatevariables must be called after all the variables are loaded otherwise they do not make it into renderTemplate
+	$templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton, 'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage, 'pageSelectionList'=>$pageSelectionList);
+
+	if($screen AND $toptemplate = $screen->getVar('toptemplate')) {
+	    print renderTemplate($toptemplate, $templateVariables);
+	} else {
+	    drawPageNav($usersCanSave, $currentPage, $totalPages, "above", $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList);
+	}
+	
 	formulize_benchmark("After drawing nav/before displayForm.");
 	
+    // need to check for the existence of an elementtemplate property in the screen, like we did with the top and bottom templates
+    // if there's an eleemnt template, then do this loop, otherwise, do the displayForm call like normal
+    if ($screen AND $elementtemplate = $screen->getVar('elementtemplate')) {  // Code added by Julian 2012-09-04 and Gordon Woodmansey 2012-09-05 to render the elementtemplate
+	    if(!security_check($fid, $entry)) {
+		exit();
+	    }
+	    // start the form manually...
+	    print "<div id='formulizeform'><form id='formulize' name='formulize' action='".getCurrentURL()."' method='post' onsubmit='return xoopsFormValidate_formulize();' enctype='multipart/form-data'>";
+	    foreach ($elements_allowed as $thisElement) {   // entry is a recordid
+		    $deReturnValue = displayElement("", $thisElement, $entry, false, $screen, null, false);
+		    if (is_array($deReturnValue)) {
+			    $form_ele = $deReturnValue[0];
+			    $isDisabled = $deReturnValue[1];
+		    } else {
+			    $form_ele = $deReturnValue;
+			    $isDisabled = false;
+		    }
+		    if (($form_ele == "not_allowed" OR $form_ele == "hidden")) {
+			$elementMarkup = "";
+			$elementCaption = "";
+		    } else {
+			$elementMarkup = $form_ele->render();
+			$elementCaption = displayCaption("", $thisElement);
+			$elementDescription = displayDescription("", $thisElement);
+			$templateVariables['elementCaption'] = $elementCaption;  // here we can assume that the $previousPageButton etc has not be changed before rendering 
+			$templateVariables['elementMarkup'] = $elementMarkup;
+			$templateVariables['elementDescription'] = $elementDescription;
+			$templateVariables['elementObjectForRendering'] = $form_ele;
+			$templateVariables['element_id'] = $thisElement;
+			print renderTemplate($elementtemplate, $templateVariables);
+		    }
+	    }
+	    // now we also need to add in some bits that are necessary for the form submission logic to work...borrowed from parts of formdisplay.php mostly...this should be put together into a more distinct rendering system for forms, so we can call the pieces as needed
+	    print "<input type=hidden name=formulize_currentPage value='".$settings['formulize_currentPage']."'>";
+	    print "<input type=hidden name=formulize_prevPage value='".$settings['formulize_prevPage']."'>";
+	    print "<input type=hidden name=formulize_doneDest value='".$settings['formulize_doneDest']."'>";
+	    print "<input type=hidden name=formulize_buttonText value='".$settings['formulize_buttonText']."'>";
+	    print $GLOBALS['xoopsSecurity']->getTokenHTML();
+	    if($entry) {
+		    print "<input type=hidden name=entry".$fid." value=".intval($entry).">"; // need this to persist the entry that the user is 
+	    }
+	    print "</form></div>";
+	    print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px;\">\n";
+	    if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
+		    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
+	    } else {
+		    print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-english.gif\">\n";
+	    }
+	    print "</div>\n";
+	    drawJavascript();
+	    print "<script type=\"text/javascript\">function xoopsFormValidate_formulize(){return true;}</script>"; // shim for the validation javascript that is created by the xoopsThemeForms, and which our saving logic currently references...saving won't work without this...we should actually render the proper validation logic at some point, but not today.
+    } else {
 	displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, "", "", 0, 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
-
+    }
+    
 	formulize_benchmark("After displayForm.");
 
 }
+    
 
-if($currentPage != $thanksPage AND !$_POST['goto_sfid']) {
+    if($currentPage != $thanksPage AND !$_POST['goto_sfid']) {
+	    // have to get the new value for $pageSelection list if the user requires it on the users view.
+	    $pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below");   
+	    if ($screen AND $bottomtemplate = $screen->getVar('bottomtemplate')) { 
+		    $templateVariables['pageSelectionList'] = $pageSelectionList; // assign the new pageSelectionList, since it was redone for the bottom section
+		    print renderTemplate($bottomtemplate, $templateVariables);
+	    } else {
+		    drawPageNav($usersCanSave, $currentPage, $totalPages, "below", $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList);
+	    }
+    }	
 
-	drawPageNav($usersCanSave, $currentPage, $previousPage, $nextPage, $pages, $thanksPage, $pageTitles, "below", $nextPageButton, $previousPageButton, $skippedPageMessage);
 
-	print "</center>";
-
-}
-
-formulize_benchmark("End of displayFormPages.");
+    formulize_benchmark("End of displayFormPages.");
 
 
 } // end of the function!
 
-
-function drawPageNav($usersCanSave="", $currentPage="", $previousPage="", $nextPage="", $pages="", $thanksPage, $pageTitles, $aboveBelow, $nextPageButton, $previousPageButton, $skippedPageMessage) {
+// Added $pageSelectionList by Gordon Woodmansey 2012-09-04
+function drawPageNav($usersCanSave="", $currentPage="", $totalPages, $aboveBelow, $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList) {
 
 	if($aboveBelow == "above") {
 		//navigation options above the form print like this
 		print "<br /><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\"><div id=\"pageNavTable\"><table><tr>\n";
-		print "<td style=\"vertical-align: middle; padding-right: 5px;\"><nobr><b>" . _formulize_DMULTI_YOUAREON . "</b></nobr><br /><nobr>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . count($pages) . "</nobr></td>";
+		print "<td style=\"vertical-align: middle; padding-right: 5px;\"><nobr><b>" . _formulize_DMULTI_YOUAREON . "</b></nobr><br /><nobr>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . $totalPages . "</nobr></td>";
 		print "<td style=\"vertical-align: middle; padding-right: 5px;\">";
 		print $previousPageButton;
 		print "</td>";
@@ -441,11 +504,11 @@ function drawPageNav($usersCanSave="", $currentPage="", $previousPage="", $nextP
 	
 		print "</td>";
 		print "<td style=\"vertical-align: middle;\">";
-		print _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . pageSelectionList($currentPage, count($pages), $pageTitles, $aboveBelow);
+		print _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . $pageSelectionList;
 		print "</td></tr></table></div></form><br />";
         } else { 
                 //navigation options below the form print like this
-                print "<br><div id=\"bottomPageNumber\"><center><p>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . count($pages);
+                print "<br><div id=\"bottomPageNumber\"><center><p>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . $totalPages;
                 if(!$usersCanSave) {print "<br>" . _formulize_INFO_NOSAVE;}
                 if($skippedPageMessage) {
                     print "<br>". $skippedPageMessage;
@@ -454,7 +517,7 @@ function drawPageNav($usersCanSave="", $currentPage="", $previousPage="", $nextP
                 print $previousPageButton;
                 print "&nbsp;&nbsp;&nbsp;&nbsp;";
                 print $nextPageButton;
-                print "</center><br><div id=\"bottomJumpList\"><p>". _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . pageSelectionList($currentPage, count($pages), $pageTitles, $aboveBelow) . "</p></div></form>";
+                print "</center><br><div id=\"bottomJumpList\"><p>". _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . $pageSelectionList . "</p></div></form>";
         }
 }
 

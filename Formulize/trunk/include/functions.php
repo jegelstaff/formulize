@@ -4678,4 +4678,33 @@ function htmlForElement($elementHandle, $nameForHTML="orphaned_formulize_element
   }
 }
 
+/*
+ *  @name renderTemplate
+ *
+ *  This function renders a template for formdisplaypages.php
+ *  It should be called as follows:
+ *  	print renderTemplate($templateX, $templateVariables);
+ *
+ *  The code was created for the Futureworx project
+ *  @author Gordon Woodmansey
+ *  @param  $template A Formulize template
+ *  @return A string that can be rendered by a print statement.
+ */
+function renderTemplate($template, $templateVariables) {
+	// get our templateVaraibles first
+      foreach ($templateVariables as $name => $value) {
+	${$name} = $value;
+      }
+	
+      // now eval and returns as string 
+      ob_start();
+      $evalSuccess = eval(html_entity_decode($template)); 
+      $evalResult = ob_get_clean();
+      if ($evalSuccess  === false) {
+	  return "<p>"._AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR."</p>";
+      } else {
+	  return $evalResult;
+      }
+}
+
 

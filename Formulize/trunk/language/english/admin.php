@@ -552,9 +552,28 @@ define("_AM_FORMULIZE_SCREEN_PARAENTRYRELATIONSHIP", "If previous answers are sh
 define("_AM_FORMULIZE_SCREEN_PARAENTRYREL_BYGROUP", "Entries belong to the same group");
 
 define("_AM_FORMULIZE_SCREEN_INTRO", "Introductory text for the first page of this form");
-define("_AM_FORMULIZE_SCREEN_THANKS", "Thank-you text for the final page of this form (will be displayed only if the Thank-you page is set as the final page of the form)");
+define("_AM_FORMULIZE_SCREEN_THANKS", "Thank-you text for the final page of this form");
+define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES", "Templates for Multi page form:");
+define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES_HELP", "<p>The following variables can be used in these templates to render certain text or UI elements:</p>
+<ul>
+<li>\$currentPage</li>
+<li>\$totalPages</li>
+<li>\$nextPageButton</li>
+<li>\$previousPageButton</li>
+<li>\$pageSelectionList &mdash; draws in the dropdown list for jumping to another page</li>
+<li>\$skippedPagesMessage &mdash; the message saying one or more pages were skipped, it will be an empty string is no pages were skipped</li>
+</ul>
+<p>In addition, in the element template, the following variables are also available.  The element template will be used multiple times, once for each element on the page.  In each case, these variables will refer to the element that is currently being rendered.</p>
+<ul>
+<li>\$elementCaption &mdash; the actual question text</li>
+<li>\$elementDescription &mdash; any help or descriptive text for the question</li>
+<li>\$elementMarkup &mdash; the HTML for rendering the question on the page</li>
+<li>\$element_id &mdash; the ID number of the element that is being rendered</li>
+<li>\$elementObjectForRendering &mdash; the object that has been prepared, based on the element settings, and has been used to generate the markup.  This is not the same as the Element Object in the Formulize API, which simply contains all those settings.  Use this object if you need to get the caption, as prepared in the actual element as it is rendered, if, for example, you are using a custom element that changes the caption text at render time.</li>
+</ul>");
+define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES_INTRO", "Leave these blank to use the default layout.  Currently, not all features are supported for rendering elements in custom templates.  Element conditions will be ignored, as well as elements being required or any other validation conditions.");
 define("_AM_FORMULIZE_SCREEN_TOPTEMPLATE", "Template for the top part of the page, above the form");
-define("_AM_FORMULIZE_SCREEN_ELEMENTTEMPLATE", "This template will be used once for each element on the page");
+define("_AM_FORMULIZE_SCREEN_ELEMENTTEMPLATE", "This template will be used once for drawing each element on the page");
 define("_AM_FORMULIZE_SCREEN_BOTTOMTEMPLATE", "Template for the bottom part of the page, below the form");
 define("_AM_FORMULIZE_SCREEN_FINISHISDONE", "The final page of the form should be...");
 define("_AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE", "<b>The Thank-you page</b>, which the user gets after clicking the \"Save and Finish\" button on the last page with questions");
