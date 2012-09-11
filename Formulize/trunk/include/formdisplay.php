@@ -2459,6 +2459,16 @@ print " initialize_formulize_xhr();\n";
 print " var formulizechanged=0;\n";
 print " var formulize_xhr_returned_check_for_unique_value = 'notreturned';\n";
 ?>
+
+if (typeof jQuery == 'undefined') { 
+	var head = document.getElementsByTagName('head')[0];
+	script = document.createElement('script');
+	script.id = 'jQuery';
+	script.type = 'text/javascript';
+	script.src = '<?php print XOOPS_URL; ?>/modules/formulize/jquery/jquery-1.4.2.min.js';
+	head.appendChild(script);
+}
+
 function showPop(url) {
 
 	if (window.formulize_popup == null) {

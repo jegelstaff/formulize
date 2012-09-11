@@ -3043,6 +3043,15 @@ function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $l
 ?>
 <script type='text/javascript'>
 
+if (typeof jQuery == 'undefined') { 
+	var head = document.getElementsByTagName('head')[0];
+	script = document.createElement('script');
+	script.id = 'jQuery';
+	script.type = 'text/javascript';
+	script.src = '<?php print XOOPS_URL; ?>/modules/formulize/jquery/jquery-1.4.2.min.js';
+	head.appendChild(script);
+}
+
 <?php
 if($useXhr) {
 	print " initialize_formulize_xhr();\n";
