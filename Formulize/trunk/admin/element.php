@@ -360,21 +360,24 @@ if($ele_type=='text') {
   if($options['islinked']) {
 	$linkedMetaDataParts = explode("#*=:*", $ele_value[2]);
 	$linkedSourceFid = $linkedMetaDataParts[0];
-	list($listValue, $selectedListValue) = createFieldList($ele_value[10], false, $linkedSourceFid, "elements-ele_value[10]", _AM_ELE_LINKSELECTEDABOVE);
-	$options['listValue'] = $listValue->render();
-	list($exportValue, $selectedExportValue) = createFieldList($ele_value[11], false, $linkedSourceFid, "elements-ele_value[11]", _AM_ELE_VALUEINLIST);
-	$options['exportValue'] = $exportValue->render();
-	list($optionSortOrder, $selectedOptionsSortOrder) = createFieldList($ele_value[12], false, $linkedSourceFid, "elements-ele_value[12]", _AM_ELE_LINKFIELD_ITSELF);
-	$options['optionSortOrder'] = $optionSortOrder->render();
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-	$linkedDataHandler = new formulizeDataHandler($linkedSourceFid);
-	$allLinkedValues = $linkedDataHandler->findAllValuesForField($linkedMetaDataParts[1], "ASC");
-	if(!is_array($ele_value[13])) {
-		$ele_value[13] = array($ele_value[13]);
+	if($linkedSourceFid) {
+		list($listValue, $selectedListValue) = createFieldList($ele_value[10], false, $linkedSourceFid, "elements-ele_value[10]", _AM_ELE_LINKSELECTEDABOVE);
+		$options['listValue'] = $listValue->render();
+		list($exportValue, $selectedExportValue) = createFieldList($ele_value[11], false, $linkedSourceFid, "elements-ele_value[11]", _AM_ELE_VALUEINLIST);
+		$options['exportValue'] = $exportValue->render();
+		list($optionSortOrder, $selectedOptionsSortOrder) = createFieldList($ele_value[12], false, $linkedSourceFid, "elements-ele_value[12]", _AM_ELE_LINKFIELD_ITSELF);
+		$options['optionSortOrder'] = $optionSortOrder->render();
+		include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+		$linkedDataHandler = new formulizeDataHandler($linkedSourceFid);
+		$allLinkedValues = $linkedDataHandler->findAllValuesForField($linkedMetaDataParts[1], "ASC");
+		if(!is_array($ele_value[13])) {
+			$ele_value[13] = array($ele_value[13]);
+		}
+		$options['optionDefaultSelectionDefaults'] = $ele_value[13];
+		$options['optionDefaultSelection'] = $allLinkedValues; // array with keys as entry ids and values as text
 	}
-	$options['optionDefaultSelectionDefaults'] = $ele_value[13];
-	$options['optionDefaultSelection'] = $allLinkedValues; // array with keys as entry ids and values as text
-  } else {
+  }
+  if(!$options['islinked'] OR !$linkedSourceFid) {
 	$options['exportValue'] = "";
 	$options['listValue'] = "";
 	$options['optionSortOrder'] = "";
