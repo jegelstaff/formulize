@@ -144,7 +144,8 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false)
   $found_names = array();
   $found_uids = array();
   foreach($all_users as $user) {
-		$found_names[$user->getVar('uid')] = $user->getVar($nametype);
+	
+		$found_names[$user->getVar('uid')] = $user->getVar($nametype) != "" ? $user->getVar($nametype) : $user->getVar('uname');
     $found_uids[$user->getVar('uid')] = $user->getVar('uid');
 	}
 	

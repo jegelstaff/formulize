@@ -68,8 +68,12 @@ if($_POST['element_delimit']) {
     $processedValues['elements']['ele_delim'] = $_POST['element_delimit'];
   }
 }
-if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != "YYYY-mm-dd" AND $processedValues['elements']['ele_value'][0] != "") { 
-	$processedValues['elements']['ele_value'][0] = date("Y-m-d", strtotime($processedValues['elements']['ele_value'][0])); 
+if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != "YYYY-mm-dd" AND $processedValues['elements']['ele_value'][0] != "") {
+	if(ereg_replace("[^A-Z{}]","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
+	  $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0];
+	} else {
+	  $processedValues['elements']['ele_value'][0] = date("Y-m-d", strtotime($processedValues['elements']['ele_value'][0]));
+	}
 } elseif($ele_type == "date") {
 	$processedValues['elements']['ele_value'][0] = "";
 }

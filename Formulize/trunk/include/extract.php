@@ -179,10 +179,14 @@ function prepvalues($value, $field, $entry_id) {
 		    if(count($uids) > 1) { array_shift($uids); }
 		    $uidFilter = extract_makeUidFilter($uids);
 		    $listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
-		    $names = go("SELECT $listtype FROM " . DBPRE . "users WHERE $uidFilter ORDER BY $listtype");
+		    $names = go("SELECT uname, name FROM " . DBPRE . "users WHERE $uidFilter ORDER BY $listtype");
 		    $value = "";
 		    foreach($names as $thisname) {
-		      $value .= "*=+*:" . $thisname[$listtype];
+			 if($thisname[$listtype]) {
+			      $value .= "*=+*:" . $thisname[$listtype];
+			 } else {
+			      $value .= "*=+*:" . $thisname['uname'];
+			 }
 		    }     
 	       } else {
 		    $value = "";
@@ -1305,9 +1309,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 			 }
                     // usernames/fullnames boxes
                     } elseif($listtype = $formFieldFilterMap[$mappedForm][$element_id]['isnamelist'] AND $ifParts[1] !== "") {
-                         $listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
                          if(!is_numeric($ifParts[1])) {
-                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE " . $listtype . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes;
+                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes;  // search name and uname, since often name might be empty these days
                          } else {
                               $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uid ".$operator.$quotes.$likebits.$ifParts[1].$likebits.$quotes;
                          }

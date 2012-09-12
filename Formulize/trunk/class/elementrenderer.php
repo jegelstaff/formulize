@@ -937,11 +937,17 @@ class formulizeElementRenderer{
 				else
 				{
 						//print "good date";
+					if (ereg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
+						$number = ereg_replace("[^0-9+-]","", $ele_value[0]);
+						$timestampToUse = mktime(0, 0, 0, date("m") , date("d")+$number, date("Y"));
+					} else {
+						$timestampToUse = strtotime($ele_value[0]);
+					}
 					$form_ele = new XoopsFormTextDateSelect (
 						$ele_caption,
 						$form_ele_id,
 						15,
-						strtotime($ele_value[0])
+						$timestampToUse
 						//$ele_value[0]
 					);
 				} // end of check to see if the default setting is for real
