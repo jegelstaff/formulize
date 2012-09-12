@@ -135,6 +135,8 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                 if(!$fileDeleteCode) { // only do this once per page load
                     $fileDeleteCode = "<script type='text/javascript'>
                 
+                    var formulizeFile".$element->getVar('ele_id')."Exists = true;
+                
                     function warnAboutFileDelete(folderName, element_id, entry_id) {
                         var answer = confirm('Do you really want to delete this file?');
                         if(answer) {
@@ -148,6 +150,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                     
                     function formulize_delete_successful(element_id) {
                         window.document.getElementById('formulize_fileStatus_'+element_id).innerHTML = 'Upload a file:';
+                        formulizeFile".$element->getVar('ele_id')."Exists = false;    
                     }
                     
                     function formulize_delete_failed() {
@@ -184,7 +187,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         $validationCode[] = "  myform.{$cueName}.name = '{$cueName}';\n";
         $validationCode[] = "}\n";
         if($element->getVar('ele_req')) { // need to include this only if the admin wants to force a value for this element
-            $validationCode[] = "if(myform.fileupload_{$markupName}.value == '') {\n";
+            $validationCode[] = "if(myform.fileupload_{$markupName}.value == '' && formulizeFile".$element->getVar('ele_id')."Exists == false) {\n";
             $validationCode[] = "  window.alert('{$validationmsg}');\n myform.fileupload_{$markupName}.focus();\n return false;\n ";
             $validationCode[] = "}\n";
         }
