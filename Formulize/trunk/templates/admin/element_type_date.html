@@ -6,7 +6,7 @@
 	    <input type="text" id="element-date" name="elements-ele_value[0]" value="<{if $content.ele_value[0] eq ''}>YYYY-mm-dd<{else}><{$content.ele_value[0]}><{/if}>" size="15" maxlength="15"/>
     </div>
 		<div class="description">
-			<p>Leave as "YYYY-mm-dd" if you do not want to have a specific date show up as the default.</p>
+			<p>Leave as "YYYY-mm-dd" if you do not want to have a specific date show up as the default.  Use {TODAY} to cause the current date to always be used, or {TODAY+7} for one week in the future, {TODAY-14} for two weeks in the past, etc.</p>
 		</div>
   </fieldset>
 </div>
