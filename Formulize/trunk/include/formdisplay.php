@@ -95,9 +95,9 @@ class formulize_themeForm extends XoopsThemeForm {
 			$js .= "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
 		}
 		$formname = $this->getName();
-		$js .= "function xoopsFormValidate_{$formname}() { myform = window.document.{$formname}; ";
+		$js .= "function xoopsFormValidate_{$formname}() { myform = window.document.{$formname};\n";
 		$js .= $this->_drawValidationJS();
-		$js .= "return true;\n}\n";
+		$js .= "\nreturn true;\n}\n";
 		if ( $withtags ) {
 			$js .= "//--></script>\n<!-- End Form Vaidation JavaScript //-->\n";
 		}
@@ -138,7 +138,7 @@ class formulize_themeForm extends XoopsThemeForm {
 
 	// need to check whether the element is a standard element, if if so, add the check for whether its row exists or not	
 	function _drawValidationJS() {
-		$js = "";
+		$fullJs = "";
 		
 		$elements = $this->getElements( true );
 		foreach ( $elements as $elt ) {
@@ -150,12 +150,14 @@ class formulize_themeForm extends XoopsThemeForm {
 				}
 				$js = $elt->renderValidationJS();
 				if($js AND $checkConditionalRow) {
-					$js = "if(window.document.getElementById('formulize-".$elt->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
+					$fullJs .= "if(window.document.getElementById('formulize-".$elt->getName()."').style.display != 'none') {\n".$js."\n}\n\n";
+				} elseif($js) {
+					$fullJs .= "\n".$js."\n";
 				}
 			}
 		}
 		
-		return $js;
+		return $fullJs;
 	}
 	
 }
