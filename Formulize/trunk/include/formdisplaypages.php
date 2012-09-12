@@ -449,6 +449,7 @@ if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages
 	    print "<input type=hidden name=formulize_prevPage value='".$settings['formulize_prevPage']."'>";
 	    print "<input type=hidden name=formulize_doneDest value='".$settings['formulize_doneDest']."'>";
 	    print "<input type=hidden name=formulize_buttonText value='".$settings['formulize_buttonText']."'>";
+	    print "<input type=hidden name=ventry value='".$settings['ventry']."'>";
 	    print $GLOBALS['xoopsSecurity']->getTokenHTML();
 	    if($entry) {
 		    print "<input type=hidden name=entry".$fid." value=".intval($entry).">"; // need this to persist the entry that the user is 
