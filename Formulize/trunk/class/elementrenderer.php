@@ -333,11 +333,12 @@ class formulizeElementRenderer{
 					static $cachedSourceValuesAutocompleteLength = array();
 
 					// setup the sort order based on ele_value[12], which is an element id number
+					$sortOrder = $ele_value[15] == 2 ? " DESC" : "ASC";
 					if($ele_value[12]=="none" OR !$ele_value[12]) {
-						$sortOrderClause = " ORDER BY t1.`$sourceHandle`";
+						$sortOrderClause = " ORDER BY t1.`$sourceHandle` $sortOrder";
 					} else {
 						list($sortHandle) = convertElementIdsToElementHandles(array($ele_value[12]), $sourceFormObject->getVar('id_form'));
-						$sortOrderClause = " ORDER BY t1.`$sortHandle`";
+						$sortOrderClause = " ORDER BY t1.`$sortHandle` $sortOrder";
 					}
 
 					if($pgroupsfilter) { // if there is a groups filter, then join to the group ownership table
