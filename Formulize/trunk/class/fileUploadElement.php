@@ -225,7 +225,14 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
             if($fileExtensionOK) {
                 $ele_value = $element->getVar('ele_value');
                 $obscureFile = $ele_value[2] ? "" : microtime(true)."+---+";
-                $folderLocation = XOOPS_ROOT_PATH."/uploads/".str_replace("de_","formulize_",$value);
+                // if it's a blank subform entry that we're saving, do things a bit differently...elements are named differently in markup in this case
+                if(strstr($value, "desubform")) {
+                    $underscorePos = strpos($value, "_"); // everything after the first underscore is the normal identifier for the element
+                    $replacementString = substr($value, 0, $underscorePos+1);
+                } else {
+                    $replacementString = "de_";
+                }
+                $folderLocation = XOOPS_ROOT_PATH."/uploads/".str_replace($replacementString,"formulize_",$value);
                 $folderExists = file_exists($folderLocation);
                 if(!$folderExists) {
                     $folderExists = mkdir($folderLocation);
@@ -254,7 +261,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                 print "<p><b>$value</b></p>";
             }
         } elseif($_FILES[$fileKey]['error'] == UPLOAD_ERR_NO_FILE) {
-            // no replacement file sent, so keep whatever we've got already...we should be skipping these uploads!
+            return "{WRITEASNULL}"; // no replacement file sent, so keep whatever we've got already...we should be skipping these uploads!
         } else {
             switch($_FILES[$fileKey]['error']) {
                 case UPLOAD_ERR_INI_SIZE:

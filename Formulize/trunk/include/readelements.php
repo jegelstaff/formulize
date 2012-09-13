@@ -358,9 +358,15 @@ return $formulize_allWrittenEntryIds;
 // entry_id is the entry id that was just written to the database
 function afterSavingLogic($values,$entry_id) {
 	if(isset($GLOBALS['formulize_afterSavingLogicRequired'])) { // elements must declare at the prepDataForWrite stage if they have after saving logic required
+		$element_handler = xoops_getmodulehandler('elements','formulize');
 		foreach($GLOBALS['formulize_afterSavingLogicRequired'] as $elementId=>$thisAfterSavingRequestType) {
-			$elementTypeHandler = xoops_getmodulehandler($thisAfterSavingRequestType."Element", "formulize");
-			$elementTypeHandler->afterSavingLogic($values[$elementId],$elementId,$entry_id);
+			$elementObject = $element_handler->get($elementId);
+			$elementHandle = $elementObject->getVar('ele_handle');
+			// if the entry that was just written was one that included the element type that we need after saving logic for, then go for it
+			if(isset($values[$elementHandle])) {
+				$elementTypeHandler = xoops_getmodulehandler($thisAfterSavingRequestType."Element", "formulize");
+				$elementTypeHandler->afterSavingLogic($values[$elementHandle],$elementId,$entry_id);
+			}
 		}
 	}
 }
