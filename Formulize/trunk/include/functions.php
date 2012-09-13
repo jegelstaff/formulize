@@ -4629,6 +4629,9 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 	if(!is_array($value)) {
 		$value = array($value);
 	}
+	if(!is_array($localIds)) {
+		$localIds = array($localIds);
+	}
 	$countOfValue = count($value);
 	$counter = 1;
 	static $cachedFormIds = array();
