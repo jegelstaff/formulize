@@ -110,7 +110,7 @@ switch($op) {
     $result = unlink($filePath);
     if($result) {
       $data_handler->writeEntry($entry_id, array($elementObject->getVar('ele_handle')=>''), false, true); // erase the recorded values for this file in the database, false is proxy user, true is force update (on a GET request)
-      print $element_id;
+      print "{ \"element_id\": \"$element_id\", \"entry_id\": \"$entry_id\" }";
     }
     break;
   case 'get_element_html':

@@ -211,7 +211,12 @@ function prepvalues($value, $field, $entry_id) {
 
 	  if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 	       $elementTypeHandler = xoops_getmodulehandler($type."Element", "formulize");
-	       return $elementTypeHandler->prepareDataForDataset($value, $field, $entry_id);
+	       $preppedValue = $elementTypeHandler->prepareDataForDataset($value, $field, $entry_id);
+	       if(!is_array($preppedValue)) {
+		    return array($preppedValue);
+	       } else {
+		    return $preppedValue;
+	       }
 	  }
 
 
@@ -1918,7 +1923,7 @@ function display($entry, $handle, $id="NULL", $localid="NULL") {
 					$foundValues[] = $value;
 					$GLOBALS['formulize_mostRecentLocalId'][] = $lid;
 				}
-			} else { // the handle is for metadata
+			} else { // the handle is for metadata, all other fields will be arrays in the dataset
 		    $GLOBALS['formulize_mostRecentLocalId'] = $lid;
 				return $elements[$handle];
 			}

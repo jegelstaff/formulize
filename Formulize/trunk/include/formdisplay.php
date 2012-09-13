@@ -1404,6 +1404,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 				foreach($elementsToDraw as $thisele) {
 					if($thisele) { 
 						ob_start();
+						// critical that we *don't* ask for displayElement to return the element object, since this way the validation logic is passed back through the global space also (ugh).  Otherwise, no validation logic possible for subforms.
 						$renderResult = displayElement($deFrid, $thisele, "subformCreateEntry_".$i."_".$subformElementId); 
 						$col_two_temp = ob_get_contents();
 						ob_end_clean();
@@ -1476,6 +1477,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 					foreach($elementsToDraw as $thisele) {
 						if($thisele) { 
 							ob_start();
+							// critical that we *don't* ask for displayElement to return the element object, since this way the validation logic is passed back through the global space also (ugh).  Otherwise, no validation logic possible for subforms.
 							$renderResult = displayElement($deFrid, $thisele, $sub_ent); 
 							$col_two_temp = ob_get_contents();
 							ob_end_clean();
