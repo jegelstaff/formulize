@@ -20,7 +20,7 @@
 <script type="text/javascript">
 
 $(".deletelink").click(function () {
-	answer = confirm("<{$smarty.const._FORM_DELETE_TEXT_CONFIRM}>");
+	answer = confirm("<{$smarty.const._AM_HOME_CONFIRMDELETEFORM}>");
 	if(answer) {
 		$("[name=deleteform]").val($(this).attr('target'));
 		runSaveEvent();
