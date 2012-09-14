@@ -104,7 +104,7 @@ class formulizeScreenHandler {
 
 	function delete($sid, $type) {
  		$sql1 = "DELETE FROM " . $this->db->prefix("formulize_screen") . " WHERE sid=" . intval($sid);
-		$sql2 = "DELETE FROM " . $this->db->prefix("formulize_screen_".$type) . " WHERE sid=" . intval($sid);
+		$sql2 = "DELETE FROM " . $this->db->prefix("formulize_screen_".strtolower($type)) . " WHERE sid=" . intval($sid);
 		if(!$result = $this->db->query($sql1)) {
 			return false;
 		}
