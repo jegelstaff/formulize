@@ -161,7 +161,7 @@ $(document).ready(function() {
     saveTarget = 0;
     redirect = "";
     formdata = new Array();
-    for( var i in formulize_formlist) {
+    for(i=0;i<formulize_formlist.length;i++) {
       if(typeof(formulize_formlist[i]) == 'object') { // for some crazy reason, non-form stuff can be pulled in by getElementsByName with that param...I hate javascript
         formdata[saveTarget] = formulize_formlist[i];
         saveTarget = saveTarget + 1;

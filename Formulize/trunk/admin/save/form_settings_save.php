@@ -52,7 +52,7 @@ if($formObject->getVar('lockedform')) {
 }
 
 // check if the user has permission to edit the form
-if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
+if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid) AND $_POST['formulize_admin_key'] != "new") {
   return;
 }
 

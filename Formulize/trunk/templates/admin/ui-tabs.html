@@ -2,7 +2,7 @@
 	
 	$(function() {
 		$("#tabs").tabs({
-			<{if $adminPage.tabselected !== ""}>
+			<{if $adminPage.tabselected > 0}>
 			selected: <{$adminPage.tabselected}>
 			<{/if}>
 		});
