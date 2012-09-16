@@ -1693,95 +1693,24 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	global $xoopsDB, $xoopsUser;
 
 	// find hidden elements first...
-	// elementdisplay.php also has handling for this...they should be amalgamated/rationalized at some point
-	$hiddenElements = array();
-	//if(!$entry) {
-		$notAllowedCriteria = new CriteriaCompo();
-		$notAllowedCriteria->add(new Criteria('ele_forcehidden', 1));
-		$criteria = new CriteriaCompo();
-		$criteria->add(new Criteria('ele_display', 0), 'OR');
-		$criteria2 = new CriteriaCompo();
-		foreach($groups as $thisgroup) {
-			$criteria2->add(new Criteria('ele_display', '%,'.$thisgroup.',%', 'NOT LIKE'), 'AND');
-		}
-		$criteria->add($criteria2, 'OR');
-		$notAllowedCriteria->add($criteria, 'AND');
-		$notAllowedCriteria->setSort('ele_order');
-		$notAllowedCriteria->setOrder('ASC');
+	$notAllowedCriteria = new CriteriaCompo();
+	$notAllowedCriteria->add(new Criteria('ele_forcehidden', 1));
+	$criteria = new CriteriaCompo();
+	$criteria->add(new Criteria('ele_display', 0), 'OR');
+	$criteria2 = new CriteriaCompo();
+	foreach($groups as $thisgroup) {
+		$criteria2->add(new Criteria('ele_display', '%,'.$thisgroup.',%', 'NOT LIKE'), 'AND');
+	}
+	$criteria->add($criteria2, 'OR');
+	$notAllowedCriteria->add($criteria, 'AND');
+	$notAllowedCriteria->setSort('ele_order');
+	$notAllowedCriteria->setOrder('ASC');
+	$notAllowedElements =& $formulize_mgr->getObjects2($notAllowedCriteria,$fid);
 
-		$notAllowedElements =& $formulize_mgr->getObjects2($notAllowedCriteria,$fid);
-	
-		foreach($notAllowedElements as $ni) {
-			// display these elements as hidden elements with the default value
-			switch($ni->getVar('ele_type')) {
+	$hiddenElements = generateHiddenElements($notAllowedElements, $entryForDEElements); // in functions.php, keys in returned array will be the element ids
 
-				case "radio":
-					if(!$entry) {
-						$indexer = 1;
-							foreach($ni->getVar('ele_value') as $k=>$v) {
-								if($v == 1) {
-								$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $indexer);
-							}
-							$indexer++;
-						}
-					}
-					break;
-				case "checkbox":
-					if(!$entry) {
-						$indexer = 1;
-							foreach($ni->getVar('ele_value') as $k=>$v) {
-								if($v == 1) {
-								$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id')."[]", $indexer);
-							}
-							$indexer++;
-						}
-					} else {
-						$data_handler = new formulizeDataHandler($ni->getVar('id_form'));
-						$checkBoxOptions = $data_handler->getElementValueInEntry($entry, $ni);
-						$indexer = 1;
-						foreach($ni->getVar('ele_value') as $k=>$v) {
-							if(strstr($checkBoxOptions, $k)) {
-								$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id')."[]", $indexer);
-							} 
-							$indexer++;
-						}
-					}
-					break;
-				case "yn":
-					if(!$entry) {
-						$ele_value = $ni->getVar('ele_value');
-						$yesNoValue = $ele_value['_YES'] == 1 ? 1 : 2; // check to see if Yes is the value, and if so, set 1, otherwise, set 2.  2 is the value used when No is the selected option in YN radio buttons
-						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $yesNoValue);
-					}
-	        break;				
-				case "text":
-					if(!$entry) {
-						global $myts;
-						if(!$myts){ $myts =& MyTextSanitizer::getInstance(); }
-						$ele_value = $ni->getVar('ele_value');
-						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $myts->htmlSpecialChars(getTextboxDefault($ele_value[2], $ni->getVar('id_form'), $entry)));
-					} else {
-						include_once XOOPS_ROOT_PATH . "/modules/class/data.php";
-						$data_handler = new formulizeDataHandler($ni->getVar('id_form'));
-						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $data_handler->getElementValueInEntry($entry, $ni));
-					}
-					break;
-				case "textarea":
-					if(!$entry) {
-						global $myts;
-						if(!$myts){ $myts =& MyTextSanitizer::getInstance(); }
-						$ele_value = $ni->getVar('ele_value');
-						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $myts->htmlSpecialChars(getTextboxDefault($ele_value[0], $ni->getVar('id_form'), $entry)));
-					} else {
-						include_once XOOPS_ROOT_PATH . "/modules/class/data.php";
-						$data_handler = new formulizeDataHandler($ni->getVar('id_form'));
-						$hiddenElements[$ni->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entryForDEElements.'_'.$ni->getVar('ele_id'), $data_handler->getElementValueInEntry($entry, $ni));
-					}
-					break;
-			}
-		}
 	//} // if(!$entry) is now broken out locally, since for plain textboxes, we are allowing special hidden values when there is an entry.  This feature will likely evolve.
-  unset($criteria);
+	unset($criteria);
 	unset($ele_value);
 
 	// set criteria for matching on display
@@ -2011,7 +1940,13 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 
 	foreach($hiddenElements as $element_id=>$thisHiddenElement) {
 		$form->addElement(new xoopsFormHidden("decue_".$fid."_".$entryForDEElements."_".$element_id, 1));
-		$form->addElement($thisHiddenElement);
+		if(is_array($thisHiddenElement)) { // could happen for checkboxes
+			foreach($thisHiddenElement as $thisIndividualHiddenElement) {
+				$form->addElement($thisIndividualHiddenElement);
+			}
+		} else {
+			$form->addElement($thisHiddenElement);
+		}
 		unset($thisHiddenElement); // some odd reference thing going on here...$thisHiddenElement is being added by reference or something like that, so that when $thisHiddenElement changes in the next run through, every previous element that was created by adding it is updated to point to the next element.  So if you unset at the end of the loop, it forces each element to be added as you would expect.
 	}
 

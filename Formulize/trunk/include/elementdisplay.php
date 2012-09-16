@@ -216,15 +216,15 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 				return "rendered";
 			} elseif(is_object($form_ele)) {
 					print $form_ele->render();
-          if(!empty($form_ele->customValidationCode) AND !$isDisabled) {
-            $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$form_ele->getName()] = $form_ele->renderValidationJS();
-          } elseif($element->getVar('ele_req') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea") AND !$isDisabled) {
-            $eltname    = $form_ele->getName();
-            $eltcaption = $form_ele->getCaption();
-            $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
-            $eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-            $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$eltname] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
-          }
+				          if(!empty($form_ele->customValidationCode) AND !$isDisabled) {
+				            $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$form_ele->getName()] = $form_ele->renderValidationJS();
+				          } elseif($element->getVar('ele_req') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea") AND !$isDisabled) {
+				            $eltname    = $form_ele->getName();
+				            $eltcaption = $form_ele->getCaption();
+				            $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+				            $eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
+				            $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$eltname] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
+				          }
 					if($isDisabled) {
 						return "rendered-disabled";
 					} else {
@@ -234,34 +234,29 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		}
   		
 
-	// or, even if the user is not supposed to see the element, put in a hidden element with its default value (only on new entries)
+	// or, even if the user is not supposed to see the element, put in a hidden element with its default value (only on new entries for elements with the forcehidden flag on)
 	// NOTE: YOU CANNOT HAVE DEFAULT VALUES ON A LINKED FIELD CURRENTLY
 	// So, no handling of linked values is included here.
 	} elseif($forcehidden = $element->getVar('ele_forcehidden') AND $entry=="new" AND !$noSave) {
-		// get the default value for the element, different kinds of elements have their defaults in different locations in ele_value
-		$ele_value = $element->getVar('ele_value');
-		// handle only radio buttons and textboxes for now.
-		switch($element->getVar('ele_type')) {
-			case "radio":
-				$indexer = 1;
-				foreach($ele_value as $k=>$v) {
-					if($v == 1) {
-						print "<input type=hidden name=decue_" . $element->getVar('id_form') . "_" . $entry . "_" . $element->getVar('ele_id') . " id=decue_" . $element->getVar('id_form') . "_" . $entry . "_" . $element->getVar('ele_id') . " value=\"1\">\n";
-						print "<input type=hidden name=de_" . $element->getVar('id_form') . "_" . $entry . "_" . $element->getVar('ele_id') . " id=de_" . $element->getVar('id_form') . "_" . $entry . "_" . $element->getVar('ele_id') . " value=\"$indexer\">\n";
+		// hiddenElements keys will be the element ids
+		$hiddenElements = generateHiddenElements(array($element), $entry);
+		$thisHiddenElement = isset($hiddenElements[$element->getVar('ele_id')]) ? $hiddenElements[$element->getVar('ele_id')] : "";
+		if(!$renderElement) {
+			return array("hidden", $isDisabled, $thisHiddenElement); // if the element is hidden, then return an array, but with hidden as the first key, so that logic that was not expecting an element back, will still function as is.  This is a backwards compatibility thing.  For hidden elements, the element is in the third key, if in fact you need it/are looking for it in the user land code...note that in the case of checkboxes, the elements returned will be in an array
+		} else {
+			$cueElement = new xoopsFormHidden("decue_".$fid."_".$entry."_".$element_id, 1);
+			print $cueElement->render();
+			if(is_array($thisHiddenElement)) { // could happen for checkboxes
+				foreach($thisHiddenElement as $thisIndividualHiddenElement) {
+					if(is_object($thisIndividualHiddenElement)) {
+						print $thisIndividualHiddenElement->render()."\n";
 					}
-					$indexer++;
 				}
-				break;
-		case "text":
-			$myts =& MyTextSanitizer::getInstance();
-			print "<input type=hidden name=de_". $entry . "_" . $element->getVar('ele_id') . " id=de_" . $entry . "_" . $element->getVar('ele_id') . " value='" . $myts->htmlSpecialChars(getTextboxDefault($ele_value[2], $element->getVar('id_form'), $entry)) . "'>\n";
-			break;
-		case "textarea":
-			$myts =& MyTextSanitizer::getInstance();
-			print "<input type=hidden name=de_". $entry . "_" . $element->getVar('ele_id') . " id=de_" . $entry . "_" . $element->getVar('ele_id') . " value='" . $myts->htmlSpecialChars(getTextboxDefault($ele_value[0], $element->getVar('id_form'), $entry)) . "'>\n";
-			break;
+			} elseif(is_object($thisHiddenElement)) {
+				print $thisHiddenElement->render()."\n";
+			}
+			return "hidden";	
 		}
-		return "hidden";
 	} else {
 		return "not_allowed";
 	}

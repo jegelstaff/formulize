@@ -2290,7 +2290,6 @@ function _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, 
 // Takes $ele_value[2] as the input (third position in ele_value array from element object)
 // $form_id and $entry_id are passed in so they can be accessible within the eval'd code if necessary
 function getTextboxDefault($ele_value, $form_id, $entry_id) {
-
 	global $xoopsUser;
 
 	if(strstr($ele_value, "\$default")) { // php default value
@@ -2356,7 +2355,6 @@ function getTextboxDefault($ele_value, $form_id, $entry_id) {
 		}
 		$ele_value = str_replace("{".$searchTerm."}", $replacementValue, $ele_value);
 	}
-
   return $ele_value;
 }
 
@@ -4711,4 +4709,96 @@ function renderTemplate($template, $templateVariables) {
       }
 }
 
-
+// this function takes a series of element objects, and returns an array of xoopsFormHidden objects that can be later added to a form or rendered as required.
+// The "decue" hidden elements that need to present to trigger reading of these values, are not being passed back with these objects, so the user code that calls this must create those cues as required.  See formdisplay.php for an example.
+// $elements can be an array of element objects, or a single element object.
+// The function will return an array where the keys are the element ids, and the values are the hidden element objects (xoopsFormHidden objects).
+// For checkbox elements, the value will be an array of objects, each one representing one hidden value that should be included in the form
+// $entry is the entry id of the entry being rendered, or "new" for new entries
+// $fid is the form id of the form that we're rendering these elements for
+function generateHiddenElements($elements, $entry) {
+  $hiddenElements = array();
+  foreach($elements as $thisElement) {
+    // display these elements as hidden elements with the default value
+    $fid = $thisElement->getVar('id_form');
+    switch($thisElement->getVar('ele_type')) {
+      case "radio":
+	if($entry == "new") {
+	  $indexer = 1;
+	  foreach($thisElement->getVar('ele_value') as $k=>$v) {
+	    if($v == 1) {
+	      $hiddenElements[$thisElement->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$thisElement->getVar('ele_id'), $indexer);
+	    }
+	    $indexer++;
+	  }
+	}
+	break;
+      case "checkbox":
+	if($entry == "new") {
+	  $indexer = 1;
+	  foreach($thisElement->getVar('ele_value') as $k=>$v) {
+	    if($v == 1) {
+	      $hiddenElements[$thisElement->getVar('ele_id')][] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$thisElement->getVar('ele_id')."[]", $indexer);
+	    }
+	    $indexer++;
+	  }
+	} else {
+	  $data_handler = new formulizeDataHandler($thisElement->getVar('id_form'));
+	  $checkBoxOptions = $data_handler->getElementValueInEntry($entry, $thisElement);
+	  $indexer = 1;
+	  foreach($thisElement->getVar('ele_value') as $k=>$v) {
+	    if(strstr($checkBoxOptions, $k)) {
+	      $hiddenElements[$thisElement->getVar('ele_id')][] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$thisElement->getVar('ele_id')."[]", $indexer);
+	    } 
+	    $indexer++;
+	  }
+	}
+	break;
+      case "yn":
+	if($entry == "new") {
+	  $ele_value = $thisElement->getVar('ele_value');
+	  $yesNoValue = $ele_value['_YES'] == 1 ? 1 : 2; // check to see if Yes is the value, and if so, set 1, otherwise, set 2.  2 is the value used when No is the selected option in YN radio buttons
+	  $hiddenElements[$thisElement->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$thisElement->getVar('ele_id'), $yesNoValue);
+	}
+	break;
+      case "text":
+	if($entry == "new") {
+	  global $myts;
+	  if(!$myts){ $myts =& MyTextSanitizer::getInstance(); }
+          $ele_value = $thisElement->getVar('ele_value');
+	  $hiddenElements[$thisElement->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$thisElement->getVar('ele_id'), $myts->htmlSpecialChars(getTextboxDefault($ele_value[2], $thisElement->getVar('id_form'), $entry)));
+	} else {
+	  include_once XOOPS_ROOT_PATH . "/modules/class/data.php";
+	  $data_handler = new formulizeDataHandler($fid);
+	  $hiddenElements[$thisElement->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$thisElement->getVar('ele_id'), $data_handler->getElementValueInEntry($entry, $thisElement));
+	}
+	break;
+      case "textarea":
+	if($entry == "new") {
+	  global $myts;
+	  if(!$myts){ $myts =& MyTextSanitizer::getInstance(); }
+	  $ele_value = $thisElement->getVar('ele_value');
+	  $hiddenElements[$thisElement->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$thisElement->getVar('ele_id'), $myts->htmlSpecialChars(getTextboxDefault($ele_value[0], $thisElement->getVar('id_form'), $entry)));
+	} else {
+	  include_once XOOPS_ROOT_PATH . "/modules/class/data.php";
+	  $data_handler = new formulizeDataHandler($fid);
+	  $hiddenElements[$thisElement->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$thisElement->getVar('ele_id'), $data_handler->getElementValueInEntry($entry, $thisElement));
+	}
+	break;
+      case "date":
+	if($entry == "new") {
+	  $ele_value = $thisElement->getVar('ele_value');
+	  if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") {
+	    $valueToUse = "";
+	  } elseif(ereg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
+	    $number = ereg_replace("[^0-9+-]","", $ele_value[0]);
+	    $valueToUse = date("Y-m-d", mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+	  } else {
+	    $valueToUse = $ele_value[0];
+	  }
+	  $hiddenElements[$thisElement->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$thisElement->getVar('ele_id'), $valueToUse);
+	}
+    }
+  }
+  return $hiddenElements;
+}

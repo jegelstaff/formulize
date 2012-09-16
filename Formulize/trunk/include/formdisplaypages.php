@@ -421,29 +421,44 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		    }
 		    // start the form manually...
 		    print "<div id='formulizeform'><form id='formulize' name='formulize' action='".getCurrentURL()."' method='post' onsubmit='return xoopsFormValidate_formulize();' enctype='multipart/form-data'>";
-		    foreach ($elements_allowed as $thisElement) {   // entry is a recordid
+		    foreach ($elements_allowed as $thisElement) {   // entry is a recordid, $thisElement is the element id
 			    // to get the conditional logic to be captured, we should buffer the drawing of the displayElement, and then output that later, because when displayElement does NOT return an object, then we get conditional logic -- subform rendering does it this way
 			    $deReturnValue = displayElement("", $thisElement, $entry, false, $screen, null, false);
 			    if (is_array($deReturnValue)) {
 				    $form_ele = $deReturnValue[0];
 				    $isDisabled = $deReturnValue[1];
+				    if(isset($deReturnValue[2])) {
+					$hiddenElements = $deReturnValue[2];
+				    }
 			    } else {
 				    $form_ele = $deReturnValue;
 				    $isDisabled = false;
 			    }
-			    if (($form_ele == "not_allowed" OR $form_ele == "hidden")) {
-				$elementMarkup = "";
-				$elementCaption = "";
+			    if ($form_ele == "not_allowed") {
+				continue;
+			    } elseif($form_ele == "hidden") {
+				$cueElement = new xoopsFormHidden("decue_".$fid."_".$entry."_".$thisElement, 1);
+				print $cueElement->render();
+				if(is_array($hiddenElements)) {
+					foreach($hiddenElements as $thisHiddenElement) {
+						if($is_object($thisHiddenElement)) {
+							print $thisHiddenElement->render()."\n";
+						}
+					}
+				} elseif(is_object($hiddenElements)) {
+					print $hiddenElements->render()."\n";
+				}
+				continue;
 			    } else {
 				$elementMarkup = $form_ele->render();
 				$elementCaption = displayCaption("", $thisElement);
 				$elementDescription = displayDescription("", $thisElement);
-				$templateVariables['elementCaption'] = $elementCaption;  // here we can assume that the $previousPageButton etc has not be changed before rendering 
-				$templateVariables['elementMarkup'] = $elementMarkup;
-				$templateVariables['elementDescription'] = $elementDescription;
 				$templateVariables['elementObjectForRendering'] = $form_ele;
-				$templateVariables['element_id'] = $thisElement;
-				print renderTemplate($elementtemplate, $templateVariables);
+				$templateVariables['elementCaption'] = $elementCaption;  // here we can assume that the $previousPageButton etc has not be changed before rendering 
+			        $templateVariables['elementMarkup'] = $elementMarkup;
+			        $templateVariables['elementDescription'] = $elementDescription;
+			        $templateVariables['element_id'] = $thisElement;
+			        print renderTemplate($elementtemplate, $templateVariables);
 			    }
 		    }
 		    // now we also need to add in some bits that are necessary for the form submission logic to work...borrowed from parts of formdisplay.php mostly...this should be put together into a more distinct rendering system for forms, so we can call the pieces as needed
