@@ -437,7 +437,8 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			    if ($form_ele == "not_allowed") {
 				continue;
 			    } elseif($form_ele == "hidden") {
-				$cueElement = new xoopsFormHidden("decue_".$fid."_".$entry."_".$thisElement, 1);
+				$cueEntryValue = $entry ? $entry : "new";
+				$cueElement = new xoopsFormHidden("decue_".$fid."_".$cueEntryValue."_".$thisElement, 1);
 				print $cueElement->render();
 				if(is_array($hiddenElements)) {
 					foreach($hiddenElements as $thisHiddenElement) {
