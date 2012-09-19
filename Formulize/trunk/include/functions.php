@@ -3275,6 +3275,7 @@ function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600) {
 
 
 // THIS FUNCTION TAKES AN ARRAY WHERE THE KEYS ARE ELEMENT IDS AND THE VALUES ARE VALUES, AND IT WRITES THEM ALL TO A SPECIFIED ENTRY OR A NEW ENTRY
+// values should be the correct values that would be passed back by the prepDataForWrite step
 // originally, only $values and $entry were required
 // $proxyUser, if present, is meant to override the current $xoopsUser uid value
 // $action is deprecated
@@ -3297,9 +3298,9 @@ function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUs
       } else {
         $ownerForGroups = 0;
       }
-			if($entry == "new" AND $writeOwnerInfo) {
-				$data_handler->setEntryOwnerGroups($ownerForGroups, $result); // result will be the ID number of the entry that was just written.
-			}
+      if($entry == "new" AND $writeOwnerInfo) {
+	$data_handler->setEntryOwnerGroups($ownerForGroups, $result); // result will be the ID number of the entry that was just written.
+      }
       return $result;
     } else {
       exit("Error: data could not be written to the database for entry $entry in form ". $elementObject->getVar('id_form').".");
@@ -4623,7 +4624,7 @@ function formulize_xhr_send(op,params) {
 // localIds is an array of ids that will match the order of the values in the array...used to get the id for a subform entry that is being displayed in the list
 // $fid is used only in the event of a mod_datetime or creation_datetime or creator_email field being drawn
 function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid, $row, $column) {
-	$output = "";
+  	$output = "";
 	if(!is_array($value)) {
 		$value = array($value);
 	}

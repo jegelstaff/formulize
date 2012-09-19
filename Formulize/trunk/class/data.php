@@ -682,16 +682,17 @@ class formulizeDataHandler  {
 				unset($seqElements[$seqKey]);
 			}
 		}
-    if(count($idElements)>0 OR count($seqElements)>0) {
-      $lockIsOn = true;
-      $xoopsDB->query("LOCK TABLES ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WRITE"); // need to lock table since there are multiple operations required on it for this one write transaction
+
+		if(count($idElements)>0 OR count($seqElements)>0) {
+			$lockIsOn = true;
+			$xoopsDB->query("LOCK TABLES ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WRITE"); // need to lock table since there are multiple operations required on it for this one write transaction
 			if(count($idElements)>0) {
 				if($entry == "new") {
-					$idMaxSQL = "SELECT MAX(entry_id) FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
+					$idMaxSQL = "SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '".XOOPS_DB_NAME."' AND TABLE_NAME = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."'";
 					if($idMaxRes = $xoopsDB->query($idMaxSQL)) {
 						$idMaxValue = $xoopsDB->fetchArray($idMaxRes);
 						foreach($idElements as $key) {
-							$values[$key] = $idMaxValue["MAX(entry_id)"] + 1;
+							$values[$key] = $idMaxValue['AUTO_INCREMENT'];
 						}
 					} else {
 						exit("Error: could not determine max value to use for {ID} elements.  SQL:<br>$idMaxSQL<br>");
@@ -785,7 +786,6 @@ class formulizeDataHandler  {
 				exit("Error: could not update revision information for entry $entry_to_return in form ".$formObject->getVar('form_handle').".  This is the query that failed:<br>$revisionSQL<br>Reported MySQL error (if any - if nothing, then query might have been attempted on a non POST submission, since no MySQL error is reported): ".mysql_error());
 			}
 		}
-		
 		if($forceUpdate) {
 			if(!$res = $xoopsDB->queryF($sql)) {
 				exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.<br>".mysql_error());

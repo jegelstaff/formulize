@@ -1146,8 +1146,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
      $formFieldFilterMap = array();
      $whereClause = "";
      $orderByClause = "";
-		 $otherPerGroupFilterJoins = "";
-		 $otherPerGroupFilterWhereClause = "";
+     $otherPerGroupFilterJoins = "";
+     $otherPerGroupFilterWhereClause = "";
      
      $oneSideFilters = array(); // we need to capture each filter individually, just in case we need to apply them individually to each part of the query for calculations.  Filters for calculations will not work right if the combination of filter terms is excessively complex, ie: includes OR'd terms across different forms in a framework, certain other complicated types of bracketing
           

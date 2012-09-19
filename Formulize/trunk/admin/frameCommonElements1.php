@@ -64,8 +64,8 @@ $lid = is_numeric($_GET['lid']) ? $_GET['lid'] : 0;
 $content['lid'] = $lid;
 
 
-$formObj1 = new formulizeForm($form1);
-$formObj2 = new formulizeForm($form2);
+$formObj1 = new formulizeForm($form1, true); // true causes elements shown to no one, to be included
+$formObj2 = new formulizeForm($form2, true);
 
 $content['form1']['name'] = $formObj1->getVar('title');
 $content['form2']['name'] = $formObj2->getVar('title');

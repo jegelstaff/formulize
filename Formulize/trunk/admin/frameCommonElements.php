@@ -103,8 +103,8 @@ print "<table width=100%><tr><td width=5%></td><td width=90%>";
 $chooseElementsForm = new xoopsThemeForm(_AM_FRAME_WHICH_ELEMENTS, 'whichElements', XOOPS_URL."/modules/formulize/admin/frameCommonElements.php?form1=$form1&form2=$form2&lid=$lid");
 
 
-$formObj1 = new formulizeForm($form1);
-$formObj2 = new formulizeForm($form2);
+$formObj1 = new formulizeForm($form1, true); // true causes elements shown to no one, to be included
+$formObj2 = new formulizeForm($form2, true);
 
 $form1Elements = generateElementList($formObj1);
 $form2Elements = generateElementList($formObj2);

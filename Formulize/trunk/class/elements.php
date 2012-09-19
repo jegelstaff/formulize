@@ -281,6 +281,7 @@ class formulizeElementsHandler {
 		return true;
 	}
 
+	// id_as_key can be true, false or "handle" or "element_id" in which case handles or the element ids will be used
 	function &getObjects2($criteria = null, $id_form , $id_as_key = false){
 		$ret = array();
 		$limit = $start = 0;
@@ -324,10 +325,13 @@ class formulizeElementsHandler {
 					$elements->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
 				}
 			}
-			if( !$id_as_key ){
-				$ret[] =& $elements;
-			}else{
+			
+			if($id_as_key === true OR $id_as_key == "element_id"){
 				$ret[$myrow['ele_id']] =& $elements;
+			}elseif($id_as_key == "handle") {
+				$ret[$myrow['ele_handle']] =& $elements;
+			} else {
+				$ret[] =& $elements;	
 			}
 			unset($elements);
 		}
