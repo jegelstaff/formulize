@@ -192,18 +192,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	</noscript>
 	<?php
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	// check to see if there are conditions on this page, and if so are they met
 	// if the conditions are not met, move on to the next page and repeat the condition check
 	// conditions only checked once there is an entry!
@@ -261,7 +249,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 				$data = getData($frid, $fid, $finalFilter, $masterBoolean, "", "", "", "", "", false, 0, false, "", false, true);
 				if(!$data) { 
-					if($prevPage < $currentPage) {
+					if($prevPage <= $currentPage) {
 						$currentPage++;
 					} else {
 						$currentPage--;
@@ -276,7 +264,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			}
 		}
 	}
-	
 	
 	
 	if($currentPage > 1) {
