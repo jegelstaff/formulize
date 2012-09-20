@@ -2537,10 +2537,11 @@ $governingElements = array();
 foreach($conditionalElements as $handle=>$theseGoverningElements) {
 	foreach($theseGoverningElements as $thisGoverningElement) {
 		$elementObject = $element_handler->get($thisGoverningElement);
-		$governingElements = compileGoverningElements($entries, $governingElements, $elementObject, $handle);
-		$governingElements = compileGoverningElements($sub_entries, $governingElements, $elementObject, $handle);
-		$governingElements = compileGoverningLinkedSelectBoxSourceConditionElements($governingElements, $handle);
-		
+		if(is_object($elementObject)) {
+			$governingElements = compileGoverningElements($entries, $governingElements, $elementObject, $handle);
+			$governingElements = compileGoverningElements($sub_entries, $governingElements, $elementObject, $handle);
+			$governingElements = compileGoverningLinkedSelectBoxSourceConditionElements($governingElements, $handle);
+		}
 		// must wrap required validation javascript in some check for the pressence of the element??  
 	}
 }
@@ -2715,7 +2716,7 @@ function compileGoverningLinkedSelectBoxSourceConditionElements($governingElemen
 	$handleParts = explode("_",$handle); // de, fid, entry, elementId
 	$element_handler = xoops_getmodulehandler('elements','formulize');
 	$elementObject = $element_handler->get($handleParts[3]);
-	if($elementObject->isLinked) {
+	if(is_object($elementObject) AND $elementObject->isLinked) {
 		$ele_value = $elementObject->getVar('ele_value');
 		$elementConditions = $ele_value[5];
 		foreach($elementConditions[2] as $thisTerm) {

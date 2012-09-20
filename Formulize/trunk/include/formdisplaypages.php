@@ -196,7 +196,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	// if the conditions are not met, move on to the next page and repeat the condition check
 	// conditions only checked once there is an entry!
 	$pagesSkipped = false;
-	if(is_array($conditions) AND $entry) { 
+	if(is_array($conditions) AND $entry) {
 		$conditionsMet = false;
 		while(!$conditionsMet) {
 			if(isset($conditions[$currentPage]) AND count($conditions[$currentPage][0])>0) { // conditions on the current page
@@ -205,23 +205,55 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				$ops = $thesecons[1];
 				$terms = $thesecons[2];
 				$types = $thesecons[3]; // indicates if the term is part of a must or may set, ie: boolean and or or
-				$start = 1;
-				$oomstart = 1;
 				$filter = "";
 				$oomfilter = "";
+				$blankORSearch = "";
 				foreach($elements as $i=>$thisElement) {
 					if($ops[$i] == "NOT") { $ops[$i] = "!="; }
-					if($types[$i] == "oom") {
-						if($oomstart) {
+					if($terms[$i] == "{BLANK}") { // NOTE...USE OF BLANKS WON'T WORK CLEANLY IN ALL CASES DEPENDING WHAT OTHER TERMS HAVE BEEN SPECIFIED!!
+						if($ops[$i] == "!=" OR $ops[$i] == "NOT LIKE") {
+							if($types[$i] != "oom") {
+								// add to the main filter, ie: entry id = 1 AND x=5 AND y IS NOT "" AND y IS NOT NULL
+								if(!$filter) {
+									$filter = $entry."][".$elements[$i]."/**//**/!=][".$elements[$i]."/**//**/IS NOT NULL";
+								} else {
+									$filter .= "][".$elements[$i]."/**//**/!=][".$elements[$i]."/**//**/IS NOT NULL";
+								}
+							} else {
+								// Add to the OOM filter, ie: entry id = 1 AND (x=5 OR y IS NOT "" OR y IS NOT NULL)
+								if(!$oomfilter) {
+									$oomfilter = $elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
+								} else {
+									$oomfilter .= "][".$elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
+								}
+							}
+						} else {
+							if($types[$i] != "oom") {
+								// add to its own OR filter, since we MUST match this condition, but we don't care if it's "" OR NULL
+								// ie: entry id = 1 AND (x=5 OR y=10) AND (z = "" OR z IS NULL)
+								if(!$blankORSearch) {
+									$blankORSearch = $elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
+								} else {
+									$blankORSearch .= "][".$elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
+								}
+							} else {
+								// it's part of the oom filters anyway, so we put it there, because we don't care if it's null or "" or neither
+								if(!$oomfilter) {
+									$oomfilter = $elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
+								} else {
+									$oomfilter .= "][".$elements[$i]."/**//**/=][".$elements[$i]."/**//**/IS NULL";
+								}
+							}
+						}
+					} elseif($types[$i] == "oom") {
+						if(!$oomfilter) {
 							$oomfilter = $elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
-							$oomstart = 0;
 						} else {
 							$oomfilter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
 						}
 					} else {
-						if($start) {
+						if($filter) {
 							$filter = $entry."][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
-							$start = 0;
 						} else {
 							$filter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
 						}
@@ -233,7 +265,10 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 					$finalFilter[0][1] = $filter;
 					$finalFilter[1][0] = "OR";
 					$finalFilter[1][1] = $oomfilter;
-					$masterBoolean = "AND";
+					if($blankORSearch) {
+						$finalFilter[2][0] = "OR";
+						$finalFilter[2][1] = $blankORSearch;
+					}
 				} elseif($oomfilter) {
 					// need to add the $entry as a separate filter from the oom, so the entry and oom get an AND in between them
 					$finalFilter = array();
@@ -241,11 +276,22 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 					$finalFilter[0][1] = $entry;
 					$finalFilter[1][0] = "OR";
 					$finalFilter[1][1] = $oomfilter;
-					$masterBoolean = "AND";
+					if($blankORSearch) {
+						$finalFilter[2][0] = "OR";
+						$finalFilter[2][1] = $blankORSearch;
+					}
 				} else {
-					$finalFilter = $filter;
-					$masterBoolean = "AND";
+					if($blankORSearch) {
+						$finalFilter[0][0] = "AND";
+						$finalFilter[0][1] = $filter;
+						$finalFilter[1][0] = "OR";
+						$finalFilter[1][1] = $blankORSearch;
+					} else {
+						$finalFilter = $filter;
+					}
 				}
+				$masterBoolean = "AND";
+
 				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 				$data = getData($frid, $fid, $finalFilter, $masterBoolean, "", "", "", "", "", false, 0, false, "", false, true);
 				if(!$data) { 
