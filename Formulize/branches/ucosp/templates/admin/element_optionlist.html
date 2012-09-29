@@ -1,0 +1,55 @@
+<p><input type="button" class="formButton" name="addoption" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> 1"</p>
+<div class="optionlist">
+<{if $content.useroptions|@count > 0}>
+  <{foreach from=$content.useroptions key=text item=checked name=optionsloop}>
+  <p class="useroptions" name="<{$smarty.foreach.optionsloop.index}>"><{if $content.type == "radio"}><input type="radio" name="defaultoption" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input><{else}><input type="checkbox" name="defaultoption[<{$smarty.foreach.optionsloop.index}>]" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input><{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[<{$smarty.foreach.optionsloop.index}>]" value="<{$text}>"></input></p>
+  <{/foreach}>
+<{else}>
+  <p class="useroptions" name="0"><{if $content.type == "radio"}><input type="radio" name="defaultoption" value=0></input><{else}><input type="checkbox" name="defaultoption[0]" value=0></input><{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[0]"></input></p>
+<{/if}>
+</div>
+
+<{if $content.type == "radio"}>
+<p><input type="button" class="formButton" name="cleardef" value="<{$smarty.const._AM_CLEAR_DEFAULT}>"/></p>
+<{/if}>
+
+<div class="description">
+  <{if $content.type == "radio"}><p><{$smarty.const._AM_ELE_OPT_DESC2}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
+  <{if $content.type == "checkbox"}><p><{$smarty.const._AM_ELE_OPT_DESC_CHECKBOXES}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
+  <{if $content.type == "select"}><p><{$smarty.const._AM_ELE_OPT_DESC}><{$smarty.const._AM_ELE_OPT_DESC1}></p><{/if}>
+  <p><{$smarty.const._AM_ELE_OPT_UITEXT}></p>
+</div>
+
+</fieldset>
+</div>
+
+<div class="form-item">
+<fieldset>
+  <legend>Resynch existing entries with any option changes?</legend>
+  <p><label for="element-changeuservalues">
+<input type="checkbox" id="element-changeuservalues" name="changeuservalues" value="1"/>
+<{$smarty.const._AM_ELE_OPT_CHANGEUSERVALUES}></label></p>
+</fieldset>
+
+<script type="text/javascript">
+  $("[name=addoption]").click(function (){
+    number = $(".useroptions:last").attr('name');
+    number = parseInt(number) + 1;
+    appendContents1 = '<{if $content.type == "radio"}><input type="radio" name="defaultoption" value='+number+'></input><{else}><input type="checkbox" name="defaultoption['+number+']" value='+number+'></input><{/if}>';
+    appendContents2 = '<input type="text" name="ele_value['+number+']"></input>';
+    $(".optionlist").append('<p class="useroptions" name="'+number+'"></p>');
+    $(".useroptions:last").append(appendContents1);
+    $(".useroptions:last").append('&nbsp;&nbsp;');
+    $(".useroptions:last").append(appendContents2);
+    $("[name=addoption]").blur();
+    setDisplay('savewarning','block');
+  });
+  
+  <{if $content.type == "radio"}>
+  $("[name=cleardef]").click(function () {
+    $("[name=defaultoption]").attr('checked',0);
+    $("[name=cleardef]").blur();
+  });
+  <{/if}>
+
+</script>

@@ -1,0 +1,17 @@
+<p><{$sectionContent.description}></p>
+
+<{if $sectionContent.aid > 0}>
+<p><a href="ui.php?page=application&aid=<{$sectionContent.aid}>"><img src="../images/kedit.png">&nbsp;&nbsp;<{$smarty.const._AM_HOME_APP_CONFIG}></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="deleteapplink" target="<{$sectionContent.aid}>" href=""><img src="../images/editdelete.gif">&nbsp;&nbsp;<{$smarty.const._AM_HOME_APP_DELETE}></a></p>
+<{/if}>
+	
+<{if $sectionContent.aid == 0}>
+<div class="description"><{$smarty.const._AM_HOME_APP_DESC}></div><br>
+<p style="clear: both;"><a href="ui.php?page=application&aid=<{$sectionContent.aid}>&tab=relationships"><img src="../images/kedit.png">&nbsp;&nbsp;<{$smarty.const._AM_HOME_APP_RELATION}></a></p>
+<{/if}>
+
+<blockquote>
+<{include file="db:admin/form_listing.html"}>
+</blockquote>  
+
+	
+

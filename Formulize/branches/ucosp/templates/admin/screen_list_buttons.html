@@ -1,0 +1,119 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_list_buttons">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+
+
+<div class="panel-content content">
+	<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION1}></p>
+  <fieldset>
+    <legend>Text for the action buttons</legend>
+
+		    
+        
+
+	      <div class="form-item">
+		      <label for="screens-useaddupdate"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_ADDENTRY}>/<{$smarty.const._formulize_DE_UPDATEENTRY}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-useaddupdate" name="screens-useaddupdate" value="<{$content.useaddupdate}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-useaddmultiple"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_ADD_MULTIPLE_ENTRY}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-useaddmultiple" name="screens-useaddmultiple" value="<{$content.useaddmultiple}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-useaddproxy"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_PROXYENTRY}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-useaddproxy" name="screens-useaddproxy" value="<{$content.useaddproxy}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-useexport"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_EXPORT}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-useexport" name="screens-useexport" value="<{$content.useexport}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-useimport"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_IMPORT}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-useimport" name="screens-useimport" value="<{$content.useimport}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-usenotifications"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_NOTBUTTON}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-usenotifications" name="screens-usenotifications" value="<{$content.usenotifications}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+
+		    <div class="description">
+			    <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION2}></p>
+        </div>
+
+	      <div class="form-item">
+		      <label for="screens-usechangecols"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_CHANGECOLS}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-usechangecols" name="screens-usechangecols" value="<{$content.usechangecols}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-usecalcs"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_CALCS}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-usecalcs" name="screens-usecalcs" value="<{$content.usecalcs}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-useadvcalcs"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_ADVCALCS}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-useadvcalcs" name="screens-useadvcalcs" value="<{$content.useadvcalcs}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-useexportcalcs"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_EXPORT_CALCS}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-useexportcalcs" name="screens-useexportcalcs" value="<{$content.useexportcalcs}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-useadvsearch"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_ADVSEARCH}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-useadvsearch" name="screens-useadvsearch" value="<{$content.useadvsearch}>" size="20" maxlength="255"/>
+		      <div class="description">This feature is deprecated.  You should use the search boxes at the top of each column instead.  <{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-useclone"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_CLONESEL}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-useclone" name="screens-useclone" value="<{$content.useclone}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-usedelete"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_DELETESEL}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-usedelete" name="screens-usedelete" value="<{$content.usedelete}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-useselectall"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_SELALL}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-useselectall" name="screens-useselectall" value="<{$content.useselectall}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-useclearall"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_CLEARALL}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-useclearall" name="screens-useclearall" value="<{$content.useclearall}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-usereset"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_RESETVIEW}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-usereset" name="screens-usereset" value="<{$content.usereset}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-usesave"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_SAVE}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-usesave" name="screens-usesave" value="<{$content.usesave}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+	      <div class="form-item">
+		      <label for="screens-usedeleteview"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON1}><{$smarty.const._formulize_DE_DELETE}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_BUTTON2}></label>
+		      <input type="text" id="screens-usedeleteview" name="screens-usedeleteview" value="<{$content.usedeleteview}>" size="20" maxlength="255"/>
+		      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK}></div>
+	      </div>
+      
+    </fieldset>
+</div>
+
+</form>

@@ -1,0 +1,62 @@
+
+
+
+<div class="panel-content content">
+    <div class="form-item required">
+	    <label for="elements-ele_value[0]"><{$smarty.const._AM_ELE_SIZE}><em>*</em></label>
+	    <input type="text" id="elements-ele_value[0]" name="elements-ele_value[0]" value="<{$content.ele_value[0]}>" size="3" maxlength="3"/>
+    </div>
+    <div class="form-item required">
+	    <label for="elements-ele_value[1]"><{$smarty.const._AM_ELE_MAX_LENGTH}><em>*</em></label>
+	    <input type="text" id="elements-ele_value[1]" name="elements-ele_value[1]" value="<{$content.ele_value[1]}>" size="3" maxlength="3"/>
+    </div>
+    <div class="form-item">
+	    <label for="elements-ele_value[2]"><{$smarty.const._AM_ELE_DEFAULT}></label>
+	    <textarea id="elements-ele_value[2]" name="elements-ele_value[2]" rows="5" cols="35"><{$content.ele_value[2]}></textarea>
+	    <div class="description">
+          <p><{$smarty.const._AM_ELE_TEXT_DESC}><{$smarty.const._AM_ELE_TEXT_DESC2}></p>
+      </div>
+    </div>
+    <div class="form-item">
+	    <fieldset>
+	    <legend><{$smarty.const._AM_ELE_TYPE}></legend>
+		    <div class="form-radios">
+			    <label for="anything"><input type="radio" id="anything" name="elements-ele_value[3]" value="0"<{if $content.ele_value[3] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_TYPE_STRING}></label>
+		    </div>
+		    <div class="form-radios">
+			    <label for="numbers"><input type="radio" id="numbers" name="elements-ele_value[3]" value="1"<{if $content.ele_value[3] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_TYPE_NUMBER}></label>
+		    </div>
+		    <div class="description">
+			    <p><{$smarty.const._AM_ELE_TYPE_DESC}></p>
+		    </div>
+	    </fieldset>
+    </div>
+    <div class="form-item">
+	    <fieldset>
+		    <legend><{$smarty.const._AM_ELE_NUMBER_OPTS}></legend>
+		    <div class="form-item">
+			    <label for="elements-ele_value[5]"><{$smarty.const._AM_ELE_NUMBER_OPTS_DEC}></label><input type="text" id="elements-ele_value[5]" name="elements-ele_value[5]" value="<{$content.ele_value[5]}>" size="2" maxlength="2"/>
+		    </div>
+		    <div class="form-item">
+			    <label for="elements-ele_value[6]"><{$smarty.const._AM_ELE_NUMBER_OPTS_PREFIX}></label><input type="text" id="elements-ele_value[6]" name="elements-ele_value[6]" value="<{$content.ele_value[6]}>" size="5" maxlength="255"/>
+		    </div>
+		    <div class="form-item">
+			    <label for="elements-ele_value[7]"><{$smarty.const._AM_ELE_NUMBER_OPTS_DECSEP}></label><input type="text" id="elements-ele_value[7]" name="elements-ele_value[7]" value="<{$content.ele_value[7]}>" size="5" maxlength="255"/>
+		    </div>
+		    <div class="form-item">
+			    <label for="elements-ele_value[8]"><{$smarty.const._AM_ELE_NUMBER_OPTS_SEP}></label><input type="text" id="elements-ele_value[8]" name="elements-ele_value[8]" value="<{$content.ele_value[8]}>" size="5" maxlength="255"/>
+		    </div>
+		    <div class="description">
+			    <{$smarty.const._AM_ELE_NUMBER_OPTS_DESC}>
+		    </div>
+	    </fieldset>
+    </div>
+    <div class="form-item">
+	    <label for="formlink"><{$smarty.const._AM_ELE_FORMLINK_TEXTBOX}></label>
+      <{$content.formlink}>
+	    <div class="description">
+		    <{$smarty.const._AM_ELE_FORMLINK_DESC_TEXTBOX}>
+	    </div>
+    </div>
+		  <input type="checkbox" id="elements-ele_value[9]" name="elements-ele_value[9]"<{if $content.ele_value[9] eq 1}> checked="checked"<{/if}> value="1"/> <{$smarty.const._AM_ELE_REQUIREUNIQUE}>
+</div>

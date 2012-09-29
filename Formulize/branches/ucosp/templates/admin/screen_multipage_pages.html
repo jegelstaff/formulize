@@ -1,0 +1,93 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<script type='text/javascript'>
+  $(document).ready(function() {
+    $("#dialog-page-settings").dialog({ autoOpen: false, modal: true, width: 950, height: 450, close: function(event, ui) {
+				var dialogEditingPage = $("[name=piforjquery]").val();
+				var newTitle = $("#screens-pagetitle_"+dialogEditingPage).val();
+				var saveWarningDisplay = $("#popupsavewarning").css("display");
+				if(saveWarningDisplay == "none") {
+					$("#drawer-4-"+dialogEditingPage+" .accordion-name").empty();
+					$("#drawer-4-"+dialogEditingPage+" .accordion-name").append(newTitle);
+				}
+			}
+		});
+  });
+
+  $.ajaxSetup({  
+    cache: false  
+  });  
+
+
+  function editPageSettings(pageNumber) {
+		$("#dialog-page-settings-content").empty();
+		$("#dialog-page-settings-content").append("<h1>Loading...</h1>");
+		$("#dialog-page-settings").dialog('open');
+    $("#dialog-page-settings-content").load('<{$smarty.const.XOOPS_URL}>/modules/formulize/admin/screen_multipage_pages_settings.php?page=' + pageNumber + '&sid=<{$content.sid}>');
+  }
+</script>
+
+<div id="dialog-page-settings" title="Edit Page Settings" style="display:none"><div id="dialog-page-settings-content"></div></div>
+
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_multipage_pages">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+<input type="hidden" name="formulize_admin_op" value="">
+<input type="hidden" name="formulize_admin_index" value="">
+<input type="hidden" name="reload_multipage_pages" value="">
+<input type="hidden" name="pageorder" value="">
+<input type="hidden" name="conditionsdelete" value="">
+
+
+
+    <p><a name="addpage" href=""><img src="../images/filenew2.png"> Create a new page</a></p>
+    <h2>Manage the pages in this screen:</h2>
+    <p>Click and drag the pages to re-order them</p>
+    <!--<p><a href="ui.php?page=screen&tab=pages&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$content.sid}>&op=new">Create a new page</a></p>-->
+  
+<div id="sortable-list">
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/screen_multipage_pages_sections.html" sections=$content.pages}>
+</div>
+
+
+</form>
+
+
+<script type='text/javascript'>
+
+  $("[name=addpage]").click(function () {
+    $("[name=formulize_admin_op]").val('addpage');
+    $(".savebutton").click();
+    return false;
+  });
+  
+  
+	$("[name=editpage]").click(function () {
+		editPageSettings($(this).attr('target'));
+		return false;
+	});
+	
+	$("[name=delpage]").click(function () {
+			var answer = confirm('Are you sure you want to delete this page?');
+			if (answer)	{
+		    $("[name=formulize_admin_op]").val('delpage');
+		    $("[name=formulize_admin_index]").val($(this).attr('target'));
+		    $(".savebutton").click();
+			}
+		  return false;
+	});
+
+  $(".savebutton").click(function () {
+  	$("[name=pageorder]").val($("#accordion-4").sortable('serialize')); 
+  });
+
+  $("#accordion-4").bind( "sortupdate", function(event, ui) {
+    setDisplay('savewarning','block');
+  });
+	
+</script>

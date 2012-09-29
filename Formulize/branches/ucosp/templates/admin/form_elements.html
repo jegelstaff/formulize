@@ -1,0 +1,109 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form class="formulize-admin-form">
+<input type="hidden" name="formulize_admin_handler" value="form_elements">
+<input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
+<input type="hidden" name="cloneelement" value="">
+<input type="hidden" name="deleteelement" value="">
+<input type="hidden" name="convertelement" value="">
+<input type="hidden" name="reload_elements" value="">
+<input type="hidden" name="aid" value="<{$content.aid}>">	
+<input type="hidden" name="elementorder" value="">	
+	
+<div class="accordion-box">
+	<h2><{$smarty.const._AM_ELE_ADDINGTOFORM}></h2>
+	<p><{$smarty.const._AM_ELE_CLICKTOADD}></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_TEXT}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MLTEXT}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=areamodif"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MODIF}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=ib"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MODIF_ONE}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=select"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_SELECTEXPLAIN}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkbox"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_CHECK}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=radio"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_RADIO}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=yn"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_YN}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=date"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_DATEBOX}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subform"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_SUBFORMEXPLAIN}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=grid"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_GRID}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_DERIVED}></a></p>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_COLORPICK}></a></p>
+			<{foreach item=customElement from=$content.customElements}>
+			<p><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=<{$customElement.type}>"><img src="../images/filenew2.png"> <{$customElement.name}></a></p>	
+			<{/foreach}>
+</div>
+
+<div class="accordion-box-wide">
+<h2><{$smarty.const._AM_ELE_MANAGINGELEFORM}></h2>
+<p><{$smarty.const._AM_ELE_CLICKDRAGANDDROP}></p>
+		<div id="sortable-list">
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.elements}>
+		</div>
+</div>
+</form>
+<div style="clear: both;"></div>
+<script type="text/javascript">
+
+$(".clonelink").click(function () {
+	$("[name=cloneelement]").val($(this).attr('target'));
+	$(".savebutton").click();
+	return false;
+});
+
+$(".deletelink").click(function () {
+	var answer = confirm("<{$smarty.const._AM_ELE_CONFIRM_DELETE}>");
+	if(answer) {
+		$("[name=deleteelement]").val($(this).attr('target'));
+		$("[name=reload_elements]").val(1);
+		$(".savebutton").click();
+	}
+	return false;
+});
+
+$(".converttotextarea").click(function () {
+	var answer = confirm("<{$smarty.const._AM_CONVERTTEXT_HELP}>");
+	if(answer) {
+		$("[name=convertelement]").val($(this).attr('target'));
+		$("[name=reload_elements]").val(1);
+		$(".savebutton").click();
+	}
+	return false;
+});
+
+$(".converttotext").click(function () {
+	var answer = confirm("<{$smarty.const._AM_CONVERTTEXTAREA_HELP}>");
+	if(answer) {
+		$("[name=convertelement]").val($(this).attr('target'));
+		$("[name=reload_elements]").val(1);
+		$(".savebutton").click();
+	}
+	return false;
+});
+$(".converttocheckbox").click(function () {
+	var answer = confirm("<{$smarty.const._AM_CONVERT_RB_CB}>");
+	if(answer) {
+		$("[name=convertelement]").val($(this).attr('target'));
+		$("[name=reload_elements]").val(1);
+		$(".savebutton").click();
+	}
+	return false;
+});
+$(".converttoradio").click(function () {
+	var answer = confirm("<{$smarty.const._AM_CONVERT_CB_RB}>");
+	if(answer) {
+		$("[name=convertelement]").val($(this).attr('target'));
+		$("[name=reload_elements]").val(1);
+		$(".savebutton").click();
+	}
+	return false;
+});
+
+$(".savebutton").click(function () {
+	$("[name=elementorder]").val($("#accordion-2").sortable('serialize')); 
+});
+
+$("#accordion-2").bind( "sortupdate", function(event, ui) {
+  setDisplay('savewarning','block');
+});
+
+</script>

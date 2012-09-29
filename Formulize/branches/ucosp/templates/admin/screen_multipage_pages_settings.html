@@ -1,0 +1,94 @@
+<div>
+	<form name="popupform">
+	<input type="hidden" name="formulize_admin_handler" value="screen_multipage_pages">
+  <input type="hidden" name="formulize_admin_key" value="<{$sid}>">
+	<input type="hidden" name="reloadpopup" value="">
+	<input type="hidden" name="conditionsdelete" value="">
+	<input type="hidden" name="piforjquery" value=<{$pageIndex}>>
+	<div id=popupsavebutton><input type="button" class="savebuttonpopup" value="Save your changes"/></div>
+	<div id="popupsavewarning">You have unsaved changes!</div>
+	<div style="clear: both"></div>
+	<div class="accordion-box">
+	  <div class="form-item required">
+		  <label for="screens-pagetitle_<{$pageIndex}>">Title for page number <{$pageNumber}></label>
+      <input type="text" class="required_formulize_element" id="screens-pagetitle_<{$pageIndex}>" name="screens-pagetitle_<{$pageIndex}>" value="<{$pageTitle}>" size="30" maxlength="255"/>
+		  <div class="description"></div>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-page<{$pageIndex}>">Form elements to display on page <{$pageNumber}></label>
+	    <select id="screens-page<{$pageIndex}>" name="screens-page<{$pageIndex}>[]" size="10" multiple>
+        <{html_options options=$options selected=$pageElements}>
+	    </select>
+		  <div class="description"></div>
+	  </div>
+	</div>
+		
+	<div class="accordion-box">
+				<p>What conditions are there on the display of this page?</p>
+				<{$pageConditions}>
+				<div class="description"><p>If you don't specify any conditions, the page will always be included in the form.</p></div>
+	</div>
+
+
+</form>
+</div>
+
+<script type="text/javascript">
+
+  $("input").change(function() {
+    window.document.getElementById('popupsavewarning').style.display = 'block';
+    });
+  $("input[type=text]").keydown(function() {
+    window.document.getElementById('popupsavewarning').style.display = 'block';
+    });
+  $("select").change(function() {
+    window.document.getElementById('popupsavewarning').style.display = 'block';
+    });
+  $("textarea").keydown(function() {
+    window.document.getElementById('popupsavewarning').style.display = 'block';
+    });
+
+
+$(".savebuttonpopup").click(function() {
+  $(".required_formulize_element").each(function() {
+    if($(this).val() == "") {
+      alert("Pages must have titles!");
+      $(this).focus();
+    }
+	});
+});
+
+$("[name=addcon]").click(function () {
+	$(".savebuttonpopup").click();
+	return false;
+});
+
+$(".conditionsdelete").click(function () {
+	$("[name=conditionsdelete]").val($(this).attr('target'));
+  $(".savebuttonpopup").click();
+	return false;
+});
+
+	$(".savebuttonpopup").click(function() {
+    if(validateRequired()) {
+			var pagedata = window.document.getElementsByName("popupform");
+			$.post("save.php?popupsave=1", $(pagedata).serialize(), function(data) {
+				if(data) {
+					if(data.substr(0,10)=="/* eval */") {
+						eval(data);
+					} else {
+						alert(data);
+					}
+				}
+				window.document.getElementById('popupsavewarning').style.display = 'none';
+				
+			});
+    }
+    $(".savebuttonpopup").blur();
+  });
+		
+	function reloadPopup() {
+		$("#dialog-page-settings-content").load('<{$smarty.const.XOOPS_URL}>/modules/formulize/admin/screen_multipage_pages_settings.php?page=<{$pageIndex}>&sid=<{$sid}>');
+	}
+
+</script>

@@ -1,0 +1,68 @@
+
+
+<p><a href="" class="newcustombutton"><img src="../images/filenew2.png"> Add a custom button</a></p>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<input type="hidden" name="formulize_admin_handler" value="screen_list_custom">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+<input type="hidden" name="reload_list_pages" value="">
+<input type="hidden" name="newbutton" value=>	
+<input type="hidden" name="deletebutton" value=>
+<input type="hidden" name="neweffect" value="">
+<input type="hidden" name="removeeffect" value=>
+
+
+<{if $content.custombuttons|@count == 0}>
+		<h2>No custom buttons have been created for this screen</h2>
+<{/if}>
+
+<div>
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/screen_list_custom_sections.html" sections=$content.custombuttons}>
+</div>
+
+</form>
+
+<script type='text/javascript'>
+
+$(".savebutton").click(function() {
+  $(".required_formulize_element").each(function() {
+    if($(this).val() == "") {
+      alert("Buttons must have a handle, and text to appear on the button!");
+      $(this).focus();
+    }
+	});
+});
+
+$("div.handle > input").keydown(function () {
+	$("[name=reload_list_pages]").val(1);
+})
+
+$(".newcustombutton").click(function () {
+	$("[name=newbutton]").val(1);
+	$("[name=reload_list_pages]").val(1);
+  $(".savebutton").click();
+	return false;
+});
+
+$(".addeffectbutton").click(function () {
+	$("[name=neweffect]").val($(this).attr('target'));
+	$("[name=reload_list_pages]").val(1);
+  $(".savebutton").click();
+	return false;
+});
+
+$(".removeeffectbutton").click(function () {
+	$("[name=removeeffect]").val($(this).attr('target'));
+	$("[name=reload_list_pages]").val(1);
+  $(".savebutton").click();
+	return false;
+});
+
+$(".deletebutton").click(function () {
+	$("[name=deletebutton]").val($(this).attr('target'));
+	$("[name=reload_list_pages]").val(1);
+  $(".savebutton").click();
+	return false;
+});
+
+</script>

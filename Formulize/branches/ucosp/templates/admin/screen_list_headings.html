@@ -1,0 +1,132 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_list_headings">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+
+
+<div class="panel-content content">
+	<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION2}></p>
+  <fieldset>
+    <legend>Options for the headings and interface elements of the list</legend>
+
+    <div class="form-item">
+      <label for="screens-useheadings"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USEHEADINGS}></label>
+			<div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-useheadings" name="screens-useheadings"<{if $content.useheadings eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-useheadings" name="screens-useheadings"<{if $content.useheadings eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
+		  </div>
+      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USEHEADINGS}></div>
+    </div>
+    <div class="form-item">
+      <label for="screens-repeatheaders"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_REPEATHEADERS}></label>
+      <input type="text" id="screens-repeatheaders" name="screens-repeatheaders" value="<{$content.repeatheaders}>" size="2" maxlength="2"/>
+      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_REPEATHEADERS}></div>
+    </div>
+    <div class="form-item">
+      <label for="screens-usesearchcalcmsgs"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USESEARCHCALCMSGS}></label>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-usesearchcalcmsgs" name="screens-usesearchcalcmsgs"<{if $content.usesearchcalcmsgs eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USCM_NEITHER}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-usesearchcalcmsgs" name="screens-usesearchcalcmsgs"<{if $content.usesearchcalcmsgs eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USCM_BOTH}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="2"><input type="radio" id="screens-usesearchcalcmsgs" name="screens-usesearchcalcmsgs"<{if $content.usesearchcalcmsgs eq 2}> checked="checked"<{/if}> value="2"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USCM_SEARCH}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="3"><input type="radio" id="screens-usesearchcalcmsgs" name="screens-usesearchcalcmsgs"<{if $content.usesearchcalcmsgs eq 3}> checked="checked"<{/if}> value="2"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USCM_CALC}></label>
+		  </div>
+      <div class="description"></div>
+    </div>                
+    <div class="form-item">
+      <label for="screens-usesearch"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USESEARCH}></label>
+      <div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-usesearch" name="screens-usesearch"<{if $content.usesearch eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-usesearch" name="screens-usesearch"<{if $content.usesearch eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
+		  </div>
+      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USESEARCH}></div>
+    </div>
+    <div class="form-item">
+      <label for="screens-columnwidth"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH}></label>
+      <input type="text" id="screens-columnwidth" name="screens-columnwidth" value="<{$content.columnwidth}>" size="3" maxlength="3"/>
+      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_COLUMNWIDTH}></div>
+    </div>
+    <div class="form-item">
+      <label for="screens-textwidth"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_TEXTWIDTH}></label>
+      <input type="text" id="screens-textwidth" name="screens-textwidth" value="<{$content.textwidth}>" size="3" maxlength="3"/>
+      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TEXTWIDTH}></div>
+    </div>
+    <div class="form-item">
+      <label for="screens-usecheckboxes"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USECHECKBOXES}> <{$content.usecheckboxes}></label>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-usecheckboxes" name="screens-usecheckboxes"<{if $content.usecheckboxes eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_UCHDEFAULT}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-usecheckboxes" name="screens-usecheckboxes"<{if $content.usecheckboxes eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_UCHALL}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="2"><input type="radio" id="screens-usecheckboxes" name="screens-usecheckboxes"<{if $content.usecheckboxes eq 2}> checked="checked"<{/if}> value="2"/><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_UCHNONE}></label>
+		  </div>
+      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USECHECKBOXES}></div>
+    </div>
+    <div class="form-item">
+      <label for="screens-useviewentrylinks"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USEVIEWENTRYLINKS}></label>
+      <div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-useviewentrylinks" name="screens-useviewentrylinks"<{if $content.useviewentrylinks eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-useviewentrylinks" name="screens-useviewentrylinks"<{if $content.useviewentrylinks eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
+		  </div>
+      <div class="description"></div>
+    </div>
+    <div class="form-item">
+      <label for="screens-hiddencolumns"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_HIDDENCOLUMNS}></label>
+	    <select id="screens-hiddencolumns[]" name="screens-hiddencolumns[]" size="10" multiple>
+        <{html_options options=$content.elementoptions selected=$content.hiddencolumns}>
+	    </select>
+      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_HIDDENCOLUMNS}></div>
+    </div>
+  </fieldset>
+</div>
+
+<div class="panel-content content">
+  <fieldset>
+    <legend>Options for columns where you would like the data displayed as a form element</legend>
+
+   <div class="form-item">
+      <label for="screens-decolumns"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DECOLUMNS}></label>
+      <select id="screens-decolumns[]" name="screens-decolumns[]" size="10" multiple>
+        <{html_options options=$content.elementoptions selected=$content.decolumns}>
+      </select>
+      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_DECOLUMNS}></div>
+    </div>
+
+    <div class="form-item">
+      <label for="screens-dedisplay">How should the form elements be displayed?</label>
+      <div class="form-radios">
+	      <label for="0"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq 0}> checked="checked"<{/if}> value="0"/>Display them all at once when the list loads</label>
+      </div>
+      <div class="form-radios">
+	      <label for="1"><input type="radio" id="screens-dedisplay" name="screens-dedisplay"<{if $content.dedisplay eq 1}> checked="checked"<{/if}> value="1"/>Display them when the user clicks an icon to activate them &mdash; if users click to activate, then you should turn OFF the security token in the <a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>" target="_blank">Formulize Preferences</a></label>
+      </div>
+      <div class="description"></div>
+    </div>
+
+    <div class="form-item">
+      <label for="screens-desavetext"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESAVETEXT}></label>
+      <input type="text" id="screens-desavetext" name="screens-desavetext" value="<{$content.desavetext}>" size="20" maxlength="255"/>
+      <div class="description"></div>
+    </div>
+  </fieldset>
+</div>
+
+</form>

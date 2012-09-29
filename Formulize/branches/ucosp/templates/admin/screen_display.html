@@ -1,0 +1,96 @@
+<div class="panel-content content">
+
+<form id="form-display-<{$number}>">
+
+<fieldset>
+<legend>Display for screen: <em><{$content.name}></em></legend>
+
+	<div class="form-item">
+		<fieldset>
+		<legend>Top Template</legend>
+			<textarea name="top-template"/></textarea>
+			<div class="description">
+				<p><strong>For top portion of the page, above the list.</strong></p>
+				<p>If you turn off the scrollbox, and do not use the Export buttons, then the code you type here and in the List and Bottom Templates, will all be drawn to the screen consecutively. This means you can start a table in the Top Template, specify the &lt;tr&gt; tags in the List Template and close the table in the Bottom Template. Essentially, these three Templates give you control over the entire page layout.</p>
+			</div>
+		</fieldset>
+	</div>
+	<div class="form-item">
+		<fieldset>
+		<legend>Bottom Template</legend>
+			<textarea name="bottom-template"/></textarea>
+			<div class="description">
+				For top portion of the page, above the list.
+			</div>
+		</fieldset>
+	</div>
+		<div class="description">
+			<h3>Help: Top and Bottom Templates</h3>
+			<p>If you specify any PHP code in the Top or Bottom Templates, it will be used to control the appearance of the space either above or below the list of entries.</p>
+			<p>WARNING: if you include any checkbox elements in your templates, turn off the checkboxes that appear on the left side of the list!</p>
+			<p>Use this PHP code to setup your preferred layout of buttons, or include custom instructions, etc.</p>
+			<p>To include buttons and controls, use these variables:</p>
+			<table>
+				<tr>
+					<td>
+						<ul>
+							<li>$addButton</li>
+							<li>$addMultiButton</li>
+							<li>$addProxyButton</li>
+							<li>$exportButton</li>
+							<li>$importButton</li>
+							<li>$notifButton</li>
+							<li>$currentViewList</li>
+							<li>$changeColsButton</li>
+							<li>$saveButton (if any columns are displayed as form elements)</li>
+						</ul> 
+					</td>
+					<td>
+						<ul>
+							<li>$calcButton</li>
+							<li>$advSearchButton</li>
+							<li>$cloneButton</li>
+							<li>$deleteButton</li>
+							<li>$selectAllButton</li>
+							<li>$clearSelectButton</li>
+							<li>$resetViewButton</li>
+							<li>$saveViewButton</li>
+							<li>$deleteViewButton</li>
+							<li>$pageNavControls (if there is more than one page of entries)</li>
+						</ul>
+					</td>
+				</tr>
+			</table>
+			<p>For Quicksearch boxes, use "$quickSearchColumn" where Column is either the element's data handle, or the Framework's element handle if using a Framework. Note:  you must turn off the quicksearch boxes at the top of the columns before you can use them in a top template.</p>
+			<p>You can also make Quickfilter dropdown boxes, by using "$quickFilterColumn". This only works for selectboxes, radio buttons and checkboxes.</p>
+			<p>For Custom Buttons, use "$handle" where handle is the handle you specified for that button. You can use "$messageText" to control where the clicked button's message will appear on the screen. By default, the message appears centred at the top.</p>
+			<p>If the current view list is available, you can determine which view was last selected from the list, by checking whether $The_view_name is true or not. You can also check $viewX where X is a number corresponding to the position of the view in the list, 1 through n. You can use this to put if..else clauses into your template, so it changes depending what view is selected.</p>
+	</div>
+	<div class="form-item">
+		<fieldset>
+		<legend>List Template</legend>
+			<textarea name="entry-template"/></textarea>
+			<div class="description">
+				<p>If you specify a List Template, certain buttons and configuration options mentioned above may be unavailable. Below is a list of element data handles for all the elements in this form. Use them with the display function. Use "$entry_id" to refer to the entry id number.</p>
+				<p>Show the entities here:</p>
+				<p>If you specify any PHP code for the List Template, it will be used to draw in each row of the list.</p>
+				<p>You do not need to create a foreach loop or any other loop structure in this template. The PHP code you specify will be executed inside a loop that runs once for each entry.</p>
+				<p>You have full access to XOOPS and Formulize objects, functions, variables and constants in this template, including $fid for the form ID. Use $entry to refer to the current entry in the list. For example:</p>
+				<code>display($entry, "phonenumber");</code>
+				<p>That code will display the phone number recorded in that entry (assuming "phonenumber" is a valid element handle).</p>
+				<p>You can use "$selectionCheckbox" to display the special checkbox used to select an entry.</p>
+				<p>You can use a special function called "viewEntryLink" to create a link to the entry so users can edit it. This function takes one parameter, which is the text that will be clickable. Examples:</p>
+				<code>print viewEntryLink("Click to view this entry");<br/>
+				print viewEntryLink(display($entry, "taskname"));<br/>
+				print viewEntryLink("<img src='" . XOOPS_ROOT_PATH . "/images/button.jpg'>");</code>
+			</div>
+		</fieldset>
+	</div>
+	<div class="form-item">
+		<input type="submit" class="savebutton" name="#form-<{$number}>" value="Save settings"/>
+	</div>
+</fieldset>
+
+</form>
+
+</div> <!--// end content -->

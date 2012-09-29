@@ -1,0 +1,52 @@
+<div class="panel-content content">
+
+<p>Add custom button</p>
+
+<form id="form-custom-<{$number}>">
+
+<fieldset>
+<legend>Custom buttons for screen: <em><{$content.name}></em></legend>
+	<div class="form-item">
+		<label for="handle">Button handle</label>
+		<input type="text" id="handle" name="handle" value="<{$content.name}>"/>
+	</div>
+	<div class="form-item">
+		<label for="text">Button text</label>
+		<input type="text" id="text" name="text" value="<{$content.name}>"/>
+	</div>
+	<div class="form-item">
+		<fieldset>
+			<legend>Appear next to every entry?</legend>
+			<label for="entry-yes"><input type="radio" id="entry-yes" name="entry" value="yes"/>Yes</label>
+			<label for="entry-no"><input type="radio" id="entry-no" name="entry" value="no"/>No</label>
+			<div class="description">
+				<p>If no, then the button will be available in the Top and Bottom Templates. If yes, the button will appear in the list, or will be available in the List Template if you use one.</p>
+			</div>
+		</fieldset>
+	</div>
+	<div class="form-item">
+		<fieldset>
+		<legend>Entries to modify</legend>
+			<div class="form-radios">
+				<label for="none"><input type="radio" id="none" name="modify" value="none"/>None. Use PHP to render some HTML wherever this buttons would appear</label>
+			</div>
+			<div class="form-radios">
+				<label for="only-entry"><input type="radio" id="only-entry" name="modify" value="only"/>Only the entry with the button</label>
+			</div>
+			<div class="form-radios">
+				<label for="only-selected"><input type="radio" id="only-selected" name="modify" value="only"/>Only the selected entries</label>
+				<em>(Only works if checkboxes are enabled above)</em>
+			</div>
+		</fieldset>
+		<label for="modified">Entries to modify</label>
+	</div>
+	<div class="form-item">
+		<input type="submit" class="savebutton" name="#form-custom-<{$number}>" value="Save custom button"/></div>
+
+</fieldset>
+
+</form>
+
+<p>Show list of custom buttons to edit</p>
+
+</div> <!--// end content -->
