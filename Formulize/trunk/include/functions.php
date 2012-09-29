@@ -212,7 +212,7 @@ function getCurrentURL() {
 	if($url) { return $url; }
 	$url_parts = parse_url(XOOPS_URL);
 	$url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST']; 
-	$url = isset($url_parts['port']) ? $url . ":" . $url_parts['port'] : $url;
+        $url = (isset($url_parts['port']) AND !strstr($_SERVER['HTTP_HOST'], ":")) ? $url . ":" . $url_parts['port'] : $url;
 	$url .= str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])));  // strip html tags, convert special chars to htmlchar equivalents, then convert back ampersand htmlchars to regular ampersands, so the URL doesn't bust on certain servers
 	return $url;
 }
@@ -1862,14 +1862,14 @@ function prepDataForWrite($element, $ele) {
 					$value = $myts->stripSlashesGPC($ele);
 				break;
 				/*
-				 * Hack by Félix<INBOX International>
+				 * Hack by Fï¿½lix<INBOX International>
 				 * Adding colorpicker form element
 				 */
 				case 'colorpick':
 					$value = $ele;
 				break;
 				/*
-				 * End of Hack by Félix<INBOX International>
+				 * End of Hack by Fï¿½lix<INBOX International>
 				 * Adding colorpicker form element
 				 */
 				default:
@@ -2005,14 +2005,14 @@ function checkOther($key, $id){
 function writeOtherValues($id_req, $fid) {
 	global $xoopsDB, $myts;
 	/*
-	 * Hack by Félix <INBOX Solutions> for sedonde
+	 * Hack by Fï¿½lix <INBOX Solutions> for sedonde
 	 * myts == NULL
 	 */
 	if(!$myts){
 		$myts =& MyTextSanitizer::getInstance();
 	}
 	/*
-	 * Hack by Félix <INBOX Solutions> for sedonde
+	 * Hack by Fï¿½lix <INBOX Solutions> for sedonde
 	 * myts == NULL
 	 */
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
