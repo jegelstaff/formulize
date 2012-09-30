@@ -162,14 +162,13 @@ if(!$element_handler->insert($element)) {
   if($_POST['elements-ele_index'] != $_POST['original_ele_index']){
     if($_POST['elements-ele_index']){
       //create new index
-	  $sql = "ALTER TABLE ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." ADD $index_fulltext `". $element->getVar('ele_handle') ."` (`".$element->getVar('ele_handle')."`)";
+	  $sql = "ALTER TABLE ".$xoopsDB->prefix("formulize_".mysql_real_escape_string($formObject->getVar('form_handle')))." ADD $index_fulltext `". mysql_real_escape_string($element->getVar('ele_handle')) ."` (`".mysql_real_escape_string($element->getVar('ele_handle'))."`)";
       $res = $xoopsDB->query($sql);
       $reloadneeded = true;
     }elseif($_POST['original_ele_index'] AND strlen($_POST['original_index_name']) > 0){
       //remove existing index
-      $sql = "DROP INDEX `".$_POST['original_index_name']."` ON ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
+      $sql = "DROP INDEX `".mysql_real_escape_string($_POST['original_index_name'])."` ON ".$xoopsDB->prefix("formulize_".mysql_real_escape_string($formObject->getVar('form_handle')));
       $res = $xoopsDB->query($sql);
-      $reloadneeded = true;
     }
   }
 
