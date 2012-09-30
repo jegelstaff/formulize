@@ -114,8 +114,8 @@ class formulizeRankOrderListHandler {
     $order = new xoopsFormHidden($form_ele_id, ''); // this element will receive the order of the sortable options upon saving, which is then read by prepDataForWrite
 
     if(!isset($GLOBALS['formulize_jQuery_included'])) { // may already be included by formdisplay.php, otherwise we're rendering element at a time and we need to account for this here
-      $sortableListHTML = "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-1.3.2.min.js\"></script>
-<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-ui-1.7.2.custom.min.js\"></script>";
+      $sortableListHTML = "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.3.2.min.js\"></script>
+<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-ui-1.7.2.custom.min.js\"></script>";
       $GLOBALS['formulize_jQuery_included'] = true;
     }
     

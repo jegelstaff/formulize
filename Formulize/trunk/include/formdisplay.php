@@ -1538,8 +1538,8 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		$col_two .= "</div>\n";
 		static $jqueryUILoaded = false;
 		if(!$jqueryUILoaded) {
-			$col_two .= "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-ui-1.8.2.custom.min.js\"></script>\n";
-			$col_two .= "<link rel=\"stylesheet\" type=\"text/css\" href=\"".XOOPS_URL."/modules/formulize/jquery/css/start/jquery-ui-1.8.2.custom.css\">\n";
+			$col_two .= "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js\"></script>\n";
+			$col_two .= "<link rel=\"stylesheet\" type=\"text/css\" href=\"".XOOPS_URL."/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css\">\n";
 			$jqueryUILoaded = true;
 		}
 		$col_two .= "\n
@@ -2390,7 +2390,7 @@ if($drawnJavascript) {
 global $xoopsUser;
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 // Left in for possible future use by the rankOrderList element type or other elements that might use jQuery
-//print "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-1.3.2.min.js\"></script><script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/jquery/jquery-ui-1.7.2.custom.min.js\"></script>";
+//print "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.3.2.min.js\"></script><script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-ui-1.7.2.custom.min.js\"></script>";
 //$GLOBALS['formulize_jQuery_included'] = true;
 print "\n<script type='text/javascript'>\n";
 
@@ -2404,7 +2404,7 @@ if (typeof jQuery == 'undefined') {
 	script = document.createElement('script');
 	script.id = 'jQuery';
 	script.type = 'text/javascript';
-	script.src = '<?php print XOOPS_URL; ?>/modules/formulize/jquery/jquery-1.4.2.min.js';
+	script.src = '<?php print XOOPS_URL; ?>/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
 	head.appendChild(script);
 }
 
