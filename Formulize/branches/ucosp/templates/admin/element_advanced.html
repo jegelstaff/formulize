@@ -4,6 +4,8 @@
 <input type="hidden" name="formulize_admin_handler" value="element_advanced">
 <input type="hidden" name="formulize_admin_key" value="<{$content.ele_id}>">
 <input type="hidden" name="original_handle" value="<{$content.original_handle}>">
+<input type="hidden" name="original_index_name" value="<{$content.original_index_name}>">
+<input type="hidden" name="original_ele_index" value="<{$content.original_ele_index}>">
 
 <{if $content.datatypeui}>
 <div class="accordion-box-wide">
@@ -34,7 +36,22 @@
 </div>
 </div>
 <{/if}>
-  
+<{if $content.ele_index_show}>  
+<div class="accordion-box">
+<div class="form-item">
+		<fieldset>
+			<legend><label for="elements-ele_index" class="question">Index this information in the database?</label></legend>
+      <p><input type="radio" name="elements-ele_index" value=1<{$content.ele_index_yes_on}>> Yes</p>
+			<p><input type="radio" name="elements-ele_index" value=0<{$content.ele_index_no_on}>> No</p>
+      <div class="description">
+				<p>An index can help speed up searchs but can impact performance in other areas.</p>
+        <p><b>Do not add to all elements as it will create unnecessary overhead!</b></p>
+			</div>
+  </fieldset>
+</div>
+</div>
+<{/if}>
+ 
 </form>
 
 <div style="clear: both;"></div>

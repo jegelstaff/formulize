@@ -60,6 +60,7 @@ foreach($allGroups as $thisGroup) {
 }
 
 $firstElementOrder = "";
+$advanced['ele_index_show'] = false;
 if($_GET['ele_id'] != "new") {
   $ele_id = intval($_GET['ele_id']);
 	$elementObject = $element_handler->get($ele_id);
@@ -117,6 +118,14 @@ if($_GET['ele_id'] != "new") {
     $advanced['ele_encrypt_no_on'] = $ele_encrypt ? "" : " checked";
     $advanced['ele_encrypt_yes_on'] = $ele_encrypt ? " checked" : "";
     $advanced['ele_encrypt_show'] = true;
+	
+	$ele_index = has_index($elementObject,$fid);
+    $advanced['original_ele_index'] = strlen($ele_index) > 0;
+    $advanced['original_index_name'] = $ele_index;
+    $advanced['ele_index_no_on'] = strlen($ele_index) > 0 ? "" : " checked";
+    $advanced['ele_index_yes_on'] = strlen($ele_index) > 0 ? " checked" : "";
+    $advanced['ele_index_show'] = true;
+	
     $advanced['original_handle'] = $elementObject->getVar('ele_handle');
   }
   
@@ -204,6 +213,13 @@ if($_GET['ele_id'] != "new") {
   if ($ele_type != "subform" AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
     $advanced['ele_encrypt_no_on'] = " checked";
     $advanced['ele_encrypt_show'] = true;
+
+	$ele_index = "";//has_index($elementObject,$fid);
+    $advanced['original_ele_index'] = strlen($ele_index) > 0;
+    $advanced['original_index_name'] = $ele_index;
+    $advanced['ele_index_no_on'] = strlen($ele_index) > 0 ? "" : " checked";
+    $advanced['ele_index_yes_on'] = strlen($ele_index) > 0 ? " checked" : "";
+    $advanced['ele_index_show'] = true;
   }
   $ele_id = "new";
   
@@ -482,31 +498,13 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
     
 		if(($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type == "radio" OR $ele_type == "checkbox" OR $ele_type == "derived" OR $customTypeNeedsUI) AND !$ele_encrypt) {
       if($element) {
-              // get the current type...
-              global $xoopsDB;
-	      $form_handler = xoops_getmodulehandler('forms', 'formulize');
-              $formObject = $form_handler->get($id_form);
-              $elementDataSQL = "SHOW COLUMNS FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." LIKE '".$element->getVar('ele_handle')."'";
-              $elementDataRes = $xoopsDB->queryF($elementDataSQL);
-              $elementDataArray = $xoopsDB->fetchArray($elementDataRes);
-              $defaultTypeComplete = $elementDataArray['Type'];
-              $parenLoc = strpos($defaultTypeComplete, "(");
-              if($parenLoc) {
-                      $defaultType = substr($defaultTypeComplete,0,$parenLoc);
-                      $lengthOfSizeValues = strlen($defaultTypeComplete)-($parenLoc+2);
-                      $defaultTypeSize = substr($defaultTypeComplete,($parenLoc+1),$lengthOfSizeValues);
-                      if($defaultType == "decimal") {
-                              $sizeParts = explode(",", $defaultTypeSize);
-                              $defaultTypeSize = $sizeParts[1]; // second part of the comma separated value is the number of decimal places declaration
-                      }
-              } else {
-                      $defaultType = $defaultTypeComplete;
-                      $defaultTypeSize = '';
-              }
-              //print "defaultType: $defaultType<br>";
-              //print "defaultTypeSize: $defaultTypeSize<br>";
-              $renderedUI .= "<input type='hidden' name='element_default_datatype' value='$defaultType'>\n";
-              $renderedUI .= "<input type='hidden' name='element_default_datatypesize' value='$defaultTypeSize'>\n";
+		$defaultTypeInformation = $element->getDataTypeInformation();
+  		$defaultType = $defaultTypeInformation['DataType'];
+  		$defaultTypeSize = $defaultTypeInformation['DataTypeSize'];
+		  //print "defaultType: $defaultType<br>";
+		  //print "defaultTypeSize: $defaultTypeSize<br>";
+		  $renderedUI .= "<input type='hidden' name='element_default_datatype' value='$defaultType'>\n";
+		  $renderedUI .= "<input type='hidden' name='element_default_datatypesize' value='$defaultTypeSize'>\n";	  
       } else {
               $defaultType = 'text';
               $defaultTypeSize = '';
@@ -561,4 +559,24 @@ function formulize_mergeUIText($values, $uitext) {
 		}
 	}
 	return $newvalues;
+}
+
+function has_index($element,$id_form) {
+	// get the current index...
+	global $xoopsDB;
+	$indexType = "";
+
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formObject = $form_handler->get($id_form);
+
+	//Complex check if 
+	$elementDataSQL = "SELECT stats.index_name FROM information_schema.statistics AS stats INNER JOIN (SELECT count( 1 ) AS amountCols, index_name FROM information_schema.statistics WHERE table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' GROUP BY index_name) AS amount ON amount.index_name = stats.index_name WHERE stats.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' AND stats.column_name = '".$element->getVar('ele_handle')."' AND amount.amountCols =1";
+	
+	// Simple sql with no check that it is not a multi column index
+	//$elementDataSQL = "SHOW  INDEX  FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WHERE Column_Name = '".$element->getVar('ele_handle')."'";
+	$elementDataRes = $xoopsDB->queryF($elementDataSQL);
+	$elementDataArray = $xoopsDB->fetchArray($elementDataRes);
+	$indexType = $elementDataArray['index_name'];
+
+	return $indexType;
 }

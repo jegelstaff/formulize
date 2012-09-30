@@ -70,6 +70,36 @@ class formulizeformulize extends XoopsObject {
 		
 	}
 	
+	//this method is used to to retreive the elements dataType and size
+	function getDataTypeInformation() {
+		$defaultType = "text";
+		$defaultTypeSize = "";
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($this->getVar('id_form'));
+		$elementDataSQL = "SHOW COLUMNS FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." LIKE '".$this->getVar('ele_handle')."'";
+		$elementDataRes = $xoopsDB->queryF($elementDataSQL);
+		$elementDataArray = $xoopsDB->fetchArray($elementDataRes);
+		$defaultTypeComplete = $elementDataArray['Type'];
+		$parenLoc = strpos($defaultTypeComplete, "(");
+		if($parenLoc) {
+			$defaultType = substr($defaultTypeComplete,0,$parenLoc);
+			$lengthOfSizeValues = strlen($defaultTypeComplete)-($parenLoc+2);
+			$defaultTypeSize = substr($defaultTypeComplete,($parenLoc+1),$lengthOfSizeValues);
+			if($defaultType == "decimal") {
+				$sizeParts = explode(",", $defaultTypeSize);
+				$defaultTypeSize = $sizeParts[1]; // second part of the comma separated value is the number of decimal places declaration
+			}
+		} else {
+			$defaultType = $defaultTypeComplete;
+			$defaultTypeSize = '';
+		}
+		//define array and return type and size		
+		return array("dataType" => $defaultType, "dataTypeSize" => $defaultTypeSize);
+
+
+	}
+	
 }
 
 class formulizeElementsHandler {
