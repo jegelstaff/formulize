@@ -499,8 +499,8 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
 		if(($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type == "radio" OR $ele_type == "checkbox" OR $ele_type == "derived" OR $customTypeNeedsUI) AND !$ele_encrypt) {
       if($element) {
 		$defaultTypeInformation = $element->getDataTypeInformation();
-  		$defaultType = $defaultTypeInformation['DataType'];
-  		$defaultTypeSize = $defaultTypeInformation['DataTypeSize'];
+  		$defaultType = $defaultTypeInformation['dataType'];
+  		$defaultTypeSize = $defaultTypeInformation['dataTypeSize'];
 		  //print "defaultType: $defaultType<br>";
 		  //print "defaultTypeSize: $defaultTypeSize<br>";
 		  $renderedUI .= "<input type='hidden' name='element_default_datatype' value='$defaultType'>\n";

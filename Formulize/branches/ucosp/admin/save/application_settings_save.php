@@ -43,5 +43,5 @@ $application_handler->insert($appObject);
 
 // if the form name was changed, then force a reload of the page...reload will be the application id
 if(isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) {
-  print "/* eval */ window.location = window.location;";
+  print "/* eval */ reloadWithScrollPosition();";
 }
