@@ -152,6 +152,26 @@ if(!$element_handler->insert($element)) {
   print "Error: could not save encryption setting for the element.";
 }
 
+//New index handling
+  global $xoopsDB;
+  $defaultTypeInformation = $element->getDataTypeInformation();
+  $defaultType = $defaultTypeInformation['dataType'];
+  $defaultTypeSize = $defaultTypeInformation['dataTypeSize'];
+
+  $index_fulltext = $defaultType == "text" ? "FULLTEXT" : "INDEX";
+  if($_POST['elements-ele_index'] != $_POST['original_ele_index']){
+    if($_POST['elements-ele_index']){
+      //create new index
+	  $sql = "ALTER TABLE ".$xoopsDB->prefix("formulize_".mysql_real_escape_string($formObject->getVar('form_handle')))." ADD $index_fulltext `". mysql_real_escape_string($element->getVar('ele_handle')) ."` (`".mysql_real_escape_string($element->getVar('ele_handle'))."`)";
+      $res = $xoopsDB->query($sql);
+      $reloadneeded = true;
+    }elseif($_POST['original_ele_index'] AND strlen($_POST['original_index_name']) > 0){
+      //remove existing index
+      $sql = "DROP INDEX `".mysql_real_escape_string($_POST['original_index_name'])."` ON ".$xoopsDB->prefix("formulize_".mysql_real_escape_string($formObject->getVar('form_handle')));
+      $res = $xoopsDB->query($sql);
+    }
+  }
+
 if($reloadneeded) {
   print "/* evalnow */ if(redirect=='') { redirect = 'reloadWithScrollPosition();'; } newhandle = '".$element->getVar('ele_handle')."';"; // pass back the new element handle so we can update the original_handle flag for the next save operation
 } else {

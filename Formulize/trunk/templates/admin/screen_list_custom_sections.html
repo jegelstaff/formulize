@@ -45,9 +45,9 @@
 			<div class="customeffect">
 				<p><a class="removeeffectbutton" href="" target="<{$sectionContent.id}>_<{$id}>"><img src="../images/editdelete.gif"> Remove this effect</a></p>
 				<{if $sectionContent.applyto == 'custom_code'}>
-				<textarea name="code_<{$sectionContent.id}>[<{$id}>]" rows=8><{$effect.code}></textarea>			
+				<textarea name="code_<{$sectionContent.id}>[<{$id}>]" class="code-textarea" rows=8><{$effect.code}></textarea>			
 				<{elseif $sectionContent.applyto == 'custom_html'}>
-				<textarea name="html_<{$sectionContent.id}>[<{$id}>]" rows=8><{$effect.html}></textarea>				
+				<textarea name="html_<{$sectionContent.id}>[<{$id}>]" class="code-textarea" rows=8><{$effect.html}></textarea>				
 				<{else}>
 				<label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ELEMENT}></label>
 				<select name="element_<{$sectionContent.id}>[<{$id}>]" size=1>
@@ -58,7 +58,7 @@
 					<{html_options options=$effect.actionOptions selected=$effect.action}>
 				</select>
 				<label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_VALUE}></label>
-				<textarea name="value_<{$sectionContent.id}>[<{$id}>]" rows=4><{$effect.value}></textarea>		
+				<textarea name="value_<{$sectionContent.id}>[<{$id}>]" class="code-textarea" rows=4><{$effect.value}></textarea>		
 				<{/if}>
 				<div class="description">
 					<p><{$effect.description}></p>
