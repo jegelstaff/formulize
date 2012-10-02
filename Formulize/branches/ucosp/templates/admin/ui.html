@@ -1,8 +1,10 @@
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-1.4.2.min.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror-compressed.js"></script>
 
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css">
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/admin/css/ui.css">
+<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror.css">
 <script type="text/javascript">
  var pagehasaccordion = new Array();
 </script>
@@ -246,5 +248,27 @@ $(document).ready(function() {
       element.style.display = styleDisplay;
     }
   }
+
+  $(document).ready(
+    $('.code-textarea').each(function() {
+        if (this.type !== 'textarea') {
+            return true; // continue
+        }
+        CodeMirror.fromTextArea(this, {
+            lineNumbers: true,
+            matchBrackets: true,
+            mode: "application/x-httpd-php",
+            indentUnit: 4,
+            indentWithTabs: true,
+            enterMode: "keep",
+            tabMode: "shift",
+            lineWrapping: true,
+            onChange: function(instance) { 
+                setDisplay('savewarning','block');
+                instance.save(); // Call this to update the textarea value for the ajax post
+            }
+        });
+    })
+  );
   
 </script>
