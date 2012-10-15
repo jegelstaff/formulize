@@ -101,11 +101,11 @@ if($_GET['sid'] == "new") {
 // prepare data for sub-page
 if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   // display data
-  $templates = array();
-  $templates['toptemplate'] = $screen->getVar('toptemplate');
-  $templates['bottomtemplate'] = $screen->getVar('bottomtemplate');
-  $templates['listtemplate'] = $screen->getVar('listtemplate');
-
+  $templates = array();  
+  $templates['toptemplate'] = $screen->getTemplate('toptemplate');
+  $templates['bottomtemplate'] = $screen->getTemplate('bottomtemplate');
+  $templates['listtemplate'] = $screen->getTemplate('listtemplate');
+  
   // view data
   // gather all the available views
   // setup an option list of all views, as well as one just for the currently selected Framework setting

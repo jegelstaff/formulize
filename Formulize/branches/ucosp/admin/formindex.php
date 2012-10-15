@@ -84,7 +84,7 @@ global $title2, $op, $data;
 	xoops_cp_header();
 
 
-//Sélection des formulizes
+//Sï¿½lection des formulizes
 
 	$sql="SELECT distinct desc_form, id_form, tableform, lockedform FROM ".$xoopsDB->prefix("formulize_id");
 	$res = $xoopsDB->query( $sql );
@@ -1423,7 +1423,7 @@ function patch40() {
 				$warningContents[] = ob_get_clean();
 			}
 		}
-		
+                                		
 		if($haveWarning) {
 			print "<hr><p>MAJOR WARNING:</p>";
 			print "<ol>";
@@ -1442,6 +1442,67 @@ function patch40() {
 			print "<p><b>You can re-run this patch after making changes.  If you do not get this warning, then your site should be OK.</b></p>";
 			print "<p>If you have any questions about this upgrade issue, please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.</p>";
 		}
+                
+                $screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/";
+                
+                $templateSQL = "SELECT sid, toptemplate, listtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_listofentries";
+                
+                $templateRes = $xoopsDB->query($templateSQL);
+                if($xoopsDB->getRowsNum($templateRes) > 0) {
+                
+                    while($handleArray = $xoopsDB->fetchArray($templateRes)) {
+                        if (!file_exists($screenpathname.$handleArray['sid'])) {
+                            $pathname = $screenpathname.$handleArray['sid']."/";
+                            mkdir($pathname, 0777, true);
+            
+                            if (!is_writable($pathname)) {
+                                chmod($pathname, 0777);
+                            }
+            
+                            $text = html_entity_decode($handleArray['toptemplate']);
+                            if (!empty($text)) {
+                            $fileHandle = fopen($pathname."/toptemplate.php", "w+");
+                            $success = fwrite($fileHandle, "<?php\n".$text);
+                            fclose($fileHandle);
+                            
+                            if ($success) {
+                                print "created templates/screens/default/".$handleArray['sid']. "/toptemplate.php. result: OK<br>";
+                            } else {
+                                print "Warning: could not save toptemplate.php.<br>";
+                            }
+                            }
+                            
+                            $text = html_entity_decode($handleArray['bottomtemplate']);
+                            if (!empty($text)) {
+                            $fileHandle = fopen($pathname."/bottomtemplate.php", "w+");
+                            $success = fwrite($fileHandle, "<?php\n".$text);
+                            fclose($fileHandle);
+                            
+                            if ($success) {
+                                print "created templates/screens/default/".$handleArray['sid']. "/bottomtemplate.php. result: OK<br>";
+                            } else {
+                                print "Warning: could not save bottomtemplate.php.<br>";
+                            }
+                            }
+                            
+                            $text = html_entity_decode($handleArray['listtemplate']);
+                            if (!empty($text)) {
+                            $fileHandle = fopen($pathname."/listtemplate.php", "w+");
+                            $success = fwrite($fileHandle, "<?php\n".$text);
+                            fclose($fileHandle);
+                            
+                            if ($success) {
+                                print "created templates/screens/default/".$handleArray['sid']. "/listtemplate.php. result: OK<br>";
+                            } else {
+                                print "Warning: could not save listtemplate.php. <br>";
+                            }
+                            }
+                        } else {
+                            print "screen templates for screen ".$handleArray['sid']." already exist. result: OK<br>";
+                        }
+                        
+                    }
+                }
 
 		print "DB updates completed.  result: OK";
 	}

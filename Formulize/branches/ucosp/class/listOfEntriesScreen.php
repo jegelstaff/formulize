@@ -40,7 +40,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeListOfEntriesScreen extends formulizeScreen {
 
-	function formulizeListOfEntriesScreen() {
+    function formulizeListOfEntriesScreen() {
 		$this->formulizeScreen();
                 $this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
                 $this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
@@ -99,7 +99,7 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
                 $this->initVar("bottomtemplate", XOBJ_DTYPE_TXTAREA);
                 $this->initVar("entriesperpage", XOBJ_DTYPE_INT);
                 $this->initVar("viewentryscreen", XOBJ_DTYPE_TXTBOX, NULL, false, 10);
-	}
+	}        
 }
 
 class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
@@ -585,6 +585,15 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 if (!$result) {
                     return false;
                 }
+
+                $success1 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-toptemplate'])), 'toptemplate', $screen);
+                $success2 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-bottomtemplate'])), 'bottomtemplate', $screen);
+                $success3 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-listtemplate'])), 'listtemplate', $screen);
+                
+                if (!$success1 || !$success2 || !$success3) {
+                    return false;
+                }
+                
 		return $sid;
             
 	}

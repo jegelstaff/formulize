@@ -437,8 +437,10 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		$templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton, 'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage, 'pageSelectionList'=>$pageSelectionList);
 
 		print "<form name=\"pageNavOptions_above\" id==\"pageNavOptions_above\">\n";
-		if($screen AND $toptemplate = $screen->getVar('toptemplate')) {
-		    print renderTemplate($toptemplate, $templateVariables);
+                
+                // need to replace by including template file
+		if($screen AND $toptemplate = $screen->getTemplate('toptemplate')) {
+                    include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/toptemplate.php";
 		} else {
 		    drawPageNav($usersCanSave, $currentPage, $totalPages, "above", $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList);
 		}
@@ -528,9 +530,10 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	    // have to get the new value for $pageSelection list if the user requires it on the users view.
 	    $pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below");
 	    print "<form name=\"pageNavOptions_below\" id==\"pageNavOptions_below\">\n";
-	    if ($screen AND $bottomtemplate = $screen->getVar('bottomtemplate')) { 
+            // need to replace this by template file
+	    if ($screen AND $bottomtemplate = $screen->getTemplate('bottomtemplate')) { 
 		    $templateVariables['pageSelectionList'] = $pageSelectionList; // assign the new pageSelectionList, since it was redone for the bottom section
-		    print renderTemplate($bottomtemplate, $templateVariables);
+                    include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/bottomtemplate.php";
 	    } else {
 		    drawPageNav($usersCanSave, $currentPage, $totalPages, "below", $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList);
 	    }
