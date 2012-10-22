@@ -281,6 +281,30 @@ if($ele_type=='text') {
   $listOfElements = new XoopsFormSelect("", 'listofelementsoptions');
   $listOfElements->addOptionArray($derivedOptions);
   $options['listofelementsoptions'] = $listOfElements->render();
+  
+  
+  //new relationship dropdown
+  $formObjects = $form_handler->getFormsByApplication($aid);
+  $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+  $allRelationships = array();
+  foreach($formObjects as $thisForm) {
+	$allRelationships = array_merge($allRelationships, $framework_handler->getFrameworksByForm($thisForm->getVar('id_form'))); // returns array of objects
+  }
+  $relationships = array();
+  $relationshipIndex = array();
+  $relationships[""] = "this form only, no relationship.";
+  $i = 1;
+  foreach($allRelationships as $thisRelationship) {
+	$frid = $thisRelationship->getVar('frid');
+	if(isset($relationshipIndex[$frid])) { continue; }
+	$relationships[$i] = $thisRelationship->getVar('name');
+	$relationshipIndex[$frid] = true;
+  }
+  
+  $listOfRelationships = new XoopsFormSelect("", 'listofrelationshipoptions');
+  $listOfRelationships->addOptionArray($relationships);
+  $options['listofrelationshipoptions'] = $listOfRelationships->render();
+  //end of new relationship
 
 } elseif($ele_type == "yn") {
   $options['ele_value_yes'] = $ele_value['_YES'];
