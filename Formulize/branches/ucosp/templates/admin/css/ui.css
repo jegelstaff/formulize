@@ -215,7 +215,7 @@ div.save-view-access {
 	margin-bottom: 1em;
   font-weight: normal;
 }
-#savewarning {
+#savewarning, #derivedfinished {
 	display: none;
 	
 	float: left;
