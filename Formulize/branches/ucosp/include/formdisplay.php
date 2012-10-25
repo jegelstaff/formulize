@@ -691,7 +691,7 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				} else {
 					$form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true); // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
 				}
-				$form->setExtra("enctype='multipart/form-data'"); // impératif!
+				$form->setExtra("enctype='multipart/form-data'"); // impï¿½ratif!
 	
 				if(is_array($settings)) { $form = writeHiddenSettings($settings, $form); }
 				$form->addElement (new XoopsFormHidden ('ventry', $settings['ventry'])); // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
@@ -705,32 +705,22 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 					if(strstr($currentURL, "printview.php")) {
 						$breakHTML = "<center>";
 					} else {
-								$breakHTML = "<center><p><b>";
-								if($info_received_msg) { $breakHTML .= _formulize_INFO_SAVED . "&nbsp;"; }
-								
-								if($info_continue == 1 AND (($owner == $uid AND $update_own_entry) OR $update_other_entries)) {
-									$breakHTML .= _formulize_INFO_CONTINUE1 . "</b></p>";
-								} elseif($info_continue == 2) {
-									$breakHTML .=  _formulize_INFO_CONTINUE2 . "</b></p>";
-								} elseif(!$entry AND ($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid))) {
-									$breakHTML .=  _formulize_INFO_MAKENEW . "</b></p>";
-								} else {
-									$breakHTML .= "</b></p>";
-								}
-
+						// Update for Ajax Save
+						$breakHTML = "<center><p id=formInstruction>";
+						$breakHTML .= genFormInstruction($info_continue, $fid, $entryId, $info_received_msg, $owner, $uid, $groups, $mid);
+						$breakHTML .= "</p>";
 					}
-							$breakHTML .= "</center><table cellpadding=5 width=100%><tr><td width=50% style=\"vertical-align: bottom;\">";
-	
-							$breakHTML .= "<p><b>" . _formulize_FD_ABOUT . "</b><br>";
-							
-							if($entries[$this_fid][0]) {
-								$form_meta = getMetaData($entries[$this_fid][0], $member_handler, $this_fid);
-								$breakHTML .= _formulize_FD_CREATED . $form_meta['created_by'] . " " . formulize_formatDateTime($form_meta['created']) . "<br>" . _formulize_FD_MODIFIED . $form_meta['last_update_by'] . " " . formulize_formatDateTime($form_meta['last_update']) . "</p>";
-							} else {
-								$breakHTML .= _formulize_FD_NEWENTRY . "</p>";
-							}
-	
-							$breakHTML .= "</td><td width=50% style=\"vertical-align: bottom;\">"; //<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p></td><td>";
+					$breakHTML .= "</center><table cellpadding=5 width=100%><tr><td width=50% style=\"vertical-align: bottom;\">";
+					$breakHTML .= "<p id=formMetaData>";
+					if($entries[$this_fid][0]) {
+						$breakHTML .= genFormMetaData($entries[$this_fid][0], $this_fid, $member_handler);
+					} else {
+						$breakHTML .=  "<b>" . _formulize_FD_ABOUT . "</b><br>" . _formulize_FD_NEWENTRY;
+					}
+					$breakHTML .= "</p>";
+					
+					$breakHTML .= "</td><td width=50% style=\"vertical-align: bottom;\">"; //<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p></td><td>";
+						// End of Update for Ajax Save
 					if(strstr($currentURL, "printview.php") OR (!$gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) AND !$gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid))) {
 						$breakHTML .= "<p>";
 					} else {
@@ -829,11 +819,16 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 	
 		// draw in proxy box if necessary (only if they have permission and only on new entries, not on edits)
 		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+			// Update for Ajax Save
 			if($gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid) AND !$entries[$fid][0]) {
-				$form = addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid);
+				$proxylist = genOwnershipList($fid, $mid, $groups);
+				// $form = addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid);
 			} elseif($entries[$fid][0] AND $gperm_handler->checkRight("update_entry_ownership", $fid, $groups, $mid)) {
-				$form = addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid, $entries[$fid][0]);	
+				$proxylist = genOwnershipList($fid, $mid, $groups, $entries[$fid][0]);
+				// $form = addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid, $entries[$fid][0]);
 			}
+			$form->addElement($proxylist);
+			// End of Update for Ajax Save
 		}
 	
 		// draw in the submitbutton if necessary
@@ -871,7 +866,7 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 			}
 			print "</div>\n";
 
-			drawJavascript($nosave);
+			drawJavascript($nosave, $single, $overrideMulti);
 			if(count($GLOBALS['formulize_renderedElementHasConditions'])>0) {
 				drawJavascriptForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $entries, $sub_entries);
 			}
@@ -1621,6 +1616,7 @@ $col_two .= "
 }
 
 
+// Kept here for historical purpose!
 // add the proxy list to a form
 function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid, $entry_id="") {
 
@@ -1995,14 +1991,14 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 
 	global $myts;
 	/*
-	 * Hack by Félix <INBOX Solutions> for sedonde
+	 * Hack by Fï¿½lix <INBOX Solutions> for sedonde
 	 * myts == NULL
 	 */
 	if(!$myts){
 		$myts =& MyTextSanitizer::getInstance();
 	}
 	/*
-	 * Hack by Félix <INBOX Solutions> for sedonde
+	 * Hack by Fï¿½lix <INBOX Solutions> for sedonde
 	 * myts == NULL
 	 */
 			$type = $i->getVar('ele_type');
@@ -2074,12 +2070,12 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 					break;
 				case "textarea":
 				/*
-				 * Hack by Félix<INBOX International>
+				 * Hack by Fï¿½lix<INBOX International>
 				 * Adding colorpicker form element
 				 */
 				case "colorpick":
 				/*
-				 * End of Hack by Félix<INBOX International>
+				 * End of Hack by Fï¿½lix<INBOX International>
 				 * Adding colorpicker form element
 				 */
 					$ele_value[0] = $value;								
@@ -2382,13 +2378,23 @@ function writeHiddenSettings($settings, $form) {
 
 // draw in javascript for this form that is relevant to subforms
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
-function drawJavascript($nosave) {
+function drawJavascript($nosave, $single, $overrideMulti) {
 static $drawnJavascript = false;
 if($drawnJavascript) {
 	return;
 }
 global $xoopsUser;
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+
+
+// Update for Ajax Save
+if($overrideMulti != 1 || $overrideMulti != true){
+	$singleEntryTrueFalse = $single ? "true" : "false";
+} else {
+	$singleEntryTrueFalse = !$single ? "true" : "false";
+}
+// End of Update for Ajax Save
+
 // Left in for possible future use by the rankOrderList element type or other elements that might use jQuery
 //print "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.3.2.min.js\"></script><script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-ui-1.7.2.custom.min.js\"></script>";
 //$GLOBALS['formulize_jQuery_included'] = true;
@@ -2397,6 +2403,9 @@ print "\n<script type='text/javascript'>\n";
 print " initialize_formulize_xhr();\n";
 print " var formulizechanged=0;\n";
 print " var formulize_xhr_returned_check_for_unique_value = 'notreturned';\n";
+// Update for Ajax Save(Try to save single and overrideMulti to javascript)
+print " var singleEntryHuh = " . $singleEntryTrueFalse . ";\n";
+// End of Update for Ajax Save
 ?>
 
 if (typeof jQuery == 'undefined') { 
@@ -2440,17 +2449,121 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 			window.document.pagebuttons.prev.disabled = true;
 			window.document.pagebuttons.next.disabled = true;
 		}
+		
+		// Update for Ajax Save
+		// The following two lines are like magic, they can show you a "saving status bar"
+		// Kept here to notify user that the information has been saved
+		// If you don't need those, you can comment this out since we are using ajax save!
 		window.document.getElementById('formulizeform').style.opacity = 0.5;
 		window.document.getElementById('savingmessage').style.display = 'block';
 		
-		window.scrollTo(0,0);
-		window.document.formulize.submit(); 
+		setTimeout(function(){
+				window.document.getElementById('formulizeform').style.opacity = 1;
+				window.document.getElementById('savingmessage').style.display = 'none';
+			},
+			366			// adjust this number here to decide how long you want to simulate saving to user!
+		);
+		
+		// Start of old Version of Form submit
+		// window.scrollTo(0,0);
+		// window.document.formulize.submit(); 
+		// End of old Version of Form submit
+		
+		// Start of new version of Form Submit using JQuery so the page doesn't have to reload after form submission
+		// alert(jQuery(window.document.formulize).serialize());
+		jQuery.post("<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php", jQuery(window.document.formulize).serialize(), function(data) {
+			// success function for submit
+			formulizechanged = 0;
+			// check if this is a save!
+			if(window.document.formulize.submitx.disabled){
+				if(data){
+					if(data == '<b>Error: the data you submitted could not be saved in the database.</b>'){
+						alert('Error: the data you submitted could not be saved in the database. Please try again.');
+					} else if(data.indexOf('ERROR') != -1){
+						alert(data);
+					} else {
+						// alert('data received from server:' + data);
+						response = eval('('+data+')');
+						// jQuery('#printview [id=XOOPS_TOKEN_REQUEST]').val(response.new_xoops_token_request);
+						// Update token for next save
+						jQuery('#formulize [id=XOOPS_TOKEN_REQUEST]').val(response.new_xoops_token_request);
+						if(response.entryId != null){
+							// if we have just made a new entry
+							if(singleEntryHuh){
+								// if the new entry is made by "add single entry"
+								// update all information required on page through jquery
+								updateEntryId(response.entryId, response.fid);
+								jQuery('#printview [name=lastentry]').val(response.entryId);
+								jQuery('#formulize [name=lastentry]').val(response.entryId);
+								jQuery('#formulize [id=ventry]').val(response.entryId);
+								
+								jQuery('#formInstruction').html(response.formInstructionUpdate);
+								jQuery('#formMetaData').html(response.metaData);
+								
+								updateOwnership(response.entryId, response.fid, response.ownershipListHtml, response.ownershipCaption);
+							} else {
+								// if this is multiple entry save, then make inputs blank
+								jQuery('#formInstruction').html(response.formInstructionMakeNew);
+								clearInput(response.entryId, response.fid);
+							}
+						} else {
+							// if we are updating an old entry, only update metadata
+							jQuery('#formInstruction').html(response.formInstructionUpdate);
+							jQuery('#formMetaData').html(response.metaData);
+						}
+					}
+				}
+				window.document.formulize.submitx.disabled=false;
+			}
+		});
+		// End of New Version Form Submit
+		// End of Update for Ajax Save
 	}
 <?php
 } // end of if not $nosave
 ?>
 }
 
+// Updates for Ajax Save
+
+function updateOwnership(entryId, fid, newHtml, newCaption){
+	var oldHtmlSelector = jQuery('#formulize-proxyuser [class=even]');
+	oldHtmlSelector.html(newHtml);
+	var oldCaptionSelector = jQuery('#formulize-proxyuser [class=caption-text]');
+	oldCaptionSelector.html(newCaption);
+	console.log(oldCaptionSelector);
+	jQuery('#formulize-proxyuser').attr('id', "formulize-updateowner" + "_" + fid + "_" + entryId);
+}
+
+function clearInput(entryId, fid){
+	clearEntryIdByPattern("[id^=de_" + fid + "_new_]");
+	clearEntryIdByPattern("[id^=de_" + fid + "_new_]");
+}
+
+function clearEntryIdByPattern(pattern){
+	jQuery(pattern).each(function(){
+		jQuery(this).val('');
+	});
+}
+
+function updateEntryId(entryId, fid){
+	updateEntryIdByPattern("[id^=formulize-de_" + fid + "_new_]", 'id', entryId);
+	updateEntryIdByPattern("[id^=decue_" + fid + "_new_]", 'name', entryId);
+	updateEntryIdByPattern("[id^=decue_" + fid + "_new_]", 'id', entryId);
+	updateEntryIdByPattern("[id^=de_" + fid + "_new_]", 'name', entryId);
+	updateEntryIdByPattern("[id^=de_" + fid + "_new_]", 'id', entryId);
+}
+
+function updateEntryIdByPattern(pattern, attr, entryId){
+	jQuery(pattern).each(function(){
+		var currentId = jQuery(this).attr(attr);
+		var regexForNew = new RegExp('new', 'i');
+		var newId = currentId.replace(regexForNew, entryId);
+		jQuery(this).attr(attr, newId);
+	});
+}
+
+// End of Updates for Ajax Save
 <?php
 
 print "	function verifyDone() {\n";

@@ -351,6 +351,66 @@ $GLOBALS['formulize_allWrittenEntryIds'] = $formulize_allWrittenEntryIds;
 $GLOBALS['formulize_newSubformBlankElementIds'] = $formulize_newSubformBlankElementIds;
 $GLOBALS['formulize_readElementsWasRun'] = $formulize_readElementsWasRun;
 
+// Update for Ajax Save
+// Check if the request is an Ajax request (Since we have passed security check above, this is secured!)
+if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+	// take special care for ajax request here
+  
+  	// create new security token
+  	$token = $GLOBALS['xoopsSecurity']->createToken();
+  	// print_r($formulize_newEntryIds);
+  	// check if user has just made a new entry and get entryId and fid
+  	if(count($formulize_newEntryIds) >= 1){
+  		if(count($formulize_newEntryIds) >= 2){
+  			// Should be here!
+  			echo "ERROR: Unsupported Case: Two forms are modified when we add a single entry!? Check out line 362 of readelements";
+			return;
+		} else {
+  			reset($formulize_newEntryIds);
+  			$response_fid = key($formulize_newEntryIds);
+			$entries = $formulize_newEntryIds[$response_fid];
+			if(count($entries) >= 2 || count($entries) < 1){
+				$num = count($entries);
+				echo "num" . "$num";
+				echo "ERROR: Unsupported Case: Two entries are modified when we modify a single form?! Check out line 368 of readelements";
+				return;
+			}
+			$response_entryId = $entries[0];
+  		}
+  	}
+  	// set fid and entryIds
+  	if($response_fid){
+  		// if new entry
+  		$fid = $response_fid;
+  		$entryId = $response_entryId;
+  	} else {
+  		// if an existing entry
+  		$fid = $elementMetaData[1];
+		$entryId = $elementMetaData[2];
+  	}
+  	$newMetaData = genFormMetaData($entryId, $fid, $member_handler);
+	$formInstructionUpdate = genFormInstruction(1, $fid, $entryId, true, $owner, $uid, $groups, $mid);
+	$formInstructionMakeNew = genFormInstruction(2, $fid, $entryId, true, $owner, $uid, $groups, $mid);
+
+  	$proxylist = genOwnershipList($fid, $mid, $groups, $entryId);
+	$ownershipListHtml = $proxylist->render();
+  	$ownershipCaption = $proxylist->getCaption();
+  	$response = array(
+  					'new_xoops_token_request' => $token,
+  					'fid' => $response_fid,
+  					'entryId' => $response_entryId,
+  					'metaData' => $newMetaData,
+  					'formInstructionUpdate' => $formInstructionUpdate,
+  					'formInstructionMakeNew' => $formInstructionMakeNew,
+  					'ownershipListHtml' => $ownershipListHtml,
+  					'ownershipCaption'=> $ownershipCaption,
+			 	);
+  	// send json back to ajax save!
+  	echo json_encode($response);
+}
+
+
+// End of Update for Ajax Save
 return $formulize_allWrittenEntryIds;
 
 // this function handles triggering the after Saving Logic of custom elements after each entry is written to the database

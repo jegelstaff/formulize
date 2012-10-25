@@ -4803,3 +4803,128 @@ function generateHiddenElements($elements, $entry) {
   }
   return $hiddenElements;
 }
+
+// Update for Ajax Save
+// Generate Form Instruction after a Save
+function genFormInstruction($info_continue, $fid, $entryId, $info_received_msg, $owner, $uid, $groups, $mid){
+	$gperm_handler =& xoops_gethandler('groupperm');
+	if(!$owner){
+		$owner = getEntryOwner($entry, $fid);
+	}
+	if(!$uid){
+		$uid = $xoopsUser ? $xoopsUser->getVar("uid") : 0;
+	}
+	if(!$mid){
+		$mid = getFormulizeModId();
+	}
+	if(!$groups){
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+	}
+	$update_other_entries = $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid);
+	$update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);
+	$breakHTML = "<b>";
+	if($info_received_msg) { $breakHTML .= _formulize_INFO_SAVED . "&nbsp;"; }					
+	if($info_continue == 1 AND (($owner == $uid AND $update_own_entry) OR $update_other_entries)) {
+		$breakHTML .= _formulize_INFO_CONTINUE1 . "</b>";
+	} elseif($info_continue == 2) {
+		$breakHTML .=  _formulize_INFO_CONTINUE2 . "</b>";
+	} elseif(!$entry AND ($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid))) {
+		$breakHTML .=  _formulize_INFO_MAKENEW . "</b>";
+	} else {
+		$breakHTML .= "</b>";
+	}
+	return $breakHTML;
+}
+// Generate Form Metadata
+function genFormMetaData($entryId, $fid, $member_handler){
+	if(!$member_handler){
+		$member_handler =& xoops_gethandler('member');
+	}
+	$form_meta = getMetaData($entryId, $member_handler, $fid);
+	$breakHTML =  "<b>" . _formulize_FD_ABOUT . "</b><br>";
+	$breakHTML .= _formulize_FD_CREATED . $form_meta['created_by'] . " " . formulize_formatDateTime_duplicate_from_formdisplay_php($form_meta['created']) . "<br>" . _formulize_FD_MODIFIED . $form_meta['last_update_by'] . " " . formulize_formatDateTime_duplicate_from_formdisplay_php($form_meta['last_update']);
+	return $breakHTML;			
+}
+
+// THIS FUNCTION FORMATS THE DATETIME INFO FOR DISPLAY CLEANLY AT THE TOP OF THE FORM
+// Old function is kept in formdisplay.php for historical reasons so nothing will break
+function formulize_formatDateTime_duplicate_from_formdisplay_php($dt) {
+	// assumption is that the server timezone has been set correctly!
+	// needs to figure out daylight savings time correctly...ie: is the user's timezone one that has daylight savings, and if so, if they are currently in a different dst condition than they were when the entry was created, add or subtract an hour from the seconds offset, so that the time information is displayed correctly.
+	global $xoopsConfig, $xoopsUser;
+	$serverTimeZone = $xoopsConfig['server_TZ'];
+	$userTimeZone = $xoopsUser ? $xoopsUser->getVar('timezone_offset') : $serverTimeZone;
+	$tzDiff = $userTimeZone - $serverTimeZone;
+	$tzDiffSeconds = $tzDiff*3600;
+	
+	if(substr($dt, -8) == "00:00:00") { // assume anything at midnight, to the second, is actually an historical entry which did not have the time recorded when it was made/saved
+		return _formulize_TEMP_ON . " " . date("F jS, Y", strtotime($dt)+$tzDiffSeconds); // on October 23rd, 2008
+	} else {
+		return _formulize_TEMP_AT . " " . date("g:i a, F jS, Y", strtotime($dt)+$tzDiffSeconds); // at 2:33pm, May 3rd, 2008
+	}
+}
+
+// generate the proxy list for a form
+function genOwnershipList($fid, $mid, $groups, $entry_id="") {
+	global $xoopsDB;
+	$member_handler =& xoops_gethandler('member');
+	$gperm_handler =& xoops_gethandler('groupperm');
+	if(!$mid){
+		$mid = getFormulizeModId();
+	}
+	if(!$groups){
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array( 0 );
+	}
+
+	$add_groups = $gperm_handler->getGroupIds("add_own_entry", $fid, $mid);
+	// May 5, 2006 -- limit to the user's own groups unless the user has global scope
+	if(!$globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid)) {
+		$add_groups = array_intersect($add_groups, $groups);
+	}
+	$all_add_users = array();
+	foreach($add_groups as $grp) {
+		$add_users = $member_handler->getUsersByGroup($grp);
+		$all_add_users = array_merge((array)$add_users, $all_add_users);
+		unset($add_users);
+	}
+		
+	$unique_users = array_unique($all_add_users);
+
+	foreach($unique_users as $uid) {
+		$uqueryforrealnames = "SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=$uid";
+		$uresqforrealnames = $xoopsDB->query($uqueryforrealnames);
+		$urowqforrealnames = $xoopsDB->fetchRow($uresqforrealnames);
+		$punames[] = $urowqforrealnames[0] ? $urowqforrealnames[0] : $urowqforrealnames[1]; // use the uname if there is no full name
+		//print "username: $urowqforrealnames[0]<br>"; // debug code
+	}
+
+	// alphabetize the proxy list added 11/2/04
+	array_multisort($punames, $unique_users);
+	
+	if($entry_id) {
+		include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+		$data_handler = new formulizeDataHandler($fid);
+		$entryMeta = $data_handler->getEntryMeta($entry_id);
+		$entryOwner = $entryMeta[2];
+		$entryOwnerName = $punames[array_search($entryOwner,$unique_users)]; // need to look in one array to find the key to lookup in the other array...a legacy from when corresponding arrays were a common data structure in Formulize...multidimensional arrays were not well understood in the beginning
+		$proxylist = new XoopsFormSelect(_AM_SELECT_UPDATE_OWNER, 'updateowner_'.$fid.'_'.$entry_id, 0, 1);
+		$proxylist->addOption('nochange', _AM_SELECT_UPDATE_NOCHANGE.$entryOwnerName);
+	} else {
+		$proxylist = new XoopsFormSelect(_AM_SELECT_PROXY, 'proxyuser', 0, 5, TRUE); // made multi May 3 05
+		$proxylist->addOption('noproxy', _formulize_PICKAPROXY);
+	}
+			
+	for($i=0;$i<count($unique_users);$i++)
+	{
+		$proxylist->addOption($unique_users[$i], $punames[$i]);
+	}
+
+	if(!$entry_id) {
+		$proxylist->setValue('noproxy');
+	} else {
+		$proxylist->setValue('nochange');
+						
+	}
+	return $proxylist;
+}
+// // End of Update for Ajax Save
