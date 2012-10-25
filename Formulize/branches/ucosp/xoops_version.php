@@ -457,6 +457,16 @@ $modversion['config'][] = array(
 	'default' => 0,
 );
 
+// user floating save button option
+$modversion['config'][] = array(
+    'name' => 'floatSave',
+    'title' => '_MI_formulize_FlOATINGSAVE',
+    'description' => '_MI_formulize_FLOATINGSAVEDESC',
+    'formtype' => 'yesno',
+    'valuetype' => 'int',
+    'default' => 1,
+);
+
 //bloc
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",

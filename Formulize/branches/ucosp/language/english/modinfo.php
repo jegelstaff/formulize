@@ -84,3 +84,7 @@ define("_MI_formulizeMENU_DESC","Displays an individually configurable menu in a
 
 // Names of blocks for this module (Not all module has blocks)
 define("_MI_formulizeMENU_BNAME","Form Menu");
+
+// for Floating save button 
+define("_MI_formulize_FlOATINGSAVE", "Enable floating save button at the bottom for forms");
+define("_MI_formulize_FLOATINGSAVEDESC", "By default, the floating save button is on. Then user can reach the save button without scrolling down to the bottom of the from each time.");

@@ -128,4 +128,20 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 
 /*=== End of Formulize Boutons ===*/
 
+/*=== Floating Save Button for Adding Entries ===*/
+#floatingsave{
+	z-index: 100;
+	left:45%;
+	padding:15px 15px 15px 0px;
+	border: 1px solid #1D65A5;
+	border-radius: 5px; 
+	background-color: white;
+	bottom:0;
+	position:fixed;
+}
+.floatingsavebuttons{
+	margin-left:15px;
+	padding:3px;
+}
 
+/*=== End of Floating Save Button ===*/

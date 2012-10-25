@@ -832,18 +832,53 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 		}
 	
 		// draw in the submitbutton if necessary
+		$subButtonText = '';
+		$allDoneOverride_temp = $allDoneOverride;
 		if($entry AND !$formElementsOnly) { // existing entry, if it's their own and they can update their own, or someone else's and they can update someone else's
 			if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries)) {
-				$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
+				if(!$formulizeConfig['floatSave']){
+					$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
+				}else{
+					$subButtonText = _formulize_SAVE;
+				}
 			} else {
-				$form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
+				if(!$formulizeConfig['floatSave']){
+					$form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
+				}else{
+					$allDoneOverride_temp = false;
+				}
 			}
-		} elseif(!$formElementsOnly) { // new entry
+		}elseif(!$formElementsOnly) { // new entry
 			if($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
-				$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
+				if(!$formulizeConfig['floatSave']){
+					$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
+				}else{
+					$subButtonText = _formulize_SAVE;
+				}
 			} else {
-				$form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
+				if(!$formulizeConfig['floatSave']){
+					$form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
+				}else{
+					$allDoneOverride_temp = false;
+				}
 			}
+		}
+		if($formulizeConfig['floatSave']){
+			if(!$button_text OR ($button_text == "{NOBUTTON}" AND $go_back['form'] > 0)) { // presence of a goback form (ie: parent form) overrides {NOBUTTON} -- assumption is the save button will not also be overridden at the same time
+				$button_text = _formulize_DONE; 
+			} elseif(is_array($button_text)) {
+				if(!$button_text[0]) { 
+					$done_text = _formulize_DONE; 
+				} else {
+					$done_text = $button_text[0];
+				}
+				if(!$button_text[1]) { 
+					$save_text = _formulize_SAVE; 
+				} else {
+					$save_text = $button_text[1];
+				}
+			}
+			$form = addPrintableviewButton($form, $save_text, $go_back, $currentURL, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride_temp, $printall, $screen);
 		}
 	
 		if(!$formElementsOnly) {
@@ -873,6 +908,27 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 		}
 
 		print "<div id=formulizeform>".$form->render()."</div>"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
+		
+		// floating save button 
+		if($printall != 2 AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php")){
+			print "<div id=floattest></div>";
+			if( $done_text !="{NOBUTTON}" OR $save_text !="{NOBUTTON}"){
+				print "<div id=floatingsave>";
+				if( $subButtonText == _formulize_SAVE ){
+					if($save_text) { $subButtonText = $save_text; }
+					if($subButtonText != "{NOBUTTON}") {
+						print "<input type='button' class=floatingsavebuttons onclick=javascript:validateAndSubmit(); value='"._formulize_SAVE."' >";
+					}
+				}
+				if((($button_text != "{NOBUTTON}" AND !$done_text) OR (isset($done_text) AND $done_text != "{NOBUTTON}")) AND !$allDoneOverride){
+					if($done_text) { $button_text = $done_text_temp; }
+					print "<input type='button' class=floatingsavebuttons onclick=javascript:verifyDone(); value='"._formulize_DONE."' >";
+				}
+				print "</div>";
+			}
+		}
+		// end floating save button
+		
 		
 		// if we're in Drupal, include the main XOOPS js file, so the calendar will work if present...
 		// assumption is that the calendar javascript has already been included by the datebox due to no
@@ -1032,6 +1088,83 @@ function addProfileFields($form, $profileForm) {
 	return $form;
 
 } 
+
+function addPrintContent($profileForm, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="", $screen=null){
+	if(!$profileForm) { // do not use printable button for profile forms
+		$newcurrentURL= XOOPS_URL . "/modules/formulize/printview.php";
+		print "<form name='printview' action='".$newcurrentURL."' method=post target=_blank>\n";
+		
+		// add security token
+		if(isset($GLOBALS['xoopsSecurity'])) {
+			print $GLOBALS['xoopsSecurity']->getTokenHTML();
+		}
+		
+		$currentPage = "";
+		$screenid = "";
+    if($screen) {
+		  $screenid = $screen->getVar('sid');
+			// check for a current page setting
+			if(isset($settings['formulize_currentPage'])) {
+				$currentPage = $settings['formulize_currentPage'];
+			}
+		}
+    
+		print "<input type=hidden name=screenid value=".$screenid.">";
+		print "<input type=hidden name=currentpage value=".$currentPage.">";
+
+		print "<input type=hidden name=lastentry value=".$cur_entry.">";
+		if($go_back['form']) { // we're on a sub, so display this form only
+			print "<input type=hidden name=formframe value=".$fids[0].">";	
+		} else { // otherwise, display like normal
+			print "<input type=hidden name=formframe value='".$formframe."'>";	
+			print "<input type=hidden name=mainform value='".$mainform."'>";
+		}
+		if(is_array($elements_allowed)) {
+			$ele_allowed = implode(",",$elements_allowed);
+			print "<input type=hidden name=elements_allowed value='".$ele_allowed."'>";
+		} else {
+			print "<input type=hidden name=elements_allowed value=''>";
+		}
+		print "</form>";
+		//added by Cory Aug 27, 2005 to make forms printable
+	}
+}
+
+function addPrintableviewButton($form, $save_text_temp, $go_back="", $currentURL, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed="", $allDoneOverride=false, $printall=0, $screen=null) {
+	if($printall == 2) { // 2 is special setting in multipage screens that means do not include any printable buttons of any kind
+		return $form;
+	}
+
+	if(strstr($currentURL, "printview.php")) { // don't do anything if we're on the print view
+		return $form;
+	} else {
+		drawGoBackForm($go_back, $currentURL, $settings, $entry);
+	
+		// need to grab the $nosubforms variable created by the multiple page function, so we know to put the printable view button (and nothing else) on the screen for multipage forms
+		global $nosubforms;
+		if(!$profileForm AND ($save_text_temp != "{NOBUTTON}" OR $nosubforms)) { // do not use printable button for profile forms, or forms where there is no Save button (ie: a non-standard saving process is in use and access to the normal printable option may be prohibited)
+			$printbutton = new XoopsFormButton('', 'printbutton', _formulize_PRINTVIEW, 'button');
+			if(is_array($elements_allowed)) {
+				$ele_allowed = implode(",",$elements_allowed);
+			}
+			$printbutton->setExtra("onclick='javascript:PrintPop(\"$ele_allowed\");'");
+			$rendered_buttons = $printbutton->render(); // nmc 2007.03.24 - added
+			if ($printall) {																					// nmc 2007.03.24 - added
+				$printallbutton = new XoopsFormButton('', 'printallbutton', _formulize_PRINTALLVIEW, 'button');	// nmc 2007.03.24 - added
+				$printallbutton->setExtra("onclick='javascript:PrintAllPop();'");								// nmc 2007.03.24 - added
+				$rendered_buttons .= "&nbsp;&nbsp;&nbsp;" . $printallbutton->render();							// nmc 2007.03.24 - added
+				}
+			$buttontray = new XoopsFormElementTray($rendered_buttons, "&nbsp;"); // nmc 2007.03.24 - amended [nb: FormElementTray 'caption' is actually either 1 or 2 buttons]
+		} else {
+			$buttontray = new XoopsFormElementTray("", "&nbsp;");
+		}
+		
+		addPrintContent($profileForm, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed, $screen);
+	
+		$form->addElement($buttontray);
+		return $form;
+	}
+}
 
 
 // add the submit button to a form
@@ -2407,6 +2540,28 @@ print " var formulize_xhr_returned_check_for_unique_value = 'notreturned';\n";
 print " var singleEntryHuh = " . $singleEntryTrueFalse . ";\n";
 // End of Update for Ajax Save
 ?>
+
+jQuery(document).ready(function(){
+	jQuery(window).bind('scroll', function () {
+	    var save = jQuery('#floatingsave');
+	    var testtop = jQuery('#floattest').offset();
+	    var relativetop = testtop.top;
+	    
+	    if ((jQuery(this).scrollTop() + jQuery(window).height()) >= relativetop) {
+	        save.css('position','relative');
+	        save.css('border','1px solid white');
+	        save.css('padding','15px 15px 15px 0px');
+	        save.css('width','200px');
+	        save.css('left','40%');
+	    } else {
+	        save.css('position','fixed');
+	        save.css('border','1px solid #1D65A5');
+	        save.css('left','45%');
+	        save.css('padding','15px 15px 15px 0px');
+	        save.css('width','auto');
+	    }
+	});
+});
 
 if (typeof jQuery == 'undefined') { 
 	var head = document.getElementsByTagName('head')[0];
