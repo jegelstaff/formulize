@@ -1050,7 +1050,9 @@ class formulizeElementRenderer{
 			if(!empty($form_ele->customValidationCode)) {
 				$form_ele_new->customValidationCode = $form_ele->customValidationCode;
 			}
-			$form_ele_new->setRequired($form_ele->isRequired());
+			if($form_ele->isRequired()) {
+				$form_ele_new->setRequired();
+			}
 			return $form_ele_new;
 		} elseif(is_object($form_ele) AND $isDisabled) { // element is disabled
 			$form_ele = $this->formulize_disableElement($form_ele, $e, $ele_desc);

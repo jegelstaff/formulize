@@ -261,7 +261,7 @@ if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $mainFormHasDerived = false;
 if($fid) {
-	$mainFormObject = $form_handler->get($fid);
+	$mainFormObject = $form_handler->get($fid, true); // true causes all elements to be gathered, including ones that are not displayed to the users
 	$mainFormHasDerived = array_search("derived", $mainFormObject->getVar('elementTypes'));
 }
 $mainFormEntriesUpdatedForDerived = array();
@@ -269,7 +269,7 @@ $formsUpdatedInFramework = array();
 // check all the entries that were written...
 foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 	$derivedValueFound = false;
-	$formObject = $form_handler->get($allWrittenFid);
+	$formObject = $form_handler->get($allWrittenFid, true); // true causes all elements to be gathered, including ones that are not displayed to the users
 	if(array_search("derived", $formObject->getVar('elementTypes'))) { // only bother if there is a derived value in the form
 		$derivedValueFound = true;
 		if(!$frid) { // if no framework in effect, then update each form's derived values in isolation
@@ -325,7 +325,7 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 if($frid) {
 	$notUpdatedForms = array_diff($formulize_allWrittenFids, $formsUpdatedInFramework);
 	foreach($notUpdatedForms as $thisFid) {
-		$formObject = $form_handler->get($thisFid);
+		$formObject = $form_handler->get($thisFid, true); // true causes all elements to be gathered, including ones that are not displayed to the users
 		if(array_search("derived", $formObject->getVar('elementTypes'))) {
 			foreach($formulize_allWrittenEntryIds[$thisFid] as $thisEntry) {
 				formulize_updateDerivedValues($thisEntry, $thisFid);
