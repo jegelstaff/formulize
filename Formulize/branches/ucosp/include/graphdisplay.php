@@ -78,15 +78,15 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pImage
  * @param $graphType type of the graph to be displayed with input data
  * @param $fid the id of the form where the data is coming from
  * @param $frid the id of the relation(relating fid's form to another form) $frid == fid if no relation is specified
- * @param $labelElementHandler the field in the form to be used as label
- * @param $dataElementHandler the field in the form to be used as data to graph
- * @param $operation is the operation to be used to draw graphs
+ * @param $labelElement the field in the form to be used as label
+ * @param $dataElement the field in the form to be used as data to graph
+ * @param $operation the operation to be used to draw graphs
  * @param $graphOptions the graph parameters passed in by user!
  */
-function displayGraph($graphType, $fid, $frid, $labelElementHandler, $dataElementHandler, $operation, $graphOptions) {
+function displayGraph($graphType, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {
 	switch ($graphType) {
 		case "Bar" :
-			displayBarGraph($fid, $frid, $labelElementHandler, $dataElementHandler, $operation, $graphOptions);
+			displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $graphOptions);
 			break;
 		default :
 			echo "Sorry, the graph type \"$graphType\" is not supported at the moment!";
@@ -98,7 +98,7 @@ function displayGraph($graphType, $fid, $frid, $labelElementHandler, $dataElemen
  * Helper method to draw bar graph
  * parameters have same meaning as displayGraph's parameters
  */
-function displayBarGraph($fid, $frid, $labelElementHandler, $dataElementHandler, $operation, $graphOptions) {
+function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {
 	// getting data from DB
 	if (is_int($frid) && $frid > 0) {
 		$dbData = getData($frid, $fid);
@@ -108,9 +108,9 @@ function displayBarGraph($fid, $frid, $labelElementHandler, $dataElementHandler,
 
 	foreach ($dbData as $entry) {
 		// mayor - OR array of mayors if there's more than one in the dataset, depending on the one-to-may in a relationship
-		$dataRawValue = display($entry, $dataElementHandler);
+		$dataRawValue = display($entry, $dataElement);
 		// city_name;
-		$labelRawValue = display($entry, $labelElementHandler);
+		$labelRawValue = display($entry, $labelElement);
 		if (!is_array($dataRawValue) && $dataRawValue) {
 			$dataRawValue = array($dataRawValue);
 		}
@@ -125,6 +125,15 @@ function displayBarGraph($fid, $frid, $labelElementHandler, $dataElementHandler,
 			}
 		}
 	}
+
+	// Oct 29 Update for column heading for graphs:
+	$elementHandler = xoops_getmodulehandler('elements', 'formulize');
+	$elementObject = $elementHandler->get($labelElement);
+	$labelElement = $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : printSmart($elementObject->getVar('ele_caption'));
+	$elementObject = $elementHandler->get($dataElement);
+	$dataElement = $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : printSmart($elementObject->getVar('ele_caption'));
+	// end of Update
+	
 	switch($operation) {
 		case "count" :
 			// count the values in each label of the array
@@ -135,10 +144,10 @@ function displayBarGraph($fid, $frid, $labelElementHandler, $dataElementHandler,
 					$dataPoints[$key] = 0;
 				}
 			}
-			if($labelElementHandler == $dataElementHandler){
-				$dataElementHandler = "count of " . $labelElementHandler;
+			if($labelElement == $dataElement){
+				$dataElement = "count of " . $labelElement;
 			} else {
-				$dataElementHandler = "count of " . $dataElementHandler;
+				$dataElement = "count of " . $dataElement;
 			}
 			break;
 		case "sum" :
@@ -147,16 +156,16 @@ function displayBarGraph($fid, $frid, $labelElementHandler, $dataElementHandler,
 			foreach ($dataPoints as $thisLabel => $theseValues) {
 				$dataPoints[$thisLabel] = array_sum($theseValues);
 			}
-			$dataElementHandler = (($operation == "display") ? "number of " : "sum of ") . $dataElementHandler;
+			$dataElement = (($operation == "display") ? "number of " : "sum of ") . $dataElement;
 			break;
 		case "count-unique" :
 			foreach ($dataPoints as $thisLabel => $theseValues) {
 				$dataPoints[$thisLabel] = count(array_unique($theseValues));
 			}
-			if($dataElementHandler == $labelElementHandler){
-				$dataElementHandler = "count of unique " . $labelElementHandler;
+			if($dataElement == $labelElement){
+				$dataElement = "count of unique " . $labelElement;
 			} else {
-				$dataElementHandler = "count of unique " . $dataElementHandler;
+				$dataElement = "count of unique " . $dataElement;
 			}
 			break;
 		default :
@@ -166,12 +175,12 @@ function displayBarGraph($fid, $frid, $labelElementHandler, $dataElementHandler,
 
 	// Code straightly copied from pChart documentation to draw the graph
 	$myData = new pData();
-	$myData -> addPoints(array_values($dataPoints), $dataElementHandler);
-	$myData -> setAxisName(0, $dataElementHandler);
-	$myData -> addPoints(array_keys($dataPoints), $labelElementHandler);
-	$myData -> setSerieDescription($labelElementHandler, $labelElementHandler);
-	$myData -> setAbscissa($labelElementHandler);
-	$myData -> setAbscissaName($labelElementHandler);
+	$myData -> addPoints(array_values($dataPoints), $dataElement);
+	$myData -> setAxisName(0, $dataElement);
+	$myData -> addPoints(array_keys($dataPoints), $labelElement);
+	$myData -> setSerieDescription($labelElement, $labelElement);
+	$myData -> setAbscissa($labelElement);
+	$myData -> setAbscissaName($labelElement);
 	// $myData -> setAxisDisplay(0, AXIS_FORMAT_CUSTOM, "YAxisFormat");
 	
 	// print_r($dataPoints);
@@ -298,7 +307,7 @@ function displayBarGraph($fid, $frid, $labelElementHandler, $dataElementHandler,
 
 	/* Draw the chart */
 	$myPicture -> drawBarChart(array("DisplayPos" => LABEL_POS_INSIDE, "DisplayValues" => TRUE, "Rounded" => TRUE, "Surrounding" => 30, "OverrideColors"=>$Palette));
-	renderGraph($myPicture, $fid, $frid, $labelElementHandler, $dataElementHandler, $operation, $graphOptions);
+	renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions);
 	return;
 }
 
@@ -314,10 +323,10 @@ function YAxisFormat($Value) {
 /**
  * Save the graph to the local file system and render the graph
  */
-function renderGraph($myPicture, $fid, $frid, $labelElementHandler, $dataElementHandler, $operation, $graphOptions) {
+function renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {
 	// TODO: make some kind of cron job clear up or some kind of caches, update graph only when needed!
 	$grapRelativePathPrefix = "modules/formulize/images/graphs/";
-	$graphRelativePath = $grapRelativePathPrefix . "_" . $fid . "_" . "_" . $frid . "_" . $labelElementHandler . "_" . $dataElementHandler . "_" . "$operation" . "_" . preg_replace('/[^\w\d]/', "", print_r($graphOptions, true)) . ".png";
+	$graphRelativePath = $grapRelativePathPrefix . "_" . $fid . "_" . "_" . $frid . "_" . $labelElement . "_" . $dataElement . "_" . "$operation" . "_" . preg_replace('/[^\w\d]/', "", print_r($graphOptions, true)) . ".png";
 	$myPicture -> render(XOOPS_ROOT_PATH . "/" . $graphRelativePath);
 	echo "<img src='" . XOOPS_URL . "/$graphRelativePath' />";
 	return;
