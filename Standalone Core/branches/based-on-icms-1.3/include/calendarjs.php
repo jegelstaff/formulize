@@ -49,7 +49,7 @@ function showCalendar(id) {
   } else {
 	var cal = new Calendar('._CAL_MONDAYFIRST.', "' . $time . '", selected, closeHandler);
 	calendar = cal;
-	cal.setRange(2000, 2015);
+	cal.setRange(1900, 2050); // ALTERED BY FREEFORM SOLUTIONS SO THE CALENDARS CAN HAVE A WIDER RANGE
 	calendar.create();
   }
   calendar.sel = el;
