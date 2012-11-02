@@ -462,18 +462,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	$showcols = removeNotAllowedCols($fid, $frid, $showcols, $groups); // converts old format metadata fields to new ones too if necessary
 
-	// clear quick searches for any columns not included now
-	$hiddenQuickSearches = array(); // array used to indicate quick searches that should be present even if the column is not displayed to the user
-	foreach($_POST as $k=>$v) {
-		if(substr($k, 0, 7) == "search_" AND !in_array(substr($k, 7), $showcols)) {
-			if(substr($v, 0, 1) == "!" AND substr($v, -1) == "!") {// don't strip searches that have ! at front and back
-				$hiddenQuickSearches[] = substr($k, 7);
-			} else {
-				unset($_POST[$k]);
-			}
-		}
-	}
-	
+		
 	// Create settings array to pass to form page or to other functions
 
 	$settings['title'] = $displaytitle;
@@ -503,6 +492,35 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$settings['lastloaded'] = $_POST['lastloaded'];
 	}
 
+	// clear quick searches for any columns not included now
+	// also, convert any { } terms to literal values for users who can't update other reports, if the last loaded report doesn't belong to them (they're presumably just report consumers, so they don't need to preserve the abstract terms)
+	$hiddenQuickSearches = array(); // array used to indicate quick searches that should be present even if the column is not displayed to the user
+	foreach($_POST as $k=>$v) {
+		if(substr($k, 0, 7) == "search_" AND !in_array(substr($k, 7), $showcols)) {
+			if(substr($v, 0, 1) == "!" AND substr($v, -1) == "!") {// don't strip searches that have ! at front and back
+				$hiddenQuickSearches[] = substr($k, 7);
+				continue; // since the { } replacement is meant for the ease of use of non-admin users, and hiddenQuickSearches never show up to users on screen, we can skip the potentially expensive operations below in this loop
+			} else {
+				unset($_POST[$k]);
+			}
+		}
+		// if this is not a report/view that was created by the user, and they don't have update permission, then convert any { } terms to literals
+		if(strstr($v, "{") AND strstr($v, "}")) {
+			$activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
+			$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
+			$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
+			if(!$update_other_reports AND $uid != $ownerOfLastLoadedView) {
+				$requestKeyToUse = substr($v,1,-1);
+				if(isset($_POST[$requestKeyToUse])) {
+					$_POST[$k] = $_POST[$requestKeyToUse];
+				} elseif(isset($_GET[$requestKeyToUse])) {
+					$_POST[$k] = $_GET[$requestKeyToUse];
+				} elseif($v == "{USER}" AND $xoopsUser) {
+					$_POST[$k] = $xoopsUser->getVar('name') ? $xoopsUser->getVar('name') : $xoopsUser->getVar('uname');
+				}
+			}
+		}
+	}
 
 	$settings['currentview'] = $currentView;
 
