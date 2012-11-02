@@ -1862,14 +1862,14 @@ function prepDataForWrite($element, $ele) {
 					$value = $myts->stripSlashesGPC($ele);
 				break;
 				/*
-				 * Hack by Fï¿½lix<INBOX International>
+				 * Hack by Félix<INBOX International>
 				 * Adding colorpicker form element
 				 */
 				case 'colorpick':
 					$value = $ele;
 				break;
 				/*
-				 * End of Hack by Fï¿½lix<INBOX International>
+				 * End of Hack by Félix<INBOX International>
 				 * Adding colorpicker form element
 				 */
 				default:
@@ -2005,14 +2005,14 @@ function checkOther($key, $id){
 function writeOtherValues($id_req, $fid) {
 	global $xoopsDB, $myts;
 	/*
-	 * Hack by Fï¿½lix <INBOX Solutions> for sedonde
+	 * Hack by Félix <INBOX Solutions> for sedonde
 	 * myts == NULL
 	 */
 	if(!$myts){
 		$myts =& MyTextSanitizer::getInstance();
 	}
 	/*
-	 * Hack by Fï¿½lix <INBOX Solutions> for sedonde
+	 * Hack by Félix <INBOX Solutions> for sedonde
 	 * myts == NULL
 	 */
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
@@ -2724,7 +2724,8 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 		} else {
 			$extra_tags['VIEWURL'] = XOOPS_URL."/modules/formulize/index.php?fid=$fid&ve=$entry";
 		}
-		$extra_tags['ENTRYID'] = $entry;			
+		$extra_tags['ENTRYID'] = $entry;
+		$extra_tags['SITEURL'] = XOOPS_URL;
 
 		if(count($uids_real) > 0) {
 			if(in_array(-1, $uids_real)) {
@@ -2785,8 +2786,18 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 			}
 			$oldsubject = $not_config['event'][$evid]['mail_subject'];
 			$oldtemp = $not_config['event'][$evid]['mail_template'];
+			// rewrite the notification with the subject and template we want, then reset
+			$GLOBALS['formulize_notificationTemplateOverride'] = $thiscon['not_cons_template'] == "" ? $not_config['event'][$evid]['mail_template'] : $thiscon['not_cons_template'];
+			$GLOBALS['formulize_notificationSubjectOverride'] = $thiscon['not_cons_subject'] == "" ? $not_config['event'][$evid]['mail_subject'] : $thiscon['not_cons_subject'];
 			$not_config['event'][$evid]['mail_template'] = $thiscon['not_cons_template'] == "" ? $not_config['event'][$evid]['mail_template'] : $thiscon['not_cons_template'];
 			$not_config['event'][$evid]['mail_subject'] = $thiscon['not_cons_subject'] == "" ? $not_config['event'][$evid]['mail_subject'] : $thiscon['not_cons_subject'];
+			// loop through the variables and do replacements in the subject, if any
+			if(strstr($not_config['event'][$evid]['mail_subject'], "{ELEMENT")) {
+			  foreach($extra_tags as $tag=>$value) {
+			    str_replace("{".$tag."}",$value, $not_config['event'][$evid]['mail_subject']);
+			    str_replace("{".$tag."}",$value, $GLOBALS['formulize_notificationSubjectOverride']);
+			  }
+			}
 			// trigger the event
 			if(count($uids_cust_real) > 0) {
 				if(in_array(-1, $uids_cust_real)) {
@@ -2799,6 +2810,8 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 			}
 			$not_config['event'][$evid]['mail_subject'] = $oldsubject;
 			$not_config['event'][$evid]['mail_template'] = $oldtemp;
+			unset($GLOBALS['formulize_notificationTemplateOverride']);
+			unset($GLOBALS['formulize_notificationSubjectOverride']);
 			unset($uids_cust_real);
 			unset($uids_cust_con);
 		}

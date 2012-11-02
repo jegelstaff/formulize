@@ -506,3 +506,15 @@ $modversion['notification']['event'][] = array(
 	'mail_template' => 'form_delentry',
 	'mail_subject' => _MI_formulize_NOTIFY_DELENTRY_MAILSUB,
 );
+
+// override mail_template and mail_subject if necessary
+if(isset($GLOBALS['formulize_notificationTemplateOverride'])) {
+	$modversion['notification']['event'][1]['mail_template'] = $GLOBALS['formulize_notificationTemplateOverride'];
+	$modversion['notification']['event'][2]['mail_template'] = $GLOBALS['formulize_notificationTemplateOverride'];
+	$modversion['notification']['event'][3]['mail_template'] = $GLOBALS['formulize_notificationTemplateOverride'];
+}
+if(isset($GLOBALS['formulize_notificationSubjectOverride'])) {
+	$modversion['notification']['event'][1]['mail_subject'] = $GLOBALS['formulize_notificationSubjectOverride'];
+	$modversion['notification']['event'][2]['mail_subject'] = $GLOBALS['formulize_notificationSubjectOverride'];
+	$modversion['notification']['event'][3]['mail_subject'] = $GLOBALS['formulize_notificationSubjectOverride'];
+}
