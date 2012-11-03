@@ -61,7 +61,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0, $viewallforms=0, $screen=null) {
 
   formulize_benchmark("start of drawing list");
-
+  
 	global $xoopsDB, $xoopsUser;
 
 	// Set some required variables
@@ -880,8 +880,6 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		${$k} = $v;
 	}
 	
-	
-	
 	// get single/multi entry status of this form...
 	$singleMulti = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $fid");
 		
@@ -911,9 +909,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$proxy = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
 	$del_own = $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid);
 	$del_others = $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid);
-
+	$modify_form = $gperm_handler->checkRight("modify_form", $fid, $groups, $mid);
+	
 	// establish text and code for buttons, whether a screen is in effect or not
 	$screenButtonText = array();
+	$screenButtonText['modifyFormButton'] = _formulize_DE_MODIFYFORM;
 	$screenButtonText['changeColsButton'] = _formulize_DE_CHANGECOLS;
 	$screenButtonText['calcButton'] = _formulize_DE_CALCS;
 	$screenButtonText['advCalcButton'] = _formulize_DE_ADVCALCS;
@@ -1015,6 +1015,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		
 		print "<h1>" . trans($title) . "</h1>";
 	
+		if ($modify_form){
+			if($thisButtonCode = $buttonCodeArray['modifyFormButton']) { print "$thisButtonCode<br />"; }
+		}	
 	
 		if($loadview AND $lockcontrols) {
 			print "<h3>" . $loadviewname . "</h3></td><td>";
@@ -1457,7 +1460,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
   
 		$headcounter = 0;
 		$blankentries = 0;
-		$update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);
+		$update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);		
 		$update_other_entries = $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid);
 		$GLOBALS['formulize_displayElement_LOE_Used'] = false;
 		$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
@@ -4087,13 +4090,16 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 	if($buttonText) {
 		$buttonText = trans($buttonText);
 		switch ($button) {
+			case "modifyFormButton":
+				return "<a href=" . XOOPS_URL . "/modules/formulize/admin/ui.php?page=form&fid=$fid&tab=elements>" . $buttonText . "</a>";
+				break;
 			case "changeColsButton":
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";
 				break;
 			case "calcButton":
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."');\"></input>";
 				break;
-      case "advCalcButton":
+			case "advCalcButton":
 				// only if any procedures (advanced calculations) are defined for this form
 				$procedureHandler = xoops_getmodulehandler('advancedCalculation','formulize');
 				$procList = $procedureHandler->getList($fid);
@@ -4102,7 +4108,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				} else {
 					return false;
 				}
-	      break;
+			break;
 			case "advSearchButton":
 				$buttonCode = "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=advsearch value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid";
 				foreach($settings as $k=>$v) {

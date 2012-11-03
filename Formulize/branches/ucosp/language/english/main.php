@@ -356,6 +356,7 @@ define("_formulize_DE_MINE", "Entries by me");
 define("_formulize_DE_GROUP", "Entries by all users in my group(s)");
 define("_formulize_DE_ALL", "Entries by all users in all groups");
 define("_formulize_DE_GO", "Apply search terms");
+define("_formulize_DE_MODIFYFORM", "Configure this screen");
 define("_formulize_DE_CHANGECOLS", "Change columns");
 define("_formulize_DE_PICKNEWCOLS", "Pick different columns to view");
 define("_formulize_DE_AVAILCOLS", "Available columns:");
