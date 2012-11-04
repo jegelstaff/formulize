@@ -131,7 +131,7 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 /*=== Floating Save Button for Adding Entries ===*/
 #floatingsave{
 	z-index: 100;
-	left:45%;
+	left:42%;
 	padding:15px 15px 15px 0px;
 	border: 1px solid #1D65A5;
 	border-radius: 5px; 

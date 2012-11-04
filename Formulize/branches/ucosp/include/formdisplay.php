@@ -921,6 +921,7 @@ function displayForm($formframe, $entry = "", $mainform = "", $done_dest = "", $
         }
 
         print "<div id=formulizeform>" . $form->render() . "</div>"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
+        
         // floating save button 
         if ($printall != 2 AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php")) {
             print "<div id=floattest></div>";
@@ -2524,25 +2525,38 @@ function drawJavascript($nosave, $single, $overrideMulti) {
     ?>
 
     jQuery(document).ready(function(){
-    jQuery(window).bind('scroll', function () {
-    var save = jQuery('#floatingsave');
-    var testtop = jQuery('#floattest').offset();
-    var relativetop = testtop.top;
-
-    if ((jQuery(this).scrollTop() + jQuery(window).height()) >= relativetop) {
-    save.css('position','relative');
-    save.css('border','1px solid white');
-    save.css('padding','15px 15px 15px 0px');
-    save.css('width','200px');
-    save.css('left','40%');
-    } else {
-    save.css('position','fixed');
-    save.css('border','1px solid #1D65A5');
-    save.css('left','45%');
-    save.css('padding','15px 15px 15px 0px');
-    save.css('width','auto');
-    }
-    });
+    	
+    	var testtoptmp = jQuery('#floattest').offset();
+		var relativetoptmp = testtoptmp.top;
+    	
+    	if((jQuery(window).scrollTop() + jQuery(window).height()) >= relativetoptmp) {
+    		var save = jQuery('#floatingsave');
+    		save.css('position','relative');
+			save.css('border','1px solid white');
+			save.css('padding','15px 15px 15px 0px');
+			save.css('width','200px');
+			save.css('left','30%');
+    	}
+    	
+	    jQuery(window).bind('scroll', function () {
+		    var save = jQuery('#floatingsave');
+		    var testtop = jQuery('#floattest').offset();
+		    var relativetop = testtop.top;
+		
+		    if ((jQuery(this).scrollTop() + jQuery(window).height()) >= relativetop) {
+			    save.css('position','relative');
+			    save.css('border','1px solid white');
+			    save.css('padding','15px 15px 15px 0px');
+			    save.css('width','200px');
+			    save.css('left','30%');
+		    } else {
+			    save.css('position','fixed');
+			    save.css('border','1px solid #1D65A5');
+			    save.css('left','42%');
+			    save.css('padding','15px 15px 15px 0px');
+			    save.css('width','auto');
+		    }
+	    });
     });
 
     if (typeof jQuery == 'undefined') { 

@@ -172,25 +172,23 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 			echo "Sorry, the operation \"$operation\" for Bar graph is not supported at the moment!";
 			return;
 	}
-
-	// Code straightly copied from pChart documentation to draw the graph
-	$myData = new pData();
-	$myData -> addPoints(array_values($dataPoints), $dataElement);
-	$myData -> setAxisName(0, $dataElement);
-	$myData -> addPoints(array_keys($dataPoints), $labelElement);
-	$myData -> setSerieDescription($labelElement, $labelElement);
-	$myData -> setAbscissa($labelElement);
-	$myData -> setAbscissaName($labelElement);
-	// $myData -> setAxisDisplay(0, AXIS_FORMAT_CUSTOM, "YAxisFormat");
 	
-	// print_r($dataPoints);
+	// print("dataElement: ".$dataElement." ");
+	// print("labelElement: ".$labelElement." ");
 
-	/* Create the pChart object */
+	
+	// process the graph options
 	$sizeMultiplier = sizeof(array_keys($dataPoints));
 	$BAR_THICKNESS = 40;
 	$IMAGE_WIDTH = 600;
 	$IMAGE_DEFAULT_WIDTH = $IMAGE_WIDTH;
-	$IMAGE_HEIGHT = $BAR_THICKNESS * $sizeMultiplier/0.5;
+	
+	if( $sizeMultiplier > 1){
+		$IMAGE_HEIGHT = $BAR_THICKNESS * $sizeMultiplier/0.5;
+	}else{
+		$IMAGE_HEIGHT = $BAR_THICKNESS * 4;	
+	}
+	
 	$IMAGE_DEFAULT_HEIGHT = $IMAGE_HEIGHT;
 	$IMAGE_ORIENTATION = "vertical";
 	$BACKGROUND_R = 141;
@@ -199,7 +197,7 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 	$BARCOLOR_R = 143;
 	$BARCOLOR_G = 190;
 	$BARCOLOR_B = 88;
-
+	
 	if (sizeof($graphOptions) > 0) {
 		foreach ($graphOptions as $graphoption => $value) {
 
@@ -268,6 +266,46 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 			}
 		}
 	}
+	
+	// reset width/height of the image in case the label is too long
+	if( (strlen($labelElement)*4.5 >= $IMAGE_HEIGHT) AND $IMAGE_ORIENTATION == "vertical"){
+		if( $IMAGE_HEIGHT == $IMAGE_DEFAULT_HEIGHT ){
+			$IMAGE_HEIGHT = strlen($labelElement)*5;
+		}else{
+			$labelElement = substr($labelElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
+		}
+	}elseif((strlen($dataElement)*4.5 >= $IMAGE_HEIGHT) AND $IMAGE_ORIENTATION == "horizontal"){
+		if( $IMAGE_HEIGHT == $IMAGE_DEFAULT_HEIGHT ){
+			$IMAGE_HEIGHT = strlen($dataElement)*5;
+		}else{
+			$dataElement = substr($dataElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
+		}
+	}elseif((strlen($labelElement)*4.5 >= $IMAGE_WIDTH) AND $IMAGE_ORIENTATION == "horizontal"){
+		if( $IMAGE_WIDTH == $IMAGE_DEFAULT_WIDTH){
+			$IMAGE_WIDTH = strlen($labelElement)*5;
+		}else{
+			$labelElement = substr($labelElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
+		}
+	}elseif((strlen($dataElement)*4.5 >= $IMAGE_WIDTH) AND $IMAGE_ORIENTATION == "vertical"){
+		if( $IMAGE_WIDTH == $IMAGE_DEFAULT_WIDTH){
+			$IMAGE_WIDTH = strlen($dataElement)*5;
+		}else{
+			$dataElement = substr($dataElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
+		}
+	}
+	
+	
+	
+
+	// Code straightly copied from pChart documentation to draw the graph
+	$myData = new pData();
+	$myData -> addPoints(array_values($dataPoints), $dataElement);
+	$myData -> setAxisName(0, $dataElement);
+	$myData -> addPoints(array_keys($dataPoints), $labelElement);
+	$myData -> setSerieDescription($labelElement, $labelElement);
+	$myData -> setAbscissa($labelElement);
+	$myData -> setAbscissaName($labelElement);
+	// $myData -> setAxisDisplay(0, AXIS_FORMAT_CUSTOM, "YAxisFormat");
 
 	/* Create the pChart object */
 	$myPicture = new pImage($IMAGE_WIDTH, $IMAGE_HEIGHT, $myData);
@@ -275,8 +313,6 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 	$myPicture->drawGradientArea(0,0,500,500,DIRECTION_HORIZONTAL,array("StartR"=>240,"StartG"=>240,"StartB"=>240,"EndR"=>180,"EndG"=>180,"EndB"=>180,"Alpha"=>30)); 
 	$myPicture -> setFontProperties(array("FontName" => "modules/formulize/libraries/pChart/fonts/arial.ttf", "FontSize" => 8));
 	
-	
-
 	$paddingtoLeft = $IMAGE_WIDTH * 0.15;
 	$paddingtoTop = $IMAGE_HEIGHT * 0.2;
 	if( $paddingtoTop > 50){
