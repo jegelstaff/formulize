@@ -2709,20 +2709,21 @@ function drawJavascript($nosave, $single, $overrideMulti) {
     }
 
     function updateEntryId(entryId, fid){
-    updateEntryIdByPattern("[id^=formulize-de_" + fid + "_new_]", 'id', entryId);
-    updateEntryIdByPattern("[id^=decue_" + fid + "_new_]", 'name', entryId);
-    updateEntryIdByPattern("[id^=decue_" + fid + "_new_]", 'id', entryId);
-    updateEntryIdByPattern("[id^=de_" + fid + "_new_]", 'name', entryId);
-    updateEntryIdByPattern("[id^=de_" + fid + "_new_]", 'id', entryId);
+    	updateEntryIdByPattern("[id^=formulize-de_" + fid + "_new_]", 'id', entryId);
+    	updateEntryIdByPattern("[id^=decue_" + fid + "_new_]", 'name', entryId);
+    	updateEntryIdByPattern("[id^=decue_" + fid + "_new_]", 'id', entryId);
+    	updateEntryIdByPattern("[id^=de_" + fid + "_new_]", 'name', entryId);
+    	updateEntryIdByPattern("[id^=de_" + fid + "_new_]", 'id', entryId);
+    	updateEntryIdByPattern("[id=.*de_" + fid + "_new_]", 'id', entryId);
     }
 
     function updateEntryIdByPattern(pattern, attr, entryId){
-    jQuery(pattern).each(function(){
-    var currentId = jQuery(this).attr(attr);
-    var regexForNew = new RegExp('new', 'i');
-    var newId = currentId.replace(regexForNew, entryId);
-    jQuery(this).attr(attr, newId);
-    });
+    	jQuery(pattern).each(function(){
+    		var currentId = jQuery(this).attr(attr);
+    		var regexForNew = new RegExp('new', 'i');
+    		var newId = currentId.replace(regexForNew, entryId);
+    		jQuery(this).attr(attr, newId);
+    	});
     }
 
     // End of Updates for Ajax Save
