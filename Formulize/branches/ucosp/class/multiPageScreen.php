@@ -99,24 +99,33 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	}
 
 	function insert($screen) {
-		$update = ($screen->getVar('sid') == 0) ? false : true;
-		if(!$sid = parent::insert($screen)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
-			return false;
-		}
-		$screen->assignVar('sid', $sid);
-		// standard flags used by xoopsobject class
-    
-		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
-		if (!$update) {
-                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, toptemplate, elementtemplate, bottomtemplate, donedest, buttontext, finishisdone, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship) VALUES (%u, %s, %s, %s, %s, %s, %s, %s, %u, %s, %s, %s, %u, %u, %u)", $this->db->prefix('formulize_screen_multipage'), $screen->getVar('sid'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('toptemplate')), $this->db->quoteString($screen->getVar('elementtemplate')), $this->db->quoteString($screen->getVar('bottomtemplate')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship')); //nmc 2007.03.24 added 'printall' & fixed pagetitles
-             } else {
-                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, toptemplate = %s, elementtemplate = %s, bottomtemplate = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('toptemplate')), $this->db->quoteString($screen->getVar('elementtemplate')), $this->db->quoteString($screen->getVar('bottomtemplate')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
-             }
-		 $result = $this->db->query($sql);
-             if (!$result) {
-                 return false;
-             }
-		 return $sid;
+            $update = ($screen->getVar('sid') == 0) ? false : true;
+            if (!$sid = parent::insert($screen)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
+                return false;
+            }
+            $screen->assignVar('sid', $sid);
+            // standard flags used by xoopsobject class
+            // note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
+            if (!$update) {
+                $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, toptemplate, elementtemplate, bottomtemplate, donedest, buttontext, finishisdone, pages, pagetitles, conditions, printall, paraentryform, paraentryrelationship) VALUES (%u, %s, %s, %s, %s, %s, %s, %s, %u, %s, %s, %s, %u, %u, %u)", $this->db->prefix('formulize_screen_multipage'), $screen->getVar('sid'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('toptemplate')), $this->db->quoteString($screen->getVar('elementtemplate')), $this->db->quoteString($screen->getVar('bottomtemplate')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship')); //nmc 2007.03.24 added 'printall' & fixed pagetitles
+            } else {
+                $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, toptemplate = %s, elementtemplate = %s, bottomtemplate = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('toptemplate')), $this->db->quoteString($screen->getVar('elementtemplate')), $this->db->quoteString($screen->getVar('bottomtemplate')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
+            }
+            $result = $this->db->query($sql);
+
+            $success1 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-toptemplate'])), 'toptemplate', $screen);
+            $success2 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-bottomtemplate'])), 'bottomtemplate', $screen);
+            $success3 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-elementtemplate'])), 'elementtemplate', $screen);
+
+            if (!$success1 || !$success2 || !$success3) {
+                return false;
+            }
+
+
+            if (!$result) {
+                return false;
+            }
+            return $sid;
 	}
 
 	// 	THIS METHOD MIGHT BE MOVED UP A LEVEL TO THE PARENT CLASS

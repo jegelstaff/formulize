@@ -440,7 +440,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
                 
                 // need to replace by including template file
 		if($screen AND $toptemplate = $screen->getTemplate('toptemplate')) {
-                    include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/toptemplate.php";
+                    renderTemplate('toptemplate', $templateVariables, $screen->getVar('sid'));
 		} else {
 		    drawPageNav($usersCanSave, $currentPage, $totalPages, "above", $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList);
 		}
@@ -450,7 +450,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		
 	    // need to check for the existence of an elementtemplate property in the screen, like we did with the top and bottom templates
 	    // if there's an eleemnt template, then do this loop, otherwise, do the displayForm call like normal
-	    if ($screen AND $elementtemplate = $screen->getVar('elementtemplate')) {  // Code added by Julian 2012-09-04 and Gordon Woodmansey 2012-09-05 to render the elementtemplate
+	    if ($screen AND $elementtemplate = $screen->getTemplate('elementtemplate')) {  // Code added by Julian 2012-09-04 and Gordon Woodmansey 2012-09-05 to render the elementtemplate
 		    if(!security_check($fid, $entry)) {
 			exit();
 		    }
@@ -494,7 +494,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			        $templateVariables['elementMarkup'] = $elementMarkup;
 			        $templateVariables['elementDescription'] = $elementDescription;
 			        $templateVariables['element_id'] = $thisElement;
-			        print renderTemplate($elementtemplate, $templateVariables);
+			        renderTemplate('elementtemplate', $templateVariables, $screen->getVar('sid'));
 			    }
 		    }
 		    // now we also need to add in some bits that are necessary for the form submission logic to work...borrowed from parts of formdisplay.php mostly...this should be put together into a more distinct rendering system for forms, so we can call the pieces as needed
@@ -533,7 +533,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
             // need to replace this by template file
 	    if ($screen AND $bottomtemplate = $screen->getTemplate('bottomtemplate')) { 
 		    $templateVariables['pageSelectionList'] = $pageSelectionList; // assign the new pageSelectionList, since it was redone for the bottom section
-                    include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/bottomtemplate.php";
+                    renderTemplate('bottomtemplate', $templateVariables, $screen->getVar('sid'));
 	    } else {
 		    drawPageNav($usersCanSave, $currentPage, $totalPages, "below", $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList);
 	    }

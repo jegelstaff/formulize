@@ -1459,44 +1459,35 @@ function patch40() {
                                 chmod($pathname, 0777);
                             }
             
-                            $text = html_entity_decode($handleArray['toptemplate']);
-                            if (!empty($text)) {
-                            $fileHandle = fopen($pathname."/toptemplate.php", "w+");
-                            $success = fwrite($fileHandle, "<?php\n".$text);
-                            fclose($fileHandle);
+                            saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
+                            saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
+                            saveTemplate($handleArray['listtemplate'], $handleArray['sid'], "listtemplate");
                             
-                            if ($success) {
-                                print "created templates/screens/default/".$handleArray['sid']. "/toptemplate.php. result: OK<br>";
-                            } else {
-                                print "Warning: could not save toptemplate.php.<br>";
+                        } else {
+                            print "screen templates for screen ".$handleArray['sid']." already exist. result: OK<br>";
+                        }
+                        
+                    }
+                }
+                
+                $multitemplateSQL = "SELECT sid, toptemplate, elementtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_multipage";
+                
+                $multitemplateRes = $xoopsDB->query($multitemplateSQL);
+                if($xoopsDB->getRowsNum($multitemplateRes) > 0) {
+                
+                    while($handleArray = $xoopsDB->fetchArray($multitemplateRes)) {
+                        if (!file_exists($screenpathname.$handleArray['sid'])) {
+                            $pathname = $screenpathname.$handleArray['sid']."/";
+                            mkdir($pathname, 0777, true);
+            
+                            if (!is_writable($pathname)) {
+                                chmod($pathname, 0777);
                             }
-                            }
+            
+                            saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
+                            saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
+                            saveTemplate($handleArray['elementtemplate'], $handleArray['sid'], "elementtemplate");
                             
-                            $text = html_entity_decode($handleArray['bottomtemplate']);
-                            if (!empty($text)) {
-                            $fileHandle = fopen($pathname."/bottomtemplate.php", "w+");
-                            $success = fwrite($fileHandle, "<?php\n".$text);
-                            fclose($fileHandle);
-                            
-                            if ($success) {
-                                print "created templates/screens/default/".$handleArray['sid']. "/bottomtemplate.php. result: OK<br>";
-                            } else {
-                                print "Warning: could not save bottomtemplate.php.<br>";
-                            }
-                            }
-                            
-                            $text = html_entity_decode($handleArray['listtemplate']);
-                            if (!empty($text)) {
-                            $fileHandle = fopen($pathname."/listtemplate.php", "w+");
-                            $success = fwrite($fileHandle, "<?php\n".$text);
-                            fclose($fileHandle);
-                            
-                            if ($success) {
-                                print "created templates/screens/default/".$handleArray['sid']. "/listtemplate.php. result: OK<br>";
-                            } else {
-                                print "Warning: could not save listtemplate.php. <br>";
-                            }
-                            }
                         } else {
                             print "screen templates for screen ".$handleArray['sid']." already exist. result: OK<br>";
                         }
@@ -1508,6 +1499,24 @@ function patch40() {
 	}
 }
 
+// Saves the given template to a template file on the disk
+function saveTemplate($template, $sid, $name) {
+    $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/". $sid . "/";
+    
+    $text = html_entity_decode($template);
+    if (!empty($text)) {
+        $fileHandle = fopen($pathname . $name. ".php", "w+");
+        $success = fwrite($fileHandle, "<?php\n" . $text);
+        fclose($fileHandle);
+
+        if ($success) {
+            print "created templates/screens/default/" . $sid . "/". $name . ".php. result: OK<br>";
+        } else {
+            print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
+        }
+    }
+    
+}
 
 // THE 4.0 SERIES WILL NEED A SEPARATE PATCH ROUTINE.  THERE IS TOO MUCH BAGGAGE IN HERE TO KEEP CARRYING IT AROUND.  ESPECIALLY THE DATATYPE CONVERSION STUFF.
 function patch31() {

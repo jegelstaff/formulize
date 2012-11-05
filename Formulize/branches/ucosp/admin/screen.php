@@ -346,9 +346,9 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
 
   // template data
   $multipageTemplates = array();   // Added by Gordon Woodmansey, 29-08-2012
-  $multipageTemplates['toptemplate'] = $screen->getVar('toptemplate');
-  $multipageTemplates['elementtemplate'] = $screen->getVar('elementtemplate'); 
-  $multipageTemplates['bottomtemplate'] = $screen->getVar('bottomtemplate'); 
+  $multipageTemplates['toptemplate'] = $screen->getTemplate('toptemplate');
+  $multipageTemplates['elementtemplate'] = $screen->getTemplate('elementtemplate'); 
+  $multipageTemplates['bottomtemplate'] = $screen->getTemplate('bottomtemplate'); 
 
   // pages data
   $multipagePages = array();
