@@ -2586,34 +2586,42 @@ function drawJavascript($nosave, $single, $overrideMulti) {
     function validateAndSubmit() {
     <?php
     if (!$nosave) { // need to check for add or update permissions on the current user and this entry before we include this javascript, otherwise they should not be able to save the form
-        ?>
-        var validate = xoopsFormValidate_formulize();
-        if(validate) {
-        jQuery(".subform-accordion-container").map(function() {
-        subelementid = jQuery(this).attr('subelementid');			
-        window.document.getElementById('subform_entry_'+subelementid+'_active').value = jQuery(this).accordion( "option", "active" );
-        });
-        if(window.document.formulize.submitx) {
-        window.document.formulize.submitx.disabled=true;
-        }
-        if(window.document.pagebuttons) {
-        window.document.pagebuttons.prev.disabled = true;
-        window.document.pagebuttons.next.disabled = true;
-        }
+    ?>
+		var validate = xoopsFormValidate_formulize();
+		if(validate) {
+        	jQuery(".subform-accordion-container").map(function() {
+        		subelementid = jQuery(this).attr('subelementid');			
+        		window.document.getElementById('subform_entry_'+subelementid+'_active').value = jQuery(this).accordion( "option", "active" );
+        	});
+        	// NOTE: All the ulgy code including
+        	// if(jQuery('#floatingsave')){} else {...}
+        	// if(if(jQuery('#floatingsave')) || ...)
+        	// are inserted by Xu Cui because Xu has used window.document.formulize.submitx to check if this is a save
+        	// but floating save has deleted window.document.formulize.submitx element, thus Xu found a quick solution
+        	if(jQuery('#floatingsave')){
+        	} else {
+       	 		if(window.document.formulize.submitx) {
+        			window.document.formulize.submitx.disabled=true;
+        		}
+				if(window.document.pagebuttons) {
+        			window.document.pagebuttons.prev.disabled = true;
+        			window.document.pagebuttons.next.disabled = true;
+        		}
+        	}
 
-        // Update for Ajax Save
-        // The following two lines are like magic, they can show you a "saving status bar"
-        // Kept here to notify user that the information has been saved
-        // If you don't need those, you can comment this out since we are using ajax save!
-        window.document.getElementById('formulizeform').style.opacity = 0.5;
-        window.document.getElementById('savingmessage').style.display = 'block';
+        	// Update for Ajax Save
+        	// The following two lines are like magic, they can show you a "saving status bar"
+        	// Kept here to notify user that the information has been saved
+        	// If you don't need those, you can comment this out since we are using ajax save!
+        	window.document.getElementById('formulizeform').style.opacity = 0.5;
+        	window.document.getElementById('savingmessage').style.display = 'block';
 
-        setTimeout(function(){
-        window.document.getElementById('formulizeform').style.opacity = 1;
-        window.document.getElementById('savingmessage').style.display = 'none';
-        },
-        366			// adjust this number here to decide how long you want to simulate saving to user!
-        );
+        	setTimeout(function(){
+        		window.document.getElementById('formulizeform').style.opacity = 1;
+        		window.document.getElementById('savingmessage').style.display = 'none';
+        		},
+        		366			// adjust this number here to decide how long you want to simulate saving to user!
+        	);
 
         // Start of old Version of Form submit
         // window.scrollTo(0,0);
@@ -2623,53 +2631,56 @@ function drawJavascript($nosave, $single, $overrideMulti) {
         // Start of new version of Form Submit using JQuery so the page doesn't have to reload after form submission
         // alert(jQuery(window.document.formulize).serialize());
         jQuery.post("<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php", jQuery(window.document.formulize).serialize(), function(data) {
-        // success function for submit
-        formulizechanged = 0;
-        // check if this is a save!
-        if(window.document.formulize.submitx.disabled){
-        if(data){
-        if(data == '<b>Error: the data you submitted could not be saved in the database.</b>'){
-        alert('Error: the data you submitted could not be saved in the database. Please try again.');
-        } else if(data.indexOf('ERROR') != -1){
-        alert(data);
-        } else {
-        // alert('data received from server:' + data);
-        response = eval('('+data+')');
-        // jQuery('#printview [id=XOOPS_TOKEN_REQUEST]').val(response.new_xoops_token_request);
-        // Update token for next save
-        jQuery('#formulize [id=XOOPS_TOKEN_REQUEST]').val(response.new_xoops_token_request);
-        if(response.entryId != null){
-        // if we have just made a new entry
-        if(singleEntryHuh){
-        // if the new entry is made by "add single entry"
-        // update all information required on page through jquery
-        updateEntryId(response.entryId, response.fid);
-        jQuery('#printview [name=lastentry]').val(response.entryId);
-        jQuery('#formulize [name=lastentry]').val(response.entryId);
-        jQuery('#formulize [id=ventry]').val(response.entryId);
+        	// success function for submit
+        	formulizechanged = 0;
+        	// check if this is a save!
+        	if(jQuery('#floatingsave') || window.document.formulize.submitx.disabled){
+        		if(data){
+        			if(data == '<b>Error: the data you submitted could not be saved in the database.</b>'){
+        				alert('Error: the data you submitted could not be saved in the database. Please try again.');
+        			} else if(data.indexOf('ERROR') != -1){
+        				alert(data);
+					} else {
+        				// alert('data received from server:' + data);
+        				response = eval('('+data+')');
+        				// jQuery('#printview [id=XOOPS_TOKEN_REQUEST]').val(response.new_xoops_token_request);
+        				// Update token for next save
+        				jQuery('#formulize [id=XOOPS_TOKEN_REQUEST]').val(response.new_xoops_token_request);
+        				if(response.entryId != null){
+        					// if we have just made a new entry
+							if(singleEntryHuh){
+        						// if the new entry is made by "add single entry"
+        						// update all information required on page through jquery
+        						updateEntryId(response.entryId, response.fid);
+        						jQuery('#printview [name=lastentry]').val(response.entryId);
+        						jQuery('#formulize [name=lastentry]').val(response.entryId);
+        						jQuery('#formulize [id=ventry]').val(response.entryId);
 
-        jQuery('#formInstruction').html(response.formInstructionUpdate);
-        jQuery('#formMetaData').html(response.metaData);
+        						jQuery('#formInstruction').html(response.formInstructionUpdate);
+        						jQuery('#formMetaData').html(response.metaData);
 
-        updateOwnership(response.entryId, response.fid, response.ownershipListHtml, response.ownershipCaption);
-        } else {
-        // if this is multiple entry save, then make inputs blank
-        jQuery('#formInstruction').html(response.formInstructionMakeNew);
-        clearInput(response.entryId, response.fid);
-        }
-        } else {
-        // if we are updating an old entry, only update metadata
-        jQuery('#formInstruction').html(response.formInstructionUpdate);
-        jQuery('#formMetaData').html(response.metaData);
-        }
-        }
-        }
-        window.document.formulize.submitx.disabled=false;
-        }
+        						updateOwnership(response.entryId, response.fid, response.ownershipListHtml, response.ownershipCaption);
+        					} else {
+        						// if this is multiple entry save, then make inputs blank
+        						jQuery('#formInstruction').html(response.formInstructionMakeNew);
+        						clearInput(response.entryId, response.fid);
+        					}
+	        			} else {
+	       					// if we are updating an old entry, only update metadata
+        					jQuery('#formInstruction').html(response.formInstructionUpdate);
+        					jQuery('#formMetaData').html(response.metaData);
+        				}
+					}
+        		}
+        		if(jQuery('#floatingsave')){}
+        		else {
+        			window.document.formulize.submitx.disabled=false;
+        		}
+        	}
         });
-        // End of New Version Form Submit
-        // End of Update for Ajax Save
-        }
+        	// End of New Version Form Submit
+        	// End of Update for Ajax Save
+		}
         <?php
     } // end of if not $nosave
     ?>
