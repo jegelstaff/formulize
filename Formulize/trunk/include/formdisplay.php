@@ -2537,9 +2537,13 @@ $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 $element_handler = xoops_getmodulehandler('elements','formulize');
 $governingElements = array();
 foreach($conditionalElements as $handle=>$theseGoverningElements) {
-	foreach($theseGoverningElements as $thisGoverningElement) {
+	foreach($theseGoverningElements as $governingElementKey=>$thisGoverningElement) {
 		$elementObject = $element_handler->get($thisGoverningElement);
 		if(is_object($elementObject)) {
+			if($elementObject->getVar('ele_type') == "derived") {
+				unset($conditionalElements[$handle][$governingElementKey]); // derived value elements have no DOM instantiation that we can latch onto, so skip them...we should find a way to update them with the current state of the form maybe??
+				continue;
+			}
 			$governingElements = compileGoverningElements($entries, $governingElements, $elementObject, $handle);
 			$governingElements = compileGoverningElements($sub_entries, $governingElements, $elementObject, $handle);
 			$governingElements = compileGoverningLinkedSelectBoxSourceConditionElements($governingElements, $handle);

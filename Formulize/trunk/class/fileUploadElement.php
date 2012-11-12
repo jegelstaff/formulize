@@ -215,9 +215,9 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                 $dotPos = $location;
             }
             if($dotPos) {
-                $extension = substr($_FILES[$fileKey]['name'],$dotPos+1);
+                $extension = strtolower(substr($_FILES[$fileKey]['name'],$dotPos+1));
                 $ele_value = $element->getVar('ele_value');
-                $allowedExtensions = str_replace(array(" ","."),"",trim($ele_value[1]));
+                $allowedExtensions = str_replace(array(" ","."),"",strtolower(trim($ele_value[1])));
                 if(in_array($extension,explode(",",$allowedExtensions))) {
                     $fileExtensionOK = true;
                 }

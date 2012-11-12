@@ -186,7 +186,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 			$isDisabled = false;
 			if($ele_disabled == 1) {
 				$isDisabled = true;
-			} elseif(!is_numeric($disabled)) {
+			} elseif(!is_numeric($ele_disabled)) {
 				$disabled_groups = explode(",", $ele_disabled);
 				if(array_intersect($groups, $disabled_groups) AND !array_diff($groups, $disabled_groups)) {
 					$isDisabled = true;
