@@ -117,29 +117,50 @@ function getFormTitle($fid) {
 }
 
 //this function returns the list of all the user's full names for all the users in the specified group(s)
+// $groups is an array of all the group ids that we should be considering
 // $nametype is either uname or name
 // $requireAllGroups is a 0 or 1, and if it's a 1, then we need to match only users who are members of all the groups specified
 // $filter is the specified filters to run on the profile form, if any
-function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false) {
+// $limitByUsersGroups is a flag to indicate if we should be using only the users own groups
+// $declaredUsersGroups is an array of all the groups that the declared user is a member of
+function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false, $limitByUsersGroups=false, $declaredUsersGroups=array()) {
+	if($groups == $declaredUsersGroups) { $limitByUsersGroups = false; }
 	global $xoopsDB;
 	$member_handler =& xoops_gethandler('member');
 	$all_users = array();
-  $usersByGroup = array();
+	$all_users_limited = array();
+	$usersByGroup = array();
 	foreach($groups as $group) {
-		$groupusers = $member_handler->getUsersByGroup($group, true);
-		if(!$requireAllGroups) {
-			$all_users = array_merge((array)$groupusers, $all_users);
-		} else {
-			$usersByGroup[] = $groupusers;
+		$groupusers = $member_handler->getUsersByGroup($group);
+		$all_users = array_merge((array)$groupusers, $all_users);
+		if(in_array($group, $declaredUsersGroups) AND $group != XOOPS_GROUP_USERS) { 
+		  $all_users_limited = array_merge((array)$groupusers, $all_users_limited); // build a list of just the users in the declared user's groups
 		}
+		$usersByGroup[$group] = $groupusers;
 	}
-  if($requireAllGroups) {
-    $all_users = $usersByGroup[0]; // need to seed the all users array so there's something to intersect with the first time, otherwise the list will be empty
-		foreach($usersByGroup as $theseUsers) {
-			$all_users = array_intersect((array)$theseUsers, $all_users);
-		}
+	// if we require users to be people who are members of all specified groups...take the intersection of the user lists from all the groups...
+	if($requireAllGroups) {
+	  $foundUsers = false;
+	  foreach($usersByGroup as $group=>$theseUsers) {
+	   // only include the users from this group if we're not limiting by the users groups, or if we are limiting, then there must be at least one user in this group who is in some group that the user is also a member of (not necessarily this group...current user and the matched user might have a different group in common, not this one, that's fine, we'll still use this group)
+	   if(!$limitByUsersGroups OR count(array_intersect($all_users_limited, $theseUsers))>0) {
+	     if(!$foundUsers) {
+	       $all_users = $theseUsers; // need to seed the all users array so there's something to intersect with the first time, otherwise the list will be empty
+	     }
+	     $foundUsers = true;
+	     $all_users = array_intersect((array)$theseUsers, $all_users);
+	   }
+	  }
+	// if we don't require people to be part of all groups, but we still want to limit by the user's own groups, then we simply use the subset of the groups that the declared user is a member of 
+	} elseif($limitByUsersGroups) {
+	  $all_users = $all_users_limited;
 	}
 	array_unique($all_users);
+	
+	// now convert the user id list into a set of objects
+	$criteria = new Criteria('uid', "(".implode(",",$all_users).")", 'IN');
+	$all_users = $member_handler->getUsers($criteria);
+	
 	
   $found_names = array();
   $found_uids = array();
@@ -361,6 +382,11 @@ function security_check($fid, $entry="", $uid="", $owner="", $groups="", $mid=""
 
 	if(!$gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
 		return false;
+	}
+	if($entry == "new" AND !$gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) AND !$gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
+		return false;
+	} else {
+		$entry = ""; // if they have rights to make a new entry, then we don't do the check below to look for permissions on a specific entry, since there isn't one yet!
 	}
 	
 	if(!$uid) {

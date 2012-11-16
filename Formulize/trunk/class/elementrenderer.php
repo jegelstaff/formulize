@@ -500,26 +500,12 @@ class formulizeElementRenderer{
 								}
 							}
 							$pgroups = array();
+							$declaredUsersGroups = $groups;
 							if($ele_value[3]) {
 								$scopegroups = explode(",",$ele_value[3]);
-										if(!in_array("all", $scopegroups)) {
-									if($ele_value[4]) { // limit by users's groups
-												foreach($groups as $gid) { // want to loop so we can get rid of reg users group simply
-													if($gid == XOOPS_GROUP_USERS) { continue; }
-													if(in_array($gid, $scopegroups)) {
-														$pgroups[] = $gid;
-													}
-												}
-												if(count($pgroups) > 0) { 
-													unset($groups);
-													$groups = $pgroups;
-												} else {
-													$groups = array();
-												}
-											} else { // don't limit by user's groups
-										$groups = $scopegroups;
-									}
-								} else { // use all
+								if(!in_array("all", $scopegroups)) {
+									$groups = $scopegroups;
+								} else { // use all 
 									if(!$ele_value[4]) { // really use all (otherwise, we're just going with all user's groups, so existing value of $groups will be okay
 										unset($groups);
 										global $xoopsDB;
@@ -530,7 +516,7 @@ class formulizeElementRenderer{
 									} 
 								}
 							}
-							$namelist = gatherNames($groups, $nametype, $ele_value[6], $ele_value[5]);
+							$namelist = gatherNames($groups, $nametype, $ele_value[6], $ele_value[5], $ele_value[4], $declaredUsersGroups);
 							foreach($namelist as $auid=>$aname) {
 								$options[$auid] = $aname;
 							}
