@@ -664,7 +664,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					}
 				}
   			$viewEntryScreen_handler->render($displayScreen, $this_ent, $settings);
-        return;
+			global $renderedFormulizeScreen; // picked up at the end of initialize.php so we set the right info in the template when the whole page is rendered
+			$renderedFormulizeScreen = $displayScreen;
+			return;
       }
 		} else {
 

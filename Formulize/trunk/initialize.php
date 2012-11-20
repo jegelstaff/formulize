@@ -40,7 +40,7 @@ include_once XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php';
 $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'] = array();
 $GLOBALS['formulize_asynchronousFormDataInAPIFormat'] = array();
 
-global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig;
+global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig, $renderedFormulizeScreen;
 
 // load the formulize language constants if they haven't been loaded already
 	if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
@@ -141,11 +141,6 @@ if($sid) {
 		} else {
 			$frid = $screen->getVar('frid'); // set these here just in case it's needed in readelements.php
 		}
-		
-    if(is_object($xoopsTpl)) {
-      $xoopsTpl->assign('xoops_pagetitle', $screen->getVar('title'));
-    }
-		
 	}
 } 
 
@@ -180,7 +175,8 @@ if($screen) {
 	} else {
 		$screen_handler->render($screen, $entry, $loadThisView);	
 	}
-  $rendered = true;
+	$rendered = true;
+	$renderedFormulizeScreen = $finalscreenObject;
 }
 
 // IF NO SCREEN IS REQUESTED (or none rendered successfully, ie: a bad screen id was passed), THEN USE THE DEFAULT DISPLAY LOGIC TO DETERMINE WHAT TO SHOW THE USER
@@ -216,7 +212,8 @@ if(!$rendered) {
 						$frid = $finalscreenObject->getVar('frid');
 						// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
 						include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-					  $finalscreen_handler->render($finalscreenObject, $entry, $loadThisView);
+						$renderedFormulizeScreen = $finalscreenObject;
+						$finalscreen_handler->render($finalscreenObject, $entry, $loadThisView);
 					} else {
 						// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
 						include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
@@ -231,7 +228,8 @@ if(!$rendered) {
 						$frid = $finalscreenObject->getVar('frid');
 						// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
 						include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-						  $finalscreen_handler->render($finalscreenObject, $entry);
+						$renderedFormulizeScreen = $finalscreenObject;
+						$finalscreen_handler->render($finalscreenObject, $entry);
 					} else {
 						// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
 						include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
@@ -244,6 +242,12 @@ if(!$rendered) {
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
       	header("Location: " . XOOPS_URL . "/modules/formulize/cat.php");
       }
+}
+
+// renderedFormulizeScreen is a global, and might be altered by entriesdisplay.php if it sends the user off to a different screen (like a form screen instead of the list)
+if($renderedFormulizeScreen AND is_object($xoopsTpl)) {
+  $xoopsTpl->assign('xoops_pagetitle', $renderedFormulizeScreen->getVar('title'));
+  $xoopsTpl->assign('formulize_screen_id', $renderedFormulizeScreen->getVar('sid'));
 }
 
 $GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering]; // go back to the previous rendering flag, in case this operation was nested inside something else
