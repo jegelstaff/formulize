@@ -89,14 +89,14 @@ class formulize_themeForm extends XoopsThemeForm {
 		return $ret;
 	}
 	
-	public function renderValidationJS( $withtags = true ) {
+	public function renderValidationJS( $withtags = true, $skipConditionalCheck = false ) {
 		$js = "";
 		if ( $withtags ) {
 			$js .= "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
 		}
 		$formname = $this->getName();
 		$js .= "function xoopsFormValidate_{$formname}() { myform = window.document.{$formname};\n";
-		$js .= $this->_drawValidationJS();
+		$js .= $this->_drawValidationJS($skipConditionalCheck);
 		$js .= "\nreturn true;\n}\n";
 		if ( $withtags ) {
 			$js .= "//--></script>\n<!-- End Form Vaidation JavaScript //-->\n";
@@ -137,13 +137,13 @@ class formulize_themeForm extends XoopsThemeForm {
 	}
 
 	// need to check whether the element is a standard element, if if so, add the check for whether its row exists or not	
-	function _drawValidationJS() {
+	function _drawValidationJS($skipConditionalCheck) {
 		$fullJs = "";
 		
 		$elements = $this->getElements( true );
 		foreach ( $elements as $elt ) {
 			if ( method_exists( $elt, 'renderValidationJS' ) ) {
-				if(substr($elt->getName(),0,3)=="de_") {
+				if(substr($elt->getName(),0,3)=="de_" AND !$skipConditionalCheck) {
 					$checkConditionalRow = true;
 				} else {
 					$checkConditionalRow = false;

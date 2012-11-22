@@ -152,46 +152,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		}
 	}
 	
-	// Set up the javascript that we need for the form-submit functionality to work
-	// note that validateAndSubmit calls the form validation function again, but obviously it will pass if it passed here.  The validation needs to be called prior to setting the pages, or else you can end up on the wrong page after clicking an ADD button in a subform when you've missed a required field.
-	?>
-	
-	<script type='text/javascript'>
-	
-	function submitForm(page, prevpage) {
-		var validate = xoopsFormValidate_formulize();
-		if(validate) {<?php
-			if(is_object($screen) AND $screen->getVar('finishisdone') AND $currentPage+1 == $thanksPage) {
-				// neuter the ventry which is the key thing that keeps us on the form page, if in fact we just came from a list screen of some kind
-				// need to use an unusual selector, because something about selecting by id wasn't working, apparently may be related to setting actions on forms with certain versions of jQuery??
-				print "		if(page == $thanksPage) {
-					window.document.formulize.ventry.value = '';
-					jQuery('form[name=formulize]').attr('action', '$done_dest');
-				}
-				";
-			}?>
-			window.document.formulize.formulize_currentPage.value = page;
-			window.document.formulize.formulize_prevPage.value = prevpage;
-			window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
-			window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
-			validateAndSubmit();
-		}
-	}
-	
-	function pageJump(options, prevpage) {
-		for (var i=0; i < options.length; i++) {
-			if (options[i].selected) {
-				submitForm(options[i].value, prevpage);
-				return false;
-			}
-		}
-	}
-	
-	</script><noscript>
-	<h1>You do not have javascript enabled in your web browser.  This form will not work with your web browser.  Please contact the webmaster for assistance.</h1>
-	</noscript>
-	<?php
-	
 	// check to see if there are conditions on this page, and if so are they met
 	// if the conditions are not met, move on to the next page and repeat the condition check
 	// conditions only checked once there is an entry!
@@ -283,7 +243,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				} else {
 					if($blankORSearch) {
 						$finalFilter[0][0] = "AND";
-						$finalFilter[0][1] = $filter;
+						$finalFilter[0][1] = $filter ? $filter : $entry;
 						$finalFilter[1][0] = "OR";
 						$finalFilter[1][1] = $blankORSearch;
 					} else {
@@ -323,7 +283,46 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	$done_dest = $done_dest ? $done_dest : getCurrentURL();
 	$done_dest = substr($done_dest,0,4) == "http" ? $done_dest : "http://".$done_dest;
 	
+	// Set up the javascript that we need for the form-submit functionality to work
+	// note that validateAndSubmit calls the form validation function again, but obviously it will pass if it passed here.  The validation needs to be called prior to setting the pages, or else you can end up on the wrong page after clicking an ADD button in a subform when you've missed a required field.
+	?>
 	
+	<script type='text/javascript'>
+	
+	function submitForm(page, prevpage) {
+		var validate = xoopsFormValidate_formulize();
+		if(validate) {<?php
+			if(is_object($screen) AND $screen->getVar('finishisdone') AND $currentPage+1 == $thanksPage) {
+				// neuter the ventry which is the key thing that keeps us on the form page, if in fact we just came from a list screen of some kind
+				// need to use an unusual selector, because something about selecting by id wasn't working, apparently may be related to setting actions on forms with certain versions of jQuery??
+				print "		if(page == $thanksPage) {
+					window.document.formulize.ventry.value = '';
+					jQuery('form[name=formulize]').attr('action', '$done_dest');
+				}
+				";
+			}?>
+			window.document.formulize.formulize_currentPage.value = page;
+			window.document.formulize.formulize_prevPage.value = prevpage;
+			window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
+			window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
+			validateAndSubmit();
+		}
+	}
+	
+	function pageJump(options, prevpage) {
+		for (var i=0; i < options.length; i++) {
+			if (options[i].selected) {
+				submitForm(options[i].value, prevpage);
+				return false;
+			}
+		}
+	}
+	
+	</script><noscript>
+	<h1>You do not have javascript enabled in your web browser.  This form will not work with your web browser.  Please contact the webmaster for assistance.</h1>
+	</noscript>
+	<?php
+		
 	if($currentPage == $thanksPage) {
 	
 		if(is_array($thankstext)) { 
@@ -453,6 +452,8 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			exit();
 		    }
 		    // start the form manually...
+		    $formObjectForRequiredJS = new formulize_themeForm('form object for required js', 'formulize', getCurrentURL(), "post", true);
+		    $element_handler = xoops_getmodulehandler('elements', 'formulize');
 		    print "<div id='formulizeform'><form id='formulize' name='formulize' action='".getCurrentURL()."' method='post' onsubmit='return xoopsFormValidate_formulize();' enctype='multipart/form-data'>";
 		    foreach ($elements_allowed as $thisElement) {   // entry is a recordid, $thisElement is the element id
 			    // to get the conditional logic to be captured, we should buffer the drawing of the displayElement, and then output that later, because when displayElement does NOT return an object, then we get conditional logic -- subform rendering does it this way
@@ -484,6 +485,9 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				}
 				continue;
 			    } else {
+				$thisElementObject = $element_handler->get($thisElement);
+				$req = !$isDisabled ? intval($thisElementObject->getVar('ele_req')) : 0; 
+				$formObjectForRequiredJS->addElement($form_ele, $req);
 				$elementMarkup = $form_ele->render();
 				$elementCaption = displayCaption("", $thisElement);
 				$elementDescription = displayDescription("", $thisElement);
@@ -514,7 +518,9 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		    }
 		    print "</div>\n";
 		    drawJavascript();
-		    print "<script type=\"text/javascript\">function xoopsFormValidate_formulize(){return true;}</script>"; // shim for the validation javascript that is created by the xoopsThemeForms, and which our saving logic currently references...saving won't work without this...we should actually render the proper validation logic at some point, but not today.
+		    // need to create the form object, and add all the rendered elements to it, and then we'll have working required elements if we render the validation logic for the form
+		    print $formObjectForRequiredJS->renderValidationJS(true, true); // with tags, true, skip the extra js that checks for the formulize theme form divs around the elements so that conditional animation works, true
+		    // print "<script type=\"text/javascript\">function xoopsFormValidate_formulize(){return true;}</script>"; // shim for the validation javascript that is created by the xoopsThemeForms, and which our saving logic currently references...saving won't work without this...we should actually render the proper validation logic at some point, but not today.
 	    } else {
 		displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, "", "", 0, 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
 	    }
