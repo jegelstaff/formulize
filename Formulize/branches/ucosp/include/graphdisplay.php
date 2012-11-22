@@ -178,6 +178,7 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 
 	
 	// process the graph options
+	// these defaults will be used, unless overwritten by values from the $graphOptions array
 	$sizeMultiplier = sizeof(array_keys($dataPoints));
 	$BAR_THICKNESS = 40;
 	$IMAGE_WIDTH = 600;
