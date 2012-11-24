@@ -3857,7 +3857,7 @@ function buildFilter($id, $ele_id, $defaulttext="", $name="", $overrides=array(0
         $passoption = $nametype ? $option_value : $option; // str_replace(" ", "_", $option); // if a nametype is in effect, then use the value, otherwise, use the key -- also, no longer swapping out spaces for underscores
         if((isset($_POST[$id]) OR isset($_GET[$id])) AND $overrides !== false) {
           if($name == "{listofentries}") {
-            $selected = ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND $overrides == $option) ) ? "selected" : "";
+            $selected = ( (is_numeric($overrides) AND $overrides == $counter) OR (!is_numeric($overrides) AND $overrides === $option) ) ? "selected" : "";
           } else {
             $selected = ($_POST[$id] == $passoption OR $_GET[$id] == $passoption) ? "selected" : "";
           }

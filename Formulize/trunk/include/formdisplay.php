@@ -1122,8 +1122,8 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 			}
 		}
     
-		print "<input type=hidden name=screenid value=".$screenid.">";
-		print "<input type=hidden name=currentpage value=".$currentPage.">";
+		print "<input type=hidden name=screenid value='".$screenid."'>";
+		print "<input type=hidden name=currentpage value='".$currentPage."'>";
 
 		print "<input type=hidden name=lastentry value=".$cur_entry.">";
 		if($go_back['form']) { // we're on a sub, so display this form only

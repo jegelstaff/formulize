@@ -435,7 +435,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		// templatevariables must be called after all the variables are loaded otherwise they do not make it into renderTemplate
 		$templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton, 'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage, 'pageSelectionList'=>$pageSelectionList);
 
-		print "<form name=\"pageNavOptions_above\" id==\"pageNavOptions_above\">\n";
+		print "<form name=\"pageNavOptions_above\" id=\"pageNavOptions_above\">\n";
 		if($screen AND $toptemplate = $screen->getVar('toptemplate')) {
 		    print renderTemplate($toptemplate, $templateVariables);
 		} else {
@@ -533,7 +533,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
     if($currentPage != $thanksPage AND !$_POST['goto_sfid']) {
 	    // have to get the new value for $pageSelection list if the user requires it on the users view.
 	    $pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below");
-	    print "<form name=\"pageNavOptions_below\" id==\"pageNavOptions_below\">\n";
+	    print "<form name=\"pageNavOptions_below\" id=\"pageNavOptions_below\">\n";
 	    if ($screen AND $bottomtemplate = $screen->getVar('bottomtemplate')) { 
 		    $templateVariables['pageSelectionList'] = $pageSelectionList; // assign the new pageSelectionList, since it was redone for the bottom section
 		    print renderTemplate($bottomtemplate, $templateVariables);

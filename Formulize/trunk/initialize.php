@@ -164,6 +164,7 @@ if(!$loadThisView) { $loadThisView = ""; } // a 0 could possibly screw things up
 if($screen) {
 	// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
+	$renderedFormulizeScreen = $screen;
 	if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
 		if($screen->getVar('frid')) {
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
@@ -176,7 +177,6 @@ if($screen) {
 		$screen_handler->render($screen, $entry, $loadThisView);	
 	}
 	$rendered = true;
-	$renderedFormulizeScreen = $finalscreenObject;
 }
 
 // IF NO SCREEN IS REQUESTED (or none rendered successfully, ie: a bad screen id was passed), THEN USE THE DEFAULT DISPLAY LOGIC TO DETERMINE WHAT TO SHOW THE USER
