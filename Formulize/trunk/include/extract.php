@@ -1344,8 +1344,32 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                          }
                     // regular whereclause
                     } else {
-                         // could/should put better handling in here of multiple value boxes, so = operators actually only look for matches within the individual values??  Is that possible?
-                         $newWhereClause = "$queryElement " . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes;
+			 // check if there's any conversion necessary from what the user typed into a special value that will work in the database
+			 $searchTerm = $ifParts[1];
+			 if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$formFieldFilterMap[$mappedForm][$element_id]['ele_type']."Element.php")) {
+			      $customTypeHandler = xoops_getmodulehandler($formFieldFilterMap[$mappedForm][$element_id]['ele_type']."Element", 'formulize');
+			      if(trim($operator) == "LIKE" OR trim($operator) == "NOT LIKE") {
+				   $searchTerm = $customTypeHandler->prepareLiteralTextForDB($ifParts[1], $customTypeHandler->get($element_id), true); // true means partial matching is in effect
+				   if(is_array($searchTerm)) { // method has returned a list of complete values in the database that match the term
+					$operator = " IN ";
+					$likebits = "";
+					$searchTerm = " ($quotes".implode($quotes.",".$quotes, $searchTerm)."$quotes) ";
+					$quotes = "";
+				   } 
+			      } else {
+				   $searchTerm = $customTypeHandler->prepareLiteralTextForDB($ifParts[1], $customTypeHandler->get($element_id));
+			      }
+			 }
+			 if($searchTerm === $ifParts[1]) {
+			      // no change, so let's escape it, otherwise the prepareLiteralTextForDB method should have returned a safe value
+			      $searchTerm = mysql_real_escape_string($ifParts[1]);	
+			 }
+			 if($searchTerm) {
+			      // could/should put better handling in here of multiple value boxes, so = operators actually only look for matches within the individual values??  Is that possible?
+			      $newWhereClause = "$queryElement " . $operator . $quotes . $likebits . $searchTerm . $likebits . $quotes;
+			 } else {
+			      $newWhereClause = "($queryElement = 1 AND $queryElement = 2)"; // impossible condition, since no values were found that match the user's states search terms (false or nothing must have been passed back from the prepareLiteralTextForDB method)
+			 }
                     }
                     
                }
@@ -1453,6 +1477,7 @@ function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap) {
           }
           $foundForm = $array['id_form'];
 	  $formFieldFilterMap[$array['id_form']][$element_id]['ele_value'] = $ele_value; // just to be on the safe side, send the entire ele_value as well in case we need something from it
+	  $formFieldFilterMap[$array['id_form']][$element_id]['ele_type'] = $array['ele_type']; 
      }
      return array(0=>$formFieldFilterMap, 1=>$foundForm);
 }

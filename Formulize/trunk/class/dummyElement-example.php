@@ -60,6 +60,7 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
     var $length; // used in formatDataForList
     
     function __construct($db) {
+        $this->db =& $db;
     }
     
     function create() {
@@ -173,9 +174,13 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
         return $value; // we're not making any modifications for this element type
     }
     
-    // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
+    // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
+    // it is only necessary to do special logic here if the values stored in the database do not match what users would be typing, ie: you're using coded numbers in the database, but displaying text on screen to users
     // this would be where a Yes value would be converted to a 1, for example, in the case of a yes/no element, since 1 is how yes is represented in the database for that element type
-    function prepareLiteralTextForDB($value, $element) {
+    // $partialMatch is used to indicate if we should search the values for partial string matches, like On matching Ontario.  This happens in the getData function when processing filter terms (ie: searches typed by users in a list of entries)
+    // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
+    // if literal text that users type can be used as is to interact with the database, simply return the $value 
+    function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
         return $value;
     }
     

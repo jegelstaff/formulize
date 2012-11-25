@@ -55,6 +55,7 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
     var $length; // used in formatDataForList
     
     function __construct($db) {
+		$this->db =& $db;
     }
     
     function create() {
@@ -75,12 +76,14 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
 			$elementSelected = $ele_value[1];
 			$sortSelected = $ele_value[2];
 		}
-		
-		$elementOptions = array("Select Menu", "Radio Buttons");
-		$sortOptions = array("Order Alphabetically", "Order by Population");		
+
+		$provinceOptions['none'] = "None";
+		$provinceOptions = $provinceOptions + $this->getProvinceList(); // the + operator does not affect the keys, whereas if we unshifted none onto the beginning, we'd lose the key->value associations
+		$elementOptions = array("Dropdown list", "Radio buttons");
+		$sortOptions = array("Order alphabetically", "Order by population");		
 		
 		return array(
-			'provinceOptions'=>$this->getProvinceList(), 'provinceSelected'=>$provinceSelected, 
+			'provinceOptions'=>$provinceOptions, 'provinceSelected'=>$provinceSelected, 
 			'elementOptions'=>$elementOptions, 'elementSelected'=>$elementSelected,
 			'sortOptions'=>$sortOptions, 'sortSelected'=>$sortSelected
 		);
@@ -121,7 +124,7 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
 		  return new xoopsFormLabel($caption, $provinceList[$ele_value[0]]);
 		}
 		
-		if ($ele_value[2] == 1){
+		if ($ele_value[2] != 1){
 			// Sort provinces alphabetically			
 			asort($provinceList);
 		}
@@ -143,8 +146,24 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
-    function generateValidationCode($caption, $markupName, $element) {      
-        return array();
+    function generateValidationCode($caption, $markupName, $element) {
+		$ele_value = $element->getVar('ele_value');
+		$validationCode = array();
+		$eltmsg = "Please select a province for '$caption'";
+		if($ele_value[1] == 0) { // validation for dropdown list
+		    $validationCode[] = "\nif ( myform.{$markupName}.options[0].selected ) {\n window.alert(\"{$eltmsg}\");\n myform.{$markupName}.focus();\n return false;\n }\n";
+		} else { // validation for radio buttons
+		    $validationCode[] = "selection = false;\n";
+		    $validationCode[] = "if(myform.{$markupName}.length) {\n";
+		    $validationCode[] = "for(var i=0;i<myform.{$markupName}.length;i++){\n";
+	    	$validationCode[] = "if(myform.{$markupName}[i].checked){\n";
+		    $validationCode[] = "selection = true;\n";
+		    $validationCode[] = "}\n";
+	    	$validationCode[] = "}\n";
+		    $validationCode[] = "}\n";
+		    $validationCode[] = "if(selection == false) { window.alert(\"{$eltmsg}\");\n myform.{$markupName}.focus();\n return false;\n }\n";   
+		}	
+        return $validationCode;
     }
     
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
@@ -177,12 +196,26 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
         return $provinceList[$value];
     }
     
-    // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
+    // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
+    // it is only necessary to do special logic here if the values stored in the database do not match what users would be typing, ie: you're using coded numbers in the database, but displaying text on screen to users
     // this would be where a Yes value would be converted to a 1, for example, in the case of a yes/no element, since 1 is how yes is represented in the database for that element type
-    function prepareLiteralTextForDB($value, $element) {
+    // $partialMatch is used to indicate if we should search the values for partial string matches, like On matching Ontario.  This happens in the getData function when processing filter terms (ie: searches typed by users in a list of entries)
+    // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
+    // if literal text that users type can be used as is to interact with the database, simply return the $value
+    // otherwise, if we need to do a conversion on literal text, then the values returned from this method should always correspond to a complete value in the database, that could be searched for with = in a SQL statement
+    function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 		$provinceList = $this->getProvinceList();
-		$value = array_search($value, $provinceList);
-        return $value;
+		if($partialMatch) {
+	    	$foundKeys = array();
+		    foreach($provinceList as $key=>$thisProvince) {
+			if(strstr(strtolower($thisProvince), strtolower($value))) {
+			    $foundKeys[] = $key;
+			}
+		    }
+	    	return empty($foundKeys) ? false : $foundKeys;
+		} else {
+		    return array_search($value, $provinceList);
+		}
     }
     
     // this method will format a dataset value for display on screen when a list of entries is prepared
@@ -193,7 +226,8 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
     }
     
     function getProvinceList(){
-		return array(0=>"Ontario", 1=>"Quebec", 2=>"British Columbia", 3=>"Alberta", 4=>"Manitoba", 5=>"Saskatchewan", 6=>"Nova Scotia", 7=>"New Brunswick", 8=>"Newfoundland and Labrador", 9=>"Prince Edward Island", 10=>"Northwest Territories", 11=>"Yukon", 12=>"Nunavut");
+	// values should not start with 0, or else you run into difficulties when setting "no default" value
+	return array(1=>"Ontario", 2=>"Quebec", 3=>"British Columbia", 4=>"Alberta", 5=>"Manitoba", 6=>"Saskatchewan", 7=>"Nova Scotia", 8=>"New Brunswick", 9=>"Newfoundland and Labrador", 10=>"Prince Edward Island", 11=>"Northwest Territories", 12=>"Yukon", 13=>"Nunavut");
     }
 
 }
