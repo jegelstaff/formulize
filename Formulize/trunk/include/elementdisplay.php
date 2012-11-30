@@ -285,10 +285,21 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		if($filterTerms[$i] === "{BLANK}") {
 			$filterTerms[$i] = "";
 		}
-		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$filterElements[$i]])) {
-			$compValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$filterElements[$i]];
+		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry][$filterElements[$i]])) {
+			$compValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry][$filterElements[$i]];
 		} elseif($entry == "new") {
-			$compValue = "";
+			// for textboxes, let's try to get their default value
+			// for other elements, generate the default is too tricky to get it to work at present, not enough time available
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$elementObject = $element_handler->get($filterElements[$i]);
+			$ele_type = $elementObject->getVar('ele_type');
+			if($ele_type == "text" OR $ele_type == "textarea") {
+				$ele_value = $elementObject->getVar('ele_value');
+				$defaultKey = $ele_type == "text" ? 2 : 0; // default key is in different places for different types of elements
+				$compValue = getTextboxDefault($ele_value[$defaultKey], $elementObject->getVar('id_form'), $entry);
+			} else {
+				$compValue = "";
+			}
 		} else {
 			$compValue = display($entryData[0], $filterElements[$i]);
 		}

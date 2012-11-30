@@ -146,12 +146,12 @@ switch($op) {
 	$handle = $passedElementObject->getVar('ele_handle');
 	$databaseReadyValue = prepDataForWrite($passedElementObject, $v);
 	$databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
-	$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$handle] = $databaseReadyValue;
+	$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
 	$apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array
 	if(is_array($apiFormatValue) AND count($apiFormatValue)==1) {
 	  $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
 	}
-	$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$handle] = $apiFormatValue;
+	$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$passedEntryId][$handle] = $apiFormatValue;
       }
     }
     $elementObject = $element_handler->get($elementId);
