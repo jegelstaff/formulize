@@ -4578,12 +4578,16 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
 		  // for textboxes, let's try to get their default value
 	          // for other elements, generate the default is too tricky to get it to work at present, not enough time available
 	          $elementObject = $element_handler->get(substr($filterTerms[$filterId],1,-1));
-	          $ele_type = $elementObject->getVar('ele_type');
-		  if($ele_type == "text" OR $ele_type == "textarea") {
-		    $ele_value = $elementObject->getVar('ele_value');
-		    $defaultKey = $ele_type == "text" ? 2 : 0; // default key is in different places for different types of elements
-		    $default = getTextboxDefault($ele_value[$defaultKey], $elementObject->getVar('id_form'), $curlyBracketEntry);
-		    $conditionsFilterComparisonValue = is_numeric($default) ? $default : "'".$default."'";
+		  if(is_object($elementObject)) {
+		    $ele_type = $elementObject->getVar('ele_type');
+		    if($ele_type == "text" OR $ele_type == "textarea") {
+		      $ele_value = $elementObject->getVar('ele_value');
+		      $defaultKey = $ele_type == "text" ? 2 : 0; // default key is in different places for different types of elements
+		      $default = getTextboxDefault($ele_value[$defaultKey], $elementObject->getVar('id_form'), $curlyBracketEntry);
+		      $conditionsFilterComparisonValue = is_numeric($default) ? $default : "'".$default."'";
+		    } else {
+		      $conditionsFilterComparisonValue = "";
+		    }
 		  } else {
 		    $conditionsFilterComparisonValue = "";
 		  }
