@@ -1371,7 +1371,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
 			      // no change, so let's escape it, otherwise the prepareLiteralTextForDB method should have returned a safe value
 			      $searchTerm = mysql_real_escape_string($ifParts[1]);	
 			 }
-			 if($searchTerm) {
+			 if($searchTerm !== false) {
 			      if($searchTermToUse) { // set as an override value in certain cases above
 				   $newWhereClause = $searchTermToUse;
 			      } else {
