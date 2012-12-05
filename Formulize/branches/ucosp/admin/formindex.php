@@ -1507,6 +1507,26 @@ function patch40() {
                         
                     }
                 }
+                
+                // need to update multiple select boxes.
+                // $xoopsDB->prefix("formulize")
+                // 1. get a list of all elements that are linked selectboxes that support only single values
+                $selectBoxesSQL = "SELECT id_form, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type = 'select'";
+                $selectBoxRes = $xoopsDB->query($selectBoxesSQL);
+                if ($xoopsDB->getRowsNum($selectBoxRes) > 0) {
+                    while ($handleArray = $xoopsDB->fetchArray($selectBoxRes)) {
+                        $metaData = formulize_getElementMetaData($handleArray['ele_id']);
+                        $ele_value = unserialize($metaData['ele_value']);
+                        
+                        // select only single option, linked select boxes
+                        if (!$ele_value[1] AND strstr($ele_value[2], "#*=:*")) {
+                            $successSelectBox = convertSelectBoxToSingle($xoopsDB->prefix('formulize_' . $handleArray['id_form']), $handleArray['ele_id']);
+                            if (!$successSelectBox) {
+                                print "could not convert column " . $handleArray['ele_id'] . " in table " . $xoopsDB->prefix('formulize_' . $handleArray['id_form']) . "<br>";
+                            }
+                        }
+                    }
+                }
 
 		print "DB updates completed.  result: OK";
 	}

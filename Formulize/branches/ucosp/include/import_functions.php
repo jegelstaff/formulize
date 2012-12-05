@@ -409,7 +409,10 @@ function importCsvValidate(&$importSet, $id_reqs, $regfid, $validateOverride=fal
 	                        case "select":
                                 if(isset($importSet[5][1][$link]) AND !strstr($cell_value, ",") AND (!is_numeric($cell_value) OR $cell_value < 10000000))
                                 {
-									// Linked element, but allow entries with commas to pass through unvalidated, and also allow through numeric values with no commas, if they are really big (assumption is big numbers are some kind of special entry_id reference, as in the case of UofT)
+                                    // Linked element, but allow entries with commas to pass through unvalidated, and 
+                                    // also allow through numeric values with no commas, if they are really big 
+                                    // (assumption is big numbers are some kind of special entry_id reference, as in 
+                                    // the case of UofT)
                                     // echo "Linked element<br>";
 
                                     $linkElement = $importSet[5][1][$link];

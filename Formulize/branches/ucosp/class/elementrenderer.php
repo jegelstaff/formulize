@@ -318,12 +318,23 @@ class formulizeElementRenderer{
 					// if there is a restriction in effect, then add some SQL to reject options that have already been selected ??
 					$restrictSQL = "";
 					if($ele_value[9]) {
-						$restrictSQL = " AND (
-						NOT EXISTS (
-						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id != ".intval($entry);
-						$restrictSQL .= $this->addEntryRestrictionSQL($ele_value[9], $id_form, $groups); // pass in the flag about restriction scope, and the form id, and the groups
-						$restrictSQL .= " ) OR EXISTS (
-						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id = ".intval($entry);
+                                                $t4_ele_value = $this->_ele->getVar('ele_value');
+                                                if($t4_ele_value[1]) { // allows multiple selections
+                                                    $restrictSQL = " AND (
+                                                    NOT EXISTS (
+                                                    SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id != ".intval($entry);
+                                                    $restrictSQL .= $this->addEntryRestrictionSQL($ele_value[9], $id_form, $groups); // pass in the flag about restriction scope, and the form id, and the groups
+                                                    $restrictSQL .= " ) OR EXISTS (
+                                                    SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id = ".intval($entry);
+                                                } else {
+                                                    $restrictSQL = " AND (
+                                                    NOT EXISTS (
+                                                    SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` = t1.`entry_id` AND t4.entry_id != ".intval($entry);
+                                                    $restrictSQL .= $this->addEntryRestrictionSQL($ele_value[9], $id_form, $groups); // pass in the flag about restriction scope, and the form id, and the groups
+                                                    $restrictSQL .= " ) OR EXISTS (
+                                                    SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` = t1.`entry_id` AND t4.entry_id = ".intval($entry);
+
+                                                }
 						$restrictSQL .= $this->addEntryRestrictionSQL($ele_value[9], $id_form, $groups);
 						$restrictSQL .= ") )";
 					}
@@ -977,7 +988,7 @@ class formulizeElementRenderer{
 				);
 			break;
 			/*
-			 * Hack by Félix<INBOX International>
+			 * Hack by Fï¿½lix<INBOX International>
 			 * Adding colorpicker form element
 			 */
 			case 'colorpick':
@@ -1006,7 +1017,7 @@ class formulizeElementRenderer{
 				} // end of check to see if the default setting is for real
 			break;
 			/*
-			 * End of Hack by Félix<INBOX International>
+			 * End of Hack by Fï¿½lix<INBOX International>
 			 * Adding colorpicker form element
 			 */
 			default:

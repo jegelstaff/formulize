@@ -1750,6 +1750,7 @@ function prepDataForWrite($element, $ele) {
             break;
         case 'select':
 
+            print_r($ele_value);
             // handle the new possible default value -- sept 7 2007
             if ($ele_value[0] == 1 AND $ele == "none") { // none is the flag for the "Choose an option" default value
                 $value = "{WRITEASNULL}"; // this flag is used to terminate processing of this value
@@ -1772,20 +1773,17 @@ function prepDataForWrite($element, $ele) {
                         $value .= $whatwasselected . ",";
                     }
                 } elseif (is_numeric($ele)) {
-                    $value = "," . $ele . ",";
+                    $value = $ele;
                 } else {
                     $value = "";
                 }
-//						print "<br>VALUE: $value";	
+		// print "<br>VALUE: $value";	
                 break;
             } else {
 
-
                 $value = '';
-
-
-
-                // The following code block is a replacement for the previous method for reading a select box which didn't work reliably -- jwe 7/26/04
+                // The following code block is a replacement for the previous method for reading a select 
+                // box which didn't work reliably -- jwe 7/26/04
                 // print_r($ele_value[2]);
                 $temparraykeys = array_keys($ele_value[2]);
                 if ($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s) -- updated for real live use September 6 2006
@@ -1801,12 +1799,22 @@ function prepDataForWrite($element, $ele) {
                 }
 
                 // THIS REALLY OLD CODE IS HARD TO READ....HERE'S A GLOSS...
-                // ele_value[2] is all the options that make up this element.  The values passed back from the form will be numbers indicating which value was selected.  First value is 0 for a multi-selection box, and 1 for a single selection box.
-                // Subsequent values are one number higher and so on all the way to the end.  Five values in a multiple selection box, the numbers are 0, 1, 2, 3, 4.
-                // masterentlistjwe and entrycounterjwe will be the same!!  There's these array_keys calls here, which result basically in a list of numbers being created, keysPassedBack, and that list is going to start at 0 and go up to whatever the last value is.  It always starts at zero, even if the list is a single selection list.  entrycounterjwe will also always start at zero.
-                // After that, we basically just loop through all the possible places, 0 through n, that the user might have selected, and we check if they did.
-                // The check lines are if($whattheuserselected == $masterentlistjwe) and $ele == ($masterentlistjwe+1) ....note the +1 to make this work for single selection boxes where the numbers start at 1 instead of 0.
-                // This is all further complicated by the fact that we're grabbing values from $entriesPassedBack, which is just the list of options in the form, so that we can populate the ultimate $value that is going to be written to the database.
+                // ele_value[2] is all the options that make up this element. The values passed back from the
+                // form will be numbers indicating which value was selected.  First value is 0 for a multi-selection box,
+                // and 1 for a single selection box.
+                // Subsequent values are one number higher and so on all the way to the end. Five values in a 
+                // multiple selection box, the numbers are 0, 1, 2, 3, 4.
+                // masterentlistjwe and entrycounterjwe will be the same!!  There's these array_keys calls here, 
+                // which result basically in a list of numbers being created, keysPassedBack, and that list is going 
+                // to start at 0 and go up to whatever the last value is.  It always starts at zero, even if the list 
+                // is a single selection list.  entrycounterjwe will also always start at zero.
+                // After that, we basically just loop through all the possible places, 0 through n, that the user 
+                // might have selected, and we check if they did.
+                // The check lines are if($whattheuserselected == $masterentlistjwe) and $ele == ($masterentlistjwe+1) 
+                // ....note the +1 to make this work for single selection boxes where the numbers start at 1 instead of 0.
+                // This is all further complicated by the fact that we're grabbing values from $entriesPassedBack, 
+                // which is just the list of options in the form, so that we can populate the ultimate $value 
+                // that is going to be written to the database.
 
                 $entriesPassedBack = array_keys($ele_value[2]);
                 $keysPassedBack = array_keys($entriesPassedBack);
@@ -1862,6 +1870,8 @@ function prepDataForWrite($element, $ele) {
             } // end of if that checks for a linked select box.
             // print "selects: $value<br>";
             break;
+            
+            
         case 'date':
             // code below commented/added by jwe 10/23/04 to convert dates into the proper standard format
             if ($ele != "YYYY-mm-dd" AND $ele != "") {
@@ -3772,6 +3782,7 @@ function buildFilter($id, $ele_id, $defaulttext = "", $name = "", $overrides = a
                 $linkedSourceElementEleValue = $linkedSourceElementObject->getVar('ele_value');
                 $linkedSourceElementEleValueParts = explode("#*=:*", $linkedSourceElementEleValue[2]); // first part will be the form id of the source form, second part will be the element handle in that form
                 $linkedFormObject = $form_handler->get($linkedSourceElementEleValueParts[0]);
+                // $linkedSourceElementEleValue[1]
                 $limitCondition = ", " . $xoopsDB->prefix("formulize_" . $linkedFormObject->getVar('form_handle')) . " as t2 WHERE t1.`$linked_ele_id` LIKE CONCAT('%',t2.entry_id,'%') AND t2.`" . $linkedSourceElementEleValueParts[1] . "` LIKE '%" . mysql_real_escape_string($_POST[$linked_data_id]) . "%'";
             }
             unset($options);
@@ -4489,7 +4500,10 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                 } else {
                     $conditionsfilter .= " AND ";
                 }
-                list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) = _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
+                list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom, $newFilterOps) = _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
+                if($newFilterOps[$filterId]) {
+                    $filterOps[$filterId] = $newFilterOps[$filterId];
+                }
                 $conditionsfilter .= "$targetAlias`" . $filterElementHandles[$filterId] . "` " . $filterOps[$filterId] . " " . $conditionsFilterComparisonValue;
             } else {
                 if ($start_oom) {
@@ -4498,7 +4512,10 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                 } else {
                     $conditionsfilter_oom .= " OR ";
                 }
-                list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) = _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
+                list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom, $newFilterOps) = _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
+                if($newFilterOps[$filterId]) {
+                    $filterOps[$filterId] = $newFilterOps[$filterId];
+                }
                 $conditionsfilter_oom .= "$targetAlias`" . $filterElementHandles[$filterId] . "` " . $filterOps[$filterId] . " " . $conditionsFilterComparisonValue;
             }
             $curlyBracketFormFrom = $thisCurlyBracketFormFrom ? $thisCurlyBracketFormFrom : $curlyBracketFormFrom; // if something was returned, use it, otherwise, stick with what we've got
@@ -4513,6 +4530,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 // this function takes the info from the above function, and actually builds the parts of the SQL statement by analyzing the current situation
 function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
     global $xoopsUser, $xoopsDB;
+    $newFilterOps = "";
     $conditionsFilterComparisonValue = "";
     $curlyBracketFormFrom = "";
     if ($filterOps[$filterId] == "NOT") {
@@ -4528,7 +4546,8 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
         $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
     }
     if ($targetFormElementTypes[$filterElementIds[$filterId]] == "select") {
-        // check for whether the source element is a linked selectbox, and if so, figure out the entry id of the record in the source of that linked selectbox which matches the filter term instead
+        // check for whether the source element is a linked selectbox, and if so, figure out the entry id of the 
+        // record in the source of that linked selectbox which matches the filter term instead
         $targetElementObject = $element_handler->get($filterElementIds[$filterId]);
         if ($targetElementObject->isLinked) {
             $targetElementEleValue = $targetElementObject->getVar('ele_value'); // get the properties of the source element
@@ -4536,6 +4555,7 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
             $targetSourceFid = $targetElementEleValueProperties[0]; // get the Fid that the source element is point at (the source of the source)
             $targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
             $targetSourceHandle = $targetElementEleValueProperties[1]; // get the element handle in the source source form
+            
             // now build a comparison value that contains a subquery on the source source form, instead of a literal match to the source form
             if (substr($filterTerms[$filterId], 0, 1) == "{" AND substr($filterTerms[$filterId], -1) == "}") {
                 $filterTermToUse = " curlybracketform.`" . mysql_real_escape_string(substr($filterTerms[$filterId], 1, -1)) . "` ";
@@ -4551,7 +4571,8 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
                         $conditionsFilterComparisonValue = " CONCAT('$likebits',$filterTermToUse,'$likebits') "; // filterTermToUse will already have , , around it so we don't need them in the two concat'd parts before and after
                     }
                 }
-                // curlybracket term found, but it's not linked to the same source as the target, so we have to work the likebits in as part of a concat, since our term is not a literal string anymore
+                // curlybracket term found, but it's not linked to the same source as the target, so we have to work the likebits in as part of a concat, 
+                // since our term is not a literal string anymore
                 if ($likebits) {
                     $filterTermToUse = " CONCAT('$likebits',$filterTermToUse,'$likebits') ";
                 }
@@ -4562,7 +4583,12 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
                 $filterTermToUse = mysql_real_escape_string($filterTerms[$filterId]);
             }
             if (!$conditionsFilterComparisonValue) {
-                $conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE `$targetSourceHandle` " . $filterOps[$filterId] . $quotes . $likebits . $filterTermToUse . $likebits . $quotes . "),',$origlikebits') ";
+                if ($targetElementEleValue[1]) {
+                    $conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE `$targetSourceHandle` " . $filterOps[$filterId] . $quotes . $likebits . $filterTermToUse . $likebits . $quotes . "),',$origlikebits') ";
+                } else {
+                    $conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE `$targetSourceHandle` " . $filterOps[$filterId] . $quotes . $likebits . $filterTermToUse . $likebits . $quotes . ") ";
+                    $newFilterOps = array($filterId=>'=');
+                }
             }
             if (substr($filterTerms[$filterId], 0, 1) == "{" AND substr($filterTerms[$filterId], -1) == "}") {
                 $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntry ";
@@ -4587,7 +4613,7 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
             }
         }
     }
-    return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
+    return array($conditionsFilterComparisonValue, $curlyBracketFormFrom, $newFilterOps);
 }
 
 // this function simply draws in the necessary xhr javascript that is used in forms sometimes, and in lists of entries sometimes
@@ -4970,4 +4996,44 @@ function genOwnershipList($fid, $mid, $groups, $entry_id = "") {
     return $proxylist;
 }
 
-// // End of Update for Ajax Save
+// End of Update for Ajax Save
+
+// Converts linked select boxes from single option only (big int)
+// to a multi-option allowed select box with preceding and trailing commas
+function convertSelectBoxToMulti($table, $column) {
+    
+    global $xoopsDB;
+    
+    $sql1 = "ALTER TABLE `$table` CHANGE `$column` `$column` TEXT NULL DEFAULT NULL";
+    $sql2 = "UPDATE `$table` SET `$column`=CONCAT(',', `$column`, ',') WHERE `$column` NOT LIKE '%[^0-9]%'";
+    
+    if (!$result1 = $xoopsDB->query($sql1)) {
+        return false;
+    }
+    
+    if (!$result2 = $xoopsDB->query($sql2)) {
+        return false;
+    }
+    return true;
+    
+}
+
+// Converts a linked select box from multi-option allowed (with preceding and trailing
+// commas) to a single option allowed select box with data type bigint.
+function convertSelectBoxToSingle($table, $column) {
+    
+    global $xoopsDB;
+    
+    $sql1 = "UPDATE `$table` SET `$column`=SUBSTRING_INDEX (TRIM(BOTH ',' FROM `$column`), ',', 1) WHERE `$column` LIKE ',%,'";
+    $sql2 = "ALTER TABLE `$table` CHANGE `$column` `$column` BIGINT NULL DEFAULT NULL";
+    
+    if (!$result1 = $xoopsDB->query($sql1)) {
+        return false;
+    }
+    
+    if (!$result2 = $xoopsDB->query($sql2)) {
+        return false;
+    }
+    return true;
+    
+}
