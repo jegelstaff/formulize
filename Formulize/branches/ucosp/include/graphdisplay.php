@@ -34,6 +34,7 @@
 include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pData.class.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pDraw.class.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pImage.class.php";
+include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
 /**
  * IMPORTANT: Implemented User Cases:
@@ -42,7 +43,7 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pImage
  * 			displayGraph("Bar", form_id_of_class, "", gender, gender, "count", $graphOptions);
  * 		b. counting # of mayors for a city
  * 			displayGraph("Bar", form_id_of_class, relation_id, city, mayor, "count", $graphOptions);
- * 2. bar graph "unique-count":
+ * 2. bar graph "count-unique":
  * 		same as above, but with a slight twist:
  * 		a. in gender example, since there are only two distinct gender, then output would be bar with length 1 and 1
  * 		b. in mayors example, the mayors with same name would only be counted once
@@ -312,7 +313,7 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 	$myPicture = new pImage($IMAGE_WIDTH, $IMAGE_HEIGHT, $myData);
 	$myPicture -> drawGradientArea(0, 0, $IMAGE_WIDTH, $IMAGE_HEIGHT, DIRECTION_VERTICAL, array("StartR" => $BACKGROUND_R, "StartG" => $BACKGROUND_G, "StartB" => $BACKGROUND_B, "EndR" => $BACKGROUND_R, "EndG" => $BACKGROUND_G, "EndB" => $BACKGROUND_B, "Alpha" => 100));
 	$myPicture->drawGradientArea(0,0,500,500,DIRECTION_HORIZONTAL,array("StartR"=>240,"StartG"=>240,"StartB"=>240,"EndR"=>180,"EndG"=>180,"EndB"=>180,"Alpha"=>30)); 
-	$myPicture -> setFontProperties(array("FontName" => "modules/formulize/libraries/pChart/fonts/arial.ttf", "FontSize" => 8));
+	$myPicture -> setFontProperties(array("FontName" => XOOPS_ROOT_PATH ."/modules/formulize/libraries/pChart/fonts/arial.ttf", "FontSize" => 8));
 	
 	$paddingtoLeft = $IMAGE_WIDTH * 0.15;
 	$paddingtoTop = $IMAGE_HEIGHT * 0.2;
@@ -364,6 +365,7 @@ function renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $oper
 	// TODO: make some kind of cron job clear up or some kind of caches, update graph only when needed!
 	$grapRelativePathPrefix = "modules/formulize/images/graphs/";
 	$graphRelativePath = $grapRelativePathPrefix . "_" . $fid . "_" . "_" . $frid . "_" . $labelElement . "_" . $dataElement . "_" . "$operation" . "_" . preg_replace('/[^\w\d]/', "", print_r($graphOptions, true)) . ".png";
+	$graphRelativePath = preg_replace('/\s/', '_', $graphRelativePath);
 	$myPicture -> render(XOOPS_ROOT_PATH . "/" . $graphRelativePath);
 	echo "<img src='" . XOOPS_URL . "/$graphRelativePath' />";
 	return;

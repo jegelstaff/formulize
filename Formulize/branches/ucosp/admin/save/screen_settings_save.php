@@ -60,11 +60,15 @@ if($screens['type'] == 'multiPage') {
   $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 } else if($screens['type'] == 'form') {
   $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+} else if($screens['type'] == 'graph') {
+  $screen_handler = xoops_getmodulehandler('graphScreen', 'formulize');
 }
+
 
 
 if($isNew) {
   $screen = $screen_handler->create();
+	
   if($screens['type'] == 'multiPage') {
     $screen->setVar('pagetitles',serialize(array(0=>'New page')));
     $screen->setVar('pages', serialize(array(0=>array())));
@@ -115,12 +119,15 @@ if($isNew) {
       $screen->setVar('reloadblank', 0);
       $screen->setVar('savebuttontext', _formulize_SAVE);
       $screen->setVar('alldonebuttontext', _formulize_DONE);
-  } 
+  } else if($screens['type'] == 'graph'){
+  	  $screen->setVar('displayheading', 1);
+      $screen->setVar('reloadblank', 0);
+      $screen->setVar('savebuttontext', _formulize_SAVE);
+      $screen->setVar('alldonebuttontext', _formulize_DONE);
+  }
 
 } else {
-  
-
-  $screen = $screen_handler->get($sid);
+ $screen = $screen_handler->get($sid);
 }
 
 $screen->setVar('title',$screens['title']);
@@ -129,6 +136,7 @@ $originalFrid = $screen->getVar('frid');
 $screen->setVar('frid',$screens['frid']);
 $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);
+
 
 if(!$sid = $screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".mysql_error();

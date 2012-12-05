@@ -328,6 +328,14 @@ foreach($listOfEntriesScreens as $screen) {
   $i++;
 }
 
+$graphScreens = $screen_handler->getObjects(new Criteria('type','graph'),$fid);
+$i = 1;
+foreach($graphScreens as $screen) {
+  $screens['graph'][$i]['sid'] = $screen->getVar('sid');
+  $screens['graph'][$i]['title'] = $screen->getVar('title');
+  $i++;
+}
+
 $settings = array();
 $settings['singleentry'] = $singleentry;
 $settings['menutext'] = $menutext;

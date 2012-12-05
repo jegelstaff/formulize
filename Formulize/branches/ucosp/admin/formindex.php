@@ -1257,6 +1257,19 @@ function patch40() {
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;";
 		}
+
+		                                if(!in_array($xoopsDB->prefix("formulize_screen_graph"), $existingTables)) {
+                        $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_graph") . " (
+  `formid` int(11) NOT NULL auto_increment,
+  `sid` int(11) NOT NULL default 0,
+  `donedest` varchar(255) NOT NULL default '',
+  `savebuttontext` varchar(255) NOT NULL default '',
+  `alldonebuttontext` varchar(255) NOT NULL default '',
+  `displayheading` tinyint(1) NOT NULL default 0,
+  `reloadblank` tinyint(1) NOT NULL default 0,
+  PRIMARY KEY (`formid`),
+  INDEX i_sid (`sid`)
+) ENGINE=MyISAM;"; }
 		
 		if(!in_array($xoopsDB->prefix("formulize_advanced_calculations"), $existingTables)) {
 			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_advanced_calculations")."` (

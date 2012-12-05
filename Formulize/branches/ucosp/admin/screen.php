@@ -52,7 +52,6 @@ if($_GET['fid'] != "new") {
   $fid = $_GET['fid'];
 }
 
-
 $sid = $_GET['sid'];
 
 
@@ -64,7 +63,6 @@ if ($res) {
     $links[] = array("id"=>$row[0], "name"=>$row[1]);
   }
 }
-
 
 
 
@@ -83,6 +81,7 @@ if($_GET['sid'] == "new") {
   $settings['type'] = $screen->getVar('type');
   $settings['frid'] = $screen->getVar('frid');
   $settings['useToken'] = $screen->getVar('useToken');
+  
 
   if($settings['type'] == 'listOfEntries') {
     $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
@@ -90,12 +89,14 @@ if($_GET['sid'] == "new") {
     $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
   } else if($settings['type'] == 'multiPage') {
     $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-  }
+  } else if($settings['type'] == 'graph') {
+  	$screen_handler = xoops_getmodulehandler('graphScreen', 'formulize');
+  } 
 
   $screen = $screen_handler->get($sid);
   $screenName = $screen->getVar('title');
-  
 }
+
 
 
 // prepare data for sub-page
@@ -364,6 +365,16 @@ if($_GET['sid'] != "new" && $settings['type'] == 'form') {
   $options['reloadblank'] = $screen->getVar('reloadblank') ? "blank" : "entry";
 } 
 
+if($_GET['sid'] != "new" && $settings['type'] == 'graph') {
+  $options = array();
+  $options['donedest'] = $screen->getVar('donedest');
+  $options['savebuttontext'] = $screen->getVar('savebuttontext');
+  $options['alldonebuttontext'] = $screen->getVar('alldonebuttontext');
+  $options['displayheading'] = $screen->getVar('displayheading');
+  $options['reloadblank'] = $screen->getVar('reloadblank') ? "blank" : "entry";
+} 
+
+
 // common values should be assigned to all tabs
 $common['name'] = $screenName;
 $common['title'] = $screenName; // oops, we've got two copies of this data floating around...standardize sometime
@@ -432,6 +443,13 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   $adminPage['tabs'][6]['content'] = $templates + $common;
 
 }
+
+if($_GET['sid'] != "new" && $settings['type'] == 'graph') {
+  $adminPage['tabs'][2]['name'] = _AM_ELE_OPT;
+  $adminPage['tabs'][2]['template'] = "db:admin/screen_form_options.html";
+  $adminPage['tabs'][2]['content'] = $options + $common;
+}
+
 
 $adminPage['pagetitle'] = _AM_FORM_SCREEN.$screenName;
 $adminPage['needsave'] = true;
