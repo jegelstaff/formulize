@@ -139,7 +139,7 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 	bottom:0;
 	position:fixed;
 }
-.floatingsavebuttons{
+#floatingsave input[type="button"]{
 	margin-left:15px;
 	padding:3px;
 }

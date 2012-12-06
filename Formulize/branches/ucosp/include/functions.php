@@ -4889,18 +4889,16 @@ function genFormInstruction($info_continue, $fid, $entryId, $info_received_msg, 
     }
     $update_other_entries = $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid);
     $update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);
-    $breakHTML = "<b>";
+    $breakHTML = "";
     if ($info_received_msg) {
         $breakHTML .= _formulize_INFO_SAVED . "&nbsp;";
     }
     if ($info_continue == 1 AND (($owner == $uid AND $update_own_entry) OR $update_other_entries)) {
-        $breakHTML .= _formulize_INFO_CONTINUE1 . "</b>";
+        $breakHTML .= _formulize_INFO_CONTINUE1;
     } elseif ($info_continue == 2) {
-        $breakHTML .= _formulize_INFO_CONTINUE2 . "</b>";
+        $breakHTML .= _formulize_INFO_CONTINUE2;
     } elseif (!$entry AND ($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid))) {
-        $breakHTML .= _formulize_INFO_MAKENEW . "</b>";
-    } else {
-        $breakHTML .= "</b>";
+        $breakHTML .= _formulize_INFO_MAKENEW;
     }
     return $breakHTML;
 }

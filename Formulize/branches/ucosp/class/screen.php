@@ -39,6 +39,9 @@ require_once XOOPS_ROOT_PATH . '/kernel/object.php';
 
 class formulizeScreen extends xoopsObject {
 
+    const CUSTOM_TEMPLATES_DIR = "/modules/formulize/templates/screens/custom/";
+    const DEFAULT_TEMPLATES_DIR = "/modules/formulize/templates/screens/default/";
+    
     function formulizeScreen() {
         $this->XoopsObject();
         $this->initVar('sid', XOBJ_DTYPE_INT, '', true);
@@ -49,19 +52,46 @@ class formulizeScreen extends xoopsObject {
         $this->initVar('useToken', XOBJ_DTYPE_INT);
     }
 
-    function getTemplate($templatename) {
-
-        static $templates = array();
-
-        if (!isset($templates[$templatename])) {
-            // there is no template saved in memory, read it from the file
-            $pathname = XOOPS_ROOT_PATH . "/modules/formulize/templates/screens/default/" . $this->getVar('sid') . "/" . $templatename . ".php";
-            $templates[$templatename] = file_get_contents($pathname);
-        }
-
-        return $templates[$templatename];
+    /**
+     * Checks if a given template name exists for the current screen.
+     * @return true if the given template name exists for the screen, false otherwise.
+     */
+    function hasTemplate($templateName) {
+        return (trim($this->getTemplate($templateName)) != "");
     }
-
+    
+    function getTemplate($templateName) {
+        static $templates = array();
+        if (!isset($templates[$templateName])) {
+            // there is no template saved in memory, read it from the file
+            $templates[$templateName] = file_get_contents($this->getCustomTemplateFilePath($templateName));
+        }
+        return $templates[$templateName];
+    }
+    
+    function getCustomTemplateFilePath($templateName) {
+        return $this->getTemplateFilePath($this->getCustomTemplatesDir(), $templateName);
+    }
+    
+    function getDefaultTemplateFilePath($templateName) {
+        return $this->getTemplateFilePath($this->getDefaultTemplatesDir(), $templateName);
+    }
+    
+    function getCustomTemplatesDir() {
+        return $this->getTemplatesDirectory(self::CUSTOM_TEMPLATES_DIR);
+    }
+    
+    function getDefaultTemplatesDir() {
+        return $this->getTemplatesDirectory(self::DEFAULT_TEMPLATES_DIR);
+    }
+    
+    private function getTemplatesDirectory($directory) {
+        return XOOPS_ROOT_PATH . $directory . $this->getVar('sid') . "/";
+    }
+    
+    private function getTemplateFilePath($dir, $templateName) {
+        return $dir . $templateName . ".php";
+    }
 }
 
 class formulizeScreenHandler {
@@ -195,7 +225,8 @@ class formulizeScreenHandler {
 
     function writeTemplateToFile($text, $filename, $screen) {
 
-        $pathname = XOOPS_ROOT_PATH . "/modules/formulize/templates/screens/default/" . $screen->getVar('sid') . "/";
+        $pathname = $screen->getCustomTemplatesDir();
+        
         // check if folder exists, if not, make it.
         if (!is_dir($pathname)) {
             mkdir($pathname, 0777, true);
@@ -205,16 +236,13 @@ class formulizeScreenHandler {
             chmod($pathname, 0777);
         }
 
-        $fileHandle = fopen($pathname . "/" . $filename . ".php", "w+");
+        $fileHandle = fopen($screen->getCustomTemplateFilePath($filename), "w+");
         $success = fwrite($fileHandle, $text);
         fclose($fileHandle);
 
         // return true or false based on writing success or failure 
         // (you'll need to make sure your web server has write permission in the /templates/screens/default/ folder
-        if ($success === FALSE) {
-            return false;
-        } else
-            return true;
+        return !($success === FALSE);
     }
 
 }

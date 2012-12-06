@@ -423,7 +423,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// if there is a screen with a top template in effect, then do not lock the controls even if the saved view says we should.  Assume that the screen author has compensated for any permission issues.
 		// we need to do this after rachetting down the visibility controls.  Fact is, controlling UI for users is one thing that we can trust the screen author to do, so we don't need to indicate that the controls are locked.  But we don't want the visibility to override what people can normally see, so we rachet that down above.
     if($screen AND $_POST['lockcontrols']) {
-      if($screen->getTemplate('toptemplate') != "") {
+      if($screen->hasTemplate('toptemplate')) {
         $_POST['lockcontrols'] = 0;
       }
     }
@@ -695,7 +695,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// if there is messageText and no custom top template, and no messageText variable in the bottom template, then we have to output the message text here
 	if($screen AND $messageText) {
-		if(trim($screen->getTemplate('toptemplate')) == "" AND !strstr($screen->getTemplate('bottomtemplate'), 'messageText')) {
+		if(!$screen->hasTemplate('toptemplate') AND !strstr($screen->getTemplate('bottomtemplate'), 'messageText')) {
 			print "<p><center><b>$messageText</b></center></p>\n";
 		}
 	}
@@ -893,7 +893,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$useSearch = 1;
 	if($screen) {
 		$useWorking = !$screen->getVar('useworkingmsg') ? false : true;
-		$useDefaultInterface = $screen->getTemplate('toptemplate') != "" ? false : true;
+		$useDefaultInterface = !$screen->hasTemplate('toptemplate');
 		$title = $screen->getVar('title'); // otherwise, title of the form is in the settings array for when no screen is in use
 		$useSearch = ($screen->getVar('usesearch') AND !$screen->getTemplate('listtemplate')) ? 1 : 0;
 	}
@@ -3888,21 +3888,9 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 		print "<div id=\"floating-list-of-entries-save-button\" class=\"\"><p>$saveButton</p></div>\n";
 	}
 	
-	//$thisTemplate = html_entity_decode($screen->getVar($type.'template'));
-        $thisTemplate = $screen->getTemplate($type.'template');
-	if($thisTemplate != "") {
-    
-    // process the template and output results
-            
-		//ob_start();
-		//$evalSuccess = eval($thisTemplate);
-		//$evalResult = ob_get_clean();
-		//if($evalSuccess === false) { // eval returns false on a parse error
-		//	print _AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR;
-		//} else {
-		//	print $evalResult;
-		//}
-                include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/".$type."template.php";
+	if($screen->hasTemplate($type.'template')) {
+                // process the template and output results
+                include $screen->getCustomTemplateFilePath($type.'template');
 		
 		// if there are no page nav controls in either template the template, then 
 		if($type == "top" AND !strstr($screen->getTemplate('toptemplate'), 'pageNavControls') AND (!strstr($screen->getTemplate('bottomtemplate'), 'pageNavControls'))) {

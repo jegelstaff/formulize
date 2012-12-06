@@ -363,6 +363,11 @@ if($_GET['sid'] != "new" && $settings['type'] == 'form') {
   $options['alldonebuttontext'] = $screen->getVar('alldonebuttontext');
   $options['displayheading'] = $screen->getVar('displayheading');
   $options['reloadblank'] = $screen->getVar('reloadblank') ? "blank" : "entry";
+  
+  $formTemplates = array();
+  $formTemplates['formTopTemplate'] = $screen->getTemplate('formTopTemplate');
+  $formTemplates['formElementsTemplate'] = $screen->getTemplate('formElementsTemplate');
+  $formTemplates['formBottomTemplate'] = $screen->getTemplate('formBottomTemplate');
 } 
 
 if($_GET['sid'] != "new" && $settings['type'] == 'graph') {
@@ -400,6 +405,10 @@ if($_GET['sid'] != "new" && $settings['type'] == 'form') {
   $adminPage['tabs'][2]['name'] = _AM_ELE_OPT;
   $adminPage['tabs'][2]['template'] = "db:admin/screen_form_options.html";
   $adminPage['tabs'][2]['content'] = $options + $common;
+  
+  $adminPage['tabs'][3]['name'] = _AM_FORM_SCREEN_TEMPLATES;
+  $adminPage['tabs'][3]['template'] = "db:admin/screen_form_templates.html";
+  $adminPage['tabs'][3]['content'] = $formTemplates + $common;
 }
 
 if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
