@@ -38,8 +38,11 @@ $application_handler = xoops_getmodulehandler('applications', 'formulize');
 $appid = $_POST['formulize_admin_key'];
 
 $menuitems = $_POST['menu_items'];
-//echo "here".var_dump($menuitems);
-$application_handler->insertMenuLinks($appid, $menuitems);
+
+if($menuitems.length > 0){
+	$application_handler->insertMenuLinks($appid, $menuitems);
+}
+
 
 // if the form name was changed, then force a reload of the page...reload will be the application id
 if(isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) {
