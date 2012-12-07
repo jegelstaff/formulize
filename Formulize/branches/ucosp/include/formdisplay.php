@@ -65,28 +65,111 @@ class formulize_themeForm extends XoopsThemeForm {
         $ibContents = $extra . "<<||>>" . $name; // can only assign strings or real element objects with addElement, not arrays
         $this->addElement($ibContents);
     }
-
+    
+    public function render() {
+        $this->renderFromTemplate();
+    }
+    
     /**
      * create HTML to output the form as a theme-enabled table with validation.
      *
      * @return	string
      */
-    public function render() {
+    public function renderFromTemplate($elementsTemplateFile = null) {
         $ele_name = $this->getName();
-        $ret = "<form id='" . $ele_name
+        print "<div id=formulizeform>";
+        print "<form id='" . $ele_name
                 . "' name='" . $ele_name
                 . "' action='" . $this->getAction()
                 . "' method='" . $this->getMethod()
-                . "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">
-			<div class='xo-theme-form'>
-			<table width='100%' class='outer' cellspacing='1'>
-			<tr><th colspan='2'>" . $this->getTitle() . "</th></tr>
-		";
-        $hidden = '';
-        list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
-        $ret .= "</table>\n$hidden\n</div>\n</form>\n";
-        $ret .= $this->renderValidationJS(true);
-        return $ret;
+                . "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">";
+        
+        if ($elementsTemplateFile != null) {
+            $this->_drawElements($this->getElements(), $elementsTemplateFile);
+        } else {
+            $this->renderDefault();
+        }
+        
+        print $this->getRenderedHiddenElements($this->getElements());
+        print "\n</form>\n";
+        print $this->renderValidationJS(true);
+        print "</div>";
+    }
+    
+    // When the default layout is extracted into default template files
+    // this method should be removed and the drawing of elements should
+    // work the same for default or custom templates.
+    private function renderDefault() {
+        print "<div class='xo-theme-form'>
+                    <table width='100%' class='outer' cellspacing='1'>
+                    <tr><th colspan='2'>" . $this->getTitle() . "</th></tr>
+                ";
+                   
+        $this->_drawElements($this->getElements());
+        
+        print "</table>\n</div>";
+    }
+    
+    function _drawElements($elements, $elementsTemplateFile = null) {
+        foreach ($elements as $ele) {
+            if ($elementsTemplateFile != null) {
+                $this->drawElementCustomTemplate($ele, $elementsTemplateFile);
+            } else {
+                $this->drawElementDefault($ele);
+            }
+        }
+    }
+    
+    private function drawElementCustomTemplate($ele, $elementsTemplateFile) {
+        if (is_object($ele) && !$ele->isHidden() && $ele->getCaption() != '') {
+            
+            // These variable's are specified as usable variables for the custom
+            // templates. Changing these variable names could cause a client's
+            // custom template to break since their template would rely on them.
+            $elementCaption = $ele->getCaption();
+            $elementIsRequired = $ele->isRequired();
+            $elementDescription = $ele->getDescription();
+            $elementField = $ele->render();
+
+            include $elementsTemplateFile;
+        }
+    }
+    
+    private function drawElementDefault($ele) {
+        $class = 'even';
+        // just plain add stuff if it's a literal string...
+        if (!is_object($ele)) { 
+            if (strstr($ele, "<<||>>")) {
+                $ele = explode("<<||>>", $ele);
+                print "<tr id='formulize-" . $ele[1] . "'>" . $ele[0] . "</tr>";
+            } elseif (substr($ele, 0, 3) != "<tr") {
+                print "<tr>" . $ele . "</tr>";
+            } else {
+                print $ele;
+            }
+        } elseif (!$ele->isHidden()) {
+            print "<tr id='formulize-" . $ele->getName() . "' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head'>";
+            if (($caption = $ele->getCaption()) != '') {
+                print   "<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
+                        . "<span class='caption-text'>{$caption}</span>"
+                        . "<span class='caption-marker'>*</span>"
+                        . "</div>";
+            }
+            if (($desc = $ele->getDescription()) != '') {
+                print "<div class='xoops-form-element-help'>{$desc}</div>";
+            }
+            print "</td><td class='$class'>" . $ele->render() . "</td></tr>\n";
+        }
+    }
+    
+    function getRenderedHiddenElements($elements) {
+        $hidden = "";
+        foreach ($elements as $ele) {
+            if (is_object($ele) && $ele->isHidden()) {
+                $hidden .= $ele->render();
+            }
+        }
+        return $hidden;
     }
 
     public function renderValidationJS($withtags = true) {
@@ -103,39 +186,7 @@ class formulize_themeForm extends XoopsThemeForm {
         }
         return $js;
     }
-
-    function _drawElements($elements, $ret, $hidden) {
-        $class = 'even';
-        foreach ($elements as $ele) {
-            if (!is_object($ele)) {// just plain add stuff if it's a literal string...
-                if (strstr($ele, "<<||>>")) {
-                    $ele = explode("<<||>>", $ele);
-                    $ret .= "<tr id='formulize-" . $ele[1] . "'>" . $ele[0] . "</tr>";
-                } elseif (substr($ele, 0, 3) != "<tr") {
-                    $ret .= "<tr>$ele</tr>";
-                } else {
-                    $ret .= $ele;
-                }
-            } elseif (!$ele->isHidden()) {
-                $ret .= "<tr id='formulize-" . $ele->getName() . "' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head'>";
-                if (($caption = $ele->getCaption()) != '') {
-                    $ret .=
-                            "<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
-                            . "<span class='caption-text'>{$caption}</span>"
-                            . "<span class='caption-marker'>*</span>"
-                            . "</div>";
-                }
-                if (($desc = $ele->getDescription()) != '') {
-                    $ret .= "<div class='xoops-form-element-help'>{$desc}</div>";
-                }
-                $ret .= "</td><td class='$class'>" . $ele->render() . "</td></tr>\n";
-            } else {
-                $hidden .= $ele->render();
-            }
-        }
-        return array($ret, $hidden);
-    }
-
+    
     // need to check whether the element is a standard element, if if so, add the check for whether its row exists or not	
     function _drawValidationJS() {
         $fullJs = "";
@@ -149,8 +200,11 @@ class formulize_themeForm extends XoopsThemeForm {
                     $checkConditionalRow = false;
                 }
                 $js = $elt->renderValidationJS();
+                $eltLocator = "window.document.getElementById('formulize-" . $elt->getName() . "')";
                 if ($js AND $checkConditionalRow) {
-                    $fullJs .= "if(window.document.getElementById('formulize-" . $elt->getName() . "').style.display != 'none') {\n" . $js . "\n}\n\n";
+                    $fullJs .= "    if(!" . $eltLocator . " || " . $eltLocator . ".style.display != 'none') {\n";
+                    $fullJs .= "        " . $js . "\n";
+                    $fullJs .= "    }\n\n";
                 } elseif ($js) {
                     $fullJs .= "\n" . $js . "\n";
                 }
@@ -159,7 +213,6 @@ class formulize_themeForm extends XoopsThemeForm {
 
         return $fullJs;
     }
-
 }
 
 // SPECIAL CLASS TO HANDLE SITUATIONS WHERE WE'RE RENDERING ONLY THE ROWS FOR THE FORM, NOT THE ENTIRE FORM 
@@ -634,7 +687,6 @@ function displayForm($formframe, $entry = "", $mainform = "", $done_dest = "", $
 
         formulize_benchmark("Ready to start building form.");
 
-        $title = "";
         foreach ($fids as $this_fid) {
 
             if (!$scheck = security_check($this_fid, $entries[$this_fid][0], $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms) {
@@ -690,7 +742,18 @@ function displayForm($formframe, $entry = "", $mainform = "", $done_dest = "", $
             if ($entries[$this_fid]) {  // if there is an entry, then get the data for that entry
                 $prevEntry = getEntryValues($entries[$this_fid][0], $formulize_mgr, $groups, $this_fid, $elements_allowed, $mid, $uid, $owner, $groupEntryWithUpdateRights);
             }
-
+            
+            // The following variable declarations are all the variables that are
+            // specified as being accessible to users in the custom form templates.
+            $title = "";
+            $formMetaData = "";
+            $formInstructions = "";
+            $saveInstructions = "";
+            $doneInstructions = "";
+            $printBtn = "";
+            $saveBtn = "";
+            $allDoneBtn = "";
+            
             // display the form
             //get the form title: (do only once)
             $firstform = 0;
@@ -698,13 +761,12 @@ function displayForm($formframe, $entry = "", $mainform = "", $done_dest = "", $
 
                 $firstform = 1;
                 $title = isset($passedInTitle) ? $passedInTitle : trans(getFormTitle($this_fid));
-                unset($form);
                 if ($formElementsOnly) {
                     $form = new formulize_elementsOnlyForm();
                 } else {
                     $form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true); // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
                 }
-                $form->setExtra("enctype='multipart/form-data'"); // imp�ratif!
+                $form->setExtra("enctype='multipart/form-data'"); // required!
 
                 if (is_array($settings)) {
                     $form = writeHiddenSettings($settings, $form);
@@ -720,14 +782,16 @@ function displayForm($formframe, $entry = "", $mainform = "", $done_dest = "", $
                         $breakHTML = "<center>";
                     } else {
                         // Update for Ajax Save
-                        $breakHTML = "<center><p id=formInstruction>";
-                        $breakHTML .= genFormInstruction($info_continue, $fid, $entryId, $info_received_msg, $owner, $uid, $groups, $mid);
+                        $breakHTML = "<p id='formInstruction' style='text-align: center; font-weight: bold;'>";
+                        $formInstructions = genFormInstruction($info_continue, $fid, $entryId, $info_received_msg, $owner, $uid, $groups, $mid);
+                        $breakHTML .= $formInstructions;
                         $breakHTML .= "</p>";
                     }
-                    $breakHTML .= "</center><table cellpadding=5 width=100%><tr><td width=50% style=\"vertical-align: bottom;\">";
+                    $breakHTML .= "<table cellpadding=5 width=100%><tr><td width=50% style=\"vertical-align: bottom;\">";
                     $breakHTML .= "<p id=formMetaData>";
                     if ($entries[$this_fid][0]) {
-                        $breakHTML .= genFormMetaData($entries[$this_fid][0], $this_fid, $member_handler);
+                        $formMetaData = genFormMetaData($entries[$this_fid][0], $this_fid, $member_handler);
+                        $breakHTML .= $formMetaData;
                     } else {
                         $breakHTML .= "<b>" . _formulize_FD_ABOUT . "</b><br>" . _formulize_FD_NEWENTRY;
                     }
@@ -758,7 +822,6 @@ function displayForm($formframe, $entry = "", $mainform = "", $done_dest = "", $
                             $done_button_text = _formulize_INFO_DONE1 . _formulize_DONE . _formulize_INFO_DONE2;
                         }
 
-
                         $nosave = false;
                         if (!$save_button_text AND (($entry AND (($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries))) OR (!$entry AND ($add_own_entry OR $add_proxy_entries)))) {
                             $save_button_text = _formulize_INFO_SAVEBUTTON;
@@ -768,8 +831,10 @@ function displayForm($formframe, $entry = "", $mainform = "", $done_dest = "", $
                             $save_button_text = _formulize_INFO_NOSAVE;
                             $nosave = true;
                         }
+                        $saveInstructions = $save_button_text;
                         $breakHTML .= "<p>" . $save_button_text;
                         if ($done_button_text) {
+                            $doneInstructions = $done_button_text;
                             $breakHTML .= "<br>" . $done_button_text;
                         }
                     }
@@ -828,7 +893,6 @@ function displayForm($formframe, $entry = "", $mainform = "", $done_dest = "", $
                 }
             }
         }
-
 
         // draw in proxy box if necessary (only if they have permission and only on new entries, not on edits)
         if (!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
@@ -891,7 +955,7 @@ function displayForm($formframe, $entry = "", $mainform = "", $done_dest = "", $
                     $save_text = $button_text[1];
                 }
             }
-            $form = addPrintableviewButton($form, $save_text, $go_back, $currentURL, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride_temp, $printall, $screen);
+            $printBtn = getPrintableViewButton($save_text, $currentURL, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $go_back, $elements_allowed, $printall, $screen);
         }
 
         if (!$formElementsOnly) {
@@ -919,32 +983,26 @@ function displayForm($formframe, $entry = "", $mainform = "", $done_dest = "", $
                 drawJavascriptForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $entries, $sub_entries);
             }
         }
-
-        print "<div id=formulizeform>" . $form->render() . "</div>"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
         
-        // floating save button 
-        if ($printall != 2 AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php")) {
-            print "<div id=floattest></div>";
-            if ($done_text != "{NOBUTTON}" OR $save_text != "{NOBUTTON}") {
-                print "<div id=floatingsave>";
-                if ($subButtonText == _formulize_SAVE) {
-                    if ($save_text) {
-                        $subButtonText = $save_text;
-                    }
-                    if ($subButtonText != "{NOBUTTON}") {
-                        print "<input type='button' class=floatingsavebuttons onclick=javascript:validateAndSubmit(); value='" . _formulize_SAVE . "' >";
-                    }
-                }
-                if ((($button_text != "{NOBUTTON}" AND !$done_text) OR (isset($done_text) AND $done_text != "{NOBUTTON}")) AND !$allDoneOverride) {
-                    if ($done_text) {
-                        $button_text = $done_text_temp;
-                    }
-                    print "<input type='button' class=floatingsavebuttons onclick=javascript:verifyDone(); value='" . _formulize_DONE . "' >";
-                }
-                print "</div>";
-            }
+        $saveBtn = getSaveButton($printall, $formulizeConfig, $currentURL, $save_text, $subButtonText);
+        $allDoneBtn = getAllDoneButton($printall, $formulizeConfig, $currentURL, $done_text, $button_text, $allDoneOverride);
+        
+        $hasCustomTemplate = ($screen AND ($screen->hasTemplate("formTopTemplate") OR $screen->hasTemplate("formElementsTemplate") OR $screen->hasTemplate("formBottomTemplate")));
+        
+        if ($hasCustomTemplate) {
+            include $screen->getCustomTemplateFilePath("formTopTemplate");
+            $form->renderFromTemplate($screen->getCustomTemplateFilePath("formElementsTemplate"));
+            include $screen->getCustomTemplateFilePath("formBottomTemplate");
+            
+        } else {
+            $form = addPrintableviewButton($printBtn, $form, $save_text, $currentURL, $profileForm, $printall);
+            // TODO : Refactor all the code into default templates and simply include them
+            // note, security token is included in the form by the xoops themeform render method, that's why 
+            // there's no explicity references to the token in the compiling/generation of the main form object
+            $form->render();
+            printFloatingSave($saveBtn, $allDoneBtn, $printall, $formulizeConfig, $currentURL, $done_text, $save_text);
         }
-        // end floating save button
+        
         // if we're in Drupal, include the main XOOPS js file, so the calendar will work if present...
         // assumption is that the calendar javascript has already been included by the datebox due to no
         // $xoopsTpl being in effect in Drupal -- this assumption will fail if Drupal is displaying a pageworks
@@ -956,6 +1014,37 @@ function displayForm($formframe, $entry = "", $mainform = "", $done_dest = "", $
             $includedXoopsJs = true;
         }
     }// end of if we're not going back to the prev page because of an all done button override
+}
+
+function getSaveButton($printall, $formulizeConfig, $currentURL, $save_text, $subButtonText) {
+    $saveBtn = "";
+    if ($printall != 2 AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php")) {
+        if ($save_text != "{NOBUTTON}" AND $subButtonText == _formulize_SAVE AND $save_text != "{NOBUTTON}") {
+            $saveBtn = "<input type='button' onclick='javascript:validateAndSubmit();' value='" . _formulize_SAVE . "' >"; 
+        }
+    }
+    return $saveBtn;
+}
+
+function getAllDoneButton($printall, $formulizeConfig, $currentURL, $done_text, $button_text, $allDoneOverride) {
+    $allDoneBtn = "";
+    if ($printall != 2 AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php")) {
+        if ($done_text != "{NOBUTTON}" AND !$allDoneOverride) {
+            if (($button_text != "{NOBUTTON}" AND !$done_text) OR (isset($done_text) AND $done_text != "{NOBUTTON}")) {
+                $allDoneBtn = "<input type='button' onclick='javascript:verifyDone();' value='" . _formulize_DONE . "' >";
+            }
+        }
+    }
+    return $allDoneBtn;
+}
+
+function printFloatingSave($saveBtn, $allDoneBtn, $printall, $formulizeConfig, $currentURL, $done_text, $save_text) {
+    if ($printall != 2 AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php")) {
+        if ($done_text != "{NOBUTTON}" OR $save_text != "{NOBUTTON}") {
+            print "<div id='floattest'></div>";
+            print "<div id='floatingsave'>" . $saveBtn . $allDoneBtn . "</div>";
+        }
+    }
 }
 
 // THIS FUNCTION ADDS THE SPECIAL PROFILE FIELDS TO THE TOP OF A PROFILE FORM
@@ -1142,40 +1231,64 @@ function addPrintContent($profileForm, $fids, $formframe, $mainform, $cur_entry,
     }
 }
 
-function addPrintableviewButton($form, $save_text_temp, $go_back = "", $currentURL, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed = "", $allDoneOverride = false, $printall = 0, $screen = null) {
+function getPrintableViewButton($save_text_temp, $currentURL, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $profileForm, $go_back = "", $elements_allowed = "", $printall = 0, $screen = null) {
+    $printBtn = "";
+    
+    if ($printall == 2) { // 2 is special setting in multipage screens that means do not include any printable buttons of any kind
+        return $printBtn;
+    }
+    if (strstr($currentURL, "printview.php")) { // don't do anything if we're on the print view
+        return $printBtn;
+    } 
+
+    drawGoBackForm($go_back, $currentURL, $settings, $entry);
+    addPrintContent($profileForm, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed, $screen);
+
+    // need to grab the $nosubforms variable created by the multiple page function, so we know 
+    // to put the printable view button (and nothing else) on the screen for multipage forms
+    global $nosubforms;
+    // do not use printable button for profile forms, or forms where there is no Save button 
+    // (ie: a non-standard saving process is in use and access to the normal printable option may be prohibited)
+    if (!$profileForm AND ($save_text_temp != "{NOBUTTON}" OR $nosubforms)) { 
+        $printbutton = new XoopsFormButton('', 'printbutton', _formulize_PRINTVIEW, 'button');
+        if (is_array($elements_allowed)) {
+            $ele_allowed = implode(",", $elements_allowed);
+        }
+        $printbutton->setExtra("onclick='javascript:PrintPop(\"$ele_allowed\");'");
+        $rendered_buttons = $printbutton->render(); // nmc 2007.03.24 - added
+        
+        if ($printall) {                     // nmc 2007.03.24 - added
+            $printallbutton = new XoopsFormButton('', 'printallbutton', _formulize_PRINTALLVIEW, 'button');
+            $printallbutton->setExtra("onclick='javascript:PrintAllPop();'");
+            $rendered_buttons .= "&nbsp;&nbsp;&nbsp;" . $printallbutton->render();
+        }
+        
+        $printBtn = $rendered_buttons;
+    }
+    return $printBtn;
+}
+
+function addPrintableviewButton($printBtn, $form, $save_text_temp, $currentURL, $profileForm, $printall = 0) {
     if ($printall == 2) { // 2 is special setting in multipage screens that means do not include any printable buttons of any kind
         return $form;
     }
-
     if (strstr($currentURL, "printview.php")) { // don't do anything if we're on the print view
         return $form;
-    } else {
-        drawGoBackForm($go_back, $currentURL, $settings, $entry);
-
-        // need to grab the $nosubforms variable created by the multiple page function, so we know to put the printable view button (and nothing else) on the screen for multipage forms
-        global $nosubforms;
-        if (!$profileForm AND ($save_text_temp != "{NOBUTTON}" OR $nosubforms)) { // do not use printable button for profile forms, or forms where there is no Save button (ie: a non-standard saving process is in use and access to the normal printable option may be prohibited)
-            $printbutton = new XoopsFormButton('', 'printbutton', _formulize_PRINTVIEW, 'button');
-            if (is_array($elements_allowed)) {
-                $ele_allowed = implode(",", $elements_allowed);
-            }
-            $printbutton->setExtra("onclick='javascript:PrintPop(\"$ele_allowed\");'");
-            $rendered_buttons = $printbutton->render(); // nmc 2007.03.24 - added
-            if ($printall) {                     // nmc 2007.03.24 - added
-                $printallbutton = new XoopsFormButton('', 'printallbutton', _formulize_PRINTALLVIEW, 'button'); // nmc 2007.03.24 - added
-                $printallbutton->setExtra("onclick='javascript:PrintAllPop();'");        // nmc 2007.03.24 - added
-                $rendered_buttons .= "&nbsp;&nbsp;&nbsp;" . $printallbutton->render();       // nmc 2007.03.24 - added
-            }
-            $buttontray = new XoopsFormElementTray($rendered_buttons, "&nbsp;"); // nmc 2007.03.24 - amended [nb: FormElementTray 'caption' is actually either 1 or 2 buttons]
-        } else {
-            $buttontray = new XoopsFormElementTray("", "&nbsp;");
-        }
-
-        addPrintContent($profileForm, $fids, $formframe, $mainform, $cur_entry, $profileForm, $elements_allowed, $screen);
-
-        $form->addElement($buttontray);
-        return $form;
     }
+
+    // need to grab the $nosubforms variable created by the multiple page function, so we know to 
+    // put the printable view button (and nothing else) on the screen for multipage forms
+    global $nosubforms;
+    // do not use printable button for profile forms, or forms where there is no Save button 
+    // (ie: a non-standard saving process is in use and access to the normal printable option may be prohibited)
+    if (!$profileForm AND ($save_text_temp != "{NOBUTTON}" OR $nosubforms)) {
+        $buttontray = new XoopsFormElementTray($printBtn, "&nbsp;");
+    } else {
+        $buttontray = new XoopsFormElementTray("", "&nbsp;");
+    }
+
+    $form->addElement($buttontray);
+    return $form;
 }
 
 // add the submit button to a form
@@ -1186,109 +1299,108 @@ function addSubmitButton($form, $subButtonText, $go_back = "", $currentURL, $but
 
     if (strstr($currentURL, "printview.php")) { // don't do anything if we're on the print view
         return $form;
-    } else {
-
-        drawGoBackForm($go_back, $currentURL, $settings, $entry);
-
-        if (!$button_text OR ($button_text == "{NOBUTTON}" AND $go_back['form'] > 0)) { // presence of a goback form (ie: parent form) overrides {NOBUTTON} -- assumption is the save button will not also be overridden at the same time
-            $button_text = _formulize_DONE;
-        } elseif (is_array($button_text)) {
-            if (!$button_text[0]) {
-                $done_text_temp = _formulize_DONE;
-            } else {
-                $done_text_temp = $button_text[0];
-            }
-            if (!$button_text[1]) {
-                $save_text_temp = _formulize_SAVE;
-            } else {
-                $save_text_temp = $button_text[1];
-            }
-        }
-
-        // override -- the "no-all-done-button" config option turns off the all done button and changes save into a save-and-leave button
-        // need to grab the $nosubforms variable created by the multiple page function, so we know to put the printable view button (and nothing else) on the screen for multipage forms
-        global $nosubforms;
-        if (!$profileForm AND ($save_text_temp != "{NOBUTTON}" OR $nosubforms)) { // do not use printable button for profile forms, or forms where there is no Save button (ie: a non-standard saving process is in use and access to the normal printable option may be prohibited)
-            $printbutton = new XoopsFormButton('', 'printbutton', _formulize_PRINTVIEW, 'button');
-            if (is_array($elements_allowed)) {
-                $ele_allowed = implode(",", $elements_allowed);
-            }
-            $printbutton->setExtra("onclick='javascript:PrintPop(\"$ele_allowed\");'");
-            $rendered_buttons = $printbutton->render(); // nmc 2007.03.24 - added
-            if ($printall) {                     // nmc 2007.03.24 - added
-                $printallbutton = new XoopsFormButton('', 'printallbutton', _formulize_PRINTALLVIEW, 'button'); // nmc 2007.03.24 - added
-                $printallbutton->setExtra("onclick='javascript:PrintAllPop();'");        // nmc 2007.03.24 - added
-                $rendered_buttons .= "&nbsp;&nbsp;&nbsp;" . $printallbutton->render();       // nmc 2007.03.24 - added
-            }
-            $buttontray = new XoopsFormElementTray($rendered_buttons, "&nbsp;"); // nmc 2007.03.24 - amended [nb: FormElementTray 'caption' is actually either 1 or 2 buttons]
-        } else {
-            $buttontray = new XoopsFormElementTray("", "&nbsp;");
-        }
-        if ($subButtonText == _formulize_SAVE) { // _formulize_SAVE is passed only when the save button is allowed to be drawn
-            if ($save_text_temp) {
-                $subButtonText = $save_text_temp;
-            }
-            if ($subButtonText != "{NOBUTTON}") {
-                $saveButton = new XoopsFormButton('', 'submitx', trans($subButtonText), 'button'); // doesn't use name submit since that conflicts with the submit javascript function
-                $saveButton->setExtra("onclick=javascript:validateAndSubmit();");
-                $buttontray->addElement($saveButton);
-            }
-        }
-
-        if ((($button_text != "{NOBUTTON}" AND !$done_text_temp) OR (isset($done_text_temp) AND $done_text_temp != "{NOBUTTON}")) AND !$allDoneOverride) {
-            if ($done_text_temp) {
-                $button_text = $done_text_temp;
-            }
-            $donebutton = new XoopsFormButton('', 'donebutton', trans($button_text), 'button');
-            $donebutton->setExtra("onclick=javascript:verifyDone();");
-            $buttontray->addElement($donebutton);
-        }
-
-        if (!$profileForm) { // do not use printable button for profile forms
-            $newcurrentURL = XOOPS_URL . "/modules/formulize/printview.php";
-            print "<form name='printview' action='" . $newcurrentURL . "' method=post target=_blank>\n";
-
-            // add security token
-            if (isset($GLOBALS['xoopsSecurity'])) {
-                print $GLOBALS['xoopsSecurity']->getTokenHTML();
-            }
-
-            $currentPage = "";
-            $screenid = "";
-            if ($screen) {
-                $screenid = $screen->getVar('sid');
-                // check for a current page setting
-                if (isset($settings['formulize_currentPage'])) {
-                    $currentPage = $settings['formulize_currentPage'];
-                }
-            }
-
-            print "<input type=hidden name=screenid value=" . $screenid . ">";
-            print "<input type=hidden name=currentpage value=" . $currentPage . ">";
-
-            print "<input type=hidden name=lastentry value=" . $cur_entry . ">";
-            if ($go_back['form']) { // we're on a sub, so display this form only
-                print "<input type=hidden name=formframe value=" . $fids[0] . ">";
-            } else { // otherwise, display like normal
-                print "<input type=hidden name=formframe value='" . $formframe . "'>";
-                print "<input type=hidden name=mainform value='" . $mainform . "'>";
-            }
-            if (is_array($elements_allowed)) {
-                $ele_allowed = implode(",", $elements_allowed);
-                print "<input type=hidden name=elements_allowed value='" . $ele_allowed . "'>";
-            } else {
-                print "<input type=hidden name=elements_allowed value=''>";
-            }
-            print "</form>";
-            //added by Cory Aug 27, 2005 to make forms printable
-        }
-
-        $trayElements = $buttontray->getElements();
-        if (count($trayElements) > 0 OR $nosubforms) {
-            $form->addElement($buttontray);
-        }
-        return $form;
     }
+    
+    drawGoBackForm($go_back, $currentURL, $settings, $entry);
+
+    if (!$button_text OR ($button_text == "{NOBUTTON}" AND $go_back['form'] > 0)) { // presence of a goback form (ie: parent form) overrides {NOBUTTON} -- assumption is the save button will not also be overridden at the same time
+        $button_text = _formulize_DONE;
+    } elseif (is_array($button_text)) {
+        if (!$button_text[0]) {
+            $done_text_temp = _formulize_DONE;
+        } else {
+            $done_text_temp = $button_text[0];
+        }
+        if (!$button_text[1]) {
+            $save_text_temp = _formulize_SAVE;
+        } else {
+            $save_text_temp = $button_text[1];
+        }
+    }
+
+    // override -- the "no-all-done-button" config option turns off the all done button and changes save into a save-and-leave button
+    // need to grab the $nosubforms variable created by the multiple page function, so we know to put the printable view button (and nothing else) on the screen for multipage forms
+    global $nosubforms;
+    if (!$profileForm AND ($save_text_temp != "{NOBUTTON}" OR $nosubforms)) { // do not use printable button for profile forms, or forms where there is no Save button (ie: a non-standard saving process is in use and access to the normal printable option may be prohibited)
+        $printbutton = new XoopsFormButton('', 'printbutton', _formulize_PRINTVIEW, 'button');
+        if (is_array($elements_allowed)) {
+            $ele_allowed = implode(",", $elements_allowed);
+        }
+        $printbutton->setExtra("onclick='javascript:PrintPop(\"$ele_allowed\");'");
+        $rendered_buttons = $printbutton->render(); // nmc 2007.03.24 - added
+        if ($printall) {                     // nmc 2007.03.24 - added
+            $printallbutton = new XoopsFormButton('', 'printallbutton', _formulize_PRINTALLVIEW, 'button'); // nmc 2007.03.24 - added
+            $printallbutton->setExtra("onclick='javascript:PrintAllPop();'");        // nmc 2007.03.24 - added
+            $rendered_buttons .= "&nbsp;&nbsp;&nbsp;" . $printallbutton->render();       // nmc 2007.03.24 - added
+        }
+        $buttontray = new XoopsFormElementTray($rendered_buttons, "&nbsp;"); // nmc 2007.03.24 - amended [nb: FormElementTray 'caption' is actually either 1 or 2 buttons]
+    } else {
+        $buttontray = new XoopsFormElementTray("", "&nbsp;");
+    }
+    if ($subButtonText == _formulize_SAVE) { // _formulize_SAVE is passed only when the save button is allowed to be drawn
+        if ($save_text_temp) {
+            $subButtonText = $save_text_temp;
+        }
+        if ($subButtonText != "{NOBUTTON}") {
+            $saveButton = new XoopsFormButton('', 'submitx', trans($subButtonText), 'button'); // doesn't use name submit since that conflicts with the submit javascript function
+            $saveButton->setExtra("onclick=javascript:validateAndSubmit();");
+            $buttontray->addElement($saveButton);
+        }
+    }
+
+    if ((($button_text != "{NOBUTTON}" AND !$done_text_temp) OR (isset($done_text_temp) AND $done_text_temp != "{NOBUTTON}")) AND !$allDoneOverride) {
+        if ($done_text_temp) {
+            $button_text = $done_text_temp;
+        }
+        $donebutton = new XoopsFormButton('', 'donebutton', trans($button_text), 'button');
+        $donebutton->setExtra("onclick=javascript:verifyDone();");
+        $buttontray->addElement($donebutton);
+    }
+
+    if (!$profileForm) { // do not use printable button for profile forms
+        $newcurrentURL = XOOPS_URL . "/modules/formulize/printview.php";
+        print "<form name='printview' action='" . $newcurrentURL . "' method=post target=_blank>\n";
+
+        // add security token
+        if (isset($GLOBALS['xoopsSecurity'])) {
+            print $GLOBALS['xoopsSecurity']->getTokenHTML();
+        }
+
+        $currentPage = "";
+        $screenid = "";
+        if ($screen) {
+            $screenid = $screen->getVar('sid');
+            // check for a current page setting
+            if (isset($settings['formulize_currentPage'])) {
+                $currentPage = $settings['formulize_currentPage'];
+            }
+        }
+
+        print "<input type=hidden name=screenid value=" . $screenid . ">";
+        print "<input type=hidden name=currentpage value=" . $currentPage . ">";
+
+        print "<input type=hidden name=lastentry value=" . $cur_entry . ">";
+        if ($go_back['form']) { // we're on a sub, so display this form only
+            print "<input type=hidden name=formframe value=" . $fids[0] . ">";
+        } else { // otherwise, display like normal
+            print "<input type=hidden name=formframe value='" . $formframe . "'>";
+            print "<input type=hidden name=mainform value='" . $mainform . "'>";
+        }
+        if (is_array($elements_allowed)) {
+            $ele_allowed = implode(",", $elements_allowed);
+            print "<input type=hidden name=elements_allowed value='" . $ele_allowed . "'>";
+        } else {
+            print "<input type=hidden name=elements_allowed value=''>";
+        }
+        print "</form>";
+        //added by Cory Aug 27, 2005 to make forms printable
+    }
+
+    $trayElements = $buttontray->getElements();
+    if (count($trayElements) > 0 OR $nosubforms) {
+        $form->addElement($buttontray);
+    }
+    return $form;
 }
 
 // this function draws in the hidden form that handles the All Done logic that sends user off the form
@@ -1875,14 +1987,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
     formulize_benchmark("Ready to loop elements.");
 
     // set the array to be used as the structure of the loop, either the passed in elements in order, or the elements as gathered from the DB	
-    if (!is_array($elements_allowed)) {
-        $element_order_array = $elements;
-    } else {
-        $element_order_array = $elements_allowed;
-    }
-
-    // if this is a printview page,  
-
+    $element_order_array = (is_array($elements_allowed)) ? $elements_allowed : $elements;
 
     foreach ($element_order_array as $thisElement) {
         if (is_numeric($thisElement)) { // if we're doing the order based on passed in element ids...
@@ -1896,19 +2001,6 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
             $i = $thisElement; // set the element object
             $this_ele_id = $i->getVar('ele_id'); // get the element ID number
         }
-
-        /*
-          // old code that is superseded by the new element_order_array stuff above
-          foreach( $elements as $i ){
-
-          $this_ele_id = $i->getVar('ele_id');
-
-          if(is_array($elements_allowed)) {
-          if(!in_array($this_ele_id, $elements_allowed)) {
-          continue;
-          }
-          }
-         */
 
         // check if we're at the start of a page, when doing a printable view of all pages (only situation when printViewPageTitles and printViewPages will be present), and if we are, then put in a break for the page titles
         if ($printViewPages) {
@@ -1945,25 +2037,12 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
             // assumption is there will only be one parent link for this form
             for ($z = 0; $z < count($parentLinks['source']); $z++) {
                 if ($this_ele_id == $parentLinks['self'][$z]) { // this is the element
-                    // get the caption of the parent's field
-                    /* $pcq = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='" . $go_back['form'] . "' AND ele_id='" . $parentLinks['source'][$z] . "'");				
-                      $parentCap = str_replace ("'", "`", $pcq[0]['ele_caption']);
-                      $parentCap = str_replace ("&quot;", "`", $parentCap);
-                      $parentCap = str_replace ("&#039;", "`", $parentCap);
-                      $pvq = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form='" . $go_back['form'] . "' AND id_req='" . $go_back['entry'] . "' AND ele_caption='$parentCap'");
-                      $pid = $pvq[0]['ele_id'];
-
-                      // NOTE: assuming that there will only be one value in the match, ie: the link field is not a multiple select box!
-                      // format of value should be $formid#*=:*$formcaption#*=:*$ele_id
-                      $ele_value[2] = $go_back['form'] . "#*=:*" . $parentCap . "#*=:*" . $pid; */
                     $ele_value[2] = "," . $go_back['entry'] . ","; // 3.0 datastructure...needs to be tested!!
                 }
             }
         } elseif ($overrideValue) { // used to force a default setting in a form element, other than the normal default
             if (!is_array($overrideValue)) { //convert a string to an array so that strings don't screw up logic below (which is designed for arrays)
-                $temp = $overrideValue;
-                unset($overrideValue);
-                $overrideValue[0] = $temp;
+                $overrideValue = array($overrideValue);
             }
             // currently only operative for select boxes
             switch ($ele_type) {
@@ -1978,7 +2057,6 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
                     // debug
                     //var_dump($overrideValue);
                     foreach ($overrideValue as $ov) {
-                        //if(ereg ("([0-9]{4})-([0-9]{2})-([0-9]{2})", $ov, $regs)) {
                         if (ereg("([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})", $ov, $regs)) {
                             $ele_value[0] = $ov;
                         }
@@ -2208,12 +2286,12 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
             break;
         case "textarea":
         /*
-         * Hack by F�lix<INBOX International>
+         * Hack by Felix<INBOX International>
          * Adding colorpicker form element
          */
         case "colorpick":
             /*
-             * End of Hack by F�lix<INBOX International>
+             * End of Hack by Felix<INBOX International>
              * Adding colorpicker form element
              */
             $ele_value[0] = $value;
