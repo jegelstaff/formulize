@@ -455,7 +455,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
 
 if($_GET['sid'] != "new" && $settings['type'] == 'graph') {
   $adminPage['tabs'][2]['name'] = _AM_ELE_OPT;
-  $adminPage['tabs'][2]['template'] = "db:admin/screen_form_options.html";
+  $adminPage['tabs'][2]['template'] = "db:admin/screen_graph_options.html";
   $adminPage['tabs'][2]['content'] = $options + $common;
 }
 
