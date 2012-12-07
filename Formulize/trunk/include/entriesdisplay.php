@@ -3083,7 +3083,7 @@ if($useXhr) {
 	print "var savingNow = \"\";";
 	print "var elementActive = \"\";";
 ?>
-function renderElement(handle,entryId,fid,check) {
+function renderElement(handle,element_id,entryId,fid,check) {
 	if(elementStates[handle] == undefined) {
 		elementStates[handle] = new Array();
 	}
@@ -3097,27 +3097,29 @@ function renderElement(handle,entryId,fid,check) {
 		elementStates[handle][entryId] = jQuery("#deDiv_"+handle+"_"+entryId).html();
 		var formulize_xhr_params = [];
 		formulize_xhr_params[0] = handle;
-		formulize_xhr_params[1] = entryId;
-		formulize_xhr_params[2] = fid;
+		formulize_xhr_params[1] = element_id;
+		formulize_xhr_params[2] = entryId;
+		formulize_xhr_params[3] = fid;
 		formulize_xhr_send('get_element_html',formulize_xhr_params);
 	} else {
 		if(check && savingNow == "") {
 			savingNow = true;
 			jQuery("#deDiv_"+handle+"_"+entryId).fadeTo("fast",0.33);
-			if(jQuery("[name='de_"+fid+"_"+entryId+"_"+handle+"[]']").length > 0) { 
-			  nameToUse = "[name='de_"+fid+"_"+entryId+"_"+handle+"[]']";
+			if(jQuery("[name='de_"+fid+"_"+entryId+"_"+element_id+"[]']").length > 0) { 
+			  nameToUse = "[name='de_"+fid+"_"+entryId+"_"+element_id+"[]']";
 			} else {
-			  nameToUse = "[name='de_"+fid+"_"+entryId+"_"+handle+"']";
+			  nameToUse = "[name='de_"+fid+"_"+entryId+"_"+element_id+"']";
 			}
-			jQuery.post("<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php", jQuery(nameToUse+",[name='decue_"+fid+"_"+entryId+"_"+handle+"']").serialize(), function(data) {
+			jQuery.post("<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php", jQuery(nameToUse+",[name='decue_"+fid+"_"+entryId+"_"+element_id+"']").serialize(), function(data) {
 				if(data) {
 				   alert(data);	
 				} else {
 					// need to get the current value, and then prep it, and then format it
 					var formulize_xhr_params = [];
 					formulize_xhr_params[0] = handle;
-					formulize_xhr_params[1] = entryId;
-					formulize_xhr_params[2] = fid;
+					formulize_xhr_params[1] = element_id;
+					formulize_xhr_params[2] = entryId;
+					formulize_xhr_params[3] = fid;
 					formulize_xhr_send('get_element_value',formulize_xhr_params);
 				}
 			});
@@ -3133,15 +3135,17 @@ function renderElement(handle,entryId,fid,check) {
 
 function renderElementHtml(elementHtml,params) {
 	handle = params[0];
-	entryId = params[1];
-	fid = params[2];
-	jQuery("#deDiv_"+handle+"_"+entryId).html(elementHtml+"<br /><a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+entryId+", "+fid+",1);return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/check.gif\" /></a>&nbsp;&nbsp;&nbsp;<a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+entryId+", "+fid+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/x-wide.gif\" /></a>");
+	element_id = params[1];
+	entryId = params[2];
+	fid = params[3];
+	jQuery("#deDiv_"+handle+"_"+entryId).html(elementHtml+"<br /><a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+",1);return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/check.gif\" /></a>&nbsp;&nbsp;&nbsp;<a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/x-wide.gif\" /></a>");
 }
 
 function renderElementNewValue(elementValue,params) {
 	handle = params[0];
-	entryId = params[1];
-	fid = params[2];
+	element_id = params[1];
+	entryId = params[2];
+	fid = params[3];
 	jQuery("#deDiv_"+handle+"_"+entryId).fadeTo("fast",1);
 	jQuery("#deDiv_"+handle+"_"+entryId).html(elementValue);
 	elementStates[handle].splice(entryId, 1);

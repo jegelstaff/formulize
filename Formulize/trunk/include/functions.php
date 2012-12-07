@@ -4693,10 +4693,12 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 	if(!isset($cachedFormIds[$handle])) {
 	  if($handle == "mod_datetime" OR $handle == "creation_datetime" OR $handle == "creator_email") {
 		$cachedFormIds[$handle] = $fid;
+		$cachedElementIds[$handle] = $handle;
 	  } else {
 		  $element_handler = xoops_getmodulehandler('elements', 'formulize');
 		  $elementObject = $element_handler->get($handle);
 		  $cachedFormIds[$handle] = $elementObject->getVar('id_form');
+		  $cachedElementIds[$handle] = $elementObject->getVar('ele_id');
 	  }
 	}
 	$fid = $cachedFormIds[$handle];
@@ -4706,7 +4708,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 		}
 		$thisEntryId = isset($localIds[$valueId]) ? $localIds[$valueId] : $entryId;
 		if($counter == 1 AND $deDisplay) {
-			$output .= '<div style="float: left; margin-right: 5px; margin-bottom: 5px;"><a href="" onclick="javascript:renderElement(\''.$handle.'\', '.$thisEntryId.', '.$fid.');return false;"><img src="'.XOOPS_URL.'/modules/formulize/images/kedit.gif" /></a></div>';
+			$output .= '<div style="float: left; margin-right: 5px; margin-bottom: 5px;"><a href="" onclick="javascript:renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.');return false;"><img src="'.XOOPS_URL.'/modules/formulize/images/kedit.gif" /></a></div>';
 		}
 		$output .= '<div class=\'main-cell-div\' id=\'cellcontents_'.$row.'_'.$column.'\'><span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle). '</span>';
 		if($counter<$countOfValue) {

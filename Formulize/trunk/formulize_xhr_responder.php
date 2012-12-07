@@ -115,11 +115,11 @@ switch($op) {
     break;
   case 'get_element_html':
     include_once XOOPS_ROOT_PATH."/modules/formulize/include/elementdisplay.php";
-    displayElement("", mysql_real_escape_string($_GET['param1']), intval($_GET['param2']));
+    displayElement("", mysql_real_escape_string($_GET['param2']), intval($_GET['param3']));
     break;
   case 'get_element_value':
     $handle = $_GET['param1'];
-    $entryId = intval($_GET['param2']);
+    $entryId = intval($_GET['param3']);
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
