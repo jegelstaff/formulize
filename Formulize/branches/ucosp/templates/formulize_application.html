@@ -11,7 +11,7 @@
 
 <{foreach item=thisform from=$appData.formData}>
 
-	<p><a href="<{$xoops_url}>/modules/formulize/index.php?fid=<{$thisform.fid}>"><{$thisform.title}></a></p>
+	<p><a href="<{$thisform.url}>"><{$thisform.title}></a></p>
 
 <{/foreach}>
 

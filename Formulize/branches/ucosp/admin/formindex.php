@@ -1527,8 +1527,91 @@ function patch40() {
                         }
                     }
                 }
+				
+				//create new menus table
+				if(!in_array($xoopsDB->prefix("formulize_menu_links"), $existingTables)) {
+					$menusql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_menu_links")."` (
+						  `menu_id` int(11) unsigned NOT NULL auto_increment,
+						  `appid` int(11) unsigned NOT NULL,
+						  `screen` varchar(11),
+						  `rank` int(11),
+						  `url` varchar(255),
+						  `link_text` varchar(255),
+						  PRIMARY KEY (`menu_id`),
+						  INDEX i_menus_appid (appid)
+						);";
 
+					$menusql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_menu_permissions")."` (
+						  `permission_id` int(11) unsigned NOT NULL auto_increment,
+						  `menu_id` int(11) unsigned NOT NULL,
+						  `group_id` int(11) unsigned NOT NULL,
+						  PRIMARY KEY (`permission_id`),
+						  INDEX i_menu_permissions (menu_id)
+						);";
+					print("creating new menu_links and menu_permissions tables");	
+					foreach($menusql as $key=>$thissql) {
+						
+						if(!$result = $xoopsDB->query($thissql)) {
+							exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+						}
+					}
+					// populate new menus tables with existing menu entries
+					$application_handler = xoops_getmodulehandler('applications', 'formulize');
+					
+					$form_handler = xoops_getmodulehandler('forms', 'formulize');
+					$allApplications = $application_handler->getAllApplications();
+					$menuTexts = array();
+					$i = 0;
+					foreach($allApplications as $thisApplication) {
+						$forms = $thisApplication->getVar('forms');
+						foreach($forms as $thisForm) {
+							$thisFormObject = $form_handler->get($thisForm);
+							if($menuText = $thisFormObject->getVar('menutext')) {
+								saveMenuEntryAndPermissionsSQL($thisFormObject->getVar('id_form'),$thisApplication->getVar("appid"),$i);
+							}
+							$i++;		
+						}
+						$i=0;
+					}		
+					
+					$formsWithNoApplication = $form_handler->getFormsByApplication(0,true); // true forces ids not objects to be returned
+					foreach($formsWithNoApplication as $thisForm) {
+						$thisFormObject = $form_handler->get($thisForm);
+						if($menuText = $thisFormObject->getVar('menutext')) {
+							saveMenuEntryAndPermissionsSQL($thisFormObject->getVar('id_form'),0,$i);
+						}
+						$i++;		
+					}
+						
+
+				}
+				
+				
 		print "DB updates completed.  result: OK";
+	}
+}
+
+function saveMenuEntryAndPermissionsSQL($formid,$appid,$i){
+	global $xoopsDB;
+	$gperm_handler = xoops_gethandler('groupperm');
+	$permissionsql = "";
+	$groupsThatCanView = $gperm_handler->getGroupIds("view_form", $formid, getFormulizeModId());
+	
+	$menuText = html_entity_decode($menuText, ENT_QUOTES) == "Use the form's title" ? '' : $menuText;
+	$thissql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'fid=".$formid."',".$i.",null,'".$menuText."');";//.$permissionsql.";";
+	if(!$result = $xoopsDB->query($thissql)) {
+		exit("Error inserting Menus. SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+	}else{
+		foreach($groupsThatCanView as $groupid) {
+			if($permissionsql != ""){
+				$permissionsql += ",(null,". mysql_insert_id().",". $groupid.")";
+			}else{
+				$permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,". mysql_insert_id().",". $groupid.")";
+			}
+		}
+		if(!$result = $xoopsDB->query($permissionsql)) {
+			exit("Error inserting Menu permissions. SQL dump:<br>" . $permissionsql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+		}
 	}
 }
 
