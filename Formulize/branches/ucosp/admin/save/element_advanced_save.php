@@ -162,22 +162,16 @@ if (!$element_handler->insert($element)) {
 }
 
 //New index handling
-global $xoopsDB;
-$defaultTypeInformation = $element->getDataTypeInformation();
-$defaultType = $defaultTypeInformation['dataType'];
-$defaultTypeSize = $defaultTypeInformation['dataTypeSize'];
-
-$index_fulltext = $defaultType == "text" ? "FULLTEXT" : "INDEX";
-if ($_POST['elements-ele_index'] != $_POST['original_ele_index']) {
-    if ($_POST['elements-ele_index']) {
-        //create new index
-        $sql = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . mysql_real_escape_string($formObject->getVar('form_handle'))) . " ADD $index_fulltext `" . mysql_real_escape_string($element->getVar('ele_handle')) . "` (`" . mysql_real_escape_string($element->getVar('ele_handle')) . "`)";
-        $res = $xoopsDB->query($sql);
-        $reloadneeded = true;
-    } elseif ($_POST['original_ele_index'] AND strlen($_POST['original_index_name']) > 0) {
-        //remove existing index
-        $sql = "DROP INDEX `" . mysql_real_escape_string($_POST['original_index_name']) . "` ON " . $xoopsDB->prefix("formulize_" . mysql_real_escape_string($formObject->getVar('form_handle')));
-        $res = $xoopsDB->query($sql);
+  global $xoopsDB;
+ 
+  if($_POST['elements-ele_index'] != $_POST['original_ele_index']){
+    if($_POST['elements-ele_index']){
+      //create new index
+	  $element->createIndex();
+      $reloadneeded = true;
+    }elseif($_POST['original_ele_index'] AND strlen($_POST['original_index_name']) > 0){
+      //remove existing index
+	  $element->deleteIndex($_POST['original_index_name']);
     }
 }
 

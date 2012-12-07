@@ -10,7 +10,7 @@
 				<fieldset>
 					<legend><label class="question">What links should be on the menu?</label></legend>
 				   
-					
+					<button class="menuButton" id="upButton" type="button" style="display:none" onClick="javascript:moveUp();" >Move Up</button>
 					<select name="menu-items[]" id="menu-items" style="width:100%;" size=10 multiple>
 						<{foreach from=$content.links item=thislink}>
 							<option value=<{$thislink.value}>><{$thislink.text}> 
@@ -20,6 +20,7 @@
 							</option>
 						<{/foreach}>					
 					</select><br />	
+					<button class="menuButton" id="downButton" type="button" style="display:none" onClick="javascript:moveDown();" >Move Down</button>
 					<div class="buttons">
 						<button class="menuButton" id="clearButton" type="button" style="display:none" onClick="javascript:clearSelection();" >Clear Selection</button> &nbsp;
 						<button class="menuButton" type="button" onClick="javascript:deleteMenuItems();" style="float: right">Deleted Selected</button>			
@@ -74,8 +75,51 @@ $("#menu-items").click(function () {
 	}
 	
 	$("#clearButton").show();
+	showHideUpDown();	
 	return true;
 });
+
+function showHideUpDown(){
+	var showUp = true;
+	var showDown = true;
+	var size = $("#menu-items").attr("length");
+	$("#menu-items option:selected").each(function(){
+		if($(this).attr("index")==0){
+			showUp = false;
+		}else if($(this).attr("index")==size-1){
+			showDown = false;
+		}
+	});
+
+	if(showDown){
+		$("#downButton").show();
+	}else{
+		$("#downButton").hide();
+	}
+	if(showUp){
+		$("#upButton").show();
+	}else{
+		$("#upButton").hide();
+	}
+}
+
+function moveUp(){
+	$('#menu-items option:selected').each(function(){
+		$(this).insertBefore($(this).prev());
+	});
+	showHideUpDown();
+	updateMenuItemField();
+	setDisplay('savewarning','block');
+}
+
+function moveDown(){
+	$($('#menu-items option:selected').get().reverse()).each(function(){
+		$(this).insertAfter($(this).next());
+	});
+	showHideUpDown();
+	updateMenuItemField();
+	setDisplay('savewarning','block');
+}
 
 function clearSelection(){
 	$("#menu-items").val("");
@@ -85,6 +129,8 @@ function clearSelection(){
 	$("#groups").val("");
 	$("#addMenuItem").text("Add Menu Item");
 	$("#clearButton").hide();
+	$("#downButton").hide();
+	$("#upButton").hide();
 	$("#addMenuItem").show();
 }
 

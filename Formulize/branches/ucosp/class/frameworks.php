@@ -258,8 +258,20 @@ class formulizeFrameworksHandler {
 	}
 
 	function delete($framework) {
+		global $xoopsDB;
 		if(!is_object($framework) OR get_class($framework) != 'formulizeFramework') { return false; }
 		$sql = array();
+		//remove auto indexes
+		$selectsql = "SELECT fl_key1,fl_key2 FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=".intval($framework->getVar('frid'));
+		$res = $xoopsDB->query($selectsql);
+		
+		if ( $res ) {
+		  while ( $row = $xoopsDB->fetchRow( $res ) ) {
+			$this->deleteIndex($row[0]);
+			$this->deleteIndex($row[1]);
+		  }
+		}
+		
 		$sql[] = "DELETE FROM ".$this->db->prefix("formulize_frameworks")." WHERE `frame_id` = ".intval($framework->getVar('frid'));
 		$sql[] = "DELETE FROM ".$this->db->prefix("formulize_framework_links")." WHERE `fl_frame_id` = ".intval($framework->getVar('frid'));
 		$success = true;
@@ -271,6 +283,16 @@ class formulizeFrameworksHandler {
 		return $success;
 	}
 
+	function deleteIndex($elementID){
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$elementObject = $element_handler->get(intval($elementID));
+		if(is_object($elementObject)){
+			$originalName = $elementObject->has_index();
+			if(strlen($originalName) > 0){
+				$elementObject->deleteIndex($originalName);
+			}
+		}
+	}
 
 	function get($frid) {
 		$frid = intval($frid);

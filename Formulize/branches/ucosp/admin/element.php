@@ -119,7 +119,7 @@ if($_GET['ele_id'] != "new") {
     $advanced['ele_encrypt_yes_on'] = $ele_encrypt ? " checked" : "";
     $advanced['ele_encrypt_show'] = true;
 	
-	$ele_index = has_index($elementObject,$fid);
+	$ele_index = $elementObject->has_index();
     $advanced['original_ele_index'] = strlen($ele_index) > 0;
     $advanced['original_index_name'] = $ele_index;
     $advanced['ele_index_no_on'] = strlen($ele_index) > 0 ? "" : " checked";
