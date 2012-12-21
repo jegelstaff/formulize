@@ -241,8 +241,10 @@ class icms_member_group_membership_Handler extends icms_core_ObjectHandler {
 	 */
 	public function getUsersByGroup($groupid, $limit=0, $start=0) {
 		$ret = array();
-		$sql = "SELECT uid FROM " . icms::$xoopsDB->prefix('groups_users_link')
-			. " WHERE groupid='" . (int) $groupid . "'";
+		$sql = "SELECT link.uid FROM " . icms::$xoopsDB->prefix('groups_users_link') . " as link "
+			. " LEFT JOIN " . icms::$xoopsDB->prefix('users') . " as users "
+			. " ON users.uid = link.uid "
+			. " WHERE link.groupid='" . (int) $groupid . "' ORDER BY users.uname ";
 		$result = icms::$xoopsDB->query($sql, $limit, $start);
 		if (!$result) {
 			return $ret;
