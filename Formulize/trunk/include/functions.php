@@ -2442,8 +2442,8 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 		// look for that uid in the target form
     $data_handler_start = new formulizeDataHandler($startForm);
     $data_handler_target = new formulizeDataHandler($targetForm['fid']);
-    $metaData = $data_handler_start->getEntryMeta($startEntry);
-    $entry_ids = $data_handler_target->getAllEntriesForUsers($metaData['creation_uid'], $all_users, $all_groups);
+    list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler_start->getEntryMeta($startEntry); 
+    $entry_ids = $data_handler_target->getAllEntriesForUsers($creation_uid, $all_users, $all_groups);
     if(count($entry_ids) > 0) {
       $entries_to_return = $entry_ids;
     } else {
@@ -4690,6 +4690,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 	$countOfValue = count($value);
 	$counter = 1;
 	static $cachedFormIds = array();
+	static $cachedElementIds = array();
 	if(!isset($cachedFormIds[$handle])) {
 	  if($handle == "mod_datetime" OR $handle == "creation_datetime" OR $handle == "creator_email") {
 		$cachedFormIds[$handle] = $fid;
