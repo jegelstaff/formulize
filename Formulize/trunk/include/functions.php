@@ -2456,7 +2456,41 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
     $data_handler_start = new formulizeDataHandler($startForm);
     $data_handler_target = new formulizeDataHandler($targetForm['fid']);
     $foundValue = $data_handler_start->getElementValueInEntry($startEntry, $targetForm['keyother']);
-    $entry_ids = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], $foundValue, $all_users, $all_groups);
+    // if keyother is a username list and the found value is numeric, and keyself is not a username list, then convert to the proper sort of name according to the rules for that type of list.
+	  // if keyself is a username list and keyother is not, then lookup the user id for the username that we found
+	  $element_handler = xoops_getmodulehandler('elements', 'formulize');
+	  $otherElement = $element_handler->get($targetForm['keyother']);
+	  $otherEleValue = $otherElement->getVar('ele_value');
+  	  $otherListType = ($otherElement->getVar('ele_type')=="select"
+			    AND is_array($otherEleValue[2])
+			    AND (key($otherEleValue[2]) == "{USERNAMES}" OR key($otherEleValue[2]) == "{FULLNAMES}")) ? key($otherEleValue[2]) : false;
+	  $selfElement = $element_handler->get($targetForm['keyself']);
+	  $selfEleValue = $selfElement->getVar('ele_value');
+  	  $selfListType = ($selfElement->getVar('ele_type')=="select"
+			    AND is_array($selfEleValue[2])
+			    AND (key($selfEleValue[2]) == "{USERNAMES}" OR key($selfEleValue[2]) == "{FULLNAMES}")) ? key($selfEleValue[2]) : false;
+	  if(is_numeric($foundValue) AND $otherListType AND !$selfListType) { // convert found id to the right kind of name
+	    $user = $member_handler->getUser($foundValue);
+	    if(is_object($user)) {
+	      if($otherListType == "{FULLNAMES}") {
+		$foundValue = $user->getVar('name') ? $user->getVar('name') : $user->getVar('uname');
+	      } else {
+		$foundValue = $user->getVar('uname');
+	      }
+	    }
+	  } elseif($selfListType AND !$otherListType) { // convert found value to a user id
+	    $nameType = $selfListType == "{FULLNAMES}" ? 'name' : 'uname';
+	    $criteria = new Criteria($nameType, $foundValue, "=");
+	    $users = $member_handler->getUsers($criteria);
+	    if(empty($users) AND $selfListType == "{FULLNAMES}") {
+              $criteria = new Criteria('uname', $foundValue, "=");
+	      $users = $member_handler->getUsers($criteria);
+	    }
+	    if(isset($users[0])) {
+	      $foundValue = $users[0]->getVar('uid');	      
+	    }
+	  }
+	$entry_ids = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], $foundValue, $all_users, $all_groups);
     if(count($entry_ids) > 0) {
       $entries_to_return = $entry_ids;
     } else {
