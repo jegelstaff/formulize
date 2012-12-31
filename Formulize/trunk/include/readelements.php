@@ -287,7 +287,7 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 				$foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
 			}
 			foreach($foundEntries['entries'][$fid] as $mainFormEntry) {
-				if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived)) {
+				if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived) AND $mainFormEntry) {
 					formulize_updateDerivedValues($mainFormEntry, $fid, $frid);
 					$mainFormEntriesUpdatedForDerived[] = $mainFormEntry;
 					if(!isset($formsUpdatedInFramework[$allWrittenFid])) { // if the form we're on has derived values, then flag it as one of the updated forms
