@@ -903,7 +903,7 @@ function deleteIdReq($id_req, $fid) {
 
 	$data_handler = new formulizeDataHandler($fid);
 	if(!$deleteResult = $data_handler->deleteEntries($id_req)) {
-	  	exit("Error deleting entries from the database for form $fid");
+	  	exit("<br />Error deleting entry $id_req from the database for form $fid<br />");
 	}
 
 	deleteMaintenance($id_req, $fid);
@@ -1144,7 +1144,7 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
 			}
 		}
   }
-  
+
   foreach($one_to_many as $many_fid) {
     $sub_fids[] = $many_fid['fid'];
     if(isset($entries[$fid][0])) {
