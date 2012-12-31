@@ -212,7 +212,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 							$oomfilter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
 						}
 					} else {
-						if($filter) {
+						if(!$filter) {
 							$filter = $entry."][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
 						} else {
 							$filter .= "][".$elements[$i]."/**/".trans($terms[$i])."/**/".$ops[$i];
