@@ -178,6 +178,10 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	}
 	
 	if($allowed) {
+		
+		if($element->getVar('ele_type') == "subform") {
+			return array("", $isDisabled);
+		}
 
 		if(isset($GLOBALS['formulize_forceElementsDisabled']) AND $GLOBALS['formulize_forceElementsDisabled'] == true) {
 			$isDisabled = true;

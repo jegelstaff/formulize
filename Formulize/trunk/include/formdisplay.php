@@ -1899,8 +1899,16 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 		$req = !$isDisabled ? intval($i->getVar('ele_req')) : 0; 
 		
 		if($ele_type == "subform") {
-			$thissfid = $ele_value[0];		
-			if($passed = security_check($thissfid) AND in_array($thissfid, $sub_fids)) {
+			$thissfid = $ele_value[0];
+			$deReturnValue = displayElement("", $i, $entry, false, $screen, $prevEntry, false, $profileForm, $groups); // do this just to evaluate any conditions...it won't actually render anything, but will return "" for the first key in the array, if the element is allowed
+			if(is_array($deReturnValue)) {
+				$form_ele = $deReturnValue[0];
+				$isDisabled = $deReturnValue[1];
+			} else {
+				$form_ele = $deReturnValue;
+				$isDisabled = false;
+			}
+			if($passed = security_check($thissfid) AND in_array($thissfid, $sub_fids) AND $form_ele == "") {
 				$GLOBALS['sfidsDrawn'][] = $thissfid;
 				$customCaption = $i->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
