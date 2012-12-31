@@ -296,11 +296,15 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			// for other elements, generate the default is too tricky to get it to work at present, not enough time available
 			$element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$elementObject = $element_handler->get($filterElements[$i]);
-			$ele_type = $elementObject->getVar('ele_type');
-			if($ele_type == "text" OR $ele_type == "textarea") {
-				$ele_value = $elementObject->getVar('ele_value');
-				$defaultKey = $ele_type == "text" ? 2 : 0; // default key is in different places for different types of elements
-				$compValue = getTextboxDefault($ele_value[$defaultKey], $elementObject->getVar('id_form'), $entry);
+			if(is_object($elementObject)) {
+				$ele_type = $elementObject->getVar('ele_type');
+				if($ele_type == "text" OR $ele_type == "textarea") {
+					$ele_value = $elementObject->getVar('ele_value');
+					$defaultKey = $ele_type == "text" ? 2 : 0; // default key is in different places for different types of elements
+					$compValue = getTextboxDefault($ele_value[$defaultKey], $elementObject->getVar('id_form'), $entry);
+				} else {
+					$compValue = "";
+				}
 			} else {
 				$compValue = "";
 			}
