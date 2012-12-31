@@ -4568,7 +4568,11 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
 		  $targetSourceHandle = $targetElementEleValueProperties[1]; // get the element handle in the source source form
 		  // now build a comparison value that contains a subquery on the source source form, instead of a literal match to the source form
 		  if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
-		    $filterTermToUse = " curlybracketform.`".mysql_real_escape_string(substr($filterTerms[$filterId],1,-1))."` ";
+		    if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)])) {
+		      $filterTermToUse = "'".$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)]."'";  
+		    } else {
+		      $filterTermToUse = " curlybracketform.`".mysql_real_escape_string(substr($filterTerms[$filterId],1,-1))."` ";
+		    }
 		    $curlyBracketFormFrom = ", ".$xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
 		    // figure out if the curlybracketform field is linked and pointing to the same source as the target element is pointing to
 		    // because if it is, then we don't need to do a subquery later, we just compare directly to the $filterTermToUse
@@ -4594,7 +4598,7 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
 		  if(!$conditionsFilterComparisonValue) {
 		    $conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE `$targetSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.$filterTermToUse.$likebits.$quotes."),',$origlikebits') ";
 		  }
-		  if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
+		  if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)])) {
 		    $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntry ";
 		  }
 	  }
