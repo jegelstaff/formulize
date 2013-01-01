@@ -4572,8 +4572,8 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
 		      $filterTermToUse = "'".$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)]."'";  
 		    } else {
 		      $filterTermToUse = " curlybracketform.`".mysql_real_escape_string(substr($filterTerms[$filterId],1,-1))."` ";
+		      $curlyBracketFormFrom = ", ".$xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
 		    }
-		    $curlyBracketFormFrom = ", ".$xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
 		    // figure out if the curlybracketform field is linked and pointing to the same source as the target element is pointing to
 		    // because if it is, then we don't need to do a subquery later, we just compare directly to the $filterTermToUse
 		    $curlyBracketElementObject = $element_handler->get(substr($filterTerms[$filterId],1,-1));

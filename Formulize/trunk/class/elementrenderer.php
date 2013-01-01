@@ -170,6 +170,7 @@ class formulizeElementRenderer{
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
 					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
 					$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
 					if($this->_ele->getVar('ele_req')) { // need to manually handle required setting, since only one validation routine can run for an element, so we need to include required checking in this unique checking routine, if the user selected required too
 						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.value == '' ) {\n";
@@ -192,6 +193,12 @@ class formulizeElementRenderer{
 					$form_ele->customValidationCode[] = "return false;\n"; 
 					$form_ele->customValidationCode[] = "}\n";
 					
+				} elseif($this->_ele->getVar('ele_req') AND !$isDisabled) {
+					$eltname = $form_ele_id;
+					$eltcaption = $ele_caption;
+					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+					$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
+					$form_ele->customValidationCode[] = "if (myform.{$eltname}.value == \"\") { window.alert(\"{$eltmsg}\"); myform.{$eltname}.focus(); return false; }";
 				}
 
 			break;

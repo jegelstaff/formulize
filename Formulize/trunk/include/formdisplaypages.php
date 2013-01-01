@@ -457,6 +457,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		    print "<div id='formulizeform'><form id='formulize' name='formulize' action='".getCurrentURL()."' method='post' onsubmit='return xoopsFormValidate_formulize();' enctype='multipart/form-data'>";
 		    foreach ($elements_allowed as $thisElement) {   // entry is a recordid, $thisElement is the element id
 			    // to get the conditional logic to be captured, we should buffer the drawing of the displayElement, and then output that later, because when displayElement does NOT return an object, then we get conditional logic -- subform rendering does it this way
+			    unset($form_ele); // previously set elements may linger when added to the form object, due to assignment of objects by reference or something odd like that...legacy of old code in the form class I think
 			    $deReturnValue = displayElement("", $thisElement, $entry, false, $screen, null, false);
 			    if (is_array($deReturnValue)) {
 				    $form_ele = $deReturnValue[0];
