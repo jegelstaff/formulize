@@ -99,9 +99,6 @@ if ( $res ) {
 
 $myts =& MyTextSanitizer::getInstance();
 $title = $myts->displayTarea($desc_form);
-if(!isset($formulize_screen_id)) {
-  $xoopsTpl->assign('xoops_pagetitle', $title);
-} 
 
 // get the global or group permission
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
@@ -247,7 +244,11 @@ if(!$rendered) {
 // renderedFormulizeScreen is a global, and might be altered by entriesdisplay.php if it sends the user off to a different screen (like a form screen instead of the list)
 if($renderedFormulizeScreen AND is_object($xoopsTpl)) {
   $xoopsTpl->assign('xoops_pagetitle', $renderedFormulizeScreen->getVar('title'));
+  $xoopsTpl->assign('icms_pagetitle', $renderedFormulizeScreen->getVar('title'));
   $xoopsTpl->assign('formulize_screen_id', $renderedFormulizeScreen->getVar('sid'));
+} else {
+  $xoopsTpl->assign('xoops_pagetitle', $title);
+  $xoopsTpl->assign('icms_pagetitle', $title);
 }
 
 $GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering]; // go back to the previous rendering flag, in case this operation was nested inside something else
