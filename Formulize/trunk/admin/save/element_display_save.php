@@ -101,7 +101,14 @@ $elementFilterSettings[2] = $_POST["elementfilter_terms"];
 $elementFilterSettings[3] = $_POST["elementfilter_types"];
 	
 $element->setVar('ele_filtersettings',$elementFilterSettings); // do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays
-    
+
+// check that the checkboxes have no values, and if so, set them to "" in the processedValues array
+if(!isset($_POST['elements-ele_forcehidden'])) {
+    $processedValues['elements']['ele_forcehidden'] = "";
+}
+if(!isset($_POST['elements-ele_private'])) {
+    $processedValues['elements']['ele_private'] = "";
+}
 foreach($processedValues['elements'] as $property=>$value) {
   $element->setVar($property, $value);
 }
