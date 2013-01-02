@@ -11,14 +11,19 @@ if(file_exists("../../../cache/".$cache)) {
 }
 
 if(count($found) == 0) {
-  include_once "../../../mainfile.php";
-  global $xoopsConfig;
-  if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
-  	include_once "../language/".$xoopsConfig['language']."/main.php";
-  } else {
-  	include_once "../language/english/main.php";
-  }
-  $found[]='["'._formulize_NO_MATCH_FOUND.'","none"]';
+    if($_GET['allow_new_values']) {
+        // write the $term and newterm:$term as the key/value
+        $found[] = '["'.$term.'","newvalue:'.$term.'"]';
+    } else {
+        include_once "../../../mainfile.php";
+        global $xoopsConfig;
+        if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
+            include_once "../language/".$xoopsConfig['language']."/main.php";
+        } else {
+            include_once "../language/english/main.php";
+        }
+        $found[]='["'._formulize_NO_MATCH_FOUND.'","none"]';
+    }
 }
 
 print "[".implode(",", $found)."]";

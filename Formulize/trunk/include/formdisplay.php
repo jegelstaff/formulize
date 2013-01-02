@@ -642,12 +642,18 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 						if($thisLink->getVar('common')) {
 							if(!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") {
 								// if we don't have a value for this element, then populate it with the value from the other element
+                                if($_POST["de_".$form2."_new_".$key2] == "{ID}") {
+                                    $_POST["de_".$form2."_new_".$key2] = $GLOBALS['formulize_newEntryIds'][$form2][0];
+                                }
 								formulize_writeEntry(array($key1=>$_POST["de_".$form2."_new_".$key2]), $GLOBALS['formulize_newEntryIds'][$form1][0]);
 							} elseif(!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") {
 								// if we don't have a value for this element, then populate it with the value from the other element
+                                if($_POST["de_".$form1."_new_".$key1] == "{ID}") {
+                                    $_POST["de_".$form1."_new_".$key1] = $GLOBALS['formulize_newEntryIds'][$form1][0];
+                                }
 								formulize_writeEntry(array($key2=>$_POST["de_".$form1."_new_".$key1]), $GLOBALS['formulize_newEntryIds'][$form2][0]);
 							}
-						} else {
+						} elseif($thisLink->getVar('unifiedDisplay')) {
 							// figure out which one is on which side of the linked selectbox
 							$element_handler = xoops_getmodulehandler('elements', 'formulize');
 							$linkedElement1 = $element_handler->get($key1);

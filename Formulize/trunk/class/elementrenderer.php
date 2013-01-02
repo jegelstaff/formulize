@@ -1175,15 +1175,16 @@ class formulizeElementRenderer{
 		$output .= "<script type='text/javascript'>";
 		// need to declare this as jQuery so that everything "just works" when being called in an environment where $ is owned by something else
 		// need to wrap it in window.load because Chrome does unusual things with the DOM and makes it ready before it's populated with content!!  (so document.ready doesn't do the trick)
-		$output .= 'jQuery(window).load(function() { ';
-		
-		$output .= "if( window.on_".$form_ele_id." )\n";
-		$output .= 'jQuery(function(){jQuery("#'.$form_ele_id.'_user'.'").quickselect({ajax: "'.XOOPS_URL.'/modules/formulize/include/formulize_quickselect.php",ajaxParams:{cache:"'.$cachedLinkedOptionsFilename.'"},maxVisibleItems:12,additionalFields: jQuery("#'.$form_ele_id.'"),onItemSelect: on_'.$form_ele_id.'});});';
-		$output .= "\nelse\n";
-		$output .= 'jQuery(function(){jQuery("#'.$form_ele_id.'_user'.'").quickselect({ajax: "'.XOOPS_URL.'/modules/formulize/include/formulize_quickselect.php",ajaxParams:{cache:"'.$cachedLinkedOptionsFilename.'"},maxVisibleItems:12,additionalFields: jQuery("#'.$form_ele_id.'")});});';
 
+		// item 16 determines whether the list box allows new values to be entered
+        $ele_value = $this->_ele->getVar('ele_value');
+        $allow_new_values = isset($ele_value[16]) ? $ele_value[16] : 0;
+		$output .= 'jQuery(window).load(function() { ';
+		$output .= "if( window.on_".$form_ele_id." )\n";
+		$output .= 'jQuery(function(){jQuery("#'.$form_ele_id.'_user'.'").quickselect({ajax: "'.XOOPS_URL.'/modules/formulize/include/formulize_quickselect.php",ajaxParams:{cache:"'.$cachedLinkedOptionsFilename.'", allow_new_values:"'.$allow_new_values.'"},maxVisibleItems:12,additionalFields: jQuery("#'.$form_ele_id.'"),onItemSelect: on_'.$form_ele_id.'});});';
+		$output .= "\nelse\n";
+		$output .= 'jQuery(function(){jQuery("#'.$form_ele_id.'_user'.'").quickselect({ajax: "'.XOOPS_URL.'/modules/formulize/include/formulize_quickselect.php",ajaxParams:{cache:"'.$cachedLinkedOptionsFilename.'", allow_new_values:"'.$allow_new_values.'"},maxVisibleItems:12,additionalFields: jQuery("#'.$form_ele_id.'")});});';
 		$output .= '});';
-		
 		$output .= "\n</script>";
 
 		return $output;

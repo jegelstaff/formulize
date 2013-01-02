@@ -1690,12 +1690,12 @@ function prepDataForWrite($element, $ele) {
 	$ele_id = $element->getVar('ele_id');
 		switch($ele_type){
 				case 'text':
-					if($ele_value[3]) { // if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
+					if($ele_value[3] AND $ele != "{ID}" AND $ele != "{SEQUENCE}") { // if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
 						$value = ereg_replace ('[^0-9.-]+', '', $ele);
 					} else {
 						$value = $ele; 
 					}
-                                        if(get_magic_quotes_gpc()) { $value = stripslashes($value); }
+                    if(get_magic_quotes_gpc()) { $value = stripslashes($value); }
 					$value = $myts->htmlSpecialChars($value);
 				break;
 				case 'textarea':
@@ -1759,56 +1759,68 @@ function prepDataForWrite($element, $ele) {
           }
 				break;
 				case 'select':
-          
-          // handle the new possible default value -- sept 7 2007
-              if($ele_value[0] == 1 AND $ele == "none") { // none is the flag for the "Choose an option" default value
-                $value = "{WRITEASNULL}"; // this flag is used to terminate processing of this value
-                break;
-              }
-          
-					// section to handle linked select boxes differently from others...
-          $ele_value_from_object = $element->getVar('ele_value');
-					if(strstr($ele_value_from_object[2], "#*=:*")) { // if we've got a formlink, then handle it here...
-						if(is_array($ele)) {
-							$startWhatWasSelected = true;
-              foreach($ele as $whatwasselected) {
-								if(!is_numeric($whatwasselected)) { continue; }
-								if($startWhatWasSelected) {
-									$value = ",";
-									$startWhatWasSelected = false;
-								}
-                $value .= $whatwasselected.",";
-              }
-						} elseif(is_numeric($ele)) {
-              $value = ",".$ele.",";
-						}	else {
-							$value = "";
-						}
-//						print "<br>VALUE: $value";	
-						break;			
-					}
-					else
-					{
 
+            // handle the new possible default value -- sept 7 2007
+            if($ele_value[0] == 1 AND $ele == "none") { // none is the flag for the "Choose an option" default value
+              $value = "{WRITEASNULL}"; // this flag is used to terminate processing of this value
+              break;
+            }
 
-					$value = '';
+            if(substr($ele, 0, 9) == "newvalue:") {
+                // need to add a new entry to the underlying source form if this is a link
+                // need to add an option to the option list for the element list, if this is not a link...to do later
+                $newValue = substr($ele, 9);
+                if($element->isLinked) {
+                  $boxproperties = explode("#*=:*", $ele_value[2]);
+                  $sourceHandle = $boxproperties[1];
+                  $newEntryId = formulize_writeEntry(array($sourceHandle=>$newValue));
+                  $value = ",".$newEntryId.",";
+                } else {
+		  $value = $newValue;
+		  $element_handler = xoops_getmodulehandler('elements', 'formulize');
+		  $ele_value[2][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
+		  $element->setVar('ele_value', $ele_value);
+		  $element_handler->insert($element);
+                }
+		break;
+            }
 
-              
-
-							// The following code block is a replacement for the previous method for reading a select box which didn't work reliably -- jwe 7/26/04
-							// print_r($ele_value[2]);
-							$temparraykeys = array_keys($ele_value[2]);
-							if($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s) -- updated for real live use September 6 2006
-								if(is_array($ele)) {
-									$value = "";
-									foreach($ele as $auid) {
-										$value .= "*=+*:" . $auid;
-									}
-								} else {
-									$value = $ele;
-								}
-								break;
-							}
+	    // section to handle linked select boxes differently from others...
+	    $ele_value_from_object = $element->getVar('ele_value');
+	    if(strstr($ele_value_from_object[2], "#*=:*")) { // if we've got a formlink, then handle it here...
+	      if(is_array($ele)) {
+		$startWhatWasSelected = true;
+	        foreach($ele as $whatwasselected) {
+		  if(!is_numeric($whatwasselected)) { continue; }
+		  if($startWhatWasSelected) {
+		    $value = ",";
+		    $startWhatWasSelected = false;
+		  }
+		  $value .= $whatwasselected.",";
+		}
+	      } elseif(is_numeric($ele)) {
+	        $value = ",".$ele.",";
+	      }	else {
+		$value = "";
+	      }
+	      // print "<br>VALUE: $value";
+	      break;
+	    } else {
+	      $value = '';
+	      // The following code block is a replacement for the previous method for reading a select box which didn't work reliably -- jwe 7/26/04
+	      // print_r($ele_value[2]);
+	      $temparraykeys = array_keys($ele_value[2]);
+	      if($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s) -- updated for real live use September 6 2006
+		      if(is_array($ele)) {
+			      $value = "";
+			      foreach($ele as $auid) {
+				      $value .= "*=+*:" . $auid;
+			      }
+		      } else {
+			      $value = $ele;
+		      }
+		      break;
+	      }
 
               // THIS REALLY OLD CODE IS HARD TO READ....HERE'S A GLOSS...
               // ele_value[2] is all the options that make up this element.  The values passed back from the form will be numbers indicating which value was selected.  First value is 0 for a multi-selection box, and 1 for a single selection box.
@@ -2442,8 +2454,8 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 		// look for that uid in the target form
     $data_handler_start = new formulizeDataHandler($startForm);
     $data_handler_target = new formulizeDataHandler($targetForm['fid']);
-    list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler_start->getEntryMeta($startEntry); 
-    $entry_ids = $data_handler_target->getAllEntriesForUsers($creation_uid, $all_users, $all_groups);
+    $metaData = $data_handler_start->getEntryMeta($startEntry);
+    $entry_ids = $data_handler_target->getAllEntriesForUsers($metaData['creation_uid'], $all_users, $all_groups);
     if(count($entry_ids) > 0) {
       $entries_to_return = $entry_ids;
     } else {
@@ -2456,41 +2468,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
     $data_handler_start = new formulizeDataHandler($startForm);
     $data_handler_target = new formulizeDataHandler($targetForm['fid']);
     $foundValue = $data_handler_start->getElementValueInEntry($startEntry, $targetForm['keyother']);
-    // if keyother is a username list and the found value is numeric, and keyself is not a username list, then convert to the proper sort of name according to the rules for that type of list.
-	  // if keyself is a username list and keyother is not, then lookup the user id for the username that we found
-	  $element_handler = xoops_getmodulehandler('elements', 'formulize');
-	  $otherElement = $element_handler->get($targetForm['keyother']);
-	  $otherEleValue = $otherElement->getVar('ele_value');
-  	  $otherListType = ($otherElement->getVar('ele_type')=="select"
-			    AND is_array($otherEleValue[2])
-			    AND (key($otherEleValue[2]) == "{USERNAMES}" OR key($otherEleValue[2]) == "{FULLNAMES}")) ? key($otherEleValue[2]) : false;
-	  $selfElement = $element_handler->get($targetForm['keyself']);
-	  $selfEleValue = $selfElement->getVar('ele_value');
-  	  $selfListType = ($selfElement->getVar('ele_type')=="select"
-			    AND is_array($selfEleValue[2])
-			    AND (key($selfEleValue[2]) == "{USERNAMES}" OR key($selfEleValue[2]) == "{FULLNAMES}")) ? key($selfEleValue[2]) : false;
-	  if(is_numeric($foundValue) AND $otherListType AND !$selfListType) { // convert found id to the right kind of name
-	    $user = $member_handler->getUser($foundValue);
-	    if(is_object($user)) {
-	      if($otherListType == "{FULLNAMES}") {
-		$foundValue = $user->getVar('name') ? $user->getVar('name') : $user->getVar('uname');
-	      } else {
-		$foundValue = $user->getVar('uname');
-	      }
-	    }
-	  } elseif($selfListType AND !$otherListType) { // convert found value to a user id
-	    $nameType = $selfListType == "{FULLNAMES}" ? 'name' : 'uname';
-	    $criteria = new Criteria($nameType, $foundValue, "=");
-	    $users = $member_handler->getUsers($criteria);
-	    if(empty($users) AND $selfListType == "{FULLNAMES}") {
-              $criteria = new Criteria('uname', $foundValue, "=");
-	      $users = $member_handler->getUsers($criteria);
-	    }
-	    if(isset($users[0])) {
-	      $foundValue = $users[0]->getVar('uid');	      
-	    }
-	  }
-	$entry_ids = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], $foundValue, $all_users, $all_groups);
+    $entry_ids = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], $foundValue, $all_users, $all_groups);
     if(count($entry_ids) > 0) {
       $entries_to_return = $entry_ids;
     } else {
@@ -4728,7 +4706,6 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 	$countOfValue = count($value);
 	$counter = 1;
 	static $cachedFormIds = array();
-	static $cachedElementIds = array();
 	if(!isset($cachedFormIds[$handle])) {
 	  if($handle == "mod_datetime" OR $handle == "creation_datetime" OR $handle == "creator_email") {
 		$cachedFormIds[$handle] = $fid;
