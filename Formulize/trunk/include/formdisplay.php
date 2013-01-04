@@ -639,19 +639,21 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 						$form2 = $thisLink->getVar('form2');
 						$key1 = $thisLink->getVar('key1');
 						$key2 = $thisLink->getVar('key2');
+						$form1EntryId = "";
+						$form2EntryId = "";
 						if($thisLink->getVar('common')) {
 							if(!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") {
 								// if we don't have a value for this element, then populate it with the value from the other element
                                 if($_POST["de_".$form2."_new_".$key2] == "{ID}") {
                                     $_POST["de_".$form2."_new_".$key2] = $GLOBALS['formulize_newEntryIds'][$form2][0];
                                 }
-								formulize_writeEntry(array($key1=>$_POST["de_".$form2."_new_".$key2]), $GLOBALS['formulize_newEntryIds'][$form1][0]);
+								$form1EntryId = formulize_writeEntry(array($key1=>$_POST["de_".$form2."_new_".$key2]), $GLOBALS['formulize_newEntryIds'][$form1][0]);
 							} elseif(!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") {
 								// if we don't have a value for this element, then populate it with the value from the other element
                                 if($_POST["de_".$form1."_new_".$key1] == "{ID}") {
                                     $_POST["de_".$form1."_new_".$key1] = $GLOBALS['formulize_newEntryIds'][$form1][0];
-                                }
-								formulize_writeEntry(array($key2=>$_POST["de_".$form1."_new_".$key1]), $GLOBALS['formulize_newEntryIds'][$form2][0]);
+							}
+								$form2EntryId = formulize_writeEntry(array($key2=>$_POST["de_".$form1."_new_".$key1]), $GLOBALS['formulize_newEntryIds'][$form2][0]);
 							}
 						} elseif($thisLink->getVar('unifiedDisplay')) {
 							// figure out which one is on which side of the linked selectbox
@@ -660,11 +662,17 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 							$linkedElement1EleValue = $linkedElement1->getVar('ele_value');
 							if(strstr($linkedElement1EleValue[2], "#*=:*")) {
 								// element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1 with , , around it
-								formulize_writeEntry(array($key1=>",".$GLOBALS['formulize_newEntryIds'][$form2][0].","), $GLOBALS['formulize_newEntryIds'][$form1][0]);
+								$form1EntryId = formulize_writeEntry(array($key1=>",".$GLOBALS['formulize_newEntryIds'][$form2][0].","), $GLOBALS['formulize_newEntryIds'][$form1][0]);
 							} else {
 								// element 2 is the linked selectbox, so get the value of entry id for what we just created in form 1 and put it in element 2 with , , around it
-								formulize_writeEntry(array($key2=>",".$GLOBALS['formulize_newEntryIds'][$form1][0].","), $GLOBALS['formulize_newEntryIds'][$form2][0]);
+								$form2EntryId = formulize_writeEntry(array($key2=>",".$GLOBALS['formulize_newEntryIds'][$form1][0].","), $GLOBALS['formulize_newEntryIds'][$form2][0]);
 							}
+						}
+						if($form1EntryId) {
+							$entries[$form1][0] = $form1EntryId;
+						}
+						if($form2EntryId) {
+							$entries[$form2][0] = $form2EntryId;
 						}
 					} 
 				}
@@ -1186,7 +1194,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries, $subformConditions, $subformElementId = 0,
 	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES) {
 
-    $addEntriesText = $addEntriesText ? $addEntriesText : _formulize_ADD_ENTRIES;
+        $addEntriesText = $addEntriesText ? $addEntriesText : _formulize_ADD_ENTRIES;
 	// only the text value is a valid flag for hiding the entries because we can't use null since older subforms will have no value for this flag
 	$hideaddentries = $hideaddentries === 'hideaddentries' ? 1 : 0;
 
@@ -1607,7 +1615,7 @@ $col_two .= "
 
 	} // end of if we're closing the subform inferface where entries are supposed to be collapsable forms
 
-    $deleteButton = "";
+        $deleteButton = "";
 	if(((count($sub_entries[$sfid])>0 AND $sub_entries[$sfid][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
         $deleteButton = "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\">";
 		static $deletesubsflagIncluded = false;
