@@ -27,12 +27,13 @@
 	    <div class="form-item"><input type="checkbox" id="element-subformaddentries" name="elements-ele_value[6]" <{if $content.ele_value[6]!='hideaddentries'}>checked="checked"<{/if}> value="1"/> Show the "Add x Entries" button below the list of subform entries?
 	     <div class="description">The "Add x Entries" button lets users create additional entries in the subform.  The page reloads with that number of new entries visible.</div>
 	    </div>
-	
-          
+            <div class="form-item">
+                <p>What text should be used to describe each entry? ie: Add x Entries, Add x Participants, Add x Activities, etc.<br />
+                &nbsp;&nbsp;&nbsp;Add x <input type="text" name="elements-ele_value[9]" value="<{if $content.ele_value[9]}><{$content.ele_value[9]}><{else}><{$smarty.const._formulize_ADD_ENTRIES}><{/if}>" /></p>
+            </div>
 	</fieldset>
     </div>
-    
-    
+
 		<div class="form-item">
 			<fieldset>
 				<legend><{$smarty.const._AM_ELE_SUBFORM_ELEMENT_LIST}></legend>

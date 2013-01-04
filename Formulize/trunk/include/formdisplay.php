@@ -1181,9 +1181,14 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 }
 
 // this function draws in the UI for sub links
-function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption="", $customElements="", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings=0, $overrideOwnerOfNewEntries="", $mainFormOwner=0, $hideaddentries, $subformConditions, $subformElementId=0, $rowsOrForms='row') {
+function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry,
+	$customCaption = "", $customElements = "", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings = 0,
+	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries, $subformConditions, $subformElementId = 0,
+	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES) {
 
-	$hideaddentries = $hideaddentries === 'hideaddentries' ? 1 : 0; // only the text value is a valid flag for hiding the entries...because we need an affirmative hide flag, we can't use null, blank, etc, since older subforms will have no value for this flag
+    $addEntriesText = $addEntriesText ? $addEntriesText : _formulize_ADD_ENTRIES;
+	// only the text value is a valid flag for hiding the entries because we can't use null since older subforms will have no value for this flag
+	$hideaddentries = $hideaddentries === 'hideaddentries' ? 1 : 0;
 
 	global $xoopsDB, $nosubforms;
 	$GLOBALS['framework'] = $frid;
@@ -1602,22 +1607,20 @@ $col_two .= "
 
 	} // end of if we're closing the subform inferface where entries are supposed to be collapsable forms
 
-
-	if($addSubEntry = $gperm_handler->checkRight("add_own_entry", $sfid, $groups, $mid) AND !$hideaddentries) {
-		if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] === "" AND $sub_single) {
-			$col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$sfid', 1, $subformElementId);\"></p>";
-		} elseif(!$sub_single) {
-			$col_two .=  "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$sfid', window.document.formulize.addsubentries$sfid$subformElementId.value, $subformElementId);\"><input type=text name=addsubentries$sfid$subformElementId id=addsubentries$sfid$subformElementId value=1 size=2 maxlength=2>" . _formulize_ADD_ENTRIES . "</p>";
-		}
-	}
+    $deleteButton = "";
 	if(((count($sub_entries[$sfid])>0 AND $sub_entries[$sfid][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
-		// $col_one .= "<br>" . _formulize_ADD_HELP4 . "</p><p><input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\">";
-		// re-org of the "columns" means we want this button in the second button in the bottom row now...
-		$col_two = str_replace("maxlength=2>" . _formulize_ADD_ENTRIES . "</p>", "maxlength=2>" . _formulize_ADD_ENTRIES . "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\"></p>", $col_two);
+        $deleteButton = "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\">";
 		static $deletesubsflagIncluded = false;
 		if(!$deletesubsflagIncluded) {
 			$col_one .= "\n<input type=hidden name=deletesubsflag value=''>\n";
 			$deletesubsflagIncluded = true;
+		}
+	}
+	if($addSubEntry = $gperm_handler->checkRight("add_own_entry", $sfid, $groups, $mid) AND !$hideaddentries) {
+		if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] === "" AND $sub_single) {
+			$col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$sfid', 1, $subformElementId);\"></p>";
+		} elseif(!$sub_single) {
+			$col_two .= "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$sfid', window.document.formulize.addsubentries$sfid$subformElementId.value, $subformElementId);\"><input type=text name=addsubentries$sfid$subformElementId id=addsubentries$sfid$subformElementId value=1 size=2 maxlength=2>".$addEntriesText.$deleteButton."</p>";
 		}
 	}
 	$col_one .= "</p>";
@@ -1918,7 +1921,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$GLOBALS['sfidsDrawn'][] = $thissfid;
 				$customCaption = $i->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
-				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form
+				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
 				if(isset($subUICols['single'])) {
 					$form->insertBreak($subUICols['single'], "even");
 				} else {
