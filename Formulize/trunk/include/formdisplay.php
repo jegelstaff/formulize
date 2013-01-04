@@ -2561,6 +2561,7 @@ $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 // need to setup governing elements array...which is inverse of the conditional elements
 $element_handler = xoops_getmodulehandler('elements','formulize');
 $governingElements = array();
+$GLOBALS['recordedEntries'] = array(); // global array used in the compile functions below, to make sure we only record a given element pair one time
 foreach($conditionalElements as $handle=>$theseGoverningElements) {
 	foreach($theseGoverningElements as $governingElementKey=>$thisGoverningElement) {
 		$elementObject = $element_handler->get($thisGoverningElement);
@@ -2729,12 +2730,16 @@ function compileGoverningElements($entries, $governingElements, $elementObject, 
 	} else {
 		$additionalNameParts = "";
 	}
+	global $recordedEntries;
 	if(isset($entries[$elementObject->getVar('id_form')])) {
 		foreach($entries[$elementObject->getVar('id_form')] as $thisEntry) {
 			if($thisEntry == "") {
 				$thisEntry = "new";
 			}
+			if(!isset($recordedEntries[$elementObject->getVar('id_form')][$thisEntry][$elementObject->getVar('ele_id')][$handle])) {
 			$governingElements['de_'.$elementObject->getVar('id_form').'_'.$thisEntry.'_'.$elementObject->getVar('ele_id').$additionalNameParts][] = $handle;
+				$recordedEntries[$elementObject->getVar('id_form')][$thisEntry][$elementObject->getVar('ele_id')][$handle] = true;
+			}
 		}
 	}
 	return $governingElements;
@@ -2747,6 +2752,7 @@ function compileGoverningLinkedSelectBoxSourceConditionElements($governingElemen
 	$handleParts = explode("_",$handle); // de, fid, entry, elementId
 	$element_handler = xoops_getmodulehandler('elements','formulize');
 	$elementObject = $element_handler->get($handleParts[3]);
+	global $recordedEntries;
 	if(is_object($elementObject) AND $elementObject->isLinked) {
 		$ele_value = $elementObject->getVar('ele_value');
 		$elementConditions = $ele_value[5];
@@ -2754,7 +2760,10 @@ function compileGoverningLinkedSelectBoxSourceConditionElements($governingElemen
 			if(substr($thisTerm,0,1)=="{" AND substr($thisTerm, -1) == "}") {
 				// figure out the element, which is presumably in the same form, and assume the same entry
 				$curlyBracketElement = $element_handler->get(trim($thisTerm,"{}"));
+				if(!isset($recordedEntries[$curlyBracketElement->getVar('id_form')][$handleParts[2]][$curlyBracketElement->getVar('ele_id')][$handle])) {
 				$governingElements['de_'.$curlyBracketElement->getVar('id_form').'_'.$handleParts[2].'_'.$curlyBracketElement->getVar('ele_id')][] = $handle;
+					$recordedEntries[$curlyBracketElement->getVar('id_form')][$handleParts[2]][$curlyBracketElement->getVar('ele_id')][$handle] = true;
+				}
 			}
 		}
 	} 
