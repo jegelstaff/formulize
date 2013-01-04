@@ -80,7 +80,7 @@ class formulizeElementRenderer{
 		// $ele_caption = stripslashes($ele_caption);
 		// next line commented out to accomodate passing of ele_value from index.php
 		// $ele_value = $this->_ele->getVar('ele_value');
-		$e = $this->_ele->getVar('ele_type');
+		$ele_type = $this->_ele->getVar('ele_type');
 
 
 		// call the text sanitizer, first try to convert HTML chars, and if there were no conversions, then do a textarea conversion to automatically make links clickable
@@ -106,16 +106,16 @@ class formulizeElementRenderer{
 
 		// setup the previous entry UI if necessary -- this is an option that can be specified for certain screens
 		$previousEntryUI = "";
-		if($screen AND $e != "derived") {
+		if($screen AND $ele_type != "derived") {
 			if($screen->getVar('paraentryform') > 0) {
-				$previousEntryUI = $this->formulize_setupPreviousEntryUI($screen, $true_ele_id, $e, $owner, $displayElementInEffect, $entry, $this->_ele->getVar('ele_handle'), $this->_ele->getVar('id_form'));
+				$previousEntryUI = $this->formulize_setupPreviousEntryUI($screen, $true_ele_id, $ele_type, $owner, $displayElementInEffect, $entry, $this->_ele->getVar('ele_handle'), $this->_ele->getVar('id_form'));
 			}
 		}
 		
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($id_form);
 	
-		switch ($e){
+		switch ($ele_type){
 			case 'derived':
 				if($entry != "new") {
 					$form_ele = new xoopsFormLabel($this->_ele->getVar('ele_caption'), formulize_numberFormat($ele_value[5], $this->_ele->getVar('ele_handle')));
@@ -780,7 +780,7 @@ class formulizeElementRenderer{
 				$options = array();
 				$opt_count = 1;
 				while( $i = each($ele_value) ){
-					switch ($e){
+					switch ($ele_type){
 						case 'radio':
 							$options[$opt_count] = $myts->stripSlashesGPC($i['key']);
               $options[$opt_count] = $myts->displayTarea($options[$opt_count]);
@@ -1003,8 +1003,8 @@ class formulizeElementRenderer{
 			 * Adding colorpicker form element
 			 */
 			default:
-				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$e."Element.php")) {
-					$elementTypeHandler = xoops_getmodulehandler($e."Element", "formulize");
+				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+					$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
 					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $form_ele_id, $isDisabled, $this->_ele, $entry); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to
 					if(!$isDisabled AND ($this->_ele->getVar('ele_req') OR $this->_ele->alwaysValidateInputs)) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
 						$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $form_ele_id, $this->_ele);
@@ -1026,8 +1026,8 @@ class formulizeElementRenderer{
 			} else {
 				$previousEntryUIRendered = "";
 			}
-			// $e is the type value...only put in a cue for certain kinds of elements, and definitely not for blank subforms
-			if(substr($form_ele_id, 0, 9) != "desubform" AND ($e == "text" OR $e == "textarea" OR $e == "select" OR $e=="radio" OR $e=="checkbox" OR $e=="date" OR $e=="colorpick" OR $e=="yn" OR $customElementHasData)) {
+			// $ele_type is the type value...only put in a cue for certain kinds of elements, and definitely not for blank subforms
+			if(substr($form_ele_id, 0, 9) != "desubform" AND ($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $customElementHasData)) {
 				$elementCue = "\n<input type=\"hidden\" id=\"decue_".trim($form_ele_id,"de_")."\" name=\"decue_".trim($form_ele_id,"de_")."\" value=1>\n";
 			} else {
 				$elementCue = "";
@@ -1048,7 +1048,7 @@ class formulizeElementRenderer{
 			}
 			return $form_ele_new;
 		} elseif(is_object($form_ele) AND $isDisabled) { // element is disabled
-			$form_ele = $this->formulize_disableElement($form_ele, $e, $ele_desc);
+			$form_ele = $this->formulize_disableElement($form_ele, $ele_type, $ele_desc);
 			return $form_ele;
 		} else { // form ele is not an object...only happens for IBs?
 			return $form_ele;
