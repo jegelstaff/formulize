@@ -1756,8 +1756,10 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	
 	formulize_benchmark("Ready to loop elements.");
 
-	// set the array to be used as the structure of the loop, either the passed in elements in order, or the elements as gathered from the DB	
-	if(!is_array($elements_allowed)) {
+	// set the array to be used as the structure of the loop, either the passed in elements in order, or the elements as gathered from the DB
+	// ignore passed in element order if there's a screen in effect, since we assume that official element order is authoritative when screens are involved
+	// API should still allow arbitrary ordering, so $element_allowed can still be set manually as part of a displayForm call, and the order will be respected then
+	if(!is_array($elements_allowed) OR $screen) {
 		$element_order_array = $elements;
 	} else {
 		$element_order_array = $elements_allowed;
