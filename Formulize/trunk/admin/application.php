@@ -103,6 +103,7 @@ foreach($allRelationships as $thisRelationship) {
   $relationshipObject = $framework_handler->get($frid);
   $relationshipLinks = $relationshipObject->getVar('links');
   $li = 1;
+  $links = array();
   foreach($relationshipLinks as $relationshipLink) {
     // get names of forms in the link
     $links[$li]['form1'] = printSmart(getFormTitle($relationshipLink->getVar('form1')));
