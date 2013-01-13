@@ -198,8 +198,29 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 			}
 		}
 
-	  $renderer = new formulizeElementRenderer($element);
-  	$ele_value = $element->getVar('ele_value');
+		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
+		if (!$is_Disabled) {
+			$update_other_entries = $gperm_handler->checkRight("update_other_entries", $element->getVar('id_form'), $groups, $mid);
+			$add_proxy_entries    = $gperm_handler->checkRight("add_proxy_entries", $element->getVar('id_form'), $groups, $mid);
+			if ($entry == "new") {
+				if (!$update_own_entry AND !$add_proxy_entries) {
+					$isDisabled = true;
+				}
+			} else {
+				if ($uid == $owner) {
+					if (!$update_own_entry){
+						$isDisabled = true;
+					}
+				} else {
+					if (!$update_other_entries){
+						$isDisabled = true;
+					}
+				}
+			}
+		}
+
+		$renderer = new formulizeElementRenderer($element);
+		$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
 		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subform' AND $ele_type != 'grid') {
 			$data_handler = new formulizeDataHandler($element->getVar('id_form'));
@@ -208,7 +229,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		
 		formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
 		
-	  	$form_ele =& $renderer->constructElement($renderedElementName, $ele_value, $entry, $isDisabled, $screen);
+		$form_ele =& $renderer->constructElement($renderedElementName, $ele_value, $entry, $isDisabled, $screen);
 
 		formulize_benchmark("Done rendering element.");
 		
