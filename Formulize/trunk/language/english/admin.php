@@ -388,6 +388,10 @@ define("_AM_ELE_DERIVED", "Value derived from other elements");
 define("_AM_ELE_DERIVED_CAP", "Formula for generating values in this element");
 define("_AM_ELE_DERIVED_DESC", "Select an element above to add it to your formula.  You can also use element ID numbers or Framework handles in your formula, as long as they are inside double quotes.  The formula can have multiple lines, or steps, and you can use PHP code in the formula.  The last line should be of the format <i>\$value = \$something</i> where \$something is the final number or formula that you want use.<br /><br />Example:<br />\$value = \"Number of hits\" / \"Total shots\" * 100<br /><br />Note: only use double quotes (\") to refer to a field.  If you need to use quotes in a line of PHP code, use single quotes (').");
 define("_AM_ELE_DERIVED_ADD", "Add to Formula");
+define("_AM_ELE_DERIVED_DONE","Finished updating values!");
+define("_AM_ELE_DERIVED_UPDATE", "Update Derived Values");
+define("_AM_ELE_DERIVED_UPDATE_CAP", "Calculate values for this element");
+define("_AM_ELE_DERIVED_UPDATE_DESC", "This may take a while depending on how many records are contained within your form.");
 
 define("_AM_ELE_SELECT_NONE","No element selected.");
 define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element?<br>All data anyone has ever entered into this form element will be deleted as well.");
