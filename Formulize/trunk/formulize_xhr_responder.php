@@ -56,6 +56,7 @@ if($op != "check_for_unique_value"
    AND $op != 'get_element_html'
    AND $op != 'get_element_value'
    AND $op != 'get_element_row_html'
+   AND $op != 'update_derived_value'
   ) {
   exit();
 }
@@ -188,8 +189,16 @@ switch($op) {
 	print $html;
       } 
     }
-    //print "de_".$fid."_".$entryId."_".$elementId."<<||>>$html";
+    break;
+
+    case "update_derived_value":
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+    $formID = $_GET['fid'];
+    $formRelationID = $_GET['frid'];
+    $limitStart = $_GET['limitstart'];
+    $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+    $data = getData($formRelationID, $formID,"","AND","",$limitStart,1000);
+    $GLOBALS['formulize_forceDerivedValueUpdate'] = false;
+    print count($data);    //print "de_".$fid."_".$entryId."_".$elementId."<<||>>$html";
+    break;
 }
-
-
-
