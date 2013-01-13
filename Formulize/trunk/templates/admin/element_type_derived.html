@@ -12,6 +12,21 @@
     </div>
 
     <div class="form-item">
+        <fieldset>
+            <legend><{$smarty.const._AM_ELE_DERIVED_UPDATE_CAP}></legend>
+            <p>
+                <input type=button name=updateder value="<{$smarty.const._AM_ELE_DERIVED_UPDATE}>"> <{$content.listofrelationshipoptions}>
+                <span name="updateder_Info" style="display:none">
+                <img src="../../../images/await.gif" width="20" height="20"/>&nbsp;
+                </span>
+            </p>
+            <div class="description">
+                <p><{$smarty.const._AM_ELE_DERIVED_UPDATE_DESC}></p>
+            </div>
+        </fieldset>
+    </div>
+
+    <div class="form-item">
 	    <fieldset>
 		    <legend><{$smarty.const._AM_ELE_DERIVED_NUMBER_OPTS}></legend>
 		    <div class="form-item">
@@ -107,7 +122,40 @@ $("[name=addele]").click(function () {
   var text = '"' + $("#listofelementsoptions").find(':selected').val() + '"';
   input.val(value.substr(0, range.start) + text + value.substr(range.end, value.length));
   input.caret(range.start + text.length);
+  return false;
+});
+
+  var formID = "";
+  var formRelationID = "1";
+
+  $("[name=updateder]").click(function () {
+    formID = $("[name=formulize_form_id]").val();
+    formRelationID = $("#listofrelationshipoptions").find(':selected').val()
+    var limitStart = 0;
+    updateDerivedValues(formID,formRelationID,limitStart);
 
   return false;
 });
+
+function updateDerivedValues(fid,frid,limitstart){
+    $.get("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=update_derived_value&fid="+fid+"&frid="+frid+"&limitstart="+limitstart, function(data){
+            if(data > 0){
+                $("[name=updateder]").hide();
+                $("[name=updateder_Info]").show();
+                limitStart += 1000;
+                updateDerivedValues(fid,frid,limitstart);
+            }else{
+                $("[name=updateder_Info]").hide();
+                $("[name=updateder]").show();
+                $("#derivedfinished").show();
+            }
+        });
+    }
+
+    function removeOnChange(){
+        $("#listofrelationshipoptions").unbind("change");
+        $("#listofelementsoptions").unbind("change");
+    }
+
+    window.setTimeout("removeOnChange();",500);
 </script>
