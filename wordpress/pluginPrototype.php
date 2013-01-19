@@ -19,9 +19,20 @@ License: A "Slug" license name e.g. GPL2
 function insertFormulize()
 {
 	echo "Hello";
-	include '/Users/dpage/Sites/formulize/htdocs/mainfile.php';
-	$formulize_screen_id = 2;
-	include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
+//	include '/Users/dpage/Sites/formulize/htdocs/mainfile.php';
+//	$formulize_screen_id = 2;
+//	include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
+}
+function metaBox()
+{
+add_meta_box(1,'Hello');
+}
+
+function addUser($userID)
+{
+	$user = get_userdata($userID);
+	if($user === FALSE)
+
 }
 
 
@@ -29,7 +40,15 @@ function synchronizeUsers()
 {
 
 }
+
+function updateUser($userID, $role)
+{
+	//This code will go to formulize for updating a user.
+}
+
 add_action("wp_loaded",insertFormulize);
+add_action('set_user_role',updateUser,"",2);
+add_action('user_register',addUser);
 
 ?>
 </body>
