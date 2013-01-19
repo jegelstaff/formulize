@@ -772,4 +772,5 @@ function _formulize_sync_roles( $drupal_user, $edit )
       //$remove_roles[] = $value;
     	$member_handler->removeUsersFromGroup($value,$uids);
     }
+  }
 }
