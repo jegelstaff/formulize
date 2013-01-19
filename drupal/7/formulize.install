@@ -1,0 +1,65 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Contains install and update functions for formulize.
+ */
+
+
+/**
+ * Implementation of hook_install()
+ * --+MedievalSpawn Drupal7 Update+-- Deprecated
+ *function formulize_install() {
+ * drupal_install_schema('formulize');
+ *}
+ */
+
+/**
+ * Implementation of hook_uninstall()
+ * --+MedievalSpawn Drupal7 Update+-- Deprecated
+ *function formulize_uninstall() {
+ *drupal_uninstall_schema('formulize');
+ *variable_del('formulize_full_path');
+ *}
+ */
+ 
+/**
+ * Implementation of hook_schemea
+ */
+function formulize_schema() {
+  $schema['formulize'] = array(
+  //* --+MedievalSpawn Drupal7 Update+-- Description is no longer translated.
+		'description' => 'The table for formulize data.',
+		'fields' => array(
+      'vid' => array(
+        'type' => 'int',
+				'unsigned' => TRUE,
+        'not null' => TRUE,
+				'default' => 0
+      ),
+      'nid' => array(
+        'type' => 'int',
+				'unsigned' => TRUE,
+        'not null' => TRUE,
+				'default' => 0
+      ),
+      'screen_id' => array(
+        'type' => 'int',
+				'unsigned' => TRUE,
+        'not null' => FALSE,
+				'default' => 0,
+        'description' => 'The screen id from Formulize.'
+      ),
+		),
+		'indexes' => array(
+		  'nid' => array('nid')
+		),
+		'unique_keys' => array(
+			'nid_vid' => array('nid', 'vid'),
+			'nid' => array('nid')
+		),
+    'primary key' => array('vid'),
+  );
+  return $schema;
+}

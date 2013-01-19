@@ -1,0 +1,10 @@
+; $Id:
+name = Formulize
+description = A module that integrates Drupal with the Formulize data management system
+core = 7.x
+package = Formulize
+
+files[] = formulize.module
+files[] = formulize.install
+configure = admin/settings/formulize
+
