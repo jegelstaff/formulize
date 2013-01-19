@@ -5,4 +5,25 @@
                         <![CDATA[Formulize]]>
                 </message>
         </layout>
+		
+	<fields name="request">
+                <fieldset name="request">
+                        <field
+                                name="id"
+                                type="list"
+                                label="Formulize"
+                                description=""
+                                default="1"
+                        >
+                                <option value="1">Form 1</option>
+				<option value="2">Form 2</option>
+				<option value="3">Form 3</option>
+				<option value="4">Form 4</option>
+	                        <option value="5">Form 5</option>
+                                <option value="6">Form 6</option>
+                        </field>
+                </fieldset>
+        </fields>
+	
+
 </metadata>
