@@ -1,7 +1,7 @@
 <html>
 <body>
-<?php
 
+<?php
 /*
 Plugin Name: Formulize Plugin 
 Plugin URI: http://www.freeformsolutions.ca/en/formulize 
@@ -12,17 +12,26 @@ Author URI: http://URI_Of_The_Plugin_Author
 License: A "Slug" license name e.g. GPL2
 */
 
-function sayHello()
+//This function is used to insert the formulize table into a wordpress page.
+//Currently screen id is hard-coded, however this will be fetched from the dropdown/some source
+//once we know how we're calling formulize within wordpress
+
+function insertFormulize()
 {
 	echo "Hello";
-	echo '<script>';
-        echo 'alert("Hello");';
-	echo '</script>';
+	include '/Users/dpage/Sites/formulize/htdocs/mainfile.php';
+	$formulize_screen_id = 2;
+	include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
 }
 
-add_action("wp_loaded",sayHello);
 
+function synchronizeUsers()
+{
+
+}
+add_action("wp_loaded",insertFormulize);
 
 ?>
 </body>
 </html>
+
