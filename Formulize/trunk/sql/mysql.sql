@@ -1,3 +1,12 @@
+CREATE TABLE `formulize_external_group_mapping` (
+    `mappingid` int(11) NOT NULL auto_increment,
+    `groupid` int(11) NOT NULL,
+    `external_groupid` int(11) NOT NULL,
+    PRIMARY KEY (`mappingid`),
+    INDEX i_groupid (`groupid`),
+    INDEX i_external_groupid (`external_groupid`)
+) ENGINE=MyISAM;
+
 CREATE TABLE `formulize_advanced_calculations` (
   `acid` int(11) NOT NULL auto_increment,
   `fid` int(11) NOT NULL default '0',

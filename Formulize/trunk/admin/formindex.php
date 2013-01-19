@@ -1297,6 +1297,18 @@ function patch40() {
   INDEX i_proc_log_id (proc_log_id)
 ) ENGINE=MyISAM;";	
 			}
+			
+			
+if(!in_array($xoopsDB->prefix("formulize_external_group_mapping"), $existingTables)) {			
+	$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_external_group_mapping")."` (
+    `mappingid` int(11) NOT NULL auto_increment,
+    `groupid` int(11) NOT NULL,
+    `external_groupid` int(11) NOT NULL,
+    PRIMARY KEY (`mappingid`),
+    INDEX i_groupid (`groupid`),
+    INDEX i_external_groupid (`external_groupid`)
+) ENGINE=MyISAM;";
+}
 
 		$sql['add_encrypt'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_encrypt` tinyint(1) NOT NULL default '0'";
 		$sql['add_lockedform'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `lockedform` tinyint(1) NULL default NULL";
