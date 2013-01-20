@@ -1310,6 +1310,11 @@ if(!in_array($xoopsDB->prefix("formulize_external_group_mapping"), $existingTabl
 ) ENGINE=MyISAM;";
 }
 
+// if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
+if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
+	$sql['increase_session_id_size'] = "ALTER TABLE ".$xoopsDB->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";
+}
+
 		$sql['add_encrypt'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_encrypt` tinyint(1) NOT NULL default '0'";
 		$sql['add_lockedform'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `lockedform` tinyint(1) NULL default NULL";
 		$sql['drop_from_formulize_id_admin'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `admin`";

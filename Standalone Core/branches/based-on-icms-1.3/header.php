@@ -27,7 +27,11 @@ $xoopsThemeFactory->defaultTheme = $icmsConfig['theme_set'];
  * @var icms_view_theme_Object
  */
 $icmsTheme = $xoTheme =& $xoopsThemeFactory->createInstance(array('contentTemplate' => @$xoopsOption['template_main'],));
+$GLOBALS['icmsTheme'] = $icmsTheme;
+$GLOBALS['xoTheme'] = $xoTheme;
 $xoopsTpl = $icmsTpl =& $xoTheme->template;
+$GLOBALS['xoopsTpl'] = $xoopsTpl;
+$GLOBALS['icmsTpl'] = $icmsTpl;
 if ($icmsConfigMetaFooter['use_google_analytics'] === TRUE
 	&& isset($icmsConfigMetaFooter['google_analytics']) && $icmsConfigMetaFooter['google_analytics'] != '') {
 	/* Legacy GA urchin code */

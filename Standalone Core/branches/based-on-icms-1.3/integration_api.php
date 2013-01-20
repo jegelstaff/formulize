@@ -17,6 +17,7 @@ class Formulize {
     static function init() {
         if (self::$db == null) {
             require_once('mainfile.php');
+	    include_once('header.php');
             self::$db = $GLOBALS['xoopsDB'];
         }
     }
