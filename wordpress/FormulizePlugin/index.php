@@ -133,8 +133,8 @@ define('KKPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 	  <select name="formulize_select" id="formulize_select">';
             
             if(count($screen_names) > 0) {
-                foreach($screen_names as $name) {
-                    print "<option value=$name>$name</option>";
+                foreach($screen_names as $screen_id=>$name) {
+                    print "<option value=$screen_id>$name</option>";
                 }
             } else {
                 // no options
@@ -194,7 +194,8 @@ define('KKPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 	//echo "Hello This is the insert formulize plug in working";
 	//echo $content;
 	Formulize::init();
-	$formulize_screen_id = 4;
+	$custom_fields = get_post_custom($GLOBALS['post']->ID);
+	$formulize_screen_id = $custom_fields['formulize_select'][0];
 	include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
 	//echo $splitContent[1];
     }
