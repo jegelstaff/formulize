@@ -187,15 +187,16 @@ define('KKPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 
     function insertFormulize($content)
     {
+	
 	//$splitContent = array();
-	$splitContent = preg_split("*FORMULIZE*",$content,1);
-	echo $splitContent[0];
+	//$splitContent = preg_split("*FORMULIZE*",$content,1);
+	//echo $splitContent[0];
 	//echo "Hello This is the insert formulize plug in working";
 	//echo $content;
-	include '/Users/dpage/Sites/formulize/htdocs/mainfile.php';
-	$formulize_screen_id = 2;
+	Formulize::init();
+	$formulize_screen_id = 4;
 	include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
-	echo $splitContent[1];
+	//echo $splitContent[1];
     }
         
     function addUser($userID)
