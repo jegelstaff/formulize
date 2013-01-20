@@ -3,7 +3,7 @@
     /*
      Plugin Name: Formulize Plugin
      Plugin URI: http://www.freeformsolutions.ca/en/formulize
-     Description: This will be a description
+     Description: This will be a description NEW VERSION
      Version: The Plugin's Version Number, e.g.: 1.0
      Author: Authors
      Author URI: http://URI_Of_The_Plugin_Author
@@ -11,8 +11,7 @@
      */
 
 $formulize_path = get_option('formulize_path', NULL);
-require_once($formulize_path . DIRECTORY_SEPARATOR . 'integration_api.php');
-    
+include_once($formulize_path . DIRECTORY_SEPARATOR . 'integration_api.php');
     
 if(!class_exists('kkPluginOptions')) :
 
@@ -28,30 +27,6 @@ define('KKPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
         //Currently screen id is hard-coded, however this will be fetched from the dropdown/some source
         //once we know how we're calling formulize within wordpress
         
-        function insertFormulize()
-        {
-            echo "Hello";
-            //	include '/Users/dpage/Sites/formulize/htdocs/mainfile.php';
-            //	$formulize_screen_id = 2;
-            //	include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
-        }
-        
-        function addUser($userID)
-        {
-            $user = get_userdata($userID);
-                
-        }
-        
-        
-        function synchronizeUsers()
-        {
-            
-        }
-        
-        function updateUser($userID, $role)
-        {
-            //This code will go to formulize for updating a user.
-        }
         
         
 		/** function/method
@@ -153,10 +128,9 @@ define('KKPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
          
          */
                
-        ?>
-<label for ="formulize_select">Choose screen: </label>
-    <select name="formulize_select" id="formulize_select">
-        <?php
+
+    echo '<label for ="formulize_select">Choose screen: </label>
+	  <select name="formulize_select" id="formulize_select">';
             
             if(count($screen_names) > 0) {
                 foreach($screen_names as $name) {
@@ -168,15 +142,14 @@ define('KKPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
             }
             
             
-            ?>
 
-    </select>
+    echo '</select>';
 
-<?php
     }
     
     /* When the post is saved, saves our custom data */
-    function formulize_save_postdata($post_id) {
+    function formulize_save_postdata($post_id)
+    {
         //verify if this is an auto save routine
         //If our form hasn't been submitted we don't want to do anything
         if (defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
@@ -210,12 +183,41 @@ define('KKPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 
     endif;
     
-    // Shannon's code to add custom meta box
-    /* Define custom box */
+
+
+    function insertFormulize($content)
+    {
+	//$splitContent = array();
+	$splitContent = preg_split("*FORMULIZE*",$content,1);
+	echo $splitContent[0];
+	//echo "Hello This is the insert formulize plug in working";
+	//echo $content;
+	include '/Users/dpage/Sites/formulize/htdocs/mainfile.php';
+	$formulize_screen_id = 2;
+	include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
+	echo $splitContent[1];
+    }
+        
+    function addUser($userID)
+    {
+        $user = get_userdata($userID);
+    }
+        
+        
+    function synchronizeUsers()
+    {
+            
+    }
+        
+    function updateUser($userID, $role)
+    {
+        //This code will go to formulize for updating a user.
+    }
+    
     add_action('add_meta_boxes', 'formulize_meta_box');
     add_action('save_post', 'formulize_save_postdata');
-    add_action("wp_loaded",insertFormulize);
-    add_action('set_user_role',updateUser,"",2);
-    add_action('user_register',addUser);
+    add_filter("the_content",'insertFormulize');
+    add_action('set_user_role','updateUser',"",2);
+    add_action('user_register','addUser');
 
 ?>
