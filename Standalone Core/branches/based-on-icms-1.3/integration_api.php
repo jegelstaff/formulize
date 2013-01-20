@@ -23,18 +23,56 @@ class Formulize {
     
     //User Management
 
+    /**
+     * Create a new XOOPS user from the provided FormulizeUser data
+     * @param	userData	FormulizeUser		The user data
+	 * @return				boolean				Whether the creation succeeded
+     */
 	static function createUser($userData) {
         self::init();
-        
+        //Create a XOOPS user from the provided FormulizeUser data
+        $member_handler = xoops_gethandler('member');
+	    $newUser = $member_handler->createUser();
+	    $newUser->setVar('uname', $userData->get('uname'));
+	    $newUser->setVar('login_name', $userData->get('login_name'));
+	    $newUser->setVar('email', $userData->get('email'));
+        //Use the default timezone offset from ImpressCMS
+	    $newUser->setVar('timezone_offset', $userData->get('timezone_offset'));
+	    $newUser->setVar('notify_method', $userData->get('notify_method')); //email
+	    $newUser->setVar('level', $userData->get('level')); //active, can login
+	    //If the user wasn't inserted, return false
+	    if(!$member_handler->insertUser($newUser, true)) {
+	    	return false;
+	    }
+	    $userId = $newUser->getVar('uid');
+	    //If setting the proper uid failed, return false
+	    if(!self::$db->queryF('UPDATE ' . self::$db->prefix('users') . ' SET uid = \'' . $userData->get('uid') . '\' WHERE uid = \'' . $userId . '\'')) {
+	    	return false;
+	    }
+
+	    return true;
 	}
 
+	/**
+	 * Removes the specified user
+	 * @param	userID		int			The ID of the user to remove
+	 * @return				boolean		Whether the delete succeeded
+	 */
     static function deleteUser($userID) {
         self::init();
+        $member_handler = xoops_gethandler('member');
+        $user = $member_handler->getUser($userID);
+        die(print_r($user));
+        if(!$member_handler->deleteUser($user)) {
+        	echo 'e';
+        	return false;
+        }
+        return true;
     }
     
     /**
      * Updates user data in XOOPS
-     * @param   userID      String          The ID of the user to update
+     * @param   userID      int          	The ID of the user to update
      * @param   userData    FormulizeUser   The FormulizeUser (with fields that
      *                                      require updates) to gather updated data
      *                                      from
@@ -57,7 +95,7 @@ class Formulize {
     
     /**
      * Rename an existing XOOPS group
-     * @param   groupID     String      The ID of the group being renamed
+     * @param   groupID     int      	The ID of the group being renamed
      * @param   name        String      The new name for the group
      */
     static function renameGroup($groupID, $name) {
@@ -67,7 +105,7 @@ class Formulize {
     
     /**
      * Deletes an existing XOOPS group
-     * @param   groupID     String      The ID of the XOOPS group to delete
+     * @param   groupID     int      	The ID of the XOOPS group to delete
      */
     static function deleteGroup($groupID) {
         self::init();
@@ -76,8 +114,8 @@ class Formulize {
     
     /**
      * Adds an existing user to a group
-     * @param   userID      String      The ID of the user being added
-     * @param   groupID     String      The ID of the group being added to
+     * @param   userID      int      	The ID of the user being added
+     * @param   groupID     int      	The ID of the group being added to
      */
     static function addUserToGroup($userID, $groupID) {
         self::init();
@@ -86,8 +124,8 @@ class Formulize {
     
     /**
      * Removes an existing user from a group
-     * @param   userID      String      The ID of the user being removed
-     * @param   groupID     String      The ID of the group being removed from
+     * @param   userID      int      	The ID of the user being removed
+     * @param   groupID     int      	The ID of the group being removed from
      */ 
     static function removeUserFromGroup($userID, $groupID) {
         self::init();
@@ -117,7 +155,6 @@ class Formulize {
     
     	if(count($options) == 0) {
     		$options[0] = t('No Formulize Screens Found');
-    		drupal_set_message(t('No screens found at this time.'));
     	}
     	
     	return $options;
@@ -127,12 +164,12 @@ class Formulize {
 
 class FormulizeUser {
 
-	private $uid = null;
-	private $uname = null; //Displayed
-	private $login_name = null; //Login
-	private $email = null;
-	private $timezone_offset = null; //Default: the current system's offset
-    private $notify_method = null; //
+	private $uid = '';
+	private $uname = '';
+	private $login_name = '';
+	private $email = '';
+	private $timezone_offset = null; //Default is set in the constructor
+    private $notify_method = 2;
 	private $level = 1;
     
     /**
@@ -141,7 +178,39 @@ class FormulizeUser {
      *                              in the base CMS
      */
     function __construct($userData) {
-        
+    	Formulize::init();
+
+        $this->uid = $userData['uid'];
+        $this->uname = $userData['uname'];
+        $this->login_name = $userData['login_name'];
+        $this->email = $userData['email'];
+        $this->timezone_offset = $userData['timezone_offset'];
+        $this->notify_method = $userData['notify_method'];
+        $this->level = $userData['level'];
+
+        //Set defaults if necessary
+        if($this->timezone_offset == null) {
+        	$this->timezone_offset = $GLOBALS['xoopsConfig']['default_TZ'];
+        }
+    }
+
+    /**
+     * Get the value of a field in this FormulizeUser
+     * @param	key		String		The name of the field to be retrieved
+     */
+    function get($key) {
+    	if(!isset($this->{$key})) throw new Exception('Attempted to get an invalid user field.');
+    	return $this->{$key};
+    }
+
+    /**
+     * Set the value of a field in this FormulizeUser
+     * @param	key		String		The name of the field to be retrieved
+     * @param	key		Object		The value to be stored in this field
+     */
+    function set($key, $value) {
+    	if(!isset($this->{$key})) throw new Exception('Attempted to set an invalid user field.');
+    	$this->{$key} = $value;
     }
 
 }
