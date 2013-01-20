@@ -3,7 +3,7 @@
  * ADD THESE TWO LINES OF CODE AT THE TOP OF YOUR FILE
  * ---------------------------------------------------
  * $formulize_path = variable_get('formulize_full_path', NULL);
- * require_once(dirname($formulize_path) . '/integration_api.php');
+ * require_once(dirname($formulize_path) .  DIRECTORY_SEPARATOR . 'integration_api.php');
  * ---------------------------------------------------
  */
 
