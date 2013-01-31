@@ -362,6 +362,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'form') {
   $options['alldonebuttontext'] = $screen->getVar('alldonebuttontext');
   $options['displayheading'] = $screen->getVar('displayheading');
   $options['reloadblank'] = $screen->getVar('reloadblank') ? "blank" : "entry";
+  $options['formelements'] = $screen->getVar('formelements');
 } 
 
 // common values should be assigned to all tabs
