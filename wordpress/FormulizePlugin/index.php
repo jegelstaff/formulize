@@ -22,13 +22,11 @@ define('KKPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 
     class kkPluginOptions
     {
-        
-        //This function is used to insert the formulize table into a wordpress page.
-        //Currently screen id is hard-coded, however this will be fetched from the dropdown/some source
-        //once we know how we're calling formulize within wordpress
-        
-        
-        
+	
+	//This function is used to insert the formulize table into a wordpress page.
+	//Currently screen id is hard-coded, however this will be fetched from the dropdown/some source
+	//once we know how we're calling formulize within wordpress
+	
 		/** function/method
 		* Usage: return absolute file path
 		* Arg(1): string
@@ -83,65 +81,65 @@ define('KKPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 			$quote = '<p><blockquote>' . get_option('kkpo_quote') . '</blockquote></p>';
 			return $content . $quote;
 		}
-        
-        
-        /*
-         * This is hopefully the code to add a link right below the plugin to take the user to the settings page (similar to Exec-PHP)
-         
-        public static function filter_plugin_actions_links($links, $file)
-        {
-            if ($file == ExecPhp_HOMEDIR. '/exec-php.php')
-            {
-                $settings_link = $settings_link = '<a href="options-general.php?page='. ExecPhp_HOMEDIR. '/includes/config_ui.php">' . __('Settings') . '</a>';
-                array_unshift($links, $settings_link);
-            }
-            return $links;
-        }
-         
-         */
-        
-        
+	
+	
+	/*
+	 * This is hopefully the code to add a link right below the plugin to take the user to the settings page (similar to Exec-PHP)
+	 
+	public static function filter_plugin_actions_links($links, $file)
+	{
+	    if ($file == ExecPhp_HOMEDIR. '/exec-php.php')
+	    {
+		$settings_link = $settings_link = '<a href="options-general.php?page='. ExecPhp_HOMEDIR. '/includes/config_ui.php">' . __('Settings') . '</a>';
+		array_unshift($links, $settings_link);
+	    }
+	    return $links;
+	}
+	 
+	 */
+	
+	
     }
     
     /* Add box to the post and page screens */
     function formulize_meta_box() {
 		add_meta_box('formulize_sectionid',
-                     __('Formulize', 'formulize_textlabel'),
-                     'formulize_inner_custom_box',
-                     'page'
-                     );
+		     __('Formulize', 'formulize_textlabel'),
+		     'formulize_inner_custom_box',
+		     'page'
+		     );
     }
     
     /* Print box content */
     function formulize_inner_custom_box($post) {
-        global $post;
-        $values = get_post_custom($post->ID);
-        $selected = isset($values['formulize_select']) ? esc_attr($values['formulize_select']) : '';
-        // We'll use this nonce field later on when saving.
-        wp_nonce_field( 'my_formulize_nonce', 'formulize_nonce' );
-        $screen_names = Formulize::getScreens();
-        /*
-        $screen_names = array(
-                "1" => "option 1",
-                "2" => "option 2",
-        );
-         
-         */
-               
+	global $post;
+	$values = get_post_custom($post->ID);
+	$selected = isset($values['formulize_select']) ? esc_attr($values['formulize_select']) : '';
+	// We'll use this nonce field later on when saving.
+	wp_nonce_field( 'my_formulize_nonce', 'formulize_nonce' );
+	$screen_names = Formulize::getScreens();
+	/*
+	$screen_names = array(
+		"1" => "option 1",
+		"2" => "option 2",
+	);
+	 
+	 */
+	       
 
     echo '<label for ="formulize_select">Choose screen: </label>
 	  <select name="formulize_select" id="formulize_select">';
-            
-            if(count($screen_names) > 0) {
-                foreach($screen_names as $screen_id=>$name) {
-                    print "<option value=$screen_id>$name</option>";
-                }
-            } else {
-                // no options
-                print "<option value=0>No screens found</option>";
-            }
-            
-            
+	    
+	    if(count($screen_names) > 0) {
+		foreach($screen_names as $screen_id=>$name) {
+		    print "<option value=$screen_id>$name</option>";
+		}
+	    } else {
+		// no options
+		print "<option value=0>No screens found</option>";
+	    }
+	    
+	    
 
     echo '</select>';
 
@@ -150,30 +148,26 @@ define('KKPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
     /* When the post is saved, saves our custom data */
     function formulize_save_postdata($post_id)
     {
-        //verify if this is an auto save routine
-        //If our form hasn't been submitted we don't want to do anything
-        if (defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
-            return;
-        
-        // if our nonce isn't there, or we can't verify it, bail
-        if (!isset($_POST['formulize_nonce'])
-            || !wp_verify_nonce($_POST['formulize_nonce'], 'my_formulize_nonce' )) return;
-        
-        // now we can actually save the data
-        $allowed = array(
-                         'a' => array( // on allow a tags
-                                      'href' => array() // and those anchors can only have href attribute
-                                      )  
-                         );  
-        
-        if (isset( $_POST['formulize_select']))  
-            update_post_meta($post_id, 'formulize_select', esc_attr( $_POST['formulize_select']));  
+	//verify if this is an auto save routine
+	//If our form hasn't been submitted we don't want to do anything
+	if (defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
+	    return;
+	
+	// if our nonce isn't there, or we can't verify it, bail
+	if (!isset($_POST['formulize_nonce'])
+	    || !wp_verify_nonce($_POST['formulize_nonce'], 'my_formulize_nonce' )) return;
+	
+	// now we can actually save the data
+	$allowed = array(
+			 'a' => array( // on allow a tags
+				      'href' => array() // and those anchors can only have href attribute
+				      )  
+			 );  
+	
+	if (isset( $_POST['formulize_select']))  
+	    update_post_meta($post_id, 'formulize_select', esc_attr( $_POST['formulize_select']));  
     }
     
-    
-    
-    
-	
 	if ( is_admin() )
 	{
 		add_action('admin_init', array('kkPluginOptions', 'register'));
@@ -184,42 +178,117 @@ define('KKPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
     endif;
     
 
-
+    /*
+     * This function is used to insert the contents of a Formulize table on a Wordpress
+     * page.
+     *
+     * AS OF 03/02/12 --> Currently it adds a table to every page. This needs to be resolved
+     * somehow. Maybe we could have a blank or null line value on every select box that's by
+     * default selected, so it can know not to post something on that page?
+     *
+     * There might be a better way to do this so we're not running a check on every page load, but
+     * this seems simple enough for now.
+     */
     function insertFormulize($content)
     {
-	
-	//$splitContent = array();
-	//$splitContent = preg_split("*FORMULIZE*",$content,1);
-	//echo $splitContent[0];
-	//echo "Hello This is the insert formulize plug in working";
-	//echo $content;
 	Formulize::init();
 	$custom_fields = get_post_custom($GLOBALS['post']->ID);
 	$formulize_screen_id = $custom_fields['formulize_select'][0];
 	include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
-	//echo $splitContent[1];
     }
-        
+	
+    /*
+     * This function is called when a new user registers on the wordpress site.
+     * It is called as the new user form is submitted, and pushes the information
+     * to formulize as the new user is created on WP.
+     */
     function addUser($userID)
     {
-        $user = get_userdata($userID);
-    }
-        
-        
-    function synchronizeUsers()
-    {
-            
-    }
-        
-    function updateUser($userID, $role)
-    {
-        //This code will go to formulize for updating a user.
+	$wpUser = get_userdata($userID);
+	$userData = array(
+			'uid'=>$wpUser->ID,
+			'uname'=>$wpUser->display_name,
+			'login_name'=>$wpUser->user_login,
+			'email'=>$wpUser->user_email,
+			'timezone_offset'=> 0,
+			'notify_method'=> "email",
+			'level'=> "active");
+	$formUser = new FormulizeUser($userData);
+	Formulize::createUser($formUser);
+	/*
+	 $to = "paged90@gmail.com";
+	$subject = "MESSAGE";
+	$message = "User has been added successfully.";
+	wp_mail($to,$subject,$message);
+	*/
     }
     
-    add_action('add_meta_boxes', 'formulize_meta_box');
-    add_action('save_post', 'formulize_save_postdata');
-    add_filter("the_content",'insertFormulize');
-    add_action('set_user_role','updateUser',"",2);
-    add_action('user_register','addUser');
-
+    
+    /**
+     * This function will delete a user from the Formulize database once the user is deleted on Wordpress.
+     *
+     * AS OF 03/02/12 - DeleteUser in Formulize API calls die(). This causes the script to end and breaks WP functionality.
+     * Do not uncomment the delete user hook.
+     */
+    function deleteUser($userID)
+    {
+	Formulize::deleteUser($userID);
+    }
+    
+    //Need to add a check in here so we don't synchronized a user twice...same for adding a user.
+    //I.e. We need a function in the API to query the formulize database so that we can confirm whether
+    //the user already exists (Or is this in the API?)
+    function synchronizeUsers()
+    {
+	$users = get_users();
+	//print_r($users);
+	foreach ($users as $x)
+	{
+		$temp = array(
+			      'uid'=>$x->ID,
+			      'uname'=>$x->display_name,
+			      'login_name'=>$x->user_login,
+			      'email'=>$x->user_email,
+			      'timezone_offset'=> 0,
+			      'notify_method'=> "email",
+			      'level'=> "active");
+		$tempUser = new FormulizeUser($temp);
+		Formulize::createUser($tempUser);
+		echo '<li>'. $x->user_email . " " . $x->ID . '</li>';
+	}
+    }
+	
+/**
+ * This function will update the information for a user in the Formulize database. It will be run
+ * at the end of every profile update currently, such that as soon as User information is edited, the
+ * information stored in Formulize will likewise be updated.
+ *
+ * AS OF 03/02/12 - Update Users function in API appear to do nothing yet. This function has no effect as of yet.
+ */
+	function updateUser($wpUser)
+	{
+		$userData = array(
+				'uid'=>$wpUser->ID,
+				'uname'=>$wpUser->display_name,
+				'login_name'=>$wpUser->user_login,
+				'email'=>$wpUser->user_email,
+				'timezone_offset'=> 0,
+				'notify_method'=> "email",
+				'level'=> "active");
+		
+		Formulize::updateUser($wpUser->ID,$userdata);
+		/*
+		 $to = "paged90@gmail.com";
+		$subject = "MESSAGE";
+		$message = "Testing update user further.";
+		wp_mail($to,$subject,$message);
+		*/
+	}
+//add_action('init','synchronizeUsers'); <-- Commented out. Will talk about where to place this function. Maybe as Formulize full path variable is changed?
+//add_action('delete_user','deleteUser'); <-- Commented out. The delete function in the API calls the die function. Uncommenting this and attempting to delete a user crashes WP.
+add_action('edit_user_profile', 'updateUser'); // <-- Update user is stub. Doesn't do anything yet in API.
+add_action('add_meta_boxes', 'formulize_meta_box');
+add_action('save_post', 'formulize_save_postdata'); 
+add_action('user_register','addUser'); // <--Currently this function works and updates the Formulize site.
+add_filter('the_content','insertFormulize'); //Need to fix this hook so that the table is displayed appropriately on each page
 ?>
