@@ -127,10 +127,15 @@ define('KKPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 	 */
 	       
 
+	/**
+	** TODO(02/03/13): This should be saving the user's last choice; currently it defaults to the order of 
+	** "None, Screen 1, Screen 2," etc.
+	**/
     echo '<label for ="formulize_select">Choose screen: </label>
 	  <select name="formulize_select" id="formulize_select">';
 	    
 	    if(count($screen_names) > 0) {
+	    print "<option value=-1>None</option>";
 		foreach($screen_names as $screen_id=>$name) {
 		    print "<option value=$screen_id>$name</option>";
 		}
@@ -182,19 +187,16 @@ define('KKPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
      * This function is used to insert the contents of a Formulize table on a Wordpress
      * page.
      *
-     * AS OF 03/02/12 --> Currently it adds a table to every page. This needs to be resolved
-     * somehow. Maybe we could have a blank or null line value on every select box that's by
-     * default selected, so it can know not to post something on that page?
-     *
-     * There might be a better way to do this so we're not running a check on every page load, but
-     * this seems simple enough for now.
+     * If the option for 'formulize_select' is set to -1, this means that no screens are to be shown.
      */
     function insertFormulize($content)
     {
 	Formulize::init();
 	$custom_fields = get_post_custom($GLOBALS['post']->ID);
-	$formulize_screen_id = $custom_fields['formulize_select'][0];
-	include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
+	if ($custom_fields['formulize_select'][0] != -1) {
+		$formulize_screen_id = $custom_fields['formulize_select'][0];
+		include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
+	}
     }
 	
     /*
