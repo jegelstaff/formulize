@@ -44,7 +44,6 @@ $sid = $_POST['formulize_admin_key'];
 
 $screens = $processedValues['screens'];
 
-
 $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
 $screen = $screen_handler->get($sid);
 // CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
@@ -62,7 +61,8 @@ $screen->setVar('savebuttontext',$screens['savebuttontext']);
 $screen->setVar('alldonebuttontext',$screens['alldonebuttontext']);
 $screen->setVar('displayheading',array_key_exists('displayheading',$screens)?1:0);
 $screen->setVar('reloadblank',$screens['reloadblank']);
-
+// if formelements is not set, force to blank otherwise changes will not be saved
+$screen->setVar('formelements', isset($screens['formelements']) ? $screens['formelements'] : "");
 
 if(!$screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".mysql_error();

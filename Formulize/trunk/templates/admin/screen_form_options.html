@@ -46,17 +46,15 @@
 		  <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>"/>
 			<div class="description">You can leave this blank, and if you do then the default All Done action will happen.  Depending on the circumstance, the default action is either the form reloading, or the user returning to the previous page.  If you do specify an All Done location, and you are sending users to a location on this site, then you don't have to type the root part of the site's URL.  Just start the destination with a slash, ie: /modules/formulize/index.php?sid=12</div>
 	  </div>
-  </fieldset>
-	
-	<fieldset>
-	    <legend>Form Elements</legend>
-	    <div class="form-item">
-	      <label for="screens-formelements">Which form elements should be included in this form?</label>
-	      <select>
-		
-	      </select>
-	      <div class="description">You can leave this blank and then all the form elements will be included.</div>
-	    </div>
+	</fieldset>
+		<legend>Form Elements</legend>
+		<div class="form-item">
+			<label for="screens-formelements">Which form elements should be displayed?</label>
+			<select id="screens-formelements" name="screens-formelements[]" size="15" multiple>
+			<{html_options options=$content.element_list selected=$content.formelements}>
+			</select>
+			<div class="description">Leave this blank to display all form elements.</div>
+		</div>
 	</fieldset>
 </div>
 

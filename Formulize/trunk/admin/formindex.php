@@ -1253,6 +1253,7 @@ function patch40() {
   `alldonebuttontext` varchar(255) NOT NULL default '',
   `displayheading` tinyint(1) NOT NULL default 0,
   `reloadblank` tinyint(1) NOT NULL default 0,
+  `formelements` text default NULL,
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;";
@@ -1346,6 +1347,7 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
 		$sql['add_toptext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `toptemplate` text NOT NULL";    
 		$sql['add_elementtext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `elementtemplate` text NOT NULL"; 
 		$sql['add_bottomtext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `bottomtemplate` text NOT NULL"; 
+        $sql['add_formelements'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_form") . " ADD `formelements` text default NULL";
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
 				if($key === "add_encrypt") {
@@ -1378,6 +1380,8 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
 					print "elementtemplate already added for multipage screens.  result: OK<br>";
 				} elseif($key === "add_bottomtext") {
 					print "bottomtemplate already added for multipage screens.  result: OK<br>";
+                } elseif($key === "add_formelements") {
+                    print "formelements field already added for single page screens.  result: OK<br>";
 				} elseif(strstr($key, 'drop_from_formulize_id_')) {
 					continue;					
 				} else {

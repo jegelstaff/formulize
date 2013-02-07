@@ -356,6 +356,30 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
 }
 
 if($_GET['sid'] != "new" && $settings['type'] == 'form') {
+  if (!function_exists("multiPageScreen_addToOptionsList")) {
+    function multiPageScreen_addToOptionsList($fid, $options) {
+        $formObject = new formulizeForm($fid);
+        $elements = $formObject->getVar('elements');
+        $elementCaptions = $formObject->getVar('elementCaptions');
+        foreach($elementCaptions as $key=>$elementCaption) {
+          $options[$elements[$key]] = printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption
+        }
+        return $options;
+    }
+  }
+  $element_list = multiPageScreen_addToOptionsList($fid, array());
+  $frid = $screen->getVar("frid");
+  if($frid) {
+      $framework_handler =& xoops_getModuleHandler('frameworks');
+      $frameworkObject = $framework_handler->get($frid);
+      foreach($frameworkObject->getVar("links") as $thisLinkObject) {
+          if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
+              $thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
+              $element_list = multiPageScreen_addToOptionsList($thisFid, $element_list);
+          }
+      }
+  }
+
   $options = array();
   $options['donedest'] = $screen->getVar('donedest');
   $options['savebuttontext'] = $screen->getVar('savebuttontext');
@@ -363,6 +387,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'form') {
   $options['displayheading'] = $screen->getVar('displayheading');
   $options['reloadblank'] = $screen->getVar('reloadblank') ? "blank" : "entry";
   $options['formelements'] = $screen->getVar('formelements');
+  $options['element_list'] = $element_list;
 } 
 
 // common values should be assigned to all tabs

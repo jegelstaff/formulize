@@ -364,8 +364,11 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 	$currentURL = getCurrentURL();
 
 	// identify form or framework
-
 	$elements_allowed = "";
+	// if a screen object is passed in, select the elements for display based on the screen's settings
+	if ($screen and is_a($screen, "formulizeFormScreen")) {
+		$elements_allowed = $screen->getVar("formelements");
+	}
 	if(is_array($formframe)) {
 		$elements_allowed = $formframe['elements'];
 		$printViewPages = isset($formframe['pages']) ? $formframe['pages'] : "";
@@ -791,25 +794,24 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				}
 	
 			}
-	
+
 			if($titleOverride=="1" AND !$firstform) { // set onetooneTitle flag to 1 when function invoked to force drawing of the form title over again
 				$title = trans(getFormTitle($this_fid));
 				$form->insertBreak("<table><th>$title</th></table>","");
 			}
-	
+
 			// if this form has a parent, then determine the $parentLinks
 			if($go_back['form'] AND !$parentLinks[$this_fid]) {
 				$parentLinks[$this_fid] = getParentLinks($this_fid, $frid);
 			}
 
 			formulize_benchmark("Before Compile Elements.");
-
-					$form = compileElements($this_fid, $form, $formulize_mgr, $prevEntry, $entries[$this_fid][0], $go_back, $parentLinks[$this_fid], $owner_groups, $groups, $overrideValue, $elements_allowed, $profileForm, $frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen, $printViewPages, $printViewPageTitles);
-
+			$form = compileElements($this_fid, $form, $formulize_mgr, $prevEntry, $entries[$this_fid][0], $go_back,
+				$parentLinks[$this_fid], $owner_groups, $groups, $overrideValue, $elements_allowed, $profileForm,
+				$frid, $mid, $sub_entries, $sub_fids, $member_handler, $gperm_handler, $title, $screen,
+				$printViewPages, $printViewPageTitles);
 			formulize_benchmark("After Compile Elements.");
-	
-	
-		} // end of for each fids
+		}	// end of for each fids
 	
 		if(!is_object($form)) { exit("Error: the form cannot be displayed.  Does the current group have permission to access the form?"); }
 	
