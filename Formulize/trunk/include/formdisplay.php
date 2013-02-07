@@ -891,6 +891,9 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 			}
 		}
 
+		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
+		$form->addElement (new XoopsFormHidden ('primaryfid', $fids[0]));
+		
 		print "<div id=formulizeform>".$form->render()."</div>"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
 		
 		// if we're in Drupal, include the main XOOPS js file, so the calendar will work if present...
