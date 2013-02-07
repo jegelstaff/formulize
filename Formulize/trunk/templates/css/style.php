@@ -41,6 +41,23 @@ header("Content-Type: text/css");
     font-size: 1.2em;
 }
 
+.formulize-subform-table {
+    width: auto;
+    border-collapse: collapse;
+}
+
+.formulize-subform-table > tbody > tr > th {
+    background-color: transparent !important;
+    color: black !important;
+    text-align: center;
+    border-bottom: 1px solid rgb(209, 209, 223);
+}
+
+.formulize-subform-table > tbody > tr > td {
+    padding: 0.5em;
+    border-bottom: 1px dotted rgb(209, 209, 223);
+}
+
 /*=== Formulize Boutons by Francois T ===*/
 button, input[type='submit'], input[type='button'], input[type='reset'] {
 	background-color: 			#F4F9FE;

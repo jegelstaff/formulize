@@ -1379,19 +1379,17 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		$elementsToDraw[] = $subHeaderList1[1];
 		$elementsToDraw[] = $subHeaderList1[2];
 	}
-	
 
 	$need_delete = 0;
 	$drawnHeadersOnce = false;
-	
+
 	if($rowsOrForms=="row" OR $rowsOrForms =='') {
-		$col_two = "<table style=\"width: 10%\">";	
+		$col_two = "<table id=\"formulize-subform-table-$sfid\" class=\"formulize-subform-table\">";
 	} else {
 		$col_two = "<div id=\"subform-$subformElementId\" class=\"subform-accordion-container\" subelementid=\"$subformElementId\" style=\"display: none;\">";
 		$col_two .= "<input type='hidden' name='subform_entry_".$subformElementId."_active' id='subform_entry_".$subformElementId."_active' value='' />";
 		include_once XOOPS_ROOT_PATH ."/modules/formulize/class/data.php";
 		$data_handler = new formulizeDataHandler($sfid);
-		
 	}
 
 	$deFrid = $frid ? $frid : ""; // need to set this up so we can pass it as part of the displayElement function, necessary to establish the framework in case this is a framework and no subform element is being used, just the default draw-in-the-one-to-many behaviour
@@ -1404,7 +1402,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	
 				// nearly same header drawing code as in the 'else' for drawing regular entries
 				if(!$drawnHeadersOnce) {
-					$col_two .= "<tr><td>\n";
+					$col_two .= "<tr><th></th>\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSource_$sfid\" value=\"$value_source\">\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceForm_$sfid\" value=\"$value_source_form\">\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceEntry_$sfid\" value=\"$entry\">\n";
@@ -1416,7 +1414,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 						if($thishead) {
 							$headerHelpLinkPart1 = $headingDescriptions[$i] ? "<a href=\"#\" onclick=\"return false;\" alt=\"".$headingDescriptions[$x]."\" title=\"".$headingDescriptions[$x]."\">" : "";
 							$headerHelpLinkPart2 = $headerHelpLinkPart1 ? "</a>" : "";
-							$col_two .= "<td style=\"width: 10%; text-align: center;\"><p>$headerHelpLinkPart1<b>$thishead</b>$headerHelpLinkPart2</p></td>\n";
+							$col_two .= "<th><p>$headerHelpLinkPart1<b>$thishead</b>$headerHelpLinkPart2</p></th>\n";
 						}
 					}
 					$col_two .= "</tr>\n";
@@ -1484,7 +1482,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 						$col_two .= "</tr>\n";
 						$drawnHeadersOnce = true;
 					}
-					$col_two .= "<tr>\n<td style=\"width: 10%;\">";
+					$col_two .= "<tr>\n<td>";
 					// check to see if we draw a delete box or not
 					if($sub_ent !== "new") {
 						$deleteSelf = $gperm_handler->checkRight("delete_own_entry", $sfid, $groups, $mid);
