@@ -7,7 +7,7 @@
     
 	<?php settings_fields($plugin_id.'_options'); ?>
     
-    <h2>kk Plugin Options &raquo; Settings</h2>
+    <h2>Formulize Plugin Options &raquo; Settings</h2>
     <table class="widefat">
 		<thead>
 		   <tr>
