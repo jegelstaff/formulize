@@ -197,10 +197,123 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
     
     // Shannon's code to add custom meta box
     /* Define custom box */
-    add_action('add_meta_boxes', 'formulize_meta_box');
-    add_action('save_post', 'formulize_save_postdata');
-    add_action("wp_loaded",'insertFormulize');  // <- This line is causing a warning, look at the log in /var/log/apache2/error_log. This error is caused because the "insertFormulize" method is inside of the Formulize Plugin Options Class.
-    add_action('set_user_role','updateUser',"",2);
-    add_action('user_register','addUser');
-    add_filter('plugin_action_links', 'formulize_settings_link', 10, 2); 
+    
+        
+
+    /*
+     * This function is used to insert the contents of a Formulize table on a Wordpress
+     * page.
+     *
+     * AS OF 03/02/12 --> Currently it adds a table to every page. This needs to be resolved
+     * somehow. Maybe we could have a blank or null line value on every select box that's by
+     * default selected, so it can know not to post something on that page?
+     *
+     * There might be a better way to do this so we're not running a check on every page load, but
+     * this seems simple enough for now.
+     */
+    function insertFormulize($content)
+    {
+	Formulize::init();
+	$custom_fields = get_post_custom($GLOBALS['post']->ID);
+	$formulize_screen_id = $custom_fields['formulize_select'][0];
+	include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
+    }
+	
+    /*
+     * This function is called when a new user registers on the wordpress site.
+     * It is called as the new user form is submitted, and pushes the information
+     * to formulize as the new user is created on WP.
+     */
+    function addUser($userID)
+    {
+	$wpUser = get_userdata($userID);
+	$userData = array(
+			'uid'=>$wpUser->ID,
+			'uname'=>$wpUser->display_name,
+			'login_name'=>$wpUser->user_login,
+			'email'=>$wpUser->user_email,
+			'timezone_offset'=> 0,
+			);
+	$formUser = new FormulizeUser($userData);
+	Formulize::createUser($formUser);
+	/*
+	 $to = "paged90@gmail.com";
+	$subject = "MESSAGE";
+	$message = "User has been added successfully.";
+	wp_mail($to,$subject,$message);
+	*/
+    }
+    
+    
+    /**
+     * This function will delete a user from the Formulize database once the user is deleted on Wordpress.
+     *
+     * AS OF 03/02/12 - DeleteUser in Formulize API calls die(). This causes the script to end and breaks WP functionality.
+     * Do not uncomment the delete user hook.
+     */
+    function deleteUser($userID)
+    {
+	Formulize::deleteUser($userID);
+    }
+    
+    //Need to add a check in here so we don't synchronized a user twice...same for adding a user.
+    //I.e. We need a function in the API to query the formulize database so that we can confirm whether
+    //the user already exists (Or is this in the API?)
+    function synchronizeUsers()
+    {
+	$users = get_users();
+	foreach ($users as $wpUser)
+	{
+		$userData = array(
+			'uid'=>$wpUser->ID,
+			'uname'=>$wpUser->display_name,
+			'login_name'=>$wpUser->user_login,
+			'email'=>$wpUser->user_email,
+			'timezone_offset'=> 0,
+			);
+		$formUser = new FormulizeUser($userData);
+		if (Formulize::createUser($formUser)==FALSE)
+		{
+			echo "FALSE FALSE!";
+		}
+		echo '<li>'. $wpUser->user_email . " " . $wpUser->ID . " " . $wpUser->display_name . " " . $wpUser->user_login .  '</li>';
+	}
+    }
+	
+/**
+ * This function will update the information for a user in the Formulize database. It will be run
+ * at the end of every profile update currently, such that as soon as User information is edited, the
+ * information stored in Formulize will likewise be updated.
+ *
+ * AS OF 03/02/12 - Update Users function in API appear to do nothing yet. This function has no effect as of yet.
+ */
+	function updateUser($wpUser)
+	{
+		$userData = array(
+				'uid'=>$wpUser->ID,
+				'uname'=>$wpUser->display_name,
+				'login_name'=>$wpUser->user_login,
+				'email'=>$wpUser->user_email,
+				'timezone_offset'=> 0,
+				);
+		
+		if(Formulize::updateUser($wpUser->ID,$userdata))
+		{
+		
+		 $to = "paged90@gmail.com";
+		$subject = "MESSAGE";
+		$message = "Testing update user further.";
+		wp_mail($to,$subject,$message);
+		}
+		
+	}
+	
+add_action('init','synchronizeUsers'); //<-- Commented out. Will talk about where to place this function. Maybe as Formulize full path variable is changed?
+add_action('delete_user','deleteUser'); //<-- Commented out. The delete function in the API calls the die function. Uncommenting this and attempting to delete a user crashes WP.
+add_action('edit_user_profile', 'updateUser'); // <-- Update user is stub. Doesn't do anything yet in API.
+add_action('add_meta_boxes', 'formulize_meta_box');
+add_action('save_post', 'formulize_save_postdata'); 
+add_action('user_register','addUser'); // <--Currently this function works and updates the Formulize site.
+add_filter('the_content','insertFormulize'); //Need to fix this hook so that the table is displayed appropriately on each page
+add_filter('plugin_action_links', 'formulize_settings_link', 10, 2); 
 ?>
