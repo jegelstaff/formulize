@@ -9,7 +9,7 @@ header("Content-Type: text/css");
 }
 
 #floating-list-of-entries-save-button {
-	padding: 1em 1.5em;
+	padding: 0.5em 1.5em;
 	margin: 1em 0;
 	background-color: #FFF;
 }
@@ -20,7 +20,10 @@ header("Content-Type: text/css");
 	z-index: 100;
 	margin-top: 0;
 	margin-bottom: 0;
-	border: solid 1px #1D65A5;
+    border-top: solid 1px #1D65A5;
+    border-left: solid 1px #1D65A5;
+	border-right: solid 1px #1D65A5;
+    border-radius: 5px 5px 0 0;
 }
 
 .floating-column {

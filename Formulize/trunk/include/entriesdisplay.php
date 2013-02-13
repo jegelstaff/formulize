@@ -3515,6 +3515,7 @@ foreach($lockedColumns as $thisColumn) {
 	});
 
 	var saveButtonOffset = jQuery('#floating-list-of-entries-save-button').offset();
+	saveButtonOffset.left = 15;
 	floatSaveButton(saveButtonOffset);
 	jQuery(window).scroll(function () {
 		floatSaveButton(saveButtonOffset);

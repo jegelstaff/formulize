@@ -33,10 +33,10 @@
 // Added Oct. 16 2006
 // setup flag for whether the Freeform Solutions user archiving patch has been applied to the core
 global $xoopsDB, $xoopsConfig;
-$sql = "SELECT * FROM " . $xoopsDB->prefix("users") . " LIMIT 0,1";
-if($res = $xoopsDB->query($sql)) {
-  $resarray = $xoopsDB->fetchArray($res);
-  $GLOBALS['formulize_archived_available'] = isset($resarray['archived']) ? true : false;
+$sqlInFunctions = "SELECT * FROM " . $xoopsDB->prefix("users") . " LIMIT 0,1";
+if($resInFunctions = $xoopsDB->query($sqlInFunctions)) {
+  $resarrayInFunctions = $xoopsDB->fetchArray($resInFunctions);
+  $GLOBALS['formulize_archived_available'] = isset($resarrayInFunctions['archived']) ? true : false;
 } else {
   $GLOBALS['formulize_archived_available'] = false;
 }

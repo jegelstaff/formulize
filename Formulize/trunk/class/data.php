@@ -41,7 +41,12 @@ class formulizeDataHandler  {
 
 	// $fid must be an id
 	function formulizeDataHandler($fid){
-		$this->fid = intval($fid);
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(is_object($formObject = $form_handler->get($fid))) {
+			$this->fid = intval($fid);
+		} else {
+			$this->fid = false;
+		}
 	}
 	
 	// this function copies data from one form to another
@@ -475,16 +480,15 @@ class formulizeDataHandler  {
 	// this function returns all the values of a given field
 	function findAllValuesForField($handle, $sort="") {
 		static $cachedValues = array();
-		$resultArray = array();
 		global $xoopsDB;
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($this->fid);
-		if(!isset($cachedValues[$handle])) {
+		if(!isset($cachedValues[$handle]) AND $this->fid) {
 			if($sort=="ASC") {
 				$sort = " ORDER BY `$handle` ASC";
 			} elseif($sort =="DESC") {
 				$sort = " ORDER BY `$handle` DESC";
 			}
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$formObject = $form_handler->get($this->fid);
 			$sql = "SELECT `$handle`, `entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')).$sort;
 			if($res = $xoopsDB->query($sql)) {
 				while($array = $xoopsDB->fetchArray($res)) {
@@ -493,7 +497,9 @@ class formulizeDataHandler  {
 			} else {
 				$cachedValues[$handle] = false;
 			}
-		} 
+		} else {
+			$cachedValues[$handle] = false; // fid passed into constructor was not valid!
+		}
 		return $cachedValues[$handle];
 	}
 		

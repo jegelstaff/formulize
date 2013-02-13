@@ -26,7 +26,7 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions 					     ##
+##  Author of this file: Freeform Solutions 				     ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -193,6 +193,9 @@ if($canSetNots) {
 }
 
 // setup the options array for form elements
+// UID
+$options['creation_uid'] = _formulize_DE_CALC_CREATOR;
+$options['mod_uid'] = _formulize_DE_CALC_MODIFIER;
 foreach($cols as $f=>$vs) {
 	foreach($vs as $row=>$values) {
 		if($values['ele_colhead'] != "") {

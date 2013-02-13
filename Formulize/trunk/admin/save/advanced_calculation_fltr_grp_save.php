@@ -76,6 +76,8 @@ $fltr_grptitles = array();
 
 $has_blank_options = false;
 
+$defaultsGathered = array();
+
 foreach($advcalc as $k=>$v) {
   //print $k . '=>' . $v ."\n";
 	if(substr($k, 0, 14) == "fltr_grptitle_") {
@@ -107,6 +109,22 @@ foreach($advcalc as $k=>$v) {
         }
     		$fltr_grps[$fltr_grp_number][substr($k, 0, 4)]['options'] = $t_options;
       }
+      
+      // gather the defaults for checkboxes...once
+      if($fltr_grps[$fltr_grp_number][substr($k, 0, 4)]['kind'] == 3 AND !isset($defaultsGathered[$fltr_grp_number])) {
+	// resequence the values so they have no gaps, since when re-rendered on screen, the numbering will be sequential
+	$prevDefault = false;
+	foreach($_POST['advcalc-defaults_'.$fltr_grp_number] as $thisDefaultKey=>$thisDefault) {
+	  if($prevDefault !== false AND $thisDefault > ($prevDefault+1)) {
+	    $thisDefault--;
+	    $_POST['advcalc-defaults_'.$fltr_grp_number][$thisDefaultKey] = $thisDefault;
+	  }
+	  $prevDefault = $thisDefault;
+	}
+	$fltr_grps[$fltr_grp_number][substr($k, 0, 4)]['defaults'] = $_POST['advcalc-defaults_'.$fltr_grp_number];
+	$defaultsGathered[$fltr_grp_number] = true;
+      }
+      
     }
   } else if(substr($k, 0, 5) == "type_") {
 		$fltr_grp_number = intval(substr($k, 5));
@@ -164,7 +182,7 @@ if($fltr_grpsHaveBeenReordered) {
 // alter the information based on a user add or delete
 switch ($op) {
 	case "addfltr_grp":
-    $fltr_grps[]=array('description'=>'','handle'=>'','type'=>array("kind"=>1,"options"=>null),'form'=>'','form_alias'=>'','is_filter'=>0,'is_group'=>0);
+    $fltr_grps[]=array('description'=>'','handle'=>'','type'=>array("kind"=>1,"options"=>null,"defaults"=>null),'form'=>'','form_alias'=>'','is_filter'=>0,'is_group'=>0);
     $fltr_grptitles[]='New filers and grouping';
 		break;
 	case "delfltr_grp":

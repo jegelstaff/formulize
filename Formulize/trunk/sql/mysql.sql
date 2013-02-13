@@ -138,6 +138,7 @@ CREATE TABLE `formulize_screen_form` (
   `alldonebuttontext` varchar(255) NOT NULL default '',
   `displayheading` tinyint(1) NOT NULL default 0,
   `reloadblank` tinyint(1) NOT NULL default 0,
+  `formelements` text default NULL,
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;
