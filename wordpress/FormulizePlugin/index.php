@@ -22,89 +22,60 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 
     class FormulizePluginOptions
     {
-        
-        //This function is used to insert the formulize table into a wordpress page.
-        //Currently screen id is hard-coded, however this will be fetched from the dropdown/some source
-        //once we know how we're calling formulize within wordpress
-        
-        function insertFormulize()
-        {
-            echo "Hello";
-            //	include '/Users/dpage/Sites/formulize/htdocs/mainfile.php';
-            //	$formulize_screen_id = 2;
-            //	include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
-        }
-
-		function addUser($userID)
-        {
-            $user = get_userdata($userID);
-                
-        }
-        
-        function synchronizeUsers()
-        {
-            
-        }
-        
-        function updateUser($userID, $role)
-        {
-            //This code will go to formulize for updating a user.
-        }
-	
-		/** function/method
-		* Usage: return absolute file path
-		* Arg(1): string
-		* Return: string
-		*/
-		public static function file_path($file)
+	/** function/method
+	* Usage: return absolute file path
+	* Arg(1): string
+	* Return: string
+	*/
+	public static function file_path($file)
+	{
+		return ABSPATH.'wp-content/plugins/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)).$file;
+	}
+	/** function/method
+	* Usage: hooking the plugin options/settings
+	* Arg(0): null
+	* Return: void
+	*/
+	public static function register()
+	{
+		register_setting(FORMULIZEPLUGINOPTIONS_ID.'_options', 'formulize_path');
+	}
+	/** function/method
+	* Usage: hooking (registering) the plugin menu
+	* Arg(0): null
+	* Return: void
+	*/
+	public static function menu()
+	{
+		// Create menu tab
+		add_options_page(FORMULIZEPLUGINOPTIONS_NICK.' Plugin Options', FORMULIZEPLUGINOPTIONS_NICK, 'manage_options', FORMULIZEPLUGINOPTIONS_ID.'_options', array('FormulizePluginOptions', 'options_page'));
+	}
+	/** function/method
+	* Usage: show options/settings form page
+	* Arg(0): null
+	* Return: void
+	*/
+	public static function options_page()
+	{ 
+		if (!current_user_can('manage_options')) 
 		{
-			return ABSPATH.'wp-content/plugins/'.str_replace(basename( __FILE__),"",plugin_basename(__FILE__)).$file;
+			wp_die( __('You do not have sufficient permissions to access this page.') );
 		}
-		/** function/method
-		* Usage: hooking the plugin options/settings
-		* Arg(0): null
-		* Return: void
-		*/
-		public static function register()
-		{
-			register_setting(FORMULIZEPLUGINOPTIONS_ID.'_options', 'formulize_path');
-		}
-		/** function/method
-		* Usage: hooking (registering) the plugin menu
-		* Arg(0): null
-		* Return: void
-		*/
-		public static function menu()
-		{
-			// Create menu tab
-			add_options_page(FORMULIZEPLUGINOPTIONS_NICK.' Plugin Options', FORMULIZEPLUGINOPTIONS_NICK, 'manage_options', FORMULIZEPLUGINOPTIONS_ID.'_options', array('FormulizePluginOptions', 'options_page'));
-		}
-		/** function/method
-		* Usage: show options/settings form page
-		* Arg(0): null
-		* Return: void
-		*/
-		public static function options_page()
-		{ 
-			if (!current_user_can('manage_options')) 
-			{
-				wp_die( __('You do not have sufficient permissions to access this page.') );
-			}
-			
-			$plugin_id = FORMULIZEPLUGINOPTIONS_ID;
-			// display options page
-			include(self::file_path('options.php'));
-		}
-		/** function/method
-		* Usage: filtering the content
-		* Arg(1): string
-		* Return: string
-		*/
-		public static function content_with_quote($content)
-		{
-			$quote = '<p><blockquote>' . get_option('kkpo_quote') . '</blockquote></p>';
-			return $content . $quote;
-		}
+		
+		$plugin_id = FORMULIZEPLUGINOPTIONS_ID;
+		// display options page
+		include(self::file_path('options.php'));
+	}
+	/** function/method
+	* Usage: filtering the content
+	* Arg(1): string
+	* Return: string
+	*/
+	public static function content_with_quote($content)
+	{
+		$quote = '<p><blockquote>' . get_option('kkpo_quote') . '</blockquote></p>';
+		return $content . $quote;
+	}
 	
     }
     
@@ -193,12 +164,7 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 	}
 	add_filter('the_content', array('FormulizePluginOptions', 'content_with_quote'));
 
-    endif;
-    
-    // Shannon's code to add custom meta box
-    /* Define custom box */
-    
-        
+    endif;    
 
     /*
      * This function is used to insert the contents of a Formulize table on a Wordpress
@@ -213,10 +179,19 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
      */
     function insertFormulize($content)
     {
+	echo '<div id=formulize_form>';
+	initializeUserInfo();
 	Formulize::init();
 	$custom_fields = get_post_custom($GLOBALS['post']->ID);
 	$formulize_screen_id = $custom_fields['formulize_select'][0];
 	include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
+	echo '</div>';
+    }
+    
+    function insertFormulizeStylesheet()
+    {
+        wp_register_style( 'newstyle', plugins_url('newstyle.css', __FILE__));
+        wp_enqueue_style( 'newstyle');
     }
 	
     /*
@@ -296,19 +271,40 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 				'email'=>$wpUser->user_email,
 				'timezone_offset'=> 0,
 				);
-		
-		if(Formulize::updateUser($wpUser->ID,$userdata))
+		if($wpUser->ID!=1)
 		{
-		
+		if(Formulize::updateUser($wpUser->ID,$userData))
+		{
 		 $to = "paged90@gmail.com";
 		$subject = "MESSAGE";
-		$message = "Testing update user further.";
+		$message = "Testing update user further." . $wpUser->ID;
 		wp_mail($to,$subject,$message);
+		}
 		}
 		
 	}
 	
-add_action('init','synchronizeUsers'); //<-- Commented out. Will talk about where to place this function. Maybe as Formulize full path variable is changed?
+	function initializeUserInfo()
+	{
+		get_currentuserinfo();
+		if(isset($GLOBALS['current_user']))
+		{
+			echo "Set";	
+		}
+		
+		global $wp_roles;
+		$roles = $wp_roles->roles;
+		$rolesArray = array();
+		do
+		{
+			$rolesArray[] = key($roles);
+		}
+		while(next($roles)!==FALSE);
+	}
+	
+//add_action('init','initializeUserInfo');
+add_action( 'wp_enqueue_scripts', 'insertFormulizeStylesheet' );
+//add_action('init','synchronizeUsers'); //<-- Commented out. Will talk about where to place this function. Maybe as Formulize full path variable is changed?
 add_action('delete_user','deleteUser'); //<-- Commented out. The delete function in the API calls the die function. Uncommenting this and attempting to delete a user crashes WP.
 add_action('edit_user_profile', 'updateUser'); // <-- Update user is stub. Doesn't do anything yet in API.
 add_action('add_meta_boxes', 'formulize_meta_box');
