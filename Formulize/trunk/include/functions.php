@@ -2094,8 +2094,7 @@ function writeOtherValues($id_req, $fid) {
 // THIS FUNCTION CREATES A SERIES OF ARRAYS THAT CONTAIN ALL THE INFORMATION NECESSARY FOR THE LIST OF ELEMENTS THAT GETS DISPLAYED ON THE ADMIN SIDE WHEN CREATING OR EDITING CERTAIN FORM ELEMENTS
 // new use with textboxes triggers a different value to be used -- just the ele_id from the 'formulize' table, which is all that is necessary to uniquely identify the element
 // note that ele_value has different contents for textboxes and selectboxes
-function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $firstValue="") {
-
+function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $firstValue="", $multi_select = false) {
 	global $xoopsDB;
       array($formids);
       array($formnames);
@@ -2156,7 +2155,7 @@ function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $fi
 	}
 
 	// make the select box and add all the options... -- jwe 7/29/04
-	$formlink = new XoopsFormSelect($am_ele_formlink, $name, '' , 1, false);
+    $formlink = new XoopsFormSelect($am_ele_formlink, $name, '', $multi_select ? 8 : 1, $multi_select);
 	$formlink->addOption("none", $am_formlink_none);
 	for($i=0;$i<$captionlistindex;$i++)
 	{

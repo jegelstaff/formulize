@@ -399,7 +399,9 @@ if($ele_type=='text') {
 	$linkedMetaDataParts = explode("#*=:*", $ele_value[2]);
 	$linkedSourceFid = $linkedMetaDataParts[0];
 	if($linkedSourceFid) {
-		list($listValue, $selectedListValue) = createFieldList($ele_value[10], false, $linkedSourceFid, "elements-ele_value[10]", _AM_ELE_LINKSELECTEDABOVE);
+		list($listValue, $selectedListValue) = createFieldList($ele_value[10], false, $linkedSourceFid, "elements-ele_value[10]",
+			_AM_ELE_LINKSELECTEDABOVE, true);
+		$listValue->setValue($ele_value[10]); // mark the current selections in the form element
 		$options['listValue'] = $listValue->render();
 		list($exportValue, $selectedExportValue) = createFieldList($ele_value[11], false, $linkedSourceFid, "elements-ele_value[11]", _AM_ELE_VALUEINLIST);
 		$options['exportValue'] = $exportValue->render();

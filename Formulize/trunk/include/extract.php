@@ -125,48 +125,47 @@ function prepvalues($value, $field, $entry_id) {
 		 }
 	}
 
-        
+    // handle cases where the value is linked to another form
+    if($source_ele_value = formulize_isLinkedSelectBox($field, true)) {
+        // value is an entry id in another form
+        // need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
+        $sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
+        if($value AND $sourceMeta[1]) {
+            // need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
+            if($GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
+                list($sourceMeta[1]) = convertElementIdsToElementHandles(array($source_ele_value[11]), $sourceMeta[0]);
+            } elseif(isset($source_ele_value[10]) AND $source_ele_value[10] != "none") {
+                // number 10 may be an array now
+                $sourceMeta[1] = convertElementIdsToElementHandles(is_array($source_ele_value[10]) ? $source_ele_value[10] : array($source_ele_value[10]), $sourceMeta[0]);
+            }
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $sourceFormObject = $form_handler->get($sourceMeta[0]);
+            // check if this is a link to a link
+            if($second_source_ele_value = formulize_isLinkedSelectBox($sourceMeta[1], true)) {
+                $secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
+                $secondFormObject = $form_handler->get($secondSourceMeta[0]);
+                $sql = "SELECT t1.`".$secondSourceMeta[1]."` FROM ".DBPRE."formulize_".$secondFormObject->getVar('form_handle')." as t1, ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle'). " as t2 WHERE t2.`entry_id` IN (".trim($value, ",").") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$sourceMeta[1]."`)) ORDER BY t2.`entry_id`";
+            } else {
+                if (is_array($sourceMeta[1])) {
+                    $select_column = "`".implode("`, `", $sourceMeta[1])."`";
+                } else {
+                    $select_column = "`{$sourceMeta[1]}`";
+                }
+                $sql = "SELECT $select_column FROM ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." WHERE entry_id IN (".trim($value, ",").") ORDER BY entry_id";
+            }
+            if(!$res = $xoopsDB->query($sql)) {
+                print "Error: could not retrieve the source values for a linked selectbox during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
+            } else {
+                $value = "";
+                while($row = $xoopsDB->fetchRow($res)) {
+                    $value .= "*=+*:" . implode(" - ", $row);
+                }
+            }
+        } elseif($value) {
+            $value = ""; // if there was no sourceMeta[1], which is the handle for the field in the source form, then the value should be empty, ie: we cannot make a link...this probably only happens in cases where there's a really old element that had its caption changed, and that happened before Formulize automatically updated all the linked selectboxes that rely on that element's caption, back when captions mattered in the pre F3 days
+        }
+    }
 
-	// handle cases where the value is linked to another form
-  if($source_ele_value = formulize_isLinkedSelectBox($field, true)) {
-     // value is an entry id in another form
-     // need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
-     $sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
-     if($value AND $sourceMeta[1]) {
-	  
-	  // need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
-	  if($GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
-	       list($sourceMeta[1]) = convertElementIdsToElementHandles(array($source_ele_value[11]), $sourceMeta[0]);
-	  } elseif(isset($source_ele_value[10]) AND $source_ele_value[10] != "none") {
-	       list($sourceMeta[1]) = convertElementIdsToElementHandles(array($source_ele_value[10]), $sourceMeta[0]);
-	  }
-	  
-					$form_handler = xoops_getmodulehandler('forms', 'formulize');
-					$sourceFormObject = $form_handler->get($sourceMeta[0]);
-					// check if this is a link to a link
-					if($second_source_ele_value = formulize_isLinkedSelectBox($sourceMeta[1], true)) {
-							 $secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
-						         $secondFormObject = $form_handler->get($secondSourceMeta[0]);
-							 $sql = "SELECT t1.`".$secondSourceMeta[1]."` FROM ".DBPRE."formulize_".$secondFormObject->getVar('form_handle')." as t1, ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle'). " as t2 WHERE t2.`entry_id` IN (".trim($value, ",").") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$sourceMeta[1]."`)) ORDER BY t2.`entry_id`";
-					} else {
-							 $sql = "SELECT `".$sourceMeta[1]."` FROM ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." WHERE entry_id IN (".trim($value, ",").") ORDER BY entry_id";		 
-					}
-          if(!$res = $xoopsDB->query($sql)) {
-               print "Error: could not retrieve the source values for a linked selectbox during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
-          } else {
-               $value = "";
-               while($row = $xoopsDB->fetchRow($res)) {
-                    $value .= "*=+*:" . $row[0];
-               }
-          }
-     } elseif($value) {
-          $value = ""; // if there was no sourceMeta[1], which is the handle for the field in the source form, then the value should be empty, ie: we cannot make a link...this probably only happens in cases where there's a really old element that had its caption changed, and that happened before Formulize automatically updated all the linked selectboxes that rely on that element's caption, back when captions mattered in the pre F3 days
-     }
-  }
-
-  
-	
-	
 	// check if this is fullnames/usernames box
   // wickedly inefficient to go to DB for each value!!  This loop executes once per datapoint in the result set!!
   if($type == "select") {
