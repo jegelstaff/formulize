@@ -231,7 +231,7 @@ class Formulize {
                 FROM ' . self::$db->prefix('formulize_id') . ' AS fi, 
                 ' . self::$db->prefix('formulize_screen') . ' AS fs 
                 WHERE fi.id_form = fs.fid 
-                ORDER BY fi.desc_form, fs.title2';
+                ORDER BY fi.desc_form, fs.title';
                 
                 if ($result = self::$db->query($sql)) {
                         while($row = self::$db->fetchArray($result)) {
