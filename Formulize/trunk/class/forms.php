@@ -973,18 +973,29 @@ class formulizeFormsHandler {
       print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
       return false;
     }
-        
-  
+
     if($clonedata) {
         // July 1 2007 -- changed how cloning happens with new data structure
         include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php"; // formulize data handler
         $dataHandler = new formulizeDataHandler($newfid);
         if(!$cloneResult = $dataHandler->cloneData($fid, $oldNewEleIdMap)) {
-          print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
-	  return false;
+        print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
+            return false;
         }
     }
-    
+
+	// if revisions are enabled for the cloned form, then create the revisions table
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$newFormObject = $form_handler->get($newfid);
+	if ($newFormObject->getVar('store_revisions')) {
+		if (!$tableCreationResult = $this->createDataTable($newfid, 0, false, true)) {
+			print "Error: could not create revisions table for form $newfid. ".
+				"Please delete the cloned form and report this error to ".
+				"<a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
+			return false;
+		}
+	}
+
     // replicate permissions of the original form on the new cloned form
     $criteria = new CriteriaCompo();
     $criteria->add(new Criteria('gperm_itemid', $fid), 'AND');
