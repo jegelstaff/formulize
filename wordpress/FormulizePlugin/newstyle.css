@@ -1,0 +1,43 @@
+.formulize_button
+{
+width: 100px;
+}
+
+#formulize_addMultiButton
+{
+width:120px;
+}
+
+.tableTitle
+{
+    border-width:0px;
+}
+
+#formulize_form .innerTable
+{
+    border-width:0px;
+}
+
+#allColumns
+{
+    border-width:0px;
+}
+
+#actionsTable
+{
+    margin-bottom:200px;
+}
+
+#fillInTable
+{
+}
+
+#temp1
+{
+    border-width:10px;
+}
+
+#temp2
+{
+    border-width:5px;
+}
