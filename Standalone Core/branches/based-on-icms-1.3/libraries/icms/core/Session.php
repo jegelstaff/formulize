@@ -39,7 +39,11 @@ class icms_core_Session {
 		// If this is a page load by another system, and we're being included, then we establish the user session based on the user id of the user in effect in the other system
 		// This approach assumes correspondence between the user ids.
 		global $user;
-		if(is_object($user)) {
+		if(isset($GLOBALS['current_user'])) //wordpress
+		{
+			$externalUid = $GLOBALS['current_user']->ID;
+		}
+		else if(is_object($user)) {
 		  $externalUid = 0;
 		  $userVars = get_object_vars($user);
 		  if(isset($userVars['uid'])) { // drupal
@@ -54,8 +58,8 @@ class icms_core_Session {
 		      unset($_SESSION['xoopsUserId']);
 		    }
 		  }
+		}
 		  if($externalUid) {
-			
 		    $icms_user = icms::handler('icms_member')->getUser( $externalUid );
 		    if(is_object($icms_user)) {
 		      // set a few things in $_SESSION, similar to what include/checklogin.php does, and make a cookie and a database entry
@@ -79,7 +83,7 @@ class icms_core_Session {
 			$_GET['lang'] = i18n_get_lang();
 		    }
 		  }
-		}
+		
 		
 		// If there's no xoopsUserId set in the $_SESSION yet, and there's an ICMS session cookie present, then let's make one last attempt to load the session (could be because we're embedded in a system that doesn't have a parallel user table like what is used above)
 		$icms_session_name = ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') ? $icmsConfig['session_name'] : session_name();
