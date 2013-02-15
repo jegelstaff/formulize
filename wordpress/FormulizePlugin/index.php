@@ -119,8 +119,8 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
         <?php
             
             if(count($screen_names) > 0) {
-                foreach($screen_names as $name) {
-                    print "<option value=$name>$name</option>";
+                foreach($screen_names as $id=>$name) {
+                    print "<option value=$id>$name</option>";
                 }
             } else {
                 // no options
