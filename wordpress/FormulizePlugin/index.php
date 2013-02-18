@@ -179,6 +179,7 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
      */
     function insertFormulize($content)
     {
+	echo $content;
 	echo '<div id=formulize_form>';
 	initializeUserInfo();
 	Formulize::init();
@@ -192,6 +193,7 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
     {
         wp_register_style( 'newstyle', plugins_url('newstyle.css', __FILE__));
         wp_enqueue_style( 'newstyle');
+	Formulize::init();
     }
 	
     /*
