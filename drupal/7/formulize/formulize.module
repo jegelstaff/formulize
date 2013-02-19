@@ -570,7 +570,7 @@ function formulize_user_role_insert($role)
  */
 function formulize_user_role_update($role)
 {
-	Formulize::renameGroup($role->rid, $role->description);
+	Formulize::renameGroup($role->rid, $role->name);
 }
 
 /**
@@ -578,5 +578,5 @@ function formulize_user_role_update($role)
  */
 function formulize_user_role_delete($role)
 {
-	Formulize::deleteGroup($role->uid);
+	Formulize::deleteGroup($role->rid);
 }
