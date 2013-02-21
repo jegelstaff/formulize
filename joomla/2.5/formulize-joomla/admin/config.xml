@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+  <fieldset name='params' label='Parameters'>
+    <field type="text" name="formulize_path" size="100" label="Path:" description="The absolute path to the formulize directory" default='' />
+  </fieldset>
+</config>
+
+
