@@ -100,44 +100,31 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
     /* Print box content */
     function formulize_inner_custom_box($post) {
         global $post;
+        $meta = get_post_meta($post->ID, 'formulize_select', true);
+
         $values = get_post_custom($post->ID);
         $selected = isset($values['formulize_select']) ? esc_attr($values['formulize_select']) : '';
         // We'll use this nonce field later on when saving.
         wp_nonce_field( 'my_formulize_nonce', 'formulize_nonce' );
         $screen_names = Formulize::getScreens();
-        /*
-        $screen_names = array(
-                "1" => "option 1",
-                "2" => "option 2",
-        );
-         
-         */
-               
-        ?>
-<label for ="formulize_select">Choose screen: </label>
-    <select name="formulize_select" id="formulize_select">
-        <?php
-            
-            if(count($screen_names) > 0) {
-                foreach($screen_names as $id=>$name) {
-                    print "<option value=$id>$name</option>";
-                }
-            } else {
-                // no options
-                print "<option value=0>No screens found</option>";
-            }
-            
-            
-            ?>
+        array_unshift($screen_names, 'No Screens');
 
-    </select>
-
-<?php
+		echo '<label for ="formulize_select">Choose screen: </label>';
+	 	echo '<select name="formulize_select" id="formulize_select">';
+	 			if(count($screen_names) > 0) { 
+	                foreach ($screen_names as $id) {
+	                    echo '<option ', $meta == $id ? ' selected="selected"' : '', '>', $id, '</option>';
+	                }
+	            } else {
+	            	// No options
+		            echo '<option value=0> No screens found </option>';
+	            }
+	                echo '</select>';
     }
     
     /* When the post is saved, saves our custom data */
     function formulize_save_postdata($post_id) {
-        //verify if this is an auto save routine
+            //verify if this is an auto save routine
         //If our form hasn't been submitted we don't want to do anything
         if (defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
             return;
@@ -152,9 +139,14 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
                                       'href' => array() // and those anchors can only have href attribute
                                       )  
                          );  
-        
-        if (isset( $_POST['formulize_select']))  
-            update_post_meta($post_id, 'formulize_select', esc_attr( $_POST['formulize_select']));  
+
+        $old = get_post_meta($post_id, 'formulize_select', true);
+        $new = $_POST['formulize_select'];
+        if ($new && $new != $old) {
+            update_post_meta($post_id, 'formulize_select', $new);
+        } elseif ('' == $new && $old) {
+            delete_post_meta($post_id, 'formulize_select', $old);
+        } 
     }
     
 	if ( is_admin() )
@@ -179,14 +171,19 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
      */
     function insertFormulize($content)
     {
-	echo $content;
-	echo '<div id=formulize_form>';
-	initializeUserInfo();
-	Formulize::init();
-	$custom_fields = get_post_custom($GLOBALS['post']->ID);
-	$formulize_screen_id = $custom_fields['formulize_select'][0];
-	include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
-	echo '</div>';
+    	echo '<div id=formulize_form>';
+		initializeUserInfo();
+		Formulize::init();
+		$custom_fields = get_post_custom($GLOBALS['post']->ID);
+		$formulize_screen_id = -1; // Default is to have no screens displayed
+		$screen_names = Formulize::getScreens();
+		foreach($screen_names as $id=>$name) { 
+			if ($custom_fields['formulize_select'][0] == $name) {
+				$formulize_screen_id = $id;
+			}
+		}
+		include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
+		echo '</div>';
     }
     
     function insertFormulizeStylesheet()

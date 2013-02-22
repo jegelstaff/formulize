@@ -216,7 +216,7 @@ class Formulize {
                 $members = xoops_gethandler('member');
                 return $members->removeUsersFromGroup($groupid, array($user_id));
         }
-        
+
         /**
          * Obtain a list of the available screen names
          * TODO: Enable permissions-based retrieval
