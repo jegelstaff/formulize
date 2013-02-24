@@ -33,7 +33,7 @@
 		<filename>index.html</filename>
 		<filename>formulize.php</filename>
 		<filename>formulize.css</filename>
-		<filename>metadata.xml</filename>
+		<folder>views</folder>
 		<folder>images</folder>
 	</files>
 
