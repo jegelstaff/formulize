@@ -14,6 +14,8 @@ class Formulize {
         static function init() {
                 if (self::$db == null) {
                         include_once('mainfile.php');
+                        require_once('modules/formulize/include/functions.php');
+
                         self::$db = $GLOBALS['xoopsDB'];
                 }
         }
@@ -23,7 +25,7 @@ class Formulize {
         /**
          * Create a new XOOPS user from the provided FormulizeUser data
          * @param   user_data   FormulizeUser       The user data
-         * @return              boolean             Whether the creation succeeded
+         * @return                              boolean                         Whether the user was successfully created
          */
         static function createUser($user_data) {
                 self::init();
@@ -83,7 +85,7 @@ class Formulize {
          * (uname, login_name, email) to allow those pieces of data to be used for
          * future registrations.
          * @param   user_id     int         The ID of the user to remove
-         * @return              boolean     Whether the delete succeeded
+         * @return                              boolean         Whether the user was successfully deleted
          */
         static function deleteUser($user_id) {
                 self::init();
@@ -101,8 +103,9 @@ class Formulize {
         
         /**
          * Updates user data in XOOPS
-         * @param   user_id      int            The ID of the user to update
-         * @param   user_data    array          An associative array of fields to update
+         * @param   user_id             int                     The ID of the user to update
+         * @param   user_data   array           An associative array of fields to update
+         * @return                              boolean         Whether the user was successfully updated
          */
         static function updateUser($user_id, $data) {
                 self::init();
@@ -120,11 +123,10 @@ class Formulize {
                 }
         }
         
-        //Group Management
-        
         /**
          * Creates a new user group in XOOPS
-         * @param       group           FormulizeGroup
+         * @param       group           FormulizeGroup          The group to create
+         * @return                              boolean                         Whether the group was successfully created
          */
         static function createGroup($group) {
                 self::init();
@@ -150,6 +152,7 @@ class Formulize {
          * Rename an existing XOOPS group
          * @param   groupid     int         The ID of the group being renamed
          * @param   name        String      The new name for the group
+         * @return                              boolean         Whether the group was successfully renamed
          */
         static function renameGroup($groupid, $name) {
                 self::init();
@@ -175,6 +178,7 @@ class Formulize {
          * Deletes an existing XOOPS group
          * TODO: Need to also remove the mapping when the group is deleted
          * @param       groupid         int                     The ID of the XOOPS group to delete
+         * @return                              boolean         Whether the group was successfully deleted
          */
         static function deleteGroup($groupid) {
                 self::init();
@@ -197,42 +201,80 @@ class Formulize {
         
         /**
          * Adds an existing user to a group
-         * @param   user_id      int         The ID of the user being added
+         * @param   user_id             int         The ID of the user being added
          * @param   groupid     int         The ID of the group being added to
+         * @return                              boolean         BooleanWhether the user was successfully added to the group
          */
         static function addUserToGroup($user_id, $groupid) {
                 self::init();
                 $members = xoops_gethandler('member');
-                return $members->addUserToGroup($groupid, $user_id);
+                return $members->addUserToGroup(self::getXoopsGroupID($groupid), $user_id);
         }
         
         /**
          * Removes an existing user from a group
-         * @param   user_id      int         The ID of the user being removed
+         * @param   user_id             int         The ID of the user being removed
          * @param   groupid     int         The ID of the group being removed from
+         * @return                              boolean         Whether the user was successfully removed from the group
          */ 
         static function removeUserFromGroup($user_id, $groupid) {
                 self::init();
                 $members = xoops_gethandler('member');
-                return $members->removeUsersFromGroup($groupid, array($user_id));
+                return $members->removeUsersFromGroup(self::getXoopsGroupID($groupid), array($user_id));
         }
-
+        
         /**
          * Obtain a list of the available screen names
-         * TODO: Enable permissions-based retrieval
+         * @param       limitUser       boolean         Whether to limit the list of screens to those
+         *                                                                      viewable by the current user
+         * @return                              Array           An array of screens (or an empty array if none are retrieved)
          */
-        static function getScreens() {
+        static function getScreens($limitUser=false) {
+                global $xoopsUser;
                 self::init();
-
                 $options = array();
+
+                $form_table = self::$db->prefix('formulize_id');
+                $screen_table = self::$db->prefix('formulize_screen');
                 
-                $sql = 
-                'SELECT fi.desc_form, fs.title, fs.sid 
-                FROM ' . self::$db->prefix('formulize_id') . ' AS fi, 
-                ' . self::$db->prefix('formulize_screen') . ' AS fs 
-                WHERE fi.id_form = fs.fid 
-                ORDER BY fi.desc_form, fs.title';
-                
+                //Getting all screens is straightforward
+                if(!$limitUser) {
+                        $sql = 
+                        '
+                                SELECT fi.desc_form, fs.title, fs.sid 
+                                FROM ' . $form_table . ' AS fi, ' . $screen_table . ' AS fs 
+                                WHERE fi.id_form = fs.fid 
+                                ORDER BY fi.desc_form, fs.title
+                        ';
+                //If only screens available to the current user are desired
+                } else {
+                        $members = xoops_gethandler('member');
+                        $group_perms = xoops_gethandler('icms_member_groupperm');
+                        $accessible_forms = array();
+
+                        //Get the groups this member belongs to
+                        $groups = $members->getGroupsByUser($xoopsUser->getVar('uid'));
+                        //Get the forms visible to each of those groups, and unite them
+                        foreach($groups as $group) {
+                                $group_forms = $group_perms->getItemIds('view_form', $group, getFormulizeModId());
+                                $accessible_forms = array_merge($accessible_forms, $group_forms);
+                        }
+                        
+                        //Get the unique IDs of the accessible forms as integers
+                        $form_IDs = array_map(intval, array_unique($accessible_forms));
+                        $in_clause = implode(',', $form_IDs);
+
+                        $sql = 
+                        '
+                                SELECT fi.desc_form, fs.title, fs.sid 
+                                FROM ' . $form_table . ' AS fi, ' . $screen_table . ' AS fs 
+                                WHERE fi.id_form = fs.fid
+                                        AND fi.id_form IN (' . $in_clause . ') 
+                                ORDER BY fi.desc_form, fs.title
+                        ';
+                }
+
+                //Run the query and assemble/return the results
                 if ($result = self::$db->query($sql)) {
                         while($row = self::$db->fetchArray($result)) {
                                 $options[$row['sid']] = $row['desc_form'] . ' - ' . $row['title'];
@@ -261,7 +303,9 @@ class Formulize {
                         WHERE groupid = ' . intval($groupid) . ' 
                         OR external_groupid = ' . intval($external_groupid)
                 ));
-                if(!is_int($external_groupid) || !is_int($groupid))
+                //+0 will allow string input to be implicitly cast to a numeric
+                //type and then checked for integer form
+                if(!is_int($external_groupid + 0) || !is_int($groupid + 0))
                         throw new Exception('Formulize::createGroupMapping() - Expecting two integer IDs.');
                 if($num_mappings == 0) {
                         return self::$db->queryF('
@@ -299,6 +343,7 @@ class FormulizeObject {
         /**
          * Get the value of a field in this FormulizeUser
          * @param   key     String      The name of the field to be retrieved
+         * @return                      [AnyType]       The requested property
          */
         function get($key) {
                 if(!isset($this->{$key}) && $this->{$key} != null) throw new Exception('FormulizeObject - Attempted to get an invalid object field: ' . $key);
@@ -372,6 +417,8 @@ class FormulizeGroup extends FormulizeObject {
          *                              in the base CMS
          */
         function __construct($group_data) {
+                Formulize::init();
+
                 if(isset($group_data['groupid']))
                         $this->groupid = $group_data['groupid'];
                 if(isset($group_data['name']))
