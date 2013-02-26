@@ -213,6 +213,16 @@ var QuickSelect;
     // Set up the interface events
       // Mark that actual item was clicked if clicked item was NOT a DIV, so the focus doesn't leave the items.
       $results_list.mousedown(function(e){if(e.srcElement)clickedLI=e.srcElement.tagName!='DIV';});
+      $(document).mousedown(function (e)
+      {
+        if (hasFocus && $results_list.is(":visible") && $results_list.has(e.target).length === 0 && !$input_element.is($(e.target))){
+          // list is visible and user has clicked outside the list, so clear selection and blank the input box
+          activeSelection = -1;
+          //hasFocus = false;
+          $input_element.val('');
+          $(options.additionalFields).each(function(i,input){$(input).val('');});
+        }
+      });
       $input_element.keydown(function(e){
         last_keyCode = e.keyCode;
         switch(e.keyCode){
