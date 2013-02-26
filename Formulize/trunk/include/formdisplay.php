@@ -2672,24 +2672,24 @@ function getRelevantElementValues(elements) {
 		}
 		elementType = jQuery(nameToUse).attr('type');
 		if(elementType == 'radio') {
-			selected = jQuery(nameToUse+':checked').val();
+			formulize_selectedItems = jQuery(nameToUse+':checked').val();
 		} else if(elementType == 'checkbox') {
-			selected = new Array();
+			formulize_selectedItems = new Array();
 			jQuery(nameToUse).map(function() { // need to check each one individually, because val isn't working right?!
 			  if(jQuery(this).attr('checked')) {
 				foundval = jQuery(this).attr('value');
-				selected.push(foundval);
+				formulize_selectedItems.push(foundval);
 			  }
 			});
 		} else {
-			selected = jQuery(nameToUse).val();
+			formulize_selectedItems = jQuery(nameToUse).val();
 		}
-		if(jQuery.isArray(selected)) {
-			for(key in selected) {
-				ret = ret + '&'+handle+'='+encodeURIComponent(selected[key]);					
+		if(jQuery.isArray(formulize_selectedItems)) {
+			for(key in formulize_selectedItems) {
+				ret = ret + '&'+handle+'='+encodeURIComponent(formulize_selectedItems[key]);					
 			}
 		} else {
-			ret = ret + '&'+handle+'='+encodeURIComponent(selected);				
+			ret = ret + '&'+handle+'='+encodeURIComponent(formulize_selectedItems);				
 		}
 
 	}
