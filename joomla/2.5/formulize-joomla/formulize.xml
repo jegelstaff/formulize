@@ -1,17 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- $Id: formulize.xml 51 2010-11-22 01:33:21Z chdemko $ -->
 <extension method="upgrade" type="component" version="1.6.0">
 	<name>Formulize</name>
-	<!-- The following elements are optional and free of formatting contraints -->
 	<creationDate>January 2013</creationDate>
 	<author>UCOSP Formulize Team 2013</author>
-	<authorEmail>umsanter@cc.umanitoba.ca</authorEmail>
-	<authorUrl>http://www.example.org</authorUrl>
-	<copyright>Copyright Info</copyright>
-	<license>License Info</license>
-	<!--  The version string is recorded in the components table -->
-	<version>0.0.1</version>
-	<!-- The description is optional and defaults to the name -->
 	<description>Integration of Formulize into Joomla</description>
 
 	<!-- Run script -->
@@ -27,8 +18,7 @@
 		</fields>
 	</form>
 
-	
-	<!-- Site Main File Copy Section -->
+	<!-- Site Section -->
 	<files folder="site">
 		<filename>index.html</filename>
 		<filename>formulize.php</filename>
@@ -37,15 +27,10 @@
 		<folder>images</folder>
 	</files>
 
-	<!-- Administration Menu Section -->
+	<!-- Administration Section -->
 	<administration>
 		<menu>Formulize</menu>
-		<!-- Administration Main File Copy Section -->
-		<!-- Note the folder attribute: This attribute describes the folder
-			to copy FROM in the package to install therefore files copied
-			in this section are copied from /admin/ in the package -->
 		<files folder="admin">
-			<!-- Admin Main File Copy Section -->
 			<filename>index.html</filename>
 			<filename>formulize.php</filename>
 			<filename>config.xml</filename>
