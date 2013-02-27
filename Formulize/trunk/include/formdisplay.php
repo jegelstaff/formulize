@@ -1402,7 +1402,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 	
 				// nearly same header drawing code as in the 'else' for drawing regular entries
 				if(!$drawnHeadersOnce) {
-					$col_two .= "<tr><th></th>\n";
+					$col_two .= "<tr><td>\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSource_$sfid\" value=\"$value_source\">\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceForm_$sfid\" value=\"$value_source_form\">\n";
 					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceEntry_$sfid\" value=\"$entry\">\n";
@@ -1471,12 +1471,12 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 				if($rowsOrForms=='row' OR $rowsOrForms =='') {
 					
 					if(!$drawnHeadersOnce) {
-						$col_two .= "<tr><td></td>\n";
+						$col_two .= "<tr><th></th>\n";
 						foreach($headersToDraw as $i=>$thishead) {
 							if($thishead) {
 								$headerHelpLinkPart1 = $headingDescriptions[$i] ? "<a href=\"#\" onclick=\"return false;\" alt=\"".$headingDescriptions[$i]."\" title=\"".$headingDescriptions[$i]."\">" : "";
 								$headerHelpLinkPart2 = $headerHelpLinkPart1 ? "</a>" : "";
-								$col_two .= "<td style=\"width: 10%; text-align: center;\"><p>$headerHelpLinkPart1<b>$thishead</b>$headerHelpLinkPart2</p></td>\n";
+								$col_two .= "<th><p>$headerHelpLinkPart1<b>$thishead</b>$headerHelpLinkPart2</p></th>\n";
 							}
 						}
 						$col_two .= "</tr>\n";
@@ -2431,6 +2431,24 @@ print " var formulizechanged=0;\n";
 print " var formulize_xhr_returned_check_for_unique_value = 'notreturned';\n";
 ?>
 
+window.onbeforeunload = function (e) {
+
+    if(formulizechanged) {
+
+	var e = e || window.event;
+
+	var confirmationText = "<?php print _formulize_CONFIRMNOSAVE_UNLOAD; ?>"; // message may have single quotes in it!
+
+	// For IE and Firefox prior to version 4
+	if (e) {
+	    e.returnValue = confirmationText;
+	}
+
+	// For Safari
+	return confirmationText;
+    }
+};
+
 if (typeof jQuery == 'undefined') { 
 	var head = document.getElementsByTagName('head')[0];
 	script = document.createElement('script');
@@ -2476,6 +2494,7 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 		window.document.getElementById('savingmessage').style.display = 'block';
 		
 		window.scrollTo(0,0);
+		formulizechanged = 0; // don't want to trigger the beforeunload warning
 		window.document.formulize.submit(); 
 	}
 <?php
@@ -2495,6 +2514,7 @@ if(!$nosave) {
 	print "	} else {\n";
 	print "		var answer = confirm (\"" . _formulize_CONFIRMNOSAVE . "\");\n";
 	print "		if (answer) {\n";
+	print "			formulizechanged = 0;\n"; // don't want to trigger the beforeunload warning
 	print "			window.document.go_parent.submit();\n";
 	print "		} else {\n";
 	print "			return false;\n";
