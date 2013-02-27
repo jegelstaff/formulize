@@ -3,10 +3,6 @@
         <name>FormulizePlg</name>
         <author>UCOSP Formulize Team 2013</author>
         <creationDate>January 2013</creationDate>
-		<copyright>Copyright Info</copyright>
-		<license>License Info</license>
-		<version>0.0.1</version>
-        <authorEmail>umsanter@cc.umanitoba.ca</authorEmail>
         <description>Integration of Formulize into Joomla</description>
         <files>
                 <filename plugin="formulize">formulize.php</filename>
