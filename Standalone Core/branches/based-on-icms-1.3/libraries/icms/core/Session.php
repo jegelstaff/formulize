@@ -43,7 +43,10 @@ class icms_core_Session {
 		{
 			$externalUid = $GLOBALS['current_user']->ID;
 		}
-		else if(is_object($user)) {
+		elseif(isset($GLOBALS['joomlaUserId'])) { // Joomla
+		    $externalUid = $GLOBALS['joomlaUserId'];
+		}
+		elseif(is_object($user)) {
 		  $externalUid = 0;
 		  $userVars = get_object_vars($user);
 		  if(isset($userVars['uid'])) { // drupal
