@@ -2483,12 +2483,9 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 			subelementid = jQuery(this).attr('subelementid');			
 			window.document.getElementById('subform_entry_'+subelementid+'_active').value = jQuery(this).accordion( "option", "active" );
 		});
-		if(window.document.formulize.submitx) {
-			window.document.formulize.submitx.disabled=true;
-		}
-		if(window.document.pagebuttons) {
-			window.document.pagebuttons.prev.disabled = true;
-			window.document.pagebuttons.next.disabled = true;
+		jQuery('#submitx').attr('disabled', 'disabled');
+		if(jQuery('.formulize-form-submit-button')) {
+			jQuery('.formulize-form-submit-button').attr('disabled', 'disabled');
 		}
 		window.document.getElementById('formulizeform').style.opacity = 0.5;
 		window.document.getElementById('savingmessage').style.display = 'block';

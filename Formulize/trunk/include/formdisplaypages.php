@@ -589,12 +589,12 @@ function generatePrevNextButtonMarkup($buttonType, $buttonText, $buttonJavascrip
         if(!$usersCanSave AND $nextPage==$thanksPage) {
             $buttonJavascriptAndExtraCode = "disabled=true";
         }
-        $buttonMarkup = "<input type=button name=next id=next value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
+        $buttonMarkup = "<input type=button name=next id=next class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
     } elseif($buttonType == "prev") {
         if($previousPage == "none") {
             $buttonJavascriptAndExtraCode = "disabled=true";
         }
-        $buttonMarkup = "<input type=button name=prev id=prev value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
+        $buttonMarkup = "<input type=button name=prev id=prev class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
     }
     return $buttonMarkup;
 }
