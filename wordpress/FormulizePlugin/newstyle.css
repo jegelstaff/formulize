@@ -8,8 +8,14 @@ width: 100px;
 width:120px;
 }
 
-.tableTitle
+#formulize_form table
 {
+    border-width:0px;
+}
+
+#formulize_form #currentViewSelectTable
+{
+    padding:0px 0px 0px 0px;
     border-width:0px;
 }
 
@@ -25,19 +31,35 @@ width:120px;
 
 #actionsTable
 {
-    margin-bottom:200px;
+    border-top-width:3px;
+    height:100px;
+    border-left-width:2px;
+    vertical-align:middle !important;
 }
 
 #fillInTable
 {
+    border-top-width:3px;
 }
 
 #temp1
 {
-    border-width:10px;
+    border-width:0px 5px 0px 0px;
+}
+
+#temp1 b
+{
+    line-height:0;
 }
 
 #temp2
 {
-    border-width:5px;
+    border-width:0px;
+    height:30px;
+    padding:0px 10px 6px 0px;
+}
+
+#formulize_form .outer
+{
+    width:20% !important;
 }

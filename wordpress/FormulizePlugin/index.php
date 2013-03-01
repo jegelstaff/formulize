@@ -171,9 +171,10 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
      */
     function insertFormulize($content)
     {
-    	echo '<div id=formulize_form>';
-		initializeUserInfo();
-		Formulize::init();
+	echo $content;
+	echo '<div id=formulize_form>';
+	initializeUserInfo();
+	Formulize::init();
 		$custom_fields = get_post_custom($GLOBALS['post']->ID);
 		$formulize_screen_id = -1; // Default is to have no screens displayed
 		$screen_names = Formulize::getScreens();
@@ -183,7 +184,7 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 			}
 		}
 		include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
-		echo '</div>';
+	echo '</div>';
     }
     
     function insertFormulizeStylesheet()
