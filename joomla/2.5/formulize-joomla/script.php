@@ -1,4 +1,4 @@
-<? php
+<?php
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
 
@@ -13,6 +13,8 @@ class com_formulizeInstallerScript {
      */
 
     function install($parent) {
+		$application = JFactory::getApplication();
+		$application->enqueueMessage(JText::_('Script is running in install'), 'message');
         // $parent is the class calling this method
         global $database;
 
@@ -22,13 +24,13 @@ class com_formulizeInstallerScript {
             $database = JFactory::getDBO();
         }
 
-        $database - > setQuery("DROP TABLE IF EXISTS `#__formulize`;");
-        $database - > query();
-        $database - > setQuery("CREATE TABLE `#__formulize` (
+        $database->setQuery("DROP TABLE IF EXISTS `#__formulize`;");
+        $database->query();
+        $database->setQuery("CREATE TABLE `#__formulize` (
           `params` text not null
           );");
 
-        $database - > query();
+        $database->query();
     }
 
     /**
@@ -49,6 +51,8 @@ class com_formulizeInstallerScript {
      */
 
     function update($parent) {
+		$application = JFactory::getApplication();
+		$application->enqueueMessage(JText::_('Script is running in update'), 'message');
         // $parent is the class calling this method
         global $database;
 
@@ -58,13 +62,13 @@ class com_formulizeInstallerScript {
             $database = JFactory::getDBO();
         }
 
-        $database - > setQuery("DROP TABLE IF EXISTS `#__formulize`;");
-        $database - > query();
-        $database - > setQuery("CREATE TABLE `#__formulize` (
+        $database->setQuery("DROP TABLE IF EXISTS `#__formulize`;");
+        $database->query();
+        $database->setQuery("CREATE TABLE `#__formulize` (
           `params` text not null
           );");
 
-        $database - > query();
+        $database->query();
     }
 
     /**
@@ -76,7 +80,7 @@ class com_formulizeInstallerScript {
     function preflight($type, $parent) {
         // $parent is the class calling this method
         // $type is the type of change (install, update or discover_install)
-        echo '<p>'.JText::_('COM_HELLOWORLD_PREFLIGHT_'.$type.'_TEXT').'</p>';
+        echo '<p>'.JText::_('COM_FORMULIZE_PREFLIGHT_'.$type.'_TEXT').'</p>';
     }
 
     /**
@@ -88,6 +92,6 @@ class com_formulizeInstallerScript {
     function postflight($type, $parent) {
         // $parent is the class calling this method
         // $type is the type of change (install, update or discover_install)
-        echo '<p>'.JText::_('COM_HELLOWORLD_POSTFLIGHT_'.$type.'_TEXT').'</p>';
+        echo '<p>'.JText::_('COM_FORMULIZE_POSTFLIGHT_'.$type.'_TEXT').'</p>';
     }
 }
