@@ -30,6 +30,10 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+// these are indexes in the ele_value array
+define(EV_MULTIPLE_LIST_COLUMNS,  10);  // display multiple columns from linked lists for display in lists
+define(EV_MULTIPLE_FORM_COLUMNS,  17);  // display multiple columns from linked lists for display in form elements
+
 // Added Oct. 16 2006
 // setup flag for whether the Freeform Solutions user archiving patch has been applied to the core
 global $xoopsDB, $xoopsConfig;

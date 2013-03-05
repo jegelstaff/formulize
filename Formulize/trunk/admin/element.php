@@ -396,35 +396,43 @@ if($ele_type=='text') {
   
   // setup the list value and export value option lists, and the default sort order list, and the list of possible default values
   if($options['islinked']) {
-	$linkedMetaDataParts = explode("#*=:*", $ele_value[2]);
-	$linkedSourceFid = $linkedMetaDataParts[0];
-	if($linkedSourceFid) {
-		list($listValue, $selectedListValue) = createFieldList($ele_value[10], false, $linkedSourceFid, "elements-ele_value[10]",
-			_AM_ELE_LINKSELECTEDABOVE, true);
-		$listValue->setValue($ele_value[10]); // mark the current selections in the form element
-		$options['listValue'] = $listValue->render();
-		list($exportValue, $selectedExportValue) = createFieldList($ele_value[11], false, $linkedSourceFid, "elements-ele_value[11]", _AM_ELE_VALUEINLIST);
-		$options['exportValue'] = $exportValue->render();
-		list($optionSortOrder, $selectedOptionsSortOrder) = createFieldList($ele_value[12], false, $linkedSourceFid, "elements-ele_value[12]", _AM_ELE_LINKFIELD_ITSELF);
-		$options['optionSortOrder'] = $optionSortOrder->render();
-		include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-		$linkedDataHandler = new formulizeDataHandler($linkedSourceFid);
-		$allLinkedValues = $linkedDataHandler->findAllValuesForField($linkedMetaDataParts[1], "ASC");
-		if(!is_array($ele_value[13])) {
-			$ele_value[13] = array($ele_value[13]);
-		}
-		$options['optionDefaultSelectionDefaults'] = $ele_value[13];
-		$options['optionDefaultSelection'] = $allLinkedValues; // array with keys as entry ids and values as text
-	}
+    $linkedMetaDataParts = explode("#*=:*", $ele_value[2]);
+    $linkedSourceFid = $linkedMetaDataParts[0];
+    if($linkedSourceFid) {
+      // this is the list of elements to display when showing this element in a list
+      list($listValue, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_LIST_COLUMNS], false, $linkedSourceFid,
+        "elements-ele_value[".EV_MULTIPLE_LIST_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
+      $listValue->setValue($ele_value[EV_MULTIPLE_LIST_COLUMNS]); // mark the current selections in the form element
+      $options['listValue'] = $listValue->render();
+
+      // this is the list of elements to display when showing this element as an html form element (in form or list screens)
+      list($displayElements, $selectedListValue) = createFieldList($ele_value[EV_MULTIPLE_FORM_COLUMNS], false, $linkedSourceFid,
+        "elements-ele_value[".EV_MULTIPLE_FORM_COLUMNS."]", _AM_ELE_LINKSELECTEDABOVE, true);
+      $displayElements->setValue($ele_value[EV_MULTIPLE_FORM_COLUMNS]); // mark the current selections in the form element
+      $options['displayElements'] = $displayElements->render();
+
+      list($exportValue, $selectedExportValue) = createFieldList($ele_value[11], false, $linkedSourceFid, "elements-ele_value[11]", _AM_ELE_VALUEINLIST);
+      $options['exportValue'] = $exportValue->render();
+      list($optionSortOrder, $selectedOptionsSortOrder) = createFieldList($ele_value[12], false, $linkedSourceFid, "elements-ele_value[12]", _AM_ELE_LINKFIELD_ITSELF);
+      $options['optionSortOrder'] = $optionSortOrder->render();
+      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+      $linkedDataHandler = new formulizeDataHandler($linkedSourceFid);
+      $allLinkedValues = $linkedDataHandler->findAllValuesForField($linkedMetaDataParts[1], "ASC");
+      if(!is_array($ele_value[13])) {
+        $ele_value[13] = array($ele_value[13]);
+      }
+      $options['optionDefaultSelectionDefaults'] = $ele_value[13];
+      $options['optionDefaultSelection'] = $allLinkedValues; // array with keys as entry ids and values as text
+    }
   }
   if(!$options['islinked'] OR !$linkedSourceFid) {
-	$options['exportValue'] = "";
-	$options['listValue'] = "";
-	$options['optionSortOrder'] = "";
-	$options['optionDefaultSelectionDefaults'] = "";
-	$options['optionDefaultSelection'] = "";
+    $options['exportValue'] = "";
+    $options['listValue'] = "";
+    $options['optionSortOrder'] = "";
+    $options['optionDefaultSelectionDefaults'] = "";
+    $options['optionDefaultSelection'] = "";
   }
-  
+
   // setup group list:
   $options['formlink_scope_options'] = array('all'=>_AM_ELE_FORMLINK_SCOPE_ALL) + $formlinkGroups;
   

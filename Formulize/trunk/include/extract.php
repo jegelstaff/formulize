@@ -132,11 +132,15 @@ function prepvalues($value, $field, $entry_id) {
         $sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
         if($value AND $sourceMeta[1]) {
             // need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
+
             if($GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
                 list($sourceMeta[1]) = convertElementIdsToElementHandles(array($source_ele_value[11]), $sourceMeta[0]);
-            } elseif(isset($source_ele_value[10]) AND $source_ele_value[10] != "none") {
-                // number 10 may be an array now
-                $sourceMeta[1] = convertElementIdsToElementHandles(is_array($source_ele_value[10]) ? $source_ele_value[10] : array($source_ele_value[10]), $sourceMeta[0]);
+            } elseif(isset($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) AND $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] != "none") {
+                // EV_MULTIPLE_LIST_COLUMNS may be an array now
+                $sourceMeta[1] = convertElementIdsToElementHandles(is_array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) ?
+                    $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] : array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]), $sourceMeta[0]);
+                // remove empty entries, which can happen if the "use the linked field selected above" option is selected
+                $sourceMeta[1] = array_filter($sourceMeta[1]);
             }
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
             $sourceFormObject = $form_handler->get($sourceMeta[0]);

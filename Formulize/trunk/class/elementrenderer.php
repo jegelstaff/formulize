@@ -348,12 +348,30 @@ class formulizeElementRenderer{
 						$sortOrderClause = " ORDER BY t1.`$sortHandle` $sortOrder";
 					}
 
-					if($pgroupsfilter) { // if there is a groups filter, then join to the group ownership table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1, ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 $parentFormFrom WHERE $pgroupsfilter $conditionsfilter $conditionsfilter_oom $restrictSQL GROUP BY t1.entry_id $sortOrderClause";				
-					} else { // otherwise just query the source table
-						$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1 $parentFormFrom WHERE t1.entry_id>0 $conditionsfilter $conditionsfilter_oom $restrictSQL GROUP BY t1.entry_id $sortOrderClause";					
+					// if no extra elements are selected for display as a form element, then display the linked element
+					if (0 == count($ele_value[EV_MULTIPLE_FORM_COLUMNS])) {
+						$linked_columns = array($boxproperties[1]);
+					} else {
+						$linked_columns = convertElementIdsToElementHandles($ele_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
+		                // remove empty entries, which can happen if the "use the linked field selected above" option is selected
+		                $linked_columns = array_filter($linked_columns);
 					}
-					//print "$sourceValuesQ<br><br>";
+					if (is_array($linked_columns)) {
+					    $select_column = "t1.`".implode("`, t1.`", $linked_columns)."`";
+					} else {
+					    $select_column = "t1.`{$linked_columns}`";	// in this case, it's just one linked column
+					}
+
+					// if there is a groups filter, then join to the group ownership table
+					$extra_clause = "";
+					if ($pgroupsfilter) {
+						$extra_clause = ", ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS t2 $parentFormFrom WHERE $pgroupsfilter";
+					} else {
+						$extra_clause = " $parentFormFrom WHERE t1.entry_id>0";
+					}
+					$sourceValuesQ = "SELECT t1.entry_id, ".$select_column." FROM ".$xoopsDB->prefix("formulize_".
+						$sourceFormObject->getVar('form_handle'))." AS t1".$extra_clause.
+						"$conditionsfilter $conditionsfilter_oom $restrictSQL"."GROUP BY t1.entry_id $sortOrderClause";
 					if(!$isDisabled) {
 						// set the default selections, based on the entry_ids that have been selected as the defaults, if applicable
 						$hasNoValues = trim($boxproperties[2]) == "" ? true : false;
@@ -385,12 +403,21 @@ class formulizeElementRenderer{
 						}
 						$reslinkedvaluesq = $xoopsDB->query($sourceValuesQ);
 						if($reslinkedvaluesq) {
+							$linked_column_count = count($linked_columns);
 							while($rowlinkedvaluesq = $xoopsDB->fetchRow($reslinkedvaluesq)) {
-								if($rowlinkedvaluesq[1]==="") { continue; }
-								if($sourceElementObject->isLinked) {
-									$rowlinkedvaluesq[1] = $data_handler->getElementValueInEntry(trim($rowlinkedvaluesq[1], ","), $originalSource[1]);
+								$linked_column_values = array();
+								foreach (range(1, $linked_column_count) as $linked_column_index) {
+									if ($rowlinkedvaluesq[$linked_column_index] === "") {
+										$linked_column_values[] = "";
+									} else {
+										if ($sourceElementObject->isLinked) {
+											$linked_column_values[] = strip_tags($data_handler->getElementValueInEntry(trim($rowlinkedvaluesq[$linked_column_index], ","), $originalSource[$linked_column_index]));
+										} else {
+											$linked_column_values[] = strip_tags(trim($rowlinkedvaluesq[$linked_column_index]));
+										}
+									}
 								}
-								$linkedElementOptions[$rowlinkedvaluesq[0]] = strip_tags($rowlinkedvaluesq[1]);
+								$linkedElementOptions[$rowlinkedvaluesq[0]] = implode(" - ", $linked_column_values);
 							}
 						}
 						$cachedSourceValuesQ[$sourceValuesQ] = $linkedElementOptions;
