@@ -2430,7 +2430,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
     $all_users = ""; 
     $all_groups = "";
 	} elseif($group_scope = $gperm_handler->checkRight("view_groupscope", $targetForm['fid'], $groups, $mid)) {
-		$formulize_permHandler = new formulizePermHandler($fid);
+		$formulize_permHandler = new formulizePermHandler($targetForm['fid']);
 		$all_groups = $formulize_permHandler->getGroupScopeGroupIds($groups);
 		if($all_groups === false) {
 				$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $targetForm['fid'], $mid);
