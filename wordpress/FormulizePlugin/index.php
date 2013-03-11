@@ -11,6 +11,7 @@
      */
 
 $formulize_path = get_option('formulize_path', NULL);
+$synchronize_users_button = get_option('synchronize_users_button', FALSE);
 include_once($formulize_path . DIRECTORY_SEPARATOR . 'integration_api.php');
     
 if(!class_exists('FormulizePluginOptions')) :
@@ -39,6 +40,7 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 	public static function register()
 	{
 		register_setting(FORMULIZEPLUGINOPTIONS_ID.'_options', 'formulize_path');
+		register_setting(FORMULIZEPLUGINOPTIONS_ID.'_options', 'synchronize_users_button');
 	}
 	/** function/method
 	* Usage: hooking (registering) the plugin menu
@@ -171,20 +173,20 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
      */
     function insertFormulize($content)
     {
-	echo $content;
-	echo '<div id=formulize_form>';
-	initializeUserInfo();
-	Formulize::init();
-		$custom_fields = get_post_custom($GLOBALS['post']->ID);
-		$formulize_screen_id = -1; // Default is to have no screens displayed
-		$screen_names = Formulize::getScreens();
-		foreach($screen_names as $id=>$name) { 
-			if ($custom_fields['formulize_select'][0] == $name) {
-				$formulize_screen_id = $id;
+		echo $content;
+		echo '<div id=formulize_form>';
+		initializeUserInfo();
+		Formulize::init();
+			$custom_fields = get_post_custom($GLOBALS['post']->ID);
+			$formulize_screen_id = -1; // Default is to have no screens displayed
+			$screen_names = Formulize::getScreens();
+			foreach($screen_names as $id=>$name) { 
+				if ($custom_fields['formulize_select'][0] == $name) {
+					$formulize_screen_id = $id;
+				}
 			}
-		}
-		include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
-	echo '</div>';
+			include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
+		echo '</div>';
     }
     
     function insertFormulizeStylesheet()
@@ -304,6 +306,9 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 	
 //add_action('init','initializeUserInfo');
 add_action( 'wp_enqueue_scripts', 'insertFormulizeStylesheet' );
+if ($synchronize_users_button) {
+	add_action('init','synchronizeUsers');
+}
 //add_action('init','synchronizeUsers'); //<-- Commented out. Will talk about where to place this function. Maybe as Formulize full path variable is changed?
 add_action('delete_user','deleteUser'); //<-- Commented out. The delete function in the API calls the die function. Uncommenting this and attempting to delete a user crashes WP.
 add_action('edit_user_profile', 'updateUser'); // <-- Update user is stub. Doesn't do anything yet in API.
@@ -312,4 +317,5 @@ add_action('save_post', 'formulize_save_postdata');
 add_action('user_register','addUser'); // <--Currently this function works and updates the Formulize site.
 add_filter('the_content','insertFormulize'); //Need to fix this hook so that the table is displayed appropriately on each page
 add_filter('plugin_action_links', 'formulize_settings_link', 10, 2); 
+
 ?>
