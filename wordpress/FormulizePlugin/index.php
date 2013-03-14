@@ -200,8 +200,8 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 		$content = ob_get_clean();
 		if($icmsTheme)
 		{
-			//if(isset($GLOBALS['formulize_calendarFileRequired']))
-			//{
+			if(isset($GLOBALS['formulize_calendarFileRequired']))
+			{
 				error_log("In inner");
 				$calendar_css = '<link rel="stylesheet" type="text/css" href="' . ICMS_URL . '/libraries/jalalijscalendar/aqua/style.css">';
 				echo '<link rel="stylesheet" type="text/css" href="http://127.0.0.1/f-ucosp/libraries/jalalijscalendar/aqua/style.css">';
@@ -209,8 +209,9 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/calendar.js'></script>";
 				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/calendar-setup.js'></script>";
 				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/jalali.js'></script>";
-				echo "<script type='text/javascript' src='" . ICMS_URL . "/language/" . $icmsConfig['language'] . "/local.date.js></script>";
-			//}
+				echo "<script type='text/javascript' src='" . ICMS_URL . "/language/" . $icmsConfig['language'] . "/local.date.js'></script>";
+				echo "<script type='text/javascript'>".$GLOBALS['formulize_calendarFileRequired']."</script>";
+			}
 		}
 		
 		error_log("In outer");
