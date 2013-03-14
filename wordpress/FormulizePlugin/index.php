@@ -11,7 +11,6 @@
      */
 
 $formulize_path = get_option('formulize_path', NULL);
-$synchronize_users_button = get_option('synchronize_users_button', FALSE);
 include_once($formulize_path . DIRECTORY_SEPARATOR . 'integration_api.php');
     
 if(!class_exists('FormulizePluginOptions')) :
@@ -37,6 +36,7 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 	* Arg(0): null
 	* Return: void
 	*/
+	
 	public static function register()
 	{
 		register_setting(FORMULIZEPLUGINOPTIONS_ID.'_options', 'formulize_path');
@@ -157,9 +157,9 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 		add_action('admin_menu', array('FormulizePluginOptions', 'menu'));
 	}
 	add_filter('the_content', array('FormulizePluginOptions', 'content_with_quote'));
+	
 
-    endif;    
-
+    endif;
 
     /**
      * This function is used to insert the contents of a Formulize table on a Wordpress
@@ -240,11 +240,13 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 	Formulize::deleteUser($userID);
     }
     
+    
     //Need to add a check in here so we don't synchronized a user twice...same for adding a user.
     //I.e. We need a function in the API to query the formulize database so that we can confirm whether
     //the user already exists (Or is this in the API?)
     function synchronizeUsers()
     {
+	echo "CLICKEDCLICKEDCLICKED";
 	$users = get_users();
 	foreach ($users as $wpUser)
 	{
@@ -307,13 +309,17 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 		while(next($roles)!==FALSE);
 	}
 	
+	
+	if(isset($_GET['syncUsers']))
+	{
+	   if($_GET['syncUsers']==TRUE)
+	   {
+		synchronizeUsers();
+	    }
+        }
+	
 //add_action('init','initializeUserInfo');
 add_action( 'wp_enqueue_scripts', 'insertFormulizeStylesheet' );
-
-if ($synchronize_users_button)
-{
-	add_action('init','synchronizeUsers');
-}
 add_action('delete_user','deleteUser'); //<-- Commented out. The delete function in the API calls the die function. Uncommenting this and attempting to delete a user crashes WP.
 add_action('edit_user_profile', 'updateUser'); // <-- Update user is stub. Doesn't do anything yet in API.
 add_action('add_meta_boxes', 'formulize_meta_box');
