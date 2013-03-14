@@ -294,7 +294,7 @@ class Formulize {
                 return $options;
         }
 
-	static function renderScreens($screenID)
+	static function renderScreen($screenID)
 	{
 		//Set the screen ID
 		$formulize_screen_id = $screenID;
