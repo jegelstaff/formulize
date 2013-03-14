@@ -1,29 +1,33 @@
 <?php
-
 /**
  * Formulize Object for API calls
  */
 class Formulize {
 
         private static $db = null;
-        private static $mapping_table = 'formulize_external_group_mapping';
+
+        //Resource types and tables for the mapping methods
+        const GROUP_RESOURCE = 0;
+        const USER_RESOURCE = 1;
+        private static $group_mapping_table = 'formulize_external_group_mapping';
+        private static $user_mapping_table = 'formulize_external_user_mapping';
         
         /**
-         * Intialize the Formuliz environment
+         * Intialize the Formulize environment
          */
         static function init() {
                 if (self::$db == null) {
                         include_once('mainfile.php');
+                        require_once('modules/formulize/include/functions.php');
+
                         self::$db = $GLOBALS['xoopsDB'];
                 }
         }
         
-        //User Management
-
         /**
          * Create a new XOOPS user from the provided FormulizeUser data
          * @param   user_data   FormulizeUser       The user data
-         * @return              boolean             Whether the creation succeeded
+         * @return                              boolean                         Whether the user was successfully created
          */
         static function createUser($user_data) {
                 self::init();
@@ -40,15 +44,13 @@ class Formulize {
                 $newUser->setVar('notify_method', $user_data->get('notify_method')); //email
                 $newUser->setVar('level', $user_data->get('level')); //active, can login
                 //If the user wasn't inserted, return false
-
                 if (!$member_handler->insertUser($newUser, true)) {
                         return false;
                 }
+
+                //Map the created user to the external ID provided
                 $user_id = $newUser->getVar('uid');
-                //If setting the proper uid failed, return false
-                if(!self::$db->queryF('UPDATE ' . self::$db->prefix('users') . ' SET uid = \'' . $user_data->get('uid') . '\' WHERE uid = \'' . $user_id . '\'')) {
-                        return false;
-                }
+                self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $user_id);
 
                 return true;
         }
@@ -60,6 +62,7 @@ class Formulize {
          */
         static function getUser($user_id) {
                 self::init();
+                $user_id = self::getXoopsResourceID(self::USER_RESOURCE, $user_id);
                 $member_handler = xoops_gethandler('member');
                 $user = $member_handler->getUser($user_id);
 
@@ -83,15 +86,17 @@ class Formulize {
          * (uname, login_name, email) to allow those pieces of data to be used for
          * future registrations.
          * @param   user_id     int         The ID of the user to remove
-         * @return              boolean     Whether the delete succeeded
+         * @return                              boolean         Whether the user was successfully deleted
          */
         static function deleteUser($user_id) {
                 self::init();
+                $external_id = $user_id;
+                $user_id = self::getXoopsResourceID(self::USER_RESOURCE, $user_id);
                 $uuid = uniqid(); //Generate a UUID for obfuscation
                 $member_handler = xoops_gethandler('member');
                 $user = $member_handler->getUser($user_id);
                 //Obfuscate identification
-                self::updateUser($user_id, array(
+                self::updateUser($external_id, array(
                         'uname' => $uuid . '-' . $user->getVar('uname'),
                         'login_name' => $uuid . '-' . $user->getVar('login_name'),
                         'email' => $uuid . '-' . $user->getVar('email')
@@ -101,11 +106,13 @@ class Formulize {
         
         /**
          * Updates user data in XOOPS
-         * @param   user_id      int            The ID of the user to update
-         * @param   user_data    array          An associative array of fields to update
+         * @param   user_id             int                     The ID of the user to update
+         * @param   user_data   array           An associative array of fields to update
+         * @return                              boolean         Whether the user was successfully updated
          */
         static function updateUser($user_id, $data) {
                 self::init();
+                $user_id = self::getXoopsResourceID(self::USER_RESOURCE, $user_id);
                 $member_handler = xoops_gethandler('member');
                 $xoops_user = $member_handler->getUser($user_id);
                 //Update fields specified in $user_data
@@ -120,11 +127,10 @@ class Formulize {
                 }
         }
         
-        //Group Management
-        
         /**
          * Creates a new user group in XOOPS
-         * @param       group           FormulizeGroup
+         * @param       group           FormulizeGroup          The group to create
+         * @return                              boolean                         Whether the group was successfully created
          */
         static function createGroup($group) {
                 self::init();
@@ -150,11 +156,12 @@ class Formulize {
          * Rename an existing XOOPS group
          * @param   groupid     int         The ID of the group being renamed
          * @param   name        String      The new name for the group
+         * @return                              boolean         Whether the group was successfully renamed
          */
         static function renameGroup($groupid, $name) {
                 self::init();
                 $group_handler = xoops_gethandler('group');
-                $xoops_groupid = self::getXoopsGroupID($groupid);
+                $xoops_groupid = self::getXoopsResourceID(Formulize::GROUP_RESOURCE, $groupid);
                 //If a group was found, rename it
                 if($xoops_groupid != null) {
                         $xoops_group = $group_handler->get($xoops_groupid);
@@ -175,11 +182,12 @@ class Formulize {
          * Deletes an existing XOOPS group
          * TODO: Need to also remove the mapping when the group is deleted
          * @param       groupid         int                     The ID of the XOOPS group to delete
+         * @return                              boolean         Whether the group was successfully deleted
          */
         static function deleteGroup($groupid) {
                 self::init();
                 $group_handler = xoops_gethandler('group');
-                $xoops_groupid = self::getXoopsGroupID($groupid);
+                $xoops_groupid = self::getXoopsResourceID(Formulize::GROUP_RESOURCE, $groupid);
                 //If a group was found, delete it
                 if($xoops_groupid != null) {
                         $xoops_group = $group_handler->get($xoops_groupid);             
@@ -197,42 +205,82 @@ class Formulize {
         
         /**
          * Adds an existing user to a group
-         * @param   user_id      int         The ID of the user being added
+         * @param   user_id             int         The ID of the user being added
          * @param   groupid     int         The ID of the group being added to
+         * @return                              boolean         BooleanWhether the user was successfully added to the group
          */
         static function addUserToGroup($user_id, $groupid) {
                 self::init();
+                $user_id = self::getXoopsResourceID(self::USER_RESOURCE, $user_id);
                 $members = xoops_gethandler('member');
-                return $members->addUserToGroup($groupid, $user_id);
+                return $members->addUserToGroup(self::getXoopsResourceID(Formulize::GROUP_RESOURCE, $groupid), $user_id);
         }
         
         /**
          * Removes an existing user from a group
-         * @param   user_id      int         The ID of the user being removed
+         * @param   user_id             int         The ID of the user being removed
          * @param   groupid     int         The ID of the group being removed from
+         * @return                              boolean         Whether the user was successfully removed from the group
          */ 
         static function removeUserFromGroup($user_id, $groupid) {
                 self::init();
+                $user_id = self::getXoopsResourceID(self::USER_RESOURCE, $user_id);
                 $members = xoops_gethandler('member');
-                return $members->removeUsersFromGroup($groupid, array($user_id));
+                return $members->removeUsersFromGroup(self::getXoopsResourceID(Formulize::GROUP_RESOURCE, $groupid), array($user_id));
         }
         
         /**
          * Obtain a list of the available screen names
-         * TODO: Enable permissions-based retrieval
+         * @param       limitUser       boolean         Whether to limit the list of screens to those
+         *                                                                      viewable by the current user
+         * @return                              Array           An array of screens (or an empty array if none are retrieved)
          */
-        static function getScreens() {
+        static function getScreens($limitUser=false) {
+                global $xoopsUser;
                 self::init();
-
                 $options = array();
+
+                $form_table = self::$db->prefix('formulize_id');
+                $screen_table = self::$db->prefix('formulize_screen');
                 
-                $sql = 
-                'SELECT fi.desc_form, fs.title, fs.sid 
-                FROM ' . self::$db->prefix('formulize_id') . ' AS fi, 
-                ' . self::$db->prefix('formulize_screen') . ' AS fs 
-                WHERE fi.id_form = fs.fid 
-                ORDER BY fi.desc_form, fs.title';
-                
+                //Getting all screens is straightforward
+                if(!$limitUser) {
+                        $sql = 
+                        '
+                                SELECT fi.desc_form, fs.title, fs.sid 
+                                FROM ' . $form_table . ' AS fi, ' . $screen_table . ' AS fs 
+                                WHERE fi.id_form = fs.fid 
+                                ORDER BY fi.desc_form, fs.title
+                        ';
+                //If only screens available to the current user are desired
+                } else {
+                        $members = xoops_gethandler('member');
+                        $group_perms = xoops_gethandler('icms_member_groupperm');
+                        $accessible_forms = array();
+
+                        //Get the groups this member belongs to
+                        $groups = $members->getGroupsByUser($xoopsUser->getVar('uid'));
+                        //Get the forms visible to each of those groups, and unite them
+                        foreach($groups as $group) {
+                                $group_forms = $group_perms->getItemIds('view_form', $group, getFormulizeModId());
+                                $accessible_forms = array_merge($accessible_forms, $group_forms);
+                        }
+                        
+                        //Get the unique IDs of the accessible forms as integers
+                        $form_IDs = array_map(intval, array_unique($accessible_forms));
+                        $in_clause = implode(',', $form_IDs);
+
+                        $sql = 
+                        '
+                                SELECT fi.desc_form, fs.title, fs.sid 
+                                FROM ' . $form_table . ' AS fi, ' . $screen_table . ' AS fs 
+                                WHERE fi.id_form = fs.fid
+                                        AND fi.id_form IN (' . $in_clause . ') 
+                                ORDER BY fi.desc_form, fs.title
+                        ';
+                }
+
+                //Run the query and assemble/return the results
                 if ($result = self::$db->query($sql)) {
                         while($row = self::$db->fetchArray($result)) {
                                 $options[$row['sid']] = $row['desc_form'] . ' - ' . $row['title'];
@@ -246,10 +294,6 @@ class Formulize {
                 return $options;
         }
 
-	/**
-	 * This function is used to render a Formulize screen inside a 3rd party CMS.
-	 * @param screenID - This is the screen ID that Formulize should render.
-	 */
 	static function renderScreens($screenID)
 	{
 		//Set the screen ID
@@ -317,27 +361,43 @@ class Formulize {
 	}
 
         /**
-         * Insert a group mapping from the external CMS to Formulize
-         * @param       external_groupid        int                     The external group ID
-         * @param       groupid                         int                     The Formulize group ID
+         * Insert a mapping from the external resource to a Formulize resource
+         * @param       external_id                     int                     The external resource ID
+         * @param       id                                      int                     The Formulize resource ID
          * @return                                              boolean         Whether mapping was successful
          * @throws      An exception is thrown if a supplied ID is not of integer form.
          */
-        private static function createGroupMapping($external_groupid, $groupid) {
-                $mapping_table = self::$db->prefix(self::$mapping_table);
+        private static function createResourceMapping($resource_type, $external_id, $id) {
+                self::init();
+                $noun = ''; //The noun ("group", "user", etc. specifies the resource noun used in the query)
+                switch($resource_type) {
+                        case Formulize::GROUP_RESOURCE:
+                                $mapping_table = self::$db->prefix(self::$group_mapping_table);
+                                $noun = 'group';
+                        break;
+                        case Formulize::USER_RESOURCE:
+                                $mapping_table = self::$db->prefix(self::$user_mapping_table);
+                                $noun = 'user';
+                        break;
+                        default:
+                                throw new Exception('Formulize::createResourceMapping() - Invalid resource type specified.');
+                }
+
                 //Determine whether any mappings exist with the specified IDs
                 $num_mappings = mysql_num_rows(self::$db->queryF('
                         SELECT * FROM ' . $mapping_table . ' 
-                        WHERE groupid = ' . intval($groupid) . ' 
-                        OR external_groupid = ' . intval($external_groupid)
+                        WHERE ' . $noun . 'id = ' . intval($id) . ' 
+                        OR external_' . $noun . 'id = ' . intval($external_id)
                 ));
-                if(!is_int($external_groupid) || !is_int($groupid))
-                        throw new Exception('Formulize::createGroupMapping() - Expecting two integer IDs.');
+                //+0 will allow string input to be implicitly cast to a numeric
+                //type and then checked for integer form
+                if(!is_int($external_id + 0) || !is_int($id + 0))
+                        throw new Exception('Formulize::createResourceMapping() - Expecting two integer IDs.');
                 if($num_mappings == 0) {
                         return self::$db->queryF('
                                 INSERT INTO ' . $mapping_table . '
-                                (external_groupid, groupid)
-                                VALUES ( ' . intval($external_groupid) . ',' . intval($groupid) . ')
+                                (external_' . $noun . 'id, ' . $noun . 'id)
+                                VALUES ( ' . intval($external_id) . ',' . intval($id) . ')
                         ');
                 } else {
                         //A group mapping containing at least one of the IDs already exists. Can't create it.
@@ -346,14 +406,28 @@ class Formulize {
         }
 
         /**
-         * Converts an external groupid into a XOOPS groupid using the mapping table
-         * @param       external_groupid        int             The external groupid to convert
-         * @return                                              int             The associated XOOPS groupid
+         * Converts an external resource ID into a XOOPS resource ID using the associated mapping table
+         * @param       external_groupid        int             The external resource ID to convert
+         * @return                                              int             The associated XOOPS resource ID
          */
-        private static function getXoopsGroupID($external_groupid) {
+        static function getXoopsResourceID($resource_type, $external_id) {
+                self::init();
+                $noun = ''; //The noun ("group", "user", etc. specifies the resource noun used in the query)
+                switch($resource_type) {
+                        case Formulize::GROUP_RESOURCE:
+                                $mapping_table = self::$group_mapping_table;
+                                $noun = 'group';
+                        break;
+                        case Formulize::USER_RESOURCE:
+                                $mapping_table = self::$user_mapping_table;
+                                $noun = 'user';
+                        break;
+                        default:
+                                throw new Exception('Formulize::getXoopsResourceID() - Invalid resource type specified.');
+                }
                 $mapping_result = mysql_fetch_row(self::$db->queryF('
-                        SELECT groupid FROM ' . self::$db->prefix(self::$mapping_table) . '
-                        WHERE external_groupid = ' . intval($external_groupid)
+                        SELECT ' . $noun . 'id FROM ' . self::$db->prefix($mapping_table) . '
+                        WHERE external_' . $noun . 'id = ' . intval($external_id)
                 ));
                 return $mapping_result[0];
         }
@@ -369,6 +443,7 @@ class FormulizeObject {
         /**
          * Get the value of a field in this FormulizeUser
          * @param   key     String      The name of the field to be retrieved
+         * @return                      [AnyType]       The requested property
          */
         function get($key) {
                 if(!isset($this->{$key}) && $this->{$key} != null) throw new Exception('FormulizeObject - Attempted to get an invalid object field: ' . $key);
@@ -442,6 +517,8 @@ class FormulizeGroup extends FormulizeObject {
          *                              in the base CMS
          */
         function __construct($group_data) {
+                Formulize::init();
+
                 if(isset($group_data['groupid']))
                         $this->groupid = $group_data['groupid'];
                 if(isset($group_data['name']))
