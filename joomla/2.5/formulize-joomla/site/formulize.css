@@ -1,4 +1,29 @@
 /* Formulize css */
+/*
+For testing!
+#formulize-screen {
+	background: #ffffff !important;
+	background-color: #ffffff !important;
+	background-image: none !important;
+	position: absolute !important;
+	color: #ffffff !important;
+}
+*/
+
+#formulize-screen * {
+	/*background-color: transparent;*/
+}
+
+
+#formulize-screen table tr, #formulize-screen table, #formulize-screen table h1 {
+	border: none !important;
+	background: #ffffff !important;
+	background-image: none !important; 
+}
+
+#formulize-screen tbody tr td {
+	/*background-color: transparent;*/
+}
 
 #formulize-screen .head {
 	background-color: #8FBE58;
@@ -198,3 +223,6 @@
 	background-color: #f4f4f4;
 	border-color : #333;
 }
+
+
+

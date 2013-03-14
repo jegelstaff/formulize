@@ -31,7 +31,7 @@ class JFormFieldFormulize extends JFormFieldList
 		// Need to use the formulize API to populate the 
 		// array with the available forms(ids and names)
 		// Note: Will get the current user here and use the new function
-		$options = Formulize::getScreens();
+		$options = Formulize::getScreens(true);
 		return $options;
 	}
 }

@@ -2,6 +2,8 @@
 	// No direct access to this file
 	defined('_JEXEC') or die('Restricted access');
 	
+	//$GLOBALS['joomla'] = 1;
+	
 	// Create a lighter shade of a hex color:
 	// Note: This function is not used currently.  
 	// It will be useful when working on the customization of 
@@ -30,23 +32,58 @@
     return $new_hex;     
     } 
 
+	
 	// Get the path to Formulize stored as a component parameters
 	$params = JComponentHelper::getParams( 'com_formulize' );
 	$formulize_path = $params->get('formulize_path');
 	// Include API
 	require_once $formulize_path."/integration_api.php";
 	
-	// Get the selected form id 
-	// Note: Need to fix menu item hiting twice here
-	// See tutorial MVC last link, in the controller
+	//echo '<meta http-equiv="Cache-control" content="no-cache">';
+	//header("Cache-Control: no-cache, must-revalidate");
+	
+	
+	// Get the selected form id
+	/*alternative to query db, but less responsive...
 	$jinput = JFactory::getApplication()->input;
 	$formId = $jinput->get('id', '1', 'INT');
+	*/
+
 	
-	// For debugging
-	//echo '<script type="text/javascript">alert("' . $formId . '"); </script>';
+	// Get the menu item id number
+	$input = JFactory::getApplication()->input;
+    $menuitemid = $input->getInt( 'Itemid' );  
+	
+    if ($menuitemid) {
+        // Get a reference to the database
+		$db = JFactory::getDbo();
+		// Query the database
+        $query = $db->getQuery(true);      
+        $query->select('link')
+			->from('#__menu ')
+			->where('id = ' .  "'". $menuitemid . "'" );            
+        $db->setQuery($query);    
+        if (!$db->query()) {
+			$this->setError($this->_db->getErrorMsg());
+			return -1;
+        }  
+		// Get the result and return the userId
+		$rows = $db->loadObjectList();  
+		$link = $rows[0]->link;
+		$parts = explode('=', $link);
+		$formId = end($parts);
+    }
+	
+	//echo '<script type="text/javascript">alert("' . $formId2 . '"); </script>';
+	
+
+
+	
+	
+	//echo '<script type="text/javascript">$('link[rel=stylesheet]').remove();</script>';
 	
 	// Add a style sheet for the icons and general styling
-	$document =& JFactory::getDocument();
+	$document = JFactory::getDocument();
 	$document->addStyleSheet(JURI::base() . 'components/com_formulize/formulize.css');
 	
 	// Note: The following code is not used currently.
@@ -62,6 +99,8 @@
 	// Will overwrite formulize.css
 	//$document->addStyleDeclaration($style1);
 	//$document->addStyleDeclaration($style2);
+	// Used to remove all style from the component
+	//$document->_styleSheets= array();
 	
 	//Include the selected form
 	echo '<div id="formulize-screen">';

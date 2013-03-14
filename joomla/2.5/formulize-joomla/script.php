@@ -14,7 +14,7 @@ class com_formulizeInstallerScript {
 
     function install($parent) {
 		$application = JFactory::getApplication();
-		$application->enqueueMessage(JText::_('Script is running in install'), 'message');
+		//$application->enqueueMessage(JText::_('Script is running in install'), 'message');
         // $parent is the class calling this method
         global $database;
 
@@ -41,7 +41,7 @@ class com_formulizeInstallerScript {
 
     function uninstall($parent) {
         // $parent is the class calling this method
-        echo '<p>'.JText::_('COM_HELLOWORLD_UNINSTALL_TEXT').'</p>';
+        //echo '<p>'.JText::_('COM_HELLOWORLD_UNINSTALL_TEXT').'</p>';
     }
 
     /**
@@ -51,8 +51,8 @@ class com_formulizeInstallerScript {
      */
 
     function update($parent) {
-		$application = JFactory::getApplication();
-		$application->enqueueMessage(JText::_('Script is running in update'), 'message');
+		//$application = JFactory::getApplication();
+		//$application->enqueueMessage(JText::_('Script is running in update'), 'message');
         // $parent is the class calling this method
         global $database;
 
@@ -80,7 +80,7 @@ class com_formulizeInstallerScript {
     function preflight($type, $parent) {
         // $parent is the class calling this method
         // $type is the type of change (install, update or discover_install)
-        echo '<p>'.JText::_('COM_FORMULIZE_PREFLIGHT_'.$type.'_TEXT').'</p>';
+        //echo '<p>'.JText::_('COM_FORMULIZE_PREFLIGHT_'.$type.'_TEXT').'</p>';
     }
 
     /**
@@ -92,6 +92,6 @@ class com_formulizeInstallerScript {
     function postflight($type, $parent) {
         // $parent is the class calling this method
         // $type is the type of change (install, update or discover_install)
-        echo '<p>'.JText::_('COM_FORMULIZE_POSTFLIGHT_'.$type.'_TEXT').'</p>';
+        //echo '<p>'.JText::_('COM_FORMULIZE_POSTFLIGHT_'.$type.'_TEXT').'</p>';
     }
 }

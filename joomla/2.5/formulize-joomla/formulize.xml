@@ -12,7 +12,7 @@
 	<form>
 		<fields name="params">
 			<fieldset label="Parameters" name="params">
-				<field default="C:/wamp/www/websites/Formulize2" description="Path to Formulize" label="Path" name="formulize_path" type="text">
+				<field default="C:/wamp/www/websites/Formulize2" description="Path to Formulize" label="Pathou" name="formulize_path" type="text">
 				</field>
 			</fieldset>
 		</fields>
@@ -27,14 +27,24 @@
 		<folder>images</folder>
 	</files>
 
+	<media destination="com_formulize" folder="media">
+		<filename>index.html</filename>
+		<folder>images</folder>
+	</media>
+	
 	<!-- Administration Section -->
 	<administration>
-		<menu>Formulize</menu>
+		<menu img="../media/com_formulize/images/logo-16x16.png">COM_FORMULIZE_MENU</menu>
 		<files folder="admin">
 			<filename>index.html</filename>
 			<filename>formulize.php</filename>
 			<filename>config.xml</filename>
 			<folder>fields</folder>
 		</files>
+		
+		<languages folder="admin">
+			<language tag="en-GB">language/en-GB/en-GB.com_formulize.ini</language>
+			<language tag="en-GB">language/en-GB/en-GB.com_formulize.sys.ini</language>
+		</languages>
 	</administration>
 </extension>

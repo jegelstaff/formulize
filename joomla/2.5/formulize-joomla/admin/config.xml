@@ -2,7 +2,7 @@
 <config>
   <fieldset name='params' label='Parameters'>
     <field type="text" name="formulize_path" size="100" label="Path:" description="The absolute path to the formulize directory" default='' />
-  </fieldset>
+  </fieldset>  
 </config>
 
 

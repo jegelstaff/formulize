@@ -79,7 +79,7 @@ class plgUserFormulize extends JPlugin
 			}
 		
 			// Get previous memberships
-			$previousGroups = self::getGroup($userId);
+			$previousGroups = self::getGroups($userId);
 		
 			// Display error message, if necessary
 			if($previousGroups<0) {
@@ -89,6 +89,7 @@ class plgUserFormulize extends JPlugin
 		}
 		
 		// Store those previous groups in a global variable
+		// Maybe better not to use super global...
 		$GLOBALS['previousGroups'] = $previousGroups;
 		
 		// For debugging, will be removed
@@ -110,10 +111,11 @@ class plgUserFormulize extends JPlugin
 		// Get the userid, unavailable in $user
 		$userId = self::getUserId($user['email']);
 		// Get current memberships of user
-		$currentGroups = self::getGroup($userId);
+		$currentGroups = self::getGroups($userId);
+		
 		// Get previous memberships of user
 		$previousGroups = $GLOBALS['previousGroups'];
-		
+	
 		// Create a new blank user for Formulize session
 		$userData = array();
 		$userData['uid'] = $userId;
@@ -309,10 +311,24 @@ class plgUserFormulize extends JPlugin
 	/*
 		Used to get the groups a user is member of from its userId
 	*/
-	private function getGroup($userId) {
+	private function getGroups($userId) {
+		// Get a reference to current application in order to display message
+		$application = JFactory::getApplication();
+		
 		// Get a reference to the database
 		$db = JFactory::getDbo();
-		// Query the database
+		// Get parents of each user group
+		$query = $db->getQuery(true);      
+        $query->select(array('id', 'parent_id'))
+			->from('#__usergroups ');          
+        $db->setQuery($query);    
+        if (!$db->query()) {
+			$this->setError($this->_db->getErrorMsg());
+			return -1;
+        }                         
+		$parents = $db->loadObjectList();
+		
+		// Get the group this user is member of
         $query = $db->getQuery(true);      
         $query->select('group_id')
 			->from('#__user_usergroup_map ')
@@ -323,14 +339,32 @@ class plgUserFormulize extends JPlugin
 			return -1;
         }                         
 		$rows = $db->loadObjectList();
-		// Create an array with the previous group memberships
+		// Create an array with the group memberships
 		$groups = array();
 		foreach($rows as $row){  
-			// Add each group to $previousGroups
+			// Add each group to $groups
 			$groups[] = $row->group_id;
+			// Add parents and ancestors
+			$parent = self::getParent($parents, $row->group_id);
+			while($parent!=0) {
+				$groups[] = $parent;
+				$parent = self::getParent($parents, $parent);
+			}
 		}
+		// Remove duplicates
+		$groups = array_unique($groups);
+		
 		// Return the array containing groups
 		return $groups;
+	}
+	
+	private function getParent($parents, $groupId) {
+		foreach($parents as $parent) {
+			if($parent->id == $groupId) {
+				return $parent->parent_id;
+			}
+		}
+		return -1;
 	}
 }
 ?>
