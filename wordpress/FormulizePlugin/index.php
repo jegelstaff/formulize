@@ -160,74 +160,53 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 
     endif;    
 
-    /*
+
+    /**
      * This function is used to insert the contents of a Formulize table on a Wordpress
      * page.
-     *
-     * AS OF 03/02/12 --> Currently it adds a table to every page. This needs to be resolved
-     * somehow. Maybe we could have a blank or null line value on every select box that's by
-     * default selected, so it can know not to post something on that page?
-     *
-     * There might be a better way to do this so we're not running a check on every page load, but
-     * this seems simple enough for now.
      */
     function insertFormulize($content)
     {
+		//Here we echo the original content of the page.
 		echo $content;
-		echo '<div id=formulize_form>';
+		
+		//Initialize our user info
 		initializeUserInfo();
+		//Initialize Formulize (already happened in stylesheet include, might be unnecessary?)
 		Formulize::init();
-			$custom_fields = get_post_custom($GLOBALS['post']->ID);
-			$formulize_screen_id = -1; // Default is to have no screens displayed
-			$screen_names = Formulize::getScreens();
-			foreach($screen_names as $id=>$name) { 
-				if ($custom_fields['formulize_select'][0] == $name) {
-					$formulize_screen_id = $id;
-				}
-			}
-		include XOOPS_ROOT_PATH . "/header.php";
 		
-		if($xoTheme)
-		{
-			error_log("XoTheme is declared");
-			global $icmsTheme;
-			$icmsTheme = $xoTheme;
-		}
+		//Here is where we obtain the screen we should display. Once we find the adequate screen name, we will
+		//render our Formulize screen, then break from our loop to ensure only one screen is rendered.
+		$custom_fields = get_post_custom($GLOBALS['post']->ID);
+		$formulize_screen_id = -1; // Default is to have no screens displayed
+		$screen_names = Formulize::getScreens();
 		
-		ob_start;
-		
-		include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
-		$content = ob_get_clean();
-		if($icmsTheme)
-		{
-			if(isset($GLOBALS['formulize_calendarFileRequired']))
+		foreach($screen_names as $id=>$name)
+		{ 
+			if ($custom_fields['formulize_select'][0] == $name)
 			{
-				error_log("In inner");
-				$calendar_css = '<link rel="stylesheet" type="text/css" href="' . ICMS_URL . '/libraries/jalalijscalendar/aqua/style.css">';
-				echo '<link rel="stylesheet" type="text/css" href="http://127.0.0.1/f-ucosp/libraries/jalalijscalendar/aqua/style.css">';
-				//echo "<script>jQuery('head').append('" . $calendar_css . "'); </script>";
-				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/calendar.js'></script>";
-				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/calendar-setup.js'></script>";
-				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/jalali.js'></script>";
-				echo "<script type='text/javascript' src='" . ICMS_URL . "/language/" . $icmsConfig['language'] . "/local.date.js'></script>";
-				echo "<script type='text/javascript'>".$GLOBALS['formulize_calendarFileRequired']."</script>";
+				Formulize::renderScreens($id);
+				break;
 			}
 		}
-		
-		error_log("In outer");
-
-		
-		echo $content;
-		echo '</div>';
     }
     
+    /**
+     * This function handles the addition of the Formulize style-sheet to the plugin. It will ensure
+     * that the necessary .css file is included. Additionally, it will also start a session for us with
+     * formulize. Depending on whether you are a registered user or anonymous user it will sync accordingly
+     * and grant permissions for interactions with the various forms as such.
+     *
+     */
     function insertFormulizeStylesheet()
     {
-        wp_register_style( 'newstyle', plugins_url('newstyle.css', __FILE__));
-	wp_register_style('aquastyle', plugins_url('aquastyle.css', __FILE__));
-	wp_enqueue_style('aquastyle');
-        wp_enqueue_style( 'newstyle');
+	//Here we initialize Formulize. This will give us access to the XOOPS/Formulize constants
+	//As well as set a session within the Formulize system.
 	Formulize::init();
+	
+	//Here we register and enqueue the style sheet for the plug in. 
+        wp_register_style( 'newstyle', plugins_url('newstyle.css', __FILE__));
+        wp_enqueue_style( 'newstyle');
     }
 	
     /*
@@ -316,7 +295,6 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 		get_currentuserinfo();
 		if(isset($GLOBALS['current_user']))
 		{
-			echo "Set";	
 		}
 		
 		global $wp_roles;
@@ -331,6 +309,7 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 	
 //add_action('init','initializeUserInfo');
 add_action( 'wp_enqueue_scripts', 'insertFormulizeStylesheet' );
+
 if ($synchronize_users_button)
 {
 	add_action('init','synchronizeUsers');
