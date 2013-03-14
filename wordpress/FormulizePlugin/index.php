@@ -185,13 +185,45 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 					$formulize_screen_id = $id;
 				}
 			}
-			include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
+		include XOOPS_ROOT_PATH . "/header.php";
+		
+		if($xoTheme)
+		{
+			error_log("XoTheme is declared");
+			global $icmsTheme;
+			$icmsTheme = $xoTheme;
+		}
+		
+		ob_start;
+		
+		include XOOPS_ROOT_PATH . '/modules/formulize/index.php';
+		
+		if($icmsTheme)
+		{
+			if(isset($GLOBALS['formulize_calendarFileRequired']))
+			{
+				error_log("In inner");
+				$calendar_css = '<link rel="stylesheet" type="text/css" href="' . ICMS_URL . '/libraries/jalalijscalendar/aqua/style.css">';
+				echo "<script>$('head').append('" . $calendar_css . "'); </script>";
+				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/calendar.js'></script>";
+				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/calendar-setup.js'></script>";
+				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/jalali.js'></script>";
+				echo "<script type='text/javascript' src='" . ICMS_URL . "/language/" . $icmsConfig['language'] . "/local.date.js></script>";
+			}
+		}
+		
+		error_log("In outer");
+
+		$content = ob_get_clean();
+		echo $content;
 		echo '</div>';
     }
     
     function insertFormulizeStylesheet()
     {
         wp_register_style( 'newstyle', plugins_url('newstyle.css', __FILE__));
+	wp_register_style('aquastyle', plugins_url('aquastyle.css', __FILE__));
+	wp_enqueue_style('aquastyle');
         wp_enqueue_style( 'newstyle');
 	Formulize::init();
     }
@@ -213,12 +245,6 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 			);
 	$formUser = new FormulizeUser($userData);
 	Formulize::createUser($formUser);
-	/*
-	 $to = "paged90@gmail.com";
-	$subject = "MESSAGE";
-	$message = "User has been added successfully.";
-	wp_mail($to,$subject,$message);
-	*/
     }
     
     
@@ -275,13 +301,10 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 				);
 		if($wpUser->ID!=1)
 		{
-		if(Formulize::updateUser($wpUser->ID,$userData))
-		{
-		 $to = "paged90@gmail.com";
-		$subject = "MESSAGE";
-		$message = "Testing update user further." . $wpUser->ID;
-		wp_mail($to,$subject,$message);
-		}
+			if(Formulize::updateUser($wpUser->ID,$userData))
+			{
+	
+			}
 		}
 		
 	}
@@ -306,10 +329,10 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 	
 //add_action('init','initializeUserInfo');
 add_action( 'wp_enqueue_scripts', 'insertFormulizeStylesheet' );
-if ($synchronize_users_button) {
+if ($synchronize_users_button)
+{
 	add_action('init','synchronizeUsers');
 }
-//add_action('init','synchronizeUsers'); //<-- Commented out. Will talk about where to place this function. Maybe as Formulize full path variable is changed?
 add_action('delete_user','deleteUser'); //<-- Commented out. The delete function in the API calls the die function. Uncommenting this and attempting to delete a user crashes WP.
 add_action('edit_user_profile', 'updateUser'); // <-- Update user is stub. Doesn't do anything yet in API.
 add_action('add_meta_boxes', 'formulize_meta_box');
