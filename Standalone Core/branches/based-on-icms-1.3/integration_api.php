@@ -146,7 +146,7 @@ class Formulize {
                 $result = $group_handler->insert($xoops_group);
                 if($result) {
                         //If the group was created, add it to the mapping
-                        return self::createGroupMapping($group->get('groupid'), $xoops_group->getVar('groupid'));
+                        return self::createResourceMapping(self::GROUP_RESOURCE, $group->get('groupid'), $xoops_group->getVar('groupid'));
                 } else {
                         return false;
                 }
