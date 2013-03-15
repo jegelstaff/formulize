@@ -75,6 +75,7 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 		$numcols = $numcols+1;
 	}
 	$numrows = count($rowcaps);
+	$actual_numrows = count(array_filter($rowcaps));	# count non-null row captions
 	if($title == "{FORMTITLE}") {
 		$title = trans(getFormTitle($fid));
 	} else {
@@ -127,7 +128,9 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 	if($headingAtSide) {
 		$gridContents[0] = $title;
 		$class = "even";
-		print "<table class='outer'>\n<tr><td class=head></td>";
+		print "<table class='outer'>\n<tr>";
+		if ($actual_numrows > 0)
+			echo "<td class=head></td>";
 	} else {
 		print "<table class=outer>\n";
 		$class = "head";
@@ -153,7 +156,6 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 	}
 	print "</tr>\n";
 
-
 	// draw regular rows
 	$class = "head";
 	$row_index = 0;
@@ -168,7 +170,8 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 		}
 		print "<tr>\n";
 		if($headingAtSide) {
-			print "<td class=\"head\">$thiscap</td>\n";
+			if ($actual_numrows > 0)
+				print "<td class=\"head\">$thiscap</td>\n";
 		} else {
 			print "<td class=$class>$thiscap</td>\n";
 		}
