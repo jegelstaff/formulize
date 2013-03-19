@@ -18,7 +18,7 @@ class Formulize {
         static function init() {
                 if (self::$db == null) {
                         include_once('mainfile.php');
-                        require_once('modules/formulize/include/functions.php');
+                        require_once(XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php');
 
                         self::$db = $GLOBALS['xoopsDB'];
                 }
