@@ -348,7 +348,7 @@ class Formulize {
 					}
                                         ";
                                         foreach($GLOBALS['formulize_calendarFileRequired']['stylesheets'] as $thisSheet) {
-                                                print "fetchCalendarCSS('" . $thisSheet . "');
+                                                print "fetchCalendarCSS('" . $thisSheet . "')";
                                         }
                                 print "</script>";
 			}
