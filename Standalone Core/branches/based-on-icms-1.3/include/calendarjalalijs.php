@@ -156,3 +156,4 @@ Calendar._NUMBERS = [' . _CAL_NUMS_ARRAY . '];
 Calendar._DIR = "' . _CAL_DIRECTION . '";';
 
 $icmsTheme->addScript("", array("type" => "text/javascript"), $src);
+$GLOBALS['formulize_calendarFileRequired'] = $src;
