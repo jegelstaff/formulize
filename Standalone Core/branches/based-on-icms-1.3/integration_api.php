@@ -329,11 +329,9 @@ class Formulize {
 			//scripts to our page load, in order for the calendar to achieve functionality.
 			if(isset($GLOBALS['formulize_calendarFileRequired']))
 			{
-				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/calendar.js'></script>";
-				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/calendar-setup.js'></script>";
-				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/jalali.js'></script>";
-				echo "<script type='text/javascript' src='" . ICMS_URL . "/language/" . $icmsConfig['language'] . "/local.date.js'></script>";
-				echo "<script type='text/javascript'>".$GLOBALS['formulize_calendarFileRequired']."</script>";
+                                foreach($GLOBALS['formulize_calendarFileRequired']['scripts'] as $thisScript) {
+                                        echo "<script type='text/javascript' src='" . $thisScript . "'></script>";
+                                }
 				
 				//In order to append our stylesheet, and ensure that no matter the load and buffer order of our page, we shall be including
 				//the style sheet via a JS call that appends the link tag to the head section on load.
@@ -348,9 +346,11 @@ class Formulize {
 						newNode.setAttribute('href', fileURL);
 						document.getElementsByTagName('head')[0].appendChild(newNode);
 					}
-					fetchCalendarCSS('" . ICMS_URL . "/libraries/jalalijscalendar/aqua/style.css');
-					</script>
-				";
+                                        ";
+                                        foreach($GLOBALS['formulize_calendarFileRequired']['stylesheets'] as $thisSheet) {
+                                                print "fetchCalendarCSS('" . $thisSheet . "');
+                                        }
+                                print "</script>";
 			}
 		}
 		
