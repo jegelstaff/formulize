@@ -384,11 +384,12 @@ function formulize_delete($node)
  * --+MedievalSpawn Drupal7 Update+-- Changed the way it called the data to meet new db handlers semantics.
  */
 function formulize_load($nodes)
-{  
-	$result = db_query('SELECT vid, screen_id FROM {formulize} WHERE vid IN (:vids)', array(':vids' => array_keys($nodes)));
+{
+	$result = db_query('SELECT nid, screen_id FROM {formulize} WHERE nid IN (:nids)', array(':nids' => array_keys($nodes)));
 	foreach ($result as $record) {
-		$nodes[$record->vid]->screen_id = $record->screen_id;
+        $nodes[$record->nid]->screen_id = $record->screen_id;
 	}
+	return $nodes;
 }
 
 /**
