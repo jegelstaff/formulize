@@ -44,9 +44,9 @@ include_formulize();
  * Throughout Drupal, hook_help() is used to display help text at the top of
  * pages.
  */
-function formulize_help($section)
+function formulize_help($path, $arg)
 { 
-	switch ($section) {
+	switch ($path) {
 		case 'admin/help#formulize':
 			$output = '<p>'. t('The Formulize module integrates with Formulize and lets you create nodes in your Drupal website that are based on screens defined in Formulize. This module also ensures synchronization of the users and groups/roles between Drupal and Formulize.') .'</p>';
 			$output .= '<p>' . t('Behaviours this module supports:') . '</p>';
@@ -262,7 +262,7 @@ function formulize_node_info()
  * Defines the custom fields for the editing form for the Formulize node type
  * --+MedievalSpawn Drupal7 Update+-- Implemented node_type_get_type() instead of node_get_types()
  */
-function formulize_form(&$node, &$form_state)
+function formulize_form($node, &$form_state)
 {
 	$type = node_type_get_type($node); 
 
@@ -292,7 +292,7 @@ function formulize_form(&$node, &$form_state)
  * Errors should be signaled with form_set_error().
  */
 
-function formulize_validate(&$node)
+function formulize_validate($node, $form, &$form_state)
 {
 	if ($node->screen_id) {
 		if (!is_numeric($node->screen_id)) {
@@ -356,7 +356,7 @@ function formulize_update($node)
  * hook_nodeapi().
  * --+MedievalSpawn Drupal7 Update+-- Implemented hook_node_revision_delete() instead
  */
-function formulize_node_revision_delete(&$node)
+function formulize_node_revision_delete($node)
 {
 	//Notice that we're matching a single revision based on the node's vid.
 	//db_query('DELETE FROM {formulize} WHERE vid = %d', $node->vid);
@@ -397,8 +397,6 @@ function formulize_load($nodes)
 	foreach ($result as $record) {
 		$nodes[$record->nid]->screen_id = $record->screen_id;
 	}
-
-	return $nodes;
 }
 
 /**
@@ -406,8 +404,11 @@ function formulize_load($nodes)
  * 
  * Runs the node text through output filters.
  */
-function formulize_view(&$node, $view_mode)
+function formulize_view($node, $view_mode)
 {
+	global $formulizeHostSystemUserId, $user;
+	$formulizeHostSystemUserId = $user->uid;
+
 	//connect to Formulize session
 	include_formulize();
 
