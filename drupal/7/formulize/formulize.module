@@ -24,8 +24,14 @@
 /**
  * Formulize Integration API inclusion
  */
-$formulize_path = variable_get('formulize_full_path', NULL);
-include_once(dirname($formulize_path) . DIRECTORY_SEPARATOR . 'integration_api.php');
+function include_formulize()
+{
+	$formulize_path = variable_get('formulize_full_path', NULL);
+	$formulize_path = is_dir($formulize_path) ? rtrim($formulize_path, '/\\') : dirname($formulize_path);
+	include_once($formulize_path . DIRECTORY_SEPARATOR . 'integration_api.php');
+}
+
+include_formulize();
 
 /**
  * @file
@@ -98,7 +104,7 @@ function formulize_permission()
  * Implementation of hook_access()
  * --+MedievalSpawn Drupal7 Update+-- Implemented hook_node_access() instead
  */
-function formulize_node_access($op, $node, $account)
+function formulize_node_access($node, $op, $account)
 {
 	$type = is_string($node) ? $node : $node->type;
 
@@ -183,7 +189,7 @@ function formulize_admin_settings()
 		'#type' => 'textfield',
 		'#title' => t('Formulize full path'),
 		'#default_value' => variable_get('formulize_full_path', NULL),
-		'#description' => t('The full path to the mainfile.php file of your Formulize installation. For instance, "/var/www/mysite.com/formulize/mainfile.php"')
+		'#description' => t('The full path to the mainfile.php file of your Formulize installation. For instance, "/var/www/mysite.com/formulize"')
 	);
 
 	$form = system_settings_form($form);
@@ -198,10 +204,10 @@ function formulize_sync()
 {
 	$form['sync_users'] = array(
 		'#type' => 'checkbox',
-		'#title' => t('Create users'),
+		'#title' => t('Create users and groups'),
 		'#default_value' => 0,
 		'#weight' => '0',
-		'#description' => t('Check this when you are ready to create Formulize users for every existing Drupal user. After the initial manual sync, for every change to your Drupal users, the changes will automatically propagate to Formulize.')
+		'#description' => t('Check this when you are ready to create Formulize users and groups for every existing Drupal user and role. After the initial manual sync, for every change to your Drupal users and roles, the changes will automatically propagate to Formulize.')
 	);
 
 	$form['hidden'] = array('#type' => 'value', '#value' => 'is_it_here');
@@ -226,9 +232,10 @@ function formulize_sync_submit($form, &$form_state)
 	if ($form_values['submit']) {
 		global $user;
 
-		if($form_values['sync_users']) {
-			_formulize_sync_users( );
-			drupal_set_message(t('Users have been synchronized with Formulize.'));
+		if ($form_values['sync_users']) {
+			_formulize_sync_groups();
+			_formulize_sync_users();
+			drupal_set_message(t('Users and groups have been synchronized with Formulize.'));
 		}
 	}
 }
@@ -384,11 +391,13 @@ function formulize_delete($node)
  * --+MedievalSpawn Drupal7 Update+-- Changed the way it called the data to meet new db handlers semantics.
  */
 function formulize_load($nodes)
-{
+{  
 	$result = db_query('SELECT nid, screen_id FROM {formulize} WHERE nid IN (:nids)', array(':nids' => array_keys($nodes)));
+
 	foreach ($result as $record) {
-        $nodes[$record->nid]->screen_id = $record->screen_id;
+		$nodes[$record->nid]->screen_id = $record->screen_id;
 	}
+
 	return $nodes;
 }
 
@@ -399,19 +408,13 @@ function formulize_load($nodes)
  */
 function formulize_view(&$node, $view_mode)
 {
-	//sconnect to Formulize session
-	$formulize_path = variable_get('formulize_full_path', NULL);
-	require_once($formulize_path);
+	//connect to Formulize session
+	include_formulize();
 
 	ob_start(); // start capturing output from Formulize screens
-
-	$formulize_screen_id = $node->screen_id;
-
-	include XOOPS_ROOT_PATH . '/modules/formulize/index.php'; 
-
+	Formulize::renderScreen($node->screen_id);
 	$output = ob_get_clean();
 
-	//$node = node_prepare($node, $teaser); // get it ready for display. Deprecated
 	$node->content['formulize_screen'] = array(
 		'#markup' => $output,
 		'#weight' => 1
@@ -419,17 +422,6 @@ function formulize_view(&$node, $view_mode)
 
 	return $node;
 }
-
-/*
- * Implement hook_theme()
- 
-function formulize_theme() {
-	return array(
-		'formulize_display_screen' => array(
-			'variables' => array('formulize_screen_output' => NULL)
-		)
-	);
-}*/
 
 /**
  * Theme a Formulize screen
@@ -441,15 +433,9 @@ function formulize_theme() {
  */
 function theme_formulize_display_screen($formulize_screen_output)
 {
-	$module_path = drupal_get_path('module', 'formulize');
-	$full_path = $module_path . '/formulize.css';
-	drupal_add_css($full_path);
+	drupal_add_css(drupal_get_path('module', 'formulize') . '/formulize.css');
 
-	$output = '<div id="formulize-screen">';
-	$output .= $formulize_screen_output;
-	$output .= '</div>';
-
-	return $output;
+	return $formulize_screen_output;
 }
 
 /**
@@ -461,11 +447,34 @@ function formulize_exist()
 }
 
 /**
+ * Sync Drupal roles with Formulize's groups
+ */
+function _formulize_sync_groups()
+{
+	// Map Drupal's authenticated user role to Formulize's Registered User group
+	Formulize::createResourceMapping(Formulize::GROUP_RESOURCE, 2, 2);
+
+	// Map Drupal's administrator role to Formulize's Webmasters group 
+	Formulize::createResourceMapping(Formulize::GROUP_RESOURCE, 3, 1);
+
+	// Map Drupal's anonymous user role to Formulize's Anonymous User group 
+	Formulize::createResourceMapping(Formulize::GROUP_RESOURCE, 1, 3);
+
+	// Map the rest of the Drupal roles
+	$result = db_query("SELECT r.rid, r.name FROM {role} r WHERE r.rid > 3 ORDER BY r.rid");
+
+	foreach ($result as $record) {
+		formulize_user_role_insert($record);
+	}
+}
+
+/**
  * Sync Drupal users with Formulize
  */
 function _formulize_sync_users()
 {
 	$result = db_query("SELECT u.uid FROM {users} u WHERE u.status = 1 AND u.uid > 1 ORDER BY u.uid");
+
 	foreach ($result as $record) {
 		formulize_user_insert(null, user_load($record->uid), null);
 	}
@@ -516,12 +525,14 @@ function formulize_user_update($edit, $account, $category)
 
 	Formulize::updateUser($account->uid, $user_data);
 
+	// Add user to groups they are now a part of
 	foreach ($account->roles as $roleid => $rolename) {
 		if (!isset($account->original->roles[$roleid])) {
 			Formulize::addUserToGroup($account->uid, $roleid);
 		}
 	}
 
+	// Remove user from groups they no longer belong to
 	foreach ($account->original->roles as $roleid => $rolename) {
 		if (!isset($account->roles[$roleid])) {
 			Formulize::removeUserFromGroup($account->uid, $roleid);
@@ -544,8 +555,9 @@ function _formulize_convert_language($account)
 {
 	$languages = array('en'=>'english','fr'=>'french');
 
-	if(array_key_exists($account,$languages))
+	if (array_key_exists($account,$languages)) {
 		return $languages[$account];
+	}
 
 	return 'english';
 }
