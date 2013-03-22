@@ -26,9 +26,30 @@
  */
 function include_formulize()
 {
+	// Get path of Formulize
 	$formulize_path = variable_get('formulize_full_path', NULL);
 	$formulize_path = is_dir($formulize_path) ? rtrim($formulize_path, '/\\') : dirname($formulize_path);
-	include_once($formulize_path . DIRECTORY_SEPARATOR . 'integration_api.php');
+	$integration_api_path = $formulize_path . DIRECTORY_SEPARATOR . 'integration_api.php';
+
+	global $user;
+
+	// Check if the integration API exists in the path specified
+	if (file_exists($integration_api_path)) {
+		// Include Integration API
+		include_once($integration_api_path);
+
+		// Set user ID for Formulize Session
+		global $formulizeHostSystemUserId;
+		$formulizeHostSystemUserId = $user->uid;
+
+		return true;
+	}
+	// If it does not exist in the path specified, let administrators know to set the Formulize path
+	else if ($user->roles && array_key_exists(3, $user->roles)) {
+		drupal_set_message(t('The Formulize path is not set. Please <a href="#overlay=admin/settings/formulize/path">set the Formulize path</a>.'), 'error');
+
+		return false;
+	}
 }
 
 include_formulize();
@@ -230,8 +251,6 @@ function formulize_sync_submit($form, &$form_state)
 	// take the submission and do the syncing
 	// check for conditions of syncing users
 	if ($form_values['submit']) {
-		global $user;
-
 		if ($form_values['sync_users']) {
 			_formulize_sync_groups();
 			_formulize_sync_users();
@@ -406,20 +425,22 @@ function formulize_load($nodes)
  */
 function formulize_view($node, $view_mode)
 {
-	global $formulizeHostSystemUserId, $user;
-	$formulizeHostSystemUserId = $user->uid;
-
 	//connect to Formulize session
-	include_formulize();
+	if (include_formulize()) {
+		ob_start(); // start capturing output from Formulize screens
+		Formulize::renderScreen($node->screen_id);
+		$output = ob_get_clean();
 
-	ob_start(); // start capturing output from Formulize screens
-	Formulize::renderScreen($node->screen_id);
-	$output = ob_get_clean();
-
-	$node->content['formulize_screen'] = array(
-		'#markup' => $output,
-		'#weight' => 1
-	);
+		$node->content['formulize_screen'] = array(
+			'#markup' => $output,
+			'#weight' => 1
+		);
+	} else {
+		$node->content['formulize_screen'] = array(
+			'#markup' => 'This section is currently unavailable.',
+			'#weight' => 1
+		);
+	}
 
 	return $node;
 }
