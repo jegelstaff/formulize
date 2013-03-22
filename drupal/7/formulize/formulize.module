@@ -35,12 +35,17 @@ function include_formulize()
 
 	// Check if the integration API exists in the path specified
 	if (file_exists($integration_api_path)) {
-		// Include Integration API
-		include_once($integration_api_path);
+		// Include Integration API, only once
+		if (!defined('XOOPS_ROOT_PATH')) {
+			include_once($integration_api_path);
 
-		// Set user ID for Formulize Session
-		global $formulizeHostSystemUserId;
-		$formulizeHostSystemUserId = $user->uid;
+			// Initialize API explicitly so that XOOPS_ROOT_PATH gets defined
+			Formulize::init();
+
+			// Set user ID for Formulize Session
+			global $formulizeHostSystemUserId;
+			$formulizeHostSystemUserId = $user->uid;
+		}
 
 		return true;
 	}
@@ -437,7 +442,7 @@ function formulize_view($node, $view_mode)
 		);
 	} else {
 		$node->content['formulize_screen'] = array(
-			'#markup' => 'This section is currently unavailable.',
+			'#markup' => t('This section is currently unavailable.'),
 			'#weight' => 1
 		);
 	}
