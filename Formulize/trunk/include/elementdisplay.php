@@ -236,10 +236,13 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 			$fileCreationTime = filectime(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName");
 			if($fileCreationTime + $maxSessionLifeTime > time()) {
 				// lock is still valid, hasn't expired yet.
+				if(count($lockedEntries)==0) {
+					print "<script type='text/javascript'>\n";
+					print "alert('"._formulize_ENTRY_IS_LOCKED."')\n";
+					print "</script>";
+				}
 				$lockedEntries[$element->getVar('id_form')][$entry] = true;
-				print "<script type='text/javascript'>\n";
-				print "alert('"._formulize_ENTRY_IS_LOCKED."')\n";
-				print "</script>";
+
 			} else {
 				// clean up expired locks
 				formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", "_".$entry."_in_form_".$element->getVar('id_form')."_", $maxSessionLifeTime); 
