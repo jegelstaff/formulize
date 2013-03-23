@@ -44,7 +44,12 @@ $GLOBALS['formulize_renderedElementHasConditions'] = array();
 function displayElement($formframe="", $ele, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $profileForm, $groups="") {
 
 	static $cachedPrevEntries = array();
-
+	static $lockedEntries = array(); // keep track of the entries we have determined are locked 
+	global $entriesThatHaveBeenLockedThisPageLoad;
+	if(!is_array($entriesThatHaveBeenLockedThisPageLoad)) { // which entries we have locked as part of this page load, so we don't waste time setting locks again on entries we've already locked, and so we can ignore locks that were set by ourselves!
+		$entriesThatHaveBeenLockedThisPageLoad = array();
+	}
+	
 	$subformCreateEntry = strstr($entry, "subformCreateEntry") ? true : false; // check for this special flag, which is mostly like a "new" situation, except for the deh hidden flag that gets passed back, since we don't want the standard readelements logic to pickup these elements!
 	if($subformCreateEntry) {
 		$subformMetaData = explode("_", $entry);
@@ -219,6 +224,32 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 			}
 		}
 
+		// check whether the entry is locked, and if so, then the element is not allowed.  Set a message to say that elements were disabled due to entries being edited elsewhere (first time only).
+		// groups with ignore lock permission bypass this, and therefore can save entries even when locked, and saving an entry removes the lock, so that gets you out of a jam if the lock is in place when it shouldn't be.
+		// locks are only valid for the session time, so if a lock is older than that, it is ignored and cleared
+		// Do this last, since locking overrides other permissions!
+		
+		$lockFileName = "entry_".$entry."_in_form_".$element->getVar('id_form')."_is_locked_for_editing_by_user_".$uid;
+		// if we haven't found a lock for this entry, check if there is one...(as long as it's not an entry that we locked ourselves on this page load)
+		if(!isset($lockedEntries[$element->getVar('id_form')][$entry]) AND !isset($entriesThatHaveBeenLockedThisPageLoad[$element->getVar('id_form')][$entry]) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName") AND !$gperm_handler->checkRight("ignore_editing_lock", $element->getVar('id_form'), $groups, $mid)) {
+			$maxSessionLifeTime = ini_get("session.gc_maxlifetime");
+			$fileCreationTime = filectime(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName");
+			if($fileCreationTime + $maxSessionLifeTime > time()) {
+				// lock is still valid, hasn't expired yet.
+				$lockedEntries[$element->getVar('id_form')][$entry] = true;
+				print "<script type='text/javascript'>\n";
+				print "alert('"._formulize_ENTRY_IS_LOCKED."')\n";
+				print "</script>";
+			} else {
+				// clean up expired locks
+				formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", "_".$entry."_in_form_".$element->getVar('id_form')."_", $maxSessionLifeTime); 
+			}
+		}
+		// if we've ever found a lock for this entry as part of this pageload...
+		if(isset($lockedEntries[$element->getVar('id_form')][$entry])) {
+			$isDisabled = true;
+		}
+		
 		$renderer = new formulizeElementRenderer($element);
 		$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
@@ -232,6 +263,13 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$form_ele =& $renderer->constructElement($renderedElementName, $ele_value, $entry, $isDisabled, $screen);
 
 		formulize_benchmark("Done rendering element.");
+		
+		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
+		if($entry AND !isset($lockedEntries[$element->getVar('id_form')][$entry])) {
+			$lockFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName","w");
+			fclose($lockFile);
+			$entriesThatHaveBeenLockedThisPageLoad[$element->getVar('id_form')][$entry] = true;
+		}
 		
 		if(!$renderElement) {
 			return array(0=>$form_ele, 1=>$isDisabled);			

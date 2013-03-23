@@ -1567,7 +1567,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		$col_two .= "\n
 <script type=\"text/javascript\">
 
-	jQuery(window).load(function() {
+	jQuery(document).ready(function() {
 		$(\"#subform-$subformElementId\").accordion({
 			autoHeight: false, // no fixed height for sections
 			collapsible: true, // sections can be collapsed
@@ -2506,19 +2506,32 @@ print "	function verifyDone() {\n";
 if(!$nosave) {
 	print "	if(formulizechanged==0) {\n";
 }
-print "			window.document.go_parent.submit();\n";
+	print "		removeEntryLocks();\n";
 if(!$nosave) {
 	print "	} else {\n";
 	print "		var answer = confirm (\"" . _formulize_CONFIRMNOSAVE . "\");\n";
 	print "		if (answer) {\n";
 	print "			formulizechanged = 0;\n"; // don't want to trigger the beforeunload warning
-	print "			window.document.go_parent.submit();\n";
+	print "			removeEntryLocks();\n";
 	print "		} else {\n";
 	print "			return false;\n";
 	print "		}\n";
 	print "	}\n";
 }
 print "	}\n";
+	
+print " function removeEntryLocks() {\n";
+global $entriesThatHaveBeenLockedThisPageLoad;
+print "		jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
+foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
+	print "			'entry_ids_".$thisForm."[]': [".implode(", ", array_keys($theseEntries))."], \n";
+}
+print "			'form_ids[]': [".implode(", ", array_keys($entriesThatHaveBeenLockedThisPageLoad))."],\n";
+print "			async: false\n";
+print "			}).done(function() {
+window.document.go_parent.submit();\n
+});\n";
+print "}\n";
 	
 print "	function add_sub(sfid, numents, ele_id) {\n";
 print "		document.formulize.target_sub.value=sfid;\n";
@@ -2560,7 +2573,7 @@ print "		window.document.printview.submit();\n";					// nmc 2007.03.24 - added
 print "}\n";														// nmc 2007.03.24 - added 
 
 // try and catch changes in a datebox element
-print "jQuery(window).load(function() {
+print "jQuery(document).ready(function() {
   jQuery(\"img[title='"._CALENDAR."']\").click(function() {
 	formulizechanged=1;		
   }); 

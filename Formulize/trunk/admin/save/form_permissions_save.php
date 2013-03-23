@@ -104,7 +104,7 @@ foreach($_POST['group_list'] as $gid) {
   $deleteSQL = "DELETE FROM ".$xoopsDB->prefix("group_permission") . " WHERE gperm_groupid='$gid' AND gperm_itemid='$fid' AND gperm_modid='$mid'";
   $insertSQL = "INSERT INTO ".$xoopsDB->prefix("group_permission") . " (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES ";
   $permsToAdd = array();
-  foreach(array("view_form", "add_own_entry", "update_own_entry", "delete_own_entry", "update_other_entries", "delete_other_entries", "add_proxy_entries", "view_groupscope", "view_globalscope", "view_private_elements", "update_other_reports", "delete_other_reports", "publish_reports", "publish_globalscope", "set_notifications_for_others", "import_data", "edit_form", "delete_form", "update_entry_ownership") as $thisPerm) {
+  foreach(array("view_form", "add_own_entry", "update_own_entry", "delete_own_entry", "update_other_entries", "delete_other_entries", "add_proxy_entries", "view_groupscope", "view_globalscope", "view_private_elements", "update_other_reports", "delete_other_reports", "publish_reports", "publish_globalscope", "set_notifications_for_others", "import_data", "edit_form", "delete_form", "update_entry_ownership", "ignore_editing_lock") as $thisPerm) {
     if($_POST[$fid."_".$gid."_".$thisPerm]) {
       $permsToAdd[] = "($gid, $fid, $mid, '$thisPerm')";
     }
