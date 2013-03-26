@@ -272,7 +272,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
 		if($entry AND !isset($lockedEntries[$element->getVar('id_form')][$entry])) {
 			$lockFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName","w");
-			fwrite($uid);
+			fwrite($lockFile, "".$uid); // need to fool this into treating the number as a string, could be cast also
 			fclose($lockFile);
 			$entriesThatHaveBeenLockedThisPageLoad[$element->getVar('id_form')][$entry] = true;
 		}
