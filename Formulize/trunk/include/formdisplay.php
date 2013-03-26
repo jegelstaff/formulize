@@ -2522,15 +2522,17 @@ print "	}\n";
 	
 print " function removeEntryLocks() {\n";
 global $entriesThatHaveBeenLockedThisPageLoad;
-print "		jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
-foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
-	print "			'entry_ids_".$thisForm."[]': [".implode(", ", array_keys($theseEntries))."], \n";
+if(count($entriesThatHaveBeenLockedThisPageLoad)>0) {
+    print "		jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
+    foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
+            print "			'entry_ids_".$thisForm."[]': [".implode(", ", array_keys($theseEntries))."], \n";
+    }
+    print "			'form_ids[]': [".implode(", ", array_keys($entriesThatHaveBeenLockedThisPageLoad))."],\n";
+    print "			async: false\n";
+    print "			}).done(function() {
+                                window.document.go_parent.submit();\n
+                        });\n";
 }
-print "			'form_ids[]': [".implode(", ", array_keys($entriesThatHaveBeenLockedThisPageLoad))."],\n";
-print "			async: false\n";
-print "			}).done(function() {
-window.document.go_parent.submit();\n
-});\n";
 print "}\n";
 	
 print "	function add_sub(sfid, numents, ele_id) {\n";

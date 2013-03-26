@@ -231,18 +231,20 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		
 		$lockFileName = "entry_".$entry."_in_form_".$element->getVar('id_form')."_is_locked_for_editing_by_user_".$uid;
 		// if we haven't found a lock for this entry, check if there is one...(as long as it's not an entry that we locked ourselves on this page load)
-		if(!isset($lockedEntries[$element->getVar('id_form')][$entry]) AND !isset($entriesThatHaveBeenLockedThisPageLoad[$element->getVar('id_form')][$entry]) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName") AND !$gperm_handler->checkRight("ignore_editing_lock", $element->getVar('id_form'), $groups, $mid)) {
+		if($entry != "new" AND !isset($lockedEntries[$element->getVar('id_form')][$entry]) AND !isset($entriesThatHaveBeenLockedThisPageLoad[$element->getVar('id_form')][$entry]) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName") AND !$gperm_handler->checkRight("ignore_editing_lock", $element->getVar('id_form'), $groups, $mid)) {
 			$maxSessionLifeTime = ini_get("session.gc_maxlifetime");
 			$fileCreationTime = filectime(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName");
 			if($fileCreationTime + $maxSessionLifeTime > time()) {
-				// lock is still valid, hasn't expired yet.
-				if(count($lockedEntries)==0) {
+				$ownerOfLock = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName");
+                                if($ownerOfLock != $uid) {
+                                    // lock is still valid, hasn't expired yet.
+                                    if(count($lockedEntries)==0) {
 					print "<script type='text/javascript'>\n";
 					print "alert('"._formulize_ENTRY_IS_LOCKED."')\n";
 					print "</script>";
-				}
-				$lockedEntries[$element->getVar('id_form')][$entry] = true;
-
+                                    }
+                                    $lockedEntries[$element->getVar('id_form')][$entry] = true;
+                                }
 			} else {
 				// clean up expired locks
 				formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", "_".$entry."_in_form_".$element->getVar('id_form')."_", $maxSessionLifeTime); 
@@ -270,6 +272,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
 		if($entry AND !isset($lockedEntries[$element->getVar('id_form')][$entry])) {
 			$lockFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName","w");
+			fwrite($uid);
 			fclose($lockFile);
 			$entriesThatHaveBeenLockedThisPageLoad[$element->getVar('id_form')][$entry] = true;
 		}

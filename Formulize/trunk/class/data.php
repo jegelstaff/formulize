@@ -805,7 +805,7 @@ class formulizeDataHandler  {
 				
 		// remove any entry-editing lock that may be in place for this record, since it was just saved successfully...a new lock can now be placed on the entry the next time any element from the form, for this entry, is rendered.
 		if($entry != "new") {
-			unlink(XOOPS_ROOT_PATH."/modules/formulize/temp/entry_".intval($entry)."_in_form_".$formObject->getVar('id_form')."_is_locked_for_editing_by_user_".$uid);
+			unlink(XOOPS_ROOT_PATH."/modules/formulize/temp/entry_".intval($entry)."_in_form_".$formObject->getVar('id_form')."_is_locked_for_editing");
 		}
 		
 		return $entry_to_return ? $entry_to_return : $lastWrittenId;
