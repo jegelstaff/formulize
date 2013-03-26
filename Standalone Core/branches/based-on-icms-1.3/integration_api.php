@@ -314,6 +314,7 @@ class Formulize {
 	}
 
 	static function renderScreen ($screenID) {
+		self::init();
 		//Set the screen ID
 		$formulize_screen_id = $screenID;
 

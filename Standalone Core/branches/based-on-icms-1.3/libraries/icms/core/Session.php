@@ -27,6 +27,7 @@ class icms_core_Session {
 	 */
 	static public function service() {
 		global $icmsConfig;
+		include_once('integration_api.php');
 		$instance = new icms_core_Session(icms::$xoopsDB);
 		session_set_save_handler(
 			array($instance, 'open'), array($instance, 'close'), array($instance, 'read'),
@@ -63,7 +64,8 @@ class icms_core_Session {
 		  }
 		}
 		  if($externalUid) {
-		    $icms_user = icms::handler('icms_member')->getUser( $externalUid );
+		  	$xoops_userid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $externalUid);
+		    $icms_user = icms::handler('icms_member')->getUser( $xoops_userid );
 		    if(is_object($icms_user)) {
 		      // set a few things in $_SESSION, similar to what include/checklogin.php does, and make a cookie and a database entry
 		      $_SESSION['xoopsUserId'] = $icms_user->getVar('uid');
