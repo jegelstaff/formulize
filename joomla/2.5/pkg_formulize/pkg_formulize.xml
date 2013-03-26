@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension method="upgrade" type="package" version="1.0">
+	<name>Formulize Package</name>
+	<creationDate>January 2013</creationDate>
+	<author>UCOSP Formulize Team 2013</author>
+	<packagename>formulize</packagename>
+	<description>Integration of Formulize into Joomla</description>
+
+	<files folder="packages">
+		<file type="component" id="com_formulize">com_formulize.zip</file>
+		<file type="plugin" id="plg_formulize" group="user">plg_formulize.zip</file>
+	</files>
+</extension>

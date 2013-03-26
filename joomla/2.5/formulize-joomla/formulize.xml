@@ -3,20 +3,10 @@
 	<name>Formulize</name>
 	<creationDate>January 2013</creationDate>
 	<author>UCOSP Formulize Team 2013</author>
-	<description>Integration of Formulize into Joomla</description>
+	<description>COM_FORMULIZE_DESCRIPTION</description>
 
 	<!-- Run script -->
 	<scriptfile>script.php</scriptfile>
-
-	<!-- Parameters -->
-	<form>
-		<fields name="params">
-			<fieldset label="Parameters" name="params">
-				<field default="C:/wamp/www/websites/Formulize2" description="Path to Formulize" label="Pathou" name="formulize_path" type="text">
-				</field>
-			</fieldset>
-		</fields>
-	</form>
 
 	<!-- Site Section -->
 	<files folder="site">
@@ -27,6 +17,7 @@
 		<folder>images</folder>
 	</files>
 
+	<!-- Media Section - For backend images -->
 	<media destination="com_formulize" folder="media">
 		<filename>index.html</filename>
 		<folder>images</folder>
@@ -42,6 +33,7 @@
 			<folder>fields</folder>
 		</files>
 		
+		<!-- Language Section - English only-->
 		<languages folder="admin">
 			<language tag="en-GB">language/en-GB/en-GB.com_formulize.ini</language>
 			<language tag="en-GB">language/en-GB/en-GB.com_formulize.sys.ini</language>

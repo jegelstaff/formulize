@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension method="upgrade" version="2.5" type="plugin" group="user">
-        <name>FormulizePlg</name>
+        <name>Formulize Plug-in</name>
         <author>UCOSP Formulize Team 2013</author>
         <creationDate>January 2013</creationDate>
         <description>Integration of Formulize into Joomla</description>
