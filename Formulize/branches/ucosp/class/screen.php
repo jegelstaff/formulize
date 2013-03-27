@@ -70,7 +70,7 @@ class formulizeScreen extends xoopsObject {
     }
     
     function getCustomTemplateFilePath($templateName) {
-        return $this->getTemplateFilePath($this->getCustomTemplatesDir(), $templateName);
+        return $this->getTemplateFilePath($this->getCustomTemplatesDir(). $this->getVar('sid') . "/", $templateName);
     }
     
     function getDefaultTemplateFilePath($templateName) {
@@ -86,7 +86,7 @@ class formulizeScreen extends xoopsObject {
     }
     
     private function getTemplatesDirectory($directory) {
-        return XOOPS_ROOT_PATH . $directory . $this->getVar('sid') . "/";
+        return XOOPS_ROOT_PATH . $directory;
     }
     
     private function getTemplateFilePath($dir, $templateName) {
