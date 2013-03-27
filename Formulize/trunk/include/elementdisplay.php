@@ -241,7 +241,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 					// lock is still valid, hasn't expired yet.
 					if(count($lockedEntries)==0) {
 						print "<script type='text/javascript'>\n";
-						print "alert('".sprintf(_formulize_ENTRY_IS_LOCKED, $lockUsername)."')\n";
+						print "alert(\"".sprintf(_formulize_ENTRY_IS_LOCKED, str_replace('"', "'", $lockUsername))."\")\n";
 						print "</script>";
 					}
 					$lockedEntries[$element->getVar('id_form')][$entry] = true;
