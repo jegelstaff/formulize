@@ -1010,6 +1010,10 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			print "</table></div>";
 		}
 
+		// $config_handler =& xoops_gethandler('config');
+		// $formulizeModule =& $module_handler->getByDirname("formulize");
+		// $formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+		// $defaultTemplate = $formulizeConfig['defaultTemplate'];
 		include $screen->getDefaultTemplateFilePath('toptemplate');
 	 } else {
 		// IF THERE IS A CUSTOM TOP TEMPLATE IN EFFECT, DO SOMETHING COMPLETELY DIFFERENT

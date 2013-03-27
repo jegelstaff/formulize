@@ -473,6 +473,18 @@ $modversion['config'][] = array(
     'default' => 1,
 );
 
+// Include default templates
+$templateFiles = scandir(XOOPS_ROOT_PATH."/modules/templates/screens/default/");
+$modversion['config'][] = array(
+	'name' => 'defaultTemplate',
+	'title' => '_MI_formulize_DEFAULTTEMPLATE',
+	'description' => '',
+	'formtype' => 'select',
+	'valuetype' => 'int',
+	'default' => '0',
+	'options' => $templateFiles,
+);
+
 //bloc
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",
