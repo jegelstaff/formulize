@@ -712,4 +712,4 @@ define("_formulize_REQUIRED_UNIQUE", "The value you entered for '%s' has been en
 
 define("_formulize_NO_MATCH_FOUND", "No match found");
 
-define("_formulize_ENTRY_IS_LOCKED", "Some or all of the data on this page has been opened by someone else, therefore it is locked and you cannot make any changes to it.  Wait for the other person to save the data, or get a webmaster to save it (webmasters can override locks like this).");
+define("_formulize_ENTRY_IS_LOCKED", "Some or all of the data on this page has been opened by '%s', therefore it is locked and you cannot make any changes to it.  Wait for the other person to save the data, or get a webmaster to save it (webmasters can override locks like this).");

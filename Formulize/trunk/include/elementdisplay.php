@@ -77,6 +77,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
   }
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+	$username = $xoopsUser ? $xoopsUser->getVar('uname') : "unknown user";
 	static $cachedEntryOwners = array();
 	if(!isset($cachedEntryOwners[$element->getVar('id_form')][$entry])) {
 		$cachedEntryOwners[$element->getVar('id_form')][$entry] = getEntryOwner($entry, $element->getVar('id_form'));
@@ -235,16 +236,16 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 			$maxSessionLifeTime = ini_get("session.gc_maxlifetime");
 			$fileCreationTime = filectime(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName");
 			if($fileCreationTime + $maxSessionLifeTime > time()) {
-				$ownerOfLock = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName");
-                                if($ownerOfLock != $uid) {
-                                    // lock is still valid, hasn't expired yet.
-                                    if(count($lockedEntries)==0) {
-					print "<script type='text/javascript'>\n";
-					print "alert('"._formulize_ENTRY_IS_LOCKED."')\n";
-					print "</script>";
-                                    }
-                                    $lockedEntries[$element->getVar('id_form')][$entry] = true;
-                                }
+				list($lockUid, $lockUsername) = explode(",", file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName"));
+				if($lockUid != $uid) {
+					// lock is still valid, hasn't expired yet.
+					if(count($lockedEntries)==0) {
+						print "<script type='text/javascript'>\n";
+						print "alert('".sprintf(_formulize_ENTRY_IS_LOCKED, $lockUsername)."')\n";
+						print "</script>";
+					}
+					$lockedEntries[$element->getVar('id_form')][$entry] = true;
+				}
 			} else {
 				// clean up expired locks
 				formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", "_".$entry."_in_form_".$element->getVar('id_form')."_", $maxSessionLifeTime); 
@@ -272,7 +273,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
 		if($entry AND !isset($lockedEntries[$element->getVar('id_form')][$entry])) {
 			$lockFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName","w");
-			fwrite($lockFile, "".$uid); // need to fool this into treating the number as a string, could be cast also
+			fwrite($lockFile, "$uid,$username");
 			fclose($lockFile);
 			$entriesThatHaveBeenLockedThisPageLoad[$element->getVar('id_form')][$entry] = true;
 		}
