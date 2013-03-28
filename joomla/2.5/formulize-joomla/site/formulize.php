@@ -16,11 +16,13 @@ if ( $_GET["sync"] == "true" ) {
 	$db = JFactory::getDbo();
 
 	echo "<b>Syncing Joomla groups to the Formulize database</b><br />";
+	
 	$query = $db->getQuery( true );
 	$query->select( array( 'id', 'title' ) )
 	->from( '#__usergroups' );
 	$db->setQuery( $query );
 	$list_of_groups = $db->loadObjectList();
+	
 	foreach ( $list_of_groups as &$group ) {
 		$exists = Formulize::getXoopsResourceID(0, $group->id);
 		if ($exists) {
@@ -39,6 +41,7 @@ if ( $_GET["sync"] == "true" ) {
 		}
 	}
 	
+	
 	echo "<br /><b>Joomla -> Formulize User Sync</b><br />";
 	$query = $db->getQuery( true );
 	$query->select( array( 'id', 'username', 'name', 'email' ) )
@@ -47,10 +50,11 @@ if ( $_GET["sync"] == "true" ) {
 
 	// QUESTION: Should we clear the formulize user table first?
 	$list_of_users = $db->loadObjectList();
+	
 	foreach ( $list_of_users as &$user ) {
 		if ($user->id == 1) {
-			Formulize::createResourceMapping(1, 1, 1);
-			continue;
+			//Formulize::createResourceMapping(1, 1, 1);
+			//continue;
 		}
 		// Create a new blank user for Formulize session
 		$user_data = array();
@@ -63,6 +67,7 @@ if ( $_GET["sync"] == "true" ) {
 		// Create or update the user in Formulize
 		$exists = Formulize::getXoopsResourceID(1, $user_data['uid']);
 		$flag = NULL;
+		
 		if ( empty($exists) ) {// Create
 			$flag = Formulize::createUser( $new_user );
 			// Display error message if necessary
@@ -91,8 +96,10 @@ if ( $_GET["sync"] == "true" ) {
 			}
 		}
 	}
+	
 	echo "<br />Sync completed.<br />";
 	// return;
+	
 }
 }
 	// Get the selected formId
@@ -121,18 +128,24 @@ if ( $_GET["sync"] == "true" ) {
 		$parts = explode('=', $link);
 		$formId = end($parts);
     }
-
-	// Add a style sheet for Formulize screens general styling
-	$document = JFactory::getDocument();
-	$document->addStyleSheet( JURI::base() . 'components/com_formulize/formulize.css' );
-	
-	// If no user is currently logged in
-	// set $GLOBALS so Formulize know no user is currently logged in
-	$user =& JFactory::getUser();
-	if ($user->guest) {
-		$GLOBALS['formulizeHostSystemUserId'] = 0;
+	// If a form was selected
+	if($formId!=0) {
+		// Add a style sheet for Formulize screens general styling
+		$document = JFactory::getDocument();
+		$document->addStyleSheet( JURI::base() . 'components/com_formulize/formulize.css' );
+		
+		// If no user is currently logged in
+		// set $GLOBALS so Formulize know no user is currently logged in
+		$user =& JFactory::getUser();
+		if ($user->guest) {
+			$GLOBALS['formulizeHostSystemUserId'] = 0;
+		}
+		
+		// Inject the selected form into the screen
+		include_once $formulize_path."/mainfile.php";
+		Formulize::renderScreen( $formId );
 	}
+	else {
+		echo '<br> No Formulize form was selected. </br>';
 	
-	// Inject the selected form into the screen
-	include_once $formulize_path."/mainfile.php";
-	Formulize::renderScreen( $formId );
+	}

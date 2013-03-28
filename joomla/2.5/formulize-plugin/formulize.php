@@ -35,7 +35,7 @@
 			
 			// Display error message, if necessary
 			if($userId<0) {
-				$application->enqueueMessage(JText::_('Username '.$user['username'].': Unable to find the user in the database'), 'error');
+				$application->enqueueMessage(JText::_('Username '.$user['username'].': Unable to find the user in the database.'), 'error');
 				return false;
 			}
 			
@@ -71,7 +71,7 @@
 			
 				// Display error message, if necessary
 				if($userId<0) {
-					$application->enqueueMessage(JText::_('Username '.$user['username'].': Unable to find the user in the database'), 'error');
+					$application->enqueueMessage(JText::_('Username '.$user['username'].': Unable to find the user in the database.'), 'error');
 					return false;
 				}
 			
@@ -80,7 +80,7 @@
 			
 				// Display error message, if necessary
 				if($previousGroups<0) {
-					$application->enqueueMessage(JText::_('Username '.$user['username'].': Error finding the groups the user is member of'), 'error');
+					$application->enqueueMessage(JText::_('Username '.$user['username'].': Error finding the groups the user is member of.'), 'error');
 					return false;
 				}
 			}
@@ -136,10 +136,11 @@
 					
 					// Display error message if necessary
 					if ( !$flag ) {
-						$application->enqueueMessage(JText::_('User id:'.$userID.' Error creating new user'), 'error');
+						$application->enqueueMessage(JText::_('User id '.$userId.': Error creating new user in Formulize.'), 'error');
 						return false;
 					}
 					else {
+						$application->enqueueMessage(JText::_('User was created in Formulize.'), 'message');
 						// Add user to current groups
 						foreach($currentGroups as $group) {
 							Formulize::addUserToGroup($userId, $group);
@@ -153,8 +154,11 @@
 					
 					// Display error message if necessary
 					if ( !$flag ) {
-						$application->enqueueMessage(JText::_('User id:'.$userID.' Error updating user'), 'error');
+						$application->enqueueMessage(JText::_('User id '.$userId.': Error updating user in Formulize.'), 'error');
 						return false;
+					}
+					else {
+						$application->enqueueMessage(JText::_('User was updated in Formulize.'), 'message');
 					}
 				}
 				
@@ -174,9 +178,12 @@
 						$flag = Formulize::removeUserFromGroup($userId, $prevGroup);
 						// Display error message if necessary
 						if ( !$flag ) {
-							$application->enqueueMessage(JText::_('Group id:'.$prevGroup.' Error removing user from group/'), 'error');
+							$application->enqueueMessage(JText::_('Group id '.$prevGroup.': Error removing user from group in Formulize.'), 'error');
 							return false;
 						}	
+						else {
+							$application->enqueueMessage(JText::_('Group id '.$prevGroup.': User was removed from group in Formulize.'), 'message');
+						}
 					}
 				}
 				// If necessary, add user to groups
@@ -194,8 +201,11 @@
 						$flag = Formulize::addUserToGroup($userId, $curGroup);
 						// Display error message if necessary
 						if ( !$flag ) {
-							$application->enqueueMessage(JText::_('User id:'.$curGroup.' Error adding user to group/'), 'error');
+							$application->enqueueMessage(JText::_('Group id '.$curGroup.': Error adding user to group in Formulize.'), 'error');
 							return false;
+						}
+						else {
+							$application->enqueueMessage(JText::_('Group id '.$curGroup.': User was added to group in Formulize.'), 'message');
 						}
 					}
 				}
@@ -225,8 +235,11 @@
 			
 			// Display error message if necessary
 			if ( !$flag ) {
-					$application->enqueueMessage(JText::_('User id:'.$userID.' Error deleting user/'), 'error');
-					return false;
+				$application->enqueueMessage(JText::_('User id '.$userId.': Error deleting user in Formulize.'), 'error');
+				return false;
+			}
+			else {
+				$application->enqueueMessage(JText::_('User was deleted in Formulize.'), 'message');
 			}
 			
 			return true;
@@ -259,8 +272,11 @@
 				$flag = Formulize::createGroup($formulizeGroup);
 				// Display error message if necessary
 				if ( !$flag ) {
-					$application->enqueueMessage(JText::_('Group id: '.$group->id.' Error creating new group'), 'error');
+					$application->enqueueMessage(JText::_('Group id '.$group->id.': Error creating new group in Formulize.'), 'error');
 					return false;
+				}
+				else {
+					$application->enqueueMessage(JText::_('Group was created in Formulize.'), 'message');
 				}
 			}
 			else // Rename
@@ -268,8 +284,11 @@
 				$flag = Formulize::renameGroup($group->id, $group->title);
 				// Display error message if necessary
 				if ( !$flag ) {
-					$application->enqueueMessage(JText::_('Group id:'.$group->id.' Error updating group'), 'error');
+					$application->enqueueMessage(JText::_('Group id '.$group->id.': Error updating group in Formulize.'), 'error');
 					return false;
+				}
+				else {
+					$application->enqueueMessage(JText::_('Group was updated in Formulize.'), 'message');
 				}
 			}
 			
@@ -293,8 +312,11 @@
 			
 			// Display error message if necessary
 			if ( !$flag ) {
-					$application->enqueueMessage(JText::_('Group id:'.$group['id'].' Error deleting group'), 'error');
-					return false;
+				$application->enqueueMessage(JText::_('Group id '.$group['id'].': Error deleting group in Formulize.'), 'error');
+				return false;
+			}
+			else {
+				$application->enqueueMessage(JText::_('Group was deleted in Formulize.'), 'message');
 			}
 			
 			return true;
