@@ -345,7 +345,7 @@ $modversion['config'][] = array(
 $templateFiles = scandir(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/");
 $finalTemplates = array();
 foreach($templateFiles as $thisFile) {
-	if(substr($thisFile, -15) == "toptemplate.php"){
+	if(substr($thisFile, -4) == ".php"){
 		$templateName = substr($thisFile, 0, strpos($thisFile, ".php"));
 		$finalTemplates[$templateName] = $templateName;
 	}
