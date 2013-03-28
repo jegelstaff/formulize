@@ -75,6 +75,8 @@ define("_MI_formulize_DOWNLOADDEFAULT_DESC", "When users export data, they can c
 define("_MI_formulize_LOGPROCEDURE", "Use logging to monitor Procedures and parameters?");
 define("_MI_formulize_LOGPROCEDUREDESC", "By default, logging is off.");
 
+define("_MI_formulize_DEFAULTTEMPLATE", "Choose default template for display");
+
 
 // The name of this module
 define("_MI_formulizeMENU_NAME","MyMenu");
