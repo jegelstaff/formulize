@@ -1039,7 +1039,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			print "</table></div>";
 		}	
 	
-		print "<table cellpadding=10><tr><td style=\"vertical-align: top;\" width=100%>";
+		print "<table cellpadding=10><tr><td id='titleTable' style=\"vertical-align: top;\" width=100%>";
 		
 		print "<h1>" . trans($title) . "</h1>";
 	
@@ -1051,9 +1051,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			print "</td>";
 			if(!$settings['lockcontrols']) {
 	
-				print "<td rowspan=3 style=\"vertical-align: bottom;\">";	      
+				print "<td id='buttonsTable' class='outerTable' rowspan=3 style=\"vertical-align: bottom;\">";	      
 		
-				print "<table><tr><td style=\"vertical-align: bottom;\">";
+				print "<table><tr><td id='leftButtonColumn' class='innerTable' style=\"vertical-align: bottom;\">";
 		
 				print "<p>$submitButton<br>";
 				if($atLeastOneActionButton) {
@@ -1068,7 +1068,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 				// you can always create and delete your own reports right now (delete_own_reports perm has no effect).  If can delete other reports, then set $pubstart to 10000 -- which is done above -- (ie: can delete published as well as your own, because the javascript will consider everything beyond the start of 'your saved views' to be saved instead of published (published be thought to never begin))
 				if( $thisButtonCode = $buttonCodeArray['deleteViewButton']) { print "<br>$thisButtonCode"; }
 
-				print "</p></td><td style=\"vertical-align: bottom;\"><p style=\"text-align: center;\">";
+				print "</p></td><td id='middleButtonColumn' class='innerTable' style=\"vertical-align: bottom;\"><p style=\"text-align: center;\">";
 
 				if(($add_own_entry AND $singleMulti[0]['singleentry'] == "") OR (($del_own OR $del_others) AND !$settings['lockcontrols'])) {
 					if( $thisButtonCode = $buttonCodeArray['selectAllButton']) { print "$thisButtonCode"; }
@@ -1081,7 +1081,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 					if( $thisButtonCode = $buttonCodeArray['deleteButton']) { print "$thisButtonCode<br>"; }
 				}
 
-				print "</p></td><td style=\"vertical-align: bottom;\"><p style=\"text-align: center;\">";
+				print "</p></td><td id='rightButtonColumn' class='innerTable' style=\"vertical-align: bottom;\"><p style=\"text-align: center;\">";
 
 				if( $thisButtonCode = $buttonCodeArray['calcButton']) { print "<br>$thisButtonCode"; }
 				if( $thisButtonCode = $buttonCodeArray['advCalcButton']) { print "<br>$thisButtonCode"; }
@@ -1102,11 +1102,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			} // end of if controls are locked
 
 			// cell for add entry buttons
-			print "<tr><td style=\"vertical-align: top;\">\n";
+			print "<tr><td id='outerAddEntryPanel' style=\"vertical-align: top;\">\n";
 
 			if(!$settings['lockcontrols']) {
 				// added October 18 2006 -- moved add entry buttons to left side to emphasize them more
-				print "<table><tr><td style=\"vertical-align: bottom;\"><p>\n";
+				print "<table><tr><td id='innerAddEntryPanel' style=\"vertical-align: bottom;\"><p>\n";
 	
 				$addButton = $buttonCodeArray['addButton'];
 				$addMultiButton = $buttonCodeArray['addMultiButton'];
@@ -1130,7 +1130,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 				print "<br><br></p></td></tr></table>\n";
 			}
 	
-			print "</td></tr><tr><td style=\"vertical-align: bottom;\">";
+			print "</td></tr><tr><td id=currentViewSelectTable style=\"vertical-align: bottom;\">";
 	
 			if ($currentViewList = $buttonCodeArray['currentViewList']) { print $currentViewList; }
 	
