@@ -4501,7 +4501,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                     $conditionsfilter .= " AND ";
                 }
                 list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom, $newFilterOps) = _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
-                if($newFilterOps[$filterId]) {
+                if(is_array($newFilterOps) AND isset($newFilterOps[$filterId])) {
                     $filterOps[$filterId] = $newFilterOps[$filterId];
                 }
                 $conditionsfilter .= "$targetAlias`" . $filterElementHandles[$filterId] . "` " . $filterOps[$filterId] . " " . $conditionsFilterComparisonValue;
@@ -4513,7 +4513,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                     $conditionsfilter_oom .= " OR ";
                 }
                 list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom, $newFilterOps) = _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
-                if($newFilterOps[$filterId]) {
+                if(is_array($newFilterOps) AND isset($newFilterOps[$filterId])) {
                     $filterOps[$filterId] = $newFilterOps[$filterId];
                 }
                 $conditionsfilter_oom .= "$targetAlias`" . $filterElementHandles[$filterId] . "` " . $filterOps[$filterId] . " " . $conditionsFilterComparisonValue;
