@@ -27,7 +27,7 @@ class icms_core_Session {
 	 */
 	static public function service() {
 		global $icmsConfig;
-		include_once('integration_api.php');
+		include_once('integration_api.php'); // ADDED CODE BY FREEFORM SOLUTIONS
 		$instance = new icms_core_Session(icms::$xoopsDB);
 		session_set_save_handler(
 			array($instance, 'open'), array($instance, 'close'), array($instance, 'read'),
@@ -40,60 +40,50 @@ class icms_core_Session {
 		// If this is a page load by another system, and we're being included, then we establish the user session based on the user id of the user in effect in the other system
 		// This approach assumes correspondence between the user ids.
 		global $user;
-		if(isset($GLOBALS['current_user'])) //wordpress
-		{
-			$externalUid = $GLOBALS['current_user']->ID;
+
+		if (isset($GLOBALS['formulizeHostSystemUserId'])) {
+			if ($GLOBALS['formulizeHostSystemUserId']) {
+				$externalUid = $GLOBALS['formulizeHostSystemUserId'];
+			} else {
+				$cookie_time = time() - 10000;
+				$instance->update_cookie(session_id(), $cookie_time);
+				$instance->destroy(session_id());
+				unset($_SESSION['xoopsUserId']);
+			}
 		}
-		elseif(isset($GLOBALS['joomlaUserId'])) { // Joomla
-		    $externalUid = $GLOBALS['joomlaUserId'];
+
+		if ($externalUid) {
+			$xoops_userid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $externalUid);
+		    $icms_user = icms::handler('icms_member')->getUser($xoops_userid);
+
+			if (is_object($icms_user)) {
+				// set a few things in $_SESSION, similar to what include/checklogin.php does, and make a cookie and a database entry
+				$_SESSION['xoopsUserId'] = $icms_user->getVar('uid');
+				$_SESSION['xoopsUserGroups'] = $icms_user->getGroups();
+				$_SESSION['xoopsUserLastLogin'] = $icms_user->getVar('last_login');
+				$_SESSION['xoopsUserLanguage'] = $icms_user->language();
+				$_SESSION['icms_fprint'] = $instance->createFingerprint();
+
+				$xoops_user_theme = $icms_user->getVar('theme');
+				if (in_array($xoops_user_theme, $icmsConfig['theme_set_allowed'])) {
+					$_SESSION['xoopsUserTheme'] = $xoops_user_theme;
+				}
+
+				$instance->write(session_id(), session_encode());
+				$icms_session_expiry = ini_get("session.gc_maxlifetime") / 60; // need to use the current maxlifetime setting, which will be coming from Drupal, so the timing of the sessions is synched.
+				$cookie_time = time() + (60 * $icms_session_expiry);
+				$instance->update_cookie(session_id(), $cookie_time);
+			}
+			
+			if (function_exists("i18n_get_lang")) { // set icms language to match the currently active Drupal language
+				$_GET['lang'] = i18n_get_lang();
+			}
 		}
-		elseif(is_object($user)) {
-		  $externalUid = 0;
-		  $userVars = get_object_vars($user);
-		  if(isset($userVars['uid'])) { // drupal
-		    $externalUid = $user->uid; 
-		  } elseif(isset($userVars['data'])) { // phpbb
-		    $externalUid = $user->data['user_id'];
-		    if($externalUid == 1) {
-		      $externalUid = 0; // user 1 in phpbb is the anonymous user
-		      $cookie_time = time()-10000;
-		      $instance->update_cookie(session_id(), $cookie_time);
-		      $instance->destroy(session_id());
-		      unset($_SESSION['xoopsUserId']);
-		    }
-		  }
-		}
-		  if($externalUid) {
-		  	$xoops_userid = Formulize::getXoopsResourceID(Formulize::USER_RESOURCE, $externalUid);
-		    $icms_user = icms::handler('icms_member')->getUser( $xoops_userid );
-		    if(is_object($icms_user)) {
-		      // set a few things in $_SESSION, similar to what include/checklogin.php does, and make a cookie and a database entry
-		      $_SESSION['xoopsUserId'] = $icms_user->getVar('uid');
-		      $_SESSION['xoopsUserGroups'] = $icms_user->getGroups();
-		      $_SESSION['xoopsUserLastLogin'] = $icms_user->getVar('last_login');
-		      $_SESSION['xoopsUserLanguage'] = $icms_user->language();
-		      $_SESSION['icms_fprint'] = $instance->createFingerprint();
-		    
-		      $xoops_user_theme = $icms_user->getVar('theme');
-		      if (in_array($xoops_user_theme, $icmsConfig['theme_set_allowed'])) {
-			$_SESSION['xoopsUserTheme'] = $xoops_user_theme;
-		      }
-		    
-		      $instance->write(session_id(), session_encode());
-		      $icms_session_expiry = ini_get("session.gc_maxlifetime") / 60; // need to use the current maxlifetime setting, which will be coming from Drupal, so the timing of the sessions is synched.
-		      $cookie_time = time()+(60*$icms_session_expiry);
-		      $instance->update_cookie(session_id(), $cookie_time);
-		    }
-		    if(function_exists("i18n_get_lang")) { // set icms language to match the currently active Drupal language
-			$_GET['lang'] = i18n_get_lang();
-		    }
-		  }
-		
-		
+
 		// If there's no xoopsUserId set in the $_SESSION yet, and there's an ICMS session cookie present, then let's make one last attempt to load the session (could be because we're embedded in a system that doesn't have a parallel user table like what is used above)
 		$icms_session_name = ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') ? $icmsConfig['session_name'] : session_name();
-		if(!isset($_SESSION['xoopsUserId']) AND isset($_COOKIE[$icms_session_name])) {
-			if($icms_session_data = $instance->read($_COOKIE[$icms_session_name])) {
+		if (!isset($_SESSION['xoopsUserId']) && isset($_COOKIE[$icms_session_name])) {
+			if ($icms_session_data = $instance->read($_COOKIE[$icms_session_name])) {
 				session_decode($icms_session_data); // put session data into $_SESSION, including the xoopsUserId if present, same as if session_start had been successful
 			}
 		}
@@ -123,8 +113,6 @@ class icms_core_Session {
 		}
 		return $instance;
 	}
-
-
 
 	/**
 	 * Database connection
