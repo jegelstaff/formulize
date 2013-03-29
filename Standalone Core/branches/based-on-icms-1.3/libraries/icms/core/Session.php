@@ -45,6 +45,7 @@ class icms_core_Session {
 			if ($GLOBALS['formulizeHostSystemUserId']) {
 				$externalUid = $GLOBALS['formulizeHostSystemUserId'];
 			} else {
+				$externalUid = 0;
 				$cookie_time = time() - 10000;
 				$instance->update_cookie(session_id(), $cookie_time);
 				$instance->destroy(session_id());

@@ -23,10 +23,10 @@ class icms_AutologinEventHandler {
 		setcookie('autologin_pass', '', time() - 3600, $icms_cookie_path, '', 0, 0);
 	}
 
-	static public function sessionAutologin($autologinName, $autologinPass, $_POST) {
+	static public function sessionAutologin($autologinName, $autologinPass, $post) {
 		// autologin V2 GIJ
-		if (!empty($_POST)) {
-			$_SESSION['AUTOLOGIN_POST'] = $_POST;
+		if (!empty($post)) {
+			$_SESSION['AUTOLOGIN_POST'] = $post;
 			$_SESSION['AUTOLOGIN_REQUEST_URI'] = $_SERVER['REQUEST_URI'];
 			redirect_header(ICMS_URL . '/session_confirm.php', 0, '&nbsp;');
 		} elseif (!empty($_SERVER['QUERY_STRING']) && substr($_SERVER['SCRIPT_NAME'], -19) != 'session_confirm.php') {
