@@ -105,23 +105,8 @@ function formulize_help($path, $arg)
 function formulize_permission()
 {
 	return array(
-		'create form content' => array(
-			'title' => t('Create Form content')
-		),
-		'edit own form content' => array(
-			'title' => t('Edit own Form content')
-		),
-		'edit any form content' => array(
-			'title' => t('Edit any Form content')
-		), 
 		'access form content' => array(
 			'title' => t('Access Form content')
-		),
-		'delete own form content' => array(
-			'title' => t('Delete own Form Content')
-		),
-		'delete any form content' => array(
-			'title' => t('Delete any Form content')
 		)
 	);
 }
@@ -135,22 +120,6 @@ function formulize_node_access($node, $op, $account)
 	$type = is_string($node) ? $node : $node->type;
 
 	if (in_array($type, node_permissions_get_configured_types())) {
-		if ($op == 'create' && user_access('create form content', $account)) {
-			return NODE_ACCESS_ALLOW;
-		}
-
-		if ($op == 'update') {
-			if (user_access('edit any form content', $account) || (user_access('edit own form content', $account) && ($account->uid == $node->uid))) {
-				return NODE_ACCESS_ALLOW;
-			}
-		}
-
-		if ($op == 'delete') {
-			if (user_access('delete any form content', $account) || (user_access('delete own form content', $account) && ($account->uid == $node->uid))) {
-				return NODE_ACCESS_ALLOW;
-			}
-		}
-
 		if ($op == 'view') {
 			if (user_access('access form content', $account) && ($account->uid == $node->uid)) {
 				return NODE_ACCESS_ALLOW;
