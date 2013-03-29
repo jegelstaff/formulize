@@ -4709,6 +4709,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 	$countOfValue = count($value);
 	$counter = 1;
 	static $cachedFormIds = array();
+	static $cachedElementIds = array();
 	if(!isset($cachedFormIds[$handle])) {
 	  if($handle == "mod_datetime" OR $handle == "creation_datetime" OR $handle == "creator_email") {
 		$cachedFormIds[$handle] = $fid;
