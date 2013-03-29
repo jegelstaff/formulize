@@ -1311,8 +1311,12 @@ jQuery(document).ready(function() {
 		    $filterValue = " 1 ";
 		}
 	    } else {
-		$filterValue .= is_numeric($_POST[$postName]) ? $_POST[$postName] : mysql_real_escape_string($_POST[$postName]);
-		$filterValue .= $fieldName ? "'" : ""; // close out the ' started above after we figured out the field this filter belongs to
+		if ($thisFilter['type']['kind'] ==1) { // 1 is dateboxes
+		    $filterValue= date("Y-m-d", strtotime($_POST[$postName]));
+		} else {
+		    $filterValue .= is_numeric($_POST[$postName]) ? $_POST[$postName] : mysql_real_escape_string($_POST[$postName]);
+		    $filterValue .= $fieldName ? "'" : ""; // close out the ' started above after we figured out the field this filter belongs to
+		}
 	    }
 	}
 	if($formId) {

@@ -246,7 +246,7 @@ if($renderedFormulizeScreen AND is_object($xoopsTpl)) {
   $xoopsTpl->assign('xoops_pagetitle', $renderedFormulizeScreen->getVar('title'));
   $xoopsTpl->assign('icms_pagetitle', $renderedFormulizeScreen->getVar('title'));
   $xoopsTpl->assign('formulize_screen_id', $renderedFormulizeScreen->getVar('sid'));
-} else {
+} elseif(is_object($xoopsTpl))  {
   $xoopsTpl->assign('xoops_pagetitle', $title);
   $xoopsTpl->assign('icms_pagetitle', $title);
 }
