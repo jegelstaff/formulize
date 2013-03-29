@@ -284,9 +284,11 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
 	$result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly, $resultOnly, $filterElements);
 	}
 	
-	if($cacheKey) {
+	if($cacheKey AND !isset($GLOBALS['formulize_doNotCacheDataSet'])) { // doNotCacheDataSet can be set, so that this query will be repeated next time instead of pulled from the cache.  This is most useful to declare in derived value formulas that cause a change to the underlyin dataset by writing things to a form that is involved in this dataset.
 		 $GLOBALS['formulize_cachedGetDataResults'][$cacheKey] = $result;
 	}
+	
+	if(isset($GLOBALS['formulize_doNotCacheDataSet'])) { unset($GLOBALS['formulize_doNotCacheDataSet']); } // this needs to be declared before or during each extraction that should now be cached...caching is too important a cost savings when building the page
 	
 	return $result;
 }
@@ -607,6 +609,14 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 							 $sortFieldMetaData = formulize_getElementMetaData($sortField, true);
 							 if($sortFieldMetaData['ele_encrypt']) {
 										$sortFieldFullValue = "AES_DECRYPT($sortFidAlias.`$sortField`, '".getAESPassword()."')"; // sorts as text, which will screw up number fields
+							 } elseif(formulize_isLinkedSelectBox($sortField, true)) {
+							    $ele_value = unserialize($sortFieldMetaData['ele_value']);
+							    $boxproperties = explode("#*=:*", $ele_value[2]);
+							    $target_fid = $boxproperties[0];
+							    $target_element_handle = $boxproperties[1];
+							    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+							    $targetFormObject = $form_handler->get($target_fid);
+							    $sortFieldFullValue = "(SELECT sourceSortForm.`".$target_element_handle."` FROM ".DBPRE."formulize_".$targetFormObject->getVar('form_handle')." as sourceSortForm WHERE CONCAT(',',sourceSortForm.`entry_id`,',') = ".$sortFidAlias.".`".$sortField."`)";
 							 } else {
 										$sortFieldFullValue = "$sortFidAlias.`$sortField`";
 							 }
