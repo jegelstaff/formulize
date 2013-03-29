@@ -551,11 +551,22 @@ function printSmart($value, $chars="35") {
   	if(!is_numeric($value) AND $value == "") {
 		$ret = "&nbsp;";
 	} else {
-		$temp = substr(trans($value), 0, $chars);
-		if(strlen(trans($value))>$chars) { $temp .= "...."; }
-		$ret = $temp;
+		$ret = cutString(trans($value), $chars);
 	}
 	return $ret;
+}
+
+// this function handles cutting up a string and is multibyte aware -- thanks to Fram!
+function cutString($string, $maxlen) {                                                                                                                                                                                                      
+    $len = (mb_strlen($string) > $maxlen)           
+        ? mb_strripos(mb_substr($string, 0, $maxlen), ' ')
+        : $maxlen  
+    ;    
+    $cutStr = mb_substr($string, 0, $len);    
+    return (mb_strlen($string) > $maxlen) 
+        ? $cutStr . '...'
+        : $cutStr
+    ;
 }
 
 
