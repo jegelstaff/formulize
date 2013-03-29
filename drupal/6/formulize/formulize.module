@@ -726,6 +726,9 @@ function _formulize_sync_roles( $drupal_user, $edit )
       $drupal_roles[] = $key;
     }
   }
+  if(count($drupal_roles)==0) {
+    return;
+  }
 
   // convert the drupal rid to xoops groupid
   $drupal_formulize_roles = array();
