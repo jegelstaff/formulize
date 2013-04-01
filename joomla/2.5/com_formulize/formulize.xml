@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension method="upgrade" type="component" version="1.6.0">
+	<name>Formulize</name>
+	<creationDate>January 2013</creationDate>
+	<author>UCOSP Formulize Team 2013</author>
+	<description>COM_FORMULIZE_DESCRIPTION</description>
+
+	<!-- Run script -->
+	<scriptfile>script.php</scriptfile>
+
+	<!-- Site Section -->
+	<files folder="site">
+		<filename>index.html</filename>
+		<filename>formulize.php</filename>
+		<filename>formulize.css</filename>
+		<folder>views</folder>
+		<folder>images</folder>
+	</files>
+
+	<!-- Media Section - For backend images -->
+	<media destination="com_formulize" folder="media">
+		<filename>index.html</filename>
+		<folder>images</folder>
+	</media>
+	
+	<!-- Administration Section -->
+	<administration>
+		<menu img="../media/com_formulize/images/logo-16x16.png">COM_FORMULIZE_MENU</menu>
+		<files folder="admin">
+			<filename>index.html</filename>
+			<filename>formulize.php</filename>
+			<filename>config.xml</filename>
+			<folder>fields</folder>
+		</files>
+		
+		<!-- Language Section - English only-->
+		<languages folder="admin">
+			<language tag="en-GB">language/en-GB/en-GB.com_formulize.ini</language>
+			<language tag="en-GB">language/en-GB/en-GB.com_formulize.sys.ini</language>
+		</languages>
+	</administration>
+</extension>

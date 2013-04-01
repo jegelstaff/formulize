@@ -1,0 +1,234 @@
+/*************
+Formulize css
+**************/
+
+/******************************************************
+General Notes:
+The form of type "Entries" has an id of 'listofentries'
+The form of type "Regular" has an id of 'formulizeform'
+*******************************************************/
+
+/**********************************
+Style the upper part of both forms
+***********************************/
+
+/* Set the fonts and make sure the background stays white */
+#formulize_form #listofentries #titleTable h1{
+	color: black;
+	font-weight: bold;
+	font-size: 1.8em;
+	border: none;
+} 
+#formulize_form #listofentries #titleTable {
+	background-color: white;
+	border-color: white;
+}
+#formulize_form #listofentries #buttonsTable, #formulize_form #listofentries #outerAddEntryPanel, #formulize_form #listofentries #innerAddEntryPanel, #formulize_form #listofentries #currentViewSelectTable {
+	color: black;
+	font-weight: bold;
+	font-size: 1.1em;
+	background-color: white;
+	border-color: white;
+}
+#formulize_form #listofentries #currentViewSelectTable #currentview{
+	color: black;
+	font-size: 0.8em;
+} 
+#formulize_form #formulizeform th {
+	font-size: 1.8em;
+	color: black;
+	font-weight: bold;
+}
+
+/**********************************
+Style the lower part of both forms
+***********************************/
+
+/* Make sure the forms fill the available space */
+#resbox, #formulizeform {
+	min-width: 900px;
+}
+#resbox table{
+	width:100%;
+}
+/* Make sure the forms as a white grid */
+#formulize_form table tbody td {
+	border: 2px solid white;
+	vertical-align: top;
+}
+#formulize_form table.outer tbody tr td.even table tbody tr td, #formulize_form table tr {
+	border: none;
+}
+/* Set the fonts and the table cells color */
+#formulize_form  #listofentries a {
+	color: #666666;
+	font-weight: bold;
+	font-size: 14px;
+}
+#formulize_form  #listofentries a:link {
+	text-decoration: none;
+}
+#formulize_form .head {
+	background-color: #8FBE58;
+	padding: 5px;
+	font-weight: bold;
+}
+#formulize_form .even {
+	background-color: #A4E2F7;
+	color:black;
+	padding: 5px;
+}
+#formulize_form #formulizeform .even {
+	background-color: #80C3DD;
+	color:black;
+	padding: 5px;
+}
+#formulize_form .odd.column, .outer .even td{
+	background-color: #80C3DD;
+}
+#formulize_form .odd {
+	color:black;
+	padding: 5px;
+	background-color: white;
+}
+#formulize_form tr.even td {
+	color:black;
+	padding: 5px;
+}
+#formulize_form tr.odd td {
+	color:black;
+	padding: 5px;
+	background-color: white;	
+}
+#formulize_form .xoops-form-element-caption {
+	color: black;
+	font-weight: bold;
+	font-size: 1.2em;
+}
+#formulize_form .xoops-form-element-caption .caption-marker {
+	display: none;
+}
+#formulize_form .xoops-form-element-help {
+	font-weight: normal;
+}
+/* Make sure the column are displayed correctly */
+#formulize_form .floating-column {
+    position: fixed;
+    border: 1px solid white;
+    display: none;
+    padding: 0px !important;
+}
+#formulize_form .floating-column .main-cell-div {
+    float: left;
+    border: 1px solid white;
+    padding: 5px;
+    
+}
+
+/****************
+Style the buttons
+*****************/ 
+/* Set colors and add images to the buttons */
+#formulize_form .formulize_button {
+	color: white;
+	height: 27px;
+	width: 163px;*/
+	font-size: 12px;
+	border-color: #cccccc;
+    text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
+    font-weight: bold;
+    height: 36px;
+}
+#formulize_form #formulize_addButton {
+	padding: 0 1.5em;
+	background: url(images/contact-new.png) no-repeat left center;
+	background-color: #2F85DC;
+	width: 190px;
+}
+#formulize_form #formulize_addMultiButton {
+	padding: 0 1.5em;
+	background: url(images/multi.png) no-repeat left center;
+	background-color: #2F85DC;
+	width: 190px;
+}
+#formulize_form #formulize_changeColsButton {
+	padding: 0 1.5em;
+	background: url(images/table.png) no-repeat left center;
+	background-color: #3399FF;
+}
+#formulize_form #formulize_resetViewButton {
+	padding: 0 1.5em;
+	background: url(images/find.png) no-repeat left center;
+	background-color: #3399FF;
+}
+#formulize_form #formulize_saveViewButton {
+	padding: 0 1.5em;
+	background: url(images/findsave.png) no-repeat left center;
+	background-color: #3399FF;
+}
+#formulize_form #formulize_deleteViewButton {
+	padding: 0 1.5em;
+	background: url(images/finddel.png) no-repeat left center;
+	background-color: #3399FF;
+}
+#formulize_form #formulize_selectAllButton {
+	padding: 0 1.5em;
+	background: url(images/select.png) no-repeat left center;
+	background-color: #3CA683;
+}
+#formulize_form #formulize_clearSelectButton {
+	padding: 0 1.5em;
+	background: url(images/unselect.png) no-repeat left center;
+	background-color: #3CA683;
+}
+#formulize_form #formulize_cloneButton {
+	padding: 0 1.5em;
+	background: url(images/clone.png) no-repeat left center;
+	background-color: #3CA683;
+}
+#formulize_form #formulize_deleteButton {
+	padding: 0 1.5em;
+	background: url(images/delete.png) no-repeat left center;
+	background-color: #3CA683;
+}
+#formulize_form #formulize_calcButton {
+	padding: 0 1.5em;
+	background: url(images/calculator.png) no-repeat left center;
+	background-color: #A7A7A7;
+}
+#formulize_form #formulize_advCalcButton {
+	padding: 0 1.5em;
+	background: url(images/calculator.png) no-repeat left center;
+	background-color: #A7A7A7;
+}
+#formulize_form #formulize_exportButton {
+	padding: 0 1.5em;
+	background: url(images/math.png) no-repeat left center;
+	background-color: #2F85DC;
+}
+#formulize_form #formulize_importButton {
+	padding: 0 1.5em;
+	background: url(images/import.png) no-repeat left center;
+	background-color: #2F85DC;
+}
+#formulize_form #formulize_notifButton {
+	padding: 0 1.5em;
+	background: url(images/notif.png) no-repeat left center;
+	background-color: #5450A5;
+}
+/* Formulize buttons by Francois T */
+#formulize_form button, #formulizeform input[type='submit'], #formulizeform input[type='button'], #formulizeform input[type='reset'] {
+	background-color: #F4F9FE;
+	-webkit-border-radius: 5px;
+	color: #2F85DC;
+	border:	1px solid;
+	border-color: #ccc;
+}
+#formulize_form input:hover, #formulizeform button:hover, #formulizeform .xo-formbuttons:hover, #formulizeform .formButton:hover {
+    transform: scale(1.2);  
+    box-shadow: 0 0 65px #F4F9FE inset, 0 0 20px #F4F9FE inset, 0 0 15px #333;  
+}
+#formulize_form button:focus, #formulizeform input[type='submit']:focus, #formulizeform input[type='button']:focus, #formulizeform input[type='reset']:focus, #formulizeform .xo-formbuttons:focus, #formulizeform .formButton:focus {
+	background-color: #f4f4f4;
+	border-color : #333;
+}
