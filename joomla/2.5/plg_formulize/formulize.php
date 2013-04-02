@@ -181,9 +181,6 @@
 							$application->enqueueMessage(JText::_('Group id '.$prevGroup.': Error removing user from group in Formulize.'), 'error');
 							return false;
 						}	
-						else {
-							$application->enqueueMessage(JText::_('Group id '.$prevGroup.': User was removed from group in Formulize.'), 'message');
-						}
 					}
 				}
 				// If necessary, add user to groups
@@ -203,9 +200,6 @@
 						if ( !$flag ) {
 							$application->enqueueMessage(JText::_('Group id '.$curGroup.': Error adding user to group in Formulize.'), 'error');
 							return false;
-						}
-						else {
-							$application->enqueueMessage(JText::_('Group id '.$curGroup.': User was added to group in Formulize.'), 'message');
 						}
 					}
 				}
