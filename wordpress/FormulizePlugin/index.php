@@ -12,6 +12,15 @@
 
 $formulize_path = get_option('formulize_path', NULL);
 include_once($formulize_path . DIRECTORY_SEPARATOR . 'integration_api.php');
+
+// Wordpress does not use role_ids, assign arbitrary values to wordpress built-in roles to satisfy formulize
+$formulize_role_ids = array(
+		    "administrator"  => 1,
+		    "editor" => 2,
+		    "author" => 3,
+		    "contributor" => 4,
+		    "subscriber" => 5,
+		);
     
 if(!class_exists('FormulizePluginOptions')) :
 
@@ -226,6 +235,7 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 			);
 	$formUser = new FormulizeUser($userData);
 	Formulize::createUser($formUser);
+	updateUserRole($userID, $wpUser->roles[0]);
     }
     
     
@@ -317,6 +327,36 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 		synchronizeUsers();
 	    }
         }
+
+    function updateUserRole($user_id, $role_name) 
+    {
+
+		global $formulize_role_ids;
+		$role = get_role($role_name);
+    	$user = get_userdata($user_id);
+
+    	// since there is no hook for removing a wordpress role, I make the assumption that users can belong to AT MOST one wordpress role at a time.
+		//remove user from all groups (we have no way to tell which role this user switched from)
+		foreach ($formulize_role_ids as $role_id)
+		{
+			Formulize::removeUserFromGroup($user->ID, $role_id);
+		}
+
+    	if ($role != null && $formulize_role_ids[$role->name] != null) // we only support default wp roles at the moment
+    	{
+    		$formulize_group = new FormulizeGroup(
+    		array(
+    		'groupid'=>$formulize_role_ids[$role->name],
+    		'name'=>$role->name,
+    		'description'=>$role->name
+    		));
+    		
+    		// lazily create this group (incase this is the first time)
+	    	Formulize::createGroup($formulize_group);
+			Formulize::addUserToGroup($user->ID, $formulize_role_ids[$role->name]);	
+    	}
+    	
+    }
 	
 //add_action('init','initializeUserInfo');
 add_action( 'wp_enqueue_scripts', 'insertFormulizeStylesheet' );
@@ -327,5 +367,6 @@ add_action('save_post', 'formulize_save_postdata');
 add_action('user_register','addUser'); // <--Currently this function works and updates the Formulize site.
 add_filter('the_content','insertFormulize'); //Need to fix this hook so that the table is displayed appropriately on each page
 add_filter('plugin_action_links', 'formulize_settings_link', 10, 2); 
+add_action('set_user_role', 'updateUserRole', 10, 2);
 
 ?>
