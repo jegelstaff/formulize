@@ -5,9 +5,9 @@ $term = $_GET['q'];
 $found = array();
 
 if(file_exists("../../../cache/".$cache)) {
-  include "../../../cache/".$cache;  
+    include "../../../cache/".$cache;
 } else {
-  include "../../../".$cache; // if the file doesn't exist in the cache folder, then look in the root of the system
+    include "../../../".$cache; // if the file doesn't exist in the cache folder, then look in the root of the system
 }
 
 if(count($found) == 0) {
@@ -24,7 +24,12 @@ if(count($found) == 0) {
         }
         $found[]='["'._formulize_NO_MATCH_FOUND.'","none"]';
     }
+} else {
+    if($_GET['allow_new_values']) {
+        // user may want to add a new entry that's a shorter version of an existing entry.
+        // for example, let the user add "John" when "John Smith" already exists
+        $found[] = '["'.$term.'","newvalue:'.$term.'"]';
+    }
 }
 
 print "[".implode(",", $found)."]";
-
