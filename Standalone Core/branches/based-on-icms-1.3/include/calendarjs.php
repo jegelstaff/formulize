@@ -110,6 +110,6 @@ Calendar._TT["WK"] = "";
 //-->';
 
 $icmsTheme->addScript("", array("type" => "text/javascript"), $src);
-$GLOBALS['formulize_calendarFileRequired']['scripts'][] = $src;
-$GLOBALS['formulize_calendarFileRequired']['scripts'][] = ICMS_URL . "/libraries/jscalendar/calendar.js";
+$GLOBALS['formulize_calendarFileRequired']['scripts-for-embedding'][] = $src;
+$GLOBALS['formulize_calendarFileRequired']['scripts-for-linking'][] = ICMS_URL . "/libraries/jscalendar/calendar.js";
 $GLOBALS['formulize_calendarFileRequired']['stylesheets'][] = ICMS_URL . "/libraries/jscalendar/calendar-blue.css";
