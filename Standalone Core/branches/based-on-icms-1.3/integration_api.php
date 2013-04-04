@@ -384,12 +384,16 @@ class Formulize {
 			//If this global is set, then we are requiring a date-box element. In that case we shall add the following
 			//scripts to our page load, in order for the calendar to achieve functionality.
 			if(isset($GLOBALS['formulize_calendarFileRequired']))
-			{
-				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/calendar.js'></script>";
-				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/calendar-setup.js'></script>";
-				echo "<script type='text/javascript' src='" . ICMS_URL . "/libraries/jalalijscalendar/jalali.js'></script>";
-				echo "<script type='text/javascript' src='" . ICMS_URL . "/language/" . $icmsConfig['language'] . "/local.date.js'></script>";
-				echo "<script type='text/javascript'>".$GLOBALS['formulize_calendarFileRequired']."</script>";
+			{	
+				// Include scripts for linking
+				foreach($GLOBALS['formulize_calendarFileRequired']['scripts-for-linking'] as $thisScript) {
+                                       echo "<script type='text/javascript' src='" . $thisScript . "'></script>";
+                }
+				// Include scripts for embedding
+				foreach($GLOBALS['formulize_calendarFileRequired']['scripts-for-embedding'] as $thisScript) {
+                                       echo "<script type='text/javascript'>". $thisScript ."</script>";
+                }
+				
 				
 				//In order to append our stylesheet, and ensure that no matter the load and buffer order of our page, we shall be including
 				//the style sheet via a JS call that appends the link tag to the head section on load.
@@ -403,19 +407,19 @@ class Formulize {
 						newNode.setAttribute('type', 'text/css');
 						newNode.setAttribute('href', fileURL);
 						document.getElementsByTagName('head')[0].appendChild(newNode);
+					}";
+					foreach($GLOBALS['formulize_calendarFileRequired']['stylesheets'] as $thisSheet) {
+						print " fetchCalendarCSS('" . $thisSheet ."'); ";
 					}
-					fetchCalendarCSS('" . ICMS_URL . "/libraries/jalalijscalendar/aqua/style.css');
-					</script>
-				";
+					print "</script>";
 			}
 		}
-		
 		//Inject formulize content
 		echo $content;
 		//Close our div tag
 		echo '</div>';
 	}
-
+	
 	/**
 	 * Insert a mapping from the external resource to a Formulize resource
 	 * @param external_id     int     The external resource ID
