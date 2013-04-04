@@ -21,11 +21,11 @@ $icmsTheme->addScript(ICMS_URL . "/libraries/jalalijscalendar/calendar-setup.js"
 
 if ($icmsConfig['use_ext_date'] == true && defined('_CALENDAR_TYPE') && _CALENDAR_TYPE == "jalali") {
 	$icmsTheme->addScript(ICMS_URL . "/libraries/jalalijscalendar/jalali.js", array("type" => "text/javascript"));
-	$GLOBALS['formulize_calendarFileRequired']['scripts'][] = ICMS_URL . "/libraries/jalalijscalendar/jalali.js";
+	$GLOBALS['formulize_calendarFileRequired']['scripts-for-linking'][] = ICMS_URL . "/libraries/jalalijscalendar/jalali.js";
 }
 if ($icmsConfig['use_ext_date'] == true && file_exists(ICMS_ROOT_PATH . '/language/' . $icmsConfig['language'] . '/local.date.js')) {
 	$icmsTheme->addScript(ICMS_URL . "/language/" . $icmsConfig['language'] . "/local.date.js", array("type" => "text/javascript"));
-	$GLOBALS['formulize_calendarFileRequired']['scripts'][] = ICMS_URL . "/language/" . $icmsConfig['language'] . "/local.date.js";
+	$GLOBALS['formulize_calendarFileRequired']['scripts-for-linking'][] = ICMS_URL . "/language/" . $icmsConfig['language'] . "/local.date.js";
 }
 
 $src = 'Calendar._DN = new Array
@@ -158,8 +158,7 @@ Calendar._NUMBERS = [' . _CAL_NUMS_ARRAY . '];
 Calendar._DIR = "' . _CAL_DIRECTION . '";';
 
 $icmsTheme->addScript("", array("type" => "text/javascript"), $src);
-$GLOBALS['formulize_calendarFileRequired']['scripts'][] = $src;
-$GLOBALS['formulize_calendarFileRequired']['scripts'][] = ICMS_URL . "/libraries/jalalijscalendar/calendar.js";
-$GLOBALS['formulize_calendarFileRequired']['scripts'][] = ICMS_URL . "/libraries/jalalijscalendar/calendar-setup.js";
+$GLOBALS['formulize_calendarFileRequired']['scripts-for-embedding'][] = $src;
+$GLOBALS['formulize_calendarFileRequired']['scripts-for-linking'][] = ICMS_URL . "/libraries/jalalijscalendar/calendar.js";
+$GLOBALS['formulize_calendarFileRequired']['scripts-for-linking'][] = ICMS_URL . "/libraries/jalalijscalendar/calendar-setup.js";
 $GLOBALS['formulize_calendarFileRequired']['stylesheets'][] = ICMS_URL . "/libraries/jalalijscalendar/aqua/style.css";
-
