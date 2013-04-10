@@ -28,7 +28,16 @@ if(count($found) == 0) {
     if($_GET['allow_new_values']) {
         // user may want to add a new entry that's a shorter version of an existing entry.
         // for example, let the user add "John" when "John Smith" already exists
-        $found[] = '["'.$term.'","newvalue:'.$term.'"]';
+        $value_is_new = true;
+        foreach ($found as $value) {                    // case insensitive search so if John exists, JOHN cannot be added
+            if (0 === stripos($value, "[\"$term\",")) { // match the whole value by searching for the formated value: ["value",
+                $value_is_new = false;                  // an exact match was found, so do not add a new value
+                break;
+            }
+        }
+        if ($value_is_new) {
+            $found[] = '["'.$term.'","newvalue:'.$term.'"]';
+        }
     }
 }
 
