@@ -2529,9 +2529,9 @@ if(count($entriesThatHaveBeenLockedThisPageLoad)>0) {
     }
     print "			'form_ids[]': [".implode(", ", array_keys($entriesThatHaveBeenLockedThisPageLoad))."],\n";
     print "			async: false\n";
-    print "			}).done(function() {
-                                window.document.go_parent.submit();\n
-                        });\n";
+    print "			async: false\n";
+    print "			});
+			window.document.go_parent.submit();";	// jQuery 1.4.4 does not allow chaining functions to run after the post
 }
 print "}\n";
 	
