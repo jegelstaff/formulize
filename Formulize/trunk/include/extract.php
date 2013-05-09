@@ -137,10 +137,23 @@ function prepvalues($value, $field, $entry_id) {
                 list($sourceMeta[1]) = convertElementIdsToElementHandles(array($source_ele_value[11]), $sourceMeta[0]);
             } elseif(isset($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) AND $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] != "none") {
                 // EV_MULTIPLE_LIST_COLUMNS may be an array now
+                if (!is_array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]))
+                    $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] = array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]);
+
+                // save the value before convertElementIdsToElementHandles()
+                $before_conversion = $sourceMeta[1];
+
                 $sourceMeta[1] = convertElementIdsToElementHandles(is_array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) ?
                     $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] : array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]), $sourceMeta[0]);
+
                 // remove empty entries, which can happen if the "use the linked field selected above" option is selected
                 $sourceMeta[1] = array_filter($sourceMeta[1]);
+
+                // unfortunately, sometimes sourceMeta[1] seems to be saved as element handles rather than element IDs, and in that case,
+                //  convertElementIdsToElementHandles() returns array(0 => 'none') which causes an error in the query below.
+                //  check for that case here and revert back to the value of sourceMeta[1] before convertElementIdsToElementHandles()
+                if (1 == count($sourceMeta[1]) and isset($sourceMeta[1][0]) and "none" == $sourceMeta[1][0])
+                    $sourceMeta[1] = $before_conversion;
             }
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
             $sourceFormObject = $form_handler->get($sourceMeta[0]);
