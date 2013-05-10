@@ -66,11 +66,6 @@
 
 <script type="text/javascript">
 <{* Use javascript to save any changes to the settings before following the link *}>
-$(".configscreen").click(function() {
-	$("[name=gotoscreen]").val($(this).attr('target-sid'));
-	$(".savebutton").click();
-	return false;
-})
 $(".deletescreen").click(function() {
 	var answer = confirm("<{$smarty.const._AM_SCREEN_DELETESCREENS}>");
 	if(answer) {
@@ -78,5 +73,5 @@ $(".deletescreen").click(function() {
 		$(".savebutton").click();
 	}
 	return false;
-})
+});
 </script>
