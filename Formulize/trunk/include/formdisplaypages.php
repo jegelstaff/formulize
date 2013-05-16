@@ -569,16 +569,18 @@ function drawPageNav($usersCanSave="", $currentPage="", $totalPages, $aboveBelow
 		print "</td></tr></table></div></form><br />";
         } else { 
                 //navigation options below the form print like this
-                print "<br><div id=\"bottomPageNumber\"><center><p>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . $totalPages;
+                print "<div id=\"bottomPageNumber\">" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . $totalPages;
                 if(!$usersCanSave) {print "<br>" . _formulize_INFO_NOSAVE;}
                 if($skippedPageMessage) {
                     print "<br>". $skippedPageMessage;
                 }
-                print "</p></center></div><br><center><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\">";
+                print "<div id=\"bottomJumpList\"><p>". _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . $pageSelectionList . "</p></div>";
+                print "</p></div>";
+                print "<div id=\"bottom-save-block\"><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\">";
                 print $previousPageButton;
                 print "&nbsp;&nbsp;&nbsp;&nbsp;";
                 print $nextPageButton;
-                print "</center><br><div id=\"bottomJumpList\"><p>". _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . $pageSelectionList . "</p></div>";
+                print "</div>";
         }
 }
 
@@ -624,5 +626,3 @@ function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow) 
 	$pageSelectionList .= "</select>";
 	return $pageSelectionList;
 }
-
-?>
