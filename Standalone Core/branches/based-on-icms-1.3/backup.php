@@ -5,24 +5,13 @@ include_once "mainfile.php";
 error_reporting(E_ALL | E_STRICT);
 
 if ($xoopsUser and userIsInGroup("Webmasters", $xoopsUser)) {
-
-    // attempt to dump the database using the mysqldump command, which may fail if the system() call is disabled
-    ob_start();
-    system("mysqldump -u ".SDATA_DB_USER." -p".SDATA_DB_PASS." ".SDATA_DB_NAME." ", $data);
-    $file_content = ob_get_clean();
-
-    // if the database was not dumped, run a manual process to do it
-    if (0 == strlen($file_content)) {
-        $file_content = backup_tables("localhost", SDATA_DB_USER, SDATA_DB_PASS, SDATA_DB_NAME, '*');
-    }
-
     // send the database content to the user
     header("Content-Transfer-Encoding: Binary");
-    header("Content-length: ".strlen($file_content));
+    #header("Content-length: ".strlen($file_content));
     header("Content-disposition: filename=\"".SDATA_DB_NAME."-".date("Y-m-d", time()).".sql\"");
     header("Content-type: application/octet-stream");
     header("Last-Modified: ".gmdate("D, d M Y H:i:s", time())." GMT");
-    print($file_content);
+    backup_tables("localhost", SDATA_DB_USER, SDATA_DB_PASS, SDATA_DB_NAME, '*');
 } else {
     header("Location: /");
 }
@@ -90,10 +79,14 @@ function backup_tables($host, $user, $pass, $name, $tables = '*')
         $row2 = mysql_fetch_row(mysql_query('SHOW CREATE TABLE '.$table));
         $return.= "\n\n".$row2[1].";\n\n";
 
+        echo $return;
+        $return = "";
+
         for ($i = 0; $i < $num_fields; $i++)
         {
             while($row = mysql_fetch_row($result))
             {
+                set_time_limit(90);
                 $return.= 'INSERT INTO '.$table.' VALUES(';
                 for($j=0; $j<$num_fields; $j++)
                 {
@@ -104,11 +97,11 @@ function backup_tables($host, $user, $pass, $name, $tables = '*')
                 }
                 $return.= ");\n";
             }
+            echo $return;
+            $return = "";
         }
         $return.="\n\n\n";
+        echo $return;
+        $return = "";
     }
-
-    return $return;
 }
-
-?>
