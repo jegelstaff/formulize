@@ -164,7 +164,9 @@ function prepvalues($value, $field, $entry_id) {
                 $sql = "SELECT t1.`".$secondSourceMeta[1]."` FROM ".DBPRE."formulize_".$secondFormObject->getVar('form_handle')." as t1, ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle'). " as t2 WHERE t2.`entry_id` IN (".trim($value, ",").") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$sourceMeta[1]."`)) ORDER BY t2.`entry_id`";
             } else {
                 if (is_array($sourceMeta[1])) {
-                    $select_column = "`".implode("`, `", $sourceMeta[1])."`";
+                    $linked_columns = convertElementIdsToElementHandles($sourceMeta[1], $sourceFormObject->getVar('id_form'));
+                    $linked_columns = array_filter($linked_columns); // remove empty entries
+                    $select_column = "`".implode("`, `", $linked_columns)."`";
                 } else {
                     $select_column = "`{$sourceMeta[1]}`";
                 }
