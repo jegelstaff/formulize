@@ -2519,7 +2519,6 @@ if(!$nosave) {
 	print "	}\n";
 }
 print "	}\n";
-	
 print " function removeEntryLocks() {\n";
 global $entriesThatHaveBeenLockedThisPageLoad;
 if(count($entriesThatHaveBeenLockedThisPageLoad)>0) {
@@ -2529,10 +2528,10 @@ if(count($entriesThatHaveBeenLockedThisPageLoad)>0) {
     }
     print "			'form_ids[]': [".implode(", ", array_keys($entriesThatHaveBeenLockedThisPageLoad))."],\n";
     print "			async: false\n";
-    print "			});
-			window.document.go_parent.submit();";	// jQuery 1.4.4 does not allow chaining functions to run after the post
+    print "			});\n";
 }
-print "}\n";
+print "  window.document.go_parent.submit();\n";	// jQuery 1.4.4 does not allow chaining functions to run after the post
+print " }\n";
 	
 print "	function add_sub(sfid, numents, ele_id) {\n";
 print "		document.formulize.target_sub.value=sfid;\n";
