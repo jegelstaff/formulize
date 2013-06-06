@@ -34,11 +34,11 @@
 require_once "../../../mainfile.php";
 global $xoopsConfig;
 // load the formulize language constants if they haven't been loaded already
-	if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
-		include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
-	} else {
-		include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
-	}
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+	include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+} else {
+	include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+}
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 
@@ -46,7 +46,6 @@ $fid = intval($_GET['fid']);
 $frid = intval($_GET['frid']);
 
 if(!isset($_POST['exportsubmit'])) {
-
 	print "<HTML>";
 	print "<head>";
 	print "<meta http-equiv='Content-Type' content='text/html;charset=utf-8' />\n";
@@ -87,9 +86,7 @@ if(!isset($_POST['exportsubmit'])) {
 	print "</td><td width=5%></td></tr></table>";
 	print "</center></body>";
 	print "</HTML>";
-
 } else {
-
 	if(!isset($_POST['metachoice'])) {
 		$_POST['metachoice'] = 0; // just set this to zero in case it's not set, which should never matter, since if 'type' is set, and metachoice is therefore skipped above, and you're making a template for updating, the metachoice is ignored in the actual export file creation process when updating
 	}
@@ -105,8 +102,8 @@ if(!isset($_POST['exportsubmit'])) {
 	global $xoopsUser;
 	$exportUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-	if(trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $exportUid) { // query fid must match passed fid in URL, and the current user id must match the userid at the time the export file was created
-			
+	// query fid must match passed fid in URL, and the current user id must match the userid at the time the export file was created
+	if(trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $exportUid) {
 			$GLOBALS['formulize_doingExport'] = true;
 			unset($queryData[0]); // get rid of the fid and userid lines
 			unset($queryData[1]);
@@ -132,8 +129,9 @@ if(!isset($_POST['exportsubmit'])) {
 			$filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
 			
 			$pathToFile = str_replace(XOOPS_URL,XOOPS_ROOT_PATH,$filename);
+
 			if($_GET['type']=="update") {
-				$fileForUser = str_replace(XOOPS_URL."/modules/formulize/export/","",$filename);
+				$fileForUser = str_replace(XOOPS_URL. SPREADSHEET_EXPORT_FOLDER, "", $filename);
 			} else {
 				$form_handler = xoops_getmodulehandler('forms','formulize');
 				$formObject = $form_handler->get($fid);
@@ -144,7 +142,7 @@ if(!isset($_POST['exportsubmit'])) {
 				}
 				$fileForUser = _formulize_EXPORT_FILENAME_TEXT."_".$formTitle."_".date("M_j_Y_Hi").".csv";
 			}
-			
+
 			header('Content-Description: File Transfer');
 			header('Content-Type: text/csv; charset='._CHARSET);
 			header('Content-Disposition: attachment; filename='.$fileForUser);
@@ -152,7 +150,7 @@ if(!isset($_POST['exportsubmit'])) {
 			header('Expires: 0');
 			header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 			header('Pragma: public');
-			
+
 			if(strstr(strtolower(_CHARSET),'utf') AND $_POST['excel']==1) {
 				echo "\xef\xbb\xbf"; // necessary to trigger certain versions of Excel to recognize the file as unicode
 			}
@@ -161,22 +159,14 @@ if(!isset($_POST['exportsubmit'])) {
 				readfile($pathToFile);
 				$fileContents = ob_get_clean();
 				header('Content-Length: '. filesize($pathToFile)*2);
-				print iconv("UTF-8","UTF-16LE//TRANSLIT",$fileContents); // open office really wants it in UTF-16LE before it will actually trigger an automatic unicode opening?! -- this seems to cause problems on very large exports?  
+				// open office really wants it in UTF-16LE before it will actually trigger an automatic unicode opening?! -- this seems to cause problems on very large exports?
+				print iconv("UTF-8","UTF-16LE//TRANSLIT", $fileContents);
 			} else {
 				header('Content-Length: '. filesize($pathToFile));
 				readfile($pathToFile);	
 			}
-			
 			exit();
-			
-			
-			
 	} else {
 			print _formulize_DE_EXPORT_FILE_ERROR;
 	}
-
 } // end of "if the metachoice form has been submitted"
-
-
-
-?>

@@ -2883,15 +2883,13 @@ $output
 </html>";		
 		// output the file
 		$exfilename = strrchr($filename, "/");
-		$wpath = XOOPS_ROOT_PATH."/modules/formulize/export$exfilename";
+		$wpath = XOOPS_ROOT_PATH . SPREADSHEET_EXPORT_FOLDER . "$exfilename";
 		$exportfile = fopen($wpath, "w");
 		fwrite ($exportfile, $outputfile);
 		fclose ($exportfile);
 	}
-  formulize_benchmark("after creating file");
+	formulize_benchmark("after creating file");
 }
-
-
 
 // this function converts a UID to a full name, or user name, if the handle is creation_uid or mod_uid
 // also converts blanks to [blank]
@@ -4652,6 +4650,3 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 	}
 	return $pageNav;	
 }
-
-
-?>

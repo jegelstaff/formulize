@@ -31,9 +31,11 @@
 ###############################################################################
 
 // these are indexes in the ele_value array
-define(EV_MULTIPLE_LIST_COLUMNS,        10);  // display multiple columns from linked lists for display in lists
-define(EV_MULTIPLE_FORM_COLUMNS,        17);  // display multiple columns from linked lists for display in form elements
-define(EV_MULTIPLE_SPREADSHEET_COLUMNS, 11);  // display multiple columns from linked lists for export to spreadsheets
+define(EV_MULTIPLE_LIST_COLUMNS,        10);    // display multiple columns from linked lists for display in lists
+define(EV_MULTIPLE_FORM_COLUMNS,        17);    // display multiple columns from linked lists for display in form elements
+define(EV_MULTIPLE_SPREADSHEET_COLUMNS, 11);    // display multiple columns from linked lists for export to spreadsheets
+
+define(SPREADSHEET_EXPORT_FOLDER, "/cache/");   // used to be /modules/formulize/export/
 
 // Added Oct. 16 2006
 // setup flag for whether the Freeform Solutions user archiving patch has been applied to the core
@@ -1218,7 +1220,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 	if($fdchoice == "calcs") { 
 		$tempfold = microtime(true);
 		$exfilename = _formulize_DE_XF . $tempfold . ".html";
-		return XOOPS_URL . "/modules/formulize/export/$exfilename";
+        return XOOPS_URL . SPREADSHEET_EXPORT_FOLDER . "$exfilename";
 	}
 
 	global $xoopsDB;
@@ -1365,15 +1367,15 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 	$tempfold = microtime(true);
 	$exfilename = _formulize_DE_XF . $tempfold . $fxt;
 	// open the output file for writing
-	$wpath = XOOPS_ROOT_PATH."/modules/formulize/export/$exfilename";
+	$wpath = XOOPS_ROOT_PATH. SPREADSHEET_EXPORT_FOLDER . "$exfilename";
 	//print $wpath;
 	$csvfile = html_entity_decode($csvfile, ENT_QUOTES);
 	$exportfile = fopen($wpath, "w");
 	fwrite ($exportfile, $csvfile);
 	fclose ($exportfile);
 
-  // garbage collection...delete files older than 6 hours
-	formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/export/", _formulize_DE_XF); 
+    // garbage collection...delete files older than 6 hours
+	formulize_scandirAndClean(XOOPS_ROOT_PATH . SPREADSHEET_EXPORT_FOLDER, _formulize_DE_XF);
 
 	// write id_reqs and tempfold to the DB if we're making an update template
 	if($template == "update") {
@@ -1383,13 +1385,10 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 		}
 	}
 
-
 	// need to add in logic to cull old files...
-	
 
 
-	return XOOPS_URL . "/modules/formulize/export/$exfilename";
-
+	return XOOPS_URL . SPREADSHEET_EXPORT_FOLDER . "$exfilename";
 }
 
 // this function returns the data to summarize the details about the entry you are looking at
