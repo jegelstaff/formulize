@@ -90,7 +90,7 @@ th { background-color:#8FBE58 !important;}
 #groupform .icms_checkboxoption {width: 48.9%;padding: 2px;}
 .icms_checkboxoption {float: left;}
 .icms_checkboxoption:hover {background: #f1f2f3;}
-.icms_checkboxoption input[type=checkbox] {float: left; outline: none; background: transparent; border: 0;}
-.icms_checkboxoption label {float: left; overflow: hidden; vertical-align: middle;}
+.icms_checkboxoption input[type=checkbox] {float: left; outline: none; background: transparent; border: 0;margin-top: 0.5em;}
+.icms_checkboxoption label {float: left; overflow: hidden; vertical-align: middle;margin-top: 0.3em;}
 .icms_checkboxoption label a {float: left; overflow: hidden;}
 #groupform .even b {clear: both; margin: 5px 0px; float: left; width: 99%; background: #dcdee0; padding: 3px; border-bottom: 1px solid #ccc;}

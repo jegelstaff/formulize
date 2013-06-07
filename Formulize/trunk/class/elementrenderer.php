@@ -714,7 +714,7 @@ class formulizeElementRenderer{
 							if( $other != false ){
 								$form_ele1->addOption($o['key'], _formulize_OPT_OTHER.$other);
 								if(in_array($o['key'], $selected)) {
-										$disabledOutputText[] = _formulize_OPT_OTHER.$other;
+									$disabledOutputText[] = _formulize_OPT_OTHER.$other;
 								}
 							}else{
 								$form_ele1->addOption($o['key'], $o['value']);
@@ -734,21 +734,22 @@ class formulizeElementRenderer{
 						$counter = 0; // counter used for javascript that works with 'Other' box
 						while( $o = each($options) ){
 							$o = formulize_swapUIText($o, $this->_ele->getVar('ele_uitext'));
+							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, true);
 							$t = new XoopsFormCheckBox(
 								'',
 								$form_ele_id.'[]',
-								$selected
+								$selected,
+								($other === $false ? "" : $other).$delimSetting
 							);
-							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter, true);
-							if( $other != false ){
-								$t->addOption($o['key'], _formulize_OPT_OTHER.$other);
+							if($other != false){
+								$t->addOption($o['key'], _formulize_OPT_OTHER);
 								if(in_array($o['key'], $selected)) {
-										$disabledOutputText[] = _formulize_OPT_OTHER.$other;
+									$disabledOutputText[] = _formulize_OPT_OTHER;
 								}
 							}else{
 								$t->addOption($o['key'], $o['value']);
 								if(in_array($o['key'], $selected)) {
-										$disabledOutputText[] = $o['value'];
+									$disabledOutputText[] = $o['value'];
 								}
 								if(strstr($o['value'], _formulize_OUTOFRANGE_DATA)) {
 									$hiddenOutOfRangeValuesToWrite[$o['key']] = str_replace(_formulize_OUTOFRANGE_DATA, "", $o['value']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
