@@ -12,7 +12,7 @@
  */
 define('XOOPS_XMLRPC', 1);
 include './mainfile.php';
-error_reporting(0);
+
 include_once ICMS_LIBRARIES_PATH . '/xml/rpc/xmlrpctag.php';
 include_once ICMS_LIBRARIES_PATH . '/xml/rpc/xmlrpcparser.php';
 
