@@ -243,7 +243,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// need to grab all hidden quick searches and then add any hidden columns to the column list...need to reverse this process when loading views
 		foreach($_POST as $k=>$v) {
 			if(substr($k, 0, 7) == "search_" AND $v != "") {
-				if(!isset($allcols[substr($k, 7)]) AND substr($v, 0, 1) == "!" AND substr($v, -1) == "!") { // if this is a hidden column with a persistent search on it
+				if(!in_array(substr($k, 7), $allcols)						// if this column is hidden
+					AND substr($v, 0, 1) == "!" AND substr($v, -1) == "!")	// if this is a persistent search
+				{
 					$_POST['oldcols'] .= ",hiddencolumn_".substr($k, 7);
 					$allquicksearches[] = $v;
 				}
