@@ -122,7 +122,7 @@ class formulize_themeForm extends XoopsThemeForm {
 					$ret .=
 					"<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
 						. "<span class='caption-text'>{$caption}</span>"
-						. "<span class='caption-marke/r'>" . ($ele->isRequired() ? "*" : "" ) . "</span>"
+						. "<span class='caption-marker'>" . ($ele->isRequired() ? "*" : "" ) . "</span>"
 						. "</div>";
 				}
 				if (($desc = $ele->getDescription()) != '') {
