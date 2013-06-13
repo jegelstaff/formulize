@@ -1342,9 +1342,9 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		// get the title of this subform
 		// help text removed for F4.0 RC2, this is an experiment
 		$subtitle = q("SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $sfid");
-		$col_one = "<p><b>" . trans($subtitle[0]['desc_form']) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
+		$col_one = "<p class=\"subform-caption\"><b>" . trans($subtitle[0]['desc_form']) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
 	} else {
-		$col_one = "<p><b>" . trans($customCaption) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
+		$col_one = "<p class=\"subform-caption\"><b>" . trans($customCaption) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
 	}
 
 	/*if(intval($sub_entries[$sfid][0]) != 0 OR $sub_entry_new OR is_array($sub_entry_written)) {
