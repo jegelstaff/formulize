@@ -1341,8 +1341,15 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // Exists works in all cases.  :-)
                     if (is_array($sourceMeta[1])) {
                         // when searching a linked box which presents multiple columns, concat the columns to search
-                        $search_column = convertElementIdsToElementHandles($sourceMeta[1], $sourceMeta[0]);
-                        $search_column = "CONCAT(source.`".implode("`, source.`", $search_column)."`)";
+                        if (1 == count($sourceMeta[1]) and "none" == $sourceMeta[1][0]) {
+                            // no columns were selected for display, so search all of them
+                            $search_column = convertElementIdsToElementHandles($sourceFormObject->getVar('elements'), $sourceMeta[0]);
+                            $search_column = "CONCAT(source.`".implode("`, source.`", $search_column)."`)";
+                        } else {
+                            // search in the columns which were selected for display
+                            $search_column = convertElementIdsToElementHandles($sourceMeta[1], $sourceMeta[0]);
+                            $search_column = "CONCAT(source.`".implode("`, source.`", $search_column)."`)";
+                        }
                     } else {
                         $search_column = "source.`" . $sourceMeta[1] . "`";
                     }
