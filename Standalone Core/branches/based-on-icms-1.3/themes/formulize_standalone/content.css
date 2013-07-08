@@ -94,3 +94,7 @@ th { background-color:#8FBE58 !important;}
 .icms_checkboxoption label {float: left; overflow: hidden; vertical-align: middle;margin-top: 0.3em;}
 .icms_checkboxoption label a {float: left; overflow: hidden;}
 #groupform .even b {clear: both; margin: 5px 0px; float: left; width: 99%; background: #dcdee0; padding: 3px; border-bottom: 1px solid #ccc;}
+
+.scrollbox {
+    overflow: auto;
+}

@@ -1349,21 +1349,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		print "<br>$xportDivText2";
 	}
 
-	
-	
 	$scrollBoxWasSet = false;
 	if($useScrollBox AND count($data) > 0) {
-		print "<style>\n";
-	
-		print ".scrollbox {\n";
-		//print "	height: 530px;\n";
-		//print "	width: 698px;\n";
-		print " border: 1px solid;";
-		print "	overflow: auto;\n"; //scroll
-		print "}\n";
-	
-		print "</style>\n";
-	
 		print "<div class=scrollbox id=resbox>\n";
 		$scrollBoxWasSet = true;
 	}
