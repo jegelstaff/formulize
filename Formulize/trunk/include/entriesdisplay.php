@@ -4328,6 +4328,12 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	global $xoopsUser;
 	foreach($searches as $key=>$master_one_search) { // $key is handles for frameworks, and ele_handles for non-frameworks.
 
+		// convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
+		$count = preg_match("/^[bB][eE][tT][wW][eE][eE][nN] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4}) [aA][nN][dD] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4})\$/", $master_one_search, $matches);
+		if ($count > 0) {
+			$master_one_search = ">={$matches[1]}//<={$matches[2]}";
+		}
+
 		// split search based on new split string
 		$searchArray = explode("//", $master_one_search);
 		
