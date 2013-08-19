@@ -1,0 +1,1249 @@
+$colorHeaderBackground: #ffffff;
+$colorPageBackground:   #ffffff;
+
+// this function chooses a color that contrasts with another color. background first, then dark color, then light color
+@function contrasting-color($bg, $colorA, $colorB) {
+    @return if((lightness($bg) > 50), $colorA, $colorB);
+}
+
+@function lighten-or-darken($bg, $percentage) {
+    @return if((lightness($bg) > 50), darken($bg, $percentage), lighten($bg, $percentage));
+}
+
+
+// header colours
+$colorHeaderMenuBG:     #8bbcdd;
+$colorHeaderText:       contrasting-color($colorHeaderBackground, #000, #fff);
+$colorHeaderLink:       contrasting-color($colorHeaderMenuBG, #fff, #000);      // reverse dark and light colours to have light on dark background
+$colorHeaderAccent:     contrasting-color($colorHeaderBackground, darken($colorHeaderBackground, 10%), lighten($colorHeaderBackground, 10%));
+
+
+// page colours
+$colorPageText:         contrasting-color($colorPageBackground, #000, #fff);
+$colorPageHeaders:      contrasting-color($colorPageBackground, #8FBE58, #8FBE58);  // so far, the same colour...
+
+$colorLink:             contrasting-color($colorPageBackground, #666, #aaa);
+$colorLinkHover:        lighten-or-darken($colorLink, 15);
+
+
+// table colours
+$colorTableHeaderBackground: #8FBE58;
+$colorTableHeaderText:  #666;
+$colorEvenBackground:   #80C3DD;
+$colorOddBackground:    #A4E2F7;
+$colorTableText:        #000;
+
+
+// form colours
+$colorFormBackground:   $colorPageBackground;
+$colorFormText:         contrasting-color($colorFormBackground, #000, #fff);
+
+$colorCalcBtnBlue:      #2F85DC;
+$colorCalcBtnBlueLight: #2F85DC;
+$colorCalcBtnGreen:     #2F85DC;
+$colorCalcBtnPurple:    #2F85DC;
+$colorCalcBtnGrey:      #2F85DC;
+
+// standard button colours
+// $colorCalcBtnBlue:      #2F85DC;
+// $colorCalcBtnBlueLight: #61A6EE;
+// $colorCalcBtnGreen:     #3CA683;
+// $colorCalcBtnPurple:    #5450A5;
+// $colorCalcBtnGrey:      #A3A3A3;
+
+
+// footer colours
+$colorFooterBackground: #5aa7d5; //#59b9e4;
+$colorFooterLink:       #666;
+
+
+$sizeContentPadding:    5px;
+
+
+@mixin border-radius($radius)
+{
+    border-radius: $radius;
+    -moz-border-radius: $radius;
+    -webkit-border-radius: $radius;
+}
+
+@mixin border-radius-top($radius)
+{
+    border-radius: $radius $radius 0 0;
+    -moz-border-radius: $radius $radius 0 0;
+    -webkit-border-radius: $radius $radius 0 0;
+}
+
+@mixin border-radius-bottom($radius)
+{
+    border-radius: 0 0 $radius $radius;
+    -moz-border-radius: 0 0 $radius $radius;
+    -webkit-border-radius: 0 0 $radius $radius;
+}
+
+@mixin background-linear-gradient($from, $to)
+{
+    background: -webkit-linear-gradient(top, $from, $to);
+    background: -moz-linear-gradient(top, $from, $to);
+    background: -ms-linear-gradient(top, $from, $to);
+    background: -o-linear-gradient(top, $from, $to);
+    background: linear-gradient(to bottom, $from, $to);
+}
+
+@mixin background-radial-gradient($from, $to)
+{
+    background-color: $to;
+    background-image: -moz-radial-gradient(50% 30%, ellipse cover, $from, $to 100%);
+    background-image: -webkit-radial-gradient(50% 30%, ellipse cover, $from, $to 100%);
+    background-image: -o-radial-gradient(50% 30%, ellipse cover, $from, $to 100%);
+    background-image: -ms-radial-gradient(50% 30%, ellipse cover, $from, $to 100%);
+    background-image: radial-gradient(50% 30%, ellipse cover, $from, $to 100%)
+}
+
+@mixin shadow-floating()
+{
+    box-shadow: 3px 3px 15px rgba(0,0,0,0.3);
+}
+
+@mixin shadow-floating-small()
+{
+    box-shadow: 1px 1px 15px rgba(0,0,0,0.12);
+}
+
+
+
+
+
+
+
+/* horizontal lines between form questions */
+div.xo-theme-form > table.outer > tbody > tr > td {
+    border-bottom: 1px solid lighten-or-darken($colorHeaderAccent, 20%);
+}
+
+/* compensate for padding in outer table cell when another table is contained -- for table-of-existing-elements */
+table.outer table.outer {
+    margin: -5px;
+}
+
+//--layout.css
+/* ---------- Canvas rules ---------- */
+#xo-canvas {
+    margin: 0;
+    width: 100%;
+}
+
+#xo-canvas-content {
+    margin-left: 30px;
+    margin-right: 30px;
+}
+
+#xo-canvas-columns {
+    margin:         0px 10px;
+    padding-right:  4px;
+    margin-top:     12px;
+}
+
+#xo-canvas-leftcolumn {
+    float:          left;
+    width:          170px;
+    margin-left:    -170px;
+}
+
+* html #xo-canvas-leftcolumn {
+    margin-left:    -85px;
+}
+
+#xo-canvas-rightcolumn {
+    float:          right;
+    width:          170px;
+    margin-right:   -170px;
+}
+
+* html #xo-canvas-rightcolumn {
+    margin-left:    -90px;
+    margin-right:   -100px;
+}
+
+@media all and (min-width: 0px) {
+head~body #xo-canvas-rightcolumn {
+    margin-right:   -170px;
+}
+
+}
+
+/* ----------Canvas rules (when columns are visible) ---------- */
+
+#xo-canvas.leftcolumn-layout #xo-canvas-columns, #xo-canvas.threecolumns-layout #xo-canvas-columns {
+    padding-left: 170px;
+}
+
+#xo-canvas.rightcolumn-layout #xo-canvas-columns, #xo-canvas.threecolumns-layout #xo-canvas-columns {
+    padding-right: 170px;
+}
+
+#xo-footer {
+    clear: both;
+}
+
+/* ----------Page [center column] rules ---------- */
+
+#xo-page {
+    float:          left;
+    width:          100%;
+}
+
+/* ------- Top and bottom zones (2 columns) ------- */
+
+#xo-page-topleftblocks, #xo-page-bottomleftblocks, #xo-page-topleft_adminblocks, #xo-page-bottomleft_adminblocks {
+    float:          left;
+    width:          48%;
+    margin-left:    1%;
+    margin-right:   1%;
+    padding:        0px;
+}
+
+#xo-page-toprightblocks, #xo-page-bottomrightblocks, #xo-page-topright_adminblocks, #xo-page-bottomright_adminblocks {
+    float:          right;
+    width:          48%;
+    margin-left:    1%;
+    margin-right:   1%;
+}
+
+* html #xo-page-topleftblocks, * html #xo-page-bottomleftblocks,
+* html #xo-page-toprightblocks, * html #xo-page-bottomrightblocks,
+* html #xo-page-topleft_adminblocks, * html #xo-page-bottomleft_adminblocks,
+* html #xo-page-topright_adminblocks, * html #xo-page-bottomright_adminblocks
+{
+    width:          47%;
+}
+
+#xo-page-topcenterblocks, #xo-page-bottomcenterblocks, #xo-page-topcenter_adminblocks, #xo-page-bottomcenter_adminblocks {
+    clear:          both;
+    margin-left:    1%;
+    margin-right:   1%;
+}
+
+/* ------- Top and bottom zones (3 columns) ------- */
+
+#xo-page-topblocks.xo-lcrpageblocks .xo-blockszone, #xo-page-bottomblocks.xo-lcrpageblocks .xo-blockszone {
+    float:          left;
+    clear:          none;
+    width:          31.2%;
+}
+
+* html #xo-page-topblocks.xo-lcrpageblocks .xo-blockszone,
+* html #xo-page-bottomblocks.xo-lcrpageblocks .xo-blockszone {
+    width:          30.6%;
+}
+
+#xo-page-topblocks.xo-lcrpageblocks #xo-page-topleftblocks {
+}
+
+#xo-content {
+    position:       relative;
+    clear: both;
+}
+
+//--layout.css
+
+//--blocks.css
+/* ------ Left column / Right column content------ */
+#xo-canvas-leftcolumn .xo-block, #xo-canvas-rightcolumn .xo-block {
+    margin-bottom:  10px;
+}
+
+#xo-canvas-leftcolumn .xo-blocktitle {
+    padding: 3px;
+    text-align: left;
+}
+
+#xo-canvas-leftcolumn .xo-blocktitle h3 {
+    color: $colorPageHeaders;
+    font-weight: bold;
+    font-size: larger;
+    margin: 0;
+    padding: 0;
+}
+
+#xo-canvas-rightcolumn .xo-blocktitle {
+    padding: 3px;
+    text-align: right;
+}
+
+#xo-canvas-rightcolumn .xo-blocktitle h3 {
+    color: $colorPageHeaders;
+    font-weight: bold;
+    font-size: larger;
+    margin: 0;
+    padding: 0;
+}
+
+#xo-canvas-leftcolumn .xo-blockcontent, #xo-canvas-rightcolumn .xo-blockcontent {
+    padding: 3px;
+}
+
+#xo-canvas-leftcolumn th, #xo-canvas-rightcolumn th {
+    // color: #F3AC03; TODO: CHANGE TO A VARIABLE
+    color: magenta;
+    font-size: 90%;
+}
+
+/* ------ Center column content ------ */
+#xo-page th {
+    color: $colorHeaderText;
+}
+
+#xo-page .xo-block {
+    margin-bottom: 5px;
+}
+
+#xo-page .xo-blocktitle {
+    padding: .2em;
+    margin: 0 .5em;
+    text-align: center;
+}
+
+#xo-page .xo-blocktitle h3 {
+    color: $colorHeaderText;
+    font-weight: bold;
+    padding: 0;
+    margin: 0;
+}
+
+#xo-page .xo-blockcontent {
+    padding: .5em;
+    background-color: #F2F2F2;  // TODO: CHANGE TO A VARIABLE COLOR
+    border-top: 4px solid #F3AC03;  // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+//--blocks.css
+
+
+//--content.css
+
+/* Start Main Menu */
+#mainmenu {
+    font-size: .8em;
+}
+
+#mainmenu a {
+    display: block;
+    margin: 0;
+    padding: 4px;
+    color: $colorLink;
+}
+
+#mainmenu a:hover {
+    color: $colorLinkHover;
+}
+
+#mainmenu a.menuTop {
+    padding-left: 3px;
+    border-top: 1px solid #ccc; // TODO: CHANGE TO A VARIABLE COLOR
+    border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
+    border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+#mainmenu a.menuMain {
+    padding-left: 3px;
+    border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
+    border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+#mainmenu a.menuSub {
+    padding-left: 17px;
+    background-image: url(../icons/arr.gif);
+    background-repeat: no-repeat;
+    background-position: left;
+    background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
+    color: $colorLink;
+    font-size: 0.9em;
+    font-style: italic;
+    border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
+    border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+#mainmenu a.menuSub:hover {
+    color: $colorPageHeaders;
+}
+
+/* End Main Menu */
+
+/* Start User Menu */
+#usermenu {
+    font-size: .8em;
+}
+
+#usermenu a {
+    color: $colorLink;
+    display: block;
+    margin: 0;
+    padding: 4px;
+    border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
+    border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+#usermenu a:hover {
+    color: $colorLinkHover;
+}
+
+#usermenu a.menuTop {
+    border-top: 1px solid #ccc; // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+#usermenu a.highlight {
+    background-color: #fcc; // TODO: CHANGE TO A VARIABLE COLOR
+    color: #ff0000; // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+/* End User Menu */
+
+/* tables and cells */
+table {
+    width: 100%;
+}
+
+table td {
+    padding: 0;
+    border-width: 0;
+    vertical-align: top;
+}
+
+th {
+    background-color: $colorHeaderBackground;
+    color: $colorHeaderText;
+    padding : 2px;
+    vertical-align : middle;
+}
+
+.main-cell-div > a {
+    color: #fff;    // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+.outer {
+    /*border: 1px solid #ccc;*/
+}
+
+.head {
+    background-color: $colorTableHeaderBackground;
+    color: $colorTableHeaderText;
+    padding: 5px;
+    font-weight: bold;
+}
+
+.even, tr.even td {
+    background-color: $colorEvenBackground;
+    color: $colorTableText;
+    padding: 5px;
+}
+
+.odd, tr.odd td {
+    background-color: $colorOddBackground;
+    color: $colorTableText;
+    padding: 5px;
+}
+
+.foot {
+    background-color: $colorHeaderBackground;
+    color: inherit;
+    padding: 5px;
+    font-weight: bold;
+}
+
+th {
+    background-color: $colorHeaderBackground !important; /* TODO: why important?? */
+}
+
+/* core messages */
+.errorMsg {
+    background-color: #FFCCCC;  // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    text-align: center;
+    border-top: 1px solid #DDDDFF;  // TODO: CHANGE TO A VARIABLE COLOR
+    border-left: 1px solid #DDDDFF; // TODO: CHANGE TO A VARIABLE COLOR
+    border-right: 1px solid #aaa;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 1px solid #aaa;  // TODO: CHANGE TO A VARIABLE COLOR
+    font-weight: bold;
+    padding: 10px;
+}
+
+.confirmMsg {
+    background-color: #DDFFDF;  // TODO: CHANGE TO A VARIABLE COLOR
+    color: #136C99;
+    text-align: center;
+    border-top: 1px solid #DDDDFF;  // TODO: CHANGE TO A VARIABLE COLOR
+    border-left: 1px solid #DDDDFF; // TODO: CHANGE TO A VARIABLE COLOR
+    border-right: 1px solid #aaa;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 1px solid #aaa;  // TODO: CHANGE TO A VARIABLE COLOR
+    font-weight: bold;
+    padding: 10px;
+}
+
+.resultMsg {
+    background-color : #bbb;        // TODO: CHANGE TO A VARIABLE COLOR
+    color: #333;                // TODO: CHANGE TO A VARIABLE COLOR
+    text-align: center;
+    border-top: 1px solid #ccc; // TODO: CHANGE TO A VARIABLE COLOR
+    border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
+    font-weight: bold;
+    border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
+    padding: 10px;
+}
+
+/* codes and quotes */
+.xoopsCode {
+    background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    border: 1px inset #000080;  // TODO: CHANGE TO A VARIABLE COLOR
+    font-family: "Courier New",Courier,monospace;
+    padding: 0 6px 6px 6px;
+    max-height: 200px;
+    overflow: auto;
+}
+
+.xoopsQuote {
+    background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    border: 1px inset #000080;      // TODO: CHANGE TO A VARIABLE COLOR
+    font-family: "Courier New",Courier,monospace;
+    font-style: italic;
+    padding: 0 6px 6px 6px;
+}
+
+.icmsCode {
+    background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    border: 1px inset #000080;  // TODO: CHANGE TO A VARIABLE COLOR
+    font-family: "Courier New",Courier,monospace;
+    padding: 0 6px 6px 6px;
+    max-height: 200px;
+    overflow: auto;
+}
+
+.icmsQuote {
+    background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    border: 1px inset #000080;  // TODO: CHANGE TO A VARIABLE COLOR
+    font-family: "Courier New",Courier,monospace;
+    font-style: italic;
+    padding: 0 6px 6px 6px;
+}
+
+/* Admin Help Nav */
+#helpbar a {
+    float: left;
+    width: 14px;
+    height: 14px;
+    padding: 2px 0 4px 5px;
+    background: #F3AC03;    // TODO: CHANGE TO A VARIABLE COLOR
+    color: #333333;     // TODO: CHANGE TO A VARIABLE COLOR
+    border: 1px dotted #dddddd;     // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+/* articles */
+.item {
+    border: 1px solid #ccc; // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+.itemHead {
+    padding-left: 3px;
+    color: #639ACE;     // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 1px solid #bbb;      // TODO: CHANGE TO A VARIABLE COLOR
+    font-size: .8em;
+}
+
+.itemInfo {
+    text-align: right;
+    padding: 3px;
+    background-color: $colorHeaderAccent;
+    color: $colorHeaderText;
+}
+
+.itemTitle a {
+    font-size: 1.1em;
+    font-weight: bold;
+    font-variant: small-caps;
+    color: #fff;        // TODO: CHANGE TO A VARIABLE COLOR
+    background-color: transparent;
+}
+
+.itemPoster {
+    font-size: .9em;
+    font-style: italic;
+}
+
+.itemPostDate {
+    font-size: .9em;
+    font-style: italic;
+}
+
+.itemStats {
+    font-size: .9em;
+    font-style: italic;
+}
+
+.itemBody {
+    padding-left: 5px;
+}
+
+.itemText {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    line-height: 1.5em;
+}
+
+.itemText:first-letter {
+    font-size: 1.3em;
+    font-weight: bold;
+}
+
+.itemFoot {
+    text-align: right;
+    padding: 3px;
+    background-color: $colorHeaderAccent;
+    color: $colorHeaderText;
+}
+
+.itemAdminLink {
+    font-size: .9em;
+}
+
+.itemPermaLink {
+    font-size: .9em;
+}
+
+/* forums */
+.row1 {
+    background-color: #FFF;     // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    padding: 5px;
+}
+
+.row2 {
+    background-color: #E9E9E9;      // TODO: CHANGE TO A VARIABLE COLOR
+    color: inherit;
+    padding: 5px;
+}
+
+.comTitle {
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.comText {
+    padding: 2px;
+}
+
+.comUserStat {
+    font-size: .7em;
+    color: #639ACE; // TODO: CHANGE TO A VARIABLE COLOR
+    font-weight: bold;
+    border: 1px solid #ccc; // TODO: CHANGE TO A VARIABLE COLOR
+    background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
+    margin: 2px;
+    padding: 2px;
+    border-right: 2px solid #999;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-bottom: 2px solid #999;  // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+.comUserStatCaption {
+    font-weight: normal;
+}
+
+.comUserRank {
+    margin: 2px;
+}
+
+.comUserRankText {
+    font-size: .8em;
+}
+
+.comUserRankImg {
+    border: 0;
+    vertical-align: middle;
+}
+
+.comUserStatus {
+    float: left;
+}
+
+.comUserName {
+    font-size: 18px;
+}
+
+.comUserName img {
+    padding: 0;
+}
+
+.comUserImg {
+    margin: 2px;
+}
+
+.comDate {
+    font-weight: normal;
+    font-style: italic;
+    font-size: .8em;
+}
+
+.comDateCaption {
+    font-weight: bold;
+    font-style: normal;
+    font-size: .8em;
+}
+
+.signature {
+    font-size: .8em;
+    font-style: italic;
+}
+
+#online {
+    color: green;
+    font-weight: 700;
+    font-size: 1em;
+}
+
+#offline {
+    color: red;
+    font-weight: 700;
+    font-size: 1em;
+}
+
+.forum_controls {
+    background-color: EEE;  // TODO: CHANGE TO A VARIABLE COLOR
+    border-left: 1px solid #999;    // TODO: CHANGE TO A VARIABLE COLOR
+    border-right: 1px solid #999;   // TODO: CHANGE TO A VARIABLE COLOR
+    border-top: 1px solid #999; // TODO: CHANGE TO A VARIABLE COLOR
+    width: 100%;
+}
+
+.userrow {
+    padding: 0;
+}
+
+.Userrow_left {
+}
+
+.Userrow_center {
+}
+
+.Userrow_right {
+}
+
+.transfer a {
+    padding-left: 5px;
+}
+
+#groupform .icms_checkboxoption {
+    width: 48.9%;
+    padding: 2px;
+}
+
+.icms_checkboxoption {
+    float: left;
+}
+
+.icms_checkboxoption:hover {
+//    background: #f1f2f3;    // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+.icms_checkboxoption input[type=checkbox] {
+    float: left;
+    outline: none;
+    background: transparent;
+    border: 0;
+    margin-top: 0.5em;
+}
+
+.icms_checkboxoption label {
+    float: left;
+    overflow: hidden;
+    vertical-align: middle;
+    margin-top: 0.3em;
+}
+
+.icms_checkboxoption label a {
+    float: left;
+    overflow: hidden;
+}
+
+#groupform .even b {
+    clear: both;
+    margin: 5px 0px;
+    float: left;
+    width: 99%;
+    background: #dcdee0;        // TODO: CHANGE TO A VARIABLE COLOR
+    padding: 3px;
+    border-bottom: 1px solid #ccc;  // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+//--content.css
+
+
+/* ------ General styles ------ */
+html, body {
+    background: $colorPageBackground;
+    color: $colorPageText;
+    margin: 0;
+    padding: 0;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+    /*background: url(img/body_bg.jpg) no-repeat;*/
+}
+
+#xo-canvas {
+    /* background: inherit; background: url(img/right_bg.jpg); background-repeat: no-repeat; background-position: top right;*/
+    float: right;
+    margin-bottom: 1em;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table td {
+    padding: 0;
+    border-width: 0;
+    vertical-align: top;
+}
+
+img {
+    border: 0;
+}
+
+a {
+    color: $colorLink;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    color: $colorLinkHover;
+}
+
+h1 {
+    font-size: 1.4em;
+}
+
+h2 {
+    font-size: 1.2em;
+}
+
+h3 {
+    font-size: 1em;
+}
+
+h4 {
+    font-size: 1em;
+}
+
+h5 {
+    font-size: .9em;
+}
+
+h6 {
+    font-size: .8em;
+}
+
+/* ------ Header rules ------ */
+#xo-header {
+    clear: both;
+    height: 90px;
+    position: relative;
+    background-color: $colorHeaderBackground;
+    margin-left: 0px;
+    margin-right: 0px;
+    border-bottom: 10px solid $colorHeaderAccent;
+    @include background-linear-gradient($colorHeaderBackground, lighten-or-darken($colorHeaderBackground, 2%));
+}
+
+/*#xo-header {
+    clear: both;
+    height: 78px;
+    position: relative;
+    background: url(img/header_bg.jpg) repeat-x;
+    margin-left: 35px;
+    margin-right: 35px;
+}
+*/
+#xo-headerlogo {
+    float: left;
+    margin-left: 40px;
+    margin-top: 5px;
+}
+
+#xo-headerbanner {
+    position: relative;
+    top: 10px;
+    right: 20px;
+    float: right;
+}
+
+/* ------ Header top menu navigation rules ------ */
+#xo-globalnav {
+    clear: both;
+    padding-left: 11px;
+    margin-top: 40px;
+    padding-bottom: 7px;
+}
+
+#xo-globalnav a {
+    background-color: $colorHeaderMenuBG;
+    @include background-linear-gradient($colorHeaderMenuBG, lighten-or-darken($colorHeaderMenuBG, 30%));
+    color: $colorHeaderLink;
+    font-weight: normal;
+    padding: 5px;
+    margin: 0 0.5em;
+    @include border-radius(3px);
+}
+
+#controlbar {
+    color: #F3AC03;      // TODO: CHANGE TO A VARIABLE COLOR
+    font-weight: bold;
+    padding-bottom: 3px;
+    border-bottom: 1px dashed #8DBDE1;       // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+/* ---------- Column left/right rules ---------- */
+#xo-canvas-rightcolumn {
+}
+
+#xo-canvas-rightcolumn a {
+}
+
+#xo-canvas-rightcolumn a:hover {
+}
+
+#xo-canvas-leftcolumn {
+}
+
+#xo-canvas-leftcolumn a {
+}
+
+#xo-canvas-leftcolumn a:hover {
+}
+
+/* ------ Main content ------ */
+#xo-canvas-content {
+    line-height: 1.3em;
+}
+
+/* lists */
+#xo-canvas-content ul {
+    margin: 5px;
+    padding: 2px;
+    list-style: decimal inside;
+    text-align: left;
+}
+
+#xo-canvas-content li {
+    margin-left: 5px;
+    color: #000;     // TODO: CHANGE TO A VARIABLE COLOR
+    background-color: inherit;
+    line-height: 1.4em;
+    list-style: circle;
+}
+
+#xo-page {
+}
+
+/* ---------- Module display rules ---------- */
+#xo-content {
+    padding: $sizeContentPadding;
+    background-color: $colorFormBackground;
+    color: $colorFormText;
+    @include border-radius(3px);
+}
+
+/* ---------- Redirect ------------ */
+#xo-redirect {
+    margin: 40px 0;
+    margin-left: auto;
+    margin-right: auto;
+    width: 85%;
+    background-color: #F2F2F2;       // TODO: CHANGE TO A VARIABLE COLOR
+    color: #222;             // TODO: CHANGE TO A VARIABLE COLOR
+    text-align: center;
+    font-weight: bold;
+    padding: 10px;
+    text-align: center;
+    border: 2px solid #DDDDFF;       // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+/* ---------- Site close ------------ */
+#xo-siteclose-login {
+    width: 270px;
+    margin: 0 auto;
+}
+
+#xo-siteclose-login h2 {
+    background-color: #f2f2f2;       // TODO: CHANGE TO A VARIABLE COLOR
+    font-weight: bold;
+    font-size: 1em;
+    color: #999;     // TODO: CHANGE TO A VARIABLE COLOR
+    padding: 2px;
+    margin: 0px;
+    text-align: center;
+    border: 1px solid #DDDDFF;       // TODO: CHANGE TO A VARIABLE COLOR
+}
+
+#xo-siteclose-login form {
+    padding: 5px 0;
+    margin: 0;
+    border: 1px solid #DDDDFF;       // TODO: CHANGE TO A VARIABLE COLOR
+    text-align: center;
+}
+
+#xo-siteclose-login input {
+    width: 90%;
+}
+
+#xo-siteclose-login div.button {
+    clear: both;
+    margin-top: 10px;
+    text-align: center;
+}
+
+#xo-siteclose-login div.button input {
+    width: 95%;
+}
+
+/* ---------- Footer rules ---------- */
+#xo-footer {
+    padding-bottom: 3px;
+    text-align: center;
+    font-size: 70%;
+    color: #bbb;     // TODO: CHANGE TO A VARIABLE COLOR
+    margin-top: 5px;
+    background-color: $colorFooterBackground;
+    border-top: 5px solid #59b9e4;
+    /*background: url(img/foot_bg.jpg) repeat-x; background-color: #59b9e4;*/
+}
+
+#xo-footer a {
+    color: $colorFooterLink;
+}
+
+#xo-footer a:hover {
+    color: lighten-or-darken($colorFooterLink, 20%);
+}
+
+/* ----------  mode debug  ---------- */
+#xo-logger-output {
+    font-size: 80%;
+}
+
+/* ADDED BY FREEFORM SOLUTIONS TO CHANGE POSITION OF JGROWL */
+div.jGrowl-notification {
+    margin-top: 80px !important;
+    margin-right: 30px !important;
+}
+
+/* from style.php */
+.icms_checkboxoption {
+    clear: both;
+}
+
+#floating-list-of-entries-save-button {
+    padding: 0.5em 1.5em;
+    margin: 1em 0;
+    background-color: $colorHeaderAccent;
+    @include shadow-floating();
+}
+
+#floating-list-of-entries-save-button.save_button_fixed {
+    position: fixed;
+    bottom: 0;
+    z-index: 100;
+    margin-top: 0;
+    margin-bottom: 0;
+    border-top: solid 1px #1D65A5;
+    border-left: solid 1px #1D65A5;
+    border-right: solid 1px #1D65A5;
+    border-radius: 5px 5px 0 0;
+}
+
+.floating-column {
+    position: fixed;
+    border: 1px solid white;
+    display: none;
+    padding: 0px !important;
+}
+.floating-column .main-cell-div {
+    float: left;
+    border: 1px solid white;
+    padding: 5px;
+    
+}
+
+#currentview {
+    width: 500px;
+    font-size: 1.2em;
+}
+
+.formulize-subform-table {
+    width: auto;
+    border-collapse: collapse;
+}
+
+.formulize-subform-table > tbody > tr > th {
+    background-color: transparent !important;
+    color: black !important;
+    text-align: center;
+    border-bottom: 1px solid rgb(209, 209, 223);
+}
+
+.formulize-subform-table > tbody > tr > td {
+    padding: 0.5em;
+    border-bottom: 1px dotted rgb(209, 209, 223);
+}
+
+/*=== Formulize Boutons by Francois T ===*/
+button, input[type='submit'], input[type='button'], input[type='reset'] {
+    border: none;
+    //margin: 1px;
+    @include border-radius(5px);
+    //background-color: #F4F9FE;
+    //color: $colorCalcBtnBlue;
+    /* border: 1px solid; border-color: #ccc; */
+}
+//input:hover, button:hover, .xo-formbuttons:hover, .formButton:hover {
+//    //transform: scale(1.2);
+//    //box-shadow: 0 0 65px #F4F9FE inset, 0 0 20px #F4F9FE inset, 0 0 15px #333;
+//    @include shadow-floating();
+//}
+input:hover, button:hover, .xo-formbuttons:hover, .formButton:hover,
+button:focus, input[type='submit']:focus, input[type='button']:focus, input[type='reset']:focus, .xo-formbuttons:focus, .formButton:focus {
+    //background-color: #f4f4f4;
+    //border-color: #333;
+    box-shadow: 1px 3px 15px rgba(0,0,0,0.5), inset 4px 4px 10px rgba(255,255,255,0.3);
+}
+
+.formulize_button {
+    color: $colorHeaderText;
+    text-shadow: 0 -1px 0 rgba(0,0,0,.4);
+    text-indent: 30px;
+    font-size: 105%;
+    height: 36px;
+    width: 185px;
+    margin: 4px;
+    //border-color: #0076a3;
+    //color: #fff !important;
+    //font-size: 15px;
+    //font-weight: bold;
+}
+
+/*=== Formulize Boutons by Francois T ===*/
+#formulize_addButton, #formulize_addProxyButton {
+    text-indent: 45px;
+    width: 210px !important;
+}
+#formulize_addMultiButton {
+    text-indent: 45px;
+    width: 210px !important;
+}
+#formulize_addButton, #formulize_addProxyButton {
+    background-color: $colorCalcBtnBlue;
+}
+#formulize_addMultiButton {
+    background-color: $colorCalcBtnBlue;
+}
+#formulize_changeColsButton {
+    background-color: $colorCalcBtnBlueLight;
+}
+#formulize_exportButton {
+    background-color: $colorCalcBtnBlue;
+}
+#formulize_exportCalcsButton {
+    background-color: $colorCalcBtnBlue;
+}
+#formulize_importButton {
+    background-color: $colorCalcBtnBlue;
+}
+#formulize_calcButton, #formulize_advCalcButton, #formulize_advSearchButton  {
+    background-color: $colorCalcBtnGrey;
+}
+#formulize_selectAllButton {
+    background-color: $colorCalcBtnGreen;
+}
+#formulize_clearSelectButton {
+    background-color: $colorCalcBtnGreen;
+}
+#formulize_deleteButton {
+    background-color: $colorCalcBtnGreen;
+}
+#formulize_cloneButton {
+    background-color: $colorCalcBtnGreen;
+}
+#formulize_notifButton {
+    background-color: $colorCalcBtnPurple;
+}
+#formulize_resetViewButton {
+    background-color: $colorCalcBtnBlueLight;
+}
+#formulize_saveViewButton {
+    background-color: $colorCalcBtnBlueLight;
+}
+#formulize_deleteViewButton {
+    background-color: $colorCalcBtnBlueLight;
+}
+
+#formulize_saveButton {
+    background-color: lighten-or-darken($colorHeaderBackground, 30%);
+    text-indent: 0px;
+}
+/* from style.php */
+
+#session-timeout-warning {
+    display: none;
+    position: fixed;
+    top: 30px;
+    left: 50%;
+    margin-left: -250px;
+    width: 500px;
+    z-index: 101;
+    text-align: center;
+    background-color: lighten-or-darken($colorPageBackground, 20%);
+    color: black;
+    border: 8px solid lighten-or-darken($colorHeaderBackground, 20%);
+    padding: 1em;
+    @include border-radius(5px);
+    box-shadow: 1px 1px 20px 3px #000;
+}
+
+/* this forces the footer to the bottom of the page even when the page content is shorter than the window */
+html, body, #content
+{
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+body > #content
+{
+    height: auto; min-height: 100%;
+}
+#content
+{
+    padding-bottom: -2em;  // height of the footer
+}
+#footer
+{
+    background-color: $colorHeaderBackground;
+    clear: both;
+    position: relative;
+    z-index: 10;
+    height: 2em;
+    padding: 0em;
+    margin-top: -2.3em; // height + top padding + bottom padding
+}
+
+.xoops-form-element-help {
+    // modify the background color instead of the text color so that this text always contrasts with the background
+    color: desaturate(lighten-or-darken($colorHeaderBackground, 40%), 60%);
+}
