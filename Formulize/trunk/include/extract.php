@@ -1669,49 +1669,47 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
 }
 
 function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $fid) {
-     // open a temporary file
-     $fileName = XOOPS_ROOT_PATH."/cache/formulize_derivedValueFormulas_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle).".php";
-     $derivedValueFormulaFile = fopen($fileName, "w");
-     fwrite($derivedValueFormulaFile, "<?php\n\n");
-     $functionsToWrite = "";
-     // loop through the formulas, process them, and write them to the file
-     foreach($metadata as $formulaNumber=>$thisMetaData) {
-          $formula = $thisMetaData['formula'];
-					$quotePos = 0;
-          while($quotePos = strpos($formula, "\"", $quotePos+1)) {
-               //print $formula . " -- $quotePos<br>"; // debug code
-               $endQuotePos = strpos($formula, "\"", $quotePos+1);
-               $term = substr($formula, $quotePos, $endQuotePos-$quotePos+1);
-               if(!is_numeric($term)) {
-                    list($newterm, $termFid) = formulize_convertCapOrColHeadToHandle($frid, $fid, $term);
-                    if($newterm != "{nonefound}") {
-			 if($frid AND $termFid == $thisMetaData['form_id'] AND $thisMetaData['form_id'] != $fid) {
-			      $replacement = "display(\$entry, '$newterm', '', \$entry_id)"; // need to pass in a "local id" since we want the value of this field in this particular entry, not in the entire framework.  If a user wants all the values for this field from the other entries in the framework, they will have to use the display function manually in the derived value formula.
-			      $numberOfChars = 34; // 34 is the number of extra characters besides the term
-			 } else {
-			      $replacement = "display(\$entry, '$newterm')";
-			      $numberOfChars = 19; // 19 is the length of the extra characters in the display function
-			 }
-			 $quotePos = $quotePos + $numberOfChars + strlen($newterm); 
-			 $formula = str_replace($term, $replacement, $formula);
-		    } else {
-			 $quotePos = $quotePos + strlen($term) + 2; // move ahead the length of the found term, plus its quotes
-		    }
-               }
-          }
-          $addSemiColons = strstr($formula, ";") ? false : true; // only add if we found none in the formula.
-          if($addSemiColons) {
-               $formulaLines = explode("\n", $formula); // \n may be a linux specific character and other OSs may require a different split
-               foreach($formulaLines as $formula_id=>$thisLine) {
-                    $formulaLines[$formula_id] .= ";"; // add missing semicolons
-               }
-               $formula = implode("\n", $formulaLines);
-          }
-          $functionsToWrite .= "function derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {\n$formula\nreturn \$value;\n}\n\n";
-     }
-     fwrite($derivedValueFormulaFile, $functionsToWrite. "?>");
-     fclose($derivedValueFormulaFile);
-     include $fileName;
+    $functionsToWrite = "";
+    // loop through the formulas, process them, and write them to the file
+    foreach($metadata as $formulaNumber => $thisMetaData) {
+        $formula = $thisMetaData['formula'];
+        $quotePos = 0;
+        while($quotePos = strpos($formula, "\"", $quotePos + 1)) {
+            $endQuotePos = strpos($formula, "\"", $quotePos + 1);
+            $term = substr($formula, $quotePos, $endQuotePos - $quotePos+1);
+            if(!is_numeric($term)) {
+                list($newterm, $termFid) = formulize_convertCapOrColHeadToHandle($frid, $fid, $term);
+                if($newterm != "{nonefound}") {
+                    if($frid AND $termFid == $thisMetaData['form_id'] AND $thisMetaData['form_id'] != $fid) {
+                        // need to pass in a "local id" since we want the value of this field in this particular entry,
+                        //  not in the entire framework.  If a user wants all the values for this field from the other
+                        //  entries in the framework, they will have to use the display function manually in the derived value formula.
+                        $replacement = "display(\$entry, '$newterm', '', \$entry_id)";
+                        $numberOfChars = 34; // 34 is the number of extra characters besides the term
+                    } else {
+                        $replacement = "display(\$entry, '$newterm')";
+                        $numberOfChars = 19; // 19 is the length of the extra characters in the display function
+                    }
+                    $quotePos = $quotePos + $numberOfChars + strlen($newterm);
+                    $formula = str_replace($term, $replacement, $formula);
+                } else {
+                    $quotePos = $quotePos + strlen($term) + 2; // move ahead the length of the found term, plus its quotes
+                }
+            }
+        }
+        $addSemiColons = strstr($formula, ";") ? false : true; // only add if we found none in the formula.
+        if($addSemiColons) {
+            $formulaLines = explode("\n", $formula);    // \n may be a linux specific character and other OSs may require a different split
+            foreach($formulaLines as $formula_id => $thisLine) {
+                $formulaLines[$formula_id] .= ";";  // add missing semicolons
+            }
+            $formula = implode("\n", $formulaLines);
+        }
+        $functionsToWrite .= "function derivedValueFormula_".
+            str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle).
+            "_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {\n$formula\nreturn \$value;\n}\n\n";
+    }
+    eval($functionsToWrite);
 }
 
 // THIS FUNCTION TAKES A STRING OF TEXT (CAPTION OR COLHEAD) AND DERIVES THE NECESSARY HANDLE OR ELEMENT ID FROM IT
