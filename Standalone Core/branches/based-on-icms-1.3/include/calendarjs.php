@@ -15,6 +15,8 @@
 
 defined('ICMS_ROOT_PATH') or exit();
 
+include_once(ICMS_ROOT_PATH . "/header.php"); // sometimes (ie: ajax conditional element checks) the header is not included and $icmsTheme is null
+
 global $icmsTheme;
 icms_loadLanguageFile('core', 'calendar');
 
