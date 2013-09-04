@@ -68,44 +68,40 @@ $(document).ready(function() {
 
 <div class="admin-ui">
 
+<div id="formulize-logo"><img src="<{$xoops_url}><{$adminPage.logo}>" align="<{$adminPage.pagetitle}>" title="<{$adminPage.pagetitle}>" /></div>
+
 <form name="scrollposition" method="post" action="">
   <input type="hidden" name="scrollx" value="">
   <input type="hidden" name="tabs_selected" value="">
   <input type="hidden" name="accordion_active" value="">
 </form>
 
+<{if $adminPage.pagetitle}>
+  <h1><{$adminPage.pagetitle}></h1>
+  <p class="smallhead"><{$adminPage.pagesubtitle}></p>
+  <{if $lasturl}>
+    <p><a href="ui.php?<{$lasturl}>"><{$smarty.const._AM_HOME_GOBACKTO}><i><{$lasttext}></i></a></p>
+  <{/if}>
+<{/if}>
+
 <{if $breadcrumbtrail}>
 <p>
+  <{counter start=0 assign=crumbcount print=false}>
+  <{foreach from=$breadcrumbtrail item=crumb}>
 
-<{counter start=0 assign=crumbcount print=false}>
-<{foreach from=$breadcrumbtrail item=crumb}>
+  <{if $crumbcount}> &raquo; <{/if}>
 
-<{if $crumbcount}>
- >
-<{/if}>
+  <{if $crumb.url}>
+    <a href="ui.php?<{$crumb.url}>"><{$crumb.text}></a>
+    <{assign var='lasturl' value=$crumb.url}>
+    <{assign var='lasttext' value=$crumb.text}>
+  <{else}>
+    <{$crumb.text}>
+  <{/if}>
 
-<{if $crumb.url}>
- <a href="ui.php?<{$crumb.url}>"><{$crumb.text}></a>
- <{assign var='lasturl' value=$crumb.url}>
- <{assign var='lasttext' value=$crumb.text}>
-<{else}>
- <{$crumb.text}>
-<{/if}>
-  
-<{counter}>
-<{/foreach}>
-
+  <{counter}>
+  <{/foreach}>
 </p>
-<{/if}>
-  
-<div id="formulize-logo"><img src="<{$xoops_url}><{$adminPage.logo}>" align="<{$adminPage.pagetitle}>" title="<{$adminPage.pagetitle}>" /></div>
-
-<{if $adminPage.pagetitle}>
-<h1><{$adminPage.pagetitle}></h1>
-<p class="smallhead"><{$adminPage.pagesubtitle}></p>
-<{if $lasturl}>
-<p><a href="ui.php?<{$lasturl}>"><{$smarty.const._AM_HOME_GOBACKTO}><i><{$lasttext}></i></a></p>
-<{/if}>
 <{/if}>
 
 <!-- modified by Freeform Solutions, S.Gray, April 11, 2011 -->
@@ -116,7 +112,6 @@ $(document).ready(function() {
 <div id="derivedfinished" class="ui-corner-all" style="display:none"><{$smarty.const._AM_ELE_DERIVED_DONE}></div>
 </div><!-- /admin_toolbar -->
 <{/if}>
-
 
 <{if $adminPage.template}>
 <{include file=$adminPage.template}>  

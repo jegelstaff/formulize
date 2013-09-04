@@ -137,7 +137,6 @@ div.accordion-box .no-bullets {
 }
 
 div.admin-ui, p.versionnumber {
-	margin-top: 2em;
 	position: static;
 }
 
@@ -193,7 +192,6 @@ div.save-view-access {
 /* modified by S.Gray, April 11, 2011, floating save button so save button is always visible */
 /* uses jQuery, see: http://michelgotta.posterous.com/sticky-scrolling-shoppingcart-with-jquery */
 #admin_toolbar {
-	padding: 1em 1.5em;
 	margin: 1em 0;
 	background-color: #FFF;
 }
@@ -204,6 +202,7 @@ div.save-view-access {
 	z-index: 100;
 	margin-top: 0;
 	margin-bottom: 0;
+    padding: 1.5em;
 	border: solid 1px #1D65A5;
 }
 
@@ -289,7 +288,10 @@ form legend {
   white-space: normal;
 }
 form div.form-item {
-	margin: 0 0 2.5em 0;
+    margin: 0 0 2.5em 0;
+}
+form div.form-item > fieldset {
+    border-radius: 5px;
 }
 form label {
 /*  display: inline-block; */
