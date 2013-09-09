@@ -64,24 +64,31 @@ class formulizeScreenHandler {
 		return new formulizeScreen();
 	}
 
-	// returns an array of screen objects
-	function &getObjects($criteria = null, $fid) {
-		$sql = "SELECT * FROM " . $this->db->prefix("formulize_screen") . " WHERE ";
-    if(is_object($criteria)) {
-        $sql .= $criteria->render() . " AND ";
+    // returns an array of screen objects
+    function &getObjects($criteria = null, $fid) {
+        $sql = "SELECT * FROM " . $this->db->prefix("formulize_screen");
+        if(is_object($criteria)) {
+            $sql .= " WHERE " . $criteria->render();
+            if (intval($fid) > 0) {
+                $sql .= " AND fid=" . intval($fid);
+            }
+        } else {
+            if (intval($fid) > 0) {
+                $sql .= " WHERE fid=" . intval($fid);
+            }
+        }
+        $sql .= " order by fid, title";
+        if(!$result = $this->db->query($sql)) {
+            return false;
+        }
+        while($array = $this->db->fetchArray($result)) {
+            $screen = $this->create();
+            $screen->assignVars($array);
+            $screens[] = $screen;
+            unset($screen);
+        }
+        return $screens;
     }
-    $sql .= "fid=" . intval($fid);
-		if(!$result = $this->db->query($sql)) {
-			return false;
-		}
-		while($array = $this->db->fetchArray($result)) {
-			$screen = $this->create();
-			$screen->assignVars($array);
-			$screens[] = $screen;	
-			unset($screen);
-		}
-		return $screens;
-	} 
 
 	function get($sid) {
 		$sid = intval($sid);

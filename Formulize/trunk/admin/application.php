@@ -129,6 +129,19 @@ foreach($allRelationships as $thisRelationship) {
 	$i++;
 }
 
+$all_screens = array();
+$screen_types = array("form" => "Single Page", "multiPage" => "Multi-page", "listOfEntries" => "List of Entries");
+foreach ($screen_handler->getObjects(null, null) as $key => $value) {
+    $sid = $value->getVar("sid");
+    $all_screens[$sid] = array(
+        'sid'       => $sid,
+        'title'     => $value->getVar("title"),
+        'fid'       => $value->getVar("fid"),
+        'formname'  => $allForms[$value->getVar("fid")]["name"],
+        'type'      => $screen_types[$value->getVar("type")],
+    );
+}
+
 $common['aid'] = $aid;
 $common['name'] = $appName;
 
@@ -139,19 +152,25 @@ $common['name'] = $appName;
 
 $i=0;
 if($aid > 0) {
-	$i++;
-	$adminPage['tabs'][$i]['name'] = _AM_APP_SETTINGS;
-	$adminPage['tabs'][$i]['template'] = "db:admin/application_settings.html";
-	$adminPage['tabs'][$i]['content'] = $common;
-	$adminPage['tabs'][$i]['content']['description'] = $appDesc;
-	$adminPage['tabs'][$i]['content']['forms'] = $allForms;
+    $i++;
+    $adminPage['tabs'][$i]['name'] = _AM_APP_SETTINGS;
+    $adminPage['tabs'][$i]['template'] = "db:admin/application_settings.html";
+    $adminPage['tabs'][$i]['content'] = $common;
+    $adminPage['tabs'][$i]['content']['description'] = $appDesc;
+    $adminPage['tabs'][$i]['content']['forms'] = $allForms;
 }
 
 $i++;
 $adminPage['tabs'][$i]['name'] = "Forms";
 $adminPage['tabs'][$i]['template'] = "db:admin/application_forms.html";
 $adminPage['tabs'][$i]['content'] = $common;
-$adminPage['tabs'][$i]['content']['forms'] = $formsInApp; 
+$adminPage['tabs'][$i]['content']['forms'] = $formsInApp;
+
+$i++;
+$adminPage['tabs'][$i]['name'] = "Screens";
+$adminPage['tabs'][$i]['template'] = "db:admin/application_screens.html";
+$adminPage['tabs'][$i]['content'] = $common;
+$adminPage['tabs'][$i]['content']['screens'] = $all_screens;
 
 $i++;
 $adminPage['tabs'][$i]['name'] = _AM_APP_RELATIONSHIPS;
