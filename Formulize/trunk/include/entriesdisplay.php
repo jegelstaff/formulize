@@ -31,6 +31,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+
 // THIS FILE CONTAINS FUNCTIONS FOR DISPLAYING A SUMMARY OF ENTRIES IN A FORM OR FRAMEWORK, AND DOING SEARCHES AND OTHER OPERATIONS ON THE DATA
 
 // Basic order of operations:
