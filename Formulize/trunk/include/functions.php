@@ -1668,12 +1668,16 @@ function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups
 
 // THIS FUNCTION SENDS TEXT THROUGH THE TRANSLATION ROUTINE IF MARCAN'S MULTILANGUAGE HACK IS INSTALLED
 // THIS FUNCTION IS ALSO AWARE OF THE XLANGUAGE MODULE IF THAT IS INSTALLED.  
-function trans($string) {
+// $lang is optional and will force the translation to be in a certain language
+function trans($string, $lang = null) {
   $myts =& MyTextSanitizer::getInstance();
   if(function_exists('easiestml')) {
     global $easiestml_lang;
     $easiestml_lang = isset($_GET['lang'])?$_GET['lang']:$easiestml_lang;   // this is required when linked with a Drupal install
+    $original_easiestml_lang = $easiestml_lang;
+    $easiestml_lang = $lang ? $lang : $easiestml_lang;
     $string = easiestml($string);
+    $easiestml_lang = $original_easiestml_lang;
   } elseif(function_exists('xlanguage_ml')) {
     $string = xlanguage_ml($string);
   } elseif(method_exists($myts, 'formatForML')) {
