@@ -1536,7 +1536,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 								} else {
 									print "<p><center>";
 								}
-								print "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='Check' name='delete_" . $linkids[0] . "' id='delete_" . $linkids[0] . "' value='delete_" . $linkids[0] . "'>";
+								print "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='formulize_selection_checkbox' name='delete_" . $linkids[0] . "' id='delete_" . $linkids[0] . "' value='delete_" . $linkids[0] . "'>";
 							}
 						}
 						if($useViewEntryLinks OR $useCheckboxes != 2) { // at least one of the above was used
@@ -1699,7 +1699,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						$owner = getEntryOwner($linkids[0], $fid);
 						// check to see if we should draw in the delete checkbox or not
 						if(($owner == $uid AND $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid)) OR ($owner != $uid AND $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid)) OR $useCheckboxes == 1) { // 1 means all
-							$selectionCheckbox = "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='Check' name='delete_" . $linkids[0] . "' id='delete_" . $linkids[0] . "' value='delete_" . $linkids[0] . "'>";
+							$selectionCheckbox = "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='formulize_selection_checkbox' name='delete_" . $linkids[0] . "' id='delete_" . $linkids[0] . "' value='delete_" . $linkids[0] . "'>";
 						} else {
 							$selectionCheckbox = "";
 						}
@@ -3238,14 +3238,14 @@ function showExport() {
 
 //Select All and Clear All new JQuery Function Instead the Javascript 
 function selectAll(check) {
-   $('.Check').each(function(){
-      $('.Check').attr('checked', true);
+   $('.formulize_selection_checkbox').each(function(){
+      $('.formulize_selection_checkbox').attr('checked', true);
    });
 }
 
 function unselectAll(uncheck) {
-   $('.Check').each(function(){
-      $('.Check').attr('checked', false);
+   $('.formulize_selection_checkbox').each(function(){
+      $('.formulize_selection_checkbox').attr('checked', false);
    });
 }
 /* ---------------------------------------
