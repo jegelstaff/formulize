@@ -1,0 +1,38 @@
+Only in 1.3_Core: backup.php
+Files 1.3_Org/class/theme.php and 1.3_Core/class/theme.php differ
+Files 1.3_Org/class/xoopsform/formtextdateselect.php and 1.3_Core/class/xoopsform/formtextdateselect.php differ
+Files 1.3_Org/editors/FCKeditor/editor/filemanager/connectors/php/io.php and 1.3_Core/editors/FCKeditor/editor/filemanager/connectors/php/io.php differ
+Files 1.3_Org/header.php and 1.3_Core/header.php differ
+Files 1.3_Org/include/calendarjalalijs.php and 1.3_Core/include/calendarjalalijs.php differ
+Files 1.3_Org/include/calendarjs.php and 1.3_Core/include/calendarjs.php differ
+Files 1.3_Org/include/version.php and 1.3_Core/include/version.php differ
+Only in 1.3_Core/install/img: logo-icms.png
+Files 1.3_Org/install/img/logo.png and 1.3_Core/install/img/logo.png differ
+Files 1.3_Org/install/language/english/finish.php and 1.3_Core/install/language/english/finish.php differ
+Files 1.3_Org/install/language/english/install.php and 1.3_Core/install/language/english/install.php differ
+Files 1.3_Org/install/language/english/welcome.php and 1.3_Core/install/language/english/welcome.php differ
+Files 1.3_Org/install/page_dbsettings.php and 1.3_Core/install/page_dbsettings.php differ
+Files 1.3_Org/install/page_end.php and 1.3_Core/install/page_end.php differ
+Only in 1.3_Core/install/sql: mysql.formulize_standalone.sql
+Files 1.3_Org/install/sql/mysql.structure.sql and 1.3_Core/install/sql/mysql.structure.sql differ
+Only in 1.3_Core: integration_api.php
+Files 1.3_Org/language/english/global.php and 1.3_Core/language/english/global.php differ
+Files 1.3_Org/libraries/icms/core/Security.php and 1.3_Core/libraries/icms/core/Security.php differ
+Files 1.3_Org/libraries/icms/core/Session.php and 1.3_Core/libraries/icms/core/Session.php differ
+Files 1.3_Org/libraries/icms/core/StopSpammer.php and 1.3_Core/libraries/icms/core/StopSpammer.php differ
+Files 1.3_Org/libraries/icms/db/legacy/mysql/Database.php and 1.3_Core/libraries/icms/db/legacy/mysql/Database.php differ
+Files 1.3_Org/libraries/icms/form/Element.php and 1.3_Core/libraries/icms/form/Element.php differ
+Files 1.3_Org/libraries/icms/form/elements/Checkbox.php and 1.3_Core/libraries/icms/form/elements/Checkbox.php differ
+Files 1.3_Org/libraries/icms/form/elements/Date.php and 1.3_Core/libraries/icms/form/elements/Date.php differ
+Files 1.3_Org/libraries/icms/form/elements/Select.php and 1.3_Core/libraries/icms/form/elements/Select.php differ
+Files 1.3_Org/libraries/icms/form/elements/captcha/img.php and 1.3_Core/libraries/icms/form/elements/captcha/img.php differ
+Files 1.3_Org/libraries/icms/member/group/membership/Handler.php and 1.3_Core/libraries/icms/member/group/membership/Handler.php differ
+Files 1.3_Org/libraries/icms/member/user/Handler.php and 1.3_Core/libraries/icms/member/user/Handler.php differ
+Only in 1.3_Core/modules: formulize
+Files 1.3_Org/modules/profile/edituser.php and 1.3_Core/modules/profile/edituser.php differ
+Files 1.3_Org/modules/profile/include/forms.php and 1.3_Core/modules/profile/include/forms.php differ
+Files 1.3_Org/modules/system/language/english/blocks.php and 1.3_Core/modules/system/language/english/blocks.php differ
+Files 1.3_Org/plugins/preloads/autologin.php and 1.3_Core/plugins/preloads/autologin.php differ
+Files 1.3_Org/plugins/preloads/debug_mode.php and 1.3_Core/plugins/preloads/debug_mode.php differ
+Only in 1.3_Core/themes: formulize_standalone
+Files 1.3_Org/xmlrpc.php and 1.3_Core/xmlrpc.php differ
