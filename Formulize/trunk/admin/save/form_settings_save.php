@@ -68,6 +68,8 @@ if(isset($_POST['apps']) AND count($_POST['apps']) > 0) {
 // interpret form object values that were submitted and need special handling
 $processedValues['forms']['headerlist'] = "*=+*:".implode("*=+*:",$_POST['headerlist']);
 
+// form_handle cannot have any period, strip all of the periods out
+$processedValues['forms']['form_handle'] = str_replace(".", "", $processedValues['forms']['form_handle']);
 // form_handle can not be blank, default to form id if blank
 if( $processedValues['forms']['form_handle'] == "" ) {
   $processedValues['forms']['form_handle'] = $fid;

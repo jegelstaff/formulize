@@ -74,6 +74,7 @@ foreach($processedValues['elements'] as $property=>$value) {
     $value = str_replace(" ", "_", $value);
     $value = str_replace("'", "", $value);
     $value = str_replace("\"", "", $value);
+	$value = str_replace(".", "", $value);
 		if($value) {
 			$firstUniqueCheck = true;
 			while(!$uniqueCheck = $form_handler->isHandleUnique($value, $ele_id)) {
