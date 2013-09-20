@@ -2474,6 +2474,17 @@ function showPop(url) {
 }
 
 function validateAndSubmit() {
+    
+    jQuery(".numbers-only-textbox").each(function() {
+                                         if(jQuery(this).val().match(/[a-z]/i) !== null) {
+                                         var answer = confirm ("Invalid Entry \"" +jQuery(this).val() +"\"\n Value will be set to 0\n Click \"OK\" to save your entry as your entry or click \"cancel\" to change your entry." );
+                                         if (!answer){
+                                         jQuery(this).val('');
+                                         jQuery(this).focus();
+                                         jQuery(<?php $nosave ?>).val()=true;
+                                         }						
+                                         } 	
+                                         });
 <?php
 if(!$nosave) { // need to check for add or update permissions on the current user and this entry before we include this javascript, otherwise they should not be able to save the form
 ?>

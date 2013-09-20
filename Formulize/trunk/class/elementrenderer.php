@@ -165,6 +165,12 @@ class formulizeElementRenderer{
 					$form_ele = new XoopsFormLabel ($ele_caption, $ele_value[2]);	// nmc 2007.03.24 - added 
 				}
 
+                
+				//if numbers-only option is set 
+				if ($ele_value[3]) {
+					$form_ele->setExtra("class='numbers-only-textbox'");
+				}
+				
 				// if required unique option is set, create validation javascript that will ask the database if the value is unique or not
 				if($ele_value[9]) {
 					$eltname = $form_ele_id;
