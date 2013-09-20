@@ -41,6 +41,10 @@
 //include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 //$GLOBALS['startPageTime'] = microtime_float();
 
+if(!isset($formulize_masterUIOverride)) {
+    $formulize_masterUIOverride = false;
+}
+
 if(isset($formulize_screen_id)) {
     if(is_numeric($formulize_screen_id)) {
         global $xoTheme;

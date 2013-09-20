@@ -69,7 +69,14 @@ if(isset($_POST['apps']) AND count($_POST['apps']) > 0) {
 $processedValues['forms']['headerlist'] = "*=+*:".implode("*=+*:",$_POST['headerlist']);
 
 // form_handle cannot have any period, strip all of the periods out
-$processedValues['forms']['form_handle'] = str_replace(".", "", $processedValues['forms']['form_handle']);
+$form_handle_from_ui = $processedValues['forms']['form_handle'];
+$corrected_form_handle = str_replace($formulize_disallowed_characters_for_handles, "", $form_handle_from_ui);
+if($corrected_form_handle != $form_handle_from_ui) {
+  $formulize_altered_form_handle = true;
+  $processedValues['forms']['form_handle'] = $corrected_form_handle;  
+}
+
+
 // form_handle can not be blank, default to form id if blank
 if( $processedValues['forms']['form_handle'] == "" ) {
   $processedValues['forms']['form_handle'] = $fid;
@@ -228,13 +235,17 @@ if(isset($_POST['forms-store_revisions']) AND $_POST['forms-store_revisions'] AN
 }
 
 // if the form name was changed, then force a reload of the page...reload will be the application id
-if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $newAppObject OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $selectedAppIds))) {
+if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $formulize_altered_form_handle OR $newAppObject OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $selectedAppIds))) {
   if(!in_array($_POST['application_url_id'], $selectedAppIds)) {
     $appidToUse = intval($selectedAppIds[0]);
   } else {
     $appidToUse = intval($_POST['application_url_id']);
   }
-  print "/* eval */ window.location = '". XOOPS_URL ."/modules/formulize/admin/ui.php?page=form&aid=$appidToUse&fid=$fid';";
+  print "/* eval */ ";
+  if($formulize_altered_form_handle) {
+    print " alert('We removed some characters from the form handle because they are not allowed in the database table names or in PHP variables (ie: ".addslashes(implode(",", $formulize_disallowed_characters_for_handles)).", etc)  Sorry.  :-('); ";
+  }
+  print " reloadWithScrollPosition('".XOOPS_URL ."/modules/formulize/admin/ui.php?page=form&aid=$appidToUse&fid=$fid');";
 }
 
 // need to do some other stuff here later to setup defaults for...

@@ -71,10 +71,7 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 $isNew = $_POST['formulize_admin_key'] == "new" ? true : false;
 foreach($processedValues['elements'] as $property=>$value) {
   if($property == "ele_handle") {
-    $value = str_replace(" ", "_", $value);
-    $value = str_replace("'", "", $value);
-    $value = str_replace("\"", "", $value);
-	$value = str_replace(".", "", $value);
+    $value = str_replace($formulize_disallowed_characters_for_handles, "", $value);
 		if($value) {
 			$firstUniqueCheck = true;
 			while(!$uniqueCheck = $form_handler->isHandleUnique($value, $ele_id)) {
@@ -87,6 +84,7 @@ foreach($processedValues['elements'] as $property=>$value) {
 			}			
 		}
     $ele_handle = $value;
+    if($value != $processedValues['elements']['ele_handle']) { $_POST['reload_names_page'] = 1; }
   }
   $element->setVar($property, $value);
 }

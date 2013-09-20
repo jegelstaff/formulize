@@ -63,6 +63,8 @@ foreach($_POST as $k=>$v) {
 
 $popupSave = isset($_GET['popupsave']) ? "_popup" : "";
 
+$formulize_disallowed_characters_for_handles = array(' ', '_', '"', "'", "\\", "/", '.', ',', '$', '@', '#', '(', ')', '&');
+
 // include the form-specific handler to invoke the necessary objects and insert them all in the DB
 if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save".$popupSave.".php")) {
   include XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save".$popupSave.".php";
