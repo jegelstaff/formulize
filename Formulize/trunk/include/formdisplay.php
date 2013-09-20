@@ -2475,16 +2475,21 @@ function showPop(url) {
 
 function validateAndSubmit() {
     
+    var formulize_numbersonly_found= false;
     jQuery(".numbers-only-textbox").each(function() {
-                                         if(jQuery(this).val().match(/[a-z]/i) !== null) {
-                                         var answer = confirm ("Invalid Entry \"" +jQuery(this).val() +"\"\n Value will be set to 0\n Click \"OK\" to save your entry as your entry or click \"cancel\" to change your entry." );
-                                         if (!answer){
-                                         jQuery(this).val('');
-                                         jQuery(this).focus();
-                                         jQuery(<?php $nosave ?>).val()=true;
-                                         }						
-                                         } 	
-                                         });
+        if(jQuery(this).val().match(/[a-z]/i) !== null) {
+            var answer = confirm ("You have entered "+jQuery(this).val()+" in a box that is supposed to have numbers only.  The letters will be removed if you save.  Is this OK?" );
+            if (!answer){
+                jQuery(this).focus();
+                formulize_numbersonly_found = true;
+            }						
+        } 	
+    });
+    
+    if (formulize_numbersonly_found){
+        return false;
+	}
+    
 <?php
 if(!$nosave) { // need to check for add or update permissions on the current user and this entry before we include this javascript, otherwise they should not be able to save the form
 ?>
