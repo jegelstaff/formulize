@@ -1863,7 +1863,7 @@ if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables))
                 }
 		$array1 = $xoopsDB->fetchArray($result1); // for 2.1 we were checking explicitly whether we needed to add these fields.  But for 2.2 we just ran the SQL and caught the error appropriately in the condition below (ie: looked for failure for 'commonvalue' and ignored it) -- although ele_disabled was added this way...clearly we're not consistent about the patch approach!
 		
-		if(!array_key_exists('ele_desc',$array1)) { 4
+		if(!array_key_exists('ele_desc',$array1)) {
 			$sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_desc` text NULL";
 		}
 		if(!array_key_exists('ele_delim',$array1)) {
