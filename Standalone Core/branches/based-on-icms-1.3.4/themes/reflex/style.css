@@ -1,0 +1,227 @@
+@import url(content.css);
+
+html, body {color: #999; margin: 0; padding: 0; font-family: sans-serif; font-size: .85em; background: #fff;}
+a {text-decoration: none; font-style: italic; color: #999;}
+a:hover {color: #000;}
+a:link, a:visited, a:active, a:focus {text-decoration: none; border: 0; outline: none;}
+table {width: 100%;}
+table td {padding: 0; border: 0; vertical-align: top;}
+
+.clear {clear: both; width: 100%; height: 1px; background: transparent;}
+h1 {font-size: 1.4em;}
+h2 {font-size: 1.2em;}
+h3 {font-size: 1em;}
+h4 {font-size: 1em;}
+h5 {font-size: .9em;}
+h6 {font-size: .8em;}
+
+img {border: 0;}
+ul {padding:0; margin: 0; list-style: none;}
+ul li {padding: 3px 0px;}
+ul li a {}
+
+input, textarea, textarea#content {background: #efefef; border: 1px solid #ccc; color: #999;}
+input:hover, textarea:hover, textarea#content:hover {background: #eee; border: 1px solid #999; color: #444;}
+input:focus, textarea:focus, textarea#content:focus {background: #fff; border: 1px solid #000; color: #000;}
+input[type=button]:focus {background: #eeefff; border: 1px solid #000; color: #000;}
+
+.submit {border: 0; width: auto;}
+.submit:hover, .submit:focus {border:0; outline: none;}
+.radio {background: none; border: 0; outline: none;}
+.width {width: 1002px; height: 100%; margin: 0 auto; padding: 0;}
+/* ---------- Header Rules ------------ */
+#outer_header {clear: both; height: 64px; position: relative; width: 100%; background: transparent url(img/headbg.jpg) top left repeat-x;}
+#header {clear: both; height: 64px; position: relative; width: 1002px; margin: 0 auto; background: transparent; font-size: 12px;}
+#logo {width: 257px; height: 64px; float: left;}
+#quicksearch {width: 254px; float: right; margin-top: 10px; margin-right: 15px; text-align: right; font-size: 12px;}
+#quicksearch input {margin-bottom: 3px;}
+#suggestions {position: absolute; right: 17px; z-index: 9000; width:203px; display:none; margin-top: -4px;}
+#searchresults { border-width:1px; border-color:#919191; border-style:solid; width:203px; background-color:#a0a0a0; font-size:10px; line-height:14px; }
+#searchresults a { display:block; background-color:#e4e4e4; clear:left; height:60px; text-decoration:none; margin-bottom: 3px; padding-right: 3px;}
+#searchresults a:hover, #searchresults a.itemhover { background-color:#b7b7b7; color:#ffffff; }
+#searchresults a img { float:left; padding:5px 10px; }
+#searchresults a span.searchheading { display:block; font-weight:bold; padding-top:5px; color:#191919; }
+#searchresults a:hover span.searchheading, #searchresults a.itemhover span.searchheading { color:#ffffff; }
+#searchresults a span { color:#555555; padding-right: 3px;}
+#searchresults a:hover span, #searchresults a.itemhover span { color:#f1f1f1; }
+#searchresults span.category { font-size:11px; margin:5px; display:block; color:#ffffff; }
+#searchresults span.searchdesc {padding-bottom: 3px;}
+#searchresults span.seperator { float:right; padding-right:15px; margin-right:5px; background: url(img/shortcuts_arrow.gif) right no-repeat; margin-top: -2px;}
+#searchresults span.seperator a {background-color:transparent; display: block; vertical-align: middle; height:auto; color:#ffffff; padding-right: 4px;}
+#needhelp {font-size: 12px;}
+
+#pagenav {clear: both; height: 27px; position: relative; margin: 0 auto; background: transparent url(img/navbg.jpg) top left repeat-x; z-index:6; color: #999;}
+#fontsizer {float: right; margin: 0; padding: 0; list-style: none; font-size: 11px; height: 27px;}
+#fontsizer li {padding-left: 3px; padding-right: 3px; float: left; position: relative;}
+#fontsizer li a {padding: 0px; margin: 0px; vertical-align: middle;}
+#fontsizer li a img {margin-top: 2px;}
+
+#controller {height: 20px; width: 975px; margin: 0 auto; padding-top: 5px; color: #999; font-size: 12px;}
+#breadcrumbs {width: 75%; float: left;}
+#heyuser {width: 25%; float: right; text-align: right;}
+/* ---------- Page Rules ------------ */
+
+#page {background: transparent url(img/bodybg.jpg) top left repeat-x; width: 100%; height: 100%; clear: both; margin: 0px;}
+#pagearea {background: transparent url(img/areabg.png) top center no-repeat; width: 100%; min-height: 300px;}
+#leftside {width: 709px; float: left; background: transparent; margin-top: 12px; margin-left: 12px;}
+#leftside_full {width: 977px; float: left; background: transparent; margin-top: 12px; margin-left: 12px;}
+#rightside {width: 261px; float: left; margin-top: 12px; margin-left: 7px;}
+
+/* ---------- Blocks on the left ------------ */
+
+#lblocks {width: 100%; height: 100%; position: relative; float: left;}
+.left {width: 100%; float: left;}
+.lbwrap {width: 261px; background: transparent url(img/leftbg.png) top center no-repeat;}
+.left .block_title {background: transparent; color: #999; font-weight: bold; padding-top: 12px; padding-left: 12px; font-size: 16px;}
+.left .block_content {width: 250px; margin: 0 auto; background: transparent; color: #999; text-align: justify; padding-top: 6px;}
+
+#rblocks {width: 100%; height: 100%; position: relative; float: left;}
+.right {width: 100%; float: left;}
+.rbwrap {width: 261px; background: transparent url(img/rightbg.png) top center no-repeat;}
+.right .block_title {background: transparent; color: #999; font-weight: bold; padding-top: 12px; padding-left: 12px; font-size: 16px;}
+.right .block_content {width: 250px; margin: 0 auto; background: transparent; color: #999; text-align: justify; padding-top: 6px;}
+
+/* ---------- Blocks on the Right and the Content Loop ------------ */
+
+#topblocks {width: 100%; height: 100%; position: relative; float: left;}
+.topcenter {width: 100%; float: left; background: transparent;}
+.tcwrap {width: 100%; background: transparent url(img/topcenterbg.png) top center no-repeat; margin-bottom: 10px;}
+#leftside_full .tcwrap {width: 100%; background: transparent url(img/topcenterbg_full.png) top center no-repeat;}
+.topcenter .block_title {background: transparent; color: #999; font-weight: bold; padding-top: 12px; padding-left: 12px; font-size: 16px;}
+.topcenter .block_content {width: 685px; margin: 0 auto; background: transparent; color: #888; text-align: justify; padding-top: 6px;}
+#leftside_full .topcenter .block_content {width: 953px; margin: 0 auto; background: transparent; color: #888; text-align: justify; padding-top: 6px;}
+
+.topleft {width: 351px; float: left;}
+#leftside_full .topleft {width: 485px; float: left;}
+.tbwrap {width: 100%; background: transparent url(img/tbb_bg.png) top center no-repeat;}
+#leftside_full .tbwrap {width: 100%; background: transparent url(img/tbb_bg_full.png) top center no-repeat;}
+.topleft .block_title {background: transparent; color: #999; font-weight: bold; padding-top: 12px; padding-left: 12px; font-size: 16px;}
+.topleft .block_content {width: 327px; margin: 0 auto; background: transparent; color: #888; text-align: justify; padding: 6px 0px 12px 0px;}
+#leftside_full .topleft .block_content {width: 461px; margin: 0 auto; background: transparent; color: #888; text-align: justify; padding: 6px 0px 12px 0px;}
+
+.topright {width: 351px; float: right;}
+#leftside_full .topright {width: 485px; float: right;}
+.topright .block_title {background: transparent; color: #999; font-weight: bold; padding-top: 12px; padding-left: 12px; font-size: 16px;}
+.topright .block_content {width: 327px; margin: 0 auto; background: transparent; color: #888; text-align: justify; padding: 6px 0px 12px 0px;}
+#leftside_full .topright .block_content {width: 461px; margin: 0 auto; background: transparent; color: #888; text-align: justify; padding: 6px 0px 12px 0px;}
+
+#content {background: transparent; color: #888; padding: 5px; margin-bottom: 5px; overflow: auto;}
+
+/* ---------- Bottom Blocks ------------ */
+#bblocks {width: 100%; position: relative; float: left; margin-top: 10px;}
+.bottomleft {width: 231px; float: left; background: transparent url(img/botsbg.png) top center no-repeat;}
+#leftside_full .bottomleft {width: 321px; float: left; background: transparent url(img/botsbg_full.png) top center no-repeat;}
+.bottomleft .block_title {background: transparent; color: #999; font-weight: bold; padding-top: 12px; padding-left: 12px; font-size: 16px;}
+.bottomleft .block_content {width: 207px; margin: 0 auto; background: transparent; color: #888; text-align: justify; padding: 6px 0px 12px 0px;}
+#leftside_full .bottomleft .block_content {width: 297px; margin: 0 auto; background: transparent; color: #888; text-align: justify; padding: 6px 0px 12px 0px;}
+
+.bottomcenter {width: 231px; float: left; background: transparent url(img/botsbg.png) top center no-repeat; margin-left: 6px;}
+#leftside_full .bottomcenter {width: 321px; float: left; background: transparent url(img/botsbg_full.png) top center no-repeat; margin-left: 6px;}
+.bottomcenter .block_title {background: transparent; color: #999; font-weight: bold; padding-top: 12px; padding-left: 12px; font-size: 16px;}
+.bottomcenter .block_content {width: 207px; margin: 0 auto; background: transparent; color: #888; text-align: justify; padding: 6px 0px 12px 0px;}
+#leftside_full .bottomcenter .block_content {width: 297px; margin: 0 auto; background: transparent; color: #888; text-align: justify; padding: 6px 0px 12px 0px;}
+
+.bottomright {width: 231px; float: left; background: transparent url(img/botsbg.png) top center no-repeat; margin-left: 6px;}
+#leftside_full .bottomright {width: 321px; float: left; background: transparent url(img/botsbg_full.png) top center no-repeat; margin-left: 6px;}
+.bottomright .block_title {background: transparent; color: #999; font-weight: bold; padding-top: 12px; padding-left: 12px; font-size: 16px;}
+.bottomright .block_content {width: 207px; margin: 0 auto; background: transparent; color: #888; text-align: justify; padding: 6px 0px 12px 0px;}
+#leftside_full .bottomright .block_content {width: 297px; margin: 0 auto; background: transparent; color: #888; text-align: justify; padding: 6px 0px 12px 0px;}
+
+/* ---------- Footer Rules ------------ */
+#outer_footer {width: 100%; background: transparent;}
+div#footer {clear: both; position: relative; width: 990px; margin: 0 auto; background: transparent;}
+#footer_text {background: transparent; color: #ccc; font-size: 11px; font-weight: bold; padding-top: 12px; float: left; width: 70%;}
+#credits {background: transparent; color: #ccc; font-size: 11px; font-weight: bold; padding-top: 12px; float: right; width: 30%; text-align: right;}
+
+
+/* ---------- Redirect ------------ */
+#redirect {margin-left: auto; margin-right: auto; width: 1000px; height: 400px; color: #000; text-align: center; font-weight: bold; text-align: center; padding-top: 100px; background: #f5f4f0 url(img/right-top_block-bg.png) top repeat-x; color: #000; border: 1px solid #dedbd1; margin-bottom: 5px;}
+/* ---------- Site close ------------ */
+#siteclose-login {margin-left: auto; margin-right: auto; width: 1000px; height: 400px; color: #000; text-align: center; font-weight: bold; text-align: center; padding-top: 100px; background: #f5f4f0 url(img/right-top_block-bg.png) top repeat-x; color: #000; border: 1px solid #dedbd1; margin-bottom: 5px;}
+#siteclosemsg {padding-top: 100px; padding-bottom: 50px; text-align: center;}
+#siteclose-login h2 {background: transparent; font-weight: bold; font-size: 1em; color: #000; padding: 2px; margin-top: 0px; margin-bottom: 0px; text-align: center;}
+#siteclose-login form {text-align: center; width: 350px; padding: 0px; margin-left: auto; margin-right: auto; border: 1px dotted #83cde1;}
+#siteclose-login div{padding: 6px; color: #000;}
+#siteclose-login span.left {float: left; padding-bottom: 3px; width: 45%;}
+#siteclose-login span.right {float: right; padding-bottom: 3px; width: 45%;}
+#siteclose-login div.button {text-align: right;	clear: both; padding-right: 15px;}
+
+#xo-logger-output {width: 100%; clear: both; float: left; margin-top: 5px; font-size: 14px;}
+
+.CPbigTitle{font-size: 20px;
+	color: #1E90FF;
+	background: no-repeat left top;
+	font-weight: bold;
+	height: 40px;
+	vertical-align: middle;
+	padding: 10px 0 0 50px;
+	border-bottom: 3px solid #1E90FF;
+}
+.CPindexOptions{
+	padding: 4px;
+	vertical-align: top;
+}
+.CPmediumTitle{
+	font-weight: bold;
+	font-size: 14px;
+	color: #FF4500;
+}
+div.cpicon{
+	margin: 3px;
+	font-family: Arial, Helvetica, sans-serif;
+	text-align: center;
+}
+div.cpicon a {
+	display: inline-block;
+	height: 58px !important;
+	height: 58px;
+	width: 58px !important;
+	width: 58px;
+	vertical-align: middle;
+	text-decoration: none;
+	border: 1px solid #999;
+	padding: 2px 5px 1px 5px;
+	margin: 0;
+	margin-bottom:4px;
+	color: #666666;
+}
+
+div.cpicon a:hover{
+	background-color: #E7F4FC;
+	border: 1px solid #000;
+	color: #1E90FF;
+}
+
+div.cpicon img { margin-top: 1px; margin-bottom: 1px; width: 20px; height: 20px;}
+div.cpicon span {
+	font-size: 9px;
+	font-weight: bold;
+	display: block;
+	overflow: hidden;
+}
+div.cpicon span.uno{
+	font-size: 11px;
+	font-weight: normal;
+	text-decoration: underline;
+	color: Blue;
+}
+div.cpicon span.unor{
+	font-size: 11px;
+	font-weight: normal;
+	text-decoration: underline;
+	color: #CC0000;
+}
+
+.imgcat_notwrite {
+    background-color: #FF0000;
+    height: 17px;
+    margin-bottom: 2px;
+    overflow: visible;
+    padding-top: 3px;
+    width: 20px;
+}
+.imgcat_notwrite span {
+    display: block;
+    margin-left: 25px;
+    width: 400px;
+}
