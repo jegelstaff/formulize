@@ -196,9 +196,13 @@ if($ele_type == "select") {
   }
 }
 
+$ele_value_before_adminSave = "";
+$ele_value_after_adminSave = "";
 if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
   $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+  $ele_value_before_adminSave = serialize($element->getVar('ele_value'));
   $changed = $customTypeHandler->adminSave($element, $processedValues['elements']['ele_value']); // cannot use getVar to retrieve ele_value from element, due to limitation of the base object class, when dealing with set values that are arrays and not being gathered directly from the database (it wants to unserialize them instead of treating them as literals)
+  $ele_value_after_adminSave = serialize($element->getVar('ele_value'));
   if($changed) {
     $_POST['reload_option_page'] = true; // force a reload, since the developer probably changed something the user did in the form, so we should reload to show the effect of this change
   }
@@ -223,7 +227,14 @@ if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.ph
 		}
 
 foreach($processedValues['elements'] as $property=>$value) {
-  $element->setVar($property, $value);
+  // if we're setting something other than ele_value, or
+  // there was no change to ele_value property of the element
+  // during the adminSave step, then set the property now.
+  // We don't want to set ele_value if it was modified during
+  // adminSave, because we might clobber user's changes
+  if($property != 'ele_value' OR $ele_value_before_adminSave === $ele_value_after_adminSave) {
+  	$element->setVar($property, $value);
+  }
 }
 
 if(!$ele_id = $element_handler->insert($element)) {
