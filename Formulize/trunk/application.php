@@ -57,15 +57,16 @@ foreach($applicationsToDraw as $aid) {
 		$aid = $aid->getVar('appid'); // when 'all' is requested, the array will be of objects, not ids
 	}
 
-	$forms = $form_handler->getFormsByApplication($aid, true);
-	$formsToShow = array_intersect($forms, $allowedForms);
-	$formsToSend = getNavDataForForms($formsToShow, $form_handler);
+	$links;
 	if($aid) {
+        $links = $application_handler->getMenuLinksForApp($aid);
 		$application = $application_handler->get($aid);
 		$app_name = $application->getVar('name');
 	} else {
+        $links = $application_handler->getMenuLinksForApp(0);
 		$app_name = _AM_CATGENERAL;
 	}
+    $formsToSend = getNavDataForForms($links);
 	if(count($formsToSend)==0) {
 		$noforms =  _AM_NOFORMS_AVAIL;
 	} else {
@@ -80,19 +81,22 @@ $xoopsTpl->assign("allAppData", $allAppData);
 require(XOOPS_ROOT_PATH."/footer.php");
 
 // $forms must be an array of form ids
-function getNavDataForForms($forms, $form_handler) {
+function getNavDataForForms($links) {
 	$formsToSend = array();
 	$i=0;
-	foreach($forms as $thisForm) {
-		$thisFormObject = $form_handler->get($thisForm);
-		if($thisFormObject->getVar('menutext')) {
-			$title = html_entity_decode($thisFormObject->getVar('menutext'), ENT_QUOTES) == "Use the form's title" ? $thisFormObject->getVar('title') : $thisFormObject->getVar('menutext');
-			if($title) {
-				$formsToSend[$i]['fid'] = $thisFormObject->getVar('id_form');
-				$formsToSend[$i]['title'] = $title;
-				$i++;
+	foreach($links as $link) {
+		$suburl = XOOPS_URL."/modules/formulize/index.php?".$link->getVar("screen")."&menuid=".$link->getVar("menu_id");
+		$url = $link->getVar("url");
+		if(strlen($url) > 0){
+			$pos = strpos($url,"://");
+			if($pos === false){
+				$url = "http://".$url;
 			}
+            $suburl = $url;
 		}
+        $formsToSend[$i]['url'] = $suburl;
+        $formsToSend[$i]['title'] = $link->getVar("text");
+        $i++;
 	}
 	return $formsToSend;
 }

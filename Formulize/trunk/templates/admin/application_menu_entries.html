@@ -1,0 +1,209 @@
+<div class="panel-content content">
+	<form id="form-<{$number}>" class="formulize-admin-form">
+        <{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
+            <input type="hidden" name="formulize_admin_handler" value="application_menu_entries">
+                <input type="hidden" name="formulize_admin_key" value="<{$content.aid}>">
+                    <input type="hidden" id="reload_settings" name="reload_settings" value="true">
+                        <input type="hidden" id="menu_items" name="menu_items" value="">
+                            <div class="accordion-box">
+                                <div class="form-item">
+                                    <fieldset>
+                                        <legend><label class="question">What links should be on the menu?</label></legend>
+                                        
+                                        <button class="menuButton" id="upButton" type="button" style="display:none" onClick="javascript:moveUp();" >Move Up</button>
+                                        <select name="menu-items[]" id="menu-items" style="width:100%;" size=10 multiple>
+                                            <{foreach from=$content.links item=thislink}>
+                                                <option value=<{$thislink.value}>><{$thislink.text}> 
+                                                    <{if isset($thislink.url) && $thislink.url != ''}>(Link: <{$thislink.url}>)
+                                                        <{else}>(Screen ID: <{$thislink.screen}>)
+                                                            <{/if}>
+                                                                </option>
+                                                <{/foreach}>					
+                                                    </select><br />	
+                                        <button class="menuButton" id="downButton" type="button" style="display:none" onClick="javascript:moveDown();" >Move Down</button>
+                                        <div class="buttons">
+                                            <button class="menuButton" id="clearButton" type="button" style="display:none" onClick="javascript:clearSelection();" >Clear Selection</button> &nbsp;
+                                            <button class="menuButton" type="button" onClick="javascript:deleteMenuItems();" style="float: right">Deleted Selected</button>			
+                                        </div>							
+                                        <p>Menu text: <input type="text" id="menutext" name="menutext">	</p>	
+                                            <br />
+                                            <{$content.listsofscreenoptions}>
+                                                <br />or<br />
+                                                external url:  <input type="text" name="url" id="url"><br />	
+                                                    <button class="menuButton" id="addMenuItem" type="button" onClick="javascript:addNewMenuItem();" >Add Menu Item</button>				
+                                                    
+                                                    </fieldset>
+                                </div>		
+                            </div>
+                            <div class="accordion-box">			
+                                <div class="form-item">
+                                    <fieldset>
+                                        <legend><label class="question">Which groups can view the link</label></legend>
+                                        <select name="groups" id="groups" size=10 multiple>
+                                            <{foreach from=$content.groups item=group}>
+                                                <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
+                                                <{/foreach}>
+                                                    </select>
+                                    </fieldset>
+                                </div>
+                            </div>
+                            </form>
+    
+	<div style="clear: both"></div>
+</div> <!--// end content -->
+<script type="text/javascript">
+    var formID = "";
+    var formRelationID = "1";
+    
+    $("#menu-items").click(function () {
+                           var values = $(this).val();
+                           values = values.toString().split("::");
+                           if(values.length == 5){
+                           $("#menutext").val(values[1]);
+                           $("#listsofscreenoptions").val(values[2]);
+                           $("#url").val(values[3]);
+                           $("#groups").val(values[4].split(","));
+                           $("#addMenuItem").text("Update Menu Item");
+                           $("#addMenuItem").show();
+                           }else{
+                           $("#menutext").val("");
+                           $("#listsofscreenoptions").val("");
+                           $("#url").val("");
+                           $("#groups").val("");
+                           $("#addMenuItem").hide();
+                           
+                           }
+                           
+                           $("#clearButton").show();
+                           showHideUpDown();	
+                           return true;
+                           });
+    
+    function showHideUpDown(){
+        var showUp = true;
+        var showDown = true;
+        var size = $("#menu-items").attr("length");
+        $("#menu-items option:selected").each(function(){
+                                              if($(this).attr("index")==0){
+                                              showUp = false;
+                                              }else if($(this).attr("index")==size-1){
+                                              showDown = false;
+                                              }
+                                              });
+        
+        if(showDown){
+            $("#downButton").show();
+        }else{
+            $("#downButton").hide();
+        }
+        if(showUp){
+            $("#upButton").show();
+        }else{
+            $("#upButton").hide();
+        }
+    }
+    
+    function moveUp(){
+        $('#menu-items option:selected').each(function(){
+                                              $(this).insertBefore($(this).prev());
+                                              });
+        showHideUpDown();
+        updateMenuItemField();
+        setDisplay('savewarning','block');
+    }
+    
+    function moveDown(){
+        $($('#menu-items option:selected').get().reverse()).each(function(){
+                                                                 $(this).insertAfter($(this).next());
+                                                                 });
+        showHideUpDown();
+        updateMenuItemField();
+        setDisplay('savewarning','block');
+    }
+    
+    function clearSelection(){
+        $("#menu-items").val("");
+        $("#menutext").val("");
+        $("#listsofscreenoptions").val("");
+        $("#url").val("");
+        $("#groups").val("");
+        $("#addMenuItem").text("Add Menu Item");
+        $("#clearButton").hide();
+        $("#downButton").hide();
+        $("#upButton").hide();
+        $("#addMenuItem").show();
+    }
+    
+    function deleteMenuItems(){
+        if(confirm("are you sure you wish to delete the selected menu links?")){
+            $("#menu-items option:selected").remove();
+            $("#clearButton").hide();
+            clearSelection();
+            setDisplay('savewarning','block');
+            updateMenuItemField();
+        }
+        
+    }
+    
+    function updateMenuItemField(){
+        var menuitems = "";
+        $("#menu-items option").each(function(){	
+                                     // add $(this).val() to your list
+                                     if(menuitems.length > 0){
+                                     menuitems += "~~" + $(this).val();
+                                     }else{
+                                     menuitems += $(this).val();
+                                     }
+                                     });
+        $("#menu_items").val(menuitems);
+    }
+    
+    function addNewMenuItem(){
+        var menuText = $("#menutext").val();
+        var url = $("#url").val();
+        var screen = $("#listsofscreenoptions").val();
+        var groupids = $("#groups").val();
+        var value = "null::";
+        if($("#menu-items option:selected").length){
+            value = $("#menu-items option:selected").val().split("::")[0] + "::";
+        }
+        var text;
+        if(screen.length > 0){
+            if(menuText.length == 0){
+                menuText = $("#listsofscreenoptions option:selected").text();	
+            }
+            text = menuText + " (Screen ID: " + screen + ")";
+        }else if(url.length > 0){
+            if(menuText.length = 0){
+                menuText = url;
+            }
+            text = menuText + " (Link: " + url + ")";
+        }else{
+            alert("missing screen or url");
+            return;
+        }
+        value += menuText + "::" + screen + "::" + url + "::"+groupids;
+        
+        if($("#menu-items option:selected").length){
+            $("#menu-items option:selected").val(value);
+            $("#menu-items option:selected").text(text);
+        }else{
+            $("#menu-items").append("<option value='" + value + "'>" + text + "</option>");
+        }
+        clearSelection();
+        setDisplay('savewarning','block');
+        updateMenuItemField();
+    }
+    
+    function updateSaveChangeDisplay(){
+        $("#listsofscreenoptions").unbind("change");
+        $("#menu-items").unbind("change");
+        $("#groups").unbind("change");
+        $("#menutext").unbind("keydown");
+        $("#url").unbind("keydown");
+        $("#menutext").unbind("change");
+        $("#url").unbind("change");
+    }
+    
+    window.setTimeout("updateSaveChangeDisplay();",500);
+    </script>

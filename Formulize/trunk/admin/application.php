@@ -34,23 +34,79 @@ $aid = intval($_GET['aid']);
 $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $application_handler = xoops_getmodulehandler('applications','formulize');
+
+$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    
+$menulinks = array(); // JAKEADDED
+$formscreens = array();
+$options = array();
+    
 if($aid == 0) {
 	$appName = "Forms with no app";
 	$appDesc = "";
 	$appForms = array();
 	$formObjects = $form_handler->getFormsByApplication(0); // returns array of objects
+    $appLinks = $application_handler->getMenuLinksForApp(0,true);	
 } else {
 	$appObject = $application_handler->get($aid);
 	$appName = $appObject->getVar('name');
 	$appDesc = $appObject->getVar('description');
-	$formObjects = $form_handler->getFormsByApplication($aid);
-	// get list of all the forms
-	$allFormObjects = $form_handler->getAllForms();
-	foreach($allFormObjects as $thisFormObject) {
-		$allForms[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
-		$allForms[$thisFormObject->getVar('id_form')]['id'] = $thisFormObject->getVar('id_form'); // settings tab uses id
+	$appLinks = $appObject->getVar('all_links'); // JAKEADDED
+}
+    
+    // get list of all the links
+    
+    $index = 0; // JAKEADDED
+    foreach ($appLinks as $menulink) // JAKEADDED
+    {
+        $menulinks[$index]['url'] = $menulink->getVar('url'); // JAKEADDED
+        $menulinks[$index]['link_text'] = $menulink->getVar('link_text'); // JAKEADDED
+        $menulinks[$index]['screen'] = $menulink->getVar('screen'); // JAKEADDED
+        $menulinks[$index]['rank'] = $menulink->getVar('rank');	
+        $menulinks[$index]['text'] = $menulink->getVar('text');	
+        $menulinks[$index]['permissions'] = $menulink->getVar('permissions');
+        $menulinks[$index]['value'] = $menulink->getVar('menu_id'). '::' .$menulink->getVar('link_text'). '::' . $menulink->getVar('screen'). '::' . $menulink->getVar('url'). '::' . $menulink->getVar('permissions');
+        $index ++; // JAKEADDED
+    }
+    
+    $formObjects = $form_handler->getFormsByApplication($aid);
+    // get list of all the forms and screens
+    $allFormObjects = $form_handler->getAllForms();
+    $forms = array();
+    $forms[''] = "Select screen to add to menu.";
+    foreach($allFormObjects as $thisFormObject) {
+        $allForms[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
+        $allForms[$thisFormObject->getVar('id_form')]['id'] = $thisFormObject->getVar('id_form'); // settings tab uses id
+        $forms['fid='.$thisFormObject->getVar('id_form')] = $thisFormObject->getVar('title');
+        $screens = $screen_handler->getObjects(null,$thisFormObject->getVar('id_form'));
+        //echo 'ASSIGNED ' . var_dump($screens);
+        foreach($screens as $screen) {
+            $forms['sid='.$screen->getVar('sid')] = "&nbsp;&nbsp;   ". $screen->getVar('title');
 	}
 }
+    
+// get list of groups
+// get the list of groups
+$member_handler = xoops_gethandler('member');
+$allGroups = $member_handler->getGroups();
+$groups = array();
+if(!isset($selectedGroups)) {
+    $selectedGroups = isset($_POST['groups']) ? $_POST['groups'] : array();  
+}
+$orderGroups = isset($_POST['order']) ? $_POST['order'] : "creation";
+foreach($allGroups as $thisGroup) {
+    $groups[$thisGroup->getVar('name')]['id'] = $thisGroup->getVar('groupid');
+    $groups[$thisGroup->getVar('name')]['name'] = $thisGroup->getVar('name');
+    $groups[$thisGroup->getVar('name')]['selected'] = in_array($thisGroup->getVar('groupid'), $selectedGroups) ? " selected" : "";
+}
+if($orderGroups == "alpha") {  
+    ksort($groups);
+}
+    
+$listofscreens = new XoopsFormSelect("", 'listsofscreenoptions');
+$listofscreens->addOptionArray($forms);
+$options['listsofscreenoptions'] = $listofscreens->render();
+    
 $screen_handler = xoops_getmodulehandler('screen', 'formulize');
 $gperm_handler = xoops_gethandler('groupperm');
 global $xoopsUser;
@@ -178,6 +234,13 @@ $adminPage['tabs'][$i]['template'] = "db:admin/application_relationships.html";
 $adminPage['tabs'][$i]['content'] = $common;
 $adminPage['tabs'][$i]['content']['relationships'] = $relationships; 
 
+$i++;
+$adminPage['tabs'][$i]['name'] = " Menu Entries";
+$adminPage['tabs'][$i]['template'] = "db:admin/application_menu_entries.html";
+$adminPage['tabs'][$i]['content'] = $options + $common;
+$adminPage['tabs'][$i]['content']['links'] = $menulinks;
+$adminPage['tabs'][$i]['content']['groups'] = $groups;
+    
 $adminPage['pagetitle'] = _AM_APP_APPLICATION.$appName;
 $adminPage['needsave'] = true;
 
