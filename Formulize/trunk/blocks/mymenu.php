@@ -35,9 +35,9 @@ function block_formulizeMENU_show() {
 
 	// GENERATE THE ID_FORM
 	$id_form = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
-  $id_form = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $id_form ;
+    $id_form = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $id_form ;
 
-	    $application_handler = xoops_getmodulehandler('applications', 'formulize');
+    $application_handler = xoops_getmodulehandler('applications', 'formulize');
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$allApplications = $application_handler->getAllApplications();
 	$menuTexts = array();
@@ -89,57 +89,55 @@ function getMenuTextsForForms($forms, $form_handler) {
 				return $menuTexts;
 }
 
-    function drawMenuSection($application, $menulinks, $forceOpen, $form_handler) {
+function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
         
-        						
+        if($application == 0) {
+            
+            $aid = 0;
+            
+            $name = _AM_CATGENERAL;
+            
+            $forms = $form_handler->getFormsByApplication(0,true); // true forces ids, not objects, to be returned
+            
+        } else {
+            $aid = intval($application->getVar('appid'));
+                
+            $name = printSmart($application->getVar('name'), 200);
+                
+            $forms = $application->getVar('forms');
+                
+        }
+        static $topwritten = false;
         
-        	if($application == 0) {
-            
-            					$aid = 0;
-            
-            					$name = _AM_CATGENERAL;
-            
-            					$forms = $form_handler->getFormsByApplication(0,true); // true forces ids, not objects, to be returned
-            
-            	} else {
-                
-                					$aid = intval($application->getVar('appid'));
-                
-                					$name = printSmart($application->getVar('name'), 200);
-                
-                					$forms = $application->getVar('forms');
-                
-                	}
-        	static $topwritten = false;
+        $itemurl = XOOPS_URL."/modules/formulize/application.php?id=$aid";
         
-        	$itemurl = XOOPS_URL."/modules/formulize/application.php?id=$aid";
+        if (!$topwritten) {
+            
+            $block = "<a class=\"menuTop\" href=\"$itemurl\">$name</a>";
+            
+            $topwritten = 1;
+            
+         } else {
+                
+             $block = "<a class=\"menuMain\" href=\"$itemurl\">$name</a>";
+                
+         }
         
-        	if (!$topwritten) {
-            
-            					$block = "<a class=\"menuTop\" href=\"$itemurl\">$name</a>";
-            
-            					$topwritten = 1;
-            
-            	} else {
-                
-                		$block = "<a class=\"menuMain\" href=\"$itemurl\">$name</a>";
-                
-                	}
+        $isThisSubMenu = false;
         
-        	$isThisSubMenu = false;
-        
-        	foreach($menulinks as $menulink) {
+        foreach($menulinks as $menulink) {
             
-            		if($menulink->getVar("menu_id") == $_GET['menuid']){
+            if($menulink->getVar("menu_id") == $_GET['menuid']){
                 
-                			$isThisSubMenu = true;
-                
-                		}
+                $isThisSubMenu = true;
+    
+            }
             
-            	}        
+        }        
 				
 				
-	if($forceOpen OR (isset($_GET['id']) AND strstr(getCurrentURL(), "/modules/formulize/application.php") AND $aid == $_GET['id']) OR $isThisSubMenu) { // if we're viewing this application or a form in this application, or this is the being forced open (only application)...
+        if($forceOpen OR (isset($_GET['id']) AND strstr(getCurrentURL(), "/modules/formulize/application.php") AND $aid == $_GET['id']) OR (strstr(getCurrentURL(), "/modules/formulize/index.php?fid=") AND in_array($_GET['fid'], $forms)) OR $isThisSubMenu ) { // if we're viewing this application or a form in this application, or this is the being forced open (only application)...
+        
 		foreach($menulinks as $menulink) {
 			$suburl = XOOPS_URL."/modules/formulize/index.php?".$menulink->getVar("screen")."&menuid=".$menulink->getVar("menu_id");
 			$url = $menulink->getVar("url");

@@ -97,7 +97,46 @@ class formulizeformulize extends XoopsObject {
 		//define array and return type and size		
 		return array("dataType" => $defaultType, "dataTypeSize" => $defaultTypeSize);
 
-
+	}
+    
+    function createIndex(){
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($this->getVar('id_form'));
+		
+		$defaultTypeInformation = $this->getDataTypeInformation();
+		$defaultType = $defaultTypeInformation['dataType'];
+		$defaultTypeSize = $defaultTypeInformation['dataTypeSize'];
+        
+		$index_fulltext = $defaultType == "text" ? "FULLTEXT" : "INDEX";
+		
+		$sql = "ALTER TABLE ".$xoopsDB->prefix("formulize_".mysql_real_escape_string($formObject->getVar('form_handle')))." ADD $index_fulltext `". mysql_real_escape_string($this->getVar('ele_handle')) ."` (`".mysql_real_escape_string($this->getVar('ele_handle'))."`)";
+		$res = $xoopsDB->query($sql);
+	}
+	
+	function deleteIndex($original_index_name){
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($this->getVar('id_form'));
+		$sql = "DROP INDEX `".mysql_real_escape_string($original_index_name)."` ON ".$xoopsDB->prefix("formulize_".mysql_real_escape_string($formObject->getVar('form_handle')));
+		$res = $xoopsDB->query($sql);
+	}
+	
+	function has_index(){
+		global $xoopsDB;
+		$indexType = "";
+        
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($this->getVar('id_form'));
+        
+		//Complex check if 
+        $elementDataSQL = "SELECT stats.index_name FROM information_schema.statistics AS stats INNER JOIN (SELECT count( 1 ) AS amountCols, index_name FROM information_schema.statistics WHERE table_schema='".XOOPS_DB_NAME."' AND table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' GROUP BY index_name) AS amount ON amount.index_name = stats.index_name WHERE stats.table_schema='".XOOPS_DB_NAME."' AND stats.table_name = '".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."' AND stats.column_name = '".$this->getVar('ele_handle')."' AND amount.amountCols =1";
+		
+		$elementDataRes = $xoopsDB->queryF($elementDataSQL);
+		$elementDataArray = $xoopsDB->fetchArray($elementDataRes);
+		$indexType = $elementDataArray['index_name'];
+        
+		return $indexType;
 	}
 	
 }
