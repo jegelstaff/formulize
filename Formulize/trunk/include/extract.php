@@ -561,13 +561,26 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    if($linkcommonvalue[$id]) { // common value
 		      $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
 		    } elseif($linktargetids[$id]) { // linked selectbox
-		      if(formulize_isLinkedSelectBox($linktargetids[$id])) { 
-			$newJoinText = " f$id.`" . $joinHandles[$linktargetids[$id]] . "` LIKE CONCAT('%,',main.entry_id,',%')";
-									//$newJoinText = " main.entry_id IN (TRIM(',' FROM f$id.`" . $joinHandles[$linktargetids[$id]] . "`)) "; // IN should be a lot faster than LIKE ?
-		      } else {
-			$newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "` LIKE CONCAT('%,',f$id.entry_id,',%')";
-									//$newJoinText = " f$id.entry_id IN (TRIM(',' FROM main.`" . $joinHandles[$linkselfids[$id]] . "`)) "; // IN should be a lot faster than LIKE ?
-		      }
+			 if($target_ele_value = formulize_isLinkedSelectBox($linktargetids[$id])) {
+                            if ($target_ele_value[1]) {
+                                // multiple values allowed
+                                $newJoinText = " f$id.`" . $joinHandles[$linktargetids[$id]] . "` LIKE CONCAT('%,',main.entry_id,',%')";
+                            } else {
+                                // single value only
+                                $newJoinText = " f$id.`" . $joinHandles[$linktargetids[$id]] . "` = main.entry_id";
+                            }
+                        } else {
+                            $main_ele_value = formulize_isLinkedSelectBox($linkselfids[$id]); 
+                            //  we know it's linked because this is a linked selectbox join, we just need the ele_value properties
+                            if ($main_ele_value[1]) {
+                                // multiple values allowed
+                                $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "` LIKE CONCAT('%,',f$id.entry_id,',%')";
+                            } else {
+                                // single value only
+                                $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "` = f$id.entry_id";
+                            }
+                        }
+			  
 		    } else { // join by uid
 		      $newJoinText = " main.creation_uid=f$id.creation_uid";
 		    }

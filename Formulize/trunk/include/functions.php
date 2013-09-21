@@ -1818,7 +1818,7 @@ function prepDataForWrite($element, $ele) {
 		  $value .= $whatwasselected.",";
 		}
 	      } elseif(is_numeric($ele)) {
-	        $value = ",".$ele.",";
+	        $value =$ele;
 	      }	else {
 		$value = "";
 	      }
@@ -4518,6 +4518,9 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 				  $conditionsfilter .= " AND ";
 			  }
 			  list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
+			  if($newFilterOps[$filterId]) {
+                    $filterOps[$filterId] = $newFilterOps[$filterId];
+                }
 			  $conditionsfilter .= "$targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue;
 		  } else { 
 			  if($start_oom) {
@@ -4527,6 +4530,9 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 				  $conditionsfilter_oom .= " OR ";
 			  }
 			  list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);			  
+			   if($newFilterOps[$filterId]) {
+                    $filterOps[$filterId] = $newFilterOps[$filterId];
+                }
 			  $conditionsfilter_oom .= "$targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue;
 		  }
 		  $curlyBracketFormFrom = $thisCurlyBracketFormFrom ? $thisCurlyBracketFormFrom : $curlyBracketFormFrom; // if something was returned, use it, otherwise, stick with what we've got
@@ -4541,6 +4547,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 // this function takes the info from the above function, and actually builds the parts of the SQL statement by analyzing the current situation
 function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
   global $xoopsUser, $xoopsDB;
+  $newFilterOps = "";
   $conditionsFilterComparisonValue = "";
   $curlyBracketFormFrom = "";
   if($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
@@ -4592,8 +4599,13 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
 		    $filterTermToUse = mysql_real_escape_string($filterTerms[$filterId]);
 		  }
 		  if(!$conditionsFilterComparisonValue) {
+		  if ($targetElementEleValue[1]) {
 		    $conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE `$targetSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.$filterTermToUse.$likebits.$quotes."),',$origlikebits') ";
 		  }
+		  else {
+                    $conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE `$targetSourceHandle` " . $filterOps[$filterId] . $quotes . $likebits . $filterTermToUse . $likebits . $quotes . ") ";
+                    $newFilterOps = array($filterId=>'=');
+					}
 		  if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)])) {
 		    $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntry ";
 		  }
@@ -4634,7 +4646,7 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
 		  }
 	  }
   }
-  return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
+  return array($conditionsFilterComparisonValue, $curlyBracketFormFrom, $newFilterOps);
 }
 // this function simply draws in the necessary xhr javascript that is used in forms sometimes, and in lists of entries sometimes
 function drawXhrJavascript() {
@@ -4895,4 +4907,43 @@ function generateHiddenElements($elements, $entry) {
     }
   }
   return $hiddenElements;
+  
+// Converts linked select boxes from single option only (big int)
+// to a multi-option allowed select box with preceding and trailing commas
+function convertSelectBoxToMulti($table, $column) {
+    
+    global $xoopsDB;
+    
+    $sql1 = "ALTER TABLE `$table` CHANGE `$column` `$column` TEXT NULL DEFAULT NULL";
+    $sql2 = "UPDATE `$table` SET `$column`=CONCAT(',', `$column`, ',') WHERE `$column` NOT LIKE '%[^0-9]%'";
+    
+    if (!$result1 = $xoopsDB->query($sql1)) {
+        return false;
+    }
+    
+    if (!$result2 = $xoopsDB->query($sql2)) {
+        return false;
+    }
+    return true;
+    
+}
+
+// Converts a linked select box from multi-option allowed (with preceding and trailing
+// commas) to a single option allowed select box with data type bigint.
+function convertSelectBoxToSingle($table, $column) {
+    
+    global $xoopsDB;
+    
+    $sql1 = "UPDATE `$table` SET `$column`=SUBSTRING_INDEX (TRIM(BOTH ',' FROM `$column`), ',', 1) WHERE `$column` LIKE ',%,'";
+    $sql2 = "ALTER TABLE `$table` CHANGE `$column` `$column` BIGINT NULL DEFAULT NULL";
+    
+    if (!$result1 = $xoopsDB->query($sql1)) {
+        return false;
+    }
+    
+    if (!$result2 = $xoopsDB->query($sql2)) {
+        return false;
+    }
+    return true;
+    
 }

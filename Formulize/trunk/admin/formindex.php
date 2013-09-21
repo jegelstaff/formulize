@@ -1519,7 +1519,25 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
                 $i++;		
             }
         }
-        
+          // need to update multiple select boxes.
+                // $xoopsDB->prefix("formulize")
+                // 1. get a list of all elements that are linked selectboxes that support only single values
+                $selectBoxesSQL = "SELECT id_form, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type = 'select'";
+                $selectBoxRes = $xoopsDB->query($selectBoxesSQL);
+                if ($xoopsDB->getRowsNum($selectBoxRes) > 0) {
+                    while ($handleArray = $xoopsDB->fetchArray($selectBoxRes)) {
+                        $metaData = formulize_getElementMetaData($handleArray['ele_id']);
+                        $ele_value = unserialize($metaData['ele_value']);
+                        
+                        // select only single option, linked select boxes
+                        if (!$ele_value[1] AND strstr($ele_value[2], "#*=:*")) {
+                            $successSelectBox = convertSelectBoxToSingle($xoopsDB->prefix('formulize_' . $handleArray['id_form']), $handleArray['ele_id']);
+                            if (!$successSelectBox) {
+                                print "could not convert column " . $handleArray['ele_id'] . " in table " . $xoopsDB->prefix('formulize_' . $handleArray['id_form']) . "<br>";
+                            }
+                        }
+                    }
+                }
 		print "DB updates completed.  result: OK";
 	}
 }
@@ -1547,7 +1565,7 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
             }
         }
     }
-    
+        
 // THE 4.0 SERIES WILL NEED A SEPARATE PATCH ROUTINE.  THERE IS TOO MUCH BAGGAGE IN HERE TO KEEP CARRYING IT AROUND.  ESPECIALLY THE DATATYPE CONVERSION STUFF.
 function patch31() {
 
@@ -1845,7 +1863,7 @@ if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables))
                 }
 		$array1 = $xoopsDB->fetchArray($result1); // for 2.1 we were checking explicitly whether we needed to add these fields.  But for 2.2 we just ran the SQL and caught the error appropriately in the condition below (ie: looked for failure for 'commonvalue' and ignored it) -- although ele_disabled was added this way...clearly we're not consistent about the patch approach!
 		
-		if(!array_key_exists('ele_desc',$array1)) {
+		if(!array_key_exists('ele_desc',$array1)) { 4
 			$sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_desc` text NULL";
 		}
 		if(!array_key_exists('ele_delim',$array1)) {

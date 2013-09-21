@@ -115,6 +115,18 @@ if($databaseElement AND $_GET['ele_id']) { // ele_id is only in the URL when we'
                   $dataType = getRequestedDataType();
             }
             break;
+			    case 'select':
+                if ($ele_value[1] == 0 AND $element->isLinked) {
+                    $dataType = 'bigint';
+                } else {
+                    if (property_exists($element, 'overrideDataType') AND $element->overrideDataType != "") {
+                        $dataType = $element->overrideDataType;
+                    } else {
+                        $dataType = getRequestedDataType();
+                    }
+                }
+                
+                break;
       default:
             // check for custom type and if there's a database type override specified
             // if not, then get requested type

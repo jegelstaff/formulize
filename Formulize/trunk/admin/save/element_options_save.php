@@ -119,12 +119,15 @@ if($ele_type == "checkbox") {
 
 if($ele_type == "select") {
   if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
+   // select box is linked
+      $linked = TRUE;
     global $xoopsDB;
     $sql_link = "SELECT ele_caption, id_form, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
 		$res_link = $xoopsDB->query($sql_link);
 		$array_link = $xoopsDB->fetchArray($res_link);
 		$processedValues['elements']['ele_value'][2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
   } else {
+        $linked = FALSE;
     list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
     foreach($_POST['ele_value'] as $id=>$text) {
 			if($text !== "") {
@@ -142,7 +145,18 @@ if($ele_type == "select") {
     $processedValues['elements']['ele_value'][0] = 1;
   }
   $processedValues['elements']['ele_value'][1] = $_POST['elements_multiple'];
-  
+    // if there is a change, need to adjust the database!!
+    $ele_value = $element->getVar('ele_value');
+    if (isset($ele_value[1]) AND $linked AND $ele_value[1] != $_POST['elements_multiple']) {
+        if ($ele_value[1] == 0) {
+            $result = convertSelectBoxToMulti($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
+        } else {
+            $result = convertSelectBoxToSingle($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
+        }
+        if (!$result) {
+            print "Could not convert select boxes from multiple options to single option or vice-versa.";
+        }
+    }
   $processedValues['elements']['ele_value'][3] = implode(",", $_POST['element_formlink_scope']);
   
   // handle conditions
