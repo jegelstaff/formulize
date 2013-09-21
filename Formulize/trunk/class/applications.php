@@ -31,6 +31,85 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 
 global $xoopsDB;
 
+    class formulizeApplicationMenuLink extends XoopsObject {
+        
+        function formulizeApplicationMenuLink() {
+            $this->XoopsObject();
+            $this->initVar("menu_id", XOBJ_DTYPE_INT, NULL, false);
+            $this->initVar("appid", XOBJ_DTYPE_INT, NULL, false);
+            $this->initVar("screen", XOBJ_DTYPE_TXTBOX, NULL, false,11);
+            $this->initVar("rank", XOBJ_DTYPE_INT, NULL, false);
+            $this->initVar("url", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+            $this->initVar("link_text", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+            $this->initVar("text", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+            $this->initVar("permissions", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+        }
+    }
+    
+    class formulizeApplicationMenuLinksHandler  {
+        
+        var $db;
+        function formulizeApplicationMenuLinksHandler(&$db) {
+            $this->db =& $db;
+        }
+        
+        function get($id, $all = false) {
+            global $xoopsDB;
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+            $linksArray = array();	
+            
+            global $xoopsUser;
+            $groupSQL = "";
+            
+            $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0 => XOOPS_GROUP_ANONYMOUS);
+            if(!$all){
+                foreach($groups as $group) {
+                    if(strlen($groupSQL) == 0){
+                        $groupSQL .= " AND ( perm.group_id=". $group . " ";
+                    }else{
+                        $groupSQL .= " OR perm.group_id=". $group . " ";
+                    }
+                }
+                $groupSQL .= ")";
+            }
+            
+            $sql = 'SELECT links.*, group_concat(group_id separator \',\') as permissions FROM '.$xoopsDB->prefix("formulize_menu_links").' as links ';
+			$sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' as perm ON links.menu_id = perm.menu_id ';
+			$sql .= ' WHERE appid = ' . $id. ' '. $groupSQL .' GROUP BY menu_id,appid,screen,rank,url,link_text ORDER BY rank';
+            
+            //echo $sql;
+            
+            if ($result = $this->db->query($sql)) { 
+                
+                while($resultArray = $this->db->fetchArray($result)) {			
+                    $newLinks = new formulizeApplicationMenuLink();
+                    $newLinks->assignVars($resultArray);
+                    array_push($linksArray, $newLinks);
+                }			
+            }
+            
+            foreach($linksArray as $menulink) {
+                
+                $menutext =	$menulink->getVar('link_text');
+                
+                if($menutext == ""){
+                    $id = explode("=",$menulink->getVar('screen'));
+                    if(strpos($menulink->getVar('screen'),"fid=") == 0){
+                        $menutext = $form_handler->get($id[1])->getVar('title');
+                    }else{
+                        $menutext = $screen_handler->get($id[1])->getVar('title');
+                    }	
+                }
+                
+                $menulink->assignVar('text',$menutext);
+            }
+            
+            return $linksArray;
+        }
+    }
+        
+    
 class formulizeApplication extends XoopsObject {
   
   function formulizeApplication() {
@@ -39,6 +118,8 @@ class formulizeApplication extends XoopsObject {
     $this->initVar("name", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
     $this->initVar("description", XOBJ_DTYPE_TXTAREA);
     $this->initVar("forms", XOBJ_DTYPE_ARRAY);
+    $this->initVar("links", XOBJ_DTYPE_ARRAY);
+    $this->initVar("all_links", XOBJ_DTYPE_ARRAY);  
   }
   
 }
@@ -113,6 +194,10 @@ class formulizeApplicationsHandler {
         $newApp = new formulizeApplication();
         $newApp->assignVars($resultArray);
         $newAppId = $newApp->getVar('appid');
+        $menulinks = $links_handler->get($newAppId); // JAKEADDED			
+        $newApp->assignVar('links', serialize($menulinks)); // JAKE ADDED
+        $menulinks = $links_handler->get($newAppId,true); // JAKEADDED			
+        $newApp->assignVar('all_links', serialize($menulinks));  
         // add in the forms
         $sql = 'SELECT link.fid FROM '.$xoopsDB->prefix("formulize_application_form_link").' as link, '.$xoopsDB->prefix("formulize_id").' as forms WHERE link.appid = '.$newAppId.' AND forms.id_form = link.fid ORDER BY forms.desc_form';
         $foundForms = array();
@@ -270,7 +355,83 @@ class formulizeApplicationsHandler {
     }
     return $isError ? false : true;
   }
-  
+    function getMenuLinksForApp($appid,$all=false){
+        global $xoopsDB;
+        $links_handler = xoops_getmodulehandler('ApplicationMenuLinks', 'formulize');
+        return $links_handler->get($appid,$all); 
+    }
+    
+    function insertMenuLinks($appid,$menuitems){
+        global $xoopsDB;
+        $links = explode("~~",$menuitems);
+        $i = 0;
+        $menuids = array(); //list of ids not to delete
+        foreach($links as $link){
+            //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids
+            $linkValues = explode("::",$link);
+            
+            if($linkValues[0] == "null"){
+                //add new menu
+                $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'".$linkValues[2]."',".$i.",'".$linkValues[3]."','".$linkValues[1]."');";
+                if(!$result = $xoopsDB->query($insertsql)) {
+                    exit("Error inserting Menu Item. SQL dump:<br>" . $insertsql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                }else{
+                    $menuids[] = mysql_insert_id();
+                    if($linkValues[4] != "null" and $linkValues[4].length > 0){
+                        $groupsThatCanView = explode(",",$linkValues[4]);
+                        $permissionsql = "";
+                        foreach($groupsThatCanView as $groupid) {
+                            if($permissionsql != ""){
+                                $permissionsql += ",(null,". mysql_insert_id().",". $groupid.")";
+                            }else{
+                                $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,". mysql_insert_id().",". $groupid.")";
+                            }
+                        }
+                        if(!$result = $xoopsDB->query($permissionsql)) {
+                            exit("Error inserting Menu Item permissions.".$linkValues[4]." SQL dump:<br>" . $permissionsql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                        }
+                    }
+                }
+                
+            }else{
+                //update existing
+                $updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET screen= '".$linkValues[2]."', rank=".$i.", url= '".$linkValues[3]."', link_text='".$linkValues[1]."' where menu_id=".$linkValues[0]." AND appid=".$appid.";";
+                if(!$result = $xoopsDB->query($updatesql)) {
+                    exit("Error updating Menu Item. SQL dump:<br>" . $updatesql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                }else{
+                    //delete existing permissions for this menu item
+                    $deletepermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE appid=".$appid." AND menu_id=".$linkValues[0];
+                    $result = $xoopsDB->query($deletepermissions);
+                    if($linkValues[4] != "null" and $linkValues[4].length > 0){
+                        $groupsThatCanView = explode(",",$linkValues[4]);
+                        $permissionsql2 = "";
+                        foreach($groupsThatCanView as $groupid) {
+                            if($permissionsql2 != ""){
+                                $permissionsql2 += ",(null,". $linkValues[0].",". $groupid.")";
+                            }else{
+                                $permissionsql2 = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,". $linkValues[0].",". $groupid.")";
+                            }
+                        }
+                        if($permissionsql2.length > 4){
+                            if(!$result = $xoopsDB->query($permissionsql2)) {
+                                exit("Error updating Menu Item permissions.".$linkValues[4]." SQL dump:<br>" . $permissionsql2 . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                            }
+                        }
+                    }
+                }
+                $menuids[] = $linkValues[0];
+            }
+            $i++;
+        }
+        $deletemenuitems = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_links")."` WHERE appid=".$appid." AND menu_id not in (".implode(",",$menuids).");";
+        $deletemenupermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE appid=".$appid." AND menu_id not in (".implode(",",$menuids).");";
+        if(!$result = $xoopsDB->query($deletemenuitems)) {
+            //no menu items deleted
+        }else{
+            $xoopsDB->query($deletemenupermissions);
+        }
+    }
 }
+
 
 
