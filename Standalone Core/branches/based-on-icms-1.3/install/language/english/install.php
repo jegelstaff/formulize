@@ -123,7 +123,7 @@ define( "ALL_PERM_OK", "All Permissions are correct." );
 
 define( "READY_CREATE_TABLES", "No ImpressCMS tables were detected.<br />The installer is now ready to create the ImpressCMS system tables.<br />Press <em>next</em> to proceed." );
 define( "XOOPS_TABLES_FOUND", "The ImpressCMS system tables already exists in your database.<br />Press <em>next</em> to go to the next step." ); // L131
-define( "READY_INSERT_DATA", "The installer is now ready to insert initial data into your database." );
+define( "READY_INSERT_DATA", "The installer is now ready to insert initial data into your database.<br />THIS COULD TAKE A REALLY LONG TIME DEPENDING ON YOUR SERVER SOFTWARE AND CONFIGURATION!" );
 define( "READY_SAVE_MAINFILE", "The installer is now ready to save the specified settings to <em>mainfile.php</em>.<br />Press <em>next</em> to proceed." );
 define( "DATA_ALREADY_INSERTED", "ImpressCMS data is stored in your database already. No further data will be stored by this action.<br />Press <em>next</em> to go to the next step." );
 

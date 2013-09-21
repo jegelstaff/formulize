@@ -44,6 +44,7 @@ session_unset();
 session_destroy();
 
 // MODIFIED BY FREEFORM SOLUTIONS TO ADD IN THE CUSTOM CONFIGURATION FOR THE FORMULIZE STANDALONE VERSION
+set_time_limit(0);
 include_once './class/dbmanager.php';
 $dbm = new db_manager();
 $dbm->db->connect();

@@ -56,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 	$result = $dbm->queryFromFile('./sql/'.XOOPS_DB_TYPE.'.data.sql');
 	$result = $dbm->queryFromFile('./language/'.$language.'/'.XOOPS_DB_TYPE.'.lang.data.sql');
 	$group = make_groups( $dbm );
+	set_time_limit(0);
 	$result = make_data( $dbm, $cm, $adminname, $adminlogin_name, $adminpass, $adminmail, $language, $adminsalt, $group );
 	$content = $dbm->report();
 } else {
