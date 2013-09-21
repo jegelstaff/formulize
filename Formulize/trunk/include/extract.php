@@ -561,7 +561,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    if($linkcommonvalue[$id]) { // common value
 		      $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "`=f$id.`" . $joinHandles[$linktargetids[$id]]."`";
 		    } elseif($linktargetids[$id]) { // linked selectbox
-			 if($target_ele_value = formulize_isLinkedSelectBox($linktargetids[$id])) {
+		      
+		      
+		      if($target_ele_value = formulize_isLinkedSelectBox($linktargetids[$id])) {
                             if ($target_ele_value[1]) {
                                 // multiple values allowed
                                 $newJoinText = " f$id.`" . $joinHandles[$linktargetids[$id]] . "` LIKE CONCAT('%,',main.entry_id,',%')";
@@ -580,7 +582,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                                 $newJoinText = " main.`" . $joinHandles[$linkselfids[$id]] . "` = f$id.entry_id";
                             }
                         }
-			  
+		      
+		      
+		      
 		    } else { // join by uid
 		      $newJoinText = " main.creation_uid=f$id.creation_uid";
 		    }
@@ -1366,9 +1370,13 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     } else {
                         $search_column = "source.`" . $sourceMeta[1] . "`";
                     }
-                    $newWhereClause = " EXISTS (SELECT 1 FROM ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." AS source".
-                        " WHERE $queryElement LIKE CONCAT('%,',source.entry_id,',%') AND " . $search_column . $operator .
-                        $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . ")";
+		    $queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
+                    $ele_value = $queryElementMetaData['ele_value'];
+                    if ($ele_value[1]) {
+                         $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement LIKE CONCAT('%,',source.entry_id,',%') AND " . $search_column . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . ")";
+                    } else {
+                         $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement = source.entry_id AND " . $search_column . $operator . $quotes . $likebits . mysql_real_escape_string($ifParts[1]) . $likebits . $quotes . ")";
+                    }
                 }
             }
                     // usernames/fullnames boxes
