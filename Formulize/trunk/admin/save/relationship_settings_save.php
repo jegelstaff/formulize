@@ -103,7 +103,15 @@ function deletelink($fl_id, $cf) {
 	global $xoopsDB;
 
   $success = true;
-
+	$sql = "SELECT fl_key1,fl_key2 FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_id='$fl_id'";
+	if(!$res = $xoopsDB->query($sql)) {
+		
+	}else{
+		$elementIDs = $xoopsDB->fetchArray($res);
+		deleteIndex($elementIDs['fl_key1']);
+		deleteIndex($elementIDs['fl_key2']);
+	}
+    
 	$deleteq = "DELETE FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_id='$fl_id'";
 	if(!$res = $xoopsDB->queryF($deleteq)) {
 		print "Error: link deletion unsuccessful";
@@ -176,6 +184,13 @@ function updatelinks($fl_id, $value) {
 	} else {
 		$common = $processedValues['relationships']['preservecommon'.$fl_id] == $value ? 1 : 0;
 	}
+    if($keys[0] > 0){
+		updateIndex($keys[0]);
+	}
+	
+	if($keys[1] > 0){
+		updateIndex($keys[1]);
+	}
 	
 	$sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_key1='" . $keys[0] . "', fl_key2='" . $keys[1] . "', fl_common_value='$common' WHERE fl_id='$fl_id'";
 	if(!$res = $xoopsDB->query($sql)) {
@@ -190,4 +205,26 @@ function updatedisplays($fl_id, $value) {
 		print "Error: could not update unified display setting for framework link $fl_id";
 	}
 }
+    
+    function updateIndex($elementID){
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
+        $elementObject = $element_handler->get(intval($elementID));
+        
+        if(is_object($elementObject)){
+            if(strlen($elementObject->has_index()) == 0){
+                $elementObject->createIndex();
+            }
+        }
+    }
+    
+    function deleteIndex($elementID){
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
+        $elementObject = $element_handler->get(intval($elementID));
+        if(is_object($elementObject)){
+            $originalName = $elementObject->has_index();
+            if(strlen($originalName) > 0){
+                $elementObject->deleteIndex($originalName);
+            }
+        }
+    }
 ?>
