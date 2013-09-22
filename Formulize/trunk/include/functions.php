@@ -4907,7 +4907,8 @@ function generateHiddenElements($elements, $entry) {
     }
   }
   return $hiddenElements;
-  
+}
+  }
 // Converts linked select boxes from single option only (big int)
 // to a multi-option allowed select box with preceding and trailing commas
 function convertSelectBoxToMulti($table, $column) {
@@ -4928,6 +4929,7 @@ function convertSelectBoxToMulti($table, $column) {
     
 }
 
+
 // Converts a linked select box from multi-option allowed (with preceding and trailing
 // commas) to a single option allowed select box with data type bigint.
 function convertSelectBoxToSingle($table, $column) {
@@ -4947,3 +4949,4 @@ function convertSelectBoxToSingle($table, $column) {
     return true;
     
 }
+
