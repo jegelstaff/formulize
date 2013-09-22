@@ -95,7 +95,10 @@ global $xoopsDB;
                 
                 if($menutext == ""){
                     $id = explode("=",$menulink->getVar('screen'));
-                    if(strpos($menulink->getVar('screen'),"fid=") == 0){
+                    
+                    if($menulink->getVar('screen')=="") {   //handle external url
+
+            			$menutext = $menulink->getVar('url');                    } elseif(strpos($menulink->getVar('screen'),"fid=") !== false ){
                         $menutext = $form_handler->get($id[1])->getVar('title');
                     }else{
                         $menutext = $screen_handler->get($id[1])->getVar('title');
@@ -188,6 +191,9 @@ class formulizeApplicationsHandler {
         $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' ORDER BY name';  
       }
     }
+      
+    $links_handler = xoops_getmodulehandler('ApplicationMenuLinks', 'formulize'); // JAKEADDED 
+
     // query the DB for the ids we're supposed to
     if ($result = $this->db->query($sql)) { 
       while($resultArray = $this->db->fetchArray($result)) {

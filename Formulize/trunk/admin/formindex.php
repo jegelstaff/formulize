@@ -1560,8 +1560,10 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
                     $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,". mysql_insert_id().",". $groupid.")";
                 }
             }
-            if(!$result = $xoopsDB->query($permissionsql)) {
-                exit("Error inserting Menu permissions. SQL dump:<br>" . $permissionsql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+            if ($permissionsql){
+                if(!$result = $xoopsDB->query($permissionsql)) {
+                    exit("Error inserting Menu permissions. SQL dump:<br>" . $permissionsql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                }
             }
         }
     }
