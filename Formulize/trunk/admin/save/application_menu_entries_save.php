@@ -39,7 +39,7 @@
     
     $menuitems = $_POST['menu_items'];
     
-    if($menuitems.length > 0){
+    if(strlen($menuitems) > 0){
         $application_handler->insertMenuLinks($appid, $menuitems);
     }
     
