@@ -4606,6 +4606,7 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
                     $conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE `$targetSourceHandle` " . $filterOps[$filterId] . $quotes . $likebits . $filterTermToUse . $likebits . $quotes . ") ";
                     $newFilterOps = array($filterId=>'=');
 					}
+					}
 		  if(substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)])) {
 		    $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntry ";
 		  }
@@ -4908,7 +4909,7 @@ function generateHiddenElements($elements, $entry) {
   }
   return $hiddenElements;
 }
-  }
+  
 // Converts linked select boxes from single option only (big int)
 // to a multi-option allowed select box with preceding and trailing commas
 function convertSelectBoxToMulti($table, $column) {
