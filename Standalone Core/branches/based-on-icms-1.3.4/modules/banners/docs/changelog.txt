@@ -1,0 +1,28 @@
+=== Banners 1.0 Final ===
+Release data: 18 Sept 2011
+Revision: 22690
+
+'''Fixed'''
+* #383 (addons): % is now calculated correctly (phoenyx)
+* #391 (addons): One userid may only be assigned to one client (phoenyx)
+* #400 (addons): Banners larger than 500x500 pixels can now be uploaded (phoenyx)
+
+'''Added'''
+* #384 (addons): a bannerclick is counted only once per banner and session (phoenyx)
+* #392 (addons): added a filter by client for the list of banners in the ACP (phoenyx)
+* #401 (addons): added the field "state" for clients (phoenyx)
+* #506: added support for HTML banners (phoenyx)
+* #507: added support for FLASH banners (phoenyx)
+* #508: added config option to specify banner types that are available for clients (phoenyx)
+* #509: clients have to be approved before they can upload banners (phoenyx)
+
+'''Improved'''
+* #393 (addons): Less queries are required to built the list of banners in the ACP (phoenyx)
+* #500: cleaning up the code / refactoring for ImpressCMS 1.3 (phoenyx)
+* #510: You cannot submit banners on the frontend as long as there are no banner positions (phoenyx)
+
+=== Banners 1.0 Alpha ===
+Release date: 12/20/2009
+Revision: 9010
+
+* First public release of the module (phoenyx)

@@ -1,0 +1,10 @@
+<{if $banners_clientform}>
+<div class="banners-form outer">
+  <h2 class="head">
+    <a href="#" onclick ="jQuery('div.banners-client-form').toggle(400);"><img src="images/toggle.gif" alt="" /></a>&nbsp;<{$lang_clientform_title}>
+  </h2>
+  <div class="banners-client-form"<{if $hideForm}> style="display:none;"<{/if}>>
+    <{includeq file='db:system_common_form.html' form=$banners_clientform}>
+  </div>
+</div>
+<{/if}>

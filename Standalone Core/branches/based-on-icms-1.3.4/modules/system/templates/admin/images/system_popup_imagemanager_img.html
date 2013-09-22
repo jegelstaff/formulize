@@ -1,0 +1,33 @@
+<div id="img<{$i}>" class="imanager_image_box">
+  <span class="imanager_image_img"><img src="<{$image.src}>" title="<{$image.nicename}>" /></span>
+  <span class="imanager_image_label"><{$image.display_nicename}></span>
+  <span class="imanager_image_info">
+    <b><{$smarty.const.IMANAGER_FILE}>:</b> <{$image.name}><br />
+    <b><{$smarty.const.IMANAGER_SIZE}>:</b> <{$image.size}><br />
+    <b><{$smarty.const.IMANAGER_WIDTH}>:</b> <{$image.width}>px<br />
+    <b><{$smarty.const.IMANAGER_HEIGHT}>:</b> <{$image.height}>px
+  </span>
+  <span class="imanager_image_btns">
+    <{$image.preview_link}>
+    <a href="#" onclick="showDiv('edit_image',<{$i}>); document.anchors.item('edit_image<{$i}>').scrollIntoView(); return false;" title="<{$lang_imanager_cat_edit}>"><img src="<{$smarty.const.ICMS_IMAGES_SET_URL}>/actions/edit.png" alt="<{$lang_imanager_cat_edit}>" /></a>
+    <a href="#" onclick="showDiv('clone_image',<{$i}>); document.anchors.item('clone_image<{$i}>').scrollIntoView(); return false;" title="<{$lang_imanager_cat_clone}>"><img src="<{$smarty.const.ICMS_IMAGES_SET_URL}>/actions/editcopy.png" alt="<{$lang_imanager_cat_clone}>" /></a>
+    <{if $image.hasextra_link}>
+      <a href="#" onclick="<{$image.editor_link}>" title="<{$lang_imanager_img_editor}>"><img src="<{$smarty.const.ICMS_IMAGES_SET_URL}>/actions/edit_picture.png" alt="<{$lang_imanager_img_editor}>"/></a>
+    <{/if}>
+    <a href="?op=delfile&amp;image_id=<{$i}>&imgcat_id=<{$image.categ_id}>&target=<{$target}>&type=<{$type}>" title="<{$smarty.const._DELETE}>"><img src="<{$smarty.const.ICMS_IMAGES_SET_URL}>/actions/editdelete.png" alt="<{$smarty.const._DELETE}>" /></a>
+    <{if $type == "ibrow"}>
+      <a href="javascript:void(0)" onclick="addItem('<{$image.url_src}>', '<{$image.nicename}>', '<{$target}>', '<{$image.categ_id}>', '<{$xoops_url}>')" title="<{$lang_select}>"><img src="<{$smarty.const.ICMS_IMAGES_SET_URL}>/actions/wizard.png" alt="<{$lang_select}>" /></a>
+    <{elseif $type == "iman"}>
+      <a href="javascript:void(0)" onclick="changeDisplay('selimage_<{$i}>'); return false;" title="<{$lang_select}>">
+        <img src="<{$smarty.const.ICMS_IMAGES_SET_URL}>/actions/wizard.png" alt="<{$lang_select}>" />
+        <div id="selimage_<{$i}>" class="ed_block_box" align="center" style="width:72px;">
+          <a href="#" onclick="javascript:appendCode('<{$image.lcode}>','<{$target}>');"><img src="<{$xoops_url}>/images/alignleft.gif" alt="Left" /></a>
+          <a href="#" onclick="javascript:appendCode('<{$image.code}>','<{$target}>');"><img src="<{$xoops_url}>/images/aligncenter.gif" alt="Center" /></a>
+          <a href="#" onclick="javascript:appendCode('<{$image.rcode}>','<{$target}>');"><img src="<{$xoops_url}>/images/alignright.gif" alt="Right" /></a>
+        </div>
+      </a>
+    <{elseif $type == "tiny"}>
+      <a href="javascript:void(0)" onclick="addItem('<{$image.src}>', '<{$image.nicename}>', '<{$target}>', '<{$image.categ_id}>', '<{$xoops_url}>', 'tiny')" title="<{$lang_select}>"><img src="<{$smarty.const.ICMS_IMAGES_SET_URL}>/actions/wizard.png" alt="<{$lang_select}>" /></a>
+    <{/if}>
+  </span>
+</div>

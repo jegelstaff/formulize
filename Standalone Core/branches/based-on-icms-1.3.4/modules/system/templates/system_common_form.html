@@ -1,0 +1,29 @@
+<{$form.javascript}>
+<form id="<{$form.name}>" action="<{$form.action}>" method="<{$form.method}>" <{$form.extra}>>
+  <table style="width: 100%" class="outer" cellspacing="1">
+    <{if $form.title}><tr><th colspan="2"><{$form.title}></th></tr><{/if}>
+    <!-- start of form elements loop -->
+    <{foreach item=element from=$form.elements}>
+      <{if $element.section == true}>
+      <tr><th colspan="2"><{$element.body}></th></tr>
+      <{elseif $element.section_close == true}>
+      <tr><td class="even" colspan="2">&nbsp;</td></tr>
+      <{elseif $element.hidden != true}>
+      <tr id="<{$element.name}>_row">
+        <td class="head">
+        <label for='<{$element.name}>'><{$element.caption}> <{if $element.required}> <span style='color:#f00'>*</span><{/if}>
+        <{if $element.description}>
+        	<img class="helptip" style="float:<{$smarty.const._GLOBAL_RIGHT}>;padding-top: 2px;" title="<{$smarty.const._MD_AM_HELP_TIP}>" alt="<{$smarty.const._MD_AM_HELP_TIP}>" src="<{$smarty.const.ICMS_IMAGES_SET_URL}>/actions/acp_help.png" alt="<{$smarty.const._MD_AM_HELP_TIP}>">
+        	<span class="helptext" style="display: none;"><{$element.description}></span>
+        <{/if}>
+        </label>
+        </td>
+        <td class="<{cycle values="even,odd"}>"><{$element.body}></td>
+      </tr>
+      <{else}>
+      <{$element.body}>
+      <{/if}>
+    <{/foreach}>
+    <!-- end of form elements loop -->
+  </table>
+</form>

@@ -1,0 +1,5 @@
+<{if $banners_client_title}><h1><{$banners_client_title}></h1><{/if}>
+<{if $banners_client_info}><p><{$banners_client_info}></p><{/if}>
+<{if $banners_client_table}><{$banners_client_table}><{/if}>
+<{if $error}><p class="errorMsg"><{$error}></p><{/if}>
+<{if $addclient}><{includeq file='db:system_common_form.html' form=$addclient}><{/if}>

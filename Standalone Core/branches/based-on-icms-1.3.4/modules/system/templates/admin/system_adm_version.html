@@ -1,0 +1,109 @@
+<div class="CPbigTitle" style="background-image: url(<{$icms_url}>/modules/system/admin/version/images/version_big.png)"><{$smarty.const._AM_VERSION_TITLE}></div><br />
+
+<div class="head" style="padding: 2px; margin-bottom: 5px;">
+	<strong><{$smarty.const._AM_VERSION_YOUR_VERSION}></strong> <{$your_version}>
+</div>
+
+<{if $update_available}>
+    <div class="even">
+	    <div class="errorMsg">
+	        <strong><{$smarty.const._AM_VERSION_UPDATE_NEEDED}></strong><br />
+	        <br />
+	        <{$smarty.const._AM_VERSION_MOREINFO}><br />
+	        <h2><a href="<{$latest_url}>" rel="external"><{$latest_version}></a></h2>
+		<{if $not_a_final_comment}> 	 
+			<div><strong><{$smarty.const._AM_VERSION_WARNING}></strong>: <{$smarty.const._AM_VERSION_WARNING_NOT_A_FINAL}></div> 	 
+		<{/if}>
+	    </div>
+    </div>
+
+    <div class="odd">
+	    <h2><{$latest_version}> <{$smarty.const._AM_VERSION_CHANGELOG}></h2>
+   		<p><{$latest_changelog}></p>
+    </div>
+<{else}>
+	<div class="even">
+		<{if $errors}>
+			<div class="errorMsg">
+				<{$errors}>
+			</div>
+		<{else}>    
+        	<div class="successMsg"><strong><{$smarty.const._AM_VERSION_NO_UPDATE}></strong></div>
+        <{/if}>
+    </div>
+<{/if}>
+<a href="#" onclick ="jQuery('div#system_info').slideToggle();" name='show_info'  id='show_info' value=''><{$smarty.const._AM_VERSION_SYSTEM_INFO}></a>
+<div class="system_info" name="system_info" id="system_info" style="padding: 2px; margin-bottom: 5px; display: none;">
+    <table>
+  <tbody>
+    <tr>
+      <td><{$smarty.const._AM_VERSION_PHP_SYSTEM}></td>
+      <td><{$lang_php_version}></td>
+    </tr>
+    <tr>
+      <td><{$smarty.const._AM_VERSION_MYSQL_SYSTEM}></td>
+      <td><{$lang_mysql_version}></td>
+    </tr>
+    <tr>
+      <td><{$smarty.const._AM_VERSION_API_SYSTEM}></td>
+      <td><{$lang_server_api}></td>
+    </tr>
+    <tr>
+      <td><{$smarty.const._AM_VERSION_OP_SYSTEM}></td>
+      <td><{$lang_os_name}></td>
+    </tr>
+    <tr>
+      <td>safe_mode</td>
+      <td><{$safe_mode}></td>
+    </tr>
+    <tr>
+      <td>register_globals</td>
+      <td><{$register_globals}></td>
+    </tr>
+    <tr>
+      <td>magic_quotes_gpc</td>
+      <td><{$magic_quotes_gpc}></td>
+    </tr>
+    <tr>
+      <td>allow_url_fopen</td>
+      <td><{$allow_url_fopen}></td>
+    </tr>
+    <tr>
+      <td>fsockopen</td>
+      <td><{$fsockopen}></td>
+    </tr>
+    <tr>
+      <td>allow_call_time_pass_reference</td>
+      <td><{$allow_call_time_pass_reference}></td>
+    </tr>
+    <tr>
+      <td>post_max_size</td>
+      <td><{$post_max_size}></td>
+    </tr>
+    <tr>
+      <td>max_input_time</td>
+      <td><{$max_input_time}></td>
+    </tr>
+    <tr>
+      <td>output_buffering</td>
+      <td><{$output_buffering}></td>
+    </tr>
+    <tr>
+      <td>max_execution_time</td>
+      <td><{$max_execution_time}></td>
+    </tr>
+    <tr>
+      <td>memory_limit</td>
+      <td><{$memory_limit}></td>
+    </tr>
+    <tr>
+      <td>file_uploads</td>
+      <td><{$file_uploads}></td>
+    </tr>
+    <tr>
+      <td>upload_max_filesize</td>
+      <td><{$upload_max_filesize}></td>
+    </tr>
+  </tbody>
+</table>
+</div>

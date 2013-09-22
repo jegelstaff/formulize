@@ -1,0 +1,261 @@
+<{include file="db:profile_header.html"}>
+<{if $profile_friendshipform}>
+<{if $hideForm}>
+<div class="profile-form outer">
+  <h2 class="head">
+    <a href="#add-friend" onclick ="jQuery('div.profile-friendship-form').toggle(400);" name="add-friend"><img src="images/toggle.png" alt="" />&nbsp;<{$lang_friendshipform_title}></a>
+  </h2>
+  <div class="profile-friendship-form" style="display: none">
+    <{includeq file='db:system_common_form.html' form=$profile_friendshipform}>
+  </div>
+</div>
+<{else}>
+<{includeq file='db:system_common_form.html' form=$profile_friendshipform}>
+<{/if}>
+<{/if}>
+<{if $user_name_header || $isOwner || $allow_profile_general || $allow_profile_contact || $allow_profile_stats || ($allow_profile_usercontributions && $modules|count > 0)}>
+<div class="profile-profile-group1">
+  <{if $user_name_header}>
+  <div id="profile-profile-visual" class="outer">
+    <h3 class="profile-profile-title head">
+      <{if $isOwner || $isAdmin}><a href="configs.php?uid=<{$uid_owner}>"><img class="profile-nav-bar-icon" src="images/configs.gif" alt="" /></a><{/if}>
+      <{if !$isAnonym && !$isOwner}><a href="<{$icms_url}>/pmlite.php?send2=1&amp;to_userid=<{$uid_owner}>" class="profile-pm"></a><{/if}>
+      <{$user_name_header}>
+    </h3>
+    <{if $allow_pictures}>
+    <div id="profile-profile-avatar">
+      <{if $user_avatar}>
+      <img src="<{$user_avatar}>" alt="" />
+      <{if $isOwner && !$gravatar}>
+      <br />
+      <form action="<{$icms_url}>/modules/<{$icms_dirname}>/pictures.php" method="post" id="avatarform" class="profile-quickform">
+        <input type="hidden" value="delavatar" name="op" />
+        <{$token}>
+        <input name="submit" type="image" alt="<{$lang_delete}>" title="<{$lang_delete}>" src="<{$icms_url}>/images/crystal/actions/editdelete.png" style="vertical-align:middle" />
+      </form>
+      <{elseif $gravatar && $allow_avatar_upload}>
+      <p><{$lang_selectavatar}></p>
+      <{/if}>
+      <{else}>
+      <{if $isOwner && $allow_avatar_upload}><a href="<{$icms_url}>/modules/<{$icms_dirname}>/pictures.php"><img src="images/noavatar.gif" alt="" /></a><p><{$lang_selectavatar}></p>
+      <{else}>
+      <img src="images/noavatar.gif" alt="" />
+      <{/if}>
+      <{/if}>
+    </div>
+    <{/if}>
+  </div>
+  <{/if}>
+  <{if $isOwner}>
+  <div id="profile-profile-visitors" class="outer">
+    <h3 class="head"><{$lang_visitors}></h3>
+    <{if $visitors}>
+    <{cycle values='even,odd' print=false reset=true advance=false}>
+    <{section name=i loop=$visitors}>
+    <p class="<{cycle values='even,odd'}>">&raquo; <a href=index.php?uid=<{$visitors[i].uid}>><{$visitors[i].uname}></a> <small>(<{$visitors[i].time}>)</small></p>
+    <{/section}>
+    <{/if}>
+  </div>
+  <{/if}>
+  <{foreach item=category from=$fields}>
+  <div class="profile-profile-details outer">
+    <{cycle values='even,odd' print=false reset=true advance=false}>
+    <h3 class="profile-profiletitle head"><{$category.title}></h3>
+    <{foreach item=field from=$category.fields}>
+    <p class="<{cycle values='even,odd'}>"><{$field.image}><span class="profile-profileinfo-label"><{$field.title}>:</span><span class="profile-profileinfo-value"><{$field.value}></span></p>
+    <{/foreach}>
+  </div>
+  <{/foreach}>
+  <{if $allow_profile_usercontributions && $modules|count > 0}>
+  <div id="profile-profile-search-results" class="outer">
+    <h3 class="profile-profiletitle head"><{$lang_usercontributions}></h3>
+    <{foreach item=module from=$modules name="search_results"}>
+    <div class="profile-profile-search-module" id="profile-profile-search-module-<{$smarty.foreach.search_results.iteration}>" >
+      <h4 class="profile-profiletitle head">
+        <a class="profile-profile-search-module-title" id="profile-profile-search-module-title-<{$smarty.foreach.search_results.iteration}>" onclick ="$('#profile-profile-search-module-results-<{$smarty.foreach.search_results.iteration}>').toggle(400);"><img src="images/toggle.png" alt="" /></a>
+        <{$module.name}>
+      </h4>
+      <div class="profile-profile-search-module-results" id="profile-profile-search-module-results-<{$smarty.foreach.search_results.iteration}>" style="display: none">
+        <{cycle values='even,odd' print=false reset=true advance=false}>
+        <{foreach item=result from=$module.results}>
+        <p class="<{cycle values='even,odd'}>">
+          <img src="<{$icms_url}>/<{$result.image}>" alt="<{$module.name}>" />
+          <strong><a href="<{$result.link}>"><{$result.title}></a></strong>
+          <small>(<{$result.time}>)</small>
+        </p>
+        <{/foreach}>
+        <p><{$module.showall_link}></p>
+      </div>
+    </div>
+    <{/foreach}>
+  </div>
+  <{/if}>
+</div>
+<{/if}>
+<{if $allow_pictures || $allow_audio || $allow_videos || $allow_friendship || $allow_tribes}>
+<div class="profile-profile-group2">
+  <{if $allow_pictures}>
+  <div id="profile-profile-pictures" class="outer">
+    <h3 class="profile-profiletitle head">
+      <a href="pictures.php?uid=<{$uid_owner}>"><img src="images/pictures.gif" alt="<{$lang_pictures_goto}>" /><{$lang_photos}></a>
+    </h3>
+    <{if $pictures|@count > 0}>
+    <{cycle values='even,odd' print=false reset=true advance=false}>
+    <table cellspacing="1" cellpadding="0"><tr>
+    <{section name=i loop=$pictures}>
+    <td class="profile-profile-picture <{cycle values="even,odd"}>">
+      <{$pictures[i].content}>
+    </td>
+    <{/section}>
+    </tr></table>
+    <div style="clear:both;"></div>
+    <{/if}>
+  </div>
+  <{/if}>
+  <{if $allow_tribes}>
+  <div id="profile-profile-tribes" class="outer">
+    <h3 class="head">
+      <a href="tribes.php?uid=<{$uid_owner}>"><img src="images/tribes.gif" alt="<{$lang_tribes_goto}>" /><{$lang_tribes}></a>
+    </h3>
+    <{if $tribes|@count > 0}>
+    <ul>
+      <{section name=i loop=$tribes}>
+      <li><{$tribes[i].itemLink}></li>
+      <{/section}>
+    </ul>
+    <{/if}>
+    <{if $tribes_approvals|@count > 0}>
+    <h3 class="head"><{$lang_approvals}></h3>
+    <ul>
+      <{section name=i loop=$tribes_approvals}>
+      <li>
+        <form action="<{$icms_url}>/modules/<{$icms_dirname}>/tribes.php?tribes_id=<{$tribes_approvals[i].tribes_id}>" method="post" class="profile-quickform">
+          <input type="hidden" value="<{$tribes_approvals[i].tribeuser_id}>" name="tribeuser_id" />
+          <input type="hidden" value="approved" name="action" />
+          <input type="hidden" value="1" name="store" />
+          <input type="hidden" value="edittribeuser" name="op" />
+          <{$token}>
+          <input class="image" name="submit" type="image" alt="<{$lang_approve}>" title="<{$lang_approve}>" src="<{$image_ok}>" style="vertical-align:middle" />
+        </form>
+        <form action="<{$icms_url}>/modules/<{$icms_dirname}>/tribes.php?tribes_id=<{$tribes_approvals[i].tribes_id}>" method="post" class="profile-quickform">
+          <input type="hidden" value="<{$tribes_approvals[i].tribeuser_id}>" name="tribeuser_id" />
+          <input type="hidden" value="approved" name="action" />
+          <input type="hidden" value="0" name="store" />
+          <input type="hidden" value="edittribeuser" name="op" />
+          <{$token}>
+          <input class="image" name="submit" type="image" alt="<{$lang_delete}>" title="<{$lang_delete}>" src="<{$image_cancel}>" style="vertical-align:middle" />
+        </form>
+        <{$tribes_approvals[i].uname}> (<{$tribes_approvals[i].tribe_itemLink}>)
+      </li>
+      <{/section}>
+    </ul>
+    <{/if}>
+    <{if $tribes_invitations|@count > 0}>
+    <h3 class="head"><{$lang_invitations}></h3>
+    <ul>
+      <{section name=i loop=$tribes_invitations}>
+      <li>
+        <form action="<{$icms_url}>/modules/<{$icms_dirname}>/tribes.php?tribes_id=<{$tribes_invitations[i].tribes_id}>" method="post" class="profile-quickform">
+          <input type="hidden" value="<{$tribes_invitations[i].tribeuser_id}>" name="tribeuser_id" />
+          <input type="hidden" value="accepted" name="action" />
+          <input type="hidden" value="1" name="store" />
+          <input type="hidden" value="edittribeuser" name="op" />
+          <{$token}>
+          <input class="image" name="submit" type="image" alt="<{$lang_accept}>" title="<{$lang_accept}>" src="<{$image_ok}>" style="vertical-align:middle" />
+        </form>
+        <form action="<{$icms_url}>/modules/<{$icms_dirname}>/tribes.php?tribes_id=<{$tribes_invitations[i].tribes_id}>" method="post" class="profile-quickform">
+          <input type="hidden" value="<{$tribes_invitations[i].tribeuser_id}>" name="tribeuser_id" />
+          <input type="hidden" value="accepted" name="action" />
+          <input type="hidden" value="0" name="store" />
+          <input type="hidden" value="edittribeuser" name="op" />
+          <{$token}>
+          <input class="image" name="submit" type="image" alt="<{$lang_delete}>" title="<{$lang_delete}>" src="<{$image_cancel}>" style="vertical-align:middle" />
+        </form>
+        <{$tribes_invitations[i].itemLink}>
+      </li>
+      <{/section}>
+    </ul>
+    <{/if}>
+  </div>
+  <{/if}>
+  <{if $allow_friendship}>
+  <div id="profile-profile-friends" class="outer">
+    <h3 class="head">
+      <a href="friendship.php?uid=<{$uid_owner}>"><img src="images/friends.gif" alt="<{$lang_friends_goto}>" /><{$lang_friends}></a>
+    </h3>
+    <{if $friends|@count > 0}>
+    <{cycle values='even,odd' print=false reset=true advance=false}>
+    <table cellspacing="1" cellpadding="0"><tr>
+    <{section name=i loop=$friends}>
+    <td class="profile-profile-friend <{cycle values="even,odd"}>">
+      <{if $friends[i].user_avatar}><{$friends[i].user_avatar}><br /><{/if}><{$friends[i].uname}>
+    <{/section}>
+    </tr></table>
+    <{/if}>
+    <{if $friends_pending|@count > 0}>
+    <h3 class="head"><{$lang_friends_pending}></h3>
+    <ul>
+      <{section name=i loop=$friends_pending}>
+      <li>
+        <form action="<{$icms_url}>/modules/<{$icms_dirname}>/index.php?uid=<{$uid}>" method="post" class="profile-quickform">
+          <input type="hidden" value="<{$friends_pending[i].friendship_id}>" name="friendship_id" />
+          <input type="hidden" value="2" name="status" />
+          <input type="hidden" value="editfriendship" name="op" />
+          <{$token}>
+          <input class="image" name="submit" type="image" alt="<{$lang_friendship_accept}>" title="<{$lang_friendship_accept}>" src="<{$image_ok}>" style="vertical-align:middle" />
+        </form>
+        <form action="<{$icms_url}>/modules/<{$icms_dirname}>/index.php?uid=<{$uid}>" method="post" class="profile-quickform">
+          <input type="hidden" value="<{$friends_pending[i].friendship_id}>" name="friendship_id" />
+          <input type="hidden" value="3" name="status" />
+          <input type="hidden" value="editfriendship" name="op" />
+          <{$token}>
+          <input class="image" name="submit" type="image" alt="<{$lang_friendship_reject}>" title="<{$lang_friendship_reject}>" src="<{$image_cancel}>" style="vertical-align:middle" />
+        </form>
+        <{$friends_pending[i].uname}>
+      </li>
+      <{/section}>
+    </ul>
+    <{/if}>
+  </div>
+  <{/if}>
+  <{if $allow_audio}>
+  <div id="profile-profile-audio" class="outer">
+    <h3 class="head">
+      <a href="audio.php?uid=<{$uid_owner}>"><img src="images/audio.gif" alt="<{$lang_audio_goto}>" /><{$lang_audio}></a>
+    </h3>
+    <{if $audio}>
+    <div class="profile-profile-audio even">
+      <{$audio.content}>
+    </div>
+    <{/if}>
+  </div>
+  <{/if}>
+  <{if $allow_videos}>
+  <div id="profile-profile-videos" class="outer">
+    <h3 class="head">
+      <a href="videos.php?uid=<{$uid_owner}>"><img src="images/video.gif" alt="<{$lang_video_goto}>" /><{$lang_videos}></a>
+    </h3>
+    <div id="profile-profile-video">
+    <{if $video}>
+    <div class="profile-profile-video even">
+      <{$video.content}>
+    </div>
+    <{/if}>
+    </div>
+  </div>
+  <{/if}>
+</div>
+<{/if}>
+<{if $user_name_header || $isOwner || $allow_profile_general || $allow_profile_contact || $allow_profile_stats || ($allow_profile_usercontributions && $modules|count > 0) || $allow_pictures || $allow_audio || $allow_videos || $allow_friendship || $allow_tribes}>
+<br style="clear:both;" />
+<{/if}>
+<{if $module_is_socialmode}>
+<div style="text-align:center;"><{$commentsnav}><{$lang_notice}></div>
+<{if $comment_mode == "flat"}>
+<{include file="db:system_comments_flat.html"}>
+<{elseif $comment_mode == "thread"}>
+<{include file="db:system_comments_thread.html"}>
+<{elseif $comment_mode == "nest"}>
+<{include file="db:system_comments_nest.html"}>
+<{/if}>
+<{/if}>

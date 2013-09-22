@@ -1,0 +1,19 @@
+<div id="img<{$i}>" class="imanager_image_box">
+  <span class="imanager_image_img"><img src="<{$image.src}>" title="<{$image.nicename}>" /></span>
+  <span class="imanager_image_label"><{$image.display_nicename}></span>
+  <span class="imanager_image_info">
+    <b><{$smarty.const.IMANAGER_FILE}>:</b> <{$image.name}><br />
+    <b><{$smarty.const.IMANAGER_SIZE}>:</b> <{$image.size}><br />
+    <b><{$smarty.const.IMANAGER_WIDTH}>:</b> <{$image.width}>px<br />
+    <b><{$smarty.const.IMANAGER_HEIGHT}>:</b> <{$image.height}>px
+  </span>
+  <span class="imanager_image_btns">
+    <{$image.preview_link}>
+    <a href="#" onclick="showDiv('edit_image',<{$i}>); document.anchors.item('edit_image<{$i}>').scrollIntoView(); return false;" title="<{$lang_imanager_cat_edit}>"><img src="<{$smarty.const.ICMS_IMAGES_SET_URL}>/actions/edit.png" alt="<{$lang_imanager_cat_edit}>" /></a>
+    <a href="#" onclick="showDiv('clone_image',<{$i}>); document.anchors.item('clone_image<{$i}>').scrollIntoView(); return false;" title="<{$lang_imanager_cat_clone}>"><img src="<{$smarty.const.ICMS_IMAGES_SET_URL}>/actions/editcopy.png" alt="<{$lang_imanager_cat_clone}>" /></a>
+    <{if $image.hasextra_link}>
+      <a href="#" onclick="<{$image.editor_link}>" title="<{$lang_imanager_img_editor}>"><img src="<{$smarty.const.ICMS_IMAGES_SET_URL}>/actions/edit_picture.png" alt="<{$lang_imanager_img_editor}>" /></a>
+    <{/if}>
+    <a href="admin.php?fct=images&amp;op=delfile&amp;image_id=<{$i}>&imgcat_id=<{$image.categ_id}>" title="<{$smarty.const._DELETE}>"><img src="<{$smarty.const.ICMS_IMAGES_SET_URL}>/actions/editdelete.png" alt="<{$smarty.const._DELETE}>" /></a>
+  </span>
+</div>

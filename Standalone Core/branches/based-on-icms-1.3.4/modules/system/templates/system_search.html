@@ -1,0 +1,81 @@
+<{if $basic_search == false && $search_results }>
+<table cellpadding="0" cellspacing="0" width="100%" style="height: 33px;" border="0">
+ <tr style="height: 33px;">
+  <td style="width:3px; background-image: url(images/search/header.<{$smarty.const._GLOBAL_LEFT}>.gif);"></td>
+  <td style="background-image: url(images/search/header.background.gif); vertical-align: middle">
+   <table cellpadding="0" cellspacing="0" border="0">
+    <tr>
+     <td colspan="2" style="font-family: sans-serif; font-weight: bold; padding-<{$smarty.const._GLOBAL_LEFT}>: 3px;"><{$label_search_results}>: <{$showing}></td>
+    </tr>
+   </table>
+  </td>
+  <td style="width:3px; background-image: url(images/search/header.<{$smarty.const._GLOBAL_RIGHT}>.gif);"></td>
+ </tr>
+</table>
+
+<table cellpadding="0" cellspacing="0" width="100%" border="0">
+<{foreach from=$module_sort_order key=sort_key item=sort_value}>
+<tr>
+ <td style="background-image: url(images/search/bodyHeader.<{$smarty.const._GLOBAL_LEFT}>.gif);"></td>
+ <td style="background-image: url(images/search/bodyHeader.background.gif);">
+ 	<div style="padding-top: 5px; padding-bottom: 5px;"><b><{$sort_key}></b>: (<{$sort_value}> <{$smarty.const._SR_HITSRETURNED}>)</div>
+<{if $search_results[$sort_key].search_more_url != ''}>
+	  <span style="margin: 10px; padding: 2px 0.5em 3px 0.5em; height:30px;">
+	  <a href="<{$search_results[$sort_key].search_more_url}>">
+	  <img style="vertical-align: middle;" src="<{$smarty.const.ICMS_IMAGES_SET_URL}>/actions/find.png" alt="<{$search_results[$sort_key].search_more_title}>" /> <{$smarty.const._SR_SHOWALLR}>
+	  </a>
+	  </span>
+	<{/if}>
+
+	<{if $search_results[$sort_key].page_nav != ''}>
+		<div style="padding-bottom: 5px; text-align: <{$smarty.const._GLOBAL_RIGHT}>"><{$search_results[$sort_key].page_nav}></div>
+	<{/if}>
+ </td>
+ <td style="background-image: url(images/search/bodyHeader.<{$smarty.const._GLOBAL_RIGHT}>.gif);"></td>
+</tr>
+<tr style="background-color: #FDFDFD;">
+ <td style="width: 16px; background-image: url(images/search/body.<{$smarty.const._GLOBAL_LEFT}>.gif)"></td>
+ <td style="padding: 15px">
+	<table class="outer" cellpadding="4" cellspacing="1" width="100%">
+		<{section name=cur_result loop=$search_results[$sort_key].results}>
+		<tr>
+			<td class="head"><{math equation="x + y" x=$smarty.section.cur_result.index y=$start}></td>
+			<td style="width: 100%;" class="<{cycle values="even,odd"}>">
+				<img alt="<{$search_results[$sort_key].results[cur_result].processed_image_alt_text}>" src="<{$search_results[$sort_key].results[cur_result].processed_image_url}>" />
+				<{$search_results[$sort_key].results[cur_result].processed_image_tag}>&nbsp;
+				<b><a href="<{$search_results[$sort_key].results[cur_result].link}>"><{$search_results[$sort_key].results[cur_result].processed_title}></a>						</b>
+				<br /><small>&nbsp;&nbsp;<a href="<{$search_results[$sort_key].results[cur_result].processed_user_url}>"><{$search_results[$sort_key].results[cur_result].processed_user_name}></a> <{$search_results[$sort_key].results[cur_result].processed_time}></small>
+     			</td>
+    	</tr>
+		<{/section}>
+	</table>
+	<{if $search_results[$sort_key].page_nav != ''}>
+		<div style="padding-bottom: 5px; text-align: <{$smarty.const._GLOBAL_RIGHT}>"><{$search_results[$sort_key].page_nav}></div>
+	<{/if}>
+ </td>
+ <td style="width: 19px; background-image: url(images/search/body.<{$smarty.const._GLOBAL_RIGHT}>.gif)"></td>
+</tr>
+<{/foreach}>
+
+    <tr>
+     <td style="height:9px; background-image: url(images/search/footer.<{$smarty.const._GLOBAL_LEFT}>.gif);"></td>
+     <td style="height:9px; background-image: url(images/search/footer.background.gif);"></td>
+     <td style="height:9px; background-image: url(images/search/footer.<{$smarty.const._GLOBAL_RIGHT}>.gif);"></td>
+    </tr>
+</table><br />
+<strong><{$label_search_type}> </strong><{$search_type}><br />
+<strong><{$label_keywords}> </strong>
+	<{* This section generates a space separated list of keywords that were searched. *}>
+	<{section name=cur_kw_searched loop=$searched_keywords}>
+	  	<{$searched_keywords[cur_kw_searched]}><{if $smarty.section.cur_kw_searched.index <> $smarty.section.cur_kw_searched.total}>&nbsp;<{/if}>
+	<{/section}><br />
+<{if $ignored_keywords}><{$label_ignored_keywords}>
+	<strong>
+	<{* This section generates a space separated list of keywords that were NOT searched. *}>
+	<{section name=cur_kw_not_searched loop=$ignored_keywords}>
+	  	<{$ignored_keywords[cur_kw_not_searched]}><{if $smarty.section.cur_kw_not_searched.index <> $smarty.section.cur_kw_not_searched.total}>&nbsp;<{/if}>
+	<{/section}>
+	</strong><br />
+<{/if}><br />
+<{/if}>
+<{$search_form}>
