@@ -16,7 +16,7 @@
  *
  */
 require_once 'common.inc.php';
-
+set_time_limit(0);
 if (!defined( 'XOOPS_INSTALL' ) )	exit();
 
 $wizard->setPage( 'modulesinstall' );
