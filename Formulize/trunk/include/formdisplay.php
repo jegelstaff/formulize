@@ -644,19 +644,23 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 						$key2 = $thisLink->getVar('key2');
 						$form1EntryId = "";
 						$form2EntryId = "";
+						$entryToWriteToForm1 = $GLOBALS['formulize_newEntryIds'][$form1][0] ? $GLOBALS['formulize_newEntryIds'][$form1][0] : $GLOBALS['formulize_allWrittenEntryIds'][$form1][0];
+						if(!$entryToWriteToForm1) { exit("Error: we could not determine which entry in form $form1 we should use for writing the key value for the relationship."); }
+						$entryToWriteToForm2 = $GLOBALS['formulize_newEntryIds'][$form2][0] ? $GLOBALS['formulize_newEntryIds'][$form2][0] : $GLOBALS['formulize_allWrittenEntryIds'][$form2][0];
+						if(!$entryToWriteToForm2) { exit("Error: we could not determine which entry in form $form2 we should use for writing the key value for the relationship."); }
 						if($thisLink->getVar('common')) {
 							if(!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") {
 								// if we don't have a value for this element, then populate it with the value from the other element
-                                if($_POST["de_".$form2."_new_".$key2] == "{ID}") {
-                                    $_POST["de_".$form2."_new_".$key2] = $GLOBALS['formulize_newEntryIds'][$form2][0];
-                                }
-								$form1EntryId = formulize_writeEntry(array($key1=>$_POST["de_".$form2."_new_".$key2]), $GLOBALS['formulize_newEntryIds'][$form1][0]);
+								if($_POST["de_".$form2."_new_".$key2] == "{ID}") {
+								    $_POST["de_".$form2."_new_".$key2] = $GLOBALS['formulize_newEntryIds'][$form2][0];
+								}
+								$form1EntryId = formulize_writeEntry(array($key1=>$_POST["de_".$form2."_new_".$key2]), $entryToWriteToForm1);
 							} elseif(!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") {
 								// if we don't have a value for this element, then populate it with the value from the other element
-                                if($_POST["de_".$form1."_new_".$key1] == "{ID}") {
-                                    $_POST["de_".$form1."_new_".$key1] = $GLOBALS['formulize_newEntryIds'][$form1][0];
-							}
-								$form2EntryId = formulize_writeEntry(array($key2=>$_POST["de_".$form1."_new_".$key1]), $GLOBALS['formulize_newEntryIds'][$form2][0]);
+								if($_POST["de_".$form1."_new_".$key1] == "{ID}") {
+								    $_POST["de_".$form1."_new_".$key1] = $GLOBALS['formulize_newEntryIds'][$form1][0];
+								}
+								$form2EntryId = formulize_writeEntry(array($key2=>$_POST["de_".$form1."_new_".$key1]), $entryToWriteToForm2);
 							}
 						} elseif($thisLink->getVar('unifiedDisplay')) {
 							// figure out which one is on which side of the linked selectbox
@@ -665,10 +669,10 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 							$linkedElement1EleValue = $linkedElement1->getVar('ele_value');
 							if(strstr($linkedElement1EleValue[2], "#*=:*")) {
 								// element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1 with , , around it
-								$form1EntryId = formulize_writeEntry(array($key1=>",".$GLOBALS['formulize_newEntryIds'][$form2][0].","), $GLOBALS['formulize_newEntryIds'][$form1][0]);
+								$form1EntryId = formulize_writeEntry(array($key1=>",".$GLOBALS['formulize_newEntryIds'][$form2][0].","), $entryToWriteToForm1);
 							} else {
 								// element 2 is the linked selectbox, so get the value of entry id for what we just created in form 1 and put it in element 2 with , , around it
-								$form2EntryId = formulize_writeEntry(array($key2=>",".$GLOBALS['formulize_newEntryIds'][$form1][0].","), $GLOBALS['formulize_newEntryIds'][$form2][0]);
+								$form2EntryId = formulize_writeEntry(array($key2=>",".$GLOBALS['formulize_newEntryIds'][$form1][0].","), $entryToWriteToForm2);
 							}
 						}
 						if($form1EntryId) {
