@@ -1,0 +1,141 @@
+
+    <div class="form-item">
+	<fieldset>
+		<legend><{$smarty.const._AM_ELE_SUBFORM_FORM}></legend>
+	    <select id="element-subform" name="elements-ele_value[0]" size="1">
+        <{html_options options=$content.subforms selected=$content.ele_value[0]}>
+	    </select>
+	    <div class="description">
+		    <{$smarty.const._AM_ELE_SUBFORM_DESC}>
+	    </div>
+	</fieldset>
+    </div>
+    
+    <div class="form-item">
+	<fieldset>
+		<legend>User interface options</legend>
+
+		<div class="form-item">
+		 <div class="form-radios">
+		     <label for="elements-ele_value[8]-row"><input type="radio" id="elements-ele_value[8]-row" name="elements-ele_value[8]" value="row"<{if $content.ele_value[8] eq 'row' OR $content.ele_value[8] eq ''}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_UITYPE_ROW}></label>
+		 </div>
+		 <div class="form-radios">
+		     <label for="elements-ele_value[8]-form"><input type="radio" id="elements-ele_value[8]-form" name="elements-ele_value[8]" value="form"<{if $content.ele_value[8] eq 'form'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_UITYPE_FORM}></label>
+		 </div>
+		</div>
+
+	    <div class="form-item"><input type="checkbox" id="element-subformaddentries" name="elements-ele_value[6]" <{if $content.ele_value[6]!='hideaddentries'}>checked="checked"<{/if}> value="1"/> Show the "Add x Entries" button below the list of subform entries?
+	     <div class="description">The "Add x Entries" button lets users create additional entries in the subform.  The page reloads with that number of new entries visible.</div>
+	    </div>
+	
+          
+	</fieldset>
+    </div>
+    
+    
+		<div class="form-item">
+			<fieldset>
+				<legend><{$smarty.const._AM_ELE_SUBFORM_ELEMENT_LIST}></legend>
+				
+			<select name="elements_ele_value_1[]" size="10" multiple>
+				<{html_options options=$content.subformelements selected=$content.ele_value[1]}>
+			</select>
+			<div class="description"><{$smarty.const._AM_ELE_SUBFORM_ELEMENTS_DESC}></div>
+			
+			</fieldset>
+		</div>
+
+<div class="form-item">
+			    <fieldset>
+				    <legend><{$smarty.const._AM_ELE_SUBFORM_IFROW}></legend>
+				    <p><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS}></p>
+			    <div class="form-radios">
+				    <label for="elements-ele_value[4]-0"><input type="radio" id="elements-ele_value[4]-0" name="elements-ele_value[4]" value="0"<{if $content.ele_value[4] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS}></label>
+			    </div>
+			    <div class="form-radios">
+				    <label for="elements-ele_value[4]-1"><input type="radio" id="elements-ele_value[4]-1" name="elements-ele_value[4]" value="1"<{if $content.ele_value[4] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS}></label>
+			    </div>
+<br />
+		<div class="form-item">
+	    <{$smarty.const._AM_ELE_SUBFORM_BLANKS}><br /><input type="text" id="element-subformblanks" name="elements-ele_value[2]" value="<{$content.ele_value[2]}>" size="2" maxlength="2"/>
+	    <div class="description"><{$smarty.const._AM_ELE_SUBFORM_BLANKS_HELP}></div>
+		</div>
+
+			    
+	
+			<div class="form-item"><input type="checkbox" id="element-subformviewbutton" name="elements-ele_value[3]" <{if $content.ele_value[3]}>checked="checked"<{/if}> value="1"/> <{$smarty.const._AM_ELE_SUBFORM_VIEW}>
+				<div class="description"><{$smarty.const._AM_ELE_SUBFORM_VIEW_DESC}></div>
+			</div>
+			
+			    
+			    </fieldset>
+			    </div>		
+    
+
+<div class="form-item">
+<fieldset>
+<legend>Which entries in the subform should be accessible through this subform element?</legend>
+<div id="filterdiv">
+	<{if $content.subformfilter}>
+				<{$content.subformfilter}>
+				</div>
+				<div class="description">
+By default, all entries in a subform that are tied to the main form will be accessible.  You can set conditions here that will limit which entries will be accessible.  This is useful if you have multiple types of entries in a subform, and want the user to interact with each type in a separate place.  For example, a Housing subform might have entries for "apartments," "townhouses," and "houses".  You could set this subform element to just show apartments, and another subform element to just show houses.
+				</div>
+				<div class="description">
+				If you have any "match all" conditions that use the = operator, then any new entries you add through the subform interface, will have those values assigned automatically.  For example, if you limit this subform interface to only entries where "type" = "apartment" then all new entries you create would have the value of "type" set to "apartment".
+				</div>
+				<{else}>
+					<p>You need to select a subform and save this element before you can choose conditions.</p>
+<{/if}>					
+</fieldset>
+</div>
+
+
+
+    
+
+	<div class="form-item">
+		<fieldset>
+    <legend>When new entries are created in the subform, who should be the owner of those entries?</legend>
+		<div class="form-radios">
+      <label for="elements-ele_value[5]-0"><input type="radio" id="elements-ele_value[5]-0" name="elements-ele_value[5]" value="0"<{if $content.ele_value[5] eq 0}> checked="checked"<{/if}>/>The currently logged in user should be the owner of subform entries</label>
+      <label for="elements-ele_value[5]-1"><input type="radio" id="elements-ele_value[5]-1" name="elements-ele_value[5]" value="1"<{if $content.ele_value[5] eq 1}> checked="checked"<{/if}>/>The owner of the entry in the main form should be the owner of subform entries</label>
+    </div>
+		<div class="description">This feature lets you override the ownership of new entries created in the subform.  By default, new entries are owned by the user who created them.  But in some situtations you might want to have all subform entries owned by the same person who created the main form entry, even if the subform entries are being created by many different people.</div>
+		</fieldset>
+	</div>
+
+<script type="text/javascript">
+
+	$("#element-subform").change(function() {
+		subfid = $("#element-subform").val();
+		$.get("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=get_element_option_list&fid="+subfid, function(data) {
+			results = eval('('+data+')');
+			if(results) {
+				$("[name=elements_ele_value_1[]]").empty();
+				for( var i in results.options) {
+					if(typeof(results.options[i]) == "object") {
+						$("[name=elements_ele_value_1[]]").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</value>");
+					}
+				}
+			}
+		});
+	});
+	
+	$("div#filterdiv > a.conditionsdelete").click(function () {
+		$(".optionsconditionsdelete").val($(this).attr('target'));
+		$("[name=reload_option_page]").val(1);
+	  $(".savebutton").click();
+		return false;
+	});
+
+
+	$("div#filterdiv > input#addcon").click(function () {
+		$("[name=reload_option_page]").val(1);
+	  $(".savebutton").click();
+		return false;
+	});
+
+
+</script>
