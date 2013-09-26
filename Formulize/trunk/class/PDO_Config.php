@@ -9,3 +9,4 @@ defined('DB_PASS') ? NULL : define('DB_PASS', XOOPS_DB_PASS);
 defined('DB_NAME') ? NULL : define('DB_NAME', XOOPS_DB_NAME);
 defined('Prefix') ? NULL : define('Prefix',XOOPS_DB_PREFIX);
 
+

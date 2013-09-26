@@ -2,7 +2,7 @@
 
 include 'PDO_Conn.php';//Include the Connection File
 	
-	//$SQLStatments;
+
 	$SQLStatments=array();
 	Check_Post_Parameter();
 	//Global Array to hold Strings
