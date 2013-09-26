@@ -1,14 +1,13 @@
 <?php
-
 include 'PDO_Conn.php';//Include the Connection File
+include 'upload.php';
 	
-
+	//$SQLStatments;
 	$SQLStatments=array();
 	Check_Post_Parameter();
 	//Global Array to hold Strings
 	//$Upload= new Upload();
 	//$Upload.load();
-	//$filename = '/Upload/'.UploadFile;
 	//Function To check if the Button Export or Import is Pressed and Loads the Function
 	Function Check_Post_Parameter()
 	{
@@ -20,7 +19,9 @@ include 'PDO_Conn.php';//Include the Connection File
 				Export_All();
 				break;
 				case 'Import':
-				echo "Import";
+				$filename = '/Upload/'.UploadFile;
+				//As soon it loads the file it changes the PREFIX word in the file to the DB Prefix 
+				replaces_Prefix_in_file ($filename);
 				break;
 			}
 	}
@@ -196,10 +197,7 @@ include 'PDO_Conn.php';//Include the Connection File
 		
 		while ($row = $Query->fetch(\PDO::FETCH_OBJ))
         {
-			
             $result[]=(array)$row;
-			
-			
 			
         }
 		//var_dump (isset ($result));
@@ -234,13 +232,12 @@ include 'PDO_Conn.php';//Include the Connection File
 	 $Query->execute();
 	while ($row = $Query->fetch(\PDO::FETCH_OBJ))
         {
-			
+
             $result[]=(array)$row;
-			
-			
-			
+
         }
 		return $result;
+		
 	
 	
 	}
@@ -252,6 +249,21 @@ include 'PDO_Conn.php';//Include the Connection File
 	header("Content-Disposition: attachment; filename=ApplicationID".$_GET['aid']."");
 	header("Pragma: no-cache");
 	header("Expires: 0");
+	}
+	//This Functions replaces the Prefix word  in the SQL insert statements with the DB Prefix
+	function replaces_Prefix_in_file ($filename)
+	{
+	$str=implode("\n",file(".$filename."));
+	$fp=fopen(".$filename.",'w');
+	//replace Prefix word file string with the current DB Prefix 
+	$str=str_replace('Prefix',Prefix,$str);
+	fwrite($fp,$str,strlen($str));
+	}
+	function Creat_Applications($filename)
+	{
+	//Some Error Handling will need to take place here and make sure not to overwrite anyhting in the DB
+	
+	
 	}
 
 
