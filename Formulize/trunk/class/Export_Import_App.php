@@ -1,6 +1,5 @@
 <?php
 include 'PDO_Conn.php';//Include the Connection File
-include 'upload.php';
 	
 	//$SQLStatments;
 	$SQLStatments=array();
@@ -19,9 +18,7 @@ include 'upload.php';
 				Export_All();
 				break;
 				case 'Import':
-				$filename = '/Upload/'.UploadFile;
-				//As soon it loads the file it changes the PREFIX word in the file to the DB Prefix 
-				replaces_Prefix_in_file ($filename);
+				Import ();
 				break;
 			}
 	}
@@ -107,6 +104,7 @@ include 'upload.php';
 	if ($k1==count($getfield)){
 	$Insert.=$column[$cur['Field']];
 	$Insert.=');';
+	
 	array_push($SQLStatments,$Insert);
 	echo $Insert;
 	  $Insert="Insert INTO Prefix".$table." VALUES (";
@@ -261,8 +259,24 @@ include 'upload.php';
 	}
 	function Creat_Applications($filename)
 	{
-	//Some Error Handling will need to take place here and make sure not to overwrite anyhting in the DB
+	//Some Error Handling will need to take place here and make sure not to overwrite anything in the DB
+	$file = fopen(".$filename.", "r");
+	while (!feof($file)) {
+	$getline = fgets($file);
+	$conn=new Connection ();
+	$Query=$conn->connect()->prepare($getline);
+	$Query->execute();
+	fclose($file);
+	}
+	}
+	Function Import ()
+	{
 	
+				require_once "upload.php";
+				$filename = '/Upload/'.UploadFile;
+				//As soon it loads the file it changes the PREFIX word in the file to the DB Prefix 
+				replaces_Prefix_in_file ($filename);
+				Creat_Applications($filename);
 	
 	}
 
