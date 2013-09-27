@@ -6,6 +6,8 @@ include 'PDO_Conn.php';//Include the Connection File
 	//echo Check_Uniquines (3,1);
 	//Application Runs From Here:
 	Check_Post_Parameter();
+	 $a=Check_Uniquines(66,3);
+	 //echo $a;
 	//Function To check if the Button Export or Import is Pressed and Loads the Function
 	Function Check_Post_Parameter()
 	{
@@ -172,11 +174,11 @@ include 'PDO_Conn.php';//Include the Connection File
 		$result=$Query->fetch(\PDO::FETCH_ASSOC);
 		}elseif  ($Uniq==3):
 		{
-				$table=Prefix;
+		$table=Prefix;
 		$table.='_formulize_id';
         $result =array();
 		$conn=new Connection ();
-        $Query=$conn->connect()->prepare("SELECT COUNT( * ) AS num from ".$table." where fid= :id") ;
+        $Query=$conn->connect()->prepare("SELECT COUNT( * ) AS num from ".$table." where id_form= :id") ;
         $Query->bindValue(":id",$appid);
         $Query->execute();
 		$result=$Query->fetch(\PDO::FETCH_ASSOC);
@@ -284,65 +286,83 @@ include 'PDO_Conn.php';//Include the Connection File
 	}
 	function Creat_Applications($filename)
 	{
-	echo "Hello";
 	$APP_ID_Replace;//This will store the New App ID if Needed
 	$Form_ID_Replace=array ();
+	$i=0;
 	//Some Error Handling will need to take place here and make sure not to overwrite anything in the DB
 	$file = fopen(".$filename.", "r");
 	while (!feof($file)) {
 	$getlines = fgets($file);
-	$get_line=explode(";",$getline);
+	 //echo $getlines. "<br />";
+	$get_line=explode(";",$getlines);
+	//print_r( $get_line);
+	
 	foreach ($get_line as $statement)
    {
-   
-	if(strstr($subject, "_formulize_applications")) {
-	
+  // echo $statement;
+  // }}fclose($file);}
+	if(strstr($statement, "_formulize_applications")) {
 	preg_match('/\(\d\d|\(\d/', $statement, $matches);
 	$x1=explode('(',$matches[0]);
 	if (Check_Uniquines ($x1[1],2)==0)
 	{
+	echo"New App <br/>";
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare($statement);
 	$Query->execute();
 	
 	}else {
+	echo"App Exists Updating ID <br/>";
 	//Do this $APP_ID_Replace =$matches1[0].New[];
-	$Se=preg_replace('/\(\d\d|\(\d/', "(", $statement);
+	$Se=preg_replace('/\(\d\d|\(\d/', "(''", $statement);
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare($Se);
 	$Query->execute();
 	$Query=$conn->connect()->prepare("SELECT max(appid) FROM ".Prefix."_formulize_applications");
 	$Query->execute();
 	$result=$Query->fetch(\PDO::FETCH_ASSOC);
-	$APP_ID_Replace=$matches1[0].":".$result['appid'];
 	
-    }}
-	if(strstr($subject, "_formulize_id")) {
-	 preg_match('/\(\d\d|\(\d/', $statement, $matches);
+	$APP_ID_Replace=$x1[1].":".$result['max(appid)']; 
+	
+    }} 
+	if(strstr($statement, "_formulize_id")) {
+	preg_match('/\(\d\d|\(\d/', $statement, $matches);
 	$x1=explode('(',$matches[0]);
-	if (Check_Uniquines ($x1[1],3)==0)
+	if (Check_Uniquines($x1[1],3)==0)
 	{
+	echo"New Form <br/>";
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare($statement);
 	$Query->execute();
 	
 	}else {
-	//Do this 
-	$Se=preg_replace('/\(\d\d|\(\d/', "(", $statement);
+	echo"From Exist Updating Row ID and Unique Field <br/>";
+	$st="VALUES ('','".$i."'";
+	$Se=preg_replace('/(\w*VALUES\w*)\s*\(\d\, \'(\w*)\'| (\w*VALUES\w*)\s*\(\d\d\, \'(\w*)\'/', $st, $statement);
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare($Se);
 	$Query->execute();
-	$Query=$conn->connect()->prepare("SELECT max(id_form) FROM ".Prefix."_formulize_id");
+	$Query1=$conn->connect()->prepare("SELECT max(id_form) FROM ".Prefix."_formulize_id");
+	$Query1->execute();
+	$result=$Query1->fetch(\PDO::FETCH_ASSOC);
+	$Query=$conn->connect()->prepare("INSERT INTO form_mapping VALUES (:id ,:id2)");
+	$Query->bindValue(":id",$x1[1]);
+	$Query->bindValue(":id2",$result['max(id_form)']);
 	$Query->execute();
-	$result=$Query->fetch(\PDO::FETCH_ASSOC);
-	$matches1[0].":".$result['appid'];
-	$Query=$conn->connect()->prepare("INSERT INTO form_mapping VALUES (:id,id2)");
-	$Query->bindValue(":id",$matches1[0]);
-	$Query->bindValue(":id2",$result['id_form']);
-	$Query->execute();
+	}
+
+
+	++$i;
     }
-	}
-	}
+	
+	
+	}}fclose($file);}/*}}fclose($file);}
+	
+	
+	
+	
+	
+	
 	//Here is Different than the Above Statments//Because we need to link the New ID if the fourms/App has been updated
 	foreach ($get_line as $statement){
 	if(strstr($subject, "_formulize_application_form_link")) {
@@ -437,6 +457,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	fclose($file);
 	}
 	}
+	}*/
 	
 
 	Function Import ()
