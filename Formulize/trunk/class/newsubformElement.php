@@ -133,6 +133,11 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
 		}
 		$ele_value[1] = implode(",",$_POST['elements_ele_value_1']);
 		$ele_value[6] = !isset($ele_value[6]) ? 'hideaddentries' : 1;
+		
+		/* THIS FUNCTION NEEDS ATTENTION
+		The following line of code needs to be REFACTORED.
+		This does not work because we have no access to the $processedValues array in this
+		adminSave function, we should somehow pass in $element instead of $processedValues */
 		$processedValues = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete', $processedValues, 7); // post key, delete key, processedValues, ele_value key for conditions
 		
 		foreach($processedValues['elements'] as $property=>$value) {
