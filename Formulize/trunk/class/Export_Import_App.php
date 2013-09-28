@@ -368,7 +368,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	$Query->bindValue(":id",$x1[1]);
 	$Query->bindValue(":id2",$result['max(id_form)']);
 	$Query->execute();
-	array_push($Form_ID_Replace,$x1[1])
+	array_push($Form_ID_Replace,$x1[1]);
 	}
 	++$i;
     }
