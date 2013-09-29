@@ -2,12 +2,8 @@
 include 'PDO_Conn.php';//Include the Connection File
 	
 	
-	//Import();
-	//echo Check_Uniquines (3,1);
 	//Application Runs From Here:
 	Check_Post_Parameter();
-	 $a=Check_Uniquines(66,3);
-	 //echo $a;
 	//Function To check if the Button Export or Import is Pressed and Loads the Function
 	Function Check_Post_Parameter()
 	{
@@ -31,11 +27,20 @@ include 'PDO_Conn.php';//Include the Connection File
 	}	
     
 	Function Create_Insert_Statments($table)
-	{//Add prefix
+	{//
 	/*
-	This Function take in the Table name that needs to create the Insert statements in it.It  uses the AppID to extract all the Fourm Links that's assigned to it and After 
-	that it get the fourms thats assigned in the Link to fetch that specific fourm:
-	Idea
+	This function creates the insert statements for the requested table.It  uses the AppID to extract all the Forum in the Links table .
+	Stpes on how it works:
+	1)Prepares the Insert statement syntax .It starts be creating the insert statement by INSERT INTO Prefix_tablename VALUES.Prefix is added to the insert statement when the file
+	is imported it changes the prefix to the current formulize version prefix. 
+	2)Then it queries the DB table for the values .
+	3)The result is returned in Array of Object.So it get the result we need to loop the array with the Column Field name.
+	4)Query the DB for the table column.
+	5)Gets the field content using the Tale column result .
+	6)Checks this Field if its included in the the text field array or not.To be able to decide whether this Field is a string or Integer 
+	6)Creates the Insert statement.
+	7)The Insert string is reversed back to step 1 to be used again if more rows from this needs to be created. 
+	///Idea\\\
 	App can Onliy be One 
 	Fourm Can be Many 
 	Links Can be Mnny
@@ -43,7 +48,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	*/
 	$getfield=Get_FieldNames($table);
 	$appid = intval($_GET['aid']);
-	$TextField=array('id_form','lockedform','defaultform','defaultlist','store_revisions');
+	$TextField=array('id_form','lockedform','defaultform','defaultlist','store_revisions','appid');//To decide whether the field is a string or not 
 	//$table='_formulize_applications';
 	
 	if ($table=='_formulize_application_form_link') {
@@ -83,7 +88,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	 foreach ($getapp as $key => $column) {
 	 foreach($getfield as $k => $cur)
 	{
-	//Need To Fix the '' Insert Statments///
+	//Need To Fix the '' Insert Statments///[DONE]
 	if ($k1==count($getfield)){
 	$Insert.="'";
 	$Insert.=$column[$cur['Field']]."'";
@@ -92,7 +97,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	echo $Insert;
 	  $Insert="Insert INTO Prefix".$table." (appid, name,description) VALUES (";
 	}else {
-	if ($cur['Field']=='appid'){
+	if (in_array($cur['Field'],$TextField)){ //Checks if the Field is a string or not 
 	$Insert.=$column[$cur['Field']];
 	$Insert.=',';
 	++$k1;}
@@ -160,8 +165,9 @@ include 'PDO_Conn.php';//Include the Connection File
 	 function Application_Fourm_Links($appid, $Uniq=null)
     {
 	/*
-	//Function to get the Fourms that's Linked with the requested AppID from URL 
-	//and if Uniq field is passed it checks the ID by returning the Count of this ID in the Table
+	1)Function to get the Forums/Links that's Linked with the requested AppID from URL. 
+	2)if Uniq field is passed it checks the ID by returning the Count of this ID in the Table this is used by the checking function when it checks if the ID
+	is in use or not.
 	*/
 		if ($Uniq==null){
 		$table=Prefix;
@@ -281,7 +287,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	}
 	Function Get_FieldNames($tablename)
 	{
-	//This Function get the Field names form the DB /This is Used when Creating the Insert statements ,so the function could have a dynamic forum and not hard coded
+	//This Function get the Field names form the DB /This is Used when Creating the Insert statements.
 	$Form_table=Prefix;
 	$Form_table.=$tablename;
 	$result =array();
@@ -316,17 +322,18 @@ include 'PDO_Conn.php';//Include the Connection File
 	function Creat_Applications($filename)
 	{
 	/*
-	The Function consists of 3 checks App,fourm and Link to Insert the statements
-	1)In App it reads the Line strips the App ID and check if this ID is currently in Use or not .If not then it strips out the ID from the Insert statment and allow the 
-	auto Increment to assign it a new ID 
-	2)In Fourm it does the same thing as the App but also changes the field desc_form to a Numerical value if ID already exists in the Table [Need to check with Juilan if this is fine or does this field needs to have a specific String] 
-	3)The Link  does the same thing ,first it needs to check if the ID is already included or not.However in both cases they follow the same schema.After checking the ID it checks if the APP_ID has been updated or not if yes then updates the Insert Statement and the same goes for the Form 
+	This Function consists of 3 checks when it Imports the Insert statements ; App,fourm and Link for Inserting the statements.
+	1)In App, it reads the Line then strips the App ID and check if this ID is currently in Use or not .If not then it strips out the ID from the Insert statement and allow the 
+	auto Increment to assign it a new ID and Update the Insert statements .
+	2)In Form, it does the same thing as the App but also changes the field desc_form .It Adds a C_ to the Field name if ID already exists in the Table.
+	
+	3)The Link  also does the same thing ,first it needs to check if the ID is exists in the Table or not.However,in both cases they follow the same procedure.After checking the ID it checks if the APP_ID has been updated or not if yes then updates the Insert Statement and the same goes for the Form. 
 	*/
-	//Those  will store the New App ID if Needed/Form ID 
-	global $APP_ID_Replace;//In imported file  will only one App.The Format is OLDAPPID:NewAPPID if updated 
-	global $Form_ID_Replace; //Every time ID is replaced the old Form ID will be pushed here to be able to match it in the Table name Form_Mapping 
+	//Those  variables will store the New AppID/Form ID  if Needed.
+	global $APP_ID_Replace;//To store the old ID with the New one.The Format is OLDAPPID:NewAPPID.If AppID is not updated then the variable stay empty.
+	global $Form_ID_Replace; //Every time ID is replaced the old FormID will be pushed here to be able to match it in the Table name Form_Mapping  
 	$Form_ID_Replace=array();
-	 //Trying To fix the Slow Loading Issue.What happens is that every time Import is clicked it tries to open the file even if thr. is no file
+    //Reads the File 
 	$file = fopen(".$filename.", "r");
 	//while (!feof($file)) {
 	$getlines = fgets($file);
@@ -344,7 +351,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	preg_match('/\(\d*\,/', $statement, $matches);//To get Any Digit number .Not just 2 digit number as the old preg match did
 	$x1=explode('(',$matches[0]);
 	$x2=explode(',',$x1[1]);
-	if (Check_Uniquines ($x2[0],2)==0)
+	if (Check_Uniquines ($x2[0],2)==0) //If Unique then no need to Update the ID
 	{
 	echo"New App <br/>";
 	$conn=new Connection ();
@@ -360,12 +367,14 @@ include 'PDO_Conn.php';//Include the Connection File
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare($Se);
 	$Query->execute();
+	//This Query the Formulize_Application to get the Updated AppID  and stores it in App_ID_Replace in order to be used when it creates the Links 
 	$Query=$conn->connect()->prepare("SELECT max(appid) FROM ".Prefix."_formulize_applications");
 	$Query->execute();
 	$result=$Query->fetch(\PDO::FETCH_ASSOC);
 	$APP_ID_Replace=$x2[0].":".$result['max(appid)']; 
 	
     }} 
+	//The Formalize Updates to Fields in the INsert statement if needed.It Updates the ID and the Desc_From 
 	if(strstr($statement, "_formulize_id")) {
 	echo "Here";
 	preg_match('/\(\d*\,/', $statement, $matches);
@@ -374,7 +383,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	//echo $s2[0];
 	//$x1=explode('(',$matches[0]);
 	echo $s6[0];
-	if (Check_Uniquines($s6[0],3)==0)
+	if (Check_Uniquines($s6[0],3)==0) //If Unique then no need to Update the ID
 	{
 	echo"New Form <br/>";
 	$conn=new Connection ();
@@ -386,7 +395,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	echo"Forom Exist Updating Row ID and Unique Field <br/>";
 	preg_match ('/\w*VALUES \(\d*\,\'\w*\'/',$statement,$stripp);
 	preg_match('/\'\w*\'/',$stripp[0],$desc_form);
-	$C_desc_form=explode("'",$desc_form[0]);//This Adds a C_ to the Desc_Form because of Uniq. constriant 
+	$C_desc_form=explode("'",$desc_form[0]);//This Adds a C_ to the Desc_Form because of Uniq. constraint 
 	$C_desc_form[1].="'";
 	//$sw=.'".$i."'";
 	$st="VALUES ('','C_".$C_desc_form[1];
@@ -397,11 +406,13 @@ include 'PDO_Conn.php';//Include the Connection File
 	$Query->execute();
 	$Query1=$conn->connect()->prepare("SELECT max(id_form) FROM ".Prefix."_formulize_id");
 	$Query1->execute();
+	//This Query the Formulize_ID to get the Updated FormID  and gets the Updated  ID to create the Form ID mapping in DB to be used later on by the Link 
 	$result=$Query1->fetch(\PDO::FETCH_ASSOC);
 	$Query=$conn->connect()->prepare("INSERT INTO form_mapping VALUES (:id ,:id2)");
 	$Query->bindValue(":id",$s6[0]);
 	$Query->bindValue(":id2",$result['max(id_form)']);
 	$Query->execute();
+	//The link uses the array to check if the ID that exists in the Link statement has been updated or not 
 	array_push($Form_ID_Replace,$s6[0]);
 	print_r($Form_ID_Replace);
 	echo $s6[0];
@@ -409,7 +420,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	++$i;
     }
 	//}fclose($file);}/*}}fclose($file);}
-	//Here is Different than the Above Statments//Because we need to link the New ID if the fourms/App has been updated////Testing 
+	//First, it checks if the Link Id is in use or not.If not then no need to update the Form ID.Second,It checks if the AppID has been updated by checking  the APP ID variable.If it's empty then it doesn't update the APP ID in the Link insert statement.Third,It checks if the Form ID that's in the link insert statement has been updated or not.If the ID is updated it will be included in the Form_ID_Replace array.After,if gets the Old ID it query the Form_Map table to check the new ID that corresponds to the OLD ID and then updates the Insert Statement and Insert the new Row. 
 	if(strstr($statement, "_formulize_application_form_link")) {
 	echo "In link";
 	preg_match('/\(\d*\,/', $statement, $matches);
@@ -432,7 +443,7 @@ include 'PDO_Conn.php';//Include the Connection File
 		$Query=$conn->connect()->prepare($statement);
 		$Query->execute();}
 		else{  
-		//Check If the //Need a Check Mechanism for The Update//Changeeeeeeeeee the Array
+		//Check If the //Need a Check Mechanism for The Update//Changeeeeeeeeee the Array [Done]
 		echo"Yes Form Update";
 		$result =array();
 		$conn=new Connection ();
@@ -552,7 +563,7 @@ include 'PDO_Conn.php';//Include the Connection File
 				//Handles all the Functions
 				require_once "upload.php";
 				$filename = '/Upload/'.UploadFile;
-				//As soon it loads the file it changes the PREFIX word in the file to the current DB Prefix 
+				//As soon it loads the file it changes the PREFIX word in the file to the current DB Prefix.
 				replaces_Prefix_in_file ($filename);
 				Creat_Applications($filename);
 				
@@ -561,7 +572,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	Function Check_Uniquines ($ID,$field)
 	{
 	/*
-	This Function Checks if the ID are Unique or not .If Unique it will return 0.
+	This Function Checks if the ID are Unique or not .If Unique then it will return 0.
 	*/
 	$Check;
 	switch ($field){
@@ -578,7 +589,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	return $Check['num'];
 	}
 	
-	Function Truncate_Map()//This Function is Used every time a new Import is made and got ID changed .This to avoid any keys mismatch in the Future 
+	Function Truncate_Map()//This Function is Used every time a file is Imported and its Form ID got updated .This to avoid any keys mismatch in the Future 
 	{
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare("TRUNCATE form_mapping");
