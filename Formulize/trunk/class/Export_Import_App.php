@@ -39,17 +39,18 @@ include 'PDO_Conn.php';//Include the Connection File
 	App can Onliy be One 
 	Fourm Can be Many 
 	Links Can be Mnny
-	//Bug Fix:A now when Exporting the String field needs to be within '' ,in order not to hit any errors during the Import Errors
+	//[FIXED String Field!!!]
 	*/
 	$getfield=Get_FieldNames($table);
 	$appid = intval($_GET['aid']);
+	$TextField=array('id_form','lockedform','defaultform','defaultlist','store_revisions');
 	//$table='_formulize_applications';
 	
 	if ($table=='_formulize_application_form_link') {
 	$k1=1;
 	 $Links=Application_Fourm_Links($appid);
 	 	  
-	  $Insert="Insert INTO Prefix".$table." VALUES (linkid,appid,fid) (";
+	  $Insert="Insert INTO Prefix".$table." (linkid,appid,fid) VALUES  (";
 	 foreach ($Links as $key => $column) {
 	
 	 foreach($getfield as $k => $cur)
@@ -61,7 +62,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	$Insert.=');';
 	array_push($SQLStatments,$Insert);
 	echo $Insert;
-	  $Insert="Insert INTO Prefix".$table." VALUES (linkid,appid,fid) (";
+	  $Insert="Insert INTO Prefix".$table." (linkid,appid,fid) VALUES (";
 	}else {
 	$Insert.=$column[$cur['Field']];
 	$Insert.=',';
@@ -84,15 +85,23 @@ include 'PDO_Conn.php';//Include the Connection File
 	{
 	//Need To Fix the '' Insert Statments///
 	if ($k1==count($getfield)){
-	$Insert.=$column[$cur['Field']];
+	$Insert.="'";
+	$Insert.=$column[$cur['Field']]."'";
 	$Insert.=');';
 	array_push($SQLStatments,$Insert);
 	echo $Insert;
 	  $Insert="Insert INTO Prefix".$table." (appid, name,description) VALUES (";
 	}else {
+	if ($cur['Field']=='appid'){
 	$Insert.=$column[$cur['Field']];
 	$Insert.=',';
+	++$k1;}
+	else 
+	{
+	$Insert.="'";
+	$Insert.=$column[$cur['Field']]."',";
 	++$k1;
+	}
 	}
 	}
 	if ($k1==3){$k1=4;}
@@ -114,17 +123,26 @@ include 'PDO_Conn.php';//Include the Connection File
 	
 	array_push($SQLStatments,$Insert);
 	echo $Insert;
-	  $Insert="Insert INTO Prefix".$table." (`id_form`, `desc_form`, `singleentry`, `headerlist`, `tableform`, `lockedform`, `defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`) VALUES (";
+	 $Insert="Insert INTO Prefix".$table." (`id_form`, `desc_form`, `singleentry`, `headerlist`, `tableform`, `lockedform`, `defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`) VALUES (";
 	}else {
+	//echo $Insert;
+	//echo $k1;
+	//To Check if the field is string or not .If it does then Add "" to it 
+	if (in_array($cur['Field'],$TextField)){
+	echo $Insert;
+	$Insert="";
 	$Insert.=$column[$cur['Field']];
 	$Insert.=',';
-	//echo "<br/>";
-	++$k1;
+	++$k1;}else {echo $Insert;
+	$Insert="'";
+	$Insert.=$column[$cur['Field']]."'";
+	$Insert.=',';
+	++$k1;}
 	}
 	}
 	}
 	if ($k1==11){$k1=1;}
-	//echo $Insert;
+	
 	 }}
 }
 	//Function to Write the Insert Statements
@@ -302,62 +320,78 @@ include 'PDO_Conn.php';//Include the Connection File
 	1)In App it reads the Line strips the App ID and check if this ID is currently in Use or not .If not then it strips out the ID from the Insert statment and allow the 
 	auto Increment to assign it a new ID 
 	2)In Fourm it does the same thing as the App but also changes the field desc_form to a Numerical value if ID already exists in the Table [Need to check with Juilan if this is fine or does this field needs to have a specific String] 
-	3)The Fourm does the same thing ,first it needs to check if the ID is already included or not.However in both cases they follow the same schema.After checking the ID it checks if the APP_ID has been updated or not if yes then updates the Insert Statement and the same goes for the Form 
-	Known bugs:
-	 1)Can't Include the Same rows of the Fourm Due to the Uniqunes of the Field Desc_From .It can Insert them once because (if the ID is already exists(the Desc_Fourm is assigned with a a numerical counter value.Maybe Assign it by letting the User pick a Unique Name?????????
+	3)The Link  does the same thing ,first it needs to check if the ID is already included or not.However in both cases they follow the same schema.After checking the ID it checks if the APP_ID has been updated or not if yes then updates the Insert Statement and the same goes for the Form 
 	*/
 	//Those  will store the New App ID if Needed/Form ID 
-	global $APP_ID_Replace;//In Every single File Import will have one App
+	global $APP_ID_Replace;//In imported file  will only one App.The Format is OLDAPPID:NewAPPID if updated 
 	global $Form_ID_Replace; //Every time ID is replaced the old Form ID will be pushed here to be able to match it in the Table name Form_Mapping 
 	$Form_ID_Replace=array();
+	 //Trying To fix the Slow Loading Issue.What happens is that every time Import is clicked it tries to open the file even if thr. is no file
 	$file = fopen(".$filename.", "r");
-	while (!feof($file)) {
+	//while (!feof($file)) {
 	$getlines = fgets($file);
 	 //echo $getlines. "<br />";
 	$get_line=explode(";",$getlines);
 	//print_r( $get_line);
-	
+	 global $x2x;
+   $x2x=0;
 	foreach ($get_line as $statement)
    {
+  
   // echo $statement;
   // }}fclose($file);}
 	if(strstr($statement, "_formulize_applications")) {
-	preg_match('/\(\d\d|\(\d/', $statement, $matches);
+	preg_match('/\(\d*\,/', $statement, $matches);//To get Any Digit number .Not just 2 digit number as the old preg match did
 	$x1=explode('(',$matches[0]);
-	if (Check_Uniquines ($x1[1],2)==0)
+	$x2=explode(',',$x1[1]);
+	if (Check_Uniquines ($x2[0],2)==0)
 	{
 	echo"New App <br/>";
 	$conn=new Connection ();
+	echo $statement;
 	$Query=$conn->connect()->prepare($statement);
 	$Query->execute();
 	
 	}else {
 	echo"App Exists Updating ID <br/>";
 	//Do this $APP_ID_Replace =$matches1[0].New[];
-	$Se=preg_replace('/\(\d\d|\(\d/', "(''", $statement);
+	$Se=preg_replace('/\(\d*\,/', "('',", $statement);
+	print_r($Se);
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare($Se);
 	$Query->execute();
 	$Query=$conn->connect()->prepare("SELECT max(appid) FROM ".Prefix."_formulize_applications");
 	$Query->execute();
 	$result=$Query->fetch(\PDO::FETCH_ASSOC);
-	$APP_ID_Replace=$x1[1].":".$result['max(appid)']; 
+	$APP_ID_Replace=$x2[0].":".$result['max(appid)']; 
 	
     }} 
 	if(strstr($statement, "_formulize_id")) {
-	preg_match('/\(\d\d|\(\d/', $statement, $matches);
-	$x1=explode('(',$matches[0]);
-	if (Check_Uniquines($x1[1],3)==0)
+	echo "Here";
+	preg_match('/\(\d*\,/', $statement, $matches);
+	$s=explode("(",$matches[0]);//Stupid Preg-match :@:@:@ just to get the number between ( and ,
+	$s6=explode(",",$s[1]);
+	//echo $s2[0];
+	//$x1=explode('(',$matches[0]);
+	echo $s6[0];
+	if (Check_Uniquines($s6[0],3)==0)
 	{
 	echo"New Form <br/>";
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare($statement);
 	$Query->execute();
+	echo $statement;
 	
 	}else {
-	echo"From Exist Updating Row ID and Unique Field <br/>";
-	$st="VALUES ('','".$i."'";
-	$Se=preg_replace('/(\w*VALUES\w*)\s*\(\d\, \'(\w*)\'| (\w*VALUES\w*)\s*\(\d\d\, \'(\w*)\'/', $st, $statement);
+	echo"Forom Exist Updating Row ID and Unique Field <br/>";
+	preg_match ('/\w*VALUES \(\d*\,\'\w*\'/',$statement,$stripp);
+	preg_match('/\'\w*\'/',$stripp[0],$desc_form);
+	$C_desc_form=explode("'",$desc_form[0]);//This Adds a C_ to the Desc_Form because of Uniq. constriant 
+	$C_desc_form[1].="'";
+	//$sw=.'".$i."'";
+	$st="VALUES ('','C_".$C_desc_form[1];
+	$Se=preg_replace('/(\w*VALUES\w*)\s*\(\d*\,\'\w*\'/', $st, $statement);
+	echo $Se;
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare($Se);
 	$Query->execute();
@@ -365,30 +399,35 @@ include 'PDO_Conn.php';//Include the Connection File
 	$Query1->execute();
 	$result=$Query1->fetch(\PDO::FETCH_ASSOC);
 	$Query=$conn->connect()->prepare("INSERT INTO form_mapping VALUES (:id ,:id2)");
-	$Query->bindValue(":id",$x1[1]);
+	$Query->bindValue(":id",$s6[0]);
 	$Query->bindValue(":id2",$result['max(id_form)']);
 	$Query->execute();
-	array_push($Form_ID_Replace,$x1[1]);
+	array_push($Form_ID_Replace,$s6[0]);
+	print_r($Form_ID_Replace);
+	echo $s6[0];
 	}
 	++$i;
     }
-	}//}fclose($file);}/*}}fclose($file);}
+	//}fclose($file);}/*}}fclose($file);}
 	//Here is Different than the Above Statments//Because we need to link the New ID if the fourms/App has been updated////Testing 
-	foreach ($get_line as $statement){
 	if(strstr($statement, "_formulize_application_form_link")) {
-	//echo "In Link";
-	preg_match('/\(\d\d|\(\d/', $statement, $matches);
+	echo "In link";
+	preg_match('/\(\d*\,/', $statement, $matches);
 	$x1=explode('(',$matches[0]);
 	//echo $matches[0];
-	echo (Check_Uniquines ($x1[1],1));
+	preg_match ('/\,\d*\)/',$statement,$stripp);
+	$st=explode(')',$stripp[0]);
+	$Form_ID_Check=explode(',',$st[0]);//This Gets the FID from the Statement it self and runs a check when it enters one of the Ifs
+	echo $Form_ID_Check[1];
+	//echo (Check_Uniquines ($x1[1],1));
 	if (Check_Uniquines ($x1[1],1)==0)
 	{ /////////
 
-	
+	echo"Unique";
 	if (empty($APP_ID_Replace))
 	{ 
 		//Working ///:)
-		if (empty ($Form_ID_Replace)){
+		if (!in_array($Form_ID_Check[1],$Form_ID_Replace)){
 		$conn=new Connection ();
 		$Query=$conn->connect()->prepare($statement);
 		$Query->execute();}
@@ -397,22 +436,23 @@ include 'PDO_Conn.php';//Include the Connection File
 		echo"Yes Form Update";
 		$result =array();
 		$conn=new Connection ();
-		foreach ($Form_ID_Replace as $Fid1){
+		
         $Query=$conn->connect()->prepare("SELECT N_FormID from form_mapping where O_FomID= :id") ;
-        $Query->bindValue(":id",$Fid1);
+        $Query->bindValue(":id",$Form_ID_Check[1]);
         $Query->execute();
 		$result=$Query->fetch(\PDO::FETCH_ASSOC);
-		$ss2=preg_replace('/(,\d\d)\)|(,\d)\)/', ",".$result['N_FormID'].")",$statement );
+		$ss2=preg_replace('/\,\d*\)/', ",".$result['N_FormID'].")",$statement );
 		$Query=$conn->connect()->prepare($ss2);
 		$Query->execute();
-		}
+		
 	}
 	}else {
 	//$Form_ID_Replace=90;
-	
+	echo "Not Empty AppID";
 	$aPP_id_2=explode (":",$APP_ID_Replace);
-	$ss2=preg_replace('/(,\d\d,)|(,\d,)/', ",".$aPP_id_2[1].",", $statement);
-	if (empty ($Form_ID_Replace)){
+	$ss2=preg_replace('/\,\d*\,/', ",".$aPP_id_2[1].",", $statement);
+	echo $ss2."<br/>";
+	if (!in_array($Form_ID_Check[1],$Form_ID_Replace)){
 	echo"Form Empty";
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare($ss2);
@@ -421,77 +461,90 @@ include 'PDO_Conn.php';//Include the Connection File
 	{
 	$result =array();
 		$conn=new Connection ();
-        foreach ($Form_ID_Replace as $Fid1){
+        $Fid1=$Form_ID_Replace[$x2x];
         $Query=$conn->connect()->prepare("SELECT N_FormID from form_mapping where O_FomID= :id") ;
-        $Query->bindValue(":id",$Fid1);
+        $Query->bindValue(":id",$Form_ID_Check[1]);
         $Query->execute();
 		$result=$Query->fetch(\PDO::FETCH_ASSOC);
-		$ss2=preg_replace('/(,\d\d)\)|(,\d)\)/', ",".$result['N_FormID'].")",$ss2 );
-		$Query=$conn->connect()->prepare($ss2);
+		$ss3=preg_replace('/\,\d*\)/', ",".$result['N_FormID'].")",$ss2 );
+		$Query=$conn->connect()->prepare($ss3);
 		$Query->execute();
-		}
+		
 	}
 	}
 	}
 	else {
 	//Use the Auto Increment  
-	$ee=preg_replace('/\(\d\d|\(\d/', "(''", $statement);
+	$ee=preg_replace('/\(\d*\,/', "('',", $statement);
 	/////////
+	echo"Not Unique";
 	//For Now it will be Null
 	//This will store the New App ID if Needed
 		if (empty($APP_ID_Replace))
 	{ 
+	echo $APP_ID_Replace;
 		//Working ///:)
-		if (empty ($Form_ID_Replace)){
+		if (!in_array($Form_ID_Check[1],$Form_ID_Replace)){
 		$conn=new Connection ();
 		$Query=$conn->connect()->prepare($ee);
 		$Query->execute();
 		}
 		else{  
-		//Check If the //Need a Check Mechanism for The Update//Changeeeeeeeeee the Array
 		echo"Yes Form Update";
 		$result =array();
 		$conn=new Connection ();
-		foreach ($Form_ID_Replace as $Fid1){
+		$Fid1=$Form_ID_Replace[$x2x];
         $Query=$conn->connect()->prepare("SELECT N_FormID from form_mapping where O_FomID= :id") ;
-        $Query->bindValue(":id",$Fid1);
+        $Query->bindValue(":id",$Form_ID_Check[1]);
         $Query->execute();
 		$result=$Query->fetch(\PDO::FETCH_ASSOC);
-		$ss2=preg_replace('/(,\d\d)\)|(,\d)\)/', ",".$result['N_FormID'].")",$ee );
+		++$x2x;
+		$ss2=preg_replace('/\,\d*\)/', ",".$result['N_FormID'].")",$ee );
 		$Query=$conn->connect()->prepare($ss2);
 		$Query->execute();
-		}
+		
 	}
 	}else {
 	//$Form_ID_Replace=90;
 	
 	$aPP_id_2=explode (":",$APP_ID_Replace);
-	$ss2=preg_replace('/(,\d\d,)|(,\d,)/', ",".$aPP_id_2[1].",", $ee);
-	if (empty ($Form_ID_Replace)){
+	echo $APP_ID_Replace;
+	$ss2=preg_replace('/\,\d*\,/', ",".$aPP_id_2[1].",", $ee);
+	echo $ss2."<br/>";
+	if (!in_array($Form_ID_Check[1],$Form_ID_Replace)){
 	echo"Form Empty";
 	$conn=new Connection ();
+	echo $ss2;
 	$Query=$conn->connect()->prepare($ss2);
 	$Query->execute();
 	}else
 	{
 	$result =array();
 		$conn=new Connection ();
-        foreach ($Form_ID_Replace as $Fid1){
+		echo"New Form Check";
+		//echo $Form_ID_Replace[0];
+        $Fid1=$Form_ID_Replace[$x2x];//Get the Rows 
         $Query=$conn->connect()->prepare("SELECT N_FormID from form_mapping where O_FomID= :id") ;
-        $Query->bindValue(":id",$Fid1);
+        $Query->bindValue(":id",$Form_ID_Check[1]);
         $Query->execute();
 		$result=$Query->fetch(\PDO::FETCH_ASSOC);
-		$ss2=preg_replace('/(,\d\d)\)|(,\d)\)/', ",".$result['N_FormID'].")",$ss2 );
-		$Query=$conn->connect()->prepare($ss2);
+		++$x2x;
+		$ss3=preg_replace('/\,\d*\)/', ",".$result['N_FormID'].")",$ss2 );
+		$Query=$conn->connect()->prepare($ss3);
 		$Query->execute();
-		}
+		
 	}
 	}
 	}
 	}
-	}
-	}
-	fclose($file);//End While Loop
+	
+	
+	
+	}//End of the IF Get Statment
+	//}//End While Loop
+	fclose($file);
+	Truncate_Map();//Remove Mapping in DB//
+	//Not Empty File
 	}
 
 	Function Import ()
@@ -502,6 +555,7 @@ include 'PDO_Conn.php';//Include the Connection File
 				//As soon it loads the file it changes the PREFIX word in the file to the current DB Prefix 
 				replaces_Prefix_in_file ($filename);
 				Creat_Applications($filename);
+				
 	
 	}
 	Function Check_Uniquines ($ID,$field)
@@ -522,6 +576,13 @@ include 'PDO_Conn.php';//Include the Connection File
 	break;
 	}
 	return $Check['num'];
+	}
+	
+	Function Truncate_Map()//This Function is Used every time a new Import is made and got ID changed .This to avoid any keys mismatch in the Future 
+	{
+	$conn=new Connection ();
+	$Query=$conn->connect()->prepare("TRUNCATE form_mapping");
+	$Query->execute();
 	}
 
 
