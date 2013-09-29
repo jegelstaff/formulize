@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.formulizeprototype"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-sdk
+        android:minSdkVersion="8"
+        android:targetSdkVersion="17" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.example.formulizeprototype.LoginActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.example.formulizeprototype.FormActivity"
+            android:label="@string/title_activity_form"
+            android:parentActivityName="com.example.formulizeprototype.LoginActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.formulizeprototype.LoginActivity" />
+        </activity>
+        <activity
+            android:name="com.example.formulizeprototype.ApplicationListActivity"
+            android:label="@string/title_activity_application_list" >
+        </activity>
+        <activity
+            android:name="com.example.formulizeprototype.ScreenListActivity"
+            android:label="@string/title_activity_form_list"
+            android:parentActivityName="com.example.formulizeprototype.ApplicationListActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.formulizeprototype.ApplicationListActivity" />
+        </activity>
+        <activity
+            android:name="com.example.formulizeprototype.ScreenActivity"
+            android:label="@string/title_activity_screen"
+            android:parentActivityName="com.example.formulizeprototype.ScreenListActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.formulizeprototype.ScreenListActivity" />
+        </activity>
+        <activity
+            android:name="com.example.formulizeprototype.ScreenWebActivity"
+            android:label="@string/title_activity_screen_web"
+            android:parentActivityName="com.example.formulizeprototype.ScreenListActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.formulizeprototype.ScreenListActivity" />
+        </activity>
+    </application>
+
+</manifest>
