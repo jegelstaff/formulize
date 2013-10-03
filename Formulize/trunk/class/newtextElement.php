@@ -84,8 +84,8 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
 		$changed = false;
 		if ($_POST['formlink'] != "none") {
 			$ele_value[4] = $_POST['formlink'];
-			$element->setVar('ele_value', $ele_value);
 		}
+		$element->setVar('ele_value', $ele_value);
         return $changed;
     }
     
