@@ -36,8 +36,13 @@
     
     $application_handler = xoops_getmodulehandler('applications', 'formulize');
     $appid = $_POST['formulize_admin_key'];
-    
     $menuitems = $_POST['menu_items'];
+    
+    // added Oct 2013 Wejdan Radhwan
+    if($_POST['deletemenuitem']) {
+  		$menuitem = $_POST['deletemenuitem'];
+		$application_handler->deleteMenuLink($appid, $menuitem);  
+  	}
     
     if(strlen($menuitems) > 0){
         $application_handler->insertMenuLinks($appid, $menuitems);

@@ -367,7 +367,10 @@ class formulizeApplicationsHandler {
         return $links_handler->get($appid,$all); 
     }
     
-    function insertMenuLinks($appid,$menuitems){
+    /*
+     // old interface functions
+     
+     function insertMenuLinks($appid,$menuitems){
         global $xoopsDB;
         $links = explode("~~",$menuitems);
         $i = 0;
@@ -437,6 +440,48 @@ class formulizeApplicationsHandler {
             $xoopsDB->query($deletemenupermissions);
         }
     }
+    */
+    function insertMenuLinks($appid,$menuitem){
+        static $rank = 1;
+        global $xoopsDB;
+        //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids
+        $linkValues = explode("::",$menuitem);
+        if($linkValues[0] == "null"){
+       	 	//add new menu
+        	$insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". $linkValues[2]."',".$rank.",'".$linkValues[3]."','".$linkValues[1]."');";
+            $rank++;
+            if(!$result = $xoopsDB->query($insertsql)) {
+                exit("Error inserting Menu Item. SQL dump:\n" . $insertsql . "\n".mysql_error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+            }else{
+            	
+                $menuid = mysql_insert_id();
+                if($linkValues[4] != "null" and count($linkValues[4]) > 0){
+                    $groupsThatCanView = explode(",",$linkValues[4]);
+                    foreach($groupsThatCanView as $groupid) {
+                        $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".$menuid.",". $groupid.")";                     
+                    	if(!$result = $xoopsDB->query($permissionsql)) {
+                    		exit("Error inserting Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".mysql_error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+                    	}
+                    }
+                }
+            }
+            
+        }
+    }//end of insertMenuLinks()
+
+    
+    // modified Oct 2013 Wejdan Radhwan
+    function deleteMenuLink($appid,$menuitem ){
+        global $xoopsDB;       
+        $deletemenuitems = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_links")."` WHERE appid=".$appid." AND menu_id=" .$menuitem .";";
+        $deletemenupermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=" .$menuitem .";";
+        if(!$result = $xoopsDB->query($deletemenuitems)) {
+            //no menu items deleted
+        }else{
+            $xoopsDB->query($deletemenupermissions);
+        }
+    }
+
 }
 
 

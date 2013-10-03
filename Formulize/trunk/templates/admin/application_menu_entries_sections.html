@@ -1,19 +1,50 @@
-<p><a href="" class="deletelink" ><img src="../images/editdelete.gif"> Delete</a></p>
+<div class="panel-content content">
+    
+    <p><a href="" class="deletelink" target="<{$content.links[$sectionNumber].menu_id}>"><img src="../images/editdelete.gif"> Delete</a></p>
 
-<div class="accordion-box">			
-    <div class="form-item">
-    	<fieldset>
- 			<p>Menu text: <input type="text" id="menutext" name="menutext">	</p>	
-                <br />
-                <{$content.listsofscreenoptions}>
-                    <br />or<br />
-                    External url:  <input type="text" name="url" id="url"><br />	 
-                        <h3>Which groups can view the link</h3>                        
-                        <select name="groups" id="groups" size=10 multiple multiple style="overflow-y: scroll;">
-                            <{foreach from=$content.groups item=group}>
-                                <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
-                                <{/foreach}>
-                                    </select>
-                        </fieldset>
-    </div>
+    <form>
+        <p>Menu text: <input type="text" id="menutext" name="menutext" value="<{$content.links[$sectionNumber].link_text}>"> </p>	
+        <br />
+            
+        <div id="sectionScreen<{$sectionNumber}>">
+            <{$content.listsofscreenoptions}>
+        </div>  
+        <b>or</b><br />
+            
+        External url:  <input type="text" name="url" id="url" value="<{$content.links[$sectionNumber].url}>">
+            <br /><br />	 
+            
+        <h3>Which groups can view the link</h3>                        
+        <select name="groups" id="groups<{$sectionNumber}>" size=10 multiple style="overflow-y: scroll;">
+            <{foreach from=$content.groups item=group}>
+                    <option value="<{$group.id}>"> <{$group.name}> </option>
+            <{/foreach}>
+        </select>
+        <br />
+            
+        <button class="menuButton" id="updateMenuItem" type="button" >Update</button>
+            
+    </form> 
 </div>
+
+
+<script type="text/javascript">
+    
+    jQuery( document ).ready(function() {
+                             
+        //show screen for each link (if there is any)		
+        jQuery("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").val("<{$content.links[$sectionNumber].screen}>"); 
+                             
+        //show group permissions for each link (if there are any)
+        var permissions= ""+'<{$content.links[$sectionNumber].permissions}>';		
+        if ( permissions != ''){				
+            permissions= permissions.split(",");
+            for (var i=0; i<permissions.length; i++){				
+                jQuery("#groups<{$sectionNumber}> option").filter( function(){
+                    return jQuery(this).val() == permissions[i];	   			
+                }).attr("selected", true);
+            }
+        }		
+                             
+});
+</script>

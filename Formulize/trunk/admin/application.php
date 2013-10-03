@@ -59,6 +59,7 @@ if($aid == 0) {
     $index = 0; // JAKEADDED
     foreach ($appLinks as $menulink) // JAKEADDED
     {
+        $menulinks[$index]['menu_id'] = $menulink->getVar('menu_id'); //Oct 2013 Wejdan Radhwan
         $menulinks[$index]['url'] = $menulink->getVar('url'); // JAKEADDED
         $menulinks[$index]['link_text'] = $menulink->getVar('link_text'); // JAKEADDED
         $menulinks[$index]['screen'] = $menulink->getVar('screen'); // JAKEADDED
