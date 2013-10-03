@@ -1,10 +1,13 @@
 <?php
 include 'PDO_Conn.php';//Include the Connection File
 	
-	
+	//Check_Uniquines(null,5,$ele_Handle);
 	//Application Runs From Here:
 	Check_Post_Parameter();
+	//print_r (Fourm_elements(7));
 	//Function To check if the Button Export or Import is Pressed and Loads the Function
+	//echo Check_Uniquines (null,5,'12');//Form Handle
+	//Check_Uniquines (ID,5);
 	Function Check_Post_Parameter()
 	{
 	if(isset($_GET['select']))
@@ -25,7 +28,6 @@ include 'PDO_Conn.php';//Include the Connection File
 	}
 	
 	}	
-    
 	Function Create_Insert_Statments($table)
 	{//
 	/*
@@ -46,9 +48,11 @@ include 'PDO_Conn.php';//Include the Connection File
 	Links Can be Mnny
 	//[FIXED String Field!!!]
 	*/
+	STATIC $getfid=array();//To get The Form ID that's being Exported to send it to Formulize table and declared Static so won't loose its value when function exists
+	//$getfid=array();//To get The Form ID that,s being Exported to send it to Formulize table
 	$getfield=Get_FieldNames($table);
 	$appid = intval($_GET['aid']);
-	$TextField=array('id_form','lockedform','defaultform','defaultlist','store_revisions','appid');//To decide whether the field is a string or not 
+	$TextField=array('id_form','lockedform','defaultform','defaultlist','store_revisions','appid','id_form','ele_id','ele_order','ele_req','ele_encrypt','ele_forcehidden','ele_private' );//To decide whether the field is a string or not 
 	//$table='_formulize_applications';
 	
 	if ($table=='_formulize_application_form_link') {
@@ -118,6 +122,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	  $Insert="Insert INTO Prefix".$table." (`id_form`, `desc_form`, `singleentry`, `headerlist`, `tableform`, `lockedform`, `defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`) VALUES (";
 	  foreach ($Links as $key => $column) {
 	 $getForm=Get_Form($column['fid']);
+	 array_push($getfid,$column['fid']);//To get all the FID and send it to _Formulize Table
 	 foreach ($getForm as $key => $column) {
 	 foreach($getfield as $k => $cur)
 	{
@@ -148,20 +153,97 @@ include 'PDO_Conn.php';//Include the Connection File
 	}
 	if ($k1==11){$k1=1;}
 	
-	 }}
+	 }}else if ($table=='_formulize') {	
+	  foreach ($getfid as $key => $column) {//Loop to get all the Fid
+	 //var_dump($column);
+	 echo  $column;
+	 $Elements=Fourm_Elements($column);//To get the Row for this FID
+	 $Insert="INSERT INTO Prefix_formulize (`id_form`, `ele_id`, `ele_type`, `ele_caption`, `ele_desc`, `ele_colhead`, `ele_handle`, `ele_order`, `ele_req`, `ele_encrypt`, `ele_value`, `ele_uitext`, `ele_delim`, `ele_display`, `ele_disabled`, `ele_filtersettings`, `ele_forcehidden`, `ele_private`) VALUES ( " ;
+	  //print_r($Elements);
+	 foreach ($Elements as $key => $column1) {
+
+	 foreach($getfield as $k => $cur) {
+	 if ($cur['Field']=='ele_private'){
+	 $Insert.=$column1[$cur['Field']].");";
+	 echo $Insert;
+	 $Insert="INSERT INTO Prefix_formulize (`id_form`, `ele_id`, `ele_type`, `ele_caption`, `ele_desc`, `ele_colhead`, `ele_handle`, `ele_order`, `ele_req`, `ele_encrypt`, `ele_value`, `ele_uitext`, `ele_delim`, `ele_display`, `ele_disabled`, `ele_filtersettings`, `ele_forcehidden`, `ele_private`) VALUES ( " ;
+	 }else{
+	 if ($cur['Field']=='ele_value'|| $cur['Field']=='ele_filtersettings' ){
+	 $Insert.="'".(str_replace(';', '&', $column1[$cur['Field']]))."',";//This Is a Special If Statement because we replace the ; with & and when we Import we switch & back to ;.At beginning. we break the statements based on ; so this will cause the sterilized array to break apart. 
+	 }else{
+	 if ($cur['Field']=='ele_handle'){
+	// $Insert.="#'".$column1[$cur['Field']]."'#,";//This Marks the Handle so when we Import we could locate which Field is the Handle by Preg Match
+	 $Insert.="'".$column1[$cur['Field']]."',";//This Marks the Handle so when we Import we could locate which Field is the Handle by Preg Match
+	 }else {
+	 if (in_array($cur['Field'],$TextField)){
+	  $Insert.=$column1[$cur['Field']].",";
+	  }else {
+	  $Insert.="'".$column1[$cur['Field']]."',";
+	  }} }}
+	 
+	}//End getting the Field Names
+	}//End of Getting Rows from Formulize table
+	}//End of FID Values loop
+	}
 }
 	//Function to Write the Insert Statements
 	Function Export_All()
 	{
 		//First Create Applications,Fourms and The Link them
 		Create_Insert_Statments("_formulize_applications");
+		//echo "<br/>";
 		Create_Insert_Statments("_formulize_id");
+		//echo "<br/>";
 		Create_Insert_Statments("_formulize_application_form_link");
+		//echo "<br/>";
+		Create_Insert_Statments("_formulize");
+		
 		Write_To_File();
 	
 	}
 	
+	function Fourm_Elements ($fid=null,$Uniq=null,$ele_form=null){
+	        global $result;//To be Used in the Function
+			$result =array();
 	
+	if (!empty($fid)){
+		$table=Prefix;
+		$table.='_formulize';
+		$conn=new Connection ();
+        $Query=$conn->connect()->prepare("select * from ".$table." where id_form= :id") ;
+        $Query->bindValue(":id",$fid);
+        $Query->execute();
+		while ($row = $Query->fetch(\PDO::FETCH_OBJ))
+        {
+            $result[]=(array)$row;
+        }
+	
+	}else {
+	
+	switch ($Uniq) {
+		case 1:
+		$table=Prefix;
+		$table.='_formulize';
+		$conn=new Connection ();
+        $Query=$conn->connect()->prepare("SELECT COUNT( * ) AS num from ".$table." where ele_id= :id") ;
+        $Query->bindValue(":id",$ele_form);
+        $Query->execute();
+		$result=$Query->fetch(\PDO::FETCH_ASSOC);
+		break;
+	case 2:
+		$table=Prefix;
+		$table.='_formulize';
+		$conn=new Connection ();
+        $Query=$conn->connect()->prepare("SELECT COUNT( * ) AS num from ".$table." where ele_handle= :handlename") ;
+        $Query->bindValue(":handlename",$ele_form);
+        $Query->execute();
+		$result=$Query->fetch(\PDO::FETCH_ASSOC);
+		break;
+		}
+		
+	}
+	return $result;
+	}
 	 function Application_Fourm_Links($appid, $Uniq=null)
     {
 	/*
@@ -169,7 +251,7 @@ include 'PDO_Conn.php';//Include the Connection File
 	2)if Uniq field is passed it checks the ID by returning the Count of this ID in the Table this is used by the checking function when it checks if the ID
 	is in use or not.
 	*/
-		if ($Uniq==null){
+		if (empty($Uniq)){
 		$table=Prefix;
 		$table.='_formulize_application_form_link';
         $result =array();
@@ -344,7 +426,8 @@ include 'PDO_Conn.php';//Include the Connection File
    $x2x=0;
 	foreach ($get_line as $statement)
    {
-  
+
+   preg_match('/\( \w*\,\w*/', $statement, $matches);
   // echo $statement;
   // }}fclose($file);}
 	if(strstr($statement, "_formulize_applications")) {
@@ -548,9 +631,79 @@ include 'PDO_Conn.php';//Include the Connection File
 	}
 	}
 	}
+	if(strstr($statement, "_formulize ")) {
+	preg_match('/\( \w*\,\w*/', $statement, $matches);
+	preg_match('/\\^\'\w*\'\^/', $statement, $matches1);//To get the Ele Handle 
+	//echo $statement;
+	//print_r($statement);
+	//echo $statement;\^\'\w*\'\^
+	$ele_Handle_Text=explode("^",$matches[0]);//To Get the Ele Handle As Text 
+	$ele_Handle_Int=explode("'",$ele_Handle_Text[1]); //To get Handle as Integear 
+	$ele_ID=explode(',',$matches[0]);
+	$Flag;//This Flag will be Used to determine if the ee_Handle is Text or Integer 
+	if ($ele_ID[1]==$ele_ID[1]){$Flag=1;}else {$Flag=0;} //If Flag =1 then the Ele_handle is Text
+	Check_Uniquines(null,5,$ele_Handle);
+	//echo $ele_ID[1];
+	$Form_ID_Check=explode('(',$ele_ID[0]);
+	//echo $Fourm_ID[1];
+	$statement=str_replace('&', ';',$statement);//This to bring back the ; to the Sterilized Array after we broke the statements with ; 
+	if (Check_Uniquines($ele_ID[1],4)==0)
+	{
+	if (!in_array($Form_ID_Check[1],$Form_ID_Replace))
+	{
+	echo "IN Check Uniq";
+	$conn=new Connection ();
+	$Query=$conn->connect()->prepare($statement);
+	$Query->execute();
+	}else {
+	echo "IN Check FID";
+	$result =array();
+	$conn=new Connection ();
+        $Query=$conn->connect()->prepare("SELECT N_FormID from form_mapping where O_FomID= :id") ;
+        $Query->bindValue(":id",$Form_ID_Check[1]);
+        $Query->execute();
+		$result=$Query->fetch(\PDO::FETCH_ASSOC);
+		++$x2x;
+		//print_r($result);
+		$ss3=preg_replace('/\w*VALUES \( \d*\,/', "VALUES (".$result['N_FormID'].",",$statement);
+		$Query=$conn->connect()->prepare($ss3);
+		$Query->execute();
+	}
 	
 	
+	}else {
+	echo "Not Unique  here";
+	$ee=preg_replace('/\w*VALUES \( \d*\,\d*/', "VALUES (".$Form_ID_Check[1].",''", $statement);
+	echo $ee;
+	//Replace Auto Increment //
+	if (!in_array($Form_ID_Check[1],$Form_ID_Replace))
+	{
+	$conn=new Connection ();
+	$Query=$conn->connect()->prepare($ee);
+	$Query->execute();
+	echo "Not";
+	}else {
+	echo "Here FID";
+	$result =array();
+	$conn=new Connection ();
+        $Query=$conn->connect()->prepare("SELECT N_FormID from form_mapping where O_FomID= :id") ;
+        $Query->bindValue(":id",$Form_ID_Check[1]);
+        $Query->execute();
+		$result=$Query->fetch(\PDO::FETCH_ASSOC);
+		++$x2x;
+		//print_r($result);
+		$ss3=preg_replace('/\w*VALUES \( \d*\,/', "VALUES (".$result['N_FormID'].",",$ee );
+		//echo $ee;
+		$Query=$conn->connect()->prepare($ss3);
+		$Query->execute();
+	//Replace FID in the INsert Statment
 	
+	}
+
+	}
+	
+	
+	}
 	}//End of the IF Get Statment
 	//}//End While Loop
 	fclose($file);
@@ -569,7 +722,7 @@ include 'PDO_Conn.php';//Include the Connection File
 				
 	
 	}
-	Function Check_Uniquines ($ID,$field)
+	Function Check_Uniquines ($ID,$field,$Text=null)
 	{
 	/*
 	This Function Checks if the ID are Unique or not .If Unique then it will return 0.
@@ -584,6 +737,12 @@ include 'PDO_Conn.php';//Include the Connection File
 	break;
 	case 3:
 	$Check=Application_Fourm_Links($ID,3);
+	break;
+	case 4:
+	$Check=Fourm_Elements (null,1,$ID);
+	break;
+	case 5:
+	$Check=Fourm_Elements (null,2,$Text);
 	break;
 	}
 	return $Check['num'];
