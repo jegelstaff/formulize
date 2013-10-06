@@ -172,7 +172,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   // headings data
   //set options for all elements in entire framework
   //also, collect the handles from a framework if any, and prep the list of possible handles/ids for the list template
-  if($selectedFramework) {
+  if($selectedFramework and isset($frameworks[$selectedFramework])) {
       $allFids = $frameworks[$selectedFramework]->getVar('fids');
   } else {
       $allFids = array(0=>$fid);
