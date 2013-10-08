@@ -58,6 +58,10 @@ class icms_core_Debug {
  	 * @param string $extra Additional information to provide about the change
  	 */
  	static public function setDeprecated($replacement='', $extra='') {
+        if (defined("ICMS_TRACK_DEPRECATED") and !ICMS_TRACK_DEPRECATED) {
+            //error_log("icms_core_Debug::setDeprecated('$replacement', '$extra');");
+            return; // if we're not actively upgrading deprecated functions, no need to spend time tracking them
+        }
 		icms_loadLanguageFile('core', 'core');
 		$trace = debug_backtrace();
 		array_shift($trace);
