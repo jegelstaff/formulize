@@ -176,6 +176,10 @@ class icms_core_Logger {
 	 * @param  string  $errline
 	 */
 	public function handleError($errno, $errstr, $errfile, $errline) {
+        if (defined("ICMS_ERROR_LOG_SEVERITY") and $errno <= ICMS_ERROR_LOG_SEVERITY) {
+            error_log("icms_core_Logger::handleError($errno, $errstr, $errfile, $errline);");
+        }
+
 		$errstr = $this->sanitizePath($errstr);
 		$errfile = $this->sanitizePath($errfile);
 		if ($this->activated && ( $errno & error_reporting() )) {
