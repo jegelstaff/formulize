@@ -519,6 +519,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					$_POST[$k] = $_GET[$requestKeyToUse];
 				} elseif($v == "{USER}" AND $xoopsUser) {
 					$_POST[$k] = $xoopsUser->getVar('name') ? $xoopsUser->getVar('name') : $xoopsUser->getVar('uname');
+				} else {
+					unset($_POST[$k]); // clear terms where no match was found, because this term is not active on the current page, so don't confuse users by showing it
 				}
 			}
 		}
