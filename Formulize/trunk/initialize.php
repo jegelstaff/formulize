@@ -237,7 +237,11 @@ if(!$rendered) {
       } else { // if no form is specified, then show the General Forms category
 	// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-      	header("Location: " . XOOPS_URL . "/modules/formulize/cat.php");
+	if(strstr($currentURL, "/modules/formulize/")) { // if it's a formulize page, reload to login screen
+		header("Location: " . XOOPS_URL . "/modules/formulize/cat.php");
+	} else {
+		print "<p>Formulize could not display a screen for you.  Are you sure the specified screen exists?</p>";
+	}
       }
 }
 
@@ -252,5 +256,3 @@ if($renderedFormulizeScreen AND is_object($xoopsTpl)) {
 }
 
 $GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering]; // go back to the previous rendering flag, in case this operation was nested inside something else
-
-?>
