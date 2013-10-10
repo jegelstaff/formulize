@@ -6,15 +6,16 @@ import android.os.Parcelable;
 /**
  * This object stores the connection information that the application needs to
  * connect to a Formulize server.
+ * 
  * @author timch326
  * 
  */
 public class ConnectionInfo implements Parcelable {
 
-	private String mConnectionURL;
-	private String mConnectionName;
-	private String mUsername;
-	private String mPassword;
+	private String connectionURL;
+	private String connectionName;
+	private String username;
+	private String password;
 
 	public ConnectionInfo(String connectionURL, String connectionName) {
 		this(connectionURL, connectionName, null, null);
@@ -29,35 +30,35 @@ public class ConnectionInfo implements Parcelable {
 	}
 
 	public String getConnectionURL() {
-		return mConnectionURL;
+		return connectionURL;
 	}
 
 	public void setConnectionURL(String mConnectionURL) {
-		this.mConnectionURL = mConnectionURL;
+		this.connectionURL = mConnectionURL;
 	}
 
 	public String getConnectionName() {
-		return mConnectionName;
+		return connectionName;
 	}
 
 	public void setConnectionName(String mConnectionName) {
-		this.mConnectionName = mConnectionName;
+		this.connectionName = mConnectionName;
 	}
 
 	public String getUsername() {
-		return mUsername;
+		return username;
 	}
 
 	public void setUsername(String mUsername) {
-		this.mUsername = mUsername;
+		this.username = mUsername;
 	}
 
 	public String getPassword() {
-		return mPassword;
+		return password;
 	}
 
 	public void setPassword(String mPassword) {
-		this.mPassword = mPassword;
+		this.password = mPassword;
 	}
 
 	@Override
@@ -66,9 +67,15 @@ public class ConnectionInfo implements Parcelable {
 	}
 
 	@Override
+	public String toString() {
+		return "Name: " + connectionName + ", URL: " + connectionURL
+				+ ", Username: " + username + ", Password: " + password;
+	}
+
+	@Override
 	public void writeToParcel(Parcel dest, int flags) {
-		dest.writeStringArray(new String[] { this.mConnectionURL,
-				this.mConnectionName, this.mUsername, this.mPassword });
+		dest.writeStringArray(new String[] { this.connectionURL,
+				this.connectionName, this.username, this.password });
 	}
 
 	// static field used to regenerate connection info from a parcel
@@ -85,9 +92,9 @@ public class ConnectionInfo implements Parcelable {
 
 	// Constructor used by CREATOR object to read data from parcel
 	public ConnectionInfo(Parcel pc) {
-		mConnectionURL = pc.readString();
-		mConnectionName = pc.readString();
-		mUsername = pc.readString();
-		mPassword = pc.readString();
+		connectionURL = pc.readString();
+		connectionName = pc.readString();
+		username = pc.readString();
+		password = pc.readString();
 	}
 }

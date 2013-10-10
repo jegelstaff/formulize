@@ -2,9 +2,12 @@ package com.example.formulizeprototype;
 
 import java.util.ArrayList;
 
+import ca.formulize.android.connection.FUserSession;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
@@ -30,6 +33,8 @@ public class ApplicationListActivity extends Activity {
 		ListView applicationListView = (ListView) findViewById(R.id.applicationList);
         applicationListView.setAdapter(arrayAdapter); 
         applicationListView.setOnItemClickListener(new ApplicationListClickListener());
+        
+        Log.d("Formulize", FUserSession.getInstance().getConnectionInfo().toString());
 	}
 
 	@Override

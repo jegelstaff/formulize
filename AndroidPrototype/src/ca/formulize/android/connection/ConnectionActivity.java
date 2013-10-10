@@ -19,10 +19,18 @@ import ca.formulize.android.data.FormulizeDBHelper;
 
 import com.example.formulizeprototype.R;
 
+/**
+ * Represents the connection list screen where users can choose from a list of
+ * connections they have created in {@link AddConnectionActivity} to connect to it.
+ * 
+ * @author timch326
+ * 
+ */
 public class ConnectionActivity extends FragmentActivity {
 
 	private ListView connectionList;
 	private FormulizeDBHelper dbHelper;
+	private SimpleCursorAdapter connectionAdapter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -36,12 +44,12 @@ public class ConnectionActivity extends FragmentActivity {
 		Cursor connectionCursor = dbHelper.getConnectionList();
 		String[] selectDBColumns = { ConnectionEntry.COLUMN_NAME_CONNECTION_NAME };
 		int[] mappedViews = { android.R.id.text1 };
-		SimpleCursorAdapter adapter = new SimpleCursorAdapter(this,
+		connectionAdapter = new SimpleCursorAdapter(this,
 				android.R.layout.simple_list_item_1, connectionCursor,
 				selectDBColumns, mappedViews,
 				CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
 
-		connectionList.setAdapter(adapter);
+		connectionList.setAdapter(connectionAdapter);
 
 		// Set up list item click listeners
 		OnItemClickListener mConnectionClickedListener = new OnConnectionClickListener();
@@ -76,10 +84,24 @@ public class ConnectionActivity extends FragmentActivity {
 	}
 
 	private class OnConnectionClickListener implements OnItemClickListener {
-		public void onItemClick(AdapterView parent, View v, int position,
+		public void onItemClick(AdapterView<?> parent, View v, int position,
 				long id) {
-			ConnectionInfo connectionInfo = dbHelper.getConnectionInfo(id);
 
+			// Get selected connection info from database
+			Cursor cursor = (Cursor) connectionAdapter.getItem(position);
+			String connectionURL = cursor
+					.getString(cursor
+							.getColumnIndex(ConnectionEntry.COLUMN_NAME_CONNECTION_URL));
+			String connectionName = cursor
+					.getString(cursor
+							.getColumnIndex(ConnectionEntry.COLUMN_NAME_CONNECTION_NAME));
+			String username = cursor.getString(cursor
+					.getColumnIndex(ConnectionEntry.COLUMN_NAME_USERNAME));
+			String password = cursor.getString(cursor
+					.getColumnIndex(ConnectionEntry.COLUMN_NAME_PASSWORD));
+
+			ConnectionInfo connectionInfo = new ConnectionInfo(connectionURL,
+					connectionName, username, password);
 			Log.d("Formulize", "Connection Selected");
 			FUserSession session = FUserSession.getInstance();
 

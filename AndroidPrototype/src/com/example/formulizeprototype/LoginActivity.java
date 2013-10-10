@@ -10,6 +10,9 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 
+/*
+ * This Activity is currently not being used by the prototype
+ */
 public class LoginActivity extends Activity {
 	
 	public final static String FORMULIZE_URL = "formulizeURL";
@@ -40,8 +43,10 @@ public class LoginActivity extends Activity {
 				
 				// Create a user session
 				FUserSession userSession = FUserSession.getInstance();
-				userSession.setFURL(formulizeURL.getText().toString());
-				userSession.setUsername(username.getText().toString());
+				
+				// Deprecated methods, use FUserSession's createSession method instead
+				//userSession.setFURL(formulizeURL.getText().toString());
+				//userSession.setUsername(username.getText().toString());
 
 				startActivity(formIntent);
 			}

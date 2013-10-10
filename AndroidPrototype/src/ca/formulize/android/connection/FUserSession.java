@@ -17,9 +17,7 @@ public class FUserSession {
 	public final static String NO_USER_CREDENTIALS = "Please enter a username and password";
 
 	private static FUserSession instance;
-	private String username;
-	private String fURL;
-	private String password;
+	private ConnectionInfo connectionInfo;
 	private String userToken;
 
 	public static FUserSession getInstance() {
@@ -32,34 +30,27 @@ public class FUserSession {
 
 	private FUserSession() {
 	}
-
-	public String getUsername() {
-		return username;
+	
+	public ConnectionInfo getConnectionInfo() {
+		return connectionInfo;
 	}
 
-	public String getFURL() {
-		return fURL;
-	}
-
-	public void setUsername(String newUsername) {
-		username = newUsername;
-	}
-
-	public void setFURL(String newFURL) {
-		fURL = newFURL;
+	public void setConnectionInfo(ConnectionInfo connectionInfo) {
+		this.connectionInfo = connectionInfo;
 	}
 
 	public void createConnection(FragmentActivity activity,
 			ConnectionInfo connectionInfo) {
 
 		if (connectionInfo.getUsername() == null
-				|| connectionInfo.getUsername() == "") {
-			
+				|| connectionInfo.getUsername().equals("")) {
+
 			// Prompt for login credentials with dialog
 			// Pass existing connection info to the login dialog
 			UserLoginDialogFragment loginDialog = new UserLoginDialogFragment();
 			Bundle args = new Bundle();
-			args.putParcelable(UserLoginDialogFragment.EXTRA_CONNECITON_INFO, connectionInfo);
+			args.putParcelable(UserLoginDialogFragment.EXTRA_CONNECITON_INFO,
+					connectionInfo);
 			loginDialog.setArguments(args);
 			loginDialog.show(activity.getSupportFragmentManager(), "login");
 		} else {
@@ -79,6 +70,15 @@ public class FUserSession {
 		return true;
 	}
 
+	/**
+	 * This asynchronous task logs into a Formulize server with the user
+	 * credentials given by the ConnectionInfo it receives. If the login is
+	 * successful, it returns the token of the user session as a result and
+	 * associates the valid ConnectionInfo and token to FUserSession.
+	 * 
+	 * @author timch326
+	 * 
+	 */
 	private class LoginTask extends AsyncTask<ConnectionInfo, String, String> {
 
 		public LoginTask(Activity activity) {
@@ -101,16 +101,14 @@ public class FUserSession {
 		@Override
 		protected String doInBackground(ConnectionInfo... info) {
 			ConnectionInfo connectionInfo = info[0];
-			if (connectionInfo.getUsername() == null) {
-				return NO_USER_CREDENTIALS;
-			}
-			if (connectionInfo.getConnectionURL() == null) {
-				return CONNECTION_FAILED;
-			}
 
 			try {
 				// Simulate Network Access
 				Thread.sleep(2000);
+
+				// Associate user session with valid connection info
+				FUserSession.this.connectionInfo = connectionInfo;
+
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -127,11 +125,14 @@ public class FUserSession {
 			super.onPostExecute(result);
 			if (result == null) {
 				Log.d("Formulize", "Connection Failed");
+			} else {
+				Log.d("Formulize", result);
+
+				// Go to application list once logged in
+				Intent viewApplicationsIntent = new Intent(activity,
+						ApplicationListActivity.class);
+				activity.startActivity(viewApplicationsIntent);
 			}
-			Log.d("Formulize", result);
-			Intent viewApplicationsIntent = new Intent(activity,
-					ApplicationListActivity.class);
-			activity.startActivity(viewApplicationsIntent);
 		}
 
 	}

@@ -1,10 +1,10 @@
 package ca.formulize.android.connection;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,7 +15,15 @@ import ca.formulize.android.data.FormulizeDBHelper;
 
 import com.example.formulizeprototype.R;
 
-public class AddConnectionActivity extends Activity {
+/**
+ * Represents the screen that allows users to create new connections to a
+ * Formulize server. Connections are saved once they are submitted and
+ * validated.
+ * 
+ * @author timch326
+ * 
+ */
+public class AddConnectionActivity extends FragmentActivity {
 
 	// Values to populate form with for editing connections
 	public final static String EXTRA_CONNECTION_URL = "ca.formulize.android.extra.connectionURL";
@@ -30,10 +38,10 @@ public class AddConnectionActivity extends Activity {
 	private String password;
 
 	// UI References
-	private EditText mConnectionURLView;
-	private EditText mConnectionNameView;
-	private EditText mUsernameView;
-	private EditText mPasswordView;
+	private EditText connectionURLView;
+	private EditText connectionNameView;
+	private EditText usernameView;
+	private EditText passwordView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -44,10 +52,10 @@ public class AddConnectionActivity extends Activity {
 
 		// Set up connection form
 		// TODO: Set up connection values if they exist to allow edits
-		mConnectionURLView = (EditText) findViewById(R.id.connection_url);
-		mConnectionNameView = (EditText) findViewById(R.id.connection_name);
-		mUsernameView = (EditText) findViewById(R.id.username);
-		mPasswordView = (EditText) findViewById(R.id.password);
+		connectionURLView = (EditText) findViewById(R.id.connection_url);
+		connectionNameView = (EditText) findViewById(R.id.connection_name);
+		usernameView = (EditText) findViewById(R.id.username);
+		passwordView = (EditText) findViewById(R.id.password);
 	}
 
 	/**
@@ -81,14 +89,14 @@ public class AddConnectionActivity extends Activity {
 			NavUtils.navigateUpFromSameTask(this);
 			return true;
 		case R.id.saveConnection:
-			connectionURL = mConnectionURLView.getText().toString();
-			connectionName = mConnectionNameView.getText().toString();
-			username = mUsernameView.getText().toString();
-			password = mPasswordView.getText().toString();
-			
-			// TODO: Validate Connection Form 
+			connectionURL = connectionURLView.getText().toString();
+			connectionName = connectionNameView.getText().toString();
+			username = usernameView.getText().toString();
+			password = passwordView.getText().toString();
 
-			// TODO: Validate if connection is valid address to 
+			// TODO: Validate Connection Form
+
+			// TODO: Validate if connection is valid address to
 			// TODO: If entered, validate connection login
 
 			// TODO: If Valid, add connection and login to database
@@ -109,7 +117,7 @@ public class AddConnectionActivity extends Activity {
 				startActivity(connectionListIntent);
 
 			} else {
-				mConnectionURLView.setError("Invalid Connection URL");
+				connectionURLView.setError("Invalid Connection URL");
 			}
 
 		}
@@ -117,22 +125,13 @@ public class AddConnectionActivity extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 
-	/**
-	 * 
-	 * @param connection
-	 * @return boolean indicating if the connection is a valid Formulize server
-	 */
-	private boolean isValidConnection(ConnectionInfo connection) {
-		// TODO: Implement
+	boolean isValidConnection(ConnectionInfo connection) {
+		// TODO: Implement the actual validation
 		return true;
 	}
 
 	private void addConnection(ConnectionInfo connection) {
 		FormulizeDBHelper dbHelper = new FormulizeDBHelper(this);
 		dbHelper.insertConnectionInfo(connection);
-	}
-
-	private void updateConnection(long pkey, ConnectionInfo connection) {
-		// TODO: Allow connection details to be modified
 	}
 }

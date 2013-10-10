@@ -40,7 +40,7 @@ public class ScreenWebActivity extends Activity {
 		webView.setWebViewClient(new FScreenWebViewClient());
 		webView.setWebChromeClient(new WebChromeClient());
 		webView.getSettings().setJavaScriptEnabled(true);
-		String fFormURL = userSession.getFURL() + "/modules/formulize/index.php?sid=" + sid;
+		String fFormURL = userSession.getConnectionInfo().getConnectionURL() + "/modules/formulize/index.php?sid=" + sid;
 		webView.loadUrl(fFormURL);		
 	}
 
