@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/action_settings"/>
+    
+    <item
+        android:id="@+id/submit"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="Submit Screen"
+        android:titleCondensed="Submit" android:showAsAction="always|withText">
+    </item>
+
+</menu>
