@@ -10,7 +10,7 @@ class Formulize {
 	//Resource types and tables for the mapping methods
 	const GROUP_RESOURCE = 0;
 	const USER_RESOURCE = 1;
-	private static $mapping_table = 'formulize_resource_mapping';
+	private static $mapping_table = 'set in the init method since it is installation-specific';
 	private static $default_mapping_active = 1;
 	
 	/**
@@ -22,6 +22,7 @@ class Formulize {
 			require_once('modules/formulize/include/functions.php');
 
 			self::$db = $GLOBALS['xoopsDB'];
+			self::$mapping_table = $db->prefix('formulize_resource_mapping');
 			self::$db->allowWebChanges = true;
 		}
 	}

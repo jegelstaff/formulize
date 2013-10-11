@@ -1,10 +1,13 @@
-CREATE TABLE `formulize_external_group_mapping` (
-    `mappingid` int(11) NOT NULL auto_increment,
-    `groupid` int(11) NOT NULL,
-    `external_groupid` int(11) NOT NULL,
-    PRIMARY KEY (`mappingid`),
-    INDEX i_groupid (`groupid`),
-    INDEX i_external_groupid (`external_groupid`)
+CREATE TABLE `formulize_resource_mapping` (
+	mapping_id int(11) NOT NULL auto_increment,
+	internal_id int(11) NOT NULL,
+	external_id int(11) NOT NULL,
+	resource_type int(4) NOT NULL,
+	mapping_active tinyint(1) NOT NULL,
+	PRIMARY KEY (mapping_id),
+	INDEX i_internal_id (internal_id),
+	INDEX i_external_id (external_id),
+	INDEX i_resource_type (resource_type)
 ) ENGINE=MyISAM;
 
 CREATE TABLE `formulize_advanced_calculations` (
