@@ -46,7 +46,7 @@ class formulizeNewTextElement extends formulizeformulize {
         $this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
         $this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
         $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
-        $this->alwaysValidateInputs = true; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
+        $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
         parent::formulizeformulize();
     }
     
@@ -95,10 +95,8 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
     // $ele_value will contain the options set for this element (based on the admin UI choices set by the user, possibly altered in the adminSave method)
     // $element is the element object
     function loadValue($value, $ele_value, $element) {
-        // dummy element will have a single value stored in the database, but when rendered, it will pickup the values from ele_value[0] and [1] and use those as the default.  See the render method.
-        // So, we'll erase ele_value[1] and set the value from the database as ele_value[0], and then everything will render right
-        $ele_value[0] = $value;
-        $ele_value[1] = "";
+		$ele_value[2] = $value;				
+		$ele_value[2] = eregi_replace("'", "&#039;", $ele_value[2]);
         return $ele_value;
     }
     
@@ -112,26 +110,37 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id) {
-        // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
-        if($isDisabled) {
-            $formElement = new xoopsFormLabel($caption, $ele_value[0] . $ele_value[1]);
-        } else {
-            $formElement = new xoopsFormText($caption, $markupName, 50, 50, $ele_value[0] . $ele_value[1]); // caption, markup name, size, maxlength, default value, according to the xoops form class
-        }
-        return $formElement;
+		$id_form = $element->getVar('id_form');
+		$ele_value[2] = stripslashes($ele_value[2]);
+        $ele_value[2] = getTextboxDefault($ele_value[2], $id_form, $entry_id);
+		if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added
+			$form_ele = new XoopsFormText(
+			$caption,
+			$id_form,
+			$ele_value[0],	//	box width
+			$ele_value[1],	//	max width
+			$ele_value[2]	  //	default value
+			);
+		} else {															// nmc 2007.03.24 - added 
+			$form_ele = new XoopsFormLabel($caption, $ele_value[2]);	// nmc 2007.03.24 - added 
+		}
+		
+		$ele_value = $element->getVar('ele_value');
+        return $form_ele;
     }
     
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
     function generateValidationCode($caption, $markupName, $element) {
-        $validationmsg = "Your value for $caption should not match the default value.";
-	$validationmsg = str_replace("'", "\'", stripslashes( $validationmsg ) );
-        $ele_value = $element->getVar('ele_value');
-        $validationCode = array();
-        $validationCode[] = "if(myform.{$markupName}.value == '".$ele_value[0].$ele_value[1]."') {\n";
-        $validationCode[] = "  window.alert('{$validationmsg}');\n myform.{$markupName}.focus();\n return false;\n ";
-        $validationCode[] = "}\n";
+		
+		$validationCode = "return true;";
+		if ($element->getVar('ele_req')) {
+			//Enter Validation Code Here
+		}
+		if ($element->alwaysValidateInputs) {
+			//Enter Validation Code Here
+		}
         return $validationCode;
     }
     
@@ -140,6 +149,21 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
     // $value is what the user submitted
     // $element is the element object
     function prepareDataForSaving($value, $element) {
+		
+		global $myts;
+		if(!$myts) { $myts =& MyTextSanitizer::getInstance(); }
+
+		$ele_value = $element->getVar('ele_value');
+		$ele_id = $element->getVar('ele_id');
+		
+		if($ele_value[3]) { // if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
+			$value = ereg_replace ('[^0-9.-]+', '', $value);
+		}
+        
+		if(get_magic_quotes_gpc()){ 
+			$value = stripslashes($value); 
+		}
+		$value = $myts->htmlSpecialChars($value);
         return mysql_real_escape_string($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
     }
     
@@ -158,7 +182,7 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
     // $handle is the element handle for the field that we're retrieving this for
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle, $entry_id) {
-        return $value; // we're not making any modifications for this element type
+        return explode("*=+*:",$value); // we're not making any modifications for this element type
     }
     
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
@@ -171,13 +195,6 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle, $entry_id) {
-        $this->clickable = true; // make urls clickable
-        $this->striphtml = true; // remove html tags as a security precaution
-        $this->length = 100; // truncate to a maximum of 100 characters, and append ... on the end
-        
-        $value = strtoupper($value); // just as an example, we'll uppercase all text when displaying in a list
-        
-        return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
     
 }
