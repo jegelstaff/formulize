@@ -49,154 +49,12 @@
     var formID = "";
     var formRelationID = "1";
     
-    // old interface functions
-    /*
-     
-     $("#menu-items").click(function () {
-                           var values = $(this).val();
-                           values = values.toString().split("::");
-                           if(values.length == 5){
-                           $("#menutext").val(values[1]);
-                           $("#listsofscreenoptions").val(values[2]);
-                           $("#url").val(values[3]);
-                           $("#groups").val(values[4].split(","));
-                           $("#addMenuItem").text("Update Menu Item");
-                           $("#addMenuItem").show();
-                           }else{
-                           $("#menutext").val("");
-                           $("#listsofscreenoptions").val("");
-                           $("#url").val("");
-                           $("#groups").val("");
-                           $("#addMenuItem").hide();
-                           
-                           }
-                           
-                           $("#clearButton").show();
-                           showHideUpDown();	
-                           return true;
-                           });
-    
-    function showHideUpDown(){
-        var showUp = true;
-        var showDown = true;
-        var size = $("#menu-items").attr("length");
-        $("#menu-items option:selected").each(function(){
-                                              if($(this).attr("index")==0){
-                                              showUp = false;
-                                              }else if($(this).attr("index")==size-1){
-                                              showDown = false;
-                                              }
-                                              });
-        
-        if(showDown){
-            $("#downButton").show();
-        }else{
-            $("#downButton").hide();
-        }
-        if(showUp){
-            $("#upButton").show();
-        }else{
-            $("#upButton").hide();
-        }
-    }
-    
-    function moveUp(){
-        $('#menu-items option:selected').each(function(){
-                                              $(this).insertBefore($(this).prev());
-                                              });
-        showHideUpDown();
-        updateMenuItemField();
-        setDisplay('savewarning','block');
-    }
-    
-    function moveDown(){
-        $($('#menu-items option:selected').get().reverse()).each(function(){
-                                                                 $(this).insertAfter($(this).next());
-                                                                 });
-        showHideUpDown();
-        updateMenuItemField();
-        setDisplay('savewarning','block');
-    }
-    
-    function clearSelection(){
-        $("#menu-items").val("");
-        $("#menutext").val("");
-        $("#listsofscreenoptions").val("");
-        $("#url").val("");
-        $("#groups").val("");
-        $("#addMenuItem").text("Add Menu Item");
-        $("#clearButton").hide();
-        $("#downButton").hide();
-        $("#upButton").hide();
-        $("#addMenuItem").show();
-    }
-    
-    function deleteMenuItems(){
-        if(confirm("are you sure you wish to delete the selected menu links?")){
-            $("#menu-items option:selected").remove();
-            $("#clearButton").hide();
-            clearSelection();
-            setDisplay('savewarning','block');
-            updateMenuItemField();
-        }
-        
-    }
-    
-    function updateMenuItemField(){
-        var menuitems = "";
-        $("#menu-items option").each(function(){	
-                                     // add $(this).val() to your list
-                                     if(menuitems.length > 0){
-                                     menuitems += "~~" + $(this).val();
-                                     }else{
-                                     menuitems += $(this).val();
-                                     }
-                                     });
-        $("#menu_items").val(menuitems);
-    }
-    
-    function addNewMenuItem(){
-        var menuText = $("#menutext").val();
-        var url = $("#url").val();
-        var screen = $("#listsofscreenoptions").val();
-        var groupids = $("#groups").val();
-        var value = "null::";
-        if($("#menu-items option:selected").length){
-            value = $("#menu-items option:selected").val().split("::")[0] + "::";
-        }
-        var text;
-        if(screen.length > 0){
-            if(menuText.length == 0){
-                menuText = $("#listsofscreenoptions option:selected").text();	
-            }
-            text = menuText + " (Screen ID: " + screen + ")";
-        }else if(url.length > 0){
-            if(menuText.length = 0){
-                menuText = url;
-            }
-            text = menuText + " (Link: " + url + ")";
-        }else{
-            alert("missing screen or url");
-            return;
-        }
-        value += menuText + "::" + screen + "::" + url + "::"+groupids;
-        
-        if($("#menu-items option:selected").length){
-            $("#menu-items option:selected").val(value);
-            $("#menu-items option:selected").text(text);
-        }else{
-            $("#menu-items").append("<option value='" + value + "'>" + text + "</option>");
-        }
-        clearSelection();
-        setDisplay('savewarning','block');
-        updateMenuItemField();
-    }
-     */
+   
     
     
-    // added Oct 2013 Wejdan Radhwan
+    // added Oct 2013 
     $(".deletelink").click(function () {
-        var answer = confirm("are you sure you wish to delete the selected menu links?");
+        var answer = confirm("The selected menu link will be deleted, OK?");
         if(answer) {
             $("[name=deletemenuitem]").val($(this).attr('target'));
             $("[name=reload_settings]").val(1);
@@ -205,10 +63,10 @@
         return false;
     });
     
-    // modified Oct 2013 Wejdan Radhwan
+    // modified Oct 2013
     $("#addMenuItem").click(function (){
                             
-        var menuText = $("#addmenutext").val();
+        var menuText = $("#addmenutext").val().trim().replace(/\'/g, " ") ;
         var url = $("#addurl").val();
         var screen = $("#listsofscreenoptions").val();
         var groupids = $("#addgroups").val();
@@ -237,13 +95,19 @@
     });
     
     function updateSaveChangeDisplay(){
-        $("#listsofscreenoptions").unbind("change");
-        $("#menu-items").unbind("change");
-        $("#groups").unbind("change");
-        $("#menutext").unbind("keydown");
-        $("#url").unbind("keydown");
-        $("#menutext").unbind("change");
-        $("#url").unbind("change");
+        $("#listsofscreenoptions").unbind("change");       
+        $("#addgroups").unbind("change");
+        $("#addmenutext").unbind("keydown");
+        $("#addurl").unbind("keydown");
+        $("#addmenutext").unbind("change");
+        $("#addurl").unbind("change");  
+        
+        $(".sectionScreen #listsofscreenoptions").unbind("change");       
+        $("[name=groups]").unbind("change");
+        $("[name=menutext]").unbind("keydown");
+        $("[name=url]").unbind("keydown");
+        $("[name=menutext]").unbind("change");
+        $("[name=url]").unbind("change");   
     }
     
     $(".savebutton").click(function () {

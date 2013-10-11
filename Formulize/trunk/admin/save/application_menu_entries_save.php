@@ -38,16 +38,58 @@
     $appid = $_POST['formulize_admin_key'];
     $menuitems = $_POST['menu_items'];
     
-    // added Oct 2013 Wejdan Radhwan
+    // added Oct 2013 W.R.
     if($_POST['deletemenuitem']) {
   		$menuitem = $_POST['deletemenuitem'];
 		$application_handler->deleteMenuLink($appid, $menuitem);  
   	}
     
     if(strlen($menuitems) > 0){
-        $application_handler->insertMenuLinks($appid, $menuitems);
+    	$linkValues = explode("::",$menuitems);
+        if($linkValues[0] == "null"){
+        	$application_handler->insertMenuLink($appid, $menuitems);
+        }
+        else{ //if($linkValues[0] == menu_id)
+        	$application_handler->updateMenuLink($appid, $menuitems);
+        }
     }
     
+    // Sort update of menu links
+    // added Oct 2013 W.R.
+
+	if (!$_POST['menu_items'] && !$_POST['deletemenuitem'] ){
+		if($_POST['menuorder']) {
+            
+			// retrieve all the links that belong to this application
+			$Links = $application_handler->getMenuLinksForApp($appid, all);
+            
+			// get the new order of the links...
+			$newOrder = explode("drawer-5[]=", str_replace("&", "", $_POST['menuorder']));
+			unset($newOrder[0]);
+			// newOrder will have keys corresponding to the new order, and values corresponding to the old order
+            
+			if(count($Links) != count($newOrder)) {
+				print "Error: the number of links being saved did not match the number of links already in the database";
+				return;
+			}
+            
+			// modify links
+			$oldOrderNumber = 0;
+			$needReload = 0;
+			foreach($Links as $link) {
+				$menu_id = $link->getVar('menu_id');	
+				$newOrderNumber = array_search(($oldOrderNumber),$newOrder);
+				$link->assignVar('rank',$newOrderNumber);	
+				if($oldOrderNumber != $newOrderNumber) {		
+					$_POST['reload_settings'] = 1;
+				}		
+				$oldOrderNumber++;
+			}
+            
+			// presist changes
+			$application_handler->updateSorting($Links);
+		}
+	}
     
     // if the form name was changed, then force a reload of the page...reload will be the application id
     if(isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) {
