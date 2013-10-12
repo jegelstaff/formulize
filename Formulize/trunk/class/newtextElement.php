@@ -46,7 +46,7 @@ class formulizeNewTextElement extends formulizeformulize {
         $this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
         $this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
         $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
-        $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
+        $this->alwaysValidateInputs = true; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
         parent::formulizeformulize();
     }
     
@@ -72,7 +72,14 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
     function adminPrepare($element) {
 		$ele_value = $element ? $element->getVar('ele_value') : array();
 		$formlink = createFieldList($ele_value[4], true);
-		return array('formlink'=>$formlink->render());
+		if (!$element) {
+			$ele_value[0] = 30;
+			$ele_value[1] = 255;
+			$ele_value[5] = 0;
+			$ele_value[7] = ".";
+			$ele_value[8] = ",";
+		}
+		return array('formlink'=>$formlink->render(), 'ele_value'=>$ele_value);
     }
     
     // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
@@ -116,7 +123,7 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
 		if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added
 			$form_ele = new XoopsFormText(
 			$caption,
-			$id_form,
+			$markupName,
 			$ele_value[0],	//	box width
 			$ele_value[1],	//	max width
 			$ele_value[2]	  //	default value
@@ -134,12 +141,35 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
     function generateValidationCode($caption, $markupName, $element) {
 		
-		$validationCode = "return true;";
-		if ($element->getVar('ele_req')) {
-			//Enter Validation Code Here
-		}
-		if ($element->alwaysValidateInputs) {
-			//Enter Validation Code Here
+		$ele_value = $element->getVar('ele_value');
+		$validationCode = array();
+		
+		if($ele_value[9]) {
+			$eltname = $markupName;
+			$eltcaption = $caption;
+			$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+			$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
+			if($element->getVar('ele_req')) { // need to manually handle required setting, since only one validation routine can run for an element, so we need to include required checking in this unique checking routine, if the user selected required too
+				$validationCode[] = "\nif ( myform.{$eltname}.value == '' ) {\n";
+				$validationCode[] = "window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n";
+				$validationCode[] = "}\n";
+			}
+			$validationCode[] = "if(formulize_xhr_returned_check_for_unique_value != 'notreturned') {\n"; // a value has already been returned from xhr, so let's check that out...
+			$validationCode[] = "if(formulize_xhr_returned_check_for_unique_value != 'valuenotfound') {\n"; // request has come back, form has been resubmitted, but the check turned up postive, ie: value is not unique, so we have to halt submission , and reset the check for unique flag so we can check again when the user has typed again and is ready to submit
+			$validationCode[] = "window.alert(\"{$eltmsgUnique}\");\n";
+			$validationCode[] = "formulize_xhr_returned_check_for_unique_value = 'notreturned'\n";
+			$validationCode[] = "myform.{$eltname}.focus();\n return false;\n";
+			$validationCode[] = "}\n";
+			$validationCode[] = "} else {\n";	 // do not submit the form, just send off the request, which will trigger a resubmission after setting the returned flag above to true so that we won't send again on resubmission
+			$validationCode[] = "\nvar formulize_xhr_params = []\n";
+			$validationCode[] = "formulize_xhr_params[0] = myform.{$eltname}.value;\n";
+			$validationCode[] = "formulize_xhr_params[1] = ".$this->_ele->getVar('ele_id').";\n";
+			//No way to get $entry in this method so this will always return 0
+			$xhr_entry_to_send = is_numeric($entry) ? $entry : 0;
+			$validationCode[] = "formulize_xhr_params[2] = ".$xhr_entry_to_send.";\n";
+			$validationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
+			$validationCode[] = "return false;\n"; 
+			$validationCode[] = "}\n";
 		}
         return $validationCode;
     }
@@ -182,7 +212,7 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
     // $handle is the element handle for the field that we're retrieving this for
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle, $entry_id) {
-        return explode("*=+*:",$value); // we're not making any modifications for this element type
+        return $value;
     }
     
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.

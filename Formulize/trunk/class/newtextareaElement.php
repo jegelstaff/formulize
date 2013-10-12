@@ -74,7 +74,6 @@ class formulizeNewTextareaElementHandler extends formulizeElementsHandler {
         $ele_value = $element ? $element->getVar('ele_value') : array();
 		$formlink = createFieldList($ele_value[3], true);
 		if (!$element) {
-			$ele_value[0] = 0;
 			$ele_value[1] = 5;
 			$ele_value[2] = 35;
 		}
@@ -121,7 +120,7 @@ class formulizeNewTextareaElementHandler extends formulizeElementsHandler {
         if (!strstr(getCurrentURL(),"printview.php")) { // nmc 2007.03.24 - added 
 			$form_ele = new XoopsFormTextArea(
 				$caption,
-				$id_form,
+				$markupName,
 				$ele_value[0],	//	default value
 				$ele_value[1],	//	rows
 				$ele_value[2]	//	cols
@@ -136,14 +135,6 @@ class formulizeNewTextareaElementHandler extends formulizeElementsHandler {
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
     function generateValidationCode($caption, $markupName, $element) {
-        $validationCode = "return true;";
-		if ($element->getVar('ele_req')) {
-			//Enter Validation Code Here
-		}
-		if ($element->alwaysValidateInputs) {
-			//Enter Validation Code Here
-		}
-        return $validationCode;
     }
     
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
@@ -177,7 +168,7 @@ class formulizeNewTextareaElementHandler extends formulizeElementsHandler {
     // $handle is the element handle for the field that we're retrieving this for
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle, $entry_id) {
-        return explode("*=+*:",$value);// we're not making any modifications for this element type
+        return $value;
     }
     
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
