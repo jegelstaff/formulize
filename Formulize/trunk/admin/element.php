@@ -487,7 +487,7 @@ if($ele_type!='colorpick') {
   $adminPage['tabs'][++$tabindex]['name'] = "Options";
   $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_options.html";
   if(count($customValues)>0) {
-	$adminPage['tabs'][$tabindex]['content'] = $options + $common + $customValues;	
+	$adminPage['tabs'][$tabindex]['content'] = $customValues + $options + $common;	
   } else {
 	$adminPage['tabs'][$tabindex]['content'] = $options + $common;
   }
