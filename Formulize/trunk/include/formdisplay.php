@@ -2499,6 +2499,10 @@ function validateAndSubmit() {
 if(!$nosave) { // need to check for add or update permissions on the current user and this entry before we include this javascript, otherwise they should not be able to save the form
 ?>
 	var validate = xoopsFormValidate_formulize();
+	// this is an optional form validation function which can be provided by a screen template or form text element
+	if (window.formulizeExtraFormValidation && typeof(window.formulizeExtraFormValidation) === 'function') {
+		validate = window.formulizeExtraFormValidation();
+	}
 	if(validate) {
 		jQuery(".subform-accordion-container").map(function() {
 			subelementid = jQuery(this).attr('subelementid');			
