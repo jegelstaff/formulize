@@ -7,7 +7,9 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.util.Log;
+import android.view.ActionMode;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -31,6 +33,7 @@ public class ConnectionActivity extends FragmentActivity {
 	private ListView connectionList;
 	private FormulizeDBHelper dbHelper;
 	private SimpleCursorAdapter connectionAdapter;
+	private ActionMode.Callback actionModeCallback;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +41,7 @@ public class ConnectionActivity extends FragmentActivity {
 
 		connectionList = new ListView(this);
 		setContentView(connectionList);
-
+		
 		// Instantiate Connection List
 		dbHelper = new FormulizeDBHelper(this);
 		Cursor connectionCursor = dbHelper.getConnectionList();

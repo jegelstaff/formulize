@@ -15,5 +15,6 @@
     <string name="title_activity_screen">ScreenActivity</string>
     <string name="title_activity_screen_web">ScreenWebActivity</string>
     <string name="title_activity_connection">Formulize</string>
+    <string name="reattempt_message">Incorrect username or password Try again.</string>
 
 </resources>

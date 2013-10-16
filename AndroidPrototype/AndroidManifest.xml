@@ -65,11 +65,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.example.formulizeprototype.TestLoginActivity"
-            android:label="@string/title_activity_test_login"
-            android:windowSoftInputMode="adjustResize|stateVisible" >
-        </activity>
-        <activity
             android:name="ca.formulize.android.connection.AddConnectionActivity"
             android:label="@string/title_activity_add_connection"
             android:parentActivityName="ca.formulize.android.connection.ConnectionActivity" >

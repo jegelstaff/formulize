@@ -8,13 +8,14 @@ import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import ca.formulize.android.data.ConnectionInfo;
 
 import com.example.formulizeprototype.R;
 
 /**
  * The login dialogue that should appear when the user attempts to connect to a
- * server without user credentials
+ * server without user credentials.
  * 
  * @author timch326
  * 
@@ -22,13 +23,16 @@ import com.example.formulizeprototype.R;
 public class UserLoginDialogFragment extends DialogFragment {
 
 	public static final String EXTRA_CONNECITON_INFO = "ca.formulize.android.extras.connectionInfo";
+	public static final String EXTRA_IS_REATTEMPT = "ca.formulize.android.extras.isReattempt";
 
 	// Connection Details
 	private ConnectionInfo connectionInfo;
+	private Boolean isReattempt;
 	private String username;
 	private String password;
 
 	// UI References
+	private TextView errorMessageView;
 	private EditText usernameView;
 	private EditText passwordView;
 
@@ -40,8 +44,21 @@ public class UserLoginDialogFragment extends DialogFragment {
 		View view = inflater.inflate(R.layout.dialog_login, null);
 
 		// Set UI References
+		errorMessageView = (TextView) view.findViewById(R.id.errorMessage);
 		usernameView = (EditText) view.findViewById(R.id.username);
 		passwordView = (EditText) view.findViewById(R.id.password);
+		
+		// Retrieve arguments
+		Bundle args = getArguments();
+		connectionInfo = (ConnectionInfo) args
+				.getParcelable(EXTRA_CONNECITON_INFO);
+		isReattempt = args.getBoolean(EXTRA_IS_REATTEMPT, false);
+		
+		// Show and set error message if this is a login re-attempt
+		if (isReattempt) {
+			errorMessageView.setText(R.string.reattempt_message);
+			errorMessageView.setVisibility(View.VISIBLE);
+		}
 
 		builder.setView(view)
 				.setPositiveButton(android.R.string.ok,
@@ -73,11 +90,6 @@ public class UserLoginDialogFragment extends DialogFragment {
 
 							}
 						}).setTitle(R.string.sign_in_label);
-
-		// Retrieve arguments
-		Bundle args = getArguments();
-		connectionInfo = (ConnectionInfo) args
-				.getParcelable(EXTRA_CONNECITON_INFO);
 
 		return builder.create();
 	}

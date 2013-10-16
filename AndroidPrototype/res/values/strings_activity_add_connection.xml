@@ -3,5 +3,7 @@
 
     <string name="title_activity_add_connection">Add a Connection</string>
     <string name="prompt_username">Username</string>
+    <string name="login_progress_signing_in">Signing in</string>
+    
 
 </resources>

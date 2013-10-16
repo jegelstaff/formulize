@@ -1,6 +1,5 @@
 package ca.formulize.android.connection;
 
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -30,7 +29,7 @@ public class FUserSession {
 
 	private FUserSession() {
 	}
-	
+
 	public ConnectionInfo getConnectionInfo() {
 		return connectionInfo;
 	}
@@ -39,28 +38,53 @@ public class FUserSession {
 		this.connectionInfo = connectionInfo;
 	}
 
+	/**
+	 * Starts the process to login to a Formulize server
+	 * 
+	 * @param activity
+	 *            The active application activity to attach the login process
+	 *            onto.
+	 * @param connectionInfo
+	 *            Connection information on which server to connect with the
+	 *            necessary credentials.
+	 */
 	public void createConnection(FragmentActivity activity,
 			ConnectionInfo connectionInfo) {
 
 		if (connectionInfo.getUsername() == null
 				|| connectionInfo.getUsername().equals("")) {
+			askLoginCredentials(activity, connectionInfo, false);
 
-			// Prompt for login credentials with dialog
-			// Pass existing connection info to the login dialog
-			UserLoginDialogFragment loginDialog = new UserLoginDialogFragment();
-			Bundle args = new Bundle();
-			args.putParcelable(UserLoginDialogFragment.EXTRA_CONNECITON_INFO,
-					connectionInfo);
-			loginDialog.setArguments(args);
-			loginDialog.show(activity.getSupportFragmentManager(), "login");
 		} else {
 			new LoginTask(activity).execute(connectionInfo);
 		}
 	}
 
-	public boolean isValidConnection(ConnectionInfo connectionInfo) {
+	/**
+	 * Prompt for login credentials with {@link UserLoginDialogFragment}
+	 * 
+	 * @param activity
+	 *            The active application activity to attach the
+	 *            UserLoginDialogFragment onto.
+	 * @param connectionInfo
+	 *            Connection information containing server URL and name.
+	 * @param isReattempt
+	 *            Indicates whether login credentials have been asked before and
+	 *            was incorrect.
+	 */
+	public void askLoginCredentials(FragmentActivity activity,
+			ConnectionInfo connectionInfo, boolean isReattempt) {
+		UserLoginDialogFragment loginDialog = new UserLoginDialogFragment();
+		Bundle args = new Bundle();
+		args.putParcelable(UserLoginDialogFragment.EXTRA_CONNECITON_INFO,
+				connectionInfo);
+		args.putBoolean(UserLoginDialogFragment.EXTRA_IS_REATTEMPT, isReattempt);
+		loginDialog.setArguments(args);
+		loginDialog.show(activity.getSupportFragmentManager(), "login");
+	}
 
-		// Check if connection is a valid Formulize server
+	public boolean isValidConnection(ConnectionInfo connectionInfo) {
+		// TODO: Check if connection is a valid Formulize server
 		return true;
 	}
 
@@ -71,31 +95,28 @@ public class FUserSession {
 	}
 
 	/**
-	 * This asynchronous task logs into a Formulize server with the user
-	 * credentials given by the ConnectionInfo it receives. If the login is
-	 * successful, it returns the token of the user session as a result and
-	 * associates the valid ConnectionInfo and token to FUserSession.
+	 * This AsyncTask logs in to a Formulize server with the user credentials
+	 * given by the ConnectionInfo it receives. If the login is successful, it
+	 * returns the token of the user session as a result and associates the
+	 * valid ConnectionInfo and token to FUserSession.
 	 * 
 	 * @author timch326
 	 * 
 	 */
 	private class LoginTask extends AsyncTask<ConnectionInfo, String, String> {
-
-		public LoginTask(Activity activity) {
+		
+		private ProgressDialog progressDialog;
+		private FragmentActivity activity; // Application context
+		private ConnectionInfo connectionInfo; // Login Info
+		
+		public LoginTask(FragmentActivity activity) {
 			this.activity = activity;
-			dialog = new ProgressDialog(activity);
+			progressDialog = new ProgressDialog(activity);
 		}
 
-		// Progress Dialog to show user that login is in progress
-		private ProgressDialog dialog;
-		// Application context
-		private Activity activity;
-
-		// Login info
-
 		protected void onPreExecute() {
-			this.dialog.setMessage("Logging in");
-			dialog.show();
+			this.progressDialog.setMessage("Logging in");
+			progressDialog.show();
 		}
 
 		@Override
@@ -106,8 +127,14 @@ public class FUserSession {
 				// Simulate Network Access
 				Thread.sleep(2000);
 
-				// Associate user session with valid connection info
-				FUserSession.this.connectionInfo = connectionInfo;
+				// Simulate incorrect password
+				if (connectionInfo.getPassword().equals("bad")
+						|| connectionInfo.getPassword().equals("")) {
+					return "BAD_PASSWORD";
+				} else {
+					// Associate user session with valid connection info
+					FUserSession.this.connectionInfo = connectionInfo;
+				}
 
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -118,15 +145,22 @@ public class FUserSession {
 		}
 
 		protected void onPostExecute(String result) {
-			if (dialog.isShowing()) {
-				dialog.dismiss();
+			if (progressDialog.isShowing()) {
+				progressDialog.dismiss();
 			}
-
 			super.onPostExecute(result);
-			if (result == null) {
+			
+			// Bad server Connection
+			if (result == null)
 				Log.d("Formulize", "Connection Failed");
-			} else {
+
+			// Ask for credentials again if they were incorrect
+			else if (result == "BAD_PASSWORD")
+				askLoginCredentials(activity, connectionInfo, true);
+
+			else {
 				Log.d("Formulize", result);
+				userToken = result;
 
 				// Go to application list once logged in
 				Intent viewApplicationsIntent = new Intent(activity,

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/delete_connection" android:title="Delete Connection" android:titleCondensed="Delete" android:icon="@drawable/ic_action_discard"></item>
+    
+
+</menu>
