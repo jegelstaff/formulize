@@ -10,23 +10,54 @@ class Formulize {
 	//Resource types and tables for the mapping methods
 	const GROUP_RESOURCE = 0;
 	const USER_RESOURCE = 1;
-	private static $mapping_table = 'set in the init method since it is installation-specific';
+	private static $mapping_table = 'formulize_resource_mapping';
 	private static $default_mapping_active = 1;
 	
 	/**
 	 * Intialize the Formulize environment
 	 */
 	static function init() {
+		static $init_done = false;
+		if ($init_done)
+			return; // only need to do it once
+
 		if (self::$db == null) {
 			include_once('mainfile.php');
 			require_once('modules/formulize/include/functions.php');
 
 			self::$db = $GLOBALS['xoopsDB'];
-			self::$mapping_table = $db->prefix('formulize_resource_mapping');
 			self::$db->allowWebChanges = true;
+			$init_done = true;
 		}
 	}
-	
+
+	/**
+	 * Create the resource mapping table if it does not exist
+	 */
+	static function create_resource_mapping_table() {
+		self::init();
+		$mapping_table = self::$db->prefix(self::$mapping_table);
+		$sql = <<<EOF
+CREATE TABLE IF NOT EXISTS $mapping_table (
+ mapping_id int(11) NOT NULL auto_increment,
+ internal_id int(11) NOT NULL,
+ external_id int(11) NOT NULL,
+ resource_type int(4) NOT NULL,
+ mapping_active tinyint(1) NOT NULL,
+ PRIMARY KEY (mapping_id),
+ INDEX i_internal_id (internal_id),
+ INDEX i_external_id (external_id),
+ INDEX i_resource_type (resource_type)
+) ENGINE=MyISAM;
+EOF;
+		self::$db->queryF($sql);
+
+		// alter the length of the session id
+		$sql = "ALTER TABLE ".self::$db->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";
+		$mapping_table = self::$db->prefix(self::$mapping_table);
+		self::$db->queryF($sql);
+	}
+
 	/**
 	 * Create a new XOOPS user from the provided FormulizeUser data
 	 * @param   user_data   FormulizeUser       The user data
@@ -36,20 +67,24 @@ class Formulize {
 		self::init();
 		if($user_data->get('uid') == -1)
 			throw new Exception('Formulize::createUser() - The supplied user doesn\'t have an ID.');
+
 		//Create a XOOPS user from the provided FormulizeUser data
 		$member_handler = xoops_gethandler('member');
 		$newUser = $member_handler->createUser();
 		$newUser->setVar('uname', $user_data->get('uname'));
 		$newUser->setVar('login_name', $user_data->get('login_name'));
 		$newUser->setVar('email', $user_data->get('email'));
+
 		//Use the default timezone offset from ImpressCMS
 		$newUser->setVar('timezone_offset', $user_data->get('timezone_offset'));
 		$newUser->setVar('notify_method', $user_data->get('notify_method')); //email
 		$newUser->setVar('level', $user_data->get('level')); //active, can login
+
 		//If the user wasn't inserted, return false
 		if (!$member_handler->insertUser($newUser, true)) {
 			return false;
 		}
+
 		//Map the created user to the external ID provided
 		$user_id = $newUser->getVar('uid');
 		return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $user_id);
@@ -159,37 +194,32 @@ class Formulize {
 			return false;
 		}
 	}
-	
-	/**
-	 * Creates a new user group in XOOPS
-	 * @param group   FormulizeGroup    The group to create
-	 * @return        boolean       Whether the group was successfully created
-	 */
-	static function createGroup($group) {
-		self::init();
-		//Every group needs a name and ID
-		if($group->get('name') == null || $group->get('groupid') == null)
-			throw new Exception("Formulize::createGroup() - The supplied group needs a name and groupid.");
-		//TODO: Figure out how to use XOOPS CriteriaElement to prevent duplicate group creation
-		$group_handler = xoops_gethandler('group');
-		$xoops_group = $group_handler->create(true);
-		$xoops_group->setVar('name', $group->get('name'));
-		$xoops_group->setVar('description', $group->get('description'));
-		$xoops_group->setVar('group_type', $group->get('group_type'));
 
-		//We only want to create this group if it doesn't already exist in XOOPS
-		if(self::getXoopsResourceID(self::GROUP_RESOURCE, $group->get('groupid')) == NULL) {
-			$result = $group_handler->insert($xoops_group);
-			if($result) {
-				//If the group was created, add it to the mapping
-				return self::createResourceMapping(self::GROUP_RESOURCE, $group->get('groupid'), $xoops_group->getVar('groupid'));
-			} else {
-				return false;
-			}
-		} else {
-			return false;
-		}
-	}
+    /**
+     * Creates a new user group in XOOPS
+     * @return        boolean           Whether the group was successfully created
+     */
+    static function createGroup($group_id, $group_name, $group_description, $group_type) {
+        self::init();
+        // confirm the group has a name and ID
+        if ($group_name == null || $group_id == null)
+            throw new Exception("Formulize::createGroup() - The supplied group needs a name and groupid.");
+
+        // only create this group if it doesn't already exist in XOOPS
+        if (null == self::getXoopsResourceID(self::GROUP_RESOURCE, $group_id)) {
+            // TODO: Figure out how to use XOOPS CriteriaElement to prevent duplicate group creation .. or maybe do that in the group handler?
+            $group_handler = xoops_gethandler('group');
+            $xoops_group = $group_handler->create(true);
+            $xoops_group->setVar('name', $group_name);
+            $xoops_group->setVar('description', $group_description);
+            $xoops_group->setVar('group_type', $group_type);
+            if ($result = $group_handler->insert($xoops_group)) {
+                // if the group was created, create a mapping record for it
+                return self::createResourceMapping(self::GROUP_RESOURCE, $group_id, $xoops_group->getVar('groupid'));
+            }
+        }
+        return false;
+    }
 
 	/**
 	 * Rename an existing XOOPS group
@@ -201,20 +231,16 @@ class Formulize {
 		self::init();
 		$group_handler = xoops_gethandler('group');
 		$xoops_groupid = self::getXoopsResourceID(Formulize::GROUP_RESOURCE, $groupid);
-		//If a group was found, rename it
-		if($xoops_groupid != null) {
+		// if a group was found, rename it
+		if ($xoops_groupid != null) {
 			$xoops_group = $group_handler->get($xoops_groupid);
-			//If the ID matched, rename the group
-			if($xoops_group) {
+			// if the ID matched, rename the group
+			if ($xoops_group) {
 				$xoops_group->setVar('name', $name);
 				return $group_handler->insert($xoops_group);
-			//No group with this ID. Can't be renamed.
-			} else {
-				return false;
 			}
-		} else {
-			return false;
 		}
+		return false;
 	}
 	
 	/**
@@ -227,23 +253,17 @@ class Formulize {
 		self::init();
 		$group_handler = xoops_gethandler('group');
 		$xoops_groupid = self::getXoopsResourceID(Formulize::GROUP_RESOURCE, $groupid);
-		//If a group was found, delete it
-		if($xoops_groupid != null) {
+		// if a group was found, delete it
+		if ($xoops_groupid != null) {
 			$xoops_group = $group_handler->get($xoops_groupid);   
-			//If the ID matched, remove the group
-			if($xoops_group) {
-				if($group_handler->delete($xoops_group)) {
+			// if the ID matched, remove the group
+			if ($xoops_group) {
+				if ($group_handler->delete($xoops_group)) {
 					return self::deactivateResourceMapping(self::GROUP_RESOURCE, $groupid);
-				} else {
-					return false;
 				}
-			//Else the group wasn't removed
-			} else {
-				return false;
 			}
-		} else {
-			return false;
 		}
+		return false;
 	}
 	
 	/**
@@ -257,11 +277,10 @@ class Formulize {
 		$user_id = self::getXoopsResourceID(self::USER_RESOURCE, $user_id);
 		$members = xoops_gethandler('member');
 		$internal_group = self::getXoopsResourceID(Formulize::GROUP_RESOURCE, $groupid);
-		if($internal_group) {
+		if ($internal_group) {
 			return $members->addUserToGroup($internal_group, $user_id);
-		} else {
-			return false;
 		}
+		return false;
 	}
 	
 	/**
@@ -277,9 +296,8 @@ class Formulize {
 		$internal_group = self::getXoopsResourceID(Formulize::GROUP_RESOURCE, $groupid);
 		if($internal_group) {
 			return $members->removeUsersFromGroup($internal_group, array($user_id));
-		} else {
-			return false;
 		}
+		return false;
 	}
 	
 	/**
@@ -431,6 +449,9 @@ class Formulize {
 	public static function createResourceMapping($resource_type, $external_id, $id) {
 		self::init();
 		$mapping_table = self::$db->prefix(self::$mapping_table);
+		//+0 will allow string input to be implicitly cast to a numeric type and then checked for integer form
+		if(!is_int($external_id + 0) || !is_int($id + 0))
+			throw new Exception('Formulize::createResourceMapping() - Expecting two integer IDs.');
 		//Determine whether any mappings exist with the specified IDs
 		$num_mappings = mysql_num_rows(self::$db->queryF('
 			SELECT * FROM ' . $mapping_table . ' 
@@ -439,10 +460,6 @@ class Formulize {
 			OR (external_id = ' . intval($external_id) . '
 				AND resource_type = ' . intval($resource_type) . ')'
 		));
-		//+0 will allow string input to be implicitly cast to a numeric
-		//type and then checked for integer form
-		if(!is_int($external_id + 0) || !is_int($id + 0))
-			throw new Exception('Formulize::createResourceMapping() - Expecting two integer IDs.');
 		if($num_mappings == 0) {
 			return self::$db->queryF('
 				INSERT INTO ' . $mapping_table . '
@@ -570,35 +587,4 @@ class FormulizeUser extends FormulizeObject {
 			$this->timezone_offset = $GLOBALS['xoopsConfig']['default_TZ'];
 		}
 	}
-
-}
-
-/**
- * Formulize Group Object
- */
-class FormulizeGroup extends FormulizeObject {
-
-	protected $groupid = null;
-	protected $name = null;
-	protected $description = '';
-	protected $group_type = 'User';
-
-	/**
-	 * Construct a Forulize User object from CMS data
-	 * @param   user_data    array   The user data acquired from the user object
-	 *                              in the base CMS
-	 */
-	function __construct($group_data) {
-		Formulize::init();
-
-		if(isset($group_data['groupid']))
-			$this->groupid = $group_data['groupid'];
-		if(isset($group_data['name']))
-			$this->name = $group_data['name'];
-		if(isset($group_data['description']))
-			$this->description = $group_data['description'];
-		if(isset($group_data['group_type']))
-			$this->group_type = $group_data['group_type'];
-	}
-
 }
