@@ -93,21 +93,37 @@
         $(".savebutton").click();
                                                                                             
     });
+                                                              
+    // user have a choice of either choosing a screen or entering an external URL
+                                                              
+    $('#addurl').change(function(){
+        if ($('#addurl').val() != ''){
+            $("#listsofscreenoptions").attr("disabled", "disabled");
+        }
+        else{
+            $("#listsofscreenoptions").attr("disabled", "");
+        }
+    });
+      
+    $('#listsofscreenoptions').change(function(){
+        if ($('#listsofscreenoptions').val() != ''){
+            $("#addurl").attr("disabled", "disabled");
+        }
+        else{
+            $("#addurl").attr("disabled", "");
+        }        
+    });
     
     function updateSaveChangeDisplay(){
-        $("#listsofscreenoptions").unbind("change");       
+             
         $("#addgroups").unbind("change");
         $("#addmenutext").unbind("keydown");
-        $("#addurl").unbind("keydown");
         $("#addmenutext").unbind("change");
-        $("#addurl").unbind("change");  
-        
-        $(".sectionScreen #listsofscreenoptions").unbind("change");       
+       
         $("[name=groups]").unbind("change");
         $("[name=menutext]").unbind("keydown");
-        $("[name=url]").unbind("keydown");
         $("[name=menutext]").unbind("change");
-        $("[name=url]").unbind("change");   
+                                                              
     }
     
     $(".savebutton").click(function () {

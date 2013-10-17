@@ -75,5 +75,27 @@
         }
                                                                                                                                                                                                                                    
     });
-    
+     
+      // user have a choice of either choosing a screen or entering a URL
+     
+      $('#url<{$sectionNumber}>').change(function(){
+          if ($('#url<{$sectionNumber}>').val() != ''){
+              $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "disabled");
+          }
+          else{
+              $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "");
+          }
+      });
+          
+      $('#sectionScreen<{$sectionNumber}> #listsofscreenoptions').change(function(){
+          if ($('#sectionScreen<{$sectionNumber}> #listsofscreenoptions').val() != ''){
+              $("#url<{$sectionNumber}>").attr("disabled", "disabled");
+          }
+          else{
+              $("#url<{$sectionNumber}>").attr("disabled", "");
+          }
+      
+      });
+     
+
 </script>
