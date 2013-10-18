@@ -43,6 +43,7 @@ global $xoopsDB;
             $this->initVar("link_text", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
             $this->initVar("text", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
             $this->initVar("permissions", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+            $this->initVar("default_screen", XOBJ_DTYPE_INT); //added oct 2013
         }
     }
     
@@ -381,9 +382,9 @@ class formulizeApplicationsHandler {
             $rank= $max['MAX(rank)']+1;
         }
         
-        //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids
+        //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen
         $linkValues = explode("::",$menuitem);
-        $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". $linkValues[2]."',".$rank.",'".$linkValues[3]."','".$linkValues[1]."');";
+        $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". $linkValues[2]."',".$rank.",'".$linkValues[3]."','".$linkValues[1]."', ".$linkValues[5].");";
 		if(!$result = $xoopsDB->query($insertsql)) {
 			exit("Error inserting Menu Item. SQL dump:\n" . $insertsql . "\n".mysql_error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 		}else{
@@ -419,9 +420,9 @@ class formulizeApplicationsHandler {
      // modified Oct 2013 W.R.
     function updateMenuLink($appid,$menuitems){
         global $xoopsDB;       
-        //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids
+        //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen 
         $linkValues = explode("::",$menuitems);
-        $updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET screen= '".$linkValues[2]."', url= '".$linkValues[3]."', link_text='".$linkValues[1]."' where menu_id=".$linkValues[0]." AND appid=".$appid.";";
+        $updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET screen= '".$linkValues[2]."', url= '".$linkValues[3]."', link_text='".$linkValues[1]."', default_screen=".$linkValues[5]." where menu_id=".$linkValues[0]." AND appid=".$appid.";";
         if(!$result = $xoopsDB->query($updatesql)) {
             exit("Error updating Menu Item. SQL dump:\n" . $updatesql . "\n".mysql_error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
         }else{
@@ -454,6 +455,29 @@ class formulizeApplicationsHandler {
         }
 	}
 
+    /*
+     //added Oct 2013
+     function defaultScreenExistsForGroup($appid, $menuid, $group_ids){
+         global $xoopsDB; 
+         $groups = explode(",",$group_ids);
+         foreach($groups as $group_id) {  
+             $checksql = "Select * FROM `".$xoopsDB->prefix("formulize_menu_links")."` as links LEFT JOIN `".$xoopsDB->prefix("formulize_menu_permissions");
+             $checksql .= "` AS perms ON links.menu_id = perms.menu_id WHERE appid=".$appid." AND default_screen = 1 AND group_id=".$group_id.";";
+             if($result = $xoopsDB->query($checksql)) {
+                 $rows = mysql_fetch_assoc($result);
+                 if ($rows==''){
+                     print("no screen exist for group".$group_id);//return false;
+                 }
+                 else{
+                     print(" screen exists for group".$group_id);//return true;
+                 }
+             }
+             else {
+                 exit("Error checking default screen. SQL dump:\n" . $checksql . "\n".mysql_error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+             }
+         }
+     }
+     */
 }
 
 

@@ -20,9 +20,12 @@
                     <option value="<{$group.id}>"> <{$group.name}> </option>
             <{/foreach}>
         </select>
+            
+        <br /><br />
+        <input type="checkbox" name="defaultScreen" id="defaultScreen<{$sectionNumber}>"  <{if $content.links[$sectionNumber].default_screen.value == 1}>checked="checked"<{/if}> > Use as a default screen for users in the selected groups
         <br />
             
-        <button class="menuButton" id="updateMenuItem<{$sectionNumber}>" type="button" >Update</button>
+         <p align="center"><button class="menuButton" id="updateMenuItem<{$sectionNumber}>" type="button" >Update</button></p>
             
     </form> 
 </div>
@@ -44,7 +47,15 @@
                     return jQuery(this).val() == permissions[i];	   			
                 }).attr("selected", true);
             }
-        }		
+        }	
+         
+         if(jQuery("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").val() != ''){
+             $("#url<{$sectionNumber}>").attr("disabled", "disabled");
+         }
+         if ($('#url<{$sectionNumber}>').val() != ''){
+             $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "disabled");
+             jQuery("#defaultScreen<{$sectionNumber}>").attr("disabled", "disabled");
+         }
                              
     });
     
@@ -58,8 +69,13 @@
             var url = $("#url<{$sectionNumber}>").val();
             var screen = $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").val();
             var groupids = $("#groups<{$sectionNumber}>").val();
+            var default_screen= 0;  
             var value = menuID;
-            
+                                                                                 
+            if( $("#defaultScreen<{$sectionNumber}>").is(':checked') ){
+                default_screen=1;    
+            } 
+                                                                                 
             if(screen.length > 0){
                 if(menuText.length == 0){
                     menuText = $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions option:selected").text().trim().replace(/\'/g, " "); 
@@ -68,7 +84,7 @@
                 if(menuText.length == 0){                                                                                                                menuText = url;                                                                                                                                                                                         } 
             }else{                                                                                                                                                    alert("missing screen or url");                                                                                                                                                                                               return;                                                                                                                                                                                          }
             
-            value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids;                                                                               
+            value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen;                                                                               
             $("[name=menu_items]").val(value);
             $("[name=reload_settings]").val(1);
             $(".savebutton").click();
@@ -76,15 +92,18 @@
                                                                                                                                                                                                                                    
     });
      
-      // user have a choice of either choosing a screen or entering a URL
-     
+     // user have a choice of either choosing a screen or entering a URL
+     // if user chooses a screen, user has the choice of choosing it as a default screen
+                                                                                 
       $('#url<{$sectionNumber}>').change(function(){
-          if ($('#url<{$sectionNumber}>').val() != ''){
-              $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "disabled");
-          }
-          else{
-              $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "");
-          }
+        if ($('#url<{$sectionNumber}>').val() != ''){
+            $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "disabled");
+            $("#defaultScreen<{$sectionNumber}>").attr("disabled", "disabled");
+        }
+        else{
+            $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "");
+            $("#defaultScreen<{$sectionNumber}>").attr("disabled", "");
+        }
       });
           
       $('#sectionScreen<{$sectionNumber}> #listsofscreenoptions').change(function(){

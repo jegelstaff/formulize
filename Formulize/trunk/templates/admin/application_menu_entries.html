@@ -1,56 +1,57 @@
 <div class="panel-content content">
 	<form id="form-<{$number}>" class="formulize-admin-form">
         <{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
-            <input type="hidden" name="formulize_admin_handler" value="application_menu_entries">
-                <input type="hidden" name="formulize_admin_key" value="<{$content.aid}>">
-                    <input type="hidden" id="reload_settings" name="reload_settings" value="true">
-                        <input type="hidden" id="menu_items" name="menu_items" value="">
-                            <input type="hidden" id="deletemenuitem" name="deletemenuitem" value="">
-                                <input type="hidden" name="menuorder" value="">	
+        <input type="hidden" name="formulize_admin_handler" value="application_menu_entries">
+        <input type="hidden" name="formulize_admin_key" value="<{$content.aid}>">
+        <input type="hidden" id="reload_settings" name="reload_settings" value="true">
+        <input type="hidden" id="menu_items" name="menu_items" value="">
+        <input type="hidden" id="deletemenuitem" name="deletemenuitem" value="">
+        <input type="hidden" name="menuorder" value="">	
                             
                             
-                            <div class="accordion-box">
-                                <div class="form-item">
+        <div class="accordion-box">
+            <div class="form-item">
+            
+                <h2> Add links to the menu</h2> 
+                
+                <fieldset>		
+                    <p>Menu text: <input type="text" id="addmenutext" name="addmenutext">	</p>	
+                    <br />
+                    <{$content.listsofscreenoptions}>
+                    <br />or<br />
+                    external url:  <input type="text" name="addurl" id="addurl"><br /><br />	
                                 
-                                    <h2> Add links to the menu</h2> 
-                                    
-                                    <fieldset>		
-                                        <p>Menu text: <input type="text" id="addmenutext" name="addmenutext">	</p>	
-                                            <br />
-                                            <{$content.listsofscreenoptions}>
-                                                <br />or<br />
-                                                external url:  <input type="text" name="addurl" id="addurl"><br /><br />	
-                                                    
-                                                    <h3>Which groups can view the link</h3>
-                                                    <select name="addgroups" id="addgroups" size=10 multiple style="overflow-y: scroll;">
-                                                        <{foreach from=$content.groups item=group}>
-                                                            <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>                 
-                                                            <{/foreach}>
-                                                                </select>
-                                                    </fieldset>
-                                    
-                                    <button class="menuButton" id="addMenuItem" type="button" >Add Menu Item</button>				
-                	             	
-                                </div>		
-                            </div>
-                                    
-                                    <div class="accordion-box">			
-                                        <h2> Manage the links in the menu</h2>
-                                        <p>Click and drag the links to re-order them</p><br/>
-                                        <div id="sortable-list">        
-                                            <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/application_menu_entries_sections.html" sections=$content.links}>
-                                                </div>                                                    
-                                    </div>
-        </form>
+                    <h3>Which groups can view the link</h3>
+                    <select name="addgroups" id="addgroups" size=10 multiple style="overflow-y: scroll;">
+                        <{foreach from=$content.groups item=group}>
+                            <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>                 
+                        <{/foreach}>
+                    </select>
+                    <br/><br/>
+                    <input type="checkbox" name="adddefaultScreen" id="adddefaultScreen" > Use as a default screen
+                </fieldset>
+                
+                <button class="menuButton" id="addMenuItem" type="button" >Add Menu Item</button>				
+                
+            </div>		
+        </div>
+                
+        <div class="accordion-box">			
+            <h2> Manage the links in the menu</h2>
+            <p>Click and drag the links to re-order them</p><br/>
+            <div id="sortable-list">        
+                <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/application_menu_entries_sections.html" sections=$content.links}>
+            </div>                                                    
+        </div>
+    </form>
     
-	<div style="clear: both"></div>
+    <div style="clear: both"></div>
+    
 </div> <!--// end content -->
 <script type="text/javascript">
     var formID = "";
     var formRelationID = "1";
-    
-   
-    
+
     
     // added Oct 2013 
     $(".deletelink").click(function () {
@@ -70,12 +71,15 @@
         var url = $("#addurl").val();
         var screen = $("#listsofscreenoptions").val();
         var groupids = $("#addgroups").val();
-                            
+        var default_screen = 0;                    
         var value = "null::";
                             
         if(screen.length > 0){
             if(menuText.length == 0){
                 menuText = $("#listsofscreenoptions option:selected").text().trim().replace(/\'/g, " "); 
+            }
+            if( $("#adddefaultScreen").is(':checked')){
+                default_screen=1;    
             }
         }else if(url.length > 0){
                 if(menuText.length == 0){
@@ -86,7 +90,7 @@
                 return;
         }   
         
-        value += menuText+ "::" + screen + "::" + url + "::"+groupids;
+        value += menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen;
                                                                                             
         $("[name=menu_items]").val(value);
         $("[name=reload_settings]").val(1);
@@ -99,8 +103,7 @@
     $('#addurl').change(function(){
         if ($('#addurl').val() != ''){
             $("#listsofscreenoptions").attr("disabled", "disabled");
-        }
-        else{
+        }else{
             $("#listsofscreenoptions").attr("disabled", "");
         }
     });
@@ -108,8 +111,7 @@
     $('#listsofscreenoptions').change(function(){
         if ($('#listsofscreenoptions').val() != ''){
             $("#addurl").attr("disabled", "disabled");
-        }
-        else{
+        }else{
             $("#addurl").attr("disabled", "");
         }        
     });

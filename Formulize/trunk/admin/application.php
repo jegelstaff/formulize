@@ -66,7 +66,8 @@ if($aid == 0) {
         $menulinks[$index]['rank'] = $menulink->getVar('rank');	
         $menulinks[$index]['text'] = $menulink->getVar('text');	
         $menulinks[$index]['permissions'] = $menulink->getVar('permissions');
-        $menulinks[$index]['value'] = $menulink->getVar('menu_id'). '::' .$menulink->getVar('link_text'). '::' . $menulink->getVar('screen'). '::' . $menulink->getVar('url'). '::' . $menulink->getVar('permissions');
+        $menulinks[$index]['default_screen'] = $menulink->getVar('default_screen'); //Oct 2013 W.R.
+        //$menulinks[$index]['value'] = $menulink->getVar('menu_id'). '::' .$menulink->getVar('link_text'). '::' . $menulink->getVar('screen'). '::' . $menulink->getVar('url'). '::' . $menulink->getVar('permissions');
         $index ++; // JAKEADDED
     }
     

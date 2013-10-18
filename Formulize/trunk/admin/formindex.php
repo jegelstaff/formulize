@@ -1476,6 +1476,7 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
             `rank` int(11),
             `url` varchar(255),
             `link_text` varchar(255),
+            `default_screen` tinyint(1),
             PRIMARY KEY (`menu_id`),
             INDEX i_menus_appid (appid)
             );";
@@ -1552,7 +1553,7 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
         $groupsThatCanView = $gperm_handler->getGroupIds("view_form", $formid, getFormulizeModId());
         
         $menuText = html_entity_decode($menuText, ENT_QUOTES) == "Use the form's title" ? '' : $menuText;
-        $thissql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'fid=".$formid."',".$i.",null,'".$menuText."');";//.$permissionsql.";";
+        $thissql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'fid=".$formid."',".$i.",null,'".$menuText."',0);";//.$permissionsql.";";
         if(!$result = $xoopsDB->query($thissql)) {
             exit("Error inserting Menus. SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
         }else{
