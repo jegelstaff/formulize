@@ -11,6 +11,7 @@
 @implementation ViewController
 @synthesize signinButton;
 @synthesize applicationData;
+@synthesize mytextField;
 
 - (void)didReceiveMemoryWarning
 {
@@ -83,6 +84,16 @@
     
     return cell;
 }
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+    [textField resignFirstResponder];
+    return YES;
+}
+-(IBAction)textFieldReturn:(id)sender
+{
+    [sender resignFirstResponder];
+} 
 
 
 
