@@ -146,7 +146,7 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
-    function generateValidationCode($caption, $markupName, $element) {
+    function generateValidationCode($caption, $markupName, $element, $entry_id) {
 		$ele_value = $element->getVar('ele_value');
 		$validationCode = array();
 		$eltmsg = "Please select a province for '$caption'";

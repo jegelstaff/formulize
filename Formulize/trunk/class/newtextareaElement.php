@@ -134,7 +134,7 @@ class formulizeNewTextareaElementHandler extends formulizeElementsHandler {
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
-    function generateValidationCode($caption, $markupName, $element) {
+    function generateValidationCode($caption, $markupName, $element, $entry_id) {
     }
     
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
@@ -185,6 +185,10 @@ class formulizeNewTextareaElementHandler extends formulizeElementsHandler {
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle, $entry_id) {
+		$this->clickable = true; // make urls clickable
+        $this->striphtml = true; // remove html tags as a security precaution
+        $this->length = 35; // truncate to a maximum of 100 characters, and append ... on the end
+		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
     
 }
