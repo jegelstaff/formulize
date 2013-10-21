@@ -42,7 +42,7 @@ class formulizeNewAreamodifElement extends formulizeformulize {
     var $alwaysValidateInputs;
     function __construct() {
         $this->name = "Custom Text for display (left and right cells)";
-        $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
+        $this->hasData = false; // set to false if this is a non-data element, like the subform or the grid
         $this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
         $this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
         $this->adminCanMakeRequired = false; // set to true if the webmaster should be able to toggle this element as required/not required
@@ -89,10 +89,6 @@ class formulizeNewAreamodifElementHandler extends formulizeElementsHandler {
     // $ele_value will contain the options set for this element (based on the admin UI choices set by the user, possibly altered in the adminSave method)
     // $element is the element object
     function loadValue($value, $ele_value, $element) {
-        // dummy element will have a single value stored in the database, but when rendered, it will pickup the values from ele_value[0] and [1] and use those as the default.  See the render method.
-        // So, we'll erase ele_value[1] and set the value from the database as ele_value[0], and then everything will render right
-        $ele_value[0] = $value;
-        $ele_value[1] = "";
         return $ele_value;
     }
     
@@ -106,27 +102,28 @@ class formulizeNewAreamodifElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id) {
-        // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
-        if($isDisabled) {
-            $formElement = new xoopsFormLabel($caption, $ele_value[0] . $ele_value[1]);
-        } else {
-            $formElement = new xoopsFormText($caption, $markupName, 50, 50, $ele_value[0] . $ele_value[1]); // caption, markup name, size, maxlength, default value, according to the xoops form class
-        }
-        return $formElement;
+        $renderer = new formulizeElementRenderer();
+		
+		if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
+			$form_id = $element->getVar('id_form');
+			$entryData = $renderer->formulize_getCachedEntryData($id_form, $entry_id);
+			$creation_datetime = display($entryData, "creation_datetime");
+			$evalResult = eval($ele_value[0]);
+			if($evalResult === false) {
+				$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
+			} else {
+				$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
+			}
+		}
+		$ele_value[0] = $renderer->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form);
+		$form_ele = new XoopsFormLabel($caption, $ele_value[0]);
+        return $form_ele;
     }
     
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
-    function generateValidationCode($caption, $markupName, $element) {
-        $validationmsg = "Your value for $caption should not match the default value.";
-	$validationmsg = str_replace("'", "\'", stripslashes( $validationmsg ) );
-        $ele_value = $element->getVar('ele_value');
-        $validationCode = array();
-        $validationCode[] = "if(myform.{$markupName}.value == '".$ele_value[0].$ele_value[1]."') {\n";
-        $validationCode[] = "  window.alert('{$validationmsg}');\n myform.{$markupName}.focus();\n return false;\n ";
-        $validationCode[] = "}\n";
-        return $validationCode;
+    function generateValidationCode($caption, $markupName, $element, $entry_id) {
     }
     
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
@@ -165,13 +162,7 @@ class formulizeNewAreamodifElementHandler extends formulizeElementsHandler {
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle, $entry_id) {
-        $this->clickable = true; // make urls clickable
-        $this->striphtml = true; // remove html tags as a security precaution
-        $this->length = 100; // truncate to a maximum of 100 characters, and append ... on the end
-        
-        $value = strtoupper($value); // just as an example, we'll uppercase all text when displaying in a list
-        
-        return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+        return $value;
     }
     
 }

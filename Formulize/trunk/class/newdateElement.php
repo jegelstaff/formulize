@@ -46,7 +46,7 @@ class formulizeNewDateElement extends formulizeformulize {
         $this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
         $this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
         $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
-        $this->alwaysValidateInputs = true; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
+        $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
         parent::formulizeformulize();
     }
     
@@ -101,10 +101,7 @@ class formulizeNewDateElementHandler extends formulizeElementsHandler {
     // $ele_value will contain the options set for this element (based on the admin UI choices set by the user, possibly altered in the adminSave method)
     // $element is the element object
     function loadValue($value, $ele_value, $element) {
-        // dummy element will have a single value stored in the database, but when rendered, it will pickup the values from ele_value[0] and [1] and use those as the default.  See the render method.
-        // So, we'll erase ele_value[1] and set the value from the database as ele_value[0], and then everything will render right
         $ele_value[0] = $value;
-        $ele_value[1] = "";
         return $ele_value;
     }
     
@@ -118,27 +115,34 @@ class formulizeNewDateElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id) {
-        // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
-        if($isDisabled) {
-            $formElement = new xoopsFormLabel($caption, $ele_value[0] . $ele_value[1]);
-        } else {
-            $formElement = new xoopsFormText($caption, $markupName, 50, 50, $ele_value[0] . $ele_value[1]); // caption, markup name, size, maxlength, default value, according to the xoops form class
-        }
-        return $formElement;
+       
+	   if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") { // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
+			$form_ele = new XoopsFormTextDateSelect ($caption, $markupName, 15, "");
+		} else {
+			if (ereg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
+				$number = ereg_replace("[^0-9+-]","", $ele_value[0]);
+				$timestampToUse = mktime(0, 0, 0, date("m") , date("d")+$number, date("Y"));
+			} else {
+				$timestampToUse = strtotime($ele_value[0]);
+			}
+			$form_ele = new XoopsFormTextDateSelect ($caption, $markupName, 15, $timestampToUse);
+		}
+        return $form_ele;
     }
     
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
-    function generateValidationCode($caption, $markupName, $element) {
-        $validationmsg = "Your value for $caption should not match the default value.";
-	$validationmsg = str_replace("'", "\'", stripslashes( $validationmsg ) );
-        $ele_value = $element->getVar('ele_value');
-        $validationCode = array();
-        $validationCode[] = "if(myform.{$markupName}.value == '".$ele_value[0].$ele_value[1]."') {\n";
-        $validationCode[] = "  window.alert('{$validationmsg}');\n myform.{$markupName}.focus();\n return false;\n ";
-        $validationCode[] = "}\n";
-        return $validationCode;
+    function generateValidationCode($caption, $markupName, $element, $entry_id) {
+		$validationCode = array();
+		if($element->getVar('ele_req') AND !$isDisabled) {
+			$eltname = $markupName;
+			$eltcaption = $caption;
+			$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+			$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
+			$validationCode[] = "\nif ( myform.{$eltname}.value == \"\" || myform.{$eltname}.value == \"YYYY-mm-dd\" ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
+		}
+		return $validationCode;
     }
     
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
@@ -146,6 +150,12 @@ class formulizeNewDateElementHandler extends formulizeElementsHandler {
     // $value is what the user submitted
     // $element is the element object
     function prepareDataForSaving($value, $element) {
+		if($value != "YYYY-mm-dd" AND $value != "") { 
+			$value = date("Y-m-d", strtotime($value)); 
+		} else {
+			$value = "{WRITEASNULL}"; // forget about this date element and go on to the next element in the form
+		}
+		$value = ''.$value;
         return mysql_real_escape_string($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
     }
     
@@ -181,13 +191,7 @@ class formulizeNewDateElementHandler extends formulizeElementsHandler {
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle, $entry_id) {
-        $this->clickable = true; // make urls clickable
-        $this->striphtml = true; // remove html tags as a security precaution
-        $this->length = 100; // truncate to a maximum of 100 characters, and append ... on the end
-        
-        $value = strtoupper($value); // just as an example, we'll uppercase all text when displaying in a list
-        
-        return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+		return $value;
     }
     
 }

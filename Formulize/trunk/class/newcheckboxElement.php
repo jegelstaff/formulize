@@ -208,10 +208,8 @@ class formulizeNewCheckboxElementHandler extends formulizeElementsHandler {
 		
 		if(strstr($markupName, "de_")) { // display element uses a slightly different element name so it can be distinguished on subsequent page load from regular elements...THIS IS NOT TRUE/NECESSARY ANYMORE SINCE FORMULIZE 3, WHERE ALL ELEMENTS ARE DISPLAY ELEMENTS
 			$true_ele_id = str_replace("de_".$element->getVar('id_form')."_".$entry_id."_", "", $markupName);
-			$displayElementInEffect = true;
 		} else {
 			$true_ele_id = str_replace("ele_", "", $markupName);
-			$displayElementInEffect = false;
 		}
 		
         $selected = array();
@@ -315,7 +313,7 @@ class formulizeNewCheckboxElementHandler extends formulizeElementsHandler {
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
-    function generateValidationCode($caption, $markupName, $element) {
+    function generateValidationCode($caption, $markupName, $element, $entry_id) {
 		$validationCode = array();
 		$isDisabled = false;
 		if (strstr(getCurrentURL(),"printview.php")) {
@@ -323,8 +321,8 @@ class formulizeNewCheckboxElementHandler extends formulizeElementsHandler {
 		}
 		
 		if($element->getVar('ele_req') AND !$isDisabled) {
-			$eltname = $form_ele_id;
-			$eltcaption = $ele_caption;
+			$eltname = $markupName;
+			$eltcaption = $caption;
 			$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
 			$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 			$validationCode[] = "selection = true;\n";
