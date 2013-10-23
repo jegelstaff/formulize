@@ -194,7 +194,7 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 		{ 
 			if ($custom_fields['formulize_select'][0] == $name)
 			{
-				Formulize::renderScreens($id);
+				Formulize::renderScreen($id);
 				break;
 			}
 		}
