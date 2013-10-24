@@ -178,12 +178,7 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
     {
 		//Here we echo the original content of the page.
 		echo $content;
-		
-		//Initialize our user info
-		initializeUserInfo();
-		//Initialize Formulize (already happened in stylesheet include, might be unnecessary?)
-		Formulize::init();
-		
+				
 		//Here is where we obtain the screen we should display. Once we find the adequate screen name, we will
 		//render our Formulize screen, then break from our loop to ensure only one screen is rendered.
 		$custom_fields = get_post_custom($GLOBALS['post']->ID);
@@ -208,11 +203,7 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
      *
      */
     function insertFormulizeStylesheet()
-    {
-	//Here we initialize Formulize. This will give us access to the XOOPS/Formulize constants
-	//As well as set a session within the Formulize system.
-	Formulize::init();
-	
+    {	
 	//Here we register and enqueue the style sheet for the plug in. 
         wp_register_style( 'newstyle', plugins_url('newstyle.css', __FILE__));
         wp_enqueue_style( 'newstyle');
@@ -304,10 +295,17 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
 	
 	function initializeUserInfo()
 	{
-		get_currentuserinfo();
-		if(isset($GLOBALS['current_user']))
+		$current_user = $current_user = wp_get_current_user();
+		if(!($current_user instanceof WP_User))
 		{
+			$GLOBALS['formulizeHostSystemUserId'] = 0;
 		}
+		{
+			$GLOBALS['formulizeHostSystemUserId'] = $current_user->ID;
+		}
+		
+		//Initialize Formulize
+		Formulize::init();
 		
 		global $wp_roles;
 		$roles = $wp_roles->roles;
@@ -358,7 +356,7 @@ define('FORMULIZEPLUGINOPTIONS_NICK', 'Formulize Plugin Options');
     	
     }
 	
-//add_action('init','initializeUserInfo');
+add_action('init','initializeUserInfo');
 add_action( 'wp_enqueue_scripts', 'insertFormulizeStylesheet' );
 add_action('delete_user','deleteUser'); //<-- Commented out. The delete function in the API calls the die function. Uncommenting this and attempting to delete a user crashes WP.
 add_action('edit_user_profile', 'updateUser'); // <-- Update user is stub. Doesn't do anything yet in API.

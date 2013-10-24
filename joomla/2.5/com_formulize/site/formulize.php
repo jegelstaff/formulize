@@ -42,15 +42,17 @@ if($formId!=0) {
 	$document = JFactory::getDocument();
 	$document->addStyleSheet( JURI::base() . 'components/com_formulize/formulize.css' );
 	
-	// If no user is currently logged in
-	// set $GLOBALS so Formulize know no user is currently logged in
 	$user =& JFactory::getUser();
 	if ($user->guest) {
+		// If no user is currently logged in
+		// set $GLOBALS so Formulize know no user is currently logged in
 		$GLOBALS['formulizeHostSystemUserId'] = 0;
+	} else {
+		$GLOBALS['formulizeHostSystemUserId'] = $user->id;
 	}
 	
 	// Inject the selected form into the screen
-	include_once $formulize_path."/mainfile.php";
+	Formulize::init();
 	Formulize::renderScreen( $formId );
 }
 else {

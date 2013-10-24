@@ -2,56 +2,54 @@
 /* Formulize css */
 
 
-#formulize-screen table td {
+#formulize_form table td {
 	padding: 0;
 	border-width: 0;
 	vertical-align: top;
 }
 
-#formulize-screen th {
+#formulize_form th {
 	font-size: large;
 }
 
-#formulize-screen .outer{
+#formulize_form .outer{
 	color: #1B75BB;
 }
-#formulize-screen .head {
+#formulize_form .head {
 	color:#74B64A;
 	padding: 5px;
 	font-weight: bold;
 	border-top: 3px solid #CCCCCC;
 }
-#formulize-screen .even {
+#formulize_form .even {
 	color:black;
 	padding: 5px;
 	border-top: 3px solid #CCCCCC;
 }
-#formulize-screen .odd {
+#formulize_form .odd {
 	color:black;
 	padding: 5px;
 	border-top: 3px solid #CCCCCC;
 	background-color: white;
 }
-#formulize-screen tr.even td {
+#formulize_form tr.even td {
 	color:black;
 	padding: 5px;
 	border-top: 3px solid #CCCCCC;
 }
-#formulize-screen tr.odd td {
+#formulize_form tr.odd td {
 	color:black;
 	padding: 5px;
 	border-top: 3px solid #CCCCCC;
 	background-color: white;	
 }
-#formulize-screen .xoops-form-element-caption .caption-marker {
+#formulize_form .xoops-form-element-caption .caption-marker {
 	display: none;
 }
-#formulize-screen .xoops-form-element-help {
+#formulize_form .xoops-form-element-help {
 	font-weight: normal;
 }
 
-#formulize-screen tbody {
+#formulize_form tbody {
   border-top: 0 solid white;
 }
-
-

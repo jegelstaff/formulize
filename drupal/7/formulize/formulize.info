@@ -7,4 +7,4 @@ package = Formulize
 files[] = formulize.module
 files[] = formulize.install
 configure = admin/settings/formulize
-
+stylesheets[all][] = formulize.css

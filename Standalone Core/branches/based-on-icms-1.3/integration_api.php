@@ -353,6 +353,7 @@ EOF;
 					AND fi.id_form IN (' . $in_clause . ') 
 				ORDER BY fi.desc_form, fs.title
 			';
+
 		}
 
 		//Run the query and assemble/return the results

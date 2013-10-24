@@ -474,7 +474,7 @@ class icms_core_DataFilter {
 			$html = self::nl2Br($html);
 		}
 
-        $html .= '<!-- input filtered -->';
+        //$html .= '<!-- input filtered -->';
 
 		icms::$preload->triggerEvent('afterFilterHTMLinput', array(&$html, 1, 1, 1, $br));
 		return $html;
