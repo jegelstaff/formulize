@@ -53,6 +53,41 @@
     var formRelationID = "1";
 
     
+    $( document ).ready(function() {
+                        
+        // user have a choice of either choosing a screen or entering an external URL
+        
+        //remove the event of displaying the warning block associated with the add textbox and the select menu 
+                        
+        $("#addurl").unbind("change");
+        $("#addurl").unbind("keydown");
+        $("#adddefaultScreen").unbind("change");
+        $("#listsofscreenoptions").unbind("change");
+        
+        //disable the screen list if a url is entered, enable otherwise.
+        $('#addurl').bind("change",function(){
+            if ($('#addurl').val() != ''){
+                $("#listsofscreenoptions").attr("disabled", "disabled");
+                $("#adddefaultScreen").attr("disabled", "disabled");
+            }else{
+                $("#listsofscreenoptions").attr("disabled", "");
+                $("#adddefaultScreen").attr("disabled", "");
+            }
+        });
+
+        //disable the url textbox if a screen list is selected, enable otherwise.
+        $('#listsofscreenoptions').bind("change",function(){
+            if ($('#listsofscreenoptions').val() != ''){
+                $("#addurl").attr("disabled", "disabled");
+            }else{
+                $("#addurl").attr("disabled", "");
+            }        
+        });
+        
+        
+    });
+    
+    
     // added Oct 2013 
     $(".deletelink").click(function () {
         var answer = confirm("The selected menu link will be deleted, OK?");
@@ -98,23 +133,7 @@
                                                                                             
     });
                                                               
-    // user have a choice of either choosing a screen or entering an external URL
-                                                              
-    $('#addurl').change(function(){
-        if ($('#addurl').val() != ''){
-            $("#listsofscreenoptions").attr("disabled", "disabled");
-        }else{
-            $("#listsofscreenoptions").attr("disabled", "");
-        }
-    });
-      
-    $('#listsofscreenoptions').change(function(){
-        if ($('#listsofscreenoptions').val() != ''){
-            $("#addurl").attr("disabled", "disabled");
-        }else{
-            $("#addurl").attr("disabled", "");
-        }        
-    });
+  
     
     function updateSaveChangeDisplay(){
              

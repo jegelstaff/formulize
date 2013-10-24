@@ -49,13 +49,37 @@
             }
         }	
          
-         if(jQuery("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").val() != ''){
-             $("#url<{$sectionNumber}>").attr("disabled", "disabled");
-         }
-         if ($('#url<{$sectionNumber}>').val() != ''){
-             $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "disabled");
-             jQuery("#defaultScreen<{$sectionNumber}>").attr("disabled", "disabled");
-         }
+        $("#url<{$sectionNumber}>").unbind("change");
+        $("#url<{$sectionNumber}>").unbind("keydown");
+        $("#defaultScreen<{$sectionNumber}>").unbind("change");
+        $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").unbind("change");
+
+        // user have a choice of either choosing a screen or entering a URL
+        // if user chooses a screen, user has the choice of choosing it as a default screen
+
+        $('#url<{$sectionNumber}>').bind("change",function(){
+          if ($('#url<{$sectionNumber}>').val() != ''){
+              $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "disabled");
+              $("#defaultScreen<{$sectionNumber}>").attr("disabled", "disabled");
+          }
+          else{
+              $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "");
+              $("#defaultScreen<{$sectionNumber}>").attr("disabled", "");
+          }
+        });
+
+        $('#sectionScreen<{$sectionNumber}> #listsofscreenoptions').bind("change",function(){
+          if ($('#sectionScreen<{$sectionNumber}> #listsofscreenoptions').val() != ''){
+              $("#url<{$sectionNumber}>").attr("disabled", "disabled");
+          }
+          else{
+              $("#url<{$sectionNumber}>").attr("disabled", "");
+          }
+          
+        });
+
+        $("#url<{$sectionNumber}>").change();
+        $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").change();  
                              
     });
     
@@ -91,30 +115,7 @@
         }
                                                                                                                                                                                                                                    
     });
-     
-     // user have a choice of either choosing a screen or entering a URL
-     // if user chooses a screen, user has the choice of choosing it as a default screen
-                                                                                 
-      $('#url<{$sectionNumber}>').change(function(){
-        if ($('#url<{$sectionNumber}>').val() != ''){
-            $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "disabled");
-            $("#defaultScreen<{$sectionNumber}>").attr("disabled", "disabled");
-        }
-        else{
-            $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "");
-            $("#defaultScreen<{$sectionNumber}>").attr("disabled", "");
-        }
-      });
-          
-      $('#sectionScreen<{$sectionNumber}> #listsofscreenoptions').change(function(){
-          if ($('#sectionScreen<{$sectionNumber}> #listsofscreenoptions').val() != ''){
-              $("#url<{$sectionNumber}>").attr("disabled", "disabled");
-          }
-          else{
-              $("#url<{$sectionNumber}>").attr("disabled", "");
-          }
-      
-      });
+    
      
 
 </script>
