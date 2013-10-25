@@ -20,12 +20,15 @@
                     <option value="<{$group.id}>"> <{$group.name}> </option>
             <{/foreach}>
         </select>
-            
-        <br /><br />
-        <input type="checkbox" name="defaultScreen" id="defaultScreen<{$sectionNumber}>"  <{if $content.links[$sectionNumber].default_screen.value == 1}>checked="checked"<{/if}> > Use as a default screen for users in the selected groups
+         
+        <div id="defaultScreenSection<{$sectionNumber}>"> 
+            <h3>Use this screen as the default page for these groups:</h3>                        
+            <select name="defaultScreenGroups" id="defaultScreenGroups<{$sectionNumber}>" size=10 multiple style="overflow-y: scroll;">
+            </select>
+       </div>     
         <br />
             
-         <p align="center"><button class="menuButton" id="updateMenuItem<{$sectionNumber}>" type="button" >Update</button></p>
+         <p align="center"><button class="menuButton" id="updateMenuItem<{$sectionNumber}>" type="button" >Update Link</button></p>
             
     </form> 
 </div>
@@ -48,11 +51,15 @@
                 }).attr("selected", true);
             }
         }	
-         
+        
+            
+        //------------------------------------------------------------------------
+                             
         $("#url<{$sectionNumber}>").unbind("change");
         $("#url<{$sectionNumber}>").unbind("keydown");
         $("#defaultScreen<{$sectionNumber}>").unbind("change");
         $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").unbind("change");
+        $("#defaultScreenSection<{$sectionNumber}>").hide();
 
         // user have a choice of either choosing a screen or entering a URL
         // if user chooses a screen, user has the choice of choosing it as a default screen
@@ -60,26 +67,62 @@
         $('#url<{$sectionNumber}>').bind("change",function(){
           if ($('#url<{$sectionNumber}>').val() != ''){
               $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "disabled");
-              $("#defaultScreen<{$sectionNumber}>").attr("disabled", "disabled");
-          }
+                        }
           else{
               $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "");
-              $("#defaultScreen<{$sectionNumber}>").attr("disabled", "");
           }
         });
 
         $('#sectionScreen<{$sectionNumber}> #listsofscreenoptions').bind("change",function(){
           if ($('#sectionScreen<{$sectionNumber}> #listsofscreenoptions').val() != ''){
               $("#url<{$sectionNumber}>").attr("disabled", "disabled");
+              if( jQuery("#groups<{$sectionNumber}> option:selected").length){
+                $("#defaultScreenSection<{$sectionNumber}>").show();
+             }
           }
           else{
               $("#url<{$sectionNumber}>").attr("disabled", "");
+              $("#defaultScreenSection<{$sectionNumber}>").hide();
           }
           
         });
 
         $("#url<{$sectionNumber}>").change();
         $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").change();  
+        
+        //------------------------------------------------------------------------
+            
+         //show groups who have this link as a default page (if there are any)
+         var selectedGroups= '<{$content.links[$sectionNumber].default_screen}>'.split(",");	
+         var groupsWithDefaultScreen= '<{$content.groupsWithDefaultScreen}>'.split(",");	
+         
+        $("#groups<{$sectionNumber}>").unbind("change");
+        $("#defaultScreenGroups<{$sectionNumber}>").unbind("change");
+                             
+        jQuery("#groups<{$sectionNumber}>").bind("change", function(){
+          
+          $("#defaultScreenGroups<{$sectionNumber}>").empty();          
+          $("#groups<{$sectionNumber}> option:selected").each( function(){
+              var value= $(this).val();
+              var text= $(this).text();
+              $("#defaultScreenGroups<{$sectionNumber}>").append($("<option></option>").attr("value", value).text(text));
+          });     
+          
+          $("#defaultScreenGroups<{$sectionNumber}> option").each(function() {
+              if ( jQuery.inArray($(this).val(), selectedGroups ) >= 0) {
+                  $(this).attr("selected", true);
+              }
+              else{
+                  if ( jQuery.inArray($(this).val(), groupsWithDefaultScreen ) >= 0 ) {
+                      $(this).remove();
+                  }
+              }
+              
+              });
+             $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").change();
+          });
+         
+         jQuery("#groups<{$sectionNumber}>").change();    
                              
     });
     
@@ -93,17 +136,15 @@
             var url = $("#url<{$sectionNumber}>").val();
             var screen = $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").val();
             var groupids = $("#groups<{$sectionNumber}>").val();
-            var default_screen= 0;  
+            var default_screen= '';  
             var value = menuID;
                                                                                  
-            if( $("#defaultScreen<{$sectionNumber}>").is(':checked') ){
-                default_screen=1;    
-            } 
                                                                                  
             if(screen.length > 0){
-                if(menuText.length == 0){
+               /* if(menuText.length == 0){
                     menuText = $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions option:selected").text().trim().replace(/\'/g, " "); 
-                }  
+                } */
+               default_screen= $("#defaultScreenGroups<{$sectionNumber}>").val();                                                                   
             }else if(url.length > 0){
                 if(menuText.length == 0){                                                                                                                menuText = url;                                                                                                                                                                                         } 
             }else{                                                                                                                                                    alert("missing screen or url");                                                                                                                                                                                               return;                                                                                                                                                                                          }

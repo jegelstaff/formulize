@@ -59,15 +59,15 @@ if($aid == 0) {
     $index = 0; // JAKEADDED
     foreach ($appLinks as $menulink) // JAKEADDED
     {
-        $menulinks[$index]['menu_id'] = $menulink->getVar('menu_id'); //Oct 2013 Wejdan Radhwan
+        $menulinks[$index]['menu_id'] = $menulink->getVar('menu_id'); //Oct 2013 W. R.
         $menulinks[$index]['url'] = $menulink->getVar('url'); // JAKEADDED
         $menulinks[$index]['link_text'] = $menulink->getVar('link_text'); // JAKEADDED
         $menulinks[$index]['screen'] = $menulink->getVar('screen'); // JAKEADDED
         $menulinks[$index]['rank'] = $menulink->getVar('rank');	
+        $menulinks[$index]['name'] = $menulink->getVar('name');	
         $menulinks[$index]['text'] = $menulink->getVar('text');	
         $menulinks[$index]['permissions'] = $menulink->getVar('permissions');
         $menulinks[$index]['default_screen'] = $menulink->getVar('default_screen'); //Oct 2013 W.R.
-        //$menulinks[$index]['value'] = $menulink->getVar('menu_id'). '::' .$menulink->getVar('link_text'). '::' . $menulink->getVar('screen'). '::' . $menulink->getVar('url'). '::' . $menulink->getVar('permissions');
         $index ++; // JAKEADDED
     }
     
@@ -87,7 +87,10 @@ if($aid == 0) {
 	}
 }
     
-// get list of groups
+
+// get list of group ids that have no default screen set
+$groupsWithDefaultScreen = $application_handler->getGroupsWithDefaultScreen();    
+    
 // get the list of groups
 $member_handler = xoops_gethandler('member');
 $allGroups = $member_handler->getGroups();
@@ -242,6 +245,7 @@ $adminPage['tabs'][$i]['template'] = "db:admin/application_menu_entries.html";
 $adminPage['tabs'][$i]['content'] = $options + $common;
 $adminPage['tabs'][$i]['content']['links'] = $menulinks;
 $adminPage['tabs'][$i]['content']['groups'] = $groups;
+$adminPage['tabs'][$i]['content']['groupsWithDefaultScreen'] = $groupsWithDefaultScreen;
     
 $adminPage['pagetitle'] = _AM_APP_APPLICATION.$appName;
 $adminPage['needsave'] = true;

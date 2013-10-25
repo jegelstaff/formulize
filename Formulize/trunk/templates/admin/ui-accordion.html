@@ -31,13 +31,7 @@
 <div id="accordion-<{$number}>">
 	<{foreach from=$sections key=sectionNumber item=section}>
 	<div id="drawer-<{$number}>-<{$sectionNumber}>">
-       <!--//menu entries sortable list - Oct 2013 Wejdan Radhwan -->
-        <{if $number==5}>	
-			<h3><a href="#"><span class="accordion-name"><{$section.text}> 
-			<{if $section.screen != null}>- <{$section.screen}> <{/if}></span></a></h3>
-            <{else}>
-                <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
-            <{/if}>
+        <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
 		<div class="accordion-content content">
 			<{include file=$sectionTemplate sectionContent=$section.content}>
 		</div>

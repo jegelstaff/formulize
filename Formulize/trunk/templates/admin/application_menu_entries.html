@@ -27,8 +27,15 @@
                             <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>                 
                         <{/foreach}>
                     </select>
-                    <br/><br/>
-                    <input type="checkbox" name="adddefaultScreen" id="adddefaultScreen" > Use as a default screen
+                    <br/>
+                        <div id="defaultScreenSection"> 
+                            <h3>Use this screen as the default page for these groups:</h3>                        
+                            <select name="defaultScreenGroups" id="addDefaultScreenGroups" size=10 multiple style="overflow-y: scroll;">
+                            </select>
+                        </div>
+                        
+                    <br/>
+                   
                 </fieldset>
                 
                 <button class="menuButton" id="addMenuItem" type="button" >Add Menu Item</button>				
@@ -55,35 +62,61 @@
     
     $( document ).ready(function() {
                         
-        // user have a choice of either choosing a screen or entering an external URL
-        
+        // user have a choice of either choosing a screen or entering an external URL        
         //remove the event of displaying the warning block associated with the add textbox and the select menu 
                         
         $("#addurl").unbind("change");
         $("#addurl").unbind("keydown");
-        $("#adddefaultScreen").unbind("change");
         $("#listsofscreenoptions").unbind("change");
+        $("#defaultScreenSection").hide();
         
         //disable the screen list if a url is entered, enable otherwise.
-        $('#addurl').bind("change",function(){
+        $("#addurl").bind("change",function(){
             if ($('#addurl').val() != ''){
                 $("#listsofscreenoptions").attr("disabled", "disabled");
-                $("#adddefaultScreen").attr("disabled", "disabled");
+        
             }else{
                 $("#listsofscreenoptions").attr("disabled", "");
-                $("#adddefaultScreen").attr("disabled", "");
+
             }
         });
 
         //disable the url textbox if a screen list is selected, enable otherwise.
-        $('#listsofscreenoptions').bind("change",function(){
+        $("#listsofscreenoptions").bind("change",function(){
             if ($('#listsofscreenoptions').val() != ''){
                 $("#addurl").attr("disabled", "disabled");
+                if($("#addgroups option:selected").length){
+                    $("#defaultScreenSection").show();
+                }
             }else{
                 $("#addurl").attr("disabled", "");
+                $("#defaultScreenSection").hide();
             }        
         });
         
+         //show groups who have this link as a default page (if there are any)
+                        
+        $("#addDefaultScreenGroups").unbind("change");
+        $("#addgroups").unbind("change");       
+        
+        var groupsWithDefaultScreen= '<{$content.groupsWithDefaultScreen}>'.split(",");	
+        
+        jQuery("#addgroups").bind("change", function(){
+                                  
+          $("#addDefaultScreenGroups").empty();
+          $("#addgroups option:selected").each( function(){
+               var value= $(this).val();
+               var text= $(this).text();
+               if ( jQuery.inArray($(this).val(), groupsWithDefaultScreen ) < 0 ) {
+                   $("#addDefaultScreenGroups").append($("<option></option>").attr("value", value).text(text));
+               }
+           }); 
+                                  
+          $("#listsofscreenoptions").change();
+          
+          });
+        
+        jQuery("#addgroups").change();
         
     });
     
@@ -106,16 +139,14 @@
         var url = $("#addurl").val();
         var screen = $("#listsofscreenoptions").val();
         var groupids = $("#addgroups").val();
-        var default_screen = 0;                    
+        var default_screen = '';                    
         var value = "null::";
                             
         if(screen.length > 0){
-            if(menuText.length == 0){
+            /*if(menuText.length == 0){
                 menuText = $("#listsofscreenoptions option:selected").text().trim().replace(/\'/g, " "); 
-            }
-            if( $("#adddefaultScreen").is(':checked')){
-                default_screen=1;    
-            }
+            }*/
+            default_screen= $("#addDefaultScreenGroups").val();
         }else if(url.length > 0){
                 if(menuText.length == 0){
                     menuText = url;
@@ -135,13 +166,11 @@
                                                               
   
     
-    function updateSaveChangeDisplay(){
-             
-        $("#addgroups").unbind("change");
+    function updateSaveChangeDisplay(){             
+        
         $("#addmenutext").unbind("keydown");
         $("#addmenutext").unbind("change");
        
-        $("[name=groups]").unbind("change");
         $("[name=menutext]").unbind("keydown");
         $("[name=menutext]").unbind("change");
                                                               

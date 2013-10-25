@@ -1476,7 +1476,6 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
             `rank` int(11),
             `url` varchar(255),
             `link_text` varchar(255),
-            `default_screen` tinyint(1),
             PRIMARY KEY (`menu_id`),
             INDEX i_menus_appid (appid)
             );";
@@ -1485,6 +1484,7 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
             `permission_id` int(11) unsigned NOT NULL auto_increment,
             `menu_id` int(11) unsigned NOT NULL,
             `group_id` int(11) unsigned NOT NULL,
+            `default_screen` tinyint(1) NOT NULL default '0',
             PRIMARY KEY (`permission_id`),
             INDEX i_menu_permissions (menu_id)
             );";
@@ -1553,7 +1553,7 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
         $groupsThatCanView = $gperm_handler->getGroupIds("view_form", $formid, getFormulizeModId());
         
         $menuText = html_entity_decode($menuText, ENT_QUOTES) == "Use the form's title" ? '' : $menuText;
-        $thissql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'fid=".$formid."',".$i.",null,'".$menuText."',0);";//.$permissionsql.";";
+        $thissql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'fid=".$formid."',".$i.",null,'".$menuText."');";//.$permissionsql.";";
         if(!$result = $xoopsDB->query($thissql)) {
             exit("Error inserting Menus. SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
         }else{
@@ -1561,7 +1561,7 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
                 if($permissionsql != ""){
                     $permissionsql += ",(null,". mysql_insert_id().",". $groupid.")";
                 }else{
-                    $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,". mysql_insert_id().",". $groupid.")";
+                    $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,". mysql_insert_id().",". $groupid.",0)";
                 }
             }
             if ($permissionsql){

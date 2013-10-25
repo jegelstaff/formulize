@@ -41,9 +41,10 @@ global $xoopsDB;
             $this->initVar("rank", XOBJ_DTYPE_INT, NULL, false);
             $this->initVar("url", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
             $this->initVar("link_text", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-            $this->initVar("text", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+            $this->initVar("name", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+             $this->initVar("text", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
             $this->initVar("permissions", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-            $this->initVar("default_screen", XOBJ_DTYPE_INT); //added oct 2013
+            $this->initVar("default_screen", XOBJ_DTYPE_TXTBOX, NULL, false, 255); //added oct 2013
         }
     }
     
@@ -92,21 +93,37 @@ global $xoopsDB;
             
             foreach($linksArray as $menulink) {
                 
-                $menutext =	$menulink->getVar('link_text');
+                // added Oct 2013
+                // groups that use the link as a default screen 
+                $menuid = $menulink->getVar('menu_id');
                 
+                $sql = 'SELECT group_concat(group_id separator \',\') as default_screen FROM '.$xoopsDB->prefix("formulize_menu_permissions");
+				$sql .= ' WHERE menu_id = ' . $menuid. ' AND default_screen = 1' ;
+				
+				if ($result = $this->db->query($sql)) { 
+               		$resultArray = $this->db->fetchArray($result);	
+                	$menulink->assignVar('default_screen',$resultArray['default_screen']);	 	                	 	
+            	}
+                
+                $menutext =	$menulink->getVar('link_text');
+                $screenidname= "";
                 if($menutext == ""){
                     $id = explode("=",$menulink->getVar('screen'));
                     
                     if($menulink->getVar('screen')=="") {   //handle external url
+            			$menutext = $menulink->getVar('url'); 
 
-            			$menutext = $menulink->getVar('url');                    } elseif(strpos($menulink->getVar('screen'),"fid=") !== false ){
+            		} elseif(strpos($menulink->getVar('screen'),"fid=") !== false ){
                         $menutext = $form_handler->get($id[1])->getVar('title');
+                        $screenidname = " - form ID: ".  $form_handler->get($id[1])->getVar('id_form');
                     }else{
                         $menutext = $screen_handler->get($id[1])->getVar('title');
+                        $screenidname = " - screen ID: ".$screen_handler->get($id[1])->getVar('sid');
                     }	
                 }
                 
                 $menulink->assignVar('text',$menutext);
+                $menulink->assignVar('name',$menutext.$screenidname);
             }
             
             return $linksArray;
@@ -384,7 +401,7 @@ class formulizeApplicationsHandler {
         
         //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen
         $linkValues = explode("::",$menuitem);
-        $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". $linkValues[2]."',".$rank.",'".$linkValues[3]."','".$linkValues[1]."', ".$linkValues[5].");";
+        $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". $linkValues[2]."',".$rank.",'".$linkValues[3]."','".$linkValues[1]."');";
 		if(!$result = $xoopsDB->query($insertsql)) {
 			exit("Error inserting Menu Item. SQL dump:\n" . $insertsql . "\n".mysql_error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 		}else{
@@ -392,16 +409,23 @@ class formulizeApplicationsHandler {
 			$menuid = mysql_insert_id();
 			if($linkValues[4] != "null" and count($linkValues[4]) > 0){
 				$groupsThatCanView = explode(",",$linkValues[4]);
+                $groupsWithDefaultPage = explode(",",$linkValues[5]);
+				$defaultScreen = 0;
 				foreach($groupsThatCanView as $groupid) {
-					$permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".$menuid.",". $groupid.")";                     
+                    //check for default screen					
+					if (in_array($groupid, $groupsWithDefaultPage)){
+						$defaultScreen = 1;
+					}
+					$permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".$menuid.",". $groupid.", ".$defaultScreen.")";                     
 					if(!$result = $xoopsDB->query($permissionsql)) {
 						exit("Error inserting Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".mysql_error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 					}
+                    $defaultScreen = 0;
 				}
 			}
 		}   
 	}
-    //end of insertMenuLinks()
+    //end of insertMenuLink()
 
     
     // modified Oct 2013 W.R.
@@ -422,7 +446,7 @@ class formulizeApplicationsHandler {
         global $xoopsDB;       
         //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen 
         $linkValues = explode("::",$menuitems);
-        $updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET screen= '".$linkValues[2]."', url= '".$linkValues[3]."', link_text='".$linkValues[1]."', default_screen=".$linkValues[5]." where menu_id=".$linkValues[0]." AND appid=".$appid.";";
+        $updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET screen= '".$linkValues[2]."', url= '".$linkValues[3]."', link_text='".$linkValues[1]."' where menu_id=".$linkValues[0]." AND appid=".$appid.";";
         if(!$result = $xoopsDB->query($updatesql)) {
             exit("Error updating Menu Item. SQL dump:\n" . $updatesql . "\n".mysql_error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
         }else{
@@ -431,12 +455,19 @@ class formulizeApplicationsHandler {
        	 	$result = $xoopsDB->query($deletepermissions);
         
        	 	if($linkValues[4] != "null" and count($linkValues[4]) > 0){
-           	 $groupsThatCanView = explode(",",$linkValues[4]);
+                $groupsThatCanView = explode(",",$linkValues[4]);
+                $groupsWithDefaultPage = explode(",",$linkValues[5]);
+                $defaultScreen = 0;
         		foreach($groupsThatCanView as $groupid) {
-           	     $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".$linkValues[0].",". $groupid.")";                     
+                    //check for default screen					
+                    if (in_array($groupid, $groupsWithDefaultPage)){
+                        $defaultScreen = 1;
+                    }
+                    $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".$linkValues[0].",". $groupid.",".$defaultScreen.")";                     
            	     if(!$result = $xoopsDB->query($permissionsql)) {
            	     	exit("Error updating Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".mysql_error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
            	 		}
+                    $defaultScreen = 0;
            		  }
         	 }
 		}
@@ -455,6 +486,22 @@ class formulizeApplicationsHandler {
         }
 	}
 
+    //added Oct 2013
+    function getGroupsWithDefaultScreen(){
+        global $xoopsDB; 
+        
+        $sql = 'SELECT group_concat( DISTINCT(group_id) separator \',\') as default_screen FROM '.$xoopsDB->prefix("formulize_menu_permissions");
+        $sql .= ' WHERE default_screen = 1' ;
+        
+        if ($result = $xoopsDB->query($sql)) { 
+            $resultArray = $xoopsDB->fetchArray($result);
+            return $resultArray['default_screen'];	 	                	 	
+        }	 
+        else {
+            exit("Error checking default screen. SQL dump:\n" . $checksql . "\n".mysql_error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
+        }
+    }
+    
     /*
      //added Oct 2013
      function defaultScreenExistsForGroup($appid, $menuid, $group_ids){
