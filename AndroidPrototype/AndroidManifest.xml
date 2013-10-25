@@ -7,8 +7,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-sdk
-        android:minSdkVersion="8"
-        android:targetSdkVersion="17" />
+        android:minSdkVersion="9"
+        android:targetSdkVersion="18" />
 
     <application
         android:allowBackup="true"
@@ -28,13 +28,13 @@
                 android:value="com.example.formulizeprototype.LoginActivity" />
         </activity>
         <activity
-            android:name="com.example.formulizeprototype.ApplicationListActivity"
+            android:name="ca.formulize.android.menu.ApplicationListActivity"
             android:label="@string/title_activity_application_list" >
         </activity>
         <activity
-            android:name="com.example.formulizeprototype.ScreenListActivity"
+            android:name="ca.formulize.android.menu.ScreenListActivity"
             android:label="@string/title_activity_form_list"
-            android:parentActivityName="com.example.formulizeprototype.ApplicationListActivity" >
+            android:parentActivityName="ca.formulize.android.menu.ApplicationListActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.formulizeprototype.ApplicationListActivity" />
@@ -42,15 +42,15 @@
         <activity
             android:name="com.example.formulizeprototype.ScreenActivity"
             android:label="@string/title_activity_screen"
-            android:parentActivityName="com.example.formulizeprototype.ScreenListActivity" >
+            android:parentActivityName="ca.formulize.android.menu.ScreenListActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.formulizeprototype.ScreenListActivity" />
         </activity>
         <activity
-            android:name="com.example.formulizeprototype.ScreenWebActivity"
+            android:name="ca.formulize.android.screen.ScreenWebActivity"
             android:label="@string/title_activity_screen_web"
-            android:parentActivityName="com.example.formulizeprototype.ScreenListActivity" >
+            android:parentActivityName="ca.formulize.android.menu.ScreenListActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.formulizeprototype.ScreenListActivity" />

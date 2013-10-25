@@ -6,6 +6,16 @@ In the first Prototype, this was done by using a `WebView`. However, this should
 
 Simpler HTTP Requests should be made instead. This way it also allows us to get the session token more easily, and detect whether a login has been successful or not.
 
+In Android `HttpURLConnection` is used to [make network requests](http://developer.android.com/reference/java/net/HttpURLConnection.html). 
+
+`HttpUrlConnection`'s `CookieManager` stores any cookies given by the response header at Login (given by `Set-Cookie` header). When a `WebView` is initiated in the `ScreenWebActivity`, it takes all the cookies collected by `HttpUrlConnection` and transfers it to `WebView`'s own `CookieManager`. That way `WebView` would have the session cookies to access the screens requested by the user.
+
+#### Things to consider
+* Is there an alternative entry point that mobile devices could use to login and get a token from the Formulize server?
+* How to deal with network that redirect users to a sign-in page?
+* Currently all testing is done on Formulize running on ICMS, does the sign in process need to change on Joomla, Wordpress etc.?
+* It seems like ICMS sets a ICMSSESSION cookie even when the user is not logged in. When I login directly with `HttpURLConnection`, there's I get two `ICMSSESSION` cookies, presumably one for the login, the other for the "unlogged" one.
+
 ### Create input validations for adding connections, login
 
 ### Saving Application State
@@ -50,4 +60,4 @@ Must be done if we are to save passwords locally.
 
 ### Dealing with Disconnects
 When application detects that the session has been lost, reprompt for login.
-	* There might be a way to know when a session is about to be timed out, application can request a new token when that happens!
+* There might be a way to know when a session is about to be timed out, application can request a new token when that happens!

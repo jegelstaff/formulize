@@ -1,8 +1,13 @@
-package com.example.formulizeprototype;
+package ca.formulize.android.screen;
 
-import org.apache.http.util.EncodingUtils;
+import java.net.CookieHandler;
+import java.net.HttpCookie;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
 
-import ca.formulize.android.menu.ApplicationListActivity;
+import com.example.formulizeprototype.R;
+import com.example.formulizeprototype.R.menu;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -17,49 +22,65 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
+import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import ca.formulize.android.connection.FUserSession;
 
-public class FormActivity extends Activity {
-
+public class ScreenWebActivity extends Activity {
+	public static final String SID = "Screen ID";
 	private WebView webView;
-	private String fURL;
-	private String username;
-	private String password;
-	private Boolean isFormPage = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_form);
+
 		// Show the Up button in the action bar.
 		setupActionBar();
 
-		// Get Intent Parameters
-		Intent intent = getIntent();
-		fURL = intent.getStringExtra(LoginActivity.FORMULIZE_URL);
-		username = intent.getStringExtra(LoginActivity.USERNAME);
-		password = intent.getStringExtra(LoginActivity.PASSWORD);
+		webView = new WebView(this);
+		setContentView(webView);
 
-		String fLoginURL = fURL + "/user.php";
-		String postData = "uname=" + username + "&pass=" + password
-				+ "&op=login";
+		// Parameteres to access a screen
+		Intent screenIntent = getIntent();
+		String sid = screenIntent.getStringExtra(SID);
+		FUserSession userSession = FUserSession.getInstance();
+		String urlString = userSession.getConnectionInfo().getConnectionURL();
 
-		// Clean cookies
-		CookieSyncManager.createInstance(this);
-		CookieManager cookieManager = CookieManager.getInstance();
-		cookieManager.removeAllCookie();
+		// Create URI Connection
+		URI baseURI = null;
+		try {
+			baseURI = new URI(urlString);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
 
-		// Load sample webpage
-		webView = (WebView) findViewById(R.id.webview);
-		webView.setWebViewClient(new FormulizeWebViewClient());
+		// Pass session cookies from HttpUrlConnection to the WebView
+		android.webkit.CookieSyncManager.createInstance(this);			// WebView Cookie Manager
+		android.webkit.CookieManager cookieManager = CookieManager.getInstance();
+		java.net.CookieStore rawCookieStore = ((java.net.CookieManager) CookieHandler
+				.getDefault()).getCookieStore();						// HttpUrlConnection Cookie Manager
 
-		Log.d("Formulize", fLoginURL);
+		// Copy cookies from HttpURLConnection to WebView
+		List<HttpCookie> cookies = rawCookieStore.get(baseURI);
+		String url = baseURI.toString();
+		for (HttpCookie cookie : cookies) {
+			String setCookie = new StringBuilder(cookie.toString())
+					.append("; domain=").append(cookie.getDomain())
+					.append("; path=").append(cookie.getPath()).toString();
+			cookieManager.setCookie(url, setCookie);
+		}
 
-		webView.postUrl(fLoginURL, EncodingUtils.getBytes(postData, "base64"));
-
-		Log.d("Formulize", postData);
+		// Load screen page
+		webView.setWebViewClient(new FScreenWebViewClient());
+		webView.setWebChromeClient(new WebChromeClient());
+		webView.getSettings().setJavaScriptEnabled(true);
+		String fFormURL = userSession.getConnectionInfo().getConnectionURL()
+				+ "modules/formulize/index.php?sid=" + sid;
+		
+		Log.d("Formulize", "screenURL: " + fFormURL);
+		
+		webView.loadUrl(fFormURL);
 	}
 
 	/**
@@ -75,7 +96,7 @@ public class FormActivity extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.form, menu);
+		getMenuInflater().inflate(R.menu.screen_web, menu);
 		return true;
 	}
 
@@ -96,31 +117,7 @@ public class FormActivity extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 
-	// private void openFormPage() {
-	// String fFormURL = fURL + "/modules/formulize/index.php?sid=1";
-	// isFormPage = true;
-	// webView.loadUrl(fFormURL);
-	// }
-
-	// Temporary workaround to prevent the client from being redirected to
-	// incorrect URLs (i.e. localhost) by ICMS
-	private class FormulizeWebViewClient extends WebViewClient {
-
-		@Override
-		public void onPageFinished(WebView view, String url) {
-			String cookies = CookieManager.getInstance().getCookie(url);
-			
-			// TODO: Confirm Login better
-			if (!isFormPage && cookies != null
-					&& cookies.toUpperCase().contains("ICMS")) {
-
-				// TODO: Get the actual application list, goto Dummy Application List
-				Intent screenListIntent = new Intent(FormActivity.this,
-						ApplicationListActivity.class);
-				startActivity(screenListIntent);
-			}
-			Log.d("Formulize", "Cookies:" + cookies);
-		}
+	private class FScreenWebViewClient extends WebViewClient {
 
 		@Override
 		public void onPageStarted(WebView view, String url, Bitmap favicon) {
@@ -141,4 +138,5 @@ public class FormActivity extends Activity {
 			return true;
 		}
 	}
+
 }

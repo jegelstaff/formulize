@@ -86,12 +86,23 @@ public final class R {
     }
     public static final class string {
         public static final int account_details_title=0x7f050007;
+        public static final int action_forgot_password=0x7f050017;
         public static final int action_settings=0x7f050001;
+        public static final int action_sign_in_register=0x7f050015;
+        public static final int action_sign_in_short=0x7f050016;
         public static final int app_name=0x7f050000;
+        public static final int error_field_required=0x7f05001b;
+        public static final int error_incorrect_password=0x7f05001a;
+        public static final int error_invalid_email=0x7f050018;
+        public static final int error_invalid_password=0x7f050019;
         public static final int formulize_url_hint=0x7f050006;
         public static final int hello_world=0x7f050002;
         public static final int login_progress_signing_in=0x7f050011;
         public static final int password_hint=0x7f050004;
+        /**  Strings related to login 
+         */
+        public static final int prompt_email=0x7f050013;
+        public static final int prompt_password=0x7f050014;
         public static final int prompt_username=0x7f050010;
         public static final int reattempt_message=0x7f05000e;
         public static final int sign_in_label=0x7f050003;
@@ -102,6 +113,7 @@ public final class R {
         public static final int title_activity_form_list=0x7f05000a;
         public static final int title_activity_screen=0x7f05000b;
         public static final int title_activity_screen_web=0x7f05000c;
+        public static final int title_activity_test_login=0x7f050012;
         public static final int username_hint=0x7f050005;
     }
     public static final class style {
