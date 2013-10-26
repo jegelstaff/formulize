@@ -1,0 +1,80 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_list_entries">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+
+
+<div class="panel-content content">
+  <fieldset>
+    <legend>How entries should be displayed</legend>
+
+    
+      <div class="form-item float-left half-width">
+	<label for="screens-defaultview"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW}></label>
+	      <select id="screens-defaultview" name="screens-defaultview" size="1">
+	  <{html_options options=$content.defaultviewoptions selected=$content.defaultview}>
+	      </select>
+	<div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW}></div>
+      </div>
+      
+      <div class="save-view-access">
+      <p><a href="<{$xoops_url}>/modules/formulize/master.php?fid=<{$content.fid}>&frid=<{$content.frid}>" target="_blank"><img src="../images/kedit.png"> <{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW}></a></p>
+      <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW_DETAILS}></p>
+      </div>
+      
+      <div class="form-item clear-both">
+	<label for="screens-usecurrentviewlist"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CURRENTVIEWLIST}></label>
+	<input type="text" id="screens-usecurrentviewlist" name="screens-usecurrentviewlist" value="<{$content.usecurrentviewlist}>" size="20" maxlength="255"/>
+	<div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK_LIST}></div>
+      </div>
+      <div class="form-item">
+	<label for="screens-limitviews"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS}></label>
+	      <select id="screens-limitviews[]" name="screens-limitviews[]" size="8" multiple>
+	  <{html_options options=$content.limitviewoptions selected=$content.limitviews}>
+	      </select>
+	<div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_LIMITVIEWS}></div>
+      </div>
+    
+    
+    
+    <div class="form-item">
+      <label for="screens-useworkingmsg"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USEWORKING}></label>
+			<div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-useworkingmsg" name="screens-useworkingmsg"<{if $content.useworkingmsg eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-useworkingmsg" name="screens-useworkingmsg"<{if $content.useworkingmsg eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
+		  </div>
+      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_USEWORKING}></div>
+    </div>
+    <div class="form-item">
+      <label for="screens-usescrollbox"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USESCROLLBOX}></label>
+						<div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-usescrollbox" name="screens-usescrollbox"<{if $content.usescrollbox eq 1}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-usescrollbox" name="screens-usescrollbox"<{if $content.usescrollbox eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
+		  </div>
+      <div class="description"></div>
+    </div>
+    <div class="form-item">
+      <label for="screens-entriesperpage"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ENTRIESPERPAGE}></label>
+      <input type="text" id="screens-entriesperpage" name="screens-entriesperpage" value="<{$content.entriesperpage}>" size="4" maxlength="4"/>
+      <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_ENTRIESPERPAGE}></div>
+    </div>
+    <div class="form-item">
+      <label for="screens-viewentryscreen"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN}></label>
+	    <select id="screens-viewentryscreen" name="screens-viewentryscreen" size="1">
+        <{html_options options=$content.viewentryscreenoptions selected=$content.viewentryscreen}>
+	    </select>
+      <div class="description"></div>
+    </div>
+  </fieldset>
+</div>
+
+</form>

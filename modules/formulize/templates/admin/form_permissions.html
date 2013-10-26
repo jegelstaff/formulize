@@ -1,0 +1,211 @@
+<div class="panel-content content">
+
+<form id="form-<{$number}>" class="formulize-admin-form" action="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$content.aid}>&fid=<{$content.fid}>&tab=permissions" method="post">
+<{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
+<input type="hidden" name="formulize_admin_handler" value="form_permissions">
+<input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
+<{* form number is used to trigger the actual submission of this form after data has been saved, so we can pass this state info to the server *}>
+<input type="hidden" name="form_number" value=<{$number}>>
+<input type="hidden" name="tabs_selected" value="<{$number-1}>">
+<input type="hidden" name="reload" value="">
+<input type="hidden" name="conditionsdelete" value="">
+<input type="hidden" id="permscrollx" name="scrollx" value="">	
+
+<div class="accordion-box">
+		<div class="form-item">
+			<fieldset>
+                <legend><label class="question"><{$smarty.const._AM_PERMISSIONS_CHOOSE_GROUPS}></label></legend>
+                <select name="groups[]" id="groups" size=10 multiple>
+                    <{foreach from=$content.groups item=group}>
+                        <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
+                    <{/foreach}>
+                </select>
+								<br /><br />
+								<input type="button" name="showperms" value="Show permissions for these groups" />
+								<input type="hidden" name="useselection" value="" />
+								<br /><br />
+								<label class="question"><{$smarty.const._AM_PERMISSIONS_LIST_GROUPS}></label>
+								<div class="form-radios radio-inline">
+                    <label for="alpha"><input type="radio" id="alpha" name="order" value="alpha"/><{$smarty.const._AM_PERMISSIONS_LIST_ALPHA}></label>
+                </div>
+                <div class="form-radios radio-inline">
+                    <label for="creation"><input type="radio" id="creation" name="order" value="creation" checked/><{$smarty.const._AM_PERMISSIONS_LIST_CREATION}></label>
+                </div>
+								<br /><br />
+								<input type="button" name="savegrouplist" value="<{$smarty.const._AM_PERMISSIONS_LIST_SAVE}>">
+								<input type="hidden" name="grouplistname" value="">
+								<input type="hidden" name="grouplistid" value="">
+            </fieldset>
+		</div>
+
+		<div class="form-item">
+			<fieldset>
+                <legend><label class="question"><{$smarty.const._AM_PERMISSIONS_LIST_ONCE}></label></legend>
+                <select name="grouplists" id="grouplists" size=1>
+                    <{foreach from=$content.grouplists item=grouplist}>
+                        <option value=<{$grouplist.id}><{$grouplist.selected}>><{$grouplist.name}></option>
+                    <{/foreach}>
+                </select>
+								<input type="hidden" name="loadthislist" value="">
+								<input type="button" name="removegrouplist" value="<{$smarty.const._AM_PERMISSIONS_LIST_REMOVE}>">
+								<input type="hidden" name="removelistid" value="">
+            </fieldset>
+		</div>
+		
+		<div class="form-item">
+			<fieldset>
+			<legend><label class="question"><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX}></label></legend>
+							<div class="form-radios radio-inline">
+                    <label for="same"><input type="radio" id="same" name="same_diff" value="same" /><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX_YES}></label>
+                </div>
+                <div class="form-radios radio-inline">
+                    <label for="different"><input type="radio" id="different" name="same_diff" value="different" /><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX_NO}></label>
+                </div>
+								<div class="description">
+									<p><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX_EXPLAIN}></p>
+								</div>
+		
+	</fieldset>
+		</div>
+
+</div>
+
+
+<div class="accordion-box">
+	
+	<{if $content.groupperms|@count == 0}>
+		<div class="form-item">
+		<fieldset>
+			<legend><label class="question"><{$smarty.const._AM_PERMISSIONS_SELECT_GROUP}></label></legend>
+		</fieldset>
+		</div>
+	<{/if}>
+	
+	
+	<{foreach from=$content.groupperms item=groupperm}>
+	<input type="hidden" name="group_list[]" value=<{$groupperm.id}>>
+	<div class="accordion-box">
+	<div class="form-item">
+		<fieldset>
+			<legend><label class="question"><{$groupperm.name}></label></legend>
+			<p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_BASIC}></b></p>
+			<div class="permissiongroup">
+			<input type="checkbox" class="view_form" name="<{$content.fid}>_<{$groupperm.id}>_view_form" value=1<{$groupperm.view_form}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}><br />
+			<input type="checkbox" class="add_own_entry" name="<{$content.fid}>_<{$groupperm.id}>_add_own_entry" value=1<{$groupperm.add_own_entry}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES}><br />
+			<input type="checkbox" class="update_own_entry" name="<{$content.fid}>_<{$groupperm.id}>_update_own_entry" value=1<{$groupperm.update_own_entry}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES}><br />
+			<input type="checkbox" class="update_other_entries" name="<{$content.fid}>_<{$groupperm.id}>_update_other_entries" value=1<{$groupperm.update_other_entries}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOTHERENTRIES}><br />
+			<input type="checkbox" class="delete_own_entry" name="<{$content.fid}>_<{$groupperm.id}>_delete_own_entry" value=1<{$groupperm.delete_own_entry}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOWNENTRIES}><br />
+			<input type="checkbox" class="delete_other_entries" name="<{$content.fid}>_<{$groupperm.id}>_delete_other_entries" value=1<{$groupperm.delete_other_entries}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOTHERENTRIES}><br />
+			</div>
+			<p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY}></b></p>
+			<div class="permissiongroup">
+			<input type="checkbox" class="view_private_elements" name="<{$content.fid}>_<{$groupperm.id}>_view_private_elements" value=1<{$groupperm.view_private_elements}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_PRIVATE}><br />
+			<input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_dummy1" value=1 checked disabled>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_THEIROWN}><br />
+			<input type="checkbox" class="view_globalscope" name="<{$content.fid}>_<{$groupperm.id}>_view_globalscope" value=1<{$groupperm.view_globalscope}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL}><br />
+			<input type="checkbox" class="view_groupscope" name="<{$content.fid}>_<{$groupperm.id}>_view_groupscope" value=1<{$groupperm.view_groupscope}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPONLY}>
+			<div class="groupselectionbox">
+				<select name="groupsscope_choice_<{$content.fid}>_<{$groupperm.id}>[]" size=6 multiple>
+				<option value=0<{$groupperm.groupscope_choice.0}>><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER}></option>
+				<{foreach from=$content.groups item=group}>
+				<{assign var=groupid value=$group.id}>
+        <option value=<{$groupid}><{$groupperm.groupscope_choice.$groupid}>><{$group.name}></option>
+        <{/foreach}>
+				</select>
+			</div>
+	    <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_filterentries" value=1<{$groupperm.hasgroupfilter}> <{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_DISABLED}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_CONDITIONS}>
+			<div class="groupselectionbox">
+			<{$groupperm.groupfilter}>
+			</div>
+			</div>
+			<p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_CONDITIONS}></b></p>
+			<div class="permissiongroup">
+			<input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_dummy2" value=1 checked disabled>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_THEIROWN}><br />
+			<input type="checkbox" class="publish_reports" name="<{$content.fid}>_<{$groupperm.id}>_publish_reports" value=1<{$groupperm.publish_reports}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_INTHEIR}><br />
+			<input type="checkbox" class="publish_globalscope" name="<{$content.fid}>_<{$groupperm.id}>_publish_globalscope" value=1<{$groupperm.publish_globalscope}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_FOROTHER}><br />
+			<input type="checkbox" class="update_other_reports" name="<{$content.fid}>_<{$groupperm.id}>_update_other_reports" value=1<{$groupperm.update_other_reports}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_UPDATE}><br />
+			<input type="checkbox" class="delete_other_reports" name="<{$content.fid}>_<{$groupperm.id}>_delete_other_reports" value=1<{$groupperm.delete_other_reports}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_DELETE}><br />
+			</div>
+			<p><b><{$smarty.const._AM_PERMISSIONS_ADVANCED}></b></p>
+			<div class="permissiongroup">
+			<input type="checkbox" class="import_data" name="<{$content.fid}>_<{$groupperm.id}>_import_data" value=1<{$groupperm.import_data}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_IMPORT}><br />
+			<input type="checkbox" class="set_notifications_for_others" name="<{$content.fid}>_<{$groupperm.id}>_set_notifications_for_others" value=1<{$groupperm.set_notifications_for_others}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_NOTIFICATIONS}><br />
+			<input type="checkbox" class="add_proxy_entries" name="<{$content.fid}>_<{$groupperm.id}>_add_proxy_entries" value=1<{$groupperm.add_proxy_entries}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_CREATEFOROTHER}><br />
+			<input type="checkbox" class="update_entry_ownership" name="<{$content.fid}>_<{$groupperm.id}>_update_entry_ownership" value=1<{$groupperm.update_entry_ownership}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_CHANGEOWNER}><br />
+			<input type="checkbox" class="ignore_editing_lock" name="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock" value=1<{$groupperm.ignore_editing_lock}>>&nbsp;&nbsp;Save entries even when they are locked while being edited elsewhere (saving cancels existing locks)<br />
+			<input type="checkbox" class="edit_form" name="<{$content.fid}>_<{$groupperm.id}>_edit_form" value=1<{$groupperm.edit_form}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_ALTER}><br />
+			<input type="checkbox" class="delete_form" name="<{$content.fid}>_<{$groupperm.id}>_delete_form" value=1<{$groupperm.delete_form}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_DELETEFORM}>
+			</div>
+		</fieldset>
+	</div>
+	</div>
+	<{/foreach}>
+</div>
+
+</form>
+
+<div style="clear: both"></div>
+</div> <!--// end content -->
+
+<script type='text/javascript'>
+
+$("#<{$content.order}>").attr('checked', true);
+$("#<{$content.samediff}>").attr('checked', true);
+
+$("[name=savegrouplist]").click(function () {
+	var grouplistname = prompt("Name of this group list", $("#grouplists option:selected").text());
+	if(grouplistname) {
+		$("[name=grouplistname]").val(grouplistname);
+		$("[name=grouplistid]").val($("#grouplists").val());
+		formulize_reload();
+	}
+  return false;
+});
+
+$("[name=removegrouplist]").click(function () {
+	var answer = confirm("Are you sure you want to delete the group list '"+$("#grouplists option:selected").text()+"'?");
+	if(answer) {
+		$("[name=removelistid]").val($("#grouplists").val());
+		formulize_reload();
+	}
+  return false;
+});
+
+$("[name=grouplists]").change(function () {
+	$("[name=loadthislist]").val($("#grouplists").val());
+	formulize_reload();
+});
+
+$("[name=showperms]").click(function () {
+	$("[name=useselection]").val(1);
+	formulize_reload();
+});
+
+$("[name=order]").change(function () {
+	formulize_reload();
+});
+
+$("[name=addcon]").click(function () {
+	formulize_reload();
+});
+
+$(".conditionsdelete").click(function () {
+	$("[name=conditionsdelete]").val($(this).attr('target'));
+	formulize_reload();
+	return false;
+});
+
+$("div.permissiongroup > input[type=checkbox]").click(function () {
+	if($('input:radio[name=same_diff]:checked').val() == "same") {
+		var checked = $(this).attr('checked');
+		var checkedclass = "."+$(this).attr('class');
+		$(checkedclass).attr('checked', checked);
+	}
+});
+
+function formulize_reload() {
+	$("[name=reload]").val(1);
+	$("#permscrollx").val($(window).scrollTop());
+	$(".savebutton").click();
+}
+
+</script>

@@ -1,0 +1,270 @@
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-1.4.2.min.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror-compressed.js"></script>
+
+<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css">
+<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/admin/css/ui.css">
+<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror.css">
+<script type="text/javascript">
+ var pagehasaccordion = new Array();
+</script>
+
+<!-- jquery for tooltips -->
+<script type="text/javascript">
+$(document).ready(function() {
+	//Select all anchor tag with rel set to tooltip
+	$('a[rel=tooltip]').mouseover(function(e) {
+		//Grab the title attribute's value and assign it to a variable
+		var tip = $(this).attr('title');		
+		//Remove the title attribute's to avoid the native tooltip from the browser
+		$(this).attr('title','');
+		//Append the tooltip template and its value
+		$('body').append('<div id="tooltip"><div class="tipHeader"></div><div class="tipBody">' + tip + '</div><div class="tipFooter"></div></div>');
+	}).mousemove(function(e) {
+		//Keep changing the X and Y axis for the tooltip, thus, the tooltip move along with the mouse
+		//$('#tooltip').children('.tipBody').html('width:' + $(window).width() + ', height:' + $(window).height() + ':: top:' + ( e.pageY + 10 ) + ', left:' + ( e.pageX + 20 ) + ', width: ' + $('#tooltip').width() + ', height: ' + $('#tooltip').height() + ':: top:' + e.clientY + ', left:' + e.clientX );
+    if( e.clientY + 10 + $('#tooltip').height() > $(window).height() ) {
+  		$('#tooltip').css('top', e.pageY - 10 - $('#tooltip').height() );
+    } else {
+  		$('#tooltip').css('top', e.pageY + 10 );
+    }
+    if( e.clientX + 20 + $('#tooltip').width() > $(window).width() ) {
+  		$('#tooltip').css('left', e.pageX - 20 - $('#tooltip').width() );
+    } else {
+  		$('#tooltip').css('left', e.pageX + 20 );
+    }
+	}).mouseout(function() {
+		//Put back the title attribute's value
+		$(this).attr('title',$('.tipBody').html());
+		//Remove the appended tooltip template
+		$('body').children('div#tooltip').remove();
+	});
+});
+</script>
+
+<!-- jquery for floating admin bar, added by S.Gray, April 11, 2011 -->
+<script type="text/javascript">
+$(document).ready(function() {
+	var offset = $('#admin_toolbar').offset();
+	
+	  $(window).scroll(function () {
+		var scrollTop = $(window).scrollTop();
+		if (offset && offset.top<scrollTop) {
+		  $('#admin_toolbar').addClass('toolbar_fixed');
+		  $('#admin_toolbar').addClass('ui-corner-all');
+		} else {
+		  $('#admin_toolbar').removeClass('toolbar_fixed');
+		  $('#admin_toolbar').removeClass('ui-corner-all');
+		};
+	  });
+		
+	});
+</script>
+<!-- end jquery -->
+
+<!--[if IE 6]> 
+	<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/admin/css/ie6.css" />
+<![endif]-->
+
+<div class="admin-ui">
+
+<div id="formulize-logo"><img src="<{$xoops_url}><{$adminPage.logo}>" align="<{$adminPage.pagetitle}>" title="<{$adminPage.pagetitle}>" /></div>
+
+<form name="scrollposition" method="post" action="">
+  <input type="hidden" name="scrollx" value="">
+  <input type="hidden" name="tabs_selected" value="">
+  <input type="hidden" name="accordion_active" value="">
+</form>
+
+<{if $adminPage.pagetitle}>
+  <h1><{$adminPage.pagetitle}></h1>
+  <p class="smallhead"><{$adminPage.pagesubtitle}></p>
+  <{if $lasturl}>
+    <p><a href="ui.php?<{$lasturl}>"><{$smarty.const._AM_HOME_GOBACKTO}><i><{$lasttext}></i></a></p>
+  <{/if}>
+<{/if}>
+
+<{if $breadcrumbtrail}>
+<p>
+  <{counter start=0 assign=crumbcount print=false}>
+  <{foreach from=$breadcrumbtrail item=crumb}>
+
+  <{if $crumbcount}> &raquo; <{/if}>
+
+  <{if $crumb.url}>
+    <a href="ui.php?<{$crumb.url}>"><{$crumb.text}></a>
+    <{assign var='lasturl' value=$crumb.url}>
+    <{assign var='lasttext' value=$crumb.text}>
+  <{else}>
+    <{$crumb.text}>
+  <{/if}>
+
+  <{counter}>
+  <{/foreach}>
+</p>
+<{/if}>
+
+<!-- modified by Freeform Solutions, S.Gray, April 11, 2011 -->
+<{if $adminPage.needsave}>
+<div id="admin_toolbar">
+<div id=savebutton><input type="button" class="savebutton" value="<{$smarty.const._AM_HOME_SAVECHANGES}>"/></div>
+<div id="savewarning" class="ui-corner-all"><{$smarty.const._AM_HOME_WARNING_UNSAVED}></div>
+<div id="derivedfinished" class="ui-corner-all" style="display:none"><{$smarty.const._AM_ELE_DERIVED_DONE}></div>
+</div><!-- /admin_toolbar -->
+<{/if}>
+
+<{if $adminPage.template}>
+<{include file=$adminPage.template}>  
+<{/if}>
+
+<{if $adminPage.tabs}>  
+<{include file="db:admin/ui-tabs.html" tabs=$adminPage.tabs}>
+<{/if}>
+  
+<p class="versionnumber">Version 4.06 Final</p>
+
+</div><!-- End admin-ui -->
+
+<script type="text/javascript">
+
+  var saveCounter = 0;
+  var saveTarget = 0;
+  var redirect = "";
+  var newhandle = "";
+  var formdata = new Array();
+
+  $("input").change(function() {
+    setDisplay('savewarning','block');
+    });
+  $("input[type=text]").keydown(function() {
+    setDisplay('savewarning','block');
+    });
+  $("select").change(function() {
+    setDisplay('savewarning','block');
+    });
+  $("textarea").keydown(function() {
+    setDisplay('savewarning','block');
+    });
+
+  $(".savebutton").click(function() {
+    if(validateRequired()) {
+      runSaveEvent();
+    }
+  });
+
+  function runSaveEvent() {
+    $(".admin-ui").fadeTo(1,0.5);
+    var formulize_formlist = $(".formulize-admin-form");
+    saveCounter = 0;
+    saveTarget = 0;
+    redirect = "";
+    formdata = new Array();
+    for(i=0;i<formulize_formlist.length;i++) {
+      if(typeof(formulize_formlist[i]) == 'object') { // for some crazy reason, non-form stuff can be pulled in by getElementsByName with that param...I hate javascript
+        formdata[saveTarget] = formulize_formlist[i];
+        saveTarget = saveTarget + 1;
+      }
+    }
+    if(saveTarget > 0) {
+      sendFormData(formdata[0]); // send the first form's data 
+    }
+  }
+  
+  function sendFormData(thisformdata, ele_id) {
+    if(!ele_id) { ele_id = 0 }
+    $.post("save.php?ele_id="+ele_id, $(thisformdata).serialize(), function(data) {
+      saveCounter = saveCounter + 1;
+      if(data) {
+        if(data.substr(0,10)=="/* eval */") {
+          redirect = data;
+        } else if(data.substr(0,13)=="/* evalnow */") {
+          eval(data);
+        } else {
+          alert(data);
+        }
+      }
+      if(saveCounter >= saveTarget) { // if we've received a response for all the forms...
+        setDisplay('savewarning','none');
+        $(".savebutton").blur();
+        if(newhandle) {
+          $("[name=original_handle]").val(newhandle);
+        }
+        if(redirect) {
+          eval(redirect);
+        } else {
+          $(".admin-ui").fadeTo(1,1);
+        }
+      } else { // if there's still forms to do, then send the next one...must do sequentially to avoid race conditions
+        sendFormData(formdata[saveCounter], ele_id);
+      }
+    });
+  }
+  
+  function reloadWithScrollPosition(url) {
+    if(url) {
+      $("[name=scrollposition]").attr('action', url);
+    }
+    window.document.scrollposition.scrollx.value = $(window).scrollTop();
+    var tabs_selected = "";
+    <{if $adminPage.tabs}> 
+    tabs_selected = $("#tabs").tabs("option","selected");
+    window.document.scrollposition.tabs_selected.value = tabs_selected;
+    tabs_selected = tabs_selected+1;
+    <{/if}>
+    var accordion_active = "";
+    if(pagehasaccordion["accordion-"+tabs_selected]) {
+      <{* // not really the active accordion we want, it's the current position of the active accordion, since accordion sections are sortable! - this is a semi-rare bug that needs fixing, cross reference the active position with the results of a toArray call on the sortable element *}>
+      accordion_active = $("#accordion-"+tabs_selected).accordion( "option", "active" );
+    }
+    window.document.scrollposition.accordion_active.value = accordion_active;
+    window.document.scrollposition.submit();
+  }
+
+  function validateRequired() {
+    var requiredok = true;
+    $(".required_formulize_element").each(function () {
+      if(($(this).val().length) == 0) {
+        requiredok = false;
+      }
+    });
+    return requiredok;
+  }
+
+  $().ajaxError(function () {
+    alert("There was an error when saving your data.  Please try again.");
+  });
+  
+  $(window).load(function () {
+    $(window).scrollTop(<{$scrollx}>);
+  });
+
+  function setDisplay( elementId, styleDisplay ) {
+    var element = window.document.getElementById( elementId );
+    if( element ) {
+      element.style.display = styleDisplay;
+    }
+  }
+
+  $(document).ready(
+    $('.code-textarea').each(function() {
+        if (this.type !== 'textarea') {
+            return true; // continue
+        }
+        CodeMirror.fromTextArea(this, {
+            lineNumbers: true,
+            matchBrackets: true,
+            mode: "application/x-httpd-php",
+            indentUnit: 4,
+            indentWithTabs: true,
+            enterMode: "keep",
+            tabMode: "shift",
+            lineWrapping: true,
+            onChange: function(instance) { 
+                setDisplay('savewarning','block');
+                instance.save(); // Call this to update the textarea value for the ajax post
+            }
+        });
+    })
+  );
+  
+</script>

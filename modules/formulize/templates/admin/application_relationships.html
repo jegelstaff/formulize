@@ -1,0 +1,24 @@
+<{if $content.aid == 0}>
+<div class="description"><{$smarty.const._AM_FORM_CREATE_EXPLAIN}></div><br>
+<{/if}>
+
+<div class="panel-content content">
+<h2><a href="ui.php?page=relationship&tab=settings&aid=<{$content.aid}>&frid=new"><img src="../images/filenew2.png"><{$smarty.const._AM_APP_RELATIONSHIPS_CREATE}></a></h2>
+</div>
+<form id="form-<{$number}>" class="formulize-admin-form">
+<input type="hidden" name="formulize_admin_handler" value="application_relationships">
+<input type="hidden" name="deleteframework" value="">
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/application_relationships_sections.html" sections=$content.relationships}>
+</form>
+
+<script type="text/javascript">
+  $(".deleterelationship").click( function() {
+    var answer = confirm("<{$smarty.const._AM_APP_RELATIONSHIPS_DELETE_CONFIRM}>");
+    if(answer) {
+      $("[name=deleteframework]").val($(this).attr('target'));
+      $(".savebutton").click();
+    }
+    return false;
+  });
+  
+</script>

@@ -1,0 +1,42 @@
+
+    <p>
+      <a name="clonestep" href="" target="<{$sectionContent.index}>"><img src="../images/clone.gif"> Clone this step</a>
+      <a name="delstep" href="" target="<{$sectionContent.index}>"><img src="../images/editdelete.gif"> Delete this step</a>
+    </p>
+
+	  <div class="form-item required">
+		  <label for="advcalc-steptitle_<{$sectionContent.index}>">Title for step number <{$sectionContent.number}></label>
+      <input type="text" class="required_formulize_element" id="advcalc-steptitle_<{$sectionContent.index}>" name="advcalc-steptitle_<{$sectionContent.index}>" value="<{$sectionContent.title}>" size="30" maxlength="255"/>
+		  <div class="description"></div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="input">Description of this step</label><br />
+	    <textarea id="advcalc-description_<{$sectionContent.index}>" name="advcalc-description_<{$sectionContent.index}>" rows="5" cols="35"><{$sectionContent.steps.description}></textarea>
+		  <div class="description"></div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="input">Use this SQL to get data from the database</label><br />
+	    <textarea id="advcalc-sql_<{$sectionContent.index}>" name="advcalc-sql_<{$sectionContent.index}>" class="code-textarea" rows="15" cols="80"><{$sectionContent.steps.sql}></textarea>
+		  <div class="description">You can use any previously defined PHP variable in the SQL, including ones defined in previous steps.  Use $fromBaseQuery instead of "FROM tablename WHERE" to have your query use the current search and filtering settings that the user has specified in Formulize -- if you do this you MUST NOT use WHERE in the SQL ($fromBaseQuery already includes it) and you MUST start your own where clause statement(s) with AND (since they will be appended to the end of the Formulize base query's where clause).  Use "{foreach $array as $key=>$value; BOOLEAN }SQL INCLUDING $key AND/OR $value{/foreach}" to add a certain piece of SQL once for every value in a previously defined array.  The BOOLEAN can be AND or OR, depending on which you want used between each instance of the SQL.</div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="input">Run this PHP code before the SQL</label><br />
+	    <textarea id="advcalc-preCalculate_<{$sectionContent.index}>" name="advcalc-preCalculate_<{$sectionContent.index}>" class="code-textarea" rows="15" cols="80"><{$sectionContent.steps.preCalculate}></textarea>
+		  <div class="description"></div>
+	  </div>
+
+	  <div class="form-item">
+			<label>Run this PHP code to process each record returned by the SQL</label><br />
+		  <textarea id="advcalc-calculate_<{$sectionContent.index}>" name="advcalc-calculate_<{$sectionContent.index}>" class="code-textarea" rows="15" cols="80"><{$sectionContent.steps.calculate}></textarea>
+		  <div class="description">use $row[X] or $array[fieldname] to refer to the values in the record.  X would be the order of the fields starting at 0, ie: use 2 to refer to the third field selected in the SQL.  fieldname would be the actual name of the field as selected in the SQL.</div>
+	  </div>
+
+	  <div class="form-item">
+		  <label for="input">Run this PHP code after processing all the records</label><br />
+	    <textarea id="advcalc-postCalculate_<{$sectionContent.index}>" name="advcalc-postCalculate_<{$sectionContent.index}>" class="code-textarea" rows="15" cols="80"><{$sectionContent.steps.postCalculate}></textarea>
+		  <div class="description"></div>
+	  </div>
+

@@ -1,0 +1,11 @@
+<div>
+<p><a href="ui.php?page=relationship&frid=<{$sectionContent.frid}>&aid=<{$content.aid}>"><img src="../images/kedit.png"> Configure this relationship</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="deleterelationship" target="<{$sectionContent.frid}>" href=""><img src="../images/editdelete.gif">&nbsp;&nbsp;Delete this relationship</a></p>
+</div>
+<div class="panel-content content">
+	<p><b>Links between forms in this relationship:</b></p>
+  <ul>
+	  <{foreach from=$sectionContent.links key=linkNumber item=link}>
+      <li><{$link.form1}> + <{$link.form2}> - <{$link.relationship}></li>
+  	<{/foreach}>
+  </ul>
+</div>

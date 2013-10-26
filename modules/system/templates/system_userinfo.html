@@ -1,0 +1,154 @@
+<{if $user_ownpage == true}>
+
+<form id="usernav" action="user.php" method="post">
+
+<table width="70%" style="margin: 0 auto;" border="0">
+  <tr align="center">
+    <td><input type="button" value="<{$lang_editprofile}>" onclick="location='edituser.php'" />
+    <input type="button" value="<{$lang_avatar}>" onclick="location='edituser.php?op=avatarform'" />
+    <input type="button" value="<{$lang_inbox}>" onclick="location='viewpmsg.php'" />
+
+    <{if $user_candelete == true}>
+    <input type="button" value="<{$lang_deleteaccount}>" onclick="location='user.php?op=delete'" />
+    <{/if}>
+
+    <input type="button" value="<{$lang_logout}>" onclick="location='user.php?op=logout'" /></td>
+  </tr>
+</table>
+</form>
+
+<{elseif $xoops_isadmin != false}>
+
+
+<table width="70%" style="margin: 0 auto;" border="0">
+  <tr align="center">
+    <td><input type="button" value="<{$lang_editprofile}>" onclick="location='<{$xoops_url}>/modules/system/admin.php?fct=users&uid=<{$user_uid}>&op=modifyUser'" />
+    <input type="button" value="<{$lang_deleteaccount}>" onclick="location='<{$xoops_url}>/modules/system/admin.php?fct=users&op=delUser&uid=<{$user_uid}>'" />
+    </td>
+  </tr>
+</table>
+
+<{/if}>
+
+<table width="100%" border="0" cellspacing="5px">
+  <tr valign="top">
+    <td style="width: 50%;">
+      <table class="outer" cellpadding="4px" cellspacing="1px" width="100%">
+        <tr>
+          <th colspan="2" align="center"><{$lang_allaboutuser}></th>
+        </tr>
+        <tr valign="top">
+          <td class="head"><{$lang_avatar}></td>
+          <td align="center" class="even"><img src="<{$user_avatarurl}>" alt="Avatar" /></td>
+        </tr>
+        <tr>
+          <td class="head"><{$lang_realname}></td>
+          <td align="center" class="odd"><{$user_realname}></td>
+        </tr>
+        <tr>
+          <td class="head"><{$lang_website}></td>
+          <td class="even"><{$user_websiteurl}></td>
+        </tr>
+        <tr valign="top">
+          <td class="head"><{$lang_email}></td>
+          <td class="odd"><{$user_email}></td>
+        </tr>
+    <{if $user_alwopenid == true}>
+        <tr valign="top">
+          <td class="head"><{$lang_openid}></td>
+          <td class="odd"><{$user_openid}></td>
+        </tr>
+    <{/if}>
+	<tr valign="top">
+          <td class="head"><{$lang_privmsg}></td>
+          <td class="even"><{$user_pmlink}></td>
+        </tr>
+        <tr valign="top">
+          <td class="head"><{$lang_icq}></td>
+          <td class="odd"><{$user_icq}></td>
+        </tr>
+        <tr valign="top">
+          <td class="head"><{$lang_aim}></td>
+          <td class="even"><{$user_aim}></td>
+        </tr>
+        <tr valign="top">
+          <td class="head"><{$lang_yim}></td>
+          <td class="odd"><{$user_yim}></td>
+        </tr>
+        <tr valign="top">
+          <td class="head"><{$lang_msnm}></td>
+          <td class="even"><{$user_msnm}></td>
+        </tr>
+        <tr valign="top">
+          <td class="head"><{$lang_location}></td>
+          <td class="odd"><{$user_location}></td>
+        </tr>
+        <tr valign="top">
+          <td class="head"><{$lang_occupation}></td>
+          <td class="even"><{$user_occupation}></td>
+        </tr>
+        <tr valign="top">
+          <td class="head"><{$lang_interest}></td>
+          <td class="odd"><{$user_interest}></td>
+        </tr>
+        <tr valign="top">
+          <td class="head"><{$lang_extrainfo}></td>
+          <td class="even"><{$user_extrainfo}></td>
+        </tr>
+      </table>
+    </td>
+    <td style="width: 50%;">
+      <table class="outer" cellpadding="4px" cellspacing="1px" width="100%">
+        <tr valign="top">
+          <th colspan="2" align="center"><{$lang_statistics}></th>
+        </tr>
+        <tr valign="top">
+          <td class="head"><{$lang_membersince}></td>
+          <td align="center" class="even"><{$user_joindate}></td>
+        </tr>
+        <tr valign="top">
+          <td class="head"><{$lang_rank}></td>
+          <td align="center" class="odd"><{if $user_rankimage}><{$user_rankimage}><br /><{/if}><{$user_ranktitle}></td>
+        </tr>
+        <tr valign="top">
+          <td class="head"><{$lang_posts}></td>
+          <td align="center" class="even"><{$user_posts}></td>
+        </tr>
+	<tr valign="top">
+          <td class="head"><{$lang_lastlogin}></td>
+          <td align="center" class="odd"><{$user_lastlogin}></td>
+        </tr>
+      </table>
+      <br />
+    <{if $user_showsignature == true}>
+      <table class="outer" cellpadding="4px" cellspacing="1px" width="100%">
+        <tr valign="top">
+          <th colspan="2" align="center"><{$lang_signature}></th>
+        </tr>
+        <tr valign="top">
+          <td class="even"><{$user_signature}></td>
+        </tr>
+      </table>
+    <{/if}>
+    </td>
+  </tr>
+</table>
+
+<!-- start module search results loop -->
+<{foreach item=module from=$modules}>
+
+<h4><{$module.name}></h4>
+<p>
+  <!-- start results item loop -->
+  <{foreach item=result from=$module.results}>
+
+  <img src="<{$result.image}>" alt="<{$module.name}>" /><b><a href="<{$result.link}>" title="<{$result.title}>"><{$result.title}></a></b><br /><small>(<{$result.time}>)</small><br />
+
+  <{/foreach}>
+  <!-- end results item loop -->
+
+<{$module.showall_link}>
+</p>
+
+<{/foreach}>
+<!-- end module search results loop -->

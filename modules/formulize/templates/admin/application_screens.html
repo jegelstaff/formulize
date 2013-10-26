@@ -1,0 +1,14 @@
+<div class="form-item">
+	<table>
+		<tr><th>ID</th><th>Title</th><th></th><th>Form</th><th>Type</th></tr>
+	<{foreach from=$content.screens item=screen}>
+		<tr>
+			<td>Screen <{$screen.sid}></td>
+			<td><a class="configscreen" target-sid="<{$screen.sid}>" href="?page=screen&aid=<{$content.aid}>&fid=<{$screen.fid}>&sid=<{$screen.sid}>"><{$screen.title}></a></td>
+			<td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank">View</a></td>
+			<td><a href="?page=form&fid=<{$screen.fid}>"><{$screen.formname}> (<{$screen.fid}>)</a></td>
+			<td><{$screen.type}></td>
+		</tr>
+	<{/foreach}>
+	</table>
+</div>

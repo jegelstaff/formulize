@@ -1,0 +1,24 @@
+<div class="panel-content content">
+	<p><a href="ui.php?page=element&aid=<{$content.aid}>&ele_id=<{$sectionContent.ele_id}>"><img src="../images/kedit.png"> Configure</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="" class="clonelink" target="<{$sectionContent.ele_id}>"><img src="../images/clone.gif"> Clone</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="" class="deletelink" target="<{$sectionContent.ele_id}>"><img src="../images/editdelete.gif"> Delete</a></p>
+	
+<table>
+	<tr>
+		<th>Data handle</th>
+		<th>Type</th>
+		<th>Required</th>
+		<th>Display</th>
+		<th>Private</th>
+	</tr>
+	<tr>
+		<td><{$sectionContent.ele_handle}></td>
+		<td><{$sectionContent.ele_type}></td>
+		<td align="center"><input type="checkbox" <{if $sectionContent.ele_req}>checked="checked"<{/if}><{if $sectionContent.ele_req === false}>disabled<{/if}> value="1" name="elements-ele_req[<{$sectionContent.ele_id}>]"></td>
+		<td align="center"><{if is_numeric($sectionContent.ele_display)}><input type="checkbox" <{if $sectionContent.ele_display}>checked="checked"<{/if}> value="1" name="elements-ele_display[<{$sectionContent.ele_id}>]"><{else}><{$sectionContent.ele_display}><input type="hidden" name="customDisplayFlag[<{$sectionContent.ele_id}>]" value=1></input><{/if}></td>
+		<td align="center"><input type="checkbox" <{if $sectionContent.ele_private}>checked="checked"<{/if}>  value="1" name="elements-ele_private[<{$sectionContent.ele_id}>]"></td>
+	</tr>
+</table>
+<{if $sectionContent.converttext}>
+	<p><a href="" class="convertto<{$sectionContent.linktype}>" target="<{$sectionContent.ele_id}>"><{$sectionContent.converttext}></a></p>
+<{/if}>
+
+</div>

@@ -1,0 +1,129 @@
+	body{
+		margin:0px;
+		padding:0px;
+		font-family:arial;
+		background-color:#666666;
+	}
+    #dhtmlgoodies_xpPane{
+		background-color:#7190e0;
+		float:left;
+		height:600px;
+		width:200px;
+		overflow-Y: auto;
+	}
+	#dhtmlgoodies_xpPane .dhtmlgoodies_panel{
+		margin-left:10px;
+		margin-right:10px;
+		margin-top:10px;	
+	}
+	#dhtmlgoodies_xpPane .panelContent{
+		font-size:0.7em;
+		background-image:url('../images/bg_pane_right.gif');
+		background-position:top right;
+		background-repeat:repeat-y;
+		border-left:1px solid #FFF;
+		border-bottom:1px solid #FFF;	
+		padding-left:2px;
+		padding-right:2px;	
+		overflow:hidden;
+		position:relative;
+	}
+	#dhtmlgoodies_xpPane .panelContent div{
+		position:relative;
+		padding:0;
+		margin:0;
+	}
+	#dhtmlgoodies_xpPane .dhtmlgoodies_panel .topBar{
+		background-image:url('../images/bg_panel_top_right.gif');
+		background-repeat:no-repeat;
+		background-position:top right;
+		height:25px;
+		padding-right:5px;
+		cursor:pointer;
+	}
+	#dhtmlgoodies_xpPane .dhtmlgoodies_panel .topBar span{
+		line-height:25px;
+		vertical-align:middle;
+		font-family:arial;
+		font-size:0.7em;
+		color:#215DC6;
+		font-weight:bold;
+		float:left;
+		padding-left:5px;
+	}
+	#dhtmlgoodies_xpPane .dhtmlgoodies_panel .topBar img{
+		float:right;
+		cursor:pointer;
+	}
+	
+	#imageContainer{
+		margin:15px;
+		left:0px;
+		top:0px;
+		position:relative;
+	}
+	.imageContent{
+		float:left;	
+		overflow: auto;
+		width: 600px;
+		height: 600px;
+	}
+input { background-color: #fff; color:inherit; border: #CCC 1px solid; font-size: .8em; font-family: verdana, arial, helvetica, sans-serif; }
+input:focus { background-color: #FFFFBB; border: #000 1px solid;}
+input:hover { border: #000 1px solid;}	
+	
+#cropButtonCell BUTTON, #cropButtonCell INPUT[type=submit] , #cropButtonCell INPUT[type=clear] , #cropButtonCell INPUT[type=button] 
+{
+    PADDING-RIGHT: 0.5em;
+    PADDING-LEFT: 0.5em;
+    PADDING-BOTTOM: 2px;
+    PADDING-TOP: 2px;
+    BACKGROUND-IMAGE: url(../../../modules/system/images/table-caption-grey.png);
+    BACKGROUND-POSITION: bottom;
+    BACKGROUND-REPEAT: repeat-x;
+    COLOR: #444;
+    FONT-WEIGHT: bold;
+    CURSOR: pointer;
+    BORDER: outset 1px #ccc;
+}
+
+	#progressBar{
+		background-color:#FFF;
+		border:1px solid #000;
+		padding:1px;
+		position:relative;
+		height:20px;
+		overflow:hidden;
+		position: absolute;
+		z-index:10000;
+		top: 0;
+		right: 0px;
+		margin: 20px;
+		width: 175px;
+		visibility: hidden;
+	}
+	.progressBar_parentBox{
+		width:60px;
+	}
+	.progressBar_square{
+		border:1px solid #000;
+		margin:1px;
+		float:left;
+		width:10px;
+		height:14px;
+		margin-top:2px;
+		background-color:#7190E0;
+	}
+	
+.imanager_image_img {
+    display:block;
+    overflow:hidden;
+    width: 100%;
+    padding:0;
+    margin:0;
+}
+
+.imanager_image_img img{
+    max-width: 160px;
+    max-height: 160px;
+}

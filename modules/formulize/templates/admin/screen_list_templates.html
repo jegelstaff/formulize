@@ -1,0 +1,54 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_list_templates">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+
+
+<div class="panel-content content">
+	
+	<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE}></p>
+	<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE2}></p>
+	<p>See the <a href="#templatedocs">bottom of this page for documentation</a> about how to include buttons and other interface elements in your templates.</p>
+	
+	  <div class="form-item">
+		  <fieldset>
+		  <legend>Top Template</legend>
+			  <textarea name="screens-toptemplate" class="code-textarea" rows="20"/><{$content.toptemplate}></textarea>
+		  </fieldset>
+	  </div>
+
+	  <div class="form-item">
+		  <fieldset>
+		  <legend>List Template</legend>
+			  <textarea name="screens-listtemplate" class="code-textarea" rows="20"/><{$content.listtemplate}></textarea>
+				  <a name="elementhandles"></a>
+					<table>
+					<tr><th>Form element</th><th>handle</th></tr>
+					<{foreach from=$content.listtemplatehelp item=row}>
+						<{$row}>
+					<{/foreach}>
+					</table>
+		  </fieldset>
+	  </div>
+
+	  <div class="form-item">
+		  <fieldset>
+		  <legend>Bottom Template</legend>
+			  <textarea name="screens-bottomtemplate" class="code-textarea" rows="20"/><{$content.bottomtemplate}></textarea>
+		  </fieldset>
+	  </div>
+	
+		<a name="templatedocs"></a>
+		<fieldset>
+			<legend>Template Documentation</legend>
+			<{$smarty.const._AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2}>
+		</fieldset>
+	
+</div>
+
+</form>

@@ -1,0 +1,234 @@
+<div class="panel-content content">
+	<div class="form-item">
+		<fieldset>
+			<legend>What kind of select box is this?</legend>
+			<div class="form-radios">
+				<label for="dropdown"><input type="radio" id="dropdown" name="elements_listordd" value="0"<{if $content.listordd eq 0}> checked="checked"<{/if}>/>This is a dropdown box</label>
+			</div>
+			<div class="form-radios">
+				<label for="list" style="vertical-align: bottom;"><input type="radio" style="vertical-align: bottom;" id="list" name="elements_listordd" value="1"<{if $content.listordd eq 1}> checked="checked"<{/if}>/>This is a list box, with <input type="text" id="elements-ele_value_0" name="elements-ele_value[0]" value="<{$content.ele_value[0]}>" maxlength=2 size=2> rows.</label>
+				<blockquote style='margin-top: 3px'>
+					Multiple selections are:
+					<label for="elements_multiple_allowed"><input type="radio" id="elements_multiple_allowed" name="elements_multiple" value="1" <{if $content.multiple}>checked<{/if}>/>Allowed</label>
+					<label for="elements_multiple_notallowed"><input type="radio" id="elements_multiple_notallowed" name="elements_multiple" value="0" <{if $content.multiple eq 0}>checked<{/if}>/>Not Allowed</label>
+				</blockquote>
+			</div>
+			<div class="form-radios">
+				<label for="autocomplete"><input type="radio" id="autocomplete" name="elements_listordd" value="2"<{if $content.listordd eq 2}> checked="checked"<{/if}>/>This is a "autocompletion" text box, which will give users a list of choices based on what they type in the box</label>
+				<blockquote style='margin-top: 3px'>
+					When users type something that doesn't match any of the choices:
+					<label for="elements-ele_value[16]-0"><input type="radio" id="elements-ele_value[16]-0" name="elements-ele_value[16]" value="0"<{if $content.ele_value[16] eq 0}> checked="checked"<{/if}>/>Say "No Match Found"</label>
+					<label for="elements-ele_value[16]-1"><input type="radio" id="elements-ele_value[16]-1" name="elements-ele_value[16]" value="1"<{if $content.ele_value[16] eq 1}> checked="checked"<{/if}>/>Add what they typed to the list of choices</label>
+				</blockquote>
+			</div>
+		</fieldset>
+	</div>
+
+	<div class="form-item">
+	<fieldset>
+		<legend>What are the options the user can choose from?</legend>
+		<div class="form-radios">
+			<input type="radio" id="yes" name="linked_yesno" value="1"<{if $content.islinked eq 1}> checked="checked"<{/if}>/>Use the values that people have entered in this form element: <{$content.linkedoptions}>
+		</div>
+		<div class="form-radios">
+			<input type="radio" id="no" name="linked_yesno" value="0"<{if $content.islinked eq 0}> checked="checked"<{/if}>/>Use the options specified below:
+		</div>
+		<{include file="db:admin/element_optionlist.html"}>
+	</div>
+
+	<div class="form-item">
+	<fieldset>
+		<legend>If the options are linked -- or are {FULLNAMES} or {USERNAMES}</legend>
+		<div class="form-item">
+		<fieldset>
+			<legend>Limit them to values from the groups selected here</legend>
+			<select id="element-formlink_scope" name="element_formlink_scope[]" size="10" multiple>
+			<{html_options options=$content.formlink_scope_options selected=$content.formlink_scope}>
+			</select>
+			<br/><br/>
+		<fieldset>
+			<div class="form-radios">
+				<label for="elements-ele_value[4]-0"><input type="radio" id="elements-ele_value[4]-0" name="elements-ele_value[4]" value="0"<{if $content.ele_value[4] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_SCOPELIMIT_NO}></label>
+			</div>
+			<div class="form-radios"><label for="elements-ele_value[4]-1"><input type="radio" id="elements-ele_value[4]-1" name="elements-ele_value[4]" value="1"<{if $content.ele_value[4] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_SCOPELIMIT_YES}></label></div>
+		</fieldset>
+		<fieldset>
+			<div class="form-radios">
+				<label for="elements-ele_value[6]-0"><input type="radio" id="elements-ele_value[6]-0" name="elements-ele_value[6]" value="0"<{if $content.ele_value[6] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ANY}></label>
+			</div>
+			<div class="form-radios">
+				<label for="elements-ele_value[6]-1"><input type="radio" id="elements-ele_value[6]-1" name="elements-ele_value[6]" value="1"<{if $content.ele_value[6] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ALL}></label>
+			</div>
+		</fieldset>
+		<div class="description">
+			<{$smarty.const._AM_ELE_FORMLINK_SCOPE_DESC}>
+		</div>
+		</fieldset>
+	</div>
+
+		  <div class="form-item">
+			  <fieldset>
+				  <legend>Filter them based on these properties of their entry in the source form</legend>
+				  <div id="filterdiv">
+				  <{$content.formlinkfilter}>
+				  </div>
+				  <div class="description">
+					  <{$smarty.const._AM_ELE_FORMLINK_SCOPEFILTER_DESC}>
+				  </div>
+			  </fieldset>
+		  </div>
+		  
+		  <div class="form-item">
+		    <fieldset>
+			    <legend>Show as links in lists of entries?</legend>
+	          <div class="form-radios">
+		          <label for="elements-ele_value[7]-1"><input type="radio" id="elements-ele_value[7]-1" name="elements-ele_value[7]" value="1" <{if $content.ele_value[7] eq 1}>checked<{/if}>/>Yes, make these values clickable in lists of entries so people can go to the source form easily</label>
+	          </div>
+	          <div class="form-radios">
+              <label for="elements-ele_value[7]-0"><input type="radio" id="elements-ele_value[7]-0" name="elements-ele_value[7]" value="0" <{if $content.ele_value[7] eq 0}>checked<{/if}>/>No, just show the selected value as text</label>
+	          </div>
+			    <div class="description">
+			    </div>
+		    </fieldset>
+	    </div>
+
+    </fieldset>
+    </div>
+    <div class="form-item">
+    <fieldset>
+	<legend>If the options are linked from another form</legend>
+
+	<div class="form-item">
+	  <fieldset>
+		  <legend>Are there restrictions on how many times each option can be picked?</legend>
+	        <div class="form-radios">
+            <label for="elements-ele_value[9]-0"><input type="radio" id="elements-ele_value[9]-0" name="elements-ele_value[9]" value="0" <{if $content.ele_value[9] eq 0}>checked<{/if}>/>No</label>
+	        </div>
+	        <div class="form-radios">
+		        <label for="elements-ele_value[9]-1"><input type="radio" id="elements-ele_value[9]-1" name="elements-ele_value[9]" value="1" <{if $content.ele_value[9] eq 1}>checked<{/if}>/>Each option can only be chosen once</label>
+	        </div>
+	        <div class="form-radios">
+            <label for="elements-ele_value[9]-2"><input type="radio" id="elements-ele_value[9]-2" name="elements-ele_value[9]" value="2" <{if $content.ele_value[9] eq 2}>checked<{/if}>/>Each option can only be chosen once, per user</label>
+	        </div>
+	        <div class="form-radios">
+            <label for="elements-ele_value[9]-3"><input type="radio" id="elements-ele_value[9]-3" name="elements-ele_value[9]" value="3" <{if $content.ele_value[9] eq 3}>checked<{/if}>/>Each option can only be chosen once, per group</label>
+	        </div>
+			  <div class="description">
+			  </div>
+	  </fieldset>
+	</div>
+
+	    <div class="form-item">
+		    <fieldset>
+			    <legend>Which column in the source form should be used to sort the options?</legend>
+			    <p><{$content.optionSortOrder}><br /><label for="elements-ele_value[15]-1"><input type=radio id="elements-ele_value[15]-1" name="elements-ele_value[15]" value=1 <{if $content.ele_value[15] != 2}>checked<{/if}>/> Ascending (a..z)&nbsp;&nbsp;&nbsp;</label><label for="elements-ele_value[15]-2"><input type=radio id="elements-ele_value[15]-2" name="elements-ele_value[15]" value=2 <{if $content.ele_value[15] eq 2}>checked<{/if}>/> Descending (z..a)</label></p>
+			    <div class="description">
+				By default, the linked column/element will be used, so the options will simply appear in alphabetical order.  If you select another column, then the options will be sorted according to those values in the source form instead.  For example, you might link to a list of classroom names, but rather than having them show up alphabetical by name, you want to show them according to which building they're in.  If the source form has an element to record the building, then you could sort the options by that column and they will show up in a different order.
+			    </div>
+		    </fieldset>
+	    </div>
+	    
+	    <div class="form-item">
+		    <fieldset>
+			    <legend>Which option(s) should be selected by default?</legend>
+				<select name=elements-ele_value[13][] size=10 multiple class="form-multiple-select">
+					<{foreach from=$content.optionDefaultSelection key="default_entry_id" item="default_value"}>
+						<option value=<{$default_entry_id}><{if in_array($default_entry_id, $content.optionDefaultSelectionDefaults)}> selected<{/if}>><{$default_value}></option>
+					<{/foreach}>
+				</select>
+				<div class="form-radios">
+			          <label for="elements-ele_value[14]-0"><input type="radio" id="elements-ele_value[14]-0" name="elements-ele_value[14]" value="0" <{if $content.ele_value[14] eq 0}>checked<{/if}>/>Use these defaults the first time the form is shown (when creating a new entry).</label>
+				</div>
+				<div class="form-radios">
+				  <label for="elements-ele_value[14]-1"><input type="radio" id="elements-ele_value[14]-1" name="elements-ele_value[14]" value="1" <{if $content.ele_value[14] eq 1}>checked<{/if}>/>Use these defaults the first time the form is shown, and also when editing an entry that has no value for this linked selectbox.</label>
+				</div>
+				<div class="description">
+					If you use these defaults every time an entry has no value for this linked selectbox, then if a user purposely saves an entry with no values selected, this selectbox will have the defaults showing on screen when the user edits their entry.  So they will always have to un-select the defaults in order to preserve their "no value" choice.
+				</div>
+		    </fieldset>
+	    </div>
+
+		<div class="form-item">
+			<fieldset>
+				<legend>When displying this element as a list box, display these values:</legend>
+				<{$content.displayElements}>
+				<div class="description">
+				This feature is useful to display multiple elements from the linked form.
+				</div>
+			</fieldset>
+		</div>
+
+	    <div class="form-item">
+		    <fieldset>
+			    <legend>When displaying this element in a list of entries, or including it in a dataset with the API, use values from a different element in the source form:</legend>
+			    <{$content.listValue}>
+			    <div class="description">
+				This feature is useful if you want the value used in the list of entries to be different from the value that users choose when filling in the form.  For example, you might link to a form called "Master List of Workshops" and in that form there are two fields, the name of the workshop, and a code number that is used to refer to them.  You might link the element to the name of the workshop, to get a list of workshops for users to choose from.  But in a list of entries, you want the code number for the workshop to be displayed.  In that case, you would pick the code number element here.
+			    </div>
+		    </fieldset>
+	    </div>
+
+	    <div class="form-item" style="margin-bottom: 0px">
+		    <fieldset>
+			    <legend>When exporting this element to a spreadsheet, use values from a different element in the source form:</legend>
+			    <{$content.exportValue}>
+			    <div class="description">
+				This feature is essentially the same as the previous one, except it applies only when data is being exported to a spreadsheet, not when lists of entries are displayed on screen.
+			    </div>
+		    </fieldset>
+	    </div>
+	    
+
+    </fieldset>
+  </div>
+</div>
+
+<script type="text/javascript">
+ $("#elements-ele_value_0").focus(function() {
+	  $("#list").attr('checked',1);
+ });
+
+ $("[name=elements_multiple]").click(function() {
+	  $("#list").attr('checked',1);
+ });
+
+ $("#formlink").change(function() {
+		$("#yes").attr('checked',1);
+		$("[name=reload_option_page]").val(1);
+		$("#filterdiv").empty();
+		$("#filterdiv").append('<p><input type="button" class="formButton" name="refreshfilter" onclick="refreshfilterjq()" value="Save changes to update filter options"></p>');
+ });
+ 
+ function refreshfilterjq() {
+	 $("[name=reload_option_page]").val(1);
+	 $(".savebutton").click();
+	 	
+ }
+ 
+ $("[name=addoption]").click(function () {
+		$("#no").attr('checked',1);
+ })
+ 
+ $("[name=ele_value[0]]").keydown(function () {
+	$("#no").attr('checked',1);
+	$("#formlink").val('none');
+	$("#filterdiv").empty();
+	$("#filterdiv").append('<p>The options are not linked.</p>');
+	
+ });
+
+	$("div#filterdiv > a.conditionsdelete").click(function () {
+		$(".optionsconditionsdelete").val($(this).attr('target'));
+		$("[name=reload_option_page]").val(1);
+	  $(".savebutton").click();
+		return false;
+	});
+
+
+	$("div#filterdiv > input#addcon").click(function () {
+		$("[name=reload_option_page]").val(1);
+	  $(".savebutton").click();
+		return false;
+	});
+ 
+</script>

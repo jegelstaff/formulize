@@ -1,0 +1,104 @@
+<div class="panel-content content">
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<input type="hidden" name="formulize_admin_handler" value="element_names">
+<input type="hidden" name="formulize_admin_key" value="<{$content.ele_id}>">
+<input type="hidden" name="formulize_form_id" value="<{$content.fid}>">
+<input type="hidden" name="aid" value="<{$content.aid}>">
+<input type="hidden" name="element_type" value="<{$content.type}>">
+<input type="hidden" name="reload_names_page" value="">
+
+
+	<div class="form-item required">
+   	<fieldset>
+      <legend><label for="elements-ele_caption" class="question">Caption</label></legend>
+			<input type="text" name="elements-ele_caption" class="required_formulize_element" value="<{$content.ele_caption}>" size=70>
+			<div class="description">
+				<p>The text that users see when this element appears on a form.</p>
+			</div>
+		</fieldset>
+	</div>
+
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_colhead" class="question">Column Heading</label></legend>
+			<input type="text" name="elements-ele_colhead" value="<{$content.ele_colhead}>" size=70>
+			<div class="description">
+				<p>Optional. The text that users see when this element appears at the top of a column in a list.</p>
+			</div>
+		</fieldset>
+	</div>
+
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_desc" class="question">Help text</label></legend>
+			<textarea name="elements-ele_desc" rows=4 cols=70><{$content.ele_desc}></textarea>
+			<div class="description">
+				<p>Optional. Descriptive or explanatory text that accompanies the element.</p>
+			</div>
+		</fieldset>
+	</div>
+
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_handle" class="question">Data handle</label></legend>
+			<input type="text" name="elements-ele_handle" value="<{$content.ele_handle}>" size=70>
+			<div class="description">
+				<p>Optional. The name used to refer to this element in programming code and in the database.</p>
+			</div>
+		</fieldset>
+	</div>
+
+
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="orderpref" class="question">Position of this element</label></legend>
+			<select name="orderpref" size=1>
+				<option value="bottom">At the end of the form</option>
+				<option value="top"<{$content.firstelementorder}>>At the beginning of the form</option>
+				<{html_options options=$content.orderoptions selected=$content.defaultorder}>
+			</select>
+		</fieldset>
+	</div>
+</div>
+<{if $content.ele_req_on}>
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_req" class="question">Make this element "required" so users must give a response:</label></legend>
+			<p><input type="radio" name="elements-ele_req" value=1<{$content.ele_req_yes_on}>> Yes</p>
+			<p><input type="radio" name="elements-ele_req" value=0<{$content.ele_req_no_on}>> No</p>
+		</fieldset>
+	</div>
+</div>
+<{/if}>
+
+</form>
+<div style="clear: both;"></div>
+</div> <!--// end content -->
+
+<script type="text/javascript">
+$(".savebutton").click(function() {
+  if($("[name=elements-ele_caption]").val() == "") {
+		alert("Elements must have a caption!");
+		$("[name=elements-ele_caption]").focus();
+	}
+	<{* reload after ele_handle is blank, since it will be reset to the ele_id and that's a state change we'll need to reload to show the user *}>
+	if($("[name=elements-ele_handle]").val() == "") {
+		$("[name=reload_names_page]").val(1);
+	}
+});
+
+$("[name=elements-ele_handle]").keydown(function () {
+	$("[name=check_handle]").val(1);
+});
+
+$("[name=elements-ele_caption]").keydown(function () {
+	$("[name=reload_names_page]").val(1);
+});
+
+
+
+
+</script>

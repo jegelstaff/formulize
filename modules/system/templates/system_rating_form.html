@@ -1,0 +1,30 @@
+<div id="icms_rating_container">
+	<div class="item">
+		<{if $icms_rated}>
+			<div class="itemHead"><b><{$smarty.const._CO_ICMS_RATING_ALREADY_RATED}><{$icms_user_rate}></b></div>
+		<{elseif $icms_user_can_rate}>
+			<div class="itemHead"><{$smarty.const._CO_ICMS_RATING_RATE_THIS}></div>
+			<div class="odd">
+				<form name='icms_rating_form' id='icms_rating_form' method='post'>
+					<div style="float: <{$smarty.const._GLOBAL_LEFT}>;">
+						<input name="icms_rating_value" value="1" type="radio">1
+						<input name="icms_rating_value" value="2" type="radio">2
+						<input name="icms_rating_value" value="3" type="radio">3
+						<input name="icms_rating_value" value="4" type="radio">4
+						<input name="icms_rating_value" value="5" type="radio">5
+					</div>
+					<div style="float: <{$smarty.const._GLOBAL_RIGHT}>;">
+						<input name="icms_rating_submit" value="<{$smarty.const._CO_ICMS_RATING_RATE_IT}>" type="submit">
+					</div>
+				</form>
+				<br />
+			</div>
+
+		<{/if}>
+		<div class="odd" style="display: block;">
+			<div><b><{$smarty.const._CO_ICMS_RATING_VOTERS_TOTAL}></b><{$icms_rating_stats_total}></div>
+			<div><b><{$smarty.const._CO_ICMS_RATING_AVERAGE}></b><{$icms_rating_stats_average}></div>
+		</div>
+
+	</div>
+</div>

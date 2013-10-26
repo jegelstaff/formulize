@@ -1,0 +1,65 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_form_options">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+
+
+<div class="panel-content content">
+  <fieldset>
+    <legend>Form Heading</legend>
+		<div class="form-item">
+		  <p><nobr><input type="checkbox" id="screens-displayheading" name="screens-displayheading"<{if $content.displayheading}> checked="checked"<{/if}> value="1"/>&nbsp;&nbsp;Show all the headings at the top of the form ("Entry created by so-and-so, on this date, etc")</nobr></p>
+	  </div>
+	</fieldset>
+	<fieldset>
+		<legend>Save button, text and behaviour</legend>
+	  <div class="form-item">
+		  <label for="screens-savebuttontext">What text should be used on the Save button?</label>
+		  <input type="text" id="screens-savebuttontext" name="screens-savebuttontext" value="<{$content.savebuttontext}>"/>
+	  </div>
+		<div class="form-item">
+		  <p><label for="screens-reloadblank">How should the form reload, after the user has saved a new entry?</label></p>
+				<div class="form-radios">
+          <label for="entry"><input type="radio" id="entry" name="screens-reloadblank" value=0 />Reload showing the entry the user has just created</label>
+        </div>
+        <div class="form-radios">
+          <label for="blank"><input type="radio" id="blank" name="screens-reloadblank" value=1 />Reload blank, so another new entry can be created</label>
+        </div>
+	<div class="description">If the All Done button is turned off in the <a href="<{$xoopsurl}>/modules/system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>">Formulize module preferences</a>, then the first option (show the entry the user just created) will send the user to the All Done destination instead.</div>
+	  </div>
+		</legend>
+	</fieldset>
+	<fieldset>
+		<legend>All Done button, text and behaviour</legend>
+	  <div class="form-item">
+		  <label for="screens-alldonebuttontext">What text should be used on the All Done button?</label>
+		  <input type="text" id="screens-alldonebuttontext" name="screens-alldonebuttontext" value="<{$content.alldonebuttontext}>"/>
+			<div class="description">You can leave this blank, that will cause the All Done button to be turned off on the form.  In that case, there will only be a Save button.</div> 
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-donedest">When users click the All Done button, what URL should they be sent to?</label>
+		  <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>"/>
+			<div class="description">You can leave this blank, and if you do then the default All Done action will happen.  Depending on the circumstance, the default action is either the form reloading, or the user returning to the previous page.  If you do specify an All Done location, and you are sending users to a location on this site, then you don't have to type the root part of the site's URL.  Just start the destination with a slash, ie: /modules/formulize/index.php?sid=12</div>
+	  </div>
+	</fieldset>
+		<legend>Form Elements</legend>
+		<div class="form-item">
+			<label for="screens-formelements">Which form elements should be displayed?</label>
+			<select id="screens-formelements" name="screens-formelements[]" size="15" multiple>
+			<{html_options options=$content.element_list selected=$content.formelements}>
+			</select>
+			<div class="description">Leave this blank to display all form elements.</div>
+		</div>
+	</fieldset>
+</div>
+
+</form>
+
+<script type="text/javascript">
+	$("#<{$content.reloadblank}>").attr('checked', true);
+</script>

@@ -1,0 +1,90 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-admin-form" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_settings">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+<input type="hidden" name="formulize_admin_fid" value="<{$content.fid}>">
+<input type="hidden" name="aid" value="<{$content.aid}>">
+
+
+<div class="panel-content content">
+  <fieldset>
+    <legend>Settings for the Screen: <em><{$content.title}></em></legend>
+
+	  <div class="form-item">
+		  <label for="screens-title">Name of the screen:</label>
+		  <input type="text" id="screens-title" name="screens-title" value="<{$content.title}>"/>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-type">What kind of screen is this:</label>
+			
+	    <select id="screens-type" size="1" name="screens-type"<{if $content.sid neq 'new'}> disabled<{/if}>>
+		    <option value="listOfEntries"<{if $content.type eq 'listOfEntries'}> selected="selected"<{/if}>>List of entries</option>
+		    <option value="form"<{if $content.type eq 'form'}> selected="selected"<{/if}>>Regular form</option>
+		    <option value="multiPage"<{if $content.type eq 'multiPage'}> selected="selected"<{/if}>>Multi page form</option>
+	    </select>
+			<{if $content.sid neq 'new'}>
+				<input type="hidden" name="screens-type" value="<{$content.type}>">
+			<{/if}>
+	  </div>
+	  <div class="form-item">
+		  <label for="screens-frid">Is this screen based on the form alone, or on a relationship with another form?</label>
+		  <select id="screens-frid" name="screens-frid">
+			  <option value="0"<{if $content.frid eq 0}> selected="selected"<{/if}>>The form alone, no relationship</option>
+	      <{foreach from=$content.links key=linkNumber item=link}>
+          <option value="<{$link.id}>"<{if $content.frid eq $link.id}> selected="selected"<{/if}>><{$link.name}></option>
+      	<{/foreach}>
+		  </select>
+	  </div>
+  </fieldset>
+
+	<fieldset>
+		<legend>URL for this screen</legend>
+		<p>To give people access to this screen, send them to this URL:</p>
+		<blockquote><{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}></blockquote>
+	</fieldset>
+	
+	<fieldset>
+		<legend>PHP code for including this screen anywhere</legend>
+		<p>You can embed this screen in any PHP application or web page that is running on the same web server.<br />Use this snippet of PHP code to include it:</p>
+		<blockquote class="code">include_once "<{$smarty.const.XOOPS_ROOT_PATH}>/mainfile.php";<br/>
+$formulize_screen_id = <{$content.sid}>;<br/>
+include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockquote>
+	</fieldset>
+
+  <!--<fieldset>
+	  <legend>Menu</legend>
+
+    <div class="form-item">
+	    <label for="imenu"><input type="radio" id="imenu" name="menu" value="imenu"/>Use iMenu</label>
+	    <label for="internal"><input type="radio" id="internal" name="menu" value="internal"/>Use internal menu</label>
+	    <div class="description">Choose whether you will use XOOPS iMenu for assigning menu items or the internal menu.</div>
+	  </div>
+  </fieldset>-->
+
+  <fieldset>
+	  <legend>Should this screen use an anti-CSRF security token</legend>
+
+	  <div class="form-item">
+	    <label for="screens-useToken-yes"><input type="radio" id="screens-useToken" name="screens-useToken" value="1"<{if $content.useToken eq 1}> checked<{/if}>/>Yes</label>
+	    <label for="screens-useToken-no"><input type="radio" id="screens-useToken" name="screens-useToken" value="0"<{if $content.useToken eq 0}> checked<{/if}>/>No</label>
+	    <div class="description">The security token is a defense against cross-site request forgery attacks. However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types.</div>
+	  </div>
+  </fieldset>
+
+  <!--<fieldset>
+	  <legend>Sample PHP Code</legend>
+
+	  <div class="form-item">
+		  <textarea name="code"/></textarea>
+		  <input type="submit" class="copybutton" name="copy-code" value="Copy code"/>
+		  <div class="description">Copy this sample PHP code somewhere.</div>
+	  </div>
+  </fieldset>-->
+</div>
+
+</form>

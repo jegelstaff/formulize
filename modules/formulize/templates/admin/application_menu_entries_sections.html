@@ -1,0 +1,162 @@
+<div class="panel-content content">
+    
+    <p><a href="" class="deletelink" target="<{$content.links[$sectionNumber].menu_id}>"><img src="../images/editdelete.gif"> Delete</a></p>
+
+    <form>
+        <p>Menu text: <input type="text" id="menutext<{$sectionNumber}>" name="menutext" value="<{$content.links[$sectionNumber].link_text}>"> </p>	
+        <br />
+            
+        <div id="sectionScreen<{$sectionNumber}>" class="sectionScreen">
+            <{$content.listsofscreenoptions}>
+        </div>  
+        <b>or</b><br />
+            
+        External url:  <input type="text" name="url" id="url<{$sectionNumber}>" value="<{$content.links[$sectionNumber].url}>">
+            <br /><br />	 
+            
+        <h3>Which groups can view the link</h3>                        
+        <select name="groups" id="groups<{$sectionNumber}>" size=10 multiple style="overflow-y: scroll;">
+            <{foreach from=$content.groups item=group}>
+                    <option value="<{$group.id}>"> <{$group.name}> </option>
+            <{/foreach}>
+        </select>
+         
+        <div id="defaultScreenSection<{$sectionNumber}>"> 
+            <h3>Use this screen as the default page for these groups:</h3>                        
+            <select name="defaultScreenGroups" id="defaultScreenGroups<{$sectionNumber}>" size=10 multiple style="overflow-y: scroll;">
+            </select>
+       </div>     
+        <br />
+            
+         <p align="center"><button class="menuButton" id="updateMenuItem<{$sectionNumber}>" type="button" >Update Link</button></p>
+            
+    </form> 
+</div>
+
+
+<script type="text/javascript">
+    
+    jQuery( document ).ready(function() {
+                             
+        //show screen for each link (if there is any)		
+        jQuery("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").val("<{$content.links[$sectionNumber].screen}>"); 
+                             
+        //show group permissions for each link (if there are any)
+        var permissions= ""+'<{$content.links[$sectionNumber].permissions}>';		
+        if ( permissions != ''){				
+            permissions= permissions.split(",");
+            for (var i=0; i<permissions.length; i++){				
+                jQuery("#groups<{$sectionNumber}> option").filter( function(){
+                    return jQuery(this).val() == permissions[i];	   			
+                }).attr("selected", true);
+            }
+        }	
+        
+            
+        //------------------------------------------------------------------------
+                             
+        $("#url<{$sectionNumber}>").unbind("change");
+        $("#url<{$sectionNumber}>").unbind("keydown");
+        $("#defaultScreen<{$sectionNumber}>").unbind("change");
+        $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").unbind("change");
+        $("#defaultScreenSection<{$sectionNumber}>").hide();
+
+        // user have a choice of either choosing a screen or entering a URL
+        // if user chooses a screen, user has the choice of choosing it as a default screen
+
+        $('#url<{$sectionNumber}>').bind("change",function(){
+          if ($('#url<{$sectionNumber}>').val() != ''){
+              $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "disabled");
+                        }
+          else{
+              $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").attr("disabled", "");
+          }
+        });
+
+        $('#sectionScreen<{$sectionNumber}> #listsofscreenoptions').bind("change",function(){
+          if ($('#sectionScreen<{$sectionNumber}> #listsofscreenoptions').val() != ''){
+              $("#url<{$sectionNumber}>").attr("disabled", "disabled");
+              if( jQuery("#groups<{$sectionNumber}> option:selected").length){
+                $("#defaultScreenSection<{$sectionNumber}>").show();
+             }
+          }
+          else{
+              $("#url<{$sectionNumber}>").attr("disabled", "");
+              $("#defaultScreenSection<{$sectionNumber}>").hide();
+          }
+          
+        });
+
+        $("#url<{$sectionNumber}>").change();
+        $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").change();  
+        
+        //------------------------------------------------------------------------
+            
+         //show groups who have this link as a default page (if there are any)
+         var selectedGroups= '<{$content.links[$sectionNumber].default_screen}>'.split(",");	
+         var groupsWithDefaultScreen= '<{$content.groupsWithDefaultScreen}>'.split(",");	
+         
+        $("#groups<{$sectionNumber}>").unbind("change");
+        $("#defaultScreenGroups<{$sectionNumber}>").unbind("change");
+                             
+        jQuery("#groups<{$sectionNumber}>").bind("change", function(){
+          
+          $("#defaultScreenGroups<{$sectionNumber}>").empty();          
+          $("#groups<{$sectionNumber}> option:selected").each( function(){
+              var value= $(this).val();
+              var text= $(this).text();
+              $("#defaultScreenGroups<{$sectionNumber}>").append($("<option></option>").attr("value", value).text(text));
+          });     
+          
+          $("#defaultScreenGroups<{$sectionNumber}> option").each(function() {
+              if ( jQuery.inArray($(this).val(), selectedGroups ) >= 0) {
+                  $(this).attr("selected", true);
+              }
+              else{
+                  if ( jQuery.inArray($(this).val(), groupsWithDefaultScreen ) >= 0 ) {
+                      $(this).remove();
+                  }
+              }
+              
+              });
+             $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").change();
+          });
+         
+         jQuery("#groups<{$sectionNumber}>").change();    
+                             
+    });
+    
+    $("#updateMenuItem<{$sectionNumber}>").click(function () {
+                                                 
+        var answer = confirm("The changes you made to the selected menu link will be saved, OK?");
+        if(answer) {
+                                                 
+            var menuID = "<{$content.links[$sectionNumber].menu_id}>";
+            var menuText = $("#menutext<{$sectionNumber}>").val().trim().replace(/\'/g, " ") ;
+            var url = $("#url<{$sectionNumber}>").val();
+            var screen = $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions").val();
+            var groupids = $("#groups<{$sectionNumber}>").val();
+            var default_screen= '';  
+            var value = menuID;
+                                                                                 
+                                                                                 
+            if(screen.length > 0){
+               /* if(menuText.length == 0){
+                    menuText = $("#sectionScreen<{$sectionNumber}> #listsofscreenoptions option:selected").text().trim().replace(/\'/g, " "); 
+                } */
+               default_screen= $("#defaultScreenGroups<{$sectionNumber}>").val();                                                                   
+            }else if(url.length > 0){
+                if(menuText.length == 0){                                                                                                                menuText = url;                                                                                                                                                                                         } 
+            }else{                                                                                                                                                    alert("missing screen or url");                                                                                                                                                                                               return;                                                                                                                                                                                          }
+            
+            value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen;                                                                               
+            $("[name=menu_items]").val(value);
+            $("[name=reload_settings]").val(1);
+            $(".savebutton").click();
+        }
+                                                                                                                                                                                                                                   
+    });
+    
+     
+
+</script>

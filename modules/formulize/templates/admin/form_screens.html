@@ -1,0 +1,77 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="form_screens">
+<input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
+<input type="hidden" name="formulize_admin_aid" value="<{$content.aid}>">
+<input type="hidden" name="gotoscreen" value="">
+<input type="hidden" name="deletescreen" value="">
+
+<div class="panel-content content">
+
+	<{$smarty.const._AM_SCREEN_EXPLAIN}>
+
+  <h2><a href="ui.php?page=screen&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=new"><img src="../images/filenew2.png"><{$smarty.const._AM_SCREEN_CREATE}></a></h2>
+
+  <{* include form if exist screens exist *}>
+
+  <h2><{$smarty.const._AM_SCREEN_FORMSCREENS}></h2>
+  <div class="form-item">
+    <table>
+	    <tr>
+		    <th>Name</th>
+				<th>id</th>
+		    <th>Type</th>
+		    <th>Default</th>
+		    <th>Action</th>
+	    </tr>
+      <{foreach from=$content.screens item=screen}>
+	      <tr>
+		      <td><label for="screens-defaultform-<{$screen.sid}>"><a class="configscreen" target-sid="<{$screen.sid}>" href="?page=screen&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$screen.sid}>"><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
+					<td><{$screen.sid}></td>
+		      <td><{if $screen.type eq 'multiPage'}>Multi page<{else}>Regular<{/if}></td>
+		      <td><div class="form-radios"><input type="radio" id="screens-defaultform-<{$screen.sid}>" name="screens-defaultform" value="<{$screen.sid}>"<{if $screen.sid eq $content.defaultform}> checked="checked"<{/if}>/></div></td>
+  		    <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;<a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
+	      </tr>
+      <{/foreach}>
+    </table>
+  </div>
+
+  <h2><{$smarty.const._AM_SCREEN_LISTSCREENS}></h2>
+  <div class="form-item">
+    <table>
+	    <tr>
+		    <th>Name</th>
+				<th>id</th>
+		    <th>Default</th>
+		    <th>Action</th>
+	    </tr>
+      <{foreach from=$content.listOfEntries item=screen}>
+	      <tr>
+		      <td><label for="screens-defaultlist-<{$screen.sid}>"><a class="configscreen" target-sid="<{$screen.sid}>" href="?page=screen&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$screen.sid}>"><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
+					<td><{$screen.sid}></td>
+		      <td><div class="form-radios"><input type="radio" id="screens-defaultlist-<{$screen.sid}>" name="screens-defaultlist" value="<{$screen.sid}>"<{if $screen.sid eq $content.defaultlist}> checked="checked"<{/if}>/></div></td>
+  		    <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;<a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
+	      </tr>
+      <{/foreach}>
+    </table>
+  </div>
+</div>
+
+</form>
+
+<script type="text/javascript">
+<{* Use javascript to save any changes to the settings before following the link *}>
+$(".deletescreen").click(function() {
+	var answer = confirm("<{$smarty.const._AM_SCREEN_DELETESCREENS}>");
+	if(answer) {
+		$("[name=deletescreen]").val($(this).attr('target'));
+		$(".savebutton").click();
+	}
+	return false;
+});
+</script>

@@ -1,0 +1,70 @@
+
+  <p><a class="deletebutton" href="" target="<{$sectionContent.id}>"><img src="../images/editdelete.gif"> Delete this button</a></p>
+
+	<div class="form-item handle required">
+		<label for="handle_<{$sectionContent.id}>"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_HANDLE}></label>
+		<input type="text" id="handle_<{$sectionContent.id}>" class="required_formulize_element" name="handle_<{$sectionContent.id}>" value="<{$sectionContent.handle}>"/>
+	</div>
+	<div class="form-item required">
+		<label for="text_<{$sectionContent.id}>"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_BUTTONTEXT}></label>
+		<input type="text" id="text_<{$sectionContent.id}>" class="required_formulize_element" name="buttontext_<{$sectionContent.id}>" value="<{$sectionContent.buttontext}>"/>
+	</div>
+	<div class="form-item">
+		<label for="message_<{$sectionContent.id}>"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_MESSAGETEXT}></label>
+		<input type="text" id="message_<{$sectionContent.id}>" name="messagetext_<{$sectionContent.id}>" value="<{$sectionContent.messagetext}>"/>
+	</div>
+	
+	<div class="form-item">
+		<label for="groups_<{$sectionContent.id}>"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_GROUPS}></label>
+		<select name="groups_<{$sectionContent.id}>[]" id="groups_<{$sectionContent.id}>" size=8 multiple="multiple">
+		<{html_options options=$content.grouplist selected=$sectionContent.groups}>
+		</select>
+	</div>
+	
+	<div class="form-item">
+		<label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_INLINE}></label>
+			<label for="inline_yes"><input type="radio" id="inline_yes" name="appearinline_<{$sectionContent.id}>" value=1 <{if $sectionContent.appearinline}>checked<{/if}> />Yes</label>
+			<label for="inline_no"><input type="radio" id="inline_no" name="appearinline_<{$sectionContent.id}>" value=0 <{if !$sectionContent.appearinline}>checked<{/if}> />No</label>
+			<div class="description">
+				<p>If no, then the button will be available in the Top and Bottom Templates. If yes, the button will appear in the list, or will be available in the List Template if you use one.</p>
+			</div>
+	</div>
+	<div class="form-item">
+		<label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO}></label>
+		<select name="applyto_<{$sectionContent.id}>" size=1>
+			<{html_options options=$content.applytoOptions selected=$sectionContent.applyto}>
+		</select>
+	</div>
+	<input type="button" class="addeffectbutton" target="<{$sectionContent.id}>" value="<{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON_EFFECT}>"/>
+
+	<{counter name="effects" start=0 print=false}>
+	<{foreach from=$sectionContent key=id item=effect}>
+		<{if is_numeric($id)}>
+		<fieldset>
+			<legend><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT}> <{counter name="effects"}></legend>
+			<div class="customeffect">
+				<p><a class="removeeffectbutton" href="" target="<{$sectionContent.id}>_<{$id}>"><img src="../images/editdelete.gif"> Remove this effect</a></p>
+				<{if $sectionContent.applyto == 'custom_code'}>
+				<textarea name="code_<{$sectionContent.id}>[<{$id}>]" class="code-textarea" rows=8><{$effect.code}></textarea>			
+				<{elseif $sectionContent.applyto == 'custom_html'}>
+				<textarea name="html_<{$sectionContent.id}>[<{$id}>]" class="code-textarea" rows=8><{$effect.html}></textarea>				
+				<{else}>
+				<label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ELEMENT}></label>
+				<select name="element_<{$sectionContent.id}>[<{$id}>]" size=1>
+					<{html_options options=$effect.elementOptions selected=$effect.element}>
+				</select>
+				<label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION}></label>
+				<select name="action_<{$sectionContent.id}>[<{$id}>]" size=1>
+					<{html_options options=$effect.actionOptions selected=$effect.action}>
+				</select>
+				<label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_VALUE}></label>
+				<textarea name="value_<{$sectionContent.id}>[<{$id}>]" class="code-textarea" rows=4><{$effect.value}></textarea>		
+				<{/if}>
+				<div class="description">
+					<p><{$effect.description}></p>
+				</div>
+			</div>
+		</fieldset>
+		
+		<{/if}>
+	<{/foreach}>

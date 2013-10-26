@@ -1,0 +1,19 @@
+<div class="panel-content content">
+  <fieldset>
+    <legend><{$smarty.const._AM_ELE_MODIF_ONE}></legend>
+
+    <div class="form-item">
+	    <label for="elements-ele_value[0]"><{$smarty.const._AM_ELE_INSERTBREAK}></label>
+	    <textarea id="elements-ele_value[0]" name="elements-ele_value[0]" rows="5" cols="35"><{$content.ele_value[0]}></textarea>
+	    <div class="description">
+          <p><{$smarty.const._AM_ELE_IB_DESC}></p>
+      </div>
+    </div>
+    <div class="form-item">
+	    <label for="elements-ele_value[1]"><{$smarty.const._AM_ELE_INSERTBREAK}></label>
+      <select name="elements-ele_value[1]" id="css" size=1>
+	<{html_options options=$content.ib_style_options selected=$content.ele_value[1]}>
+      </select>
+    </div>
+  </fieldset>
+</div>
