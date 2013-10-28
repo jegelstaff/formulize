@@ -1,6 +1,0 @@
-/* IE-Specific CSS */
-
-/* because min-height not recognized */
-div.accordion-box .form-name a {
-	height: 30px;
-}
