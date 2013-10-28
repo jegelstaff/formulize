@@ -1,5 +1,0 @@
-<{include file="db:profile_header.html"}>
-<{if $stop}><div class='errorMsg'><{$stop}></div><br clear='both'><{/if}>
-<{if $confirm}><div class='confirmMsg'><{foreach item=msg from=$confirm name=loop}><{$msg}><{if !$smarty.foreach.loop.last}><br /><{/if}><{/foreach}></div><br clear='both'><{/if}>
-<{if $regform}><{includeq file='db:system_common_form.html' form=$regform}><{/if}>
-<{include file="db:profile_footer.html"}>

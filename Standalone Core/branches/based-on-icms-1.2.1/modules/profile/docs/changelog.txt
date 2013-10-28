@@ -1,9 +1,0 @@
-Changelog 1.21 RC
-May 2nd, 2009
-=============
-1	Fixed : Checked all the language constants whether they were used or not.
-					thanks to the language checker made by trabis. Credits : www.xuups.com (trabis)
-
-
-<b><u> Version 1.20 </u></b>
-- Merged a clone of SmartProfile with Yogurt

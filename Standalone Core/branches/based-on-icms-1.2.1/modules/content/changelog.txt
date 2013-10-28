@@ -1,3 +1,0 @@
-<b><u>=> Unreleased: Version 1.0 Beta</u></b>
-
-- First public release of the module.

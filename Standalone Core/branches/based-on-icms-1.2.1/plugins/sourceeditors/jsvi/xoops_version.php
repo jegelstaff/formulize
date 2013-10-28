@@ -1,1 +1,0 @@
-<?php$editorversion['name'] = "CodeMirror";$editorversion['version'] = 'unknown';$editorversion['license'] = "GPL v3 or later";$editorversion['dirname'] = "jsvi";$editorversion['class'] = "IcmsSourceEditorJSVI";$editorversion['file'] = "jsvi.php";?>

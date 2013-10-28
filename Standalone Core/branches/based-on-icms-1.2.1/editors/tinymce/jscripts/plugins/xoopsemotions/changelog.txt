@@ -1,3 +1,0 @@
-01-03-2008
-Xoopsemotions plugin v1.0 created for TinyMCE v3.0.1
-by luciorota

@@ -1,1 +1,0 @@
-<?phpdefine('_ICMS_SOURCEEDITOR_JSVI','JSVI - vi style code editor');?>
