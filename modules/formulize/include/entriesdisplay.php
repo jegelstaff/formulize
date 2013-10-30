@@ -508,7 +508,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 		// if this is not a report/view that was created by the user, and they don't have update permission, then convert any { } terms to literals
 		// remove any { } terms that don't have a passed in value (so they appear as "" to users)
-		if(strstr($v, "{") AND strstr($v, "}") AND substr($k, 0, 7) == "search_" AND in_array(substr($k, 7), $showcols)) {
+		// only deal with terms that start and end with { } and not ones where the { } terms is not the entire term
+		if(substr($v, 0, 1) == "{" AND substr($v, -1) == "}" AND substr($k, 0, 7) == "search_" AND in_array(substr($k, 7), $showcols)) {
 			$activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
 			$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
 			$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
@@ -520,7 +521,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					$_POST[$k] = $_GET[$requestKeyToUse];
 				} elseif($v == "{USER}" AND $xoopsUser) {
 					$_POST[$k] = $xoopsUser->getVar('name') ? $xoopsUser->getVar('name') : $xoopsUser->getVar('uname');
-				} else {
+				} elseif(!strstr($v, "{BLANK}") AND !strstr($v, "{TODAY") AND !strstr($v, "{PERGROUPFILTER}") AND !strstr($v, "{USER")) { 
 					unset($_POST[$k]); // clear terms where no match was found, because this term is not active on the current page, so don't confuse users by showing it
 				}
 			}
