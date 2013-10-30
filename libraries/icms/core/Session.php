@@ -27,7 +27,8 @@ class icms_core_Session {
 	 */
 	static public function service() {
 		global $icmsConfig;
-		include_once('integration_api.php'); // ADDED CODE BY FREEFORM SOLUTIONS
+		if (file_exists("integration_api.php"))
+			include_once('integration_api.php'); // ADDED CODE BY FREEFORM SOLUTIONS
 		$instance = new icms_core_Session(icms::$xoopsDB);
 		session_set_save_handler(
 			array($instance, 'open'), array($instance, 'close'), array($instance, 'read'),
