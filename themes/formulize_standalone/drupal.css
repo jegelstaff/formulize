@@ -1,0 +1,76 @@
+/* Formulize css */
+#formulize_form table td {
+  padding: 0;
+  border-width: 0;
+  vertical-align: top; }
+
+#formulize_form th {
+  font-size: large; }
+
+#formulize_form .outer {
+  color: #1B75BB; }
+
+#formulize_form .head {
+  color: #74B64A;
+  padding: 5px;
+  font-weight: bold;
+  border-top: 3px solid #f3f3f3; }
+
+#formulize_form .even {
+  color: black;
+  padding: 5px;
+  border-top: 3px solid #f3f3f3; }
+
+#formulize_form .odd {
+  color: black;
+  padding: 5px;
+  border-top: 3px solid #f3f3f3;
+  background-color: white; }
+
+#formulize_form tr.even td {
+  color: black;
+  padding: 5px;
+  border-top: 3px solid #f3f3f3; }
+
+#formulize_form tr.odd td {
+  color: black;
+  padding: 5px;
+  border-top: 3px solid #f3f3f3;
+  background-color: white; }
+
+#formulize_form .xoops-form-element-caption .caption-marker {
+  display: none; }
+
+#formulize_form .xoops-form-element-help {
+  font-weight: normal; }
+
+#formulize_form tbody {
+  border-top: 0 solid white; }
+
+#formulize_form a.loe-edit-entry {
+  display: inline-block;
+  background-image: url("edit.png");
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  margin-left: 0.5em;
+  text-decoration: none; }
+
+#formulize_form a.loe-edit-entry:hover {
+  border-radius: 3px; }
+
+#formulize_form td.formulize-controls {
+  white-space: nowrap;
+  width: 40px; }
+
+.icms_checkboxoption {
+  display: block; }
+
+.icms_checkboxoption > label {
+  font-weight: normal;
+  display: inline-block;
+  margin-left: 0.5em;
+  font-size: 90%; }
+
+input[type=radio] {
+  margin-right: 0.5em; }
