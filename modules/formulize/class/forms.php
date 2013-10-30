@@ -140,8 +140,6 @@ class formulizeForm extends XoopsObject {
 					$filterSettings[$filterSettingData['groupid']] = unserialize($filterSettingData['filter']);
 				}
 			}
-
-			
 		}
 
 		$this->XoopsObject();
@@ -169,6 +167,25 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
 		$this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
 	}
+
+    static function sanitize_handle_name($handle_name) {
+        // strip non-alphanumeric characters from form and element handles
+        return preg_replace("/[^a-zA-Z0-9_]+/", "", $handle_name);
+    }
+
+    public function assignVar($key, $value) {
+        if ("form_handle" == $key) {
+            $value = self::sanitize_handle_name($value);
+        }
+        parent::assignVar($key, $value);
+    }
+
+    public function setVar($key, $value, $not_gpc = false) {
+        if ("form_handle" == $key) {
+            $value = self::sanitize_handle_name($value);
+        }
+        parent::setVar($key, $value, $not_gpc);
+    }
 }
 
 class formulizeFormsHandler {
@@ -186,7 +203,7 @@ class formulizeFormsHandler {
 	function &create() {
 		return new formulizeForm();
 	}
-	
+
 	function &get($fid,$includeAllElements=false) {
 		$fid = intval($fid);
 		// this is cheap...we're caching form objects potentially twice because of a possible difference in whether we want all objects included or not.  This could be handled much better.  Maybe iterators could go over the object to return all elements, or all visible elements, or all kinds of other much more elegant stuff.
@@ -377,9 +394,10 @@ class formulizeFormsHandler {
 			return true;
 		}
 	}
-	
+
 	// check to see if a handle is unique within a form
 	function isHandleUnique($handle, $element_id="") {
+        $handle = formulizeForm::sanitize_handle_name($handle);
 		$ucHandle = strtoupper($handle);
 		if($ucHandle == "CREATION_UID" OR $ucHandle == "CREATION_DATETIME" OR $ucHandle == "MOD_UID" OR $ucHandle == "MOD_DATETIME" OR $ucHandle == "CREATOR_EMAIL" OR $ucHandle == "UID" OR $ucHandle == "PROXYID" OR $ucHandle == "CREATION_DATE" OR $ucHandle == "MOD_DATE" OR $ucHandle == "MAIN_EMAIL" OR $ucHandle == "MAIN_USER_VIEWEMAIL") {
 			return false; // don't allow reserved words that will be used in the main data extraction queries
