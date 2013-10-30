@@ -44,8 +44,29 @@ class formulizeScreen extends xoopsObject {
 		$this->initVar('fid', XOBJ_DTYPE_INT, '', true);
 		$this->initVar('frid', XOBJ_DTYPE_INT, '', true);
 		$this->initVar('type', XOBJ_DTYPE_TXTBOX, '', true, 100);
-    $this->initVar('useToken', XOBJ_DTYPE_INT);
+		$this->initVar('useToken', XOBJ_DTYPE_INT);
 	}
+
+    static function normalize_values($key, $value) {
+        switch ($key) {
+            case "customactions":
+            case "decolumns":
+            case "hiddencolumns":
+            if (!is_array(unserialize($value))) {
+                $value = serialize(array());
+            }
+            break;
+        }
+        return $value;
+    }
+
+    public function assignVar($key, $value) {
+        parent::assignVar($key, self::normalize_values($key, $value));
+    }
+
+    public function setVar($key, $value, $not_gpc = false) {
+        parent::setVar($key, self::normalize_values($key, $value), $not_gpc);
+    }
 }
 
 class formulizeScreenHandler {
@@ -134,7 +155,7 @@ class formulizeScreenHandler {
 		$form->addElement(new xoopsFormHidden('sid', $sid));
 		$form->addElement(new xoopsFormHidden('oneditscreen', 1));
 		$form->addElement(new xoopsFormText(_AM_FORMULIZE_SCREEN_TITLE, 'title', 30, 255, $title));
-		
+
 		// get the frameworks that this form is involved in
 		$framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
 		$frameworks = $framework_handler->getFrameworksByForm($fid);
