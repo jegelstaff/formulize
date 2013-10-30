@@ -43,7 +43,7 @@ class icms_db_criteria_Compo extends icms_db_criteria_Element {
 	 * @param   object  $ele
 	 * @param   string  $condition
 	 **/
-	public function __construct($ele=null, $condition='AND') {
+	public function __construct($ele=null, $condition='AND', $operator='=', $prefix = '', $function = '') {
 		if (isset($ele) && is_object($ele)) {
 			$this->add($ele, $condition);
 		}

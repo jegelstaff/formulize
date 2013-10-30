@@ -37,7 +37,7 @@ class icms_db_criteria_Item extends icms_db_criteria_Element {
 	 * @param   string  $value
 	 * @param   string  $operator
 	 **/
-	public function __construct($column, $value='', $operator='=', $prefix = '', $function = '') {
+	public function __construct($column = '', $value='', $operator='=', $prefix = '', $function = '') {
 		$this->_prefix = $prefix;
 		$this->_function = $function;
 		$this->_column = $column;

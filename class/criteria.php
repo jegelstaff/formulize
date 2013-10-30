@@ -42,7 +42,7 @@
  */
 abstract class CriteriaElement extends icms_db_criteria_Element
 {
-	public function __construct() {
+	public function __construct($column = '', $value='', $operator='=', $prefix = '', $function = '') {
 	}
 }
 
