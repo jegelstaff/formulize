@@ -1519,34 +1519,30 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 					if($useViewEntryLinks OR $useCheckboxes != 2) {
 						print "<td class=\"head formulize-controls\">\n";
 					}
-			
+
 					if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
+						if($useCheckboxes != 2) { // two means none
+							// put in the delete checkboxes -- check for perms delete_own_entry, delete_other_entries
+							$owner = getEntryOwner($linkids[0], $fid);
+							// check to see if we should draw in the delete checkbox or not
+							if(($owner == $uid AND $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid)) OR ($owner != $uid AND $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid)) OR $useCheckboxes == 1) { // 1 means all
+								print "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='formulize_selection_checkbox' name='delete_" . $linkids[0] . "' id='delete_" . $linkids[0] . "' value='delete_" . $linkids[0] . "'>";
+							}
+						}
 						if($useViewEntryLinks) {
-							print "<p><center><a href='" . $currentURL;
+							print "<a href='" . $currentURL;
 							if(strstr($currentURL, "?")) { // if params are already part of the URL...
 								print "&";
 							} else {
 								print "?";
 							}
-							print "ve=" . $linkids[0] . "' onclick=\"javascript:goDetails('" . $linkids[0] . "');return false;\"><img src='" . XOOPS_URL . "/modules/formulize/images/detail.gif' border=0 alt=\"" . _formulize_DE_VIEWDETAILS . "\" title=\"" . _formulize_DE_VIEWDETAILS . "\"></a>";
-						}
-						if($useCheckboxes != 2) { // two means none
-							// put in the delete checkboxes -- check for perms delete_own_entry, delete_other_entries
-              $owner = getEntryOwner($linkids[0], $fid);
-              // check to see if we should draw in the delete checkbox or not
-							if(($owner == $uid AND $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid)) OR ($owner != $uid AND $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid)) OR $useCheckboxes == 1) { // 1 means all
-								if($useViewEntryLinks) {
-									print "<br>";
-								} else {
-									print "<p><center>";
-								}
-								print "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='formulize_selection_checkbox' name='delete_" . $linkids[0] . "' id='delete_" . $linkids[0] . "' value='delete_" . $linkids[0] . "'>";
-							}
-						}
-						if($useViewEntryLinks OR $useCheckboxes != 2) { // at least one of the above was used
-							print "</center></p>\n";
+							print "ve=" . $linkids[0] . "' onclick=\"javascript:goDetails('" . $linkids[0] . "');return false;\" ".
+								" class=\"loe-edit-entry\" alt=\"" . _formulize_DE_VIEWDETAILS . "\" title=\"" . _formulize_DE_VIEWDETAILS . "\" >";
+							//print "<img src='" . XOOPS_URL . "/modules/formulize/images/detail.gif' border=0 alt=\"" . _formulize_DE_VIEWDETAILS . "\" title=\"" . _formulize_DE_VIEWDETAILS . "\">";
+							print "&nbsp;</a>";
 						}
 					} // end of IF NO LOCKCONTROLS
+
 					if($useViewEntryLinks OR $useCheckboxes != 2) {
 						print "</td>\n";
 					}	

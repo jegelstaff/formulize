@@ -901,3 +901,20 @@ body > #content {
 
 .xoops-form-element-help {
   color: #999999; }
+
+a.loe-edit-entry {
+  display: inline-block;
+  background-image: url("../../modules/formulize/images/edit.png");
+  text-decoration: none;
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  margin-left: 0.5em; }
+
+a.loe-edit-entry:hover {
+  background-color: #a8cc7d;
+  border-radius: 3px; }
+
+td.formulize-controls {
+  white-space: nowrap;
+  width: 40px; }

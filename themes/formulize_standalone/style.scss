@@ -216,3 +216,25 @@ body > #content
     // modify the background color instead of the text color so that this text always contrasts with the background
     color: desaturate(lighten-or-darken($colorHeaderBackground, 40%), 60%);
 }
+
+// edit link for each row on list of entries screens
+a.loe-edit-entry {
+    display: inline-block;
+    // browsers will find the file relative to the css file, so this should work even if the site is in a subfolder on the website
+    background-image: url('../../modules/formulize/images/edit.png');
+    text-decoration: none;
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    margin-left: 0.5em;
+}
+
+a.loe-edit-entry:hover {
+    background-color: lighten($colorTableHeaderBackground, 10%);    // always inside td.head
+    border-radius: 3px;
+}
+
+td.formulize-controls {
+    white-space: nowrap;
+    width: 40px;
+}
