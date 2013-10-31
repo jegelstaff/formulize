@@ -1,58 +1,105 @@
 <div class="panel-content content">
-<div style="float: right;"><p><a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>"><img src="../images/kedit.png"> <{$smarty.const._AM_HOME_PREF}></a></p></div>
-<p><a href="ui.php?page=form&tab=settings&fid=new"><img src="../images/filenew2.png"> <{$smarty.const._AM_HOME_NEWFORM}></a>&nbsp&nbsp&nbsp;&nbsp;&nbsp&nbsp&nbsp;&nbsp;<a href="ui.php?page=form&tab=settings&fid=new&tableform=true"><img src="../images/filenew3.gif"> Create a new reference to a datatable</a></p>
-<h2><{$smarty.const._AM_HOME_MANAGEAPP}></h2>
-<form class="formulize-admin-form">
-<{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
-<input type="hidden" name="formulize_admin_handler" value="home">
-<input type="hidden" name="deleteform" value="">
-<input type="hidden" name="deleteapp" value="">
-<input type="hidden" name="cloneform" value="">
-<input type="hidden" name="cloneformdata" value="">
-<input type="hidden" name="lockdown" value="">
-<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/home_sections.html" sections=$adminPage.apps}>
-</form>
+    <div class="formulize-toolbar right-toolbar">
+        <a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>"><img height="16px" src="../images/kedit.png"> <{$smarty.const._AM_HOME_PREF}></a>
+        <a href="ui.php?page=form&tab=settings&fid=new"><img height="16px" src="../images/filenew2.png"> <{$smarty.const._AM_HOME_NEWFORM}></a>
+        <a href="ui.php?page=form&tab=settings&fid=new&tableform=true"><img height="16px" src="../images/filenew3.gif"> Create a new reference to a datatable</a>
+    </div>
+
+    <h2><{$smarty.const._AM_HOME_MANAGEAPP}></h2>
+    <form class="formulize-admin-form">
+        <{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
+        <input type="hidden" name="formulize_admin_handler" value="home">
+        <input type="hidden" name="deleteform" value="">
+        <input type="hidden" name="deleteapp" value="">
+        <input type="hidden" name="cloneform" value="">
+        <input type="hidden" name="cloneformdata" value="">
+        <input type="hidden" name="lockdown" value="">
+        <{foreach from=$applications item=app}>
+        <div class="formulize-application-panel">
+            <div class="formulize-application-panel-header">
+                <span class="formulize-toolbar right-toolbar">
+                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=settings">Settings</a>
+                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=forms">Forms</a>
+                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=screens">Screens</a>
+                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=relationships">Relationships</a>
+                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=menus">Menu Entries</a>
+                </span>
+                <h2><{$app->name}></h2>
+            </div>
+            <div class="formulize-application-panel-body">
+                <span class="formulize-toolbar right-toolbar">
+                    <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$app->appid}>&tab=settings&fid=new">Add a Form</a>&emsp;
+                </span>
+                <{if count($app->forms) == 0}>
+                <p>No forms.</p>
+                <{else}>
+                <h2>Forms</h2>
+                <ul class="admin-application-form-list">
+                <{foreach from=$app->forms item=form}>
+                    <li><a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$app->appid}>&fid=<{$form->id_form}>&tab=elements"><{$form->title}> (<{$form->id_form}>)</a></li>
+                <{/foreach}>
+                </ul>
+                <{/if}>
+            </div>
+        </div>
+        <{/foreach}>
+        <div class="formulize-application-panel">
+            <div class="formulize-application-panel-header">
+                <h2>Other Forms</h2>
+            </div>
+            <div class="formulize-application-panel-body">
+                <{if count($extra_forms) == 0}>
+                <p>No forms.</p>
+                <{else}>
+                <h2>Forms</h2>
+                <ul class="admin-application-form-list">
+                <{foreach from=$extra_forms item=form}>
+                    <li><a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=0&fid=<{$form->id_form}>&tab=elements"><{$form->title}> (<{$form->id_form}>)</a></li>
+                <{/foreach}>
+                </ul>
+                <{/if}>
+            </div>
+        </div>
+    </form>
 </div>
 
 <script type="text/javascript">
-
 $(".deletelink").click(function () {
-	answer = confirm("<{$smarty.const._AM_HOME_CONFIRMDELETEFORM}>");
-	if(answer) {
-		$("[name=deleteform]").val($(this).attr('target'));
-		runSaveEvent();
-	}
-	return false;
+    answer = confirm("<{$smarty.const._AM_HOME_CONFIRMDELETEFORM}>");
+    if(answer) {
+        $("[name=deleteform]").val($(this).attr('target'));
+        runSaveEvent();
+    }
+    return false;
 });
 
 $(".deleteapplink").click(function () {
-	answer = confirm("<{$smarty.const._AM_HOME_CONFIRMDELETEAPP}>");
-	if(answer) {
-		$("[name=deleteapp]").val($(this).attr('target'));
-		runSaveEvent();
-	}
-	return false;
+    answer = confirm("<{$smarty.const._AM_HOME_CONFIRMDELETEAPP}>");
+    if(answer) {
+        $("[name=deleteapp]").val($(this).attr('target'));
+        runSaveEvent();
+    }
+    return false;
 });
 
 $(".cloneform").click(function () {
-	$("[name=cloneform]").val($(this).attr('target'));
-	runSaveEvent();
-	return false;
+    $("[name=cloneform]").val($(this).attr('target'));
+    runSaveEvent();
+    return false;
 });
 
 $(".cloneformdata").click(function () {
-	$("[name=cloneformdata]").val($(this).attr('target'));
-	runSaveEvent();
-	return false;
+    $("[name=cloneformdata]").val($(this).attr('target'));
+    runSaveEvent();
+    return false;
 });
 
 $(".lockdown").click(function () {
-	answer = confirm("<{$smarty.const._AM_HOME_CONFIRMLOCKDOWN}>");
-	if(answer) {
-		$("[name=lockdown]").val($(this).attr('target'));
-		runSaveEvent();
-	}
-	return false;
+    answer = confirm("<{$smarty.const._AM_HOME_CONFIRMLOCKDOWN}>");
+    if(answer) {
+        $("[name=lockdown]").val($(this).attr('target'));
+        runSaveEvent();
+    }
+    return false;
 });
-
 </script>

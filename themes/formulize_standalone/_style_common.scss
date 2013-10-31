@@ -91,14 +91,14 @@ h6 {
 }
 
 /* lists */
-#xo-canvas-content ul {
+ul {
     margin: 5px;
     padding: 2px;
     list-style: decimal inside;
     text-align: left;
 }
 
-#xo-canvas-content li {
+li {
     margin-left: 5px;
     color: #000;     // TODO: CHANGE TO A VARIABLE COLOR
     background-color: inherit;
@@ -354,7 +354,7 @@ head~body #xo-canvas-rightcolumn {
 }
 
 #xo-content {
-    position:       relative;
+    //position: relative;
     clear: both;
 }
 
@@ -547,6 +547,10 @@ td.head {
     color: $colorTableHeaderText;
     font-weight: bold;
     padding: 0.5em 1em 0.5em 0.4em;
+}
+
+td.head a {
+    color: $colorTableLink;
 }
 
 .even, tr.even td {

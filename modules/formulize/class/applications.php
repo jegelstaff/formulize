@@ -141,8 +141,16 @@ class formulizeApplication extends XoopsObject {
     $this->initVar("forms", XOBJ_DTYPE_ARRAY);
     $this->initVar("links", XOBJ_DTYPE_ARRAY);
     $this->initVar("all_links", XOBJ_DTYPE_ARRAY);  
-  }
-  
+    }
+
+    function forms() {
+        static $forms = null;
+        if (null == $forms) {
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $forms = $form_handler->getFormsByApplication($this->appid);
+        }
+        return $forms;
+    }
 }
 
 class formulizeApplicationsHandler {

@@ -57,13 +57,13 @@ h6 {
   line-height: 1.3em; }
 
 /* lists */
-#xo-canvas-content ul {
+ul {
   margin: 5px;
   padding: 2px;
   list-style: decimal inside;
   text-align: left; }
 
-#xo-canvas-content li {
+li {
   margin-left: 5px;
   color: #000;
   background-color: inherit;
@@ -276,7 +276,6 @@ h6 {
   width: 30.6%; }
 
 #xo-content {
-  position: relative;
   clear: both; }
 
 /* ------ Left column / Right column content------ */
@@ -428,6 +427,9 @@ td.head {
   color: white;
   font-weight: bold;
   padding: 0.5em 1em 0.5em 0.4em; }
+
+td.head a {
+  color: white; }
 
 .even, tr.even td {
   background-color: white;
