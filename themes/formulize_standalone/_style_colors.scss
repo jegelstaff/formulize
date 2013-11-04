@@ -31,7 +31,7 @@ $colorLinkHover:        lighten-or-darken($colorLink, 15);
 
 
 // table colours
-$colorTableHeaderBackground: $colourAccent;
+$colorTableHeaderBackground: $colourPrimary;
 $colorTableHeaderText:  contrasting-color($colorTableHeaderBackground, #000, #fff);
 $colorEvenBackground:   $colorPageBackground;
 $colorOddBackground:    lighten-or-darken($colorPageBackground, 10);
