@@ -158,8 +158,11 @@ class icms_form_elements_Checkbox extends icms_form_Element {
 	 * @return    string
 	 */
 	public function render() {
-		$ret = "<div class='grouped'>";
 		$ele_name = $this->getName();
+		$element_id = $ele_name;
+		if (1 == preg_match("/de_(\d+)_(?:new|\d+)_(\d+)/", $ele_name, $matches))
+			$element_id = "f".$matches[1]."-"."e".$matches[2];	// extract form_id and elemen_id, ignoring record id
+		$ret = "<div class='grouped' id='checkbox-group-".$element_id."'>";
 		$ele_value = $this->getValue();
 		$ele_options = $this->getOptions();
 		$ele_extra = $this->getExtra();

@@ -798,13 +798,13 @@ class formulizeElementRenderer{
 				} else {
 					$renderedElement = $form_ele1->render();
 				}
-				
+
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
-					"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValues\n"
+					"$renderedElement\n$renderedHoorvs\n$disabledHiddenValues\n"
 				);
 				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
-				
+
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
