@@ -349,30 +349,14 @@ h6 {
   color: #689138; }
 
 #mainmenu a.menuTop {
-  padding-left: 3px;
-  border-top: 1px solid #cccccc;
-  border-right: 1px solid #666666;
-  border-bottom: 1px solid #666666;
-  border-left: 1px solid #cccccc; }
+  padding-left: 3px; }
 
 #mainmenu a.menuMain {
-  padding-left: 3px;
-  border-right: 1px solid #666666;
-  border-bottom: 1px solid #666666;
-  border-left: 1px solid #cccccc; }
+  padding-left: 3px; }
 
 #mainmenu a.menuSub {
   padding-left: 17px;
-  background-image: url(../icons/arr.gif);
-  background-repeat: no-repeat;
-  background-position: left;
-  background-color: #fff;
-  color: #8fbe58;
-  font-size: 0.9em;
-  font-style: italic;
-  border-right: 1px solid #666666;
-  border-bottom: 1px solid #666666;
-  border-left: 1px solid #cccccc; }
+  color: #8fbe58; }
 
 #mainmenu a.menuSub:hover {
   color: #8fbe58; }

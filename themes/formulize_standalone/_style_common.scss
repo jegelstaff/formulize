@@ -453,31 +453,31 @@ head~body #xo-canvas-rightcolumn {
 
 #mainmenu a.menuTop {
     padding-left: 3px;
-    border-top: 1px solid #ccc; // TODO: CHANGE TO A VARIABLE COLOR
-    border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
-    border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
-    border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
+    //border-top: 1px solid #ccc; // TODO: CHANGE TO A VARIABLE COLOR
+    //border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
+    //border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
+    //border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
 }
 
 #mainmenu a.menuMain {
     padding-left: 3px;
-    border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
-    border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
-    border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
+    //border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
+    //border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
+    //border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
 }
 
 #mainmenu a.menuSub {
     padding-left: 17px;
-    background-image: url(../icons/arr.gif);
-    background-repeat: no-repeat;
-    background-position: left;
-    background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
+    //background-image: url(../icons/arr.gif);
+    //background-repeat: no-repeat;
+    //background-position: left;
+    //background-color: #fff; // TODO: CHANGE TO A VARIABLE COLOR
     color: $colorLink;
-    font-size: 0.9em;
-    font-style: italic;
-    border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
-    border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
-    border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
+    //font-size: 0.9em;
+    //font-style: italic;
+    //border-right: 1px solid #666;   // TODO: CHANGE TO A VARIABLE COLOR
+    //border-bottom: 1px solid #666;  // TODO: CHANGE TO A VARIABLE COLOR
+    //border-left: 1px solid #ccc;    // TODO: CHANGE TO A VARIABLE COLOR
 }
 
 #mainmenu a.menuSub:hover {
