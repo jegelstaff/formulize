@@ -69,24 +69,26 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 }
 
 $isNew = $_POST['formulize_admin_key'] == "new" ? true : false;
-foreach($processedValues['elements'] as $property=>$value) {
-  if($property == "ele_handle") {
-    $value = str_replace($formulize_disallowed_characters_for_handles, "", $value);
-		if($value) {
-			$firstUniqueCheck = true;
-			while(!$uniqueCheck = $form_handler->isHandleUnique($value, $ele_id)) {
-						if($firstUniqueCheck) {
-									$value = $value . "_".$fid;
-									$firstUniqueCheck = false;
-						} else {
-									$value = $value . "_copy";
-						}
-			}			
-		}
-    $ele_handle = $value;
-    if($value != $processedValues['elements']['ele_handle']) { $_POST['reload_names_page'] = 1; }
-  }
-  $element->setVar($property, $value);
+foreach ($processedValues['elements'] as $property => $element_handle_name) {
+    if ($property == "ele_handle") {
+        $element_handle_name = formulizeForm::sanitize_handle_name($element_handle_name);
+        if (strlen($element_handle_name)) {
+            $firstUniqueCheck = true;
+            while (!$uniqueCheck = $form_handler->isHandleUnique($element_handle_name, $ele_id)) {
+                if ($firstUniqueCheck) {
+                    $element_handle_name = $element_handle_name . "_".$fid;
+                    $firstUniqueCheck = false;
+                } else {
+                    $element_handle_name = $element_handle_name . "_copy";
+                }
+            }
+        }
+        $ele_handle = $element_handle_name;
+        if ($element_handle_name != $processedValues['elements']['ele_handle']) {
+            $_POST['reload_names_page'] = 1;
+        }
+    }
+    $element->setVar($property, $element_handle_name);
 }
 
 if(!$ele_id = $element_handler->insert($element)) {

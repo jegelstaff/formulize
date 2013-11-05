@@ -244,11 +244,10 @@ class formulizeElementRenderer{
 					$ele_value[0]
 				);
 			break;
-			
+
 			case 'select':
-				if(strstr($ele_value[2], "#*=:*")) // if we've got a link on our hands... -- jwe 7/29/04
+				if(is_string($ele_value[2]) and strstr($ele_value[2], "#*=:*")) // if we've got a link on our hands... -- jwe 7/29/04
 				{
-					
 					// new process for handling links...May 10 2008...new datastructure for formulize 3.0
 					$boxproperties = explode("#*=:*", $ele_value[2]);
 					$sourceFid = $boxproperties[0];
@@ -798,13 +797,13 @@ class formulizeElementRenderer{
 				} else {
 					$renderedElement = $form_ele1->render();
 				}
-				
+
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
-					"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValues\n"
+					"$renderedElement\n$renderedHoorvs\n$disabledHiddenValues\n"
 				);
 				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
-				
+
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
@@ -928,7 +927,7 @@ class formulizeElementRenderer{
 				}
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
-					"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValue\n"
+					"$renderedElement\n$renderedHoorvs\n$disabledHiddenValue\n"
 				);
 				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				

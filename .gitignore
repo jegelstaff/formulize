@@ -1,3 +1,6 @@
-cache/*
-templates_c/*
-
+cache/
+modules/protector/
+modules/formulize/temp/
+templates_c/
+trust_*/
+uploads/profile/

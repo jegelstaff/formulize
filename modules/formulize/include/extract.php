@@ -185,32 +185,36 @@ function prepvalues($value, $field, $entry_id) {
         }
     }
 
-	// check if this is fullnames/usernames box
-  // wickedly inefficient to go to DB for each value!!  This loop executes once per datapoint in the result set!!
-  if($type == "select") {
-		 $ele_value = unserialize($elementArray['ele_value']);
-     	  $listtype = key($ele_value[2]);
-	  if($listtype === "{USERNAMES}" OR $listtype === "{FULLNAMES}") {
-	       $uids = explode("*=+*:", $value);
-	       if(count($uids) > 0) {
-		    if(count($uids) > 1) { array_shift($uids); }
-		    $uidFilter = extract_makeUidFilter($uids);
-		    $listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
-		    $names = go("SELECT uname, name FROM " . DBPRE . "users WHERE $uidFilter ORDER BY $listtype");
-		    $value = "";
-		    foreach($names as $thisname) {
-			 if($thisname[$listtype]) {
-			      $value .= "*=+*:" . $thisname[$listtype];
-			 } else {
-			      $value .= "*=+*:" . $thisname['uname'];
-			 }
-		    }     
-	       } else {
-		    $value = "";
-	       }
-	  }
-  }
-  		
+    // check if this is fullnames/usernames box
+    // wickedly inefficient to go to DB for each value!!  This loop executes once per datapoint in the result set!!
+    if($type == "select") {
+        $ele_value = unserialize($elementArray['ele_value']);
+        if (is_array($ele_value[2])) {
+            $listtype = key($ele_value[2]);
+            if($listtype === "{USERNAMES}" OR $listtype === "{FULLNAMES}") {
+                $uids = explode("*=+*:", $value);
+                if(count($uids) > 0) {
+                    if(count($uids) > 1) {
+                        array_shift($uids);
+                    }
+                    $uidFilter = extract_makeUidFilter($uids);
+                    $listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
+                    $names = go("SELECT uname, name FROM " . DBPRE . "users WHERE $uidFilter ORDER BY $listtype");
+                    $value = "";
+                    foreach($names as $thisname) {
+                        if($thisname[$listtype]) {
+                            $value .= "*=+*:" . $thisname[$listtype];
+                        } else {
+                            $value .= "*=+*:" . $thisname['uname'];
+                        }
+                    }
+                } else {
+                    $value = "";
+                }
+            }
+        }
+    }
+
 	//and remove any leading *=+*: while we're at it...
 	if(substr($value, 0, 5) == "*=+*:")	{
 		$value = substr_replace($value, "", 0, 5);

@@ -31,11 +31,11 @@
 ###############################################################################
 
 // these are indexes in the ele_value array
-define(EV_MULTIPLE_LIST_COLUMNS,        10);    // display multiple columns from linked lists for display in lists
-define(EV_MULTIPLE_FORM_COLUMNS,        17);    // display multiple columns from linked lists for display in form elements
-define(EV_MULTIPLE_SPREADSHEET_COLUMNS, 11);    // display multiple columns from linked lists for export to spreadsheets
+define("EV_MULTIPLE_LIST_COLUMNS",          10);    // display multiple columns from linked lists for display in lists
+define("EV_MULTIPLE_FORM_COLUMNS",          17);    // display multiple columns from linked lists for display in form elements
+define("EV_MULTIPLE_SPREADSHEET_COLUMNS",   11);    // display multiple columns from linked lists for export to spreadsheets
 
-define(SPREADSHEET_EXPORT_FOLDER, "/cache/");   // used to be /modules/formulize/export/
+define("SPREADSHEET_EXPORT_FOLDER",         "/cache/");   // used to be /modules/formulize/export/
 
 // Added Oct. 16 2006
 // setup flag for whether the Freeform Solutions user archiving patch has been applied to the core
@@ -290,81 +290,51 @@ function getSavedViewOwner($vid) {
 function availReports($uid, $groups, $fid, $frid="0") {
 	global $xoopsDB;
 
-	// get old saved reports
-      //$s_reports = q("SELECT report_id, report_name FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id_form='$fid' AND report_uid='$uid'");
-
-
-	// get old published reports
-	//$published_reports = q("SELECT report_id, report_name, report_groupids, report_uid FROM " . $xoopsDB->prefix("formulize_reports") . " WHERE report_id_form='$fid' AND report_ispublished > 0");
-
-
-	// cull published reports to ones that are published to a group that the user belongs to
-	/*$indexer = 0;
-	for($i=0;$i<count($published_reports);$i++) {
-		$report_groups = explode("&*=%4#", $published_reports[$i]['report_groupids']);
-		if(array_intersect($groups, $report_groups)) {
-			$p_reports[$indexer]['report_id'] = $published_reports[$i]['report_id'];
-			$p_reports[$indexer]['report_name'] = $published_reports[$i]['report_name'];
-			$p_reports[$indexer]['report_uid'] = $published_reports[$i]['report_uid'];
-			$indexer++;
-		}
-	}*/
-
-	//--------------repeat for saved views (new system): ------------------------
-
 	// get new saved reports
 	if($frid) {
-	      $ns_reports = q("SELECT sv_id, sv_name FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$frid' AND sv_mainform='$fid' AND sv_owner_uid='$uid'");
+	      $saved_reports = q("SELECT sv_id, sv_name FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$frid' AND sv_mainform='$fid' AND sv_owner_uid='$uid'");
 	} else {
-	      $ns_reports = q("SELECT sv_id, sv_name FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$fid' AND sv_owner_uid='$uid'");
+	      $saved_reports = q("SELECT sv_id, sv_name FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$fid' AND sv_owner_uid='$uid'");
 	}
 
 	// get new published reports
 	if($frid) {
-		$npublished_reports = q("SELECT sv_id, sv_name, sv_pubgroups, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$frid' AND sv_mainform='$fid' AND sv_pubgroups != \"\"");
+		$published_reports = q("SELECT sv_id, sv_name, sv_pubgroups, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$frid' AND sv_mainform='$fid' AND sv_pubgroups != \"\"");
 	} else {
-		$npublished_reports = q("SELECT sv_id, sv_name, sv_pubgroups, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$fid' AND sv_pubgroups != \"\"");
+		$published_reports = q("SELECT sv_id, sv_name, sv_pubgroups, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$fid' AND sv_pubgroups != \"\"");
 	}
 
 	// cull published reports to ones that are published to a group that the user belongs to
 	$indexer = 0;
-	for($i=0;$i<count($npublished_reports);$i++) {
-		$nreport_groups = explode(",", $npublished_reports[$i]['sv_pubgroups']);
-		if(array_intersect($groups, $nreport_groups)) {
-			$np_reports[$indexer]['sv_id'] = $npublished_reports[$i]['sv_id'];
-			$np_reports[$indexer]['sv_name'] = $npublished_reports[$i]['sv_name'];
-			$np_reports[$indexer]['sv_uid'] = $npublished_reports[$i]['sv_owner_uid'];
+    $available_published_reports = array();
+	for($i = 0; $i < count($published_reports); $i++) {
+		$report_groups = explode(",", $published_reports[$i]['sv_pubgroups']);
+		if(array_intersect($groups, $report_groups)) {
+			$available_published_reports[$indexer]['sv_id']   = $published_reports[$i]['sv_id'];
+			$available_published_reports[$indexer]['sv_name'] = $published_reports[$i]['sv_name'];
+			$available_published_reports[$indexer]['sv_uid']  = $published_reports[$i]['sv_owner_uid'];
 			$indexer++;
 		}
 	}
 
 	// parse out details from arrays for passing back....
 
-	foreach($s_reports as $id=>$details) {
-		$sortnames[] = $details['report_name'];
-	}
-	array_multisort($sortnames, $s_reports);
-	unset($sortnames);
-	foreach($p_reports as $id=>$details) {
-		$sortnames[] = $details['report_name'];
-	}
+    $sortnames = array();
+    foreach($saved_reports as $id=>$details) {
+        $sortnames[] = $details['report_name'];
+    }
+    array_multisort($sortnames, $saved_reports);
 
-	array_multisort($sortnames, $p_reports);
-	unset($sortnames);
-	foreach($ns_reports as $id=>$details) {
+    $sortnames = array();
+	foreach($available_published_reports as $id=>$details) {
 		$sortnames[] = $details['report_name'];
 	}
-	array_multisort($sortnames, $ns_reports);
-	unset($sortnames);
-	foreach($np_reports as $id=>$details) {
-		$sortnames[] = $details['report_name'];
-	}
-	array_multisort($sortnames, $np_reports);
+	array_multisort($sortnames, $available_published_reports);
 
-      $to_return[0] = $s_reports;
-	$to_return[1] = $p_reports;
-	$to_return[2] = $ns_reports;
-	$to_return[3] = $np_reports;
+    $to_return[0] = array();    // in an older version the saved and published reports were returned but then the
+    $to_return[1] = array();    //  methed changed, and new array indexes were added and these were left for compatability
+	$to_return[2] = $saved_reports;
+	$to_return[3] = $available_published_reports;
 
 	return $to_return;
 }
@@ -1033,7 +1003,9 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
   // get one-to-one links
   $one_q1 = q("SELECT fl_form1_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 1 AND fl_frame_id = $frid $unified_display");
   $one_q2 = q("SELECT fl_form2_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 1 AND fl_frame_id = $frid $unified_display");
-  $indexer=0;
+  $indexer = 0;
+  $one_to_one = array();
+  $many_to_one = array();
   foreach($one_q1 as $res1) {
     $one_to_one[$indexer]['fid'] = $res1['fl_form1_id'];
     $one_to_one[$indexer]['keyself'] = $res1['fl_key1'];
@@ -1168,8 +1140,10 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
     if(isset($entries[$fid][0])) {
       if($thisent = $entries[$fid][0]) { // for some reason PHP 5 won't let us evaluate this directly
         $entries_found = findLinkedEntries($fid, $many_fid, $entries[$fid][0], $gperm_handler, $owner_groups, $mid, $member_handler, $owner);
-        foreach($entries_found as $many_entry) {
-          $sub_entries[$many_fid['fid']][] = $many_entry;
+        if (is_array($entries_found)) {
+            foreach($entries_found as $many_entry) {
+              $sub_entries[$many_fid['fid']][] = $many_entry;
+            }
         }
       }
     } else {
@@ -1785,7 +1759,7 @@ function prepDataForWrite($element, $ele) {
               break;
             }
 
-            if(substr($ele, 0, 9) == "newvalue:") {
+            if(is_string($ele) and substr($ele, 0, 9) == "newvalue:") {
                 // need to add a new entry to the underlying source form if this is a link
                 // need to add an option to the option list for the element list, if this is not a link...to do later
                 $newValue = substr($ele, 9);
@@ -2074,40 +2048,41 @@ function writeOtherValues($id_req, $fid) {
 	 */
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
 	$thisForm = new formulizeForm($fid);
-	foreach($GLOBALS['formulize_other'] as $ele_id=>$value) {
+    if (isset($GLOBALS['formulize_other']) and is_array($GLOBALS['formulize_other'])) {
+        foreach($GLOBALS['formulize_other'] as $ele_id=>$value) {
+            // filter out any ele_ids that are not part of this form, since when a framework is used, the formulize_other array would contain ele_ids from multiple forms
+            if(!in_array($ele_id, $thisForm->getVar('elements'))) { continue; }
+            // determine the current status of that element
+            $sql = "SELECT * FROM " . $xoopsDB->prefix("formulize_other") . " WHERE ele_id='$ele_id' AND id_req='$id_req' LIMIT 0,1";
+            $result = $xoopsDB->query($sql);
+            $array = $xoopsDB->fetchArray($result);
+            if(isset($array['other_id'])) {
+                $existing_value = true;
+            } else {
+                $existing_value = false;
+            }
 
-		// filter out any ele_ids that are not part of this form, since when a framework is used, the formulize_other array would contain ele_ids from multiple forms
-		if(!in_array($ele_id, $thisForm->getVar('elements'))) { continue; }
-		// determine the current status of that element
-		$sql = "SELECT * FROM " . $xoopsDB->prefix("formulize_other") . " WHERE ele_id='$ele_id' AND id_req='$id_req' LIMIT 0,1"; 
-		$result = $xoopsDB->query($sql);
-		$array = $xoopsDB->fetchArray($result);
-		if(isset($array['other_id'])) { 
-			$existing_value = true;
-		} else {
-			$existing_value = false;
-		}
-
-		if(get_magic_quotes_gpc()) { $value = stripslashes($value); }
-		$value = $myts->htmlSpecialChars($value);
-		if($value != "" AND $existing_value) { // update
-			$sql = "UPDATE " . $xoopsDB->prefix("formulize_other") . " SET other_text=\"" . mysql_real_escape_string($value) . "\" WHERE id_req='$id_req' AND ele_id='$ele_id'";
-		}elseif($value != "" AND !$existing_value) { // add 
-			$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$id_req\", \"$ele_id\", \"" . mysql_real_escape_string($value) . "\")";
-		}elseif($value == "" AND $existing_value) { // delete
-			$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$id_req' AND ele_id='$ele_id'";
-		}else { // do nothing (only other combination is....  if(!isset($value) AND !$existing_value) ....ie: nothing passed, and nothing existing in DB
-			$sql = false;
-		}
-		if($sql) {
-			if(!$result = $xoopsDB->query($sql)) {
-				exit("Error writing 'Other' value to the database with this SQL:<br>$sql");
-			}
-		}
-		unset($GLOBALS['formulize_other'][$ele_id]);
-	}
+            if(get_magic_quotes_gpc()) { $value = stripslashes($value); }
+            $value = $myts->htmlSpecialChars($value);
+            if($value != "" AND $existing_value) { // update
+                $sql = "UPDATE " . $xoopsDB->prefix("formulize_other") . " SET other_text=\"" . mysql_real_escape_string($value) . "\" WHERE id_req='$id_req' AND ele_id='$ele_id'";
+            }elseif($value != "" AND !$existing_value) { // add
+                $sql = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$id_req\", \"$ele_id\", \"" . mysql_real_escape_string($value) . "\")";
+            }elseif($value == "" AND $existing_value) { // delete
+                $sql = "DELETE FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$id_req' AND ele_id='$ele_id'";
+            }else {
+                // do nothing (only other combination is....  if(!isset($value) AND !$existing_value) ....ie: nothing passed, and nothing existing in DB
+                $sql = false;
+            }
+            if($sql) {
+                if(!$result = $xoopsDB->query($sql)) {
+                    exit("Error writing 'Other' value to the database with this SQL:<br>$sql");
+                }
+            }
+            unset($GLOBALS['formulize_other'][$ele_id]);
+        }
+    }
 }
-
 
 
 // THIS FUNCTION CREATES A SERIES OF ARRAYS THAT CONTAIN ALL THE INFORMATION NECESSARY FOR THE LIST OF ELEMENTS THAT GETS DISPLAYED ON THE ADMIN SIDE WHEN CREATING OR EDITING CERTAIN FORM ELEMENTS
@@ -2272,7 +2247,8 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
 			$start = 0;
 		}
 		return $printText;
-	} elseif($ele_type=='select' AND strstr($ele_value[2], "#*=:*") AND $ele_value[7] == 1) { // dealing with a linked selectbox
+    } elseif($ele_type=='select' AND is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*") AND $ele_value[7] == 1) {
+        // dealing with a linked selectbox
 		$boxproperties = explode("#*=:*", $ele_value[2]);
 		// NOTE:
 		// boxproperties[0] is form_id

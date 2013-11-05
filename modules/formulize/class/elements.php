@@ -138,7 +138,25 @@ class formulizeformulize extends XoopsObject {
         
 		return $indexType;
 	}
-	
+
+    static function sanitize_handle_name($handle_name) {
+        // strip non-alphanumeric characters from form and element handles
+        return preg_replace("/[^a-zA-Z0-9_]+/", "", $handle_name);
+    }
+
+    public function assignVar($key, $value) {
+        if ("ele_handle" == $key) {
+            $value = self::sanitize_handle_name($value);
+        }
+        parent::assignVar($key, $value);
+    }
+
+    public function setVar($key, $value, $not_gpc = false) {
+        if ("ele_handle" == $key) {
+            $value = self::sanitize_handle_name($value);
+        }
+        parent::setVar($key, $value, $not_gpc);
+    }
 }
 
 class formulizeElementsHandler {
@@ -161,7 +179,7 @@ class formulizeElementsHandler {
 		static $cachedElements = array();
 		if(isset($cachedElements[$id])) {
 			return $cachedElements[$id];
-		}	
+		}
 		if ($id > 0 AND is_numeric($id)) {
 			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_id='.$id;
 			if (!$result = $this->db->query($sql)) {
@@ -460,7 +478,4 @@ class formulizeElementsHandler {
 		}
 		return $value;
 	}
-	
 }
-
-?>

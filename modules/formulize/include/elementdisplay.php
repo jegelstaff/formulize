@@ -41,7 +41,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 $GLOBALS['formulize_renderedElementHasConditions'] = array();
 
 // $groups is optional and can be passed in to override getting the user's groups.  This is necessary for the registration form to work with custom displayed elements
-function displayElement($formframe="", $ele, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $profileForm, $groups="") {
+function displayElement($formframe="", $ele, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $profileForm = null, $groups="") {
 
 	static $cachedPrevEntries = array();
 	static $lockedEntries = array(); // keep track of the entries we have determined are locked 
@@ -272,11 +272,25 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
 		if ($entry > 0 AND !isset($lockedEntries[$element->getVar('id_form')][$entry])) {
-			$lockFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName","w");
-			fwrite($lockFile, "$uid,$username");
-			fclose($lockFile);
-			$entriesThatHaveBeenLockedThisPageLoad[$element->getVar('id_form')][$entry] = true;
-		}
+            if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {
+                $lockFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName", "w");
+                if (false !== $lockFile) {
+                    fwrite($lockFile, "$uid,$username");
+                    fclose($lockFile);
+                    $entriesThatHaveBeenLockedThisPageLoad[$element->getVar('id_form')][$entry] = true;
+                }
+            } else {
+                if (defined("ICMS_ERROR_LOG_SEVERITY") and ICMS_ERROR_LOG_SEVERITY >= E_WARNING) {
+                    static $lock_file_warning_issued = false;
+                    if (!$lock_file_warning_issued) {
+                        // cannot write to Formulize temp folder to create lock entries
+                        error_log("Notice: Formulize temp folder does not exist or is not writeable, so lock file cannot be created in ".
+                            XOOPS_ROOT_PATH."/modules/formulize/temp/");
+                        $lock_file_warning_issued = true;
+                    }
+                }
+            }
+        }
 		
 		if(!$renderElement) {
 			return array(0=>$form_ele, 1=>$isDisabled);			

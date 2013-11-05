@@ -57,8 +57,8 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid) AND $_POST['for
 }
 
 if(($_POST['new_app_yes_no'] == "yes" AND $_POST['applications-name'])) {
-  $newAppObject = $application_handler->create();  
-} 
+  $newAppObject = $application_handler->create();
+}
 
 // get all the existing applcations that this form object was assigned to
 if(isset($_POST['apps']) AND count($_POST['apps']) > 0) {
@@ -70,12 +70,11 @@ $processedValues['forms']['headerlist'] = "*=+*:".implode("*=+*:",$_POST['header
 
 // form_handle cannot have any period, strip all of the periods out
 $form_handle_from_ui = $processedValues['forms']['form_handle'];
-$corrected_form_handle = str_replace($formulize_disallowed_characters_for_handles, "", $form_handle_from_ui);
+$corrected_form_handle = formulizeForm::sanitize_handle_name($form_handle_from_ui);
 if($corrected_form_handle != $form_handle_from_ui) {
   $formulize_altered_form_handle = true;
-  $processedValues['forms']['form_handle'] = $corrected_form_handle;  
+  $processedValues['forms']['form_handle'] = $corrected_form_handle;
 }
-
 
 // form_handle can not be blank, default to form id if blank
 if( $processedValues['forms']['form_handle'] == "" ) {
@@ -243,7 +242,8 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $for
   }
   print "/* eval */ ";
   if($formulize_altered_form_handle) {
-    print " alert('We removed some characters from the form handle because they are not allowed in the database table names or in PHP variables (ie: ".addslashes(implode(",", $formulize_disallowed_characters_for_handles)).", etc)  Sorry.  :-('); ";
+    print " alert('Some characters, such as punctuation, were removed from the form handle because they ".
+      "are not allowed in the database table names or PHP variables.');\n";
   }
   print " reloadWithScrollPosition('".XOOPS_URL ."/modules/formulize/admin/ui.php?page=form&aid=$appidToUse&fid=$fid');";
 }

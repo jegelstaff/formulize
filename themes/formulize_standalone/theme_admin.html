@@ -89,7 +89,7 @@
 		          <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{else}><{$icms_url}>/modules/system/images/imagesarrow1.gif<{/if}>);"><{$sub.title}></a></li>
                 <{elseif $item.id == 'opsystem'}>
                   <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>"><{$sub.title}></a>
-                    <{if $sub.hassubs}>
+                    <{if isset($sub.hassubs) and $sub.hassubs}>
                       <ul>
                         <{foreach item=subitem from=$sub.subs}>
                           <li><a href="<{$subitem.link}>" style="background-image: url(<{if $subitem.small!=''}><{$icms_url}>/modules/system/<{$subitem.small}><{else}><{$icms_url}>/modules/system/images/imagesarrow1.gif<{/if}>);"><{$subitem.title}></a>
@@ -107,7 +107,7 @@
                   </li>
                 <{elseif $item.id == 'modules'}>
 		          <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{else}><{$icms_url}>/modules/system/images/modulesitem.png<{/if}>);"><{$sub.title}></a>
-    		      <{if $sub.hassubs}>
+    		      <{if isset($sub.hassubs) and $sub.hassubs}>
 	    	        <ul>
 		              <{foreach item=subitem from=$sub.subs}>
 		                <li><a href="<{$subitem.link}>"><{$subitem.title}></a></li>
@@ -215,10 +215,11 @@
 			<{/if}>
 		</div>
 	</div>
+	<div id="footer-padding">&nbsp;</div>
 </div>
 	<!-- Footer -->
 	<div id="xo-footer">
-	<{* <div id="banner" style="margin-left: auto; margin-right: auto;"><{$icms_banner}> 
+	<{* <div id="banner" style="margin-left: auto; margin-right: auto;"><{$icms_banner}>
 	<br /> *}>
 	<{$icms_footadm}>
 	</div>
