@@ -70,8 +70,8 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 
 $isNew = $_POST['formulize_admin_key'] == "new" ? true : false;
 foreach ($processedValues['elements'] as $property => $element_handle_name) {
-    $element_handle_name = formulizeForm::sanitize_handle_name($element_handle_name);
     if ($property == "ele_handle") {
+        $element_handle_name = formulizeForm::sanitize_handle_name($element_handle_name);
         if (strlen($element_handle_name)) {
             $firstUniqueCheck = true;
             while (!$uniqueCheck = $form_handler->isHandleUnique($element_handle_name, $ele_id)) {
