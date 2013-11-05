@@ -928,7 +928,7 @@ class formulizeElementRenderer{
 				}
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
-					"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValue\n"
+					"$renderedElement\n$renderedHoorvs\n$disabledHiddenValue\n"
 				);
 				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				
