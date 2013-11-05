@@ -111,8 +111,8 @@ $view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, 
 $config_handler =& xoops_gethandler('config');
 $formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
 
+$currentURL = getCurrentURL();
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
-	$currentURL = getCurrentURL();
 	if(strstr($currentURL, "/modules/formulize/")) { // if it's a formulize page, reload to login screen
 		redirect_header(XOOPS_URL . "/user.php?xoops_redirect=$currentURL", 3, _formulize_NO_PERMISSION);
 	} else { // if formulize is just being included elsewhere, then simply show error and end script
