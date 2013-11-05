@@ -1666,6 +1666,7 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 		
 			$unique_users = array_unique($all_add_users);
 
+			$punames = array();
 			foreach($unique_users as $uid) {
 				$uqueryforrealnames = "SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=$uid";
 				$uresqforrealnames = $xoopsDB->query($uqueryforrealnames);
@@ -1676,8 +1677,7 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 
 			// alphabetize the proxy list added 11/2/04
 			array_multisort($punames, $unique_users);
-	
-			
+
 			if($entry_id) {
 				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 				$data_handler = new formulizeDataHandler($fid);
@@ -2128,13 +2128,13 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 					// NEED TO ADD IN INITIALIZATION OF LINKED SELECT BOXES FOR SUBFORMS
 
 					// NOTE:  unique delimiter used to identify LINKED select boxes, so they can be handled differently.
-					if(strstr($ele_value[2], "#*=:*")) // if we've got a linked select box, then do everything differently
-					{
+					if(is_string($ele_value[2]) and strstr($ele_value[2], "#*=:*"))
+                    {
+                        // if we've got a linked select box, then do everything differently
 						$ele_value[2] .= "#*=:*".$value; // append the selected entry ids to the form and handle info in the element definition
 					}
 					else
 					{
-
 						// put the array into another array (clearing all default values)
 						// then we modify our place holder array and then reassign
 	
@@ -2301,12 +2301,15 @@ function formulize_formatDateTime($dt) {
 
 
 // write the settings passed to this page from the view entries page, so the view can be restored when they go back
-function writeHiddenSettings($settings, $form) {
+function writeHiddenSettings($settings, $form = null) {
 	//unpack settings
 	$sort = $settings['sort'];
 	$order = $settings['order'];
 	$oldcols = $settings['oldcols'];
 	$currentview = $settings['currentview'];
+	$searches = array();
+	if (!isset($settings['calhidden']) and !is_array($settings['calhidden']))
+		$settings['calhidden'] = array();
 	foreach($settings as $k=>$v) {
 		if(substr($k, 0, 7) == "search_" AND $v != "") {
 			$thiscol = substr($k, 7);

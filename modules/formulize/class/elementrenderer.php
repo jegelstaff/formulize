@@ -244,11 +244,10 @@ class formulizeElementRenderer{
 					$ele_value[0]
 				);
 			break;
-			
+
 			case 'select':
-				if(strstr($ele_value[2], "#*=:*")) // if we've got a link on our hands... -- jwe 7/29/04
+				if(is_string($ele_value[2]) and strstr($ele_value[2], "#*=:*")) // if we've got a link on our hands... -- jwe 7/29/04
 				{
-					
 					// new process for handling links...May 10 2008...new datastructure for formulize 3.0
 					$boxproperties = explode("#*=:*", $ele_value[2]);
 					$sourceFid = $boxproperties[0];

@@ -509,7 +509,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// if this is not a report/view that was created by the user, and they don't have update permission, then convert any { } terms to literals
 		// remove any { } terms that don't have a passed in value (so they appear as "" to users)
 		// only deal with terms that start and end with { } and not ones where the { } terms is not the entire term
-		if(substr($v, 0, 1) == "{" AND substr($v, -1) == "}" AND substr($k, 0, 7) == "search_" AND in_array(substr($k, 7), $showcols)) {
+		if(is_string($v) and substr($v, 0, 1) == "{" AND substr($v, -1) == "}" AND substr($k, 0, 7) == "search_" AND in_array(substr($k, 7), $showcols)) {
 			$activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
 			$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
 			$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
@@ -3875,8 +3875,7 @@ function removeNotAllowedCols($fid, $frid, $cols, $groups) {
 // THIS FUNCTION HANDLES INTERPRETTING A LOE SCREEN TEMPLATE
 // $type is the top/bottom setting
 // $buttonCodeArray is the available buttons that have been pre-compiled by the drawInterface function
-function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings, $messageText) {
-
+function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings, $messageText = null) {
 	// include necessary files
 	if(strstr($screen->getVar($type.'template'), 'buildFilter(')) {
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/calendardisplay.php";
@@ -4255,6 +4254,8 @@ function formulize_runAdvancedSearch($query_string, $data) {
 
 // THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
 function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order="", $frid, $fid, $scope, $screen="", $currentURL="", $forcequery = 0) {
+	if (!is_array($searches))
+		$searches = array();
 
 	// setup "flatscope" so we can compare arrays of groups that make up the scope, from page load to pageload
 	if(is_array($scope)) {

@@ -77,7 +77,8 @@ class formulizeFramework extends XoopsObject {
 				$notAFramework = true;
 			}
 			$formHandles = array();
-			if(in_array($xoopsDB->prefix("formulize_framework_forms"), $existingTables)) {
+			// $existingTables is not defined in this file, so this code cannot run as written
+			if(false and in_array($xoopsDB->prefix("formulize_framework_forms"), $existingTables)) {
 				$frame_form_handles_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_forms") . " WHERE ff_frame_id=$frid");
 				if(!isset($frame_form_handles_q[0])) {
 					$notAFramework = true;
