@@ -13,4 +13,4 @@ jQuery(document).ready(function() {
             jQuery(this).parents(".grouped").find("input").attr("checked", false);
         }
     });
-}
+});
