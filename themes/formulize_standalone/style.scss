@@ -1,5 +1,13 @@
 @import '_style_common';
 
+div.xo-theme-form > table {
+    table-layout: fixed;    // prevent subforms from making the table too wide
+}
+
+div.xo-theme-form > table.outer > tbody > tr > td {
+    overflow: scroll;   // table cell contents, specifically subforms, should scroll if the content is too wide
+}
+
 /* horizontal lines between form questions */
 div.xo-theme-form > table.outer > tbody > tr > td {
     border-bottom: 1px solid $colourPrimary;
