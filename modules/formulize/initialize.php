@@ -33,8 +33,6 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// futher testing
-
 if (file_exists(XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php'))
     include_once XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php';
 
