@@ -34,12 +34,6 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 
 class formulizeNewCheckboxElement extends formulizeformulize {
     
-    var $needsDataType;
-    var $overrideDataType;
-    var $hasData;
-    var $name;
-    var $adminCanMakeRequired;
-    var $alwaysValidateInputs;
     function __construct() {
         $this->name = "Custom Check boxes";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid

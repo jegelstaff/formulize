@@ -712,7 +712,7 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				} else {
 					$form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true); // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
 				}
-				$form->setExtra("enctype='multipart/form-data'"); // impératif!
+				$form->setExtra("enctype='multipart/form-data'"); // impï¿½ratif!
 	
 				if(is_array($settings)) { $form = writeHiddenSettings($settings, $form); }
 				$form->addElement (new XoopsFormHidden ('ventry', $settings['ventry'])); // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
@@ -1758,6 +1758,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	$criteria->setOrder('ASC');
 	$elements =& $formulize_mgr->getObjects2($criteria,$fid,true); // true makes the keys of the returned array be the element ids
 	$count = 0;
+	global $gridCounter;
 	$gridCounter = array();
 	$inGrid = 0;
 	
@@ -1963,7 +1964,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			} else {
 				$form->insertBreak($gridContents, "head"); // head is the css class of the cell				
 			}
-		} elseif($ele_type == "ib") {// if it's a break, handle it differently...
+		} elseif($ele_type == "ib" OR is_array($form_ele)) {// if it's a break, handle it differently...$form_ele may be an array if it's a non-interactive element such as a grid
 			$form->insertBreakFormulize("<div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1], 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id); // final param is used as id name in the table row where this element exists, so we can interact with it for showing and hiding
 		} else {
 			$form->addElement($form_ele, $req);
@@ -2032,14 +2033,14 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 
 	global $myts;
 	/*
-	 * Hack by Félix <INBOX Solutions> for sedonde
+	 * Hack by Fï¿½lix <INBOX Solutions> for sedonde
 	 * myts == NULL
 	 */
 	if(!$myts){
 		$myts =& MyTextSanitizer::getInstance();
 	}
 	/*
-	 * Hack by Félix <INBOX Solutions> for sedonde
+	 * Hack by Fï¿½lix <INBOX Solutions> for sedonde
 	 * myts == NULL
 	 */
 			$type = $i->getVar('ele_type');
@@ -2111,12 +2112,12 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 					break;
 				case "textarea":
 				/*
-				 * Hack by Félix<INBOX International>
+				 * Hack by Fï¿½lix<INBOX International>
 				 * Adding colorpicker form element
 				 */
 				case "colorpick":
 				/*
-				 * End of Hack by Félix<INBOX International>
+				 * End of Hack by Fï¿½lix<INBOX International>
 				 * Adding colorpicker form element
 				 */
 					$ele_value[0] = $value;								
@@ -2234,53 +2235,7 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 			return $ele_value;
 }
 
-// THIS FUNCTION TAKES THE ELE_VALUE SETTINGS FOR A GRID AND RETURNS ALL THE NECESSARY PARAMS READY FOR PASSING TO THE DISPLAYGRID FUNCTION
-// ALSO WORKS OUT THE NUMBER OF ELEMENTS THAT CAN BE ENTERED INTO THIS GRID
-function compileGrid($ele_value, $title, $element) {
 
-	// 1 is heading
-	// 2 is row captions
-	// 3 is col captions
-	// 4 is shading
-	// 5 is first element
-
-	switch($ele_value[0]) {
-		case "caption":
-			global $myts;
-			if(!$myts){
-				$myts =& MyTextSanitizer::getInstance();
-			}
-			// call the text sanitizer, first try to convert HTML chars, and if there were no conversions, then do a textarea conversion to automatically make links clickable
-			$ele_caption = trans($element->getVar('ele_caption'));
-			$htmlCaption = $myts->undoHtmlSpecialChars($ele_caption);
-			if($htmlCaption == $ele_caption) {
-				$ele_caption = $myts->displayTarea($ele_caption);
-			} else {
-				$ele_caption = $htmlCaption;
-			}
-			$toreturn[] = $ele_caption;
-			break;
-		case "form":
-			$toreturn[] = $title;
-			break;
-		case "none":
-			$toreturn[] = "";
-			break;
-	}
-
-	$toreturn[] = explode(",", $ele_value[1]);
-	$toreturn[] = explode(",", $ele_value[2]);
-
-	$toreturn[] = $ele_value[3];
-
-	$toreturn[] = $ele_value[4];
-
-	// number of cells in this grid
-	$toreturn[] = count($toreturn[1]) * count($toreturn[2]);
-
-	return $toreturn;
-
-}
 
 // THIS FUNCTION FORMATS THE DATETIME INFO FOR DISPLAY CLEANLY AT THE TOP OF THE FORM
 function formulize_formatDateTime($dt) {

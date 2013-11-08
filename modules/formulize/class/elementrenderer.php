@@ -1017,7 +1017,7 @@ class formulizeElementRenderer{
 				);
 			break;
 			/*
-			 * Hack by Félix<INBOX International>
+			 * Hack by Fï¿½lix<INBOX International>
 			 * Adding colorpicker form element
 			 */
 			case 'colorpick':
@@ -1046,28 +1046,31 @@ class formulizeElementRenderer{
 				} // end of check to see if the default setting is for real
 			break;
 			/*
-			 * End of Hack by Félix<INBOX International>
+			 * End of Hack by Fï¿½lix<INBOX International>
 			 * Adding colorpicker form element
 			 */
 			default:
 				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
 					$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
-					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $form_ele_id, $isDisabled, $this->_ele, $entry); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to
-					if(!$isDisabled AND ($this->_ele->getVar('ele_req') OR $this->_ele->alwaysValidateInputs)) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
-						$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $form_ele_id, $this->_ele, $entry);
-					}
-					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
-					$isDisabled = false; // the render method must handle providing a disabled output, so as far as the rest of the logic here goes, the element is not disabled but should be rendered as is
-					$baseCustomElementObject = $elementTypeHandler->create();
-					if($baseCustomElementObject->hasData) {
-						$customElementHasData = true;
+					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $form_ele_id, $isDisabled, $this->_ele, $entry, $screen); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
+					// if form_ele is an array, then we want to treat it the same as an "insertbreak" element, ie: it's not a real form element object
+					if(!is_array($form_ele)) {
+    					if(!$isDisabled AND ($this->_ele->getVar('ele_req') OR $this->_ele->alwaysValidateInputs) AND $this->_ele->hasData) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
+    						$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $form_ele_id, $this->_ele, $entry);
+    					}
+    					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+    					$isDisabled = false; // the render method must handle providing a disabled output, so as far as the rest of the logic here goes, the element is not disabled but should be rendered as is
+    					$baseCustomElementObject = $elementTypeHandler->create();
+    					if($baseCustomElementObject->hasData) {
+    						$customElementHasData = true;
+    					}
 					}
 				} else {
 					return false;
 				}
 			break;
 		}
-		if(is_object($form_ele) AND !$isDisabled) {
+		if(is_object($form_ele) AND !$isDisabled AND $this->_ele->hasData) {
 			if($previousEntryUI) {
 				$previousEntryUIRendered = "&nbsp;&nbsp;" . $previousEntryUI->render();				
 			} else {
@@ -1094,10 +1097,10 @@ class formulizeElementRenderer{
 				$form_ele_new->setRequired();
 			}
 			return $form_ele_new;
-		} elseif(is_object($form_ele) AND $isDisabled) { // element is disabled
+		} elseif(is_object($form_ele) AND $isDisabled AND $this->_ele->hasData) { // element is disabled
 			$form_ele = $this->formulize_disableElement($form_ele, $ele_type, $ele_desc);
 			return $form_ele;
-		} else { // form ele is not an object...only happens for IBs?
+		} else { // form ele is not an object...and/or has no data.  Happens for IBs and for non-interactive elements, like grids.
 			return $form_ele;
 		}
 		
