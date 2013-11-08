@@ -73,6 +73,53 @@ if(isset($formulize_screen_id) AND is_numeric($formulize_screen_id)) {
 } else {
 	$sid="";
 }
+    
+// get the global or group permission
+$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+$mid = getFormulizeModId();
+$gperm_handler = &xoops_gethandler('groupperm');
+$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
+$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
+
+$config_handler =& xoops_gethandler('config');
+$formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
+    
+// query added Oct 2013
+// get the default menu link for the current user, and set the fid or sid based on it
+    
+if( !$fid AND !$sid) {
+    
+    $groupSQL = "";
+    foreach($groups as $group) {
+        if(strlen($groupSQL) == 0){
+            $groupSQL .= " AND ( perm.group_id=". $group . " ";
+        }else{
+            $groupSQL .= " OR perm.group_id=". $group . " ";
+        }
+    }
+    $groupSQL .= ")";
+    
+    $sql = 'SELECT links.screen FROM '.$xoopsDB->prefix("formulize_menu_links").' AS links ';
+    $sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' AS perm ON links.menu_id = perm.menu_id ';
+    $sql .= ' WHERE  default_screen = 1'. $groupSQL . 'ORDER BY perm.group_id';
+    
+    $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.mysql_error());
+    
+    if ( $res ) {
+        $row = $xoopsDB->fetchArray ( $res );	  
+        $screenID = $row['screen'];
+        
+        if ( strpos($screenID,"fid=") !== false){
+            $fid = substr($screenID, strpos($screenID,"=")+1 );
+        }
+        else{
+            $sid = substr($screenID, strpos($screenID,"=")+1 );
+        }	
+    }
+}
+
+    
 $screen_handler =& xoops_getmodulehandler('screen', 'formulize');
 if($sid) {
 	$thisscreen1 = $screen_handler->get($sid); // first get basic screen object to determine type
@@ -99,16 +146,7 @@ if ( $res ) {
 $myts =& MyTextSanitizer::getInstance();
 $title = $myts->displayTarea($desc_form);
 
-// get the global or group permission
-$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-$mid = getFormulizeModId();
-$gperm_handler = &xoops_gethandler('groupperm');
-$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
-$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
 
-$config_handler =& xoops_gethandler('config');
-$formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
 
 $currentURL = getCurrentURL();
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
