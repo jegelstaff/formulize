@@ -1570,14 +1570,13 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		}
 		$col_two .= "\n
 <script type=\"text/javascript\">
-
 	jQuery(document).ready(function() {
-		$(\"#subform-$subformElementId\").accordion({
+		jQuery(\"#subform-$subformElementId\").accordion({
 			autoHeight: false, // no fixed height for sections
 			collapsible: true, // sections can be collapsed
 			active: ";
-			if($_POST['target_sub_instance'] == $subformElementId AND $_POST['target_sub'] == $sfid) {	
-				$col_two .= count($sub_entries[$sfid])-$_POST['numsubents'];	
+			if($_POST['target_sub_instance'] == $subformElementId AND $_POST['target_sub'] == $sfid) {
+				$col_two .= count($sub_entries[$sfid])-$_POST['numsubents'];
 			} elseif(is_numeric($_POST['subform_entry_'.$subformElementId.'_active'])) {
 				$col_two .= $_POST['subform_entry_'.$subformElementId.'_active'];
 			} else {
@@ -1586,13 +1585,11 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 			$col_two .= ",
 			header: \"> div > p.subform-header\"
 		});
-		$(\"#subform-$subformElementId\").fadeIn();
+		jQuery(\"#subform-$subformElementId\").fadeIn();
 	});
-
 </script>
 
 <style>
-
 p.subform-header {
 	font-size: 10pt !important;
 }
