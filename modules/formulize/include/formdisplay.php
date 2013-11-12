@@ -2430,11 +2430,9 @@ function showPop(url) {
 		}
 	}
 	window.formulize_popup.focus();
-
 }
 
 function validateAndSubmit() {
-    
     var formulize_numbersonly_found= false;
     jQuery(".numbers-only-textbox").each(function() {
         if(jQuery(this).val().match(/[a-z]/i) !== null) {
@@ -2442,14 +2440,14 @@ function validateAndSubmit() {
             if (!answer){
                 jQuery(this).focus();
                 formulize_numbersonly_found = true;
-            }						
-        } 	
+            }
+        }
     });
-    
+
     if (formulize_numbersonly_found){
         return false;
-	}
-    
+    }
+
 <?php
 if(!$nosave) { // need to check for add or update permissions on the current user and this entry before we include this javascript, otherwise they should not be able to save the form
 ?>
@@ -2460,20 +2458,21 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 	}
 	if(validate) {
 		jQuery(".subform-accordion-container").map(function() {
-			subelementid = jQuery(this).attr('subelementid');			
+			subelementid = jQuery(this).attr('subelementid');
 			window.document.getElementById('subform_entry_'+subelementid+'_active').value = jQuery(this).accordion( "option", "active" );
 		});
 		jQuery('#submitx').attr('disabled', 'disabled');
 		if(jQuery('.formulize-form-submit-button')) {
 			jQuery('.formulize-form-submit-button').attr('disabled', 'disabled');
 		}
-		window.document.getElementById('formulizeform').style.opacity = 0.5;
-		window.document.getElementById('savingmessage').style.display = 'block';
-		
-		window.scrollTo(0,0);
-		formulizechanged = 0; // don't want to trigger the beforeunload warning
-		window.document.formulize.submit(); 
-	}
+        if (formulizechanged) {
+            window.document.getElementById('formulizeform').style.opacity = 0.5;
+            window.document.getElementById('savingmessage').style.display = 'block';
+            window.scrollTo(0,0);
+            formulizechanged = 0; // don't want to trigger the beforeunload warning
+        }
+        window.document.formulize.submit();
+    }
 <?php
 } // end of if not $nosave
 ?>
