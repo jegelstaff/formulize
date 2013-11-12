@@ -1070,7 +1070,7 @@ class formulizeElementRenderer{
 				}
 			break;
 		}
-		if(is_object($form_ele) AND !$isDisabled AND $this->_ele->hasData) {
+		if(is_object($form_ele) AND !$isDisabled /*AND $this->_ele->hasData*/) {
 			if($previousEntryUI) {
 				$previousEntryUIRendered = "&nbsp;&nbsp;" . $previousEntryUI->render();				
 			} else {
