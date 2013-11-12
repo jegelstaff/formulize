@@ -509,7 +509,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// if this is not a report/view that was created by the user, and they don't have update permission, then convert any { } terms to literals
 		// remove any { } terms that don't have a passed in value (so they appear as "" to users)
 		// only deal with terms that start and end with { } and not ones where the { } terms is not the entire term
-		if(substr($v, 0, 1) == "{" AND substr($v, -1) == "}" AND substr($k, 0, 7) == "search_" AND in_array(substr($k, 7), $showcols)) {
+		if(is_string($v) AND substr($v, 0, 1) == "{" AND substr($v, -1) == "}"
+			AND substr($k, 0, 7) == "search_" AND in_array(substr($k, 7), $showcols))
+		{
 			$requestKeyToUse = substr($v,1,-1);
 			if(!strstr($requestKeyToUse,"}") AND !strstr($requestKeyToUse, "{")) { // double check that there's no other { } in the term!
 				$activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)

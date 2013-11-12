@@ -1778,12 +1778,13 @@ function prepDataForWrite($element, $ele) {
 		break;
             }
 
-	    // section to handle linked select boxes differently from others...
-	    $ele_value_from_object = $element->getVar('ele_value');
-	    if(strstr($ele_value_from_object[2], "#*=:*")) { // if we've got a formlink, then handle it here...
-	      if(is_array($ele)) {
-		$startWhatWasSelected = true;
-	        foreach($ele as $whatwasselected) {
+        // section to handle linked select boxes differently from others...
+        $ele_value_from_object = $element->getVar('ele_value');
+        // if we've got a formlink, then handle it here
+        if(is_string($ele_value_from_object[2]) and strstr($ele_value_from_object[2], "#*=:*")) {
+            if(is_array($ele)) {
+            $startWhatWasSelected = true;
+            foreach($ele as $whatwasselected) {
 		  if(!is_numeric($whatwasselected)) { continue; }
 		  if($startWhatWasSelected) {
 		    $value = ",";
@@ -4851,7 +4852,7 @@ function generateHiddenElements($elements, $entry) {
           $ele_value = $thisElement->getVar('ele_value');
 	  $hiddenElements[$thisElement->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$thisElement->getVar('ele_id'), $myts->htmlSpecialChars(getTextboxDefault($ele_value[2], $thisElement->getVar('id_form'), $entry)));
 	} else {
-	  include_once XOOPS_ROOT_PATH . "/modules/class/data.php";
+	  include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 	  $data_handler = new formulizeDataHandler($fid);
 	  $hiddenElements[$thisElement->getVar('ele_id')] = new xoopsFormHidden('de_'.$fid.'_'.$entry.'_'.$thisElement->getVar('ele_id'), $data_handler->getElementValueInEntry($entry, $thisElement));
 	}
