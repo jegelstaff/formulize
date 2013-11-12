@@ -418,13 +418,18 @@ class formulizeElementsHandler {
 			}
 			$elements->assignVars($myrow);
 			$elements->isLinked = false;
-			if($elements->getVar('ele_type')=="select") {
+			$ele_type = $elements->getVar('ele_type');
+			if($ele_type=="select") {
 				$ele_value = $elements->getVar('ele_value');
 				if(!is_array($ele_value[2])) {
 					$elements->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
 				}
 			}
-			
+			if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn") {
+			    $elements->hasData = true;
+			} else {
+			    $elements->hasData = false;
+			}
 			if($id_as_key === true OR $id_as_key == "element_id"){
 				$ret[$myrow['ele_id']] =& $elements;
 			}elseif($id_as_key == "handle") {
