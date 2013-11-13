@@ -430,10 +430,12 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		$totalPages = count($pages);
 		$skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
 		$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "above");   // calling for the 'above' drawPageNav 
-	       
-		// setting up the basic templateVars for all templates
-		// templatevariables must be called after all the variables are loaded otherwise they do not make it into renderTemplate
-		$templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton, 'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage, 'pageSelectionList'=>$pageSelectionList);
+
+        // setting up the basic templateVars for all templates
+        // templatevariables must be called after all the variables are loaded otherwise they do not make it into renderTemplate
+        $templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton,
+            'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage,
+            'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles);
 
 		print "<form name=\"pageNavOptions_above\" id=\"pageNavOptions_above\">\n";
 		if($screen AND $toptemplate = $screen->getVar('toptemplate')) {
