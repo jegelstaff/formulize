@@ -4,3 +4,4 @@ modules/formulize/temp/
 templates_c/
 trust_*/
 uploads/profile/
+*.bak
