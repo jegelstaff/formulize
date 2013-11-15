@@ -858,15 +858,17 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
    LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
    LEFT JOIN ".$joinTextTableRef[$thisLinkFid] . $joinTextIndex[$thisLinkFid]."
    INNER JOIN ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
-			 $start = true;
-			 foreach($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
-			      if(!$start) {
-				   $linkQuery .= " AND ( $thisOneSideFilter ) ";
-			      } else {
-				   $linkQuery .= " WHERE ( $thisOneSideFilter ) ";
-				   $start = false;
-			      }
-			 }
+            if (isset($oneSideFilters[$thisLinkFid]) and is_array($oneSideFilters[$thisLinkFid])) {
+                $start = true;
+                foreach($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
+                    if(!$start) {
+                        $linkQuery .= " AND ( $thisOneSideFilter ) ";
+                    } else {
+                        $linkQuery .= " WHERE ( $thisOneSideFilter ) ";
+                        $start = false;
+                    }
+                }
+            }
 			 $linkQuery .= " ORDER BY sort_and_limit_table.mastersort";
 			  $linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery));
 			  $GLOBALS['formulize_queryForExport'] .= " -- SEPARATOR FOR EXPORT QUERIES -- ".$linkQuery;

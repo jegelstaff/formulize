@@ -177,9 +177,10 @@ class formulize_elementsOnlyForm extends formulize_themeForm {
 		$ret .= "</table>\n$hidden\n</div>\n";
 		return $ret;
 	}
-	//We need to render the validation code differently, without the opening/closing part of the validation function, since the form is embedded inside another..
+
+	// render the validation code without the opening/closing part of the validation function, since the form is embedded inside another
 	public function renderValidationJS() {
-		return $this->_drawValidationJS();
+		return $this->_drawValidationJS(false);
 	}
 }
 
@@ -708,13 +709,15 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				$title = isset($passedInTitle) ? $passedInTitle : trans(getFormTitle($this_fid));
 				unset($form);
 				if($formElementsOnly) {
-					$form = new formulize_elementsOnlyForm();
-				} else {
-					$form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true); // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
-					$form->addElement (new XoopsFormHidden ('ventry', $settings['ventry'])); // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
-				}
-				$form->setExtra("enctype='multipart/form-data'"); // imp�ratif!
-	
+					$form = new formulize_elementsOnlyForm($title, 'formulize', "$currentURL", "post", true);
+                } else {
+                    // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
+                    $form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true);
+                    // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
+                    $form->addElement (new XoopsFormHidden ('ventry', $settings['ventry']));
+                }
+                $form->setExtra("enctype='multipart/form-data'"); // impératif!
+
 				if(is_array($settings)) { $form = writeHiddenSettings($settings, $form); }
 	
 				// include who the entry belongs to and the date
