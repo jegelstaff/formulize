@@ -52,6 +52,7 @@ to proceed with the import, or <SPAN STYLE="background: #ffff00"><b><u>Cancel</b
 		</form>
         <form action="Import.php"  name="SubmitResults">
           <input type="Submit" value="Submit" />
+		  <br/>
 <?php
 include 'PDO_Conn.php';
 Import();
@@ -61,6 +62,8 @@ Function Import ()
 	$file_tmp=$_FILES['file']['tmp_name'];
 	move_uploaded_file ($file_tmp,"upload/".$file_name);
 	$filename="upload/".$file_name;
+	$f=explode("/",$filename);//To notify User File Uploaded ,becaus ethe screen won't change if the File doesn't contain groups
+	if ($f[1]!=null){echo "File Uploaded <br/>";}
 	replaces_Prefix_in_file ($filename);
 	displ($filename);
 }
@@ -77,6 +80,7 @@ function displ ($filename){
 
 	$newGroups = Getall(2);
 	$oldGroups = Getall(1,$filename);
+	if ($oldGroups !=null){
 	echo "<table border='1'>";
 	echo "<tr>";
 	echo "<th> No </th>";
@@ -84,6 +88,7 @@ function displ ($filename){
 	echo "<th> New Group </th>";
 	echo "</tr>";
 	$k=1;
+	
 	foreach($oldGroups as $x=>$x_value)
 	{
 		echo "<tr>";
@@ -106,6 +111,7 @@ function displ ($filename){
 		$k++;
 	}
 	echo "</table> ";
+	}
 }
 function Getall($Flag,$Filename=null){
 	global $get;
@@ -116,13 +122,17 @@ function Getall($Flag,$Filename=null){
 		session_start();
 		$_SESSION['file'] = $getlines;
 		$get_line=explode(";",$getlines);
-		
 		foreach ($get_line as $statement)
 		{
-			if(strstr($statement, "_groups")) {
-				preg_match('/\(\d*\,\'\w* \w*\'|\(\d*\,\'\w*\'/', $statement, $matches);
-				$m=explode('(',$matches[0]);
-				$m1=explode(',',$m[1]);
+		preg_match('/_.*\(\`/', $statement, $table);//To get the Table name
+		$rem=array('VALUES','`','(',' ',')','\'');
+		$table=str_replace($rem,'', $table[0]);
+			if($table=="_groups") {
+				preg_match('/\(\'\d*\'\,\'.*\'/', $statement, $matches);
+				print_r($matches);
+				str_replace($rem,'', $matches[0]);
+				$m=str_replace($rem,'', $matches[0]);
+				$m1=explode(',',$m);
 				$get[$m1[0]] = $m1[1]; //Array push Group ID and name
 			}
 		}
