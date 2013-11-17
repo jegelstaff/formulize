@@ -34,12 +34,6 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 
 class formulizeNewYnElement extends formulizeformulize {
     
-    var $needsDataType;
-    var $overrideDataType;
-    var $hasData;
-    var $name;
-    var $adminCanMakeRequired;
-    var $alwaysValidateInputs;
     function __construct() {
         $this->name = "Custom simple yes/no radio buttons";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
@@ -97,7 +91,13 @@ class formulizeNewYnElementHandler extends formulizeElementsHandler {
 		}
 		
 		$element->setVar('ele_value', $ele_value);
-		$element->setVar('ele_delim', "br");
+		
+		
+		if ($_POST['element_delimit'] == "custom") {
+			$element->setVar('ele_delim', $_POST['element_delim_custom']);
+		} else {
+			$element->setVar('ele_delim', $_POST['element_delimit']);
+		}
         return $changed;
     }
     
