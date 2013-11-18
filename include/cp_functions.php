@@ -196,10 +196,12 @@ if (! empty( $_SESSION['redirect_message'] )) {
 			$perm_itens = array();
 			foreach ( $navitem ['menu'] as $item ) {
 				$module = $module_handler->getByDirname($item['dir']);
-				$admin_perm = $moduleperm_handler->checkRight('module_admin', $module->getVar('mid'), icms::$user->getGroups());
-				if ($admin_perm) {
-					if ($item['dir'] != 'system') {
-						$perm_itens[] = $item;
+				if (null != $module) {
+					$admin_perm = $moduleperm_handler->checkRight('module_admin', $module->getVar('mid'), icms::$user->getGroups());
+					if ($admin_perm) {
+						if ($item['dir'] != 'system') {
+							$perm_itens[] = $item;
+						}
 					}
 				}
 			}
