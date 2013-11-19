@@ -367,8 +367,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}*/
 
 
-
-	// get control settings passed from form 
+	// set flag to indicate whether we let the user's scope setting expand beyond their normal permission level (happens when unlocked published views are in effect)
+	$currentViewCanExpand = false;
 
 	// handling change in view, and loading reports/saved views if necessary
 	if($_POST['loadreport']) {
@@ -421,6 +421,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$currentView = "mine";
 			}
 		}
+		$currentViewCanExpand = $_POST['lockcontrols'] ? false : true; // if the controls are not locked, then we can expand the view for the user so they can see things they wouldn't normally see
 		
 		// if there is a screen with a top template in effect, then do not lock the controls even if the saved view says we should.  Assume that the screen author has compensated for any permission issues.
 		// we need to do this after rachetting down the visibility controls.  Fact is, controlling UI for users is one thing that we can trust the screen author to do, so we don't need to indicate that the controls are locked.  But we don't want the visibility to override what people can normally see, so we rachet that down above.
@@ -478,7 +479,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 
-	list($scope, $currentView) = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
+	list($scope, $currentView) = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, $currentViewCanExpand);  
 	// generate the available views
 
 	// pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)

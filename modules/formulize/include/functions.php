@@ -1584,7 +1584,7 @@ function getCalcHandleText($handle, $forceColhead=false) {
 // this function builds the scope used for passing to the getData function
 // based on values of either mine, group, all, or a groupid string formatted with start, end and inbetween commas: ,1,3,
 // will return the scope, plus the value of currentView, which may have been modified depending on the user's permissions
-function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid) {
+function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, $currentViewCanExpand = false) {
   
 	$scope = "";
         if($currentView == "blank") { // send an invalid scope
@@ -1605,7 +1605,7 @@ function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups
 			$scope = $grouplist;
 		}
 	} elseif($currentView == "all") {
-		if($hasGlobalScope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid)) {
+		if($hasGlobalScope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid) OR $currentViewCanExpand) {
 		  $scope = "";
 		} elseif($hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid)) {
 		  $currentView = "group";
@@ -1615,7 +1615,7 @@ function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups
 	} 
 	// do this second last, just in case currentview =all was passed in but not valid and defaulted back to group
 	if($currentView == "group") {
-		if(!$hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid)) {
+		if(!$hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid) AND !$currentViewCanExpand) {
 		  $currentView = "mine";
 		} else {
 		  $formulize_permHandler = new formulizePermHandler($fid);
