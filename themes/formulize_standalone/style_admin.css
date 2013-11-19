@@ -1,3 +1,4 @@
+@import url(formulize-icons/formulize-icons.css);
 html, body {
   background: white;
   color: black;
@@ -793,11 +794,11 @@ tr.blocked td {
   margin-top: 0; }
 
 ul.admin-application-form-list {
-  margin: 0 0 0 1em;
+  margin: 0;
   padding: 0; }
 
 ul.admin-application-form-list li {
-  list-style-type: disc;
+  list-style-type: none;
   line-height: 2em; }
 
 .floatright {

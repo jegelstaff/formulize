@@ -1,8 +1,8 @@
 <div class="panel-content content">
     <div class="formulize-toolbar right-toolbar">
-        <a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>"><img height="16px" src="../images/kedit.png"> <{$smarty.const._AM_HOME_PREF}></a>
-        <a href="ui.php?page=form&tab=settings&fid=new"><img height="16px" src="../images/filenew2.png"> <{$smarty.const._AM_HOME_NEWFORM}></a>
-        <a href="ui.php?page=form&tab=settings&fid=new&tableform=true"><img height="16px" src="../images/filenew3.gif"> Create a new reference to a datatable</a>
+        <a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>"><i class="icon-config"></i> <{$smarty.const._AM_HOME_PREF}></a>
+        <a href="ui.php?page=form&tab=settings&fid=new"><i class="icon-add"></i> <{$smarty.const._AM_HOME_NEWFORM}></a>
+        <a href="ui.php?page=form&tab=settings&fid=new&tableform=true"><i class="icon-table"></i> Create a new reference to a datatable</a>
     </div>
 
     <h2><{$smarty.const._AM_HOME_MANAGEAPP}></h2>
@@ -18,17 +18,17 @@
         <div class="formulize-application-panel">
             <div class="formulize-application-panel-header">
                 <span class="formulize-toolbar right-toolbar">
-                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=settings">Settings</a>
-                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=forms">Forms</a>
-                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=screens">Screens</a>
-                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=relationships">Relationships</a>
-                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=menus">Menu Entries</a>
+                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=settings"><i class="icon-config"></i> Settings</a>
+                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=forms"><i class="icon-form"></i> Forms</a>
+                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=screens"><i class="icon-screen"></i> Screens</a>
+                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=relationships"><i class="icon-relationship"></i> Relationships</a>
+                <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=application&aid=<{$app->appid}>&tab=menus"><i class="icon-menu"></i> Menu Entries</a>
                 </span>
-                <h2><{$app->name}></h2>
+                <h2><i class="icon-application"></i> <{$app->name}></h2>
             </div>
             <div class="formulize-application-panel-body">
                 <span class="formulize-toolbar right-toolbar">
-                    <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$app->appid}>&tab=settings&fid=new">Add a Form</a>&emsp;
+                    <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$app->appid}>&tab=settings&fid=new"><i class="icon-add"></i> Add a Form</a>&emsp;
                 </span>
                 <{if count($app->forms) == 0}>
                 <p>No forms.</p>
@@ -36,7 +36,7 @@
                 <h2>Forms</h2>
                 <ul class="admin-application-form-list">
                 <{foreach from=$app->forms item=form}>
-                    <li><a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$app->appid}>&fid=<{$form->id_form}>&tab=elements"><{$form->title}> (<{$form->id_form}>)</a></li>
+                    <li><a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$app->appid}>&fid=<{$form->id_form}>&tab=elements"><i class="icon-form"></i>  <{$form->title}> (<{$form->id_form}>)</a></li>
                 <{/foreach}>
                 </ul>
                 <{/if}>
@@ -45,7 +45,7 @@
         <{/foreach}>
         <div class="formulize-application-panel">
             <div class="formulize-application-panel-header">
-                <h2>Other Forms</h2>
+                <h2><i class="icon-application"></i> Other Forms</h2>
             </div>
             <div class="formulize-application-panel-body">
                 <{if count($extra_forms) == 0}>
@@ -54,7 +54,7 @@
                 <h2>Forms</h2>
                 <ul class="admin-application-form-list">
                 <{foreach from=$extra_forms item=form}>
-                    <li><a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=0&fid=<{$form->id_form}>&tab=elements"><{$form->title}> (<{$form->id_form}>)</a></li>
+                    <li><a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=0&fid=<{$form->id_form}>&tab=elements"><i class="icon-form"></i> <{$form->title}> (<{$form->id_form}>)</a></li>
                 <{/foreach}>
                 </ul>
                 <{/if}>
