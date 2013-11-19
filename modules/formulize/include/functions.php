@@ -3990,6 +3990,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
     }
     // load the saved view requested, and get everything ready for calling gatherDataSet
     list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport($savedView, $fid, $frid);
+    $currentViewCanExpand = $_POST['lockcontrols'] ? false : true; // must check for this and set it here, inside this section, where we know for sure that $_POST['lockcontrols'] has been set based on the database value for the saved view, and not anything else sent from the user!!!  Otherwise the user might be injecting a greater scope for themselves than they should have!
     // explode quicksearches into the search_ values
     $allqsearches = explode("&*=%4#", $quicksearches);
     $colsforsearches = explode(",", $_POST['oldcols']);
@@ -4014,7 +4015,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
     $uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
     //print_r($_POST['currentview']);
-    list($scope, $throwAwayCurrentView) = buildScope($_POST['currentview'], $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
+    list($scope, $throwAwayCurrentView) = buildScope($_POST['currentview'], $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, $currentViewCanExpand);
     /*print "Saved View: $savedView<br>";
     print "Currentview setting: " . $_POST['currentview'] . "<br>";
     print "Scope generated for view: ";
