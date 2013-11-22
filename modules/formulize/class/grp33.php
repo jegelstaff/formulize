@@ -117,12 +117,11 @@ function Getall($Flag,$Filename=null){
 	global $get;
 	$get=array();
 	if ($Flag==1){
+		$file = fopen($Filename, "r");
+		$getlines = fgets($file);
 		session_start();
-		$_SESSION['file'] =$Filename;//Send the File Location to Import.php
-		session_cache_limiter('private');
-		$file =$Filename;
-		$getlines = file_get_contents($file);
-		$get_line=explode(";",$getlines);//print_r($get_line);
+		$_SESSION['file'] = $getlines;
+		$get_line=explode(";",$getlines);
 		foreach ($get_line as $statement)
 		{
 		preg_match('/_.*\(\`/', $statement, $table);//To get the Table name
@@ -130,7 +129,7 @@ function Getall($Flag,$Filename=null){
 		$table=str_replace($rem,'', $table[0]);
 			if($table=="_groups") {
 				preg_match('/\(\'\d*\'\,\'.*\'/', $statement, $matches);
-				///print_r($matches);
+				print_r($matches);
 				str_replace($rem,'', $matches[0]);
 				$m=str_replace($rem,'', $matches[0]);
 				$m1=explode(',',$m);
@@ -139,7 +138,6 @@ function Getall($Flag,$Filename=null){
 		}
 
 		fclose($file);
-		///print_r($_SESSION['file']);
 		return $get;
 	}
 

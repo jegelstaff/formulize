@@ -2,10 +2,13 @@
 include  'PDO_Conn.php';//Include the Connection File
 
 //To get the Application ID from Formulize Export_Import Page
-$ID=1;
-//$ID =$_GET['aid'];
+//$ID=1;
+$ID =$_GET['aid'];
 //echo $ID;
-if (!Export($ID)){echo "</br>Error [0] : Invalid Application Id Contact the Administrator ...No Export File is Created ... Exiting </br>";}
+if (!Export($ID))
+{
+	echo "<br/>Error [0] : Invalid Application Id Contact the Administrator ...No Export File is Created ... Exiting <br/>";
+}
 
 // Function sqlQuery(SQL Statement,Column Name, Bind Variable)
 Function sqlQuery($sql,$colname = NULL,$bindvar = NULL)
@@ -13,7 +16,7 @@ Function sqlQuery($sql,$colname = NULL,$bindvar = NULL)
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare($sql) ;
 	if (!empty($bindvar)){
-	$Query->bindValue(":id",$bindvar,PDO::PARAM_STR);}
+		$Query->bindValue(":id",$bindvar,PDO::PARAM_STR);}
 	$Query->execute();
 	$returnrow=Array();
 	if (is_null($colname)){$returnrow=Array(Array());}
@@ -26,23 +29,6 @@ Function sqlQuery($sql,$colname = NULL,$bindvar = NULL)
 	return $returnrow;
 }
 
-// Function chk_integrity($tables) Checks that all tables exisit, otherwise cause the system to exit
-Function chk_integrity($tables,$prefix)
-{
-	$flag = true;
-	foreach ($tables as $table)
-	{
-		$row = explode("/",$table);
-		$num = sqlQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME= '$prefix$row[2]';","cnt");
-		if ($num[0]==0) 
-	    {
-			echo "Table : $row[2] (Error Table does not exsist)</br>";
-			$flag= false;
-		}
-	}
-	
-	return $flag;
-}
 function Export ($ID) {
 	global $appid; 
 	$appid=$ID; 
@@ -61,7 +47,7 @@ function Export ($ID) {
 	// Query basic variables
 	if ($formsid !== "()")
 	{	//Links
-	
+		
 		$row = sqlQuery("SELECT fl_id FROM ".Prefix."_formulize_framework_links Where fl_form1_id IN $formsid or fl_form2_id IN $formsid;","fl_id");
 		$linksid = "(".(implode(",",$row)).")";
 		//Screens
@@ -84,13 +70,12 @@ function Export ($ID) {
 	"0/0/_formulize_screen_listofentries/sid/in/$screenid","0/0/_formulize_screen_multipage/sid/in/$screenid",
 	"0/0/_formulize_screen_form/formid/in/$formsid","0/0/_formulize_saved_views/sv_id/in/$savedviews");
 
-	//Add Dynamic Tables based on captured ele_handle in formulize_id table 
+	//Add Special Tables based on ele_handle in formulize_id table 
 	$row = sqlQuery("select CONCAT('Create table^',form_handle,'/1/_formulize_',form_handle) as form_handle
 	from ".Prefix."_formulize_id where form_handle is not NULL and id_form in $formsid","form_handle");
 	$tables = array_merge($tables,$row);
 	$lines = Array();
 	$prefix= "".Prefix."";
-	if (!chk_integrity($tables,$prefix)) {return false;}
 	foreach ($tables as $t)
 	{
 		$table = explode ('/',$t);
@@ -101,12 +86,11 @@ function Export ($ID) {
 			$lines=array_merge($lines,expTable($prefix,$table[0],$table[1],$table[2],$exclude,$criteria));
 		}
 	}
-	$text =implode(chr(13),$lines);
-	//echo $text;
-	Output_File($text);
+	$text =implode("",$lines);
+	echo $text;
+	//Output_File($text);
 	return true;
 }
-
 Function Output_File($output)
 {
 	$file ="Application -".$_GET['aid'];
@@ -131,7 +115,7 @@ Function expTable($Prefix,$padText,$insStyle,$Table_Name,$Exclude_Columns = Null
 {
 	// Replace all (;) with (&) for the following fields 
 	$replace=Array("not_cons_con","gl_name","fltr_grps","steptitles","steps","ele_filtersettings","ele_value","fltr_grptitles","filter",
-	"pages","pagetitles","conditions","ele_uitext","ele_delim","limitviews","hiddencolumns","decolumns","customactions");
+	"pages","pagetitles","conditions");
 	// Pad all with (^) e.g 1 = ^1^ 
 	$padding=Array("ele_handle","form_handle","not_cons_uid");
 	$inslist = Array();
@@ -160,7 +144,6 @@ Function expTable($Prefix,$padText,$insStyle,$Table_Name,$Exclude_Columns = Null
 			if (is_null($onefield)){$onefield="NULL";}
 			$onefield=str_replace("'","\'",$onefield);
 			///if ($field=='not_cons_con'){echo "Yes";}
-			///$onefield=str_replace(array("\n","\r"), "", $onefield);
 			if (in_array($field,$replace)){$onefield=str_replace(";","&",$onefield);}
 			if (in_array($field,$padding)){$onefield="^".$onefield."^";}
 			if ($onefield !="NULL"){$onefield ="'".$onefield."'";}
