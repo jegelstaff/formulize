@@ -1584,7 +1584,7 @@ function getCalcHandleText($handle, $forceColhead=false) {
 // this function builds the scope used for passing to the getData function
 // based on values of either mine, group, all, or a groupid string formatted with start, end and inbetween commas: ,1,3,
 // will return the scope, plus the value of currentView, which may have been modified depending on the user's permissions
-function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid) {
+function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, $currentViewCanExpand = false) {
   
 	$scope = "";
         if($currentView == "blank") { // send an invalid scope
@@ -1605,7 +1605,7 @@ function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups
 			$scope = $grouplist;
 		}
 	} elseif($currentView == "all") {
-		if($hasGlobalScope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid)) {
+		if($hasGlobalScope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid) OR $currentViewCanExpand) {
 		  $scope = "";
 		} elseif($hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid)) {
 		  $currentView = "group";
@@ -1615,7 +1615,7 @@ function buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups
 	} 
 	// do this second last, just in case currentview =all was passed in but not valid and defaulted back to group
 	if($currentView == "group") {
-		if(!$hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid)) {
+		if(!$hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid) AND !$currentViewCanExpand) {
 		  $currentView = "mine";
 		} else {
 		  $formulize_permHandler = new formulizePermHandler($fid);
@@ -3990,6 +3990,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
     }
     // load the saved view requested, and get everything ready for calling gatherDataSet
     list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport($savedView, $fid, $frid);
+    $currentViewCanExpand = $_POST['lockcontrols'] ? false : true; // must check for this and set it here, inside this section, where we know for sure that $_POST['lockcontrols'] has been set based on the database value for the saved view, and not anything else sent from the user!!!  Otherwise the user might be injecting a greater scope for themselves than they should have!
     // explode quicksearches into the search_ values
     $allqsearches = explode("&*=%4#", $quicksearches);
     $colsforsearches = explode(",", $_POST['oldcols']);
@@ -4014,7 +4015,7 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
     $uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
     //print_r($_POST['currentview']);
-    list($scope, $throwAwayCurrentView) = buildScope($_POST['currentview'], $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
+    list($scope, $throwAwayCurrentView) = buildScope($_POST['currentview'], $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, $currentViewCanExpand);
     /*print "Saved View: $savedView<br>";
     print "Currentview setting: " . $_POST['currentview'] . "<br>";
     print "Scope generated for view: ";
