@@ -1592,39 +1592,10 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		});
 		jQuery(\"#subform-$subformElementId\").fadeIn();
 	});
-</script>
-
-<style>
-p.subform-header {
-	font-size: 10pt !important;
-}
-.ui-accordion-content {
-	background: #80C3DD;
-	border-color: white;
-	font-size: 10pt; !important;
-}
-.ui-accordion-header {
-	border-color: white;
-}
-.subform-deletebox {
-	float: left;
-}\n";
-
-if($need_delete) {
-$col_two .= "
-.subform-entry-container {
-	margin-left: 25px;
-}
-\n";
-}
-
-$col_two .= "
-</style>
-\n";
-
+</script>";
 	} // end of if we're closing the subform inferface where entries are supposed to be collapsable forms
 
-        $deleteButton = "";
+    $deleteButton = "";
 	if(((count($sub_entries[$sfid])>0 AND $sub_entries[$sfid][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
         $deleteButton = "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\">";
 		static $deletesubsflagIncluded = false;

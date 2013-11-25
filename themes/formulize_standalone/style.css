@@ -764,6 +764,12 @@ div.jGrowl-notification {
   padding: 0.5em;
   border-bottom: 1px dotted #d1d1df; }
 
+.subform-deletebox {
+  float: left; }
+
+.subform-entry-container {
+  margin-left: 25px; }
+
 /*=== Formulize Boutons by Francois T ===*/
 button, input[type='submit'], input[type='button'], input[type='reset'] {
   border: none;
