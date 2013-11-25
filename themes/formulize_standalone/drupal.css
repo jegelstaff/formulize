@@ -74,3 +74,6 @@
 
 input[type=radio] {
   margin-right: 0.5em; }
+
+div.xo-theme-form > table {
+  table-layout: fixed; }

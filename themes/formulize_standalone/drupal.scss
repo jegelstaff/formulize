@@ -91,8 +91,3 @@ input[type=radio] {
 div.xo-theme-form > table {
     table-layout: fixed;    // prevent subforms from making the table too wide
 }
-
-div.xo-theme-form > table.outer > tbody > tr > td {
-    overflow: scroll;   // table cell contents, specifically subforms, should scroll if the content is too wide
-}
-
