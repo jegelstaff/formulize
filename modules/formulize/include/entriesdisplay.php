@@ -1819,7 +1819,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 			} else {
 				$search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help.xhtml";
 			}
-			$helpText = "\n&nbsp;<a href=\"\" onclick=\"javascript:showPop('".$search_help_filepath."'); return false;\" title=\""._formulize_DE_SEARCH_POP_HELP."\">[?]<a>\n";
+			$helpText = "\n&nbsp;<a href=\"\" class=\"header-info-link\" onclick=\"javascript:showPop('".$search_help_filepath."'); return false;\" title=\""._formulize_DE_SEARCH_POP_HELP."\"><a>\n";
 		}
     //formulize_benchmark("finished prep of search box");
 		$quickSearchBoxes[$cols[$i]]['search'] = "<input type=text $boxid name='search_" . $cols[$i] . "' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
@@ -1964,9 +1964,10 @@ function drawHeaders($headers, $cols, $useBoxes=null, $useLinks=null, $numberOfB
 		print "<td class='$classToUse' id='celladdress_0_$i'><div class='main-cell-div' id='cellcontents_0_".$i."'>\n";
 
 		if($headingHelpLink) {
-			$lockedUI = in_array($i, $lockedColumns) ? "[X]" : "[ ]";
-			print "<div style=\"float: right; margin-left: 3px;\"><a href=\"\" id=\"lockcolumn_$i\" class=\"lockcolumn\" title=\""._formulize_DE_FREEZECOLUMN."\">$lockedUI</a></div>\n";
-			print "<div style=\"float: right;\"><a href=\"\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=".$cols[$i]."');return false;\" title=\""._formulize_DE_MOREINFO."\">[?]</a></div>\n";
+			$lockedUI = in_array($i, $lockedColumns) ? "heading-locked" : "heading-unlocked";
+			print "<a href=\"\" id=\"lockcolumn_$i\" class=\"lockcolumn $lockedUI\" title=\""._formulize_DE_FREEZECOLUMN."\"></a>\n";
+
+			print "<a href=\"\" class=\"header-info-link\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=".$cols[$i]."');return false;\" title=\""._formulize_DE_MOREINFO."\"></a>\n";
 		}
 		print clickableSortLink($cols[$i], printSmart(trans($headers[$i])));
 		print "</div></td>\n";
@@ -3473,22 +3474,20 @@ jQuery(window).load(function() {
 		var lockData = jQuery(this).attr('id').split('_');
 		var column = lockData[1];
 		if(floatingContents[column] == true) {
-			jQuery(this).empty();
-			jQuery(this).append('[ ]');
-			var curColumnsArray = jQuery('#formulize_lockedColumns').val().split(',');
-			var curColumnsHTML = '';
-			for (var i=0; i < curColumnsArray.length; i++) {
-				if(curColumnsArray[i] != column) {
-					if(curColumnsHTML != '') {
-						curColummsHTML = curColumnsHTML+',';
-					}
-					curColumnsHTML = curColumnsHTML+curColumnsArray[i];
-				}
-			}
-			jQuery('#formulize_lockedColumns').val(curColumnsHTML);
-		} else {
-			jQuery(this).empty();
-			jQuery(this).append('[X]');
+            jQuery(this).removeClass("heading-locked").addClass("heading-unlocked");
+            var curColumnsArray = jQuery('#formulize_lockedColumns').val().split(',');
+            var curColumnsHTML = '';
+            for (var i=0; i < curColumnsArray.length; i++) {
+                if(curColumnsArray[i] != column) {
+                    if(curColumnsHTML != '') {
+                        curColummsHTML = curColumnsHTML+',';
+                    }
+                    curColumnsHTML = curColumnsHTML+curColumnsArray[i];
+                }
+            }
+            jQuery('#formulize_lockedColumns').val(curColumnsHTML);
+        } else {
+			jQuery(this).removeClass("heading-unlocked").addClass("heading-locked");
 			var curColumnsHTML = jQuery('#formulize_lockedColumns').val();
 			jQuery('#formulize_lockedColumns').val(curColumnsHTML+','+column);
 		}

@@ -34,6 +34,9 @@
 .icon-form:before,
 .icon-help:before,
 .icon-home:before,
+.icon-lock-unlocked:before,
+.icon-lock:before,
+.icon-magnifier:before,
 .icon-menu:before,
 .icon-permission:before,
 .icon-piechart:before,
@@ -72,12 +75,15 @@
 .icon-form:before { content: "\f10f"; }
 .icon-help:before { content: "\f110"; }
 .icon-home:before { content: "\f111"; }
-.icon-menu:before { content: "\f112"; }
-.icon-permission:before { content: "\f113"; }
-.icon-piechart:before { content: "\f114"; }
-.icon-print:before { content: "\f115"; }
-.icon-relationship:before { content: "\f116"; }
-.icon-screen:before { content: "\f117"; }
-.icon-table:before { content: "\f118"; }
-.icon-trash:before { content: "\f119"; }
-.icon-view:before { content: "\f11a"; }
+.icon-lock-unlocked:before { content: "\f112"; }
+.icon-lock:before { content: "\f113"; }
+.icon-magnifier:before { content: "\f114"; }
+.icon-menu:before { content: "\f115"; }
+.icon-permission:before { content: "\f116"; }
+.icon-piechart:before { content: "\f117"; }
+.icon-print:before { content: "\f118"; }
+.icon-relationship:before { content: "\f119"; }
+.icon-screen:before { content: "\f11a"; }
+.icon-table:before { content: "\f11b"; }
+.icon-trash:before { content: "\f11c"; }
+.icon-view:before { content: "\f11d"; }

@@ -246,22 +246,22 @@ body > #content
 
 // edit link for each row on list of entries screens
 a.loe-edit-entry {
-    display: inline-block;
-    // browsers will find the file relative to the css file, so this should work even if the site is in a subfolder on the website
-    background-image: url('../../modules/formulize/images/edit.png');
-    text-decoration: none;
+    @include use-icon-font();
+    font-size: 12pt;
     margin: 0;
-    width: 16px;
-    height: 16px;
     margin-left: 0.5em;
+    padding: 0.1em;
+}
+
+.loe-edit-entry:before{
+    content: "\f10d";   // icon-edit
 }
 
 a.loe-edit-entry:hover {
-    background-color: lighten($colorTableHeaderBackground, 10%);    // always inside td.head
-    border-radius: 3px;
+    text-shadow: 0px 0px 2px
+        contrasting-color($colorTableHeaderBackground, lighten($colorTableHeaderBackground, 40%), darken($colorTableHeaderBackground, 40%));
 }
 
 td.formulize-controls {
-    white-space: nowrap;
-    width: 40px;
+    white-space: nowrap;    // keeps checkbox and edit link side-by-side instead of awkwardly stacking
 }
