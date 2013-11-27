@@ -34,12 +34,6 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 
 class formulizeDummyElement extends formulizeformulize {
     
-    var $needsDataType;
-    var $overrideDataType;
-    var $hasData;
-    var $name;
-    var $adminCanMakeRequired;
-    var $alwaysValidateInputs;
     function __construct() {
         $this->name = "The Dummy Element";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
@@ -124,7 +118,8 @@ class formulizeDummyElementHandler extends formulizeElementsHandler {
     // $isDisabled flags whether the element is disabled or not so we know how to render it
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id) {
+    // $screen is the screen object that is in effect, if any (may be null)
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen) {
         // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
         if($isDisabled) {
             $formElement = new xoopsFormLabel($caption, $ele_value[0] . $ele_value[1]);

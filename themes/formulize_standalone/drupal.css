@@ -74,3 +74,12 @@
 
 input[type=radio] {
   margin-right: 0.5em; }
+
+.subform-deletebox {
+  float: left; }
+
+.subform-entry-container {
+  margin-left: 25px; }
+
+div.xo-theme-form > table {
+  table-layout: fixed; }

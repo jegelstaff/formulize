@@ -80,15 +80,19 @@ EOF;
 		$newUser->setVar('notify_method', $user_data->get('notify_method')); //email
 		$newUser->setVar('level', $user_data->get('level')); //active, can login
 
-		//If the user wasn't inserted, return false
-		if (!$member_handler->insertUser($newUser, true)) {
-			return false;
-		}
-
-		//Map the created user to the external ID provided
-		$user_id = $newUser->getVar('uid');
-		return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $user_id);
-	}
+        if ($member_handler->insertUser($newUser, true)) {
+            // new user account was created; create a mapping record for the new account id and the external id
+            return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $newUser->getVar('uid'));
+        } else {
+            // user record could not be created, perhaps because it already exists, so try to load it from the database by email address
+            $getuser =& $member_handler->getUsers(new icms_db_criteria_Item('email', icms_core_DataFilter::addSlashes($user_data->get('email'))));
+            if (!empty($getuser)) {
+                // we found an existing user with the same email address, so create a resource mapping
+                return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $getuser[0]->getVar('uid'));
+            }
+        }
+        return false;   // could not create a new account and an account with the email addres does not exist
+    }
 
 	/**
 	 * Retrieves the specified User's data

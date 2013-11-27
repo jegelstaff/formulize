@@ -367,8 +367,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}*/
 
 
-
-	// get control settings passed from form 
+	// set flag to indicate whether we let the user's scope setting expand beyond their normal permission level (happens when unlocked published views are in effect)
+	$currentViewCanExpand = false;
 
 	// handling change in view, and loading reports/saved views if necessary
 	if($_POST['loadreport']) {
@@ -421,6 +421,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$currentView = "mine";
 			}
 		}
+		// must check for this and set it here, inside this section, where we know for sure that $_POST['lockcontrols'] has been set based on the database value for the saved view, and not anything else sent from the user!!!  Otherwise the user might be injecting a greater scope for themselves than they should have!
+		$currentViewCanExpand = $_POST['lockcontrols'] ? false : true; // if the controls are not locked, then we can expand the view for the user so they can see things they wouldn't normally see
 		
 		// if there is a screen with a top template in effect, then do not lock the controls even if the saved view says we should.  Assume that the screen author has compensated for any permission issues.
 		// we need to do this after rachetting down the visibility controls.  Fact is, controlling UI for users is one thing that we can trust the screen author to do, so we don't need to indicate that the controls are locked.  But we don't want the visibility to override what people can normally see, so we rachet that down above.
@@ -478,7 +480,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 
-	list($scope, $currentView) = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid);
+	list($scope, $currentView) = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, $currentViewCanExpand);  
 	// generate the available views
 
 	// pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
@@ -509,20 +511,24 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// if this is not a report/view that was created by the user, and they don't have update permission, then convert any { } terms to literals
 		// remove any { } terms that don't have a passed in value (so they appear as "" to users)
 		// only deal with terms that start and end with { } and not ones where the { } terms is not the entire term
-		if(substr($v, 0, 1) == "{" AND substr($v, -1) == "}" AND substr($k, 0, 7) == "search_" AND in_array(substr($k, 7), $showcols)) {
-			$activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
-			$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
-			$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
-			if(!$update_other_reports AND $uid != $ownerOfLastLoadedView) {
-				$requestKeyToUse = substr($v,1,-1);
-				if(isset($_POST[$requestKeyToUse])) {
-					$_POST[$k] = $_POST[$requestKeyToUse];
-				} elseif(isset($_GET[$requestKeyToUse])) {
-					$_POST[$k] = $_GET[$requestKeyToUse];
-				} elseif($v == "{USER}" AND $xoopsUser) {
-					$_POST[$k] = $xoopsUser->getVar('name') ? $xoopsUser->getVar('name') : $xoopsUser->getVar('uname');
-				} elseif(!strstr($v, "{BLANK}") AND !strstr($v, "{TODAY") AND !strstr($v, "{PERGROUPFILTER}") AND !strstr($v, "{USER")) { 
-					unset($_POST[$k]); // clear terms where no match was found, because this term is not active on the current page, so don't confuse users by showing it
+		if(is_string($v) AND substr($v, 0, 1) == "{" AND substr($v, -1) == "}"
+			AND substr($k, 0, 7) == "search_" AND in_array(substr($k, 7), $showcols))
+		{
+			$requestKeyToUse = substr($v,1,-1);
+			if(!strstr($requestKeyToUse,"}") AND !strstr($requestKeyToUse, "{")) { // double check that there's no other { } in the term!
+				$activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
+				$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
+				$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
+				if(!$update_other_reports AND $uid != $ownerOfLastLoadedView) {
+					if(isset($_POST[$requestKeyToUse])) {
+						$_POST[$k] = $_POST[$requestKeyToUse];
+					} elseif(isset($_GET[$requestKeyToUse])) {
+						$_POST[$k] = $_GET[$requestKeyToUse];
+					} elseif($v == "{USER}" AND $xoopsUser) {
+						$_POST[$k] = $xoopsUser->getVar('name') ? $xoopsUser->getVar('name') : $xoopsUser->getVar('uname');
+					} elseif(!strstr($v, "{BLANK}") AND !strstr($v, "{TODAY") AND !strstr($v, "{PERGROUPFILTER}") AND !strstr($v, "{USER")) { 
+						unset($_POST[$k]); // clear terms where no match was found, because this term is not active on the current page, so don't confuse users by showing it
+					}
 				}
 			}
 		}
@@ -1405,9 +1411,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	} 
 	// MASTER HIDELIST CONDITIONAL...
 	if(!$settings['hlist'] AND !$listTemplate) {
+		print "<div class=\"list-of-entries-container\"><table class=\"outer\">";
 
-		print "<table class=outer>";
-	
 		$count_colspan = count($cols)+1;
 		if($useViewEntryLinks OR $useCheckboxes != 2) {
 			$count_colspan_calcs = $count_colspan;
@@ -1641,9 +1646,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 			
 			} // end of foreach data as entry
 		} // end of if there is any data to draw
-	
-		print "</table>";
 
+		print "</table></div>";
 	} elseif($listTemplate AND !$settings['hlist']) {
 
 		// USING A CUSTOM LIST TEMPLATE SO DO EVERYTHING DIFFERENTLY
@@ -3871,8 +3875,7 @@ function removeNotAllowedCols($fid, $frid, $cols, $groups) {
 // THIS FUNCTION HANDLES INTERPRETTING A LOE SCREEN TEMPLATE
 // $type is the top/bottom setting
 // $buttonCodeArray is the available buttons that have been pre-compiled by the drawInterface function
-function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings, $messageText) {
-
+function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings, $messageText = null) {
 	// include necessary files
 	if(strstr($screen->getVar($type.'template'), 'buildFilter(')) {
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/calendardisplay.php";
@@ -4251,6 +4254,8 @@ function formulize_runAdvancedSearch($query_string, $data) {
 
 // THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
 function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order="", $frid, $fid, $scope, $screen="", $currentURL="", $forcequery = 0) {
+	if (!is_array($searches))
+		$searches = array();
 
 	// setup "flatscope" so we can compare arrays of groups that make up the scope, from page load to pageload
 	if(is_array($scope)) {

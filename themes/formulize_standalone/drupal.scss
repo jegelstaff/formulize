@@ -87,3 +87,30 @@
 input[type=radio] {
     margin-right:0.5em;
 }
+
+// accordion subforms >
+p.subform-header {
+    // font-size: 10pt !important;
+}
+
+.ui-accordion-content {
+    //background: #80C3DD;
+    //border-color: white;
+    // font-size: 10pt; !important;
+}
+.ui-accordion-header {
+    //border-color: white;
+}
+
+.subform-deletebox {
+    float: left;        // float the delete checkboxes to the left
+}
+
+.subform-entry-container {
+    margin-left: 25px;  // space for the delete checkboxes
+}
+// accordion subforms <
+
+div.xo-theme-form > table {
+    table-layout: fixed;    // prevent subforms from making the table too wide
+}

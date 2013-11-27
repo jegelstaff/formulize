@@ -292,23 +292,42 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	function submitForm(page, prevpage) {
 		var validate = xoopsFormValidate_formulize();
 		if(validate) {<?php
-			if(is_object($screen) AND $screen->getVar('finishisdone') AND $currentPage+1 == $thanksPage) {
-				// neuter the ventry which is the key thing that keeps us on the form page, if in fact we just came from a list screen of some kind
-				// need to use an unusual selector, because something about selecting by id wasn't working, apparently may be related to setting actions on forms with certain versions of jQuery??
-				print "		if(page == $thanksPage) {
-					window.document.formulize.ventry.value = '';
-					jQuery('form[name=formulize]').attr('action', '$done_dest');
-				}
-				";
-			}?>
-			window.document.formulize.formulize_currentPage.value = page;
-			window.document.formulize.formulize_prevPage.value = prevpage;
-			window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
-			window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
-			validateAndSubmit();
-		}
-	}
-	
+			// neuter the ventry which is the key thing that keeps us on the form page,
+			//  if in fact we just came from a list screen of some kind.
+			// need to use an unusual selector, because something about selecting by id wasn't working,
+			//  apparently may be related to setting actions on forms with certain versions of jQuery?
+			print "
+			if(page == $thanksPage) {
+				window.document.formulize.ventry.value = '';
+				jQuery('form[name=formulize]').attr('action', '$done_dest');
+			}
+";?>
+            if (formulizechanged) {
+                window.document.formulize.formulize_currentPage.value = page;
+                window.document.formulize.formulize_prevPage.value = prevpage;
+                window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
+                window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
+                validateAndSubmit();
+            } else {
+                jQuery("#formulizeform").animate({opacity:0.4}, 200, "linear");
+                jQuery.ajax({
+                    type: "POST",
+                    url: jQuery('form[name=formulize]').attr('action'),
+                    data: {
+                        formulize_currentPage: page,
+                        formulize_prevPage: prevpage,
+                        ventry: window.document.formulize.ventry.value,
+                    },
+                    success: function(html, x){
+                        document.open();
+                        document.write(html);
+                        document.close();
+                    }
+                });
+            }
+        }
+    }
+
 	function pageJump(options, prevpage) {
 		for (var i=0; i < options.length; i++) {
 			if (options[i].selected) {
@@ -430,10 +449,12 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		$totalPages = count($pages);
 		$skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
 		$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "above");   // calling for the 'above' drawPageNav 
-	       
-		// setting up the basic templateVars for all templates
-		// templatevariables must be called after all the variables are loaded otherwise they do not make it into renderTemplate
-		$templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton, 'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage, 'pageSelectionList'=>$pageSelectionList);
+
+        // setting up the basic templateVars for all templates
+        // templatevariables must be called after all the variables are loaded otherwise they do not make it into renderTemplate
+        $templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton,
+            'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage,
+            'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles);
 
 		print "<form name=\"pageNavOptions_above\" id=\"pageNavOptions_above\">\n";
 		if($screen AND $toptemplate = $screen->getVar('toptemplate')) {

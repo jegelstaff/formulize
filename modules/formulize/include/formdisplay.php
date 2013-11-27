@@ -177,9 +177,10 @@ class formulize_elementsOnlyForm extends formulize_themeForm {
 		$ret .= "</table>\n$hidden\n</div>\n";
 		return $ret;
 	}
-	//We need to render the validation code differently, without the opening/closing part of the validation function, since the form is embedded inside another..
+
+	// render the validation code without the opening/closing part of the validation function, since the form is embedded inside another
 	public function renderValidationJS() {
-		return $this->_drawValidationJS();
+		return $this->_drawValidationJS(false);
 	}
 }
 
@@ -708,14 +709,16 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				$title = isset($passedInTitle) ? $passedInTitle : trans(getFormTitle($this_fid));
 				unset($form);
 				if($formElementsOnly) {
-					$form = new formulize_elementsOnlyForm();
-				} else {
-					$form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true); // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
-				}
-				$form->setExtra("enctype='multipart/form-data'"); // impératif!
-	
+					$form = new formulize_elementsOnlyForm($title, 'formulize', "$currentURL", "post", true);
+                } else {
+                    // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
+                    $form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true);
+                    // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
+                    $form->addElement (new XoopsFormHidden ('ventry', $settings['ventry']));
+                }
+                $form->setExtra("enctype='multipart/form-data'"); // impÃ©ratif!
+
 				if(is_array($settings)) { $form = writeHiddenSettings($settings, $form); }
-				$form->addElement (new XoopsFormHidden ('ventry', $settings['ventry'])); // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
 	
 				// include who the entry belongs to and the date
 				// include acknowledgement that information has been updated if we have just done a submit
@@ -895,11 +898,13 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 			if(count($GLOBALS['formulize_renderedElementHasConditions'])>0) {
 				drawJavascriptForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $entries, $sub_entries);
 			}
-		}
 
 		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
 		$form->addElement (new XoopsFormHidden ('primaryfid', $fids[0]));
 		
+		}
+
+
 		print "<div id=formulizeform>".$form->render()."</div>"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
 		
 		// if we're in Drupal, include the main XOOPS js file, so the calendar will work if present...
@@ -1570,14 +1575,13 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 		}
 		$col_two .= "\n
 <script type=\"text/javascript\">
-
 	jQuery(document).ready(function() {
-		$(\"#subform-$subformElementId\").accordion({
+		jQuery(\"#subform-$subformElementId\").accordion({
 			autoHeight: false, // no fixed height for sections
 			collapsible: true, // sections can be collapsed
 			active: ";
-			if($_POST['target_sub_instance'] == $subformElementId AND $_POST['target_sub'] == $sfid) {	
-				$col_two .= count($sub_entries[$sfid])-$_POST['numsubents'];	
+			if($_POST['target_sub_instance'] == $subformElementId AND $_POST['target_sub'] == $sfid) {
+				$col_two .= count($sub_entries[$sfid])-$_POST['numsubents'];
 			} elseif(is_numeric($_POST['subform_entry_'.$subformElementId.'_active'])) {
 				$col_two .= $_POST['subform_entry_'.$subformElementId.'_active'];
 			} else {
@@ -1586,43 +1590,12 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 			$col_two .= ",
 			header: \"> div > p.subform-header\"
 		});
-		$(\"#subform-$subformElementId\").fadeIn();
+		jQuery(\"#subform-$subformElementId\").fadeIn();
 	});
-
-</script>
-
-<style>
-
-p.subform-header {
-	font-size: 10pt !important;
-}
-.ui-accordion-content {
-	background: #80C3DD;
-	border-color: white;
-	font-size: 10pt; !important;
-}
-.ui-accordion-header {
-	border-color: white;
-}
-.subform-deletebox {
-	float: left;
-}\n";
-
-if($need_delete) {
-$col_two .= "
-.subform-entry-container {
-	margin-left: 25px;
-}
-\n";
-}
-
-$col_two .= "
-</style>
-\n";
-
+</script>";
 	} // end of if we're closing the subform inferface where entries are supposed to be collapsable forms
 
-        $deleteButton = "";
+    $deleteButton = "";
 	if(((count($sub_entries[$sfid])>0 AND $sub_entries[$sfid][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
         $deleteButton = "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\">";
 		static $deletesubsflagIncluded = false;
@@ -1666,6 +1639,7 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 		
 			$unique_users = array_unique($all_add_users);
 
+			$punames = array();
 			foreach($unique_users as $uid) {
 				$uqueryforrealnames = "SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=$uid";
 				$uresqforrealnames = $xoopsDB->query($uqueryforrealnames);
@@ -1676,8 +1650,7 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 
 			// alphabetize the proxy list added 11/2/04
 			array_multisort($punames, $unique_users);
-	
-			
+
 			if($entry_id) {
 				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 				$data_handler = new formulizeDataHandler($fid);
@@ -1758,6 +1731,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	$criteria->setOrder('ASC');
 	$elements =& $formulize_mgr->getObjects2($criteria,$fid,true); // true makes the keys of the returned array be the element ids
 	$count = 0;
+	global $gridCounter;
 	$gridCounter = array();
 	$inGrid = 0;
 	
@@ -1963,7 +1937,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			} else {
 				$form->insertBreak($gridContents, "head"); // head is the css class of the cell				
 			}
-		} elseif($ele_type == "ib") {// if it's a break, handle it differently...
+		} elseif($ele_type == "ib" OR is_array($form_ele)) {// if it's a break, handle it differently...$form_ele may be an array if it's a non-interactive element such as a grid
 			$form->insertBreakFormulize("<div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1], 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id); // final param is used as id name in the table row where this element exists, so we can interact with it for showing and hiding
 		} else {
 			$form->addElement($form_ele, $req);
@@ -1987,8 +1961,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 		unset($thisHiddenElement); // some odd reference thing going on here...$thisHiddenElement is being added by reference or something like that, so that when $thisHiddenElement changes in the next run through, every previous element that was created by adding it is updated to point to the next element.  So if you unset at the end of the loop, it forces each element to be added as you would expect.
 	}
 
-	$form->addElement (new XoopsFormHidden ('counter', $count)); // not used by reading logic?
-	if($entry) { 
+	if($entry AND !is_a($form, 'formulize_elementsOnlyForm')) { 
 		$form->addElement (new XoopsFormHidden ('entry'.$fid, $entry));
 	}
 	if($_POST['parent_form']) { // if we just came back from a parent form, then if they click save, we DO NOT want an override condition, even though we are now technically editing an entry that was previously saved when we went to the subform in the first place.  So the override logic looks for this hidden value as an exception.
@@ -2032,14 +2005,14 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 
 	global $myts;
 	/*
-	 * Hack by Félix <INBOX Solutions> for sedonde
+	 * Hack by Fï¿½lix <INBOX Solutions> for sedonde
 	 * myts == NULL
 	 */
 	if(!$myts){
 		$myts =& MyTextSanitizer::getInstance();
 	}
 	/*
-	 * Hack by Félix <INBOX Solutions> for sedonde
+	 * Hack by Fï¿½lix <INBOX Solutions> for sedonde
 	 * myts == NULL
 	 */
 			$type = $i->getVar('ele_type');
@@ -2111,12 +2084,12 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 					break;
 				case "textarea":
 				/*
-				 * Hack by Félix<INBOX International>
+				 * Hack by Fï¿½lix<INBOX International>
 				 * Adding colorpicker form element
 				 */
 				case "colorpick":
 				/*
-				 * End of Hack by Félix<INBOX International>
+				 * End of Hack by Fï¿½lix<INBOX International>
 				 * Adding colorpicker form element
 				 */
 					$ele_value[0] = $value;								
@@ -2128,13 +2101,13 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 					// NEED TO ADD IN INITIALIZATION OF LINKED SELECT BOXES FOR SUBFORMS
 
 					// NOTE:  unique delimiter used to identify LINKED select boxes, so they can be handled differently.
-					if(strstr($ele_value[2], "#*=:*")) // if we've got a linked select box, then do everything differently
-					{
+					if(is_string($ele_value[2]) and strstr($ele_value[2], "#*=:*"))
+                    {
+                        // if we've got a linked select box, then do everything differently
 						$ele_value[2] .= "#*=:*".$value; // append the selected entry ids to the form and handle info in the element definition
 					}
 					else
 					{
-
 						// put the array into another array (clearing all default values)
 						// then we modify our place holder array and then reassign
 	
@@ -2234,53 +2207,7 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 			return $ele_value;
 }
 
-// THIS FUNCTION TAKES THE ELE_VALUE SETTINGS FOR A GRID AND RETURNS ALL THE NECESSARY PARAMS READY FOR PASSING TO THE DISPLAYGRID FUNCTION
-// ALSO WORKS OUT THE NUMBER OF ELEMENTS THAT CAN BE ENTERED INTO THIS GRID
-function compileGrid($ele_value, $title, $element) {
 
-	// 1 is heading
-	// 2 is row captions
-	// 3 is col captions
-	// 4 is shading
-	// 5 is first element
-
-	switch($ele_value[0]) {
-		case "caption":
-			global $myts;
-			if(!$myts){
-				$myts =& MyTextSanitizer::getInstance();
-			}
-			// call the text sanitizer, first try to convert HTML chars, and if there were no conversions, then do a textarea conversion to automatically make links clickable
-			$ele_caption = trans($element->getVar('ele_caption'));
-			$htmlCaption = $myts->undoHtmlSpecialChars($ele_caption);
-			if($htmlCaption == $ele_caption) {
-				$ele_caption = $myts->displayTarea($ele_caption);
-			} else {
-				$ele_caption = $htmlCaption;
-			}
-			$toreturn[] = $ele_caption;
-			break;
-		case "form":
-			$toreturn[] = $title;
-			break;
-		case "none":
-			$toreturn[] = "";
-			break;
-	}
-
-	$toreturn[] = explode(",", $ele_value[1]);
-	$toreturn[] = explode(",", $ele_value[2]);
-
-	$toreturn[] = $ele_value[3];
-
-	$toreturn[] = $ele_value[4];
-
-	// number of cells in this grid
-	$toreturn[] = count($toreturn[1]) * count($toreturn[2]);
-
-	return $toreturn;
-
-}
 
 // THIS FUNCTION FORMATS THE DATETIME INFO FOR DISPLAY CLEANLY AT THE TOP OF THE FORM
 function formulize_formatDateTime($dt) {
@@ -2301,12 +2228,15 @@ function formulize_formatDateTime($dt) {
 
 
 // write the settings passed to this page from the view entries page, so the view can be restored when they go back
-function writeHiddenSettings($settings, $form) {
+function writeHiddenSettings($settings, $form = null) {
 	//unpack settings
 	$sort = $settings['sort'];
 	$order = $settings['order'];
 	$oldcols = $settings['oldcols'];
 	$currentview = $settings['currentview'];
+	$searches = array();
+	if (!isset($settings['calhidden']) and !is_array($settings['calhidden']))
+		$settings['calhidden'] = array();
 	foreach($settings as $k=>$v) {
 		if(substr($k, 0, 7) == "search_" AND $v != "") {
 			$thiscol = substr($k, 7);
@@ -2475,11 +2405,9 @@ function showPop(url) {
 		}
 	}
 	window.formulize_popup.focus();
-
 }
 
 function validateAndSubmit() {
-    
     var formulize_numbersonly_found= false;
     jQuery(".numbers-only-textbox").each(function() {
         if(jQuery(this).val().match(/[a-z]/i) !== null) {
@@ -2487,14 +2415,14 @@ function validateAndSubmit() {
             if (!answer){
                 jQuery(this).focus();
                 formulize_numbersonly_found = true;
-            }						
-        } 	
+            }
+        }
     });
-    
+
     if (formulize_numbersonly_found){
         return false;
-	}
-    
+    }
+
 <?php
 if(!$nosave) { // need to check for add or update permissions on the current user and this entry before we include this javascript, otherwise they should not be able to save the form
 ?>
@@ -2505,20 +2433,21 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 	}
 	if(validate) {
 		jQuery(".subform-accordion-container").map(function() {
-			subelementid = jQuery(this).attr('subelementid');			
+			subelementid = jQuery(this).attr('subelementid');
 			window.document.getElementById('subform_entry_'+subelementid+'_active').value = jQuery(this).accordion( "option", "active" );
 		});
 		jQuery('#submitx').attr('disabled', 'disabled');
 		if(jQuery('.formulize-form-submit-button')) {
 			jQuery('.formulize-form-submit-button').attr('disabled', 'disabled');
 		}
-		window.document.getElementById('formulizeform').style.opacity = 0.5;
-		window.document.getElementById('savingmessage').style.display = 'block';
-		
-		window.scrollTo(0,0);
-		formulizechanged = 0; // don't want to trigger the beforeunload warning
-		window.document.formulize.submit(); 
-	}
+        if (formulizechanged) {
+            window.document.getElementById('formulizeform').style.opacity = 0.5;
+            window.document.getElementById('savingmessage').style.display = 'block';
+            window.scrollTo(0,0);
+            formulizechanged = 0; // don't want to trigger the beforeunload warning
+        }
+        window.document.formulize.submit();
+    }
 <?php
 } // end of if not $nosave
 ?>

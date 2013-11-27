@@ -244,11 +244,10 @@ class formulizeElementRenderer{
 					$ele_value[0]
 				);
 			break;
-			
+
 			case 'select':
-				if(strstr($ele_value[2], "#*=:*")) // if we've got a link on our hands... -- jwe 7/29/04
+				if(is_string($ele_value[2]) and strstr($ele_value[2], "#*=:*")) // if we've got a link on our hands... -- jwe 7/29/04
 				{
-					
 					// new process for handling links...May 10 2008...new datastructure for formulize 3.0
 					$boxproperties = explode("#*=:*", $ele_value[2]);
 					$sourceFid = $boxproperties[0];
@@ -798,13 +797,13 @@ class formulizeElementRenderer{
 				} else {
 					$renderedElement = $form_ele1->render();
 				}
-				
+
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
-					"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValues\n"
+					"$renderedElement\n$renderedHoorvs\n$disabledHiddenValues\n"
 				);
 				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
-				
+
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
@@ -928,7 +927,7 @@ class formulizeElementRenderer{
 				}
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
-					"<nobr>$renderedElement</nobr>\n$renderedHoorvs\n$disabledHiddenValue\n"
+					"$renderedElement\n$renderedHoorvs\n$disabledHiddenValue\n"
 				);
 				$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
 				
@@ -999,7 +998,9 @@ class formulizeElementRenderer{
 					$eltcaption = $ele_caption;
 					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-					$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.value == \"\" || myform.{$eltname}.value == \"YYYY-mm-dd\" ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
+					// parseInt() is used to determine if the element value contains a number
+					// Date.parse() would be better, except that it will fail for dd-mm-YYYY format, ie: 22-11-2013
+					$form_ele->customValidationCode[] = "\nif (isNaN(parseInt(myform.{$eltname}.value))) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 				}
 			break;
 			case 'sep':
@@ -1018,7 +1019,7 @@ class formulizeElementRenderer{
 				);
 			break;
 			/*
-			 * Hack by Félix<INBOX International>
+			 * Hack by Fï¿½lix<INBOX International>
 			 * Adding colorpicker form element
 			 */
 			case 'colorpick':
@@ -1047,28 +1048,31 @@ class formulizeElementRenderer{
 				} // end of check to see if the default setting is for real
 			break;
 			/*
-			 * End of Hack by Félix<INBOX International>
+			 * End of Hack by Fï¿½lix<INBOX International>
 			 * Adding colorpicker form element
 			 */
 			default:
 				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
 					$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
-					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $form_ele_id, $isDisabled, $this->_ele, $entry); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to
-					if(!$isDisabled AND ($this->_ele->getVar('ele_req') OR $this->_ele->alwaysValidateInputs)) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
-						$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $form_ele_id, $this->_ele, $entry);
-					}
-					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
-					$isDisabled = false; // the render method must handle providing a disabled output, so as far as the rest of the logic here goes, the element is not disabled but should be rendered as is
-					$baseCustomElementObject = $elementTypeHandler->create();
-					if($baseCustomElementObject->hasData) {
-						$customElementHasData = true;
+					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $form_ele_id, $isDisabled, $this->_ele, $entry, $screen); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
+					// if form_ele is an array, then we want to treat it the same as an "insertbreak" element, ie: it's not a real form element object
+					if(!is_array($form_ele)) {
+    					if(!$isDisabled AND ($this->_ele->getVar('ele_req') OR $this->_ele->alwaysValidateInputs) AND $this->_ele->hasData) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
+    						$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $form_ele_id, $this->_ele, $entry);
+    					}
+    					$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+    					$isDisabled = false; // the render method must handle providing a disabled output, so as far as the rest of the logic here goes, the element is not disabled but should be rendered as is
+    					$baseCustomElementObject = $elementTypeHandler->create();
+    					if($baseCustomElementObject->hasData) {
+    						$customElementHasData = true;
+    					}
 					}
 				} else {
 					return false;
 				}
 			break;
 		}
-		if(is_object($form_ele) AND !$isDisabled) {
+		if(is_object($form_ele) AND !$isDisabled AND $this->_ele->hasData) {
 			if($previousEntryUI) {
 				$previousEntryUIRendered = "&nbsp;&nbsp;" . $previousEntryUI->render();				
 			} else {
@@ -1095,10 +1099,10 @@ class formulizeElementRenderer{
 				$form_ele_new->setRequired();
 			}
 			return $form_ele_new;
-		} elseif(is_object($form_ele) AND $isDisabled) { // element is disabled
+		} elseif(is_object($form_ele) AND $isDisabled AND $this->_ele->hasData) { // element is disabled
 			$form_ele = $this->formulize_disableElement($form_ele, $ele_type, $ele_desc);
 			return $form_ele;
-		} else { // form ele is not an object...only happens for IBs?
+		} else { // form ele is not an object...and/or has no data.  Happens for IBs and for non-interactive elements, like grids.
 			return $form_ele;
 		}
 		

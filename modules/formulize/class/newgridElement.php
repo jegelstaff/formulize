@@ -34,16 +34,10 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 
 class formulizeNewGridElement extends formulizeformulize {
     
-    var $needsDataType;
-    var $overrideDataType;
-    var $hasData;
-    var $name;
-    var $adminCanMakeRequired;
-    var $alwaysValidateInputs;
     function __construct() {
         $this->name = "Custom Table of existing elements (place BEFORE the elements it contains)";
-        $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
-        $this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
+        $this->hasData = false; // set to false if this is a non-data element, like the subform or the grid
+        $this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
         $this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
         $this->adminCanMakeRequired = false; // set to true if the webmaster should be able to toggle this element as required/not required
         $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
@@ -73,6 +67,12 @@ class formulizeNewGridElementHandler extends formulizeElementsHandler {
 		$ele_value = $element ? $element->getVar('ele_value') : array();
 		$fid = $element ? $element->getVar('id_form') : intval($_GET['fid']);
 		
+		if (!$element) {
+			$ele_value[3] = "horizontal";
+			$ele_value[5] = 1;
+			$ele_value[0] = "caption";
+		}
+		
 		$background = $ele_value[3];
 		$sideortop = $ele_value[5] == 1 ? "side" : "above";
 		$heading = $ele_value[0];
@@ -86,7 +86,7 @@ class formulizeNewGridElementHandler extends formulizeElementsHandler {
 			$grid_start_options[$this_element->getVar('ele_id')] = $this_element->getVar('ele_colhead') ? printSmart(trans($this_element->getVar('ele_colhead'))) : printSmart(trans($this_element->getVar('ele_caption')));
 		}
 		
-		return array('grid_start_options'=>$grid_start_options, 'background'=>$background, 'sideortop'=>$sideortop, 'heading'=>$heading);
+		return array('grid_start_options'=>$grid_start_options, 'background'=>$background, 'sideortop'=>$sideortop, 'heading'=>$heading, 'ele_value'=>$ele_value);
     }
     
     // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
@@ -121,14 +121,24 @@ class formulizeNewGridElementHandler extends formulizeElementsHandler {
     // $isDisabled flags whether the element is disabled or not so we know how to render it
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id) {
-        // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
-        if($isDisabled) {
-            $formElement = new xoopsFormLabel($caption, $ele_value[0] . $ele_value[1]);
-        } else {
-            $formElement = new xoopsFormText($caption, $markupName, 50, 50, $ele_value[0] . $ele_value[1]); // caption, markup name, size, maxlength, default value, according to the xoops form class
-        }
-        return $formElement;
+    // $screen is the screen object that is in effect, if any (may be null)
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen) {
+        // we are going to have to store some kind of flag/counter with the id number of the starting element in the table, and the number of times we need to ignore things
+		// we need to then listen for this up above and skip those elements as they come up.  This is why grids must come before their elements in the form definition
+
+		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/griddisplay.php";
+		$fid = $element->getVar('id_form');
+		global $gridCounter;
+		list($grid_title, $grid_row_caps, $grid_col_caps, $grid_background, $grid_start, $grid_count) = compileGrid($ele_value, trans(getFormTitle($fid)), $element);
+		$headingAtSide = ($ele_value[5] AND $grid_title) ? true : false; // if there is a value for ele_value[5], then the heading should be at the side, otherwise, grid spans form width as it's own chunk of HTML
+		$gridCounter[$grid_start] = $grid_count;
+		$gridContents = displayGrid($fid, $entry_id, $grid_row_caps, $grid_col_caps, $grid_title, $grid_background, $grid_start, "", "", true, $screen, $headingAtSide);
+		if($headingAtSide) { // grid contents is the two bits for the xoopsformlabel when heading is at side, otherwise, it's just the contents for the break
+			return new XoopsFormLabel($gridContents[0], $gridContents[1]);
+		} else {
+			return array($gridContents, "head"); // head is the css class of the cell				
+		}
+        
     }
     
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
@@ -136,7 +146,7 @@ class formulizeNewGridElementHandler extends formulizeElementsHandler {
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
     function generateValidationCode($caption, $markupName, $element) {
         $validationmsg = "Your value for $caption should not match the default value.";
-	$validationmsg = str_replace("'", "\'", stripslashes( $validationmsg ) );
+		$validationmsg = str_replace("'", "\'", stripslashes( $validationmsg ) );
         $ele_value = $element->getVar('ele_value');
         $validationCode = array();
         $validationCode[] = "if(myform.{$markupName}.value == '".$ele_value[0].$ele_value[1]."') {\n";

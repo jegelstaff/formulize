@@ -222,4 +222,50 @@ function displayGrid($fid, $entry="", $rowcaps, $colcaps, $title="", $orientatio
 	
 }
 
-?>
+// THIS FUNCTION TAKES THE ELE_VALUE SETTINGS FOR A GRID AND RETURNS ALL THE NECESSARY PARAMS READY FOR PASSING TO THE DISPLAYGRID FUNCTION
+// ALSO WORKS OUT THE NUMBER OF ELEMENTS THAT CAN BE ENTERED INTO THIS GRID
+function compileGrid($ele_value, $title, $element) {
+
+	// 1 is heading
+	// 2 is row captions
+	// 3 is col captions
+	// 4 is shading
+	// 5 is first element
+
+	switch($ele_value[0]) {
+		case "caption":
+			global $myts;
+			if(!$myts){
+				$myts =& MyTextSanitizer::getInstance();
+			}
+			// call the text sanitizer, first try to convert HTML chars, and if there were no conversions, then do a textarea conversion to automatically make links clickable
+			$ele_caption = trans($element->getVar('ele_caption'));
+			$htmlCaption = $myts->undoHtmlSpecialChars($ele_caption);
+			if($htmlCaption == $ele_caption) {
+				$ele_caption = $myts->displayTarea($ele_caption);
+			} else {
+				$ele_caption = $htmlCaption;
+			}
+			$toreturn[] = $ele_caption;
+			break;
+		case "form":
+			$toreturn[] = $title;
+			break;
+		case "none":
+			$toreturn[] = "";
+			break;
+	}
+
+	$toreturn[] = explode(",", $ele_value[1]);
+	$toreturn[] = explode(",", $ele_value[2]);
+
+	$toreturn[] = $ele_value[3];
+
+	$toreturn[] = $ele_value[4];
+
+	// number of cells in this grid
+	$toreturn[] = count($toreturn[1]) * count($toreturn[2]);
+
+	return $toreturn;
+
+}

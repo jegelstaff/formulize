@@ -349,30 +349,14 @@ li {
   color: #689138; }
 
 #mainmenu a.menuTop {
-  padding-left: 3px;
-  border-top: 1px solid #cccccc;
-  border-right: 1px solid #666666;
-  border-bottom: 1px solid #666666;
-  border-left: 1px solid #cccccc; }
+  padding-left: 3px; }
 
 #mainmenu a.menuMain {
-  padding-left: 3px;
-  border-right: 1px solid #666666;
-  border-bottom: 1px solid #666666;
-  border-left: 1px solid #cccccc; }
+  padding-left: 3px; }
 
 #mainmenu a.menuSub {
   padding-left: 17px;
-  background-image: url(../icons/arr.gif);
-  background-repeat: no-repeat;
-  background-position: left;
-  background-color: #fff;
-  color: #8fbe58;
-  font-size: 0.9em;
-  font-style: italic;
-  border-right: 1px solid #666666;
-  border-bottom: 1px solid #666666;
-  border-left: 1px solid #cccccc; }
+  color: #8fbe58; }
 
 #mainmenu a.menuSub:hover {
   color: #8fbe58; }
@@ -424,7 +408,7 @@ th {
   /*border: 1px solid #ccc;*/ }
 
 td.head {
-  background-color: #8fbe58;
+  background-color: #59a7d4;
   color: white;
   font-weight: bold;
   padding: 0.5em 1em 0.5em 0.4em; }
@@ -717,6 +701,9 @@ th {
 table.outer {
   border: 1px solid #59a7d4; }
 
+div.xo-theme-form > table {
+  table-layout: fixed; }
+
 /* horizontal lines between form questions */
 div.xo-theme-form > table.outer > tbody > tr > td {
   border-bottom: 1px solid #59a7d4; }
@@ -779,6 +766,12 @@ div.jGrowl-notification {
 .formulize-subform-table > tbody > tr > td {
   padding: 0.5em;
   border-bottom: 1px dotted #d1d1df; }
+
+.subform-deletebox {
+  float: left; }
+
+.subform-entry-container {
+  margin-left: 25px; }
 
 /*=== Formulize Boutons by Francois T ===*/
 button, input[type='submit'], input[type='button'], input[type='reset'] {

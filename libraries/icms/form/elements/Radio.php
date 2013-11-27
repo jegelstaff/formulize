@@ -144,12 +144,14 @@ class icms_form_elements_Radio extends icms_form_Element {
 		$ele_options = $this->getOptions();
 		$ele_extra = $this->getExtra();
 		$ele_delimeter = $this->getDelimeter();
+		$counter = 0;
 		foreach ($ele_options as $value => $name) {
-			$ret .= "<input type='radio' name='" . $ele_name . "' value='" . htmlspecialchars($value, ENT_QUOTES) . "'";
+			$counter++;
+			$ret .= "<input type='radio' id='" . $ele_name."-".$counter . "' name='" . $ele_name . "' value='" . htmlspecialchars($value, ENT_QUOTES) . "'";
 			if ($value == $ele_value) {
 				$ret .= " checked='checked'";
 			}
-			$ret .= $ele_extra . " />" . $name . $ele_delimeter . "\n";
+			$ret .= $ele_extra . " /><label for='" . $ele_name."-".$counter . "'>" . $name . "</label>" . $ele_delimeter . "\n";
 		}
 		return $ret;
 	}
