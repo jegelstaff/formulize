@@ -37,7 +37,15 @@ class formulizePermHandler  {
 	function formulizePermHandler($fid){
 		$this->fid = intval($fid);
 	}
-	
+
+    static function getPermissionList() {
+        // canonical list of form permissions
+        return array("view_form", "add_own_entry", "update_own_entry", "delete_own_entry", "update_other_entries", "delete_other_entries",
+            "add_proxy_entries", "view_groupscope", "view_globalscope", "view_private_elements", "update_other_reports", "delete_other_reports",
+            "publish_reports", "publish_globalscope", "set_notifications_for_others", "import_data", "edit_form", "delete_form",
+            "update_entry_ownership", "ignore_editing_lock", "update_group_entries", "delete_group_entries");
+    }
+
 	// this method returns an array of group names, keys are ids
 	// gids can be a group id or array of ids...it is the groupids that you are asking about, and you want to know which specific groups are selected as the scope for these groups you're passing in
 	function getGroupScopeGroups($gids) {
