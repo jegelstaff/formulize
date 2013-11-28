@@ -71,6 +71,8 @@ define("_AM_ELE_VALUEINLIST", "Use the value displayed in the list");
 define("_AM_ELE_LINKFIELD_ITSELF", "Use the linked field itself (alphabetical sort)");
 define("_AM_CONVERT_RB_CB", "Convert these radio buttons to checkboxes?");
 define("_AM_CONVERT_CB_RB", "Convert these checkboxes to radio buttons?");
+define("_AM_CONVERT_SB_CB", "Convert this select box to checkboxes?");
+
 
 /*mod Language for form*/
 define("_AM_FORM_CREATE"," Create a new form");
