@@ -159,18 +159,6 @@ define("_AM_SCREEN_FORMSCREENS","Screen(s) du formulaire");
 define("_AM_SCREEN_LISTSCREENS","Screen(s) de la liste des entrées");
 define("_AM_SCREEN_DELETESCREENS","Etes vous sur de vouloir effacer ce screen? Tous les réglages de configuration seront perdus!");
 
-
-
-
-
-
-
-
-
-
-
-
-
 /*end mod Language for admin side, by François T*/
 
 define("_AM_ACTIVE","actif");
@@ -267,7 +255,7 @@ define("_AM_ELE_GRID_HEADING_USE_FORM", "Le titre du formulaire");
 define("_AM_ELE_GRID_ROW_CAPTIONS", "Entrez les légendes pour les lignes de ce tableau");
 define("_AM_ELE_GRID_ROW_CAPTIONS_DESC", "Chaque tableau est une grille de colonnes et de rangées. Le côté gauche de la table a une légende dans chaque cellule au début de chaque ligne. Tapez le texte que vous souhaitez utiliser pour les légendes, séparées par des virgules. Si vos légendes sont longues, c'est mieux visuellement de mettre chaque légende sur sa propre ligne.");
 define("_AM_ELE_GRID_START", "Choisissez le premier élément qui apparaitra dans le coin en haut à gauche du tableau");
-define("_AM_ELE_GRID_START_DESC", "Chaque tableau aura un nombre d'éléments, avec autant de lignes que de colonnes.  ie: avec 3 lignes et 4 colonnes, vous aurez 12 éléments. Le premier élément apparait en haut à gauche, et le suivant dans la case à droite.  A la fin d'une ligne l'élément suivant apparait dans la ligne suivante.  Les éléments apparaissent dans le même ordre que dans le formulaire ; Les 11 elements après le premier seront utilisés, assurez vous donc de l'ordre.");
+define("_AM_ELE_GRID_START_DESC", "Chaque tableau aura un nombre d'éléments, équivalent aux lignes multipliées par les colonnes.  ie: avec 3 lignes et 4 colonnes, vous aurez 12 éléments. Le premier élément apparait en haut à gauche, et le suivant dans la case à droite.  A la fin d'une ligne l'élément suivant apparait dans la ligne suivante.  Les éléments apparaissent dans le même ordre que dans le formulaire ; Les 11 elements après le premier seront utilisés, assurez vous donc de l'ordre.");
 define("_AM_ELE_IB_CLASS","Classe CSS pour la rangée:");
 define("_AM_ELE_IB_DESC","La légende ne s'affiche pas. Seul le texte de cette case apparaît sur l'écran, dans une ligne unique couvrant les deux colonnes du formulaire.");
 define("_AM_ELE_INSERTBREAK","Contenu HTML pour cette ligne");
@@ -281,7 +269,7 @@ define("_AM_ELE_NUMBER_OPTS","Si un nombre est tapé...");
 define("_AM_ELE_NUMBER_OPTS_DEC","Nombre de place pour les décimales:");
 define("_AM_ELE_NUMBER_OPTS_DECSEP","Separer les décimales avec ce caractère (ie: '.'):");
 define("_AM_ELE_NUMBER_OPTS_DESC","Utiliser cette option pour contrôler comment se comporteront les décimales et chiffres, et comment ils seront affichés sur cet écran.");
-define("_AM_ELE_NUMBER_OPTS_PREFIX","Display numbers with this prefix (ie: '$'):");
+define("_AM_ELE_NUMBER_OPTS_PREFIX","Afficher les nombres avec ce préfixe (ie: '$'):");
 define("_AM_ELE_NUMBER_OPTS_SEP","Separer les centaines avec ce caractère (ie: ','):");
 define("_AM_ELE_OPT","Options");
 define("_AM_ELE_OPT_DESC","Cocher la boîte de sélection avec des valeurs par défaut");
@@ -335,30 +323,30 @@ define("_AM_FORMLINK_NONE", "aucun lien -- options courante en action");
 define("_AM_FORMLINK_NONE_TEXTBOX", "Pas d'association effective");
 define("_AM_FORMULIZE_ADD_NEW_SCREEN_OF_TYPE", "Ajouter un nouveau Screen de ce type:");
 define("_AM_FORMULIZE_ADD_SCREEN_NOW", "Ajouter maintenant!");
-define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE", "Are you sure you want to delete this screen?  Please confirm!");
-define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE_PAGE", "Are you sure you want to delete this page?  Please confirm!");
+define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE", "Etes vous sur de vouloir effacer ce Screen?  Merci de confirmer!");
+define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE_PAGE", "Etes vous sur de vouloir effacer cette page?  Merci de confirmer!");
 define("_AM_FORMULIZE_DEFINED_SCREENS", "Screens disponibles pour ce formulaire");
 define("_AM_FORMULIZE_DELETE_SCREEN", "Effacer");
 define("_AM_FORMULIZE_DELETE_THIS_PAGE", "Effacer cette page");
 define("_AM_FORMULIZE_SCREEN_ADDPAGE", "Ajouter une autre page");
 define("_AM_FORMULIZE_SCREEN_A_PAGE", "Elements du formulaire à afficher sur cette page");
-define("_AM_FORMULIZE_SCREEN_BUTTONTEXT", "The text of the link users get at the end of the form");
+define("_AM_FORMULIZE_SCREEN_BUTTONTEXT", "Le texte du lien que les utilisateurs auront à la fin du formulaire");
 define("_AM_FORMULIZE_SCREEN_CONS_ADDCON", "Ajouter une autre condition condition");
-define("_AM_FORMULIZE_SCREEN_CONS_HELP", "Conditions are useful if a page should only appear based on answers to questions in a previous page.  Select the questions from the previous page and specify the answers that should result in this page being displayed.");
+define("_AM_FORMULIZE_SCREEN_CONS_HELP", "Les conditions sont très utiles pour faire apparaitre un texte en fonction des réponses effectuées sur la page précédente.  Sélectionnez les questions de la page précédente et spécifiez les réponses qui feront que cette page s'affichera.");
 define("_AM_FORMULIZE_SCREEN_CONS_NONE", "Toujours afficher cette page");
 define("_AM_FORMULIZE_SCREEN_CONS_PAGE", "Conditions pour afficher cette page");
-define("_AM_FORMULIZE_SCREEN_CONS_YES", "Only display when the following conditions are true:");
-define("_AM_FORMULIZE_SCREEN_DONEDEST", "The URL for the link users get at the end of the form");
+define("_AM_FORMULIZE_SCREEN_CONS_YES", "N'afficher que si les conditions suivantes sont réunies:");
+define("_AM_FORMULIZE_SCREEN_DONEDEST", "L' URL du lien que les utilisateurs auront à la fin du formulaire");
 define("_AM_FORMULIZE_SCREEN_FORM", "Créer ou modifier un Screen");
 define("_AM_FORMULIZE_SCREEN_INSERTPAGE", "Insérer une nouvelle page ici");
 define("_AM_FORMULIZE_SCREEN_INTRO", "Texte en introduction pour la première page du formulaire");
 define("_AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON", "Ajouter un bouton personnalisé");
 define("_AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON_EFFECT", "Ajouter un effet pour ce bouton");
 define("_AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW", "Use a blank default view (ie: aucune entrée affichée)");
-define("_AM_FORMULIZE_SCREEN_LOE_BOTTOMTEMPLATE", "Template for the bottom portion of the page, below the list:");
+define("_AM_FORMULIZE_SCREEN_LOE_BOTTOMTEMPLATE", "Template pour la portion basse de la page, sous la liste:");
 define("_AM_FORMULIZE_SCREEN_LOE_BUTTON1", "Quel texte doit être sur le '");
 define("_AM_FORMULIZE_SCREEN_LOE_BUTTON2", "' bouton?");
-define("_AM_FORMULIZE_SCREEN_LOE_BUTTONINTRO", "Specify which buttons you want included on this screen:");
+define("_AM_FORMULIZE_SCREEN_LOE_BUTTONINTRO", "Specifier quels boutons doivent être inclus dans ce Screen:");
 define("_AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION1", "You can change the text on the buttons below.  Also, if you use a custom Top or Bottom Template, these buttons will be available there.");
 define("_AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION2", "You can change the text on the buttons below.  If you use a custom List Template, these buttons will not appear on the screen by default, but you can use a custom Top or Bottom Template to specifically include them.");
 define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH", "Largeur de toutes les colonnes en pixel?");
