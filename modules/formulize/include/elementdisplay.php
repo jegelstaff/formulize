@@ -56,12 +56,17 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$subformEntryIndex = $subformMetaData[1];
 		$subformElementId = $subformMetaData[2];
 	} 
-	if($entry == "" OR $subformCreateEntry) { $entry = "new"; }
+
+    if($entry == "" OR $subformCreateEntry) {
+        $entry = "new";
+    }
 
 	$element = _formulize_returnElement($ele, $formframe);
 	if(!is_object($element)) {
 		return "invalid_element";
 	}
+
+    $form_id = $element->getVar('id_form');
 
 	$deprefix = $noSave ? "denosave_" : "de_";
 	$deprefix = $subformCreateEntry ? "desubform".$subformEntryIndex."x".$subformElementId."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
@@ -69,43 +74,43 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$renderedElementName = $noSave; // if we've passed a specific string with $noSave, then we want to use that to override the name of the element, because the developer wants to pick up that form value later after submission
 		$noSave = true;
 	} else {
-		$renderedElementName = $deprefix.$element->getVar('id_form').'_'.$entry.'_'.$element->getVar('ele_id');
+		$renderedElementName = $deprefix.$form_id.'_'.$entry.'_'.$element->getVar('ele_id');
 	}
 	
 	global $xoopsUser;
-  if(!$groups) { // groups might be passed in, which covers the case of the registration form and getting the groups from the registration code
+    if(!$groups) {
+        // groups might be passed in, which covers the case of the registration form and getting the groups from the registration code
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
   }
-	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+	$user_id = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 	$username = $xoopsUser ? $xoopsUser->getVar('uname') : "unknown user";
 	static $cachedEntryOwners = array();
-	if(!isset($cachedEntryOwners[$element->getVar('id_form')][$entry])) {
-		$cachedEntryOwners[$element->getVar('id_form')][$entry] = getEntryOwner($entry, $element->getVar('id_form'));
+	if(!isset($cachedEntryOwners[$form_id][$entry])) {
+		$cachedEntryOwners[$form_id][$entry] = getEntryOwner($entry, $form_id);
 	}
-	$owner = $cachedEntryOwners[$element->getVar('id_form')][$entry];
+	$owner = $cachedEntryOwners[$form_id][$entry];
 	$mid = getFormulizeModId();
 
-	
 	static $cachedViewPrivate = array();
 	static $cachedUpdateOwnEntry = array();
 	$gperm_handler = xoops_gethandler('groupperm');
-	if(!isset($cachedViewPrivate[$element->getVar('id_form')])) {
-		$cachedViewPrivate[$element->getVar('id_form')] = $gperm_handler->checkRight("view_private_elements", $element->getVar('id_form'), $groups, $mid);	
-		$cachedUpdateOwnEntry[$element->getVar('id_form')] = $gperm_handler->checkRight("update_own_entry", $element->getVar('id_form'), $groups, $mid);	
+	if(!isset($cachedViewPrivate[$form_id])) {
+		$cachedViewPrivate[$form_id] = $gperm_handler->checkRight("view_private_elements", $form_id, $groups, $mid);
+		$cachedUpdateOwnEntry[$form_id] = $gperm_handler->checkRight("update_own_entry", $form_id, $groups, $mid);
 	}
-	$view_private_elements = $cachedViewPrivate[$element->getVar('id_form')];
-	$update_own_entry = $cachedUpdateOwnEntry[$element->getVar('id_form')];
+	$view_private_elements = $cachedViewPrivate[$form_id];
+	$update_own_entry = $cachedUpdateOwnEntry[$form_id];
 	
 	// check if the user is normally able to view this element or not, by checking their groups against the display groups -- added Nov 7 2005
 	// messed up.  Private should not override the display settings.  And the $entry should be checked against the security check first to determine whether the user should even see this entry in the first place.
 	$display = $element->getVar('ele_display');
 	$private = $element->getVar('ele_private');
 	$member_handler = xoops_gethandler('member');
-	$single_result = getSingle($element->getVar('id_form'), $uid, $groups, $member_handler, $gperm_handler, $mid);
+	$single_result = getSingle($form_id, $user_id, $groups, $member_handler, $gperm_handler, $mid);
 	$groupEntryWithUpdateRights = ($single_result['flag'] == "group" AND $update_own_entry AND $entry == $single_result['entry']) ? true : false;
 
 	// need to test whether the display setting should be checked first?!  Order of checks here looks wrong.  JWE Nov 25 2010
-	if($private AND $uid != $owner AND !$groupEntryWithUpdateRights AND $entry != "new") {
+	if($private AND $user_id != $owner AND !$groupEntryWithUpdateRights AND $entry != "new") {
 		$allowed = $view_private_elements ? 1 : 0;
 	} elseif(strstr($display, ",")) {
 		$display_groups = explode(",", $display);
@@ -117,7 +122,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	}
 
 	if($prevEntry==null) { // preferable to pass in prevEntry!
-		$prevEntry = getEntryValues($entry, "", $groups, $element->getVar('id_form'), "", $mid, $uid, $owner, $groupEntryWithUpdateRights);			
+		$prevEntry = getEntryValues($entry, "", $groups, $form_id, "", $mid, $user_id, $owner, $groupEntryWithUpdateRights);
 	}
 
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
@@ -128,10 +133,10 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		// need to check if there's a condition on this element that is met or not
 		static $cachedEntries = array();
 		if($entry != "new") {
-			if(!isset($cachedEntries[$element->getVar('id_form')][$entry])) {
-				$cachedEntries[$element->getVar('id_form')][$entry] = getData("", $element->getVar('id_form'), $entry);
+			if(!isset($cachedEntries[$form_id][$entry])) {
+				$cachedEntries[$form_id][$entry] = getData("", $form_id, $entry);
 			}	
-			$entryData = $cachedEntries[$element->getVar('id_form')][$entry];
+			$entryData = $cachedEntries[$form_id][$entry];
 		}
 		
 		$filterElements = $elementFilterSettings[0];
@@ -184,7 +189,6 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 	}
 	
 	if($allowed) {
-		
 		if($element->getVar('ele_type') == "subform") {
 			return array("", $isDisabled);
 		}
@@ -206,53 +210,38 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
 		if (!$is_Disabled) {
-			$update_other_entries = $gperm_handler->checkRight("update_other_entries", $element->getVar('id_form'), $groups, $mid);
-			$add_proxy_entries    = $gperm_handler->checkRight("add_proxy_entries", $element->getVar('id_form'), $groups, $mid);
-			if ($entry == "new") {
-				if (!$update_own_entry AND !$add_proxy_entries) {
-					$isDisabled = true;
+            // note that we're using the OPPOSITE of the permission because we want to know if the element should be disabled
+            $isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
 				}
-			} else {
-				if ($uid == $owner) {
-					if (!$update_own_entry){
-						$isDisabled = true;
-					}
-				} else {
-					if (!$update_other_entries){
-						$isDisabled = true;
-					}
-				}
-			}
-		}
 
 		// check whether the entry is locked, and if so, then the element is not allowed.  Set a message to say that elements were disabled due to entries being edited elsewhere (first time only).
 		// groups with ignore lock permission bypass this, and therefore can save entries even when locked, and saving an entry removes the lock, so that gets you out of a jam if the lock is in place when it shouldn't be.
 		// locks are only valid for the session time, so if a lock is older than that, it is ignored and cleared
 		// Do this last, since locking overrides other permissions!
 		
-		$lockFileName = "entry_".$entry."_in_form_".$element->getVar('id_form')."_is_locked_for_editing_by_user_".$uid;
+		$lockFileName = "entry_".$entry."_in_form_".$form_id."_is_locked_for_editing_by_user_".$user_id;
 		// if we haven't found a lock for this entry, check if there is one...(as long as it's not an entry that we locked ourselves on this page load)
-		if($entry != "new" AND !isset($lockedEntries[$element->getVar('id_form')][$entry]) AND !isset($entriesThatHaveBeenLockedThisPageLoad[$element->getVar('id_form')][$entry]) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName") AND !$gperm_handler->checkRight("ignore_editing_lock", $element->getVar('id_form'), $groups, $mid)) {
+		if($entry != "new" AND !isset($lockedEntries[$form_id][$entry]) AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry]) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName") AND !$gperm_handler->checkRight("ignore_editing_lock", $form_id, $groups, $mid)) {
 			$maxSessionLifeTime = ini_get("session.gc_maxlifetime");
 			$fileCreationTime = filectime(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName");
 			if($fileCreationTime + $maxSessionLifeTime > time()) {
 				list($lockUid, $lockUsername) = explode(",", file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName"));
-				if($lockUid != $uid) {
+				if($lockUid != $user_id) {
 					// lock is still valid, hasn't expired yet.
 					if(count($lockedEntries)==0) {
 						print "<script type='text/javascript'>\n";
 						print "alert(\"".sprintf(_formulize_ENTRY_IS_LOCKED, str_replace('"', "'", $lockUsername))."\")\n";
 						print "</script>";
 					}
-					$lockedEntries[$element->getVar('id_form')][$entry] = true;
+					$lockedEntries[$form_id][$entry] = true;
 				}
 			} else {
 				// clean up expired locks
-				formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", "_".$entry."_in_form_".$element->getVar('id_form')."_", $maxSessionLifeTime); 
+				formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", "_".$entry."_in_form_".$form_id."_", $maxSessionLifeTime); 
 			}
 		}
 		// if we've ever found a lock for this entry as part of this pageload...
-		if(isset($lockedEntries[$element->getVar('id_form')][$entry])) {
+		if(isset($lockedEntries[$form_id][$entry])) {
 			$isDisabled = true;
 		}
 		
@@ -260,7 +249,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
 		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subform' AND $ele_type != 'grid') {
-			$data_handler = new formulizeDataHandler($element->getVar('id_form'));
+			$data_handler = new formulizeDataHandler($form_id);
 			$ele_value = loadValue($prevEntry, $element, $ele_value, $data_handler->getEntryOwnerGroups($entry), $groups, $entry, $profileForm); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 		}
 		
@@ -271,13 +260,13 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		formulize_benchmark("Done rendering element.");
 		
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
-		if ($entry > 0 AND !isset($lockedEntries[$element->getVar('id_form')][$entry])) {
+		if ($entry > 0 AND !isset($lockedEntries[$form_id][$entry])) {
             if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {
                 $lockFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName", "w");
                 if (false !== $lockFile) {
-                    fwrite($lockFile, "$uid,$username");
+                    fwrite($lockFile, "$user_id,$username");
                     fclose($lockFile);
-                    $entriesThatHaveBeenLockedThisPageLoad[$element->getVar('id_form')][$entry] = true;
+                    $entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry] = true;
                 }
             } else {
                 if (defined("ICMS_ERROR_LOG_SEVERITY") and ICMS_ERROR_LOG_SEVERITY >= E_WARNING) {
@@ -509,7 +498,3 @@ function displayButton($text, $ele, $value, $entry="new", $append="replace", $bu
 		exit("Error: invalid button or link option specified in a call to displayButton");
 	}
 }
-
-
-
-?>
