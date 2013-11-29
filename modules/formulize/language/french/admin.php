@@ -202,21 +202,21 @@ define("_AM_ELE_CTRE","Centré");
 define("_AM_ELE_DATE","Date");
 define("_AM_ELE_DEFAULT","Valeur par défaut");
 define("_AM_ELE_DELIM_CHOICE",'Delimitation entre chaque option');
-define("_AM_ELE_LEFTRIGHT_DESC","Any text or HTML code that you type here will appear on the right beside the caption.  You can use PHP code instead of text or HTML, just make sure it contains '&#36;value = &#36;something;' and Formulize will read this text as PHP code.");
+define("_AM_ELE_LEFTRIGHT_DESC","Tout texte ou code HTML entré ici apparaitra à coté de la légende.  Vous pouvez utiliser du PHP, mais assurez vous qu'il contient '&#36;value = &#36;something;' et Formulize lira ce texte comme du code PHP.");
 define("_AM_ELE_LEFTRIGHT_TEXT","Contenu du coté droit");
-define("_AM_ELE_OPT_CHANGEUSERVALUES", "Lorsque saving changes to these options, also change the values users have made in the form to match the new options (ie: where users had selected the old first option, replace their selection with the new first option instead)");
+define("_AM_ELE_OPT_CHANGEUSERVALUES", "Lors de l'enregistrement des changements pour ces choix, changer aussi les valeurs faites par l'utilisateur dans le formulaire pour correspondre aux nouvelles options (ie: quand l'utilisateur a sélectionné le premier choix, version ancienne, remplacer sa sélection par le nouveau premier choix)");
 define("_AM_FORMULIZE_SCREEN_SECURITY", "Utiliser la securité XOOPS sur cet écran?");
-define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "The XOOPS security token is a defense against cross-site scripting attacks.  However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types.");
+define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "La sécurité XOOPS est une défense contre les attaques malveillantes par script.  Mais cela peut poser des problèmes si vous utilisez une Interface Utilisateur Ajax-based dans le Screen de la Liste des Entrées, et peut être dans d'autres types de Screens.");
 
 	
 	// number options for textboxes
 define("_AM_ELE_DERIVED", "Valeur dérivée venant d'autres éléments (calculs...)");
 define("_AM_ELE_DERIVED_ADD", "Ajouter à la formule");
 define("_AM_ELE_DERIVED_CAP", "Formule pour générer des valeurs dans cet élément");
-define("_AM_ELE_DERIVED_DESC", "Selectionner un element ci dessous pour l'ajouter à votre formule.  You can also use element ID numbers or Framework handles in your formula, as long as they are inside double quotes.  The formula can have multiple lines, or steps, and you can use PHP code in the formula.  The last line should be of the format <i>\$value = \$something</i> where \$something is the final number or formula that you want use.<br /><br />Example:<br />\$value = \"Number of hits\" / \"Total shots\" * 100");
+define("_AM_ELE_DERIVED_DESC", "Selectionner un element ci dessous pour l'ajouter à votre formule.  Vous pouvez aussi utiliser le numéro ID d'un élément ouh d'un Framework dans votre code, tant qu'il est entre les doubles guillemets.  Vous pouvez utiliser un code PHP, avec de multiples lignes.  Format de la dernière ligne obligatoire: <i>\$value = \$something</i> où \$something est le nombre final ou le code que vous souhaitez utiliser.<br /><br />Exemple:<br />\$value = \"Number of hits\" / \"Total shots\" * 100");
 define("_AM_ELE_DERIVED_NUMBER_OPTS","Si cette formule produit un nombre ...");	
 define("_AM_ELE_DESC","texte descriptif");
-define("_AM_ELE_DESC_HELP","quoique vous tapiez ici, cela apparitra comme cette ligne de texte le fait.");
+define("_AM_ELE_DESC_HELP","quoique vous tapiez ici, cela apparaitra comme cette ligne de texte le fait.");
 define("_AM_ELE_DETAIL","Détails");
 define("_AM_ELE_DISABLED", "Désactiver cet élément pour un groupe?");
 define("_AM_ELE_DISPLAY","Afficher");
@@ -232,7 +232,7 @@ define("_AM_ELE_FORMLINK_SCOPEFILTER_ADDCON", "Ajouter une autre condition");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_ALL", "Pas de filttre en action (effacer les filtres).");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_CON", "Filtrer les options basées sur ces conditions:");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_DESC", "When you link to values in another form, you may wish to limit the values included in the list based on certain properties of the entries in the other form.  For example, if you are linking to the names of tasks in a task form, you might want to list only tasks that are incomplete.  If there's a question in the task form that asks if the task is complete, you could specify a filter like: \"Task is complete = No\".<br><br>If the options are {FULLNAMES} or {USERNAMES}, and you are using a custom profile form in conjunction with the Registration Codes module, you can filter the names based on the profile form.");
-define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(If the first list here is empty, click the 'Add another condition' button to refresh it.)");
+define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(Si la première liste est vide, cliquer sur le bouton 'Ajouter une autre condition' pour la rafraichir it.)");
 define("_AM_ELE_FORMLINK_SCOPELIMIT_NO", "Utiliser tous ces groupes");
 define("_AM_ELE_FORMLINK_SCOPELIMIT_YES", "Utiliser seulement les groupes dont l'utilisateur est actuellement membre");
 define("_AM_ELE_FORMLINK_SCOPE_ALL", "Utiliser tous les groupes");
