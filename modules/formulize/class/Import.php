@@ -2,7 +2,7 @@
 include  'PDO_Conn.php';//Include the Connection File
 
 Import();
-echo"Exited";
+echo"Successfully Imported all Insert Statements .Exit";
 //Import Functions Begins Below
 function Creat_Applications()
 {
@@ -26,7 +26,7 @@ function Creat_Applications()
 		if(strstr($statement, "Create table")) {
 			Create_table($statement);
 		}
-		if(Statement_ID($statement,null,null,1)=="_formulize_applications") {
+		if(Statement_ID($statement,null,null,1)=="_formulize_applications") { 
 			$App_ID=Statement_ID($statement);
 			if (Check_Uniquines ($App_ID,2)==0) //If Unique then no need to Update the ID
 			{
@@ -217,9 +217,9 @@ function Creat_Applications()
 		}
 		if(Statement_ID($statement,null,null,1)=="_groups"){
 			//The Only ID it will Insert is the One that's in Group_Insert Array//It checks that's Included in Array and then Inserts it
-			echo "Here in groups";
+			////echo "Here in groups";
 			$groups_ID=Statement_ID($statement);
-			echo $groups_ID."<br/>";
+			////echo $groups_ID."<br/>";
 			if (formIdMap(2,"Group_Insert",$groups_ID)!=null){
 				
 				if (Check_Uniquines($groups_ID,9)==0)
@@ -236,9 +236,9 @@ function Creat_Applications()
 					echo "Updating the Group ID  in Groups from = ".$groups_ID." to ".$NewID."<br/>";
 				}}}
 		if(Statement_ID($statement,null,null,1)=="_formulize_entry_owner_groups"||Statement_ID($statement,null,null,1)=="_formulize_group_filters"
-				||Statement_ID($statement,null,null,1)=="_formulize_groupscope_settings"||Statement_ID($statement,null,null,1)=="_group_lists")
+				||Statement_ID($statement,null,null,1)=="_formulize_groupscope_settings"||Statement_ID($statement,null,null,1)=="_group_lists"
+				||Statement_ID($statement,null,null,1)=="_group_permission")
 		{
-			echo Statement_ID($statement,null,null,1);
 			preg_match('/VALUES \(.*\)/', $statement, $values);//To get the Values
 			$rem=array('VALUES','`','(',')');
 			$table=Statement_ID($statement,null,null,1);
@@ -267,9 +267,9 @@ function Creat_Applications()
 			//***********************************
 			//***********************************
 			//This is Needed because the Tables in the DB are poorly designed .FID should have been consistent in the column number in all tables,also the group ID 
-			$map_fid=array ("_formulize_entry_owner_groups"=>"1/17","_formulize_group_filters"=>"1/19","_formulize_groupscope_settings"=>"2/23");
-			$map_grpid=array ("_formulize_entry_owner_groups"=>3,"_formulize_group_filters"=>2,"_formulize_groupscope_settings"=>1);
-			$map_check=array ('_formulize_entry_owner_groups'=>11,'_formulize_group_filters'=>12,'_formulize_groupscope_settings'=>13,'_group_lists'=>14);
+			$map_fid=array ("_formulize_entry_owner_groups"=>"1/17","_formulize_group_filters"=>"1/19","_formulize_groupscope_settings"=>"2/23","_group_permission"=>"2/56");
+			$map_grpid=array ("_formulize_entry_owner_groups"=>3,"_formulize_group_filters"=>2,"_formulize_groupscope_settings"=>1,"_group_permission"=>1);
+			$map_check=array ('_formulize_entry_owner_groups'=>11,'_formulize_group_filters'=>12,'_formulize_groupscope_settings'=>13,'_group_lists'=>14,'_group_permission'=>24);
 			$map_fid=explode('/',$map_fid[$table]);
 			//echo"FID <br/>";
 			//print_r($map_fid);
@@ -299,12 +299,17 @@ function Creat_Applications()
 				echo "Updating Row in".$table."<br/>";
 				//Post Process
 			}
+			if ($table=="_formulize_entry_owner_groups"){
+				Insert ("UPDATE ".Prefix."_formulize_entry_owner_groups SET `entry_id`=".SID." where `owner_id`=$ID");
+			}
+			if ($table=="_group_permission"){
+				Insert ("UPDATE ".Prefix."_group_permission SET `gperm_modid`=".MOD_ID." where gperm_id=$ID");}
 			foreach ($values as $k=>$v)
 			{
 				$rem=array('\'');
 				$v=str_replace($rem,'',$v);
 				if ($map_fid[0]==$k && $table!='_group_lists')
-				{ 
+				{ ////echo $v;
 					if (formIdMap(2,"Form",$v)!=null){ // Updates Form 1
 						$ForID1=formIdMap(2,"Form",$v);
 						Post_Process ($ID,$ForID1,null,2,$map_fid[1]);
@@ -740,7 +745,8 @@ Function Post_Process ($ID,$Update=null,$Flag=null,$switch,$table=null,$Flag1=nu
 	,47=>'_formulize_screen_multipage/conditions/multipageid',48=>'_formulize_screen_multipage/paraentryform/multipageid',
 	50=>'_formulize_screen_listofentries/sid/listofentriesid',51=>'_formulize_screen_listofentries/limitviews/listofentriesid',
 	52=>'_formulize_screen_listofentries/defaultview /listofentriesid',53=>'_formulize_screen_listofentries/hiddencolumns/listofentriesid'
-	,54=>'_formulize_screen_listofentries/decolumns/listofentriesid',55=>'_formulize_screen_listofentries/viewentryscreen/listofentriesid');
+	,54=>'_formulize_screen_listofentries/decolumns/listofentriesid',55=>'_formulize_screen_listofentries/viewentryscreen/listofentriesid',
+	56=>'_group_permission/gperm_itemid/gperm_id',57=>'_group_permission/gperm_groupid/gperm_id');
 
 
 	$fields=explode ('/',$tables[$table]);
@@ -782,7 +788,7 @@ Function Check_Uniquines ($ID,$field)
 	,10=>'_formulize_id/`form_handle`',11=>'_formulize_entry_owner_groups/`owner_id`',12=>'_formulize_group_filters/filterid',13=>'_formulize_groupscope_settings/groupscope_id'
 	,14=>'_group_lists/`gl_id`',15=>'_group_lists/gl_name',16=>'_formulize_advanced_calculations/acid',17=>'_formulize_other/other_id',18=>'_formulize_saved_views/sv_id'
 	,19=>'_formulize_screen/sid',20=>'_formulize_screen_form/formid',21=>'_formulize_screen_multipage/multipageid',22=>'_formulize_notification_conditions/not_cons_id'
-	,23=>'_formulize_screen_listofentries/listofentriesid');
+	,23=>'_formulize_screen_listofentries/listofentriesid',24=>'_group_permission/gperm_id');
 	$fields=explode ('/',$tables[$field]);
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare("SELECT COUNT( * ) AS num from ".Prefix."".$fields[0]." where ".$fields[1]."= :id ;") ;
@@ -1012,7 +1018,8 @@ function Create_table($Insert)
 	$s1.=$Insert[2];
 	$s1.=";";
 	$s1=preg_replace('/Table_Name/', "`".Prefix."_formulize_$AllHandles2[0]`", $s1);
-	Insert ($s1);
+	Insert($s1);
+	Insert ("UPDATE `".Prefix."_formulize_$AllHandles2[0]` SET `mod_uid`=".SID."");//To Update Formulize_Handle Mod ID to the User who's carrying out the Impot
 	echo "Creating Table Formulize_$AllHandles2[0] <br/>";
 }
 function update_groups ($table,$ID,$flag=null)
@@ -1021,7 +1028,7 @@ function update_groups ($table,$ID,$flag=null)
 	$tables=array ('_formulize_entry_owner_groups'=>'groupid/owner_id/16','_formulize_group_filters'=>'groupid/filterid/18'
 	,'_formulize_groupscope_settings'=>'groupid/groupscope_id/21','_2formulize_groupscope_settings'=>'view_groupid/groupscope_id/22','_group_lists'=>'gl_groups/gl_id/24'
 	,'_formulize_notification_conditions'=>'not_cons_groupid/not_cons_id/30','_formulize_saved_views'=>'sv_pubgroups/sv_id/34'
-	,'_formulize'=>'ele_display/ele_id/11','_2formulize'=>'ele_disabled/ele_id/12');
+	,'_formulize'=>'ele_display/ele_id/11','_2formulize'=>'ele_disabled/ele_id/12','_group_permission'=>'gperm_groupid/gperm_id/57');
 	$f;
 	//echo $tables[$table];
 	switch ($flag){
@@ -1061,21 +1068,18 @@ function update_groups ($table,$ID,$flag=null)
 			if (empty($f)){
 				Post_Process ($ID,$grpID_N,null,2,$fields[2]);}else {$result[$k]=$grpID_N; ///print_r($result);
 			}
-			////echo "Here";
 		}
-		///echo "$d <br/>";
 		if (formIdMap(2,"Group_Map",$d)!=null){ //To Update the Map Group
-			///echo "hr";
 			$grpID_N=formIdMap(2,"Group_Map",$d);
-			///echo "hr";
 			if (empty($f)){
 				Post_Process ($ID,$grpID_N,null,2,$fields[2]);}else {
 				$result[$k]=$grpID_N;
 			}
 		}
 		if (formIdMap(2,"Group_Ignore",$d)!=null){
-			if (empty($f)){	//To Remove the Group that's flagged as Ignore by replacing it with ''
-				Post_Process ($ID,0,null,2,$fields[2]);} else {unset($result[$k]);} 
+			if (empty($f)){	//To Remove the Group that's flagged as Ignore by Removing it from the DB if it's a list then it Unset the array
+				if ($table1!='_formulize_groupscope_settings' && $table1 !='_formulize') {Insert("DELETE FROM $table1 WHERE $fields[1]=$ID and $fields[0]=$d;");}else
+				{Post_Process ($ID,0,null,2,$fields[2]);}} else {unset($result[$k]);} 
 		}}
 	if (!empty($f))
 	{
