@@ -88,6 +88,17 @@ $(".converttocheckbox").click(function () {
 	}
 	return false;
 });
+
+$(".converttocheckboxfromsb").click(function () {
+	var answer = confirm("<{$smarty.const._AM_CONVERT_SB_CB}> WARNING: existing submissions from users will not be preserved!!");
+	if(answer) {
+		$("[name=convertelement]").val($(this).attr('target'));
+		$("[name=reload_elements]").val(1);
+		$(".savebutton").click();
+	}
+	return false;
+});
+
 $(".converttoradio").click(function () {
 	var answer = confirm("<{$smarty.const._AM_CONVERT_CB_RB}>");
 	if(answer) {

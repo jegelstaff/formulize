@@ -4,10 +4,6 @@ div.xo-theme-form > table {
     table-layout: fixed;    // prevent subforms from making the table too wide
 }
 
-div.xo-theme-form > table.outer > tbody > tr > td {
-    overflow: scroll;   // table cell contents, specifically subforms, should scroll if the content is too wide
-}
-
 /* horizontal lines between form questions */
 div.xo-theme-form > table.outer > tbody > tr > td {
     border-bottom: 1px solid $colourPrimary;
@@ -82,6 +78,29 @@ div.jGrowl-notification {
     padding: 0.5em;
     border-bottom: 1px dotted rgb(209, 209, 223);
 }
+
+// accordion subforms >
+p.subform-header {
+    // font-size: 10pt !important;
+}
+
+.ui-accordion-content {
+    //background: #80C3DD;
+    //border-color: white;
+    // font-size: 10pt; !important;
+}
+.ui-accordion-header {
+    //border-color: white;
+}
+
+.subform-deletebox {
+    float: left;        // float the delete checkboxes to the left
+}
+
+.subform-entry-container {
+    margin-left: 25px;  // space for the delete checkboxes
+}
+// accordion subforms <
 
 /*=== Formulize Boutons by Francois T ===*/
 button, input[type='submit'], input[type='button'], input[type='reset'] {

@@ -34,12 +34,6 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 
 class formulizeNewIbElement extends formulizeformulize {
     
-    var $needsDataType;
-    var $overrideDataType;
-    var $hasData;
-    var $name;
-    var $adminCanMakeRequired;
-    var $alwaysValidateInputs;
     function __construct() {
         $this->name = "Custom Text for display (spanning both cells)";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
@@ -108,27 +102,32 @@ class formulizeNewIbElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id) {
-        // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
-        if($isDisabled) {
-            $formElement = new xoopsFormLabel($caption, $ele_value[0] . $ele_value[1]);
-        } else {
-            $formElement = new xoopsFormText($caption, $markupName, 50, 50, $ele_value[0] . $ele_value[1]); // caption, markup name, size, maxlength, default value, according to the xoops form class
-        }
-        return $formElement;
+		$elementrenderer = new formulizeElementRenderer();
+		$id_form = $element->getVar('id_form');
+        if(get_magic_quotes_gpc()) {
+			$ele_value[0] = stripslashes($ele_value[0]);
+		}
+		if(trim($ele_value[0]) == "") { $ele_value[0] = $caption; }
+		if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
+			$form_id = $id_form;
+			// $entry_id = $entry;
+			$entryData = $elementrenderer->formulize_getCachedEntryData($id_form, $entry_id);
+			$creation_datetime = display($entryData, "creation_datetime");
+			$evalResult = eval($ele_value[0]);
+			if($evalResult === false) {
+				$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
+			} else {
+				$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
+			}
+		}
+		$ele_value[0] = $elementrenderer->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form);
+		return $ele_value; // an array, item 0 is the contents of the break, item 1 is the class of the table cell (for when the form is table rendered)
     }
     
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
     function generateValidationCode($caption, $markupName, $element) {
-        $validationmsg = "Your value for $caption should not match the default value.";
-	$validationmsg = str_replace("'", "\'", stripslashes( $validationmsg ) );
-        $ele_value = $element->getVar('ele_value');
-        $validationCode = array();
-        $validationCode[] = "if(myform.{$markupName}.value == '".$ele_value[0].$ele_value[1]."') {\n";
-        $validationCode[] = "  window.alert('{$validationmsg}');\n myform.{$markupName}.focus();\n return false;\n ";
-        $validationCode[] = "}\n";
-        return $validationCode;
     }
     
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable

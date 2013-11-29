@@ -98,6 +98,10 @@ if($_GET['fid'] != "new") {
         $converttext = _AM_ELE_CONVERT_RB;
         $linktype = "radio";
         break;
+      case("select"):
+        $converttext = _AM_ELE_CONVERT_CB;
+        $linktype = "checkboxfromsb";
+	break;
       default:
         $converttext = "";
         $linktype = "";

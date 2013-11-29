@@ -1411,9 +1411,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	} 
 	// MASTER HIDELIST CONDITIONAL...
 	if(!$settings['hlist'] AND !$listTemplate) {
+		print "<div class=\"list-of-entries-container\"><table class=\"outer\">";
 
-		print "<table class=outer>";
-	
 		$count_colspan = count($cols)+1;
 		if($useViewEntryLinks OR $useCheckboxes != 2) {
 			$count_colspan_calcs = $count_colspan;
@@ -1651,9 +1650,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 			
 			} // end of foreach data as entry
 		} // end of if there is any data to draw
-	
-		print "</table>";
 
+		print "</table></div>";
 	} elseif($listTemplate AND !$settings['hlist']) {
 
 		// USING A CUSTOM LIST TEMPLATE SO DO EVERYTHING DIFFERENTLY

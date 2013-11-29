@@ -698,6 +698,9 @@ th {
 table.outer {
   border: 1px solid #59a7d4; }
 
+div.xo-theme-form > table {
+  table-layout: fixed; }
+
 /* horizontal lines between form questions */
 div.xo-theme-form > table.outer > tbody > tr > td {
   border-bottom: 1px solid #59a7d4; }
@@ -760,6 +763,12 @@ div.jGrowl-notification {
 .formulize-subform-table > tbody > tr > td {
   padding: 0.5em;
   border-bottom: 1px dotted #d1d1df; }
+
+.subform-deletebox {
+  float: left; }
+
+.subform-entry-container {
+  margin-left: 25px; }
 
 /*=== Formulize Boutons by Francois T ===*/
 button, input[type='submit'], input[type='button'], input[type='reset'] {
