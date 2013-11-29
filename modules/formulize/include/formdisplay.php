@@ -320,8 +320,9 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mi
 }
 
 
-function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button_text="", $settings="", $titleOverride="", $overrideValue="", $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0, $printall=0, $screen=null) {  // nmc 2007.03.24 - added $printall
-
+function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button_text="", $settings="", $titleOverride="", $overrideValue="",
+    $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0, $printall=0, $screen=null)
+{
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/extract.php';
 formulize_benchmark("Start of formDisplay.");
@@ -332,7 +333,8 @@ if($titleOverride == "formElementsOnly") {
 	$formElementsOnly = true;
 }
 if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "all") {
-	$passedInTitle = $titleOverride; // we can pass in a text title for the form, and that will cause the $titleOverride "all" behaviour to be invoked, and meanwhile we will use this title for the top of the form
+        // we can pass in a text title for the form, and that will cause the $titleOverride "all" behaviour to be invoked, and meanwhile we will use this title for the top of the form
+        $passedInTitle = $titleOverride;
 	$titleOverride = "all";
 } 
 
@@ -494,14 +496,14 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 
 	$info_received_msg = 0;
 	$info_continue = 0;
-	if($entries[$fid][0]) { $info_continue = 1; }
+    if($entries[$fid][0]) {
+        $info_continue = 1;
+    }
 	
-	$update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);
-	$update_other_entries = $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid);
 	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
 	$add_proxy_entries = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
 	
-	if($_POST['form_submitted'] AND $profileForm !== "new" AND ((!$entry AND ($add_own_entry OR $add_proxy_entries)) OR ($entry AND ($update_other_entries OR ($update_own_entry AND $uid = getEntryOwner($entry, $fid)))))) {
+	if ($_POST['form_submitted'] and $profileForm !== "new" and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 		$info_received_msg = "1"; // flag for display of info received message
 		if(!isset($GLOBALS['formulize_readElementsWasRun'])) {
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
@@ -687,15 +689,11 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				$oneToOneLinksMade = true;
 			}
 			
-
-				if($single == "group" AND $update_own_entry AND $entry == $single_result['entry']) {
-					$groupEntryWithUpdateRights = true;
-					$update_other_entries = true;
-				}
-
-	
 				unset($prevEntry);
-				if($entries[$this_fid]) { 	// if there is an entry, then get the data for that entry
+            // if there is an entry, then get the data for that entry
+            if ($entries[$this_fid]) {
+                // TODO: is this permission check working as it should? perhaps it can be moved inside the function?
+                $groupEntryWithUpdateRights = ($single == "group" AND $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid) AND $entry == $single_result['entry']);
 					$prevEntry = getEntryValues($entries[$this_fid][0], $formulize_mgr, $groups, $this_fid, $elements_allowed, $mid, $uid, $owner, $groupEntryWithUpdateRights); 
 				}
 
@@ -718,7 +716,9 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
                 }
                 $form->setExtra("enctype='multipart/form-data'"); // impératif!
 
-				if(is_array($settings)) { $form = writeHiddenSettings($settings, $form); }
+                if(is_array($settings)) {
+                    $form = writeHiddenSettings($settings, $form);
+                }
 	
 				// include who the entry belongs to and the date
 				// include acknowledgement that information has been updated if we have just done a submit
@@ -726,17 +726,19 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 	
 				if(!$profileForm AND $titleOverride != "all") {
 							// build the break HTML and then add the break to the form
-					if(strstr($currentURL, "printview.php")) {
 						$breakHTML = "<center>";
-					} else {
-								$breakHTML = "<center><p><b>";
-								if($info_received_msg) { $breakHTML .= _formulize_INFO_SAVED . "&nbsp;"; }
-								
-								if($info_continue == 1 AND (($owner == $uid AND $update_own_entry) OR $update_other_entries)) {
+                    if(!strstr($currentURL, "printview.php")) {
+                        $breakHTML .= "<p><b>";
+                        if($info_received_msg) {
+                            $breakHTML .= _formulize_INFO_SAVED . "&nbsp;";
+                        }
+                        // TODO: are the correct form, user and entry IDs used here?
+                        if($info_continue == 1 and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 									$breakHTML .= _formulize_INFO_CONTINUE1 . "</b></p>";
 								} elseif($info_continue == 2) {
 									$breakHTML .=  _formulize_INFO_CONTINUE2 . "</b></p>";
-								} elseif(!$entry AND ($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid))) {
+                        // TODO: are the correct form, user and entry IDs used here?
+                        } elseif(!$entry and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 									$breakHTML .=  _formulize_INFO_MAKENEW . "</b></p>";
 								} else {
 									$breakHTML .= "</b></p>";
@@ -754,8 +756,8 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 								$breakHTML .= _formulize_FD_NEWENTRY . "</p>";
 							}
 	
-							$breakHTML .= "</td><td width=50% style=\"vertical-align: bottom;\">"; //<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p></td><td>";
-					if(strstr($currentURL, "printview.php") OR (!$gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) AND !$gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid))) {
+					$breakHTML .= "</td><td width=50% style=\"vertical-align: bottom;\">";
+					if (strstr($currentURL, "printview.php") or !formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 						$breakHTML .= "<p>";
 					} else {
 						// get save and button button options
@@ -772,17 +774,17 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 						} elseif($done_button_text != "{NOBUTTON}" AND !$allDoneOverride) {
 							$done_button_text = _formulize_INFO_DONE1 . $done_button_text . _formulize_INFO_DONE2;
 						// check to see if the user is allowed to modify the existing entry, and if they're not, then we have to draw in the all done button so they have a way of getting back where they're going
-						} elseif(($entry AND (($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries))) OR !$entry) {
+                        // TODO: is this check doing what it is supposed to?
+						} elseif (($entry and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) OR !$entry) {
 							$done_button_text = "";
 						} else {
 							$done_button_text = _formulize_INFO_DONE1 . _formulize_DONE . _formulize_INFO_DONE2;					
 						}
 	
-	
 						$nosave = false;
-						if(!$save_button_text AND (($entry AND (($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries))) OR (!$entry AND ($add_own_entry OR $add_proxy_entries)))) {
+						if(!$save_button_text and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 							$save_button_text = _formulize_INFO_SAVEBUTTON;
-						} elseif($save_button_text != "{NOBUTTON}" AND (($entry AND (($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries))) OR (!$entry AND ($add_own_entry OR $add_proxy_entries)))) {
+						} elseif ($save_button_text != "{NOBUTTON}" and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 							$save_button_text = _formulize_INFO_SAVE1 . $save_button_text . _formulize_INFO_SAVE2;
 						} else {
 							$save_button_text = _formulize_INFO_NOSAVE;
@@ -820,7 +822,9 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 			formulize_benchmark("After Compile Elements.");
 		}	// end of for each fids
 	
-		if(!is_object($form)) { exit("Error: the form cannot be displayed.  Does the current group have permission to access the form?"); }
+        if(!is_object($form)) {
+            exit("Error: the form cannot be displayed.  Does the current group have permission to access the form?");
+        }
 	
 				// DRAW IN THE SPECIAL UI FOR A SUBFORM LINK (ONE TO MANY)		
 				if(count($sub_fids) > 0) { // if there are subforms, then draw them in...only once we have a bonafide entry in place already
@@ -860,19 +864,11 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 		}
 	
 		// draw in the submitbutton if necessary
-		if($entry AND !$formElementsOnly) { // existing entry, if it's their own and they can update their own, or someone else's and they can update someone else's
-			if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries)) {
-				$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
+		if (!$formElementsOnly and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
+			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen);
 			} else {
-				$form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
+			$form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen);
 			}
-		} elseif(!$formElementsOnly) { // new entry
-			if($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
-				$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen); //nmc 2007.03.24 - added $printall
-			} else {
-				$form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen); //nmc 2007.03.24 - added $printall
-			}
-		}
 	
 		if(!$formElementsOnly) {
 			
@@ -1493,12 +1489,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 					}
 					$col_two .= "<tr>\n<td>";
 					// check to see if we draw a delete box or not
-					if($sub_ent !== "new") {
-						$deleteSelf = $gperm_handler->checkRight("delete_own_entry", $sfid, $groups, $mid);
-						$deleteOther = $gperm_handler->checkRight("delete_other_entries", $sfid, $groups, $mid);
-						$sub_owner = getEntryOwner($sub_ent, $sfid);
-						//print "sub_owner: $sub_owner<br>uid: $uid<br>deleteself: $deleteSelf<br>";
-						if(($sub_owner == $uid AND $deleteSelf) OR ($sub_owner != $uid AND $deleteOther)) {
+					if ($sub_ent !== "new" and formulizePermHandler::user_can_delete_entry($sfid, $uid, $sub_ent)) {
 							$need_delete = 1;
 							$col_two .= "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>";
 						} 
@@ -1534,15 +1525,9 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 					
 					// check to see if we draw a delete box or not
 					$deleteBox = "";
-					if($sub_ent !== "new") {
-						$deleteSelf = $gperm_handler->checkRight("delete_own_entry", $sfid, $groups, $mid);
-						$deleteOther = $gperm_handler->checkRight("delete_other_entries", $sfid, $groups, $mid);
-						$sub_owner = getEntryOwner($sub_ent, $sfid);
-						//print "sub_owner: $sub_owner<br>uid: $uid<br>deleteself: $deleteSelf<br>";
-						if(($sub_owner == $uid AND $deleteSelf) OR ($sub_owner != $uid AND $deleteOther)) {
-							$need_delete = 1;
-							$deleteBox = "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>&nbsp;&nbsp;";
-						} 
+					if ($sub_ent !== "new" and formulizePermHandler::user_can_delete_entry($sfid, $uid, $sub_ent)) {
+						$need_delete = 1;
+						$deleteBox = "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>&nbsp;&nbsp;";
 					}
 					
 					
@@ -1555,7 +1540,6 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid
 					ob_end_clean();
 					$col_two .= $col_two_temp . "</div>\n</div>\n";
 				}
-			}
 		}
 		
 	} // end of the if condition controlling placement of blank defaults
