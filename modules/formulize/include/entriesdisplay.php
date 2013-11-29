@@ -123,18 +123,20 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 	}
 
-	// check for deletion request and then delete entries...must check security first!
-	if($_POST['delconfirmed'] AND $formulize_LOESecurityPassed AND ($delete_own_entry OR $delete_other_entries)) { // only gets set by clicking on the delete selected button
+    // check for deletion request (set by 'delete selected' button)
+    if ($_POST['delconfirmed'] AND $formulize_LOESecurityPassed) {
 		foreach($_POST as $k=>$v) {
 			if(substr($k, 0, 7) == "delete_" AND $v != "") {
-				$thisentry = substr($k, 7);
-				if($delete_other_entries OR $xoopsUser->getVar('uid') == getEntryOwner($thisentry, $fid)) { // if they only have "delete own" then only proceed if this is their entry
+                $delete_entry_id = substr($k, 7);
+
+                // confirm user has permission to delete this entry
+                if (formulizePermHandler::user_can_delete_entry($fid, $uid, $delete_entry_id)) {
 					$GLOBALS['formulize_deletionRequested'] = true;
 					// new syntax for deleteEntry, Sept 18 2005 -- used to handle deleting all unified display entries that are linked to this entry.  
 					if($frid) {
-						deleteEntry($thisentry, $frid, $fid, $gperm_handler, $member_handler, $mid);
+						deleteEntry($delete_entry_id, $frid, $fid, $gperm_handler, $member_handler, $mid);
 					} else {
-						deleteEntry($thisentry, "", $fid);
+						deleteEntry($delete_entry_id, "", $fid);
 					}
 				}
 			}
@@ -143,7 +145,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// check for cloning request and if present then clone entries
 	if($_POST['cloneconfirmed'] AND $formulize_LOESecurityPassed AND $add_own_entry) {
-//		print $_POST['cloneconfirmed'];
 		foreach($_POST as $k=>$v) {
 			if(substr($k, 0, 7) == "delete_" AND $v != "") {
 				$thisentry = substr($k, 7);
@@ -949,8 +950,8 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	// need to establish these here because they are used in conditions lower down
 	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
 	$proxy = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
-	$del_own = $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid);
-	$del_others = $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid);
+	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
+	$user_can_delete    = formulizePermHandler::user_can_delete_from_form($fid, $uid);
 
 	// establish text and code for buttons, whether a screen is in effect or not
 	$screenButtonText = array();
@@ -1000,7 +1001,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		// only include clone and delete if the checkboxes are in effect (2 means do not use checkboxes)
 		if($screen->getVar('usecheckboxes') != 2) {
 			$screenButtonText['cloneButton'] = $screen->getVar('useclone');
-			if(($del_own OR $del_others) AND !$settings['lockcontrols']) {
+            if ($user_can_delete and !$settings['lockcontrols']) {
 				$screenButtonText['deleteButton'] = $screen->getVar('usedelete');
 			} else {
 				$screenButtonText['deleteButton'] = "";
@@ -1082,14 +1083,14 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 
 				print "</p></td><td id='middleButtonColumn' class='innerTable' style=\"vertical-align: bottom;\"><p style=\"text-align: center;\">";
 
-				if(($add_own_entry AND $singleMulti[0]['singleentry'] == "") OR (($del_own OR $del_others) AND !$settings['lockcontrols'])) {
+                if (($add_own_entry AND $singleMulti[0]['singleentry'] == "") OR ($user_can_delete and !$settings['lockcontrols'])) {
 					if( $thisButtonCode = $buttonCodeArray['selectAllButton']) { print "$thisButtonCode"; }
 					if( $thisButtonCode = $buttonCodeArray['clearSelectButton']) { print "<br>$thisButtonCode<br>"; }
 				}
 				if($add_own_entry AND $singleMulti[0]['singleentry'] == "") {
 					if( $thisButtonCode = $buttonCodeArray['cloneButton']) { print "$thisButtonCode<br>"; }
 				}
-				if(($del_own OR $del_others) AND !$settings['lockcontrols']) {
+                if ($user_can_delete and !$settings['lockcontrols']) {
 					if( $thisButtonCode = $buttonCodeArray['deleteButton']) { print "$thisButtonCode<br>"; }
 				}
 
@@ -1481,8 +1482,6 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
   
 		$headcounter = 0;
 		$blankentries = 0;
-		$update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);
-		$update_other_entries = $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid);
 		$GLOBALS['formulize_displayElement_LOE_Used'] = false;
 		$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
 		// adjust formulize_LOEPageSize if the actual count of entries is less than the page size
@@ -1535,11 +1534,10 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 							}
 							print "ve=" . $linkids[0] . "' onclick=\"javascript:goDetails('" . $linkids[0] . "');return false;\"><img src='" . XOOPS_URL . "/modules/formulize/images/detail.gif' border=0 alt=\"" . _formulize_DE_VIEWDETAILS . "\" title=\"" . _formulize_DE_VIEWDETAILS . "\"></a>";
 						}
-						if($useCheckboxes != 2) { // two means none
-							// put in the delete checkboxes -- check for perms delete_own_entry, delete_other_entries
-              $owner = getEntryOwner($linkids[0], $fid);
-              // check to see if we should draw in the delete checkbox or not
-							if(($owner == $uid AND $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid)) OR ($owner != $uid AND $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid)) OR $useCheckboxes == 1) { // 1 means all
+
+                        if ($useCheckboxes != 2) { // two means no checkboxes -- should use a constant to make it clear
+                            // check to see if we should draw in the delete checkbox
+                            if ($useCheckboxes == 1 /* 1 means all */ or formulizePermHandler::user_can_delete_entry($fid, $uid, $linkids[0])) {
 								if($useViewEntryLinks) {
 									print "<br>";
 								} else {
@@ -1585,8 +1583,11 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						} else {
 							$value = display($entry, $col);
 						}
-						$currentColumnLocalId = $GLOBALS['formulize_mostRecentLocalId']; // set in the display function, corresponds to the entry id of the record in the form where the current value was retrieved from.  If there is more than one local entry id, because of a one to many framework, then this will be an array that corresponds to the order of the values returned by display.
-						if(in_array($colhandle, $deColumns) AND ($update_other_entries OR ($update_own_entry AND $uid == getEntryOwner($entry, $fid)))) { // if we're supposed to display this column as an element... (only show it if they have permission to update this entry)
+
+                        // set in the display function, corresponds to the entry id of the record in the form where the current value was retrieved from.  If there is more than one local entry id, because of a one to many framework, then this will be an array that corresponds to the order of the values returned by display.
+                        $currentColumnLocalId = $GLOBALS['formulize_mostRecentLocalId'];
+                        // if we're supposed to display this column as an element... (only show it if they have permission to update this entry)
+                        if (in_array($colhandle, $deColumns) and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 							if($frid) { // need to work out which form this column belongs to, and use that form's entry ID.  Need to loop through the entry to find all possible internal IDs, since a subform situation would lead to multiple values appearing in a single cell, so multiple displayElement calls would be made each with their own internal ID.
 								foreach($entry as $entryFormHandle=>$entryFormData) {
@@ -1700,14 +1701,14 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						} else {
 							$viewEntryLinkCode .= "?";
 						}
-						$viewEntryLinkCode .= "ve=" . $linkids[0] . "' onclick=\"javascript:goDetails('" . $linkids[0] . "');return false;\">";
-						$GLOBALS['formulize_viewEntryId'] = $linkids[0];
-	    				        $GLOBALS['formulize_viewEntryLinkCode'] = $viewEntryLinkCode; // put into global scope so the function 'viewEntryLink' can pick it up if necessary
-						// put in the delete checkboxes -- check for perms delete_own_entry, delete_other_entries
-						$owner = getEntryOwner($linkids[0], $fid);
-						// check to see if we should draw in the delete checkbox or not
-						if(($owner == $uid AND $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid)) OR ($owner != $uid AND $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid)) OR $useCheckboxes == 1) { // 1 means all
-							$selectionCheckbox = "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='formulize_selection_checkbox' name='delete_" . $linkids[0] . "' id='delete_" . $linkids[0] . "' value='delete_" . $linkids[0] . "'>";
+                        $viewEntryLinkCode .= "ve=" . $entry_id . "' onclick=\"javascript:goDetails('" . $entry_id . "');return false;\">";
+                        $GLOBALS['formulize_viewEntryId'] = $entry_id;
+                        // put into global scope so the function 'viewEntryLink' can pick it up if necessary
+                        $GLOBALS['formulize_viewEntryLinkCode'] = $viewEntryLinkCode;
+
+                        // check to see if we should draw in the delete checkbox
+                        if ($useCheckboxes == 1 /* 1 means all */ or formulizePermHandler::user_can_delete_entry($fid, $uid, $entry_id)) {
+                            $selectionCheckbox = "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='formulize_selection_checkbox' name='delete_" . $entry_id . "' id='delete_" . $entry_id . "' value='delete_" . $entry_id . "'>";
 						} else {
 							$selectionCheckbox = "";
 						}
