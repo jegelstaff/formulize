@@ -110,7 +110,7 @@ class formulizePermHandler {
                         self::$cached_permissions[$cache_key] = $gperm_handler->checkRight("add_proxy_entries", $form_id, $groups, self::$formulize_module_id);
                     }
                 } else {
-                    return false;   // cannot delete an entry which has not been saved
+                    self::$cached_permissions[$cache_key] = false;  // cannot delete an entry which has not been saved
                 }
             } else {
                 if (getEntryOwner($entry_id, $form_id) == $user_id) {
