@@ -1019,7 +1019,7 @@ function Create_table($Insert)
 	$s1.=";";
 	$s1=preg_replace('/Table_Name/', "`".Prefix."_formulize_$AllHandles2[0]`", $s1);
 	Insert($s1);
-	Insert ("UPDATE `".Prefix."_formulize_$AllHandles2[0]` SET `mod_uid`=".SID."");//To Update Formulize_Handle Mod ID to the User who's carrying out the Impot
+	Insert ("UPDATE `".Prefix."_formulize_$AllHandles2[0]` SET `creation_uid`=".SID."");//To Update Formulize_Handle Mod ID to the User who's carrying out the Impot
 	echo "Creating Table Formulize_$AllHandles2[0] <br/>";
 }
 function update_groups ($table,$ID,$flag=null)
