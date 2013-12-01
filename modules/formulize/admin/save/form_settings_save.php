@@ -66,7 +66,8 @@ if(isset($_POST['apps']) AND count($_POST['apps']) > 0) {
 }
 
 // interpret form object values that were submitted and need special handling
-$processedValues['forms']['headerlist'] = "*=+*:".implode("*=+*:",$_POST['headerlist']);
+$processedValues['forms']['headerlist'] = (isset($_POST['headerlist']) and is_array($_POST['headerlist']))
+    ? "*=+*:".implode("*=+*:",$_POST['headerlist']) : "";
 
 // form_handle cannot have any period, strip all of the periods out
 $form_handle_from_ui = $processedValues['forms']['form_handle'];

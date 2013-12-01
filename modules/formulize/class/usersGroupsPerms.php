@@ -26,18 +26,125 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// require_once XOOPS_ROOT_PATH.'/kernel/object.php'; // xoops object not used
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
-class formulizePermHandler  {
-	
-	var $fid; // the form this Perm Handler object is attached to
+class formulizePermHandler {
 
-	// $fid must be an id
-	function formulizePermHandler($fid){
-		$this->fid = intval($fid);
-	}
-	
+    var $fid;                               // the form this Perm Handler object is attached to
+    static $cached_permissions = array();   // permission checks are called frequently for the same entries, so cache the results
+    static $formulize_module_id = null;
+
+
+    function formulizePermHandler($fid) {
+        $this->fid = intval($fid);
+    }
+
+
+    static function getPermissionList() {
+        // canonical list of form permissions
+        return array("view_form", "add_own_entry", "update_own_entry", "delete_own_entry", "update_other_entries", "delete_other_entries",
+            "add_proxy_entries", "view_groupscope", "view_globalscope", "view_private_elements", "update_other_reports", "delete_other_reports",
+            "publish_reports", "publish_globalscope", "set_notifications_for_others", "import_data", "edit_form", "delete_form",
+            "update_entry_ownership", "ignore_editing_lock", "update_group_entries", "delete_group_entries");
+    }
+
+
+    // check if a user belongs to a group with delete permission on a form. only for checking whether the delete button should be included in the page
+    static function user_can_delete_from_form($form_id, $user_id) {
+        $cache_key = "delete-button $form_id $user_id";
+        if (!isset(self::$cached_permissions[$cache_key])) {
+            self::$cached_permissions[$cache_key] = false;
+
+            if (null == self::$formulize_module_id)
+                self::$formulize_module_id = getFormulizeModId();
+
+            $gperm_handler =& xoops_gethandler('groupperm');
+            $member_handler =& xoops_gethandler('icms_member');
+            $groups = $member_handler->getGroupsByUser($user_id);
+
+            if ($gperm_handler->checkRight("delete_own_entry", $form_id, $groups, self::$formulize_module_id)
+                or $gperm_handler->checkRight("delete_other_entries", $form_id, $groups, self::$formulize_module_id)
+                or $gperm_handler->checkRight("delete_group_entries", $form_id, $groups, self::$formulize_module_id))
+            {
+                // user belongs to a group that can delete entries from the form
+                self::$cached_permissions[$cache_key] = true;
+            }
+        }
+        return self::$cached_permissions[$cache_key];
+    }
+
+
+    // check whether a user is able to update an entry in a form
+    static function user_can_edit_entry($form_id, $user_id, $entry_id) {
+        return self::user_can_modify_entry("update", $form_id, $user_id, $entry_id);
+    }
+
+
+    // check whether a user is able to delete a specific entry in a form. use this to show the delete checkbox and as a security check before actual deletion
+    static function user_can_delete_entry($form_id, $user_id, $entry_id) {
+        return self::user_can_modify_entry("delete", $form_id, $user_id, $entry_id);
+    }
+
+
+    private static function user_can_modify_entry($action, $form_id, $user_id, $entry_id) {
+        if (!in_array($action, array("update", "delete")))
+            throw new Exception("Error: specify either update or delete when calling user_can_modify_entry();");
+
+        $cache_key = "$action $form_id $user_id $entry_id";
+        if (!isset(self::$cached_permissions[$cache_key])) {
+            self::$cached_permissions[$cache_key] = false;
+
+            if (null == self::$formulize_module_id)
+                self::$formulize_module_id = getFormulizeModId();
+
+            $gperm_handler =& xoops_gethandler('groupperm');
+            $member_handler =& xoops_gethandler('icms_member');
+            $groups = $member_handler->getGroupsByUser($user_id);
+
+            if ("new" == $entry_id or "" == $entry_id) {
+                if ("update" == $action) {
+                    // user has permission to add new entries
+                    self::$cached_permissions[$cache_key] = $gperm_handler->checkRight("add_own_entry", $form_id, $groups, self::$formulize_module_id);
+
+                    if (!self::$cached_permissions[$cache_key]) {
+                        self::$cached_permissions[$cache_key] = $gperm_handler->checkRight("add_proxy_entries", $form_id, $groups, self::$formulize_module_id);
+                    }
+                } else {
+                    return false;   // cannot delete an entry which has not been saved
+                }
+            } else {
+                if (getEntryOwner($entry_id, $form_id) == $user_id) {
+                    // user can update entry because it is their own and they have permission to update their own entries
+                    self::$cached_permissions[$cache_key] = $gperm_handler->checkRight("{$action}_own_entry", $form_id, $groups, self::$formulize_module_id);
+                } else {
+                    // user can update entry because they have permission to update entries by others
+                    self::$cached_permissions[$cache_key] = $gperm_handler->checkRight("{$action}_other_entries", $form_id, $groups, self::$formulize_module_id);
+
+                    if (!self::$cached_permissions[$cache_key]) {
+                        // check if the user belongs to a group with group-edit permission
+                        if ($gperm_handler->checkRight("{$action}_group_entries", $form_id, $groups, self::$formulize_module_id)) {
+                            // sometimes users can have a special group scope set, so use that if available
+                            $formulize_permHandler = new formulizePermHandler($form_id);
+                            $view_form_groups = $formulize_permHandler->getGroupScopeGroupIds($groups);
+                            if ($view_form_groups === false) {
+                                // no special group scope, so use normal view-form permissions
+                                $view_form_groups = $gperm_handler->getGroupIds("view_form", $form_id, self::$formulize_module_id);
+                            }
+
+                            // get the owner groups for the entry
+                            $data_handler = new formulizeDataHandler($form_id);
+                            $owner_groups = $data_handler->getEntryOwnerGroups($entry_id);
+
+                            // check if the user belongs to a group with view form permission and the entry also belongs to one of those groups
+                            self::$cached_permissions[$cache_key] = count(array_intersect($groups, $owner_groups, $view_form_groups));
+                        }
+                    }
+                }
+            }
+        }
+        return self::$cached_permissions[$cache_key];
+    }
+
 	// this method returns an array of group names, keys are ids
 	// gids can be a group id or array of ids...it is the groupids that you are asking about, and you want to know which specific groups are selected as the scope for these groups you're passing in
 	function getGroupScopeGroups($gids) {
@@ -164,6 +271,4 @@ class formulizePermHandler  {
 		}
 		return $foundGids;
 	}
-	
 }
-	
