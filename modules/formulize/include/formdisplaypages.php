@@ -73,8 +73,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 	$gperm_handler =& xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
-	$update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);
-	$update_other_entries = $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid);
 	$single_result = getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid);
 	
 	// if this function was called without an entry specified, then assume the identity of the entry we're editing (unless this is a new save, in which case no entry has been made yet)
@@ -91,12 +89,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		$entry = $GLOBALS['formulize_newEntryIds'][$fid][0];
 	}
 	
-	if($single_result['flag'] == "group" AND $update_own_entry AND $entry == $single_result['entry']) {
-		$update_other_entries = true;
-	}
-	
 	$owner = getEntryOwner($entry, $fid);
-	
 	
 	$prevPage = isset($_POST['formulize_prevPage']) ? $_POST['formulize_prevPage'] : 1; // last page that the user was on, not necessarily the previous page numerically
 	$currentPage = isset($_POST['formulize_currentPage']) ? $_POST['formulize_currentPage'] : 1;
@@ -105,19 +98,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	// debug control:
 	$currentPage = (isset($_GET['debugpage']) AND is_numeric($_GET['debugpage'])) ? $_GET['debugpage'] : $currentPage;
 	
-	if($entry) {
-		if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries)) {
-			$usersCanSave = true;
-		} else {
-			$usersCanSave = false;
-		}
-	} else {
-		if($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
-			$usersCanSave = true;
-		} else {
-			$usersCanSave = false;
-		}
-	}
+    $usersCanSave = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
 	
 	if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // remember prevPage is the last page the user was on, not the previous page numerically
 		

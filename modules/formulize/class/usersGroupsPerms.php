@@ -110,7 +110,7 @@ class formulizePermHandler {
                         self::$cached_permissions[$cache_key] = $gperm_handler->checkRight("add_proxy_entries", $form_id, $groups, self::$formulize_module_id);
                     }
                 } else {
-                    return false;   // cannot delete an entry which has not been saved
+                    self::$cached_permissions[$cache_key] = false;  // cannot delete an entry which has not been saved
                 }
             } else {
                 if (getEntryOwner($entry_id, $form_id) == $user_id) {
@@ -129,7 +129,8 @@ class formulizePermHandler {
                             if ($view_form_groups === false) {
                                 // no special group scope, so use normal view-form permissions
                                 $view_form_groups = $gperm_handler->getGroupIds("view_form", $form_id, self::$formulize_module_id);
-				$view_form_groups = array_intersect($view_form_groups, $groups); // need the groups the user is a member of, that have view form permission
+                                // need the groups the user is a member of, that have view form permission
+                                $view_form_groups = array_intersect($view_form_groups, $groups);
                             }
 
                             // get the owner groups for the entry
@@ -145,6 +146,7 @@ class formulizePermHandler {
         }
         return self::$cached_permissions[$cache_key];
     }
+
 
 	// this method returns an array of group names, keys are ids
 	// gids can be a group id or array of ids...it is the groupids that you are asking about, and you want to know which specific groups are selected as the scope for these groups you're passing in
