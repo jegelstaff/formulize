@@ -129,14 +129,15 @@ class formulizePermHandler {
                             if ($view_form_groups === false) {
                                 // no special group scope, so use normal view-form permissions
                                 $view_form_groups = $gperm_handler->getGroupIds("view_form", $form_id, self::$formulize_module_id);
+				$view_form_groups = array_intersect($view_form_groups, $groups); // need the groups the user is a member of, that have view form permission
                             }
 
                             // get the owner groups for the entry
                             $data_handler = new formulizeDataHandler($form_id);
                             $owner_groups = $data_handler->getEntryOwnerGroups($entry_id);
 
-                            // check if the user belongs to a group with view form permission and the entry also belongs to one of those groups
-                            self::$cached_permissions[$cache_key] = count(array_intersect($groups, $owner_groups, $view_form_groups));
+                            // check if the entry belongs to a group that is part of the scope that the user is permitted to interact with
+                            self::$cached_permissions[$cache_key] = count(array_intersect($owner_groups, $view_form_groups));
                         }
                     }
                 }
