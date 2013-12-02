@@ -1,49 +1,104 @@
+<!DOCTYPE html>
 <html>
-<head>
-<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
- <title>Export Select</title>
-</head>
+<h1 style="font-family:verdana;color:red">Formulize</h1>
+<hr noshade size=4 width="100%" align=left>
+<hr>
+<h3 style="font-family:verdana;color:rgb(0,100,100)">Export Application Utility</h3>
+<hr size=4 width="20%" align=left>
+<p style="font-family:arial;color:rgb(100,100,0);font-size:medium;">
+    This utility will automatically export all basic tables of the selected application.</br>
+    However, you need to a make decision with regard to the following <u>dynamic forms</u>, </br>
+    forms selected will be exported with data and other names we will only export empty forms</br>
+	Furthermore, you need also to select the group lists. 
+</p>
 <body>
+<table class="formTable">
+<tbody>
 <form action="<?php $_SERVER['PHP_SELF']; ?>" method="POST">
 <?php
 include  'PDO_Conn.php';//Include the Connection File
-//To get the Application ID from Formulize Export_Import Page
+//Pass Application Id from Formulize
 $appid =$_GET['aid'];
 // Check if Application Exist
 $row = sqlQuery("SELECT count(appid) as appid FROM ".Prefix."_formulize_applications WHERE appid = :id;","appid","$appid");
-$flag = false;
+$i = 0;
 if ($row[0]> 0)	
 {
 	// Get Form id's to export
-	$row = sqlQuery("SELECT fid FROM ".Prefix."_formulize_application_form_link WHERE appid = $appid;","fid");
+	$row = sqlQuery("SELECT fid FROM ".Prefix."_formulize_application_form_link WHERE appid = :id;","fid","$appid");
 	$formsid = "(".(implode(",",$row)).")";
 	session_start();
 	$_SESSION['fid'] = $formsid;
 	//echo $formsid;
-	$rowset = sqlQuery("select desc_form,form_handle from ".Prefix."_formulize_id where id_form in $formsid");
-	echo "<label for='FormIDS[]'>Select the Forms that you Want data to be exported from :</label><br>";
-	echo "<select multiple=\"multiple\" name=FormIDS[] size=15>";
-	foreach ($rowset as $key){echo "<option value=$key[form_handle]>$key[desc_form]</option>";}
-	echo "</select><br>";
-	$flag = true;
+	$rowset = sqlQuery("select desc_form,form_handle from ".Prefix."_formulize_id where id_form in $formsid order by desc_form");
+	$rowset1= sqlQuery("select gl_id,gl_name from ".Prefix."_group_lists order by gl_name");
+	if (!empty($rowset))
+		{
+			echo "<tr><td><label>Select Forms</label></td>";
+		if (!empty($rowset1)) {echo "<td><label>Select Groups</label></td>";}
+		echo "</tr>";
+		echo "<td><select multiple=\"multiple\" name=FormIDS[] size=12>";
+		foreach ($rowset as $key){echo "<option value=$key[form_handle]>$key[desc_form]</option>";}
+	    echo "</select><br></td>";
+	    if (!empty($rowset1)){
+		echo "<td><select multiple=\"multiple\" name=GroupID[] size=12>";
+	    foreach ($rowset1 as $key){echo "<option value=$key[gl_id]>$key[gl_name]</option>";}
+	    echo "</select><br></td></tr>";}
+		}
 }
 else
 {
-	echo "</br>Error [0] : Invalid Application Id Contact the Administrator ...No Export File is Created ... Exiting </br>";
+	exit("Error [0] : Invalid Application Id Contact the Administrator ...No Export File is Created ... Exiting");
 }
-	
-?>
-<input type="submit" name="formSubmit" value="export" >
+?>	
+<tr>
+<td><input type='submit' name='formSubmit' value='Export' id='export'></td>
+<td><input type="button" id='download' value="Download" onclick='myfunction()'" /></td>
+</tr>
+</tbody>
+</table>
+<!-- Progress bar holder -->
+<div id="progress" style="width:500px;border:3px solid #ccc;"></div>
+<!-- Progress information -->
+<div id="information" style="width"></div>
+<script>
+ function hide(button){document.getElementById(button).hidden=true;}
+ function unhide(button){document.getElementById(button).hidden=false;}
+ function myfunction()
+ { var tmp =<?php echo $appid?>;
+   // link need to be updated
+   url ='download.php?aid='+tmp;
+   window.open(url);
+ }
+</script>
+</form>
+</body>
 
 <?php
-///print_r( $_POST['FormIDS']);
-if (isset($_POST['formSubmit'])) {
-export();
+$text ="";
+echo "<script language='javascript'> hide('download');</script>";
+if (isset($_POST['formSubmit'])) 
+{
+	global $i;
+	echo "<script language='javascript'> hide('download');</script>";
+	export();
+	//output($text);
+	echo "<script language='javascript'> hide('export');</script>";
+	progress(100,$i);
+	echo "<script language='javascript'> unhide('download');</script>";
 }
+Function output($output)
+{
+	///echo $output;
+	$file_name ="Application -".$_GET['aid'];
+	$f = fopen($file_name, "w"); 
+	fwrite($f,$output);
+	fclose($f);
+} 
 // Function sqlQuery(SQL Statement,Column Name, Bind Variable)
 Function sqlQuery($sql,$colname = NULL,$bindvar = NULL)
 {
-	//echo "$sql </br>";
+	global $i;
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare($sql) ;
 	if (!empty($bindvar)){
@@ -57,11 +112,32 @@ Function sqlQuery($sql,$colname = NULL,$bindvar = NULL)
 		if (is_null($colname))	{array_push($returnrow,$row);} 
 		else{array_push($returnrow,$row[$colname]);}
 	}
+    // Calculate the percent progress
+    $percent = intval($i);
+    progress($percent,$i);
+    $i++;
 	return $returnrow;
 }
 
+//progress bar
+Function progress($pcnt,$tran)
+{
+	// Javascript for updating the progress bar and information
+	$tran = $tran."Transactions Processed";
+	if ($pcnt == 100) { $tran = "Process completed";}
+     echo '<script language="javascript">
+    document.getElementById("progress").innerHTML="<div style=\"width:'.$pcnt.'%;background-color:#f00;\">&nbsp;</div>";
+    document.getElementById("information").innerHTML="'.$tran.'";
+	</script>';
+	// This is for the buffer achieve the minimum size in order to flush data
+	echo str_repeat(' ',1024);
+	// Send output to browser immediately
+	ob_flush();
+	 // Sleep one second so we can see the delay
+	 sleep(.03);
+}
 
-// Function chk_integrity($tables) Checks that all tables exisit, otherwise cause the system to exit
+// Function chk_integrity($tables) Checks that all tables exist, otherwise cause the system to exit
 Function chk_integrity($tables,$prefix)
 {
 	$flag = true;
@@ -83,6 +159,7 @@ function export () {
 	global $appid; 
 	global $MODID;
 	global $formsid;
+	global $text;
 	session_start();
 	$appid=$_GET['aid'];//Put Real App ID 
 	$formsid=$_SESSION['fid'];
@@ -90,6 +167,7 @@ function export () {
 	$MODID=MOD_ID;//MOD ID 
 	$formhandels = "()";
 	$formselect = $_POST['FormIDS'];
+	$groupselect="('".(implode("','",$_POST['GroupID']))."')";
 	$formhandels = "('".(implode("','",$formselect))."')";
 	$flid = Array(); // framework id array to export
 	$exclude = Array(); 
@@ -98,6 +176,7 @@ function export () {
 	$elementsid ="()"; 	// No Elements
 	$savedviews ="()"; 	// No Saved Views
 	$gperms ="()"; 		// No Group Permissions
+	$totaltrans=5;      // Totals used in Progress Bar for future use
 	// Query basic variables
 	if ($formsid !== "()")
 	{	//Links
@@ -120,9 +199,9 @@ function export () {
 
 	// tables to export in the format table_name/where criteria field/ criteria condition
 	// 0-No Padding/0-Single Insert 1-Multi Row Insert/Table Name/Operator/Where Field/Where Condition
-	$tables=array ("0/0/_formulize_applications/appid/=/$appid","0/0/_formulize_id/id_form/in/$formsid","0/0/_formulize_application_form_link/fid/in/$formsid",
+	$tables=array ("0/0/_formulize_applications/appid/=/$appid","0/0/_formulize_id/id_form/in/$formsid","0/0/_formulize_application_form_link/appid/=/$appid",
 	"0/0/_formulize/id_form/in/$formsid", "0/0/_formulize_frameworks/frame_id/in/$linksid","0/0/_formulize_framework_links/fl_id/in/$linksid",
-	"0/0/_groups","0/0/_group_lists","0/0/_formulize_advanced_calculations/fid/in/$formsid","0/0/_formulize_group_filters/fid/in/$formsid",
+	"0/0/_groups","0/0/_group_lists/gl_id/in/$groupselect","0/0/_formulize_advanced_calculations/fid/in/$formsid","0/0/_formulize_group_filters/fid/in/$formsid",
 	"0/0/_formulize_groupscope_settings/fid/in/$formsid","0/0/_formulize_screen/fid/in/$formsid","0/0/_formulize_other/ele_id/in/$elementsid",
 	"0/0/_formulize_notification_conditions/not_cons_fid/in/$formsid","0/0/_formulize_entry_owner_groups/fid/in/$formsid",
 	"0/0/_formulize_screen_listofentries/sid/in/$screenid","0/0/_formulize_screen_multipage/sid/in/$screenid",
@@ -140,7 +219,6 @@ function export () {
 	from ".Prefix."_formulize_id where form_handle is not NULL and id_form in $formsid and form_handle not in $formhandels","form_handle");
 	
 	$tables = array_merge($tables,$row);
-	
 	$lines = Array();
 	$prefix= "".Prefix."";
 	if (!chk_integrity($tables,$prefix)) {return false;}
@@ -159,29 +237,8 @@ function export () {
 	}
 
 	$text =implode("\n",$lines);
-	///echo $text;
-	Output_File($text);
-	
+	output($text);
 	return true;
-}
-
-Function Output_File($output)
-{
-	$file ="Application -".$_GET['aid'];
-	$f = fopen($file, "w");  
-	fwrite($f, $output);  
-	fclose($f);
-	header('Content-Description: File Transfer');
-	header('Content-Type: application/octet-stream');
-	header('Content-Disposition: attachment; filename='.basename($file));
-	header('Content-Transfer-Encoding: binary');
-	header('Expires: 0');
-	header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-	header('Pragma: public');
-	header('Content-Length: ' . filesize($file));
-	ob_clean();
-	flush();
-	readfile($file);
 }
 
 // Function expTable(padding,insert style,table name, excluded columns array, criteria for selection, post selection fields character replacement array)
@@ -206,7 +263,11 @@ Function expTable($Prefix,$padText,$insStyle,$Table_Name,$Exclude_Columns = Null
 	if ($padText !=="0") {$insStatment = "$padText," .implode(",", array_slice($row,5))."^INSERT INTO Table_Name VALUES ";}
 	///echo $Criteria;
 	///echo "Select $values from $Prefix$Table_Name $Criteria;";
-	$rowset = sqlQuery("Select $values from $Prefix$Table_Name $Criteria;");
+	if ($Table_Name=='_formulize_applications' || $Table_Name=='_formulize_application_form_link'){
+	$Criteria=explode('=',$Criteria);
+	$rowset = sqlQuery("Select $values from $Prefix$Table_Name $Criteria[0]= :id;",null,$Criteria[1]);}
+	else{
+	 $rowset = sqlQuery("Select $values from $Prefix$Table_Name $Criteria;");}
 ///	print_r($rowset);
 	///echo 'e';
 	if ($insStyle =="1") {$insrow=$insStatment;}
@@ -255,6 +316,6 @@ Function expTable($Prefix,$padText,$insStyle,$Table_Name,$Exclude_Columns = Null
 	return $inslist;
 }
 ?>
-	</form>
+
 </body>
 </html>
