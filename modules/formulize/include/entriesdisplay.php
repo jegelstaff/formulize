@@ -575,6 +575,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$groupsWithAccess = $formulize_permHandler->getGroupScopeGroupIds($groups);
 				if($groupsWithAccess === false) {
 					$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+					$groupsWithAccess = array_intersect($groups, $groupsWithAccess); // limit to just the user's own groups that have this permission, since what we're checking of below is whether the user's groups with view form meet the condition or not
 				}
 				$diff = array_diff($viewgroups, $groupsWithAccess);
 				if(!isset($diff[0]) AND $view_groupscope) { // if the scopegroups are completely included in the user's groups that have access to the form, and they have groupscope (ie: they would be allowed to see all these entries anyway)
