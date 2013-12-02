@@ -692,7 +692,6 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				unset($prevEntry);
             // if there is an entry, then get the data for that entry
             if ($entries[$this_fid]) {
-                // TODO: is this permission check working as it should? perhaps it can be moved inside the function?
                 $groupEntryWithUpdateRights = ($single == "group" AND $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid) AND $entry == $single_result['entry']);
 					$prevEntry = getEntryValues($entries[$this_fid][0], $formulize_mgr, $groups, $this_fid, $elements_allowed, $mid, $uid, $owner, $groupEntryWithUpdateRights); 
 				}
@@ -732,12 +731,10 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
                         if($info_received_msg) {
                             $breakHTML .= _formulize_INFO_SAVED . "&nbsp;";
                         }
-                        // TODO: are the correct form, user and entry IDs used here?
                         if($info_continue == 1 and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 									$breakHTML .= _formulize_INFO_CONTINUE1 . "</b></p>";
 								} elseif($info_continue == 2) {
 									$breakHTML .=  _formulize_INFO_CONTINUE2 . "</b></p>";
-                        // TODO: are the correct form, user and entry IDs used here?
                         } elseif(!$entry and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 									$breakHTML .=  _formulize_INFO_MAKENEW . "</b></p>";
 								} else {
@@ -774,7 +771,6 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 						} elseif($done_button_text != "{NOBUTTON}" AND !$allDoneOverride) {
 							$done_button_text = _formulize_INFO_DONE1 . $done_button_text . _formulize_INFO_DONE2;
 						// check to see if the user is allowed to modify the existing entry, and if they're not, then we have to draw in the all done button so they have a way of getting back where they're going
-                        // TODO: is this check doing what it is supposed to?
 						} elseif (($entry and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) OR !$entry) {
 							$done_button_text = "";
 						} else {
