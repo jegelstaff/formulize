@@ -97,8 +97,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
 	$delete_own_reports = $gperm_handler->checkRight("delete_own_reports", $fid, $groups, $mid);
 	$delete_other_reports = $gperm_handler->checkRight("delete_other_reports", $fid, $groups, $mid);
-	$delete_own_entry = $gperm_handler->checkRight("delete_own_entry", $fid, $groups, $mid);
-	$delete_other_entries = $gperm_handler->checkRight("delete_other_entries", $fid, $groups, $mid);
 	$update_other_reports = $gperm_handler->checkRight("update_other_reports", $fid, $groups, $mid);
 	$update_own_reports = $gperm_handler->checkRight("update_own_reports", $fid, $groups, $mid);
 	$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
