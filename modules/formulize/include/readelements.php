@@ -182,26 +182,26 @@ if(count($formulize_elementData) > 0 ) { // do security check if it looks like w
 }
 
 foreach($formulize_elementData as $elementFid=>$entryData) { // for every form we found data for...
-	
-	// figure out permissions on the forms
-	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $elementFid, $groups, $mid);
-	$add_proxy_entries = $gperm_handler->checkRight("add_proxy_entries", $elementFid, $groups, $mid);
-	$update_own_entry = $gperm_handler->checkRight("update_own_entry", $elementFid, $groups, $mid);
-	$update_other_entries = $gperm_handler->checkRight("update_other_entries", $elementFid, $groups, $mid);
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$formulize_formObject = $form_handler->get($elementFid);
-	$oneEntryPerGroupForm = $formulize_formObject->getVar('single') == "group" ? true : false;
+    // TODO: should the one-entry-per-group permission be checked in the permissions handler instead?
+	$oneEntryPerGroupForm = ($formulize_formObject->getVar('single') == "group");
 
-	foreach($entryData as $currentEntry=>$values) { // for every entry in the form...
-		if(substr($currentEntry, 0 , 3) == "new") { // handle entries in the form that are new...if there is more than one new entry in a dataset, they will be listed as new1, new2, new3, etc
+    // for every entry in the form...
+    foreach($entryData as $currentEntry => $values) {
+        if(substr($currentEntry, 0 , 3) == "new") {
+            // handle entries in the form that are new. if there is more than one new entry, they will be listed as new1, new2, new3, etc
 			$subformElementId = 0;
 			if(strstr($currentEntry, "x")) {
 				$subformMetaDataParts = explode("x",$currentEntry);
 				$subformElementId = $subformMetaDataParts[1];
 			}
-			if(strlen($currentEntry) > 3) { $currentEntry = "new"; } // remove the number from the end of any new entry flags that have numbers, which will be subform blanks (and not anything else?)
+            if (strlen($currentEntry) > 3) {
+                // remove the number from the end of any new entry flags that have numbers, which will be subform blanks (and not anything else?)
+                $currentEntry = "new";
+            }
 			foreach($creation_users as $creation_user) {
-				if(($creation_user == $uid AND $add_own_entry) OR ($creation_user != $uid AND $add_proxy_entries)) { // only proceed if the user has the right permissions
+                if (formulizePermHandler::user_can_edit_entry($elementFid, $creation_user, $currentEntry)) {
 					$writtenEntryId = formulize_writeEntry($values, $currentEntry, "", $creation_user, "", false); // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
 					if(isset($formulize_subformBlankCues[$elementFid])) {
 						$GLOBALS['formulize_subformCreateEntry'][$elementFid][] = $writtenEntryId;
@@ -222,9 +222,10 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 					afterSavingLogic($values, $writtenEntryId);
 				}
 			}
-		} else { // handle existing entries...
-			$owner = getEntryOwner($currentEntry, $elementFid);
-			if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND ($update_other_entries OR ($update_own_entry AND $oneEntryPerGroupForm)))) { // only proceed if the user has the right permissions
+		} else {
+            // save changes to existing elements
+            // TODO: should this use $uid or a proxy user setting?
+            if (formulizePermHandler::user_can_edit_entry($elementFid, $uid, $currentEntry)) {
 				$writtenEntryId = formulize_writeEntry($values, $currentEntry);
 				$formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
 				if(!isset($formulize_allWrittenFids[$elementFid])) {

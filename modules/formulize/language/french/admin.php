@@ -113,8 +113,10 @@ define("_AM_PERMISSIONS_DEFINE_BASIC","Les basiques:");
 define("_AM_PERMISSIONS_DEFINE_VIEWFORM","Voir le formulaire");
 define("_AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES","Créer sa propre entrée dans le formulaire");
 define("_AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES","Mettre à jour <i>ses entrées</i>");
+define("_AM_PERMISSIONS_DEFINE_UPDATE_GROUP_ENTRIES","Mettre à jour les <i>entrées des les groupes</i>");
 define("_AM_PERMISSIONS_DEFINE_UPDATEOTHERENTRIES","Mettre à jour les <i>entrées des autres</i>");
 define("_AM_PERMISSIONS_DEFINE_DELETEOWNENTRIES","Effacer <i>ses entrées</i>");
+define("_AM_PERMISSIONS_DEFINE_DELETE_GROUP_ENTRIES","Effacer <i>les entrées des les groupes</i>");
 define("_AM_PERMISSIONS_DEFINE_DELETEOTHERENTRIES","Effacer <i>les entrées des autres</i>");
 define("_AM_PERMISSIONS_DEFINE_VISIBILITY","Visibilité:");
 define("_AM_PERMISSIONS_DEFINE_VISIBILITY_PRIVATE","Voir les éléments du formulaire marqués comme 'privés'");
@@ -159,18 +161,6 @@ define("_AM_SCREEN_FORMSCREENS","Screen(s) du formulaire");
 define("_AM_SCREEN_LISTSCREENS","Screen(s) de la liste des entrées");
 define("_AM_SCREEN_DELETESCREENS","Etes vous sur de vouloir effacer ce screen? Tous les réglages de configuration seront perdus!");
 
-
-
-
-
-
-
-
-
-
-
-
-
 /*end mod Language for admin side, by François T*/
 
 define("_AM_ACTIVE","actif");
@@ -214,21 +204,21 @@ define("_AM_ELE_CTRE","Centré");
 define("_AM_ELE_DATE","Date");
 define("_AM_ELE_DEFAULT","Valeur par défaut");
 define("_AM_ELE_DELIM_CHOICE",'Delimitation entre chaque option');
-define("_AM_ELE_LEFTRIGHT_DESC","Any text or HTML code that you type here will appear on the right beside the caption.  You can use PHP code instead of text or HTML, just make sure it contains '&#36;value = &#36;something;' and Formulize will read this text as PHP code.");
+define("_AM_ELE_LEFTRIGHT_DESC","Tout texte ou code HTML entré ici apparaitra à coté de la légende.  Vous pouvez utiliser du PHP, mais assurez vous qu'il contient '&#36;value = &#36;something;' et Formulize lira ce texte comme du code PHP.");
 define("_AM_ELE_LEFTRIGHT_TEXT","Contenu du coté droit");
-define("_AM_ELE_OPT_CHANGEUSERVALUES", "Lorsque saving changes to these options, also change the values users have made in the form to match the new options (ie: where users had selected the old first option, replace their selection with the new first option instead)");
+define("_AM_ELE_OPT_CHANGEUSERVALUES", "Lors de l'enregistrement des changements pour ces choix, changer aussi les valeurs faites par l'utilisateur dans le formulaire pour correspondre aux nouvelles options (ie: quand l'utilisateur a sélectionné le premier choix, version ancienne, remplacer sa sélection par le nouveau premier choix)");
 define("_AM_FORMULIZE_SCREEN_SECURITY", "Utiliser la securité XOOPS sur cet écran?");
-define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "The XOOPS security token is a defense against cross-site scripting attacks.  However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types.");
+define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "La sécurité XOOPS est une défense contre les attaques malveillantes par script.  Mais cela peut poser des problèmes si vous utilisez une Interface Utilisateur Ajax-based dans le Screen de la Liste des Entrées, et peut être dans d'autres types de Screens.");
 
 	
 	// number options for textboxes
 define("_AM_ELE_DERIVED", "Valeur dérivée venant d'autres éléments (calculs...)");
 define("_AM_ELE_DERIVED_ADD", "Ajouter à la formule");
 define("_AM_ELE_DERIVED_CAP", "Formule pour générer des valeurs dans cet élément");
-define("_AM_ELE_DERIVED_DESC", "Selectionner un element ci dessous pour l'ajouter à votre formule.  You can also use element ID numbers or Framework handles in your formula, as long as they are inside double quotes.  The formula can have multiple lines, or steps, and you can use PHP code in the formula.  The last line should be of the format <i>\$value = \$something</i> where \$something is the final number or formula that you want use.<br /><br />Example:<br />\$value = \"Number of hits\" / \"Total shots\" * 100");
+define("_AM_ELE_DERIVED_DESC", "Selectionner un element ci dessous pour l'ajouter à votre formule.  Vous pouvez aussi utiliser le numéro ID d'un élément ouh d'un Framework dans votre code, tant qu'il est entre les doubles guillemets.  Vous pouvez utiliser un code PHP, avec de multiples lignes.  Format de la dernière ligne obligatoire: <i>\$value = \$something</i> où \$something est le nombre final ou le code que vous souhaitez utiliser.<br /><br />Exemple:<br />\$value = \"Number of hits\" / \"Total shots\" * 100");
 define("_AM_ELE_DERIVED_NUMBER_OPTS","Si cette formule produit un nombre ...");	
 define("_AM_ELE_DESC","texte descriptif");
-define("_AM_ELE_DESC_HELP","quoique vous tapiez ici, cela apparitra comme cette ligne de texte le fait.");
+define("_AM_ELE_DESC_HELP","quoique vous tapiez ici, cela apparaitra comme cette ligne de texte le fait.");
 define("_AM_ELE_DETAIL","Détails");
 define("_AM_ELE_DISABLED", "Désactiver cet élément pour un groupe?");
 define("_AM_ELE_DISPLAY","Afficher");
@@ -237,14 +227,14 @@ define("_AM_ELE_FICH",'Fichier');
 define("_AM_ELE_FORM","Eléments du formulaire");
 define("_AM_ELE_FORMLINK", "Options liées à un autre formulaire");
 define("_AM_ELE_FORMLINK_DESC","Selectionnez un champs d'un autre formulaire et utilisez ces entrées comme option pour la boîte de sélection. (ces paramètres remplaceront tout ceux effectués antérieurement.)");
-define("_AM_ELE_FORMLINK_DESC_TEXTBOX","If you select another form element here, then text that users type into this element will be compared with values entered in the other element.  If a match is found then the text users type into this element will be clickable in the \"List of Entries\" screen, and will take users to the matching entry in the other form.");
-define("_AM_ELE_FORMLINK_SCOPE", "If the options are linked -- or are {FULLNAMES} or {USERNAMES} -- limit them to values from the groups selected here.");
-define("_AM_ELE_FORMLINK_SCOPEFILTER", "If the options are linked -- or are {FULLNAMES} OR {USERNAMES} -- filter them based on these properties of their entry in the source form.");
+define("_AM_ELE_FORMLINK_DESC_TEXTBOX","Si vous sélectionnez ici un autre élément du formulaire, alors le texte que les utilisateurs taperont dans cet élément sera comparé aux valeurs entrées dans les autres éléments. Si une correspondance est trouvée alors le texte écrit dans cet élément sera cliquable dans l'écran \"Liste des Entrées\", et aménera les utilisateursà l'entrée correspondante dans l'autre formulaire.");
+define("_AM_ELE_FORMLINK_SCOPE", "Si les options sont liées -- ou sont de type {FULLNAMES} ou {USERNAMES} -- les limiter aux valeurs du groupe sélectionné ici.");
+define("_AM_ELE_FORMLINK_SCOPEFILTER", "Si les options sont liées -- ou sont de type {FULLNAMES} ou {USERNAMES} -- les filtrer en se basant sur les propriétés de leurs entrées dans le formulaire source.");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_ADDCON", "Ajouter une autre condition");
-define("_AM_ELE_FORMLINK_SCOPEFILTER_ALL", "No filter in effect (select this to clear existing filters).");
-define("_AM_ELE_FORMLINK_SCOPEFILTER_CON", "Filter the options based on this/these conditions:");
+define("_AM_ELE_FORMLINK_SCOPEFILTER_ALL", "Pas de filttre en action (effacer les filtres).");
+define("_AM_ELE_FORMLINK_SCOPEFILTER_CON", "Filtrer les options basées sur ces conditions:");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_DESC", "When you link to values in another form, you may wish to limit the values included in the list based on certain properties of the entries in the other form.  For example, if you are linking to the names of tasks in a task form, you might want to list only tasks that are incomplete.  If there's a question in the task form that asks if the task is complete, you could specify a filter like: \"Task is complete = No\".<br><br>If the options are {FULLNAMES} or {USERNAMES}, and you are using a custom profile form in conjunction with the Registration Codes module, you can filter the names based on the profile form.");
-define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(If the first list here is empty, click the 'Add another condition' button to refresh it.)");
+define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(Si la première liste est vide, cliquer sur le bouton 'Ajouter une autre condition' pour la rafraichir it.)");
 define("_AM_ELE_FORMLINK_SCOPELIMIT_NO", "Utiliser tous ces groupes");
 define("_AM_ELE_FORMLINK_SCOPELIMIT_YES", "Utiliser seulement les groupes dont l'utilisateur est actuellement membre");
 define("_AM_ELE_FORMLINK_SCOPE_ALL", "Utiliser tous les groupes");
@@ -267,7 +257,7 @@ define("_AM_ELE_GRID_HEADING_USE_FORM", "Le titre du formulaire");
 define("_AM_ELE_GRID_ROW_CAPTIONS", "Entrez les légendes pour les lignes de ce tableau");
 define("_AM_ELE_GRID_ROW_CAPTIONS_DESC", "Chaque tableau est une grille de colonnes et de rangées. Le côté gauche de la table a une légende dans chaque cellule au début de chaque ligne. Tapez le texte que vous souhaitez utiliser pour les légendes, séparées par des virgules. Si vos légendes sont longues, c'est mieux visuellement de mettre chaque légende sur sa propre ligne.");
 define("_AM_ELE_GRID_START", "Choisissez le premier élément qui apparaitra dans le coin en haut à gauche du tableau");
-define("_AM_ELE_GRID_START_DESC", "Each table will have a number of elements in it, equal to the rows times the columns.  ie: if you have three rows and four columns, you will have 12 elements in your table.  The first element appears in the upper left corner, and the next element after that appears in the next cell to the right.  Once the end of a row has been reached, the next element appears in the first cell of the next row.  Elements are drawn from the form according to the order currently assigned to them; if you have 12 elements in your table, then the next 11 elements after the first element will be used in your table.  Therefore, make sure all the elements you want to use in tables are consecutively ordered in your form.");
+define("_AM_ELE_GRID_START_DESC", "Chaque tableau aura un nombre d'éléments, équivalent aux lignes multipliées par les colonnes.  ie: avec 3 lignes et 4 colonnes, vous aurez 12 éléments. Le premier élément apparait en haut à gauche, et le suivant dans la case à droite.  A la fin d'une ligne l'élément suivant apparait dans la ligne suivante.  Les éléments apparaissent dans le même ordre que dans le formulaire ; Les 11 elements après le premier seront utilisés, assurez vous donc de l'ordre.");
 define("_AM_ELE_IB_CLASS","Classe CSS pour la rangée:");
 define("_AM_ELE_IB_DESC","La légende ne s'affiche pas. Seul le texte de cette case apparaît sur l'écran, dans une ligne unique couvrant les deux colonnes du formulaire.");
 define("_AM_ELE_INSERTBREAK","Contenu HTML pour cette ligne");
@@ -281,7 +271,7 @@ define("_AM_ELE_NUMBER_OPTS","Si un nombre est tapé...");
 define("_AM_ELE_NUMBER_OPTS_DEC","Nombre de place pour les décimales:");
 define("_AM_ELE_NUMBER_OPTS_DECSEP","Separer les décimales avec ce caractère (ie: '.'):");
 define("_AM_ELE_NUMBER_OPTS_DESC","Utiliser cette option pour contrôler comment se comporteront les décimales et chiffres, et comment ils seront affichés sur cet écran.");
-define("_AM_ELE_NUMBER_OPTS_PREFIX","Display numbers with this prefix (ie: '$'):");
+define("_AM_ELE_NUMBER_OPTS_PREFIX","Afficher les nombres avec ce préfixe (ie: '$'):");
 define("_AM_ELE_NUMBER_OPTS_SEP","Separer les centaines avec ce caractère (ie: ','):");
 define("_AM_ELE_OPT","Options");
 define("_AM_ELE_OPT_DESC","Cocher la boîte de sélection avec des valeurs par défaut");
@@ -329,36 +319,36 @@ define("_AM_ELE_TYPE_DESC","Choisissez 'Nombres uniquement' pour enlever les car
 define("_AM_ELE_TYPE_NUMBER","Nombres uniquement");
 define("_AM_ELE_TYPE_STRING","N'importe quoi");
 define("_AM_ELE_UPLOAD","Joindre un fichier");
-define("_AM_ELE_YN","Simple boutons radio oui/non");
+define("_AM_ELE_YN","Simple bouton radio oui/non");
 define("_AM_FORM","Formulaire : ");
 define("_AM_FORMLINK_NONE", "aucun lien -- options courante en action");
-define("_AM_FORMLINK_NONE_TEXTBOX", "No association in effect");
-define("_AM_FORMULIZE_ADD_NEW_SCREEN_OF_TYPE", "Add a new screen of this type:");
-define("_AM_FORMULIZE_ADD_SCREEN_NOW", "Add it Now!");
-define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE", "Are you sure you want to delete this screen?  Please confirm!");
-define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE_PAGE", "Are you sure you want to delete this page?  Please confirm!");
-define("_AM_FORMULIZE_DEFINED_SCREENS", "Defined Screens for This Form");
-define("_AM_FORMULIZE_DELETE_SCREEN", "Delete");
-define("_AM_FORMULIZE_DELETE_THIS_PAGE", "Delete this page");
-define("_AM_FORMULIZE_SCREEN_ADDPAGE", "Add another page");
-define("_AM_FORMULIZE_SCREEN_A_PAGE", "Form elements to display on page");
-define("_AM_FORMULIZE_SCREEN_BUTTONTEXT", "The text of the link users get at the end of the form");
-define("_AM_FORMULIZE_SCREEN_CONS_ADDCON", "Add an another condition");
-define("_AM_FORMULIZE_SCREEN_CONS_HELP", "Conditions are useful if a page should only appear based on answers to questions in a previous page.  Select the questions from the previous page and specify the answers that should result in this page being displayed.");
-define("_AM_FORMULIZE_SCREEN_CONS_NONE", "Always display this page");
-define("_AM_FORMULIZE_SCREEN_CONS_PAGE", "Conditions in which to display page");
-define("_AM_FORMULIZE_SCREEN_CONS_YES", "Only display when the following conditions are true:");
-define("_AM_FORMULIZE_SCREEN_DONEDEST", "The URL for the link users get at the end of the form");
-define("_AM_FORMULIZE_SCREEN_FORM", "Create or Modify a Screen");
-define("_AM_FORMULIZE_SCREEN_INSERTPAGE", "Insert a new page here");
-define("_AM_FORMULIZE_SCREEN_INTRO", "Introductory text for the first page of this form");
-define("_AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON", "Add a new custom button");
-define("_AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON_EFFECT", "Add an effect for this button");
-define("_AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW", "Use a blank default view (ie: display no entries)");
-define("_AM_FORMULIZE_SCREEN_LOE_BOTTOMTEMPLATE", "Template for the bottom portion of the page, below the list:");
-define("_AM_FORMULIZE_SCREEN_LOE_BUTTON1", "What text should be on the '");
-define("_AM_FORMULIZE_SCREEN_LOE_BUTTON2", "' button?");
-define("_AM_FORMULIZE_SCREEN_LOE_BUTTONINTRO", "Specify which buttons you want included on this screen:");
+define("_AM_FORMLINK_NONE_TEXTBOX", "Pas d'association effective");
+define("_AM_FORMULIZE_ADD_NEW_SCREEN_OF_TYPE", "Ajouter un nouveau Screen de ce type:");
+define("_AM_FORMULIZE_ADD_SCREEN_NOW", "Ajouter maintenant!");
+define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE", "Etes vous sur de vouloir effacer ce Screen?  Merci de confirmer!");
+define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE_PAGE", "Etes vous sur de vouloir effacer cette page?  Merci de confirmer!");
+define("_AM_FORMULIZE_DEFINED_SCREENS", "Screens disponibles pour ce formulaire");
+define("_AM_FORMULIZE_DELETE_SCREEN", "Effacer");
+define("_AM_FORMULIZE_DELETE_THIS_PAGE", "Effacer cette page");
+define("_AM_FORMULIZE_SCREEN_ADDPAGE", "Ajouter une autre page");
+define("_AM_FORMULIZE_SCREEN_A_PAGE", "Elements du formulaire à afficher sur cette page");
+define("_AM_FORMULIZE_SCREEN_BUTTONTEXT", "Le texte du lien que les utilisateurs auront à la fin du formulaire");
+define("_AM_FORMULIZE_SCREEN_CONS_ADDCON", "Ajouter une autre condition condition");
+define("_AM_FORMULIZE_SCREEN_CONS_HELP", "Les conditions sont très utiles pour faire apparaitre un texte en fonction des réponses effectuées sur la page précédente.  Sélectionnez les questions de la page précédente et spécifiez les réponses qui feront que cette page s'affichera.");
+define("_AM_FORMULIZE_SCREEN_CONS_NONE", "Toujours afficher cette page");
+define("_AM_FORMULIZE_SCREEN_CONS_PAGE", "Conditions pour afficher cette page");
+define("_AM_FORMULIZE_SCREEN_CONS_YES", "N'afficher que si les conditions suivantes sont réunies:");
+define("_AM_FORMULIZE_SCREEN_DONEDEST", "L' URL du lien que les utilisateurs auront à la fin du formulaire");
+define("_AM_FORMULIZE_SCREEN_FORM", "Créer ou modifier un Screen");
+define("_AM_FORMULIZE_SCREEN_INSERTPAGE", "Insérer une nouvelle page ici");
+define("_AM_FORMULIZE_SCREEN_INTRO", "Texte en introduction pour la première page du formulaire");
+define("_AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON", "Ajouter un bouton personnalisé");
+define("_AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON_EFFECT", "Ajouter un effet pour ce bouton");
+define("_AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW", "Use a blank default view (ie: aucune entrée affichée)");
+define("_AM_FORMULIZE_SCREEN_LOE_BOTTOMTEMPLATE", "Template pour la portion basse de la page, sous la liste:");
+define("_AM_FORMULIZE_SCREEN_LOE_BUTTON1", "Quel texte doit être sur le '");
+define("_AM_FORMULIZE_SCREEN_LOE_BUTTON2", "' bouton?");
+define("_AM_FORMULIZE_SCREEN_LOE_BUTTONINTRO", "Specifier quels boutons doivent être inclus dans ce Screen:");
 define("_AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION1", "You can change the text on the buttons below.  Also, if you use a custom Top or Bottom Template, these buttons will be available there.");
 define("_AM_FORMULIZE_SCREEN_LOE_BUTTON_SECTION2", "You can change the text on the buttons below.  If you use a custom List Template, these buttons will not appear on the screen by default, but you can use a custom Top or Bottom Template to specifically include them.");
 define("_AM_FORMULIZE_SCREEN_LOE_COLUMNWIDTH", "Largeur de toutes les colonnes en pixel?");

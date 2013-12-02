@@ -332,21 +332,9 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 	    $xoopsTpl->assign('yearSelector', $yearSelector);
 	}
     
-
-
 	// process data set(s)
 	for($i=0;$i<count($data);$i++) {
-
-		// determine if the user has the right to delete items in this form -- added September 18 2005
-		$delown = 0;
-		$delother = 0;
-		$delown = $gperm_handler->checkRight("delete_own_entry", $fids[$i], $groups, $mid);
-		$delother = $gperm_handler->checkRight("delete_other_entries", $fids[$i], $groups, $mid);
-
 		foreach($data[$i] as $id=>$entry) {
-      
-      
-      
 	            if(!$frids[$i]) {
 				if(is_array($viewHandles[$i])) {
 					$formhandle = getFormHandleFromEntry($entry, $viewHandles[$i][0]);
@@ -358,7 +346,6 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
 			}
 			$ids = internalRecordIds($entry, $formhandle);
 			
-        
             if(is_array($viewHandles[$i])) {
 			$needsep = 0;
 
@@ -382,14 +369,9 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
             $calendarDataItem[1] = $frids[$i];
             $calendarDataItem[2] = $fids[$i];
             $calendarDataItem[3] = $textToDisplay;
-		if($i==0 AND (($uid == display($entry, "uid") AND $delown) OR ($uid != display($entry, "uid") AND $delother))) {
-			$calendarDataItem[4] = true;
-		} else {
-			$calendarDataItem[4] = false;
-		}
+            $calendarDataItem[4] = ($i == 0 and formulizePermHandler::user_can_delete_entry($fids[$i], display($entry, "uid"), $ids[0]));
 
             // Layout	
-
 	        if($type == "month"
 	        	|| $type == "mini_month"
 	        	|| $type == "micro_month")
@@ -401,8 +383,6 @@ function displayCalendar($formframes, $mainforms="", $viewHandles, $dateHandles,
                     
                     if($startValue && $endValue)
                     {
-                    	//echo "$startValue - $endValue (Both)<br>";
-                        
                         $startDate = strtotime($startValue);
                         $endDate = strtotime($endValue);
                         for($x=$startDate;$x<=$endDate;$x=$x+86400) 
@@ -570,5 +550,3 @@ function readScreenId($id, $fid) {
 		return false;
 	}
 }
-
-?>

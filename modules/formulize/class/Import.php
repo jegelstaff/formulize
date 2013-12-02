@@ -1019,7 +1019,7 @@ function Create_table($Insert)
 	$s1.=";";
 	$s1=preg_replace('/Table_Name/', "`".Prefix."_formulize_$AllHandles2[0]`", $s1);
 	Insert($s1);
-	Insert ("UPDATE `".Prefix."_formulize_$AllHandles2[0]` SET `mod_uid`=".SID."");//To Update Formulize_Handle Mod ID to the User who's carrying out the Impot
+	Insert ("UPDATE `".Prefix."_formulize_$AllHandles2[0]` SET `creation_uid`=".SID.",`mod_uid`=".MOD_ID."");//To Update Formulize_Handle Mod ID to the User who's carrying out the Impot
 	echo "Creating Table Formulize_$AllHandles2[0] <br/>";
 }
 function update_groups ($table,$ID,$flag=null)
@@ -1077,9 +1077,9 @@ function update_groups ($table,$ID,$flag=null)
 			}
 		}
 		if (formIdMap(2,"Group_Ignore",$d)!=null){
-			if (empty($f)){	//To Remove the Group that's flagged as Ignore by Removing it from the DB if it's a list then it Unset the array
-				if ($table1!='_formulize_groupscope_settings' && $table1 !='_formulize') {Insert("DELETE FROM $table1 WHERE $fields[1]=$ID and $fields[0]=$d;");}else
-				{Post_Process ($ID,0,null,2,$fields[2]);}} else {unset($result[$k]);} 
+			if (empty($f)){	//To Remove the Group that's flagged as Ignore by replacing it with ID 999
+			Post_Process ($ID,999,null,2,$fields[2]);}else {
+			$result[$k]=999;}
 		}}
 	if (!empty($f))
 	{
