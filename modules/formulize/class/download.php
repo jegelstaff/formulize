@@ -11,5 +11,6 @@
 	header('Content-Transfer-Encoding: binary');
 	header('Content-Length: '.filesize($file_name));	// provide file size
 	header('Connection: close');
-    readfile($file_name);
+    	readfile($file_name);
+    	unlink($file_name);//To Delete the File From the Server.
 ?>
