@@ -1,245 +1,319 @@
+<!DOCTYPE html>
+<html>
+<h1 style="font-family:verdana;color:red">Formulize</h1>
+<hr noshade size=4 width="100%" align=left>
+<hr>
+<h3 style="font-family:verdana;color:rgb(0,100,100)">Export Application Utility</h3>
+<hr size=4 width="20%" align=left>
+<p style="font-family:arial;color:rgb(100,100,0);font-size:medium;">
+    This utility will automatically export all basic tables of the selected application.</br>
+    However, you need to a make decision with regard to the following <u>dynamic forms</u>, </br>
+    forms selected will be exported with data and other names we will only export empty forms</br>
+	Furthermore, you need also to select the group lists. 
+</p>
+<body>
+<table class="formTable">
+<tbody>
+<form action="<?php $_SERVER['PHP_SELF']; ?>" method="POST">
 <?php
 include  'PDO_Conn.php';//Include the Connection File
-
-//To get the Application ID  from the Export_Import Page
-//$ID=1;
-$ID =$_GET['aid'];
-//echo $ID;
-if (!Export($ID))
+//Pass Application Id from Formulize
+$appid =$_GET['aid'];
+// Check if Application Exist
+$row = sqlQuery("SELECT count(appid) as appid FROM ".Prefix."_formulize_applications WHERE appid = :id;","appid","$appid");
+$i = 0;
+if ($row[0]> 0)	
 {
-	echo "<br/>Error [0] : Invalid Application Id Contact the Administrator ...No Export File is Created ... Exiting <br/>";
+	// Get Form id's to export
+	$row = sqlQuery("SELECT fid FROM ".Prefix."_formulize_application_form_link WHERE appid = :id;","fid","$appid");
+	$formsid = "(".(implode(",",$row)).")";
+	session_start();
+	$_SESSION['fid'] = $formsid;
+	//echo $formsid;
+	$rowset = sqlQuery("select desc_form,form_handle from ".Prefix."_formulize_id where id_form in $formsid order by desc_form");
+	$rowset1= sqlQuery("select gl_id,gl_name from ".Prefix."_group_lists order by gl_name");
+	if (!empty($rowset))
+		{
+			echo "<tr><td><label>Select Forms</label></td>";
+		if (!empty($rowset1)) {echo "<td><label>Select Groups</label></td>";}
+		echo "</tr>";
+		echo "<td><select multiple=\"multiple\" name=FormIDS[] size=12>";
+		foreach ($rowset as $key){echo "<option value=$key[form_handle]>$key[desc_form]</option>";}
+	    echo "</select><br></td>";
+	    if (!empty($rowset1)){
+		echo "<td><select multiple=\"multiple\" name=GroupID[] size=12>";
+	    foreach ($rowset1 as $key){echo "<option value=$key[gl_id]>$key[gl_name]</option>";}
+	    echo "</select><br></td></tr>";}
+		}
+}
+else
+{
+	exit("Error [0] : Invalid Application Id Contact the Administrator ...No Export File is Created ... Exiting");
+}
+?>	
+<tr>
+<td><input type='submit' name='formSubmit' value='Export' id='export'></td>
+<td><input type="button" id='download' value="Download" onclick='myfunction()'" /></td>
+</tr>
+</tbody>
+</table>
+<!-- Progress bar holder -->
+<div id="progress" style="width:500px;border:3px solid #ccc;"></div>
+<!-- Progress information -->
+<div id="information" style="width"></div>
+<script>
+ function hide(button){document.getElementById(button).hidden=true;}
+ function unhide(button){document.getElementById(button).hidden=false;}
+ function myfunction()
+ { var tmp =<?php echo $appid?>;
+   // link need to be updated
+   url ='download.php?aid='+tmp;
+   window.open(url);
+ }
+</script>
+</form>
+</body>
+
+<?php
+$text ="";
+echo "<script language='javascript'> hide('download');</script>";
+if (isset($_POST['formSubmit'])) 
+{
+	global $i;
+	echo "<script language='javascript'> hide('download');</script>";
+	export();
+	//output($text);
+	echo "<script language='javascript'> hide('export');</script>";
+	progress(100,$i);
+	echo "<script language='javascript'> unhide('download');</script>";
+}
+Function output($output)
+{
+	///echo $output;
+	$file_name ="Application -".$_GET['aid'];
+	$f = fopen($file_name, "w"); 
+	fwrite($f,$output);
+	fclose($f);
+} 
+// Function sqlQuery(SQL Statement,Column Name, Bind Variable)
+Function sqlQuery($sql,$colname = NULL,$bindvar = NULL)
+{
+	global $i;
+	$conn=new Connection ();
+	$Query=$conn->connect()->prepare($sql) ;
+	if (!empty($bindvar)){
+	$Query->bindValue(":id",$bindvar,PDO::PARAM_STR);}
+	$Query->execute();
+	$returnrow=Array();
+	if (is_null($colname)){$returnrow=Array(Array());}
+	array_pop($returnrow);
+	while ($row=$Query->fetch(\PDO::FETCH_ASSOC))
+	{ 
+		if (is_null($colname))	{array_push($returnrow,$row);} 
+		else{array_push($returnrow,$row[$colname]);}
+	}
+    // Calculate the percent progress
+    $percent = intval($i);
+    progress($percent,$i);
+    $i++;
+	return $returnrow;
 }
 
-function Export ($ID) {
-	global $appid; 
-	$appid=$ID; 
-	$flid = Array(); // framework id array to export
-	//Instructions array to replace and pad values in the selected fields (C) To Replace & (P) To Pad the field with the specified character
-	$Instructions = array(array());
-	$Instructions[filter][C][0]=";";
-	$Instructions[filter][C][1]="&";
-	$Instructions[gl_name][C][0]=" "; // Character to Replace 
-	$Instructions[gl_name][C][1]="&";
-  	$Instructions[fltr_grps][C][0]=";"; // Character to Replace 
-	$Instructions[fltr_grps][C][1]="&";
-	$Instructions[steptitles][C][0]=";"; // Character to Replace 
-	$Instructions[steptitles][C][1]="&";
-	$Instructions[fltr_grps][C][0]=";"; // Character to Replace 
-	$Instructions[fltr_grps][C][1]="&";
-	$Instructions[steps][C][0]=";"; // Character to Replace 
-	$Instructions[steps][C][1]="&";
-	$Instructions[ele_filtersettings][C][0]=";"; // Character to Replace 
-	$Instructions[ele_filtersettings][C][1]="&"; // Replace by eg. Replace all (;) with (&) for the field ele_filtersettings
-	$Instructions[ele_value][C][0]=";";
-	$Instructions[ele_value][C][1]="&";
-	$Instructions[ele_handle][P][0]="^"; // Pad ele_handle value with (^) e.g 1 = ^1^
-	$Instructions[form_handle][P][0]="^"; // Pad form_handle value with (^) e.g 1 = ^1^
-	$Instructions[desc_form][P][0]="&";
-	$exclude = Array(); 
-	$conn=new Connection ();
-	// Check if Application Exist
-	$sql="SELECT count(appid) as appid FROM ".Prefix."_formulize_applications WHERE appid = :id;";
-	$Query=$conn->connect()->prepare($sql) ;
-	$Query->bindValue(":id",$appid);
-	$Query->execute();
-	$row=$Query->fetch(\PDO::FETCH_ASSOC);
-	//echo "Here";
-	if ($row['appid']< 1)	{return false;}
-	// Get Form id's to export
-	$sql="SELECT fid FROM ".Prefix."_formulize_application_form_link WHERE appid = :id;";
-	$Query=$conn->connect()->prepare($sql) ;
-	$Query->bindValue(":id",$appid);
-	$Query->execute();
-	while ($row=$Query->fetch(\PDO::FETCH_ASSOC))
+//progress bar
+Function progress($pcnt,$tran)
+{
+	// Javascript for updating the progress bar and information
+	$tran = $tran."Transactions Processed";
+	if ($pcnt == 100) { $tran = "Process completed";}
+     echo '<script language="javascript">
+    document.getElementById("progress").innerHTML="<div style=\"width:'.$pcnt.'%;background-color:#f00;\">&nbsp;</div>";
+    document.getElementById("information").innerHTML="'.$tran.'";
+	</script>';
+	echo str_repeat(' ',1024);
+	// Send output to browser immediately
+	ob_flush();
+	 sleep(.03);
+}
+
+// Function chk_integrity($tables) Checks that all tables exist, otherwise cause the system to exit
+Function chk_integrity($tables,$prefix)
+{
+	$flag = true;
+	foreach ($tables as $table)
 	{
-		$fid[]=$row[fid];
-	}
-	$formsid = "(".(implode(",",$fid)).")";
-	if ($formsid == "()")
-	{
-		$linksid ="()"; // No forms
-		$screenid = "()"; // No Screens as there are no forms
-	}
-	else
-	{	//Links
-		$sql="SELECT fl_id FROM ".Prefix."_formulize_framework_links WHERE fl_form1_id in $formsid or fl_form2_id in $formsid;";
-		$Query=$conn->connect()->prepare($sql) ;
-		$Query->execute();
-		while ($row=$Query->fetch(\PDO::FETCH_ASSOC))
-		{
-			$flid[]=$row[fl_id];
+		$row = explode("/",$table);
+		$num = sqlQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME= '$prefix$row[2]';","cnt");
+		if ($num[0]==0) 
+	    {
+			echo "Table : $row[2] (Error Table does not exsist)</br>";
+			$flag= false;
 		}
-		$linksid = "(".(implode(",",$flid)).")";
-		//Screens
-		//echo "$sql </br>";
-		$Query=$conn->connect()->prepare($sql) ;
-		$Query->execute();
-		$row=$Query->fetch(\PDO::FETCH_ASSOC);
-		$screenid = "(".(implode(",",$row)).")";
 	}
+	
+	return $flag;
+}
+function export () {
+	///echo "Here";
+	global $appid; 
+	global $MODID;
+	global $formsid;
+	global $text;
+	session_start();
+	$appid=$_GET['aid'];//Put Real App ID 
+	$formsid=$_SESSION['fid'];
+	///session_destroy();
+	$MODID=MOD_ID;//MOD ID 
+	$formhandels = "()";
+	$formselect = $_POST['FormIDS'];
+	$groupselect="('".(implode("','",$_POST['GroupID']))."')";
+	$formhandels = "('".(implode("','",$formselect))."')";
+	$flid = Array(); // framework id array to export
+	$exclude = Array(); 
+	$linksid ="()"; 	// No forms
+	$screenid = "()"; 	// No Screens as there are no forms
+	$elementsid ="()"; 	// No Elements
+	$savedviews ="()"; 	// No Saved Views
+	$gperms ="()"; 		// No Group Permissions
+	$totaltrans=5;      // Totals used in Progress Bar for future use
+	// Query basic variables
+	if ($formsid !== "()")
+	{	//Links
+		$row = sqlQuery("SELECT fl_id FROM ".Prefix."_formulize_framework_links Where fl_form1_id IN $formsid or fl_form2_id IN $formsid;","fl_id");
+		$linksid = "(".(implode(",",$row)).")";
+		//Screens
+		$row = sqlQuery("SELECT sid FROM ".Prefix."_formulize_screen_form Where formid in $formsid;","sid");
+		$screenid = "(".(implode(",",$row)).")";
+		//elements
+		$row = sqlQuery("SELECT ele_id FROM ".Prefix."_formulize Where id_form in $formsid","ele_id");
+		$elementsid = "(".(implode(",",$row)).")";
+		//views
+		$row = sqlQuery("SELECT sv_id FROM ".Prefix."_formulize_saved_views WHERE sv_mainform in $formsid or sv_formframe in $formsid;","sv_id");
+		$savedviews = "(".(implode(",",$row)).")";
+		//group permissions
+		$row = sqlQuery("SELECT gperm_id FROM ".Prefix."_group_permission WHERE gperm_itemid in $formsid and gperm_modid = $MODID;","gperm_id");
+		$gperms = "(".(implode(",",$row)).")";
+
+}
+
 	// tables to export in the format table_name/where criteria field/ criteria condition
 	// 0-No Padding/0-Single Insert 1-Multi Row Insert/Table Name/Operator/Where Field/Where Condition
-	$tables=array ("0/0/_formulize_applications/appid/=/$appid","0/0/_formulize_id/id_form/in/$formsid","0/0/_formulize_application_form_link/fid/in/$formsid",
+	$tables=array ("0/0/_formulize_applications/appid/=/$appid","0/0/_formulize_id/id_form/in/$formsid","0/0/_formulize_application_form_link/appid/=/$appid",
 	"0/0/_formulize/id_form/in/$formsid", "0/0/_formulize_frameworks/frame_id/in/$linksid","0/0/_formulize_framework_links/fl_id/in/$linksid",
-	"0/0/_groups","0/0/_formulize_advanced_calculations/fid/in/$formsid","0/0/_formulize_group_filters/fid/in/$formsid",
-	"0/0/_formulize_groupscope_settings/fid/in/$formsid","0/0/_formulize_screen/fid/in/$formsid",
+	"0/0/_groups","0/0/_group_lists/gl_id/in/$groupselect","0/0/_formulize_advanced_calculations/fid/in/$formsid","0/0/_formulize_group_filters/fid/in/$formsid",
+	"0/0/_formulize_groupscope_settings/fid/in/$formsid","0/0/_formulize_screen/fid/in/$formsid","0/0/_formulize_other/ele_id/in/$elementsid",
 	"0/0/_formulize_notification_conditions/not_cons_fid/in/$formsid","0/0/_formulize_entry_owner_groups/fid/in/$formsid",
-	"0/0/_formulize_screen_listofentries/sid/in/$screenid","0/0/_formulize_screen_multipage/sid/in/$screenid");
+	"0/0/_formulize_screen_listofentries/sid/in/$screenid","0/0/_formulize_screen_multipage/sid/in/$screenid",
+	"0/0/_formulize_screen_form/formid/in/$formsid","0/0/_formulize_saved_views/sv_id/in/$savedviews",
+	"0/0/_group_permission/gperm_id/in/$gperms");
 
-//******************************************************
-    $conn=new Connection ();
-	$ssql ="select form_handle from ".Prefix."_formulize_id where form_handle is not NULL and id_form in $formsid" ;
-	$Query=$conn->connect()->prepare($ssql);
-	$Query->execute();
-	$pad ="Create table^";
-	//echo "Here2";
-	while ($row=$Query->fetch(\PDO::FETCH_ASSOC))
-		{
-			if ($row[form_handle])
-			{
-				$pad .="$row[form_handle],";
-				////echo $pad."<br/>";
-				array_push($tables,"$pad/1/_formulize_".$row[form_handle]);
-			}
-			$pad ="Create table^";
-		}
-		////print_r($tables);
-		////echo "<//br>...........................................</br>";
-//******************************************************
+	//Add Dynamic Tables based on captured ele_handle in formulize_id table (User Selected to incorporate data)
+	$row = sqlQuery("select CONCAT('Create table^',form_handle,'/1/_formulize_',form_handle) as form_handle
+	from ".Prefix."_formulize_id where form_handle is not NULL and id_form in $formsid and form_handle in $formhandels","form_handle");
+	
+	$tables = array_merge($tables,$row);
+	
+	//Add Dynamic Tables based on captured ele_handle in formulize_id table (empty tables)
+	$row = sqlQuery("select CONCAT('Create table^',form_handle,'/2/_formulize_',form_handle,'/1/=/2') as form_handle
+	from ".Prefix."_formulize_id where form_handle is not NULL and id_form in $formsid and form_handle not in $formhandels","form_handle");
+	
+	$tables = array_merge($tables,$row);
 	$lines = Array();
-	//print_r($tables);
+	$prefix= "".Prefix."";
+	if (!chk_integrity($tables,$prefix)) {return false;}
+	
 	foreach ($tables as $t)
 	{
 		$table = explode ('/',$t);
 		$criteria = "Where $table[3] $table[4] $table[5]";
+		
 		if (is_null($table[3])) {$criteria ="";}
-		//echo "$t ... $table[2] ... $criteria <br/>";
 		if ($table[5] !== "()")
 		{
-			$lines=array_merge($lines,expTable($table[0],$table[1],"".Prefix.$table[2],$exclude,$criteria,$Instructions));
-			//print_r($lines);
+			$lines=array_merge($lines,expTable($prefix,$table[0],$table[1],$table[2],$exclude,$criteria));
+		///echo "Here";
 		}
 	}
-	//output the insert statement lines
-	$text = str_replace("formulize_framework_links","1formulize_framework_links",implode("",$lines));
-	echo $text;
-	//Output_File($text);
-	//Print "<br/>..............Completed Sucessfuly............ <br/>";
+
+	$text =implode("\n",$lines);
+	output($text);
 	return true;
 }
-	Function Output_File($output)
-	{
-	$file ="Application -".$_GET['aid'];
-	$f = fopen($file, "w");  
-	fwrite($f, $output);  
-	fclose($f);
-	header('Content-Description: File Transfer');
-	header('Content-Type: application/octet-stream');
-	header('Content-Disposition: attachment; filename='.basename($file));
-	header('Content-Transfer-Encoding: binary');
-	header('Expires: 0');
-	header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-	header('Pragma: public');
-	header('Content-Length: ' . filesize($file));
-	ob_clean();
-	flush();
-	readfile($file);
-	}
 
 // Function expTable(padding,insert style,table name, excluded columns array, criteria for selection, post selection fields character replacement array)
-Function expTable($padText,$insStyle,$Table_Name,$Exclude_Columns = Null,$Criteria = Null,$Instructions = Null)
-{
-	$keys = Array();
-	static $x;
-	$values = Array();
-	// text field types
-	//('varchar','bigint','longtext','datetime','int','tinyint','decimal','double','char','timestamp','set','enum','longblob','binary','mediumtext','smallint','text','blob','float','time','date','mediumint','mediumblob','tinytext`)
-	$types = Array('varchar','longtext','datetime','char','timestamp','enum','mediumtext','text','time','date','tinytext');
-	$conn=new Connection ();
-	$sql ="SELECT COLUMN_NAME,DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = :id;" ;
-	$Query=$conn->connect()->prepare($sql);
-	$Query->bindValue(":id",$Table_Name);
-	$Query->execute();
-
-	// Fetch table structure and identify text fields
-	while ($row=$Query->fetch(\PDO::FETCH_ASSOC))
-	{
-		if (!in_array($row['COLUMN_NAME'], $Exclude_Columns )) 
-		{
-			$keys[] = $row['COLUMN_NAME'];
-			if (in_array($row['DATA_TYPE'],$types))
-			{	
-				$values[]="CONCAT(CHAR(34),`".$row['COLUMN_NAME']."`,CHAR(34))";
-			}
-			else
-			{	
-					$values[]="`".$row['COLUMN_NAME']."`";
-			}
-		}
-	}
-	unset($Query);
-	$Tablename="Prefix";
-	$Tablename .=substr($Table_Name,9,strlen($Table_Name)-9);
-	// Format the Insert statement
-	if ($padText =="0") 
-	{
-	   $insStatment .= "INSERT INTO $Tablename (`".implode("`,`",$keys)."`) VALUES (";
-	   }
-	else
-		{
-		    $insStatment = "$padText" .implode(",", array_slice($keys,5))."^INSERT INTO Table_Name VALUES ";
-		}
-	$values = implode(",",$values);// Column Names Separated by ,
-	$sqlvalues="Select $values from $Table_Name $Criteria;";
+Function expTable($Prefix,$padText,$insStyle,$Table_Name,$Exclude_Columns = Null,$Criteria = Null)
+{///echo "here";
+	// Replace all (;) with (&) for the following fields 
+	$replace=Array("not_cons_con","gl_name","fltr_grps","steptitles","steps","ele_filtersettings","ele_value","fltr_grptitles","filter",
+	"pages","pagetitles","conditions","ele_uitext","ele_delim");
+	// Pad all with (^) e.g 1 = ^1^ 
+	$padding=Array("ele_handle","form_handle","not_cons_uid");
 	$inslist = Array();
-	$Query=$conn->connect()->prepare($sqlvalues) ;
-	$Query->execute();
-	//$cow=$Query->fetch(\PDO::FETCH_ASSOC);
-	
+	// Table Column Names
+	$row = sqlQuery("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '$Prefix$Table_Name';","COLUMN_NAME");
+	////echo "h2";
+	$row = array_diff($row,$Exclude_Columns);
+	$keys=$row;
+	$values = "`".implode("`,`",$row)."`";
+	$Tablename="Prefix".$Table_Name;
+	$insStatment = "INSERT INTO $Tablename (`".implode("`,`",$row)."`) VALUES ("; //Standard Insert Statement
+	// Format Special Insert statement (Formulize_1,_2 ..etc)
+	////echo 'd';
+	if ($padText !=="0") {$insStatment = "$padText," .implode(",", array_slice($row,5))."^INSERT INTO Table_Name VALUES ";}
+	///echo $Criteria;
+	///echo "Select $values from $Prefix$Table_Name $Criteria;";
+	if ($Table_Name=='_formulize_applications' || $Table_Name=='_formulize_application_form_link'){
+	$Criteria=explode('=',$Criteria);
+	$rowset = sqlQuery("Select $values from $Prefix$Table_Name $Criteria[0]= :id;",null,$Criteria[1]);}
+	else{
+	 $rowset = sqlQuery("Select $values from $Prefix$Table_Name $Criteria;");}
+///	print_r($rowset);
+	///echo 'e';
 	if ($insStyle =="1") {$insrow=$insStatment;}
-	// Create the insert statements for the required table
-	
-	while ($row=$Query->fetch(\PDO::FETCH_ASSOC))
-	{
-	
-	if ($insStyle =="0") {$insrow=$insStatment;}
-	if ($insStyle =="1") {$insrow .="(";}
+	///echo "here";
+	// Export only table structure
+	if ($insStyle =="2")
+      {
+		$insStatment = "$padText," .implode(",", array_slice($row,5))."^;";
+		array_push($inslist,$insStatment);
+		return $inslist;
+	  }
+	  // Create the insert statements for the required table
+	foreach($rowset as $rowset)
+	{		
+		if ($insStyle =="0") {$insrow=$insStatment;}
+		if ($insStyle =="1") {$insrow .="(";}
 		$k=0;
-		foreach($row as $onefield)
-		{
-			
+		foreach($rowset as $row)
+		{			
 			$field=$keys[$k];
-			//echo $keys[$k].":".$onefield."<br/>";
+			$onefield=$row;
+			// apply changes to the required fields
+			if (is_null($onefield)){$onefield="NULL";}
 			$onefield=str_replace("'","\'",$onefield);
-		if (gettype($onefield)==NULL or is_null($onefield)){$onefield="NULL";}
-			// execute changes to the required fields
-			if (isset($Instructions[$field][C][0])){
-			//if (strstr($onefield,"'")) {$onefield=str_replace("'","\'",$onefield);}
-				$onefield=str_replace($Instructions[$field][C][0],$Instructions[$field][C][1],$onefield);}
-			if (isset($Instructions[$field][P][0])){
-				//if (strstr($onefield,"'")) {$onefield=str_replace("'","\'",$onefield);}
-				$onefield=(chr(34)).$Instructions[$field][P][0].(substr($onefield,1,strlen($onefield)-2)).$Instructions[$field][P][0].(chr(34));}
-			
+			///if ($field=='not_cons_con'){echo "Yes";}
+			///$onefield=str_replace(array("\n","\r"), "", $onefield);
+			if (in_array($field,$replace)){$onefield=str_replace(";","&",$onefield);}
+			if (in_array($field,$padding)){$onefield="^".$onefield."^";}
+			if ($onefield !="NULL"){$onefield ="'".$onefield."'";}
 			$insrow .="$onefield,";
-
 			$k++;
 		}
 		if ($insStyle =="0")
-		   {
-				//$insrow= str_replace("'","''",substr($insrow,0,strlen($insrow)-1).");");
-				$insrow= substr($insrow,0,strlen($insrow)-1).");";
-				array_push($inslist,$insrow);
-		   }
-		else { $insrow= substr($insrow,0,strlen($insrow)-1)."),";}
+		{
+			$insrow= substr($insrow,0,strlen($insrow)-1).");";
+			array_push($inslist,$insrow);
+		}
+		if ($insStyle =="1") { $insrow= substr($insrow,0,strlen($insrow)-1)."),";}
 	}
 	if ($insStyle =="1")
-		{
-				$insrow= substr($insrow,0,strlen($insrow)-1).";";
-				array_push($inslist,$insrow);
-		}
-	unset($Query);
-	//unset($keys);
-	//print_r($inslist);
+	{
+		$insrow= substr($insrow,0,strlen($insrow)-1).";";
+		array_push($inslist,$insrow);
+	}
+	///print_r($inslist);
 	return $inslist;
 }
 ?>
+
+</body>
+</html>

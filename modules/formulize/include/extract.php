@@ -858,15 +858,17 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
    LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
    LEFT JOIN ".$joinTextTableRef[$thisLinkFid] . $joinTextIndex[$thisLinkFid]."
    INNER JOIN ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
-			 $start = true;
-			 foreach($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
-			      if(!$start) {
-				   $linkQuery .= " AND ( $thisOneSideFilter ) ";
-			      } else {
-				   $linkQuery .= " WHERE ( $thisOneSideFilter ) ";
-				   $start = false;
-			      }
-			 }
+            if (isset($oneSideFilters[$thisLinkFid]) and is_array($oneSideFilters[$thisLinkFid])) {
+                $start = true;
+                foreach($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
+                    if(!$start) {
+                        $linkQuery .= " AND ( $thisOneSideFilter ) ";
+                    } else {
+                        $linkQuery .= " WHERE ( $thisOneSideFilter ) ";
+                        $start = false;
+                    }
+                }
+            }
 			 $linkQuery .= " ORDER BY sort_and_limit_table.mastersort";
 			  $linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery));
 			  $GLOBALS['formulize_queryForExport'] .= " -- SEPARATOR FOR EXPORT QUERIES -- ".$linkQuery;
@@ -1473,14 +1475,14 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
           $numSeachExps++;
      }
 
-		 $otherPerGroupFilterJoins = implode(" ", $otherPerGroupFilterJoins);
-		 $otherPerGroupFilterWhereClause = implode(" ", $otherPerGroupFilterWhereClause);
-     return array(0=>$formFieldFilterMap, 1=>$whereClause, 2=>$orderByClause, 3=>$oneSideFilters, 4=>$otherPerGroupFilterJoins, 5=>$otherPerGroupFilterWhereClause);    
+    $otherPerGroupFilterJoins = is_array($otherPerGroupFilterJoins) ? implode(" ", $otherPerGroupFilterJoins) : "";
+    $otherPerGroupFilterWhereClause = is_array($otherPerGroupFilterWhereClause) ? implode(" ", $otherPerGroupFilterWhereClause) : "";
+    return array(0=>$formFieldFilterMap, 1=>$whereClause, 2=>$orderByClause, 3=>$oneSideFilters, 4=>$otherPerGroupFilterJoins, 5=>$otherPerGroupFilterWhereClause);
 }
+
 
 // THIS FUNCTION TAKES INPUTS ABOUT AND ELEMENT, AND RETURNS A SET OF INFORMATION THAT IS NECESSARY WHEN BUILDING VARIOUS PARTS OF THE WHERE CLAUSE
 function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formFieldFilterMap){
-
 		 // first convert any handles to element Handles, and/or get the element id if necessary...element id is necessary for creating the formfieldfiltermap, since that function was written the first time we tried to do this, when there were no element handles in the mix
 		 if($frid AND !is_numeric($ifPartsZero)) {
 					$ifPartsZero = dealWithDeprecatedFrameworkHandles($ifPartsZero, $frid); // will convert a framework handle if necessary

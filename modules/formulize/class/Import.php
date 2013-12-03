@@ -1,10 +1,8 @@
 <?php
 include  'PDO_Conn.php';//Include the Connection File
-Import();
-//$a =array ('Text',2,3,4,5);
-//$b="Create table^'Text',2,3,4,5^Insert into Table_name values (1, '2013-09-22 09:48:07', '2013-09-22 09:48:07', 1, 1, '1', NULL),(2, '2013-09-22 09:48:07', '2013-09-22 09:48:07', 1, 1, '1', NULL);";
-//Create_table($b);
 
+Import();
+echo"Successfully Imported all Insert Statements .Exit";
 //Import Functions Begins Below
 function Creat_Applications()
 {
@@ -15,96 +13,72 @@ function Creat_Applications()
 	3)Usually post Process for each table is done after each insert .Unless the Post process involves a global process ,for example Ele_Value might contain groups ID so we need to wait till we are done with the Group Insert  
 	*/
 	//Those  variables will store the New AppID/Form ID  if Needed.
-	global $APP_ID_Replace;//To store the old ID with the New one.The Format is OLDAPPID:NewAPPID.If AppID is not updated then the variable stay empty.
 	global $Element_ID; //Every time ID is Inserted in the DB it will be pushed here to be used later on for the Ele_Filter settings and Ele_Value 
 	global $Calc_ID; //To store the Calculation IDs
 	$Calc_ID=array ();
 	$Element_ID=array();
 	session_start();
-	$getlines=$_SESSION['file'];//Gets the String of inserts from grp33.php file 
-	$get_line=explode(";",$getlines);
-	foreach ($get_line as $statement)
-	{
+	$file=$_SESSION['file'];//Gets the String of inserts from grp33.php file 
+	$getlines = file_get_contents($file);
+	$get_line=explode(';',$getlines);
+	set_time_limit(0);
+	foreach ($get_line as $statement){ 
 		if(strstr($statement, "Create table")) {
 			Create_table($statement);
 		}
-		if(strstr($statement, "_formulize_applications")) {
-			preg_match('/\(\d*\,/', $statement, $matches);//To get Any Digit number .Not just 2 digit number as the old preg match did
-			$x1=explode('(',$matches[0]);
-			$x2=explode(',',$x1[1]);
-			if (Check_Uniquines ($x2[0],2)==0) //If Unique then no need to Update the ID
+		if(Statement_ID($statement,null,null,1)=="_formulize_applications") { 
+			$App_ID=Statement_ID($statement);
+			if (Check_Uniquines ($App_ID,2)==0) //If Unique then no need to Update the ID
 			{
 				echo"New App <br/>";
-				Insert ($statement);
+				Insert ($statement);echo $statement;
 			}else {
 				echo"App Exists Updating ID <br/>";
-				$Se=preg_replace('/\(\d*\,/', "('',", $statement);
-				$NewID=getlastID ($Se);
-				$APP_ID_Replace=$x2[0].":".$NewID; 
+				$Auto_Incr=Statement_ID($statement,1);
+				$NewID=getlastID ($Auto_Incr);
+				formIdMap(1,"AppID",$App_ID,$NewID);
+				///$APP_ID_Replace=$App_ID.":".$NewID; 
 			}} 
 		//The Formalize Updates to Fields in the INsert statement if needed.It Updates the ID and the Desc_From 
-		if(strstr($statement, "_formulize_id")) {
-
-			global $NewID;
-			global $F3;
-			preg_match('/\(\d*\,\"\&.*\&\"/', $statement, $matches);//Updated Preg_Match to get the Desc form that contains Space .
-			$s=explode("(",$matches[0]);
-			$s6=explode(",",$s[1]);
-			$desc=explode("\"",$s6[1]);
-			$desc=explode("&",$desc[1]);
+		if(Statement_ID($statement,null,null,1)=="_formulize_id") {//echo $statement;
+			$Form_ID=Statement_ID($statement);
+			global $up;
 			//Process Form Handle//
 			preg_match('/\^.*\^/', $statement, $handle);//To get the Form Handle 
-			$form_Handle_Text=explode("^",$handle[0]);//To Get the Ele Handle As Text 
-			global $Flag;//This Flag will be Used to determine if the Form_Handle is Text or Integer 
+			$form_Handle_Text=explode("^",$handle[0]);//To Get the Form Handle As Text 
+			$Flag;//This Flag will be Used to determine if the Form_Handle is Text or Integer 
 			$Flag=is_numeric($form_Handle_Text[1]);//This Flag will be Used to determine if the Form_Handle is Text or Integer Flag=1 if Yes or Null
 			if ($Flag==null)
 			{
 				if (Check_Uniquines($form_Handle_Text[1],10)!=0){
 					$statement=preg_replace('/\^.*\^/',"Imp_".$form_Handle_Text[1]."", $statement);
 					formIdMap(1,"Form_Handle",$form_Handle_Text[1],"Imp_".$form_Handle_Text[1]."");
-				} else {$statement=preg_replace('/\^.*\^/',"".$form_Handle_Text[1]."", $statement);}//To Remove The ^^ if Unique
-				$F3=12;
-			}
-			//Changes the desc If not Uniq. Once Instead Repeating the Code
-			if (Check_Uniquines($desc[1],8)!=0){
-				$st="VALUES (".$s6[0].",\"C_".$desc[1]."\"";
-				$statement=preg_replace('/(\w*VALUES\w*)\s*\(\d*\,\"\&.*\&\"/', $st, $statement);
-				echo "The Form Description is Not Unique Change the Name to C_".$desc[1]." <br/>";} 
-			else  
-			{$st="VALUES (".$s6[0].",\"".$desc[1]."\""; $statement=preg_replace('/(\w*VALUES\w*)\s*\(\d*\,\"\&.*\&\"/', $st, $statement);}//This Means Desc_Form is Uniq. so remove the && char from the Desc_from
-			formIdMap(1,"FormOri",$s6[0],2); // Used For Warning
-			if (Check_Uniquines($s6[0],3)==0) //If Unique then no need to Update the ID
+				} else {$statement=preg_replace('/\^.*\^/',"".$form_Handle_Text[1]."", $statement);
+				}}
+			formIdMap(1,"FormOri",$Form_ID,2); // Used For Warning
+			if (Check_Uniquines($Form_ID,3)==0) //If Unique then no need to Update the ID
 			{
-				//This Is a Special Case :If a New ID is Inserted but the desc_form is not unique in DB
 				Insert ($statement);
-				if ($F3==null){echo "Update";Post_Process ($s6[0],$s6[0],null,2,13);}//To remove the ^^ form the Field as when it was initially inserted it had ^id^
-				//echo $statement;
-				if ($x == null) { echo"New Form <br/>";} 
-				//
+				echo"New Form <br/>"; 
 			}else {
 				echo"Froum Exist Updating Row ID and Unique Field <br/>";
-				$st="VALUES ('',\"";
-				$Se=preg_replace('/(\w*VALUES\w*)\s*\(\d*\,\"/', $st, $statement);
-				echo $Se;
-				$NewID=getlastID ($Se);
-				//echo $NewID;
-				formIdMap(1,"Form",$s6[0],$NewID);
-				echo "ID Replaced =".$s6[0]. ":" .formIdMap(2,"Form",$s6[0])."<br/>";
-				if ($Flag!=null) {
-					formIdMap(1,"Form_Handle",$form_Handle_Text[1],$NewID);
-					Post_Process ($NewID,"$NewID",null,2,13);}
+				$Auto_Incr=Statement_ID($statement,1);
+				$NewID=getlastID ($Auto_Incr);
+				formIdMap(1,"Form",$Form_ID,$NewID);
+				$up=2;
+				//$Form_ID=$NewID;
 			}
+			if ($Flag!=null) {
+				if ($up==2){
+					$Form_ID=$NewID;
+					formIdMap(1,"Form_Handle",$form_Handle_Text[1],$Form_ID);
+				}
+				Post_Process ($Form_ID,$Form_ID,null,2,13);}
 		}
 		//First, it checks if the Link Id is in use or not.If not then no need to update the Form ID.Second,It checks if the AppID has been updated by checking  the APP ID variable.If it's empty then it doesn't update the APP ID in the Link insert statement.Third,It checks if the Form ID that's in the link insert statement has been updated or not.If the ID is updated it will be included in the Form_ID_Replace array.After,if gets the Old ID it query the Form_Map table to check the new ID that corresponds to the OLD ID and then updates the Insert Statement and Insert the new Row. 
-		if(strstr($statement, "_formulize_application_form_link")) {
-			global $NewID;
-			preg_match('/\(\d*\,/', $statement, $matches);
-			$x1=explode('(',$matches[0]);
-			//echo $matches[0];
-			preg_match ('/\,\d*\)/',$statement,$stripp);
-			$st=explode(')',$stripp[0]);
-			$Form_ID_Check=explode(',',$st[0]);//This Gets the FID from the Statement it self and runs a check when it enters one of the Ifs
-			if (Check_Uniquines ($x1[1],1)==0)
+		if(Statement_ID($statement,null,null,1)=="_formulize_application_form_link") {
+			$Link_ID=Statement_ID($statement);
+			if (Check_Uniquines ($Link_ID,1)==0)
 			{ 
 				Insert ($statement);
 				echo "New Link Form/App  <br/>";
@@ -112,270 +86,272 @@ function Creat_Applications()
 			else {
 				//Use the Auto Increment 
 				echo "Updating the Link ID  <br/>";
-				$ee=preg_replace('/\(\d*\,/', "('',", $statement);
-				$NewID=getlastID ($ee);
+				$Auto_Incr=Statement_ID($statement,1);
+				$NewID=getlastID ($Auto_Incr);
+				$Link_ID=$NewID;
 			}
 			//Post Process To Update the Link with the Latest App and Form
-			$id = (null == $NewID) ? $x1[1] : $NewID;
-			if (!empty($APP_ID_Replace)) { echo "Here";
-				$aPP_id_2=explode (":",$APP_ID_Replace);
-				Post_Process ($id,$aPP_id_2[1],null,2,2);
-				echo "Updating Fourm Link APPID To =".$aPP_id_2[1]."<br/>";
+			$result=get_result('_formulize_application_form_link',$Link_ID);
+			if (formIdMap(2,"AppID",$result['appid'])!=null ) {//Update the App ID 
+				Post_Process ($Link_ID,formIdMap(2,"AppID",$result['appid']),null,2,2);
 			}
-			if (formIdMap(2,"Form",$Form_ID_Check[1])!=null ) {
-				$NewFormID=formIdMap(2,"Form",$Form_ID_Check[1]);
-				Post_Process ($id,$NewFormID,null,2,3);
-				echo "Updating Fourm Link FID from =".$Form_ID_Check[1]." to ".$NewFormID."<br/>";
+			if (formIdMap(2,"Form",$result['fid'])!=null ) { //Update the Form ID
+				$NewFormID=formIdMap(2,"Form",$result['fid']);
+				Post_Process ($Link_ID,$NewFormID,null,2,3);
 			}
 		}
-		if(strstr($statement, "_formulize ")) {
-			//echo "Here";
-			global $F2;
-			preg_match('/\(\d*\,\d*/', $statement, $matches);
+		if(Statement_ID($statement,null,null,1)=="_formulize") {
+			///echo $statement."<br/>";
 			preg_match('/\^.*\^/', $statement, $matches1);//To get the Ele Handle 
 			$ele_Handle_Text=explode("^",$matches1[0]);//To Get the Ele Handle As Text 
-			$ele_ID=explode(',',$matches[0]);
-			global $Flag;//This Flag will be Used to determine if the ee_Handle is Text or Integer 
+			$Ele_ID=Statement_ID($statement,null,2);///
+			///echo $Ele_ID;
+			///$NewID;
+			global $up;
+			$Flag;//This Flag will be Used to determine if the ee_Handle is Text or Integer 
 			$Flag=is_numeric($ele_Handle_Text[1]);//This Flag will be Used to determine if the ele_Handle is Text or Integer Flag=1 if Yes or Null
-			$Form_ID_Check=explode('(',$ele_ID[0]);
 			$statement=str_replace('&', ';',$statement);//This to bring back the ; to the Sterilized Array after we broke the statements with ; 
-			formIdMap(1,"ElementOri",$ele_ID[1],2); //Used For Warning
+			///echo $statement;  
+			$rem=array('\'');
+			$Ele_ID=str_replace($rem,'', $Ele_ID);
+			formIdMap(1,"ElementOri",$Ele_ID,2); //Used For Warning
+			
 			if ($Flag==null) //Ele_Handle Needs to be Done before Insert if it was a Text due to conflict might appear after the Insert
 			{
 				if (Check_Uniquines($ele_Handle_Text[1],5)!=0){
-					$statement=preg_replace('/\^.*\^/',"\"Imp_".$ele_Handle_Text[1]."\"", $statement);
+					$statement=preg_replace('/\^.*\^/',"Imp_".$ele_Handle_Text[1]."", $statement);
 					formIdMap(1,"Element_Handle",$ele_Handle_Text[1],"Imp_".$ele_Handle_Text[1]."");
-				} else {$statement=preg_replace('/\^.*\^/',"\"".$ele_Handle_Text[1]."\"", $statement);}//To Remove The ^^ if Unique
-				$F2=2;//This is Used so not to Overwrite the above Handle text if the ID is Uniq.and ele _handle is a new Ele_ID
+				} else {$statement=preg_replace('/\^.*\^/',"".$ele_Handle_Text[1]."", $statement);}//To Remove The ^^ if Unique
 			}
-			if (Check_Uniquines($ele_ID[1],4)==0)//Check IF Ele_ID is Unique or not 
+			//echo $Ele_ID."Here";
+
+			if (Check_Uniquines($Ele_ID,4)==0)//Check IF Ele_ID is Unique or not 
 			{
 				Insert ($statement);
-				if ($F2==null){echo "Update";Post_Process ($ele_ID[1],$ele_ID[1],null,2,14);}//To remove the ^^ form the Field as when it was initially inserted it had ^18^
-				if (formIdMap(2,"Form",$Form_ID_Check[1])!=null ) {
-					$NewFormID=formIdMap(2,"Form",$Form_ID_Check[1]);
-					Post_Process ($ele_ID[1],$NewFormID,null,2,4);
-					array_push($Element_ID,$ele_ID[1]);
-					echo "Ele_ID Unique but Updating FID in Forumulize from =".$Form_ID_Check[1]." to ".$NewFormID."<br/>";
-				}
-				echo "New Formulize row <br/>";
-			}else {
-				echo "Updating the Ele_ID in Formulize  <br/>";
-				$ee=preg_replace('/\w*VALUES \(\d*\,\d*/', "VALUES (".$Form_ID_Check[1].",''", $statement);
-				echo $ee;
-				$NewID=getlastID ($ee);
-				array_push($Element_ID,$NewID);
-				formIdMap(1,"Element",$ele_ID[1],$NewID);
-				//AddMapp to Element;
-				if (formIdMap(2,"Form",$Form_ID_Check[1])!=null ) {
-					$NewFormID=formIdMap(2,"Form",$Form_ID_Check[1]);
-					Post_Process ($NewID,$NewFormID,null,2,4);
-				}
-				if ($Flag!=null) {formIdMap(1,"Element_Handle",$ele_ID[1],$NewID); Post_Process ($NewID,"$NewID",null,2,14);} //Example Of Post Process,this Is Different Because we Update the Ele_Handle Field with New ID
+				array_push($Element_ID,$Ele_ID);
+				echo "New Formulize row <br/>";  //cho $statement;
 			}
-			
+			else {
+				//echo "Updating the Ele_ID in Formulize  <br/>";
+				$Auto_Incr=Statement_ID($statement,1,1);
+				////echo $Auto_Incr;
+				$NewID_1=getlastID($Auto_Incr);
+				///echo $NewID_1;
+				array_push($Element_ID,$NewID_1);
+				formIdMap(1,"Element",$Ele_ID,$NewID_1);
+				echo "Updating the Ele_ID in Formulize from :".$Ele_ID." to ".$NewID_1." <br/>";
+				$up=1;
+			}
+			////echo "Inserted";
+			if ($Flag!=null) {
+				if ($up==1){//This to check if THe ID has been Updated or not
+					$Ele_ID=$NewID_1;//We initialize the ELE_ID here with the latest ID  to be able to keep track of the Element_Handle the New with OLD
+					formIdMap(1,"Element_Handle",$ele_Handle_Text[1],$Ele_ID);}
+				Post_Process ($Ele_ID,$Ele_ID,null,2,14);
+			} 
+			if (!empty($NewID_1)){$Ele_ID=$NewID_1;} //This is used as a precaution if the ELe_Handle is not a Number then the Ele_ID will always contain the OLD ID   
+			$result=get_result('_formulize',$Ele_ID);
+			if (formIdMap(2,"Form",$result['id_form'])!=null ) {
+				Post_Process ($Ele_ID,formIdMap(2,"Form",$result['id_form']),null,2,4);
+			}
 		}
-		if(strstr($statement, "_formulize_framework")) {
-			preg_match('/\(\d*\,/', $statement, $matches);
-			$frame_ID=explode('(',$matches[0]);
-			$frame_ID=explode(',',$frame_ID[1]);
-			if (Check_Uniquines($frame_ID[0],6)==0)
+		if(Statement_ID($statement,null,null,1)=="_formulize_frameworks") {
+			$frame_ID=Statement_ID($statement);
+			if (Check_Uniquines($frame_ID,6)==0)
 			{
 				echo "New Frameworks <br/>";
 				Insert ($statement);
 			}
 			else 
 			{
-				$ee=preg_replace('/\(\d*\,/', "('',", $statement);
-				$NewID=getlastID ($ee);
-				formIdMap(1,"Frame",$frame_ID[0],$NewID);
-				echo "Updating the Frame ID  in Frameworks from = ".$frame_ID[0]." to ".$NewID."<br/>";
+				$Auto_Incr=Statement_ID($statement,1);
+				$NewID=getlastID ($Auto_Incr);
+				formIdMap(1,"Frame",$frame_ID,$NewID);
+				echo "Updating the Frame ID  in Frameworks from = ".$frame_ID." to ".$NewID."<br/>";
 			}
 		}
-		if(strstr($statement, "_1formulize_framework_links")) {
-			$statement=str_replace('_1', '_',$statement);
-			preg_match('/\(\d*,\d*,\d*,\d*,\d*,\d*/', $statement, $matches);//This will Get all the 6 Fields 
-			$frame_links=explode('(',$matches[0]);
-			$frame_links=explode(',',$frame_links[1]); //Frame links [0]=link ID ,1=Frame ID,2=Form 1,3=Form 2, 4=Element 1 ,5=Element 2
-			if (Check_Uniquines($frame_links[0],7)==0)
+		if(Statement_ID($statement,null,null,1)=="_formulize_framework_links") {
+			$frame_links_ID=Statement_ID($statement);
+			if (Check_Uniquines($frame_links_ID,7)==0)
 			{
 				Insert ($statement);
-				echo "New Frame Link Row With ID :".$frame_links[0]."<br/>";
+				echo "New Frame Link Row With ID <br/>";
+				formIdMap(1,"Framelinks",$frame_links[0],$frame_links[0]);
 			}
 			else
 			{
-				$ee=preg_replace('/\(\d*\,/', "('',", $statement);
-				$Newid=getlastID ($ee);
-				echo "Updating Frame Link ID :".$frame_links[0]." to ".$Newid."<br/>";
-				formIdMap(1,"Framelinks",$frame_links[0],$NewID);
+				$Auto_Incr=Statement_ID($statement,1);
+				$NEWID=getlastID ($Auto_Incr);
+				echo "Updating Frame Link ID <br/>";
+				formIdMap(1,"Framelinks",$frame_links_ID,$NEWID);
+				$frame_links_ID=$NEWID;
 			}
+			///echo $frame_links_ID;
 			//Post Process// To Update the Fields
-			$id = (null == $Newid) ? $frame_links[0] : $Newid;//To Decide if ID has been Updated or Not to Avoid Redundancy Above 
-			if (formIdMap(2,"Frame",$frame_links[1])!=null){ //Updates the Frame ID
-				$FrID=formIdMap(2,"Frame",$frame_links[1]);
-				Post_Process ($id,$FrID,null,2,6);
-				echo "Updating Frame ID :".$frame_links[1]." to ".$FrID."<br/>";
+			$result=get_result('_formulize_framework_links',$frame_links_ID);
+			///echo "Here".$result;
+			//if (is_numeric($result['fl_form1_id'])){echo "Tre";}
+			if (formIdMap(2,"Frame",$result['fl_frame_id'])!=null){ //Updates the Frame ID
+				$FrID=formIdMap(2,"Frame",$result['fl_frame_id']);
+				Post_Process ($frame_links_ID,$FrID,null,2,6);
 			}
-			if (formIdMap(2,"Form",$frame_links[2])!=null){ // Updates Form 1
-				$ForID1=formIdMap(2,"Form",$frame_links[2]);
-				Post_Process ($id,$ForID1,null,2,7);
-				echo "Updating Form 1 ID :".$frame_links[2]." to ".$ForID1."<br/>";
+			if (formIdMap(2,"Form",$result['fl_form1_id'])!=null){ // Updates Form 1
+				$ForID1=formIdMap(2,"Form",$result['fl_form1_id']);
+				Post_Process ($frame_links_ID,$ForID1,null,2,7);
 			}
-			if (formIdMap(2,"Form",$frame_links[3])!=null){ // Updates Form 2
-				$ForID2=formIdMap(2,"Form",$frame_links[3]);
-				Post_Process ($id,$ForID2,null,2,8);
-				echo "Updating Form 2 ID :".$frame_links[3]." to ".$ForID2."<br/>";
+			if (formIdMap(2,"Form",$result['fl_form2_id'])!=null){ // Updates Form 2
+				$ForID2=formIdMap(2,"Form",$result['fl_form2_id']);
+				Post_Process ($frame_links_ID,$ForID2,null,2,8);
 			}
-			if (formIdMap(2,"Element",$frame_links[4])!=null){ // Updates Elements 1
-				$Element1=formIdMap(2,"Element",$frame_links[4]);
-				Post_Process ($id,$Element1,null,2,9);
-				echo "Updating Element 1 ID :".$frame_links[4]." to ".$Element1."<br/>";
+			if (formIdMap(2,"Element",$result['fl_key1'])!=null){ // Updates Elements 1
+				$Element1=formIdMap(2,"Element",$result['fl_key1']);
+				Post_Process ($frame_links_ID,$Element1,null,2,9);
 			}
-			if (formIdMap(2,"Element",$frame_links[5])!=null){ // Updates Elements 2
-				$Element2=formIdMap(2,"Element",$frame_links[5]);
-				Post_Process ($id,$Element2,null,2,10);
-				echo "Updating Element 2 ID :".$frame_links[5]." to ".$Element2."<br/>";
+			if (formIdMap(2,"Element",$result['fl_key2'])!=null){ // Updates Elements 2
+				$Element2=formIdMap(2,"Element",$result['fl_key2']);
+				Post_Process ($frame_links_ID,$Element2,null,2,10);
 			}
-
 			//Alert The User If Form,Elements Are not Part of the App 
-			if (formIdMap(2,"FormOri",$frame_links[2])==null || formIdMap(2,"FormOri",$frame_links[3])==null ){ echo "Warning Form Doesn't Exist in Export <br/>";} //Alert For Form
-			if (formIdMap(2,"ElementOri",$frame_links[4])==null || formIdMap(2,"ElementOri",$frame_links[5])==null ){ echo "Warning Element Doesn't Exist in Export <br/>";} //Alert For Element
+			if (formIdMap(2,"FormOri",$result['fl_form1_id'])==null || formIdMap(2,"FormOri",$result['fl_form2_id'])==null ){ echo "Warning Form Doesn't Exist in Export <br/>";} //Alert For Form
+			if (formIdMap(2,"ElementOri",$result['fl_key1'])==null || formIdMap(2,"ElementOri",$result['fl_key2'])==null ){ echo "Warning Element Doesn't Exist in Export <br/>";} //Alert For Element
 		}
-		if(strstr($statement, "_groups")){
-
+		if(Statement_ID($statement,null,null,1)=="_groups"){
 			//The Only ID it will Insert is the One that's in Group_Insert Array//It checks that's Included in Array and then Inserts it
-			preg_match('/\(\d*\,/', $statement, $matches);
-			$groups_ID=explode('(',$matches[0]);
-			$groups_ID=explode(',',$groups_ID[1]);
-			if (formIdMap(2,"Group_Insert",$groups_ID[0])!=null){
+			////echo "Here in groups";
+			$groups_ID=Statement_ID($statement);
+			////echo $groups_ID."<br/>";
+			if (formIdMap(2,"Group_Insert",$groups_ID)!=null){
 				
-				if (Check_Uniquines($groups_ID[0],9)==0)
+				if (Check_Uniquines($groups_ID,9)==0)
 				{
 					echo "New Groups Has Been Inserted  <br/>";
 					Insert ($statement);
-					formIdMap(1,"Group_Map_Auto",$groups_ID[0],11);
+					formIdMap(1,"Group_Map_Auto",$groups_ID,11);
 				}
 				else 
 				{
-					$ee=preg_replace('/\(\d*\,/', "('',", $statement);
-					$NewID=getlastID ($ee);
-					formIdMap(1,"Group_Map_Auto",$groups_ID[0],$NewID);
-					echo "Updating the Group ID  in Groups from = ".$groups_ID[0]." to ".$NewID."<br/>";
+					$Auto_Incr=Statement_ID($statement,1);
+					$NewID=getlastID ($Auto_Incr);
+					formIdMap(1,"Group_Map_Auto",$groups_ID,$NewID);
+					echo "Updating the Group ID  in Groups from = ".$groups_ID." to ".$NewID."<br/>";
 				}}}
-		if(strstr($statement, "_formulize_entry_owner_groups")||strstr($statement,"_formulize_group_filters")
-				||strstr($statement, "_formulize_groupscope_settings") ||strstr($statement,"_1group_lists")
-				){
-			echo "Test1";
-			$statement=str_replace('_1group_lists','_group_lists', $statement);
-			//echo $statement;
-			formIdMap(1,"Form",1,66);
-			preg_match('/_.*\(\`/', $statement, $table);//To get the Table name
+		if(Statement_ID($statement,null,null,1)=="_formulize_entry_owner_groups"||Statement_ID($statement,null,null,1)=="_formulize_group_filters"
+				||Statement_ID($statement,null,null,1)=="_formulize_groupscope_settings"||Statement_ID($statement,null,null,1)=="_group_lists"
+				||Statement_ID($statement,null,null,1)=="_group_permission")
+		{
 			preg_match('/VALUES \(.*\)/', $statement, $values);//To get the Values
-			$rem=array('VALUES','`','(',' ',')');
-			$table=str_replace($rem,'', $table[0]);
+			$rem=array('VALUES','`','(',')');
+			$table=Statement_ID($statement,null,null,1);
 			$values=str_replace($rem,'',$values[0]);
 			$values=explode(',',$values);
 			$tt=$values[1];
-			print_r($values);
-			$values=str_replace('&',' ',$values);
+			///print_r($values);
+			//$values=str_replace('&',' ',$values);
 			if ($table=='_formulize_group_filters'){
 				$statement=str_replace('&', ';',$statement);}
 			if ($table=='_group_lists'){
 				$values[1]=explode('\'',$values[1]);//Add a check only to Group_Lists
 				$values[1]=$values[1][1];}
 			$ID=$values[0]; //Statement ID
-			if ($table=='_group_lists'&& Check_Uniquines($values[1],15))
-			{  
+			$ID=$values[0];
+			///print_r($values);
+			///echo "Here".Check_Uniquines($values[1],15);
+			///print_r($values);
+			if ($table=='_group_lists'&& Check_Uniquines($values[1],15)!=0)
+			{  ///echo "Not Ui";
 				$gl_name='Imp_'.$values[1];
+				///echo $gl_name;
 			}
-			
+			///echo "Here";
 			//To get the table name \\
 			//***********************************
 			//***********************************
 			//This is Needed because the Tables in the DB are poorly designed .FID should have been consistent in the column number in all tables,also the group ID 
-			$map_fid=array ("_formulize_entry_owner_groups"=>"1/17","_formulize_group_filters"=>"1/19","_formulize_groupscope_settings"=>"2/23");
-			$map_grpid=array ("_formulize_entry_owner_groups"=>3,"_formulize_group_filters"=>2,"_formulize_groupscope_settings"=>1);
-			$map_check=array ('_formulize_entry_owner_groups'=>11,'_formulize_group_filters'=>12,'_formulize_groupscope_settings'=>13,'_group_lists'=>14);
+			$map_fid=array ("_formulize_entry_owner_groups"=>"1/17","_formulize_group_filters"=>"1/19","_formulize_groupscope_settings"=>"2/23","_group_permission"=>"2/56");
+			$map_grpid=array ("_formulize_entry_owner_groups"=>3,"_formulize_group_filters"=>2,"_formulize_groupscope_settings"=>1,"_group_permission"=>1);
+			$map_check=array ('_formulize_entry_owner_groups'=>11,'_formulize_group_filters'=>12,'_formulize_groupscope_settings'=>13,'_group_lists'=>14,'_group_permission'=>24);
 			$map_fid=explode('/',$map_fid[$table]);
 			//echo"FID <br/>";
 			//print_r($map_fid);
 			//echo"FID <br/>";
+			$rem=array('\'');
+			$ID=str_replace($rem,'',$ID);
+			///echo $ID;
 			if (Check_Uniquines($ID,$map_check[$table])==0)
 			{
 				Insert ($statement);
-				echo "Inserting New Row in".$table[0]."<br/>";
+				echo "Inserting New Row in".$table."<br/>";
 			}
 			else
 			{
-				echo "Not Unique <br/>";
+				///echo "Not Unique <br/>";
 				if ($table=='_group_lists') { 
-					$ee=str_replace($values[0],"''",$statement);
-					$ee=str_replace($tt,"'$gl_name'",$ee);echo "here";
+					$ee=preg_replace('/\(\'\d*\'\,/',"('',", $statement);
+					///echo $ee;
+					if (!empty($gl_name)){// A fix added ,because if the Field is Unique then it will always get a null value
+						$ee=str_replace($tt,"'$gl_name'",$ee);}//echo "here";
+					//echo $ee;
 				} else{
-					$ee=preg_replace('/\(\d*\,/',"('',", $statement);
+					$ee=preg_replace('/\(\'\d*\'\,/',"('',", $statement);
 				}
-				$ID=getlastID ($ee);
-				echo $ID;
+				///	echo $ID;
+				$ID=getlastID($ee);
 				echo "Updating Row in".$table."<br/>";
 				//Post Process
-
-				foreach ($values as $k=>$v)
+			}
+			if ($table=="_formulize_entry_owner_groups"){
+				Insert ("UPDATE ".Prefix."_formulize_entry_owner_groups SET `entry_id`=".SID." where `owner_id`=$ID");
+			}
+			if ($table=="_group_permission"){
+				Insert ("UPDATE ".Prefix."_group_permission SET `gperm_modid`=".MOD_ID." where gperm_id=$ID");}
+			foreach ($values as $k=>$v)
+			{
+				$rem=array('\'');
+				$v=str_replace($rem,'',$v);
+				if ($map_fid[0]==$k && $table!='_group_lists')
+				{ ////echo $v;
+					if (formIdMap(2,"Form",$v)!=null){ // Updates Form 1
+						$ForID1=formIdMap(2,"Form",$v);
+						Post_Process ($ID,$ForID1,null,2,$map_fid[1]);
+					}}
+				if ($map_grpid[$table]==$k &&$table!='_formulize_groupscope_settings')
 				{
-					if ($map_fid[0]==$k && $table!='_group_lists')
-					{ 
-						if (formIdMap(2,"Form",$v)!=null){ // Updates Form 1
-							$ForID1=formIdMap(2,"Form",$v);
-							//echo $ForID1."ID new <br/>";
-							Post_Process ($ID,$ForID1,null,2,$map_fid[1]);
-						}}
-					if ($map_grpid[$table]==$k &&$table!='_formulize_groupscope_settings')
-					{
-						update_groups ($table,$ID); //This function will take care of retrieving the Group ID using the ID and check if needs update ,new or ignore 
-					}
-					if ($map_grpid[$table]==$k &&$table=='_formulize_groupscope_settings')
-					{
-						update_groups ($table,$ID,1); //This function will take care of retrieving the Group ID using the ID and check if needs update ,new or ignore 
-						update_groups ($table,$ID,2);
-					}
-				}}}
-		if (strstr($statement,'_formulize_advanced_calculations'))
+					update_groups ($table,$ID); //This function will take care of retrieving the Group ID using the ID and check if needs update ,new or ignore 
+				}
+				if ($map_grpid[$table]==$k &&$table=='_formulize_groupscope_settings')
+				{
+					update_groups ($table,$ID,1); //This function will take care of retrieving the Group ID using the ID and check if needs update ,new or ignore 
+					update_groups ($table,$ID,2);
+				}
+			}}
+		if (Statement_ID($statement,null,null,1)=='_formulize_advanced_calculations')
 		{
-			preg_match('/VALUES \(.*\)/', $statement, $values);//To get the Values
 			$statement=str_replace('&', ';',$statement);
-			$rem=array('VALUES','`','(',' ',')');
-			$values=str_replace($rem,'',$values[0]);
-			$values=explode(',',$values);
-			print_r($values);
-			$ID=$values[0];
+			$ID=Statement_ID($statement);
 			if (Check_Uniquines($ID,16)==0)
 			{
 				Insert ($statement);
-				echo "Inserting New Row in formulize_advanced_calculations<br/>";
+				echo " New Row in formulize_advanced_calculations <br/>";
 			}
 			else
-			{
-				$ee=preg_replace('/\(\d*\,/',"('',", $statement);
-				$ID=getlastID ($ee);
-				//echo $ID;
+			{echo "Not Uniq";
+				$Auto_Incr=Statement_ID($statement,1);
+				$ID=getlastID ($Auto_Incr);
 				echo "Updating Row in formulize_advanced_calculations <br/>";
 			}
-			//formIdMap(1,"Form",1,60);
-			if (formIdMap(2,"Form",$values[1])!=null){ // Updates Form 1
-				$ForID1=formIdMap(2,"Form",$values[1]);
+			//Post Process
+			$result=get_result('_formulize_advanced_calculations',$ID);
+			if (formIdMap(2,"Form",$result['fid'])!=null){ // Updates Form 1
+				$ForID1=formIdMap(2,"Form",$result['fid']);
 				Post_Process ($ID,$ForID1,null,2,26);
 			}
-			//formIdMap(1,"Element_Handle",5,66);
 			$a=array();
 			array_push($a,$ID);//Because the Function Expects an Array of IDS
 			ser($a,2,3);
 		}
-		if (strstr($statement,'_formulize_other'))
+		if (Statement_ID($statement,null,null,1)=='_formulize_other')
 		{
-			preg_match('/VALUES \(.*\)/', $statement, $values);
-			$rem=array('VALUES','`','(',' ',')');
-			$values=str_replace($rem,'',$values[0]);
-			$values=explode(',',$values);
-			$ID=$values[0];
+			$ID=Statement_ID($statement);
 			if (Check_Uniquines($ID,17)==0)
 			{
 				Insert ($statement);
@@ -383,69 +359,363 @@ function Creat_Applications()
 			}
 			else
 			{
-				$ee=preg_replace('/\(\d*\,/',"('',", $statement);
-				$ID=getlastID ($ee);
-				//echo $ID;
-				echo "Updating Row in formulize_advanced_calculations <br/>";
+				$Auto_Incr=Statement_ID($statement,1);
+				$ID=getlastID ($Auto_Incr);
+				echo "Updating Row in Formulize Other <br/>";
 			}
-			if (formIdMap(2,"Element",$values[2])!=null){ // Updates Form 1
-				$ForID1=formIdMap(2,"Element",$values[2]);
+			$result=get_result('_formulize_other',$ID);
+			if (formIdMap(2,"Element",$result['ele_id'])!=null){ // Updates Form 1
+				$ForID1=formIdMap(2,"Element",$result['ele_id']);
 				Post_Process ($ID,$ForID1,null,2,27);
 			}
 		}
-		if (strstr($statement,'_formulize_notification_conditions'))
-		{
-			preg_match('/VALUES \(.*\)/', $statement, $values);
-			$rem=array('VALUES','`','(',' ',')');
-			$values=str_replace($rem,'',$values[0]);
-			$statement=str_replace('&',';',$statement);
-			if ($values[3]==0)//To check if the UID is 0 or not .IF its not zero then this row won't be Inserted 
-			{
-				if (Check_Uniquines($ID,16)==0)
-				{
+		if (Statement_ID($statement,null,null,1)=='_formulize_notification_conditions')
+		{echo "Here";
+			preg_match('/\^.*\^/', $statement, $matches1);//To get the UID 
+			$UID=explode("^",$matches1[0]);//
+			$UID=$UID[1];
+			$ID=Statement_ID($statement);
+			
+			///echo $UID."   ".$ID;
+			if ($UID==0)//To check if the UID is 0 or not .IF its not zero then this row won't be Inserted 
+			{///	echo "I UID";
+				$statement=str_replace('^','',$statement);
+				$statement=str_replace('&',';',$statement);
+				if (Check_Uniquines($ID,22)==0)
+				{///echo "Uniq";echo $statement;
 					Insert ($statement);
 					echo "Inserting New Row in _formulize_notification_conditions<br/>";
 				}
 				else
 				{
-					$ee=preg_replace('/\(\d*\,/',"('',", $statement);
-					$ID=getlastID ($ee);
+					///echo "Not Uniq";
+					$Auto_Incr=Statement_ID($statement,1);
+					$ID=getlastID ($Auto_Incr);
 					//echo $ID;
 					echo "Updating Row in  formulize_notification_conditions <br/>";
 				}
+				$result=get_result('_formulize_notification_conditions',$ID);
 				///Post Process\\\
-				if (formIdMap(2,"Form",$values[1])!=null){ // Updates Form ID in the Table
-					$ForID1=formIdMap(2,"Form",$values[1]);
+				if (formIdMap(2,"Form",$result['not_cons_fid'])!=null){ // Updates Form ID in the Table
+					$ForID1=formIdMap(2,"Form",$result['not_cons_fid']);
 					Post_Process ($ID,$ForID1,null,2,28);
 				}
-				if ($values[5]!=0)//Check if the GroupID is null or nut
+				if ($result['not_cons_groupid']!=0)//Check if the GroupID is null or nut
 				{
 					update_groups ('_formulize_notification_conditions',$ID);//To update the Group ID if needed 
 				}
-				if ($values[7]!=0)
+				if ($result['not_cons_elementuids']!=0)
 				{
-					if (formIdMap(2,"Element",$values[7])!=null){ // Updates Elements not_cons_elementuids 
-						$ForID1=formIdMap(2,"Element",$values[7]);
+					if (formIdMap(2,"Element",$result['not_cons_elementuids'])!=null){ // Updates Elements not_cons_elementuids
+						$ForID1=formIdMap(2,"Element",$result['not_cons_elementuids']);
 						Post_Process ($ID,$ForID1,null,2,31);
 					}
 				}
-				if ($values[9]!=0)
+				if ($result['not_cons_elementemail']!=0)
 				{
-					if (formIdMap(2,"Element",$values[9])!=null){ // Updates Elements not_cons_elementemail
-						$ForID1=formIdMap(2,"Element",$values[9]);
+					if (formIdMap(2,"Element",$result['not_cons_elementemail'])!=null){ // Updates Elements not_cons_elementemail
+						$ForID1=formIdMap(2,"Element",$result['not_cons_elementemail']);
 						Post_Process ($ID,$ForID1,null,2,32);
 					}
 				}
-				if ($values[10]!='None'){
-					$a=array();
-					array_push ($a,$ID);//Ser Expects Array 
-					ser($ID,2,4);
+				$Data_Ser=@unserialize($result['not_cons_con']);//To check if its a serialized array or Not
+				if ($Data_Ser!=false && $Data_Ser !='b:0;'){
+					$Data_Ser=unserialize($result['not_cons_con']); //$Data_Ser[0] Elements Handle and $Data_Ser[2]
+					$DS=unserialize($Data_Ser[0]);//For Array 0 Element Handle 
+					$DS1=unserialize($Data_Ser[2]);//For Array 2 Element Handle between { } 
+					if (formIdMap(2,"Element_Handle",$DS[0])!=null){///echo "Here";
+						$NewIDSer=array();
+						$NewIDSer0[0]=formIdMap(2,"Element_Handle",$DS[0]);
+						$Data_Ser[0]=serialize($NewIDSer0);
+					}
+					if (preg_match('/\{.*\}/',$DS1[0])) {
+						$rem=array('{','}',' ');
+						$DS1=str_replace($rem,'', $DS1[0]);
+						if (formIdMap(2,"Element_Handle",$DS1)!=null){
+							$NewIDSer2=array();
+							$NewIDSer2[0]="{".formIdMap(2,"Element_Handle",$DS1)."}";
+							$Data_Ser[2]=serialize($NewIDSer2);
+						}}
+					Post_Process ($ID,serialize($Data_Ser),null,2,33);
 				}
+				
 			}else {
-				echo "This User ID row won't be inserted : ".$values[3]."<br/>";
+				echo "This User ID row won't be inserted With USER ID : ".$UID."<br/>";
 			}
 		}
-	}//Add New Table before this Curly Bracket
+		if (Statement_ID($statement,null,null,1)=='_formulize_saved_views')
+		{echo "Here";///echo $statement;
+			$sv_ID=Statement_ID($statement);echo $sv_ID;
+			if (Check_Uniquines ($sv_ID,18)==0)
+			{///echo "Trying";
+				Insert($statement);
+				echo "Inserting New Row in Saved Views <br/>";
+				formIdMap(1,"SV_ID",$sv_ID,$sv_ID);//No Need to store it in the Map array but it won't hurt
+			}else
+			{
+				$Auto_Incr=Statement_ID($statement,1);
+				$ID=getlastID ($Auto_Incr);///echo $Auto_Incr;
+				formIdMap(1,"SV_ID",$sv_ID,$ID);//No Need to store it in the Map array but it won't hurt
+				$sv_ID=$ID;
+				echo "Updating Row in  Saved Views <br/>";
+			}
+			//By this point we carry the Post Process Procedure//
+			$result=get_result('_formulize_saved_views',$sv_ID);
+			//print_r ($result);
+			foreach ($result as $field_name=>$field_value)
+			{
+				switch ($field_name){
+				case 'sv_pubgroups'://Actually the $field_vlaue is useless in here because the Function Update_groups gets the values by it self
+					update_groups ('_formulize_saved_views',$sv_ID);
+					break;
+				case 'sv_owner_uid':
+					Post_Process($sv_ID,SID,null,2,35);
+					break;
+				case 'sv_mod_uid':
+					Post_Process($sv_ID,SID,null,2,36);
+					break;
+				case 'sv_formframe':
+					if ($field_value!=null)
+					{
+						if ($result['sv_mainform']!=null){//If it's not Empty then this means the sv_fromframe is a Frame Links ID 
+							Post_Process($sv_ID,formIdMap(2,"Framelinks",$field_value),null,2,37);}
+						else {Post_Process($sv_ID,formIdMap(2,"Form",$field_value),null,2,37);}//Else the From Frame is a Form ID
+					}
+					break;
+				case 'sv_mainform':
+					if (formIdMap(2,"Form",$field_value)!=null){
+						Post_Process($sv_ID,formIdMap(2,"Form",$field_value),null,2,38);
+					}
+					break;
+				case 'sv_sort':
+					break;
+				case 'sv_oldcols':
+					$Temp_value=explode(',',$field_value);
+					//print_r($Temp_value);
+					foreach ($Temp_value as $v)
+					{
+						if (formIdMap(2,"Element_Handle",$v)!=null){
+							$field_value=str_replace($v, formIdMap(2,"Element_Handle",$v), $field_value);
+						}
+						if (strstr($v,'hiddencolumn_')){
+							$hdncolm=explode('hiddencolumn_',$v);
+							if (formIdMap(2,"Element_Handle",$hdncolm[1])!=null)
+							{
+								$field_value=str_replace($v,'hiddencolumn_'.formIdMap(2,"Element_Handle",$hdncolm[1]), $field_value);
+							}
+							//echo $v."<br/>";
+						}
+						Post_Process($sv_ID,$field_value,null,2,40);
+					}
+					break;
+				case 'sv_currentview':
+					break;
+				case 'sv_calc_cols':
+					$Temp_value=explode('/',$field_value);
+					foreach ($Temp_value as $v)
+					{
+						if (is_numeric($v))
+						{
+							if (formIdMap(2,"Element",$v)!=null){
+								$field_value=str_replace($v, formIdMap(2,"Element",$v), $field_value);
+							}
+						}
+						Post_Process($sv_ID,$field_value,null,2,39);
+					}
+					break;
+				case 'sv_calc_grouping':
+					preg_match_all('!\d+!', $field_value, $numbers);//This will return all the numbers in the string
+					///	print_r($numbers);
+					foreach ($numbers[0] as $v)
+					{
+						//echo $v;
+						//echo strlen($v)."<br/>";
+						//echo formIdMap(2,"Element",$v);
+						if (formIdMap(2,"Element",$v)!=null){
+							$field_value=str_replace($v,formIdMap(2,"Element",$v), $field_value);
+						}
+					}
+					///echo $field_value;
+					Post_Process($sv_ID,$field_value,null,2,41);
+					break;
+				}
+			}
+			
+		}
+		if (Statement_ID($statement,null,null,1)=='_formulize_screen'|| Statement_ID($statement,null,null,1)=='_formulize_screen_form')
+		{echo "Herescreen";
+			$ID=Statement_ID($statement);
+			echo $ID;
+			$table=Statement_ID($statement,null,null,1);
+			$tables=array('_formulize_screen'=>19,'_formulize_screen_form'=>20);
+			//echo $table."     $ID <br/>";
+			//echo $tables[$table]."<br/>";
+			if (Check_Uniquines ($ID,$tables[$table])==0)
+			{
+				Insert($statement);
+				echo "Inserting New Row in $table with ID : $ID <br/>";
+			}else
+			{
+				echo "Here";
+				$Auto_Incr=Statement_ID($statement,1);
+				$ID1=getlastID ($Auto_Incr);
+				if ($table=='_formulize_screen'){
+					formIdMap(1,'SID',$ID,$ID1);}//No Need to store it in the Map array but it won't hurt
+				echo "Updating Row in in $table  with ID : $ID1 <br/>";
+				$ID=$ID1;
+			}
+			
+			//Post Process//
+			$result=get_result($table,$ID);
+			//print_r($result);
+			//Update the FID 
+			if ($table=='_formulize_screen'){
+				if (formIdMap(2,'Form',$result['fid'])!=null)
+				{
+					Post_Process ($ID,formIdMap(2,'Form',$result['fid']),null,2,42);
+				}
+				if (formIdMap(2,'Framelinks',$result['frid'])!=null)
+				{
+					Post_Process ($ID,formIdMap(2,'Form',$result['frid']),null,2,43);
+				}}
+			if ($table=='_formulize_screen_form'){
+				if (formIdMap(2,'SID',$result['sid'])!=null)
+				{
+					Post_Process ($ID,formIdMap(2,'SID',$result['sid']),null,2,44);
+				}
+			}
+		}
+		if (Statement_ID($statement,null,null,1)=='_formulize_screen_multipage')
+		{//echo "HEre";
+			$statement=str_replace('&', ';',$statement);
+			$Multi_ID=Statement_ID($statement);
+			//echo $Multi_ID;
+			if (Check_Uniquines ($Multi_ID,21)==0)
+			{
+				Insert($statement);
+				echo "Inserting New Row in Screen Multipage with ID : $Multi_ID <br/>";
+			}else
+			{
+				$Aut_Incr=Statement_ID($statement,1);
+				$ID1=getlastID ($Aut_Incr);
+				//echo $ID1;
+				formIdMap(1,'multipageid',$Multi_ID,$ID1);//No Need to store it in the Map array but it won't hurt
+				echo "Updating Row in in Screen Multipage  with ID : $ID1 <br/>";
+				$Multi_ID=$ID1;
+			}
+			//Post Process
+			$result=get_result('_formulize_screen_multipage',$Multi_ID);
+			if (formIdMap(2,'SID',$result['sid'])!=null)
+			{
+				Post_Process ($Multi_ID,formIdMap(2,'SID',$result['sid']),null,2,45);
+			}
+			if ($result['paraentryform']!=0)//If not default Zero 
+			{
+				Post_Process ($Multi_ID,formIdMap(2,'Form',$result['paraentryform']),null,2,48);
+			}
+			if (!empty($result['pages'][0]))
+			{
+				$data1=unserialize($result['pages']);
+				foreach($data1[0] as $k=>$v)
+				{
+					if (formIdMap(2,"Element",$v)!=null){ // Updates Elements not_cons_elementuids 
+						$v=formIdMap(2,"Element",$v);
+						$data1[0][$k]=$v;
+						//Post_Process ($ID,$ForID1,null,2,31);
+					}
+				}
+				Post_Process ($Multi_ID,serialize($data1),null,2,46);
+			}
+			//To Update the Condition Field ;
+			if (!empty($result['conditions'])){//echo "Here";
+				$data1=unserialize($result['conditions']);
+				//$data1);
+				foreach ($data1 as $K1=>$D){
+					foreach ($D[0] as $k => $d) //To Change the Array of Elements Handle 
+					{//echo "$d";
+						//print_r($d);
+						if (formIdMap(2,"Element_Handle",$D[0][$k])!=null)
+						{ //echo "Here";
+							$data1[$K1][0][$k]=formIdMap(2,"Element_Handle",$D[0][$k]);
+							//echo $
+						}}
+					foreach ($D[2] as $k => $d)
+					{
+						if (preg_match('/\{.*\}/',$d)) {
+							$s=explode("{",$d);
+							$s=explode("}",$s[1]);
+							if (formIdMap(2,"Element_Handle",$s[0])!=null){
+								$v="{".formIdMap(2,"Element_Handle",$s[0])."}";
+								$data1[$K1][2][$k]=$v;
+							}}}
+				}
+				Post_Process ($Multi_ID,serialize($data1),null,2,47);
+			}}
+		if (Statement_ID($statement,null,null,1)=='_formulize_screen_listofentries')
+		{
+			$statement=str_replace('&', ';',$statement);
+			$ListEntries_ID=Statement_ID($statement);
+			if (Check_Uniquines ($ListEntries_ID,23)==0)
+			{
+				Insert($statement);
+				echo "Inserting New Row in Screen Screen List of Entries with ID : $ListEntries_ID <br/>";
+			}else{
+				$Aut_Incr=Statement_ID($statement,1);
+				$ID1=getlastID ($Aut_Incr);
+				//echo $ID1;
+				formIdMap(1,'ListofEntriesID',$ListEntries_ID,$ID1);//No Need to store it in the Map array but it won't hurt
+				echo "Updating Row in in Screen List of Entries  with ID : $ID1 <br/>";
+				$ListEntries_ID=$ID1;
+			}
+			$result=get_result('_formulize_screen_listofentries',$ListEntries_ID);
+			$Decolums=unserialize($result['decolumns']);
+			$hiddencolumns=unserialize($result['hiddencolumns']);
+			$limitviews=unserialize($result['limitviews']);
+			if (formIdMap(2,'SID',$result['sid'])!=null)
+			{
+				Post_Process ($ListEntries_ID,formIdMap(2,'SID',$result['sid']),null,2,50);
+			}
+			if (formIdMap(2,'SID',$result['defaultview'])!=null)
+			{
+				Post_Process ($ListEntries_ID,formIdMap(2,'SID',$result['sid']),null,2,52);
+			}
+			foreach ($limitviews as $key=>$value)
+			{
+				if (formIdMap(2,'SID',$value)!=null)
+				{
+					$limitviews[$key]="".formIdMap(2,'SID',$value)."";
+				}
+			}
+			if ($result['decolumns']!='b:0;'|| $result['decolumns']!='a:0:{}')
+			{
+				foreach ($Decolums as $key=>$data)
+				{
+					if (formIdMap(2,"Element_Handle",$data)!=null)
+					{
+						$Decolums[$key]=formIdMap(2,"Element_Handle",$data);
+					}
+				}
+				Post_Process ($ListEntries_ID,serialize($Decolums),null,2,54);
+			}
+			if ($result['hiddencolumns']!='b:0;'|| $result['hiddencolumns']!='a:0:{}')
+			{
+				foreach ($hiddencolumns as $key=>$data)
+				{
+					if (formIdMap(2,"Element_Handle",$data)!=null)
+					{
+						$hiddencolumns[$key]=formIdMap(2,"Element_Handle",$data);
+					}
+				}
+				Post_Process ($ListEntries_ID,serialize($hiddencolumns),null,2,53);
+			}
+			if (formIdMap(2,'SID',$result['viewentryscreen'])!=null)
+			{
+				Post_Process ($ListEntries_ID,formIdMap(2,'SID',$result['viewentryscreen']),null,2,55);
+			}
+			Post_Process ($ListEntries_ID,serialize($limitviews),null,2,51);
+		}
+	}//Add New Table before this Curly Bracket_formulize_screen
+	///echo "Total TIme:".timer()."<br/>";
 	//$Element_ID is an array that Holds all the Inserted Element ID.If it was New ID or Auto-Incremented. 
 	ser($Element_ID,1);//To Update Ele_Value
 	ser($Element_ID,2,1);//To Update Ele_Filter settings 
@@ -467,7 +737,16 @@ Function Post_Process ($ID,$Update=null,$Flag=null,$switch,$table=null,$Flag1=nu
 	23=>'_formulize_groupscope_settings/fid/`groupscope_id`',24=>'_group_lists/gl_groups/`gl_id`',25=>'_formulize_advanced_calculations/fltr_grps/acid',
 	26=>'_formulize_advanced_calculations/fid/acid',27=>'_formulize_other/ele_id/other_id',28=>'_formulize_notification_conditions/not_cons_fid/not_cons_id',
 	29=>'_formulize_notification_conditions/not_cons_event/not_cons_id',30=>'_formulize_notification_conditions/not_cons_groupid/not_cons_id',31=>'_formulize_notification_conditions/not_cons_elementuids/not_cons_id'
-	,32=>'_formulize_notification_conditions/not_cons_elementemail/not_cons_id',33=>'_formulize_notification_conditions/not_cons_con/not_cons_id');
+	,32=>'_formulize_notification_conditions/not_cons_elementemail/not_cons_id',33=>'_formulize_notification_conditions/not_cons_con/not_cons_id'
+	,34=>'_formulize_saved_views/sv_pubgroups/sv_id/',35=>'_formulize_saved_views/sv_owner_uid/sv_id/',36=>'_formulize_saved_views/sv_mod_uid/sv_id/',
+	37=>'_formulize_saved_views/sv_formframe/sv_id/',38=>'_formulize_saved_views/sv_mainform/sv_id/',39=>'_formulize_saved_views/sv_calc_cols/sv_id/',
+	40=>'_formulize_saved_views/sv_oldcols/sv_id/',41=>'_formulize_saved_views/sv_calc_grouping/sv_id/',42=>'_formulize_screen/fid/sid',
+	43=>'_formulize_screen/frid/sid',44=>'_formulize_screen_form/sid/formid',45=>'_formulize_screen_multipage/sid/multipageid',46=>'_formulize_screen_multipage/pages/multipageid'
+	,47=>'_formulize_screen_multipage/conditions/multipageid',48=>'_formulize_screen_multipage/paraentryform/multipageid',
+	50=>'_formulize_screen_listofentries/sid/listofentriesid',51=>'_formulize_screen_listofentries/limitviews/listofentriesid',
+	52=>'_formulize_screen_listofentries/defaultview /listofentriesid',53=>'_formulize_screen_listofentries/hiddencolumns/listofentriesid'
+	,54=>'_formulize_screen_listofentries/decolumns/listofentriesid',55=>'_formulize_screen_listofentries/viewentryscreen/listofentriesid',
+	56=>'_group_permission/gperm_itemid/gperm_id',57=>'_group_permission/gperm_groupid/gperm_id');
 
 
 	$fields=explode ('/',$tables[$table]);
@@ -483,27 +762,9 @@ Function Post_Process ($ID,$Update=null,$Flag=null,$switch,$table=null,$Flag1=nu
 	case 3:
 		//This Is done because it's much easier to Get the Ele_Display/Ele_Disable from the DB after its inserted.Preg-match and Str_Pos won't be Reliable to get from Insert String
 		foreach ( $ID as $ElementID){
-			$sql="select ".$Flag1." from  ".Prefix."".$fields[0]." where ".$fields[2]."= :id";
-			$Query=$conn->connect()->prepare($sql);
-			$Query->bindValue(':id',$ElementID);
-			$Query->execute();
-			$result=$Query->fetch(\PDO::FETCH_ASSOC);
-			$result=$result["$Flag1"];
-			//echo $Flag1;
-			if ($result!='1' && $result!='0'){ //To make sure the Result is not 1 or 0
-				$eledispl=explode (",",$result);
-				foreach ( $eledispl as $grpID){
-					if (formIdMap(2,"Group_Map_Auto",$grpID)!=null){//To Update The Create New Group
-						$grpID_N=formIdMap(2,"Group_Map_Auto",$grpID);
-						$result=str_replace($grpID,$grpID_N,$result);}
-					if (formIdMap(2,"Group_Map",$grpID)!=null){ //To Update the Map Group
-						$grpID_N=formIdMap(2,"Group_Map",$grpID);
-						$result=str_replace($grpID,$grpID_N,$result);}
-					if (formIdMap(2,"Group_Ignore",$grpID)!=null){ //To Remove the Group that's flagged as Ignore by replacing it with ''
-						$result=str_replace($grpID,null,$result);}
-				}
-				($Flag1=="ele_display" ? Post_Process ($ElementID,$result,null,2,11) :Post_Process ($ElementID,$result,null,2,12));
-			}}
+			$result=get_result('_formulize',$ElementID);
+			if ($result["$Flag1"]!='1' && $result["$Flag1"]!='0'){ //To make sure the Result is not 1 or 0
+				($Flag1=="ele_display" ? update_groups ('_formulize',$ElementID,3) :update_groups ('_formulize',$ElementID,4));}}
 		break;
 	}	
 	if ($Flag1==null){//This iF The Post Process In Case 2: Which is the General Update Fields  for any Field ,but the Ele_display needs to be returned Broken Down and Processed to check each Group
@@ -525,7 +786,9 @@ Function Check_Uniquines ($ID,$field)
 	$tables=array (1=>'_formulize_application_form_link/`linkid` ',2=>'_formulize_applications/`appid`',3=>'_formulize_id/`id_form`'
 	,4=>'_formulize/ele_id',5=>'_formulize/`ele_handle`',6=>'_formulize_frameworks/`frame_id`',7=>'_formulize_framework_links/`fl_id`',8=>'_formulize_id/desc_form',9=>'_groups/`groupid`'
 	,10=>'_formulize_id/`form_handle`',11=>'_formulize_entry_owner_groups/`owner_id`',12=>'_formulize_group_filters/filterid',13=>'_formulize_groupscope_settings/groupscope_id'
-	,14=>'_group_lists/`gl_id`',15=>'_group_lists/gl_name',16=>'_formulize_advanced_calculations/acid',17=>'_formulize_other/other_id');
+	,14=>'_group_lists/`gl_id`',15=>'_group_lists/gl_name',16=>'_formulize_advanced_calculations/acid',17=>'_formulize_other/other_id',18=>'_formulize_saved_views/sv_id'
+	,19=>'_formulize_screen/sid',20=>'_formulize_screen_form/formid',21=>'_formulize_screen_multipage/multipageid',22=>'_formulize_notification_conditions/not_cons_id'
+	,23=>'_formulize_screen_listofentries/listofentriesid',24=>'_group_permission/gperm_id');
 	$fields=explode ('/',$tables[$field]);
 	$conn=new Connection ();
 	$Query=$conn->connect()->prepare("SELECT COUNT( * ) AS num from ".Prefix."".$fields[0]." where ".$fields[1]."= :id ;") ;
@@ -581,9 +844,11 @@ function formIdMap($a,$t=null,$b=null,$c=null)
 function ser($AllElements,$Flag,$table=null)
 {//Function used to Update the Ele_Value and Ele_settings. Flag=1: Ele_Value and Flag=2:Ele_filter settings
 	$result=array();
+	$type=array('text','grid','textarea','select');
 	$conn=new Connection ();
 	$fields=array (1=>"_formulize/ele_filtersettings/ele_id/15",2=>"_formulize_group_filters/filter/filterid/20",
-	3=>"_formulize_advanced_calculations/fltr_grps/acid/25",4=>"_formulize_notification_conditions/not_cons_con/not_cons_id/33");//We Assume notification_conditions filter is same as before
+	3=>"_formulize_advanced_calculations/fltr_grps/acid/25",4=>"_formulize_notification_conditions/not_cons_con/not_cons_id/33"
+	,5=>"_formulize_screen_multipage/conditions/multipageid/47");//We Assume notification_conditions filter is same as before
 	$fields=explode ('/',$fields[$table]);
 	if ($Flag==1){
 		foreach ($AllElements as $keyid) { 
@@ -591,7 +856,7 @@ function ser($AllElements,$Flag,$table=null)
 			$Query->bindValue(':ID',$keyid);
 			$Query->execute();
 			$result=$Query->fetch(\PDO::FETCH_ASSOC);
-			$data1=unserialize($result['ele_value']); 
+			$data1=unserialize($result['ele_value']);
 			switch ($result['ele_type']){
 			case 'text':
 			case 'grid'://If Row was Text or Grid
@@ -614,7 +879,7 @@ function ser($AllElements,$Flag,$table=null)
 					switch ($k){
 					case 2:
 						if (strstr ($d,"#*=:*")){
-							$s=explode ("#*=:*",$d);
+							$s=explode ("#*=:*",$d);///print_r($s);echo $keyid."<br/>";
 							if (formIdMap(2,"Form",$s[0])!=null){ 
 								$d=str_replace($s[0],formIdMap(2,"Form",$s[0]),$d);}
 							if (formIdMap(2,"Element_Handle",$s[1])!=null)
@@ -623,21 +888,22 @@ function ser($AllElements,$Flag,$table=null)
 							}
 							$data1[2]=$d;
 						}
+						//echo $data1[2];
 						break;//End of Case 2
 					case 3:
 						if (strstr ($d,",") || is_numeric($d)){//If it was a List of Groups or Single ID\\\\
 							$s=explode(',',$d);
-							foreach ($s as $v){
+							foreach ($s as $key=>$v){//Update the Code Instead of Using Str_Replace to replace the value ,I reassign the Key of the array.It won't make difference in the Front end ,but just to keep things cleaner in the back end.For example if we ignored a group the str_replace will remove the grp id but keep the comma,however,unset will remove the value and , because of how Implode works. 
 								if (formIdMap(2,"Group_Map_Auto",$v)!=null){//To Update The Create New Group
 									$grpID_N=formIdMap(2,"Group_Map_Auto",$v);
-									$d=str_replace($v,$grpID_N,$d);}
+									$s[$key]=$grpID_N;}
 								if (formIdMap(2,"Group_Map",$v)!=null){ //To Update the Map Group
 									$grpID_N=formIdMap(2,"Group_Map",$v);
-									$d=str_replace($v,$grpID_N,$d);}
+									$s[$key]=$grpID_N;}
 								if (formIdMap(2,"Group_Ignore",$v)!=null){ //To Remove the Group that's flagged as Ignore by replacing it with ''
-									$d=str_replace($v,null,$d);}
+									unset($s[$key]);}
 							}
-							$data1[3]=$d;
+							$data1[3]=implode(',',$s);;
 						}
 						break;//End of Case 3
 					case 5://To Update the Array of Ele_ID=>{ele_handle}
@@ -661,7 +927,8 @@ function ser($AllElements,$Flag,$table=null)
 							if (formIdMap(2,"Element",$d)!=null){ // Updates Elements 1
 								$data[$k]="".formIdMap(2,"Element",$d)."";}}
 						break;
-					}}}Post_Process($keyid,serialize($data1),null,2,5);}}
+					}}}Post_Process($keyid,serialize($data1),null,2,5);
+			if (!in_array($result['ele_type'],$type)){Post_Process($keyid,$result['ele_value'],null,2,5);}}}
 	if ($Flag==2)
 	{
 		//echo "Here Serilzed";
@@ -677,10 +944,12 @@ function ser($AllElements,$Flag,$table=null)
 			//print_r($data1);
 			if ($fields[2]!='acid'){
 				foreach ($data1[0] as $k => $d) //To Change the Array of Elements Handle 
-				{
+				{//echo "$d";
+					///print_r($d);
 					if (formIdMap(2,"Element_Handle",$data1[0][$k])!=null)
-					{
+					{ //echo "Here";
 						$data1[0][$k]=formIdMap(2,"Element_Handle",$data1[0][$k]);
+						//echo $
 					}}
 				foreach ($data1[2] as $k => $d)
 				{
@@ -697,6 +966,7 @@ function ser($AllElements,$Flag,$table=null)
 					$data1[0]['form']=formIdMap(2,"Element_Handle",$data1[0]['form']);
 				}
 			}
+			//print_r($data1);
 			Post_Process($keyid,serialize($data1),null,2,$fields[3]);
 		}}
 }
@@ -740,15 +1010,16 @@ function Create_table($Insert)
 	foreach ($AllHandles1 as $k=> $column)
 	{
 		if ($k!=0){
-			if (formIdMap(2,"Element",$column)!=null){
-				$column=formIdMap(2,"Element",$column);}
+			if (formIdMap(2,"Element_Handle",$column)!=null){
+				$column=formIdMap(2,"Element_Handle",$column);}
 			$s1.="`$column` text,";
 		}}
 	$s1.=$s2;
 	$s1.=$Insert[2];
 	$s1.=";";
 	$s1=preg_replace('/Table_Name/', "`".Prefix."_formulize_$AllHandles2[0]`", $s1);
-	Insert ($s1);
+	Insert($s1);
+	Insert ("UPDATE `".Prefix."_formulize_$AllHandles2[0]` SET `creation_uid`=".SID.",`mod_uid`=".MOD_ID."");//To Update Formulize_Handle Mod ID to the User who's carrying out the Impot
 	echo "Creating Table Formulize_$AllHandles2[0] <br/>";
 }
 function update_groups ($table,$ID,$flag=null)
@@ -756,23 +1027,29 @@ function update_groups ($table,$ID,$flag=null)
 	///echo $ID;
 	$tables=array ('_formulize_entry_owner_groups'=>'groupid/owner_id/16','_formulize_group_filters'=>'groupid/filterid/18'
 	,'_formulize_groupscope_settings'=>'groupid/groupscope_id/21','_2formulize_groupscope_settings'=>'view_groupid/groupscope_id/22','_group_lists'=>'gl_groups/gl_id/24'
-	,'_formulize_notification_conditions'=>'not_cons_groupid/not_cons_id/30');
+	,'_formulize_notification_conditions'=>'not_cons_groupid/not_cons_id/30','_formulize_saved_views'=>'sv_pubgroups/sv_id/34'
+	,'_formulize'=>'ele_display/ele_id/11','_2formulize'=>'ele_disabled/ele_id/12','_group_permission'=>'gperm_groupid/gperm_id/57');
 	$f;
 	//echo $tables[$table];
 	switch ($flag){
 	case null:
 		$fields=explode ('/',$tables[$table]);
-		print_r($fields);
 		break;
 	case 1:
 		$tb="_formulize_groupscope_settings";
 		$fields=explode ('/',$tables[$tb]);
-		print_r($fields);
 		break;
 	case 2:
 		$tb="_2formulize_groupscope_settings";
 		$fields=explode ('/',$tables[$tb]);
-		print_r($fields);
+		break;
+	case 3:
+		$tb="_formulize";
+		$fields=explode ('/',$tables[$tb]);
+		break;
+	case 4:
+		$tb="_2formulize";
+		$fields=explode ('/',$tables[$tb]);
 		break;
 	}
 	$table1=Prefix.$table;
@@ -782,24 +1059,27 @@ function update_groups ($table,$ID,$flag=null)
 	$Query->bindValue(":id",$ID);
 	$Query->execute();
 	$result=$Query->fetch(\PDO::FETCH_ASSOC);
-	print_r ($result);
-	if (strstr($result[$fields[0]],',')){echo "Here in F 1";$f=1;}
+	if (strstr($result[$fields[0]],',')){//echo "Here in F 1";
+		$f=1;}
 	$result=explode(',',$result[$fields[0]]);
-	///print_r($result);
 	foreach ($result as $k=>$d){
 		if (formIdMap(2,"Group_Map_Auto",$d)!=null){//To Update The Create New Group
 			$grpID_N=formIdMap(2,"Group_Map_Auto",$d);
 			if (empty($f)){
-				Post_Process ($ID,$grpID_N,null,2,$fields[2]);}else {$result[$k]=$grpID_N;}
+				Post_Process ($ID,$grpID_N,null,2,$fields[2]);}else {$result[$k]=$grpID_N; ///print_r($result);
+			}
 		}
 		if (formIdMap(2,"Group_Map",$d)!=null){ //To Update the Map Group
 			$grpID_N=formIdMap(2,"Group_Map",$d);
 			if (empty($f)){
-				Post_Process ($ID,$grpID_N,null,2,$fields[2]);}else {$result[$k]=$grpID_N;}
+				Post_Process ($ID,$grpID_N,null,2,$fields[2]);}else {
+				$result[$k]=$grpID_N;
+			}
 		}
 		if (formIdMap(2,"Group_Ignore",$d)!=null){
-			if (empty($f)){	//To Remove the Group that's flagged as Ignore by replacing it with ''
-				Post_Process ($ID,$grpID_N,null,2,0);} else {unset($result[$k]);} 
+			if (empty($f)){	//To Remove the Group that's flagged as Ignore by replacing it with ID 999
+			Post_Process ($ID,999,null,2,$fields[2]);}else {
+			$result[$k]=999;}
 		}}
 	if (!empty($f))
 	{
@@ -813,3 +1093,65 @@ function update_groups ($table,$ID,$flag=null)
 		ser($a,2,2);
 	}
 }
+function get_result($table,$ID)
+{
+	//Adapted Juilan regarding Array Map Idea instead of Explode on /
+	$tables = array('_formulize_saved_views'=>array('sv_pubgroups,sv_owner_uid,sv_mod_uid,sv_formframe,sv_mainform,sv_sort,sv_oldcols,sv_currentview,sv_calc_cols,sv_calc_grouping',Prefix.'_formulize_saved_views','sv_id')
+	,'_formulize_screen'=>array('fid,frid',Prefix.'_formulize_screen','sid'),'_formulize_screen_form'=>array('sid',Prefix.'_formulize_screen_form','formid'),
+	'_formulize_screen_multipage'=>array('sid,pages,conditions,paraentryform',Prefix.'_formulize_screen_multipage','multipageid'),
+	'_formulize'=>array('id_form,ele_display,ele_disabled',Prefix.'_formulize','ele_id'),'_formulize_application_form_link'=>array('appid,fid',Prefix.'_formulize_application_form_link','linkid')
+	,'_formulize_framework_links'=>array('fl_frame_id,fl_form1_id,fl_form2_id,fl_key1,fl_key2',Prefix.'_formulize_framework_links','fl_id')
+	,'_formulize_advanced_calculations'=>array ('fid',Prefix.'_formulize_advanced_calculations','acid'),'_formulize_other'=>array ('ele_id',Prefix.'_formulize_other','other_id')
+	,'_formulize_notification_conditions'=>array('not_cons_fid,not_cons_groupid,not_cons_elementuids,not_cons_elementemail,not_cons_con',Prefix.'_formulize_notification_conditions','not_cons_id')
+	,'_formulize_screen_listofentries'=>array('sid,limitviews,defaultview,hiddencolumns,decolumns,viewentryscreen',Prefix.'_formulize_screen_listofentries','listofentriesid'));
+	$conn=new Connection ();
+	//echo "SELECT ".$tables[$table][0]." from ".$tables[$table][1]." where ".$tables[$table][2]." =$ID";
+	$Query=$conn->connect()->prepare("SELECT ".$tables[$table][0]." from ".$tables[$table][1]." where ".$tables[$table][2]." =:id") ;
+	$Query->bindValue(":id",$ID);
+	$Query->execute();
+	$result=$Query->fetch(\PDO::FETCH_ASSOC);
+	return $result;	
+}
+function Statement_ID ($statement,$Flag=null,$sec=null,$table=null)
+{
+	if ($Flag==null && empty($table))
+	{
+		if ($sec==null){
+			preg_match('/\(\'\d*\'\,/', $statement, $matches);//To get Any Digit number .Not just 2 digit number as the old preg match did
+			preg_match_all('!\d+!', $matches[0], $numbers);
+			return $numbers[0][0];}
+		if ($sec!=null)
+		{
+			preg_match('/\(\'\d*\'\,\'\d*\'/', $statement, $matches);
+			$ID=explode(',',$matches[0]);
+			//echo $ID[1];
+			return $ID[1];
+		}
+	}
+	else {
+		if (empty($table)){ 
+			if ($sec==null){
+				$statement=preg_replace('/\(\'\d*\'\,/',"('',", $statement);
+				///echo $statement;
+				return $statement; 
+			}
+			if ($sec!=null)
+			{
+				preg_match('/\(\'\d*\'\,\'\d*\'/', $statement, $matches);
+				$ID=explode(',',$matches[0]);
+				///print_r($ID);
+				$statement=preg_replace('/\w*VALUES \(\'\d*\'\,\'\d*\'/', "VALUES ".$ID[0].",''", $statement);
+				//echo $statement;
+				return $statement;
+			}
+		}}
+	if ($table!=null)
+	{
+		preg_match('/_.*\(\`/', $statement, $table);//To get the Table name
+		$rem=array('VALUES','`','(',' ',')');
+		$table=str_replace($rem,'', $table[0]);
+		return $table;
+	}
+}
+
+

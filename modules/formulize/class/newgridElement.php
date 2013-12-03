@@ -67,6 +67,12 @@ class formulizeNewGridElementHandler extends formulizeElementsHandler {
 		$ele_value = $element ? $element->getVar('ele_value') : array();
 		$fid = $element ? $element->getVar('id_form') : intval($_GET['fid']);
 		
+		if (!$element) {
+			$ele_value[3] = "horizontal";
+			$ele_value[5] = 1;
+			$ele_value[0] = "caption";
+		}
+		
 		$background = $ele_value[3];
 		$sideortop = $ele_value[5] == 1 ? "side" : "above";
 		$heading = $ele_value[0];
@@ -80,7 +86,7 @@ class formulizeNewGridElementHandler extends formulizeElementsHandler {
 			$grid_start_options[$this_element->getVar('ele_id')] = $this_element->getVar('ele_colhead') ? printSmart(trans($this_element->getVar('ele_colhead'))) : printSmart(trans($this_element->getVar('ele_caption')));
 		}
 		
-		return array('grid_start_options'=>$grid_start_options, 'background'=>$background, 'sideortop'=>$sideortop, 'heading'=>$heading);
+		return array('grid_start_options'=>$grid_start_options, 'background'=>$background, 'sideortop'=>$sideortop, 'heading'=>$heading, 'ele_value'=>$ele_value);
     }
     
     // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
@@ -128,7 +134,7 @@ class formulizeNewGridElementHandler extends formulizeElementsHandler {
 		$gridCounter[$grid_start] = $grid_count;
 		$gridContents = displayGrid($fid, $entry_id, $grid_row_caps, $grid_col_caps, $grid_title, $grid_background, $grid_start, "", "", true, $screen, $headingAtSide);
 		if($headingAtSide) { // grid contents is the two bits for the xoopsformlabel when heading is at side, otherwise, it's just the contents for the break
-			return XoopsFormLabel($gridContents[0], $gridContents[1]);
+			return new XoopsFormLabel($gridContents[0], $gridContents[1]);
 		} else {
 			return array($gridContents, "head"); // head is the css class of the cell				
 		}
@@ -140,7 +146,7 @@ class formulizeNewGridElementHandler extends formulizeElementsHandler {
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
     function generateValidationCode($caption, $markupName, $element) {
         $validationmsg = "Your value for $caption should not match the default value.";
-	$validationmsg = str_replace("'", "\'", stripslashes( $validationmsg ) );
+		$validationmsg = str_replace("'", "\'", stripslashes( $validationmsg ) );
         $ele_value = $element->getVar('ele_value');
         $validationCode = array();
         $validationCode[] = "if(myform.{$markupName}.value == '".$ele_value[0].$ele_value[1]."') {\n";

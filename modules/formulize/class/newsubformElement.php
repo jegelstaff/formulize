@@ -34,12 +34,6 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 
 class formulizeNewSubformElement extends formulizeformulize {
     
-    var $needsDataType;
-    var $overrideDataType;
-    var $hasData;
-    var $name;
-    var $adminCanMakeRequired;
-    var $alwaysValidateInputs;
     function __construct() {
         $this->name = "Custom Subform (another form with a relationship to this one)";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
@@ -70,6 +64,7 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
     function adminPrepare($element) {
+		$fid = intval($_GET['fid']);
         $ele_value = $element ? $element->getVar('ele_value') : array();
         
 		if (!$element) {
@@ -118,7 +113,7 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
 		// setup the UI for the subform conditions filter
 		$subformfilter = formulize_createFilterUI($ele_value[7], "subformfilter", $ele_value[0], "form-2");
 		
-		return array('subformfilter'=>$subformfilter, 'subformelements'=>$subformelements, 'subforms'=>$subfroms, 'uid'=>$uid);
+		return array('subformfilter'=>$subformfilter, 'subformelements'=>$subformelements, 'subforms'=>$subforms, 'uid'=>$uid, 'ele_value'=>$ele_value);
     }
     
     // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
@@ -164,14 +159,38 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
     // $isDisabled flags whether the element is disabled or not so we know how to render it
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id) {
-        // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
-        if($isDisabled) {
-            $formElement = new xoopsFormLabel($caption, $ele_value[0] . $ele_value[1]);
-        } else {
-            $formElement = new xoopsFormText($caption, $markupName, 50, 50, $ele_value[0] . $ele_value[1]); // caption, markup name, size, maxlength, default value, according to the xoops form class
-        }
-        return $formElement;
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen) {
+		
+        $thissfid = $ele_value[0];
+		if(!$thissfid) { continue; } // can't display non-specified subforms!
+		// $deReturnValue = displayElement("", $element, $entry_id, false, $screen, $prevEntry, false, $profileForm, $groups); // do this just to evaluate any conditions...it won't actually render anything, but will return "" for the first key in the array, if the element is allowed
+		$deReturnValue = array("", $isDisabled);
+		$form_ele = $deReturnValue[0];
+		$isDisabled = $deReturnValue[1];
+		
+		// if(is_array($deReturnValue)) {
+			// $form_ele = $deReturnValue[0];
+			// $isDisabled = $deReturnValue[1];
+		// } else {
+			// $form_ele = $deReturnValue;
+			// $isDisabled = false;
+		// }
+		
+		if($passed = security_check($thissfid) AND in_array($thissfid, $sub_fids) AND $form_ele == "") {
+			$GLOBALS['sfidsDrawn'][] = $thissfid;
+			$customCaption = $element->getVar('ele_caption');
+			$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
+			$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry_id, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
+			if(isset($subUICols['single'])) {
+				$form_ele = array($subUICols['single'], "even");
+			} else {
+				$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']);
+				$form_ele = $subLinkUI;
+			}
+			unset($subLinkUI);
+		}
+		
+		return $form_ele;
     }
     
     // this method returns any custom validation code (javascript) that should figure out how to validate this element

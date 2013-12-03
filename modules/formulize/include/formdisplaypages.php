@@ -73,8 +73,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 	$gperm_handler =& xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
-	$update_own_entry = $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid);
-	$update_other_entries = $gperm_handler->checkRight("update_other_entries", $fid, $groups, $mid);
 	$single_result = getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid);
 	
 	// if this function was called without an entry specified, then assume the identity of the entry we're editing (unless this is a new save, in which case no entry has been made yet)
@@ -91,12 +89,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		$entry = $GLOBALS['formulize_newEntryIds'][$fid][0];
 	}
 	
-	if($single_result['flag'] == "group" AND $update_own_entry AND $entry == $single_result['entry']) {
-		$update_other_entries = true;
-	}
-	
 	$owner = getEntryOwner($entry, $fid);
-	
 	
 	$prevPage = isset($_POST['formulize_prevPage']) ? $_POST['formulize_prevPage'] : 1; // last page that the user was on, not necessarily the previous page numerically
 	$currentPage = isset($_POST['formulize_currentPage']) ? $_POST['formulize_currentPage'] : 1;
@@ -105,19 +98,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	// debug control:
 	$currentPage = (isset($_GET['debugpage']) AND is_numeric($_GET['debugpage'])) ? $_GET['debugpage'] : $currentPage;
 	
-	if($entry) {
-		if(($owner == $uid AND $update_own_entry) OR ($owner != $uid AND $update_other_entries)) {
-			$usersCanSave = true;
-		} else {
-			$usersCanSave = false;
-		}
-	} else {
-		if($gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid) OR $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid)) {
-			$usersCanSave = true;
-		} else {
-			$usersCanSave = false;
-		}
-	}
+    $usersCanSave = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
 	
 	if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // remember prevPage is the last page the user was on, not the previous page numerically
 		
@@ -292,23 +273,42 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	function submitForm(page, prevpage) {
 		var validate = xoopsFormValidate_formulize();
 		if(validate) {<?php
-			if(is_object($screen) AND $screen->getVar('finishisdone') AND $currentPage+1 == $thanksPage) {
-				// neuter the ventry which is the key thing that keeps us on the form page, if in fact we just came from a list screen of some kind
-				// need to use an unusual selector, because something about selecting by id wasn't working, apparently may be related to setting actions on forms with certain versions of jQuery??
-				print "		if(page == $thanksPage) {
-					window.document.formulize.ventry.value = '';
-					jQuery('form[name=formulize]').attr('action', '$done_dest');
-				}
-				";
-			}?>
-			window.document.formulize.formulize_currentPage.value = page;
-			window.document.formulize.formulize_prevPage.value = prevpage;
-			window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
-			window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
-			validateAndSubmit();
-		}
-	}
-	
+			// neuter the ventry which is the key thing that keeps us on the form page,
+			//  if in fact we just came from a list screen of some kind.
+			// need to use an unusual selector, because something about selecting by id wasn't working,
+			//  apparently may be related to setting actions on forms with certain versions of jQuery?
+			print "
+			if(page == $thanksPage) {
+				window.document.formulize.ventry.value = '';
+				jQuery('form[name=formulize]').attr('action', '$done_dest');
+			}
+";?>
+            if (formulizechanged) {
+                window.document.formulize.formulize_currentPage.value = page;
+                window.document.formulize.formulize_prevPage.value = prevpage;
+                window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
+                window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
+                validateAndSubmit();
+            } else {
+                jQuery("#formulizeform").animate({opacity:0.4}, 200, "linear");
+                jQuery.ajax({
+                    type: "POST",
+                    url: jQuery('form[name=formulize]').attr('action'),
+                    data: {
+                        formulize_currentPage: page,
+                        formulize_prevPage: prevpage,
+                        ventry: window.document.formulize.ventry.value,
+                    },
+                    success: function(html, x){
+                        document.open();
+                        document.write(html);
+                        document.close();
+                    }
+                });
+            }
+        }
+    }
+
 	function pageJump(options, prevpage) {
 		for (var i=0; i < options.length; i++) {
 			if (options[i].selected) {
@@ -430,10 +430,12 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		$totalPages = count($pages);
 		$skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
 		$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "above");   // calling for the 'above' drawPageNav 
-	       
-		// setting up the basic templateVars for all templates
-		// templatevariables must be called after all the variables are loaded otherwise they do not make it into renderTemplate
-		$templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton, 'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage, 'pageSelectionList'=>$pageSelectionList);
+
+        // setting up the basic templateVars for all templates
+        // templatevariables must be called after all the variables are loaded otherwise they do not make it into renderTemplate
+        $templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton,
+            'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage,
+            'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles);
 
 		print "<form name=\"pageNavOptions_above\" id=\"pageNavOptions_above\">\n";
 		if($screen AND $toptemplate = $screen->getVar('toptemplate')) {
