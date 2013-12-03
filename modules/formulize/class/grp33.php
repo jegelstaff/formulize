@@ -119,7 +119,6 @@ function Getall($Flag,$Filename=null){
 	if ($Flag==1){
 		session_start();
 		$_SESSION['file'] =$Filename;//Send the File Location to Import.php
-		session_cache_limiter('private');
 		$file =$Filename;
 		$getlines = file_get_contents($file);
 		$get_line=explode(";",$getlines);//print_r($get_line);
