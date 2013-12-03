@@ -64,7 +64,7 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
     function adminPrepare($element) {
-		$fid = $element->getVar('id_form');
+		$fid = !is_object($element) ? intval($_GET['fid']) : $element->getVar('id_form');
         $ele_value = $element ? $element->getVar('ele_value') : array();
         
 		if (!$element) {
