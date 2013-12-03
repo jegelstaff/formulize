@@ -1839,6 +1839,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			// false is "nosave" param...only used to force element to not be picked up by readelements.php after saving
 			// $screen is the screen object
 			// false means don't print it out to screen, return it here
+			$GLOBALS['formulize_sub_fids'] = $sub_fids; // set here so we can pick it up in the render method of elements, if necessary (only necessary for subforms?);
 			$deReturnValue = displayElement("", $i, $entry, false, $screen, $prevEntry, false, $profileForm, $groups);
 			if(is_array($deReturnValue)) {
 				$form_ele = $deReturnValue[0];

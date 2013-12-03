@@ -64,7 +64,7 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
     function adminPrepare($element) {
-		$fid = intval($_GET['fid']);
+		$fid = $element->getVar('id_form');
         $ele_value = $element ? $element->getVar('ele_value') : array();
         
 		if (!$element) {
@@ -161,6 +161,7 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
     // $entry_id is the ID number of the entry where this particular element comes from
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen) {
 		
+		$sub_fids = $GLOBALS['formulize_sub_fids']; // set in compileElements, right before the displayElement function is called
         $thissfid = $ele_value[0];
 		if(!$thissfid) { continue; } // can't display non-specified subforms!
 		// $deReturnValue = displayElement("", $element, $entry_id, false, $screen, $prevEntry, false, $profileForm, $groups); // do this just to evaluate any conditions...it won't actually render anything, but will return "" for the first key in the array, if the element is allowed
