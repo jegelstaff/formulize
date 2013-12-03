@@ -71,6 +71,7 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
 			//Assign default values
 			$ele_value[2] = 1;
 			$ele_value[3] = 1;
+			$ele_value[9] = "entries";
 		}
 		
 		$ele_value[1] = explode(",",$ele_value[1]);
@@ -128,12 +129,10 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
 		}
 		$ele_value[1] = implode(",",$_POST['elements_ele_value_1']);
 		$ele_value[6] = !isset($ele_value[6]) ? 'hideaddentries' : 1;
-		
+		$ele_value[9] = $_POST['elements-ele_value'][9];
 		$parsedConditions = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete', array(), 7); // post key, delete key, processedValues, ele_value key for conditions
 		$ele_value[7] = $parsedConditions['elements']['ele_value'][7];
-		
 		$element->setVar('ele_value', $ele_value);
-		
         return $changed;
     }
     
@@ -160,8 +159,16 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen) {
-		
+		$fid = $element->getVar('id_form');
+		$this_ele_id = $element->getVar('ele_id');
+		global $xoopsUser;
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+		$groups = $xoopsUser->getGroups();
 		$sub_fids = $GLOBALS['formulize_sub_fids']; // set in compileElements, right before the displayElement function is called
+		$mid = getFormulizeModId();
+		$frid = $GLOBALS['framework'];
+		$sub_entries = $GLOBALS['sub_entries']; //set in compileElements
+		$owner = getEntryOwner($entry_id, $fid);
         $thissfid = $ele_value[0];
 		if(!$thissfid) { continue; } // can't display non-specified subforms!
 		
@@ -169,7 +176,7 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
 			$GLOBALS['sfidsDrawn'][] = $thissfid;
 			$customCaption = $element->getVar('ele_caption');
 			$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
-			$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry_id, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
+			$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry_id, $caption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
 			if(isset($subUICols['single'])) {
 				$form_ele = array($subUICols['single'], "even");
 			} else {

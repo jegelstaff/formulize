@@ -1882,7 +1882,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 		}
 		
 		$req = !$isDisabled ? intval($i->getVar('ele_req')) : 0; 
-		
+		$GLOBALS['sub_entries'] = $sub_entries;
 		if($ele_type == "subform" ) {
 			$thissfid = $ele_value[0];
 			if(!$thissfid) { continue; } // can't display non-specified subforms!
