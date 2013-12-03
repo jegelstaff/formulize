@@ -164,20 +164,8 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
 		$sub_fids = $GLOBALS['formulize_sub_fids']; // set in compileElements, right before the displayElement function is called
         $thissfid = $ele_value[0];
 		if(!$thissfid) { continue; } // can't display non-specified subforms!
-		// $deReturnValue = displayElement("", $element, $entry_id, false, $screen, $prevEntry, false, $profileForm, $groups); // do this just to evaluate any conditions...it won't actually render anything, but will return "" for the first key in the array, if the element is allowed
-		$deReturnValue = array("", $isDisabled);
-		$form_ele = $deReturnValue[0];
-		$isDisabled = $deReturnValue[1];
 		
-		// if(is_array($deReturnValue)) {
-			// $form_ele = $deReturnValue[0];
-			// $isDisabled = $deReturnValue[1];
-		// } else {
-			// $form_ele = $deReturnValue;
-			// $isDisabled = false;
-		// }
-		
-		if($passed = security_check($thissfid) AND in_array($thissfid, $sub_fids) AND $form_ele == "") {
+		if($passed = security_check($thissfid) AND in_array($thissfid, $sub_fids)) {
 			$GLOBALS['sfidsDrawn'][] = $thissfid;
 			$customCaption = $element->getVar('ele_caption');
 			$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
