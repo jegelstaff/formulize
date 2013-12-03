@@ -64,13 +64,14 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
     function adminPrepare($element) {
-		$fid = intval($_GET['fid']);
+		$fid = !is_object($element) ? intval($_GET['fid']) : $element->getVar('id_form');
         $ele_value = $element ? $element->getVar('ele_value') : array();
         
 		if (!$element) {
 			//Assign default values
 			$ele_value[2] = 1;
 			$ele_value[3] = 1;
+			$ele_value[9] = "entries";
 		}
 		
 		$ele_value[1] = explode(",",$ele_value[1]);
@@ -128,19 +129,10 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
 		}
 		$ele_value[1] = implode(",",$_POST['elements_ele_value_1']);
 		$ele_value[6] = !isset($ele_value[6]) ? 'hideaddentries' : 1;
-		
-		/* THIS FUNCTION NEEDS ATTENTION
-		The following line of code needs to be REFACTORED.
-		This does not work because we have no access to the $processedValues array in this
-		adminSave function, we should somehow pass in $element instead of $processedValues */
-		$processedValues = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete', $processedValues, 7); // post key, delete key, processedValues, ele_value key for conditions
-		
-		foreach($processedValues['elements'] as $property=>$value) {
-			$element->setVar($property, $value);
-		}
-		
+		$ele_value[9] = $_POST['elements-ele_value'][9];
+		$parsedConditions = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete', array(), 7); // post key, delete key, processedValues, ele_value key for conditions
+		$ele_value[7] = $parsedConditions['elements']['ele_value'][7];
 		$element->setVar('ele_value', $ele_value);
-		
         return $changed;
     }
     
@@ -167,27 +159,24 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen) {
-		
+		$fid = $element->getVar('id_form');
+		$this_ele_id = $element->getVar('ele_id');
+		global $xoopsUser;
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+		$groups = $xoopsUser->getGroups();
+		$sub_fids = $GLOBALS['formulize_sub_fids']; // set in compileElements, right before the displayElement function is called
+		$mid = getFormulizeModId();
+		$frid = $GLOBALS['framework'];
+		$sub_entries = $GLOBALS['sub_entries']; //set in compileElements
+		$owner = getEntryOwner($entry_id, $fid);
         $thissfid = $ele_value[0];
 		if(!$thissfid) { continue; } // can't display non-specified subforms!
-		// $deReturnValue = displayElement("", $element, $entry_id, false, $screen, $prevEntry, false, $profileForm, $groups); // do this just to evaluate any conditions...it won't actually render anything, but will return "" for the first key in the array, if the element is allowed
-		$deReturnValue = array("", $isDisabled);
-		$form_ele = $deReturnValue[0];
-		$isDisabled = $deReturnValue[1];
 		
-		// if(is_array($deReturnValue)) {
-			// $form_ele = $deReturnValue[0];
-			// $isDisabled = $deReturnValue[1];
-		// } else {
-			// $form_ele = $deReturnValue;
-			// $isDisabled = false;
-		// }
-		
-		if($passed = security_check($thissfid) AND in_array($thissfid, $sub_fids) AND $form_ele == "") {
+		if($passed = security_check($thissfid) AND in_array($thissfid, $sub_fids)) {
 			$GLOBALS['sfidsDrawn'][] = $thissfid;
 			$customCaption = $element->getVar('ele_caption');
 			$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
-			$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry_id, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
+			$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry_id, $caption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
 			if(isset($subUICols['single'])) {
 				$form_ele = array($subUICols['single'], "even");
 			} else {

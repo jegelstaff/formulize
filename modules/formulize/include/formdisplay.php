@@ -838,7 +838,7 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				if(in_array($sfid, $sfidsDrawn) OR $elements_allowed OR (!$scheck = security_check($sfid, "", $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms)) { // no entry passed so this will simply check whether they have permission for the form or not
 					continue;
 				}
-				$subUICols = drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry);
+				$subUICols = drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry);
 				unset($subLinkUI);
 				if(isset($subUICols['single'])) {
 					$form->insertBreak($subUICols['single'], "even");
@@ -1195,10 +1195,14 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 }
 
 // this function draws in the UI for sub links
-function drawSubLinks($sfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry,
+function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry,
 	$customCaption = "", $customElements = "", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings = 0,
 	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries, $subformConditions, $subformElementId = 0,
 	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES) {
+
+    $member_handler = xoops_gethandler('member');
+    $gperm_handler = xoops_gethandler('groupperm');
+
 
         $addEntriesText = $addEntriesText ? $addEntriesText : _formulize_ADD_ENTRIES;
 	// only the text value is a valid flag for hiding the entries because we can't use null since older subforms will have no value for this flag
@@ -1839,6 +1843,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			// false is "nosave" param...only used to force element to not be picked up by readelements.php after saving
 			// $screen is the screen object
 			// false means don't print it out to screen, return it here
+			$GLOBALS['formulize_sub_fids'] = $sub_fids; // set here so we can pick it up in the render method of elements, if necessary (only necessary for subforms?);
 			$deReturnValue = displayElement("", $i, $entry, false, $screen, $prevEntry, false, $profileForm, $groups);
 			if(is_array($deReturnValue)) {
 				$form_ele = $deReturnValue[0];
@@ -1877,7 +1882,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 		}
 		
 		$req = !$isDisabled ? intval($i->getVar('ele_req')) : 0; 
-		
+		$GLOBALS['sub_entries'] = $sub_entries;
 		if($ele_type == "subform" ) {
 			$thissfid = $ele_value[0];
 			if(!$thissfid) { continue; } // can't display non-specified subforms!
@@ -1893,7 +1898,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$GLOBALS['sfidsDrawn'][] = $thissfid;
 				$customCaption = $i->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
-				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $member_handler, $frid, $gperm_handler, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
+				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
 				if(isset($subUICols['single'])) {
 					$form->insertBreak($subUICols['single'], "even");
 				} else {
