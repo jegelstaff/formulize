@@ -5,3 +5,4 @@ templates_c/
 trust_*/
 uploads/profile/
 *.bak
+*.db
