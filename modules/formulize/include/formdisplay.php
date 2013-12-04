@@ -862,8 +862,6 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 		// draw in the submitbutton if necessary
 		if (!$formElementsOnly and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, $allDoneOverride, $printall, $screen);
-			} else {
-			$form = addSubmitButton($form, '', $go_back, $currentURL, $button_text, $settings, $temp_entries[$this_fid][0], $fids, $formframe, $mainform, $entry, $profileForm, $elements_allowed, false, $printall, $screen);
 			}
 	
 		if(!$formElementsOnly) {
@@ -897,7 +895,8 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 		}
 
 
-		print "<div id=formulizeform>".$form->render()."</div>"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
+		$idForForm = $formElementsOnly ? "" : "id=\"formulizeform\""; // when rendering disembodied forms, don't use the master id!
+		print "<div $idForForm>".$form->render()."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
 		
 		// if we're in Drupal, include the main XOOPS js file, so the calendar will work if present...
 		// assumption is that the calendar javascript has already been included by the datebox due to no
@@ -1490,9 +1489,8 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 					$col_two .= "<tr>\n<td>";
 					// check to see if we draw a delete box or not
 					if ($sub_ent !== "new" and formulizePermHandler::user_can_delete_entry($sfid, $uid, $sub_ent)) {
-							$need_delete = 1;
-							$col_two .= "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>";
-						} 
+						$need_delete = 1;
+						$col_two .= "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>";
 					}
 					$col_two .= "</td>\n";
 					include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
@@ -1512,7 +1510,6 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 					}
 					if(!$nosubforms AND $showViewButtons) { $col_two .= "<td><input type=button name=view".$sub_ent." value='"._formulize_SUBFORM_VIEW."' onclick=\"javascript:goSub('$sub_ent', '$sfid');return false;\"></input></td>\n"; }
 					$col_two .= "</tr>\n";
-
 				} else { // display the full form
 					$headerValues = array();
 					foreach($elementsToDraw as $thisele) {
@@ -1532,7 +1529,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 					
 					
 					$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container\" id=\"subform-".$sfid."-"."$sub_ent\">
-<p class=\"subform-header\"><a href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>
+	<p class=\"subform-header\"><a href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>
 	<div class=\"accordion-content content\">";
 					ob_start();
 					$renderResult = displayForm($sfid, $sub_ent, "", "",  "", "", "formElementsOnly"); // SHOULD CHANGE THIS TO USE THE DEFAULT SCREEN FOR THE FORM!!!!!!????
@@ -1540,9 +1537,12 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 					ob_end_clean();
 					$col_two .= $col_two_temp . "</div>\n</div>\n";
 				}
+			
+			}
+		
 		}
 		
-	} // end of the if condition controlling placement of blank defaults
+	}
 
 	
 
@@ -1550,7 +1550,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 		// complete the table if we're drawing rows
 		$col_two .= "</table>";	
 	} else {
-		$col_two .= "</div>\n";
+		$col_two .= "</div>"; // close of the subform-accordion-container
 		static $jqueryUILoaded = false;
 		if(!$jqueryUILoaded) {
 			$col_two .= "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js\"></script>\n";
@@ -1595,7 +1595,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 			$col_two .= "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$sfid', window.document.formulize.addsubentries$sfid$subformElementId.value, $subformElementId);\"><input type=text name=addsubentries$sfid$subformElementId id=addsubentries$sfid$subformElementId value=1 size=2 maxlength=2>".$addEntriesText.$deleteButton."</p>";
 		}
 	}
-	$col_one .= "</p>";
+	
 	$to_return['c1'] = $col_one;
 	$to_return['c2'] = $col_two;
 	//return $to_return; // now returning a single set of HTML, which should be a configurable option
