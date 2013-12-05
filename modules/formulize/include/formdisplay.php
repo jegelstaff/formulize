@@ -1197,15 +1197,12 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry,
 	$customCaption = "", $customElements = "", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings = 0,
 	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries, $subformConditions, $subformElementId = 0,
-	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES) {
-
+	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES)
+{
     $member_handler = xoops_gethandler('member');
     $gperm_handler = xoops_gethandler('groupperm');
 
-
-        $addEntriesText = $addEntriesText ? $addEntriesText : _formulize_ADD_ENTRIES;
-	// only the text value is a valid flag for hiding the entries because we can't use null since older subforms will have no value for this flag
-	$hideaddentries = $hideaddentries === 'hideaddentries' ? 1 : 0;
+    $addEntriesText = $addEntriesText ? $addEntriesText : _formulize_ADD_ENTRIES;
 
 	global $xoopsDB, $nosubforms;
 	$GLOBALS['framework'] = $frid;
@@ -1588,19 +1585,33 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			$deletesubsflagIncluded = true;
 		}
 	}
-	if($addSubEntry = $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid) AND !$hideaddentries) {
-		if(count($sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
-			$col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, $subformElementId);\"></p>";
-		} elseif(!$sub_single) {
-			$col_two .= "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$subform_id', window.document.formulize.addsubentries$subform_id$subformElementId.value, $subformElementId);\"><input type=text name=addsubentries$subform_id$subformElementId id=addsubentries$subform_id$subformElementId value=1 size=2 maxlength=2>".$addEntriesText.$deleteButton."</p>";
-		}
-	}
-	
+
+    // if the 'add x entries button' should be hidden or visible
+    if ("hideaddentries" != $hideaddentries) {
+        $allowed_to_add_entries = false;
+        if ("subform" == $hideaddentries OR 1 == $hideaddentries) {
+            // for compatability, accept '1' which is the old value which corresponds to the new use-subform-permissions (saved as "subform")
+            // user can add entries if they have permission on the sub form
+            $allowed_to_add_entries = $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid);
+        } else {
+            // user can add entries if they have permission on the main form
+            // the user should only be able to add subform entries if they can *edit* the main form entry, since adding a subform entry
+            //  is like editing the main form entry. otherwise they could add subform entries on main form entries owned by other users
+            $allowed_to_add_entries = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
+        }
+        if ($allowed_to_add_entries) {
+            if (count($sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
+                $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, $subformElementId);\"></p>";
+            } elseif(!$sub_single) {
+                $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$subform_id', window.document.formulize.addsubentries$subform_id$subformElementId.value, $subformElementId);\"><input type=text name=addsubentries$subform_id$subformElementId id=addsubentries$subform_id$subformElementId value=1 size=2 maxlength=2>".$addEntriesText.$deleteButton."</p>";
+            }
+        }
+    }
+
 	$to_return['c1'] = $col_one;
 	$to_return['c2'] = $col_two;
 	//return $to_return; // now returning a single set of HTML, which should be a configurable option
 	return array('single'=>$col_one . $col_two);
-
 }
 
 
@@ -1898,7 +1909,8 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$GLOBALS['sfidsDrawn'][] = $thissfid;
 				$customCaption = $i->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
-				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
+                // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
+                $subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]);
 				if(isset($subUICols['single'])) {
 					$form->insertBreak($subUICols['single'], "even");
 				} else {

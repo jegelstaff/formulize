@@ -24,13 +24,24 @@
 		 </div>
 		</div>
 
-	    <div class="form-item"><input type="checkbox" id="element-subformaddentries" name="elements-ele_value[6]" <{if $content.ele_value[6]!='hideaddentries'}>checked="checked"<{/if}> value="1"/> Show the "Add x Entries" button below the list of subform entries?
-	     <div class="description">The "Add x Entries" button lets users create additional entries in the subform.  The page reloads with that number of new entries visible.</div>
-	    </div>
-            <div class="form-item">
-                <p>What text should be used to describe each entry? ie: Add x Entries, Add x Participants, Add x Activities, etc.<br />
-                &nbsp;&nbsp;&nbsp;Add x <input type="text" name="elements-ele_value[9]" value="<{if $content.ele_value[9]}><{$content.ele_value[9]}><{else}><{$smarty.const._formulize_ADD_ENTRIES}><{/if}>" /></p>
+        <div class="form-item">
+            <p>Show the "Add x Entries" button below the list of subform entries?</p>
+            <div class="description">The "Add x Entries" button lets users create additional entries in the subform.</div>
+            <div class="form-radios">
+                <label for="elements-ele_value[6]-no"><input type="radio" id="elements-ele_value[6]-no" name="elements-ele_value[6]" value="hideaddentries"<{if $content.ele_value[6] eq 'hideaddentries' OR $content.ele_value[6] eq ''}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_NONE}></label>
             </div>
+            <div class="form-radios">
+                <label for="elements-ele_value[6]-subform"><input type="radio" id="elements-ele_value[6]-subform" name="elements-ele_value[6]" value="subform"<{if $content.ele_value[6] eq 'subform' OR $content.ele_value[6] eq '1'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_SUBFORM}></label>
+            </div>
+            <div class="form-radios">
+                <label for="elements-ele_value[6]-parent"><input type="radio" id="elements-ele_value[6]-parent" name="elements-ele_value[6]" value="parent"<{if $content.ele_value[6] eq 'parent'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_PARENT}></label>
+            </div>
+        </div>
+
+        <div class="form-item">
+            <p>What text should be used to describe each entry? ie: Add x Entries, Add x Participants, Add x Activities, etc.<br />
+            &nbsp;&nbsp;&nbsp;Add x <input type="text" name="elements-ele_value[9]" value="<{if $content.ele_value[9]}><{$content.ele_value[9]}><{else}><{$smarty.const._formulize_ADD_ENTRIES}><{/if}>" /></p>
+        </div>
 	</fieldset>
     </div>
 
