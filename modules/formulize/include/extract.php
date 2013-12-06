@@ -678,7 +678,6 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
            if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
              return $countMasterResultsRow[0];
            } else {
-					   $GLOBALS['formulize_countMasterResults'] = $countMasterResultsRow[0]; // put this in the global space so we can pick it up later when determining how many page numbers to create
 					   // if we're in a getData call from displayEntries, put the count in an additional special place for use in generating page numbers
 					   if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
 							 $GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countMasterResultsRow[0]; 
