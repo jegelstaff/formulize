@@ -94,7 +94,6 @@ if($ele_type == "subform") {
     $processedValues['elements']['ele_value'][3] = 0;
   }
   $processedValues['elements']['ele_value'][1] = implode(",",$_POST['elements_ele_value_1']);
-  $processedValues['elements']['ele_value'][6] = !isset($processedValues['elements']['ele_value'][6]) ? 'hideaddentries' : 1;
   $processedValues = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete', $processedValues, 7); // post key, delete key, processedValues, ele_value key for conditions
 }
 

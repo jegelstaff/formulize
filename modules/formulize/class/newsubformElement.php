@@ -128,7 +128,6 @@ class formulizeNewSubformElementHandler extends formulizeElementsHandler {
 			$ele_value[3] = 0;
 		}
 		$ele_value[1] = implode(",",$_POST['elements_ele_value_1']);
-		$ele_value[6] = !isset($ele_value[6]) ? 'hideaddentries' : 1;
 		$ele_value[9] = $_POST['elements-ele_value'][9];
 		$parsedConditions = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete', array(), 7); // post key, delete key, processedValues, ele_value key for conditions
 		$ele_value[7] = $parsedConditions['elements']['ele_value'][7];

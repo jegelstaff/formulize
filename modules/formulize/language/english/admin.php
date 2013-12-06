@@ -367,6 +367,10 @@ define("_AM_ELE_SUBFORM_BLANKS", "How many blank spaces should be shown for this
 define("_AM_ELE_SUBFORM_BLANKS_HELP", "Note: if you have more than one blank space, do not use file upload elements in your subform.  File upload elements only work effectively with one blank subform row at a time.");
 define("_AM_ELE_SUBFORM_UITYPE_ROW", "Display each subform entry as a row with only the elements selected below showing");
 define("_AM_ELE_SUBFORM_UITYPE_FORM", "Display each subform entry using the full form, inside a collapsable area that the user can open and close");
+define("_AM_ELE_SUBFORM_ADD_NONE", "No");
+define("_AM_ELE_SUBFORM_ADD_SUBFORM", "Yes, only if the user can add entries in the subform");
+define("_AM_ELE_SUBFORM_ADD_PARENT", "Yes, only if the user can add entries in the main form");
+
 
 // grids
 define("_AM_ELE_GRID", "Table of existing elements (place BEFORE the elements it contains)");

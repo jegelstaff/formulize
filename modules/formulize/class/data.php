@@ -428,7 +428,7 @@ class formulizeDataHandler  {
 			$queryValue = "\"%," . mysql_real_escape_string($value) . ",%\"";
 		}
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
-			$scopeFilter = $this->_buildScopeFilter($scope_uids);
+			$scopeFilter = $this->_buildScopeFilter($scope_uids, array());
 			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter GROUP BY entry_id ORDER BY entry_id";
 		} elseif(is_array($scope_groups) AND count($scope_groups)>0) {
 			$scopeFilter = $this->_buildScopeFilter("", $scope_groups);
