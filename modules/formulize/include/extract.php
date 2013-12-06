@@ -666,28 +666,27 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       //$beforeQueryTime = microtime_float();
 	       
 	  
+	  if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
 	       // If there's an LOE Limit in place, check that we're not over it first
 	       global $formulize_LOE_limit;
 
 	       $countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main ";
 	       $countMasterResults .= "$userJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause "; 
-         $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
-				 $countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
+	       $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
+	       $countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 	       if($countMasterResultsRes = $xoopsDB->query($countMasterResults)) {
-           $countMasterResultsRow = $xoopsDB->fetchRow($countMasterResultsRes);
-           if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
-             return $countMasterResultsRow[0];
-           } else {
-					   $GLOBALS['formulize_countMasterResults'] = $countMasterResultsRow[0]; // put this in the global space so we can pick it up later when determining how many page numbers to create
-					   // if we're in a getData call from displayEntries, put the count in an additional special place for use in generating page numbers
-					   if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
-							 $GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countMasterResultsRow[0]; 
-							 unset($GLOBALS['formulize_getCountForPageNumbers']);
-						 } 
-           }
+		    $countMasterResultsRow = $xoopsDB->fetchRow($countMasterResultsRes);
+		    if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
+			 return $countMasterResultsRow[0];
+		    } else {
+			 // if we're in a getData call from displayEntries, put the count in a special place for use in generating page numbers
+			 $GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countMasterResultsRow[0]; 
+		    } 
 	       } else {
-		       exit("Error: could not count master results.<br>".$xoopsDB->error()."<br>SQL:$countMasterResults<br>");
+		    exit("Error: could not count master results.<br>".$xoopsDB->error()."<br>SQL:$countMasterResults<br>");
 	       }
+	       unset($GLOBALS['formulize_getCountForPageNumbers']);
+	  }
          
          // now, if there's framework in effect, get the entry ids of the entries in the main form that match the criteria, so we can use a specific query for them instead of the order clause in the master query
          $limitByEntryId = "";
