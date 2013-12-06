@@ -1692,7 +1692,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
                         }
                     }
                 }
-                if ($xoopsDB) {
+                if ($xoopsDB and count($dataToWrite) > 0) {
                     // false for no proxy user, true to force the update even on get requests, false is do not update the metadata (modification user)
                     $data_handler->writeEntry($primary_entry_id, $dataToWrite, false, true, false);
                 }
