@@ -1655,7 +1655,7 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
 // THIS FUNCTION LOOPS THROUGH AN ENTRY AND ADDS IN THE DERIVED VALUES IN ANY DERIVED COLUMNS
 // Odd results may occur when a derived column is inside a subform in a framework!
 // Derived values should always be in the mainform only?
-function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
+function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form_id) {
     global $xoopsDB;
     static $parsedFormulas = array();
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
@@ -1665,7 +1665,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
         if (isset($metadata[$formHandle])) {
             // if there are derived value formulas for this form
             if (!isset($parsedFormulas[$formHandle])) {
-                formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $frid, $fid);
+                formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $relationship_id, $form_id);
                 $parsedFormulas[$formHandle] = true;
             }
             foreach ($record as $primary_entry_id => $elements) {
@@ -1680,7 +1680,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
                             unset($GLOBALS['formulize_forceDerivedValueUpdate']);
                             $resetDerivedValueFlag = true;
                         }
-                        $derivedValue = $functionName($entry, $fid, $primary_entry_id, $frid);
+                        $derivedValue = $functionName($entry, $form_id, $primary_entry_id, $relationship_id);
                         if ($resetDerivedValueFlag) {
                             $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
                         }
