@@ -28,13 +28,13 @@
             <p>Show the "Add x Entries" button below the list of subform entries?</p>
             <div class="description">The "Add x Entries" button lets users create additional entries in the subform.</div>
             <div class="form-radios">
-                <label for="elements-ele_value[6]-no"><input type="radio" id="elements-ele_value[6]-no" name="elements-ele_value[6]" value="hideaddentries"<{if $content.ele_value[6] eq 'hideaddentries' OR $content.ele_value[6] eq ''}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_NONE}></label>
-            </div>
-            <div class="form-radios">
                 <label for="elements-ele_value[6]-subform"><input type="radio" id="elements-ele_value[6]-subform" name="elements-ele_value[6]" value="subform"<{if $content.ele_value[6] eq 'subform' OR $content.ele_value[6] eq '1'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_SUBFORM}></label>
             </div>
             <div class="form-radios">
                 <label for="elements-ele_value[6]-parent"><input type="radio" id="elements-ele_value[6]-parent" name="elements-ele_value[6]" value="parent"<{if $content.ele_value[6] eq 'parent'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_PARENT}></label>
+            </div>
+	    <div class="form-radios">
+                <label for="elements-ele_value[6]-no"><input type="radio" id="elements-ele_value[6]-no" name="elements-ele_value[6]" value="hideaddentries"<{if $content.ele_value[6] eq 'hideaddentries' OR $content.ele_value[6] eq ''}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_NONE}></label>
             </div>
         </div>
 

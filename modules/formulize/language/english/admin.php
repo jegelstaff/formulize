@@ -368,8 +368,8 @@ define("_AM_ELE_SUBFORM_BLANKS_HELP", "Note: if you have more than one blank spa
 define("_AM_ELE_SUBFORM_UITYPE_ROW", "Display each subform entry as a row with only the elements selected below showing");
 define("_AM_ELE_SUBFORM_UITYPE_FORM", "Display each subform entry using the full form, inside a collapsable area that the user can open and close");
 define("_AM_ELE_SUBFORM_ADD_NONE", "No");
-define("_AM_ELE_SUBFORM_ADD_SUBFORM", "Yes, based on permission on the subform");
-define("_AM_ELE_SUBFORM_ADD_PARENT", "Yes, based on permission on the main form");
+define("_AM_ELE_SUBFORM_ADD_SUBFORM", "Yes, only if the user can add entries in the subform");
+define("_AM_ELE_SUBFORM_ADD_PARENT", "Yes, only if the user can add entries in the main form");
 
 
 // grids
