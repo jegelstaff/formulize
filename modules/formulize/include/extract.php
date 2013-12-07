@@ -1651,52 +1651,57 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
      }
 }
 
-// THIS FUNCTION LOOPS THROUGH AN ENTRY AND ADDS IN THE DERIVED VALUES IN ANY DERIVED COLUMNS -- March 27 2007
+
+// THIS FUNCTION LOOPS THROUGH AN ENTRY AND ADDS IN THE DERIVED VALUES IN ANY DERIVED COLUMNS
 // Odd results may occur when a derived column is inside a subform in a framework!
 // Derived values should always be in the mainform only?
-function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
-     global $xoopsDB; // just used as a cue to see if XOOPS is active
-     static $parsedFormulas = array();
-     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-     foreach($entry as $formHandle=>$record) {
-	  $data_handler = new formulizeDataHandler(formulize_getFormIdFromName($formHandle));
-	  $formHandle = htmlspecialchars_decode($formHandle, ENT_QUOTES);
-          if(isset($metadata[$formHandle])) { // if there are derived value formulas for this form...
-               if(!isset($parsedFormulas[$formHandle])) {
-                    formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $frid, $fid);
-                    $parsedFormulas[$formHandle] = true;
-               }
-	       foreach($record as $primary_entry_id=>$elements) {
-		    $dataToWrite = array();
-		    foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {    
-			 if(($entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
-			      $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
-			      // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
-			      $resetDerviedValueFlag = false;
-			      if(isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
-				unset($GLOBALS['formulize_forceDerivedValueUpdate']);
-				$resetDerivedValueFlag = true;
-			      }
-			      $derivedValue = $functionName($entry, $fid, $primary_entry_id, $frid);
-			      if($resetDerivedValueFlag) {
-				$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
-			      }
-			      $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue;
-			      // save value for writing to database if XOOPS is active
-			      if($xoopsDB) {
-				   $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
-				   $dataToWrite[$elementID] = $derivedValue;
-			      }
-			 }
-		    }
-		    if($xoopsDB) {
-			 $data_handler->writeEntry($primary_entry_id, $dataToWrite, false, true, false); // false is no proxy user, true is force the update even on get requests, false is do not update the metadata (modification user)
-		    }
-               }
-          }
-     }          
-     return $entry;    
+function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form_id) {
+    global $xoopsDB;
+    static $parsedFormulas = array();
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+    foreach ($entry as $formHandle => $record) {
+        $data_handler = new formulizeDataHandler(formulize_getFormIdFromName($formHandle));
+        $formHandle = htmlspecialchars_decode($formHandle, ENT_QUOTES);
+        if (isset($metadata[$formHandle])) {
+            // if there are derived value formulas for this form
+            if (!isset($parsedFormulas[$formHandle])) {
+                formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $relationship_id, $form_id);
+                $parsedFormulas[$formHandle] = true;
+            }
+            foreach ($record as $primary_entry_id => $elements) {
+                $dataToWrite = array();
+                foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
+                    // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
+                    if (($entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) {
+                        $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
+                        // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
+                        $resetDerivedValueFlag = false;
+                        if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
+                            unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+                            $resetDerivedValueFlag = true;
+                        }
+                        $derivedValue = $functionName($entry, $form_id, $primary_entry_id, $relationship_id);
+                        if ($resetDerivedValueFlag) {
+                            $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+                        }
+                        $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue;
+                        if ($xoopsDB) {
+                            // save value for writing to database if XOOPS is active
+                            $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
+                            $dataToWrite[$elementID] = $derivedValue;
+                        }
+                    }
+                }
+                if ($xoopsDB and count($dataToWrite) > 0) {
+                    // false for no proxy user, true to force the update even on get requests, false is do not update the metadata (modification user)
+                    $data_handler->writeEntry($primary_entry_id, $dataToWrite, false, true, false);
+                }
+            }
+        }
+    }
+    return $entry;
 }
+
 
 function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $fid) {
     $functionsToWrite = "";
