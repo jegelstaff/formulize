@@ -12,12 +12,16 @@
 <input type="hidden" name="deleteadvanced_calculations" value="">
 <input type="hidden" name="cloneadvanced_calculations" value="">
 
-
 <div class="panel-content content">
 
-	<p><i>Procedures</i> <{$smarty.const._AM_CALC_EXPLAIN}></p>
+    <h2>Before Saving</h2>
+    <p>This special procedure runs before an entry is saved. Values are available as PHP variables using the element handle name. The ID of the current entry (or 'new') is available as $entry_id. On multi-page forms, only the elements which appear on the current page are available, however creating PHP variables for other elements will cause them to be saved.</p><br />
+    <textarea id="forms-on_before_save" name="forms-on_before_save" class="code-textarea"><{$content.form_object->on_before_save}>
+</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
 
-  <h2><a name="newprocedure" href="ui.php?page=advanced-calculation&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&acid=new"><img src="../images/filenew2.png"> <{$smarty.const._AM_CALC_CREATE_NEW}></a></h2>
+    <p><i>Procedures</i> <{$smarty.const._AM_CALC_EXPLAIN}></p>
+
+    <h2><a name="newprocedure" href="ui.php?page=advanced-calculation&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&acid=new"><img src="../images/filenew2.png"> <{$smarty.const._AM_CALC_CREATE_NEW}></a></h2>
 
   <{* include form if exist advanced_calculations exist *}>
 
