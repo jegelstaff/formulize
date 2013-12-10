@@ -1787,7 +1787,7 @@ function prepDataForWrite($element, $ele) {
                 $boxproperties = explode("#*=:*", $ele_value[2]);
                 $sourceHandle = $boxproperties[1];
                 $newEntryId = formulize_writeEntry(array($sourceHandle=>$newValue));
-                $value = ",".$newEntryId.",";
+                $value = $newEntryId;
             } else {
                 $value = $newValue;
                 $element_handler = xoops_getmodulehandler('elements', 'formulize');
