@@ -213,7 +213,7 @@ class formulizeElementsHandler {
 			$element->assignVars($array);
 			$element->isLinked = false;
 			$ele_type = $element->getVar('ele_type');
-			if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn") {
+			if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {
 			    $element->hasData = true;
 			} else {
 			    $element->hasData = false;
@@ -425,7 +425,7 @@ class formulizeElementsHandler {
 					$elements->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
 				}
 			}
-			if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn") {
+			if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type == "derived") {
 			    $elements->hasData = true;
 			} else {
 			    $elements->hasData = false;
