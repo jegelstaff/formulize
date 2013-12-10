@@ -913,8 +913,9 @@ function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView
 
 // this function draws in the interface parts of a display entries widget
 function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview="", $loadOnlyView=0, $screen, $searches, $pageNav, $messageText, $hiddenQuickSearches) {
-
 	global $xoopsDB;
+	global $xoopsuser;
+
 	// unpack the $settings
 	foreach($settings as $k=>$v) {
 		${$k} = $v;
