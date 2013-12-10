@@ -42,6 +42,8 @@
 .icon-piechart:before,
 .icon-print:before,
 .icon-relationship:before,
+.icon-screen-form:before,
+.icon-screen-list:before,
 .icon-screen:before,
 .icon-table:before,
 .icon-trash:before,
@@ -83,7 +85,9 @@
 .icon-piechart:before { content: "\f117"; }
 .icon-print:before { content: "\f118"; }
 .icon-relationship:before { content: "\f119"; }
-.icon-screen:before { content: "\f11a"; }
-.icon-table:before { content: "\f11b"; }
-.icon-trash:before { content: "\f11c"; }
-.icon-view:before { content: "\f11d"; }
+.icon-screen-form:before { content: "\f11a"; }
+.icon-screen-list:before { content: "\f11b"; }
+.icon-screen:before { content: "\f11c"; }
+.icon-table:before { content: "\f11d"; }
+.icon-trash:before { content: "\f11e"; }
+.icon-view:before { content: "\f11f"; }
