@@ -638,6 +638,7 @@ class formulizeDataHandler  {
 		global $xoopsDB, $xoopsUser;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->fid);
+		$creation_uid = $proxyUser ? intval($proxyUser) : intval($uid);
 		static $cachedMaps = array();
 		$mapIDs = true; // assume we're mapping elements based on their IDs, because the values array is based on ids as keys
 		foreach(array_keys($values) as $thisKey) { // check the values array keys
