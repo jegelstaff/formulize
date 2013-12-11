@@ -4467,16 +4467,15 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                 $filterElementIds[$filterId] = $elementObject->getVar('ele_id');
             }
 
+	    
+	    list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
+	    
             if ($filterTypes[$filterId] != "oom") {
                 if ($start) {
                     $conditionsfilter = " AND (";
                     $start = false;
                 } else {
                     $conditionsfilter .= " AND ";
-                }
-                list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
-                if ($newFilterOps[$filterId]) {
-                    $filterOps[$filterId] = $newFilterOps[$filterId];
                 }
                 $conditionsfilter .= "$targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue;
             } else {
@@ -4485,10 +4484,6 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                     $start_oom = false;
                 } else {
                     $conditionsfilter_oom .= " OR ";
-                }
-                list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
-                if ($newFilterOps[$filterId]) {
-                    $filterOps[$filterId] = $newFilterOps[$filterId];
                 }
                 $conditionsfilter_oom .= "$targetAlias`".$filterElementHandles[$filterId]."` ".$filterOps[$filterId]." ".$conditionsFilterComparisonValue;
             }
@@ -4503,9 +4498,10 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 
 
 // this function takes the info from the above function, and actually builds the parts of the SQL statement by analyzing the current situation
-function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
+// $filterOps may be modified by this function
+// $filterTerms may be modified by this function
+function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
     global $xoopsUser, $xoopsDB;
-    $newFilterOps = "";
     $conditionsFilterComparisonValue = "";
     $curlyBracketFormFrom = "";
     if ($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
@@ -4561,7 +4557,7 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
                     $conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE `$targetSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.$filterTermToUse.$likebits.$quotes."),',$origlikebits') ";
                 } else {
                     $conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE `$targetSourceHandle` " . $filterOps[$filterId] . $quotes . $likebits . $filterTermToUse . $likebits . $quotes . ") ";
-                    $newFilterOps = array($filterId=>'=');
+                    $filterOps[$filterId] = '=';
                 }
             }
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)])) {
@@ -4573,6 +4569,17 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
     if ($filterOps[$filterId] == "=") {
         $filterTerms[$filterId] = prepareLiteralTextForDB($element_handler->get($filterElementIds[$filterId]), $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
     }
+    
+    if ($filterTerms[$filterId]=="{BLANK}") {
+      $conditionsFilterComparisonValue = 'NULL';
+      $filterTerms[$filterId]="";
+      if($filterOps[$filterId] == '!=' OR $filterOps[$filterId] == 'NOT LIKE') {
+	$filterOps[$filterId] = 'IS NOT';
+      } else {
+	$filterOps[$filterId] = 'IS';
+      }
+    } 
+    
     if (!$conditionsFilterComparisonValue) {
         $conditionsFilterComparisonValue = $quotes.$likebits.mysql_real_escape_string($filterTerms[$filterId]).$likebits.$quotes;
     }
@@ -4608,7 +4615,7 @@ function _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterE
             }
         }
     }
-    return array($conditionsFilterComparisonValue, $curlyBracketFormFrom, $newFilterOps);
+    return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
 }
 
 
