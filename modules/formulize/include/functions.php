@@ -1101,7 +1101,7 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
                 if (strstr($selfEleValue[2], "#*=:*")) {
                     // get the entry in the $one_fid['fid'] form (form with the self element), that has the intval($entries[$fid][0]) entry (the entry we are calling up already) as it's linked value (with , , around it)
                     $data_handler = new formulizeDataHandler($one_fid['fid']);
-                    $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, ",".intval($entries[$fid][0]).",");
+                    $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($entries[$fid][0]));
                     if ($foundEntry !== false) {
                         $entries[$one_fid['fid']][] = $foundEntry;
                     } else {
@@ -3186,7 +3186,7 @@ function writeElementValue($formframe = "", $ele, $entry, $value, $append, $prev
                 $linkQueryResult = q("SELECT `entry_id` FROM " . $xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle')) . " WHERE `".$sourceParts[1]."` = '".implode("' OR `".$sourceParts[1]."` = '", $searchForValues) . "'");
                 unset($searchForValues);
                 foreach ($linkQueryResult as $linkedEntryId) {
-                    $searchForValues[] = ",".$linkedEntryId['entry_id'].",";
+                    $searchForValues[] = $linkedEntryId['entry_id'];
                 }
                 if ($linkedTargetHint) {
                     $linkedTargetHint = " AND `entry_id` = $linkedTargetHint";
@@ -3202,9 +3202,11 @@ function writeElementValue($formframe = "", $ele, $entry, $value, $append, $prev
                 $foundEntryIds[] = $thisEntryId['entry_id'];
             }
         }
-        if (count($foundEntryIds)>0) {
+        if (count($foundEntryIds)>1) {
             $foundEntryIdString = ",".implode(",", $foundEntryIds).",";
-        } else {
+	} elseif(count($foundEntryIds) == 1) {
+	    $foundEntryIdString = $foundEntryIds[0];
+	} else {
             $foundEntryIdString = "";
         }
         unset($value);

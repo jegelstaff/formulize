@@ -193,7 +193,14 @@ class formulizeDataHandler  {
 						$newIds[] = $thisId;
 					}
 				}
-				$sql = "UPDATE " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " SET `".$lsbElement->getVar('ele_handle')."` = \",".implode(",",$newIds).",\" WHERE entry_id=$thisEntry";
+				
+				if(count($newIds) > 1) {
+					$newEleHandleValue = "\",".implode(",",$newIds).",\"";
+				} else {
+					$newEleHandleValue = $newIds[0];
+				}
+				
+				$sql = "UPDATE " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " SET `".$lsbElement->getVar('ele_handle')."` = $newEleHandleValue WHERE entry_id=$thisEntry";
 				if(!$res = $xoopsDB->query($sql)) {
 					return false;
 				}

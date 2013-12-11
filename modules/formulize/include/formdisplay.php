@@ -672,10 +672,10 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 							$linkedElement1EleValue = $linkedElement1->getVar('ele_value');
 							if(strstr($linkedElement1EleValue[2], "#*=:*")) {
 								// element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1 with , , around it
-								$form1EntryId = formulize_writeEntry(array($key1=>",".$GLOBALS['formulize_newEntryIds'][$form2][0].","), $entryToWriteToForm1);
+								$form1EntryId = formulize_writeEntry(array($key1=>$GLOBALS['formulize_newEntryIds'][$form2][0]), $entryToWriteToForm1);
 							} else {
 								// element 2 is the linked selectbox, so get the value of entry id for what we just created in form 1 and put it in element 2 with , , around it
-								$form2EntryId = formulize_writeEntry(array($key2=>",".$GLOBALS['formulize_newEntryIds'][$form1][0].","), $entryToWriteToForm2);
+								$form2EntryId = formulize_writeEntry(array($key2=>$GLOBALS['formulize_newEntryIds'][$form1][0]), $entryToWriteToForm2);
 							}
 						}
 						if($form1EntryId) {
@@ -1254,7 +1254,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					$value_to_write = $data_handler->getElementValueInEntry($entry, $value_source);
 				}
 			} else {
-				$value_to_write = ",".$entry.","; 
+				$value_to_write = $entry; 
 			}
 			$sub_entry_new = "";
 		
@@ -1816,7 +1816,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 					// NOTE: assuming that there will only be one value in the match, ie: the link field is not a multiple select box!
 					// format of value should be $formid#*=:*$formcaption#*=:*$ele_id
 					$ele_value[2] = $go_back['form'] . "#*=:*" . $parentCap . "#*=:*" . $pid; */
-					$ele_value[2] = ",".$go_back['entry'].","; // 3.0 datastructure...needs to be tested!!
+					$ele_value[2] = $go_back['entry']; // 3.0 datastructure...needs to be tested!! -- now updated for 5.0
 				}
 			}
 		} elseif($overrideValue){ // used to force a default setting in a form element, other than the normal default

@@ -840,7 +840,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 					$value .= $whatwasselected.",";
 				}
 			} elseif(is_numeric($ele)) {
-				$value = ",".$ele.",";
+				$value = $ele;
 			}	else {
 				$value = "";
 			}
