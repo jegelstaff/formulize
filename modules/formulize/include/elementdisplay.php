@@ -209,7 +209,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		}
 
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
-		if (!$is_Disabled) {
+		if (!$isDisabled) {
             // note that we're using the OPPOSITE of the permission because we want to know if the element should be disabled
             $isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
 				}
