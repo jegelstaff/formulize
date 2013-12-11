@@ -50,6 +50,7 @@ if(isset($formulize_screen_id)) {
         global $xoTheme;
         if($xoTheme) {
             $xoTheme->addStylesheet("/modules/formulize/templates/css/style.php");
+            $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
         }
         include 'initialize.php';        
     }
@@ -59,10 +60,9 @@ if(isset($formulize_screen_id)) {
     global $xoTheme;
     if($xoTheme) {
         $xoTheme->addStylesheet("/modules/formulize/templates/css/style.php");
+        $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
     }
     include 'initialize.php';
 
     include XOOPS_ROOT_PATH.'/footer.php';
 }
-
-
