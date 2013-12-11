@@ -643,6 +643,7 @@ class formulizeDataHandler  {
 	function writeEntry($entry, $values, $proxyUser=false, $forceUpdate=false, $update_metadata=true) {
 
 		global $xoopsDB, $xoopsUser;
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->fid);
 		$creation_uid = $proxyUser ? intval($proxyUser) : intval($uid);
@@ -771,8 +772,6 @@ class formulizeDataHandler  {
                 $element_values[$key] = "AES_ENCRYPT({$element_values[$key]}, '$aes_password')";
             }
         }
-
-        $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
         if ($update_metadata or "new" == $entry) {
             // update entry metadata
