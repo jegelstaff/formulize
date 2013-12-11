@@ -20,7 +20,8 @@ if (typeof xoopsGetElementById != 'function') {
 }
 
 jQuery(document).ready(function() {
-    jQuery('input.checkemall').click(function() {
+    // set formulizechanged when the 'check all' checkbox is clicked, or an autocomplete changes
+    jQuery('input.checkemall, .formulize_autocomplete').click(function() {
         formulizechanged = 1;
     });
 });
