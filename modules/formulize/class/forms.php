@@ -236,6 +236,15 @@ EOF;
             include_once $this->on_before_save_filename;
             // note that the custom code could create new values in the element_values array, so the caller must limit to valid field names
             $element_values = call_user_func($this->on_before_save_function_name, $entry_id, $element_values);
+            foreach ($element_values["element_values"] as $key => $value) {
+                if (0 == preg_match("/^[a-zA-Z_][a-zA-Z0-9_]*$/", $key)) {
+                    // this key is invalid for a PHP variable name, so it was not set in the on-before-save function and
+                    //  the value in the array (which could have been modified) should be returned
+                    $element_values[$key] = $value;
+                }
+            }
+            // due to extract()ing and then collecting back into an array, the array contains itself, so remove the duplicate
+            unset($element_values["element_values"]);
         }
         return $element_values;
     }
