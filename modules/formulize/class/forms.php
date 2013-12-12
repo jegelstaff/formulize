@@ -206,7 +206,7 @@ class formulizeForm extends XoopsObject {
             $on_before_save_code = <<<EOF
 <?php
 
-function form_{$this->id_form}_on_before_save(\$entry_id, \$element_values) {
+function form_{$this->id_form}_on_before_save(\$entry_id, \$element_values, \$form_id) {
     extract(\$element_values);  // this converts the array elements into PHP variables
 
 {$this->on_before_save}
@@ -235,7 +235,7 @@ EOF;
         if (strlen($this->on_before_save) > 0 and (file_exists($this->on_before_save_filename) or $this->cache_on_before_save_code())) {
             include_once $this->on_before_save_filename;
             // note that the custom code could create new values in the element_values array, so the caller must limit to valid field names
-            $element_values = call_user_func($this->on_before_save_function_name, $entry_id, $element_values);
+            $element_values = call_user_func($this->on_before_save_function_name, $entry_id, $element_values, $this->getVar('id_form'));
             foreach ($element_values["element_values"] as $key => $value) {
                 if (0 == preg_match("/^[a-zA-Z_][a-zA-Z0-9_]*$/", $key)) {
                     // this key is invalid for a PHP variable name, so it was not set in the on-before-save function and
