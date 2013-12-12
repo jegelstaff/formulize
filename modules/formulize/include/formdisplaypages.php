@@ -132,7 +132,12 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			synchSubformBlankDefaults($fid, $entry);
 		}
 	}
-	
+
+    // there are several points above where $entry is set, and now that we have a final value, store in ventry
+    if ($entry > 0) {
+        $settings['ventry'] = $entry;
+    }
+
 	// check to see if there are conditions on this page, and if so are they met
 	// if the conditions are not met, move on to the next page and repeat the condition check
 	// conditions only checked once there is an entry!
