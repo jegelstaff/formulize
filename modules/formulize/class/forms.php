@@ -202,7 +202,8 @@ class formulizeForm extends XoopsObject {
     }
 
     private function cache_on_before_save_code() {
-        $on_before_save_code = <<<EOF
+        if (strlen($this->on_before_save) > 0) {
+            $on_before_save_code = <<<EOF
 <?php
 
 function form_{$this->id_form}_on_before_save(\$entry_id, \$element_values) {
@@ -214,8 +215,14 @@ function form_{$this->id_form}_on_before_save(\$entry_id, \$element_values) {
 }
 
 EOF;
-        // todo: there is a way to validate php files on disk, so do that and report any syntax errors
-        return (false !== file_put_contents($this->on_before_save_filename, $on_before_save_code));
+            // todo: there is a way to validate php files on disk, so do that and report any syntax errors
+            return (false !== file_put_contents($this->on_before_save_filename, $on_before_save_code));
+        } else {
+            if (file_exists($this->on_before_save_filename)) {
+                unlink($this->on_before_save_filename);
+            }
+            return true;
+        }
     }
 
     public function on_before_save() {
