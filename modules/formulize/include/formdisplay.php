@@ -1490,7 +1490,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					}
 					$col_two .= "<tr>\n<td>";
 					// check to see if we draw a delete box or not
-					if ($sub_ent !== "new" and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent)) {
+					if ($sub_ent !== "new" and ("hideaddentries" != $hideaddentries)
+						and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent))
+					{
+						// note: if the add/delete entry buttons are hidden, then these delete checkboxes are hidden as well
 						$need_delete = 1;
 						$col_two .= "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>";
 					}
