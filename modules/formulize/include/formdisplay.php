@@ -591,7 +591,12 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 			print "<p>" . _NO_PERM . "</p>";
 			return;
 		}
-      }
+	}
+
+    // there are several points above where $entry is set, and now that we have a final value, store in ventry
+    if ($entry > 0) {
+        $settings['ventry'] = $entry;
+    }
 
 	// set the alldoneoverride if necessary -- August 22 2006
 	$config_handler =& xoops_gethandler('config');
