@@ -4558,8 +4558,17 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 if ($targetElementEleValue[1]) {
                     $conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE `$targetSourceHandle` ".$filterOps[$filterId].$quotes.$likebits.$filterTermToUse.$likebits.$quotes."),',$origlikebits') ";
                 } else {
-                    $conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE `$targetSourceHandle` " . $filterOps[$filterId] . $quotes . $likebits . $filterTermToUse . $likebits . $quotes . ") ";
-                    $filterOps[$filterId] = '=';
+							    $overrideReturnedOp = "";
+							    if($filterOps[$filterId] == "!=") {
+							      $filterOps[$filterId] = "=";
+							      $overrideReturnedOp = "!=";
+							    } 
+                  $conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE `$targetSourceHandle` " . $filterOps[$filterId] . $quotes . $likebits . $filterTermToUse . $likebits . $quotes . ") ";
+							    // need to change the filterOp being used, so when this is inserted into the main query, we have a different op introducing the subquery
+							    if($filterOps[$filterId] == "LIKE" OR $filterOps[$filterId] == "NOT LIKE") {
+							      $overrideReturnedOp = "IN";
+							    }
+                  $filterOps[$filterId] = $overrideReturnedOp ? $overrideReturnedOp : '=';
                 }
             }
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][substr($filterTerms[$filterId],1,-1)])) {
