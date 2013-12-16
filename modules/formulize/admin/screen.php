@@ -358,7 +358,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
 if($_GET['sid'] != "new" && $settings['type'] == 'form') {
   if (!function_exists("multiPageScreen_addToOptionsList")) {
     function multiPageScreen_addToOptionsList($fid, $options) {
-        $formObject = new formulizeForm($fid);
+        $formObject = new formulizeForm($fid, true); // true causes all elements, even ones now shown to any user, to be included
         $elements = $formObject->getVar('elements');
         $elementCaptions = $formObject->getVar('elementCaptions');
         foreach($elementCaptions as $key=>$elementCaption) {
