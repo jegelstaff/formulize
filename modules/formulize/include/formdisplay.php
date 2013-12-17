@@ -594,7 +594,7 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 	}
 
     // there are several points above where $entry is set, and now that we have a final value, store in ventry
-    if ($entry > 0) {
+    if ($entry > 0 and "addnew" != $settings['ventry']) {
         $settings['ventry'] = $entry;
     }
 
