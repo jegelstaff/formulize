@@ -1386,6 +1386,8 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
 					print "bottomtemplate already added for multipage screens.  result: OK<br>";
                 } elseif($key === "add_formelements") {
                     print "formelements field already added for single page screens.  result: OK<br>";
+                } elseif($key === "add_on_before_save") {
+                    print "on_before_save field already added.  result: OK<br>";
 				} elseif(strstr($key, 'drop_from_formulize_id_')) {
 					continue;					
 				} else {
