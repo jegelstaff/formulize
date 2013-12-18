@@ -162,11 +162,22 @@ class formulizeFramework extends XoopsObject {
 		return $cachedHandles[$key];
 	}
 
+
+    function __get($name) {
+        if (!isset($this->$name)) {
+            if (method_exists($this, $name)) {
+                $this->$name = $this->$name();
+            } else {
+                $this->$name = $this->getVar($name);
+            }
+        }
+        return $this->$name;
+    }
 }
+
 
 class formulizeFrameworkLink extends XoopsObject {
 	function formulizeFrameworkLink($lid=""){
-		
 		// validate $lid
 		global $xoopsDB;
 		if(!is_numeric($lid)) {
@@ -180,11 +191,11 @@ class formulizeFrameworkLink extends XoopsObject {
 			$common = "";
 			$relationship = "";
 			$unified_display = "";
-		} else {		
-			$link_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_id=\"" . mysql_real_escape_string($lid). "\"");
+		} else {
+			$link_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_id = \"" . mysql_real_escape_string($lid). "\"");
 			if(!isset($link_q[0])) {
 				// set empty defaults
-  			$lid = "";
+				$lid = "";
 				$frid = "";
 				$form1 = "";
 				$form2 = "";
@@ -193,8 +204,9 @@ class formulizeFrameworkLink extends XoopsObject {
 				$common = "";
 				$relationship = "";
 				$unified_display = "";
+				$unified_delete = "";
 			} else {
-  			$lid = $lid;
+				$lid = $lid;
 				$frid = $link_q[0]['fl_frame_id'];
 				$form1 = $link_q[0]['fl_form1_id'];
 				$form2 = $link_q[0]['fl_form2_id'];
@@ -203,6 +215,7 @@ class formulizeFrameworkLink extends XoopsObject {
 				$common = $link_q[0]['fl_common_value'];
 				$relationship = $link_q[0]['fl_relationship'];
 				$unified_display = $link_q[0]['fl_unified_display'];
+				$unified_delete = $link_q[0]['fl_unified_delete'];
 			}
 		}
 
@@ -217,11 +230,164 @@ class formulizeFrameworkLink extends XoopsObject {
 		$this->initVar("common", XOBJ_DTYPE_INT, $common, true);
 		$this->initVar("relationship", XOBJ_DTYPE_INT, $relationship, true);
 		$this->initVar("unifiedDisplay", XOBJ_DTYPE_INT, $unified_display, true);
+		$this->initVar("unified_delete", XOBJ_DTYPE_INT, $unified_delete, true);
 	}
-	
-	
-	
+
+
+    function main_form() {
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        return $form_handler->get($this->getVar('form1'));
+    }
+
+
+    function linked_form() {
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        return $form_handler->get($this->getVar('form2'));
+    }
+
+
+    function link_selected() {
+        return "{$this->key1}+{$this->key2}";
+    }
+
+
+    function link_options() {
+        global $xoopsDB;
+
+        $elements = array();
+
+        // initialize the class that can read the ele_value field
+        $formulize_mgr =& xoops_getmodulehandler('elements');
+
+        // get a list of all the linked select boxes since we need to know if any fields in these two forms are the source for any links
+        $resgetlinksq = $xoopsDB->query("SELECT id_form, ele_caption, ele_id, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type=\"select\" AND ele_value LIKE '%#*=:*%' ORDER BY id_form");
+        while ($rowlinksq = $xoopsDB->fetchRow($resgetlinksq)) {
+            $target_form_ids[] = $rowlinksq[0];
+            $target_captions[] = $rowlinksq[1];
+            $target_ele_ids[] = $rowlinksq[2];
+
+            // returns an object containing all the details about the form
+            $elements =& $formulize_mgr->getObjects2($criteria, $rowlinksq[0]);
+
+            // search for the elements where the link exists
+            foreach ($elements as $e) {
+                $ele_id = $e->getVar('ele_id');
+                // if this is the right element, then proceed and get the source of the link
+                if ($ele_id == $rowlinksq[2]) {
+                    $ele_value = $e->getVar('ele_value');
+                    $details = explode("#*=:*", $ele_value[2]);
+                    $source_form_ids[] = $details[0];
+
+                    //get the element ID for the source we've just found
+                    $sourceq = "SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . mysql_real_escape_string($details[1]) . "' AND id_form = '$details[0]'";
+                    if ($ressourceq = $xoopsDB->query($sourceq)) {
+                        $rowsourceq = $xoopsDB->fetchRow($ressourceq);
+                        $source_ele_ids[] = $rowsourceq[0];
+                        $source_captions[] = $rowsourceq[1];
+                    } else {
+                        print "Error:  Query failed.  Searching for element ID for the caption $details[1] in form $details[0]";
+                    }
+                }
+            }
+        }
+
+        // Arrays now set as follows:
+        // target_form_ids == the ID of the form where the current linked selectbox resides
+        // target_captions == the caption of the current linked selectbox
+        // target_ele_ids == the element ID of the current linked selectbox
+        // source_form_ids == the ID of the form where the source for the current linked selectbox resides
+        // source_captions == the caption of the source for the current linked selectbox
+        // source_ele_ids == the element ID of the source for the current linked selectbox
+
+        // each index in those arrays denotes a distinct linked selectbox
+
+        // example:
+        // target_form_ids == 11
+        // target_captions == Link to Name
+        // target_ele_ids == 22
+        // source_form_ids == 10
+        // source_captions == Name
+        // source_ele_ids == 20
+
+        //determine the contents of the linkage box
+        //find all links between these forms, but add User ID as the top value in the box
+        // 1. Find all target links for form 1
+        // 2. Check if the source is form 2
+        // 3. If yes, add to the stack
+        // 4. Repeat for form 2, looking for form 1
+        // 5. Draw entries in box as follows:
+        // form 1 field name/form 2 field name
+        // 6. Account for the current link if one is specified, and make that the default selection
+
+        $hits12 = $this->_findlink($this->getVar('form1'), $this->getVar('form2'), $target_form_ids, $source_form_ids);
+        $hits21 = $this->_findlink($this->getVar('form2'), $this->getVar('form1'), $target_form_ids, $source_form_ids);
+
+        $link_options = array();
+        $loi = 1;
+        if ($this->getVar('common') == 1) {
+            // must retrieve the names of the fields, since they won't be in the target and source caps arrays, since those are focused only on the linked fields
+            $element_handler =& xoops_getmodulehandler('elements', 'formulize');
+            $ele1 = $element_handler->get($this->getVar('key1'));
+            $ele2 = $element_handler->get($this->getVar('key2'));
+            if (is_object($ele1)) {
+                $name1 = $ele1->getVar('ele_colhead') ? printSmart($ele1->getVar('ele_colhead')) : printSmart($ele1->getVar('ele_caption'));
+            } else {
+                $name1 = '';
+            }
+            if (is_object($ele2)) {
+                $name2 = $ele2->getVar('ele_colhead') ? printSmart($ele2->getVar('ele_colhead')) : printSmart($ele2->getVar('ele_caption'));
+            } else {
+                $name2 = '';
+            }
+            $link_options[$loi]['value'] = $this->getVar('key1') . "+" . $this->getVar('key2');
+            $link_options[$loi]['name'] = _AM_FRAME_COMMON_VALUES . printSmart($name1,20) . " & " . printSmart($name2,20);
+            $loi++;
+        }
+        $this->_buildlinkoptions($hits12, 0, $this->getVar('key1'), $this->getVar('key2'), $target_ele_ids, $source_ele_ids, $target_captions, $source_captions, $link_options, $loi);
+        $this->_buildlinkoptions($hits21, 1, $this->getVar('key1'), $this->getVar('key2'), $target_ele_ids, $source_ele_ids, $target_captions, $source_captions, $link_options, $loi);
+
+        return $link_options;
+    }
+
+
+    protected function _findlink($target_form, $source_form, $target_form_ids, $source_form_ids) {
+        $truehits = array();
+        $hits = array_keys($target_form_ids, $target_form);
+        foreach ($hits as $hit) {
+            if ($source_form_ids[$hit] == $source_form) {
+                $truehits[] = $hit;
+            }
+        }
+        return $truehits;
+    }
+
+
+    protected function _buildlinkoptions($links, $invert, $key1, $key2, $target_ele_ids, $source_ele_ids, $target_captions, $source_captions, &$linkoptions, $loi) {
+        foreach ($links as $link) {
+            if ($invert) {
+                $linkoptions[$loi]['value'] = $source_ele_ids[$link] . "+" . $target_ele_ids[$link];
+                $linkoptions[$loi]['name'] = "Linked elements: ".printSmart(htmlspecialchars(strip_tags($source_captions[$link])),20) . " & " . printSmart(htmlspecialchars(strip_tags($target_captions[$link])),20);
+            } else {
+                $linkoptions[$loi]['value'] = $target_ele_ids[$link] . "+" . $source_ele_ids[$link];
+                $linkoptions[$loi]['name'] = "Linked elements: ".printSmart(htmlspecialchars(strip_tags($source_captions[$link])),20) . " & " . printSmart(htmlspecialchars(strip_tags($target_captions[$link])),20);
+            }
+            $loi++;
+        }
+    }
+
+
+    function __get($name) {
+        if (!isset($this->$name)) {
+            if (method_exists($this, $name)) {
+                $this->$name = $this->$name();
+            } else {
+                $this->$name = $this->getVar($name);
+            }
+        }
+        return $this->$name;
+    }
 }
+
 
 class formulizeFrameworksHandler {
 	var $db;
@@ -323,11 +489,5 @@ class formulizeFrameworksHandler {
 		}
 		$cachedResults[$fid] = $ret;
 		return $ret;
-
 	}
-
-  
-
-
 }
-?>

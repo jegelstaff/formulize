@@ -916,7 +916,12 @@ function deleteEntry($id_req, $frid="", $fid, $gperm_handler="", $member_handler
             $data_handler = new formulizeDataHandler($fid);
             $owner_groups = $data_handler->getEntryOwnerGroups($id_req);
         }
-        $linkresults = checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner);
+
+        // check for entries in forms with a relationship to this one, where the unified_delete setting is enabled
+        $unified_display = false;
+        $unified_delete = true;
+        $linkresults = checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner,
+            $unified_display, $unified_delete);
         foreach ($linkresults['entries'] as $thisfid=>$ents) {
             foreach ($ents as $ent) {
                 if ($ent) {
@@ -978,19 +983,27 @@ function makeUidFilter($users) {
 // FUNCTION HANDLES CHECKING FOR ALL LINKING RELATIONSHIPS FOR THE FORM
 // returns the fids and entries passed to it, plus any others in a framework relationship
 // final param is a flag to control whether only unified display relationships are returned or all relationships
-function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner, $ud="1") {
+function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner,
+    $unified_display=false, $unified_delete=true)
+{
     // by default (ie: when called from formDisplay) only look for unified display relationships
-    // when $ud is specifically set to zero, ie: when called from displayEntries, look for any relationships in the framework
-    if ($ud) {
+    // when $unified_display is specifically set to zero, ie: when called from displayEntries, look for any relationships in the framework
+    if ($unified_display) {
         $unified_display = "AND fl_unified_display = 1";
     } else {
         $unified_display = "";
     }
 
+    if ($unified_delete) {
+        $unified_delete = "AND fl_unified_delete = 1";
+    } else {
+        $unified_delete = "";
+    }
+
     global $xoopsDB;
     // get one-to-one links
-    $one_q1 = q("SELECT fl_form1_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 1 AND fl_frame_id = $frid $unified_display");
-    $one_q2 = q("SELECT fl_form2_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 1 AND fl_frame_id = $frid $unified_display");
+    $one_q1 = q("SELECT fl_form1_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 1 AND fl_frame_id = $frid $unified_display $unified_delete");
+    $one_q2 = q("SELECT fl_form2_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 1 AND fl_frame_id = $frid $unified_display $unified_delete");
     $indexer = 0;
     $one_to_one = array();
     $many_to_one = array();
@@ -1011,8 +1024,8 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
 
     // get one-to-many links
     $indexer=0;
-    $many_q1 = q("SELECT fl_form1_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 3 AND fl_frame_id = $frid $unified_display");
-    $many_q2 = q("SELECT fl_form2_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 2 AND fl_frame_id = $frid $unified_display");
+    $many_q1 = q("SELECT fl_form1_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 3 AND fl_frame_id = $frid $unified_display $unified_delete");
+    $many_q2 = q("SELECT fl_form2_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 2 AND fl_frame_id = $frid $unified_display $unified_delete");
 
     foreach ($many_q1 as $res1) {
         $one_to_many[$indexer]['fid'] = $res1['fl_form1_id'];
@@ -1030,8 +1043,8 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
     }
 
     // get MANY-TO-ONE links
-    $many_q3 = q("SELECT fl_form1_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 2 AND fl_frame_id = $frid $unified_display");
-    $many_q4 = q("SELECT fl_form2_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 3 AND fl_frame_id = $frid $unified_display");
+    $many_q3 = q("SELECT fl_form1_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form2_id = $fid AND fl_relationship = 2 AND fl_frame_id = $frid $unified_display $unified_delete");
+    $many_q4 = q("SELECT fl_form2_id, fl_key1, fl_key2, fl_common_value FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_form1_id = $fid AND fl_relationship = 3 AND fl_frame_id = $frid $unified_display $unified_delete");
 
     foreach ($many_q3 as $res1) {
         $many_to_one[$indexer]['fid'] = $res1['fl_form1_id'];
@@ -4124,8 +4137,10 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
         if (isset($filterSettings[3])) {
             ${$oldTypesName} = $filterSettings[3];
         } else {
-            foreach ($filterSettings[0] as $i=>$thisFilterSettingsZero) {
-                ${$oldTypesName}[$i] = $defaultTypeIfNoFilterTypeGiven;
+            if (is_array($filterSettings[0])) {
+                foreach ($filterSettings[0] as $i => $thisFilterSettingsZero) {
+                    ${$oldTypesName}[$i] = $defaultTypeIfNoFilterTypeGiven;
+                }
             }
         }
     }
