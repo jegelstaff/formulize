@@ -994,6 +994,7 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
     $indexer = 0;
     $one_to_one = array();
     $many_to_one = array();
+    $one_to_many = array();
     foreach ($one_q1 as $res1) {
         $one_to_one[$indexer]['fid'] = $res1['fl_form1_id'];
         $one_to_one[$indexer]['keyself'] = $res1['fl_key1'];
