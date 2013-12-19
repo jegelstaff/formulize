@@ -285,7 +285,7 @@ foreach($formulize_allWrittenEntryIds as $allWrittenFid=>$entries) {
 				$foundEntries['entries'][$fid] = $entries;
 			} else {
 				// Since this isn't the main form, then we need to check for which mainform entries match to the entries we're updating right now
-				$foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)));
+				$foundEntries = checkForLinks($frid, array($allWrittenFid), $allWrittenFid, array($allWrittenFid=>array($thisEntry)), null, null, null, null, null, null);
 			}
 			foreach($foundEntries['entries'][$fid] as $mainFormEntry) {
 				if(!in_array($mainFormEntry, $mainFormEntriesUpdatedForDerived) AND $mainFormEntry) {
