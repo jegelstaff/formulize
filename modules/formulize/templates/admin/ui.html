@@ -76,6 +76,13 @@ $(document).ready(function() {
   <input type="hidden" name="accordion_active" value="">
 </form>
 
+<{if $adminPage.show_user_view}>
+<{* link to the front-end view of this screen *}>
+<div id="fz-admin-toolbar">
+    <a class="show-user-view" href="<{$adminPage.show_user_view.1}>"><{$adminPage.show_user_view.0}></a>
+</div>
+<{/if}>
+
 <{if $adminPage.pagetitle}>
   <h1><{$adminPage.pagetitle}></h1>
   <p class="smallhead"><{$adminPage.pagesubtitle}></p>
