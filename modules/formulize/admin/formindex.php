@@ -1545,6 +1545,14 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
                         }
                     }
                 }
+
+        // if the relationship link option, unified_delete, does not exist, create the field and default to the unified_display setting value
+        $sql = $xoopsDB->query("show columns from ".$xoopsDB->prefix("formulize_framework_links")." where Field = 'fl_unified_delete'");
+        if (0 == $xoopsDB->getRowsNum($sql)) {
+            $xoopsDB->query("ALTER TABLE " . $xoopsDB->prefix("formulize_framework_links") . " ADD `fl_unified_delete` smallint(5)");
+            $xoopsDB->query("update " . $xoopsDB->prefix("formulize_framework_links") . " set `fl_unified_delete` = `fl_unified_display`");
+        }
+
 		print "DB updates completed.  result: OK";
 	}
 }

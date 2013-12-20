@@ -248,6 +248,18 @@ EOF;
         }
         return $element_values;
     }
+
+
+    function __get($name) {
+        if (!isset($this->$name)) {
+            if (method_exists($this, $name)) {
+                $this->$name = $this->$name();
+            } else {
+                $this->$name = $this->getVar($name);
+            }
+        }
+        return $this->$name;
+    }
 }
 
 
