@@ -952,9 +952,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$proxy = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
 	$user_can_delete    = formulizePermHandler::user_can_delete_from_form($fid, $uid);
-
+	$edit_form = $gperm_handler->checkRight("edit_form", $fid, $groups, $mid);
+	
 	// establish text and code for buttons, whether a screen is in effect or not
 	$screenButtonText = array();
+	$screenButtonText['modifyScreenLink'] = $edit_form ? _formulize_DE_MODIFYSCREEN : "";
 	$screenButtonText['changeColsButton'] = _formulize_DE_CHANGECOLS;
 	$screenButtonText['calcButton'] = _formulize_DE_CALCS;
 	$screenButtonText['advCalcButton'] = _formulize_DE_ADVCALCS;
@@ -1056,6 +1058,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		
 		print "<h1>" . trans($title) . "</h1>";
 	
+		if($thisButtonCode = $buttonCodeArray['modifyScreenLink']) { print "$thisButtonCode<br />"; }
 	
 		if($loadview AND $lockcontrols) {
 			print "<h3>" . $loadviewname . "</h3></td><td>";
@@ -4121,6 +4124,9 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 	if($buttonText) {
 		$buttonText = trans($buttonText);
 		switch ($button) {
+			case "modifyScreenLink":
+				return "<a href=" . XOOPS_URL . "/modules/formulize/admin/ui.php?page=form&fid=$fid&tab=elements>" . $buttonText . "</a>";
+				break;
 			case "changeColsButton":
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";
 				break;
