@@ -956,7 +956,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	
 	// establish text and code for buttons, whether a screen is in effect or not
 	$screenButtonText = array();
-	$screenButtonText['modifyScreenLink'] = $edit_form ? _formulize_DE_MODIFYSCREEN : "";
+	$screenButtonText['modifyScreenLink'] = ($edit_form AND $screen) ? _formulize_DE_MODIFYSCREEN : "";
 	$screenButtonText['changeColsButton'] = _formulize_DE_CHANGECOLS;
 	$screenButtonText['calcButton'] = _formulize_DE_CALCS;
 	$screenButtonText['advCalcButton'] = _formulize_DE_ADVCALCS;
@@ -1033,7 +1033,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$atLeastOneActionButton = false;
 	foreach($screenButtonText as $scrButton=>$scrText) {
     formulize_benchmark("before creating button: ".$scrButton);
-		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid);
+		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
     formulize_benchmark("button done");
 		if($buttonCodeArray[$scrButton] AND $onActionButtonCounter < 14) { // first 14 items in the array should be the action buttons only
 			$atLeastOneActionButton = true;
@@ -4119,13 +4119,13 @@ function gatherHiddenValue($handle) {
 }
 
 // THIS FUNCTION GENERATES HTML FOR ANY BUTTONS THAT ARE REQUESTED
-function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid) {
+function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen) {
   static $importExportCleanupDone = false;
 	if($buttonText) {
 		$buttonText = trans($buttonText);
 		switch ($button) {
 			case "modifyScreenLink":
-				return "<a href=" . XOOPS_URL . "/modules/formulize/admin/ui.php?page=form&fid=$fid&tab=elements>" . $buttonText . "</a>";
+				return "<a href=" . XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid').">" . $buttonText . "</a>";
 				break;
 			case "changeColsButton":
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";
