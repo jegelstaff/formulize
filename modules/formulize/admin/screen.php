@@ -31,33 +31,64 @@
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
-// need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
-$aid = intval($_GET['aid']);
+$screen_id = $_GET['sid'];
+// screen settings data
+$settings = array();
+$settings['links'] = $links;
+
+$aid = 0;
+$form_id = "new";
+
+if($screen_id == "new") {
+    $settings['type'] = 'listOfEntries';
+    $settings['frid'] = 0;
+    $settings['useToken'] = 1;
+    $screenName = "New screen";
+} else {
+    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    $screen = $screen_handler->get($screen_id);
+    if (null == $screen) {
+        // not a valid screen ID, so redirect to the Formulize main page
+        header("location: ".XOOPS_URL."/modules/formulize/application.php?id=all");
+        die;
+    }
+
+    $settings['type'] = $screen->getVar('type');
+    $settings['frid'] = $screen->getVar('frid');
+    $settings['useToken'] = $screen->getVar('useToken');
+
+    if($settings['type'] == 'listOfEntries') {
+        $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+    } else if($settings['type'] == 'form') {
+        $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+    } else if($settings['type'] == 'multiPage') {
+        $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+    }
+
+    $screenName = $screen->getVar('title');
+    $form_id = $screen->form_id;
+
+    $adminPage["template"] = "ABC, mellonfarmers!";
+}
+
 if($aid == 0) {
-	$appName = "Forms with no app"; 
+    $appName = "Forms with no app";
 } else {
   $application_handler = xoops_getmodulehandler('applications','formulize');
-	$appObject = $application_handler->get($aid);
-	$appName = $appObject->getVar('name');
+    $appObject = $application_handler->get($aid);
+    $appName = $appObject->getVar('name');
 }
+
+if ($form_id != "new") {
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $formObject = $form_handler->get($form_id);
+    $formName = $formObject->getVar('title');
+    $singleentry = $formObject->getVar('single');
+}
+
 $elements = array();
-if($_GET['fid'] != "new") {
-  $fid = intval($_GET['fid']);
-  $form_handler = xoops_getmodulehandler('forms', 'formulize');
-  $formObject = $form_handler->get($fid);
-  $formName = $formObject->getVar('title');
-  $singleentry = $formObject->getVar('single');
-  //$screen_handler = xoops_getmodulehandler('screen', 'formulize');
-} else {
-  $fid = $_GET['fid'];
-}
-
-
-$sid = $_GET['sid'];
-
-
 $links = array();
-$sql = 'SELECT DISTINCT frameworks.frame_id, frameworks.frame_name FROM '.$xoopsDB->prefix("formulize_framework_links").' as links, '.$xoopsDB->prefix("formulize_frameworks").' as frameworks WHERE fl_form1_id='.intval($fid).' OR fl_form2_id='.intval($fid).' AND links.fl_frame_id=frameworks.frame_id';
+$sql = 'SELECT DISTINCT frameworks.frame_id, frameworks.frame_name FROM '.$xoopsDB->prefix("formulize_framework_links").' as links, '.$xoopsDB->prefix("formulize_frameworks").' as frameworks WHERE fl_form1_id='.intval($form_id).' OR fl_form2_id='.intval($form_id).' AND links.fl_frame_id=frameworks.frame_id';
 $res = $xoopsDB->query($sql);
 if ($res) {
   while ($row = $xoopsDB->fetchRow($res)) {
@@ -65,41 +96,8 @@ if ($res) {
   }
 }
 
-
-
-
-// screen settings data
-$settings = array();
-$settings['links'] = $links;
-
-if($_GET['sid'] == "new") {
-  $settings['type'] = 'listOfEntries';
-  $settings['frid'] = 0;
-  $settings['useToken'] = 1;
-  $screenName = "New screen";
-} else {
-  $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-  $screen = $screen_handler->get($sid);
-  $settings['type'] = $screen->getVar('type');
-  $settings['frid'] = $screen->getVar('frid');
-  $settings['useToken'] = $screen->getVar('useToken');
-
-  if($settings['type'] == 'listOfEntries') {
-    $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
-  } else if($settings['type'] == 'form') {
-    $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
-  } else if($settings['type'] == 'multiPage') {
-    $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-  }
-
-  $screen = $screen_handler->get($sid);
-  $screenName = $screen->getVar('title');
-  
-}
-
-
 // prepare data for sub-page
-if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
+if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // display data
   $templates = array();
   $templates['toptemplate'] = $screen->getVar('toptemplate');
@@ -111,8 +109,8 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   // setup an option list of all views, as well as one just for the currently selected Framework setting
   $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
   $form_handler =& xoops_getmodulehandler('forms', 'formulize');
-  $formObj = $form_handler->get($fid, true); // true causes all elements to be included even if they're not visible.
-  $frameworks = $framework_handler->getFrameworksByForm($fid);
+  $formObj = $form_handler->get($form_id, true); // true causes all elements to be included even if they're not visible.
+  $frameworks = $framework_handler->getFrameworksByForm($form_id);
   $selectedFramework = $settings['frid'];
   $views = $formObj->getVar('views');
   $viewNames = $formObj->getVar('viewNames');
@@ -140,7 +138,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   $screen_handler = xoops_getmodulehandler('screen', 'formulize');
   $criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
   $criteria_object->add(new Criteria('type','form'), 'OR');
-  $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $fid); 
+  $viewentryscreenOptionsDB = $screen_handler->getObjects($criteria_object, $form_id);
   $viewentryscreenOptions["none"] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT;
   foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
       $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
@@ -175,7 +173,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   if($selectedFramework and isset($frameworks[$selectedFramework])) {
       $allFids = $frameworks[$selectedFramework]->getVar('fids');
   } else {
-      $allFids = array(0=>$fid);
+      $allFids = array(0=>$form_id);
   }
   $thisFidObj = "";
   $allFidObjs = array();
@@ -184,7 +182,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   $class = "odd";
   foreach($allFids as $thisFid) {
       unset($thisFidObj);
-      if($fid == $thisFid) {
+      if($form_id == $thisFid) {
           $thisFidObj = $formObj;
       } else {
           $thisFidObj = $form_handler->get($thisFid, true); // true causes all elements to be included, even if they're not visible
@@ -204,7 +202,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
       }
   }
   $templates['listtemplatehelp'] = $listTemplateHelp;
-  
+
   $headings = array();
   $headings['useheadings'] = $screen->getVar('useheadings');
   $headings['repeatheaders'] = $screen->getVar('repeatheaders');
@@ -246,7 +244,7 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   $applyToOptions = array('inline'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_INLINE, 'selected'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_SELECTED, 'all'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_ALL, 'new'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW, 'new_per_selected'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED);
   if(count($allFids) > 1) {
     foreach ($allFids as $i=>$thisFid) {
-      if($thisFid == $fid) { continue; } // don't treat the current form as if it's an 'other' form
+      if($thisFid == $form_id) { continue; } // don't treat the current form as if it's an 'other' form
       $applyToOptions['new_'.$thisFid] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW_OTHER . printSmart($allFidObjs[$thisFid]->getVar('title'), 20) . "'";
       $applyToOptions['new_per_selected_'.$thisFid] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW_OTHER . printSmart($allFidObjs[$thisFid]->getVar('title'), 20) . _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED_OTHER;
     }
@@ -254,36 +252,37 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   $applyToOptions['custom_code'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_CODE;
   $applyToOptions['custom_html'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_HTML;
   $custom['applytoOptions'] = $applyToOptions;
-  foreach($screen->getVar('customactions') as $buttonId=>$buttonData) {
-    $custom['custombuttons'][$buttonId]['content'] = $buttonData;
-    $custom['custombuttons'][$buttonId]['content']['id'] = $buttonId; // add id to the date for the template
-    $custom['custombuttons'][$buttonId]['name'] = $buttonData['handle'];
-    $custom['custombuttons'][$buttonId]['groups'] = unserialize($buttonData['groups']);
-    foreach($buttonData as $key=>$value) {
-      if(is_numeric($key)) { // effects have numeric keys
-        if($buttonData['applyto'] == 'custom_code') {
-          $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_CODE_DESC;
-        } elseif($buttonData['applyto'] == 'custom_html') {
-          $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_HTML_DESC;
-        } else {
-          if(strstr($buttonData['applyto'], "new_per_selected_")) {
-            $thisEffectFid = substr($buttonData['applyto'], 17);            
-          } elseif(strstr($buttonData['applyto'], "new_")) {
-            $thisEffectFid = substr($buttonData['applyto'], 4);
+  if (is_array($screen->getVar('customactions'))) {
+    foreach($screen->getVar('customactions') as $buttonId=>$buttonData) {
+      $custom['custombuttons'][$buttonId]['content'] = $buttonData;
+      $custom['custombuttons'][$buttonId]['content']['id'] = $buttonId; // add id to the date for the template
+      $custom['custombuttons'][$buttonId]['name'] = $buttonData['handle'];
+      $custom['custombuttons'][$buttonId]['groups'] = unserialize($buttonData['groups']);
+      foreach($buttonData as $key=>$value) {
+        if(is_numeric($key)) { // effects have numeric keys
+          if($buttonData['applyto'] == 'custom_code') {
+            $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_CODE_DESC;
+          } elseif($buttonData['applyto'] == 'custom_html') {
+            $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_HTML_DESC;
           } else {
-            $thisEffectFid = $fid;
+            if(strstr($buttonData['applyto'], "new_per_selected_")) {
+              $thisEffectFid = substr($buttonData['applyto'], 17);
+            } elseif(strstr($buttonData['applyto'], "new_")) {
+              $thisEffectFid = substr($buttonData['applyto'], 4);
+            } else {
+              $thisEffectFid = $form_id;
+            }
+            $custom['custombuttons'][$buttonId]['content'][$key]['elementOptions'] = $elementOptionsFid[$thisEffectFid]; // add element options from the appropriate form to each effect, for passing to the template
+            $custom['custombuttons'][$buttonId]['content'][$key]['actionOptions'] = array('replace'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE, 'remove'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE, 'append'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND); // add the apply to options to each effect for sending to the template
+            $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_DESC;
           }
-          $custom['custombuttons'][$buttonId]['content'][$key]['elementOptions'] = $elementOptionsFid[$thisEffectFid]; // add element options from the appropriate form to each effect, for passing to the template
-          $custom['custombuttons'][$buttonId]['content'][$key]['actionOptions'] = array('replace'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE, 'remove'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE, 'append'=>_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND); // add the apply to options to each effect for sending to the template
-          $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_DESC;
         }
       }
     }
   }
- 
 }
 
-if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
+if($screen_id != "new" && $settings['type'] == 'multiPage') {
   // parallel entry options for showing previous entries in another form (or entries of some other defined type, but previous entries are what this was made for)
   // Previous entries are meant to be in another form.  To begin with, that form must have the same captions as this form does, but later on there will be some broader capabilities to specify the parallel elements.
   $fe_paraentryform = new xoopsFormSelect(_AM_FORMULIZE_SCREEN_PARAENTRYFORM, 'paraentryform', $screen->getVar('paraentryform'), 1, false);
@@ -296,8 +295,8 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
 
 	// setup all the elements in this form for use in the listboxes
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
-	$options = multiPageScreen_addToOptionsList($fid, array());
-	
+	$options = multiPageScreen_addToOptionsList($form_id, array());
+
 	// add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
 	// added March 20 2008, by jwe
 	$frid = $screen->getVar("frid");
@@ -306,16 +305,16 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
 			$frameworkObject = $framework_handler->get($frid);
 			foreach($frameworkObject->getVar("links") as $thisLinkObject) {
 					if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
-							$thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
+							$thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
 							$options = multiPageScreen_addToOptionsList($thisFid, $options);
 					}
 			}
 	}
-		
-	// get page titles
-  $pageTitles = $screen->getVar("pagetitles");
-  $elements = $screen->getVar("pages");
-  $conditions = $screen->getVar("conditions");
+
+    // get page titles
+    $pageTitles = $screen->getVar("pagetitles");
+    $elements = $screen->getVar("pages");
+    $conditions = $screen->getVar("conditions");
 
   // group entries
   $pages = array();
@@ -347,18 +346,18 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
   // template data
   $multipageTemplates = array();   // Added by Gordon Woodmansey, 29-08-2012
   $multipageTemplates['toptemplate'] = $screen->getVar('toptemplate');
-  $multipageTemplates['elementtemplate'] = $screen->getVar('elementtemplate'); 
-  $multipageTemplates['bottomtemplate'] = $screen->getVar('bottomtemplate'); 
+  $multipageTemplates['elementtemplate'] = $screen->getVar('elementtemplate');
+  $multipageTemplates['bottomtemplate'] = $screen->getVar('bottomtemplate');
 
   // pages data
   $multipagePages = array();
   $multipagePages['pages'] = $pages;
 }
 
-if($_GET['sid'] != "new" && $settings['type'] == 'form') {
+if($screen_id != "new" && $settings['type'] == 'form') {
   if (!function_exists("multiPageScreen_addToOptionsList")) {
-    function multiPageScreen_addToOptionsList($fid, $options) {
-        $formObject = new formulizeForm($fid, true); // true causes all elements, even ones now shown to any user, to be included
+    function multiPageScreen_addToOptionsList($form_id, $options) {
+        $formObject = new formulizeForm($form_id, true); // true causes all elements, even ones now shown to any user, to be included
         $elements = $formObject->getVar('elements');
         $elementCaptions = $formObject->getVar('elementCaptions');
         foreach($elementCaptions as $key=>$elementCaption) {
@@ -367,14 +366,14 @@ if($_GET['sid'] != "new" && $settings['type'] == 'form') {
         return $options;
     }
   }
-  $element_list = multiPageScreen_addToOptionsList($fid, array());
+  $element_list = multiPageScreen_addToOptionsList($form_id, array());
   $frid = $screen->getVar("frid");
   if($frid) {
       $framework_handler =& xoops_getModuleHandler('frameworks');
       $frameworkObject = $framework_handler->get($frid);
       foreach($frameworkObject->getVar("links") as $thisLinkObject) {
           if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
-              $thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
+              $thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
               $element_list = multiPageScreen_addToOptionsList($thisFid, $element_list);
           }
       }
@@ -388,13 +387,13 @@ if($_GET['sid'] != "new" && $settings['type'] == 'form') {
   $options['reloadblank'] = $screen->getVar('reloadblank') ? "blank" : "entry";
   $options['formelements'] = $screen->getVar('formelements');
   $options['element_list'] = $element_list;
-} 
+}
 
 // common values should be assigned to all tabs
 $common['name'] = $screenName;
 $common['title'] = $screenName; // oops, we've got two copies of this data floating around...standardize sometime
-$common['sid'] = $sid;
-$common['fid'] = $fid;
+$common['sid'] = $screen_id;
+$common['fid'] = $form_id;
 $common['aid'] = $aid;
 
 // generate a group list for use with the custom buttons
@@ -405,19 +404,18 @@ if($res = $xoopsDB->query($sql)) {
 	}
 }
 
-
 // define tabs for screen sub-page
 $adminPage['tabs'][1]['name'] = _AM_APP_SETTINGS;
 $adminPage['tabs'][1]['template'] = "db:admin/screen_settings.html";
 $adminPage['tabs'][1]['content'] = $settings + $common;
 
-if($_GET['sid'] != "new" && $settings['type'] == 'form') {
+if($screen_id != "new" && $settings['type'] == 'form') {
   $adminPage['tabs'][2]['name'] = _AM_ELE_OPT;
   $adminPage['tabs'][2]['template'] = "db:admin/screen_form_options.html";
   $adminPage['tabs'][2]['content'] = $options + $common;
 }
 
-if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
+if($screen_id != "new" && $settings['type'] == 'multiPage') {
   $adminPage['tabs'][2]['name'] = _AM_ELE_OPT;
   $adminPage['tabs'][2]['template'] = "db:admin/screen_multipage_options.html";
   $adminPage['tabs'][2]['content'] = $multipageOptions + $common;
@@ -430,13 +428,12 @@ if($_GET['sid'] != "new" && $settings['type'] == 'multiPage') {
   $adminPage['tabs'][4]['template'] = "db:admin/screen_multipage_pages.html";
   $adminPage['tabs'][4]['content'] = $multipagePages + $common;
 
-  $adminPage['tabs'][5]['name'] = _AM_FORM_SCREEN_TEMPLATES;  
-  $adminPage['tabs'][5]['template'] = "db:admin/screen_multipage_templates.html";  
+  $adminPage['tabs'][5]['name'] = _AM_FORM_SCREEN_TEMPLATES;
+  $adminPage['tabs'][5]['template'] = "db:admin/screen_multipage_templates.html";
   $adminPage['tabs'][5]['content'] = $multipageTemplates + $common;
 }
 
-if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
-  
+if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $adminPage['tabs'][2]['name'] = _AM_FORM_SCREEN_ENTRIES_DISPLAY;
   $adminPage['tabs'][2]['template'] = "db:admin/screen_list_entries.html";
   $adminPage['tabs'][2]['content'] = $entries + $common;
@@ -452,20 +449,20 @@ if($_GET['sid'] != "new" && $settings['type'] == 'listOfEntries') {
   $adminPage['tabs'][5]['name'] = _AM_FORM_SCREEN_CUSTOM_BUTTONS;
   $adminPage['tabs'][5]['template'] = "db:admin/screen_list_custom.html";
   $adminPage['tabs'][5]['content'] = $custom + $common;
-  
+
   $adminPage['tabs'][6]['name'] = _AM_FORM_SCREEN_TEMPLATES;
   $adminPage['tabs'][6]['template'] = "db:admin/screen_list_templates.html";
   $adminPage['tabs'][6]['content'] = $templates + $common;
-
 }
 
 $adminPage['pagetitle'] = _AM_FORM_SCREEN.$screenName;
 $adminPage['needsave'] = true;
+$adminPage['show_user_view'] = array("View Screen", XOOPS_URL."/modules/formulize/index.php?sid=$screen_id");
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['url'] = "page=application&aid=$aid&tab=forms";
 $breadcrumbtrail[2]['text'] = $appName;
-$breadcrumbtrail[3]['url'] = "page=form&aid=$aid&fid=$fid&tab=screens";
+$breadcrumbtrail[3]['url'] = "page=form&aid=$aid&fid=$form_id&tab=screens";
 $breadcrumbtrail[3]['text'] = $formName;
 $breadcrumbtrail[4]['text'] = $screenName;

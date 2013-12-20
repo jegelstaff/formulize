@@ -67,6 +67,25 @@ class formulizeScreen extends xoopsObject {
     public function setVar($key, $value, $not_gpc = false) {
         parent::setVar($key, self::normalize_values($key, $value), $not_gpc);
     }
+
+    public function form_id() {
+        return $this->getVar("fid");
+    }
+
+    public function relationship_id() {
+        return $this->getVar("frid");
+    }
+
+    function __get($name) {
+        if (!isset($this->$name)) {
+            if (method_exists($this, $name)) {
+                $this->$name = $this->$name();
+            } else {
+                $this->$name = $this->getVar($name);
+            }
+        }
+        return $this->$name;
+    }
 }
 
 class formulizeScreenHandler {

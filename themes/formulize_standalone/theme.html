@@ -50,8 +50,11 @@
 	<div id="xo-globalnav">
 		  <a href="<{$icms_url}>" title="<{$icms_sitename}>"><{$smarty.const.THEME_HOME}></a>
 		  <{if $xoops_isadmin}>
-		  <a href="<{$icms_url}>/modules/formulize/admin/ui.php" title="admin">Admin</a>
-		  <{/if}>
+          <a href="<{$icms_url}>/modules/formulize/admin/ui.php" title="admin">Admin</a>
+		      <{if isset($formulize_screen_id) and $formulize_screen_id}>
+                <a href="<{$icms_url}>/modules/formulize/admin/ui.php?page=screen&sid=<{$formulize_screen_id}>" title="edit screen">Edit Screen</a>
+		      <{/if}>
+          <{/if}>
 		  <{php}>
 		  global $xoopsUser;
 		  if($xoopsUser) {
