@@ -1204,6 +1204,13 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries, $subformConditions, $subformElementId = 0,
 	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES)
 {
+	$nestedSubform = false;
+	if(isset($GLOBALS['formulize_inlineSubformFrid'])) {
+		$frid = $GLOBALS['formulize_inlineSubformFrid'];
+		$nestedSubform = true;
+	}
+	
+	
     $member_handler = xoops_gethandler('member');
     $gperm_handler = xoops_gethandler('groupperm');
 
@@ -1537,7 +1544,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	<p class=\"subform-header\"><a href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>
 	<div class=\"accordion-content content\">";
 					ob_start();
+					$GLOBALS['formulize_inlineSubformFrid'] = $frid;
 					$renderResult = displayForm($subform_id, $sub_ent, "", "",  "", "", "formElementsOnly"); // SHOULD CHANGE THIS TO USE THE DEFAULT SCREEN FOR THE FORM!!!!!!????
+					if(!$nestedSubform) {
+						unset($GLOBALS['formulize_inlineSubformFrid']);
+					}
 					$col_two_temp = ob_get_contents();
 					ob_end_clean();
 					$col_two .= $col_two_temp . "</div>\n</div>\n";
@@ -1913,10 +1924,14 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$form_ele = $deReturnValue;
 				$isDisabled = false;
 			}
-			if($passed = security_check($thissfid) AND in_array($thissfid, $sub_fids) AND $form_ele == "") {
+			if($passed = security_check($thissfid) AND $form_ele == "") {
 				$GLOBALS['sfidsDrawn'][] = $thissfid;
 				$customCaption = $i->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
+				if(isset($GLOBALS['formulize_inlineSubformFrid'])) {
+					$newLinkResults = checkForLinks($GLOBALS['formulize_inlineSubformFrid'][0], array($fid), $fid, array($fid=>array($entry)), null, $owner_groups, $mid, null, $owner);
+					$sub_entries = $newLinkResults['sub_entries'];
+				}
                 // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
                 $subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]);
 				if(isset($subUICols['single'])) {
