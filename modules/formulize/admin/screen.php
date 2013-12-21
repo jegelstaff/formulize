@@ -34,10 +34,9 @@ include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 $screen_id = $_GET['sid'];
 // screen settings data
 $settings = array();
-$settings['links'] = $links;
 
-$aid = 0;
-$form_id = "new";
+$aid = isset($_GET['aid']) ? intval($_GET['aid']) : 0;
+$form_id = intval($_GET['fid']);
 
 if($screen_id == "new") {
     $settings['type'] = 'listOfEntries';
@@ -64,6 +63,7 @@ if($screen_id == "new") {
     } else if($settings['type'] == 'multiPage') {
         $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
     }
+    $screen = $screen_handler->get($screen_id);
 
     $screenName = $screen->getVar('title');
     $form_id = $screen->form_id;
@@ -88,13 +88,14 @@ if ($form_id != "new") {
 
 $elements = array();
 $links = array();
-$sql = 'SELECT DISTINCT frameworks.frame_id, frameworks.frame_name FROM '.$xoopsDB->prefix("formulize_framework_links").' as links, '.$xoopsDB->prefix("formulize_frameworks").' as frameworks WHERE fl_form1_id='.intval($form_id).' OR fl_form2_id='.intval($form_id).' AND links.fl_frame_id=frameworks.frame_id';
+$sql = 'SELECT DISTINCT frameworks.frame_id, frameworks.frame_name FROM '.$xoopsDB->prefix("formulize_framework_links").' as links, '.$xoopsDB->prefix("formulize_frameworks").' as frameworks WHERE (fl_form1_id='.intval($form_id).' OR fl_form2_id='.intval($form_id).') AND links.fl_frame_id=frameworks.frame_id';
 $res = $xoopsDB->query($sql);
 if ($res) {
   while ($row = $xoopsDB->fetchRow($res)) {
     $links[] = array("id"=>$row[0], "name"=>$row[1]);
   }
 }
+$settings['links'] = $links;
 
 // prepare data for sub-page
 if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
