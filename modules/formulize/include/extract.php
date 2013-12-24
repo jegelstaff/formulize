@@ -158,20 +158,22 @@ function prepvalues($value, $field, $entry_id) {
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
             $sourceFormObject = $form_handler->get($sourceMeta[0]);
             // check if this is a link to a link
-            if($second_source_ele_value = formulize_isLinkedSelectBox($sourceMeta[1], true)) {
-                $secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
-                $secondFormObject = $form_handler->get($secondSourceMeta[0]);
-                $sql = "SELECT t1.`".$secondSourceMeta[1]."` FROM ".DBPRE."formulize_".$secondFormObject->getVar('form_handle')." as t1, ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle'). " as t2 WHERE t2.`entry_id` IN (".trim($value, ",").") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$sourceMeta[1]."`)) ORDER BY t2.`entry_id`";
-            } else {
-                if (is_array($sourceMeta[1])) {
-                    $linked_columns = convertElementIdsToElementHandles($sourceMeta[1], $sourceFormObject->getVar('id_form'));
-                    $linked_columns = array_filter($linked_columns); // remove empty entries
-                    $select_column = "`".implode("`, `", $linked_columns)."`";
+            if (!is_array($sourceMeta[1]))
+                $sourceMeta[1] = array($sourceMeta[1]);
+            $query_columns = array();
+            foreach ($sourceMeta[1] as $key => $handle) {
+                if ($second_source_ele_value = formulize_isLinkedSelectBox($handle, true)) {
+                    $secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
+                    $secondFormObject = $form_handler->get($secondSourceMeta[0]);
+                    $query_columns[] = "(SELECT t1.`".$secondSourceMeta[1]."` FROM ".DBPRE."formulize_".$secondFormObject->getVar('form_handle').
+                        " as t1, ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle'). " as t2 WHERE t2.`entry_id` IN (".trim($value, ",").
+                        ") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$handle."`)) ORDER BY t2.`entry_id`)";
                 } else {
-                    $select_column = "`{$sourceMeta[1]}`";
+                    $query_columns[] = "`$handle`";
                 }
-                $sql = "SELECT $select_column FROM ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." WHERE entry_id IN (".trim($value, ",").") ORDER BY entry_id";
             }
+            $sql = "SELECT ".implode(", ", $query_columns)." FROM ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle').
+                " WHERE entry_id IN (".trim($value, ",").") ORDER BY entry_id";
             if(!$res = $xoopsDB->query($sql)) {
                 print "Error: could not retrieve the source values for a linked selectbox during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
             } else {
