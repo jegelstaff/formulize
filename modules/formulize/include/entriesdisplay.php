@@ -3955,7 +3955,7 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 // $caid is the id of this button, $thisCustomAction is all the settings for this button, $entries is optional and is a comma separated list of entries that should be modified by this button (only takes effect on inline buttons, and possible future types)
 // $entries is the entry ID that should be altered when this button is clicked.  Only sent for inline buttons.
 // $entry is only sent from inline buttons, so that any PHP/HTML to be rendered inline has access to all the values of the current entry
-function processCustomButton($caid, $thisCustomAction, $entries="", $entry) {
+function processCustomButton($caid, $thisCustomAction, $entries="", $entry="") {
 
 	global $xoopsUser;
 	$userGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
