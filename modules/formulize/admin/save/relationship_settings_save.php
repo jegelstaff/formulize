@@ -89,7 +89,9 @@ function addlink($form1_id, $form2_id, $relationship_id) {
     $forms[] = $form2_id;
 
     // write the link to the links table
-    $writelink = "INSERT INTO " . $xoopsDB->prefix("formulize_framework_links") . " (fl_frame_id, fl_form1_id, fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_unified_delete, fl_common_value) VALUES ('$relationship_id', '$form1_id', '$form2_id', 0, 0, 1, 0, 0, 0)";
+    $writelink = "INSERT INTO " . $xoopsDB->prefix("formulize_framework_links") .
+        " (fl_frame_id, fl_form1_id, fl_form2_id, fl_key1, fl_key2, fl_relationship, fl_unified_display, fl_unified_delete, fl_common_value)".
+        " VALUES ('$relationship_id', '$form1_id', '$form2_id', 0, 0, 1, 1, 0, 0)";
     if(!$res = $xoopsDB->query($writelink)) {
         print "Error: could not write link of $form1_id and $form2_id to the links table for framework $relationship_id";
         $success = false;
