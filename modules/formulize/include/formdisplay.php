@@ -1221,7 +1221,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 
 	// limit the sub_entries array to just the entries that match the conditions, if any
-	if(is_array($subformConditions)) {
+	if(is_array($subformConditions) and is_array($sub_entries[$subform_id])) {
 		list($conditionsFilter, $conditionsFilterOOM, $curlyBracketFormFrom) = buildConditionsFilterSQL($subformConditions, $subform_id, $entry, $mainFormOwner, $fid); // pass in mainFormOwner as the comparison ID for evaluating {USER} so that the included entries are consistent when an admin looks at a set of entries made by someone else.
 		$subformObject = $form_handler->get($subform_id);
 		$sql = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$subformObject->getVar('form_handle'))."$curlyBracketFormFrom WHERE entry_id IN (".implode(", ", $sub_entries[$subform_id]).") $conditionsFilter $conditionsFilterOOM";
