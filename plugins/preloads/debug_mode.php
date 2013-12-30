@@ -25,6 +25,7 @@ class icms_DebugEventHandler {
 						icms_Event::attach('icms_db_IConnection', 'execute', array(__CLASS__, 'executeQuery'));
 					}
 				} else {
+					error_reporting(0);
 					icms::$logger->activated = false;
 				}
 			}
