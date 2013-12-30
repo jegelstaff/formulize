@@ -6,7 +6,7 @@
 
 /* logo */
 #formulize-logo {
-	margin-bottom: 20px;
+	margin-bottom: 20px;	
 }
 
 
@@ -137,7 +137,7 @@ div.accordion-box .no-bullets {
 }
 
 div.admin-ui, p.versionnumber {
-	position: static;
+	position: static;	
 }
 
 .admin-ui a {
@@ -444,4 +444,14 @@ form .groupselectionbox {
   border-bottom-left-radius: 75px;
   -moz-border-radius-bottomright: 75px;
   border-bottom-right-radius: 75px;
+}
+
+/* patch div */
+#formulize-patch-panel {
+	float: right;
+	padding-left: 1em;
+	width: 50%;
+	height: 13em;
+	overflow: auto;
+	border: 1px solid blue;
 }

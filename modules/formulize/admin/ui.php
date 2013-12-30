@@ -30,6 +30,7 @@
 // initialize the ImpressCMS admin page template
 include_once("admin_header.php");
 xoops_cp_header();
+define('_FORMULIZE_UI_PHP_INCLUDED', 1);
 
 // include necessary Formulize files/functions
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
@@ -65,10 +66,8 @@ if(!isset($xoopsTpl)) {
 }
 
 // handle any operations requested as part of this page load
-if(isset($_GET['op'])) {
-  include_once "op.php";
-}
-
+// sets up a template variable with the results of the op, called opResults
+include_once "op.php";
 
 // create the contents that we want to display for the currently selected page
 // the included php files create the values for $adminPage that are used for this page

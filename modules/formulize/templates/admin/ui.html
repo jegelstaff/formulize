@@ -68,6 +68,9 @@ $(document).ready(function() {
 
 <div class="admin-ui">
 
+<{if $opResults}>
+<div id="formulize-patch-panel"><{$opResults}><p><a href='<{$xoops_url}>/modules/formulize/admin/'><{$smarty.const._CLOSE}></a></p></div>
+<{/if}>
 <div id="formulize-logo"><img src="<{$xoops_url}><{$adminPage.logo}>" align="<{$adminPage.pagetitle}>" title="<{$adminPage.pagetitle}>" /></div>
 
 <form name="scrollposition" method="post" action="">
