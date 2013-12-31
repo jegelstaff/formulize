@@ -426,7 +426,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// if there is a screen with a top template in effect, then do not lock the controls even if the saved view says we should.  Assume that the screen author has compensated for any permission issues.
 		// we need to do this after rachetting down the visibility controls.  Fact is, controlling UI for users is one thing that we can trust the screen author to do, so we don't need to indicate that the controls are locked.  But we don't want the visibility to override what people can normally see, so we rachet that down above.
     if($screen AND $_POST['lockcontrols']) {
-      if($screen->getVar('toptemplate') != "") {
+		  if($screen->getTemplate('toptemplate') != "") {
         $_POST['lockcontrols'] = 0;
       }
     }
@@ -735,7 +735,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// if there is messageText and no custom top template, and no messageText variable in the bottom template, then we have to output the message text here
 	if($screen AND $messageText) {
-		if(trim($screen->getVar('toptemplate')) == "" AND !strstr($screen->getVar('bottomtemplate'), 'messageText')) {
+		if(trim($screen->getTemplate('toptemplate')) == "" AND !strstr($screen->getTemplate('bottomtemplate'), 'messageText')) {
 			print "<p><center><b>$messageText</b></center></p>\n";
 		}
 	}
@@ -936,9 +936,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$useSearch = 1;
 	if($screen) {
 		$useWorking = !$screen->getVar('useworkingmsg') ? false : true;
-		$useDefaultInterface = $screen->getVar('toptemplate') != "" ? false : true;
+		$useDefaultInterface = $screen->getTemplate('toptemplate') != "" ? false : true;
 		$title = $screen->getVar('title'); // otherwise, title of the form is in the settings array for when no screen is in use
-		$useSearch = ($screen->getVar('usesearch') AND !$screen->getVar('listtemplate')) ? 1 : 0;
+		$useSearch = ($screen->getVar('usesearch') AND !$screen->getTemplate('listtemplate')) ? 1 : 0;
 	}
 	
 	if(strstr($_SERVER['HTTP_USER_AGENT'], "MSIE")) {
@@ -1159,12 +1159,12 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	} else {
 		// IF THERE IS A CUSTOM TOP TEMPLATE IN EFFECT, DO SOMETHING COMPLETELY DIFFERENT
 	
-		if(!$screen->getVar('usecurrentviewlist') OR (!strstr($screen->getVar('toptemplate'), 'currentViewList') AND !strstr($screen->getVar('toptemplate'), 'currentViewList'))) { print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n"; } // print it even if the text is blank, it will be a hidden value in this case
+		if(!$screen->getVar('usecurrentviewlist') OR (!strstr($screen->getTemplate('toptemplate'), 'currentViewList') AND !strstr($screen->getTemplate('toptemplate'), 'currentViewList'))) { print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n"; } // print it even if the text is blank, it will be a hidden value in this case
 				
 		// if search is not used, generate the search boxes and make them available in the template
 		// also setup searches when calculations are in effect, or there's a custom list template
 		// (essentially, whenever the search boxes would not be drawn in for whatever reason)
-		if(!$useSearch OR ($calc_cols AND !$hcalc) OR $screen->getVar('listtemplate')) {
+		if(!$useSearch OR ($calc_cols AND !$hcalc) OR $screen->getTemplate('listtemplate')) {
       formulize_benchmark("before calling draw searches");
 			$quickSearchBoxes = drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, true); // first true means we will receive back the code instead of having it output to the screen, second (last) true means that all allowed filters should be generated
       formulize_benchmark("after calling draw searches");
@@ -1172,15 +1172,15 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			foreach($quickSearchBoxes as $handle=>$qscode) {
 				$handle = str_replace("-","_",$handle);
 				$foundQS = false;
-				if(strstr($screen->getVar('toptemplate'), 'quickSearch' . $handle) OR strstr($screen->getVar('bottomtemplate'), 'quickSearch' . $handle)) {
+				if(strstr($screen->getTemplate('toptemplate'), 'quickSearch' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickSearch' . $handle)) {
 					$buttonCodeArray['quickSearch' . $handle] = $qscode['search']; // set variables for use in the template
           $foundQS = true;
         }
-        if(strstr($screen->getVar('toptemplate'), 'quickFilter' . $handle) OR strstr($screen->getVar('bottomtemplate'), 'quickFilter' . $handle)) {
+				if(strstr($screen->getTemplate('toptemplate'), 'quickFilter' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickFilter' . $handle)) {
           $buttonCodeArray['quickFilter' . $handle] = $qscode['filter']; // set variables for use in the template
           $foundQS = true;
         }
-	if(strstr($screen->getVar('toptemplate'), 'quickDateRange' . $handle) OR strstr($screen->getVar('bottomtemplate'), 'quickDateRange' . $handle)) {
+				if(strstr($screen->getTemplate('toptemplate'), 'quickDateRange' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickDateRange' . $handle)) {
           $buttonCodeArray['quickDateRange' . $handle] = $qscode['dateRange']; // set variables for use in the template
           $foundQS = true;
         }
@@ -1323,7 +1323,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		$deColumns = $screen->getVar('decolumns');
 		$deDisplay = $screen->getVar('dedisplay');
 		$useSearchCalcMsgs = $screen->getVar('usesearchcalcmsgs');
-		$listTemplate = $screen->getVar('listtemplate');
+		$listTemplate = $screen->getTemplate("listtemplate");
 		foreach($screen->getVar('customactions') as $caid=>$thisCustomAction) {
 			if($thisCustomAction['appearinline'] == 1) {
 				list($caCode) = processCustomButton($caid, $thisCustomAction);
@@ -1730,15 +1730,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$thisHiddenCol\" value=\"" . htmlspecialchars(display($entry, $thisHiddenCol)) . "\"></input>\n";
 					}
 					
-					ob_start();
-					$evalSuccess = eval(html_entity_decode($listTemplate));
-					$evalResult = ob_get_clean();
-					if($evalSuccess === false) { // eval returns false on a parse error
-						print "<p>" . _AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR . "</p>";
-						break;
-					} else {
-						print $evalResult;
-					}
+					include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/listtemplate.php";
 				}
 			}
 		}
@@ -3921,31 +3913,24 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	}
 
 	// if there is no save button specified in either of the templates, but one is available, then put it in below the list
-	if($type == "bottom" AND count($screen->getVar('decolumns')) > 0 AND !$screen->getVar('dedisplay') AND $GLOBALS['formulize_displayElement_LOE_Used'] AND !strstr($screen->getVar('toptemplate'), 'saveButton') AND !strstr($screen->getVar('bottomtemplate'), 'saveButton')) {
+	if($type == "bottom" AND count($screen->getVar('decolumns')) > 0 AND !$screen->getVar('dedisplay') AND $GLOBALS['formulize_displayElement_LOE_Used'] AND !strstr($screen->getTemplate('toptemplate'), 'saveButton') AND !strstr($screen->getTemplate('bottomtemplate'), 'saveButton')) {
 		print "<div id=\"floating-list-of-entries-save-button\" class=\"\"><p>$saveButton</p></div>\n";
 	}
 	
-	$thisTemplate = html_entity_decode($screen->getVar($type.'template'));
+	$thisTemplate = $screen->getTemplate($type.'template');
 	if($thisTemplate != "") {
     
     // process the template and output results
-		ob_start();
-		$evalSuccess = eval($thisTemplate);
-		$evalResult = ob_get_clean();
-		if($evalSuccess === false) { // eval returns false on a parse error
-			print _AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR;
-		} else {
-			print $evalResult;
-		}
+		include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/".$type."template.php";
 		
 		// if there are no page nav controls in either template the template, then 
-		if($type == "top" AND !strstr($screen->getVar('toptemplate'), 'pageNavControls') AND (!strstr($screen->getVar('bottomtemplate'), 'pageNavControls'))) {
+		if($type == "top" AND !strstr($screen->getTemplate('toptemplate'), 'pageNavControls') AND (!strstr($screen->getTemplate('bottomtemplate'), 'pageNavControls'))) {
 			print $pageNavControls;
 		}
 	}
 	
 	// output the message text to the screen if it's not used in the custom templates somewhere
-	if($type == "top" AND $messageText AND !strstr($screen->getVar('toptemplate'), 'messageText') AND !strstr($screen->getVar('bottomtemplate'), 'messageText')) {
+	if($type == "top" AND $messageText AND !strstr($screen->getTemplate('toptemplate'), 'messageText') AND !strstr($screen->getTemplate('bottomtemplate'), 'messageText')) {
 		print "<p><center><b>$messageText</b></center></p>\n";
 	}
 	

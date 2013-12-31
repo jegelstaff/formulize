@@ -101,9 +101,9 @@ $settings['links'] = $links;
 if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // display data
   $templates = array();
-  $templates['toptemplate'] = $screen->getVar('toptemplate');
-  $templates['bottomtemplate'] = $screen->getVar('bottomtemplate');
-  $templates['listtemplate'] = $screen->getVar('listtemplate');
+  $templates['toptemplate'] = $screen->getTemplate('toptemplate');
+  $templates['bottomtemplate'] = $screen->getTemplate('bottomtemplate');
+  $templates['listtemplate'] = $screen->getTemplate('listtemplate');
 
   // view data
   // gather all the available views
@@ -346,9 +346,9 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
 
   // template data
   $multipageTemplates = array();   // Added by Gordon Woodmansey, 29-08-2012
-  $multipageTemplates['toptemplate'] = $screen->getVar('toptemplate');
-  $multipageTemplates['elementtemplate'] = $screen->getVar('elementtemplate');
-  $multipageTemplates['bottomtemplate'] = $screen->getVar('bottomtemplate');
+  $multipageTemplates['toptemplate'] = $screen->getTemplate('toptemplate');
+  $multipageTemplates['elementtemplate'] = $screen->getTemplate('elementtemplate'); 
+  $multipageTemplates['bottomtemplate'] = $screen->getTemplate('bottomtemplate'); 
 
   // pages data
   $multipagePages = array();

@@ -437,14 +437,13 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "above");   // calling for the 'above' drawPageNav 
 
         // setting up the basic templateVars for all templates
-        // templatevariables must be called after all the variables are loaded otherwise they do not make it into renderTemplate
         $templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton,
             'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage,
             'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles);
 
 		print "<form name=\"pageNavOptions_above\" id=\"pageNavOptions_above\">\n";
-		if($screen AND $toptemplate = $screen->getVar('toptemplate')) {
-		    print renderTemplate($toptemplate, $templateVariables);
+		if($screen AND $toptemplate = $screen->getTemplate('toptemplate')) {
+		    formulize_renderTemplate('toptemplate', $templateVariables, $screen->getVar('sid'));
 		} else {
 		    drawPageNav($usersCanSave, $currentPage, $totalPages, "above", $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList);
 		}
@@ -454,7 +453,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		
 	    // need to check for the existence of an elementtemplate property in the screen, like we did with the top and bottom templates
 	    // if there's an eleemnt template, then do this loop, otherwise, do the displayForm call like normal
-	    if ($screen AND $elementtemplate = $screen->getVar('elementtemplate')) {  // Code added by Julian 2012-09-04 and Gordon Woodmansey 2012-09-05 to render the elementtemplate
+	    if ($screen AND $elementtemplate = $screen->getTemplate('elementtemplate')) {  // Code added by Julian 2012-09-04 and Gordon Woodmansey 2012-09-05 to render the elementtemplate
 		    if(!security_check($fid, $entry)) {
 			exit();
 		    }
@@ -504,7 +503,8 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			        $templateVariables['elementMarkup'] = $elementMarkup;
 			        $templateVariables['elementDescription'] = $elementDescription;
 			        $templateVariables['element_id'] = $thisElement;
-			        print renderTemplate($elementtemplate, $templateVariables);
+				formulize_renderTemplate('elementtemplate', $templateVariables, $screen->getVar('sid'));
+			        
 			    }
 		    }
 		    // now we also need to add in some bits that are necessary for the form submission logic to work...borrowed from parts of formdisplay.php mostly...this should be put together into a more distinct rendering system for forms, so we can call the pieces as needed
@@ -542,9 +542,9 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	    // have to get the new value for $pageSelection list if the user requires it on the users view.
 	    $pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below");
 	    print "<form name=\"pageNavOptions_below\" id=\"pageNavOptions_below\">\n";
-	    if ($screen AND $bottomtemplate = $screen->getVar('bottomtemplate')) { 
+	    if ($screen AND $bottomtemplate = $screen->getTemplate('bottomtemplate')) { 
 		    $templateVariables['pageSelectionList'] = $pageSelectionList; // assign the new pageSelectionList, since it was redone for the bottom section
-		    print renderTemplate($bottomtemplate, $templateVariables);
+		    formulize_renderTemplate('bottomtemplate', $templateVariables, $screen->getVar('sid'));
 	    } else {
 		    drawPageNav($usersCanSave, $currentPage, $totalPages, "below", $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList);
 	    }

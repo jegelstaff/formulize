@@ -86,6 +86,22 @@ class formulizeScreen extends xoopsObject {
         }
         return $this->$name;
     }
+    
+    function getTemplate($templatename) {
+            
+	static $templates = array();
+	
+	if (!isset($templates[$templatename])) {
+	    // there is no template saved in memory, read it from the file
+	    $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/".$templatename.".php";
+	    $templates[$templatename] = file_get_contents($pathname);
+	    // strip out opening <?php since we use this value for comparisons a lot, and it should be otherwise empty in that case
+	    $templates[$templatename] = substr($templates[$templatename],5);
+	}
+	
+	return $templates[$templatename];
+    }
+    
 }
 
 class formulizeScreenHandler {
@@ -222,6 +238,27 @@ class formulizeScreenHandler {
 		 return $sid;
 	}
 
-}
+	function writeTemplateToFile($text, $filename, $screen) {
 
-?>
+            $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/";
+            // check if folder exists, if not, make it.
+            if (!is_dir($pathname)) {
+                mkdir($pathname, 0777, true);
+            }
+            
+            if (!is_writable($pathname)) {
+                chmod($pathname, 0777);
+	    }
+
+            $fileHandle = fopen($pathname."/".$filename.".php", "w+");
+            $success = fwrite($fileHandle, $text);
+            fclose($fileHandle);
+            
+            // return true or false based on writing success or failure 
+            // (you'll need to make sure your web server has write permission in the /templates/screens/default/ folder
+            if ($success === FALSE) {
+                return false;
+            } else return true;
+        }
+	
+}

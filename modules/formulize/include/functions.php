@@ -4785,32 +4785,21 @@ function htmlForElement($elementHandle, $nameForHTML="orphaned_formulize_element
 
 
 /*
- *  @name renderTemplate
+ *  @name formulize_renderTemplate
  *
  *  This function renders a template for formdisplaypages.php
  *  It should be called as follows:
- *      print renderTemplate($templateX, $templateVariables);
+ *  	renderTemplate($templatenameX, $templateVariables, $sid);
  *
- *  The code was created for the Futureworx project
- *  @author Gordon Woodmansey
- *  @param  $template A Formulize template
- *  @return A string that can be rendered by a print statement.
  */
-function renderTemplate($template, $templateVariables) {
+
+function formulize_renderTemplate($templatename, $templateVariables, $sid) {
     // get our templateVaraibles first
     foreach ($templateVariables as $name => $value) {
         ${$name} = $value;
     }
 
-    // now eval and returns as string
-    ob_start();
-    $evalSuccess = eval(html_entity_decode($template));
-    $evalResult = ob_get_clean();
-    if ($evalSuccess  === false) {
-        return "<p>"._AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR."</p>";
-    } else {
-        return $evalResult;
-    }
+    include XOOPS_ROOT_PATH . "/modules/formulize/templates/screens/default/" . $sid . "/" . $templatename . ".php";
 }
 
 
