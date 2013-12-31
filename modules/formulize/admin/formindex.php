@@ -112,7 +112,7 @@ function patch40() {
 	 * ====================================== */
 	
 	$checkThisTable = 'formulize_id';
-	$checkThisField = 'on_before_savex';
+	$checkThisField = 'on_before_save';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
