@@ -626,9 +626,9 @@ define("_formulize_DE_NOT_SUBJTEXT", "Use this custom subject line: ");
 
 // multi-page forms
 define("_formulize_DMULTI_THANKS", "<h1>You're done!</h1><p>Thanks for taking the time to fill in that form.  We really appreciate it.</p>");
-define("_formulize_DMULTI_NEXT", "Save and Continue >>");
-define("_formulize_DMULTI_PREV", "<< Save and Go Back");
-define("_formulize_DMULTI_SAVE", "Save and Finish >>");
+define("_formulize_DMULTI_NEXT", "Save and Continue");
+define("_formulize_DMULTI_PREV", "Save and Go Back");
+define("_formulize_DMULTI_SAVE", "Save and Finish");
 define("_formulize_DMULTI_PAGE", "Page");
 define("_formulize_DMULTI_OF", "Of");
 define("_formulize_DMULTI_SKIP", "One or more pages was skipped because they don't apply");
