@@ -576,14 +576,14 @@ function drawPageNav($usersCanSave="", $currentPage="", $totalPages, $aboveBelow
 		print "</td></tr></table></div></form><br />";
         } else { 
                 //navigation options below the form print like this
-                print "<div id=\"bottomPageNumber\">" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . $totalPages;
+                print "<div id=\"bottomPageNumber\"><br /><p><b>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . $totalPages."</b></p>";
                 if(!$usersCanSave) {print "<br>" . _formulize_INFO_NOSAVE;}
                 if($skippedPageMessage) {
                     print "<br>". $skippedPageMessage;
                 }
-                print "<div id=\"bottomJumpList\"><p>". _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . $pageSelectionList . "</p></div>";
+                print "<div id=\"bottomJumpList\"><br /><p>". _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . $pageSelectionList . "</p></div>";
                 print "</p></div>";
-                print "<div id=\"bottom-save-block\"><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\">";
+                print "<div id=\"bottom-save-block\"><br /><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\">";
                 print $previousPageButton;
                 print "&nbsp;&nbsp;&nbsp;&nbsp;";
                 print $nextPageButton;
