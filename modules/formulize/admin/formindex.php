@@ -517,8 +517,81 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		    }
         }
 
+		
+		// CONVERTING EXISTING TEMPLATES IN DB TO TEMPLATE FILES
+		$screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/";
+                
+                $templateSQL = "SELECT sid, toptemplate, listtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_listofentries";
+                
+                $templateRes = $xoopsDB->query($templateSQL);
+                if($xoopsDB->getRowsNum($templateRes) > 0) {
+                
+                    while($handleArray = $xoopsDB->fetchArray($templateRes)) {
+                        if (!file_exists($screenpathname.$handleArray['sid'])) {
+                            $pathname = $screenpathname.$handleArray['sid']."/";
+                            mkdir($pathname, 0777, true);
+            
+                            if (!is_writable($pathname)) {
+                                chmod($pathname, 0777);
+                            }
+            
+                            saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
+                            saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
+                            saveTemplate($handleArray['listtemplate'], $handleArray['sid'], "listtemplate");
+                            
+                        } else {
+                            print "screen templates for screen ".$handleArray['sid']." already exist. result: OK<br>";
+                        }
+                        
+                    }
+                }
+                
+                $multitemplateSQL = "SELECT sid, toptemplate, elementtemplate, bottomtemplate FROM ".$xoopsDB->prefix("formulize")."_screen_multipage";
+                
+                $multitemplateRes = $xoopsDB->query($multitemplateSQL);
+                if($xoopsDB->getRowsNum($multitemplateRes) > 0) {
+                
+                    while($handleArray = $xoopsDB->fetchArray($multitemplateRes)) {
+                        if (!file_exists($screenpathname.$handleArray['sid'])) {
+                            $pathname = $screenpathname.$handleArray['sid']."/";
+                            mkdir($pathname, 0777, true);
+            
+                            if (!is_writable($pathname)) {
+                                chmod($pathname, 0777);
+                            }
+            
+                            saveTemplate($handleArray['toptemplate'], $handleArray['sid'], "toptemplate");
+                            saveTemplate($handleArray['bottomtemplate'], $handleArray['sid'], "bottomtemplate");
+                            saveTemplate($handleArray['elementtemplate'], $handleArray['sid'], "elementtemplate");
+                            
+                        } else {
+                            print "screen templates for screen ".$handleArray['sid']." already exist. result: OK<br>";
+                        }
+                        
+                    }
+                }
+
+		
 		print "DB updates completed.  result: OK";
 	}
+}
+
+// Saves the given template to a template file on the disk
+function saveTemplate($template, $sid, $name) {
+    $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/". $sid . "/";
+    
+    $text = html_entity_decode($template);
+    if (!empty($text)) {
+        $fileHandle = fopen($pathname . $name. ".php", "w+");
+        $success = fwrite($fileHandle, "<?php\n" . $text);
+        fclose($fileHandle);
+
+        if ($success) {
+            print "created templates/screens/default/" . $sid . "/". $name . ".php. result: OK<br>";
+        } else {
+            print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
+        }
+    }
 }
 
     function saveMenuEntryAndPermissionsSQL($formid,$appid,$i,$menuText){
