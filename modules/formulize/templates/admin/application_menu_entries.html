@@ -3,10 +3,11 @@
         <{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
         <input type="hidden" name="formulize_admin_handler" value="application_menu_entries">
         <input type="hidden" name="formulize_admin_key" value="<{$content.aid}>">
-        <input type="hidden" id="reload_settings" name="reload_settings" value="true">
-        <input type="hidden" id="menu_items" name="menu_items" value="">
+        <input type="hidden" id="reload_settings" name="reload_settings" value=1>
         <input type="hidden" id="deletemenuitem" name="deletemenuitem" value="">
-        <input type="hidden" name="menuorder" value="">	
+        <input type="hidden" name="menuorder" value="">
+	<input type="hidden" name="tabnumber" value=<{$number}>>
+		
                             
                             
         <div class="accordion-box">
@@ -15,26 +16,36 @@
                 <h2> Add links to the menu</h2> 
                 
                 <fieldset>		
-                    <p>Menu text: <input type="text" id="addmenutext" name="addmenutext">	</p>	
-                    <br />
-                    <{$content.listsofscreenoptions}>
-                    <br />or<br />
-                    external url:  <input type="text" name="addurl" id="addurl"><br /><br />	
-                                
-                    <h3>Which groups can view the link</h3>
+                    <div>
+			<h3>Text for this link:</h3>
+			<input type="text" id="addmenutext" name="addmenutext">
+		    </div>
+		    <div id="listofscreenoptions">
+			<h3>This link goes to:</h3>
+			<{html_options name='addnewscreenoptions' options=$content.listsofscreenoptions}>
+		    </div>
+		    <div>
+                    <input type="text" name="addurl" id="addurl" value="http://">
+		    </div>
+		    <div>
+                    <h3>Show this link to these groups:</h3>
                     <select name="addgroups" id="addgroups" size=10 multiple style="overflow-y: scroll;">
                         <{foreach from=$content.groups item=group}>
                             <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>                 
                         <{/foreach}>
                     </select>
-                    <br/>
-                        <div id="defaultScreenSection"> 
-                            <h3>Use this screen as the default page for these groups:</h3>                        
-                            <select name="defaultScreenGroups" id="addDefaultScreenGroups" size=10 multiple style="overflow-y: scroll;">
-                            </select>
-                        </div>
-                        
-                    <br/>
+		    </div>
+                    <div id="defaultScreenSection"> 
+			<h3>Send these groups to this link right after they login:</h3>                        
+			<select name="defaultScreenGroups" id="addDefaultScreenGroups" size=10 multiple style="overflow-y: scroll;">
+			    <{foreach from=$content.groups item=group}>
+				<option value=<{$group.id}><{$group.selected}>><{$group.name}></option>                 
+			    <{/foreach}>
+			</select>
+                    </div>
+			<div class="description">
+			<p>This only takes effect if Formulize is also set as the default start page for a group, under <a href='<{$xoops_url}>/modules/system/admin.php?fct=preferences&op=show&confcat_id=1' target='_blank'>General Settings</a></p>
+			</div>
                    
                 </fieldset>
                 
@@ -58,131 +69,72 @@
 <script type="text/javascript">
     var formID = "";
     var formRelationID = "1";
-
-    
-    $( document ).ready(function() {
-                        
-        // user have a choice of either choosing a screen or entering an external URL        
-        //remove the event of displaying the warning block associated with the add textbox and the select menu 
-                        
-        $("#addurl").unbind("change");
-        $("#addurl").unbind("keydown");
-        $("#listsofscreenoptions").unbind("change");
-        $("#defaultScreenSection").hide();
-        
-        //disable the screen list if a url is entered, enable otherwise.
-        $("#addurl").bind("change",function(){
-            if ($('#addurl').val() != ''){
-                $("#listsofscreenoptions").attr("disabled", "disabled");
-        
-            }else{
-                $("#listsofscreenoptions").attr("disabled", "");
-
-            }
-        });
-
-        //disable the url textbox if a screen list is selected, enable otherwise.
-        $("#listsofscreenoptions").bind("change",function(){
-            if ($('#listsofscreenoptions').val() != ''){
-                $("#addurl").attr("disabled", "disabled");
-                if($("#addgroups option:selected").length){
-                    $("#defaultScreenSection").show();
-                }
-            }else{
-                $("#addurl").attr("disabled", "");
-                $("#defaultScreenSection").hide();
-            }        
-        });
-        
-         //show groups who have this link as a default page (if there are any)
-                        
-        $("#addDefaultScreenGroups").unbind("change");
-        $("#addgroups").unbind("change");       
-        
-        var groupsWithDefaultScreen= '<{$content.groupsWithDefaultScreen}>'.split(",");	
-        
-        jQuery("#addgroups").bind("change", function(){
-                                  
-          $("#addDefaultScreenGroups").empty();
-          $("#addgroups option:selected").each( function(){
-               var value= $(this).val();
-               var text= $(this).text();
-               if ( jQuery.inArray($(this).val(), groupsWithDefaultScreen ) < 0 ) {
-                   $("#addDefaultScreenGroups").append($("<option></option>").attr("value", value).text(text));
-               }
-           }); 
-                                  
-          $("#listsofscreenoptions").change();
-          
-          });
-        
-        jQuery("#addgroups").change();
-        
-    });
-    
     
     // added Oct 2013 
     $(".deletemenulink").click(function () {
-        var answer = confirm("The selected menu link will be deleted, OK?");
+        var answer = confirm("Do you want to delete the menu link '"+$(this).attr('menuname')+"'?");
         if(answer) {
             $("[name=deletemenuitem]").val($(this).attr('target'));
-            $("[name=reload_settings]").val(1);
             $(".savebutton").click();
         }
         return false;
     });
     
+	jQuery("#addurl").hide();
+        jQuery("#listofscreenoptions select").change(function(){
+            if(jQuery(this).val() == 'url') {
+                jQuery("#addurl").fadeIn();
+            } else {
+                jQuery("#addurl").fadeOut();
+            }
+        });
+    
     // modified Oct 2013
     $("#addMenuItem").click(function (){
-                            
-        var menuText = $("#addmenutext").val().trim().replace(/\'/g, " ") ;
-        var url = $("#addurl").val();
-        var screen = $("#listsofscreenoptions").val();
-        var groupids = $("#addgroups").val();
-        var default_screen = '';                    
-        var value = "null::";
-                            
-        if(screen.length > 0){
-            /*if(menuText.length == 0){
-                menuText = $("#listsofscreenoptions option:selected").text().trim().replace(/\'/g, " "); 
-            }*/
-            default_screen= $("#addDefaultScreenGroups").val();
-        }else if(url.length > 0){
-                if(menuText.length == 0){
-                    menuText = url;
-                }
-        }else{
-                alert("missing screen or url");
-                return;
-        }   
-        
-        value += menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen;
-                                                                                            
-        $("[name=menu_items]").val(value);
-        $("[name=reload_settings]").val(1);
         $(".savebutton").click();
-                                                                                            
     });
-                                                              
   
-    
-    function updateSaveChangeDisplay(){             
-        
-        $("#addmenutext").unbind("keydown");
-        $("#addmenutext").unbind("change");
-       
-        $("[name=menutext]").unbind("keydown");
-        $("[name=menutext]").unbind("change");
-                                                              
-    }
-    
     $(".savebutton").click(function () {
-        $("[name=menuorder]").val($("#accordion-5").sortable('serialize')); 
+        $("[name=menuorder]").val($("#accordion-<{$number}>").sortable('serialize'));
+	
+	var menuText = $("#addmenutext").val().trim().replace(/\'/g, " ") ;
+	if(menuText) {
+		var url = $("#addurl").val();
+	        var screen = $("#listofscreenoptions select").val();
+	        var groupids = $("#addgroups").val();
+	        var default_screen = $("#addDefaultScreenGroups").val();
+	        var value = "null";
+		value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen;
+	        addHiddenMenuItem(value);
+	}
+	
+	$(".menuEntriesSection").each(function() {
+		var sectionNumber = $(this).attr('menuentry');
+		var menuID = $(this).attr('menuid');
+		var menuText = $("#menutext"+sectionNumber).val().trim().replace(/\'/g, " ") ;
+		var url = $("#url"+sectionNumber).val();
+		var screen = $("#sectionScreen"+sectionNumber+" select").val();
+		var groupids = $("#groups"+sectionNumber).val();
+		var default_screen= $("#defaultScreenGroups"+sectionNumber).val();  
+		var value = menuID;
+		
+		value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen;                                                                               
+		addHiddenMenuItem(value);
+	});
     });
-                            
-    $("#accordion-5").bind( "sortupdate", function(event, ui) {
+ 
+    $("#accordion-<{$number}>").bind( "sortupdate", function(event, ui) {
         setDisplay('savewarning','block');
     });
                             
-    window.setTimeout("updateSaveChangeDisplay();",500);
+    function addHiddenMenuItem(value) {
+	$('<input>').attr({
+		type: 'hidden',
+		name: 'menu_items[]',
+		value: value
+	}).appendTo('#form-<{$number}>');
+    }
+    
+    
+    
     </script>

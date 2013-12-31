@@ -266,12 +266,13 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 	INDEX i_external_id (external_id),
 	INDEX i_resource_type (resource_type)
 ) ENGINE=MyISAM;";
-}
 
-// if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
-if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
+		}
+
+		// if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
+		if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
 	$sql['increase_session_id_size'] = "ALTER TABLE ".$xoopsDB->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";
-}
+		}
 
 		$sql['add_encrypt'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_encrypt` tinyint(1) NOT NULL default '0'";
 		$sql['add_lockedform'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `lockedform` tinyint(1) NULL default NULL";
@@ -445,7 +446,7 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
             PRIMARY KEY (`permission_id`),
             INDEX i_menu_permissions (menu_id)
             );";
-            print("creating new menu_links and menu_permissions tables");	
+		    print("Creating new menu_links and menu_permissions tables...<br>");	
             foreach($menusql as $key=>$thissql) {
                 
                 if(!$result = $xoopsDB->query($thissql)) {
@@ -464,7 +465,7 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
                 foreach($forms as $thisForm) {
                     $thisFormObject = $form_handler->get($thisForm);
                     if($menuText = $thisFormObject->getVar('menutext')) {
-                        saveMenuEntryAndPermissionsSQL($thisFormObject->getVar('id_form'),$thisApplication->getVar("appid"),$i);
+				saveMenuEntryAndPermissionsSQL($thisFormObject->getVar('id_form'),$thisApplication->getVar("appid"),$i,$menuText);
                     }
                     $i++;		
                 }
@@ -475,12 +476,13 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
             foreach($formsWithNoApplication as $thisForm) {
                 $thisFormObject = $form_handler->get($thisForm);
                 if($menuText = $thisFormObject->getVar('menutext')) {
-                    saveMenuEntryAndPermissionsSQL($thisFormObject->getVar('id_form'),0,$i);
+			    saveMenuEntryAndPermissionsSQL($thisFormObject->getVar('id_form'),0,$i,$menuText);
                 }
                 $i++;		
             }
         }
-          // need to update multiple select boxes.
+		
+		// need to update multiple select boxes for new data structure
                 // $xoopsDB->prefix("formulize")
                 // 1. get a list of all elements that are linked selectboxes that support only single values
                 $selectBoxesSQL = "SELECT id_form, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type = 'select'";
@@ -503,15 +505,23 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
         // if the relationship link option, unified_delete, does not exist, create the field and default to the unified_display setting value
         $sql = $xoopsDB->query("show columns from ".$xoopsDB->prefix("formulize_framework_links")." where Field = 'fl_unified_delete'");
         if (0 == $xoopsDB->getRowsNum($sql)) {
-            $xoopsDB->query("ALTER TABLE " . $xoopsDB->prefix("formulize_framework_links") . " ADD `fl_unified_delete` smallint(5)");
-            $xoopsDB->query("update " . $xoopsDB->prefix("formulize_framework_links") . " set `fl_unified_delete` = `fl_unified_display`");
+		    $sql = "ALTER TABLE " . $xoopsDB->prefix("formulize_framework_links") . " ADD `fl_unified_delete` smallint(5)";
+		    if($udres1 = $xoopsDB->query($sql)) {
+			$sql = "update " . $xoopsDB->prefix("formulize_framework_links") . " set `fl_unified_delete` = `fl_unified_display`";
+			$udres2 = $xoopsDB->query($sql);
+		    }
+		    if(!$udres1 OR !$udres2) {
+			print "Error updating relationships with unified delete option.  SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.";
+		    } else {
+			print "Updating relationships with unified delete option.  result: OK<br>";
+		    }
         }
 
 		print "DB updates completed.  result: OK";
 	}
 }
 
-    function saveMenuEntryAndPermissionsSQL($formid,$appid,$i){
+    function saveMenuEntryAndPermissionsSQL($formid,$appid,$i,$menuText){
         global $xoopsDB;
         $gperm_handler = xoops_gethandler('groupperm');
         $permissionsql = "";
@@ -524,9 +534,9 @@ if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
         }else{
             foreach($groupsThatCanView as $groupid) {
                 if($permissionsql != ""){
-                    $permissionsql += ",(null,". mysql_insert_id().",". $groupid.")";
+                    $permissionsql .= ",(null,". $xoopsDB->getInsertId().",". $groupid.",0)";
                 }else{
-                    $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,". mysql_insert_id().",". $groupid.",0)";
+                    $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,". $xoopsDB->getInsertId().",". $groupid.",0)";
                 }
             }
             if ($permissionsql){

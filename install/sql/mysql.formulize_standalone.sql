@@ -3,9 +3,9 @@ TRUNCATE `REPLACE_WITH_PREFIX_config`;
 INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES
 (1, 0, 1, 'sitename', '_MD_AM_SITENAME', 'Formulize Standalone', '_MD_AM_SITENAMEDSC', 'textbox', 'text', 0),
 (2, 0, 1, 'slogan', '_MD_AM_SLOGAN', '', '_MD_AM_SLOGANDSC', 'textbox', 'text', 1),
-(3, 0, 1, 'adminmail', '_MD_AM_ADMINML', 'admin@admin.admin', '_MD_AM_ADMINMLDSC', 'textbox', 'text', 2),
+(3, 0, 1, 'adminmail', '_MD_AM_ADMINML', '', '_MD_AM_ADMINMLDSC', 'textbox', 'text', 2),
 (4, 0, 1, 'language', '_MD_AM_LANGUAGE', 'english', '_MD_AM_LANGUAGEDSC', 'language', 'other', 3),
-(5, 0, 1, 'startpage', '_MD_AM_STARTPAGE', 'a:3:{i:1;s:2:"--";i:2;s:2:"--";i:3;s:2:"--";}', '_MD_AM_STARTPAGEDSC', 'startpage', 'array', 4),
+(5, 0, 1, 'startpage', '_MD_AM_STARTPAGE', 'a:3:{i:1;s:9:"formulize";i:2;s:9:"formulize";i:3;s:2:"--";}', '_MD_AM_STARTPAGEDSC', 'startpage', 'array', 4),
 (6, 0, 1, 'server_TZ', '_MD_AM_SERVERTZ', '-5', '_MD_AM_SERVERTZDSC', 'timezone', 'float', 5),
 (7, 0, 1, 'default_TZ', '_MD_AM_DEFAULTTZ', '-5', '_MD_AM_DEFAULTTZDSC', 'timezone', 'float', 6),
 (8, 0, 1, 'use_ext_date', '_MD_AM_EXT_DATE', '1', '_MD_AM_EXT_DATEDSC', 'yesno', 'int', 7),

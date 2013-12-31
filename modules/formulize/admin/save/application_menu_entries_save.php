@@ -36,38 +36,50 @@
     
     $application_handler = xoops_getmodulehandler('applications', 'formulize');
     $appid = $_POST['formulize_admin_key'];
-    $menuitems = $_POST['menu_items'];
+    $setOfMenuItems = $_POST['menu_items'];
     
     // added Oct 2013 W.R.
     if($_POST['deletemenuitem']) {
   		$menuitem = $_POST['deletemenuitem'];
 		$application_handler->deleteMenuLink($appid, $menuitem);  
+		$_POST['reload_settings'] = 1;
   	}
+    
+    $menuLinkAdded = false;
+    foreach($setOfMenuItems as $menuitems) {
     
     if(strlen($menuitems) > 0){
     	$linkValues = explode("::",$menuitems);
+	    if($linkValues[2] != 'url') {
+		$linkValues[3] = '';
+		$menuitems = implode("::", $linkValues);
+	    }
         if($linkValues[0] == "null"){
         	$application_handler->insertMenuLink($appid, $menuitems);
+		    $_POST['reload_settings'] = 1;
+		    $menuLinkAdded = true;
         }
         else{ //if($linkValues[0] == menu_id)
         	$application_handler->updateMenuLink($appid, $menuitems);
         }
     }
+    }
     
     // Sort update of menu links
     // added Oct 2013 W.R.
 
-	if (!$_POST['menu_items'] && !$_POST['deletemenuitem'] ){
 		if($_POST['menuorder']) {
             
 			// retrieve all the links that belong to this application
 			$Links = $application_handler->getMenuLinksForApp($appid, all);
             
 			// get the new order of the links...
-			$newOrder = explode("drawer-5[]=", str_replace("&", "", $_POST['menuorder']));
+	$newOrder = explode("drawer-".intval($_POST['tabnumber'])."[]=", str_replace("&", "", $_POST['menuorder']));
 			unset($newOrder[0]);
+	if($menuLinkAdded) {
+	    $newOrder[] = count($newOrder); // assign the current count, to a new key (so the key and value will be the same, to represent the most recent menu entry)
+	}
 			// newOrder will have keys corresponding to the new order, and values corresponding to the old order
-            
 			if(count($Links) != count($newOrder)) {
 				print "Error: the number of links being saved did not match the number of links already in the database";
 				return;
@@ -89,7 +101,6 @@
 			// presist changes
 			$application_handler->updateSorting($Links);
 		}
-	}
     
     // if the form name was changed, then force a reload of the page...reload will be the application id
     if(isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) {
