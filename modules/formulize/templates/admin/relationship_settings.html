@@ -11,7 +11,7 @@ function checkForCommon(Obj, form1, form2, lid) {
     for (var i=0; i < Obj.options.length; i++) {
         if(Obj.options[i].selected && Obj.options[i].value == 'common') {
             jQuery("#dialog-common-values").dialog('open');
-            jQuery("#dialog-common-values-content").load('<{$smarty.const.XOOPS_URL}>/modules/formulize/admin/frameCommonElements1.php?form1=' + form1 + '&form2=' + form2 + '&lid=' + lid);
+            jQuery("#dialog-common-values-content").load('<{$smarty.const.XOOPS_URL}>/modules/formulize/admin/frameCommonElements_dialog.php?form1=' + form1 + '&form2=' + form2 + '&lid=' + lid);
         }
     }
 }

@@ -122,7 +122,6 @@ $accordion_active = (isset($_POST['accordion_active']) AND $_POST['accordion_act
 $xoopsTpl->assign('accordion_active', $accordion_active);
 $xoopsTpl->display("db:admin/ui.html");
 
-include 'footer.php';
 xoops_cp_footer();
 
 
