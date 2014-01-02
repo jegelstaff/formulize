@@ -18,10 +18,29 @@
 if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 	define("XOOPS_MAINFILE_INCLUDED",1);
 
+	// ADDED BY FREEFORM SOLUTIONS
+	// this setting determines which errors will be recorded in the error log
+	// use one of the error log constants to log errors of that, or higher severity: http://www.php.net/manual/en/errorfunc.constants.php
+	// ie: setting E_WARNING here will log E_WARNING and E_ERROR only
+	// setting this to 0 will cause no errors to be logged
+	// This constant also causes errors to still be logged (but not displayed) when the Developer Dashboard setting is off.
+	// Comment out this constant if you don't want any of this behaviour
+	define("ICMS_ERROR_LOG_SEVERITY", E_WARNING);
+	
+	// ADDED BY FREEFORM SOLUTIONS
+	// Set the default timezone to UTC if there is no other timezone specifically set already
+	if ("UTC" == @date_default_timezone_get()) {
+		date_default_timezone_set("UTC");
+	}
+		
 	// XOOPS Physical Path
 	// Physical path to your main XOOPS directory WITHOUT trailing slash
 	// Example: define('XOOPS_ROOT_PATH', '/path/to/xoops/directory');
-	define('XOOPS_ROOT_PATH', '');
+	// ALTERED BY FREEFORM SOLUTIONS...
+	// AS DEFINED IN INSTALLER BY USER:
+	// define('XOOPS_ROOT_PATH', '');
+	// AS DETERMINED FROM FIRST PRINCIPLES:
+	define('XOOPS_ROOT_PATH', realpath(dirname(__FILE__)));
 
 	// XOOPS Security Physical Path
 	// Physical path to your security XOOPS directory WITHOUT trailing slash.
@@ -34,7 +53,20 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 	// XOOPS Virtual Path (URL)
 	// Virtual path to your main XOOPS directory WITHOUT trailing slash
 	// Example: define('XOOPS_URL', 'http://url_to_xoops_directory');
-	define('XOOPS_URL', 'http://');
+	// ALTERED BY FREEFORM SOLUTIONS...
+	// AS DEFINED IN INSTALLER BY USER:
+	// define('XOOPS_URL', 'http://');
+	// AS DETERMINED FROM FIRST PRINCIPLES:
+	if (!defined("SITE_BASE_URL")) {
+        # if this code is in a subfolder of the website, figure out what the subfolder url is
+        $doc_root_len = strlen($_SERVER["DOCUMENT_ROOT"]);
+        if (strlen(XOOPS_ROOT_PATH) > $doc_root_len) {
+		define("SITE_BASE_URL", substr(XOOPS_ROOT_PATH, $doc_root_len));
+        }
+        else
+		define("SITE_BASE_URL", "");
+	}
+	define('XOOPS_URL', (443 == $_SERVER["SERVER_PORT"] ? "https://" : "http://") . $_SERVER['SERVER_NAME'] . SITE_BASE_URL);
 
 	define('XOOPS_CHECK_PATH', 0);
 	// Protect against external scripts execution if safe mode is not enabled

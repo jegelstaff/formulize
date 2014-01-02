@@ -104,6 +104,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 				$content = str_replace('// sdata#--#', '', $content);
 			}
 
+			// ADDED BY FREEFORM SOLUTIONS
+			$vars['TRUST_PATH'] = str_replace($vars['ROOT_PATH'], "'.XOOPS_ROOT_PATH.'", $vars['TRUST_PATH']);
+			
 			foreach ($rewrite as $key => $val) {
 				if (is_int($val) && preg_match("/(define\()([\"'])(XOOPS_$key)\\2,\s*([0-9]+)\s*\)/", $content )) {
 					$content = preg_replace( "/(define\()([\"'])(XOOPS_$key)\\2,\s*([0-9]+)\s*\)/",
