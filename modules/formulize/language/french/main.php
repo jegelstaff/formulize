@@ -80,6 +80,9 @@ define("_AM_SELECT_PROXY", "Est-ce que cette information concerne un autre perso
 define("_AM_SELECT_UPDATE_NOCHANGE", "Le responsable en cours: ");
 define("_AM_SELECT_UPDATE_OWNER", "Changer la personne en charge de cette entrée?");
 define("_AM_UPLOAD", "Envoyer un fichier");
+define("_AM_UPLOAD_DELETE", " Effacer ce fichier");
+define("_AM_UPLOAD_DELETE_FAIL", " Il y a eu un problème lors de l'effacement du fichier, rechargez le formulaire et essayez une nouvelle fois ");
+define("_AM_UPLOAD_DELETE_WARN", " Voulez vous vraiment effacer ce fichier?");
 define("_AM_UPLOAD_ERROR_MIMETYPES", "Le type de fichier que vous envoyez n'est pas autorisé pour '");
 define("_AM_UPLOAD_ERR_CANT_WRITE", "Votre fichier a été envoyé, mais ne peut être sauvegardé sur le serveur car il est probablement plein. Merci de signaler cela au webmaster.");
 define("_AM_UPLOAD_ERR_EXTENSION", "Le serveur a rejeté votre fichier (une extension PHP a stoppé le processus d'envoi).");
@@ -87,7 +90,8 @@ define("_AM_UPLOAD_ERR_FORM_SIZE", "La taille de fichier est trop grande pour '"
 define("_AM_UPLOAD_ERR_INI_SIZE", "La taille de fichier est trop grande par rapport à celle autorisée sur le site.");
 define("_AM_UPLOAD_ERR_NO_TMP_DIR", "Il n'y a pas de répertoire temporaire sur le serveur pour y stocker votre fichier. Merci de signaler cela au webmaster.");
 define("_AM_UPLOAD_ERR_PARTIAL", "Le fichier n'a été envoyé qu'en partie.  Réessayez s'il vous plait.");
-define("_AM_UPLOAD_LOST", "Votre fichier a été envoyé, mais ne peut être déplacé dans une direction permanente sur le serveur.  Réessayez et, si l'erreur persiste, contactez le webmaster.");
+define("_AM_UPLOAD_LOST", "Votre fichier a été envoyé, mais ne peut être déplacé dans une direction permanente sur le serveur.  Réessayez et, si l'erreur persiste, contactez le webmaster.")
+define("_AM_UPLOAD_MOD", "Remplacer ce fichier par un autre:");;
 define("_AM_UPLOAD_NOLOCATION", "Votre fichier a été envoyé, mais le fichier pour le sauver n'existe pas.  Signalez cela au webmaster.");
 define("_CONTINUE", "Continue to the next part");
 define("_FORM_ACT","Action");
