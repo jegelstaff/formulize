@@ -714,3 +714,20 @@ define("_formulize_REQUIRED_UNIQUE", "The value you entered for '%s' has been en
 define("_formulize_NO_MATCH_FOUND", "No match found");
 
 define("_formulize_ENTRY_IS_LOCKED", "Some or all of the data on this page has been opened by '%s', therefore it is locked and you cannot make any changes to it.  Wait for the other person to save the data, or get a webmaster to save it (webmasters can override locks like this).");
+
+/* Upload element translation by François */
+define("_AM_UPLOAD", "Upload a file:");
+define("_AM_UPLOAD_DELETE", "  Delete this file");
+define("_AM_UPLOAD_DELETE_FAIL", "There was an error deleting the file, please reload the form and try again.");
+define("_AM_UPLOAD_DELETE_WARN", "Do you really want to delete this file?");
+define("_AM_UPLOAD_LOST", "Your file was uploaded, but could not be moved to a permanent location on the server.  Please try again.  If this happens again, please inform the webmaster about this error..");
+define("_AM_UPLOAD_MOD", "Replace this with a new file:");
+define("_AM_UPLOAD_NOLOCATION", "Your file was uploaded, but the location where we need to save it on the server does not exist.  Please inform the webmaster about this error.");
+define("_AM_UPLOAD_ERROR_MIMETYPES", "The type of file you uploaded is not allowed for '");
+define("_AM_UPLOAD_ERR_INI_SIZE", "Your file is larger than the maximum size allowed by the webserver (in php.ini).");
+define("_AM_UPLOAD_ERR_FORM_SIZE", "Your file is larger than the maximum size allowed for '");
+define("_AM_UPLOAD_ERR_PARTIAL", "The file was only partially uploaded.  Please try again.");
+define("_AM_UPLOAD_ERR_NO_TMP_DIR", "There is no temporary folder on the server to save your file in.  Please inform the webmaster about this error.");
+define("_AM_UPLOAD_ERR_CANT_WRITE", "Your file was uploaded, but could not be saved on the web server, maybe because the hard drive is full.  Please inform the webmaster about this error.");
+define("_AM_UPLOAD_ERR_EXTENSION", "The web server rejected your file (a PHP extension stopped it form being uploaded).");
+/* End Upload element translation by François */
