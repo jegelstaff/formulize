@@ -287,6 +287,7 @@ CREATE TABLE formulize_id (
   form_handle varchar(255) NOT NULL default '',
   store_revisions tinyint(1) NOT NULL default '0',
   on_before_save text default NULL,
+  note text default NULL,
   PRIMARY KEY  (`id_form`)
 ) ENGINE=MyISAM;
 

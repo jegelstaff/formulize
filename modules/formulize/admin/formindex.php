@@ -112,7 +112,7 @@ function patch40() {
 	 * ====================================== */
 	
 	$checkThisTable = 'formulize_id';
-	$checkThisField = 'on_before_save';
+	$checkThisField = 'note';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
@@ -306,7 +306,8 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		$sql['add_elementtext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `elementtemplate` text NOT NULL"; 
 		$sql['add_bottomtext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `bottomtemplate` text NOT NULL"; 
 		$sql['add_formelements'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_form") . " ADD `formelements` text default NULL";
-		$sql['add_on_before_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_before_save` text default NULL";
+        $sql['add_on_before_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_before_save` text default NULL";
+		$sql['add_form_note'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `note` text default NULL";
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
 				if($key === "add_encrypt") {
@@ -343,8 +344,10 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
                     print "formelements field already added for single page screens.  result: OK<br>";
                 } elseif($key === "add_on_before_save") {
                     print "on_before_save field already added.  result: OK<br>";
+                } elseif($key === "add_form_note") {
+                    print "form note field already added.  result: OK<br>";
 				} elseif(strstr($key, 'drop_from_formulize_id_')) {
-					continue;					
+					continue;
 				} else {
 					exit("Error patching DB for Formulize 4.0. SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}

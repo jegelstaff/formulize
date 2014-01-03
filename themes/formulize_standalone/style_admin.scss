@@ -25,3 +25,8 @@ tr.blocked td {
     margin: 0 0.25em;
     @include border-radius(3px);
 }
+
+.forms-note {
+    width: 99%;
+    height: 10em;
+}

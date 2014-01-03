@@ -167,6 +167,7 @@ class formulizeForm extends XoopsObject {
         $this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
         $this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
         $this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_before_save']);
+        $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
     }
 
     static function sanitize_handle_name($handle_name) {
@@ -398,17 +399,18 @@ class formulizeFormsHandler {
 
                 if($formObject->isNew() || empty($id_form)) {
                     $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, ".
-                        "`defaultlist`, `menutext`, `form_handle`, `store_revisions`, `on_before_save`) VALUES (".
+                        "`defaultlist`, `menutext`, `form_handle`, `store_revisions`, `on_before_save`, `note`) VALUES (".
                         $this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".
                         $this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).
                         ", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
-                        intval($store_revisions).", ".$this->db->quoteString($on_before_save).")";
+                        intval($store_revisions).", ".$this->db->quoteString($on_before_save).", ".$this->db->quoteString($note).")";
                 } else {
                     $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).
                     ", `singleentry` = ".$this->db->quoteString($singleToWrite).", `headerlist` = ".$this->db->quoteString($headerlist).
                     ", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist).", `menutext` = ".
                     $this->db->quoteString($menutext).", `form_handle` = ".$this->db->quoteString($form_handle).", `store_revisions` = ".
-                    intval($store_revisions).", `on_before_save` = ".$this->db->quoteString($on_before_save)." WHERE id_form = ".intval($id_form);
+                    intval($store_revisions).", `on_before_save` = ".$this->db->quoteString($on_before_save)." , ".
+                    "`note` = ".$this->db->quoteString($note)." WHERE id_form = ".intval($id_form);
                 }
 
                 if (false != $force) {
