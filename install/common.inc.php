@@ -13,6 +13,12 @@
  * @version		$Id: common.inc.php 20098 2010-09-07 16:19:19Z skenow $
  */
 
+// ADDED BY FREEFORM SOLUTIONS
+// Set the default timezone to UTC if there is no other timezone specifically set already
+if ("UTC" == @date_default_timezone_get()) {
+    date_default_timezone_set("UTC");
+}
+
 /**
  * If non-empty, only this user can access this installer
  */
