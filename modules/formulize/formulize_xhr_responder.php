@@ -199,6 +199,6 @@ switch($op) {
     $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
     $data = getData($formRelationID, $formID,"","AND","",$limitStart,1000);
     $GLOBALS['formulize_forceDerivedValueUpdate'] = false;
-    print count($data);    //print "de_".$fid."_".$entryId."_".$elementId."<<||>>$html";
+    print count($data); // return the number of entries found. when this reaches 0, the client will know to stop calling
     break;
 }
