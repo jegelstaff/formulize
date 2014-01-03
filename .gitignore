@@ -1,6 +1,8 @@
 cache/
 modules/protector/
 modules/formulize/temp/
+modules/formulize/templates/screens/default/
+modules/iMenu/
 templates_c/
 trust_*/
 uploads/profile/
