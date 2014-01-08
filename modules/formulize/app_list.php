@@ -27,7 +27,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-include "mainfile.php";
+include "../../mainfile.php";
 
 /*
 	This is an access point for mobile clients to retrieve the list 
@@ -76,8 +76,7 @@ foreach ($application_list as $application) {
 		$app_data["links"] = $links_arr;
 		array_push($applications_array, $app_data);
 	}
-
 }
-	// Output application menu links in a JSON format for mobile clients
-	exit(json_encode($applications_array));
 
+// Output application menu links in a JSON format for mobile clients
+exit(json_encode($applications_array));
