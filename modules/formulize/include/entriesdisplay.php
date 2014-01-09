@@ -3480,7 +3480,7 @@ jQuery(window).load(function() {
 			for (var i=0; i < curColumnsArray.length; i++) {
 				if(curColumnsArray[i] != column) {
 					if(curColumnsHTML != '') {
-						curColummsHTML = curColumnsHTML+',';
+						curColumnsHTML = curColumnsHTML+',';
 					}
 					curColumnsHTML = curColumnsHTML+curColumnsArray[i];
 				}
