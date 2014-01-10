@@ -3437,6 +3437,7 @@ function toggleColumnInFloat(column) {
 		var row = columnAddress[1];
 		if(floatingContents[column] == true) {
 			jQuery('#floatingcelladdress_'+row+' #cellcontents_'+row+'_'+column).remove();
+			jQuery('#celladdress_'+row+'_'+column).css('display', 'table-cell');
 			jQuery(this).removeClass('now-scrolling');
 		} else {
 			jQuery('#floatingcelladdress_'+row).append(jQuery(this).html());
