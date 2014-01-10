@@ -56,7 +56,7 @@ class formulizeForm extends XoopsObject {
 			$encryptedElements = array();
 			$headerlist = array();
 			$defaultform = "";
-			$defaultlist = "";
+            $defaultlist = "";
 		} else {
 			$formq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$id_form");
 			if(!isset($formq[0])) {
@@ -160,13 +160,15 @@ class formulizeForm extends XoopsObject {
 		$this->initVar("viewFrids", XOBJ_DTYPE_ARRAY, serialize($viewFrids));
 		$this->initVar("viewPublished", XOBJ_DTYPE_ARRAY, serialize($viewPublished));
 		$this->initVar("filterSettings", XOBJ_DTYPE_ARRAY, serialize($filterSettings));
-		$this->initVar("headerlist", XOBJ_DTYPE_TXTAREA, $headerlist);
-		$this->initVar("defaultform", XOBJ_DTYPE_INT, $defaultform, true);
-		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);
-		$this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
-		$this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
-		$this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
-	}
+        $this->initVar("headerlist", XOBJ_DTYPE_TXTAREA, $headerlist);
+        $this->initVar("defaultform", XOBJ_DTYPE_INT, $defaultform, true);
+        $this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);
+        $this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
+        $this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
+        $this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
+        $this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_before_save']);
+        $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
+    }
 
     static function sanitize_handle_name($handle_name) {
         // strip non-alphanumeric characters from form and element handles
@@ -185,8 +187,82 @@ class formulizeForm extends XoopsObject {
             $value = self::sanitize_handle_name($value);
         }
         parent::setVar($key, $value, $not_gpc);
+        if ("on_before_save" == $key) {
+            $this->cache_on_before_save_code();
+        }
+    }
+
+    protected function on_before_save_function_name() {
+        // form ID is used so the function name is unique
+        return "form_".$this->id_form."_on_before_save";
+    }
+
+    protected function on_before_save_filename() {
+        // save the code in the icms cache folder (because it is known to be writeable)
+        return ICMS_CACHE_PATH."/{$this->on_before_save_function_name}.php";
+    }
+
+    private function cache_on_before_save_code() {
+        if (strlen($this->on_before_save) > 0) {
+            $on_before_save_code = <<<EOF
+<?php
+
+function form_{$this->id_form}_on_before_save(\$entry_id, \$element_values, \$form_id) {
+    extract(\$element_values);  // this converts the array elements into PHP variables
+
+{$this->on_before_save}
+
+    return get_defined_vars();  // this converts PHP variables back into an array
+}
+
+EOF;
+            // todo: there is a way to validate php files on disk, so do that and report any syntax errors
+            return (false !== file_put_contents($this->on_before_save_filename, $on_before_save_code));
+        } else {
+            if (file_exists($this->on_before_save_filename)) {
+                unlink($this->on_before_save_filename);
+            }
+            return true;
+        }
+    }
+
+    public function on_before_save() {
+        // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
+        return $this->vars['on_before_save']['value'];
+    }
+
+    public function onBeforeSave($entry_id, $element_values) {
+        // if there is any code to run before saving, include it (write if necessary), and run the function
+        if (strlen($this->on_before_save) > 0 and (file_exists($this->on_before_save_filename) or $this->cache_on_before_save_code())) {
+            include_once $this->on_before_save_filename;
+            // note that the custom code could create new values in the element_values array, so the caller must limit to valid field names
+            $element_values = call_user_func($this->on_before_save_function_name, $entry_id, $element_values, $this->getVar('id_form'));
+            foreach ($element_values["element_values"] as $key => $value) {
+                if (0 == preg_match("/^[a-zA-Z_][a-zA-Z0-9_]*$/", $key)) {
+                    // this key is invalid for a PHP variable name, so it was not set in the on-before-save function and
+                    //  the value in the array (which could have been modified) should be returned
+                    $element_values[$key] = $value;
+                }
+            }
+            // due to extract()ing and then collecting back into an array, the array contains itself, so remove the duplicate
+            unset($element_values["element_values"]);
+        }
+        return $element_values;
+    }
+
+
+    function __get($name) {
+        if (!isset($this->$name)) {
+            if (method_exists($this, $name)) {
+                $this->$name = $this->$name();
+            } else {
+                $this->$name = $this->getVar($name);
+            }
+        }
+        return $this->$name;
     }
 }
+
 
 class formulizeFormsHandler {
 	var $db;
@@ -320,17 +396,28 @@ class formulizeFormsHandler {
 						$singleToWrite = "group";
 						break;
 				}
-				if($formObject->isNew() || empty($id_form)) {
-					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`) VALUES (".$this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".$this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".intval($store_revisions).")";
-				} else {
-					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).", `singleentry` = ".$this->db->quoteString($singleToWrite).", `headerlist` = ".$this->db->quoteString($headerlist).", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist).", `menutext` = ".$this->db->quoteString($menutext).", `form_handle` = ".$this->db->quoteString($form_handle).", `store_revisions` = ".intval($store_revisions)." WHERE id_form = ".intval($id_form);
-				}
-				
-				if( false != $force ){
-            $result = $this->db->queryF($sql);
-        }else{
-            $result = $this->db->query($sql);
-        }
+
+                if($formObject->isNew() || empty($id_form)) {
+                    $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, ".
+                        "`defaultlist`, `menutext`, `form_handle`, `store_revisions`, `on_before_save`, `note`) VALUES (".
+                        $this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".
+                        $this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).
+                        ", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
+                        intval($store_revisions).", ".$this->db->quoteString($on_before_save).", ".$this->db->quoteString($note).")";
+                } else {
+                    $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).
+                    ", `singleentry` = ".$this->db->quoteString($singleToWrite).", `headerlist` = ".$this->db->quoteString($headerlist).
+                    ", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist).", `menutext` = ".
+                    $this->db->quoteString($menutext).", `form_handle` = ".$this->db->quoteString($form_handle).", `store_revisions` = ".
+                    intval($store_revisions).", `on_before_save` = ".$this->db->quoteString($on_before_save)." , ".
+                    "`note` = ".$this->db->quoteString($note)." WHERE id_form = ".intval($id_form);
+                }
+
+                if (false != $force) {
+                    $result = $this->db->queryF($sql);
+                } else{
+                    $result = $this->db->query($sql);
+                }
 
 				if( !$result ){
 					print "Error: this form could not be saved in the database.  SQL: $sql<br>".mysql_error();

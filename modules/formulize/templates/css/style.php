@@ -89,6 +89,25 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
     width: 185px !important;
 }
 
+#prev {
+	    background:#008CC4 url('<?php print XOOPS_URL; ?>/modules/formulize/images/prev.png') no-repeat 10px;
+	    text-indent:40px;
+	    height: 36px;
+	    color: #fff !important;
+	    text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
+	    font-size: 15px;
+
+}
+#next {
+	    background:#008CC4 url('<?php print XOOPS_URL; ?>/modules/formulize/images/next.png') no-repeat 140px;
+            text-align: left;
+            width: 185px;
+	    height: 36px;
+	    color: #fff !important;
+	    text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
+	    font-size: 15px;
+}
+
 /*=== Formulize Boutons by Francois T ===*/
 #formulize_addButton, #formulize_addProxyButton {
     text-indent:45px;	

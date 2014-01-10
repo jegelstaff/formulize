@@ -307,6 +307,7 @@ $common['fid'] = $fid;
 $common['aid'] = $aid;
 $common['defaultform'] = $defaultform;
 $common['defaultlist'] = $defaultlist;
+$common['form_object'] = $formObject;
 
 $permissions = array();
 $permissions['hello'] = "Hello Permission World";
@@ -406,4 +407,3 @@ $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['url'] = "page=application&aid=$aid&tab=forms";
 $breadcrumbtrail[2]['text'] = $appName;
 $breadcrumbtrail[3]['text'] = $formName;
-

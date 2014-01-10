@@ -368,7 +368,7 @@ class formulizeElementRenderer{
 					}
 
 					// if no extra elements are selected for display as a form element, then display the linked element
-					if (0 == count($ele_value[EV_MULTIPLE_FORM_COLUMNS])) {
+					if (0 == count($ele_value[EV_MULTIPLE_FORM_COLUMNS]) OR $ele_value[EV_MULTIPLE_FORM_COLUMNS][0] == 'none') {
 						$linked_columns = array($boxproperties[1]);
 					} else {
 						$linked_columns = convertElementIdsToElementHandles($ele_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));

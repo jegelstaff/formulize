@@ -591,7 +591,12 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 			print "<p>" . _NO_PERM . "</p>";
 			return;
 		}
-      }
+	}
+
+    // there are several points above where $entry is set, and now that we have a final value, store in ventry
+    if ($entry > 0 and "addnew" != $settings['ventry']) {
+        $settings['ventry'] = $entry;
+    }
 
 	// set the alldoneoverride if necessary -- August 22 2006
 	$config_handler =& xoops_gethandler('config');
@@ -672,10 +677,10 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 							$linkedElement1EleValue = $linkedElement1->getVar('ele_value');
 							if(strstr($linkedElement1EleValue[2], "#*=:*")) {
 								// element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1 with , , around it
-								$form1EntryId = formulize_writeEntry(array($key1=>",".$GLOBALS['formulize_newEntryIds'][$form2][0].","), $entryToWriteToForm1);
+								$form1EntryId = formulize_writeEntry(array($key1=>$GLOBALS['formulize_newEntryIds'][$form2][0]), $entryToWriteToForm1);
 							} else {
 								// element 2 is the linked selectbox, so get the value of entry id for what we just created in form 1 and put it in element 2 with , , around it
-								$form2EntryId = formulize_writeEntry(array($key2=>",".$GLOBALS['formulize_newEntryIds'][$form1][0].","), $entryToWriteToForm2);
+								$form2EntryId = formulize_writeEntry(array($key2=>$GLOBALS['formulize_newEntryIds'][$form1][0]), $entryToWriteToForm2);
 							}
 						}
 						if($form1EntryId) {
@@ -832,13 +837,13 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 			$form->addElement (new XoopsFormHidden ('goto_sub', ''));
 			$form->addElement (new XoopsFormHidden ('goto_sfid', ''));
 			
-			foreach($sub_fids as $sfid) {
+			foreach($sub_fids as $subform_id) {
 				// only draw in the subform UI if the subform hasn't been drawn in previously, courtesy of a subform element in the form.
 				// Subform elements are recommended since they provide 1. specific placement, 2. custom captions, 3. direct choice of form elements to include
-				if(in_array($sfid, $sfidsDrawn) OR $elements_allowed OR (!$scheck = security_check($sfid, "", $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms)) { // no entry passed so this will simply check whether they have permission for the form or not
+				if(in_array($subform_id, $sfidsDrawn) OR $elements_allowed OR (!$scheck = security_check($subform_id, "", $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms)) { // no entry passed so this will simply check whether they have permission for the form or not
 					continue;
 				}
-				$subUICols = drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry);
+				$subUICols = drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry);
 				unset($subLinkUI);
 				if(isset($subUICols['single'])) {
 					$form->insertBreak($subUICols['single'], "even");
@@ -1194,39 +1199,43 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 }
 
 // this function draws in the UI for sub links
-function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry,
+function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry,
 	$customCaption = "", $customElements = "", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings = 0,
 	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries, $subformConditions, $subformElementId = 0,
-	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES) {
-
+	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES)
+{
+	$nestedSubform = false;
+	if(isset($GLOBALS['formulize_inlineSubformFrid'])) {
+		$frid = $GLOBALS['formulize_inlineSubformFrid'];
+		$nestedSubform = true;
+	}
+	
+	
     $member_handler = xoops_gethandler('member');
     $gperm_handler = xoops_gethandler('groupperm');
 
-
-        $addEntriesText = $addEntriesText ? $addEntriesText : _formulize_ADD_ENTRIES;
-	// only the text value is a valid flag for hiding the entries because we can't use null since older subforms will have no value for this flag
-	$hideaddentries = $hideaddentries === 'hideaddentries' ? 1 : 0;
+    $addEntriesText = $addEntriesText ? $addEntriesText : _formulize_ADD_ENTRIES;
 
 	global $xoopsDB, $nosubforms;
 	$GLOBALS['framework'] = $frid;
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 
 	// limit the sub_entries array to just the entries that match the conditions, if any
-	if(is_array($subformConditions)) {
-		list($conditionsFilter, $conditionsFilterOOM, $curlyBracketFormFrom) = buildConditionsFilterSQL($subformConditions, $sfid, $entry, $mainFormOwner, $fid); // pass in mainFormOwner as the comparison ID for evaluating {USER} so that the included entries are consistent when an admin looks at a set of entries made by someone else.
-		$subformObject = $form_handler->get($sfid);
-		$sql = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$subformObject->getVar('form_handle'))."$curlyBracketFormFrom WHERE entry_id IN (".implode(", ", $sub_entries[$sfid]).") $conditionsFilter $conditionsFilterOOM";
-		$sub_entries[$sfid] = array();
+	if(is_array($subformConditions) and is_array($sub_entries[$subform_id])) {
+		list($conditionsFilter, $conditionsFilterOOM, $curlyBracketFormFrom) = buildConditionsFilterSQL($subformConditions, $subform_id, $entry, $mainFormOwner, $fid); // pass in mainFormOwner as the comparison ID for evaluating {USER} so that the included entries are consistent when an admin looks at a set of entries made by someone else.
+		$subformObject = $form_handler->get($subform_id);
+		$sql = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$subformObject->getVar('form_handle'))."$curlyBracketFormFrom WHERE entry_id IN (".implode(", ", $sub_entries[$subform_id]).") $conditionsFilter $conditionsFilterOOM";
+		$sub_entries[$subform_id] = array();
 		if($res = $xoopsDB->query($sql)) {
 			while($array = $xoopsDB->fetchArray($res)) {
-				$sub_entries[$sfid][] = $array['entry_id'];
+				$sub_entries[$subform_id][] = $array['entry_id'];
 			}
 		}
 	}
 	
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 	
-	$target_sub_to_use = (isset($_POST['target_sub']) AND $_POST['target_sub'] != 0) ? $_POST['target_sub'] : $sfid; 
+	$target_sub_to_use = (isset($_POST['target_sub']) AND $_POST['target_sub'] != 0) ? $_POST['target_sub'] : $subform_id; 
 	$elementq = q("SELECT fl_key1, fl_key2, fl_common_value, fl_form2_id FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=" . intval($frid) . " AND fl_form2_id=" . intval($fid) . " AND fl_form1_id=" . intval($target_sub_to_use));
 	// element_to_write is used below in writing results of "add x entries" clicks, plus it is used for defaultblanks on first drawing blank entries, so we need to get this outside of the saving routine
 	if(count($elementq) > 0) {
@@ -1243,7 +1252,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 
 	// check for adding of a sub entry, and handle accordingly -- added September 4 2006
 	
-	if($_POST['target_sub'] AND $_POST['target_sub'] == $sfid AND $_POST['target_sub_instance'] == $subformElementId) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
+	if($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
 		// need to handle things differently depending on whether it's a common value or a linked selectbox type of link
 		// uid links need to result in a "new" value in the displayElement boxes -- odd things will happen if people start adding linked values to entries that aren't theirs!
 		if($element_to_write != 0) {
@@ -1257,7 +1266,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 					$value_to_write = $data_handler->getElementValueInEntry($entry, $value_source);
 				}
 			} else {
-				$value_to_write = ",".$entry.","; 
+				$value_to_write = $entry; 
 			}
 			$sub_entry_new = "";
 		
@@ -1321,37 +1330,37 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 
 	// need to do a number of checks here, including looking for single status on subform, and not drawing in add another if there is an entry for a single
 
-	$sub_single_result = getSingle($sfid, $uid, $groups, $member_handler, $gperm_handler, $mid);
+	$sub_single_result = getSingle($subform_id, $uid, $groups, $member_handler, $gperm_handler, $mid);
 	$sub_single = $sub_single_result['flag'];
 	if($sub_single) {
 		unset($sub_entries);
-		$sub_entries[$sfid][0] = $sub_single_result['entry'];
+		$sub_entries[$subform_id][0] = $sub_single_result['entry'];
 	}
 
-	if(!is_array($sub_entries[$sfid])) { $sub_entries[$sfid] = array(); }
+	if(!is_array($sub_entries[$subform_id])) { $sub_entries[$subform_id] = array(); }
 
-	if($sub_entry_new AND !$sub_single AND $_POST['target_sub'] == $sfid) {
+	if($sub_entry_new AND !$sub_single AND $_POST['target_sub'] == $subform_id) {
 		for($i=0;$i<$_POST['numsubents'];$i++) {
-			array_unshift($sub_entries[$sfid], $sub_entry_new);
+			array_unshift($sub_entries[$subform_id], $sub_entry_new);
 		}
 	}
 
-	if(is_array($sub_entry_written) AND !$sub_single AND $_POST['target_sub'] == $sfid) {
+	if(is_array($sub_entry_written) AND !$sub_single AND $_POST['target_sub'] == $subform_id) {
 		foreach($sub_entry_written as $sew) {
-			array_unshift($sub_entries[$sfid], $sew);
+			array_unshift($sub_entries[$subform_id], $sew);
 		}
 	}
 
 	if(!$customCaption) {
 		// get the title of this subform
 		// help text removed for F4.0 RC2, this is an experiment
-		$subtitle = q("SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $sfid");
+		$subtitle = q("SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $subform_id");
 		$col_one = "<p class=\"subform-caption\"><b>" . trans($subtitle[0]['desc_form']) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
 	} else {
 		$col_one = "<p class=\"subform-caption\"><b>" . trans($customCaption) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
 	}
 
-	/*if(intval($sub_entries[$sfid][0]) != 0 OR $sub_entry_new OR is_array($sub_entry_written)) {
+	/*if(intval($sub_entries[$subform_id][0]) != 0 OR $sub_entry_new OR is_array($sub_entry_written)) {
 		if(!$nosubforms) { $col_one .= "<br>" . _formulize_ADD_HELP2; }
 		$col_one .= "<br>" . _formulize_ADD_HELP3;
 	} */
@@ -1374,8 +1383,8 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 			}
 		}		
 	} else {
-		$subHeaderList = getHeaderList($sfid);
-		$subHeaderList1 = getHeaderList($sfid, true);
+		$subHeaderList = getHeaderList($subform_id);
+		$subHeaderList1 = getHeaderList($subform_id, true);
 		$headersToDraw[] = trans($subHeaderList[0]);
 		$headersToDraw[] = trans($subHeaderList[1]);
 		$headersToDraw[] = trans($subHeaderList[2]);
@@ -1388,31 +1397,31 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 	$drawnHeadersOnce = false;
 
 	if($rowsOrForms=="row" OR $rowsOrForms =='') {
-		$col_two = "<table id=\"formulize-subform-table-$sfid\" class=\"formulize-subform-table\">";
+		$col_two = "<table id=\"formulize-subform-table-$subform_id\" class=\"formulize-subform-table\">";
 	} else {
 		$col_two = "<div id=\"subform-$subformElementId\" class=\"subform-accordion-container\" subelementid=\"$subformElementId\" style=\"display: none;\">";
 		$col_two .= "<input type='hidden' name='subform_entry_".$subformElementId."_active' id='subform_entry_".$subformElementId."_active' value='' />";
 		include_once XOOPS_ROOT_PATH ."/modules/formulize/class/data.php";
-		$data_handler = new formulizeDataHandler($sfid);
+		$data_handler = new formulizeDataHandler($subform_id);
 	}
 
 	$deFrid = $frid ? $frid : ""; // need to set this up so we can pass it as part of the displayElement function, necessary to establish the framework in case this is a framework and no subform element is being used, just the default draw-in-the-one-to-many behaviour
 	
 	// if there's been no form submission, and there's no sub_entries, and there are default blanks to show, then do everything differently -- sept 8 2007
 	
-	if(!$_POST['form_submitted'] AND count($sub_entries[$sfid]) == 0 AND $defaultblanks > 0 AND ($rowsOrForms == "row"  OR $rowsOrForms =='')) {
+	if(!$_POST['form_submitted'] AND count($sub_entries[$subform_id]) == 0 AND $defaultblanks > 0 AND ($rowsOrForms == "row"  OR $rowsOrForms =='')) {
 	
 		for($i=0;$i<$defaultblanks;$i++) {
 	
 				// nearly same header drawing code as in the 'else' for drawing regular entries
 				if(!$drawnHeadersOnce) {
 					$col_two .= "<tr><td>\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSource_$sfid\" value=\"$value_source\">\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceForm_$sfid\" value=\"$value_source_form\">\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceEntry_$sfid\" value=\"$entry\">\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformElementToWrite_$sfid\" value=\"$element_to_write\">\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformSourceType_$sfid\" value=\"".$elementq[0]['fl_common_value']."\">\n";
-					$col_two .= "<input type=\"hidden\" name=\"formulize_subformId_$sfid\" value=\"$sfid\">\n"; // this is probably redundant now that we're tracking sfid in the names of the other elements
+					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSource_$subform_id\" value=\"$value_source\">\n";
+					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceForm_$subform_id\" value=\"$value_source_form\">\n";
+					$col_two .= "<input type=\"hidden\" name=\"formulize_subformValueSourceEntry_$subform_id\" value=\"$entry\">\n";
+					$col_two .= "<input type=\"hidden\" name=\"formulize_subformElementToWrite_$subform_id\" value=\"$element_to_write\">\n";
+					$col_two .= "<input type=\"hidden\" name=\"formulize_subformSourceType_$subform_id\" value=\"".$elementq[0]['fl_common_value']."\">\n";
+					$col_two .= "<input type=\"hidden\" name=\"formulize_subformId_$subform_id\" value=\"$subform_id\">\n"; // this is probably redundant now that we're tracking sfid in the names of the other elements
 					$col_two .= "</td>\n";
 					foreach($headersToDraw as $x=>$thishead) {
 						if($thishead) {
@@ -1445,31 +1454,31 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 				
 		}
 	
-	} elseif(count($sub_entries[$sfid]) > 0) {
+	} elseif(count($sub_entries[$subform_id]) > 0) {
 		
 		// need to figure out the proper order for the sub entries based on the properties set for this form
 		// for now, hard code to the word number field to suit the map site only
 		// if it's the word subform, then sort the entries differently
-		/*if($sfid == 281) {
+		/*if($subform_id == 281) {
 			$sortClause = " fas_281, block_281, word_number ";
 		} 
-		elseif ($sfid == 283) {
+		elseif ($subform_id == 283) {
 			$sortClause = " fas_283 ";
 		}
 		else {*/
 			$sortClause = " entry_id ";
 		//}
 		
-		$sformObject = $form_handler->get($sfid);
-		$subEntriesOrderSQL = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$sformObject->getVar('form_handle'))." WHERE entry_id IN (".implode(",", $sub_entries[$sfid]).") ORDER BY $sortClause";
+		$sformObject = $form_handler->get($subform_id);
+		$subEntriesOrderSQL = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$sformObject->getVar('form_handle'))." WHERE entry_id IN (".implode(",", $sub_entries[$subform_id]).") ORDER BY $sortClause";
 		if($subEntriesOrderRes = $xoopsDB->query($subEntriesOrderSQL)) {
-			$sub_entries[$sfid] = array();
+			$sub_entries[$subform_id] = array();
 			while($subEntriesOrderArray = $xoopsDB->fetchArray($subEntriesOrderRes)) {
-				$sub_entries[$sfid][] = $subEntriesOrderArray['entry_id'];
+				$sub_entries[$subform_id][] = $subEntriesOrderArray['entry_id'];
 			}
 		}
 
-		foreach($sub_entries[$sfid] as $sub_ent) {
+		foreach($sub_entries[$subform_id] as $sub_ent) {
 			if($sub_ent != "") {
 				
 				if($rowsOrForms=='row' OR $rowsOrForms =='') {
@@ -1488,7 +1497,10 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 					}
 					$col_two .= "<tr>\n<td>";
 					// check to see if we draw a delete box or not
-					if ($sub_ent !== "new" and formulizePermHandler::user_can_delete_entry($sfid, $uid, $sub_ent)) {
+					if ($sub_ent !== "new" and ("hideaddentries" != $hideaddentries)
+						and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent))
+					{
+						// note: if the add/delete entry buttons are hidden, then these delete checkboxes are hidden as well
 						$need_delete = 1;
 						$col_two .= "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>";
 					}
@@ -1508,7 +1520,7 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 							}
 						}
 					}
-					if(!$nosubforms AND $showViewButtons) { $col_two .= "<td><input type=button name=view".$sub_ent." value='"._formulize_SUBFORM_VIEW."' onclick=\"javascript:goSub('$sub_ent', '$sfid');return false;\"></input></td>\n"; }
+					if(!$nosubforms AND $showViewButtons) { $col_two .= "<td><input type=button name=view".$sub_ent." value='"._formulize_SUBFORM_VIEW."' onclick=\"javascript:goSub('$sub_ent', '$subform_id');return false;\"></input></td>\n"; }
 					$col_two .= "</tr>\n";
 				} else { // display the full form
 					$headerValues = array();
@@ -1522,17 +1534,21 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 					
 					// check to see if we draw a delete box or not
 					$deleteBox = "";
-					if ($sub_ent !== "new" and formulizePermHandler::user_can_delete_entry($sfid, $uid, $sub_ent)) {
+					if ($sub_ent !== "new" and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent)) {
 						$need_delete = 1;
 						$deleteBox = "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>&nbsp;&nbsp;";
 					}
 					
 					
-					$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container\" id=\"subform-".$sfid."-"."$sub_ent\">
+					$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container\" id=\"subform-".$subform_id."-"."$sub_ent\">
 	<p class=\"subform-header\"><a href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>
 	<div class=\"accordion-content content\">";
 					ob_start();
-					$renderResult = displayForm($sfid, $sub_ent, "", "",  "", "", "formElementsOnly"); // SHOULD CHANGE THIS TO USE THE DEFAULT SCREEN FOR THE FORM!!!!!!????
+					$GLOBALS['formulize_inlineSubformFrid'] = $frid;
+					$renderResult = displayForm($subform_id, $sub_ent, "", "",  "", "", "formElementsOnly"); // SHOULD CHANGE THIS TO USE THE DEFAULT SCREEN FOR THE FORM!!!!!!????
+					if(!$nestedSubform) {
+						unset($GLOBALS['formulize_inlineSubformFrid']);
+					}
 					$col_two_temp = ob_get_contents();
 					ob_end_clean();
 					$col_two .= $col_two_temp . "</div>\n</div>\n";
@@ -1564,8 +1580,8 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 			autoHeight: false, // no fixed height for sections
 			collapsible: true, // sections can be collapsed
 			active: ";
-			if($_POST['target_sub_instance'] == $subformElementId AND $_POST['target_sub'] == $sfid) {
-				$col_two .= count($sub_entries[$sfid])-$_POST['numsubents'];
+			if($_POST['target_sub_instance'] == $subformElementId AND $_POST['target_sub'] == $subform_id) {
+				$col_two .= count($sub_entries[$subform_id])-$_POST['numsubents'];
 			} elseif(is_numeric($_POST['subform_entry_'.$subformElementId.'_active'])) {
 				$col_two .= $_POST['subform_entry_'.$subformElementId.'_active'];
 			} else {
@@ -1580,27 +1596,41 @@ function drawSubLinks($sfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $en
 	} // end of if we're closing the subform inferface where entries are supposed to be collapsable forms
 
     $deleteButton = "";
-	if(((count($sub_entries[$sfid])>0 AND $sub_entries[$sfid][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
-        $deleteButton = "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$sfid');\">";
+	if(((count($sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND $need_delete) {
+        $deleteButton = "&nbsp;&nbsp;&nbsp;<input type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del('$subform_id');\">";
 		static $deletesubsflagIncluded = false;
 		if(!$deletesubsflagIncluded) {
 			$col_one .= "\n<input type=hidden name=deletesubsflag value=''>\n";
 			$deletesubsflagIncluded = true;
 		}
 	}
-	if($addSubEntry = $gperm_handler->checkRight("add_own_entry", $sfid, $groups, $mid) AND !$hideaddentries) {
-		if(count($sub_entries[$sfid]) == 1 AND $sub_entries[$sfid][0] === "" AND $sub_single) {
-			$col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$sfid', 1, $subformElementId);\"></p>";
-		} elseif(!$sub_single) {
-			$col_two .= "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$sfid', window.document.formulize.addsubentries$sfid$subformElementId.value, $subformElementId);\"><input type=text name=addsubentries$sfid$subformElementId id=addsubentries$sfid$subformElementId value=1 size=2 maxlength=2>".$addEntriesText.$deleteButton."</p>";
-		}
-	}
-	
+
+    // if the 'add x entries button' should be hidden or visible
+    if ("hideaddentries" != $hideaddentries) {
+        $allowed_to_add_entries = false;
+        if ("subform" == $hideaddentries OR 1 == $hideaddentries) {
+            // for compatability, accept '1' which is the old value which corresponds to the new use-subform-permissions (saved as "subform")
+            // user can add entries if they have permission on the sub form
+            $allowed_to_add_entries = $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid);
+        } else {
+            // user can add entries if they have permission on the main form
+            // the user should only be able to add subform entries if they can *edit* the main form entry, since adding a subform entry
+            //  is like editing the main form entry. otherwise they could add subform entries on main form entries owned by other users
+            $allowed_to_add_entries = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
+        }
+        if ($allowed_to_add_entries) {
+            if (count($sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
+                $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, $subformElementId);\"></p>";
+            } elseif(!$sub_single) {
+                $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$subform_id', window.document.formulize.addsubentries$subform_id$subformElementId.value, $subformElementId);\"><input type=text name=addsubentries$subform_id$subformElementId id=addsubentries$subform_id$subformElementId value=1 size=2 maxlength=2>".$addEntriesText.$deleteButton."</p>";
+            }
+        }
+    }
+
 	$to_return['c1'] = $col_one;
 	$to_return['c2'] = $col_two;
 	//return $to_return; // now returning a single set of HTML, which should be a configurable option
 	return array('single'=>$col_one . $col_two);
-
 }
 
 
@@ -1805,7 +1835,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 					// NOTE: assuming that there will only be one value in the match, ie: the link field is not a multiple select box!
 					// format of value should be $formid#*=:*$formcaption#*=:*$ele_id
 					$ele_value[2] = $go_back['form'] . "#*=:*" . $parentCap . "#*=:*" . $pid; */
-					$ele_value[2] = ",".$go_back['entry'].","; // 3.0 datastructure...needs to be tested!!
+					$ele_value[2] = $go_back['entry']; // 3.0 datastructure...needs to be tested!! -- now updated for 5.0
 				}
 			}
 		} elseif($overrideValue){ // used to force a default setting in a form element, other than the normal default
@@ -1894,11 +1924,16 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$form_ele = $deReturnValue;
 				$isDisabled = false;
 			}
-			if($passed = security_check($thissfid) AND in_array($thissfid, $sub_fids) AND $form_ele == "") {
+			if($passed = security_check($thissfid) AND $form_ele == "") {
 				$GLOBALS['sfidsDrawn'][] = $thissfid;
 				$customCaption = $i->getVar('ele_caption');
 				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
-				$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
+				if(isset($GLOBALS['formulize_inlineSubformFrid'])) {
+					$newLinkResults = checkForLinks($GLOBALS['formulize_inlineSubformFrid'][0], array($fid), $fid, array($fid=>array($entry)), null, $owner_groups, $mid, null, $owner);
+					$sub_entries = $newLinkResults['sub_entries'];
+				}
+                // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
+                $subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]);
 				if(isset($subUICols['single'])) {
 					$form->insertBreak($subUICols['single'], "even");
 				} else {

@@ -28,12 +28,41 @@
 ###############################################################################
 
 // handles all operations requested through the UI
+// included in ui.php
+// depends on declarations in ui.php file!!
 
-switch($_GET['op']) {
-  case "delete":
-    deleteForm($_GET['fid']);
-    break;
+include_once "formindex.php";
+
+ob_start();
+
+if(isset($_GET['op'])) {
+
+  switch($_GET['op']) {
+    case "delete":
+      deleteForm($_GET['fid']);
+      break;
+    // patch ops are only in formindex.php, must be called by going to that URL with the patch op in the URL as a param
+    case "patch40":
+    case "patchDB";
+      patch40();
+      break;
+    case "patch31":
+      patch31();
+      break;
+    case "patch22convertdata":
+      patch22convertdata();
+      break;
+    case "patch30datastructure":
+      patch30DataStructure();
+      break;
+   
+  }
+  
+} else {
+  patch40(); // do this which will double check if the user needs to apply a DB patch or not!!
 }
+
+$xoopsTpl->assign('opResults', ob_get_clean());
 
 
 function deleteForm($fid) {
@@ -48,8 +77,8 @@ function deleteForm($fid) {
 
 	global $xoopsDB, $myts, $eh;
         
-  $form_handler = xoops_getmodulehandler('forms', 'formulize');
-  $form_handler->dropDataTable($fid);
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $form_handler->dropDataTable($fid);
         
 	$sql = sprintf("DELETE FROM %s WHERE id_form = '%s'", $xoopsDB->prefix("formulize_id"), $fid);
 	$xoopsDB->queryF($sql) or $eh->show("error supression 1 dans delform");

@@ -1,13 +1,33 @@
+CREATE TABLE `formulize_menu_links` (
+    `menu_id` int(11) unsigned NOT NULL auto_increment,
+    `appid` int(11) unsigned NOT NULL,
+    `screen` varchar(11),
+    `rank` int(11),
+    `url` varchar(255),
+    `link_text` varchar(255),
+    PRIMARY KEY (`menu_id`),
+    INDEX i_menus_appid (appid)
+) ENGINE=MyISAM;
+    
+CREATE TABLE `formulize_menu_permissions` (
+    `permission_id` int(11) unsigned NOT NULL auto_increment,
+    `menu_id` int(11) unsigned NOT NULL,
+    `group_id` int(11) unsigned NOT NULL,
+    `default_screen` tinyint(1) NOT NULL default '0',
+    PRIMARY KEY (`permission_id`),
+    INDEX i_menu_permissions (menu_id)
+) ENGINE=MyISAM;
+
 CREATE TABLE `formulize_resource_mapping` (
-	mapping_id int(11) NOT NULL auto_increment,
-	internal_id int(11) NOT NULL,
-	external_id int(11) NOT NULL,
-	resource_type int(4) NOT NULL,
-	mapping_active tinyint(1) NOT NULL,
-	PRIMARY KEY (mapping_id),
-	INDEX i_internal_id (internal_id),
-	INDEX i_external_id (external_id),
-	INDEX i_resource_type (resource_type)
+    mapping_id int(11) NOT NULL auto_increment,
+    internal_id int(11) NOT NULL,
+    external_id int(11) NOT NULL,
+    resource_type int(4) NOT NULL,
+    mapping_active tinyint(1) NOT NULL,
+    PRIMARY KEY (mapping_id),
+    INDEX i_internal_id (internal_id),
+    INDEX i_external_id (external_id),
+    INDEX i_resource_type (resource_type)
 ) ENGINE=MyISAM;
 
 CREATE TABLE `formulize_advanced_calculations` (
@@ -249,6 +269,7 @@ CREATE TABLE formulize_framework_links (
   fl_key2 smallint(5),
   fl_relationship smallint(5),
   fl_unified_display smallint(5),
+  fl_unified_delete smallint(5),
   fl_common_value tinyint(1) NOT NULL default '0',
   PRIMARY KEY (`fl_id`)
 ) ENGINE=MyISAM;
@@ -265,6 +286,8 @@ CREATE TABLE formulize_id (
   menutext varchar(255) default NULL,
   form_handle varchar(255) NOT NULL default '',
   store_revisions tinyint(1) NOT NULL default '0',
+  on_before_save text default NULL,
+  note text default NULL,
   PRIMARY KEY  (`id_form`)
 ) ENGINE=MyISAM;
 

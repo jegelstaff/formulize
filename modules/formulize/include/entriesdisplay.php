@@ -426,7 +426,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		// if there is a screen with a top template in effect, then do not lock the controls even if the saved view says we should.  Assume that the screen author has compensated for any permission issues.
 		// we need to do this after rachetting down the visibility controls.  Fact is, controlling UI for users is one thing that we can trust the screen author to do, so we don't need to indicate that the controls are locked.  But we don't want the visibility to override what people can normally see, so we rachet that down above.
     if($screen AND $_POST['lockcontrols']) {
-      if($screen->getVar('toptemplate') != "") {
+		  if($screen->getTemplate('toptemplate') != "") {
         $_POST['lockcontrols'] = 0;
       }
     }
@@ -735,7 +735,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// if there is messageText and no custom top template, and no messageText variable in the bottom template, then we have to output the message text here
 	if($screen AND $messageText) {
-		if(trim($screen->getVar('toptemplate')) == "" AND !strstr($screen->getVar('bottomtemplate'), 'messageText')) {
+		if(trim($screen->getTemplate('toptemplate')) == "" AND !strstr($screen->getTemplate('bottomtemplate'), 'messageText')) {
 			print "<p><center><b>$messageText</b></center></p>\n";
 		}
 	}
@@ -913,8 +913,9 @@ function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView
 
 // this function draws in the interface parts of a display entries widget
 function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview="", $loadOnlyView=0, $screen, $searches, $pageNav, $messageText, $hiddenQuickSearches) {
-
 	global $xoopsDB;
+	global $xoopsUser;
+
 	// unpack the $settings
 	foreach($settings as $k=>$v) {
 		${$k} = $v;
@@ -935,9 +936,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$useSearch = 1;
 	if($screen) {
 		$useWorking = !$screen->getVar('useworkingmsg') ? false : true;
-		$useDefaultInterface = $screen->getVar('toptemplate') != "" ? false : true;
+		$useDefaultInterface = $screen->getTemplate('toptemplate') != "" ? false : true;
 		$title = $screen->getVar('title'); // otherwise, title of the form is in the settings array for when no screen is in use
-		$useSearch = ($screen->getVar('usesearch') AND !$screen->getVar('listtemplate')) ? 1 : 0;
+		$useSearch = ($screen->getVar('usesearch') AND !$screen->getTemplate('listtemplate')) ? 1 : 0;
 	}
 	
 	if(strstr($_SERVER['HTTP_USER_AGENT'], "MSIE")) {
@@ -951,9 +952,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$proxy = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
 	$user_can_delete    = formulizePermHandler::user_can_delete_from_form($fid, $uid);
-
+	$edit_form = $gperm_handler->checkRight("edit_form", $fid, $groups, $mid);
+	
 	// establish text and code for buttons, whether a screen is in effect or not
 	$screenButtonText = array();
+	$screenButtonText['modifyScreenLink'] = ($edit_form AND $screen) ? _formulize_DE_MODIFYSCREEN : "";
 	$screenButtonText['changeColsButton'] = _formulize_DE_CHANGECOLS;
 	$screenButtonText['calcButton'] = _formulize_DE_CALCS;
 	$screenButtonText['advCalcButton'] = _formulize_DE_ADVCALCS;
@@ -1030,7 +1033,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$atLeastOneActionButton = false;
 	foreach($screenButtonText as $scrButton=>$scrText) {
     formulize_benchmark("before creating button: ".$scrButton);
-		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid);
+		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
     formulize_benchmark("button done");
 		if($buttonCodeArray[$scrButton] AND $onActionButtonCounter < 14) { // first 14 items in the array should be the action buttons only
 			$atLeastOneActionButton = true;
@@ -1055,6 +1058,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		
 		print "<h1>" . trans($title) . "</h1>";
 	
+		if($thisButtonCode = $buttonCodeArray['modifyScreenLink']) { print "$thisButtonCode<br />"; }
 	
 		if($loadview AND $lockcontrols) {
 			print "<h3>" . $loadviewname . "</h3></td><td>";
@@ -1155,12 +1159,12 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	} else {
 		// IF THERE IS A CUSTOM TOP TEMPLATE IN EFFECT, DO SOMETHING COMPLETELY DIFFERENT
 	
-		if(!$screen->getVar('usecurrentviewlist') OR (!strstr($screen->getVar('toptemplate'), 'currentViewList') AND !strstr($screen->getVar('toptemplate'), 'currentViewList'))) { print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n"; } // print it even if the text is blank, it will be a hidden value in this case
+		if(!$screen->getVar('usecurrentviewlist') OR (!strstr($screen->getTemplate('toptemplate'), 'currentViewList') AND !strstr($screen->getTemplate('toptemplate'), 'currentViewList'))) { print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n"; } // print it even if the text is blank, it will be a hidden value in this case
 				
 		// if search is not used, generate the search boxes and make them available in the template
 		// also setup searches when calculations are in effect, or there's a custom list template
 		// (essentially, whenever the search boxes would not be drawn in for whatever reason)
-		if(!$useSearch OR ($calc_cols AND !$hcalc) OR $screen->getVar('listtemplate')) {
+		if(!$useSearch OR ($calc_cols AND !$hcalc) OR $screen->getTemplate('listtemplate')) {
       formulize_benchmark("before calling draw searches");
 			$quickSearchBoxes = drawSearches($searches, $settings['columns'], $useCheckboxes, $useViewEntryLinks, 0, true, $hiddenQuickSearches, true); // first true means we will receive back the code instead of having it output to the screen, second (last) true means that all allowed filters should be generated
       formulize_benchmark("after calling draw searches");
@@ -1168,15 +1172,15 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			foreach($quickSearchBoxes as $handle=>$qscode) {
 				$handle = str_replace("-","_",$handle);
 				$foundQS = false;
-				if(strstr($screen->getVar('toptemplate'), 'quickSearch' . $handle) OR strstr($screen->getVar('bottomtemplate'), 'quickSearch' . $handle)) {
+				if(strstr($screen->getTemplate('toptemplate'), 'quickSearch' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickSearch' . $handle)) {
 					$buttonCodeArray['quickSearch' . $handle] = $qscode['search']; // set variables for use in the template
           $foundQS = true;
         }
-        if(strstr($screen->getVar('toptemplate'), 'quickFilter' . $handle) OR strstr($screen->getVar('bottomtemplate'), 'quickFilter' . $handle)) {
+				if(strstr($screen->getTemplate('toptemplate'), 'quickFilter' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickFilter' . $handle)) {
           $buttonCodeArray['quickFilter' . $handle] = $qscode['filter']; // set variables for use in the template
           $foundQS = true;
         }
-	if(strstr($screen->getVar('toptemplate'), 'quickDateRange' . $handle) OR strstr($screen->getVar('bottomtemplate'), 'quickDateRange' . $handle)) {
+				if(strstr($screen->getTemplate('toptemplate'), 'quickDateRange' . $handle) OR strstr($screen->getTemplate('bottomtemplate'), 'quickDateRange' . $handle)) {
           $buttonCodeArray['quickDateRange' . $handle] = $qscode['dateRange']; // set variables for use in the template
           $foundQS = true;
         }
@@ -1319,7 +1323,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		$deColumns = $screen->getVar('decolumns');
 		$deDisplay = $screen->getVar('dedisplay');
 		$useSearchCalcMsgs = $screen->getVar('usesearchcalcmsgs');
-		$listTemplate = $screen->getVar('listtemplate');
+		$listTemplate = $screen->getTemplate("listtemplate");
 		foreach($screen->getVar('customactions') as $caid=>$thisCustomAction) {
 			if($thisCustomAction['appearinline'] == 1) {
 				list($caCode) = processCustomButton($caid, $thisCustomAction);
@@ -1718,15 +1722,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 						print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$thisHiddenCol\" value=\"" . htmlspecialchars(display($entry, $thisHiddenCol)) . "\"></input>\n";
 					}
 					
-					ob_start();
-					$evalSuccess = eval(html_entity_decode($listTemplate));
-					$evalResult = ob_get_clean();
-					if($evalSuccess === false) { // eval returns false on a parse error
-						print "<p>" . _AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR . "</p>";
-						break;
-					} else {
-						print $evalResult;
-					}
+					include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/listtemplate.php";
 				}
 			}
 		}
@@ -1934,10 +1930,10 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
 }
 
 // this function writes in the headers for the columns in the results box
-function drawHeaders($headers, $cols, $useBoxes=null, $useLinks=null, $numberOfButtons, $lockedColumns=array()) { //, $lockcontrols) {
-
+function drawHeaders($headers, $cols, $useBoxes=null, $useLinks=null, $numberOfButtons, $lockedColumns=array()) {
 	static $checkedHelpLink = false;
 	static $headingHelpLink;
+	static $row_id = 1;
 	if(!$checkedHelpLink) {
 		$module_handler =& xoops_gethandler('module');
 		$config_handler =& xoops_gethandler('config');
@@ -1945,6 +1941,9 @@ function drawHeaders($headers, $cols, $useBoxes=null, $useLinks=null, $numberOfB
 		$formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
 		$headingHelpLink = $formulizeConfig['heading_help_link'];
 		$checkedHelpLink = true;
+	} else {
+		// row ID starts with 'h' then this number. data rows use only a number
+		$row_id++;
 	}
 
 	print "<tr>";
@@ -1952,12 +1951,11 @@ function drawHeaders($headers, $cols, $useBoxes=null, $useLinks=null, $numberOfB
 		print "<td class=head>&nbsp;</td>\n";
 	}
 	for($i=0;$i<count($headers);$i++) {
-	
 		$classToUse = "head column column".$i;
 		if($i==0) {
-			print "<td class='head floating-column' id='floatingcelladdress_0'>\n";
+			print "<td class='head floating-column' id='floatingcelladdress_h{$row_id}'>\n";
 		}
-		print "<td class='$classToUse' id='celladdress_0_$i'><div class='main-cell-div' id='cellcontents_0_".$i."'>\n";
+		print "<td class='$classToUse' id='celladdress_h{$row_id}_$i'><div class='main-cell-div' id='cellcontents_h{$row_id}_".$i."'>\n";
 
 		if($headingHelpLink) {
 			$lockedUI = in_array($i, $lockedColumns) ? "heading-locked" : "heading-unlocked";
@@ -3434,6 +3432,7 @@ function toggleColumnInFloat(column) {
 		var row = columnAddress[1];
 		if(floatingContents[column] == true) {
 			jQuery('#floatingcelladdress_'+row+' #cellcontents_'+row+'_'+column).remove();
+			jQuery('#celladdress_'+row+'_'+column).css('display', 'table-cell');
 			jQuery(this).removeClass('now-scrolling');
 		} else {
 			jQuery('#floatingcelladdress_'+row).append(jQuery(this).html());
@@ -3448,6 +3447,7 @@ function toggleColumnInFloat(column) {
 	});
 	if(floatingContents[column] == true) {
 		floatingContents[column] = false;
+		jQuery("#lockcolumn_"+column).empty().append('[ ]');
 	} else {
 		floatingContents[column] = true;
 	}
@@ -3465,8 +3465,7 @@ function setScrollDisplay(element) {
 }
 
 jQuery(window).load(function() {
-	
-	jQuery('.lockcolumn').click(function() {
+	jQuery('.lockcolumn').live("click", function() {
 		var lockData = jQuery(this).attr('id').split('_');
 		var column = lockData[1];
 		if(floatingContents[column] == true) {
@@ -3476,7 +3475,7 @@ jQuery(window).load(function() {
 			for (var i=0; i < curColumnsArray.length; i++) {
 				if(curColumnsArray[i] != column) {
 					if(curColumnsHTML != '') {
-						curColummsHTML = curColumnsHTML+',';
+						curColumnsHTML = curColumnsHTML+',';
 					}
 					curColumnsHTML = curColumnsHTML+curColumnsArray[i];
 				}
@@ -3908,31 +3907,24 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	}
 
 	// if there is no save button specified in either of the templates, but one is available, then put it in below the list
-	if($type == "bottom" AND count($screen->getVar('decolumns')) > 0 AND !$screen->getVar('dedisplay') AND $GLOBALS['formulize_displayElement_LOE_Used'] AND !strstr($screen->getVar('toptemplate'), 'saveButton') AND !strstr($screen->getVar('bottomtemplate'), 'saveButton')) {
+	if($type == "bottom" AND count($screen->getVar('decolumns')) > 0 AND !$screen->getVar('dedisplay') AND $GLOBALS['formulize_displayElement_LOE_Used'] AND !strstr($screen->getTemplate('toptemplate'), 'saveButton') AND !strstr($screen->getTemplate('bottomtemplate'), 'saveButton')) {
 		print "<div id=\"floating-list-of-entries-save-button\" class=\"\"><p>$saveButton</p></div>\n";
 	}
 	
-	$thisTemplate = html_entity_decode($screen->getVar($type.'template'));
+	$thisTemplate = $screen->getTemplate($type.'template');
 	if($thisTemplate != "") {
     
     // process the template and output results
-		ob_start();
-		$evalSuccess = eval($thisTemplate);
-		$evalResult = ob_get_clean();
-		if($evalSuccess === false) { // eval returns false on a parse error
-			print _AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR;
-		} else {
-			print $evalResult;
-		}
+		include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/".$type."template.php";
 		
 		// if there are no page nav controls in either template the template, then 
-		if($type == "top" AND !strstr($screen->getVar('toptemplate'), 'pageNavControls') AND (!strstr($screen->getVar('bottomtemplate'), 'pageNavControls'))) {
+		if($type == "top" AND !strstr($screen->getTemplate('toptemplate'), 'pageNavControls') AND (!strstr($screen->getTemplate('bottomtemplate'), 'pageNavControls'))) {
 			print $pageNavControls;
 		}
 	}
 	
 	// output the message text to the screen if it's not used in the custom templates somewhere
-	if($type == "top" AND $messageText AND !strstr($screen->getVar('toptemplate'), 'messageText') AND !strstr($screen->getVar('bottomtemplate'), 'messageText')) {
+	if($type == "top" AND $messageText AND !strstr($screen->getTemplate('toptemplate'), 'messageText') AND !strstr($screen->getTemplate('bottomtemplate'), 'messageText')) {
 		print "<p><center><b>$messageText</b></center></p>\n";
 	}
 	
@@ -3942,7 +3934,7 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 // $caid is the id of this button, $thisCustomAction is all the settings for this button, $entries is optional and is a comma separated list of entries that should be modified by this button (only takes effect on inline buttons, and possible future types)
 // $entries is the entry ID that should be altered when this button is clicked.  Only sent for inline buttons.
 // $entry is only sent from inline buttons, so that any PHP/HTML to be rendered inline has access to all the values of the current entry
-function processCustomButton($caid, $thisCustomAction, $entries="", $entry) {
+function processCustomButton($caid, $thisCustomAction, $entries="", $entry="") {
 
 	global $xoopsUser;
 	$userGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
@@ -4106,11 +4098,14 @@ function gatherHiddenValue($handle) {
 }
 
 // THIS FUNCTION GENERATES HTML FOR ANY BUTTONS THAT ARE REQUESTED
-function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid) {
+function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen) {
   static $importExportCleanupDone = false;
 	if($buttonText) {
 		$buttonText = trans($buttonText);
 		switch ($button) {
+			case "modifyScreenLink":
+				return "<a href=" . XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid').">" . $buttonText . "</a>";
+				break;
 			case "changeColsButton":
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";
 				break;

@@ -85,7 +85,7 @@ function getNavDataForForms($links) {
 	$formsToSend = array();
 	$i=0;
 	foreach($links as $link) {
-		$suburl = XOOPS_URL."/modules/formulize/index.php?".$link->getVar("screen")."&menuid=".$link->getVar("menu_id");
+		$suburl = XOOPS_URL."/modules/formulize/index.php?".$link->getVar("screen");
 		$url = $link->getVar("url");
 		if(strlen($url) > 0){
 			$pos = strpos($url,"://");

@@ -139,7 +139,7 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
         if($forceOpen OR (isset($_GET['id']) AND strstr(getCurrentURL(), "/modules/formulize/application.php") AND $aid == $_GET['id']) OR (strstr(getCurrentURL(), "/modules/formulize/index.php?fid=") AND in_array($_GET['fid'], $forms)) OR $isThisSubMenu ) { // if we're viewing this application or a form in this application, or this is the being forced open (only application)...
         
 		foreach($menulinks as $menulink) {
-			$suburl = XOOPS_URL."/modules/formulize/index.php?".$menulink->getVar("screen")."&menuid=".$menulink->getVar("menu_id");
+			$suburl = XOOPS_URL."/modules/formulize/index.php?".$menulink->getVar("screen");
 			$url = $menulink->getVar("url");
 			$target = "";
 			if(strlen($url) > 0){

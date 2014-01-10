@@ -158,20 +158,22 @@ function prepvalues($value, $field, $entry_id) {
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
             $sourceFormObject = $form_handler->get($sourceMeta[0]);
             // check if this is a link to a link
-            if($second_source_ele_value = formulize_isLinkedSelectBox($sourceMeta[1], true)) {
-                $secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
-                $secondFormObject = $form_handler->get($secondSourceMeta[0]);
-                $sql = "SELECT t1.`".$secondSourceMeta[1]."` FROM ".DBPRE."formulize_".$secondFormObject->getVar('form_handle')." as t1, ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle'). " as t2 WHERE t2.`entry_id` IN (".trim($value, ",").") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$sourceMeta[1]."`)) ORDER BY t2.`entry_id`";
-            } else {
-                if (is_array($sourceMeta[1])) {
-                    $linked_columns = convertElementIdsToElementHandles($sourceMeta[1], $sourceFormObject->getVar('id_form'));
-                    $linked_columns = array_filter($linked_columns); // remove empty entries
-                    $select_column = "`".implode("`, `", $linked_columns)."`";
+            if (!is_array($sourceMeta[1]))
+                $sourceMeta[1] = array($sourceMeta[1]);
+            $query_columns = array();
+            foreach ($sourceMeta[1] as $key => $handle) {
+                if ($second_source_ele_value = formulize_isLinkedSelectBox($handle, true)) {
+                    $secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
+                    $secondFormObject = $form_handler->get($secondSourceMeta[0]);
+                    $query_columns[] = "(SELECT t1.`".$secondSourceMeta[1]."` FROM ".DBPRE."formulize_".$secondFormObject->getVar('form_handle').
+                        " as t1, ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle'). " as t2 WHERE t2.`entry_id` IN (".trim($value, ",").
+                        ") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$handle."`)) ORDER BY t2.`entry_id`)";
                 } else {
-                    $select_column = "`{$sourceMeta[1]}`";
+                    $query_columns[] = "`$handle`";
                 }
-                $sql = "SELECT $select_column FROM ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." WHERE entry_id IN (".trim($value, ",").") ORDER BY entry_id";
             }
+            $sql = "SELECT ".implode(", ", $query_columns)." FROM ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle').
+                " WHERE entry_id IN (".trim($value, ",").") ORDER BY entry_id";
             if(!$res = $xoopsDB->query($sql)) {
                 print "Error: could not retrieve the source values for a linked selectbox during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
             } else {
@@ -666,28 +668,27 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       //$beforeQueryTime = microtime_float();
 	       
 	  
+	  if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
 	       // If there's an LOE Limit in place, check that we're not over it first
 	       global $formulize_LOE_limit;
 
 	       $countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main ";
 	       $countMasterResults .= "$userJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause "; 
-         $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
-				 $countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
+	       $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
+	       $countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 	       if($countMasterResultsRes = $xoopsDB->query($countMasterResults)) {
-           $countMasterResultsRow = $xoopsDB->fetchRow($countMasterResultsRes);
-           if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
-             return $countMasterResultsRow[0];
-           } else {
-					   $GLOBALS['formulize_countMasterResults'] = $countMasterResultsRow[0]; // put this in the global space so we can pick it up later when determining how many page numbers to create
-					   // if we're in a getData call from displayEntries, put the count in an additional special place for use in generating page numbers
-					   if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
-							 $GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countMasterResultsRow[0]; 
-							 unset($GLOBALS['formulize_getCountForPageNumbers']);
-						 } 
-           }
+		    $countMasterResultsRow = $xoopsDB->fetchRow($countMasterResultsRes);
+		    if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
+			 return $countMasterResultsRow[0];
+		    } else {
+			 // if we're in a getData call from displayEntries, put the count in a special place for use in generating page numbers
+			 $GLOBALS['formulize_countMasterResultsForPageNumbers'] = $countMasterResultsRow[0]; 
+		    } 
 	       } else {
-		       exit("Error: could not count master results.<br>".$xoopsDB->error()."<br>SQL:$countMasterResults<br>");
+		    exit("Error: could not count master results.<br>".$xoopsDB->error()."<br>SQL:$countMasterResults<br>");
 	       }
+	       unset($GLOBALS['formulize_getCountForPageNumbers']);
+	  }
          
          // now, if there's framework in effect, get the entry ids of the entries in the main form that match the criteria, so we can use a specific query for them instead of the order clause in the master query
          $limitByEntryId = "";
@@ -1652,48 +1653,57 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
      }
 }
 
-// THIS FUNCTION LOOPS THROUGH AN ENTRY AND ADDS IN THE DERIVED VALUES IN ANY DERIVED COLUMNS -- March 27 2007
+
+// THIS FUNCTION LOOPS THROUGH AN ENTRY AND ADDS IN THE DERIVED VALUES IN ANY DERIVED COLUMNS
 // Odd results may occur when a derived column is inside a subform in a framework!
 // Derived values should always be in the mainform only?
-function formulize_calcDerivedColumns($entry, $metadata, $frid, $fid) {
-     global $xoopsDB; // just used as a cue to see if XOOPS is active
-     static $parsedFormulas = array();
-     foreach($entry as $formHandle=>$record) {
-	  $formHandle = htmlspecialchars_decode($formHandle, ENT_QUOTES);
-          if(isset($metadata[$formHandle])) { // if there are derived value formulas for this form...
-               if(!isset($parsedFormulas[$formHandle])) {
-                    formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $frid, $fid);
-                    $parsedFormulas[$formHandle] = true;
-               }
-               foreach($metadata[$formHandle] as $formulaNumber=>$thisMetaData) {
-	  	    foreach($record as $primary_entry_id=>$elements) {
-			 if(($entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) { // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
-			      $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
-			      // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
-			      $resetDerviedValueFlag = false;
-			      if(isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
-				unset($GLOBALS['formulize_forceDerivedValueUpdate']);
-				$resetDerivedValueFlag = true;
-			      }
-			      $derivedValue = $functionName($entry, $fid, $primary_entry_id, $frid);
-			      if($resetDerivedValueFlag) {
-				$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
-			      }
-			      $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue;
-			      // write value to database if XOOPS is active
-			      if($xoopsDB) {
-				   include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-				   $data_handler = new formulizeDataHandler(formulize_getFormIdFromName($formHandle));
-				   $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
-				   $data_handler->writeEntry($primary_entry_id, array($elementID=>$derivedValue), false, true, false); // false is no proxy user, true is force the update even on get requests, false is do not update the metadata (modification user)
-			      }
-			 }
-		    }
-               }
-          }
-     }          
-     return $entry;    
+function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form_id) {
+    global $xoopsDB;
+    static $parsedFormulas = array();
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+    foreach ($entry as $formHandle => $record) {
+        $data_handler = new formulizeDataHandler(formulize_getFormIdFromName($formHandle));
+        $formHandle = htmlspecialchars_decode($formHandle, ENT_QUOTES);
+        if (isset($metadata[$formHandle])) {
+            // if there are derived value formulas for this form
+            if (!isset($parsedFormulas[$formHandle])) {
+                formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $relationship_id, $form_id);
+                $parsedFormulas[$formHandle] = true;
+            }
+            foreach ($record as $primary_entry_id => $elements) {
+                $dataToWrite = array();
+                foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
+                    // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
+                    if (($entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) {
+                        $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
+                        // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
+                        $resetDerivedValueFlag = false;
+                        if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
+                            unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+                            $resetDerivedValueFlag = true;
+                        }
+                        $derivedValue = $functionName($entry, $form_id, $primary_entry_id, $relationship_id);
+                        if ($resetDerivedValueFlag) {
+                            $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
+                        }
+                        $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue;
+                        if ($xoopsDB) {
+                            // save value for writing to database if XOOPS is active
+                            $elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
+                            $dataToWrite[$elementID] = $derivedValue;
+                        }
+                    }
+                }
+                if ($xoopsDB and count($dataToWrite) > 0) {
+                    // false for no proxy user, true to force the update even on get requests, false is do not update the metadata (modification user)
+                    $data_handler->writeEntry($primary_entry_id, $dataToWrite, false, true, false);
+                }
+            }
+        }
+    }
+    return $entry;
 }
+
 
 function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $fid) {
     $functionsToWrite = "";

@@ -19,7 +19,7 @@
 
 <script type="text/javascript">
 
-$(".deletelink").click(function () {
+$(".deleteformlink").click(function () {
 	answer = confirm("<{$smarty.const._AM_HOME_CONFIRMDELETEFORM}>");
 	if(answer) {
 		$("[name=deleteform]").val($(this).attr('target'));

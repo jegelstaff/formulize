@@ -18,10 +18,6 @@
         	<fieldset>
                 <legend><label for="forms-title" class="question"><{$smarty.const._AM_SETTINGS_FORM_TITLE_QUESTION}></label></legend>
                 <p><{$smarty.const._AM_SETTINGS_FORM_TITLE}><input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" /></p>
-								<p><{$smarty.const._AM_SETTINGS_MENU_ENTRY}><input type="text" id="forms-menutext" name="forms-menutext" value="<{$content.menutext}>"  /></p>
-								<div class="description">
-								<{$smarty.const._AM_SETTINGS_MENU_LEAVE}>
-								</div>
             </fieldset>
 		</div>
 	</div>
@@ -134,9 +130,9 @@
 		</div>
 	</div>
 	<{/if}>
-	<div class="accordion-box">
-		<div class="form-item">
-			<fieldset>
+    <div class="accordion-box">
+        <div class="form-item">
+            <fieldset>
                 <legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_APPNEW}></label></legend>
                 <div class="form-radios radio-inline">
                     <label for="yes"><input type="radio" id="new-app-yes" name="new_app_yes_no" value="yes"/><{$smarty.const._AM_YES}></label>
@@ -144,11 +140,19 @@
                 <div class="form-radios radio-inline">
                     <label for="yes"><input type="radio" id="new-app-no" name="new_app_yes_no" value="no" checked/><{$smarty.const._AM_NO}></label>
                 </div>
-								<br /><br />
-								<div class="form-item" id="new-application-box" style="display: none;">
-			          <label class="question">What is the name of the new application?</label>
+                                <br /><br />
+                                <div class="form-item" id="new-application-box" style="display: none;">
+                      <label class="question">What is the name of the new application?</label>
                 <input type="text" id="applications-name" name="applications-name" value="" />
-							</div>
+                            </div>
+            </fieldset>
+        </div>
+    </div>
+	<div class="accordion-box">
+		<div class="form-item">
+			<fieldset>
+                <legend><label class="question">Notes</label></legend>
+                <textarea name="forms-note" class="forms-note"><{ $content.form_object->note }></textarea>
             </fieldset>
 		</div>
 	</div> 

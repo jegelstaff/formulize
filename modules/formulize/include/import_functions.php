@@ -910,7 +910,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 																						}
 																					}
 	                                    
-	                                    $row_value = ",".$ele_id.",";
+	                                    $row_value = $ele_id;
 	                                }
 	                            }
 	                            elseif(!strstr($row_value, ",") AND (!is_numeric($row_value) OR $row_value < 10000000))

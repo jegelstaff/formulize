@@ -193,7 +193,14 @@ class formulizeDataHandler  {
 						$newIds[] = $thisId;
 					}
 				}
-				$sql = "UPDATE " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " SET `".$lsbElement->getVar('ele_handle')."` = \",".implode(",",$newIds).",\" WHERE entry_id=$thisEntry";
+				
+				if(count($newIds) > 1) {
+					$newEleHandleValue = "\",".implode(",",$newIds).",\"";
+				} else {
+					$newEleHandleValue = $newIds[0];
+				}
+				
+				$sql = "UPDATE " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " SET `".$lsbElement->getVar('ele_handle')."` = $newEleHandleValue WHERE entry_id=$thisEntry";
 				if(!$res = $xoopsDB->query($sql)) {
 					return false;
 				}
@@ -428,7 +435,7 @@ class formulizeDataHandler  {
 			$queryValue = "\"%," . mysql_real_escape_string($value) . ",%\"";
 		}
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
-			$scopeFilter = $this->_buildScopeFilter($scope_uids);
+			$scopeFilter = $this->_buildScopeFilter($scope_uids, array());
 			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter GROUP BY entry_id ORDER BY entry_id";
 		} elseif(is_array($scope_groups) AND count($scope_groups)>0) {
 			$scopeFilter = $this->_buildScopeFilter("", $scope_groups);
@@ -632,12 +639,14 @@ class formulizeDataHandler  {
 	// This function writes a set of values to an entry
 	// $values will be an array of element ids and prepared values, or handles and prepared values.  Array must use all ids as keys or all handles as keys!
 	// $proxyUser is optional and if present will override the current xoopsuser uid as the creation user
-	// $updateMetadata is a flag to allow us to skip updating the modification user and time.  Introduced for when we update derived values and the mod user and time should not change.
-	function writeEntry($entry, $values, $proxyUser=false, $forceUpdate=false, $updateMetadata=true) {
+	// $update_metadata is a flag to allow us to skip updating the modification user and time.  Introduced for when we update derived values and the mod user and time should not change.
+	function writeEntry($entry, $values, $proxyUser=false, $forceUpdate=false, $update_metadata=true) {
 
 		global $xoopsDB, $xoopsUser;
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->fid);
+		$creation_uid = $proxyUser ? intval($proxyUser) : intval($uid);
 		static $cachedMaps = array();
 		$mapIDs = true; // assume we're mapping elements based on their IDs, because the values array is based on ids as keys
 		foreach(array_keys($values) as $thisKey) { // check the values array keys
@@ -646,7 +655,9 @@ class formulizeDataHandler  {
 				break;
 			}
 		}
-		
+
+        $encrypt_element_handles = array(); // array of element handles which should be encrypted
+
 		// get handle/id equivalents directly from database in one query, since we'll need them later
 		// much more efficient to do it this way than query for all the element objects, for instance.
 		if(!isset($cachedMaps[$this->fid][$mapIDs])) {
@@ -667,6 +678,10 @@ class formulizeDataHandler  {
 						$encryptElementMap[$handleElementMapArray['ele_handle']] = $handleElementMapArray['ele_encrypt'];
 						break;
 				}
+                if ($handleElementMapArray['ele_encrypt']) {
+                    // if this element should be encrypted in the database, save its handle into the encrypted element handle array
+                    $encrypt_element_handles[] = $handleElementMapArray['ele_handle'];
+                }
 			}
 			$cachedMap[$this->fid][$mapIDs] = $handleElementMap;
 		}
@@ -718,54 +733,76 @@ class formulizeDataHandler  {
 					} else {
 						exit("Error: count not determine max value for use in element $seqElement.  SQL:<br>$maxSQL<br>");
 					}
-				}	
+				}
 			}
 		}
 
-		// do the actual writing now that we have prepared all the info we need
-		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-		if($entry == "new") {
-			$sql = "INSERT INTO ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." (`creation_datetime`, `mod_datetime`, `creation_uid`, `mod_uid`";
-			$sqlValues = "";
-			foreach($values as $id=>$value) {
-				$sql .= ", `".$handleElementMap[$id]."`";
-				if($encryptElementMap[$id]) {
-					$value = $value === "{WRITEASNULL}" ? "" : $value;
-					$sqlValues .= ", AES_ENCRYPT('".mysql_real_escape_string($value)."', '".getAESPassword()."')";
-				} elseif($value === "{WRITEASNULL}") {
-					$sqlValues .= ", NULL";
-				} else {
-					$sqlValues .= ", '".mysql_real_escape_string($value)."'";
-				}
-			}
-			$creation_uid = $proxyUser ? $proxyUser : $uid;
-			$sql .= ") VALUES (NOW(), NOW(), ".intval($creation_uid).", ".intval($uid)."$sqlValues)";
-			$entry_to_return = "";
-		} else {
-			$sql = "UPDATE " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) .  " SET ";
-			$needComma = false;
-			if($updateMetadata) {
-				$sql .= "mod_datetime=NOW(), mod_uid=".intval($uid);
-				$needComma = true;
-			} 
-			foreach($values as $id=>$value) { // note, id might be handle or element id...this is why we choose how we're going to map the info above (at one time, it had to be element id, hence the name)
-				if($needComma) {
-					$sql .= ", ";
-				}
-				if($encryptElementMap[$id]) {
-					$value = $value === "{WRITEASNULL}" ? "" : $value;
-					$sql .= "`".$handleElementMap[$id]."` = AES_ENCRYPT('".mysql_real_escape_string($value)."', '".getAESPassword()."')";
-				} elseif($value === "{WRITEASNULL}") {
-					$sql .= "`".$handleElementMap[$id]."` = NULL";
-				} else {
-					$sql .= "`".$handleElementMap[$id]."` = '".mysql_real_escape_string($value)."'";
-				}
-				$needComma = true;
-			}
-			$sql .= " WHERE entry_id=".intval($entry);
-			$entry_to_return = intval($entry);
-		}
-		
+        // convert the value array keys from IDs to handles
+        $element_values = array();
+        foreach ($values as $key => $value) {
+            $element_values[$handleElementMap[$key]] = $value;
+        }
+
+        // call a hook which can modify the values before saving
+        $element_values = $formObject->onBeforeSave($entry, $element_values);
+
+        // ensure the hook has not created any invalid element handles because that would cause the sql query to fail
+        // note that array_flip means both arrays use element handles as keys. values from the second array are ignored in the intersect
+        $element_values = array_intersect_key($element_values, array_flip($handleElementMap));
+
+        if (0 == count($element_values)) {
+            // no values to save, which is probably caused by the onBeforeSave() handler deleting all of the values
+            return null;
+        }
+
+        // escape field names and values before writing to database
+        $aes_password = getAESPassword();
+        foreach ($element_values as $key => $value) {
+            $encrypt_this = in_array($key, $encrypt_element_handles);
+            unset($element_values[$key]);   // since field name is not escaped, remove from array
+            $key = "`$key`";                // escape field name
+
+            if ("{WRITEASNULL}" == $value or null === $value) {
+                $element_values[$key] = "NULL";
+            } else {
+                $element_values[$key] = "'".mysql_real_escape_string($value)."'";
+            }
+            if ($encrypt_this) {
+                // this element should be encrypted. note that the actual value is quoted and escapted already
+                $element_values[$key] = "AES_ENCRYPT({$element_values[$key]}, '$aes_password')";
+            }
+        }
+
+        if ($update_metadata or "new" == $entry) {
+            // update entry metadata
+            $element_values["`mod_datetime`"]   = "NOW()";
+            $element_values["`mod_uid`"]        = intval($uid);
+        }
+
+        // do the actual writing now that we have prepared all the info we need
+        if ($entry == "new") {
+            // set metadata for new record
+            $element_values["`creation_datetime`"]  = "NOW()";
+            $element_values["`creation_uid`"]       = intval($creation_uid);
+
+            // write sql statement to insert new entry
+            $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." (".
+                implode(", ", array_keys($element_values)).") VALUES (".implode(", ", array_values($element_values)).")";
+            $entry_to_return = "";
+        } else {
+            if (!function_exists("make_sql_set_values")) {
+                function make_sql_set_values($field, $value) {
+                    return "$field = $value";
+                }
+            }
+            $sql_set_values = array_map("make_sql_set_values", array_keys($element_values), array_values($element_values));
+
+            // write sql statement to update entry
+            $sql = "UPDATE " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) .  " SET ".implode(", ", $sql_set_values).
+                " WHERE entry_id = ".intval($entry);
+            $entry_to_return = intval($entry);
+        }
+
 		if($formObject->getVar('store_revisions') AND $entry_to_return AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
 			static $cachedColumns = array();
 			if(!isset($cachedColumns[$formObject->getVar('id_form')])) {
@@ -800,8 +837,12 @@ class formulizeDataHandler  {
 			exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>".mysql_error());
 		}
 		$lastWrittenId = $xoopsDB->getInsertId();
-		if($lockIsOn) { $xoopsDB->query("UNLOCK TABLES"); }
-		if($entry_to_return) { $this->updateCaches($entry_to_return); }
+		if($lockIsOn) {
+            $xoopsDB->query("UNLOCK TABLES");
+        }
+		if($entry_to_return) {
+            $this->updateCaches($entry_to_return);
+        }
 
 		// remove any entry-editing lock that may be in place for this record, since it was just saved successfully...a new lock can now be placed on the entry the next time any element from the form, for this entry, is rendered.
 		if($entry != "new") {
@@ -812,8 +853,8 @@ class formulizeDataHandler  {
 
 		return $entry_to_return ? $entry_to_return : $lastWrittenId;
 	}
-		
-	
+
+
 	// this function updates relevant caches after data has been updated in the database
 	function updateCaches($id) {
 		//so far, only metadata cache is affected

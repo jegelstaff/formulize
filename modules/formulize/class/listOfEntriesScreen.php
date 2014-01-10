@@ -457,13 +457,13 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 $templateTable = "<table class=\"outer\" width=100% cellspacing=1 style=\"background: white;\">\n<tr><th colspan=2>" . _AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO . "</th></tr>\n";
                 $templateTable .= "<tr><td class=\"head\" colspan=2><p><b>" . _AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2 . "</b></p></td></tr>\n";
               
-                $toptemplateDefault = $screen->getVar('sid') ? $screen->getVar('toptemplate') : "";
-                $toptemplate = new xoopsFormTextArea(_AM_FORMULIZE_SCREEN_LOE_TOPTEMPLATE, 'toptemplate', $screen->getVar('toptemplate'), 20, 65);
+                $toptemplateDefault = $screen->getVar('sid') ? $screen->getTemplate('toptemplate') : "";
+                $toptemplate = new xoopsFormTextArea(_AM_FORMULIZE_SCREEN_LOE_TOPTEMPLATE, 'toptemplate', $screen->getTemplate('toptemplate'), 20, 65);
                 $toptemplate->setDescription(_AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE);
                 $templateTable = addElementLOE($toptemplate, $templateTable);
                 
-                $listtemplateDefault = $screen->getVar('sid') ? $screen->getVar('listtemplate') : "";
-                $listtemplate = new xoopsFormTextArea(_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE, 'listtemplate', $screen->getVar('listtemplate'), 20, 65);
+                $listtemplateDefault = $screen->getVar('sid') ? $screen->getTemplate('listtemplate') : "";
+                $listtemplate = new xoopsFormTextArea(_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE, 'listtemplate', $screen->getTemplate('listtemplate'), 20, 65);
                 $elementList = "<br /><br />";
                 $elementList .= $selectedFramework ? _AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FRAMEWORK : _AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FORM;
                 $elementList .= "<br /><br /><div class=scrollbox style=\"height: 250px; width: 400px; overflow: scroll;\">\n";
@@ -480,8 +480,8 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 $listtemplate->setDescription(_AM_FORMULIZE_SCREEN_LOE_DESC_LISTTEMPLATE . $elementList);
                 $templateTable = addElementLOE($listtemplate, $templateTable);
                 
-                $bottomtemplateDefault = $screen->getVar('sid') ? $screen->getVar('bottomtemplate') : "";
-                $bottomtemplate = new xoopsFormTextArea(_AM_FORMULIZE_SCREEN_LOE_BOTTOMTEMPLATE, 'bottomtemplate', $screen->getVar('bottomtemplate'), 20, 65);
+                $bottomtemplateDefault = $screen->getVar('sid') ? $screen->getTemplate('bottomtemplate') : "";
+                $bottomtemplate = new xoopsFormTextArea(_AM_FORMULIZE_SCREEN_LOE_BOTTOMTEMPLATE, 'bottomtemplate', $screen->getTemplate('bottomtemplate'), 20, 65);
                 $templateTable = addElementLOE($bottomtemplate, $templateTable);
                 
                 $templateTable .= "</table>\n";
@@ -585,6 +585,15 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
                 if (!$result) {
                     return false;
                 }
+		
+		$success1 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-toptemplate'])), 'toptemplate', $screen);
+                $success2 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-bottomtemplate'])), 'bottomtemplate', $screen);
+                $success3 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-listtemplate'])), 'listtemplate', $screen);
+                
+                if (!$success1 || !$success2 || !$success3) {
+                    return false;
+                }
+		
 		return $sid;
             
 	}

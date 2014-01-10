@@ -209,7 +209,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		}
 
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
-		if (!$is_Disabled) {
+		if (!$isDisabled) {
             // note that we're using the OPPOSITE of the permission because we want to know if the element should be disabled
             $isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
 				}
@@ -219,7 +219,7 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		// locks are only valid for the session time, so if a lock is older than that, it is ignored and cleared
 		// Do this last, since locking overrides other permissions!
 		
-		$lockFileName = "entry_".$entry."_in_form_".$form_id."_is_locked_for_editing_by_user_".$user_id;
+		$lockFileName = "entry_".$entry."_in_form_".$form_id."_is_locked_for_editing";
 		// if we haven't found a lock for this entry, check if there is one...(as long as it's not an entry that we locked ourselves on this page load)
 		if($entry != "new" AND !isset($lockedEntries[$form_id][$entry]) AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry]) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName") AND !$gperm_handler->checkRight("ignore_editing_lock", $form_id, $groups, $mid)) {
 			$maxSessionLifeTime = ini_get("session.gc_maxlifetime");

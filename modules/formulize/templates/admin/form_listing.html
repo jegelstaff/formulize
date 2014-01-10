@@ -22,13 +22,14 @@
 		<a rel="tooltip" title="Copy the structure of an existing form into a new form with a different name.<br>The new form will have a copy of all the entries collected in the original form." class="cloneformdata" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clonedata.gif"></div><div class="formaction"><{$smarty.const._AM_APP_CLONE_WITHDATA}></div></a><br />
 		<{if $form.lockedform != 1 && $form.hasdelete}>
 		<a rel="tooltip" title="Use this to prevent any changes to the form or its settings, even by the webmaster.<br>This action cannot be undone!" class="lockdown" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/perm.png"></div><div class="formaction"><{$smarty.const._AM_APP_LOCKDOWN}></div></a><br />
-		<a rel="tooltip" title="Delete a form plus all the entries people have made in it.<br>This action cannot be undone!" class="deletelink" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/editdelete.gif"></div><div class="formaction"><{$smarty.const._AM_APP_DELETE_FORM}></div></a><br />
+		<a rel="tooltip" title="Delete a form plus all the entries people have made in it.<br>This action cannot be undone!" class="deleteformlink" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/editdelete.gif"></div><div class="formaction"><{$smarty.const._AM_APP_DELETE_FORM}></div></a><br />
+		<{/if}>
+		<{if !$form.defaultformscreenid && !$form.defaultlistscreenid}>
+		<p><a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=new"><div class="imageicon"><img src="../images/filenew2.png"></div><div class="formaction"><{$smarty.const._AM_APP_CREATE_NEW_SCREEN}></div></a></p>
 		<{/if}>
 		</div>
-		
-		<{if !$form.defaultformscreenid && !$form.defaultlistscreenid}>
-    <p><a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=new"><div class="imageicon"><img src="..images/filenew2.png"></div><div class="formaction"><{$smarty.const._AM_APP_CREATE_NEW_SCREEN}></div></a></p>
-		<{else}>
+
+		<{if $form.defaultformscreenid || $form.defaultlistscreenid}>
 		<p class="formbox-title"><{$smarty.const._AM_APP_DEFAULTSCREENS}></p>
 		<div class="formactions-list">
 		<{if $form.defaultlistscreenid}>

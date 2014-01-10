@@ -60,7 +60,7 @@ if($aid == 0) {
     foreach ($appLinks as $menulink) // JAKEADDED
     {
         $menulinks[$index]['menu_id'] = $menulink->getVar('menu_id'); //Oct 2013 W. R.
-        $menulinks[$index]['url'] = $menulink->getVar('url'); // JAKEADDED
+        $menulinks[$index]['url'] = $menulink->getVar('url') ? $menulink->getVar('url') : "http://"; // JAKEADDED
         $menulinks[$index]['link_text'] = $menulink->getVar('link_text'); // JAKEADDED
         $menulinks[$index]['screen'] = $menulink->getVar('screen'); // JAKEADDED
         $menulinks[$index]['rank'] = $menulink->getVar('rank');	
@@ -75,7 +75,7 @@ if($aid == 0) {
     // get list of all the forms and screens
     $allFormObjects = $form_handler->getAllForms();
     $forms = array();
-    $forms[''] = "Select screen to add to menu.";
+    $forms[''] = "Select the form or screen:";
     foreach($allFormObjects as $thisFormObject) {
         $allForms[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
         $allForms[$thisFormObject->getVar('id_form')]['id'] = $thisFormObject->getVar('id_form'); // settings tab uses id
@@ -85,7 +85,8 @@ if($aid == 0) {
         foreach($screens as $screen) {
             $forms['sid='.$screen->getVar('sid')] = "&nbsp;&nbsp;   ". $screen->getVar('title');
 	}
-}
+    }
+    $forms['url'] = "An external URL";
     
 
 // get list of group ids that have no default screen set
@@ -108,9 +109,7 @@ if($orderGroups == "alpha") {
     ksort($groups);
 }
     
-$listofscreens = new XoopsFormSelect("", 'listsofscreenoptions');
-$listofscreens->addOptionArray($forms);
-$options['listsofscreenoptions'] = $listofscreens->render();
+$options['listsofscreenoptions'] = $forms;
     
 $screen_handler = xoops_getmodulehandler('screen', 'formulize');
 $gperm_handler = xoops_gethandler('groupperm');

@@ -176,7 +176,7 @@ class icms_form_elements_Checkbox extends icms_form_Element {
 			if (count($ele_value) > 0 && in_array($value, $ele_value)) {
 				$ret .= " checked='checked'";
 			}
-			$ret .= $ele_extra." /><label for='item_".$value."_".$ele_name."'>$name</label>$ele_delimeter</span>";
+			$ret .= $ele_extra." /><label for='item_".$value."_".$ele_name."'>$name</label></span>$ele_delimeter";
 		}
 		if (count($ele_options) > 1) {
 			$ret .= "<div class='icms_checkboxoption'><input type='checkbox' id='checkemall' class='checkemall' /><label for='checkemall'>"._CHECKALL."</label></div>";

@@ -25,6 +25,12 @@ class icms_DebugEventHandler {
 						icms_Event::attach('icms_db_IConnection', 'execute', array(__CLASS__, 'executeQuery'));
 					}
 				} else {
+					// ICMS_ERROR_LOG_SEVERITY ADDED BY FREEFORM SOLUTIONS
+					if (defined("ICMS_ERROR_LOG_SEVERITY")) {
+						ini_set('display_errors', 0);	
+					} else {
+						error_reporting(0);
+					}
 					icms::$logger->activated = false;
 				}
 			}

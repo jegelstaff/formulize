@@ -50,7 +50,7 @@ $(".clonelink").click(function () {
 	return false;
 });
 
-$(".deletelink").click(function () {
+$(".deleteelementlink").click(function () {
 	var answer = confirm("<{$smarty.const._AM_ELE_CONFIRM_DELETE}>");
 	if(answer) {
 		$("[name=deleteelement]").val($(this).attr('target'));

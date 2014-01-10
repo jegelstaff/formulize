@@ -874,3 +874,25 @@ ul.admin-application-form-list li {
 .right-toolbar {
   display: inline-block;
   float: right; }
+
+#fz-admin-toolbar {
+  float: right; }
+
+#fz-admin-toolbar a {
+  background-color: #59a7d4;
+  background: -webkit-linear-gradient(top, #59a7d4, #3391c7);
+  background: -moz-linear-gradient(top, #59a7d4, #3391c7);
+  background: -ms-linear-gradient(top, #59a7d4, #3391c7);
+  background: -o-linear-gradient(top, #59a7d4, #3391c7);
+  background: linear-gradient(to bottom, #59a7d4, #3391c7);
+  color: white;
+  font-weight: normal;
+  padding: 0.5em 0.75em;
+  margin: 0 0.25em;
+  border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px; }
+
+.forms-note {
+  width: 99%;
+  height: 10em; }

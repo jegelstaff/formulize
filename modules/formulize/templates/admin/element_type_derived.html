@@ -15,9 +15,11 @@
         <fieldset>
             <legend><{$smarty.const._AM_ELE_DERIVED_UPDATE_CAP}></legend>
             <p>
-                <input type=button name=updateder value="<{$smarty.const._AM_ELE_DERIVED_UPDATE}>"> <{$content.listofrelationshipoptions}>
+                <span name="updateder_controls">
+                    <input type=button name=updateder value="<{$smarty.const._AM_ELE_DERIVED_UPDATE}>"> <{$content.listofrelationshipoptions}>
+                </span>
                 <span name="updateder_Info" style="display:none">
-                <img src="../../../images/await.gif" width="20" height="20"/>&nbsp;
+                    Updating Values... <img src="../../../images/await.gif" width="20" height="20"/>
                 </span>
             </p>
             <div class="description">
@@ -128,25 +130,24 @@ $("[name=addele]").click(function () {
   var formID = "";
   var formRelationID = "1";
 
-  $("[name=updateder]").click(function () {
+$("[name=updateder]").click(function () {
     formID = $("[name=formulize_form_id]").val();
     formRelationID = $("#listofrelationshipoptions").find(':selected').val()
     var limitStart = 0;
+    $("[name=updateder_controls]").hide();
+    $("[name=updateder_Info]").show();
     updateDerivedValues(formID,formRelationID,limitStart);
-
-  return false;
+    return false;
 });
 
-function updateDerivedValues(fid,frid,limitstart){
-    $.get("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=update_derived_value&fid="+fid+"&frid="+frid+"&limitstart="+limitstart, function(data){
+function updateDerivedValues(fid,frid,limitStart){
+    $.get("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=update_derived_value&fid="+fid+"&frid="+frid+"&limitstart="+limitStart, function(data){
             if(data > 0){
-                $("[name=updateder]").hide();
-                $("[name=updateder_Info]").show();
                 limitStart += 1000;
-                updateDerivedValues(fid,frid,limitstart);
+                updateDerivedValues(fid,frid,limitStart);
             }else{
                 $("[name=updateder_Info]").hide();
-                $("[name=updateder]").show();
+                $("[name=updateder_controls]").show();
                 $("#derivedfinished").show();
             }
         });
