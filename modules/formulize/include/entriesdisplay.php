@@ -3452,6 +3452,7 @@ function toggleColumnInFloat(column) {
 	});
 	if(floatingContents[column] == true) {
 		floatingContents[column] = false;
+		jQuery("#lockcolumn_"+column).empty().append('[ ]');
 	} else {
 		floatingContents[column] = true;
 	}
