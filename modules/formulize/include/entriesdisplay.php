@@ -1938,10 +1938,10 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
 }
 
 // this function writes in the headers for the columns in the results box
-function drawHeaders($headers, $cols, $useBoxes=null, $useLinks=null, $numberOfButtons, $lockedColumns=array()) { //, $lockcontrols) {
-
+function drawHeaders($headers, $cols, $useBoxes=null, $useLinks=null, $numberOfButtons, $lockedColumns=array()) {
 	static $checkedHelpLink = false;
 	static $headingHelpLink;
+	static $row_id = 1;
 	if(!$checkedHelpLink) {
 		$module_handler =& xoops_gethandler('module');
 		$config_handler =& xoops_gethandler('config');
@@ -1949,6 +1949,9 @@ function drawHeaders($headers, $cols, $useBoxes=null, $useLinks=null, $numberOfB
 		$formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
 		$headingHelpLink = $formulizeConfig['heading_help_link'];
 		$checkedHelpLink = true;
+	} else {
+		// row ID starts with 'h' then this number. data rows use only a number
+		$row_id++;
 	}
 
 	print "<tr>";
@@ -1956,12 +1959,11 @@ function drawHeaders($headers, $cols, $useBoxes=null, $useLinks=null, $numberOfB
 		print "<td class=head>&nbsp;</td>\n";
 	}
 	for($i=0;$i<count($headers);$i++) {
-	
 		$classToUse = "head column column".$i;
 		if($i==0) {
-			print "<td class='head floating-column' id='floatingcelladdress_0'>\n";
+			print "<td class='head floating-column' id='floatingcelladdress_h{$row_id}'>\n";
 		}
-		print "<td class='$classToUse' id='celladdress_0_$i'><div class='main-cell-div' id='cellcontents_0_".$i."'>\n";
+		print "<td class='$classToUse' id='celladdress_h{$row_id}_$i'><div class='main-cell-div' id='cellcontents_h{$row_id}_".$i."'>\n";
 
 		if($headingHelpLink) {
 			$lockedUI = in_array($i, $lockedColumns) ? "[X]" : "[ ]";
