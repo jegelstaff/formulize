@@ -2669,7 +2669,11 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
     $notification_handler =& xoops_gethandler('notification');
 
     // start main loop
+    $notificationTemplateData = array();
     foreach ($entries as $entry) {
+      
+	$notificationTemplateData[$entry] = "";
+      
         // user list is potentially different for each entry. ignore anything that was passed in for $groups
         if (count($groups) == 0) { // if no groups specified as the owner of the current entry, then let's get that from the table
             $data_handler = new formulizeDataHandler($fid);
@@ -2825,16 +2829,16 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                     $templateFileContents = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/".$templateFileName);
                     if (strstr($templateFileContents, "{ELEMENT")) {
                         // gather the data for this entry and make it available to the template, since it uses an element tag in the message
-                        // Only do this getData call if we don't already have data from the database. $data[0] == "" will probably never be true in Formulize 3.0 and higher, but will evaluate as expected, with a warning about [0] being an invalid offset or something like that
-                        if ((is_array($data) AND $data[0] == "") OR $data == "") {
+                        // Only do this getData call if we don't already have data from the database. $notificationTemplateData[$entry][0] == "" will probably never be true in Formulize 3.0 and higher, but will evaluate as expected, with a warning about [0] being an invalid offset or something like that
+                        if ($notificationTemplateData[$entry][0] == "" OR $notificationTemplateData[$entry] == "") {
                             include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-                            $data = getData("", $fid, $entry);
+                            $notificationTemplateData[$entry] = getData("", $fid, $entry);
                         }
                         // get all the element IDs for the current form
                         $form_handler = xoops_getmodulehandler('forms', 'formulize');
                         $formObject = $form_handler->get($fid);
                         foreach ($formObject->getVar('elementHandles') as $elementHandle) {
-                            $extra_tags['ELEMENT'.strtoupper($elementHandle)] = html_entity_decode(displayTogether($data[0], $elementHandle, ", "), ENT_QUOTES);
+                            $extra_tags['ELEMENT'.strtoupper($elementHandle)] = html_entity_decode(displayTogether($notificationTemplateData[$entry][0], $elementHandle, ", "), ENT_QUOTES);
                             // for legacy compatibility, we provide both with and without _ keys in the extra tags array.
                             $extra_tags['ELEMENT_'.strtoupper($elementHandle)] = $extra_tags['ELEMENT'.strtoupper($elementHandle)];
                         }
