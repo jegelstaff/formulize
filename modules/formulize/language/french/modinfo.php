@@ -28,7 +28,6 @@ define("_MI_formulize_NOTIFY_DELENTRY", "Effacement d'entrée de formulaire");
 define("_MI_formulize_NOTIFY_DELENTRY_CAP", "Notifiez moi quand une entrée de formulaire est effacée");
 define("_MI_formulize_NOTIFY_DELENTRY_DESC", "Cette option de notification alerte les utilisateurs quand une entrée de formulaire est effacée");
 define("_MI_formulize_NOTIFY_DELENTRY_MAILSUB", "Entrée de formulaire effacée");
-define("_MI_formulize_TAREA_COLS","Nombre de colonnes des aires de saisies de texte par défaut");
 
 //	préférences
 define("_MI_formulize_TEXT_WIDTH","Largeur des boîtes de texte par défaut");
