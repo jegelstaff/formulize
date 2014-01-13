@@ -73,7 +73,6 @@ define("_FORM_COLOREVEN","First alternate colour for report writing page (altern
 define("_FORM_COLORODD","Second alternate colour for report writing page:");
 
 
-define("_FORM_MODIF","Modify the Form's Questions");
 define("_AM_FORM","Form: ");
 define("_FORM_EXPORT","Export in CSV format");
 define("_FORM_ALT_EXPORT","Export");
