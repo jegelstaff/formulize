@@ -344,6 +344,7 @@ define("_formulize_DE_LOE_LIMIT_REACHED3", "vous pouvez cliquer ici pour faire q
 define("_formulize_DE_MINE", "Mes entrées");
 define("_formulize_DE_MODCALCS", "Changer calculs");
 define("_formulize_DE_MOD_ADVSEARCH", "Modifier la recherche");
+define("_formulize_DE_MODIFYSCREEN", "Configurer cet écran (Screen)");
 define("_formulize_DE_MOREINFO", "Cliquer ici pour plus d'information sur cette colonne");
 define("_formulize_DE_MOREINFO_OPTIONS", "Options de réponse:");
 define("_formulize_DE_MOREINFO_QUESTION", "Texte pour la question tel qu'il apparait dans le formulaire:");
@@ -354,7 +355,7 @@ define("_formulize_DE_NOGROUPSPICKED", "Cliquez sur un ou plusieurs groupes de c
 define("_formulize_DE_NOTBUTTON", "Notifications");
 define("_formulize_DE_NOTLIST", "Notifications en cours");
 define("_formulize_DE_NOT_CONTEXTIF", " seulement si ");
-define("_formulize_DE_NOT_SENDTEXT", " envoyer une notification a ");
+define("_formulize_DE_NOT_SENDTEXT", " envoyer une notification à ");
 define("_formulize_DE_NOT_SUBJTEXT", "Utiliser ce sujet particulier pour le mail: ");
 define("_formulize_DE_NOT_TEMPTEXT", "Utiliser ce type de mail particulier: ");
 define("_formulize_DE_NOT_WHENTEXT", "Lorsque ");
