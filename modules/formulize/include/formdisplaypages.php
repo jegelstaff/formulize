@@ -288,22 +288,19 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				jQuery('form[name=formulize]').attr('action', '$done_dest');
 			}
 ";?>
-            if (formulizechanged) {
                 window.document.formulize.formulize_currentPage.value = page;
                 window.document.formulize.formulize_prevPage.value = prevpage;
                 window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
                 window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
+		if (formulizechanged) {
                 validateAndSubmit();
             } else {
                 jQuery("#formulizeform").animate({opacity:0.4}, 200, "linear");
+			jQuery("input[name^='decue_']").val(0);
                 jQuery.ajax({
                     type: "POST",
                     url: jQuery('form[name=formulize]').attr('action'),
-                    data: {
-                        formulize_currentPage: page,
-                        formulize_prevPage: prevpage,
-                        ventry: window.document.formulize.ventry.value,
-                    },
+			    data: jQuery('form[name=formulize]').serialize(),
                     success: function(html, x){
                         document.open();
                         document.write(html);
@@ -394,6 +391,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		<input type=hidden name=entry<?php print $fid; ?> id=entry<?php print $fid; ?> value=<?php print $entry ?>>
 		<input type=hidden name=formulize_currentPage id=formulize_currentPage value="">
 		<input type=hidden name=formulize_prevPage id=formulize_prevPage value="">
+		writeHiddenSettings($settings);
 		</form>
 	
 		<script type="text/javascript">
