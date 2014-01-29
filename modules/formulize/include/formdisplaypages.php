@@ -439,7 +439,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
         // setting up the basic templateVars for all templates
         $templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton,
             'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage,
-            'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles);
+            'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles, 'entry_id'=>$entry, 'form_id'=>$fid);
 
 		print "<form name=\"pageNavOptions_above\" id=\"pageNavOptions_above\">\n";
 		if($screen AND $toptemplate = $screen->getTemplate('toptemplate')) {
