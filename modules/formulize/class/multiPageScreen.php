@@ -113,10 +113,19 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
                  $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, toptemplate = %s, elementtemplate = %s, bottomtemplate = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('toptemplate')), $this->db->quoteString($screen->getVar('elementtemplate')), $this->db->quoteString($screen->getVar('bottomtemplate')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('buttontext')), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
              }
 		 $result = $this->db->query($sql);
-		 
-		$success1 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-toptemplate'])), 'toptemplate', $screen);
-		$success2 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-bottomtemplate'])), 'bottomtemplate', $screen);
-		$success3 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-elementtemplate'])), 'elementtemplate', $screen);
+		
+		$success1 = true;
+		if(isset($_POST['screens-toptemplate'])) { 
+		    $success1 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-toptemplate'])), 'toptemplate', $screen);
+		}
+		$success2 = true;
+		if(isset($_POST['screens-bottomtemplate'])) { 
+		    $success2 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-bottomtemplate'])), 'bottomtemplate', $screen);
+		}
+		$success3 = true;
+		if(isset($_POST['screens-elementtemplate'])) { 
+		    $success3 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-elementtemplate'])), 'elementtemplate', $screen);
+		}
 
 		if (!$success1 || !$success2 || !$success3) {
 		    return false;
