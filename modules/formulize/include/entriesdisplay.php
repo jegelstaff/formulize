@@ -1529,7 +1529,9 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 
 					if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
                         // check to see if we should draw in the delete checkbox
-                        if ($useCheckboxes != 2 /* 2 means none */ and formulizePermHandler::user_can_delete_entry($fid, $uid, $linkids[0])) {
+			// 2 is none, 1 is all
+                        if ($useCheckboxes != 2 and ($useCheckboxes == 1 or formulizePermHandler::user_can_delete_entry($fid, $uid, $linkids[0]))) {
+				
 							print "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='formulize_selection_checkbox' name='delete_" . $linkids[0] . "' id='delete_" . $linkids[0] . "' value='delete_" . $linkids[0] . "'>";
 						}
 						if($useViewEntryLinks) {
@@ -1702,7 +1704,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
                         $GLOBALS['formulize_viewEntryLinkCode'] = $viewEntryLinkCode;
 
                         // check to see if we should draw in the delete checkbox
-                        if ($useCheckboxes == 1 /* 1 means all */ or formulizePermHandler::user_can_delete_entry($fid, $uid, $entry_id)) {
+			// 2 is none, 1 is all
+                        if ($useCheckboxes != 2 and ($useCheckboxes == 1 or formulizePermHandler::user_can_delete_entry($fid, $uid, $entry_id))) {
                             $selectionCheckbox = "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='formulize_selection_checkbox' name='delete_" . $entry_id . "' id='delete_" . $entry_id . "' value='delete_" . $entry_id . "'>";
 						} else {
 							$selectionCheckbox = "";
