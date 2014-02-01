@@ -66,7 +66,7 @@ CREATE TABLE `formulize_group_filters` (
   `filterid` int(11) NOT NULL auto_increment,
   `fid` int(11) NOT NULL default 0,
   `groupid` int(11) NOT NULL default 0,
-  `filter` text NOT NULL default '',
+  `filter` text NOT NULL,
   PRIMARY KEY (`filterid`),
   INDEX i_fid (`fid`),
   INDEX i_groupid (`groupid`)
