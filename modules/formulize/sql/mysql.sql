@@ -161,7 +161,7 @@ CREATE TABLE `formulize_screen_form` (
   `alldonebuttontext` varchar(255) NOT NULL default '',
   `displayheading` tinyint(1) NOT NULL default 0,
   `reloadblank` tinyint(1) NOT NULL default 0,
-  `formelements` text default NULL,
+  `formelements` text,
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;
@@ -218,7 +218,7 @@ CREATE TABLE formulize_other (
 CREATE TABLE formulize_saved_views (
   sv_id smallint(5) NOT NULL auto_increment,
   sv_name varchar(255) default NULL,
-  sv_pubgroups text default NULL,
+  sv_pubgroups text,
   sv_owner_uid int(5),
   sv_mod_uid int(5),
   sv_formframe varchar(255) default NULL,
@@ -226,16 +226,16 @@ CREATE TABLE formulize_saved_views (
   sv_lockcontrols tinyint(1),
   sv_hidelist tinyint(1),
   sv_hidecalc tinyint(1),
-  sv_asearch text default NULL,
+  sv_asearch text,
   sv_sort varchar(255) default NULL,
   sv_order varchar(30) default NULL,
-  sv_oldcols text default NULL,
-  sv_currentview text default NULL,
-  sv_calc_cols text default NULL,
-  sv_calc_calcs text default NULL,
-  sv_calc_blanks text default NULL,
-  sv_calc_grouping text default NULL,
-  sv_quicksearches text default NULL,
+  sv_oldcols text,
+  sv_currentview text,
+  sv_calc_cols text,
+  sv_calc_calcs text,
+  sv_calc_blanks text,
+  sv_calc_grouping text,
+  sv_quicksearches text,
   PRIMARY KEY (sv_id)
 ) ENGINE=MyISAM;
 
@@ -278,7 +278,7 @@ CREATE TABLE formulize_id (
   id_form smallint(5) NOT NULL auto_increment,
   desc_form varchar(255) NOT NULL default '',
   singleentry varchar(5) default NULL,
-  headerlist text default NULL,
+  headerlist text,
   tableform varchar(255) default NULL,
   lockedform tinyint(1) NULL default NULL,
   defaultform int(11) NOT NULL default 0,
@@ -286,8 +286,8 @@ CREATE TABLE formulize_id (
   menutext varchar(255) default NULL,
   form_handle varchar(255) NOT NULL default '',
   store_revisions tinyint(1) NOT NULL default '0',
-  on_before_save text default NULL,
-  note text default NULL,
+  on_before_save text,
+  note text,
   PRIMARY KEY  (`id_form`)
 ) ENGINE=MyISAM;
 
