@@ -91,6 +91,16 @@ switch($_GET['page']) {
 	case "advanced-calculation":
 		include "advanced_calculation.php";
 		break;
+	case "export":
+		// do export stuff
+		$_GET['aid'] = 1;
+		include "export1.php";
+		break;
+	case "import":
+		// do import stuff
+		$_GET['aid'] = 1;
+		include "import.php";
+		break;
 	default:
 	case "home":
 		include "home.php";

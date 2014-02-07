@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
-<h1 style="font-family:verdana;color:red">Formulize</h1>
+<!--<h1 style="font-family:verdana;color:red">Formulize</h1>
 <hr noshade size=4 width="100%" align=left>
-<hr>
+<hr>-->
 <h3 style="font-family:verdana;color:rgb(0,100,100)">Export Application Utility</h3>
-<hr size=4 width="20%" align=left>
+<!--<hr size=4 width="20%" align=left>-->
 <p style="font-family:arial;color:rgb(100,100,0);font-size:medium;">
     This utility will automatically export all basic tables of the selected application.</br>
     However, you need to a make decision with regard to the following <u>dynamic forms</u>, </br>
@@ -53,7 +53,7 @@ else
 ?>	
 <tr>
 <td><input type='submit' name='formSubmit' value='Export' id='export'></td>
-<td><input type="button" id='download' value="Download" onclick='myfunction()'" /></td>
+<td><input type="button" id='download' value="Download" onclick='myfunction()' /></td>
 </tr>
 </tbody>
 </table>
@@ -131,7 +131,7 @@ Function progress($pcnt,$tran)
 	</script>';
 	echo str_repeat(' ',1024);
 	// Send output to browser immediately
-	ob_flush();
+	//ob_flush();
 	 sleep(.03);
 }
 
@@ -145,7 +145,7 @@ Function chk_integrity($tables,$prefix)
 		$num = sqlQuery("SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME= '$prefix$row[2]';","cnt");
 		if ($num[0]==0) 
 	    {
-			echo "Table : $row[2] (Error Table does not exsist)</br>";
+			echo "Table : $row[2] (Error Table does not exist)</br>";
 			$flag= false;
 		}
 	}

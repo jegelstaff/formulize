@@ -20,7 +20,7 @@ H2.ctl { font-family: "Cambria", serif; font-size: 13pt }
 <FONT COLOR="#17365d"><FONT FACE="Cambria, serif"<FONT SIZE=6 STYLE="font-size: 26pt"><FONT FACE="Calibri, serif">Importing
 Applications</FONT></FONT></FONT></FONT></P>
 <P STYLE="margin-bottom: 0.14in">This utility imports previously
-exported <FONT COLOR="#4f81bd">Fourmalize</FONT> applications. 
+exported <FONT COLOR="#4f81bd">Formulize</FONT> applications. 
 </P>
 <H2 CLASS="western"><FONT FACE="verdana, serif">Instructions</FONT></H2>
 <UL>
