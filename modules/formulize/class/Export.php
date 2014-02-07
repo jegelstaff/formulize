@@ -1,17 +1,10 @@
-<!DOCTYPE html>
-<html>
-<!--<h1 style="font-family:verdana;color:red">Formulize</h1>
-<hr noshade size=4 width="100%" align=left>
-<hr>-->
 <h3 style="font-family:verdana;color:rgb(0,100,100)">Export Application Utility</h3>
-<!--<hr size=4 width="20%" align=left>-->
 <p style="font-family:arial;color:rgb(100,100,0);font-size:medium;">
     This utility will automatically export all basic tables of the selected application.</br>
     However, you need to a make decision with regard to the following <u>dynamic forms</u>, </br>
     forms selected will be exported with data and other names we will only export empty forms</br>
 	Furthermore, you need also to select the group lists. 
 </p>
-<body>
 <table class="formTable">
 <tbody>
 <form action="<?php $_SERVER['PHP_SELF']; ?>" method="POST">
@@ -314,6 +307,3 @@ Function expTable($Prefix,$padText,$insStyle,$Table_Name,$Exclude_Columns = Null
 	return $inslist;
 }
 ?>
-
-</body>
-</html>

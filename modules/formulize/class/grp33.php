@@ -1,9 +1,3 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML>
-<HEAD>
-<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
-<TITLE>Application Import</TITLE>
-
 <STYLE TYPE="text/css">
 <!--
 @page { size: 8.5in 11in; margin: 1in }
