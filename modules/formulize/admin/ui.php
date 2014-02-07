@@ -94,7 +94,7 @@ switch($_GET['page']) {
 	case "export":
 		// do export stuff
 		$_GET['aid'] = 1;
-		include "export1.php";
+		include "export.php";
 		break;
 	case "import":
 		// do import stuff
