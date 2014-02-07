@@ -123,7 +123,7 @@ class SystemAutoTasks extends icms_ipf_Object {
 		if ($type[0] == ':') {
 			$type = substr($type, 1);
 		}
-		$type = explode('/', $type);
+		$type = explode(DIRECTORY_SEPARATOR, $type);
 		if ($part === NULL) return $type;
 		return $type[$part];
 	}
@@ -170,9 +170,9 @@ class SystemAutoTasks extends icms_ipf_Object {
 			$module = icms::handler("icms_module")->getByDirname($dirname);
 			if ($module->getVar("isactive") != 1) return FALSE;
 			
-			$dirname = ICMS_MODULES_PATH . '/' . $dirname;
-			$dirname = $dirname . '/' . $code;
-			$code = ' require "' . $dirname . '";';
+			$dirname = ICMS_MODULES_PATH . DIRECTORY_SEPARATOR . $dirname;
+			$dirname = $dirname . DIRECTORY_SEPARATOR . $code;
+			$code = " require '" . $dirname . "';";
 			$is_bug = !(@highlight_string(file_get_contents($dirname), TRUE));
 		} else {
 			$is_bug = !(@highlight_string('<?' . 'php '. $code . ' return TRUE; ?' . '>', TRUE));
