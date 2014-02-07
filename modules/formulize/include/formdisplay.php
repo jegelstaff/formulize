@@ -1525,8 +1525,13 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 				} else { // display the full form
 					$headerValues = array();
 					foreach($elementsToDraw as $thisele) {
-						$headerValues[] = htmlspecialchars(strip_tags($data_handler->getElementValueInEntry($sub_ent, $thisele)));
-					}					
+						$value = $data_handler->getElementValueInEntry($sub_ent, $thisele);
+						$element_object = _getElementObject($thisele);
+						$value = prepvalues($value, $element_object->getVar("ele_handle"), $sub_ent);
+						if (is_array($value))
+							$value = implode(" - ", $value);	// is this always an array, or only sometimes?
+						$headerValues[] = $value;
+					}
 					$headerToWrite = implode(" &mdash; ", $headerValues);
 					if(str_replace(" &mdash; ", "", $headerToWrite) == "") {
 						$headerToWrite = _AM_ELE_SUBFORM_NEWENTRY_LABEL;
