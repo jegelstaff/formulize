@@ -412,6 +412,15 @@ $modversion['config'][] = array(
 );
 
 $modversion['config'][] = array(
+	'name' =>'number_suffix',
+	'title' => '_MI_formulize_NUMBER_SUFFIX',
+	'description' => '_MI_formulize_NUMBER_SUFFIX_DESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => "",
+);
+
+$modversion['config'][] = array(
 	'name' =>'number_decimalsep',
 	'title' => '_MI_formulize_NUMBER_DECIMALSEP',
 	'description' => '',
@@ -466,14 +475,7 @@ $modversion['config'][] = array(
 	'default' => 0,
 );
 
-$modversion['config'][] = array(
-	'name' =>'number_suffix',
-	'title' => '_MI_formulize_NUMBER_SUFFIX',
-	'description' => '_MI_formulize_NUMBER_SUFFIX_DESC',
-	'formtype' => 'textbox',
-	'valuetype' => 'text',
-	'default' => "",
-);
+
 
 //bloc
 $modversion['blocks'][1] = array(

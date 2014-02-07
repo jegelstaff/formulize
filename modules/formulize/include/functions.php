@@ -3943,7 +3943,7 @@ function formulize_numberFormat($value, $handle, $decimalOverride=0) {
     } elseif ($elementMetaData['ele_type'] == "derived") {
         $ele_value = unserialize($elementMetaData['ele_value']);
         // value, decimaloverride, decimals, decsep exists, decsep, sep exists, sep, prefix exists, prefix
-        return _formulize_numberFormat($value, $decimalOverride, $ele_value[1], isset($ele_value[3]), $ele_value[3], isset($ele_value[4]), $ele_value[4], isset($ele_value[2]), $ele_value[2], isset($ele_value[6]), $ele_value[6]);
+        return _formulize_numberFormat($value, $decimalOverride, $ele_value[1], isset($ele_value[3]), $ele_value[3], isset($ele_value[4]), $ele_value[4], isset($ele_value[2]), $ele_value[2], isset($ele_value[5]), $ele_value[5]);
     }   else {
         return $value;
     }
