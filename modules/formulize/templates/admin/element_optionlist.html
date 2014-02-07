@@ -1,4 +1,4 @@
-<p><input type="button" class="formButton" name="addoption" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> 1"</p>
+
 <div class="optionlist">
 <{if $content.useroptions|@count > 0}>
   <{foreach from=$content.useroptions key=text item=checked name=optionsloop}>
@@ -12,6 +12,8 @@
 <{if $content.type == "radio"}>
 <p><input type="button" class="formButton" name="cleardef" value="<{$smarty.const._AM_CLEAR_DEFAULT}>"/></p>
 <{/if}>
+
+<p><input type="button" class="formButton" name="addoption" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> 1"</p>
 
 <div class="description">
   <{if $content.type == "radio"}><p><{$smarty.const._AM_ELE_OPT_DESC2}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
