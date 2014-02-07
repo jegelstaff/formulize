@@ -360,3 +360,13 @@ CREATE TABLE `formulize_procedure_logs_params` (
   PRIMARY KEY (`proc_log_param_id`),
   INDEX i_proc_log_id (proc_log_id)
 ) ENGINE=MyISAM;
+
+CREATE TABLE formulize_deletion_logs (
+  del_log_id int(11) unsigned NOT NULL auto_increment,
+  form_id int(11) NOT NULL,
+  entry_id int(7) NOT NULL,
+  user_id mediumint(8) NOT NULL,
+  PRIMARY KEY (del_log_id),
+  INDEX i_del_id (del_log_id)
+) ENGINE=MyISAM;
+

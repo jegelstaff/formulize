@@ -111,8 +111,8 @@ function patch40() {
 	 * 
 	 * ====================================== */
 	
-	$checkThisTable = 'formulize_id';
-	$checkThisField = 'note';
+	$checkThisTable = 'formulize_deletion_logs';
+	$checkThisField = 'del_log_id';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
@@ -268,6 +268,17 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 ) ENGINE=MyISAM;";
 
 		}
+		
+	if(!in_array($xoopsDB->prefix("formulize_deletion_logs"), $existingTables)) {			
+		$sql[] = "CREATE TABLE ".$xoopsDB->prefix("formulize_deletion_logs")." (
+				  del_log_id int(11) unsigned NOT NULL auto_increment,
+				  form_id int(11) NOT NULL,
+				  entry_id int(7) NOT NULL,
+				  user_id mediumint(8) NOT NULL,
+				  PRIMARY KEY (del_log_id),
+				  INDEX i_del_id (del_log_id)
+		) ENGINE=MyISAM;";
+	}
 
 		// if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
 		if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
