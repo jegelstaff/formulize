@@ -59,9 +59,9 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 	// AS DETERMINED FROM FIRST PRINCIPLES:
 	if (!defined("SITE_BASE_URL")) {
         # if this code is in a subfolder of the website, figure out what the subfolder url is
-        $doc_root_len = strlen($_SERVER["DOCUMENT_ROOT"]);
+        $doc_root_len = strlen($_SERVER["DOCUMENT_ROOT"]) + 1;
         if (strlen(XOOPS_ROOT_PATH) > $doc_root_len) {
-		define("SITE_BASE_URL", substr(XOOPS_ROOT_PATH, $doc_root_len));
+		define("SITE_BASE_URL", '/' . substr(XOOPS_ROOT_PATH, $doc_root_len));
         }
         else
 		define("SITE_BASE_URL", "");
