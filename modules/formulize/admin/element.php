@@ -136,6 +136,9 @@ if($_GET['ele_id'] != "new") {
     if(!isset($ele_value[6])) {
       $ele_value[6] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
     }
+    if(!isset($ele_value[10])) {
+      $ele_value[10] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
+    }
     if(!isset($ele_value[7])) {
       $ele_value[7] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
     }

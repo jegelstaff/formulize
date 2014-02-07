@@ -3939,11 +3939,11 @@ function formulize_numberFormat($value, $handle, $decimalOverride=0) {
     if ($elementMetaData['ele_type'] == "text") {
         $ele_value = unserialize($elementMetaData['ele_value']);
         // value, decimaloverride, decimals, decsep exists, decsep, sep exists, sep, prefix exists, prefix
-        return _formulize_numberFormat($value, $decimalOverride, $ele_value[5], isset($ele_value[7]), $ele_value[7], isset($ele_value[8]), $ele_value[8], isset($ele_value[6]), $ele_value[6]);
+        return _formulize_numberFormat($value, $decimalOverride, $ele_value[5], isset($ele_value[7]), $ele_value[7], isset($ele_value[8]), $ele_value[8], isset($ele_value[6]), $ele_value[6], isset($ele_value[10]), $ele_value[10]);
     } elseif ($elementMetaData['ele_type'] == "derived") {
         $ele_value = unserialize($elementMetaData['ele_value']);
         // value, decimaloverride, decimals, decsep exists, decsep, sep exists, sep, prefix exists, prefix
-        return _formulize_numberFormat($value, $decimalOverride, $ele_value[1], isset($ele_value[3]), $ele_value[3], isset($ele_value[4]), $ele_value[4], isset($ele_value[2]), $ele_value[2]);
+        return _formulize_numberFormat($value, $decimalOverride, $ele_value[1], isset($ele_value[3]), $ele_value[3], isset($ele_value[4]), $ele_value[4], isset($ele_value[2]), $ele_value[2], isset($ele_value[5]), $ele_value[5]);
     }   else {
         return $value;
     }
@@ -3952,7 +3952,7 @@ function formulize_numberFormat($value, $handle, $decimalOverride=0) {
 
 // internal function used by formulize_numberFormat to actually do the formatting
 // different element types have different parts of ele_value where the number values are stored, so that's the reason for abstracting this out one level
-function _formulize_numberFormat($value, $decimalOverride, $decimals="", $decSepExists=false, $decsep="", $sepExists=false, $sep="", $prefixExists=false, $prefix="") {
+function _formulize_numberFormat($value, $decimalOverride, $decimals="", $decSepExists=false, $decsep="", $sepExists=false, $sep="", $prefixExists=false, $prefix="", $suffixExists=false, $suffix="") {
     $config_handler =& xoops_gethandler('config');
     $formulizeConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId());
     if ($decimalOverride) {
@@ -3973,7 +3973,11 @@ function _formulize_numberFormat($value, $decimalOverride, $decimals="", $decSep
         // if no prefix actually is specified for the element, then use module pref if one is set, otherwise use ""
         $prefix = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : "";
     }
-    return $prefix . number_format($value, $decimals, $decsep, $sep);
+    if ($suffix == "" AND !$suffixExists) {
+        // if no prefix actually is specified for the element, then use module pref if one is set, otherwise use ""
+        $suffix = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : "";
+    }
+    return $prefix . number_format($value, $decimals, $decsep, $sep) . $suffix;
 }
 
 
