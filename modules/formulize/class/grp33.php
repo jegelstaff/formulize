@@ -25,7 +25,7 @@ where the “xx” represents the imported Application Id.
 to load the import contents.
 <LI>Application will then prompt
 the user to map the imported application “<FONT COLOR="#4f81bd"><U><B>Groups</B></U></FONT>”
-to the current  <FONT COLOR="#4f81bd">Fourmalize</FONT> 
+to the current  <FONT COLOR="#4f81bd">Formulize</FONT> 
 <LI>The users will need to select
 one of the following options to complete the required mapping:
 <UL  class="checkmark">
@@ -37,7 +37,7 @@ attributes as is to the current groups
 attributes to an existing group code.
 </UL>
 <LI>Following Click  <SPAN STYLE="background: #ffff00"><b><u>Submit</b></u></SPAN>
-to proceed with the import, or <SPAN STYLE="background: #ffff00"><b><u>Cancel</b></u></SPAN>to Exit
+to proceed with the import, or <SPAN STYLE="background: #ffff00"><b><u>Cancel</b></u></SPAN> to Exit
 </UL>
 <P ALIGN=CENTER STYLE="margin-bottom: 0.21in; border-top: none; border-bottom: 1.00pt solid #4f81bd; border-left: none; border-right: none; padding-top: 0in; padding-bottom: 0.06in; padding-left: 0in; padding-right: 0in; line-height: 100%">
 		<form name="Upload " method="POST" enctype="multipart/form-data">
