@@ -275,6 +275,7 @@ define("_AM_ELE_NUMBER_OPTS_DESC","You can set these options to control how deci
 define("_AM_ELE_NUMBER_OPTS_DEC","Number of decimal places:");
 define("_AM_ELE_NUMBER_OPTS_PREFIX","Display numbers with this prefix (ie: '$'):");
 define("_AM_ELE_NUMBER_OPTS_DECSEP","Separate decimals with this character (ie: '.'):");
+define("_AM_ELE_NUMBER_OPTS_SUFFIX","Display numbers with this suffix (ie: '%'):");
 define("_AM_ELE_NUMBER_OPTS_SEP","Separate thousands with this character (ie: ','):");
 define("_AM_ELE_DERIVED_NUMBER_OPTS","If this formula produces a number ...");
 
