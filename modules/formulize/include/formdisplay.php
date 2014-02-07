@@ -1529,7 +1529,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						$element_object = _getElementObject($thisele);
 						$value = prepvalues($value, $element_object->getVar("ele_handle"), $sub_ent);
 						if (is_array($value))
-							$value = implode(" - ", $value);	// is this always an array, or only sometimes?
+							$value = implode(" - ", $value); // may be an array if the element allows multiple selections (checkboxes, multiselect list boxes, etc)
 						$headerValues[] = $value;
 					}
 					$headerToWrite = implode(" &mdash; ", $headerValues);
