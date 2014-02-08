@@ -35,15 +35,6 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 // this file contains the functions for gathering a dataset from the database and interacting with the dataset
 
-function connect($host, $username, $password, $db) {
-     $connect = mysql_connect($host, $username, $password)
-     		or printf("<br>Could not connect to mysql host<br>");
-
-     $dbselect = mysql_select_db($db)
-            or printf("Could not select database<br>");
-}
-
-
 
 // RETURNS THE RESULTS OF AN SQL STATEMENT
 // WARNING:  HIGHLY INEFFICIENT IN TERMS OF MEMORY USAGE!
@@ -2319,56 +2310,29 @@ function countHits($entry, $handle, $word) {
 
 global $xoopsDB, $myts;
 
-if(!$xoopsDB) {
-	// SET DB PREFIX -- must be done for each installation if the installation uses a prefix other than "xoops_"
-	define("DBPRE", "xoops_");
-	connect(DBHOST, DBUSER, DBPASS, DBNAME);
-	// language translation table if xoops own objects (and presumably language files) have not been invoked
-	if(LANG == "English") {
-		define("_formulize_TEMP_QYES", "Yes");
-		define("_formulize_TEMP_QNO", "No");
-		define("_formulize_OPT_OTHER", "Other: ");
-	}
-	if(LANG == "French") {
-		define("_formulize_TEMP_QYES", "Oui");
-		define("_formulize_TEMP_QNO", "Non");
-		define("_formulize_OPT_OTHER", "Autre : ");
-	}
-  $LOE_limit = 0;
-	
-	// this function gets the password for the encryption/decryption process
-  // want to hash the db pass since we don't want any SQL logging processes to include the db pass as plaintext
-	// copied from functions.php, used in case any of the elements are encrypted
-  function getAESPassword() {
-		 return sha1(DBPASS."I'm a cool, cool, cool dingbat");
-  }
-	
-	$basePath = str_replace("modules/formulize/include/extract.php", "", __FILE__);
-	define('XOOPS_ROOT_PATH', str_replace("modules\formulize\include\extract.php", "", $basePath));
-	
-} else {
-	define("DBPRE", $xoopsDB->prefix('') . "_");
-	if(!defined("_formulize_OPT_OTHER")) {
-		global $xoopsConfig;
-		switch($xoopsConfig['language']) {
-			case "french":
-				define("_formulize_OPT_OTHER", "Autre : ");
-				define("_formulize_TEMP_QYES", "Oui");
-				define("_formulize_TEMP_QNO", "Non");
-				break;
-			case "english":
-			default:
-				define("_formulize_OPT_OTHER", "Other: ");
-				define("_formulize_TEMP_QYES", "Yes");
-				define("_formulize_TEMP_QNO", "No");
-				break;
-		} 
-	}
-        $config_handler =& xoops_gethandler('config');
-	$formulizeModuleConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId()); // get the *Formulize* module config settings
- 	$GLOBALS['formulize_LOE_limit'] = $formulizeModuleConfig['LOE_limit'];
-        
+
+define("DBPRE", $xoopsDB->prefix('') . "_");
+if(!defined("_formulize_OPT_OTHER")) {
+	global $xoopsConfig;
+	switch($xoopsConfig['language']) {
+		case "french":
+			define("_formulize_OPT_OTHER", "Autre : ");
+			define("_formulize_TEMP_QYES", "Oui");
+			define("_formulize_TEMP_QNO", "Non");
+			break;
+		case "english":
+		default:
+			define("_formulize_OPT_OTHER", "Other: ");
+			define("_formulize_TEMP_QYES", "Yes");
+			define("_formulize_TEMP_QNO", "No");
+			break;
+	} 
 }
+$config_handler =& xoops_gethandler('config');
+        
+$formulizeModuleConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId()); // get the *Formulize* module config settings
+$GLOBALS['formulize_LOE_limit'] = $formulizeModuleConfig['LOE_limit'];       
+
 
 function formulize_benchmark($text, $dumpLog = false) {
      global $xoopsUser;
