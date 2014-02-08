@@ -54,4 +54,4 @@ $formulizeForm = new formulizeForm();
 error_log(method_exists($formulizeForm, "checkFormOwnership"));
 
 $n=$formulizeForm->checkFormOwnership($_POST['form_id'],$_POST['form_handle']);
-return $n
+echo "found and fixed ". $n . " ownership problems in your form";
