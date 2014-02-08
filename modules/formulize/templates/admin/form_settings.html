@@ -23,15 +23,6 @@
 		</div>
 	</div>
 
-	<div class="accordion-box">
-		<div class="form-item required">
-        	<fieldset>
-                <legend><label for="forms-title" class="question"><?php echo @_AM_SETTINGS_FORM_TITLE_QUESTION; ?>
-                </label>
-                </legend><input type="button" id="fix_entries" value="Repaier Ownership table">
-             </fieldset>
-		</div>
-	</div>
 
   <div class="accordion-box">
 	  <div class="form-item">
@@ -45,6 +36,15 @@
 	  </div>
   </div>
 
+	<div class="accordion-box">
+		<div class="form-item required">
+        	<fieldset>
+                <legend><label for="forms-title" class="question"><{$smarty.const._AM_EOG_Repair}>
+                </label>
+                </legend><input type="button" id="fix_entries" value="Repair Ownership table">
+             </fieldset>
+		</div>
+	</div>
 		<{if $content.istableform == true && $content.fid == "new"}>
 		<div class="accordion-box">
 			<div class="form-item">

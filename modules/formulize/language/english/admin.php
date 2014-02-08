@@ -90,6 +90,7 @@ define("_AM_SETTINGS_FORM_TITLE","Form title: ");
 define("_AM_SETTINGS_MENU_ENTRY","Menu entry: ");
 define("_AM_SETTINGS_MENU_LEAVE","Leave the 'menu entry' blank to remove this form from the default menu block");
 define("_AM_SETTINGS_FORM_HANDLE","Form handle");
+define("_AM_EOG_Repair","Repair entry ownership table");
 define("_AM_SETTINGS_FORM_HANDLE_EXPLAIN","Optional. The name will you use to refer to this form in programming code and in the database. Defaults to the form ID number.");
 define("_AM_SETTINGS_FORM_DATABASE","Which database table should this 'form' point to?");
 define("_AM_SETTINGS_FORM_DATABASE_EXPLAIN","Type the exact name, including the prefix, ie: mysite_groups");
