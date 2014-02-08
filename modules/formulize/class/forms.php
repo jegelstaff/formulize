@@ -36,6 +36,24 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeForm extends XoopsObject {
+function checkFormOwnership($id_form,$form_handle){
+
+		global $xoopsDB;
+                //check to see if there are entries in the form which 
+                //do not appear in the entry_owner_groups table. If so, it finds the 
+                // owner/creator of the entry and calls setEntryOwnerGroups() which inserts the
+                //first, get the form ids and handles.  
+                $missingEntries=q("SELECT main.entry_id,main.creation_uid From " . $xoopsDB->prefix("formulize_".$form_handle) . " as main WHERE NOT EXISTS(
+               SELECT 1 FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " as eog WHERE eog.fid=".$id_form ." and eog.entry_id=main.entry_id )");
+                //now we got the missing entries in the form and the users who created them.    
+                $data_handler = new formulizeDataHandler($id_form);
+                foreach ($missingEntries as $entry){
+                        if (!$groupResult = $data_handler->setEntryOwnerGroups($entry['creation_uid'],$entry['entry_id'])) {
+                                print "ERROR: failed to write the entry ownership information to the database.<br>";
+                        }
+                }
+	return count($missingEntries);
+        }
 	function formulizeForm($id_form="", $includeAllElements=false){
 
 		// validate $id_form
