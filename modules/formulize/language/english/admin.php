@@ -268,6 +268,9 @@ define("_AM_ELE_SEP","Break up line");
 define("_AM_ELE_NOM_SEP","Break up name");
 define("_AM_ELE_UPLOAD","Join a file");
 define("_AM_ELE_CLR","with the color");
+define("_AM_ELE_PLACEHOLDER_DESC","How do you want to use the default value?");
+define("_AM_ELE_NO_PLACEHOLDER","Add it to the text box when the form loads, it will be saved as-is if the user leaves it alone");
+define("_AM_ELE_PLACEHOLDER_OPTION","Show it as an example in the text box, but don't save it if the form is submitted");
 
 // number options for textboxes
 define("_AM_ELE_NUMBER_OPTS","If a number is typed...");
