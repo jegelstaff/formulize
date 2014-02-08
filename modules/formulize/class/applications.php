@@ -401,15 +401,17 @@ class formulizeApplicationsHandler {
         
         //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen
         $linkValues = explode("::",$menuitem);
-        $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". $linkValues[2]."',".$rank.",'".$linkValues[3]."','".$linkValues[1]."');";
+        $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". $xoopsDB->escape($linkValues[2])."',".$rank.",'".$xoopsDB->escape($linkValues[3])."','".$xoopsDB->escape($linkValues[1])."');";
 		if(!$result = $xoopsDB->query($insertsql)) {
 			exit("Error inserting Menu Item. SQL dump:\n" . $insertsql . "\n".mysql_error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 		}else{
 			
 			$menuid = mysql_insert_id();
 			if($linkValues[4] != "null" and count($linkValues[4]) > 0){
-				$groupsThatCanView = explode(",",$linkValues[4]);
+                $groupsThatCanView = explode(",",$linkValues[4]);
+				$groupsThatCanView = array_map(array($xoopsDB, 'escape'), $groupsThatCanView);
                 $groupsWithDefaultPage = explode(",",$linkValues[5]);
+				$groupsWithDefaultPage = array_map(array($xoopsDB, 'escape'), $groupsWithDefaultPage);
 				$defaultScreen = 0;
 				foreach($groupsThatCanView as $groupid) {
                     //check for default screen					
@@ -446,24 +448,26 @@ class formulizeApplicationsHandler {
         global $xoopsDB;       
         //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen 
         $linkValues = explode("::",$menuitems);
-        $updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET screen= '".$linkValues[2]."', url= '".$linkValues[3]."', link_text='".$linkValues[1]."' where menu_id=".$linkValues[0]." AND appid=".$appid.";";
+        $updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET screen= '".$xoopsDB->escape($linkValues[2])."', url= '".$xoopsDB->escape($linkValues[3])."', link_text='".$xoopsDB->escape($linkValues[1])."' where menu_id=".$xoopsDB->escape($linkValues[0])." AND appid=".$appid.";";
         if(!$result = $xoopsDB->query($updatesql)) {
             exit("Error updating Menu Item. SQL dump:\n" . $updatesql . "\n".mysql_error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
         }else{
         	//delete existing permissions for this menu item
-        	$deletepermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=".$linkValues[0].";";
+        	$deletepermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=".$xoopsDB->escape($linkValues[0]).";";
        	 	$result = $xoopsDB->query($deletepermissions);
         
        	 	if($linkValues[4] != "null" and count($linkValues[4]) > 0){
                 $groupsThatCanView = explode(",",$linkValues[4]);
+				$groupsThatCanView = array_map(array($xoopsDB, 'escape'), $groupsThatCanView);
                 $groupsWithDefaultPage = explode(",",$linkValues[5]);
+				$groupsWithDefaultPage = array_map(array($xoopsDB, 'escape'), $groupsWithDefaultPage);
                 $defaultScreen = 0;
         		foreach($groupsThatCanView as $groupid) {
                     //check for default screen					
                     if (in_array($groupid, $groupsWithDefaultPage)){
                         $defaultScreen = 1;
                     }
-                    $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".$linkValues[0].",". $groupid.",".$defaultScreen.")";                     
+                    $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".$xoopsDB->escape($linkValues[0]).",". $groupid.",".$defaultScreen.")";                     
            	     if(!$result = $xoopsDB->query($permissionsql)) {
            	     	exit("Error updating Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".mysql_error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
            	 		}
