@@ -60,6 +60,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 // $screen will be a screen object if present
 function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0, $viewallforms=0, $screen=null) {
 
+//TODO Up here might be the best place to generate an implict screen if it is null. That way future logic can assume if($screen) to simplify logic. 
   formulize_benchmark("start of drawing list");
 
 	global $xoopsDB, $xoopsUser;
@@ -932,6 +933,8 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$flatcols = implode(",", $columns); // part of $settings (will be IDs if no framework in effect)
 
 	$useWorking = true;
+	//TODO remove references to useDefaultInterface logic.
+	//Implictly create a screen from the appropriate protype template if no screen is set?
 	$useDefaultInterface = true;
 	$useSearch = 1;
 	if($screen) {
@@ -1045,6 +1048,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	}
 	$buttonCodeArray['pageNavControls'] = $pageNav; // put this unique UI element into the buttonCodeArray for use elsewhere if necessary
 
+	//TODO replace with prototype lookup 
 	if($useDefaultInterface) {
 
 		// if search is not used, generate the search boxes 
@@ -1160,7 +1164,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		// IF THERE IS A CUSTOM TOP TEMPLATE IN EFFECT, DO SOMETHING COMPLETELY DIFFERENT
 	
 		if(!$screen->getVar('usecurrentviewlist') OR (!strstr($screen->getTemplate('toptemplate'), 'currentViewList') AND !strstr($screen->getTemplate('toptemplate'), 'currentViewList'))) { print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n"; } // print it even if the text is blank, it will be a hidden value in this case
-				
+		
+		//TODO leave all of these parentalism checks with new prototype template flow.
+		
 		// if search is not used, generate the search boxes and make them available in the template
 		// also setup searches when calculations are in effect, or there's a custom list template
 		// (essentially, whenever the search boxes would not be drawn in for whatever reason)
