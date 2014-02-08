@@ -923,7 +923,6 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	}
 	
 	
-	
 	// get single/multi entry status of this form...
 	$singleMulti = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $fid");
 		
@@ -1204,6 +1203,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		}	
 	
     formulize_benchmark("before rendering top template");
+    
+    //TODO Here is the rendering for the custom template. Somehow always end up in this code block and someone this where we grab the
+    //protype template if no custom one exists?
 		formulize_screenLOETemplate($screen, "top", $buttonCodeArray, $settings, $messageText);
     formulize_benchmark("after rendering top template");
 		$buttonCodeArray['submitButton'] = $submitButton; // send this back so that we can put it at the bottom of the page if necessary
@@ -3931,6 +3933,9 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	if($thisTemplate != "") {
     
     // process the template and output results
+    
+    //Could load the prototype templates here in the case of no template being found. The code that used to be used in that case
+    //had a much more extensive list of variables in scope that would all be availible here which would cause issues. 
 		include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/".$type."template.php";
 		
 		// if there are no page nav controls in either template the template, then 
