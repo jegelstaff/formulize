@@ -90,6 +90,7 @@ define("_AM_SETTINGS_FORM_DATABASE","Vers quelle table de la base de données do
 define("_AM_SETTINGS_FORM_DATABASE_EXPLAIN","Tapez le nom exact, incluant le préfixe, par exemple: mysite_groups");
 define("_AM_SETTINGS_FORM_ENTRIES_ALLOWED","Combien d'entrées sont autorisées dans ce formulaire?");
 define("_AM_SETTINGS_FORM_ENTRIES_ONEPERGROUP","Une entrée par <b>groupe</b>");
+define("_AM_EOG_Repair","Repair entry ownership table");
 define("_AM_SETTINGS_FORM_ENTRIES_ONEPERUSER","Une entrée par <b>utilisateur</b>");
 define("_AM_SETTINGS_FORM_ENTRIES_MORETHANONE","<b>Plus d'une entrée</b> par utilisateur");
 define("_AM_SETTINGS_FORM_SHOWING_LIST","Quand la liste des entrées s'affiche pour ce formulaire, quels éléments souhaitez vous afficher par défaut?");
