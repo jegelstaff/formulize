@@ -218,23 +218,24 @@ class formulizeDataHandler  {
 			$ids[0] = $sentID;
 		}
 		global $xoopsDB;
+		$ids = array_map(array($xoopsDB, 'escape'), $ids);
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$sql = "DELETE FROM " .$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . implode(" OR entry_id = ", array_map('$xoopsDB->escape', $ids));
+		$sql = "DELETE FROM " .$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . implode(" OR entry_id = ", $ids);
 		if(!$deleteSuccess = $xoopsDB->query($sql)) {
 			return false;
 		}
-		$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=".$xoopsDB->escape($this->fid)." AND (entry_id = " . implode(" OR entry_id = ", array_map('$xoopsDB->escape', $ids)) . ")";
+		$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=".$xoopsDB->escape($this->fid)." AND (entry_id = " . implode(" OR entry_id = ", $ids) . ")";
 		if(!$deleteOwernshipSuccess = $xoopsDB->query($sql)) {
-			print "Error: could not delete entry ownership information for form ". $xoopsDB->escape($this->fid) . ", entries: " . implode(", ", array_map('$xoopsDB->escape', $ids)) . ". Check the DB queries debug info for details.";
+			print "Error: could not delete entry ownership information for form ". $xoopsDB->escape($this->fid) . ", entries: " . implode(", ", $ids) . ". Check the DB queries debug info for details.";
 		}
 		if($formObject->getVar('store_revisions')) {
 			global $xoopsUser;
 			$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 			foreach($ids as $id) {
-				$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_deletion_logs") . " (form_id, entry_id, user_id) VALUES (" . $xoopsDB->escape($this->fid) . ", " . $xoopsDB->escape($id) . ", " . $xoopsDB->escape($uid) . ")";
+				$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_deletion_logs") . " (form_id, entry_id, user_id) VALUES (" . $xoopsDB->escape($this->fid) . ", " . $id . ", " . $xoopsDB->escape($uid) . ")";
 				if(!$deleteLoggingSuccess = $xoopsDB->query($sql)) {
-					print "Error: could not insert delete log entry information for form " . $xoopsDB->escape($this->fid) . ", entry " . $xoopsDB->escape($id) . ", user " . $xoopsDB->escape($uid) . ". Check the DB queries debug info for details.";
+					print "Error: could not insert delete log entry information for form " . $xoopsDB->escape($this->fid) . ", entry " . $id . ", user " . $xoopsDB->escape($uid) . ". Check the DB queries debug info for details.";
 				}
 			}
 			unset($id);
