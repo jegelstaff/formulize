@@ -136,7 +136,7 @@ $screen->setVar('introtext', undoAllHTMLChars($screen->getVar('introtext', "e"))
 $screen->setVar('thankstext', undoAllHTMLChars($screen->getVar('thankstext', "e")));
 
 if(!$screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".mysql_error();
+  print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
 
 // reload the page if the state has changed

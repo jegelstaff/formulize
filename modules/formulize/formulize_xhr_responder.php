@@ -116,7 +116,7 @@ switch($op) {
     break;
   case 'get_element_html':
     include_once XOOPS_ROOT_PATH."/modules/formulize/include/elementdisplay.php";
-    displayElement("", mysql_real_escape_string($_GET['param2']), intval($_GET['param3']));
+    displayElement("", $xoopsDB->escape($_GET['param2']), intval($_GET['param3']));
     break;
   case 'get_element_value':
     $handle = $_GET['param1'];
@@ -125,7 +125,7 @@ switch($op) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
     $element_handler = xoops_getmodulehandler('elements','formulize');
-    $elementObject = $element_handler->get(mysql_real_escape_string($handle));
+    $elementObject = $element_handler->get($xoopsDB->escape($handle));
     $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
     $dbValue = $data_handler->getElementValueInEntry($entryId,$handle);
     $preppedValue = prepvalues($dbValue,$handle,$entryId);

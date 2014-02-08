@@ -56,7 +56,7 @@ $form->setVar('defaultform',intval($screens['defaultform']));
 $form->setVar('defaultlist',intval($screens['defaultlist']));
 
 if(!$fid = $form_handler->insert($form)) {
-  print "Error: could not save the form properly: ".mysql_error();
+  print "Error: could not save the form properly: ".$xoopsDB->error();
 }
 
 

@@ -76,7 +76,7 @@ class formulizeDataHandler  {
 				}
 				if(isset($map[$field])) { $field = $map[$field]; } // if this field is in the map, then use the value from the map as the field name (this will match the field name in the cloned form)
 				if(!$start) { $insertSQL .= ", "; }
-				$insertSQL .= "`$field` = \"" . mysql_real_escape_string($value) . "\"";
+				$insertSQL .= "`$field` = \"" . $xoopsDB->escape($value) . "\"";
 				$start = false;
 			}
 			if(!$insertResult = $xoopsDB->queryF($insertSQL)) {
@@ -162,7 +162,7 @@ class formulizeDataHandler  {
 			if($field == "entry_id") { continue; }
 			if(!$start) { $sql .= ", "; }
 			$start = 0;
-			$sql .= "`$field` = \"" . mysql_real_escape_string($value) . "\"";
+			$sql .= "`$field` = \"" . $xoopsDB->escape($value) . "\"";
 		}
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
@@ -412,7 +412,7 @@ class formulizeDataHandler  {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` = \"" . mysql_real_escape_string($value) . "\" ORDER BY entry_id LIMIT 0,1";
+		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` = \"" . $xoopsDB->escape($value) . "\" ORDER BY entry_id LIMIT 0,1";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -429,10 +429,10 @@ class formulizeDataHandler  {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$queryValue = "\"" . mysql_real_escape_string($value) . "\"";
+		$queryValue = "\"" . $xoopsDB->escape($value) . "\"";
 		if($operator == "{LINKEDSEARCH}") {
 			$operator = "LIKE";
-			$queryValue = "\"%," . mysql_real_escape_string($value) . ",%\"";
+			$queryValue = "\"%," . $xoopsDB->escape($value) . ",%\"";
 		}
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids, array());
@@ -765,7 +765,7 @@ class formulizeDataHandler  {
             if ("{WRITEASNULL}" == $value or null === $value) {
                 $element_values[$key] = "NULL";
             } else {
-                $element_values[$key] = "'".mysql_real_escape_string($value)."'";
+                $element_values[$key] = "'".$xoopsDB->escape($value)."'";
             }
             if ($encrypt_this) {
                 // this element should be encrypted. note that the actual value is quoted and escapted already
@@ -826,15 +826,15 @@ class formulizeDataHandler  {
 				$revisionRes = $xoopsDB->query($revisionSQL);
 			}
 			if(!$revisionRes) {
-				exit("Error: could not update revision information for entry $entry_to_return in form ".$formObject->getVar('form_handle').".  This is the query that failed:<br>$revisionSQL<br>Reported MySQL error (if any - if nothing, then query might have been attempted on a non POST submission, since no MySQL error is reported): ".mysql_error());
+				exit("Error: could not update revision information for entry $entry_to_return in form ".$formObject->getVar('form_handle').".  This is the query that failed:<br>$revisionSQL<br>Reported MySQL error (if any - if nothing, then query might have been attempted on a non POST submission, since no MySQL error is reported): ".$xoopsDB->error());
 			}
 		}
 		if($forceUpdate) {
 			if(!$res = $xoopsDB->queryF($sql)) {
-				exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.<br>".mysql_error());
+				exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
 			}
 		} elseif(!$res = $xoopsDB->query($sql)) {
-			exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>".mysql_error());
+			exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>".$xoopsDB->error());
 		}
 		$lastWrittenId = $xoopsDB->getInsertId();
 		if($lockIsOn) {
@@ -1001,7 +1001,7 @@ class formulizeDataHandler  {
 			} else {
 				$replacementString = $currentValues[0];
 			}
-			$updateSql[] = "UPDATE ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." SET `".$element->getVar('ele_handle')."` = '".mysql_real_escape_string($replacementString)."' WHERE entry_id = ".$array['entry_id'];
+			$updateSql[] = "UPDATE ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." SET `".$element->getVar('ele_handle')."` = '".$xoopsDB->escape($replacementString)."' WHERE entry_id = ".$array['entry_id'];
 		}
 		if(count($updateSql) > 0) { // if we have some SQL generated, then run it.
 			foreach($updateSql as $thisSql) {

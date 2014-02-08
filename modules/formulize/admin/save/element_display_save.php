@@ -132,7 +132,7 @@ if($_POST['elements_ele_disabled'][0] == "none") {
 $element->setVar('ele_disabled', $disabled);
 
 if(!$ele_id = $element_handler->insert($element)) {
-  print "Error: could not save the display settings for element: ".mysql_error();
+  print "Error: could not save the display settings for element: ".$xoopsDB->error();
 }
 
 if($_POST['reload_element_pages']) {

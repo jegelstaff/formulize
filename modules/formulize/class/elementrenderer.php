@@ -318,7 +318,7 @@ class formulizeElementRenderer{
 						}
 						$pgroupsfilter .= ")";
 					} elseif(count($pgroups) > 0) {
-						$pgroupsfilter = " t2.groupid IN (".mysql_real_escape_string(implode(",",$pgroups)).") AND t2.entry_id=t1.entry_id AND t2.fid=$sourceFid";
+						$pgroupsfilter = " t2.groupid IN (".$xoopsDB->escape(implode(",",$pgroups)).") AND t2.entry_id=t1.entry_id AND t2.fid=$sourceFid";
 					} else {
 						$pgroupsfilter = "";
 					}
