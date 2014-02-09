@@ -1200,7 +1200,15 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 				}
 				print "</div>";
 			}
-		}	
+		}
+
+	//push all variables needed in context during template rendering to the settings dictionary
+	$settings['translated_title'] = trans($title);
+	$settings['import_data'] = $gperm_handler->checkRight("import_data", $fid, $groups, $mid);
+	$settings['atLeastOneActionButton'] = $atLeastOneActionButton;
+	$settings['user_can_delete'] = $user_can_delete;
+	$settings['add_own_entry'] = $add_own_entry;
+	$settings['proxy'] = $proxy;
 	
     formulize_benchmark("before rendering top template");
     
