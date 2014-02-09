@@ -253,3 +253,16 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $for
 // screens?
 // menu items?
 // permissions?
+
+// Auto menu link creation
+// The link is shown to to Webmaster and registered users only (1,2 in $menuitems)
+if($_POST['formulize_admin_key'] == "new") {
+  $menuitems = "null::" . $xoopsDB->escape($formObject->getVar('title')) . "::fid=" . $xoopsDB->escape($fid) . "::http://::1,2::null";
+  if(!empty($selectedAppIds)) {
+    foreach($selectedAppIds as $appid) {
+      $application_handler->insertMenuLink($xoopsDB->escape($appid), $menuitems);
+    }
+  } else {
+    $application_handler->insertMenuLink(0, $menuitems);
+  }
+}
