@@ -1176,7 +1176,6 @@ formulize_benchmark("after rendering top template");
 	$returnArray = array();
 	$returnArray[0] = $buttonCodeArray; // send this back so it's available in the bottom template if necessary.  MUST USE NUMERICAL KEYS FOR list TO WORK ON RECEIVING END.
 	return $returnArray;
-
 }
 
 // THIS FUNCTION DRAWS IN THE RESULTS OF THE QUERY
@@ -3817,14 +3816,13 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 		print "<div id=\"floating-list-of-entries-save-button\" class=\"\"><p>$saveButton</p></div>\n";
 	}
 	
+	// process the template and output results
+	
 	$thisTemplate = $screen->getTemplate($type.'template');
 	if($thisTemplate != "") {
     
-    // process the template and output results
     
-    //Could load the prototype templates here in the case of no template being found. The code that used to be used in that case
-    //had a much more extensive list of variables in scope that would all be availible here which would cause issues. 
-		include XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/".$type."template.php";
+		include $screen->getTemplatePath($type.'template');
 		
 		// if there are no page nav controls in either template the template, then 
 		if($type == "top" AND !strstr($screen->getTemplate('toptemplate'), 'pageNavControls') AND (!strstr($screen->getTemplate('bottomtemplate'), 'pageNavControls'))) {
