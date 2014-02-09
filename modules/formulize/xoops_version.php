@@ -289,7 +289,12 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/advanced_calculation_fltr_grp_sections.html',
 	'description' => '');
-
+$modversion['templates'][] = array(
+	'file' => 'admin/import_template.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/export_template.html',
+	'description' => '');
 
 //	Module Configs
 // $xoopsModuleConfig['t_width']
