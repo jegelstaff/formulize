@@ -124,7 +124,7 @@ function patch40() {
 		$fieldCheckSql = "SHOW COLUMNS FROM " . $xoopsDB->prefix(mysql_real_escape_string($checkThisTable)) ." LIKE '".mysql_real_escape_string($checkThisField)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
 		$fieldCheckRes = formulize_DBPatchCheckSQL($fieldCheckSql, $needsPatch); // may modify needsPatch!	
 	} 
-	if($checkPropertyForValue) {
+	if($fieldCheckRes AND !$needsPatch AND $checkPropertyForValue) {
 		$fieldCheckArray = $xoopsDB->fetchArray($fieldCheckRes);
 		if($fieldCheckArray[$checkThisProperty] != $checkPropertyForValue) {
 			$needsPatch = true;
