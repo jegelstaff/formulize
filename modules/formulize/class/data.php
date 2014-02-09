@@ -839,15 +839,15 @@ class formulizeDataHandler  {
 				$revisionRes = $xoopsDB->query($revisionSQL);
 			}
 			if(!$revisionRes) {
-				exit("Error: could not update revision information for entry $entry_to_return in form ".$formObject->getVar('form_handle').".  This is the query that failed:<br>$revisionSQL<br>Reported MySQL error (if any - if nothing, then query might have been attempted on a non POST submission, since no MySQL error is reported): ".mysql_error());
+				exit("Error: could not update revision information for entry $entry_to_return in form ".$formObject->getVar('form_handle').".  This is the query that failed:<br>$revisionSQL<br>Reported MySQL error (if any - if nothing, then query might have been attempted on a non POST submission, since no MySQL error is reported): ".$xoopsDB->error());
 			}
 		}
 		if($forceUpdate) {
 			if(!$res = $xoopsDB->queryF($sql)) {
-				exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.<br>".mysql_error());
+				exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
 			}
 		} elseif(!$res = $xoopsDB->query($sql)) {
-			exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>".mysql_error());
+			exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>".$xoopsDB->error());
 		}
 		$lastWrittenId = $xoopsDB->getInsertId();
 		if($lockIsOn) {

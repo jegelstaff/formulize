@@ -67,7 +67,7 @@ $advCalcObject->setVar('output',$advCalc['output']);
 
 // save object, and if a new item, reload page
 if(!$acid = $advanced_calculation_handler->insert($advCalcObject)) {
-  print "Error: could not save the advanced calculation properly: ".mysql_error();
+  print "Error: could not save the advanced calculation properly: ".$xoopsDB->error();
 }
 */
 
@@ -209,7 +209,7 @@ $advCalcObject->setVar('fltr_grps',$fltr_grps);
 $advCalcObject->setVar('fltr_grptitles',$fltr_grptitles);
 
 if(!$advanced_calculation_handler->insert($advCalcObject)) {
-  print "Error: could not save the advanced calculation properly: ".mysql_error();
+  print "Error: could not save the advanced calculation properly: ".$xoopsDB->error();
 }
 
 // reload the filter and grouping if the state has changed

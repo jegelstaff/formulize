@@ -53,7 +53,7 @@ foreach ($processedValues['forms'] as $property => $value) {
     $formObject->setVar($property, $value);
 }
 if (!$form_handler->insert($formObject)) {
-    print "Error: could not save the form properly: ".mysql_error();
+    print "Error: could not save the form properly: ".$xoopsDB->error();
 }
 
 // do cloning here

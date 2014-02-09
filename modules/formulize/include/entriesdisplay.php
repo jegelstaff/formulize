@@ -253,11 +253,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 		$qsearches = implode("&*=%4#", $allquicksearches);
 
-		$savename = mysql_real_escape_string($savename);
-		$savesearches = mysql_real_escape_string($_POST['asearch']);
+		$savename = $xoopsDB->escape($savename);
+		$savesearches = $xoopsDB->escape($_POST['asearch']);
 		//print $_POST['asearch'] . "<br>";
 		//print "$savesearches<br>";
-		$qsearches = mysql_real_escape_string($qsearches);
+		$qsearches = $xoopsDB->escape($qsearches);
 
 		if($frid) { 
 			$saveformframe = $frid;
@@ -2670,9 +2670,9 @@ function calcParseBlanksSetting($setting) {
 			foreach($setting as $thisSetting) {
 				// does it have ! at the front, which is the "not" indicator
 				if(substr($thisSetting,0,1)=="!") {
-  				$allowed[] = mysql_real_escape_string(substr($thisSetting,1));
+  				$allowed[] = $xoopsDB->escape(substr($thisSetting,1));
 				} else {
-					$excluded[] = mysql_real_escape_string($thisSetting);
+					$excluded[] = $xoopsDB->escape($thisSetting);
 				}
 			}
 			break;
@@ -3812,7 +3812,7 @@ function loadReport($id, $fid, $frid) {
       $formframe = intval($fid);
       $mainform = "''";
     }
-    $thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_name='".mysql_real_escape_string($id)."' AND sv_formframe = $formframe AND sv_mainform = $mainform");
+    $thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_name='".$xoopsDB->escape($id)."' AND sv_formframe = $formframe AND sv_mainform = $mainform");
   }
   if(!isset($thisview[0]['sv_currentview'])) {
     print "Error: could not load the specified saved view: '".strip_tags(htmlspecialchars($id))."'";
@@ -4457,11 +4457,11 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 				$individualORSearches[] = $key ."/**/$one_search";
 			} elseif($addToORFilter) {
 				if(!$ORstart) { $ORfilter .= "]["; }
-				$ORfilter .= $key . "/**/$one_search"; // . mysql_real_escape_string($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
+				$ORfilter .= $key . "/**/$one_search"; // . $xoopsDB->escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
 				$ORstart = 0;
 			} else {
 				if(!$start) { $filter .= "]["; }
-				$filter .= $key . "/**/$one_search"; // . mysql_real_escape_string($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
+				$filter .= $key . "/**/$one_search"; // . $xoopsDB->escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
 				$start = 0;
 			}
 			

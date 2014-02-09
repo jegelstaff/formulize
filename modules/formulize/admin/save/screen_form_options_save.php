@@ -65,6 +65,6 @@ $screen->setVar('reloadblank',$screens['reloadblank']);
 $screen->setVar('formelements', isset($screens['formelements']) ? $screens['formelements'] : "");
 
 if(!$screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".mysql_error();
+  print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
 ?>

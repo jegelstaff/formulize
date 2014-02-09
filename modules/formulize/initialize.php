@@ -104,7 +104,7 @@ if( !$fid AND !$sid) {
     $sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' AS perm ON links.menu_id = perm.menu_id ';
     $sql .= ' WHERE  default_screen = 1'. $groupSQL . 'ORDER BY perm.group_id';
     
-    $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.mysql_error());
+    $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
     
     if ( $res ) {
         $row = $xoopsDB->fetchArray ( $res );	  
@@ -133,7 +133,7 @@ if(isset($_GET['forceDerivedValueUpdate'])) {
 
 // query modified to include singleentry - July 28, 2005 -- part of switch to new intnerface
 $sql=sprintf("SELECT singleentry,desc_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form='$fid'");
-$res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.mysql_error());
+$res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
 //global $nb_fichier;
  
 if ( $res ) {
