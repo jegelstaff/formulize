@@ -76,7 +76,7 @@ class formulizeDataHandler  {
 				}
 				if(isset($map[$field])) { $field = $map[$field]; } // if this field is in the map, then use the value from the map as the field name (this will match the field name in the cloned form)
 				if(!$start) { $insertSQL .= ", "; }
-				$insertSQL .= "`$field` = \"" . mysql_real_escape_string($value) . "\"";
+				$insertSQL .= "`$field` = \"" . $xoopsDB->escape($value) . "\"";
 				$start = false;
 			}
 			if(!$insertResult = $xoopsDB->queryF($insertSQL)) {
@@ -162,7 +162,7 @@ class formulizeDataHandler  {
 			if($field == "entry_id") { continue; }
 			if(!$start) { $sql .= ", "; }
 			$start = 0;
-			$sql .= "`$field` = \"" . mysql_real_escape_string($value) . "\"";
+			$sql .= "`$field` = \"" . $xoopsDB->escape($value) . "\"";
 		}
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
@@ -218,15 +218,28 @@ class formulizeDataHandler  {
 			$ids[0] = $sentID;
 		}
 		global $xoopsDB;
+		$ids = array_map(array($xoopsDB, 'escape'), $ids);
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
 		$sql = "DELETE FROM " .$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . implode(" OR entry_id = ", $ids);
 		if(!$deleteSuccess = $xoopsDB->query($sql)) {
 			return false;
 		}
-		$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=".$this->fid." AND (entry_id = " . implode(" OR entry_id = ", $ids) . ")";
+		$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=".$xoopsDB->escape($this->fid)." AND (entry_id = " . implode(" OR entry_id = ", $ids) . ")";
 		if(!$deleteOwernshipSuccess = $xoopsDB->query($sql)) {
-			print "Error: could not delete entry ownership information for form ". $this->fid . ", entries: " . implode(", ", $ids) . ". Check the DB queries debug info for details.";
+			print "Error: could not delete entry ownership information for form ". $xoopsDB->escape($this->fid) . ", entries: " . implode(", ", $ids) . ". Check the DB queries debug info for details.";
+		}
+		if($formObject->getVar('store_revisions')) {
+			global $xoopsUser;
+			$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+			$context = serialize(array("get"=>$_GET, "post"=>$_POST));
+			foreach($ids as $id) {
+				$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_deletion_logs") . " (form_id, entry_id, user_id, context) VALUES (" . $xoopsDB->escape($this->fid) . ", " . $id . ", " . $xoopsDB->escape($uid) . ", \"" . $xoopsDB->escape($context) . "\")";
+				if(!$deleteLoggingSuccess = $xoopsDB->query($sql)) {
+					print "Error: could not insert delete log entry information for form " . $xoopsDB->escape($this->fid) . ", entry " . $id . ", user " . $xoopsDB->escape($uid) . ". Check the DB queries debug info for details.";
+				}
+			}
+			unset($id);
 		}
 		return true;
 	}
@@ -412,7 +425,7 @@ class formulizeDataHandler  {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` = \"" . mysql_real_escape_string($value) . "\" ORDER BY entry_id LIMIT 0,1";
+		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` = \"" . $xoopsDB->escape($value) . "\" ORDER BY entry_id LIMIT 0,1";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -429,10 +442,10 @@ class formulizeDataHandler  {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$queryValue = "\"" . mysql_real_escape_string($value) . "\"";
+		$queryValue = "\"" . $xoopsDB->escape($value) . "\"";
 		if($operator == "{LINKEDSEARCH}") {
 			$operator = "LIKE";
-			$queryValue = "\"%," . mysql_real_escape_string($value) . ",%\"";
+			$queryValue = "\"%," . $xoopsDB->escape($value) . ",%\"";
 		}
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids, array());
@@ -765,7 +778,7 @@ class formulizeDataHandler  {
             if ("{WRITEASNULL}" == $value or null === $value) {
                 $element_values[$key] = "NULL";
             } else {
-                $element_values[$key] = "'".mysql_real_escape_string($value)."'";
+                $element_values[$key] = "'".$xoopsDB->escape($value)."'";
             }
             if ($encrypt_this) {
                 // this element should be encrypted. note that the actual value is quoted and escapted already
@@ -1001,7 +1014,7 @@ class formulizeDataHandler  {
 			} else {
 				$replacementString = $currentValues[0];
 			}
-			$updateSql[] = "UPDATE ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." SET `".$element->getVar('ele_handle')."` = '".mysql_real_escape_string($replacementString)."' WHERE entry_id = ".$array['entry_id'];
+			$updateSql[] = "UPDATE ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." SET `".$element->getVar('ele_handle')."` = '".$xoopsDB->escape($replacementString)."' WHERE entry_id = ".$array['entry_id'];
 		}
 		if(count($updateSql) > 0) { // if we have some SQL generated, then run it.
 			foreach($updateSql as $thisSql) {

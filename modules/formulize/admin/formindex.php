@@ -111,8 +111,8 @@ function patch40() {
 	 * 
 	 * ====================================== */
 	
-	$checkThisTable = 'formulize_id';
-	$checkThisField = 'note';
+	$checkThisTable = 'formulize_deletion_logs';
+	$checkThisField = 'context';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
@@ -124,7 +124,7 @@ function patch40() {
 		$fieldCheckSql = "SHOW COLUMNS FROM " . $xoopsDB->prefix(mysql_real_escape_string($checkThisTable)) ." LIKE '".mysql_real_escape_string($checkThisField)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
 		$fieldCheckRes = formulize_DBPatchCheckSQL($fieldCheckSql, $needsPatch); // may modify needsPatch!	
 	} 
-	if($checkPropertyForValue) {
+	if($fieldCheckRes AND !$needsPatch AND $checkPropertyForValue) {
 		$fieldCheckArray = $xoopsDB->fetchArray($fieldCheckRes);
 		if($fieldCheckArray[$checkThisProperty] != $checkPropertyForValue) {
 			$needsPatch = true;
@@ -268,6 +268,19 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 ) ENGINE=MyISAM;";
 
 		}
+		
+	if(!in_array($xoopsDB->prefix("formulize_deletion_logs"), $existingTables)) {
+		$sql[] = "CREATE TABLE ".$xoopsDB->prefix("formulize_deletion_logs")." (
+				  del_log_id int(11) unsigned NOT NULL auto_increment,
+				  form_id int(11) NOT NULL,
+				  entry_id int(7) NOT NULL,
+				  user_id mediumint(8) NOT NULL,
+				  context text,
+				  deletion_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				  PRIMARY KEY (del_log_id),
+				  INDEX i_del_id (del_log_id)
+		) ENGINE=MyISAM;";
+	}
 
 		// if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
 		if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
