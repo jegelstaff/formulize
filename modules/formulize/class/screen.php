@@ -98,8 +98,16 @@ class formulizeScreen extends xoopsObject {
                 // strip out opening <?php since we use this value for comparisons a lot, and it should be otherwise empty in that case
                 $templates[$templatename] = substr($templates[$templatename], 5);
             } else {
-                $templates[$templatename] = null;
-            }
+		
+		$prototype_pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/prototypes/prototype_/".$templatename.".php";
+		if (file_exists($prototype_pathname)) {
+                $templates[$templatename] = file_get_contents($prototype_pathname);
+                // strip out opening <?php since we use this value for comparisons a lot, and it should be otherwise empty in that case
+                $templates[$templatename] = substr($templates[$templatename], 5);
+		} else {
+		    $templates[$templatename] = null;
+		}
+	    }
         }
         return $templates[$templatename];
     }
