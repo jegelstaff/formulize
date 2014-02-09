@@ -86,26 +86,8 @@ class formulizeScreen extends xoopsObject {
         }
         return $this->$name;
     }
-
-
-    function getTemplate($templatename) {
-        static $templates = array();
-        if (!isset($templates[$templatename])) {
-            // there is no template saved in memory, read it from the file
-            $pathname = getTemplatePath($templatename);
-            if (file_exists($pathname)) {
-                $templates[$templatename] = file_get_contents($pathname);
-                // strip out opening <?php since we use this value for comparisons a lot, and it should be otherwise empty in that case
-                $templates[$templatename] = substr($templates[$templatename], 5);
-            } else {
-		$templates[$templatename] = null;
-		print $templatename;
-	    }
-        }
-        return $templates[$templatename];
-    }
     
-    
+        
     function getTemplatePath($templatename)
     {
 	$pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/".$templatename.".php";
@@ -116,9 +98,25 @@ class formulizeScreen extends xoopsObject {
 	    {
 		$pathname = null;
 	    }
-
 	}
 	return $pathname;
+    }
+
+    function getTemplate($templatename) {
+        static $templates = array();
+        if (!isset($templates[$templatename])) {
+            // there is no template saved in memory, read it from the file
+            $pathname = $this->getTemplatePath($templatename);
+            if (file_exists($pathname)) {
+                $templates[$templatename] = file_get_contents($pathname);
+                // strip out opening <?php since we use this value for comparisons a lot, and it should be otherwise empty in that case
+                $templates[$templatename] = substr($templates[$templatename], 5);
+            } else {
+		$templates[$templatename] = null;
+	    }
+        }
+        return $templates[$templatename];
+
     }
 }
 

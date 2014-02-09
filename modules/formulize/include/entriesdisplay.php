@@ -1084,6 +1084,7 @@ if($foundQS) { continue; } // skip next line
 			}
 			print "</div>";
 		}
+	}
 
 	//push all variables needed in context during template rendering to the settings dictionary
 	$settings['translated_title'] = trans($title);
@@ -1092,13 +1093,11 @@ if($foundQS) { continue; } // skip next line
 	$settings['user_can_delete'] = $user_can_delete;
 	$settings['add_own_entry'] = $add_own_entry;
 	$settings['proxy'] = $proxy;
+	$buttonCodeArray['submitButton'] = $submitButton; // send this back so that we can put it at the bottom of the page if necessary
 
 formulize_benchmark("before rendering top template");
 	formulize_screenLOETemplate($screen, "top", $buttonCodeArray, $settings, $messageText);
 formulize_benchmark("after rendering top template");
-	$buttonCodeArray['submitButton'] = $submitButton; // send this back so that we can put it at the bottom of the page if necessary
-	
-	}
 	
 
 	print "<input type=hidden name=newcols id=newcols value=\"\"></input>\n";
@@ -3779,7 +3778,7 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	if(strstr($screen->getVar($type.'template'), 'buildFilter(')) {
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/calendardisplay.php";
 	}
-
+	
 	// setup the button variables
 	foreach($buttonCodeArray as $buttonName=>$buttonCode) {
 		${$buttonName} = $buttonCode;
@@ -3820,7 +3819,6 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	
 	$thisTemplate = $screen->getTemplate($type.'template');
 	if($thisTemplate != "") {
-    
     
 		include $screen->getTemplatePath($type.'template');
 		
