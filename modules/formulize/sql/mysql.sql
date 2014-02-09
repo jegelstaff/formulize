@@ -366,6 +366,8 @@ CREATE TABLE formulize_deletion_logs (
   form_id int(11) NOT NULL,
   entry_id int(7) NOT NULL,
   user_id mediumint(8) NOT NULL,
+  context text,
+  deletion_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (del_log_id),
   INDEX i_del_id (del_log_id)
 ) ENGINE=MyISAM;

@@ -232,8 +232,9 @@ class formulizeDataHandler  {
 		if($formObject->getVar('store_revisions')) {
 			global $xoopsUser;
 			$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+			$context = serialize(array("get"=>$_GET, "post"=>$_POST));
 			foreach($ids as $id) {
-				$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_deletion_logs") . " (form_id, entry_id, user_id) VALUES (" . $xoopsDB->escape($this->fid) . ", " . $id . ", " . $xoopsDB->escape($uid) . ")";
+				$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_deletion_logs") . " (form_id, entry_id, user_id, context) VALUES (" . $xoopsDB->escape($this->fid) . ", " . $id . ", " . $xoopsDB->escape($uid) . ", \"" . $xoopsDB->escape($context) . "\")";
 				if(!$deleteLoggingSuccess = $xoopsDB->query($sql)) {
 					print "Error: could not insert delete log entry information for form " . $xoopsDB->escape($this->fid) . ", entry " . $id . ", user " . $xoopsDB->escape($uid) . ". Check the DB queries debug info for details.";
 				}

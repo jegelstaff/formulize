@@ -112,7 +112,7 @@ function patch40() {
 	 * ====================================== */
 	
 	$checkThisTable = 'formulize_deletion_logs';
-	$checkThisField = 'del_log_id';
+	$checkThisField = 'context';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
@@ -269,12 +269,14 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 
 		}
 		
-	if(!in_array($xoopsDB->prefix("formulize_deletion_logs"), $existingTables)) {			
+	if(!in_array($xoopsDB->prefix("formulize_deletion_logs"), $existingTables)) {
 		$sql[] = "CREATE TABLE ".$xoopsDB->prefix("formulize_deletion_logs")." (
 				  del_log_id int(11) unsigned NOT NULL auto_increment,
 				  form_id int(11) NOT NULL,
 				  entry_id int(7) NOT NULL,
 				  user_id mediumint(8) NOT NULL,
+				  context text,
+				  deletion_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				  PRIMARY KEY (del_log_id),
 				  INDEX i_del_id (del_log_id)
 		) ENGINE=MyISAM;";
