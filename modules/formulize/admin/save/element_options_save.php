@@ -245,14 +245,10 @@ foreach($processedValues['elements'] as $property=>$value) {
   // during the adminSave step, then set the property now.
   // We don't want to set ele_value if it was modified during
   // adminSave, because we might clobber user's changes
-  
-  if($ele_value[11]){
-  	$element->setVar($property, $value);
-  }
   	
   
   if($property != 'ele_value' OR $ele_value_before_adminSave === $ele_value_after_adminSave) {
-  	
+  
   	$element->setVar($property, $value);
   }
 }
