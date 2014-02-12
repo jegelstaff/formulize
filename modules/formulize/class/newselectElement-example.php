@@ -451,7 +451,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
 				}
 				$pgroupsfilter .= ")";
 			} elseif(count($pgroups) > 0) {
-				$pgroupsfilter = " t2.groupid IN (".$xoopsDB->escape(implode(",",$pgroups)).") AND t2.entry_id=t1.entry_id AND t2.fid=$sourceFid";
+				$pgroupsfilter = " t2.groupid IN (".formulize_escape(implode(",",$pgroups)).") AND t2.entry_id=t1.entry_id AND t2.fid=$sourceFid";
 			} else {
 				$pgroupsfilter = "";
 			}
@@ -919,7 +919,7 @@ class formulizeNewSelectElementHandler extends formulizeElementsHandler {
                 
 		} // end of if that checks for a linked select box.
               
-        return $xoopsDB->escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
+        return formulize_escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
     }
     
     // this method will handle any final actions that have to happen after data has been saved

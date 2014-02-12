@@ -144,7 +144,7 @@ class formulizeNewTextareaElementHandler extends formulizeElementsHandler {
 			$value = stripslashes($value); 
 		}
 		$value = $myts->htmlSpecialChars($value);
-        return $xoopsDB->escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
+        return formulize_escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
     }
     
     // this method will handle any final actions that have to happen after data has been saved

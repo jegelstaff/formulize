@@ -118,10 +118,10 @@ function patch40() {
 	
 	$needsPatch = false;
 	
-	$tableCheckSql = "SELECT 1 FROM information_schema.tables WHERE table_name = '".$xoopsDB->prefix($xoopsDB->escape($checkThisTable)) ."'";
+	$tableCheckSql = "SELECT 1 FROM information_schema.tables WHERE table_name = '".$xoopsDB->prefix(formulize_escape($checkThisTable)) ."'";
 	$tableCheckRes = formulize_DBPatchCheckSQL($tableCheckSql, $needsPatch); // may modify needsPatch!
 	if($tableCheckRes AND !$needsPatch AND $checkThisField) { // table was found, and we're looking for a field in it
-		$fieldCheckSql = "SHOW COLUMNS FROM " . $xoopsDB->prefix($xoopsDB->escape($checkThisTable)) ." LIKE '".$xoopsDB->escape($checkThisField)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+		$fieldCheckSql = "SHOW COLUMNS FROM " . $xoopsDB->prefix(formulize_escape($checkThisTable)) ." LIKE '".formulize_escape($checkThisField)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
 		$fieldCheckRes = formulize_DBPatchCheckSQL($fieldCheckSql, $needsPatch); // may modify needsPatch!	
 	} 
 	if($fieldCheckRes AND !$needsPatch AND $checkPropertyForValue) {
@@ -1103,7 +1103,7 @@ if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables))
                         $dataRes = $xoopsDB->query($dataSql);
                         while($dataArray = $xoopsDB->fetchArray($dataRes)) {
                                 if(!isset($formCaptions[$dataArray['id_form']][$dataArray['ele_caption']])) {
-                                        $deleteSql = "DELETE FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=".$dataArray['id_form']." AND ele_caption=\"".$xoopsDB->escape($dataArray['ele_caption'])."\"";
+                                        $deleteSql = "DELETE FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=".$dataArray['id_form']." AND ele_caption=\"".formulize_escape($dataArray['ele_caption'])."\"";
                                         if(!$result = $xoopsDB->query($deleteSql)) {
                                                 exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $deletesql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
                                         }
@@ -1278,7 +1278,7 @@ function patch22convertdata() {
 			if(get_magic_quotes_gpc()) { $sanArray['ele_value'] = stripslashes($sanArray['ele_value']); }
 			$newvalue = $myts->htmlSpecialChars($sanArray['ele_value']);
 			if($newvalue != $origvalue) {
-				$newsql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET ele_value = \"" . $xoopsDB->escape($newvalue) . "\" WHERE ele_id = " . $sanArray['ele_id'];
+				$newsql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET ele_value = \"" . formulize_escape($newvalue) . "\" WHERE ele_id = " . $sanArray['ele_id'];
 				if(!$newres = $xoopsDB->query($newsql)) {
 					exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>".$xoopsDB->error()."<br>Could not write data for sanitizing.  Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
@@ -1460,7 +1460,7 @@ function patch30DataStructure($auto = false) {
 																	continue; // don't write in blank date values, let them get the default NULL value for the field
 																} 
 																
-                                $insertSQL .= ", `" . $captionHandleIndex[$dataArray['ele_caption']] . "`=\"" . $xoopsDB->escape($dataArray['ele_value']) . "\"";
+                                $insertSQL .= ", `" . $captionHandleIndex[$dataArray['ele_caption']] . "`=\"" . formulize_escape($dataArray['ele_value']) . "\"";
                         }
                         if($insertSQL) {
                                 if(!$insertRes = $xoopsDB->query($insertSQL)) {
@@ -1492,7 +1492,7 @@ function patch30DataStructure($auto = false) {
         $elementObject = $element_handler->get($array['ele_id']);
         $ele_value = $elementObject->getVar('ele_value');
         $parts = explode("#*=:*", $ele_value[2]);
-        $sql2 = "SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_caption = '". $xoopsDB->escape($parts[1]) . "' AND id_form=". $parts[0];
+        $sql2 = "SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_caption = '". formulize_escape($parts[1]) . "' AND id_form=". $parts[0];
 				//print "$sql2<br>";
         if(!$res2 = $xoopsDB->query($sql2)) {
           exit("Error: could not get the handle for a linked selectbox source.  SQL: $sql2<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");

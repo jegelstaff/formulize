@@ -58,7 +58,7 @@ class formulizeFramework extends XoopsObject {
 					}
 				}
 			}
-			$frame_links_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=\"" . $xoopsDB->escape($frid). "\"");
+			$frame_links_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=\"" . formulize_escape($frid). "\"");
 			if(!isset($frame_links_q[0])) {
 				$notAFramework = true;
 			} else {
@@ -192,7 +192,7 @@ class formulizeFrameworkLink extends XoopsObject {
 			$relationship = "";
 			$unified_display = "";
 		} else {
-			$link_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_id = \"" . $xoopsDB->escape($lid). "\"");
+			$link_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_id = \"" . formulize_escape($lid). "\"");
 			if(!isset($link_q[0])) {
 				// set empty defaults
 				$lid = "";
@@ -279,7 +279,7 @@ class formulizeFrameworkLink extends XoopsObject {
                     $source_form_ids[] = $details[0];
 
                     //get the element ID for the source we've just found
-                    $sourceq = "SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . $xoopsDB->escape($details[1]) . "' AND id_form = '$details[0]'";
+                    $sourceq = "SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . formulize_escape($details[1]) . "' AND id_form = '$details[0]'";
                     if ($ressourceq = $xoopsDB->query($sourceq)) {
                         $rowsourceq = $xoopsDB->fetchRow($ressourceq);
                         $source_ele_ids[] = $rowsourceq[0];

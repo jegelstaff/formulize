@@ -54,8 +54,8 @@ global $xoopsDB;
 if($_POST['grouplistname']) {
  
   $groupListId = intval($_POST['grouplistid']);
-  $groupListGroups = $xoopsDB->escape(implode(",",$_POST['groups']));
-  $name = $xoopsDB->escape($_POST['grouplistname']);
+  $groupListGroups = formulize_escape(implode(",",$_POST['groups']));
+  $name = formulize_escape($_POST['grouplistname']);
   // are we inserting or updating? 
   $newList = $groupListId == 0 ? true : false;
   if(!$newList) {
