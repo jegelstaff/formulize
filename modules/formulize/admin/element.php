@@ -345,9 +345,16 @@ if($ele_type=='text') {
   } else {
     $options['subformelements'][0] = "";
   }
-  
-  // setup the UI for the subform conditions filter
-   $options['subformfilter'] = formulize_createFilterUI($ele_value[7], "subformfilter", $ele_value[0], "form-2");
+
+    // compile a list of data-entry screens for this form
+    $options['subform_screens'] = array();
+    $screen_options = q("SELECT sid, title FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=".intval($formtouse)." and type='form'");
+    $options['subform_screens'][0] = "(Use Default Screen)";
+    foreach($screen_options as $screen_option) {
+        $options['subform_screens'][$screen_option["sid"]] = $screen_option["title"];
+    }
+    // setup the UI for the subform conditions filter
+    $options['subformfilter'] = formulize_createFilterUI($ele_value[7], "subformfilter", $ele_value[0], "form-2");
 
 } elseif($ele_type == "grid") {
   $options['background'] = $ele_value[3];
