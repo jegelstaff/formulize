@@ -36,6 +36,24 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeForm extends XoopsObject {
+function checkFormOwnership($id_form,$form_handle){
+
+		global $xoopsDB;
+                //check to see if there are entries in the form which 
+                //do not appear in the entry_owner_groups table. If so, it finds the 
+                // owner/creator of the entry and calls setEntryOwnerGroups() which inserts the
+                //first, get the form ids and handles.  
+                $missingEntries=q("SELECT main.entry_id,main.creation_uid From " . $xoopsDB->prefix("formulize_".$form_handle) . " as main WHERE NOT EXISTS(
+               SELECT 1 FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " as eog WHERE eog.fid=".$id_form ." and eog.entry_id=main.entry_id )");
+                //now we got the missing entries in the form and the users who created them.    
+                $data_handler = new formulizeDataHandler($id_form);
+                foreach ($missingEntries as $entry){
+                        if (!$groupResult = $data_handler->setEntryOwnerGroups($entry['creation_uid'],$entry['entry_id'])) {
+                                print "ERROR: failed to write the entry ownership information to the database.<br>";
+                        }
+                }
+	return count($missingEntries);
+        }
 	function formulizeForm($id_form="", $includeAllElements=false){
 
 		// validate $id_form
@@ -294,7 +312,7 @@ class formulizeFormsHandler {
 	
 	function getByHandle($handle) {
 		global $xoopsDB;
-		$sql = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_handle = '".mysql_real_escape_string($handle) . "'";
+		$sql = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_handle = '".formulize_escape($handle) . "'";
 		if($res = $xoopsDB->query($sql)) {
 			$array = $xoopsDB->fetchArray($res);
 			return $this->get($array['id_form']);
@@ -420,7 +438,7 @@ class formulizeFormsHandler {
                 }
 
 				if( !$result ){
-					print "Error: this form could not be saved in the database.  SQL: $sql<br>".mysql_error();
+					print "Error: this form could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
 					return false;
 				}
 				if( empty($id_form) ){
@@ -439,7 +457,7 @@ class formulizeFormsHandler {
 
 	function createTableFormElements($targetTableName, $fid) {
 		
-		$result = $this->db->query("SHOW COLUMNS FROM " . mysql_real_escape_string($targetTableName));
+		$result = $this->db->query("SHOW COLUMNS FROM " . formulize_escape($targetTableName));
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$element_order = 0;
 		while($row = $this->db->fetchRow($result)) {
@@ -491,7 +509,7 @@ class formulizeFormsHandler {
 		}
 		global $xoopsDB;
 		$element_id_condition = $element_id ? " AND ele_id != " . intval($element_id) : "";
-		$sql = "SELECT count(ele_handle) FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . mysql_real_escape_string($handle) . "' $element_id_condition";
+		$sql = "SELECT count(ele_handle) FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . formulize_escape($handle) . "' $element_id_condition";
 		if(!$res = $xoopsDB->query($sql)) {
 			print "Error: could not verify uniqueness of handle '$handle' in form $fid";
 		} else {
@@ -664,7 +682,7 @@ class formulizeFormsHandler {
 		$newTableSQL .= ") ENGINE=MyISAM;";
 		// make the table
 		if(!$tableCreationRes = $xoopsDB->queryF($newTableSQL)) {
-			print mysql_error();
+			print $xoopsDB->error();
 			print "\n";
 			print $newTableSQL;
 			return false;
@@ -811,12 +829,12 @@ class formulizeFormsHandler {
 		foreach($filterSettings as $groupid=>$theseSettings) {
 			if(isset($foundGroups[$groupid])) {
 				// add to update query
-				$updateSQL .= "WHEN $groupid THEN '".mysql_real_escape_string(serialize($theseSettings))."' ";
+				$updateSQL .= "WHEN $groupid THEN '".formulize_escape(serialize($theseSettings))."' ";
 				$runUpdate = true;
 			} else {
 				// add to the insert query
 			  if(!$insertStart) { $insertSQL .= ", "; }
-				$insertSQL .= "(".$fid.", ".$groupid.", '".mysql_real_escape_string(serialize($theseSettings))."')";
+				$insertSQL .= "(".$fid.", ".$groupid.", '".formulize_escape(serialize($theseSettings))."')";
 				$insertStart = false;
 				$runInsert = true;
 			}
@@ -846,7 +864,7 @@ class formulizeFormsHandler {
 			return false;
 		}
 		global $xoopsDB;
-		$deleteSQL = mysql_real_escape_string("DELETE FROM ".$xoopsDB->prefix("formulize_group_filters")." WHERE fid=$fid AND groupid IN (".implode(", ",$groupids).")");
+		$deleteSQL = formulize_escape("DELETE FROM ".$xoopsDB->prefix("formulize_group_filters")." WHERE fid=$fid AND groupid IN (".implode(", ",$groupids).")");
 		if(!$xoopsDB->query($deleteSQL)) {
 			return false;
 		} else {
@@ -945,7 +963,7 @@ class formulizeFormsHandler {
 				$number = ereg_replace("[^0-9+-]","", $termToUse);
 				$termToUse = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
 			}
-			$termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "\"$likeBits".mysql_real_escape_string($termToUse)."$likeBits\"";
+			$termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "\"$likeBits".formulize_escape($termToUse)."$likeBits\"";
 			$perGroupFilter .= "$formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . $termToUse; // htmlspecialchars_decode is used because &lt;= might be the operator coming out of the DB instead of <=
 		}
 
@@ -1006,16 +1024,16 @@ class formulizeFormsHandler {
 		}
 		$insert_sql .= ")";
 		if(!$result = $this->db->query($insert_sql)) {
-			print "error duplicating form: '$title'<br>SQL: $insert_sql<br>".mysql_error();
+			print "error duplicating form: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
 			return false;
 		}
 
 		$newfid = $this->db->getInsertId();
 		
 		// replace formhandle of the new form
-		$replaceSQL = "UPDATE ". $this->db->prefix("formulize_id") . " SET form_handle='".mysql_real_escape_string($oldFormHandle."_".$newfid)."' WHERE form_handle=\"replace_with_handle_and_id\"";
+		$replaceSQL = "UPDATE ". $this->db->prefix("formulize_id") . " SET form_handle='".formulize_escape($oldFormHandle."_".$newfid)."' WHERE form_handle=\"replace_with_handle_and_id\"";
 		if(!$result = $this->db->queryF($replaceSQL)) {
-		  print "error setting the form_handle for the new form.<br>".mysql_error();
+		  print "error setting the form_handle for the new form.<br>".$xoopsDB->error();
 		  return false;
 		}		
 	
@@ -1058,7 +1076,7 @@ class formulizeFormsHandler {
 			}
 			$insert_sql .= ")";
 			if(!$result = $this->db->query($insert_sql)) {
-				print "error duplicating elements in form: '$title'<br>SQL: $insert_sql<br>".mysql_error();
+				print "error duplicating elements in form: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
 				return false;
 			}
 			if($oldNewEleIdMap[$ele['ele_handle']] == "replace_with_ele_id") {
@@ -1069,13 +1087,13 @@ class formulizeFormsHandler {
 		// replace ele_id flags that need replacing
 		$replaceSQL = "UPDATE ". $this->db->prefix("formulize") . " SET ele_handle=ele_id WHERE ele_handle=\"replace_with_ele_id\"";
 		if(!$result = $this->db->queryF($replaceSQL)) {
-		   print "error setting the ele_handle values for the new form.<br>".mysql_error();
+		   print "error setting the ele_handle values for the new form.<br>".$xoopsDB->error();
 		   return false;
 		}
 
 	  // Need to create the new data table now -- July 1 2007
     if(!$tableCreationResult = $this->createDataTable($newfid, $fid, $oldNewEleIdMap)) { 
-      print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
+      print "Error: could not make the necessary new datatable for form " . $newfid . ".  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".$xoopsDB->error();
       return false;
     }
 
@@ -1084,7 +1102,7 @@ class formulizeFormsHandler {
         include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php"; // formulize data handler
         $dataHandler = new formulizeDataHandler($newfid);
         if(!$cloneResult = $dataHandler->cloneData($fid, $oldNewEleIdMap)) {
-        print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
+        print "Error:  could not clone the data from the old form to the new form.  Please delete the cloned form and report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".$xoopsDB->error();
             return false;
         }
     }
@@ -1096,7 +1114,7 @@ class formulizeFormsHandler {
 		if (!$tableCreationResult = $this->createDataTable($newfid, 0, false, true)) {
 			print "Error: could not create revisions table for form $newfid. ".
 				"Please delete the cloned form and report this error to ".
-				"<a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".mysql_error();
+				"<a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.<br>".$xoopsDB->error();
 			return false;
 		}
 	}

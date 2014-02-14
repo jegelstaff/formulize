@@ -27,54 +27,31 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file handles saving of submissions from the screen_list_buttons page of the new admin UI
+// This file receives ajax form submissions from the new admin UI
 
-// if we aren't coming from what appears to be save.php, then return nothing
-if(!isset($processedValues)) {
+include_once "../../../mainfile.php";
+ob_end_clean(); // in some cases ther appear to be two buffers active?!  So we must try to end twice.
+global $xoopsUser;
+if(!$xoopsUser) {
+  print "Error: you are not logged in";
+  return;
+}
+$gperm_handler = xoops_gethandler('groupperm');
+include_once XOOPS_ROOT_PATH . "/modules/formulizSe/include/functions.php";
+include_once XOOPS_ROOT_PATH ."/modules/formulize/class/forms.php";
+
+$groups = $xoopsUser->getGroups();
+$mid = getFormulizeModId();
+$permissionToCheck = "module_admin";
+$itemToCheck = $mid;
+$moduleToCheck = 1; // system module
+if(!$gperm_handler->checkRight($permissionToCheck, $itemToCheck, $groups, $moduleToCheck)) {
+  print "Error: you do not have permission to save this data";
   return;
 }
 
+$formulizeForm = new formulizeForm();
+error_log(method_exists($formulizeForm, "checkFormOwnership"));
 
-$aid = intval($_POST['aid']);
-$sid = $_POST['formulize_admin_key'];
-
-$screens = $processedValues['screens'];
-
-
-$screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
-$screen = $screen_handler->get($sid);
-// CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
-$form_handler = xoops_getmodulehandler('forms', 'formulize');
-$formObject = $form_handler->get($screen->getVar('fid'));
-if($formObject->getVar('lockedform')) {
-  return;
-}
-// check if the user has permission to edit the form
-if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
-  return;
-}
-
-$screen->setVar('useaddupdate',$screens['useaddupdate']);
-$screen->setVar('useaddmultiple',$screens['useaddmultiple']);
-$screen->setVar('useaddproxy',$screens['useaddproxy']);
-$screen->setVar('useexport',$screens['useexport']);
-$screen->setVar('useimport',$screens['useimport']);
-$screen->setVar('usenotifications',$screens['usenotifications']);
-$screen->setVar('usechangecols',$screens['usechangecols']);
-$screen->setVar('usecalcs',$screens['usecalcs']);
-$screen->setVar('useadvcalcs',$screens['useadvcalcs']);
-$screen->setVar('useexportcalcs',$screens['useexportcalcs']);
-$screen->setVar('useadvsearch',$screens['useadvsearch']);
-$screen->setVar('useclone',$screens['useclone']);
-$screen->setVar('usedelete',$screens['usedelete']);
-$screen->setVar('useselectall',$screens['useselectall']);
-$screen->setVar('useclearall',$screens['useclearall']);
-$screen->setVar('usereset',$screens['usereset']);
-$screen->setVar('usesave',$screens['usesave']);
-$screen->setVar('usedeleteview',$screens['usedeleteview']);
-
-
-if(!$screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".$xoopsDB->error();
-}
-?>
+$n=$formulizeForm->checkFormOwnership($_POST['form_id'],$_POST['form_handle']);
+echo "found and fixed ". $n . " ownership problems in your form";

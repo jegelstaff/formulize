@@ -59,18 +59,28 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
 }
 
 // get page titles
+
 $pages = $screen->getVar('pages');
+
 $pagetitles = $screen->getVar('pagetitles');
+
 $conditions = $screen->getVar('conditions');
+
 
 // get the new order of the elements...
 $newOrder = explode("drawer-4[]=", str_replace("&", "", $_POST['pageorder']));
 unset($newOrder[0]);
 
+
 if(count($newOrder) != count($pagetitles)) {
+
 	print "Error: number of pages being saved does not match number of pages in this screen!";
+
 	return;
+
 }
+
+
 
 // newOrder will have keys corresponding to the new order, and values corresponding to the old order
 // need to add in conditions handling here too
@@ -95,8 +105,11 @@ if($pagesHaveBeenReordered) {
 	$pagetitles = $newpagetitles;
 	$conditions = $newconditions;
 	// change the deletion index so we get the page at its new position!!
+
 	$index = array_search($index,$newOrder);
+
 	$index--;
+
 }
 
 
@@ -118,8 +131,11 @@ switch ($op) {
 		break;
 	case "delpage":
 		ksort($pages);
+
 		ksort($pagetitles);
+
 		ksort($conditions);
+
     array_splice($pages, $index, 1);
     array_splice($pagetitles, $index, 1);
     array_splice($conditions, $index, 1);
@@ -132,7 +148,7 @@ $screen->setVar('conditions',serialize($conditions));
 
 
 if(!$screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".mysql_error();
+  print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
 
 

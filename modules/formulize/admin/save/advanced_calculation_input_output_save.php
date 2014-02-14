@@ -59,5 +59,5 @@ $advCalcObject->setVar('output',$advCalc['output']);
 
 // save object, and if a new item, reload page
 if(!$acid = $advanced_calculation_handler->insert($advCalcObject)) {
-  print "Error: could not save the advanced calculation properly: ".mysql_error();
+  print "Error: could not save the advanced calculation properly: ".$xoopsDB->error();
 }

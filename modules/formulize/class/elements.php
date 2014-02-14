@@ -116,7 +116,7 @@ class formulizeformulize extends XoopsObject {
         
 		$index_fulltext = $defaultType == "text" ? "FULLTEXT" : "INDEX";
 		
-		$sql = "ALTER TABLE ".$xoopsDB->prefix("formulize_".mysql_real_escape_string($formObject->getVar('form_handle')))." ADD $index_fulltext `". mysql_real_escape_string($this->getVar('ele_handle')) ."` (`".mysql_real_escape_string($this->getVar('ele_handle'))."`)";
+		$sql = "ALTER TABLE ".$xoopsDB->prefix("formulize_".formulize_escape($formObject->getVar('form_handle')))." ADD $index_fulltext `". formulize_escape($this->getVar('ele_handle')) ."` (`".formulize_escape($this->getVar('ele_handle'))."`)";
 		$res = $xoopsDB->query($sql);
 	}
 	
@@ -124,7 +124,7 @@ class formulizeformulize extends XoopsObject {
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->getVar('id_form'));
-		$sql = "DROP INDEX `".mysql_real_escape_string($original_index_name)."` ON ".$xoopsDB->prefix("formulize_".mysql_real_escape_string($formObject->getVar('form_handle')));
+		$sql = "DROP INDEX `".formulize_escape($original_index_name)."` ON ".$xoopsDB->prefix("formulize_".formulize_escape($formObject->getVar('form_handle')));
 		$res = $xoopsDB->query($sql);
 	}
 	
@@ -193,7 +193,7 @@ class formulizeElementsHandler {
 				return false;
 			}
 		} else {
-			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_handle="'.mysql_real_escape_string($id).'"';
+			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_handle="'.formulize_escape($id).'"';
 			if (!$result = $this->db->query($sql)) {
 				$cachedElements[$id] = false;
 				return false;
@@ -320,7 +320,7 @@ class formulizeElementsHandler {
         }
 
 		if( !$result ){
-			print "Error: this element could not be saved in the database.  SQL: $sql<br>".mysql_error();
+			print "Error: this element could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
 			return false;
 		}
 		if( $ele_id == 0 ){ // only occurs for new elements

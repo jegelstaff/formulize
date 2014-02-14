@@ -98,7 +98,7 @@ foreach($elements as $element) {
 
   // presist changes
   if(!$element_handler->insert($element)) {
-    print "Error: could not save the form elements properly: ".mysql_error();
+    print "Error: could not save the form elements properly: ".$xoopsDB->error();
   }
 }
 

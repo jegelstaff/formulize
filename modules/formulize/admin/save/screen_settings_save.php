@@ -131,7 +131,7 @@ $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);
 
 if(!$sid = $screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".mysql_error();
+  print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
 
 if($isNew) {

@@ -73,7 +73,7 @@ $advCalcObject->setVar('fid',$fid);
 
 // save object, and if a new item, reload page
 if(!$acid = $advanced_calculation_handler->insert($advCalcObject)) {
-  print "Error: could not save the advanced calculation properly: ".mysql_error();
+  print "Error: could not save the advanced calculation properly: ".$xoopsDB->error();
 } else if($isNew) {
   // send code to client that will to be evaluated
   $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=advanced-calculation&tab=settings&aid=".$aid.'&fid='.$fid.'&acid='.$acid;

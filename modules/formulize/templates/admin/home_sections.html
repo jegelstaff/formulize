@@ -3,7 +3,7 @@
 <{if $sectionContent.aid > 0}>
 <p><a href="ui.php?page=application&aid=<{$sectionContent.aid}>"><img src="../images/kedit.png">&nbsp;&nbsp;<{$smarty.const._AM_HOME_APP_CONFIG}></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="deleteapplink" target="<{$sectionContent.aid}>" href=""><img src="../images/editdelete.gif">&nbsp;&nbsp;<{$smarty.const._AM_HOME_APP_DELETE}></a></p>
 
-<p><a  href="../class/Export_Import_App.php?page=application&aid=<{$sectionContent.aid}>&select=Export">Export this Application</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a  href="../class/Export_Import_App.php?page=application&aid=<{$sectionContent.aid}>&select=Import">Import Application</a></p>
+<p><a  href="ui.php?page=export">Export this Application</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a  href="ui.php?page=import">Import Application</a></p>
 
 
 <{/if}>

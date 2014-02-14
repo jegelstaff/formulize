@@ -18,9 +18,11 @@
         	<fieldset>
                 <legend><label for="forms-title" class="question"><{$smarty.const._AM_SETTINGS_FORM_TITLE_QUESTION}></label></legend>
                 <p><{$smarty.const._AM_SETTINGS_FORM_TITLE}><input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" /></p>
+            
             </fieldset>
 		</div>
 	</div>
+
 
   <div class="accordion-box">
 	  <div class="form-item">
@@ -34,6 +36,15 @@
 	  </div>
   </div>
 
+	<div class="accordion-box">
+		<div class="form-item required">
+        	<fieldset>
+                <legend><label for="forms-title" class="question"><{$smarty.const._AM_EOG_Repair}>
+                </label>
+                </legend><input type="button" id="fix_entries" value="Repair Ownership table">
+             </fieldset>
+		</div>
+	</div>
 		<{if $content.istableform == true && $content.fid == "new"}>
 		<div class="accordion-box">
 			<div class="form-item">
@@ -132,9 +143,9 @@
 		</div>
 	</div>
 	<{/if}>
-    <div class="accordion-box">
-        <div class="form-item">
-            <fieldset>
+	<div class="accordion-box">
+		<div class="form-item">
+			<fieldset>
                 <legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_APPNEW}></label></legend>
                 <div class="form-radios radio-inline">
                     <label for="yes"><input type="radio" id="new-app-yes" name="new_app_yes_no" value="yes"/><{$smarty.const._AM_YES}></label>
@@ -142,19 +153,11 @@
                 <div class="form-radios radio-inline">
                     <label for="yes"><input type="radio" id="new-app-no" name="new_app_yes_no" value="no" checked/><{$smarty.const._AM_NO}></label>
                 </div>
-                                <br /><br />
-                                <div class="form-item" id="new-application-box" style="display: none;">
-                      <label class="question">What is the name of the new application?</label>
+								<br /><br />
+								<div class="form-item" id="new-application-box" style="display: none;">
+			          <label class="question">What is the name of the new application?</label>
                 <input type="text" id="applications-name" name="applications-name" value="" />
-                            </div>
-            </fieldset>
-        </div>
-    </div>
-	<div class="accordion-box">
-		<div class="form-item">
-			<fieldset>
-                <legend><label class="question">Notes</label></legend>
-                <textarea name="forms-note" class="forms-note"><{ $content.form_object->note }></textarea>
+							</div>
             </fieldset>
 		</div>
 	</div> 
@@ -182,7 +185,16 @@
 			$("[name=forms-title]").focus();
 		}
 	});
-	
+	$('#fix_entries').click(function(){
+		$.ajax({
+			type:"POST",
+			url:"<{$xoops_url}>/modules/formulize/admin/repair_eog_table.php",
+			data:{"form_id":"<{$content.fid}>","form_handle":"<{$content.form_handle}>"},
+			success:function(response){
+				alert(response);
+			}
+		});
+	});	
 </script>
 <div style="clear: both"></div>
 </div> <!--// end content -->
