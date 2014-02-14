@@ -115,7 +115,8 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 
 	// THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN
 	// $screen is a screen object
-	function render($screen, $entry, $settings = "") { // $settings is used internally to pass list of entries settings back and forth to editing screens
+    // $settings is used internally to pass list of entries settings back and forth to editing screens
+    function render($screen, $entry, $settings = "", $elements_only = false) {
 		if(!is_array($settings)) {
 				$settings = "";
 		}
@@ -147,7 +148,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		}
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 		displayForm($formframe, $entry, $mainform, $donedest, array(0=>$alldonebuttontext, 1=>$savebuttontext),
-            $settings, $displayheading, "", $overrideMulti, "", 0, 0, 0, $screen);
+            $settings, $displayheading, "", $overrideMulti, "", 0, 0, 0, $screen, $elements_only);
 	}
 }
 ?>
