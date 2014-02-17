@@ -94,61 +94,61 @@ class formulize_themeForm extends XoopsThemeForm {
 		$hidden = '';
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
 		$ret .= "</table>\n$hidden\n</div>\n</form>\n";
-		$ret .= '<html lang="en">
+        #some javascript for updating the elements in the table
+
+        $ret .= '<html lang="en">
+
+                <script type=\'text/javascript\'>
+
+                var fixHelperModified = function(e, tr) {
+
+                    var $originals = tr.children();
+                    var $helper = tr.clone();
+                    $helper.children().each(function(index) {
+                        $(this).width($originals.eq(index).width())
+                    });
+                    return $helper;
+                },
+                    updateIndex = function(e, ui) {
+
+                        $(\'td.index\', ui.item.parent()).each(function (i) {
+                            $(this).html(i + 1);
+                        });
+                    };
+                    updateTable = function(){
+                        var table = document.getElementById(\'entryTable\');
+                        var rowLength = table.rows.length;
+                          for(var i=2; i<rowLength-2; i+=1){
+                              var row = table.rows[i];
+                              row.setAttribute("rowIndex",i-1);
+                              console.log(row.getAttribute("rowId"));
+                            $.ajax(
+                            {
+                                type:"POST",
+                                url:"admin/reorder_entry_elements.php",                
+                                data:{"ele_id":row.getAttribute("rowId"),"ele_order":row.getAttribute("rowIndex")},
+                                success:function(response){
+                               }
+                            });              
 
 
+                            }
+                    };
 
-<script type=\'text/javascript\'>
+                $("#entryTable tbody").sortable({
 
-var fixHelperModified = function(e, tr) {
-
-    var $originals = tr.children();
-    var $helper = tr.clone();
-    $helper.children().each(function(index) {
-        $(this).width($originals.eq(index).width())
-    });
-    return $helper;
-},
-    updateIndex = function(e, ui) {
-
-        $(\'td.index\', ui.item.parent()).each(function (i) {
-            $(this).html(i + 1);
-        });
-    };
-    updateTable = function(){
-        var table = document.getElementById(\'entryTable\');
-        var rowLength = table.rows.length;
-          for(var i=2; i<rowLength-2; i+=1){
-              var row = table.rows[i];
-              row.setAttribute("rowIndex",i-1);
-              console.log(row.getAttribute("rowId"));
-            $.ajax(
-            {
-                type:"POST",
-                url:"admin/reorder_entry_elements.php",                
-                data:{"ele_id":row.getAttribute("rowId"),"ele_order":row.getAttribute("rowIndex")},
-                success:function(response){
-               }
-            });              
+                  items: \'tr:gt(2):lt(-2)\',
+                    helper: fixHelperModified,
+                    stop: updateIndex,
+                    update: updateTable
+                }).disableSelection();
 
 
-            }
-    };
-
-$("#entryTable tbody").sortable({
-
-  items: \'tr:gt(2):lt(-2)\',
-    helper: fixHelperModified,
-    stop: updateIndex,
-    update: updateTable
-}).disableSelection();
-
-
-</script>
- 
-</body>
-</html>
-';
+                </script>
+                 
+                </body>
+                </html>
+                ';
 		$ret .= $this->renderValidationJS(true);
 		return $ret;
 	}
@@ -169,7 +169,7 @@ $("#entryTable tbody").sortable({
 	}
 	function _drawElements($elements, $ret, $hidden) {
 		$class ='even';
-		//error_log(print_r($elements, true));
+		//$i will be the row number
         $i=0;
 		foreach ( $elements as $ele ) {
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
@@ -183,8 +183,11 @@ $("#entryTable tbody").sortable({
 				}
 			} elseif ( !$ele->isHidden() ) {
                 $i++;
+
+                #the element id is the last character in the element's name...for some reason
                 $eleName=explode("_",$ele->getName());
                 $ele_id=end($eleName);
+
 				$ret .= "<tr rowIndex=\"".$i."\" rowId=\"".$ele_id."\" class=\"sortable\" id='formulize-".$ele->getName()." ' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head'>";
 
                 //$ret .= "<td class=\"index\">".$i."</td> ";				
