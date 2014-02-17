@@ -1,4 +1,7 @@
+
 <?php
+
+
 
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
@@ -46,6 +49,7 @@ include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
+
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW
 class formulize_themeForm extends XoopsThemeForm {
 	/**
@@ -79,12 +83,72 @@ class formulize_themeForm extends XoopsThemeForm {
 				. "' method='" . $this->getMethod()
 				. "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">
 			<div class='xo-theme-form'>
-			<table width='100%' class='outer' cellspacing='1'>
+			<head>
+              <script src=\"//code.jquery.com/jquery-1.10.2.js\"></script>
+              <script src=\"//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css\"></script>
+              <script src=\"//code.jquery.com/ui/1.10.4/jquery-ui.js\"></script>
+            </head>
+            <table id='entryTable' width='100%'  class='outer' cellspacing='1'>
 			<tr><th colspan='2'>" . $this->getTitle() . "</th></tr>
 		";
 		$hidden = '';
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
 		$ret .= "</table>\n$hidden\n</div>\n</form>\n";
+		$ret .= '<html lang="en">
+
+
+
+<script type=\'text/javascript\'>
+
+var fixHelperModified = function(e, tr) {
+
+    var $originals = tr.children();
+    var $helper = tr.clone();
+    $helper.children().each(function(index) {
+        $(this).width($originals.eq(index).width())
+    });
+    return $helper;
+},
+    updateIndex = function(e, ui) {
+
+        $(\'td.index\', ui.item.parent()).each(function (i) {
+            $(this).html(i + 1);
+        });
+    };
+    updateTable = function(){
+        var table = document.getElementById(\'entryTable\');
+        var rowLength = table.rows.length;
+          for(var i=2; i<rowLength-2; i+=1){
+              var row = table.rows[i];
+              row.setAttribute("rowIndex",i-1);
+              console.log(row.getAttribute("rowId"));
+            $.ajax(
+            {
+                type:"POST",
+                url:"admin/reorder_entry_elements.php",                
+                data:{"ele_id":row.getAttribute("rowId"),"ele_order":row.getAttribute("rowIndex")},
+                success:function(response){
+               }
+            });              
+
+
+            }
+    };
+
+$("#entryTable tbody").sortable({
+
+  items: \'tr:gt(2):lt(-2)\',
+    helper: fixHelperModified,
+    stop: updateIndex,
+    update: updateTable
+}).disableSelection();
+
+
+</script>
+ 
+</body>
+</html>
+';
 		$ret .= $this->renderValidationJS(true);
 		return $ret;
 	}
@@ -103,9 +167,10 @@ class formulize_themeForm extends XoopsThemeForm {
 		}
 		return $js;
 	}
-	
 	function _drawElements($elements, $ret, $hidden) {
 		$class ='even';
+		//error_log(print_r($elements, true));
+        $i=0;
 		foreach ( $elements as $ele ) {
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
 				if(strstr($ele, "<<||>>")) {
@@ -117,9 +182,14 @@ class formulize_themeForm extends XoopsThemeForm {
 					$ret .= $ele;
 				}
 			} elseif ( !$ele->isHidden() ) {
-				$ret .= "<tr id='formulize-".$ele->getName()."' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head'>";
-				if (($caption = $ele->getCaption()) != '') {
-					$ret .=
+                $i++;
+                $eleName=explode("_",$ele->getName());
+                $ele_id=end($eleName);
+				$ret .= "<tr rowIndex=\"".$i."\" rowId=\"".$ele_id."\" class=\"sortable\" id='formulize-".$ele->getName()." ' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head'>";
+
+                //$ret .= "<td class=\"index\">".$i."</td> ";				
+                if (($caption = $ele->getCaption()) != '') {
+                	$ret .=
 					"<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
 						. "<span class='caption-text'>{$caption}</span>"
 						. "<span class='caption-marker'>" . ($ele->isRequired() ? "*" : "" ) . "</span>"
@@ -128,13 +198,21 @@ class formulize_themeForm extends XoopsThemeForm {
 				if (($desc = $ele->getDescription()) != '') {
 					$ret .= "<div class='xoops-form-element-help'>{$desc}</div>";
 				}
-				$ret .= "</td><td class='$class'>" . $ele->render() . "</td></tr>\n";
+				
+                $ret .= "</td><td class='$class'>" . $ele->render() ;
+				$ret .= "</td></tr>\n";
+				if ($ele == $elements[20]){
+					error_log(print_r($ret, true));
+					//$ret .= "<p><input type="button" class="formButton" name="editx" id="submitx" value="Edit" onclick="javascript:validateAndSubmit();"></p>";
+				}
 			} else {
 				$hidden .= $ele->render();
 			}
-		}
+        }
 		return array($ret, $hidden);
 	}
+
+
 
 	// need to check whether the element is a standard element, if if so, add the check for whether its row exists or not	
 	function _drawValidationJS($skipConditionalCheck) {
@@ -253,7 +331,7 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mi
 		foreach($formEncryptedElements as $thisEncryptedElement) {
 			$encryptedSelect .= ", AES_DECRYPT(`".$thisEncryptedElement."`, '".getAESPassword()."') as 'decrypted_value_for_".$thisEncryptedElement."'";
 		}
-		
+
 		$viewquerydb = q("SELECT * $encryptedSelect FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " WHERE entry_id=$entry");
 		$viewquery = array();
 		
@@ -1565,6 +1643,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		
 	}
 
+
 	
 
 	if($rowsOrForms=='row' OR $rowsOrForms =='') {
@@ -2594,8 +2673,13 @@ foreach($conditionalElements as $handle=>$theseGoverningElements) {
 
 print "
 <script type='text/javascript'>
-
+<src>//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css</scr>
+<src>//code.jquery.com/jquery-2.0.2.js</src>
+<src>//code.jquery.com/ui/1.10.4/jquery-ui.js</src>
 var conditionalHTML = new Array(); // needs to be global!
+
+$(\"#entryTable tbody\").sortable().disableSelection(); 
+$(\"#sort3\").sortable().disableSelection(); 
 
 jQuery(window).load(function() {
 
@@ -2728,6 +2812,7 @@ function ShowHideTableRow(rowSelector, show, speed, callback)
         }
     });
 }
+
 
 
 
