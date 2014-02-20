@@ -2122,23 +2122,23 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
       // figure out what to ask for for this calculation      
       switch($calc) {
         case "sum":
-          $select = "SELECT sum($calcElement) as $fidAlias$handle";
+          $select = "SELECT sum(tempElement) as $fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
           break;
         case "min":
-          $select = "SELECT min($calcElement) as $fidAlias$handle";
+          $select = "SELECT min(tempElement) as $fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
           break;
         case "max":
-          $select = "SELECT max($calcElement) as $fidAlias$handle";
+          $select = "SELECT max(tempElement) as $fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
           break;
         case "count":
-          $select = "SELECT count($calcElement) as count$fidAlias$handle, count(distinct($calcElement)) as distinct$fidAlias$handle";
+          $select = "SELECT count(tempElement) as count$fidAlias$handle, count(distinct(tempElement)) as distinct$fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
           break;
         case "avg":
-          $select = "SELECT avg($calcElement) as avg$fidAlias$handle, std($calcElement) as std$fidAlias$handle";
-          $selectAvgCount = "SELECT $calcElement as $fidAlias$handle, count($calcElement) as avgcount$fidAlias$handle";
+          $select = "SELECT avg(tempElement) as avg$fidAlias$handle, std(tempElement) as std$fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
+          $selectAvgCount = "SELECT tempElement as $fidAlias$handle, count(tempElement) as avgcount$fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
           break;
         case "per":
-          $select = "SELECT $calcElement as $fidAlias$handle, count($calcElement) as percount$fidAlias$handle";
+          $select = "SELECT tempElement as $fidAlias$handle, count(tempElement) as percount$fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
 	  include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php"; // need a function here later on
           break;
         default:
@@ -2255,7 +2255,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
     
       // do the query
       $calcResult = array();
-      $calcResultSQL = "$select $thisBaseQuery $allowedWhere $excludedWhere $groupByClause $orderByClause";
+      $calcResultSQL = "$select $thisBaseQuery $allowedWhere $excludedWhere) as tempQuery $groupByClause $orderByClause ";
       global $xoopsUser;
       //if($xoopsUser->getVar('uid') == 1) {
       //  print "$calcResultSQL<br><br>";
@@ -2386,7 +2386,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
       if($calc=="avg") { // then do some extra stuff for the more complicated calculations
         // work out the mode...
         $modeCounts = array();
-        $modeQuery = "$selectAvgCount $thisBaseQuery $allowedWhere $excludedWhere $groupByClauseMode ORDER BY ";
+        $modeQuery = "$selectAvgCount $thisBaseQuery $allowedWhere $excludedWhere ) as tempQuery $groupByClauseMode ORDER BY ";
         if(count($allGroupings)>0) {
           $modeQuery .= implode(", ",$allGroupings) . ", ";
         }
@@ -2514,9 +2514,9 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
         foreach($groupCounts as $groupCountData) {
           $start = true;
           if($groupCountData['countValue'] == $groupCountData['responseCountValue'] AND $start) {
-            $typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENT . "</u></td></tr>\n";
+            $typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top; padding-right: 1em; padding-right: 1em;\"><u>" . _formulize_DE_PER_PERCENT . "</u></td></tr>\n";
           } else {
-            $typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENTRESPONSES . "</u></td><td style=\"vertical-align: top;\"><u>" . _formulize_DE_PER_PERCENTENTRIES . "</u></td></tr>\n";
+            $typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top; padding-right: 1em; padding-right: 1em;\"><u>" . _formulize_DE_PER_PERCENTRESPONSES . "</u></td><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_PERCENTENTRIES . "</u></td></tr>\n";
           }
           // replace the indivText with a corresponding name, if we have any on file
           $nameReplacementMap = array();
