@@ -1156,6 +1156,9 @@ class formulizeElementRenderer{
 			$otherq = q("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$entry' AND ele_id='$ele_id' LIMIT 0,1");
 			$other_text = $otherq[0]['other_text'];
 		}
+		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+			return $other_text;			
+		}
 		$s = explode('|', preg_replace('/[\{\}]/', '', $s));
 		$len = !empty($s[1]) ? $s[1] : $xoopsModuleConfig['t_width'];
 		$box = new XoopsFormText('', 'other[ele_'.$ele_id.']', $len, 255, $other_text);
