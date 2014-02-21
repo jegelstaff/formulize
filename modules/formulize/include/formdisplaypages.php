@@ -296,7 +296,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
                 validateAndSubmit();
             } else {
                 jQuery("#formulizeform").animate({opacity:0.4}, 200, "linear");
-			jQuery("input[name^='decue_']").val(0);
+                jQuery("input[name^='decue_']").remove();
                 jQuery.ajax({
                     type: "POST",
                     url: jQuery('form[name=formulize]').attr('action'),
