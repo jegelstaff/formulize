@@ -35,6 +35,8 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pData.
 include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pDraw.class.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pImage.class.php";
 
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+
 /**
  * IMPORTANT: Implemented User Cases:
  * 1. bar graph "count":
