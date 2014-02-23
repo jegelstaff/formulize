@@ -111,8 +111,8 @@ function patch40() {
 	 * 
 	 * ====================================== */
 	
-	$checkThisTable = 'formulize_deletion_logs';
-	$checkThisField = 'context';
+	$checkThisTable = 'formulize_screen_graph';
+	$checkThisField = 'barb';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
