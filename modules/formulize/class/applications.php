@@ -395,7 +395,7 @@ class formulizeApplicationsHandler {
         $rankquery = "SELECT MAX(rank) FROM `".$xoopsDB->prefix("formulize_menu_links")."` WHERE appid=".$appid.";";
         if($result = $xoopsDB->query($rankquery)) {
         	//if empty query, then rank = 1, else, rank is the next larger number
-        	$max = $xoopsDB->fetchAssoc($result);
+        	$max = mysql_fetch_assoc($result);
             $rank= $max['MAX(rank)']+1;
         }
         
