@@ -1,0 +1,70 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_graph_options">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+
+
+<div class="panel-content content">
+	<fieldset>
+		<legend>Dimension</legend>
+		<div class="form-item">
+			<label for="screens-width">Width</label>
+			<input type="text" id="screens-width" name="screens-width" value="<{$content.width}>"/>
+		</div>
+		<div class="form-item">
+			<label for="screens-height">Height</label>
+			<input type="text" id="screens-height" name="screens-height" value="<{$content.height}>"/>
+		</div>
+	</fieldset>
+	<fieldset>
+		<legend>Orientation</legend>
+		<div class="form-item">
+			<label for="screens-orientation">Orientation</label>
+			<select id="screens-orientation" size="1" name="screens-orientation">
+				<option value="horizontal"<{if $content.orientation eq 'horizontal'}> selected="selected"<{/if}>>Horizontal</option>
+				<option value="vertical"<{if $content.orientation eq 'vertical'}> selected="selected"<{/if}>>Vertical</option>
+			</select>
+		</div>
+	</fieldset>
+	<fieldset>
+		<legend>Background Color</legend>
+		<div class="form-item">
+			<label for="screens-bgr">R</label>
+			<input type="text" id="screens-bgr" name="screens-bgr" value="<{$content.bgr}>"/>
+		</div>
+		<div class="form-item">
+			<label for="screens-bgg">G</label>
+			<input type="text" id="screens-bgg" name="screens-bgg" value="<{$content.bgg}>"/>
+		</div>
+		<div class="form-item">
+			<label for="screens-bgb">B</label>
+			<input type="text" id="screens-bgb" name="screens-bgb" value="<{$content.bgb}>"/>
+		</div>
+	</fieldset>
+	<fieldset>
+		<legend>Bar Color</legend>
+		<div class="form-item">
+			<label for="screens-barr">R</label>
+			<input type="text" id="screens-barr" name="screens-barr" value="<{$content.barr}>"/>
+		</div>
+		<div class="form-item">
+			<label for="screens-barg">G</label>
+			<input type="text" id="screens-barg" name="screens-barg" value="<{$content.barg}>"/>
+		</div>
+		<div class="form-item">
+			<label for="screens-barb">B</label>
+			<input type="text" id="screens-barb" name="screens-barb" value="<{$content.barb}>"/>
+		</div>
+	</fieldset>
+</div>
+
+</form>
+
+<script type="text/javascript">
+	$("#<{$content.reloadblank}>").attr('checked', true);
+</script>
