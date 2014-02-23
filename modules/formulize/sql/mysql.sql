@@ -372,3 +372,18 @@ CREATE TABLE formulize_deletion_logs (
   INDEX i_del_id (del_log_id)
 ) ENGINE=MyISAM;
 
+CREATE TABLE `formulize_screen_graph` (
+  `formid` int(11) NOT NULL auto_increment,
+  `sid` int(11) NOT NULL default 0,
+  `width` int(11) NOT NULL default 500,
+  `height` int(11) NOT NULL default 300,
+  `orientation` varchar(255) NOT NULL default 'horizontal',
+  `bgr` int(8) NOT NULL default 141,
+  `bgg` int(8) NOT NULL default 189,
+  `bgb` int(8) NOT NULL default 225,
+  `barr` int(8) NOT NULL default 143,
+  `barg` int(8) NOT NULL default 190,
+  `barb` int(8) NOT NULL default 88,
+  PRIMARY KEY (`formid`),
+  INDEX i_sid (`sid`)
+) ENGINE=MyISAM;
