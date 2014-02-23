@@ -167,6 +167,7 @@ define("_AM_SCREEN_EXPLAIN","<p><i>Screens</i> let you show users different vers
 define("_AM_SCREEN_CREATE"," Create a new Screen");
 define("_AM_SCREEN_FORMSCREENS","Form Screens");
 define("_AM_SCREEN_LISTSCREENS","List Screens");
+define("_AM_SCREEN_GRAPHSCREENS","Graph Screens");
 define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? All configuration settings for this screen will be lost!");
 
 
@@ -779,5 +780,6 @@ define("_AM_FORMULIZE_CLONING_FOUND_ELEMENTS", "After cloning, the following lin
 define("_AM_FORMULIZE_CLONING_CANBELINKEDTO", "can be linked to:");
 define("_AM_FORMULIZE_CLONING_NOCHANGE", "keep it linked to its current source");
 
-
+// Graph Screen Definitions
+define("_AM_GRAPH_SCREEN_OPTIONS", "Graph Options");
 ?>

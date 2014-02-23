@@ -60,6 +60,8 @@ if($screens['type'] == 'multiPage') {
   $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 } else if($screens['type'] == 'form') {
   $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+} else if($screens['type'] == 'graph') {
+  $screen_handler = xoops_getmodulehandler('graphScreen', 'formulize');
 }
 
 
@@ -115,7 +117,18 @@ if($isNew) {
       $screen->setVar('reloadblank', 0);
       $screen->setVar('savebuttontext', _formulize_SAVE);
       $screen->setVar('alldonebuttontext', _formulize_DONE);
-  } 
+  } else if($screens['type'] == 'graph') {
+      // Defaults
+	  $screen->setVar('width', 500);
+	  $screen->setVar('height', 300);
+	  $screen->setVar('orientation', "horizontal");
+	  $screen->setVar('bgr', 141);
+	  $screen->setVar('bgg', 189);
+	  $screen->setVar('bgb', 225);
+	  $screen->setVar('barr', 143);
+	  $screen->setVar('barg', 190);
+	  $screen->setVar('barb', 88);
+  }
 
 } else {
   

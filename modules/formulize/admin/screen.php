@@ -62,6 +62,8 @@ if($screen_id == "new") {
         $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
     } else if($settings['type'] == 'multiPage') {
         $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+    } else if($settings['type'] == 'graph') {
+        $screen_handler = xoops_getmodulehandler('graphScreen', 'formulize');
     }
     $screen = $screen_handler->get($screen_id);
 
@@ -390,6 +392,19 @@ if($screen_id != "new" && $settings['type'] == 'form') {
   $options['element_list'] = $element_list;
 }
 
+if($screen_id != "new" && $settings['type'] == 'graph') {
+  $graph_options = array();
+  $graph_options['width'] = $screen->getVar('width');
+  $graph_options['height'] = $screen->getVar('height');
+  $graph_options['orientation'] = $screen->getVar('orientation');
+  $graph_options['bgr'] = $screen->getVar('bgr');
+  $graph_options['bgg'] = $screen->getVar('bgg');
+  $graph_options['bgb'] = $screen->getVar('bgb');
+  $graph_options['barr'] = $screen->getVar('barr');
+  $graph_options['barg'] = $screen->getVar('barg');
+  $graph_options['barb'] = $screen->getVar('barb');
+}
+
 // common values should be assigned to all tabs
 $common['name'] = $screenName;
 $common['title'] = $screenName; // oops, we've got two copies of this data floating around...standardize sometime
@@ -454,6 +469,12 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $adminPage['tabs'][6]['name'] = _AM_FORM_SCREEN_TEMPLATES;
   $adminPage['tabs'][6]['template'] = "db:admin/screen_list_templates.html";
   $adminPage['tabs'][6]['content'] = $templates + $common;
+}
+
+if($screen_id != "new" && $settings['type'] == 'graph') {
+  $adminPage['tabs'][2]['name'] = _AM_GRAPH_SCREEN_OPTIONS;
+  $adminPage['tabs'][2]['template'] = "db:admin/screen_graph_options.html";
+  $adminPage['tabs'][2]['content'] = $graph_options + $common;
 }
 
 $adminPage['pagetitle'] = _AM_FORM_SCREEN.$screenName;
