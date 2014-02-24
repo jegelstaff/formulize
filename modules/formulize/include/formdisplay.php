@@ -48,6 +48,9 @@ include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW
 class formulize_themeForm extends XoopsThemeForm {
+
+	var $form_id = "";
+
 	/**
 	 * Insert an empty row in the table to serve as a seperator.
 	 *
@@ -79,12 +82,31 @@ class formulize_themeForm extends XoopsThemeForm {
 				. "' method='" . $this->getMethod()
 				. "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">
 			<div class='xo-theme-form'>
+			<head>
+			<script type=\"text/javascript\" src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js\"></script>
+			<script type=\"text/javascript\" src=\"../../plugins/slidepanel/js/jquery.slidepanel.js\"></script>
+			<link rel=\"stylesheet\" type=\"text/css\" href=\"../../plugins/slidepanel/css/jquery.slidepanel.css\">
+            </head>
 			<table width='100%' class='outer' cellspacing='1'>
 			<tr><th colspan='2'>" . $this->getTitle() . "</th></tr>
 		";
 		$hidden = '';
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
 		$ret .= "</table>\n$hidden\n</div>\n</form>\n";
+		$ret .= '
+		<html lang="en">
+		<script type="text/javascript">
+      	$(document).ready(function(){
+          $("[data-slidepanel]").slidepanel({
+              orientation: "right",
+              mode: "push"
+          });
+      	});
+		</script>
+
+        </body>
+        </html>
+		';
 		$ret .= $this->renderValidationJS(true);
 		return $ret;
 	}
@@ -128,7 +150,21 @@ class formulize_themeForm extends XoopsThemeForm {
 				if (($desc = $ele->getDescription()) != '') {
 					$ret .= "<div class='xoops-form-element-help'>{$desc}</div>";
 				}
-				$ret .= "</td><td class='$class'>" . $ele->render() . "</td></tr>\n";
+				$ret .= "</td><td class='$class'>" . $ele->render();
+				$element_name = trim($ele->getName());
+				//print "name: ".$element_name.'<br />';
+				switch ($element_name) {
+					case 'control_buttons':
+					case 'proxyuser':
+						// Do nothing
+					break;
+					default:
+						include_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php";
+						$ret .= formulize_themeForm::addFrontsideEditButton($element_name);
+						break;
+				}
+
+				$ret .= "</td></tr>\n";
 			} else {
 				$hidden .= $ele->render();
 			}
@@ -158,6 +194,29 @@ class formulize_themeForm extends XoopsThemeForm {
 		}
 		
 		return $fullJs;
+	}
+
+	function addFrontsideEditButton ($thisEleName) {
+		global $xoopsUser;
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+		$mid = getFormulizeModId();
+		$gperm_handler = xoops_gethandler('groupperm');
+		$isAdmin = $gperm_handler->checkRight("edit_form", $this->form_id, $groups, $mid);
+
+		if (!$isAdmin) {
+			return;
+		}
+
+		$editButton = 'edit_' . $thisEleName;
+		//$returnButton = '<a href="../../plugins/slidepanel/external.html" data-slidepanel="panel"><input type="button" class="formulize_adminEditButton" name="editx" id="' . $editButton . '" value="Edit" onclick="javascript:adminEdit(' . $thisEleName . ');"></a>';
+		//$returnButton = '<a href="../../modules/formulize/templates/admin/ui.html" data-slidepanel="panel"><input type="button" class="formulize_adminEditButton" name="editx" id="' . $editButton . '" value="Edit" onclick="javascript:adminEdit(' . $thisEleName . ');"></a>';
+		$returnButton = '<a href="../../modules/formulize/admin/admin_editor.php?' . 'ele_name=' . $thisEleName . '" data-slidepanel="panel"><input type="button" class="formulize_adminEditButton" name="editx" id="' . $editButton . '" value="Edit"></a>';
+
+		//$returnButton = '<a href="../../modules/formulize/admin/ui.php?ele_id=1&aid=0&page=element" data-slidepanel="panel"><input type="button" class="formulize_adminEditButton" name="editx" id="' . $editButton . '" value="Edit"></a>';
+
+
+		return $returnButton;
 	}
 	
 }
@@ -718,6 +777,7 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
                     // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
                     $form->addElement (new XoopsFormHidden ('ventry', $settings['ventry']));
                 }
+                $form->form_id = $this_fid;
                 $form->setExtra("enctype='multipart/form-data'"); // impératif!
 
                 if(is_array($settings)) {
@@ -1138,7 +1198,7 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 		
 		$currentPage = "";
 		$screenid = "";
-    if($screen) {
+   		if($screen) {
 		  $screenid = $screen->getVar('sid');
 			// check for a current page setting
 			if(isset($settings['formulize_currentPage'])) {
@@ -1168,6 +1228,7 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 
 	$trayElements = $buttontray->getElements();
 	if(count($trayElements) > 0 OR $nosubforms) {
+		$buttontray->setName("control_buttons");
 		$form->addElement($buttontray);
 	}
 	return $form;
@@ -1355,9 +1416,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		// get the title of this subform
 		// help text removed for F4.0 RC2, this is an experiment
 		$subtitle = q("SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $subform_id");
-		$col_one = "<p id=\"subform-caption-f$fid-sf$subform_id\" class=\"subform-caption\"><b>" . trans($subtitle[0]['desc_form']) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
+		$col_one = "<p class=\"subform-caption\"><b>" . trans($subtitle[0]['desc_form']) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
 	} else {
-		$col_one = "<p id=\"subform-caption-f$fid-sf$subform_id\" class=\"subform-caption\"><b>" . trans($customCaption) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
+		$col_one = "<p class=\"subform-caption\"><b>" . trans($customCaption) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
 	}
 
 	/*if(intval($sub_entries[$subform_id][0]) != 0 OR $sub_entry_new OR is_array($sub_entry_written)) {

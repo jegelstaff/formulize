@@ -9,20 +9,20 @@ header("Content-Type: text/css");
 }
 
 #floating-list-of-entries-save-button {
-	padding: 0.5em 1.5em;
-	margin: 1em 0;
-	background-color: #FFF;
+    padding: 0.5em 1.5em;
+    margin: 1em 0;
+    background-color: #FFF;
 }
 
 #floating-list-of-entries-save-button.save_button_fixed {
-	position: fixed; 
-	bottom: 0;
-	z-index: 100;
-	margin-top: 0;
-	margin-bottom: 0;
+    position: fixed; 
+    bottom: 0;
+    z-index: 100;
+    margin-top: 0;
+    margin-bottom: 0;
     border-top: solid 1px #1D65A5;
     border-left: solid 1px #1D65A5;
-	border-right: solid 1px #1D65A5;
+    border-right: solid 1px #1D65A5;
     border-radius: 5px 5px 0 0;
 }
 
@@ -63,19 +63,19 @@ header("Content-Type: text/css");
 
 /*=== Formulize Boutons by Francois T ===*/
 button, input[type='submit'], input[type='button'], input[type='reset'] {
-	background-color: 			#F4F9FE;
-	-webkit-border-radius: 5px;
-	color: 						#2F85DC;
-	border:						1px solid;
-	border-color: 				#ccc;
+    background-color:           #F4F9FE;
+    -webkit-border-radius: 5px;
+    color:                      #2F85DC;
+    border:                     1px solid;
+    border-color:               #ccc;
 }
 input:hover, button:hover, .xo-formbuttons:hover, .formButton:hover {
     transform: scale(1.2);  
     box-shadow: 0 0 65px #F4F9FE inset, 0 0 20px #F4F9FE inset, 0 0 15px #333;  
 }
 button:focus, input[type='submit']:focus, input[type='button']:focus, input[type='reset']:focus, .xo-formbuttons:focus, .formButton:focus {
-	background-color:			#f4f4f4;
-	border-color :				#333;
+    background-color:           #f4f4f4;
+    border-color :              #333;
 }
 
 .formulize_button {
@@ -90,27 +90,27 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 }
 
 #prev {
-	    background:#008CC4 url('<?php print XOOPS_URL; ?>/modules/formulize/images/prev.png') no-repeat 10px;
-	    text-indent:40px;
-	    height: 36px;
-	    color: #fff !important;
-	    text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
-	    font-size: 15px;
+        background:#008CC4 url('<?php print XOOPS_URL; ?>/modules/formulize/images/prev.png') no-repeat 10px;
+        text-indent:40px;
+        height: 36px;
+        color: #fff !important;
+        text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
+        font-size: 15px;
 
 }
 #next {
-	    background:#008CC4 url('<?php print XOOPS_URL; ?>/modules/formulize/images/next.png') no-repeat 140px;
+        background:#008CC4 url('<?php print XOOPS_URL; ?>/modules/formulize/images/next.png') no-repeat 140px;
             text-align: left;
             width: 185px;
-	    height: 36px;
-	    color: #fff !important;
-	    text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
-	    font-size: 15px;
+        height: 36px;
+        color: #fff !important;
+        text-shadow: 0 -1px 0 rgba(0,0,0,.4);    
+        font-size: 15px;
 }
 
 /*=== Formulize Boutons by Francois T ===*/
 #formulize_addButton, #formulize_addProxyButton {
-    text-indent:45px;	
+    text-indent:45px;   
     background:#2F85DC url('<?php print XOOPS_URL; ?>/modules/formulize/images/contact-new.png') no-repeat 10px;
     width: 210px !important;
 }
@@ -165,6 +165,27 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
     text-indent: 0px;
 }
 
+.even .formulize_adminEditButton {
+    opacity:0;
+    float:right;
+}
+
+.even:hover .formulize_adminEditButton {
+  opacity:1;
+}
+
+.head .formulize_adminEditButton {
+    opacity:0;
+    float:right;
+}
+
+
+.head:hover .formulize_adminEditButton {
+  opacity:1;
+}
+
+
+}
 /*=== End of Formulize Boutons ===*/
 
 

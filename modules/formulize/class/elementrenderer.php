@@ -144,6 +144,9 @@ class formulizeElementRenderer{
 					}
 				}
 				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry, $id_form);
+				
+				include_once XOOPS_ROOT_PATH."/modules/formulize/include/formdisplay.php";
+				$ele_value[0] .= formulize_themeForm::addFrontsideEditButton($form_ele_id);
 				$form_ele = $ele_value; // an array, item 0 is the contents of the break, item 1 is the class of the table cell (for when the form is table rendered)
 				break;
 			case 'text':
@@ -255,6 +258,7 @@ class formulizeElementRenderer{
 					$ele_caption,
 					$ele_value[0]
 				);
+				$form_ele->setName($form_ele_id);
 			break;
 
 			case 'select':
