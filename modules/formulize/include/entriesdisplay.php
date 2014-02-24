@@ -60,11 +60,58 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 // $screen will be a screen object if present
 function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0, $viewallforms=0, $screen=null) {
 
-//TODO Up here might be the best place to generate an implict screen if it is null. That way future logic can assume if($screen) to simplify logic. 
+
   formulize_benchmark("start of drawing list");
 
 	global $xoopsDB, $xoopsUser;
+	
+	//If no screen create a default instance
+	if(!$screen)
+	{
+		$screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+		$screen = $screen_handler->create();
 
+		// set the defaults for the new screen
+		// View
+		$screen->setVar('defaultview','all');
+		$screen->setVar('usecurrentviewlist',_formulize_DE_CURRENT_VIEW);
+		$screen->setVar('limitviews',serialize(array(0=>'allviews')));
+		$screen->setVar('useworkingmsg',1);
+		$screen->setVar('usescrollbox',1);
+		$screen->setVar('entriesperpage',10);
+		$screen->setVar('viewentryscreen','none');
+		// Headings
+		$screen->setVar('useheadings',1);
+		$screen->setVar('repeatheaders',5);
+		$screen->setVar('usesearchcalcmsgs',1);
+		$screen->setVar('usesearch',1);
+		$screen->setVar('columnwidth',0);
+		$screen->setVar('textwidth',35);
+		$screen->setVar('usecheckboxes',0);
+		$screen->setVar('useviewentrylinks',1);
+		$screen->setVar('desavetext',_formulize_SAVE);
+		// Buttons
+		$screen->setVar('useaddupdate',_formulize_DE_ADDENTRY);
+		$screen->setVar('useaddmultiple',_formulize_DE_ADD_MULTIPLE_ENTRY);
+		$screen->setVar('useaddproxy',_formulize_DE_PROXYENTRY);
+		$screen->setVar('useexport',_formulize_DE_EXPORT);
+		$screen->setVar('useimport',_formulize_DE_IMPORT);
+		$screen->setVar('usenotifications',_formulize_DE_NOTBUTTON);
+		$screen->setVar('usechangecols',_formulize_DE_CHANGECOLS);
+		$screen->setVar('usecalcs',_formulize_DE_CALCS);
+		$screen->setVar('useadvcalcs',_formulize_DE_ADVCALCS);
+		$screen->setVar('useexportcalcs',_formulize_DE_EXPORT_CALCS);
+		$screen->setVar('useadvsearch',_formulize_DE_ADVSEARCH);
+		$screen->setVar('useclone',_formulize_DE_CLONESEL);
+		$screen->setVar('usedelete',_formulize_DE_DELETESEL);
+		$screen->setVar('useselectall',_formulize_DE_SELALL);
+		$screen->setVar('useclearall',_formulize_DE_CLEARALL);
+		$screen->setVar('usereset',_formulize_DE_RESETVIEW);
+		$screen->setVar('usesave',_formulize_DE_SAVE);
+		$screen->setVar('usedeleteview',_formulize_DE_DELETE);
+	      
+	}
+	
 	// Set some required variables
 	$mid = getFormulizeModId();
 	list($fid, $frid) = getFormFramework($formframe, $mainform);
@@ -656,6 +703,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
         include XOOPS_ROOT_PATH . "/modules/pageworks/index.php";
         return;
       } else {
+				//TODO AB Need to understand how the current fallback for no screen works. Creating a phantom screen will likely change
+				//this section. 
 				$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 				if($_POST['overridescreen']) {
 					$screenToLoad = intval($_POST['overridescreen']);
