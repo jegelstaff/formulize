@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="jquery.mobile-1.4.0.min.css">
+    <script src="jquery.js"></script>
+	<script src="jquery.mobile-1.4.0.min.js"></script>
+	<script src="jquery.mobile-1.4.0.min.js"></script>
+
+</head>
+<body>
+	<div data-role="page">
+		<!-- overlay menu -->
+		<div data-role="panel" id="panel">
+			<p>BLAH</p>
+			<input type="button" id="addentry" name="addentry" value="Make a proxy entry">
+		</div>
+
+		<div data-role="content">
+		    <form>
+		    	<a href="#panel" class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-btn-icon-left ui-icon-bars">Default panel</a>
+			    <fieldset data-role="collapsible" data-role="controlgroup" data-mini="true">
+			        <legend>Legend</legend>
+			        <div data-role="controlgroup" >
+			            <input type="radio" name="view" value="one" id="choice-1">
+			            <label for="choice-1">One</label>
+			            <input type="radio" name="view" value="two" id="choice-2">
+			            <label for="choice-2">Two</label>
+			            <input type="radio" name="view" value="three" id="choice-3">
+			            <label for="choice-3">Three3</label>
+			        </div>
+			    </fieldset>
+			</form>
+
+			<!-- Trying out stuff with jQuery mobile -->
+			<h3>Swipe the green rectangle in the right direction to change its color:</h3>
+			<div class="box" id="box_0_0"></div><br />
+			<div class="box" id="box_0_1"></div>
+
+<!-- Columns of stuff -->
+		<div data-role="content">
+			<div class="scrollbox" id="resbox">
+				<div class="list-of-entries-container">
+					<table class="outer">
+						<tbody>
+							<tr>
+								<td class="head column column0" id="celladdress_h1_0">
+									<div class="main-cell-div" id="cellcontents_h1_0">
+										<div style="float: right;"></div>
+										<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('10');return false;">Hello</a>
+									</div>
+								</td>
+								<td class="head column column1" id="celladdress_h1_1">
+									<div class="main-cell-div" id="cellcontents_h1_1">
+										<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('11');return false;">T</a>
+									</div>
+								</td>
+								<td class="head column column2" id="celladdress_h1_2">
+									<div class="main-cell-div" id="cellcontents_h1_2">
+										<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('12');return false;">Food</a>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td class="head column column0" id="celladdress_1_0">
+									<div class="main-cell-div" id="cellcontents_1_0">
+										<nobr>
+											<input type="text" id="firstbox" name="search_10" value="Type search terms here" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
+											&nbsp;<a></a>
+										</nobr>
+									</div>
+								</td>
+								<td class="head column column1" id="celladdress_1_1">
+									<div class="main-cell-div" id="cellcontents_1_1">
+										<nobr>
+											<input type="text" name="search_11" value="" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
+										</nobr>
+									</div>
+								</td>
+								<td class="head column column2" id="celladdress_1_2">
+									<div class="main-cell-div" id="cellcontents_1_2">
+										<nobr>
+											<input type="text" name="search_12" value="" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
+										</nobr>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td class="even column column0" id="celladdress_2_0">
+									<div class="main-cell-div" id="cellcontents_2_0">
+										<span>First</span>
+									</div>
+								</td>
+								<td class="even column column1" id="celladdress_2_1">
+									<div class="main-cell-div" id="cellcontents_2_1">
+										<span>giraffe</span>
+									</div>
+								</td>
+								<td class="even column column2" id="celladdress_2_2">
+									<div class="main-cell-div" id="cellcontents_2_2">
+										<span>bananas</span></div>
+									</td>
+							</tr>
+								<tr>
+									<td class="odd column column0" id="celladdress_3_0">
+										<div class="main-cell-div" id="cellcontents_3_0">
+											<span>Second</span></div>
+										</td>
+										<td class="odd column column1" id="celladdress_3_1">
+											<div class="main-cell-div" id="cellcontents_3_1">
+												<span>giraffe</span>,<br>
+												<div class="main-cell-div" id="cellcontents_3_1">
+													<span>zebra</span>,<br>
+													<div class="main-cell-div" id="cellcontents_3_1">
+														<span>cobra</span>
+													</div>
+												</div>
+											</div>
+										</td>
+										<td class="odd column column2" id="celladdress_3_2">
+											<div class="main-cell-div" id="cellcontents_3_2">
+												<span>beets</span>
+											</div>
+										</td>
+									</tr>
+									<tr>
+										<td class="even column column0" id="celladdress_4_0">
+											<div class="main-cell-div" id="cellcontents_4_0">
+												<span>Third</span>
+											</div>
+										</td>
+										<td class="even column column1" id="celladdress_4_1">
+											<div class="main-cell-div" id="cellcontents_4_1">
+												<span>cobra</span>
+											</div>
+										</td>
+										<td class="even column column2" id="celladdress_4_2">
+											<div class="main-cell-div" id="cellcontents_4_2">
+												<span>lettuce</span>
+											</div>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+
+	<script type="text/javascript">
+
+		// hide all cols except the first one on page load
+		$( document ).ready(function() {
+    		alert( "ready! - about to hide cols" );
+    		$(".column").not(".column0").hide();
+		});
+
+		jQuery('#addentry').click(function (){
+			alert('HELLO!');
+		});
+
+		// on right swipe, move one col to the left
+		jQuery('td').swiperight(function() {
+			alert("SWIPE DETECTED!")
+			var id = $(event.target).attr('id');
+			var arr = id.split("_");
+  			alert("col: " + arr[2]);
+  			var col = parseInt(arr[2]);
+
+  			// if we're on the leftmost col, we can't go to the left,
+  			// so do nothing
+  			if (col != 0) {
+  				$(".column" + arr[2]).hide();
+  				$(".column" + (col - 1)).show();
+  			}
+		});
+
+		// on left swipe, move one col to the right
+		jQuery('td').swipeleft(function() {
+			alert("SWIPE DETECTED!")
+			var id = $(event.target).attr('id');
+			var arr = id.split("_");
+  			alert("col: " + arr[2]);
+
+  			// if we're on the rightmost col, we can't go right,
+  			// so do nothing
+  			var col = parseInt(arr[2]);
+  			if (col != 2) {
+  				$(".column" + arr[2]).hide();
+  				$(".column" + (col + 1)).show();
+  			}
+		});
+
+		// trying out swipe stuff with jQuery mobile - doesn't support tables...
+		$(function(){
+    	// Bind the swiperightHandler callback function to the swipe event on div.box
+  			$( "div.box" ).on( "swiperight", swiperightHandler );
+ 
+  			// Callback function references the event target and adds the 'swiperight' class to it
+  			function swiperightHandler( event ){
+  				alert($(event.target).attr('id'));
+  				var id = $(event.target).attr('id');
+  				var arr = id.split("_");
+  				alert("col: " + arr[2]);
+  				alert("row: " + arr[1]);
+  				var row = parseInt(arr[2]);
+  				row += 1;
+   				$( event.target ).addClass( "swiperight" );
+   				//$(event.target).hide();
+   				$("#box_0_" + row).show();
+  			}
+		});
+
+	</script>
+
+	<style>
+		div.box {
+	    	width: 30em;
+	    	height: 3em;
+	    	background-color: #108040;
+	  	}
+	  	div.box.swiperight {
+	    	background-color: #7ACEF4;
+	  	}
+
+	  	#box_0_1 {
+	  		display: none;
+	  	}
+	  	
+  	</style>
+
+</body>
+</html>
