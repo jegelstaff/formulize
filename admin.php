@@ -17,7 +17,7 @@
  * @author		modified by marcan <marcan@impresscms.org>
  * @version		$Id: admin.php 20456 2010-12-02 17:57:52Z skenow $
  */
-
+// hello world
 define('ICMS_IN_ADMIN', 1);
 
 $xoopsOption['pagetype'] = 'admin';
