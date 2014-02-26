@@ -59,7 +59,7 @@ class formulizePermHandler {
                 self::$formulize_module_id = getFormulizeModId();
 
             $gperm_handler =& xoops_gethandler('groupperm');
-            $member_handler =& xoops_gethandler('icms_member');
+            $member_handler =& xoops_gethandler('member');
             $groups = $member_handler->getGroupsByUser($user_id);
 
             if ($gperm_handler->checkRight("delete_own_entry", $form_id, $groups, self::$formulize_module_id)
@@ -98,7 +98,7 @@ class formulizePermHandler {
                 self::$formulize_module_id = getFormulizeModId();
 
             $gperm_handler =& xoops_gethandler('groupperm');
-            $member_handler =& xoops_gethandler('icms_member');
+            $member_handler =& xoops_gethandler('member');
             $groups = $member_handler->getGroupsByUser($user_id);
 
             if ("new" == $entry_id or "" == $entry_id) {
