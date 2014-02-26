@@ -12,15 +12,6 @@
     </div>
 
     <div class="form-item">
-        <fieldset>
-            <legend><{$smarty.const._AM_ELE_SUBFORM_SCREEN}></legend>
-            <select id="element-subform" name="elements-ele_value[display_screen]" size="1">
-                <{html_options options=$content.subform_screens selected=$content.ele_value.display_screen}>
-            </select>
-        </fieldset>
-    </div>
-
-    <div class="form-item">
 	<fieldset>
 		<legend>User interface options</legend>
 
@@ -90,7 +81,19 @@
 			
 			    
 			    </fieldset>
-			    </div>		
+			    </div>
+
+    <div class="form-item">
+        <fieldset>
+            <legend><{$smarty.const._AM_ELE_SUBFORM_IFFORM}></legend>
+	    <p><{$smarty.const._AM_ELE_SUBFORM_SCREEN}></p>
+            <select id="element-subform" name="elements-ele_value[display_screen]" size="1">
+                <{html_options options=$content.subform_screens selected=$content.ele_value.display_screen}>
+            </select>
+        </fieldset>
+    </div>
+
+
     
 
 <div class="form-item">
