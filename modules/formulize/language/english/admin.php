@@ -355,6 +355,8 @@ define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(If the first list here is e
 
 // subforms
 define("_AM_ELE_SUBFORM_FORM", "Which form do you want to include as a subform?");
+define("_AM_ELE_SUBFORM_IFFORM", "If the subform entries are shown in a full form:");
+define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each entry?");
 define("_AM_ELE_SUBFORM", "Subform (from a form framework)");
 define("_AM_ELE_SUBFORM_DESC", "When you display the current form as part of a framework, the subform interface can be included in the form.  The subform interface allows users to create and modify entries in a related subform without leaving the main form.  The list here shows all the possible subforms from all frameworks that this form is part of.");
 define("_AM_ELE_SUBFORM_NONE", "No subforms available - define a framework first");
