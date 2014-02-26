@@ -1251,8 +1251,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 
 	// check for adding of a sub entry, and handle accordingly -- added September 4 2006
+	static $subformInstance;
+	$subformInstance = !isset($subformInstance) ? 100 : $subformInstance;
+	$subformInstance++;
 	
-	if($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
+	if($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
 		// need to handle things differently depending on whether it's a common value or a linked selectbox type of link
 		// uid links need to result in a "new" value in the displayElement boxes -- odd things will happen if people start adding linked values to entries that aren't theirs!
 		if($element_to_write != 0) {
@@ -1478,6 +1481,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			}
 		}
 
+		$currentSubformInstance = $subformInstance;
+
 		foreach($sub_entries[$subform_id] as $sub_ent) {
 			if($sub_ent != "") {
 				
@@ -1563,6 +1568,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		
 		}
 		
+		$subformInstance = $currentSubformInstance; // instance counter might have changed because the form could include other subforms
+
+		
 	}
 
 	
@@ -1585,7 +1593,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			autoHeight: false, // no fixed height for sections
 			collapsible: true, // sections can be collapsed
 			active: ";
-			if($_POST['target_sub_instance'] == $subformElementId AND $_POST['target_sub'] == $subform_id) {
+			if($_POST['target_sub_instance'] == $subformElementId.$subformInstance AND $_POST['target_sub'] == $subform_id) {
 				$col_two .= count($sub_entries[$subform_id])-$_POST['numsubents'];
 			} elseif(is_numeric($_POST['subform_entry_'.$subformElementId.'_active'])) {
 				$col_two .= $_POST['subform_entry_'.$subformElementId.'_active'];
@@ -1625,9 +1633,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         }
         if ($allowed_to_add_entries) {
             if (count($sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
-                $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, $subformElementId);\"></p>";
+                $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.");\"></p>";
             } elseif(!$sub_single) {
-                $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$subform_id', window.document.formulize.addsubentries$subform_id$subformElementId.value, $subformElementId);\"><input type=text name=addsubentries$subform_id$subformElementId id=addsubentries$subform_id$subformElementId value=1 size=2 maxlength=2>".$addEntriesText.$deleteButton."</p>";
+                $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$subform_id', window.document.formulize.addsubentries$subform_id$subformElementId$subformInstance.value, ".$subformElementId.$subformInstance.");\"><input type=text name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=1 size=2 maxlength=2>".$addEntriesText.$deleteButton."</p>";
             }
         }
     }
@@ -2512,10 +2520,10 @@ if(count($entriesThatHaveBeenLockedThisPageLoad)>0) {
 print "  window.document.go_parent.submit();\n";	// jQuery 1.4.4 does not allow chaining functions to run after the post
 print " }\n";
 	
-print "	function add_sub(sfid, numents, ele_id) {\n";
+print "	function add_sub(sfid, numents, instance_id) {\n";
 print "		document.formulize.target_sub.value=sfid;\n";
 print "		document.formulize.numsubents.value=numents;\n";
-print "		document.formulize.target_sub_instance.value=ele_id;\n";
+print "		document.formulize.target_sub_instance.value=instance_id;\n";
 print "		validateAndSubmit();\n";
 print "	}\n";
 
