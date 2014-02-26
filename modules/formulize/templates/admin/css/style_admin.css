@@ -1,3 +1,4 @@
+@import url(formulize-icons/formulize-icons.css);
 html, body {
   background: white;
   color: black;
@@ -57,13 +58,13 @@ h6 {
   line-height: 1.3em; }
 
 /* lists */
-#xo-canvas-content ul {
+ul {
   margin: 5px;
   padding: 2px;
   list-style: decimal inside;
   text-align: left; }
 
-#xo-canvas-content li {
+li {
   margin-left: 5px;
   color: #000;
   background-color: inherit;
@@ -276,7 +277,6 @@ h6 {
   width: 30.6%; }
 
 #xo-content {
-  position: relative;
   clear: both; }
 
 /* ------ Left column / Right column content------ */
@@ -412,6 +412,9 @@ td.head {
   color: white;
   font-weight: bold;
   padding: 0.5em 1em 0.5em 0.4em; }
+
+td.head a {
+  color: white; }
 
 .even, tr.even td {
   background-color: white;
@@ -698,6 +701,89 @@ th {
 table.outer {
   border: 1px solid #59a7d4; }
 
+a.tooltip {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 11pt;
+  cursor: help;
+  position: relative;
+  background: transparent;
+  background-color: transparent; }
+
+a.tooltip:before {
+  content: "\f110";
+  font-size: 15pt;
+  color: #59a7d4; }
+
+a.tooltip > span {
+  display: none; }
+
+a.tooltip:hover {
+  background: transparent;
+  background-color: transparent; }
+
+a.tooltip:hover > span {
+  position: absolute;
+  top: 2em;
+  left: -5em;
+  width: 25em;
+  display: block;
+  background-color: white;
+  color: black;
+  padding: 1.5em;
+  line-height: 1.5em;
+  opacity: 0.95;
+  border: 2px solid #59a7d4;
+  border-radius: 6px;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.3); }
+
+td a.heading-locked, td a.heading-unlocked {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 11pt;
+  float: right;
+  margin-left: 0.3em;
+  color: #aad2e9; }
+
+td a.heading-locked {
+  color: #d3e7f3; }
+
+.heading-locked:before {
+  content: "\f113"; }
+
+.heading-unlocked:before {
+  content: "\f112"; }
+
+td a.header-info-link {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 11pt;
+  float: right;
+  color: #aad2e9; }
+
+.header-info-link:before {
+  content: "\f110"; }
+
+.heading-locked:hover, .heading-unlocked:hover, .header-info-link:hover {
+  text-shadow: 0px 0px 2px #1e5676; }
+
 /* ------ Header top menu navigation rules ------ */
 #xo-globalnav a:hover {
   color: #fff;
@@ -706,6 +792,93 @@ table.outer {
 /* ---------- Image Manager / Folder not writeable ------------ */
 tr.blocked td {
   background-color: #FF0000; }
+
+.admin-ui a, .ui-widget-content a {
+  color: #59a7d4; }
+
+.admin-ui a:hover, .ui-widget-content a:hover {
+  color: #3391c7; }
+
+.formulize-toolbar {
+  border-bottom: 1px #e0e4e0;
+  border-radius: 5px;
+  padding: 5px;
+  vertical-align: middle; }
+
+/*float: right;background-color: #f8f8f8;padding: 0.5em;border-radius:3px;*/
+.formulize-application-toolbar > a {
+  margin: 0 1em; }
+
+.formulize-application-toolbar > :first-child {
+  margin-left: 0; }
+
+.formulize-application-toolbar > :last-child {
+  margin-right: 0; }
+
+.formulize-application-panel {
+  background-color: #59a7d4;
+  border: 1px solid #59a7d4;
+  margin: 2em 0;
+  padding: 0em;
+  border-radius: 3px;
+  box-shadow: 2px 2px 15px #d9d9d9; }
+
+.formulize-application-panel-header {
+  color: white;
+  border-bottom: 1px solid #8fbe58;
+  padding: 1em 0.5em;
+  border-radius: 3px 3px 0 0; }
+
+.formulize-application-panel-header .formulize-toolbar {
+  padding: 0; }
+  
+.formulize-toolbar a {
+  float: left;
+  margin-right: 1em;
+}
+
+.formulize-application-panel-header a {
+  background-color: #459ccf;
+  color: white;
+  margin: 0 0.25em;
+  padding: 0.25em 0.5em;
+  border-radius: 3px; }
+
+.formulize-application-panel-header a:hover {
+  color: #e6e6e6; }
+
+.formulize-application-panel-header a:last-child {
+  margin-right: 0; }
+
+.formulize-application-panel-header > h2 {
+  padding-top: 0em;
+  margin-top: 0em;
+  margin-bottom: 0em;
+  clear: none; }
+
+.formulize-application-panel-body {
+  background-color: white;
+  margin: 0;
+  padding: 2em 1em;
+  border-radius: 0 0 3px 3px; }
+
+.formulize-application-panel-body h2 {
+  margin-top: 0; }
+
+ul.admin-application-form-list {
+  margin: 0;
+  padding: 0; }
+
+ul.admin-application-form-list li {
+  list-style-type: none;
+  line-height: 2em; }
+
+.floatright {
+  float: right; }
+
+.right-toolbar {
+  display: inline-block;
+  float: right; }
 
 #fz-admin-toolbar {
   float: right; }

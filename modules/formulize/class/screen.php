@@ -136,14 +136,14 @@ class formulizeScreenHandler {
             }
         }
         $sql .= " order by fid, title";
-        if(!$result = $this->db->query($sql)) {
-            return false;
-        }
+        $screens = array();
+        if($result = $this->db->query($sql)) {
         while($array = $this->db->fetchArray($result)) {
             $screen = $this->create();
             $screen->assignVars($array);
             $screens[] = $screen;
             unset($screen);
+            }
         }
         return $screens;
     }

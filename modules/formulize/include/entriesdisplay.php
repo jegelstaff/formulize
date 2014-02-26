@@ -1528,29 +1528,22 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 					}
 			
 					if(!$settings['lockcontrols']) { //  AND !$loadview) { // -- loadview removed from this function sept 24 2005
+                        // check to see if we should draw in the delete checkbox
+			// 2 is none, 1 is all
+                        if ($useCheckboxes != 2 and ($useCheckboxes == 1 or formulizePermHandler::user_can_delete_entry($fid, $uid, $linkids[0]))) {
+				
+							print "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='formulize_selection_checkbox' name='delete_" . $linkids[0] . "' id='delete_" . $linkids[0] . "' value='delete_" . $linkids[0] . "'>";
+						}
 						if($useViewEntryLinks) {
-							print "<p><center><a href='" . $currentURL;
+							print "<a href='" . $currentURL;
 							if(strstr($currentURL, "?")) { // if params are already part of the URL...
 								print "&";
 							} else {
 								print "?";
 							}
-							print "ve=" . $linkids[0] . "' onclick=\"javascript:goDetails('" . $linkids[0] . "');return false;\"><img src='" . XOOPS_URL . "/modules/formulize/images/detail.gif' border=0 alt=\"" . _formulize_DE_VIEWDETAILS . "\" title=\"" . _formulize_DE_VIEWDETAILS . "\"></a>";
-						}
-
-                        if ($useCheckboxes != 2) { // two means no checkboxes -- should use a constant to make it clear
-                            // check to see if we should draw in the delete checkbox
-                            if ($useCheckboxes == 1 /* 1 means all */ or formulizePermHandler::user_can_delete_entry($fid, $uid, $linkids[0])) {
-								if($useViewEntryLinks) {
-									print "<br>";
-								} else {
-									print "<p><center>";
-								}
-								print "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='formulize_selection_checkbox' name='delete_" . $linkids[0] . "' id='delete_" . $linkids[0] . "' value='delete_" . $linkids[0] . "'>";
-							}
-						}
-						if($useViewEntryLinks OR $useCheckboxes != 2) { // at least one of the above was used
-							print "</center></p>\n";
+							print "ve=" . $linkids[0] . "' onclick=\"javascript:goDetails('" . $linkids[0] . "');return false;\" ".
+								" class=\"loe-edit-entry\" alt=\"" . _formulize_DE_VIEWDETAILS . "\" title=\"" . _formulize_DE_VIEWDETAILS . "\" >";
+							print "&nbsp;</a>";
 						}
 					} // end of IF NO LOCKCONTROLS
 					if($useViewEntryLinks OR $useCheckboxes != 2) {
@@ -1820,7 +1813,7 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 			} else {
 				$search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help.xhtml";
 			}
-			$helpText = "\n&nbsp;<a href=\"\" onclick=\"javascript:showPop('".$search_help_filepath."'); return false;\" title=\""._formulize_DE_SEARCH_POP_HELP."\">[?]<a>\n";
+			$helpText = "\n&nbsp;<a href=\"\" class=\"header-info-link\" onclick=\"javascript:showPop('".$search_help_filepath."'); return false;\" title=\""._formulize_DE_SEARCH_POP_HELP."\"><a>\n";
 		}
     //formulize_benchmark("finished prep of search box");
 		$quickSearchBoxes[$cols[$i]]['search'] = "<input type=text $boxid name='search_" . $cols[$i] . "' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
@@ -1967,9 +1960,10 @@ function drawHeaders($headers, $cols, $useBoxes=null, $useLinks=null, $numberOfB
 		print "<td class='$classToUse' id='celladdress_h{$row_id}_$i'><div class='main-cell-div' id='cellcontents_h{$row_id}_".$i."'>\n";
 
 		if($headingHelpLink) {
-			$lockedUI = in_array($i, $lockedColumns) ? "[X]" : "[ ]";
-			print "<div style=\"float: right; margin-left: 3px;\"><a href=\"\" id=\"lockcolumn_$i\" class=\"lockcolumn\" title=\""._formulize_DE_FREEZECOLUMN."\">$lockedUI</a></div>\n";
-			print "<div style=\"float: right;\"><a href=\"\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=".$cols[$i]."');return false;\" title=\""._formulize_DE_MOREINFO."\">[?]</a></div>\n";
+			$lockedUI = in_array($i, $lockedColumns) ? "heading-locked" : "heading-unlocked";
+			print "<a href=\"\" id=\"lockcolumn_$i\" class=\"lockcolumn $lockedUI\" title=\""._formulize_DE_FREEZECOLUMN."\"></a>\n";
+
+			print "<a href=\"\" class=\"header-info-link\" onclick=\"javascript:showPop('".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=".$cols[$i]."');return false;\" title=\""._formulize_DE_MOREINFO."\"></a>\n";
 		}
 		print clickableSortLink($cols[$i], printSmart(trans($headers[$i])));
 		print "</div></td>\n";
@@ -3477,8 +3471,7 @@ jQuery(window).load(function() {
 		var lockData = jQuery(this).attr('id').split('_');
 		var column = lockData[1];
 		if(floatingContents[column] == true) {
-			jQuery(this).empty();
-			jQuery(this).append('[ ]');
+            jQuery(this).removeClass("heading-locked").addClass("heading-unlocked");
 			var curColumnsArray = jQuery('#formulize_lockedColumns').val().split(',');
 			var curColumnsHTML = '';
 			for (var i=0; i < curColumnsArray.length; i++) {
@@ -3491,8 +3484,7 @@ jQuery(window).load(function() {
 			}
 			jQuery('#formulize_lockedColumns').val(curColumnsHTML);
 		} else {
-			jQuery(this).empty();
-			jQuery(this).append('[X]');
+			jQuery(this).removeClass("heading-unlocked").addClass("heading-locked");
 			var curColumnsHTML = jQuery('#formulize_lockedColumns').val();
 			jQuery('#formulize_lockedColumns').val(curColumnsHTML+','+column);
 		}

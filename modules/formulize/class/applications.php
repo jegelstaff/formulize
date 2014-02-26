@@ -133,6 +133,8 @@ global $xoopsDB;
     
 class formulizeApplication extends XoopsObject {
   
+  private $_forms = null;
+
   function formulizeApplication() {
     $this->XoopsObject();
     $this->initVar("appid", XOBJ_DTYPE_INT, NULL, false);
@@ -143,6 +145,13 @@ class formulizeApplication extends XoopsObject {
     $this->initVar("all_links", XOBJ_DTYPE_ARRAY);  
   }
   
+    function forms() {
+        if (null == $this->_forms) {
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $this->_forms = $form_handler->getFormsByApplication($this->appid);
+        }
+        return $this->_forms;
+    }
 }
 
 class formulizeApplicationsHandler {
