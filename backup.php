@@ -1,5 +1,5 @@
 <?php
-
+// hello world
 include_once "mainfile.php";
 
 error_reporting(E_ALL | E_STRICT);
