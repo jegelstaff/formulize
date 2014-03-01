@@ -129,6 +129,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		$alldonebuttontext = $alldonebuttontext ? $alldonebuttontext : "{NOBUTTON}";
 		$displayheading = $screen->getVar('displayheading');
 		$displayheading = $displayheading ? "" : "all"; // if displayheading is off, then need to pass the "all" keyword to supress all the headers
+		$displayheading = $elements_only ? "all" : $displayheading;
 		$reloadblank = $screen->getVar('reloadblank');
 		// figure out the form's properties...
 		// if it's more than one entry per user, and we have requested reload blank, then override multi is 0, otherwise 1
@@ -148,7 +149,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		}
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 		displayForm($formframe, $entry, $mainform, $donedest, array(0=>$alldonebuttontext, 1=>$savebuttontext),
-            $settings, $displayheading, "", $overrideMulti, "", 0, 0, 0, $screen, $elements_only);
+            $settings, $displayheading, "", $overrideMulti, "", 0, 0, 0, $screen);
 	}
 }
 ?>

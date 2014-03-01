@@ -321,7 +321,7 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mi
 
 
 function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button_text="", $settings="", $titleOverride="", $overrideValue="",
-    $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0, $printall=0, $screen=null, $formElementsOnly = false)
+    $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0, $printall=0, $screen=null) 
 {
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/extract.php';
@@ -2416,14 +2416,7 @@ window.onbeforeunload = function (e) {
     }
 };
 
-if (typeof jQuery == 'undefined') { 
-	var head = document.getElementsByTagName('head')[0];
-	script = document.createElement('script');
-	script.id = 'jQuery';
-	script.type = 'text/javascript';
-	script.src = '<?php print XOOPS_URL; ?>/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
-	head.appendChild(script);
-}
+<?php print $codeToIncludejQueryWhenNecessary; ?>
 
 function showPop(url) {
 

@@ -37,6 +37,16 @@ define("EV_MULTIPLE_SPREADSHEET_COLUMNS",   11);    // display multiple columns 
 
 define("SPREADSHEET_EXPORT_FOLDER",         "/cache/");   // used to be /modules/formulize/export/
 
+$codeToIncludejQueryWhenNecessary = "
+if (typeof jQuery == 'undefined') { 
+    var head = document.getElementsByTagName('head')[0];
+    script = document.createElement('script');
+    script.id = 'jQuery';
+    script.type = 'text/javascript';
+    script.src = '".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
+    head.appendChild(script);
+}";
+
 // setup flag for whether the Freeform Solutions user archiving patch has been applied to the core
 global $xoopsDB, $xoopsConfig;
 $sqlInFunctions = "SELECT * FROM " . $xoopsDB->prefix("users") . " LIMIT 0,1";
@@ -984,7 +994,7 @@ function makeUidFilter($users) {
 // returns the fids and entries passed to it, plus any others in a framework relationship
 // final param is a flag to control whether only unified display relationships are returned or all relationships
 function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_groups, $mid, $member_handler, $owner,
-    $unified_display=false, $unified_delete=true)
+    $unified_display=false, $unified_delete=false)
 {
     // by default (ie: when called from formDisplay) only look for unified display relationships
     // when $unified_display is specifically set to zero, ie: when called from displayEntries, look for any relationships in the framework
