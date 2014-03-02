@@ -1,0 +1,138 @@
+@import '_style_common';
+
+/* ------ Header top menu navigation rules ------ */
+
+#xo-globalnav a:hover {
+    color: #fff;
+    border-top: 4px solid #F3AC03;
+}
+
+/* ---------- Image Manager / Folder not writeable ------------ */
+tr.blocked td {
+    background-color: #FF0000;
+}
+
+.admin-ui a, .ui-widget-content a {
+    color: $colourPrimary;
+}
+
+.admin-ui a:hover, .ui-widget-content a:hover {
+    color: lighten-or-darken($colourPrimary, 10%);
+}
+
+.formulize-toolbar {
+    border-bottom: 1px #e0e4e0;
+    border-radius: 5px;
+    padding: 5px;
+    vertical-align: middle;
+}
+/*float: right;background-color: #f8f8f8;padding: 0.5em;border-radius:3px;*/
+
+.formulize-application-toolbar > a {
+    margin: 0 1em;
+}
+
+.formulize-application-toolbar > :first-child {
+    margin-left: 0;
+}
+
+.formulize-application-toolbar > :last-child {
+    margin-right: 0;
+}
+
+.formulize-application-panel {
+    background-color: $colourPrimary;
+    border: 1px solid $colourPrimary;
+    margin: 2em 0;
+    padding: 0em;
+    border-radius: 3px;
+    box-shadow: 2px 2px 15px darken($colorPageBackground, 15%);
+}
+
+.formulize-application-panel-header {
+    color: $colourTextOnPrimary;
+    border-bottom: 1px solid $colourAccent;
+    padding: 1em 0.5em;
+    border-radius: 3px 3px 0 0;
+}
+
+.formulize-application-panel-header .formulize-toolbar {
+    padding: 0;
+}
+
+.formulize-toolbar a {
+  float: left;
+  margin-right: 1em;
+}
+
+.formulize-application-panel-header a {
+    background-color: lighten-or-darken($colourPrimary, 5%);
+    color: $colourTextOnPrimary;
+    margin: 0 0.25em;
+    padding: 0.25em 0.5em;
+    border-radius: 3px;
+}
+
+.formulize-application-panel-header a:hover {
+    color: lighten-or-darken($colourTextOnPrimary, 10%);
+}
+
+.formulize-application-panel-header a:last-child {
+    margin-right: 0;
+}
+
+.formulize-application-panel-header > h2 {
+    padding-top:0em;
+    margin-top:0em;
+    margin-bottom:0em;
+    clear:none;
+}
+
+.formulize-application-panel-body {
+    background-color: $colorPageBackground;
+    margin: 0;
+    padding: 2em 1em;
+    border-radius: 0 0 3px 3px;
+}
+
+.formulize-application-panel-body h2 {
+    margin-top: 0;
+}
+
+ul.admin-application-form-list {
+    margin: 0;
+    padding: 0;
+}
+
+ul.admin-application-form-list li {
+    list-style-type: none;
+    line-height: 2em;
+}
+
+.floatright {
+    float: right;
+}
+
+.right-toolbar {
+    display:inline-block;
+    float:right;
+}
+
+#fz-admin-toolbar {
+    float: right;
+}
+
+#fz-admin-toolbar a {
+    background-color: $colorHeaderMenuBG;
+    @include background-linear-gradient($colorHeaderMenuBG, lighten-or-darken($colorHeaderMenuBG, 10%));
+    color: $colorHeaderLink;
+    font-weight: normal;
+    padding: 0.5em 0.75em;
+    margin: 0 0.25em;
+    @include border-radius(3px);
+}
+
+.forms-note {
+    width: 99%;
+    height: 10em;
+}

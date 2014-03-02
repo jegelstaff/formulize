@@ -133,6 +133,8 @@ global $xoopsDB;
     
 class formulizeApplication extends XoopsObject {
   
+  private $_forms = null;
+
   function formulizeApplication() {
     $this->XoopsObject();
     $this->initVar("appid", XOBJ_DTYPE_INT, NULL, false);
@@ -143,6 +145,13 @@ class formulizeApplication extends XoopsObject {
     $this->initVar("all_links", XOBJ_DTYPE_ARRAY);  
   }
   
+    function forms() {
+        if (null == $this->_forms) {
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $this->_forms = $form_handler->getFormsByApplication($this->appid);
+        }
+        return $this->_forms;
+    }
 }
 
 class formulizeApplicationsHandler {
@@ -394,8 +403,8 @@ class formulizeApplicationsHandler {
         $rank = 1;
         $rankquery = "SELECT MAX(rank) FROM `".$xoopsDB->prefix("formulize_menu_links")."` WHERE appid=".$appid.";";
         if($result = $xoopsDB->query($rankquery)) {
-        	//if empty query, then rank = 1, else, rank is the next larger number
-        	$max = $xoopsDB->fetchAssoc($result);
+	    //if empty query, then rank = 1, else, rank is the next larger number
+            $max = $xoopsDB->fetchArray($result);
             $rank= $max['MAX(rank)']+1;
         }
         
@@ -506,29 +515,6 @@ class formulizeApplicationsHandler {
         }
     }
     
-    /*
-     //added Oct 2013
-     function defaultScreenExistsForGroup($appid, $menuid, $group_ids){
-         global $xoopsDB; 
-         $groups = explode(",",$group_ids);
-         foreach($groups as $group_id) {  
-             $checksql = "Select * FROM `".$xoopsDB->prefix("formulize_menu_links")."` as links LEFT JOIN `".$xoopsDB->prefix("formulize_menu_permissions");
-             $checksql .= "` AS perms ON links.menu_id = perms.menu_id WHERE appid=".$appid." AND default_screen = 1 AND group_id=".$group_id.";";
-             if($result = $xoopsDB->query($checksql)) {
-                 $rows = $xoopsDB->fetchAssoc($result);
-                 if ($rows==''){
-                     print("no screen exist for group".$group_id);//return false;
-                 }
-                 else{
-                     print(" screen exists for group".$group_id);//return true;
-                 }
-             }
-             else {
-                 exit("Error checking default screen. SQL dump:\n" . $checksql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
-             }
-         }
-     }
-     */
 }
 
 

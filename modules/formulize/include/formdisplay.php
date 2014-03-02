@@ -321,13 +321,12 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mi
 
 
 function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button_text="", $settings="", $titleOverride="", $overrideValue="",
-    $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0, $printall=0, $screen=null)
+    $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0, $printall=0, $screen=null) 
 {
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/extract.php';
 formulize_benchmark("Start of formDisplay.");
 
-$formElementsOnly = false;
 if($titleOverride == "formElementsOnly") {
 	$titleOverride = "all";
 	$formElementsOnly = true;
@@ -1202,15 +1201,14 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry,
 	$customCaption = "", $customElements = "", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings = 0,
 	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries, $subformConditions, $subformElementId = 0,
-	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES)
+	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES, $subform_element_object = null)
 {
 	$nestedSubform = false;
 	if(isset($GLOBALS['formulize_inlineSubformFrid'])) {
 		$frid = $GLOBALS['formulize_inlineSubformFrid'];
 		$nestedSubform = true;
 	}
-	
-	
+
     $member_handler = xoops_gethandler('member');
     $gperm_handler = xoops_gethandler('groupperm');
 
@@ -1251,8 +1249,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 
 	// check for adding of a sub entry, and handle accordingly -- added September 4 2006
+	static $subformInstance;
+	$subformInstance = !isset($subformInstance) ? 100 : $subformInstance;
+	$subformInstance++;
 	
-	if($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
+	if($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
 		// need to handle things differently depending on whether it's a common value or a linked selectbox type of link
 		// uid links need to result in a "new" value in the displayElement boxes -- odd things will happen if people start adding linked values to entries that aren't theirs!
 		if($element_to_write != 0) {
@@ -1355,9 +1356,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		// get the title of this subform
 		// help text removed for F4.0 RC2, this is an experiment
 		$subtitle = q("SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $subform_id");
-		$col_one = "<p class=\"subform-caption\"><b>" . trans($subtitle[0]['desc_form']) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
+		$col_one = "<p id=\"subform-caption-f$fid-sf$subform_id\" class=\"subform-caption\"><b>" . trans($subtitle[0]['desc_form']) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
 	} else {
-		$col_one = "<p class=\"subform-caption\"><b>" . trans($customCaption) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
+		$col_one = "<p id=\"subform-caption-f$fid-sf$subform_id\" class=\"subform-caption\"><b>" . trans($customCaption) . "</b></p>"; // <p style=\"font-weight: normal;\">" . _formulize_ADD_HELP;
 	}
 
 	/*if(intval($sub_entries[$subform_id][0]) != 0 OR $sub_entry_new OR is_array($sub_entry_written)) {
@@ -1478,6 +1479,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			}
 		}
 
+		$currentSubformInstance = $subformInstance;
+
 		foreach($sub_entries[$subform_id] as $sub_ent) {
 			if($sub_ent != "") {
 				
@@ -1550,7 +1553,14 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	<div class=\"accordion-content content\">";
 					ob_start();
 					$GLOBALS['formulize_inlineSubformFrid'] = $frid;
-					$renderResult = displayForm($subform_id, $sub_ent, "", "",  "", "", "formElementsOnly"); // SHOULD CHANGE THIS TO USE THE DEFAULT SCREEN FOR THE FORM!!!!!!????
+                    if ($display_screen = get_display_screen_for_subform($subform_element_object)) {
+                        $subScreen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+                        $subScreenObject = $subScreen_handler->get($display_screen);
+                        $subScreen_handler->render($subScreenObject, $sub_ent, null, true);
+                    } else {
+                        // SHOULD CHANGE THIS TO USE THE DEFAULT SCREEN FOR THE FORM!!!!!!????
+                        $renderResult = displayForm($subform_id, $sub_ent, "", "",  "", "", "formElementsOnly");
+                    }
 					if(!$nestedSubform) {
 						unset($GLOBALS['formulize_inlineSubformFrid']);
 					}
@@ -1558,14 +1568,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					ob_end_clean();
 					$col_two .= $col_two_temp . "</div>\n</div>\n";
 				}
-			
 			}
-		
 		}
-		
-	}
 
-	
+		$subformInstance = $currentSubformInstance; // instance counter might have changed because the form could include other subforms
+	}
 
 	if($rowsOrForms=='row' OR $rowsOrForms =='') {
 		// complete the table if we're drawing rows
@@ -1585,7 +1592,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			autoHeight: false, // no fixed height for sections
 			collapsible: true, // sections can be collapsed
 			active: ";
-			if($_POST['target_sub_instance'] == $subformElementId AND $_POST['target_sub'] == $subform_id) {
+			if($_POST['target_sub_instance'] == $subformElementId.$subformInstance AND $_POST['target_sub'] == $subform_id) {
 				$col_two .= count($sub_entries[$subform_id])-$_POST['numsubents'];
 			} elseif(is_numeric($_POST['subform_entry_'.$subformElementId.'_active'])) {
 				$col_two .= $_POST['subform_entry_'.$subformElementId.'_active'];
@@ -1625,9 +1632,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         }
         if ($allowed_to_add_entries) {
             if (count($sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
-                $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, $subformElementId);\"></p>";
+                $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.");\"></p>";
             } elseif(!$sub_single) {
-                $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$subform_id', window.document.formulize.addsubentries$subform_id$subformElementId.value, $subformElementId);\"><input type=text name=addsubentries$subform_id$subformElementId id=addsubentries$subform_id$subformElementId value=1 size=2 maxlength=2>".$addEntriesText.$deleteButton."</p>";
+                $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$subform_id', window.document.formulize.addsubentries$subform_id$subformElementId$subformInstance.value, ".$subformElementId.$subformInstance.");\"><input type=text name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=1 size=2 maxlength=2>".$addEntriesText.$deleteButton."</p>";
             }
         }
     }
@@ -1938,7 +1945,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 					$sub_entries = $newLinkResults['sub_entries'];
 				}
                 // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
-                $subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9]);
+                $subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry, $customCaption, $customElements, intval($ele_value[2]), $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $this_ele_id, $ele_value[8], $ele_value[9], $thisElement);
 				if(isset($subUICols['single'])) {
 					$form->insertBreak($subUICols['single'], "even");
 				} else {
@@ -2409,14 +2416,7 @@ window.onbeforeunload = function (e) {
     }
 };
 
-if (typeof jQuery == 'undefined') { 
-	var head = document.getElementsByTagName('head')[0];
-	script = document.createElement('script');
-	script.id = 'jQuery';
-	script.type = 'text/javascript';
-	script.src = '<?php print XOOPS_URL; ?>/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
-	head.appendChild(script);
-}
+<?php print $codeToIncludejQueryWhenNecessary; ?>
 
 function showPop(url) {
 
@@ -2512,10 +2512,10 @@ if(count($entriesThatHaveBeenLockedThisPageLoad)>0) {
 print "  window.document.go_parent.submit();\n";	// jQuery 1.4.4 does not allow chaining functions to run after the post
 print " }\n";
 	
-print "	function add_sub(sfid, numents, ele_id) {\n";
+print "	function add_sub(sfid, numents, instance_id) {\n";
 print "		document.formulize.target_sub.value=sfid;\n";
 print "		document.formulize.numsubents.value=numents;\n";
-print "		document.formulize.target_sub_instance.value=ele_id;\n";
+print "		document.formulize.target_sub_instance.value=instance_id;\n";
 print "		validateAndSubmit();\n";
 print "	}\n";
 
@@ -2782,4 +2782,38 @@ function compileGoverningLinkedSelectBoxSourceConditionElements($governingElemen
 		}
 	} 
 	return $governingElements;
+}
+
+// determine which screen to use when displaying a subform
+// - if a screen is selected in the admin section, then use that
+// - if no screen is selected, use the default screen
+// - if the screen selected so far is not a single-page data-entry screen, return null
+function get_display_screen_for_subform($subform_element_object) {
+    $selected_screen_id = null;
+
+    if ($subform_element_object and is_a($subform_element_object, "formulizeformulize")) {
+        $ele_value = $subform_element_object->getVar('ele_value');
+        if (isset($ele_value['display_screen'])) {
+            // use selected screen
+            $selected_screen_id = intval($ele_value['display_screen']);
+        } else {
+            // use default screen for the form
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $formObject = $form_handler->get($ele_value[0]);    // 0 is the form_id
+            $selected_screen_id = intval($formObject->getVar('defaultform'));
+        }
+
+        if ($selected_screen_id) {
+            // a screen is selected -- confirm that it is a single-page data-entry screen
+            global $xoopsDB;
+            $screen_type = q("SELECT type FROM ".$xoopsDB->prefix("formulize_screen").
+                " WHERE sid=".intval($selected_screen_id)." and fid=".intval($ele_value[0]));
+            if (1 != count($screen_type) or !isset($screen_type[0]['type']) or "form" != $screen_type[0]['type']) {
+                // selected screen is not valid for displaying the subform
+                $selected_screen_id = null;
+            }
+        }
+    }
+
+    return $selected_screen_id;
 }

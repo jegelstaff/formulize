@@ -151,6 +151,13 @@ class formulizeElementRenderer{
 //        $ele_value[2] = $myts->displayTarea($ele_value[2]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
 				
 				$ele_value[2] = getTextboxDefault($ele_value[2], $id_form, $entry);
+				
+				//if placeholder value is set
+				if($ele_value[11]) {
+					$placeholder = $ele_value[2];
+					$ele_value[2] = "";
+				}
+				
 
 				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added
 					
@@ -164,12 +171,17 @@ class formulizeElementRenderer{
 				} else {															// nmc 2007.03.24 - added 
 					$form_ele = new XoopsFormLabel ($ele_caption, $ele_value[2]);	// nmc 2007.03.24 - added 
 				}
-
+				
+				//if placeholder value is set
+				if($ele_value[11]) {
+					$form_ele->setExtra("placeholder='".$placeholder."'");
+				}
                 
 				//if numbers-only option is set 
 				if ($ele_value[3]) {
 					$form_ele->setExtra("class='numbers-only-textbox'");
 				}
+	
 				
 				// if required unique option is set, create validation javascript that will ask the database if the value is unique or not
 				if($ele_value[9]) {
@@ -1213,8 +1225,9 @@ class formulizeElementRenderer{
 			// quickselect-formulize has a change in it so that "none" is an allowed value for matches, so that we can give the user good UI when something wrong is happening
 			$output = "<!-- Dependencies - note: quickselect-formulize has a change in it so that \"none\" is an allowed value for matches, so that we can give the user good UI when something wrong is happening -->\n";
 
-			if( ! defined( "FORMULIZE_DONT_INCLUDE_JQUERY" ) )
-				$output .= "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js\"></script>\n";
+			if( ! defined( "FORMULIZE_DONT_INCLUDE_JQUERY" ) ) {
+				$output .= "<script type=\"text/javascript\">$codeToIncludejQueryWhenNecessary</script>";
+			}
 
 			$output .= "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/quicksilver.js\"></script>\n
 <script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery.quickselect-formulize.min.js\"></script>\n

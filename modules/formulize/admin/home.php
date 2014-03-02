@@ -42,6 +42,12 @@ foreach($appObjects as $thisAppObject) {
 }
 $apps = readApplicationData(0,$apps); // lastly, get forms that don't have an application
 
+// refactoring possible to take advantage of simply gathering the applications and then interacting with the object in the template
+// but tricky to get it working with the current way things are passed through the accordion template using conventional names
+// also don't want to split how we handle applications vs forms with no app
+//$xoopsTpl->assign('applications', xoops_getmodulehandler('applications', 'formulize')->getAllApplications());
+//$xoopsTpl->assign('extra_forms', xoops_getmodulehandler('forms', 'formulize')->getFormsByApplication(0));
+
 $adminPage['apps'] = $apps;
 $adminPage['template'] = "db:admin/home.html";
 
@@ -90,6 +96,20 @@ function readApplicationData($aid, $apps) {
     }
     $x++;
   }
+  $apps[$i]['header'] = '<span class="formulize-toolbar right-toolbar">';
+  if($aid>0) {
+    $apps[$i]['header'] .= '<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=settings"><i class="icon-config"></i> Settings</a>';
+  }
+  // menu entries link does not work!!  can't pass names with spaces?  
+  $apps[$i]['header'] .= '<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=forms"><i class="icon-form"></i> Forms</a>
+<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=screens"><i class="icon-screen"></i> Screens</a>
+<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=relationships"><i class="icon-connection"></i> Relationships</a>
+<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=menu%20entries"><i class="icon-menu"></i> Menu Entries</a>
+<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=export&aid='.$aid.'"><i class="icon-download"></i> Export (beta!)</a>';
+  if($aid>0) {
+    $apps[$i]['header'] .= '<a href="" class="deleteapplink" target="'.$aid.'"><i class="icon-delete"></i> Delete</a>';
+  }
+  $apps[$i]['header'] .= '</span>';
   $i++;
   return $apps;
 }

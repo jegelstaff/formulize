@@ -115,7 +115,8 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 
 	// THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN
 	// $screen is a screen object
-	function render($screen, $entry, $settings = "") { // $settings is used internally to pass list of entries settings back and forth to editing screens
+    // $settings is used internally to pass list of entries settings back and forth to editing screens
+    function render($screen, $entry, $settings = "", $elements_only = false) {
 		if(!is_array($settings)) {
 				$settings = "";
 		}
@@ -128,6 +129,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		$alldonebuttontext = $alldonebuttontext ? $alldonebuttontext : "{NOBUTTON}";
 		$displayheading = $screen->getVar('displayheading');
 		$displayheading = $displayheading ? "" : "all"; // if displayheading is off, then need to pass the "all" keyword to supress all the headers
+		$displayheading = $elements_only ? "all" : $displayheading;
 		$reloadblank = $screen->getVar('reloadblank');
 		// figure out the form's properties...
 		// if it's more than one entry per user, and we have requested reload blank, then override multi is 0, otherwise 1

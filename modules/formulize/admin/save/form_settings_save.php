@@ -257,7 +257,7 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $for
 // Auto menu link creation
 // The link is shown to to Webmaster and registered users only (1,2 in $menuitems)
 if($_POST['formulize_admin_key'] == "new") {
-  $menuitems = "null::" . formulize_escape($formObject->getVar('title')) . "::fid=" . formulize_escape($fid) . "::http://::1,2::null";
+  $menuitems = "null::" . formulize_escape($formObject->getVar('title')) . "::fid=" . formulize_escape($fid) . "::::1,2::null";
   if(!empty($selectedAppIds)) {
     foreach($selectedAppIds as $appid) {
       $application_handler->insertMenuLink(formulize_escape($appid), $menuitems);
