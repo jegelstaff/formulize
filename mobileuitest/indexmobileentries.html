@@ -1,3 +1,6 @@
+<!DOCTYPE html>
+<html>
+
 <head>
 <!-- Center block custom positioning -->
 				
@@ -20,29 +23,80 @@
 <meta http-equiv="Content-Style-Type" content="text/css">
 <script type="text/javascript" src="http://localhost:8888/formulize/include/xoops.js"></script>
 <script type="text/javascript" src="http://localhost:8888/formulize/include/linkexternal.js"></script>
-<script type="text/javascript" src="http://localhost:8888/formulize/libraries/jquery/jquery.js"></script>
+<!--<script type="text/javascript" src="http://localhost:8888/formulize/libraries/jquery/jquery.js"></script>-->
+<script src="jquery.js"></script>
+
 <script type="text/javascript" src="http://localhost:8888/formulize/libraries/jquery/ui/ui.min.js"></script>
 <script type="text/javascript" src="http://localhost:8888/formulize/libraries/jquery/helptip.js"></script>
 <script src="http://localhost:8888/formulize/libraries/jquery/colorbox/jquery.colorbox-min.js" type="text/javascript"></script><style type="text/css">.hidden{display:none;}</style>
 <script src="http://localhost:8888/formulize/modules/formulize/libraries/formulize.js" type="text/javascript"></script>
-<link rel="stylesheet" media="screen" href="http://localhost:8888/formulize/icms.css" type="text/css">
+<!--<link rel="stylesheet" media="screen" href="http://localhost:8888/formulize/icms.css" type="text/css">
 <link rel="stylesheet" media="screen" href="http://localhost:8888/formulize/plugins/textsanitizer/syntaxhighlightphp/syntaxhighlightphp.css" type="text/css">
 <link rel="stylesheet" media="screen" href="http://localhost:8888/formulize/plugins/textsanitizer/hiddencontent/hiddencontent.css" type="text/css">
-<link rel="stylesheet" media="screen" href="http://localhost:8888/formulize/libraries/jquery/ui/css/ui-smoothness/ui.css" type="text/css">
-<link rel="stylesheet" media="screen" href="http://localhost:8888/formulize/libraries/jquery/jgrowl.css" type="text/css">
+<link rel="stylesheet" media="screen" href="http://localhost:8888/formulize/libraries/jquery/ui/css/ui-smoothness/ui.css" type="text/css">-->
+<!--<link rel="stylesheet" media="screen" href="http://localhost:8888/formulize/libraries/jquery/jgrowl.css" type="text/css">
 <link rel="stylesheet" href="http://localhost:8888/formulize/libraries/jquery/colorbox/colorbox.css" type="text/css">
-<link rel="stylesheet" href="http://localhost:8888/formulize/modules/formulize/templates/css/style.php" type="text/css">
+<link rel="stylesheet" href="http://localhost:8888/formulize/modules/formulize/templates/css/style.php" type="text/css">-->
 
-	
+<!-- jQuery Mobile -->
+<link rel="stylesheet" href="jquery.mobile-1.4.0.min.css">
+<script src="jquery.mobile-1.4.0.min.js"></script>
+
 <!-- Favicon -->
 	<link rel="shortcut icon" type="image/ico" href="http://localhost:8888/formulize/themes/formulize_standalone/icons/favicon.ico">
 	<link rel="icon" type="image/png" href="http://localhost:8888/formulize/themes/formulize_standalone/icons/icon.png">
 	
 <!-- Sheet Css -->
-	<link rel="stylesheet" type="text/css" media="all" href="http://localhost:8888/formulize/themes/formulize_standalone/style.css">
+<!--<link rel="stylesheet" type="text/css" media="all" href="http://localhost:8888/formulize/themes/formulize_standalone/style.css">-->
 </head>
 <body id="formulize" class="en formulize-screen formulize-screen-2">
-	<div id="cboxOverlay" style="display: none;"></div>
+	<div data-role="page">
+		<div data-role="panel" id="buttonpanel">
+			
+									<!--<input type="submit" name="submitx" style="visibility: hidden;" value="" id="submit">-->
+								
+									<input type="button" class="formulize_button" id="formulize_changeColsButton" name="changecols" value="Change columns" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/changecols.php?fid=1&amp;frid=&amp;cols=10,11,12');">
+
+									<input type="button" class="formulize_button" id="formulize_resetViewButton" name="resetviewbutton" value="Reset view" onclick="javascript:showLoadingReset();">
+
+									<input type="button" class="formulize_button" id="formulize_saveViewButton" name="save" value="Save view" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/save.php?fid=1&amp;frid=&amp;lastloaded=&amp;cols=10,11,12&amp;currentview=all&amp;loadonlyview=0');">
+
+									<input type="button" class="formulize_button" id="formulize_deleteViewButton" name="delete" value="Delete view" onclick="javascript:delete_view(this.form, '10000', '4');">
+								
+
+									<input type="button" class="formulize_button" id="formulize_selectAllButton" name="sellall" value="Select all" onclick="selectAll(this.check);">
+
+									<input type="button" class="formulize_button" id="formulize_clearSelectButton" name="clearall" value="Clear selection" onclick="unselectAll(this.uncheck);">
+
+									<input type="button" class="formulize_button" id="formulize_cloneButton" name="clonesel" value="Clone selected" onclick="javascript:confirmClone();">
+
+									<input type="button" class="formulize_button" id="formulize_deleteButton" name="deletesel" value="Delete selected" onclick="javascript:confirmDel();">
+							
+									<input type="button" class="formulize_button" id="formulize_calcButton" name="calculations" value="Calculations" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/pickcalcs.php?fid=1&amp;frid=&amp;calc_cols=&amp;calc_calcs=&amp;calc_blanks=&amp;calc_grouping=');">
+
+									<input type="button" class="formulize_button" id="formulize_exportButton" name="export" value="Export Entries" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/export.php?fid=1&amp;frid=&amp;cols=10,11,12&amp;eq=1393200219');">
+
+									<input type="button" class="formulize_button" id="formulize_importButton" name="impdata" value="Import Data" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/import.php?fid=1&amp;eq=1393200219');">
+
+									<input type="button" class="formulize_button" id="formulize_notifButton" name="notbutton" value="Notifications" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/setnot.php?fid=1');">	
+		
+		</div>
+
+		<div data-role="content">
+			<a href="#buttonpanel" class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-btn-icon-left ui-icon-bars">Actions</a>
+
+			<div class="ui-field-contain">
+				<label for="currentview" class="select">Current View: </label>
+				<select name="currentview" id="currentview" onchange="javascript:change_view(this.form, '4', '4');" data-mini="true">
+					<option value="">STANDARD VIEWS:</option>
+					<option value="mine">&nbsp;&nbsp;Entries by me</option>
+					<option value="group">&nbsp;&nbsp;Entries by all users in my group(s)</option>
+					<option value="all" selected="">&nbsp;&nbsp;Entries by all users in all groups</option>
+					<option value="">&nbsp;&nbsp;Entries by all users in...[pick groups]</option>
+				</select>
+			</div>
+		</div>
+	<!--<div id="cboxOverlay" style="display: none;"></div>
 	<div id="colorbox" class="" style="padding-bottom: 32px; padding-right: 0px; display: none;">
 		<div id="cboxWrapper"></div>
 		<div id="cboxTopLeft" style="float: left;"></div>
@@ -70,7 +124,7 @@
 		<div id="cboxBottomRight" style="float: left;"></div>
 	</div>
 </div>
-<div style="position:absolute; width:9999px; visibility:hidden; display:none"></div></div>
+<div style="position:absolute; width:9999px; visibility:hidden; display:none"></div></div>-->
 
 	<!-- Content -->
 	<div id="xo-canvas-content">
@@ -1174,4 +1228,4 @@ jQuery(window).scroll(function () {
 	}
 	xoSetLoggerView( xoLogReadCookie( 'XOLOGGERVIEW' ) );
 </script>
-<div class="ui-dialog ui-widget ui-widget-content ui-corner-all  ui-draggable ui-resizable" tabindex="-1" role="dialog" aria-labelledby="ui-dialog-title-ed_block_24" style="display: none; z-index: 1000; outline: 0px; position: absolute;"><div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix"><span class="ui-dialog-title" id="ui-dialog-title-ed_block_24">&nbsp;</span><a href="#" class="ui-dialog-titlebar-close ui-corner-all" role="button"><span class="ui-icon ui-icon-closethick">close</span></a></div><div id="ed_block_24" class="ui-dialog-content ui-widget-content"><a href="http://localhost:8888/formulize/modules/system/admin.php?fct=blocksadmin&amp;op=visible&amp;bid=24&amp;rtn=L21vZHVsZXMvZm9ybXVsaXplL2luZGV4LnBocD9maWQ9MQ=="> <img src="http://localhost:8888/formulize/images/crystal/actions/button_cancel.png" alt="Invisible"> Invisible</a><br><a href="http://localhost:8888/formulize/modules/system/admin.php?fct=blocksadmin&amp;op=clone&amp;bid=24"> <img src="http://localhost:8888/formulize/images/crystal/actions/editcopy.png" alt="Clone"> Clone</a><br><a href="http://localhost:8888/formulize/modules/system/admin.php?fct=blocksadmin&amp;op=mod&amp;bid=24"> <img src="http://localhost:8888/formulize/images/crystal/actions/edit.png" alt="Edit"> Edit</a><br><a href="http://localhost:8888/formulize/modules/system/admin.php?fct=blocksadmin&amp;op=up&amp;bid=24&amp;rtn=L21vZHVsZXMvZm9ybXVsaXplL2luZGV4LnBocD9maWQ9MQ=="> <img src="http://localhost:8888/formulize/images/crystal/actions/up.png" alt="Up"> Up</a><br><a href="http://localhost:8888/formulize/modules/system/admin.php?fct=blocksadmin&amp;op=down&amp;bid=24&amp;rtn=L21vZHVsZXMvZm9ybXVsaXplL2luZGV4LnBocD9maWQ9MQ=="> <img src="http://localhost:8888/formulize/images/crystal/actions/down.png" alt="Down"> Down</a></div><div class="ui-resizable-handle ui-resizable-n"></div><div class="ui-resizable-handle ui-resizable-e"></div><div class="ui-resizable-handle ui-resizable-s"></div><div class="ui-resizable-handle ui-resizable-w"></div><div class="ui-resizable-handle ui-resizable-se ui-icon ui-icon-gripsmall-diagonal-se ui-icon-grip-diagonal-se" style="z-index: 1001;"></div><div class="ui-resizable-handle ui-resizable-sw" style="z-index: 1002;"></div><div class="ui-resizable-handle ui-resizable-ne" style="z-index: 1003;"></div><div class="ui-resizable-handle ui-resizable-nw" style="z-index: 1004;"></div></div></body>
+<div class="ui-dialog ui-widget ui-widget-content ui-corner-all  ui-draggable ui-resizable" tabindex="-1" role="dialog" aria-labelledby="ui-dialog-title-ed_block_24" style="display: none; z-index: 1000; outline: 0px; position: absolute;"><div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix"><span class="ui-dialog-title" id="ui-dialog-title-ed_block_24">&nbsp;</span><a href="#" class="ui-dialog-titlebar-close ui-corner-all" role="button"><span class="ui-icon ui-icon-closethick">close</span></a></div><div id="ed_block_24" class="ui-dialog-content ui-widget-content"><a href="http://localhost:8888/formulize/modules/system/admin.php?fct=blocksadmin&amp;op=visible&amp;bid=24&amp;rtn=L21vZHVsZXMvZm9ybXVsaXplL2luZGV4LnBocD9maWQ9MQ=="> <img src="http://localhost:8888/formulize/images/crystal/actions/button_cancel.png" alt="Invisible"> Invisible</a><br><a href="http://localhost:8888/formulize/modules/system/admin.php?fct=blocksadmin&amp;op=clone&amp;bid=24"> <img src="http://localhost:8888/formulize/images/crystal/actions/editcopy.png" alt="Clone"> Clone</a><br><a href="http://localhost:8888/formulize/modules/system/admin.php?fct=blocksadmin&amp;op=mod&amp;bid=24"> <img src="http://localhost:8888/formulize/images/crystal/actions/edit.png" alt="Edit"> Edit</a><br><a href="http://localhost:8888/formulize/modules/system/admin.php?fct=blocksadmin&amp;op=up&amp;bid=24&amp;rtn=L21vZHVsZXMvZm9ybXVsaXplL2luZGV4LnBocD9maWQ9MQ=="> <img src="http://localhost:8888/formulize/images/crystal/actions/up.png" alt="Up"> Up</a><br><a href="http://localhost:8888/formulize/modules/system/admin.php?fct=blocksadmin&amp;op=down&amp;bid=24&amp;rtn=L21vZHVsZXMvZm9ybXVsaXplL2luZGV4LnBocD9maWQ9MQ=="> <img src="http://localhost:8888/formulize/images/crystal/actions/down.png" alt="Down"> Down</a></div><div class="ui-resizable-handle ui-resizable-n"></div><div class="ui-resizable-handle ui-resizable-e"></div><div class="ui-resizable-handle ui-resizable-s"></div><div class="ui-resizable-handle ui-resizable-w"></div><div class="ui-resizable-handle ui-resizable-se ui-icon ui-icon-gripsmall-diagonal-se ui-icon-grip-diagonal-se" style="z-index: 1001;"></div><div class="ui-resizable-handle ui-resizable-sw" style="z-index: 1002;"></div><div class="ui-resizable-handle ui-resizable-ne" style="z-index: 1003;"></div><div class="ui-resizable-handle ui-resizable-nw" style="z-index: 1004;"></div></div></div></body></html>

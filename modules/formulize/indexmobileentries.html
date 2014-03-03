@@ -1,0 +1,1202 @@
+<head>
+<!-- Center block custom positioning -->
+				
+<!-- Theme name -->
+	
+<!-- Title and meta -->
+	<title>Entries in 'giraffe' : Formulize Standalone</title>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">	
+	<meta name="robots" content="noindex,nofollow">
+	<meta name="keywords" content="">
+	<meta name="description" content="Formulize is a data management and reporting system that lets you easily create forms on the web, and interact with the data people have submitted.">
+	<meta name="rating" content="general">
+	<meta name="author" content="Formulize">
+	<meta name="copyright" content="Copyright © 2007-2011">
+	<meta name="generator" content="ImpressCMS">
+
+<!-- Module Header -->
+
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<script type="text/javascript" src="http://localhost:8888/formulize/include/xoops.js"></script>
+<script type="text/javascript" src="http://localhost:8888/formulize/include/linkexternal.js"></script>
+<script type="text/javascript" src="http://localhost:8888/formulize/libraries/jquery/jquery.js"></script>
+<script type="text/javascript" src="http://localhost:8888/formulize/libraries/jquery/ui/ui.min.js"></script>
+<script type="text/javascript" src="http://localhost:8888/formulize/libraries/jquery/helptip.js"></script>
+<script src="http://localhost:8888/formulize/libraries/jquery/colorbox/jquery.colorbox-min.js" type="text/javascript"></script><style type="text/css">.hidden{display:none;}</style>
+<script src="http://localhost:8888/formulize/modules/formulize/libraries/formulize.js" type="text/javascript"></script>
+<link rel="stylesheet" media="screen" href="http://localhost:8888/formulize/icms.css" type="text/css">
+<link rel="stylesheet" media="screen" href="http://localhost:8888/formulize/plugins/textsanitizer/syntaxhighlightphp/syntaxhighlightphp.css" type="text/css">
+<link rel="stylesheet" media="screen" href="http://localhost:8888/formulize/plugins/textsanitizer/hiddencontent/hiddencontent.css" type="text/css">
+<link rel="stylesheet" media="screen" href="http://localhost:8888/formulize/libraries/jquery/ui/css/ui-smoothness/ui.css" type="text/css">
+<link rel="stylesheet" media="screen" href="http://localhost:8888/formulize/libraries/jquery/jgrowl.css" type="text/css">
+<link rel="stylesheet" href="http://localhost:8888/formulize/libraries/jquery/colorbox/colorbox.css" type="text/css">
+<link rel="stylesheet" href="http://localhost:8888/formulize/modules/formulize/templates/css/style.php" type="text/css">
+
+	
+<!-- Favicon -->
+	<link rel="shortcut icon" type="image/ico" href="http://localhost:8888/formulize/themes/formulize_standalone/icons/favicon.ico">
+	<link rel="icon" type="image/png" href="http://localhost:8888/formulize/themes/formulize_standalone/icons/icon.png">
+	
+<!-- Sheet Css -->
+	<link rel="stylesheet" type="text/css" media="all" href="http://localhost:8888/formulize/themes/formulize_standalone/style.css">
+</head>
+<body id="formulize" class="en formulize-screen formulize-screen-2">
+	<div id="cboxOverlay" style="display: none;"></div>
+	<div id="colorbox" class="" style="padding-bottom: 32px; padding-right: 0px; display: none;">
+		<div id="cboxWrapper"></div>
+		<div id="cboxTopLeft" style="float: left;"></div>
+		<div id="cboxTopCenter" style="float: left;"></div>
+		<div id="cboxTopRight" style="float: left;"></div>
+	</div>
+	<div style="clear:left">
+		<div id="cboxMiddleLeft" style="float: left;"></div>
+		<div id="cboxContent" style="float: left;">
+			<div id="cboxLoadedContent" style="width:0; height:0; overflow:hidden" class=""></div>
+			<div id="cboxLoadingOverlay" class=""></div>
+			<div id="cboxLoadingGraphic" class=""></div>
+			<div id="cboxTitle" class=""></div>
+			<div id="cboxCurrent" class=""></div>
+			<div id="cboxNext" class=""></div>
+			<div id="cboxPrevious" class=""></div>
+			<div id="cboxSlideshow" class=""></div>
+			<div id="cboxClose" class=""></div>
+		</div>
+		<div id="cboxMiddleRight" style="float: left;"></div>
+	</div>
+	<div style="clear:left">
+		<div id="cboxBottomLeft" style="float: left;"></div>
+		<div id="cboxBottomCenter" style="float: left;"></div>
+		<div id="cboxBottomRight" style="float: left;"></div>
+	</div>
+</div>
+<div style="position:absolute; width:9999px; visibility:hidden; display:none"></div></div>
+
+	<!-- Content -->
+	<div id="xo-canvas-content">
+		<div id="xo-canvas-columns">
+			<!-- Left column -->
+										
+	<div class="xo-blockszone x2-secondary xo-canvas-column" id="xo-canvas-leftcolumn">
+		<div class="xo-block formulize">
+		<div class="xo-blocktitle"><h3>Form Menu&nbsp;<a href="#" onclick="$('#ed_block_24').dialog('open'); return false;"><img src="http://localhost:8888/formulize/images/crystal/actions/configure.png" title="Edit" alt="Edit"></a><button style="display: none;"></button><script type="text/javascript">
+					$(function() {
+						$('#ed_block_24').dialog({
+							bgiframe: true,
+							//height: 140,
+							autoOpen: false,
+							modal: true
+						});
+					});
+					</script>
+				</h3></div>		<div class="xo-blockcontent">There are no forms currently available.</div>
+	</div>
+		</div>
+									<!-- Center column / page -->
+			<div id="xo-page">
+				<!-- Top blocks -->
+								<!-- Module content -->
+								<div id="xo-content"><form name="resetviewform" id="resetviewform" action="http://localhost:8888/formulize/modules/formulize/index.php?fid=1" method="post" onsubmit="javascript:showLoading();">
+<input type="hidden" name="currentview" value="all">
+<input type="hidden" name="userClickedReset" value="1">
+</form>
+<div id="workingmessage" style="display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px;">
+<img src="http://localhost:8888/formulize/modules/formulize/images/working-english.gif">
+</div>
+<div id="listofentries">
+<form name="controls" id="controls" action="http://localhost:8888/formulize/modules/formulize/index.php?fid=1" method="post" onsubmit="javascript:showLoading();">
+<input type="hidden" name="XOOPS_TOKEN_REQUEST" id="XOOPS_TOKEN_REQUEST" value="1bab901fb2abceed8ed6c70a5c50897e"><input type="hidden" name="formulize_cacheddata" id="formulize_cacheddata" value="">
+<input type="hidden" name="formulize_previous_filter" id="formulize_previous_filter" value="">
+<input type="hidden" name="formulize_previous_scope" id="formulize_previous_scope" value="">
+<input type="hidden" name="formulize_previous_sort" id="formulize_previous_sort" value="">
+<input type="hidden" name="formulize_previous_order" id="formulize_previous_order" value="">
+<input type="hidden" name="formulize_previous_querystring" id="formulize_previous_querystring" value="">
+
+<input type="hidden" name="formulize_LOEPageStart" id="formulize_LOEPageStart" value="0">
+<table cellpadding="10">
+	<tbody>
+		<tr>
+			<td id="titleTable" style="vertical-align: top;" width="100%">
+				<h1>Entries in 'giraffe'</h1>
+				<a href="http://localhost:8888/formulize/modules/formulize/admin/ui.php?page=screen&amp;sid=2">Configure this Screen</a><br>
+			</td>
+			<td id="buttonsTable" class="outerTable" rowspan="3" style="vertical-align: bottom;">
+				<table>
+					<tbody>
+						<tr>
+							<td id="leftButtonColumn" class="innerTable" style="vertical-align: bottom;">
+								<p><input type="submit" name="submitx" style="visibility: hidden;" value="">
+									<br>
+									<b>Actions: </b>
+									<br>
+									<input type="button" class="formulize_button" id="formulize_changeColsButton" name="changecols" value="Change columns" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/changecols.php?fid=1&amp;frid=&amp;cols=10,11,12');"><br>
+
+									<input type="button" class="formulize_button" id="formulize_resetViewButton" name="resetviewbutton" value="Reset view" onclick="javascript:showLoadingReset();"><br>
+
+									<input type="button" class="formulize_button" id="formulize_saveViewButton" name="save" value="Save view" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/save.php?fid=1&amp;frid=&amp;lastloaded=&amp;cols=10,11,12&amp;currentview=all&amp;loadonlyview=0');"><br>
+
+									<input type="button" class="formulize_button" id="formulize_deleteViewButton" name="delete" value="Delete view" onclick="javascript:delete_view(this.form, '10000', '4');">
+								</p>
+							</td>
+
+							<td id="middleButtonColumn" class="innerTable" style="vertical-align: bottom;">
+								<p style="text-align: center;">
+									<input type="button" class="formulize_button" id="formulize_selectAllButton" name="sellall" value="Select all" onclick="selectAll(this.check);"><br>
+
+									<input type="button" class="formulize_button" id="formulize_clearSelectButton" name="clearall" value="Clear selection" onclick="unselectAll(this.uncheck);"><br>
+
+									<input type="button" class="formulize_button" id="formulize_cloneButton" name="clonesel" value="Clone selected" onclick="javascript:confirmClone();"><br>
+
+									<input type="button" class="formulize_button" id="formulize_deleteButton" name="deletesel" value="Delete selected" onclick="javascript:confirmDel();"><br>
+								</p>
+							</td>
+							<td id="rightButtonColumn" class="innerTable" style="vertical-align: bottom;">
+								<p style="text-align: center;"><br>
+									<input type="button" class="formulize_button" id="formulize_calcButton" name="calculations" value="Calculations" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/pickcalcs.php?fid=1&amp;frid=&amp;calc_cols=&amp;calc_calcs=&amp;calc_blanks=&amp;calc_grouping=');"><br>
+
+									<input type="button" class="formulize_button" id="formulize_exportButton" name="export" value="Export Entries" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/export.php?fid=1&amp;frid=&amp;cols=10,11,12&amp;eq=1393200219');"><br>
+
+									<input type="button" class="formulize_button" id="formulize_importButton" name="impdata" value="Import Data" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/import.php?fid=1&amp;eq=1393200219');">
+
+									<input type="button" class="formulize_button" id="formulize_notifButton" name="notbutton" value="Notifications" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/setnot.php?fid=1');">
+								</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td id="outerAddEntryPanel" style="vertical-align: top;">
+				<table>
+					<tbody>
+						<tr>
+							<td id="innerAddEntryPanel" style="vertical-align: bottom;">
+								<p>
+									<b>Fill In This Form: </b><br>
+									<input type="button" class="formulize_button" id="formulize_addButton" name="addentry" value="Add one entry" onclick="javascript:addNew('single');"><br>
+
+									<input type="button" class="formulize_button" id="formulize_addMultiButton" name="addentry" value="Add multiple entries" onclick="javascript:addNew();"><br><br>
+								</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td id="currentViewSelectTable" style="vertical-align: bottom;">
+				<b>Current View: </b><br>
+				<select style="width: 350px;" name="currentview" id="currentview" size="1" onchange="javascript:change_view(this.form, '4', '4');">
+					<option value="">STANDARD VIEWS:</option>
+					<option value="mine">&nbsp;&nbsp;Entries by me</option>
+					<option value="group">&nbsp;&nbsp;Entries by all users in my group(s)</option>
+					<option value="all" selected="">&nbsp;&nbsp;Entries by all users in all groups</option>
+					<option value="">&nbsp;&nbsp;Entries by all users in...[pick groups]</option>
+				</select>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<input type="hidden" name="newcols" id="newcols" value="">
+<input type="hidden" name="oldcols" id="oldcols" value="10,11,12">
+<input type="hidden" name="ventry" id="ventry" value="1">
+<input type="hidden" name="overridescreen" id="overridescreen" value="">
+<input type="hidden" name="delconfirmed" id="delconfirmed" value="">
+<input type="hidden" name="cloneconfirmed" id="cloneconfirmed" value="">
+<input type="hidden" name="xport" id="xport" value="">
+<input type="hidden" name="xport_cust" id="xport_cust" value="">
+<input type="hidden" name="loadreport" id="loadreport" value="">
+<input type="hidden" name="lastloaded" id="lastloaded" value="">
+<input type="hidden" name="saveviewname" id="saveviewname" value="">
+<input type="hidden" name="saveviewoptions" id="saveviewoptions" value="">
+<input type="hidden" name="caid" id="caid" value="">
+<input type="hidden" name="caentries" id="caentries" value="">
+<input type="hidden" name="sort" id="sort" value="">
+<input type="hidden" name="order" id="order" value="">
+<input type="hidden" name="hlist" id="hlist" value="">
+<input type="hidden" name="hcalc" id="hcalc" value="">
+<input type="hidden" name="lockcontrols" id="lockcontrols" value="">
+<input type="hidden" name="resetview" id="resetview" value="">
+<input type="hidden" name="calc_cols" id="calc_cols" value="">
+<input type="hidden" name="calc_calcs" id="calc_calcs" value="">
+<input type="hidden" name="calc_blanks" id="calc_blanks" value="">
+<input type="hidden" name="calc_grouping" id="calc_grouping" value="">
+<input type="hidden" name="advcalc_acid" id="advcalc_acid" value="">
+<input type="hidden" name="asearch" id="asearch" value="">
+<input type="hidden" name="advscope" id="advscope" value="">
+<input type="hidden" name="delview" id="delview" value="">
+<input type="hidden" name="delviewid_formulize" id="delviewid_formulize" value="">
+<input type="hidden" name="saveid_formulize" id="saveid_formulize" value="">
+<input type="hidden" name="savename" id="savename" value="">
+<input type="hidden" name="savegroups" id="savegroups" value="">
+<input type="hidden" name="savelock" id="savelock" value="">
+<input type="hidden" name="savescope" id="savescope" value="">
+<input type="hidden" name="forcequery" id="forcequery" value="0">
+<input type="hidden" name="formulize_lockedColumns" id="formulize_lockedColumns" value="">
+<input type="hidden" name="formulize_scrollx" id="formulize_scrollx" value="">
+<input type="hidden" name="formulize_scrolly" id="formulize_scrolly" value="">
+<script type="text/javascript">
+
+// MOBILE VERSION CODE
+
+// hide all cols except the first one on page load
+		$( document ).ready(function() {
+    		alert( "ready! - about to hide cols" );
+    		$(".column").not(".column0").hide();
+		});
+
+		// on right swipe, move one col to the left
+		jQuery('td').swiperight(function() {
+			alert("SWIPE DETECTED!")
+			var id = $(event.target).attr('id');
+			var arr = id.split("_");
+  			alert("col: " + arr[2]);
+  			var col = parseInt(arr[2]);
+
+  			// if we're on the leftmost col, we can't go to the left,
+  			// so do nothing
+  			if (col != 0) {
+  				$(".column" + arr[2]).hide("slow");
+  				$(".column" + (col - 1)).show("slow");
+  			}
+		});
+
+
+if (typeof jQuery == 'undefined') { 
+	var head = document.getElementsByTagName('head')[0];
+	script = document.createElement('script');
+	script.id = 'jQuery';
+	script.type = 'text/javascript';
+	script.src = 'http://localhost:8888/formulize/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
+	head.appendChild(script);
+}
+
+
+
+window.document.controls.ventry.value = '';
+window.document.controls.loadreport.value = '';
+
+function warnLock() {
+	alert('<p>The view that you have selected is set to <i>lock the controls</i>.  This means that you cannot change the columns, do calculations, do advanced searches, or export data.</p><p>You can perform sorting and basic searches using the controls at the top of each column.</p>');
+	return false;
+}
+
+function clearSearchHelp(formObj, defaultHelp) {
+	if(formObj.firstbox.value == defaultHelp) {
+		formObj.firstbox.value = "";
+	}
+}
+
+function showPop(url) {
+
+	window.document.controls.ventry.value = '';
+	if (window.formulize_popup == null) {
+		formulize_popup = window.open(url,'formulize_popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
+      } else {
+		if (window.formulize_popup.closed) {
+			formulize_popup = window.open(url,'formulize_popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
+            } else {
+			window.formulize_popup.location = url;              
+		}
+	}
+	window.formulize_popup.focus();
+
+}
+
+
+function confirmDel() {
+	var answer = confirm ('You are about to delete the selected entries.  Please confirm!');
+	if (answer) {
+		window.document.controls.delconfirmed.value = 1;
+		window.document.controls.ventry.value = '';
+		showLoading();
+	} else {
+		return false;
+	}
+}
+
+function confirmClone() {
+	var clonenumber = prompt("How many copies of the selected entries do you want to make? (use numbers, not words)", "1");
+	if(eval(clonenumber) > 0) {
+		window.document.controls.cloneconfirmed.value = clonenumber;
+		window.document.controls.ventry.value = '';
+		window.document.controls.forcequery.value = 1;
+		showLoading();
+	} else {
+		return false;
+	}
+}
+
+
+function sort_data(col) {
+	if(window.document.controls.sort.value == col) {
+		var ord = window.document.controls.order.value;
+		if(ord == 'SORT_DESC') {
+			window.document.controls.order.value = 'SORT_ASC';
+		} else {
+			window.document.controls.order.value = 'SORT_DESC';
+		}
+	} else {
+		window.document.controls.order.value = 'SORT_ASC';
+	}
+	window.document.controls.sort.value = col;
+	window.document.controls.ventry.value = '';
+	showLoading();
+}
+
+
+function runExport(type) {
+	window.document.controls.xport.value = type;
+	window.document.controls.ventry.value = '';
+	showLoading();
+
+}
+
+function showExport() {
+	window.document.getElementById('exportlink').style.display = 'block';
+}
+
+//Select All and Clear All new JQuery Function Instead the Javascript 
+function selectAll(check) {
+   $('.formulize_selection_checkbox').each(function(){
+      $('.formulize_selection_checkbox').attr('checked', true);
+   });
+}
+
+function unselectAll(uncheck) {
+   $('.formulize_selection_checkbox').each(function(){
+      $('.formulize_selection_checkbox').attr('checked', false);
+   });
+}
+/* ---------------------------------------
+   The selectall and clearall functions are based on a function by
+   Vincent Puglia, GrassBlade Software
+   site:   http://members.aol.com/grassblad
+   
+   NOTE: MUST RETROFIT THIS SO IN ADDITION TO CHECKING TYPE, WE ARE CHECKING FOR 'delete_' in the name, so we can have other checkbox elements in the screen templates!
+------------------------------------------- */
+/*
+function selectAll(formObj) 
+{
+   for (var i=0;i < formObj.length;i++) 
+   {
+      fldObj = formObj.elements[i];
+      if (fldObj.type == 'checkbox')
+      { 
+         fldObj.checked = true; 
+      }
+   }
+}
+
+function clearAll(formObj)
+{
+   for (var i=0;i < formObj.length;i++) 
+   {
+      fldObj = formObj.elements[i];
+      if (fldObj.type == 'checkbox')
+      { 
+         fldObj.checked = false; 
+      }
+   }
+}
+*/
+function delete_view(formObj, pubstart, endstandard) {
+
+	for (var i=0; i < formObj.currentview.options.length; i++) {
+		if (formObj.currentview.options[i].selected) {
+			if( i > endstandard && i < pubstart && formObj.currentview.options[i].value != "") {
+				var answer = confirm ('You are about to delete this view!  Please confirm.');
+				if (answer) {
+					window.document.controls.delview.value = 1;
+					window.document.controls.ventry.value = '';
+					showLoading();
+				} else {
+					return false;
+				}
+			} else {
+				if(formObj.currentview.options[i].value != "") {
+					alert('You are not allowed to delete that view from the list.');
+				}
+				return false;
+			}
+		}
+	}
+
+}
+
+function change_view(formObj, pickgroups, endstandard) {
+	for (var i=0; i < formObj.currentview.options.length; i++) {
+		if (formObj.currentview.options[i].selected) {
+			if(i == pickgroups && pickgroups != 0) {
+				showPop('http://localhost:8888/formulize/modules/formulize/include/changescope.php?fid=1&frid=&scope=all');				
+				return false;
+			} else {
+				if ( formObj.currentview.options[i].value == "" ) {
+					return false;
+				} else {
+					window.document.controls.loadreport.value = 1;
+					if(i <= endstandard && window.document.controls.lockcontrols.value == 1) {
+						window.document.controls.resetview.value = 1;
+						window.document.controls.curviewid.value = "";
+					}
+					window.document.controls.lockcontrols.value = 0;
+					window.document.controls.ventry.value = '';
+					showLoading();
+				}
+			}
+		}
+	}
+}
+
+function addNew(flag) {
+	if(flag=='proxy') {
+		window.document.controls.ventry.value = 'proxy';
+	} else if(flag=='single') {
+		window.document.controls.ventry.value = 'single';
+	} else {
+		window.document.controls.ventry.value = 'addnew';
+	}
+	window.document.controls.submit();
+}
+
+function goDetails(viewentry, screen) {
+	window.document.controls.ventry.value = viewentry;
+	if(screen>0) {
+		window.document.controls.overridescreen.value = screen;
+	}
+	window.document.controls.submit();
+}
+
+function cancelCalcs() {
+	window.document.controls.calc_cols.value = '';
+	window.document.controls.calc_calcs.value = '';
+	window.document.controls.calc_blanks.value = '';
+	window.document.controls.calc_grouping.value = '';
+	window.document.controls.hlist.value = 0;
+	window.document.controls.hcalc.value = 1;
+	window.document.controls.ventry.value = '';
+	showLoading();
+}
+
+function customButtonProcess(caid, entries) {
+	window.document.controls.caid.value = caid;
+	window.document.controls.caentries.value = entries;
+	showLoading();
+}
+
+
+function hideList() {
+	window.document.controls.hlist.value = 1;
+	window.document.controls.hcalc.value = 0;
+	window.document.controls.ventry.value = '';
+	showLoading();
+}
+
+function showList() {
+	window.document.controls.hlist.value = 0;
+	window.document.controls.hcalc.value = 1;
+	window.document.controls.ventry.value = '';
+	showLoading();
+}
+
+function killSearch() {
+	window.document.controls.asearch.value = '';
+	window.document.controls.ventry.value = '';
+	showLoading();
+}
+
+function forceQ() {
+	window.document.controls.forcequery.value = 1;
+	showLoading();
+}
+
+function showLoading() {
+	window.document.controls.formulize_scrollx.value = jQuery(window).scrollTop();
+	window.document.controls.formulize_scrolly.value = jQuery(window).scrollLeft();
+	window.document.getElementById('listofentries').style.opacity = 0.5;
+window.document.getElementById('workingmessage').style.display = 'block';
+window.scrollTo(0,0);
+	window.document.controls.ventry.value = '';
+	window.document.controls.submit();
+}
+
+function showLoadingReset() {
+	window.document.getElementById('listofentries').style.opacity = 0.5;
+window.document.getElementById('workingmessage').style.display = 'block';
+window.scrollTo(0,0);
+	window.document.resetviewform.submit();
+}
+
+function pageJump(page) {
+	window.document.controls.formulize_LOEPageStart.value = page;
+	showLoading();
+}
+
+function getPaddingNumber(element,paddingType) {
+	var value = element.css(paddingType).replace(/[A-Za-z$-]/g, "");;
+	return value;
+}
+
+var floatingContents = new Array();
+
+function toggleColumnInFloat(column) {
+	jQuery('.column'+column).map(function () {
+		var columnAddress = jQuery(this).attr('id').split('_');
+		var row = columnAddress[1];
+		if(floatingContents[column] == true) {
+			jQuery('#floatingcelladdress_'+row+' #cellcontents_'+row+'_'+column).remove();
+			jQuery('#celladdress_'+row+'_'+column).css('display', 'table-cell');
+			jQuery(this).removeClass('now-scrolling');
+		} else {
+			jQuery('#floatingcelladdress_'+row).append(jQuery(this).html());
+			var paddingTop = getPaddingNumber(jQuery(this),'padding-top');
+			var paddingBottom = getPaddingNumber(jQuery(this),'padding-bottom');
+			var paddingLeft = getPaddingNumber(jQuery(this),'padding-left');
+			var paddingRight = getPaddingNumber(jQuery(this),'padding-right');
+			jQuery('#floatingcelladdress_'+row+' #cellcontents_'+row+'_'+column).css('width', (parseInt(jQuery(this).width())+parseInt(paddingLeft)+parseInt(paddingRight)));
+			jQuery('#floatingcelladdress_'+row+' #cellcontents_'+row+'_'+column).css('height', (parseInt(jQuery(this).height())+parseInt(paddingTop)+parseInt(paddingBottom)));
+			jQuery(this).addClass('now-scrolling');
+		}
+	});
+	if(floatingContents[column] == true) {
+		floatingContents[column] = false;
+		jQuery("#lockcolumn_"+column).empty().append('[ ]');
+	} else {
+		floatingContents[column] = true;
+	}
+}
+
+function setScrollDisplay(element) {
+	if(element.scrollLeft() > 0) {
+		var maxWidth = 0;
+		jQuery(".now-scrolling").css('display', 'none');
+		jQuery(".floating-column").css('display', 'table-cell');
+	} else {
+		jQuery(".floating-column").css('display', 'none');
+		jQuery(".now-scrolling").css('display', 'table-cell');
+	}
+}
+
+jQuery(window).load(function() {
+	jQuery('.lockcolumn').live("click", function() {
+		var lockData = jQuery(this).attr('id').split('_');
+		var column = lockData[1];
+		if(floatingContents[column] == true) {
+			jQuery(this).empty();
+			jQuery(this).append('[ ]');
+			var curColumnsArray = jQuery('#formulize_lockedColumns').val().split(',');
+			var curColumnsHTML = '';
+			for (var i=0; i < curColumnsArray.length; i++) {
+				if(curColumnsArray[i] != column) {
+					if(curColumnsHTML != '') {
+						curColumnsHTML = curColumnsHTML+',';
+					}
+					curColumnsHTML = curColumnsHTML+curColumnsArray[i];
+				}
+			}
+			jQuery('#formulize_lockedColumns').val(curColumnsHTML);
+		} else {
+			jQuery(this).empty();
+			jQuery(this).append('[X]');
+			var curColumnsHTML = jQuery('#formulize_lockedColumns').val();
+			jQuery('#formulize_lockedColumns').val(curColumnsHTML+','+column);
+		}
+		toggleColumnInFloat(column);
+		return false;
+	});
+	
+	jQuery(window).scrollTop(0);
+	jQuery(window).scrollLeft(0);
+
+	
+	jQuery('#resbox').scroll(function () {
+		setScrollDisplay(jQuery('#resbox'));
+	});
+	jQuery(window).scroll(function () {
+		setScrollDisplay(jQuery(window));
+	});
+
+	var saveButtonOffset = jQuery('#floating-list-of-entries-save-button').offset();
+	saveButtonOffset.left = 15;
+	floatSaveButton(saveButtonOffset);
+	jQuery(window).scroll(function () {
+		floatSaveButton(saveButtonOffset);
+	});
+	
+});
+
+function floatSaveButton(saveButtonOffset) {
+      var scrollBottom = jQuery(window).height() - jQuery(window).scrollTop();
+      if (saveButtonOffset && (saveButtonOffset.top > scrollBottom || jQuery(window).width() < jQuery(document).width())) {
+	jQuery('#floating-list-of-entries-save-button').addClass('save_button_fixed');
+	jQuery('#floating-list-of-entries-save-button').addClass('ui-corner-all');
+	if(saveButtonOffset.top <= scrollBottom) {
+		jQuery('#floating-list-of-entries-save-button').css('bottom', jQuery(window).height() - saveButtonOffset.top - jQuery('#floating-list-of-entries-save-button').height());
+	}
+	if(jQuery(window).scrollLeft() < saveButtonOffset.left) {
+		newSaveButtonOffset = saveButtonOffset.left - jQuery(window).scrollLeft();
+	} else if(jQuery(window).scrollLeft() > 0){
+		newSaveButtonOffset = 0;
+	} else {
+		newSaveButtonOffset = saveButtonOffset.left;
+	}
+	jQuery('#floating-list-of-entries-save-button').css('left', newSaveButtonOffset);
+      } else if(saveButtonOffset) {
+	jQuery('#floating-list-of-entries-save-button').removeClass('save_button_fixed');
+	jQuery('#floating-list-of-entries-save-button').removeClass('ui-corner-all');
+      };
+}
+
+jQuery(window).scroll(function () {
+        jQuery('.floating-column').css('margin-top', ((window.pageYOffset)*-1));
+});
+
+</script>
+<div class="scrollbox" id="resbox">
+	<div class="list-of-entries-container">
+		<table class="outer">
+			<tbody>
+				<tr>
+					<td class="head">&nbsp;</td>
+					<td class="head floating-column" id="floatingcelladdress_h1" style="margin-top: -375px; display: none;"></td>
+					<td class="head column column0" id="celladdress_h1_0"><div class="main-cell-div" id="cellcontents_h1_0">
+						<div style="float: right; margin-left: 3px;">
+							<a href="" id="lockcolumn_0" class="lockcolumn" title="Click to freeze this column so it's visible when you scroll right">[ ]</a>
+						</div>
+						<div style="float: right;">
+							<a href="" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/moreinfo.php?col=10');return false;" title="Click for more info about this column">[?]</a>
+						</div>
+						<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('10');return false;">Hello</a>
+					</div>
+				</td>
+				<td class="head column column1" id="celladdress_h1_1">
+					<div class="main-cell-div" id="cellcontents_h1_1">
+						<div style="float: right; margin-left: 3px;">
+							<a href="" id="lockcolumn_1" class="lockcolumn" title="Click to freeze this column so it's visible when you scroll right">[ ]</a>
+						</div>
+						<div style="float: right;">
+							<a href="" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/moreinfo.php?col=11');return false;" title="Click for more info about this column">[?]</a>
+						</div>
+						<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('11');return false;">T</a>
+					</div>
+				</td>
+				<td class="head column column2" id="celladdress_h1_2">
+					<div class="main-cell-div" id="cellcontents_h1_2">
+						<div style="float: right; margin-left: 3px;">
+							<a href="" id="lockcolumn_2" class="lockcolumn" title="Click to freeze this column so it's visible when you scroll right">[ ]</a>
+						</div>
+						<div style="float: right;">
+							<a href="" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/moreinfo.php?col=12');return false;" title="Click for more info about this column">[?]</a>
+						</div>
+						<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('12');return false;">Food</a>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td class="head">&nbsp;</td>
+				<td class="head floating-column" id="floatingcelladdress_1" style="margin-top: -375px; display: none;"></td>
+				<td class="head column column0" id="celladdress_1_0">
+					<div class="main-cell-div" id="cellcontents_1_0">
+						<nobr>
+							<input type="text" id="firstbox" name="search_10" value="Type search terms here" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">&nbsp;
+							<a href="" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/docs/search_help.xhtml'); return false;" title="Click here for info about the search terms">[?]</a>
+							<a></a>
+						</nobr>
+					</div>
+				</td>
+				<td class="head column column1" id="celladdress_1_1">
+					<div class="main-cell-div" id="cellcontents_1_1">
+						<nobr>
+							<input type="text" name="search_11" value="" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
+						</nobr>
+					</div>
+				</td>
+				<td class="head column column2" id="celladdress_1_2">
+					<div class="main-cell-div" id="cellcontents_1_2">
+						<nobr>
+							<input type="text" name="search_12" value="" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
+						</nobr>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td class="head formulize-controls">
+					<p></p>
+					<center>
+						<a href="http://localhost:8888/formulize/modules/formulize/index.php?fid=1&amp;ve=1" onclick="javascript:goDetails('1');return false;">
+							<img src="http://localhost:8888/formulize/modules/formulize/images/detail.gif" border="0" alt="Click to view details for this entry." title="Click to view details for this entry.">
+						</a><br>
+						<input type="checkbox" title="Check this box to select/unselect this entry." class="formulize_selection_checkbox" name="delete_1" id="delete_1" value="delete_1">
+					</center>
+					<p></p>
+				</td>
+				<td class="even floating-column" id="floatingcelladdress_2" style="margin-top: -375px; display: none;"></td>
+				<td class="even column column0" id="celladdress_2_0">
+					<div class="main-cell-div" id="cellcontents_2_0">
+						<span>First</span>
+					</div>
+				</td>
+				<td class="even column column1" id="celladdress_2_1">
+					<div class="main-cell-div" id="cellcontents_2_1">
+						<span>giraffe</span>
+					</div>
+				</td>
+				<td class="even column column2" id="celladdress_2_2">
+					<div class="main-cell-div" id="cellcontents_2_2">
+						<span>bananas</span>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td class="head formulize-controls">
+					<p></p>
+					<center>
+						<a href="http://localhost:8888/formulize/modules/formulize/index.php?fid=1&amp;ve=2" onclick="javascript:goDetails('2');return false;"><img src="http://localhost:8888/formulize/modules/formulize/images/detail.gif" border="0" alt="Click to view details for this entry." title="Click to view details for this entry."></a>
+						<br>
+						<input type="checkbox" title="Check this box to select/unselect this entry." class="formulize_selection_checkbox" name="delete_2" id="delete_2" value="delete_2">
+					</center>
+					<p></p>
+				</td>
+				<td class="odd floating-column" id="floatingcelladdress_3" style="margin-top: -375px; display: none;"></td>
+				<td class="odd column column0" id="celladdress_3_0">
+					<div class="main-cell-div" id="cellcontents_3_0">
+						<span>Second</span>
+					</div>
+				</td>
+				<td class="odd column column1" id="celladdress_3_1">
+					<div class="main-cell-div" id="cellcontents_3_1">
+						<span>giraffe</span>,<br>
+						<div class="main-cell-div" id="cellcontents_3_1">
+							<span>zebra</span>,<br>
+							<div class="main-cell-div" id="cellcontents_3_1">
+								<span>cobra</span>
+							</div>
+						</div>
+					</div>
+				</td>
+				<td class="odd column column2" id="celladdress_3_2">
+					<div class="main-cell-div" id="cellcontents_3_2">
+						<span>beets</span>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td class="head formulize-controls">
+					<p></p>
+					<center>
+						<a href="http://localhost:8888/formulize/modules/formulize/index.php?fid=1&amp;ve=3" onclick="javascript:goDetails('3');return false;">
+							<img src="http://localhost:8888/formulize/modules/formulize/images/detail.gif" border="0" alt="Click to view details for this entry." title="Click to view details for this entry.">
+						</a>
+						<br><input type="checkbox" title="Check this box to select/unselect this entry." class="formulize_selection_checkbox" name="delete_3" id="delete_3" value="delete_3">
+					</center>
+					<p></p>
+				</td>
+				<td class="even floating-column" id="floatingcelladdress_4" style="margin-top: -375px; display: none;"></td>
+				<td class="even column column0" id="celladdress_4_0">
+					<div class="main-cell-div" id="cellcontents_4_0">
+						<span>Third</span>
+					</div>
+				</td>
+				<td class="even column column1" id="celladdress_4_1">
+					<div class="main-cell-div" id="cellcontents_4_1">
+						<span>cobra</span>
+					</div>
+				</td>
+				<td class="even column column2" id="celladdress_4_2">
+					<div class="main-cell-div" id="cellcontents_4_2">
+						<span>lettuce</span>
+					</div>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+</div>
+</form>
+</div>
+</div>
+								<!-- Bottom blocks -->
+							</div>
+			<!-- Right column -->
+												</div>
+	</div>
+	<div id="footer-padding">&nbsp;</div>
+</div>
+	<!-- Footer -->
+	<div id="xo-footer">
+		<a href="http://www.freeformsolutions.ca/formulize/" rel="external" target="_blank">Formulize Standalone Version</a> © 2004-2014 — <a href="http://www.impresscms.org/" rel="external" target="_blank">The ImpressCMS Project</a> © 2007-2011 
+	</div>
+	
+
+
+<div id="xo-logger-output">
+<div id="xo-logger-tabs">
+<a href='javascript:xoSetLoggerView("none")'>None</a> | 
+<a href='javascript:xoSetLoggerView("")'>All</a> | 
+<a href='javascript:xoSetLoggerView("errors")'>Errors (159)</a>
+<a href='javascript:xoSetLoggerView("queries")'>Queries (75)</a>
+<a href='javascript:xoSetLoggerView("blocks")'>Blocks (3)</a>
+<a href='javascript:xoSetLoggerView("extra")'>Extra (2)</a>
+<a href='javascript:xoSetLoggerView("timers")'>Timers (6)</a>
+<a href='javascript:xoSetLoggerView("deprecated")'>Deprecated (120)</a>
+</div>
+<table id="xo-logger-errors" class="outer" style="display: none;"><tbody><tr><th>Errors</th></tr>
+<tr><td class="even">Notice: Undefined variable: externalUid in file /libraries/icms/core/Session.php line 57<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: xoopsConfig in file /modules/formulize/language/english/main.php line 7<br>
+</td></tr>
+<tr><td class="even">Strict: Accessing static property icms_member_groupperm_Handler::$_cachedRights as non static in file /libraries/icms/member/groupperm/Handler.php line 362<br>
+</td></tr>
+<tr><td class="odd">Strict: Declaration of icms_view_block_Object::store() should be compatible with icms_ipf_Object::store($force = false) in file /libraries/icms/view/block/Object.php line 0<br>
+</td></tr>
+<tr><td class="even">Strict: Declaration of icms_view_block_Object::delete() should be compatible with icms_ipf_Object::delete($force = false) in file /libraries/icms/view/block/Object.php line 0<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /libraries/icms/view/block/Object.php line 85<br>
+</td></tr>
+<tr><td class="even">Unknown: preg_replace(): The /e modifier is deprecated, use preg_replace_callback instead in file /libraries/icms/core/DataFilter.php line 670<br>
+</td></tr>
+<tr><td class="odd">Unknown: preg_replace(): The /e modifier is deprecated, use preg_replace_callback instead in file /plugins/textsanitizer/syntaxhighlightphp/syntaxhighlightphp.php line 23<br>
+</td></tr>
+<tr><td class="even">Unknown: preg_replace(): The /e modifier is deprecated, use preg_replace_callback instead in file /libraries/icms/core/DataFilter.php line 695<br>
+</td></tr>
+<tr><td class="odd">Notice: Constant _AM_CATGENERAL already defined in file /modules/formulize/language/english/blocks.php line 4<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/blocks/mymenu.php line 25<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /libraries/icms/core/Object.php line 357<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /libraries/icms/core/Object.php line 357<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /libraries/icms/core/Object.php line 357<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /include/functions.php line 881<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /libraries/icms/ipf/permission/Handler.php line 124<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /libraries/icms/ipf/permission/Handler.php line 135<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/initialize.php line 146<br>
+</td></tr>
+<tr><td class="even">Unknown: preg_replace(): The /e modifier is deprecated, use preg_replace_callback instead in file /libraries/icms/core/DataFilter.php line 670<br>
+</td></tr>
+<tr><td class="odd">Unknown: preg_replace(): The /e modifier is deprecated, use preg_replace_callback instead in file /plugins/textsanitizer/syntaxhighlightphp/syntaxhighlightphp.php line 23<br>
+</td></tr>
+<tr><td class="even">Unknown: preg_replace(): The /e modifier is deprecated, use preg_replace_callback instead in file /libraries/icms/core/DataFilter.php line 695<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: loadview in file /modules/formulize/initialize.php line 194<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined variable: element_handler in file /modules/formulize/include/readelements.php line 79<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /libraries/icms/core/Object.php line 357<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: delconfirmed in file /modules/formulize/include/entriesdisplay.php line 82<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: cloneconfirmed in file /modules/formulize/include/entriesdisplay.php line 82<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: delviewid_formulize in file /modules/formulize/include/entriesdisplay.php line 82<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: saveid_formulize in file /modules/formulize/include/entriesdisplay.php line 82<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: caid in file /modules/formulize/include/entriesdisplay.php line 82<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: delconfirmed in file /modules/formulize/include/entriesdisplay.php line 125<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: cloneconfirmed in file /modules/formulize/include/entriesdisplay.php line 145<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: delview in file /modules/formulize/include/entriesdisplay.php line 156<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: resetview in file /modules/formulize/include/entriesdisplay.php line 182<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: saveid_formulize in file /modules/formulize/include/entriesdisplay.php line 192<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined variable: loadview in file /modules/formulize/include/entriesdisplay.php line 325<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: loadreport in file /modules/formulize/include/entriesdisplay.php line 373<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: advscope in file /modules/formulize/include/entriesdisplay.php line 435<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: newcols in file /modules/formulize/include/entriesdisplay.php line 458<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: xport in file /modules/formulize/include/entriesdisplay.php line 474<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: loadedView in file /modules/formulize/include/entriesdisplay.php line 486<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: curviewid in file /modules/formulize/include/entriesdisplay.php line 486<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /libraries/icms/core/Object.php line 357<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined variable: loadviewname in file /modules/formulize/include/entriesdisplay.php line 907<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: curviewid in file /modules/formulize/include/entriesdisplay.php line 908<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: loadviewname in file /modules/formulize/include/entriesdisplay.php line 489<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: ventry in file /modules/formulize/include/entriesdisplay.php line 601<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: formulize_lockedColumns in file /modules/formulize/include/entriesdisplay.php line 626<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: formulize_lockedColumns in file /modules/formulize/include/entriesdisplay.php line 628<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: advcalc_acid in file /modules/formulize/include/entriesdisplay.php line 635<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined offset: 1 in file /modules/formulize/include/functions.php line 4366<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: formulize_cacheddata in file /modules/formulize/include/entriesdisplay.php line 639<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: ventry in file /modules/formulize/include/entriesdisplay.php line 641<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined variable: searches in file /modules/formulize/include/entriesdisplay.php line 729<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: forcequery in file /modules/formulize/include/entriesdisplay.php line 729<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: as_0 in file /modules/formulize/include/entriesdisplay.php line 4296<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined offset: 5 in file /modules/formulize/include/extract.php line 489<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined offset: 4 in file /modules/formulize/include/extract.php line 489<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined offset: 3 in file /modules/formulize/include/extract.php line 489<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: creator_email in file /modules/formulize/include/extract.php line 616<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: existsJoinText in file /modules/formulize/include/extract.php line 677<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined variable: existsJoinText in file /modules/formulize/include/extract.php line 759<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: formulize_returnAfterSettingBaseQuery in file /modules/formulize/include/extract.php line 794<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined variable: curFormAlias in file /modules/formulize/include/extract.php line 1076<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: formulize_cachedDataId in file /modules/formulize/include/entriesdisplay.php line 4595<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined variable: wq in file /modules/formulize/include/entriesdisplay.php line 4603<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: loadview in file /modules/formulize/include/entriesdisplay.php line 734<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined variable: searches in file /modules/formulize/include/entriesdisplay.php line 734<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined variable: formulize_export_cache_files in file /modules/formulize/include/entriesdisplay.php line 4166<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined variable: loadedview in file /modules/formulize/include/entriesdisplay.php line 1252<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: forcequery in file /modules/formulize/include/entriesdisplay.php line 1262<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: formulize_scrollx in file /modules/formulize/include/entriesdisplay.php line 3503<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: formulize_scrolly in file /modules/formulize/include/entriesdisplay.php line 3504<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined variable: searches in file /modules/formulize/include/entriesdisplay.php line 744<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /libraries/icms/core/Object.php line 357<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /libraries/icms/core/Object.php line 357<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /libraries/icms/core/Object.php line 357<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined index: xport in file /modules/formulize/include/entriesdisplay.php line 1340<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined index: as_0 in file /modules/formulize/include/entriesdisplay.php line 1439<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/entriesdisplay.php line 1949<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: class in file /modules/formulize/include/entriesdisplay.php line 1516<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined variable: elstyle in file /modules/formulize/include/functions.php line 4763<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be passed by reference in file /modules/formulize/include/functions.php line 2360<br>
+</td></tr>
+<tr><td class="even">Notice: Undefined variable: elstyle in file /modules/formulize/include/functions.php line 4763<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be passed by reference in file /modules/formulize/include/functions.php line 2360<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /libraries/icms/core/Object.php line 357<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: elstyle in file /modules/formulize/include/functions.php line 4763<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be passed by reference in file /modules/formulize/include/functions.php line 2360<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: elstyle in file /modules/formulize/include/functions.php line 4763<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be passed by reference in file /modules/formulize/include/functions.php line 2360<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: elstyle in file /modules/formulize/include/functions.php line 4763<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be passed by reference in file /modules/formulize/include/functions.php line 2360<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: elstyle in file /modules/formulize/include/functions.php line 4763<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be passed by reference in file /modules/formulize/include/functions.php line 2360<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: elstyle in file /modules/formulize/include/functions.php line 4763<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be passed by reference in file /modules/formulize/include/functions.php line 2360<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: elstyle in file /modules/formulize/include/functions.php line 4763<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be passed by reference in file /modules/formulize/include/functions.php line 2360<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: elstyle in file /modules/formulize/include/functions.php line 4763<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be passed by reference in file /modules/formulize/include/functions.php line 2360<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: elstyle in file /modules/formulize/include/functions.php line 4763<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be passed by reference in file /modules/formulize/include/functions.php line 2360<br>
+</td></tr>
+<tr><td class="odd">Notice: Undefined variable: elstyle in file /modules/formulize/include/functions.php line 4763<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /modules/formulize/include/functions.php line 1658<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be passed by reference in file /modules/formulize/include/functions.php line 2360<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /libraries/icms/core/Object.php line 311<br>
+</td></tr>
+<tr><td class="even">Unknown: preg_replace(): The /e modifier is deprecated, use preg_replace_callback instead in file /libraries/icms/core/DataFilter.php line 670<br>
+</td></tr>
+<tr><td class="odd">Unknown: preg_replace(): The /e modifier is deprecated, use preg_replace_callback instead in file /plugins/textsanitizer/syntaxhighlightphp/syntaxhighlightphp.php line 23<br>
+</td></tr>
+<tr><td class="even">Unknown: preg_replace(): The /e modifier is deprecated, use preg_replace_callback instead in file /libraries/icms/core/DataFilter.php line 695<br>
+</td></tr>
+<tr><td class="odd">Strict: Only variables should be assigned by reference in file /libraries/icms/core/Object.php line 357<br>
+</td></tr>
+<tr><td class="even">Strict: Only variables should be assigned by reference in file /libraries/icms/core/Object.php line 357<br>
+</td></tr>
+</tbody></table>
+
+<script type="text/javascript">
+	function xoLogCreateCookie(name,value,days) {
+		if (days) {
+			var date = new Date();
+			date.setTime(date.getTime()+(days*24*60*60*1000));
+			var expires = "; expires="+date.toGMTString();
+		}
+		else var expires = "";
+		document.cookie = name+"="+value+expires+"; path=/";
+	}
+	function xoLogReadCookie(name) {
+		var nameEQ = name + "=";
+		var ca = document.cookie.split(';');
+		for (var i=0;i < ca.length;i++) {
+			var c = ca[i];
+			while (c.charAt(0)==' ') c = c.substring(1,c.length);
+			if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+		}
+		return null;
+	}
+	function xoLogEraseCookie(name) {
+		createCookie(name,"",-1);
+	}
+	function xoSetLoggerView( name) {
+		var log = document.getElementById( "xo-logger-output" );
+		if (!log ) return;
+		var i, elt;
+		for ( i=0; i!=log.childNodes.length; i++) {
+			elt = log.childNodes[i];
+			if (elt.tagName && elt.tagName.toLowerCase() != 'script' && elt.id != "xo-logger-tabs") {
+				elt.style.display = ( !name || elt.id == "xo-logger-" + name ) ? "block" : "none";
+			}
+		}
+		xoLogCreateCookie( 'XOLOGGERVIEW', name, 1 );
+	}
+	xoSetLoggerView( xoLogReadCookie( 'XOLOGGERVIEW' ) );
+</script>
+</body>

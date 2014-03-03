@@ -21,7 +21,9 @@
  
 <script>
 $( "button" ).click(function() {
+  alert("SWIPE DETECTED!");
   $( "div" ).hide( "slide", { direction: "left" }, "slow" );
+  $( "div" ).show( "slide", { direction: "right" }, "slow" );
 });
 
 </script>

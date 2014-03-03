@@ -7,9 +7,9 @@
 	<script src="jquery.mobile-1.4.0.min.js"></script>
 	<script src="jquery.mobile-1.4.0.min.js"></script>
 	  
-	<!-- for column animation -->
+	<!-- for column animation 
 	<script src="jquery-ui-1.10.4/js/jquery-1.10.2.js"></script>
-  	<script src="jquery-ui-1.10.4/jquery-ui.js"></script>
+  	<script src="jquery-ui-1.10.4/jquery-ui.js"></script> -->
 </head>
 
 <body>
@@ -17,37 +17,54 @@
 
 	<div data-role="page">
 
-<!-- animation test -->
-	<button>hide the div</button>
-	<div id="animationtest"></div>
+		<div data-role="panel" id="buttonpanel">
+			
+									<!--<input type="submit" name="submitx" style="visibility: hidden;" value="" id="submit">-->
+								
+									<input type="button" class="formulize_button" id="formulize_changeColsButton" name="changecols" value="Change columns" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/changecols.php?fid=1&amp;frid=&amp;cols=10,11,12');">
 
-		<!-- overlay menu -->
-		<div data-role="panel" id="panel">
-			<p>BLAH</p>
-			<input type="button" id="addentry" name="addentry" value="Make a proxy entry">
+									<input type="button" class="formulize_button" id="formulize_resetViewButton" name="resetviewbutton" value="Reset view" onclick="javascript:showLoadingReset();">
+
+									<input type="button" class="formulize_button" id="formulize_saveViewButton" name="save" value="Save view" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/save.php?fid=1&amp;frid=&amp;lastloaded=&amp;cols=10,11,12&amp;currentview=all&amp;loadonlyview=0');">
+
+									<input type="button" class="formulize_button" id="formulize_deleteViewButton" name="delete" value="Delete view" onclick="javascript:delete_view(this.form, '10000', '4');">
+								
+
+									<input type="button" class="formulize_button" id="formulize_selectAllButton" name="sellall" value="Select all" onclick="selectAll(this.check);">
+
+									<input type="button" class="formulize_button" id="formulize_clearSelectButton" name="clearall" value="Clear selection" onclick="unselectAll(this.uncheck);">
+
+									<input type="button" class="formulize_button" id="formulize_cloneButton" name="clonesel" value="Clone selected" onclick="javascript:confirmClone();">
+
+									<input type="button" class="formulize_button" id="formulize_deleteButton" name="deletesel" value="Delete selected" onclick="javascript:confirmDel();">
+							
+									<input type="button" class="formulize_button" id="formulize_calcButton" name="calculations" value="Calculations" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/pickcalcs.php?fid=1&amp;frid=&amp;calc_cols=&amp;calc_calcs=&amp;calc_blanks=&amp;calc_grouping=');">
+
+									<input type="button" class="formulize_button" id="formulize_exportButton" name="export" value="Export Entries" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/export.php?fid=1&amp;frid=&amp;cols=10,11,12&amp;eq=1393200219');">
+
+									<input type="button" class="formulize_button" id="formulize_importButton" name="impdata" value="Import Data" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/import.php?fid=1&amp;eq=1393200219');">
+
+									<input type="button" class="formulize_button" id="formulize_notifButton" name="notbutton" value="Notifications" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/setnot.php?fid=1');">	
 		</div>
 
 		<div data-role="content">
-		    <form>
-		    	<a href="#panel" class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-btn-icon-left ui-icon-bars">Default panel</a>
-			    <fieldset data-role="collapsible" data-role="controlgroup" data-mini="true">
-			        <legend>Legend</legend>
-			        <div data-role="controlgroup" >
-			            <input type="radio" name="view" value="one" id="choice-1">
-			            <label for="choice-1">One</label>
-			            <input type="radio" name="view" value="two" id="choice-2">
-			            <label for="choice-2">Two</label>
-			            <input type="radio" name="view" value="three" id="choice-3">
-			            <label for="choice-3">Three3</label>
-			        </div>
-			    </fieldset>
-			</form>
+			<a href="#buttonpanel" class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-btn-icon-left ui-icon-bars">Actions</a>
+
+			<div class="ui-field-contain">
+				<label for="currentview" class="select">Current View: </label>
+				<select name="currentview" id="currentview" onchange="javascript:change_view(this.form, '4', '4');" data-mini="true">
+					<option value="">STANDARD VIEWS:</option>
+					<option value="mine">&nbsp;&nbsp;Entries by me</option>
+					<option value="group">&nbsp;&nbsp;Entries by all users in my group(s)</option>
+					<option value="all" selected="">&nbsp;&nbsp;Entries by all users in all groups</option>
+					<option value="">&nbsp;&nbsp;Entries by all users in...[pick groups]</option>
+				</select>
+			</div>
 
 			<!-- Trying out stuff with jQuery mobile -->
-			<h3>Swipe the green rectangle in the right direction to change its color:</h3>
+			<!-- <h3>Swipe the green rectangle in the right direction to change its color:</h3>
 			<div class="box" id="box_0_0"></div><br />
-			<div class="box" id="box_0_1"></div>
-
+			<div class="box" id="box_0_1"></div> -->
 
 <!-- Columns of stuff -->
 		<div data-role="content">
@@ -158,6 +175,8 @@
 					</div>
 				</div>
 
+
+
 	<script type="text/javascript">
 
 		// hide all cols except the first one on page load
@@ -181,8 +200,8 @@
   			// if we're on the leftmost col, we can't go to the left,
   			// so do nothing
   			if (col != 0) {
-  				$(".column" + arr[2]).hide();
-  				$(".column" + (col - 1)).show();
+  				$(".column" + arr[2]).hide("slow");
+  				$(".column" + (col - 1)).show("slow");
   			}
 		});
 
@@ -197,8 +216,8 @@
   			// so do nothing
   			var col = parseInt(arr[2]);
   			if (col != 2) {
-  				$(".column" + arr[2]).hide();
-  				$(".column" + (col + 1)).show();
+  				$(".column" + arr[2]).hide("slow");
+  				$(".column" + (col + 1)).show("slow");
   			}
 		});
 
@@ -222,16 +241,6 @@
   			}
 		});
 
-		// animation test - doesn't work!
-		$( "button" ).click(function() {
-			alert("button was clicked!");
-
-			// Test that we can grab the element and do something with it
-			//$("#animationtest").hide();
-
-  			$( "#animationtest" ).hide( "drop", { direction: "down" }, "slow" );
-		});
-
 	</script>
 
 	<style>
@@ -247,14 +256,6 @@
 	  	#box_0_1 {
 	  		display: none;
 	  	}
-
-	  	#animationtest {
-    		width: 100px;
-    		height: 100px;
-    		background: #ccc;
-    		border: 1px solid #000;
-  		}
-	  	
   	</style>
 
 </body>
