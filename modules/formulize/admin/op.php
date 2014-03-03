@@ -30,13 +30,22 @@
 // handles all operations requested through the UI
 // included in ui.php
 // depends on declarations in ui.php file!!
-
+global $xoopsDB;
 include_once "formindex.php";
 
+$myCol = q("SELECT * FROM ". $xoopsDB->prefix("formulize"). " LIMIT 1");
+//var_dump($myCol[0]);
+if(!isset($myCol[0]["ele_list_order"])){
+
+//Alter table `i73297b8d_formulize` ADD `ele_order_list` smallint (5)
+  $sql=$xoopsDB->query("Alter table ".$xoopsDB->prefix("formulize")." ADD `ele_list_order` smallint(5)");
+  var_dump($sql);
+}else{
+  print "nope";
+}
+
 ob_start();
-
 if(isset($_GET['op'])) {
-
   switch($_GET['op']) {
     case "delete":
       deleteForm($_GET['fid']);
