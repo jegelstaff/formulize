@@ -298,6 +298,9 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/screen_graph_options.html',
 	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_graph_cases.html',
+	'description' => '');
 
 //	Module Configs
 // $xoopsModuleConfig['t_width']

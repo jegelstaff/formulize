@@ -26,45 +26,50 @@
 		<div class="form-item">
 			<label for="screens-orientation">Orientation</label>
 			<select id="screens-orientation" size="1" name="screens-orientation">
-				<option value="horizontal"<{if $content.orientation eq 'horizontal'}> selected="selected"<{/if}>>Horizontal</option>
-				<option value="vertical"<{if $content.orientation eq 'vertical'}> selected="selected"<{/if}>>Vertical</option>
+				<option value="horizontal"<{if $content.orientation eq 'horizontal'}> selected="selected"<{/if}>>Bar expands upwards</option>
+				<option value="vertical"<{if $content.orientation eq 'vertical'}> selected="selected"<{/if}>>Bar expands sideways</option>
 			</select>
 		</div>
 	</fieldset>
 	<fieldset>
 		<legend>Background Color</legend>
 		<div class="form-item">
-			<label for="screens-bgr">R</label>
-			<input type="text" id="screens-bgr" name="screens-bgr" value="<{$content.bgr}>"/>
+			<input id="bgc">
 		</div>
-		<div class="form-item">
-			<label for="screens-bgg">G</label>
-			<input type="text" id="screens-bgg" name="screens-bgg" value="<{$content.bgg}>"/>
-		</div>
-		<div class="form-item">
-			<label for="screens-bgb">B</label>
-			<input type="text" id="screens-bgb" name="screens-bgb" value="<{$content.bgb}>"/>
-		</div>
+		<input type="text" id="screens-bgr" name="screens-bgr" value="<{$content.bgr}>" hidden=true/>
+		<input type="text" id="screens-bgg" name="screens-bgg" value="<{$content.bgg}>" hidden=true/>
+		<input type="text" id="screens-bgb" name="screens-bgb" value="<{$content.bgb}>" hidden=true/>
 	</fieldset>
 	<fieldset>
 		<legend>Bar Color</legend>
 		<div class="form-item">
-			<label for="screens-barr">R</label>
-			<input type="text" id="screens-barr" name="screens-barr" value="<{$content.barr}>"/>
+			<input id="barc">
 		</div>
-		<div class="form-item">
-			<label for="screens-barg">G</label>
-			<input type="text" id="screens-barg" name="screens-barg" value="<{$content.barg}>"/>
-		</div>
-		<div class="form-item">
-			<label for="screens-barb">B</label>
-			<input type="text" id="screens-barb" name="screens-barb" value="<{$content.barb}>"/>
-		</div>
+		<input type="text" id="screens-barr" name="screens-barr" value="<{$content.barr}>" hidden=true/>
+		<input type="text" id="screens-barg" name="screens-barg" value="<{$content.barg}>" hidden=true/>
+		<input type="text" id="screens-barb" name="screens-barb" value="<{$content.barb}>" hidden=true/>
 	</fieldset>
 </div>
 
 </form>
 
 <script type="text/javascript">
+	var bgcp = new jscolor.color(document.getElementById('bgc'), {});
+	bgcp.fromRGB(document.getElementById('screens-bgr').value / 255.0, document.getElementById('screens-bgg').value / 255.0, document.getElementById('screens-bgb').value / 255.0);
+	var barcp = new jscolor.color(document.getElementById('barc'), {});
+	barcp.fromRGB(document.getElementById('screens-barr').value / 255.0, document.getElementById('screens-barg').value / 255.0, document.getElementById('screens-barb').value / 255.0);
+	
+	bgcp.onImmediateChange = function() {
+		document.getElementById('screens-bgr').value = Math.round(bgcp.rgb[0] * 255);
+		document.getElementById('screens-bgg').value = Math.round(bgcp.rgb[1] * 255);
+		document.getElementById('screens-bgb').value = Math.round(bgcp.rgb[2] * 255);
+	}
+	
+	barcp.onImmediateChange = function() {
+		document.getElementById('screens-barr').value = Math.round(barcp.rgb[0] * 255);
+		document.getElementById('screens-barg').value = Math.round(barcp.rgb[1] * 255);
+		document.getElementById('screens-barb').value = Math.round(barcp.rgb[2] * 255);
+	}
+	
 	$("#<{$content.reloadblank}>").attr('checked', true);
 </script>

@@ -26,6 +26,7 @@
 		    <option value="listOfEntries"<{if $content.type eq 'listOfEntries'}> selected="selected"<{/if}>>List of entries</option>
 		    <option value="form"<{if $content.type eq 'form'}> selected="selected"<{/if}>>Regular form</option>
 		    <option value="multiPage"<{if $content.type eq 'multiPage'}> selected="selected"<{/if}>>Multi page form</option>
+			<option value="graph"<{if $content.type eq 'graph'}> selected="selected"<{/if}>>Graph</option>
 	    </select>
 			<{if $content.sid neq 'new'}>
 				<input type="hidden" name="screens-type" value="<{$content.type}>">
