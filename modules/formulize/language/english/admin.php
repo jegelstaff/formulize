@@ -782,4 +782,5 @@ define("_AM_FORMULIZE_CLONING_NOCHANGE", "keep it linked to its current source")
 
 // Graph Screen Definitions
 define("_AM_GRAPH_SCREEN_OPTIONS", "Graph Options");
+define("_AM_GRAPH_SCREEN_CASES", "Graph Cases");
 ?>
