@@ -96,7 +96,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 // not in use now, see note below with the function
 //cleanupNots($fid, $uid, $mid);
 
-$cols = getAllColList($fid, "", $groups); // notifications can only be set on a single form at a time
+$cols = getAllColList($fid, "", $groups,"ele_list_order"); // notifications can only be set on a single form at a time
 
 $canSetNots = $gperm_handler->checkRight("set_notifications_for_others", $fid, $groups, $mid);
 

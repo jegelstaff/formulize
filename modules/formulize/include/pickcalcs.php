@@ -303,7 +303,7 @@ Note:  calculation columns (difference between order date and ship date for this
 // convert URL passed calcs to $_POST array
 setURLCalcs();
 
-$cols = getAllColList($fid, $frid, $groups);
+$cols = getAllColList($fid, $frid, $groups,"ele_list_order");
 
 $deleted = handleDelete(); // returns 1 if a deletion was made, 0 if not.  
 

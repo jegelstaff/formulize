@@ -193,7 +193,7 @@ include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
 
 $returned = readQueryItems();
 
-$cols = getAllColList($fid, $frid, $groups);
+$cols = getAllColList($fid, $frid, $groups,"ele_list_order");
 
 $returned = handleDelete($returned[0], $returned[1]); // returns 1 if a deletion was made, 0 if not.  
 $items = $returned[0];

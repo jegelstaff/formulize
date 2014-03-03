@@ -111,7 +111,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 		exit;
 	}
 
-	$cols = getAllColList($fid, $frid, $groups); // $groups indicates that we only want columns which are visible to the current user
+	$cols = getAllColList($fid, $frid, $groups,"ele_list_order"); // $groups indicates that we only want columns which are visible to the current user
 
 	// handle metadata columns
 	// UID
