@@ -533,6 +533,21 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		    }
         }
 
+        // if ele_list_order doesn't exist, create it. The initial values can be the same as ele_order
+        $sql = $xoopsDB->query("show columns from ".$xoopsDB->prefix("formulize")." where Field = 'ele_list_order'");
+        if (0 == $xoopsDB->getRowsNum($sql)) {
+		    $sql = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_list_order` smallint(5)";
+		    if($udres1 = $xoopsDB->query($sql)) {
+			$sql = "update " . $xoopsDB->prefix("formulize") . " set `ele_list_order` = `ele_order`";
+			$udres2 = $xoopsDB->query($sql);
+		    }
+		    if(!$udres1 OR !$udres2) {
+			print "Error updating relationships with element_list_order.  SQL dump:<br>" . $thissql . "<br>".mysql_error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.";
+		    } else {
+			print "Updating relationships with element list order.  result: OK<br>";
+		    }
+        }
+
 		
 		// CONVERTING EXISTING TEMPLATES IN DB TO TEMPLATE FILES
 		$screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/";
