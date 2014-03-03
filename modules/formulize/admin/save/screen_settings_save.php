@@ -144,7 +144,7 @@ if($isNew) {
     $screen_handler->writeTemplateToFile("<?php\n", 'bottomtemplate', $screen);
   } elseif($screens['type'] == "listOfEntries") {
     $screen_handler->writeTemplateToFile("<?php\n".$screen->getTemplate('toptemplate'), 'toptemplate', $screen);
-    $screen_handler->writeTemplateToFile("<?php\n", 'listtemplate', $screen);
+    $screen_handler->writeTemplateToFile("<?php\n".$screen->getTemplate('listtemplate'), 'listtemplate', $screen);
     $screen_handler->writeTemplateToFile("<?php\n", 'bottomtemplate', $screen);
   }
   
