@@ -403,6 +403,11 @@ if($screen_id != "new" && $settings['type'] == 'graph') {
   $graph_options['barr'] = $screen->getVar('barr');
   $graph_options['barg'] = $screen->getVar('barg');
   $graph_options['barb'] = $screen->getVar('barb');
+  $graph_options['ops'] = $screen->getVar('ops');
+  list($labelelem, $selectedlabelelem) = createFieldList($screen->getVar('labelelem'), false, false, "screens-labelelem", "Choose one");
+  $graph_options['labelelem'] = $labelelem->render();
+  list($dataelem, $selecteddataelem) = createFieldList($screen->getVar('dataelem'), false, false, "screens-dataelem", "Choose one");
+  $graph_options['dataelem'] = $dataelem->render();
 }
 
 // common values should be assigned to all tabs
@@ -475,6 +480,10 @@ if($screen_id != "new" && $settings['type'] == 'graph') {
   $adminPage['tabs'][2]['name'] = _AM_GRAPH_SCREEN_OPTIONS;
   $adminPage['tabs'][2]['template'] = "db:admin/screen_graph_options.html";
   $adminPage['tabs'][2]['content'] = $graph_options + $common;
+  
+  $adminPage['tabs'][3]['name'] = _AM_GRAPH_SCREEN_CASES;
+  $adminPage['tabs'][3]['template'] = "db:admin/screen_graph_cases.html";
+  $adminPage['tabs'][3]['content'] = $graph_options + $common;
 }
 
 $adminPage['pagetitle'] = _AM_FORM_SCREEN.$screenName;

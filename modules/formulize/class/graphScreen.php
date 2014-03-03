@@ -20,6 +20,9 @@ class formulizeGraphScreen extends formulizeScreen {
 		$this->initvar("barr", XOBJ_DTYPE_INT);
 		$this->initvar("barg", XOBJ_DTYPE_INT);
 		$this->initvar("barb", XOBJ_DTYPE_INT);
+		$this->initvar("ops", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+		$this->initvar("labelelem", XOBJ_DTYPE_INT);
+		$this->initvar("dataelem", XOBJ_DTYPE_INT);
 	}
 }
 
@@ -56,9 +59,9 @@ class formulizeGraphScreenHandler extends formulizeScreenHandler {
 	    $screen->setVar('dobr', 0);
 		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
 		if (!$update) {
-            $sql = sprintf("INSERT INTO %s (sid, width, height, orientation, bgr, bgg, bgb, barr, barg, barb) VALUES (%u, %u, %u, %s, %u, %u, %u, %u, %u, %u)", $this->db->prefix('formulize_screen_graph'), $screen->getVar('sid'), $screen->getVar('width'), $screen->getVar('height'), $this->db->quoteString($screen->getVar('orientation')), $screen->getVar('bgr'), $screen->getVar('bgg'), $screen->getVar('bgb'), $screen->getVar('barr'), $screen->getVar('barg'), $screen->getVar('barb'));
+            $sql = sprintf("INSERT INTO %s (sid, width, height, orientation, bgr, bgg, bgb, barr, barg, barb, ops, labelelem, dataelem) VALUES (%u, %u, %u, %s, %u, %u, %u, %u, %u, %u, %s, %u, %u)", $this->db->prefix('formulize_screen_graph'), $screen->getVar('sid'), $screen->getVar('width'), $screen->getVar('height'), $this->db->quoteString($screen->getVar('orientation')), $screen->getVar('bgr'), $screen->getVar('bgg'), $screen->getVar('bgb'), $screen->getVar('barr'), $screen->getVar('barg'), $screen->getVar('barb'), $screen->getVar('ops'));
         } else {
-            $sql = sprintf("UPDATE %s SET width = %u, height = %u, orientation = %s, bgr = %u, bgg = %u, bgb = %u, barr = %u, barg = %u, barb = %u WHERE sid = %u", $this->db->prefix('formulize_screen_graph'), $screen->getVar('width'), $screen->getVar('height'), $this->db->quoteString($screen->getVar('orientation')), $screen->getVar('bgr'), $screen->getVar('bgg'), $screen->getVar('bgb'), $screen->getVar('barr'), $screen->getVar('barg'), $screen->getVar('barb'), $screen->getVar('sid'));
+            $sql = sprintf("UPDATE %s SET width = %u, height = %u, orientation = %s, bgr = %u, bgg = %u, bgb = %u, barr = %u, barg = %u, barb = %u, ops = %s, labelelem = %u, dataelem = %u WHERE sid = %u", $this->db->prefix('formulize_screen_graph'), $screen->getVar('width'), $screen->getVar('height'), $this->db->quoteString($screen->getVar('orientation')), $screen->getVar('bgr'), $screen->getVar('bgg'), $screen->getVar('bgb'), $screen->getVar('barr'), $screen->getVar('barg'), $screen->getVar('barb'), $this->db->quoteString($screen->getVar('ops')), $screen->getVar('labelelem'), $screen->getVar('dataelem'), $screen->getVar('sid'));
         }
         $result = $this->db->query($sql);
         if (!$result) {
@@ -90,46 +93,25 @@ class formulizeGraphScreenHandler extends formulizeScreenHandler {
 	// THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN
 	// $screen is a screen object
 	function render($screen, $entry, $settings = "") { // $settings is used internally to pass list of entries settings back and forth to editing screens
-		/*
-		if(!is_array($settings)) {
-				$settings = "";
-		}
-		$formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
-		$mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
-		$donedest = $screen->getVar("donedest");
-		$savebuttontext = $screen->getVar("savebuttontext");
-		$savebuttontext = $savebuttontext ? $savebuttontext : _formulize_SAVE;
-		$alldonebuttontext = $screen->getVar("alldonebuttontext");
-		$alldonebuttontext = $alldonebuttontext ? $alldonebuttontext : "{NOBUTTON}";
-		$displayheading = $screen->getVar('displayheading');
-		$displayheading = $displayheading ? "" : "all"; // if displayheading is off, then need to pass the "all" keyword to supress all the headers
-		$reloadblank = $screen->getVar('reloadblank');
-		// figure out the form's properties...
-		// if it's more than one entry per user, and we have requested reload blank, then override multi is 0, otherwise 1
-		// if it's one entry per user, and we have requested reload blank, then override multi is 1, otherwise 0
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($screen->getVar('fid'));
-		if($formObject->getVar('single')=="off" AND $reloadblank) { 
-			$overrideMulti = 0;
-		} elseif($formObject->getVar('single')=="off" AND !$reloadblank) {
-			$overrideMulti = 1;
-		} elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND $reloadblank) {
-			$overrideMulti = 1;
-		} elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND !$reloadblank) {
-			$overrideMulti = 0;
-		} else {
-			$overrideMulti = 0;
-		}
-		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-		displayForm($formframe, $entry, $mainform, $donedest, array(0=>$alldonebuttontext, 1=>$savebuttontext),
-            $settings, $displayheading, "", $overrideMulti, "", 0, 0, 0, $screen);
-		*/
+		$bgc = [
+			"R" => $screen->getVar('bgr'),
+			"G" => $screen->getVar('bgg'),
+			"B" => $screen->getVar('bgb')
+		];
+		$barc = [
+			"R" => $screen->getVar('barr'),
+			"G" => $screen->getVar('barg'),
+			"B" => $screen->getVar('barb')
+		];
 		$options = [
 			"width" => $screen->getVar('width'),
 			"height" => $screen->getVar('height'),
+			"orientation" => $screen->getVar('orientation'),
+			"backgroundcolor" => $bgc,
+			"barcolor" => $barc
 		];
 		include_once XOOPS_ROOT_PATH."/modules/formulize/include/graphdisplay.php";
-		displayGraph('Bar', $screen->getVar('fid'), $screen->getVar('frid'), 2, 2, 'sum', $options);
+		displayGraph('Bar', $screen->getVar('fid'), $screen->getVar('frid'), $screen->getVar('labelelem'), $screen->getVar('dataelem'), $screen->getVar('ops'), $options);
 	}
 }
 ?>

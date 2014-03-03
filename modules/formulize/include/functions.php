@@ -2156,9 +2156,8 @@ function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $fi
                 // write formname: caption to the master array that will be passed to the select box.
                 $totalcaptionlist[$captionlistindex] = printSmart(trans($rowformlist[1])) . ": " . printSmart(trans($rowfieldnames[0]), 50);
                 $totalvaluelist[$captionlistindex] = $rowfieldnames[1];
-
                 // if this is the selected entry
-                if ($val == $totalvaluelist[$captionlistindex] OR $val == $rowformlist[0] . "#*=:*" . $rowfieldnames[2]) {
+                if ($val == $totalvaluelist[$captionlistindex] OR $val === ($rowformlist[0] . "#*=:*" . $rowfieldnames[2])) {
                     $defaultlinkselection = $captionlistindex;
                 }
                 $captionlistindex++;
