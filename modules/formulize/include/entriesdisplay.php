@@ -703,8 +703,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
         include XOOPS_ROOT_PATH . "/modules/pageworks/index.php";
         return;
       } else {
-				//TODO AB Need to understand how the current fallback for no screen works. Creating a phantom screen will likely change
-				//this section. 
 				$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 				if($_POST['overridescreen']) {
 					$screenToLoad = intval($_POST['overridescreen']);
