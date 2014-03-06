@@ -2553,7 +2553,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
 // can take an entry in a framework and make copies of all relevant entries in all relevant forms
 // note that the same relative linked selectbox relationships are preserved in cloned framework entries, but links based on common values and uids are not modified at all. this might not be desired behaviour in all cases!!!
 // entries in single-entry forms are never cloned
-function cloneEntry($entry, $frid, $fid, $copies) {
+function cloneEntry($entry, $frid, $fid, $copies, $callback = null) {
     global $xoopsDB, $xoopsUser;
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
     $lsbpairs = array();
@@ -2598,7 +2598,7 @@ function cloneEntry($entry, $frid, $fid, $copies) {
                 if (!isset($dataHandlers[$fid])) {
                     $dataHandlers[$fid] = new formulizeDataHandler($fid);
                 }
-                $clonedEntryId = $dataHandlers[$fid]->cloneEntry($thisentry);
+                $clonedEntryId = $dataHandlers[$fid]->cloneEntry($thisentry, $callback);
                 $dataHandlers[$fid]->setEntryOwnerGroups(getEntryOwner($thisentry, $fid), $clonedEntryId);
                 $entryMap[$fid][$thisentry][] = $clonedEntryId;
             }

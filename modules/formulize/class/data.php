@@ -144,32 +144,34 @@ class formulizeDataHandler  {
 	}
 
 	// this function makes a copy of an entry in one form
-	function cloneEntry($entry) {
+	function cloneEntry($entry, $callback = null) {
 		if(!is_numeric($entry)) {
 			return false;
 		}
+
 		global $xoopsDB;
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $formObject = $form_handler->get($this->fid);
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($this->fid);
 		$sql = "SELECT * FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = $entry";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
 		$data = $xoopsDB->fetchArray($res);
-		$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " SET ";
-		$start = 1;
-		foreach($data as $field=>$value) {
-			if($field == "entry_id") { continue; }
-			if(!$start) { $sql .= ", "; }
-			$start = 0;
-			$sql .= "`$field` = \"" . formulize_escape($value) . "\"";
+
+		if (function_exists($callback)) {
+			$data = $callback($data);
 		}
-		if(!$res = $xoopsDB->query($sql)) {
-			return false;
-		}
-		return $xoopsDB->getInsertId();
+
+		unset($data['entry_id']);
+		unset($data['creation_datetime']);
+		unset($data['mod_datetime']);
+		unset($data['creation_uid']);
+		unset($data['mod_uid']);
+		global $xoopsUser;
+		return $this->writeEntry("new", $data, $xoopsUser, true, true);
 	}
-	
+
+
 	// this function looks in a particular entry in a particular form, and finds the entries it is pointing at, and then finds the new entries that it should be pointing at, and reassigns the values to match
 	// intended to be called once per pair of linked selectboxes involved in an entry cloning process
 	function reassignLSB($sourceFid, $lsbElement, $entryMap) {
