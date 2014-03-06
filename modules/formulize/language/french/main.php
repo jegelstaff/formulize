@@ -154,6 +154,7 @@ define("_formulize_ACTDETAILS", "Informations sur le compte:");
 define("_formulize_ADD", "Ajouter");
 define("_formulize_ADDNEW_SUBFORM", "Ajouter une nouvelle entrée");
 define("_formulize_ADD_ENTRIES", "ligne(s)");
+define("_formulize_SUBFORM_SIMPLE_BUTTON", "Display a simple button, using the text above, for adding one entry at a time");
 define("_formulize_ADD_HELP", "Pour ajouter des cases, appuyez sur le bouton <i>Ajouter</i>.");
 define("_formulize_ADD_HELP2", "Voir une entrée entière en cliquant le bouton <i>Vue</i>.");
 define("_formulize_ADD_HELP3", "Update an entry by changing the values on the right.");

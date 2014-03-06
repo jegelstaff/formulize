@@ -41,6 +41,7 @@
         <div class="form-item">
             <p>What text should be used to describe each entry? ie: Add x Entries, Add x Participants, Add x Activities, etc.<br />
             &nbsp;&nbsp;&nbsp;Add x <input type="text" name="elements-ele_value[9]" value="<{if $content.ele_value[9]}><{$content.ele_value[9]}><{else}><{$smarty.const._formulize_ADD_ENTRIES}><{/if}>" /></p>
+            <input type="checkbox" id="elements-ele_value[simple_add_one_button]" name="elements-ele_value[simple_add_one_button]" <{if $content.ele_value.simple_add_one_button}>checked="checked"<{/if}> value="1"/> <label for="elements-ele_value[simple_add_one_button]"><{$smarty.const._formulize_SUBFORM_SIMPLE_BUTTON}></label>
         </div>
 	</fieldset>
     </div>
