@@ -61,6 +61,49 @@ if($orderGroups == "alpha") {
     ksort($groups);
 }
 
+// Use fid 1 *temporary*
+$fid = 1;
+
+// Get all the permissions for the selected groups for this form
+$gperm_handler =& xoops_gethandler('groupperm');
+$formulize_permHandler = new formulizePermHandler($fid);
+$formObject = $form_handler->get($fid);
+$filterSettings = $formObject->getVar('filterSettings');
+$groupperms = array();
+$groupfilters = array();
+$i = 0;
+foreach($selectedGroups as $thisGroup) {
+	// Get all the permissions this group has on this form.
+  	$criteria = new CriteriaCompo(new Criteria('gperm_groupid', $thisGroup));
+  	$criteria->add(new Criteria('gperm_itemid', $fid));
+  	$criteria->add(new Criteria('gperm_modid', getFormulizeModId()));
+  	$perms = $gperm_handler->getObjects($criteria, true);
+    
+    $groupObject = $member_handler->getGroup($thisGroup);
+    $groupperms[$i]['name'] = $groupObject->getVar('name');
+    $groupperms[$i]['id'] = $groupObject->getVar('groupid');
+  	foreach($perms as $perm) {
+        $groupperms[$i][$perm->getVar('gperm_name')] = " checked";
+  	}
+    // Group-specific scope.
+    $scopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groupObject->getVar('groupid'));
+    if($scopeGroups===false) {
+        $groupperms[$i]['groupscope_choice'][0] = " selected";
+      } else {
+        foreach($scopeGroups as $thisScopeGroupId) {
+          $groupperms[$i]['groupscope_choice'][$thisScopeGroupId] = " selected";
+        }
+    }
+    // Per-group filters.
+    $filterSettingsToSend = isset($filterSettings[$thisGroup]) ? $filterSettings[$thisGroup] : "";
+    $htmlFormId = $tableform ? "form-2" : "form-3"; // the form id will vary depending on the tabs, and tableforms have no elements tab
+    $groupperms[$i]['groupfilter'] = formulize_createFilterUI($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, "oom");
+    $groupperms[$i]['hasgroupfilter'] = $filterSettingsToSend ? " checked" : "";
+    $i++;
+    
+  	unset($criteria);
+  }
+
 // Common values are assigned to all tabs.
 $common['aid'] = $aid;
 
