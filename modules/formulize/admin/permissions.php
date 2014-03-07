@@ -68,11 +68,6 @@ if($orderGroups == "alpha") {
     ksort($groups);
 }
 
-$breadcrumbtrail[1]['url'] = "page=home";
-$breadcrumbtrail[1]['text'] = "Home";
-$breadcrumbtrail[2]['url'] = "page=permissions&aid=$aid";
-$breadcrumbtrail[2]['text'] = $appName;
-
 // common values should be assigned to all tabs
 $common['aid'] = $aid;
 
@@ -80,3 +75,8 @@ $adminPage['tabs'][1]['name'] = "Multiple Form Permissions";
 $adminPage['tabs'][1]['template'] = "db:admin/multiple_permissions.html";
 $adminPage['tabs'][1]['content'] = $common;
 $adminPage['needsave'] = true;
+
+$breadcrumbtrail[1]['url'] = "page=home";
+$breadcrumbtrail[1]['text'] = "Home";
+$breadcrumbtrail[2]['url'] = "page=application&aid=$aid&tab=forms";
+$breadcrumbtrail[2]['text'] = $appName;
