@@ -12,6 +12,7 @@ define("_AM_APP_RELATIONSHIPS_DELETE_CONFIRM","Are you sure you want to delete t
 define("_AM_APP_RELATIONSHIPS","Relationships");
 define("_AM_APP_FORMWITHNOAPP","Forms that don't belong to an application");
 define("_AM_APP_SCREENS","Screens");
+define("_AM_APP_MENU_ENTRIES"," Menu Entries");
 define("_AM_APP_NEWFORM","New form");
 define("_AM_APP_USETITLE","Use the form's title");
 define("_AM_APP_NAMEQUESTION","What is the name of this Application?");
