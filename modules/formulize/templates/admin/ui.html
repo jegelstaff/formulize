@@ -182,7 +182,7 @@ $(document).ready(function() {
   
   function sendFormData(thisformdata, ele_id) {
     if(!ele_id) { ele_id = 0 }
-    $.post("<{$xoops_url}>/save.php?ele_id="+ele_id, $(thisformdata).serialize(), function(data) {
+    $.post("<{$xoops_url}>/modules/formulize/admin/save.php?ele_id="+ele_id, $(thisformdata).serialize(), function(data) {
       saveCounter = saveCounter + 1;
       if(data) {
         if(data.substr(0,10)=="/* eval */") {
@@ -199,6 +199,8 @@ $(document).ready(function() {
         if(newhandle) {
           $("[name=original_handle]").val(newhandle);
         }
+
+        //alert(redirect);
         if(redirect) {
           eval(redirect);
         } else {

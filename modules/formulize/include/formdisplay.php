@@ -209,12 +209,7 @@ class formulize_themeForm extends XoopsThemeForm {
 		}
 
 		$editButton = 'edit_' . $thisEleName;
-		//$returnButton = '<a href="../../plugins/slidepanel/external.html" data-slidepanel="panel"><input type="button" class="formulize_adminEditButton" name="editx" id="' . $editButton . '" value="Edit" onclick="javascript:adminEdit(' . $thisEleName . ');"></a>';
-		//$returnButton = '<a href="../../modules/formulize/templates/admin/ui.html" data-slidepanel="panel"><input type="button" class="formulize_adminEditButton" name="editx" id="' . $editButton . '" value="Edit" onclick="javascript:adminEdit(' . $thisEleName . ');"></a>';
 		$returnButton = '<a href="../../modules/formulize/admin/admin_editor.php?' . 'ele_name=' . $thisEleName . '" data-slidepanel="panel"><input type="button" class="formulize_adminEditButton" name="editx" id="' . $editButton . '" value="Edit"></a>';
-
-		//$returnButton = '<a href="../../modules/formulize/admin/ui.php?ele_id=1&aid=0&page=element" data-slidepanel="panel"><input type="button" class="formulize_adminEditButton" name="editx" id="' . $editButton . '" value="Edit"></a>';
-
 
 		return $returnButton;
 	}
