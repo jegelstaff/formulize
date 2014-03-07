@@ -184,13 +184,13 @@ if($aid > 0) {
 }
 
 $i++;
-$adminPage['tabs'][$i]['name'] = "Forms";
+$adminPage['tabs'][$i]['name'] = _AM_APP_FORMS;
 $adminPage['tabs'][$i]['template'] = "db:admin/application_forms.html";
 $adminPage['tabs'][$i]['content'] = $common;
 $adminPage['tabs'][$i]['content']['forms'] = $formsInApp;
 
 $i++;
-$adminPage['tabs'][$i]['name'] = "Screens";
+$adminPage['tabs'][$i]['name'] = _AM_APP_SCREENS;
 $adminPage['tabs'][$i]['template'] = "db:admin/application_screens.html";
 $adminPage['tabs'][$i]['content'] = $common;
 $adminPage['tabs'][$i]['content']['screens'] = $all_screens;
@@ -202,7 +202,7 @@ $adminPage['tabs'][$i]['content'] = $common;
 $adminPage['tabs'][$i]['content']['relationships'] = $relationships; 
 
 $i++;
-$adminPage['tabs'][$i]['name'] = " Menu Entries";
+$adminPage['tabs'][$i]['name'] = _AM_APP_MENU_ENTRIES;
 $adminPage['tabs'][$i]['template'] = "db:admin/application_menu_entries.html";
 $adminPage['tabs'][$i]['content'] = $options + $common;
 $adminPage['tabs'][$i]['content']['links'] = $menulinks;
