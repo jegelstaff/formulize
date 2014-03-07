@@ -64,10 +64,10 @@ if($orderGroups == "alpha") {
 // Common values are assigned to all tabs.
 $common['aid'] = $aid;
 
-$adminPage['tabs'][1]['name'] = "Multiple Form Permissions";
+$adminPage['tabs'][1]['name'] = _AM_MULTIPLE_FORM_PERMISSIONS;
 $adminPage['tabs'][1]['template'] = "db:admin/multiple_permissions.html";
 $adminPage['tabs'][1]['content'] = $common;
-$adminPage['tabs'][$i]['content']['groups'] = $groups;
+$adminPage['tabs'][1]['content']['groups'] = $groups;
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";
