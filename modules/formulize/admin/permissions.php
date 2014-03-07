@@ -27,31 +27,24 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file gets all the data about applications, so we can display the Settings/forms/relationships tabs for applications
-
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
+// Listen for $_GET['aid'] so we can limit this to just the application that is requested.
+$aid = intval($_GET['aid']);
+$application_handler = xoops_getmodulehandler('applications','formulize');
+// Get a list of all applications
+$allApps = $application_handler->getAllApplications();
+
 if(0 == $aid = intval($_GET['aid'])) {
-    $appName = "Forms with no app";
+    $appName = _AM_APP_FORMWITHNOAPP;
 } else {
-    $application_handler = xoops_getmodulehandler('applications', 'formulize');
     $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
     $appObject = $application_handler->get($aid);
     $appName = $appObject->getVar('name');
 }
 
-// retrieve the names and ids of all forms, and create the form options for the Add Form section
-$formsq = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id") . " ORDER BY desc_form";
-$res = $xoopsDB->query($formsq);
-$i = 0;
-while($array = $xoopsDB->fetchArray($res)) {
-    $common['formoptions'][$i]['value'] = $array['id_form'];
-    $common['formoptions'][$i]['name'] = $array['desc_form'];
-    $i++;
-}
-
-// get the list of groups
+// Get a list of all groups.
 $member_handler = xoops_gethandler('member');
 $allGroups = $member_handler->getGroups();
 $groups = array();
@@ -68,12 +61,13 @@ if($orderGroups == "alpha") {
     ksort($groups);
 }
 
-// common values should be assigned to all tabs
+// Common values are assigned to all tabs.
 $common['aid'] = $aid;
 
 $adminPage['tabs'][1]['name'] = "Multiple Form Permissions";
 $adminPage['tabs'][1]['template'] = "db:admin/multiple_permissions.html";
 $adminPage['tabs'][1]['content'] = $common;
+$adminPage['tabs'][$i]['content']['groups'] = $groups;
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";
