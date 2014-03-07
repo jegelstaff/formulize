@@ -2111,445 +2111,453 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
         $thisBaseQuery = $baseQuery;
       }
       
-			// figure out if the field is encrypted, and setup the calcElement accordingly
-			$calcElementMetaData = formulize_getElementMetaData($handle, true);
-			if($calcElementMetaData['ele_encrypt']) {
-				$calcElement = "AES_DECRYPT($fidAlias.`$handle`, '".getAESPassword()."')";
-			} else {
-				$calcElement = "$fidAlias.`$handle`";
-			}
-      
-      // figure out what to ask for for this calculation      
-      switch($calc) {
-        case "sum":
-          $select = "SELECT sum(tempElement) as $fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
-          break;
-        case "min":
-          $select = "SELECT min(tempElement) as $fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
-          break;
-        case "max":
-          $select = "SELECT max(tempElement) as $fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
-          break;
-        case "count":
-          $select = "SELECT count(tempElement) as count$fidAlias$handle, count(distinct(tempElement)) as distinct$fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
-          break;
-        case "avg":
-          $select = "SELECT avg(tempElement) as avg$fidAlias$handle, std(tempElement) as std$fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
-          $selectAvgCount = "SELECT tempElement as $fidAlias$handle, count(tempElement) as avgcount$fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
-          break;
-        case "per":
-          $select = "SELECT tempElement as $fidAlias$handle, count(tempElement) as percount$fidAlias$handle FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement ";
-	  include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php"; // need a function here later on
-          break;
-        default:
-          
-          break;
-      }
-            
-      // figure out the special where clause conditions that need to be added for this calculation
-      list($allowedValues, $excludedValues) = calcParseBlanksSetting($excludes[$cid]);
-        
-      $allowedWhere = "";  
-      if(count($allowedValues)>0) {
-        $start = true;
-        foreach($allowedValues as $value) {
-          if($start) {
-            $allowedWhere = " AND (";
-            $start = false;
-          } else {
-            $allowedWhere .= " OR ";
-          }
-          if($value === "{BLANK}") {
-            $allowedWhere .= "($calcElement='' OR $calcElement IS NULL)";
-          } else {
-            $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
-            $allowedWhere .= "$calcElement=";
-            $allowedWhere .= (is_numeric($value) AND $value !=0) ? $value : "'$value'";
-          }
-        }
-        if($allowedWhere) {
-          $allowedWhere .= ")";
-          // replace any LEFT JOIN on this form in the query with an INNER JOIN, since there are now search criteria for this form
-          if($handleFid =="xoopsusertable") {
-            $replacementTable = DBPRE . "users";
-          } else {
-            $replacementTable = DBPRE . "formulize_".$handleFormObject->getVar('form_handle');
-          }
-          $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable, "INNER JOIN " . $replacementTable, $thisBaseQuery);
-        }
-      }
-      
-      $excludedWhere = "";
-      if(count($excludedValues)>0) {
-        $start = true;
-        foreach($excludedValues as $value) {
-          if($start) {
-            $excludedWhere = " AND (";
-            $start = false;
-          } else {
-            $excludedWhere .= " AND ";
-          }
-          if($value === "{BLANK}") {
-            $excludedWhere .= "($calcElement!='' AND $calcElement IS NOT NULL)";
-          } else {
-            $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
-            $excludedWhere .= "$calcElement!=";
-            $excludedWhere .= (is_numeric($value) AND $value !=0) ? $value : "'$value'";
-          }
-        }
-        if($excludedWhere) {
-          $excludedWhere .= ")";
-          if($handleFid =="xoopsusertable") {
-            $replacementTable = DBPRE . "users";
-          } else {
-            $replacementTable = DBPRE . "formulize_".$handleFormObject->getVar('form_handle');
-          }
-          // replace any LEFT JOIN on this form in the query with an INNER JOIN, since there are now search criteria for this form
-          $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable, "INNER JOIN " . $replacementTable, $thisBaseQuery);
-        } 
-      }
-      
-      // figure out the group by clause (grouping is expressed as element ids right now)
-      //$groupings[$cid] .= "!@^%*17461!@^%*9402";
-      $theseGroupings = explode("!@^%*", $groupings[$cid]);
-      $groupByClause = "";
-      $groupByClauseMode = "";
-      $orderByClause = "";
-      $start = true;
-      $allGroupings = array();
-      foreach($theseGroupings as $thisGrouping) {
-        if($thisGrouping == "none" OR $thisGrouping == "") { continue; }
-        list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
-				// need to add awareness of encryption in here
-        if($start) {
-          $start = false;
-        } else {
-          $groupByClause .= ", ";
-        }
-        $allGroupings[] = "$galias$ghandle";
-        $groupByClause .= "$galias$ghandle";
-	if($ghandle == "creation_uid" OR $ghandle == "mod_uid") {
-		$select .= ", (SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".".$ghandle.") as $galias$ghandle";
-		$selectAvgCount .= ", (SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".".$ghandle.") as $galias$ghandle";
+	// figure out if the field is encrypted, and setup the calcElement accordingly
+	$calcElementMetaData = formulize_getElementMetaData($handle, true);
+	if($calcElementMetaData['ele_encrypt']) {
+		$calcElement = "AES_DECRYPT($fidAlias.`$handle`, '".getAESPassword()."')";
 	} else {
-		$select .= ", $galias.`$ghandle` as $galias$ghandle";
-	        $selectAvgCount .= ", $galias.`$ghandle` as $galias$ghandle";
+		$calcElement = "$fidAlias.`$handle`";
 	}
-      }
-      if($groupByClause) {
-        if($calc == "avg") {
-          $groupByClauseMode = " GROUP BY $fidAlias$handle, ".$groupByClause;
-          $groupByClause = " GROUP BY ".$groupByClause;
-        } elseif($calc == "per") {
-          $orderByClause = " ORDER BY $groupByClause, percount$fidAlias$handle DESC";
-          $groupByClause = " GROUP BY $fidAlias$handle, ".$groupByClause;
-        } else {
-          $groupByClause = " GROUP BY ".$groupByClause;
-        }
-      } elseif($calc == "avg") {
-        $groupByClauseMode = " GROUP BY $fidAlias$handle";
-      } elseif($calc == "per") {
-        $groupByClause = " GROUP BY $fidAlias$handle";
-        $orderByClause = " ORDER BY percount$fidAlias$handle DESC";
-      }
-    
-      // do the query
-      $calcResult = array();
-      $calcResultSQL = "$select $thisBaseQuery $allowedWhere $excludedWhere) as tempQuery $groupByClause $orderByClause ";
-      global $xoopsUser;
-      //if($xoopsUser->getVar('uid') == 1) {
-      //  print "$calcResultSQL<br><br>";
-      //}*/
-      $calcResultRes = $xoopsDB->query($calcResultSQL);
-      while($calcResultArray = $xoopsDB->fetchArray($calcResultRes)) {
-        $calcResult[] = $calcResultArray;
-      }
       
-      // package up the result into the results array that gets passed to the output function that dumps data to screen (suitable for templating at a later date)
-      $blankSettings[$cols[$i]][$calc] = $excludes[$cid];
-      $groupingSettings[$cols[$i]][$calc] = $groupings[$cid];
-      $groupingValues[$cols[$i]][$calc] = array(); // this is an array to store
-
-      if($calc == "per") {
-        $groupCounts = array();
-	$indivCounts = array();
-        $perindexer = -1;
-      }
-
-      foreach($calcResult as $calcId=>$thisResult) { // this needs to be moved inside or lower down in order to support two level grouping?  
-          
-          switch($calc) {
-            case "sum":
-              foreach($theseGroupings as $gid=>$thisGrouping) {
-                if($thisGrouping != "none" AND $thisGrouping != "") {
-                  list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
-                  $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
-                }
-              }
-              $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_SUM . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);                
-              break;
-            case "min":
-              foreach($theseGroupings as $gid=>$thisGrouping) {
-                if($thisGrouping != "none" AND $thisGrouping != "") {
-                  list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
-                  
-                  $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $handle, true);
-                }
-              }
-              $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MIN . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
-              break;
-            case "max":
-              foreach($theseGroupings as $gid=>$thisGrouping) {
-                if($thisGrouping != "none" AND $thisGrouping != "") {
-                  list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
-                  $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $handle, true);
-                }
-              }
-              $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MAX . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
-              break;
-            case "count":
-              foreach($theseGroupings as $gid=>$thisGrouping) {
-                if($thisGrouping != "none" AND $thisGrouping != "") {
-                  list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
-                  $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
-                }
-              }
-              $masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_NUMENTRIES . ": ".$thisResult["count$fidAlias$handle"]."<br>"._formulize_DE_CALC_NUMUNIQUE . ": " .$thisResult["distinct$fidAlias$handle"];
-              break;
-            case "avg":
-              foreach($theseGroupings as $gid=>$thisGrouping) {
-                if($thisGrouping != "none" AND $thisGrouping != "") {
-                  list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
-                  $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
-                }
-              }
-              $masterResults[$cols[$i]][$calc][$calcId] =  _formulize_DE_CALC_MEAN . ": ".formulize_numberFormat($thisResult["avg$fidAlias$handle"], $handle)."<br>" . _formulize_DE_CALC_STD . ": ".formulize_numberFormat($thisResult["std$fidAlias$handle"], $handle)."<br><br>";
-              break;
-            case "per":
-              $groupingWhere = array();
-              $groupingValuesFound = array();
-              foreach($theseGroupings as $gid=>$thisGrouping) {
-                if($thisGrouping != "none" AND $thisGrouping != "") {
-                  list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
-                  //print $thisResult["$galias$ghandle"] . "<br>";
-                  if($thisResult["$galias$ghandle"] == "") {
-                    $groupingWhere[] = "($galias.`$ghandle` = '".$thisResult["$galias$ghandle"]."' OR $galias.`$ghandle` IS NULL)";
-                    $groupingValuesFound[] = _formulize_BLANK_KEYWORD;
-                  } else {
-                    $groupingWhere[] = "$galias.`$ghandle` = '".$thisResult["$galias$ghandle"]."'";
-                    $groupingValuesFound[] = $thisResult["$galias$ghandle"];
-                  }
-                }
-              }
-              if(count($groupingWhere)>0) {
-                $groupingWhere = "AND (".implode(" AND ", $groupingWhere).")";
-              } else {
-                $groupingWhere = "";
-              }
-              if(!isset($groupCounts[$groupingWhere])) { // need to figure out the total count for this grouping setting
-                $perindexer++;
-                $groupingValues[$cols[$i]][$calc][$perindexer] = convertRawValuesToRealValues($groupingValuesFound, $ghandle, true);
-                $countSQL = "SELECT count($fidAlias.`$handle`) as count$fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere";
-                //print "$countSQL<br>";
-                $countRes = $xoopsDB->query($countSQL);
-                $countArray = $xoopsDB->fetchArray($countRes);
-                $countValue = $countArray["count$fidAlias$handle"];
-                $indexerToUse = $perindexer;
-                $groupCounts[$groupingWhere]['countValue'] = $countValue;
-                $groupCounts[$groupingWhere]['indexerToUse'] = $indexerToUse;
-                $start = true;
-              } else {
-                $indexerToUse = $groupCounts[$groupingWhere]['indexerToUse'];
-                $countValue = $groupCounts[$groupingWhere]['countValue'];
-              }
-              // need to figure out the individual counts of the constituent parts of this result
-              if(strstr($thisResult["$fidAlias$handle"], "*=+*:")) {
-              	$rawIndivValues = explode("*=+*:", $thisResult["$fidAlias$handle"]);
-              	array_shift($rawIndivValues); // current convention is to have the separator at the beginning of the string, so the exploded array will have a blank value at the beginning
-              } elseif($linkedMetaData = formulize_isLinkedSelectBox($cols[$i])) {
-                // convert the pointers for the linked selectbox values, to their source values
-                $sourceMeta = explode("#*=:*", $linkedMetaData[2]);
-                $data_handler = new formulizeDataHandler($sourceMeta[0]);
-                $rawIndivValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($thisResult["$fidAlias$handle"], ","))); // trip opening and closing commas and split by comma into an array
-              } else {
-                $rawIndivValues = array(0=>$thisResult["$fidAlias$handle"]);
-              }
-              foreach($rawIndivValues as $thisIndivValue) {
-                $indivCounts[$cols[$i]][$calc][$indexerToUse][trans(calcValuePlusText($thisIndivValue, $handle, $cols[$i], $calc, $indexerToUse))] += $thisResult["percount$fidAlias$handle"]; // add this count to the total count for this particular item
-                $groupCounts[$groupingWhere]['responseCountValue'] += $thisResult["percount$fidAlias$handle"]; // add this count to the total count for all items
-              }
-              break;
-          }
-        
-      }
+	// figure out the group by clause (grouping is expressed as element ids right now)
+	//$groupings[$cid] .= "!@^%*17461!@^%*9402";
+	$theseGroupings = explode("!@^%*", $groupings[$cid]);
+	$groupByClause = "";
+	$outerGroupingSelect = "";
+	$innerGroupingSelect = "";
+	$outerGroupingSelectAvgCount = "";
+	$innerGroupingSelectAvgCount = "";
+	$start = true;
+	$allGroupings = array();
+	foreach($theseGroupings as $thisGrouping) {
+	  if($thisGrouping == "none" OR $thisGrouping == "") { continue; }
+	  list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+	  // need to add awareness of encryption in here
+	  if($start) {
+	    $start = false;
+	  } else {
+	    $groupByClause .= ", ";
+	  }
+	  $allGroupings[] = "$galias$ghandle";
+	  $groupByClause .= "$galias$ghandle";
+	  if($ghandle == "creation_uid" OR $ghandle == "mod_uid") {
+		  $innerGroupingSelect .= ", (SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".".$ghandle.") as inner$galias$ghandle";
+		  $innerGroupingSelectAvgCount .= ", (SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".".$ghandle.") as inner$galias$ghandle";
+	  } else {
+		  $innerGroupingSelect .= ", $galias.`$ghandle` as inner$galias$ghandle";
+		  $innerGroupingSelectAvgCount .= ", $galias.`$ghandle` as inner$galias$ghandle";
+	  }
+	  $outerGroupingSelect .= ", inner$galias$ghandle as $galias$ghandle";
+	  $outerGroupingSelectAvgCount .= ", inner$galias$ghandle as $galias$ghandle";
+	}
       
-      if($calc=="avg") { // then do some extra stuff for the more complicated calculations
-        // work out the mode...
-        $modeCounts = array();
-        $modeQuery = "$selectAvgCount $thisBaseQuery $allowedWhere $excludedWhere ) as tempQuery $groupByClauseMode ORDER BY ";
-        if(count($allGroupings)>0) {
-          $modeQuery .= implode(", ",$allGroupings) . ", ";
-        }
-        $modeQuery .= "avgcount$fidAlias$handle DESC";
-        //print "$modeQuery<br>";
-        $modeRes = $xoopsDB->query($modeQuery);
-        $foundModeValue = array();
-        $modeIndexer = 0;
-        while($modeData = $xoopsDB->fetchArray($modeRes)) {
-          $foundValues = "";
-          $modeCountsTemp = array();
-          foreach($theseGroupings as $gid=>$thisGrouping) {
-            if($thisGrouping != "none" AND $thisGrouping != "") {
-              list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
-              $foundValues .= $modeData["$galias$ghandle"]."xyz";
-              $modeCountsTemp[$modeData["$galias$ghandle"]] = "$galias.`$ghandle`";
-            }
-          }
-          if(!isset($foundModeValue[$foundValues])) { // this is a new combination
-            $foundModeValue[$foundValues] = true;
-            if($foundValues) {
-              $modeCounts[$modeIndexer] = $modeCountsTemp;
-            } else {
-              $modeCounts[$modeIndexer]['none'] = 'none';
-            }
-            $masterResults[$cols[$i]][$calc][$modeIndexer] .= "REPLACE WITH MEDIAN"._formulize_DE_CALC_MODE . ": ".formulize_numberFormat($modeData["$fidAlias$handle"], $handle);
-            $modeIndexer++;
-          } 
-        }
-        // work out the percentiles including median
-        // calculating percentiles logic based on formula described here: http://onlinestatbook.com/chapter1/percentiles.html
-        // modeGrouping is the value that we are grouping by, modeHandle is the field to look for that value in
-        foreach($modeCounts as $thisGid=>$thisModeGrouping) {
-          $groupingWhere = "";
-          foreach($thisModeGrouping as $modeGrouping=>$modeHandle) {
-            // first we need to get the full count for this group of results
-            // need to convert grouping values into the where clause for the percentile calculations
-            $groupingWhere .= $modeHandle === 'none' ? "" : " AND ($modeHandle = '$modeGrouping')";
-          }
-          $countSQL = "SELECT count($fidAlias.`$handle`) as count$fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere";
-          //print "<br>$countSQL<br>";
-          $countRes = $xoopsDB->query($countSQL);
-          $countArray = $xoopsDB->fetchArray($countRes);
-          $countValue = $countArray["count$fidAlias$handle"];
-          $per25Limit = floor(($countValue+1)/4);
-          $per25Fraction = (($countValue+1)/4)-$per25Limit;
-          $per25Limit = $per25Limit-1; // since Limit statements interpret rank orders as starting from 0, must subtract 1
-          $per25Size = ($countValue+1) % 4 == 0 ? 1 : 2;
-          $per75Limit = floor((($countValue+1)*3)/4);
-          $per75Fraction = ((($countValue+1)*3)/4)-$per75Limit;
-          $per75Limit = $per75Limit-1; // since Limit statements interpret rank orders as starting from 0, must subtract 1
-          $per75Size = $per25Size;
-          $per50Limit = floor(($countValue+1)/2);
-          $per50Fraction = (($countValue+1)/2)-$per50Limit;
-          $per50Limit = $per50Limit-1; // since Limit statements interpret rank orders as starting from 0, must subtract 1
-          $per50Size = ($countValue+1) % 2 == 0 ? 1 : 2;
-          $per25SQL = "SELECT $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per25Limit,$per25Size";
-          //print "$per25SQL<Br><Br>";
-          $per75SQL = "SELECT $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per75Limit,$per75Size";
-          //print "$per75SQL<Br><Br>";
-          $per50SQL = "SELECT $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per50Limit,$per50Size";
-          //print "$per50SQL<Br><Br>";
-          $per25Res = $xoopsDB->query($per25SQL);
-          $per75Res = $xoopsDB->query($per75SQL);
-          $per50Res = $xoopsDB->query($per50SQL);
-          $allPerResults = _formulize_DE_CALC_MEDIAN25.": ";
-          $per25Results = "";
-          $per75Results = "";
-          $per50Results = "";
-          $start = true;
-          $perPair = array();
-          while($per25Array = $xoopsDB->fetchArray($per25Res)) {
-              $perPair[] = $per25Array["$fidAlias$handle"];
-              if(!$start) { $per25Results .= ", "; }
-              $start = false;
-              $per25Results .= formulize_numberFormat($per25Array["$fidAlias$handle"], $handle);
-          }
-          if(count($perPair) < 2) {
-            $allPerResults .= $per25Results;
-          } elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percentile point, so figure out the weighted average
-            $allPerResults .= formulize_numberFormat(($per25Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per25Results)";
-          } else { // multiple, equal values at median/percentile point
-            $allPerResults .= formulize_numberFormat($perPair[0], $handle);
-          }
-          $allPerResults .= "<br>";
-          $allPerResults .= _formulize_DE_CALC_MEDIAN.": ";
-          $start = true;
-          $perPair = array();
-          while($per50Array = $xoopsDB->fetchArray($per50Res)) {
-              $perPair[] = $per50Array["$fidAlias$handle"];
-              if(!$start) { $per50Results .= ", "; }
-              $start = false;
-              $per50Results .= formulize_numberFormat($per50Array["$fidAlias$handle"], $handle);
-          }
-          if(count($perPair) < 2) {
-            $allPerResults .= $per50Results;
-          } elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percentile point, so figure out the average
-            $allPerResults .= formulize_numberFormat(($per50Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per50Results)";
-          } else { // multiple, equal values at median/percentile point
-            $allPerResults .= formulize_numberFormat($perPair[0], $handle);
-          }
-          $allPerResults .= "<br>";
-          $allPerResults .= _formulize_DE_CALC_MEDIAN75.": ";
-          $start = true;
-          $perPair = array();
-          while($per75Array = $xoopsDB->fetchArray($per75Res)) {
-              $perPair[] = $per75Array["$fidAlias$handle"];
-              if(!$start) { $per75Results .= ", "; }
-              $start = false;
-              $per75Results .= formulize_numberFormat($per75Array["$fidAlias$handle"], $handle);
-          }
-          if(count($perPair) < 2) {
-            $allPerResults .= $per75Results;
-          } elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percential point, so figure out the average
-            $allPerResults .= formulize_numberFormat(($per75Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per75Results)";
-          } else { // multiple, equal values at median/percentile point
-            $allPerResults .= formulize_numberFormat($perPair[0], $handle);
-          }
-          $allPerResults .= "<br><br>";
-          //print $medianResults."<br><br>";
-          $masterResults[$cols[$i]][$calc][$thisGid] = str_replace("REPLACE WITH MEDIAN", $allPerResults, $masterResults[$cols[$i]][$calc][$thisGid]);
-          
-        }
-      } elseif($calc=="per") { // output the percentage breakdowns, since we'll be done counting everything we need now
-        foreach($groupCounts as $groupCountData) {
-          $start = true;
-          if($groupCountData['countValue'] == $groupCountData['responseCountValue'] AND $start) {
-            $typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top; padding-right: 1em; padding-right: 1em;\"><u>" . _formulize_DE_PER_PERCENT . "</u></td></tr>\n";
-          } else {
-            $typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top; padding-right: 1em; padding-right: 1em;\"><u>" . _formulize_DE_PER_PERCENTRESPONSES . "</u></td><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_PERCENTENTRIES . "</u></td></tr>\n";
-          }
-          // replace the indivText with a corresponding name, if we have any on file
-          $nameReplacementMap = array();
-          if(isset($GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$cols[$i]][$calc][$groupCountData['indexerToUse']]) AND $start) {
-            global $xoopsDB;
-            $nameType = $GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$cols[$i]][$calc][$groupCountData['indexerToUse']]['nametype'];
-            $userIDs = $GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$cols[$i]][$calc][$groupCountData['indexerToUse']]['values'];
-            // get a list of all the names and uids that we're dealing with
-            $nameReplacementSQL = "SELECT $nameType, uid FROM ".$xoopsDB->prefix("users") . " WHERE uid IN (". implode(", ", $userIDs). ")";
-            $nameReplacementRes = $xoopsDB->query($nameReplacementSQL);
-            while($nameReplacementArray = $xoopsDB->fetchArray($nameReplacementRes)) {
-              // map the uid and name values we found, so we can sub them in lower down when needed
-              $nameReplacementMap[$nameReplacementArray['uid']] = $nameReplacementArray[$nameType];
-            }
-          }
-          $start = false;
-          arsort($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']]);
-          foreach($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']] as $indivText=>$indivTotal) {
-            if(count($nameReplacementMap)>0) { $indivText = $nameReplacementMap[$indivText]; } // swap in a name for this user, if applicable
-            if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
-              $typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['countValue'])*100,2)."%</td></tr>\n";
-            } else {
-              $typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['responseCountValue'])*100,2)."%</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['countValue'])*100,2)."%</td></tr>\n";						
-            }					
-          }
-          if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
-            $typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['countValue']."</td><td style=\"vertical-align: top;\"><hr>100%</td></tr>\n</table>\n";			
-          } else {
-            $typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['responseCountValue']. " " ._formulize_DE_PER_TOTALRESPONSES."<br>".$groupCountData['countValue']. " " ._formulize_DE_PER_TOTALENTRIES."</td><td style=\"vertical-align: top;\"><hr>100%</td><td style=\"vertical-align: top;\"><hr>" . round($groupCountData['responseCountValue']/$groupCountData['countValue'], 2) . " " . _formulize_DE_PER_RESPONSESPERENTRY . "</td></tr>\n</table>";
-          }
-          $masterResults[$cols[$i]][$calc][$groupCountData['indexerToUse']] = $typeout;		
-        }
-      }
+	// figure out what to ask for for this calculation      
+	switch($calc) {
+	  case "sum":
+	    $select = "SELECT sum(tempElement) as $fidAlias$handle $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
+	    break;
+	  case "min":
+	    $select = "SELECT min(tempElement) as $fidAlias$handle $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
+	    break;
+	  case "max":
+	    $select = "SELECT max(tempElement) as $fidAlias$handle $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
+	    break;
+	  case "count":
+	    $select = "SELECT count(tempElement) as count$fidAlias$handle, count(distinct(tempElement)) as distinct$fidAlias$handle $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
+	    break;
+	  case "avg":
+	    $select = "SELECT avg(tempElement) as avg$fidAlias$handle, std(tempElement) as std$fidAlias$handle $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
+	    $selectAvgCount = "SELECT tempElement as $fidAlias$handle, count(tempElement) as avgcount$fidAlias$handle $outerGroupingSelectAvgCount FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelectAvgCount";
+	    break;
+	  case "per":
+	    $select = "SELECT tempElement as $fidAlias$handle, count(tempElement) as percount$fidAlias$handle $outerGroupingSelect FROM (SELECT distinct($fidAlias.`entry_id`), $calcElement as tempElement $innerGroupingSelect";
+	    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php"; // need a function here later on
+	    break;
+	  default:
+	    
+	    break;
+	}
+	      
+	// figure out the special where clause conditions that need to be added for this calculation
+	list($allowedValues, $excludedValues) = calcParseBlanksSetting($excludes[$cid]);
+	  
+	$allowedWhere = "";  
+	if(count($allowedValues)>0) {
+	  $start = true;
+	  foreach($allowedValues as $value) {
+	    if($start) {
+	      $allowedWhere = " AND (";
+	      $start = false;
+	    } else {
+	      $allowedWhere .= " OR ";
+	    }
+	    if($value === "{BLANK}") {
+	      $allowedWhere .= "($calcElement='' OR $calcElement IS NULL)";
+	    } else {
+	      $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
+	      $allowedWhere .= "$calcElement=";
+	      $allowedWhere .= (is_numeric($value) AND $value !=0) ? $value : "'$value'";
+	    }
+	  }
+	  if($allowedWhere) {
+	    $allowedWhere .= ")";
+	    // replace any LEFT JOIN on this form in the query with an INNER JOIN, since there are now search criteria for this form
+	    if($handleFid =="xoopsusertable") {
+	      $replacementTable = DBPRE . "users";
+	    } else {
+	      $replacementTable = DBPRE . "formulize_".$handleFormObject->getVar('form_handle');
+	    }
+	    $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable, "INNER JOIN " . $replacementTable, $thisBaseQuery);
+	  }
+	}
+	
+	$excludedWhere = "";
+	if(count($excludedValues)>0) {
+	  $start = true;
+	  foreach($excludedValues as $value) {
+	    if($start) {
+	      $excludedWhere = " AND (";
+	      $start = false;
+	    } else {
+	      $excludedWhere .= " AND ";
+	    }
+	    if($value === "{BLANK}") {
+	      $excludedWhere .= "($calcElement!='' AND $calcElement IS NOT NULL)";
+	    } else {
+	      $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
+	      $excludedWhere .= "$calcElement!=";
+	      $excludedWhere .= (is_numeric($value) AND $value !=0) ? $value : "'$value'";
+	    }
+	  }
+	  if($excludedWhere) {
+	    $excludedWhere .= ")";
+	    if($handleFid =="xoopsusertable") {
+	      $replacementTable = DBPRE . "users";
+	    } else {
+	      $replacementTable = DBPRE . "formulize_".$handleFormObject->getVar('form_handle');
+	    }
+	    // replace any LEFT JOIN on this form in the query with an INNER JOIN, since there are now search criteria for this form
+	    $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable, "INNER JOIN " . $replacementTable, $thisBaseQuery);
+	  } 
+	}
+	  
+	// setup group by clause and order by clause
+	$orderByClause = "";
+	$groupByClauseMode = "";
+	if($groupByClause) {
+	  if($calc == "avg") {
+	    $groupByClauseMode = " GROUP BY $fidAlias$handle, ".$groupByClause;
+	    $groupByClause = " GROUP BY ".$groupByClause;
+	  } elseif($calc == "per") {
+	    $orderByClause = " ORDER BY $groupByClause, percount$fidAlias$handle DESC";
+	    $groupByClause = " GROUP BY $fidAlias$handle, ".$groupByClause;
+	  } else {
+	    $groupByClause = " GROUP BY ".$groupByClause;
+	  }
+	} elseif($calc == "avg") {
+	  $groupByClauseMode = " GROUP BY $fidAlias$handle";
+	} elseif($calc == "per") {
+	  $groupByClause = " GROUP BY $fidAlias$handle";
+	  $orderByClause = " ORDER BY percount$fidAlias$handle DESC";
+	}
+      
+	// do the query
+	$calcResult = array();
+	$calcResultSQL = "$select $thisBaseQuery $allowedWhere $excludedWhere) as tempQuery $groupByClause $orderByClause ";
+	global $xoopsUser;
+	//if($xoopsUser->getVar('uid') == 1) {
+	//  print "$calcResultSQL<br><br>";
+	//}*/
+	$calcResultRes = $xoopsDB->query($calcResultSQL);
+	while($calcResultArray = $xoopsDB->fetchArray($calcResultRes)) {
+	  $calcResult[] = $calcResultArray;
+	}
+	
+	// package up the result into the results array that gets passed to the output function that dumps data to screen (suitable for templating at a later date)
+	$blankSettings[$cols[$i]][$calc] = $excludes[$cid];
+	$groupingSettings[$cols[$i]][$calc] = $groupings[$cid];
+	$groupingValues[$cols[$i]][$calc] = array(); // this is an array to store
+  
+	if($calc == "per") {
+	  $groupCounts = array();
+	  $indivCounts = array();
+	  $perindexer = -1;
+	}
+  
+	foreach($calcResult as $calcId=>$thisResult) { // this needs to be moved inside or lower down in order to support two level grouping?  
+	    
+	    switch($calc) {
+	      case "sum":
+		foreach($theseGroupings as $gid=>$thisGrouping) {
+		  if($thisGrouping != "none" AND $thisGrouping != "") {
+		    list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+		    $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
+		  }
+		}
+		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_SUM . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);                
+		break;
+	      case "min":
+		foreach($theseGroupings as $gid=>$thisGrouping) {
+		  if($thisGrouping != "none" AND $thisGrouping != "") {
+		    list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+		    
+		    $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $handle, true);
+		  }
+		}
+		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MIN . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
+		break;
+	      case "max":
+		foreach($theseGroupings as $gid=>$thisGrouping) {
+		  if($thisGrouping != "none" AND $thisGrouping != "") {
+		    list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+		    $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $handle, true);
+		  }
+		}
+		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_MAX . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);
+		break;
+	      case "count":
+		foreach($theseGroupings as $gid=>$thisGrouping) {
+		  if($thisGrouping != "none" AND $thisGrouping != "") {
+		    list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+		    $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
+		  }
+		}
+		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_NUMENTRIES . ": ".$thisResult["count$fidAlias$handle"]."<br>"._formulize_DE_CALC_NUMUNIQUE . ": " .$thisResult["distinct$fidAlias$handle"];
+		break;
+	      case "avg":
+		foreach($theseGroupings as $gid=>$thisGrouping) {
+		  if($thisGrouping != "none" AND $thisGrouping != "") {
+		    list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+		    $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
+		  }
+		}
+		$masterResults[$cols[$i]][$calc][$calcId] =  _formulize_DE_CALC_MEAN . ": ".formulize_numberFormat($thisResult["avg$fidAlias$handle"], $handle)."<br>" . _formulize_DE_CALC_STD . ": ".formulize_numberFormat($thisResult["std$fidAlias$handle"], $handle)."<br><br>";
+		break;
+	      case "per":
+		$groupingWhere = array();
+		$groupingValuesFound = array();
+		foreach($theseGroupings as $gid=>$thisGrouping) {
+		  if($thisGrouping != "none" AND $thisGrouping != "") {
+		    list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+		    //print $thisResult["$galias$ghandle"] . "<br>";
+		    if($thisResult["$galias$ghandle"] == "") {
+		      $groupingWhere[] = "($galias.`$ghandle` = '".$thisResult["$galias$ghandle"]."' OR $galias.`$ghandle` IS NULL)";
+		      $groupingValuesFound[] = _formulize_BLANK_KEYWORD;
+		    } else {
+		      $groupingWhere[] = "$galias.`$ghandle` = '".$thisResult["$galias$ghandle"]."'";
+		      $groupingValuesFound[] = $thisResult["$galias$ghandle"];
+		    }
+		  }
+		}
+		if(count($groupingWhere)>0) {
+		  $groupingWhere = "AND (".implode(" AND ", $groupingWhere).")";
+		} else {
+		  $groupingWhere = "";
+		}
+		if(!isset($groupCounts[$groupingWhere])) { // need to figure out the total count for this grouping setting
+		  $perindexer++;
+		  $groupingValues[$cols[$i]][$calc][$perindexer] = convertRawValuesToRealValues($groupingValuesFound, $ghandle, true);
+		  $countSQL = "SELECT count($fidAlias.`$handle`) as count$fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere";
+		  //print "$countSQL<br>";
+		  $countRes = $xoopsDB->query($countSQL);
+		  $countArray = $xoopsDB->fetchArray($countRes);
+		  $countValue = $countArray["count$fidAlias$handle"];
+		  $indexerToUse = $perindexer;
+		  $groupCounts[$groupingWhere]['countValue'] = $countValue;
+		  $groupCounts[$groupingWhere]['indexerToUse'] = $indexerToUse;
+		  $start = true;
+		} else {
+		  $indexerToUse = $groupCounts[$groupingWhere]['indexerToUse'];
+		  $countValue = $groupCounts[$groupingWhere]['countValue'];
+		}
+		// need to figure out the individual counts of the constituent parts of this result
+		if(strstr($thisResult["$fidAlias$handle"], "*=+*:")) {
+		  $rawIndivValues = explode("*=+*:", $thisResult["$fidAlias$handle"]);
+		  array_shift($rawIndivValues); // current convention is to have the separator at the beginning of the string, so the exploded array will have a blank value at the beginning
+		} elseif($linkedMetaData = formulize_isLinkedSelectBox($cols[$i])) {
+		  // convert the pointers for the linked selectbox values, to their source values
+		  $sourceMeta = explode("#*=:*", $linkedMetaData[2]);
+		  $data_handler = new formulizeDataHandler($sourceMeta[0]);
+		  $rawIndivValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($thisResult["$fidAlias$handle"], ","))); // trip opening and closing commas and split by comma into an array
+		} else {
+		  $rawIndivValues = array(0=>$thisResult["$fidAlias$handle"]);
+		}
+		foreach($rawIndivValues as $thisIndivValue) {
+		  $indivCounts[$cols[$i]][$calc][$indexerToUse][trans(calcValuePlusText($thisIndivValue, $handle, $cols[$i], $calc, $indexerToUse))] += $thisResult["percount$fidAlias$handle"]; // add this count to the total count for this particular item
+		  $groupCounts[$groupingWhere]['responseCountValue'] += $thisResult["percount$fidAlias$handle"]; // add this count to the total count for all items
+		}
+		break;
+	    }
+	  
+	}
+	
+	if($calc=="avg") { // then do some extra stuff for the more complicated calculations
+	  // work out the mode...
+	  $modeCounts = array();
+	  $modeQuery = "$selectAvgCount $thisBaseQuery $allowedWhere $excludedWhere ) as tempQuery $groupByClauseMode ORDER BY ";
+	  if(count($allGroupings)>0) {
+	    $modeQuery .= implode(", ",$allGroupings) . ", ";
+	  }
+	  $modeQuery .= "avgcount$fidAlias$handle DESC";
+	  //print "$modeQuery<br>";
+	  $modeRes = $xoopsDB->query($modeQuery);
+	  $foundModeValue = array();
+	  $modeIndexer = 0;
+	  while($modeData = $xoopsDB->fetchArray($modeRes)) {
+	    $foundValues = "";
+	    $modeCountsTemp = array();
+	    foreach($theseGroupings as $gid=>$thisGrouping) {
+	      if($thisGrouping != "none" AND $thisGrouping != "") {
+		list($ghandle, $galias) = getCalcHandleAndFidAlias($thisGrouping, $fid);
+		$foundValues .= $modeData["$galias$ghandle"]."xyz";
+		$modeCountsTemp[$modeData["$galias$ghandle"]] = "$galias.`$ghandle`";
+	      }
+	    }
+	    if(!isset($foundModeValue[$foundValues])) { // this is a new combination
+	      $foundModeValue[$foundValues] = true;
+	      if($foundValues) {
+		$modeCounts[$modeIndexer] = $modeCountsTemp;
+	      } else {
+		$modeCounts[$modeIndexer]['none'] = 'none';
+	      }
+	      $masterResults[$cols[$i]][$calc][$modeIndexer] .= "REPLACE WITH MEDIAN"._formulize_DE_CALC_MODE . ": ".formulize_numberFormat($modeData["$fidAlias$handle"], $handle);
+	      $modeIndexer++;
+	    } 
+	  }
+	  // work out the percentiles including median
+	  // calculating percentiles logic based on formula described here: http://onlinestatbook.com/chapter1/percentiles.html
+	  // modeGrouping is the value that we are grouping by, modeHandle is the field to look for that value in
+	  foreach($modeCounts as $thisGid=>$thisModeGrouping) {
+	    $groupingWhere = "";
+	    foreach($thisModeGrouping as $modeGrouping=>$modeHandle) {
+	      // first we need to get the full count for this group of results
+	      // need to convert grouping values into the where clause for the percentile calculations
+	      $groupingWhere .= $modeHandle === 'none' ? "" : " AND ($modeHandle = '$modeGrouping')";
+	    }
+	    $countSQL = "SELECT count($fidAlias.`$handle`) as count$fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere";
+	    //print "<br>$countSQL<br>";
+	    $countRes = $xoopsDB->query($countSQL);
+	    $countArray = $xoopsDB->fetchArray($countRes);
+	    $countValue = $countArray["count$fidAlias$handle"];
+	    $per25Limit = floor(($countValue+1)/4);
+	    $per25Fraction = (($countValue+1)/4)-$per25Limit;
+	    $per25Limit = $per25Limit-1; // since Limit statements interpret rank orders as starting from 0, must subtract 1
+	    $per25Size = ($countValue+1) % 4 == 0 ? 1 : 2;
+	    $per75Limit = floor((($countValue+1)*3)/4);
+	    $per75Fraction = ((($countValue+1)*3)/4)-$per75Limit;
+	    $per75Limit = $per75Limit-1; // since Limit statements interpret rank orders as starting from 0, must subtract 1
+	    $per75Size = $per25Size;
+	    $per50Limit = floor(($countValue+1)/2);
+	    $per50Fraction = (($countValue+1)/2)-$per50Limit;
+	    $per50Limit = $per50Limit-1; // since Limit statements interpret rank orders as starting from 0, must subtract 1
+	    $per50Size = ($countValue+1) % 2 == 0 ? 1 : 2;
+	    $per25SQL = "SELECT $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per25Limit,$per25Size";
+	    //print "$per25SQL<Br><Br>";
+	    $per75SQL = "SELECT $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per75Limit,$per75Size";
+	    //print "$per75SQL<Br><Br>";
+	    $per50SQL = "SELECT $fidAlias.`$handle` as $fidAlias$handle $thisBaseQuery $allowedWhere $excludedWhere $groupingWhere ORDER BY $fidAlias$handle LIMIT $per50Limit,$per50Size";
+	    //print "$per50SQL<Br><Br>";
+	    $per25Res = $xoopsDB->query($per25SQL);
+	    $per75Res = $xoopsDB->query($per75SQL);
+	    $per50Res = $xoopsDB->query($per50SQL);
+	    $allPerResults = _formulize_DE_CALC_MEDIAN25.": ";
+	    $per25Results = "";
+	    $per75Results = "";
+	    $per50Results = "";
+	    $start = true;
+	    $perPair = array();
+	    while($per25Array = $xoopsDB->fetchArray($per25Res)) {
+		$perPair[] = $per25Array["$fidAlias$handle"];
+		if(!$start) { $per25Results .= ", "; }
+		$start = false;
+		$per25Results .= formulize_numberFormat($per25Array["$fidAlias$handle"], $handle);
+	    }
+	    if(count($perPair) < 2) {
+	      $allPerResults .= $per25Results;
+	    } elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percentile point, so figure out the weighted average
+	      $allPerResults .= formulize_numberFormat(($per25Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per25Results)";
+	    } else { // multiple, equal values at median/percentile point
+	      $allPerResults .= formulize_numberFormat($perPair[0], $handle);
+	    }
+	    $allPerResults .= "<br>";
+	    $allPerResults .= _formulize_DE_CALC_MEDIAN.": ";
+	    $start = true;
+	    $perPair = array();
+	    while($per50Array = $xoopsDB->fetchArray($per50Res)) {
+		$perPair[] = $per50Array["$fidAlias$handle"];
+		if(!$start) { $per50Results .= ", "; }
+		$start = false;
+		$per50Results .= formulize_numberFormat($per50Array["$fidAlias$handle"], $handle);
+	    }
+	    if(count($perPair) < 2) {
+	      $allPerResults .= $per50Results;
+	    } elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percentile point, so figure out the average
+	      $allPerResults .= formulize_numberFormat(($per50Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per50Results)";
+	    } else { // multiple, equal values at median/percentile point
+	      $allPerResults .= formulize_numberFormat($perPair[0], $handle);
+	    }
+	    $allPerResults .= "<br>";
+	    $allPerResults .= _formulize_DE_CALC_MEDIAN75.": ";
+	    $start = true;
+	    $perPair = array();
+	    while($per75Array = $xoopsDB->fetchArray($per75Res)) {
+		$perPair[] = $per75Array["$fidAlias$handle"];
+		if(!$start) { $per75Results .= ", "; }
+		$start = false;
+		$per75Results .= formulize_numberFormat($per75Array["$fidAlias$handle"], $handle);
+	    }
+	    if(count($perPair) < 2) {
+	      $allPerResults .= $per75Results;
+	    } elseif($perPair[0] != $perPair[1]) { // we have multiple values at the median/percential point, so figure out the average
+	      $allPerResults .= formulize_numberFormat(($per75Fraction * ($perPair[1]-$perPair[0])) + $perPair[0], $handle, "", 2) . " ($per75Results)";
+	    } else { // multiple, equal values at median/percentile point
+	      $allPerResults .= formulize_numberFormat($perPair[0], $handle);
+	    }
+	    $allPerResults .= "<br><br>";
+	    //print $medianResults."<br><br>";
+	    $masterResults[$cols[$i]][$calc][$thisGid] = str_replace("REPLACE WITH MEDIAN", $allPerResults, $masterResults[$cols[$i]][$calc][$thisGid]);
+	    
+	  }
+	} elseif($calc=="per") { // output the percentage breakdowns, since we'll be done counting everything we need now
+	  foreach($groupCounts as $groupCountData) {
+	    $start = true;
+	    if($groupCountData['countValue'] == $groupCountData['responseCountValue'] AND $start) {
+	      $typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top; padding-right: 1em; padding-right: 1em;\"><u>" . _formulize_DE_PER_PERCENT . "</u></td></tr>\n";
+	    } else {
+	      $typeout = "<table cellpadding=3>\n<tr><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_ITEM . "</u></td><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_COUNT . "</u></td><td style=\"vertical-align: top; padding-right: 1em; padding-right: 1em;\"><u>" . _formulize_DE_PER_PERCENTRESPONSES . "</u></td><td style=\"vertical-align: top; padding-right: 1em;\"><u>" . _formulize_DE_PER_PERCENTENTRIES . "</u></td></tr>\n";
+	    }
+	    // replace the indivText with a corresponding name, if we have any on file
+	    $nameReplacementMap = array();
+	    if(isset($GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$cols[$i]][$calc][$groupCountData['indexerToUse']]) AND $start) {
+	      global $xoopsDB;
+	      $nameType = $GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$cols[$i]][$calc][$groupCountData['indexerToUse']]['nametype'];
+	      $userIDs = $GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$cols[$i]][$calc][$groupCountData['indexerToUse']]['values'];
+	      // get a list of all the names and uids that we're dealing with
+	      $nameReplacementSQL = "SELECT $nameType, uid FROM ".$xoopsDB->prefix("users") . " WHERE uid IN (". implode(", ", $userIDs). ")";
+	      $nameReplacementRes = $xoopsDB->query($nameReplacementSQL);
+	      while($nameReplacementArray = $xoopsDB->fetchArray($nameReplacementRes)) {
+		// map the uid and name values we found, so we can sub them in lower down when needed
+		$nameReplacementMap[$nameReplacementArray['uid']] = $nameReplacementArray[$nameType];
+	      }
+	    }
+	    $start = false;
+	    arsort($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']]);
+	    foreach($indivCounts[$cols[$i]][$calc][$groupCountData['indexerToUse']] as $indivText=>$indivTotal) {
+	      if(count($nameReplacementMap)>0) { $indivText = $nameReplacementMap[$indivText]; } // swap in a name for this user, if applicable
+	      if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
+		$typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['countValue'])*100,2)."%</td></tr>\n";
+	      } else {
+		$typeout .= "<tr><td style=\"vertical-align: top;\">$indivText</td><td style=\"vertical-align: top;\">$indivTotal</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['responseCountValue'])*100,2)."%</td><td style=\"vertical-align: top;\">".round(($indivTotal/$groupCountData['countValue'])*100,2)."%</td></tr>\n";						
+	      }					
+	    }
+	    if($groupCountData['countValue'] == $groupCountData['responseCountValue']) {
+	      $typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['countValue']."</td><td style=\"vertical-align: top;\"><hr>100%</td></tr>\n</table>\n";			
+	    } else {
+	      $typeout .= "<tr><td style=\"vertical-align: top;\"><hr>" . _formulize_DE_PER_TOTAL . "</td><td style=\"vertical-align: top;\"><hr>".$groupCountData['responseCountValue']. " " ._formulize_DE_PER_TOTALRESPONSES."<br>".$groupCountData['countValue']. " " ._formulize_DE_PER_TOTALENTRIES."</td><td style=\"vertical-align: top;\"><hr>100%</td><td style=\"vertical-align: top;\"><hr>" . round($groupCountData['responseCountValue']/$groupCountData['countValue'], 2) . " " . _formulize_DE_PER_RESPONSESPERENTRY . "</td></tr>\n</table>";
+	    }
+	    $masterResults[$cols[$i]][$calc][$groupCountData['indexerToUse']] = $typeout;		
+	  }
+	}
     }
   }
   /*print "<br><br>";
