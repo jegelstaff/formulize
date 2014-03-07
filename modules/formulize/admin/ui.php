@@ -83,6 +83,9 @@ switch($active_page) {
 	case "relationship":
 		include "relationship.php";
 		break;
+	case "permissions":
+		include "permissions.php";
+		break;
 	case "element":
 		include "element.php";
 		break;
