@@ -35,14 +35,25 @@ $application_handler = xoops_getmodulehandler('applications','formulize');
 // Get a list of all applications
 $allApps = $application_handler->getAllApplications();
 
+$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+
 if(0 == $aid = intval($_GET['aid'])) {
     $appName = _AM_APP_FORMWITHNOAPP;
 } else {
-    $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-	$form_handler = xoops_getmodulehandler('forms', 'formulize');
     $appObject = $application_handler->get($aid);
     $appName = $appObject->getVar('name');
 }
+
+// Get list of all the forms in this app.
+$formObjects = $form_handler->getFormsByApplication($aid);
+$forms = array();
+foreach($formObjects as $thisFormObject) {
+    $forms[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
+    $forms[$thisFormObject->getVar('id_form')]['id'] = $thisFormObject->getVar('id_form');
+}
+
 
 // Get a list of all groups.
 $member_handler = xoops_gethandler('member');
@@ -110,6 +121,7 @@ $common['aid'] = $aid;
 $adminPage['tabs'][1]['name'] = _AM_MULTIPLE_FORM_PERMISSIONS;
 $adminPage['tabs'][1]['template'] = "db:admin/multiple_permissions.html";
 $adminPage['tabs'][1]['content'] = $common;
+$adminPage['tabs'][1]['content']['forms'] = $forms;
 $adminPage['tabs'][1]['content']['groups'] = $groups;
 $adminPage['needsave'] = true;
 
