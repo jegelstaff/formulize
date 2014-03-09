@@ -115,14 +115,17 @@ foreach($selectedGroups as $thisGroup) {
   	unset($criteria);
   }
 
-// Common values are assigned to all tabs.
-$common['aid'] = $aid;
+$i=0;
 
-$adminPage['tabs'][1]['name'] = _AM_MULTIPLE_FORM_PERMISSIONS;
-$adminPage['tabs'][1]['template'] = "db:admin/multiple_permissions.html";
-$adminPage['tabs'][1]['content'] = $common;
-$adminPage['tabs'][1]['content']['forms'] = $forms;
-$adminPage['tabs'][1]['content']['groups'] = $groups;
+$i++;
+$adminPage['tabs'][$i]['name'] = _AM_MULTIPLE_FORM_PERMISSIONS;
+$adminPage['tabs'][$i]['template'] = "db:admin/multiple_permissions.html";
+$adminPage['tabs'][$i]['content']['forms'] = $forms;
+$adminPage['tabs'][$i]['content']['groups'] = $groups;
+$adminPage['tabs'][$i]['content']['grouplists'] = $grouplists;
+$adminPage['tabs'][$i]['content']['order'] = $orderGroups;
+$adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "same" ? "same" : "different";
+$adminPage['tabs'][$i]['content']['groupperms'] = $groupperms;
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";
