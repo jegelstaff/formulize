@@ -121,6 +121,7 @@ define("_AM_PERMISSIONS_SAME_CHECKBOX_YES","Yes, when I check a box for one grou
 define("_AM_PERMISSIONS_SAME_CHECKBOX_NO","No, I will set each group individually");
 define("_AM_PERMISSIONS_SAME_CHECKBOX_EXPLAIN","You can change this setting at any time while you are adjusting the checkboxes.  Set it to <b>Yes</b>, to quickly set some checkboxes the same for all groups.  Change it to <b>No</b> when you need to set specific checkboxes for only certain groups.");
 define("_AM_PERMISSIONS_SELECT_GROUP","Select some groups to see their permissions");
+define("_AM_PERMISSIONS_SELECTS_FORMS_AND_GROUPS","Select forms and groups to view a group's current permissions");
 define("_AM_PERMISSIONS_DEFINE_BASIC","The basics:");
 define("_AM_PERMISSIONS_DEFINE_VIEWFORM","View the form");
 define("_AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES","Create their own entries in the form");
