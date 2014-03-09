@@ -534,7 +534,6 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
         }
 
         // if ele_list_order doesn't exist, create it. The initial values can be the same as ele_order
-
 		$myCol = q("SELECT * FROM ". $xoopsDB->prefix("formulize"). " LIMIT 1");
 		if(!isset($myCol[0]["ele_list_order"])){
 		  $statement="Alter table `".$xoopsDB->prefix("formulize")."` ADD `ele_list_order` smallint(5)";
