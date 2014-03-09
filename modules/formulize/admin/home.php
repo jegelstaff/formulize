@@ -104,6 +104,7 @@ function readApplicationData($aid, $apps) {
   $apps[$i]['header'] .= '<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=forms"><i class="icon-form"></i> Forms</a>
 <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=screens"><i class="icon-screen"></i> Screens</a>
 <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=relationships"><i class="icon-connection"></i> Relationships</a>
+<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=permissions"><i class="icon-lock"></i> Permissions</a>
 <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=menu%20entries"><i class="icon-menu"></i> Menu Entries</a>
 <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=export&aid='.$aid.'"><i class="icon-download"></i> Export (beta!)</a>';
   if($aid>0) {
