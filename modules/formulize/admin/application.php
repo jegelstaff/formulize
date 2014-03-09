@@ -202,6 +202,13 @@ $adminPage['tabs'][$i]['content'] = $common;
 $adminPage['tabs'][$i]['content']['relationships'] = $relationships; 
 
 $i++;
+$adminPage['tabs'][$i]['name'] = _AM_APP_PERMISSIONS;
+$adminPage['tabs'][$i]['template'] = "db:admin/multiple_permissions.html";
+$adminPage['tabs'][$i]['content'] = $common;
+$adminPage['tabs'][$i]['content']['groups'] = $groups;
+$adminPage['tabs'][$i]['content']['forms'] = $formsInApp;
+
+$i++;
 $adminPage['tabs'][$i]['name'] = _AM_APP_MENU_ENTRIES;
 $adminPage['tabs'][$i]['template'] = "db:admin/application_menu_entries.html";
 $adminPage['tabs'][$i]['content'] = $options + $common;
