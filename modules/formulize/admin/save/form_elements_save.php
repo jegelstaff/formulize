@@ -67,9 +67,11 @@ $elements = $element_handler->getObjects2(null,$fid);
 $newFormOrder = explode("drawer-2[]=", str_replace("&", "", $_POST['elementorder']));
 $newListOrder = explode("drawer-3[]=", str_replace("&", "", $_POST['element-list-order']));
 
-$orders=array($newFormOrder,$newListOrder);
+$orders=array(array($newFormOrder,"ele_order"),array($newListOrder,"ele_list_order"));
 
-foreach($orders as $keys=>$newOrder){
+foreach($orders as $keys=>$value){
+  $newOrder=$value[0];
+  $sortOrder=$value[1]; 
   unset($newOrder[0]);
   // newOrder will have keys corresponding to the new order, and values corresponding to the old order
 
@@ -86,7 +88,7 @@ foreach($orders as $keys=>$newOrder){
     $element->setVar('ele_req',0);
     $element->setVar('ele_private',0);
     $newOrderNumber = array_search($oldOrderNumber,$newOrder);
-    $element->setVar('ele_order',$newOrderNumber);
+    $element->setVar($sortOrder,$newOrderNumber);
     if($oldOrderNumber != $newOrderNumber) {
       $_POST['reload_elements'] = 1; // need to reload since the drawer numbers will be out of sequence now
     }
