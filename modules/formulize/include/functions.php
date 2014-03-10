@@ -4966,3 +4966,8 @@ function formulize_escape($value) {
     return substr($value, 1,-1);
   }
 }
+
+// strip non-alphanumeric characters
+function sanitize_name($name) {
+	return preg_replace("/[^a-zA-Z0-9_]+/", "", $name);
+}

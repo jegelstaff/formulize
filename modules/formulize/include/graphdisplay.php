@@ -366,6 +366,7 @@ function renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $oper
 	// TODO: make some kind of cron job clear up or some kind of caches, update graph only when needed!
 	$grapRelativePathPrefix = "modules/formulize/images/graphs/";
 	$graphRelativePath = $grapRelativePathPrefix . "_" . $fid . "_" . "_" . $frid . "_" . $labelElement . "_" . $dataElement . "_" . "$operation" . "_" . preg_replace('/[^\w\d]/', "", print_r($graphOptions, true)) . ".png";
+	$graphRelativePath = sanitize_name($graphRelativePath);
 	$myPicture -> render(XOOPS_ROOT_PATH . "/" . $graphRelativePath);
 	echo "<img src='" . XOOPS_URL . "/$graphRelativePath' />";
 	return;
