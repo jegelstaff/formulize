@@ -27,7 +27,7 @@ body {
 }
 #accordion-3.hidden{
 	position:absolute;
-	top:1px;
+	top:0px;
 }
 </style>
 
@@ -73,8 +73,8 @@ body {
 			$("#accordion-3").toggleClass('hidden');  	  
    		}
 
-   		$( "#accordion-2" ).toggle( "slide", { direction: "up" }, 1000);
-   		$( "#accordion-3" ).toggle( "slide", { direction: "down" }, 1000 );
+   		$( "#accordion-2" ).toggle( "slide", { direction: "left" }, 1000);
+   		$( "#accordion-3" ).toggle( "slide", { direction: "right" }, 1000 );
 
 
 		if($("#accordion-3").hasClass('hidden')==true){
