@@ -111,8 +111,8 @@ function patch40() {
 	 * 
 	 * ====================================== */
 	
-	$checkThisTable = 'formulize_deletion_logs';
-	$checkThisField = 'context';
+	$checkThisTable = 'formulize';
+	$checkThisField = 'ele_list_order';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
