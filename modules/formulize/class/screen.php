@@ -131,7 +131,6 @@ class formulizeScreen extends xoopsObject {
 	    }
         }
 	if($usePrototype){
-	    error_log($templates["prototype_".$templatename]);
 	    return $templates["prototype_".$templatename];
 	}
 	else

@@ -106,7 +106,6 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $templates['listtemplate'] = $screen->getTemplate('listtemplate');
   
   $templates['prototype_toptemplate'] = $screen->getTemplate('toptemplate', true);
-  error_log($templates['prototype_toptemplate']);
   $templates['prototype_bottomtemplate'] = $screen->getTemplate('bottomtemplate', true);
   $templates['prototype_listtemplate'] = $screen->getTemplate('listtemplate', true);
 
