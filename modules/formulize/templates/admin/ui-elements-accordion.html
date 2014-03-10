@@ -1,18 +1,26 @@
+<style>
+body {
+    font-family:sans-serif;
+}
 
+
+#accordion-3.hidden
+{
+	position:relative;
+	top:-72px;
+}
+</style>
 <div class="toggle">
-    <label><input id="formAccordian" type="radio" name="toggle"><span>form</span></label>    
-</div>
-<div class="toggle">
-    <label><input id="elementAccordian" type="radio" name="toggle"><span>element</span></label>
+    <label><input id="elementAccordion" type="radio" name="toggle"><span>element</span></label>
 </div>
 
-<div id="accordion-<{$number}>">
+<div id="accordion-2">
 	<{foreach from=$sections[1] key=sectionNumber item=section}>
-	<div id="drawer-<{$number}>-<{$sectionNumber}>">
+	<div id="drawer-2-<{$sectionNumber}>">
         <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
 		<div class="accordion-content content">
 			<{if $section.header}>
-			<div style="position: absolute; top: 10px; right: 10px;">
+			<div >
 				<{$section.header}>
 			</div>
 			<{/if}>
@@ -22,13 +30,13 @@
 	<{/foreach}>
 </div>
 
-<div id="accordion-3" style="display:none">
+<div id="accordion-3" class="hidden" style="display:none" >
 	<{foreach from=$sections[0] key=sectionNumber item=section}>
 	<div id="drawer-3-<{$sectionNumber}>">
         <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
 		<div class="accordion-content content">
 			<{if $section.header}>
-			<div style="position: absolute; top: 10px; right: 10px;">
+			<div>
 				<{$section.header}>
 			</div>
 			<{/if}>
@@ -37,7 +45,24 @@
 	</div>
 	<{/foreach}>
 </div> 
+
+
 <script type="text/javascript">
+	$("#elementAccordion").click(function() {
+
+		if($("#accordion-3").hasClass('hidden')==false){
+			$("#accordion-3").toggleClass('hidden');  	  
+   		}
+
+   		$( "#accordion-2" ).toggle( "slide", { direction: "up" }, 1000);
+   		$( "#accordion-3" ).toggle( "slide", { direction: "down" }, 1000 );
+
+
+		if($("#accordion-3").hasClass('hidden')==true){
+			$("#accordion-3").toggleClass('hidden');  	  
+   		}
+	});
+
 	pagehasaccordion["accordion-<{$number}>"] = true;
 
 	$(function() {
@@ -86,5 +111,12 @@
 			}
 		});
 	});
+
+$('label').click(function(){
+    $(this).children('span').addClass('input-checked');
+    $(this).parent('.toggle').siblings('.toggle').children('label').children('span').removeClass('input-checked');
+});
+
+
 
 </script>
