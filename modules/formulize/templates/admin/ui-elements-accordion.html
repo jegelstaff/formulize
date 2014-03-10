@@ -21,47 +21,50 @@ body {
     background:#C6E3FF;
     box-shadow: 0px 0px 1px #777;    
 }
-
+.container{
+	position: relative;
+	top:0px;
+}
 #accordion-3.hidden{
-	position:relative;
-	top:-60px;
+	position:absolute;
+	top:1px;
 }
 </style>
 
 
-
-<div id="accordion-2">
-	<{foreach from=$sections[1] key=sectionNumber item=section}>
-	<div id="drawer-2-<{$sectionNumber}>">
-        <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
-		<div class="accordion-content content">
-			<{if $section.header}>
-			<div >
-				<{$section.header}>
+<div class="container">
+	<div id="accordion-2">
+		<{foreach from=$sections[1] key=sectionNumber item=section}>
+		<div id="drawer-2-<{$sectionNumber}>">
+	        <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
+			<div class="accordion-content content">
+				<{if $section.header}>
+				<div >
+					<{$section.header}>
+				</div>
+				<{/if}>
+				<{include file=$sectionTemplate sectionContent=$section.content}>
 			</div>
-			<{/if}>
-			<{include file=$sectionTemplate sectionContent=$section.content}>
 		</div>
+		<{/foreach}>
 	</div>
-	<{/foreach}>
+
+	<div id="accordion-3" class="hidden" style="display:none" >
+		<{foreach from=$sections[0] key=sectionNumber item=section}>
+		<div id="drawer-3-<{$sectionNumber}>">
+	        <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
+			<div class="accordion-content content">
+				<{if $section.header}>
+				<div>
+					<{$section.header}>
+				</div>
+				<{/if}>
+				<{include file=$sectionTemplate sectionContent=$section.content}>
+			</div>
+		</div>
+		<{/foreach}>
+	</div> 
 </div>
-
-<div id="accordion-3" class="hidden" style="display:none" >
-	<{foreach from=$sections[0] key=sectionNumber item=section}>
-	<div id="drawer-3-<{$sectionNumber}>">
-        <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
-		<div class="accordion-content content">
-			<{if $section.header}>
-			<div>
-				<{$section.header}>
-			</div>
-			<{/if}>
-			<{include file=$sectionTemplate sectionContent=$section.content}>
-		</div>
-	</div>
-	<{/foreach}>
-</div> 
-
 
 <script type="text/javascript">
 	$("#switch-accordion").click(function() {
