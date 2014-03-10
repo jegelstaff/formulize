@@ -4,7 +4,6 @@ body {
     font-family: Verdana, Arial, sans-serif;
     font-size: 12px;
 }
-
 .button {
 	border-style:solid;
 	border-radius:4px;
@@ -12,24 +11,18 @@ body {
     background-color: #70B8FF;
     padding: 5px,5px,5px,5px;
     color: #000;
-    font-family: 'Oswald';
     font-size: 17px;
     text-decoration: none;
     cursor: pointer;
 	box-shadow: 1px 2px 1px #888888;
-    }
-
-
-
-.button:hover {
-  
-    background:#C6E3FF;
-    box-shadow: 0px 0px 1px #777;
-    
 }
 
-#accordion-3.hidden
-{
+.button:hover {
+    background:#C6E3FF;
+    box-shadow: 0px 0px 1px #777;    
+}
+
+#accordion-3.hidden{
 	position:relative;
 	top:-60px;
 }
@@ -86,7 +79,7 @@ body {
    		}
 	
 		buttonVal=$("#switch-accordion").text();
-   		$("#switch-accordion").text(buttonVal=='Forms'? 'Elements' : 'Forms');
+   		$("#switch-accordion").text(buttonVal=='Forms'? 'Lists' : 'Forms');
 	});
 
 	pagehasaccordion["accordion-<{$number}>"] = true;

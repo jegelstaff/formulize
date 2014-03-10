@@ -62,46 +62,52 @@ foreach($processedValues['elements'] as $property=>$values) {
 $elements = $element_handler->getObjects2(null,$fid);
 
 // get the new order of the elements...
-$newOrder = explode("drawer-2[]=", str_replace("&", "", $_POST['elementorder']));
-unset($newOrder[0]);
-// newOrder will have keys corresponding to the new order, and values corresponding to the old order
+/*var_dump($_POST['element-list-order']);
+*/
+$newFormOrder = explode("drawer-2[]=", str_replace("&", "", $_POST['elementorder']));
+$newListOrder = explode("drawer-3[]=", str_replace("&", "", $_POST['element-list-order']));
 
-if(count($elements) != count($newOrder)) {
-	print "Error: the number of elements being saved did not match the number of elements already in the database";
-	return;
+$orders=array($newFormOrder,$newListOrder);
+
+foreach($orders as $keys=>$newOrder){
+  unset($newOrder[0]);
+  // newOrder will have keys corresponding to the new order, and values corresponding to the old order
+
+  if(count($elements) != count($newOrder)) {
+  	print "Error: the number of elements being saved did not match the number of elements already in the database";
+  	return;
+  }
+
+  // modify elements
+  $oldOrderNumber = 1;
+  foreach($elements as $element) {
+    $ele_id = $element->getVar('ele_id');
+    // reset elements to deault
+    $element->setVar('ele_req',0);
+    $element->setVar('ele_private',0);
+    $newOrderNumber = array_search($oldOrderNumber,$newOrder);
+    $element->setVar('ele_order',$newOrderNumber);
+    if($oldOrderNumber != $newOrderNumber) {
+      $_POST['reload_elements'] = 1; // need to reload since the drawer numbers will be out of sequence now
+    }
+    $oldOrderNumber++;
+
+    // apply settings submitted by user
+    foreach($processedElements[$ele_id] as $property=>$value) {
+      $element->setVar($property,$value);
+    }
+  	
+  	// if there was no display property sent, and there was no custom flag sent, then blank the display settings
+  	if(!isset($processedElements[$ele_id]['ele_display']) AND !isset($_POST['customDisplayFlag'][$ele_id])) {
+  		$element->setVar('ele_display',0);
+  	}
+
+    // presist changes
+    if(!$element_handler->insert($element)) {
+      print "Error: could not save the form elements properly: ".$xoopsDB->error();
+    }
+  }
 }
-
-// modify elements
-$oldOrderNumber = 1;
-foreach($elements as $element) {
-  $ele_id = $element->getVar('ele_id');
-
-  // reset elements to deault
-  $element->setVar('ele_req',0);
-  $element->setVar('ele_private',0);
-  $newOrderNumber = array_search($oldOrderNumber,$newOrder);
-  $element->setVar('ele_order',$newOrderNumber);
-  if($oldOrderNumber != $newOrderNumber) {
-    $_POST['reload_elements'] = 1; // need to reload since the drawer numbers will be out of sequence now
-  }
-  $oldOrderNumber++;
-
-  // apply settings submitted by user
-  foreach($processedElements[$ele_id] as $property=>$value) {
-    $element->setVar($property,$value);
-  }
-	
-	// if there was no display property sent, and there was no custom flag sent, then blank the display settings
-	if(!isset($processedElements[$ele_id]['ele_display']) AND !isset($_POST['customDisplayFlag'][$ele_id])) {
-		$element->setVar('ele_display',0);
-	}
-
-  // presist changes
-  if(!$element_handler->insert($element)) {
-    print "Error: could not save the form elements properly: ".$xoopsDB->error();
-  }
-}
-
 // handle any operations
 if($_POST['convertelement']) {
   global $xoopsModuleConfig;

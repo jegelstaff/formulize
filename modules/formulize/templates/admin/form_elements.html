@@ -11,6 +11,7 @@
 <input type="hidden" name="reload_elements" value="">
 <input type="hidden" name="aid" value="<{$content.aid}>">	
 <input type="hidden" name="elementorder" value="">	
+<input type="hidden" name="element-list-order" value="">	
 	
 <div class="accordion-box">
 	<h2><{$smarty.const._AM_ELE_ADDINGTOFORM}></h2>
@@ -123,6 +124,8 @@ $(".converttoradio").click(function () {
 
 $(".savebutton").click(function () {
 	$("[name=elementorder]").val($("#accordion-2").sortable('serialize')); 
+	$("[name=element-list-order]").val($("#accordion-3").sortable('serialize')); 
+
 });
 
 $("#accordion-2").bind( "sortupdate", function(event, ui) {
