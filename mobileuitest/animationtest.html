@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <title>hide demo</title>
   <style>
-  div {
+  .div1 {
     width: 100px;
     height: 100px;
     background: #ccc;
@@ -17,14 +17,32 @@
 <body>
  
 <button>hide the div</button>
-<div>Hello</div>
+<div class="div">Hello</div>
+<div class="div1">Goodbye<br/>BLAH</div>
  
 <script>
-$( "button" ).click(function() {
-  alert("SWIPE DETECTED!");
-  $( "div" ).hide( "slide", { direction: "left" }, "slow" );
-  $( "div" ).show( "slide", { direction: "right" }, "slow" );
-});
+  $( "button" ).click(function() {
+    alert("SWIPE DETECTED!");
+
+    /*$( ".div" ).hide( "slide", { direction: "left" }, "slow", function() { 
+      $( ".div1" ).hide( "slide", { direction: "right" }, "slow" );
+    });
+    //$( ".div" ).show( "slide", { direction: "right" }, "slow" );
+  });*/
+
+    /*$(".div1").animate({opacity: 0.25, left: "+=50", height: "toggle"
+      }, 5000, function() {
+        $(".div1").hide();
+        //$(".div1").css("display", "none");
+      });*/
+    $(".div1").toggle("slide", {direction: 'left'}, 1000, function() {
+      $(".div1").hide(0, function(){
+        $(".div1").toggle("slide", {direction:'right'}, 1000);
+      });
+    });
+  });
+
+
 
 </script>
  

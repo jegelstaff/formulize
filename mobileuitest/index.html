@@ -2,14 +2,18 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<link rel="stylesheet" href="jquery.mobile-1.4.0.min.css">
     <script src="jquery.js"></script>
-	<script src="jquery.mobile-1.4.0.min.js"></script>
-	<script src="jquery.mobile-1.4.0.min.js"></script>
+
+
 	  
-	<!-- for column animation 
+	<!-- for column animation -->
 	<script src="jquery-ui-1.10.4/js/jquery-1.10.2.js"></script>
-  	<script src="jquery-ui-1.10.4/jquery-ui.js"></script> -->
+  	<script src="jquery-ui-1.10.4/jquery-ui.js"></script>
+
+  	<!-- jquery mobile -->
+    <link rel="stylesheet" href="jquery.mobile-1.4.0.min.css">
+	<script src="jquery.mobile-1.4.0.min.js"></script>
+	<script src="jquery.mobile-1.4.0.min.js"></script>
 </head>
 
 <body>
@@ -68,116 +72,131 @@
 
 <!-- Columns of stuff -->
 		<div data-role="content">
-			<div class="scrollbox" id="resbox">
-				<div class="list-of-entries-container">
-					<table class="outer">
-						<tbody>
-							<tr>
-								<td class="head column column0" id="celladdress_h1_0">
-									<div class="main-cell-div" id="cellcontents_h1_0">
-										<div style="float: right;"></div>
-										<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('10');return false;">Hello</a>
+			<table class="outer">
+				<tbody>
+					<tr>
+						<td class="head column column0" id="celladdress_h1_0">
+							<div class="main-cell-div" id="cellcontents_h1_0">
+								<div style="float: right;"></div>
+								<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('10');return false;">Hello</a>
+							</div>
+						</td>
+						<td class="head column column1" id="celladdress_h1_1">
+							<div class="main-cell-div" id="cellcontents_h1_1">
+								<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('11');return false;">T</a>
+							</div>
+						</td>
+						<td class="head column column2" id="celladdress_h1_2">
+							<div class="main-cell-div" id="cellcontents_h1_2">
+								<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('12');return false;">Food</a>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td class="head column column0" id="celladdress_1_0">
+							<div class="main-cell-div" id="cellcontents_1_0">
+								<nobr>
+									<input type="text" id="firstbox" name="search_10" value="Type search terms here" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
+									&nbsp;<a></a>
+								</nobr>
+							</div>
+						</td>
+						<td class="head column column1" id="celladdress_1_1">
+							<div class="main-cell-div" id="cellcontents_1_1">
+								<nobr>
+									<input type="text" name="search_11" value="" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
+								</nobr>
+							</div>
+						</td>
+						<td class="head column column2" id="celladdress_1_2">
+							<div class="main-cell-div" id="cellcontents_1_2">
+								<nobr>
+									<input type="text" name="search_12" value="" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
+								</nobr>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td class="even column column0" id="celladdress_2_0">
+							<div class="main-cell-div" id="cellcontents_2_0">
+								<span>First</span>
+							</div>
+						</td>
+						<td class="even column column1" id="celladdress_2_1">
+							<div class="main-cell-div" id="cellcontents_2_1">
+								<span>giraffe</span>
+							</div>
+						</td>
+						<td class="even column column2" id="celladdress_2_2">
+							<div class="main-cell-div" id="cellcontents_2_2">
+								<span>bananas</span>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td class="odd column column0" id="celladdress_3_0">
+							<div class="main-cell-div" id="cellcontents_3_0">
+								<span>Second</span>
+							</div>
+						</td>
+						<td class="odd column column1" id="celladdress_3_1">
+							<div class="main-cell-div" id="cellcontents_3_1">
+								<span>giraffe</span>,<br>
+								<div class="main-cell-div" id="cellcontents_3_1">
+									<span>zebra</span>,<br>
+									<div class="main-cell-div" id="cellcontents_3_1">
+										<span>cobra</span>
 									</div>
-								</td>
-								<td class="head column column1" id="celladdress_h1_1">
-									<div class="main-cell-div" id="cellcontents_h1_1">
-										<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('11');return false;">T</a>
-									</div>
-								</td>
-								<td class="head column column2" id="celladdress_h1_2">
-									<div class="main-cell-div" id="cellcontents_h1_2">
-										<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('12');return false;">Food</a>
-									</div>
-								</td>
-							</tr>
-							<tr>
-								<td class="head column column0" id="celladdress_1_0">
-									<div class="main-cell-div" id="cellcontents_1_0">
-										<nobr>
-											<input type="text" id="firstbox" name="search_10" value="Type search terms here" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
-											&nbsp;<a></a>
-										</nobr>
-									</div>
-								</td>
-								<td class="head column column1" id="celladdress_1_1">
-									<div class="main-cell-div" id="cellcontents_1_1">
-										<nobr>
-											<input type="text" name="search_11" value="" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
-										</nobr>
-									</div>
-								</td>
-								<td class="head column column2" id="celladdress_1_2">
-									<div class="main-cell-div" id="cellcontents_1_2">
-										<nobr>
-											<input type="text" name="search_12" value="" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
-										</nobr>
-									</div>
-								</td>
-							</tr>
-							<tr>
-								<td class="even column column0" id="celladdress_2_0">
-									<div class="main-cell-div" id="cellcontents_2_0">
-										<span>First</span>
-									</div>
-								</td>
-								<td class="even column column1" id="celladdress_2_1">
-									<div class="main-cell-div" id="cellcontents_2_1">
-										<span>giraffe</span>
-									</div>
-								</td>
-								<td class="even column column2" id="celladdress_2_2">
-									<div class="main-cell-div" id="cellcontents_2_2">
-										<span>bananas</span></div>
-									</td>
-							</tr>
-								<tr>
-									<td class="odd column column0" id="celladdress_3_0">
-										<div class="main-cell-div" id="cellcontents_3_0">
-											<span>Second</span></div>
-										</td>
-										<td class="odd column column1" id="celladdress_3_1">
-											<div class="main-cell-div" id="cellcontents_3_1">
-												<span>giraffe</span>,<br>
-												<div class="main-cell-div" id="cellcontents_3_1">
-													<span>zebra</span>,<br>
-													<div class="main-cell-div" id="cellcontents_3_1">
-														<span>cobra</span>
-													</div>
-												</div>
-											</div>
-										</td>
-										<td class="odd column column2" id="celladdress_3_2">
-											<div class="main-cell-div" id="cellcontents_3_2">
-												<span>beets</span>
-											</div>
-										</td>
-									</tr>
-									<tr>
-										<td class="even column column0" id="celladdress_4_0">
-											<div class="main-cell-div" id="cellcontents_4_0">
-												<span>Third</span>
-											</div>
-										</td>
-										<td class="even column column1" id="celladdress_4_1">
-											<div class="main-cell-div" id="cellcontents_4_1">
-												<span>cobra</span>
-											</div>
-										</td>
-										<td class="even column column2" id="celladdress_4_2">
-											<div class="main-cell-div" id="cellcontents_4_2">
-												<span>lettuce</span>
-											</div>
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-					</div>
-				</div>
+								</div>
+							</div>
+						</td>
+						<td class="odd column column2" id="celladdress_3_2">
+							<div class="main-cell-div" id="cellcontents_3_2">
+								<span>beets</span>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td class="even column column0" id="celladdress_4_0">
+							<div class="main-cell-div" id="cellcontents_4_0">
+								<span>Third</span>
+							</div>
+						</td>
+						<td class="even column column1" id="celladdress_4_1">
+							<div class="main-cell-div" id="cellcontents_4_1">
+								<span>cobra</span>
+							</div>
+						</td>
+						<td class="even column column2" id="celladdress_4_2">
+							<div class="main-cell-div" id="cellcontents_4_2">
+								<span>lettuce</span>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<button>hide the div</button>
+			<div class="div">Hello</div>
+			<div class="div">Goodbye</div>
+		</div>
+
+
 
 
 
 	<script type="text/javascript">
+
+		$( "button" ).swiperight(function() {
+	  		alert("SWIPE DETECTED!");
+	 		//$( ".column0" ).hide( "slide", { direction: "left" }, "slow" );
+	 		$(".column0").animate({'width': 0}, 1000);
+	 		//$(".column1").toggle("slide", {direction:"right"}, 1000);
+	  		/*$( ".column0" ).show( "slide", { direction: "right" }, "slow", function () {
+	  			$(".column1").show("slide", {direction: "right"}, "slow");
+	  		});*/
+	  		//$(".column1").show("slide", {direction: "right"}, "slow");
+		});
 
 		// hide all cols except the first one on page load
 		$( document ).ready(function() {
@@ -191,33 +210,37 @@
 
 		// on right swipe, move one col to the left
 		jQuery('td').swiperight(function() {
-			alert("SWIPE DETECTED!")
+			//alert("SWIPE DETECTED!")
 			var id = $(event.target).attr('id');
 			var arr = id.split("_");
-  			alert("col: " + arr[2]);
+  			//alert("col: " + arr[2]);
   			var col = parseInt(arr[2]);
 
   			// if we're on the leftmost col, we can't go to the left,
   			// so do nothing
   			if (col != 0) {
-  				$(".column" + arr[2]).hide("slow");
-  				$(".column" + (col - 1)).show("slow");
+  				$(".column" + arr[2]).hide( "slide", { direction: "right" }, "slow", function(){
+  					$(".column" + (col - 1)).show("slide", {direction: "left"}, "slow");
+  				} );
+  				//$(".column" + (col - 1)).show("slide", {direction: "left"}, "slow");
   			}
 		});
 
 		// on left swipe, move one col to the right
 		jQuery('td').swipeleft(function() {
-			alert("SWIPE DETECTED!")
+			//alert("SWIPE DETECTED!")
 			var id = $(event.target).attr('id');
 			var arr = id.split("_");
-  			alert("col: " + arr[2]);
+  			//alert("col: " + arr[2]);
 
   			// if we're on the rightmost col, we can't go right,
   			// so do nothing
   			var col = parseInt(arr[2]);
   			if (col != 2) {
-  				$(".column" + arr[2]).hide("slow");
-  				$(".column" + (col + 1)).show("slow");
+  				$(".column" + arr[2]).hide("slide", {direction: "left"}, "slow", function () {
+  					$(".column" + (col + 1)).show("slide", {direction: "right"}, "slow");
+  				});
+  				//$(".column" + (col + 1)).show("slide", {direction: "right"}, "slow");
   			}
 		});
 

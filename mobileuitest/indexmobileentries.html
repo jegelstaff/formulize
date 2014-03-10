@@ -43,17 +43,17 @@
 <script src="jquery.mobile-1.4.0.min.js"></script>
 
 <!-- Favicon -->
-	<link rel="shortcut icon" type="image/ico" href="http://localhost:8888/formulize/themes/formulize_standalone/icons/favicon.ico">
-	<link rel="icon" type="image/png" href="http://localhost:8888/formulize/themes/formulize_standalone/icons/icon.png">
+<link rel="shortcut icon" type="image/ico" href="http://localhost:8888/formulize/themes/formulize_standalone/icons/favicon.ico">
+<link rel="icon" type="image/png" href="http://localhost:8888/formulize/themes/formulize_standalone/icons/icon.png">
 	
 <!-- Sheet Css -->
 <!--<link rel="stylesheet" type="text/css" media="all" href="http://localhost:8888/formulize/themes/formulize_standalone/style.css">-->
 </head>
 <body id="formulize" class="en formulize-screen formulize-screen-2">
 	<div data-role="page">
-		<div data-role="panel" id="buttonpanel">
+		<!--<div data-role="panel" id="buttonpanel">
 			
-									<!--<input type="submit" name="submitx" style="visibility: hidden;" value="" id="submit">-->
+									<!--<input type="submit" name="submitx" style="visibility: hidden;" value="" id="submit">
 								
 									<input type="button" class="formulize_button" id="formulize_changeColsButton" name="changecols" value="Change columns" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/changecols.php?fid=1&amp;frid=&amp;cols=10,11,12');">
 
@@ -95,7 +95,7 @@
 					<option value="">&nbsp;&nbsp;Entries by all users in...[pick groups]</option>
 				</select>
 			</div>
-		</div>
+		</div>-->
 	<!--<div id="cboxOverlay" style="display: none;"></div>
 	<div id="colorbox" class="" style="padding-bottom: 32px; padding-right: 0px; display: none;">
 		<div id="cboxWrapper"></div>
@@ -129,129 +129,136 @@
 	<!-- Content -->
 	<div id="xo-canvas-content">
 		<div id="xo-canvas-columns">
-			<!-- Left column -->
-										
-	<div class="xo-blockszone x2-secondary xo-canvas-column" id="xo-canvas-leftcolumn">
-		<div class="xo-block formulize">
-		<div class="xo-blocktitle"><h3>Form Menu&nbsp;<a href="#" onclick="$('#ed_block_24').dialog('open'); return false;"><img src="http://localhost:8888/formulize/images/crystal/actions/configure.png" title="Edit" alt="Edit"></a><button style="display: none;"></button><script type="text/javascript">
-					$(function() {
-						$('#ed_block_24').dialog({
-							bgiframe: true,
-							//height: 140,
-							autoOpen: false,
-							modal: true
-						});
-					});
-					</script>
-				</h3></div>		<div class="xo-blockcontent">There are no forms currently available.</div>
-	</div>
+			<!-- Left column -->						
+			<!-- <div class="xo-blockszone x2-secondary xo-canvas-column" id="xo-canvas-leftcolumn">
+				<div class="xo-block formulize">
+					<div class="xo-blocktitle">
+						<h3>Form Menu&nbsp;
+							<a href="#" onclick="$('#ed_block_24').dialog('open'); return false;">
+								<img src="http://localhost:8888/formulize/images/crystal/actions/configure.png" title="Edit" alt="Edit">
+							</a>
+							<button style="display: none;"></button>
+							<script type="text/javascript">
+								$(function() {
+									$('#ed_block_24').dialog({
+										bgiframe: true,
+										//height: 140,
+										autoOpen: false,
+										modal: true
+									});
+								});
+							</script>
+						</h3>
+					</div>		
+				<div class="xo-blockcontent">There are no forms currently available.</div>
+			</div> -->
 		</div>
-									<!-- Center column / page -->
-			<div id="xo-page">
+		<!-- Center column / page -->
+		<div id="xo-page">
 				<!-- Top blocks -->
-								<!-- Module content -->
-								<div id="xo-content"><form name="resetviewform" id="resetviewform" action="http://localhost:8888/formulize/modules/formulize/index.php?fid=1" method="post" onsubmit="javascript:showLoading();">
-<input type="hidden" name="currentview" value="all">
-<input type="hidden" name="userClickedReset" value="1">
-</form>
-<div id="workingmessage" style="display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px;">
-<img src="http://localhost:8888/formulize/modules/formulize/images/working-english.gif">
-</div>
-<div id="listofentries">
-<form name="controls" id="controls" action="http://localhost:8888/formulize/modules/formulize/index.php?fid=1" method="post" onsubmit="javascript:showLoading();">
-<input type="hidden" name="XOOPS_TOKEN_REQUEST" id="XOOPS_TOKEN_REQUEST" value="1bab901fb2abceed8ed6c70a5c50897e"><input type="hidden" name="formulize_cacheddata" id="formulize_cacheddata" value="">
-<input type="hidden" name="formulize_previous_filter" id="formulize_previous_filter" value="">
-<input type="hidden" name="formulize_previous_scope" id="formulize_previous_scope" value="">
-<input type="hidden" name="formulize_previous_sort" id="formulize_previous_sort" value="">
-<input type="hidden" name="formulize_previous_order" id="formulize_previous_order" value="">
-<input type="hidden" name="formulize_previous_querystring" id="formulize_previous_querystring" value="">
+				<!-- Module content -->
+				<div id="xo-content">
+					<form name="resetviewform" id="resetviewform" action="http://localhost:8888/formulize/modules/formulize/index.php?fid=1" method="post" onsubmit="javascript:showLoading();">
+						<input type="hidden" name="currentview" value="all">
+						<input type="hidden" name="userClickedReset" value="1">
+					</form>
+				<div id="workingmessage" style="display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px;">
+					<img src="http://localhost:8888/formulize/modules/formulize/images/working-english.gif">
+				</div>
+				<div id="listofentries">
+				<form name="controls" id="controls" action="http://localhost:8888/formulize/modules/formulize/index.php?fid=1" method="post" onsubmit="javascript:showLoading();">
+					<input type="hidden" name="XOOPS_TOKEN_REQUEST" id="XOOPS_TOKEN_REQUEST" value="1bab901fb2abceed8ed6c70a5c50897e"><input type="hidden" name="formulize_cacheddata" id="formulize_cacheddata" value="">
+					<input type="hidden" name="formulize_previous_filter" id="formulize_previous_filter" value="">
+					<input type="hidden" name="formulize_previous_scope" id="formulize_previous_scope" value="">
+					<input type="hidden" name="formulize_previous_sort" id="formulize_previous_sort" value="">
+					<input type="hidden" name="formulize_previous_order" id="formulize_previous_order" value="">
+					<input type="hidden" name="formulize_previous_querystring" id="formulize_previous_querystring" value="">
+					<input type="hidden" name="formulize_LOEPageStart" id="formulize_LOEPageStart" value="0">
+					<table cellpadding="10">
+						<tbody>
+							<tr>
+								<td id="titleTable" style="vertical-align: top;" width="100%">
+									<h1>Entries in 'giraffe'</h1>
+									<!--<a href="http://localhost:8888/formulize/modules/formulize/admin/ui.php?page=screen&amp;sid=2">Configure this Screen</a><br>-->
+								</td>
+								<td id="buttonsTable" class="outerTable" rowspan="3" style="vertical-align: bottom;">
+									<table>
+										<tbody>
+											<tr>
+												<td id="leftButtonColumn" class="innerTable" style="vertical-align: bottom;">
+													<p><input type="submit" name="submitx" style="visibility: hidden;" value="">
+														<br>
+														<b>Actions: </b>
+														<br>
+														<input type="button" class="formulize_button" id="formulize_changeColsButton" name="changecols" value="Change columns" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/changecols.php?fid=1&amp;frid=&amp;cols=10,11,12');"><br>
 
-<input type="hidden" name="formulize_LOEPageStart" id="formulize_LOEPageStart" value="0">
-<table cellpadding="10">
-	<tbody>
-		<tr>
-			<td id="titleTable" style="vertical-align: top;" width="100%">
-				<h1>Entries in 'giraffe'</h1>
-				<a href="http://localhost:8888/formulize/modules/formulize/admin/ui.php?page=screen&amp;sid=2">Configure this Screen</a><br>
-			</td>
-			<td id="buttonsTable" class="outerTable" rowspan="3" style="vertical-align: bottom;">
-				<table>
-					<tbody>
-						<tr>
-							<td id="leftButtonColumn" class="innerTable" style="vertical-align: bottom;">
-								<p><input type="submit" name="submitx" style="visibility: hidden;" value="">
-									<br>
-									<b>Actions: </b>
-									<br>
-									<input type="button" class="formulize_button" id="formulize_changeColsButton" name="changecols" value="Change columns" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/changecols.php?fid=1&amp;frid=&amp;cols=10,11,12');"><br>
+														<input type="button" class="formulize_button" id="formulize_resetViewButton" name="resetviewbutton" value="Reset view" onclick="javascript:showLoadingReset();"><br>
 
-									<input type="button" class="formulize_button" id="formulize_resetViewButton" name="resetviewbutton" value="Reset view" onclick="javascript:showLoadingReset();"><br>
+														<input type="button" class="formulize_button" id="formulize_saveViewButton" name="save" value="Save view" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/save.php?fid=1&amp;frid=&amp;lastloaded=&amp;cols=10,11,12&amp;currentview=all&amp;loadonlyview=0');"><br>
 
-									<input type="button" class="formulize_button" id="formulize_saveViewButton" name="save" value="Save view" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/save.php?fid=1&amp;frid=&amp;lastloaded=&amp;cols=10,11,12&amp;currentview=all&amp;loadonlyview=0');"><br>
+														<input type="button" class="formulize_button" id="formulize_deleteViewButton" name="delete" value="Delete view" onclick="javascript:delete_view(this.form, '10000', '4');">
+													</p>
+												</td>
 
-									<input type="button" class="formulize_button" id="formulize_deleteViewButton" name="delete" value="Delete view" onclick="javascript:delete_view(this.form, '10000', '4');">
-								</p>
-							</td>
+												<td id="middleButtonColumn" class="innerTable" style="vertical-align: bottom;">
+													<p style="text-align: center;">
+														<input type="button" class="formulize_button" id="formulize_selectAllButton" name="sellall" value="Select all" onclick="selectAll(this.check);"><br>
 
-							<td id="middleButtonColumn" class="innerTable" style="vertical-align: bottom;">
-								<p style="text-align: center;">
-									<input type="button" class="formulize_button" id="formulize_selectAllButton" name="sellall" value="Select all" onclick="selectAll(this.check);"><br>
+														<input type="button" class="formulize_button" id="formulize_clearSelectButton" name="clearall" value="Clear selection" onclick="unselectAll(this.uncheck);"><br>
 
-									<input type="button" class="formulize_button" id="formulize_clearSelectButton" name="clearall" value="Clear selection" onclick="unselectAll(this.uncheck);"><br>
+														<input type="button" class="formulize_button" id="formulize_cloneButton" name="clonesel" value="Clone selected" onclick="javascript:confirmClone();"><br>
 
-									<input type="button" class="formulize_button" id="formulize_cloneButton" name="clonesel" value="Clone selected" onclick="javascript:confirmClone();"><br>
+														<input type="button" class="formulize_button" id="formulize_deleteButton" name="deletesel" value="Delete selected" onclick="javascript:confirmDel();"><br>
+													</p>
+												</td>
+												<td id="rightButtonColumn" class="innerTable" style="vertical-align: bottom;">
+													<p style="text-align: center;"><br>
+														<input type="button" class="formulize_button" id="formulize_calcButton" name="calculations" value="Calculations" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/pickcalcs.php?fid=1&amp;frid=&amp;calc_cols=&amp;calc_calcs=&amp;calc_blanks=&amp;calc_grouping=');"><br>
 
-									<input type="button" class="formulize_button" id="formulize_deleteButton" name="deletesel" value="Delete selected" onclick="javascript:confirmDel();"><br>
-								</p>
-							</td>
-							<td id="rightButtonColumn" class="innerTable" style="vertical-align: bottom;">
-								<p style="text-align: center;"><br>
-									<input type="button" class="formulize_button" id="formulize_calcButton" name="calculations" value="Calculations" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/pickcalcs.php?fid=1&amp;frid=&amp;calc_cols=&amp;calc_calcs=&amp;calc_blanks=&amp;calc_grouping=');"><br>
+														<input type="button" class="formulize_button" id="formulize_exportButton" name="export" value="Export Entries" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/export.php?fid=1&amp;frid=&amp;cols=10,11,12&amp;eq=1393200219');"><br>
 
-									<input type="button" class="formulize_button" id="formulize_exportButton" name="export" value="Export Entries" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/export.php?fid=1&amp;frid=&amp;cols=10,11,12&amp;eq=1393200219');"><br>
+														<input type="button" class="formulize_button" id="formulize_importButton" name="impdata" value="Import Data" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/import.php?fid=1&amp;eq=1393200219');">
 
-									<input type="button" class="formulize_button" id="formulize_importButton" name="impdata" value="Import Data" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/import.php?fid=1&amp;eq=1393200219');">
+														<input type="button" class="formulize_button" id="formulize_notifButton" name="notbutton" value="Notifications" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/setnot.php?fid=1');">
+													</p>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</td>
+							</tr>
+							<tr>
+								<td id="outerAddEntryPanel" style="vertical-align: top;">
+									<table>
+										<tbody>
+											<tr>
+												<td id="innerAddEntryPanel" style="vertical-align: bottom;">
+													<p>
+														<b>Fill In This Form: </b><br>
+														<input type="button" class="formulize_button" id="formulize_addButton" name="addentry" value="Add one entry" onclick="javascript:addNew('single');"><br>
 
-									<input type="button" class="formulize_button" id="formulize_notifButton" name="notbutton" value="Notifications" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/setnot.php?fid=1');">
-								</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</td>
-		</tr>
-		<tr>
-			<td id="outerAddEntryPanel" style="vertical-align: top;">
-				<table>
-					<tbody>
-						<tr>
-							<td id="innerAddEntryPanel" style="vertical-align: bottom;">
-								<p>
-									<b>Fill In This Form: </b><br>
-									<input type="button" class="formulize_button" id="formulize_addButton" name="addentry" value="Add one entry" onclick="javascript:addNew('single');"><br>
-
-									<input type="button" class="formulize_button" id="formulize_addMultiButton" name="addentry" value="Add multiple entries" onclick="javascript:addNew();"><br><br>
-								</p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</td>
-		</tr>
-		<tr>
-			<td id="currentViewSelectTable" style="vertical-align: bottom;">
-				<b>Current View: </b><br>
-				<select style="width: 350px;" name="currentview" id="currentview" size="1" onchange="javascript:change_view(this.form, '4', '4');">
-					<option value="">STANDARD VIEWS:</option>
-					<option value="mine">&nbsp;&nbsp;Entries by me</option>
-					<option value="group">&nbsp;&nbsp;Entries by all users in my group(s)</option>
-					<option value="all" selected="">&nbsp;&nbsp;Entries by all users in all groups</option>
-					<option value="">&nbsp;&nbsp;Entries by all users in...[pick groups]</option>
-				</select>
-			</td>
-		</tr>
-	</tbody>
-</table>
+														<input type="button" class="formulize_button" id="formulize_addMultiButton" name="addentry" value="Add multiple entries" onclick="javascript:addNew();"><br><br>
+													</p>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</td>
+							</tr>
+							<tr>
+								<td id="currentViewSelectTable" style="vertical-align: bottom;">
+									<b>Current View: </b><br>
+									<select style="width: 350px;" name="currentview" id="currentview" size="1" onchange="javascript:change_view(this.form, '4', '4');">
+										<option value="">STANDARD VIEWS:</option>
+										<option value="mine">&nbsp;&nbsp;Entries by me</option>
+										<option value="group">&nbsp;&nbsp;Entries by all users in my group(s)</option>
+										<option value="all" selected="">&nbsp;&nbsp;Entries by all users in all groups</option>
+										<option value="">&nbsp;&nbsp;Entries by all users in...[pick groups]</option>
+									</select>
+								</td>
+							</str>
+						</tbody>
+					</table>
 <input type="hidden" name="newcols" id="newcols" value="">
 <input type="hidden" name="oldcols" id="oldcols" value="10,11,12">
 <input type="hidden" name="ventry" id="ventry" value="1">
@@ -608,7 +615,7 @@ function setScrollDisplay(element) {
 }
 
 jQuery(window).load(function() {
-	jQuery('.lockcolumn').live("click", function() {
+	jQuery('.lockcolumn').on("click", function() {
 		var lockData = jQuery(this).attr('id').split('_');
 		var column = lockData[1];
 		if(floatingContents[column] == true) {
