@@ -88,21 +88,21 @@ class formulizeScreen extends xoopsObject {
     }
     
         
-    function getTemplatePath($templatename)
+    function getTemplatePath($templatename, $usePrototype = false)
     {
-	$pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/".$templatename.".php";
-        if (!file_exists($pathname))
+	if($usePrototype)
 	{
 	    $pathname = $prototype_pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/prototypes/prototype_".$templatename.".php";
-	    if (!file_exists($pathname))
-	    {
-		$pathname = null;
-	    }
 	}
+	else
+	{
+	    $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/".$templatename.".php";
+	}
+
 	return $pathname;
     }
-
-    function getTemplate($templatename) {
+    
+    function getTemplate($templatename, $usePrototype = false) {
         static $templates = array();
         if (!isset($templates[$templatename])) {
             // there is no template saved in memory, read it from the file
@@ -110,13 +110,34 @@ class formulizeScreen extends xoopsObject {
             if (file_exists($pathname)) {
                 $templates[$templatename] = file_get_contents($pathname);
                 // strip out opening <?php since we use this value for comparisons a lot, and it should be otherwise empty in that case
-                $templates[$templatename] = substr($templates[$templatename], 5);
-            } else {
-		$templates[$templatename] = null;
+                $templates[$templatename] = substr($templates[$templatename], 6);
+	    }
+	    else
+	    {
+	    	$templates[$templatename] = null;
+	    }
+	}
+	if (!isset($templates["prototype_".$templatename])){
+	    $pathname = $this->getTemplatePath($templatename, true);
+	    if (file_exists($pathname)) {
+
+		$templates["prototype_".$templatename] = file_get_contents($pathname);
+		// strip out opening <?php since we use this value for comparisons a lot, and it should be otherwise empty in that case
+		$templates["prototype_".$templatename] = substr($templates["prototype_".$templatename], 6);
+	    }
+	    else
+	    {
+		$templates["prototype_".$templatename] = null;
 	    }
         }
-        return $templates[$templatename];
-
+	if($usePrototype){
+	    error_log($templates["prototype_".$templatename]);
+	    return $templates["prototype_".$templatename];
+	}
+	else
+	{
+            return $templates[$templatename];
+	}
     }
 }
 

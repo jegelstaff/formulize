@@ -1422,8 +1422,6 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		} 
 	
   
-    
-  
 		$headcounter = 0;
 		$blankentries = 0;
 		$GLOBALS['formulize_displayElement_LOE_Used'] = false;
@@ -3864,16 +3862,22 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	
 	// process the template and output results
 	
-	$thisTemplate = $screen->getTemplate($type.'template');
-	if($thisTemplate != "") {
+	//Don't fall back to the prototype automatically as we explictly are checking if the default template has been editted. 
+	$thisTemplate = $screen->getTemplate($type.'template', false);
+	if($thisTemplate != null && $thisTemplate != "") {
     
 		include $screen->getTemplatePath($type.'template');
-		
-		// if there are no page nav controls in either template the template, then 
-		if($type == "top" AND !strstr($screen->getTemplate('toptemplate'), 'pageNavControls') AND (!strstr($screen->getTemplate('bottomtemplate'), 'pageNavControls'))) {
-			print $pageNavControls;
-		}
 	}
+	else
+	{
+		include $screen->getTemplatePath($type.'template', true);
+	}
+		
+	// if there are no page nav controls in either template the template, then 
+	if($type == "top" AND !strstr($screen->getTemplate('toptemplate'), 'pageNavControls') AND (!strstr($screen->getTemplate('bottomtemplate'), 'pageNavControls'))) {
+		print $pageNavControls;
+	}
+	
 	
 	// output the message text to the screen if it's not used in the custom templates somewhere
 	if($type == "top" AND $messageText AND !strstr($screen->getTemplate('toptemplate'), 'messageText') AND !strstr($screen->getTemplate('bottomtemplate'), 'messageText')) {

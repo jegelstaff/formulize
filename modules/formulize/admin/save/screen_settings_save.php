@@ -139,12 +139,12 @@ if($isNew) {
   // write out the necessary templates...
   // templates - initialize with the necessary php opening tags
   if($screens['type'] == "multiPage") {
-    $screen_handler->writeTemplateToFile("<?php\n".$screen->getTemplate('toptemplate'), 'toptemplate', $screen);
+    $screen_handler->writeTemplateToFile("<?php\n", 'toptemplate', $screen);
     $screen_handler->writeTemplateToFile("<?php\n", 'elementtemplate', $screen);
     $screen_handler->writeTemplateToFile("<?php\n", 'bottomtemplate', $screen);
   } elseif($screens['type'] == "listOfEntries") {
-    $screen_handler->writeTemplateToFile("<?php\n".$screen->getTemplate('toptemplate'), 'toptemplate', $screen);
-    $screen_handler->writeTemplateToFile("<?php\n".$screen->getTemplate('listtemplate'), 'listtemplate', $screen);
+    $screen_handler->writeTemplateToFile("<?php\n", 'toptemplate', $screen);
+    $screen_handler->writeTemplateToFile("<?php\n", 'listtemplate', $screen);
     $screen_handler->writeTemplateToFile("<?php\n", 'bottomtemplate', $screen);
   }
   
