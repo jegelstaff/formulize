@@ -87,7 +87,6 @@ define("_AM_FORM_SCREEN_HEADINGS_INTERFACE","Headings and Interface");
 define("_AM_FORM_SCREEN_ACTION_BUTTONS","Action Buttons");
 define("_AM_FORM_SCREEN_CUSTOM_BUTTONS","Custom buttons");
 define("_AM_FORM_SCREEN_TEMPLATES","Templates");
-define("_AM_FORM_MULTIPLE_PERMISSIONS"," Set multiple form permissions");
 define("_AM_SETTINGS_FORM_TITLE_QUESTION","What is the name of the form?");
 define("_AM_SETTINGS_FORM_TITLE","Form title: ");
 define("_AM_SETTINGS_MENU_ENTRY","Menu entry: ");
