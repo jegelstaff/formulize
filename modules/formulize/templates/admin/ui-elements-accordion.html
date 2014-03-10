@@ -1,18 +1,41 @@
 <style>
+
 body {
-    font-family:sans-serif;
+    font-family: Verdana, Arial, sans-serif;
+    font-size: 12px;
 }
 
+.button {
+	border-style:solid;
+	border-radius:4px;
+	border-color:#0099FF;
+    background-color: #70B8FF;
+    padding: 5px,5px,5px,5px;
+    color: #000;
+    font-family: 'Oswald';
+    font-size: 17px;
+    text-decoration: none;
+    cursor: pointer;
+	box-shadow: 1px 2px 1px #888888;
+    }
+
+
+
+.button:hover {
+  
+    background:#C6E3FF;
+    box-shadow: 0px 0px 1px #777;
+    
+}
 
 #accordion-3.hidden
 {
 	position:relative;
-	top:-72px;
+	top:-60px;
 }
 </style>
-<div class="toggle">
-    <label><input id="elementAccordion" type="radio" name="toggle"><span>element</span></label>
-</div>
+
+
 
 <div id="accordion-2">
 	<{foreach from=$sections[1] key=sectionNumber item=section}>
@@ -48,7 +71,7 @@ body {
 
 
 <script type="text/javascript">
-	$("#elementAccordion").click(function() {
+	$("#switch-accordion").click(function() {
 
 		if($("#accordion-3").hasClass('hidden')==false){
 			$("#accordion-3").toggleClass('hidden');  	  
@@ -61,6 +84,9 @@ body {
 		if($("#accordion-3").hasClass('hidden')==true){
 			$("#accordion-3").toggleClass('hidden');  	  
    		}
+	
+		buttonVal=$("#switch-accordion").text();
+   		$("#switch-accordion").text(buttonVal=='Forms'? 'Elements' : 'Forms');
 	});
 
 	pagehasaccordion["accordion-<{$number}>"] = true;

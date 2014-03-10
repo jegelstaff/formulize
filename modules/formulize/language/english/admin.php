@@ -58,7 +58,7 @@ define("_AM_ELE_CONVERT_SL", "Convert to single-line text box");
 define("_AM_ELE_CONVERT_CB", "Convert to check boxes");
 define("_AM_ELE_CONVERT_RB", "Convert to radio buttons.");
 define("_AM_ELE_ADDINGTOFORM","Add elements to the form");
-define("_AM_ELE_MANAGINGELEFORM","Manage the elements in the form");
+define("_AM_ELE_MANAGINGELEFORM","Reorder the elements in: ");
 define("_AM_ELE_CLICKTOADD","Click an element name to add it");
 define("_AM_ELE_CLICKDRAGANDDROP","Click and drag the elements to re-order them");
 define("_AM_ELE_MLTEXT", "Multi-line text box");
