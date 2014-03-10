@@ -56,6 +56,21 @@
 	</div>
 </div>
 
+<fieldset>
+	<legend>Screens to display to</legend>
+	<div class="form-item">
+		<label for="element-screens">Which screens should be displayed on?</label>
+		<select id="element-screens" name="element-screens[]" size="8" multiple>
+		<{foreach from=$content.screens item=screen}>
+		<{assign var=screenid value=$screen.id}>
+        <option value=<{$screenid}><{$content.ele_disabled.$screenid}>><{$screen.name}></option>
+        <{/foreach}>
+		</select>
+		<div class="description">Leave this blank to display element in all screens.</div>
+	</div>
+</fieldset>
+
+
 <div class="accordion-box">
 	<div class="form-item">
    	<fieldset>

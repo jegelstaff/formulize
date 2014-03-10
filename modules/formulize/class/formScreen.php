@@ -151,5 +151,21 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		displayForm($formframe, $entry, $mainform, $donedest, array(0=>$alldonebuttontext, 1=>$savebuttontext),
             $settings, $displayheading, "", $overrideMulti, "", 0, 0, 0, $screen);
 	}
+
+	public function getScreensForElement() {
+		$allScreens = array (
+		  "Screen1" => Array
+		     (
+		       "id" => 1,
+		       "name" => "Screen1Hello!"
+		     ),
+		  "Screen2" => Array
+		     (
+		       "id" => 2,
+		       "name" => "Screen2World!"
+		     )
+		  );
+		return $allScreens;
+	}
 }
 ?>
