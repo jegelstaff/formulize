@@ -7,7 +7,7 @@
 <script type="text/javascript">
 setTimeout(function(){jQuery("#session-timeout-warning").show();}, <{php}>
     // javascript uses times in milliseconds, so convert from minutes
-    $session_timeout_ms = $GLOBALS['icmsConfig']['session_expire'] * 60 * 1000;
+    $session_timeout_ms = ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') ? $icmsConfig['session_expire'] * 60 * 1000 : ini_get('session.cookie_lifetime') * 1000;
     // show notice five minutes before session timeout
     $grace_time_ms = (5 * 60 * 1000);
     echo ($session_timeout_ms - $grace_time_ms);
