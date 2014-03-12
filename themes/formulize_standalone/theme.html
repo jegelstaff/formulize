@@ -34,6 +34,7 @@
 </head>
 
 <body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) and $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>">
+<{includeq file="$theme_name/session-timeout-warning.html"}>
 <{if $xoBlocks.canvas_left and $xoBlocks.canvas_right}>
 <{assign var=columns_layout value='threecolumns-layout'}>
 <{elseif $xoBlocks.canvas_left}>

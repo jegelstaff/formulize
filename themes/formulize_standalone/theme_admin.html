@@ -42,6 +42,7 @@
 </head>
 
 <body id="<{$icms_dirname}>" class="<{$icms_langcode}>">
+<{includeq file="$theme_name/session-timeout-warning.html"}>
 <{if $xoBlocks.canvas_left_admin and $xoBlocks.canvas_right_admin}>
 <{assign var=columns_layout value='threecolumns-layout'}>
 <{elseif $xoBlocks.canvas_left_admin}>

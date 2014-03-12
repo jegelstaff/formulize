@@ -939,20 +939,31 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 #session-timeout-warning {
   display: none;
   position: fixed;
-  top: 30px;
+  top: 7%;
   left: 50%;
   margin-left: -250px;
   width: 500px;
   z-index: 101;
   text-align: center;
-  background-color: #cccccc;
+  background-color: #fff;
   color: black;
-  border: 8px solid #cccccc;
+  border: 3px solid #ce8c22;
   padding: 1em;
   border-radius: 5px;
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
-  box-shadow: 1px 1px 20px 3px black; }
+  box-shadow: 1px 1px 20px 3px #aaa; }
+#session-timeout-warning img.session-timeout-warning-icon {
+  position: absolute;
+  top: calc(50% - 16px);
+  left: 1.3em; }
+#session-timeout-warning img.session-timeout-warning-close {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  cursor: pointer; }
+#session-timeout-warning p {
+  margin: 1em; }
 
 /* this forces the footer to the bottom of the page even when the page content is shorter than the window */
 html, body, #content {
