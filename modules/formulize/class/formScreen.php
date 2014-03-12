@@ -38,6 +38,7 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 require_once XOOPS_ROOT_PATH.'/modules/formulize/class/screen.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
+
 class formulizeFormScreen extends formulizeScreen {
 
 	function formulizeFormScreen() {
@@ -152,20 +153,55 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
             $settings, $displayheading, "", $overrideMulti, "", 0, 0, 0, $screen);
 	}
 
+	function _getElementsForScreen($fid, $options) {
+	    $formObject = new formulizeForm($fid, true); // true causes all elements, even ones now shown to any user, to be included
+	    $elements = $formObject->getVar('elements');
+	    $elementCaptions = $formObject->getVar('elementCaptions');
+	    foreach($elementCaptions as $key=>$elementCaption) {
+	      $options[$elements[$key]] = printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption
+	    }
+	    return $options;
+	}
+
+	function _getSelectedElementsForScreen($sid) {
+		$screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+    	$screen = $screen_handler->get($sid);
+    	$elements = $screen->getVar('formelements');
+    	return $elements;
+	}
+
 	public function getScreensForElement($fid) {
 
 		$screens = array();
 		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 		$criteria_object = new CriteriaCompo(new Criteria('type','form'));
-		$mulitPageAndFormScreens = $screen_handler->getObjects($criteria_object,$fid);
-		$i = 0;
-		foreach($mulitPageAndFormScreens as $screen) {
-		  $screens[$i]['sid'] = $screen->getVar('sid');
-		  $screens[$i]['title'] = $screen->getVar('title');
-		  $screens[$i]['type'] = $screen->getVar('type');
-		  $i++;
+		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
+		foreach($formScreens as $screen) {
+			$sid = $screen->getVar('sid');
+		  	$screens[$sid]['sid'] = $screen->getVar('sid');
+		  	$screens[$sid]['title'] = $screen->getVar('title');
+		  	$screens[$sid]['type'] = $screen->getVar('type');
 		}
 		return $screens;
 	}
+
+	public function getSelectedScreens($fid) {
+
+		$selected_screens = array();
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$criteria_object = new CriteriaCompo(new Criteria('type','form'));
+		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
+		foreach($formScreens as $screen) {
+			$sid = $screen->getVar('sid');
+
+	  		// See if this element is being selected by the screen(s) already
+			$selected_elements = $this->_getSelectedElementsForScreen($sid);
+			if (in_array($_GET['ele_id'], $selected_elements)) {
+				$selected_screens[$sid] = " selected";
+			}
+		}
+		return $selected_screens;
+	}
+
 }
 ?>

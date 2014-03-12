@@ -61,9 +61,9 @@
 	<div class="form-item">
 		<label for="elements_form_screens">Which form screens should element display on?</label>
 		<select id="elements_form_screens" name="elements_form_screens[]" size="8" multiple>
-		<{foreach from=$content.screens item=form_screen}>
+		<{foreach from=$content.form_screens item=form_screen}>
 		<{assign var=formscreenid value=$form_screen.sid}>
-        <option value=<{$formscreenid}><{$content.form_screens.$formscreenid}>><{$form_screen.title}></option>
+        <option value=<{$formscreenid}><{$content.ele_form_screens.$formscreenid}>><{$form_screen.title}></option>
         <{/foreach}>
 		</select>
 		<div class="description">Leave this blank to display element in all screens.</div>

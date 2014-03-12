@@ -512,7 +512,10 @@ $adminPage['tabs'][++$tabindex]['name'] = _AM_ELE_DISPLAYSETTINGS;
 $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_display.html";
 $adminPage['tabs'][$tabindex]['content'] = $display + $common;
 $formScreenHandler = new formulizeFormScreenHandler();
-$adminPage['tabs'][$tabindex]['content']['screens'] = $formScreenHandler->getScreensForElement($common['fid']);
+$adminPage['tabs'][$tabindex]['content']['form_screens'] = $formScreenHandler->getScreensForElement($common['fid']);
+// get all default selected form screens in an array
+$adminPage['tabs'][$tabindex]['content']['ele_form_screens'] = $formScreenHandler->getSelectedScreens($common['fid']);
+
 
   
 if($advanced['datatypeui'] OR $advanced['ele_encrypt_show']) {
