@@ -1748,7 +1748,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	foreach($groups as $thisgroup) {
 		$criteriaBase->add(new Criteria('ele_display', '%,'.$thisgroup.',%', 'LIKE'), 'OR');
 	}
-	if(is_array($elements_allowed)) {
+	if(is_array($elements_allowed) and count($elements_allowed) > 0) {
 		// if we're limiting the elements, then add a criteria for that (multiple criteria are joined by AND unless you specify OR manually when adding them (as in the base above))
 		$criteria = new CriteriaCompo();
 		$criteria->add(new Criteria('ele_id', "(".implode(",",$elements_allowed).")", "IN"));
