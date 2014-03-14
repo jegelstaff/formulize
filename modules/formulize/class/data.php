@@ -443,10 +443,6 @@ class formulizeDataHandler  {
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
 		$queryValue = "\"" . formulize_escape($value) . "\"";
-		if($operator == "{LINKEDSEARCH}") {
-			$operator = "LIKE";
-			$queryValue = "\"%," . formulize_escape($value) . ",%\"";
-		}
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids, array());
 			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter GROUP BY entry_id ORDER BY entry_id";

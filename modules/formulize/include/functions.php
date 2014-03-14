@@ -2538,7 +2538,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry, $gperm_handler,
         } else { // option 3. target form is the linked selectbox
             // so look for all the entry ids in the target form, where the linked field has the startEntry in it
             $data_handler_target = new formulizeDataHandler($targetForm['fid']);
-            $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], $startEntry, $all_users, $all_groups, "{LINKEDSEARCH}");
+            $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], $startEntry, $all_users, $all_groups);
             if ($entries_to_return !== false) {
                 return $entries_to_return;
             } else {
