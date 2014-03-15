@@ -2837,7 +2837,12 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
     formulize_benchmark("before reading stylesheet");
 		if(file_exists(XOOPS_ROOT_PATH . "/themes/" . $xoopsConfig['theme_set'] . "/style.css")) {
 			if( !class_exists('csstidy') ) {
-				include XOOPS_ROOT_PATH . "/modules/formulize/class/class.csstidy.php";
+				// use supplied csstidy in parent if one exists...
+				if(file_exists(XOOPS_ROOT_PATH . "/plugins/csstidy/class.csstidy.php")) {
+					include_once XOOPS_ROOT_PATH . "/plugins/csstidy/class.csstidy.php";
+				} else {
+					include_once XOOPS_ROOT_PATH . "/modules/formulize/class/class.csstidy.php";	
+				}
 			}
 			$css = new csstidy();
 			$css->set_cfg('merge_selectors',0);
