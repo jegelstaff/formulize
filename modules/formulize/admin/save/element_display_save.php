@@ -55,7 +55,6 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
 
-
 // grab any conditions for this page too
 // add new ones to what was passed from before
 if($_POST["new_elementfilter_term"] != "") {
@@ -130,6 +129,37 @@ if($_POST['elements_ele_disabled'][0] == "none") {
   $disabled = "," . implode(",", $_POST['elements_ele_disabled']) . ",";
 }
 $element->setVar('ele_disabled', $disabled);
+
+// Saving element existence in screen(s)
+$screens_save = $_POST['elements_form_screens'];
+// go through each possible screen, and save whether the element in the UI accordingly by appending to existing screen's elements
+// If the screen is not highlighted in the UI, then we must unset it manually by going through each screen's saved array
+
+  $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+  $criteria_object = new CriteriaCompo(new Criteria('type','form'));
+  $form_screens = $screen_handler->getObjects($criteria_object,$fid);
+  foreach($form_screens as $form_screen) {
+    $sid = $form_screen->getVar('sid');
+    $form_elements = $form_screen->getVar('formelements');
+  echo "<pre>";
+  print_r($form_screen);
+
+    // $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+    // $screen = $screen_handler->get($sid);
+  }  
+    exit();
+  if (in_array($sid, $screens_save)) {
+    $save_element_array = array();
+    $save_element_array['formelements'][0] = strval($ele_id);
+    $save_element = serialize($save_element_array['formelements']);
+    $screen->setVar('formelements', $save_element);
+  } else {
+    $screen->setVar('formelements', "");
+  }
+
+  if(!$screen_handler->insert($screen)) {
+    print "Error: could not save the screen properly: ".$xoopsDB->error();
+  }  
 
 if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the display settings for element: ".$xoopsDB->error();
