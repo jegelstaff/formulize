@@ -163,7 +163,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 	    return $options;
 	}
 
-	function _getSelectedElementsForScreen($sid) {
+	public function getSelectedElementsForScreen($sid) {
 		$screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
     	$screen = $screen_handler->get($sid);
     	$elements = $screen->getVar('formelements');
@@ -195,7 +195,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 			$sid = $screen->getVar('sid');
 
 	  		// See if this element is being selected by the screen(s) already
-			$selected_elements = $this->_getSelectedElementsForScreen($sid);
+			$selected_elements = $this->getSelectedElementsForScreen($sid);
 			if (in_array($_GET['ele_id'], $selected_elements)) {
 				$selected_screens[$sid] = " selected";
 			}

@@ -27,6 +27,10 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+// this file contains objects to retrieve screen(s) information for elements
+
+include_once XOOPS_ROOT_PATH."/modules/formulize/class/formScreen.php";
+
 // this file handles saving of submissions from the element display page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
@@ -134,32 +138,43 @@ $element->setVar('ele_disabled', $disabled);
 $screens_save = $_POST['elements_form_screens'];
 // go through each possible screen, and save whether the element in the UI accordingly by appending to existing screen's elements
 // If the screen is not highlighted in the UI, then we must unset it manually by going through each screen's saved array
+$formScreenHandler = new formulizeFormScreenHandler();
+$all_screens = $formScreenHandler->getScreensForElement($fid);
 
-  $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
-  $criteria_object = new CriteriaCompo(new Criteria('type','form'));
-  $form_screens = $screen_handler->getObjects($criteria_object,$fid);
-  foreach($form_screens as $form_screen) {
-    $sid = $form_screen->getVar('sid');
-    $form_elements = $form_screen->getVar('formelements');
-  echo "<pre>";
-  print_r($form_screen);
-
-    // $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
-    // $screen = $screen_handler->get($sid);
-  }  
-    exit();
-  if (in_array($sid, $screens_save)) {
-    $save_element_array = array();
-    $save_element_array['formelements'][0] = strval($ele_id);
-    $save_element = serialize($save_element_array['formelements']);
-    $screen->setVar('formelements', $save_element);
+// Due to security, not possible to retrieve formelements from using getmodulehandler, hence used abstract method.
+// For saving, use getmodulehandler directly
+$screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+foreach ($all_screens as $key => $screen) {
+  $screen_elements = $formScreenHandler->getSelectedElementsForScreen($screen['sid']);
+  $screen_stream = $screen_handler->get($screen['sid']);
+  if (in_array($screen['sid'], $screens_save)) {
+    // avoid adding duplicate element within the list if the screen already has it
+    if (!in_array($ele_id, $screen_elements)) {
+      array_push($screen_elements, strval($ele_id));
+    }
+    $save_element = serialize($screen_elements);
+    $screen_stream->setVar('formelements', $save_element);
   } else {
-    $screen->setVar('formelements', "");
-  }
+    if (in_array($ele_id, $screen_elements)) {
+      // If the element exists in the screen's element, array, then unset it
+      if(($index = array_search($ele_id, $screen_elements)) !== false) {
+          unset($screen_elements[$index]);
+      }
 
-  if(!$screen_handler->insert($screen)) {
+      // if resulting array is empty, then send an empty quotation as data to setVar
+      if (empty($screen_elements)){ 
+        $screen_stream->setVar('formelements', "");
+      } else {
+        $save_element = serialize($screen_elements);
+        $screen_stream->setVar('formelements', $save_element);         
+      }
+
+    }
+  }
+  if(!$screen_handler->insert($screen_stream)) {
     print "Error: could not save the screen properly: ".$xoopsDB->error();
   }  
+} 
 
 if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the display settings for element: ".$xoopsDB->error();

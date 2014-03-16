@@ -388,9 +388,6 @@ if($screen_id != "new" && $settings['type'] == 'form') {
   $options['reloadblank'] = $screen->getVar('reloadblank') ? "blank" : "entry";
   $options['formelements'] = $screen->getVar('formelements');
   $options['element_list'] = $element_list;
-  echo "<pre>";
-  print_r($options);
-  exit();
 }
 
 // common values should be assigned to all tabs
