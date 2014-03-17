@@ -380,6 +380,8 @@ if($fid != "new") {
         return $a['order']-$b['order'];
       });
       $adminPage['tabs'][$i]['content']['allElements'] = array($listElements,$elements);
+      $adminPage['tabs'][$i]['content']['accordionNames'] = array("-form","-list");
+
     }
     if(count($customElements)>0) {
 	$adminPage['tabs'][$i]['content']['customElements'] = $customElements;

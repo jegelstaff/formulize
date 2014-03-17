@@ -1,45 +1,14 @@
-<style>
 
-body {
-    font-family: Verdana, Arial, sans-serif;
-    font-size: 12px;
-}
-.button {
-	border-style:solid;
-	border-radius:4px;
-	border-color:#0099FF;
-    background-color: #70B8FF;
-    padding: 5px,5px,5px,5px;
-    color: #000;
-    font-size: 17px;
-    text-decoration: none;
-    cursor: pointer;
-	box-shadow: 1px 2px 1px #888888;
-}
+<html>
+<{assign var="number" value=$number$name }>
 
-.button:hover {
-    background:#C6E3FF;
-    box-shadow: 0px 0px 1px #777;    
-}
-.container{
-	position: relative;
-	top:0px;
-}
-#accordion-3.hidden{
-	position:absolute;
-	top:0px;
-}
-</style>
-
-
-<div class="container">
-	<div id="accordion-2">
-		<{foreach from=$sections[1] key=sectionNumber item=section}>
-		<div id="drawer-2-<{$sectionNumber}>">
+	<div id="accordion-<{$number}>" class="<{$class}>" style="<{$style}>" >
+		<{foreach from=$sections key=sectionNumber item=section}>
+		<div id="drawer-<{$number}>-<{$sectionNumber}>" class="">
 	        <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
 			<div class="accordion-content content">
 				<{if $section.header}>
-				<div >
+				<div style="position: absolute; top: 10px; right: 10px;">
 					<{$section.header}>
 				</div>
 				<{/if}>
@@ -48,55 +17,23 @@ body {
 		</div>
 		<{/foreach}>
 	</div>
-
-	<div id="accordion-3" class="hidden" style="display:none" >
-		<{foreach from=$sections[0] key=sectionNumber item=section}>
-		<div id="drawer-3-<{$sectionNumber}>">
-	        <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
-			<div class="accordion-content content">
-				<{if $section.header}>
-				<div>
-					<{$section.header}>
-				</div>
-				<{/if}>
-				<{include file=$sectionTemplate sectionContent=$section.content}>
-			</div>
-		</div>
-		<{/foreach}>
-	</div> 
-</div>
-
+</html>
 <script type="text/javascript">
-	$("#switch-accordion").click(function() {
 
-		if($("#accordion-3").hasClass('hidden')==false){
-			$("#accordion-3").toggleClass('hidden');  	  
-   		}
-
-   		$( "#accordion-2" ).toggle( "slide", { direction: "left" }, 1000);
-   		$( "#accordion-3" ).toggle( "slide", { direction: "right" }, 1000 );
-
-
-		if($("#accordion-3").hasClass('hidden')==true){
-			$("#accordion-3").toggleClass('hidden');  	  
-   		}
-	
-		buttonVal=$("#switch-accordion").text();
-   		$("#switch-accordion").text(buttonVal=='Forms'? 'Lists' : 'Forms');
-	});
+console.log("accordion-<{$number}>");
 
 	pagehasaccordion["accordion-<{$number}>"] = true;
 
 	$(function() {
 		var stop = false;
-		$("#accordion-2 h3").click(function(event) {
+		$("#accordion-<{$number}> h3").click(function(event) {
 			if (stop) {
 				event.stopImmediatePropagation();
 				event.preventDefault();
 				stop = false;
 			}
 		});
-		$("#accordion-2").accordion({
+		$("#accordion-<{$number}>").accordion({
 			autoHeight: false, // no fixed height for sections
 			collapsible: true, // sections can be collapsed 
 			active: <{$accordion_active}>,
@@ -109,36 +46,5 @@ body {
 			}
 		});
 	});
-
-
-	$(function() {
-		var stop = false;
-		$("#accordion-3 h3").click(function(event) {
-			if (stop) {
-				event.stopImmediatePropagation();
-				event.preventDefault();
-				stop = false;
-			}
-		});
-		$("#accordion-3").accordion({
-			autoHeight: false, // no fixed height for sections
-			collapsible: true, // sections can be collapsed 
-			active: <{$accordion_active}>,
-			header: "> div > h3"
-		}).sortable({
-			axis: "y",
-			handle: "h3",
-			stop: function(event, ui) {
-				stop = true;
-			}
-		});
-	});
-
-$('label').click(function(){
-    $(this).children('span').addClass('input-checked');
-    $(this).parent('.toggle').siblings('.toggle').children('label').children('span').removeClass('input-checked');
-});
-
-
 
 </script>
