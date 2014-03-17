@@ -1045,6 +1045,8 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	}
 	$buttonCodeArray['pageNavControls'] = $pageNav; // put this unique UI element into the buttonCodeArray for use elsewhere if necessary
 
+	$currentViewName = $settings['loadviewname'];
+	
 	if($useDefaultInterface) {
 
 		// if search is not used, generate the search boxes 
