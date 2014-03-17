@@ -64,8 +64,8 @@ $elements = $element_handler->getObjects2(null,$fid);
 // get the new order of the elements...
 /*var_dump($_POST['element-list-order']);
 */
-$newFormOrder = explode("drawer-2[]=", str_replace("&", "", $_POST['elementorder']));
-$newListOrder = explode("drawer-3[]=", str_replace("&", "", $_POST['element-list-order']));
+$newFormOrder = explode("drawer-2-form[]=", str_replace("&", "", $_POST['elementorder']));
+$newListOrder = explode("drawer-2-list[]=", str_replace("&", "", $_POST['element-list-order']));
 
 $orders=array(array($newFormOrder,"ele_order"),array($newListOrder,"ele_list_order"));
 
