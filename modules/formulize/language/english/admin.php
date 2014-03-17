@@ -152,6 +152,9 @@ define("_AM_PERMISSIONS_ADVANCED_CHANGEOWNER","Change the owner/creator of an ex
 define("_AM_PERMISSIONS_ADVANCED_ALTER","Alter this form's configuration settings");
 define("_AM_PERMISSIONS_ADVANCED_DELETEFORM","Delete this form");
 define("_AM_MULTIPLE_FORM_PERMISSIONS","Multiple Form Permissions");
+define("_AM_MULTIPLE_PERMISSIONS_HOW_TO_APPLY","How do you want these permissions to be applied?");
+define("_AM_MULTIPLE_PERMISSIONS_ADD_ONLY","Only add new permissions, but don't remove any if the checkboxes are left unchecked.");
+define("_AM_MULTIPLE_PERMISSIONS_ADD_REMOVE","Start with a blank slate and apply these exact permissions.");
 
 /*mod Language for procedures*/
 define("_AM_CALC_EXPLAIN","let you create a series of queries and logical steps, that get carried out on the data that users have submitted in the form.  You can use Procedures for advanced, multi-step calculations, or any other situation where a single query or single operation is not enough to get to the outcome you want.");
