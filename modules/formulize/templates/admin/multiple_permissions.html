@@ -62,34 +62,34 @@
 				<input type="hidden" name="removelistid" value="">
             </fieldset>
 		</div>
-		
-		<div class="form-item">
-			<fieldset>
-				<legend><label class="question"><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX}></label></legend>
-				<div class="form-radios radio-inline">
-                    <label for="same"><input type="radio" id="same" name="same_diff" value="same" /><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX_YES}></label>
-            	</div>
-            	<div class="form-radios radio-inline">
-                    <label for="different"><input type="radio" id="different" name="same_diff" value="different" /><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX_NO}></label>
-            	</div>
-				<div class="description">
-					<p><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX_EXPLAIN}></p>
-				</div>
-			</fieldset>
-		</div>
 </div>
 
 
 <div class="accordion-box">
 	
+	<div class="form-item">
+		<fieldset>
+			<legend><label class="question"><{$smarty.const._AM_MULTIPLE_PERMISSIONS_HOW_TO_APPLY}></label></legend>
+			<div class="form-radios radio-inline">
+                <label for="addonly"><input type="radio" id="addonly" name="addonly_addremove" value="addonly" /><{$smarty.const._AM_MULTIPLE_PERMISSIONS_ADD_ONLY}></label>
+        	</div>
+        	<p></p>
+        	<div class="form-radios radio-inline">
+                <label for="addremove"><input type="radio" id="addremove" name="addonly_addremove" value="addremove" /><{$smarty.const._AM_MULTIPLE_PERMISSIONS_ADD_REMOVE}></label>
+            </div>
+			<div class="description">
+				<p>Starting with a blank slate will erase current permissions for the selected group and forms. If boxes are left unchecked, permissions may be removed.</p>
+			</div>
+		</fieldset>
+	</div>
+	
 	<{if $content.groupperms|@count == 0}>
-		<div class="form-item">
+	<div class="form-item">
 		<fieldset>
 			<legend><label class="question"><{$smarty.const._AM_PERMISSIONS_SELECTS_FORMS_AND_GROUPS}></label></legend>
 		</fieldset>
-		</div>
+	</div>
 	<{/if}>
-	
 	
 	<{foreach from=$content.groupperms item=groupperm}>
 	<input type="hidden" name="group_list[]" value=<{$groupperm.id}>>
