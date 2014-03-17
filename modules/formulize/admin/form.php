@@ -379,7 +379,7 @@ if($fid != "new") {
       usort($listElements,function($a,$b){
         return $a['order']-$b['order'];
       });
-      $adminPage['tabs'][$i]['content']['allElements'] = array($listElements,$elements);
+      $adminPage['tabs'][$i]['content']['allElements'] = array($elements,$listElements);
       $adminPage['tabs'][$i]['content']['accordionNames'] = array("-form","-list");
 
     }
