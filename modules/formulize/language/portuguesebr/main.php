@@ -315,7 +315,10 @@ define("_formulize_FD_NEWENTRY", "Esta é uma nova entrada que ainda não foi sa
 define("_formulize_ADD", "Adicionar");
 define("_formulize_ADD_ONE", "Adicionar um");
 define("_formulize_ADD_ENTRIES", "entradas");
-define("_formulize_SUBFORM_SIMPLE_BUTTON", "Display a simple button, using the text above, for adding one entry at a time");
+define("_formulize_SUBFORM_SIMPLE_BUTTON", "Display a simple button for adding one entry at a time");
+define("_formulize_SUBFORM_SIMPLE_LABEL", "What text should appear on the button?");
+define("_formulize_SUBFORM_MULTIPLE_BUTTON", "Display a button with a text box for choosing the number of entries to add");
+define("_formulize_SUBFORM_MULTIPLE_LABEL", "What text should be used to describe each entry? ie: Add x Entries, Add x Participants, etc.");
 define("_formulize_DELETE_CHECKED", "Excluir itens marcados");
 define("_formulize_ADD_HELP", "Clique no botão <i>Adicionar</i> para adicionar uma entrada a esta seção.");
 define("_formulize_ADD_HELP2", "Clique no botão <i>Ver</i> para visualizar uma entrada completa.");
