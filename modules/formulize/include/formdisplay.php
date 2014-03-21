@@ -1637,7 +1637,16 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             if (count($sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
                 $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.");\"></p>";
             } elseif(!$sub_single) {
-                $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD . "' onclick=\"javascript:add_sub('$subform_id', window.document.formulize.addsubentries$subform_id$subformElementId$subformInstance.value, ".$subformElementId.$subformInstance.");\"><input type=text name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=1 size=2 maxlength=2>".$addEntriesText.$deleteButton."</p>";
+                $use_simple_add_one_button = (isset($subform_element_object->ele_value["simple_add_one_button"]) ?
+                    1 == $subform_element_object->ele_value["simple_add_one_button"] : false);
+                $col_two .= "<p><input type=button name=addsub value='".($use_simple_add_one_button ? $subform_element_object->ele_value['simple_add_one_button_text'] : _formulize_ADD)."' onclick=\"javascript:add_sub('$subform_id', window.document.formulize.addsubentries$subform_id$subformElementId$subformInstance.value, ".$subformElementId.$subformInstance.");\">";
+                if ($use_simple_add_one_button) {
+                    $col_two .= "<input type=\"hidden\" name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=\"1\">";
+                } else {
+                    $col_two .= "<input type=text name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=1 size=2 maxlength=2>";
+                    $col_two .= $addEntriesText;
+                }
+                $col_two .= $deleteButton."</p>";
             }
         }
     }

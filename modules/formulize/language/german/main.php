@@ -307,6 +307,10 @@ define("_formulize_FD_NEWENTRY", "This is a new entry that has not been saved ye
 define("_formulize_ADD", "Add");
 define("_formulize_ADD_ONE", "Add One");
 define("_formulize_ADD_ENTRIES", "entries");
+define("_formulize_SUBFORM_SIMPLE_BUTTON", "Display a simple button for adding one entry at a time");
+define("_formulize_SUBFORM_SIMPLE_LABEL", "What text should appear on the button?");
+define("_formulize_SUBFORM_MULTIPLE_BUTTON", "Display a button with a text box for choosing the number of entries to add");
+define("_formulize_SUBFORM_MULTIPLE_LABEL", "What text should be used to describe each entry? ie: Add x Entries, Add x Participants, etc.");
 define("_formulize_DELETE_CHECKED", "Delete checked items");
 define("_formulize_ADD_HELP", "Add an entry in this section by clicking the <i>Add</i> button.");
 define("_formulize_ADD_HELP2", "See an entire entry by clicking the <i>View</i> button.");
