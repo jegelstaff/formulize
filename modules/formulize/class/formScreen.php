@@ -129,7 +129,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		$alldonebuttontext = $alldonebuttontext ? $alldonebuttontext : "{NOBUTTON}";
 		$displayheading = $screen->getVar('displayheading');
 		$displayheading = $displayheading ? "" : "all"; // if displayheading is off, then need to pass the "all" keyword to supress all the headers
-		$displayheading = $elements_only ? "all" : $displayheading;
+		$displayheading = $elements_only ? "formElementsOnly" : $displayheading;
 		$reloadblank = $screen->getVar('reloadblank');
 		// figure out the form's properties...
 		// if it's more than one entry per user, and we have requested reload blank, then override multi is 0, otherwise 1
