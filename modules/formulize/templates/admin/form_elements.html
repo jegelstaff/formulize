@@ -78,8 +78,11 @@ body {
 <h2><{$smarty.const._AM_ELE_MANAGINGELEFORM}><span id="switch-accordion" class="button">Forms</span></h2>
 <p><{$smarty.const._AM_ELE_CLICKDRAGANDDROP}></p>
 	<div id="sortable-list" >
+		<div>
 		<{include file="db:admin/ui-elements-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.allElements[0] name=$content.accordionNames[0]}>
+		
 		<{include file="db:admin/ui-elements-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.allElements[1] name=$content.accordionNames[1] class="hidden" style="display:none"}>
+		</div>
 		</div>
 	</div>
 
@@ -178,8 +181,8 @@ $(".converttoradio").click(function () {
 });
 
 $(".savebutton").click(function () {
-	$("[name=elementorder]").val($("#accordion-2-form").sortable('serialize')); 
 	$("[name=element-list-order]").val($("#accordion-2-list").sortable('serialize')); 
+	$("[name=elementorder]").val($("#accordion-2-form").sortable('serialize')); 
 
 });
 
