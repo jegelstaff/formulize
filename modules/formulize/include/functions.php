@@ -5059,3 +5059,21 @@ function dateFormatToStrftime($dateFormat) {
     
     return strtr((string)$dateFormat, $caracs); 
 } 
+
+// THIS FUNCTION PARSES OUT THE {USER} AND {TODAY} KEYWORDS INTO THEIR LITERAL VALUES
+function parseUserAndToday($term) {
+  if ($term === "{USER}") {
+		global $xoopsUser;
+		if($xoopsUser) {
+			$term = $xoopsUser->getVar('name');
+			if(!$term) { $term = $xoopsUser->getVar('uname'); }
+		} else {
+			$term = 0;
+		}
+	}
+ 	if (ereg_replace("[^A-Z{}]","", $term) === "{TODAY}") {
+		$number = ereg_replace("[^0-9+-]","", $term);
+		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+	}
+  return $term;
+}
