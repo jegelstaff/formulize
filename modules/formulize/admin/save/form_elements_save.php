@@ -62,31 +62,16 @@ foreach($processedValues['elements'] as $property=>$values) {
 $elements = $element_handler->getObjects2(null,$fid);
 
 // get the new order of the elements...
-/*var_dump($_POST['element-list-order']);
-*/
-$newListOrder = explode("drawer-2-list[]=", str_replace("&", "", $_POST['element-list-order']));
 $newFormOrder = explode("drawer-2-form[]=", str_replace("&", "", $_POST['elementorder']));
+$newListOrder = explode("drawer-2-list[]=", str_replace("&", "", $_POST['element-list-order']));
+unset($newFormOrder[0]);
+unset($newListOrder[0]);
 
-$orders=array(array($newFormOrder,"ele_order"), array($newListOrder,"ele_list_order"));
-
-
-//$orders=array(array(array("",2,1),"ele_order"), array(array("",1,2),"ele_list_order"));
-
-// var_dump($orders);
-
-//$orders=array(array($newListOrder,"ele_list_order");
-
-foreach($orders as $keys=>$value){
-  $newOrder=$value[0];
-  $sortOrder=$value[1]; 
-  unset($newOrder[0]);
   // newOrder will have keys corresponding to the new order, and values corresponding to the old order
-
-  if(count($elements) != count($newOrder)) {
-  	print "Error: the number of elements being saved did not match the number of elements already in the database";
-  	return;
+  if(count($elements) != count($newFormOrder) ||count($elements) != count($newListOrder)  ) {
+    print "Error: the number of elements being saved did not match the number of elements already in the database";
+    return;
   }
-
   // modify elements
   $oldOrderNumber = 1;
   foreach($elements as $element) {
@@ -94,11 +79,17 @@ foreach($orders as $keys=>$value){
     // reset elements to deault
     $element->setVar('ele_req',0);
     $element->setVar('ele_private',0);
-    $newOrderNumber = array_search($oldOrderNumber,$newOrder);
-    $element->setVar($sortOrder,$newOrderNumber);
-    if($oldOrderNumber != $newOrderNumber) {
+
+    $newListOrderNumber = array_search($oldOrderNumber,$newListOrder);
+    $newFormOrderNumber = array_search($oldOrderNumber,$newFormOrder);
+    
+    $element->setVar("ele_list_order",$newListOrderNumber);
+    $element->setVar("ele_order",$newFormOrderNumber);
+
+    if($oldOrderNumber != $newListOrderNumber || $oldOrderNumber != $newFormOrderNumber) {
       $_POST['reload_elements'] = 1; // need to reload since the drawer numbers will be out of sequence now
     }
+
     $oldOrderNumber++;
 
     // apply settings submitted by user
@@ -116,7 +107,9 @@ foreach($orders as $keys=>$value){
       print "Error: could not save the form elements properly: ".$xoopsDB->error();
     }
   }
-}
+
+//error_log($string);
+
 // handle any operations
 if($_POST['convertelement']) {
   global $xoopsModuleConfig;

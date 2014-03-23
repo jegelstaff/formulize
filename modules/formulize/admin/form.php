@@ -376,11 +376,16 @@ if($fid != "new") {
       //listElements are the same as elements, but sorted with ele_list_order      
       $listElements=$elements;
       //sort
-      usort($listElements,function($a,$b){
+      function cmp($a,$b){
         return $a['order']-$b['order'];
-      });
-      $adminPage['tabs'][$i]['content']['allElements'] = array($elements,$listElements);
+      }
+      
+      uasort($listElements,"cmp");
       $adminPage['tabs'][$i]['content']['accordionNames'] = array("-form","-list");
+      $adminPage['tabs'][$i]['content']['listElements'] = $listElements;
+      echo '<pre>'; print_r($elements); echo '</pre>';
+      echo '--------------------------------------------------\n';
+      echo '<pre>'; print_r($listElements); echo '</pre>';
 
     }
     if(count($customElements)>0) {
