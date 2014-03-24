@@ -2,7 +2,7 @@
 
 <form id="form-<{$number}>" class="formulize-admin-form" action="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$content.aid}>&fid=<{$content.fid}>&tab=permissions" method="post">
 <{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
-<input type="hidden" name="formulize_admin_handler" value="form_permissions">
+<input type="hidden" name="formulize_admin_handler" value="multiple_permissions">
 <input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
 <{* form number is used to trigger the actual submission of this form after data has been saved, so we can pass this state info to the server *}>
 <input type="hidden" name="form_number" value=<{$number}>>
@@ -73,7 +73,6 @@
 			<div class="form-radios radio-inline">
                 <label for="addonly"><input type="radio" id="addonly" name="addonly_addremove" value="addonly" /><{$smarty.const._AM_MULTIPLE_PERMISSIONS_ADD_ONLY}></label>
         	</div>
-        	<p></p>
         	<div class="form-radios radio-inline">
                 <label for="addremove"><input type="radio" id="addremove" name="addonly_addremove" value="addremove" /><{$smarty.const._AM_MULTIPLE_PERMISSIONS_ADD_REMOVE}></label>
             </div>
