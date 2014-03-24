@@ -1578,7 +1578,7 @@ function patchEmptyFormScreens() {
     			}
 
 				$updateSQL = "UPDATE `". $xoopsDB->prefix("formulize_screen_form") ."` SET `formelements`='" . $all_elements_serialized . "' WHERE `formid`='" . $screen_form_primaryid . "'";
-    			if ($result = $xoopsDB->query($updateSQL)) {
+    			if ($result = $xoopsDB->queryF($updateSQL)) {
     				print "Database update successfully for formid = " . $screen_form_primaryid . ", sid = " . $value['sid'] . " in table formulize_screen_form <br />";
     			} else {
     				print "Database update failed for formid = " . $screen_form_primaryid . ", sid = " . $value['sid'] . " in table formulize_screen_form <br />";
