@@ -68,7 +68,7 @@ unset($newFormOrder[0]);
 unset($newListOrder[0]);
 
   // newOrder will have keys corresponding to the new order, and values corresponding to the old order
-  if(count($elements) != count($newFormOrder) ||count($elements) != count($newListOrder)  ) {
+  if(count($elements) != count($newListOrder)  || count($elements) != count($newFormOrder) ) {
     print "Error: the number of elements being saved did not match the number of elements already in the database";
     return;
   }
@@ -86,8 +86,16 @@ unset($newListOrder[0]);
     $element->setVar("ele_list_order",$newListOrderNumber);
     $element->setVar("ele_order",$newFormOrderNumber);
 
-    if($oldOrderNumber != $newListOrderNumber || $oldOrderNumber != $newFormOrderNumber) {
-      $_POST['reload_elements'] = 1; // need to reload since the drawer numbers will be out of sequence now
+    if($oldOrderNumber != $newListOrderNumber) {
+      $reloadElements=TRUE;
+      error_log("list reload");
+
+    }
+
+    if($oldOrderNumber != $newFormOrderNumber) {
+      $reloadElements=TRUE;
+      error_log("form reload");
+
     }
 
     $oldOrderNumber++;
@@ -107,6 +115,7 @@ unset($newListOrder[0]);
       print "Error: could not save the form elements properly: ".$xoopsDB->error();
     }
   }
+ $_POST['reload_elements'] = $reloadElements;
 
 //error_log($string);
 

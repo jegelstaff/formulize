@@ -379,13 +379,10 @@ if($fid != "new") {
       function cmp($a,$b){
         return $a['order']-$b['order'];
       }
-      
+
       uasort($listElements,"cmp");
       $adminPage['tabs'][$i]['content']['accordionNames'] = array("-form","-list");
       $adminPage['tabs'][$i]['content']['listElements'] = $listElements;
-      echo '<pre>'; print_r($elements); echo '</pre>';
-      echo '--------------------------------------------------\n';
-      echo '<pre>'; print_r($listElements); echo '</pre>';
 
     }
     if(count($customElements)>0) {
