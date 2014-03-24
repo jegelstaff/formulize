@@ -1,6 +1,4 @@
-
 <{assign var="number" value=$number$name }>
-
 	<div id="accordion-<{$number}>" class="<{$class}>" style="<{$style}>" >
 		<{foreach from=$sections key=sectionNumber item=section}>
 		<div id="drawer-<{$number}>-<{$sectionNumber}>" class="">
@@ -17,11 +15,7 @@
 		<{/foreach}>
 	</div>
 <script type="text/javascript">
-
-console.log("accordion-<{$number}>");
-
 	pagehasaccordion["accordion-<{$number}>"] = true;
-
 	$(function() {
 		var stop = false;
 		$("#accordion-<{$number}> h3").click(function(event) {
@@ -44,5 +38,4 @@ console.log("accordion-<{$number}>");
 			}
 		});
 	});
-
 </script>

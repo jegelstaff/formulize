@@ -86,17 +86,6 @@ unset($newListOrder[0]);
     $element->setVar("ele_list_order",$newListOrderNumber);
     $element->setVar("ele_order",$newFormOrderNumber);
 
-    if($oldOrderNumber != $newListOrderNumber) {
-      $reloadElements=TRUE;
-      error_log("list reload");
-
-    }
-
-    if($oldOrderNumber != $newFormOrderNumber) {
-      $reloadElements=TRUE;
-      error_log("form reload");
-
-    }
 
     $oldOrderNumber++;
 
@@ -115,9 +104,8 @@ unset($newListOrder[0]);
       print "Error: could not save the form elements properly: ".$xoopsDB->error();
     }
   }
- $_POST['reload_elements'] = $reloadElements;
-
-//error_log($string);
+  //always refresh the page
+ $_POST['reload_elements'] = 1;
 
 // handle any operations
 if($_POST['convertelement']) {
@@ -156,7 +144,7 @@ if($_POST['convertelement']) {
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 			$data_handler = new formulizeDataHandler($element->getVar('id_form'));
 			if(!$data_handler->convertRadioDataToCheckbox($element)) {
-				print "Error: ". _AM_ELE_CHECKBOX_DATA_NOT_READY;
+				print- "Error: ". _AM_ELE_CHECKBOX_DATA_NOT_READY;
 			} 
 		}
 	} elseif($ele_type=="checkbox") {

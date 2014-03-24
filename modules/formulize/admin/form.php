@@ -376,12 +376,9 @@ if($fid != "new") {
       //listElements are the same as elements, but sorted with ele_list_order      
       $listElements=$elements;
       //sort
-      function cmp($a,$b){
+      uasort($listElements,function($a,$b){
         return $a['order']-$b['order'];
-      }
-
-      uasort($listElements,"cmp");
-      $adminPage['tabs'][$i]['content']['accordionNames'] = array("-form","-list");
+      });
       $adminPage['tabs'][$i]['content']['listElements'] = $listElements;
 
     }
@@ -397,7 +394,7 @@ if($fid != "new") {
   $adminPage['tabs'][$i]['content']['groups'] = $groups;
   $adminPage['tabs'][$i]['content']['grouplists'] = $grouplists;
   $adminPage['tabs'][$i]['content']['order'] = $orderGroups;
-  $adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "same" ? "same" : "different";
+  $adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "sajme" ? "same" : "different";
   $adminPage['tabs'][$i]['content']['groupperms'] = $groupperms;
   
   $i++;
