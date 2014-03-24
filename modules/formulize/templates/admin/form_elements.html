@@ -76,8 +76,8 @@ body {
 <p><{$smarty.const._AM_ELE_CLICKDRAGANDDROP}></p>
 	<div id="sortable-list" >
 		<div>
-		<{include file="db:admin/ui-elements-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.elements name="-form"}>
-		<{include file="db:admin/ui-elements-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.listElements name="-list" class="hidden" style=display:none }>
+		<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.elements name="-form"}>
+		<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.listElements name="-list" class="hidden" style=display:none }>
 		
 		</div>
 		</div>
