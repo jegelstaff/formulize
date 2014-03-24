@@ -394,7 +394,7 @@ if($fid != "new") {
   $adminPage['tabs'][$i]['content']['groups'] = $groups;
   $adminPage['tabs'][$i]['content']['grouplists'] = $grouplists;
   $adminPage['tabs'][$i]['content']['order'] = $orderGroups;
-  $adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "sajme" ? "same" : "different";
+  $adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "same" ? "same" : "different";
   $adminPage['tabs'][$i]['content']['groupperms'] = $groupperms;
   
   $i++;
