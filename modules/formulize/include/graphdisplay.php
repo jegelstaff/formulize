@@ -309,13 +309,19 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 	$myData -> setAbscissa($labelElement);
 	$myData -> setAbscissaName($labelElement);
 	// $myData -> setAxisDisplay(0, AXIS_FORMAT_CUSTOM, "YAxisFormat");
+   print_r($dataPoints);
+    print_r(array_values($dataPoints));
+    print_r(array_keys($dataPoints));
+    print_r(Array(2000000, 600000, 12000000));
+    print_r(array("San Fransisco", "Seattle", "New York"));
+    print $IMAGE_WIDTH . " " . $IMAGE_HEIGHT . " " . $IMAGE_ORIENTATION . " " . $BARCOLOR_R . " " . $BARCOLOR_G . " " . $BARCOLOR_B . " " . $sizeMultiplier . " " . $BACKGROUND_R . " " . $BACKGROUND_G . " " . $BACKGROUND_B;
 
 	/* Create the pChart object */
 	$myPicture = new pImage($IMAGE_WIDTH, $IMAGE_HEIGHT, $myData);
 	$myPicture -> drawGradientArea(0, 0, $IMAGE_WIDTH, $IMAGE_HEIGHT, DIRECTION_VERTICAL, array("StartR" => $BACKGROUND_R, "StartG" => $BACKGROUND_G, "StartB" => $BACKGROUND_B, "EndR" => $BACKGROUND_R, "EndG" => $BACKGROUND_G, "EndB" => $BACKGROUND_B, "Alpha" => 100));
-	$myPicture->drawGradientArea(0,0,500,500,DIRECTION_HORIZONTAL,array("StartR"=>240,"StartG"=>240,"StartB"=>240,"EndR"=>180,"EndG"=>180,"EndB"=>180,"Alpha"=>30)); 
+	$myPicture->drawGradientArea(0,0,500,500,DIRECTION_HORIZONTAL,array("StartR"=>240,"StartG"=>240,"StartB"=>240,"EndR"=>180,"EndG"=>180,"EndB"=>180,"Alpha"=>30));
 	$myPicture -> setFontProperties(array("FontName" => "modules/formulize/libraries/pChart/fonts/arial.ttf", "FontSize" => 8));
-	
+
 	$paddingtoLeft = $IMAGE_WIDTH * 0.15;
 	$paddingtoTop = $IMAGE_HEIGHT * 0.2;
 	if( $paddingtoTop > 50){
@@ -324,24 +330,24 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 
 	/* Draw the chart scale */
 	$myPicture -> setGraphArea($paddingtoLeft, $paddingtoTop, $IMAGE_WIDTH * 0.90, $IMAGE_HEIGHT * 0.88);
-	
+
 	if($IMAGE_ORIENTATION == "vertical"){
 		$myPicture -> drawScale(array("CycleBackground" => TRUE, "DrawSubTicks" => TRUE, "GridR" => 0, "GridG" => 0, "GridB" => 0, "GridAlpha" => 10, "Pos" => SCALE_POS_TOPBOTTOM, "Mode" => SCALE_MODE_ADDALL_START0, "Decimal" => 0, "MinDivHeight" => 50));
 	}else{
 		$myPicture -> drawScale(array("CycleBackground" => TRUE, "DrawSubTicks" => TRUE, "GridR" => 0, "GridG" => 0, "GridB" => 0, "GridAlpha" => 10, "Mode" => SCALE_MODE_ADDALL_START0, "Decimal" => 0, "MinDivHeight" => 50));
 	}
-		
+
 	/* Turn on shadow computing */
 	$myPicture -> setShadow(TRUE, array("X" => 1, "Y" => 1, "R" => 0, "G" => 0, "B" => 0, "Alpha" => 10));
-	
+
 	$Palette = array("0"=>array("R"=>$BARCOLOR_R,"G"=>$BARCOLOR_G,"B"=>$BARCOLOR_B,"Alpha"=>100));
-	
+
 	for($i = 1 ; $i < $sizeMultiplier ; $i++){
 		$Palette[$i] = array("R"=>$BARCOLOR_R,"G"=>$BARCOLOR_G,"B"=>$BARCOLOR_B,"Alpha"=>100);
 	}
-	
+
 	// print_r($Palette);
-					 
+
 	$myPicture->drawBarChart(array("OverrideColors"=>$Palette));
 
 	/* Draw the chart */
@@ -364,9 +370,9 @@ function YAxisFormat($Value) {
  */
 function renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {
 	// TODO: make some kind of cron job clear up or some kind of caches, update graph only when needed!
-	$grapRelativePathPrefix = "modules/formulize/images/graphs/";
-	$graphRelativePath = $grapRelativePathPrefix . "_" . $fid . "_" . "_" . $frid . "_" . $labelElement . "_" . $dataElement . "_" . "$operation" . "_" . preg_replace('/[^\w\d]/', "", print_r($graphOptions, true)) . ".png";
-	$graphRelativePath = sanitize_name($graphRelativePath);
+	$graphRelativePathPrefix = "modules/formulize/images/graphs/";
+    // Uses md5 hash of the data points and graph options to shorten filename and handle non alphanumeric chars
+	$graphRelativePath = $graphRelativePathPrefix . md5(SDATA_DB_SALT.var_export($dataPoints, true).var_export($graphOptions, true)).".png";
 	$myPicture -> render(XOOPS_ROOT_PATH . "/" . $graphRelativePath);
 	echo "<img src='" . XOOPS_URL . "/$graphRelativePath' />";
 	return;
