@@ -295,7 +295,7 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
   `barr` int(8) NOT NULL default 143,
   `barg` int(8) NOT NULL default 190,
   `barb` int(8) NOT NULL default 88,
-  'ops' varchar(255) NOT NULL default 'count',
+  `ops` varchar(255) NOT NULL default 'count',
   `labelelem` int(8) NOT NULL default 0,
   `dataelem` int(8) NOT NULL default 0,
   PRIMARY KEY (`formid`),
