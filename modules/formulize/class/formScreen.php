@@ -186,7 +186,6 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 	}
 
 	public function getSelectedScreens($fid) {
-
 		$selected_screens = array();
 		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 		$criteria_object = new CriteriaCompo(new Criteria('type','form'));
@@ -198,6 +197,45 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 			$selected_elements = $this->getSelectedElementsForScreen($sid);
 			if (in_array($_GET['ele_id'], $selected_elements)) {
 				$selected_screens[$sid] = " selected";
+			}
+		}
+
+		return $selected_screens;
+	}
+
+	public function getSelectedScreensForNewElement() {
+		global $xoopsDB;
+		$selected_screens = array();
+		$allScreensForForm = $this->getScreensForElement($_GET['fid']);
+
+	    $formScreenSQL = "SELECT formid, sid, formelements FROM " . $xoopsDB->prefix("formulize_screen_form");
+	    $formScreenHandler = $xoopsDB->query($formScreenSQL);
+
+	    $formScreenIndex = array();
+	    $allScreens = array();
+	    $formid_to_elementid = array();
+	    while($formScreenHandlesArray = $xoopsDB->fetchArray($formScreenHandler)) {
+	    	array_push($formScreenIndex, $formScreenHandlesArray);
+	    }
+
+	    $formElementsSQL = "SELECT id_form, ele_id FROM " . $xoopsDB->prefix("formulize");
+	    $formElementsHandler = $xoopsDB->query($formElementsSQL);
+
+	    while($formElementsHandlesArray = $xoopsDB->fetchArray($formElementsHandler)) {
+	    	if (!isset($formid_to_elementid[$formElementsHandlesArray['id_form']])) {
+	    		$formid_to_elementid[$formElementsHandlesArray['id_form']] = array();
+	    	}
+	    	array_push($formid_to_elementid[$formElementsHandlesArray['id_form']], $formElementsHandlesArray['ele_id']);
+	    }
+
+		foreach ($allScreensForForm as $i => $thisScreen) {
+			foreach ($formScreenIndex as $j => $screenData) {
+				if ($screenData['sid'] == $thisScreen['sid']) {
+					$unserializedData = unserialize($screenData['formelements']);
+					if (count($formid_to_elementid[$_GET['fid']]) == count($unserializedData)) {
+						$selected_screens[$screenData['sid']] = " selected";
+					}
+				}
 			}
 		}
 		return $selected_screens;
