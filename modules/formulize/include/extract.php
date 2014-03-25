@@ -445,7 +445,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  
 	  // Structure of the SQL should be...
 	  // SELECT main.entry_id, main.creation_uid, main.mod_uid, main.creation_datetime, main.mod_datetime, main.handle1...main.handleN, f2.entry_id, f2.1..f2.n, etc FROM formulize_A AS main [join syntax] WHERE main.handle1 = "whatever" AND/OR f2.handle1 = "whatever"
-	  // Join syntax:  if there are query terms on the f2 or subsequent forms, then use INNER JOIN formulize_B AS f2 ON main.1 LIKE CONCAT('%,', f2.entry_id, ',%')
+	  // Join syntax:  if there are query terms on the f2 or subsequent forms, then use INNER JOIN formulize_B AS f2 ON main.1 LIKE CONCAT('%,', f2.entry_id, ',%') -- or no %, ,% if only one value is allowed
 	  // If there are no query terms on the f2 or subsequent forms, then use LEFT JOIN
 	  
 	  // establish the join type and all that
@@ -645,9 +645,10 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 							    $target_element_handle = $boxproperties[1];
 							    $form_handler = xoops_getmodulehandler('forms', 'formulize');
 							    $targetFormObject = $form_handler->get($target_fid);
-							    $sortFieldFullValue = "(SELECT sourceSortForm.`".$target_element_handle."` FROM ".DBPRE."formulize_".$targetFormObject->getVar('form_handle')." as sourceSortForm WHERE CONCAT(',',sourceSortForm.`entry_id`,',') = ".$sortFidAlias.".`".$sortField."`)";
+							    // note you cannot sort by multi select boxes!
+							    $sortFieldFullValue = "(SELECT sourceSortForm.`".$target_element_handle."` FROM ".DBPRE."formulize_".$targetFormObject->getVar('form_handle')." as sourceSortForm WHERE sourceSortForm.`entry_id` = ".$sortFidAlias.".`".$sortField."`)";
 							 } else {
-										$sortFieldFullValue = "$sortFidAlias.`$sortField`";
+								$sortFieldFullValue = "$sortFidAlias.`$sortField`";
 							 }
                $orderByClause = " ORDER BY $sortFieldFullValue $sortOrder ";
           } elseif(!$orderByClause) {
@@ -1626,6 +1627,7 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle=false, $fid=0)
      global $xoopsDB;
      static $cachedElements = array();
      $cacheType = $isHandle ? 'handles' : 'ids';
+     $elementOrHandle = str_replace("`","",$elementOrHandle);
      if(!isset($cachedElements[$cacheType][$elementOrHandle])) {
           if($fid) {
                $whereClause = "id_form=".intval($fid);
