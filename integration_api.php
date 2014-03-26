@@ -82,7 +82,12 @@ EOF;
 
         if ($member_handler->insertUser($newUser, true)) {
             // new user account was created; create a mapping record for the new account id and the external id
-            return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $newUser->getVar('uid'));
+            $user_id = $newUser->getVar('uid');
+            $return = self::createResourceMapping(self::USER_RESOURCE, $user_data->get('uid'), $user_id);
+            if ($return > 0) {
+                $member_handler->addUserToGroup(2 /* 2 is registered users group */, $user_id);
+            }
+            return $return;
         } else {
             // user record could not be created, perhaps because it already exists, so try to load it from the database by email address
             $getuser =& $member_handler->getUsers(new icms_db_criteria_Item('email', icms_core_DataFilter::addSlashes($user_data->get('email'))));
