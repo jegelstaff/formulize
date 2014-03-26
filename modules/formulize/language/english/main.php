@@ -378,7 +378,7 @@ define("_formulize_DE_EXPORT_FILE_ERROR", "Sorry!  There is an error with the qu
 define("_formulize_DE_EXPORT_TITLE", "Export options:");
 define("_formulize_DB_EXPORT_METAYES", "Include all metadata columns (user who created the entry, last modification time, etc)");
 define("_formulize_DB_EXPORT_METANO", "Do not include metadata columns");
-define("_formulize_DE_EXPORT_MAKEFILE", "Create the data file with these options");
+define("_formulize_DE_EXPORT_MAKEFILE", "Export Data");
 define("_formulize_DB_EXPORT_TO_EXCEL", "Use compatibility mode for some versions of Microsoft Excel (helps with accented characters in some cases)");
 define("_formulize_EXPORT_FILENAME_TEXT", "Exported_data_from");
 
