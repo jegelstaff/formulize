@@ -667,6 +667,9 @@ define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR", "Há um erro no código do seu
 define("_AM_FORMULIZE_LOE_FIRSTPAGE", "<< Primeira");
 define("_AM_FORMULIZE_LOE_LASTPAGE", "Última >>");
 define("_AM_FORMULIZE_LOE_ONPAGE", "Na página ");
+define("_AM_FORMULIZE_LOE_PREVIOUS", "Previous");
+define("_AM_FORMULIZE_LOE_NEXT", "Next");
+define("_AM_FORMULIZE_LOE_TOTAL", "Total Entries: %d");
 
 define("_formulize_DE_LOE_LIMIT_REACHED1", "Lá estão"); //GibaPhp 3.0
 define("_formulize_DE_LOE_LIMIT_REACHED2", "entradas na lista. Seria preciso um longo tempo para recuperá-los. Você pode usar termos de pesquisa para limitar o número de entradas, ou"); //GibaPhp 3.0

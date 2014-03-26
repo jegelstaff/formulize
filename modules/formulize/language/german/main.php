@@ -673,6 +673,9 @@ define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR", "There is an error in your tem
 define("_AM_FORMULIZE_LOE_FIRSTPAGE", "<< First");
 define("_AM_FORMULIZE_LOE_LASTPAGE", "Last >>");
 define("_AM_FORMULIZE_LOE_ONPAGE", "On Page ");
+define("_AM_FORMULIZE_LOE_PREVIOUS", "Previous");
+define("_AM_FORMULIZE_LOE_NEXT", "Next");
+define("_AM_FORMULIZE_LOE_TOTAL", "Total Entries: %d");
 
 define("_formulize_DE_LOE_LIMIT_REACHED1", "There are");
 define("_formulize_DE_LOE_LIMIT_REACHED2", "entries in the list.  It would take a long time to retrieve them.  You can use search terms to limit the number of entries, or");
