@@ -94,6 +94,7 @@ function readApplicationData($aid, $apps) {
       $apps[$i]['content']['forms'][$x]['defaultlistscreenid'] = $defaultListScreen;
       $apps[$i]['content']['forms'][$x]['defaultlistscreenname'] = $defaultListName;
     }
+    $apps[$i]['content']['forms'][$x]['form'] = $thisFormObject;
     $x++;
   }
   $apps[$i]['header'] = '<span class="formulize-toolbar right-toolbar">';
