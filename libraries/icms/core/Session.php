@@ -79,6 +79,9 @@ class icms_core_Session {
 			
 			if (function_exists("i18n_get_lang")) { // set icms language to match the currently active Drupal language
 				$_GET['lang'] = i18n_get_lang();
+		    } elseif(function_exists("i18n_langcode")) {
+			$_GET['lang'] = i18n_langcode();
+		    }		    
 			}
 		}
 
