@@ -41,7 +41,9 @@ $form_id = intval($_GET['fid']);
 if($screen_id == "new") {
     $settings['type'] = 'listOfEntries';
     $settings['frid'] = 0;
-    $settings['useToken'] = 1;
+    $config_handler = $config_handler =& xoops_gethandler('config');
+    $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+    $settings['useToken'] = $formulizeConfig['useToken'];
     $screenName = "New screen";
 } else {
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
