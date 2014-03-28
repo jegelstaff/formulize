@@ -296,9 +296,9 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 			$dataElement = substr($dataElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
 		}
 	}
-	
-	
-	
+
+
+
 
 	// Code straightly copied from pChart documentation to draw the graph
 	$myData = new pData();
@@ -309,18 +309,12 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 	$myData -> setAbscissa($labelElement);
 	$myData -> setAbscissaName($labelElement);
 	// $myData -> setAxisDisplay(0, AXIS_FORMAT_CUSTOM, "YAxisFormat");
-   print_r($dataPoints);
-    print_r(array_values($dataPoints));
-    print_r(array_keys($dataPoints));
-    print_r(Array(2000000, 600000, 12000000));
-    print_r(array("San Fransisco", "Seattle", "New York"));
-    print $IMAGE_WIDTH . " " . $IMAGE_HEIGHT . " " . $IMAGE_ORIENTATION . " " . $BARCOLOR_R . " " . $BARCOLOR_G . " " . $BARCOLOR_B . " " . $sizeMultiplier . " " . $BACKGROUND_R . " " . $BACKGROUND_G . " " . $BACKGROUND_B;
 
 	/* Create the pChart object */
 	$myPicture = new pImage($IMAGE_WIDTH, $IMAGE_HEIGHT, $myData);
 	$myPicture -> drawGradientArea(0, 0, $IMAGE_WIDTH, $IMAGE_HEIGHT, DIRECTION_VERTICAL, array("StartR" => $BACKGROUND_R, "StartG" => $BACKGROUND_G, "StartB" => $BACKGROUND_B, "EndR" => $BACKGROUND_R, "EndG" => $BACKGROUND_G, "EndB" => $BACKGROUND_B, "Alpha" => 100));
 	$myPicture->drawGradientArea(0,0,500,500,DIRECTION_HORIZONTAL,array("StartR"=>240,"StartG"=>240,"StartB"=>240,"EndR"=>180,"EndG"=>180,"EndB"=>180,"Alpha"=>30));
-	$myPicture -> setFontProperties(array("FontName" => "modules/formulize/libraries/pChart/fonts/arial.ttf", "FontSize" => 8));
+	$myPicture -> setFontProperties(array("FontName" => XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/fonts/arial.ttf", "FontSize" => 8));
 
 	$paddingtoLeft = $IMAGE_WIDTH * 0.15;
 	$paddingtoTop = $IMAGE_HEIGHT * 0.2;
