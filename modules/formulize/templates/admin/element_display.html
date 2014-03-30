@@ -1,3 +1,8 @@
+<!-- start checkboxTree configuration -->
+<script type="text/javascript" src="<{$xoops_url}>/libraries/jquery/checkboxtree/jquery.checkboxtree.js"></script>
+<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/libraries/jquery/checkboxtree/jquery.checkboxtree.css"/>
+<!-- end checkboxTree configuration -->
+
 <div class="panel-content content">
 
 <form id="form-<{$number}>" class="formulize-admin-form">
@@ -6,6 +11,26 @@
 <input type="hidden" name="reload_element_pages" value="">
 <input type="hidden" class="conditionsdelete" name="conditionsdelete" value="">
 
+
+<!-- initialize checkboxTree plugin -->
+<script type="text/javascript">
+$(document).ready(function() {
+$('#multi-screen-tree').checkboxTree({
+            onCheck: {
+                ancestors: 'checkIfFull',
+                descendants: 'check'
+            },
+            onUncheck: {
+                ancestors: 'uncheck'
+            },
+
+     		initializeChecked: 'expanded',
+            initializeUnchecked: 'collapsed'            
+
+        });
+});
+
+</script>       
 
 <div class="accordion-box">
 	<div class="form-item">
@@ -42,6 +67,21 @@
 	</div>
 </div>
 
+<div class="accordion-box">
+<fieldset>
+	<legend>Regular Form Screens to display to</legend>
+	<div class="form-item">
+		<label for="elements_form_screens">Which form screens should element display on?</label>
+		<select id="elements_form_screens" name="elements_form_screens[]" size="8" multiple>
+		<{foreach from=$content.form_screens item=form_screen}>
+		<{assign var=formscreenid value=$form_screen.sid}>
+        <option value=<{$formscreenid}><{$content.ele_form_screens.$formscreenid}>><{$form_screen.title}></option>
+        <{/foreach}>
+		</select>
+	</div>
+</fieldset>
+</div>
+
 <div class="accordion-box-wide">
 	<div class="form-item">
    	<fieldset>
@@ -56,20 +96,37 @@
 	</div>
 </div>
 
-<fieldset>
-	<legend>Form Screens to display to</legend>
-	<div class="form-item">
-		<label for="elements_form_screens">Which form screens should element display on?</label>
-		<select id="elements_form_screens" name="elements_form_screens[]" size="8" multiple>
-		<{foreach from=$content.form_screens item=form_screen}>
-		<{assign var=formscreenid value=$form_screen.sid}>
-        <option value=<{$formscreenid}><{$content.ele_form_screens.$formscreenid}>><{$form_screen.title}></option>
-        <{/foreach}>
-		</select>
-		<div class="description">Leave this blank to display element in all screens.</div>
-	</div>
-</fieldset>
 
+<div class="accordion-box">
+<fieldset>
+	<legend>Multi-Page Form Screens to display to</legend>
+    <ul id="multi-screen-tree">
+		<label for="multi_page_screens">Which pages of the screens should element display on?</label>
+        <li><input type="checkbox" name="multi_page_screens[]" value="1.0"><label>Screen 1</label>
+            <ul>
+                <li><input type="checkbox" name="multi_page_screens[]" value="1.1"><label>Page 1.1</label>
+            </ul>
+            <ul>
+                <li><input type="checkbox" name="multi_page_screens[]" value="1.2"><label>Page 1.2</label>
+            </ul>
+        <li><input type="checkbox" name="multi_page_screens[]" value="2.0"><label>Screen 2</label>
+            <ul>
+                <li><input type="checkbox" name="multi_page_screens[]" value="2.1"><label>Page 2.1</label>
+                <li><input type="checkbox" name="multi_page_screens[]" value="2.2"><label>Page 2.2</label>
+            </ul>
+        <li><input type="checkbox" name="multi_page_screens[]" value="3.0"><label>Screen 3</label>
+            <ul>
+                <li><input type="checkbox" name="multi_page_screens[]" value="3.1"><label>Page 3.1</label>
+                <li><input type="checkbox" name="multi_page_screens[]" value="3.2"><label>Page 3.2</label>
+            </ul>
+        <li><input type="checkbox"><label>Screen 4</label>
+            <ul>
+                <li><input type="checkbox" name="multi_page_screens[]" value="4.1"><label>Page 4.1</label>
+                <li><input type="checkbox" name="multi_page_screens[]" value="5.2"><label>Page 4.2</label>
+            </ul>            
+	</ul>
+</fieldset>
+</div>
 
 <div class="accordion-box">
 	<div class="form-item">
