@@ -246,7 +246,7 @@ class formulizeElementsHandler {
    		if( $element->isNew() || $ele_id == 0){
 				$sql = sprintf("INSERT INTO %s (
 				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings,ele_list_order,ele_list_display
-				) VA
+				) VALUES
 				%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %u,%s
 				)",
 				formulize_TABLE,
@@ -327,7 +327,8 @@ class formulizeElementsHandler {
         }
 
 		if( !$result ){
-			print "Error: this element could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
+			error_log($sql);
+			print "Error: this element could not be saved in the database.  SQL: $sql<br>";
 			return false;
 		}
 		if( $ele_id == 0 ){ // only occurs for new elements

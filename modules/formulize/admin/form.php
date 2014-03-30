@@ -384,15 +384,20 @@ if($fid != "new") {
       });
 
             foreach ($listElements as $key => $value) {
-        echo "<pre>";
+                echo "<pre>";
                 unset($listElements[$key]['content']['ele_display']);
-                unset($elements[$key]['content']['ele_list_display']);
-        print_r ($listElements[$key]);
-        // print  $listElements['order'];
-        echo "</pre>";
-              $adminPage['tabs'][$i]['content']['listElements'] = $listElements;
-
+                print_r ($listElements[$key]);
+                echo "</pre>";
       }
+          foreach ($elements as $key => $value) {
+                echo "<pre>";
+                unset($elements[$key]['content']['ele_list_display']);
+                print_r ($elements[$key]);
+                echo "</pre>";
+      }
+
+      $adminPage['tabs'][$i]['content']['listElements'] = $listElements;
+
     }
     if(count($customElements)>0) {
 	$adminPage['tabs'][$i]['content']['customElements'] = $customElements;

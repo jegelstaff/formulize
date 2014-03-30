@@ -68,10 +68,10 @@ unset($newFormOrder[0]);
 unset($newListOrder[0]);
 
   // newOrder will have keys corresponding to the new order, and values corresponding to the old order
-  if(count($elements) != count($newListOrder)  || count($elements) != count($newFormOrder) ) {
+  /*if(count($elements) != count($newListOrder)  || count($elements) != count($newFormOrder) ) {
     print "Error: the number of elements being saved did not match the number of elements already in the database";
     return;
-  }
+  }*/
   // modify elements
   $oldOrderNumber = 1;
   foreach($elements as $element) {
@@ -83,7 +83,7 @@ unset($newListOrder[0]);
     $newListOrderNumber = array_search($oldOrderNumber,$newListOrder);
     $newFormOrderNumber = array_search($oldOrderNumber,$newFormOrder);
     
-    $element->setVar("ele_list_order",$newListOrderNumber);
+    //$element->setVar("ele_list_order",$newListOrderNumber);
     $element->setVar("ele_order",$newFormOrderNumber);
 
 
