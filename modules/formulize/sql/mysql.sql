@@ -307,6 +307,7 @@ CREATE TABLE formulize (
   ele_uitext text NOT NULL,
   ele_delim varchar(255) NOT NULL default '',
   ele_display text NOT NULL,
+  ele_list_display text NOT NULL,
   ele_disabled text NOT NULL,
   ele_filtersettings text NOT NULL,
   ele_forcehidden tinyint(1) NOT NULL default '0',

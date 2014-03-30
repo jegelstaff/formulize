@@ -541,7 +541,15 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		  $statement = "update " . $xoopsDB->prefix("formulize") . " set `ele_list_order` = `ele_order`";
 		  $result=$xoopsDB->queryF($sql);
 		}
-		
+      //if ele_list_display doesn't exist, create it
+		$myCol = q("SELECT * FROM ". $xoopsDB->prefix("formulize"). " LIMIT 1");
+		if(!isset($myCol[0]["ele_list_display"])){
+		  $statement="Alter table `".$xoopsDB->prefix("formulize")."` ADD `ele_list_display` text";
+		  $result=$xoopsDB->queryF($statement);
+		  $statement = "update " . $xoopsDB->prefix("formulize") . " set `ele_list_display` = `ele_display`";
+		  $result=$xoopsDB->queryF($sql);
+		}
+
 		// CONVERTING EXISTING TEMPLATES IN DB TO TEMPLATE FILES
 		$screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/";
                 

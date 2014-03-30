@@ -98,7 +98,9 @@ unset($newListOrder[0]);
   	if(!isset($processedElements[$ele_id]['ele_display']) AND !isset($_POST['customDisplayFlag'][$ele_id])) {
   		$element->setVar('ele_display',0);
   	}
-
+      if(!isset($processedElements[$ele_id]['ele_list_display']) AND !isset($_POST['customListDisplayFlag'][$ele_id])) {
+      $element->setVar('ele_list_display',0);
+    }
     // presist changes
     if(!$element_handler->insert($element)) {
       print "Error: could not save the form elements properly: ".$xoopsDB->error();

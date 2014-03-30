@@ -68,10 +68,8 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("ele_delim", XOBJ_DTYPE_TXTBOX, NULL, true, 255);
 		$this->initVar("ele_forcehidden", XOBJ_DTYPE_INT);
 		$this->initVar("ele_private", XOBJ_DTYPE_INT);
- 		// changed - start - August 19 2005 - jpc 		
-		//$this->initVar("ele_display", XOBJ_DTYPE_INT);
 		$this->initVar("ele_display", XOBJ_DTYPE_TXTBOX);
-		// changed - end - August 19 2005 - jpc
+		$this->initVar("ele_list_display", XOBJ_DTYPE_TXTBOX);
 		$this->initVar("ele_disabled", XOBJ_DTYPE_TXTBOX); // added June 17 2007 by jwe
 		$this->initVar("ele_encrypt", XOBJ_DTYPE_INT); // added July 15 2009 by jwe
 		$this->initVar("ele_filtersettings", XOBJ_DTYPE_ARRAY);
@@ -247,9 +245,9 @@ class formulizeElementsHandler {
 				}
    		if( $element->isNew() || $ele_id == 0){
 				$sql = sprintf("INSERT INTO %s (
-				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings,ele_list_order
-				) VALUES (
-				%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %u
+				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings,ele_list_order,ele_list_display
+				) VA
+				%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %u,%s
 				)",
 				formulize_TABLE,
 				$id_form,
@@ -269,7 +267,8 @@ class formulizeElementsHandler {
 				$ele_private,
 				$ele_encrypt,
 				$this->db->quoteString($ele_filtersettings),
-				$ele_list_order
+				$ele_list_order,
+				$this->db->quoteString($ele_list_display)
 
 			);            
             // changed - end - August 19 2005 - jpc
@@ -292,8 +291,8 @@ class formulizeElementsHandler {
 				ele_private = %u,
 				ele_encrypt = %u,
 				ele_filtersettings = %s,
-				ele_list_order = %u
-
+				ele_list_order = %u,
+				ele_list_display=%s
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),
@@ -313,6 +312,7 @@ class formulizeElementsHandler {
 				$ele_encrypt,
 				$this->db->quoteString($ele_filtersettings),
 				$ele_list_order, 
+				$this->db->quoteString($ele_list_display),
 				$ele_id,
 				$id_form
 			);

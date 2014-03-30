@@ -81,7 +81,7 @@ if($_GET['fid'] != "new") {
     $elements[$i]['content']['ele_id'] = $ele_id;
     $elements[$i]['content']['ele_handle'] = $ele_handle;
     $elements[$i]['order']=$thisElement->getVar("ele_list_order");
-
+    
     $ele_type = $thisElement->getVar('ele_type');
     
     switch($ele_type) {
@@ -137,6 +137,8 @@ if($_GET['fid'] != "new") {
       $check_display = $ele_display;
     }
     $elements[$i]['content']['ele_display'] = $check_display;
+    $elements[$i]['content']['ele_list_display'] = $thisElement->getVar('ele_list_display'); 
+
     $elements[$i]['content']['ele_private'] = $thisElement->getVar('ele_private');
     $elementHeadings[$i]['text'] = $colhead ? printSmart($colhead) : printSmart($elementCaption);
     $elementHeadings[$i]['ele_id'] = $ele_id;
@@ -375,12 +377,22 @@ if($fid != "new") {
       
       //listElements are the same as elements, but sorted with ele_list_order      
       $listElements=$elements;
+
       //sort
       uasort($listElements,function($a,$b){
         return $a['order']-$b['order'];
       });
-      $adminPage['tabs'][$i]['content']['listElements'] = $listElements;
 
+            foreach ($listElements as $key => $value) {
+        echo "<pre>";
+                unset($listElements[$key]['content']['ele_display']);
+                unset($elements[$key]['content']['ele_list_display']);
+        print_r ($listElements[$key]);
+        // print  $listElements['order'];
+        echo "</pre>";
+              $adminPage['tabs'][$i]['content']['listElements'] = $listElements;
+
+      }
     }
     if(count($customElements)>0) {
 	$adminPage['tabs'][$i]['content']['customElements'] = $customElements;
