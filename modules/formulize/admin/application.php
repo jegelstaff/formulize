@@ -243,7 +243,9 @@ $adminPage['tabs'][$i]['name'] = _AM_APP_PERMISSIONS;
 $adminPage['tabs'][$i]['template'] = "db:admin/multiple_permissions.html";
 $adminPage['tabs'][$i]['content'] = $common;
 $adminPage['tabs'][$i]['content']['groups'] = $groups;
+$adminPage['tabs'][$i]['content']['order'] = $orderGroups;
 $adminPage['tabs'][$i]['content']['forms'] = $formsInApp;
+$adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "same" ? "same" : "different";
 
 $i++;
 $adminPage['tabs'][$i]['name'] = _AM_APP_MENU_ENTRIES;
