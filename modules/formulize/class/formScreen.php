@@ -185,6 +185,24 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		return $screens;
 	}
 
+	public function getMultiScreens($fid) {
+
+		$screens = array();
+		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
+		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
+		foreach($formScreens as $screen) {
+			$sid = $screen->getVar('sid');
+			$screenData = $screen_handler->get($sid);	
+		  	$screens[$sid]['sid'] = $screenData->getVar('sid');
+		  	$screens[$sid]['title'] = $screenData->getVar('title');
+		  	$screens[$sid]['type'] = $screenData->getVar('type');
+		  	$screens[$sid]['pages'] = $screenData->getVar('pages');
+		  	$screens[$sid]['pagetitles'] = $screenData->getVar('pagetitles');
+		}
+		return $screens;
+	}	
+
 	public function getSelectedScreens($fid) {
 		$selected_screens = array();
 		$screen_handler = xoops_getmodulehandler('screen', 'formulize');

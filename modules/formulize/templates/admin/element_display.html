@@ -102,28 +102,16 @@ $('#multi-screen-tree').checkboxTree({
 	<legend>Multi-Page Form Screens to display to</legend>
     <ul id="multi-screen-tree">
 		<label for="multi_page_screens">Which pages of the screens should element display on?</label>
-        <li><input type="checkbox" name="multi_page_screens[]" value="1.0"><label>Screen 1</label>
-            <ul>
-                <li><input type="checkbox" name="multi_page_screens[]" value="1.1"><label>Page 1.1</label>
-            </ul>
-            <ul>
-                <li><input type="checkbox" name="multi_page_screens[]" value="1.2"><label>Page 1.2</label>
-            </ul>
-        <li><input type="checkbox" name="multi_page_screens[]" value="2.0"><label>Screen 2</label>
-            <ul>
-                <li><input type="checkbox" name="multi_page_screens[]" value="2.1"><label>Page 2.1</label>
-                <li><input type="checkbox" name="multi_page_screens[]" value="2.2"><label>Page 2.2</label>
-            </ul>
-        <li><input type="checkbox" name="multi_page_screens[]" value="3.0"><label>Screen 3</label>
-            <ul>
-                <li><input type="checkbox" name="multi_page_screens[]" value="3.1"><label>Page 3.1</label>
-                <li><input type="checkbox" name="multi_page_screens[]" value="3.2"><label>Page 3.2</label>
-            </ul>
-        <li><input type="checkbox"><label>Screen 4</label>
-            <ul>
-                <li><input type="checkbox" name="multi_page_screens[]" value="4.1"><label>Page 4.1</label>
-                <li><input type="checkbox" name="multi_page_screens[]" value="5.2"><label>Page 4.2</label>
-            </ul>            
+		<{foreach from=$content.multi_form_screens item=form_screen}>
+			<{assign var=formscreenid value=$form_screen.sid}>
+			<{assign var=formscreenpages value=$form_screen.pages}>
+			<li><input type="checkbox" name="multi_page_screens[]" value=<{$formscreenid}>><label><{$form_screen.title}></label>
+			<{foreach from=$formscreenpages key=k item=screen_page}>
+				 <ul>
+	                <li><input type="checkbox" name="multi_page_screens[]" value=<{$formscreenid}>><label><{$form_screen.pagetitles[$k]}></label>
+	            </ul>
+			<{/foreach}>
+        <{/foreach}>         
 	</ul>
 </fieldset>
 </div>
