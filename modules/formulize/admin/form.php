@@ -378,27 +378,22 @@ if($fid != "new") {
       //listElements are the same as elements, but sorted with ele_list_order      
       $listElements=$elements;
 
-      //sort
+      //sort listElements
       uasort($listElements,function($a,$b){
         return $a['order']-$b['order'];
       });
 
-            foreach ($listElements as $key => $value) {
-                echo "<pre>";
-                unset($listElements[$key]['content']['ele_display']);
-                print_r ($listElements[$key]);
-                echo "</pre>";
+      //unset ele_display for listelements, and ele_list_display for elements
+      foreach ($listElements as $key => $value) {
+          unset($listElements[$key]['content']['ele_display']);
       }
-          foreach ($elements as $key => $value) {
-                echo "<pre>";
-                unset($elements[$key]['content']['ele_list_display']);
-                print_r ($elements[$key]);
-                echo "</pre>";
+      foreach ($elements as $key => $value) {
+          unset($elements[$key]['content']['ele_list_display']);
       }
 
       $adminPage['tabs'][$i]['content']['listElements'] = $listElements;
-
     }
+    
     if(count($customElements)>0) {
 	$adminPage['tabs'][$i]['content']['customElements'] = $customElements;
     }
