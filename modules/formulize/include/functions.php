@@ -1469,9 +1469,9 @@ function getAllColList($fid, $frid="", $groups="",$order, $includeBreaks=false) 
     // build query for display groups
     $gq = "";
     if ($groups) {
-        $gq = "AND (ele_display='1'";
+        $gq = "AND (ele_list_display='1'";
         foreach ($groups as $thisgroup) {
-            $gq .= " OR ele_display LIKE '%,$thisgroup,%'";
+            $gq .= " OR ele_list_display LIKE '%,$thisgroup,%'";
         }
         $gq .= ")";
     }
