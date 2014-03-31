@@ -104,10 +104,13 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $templates['toptemplate'] = $screen->getTemplate('toptemplate');
   $templates['bottomtemplate'] = $screen->getTemplate('bottomtemplate');
   $templates['listtemplate'] = $screen->getTemplate('listtemplate');
+  $templates['tabletemplate'] = $screen->getTemplate('tabletemplate');
   
   $templates['prototype_toptemplate'] = $screen->getTemplate('toptemplate', true);
   $templates['prototype_bottomtemplate'] = $screen->getTemplate('bottomtemplate', true);
   $templates['prototype_listtemplate'] = $screen->getTemplate('listtemplate', true);
+  $templates['prototype_tabletemplate'] = $screen->getTemplate('tabletemplate', true);
+
 
   // view data
   // gather all the available views

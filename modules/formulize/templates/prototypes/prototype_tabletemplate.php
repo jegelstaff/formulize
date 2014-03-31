@@ -218,7 +218,7 @@ $filename = "";
 							print "</center></p>\n";
 						}
 					} // end of IF NO LOCKCONTROLS
-			$drawRow($entry);
+			$drawRow($entry, $linkids);
 			
 				}
 			

@@ -8,6 +8,7 @@
 <input type="hidden" name="formulize_admin_handler" value="screen_list_templates">
 <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
 <input type ="hidden" name="screens-toptemplate-prototype" value="<{$content.prototype_toptemplate|escape}>"></textarea>
+<input type ="hidden" name="screens-tabletemplate-prototype" value="<{$content.prototype_tabletemplate|escape}>"></textarea>
 <input type ="hidden" name="screens-listtemplate-prototype" value="<{$content.prototype_listtemplate|escape}>"></textarea>
 
 
@@ -24,6 +25,23 @@
 
 			  <textarea name="screens-toptemplate" class="code-textarea" rows="20"/>&lt;?php
 <{$content.toptemplate}></textarea>
+		  </fieldset>
+	  </div>
+
+	<div class="form-item">
+		  <fieldset>
+		  <legend>Table Template</legend>
+		  	<input type="button" class="importDefaultTableTemplate"  name="importDefaultTableTemplate" value="Import Default Table Template">
+
+			  <textarea name="screens-tabletemplate" class="code-textarea" rows="20"/>&lt;?php
+<{$content.tabletemplate}></textarea>
+				  <a name="elementhandles"></a>
+					<table>
+					<tr><th>Form element</th><th>handle</th></tr>
+					<!--<{foreach from=$content.tableetemplatehelp item=row}>
+						<{$row}>
+					<{/foreach}>-->
+					</table>
 		  </fieldset>
 	  </div>
 
@@ -68,6 +86,14 @@
   $(".importDefaultTopTemplate").click(function () {
 	var textarea = document.getElementsByName("screens-toptemplate")[0];
 	var prototypeValue = document.getElementsByName("screens-toptemplate-prototype")[0].value;
+	$(textarea).siblings('.CodeMirror').each(function(i, el){
+	el.CodeMirror.setValue("<?php \n" + prototypeValue);
+});
+  });
+  
+    $(".importDefaultTableTemplate").click(function () {
+	var textarea = document.getElementsByName("screens-tabletemplate")[0];
+	var prototypeValue = document.getElementsByName("screens-tabletemplate-prototype")[0].value;
 	$(textarea).siblings('.CodeMirror').each(function(i, el){
 	el.CodeMirror.setValue("<?php \n" + prototypeValue);
 });
