@@ -54,9 +54,9 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
   return;
 }  // code changed by Gordon Woodmansey, 2012-08-29
 
-$screen->setVar('toptemplate',get_magic_quotes_gpc() ? htmlspecialchars(trim(stripslashes($screens['toptemplate']))) : htmlspecialchars(trim($screens['toptemplate'])));
-$screen->setVar('elementtemplate',get_magic_quotes_gpc() ? htmlspecialchars(trim(stripslashes($screens['elementtemplate']))) : htmlspecialchars(trim($screens['elementtemplate'])));
-$screen->setVar('bottomtemplate',get_magic_quotes_gpc() ? htmlspecialchars(trim(stripslashes($screens['bottomtemplate']))) : htmlspecialchars(trim($screens['bottomtemplate'])));
+$screen->setVar('toptemplate',get_magic_quotes_gpc() ? htmlspecialchars(trim($screens['toptemplate'])) : htmlspecialchars(trim($screens['toptemplate'])));
+$screen->setVar('elementtemplate',get_magic_quotes_gpc() ? htmlspecialchars(trim($screens['elementtemplate'])) : htmlspecialchars(trim($screens['elementtemplate'])));
+$screen->setVar('bottomtemplate',get_magic_quotes_gpc() ? htmlspecialchars(trim($screens['bottomtemplate'])) : htmlspecialchars(trim($screens['bottomtemplate'])));
 
 
 if(!$screen_handler->insert($screen)) {
