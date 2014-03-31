@@ -93,4 +93,3 @@ if($useViewEntryLinks OR $useCheckboxes != 2) {
 					print "\n<input type=\"hidden\" name=\"hiddencolumn_".$linkids[0]."_$thisHiddenCol\" value=\"" . htmlspecialchars(display($entry, $thisHiddenCol)) . "\"></input>\n";
 				}				
 				
-				print "</tr>\n";
