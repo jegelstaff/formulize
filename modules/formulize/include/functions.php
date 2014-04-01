@@ -4704,7 +4704,7 @@ function formulize_xhr_send(op,params) {
     key = 1;
     var params_for_uri;
     params_for_uri = '';
-    params.foreach (function(i) {
+    params.forEach (function(i) {
         params_for_uri += 'param' + key + '=' + encodeURIComponent(i) + '&';
         key++;
     });
