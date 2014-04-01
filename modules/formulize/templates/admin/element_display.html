@@ -107,9 +107,15 @@ $('#multi-screen-tree').checkboxTree({
 			<{assign var=formscreenpages value=$form_screen.pages}>
 			<li><input type="checkbox" name="multi_page_screens[]" value=<{$formscreenid}>><label><{$form_screen.title}></label>
 			<{foreach from=$formscreenpages key=k item=screen_page}>
+				<{if in_array($content.ele_id, $screen_page)}>
 				 <ul>
+	                <li><input type="checkbox" name="multi_page_screens[]" value=<{$formscreenid}> checked><label><{$form_screen.pagetitles[$k]}></label>
+	            </ul>
+	            <{else}>
+	            <ul>
 	                <li><input type="checkbox" name="multi_page_screens[]" value=<{$formscreenid}>><label><{$form_screen.pagetitles[$k]}></label>
 	            </ul>
+	            <{/if}>
 			<{/foreach}>
         <{/foreach}>         
 	</ul>
