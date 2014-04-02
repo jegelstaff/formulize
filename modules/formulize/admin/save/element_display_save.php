@@ -197,13 +197,13 @@ foreach ($all_multi_screens as $i => $screen_array) {
             }
           }
 
-          if ($element_exists_in_treeview && ($page_element == $ele_id)) {
-            if (!in_array($ele_id, $page_elements)) {
+          if ($element_exists_in_treeview) {
+            if (!in_array($ele_id, $existing_pages[$page_index])) {
               // If this element does not exist yet under the page's element array, then add it
               array_push($existing_pages[$page_index], $ele_id);
             }
-          } elseif ((!$element_exists_in_treeview) && ($page_element == $ele_id)) {
-            if (in_array($ele_id, $page_elements)) {
+          } else {
+            if (in_array($ele_id, $existing_pages[$page_index])) {
               // If this element exists under the page's element array, then remove it
               unset($existing_pages[$page_index][$ele_index]);
             }
@@ -255,6 +255,7 @@ foreach ($all_screens as $key => $screen) {
 
     }
   }
+  
   if(!$screen_handler->insert($screen_stream)) {
     print "Error: could not save the screen properly: ".$xoopsDB->error();
   }  
