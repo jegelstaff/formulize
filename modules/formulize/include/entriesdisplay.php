@@ -3464,7 +3464,7 @@ function toggleColumnInFloat(column) {
 	});
 	if(floatingContents[column] == true) {
 		floatingContents[column] = false;
-		jQuery("#lockcolumn_"+column).empty().append('[ ]');
+		jQuery(this).removeClass("heading-locked").addClass("heading-unlocked");
 	} else {
 		floatingContents[column] = true;
 	}
