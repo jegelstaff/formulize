@@ -134,6 +134,70 @@ if($_POST['elements_ele_disabled'][0] == "none") {
 }
 $element->setVar('ele_disabled', $disabled);
 
+
+// Saving element existence in multi-paged screens
+$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+$raw_pages = $_POST['multi_page_screens'];
+$formScreenHandler = new formulizeFormScreenHandler();
+$all_multi_screens = $formScreenHandler->getMultiScreens($fid);
+
+// Go through each possible multi-paged screen's pages, and make changes accordingly
+foreach ($all_multi_screens as $i => $screen_array) {
+  $screen_id = $screen_array['sid'];
+  $screen = $screen_handler->get($screen_id);
+  $existing_pages = $screen->getVar('pages');
+  if (empty($raw_pages)) {
+    // Check if this element exists in each page, if it exists, then unset them
+    foreach ($existing_pages as $page_index => $page_elements) {
+      // Since PHP does not know how to differentiate between false and 0 that well, have a double checking for element existence
+      $element_exists = in_array($ele_id, $page_elements);
+      $element_index = array_search($ele_id, $page_elements);
+      if ($element_exists) {
+        unset($existing_pages[$page_index][$element_index]);
+      }
+    }
+  } else {
+     foreach ($existing_pages as $page_index => $page_elements) {
+      foreach ($page_elements as $j => $page_element) {
+        // Necessary to loop through each treeview checkbox value, since every value is concatenated with its page index
+        $element_exists_in_treeview = false;
+        foreach ($raw_pages as $k => $raw_pair) {
+          $screen_page = explode("-", $raw_pair);
+          if ($screen_id == $screen_page[0] && $page_index == $screen_page[1]) {
+            $element_exists_in_treeview = true;
+          }
+        }
+
+        if ($element_exists_in_treeview) {
+          if (!in_array($ele_id, $page_elements)) {
+            // If this element does not exist yet under the page's element array, then add it
+            array_push($existing_pages[$page_index], $ele_id);
+          }
+        } else {
+          if (in_array($ele_id, $page_elements)) {
+            // If this element exists under the page's element array, then remove it
+            $element_index = array_search($ele_id, $existing_pages[$page_index]);
+            unset($existing_pages[$page_index][$element_index]);
+          }
+        }
+
+      }
+      // Since PHP does not know how to differentiate between false and 0 that well, have a double checking for element existence
+      $element_exists = in_array($ele_id, $page_elements);
+      $element_index = array_search($ele_id, $page_elements);
+      if ($element_exists) {
+        unset($existing_pages[$j][$element_index]);
+      }
+    }   
+  }
+
+  $screen->setVar('pages',serialize($existing_pages)); 
+  if(!$screen_handler->insert($screen)) {
+        print "Error: could not save the screen properly: ".$xoopsDB->error();
+  }       
+}
+
+
 // Saving element existence in screen(s)
 $screens_save = $_POST['elements_form_screens'];
 // go through each possible screen, and save whether the element in the UI accordingly by appending to existing screen's elements
