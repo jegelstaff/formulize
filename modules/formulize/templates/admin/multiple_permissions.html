@@ -17,7 +17,7 @@
                 <legend><label class="question"><{$smarty.const._AM_PERMISSIONS_CHOOSE_FORMS}></label></legend>
                 <select name="forms[]" id="forms" size=10 multiple>
                     <{foreach from=$content.forms item=form}>
-                        <option value=<{$form.id}><{$form.selected}>><{$form.name}></option>
+                        <option value=<{$form.fid}><{$form.selected}>><{$form.name}></option>
                     <{/foreach}>
                 </select>
 				<br /><br />
