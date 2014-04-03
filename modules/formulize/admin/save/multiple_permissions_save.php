@@ -27,20 +27,34 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-
 // This file handles the saving of submissions from the multiple_permissions page.
+
+// TEMPORARY - for debugging
+ini_set('display_errors', 1); 
+error_reporting(E_ALL);
 
 // If we aren't coming from what appears to be save.php, then return nothing.
 if(!isset($processedValues)) {
   return;
 }
 
-// CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
-$formObject = $form_handler->get($_POST['formulize_admin_key']);
+
+
+// Loop through each of the selected forms.
+foreach($_POST['forms'] as $form) {
+	// Do stuff for each form.
+	// TEMPORARILY EMPTY - trying to figure out why $_POST['forms'] isn't set
+	
+}
+
+// Code below should be inside the above loop and execute for each individual form.
+
+$fid = 1; // TEMPORARY
+$formObject = $form_handler->get($fid);
 $form_id = $formObject->getVar('id_form');
 if($formObject->getVar('lockedform')) {
-  return;
+ 	return;
 }
 
 // If the user doesn't have edit form permission, then do nothing.
