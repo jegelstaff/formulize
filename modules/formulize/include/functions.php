@@ -3407,6 +3407,11 @@ function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600) {
 // $writeOwnerInfo causes the entry_owner_groups table to be updated when a new entry is written
 // NOTE: $values takes ID numbers as keys, since that's how the datahandler expects things
 function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUser=false, $forceUpdate=false, $writeOwnerInfo=true) {
+    if ($entry < 1 and "new" != $entry) {
+        // safety net in case NULL is passed as $entry
+        $entry = "new";
+    }
+
     // get the form id from the element id of the first value in the values array
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = $element_handler->get(key($values));
