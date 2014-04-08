@@ -479,9 +479,8 @@ class formulizeElementRenderer{
 					if(!$isDisabled AND $ele_value[8] == 1) {
 						// do autocomplete rendering logic here
 						if($boxproperties[2]) {
-							$default_value = trim($boxproperties[2], ",");
-							$data_handler_autocomplete = new formulizeDataHandler($boxproperties[0]);
-							$default_value_user = $data_handler_autocomplete->getElementValueInEntry(trim($boxproperties[2], ","), $boxproperties[1]);
+							$default_value = $boxproperties[2];
+							$default_value_user = $linkedElementOptions[$boxproperties[2]];
 						}
 						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedSourceValuesAutocompleteFile[$sourceValuesQ], $default_value, $default_value_user, $cachedSourceValuesAutocompleteLength[$sourceValuesQ]);
 						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
