@@ -97,7 +97,7 @@
 							<div class="main-cell-div" id="cellcontents_1_0">
 								<nobr>
 									<input type="text" id="firstbox" name="search_10" value="Type search terms here" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
-									&nbsp;<a></a>
+									<!--&nbsp;-->
 								</nobr>
 							</div>
 						</td>
@@ -141,17 +141,12 @@
 						</td>
 						<td class="odd column column1" id="celladdress_3_1">
 							<div class="main-cell-div" id="cellcontents_3_1">
-								<span>giraffe</span>,<br>
-								<div class="main-cell-div" id="cellcontents_3_1">
-									<span>zebra</span>,<br>
-									<div class="main-cell-div" id="cellcontents_3_1">
-										<span>cobra</span>
-									</div>
-								</div>
+								<span>zebra</span>
 							</div>
 						</td>
 						<td class="odd column column2" id="celladdress_3_2">
 							<div class="main-cell-div" id="cellcontents_3_2">
+								<span>beets</span><br />
 								<span>beets</span>
 							</div>
 						</td>
@@ -219,8 +214,8 @@
   			// if we're on the leftmost col, we can't go to the left,
   			// so do nothing
   			if (col != 0) {
-  				$(".column" + arr[2]).hide( "slide", { direction: "right" }, "slow", function(){
-  					$(".column" + (col - 1)).show("slide", {direction: "left"}, "slow");
+  				$(".column" + arr[2]).hide( "slide", { direction: "right" }, 1000, function(){
+  					$(".column" + (col - 1)).show("slide", {direction: "left"}, 1000);
   				} );
   				//$(".column" + (col - 1)).show("slide", {direction: "left"}, "slow");
   			}
@@ -237,8 +232,8 @@
   			// so do nothing
   			var col = parseInt(arr[2]);
   			if (col != 2) {
-  				$(".column" + arr[2]).hide("slide", {direction: "left"}, "slow", function () {
-  					$(".column" + (col + 1)).show("slide", {direction: "right"}, "slow");
+  				$(".column" + arr[2]).hide("slide", {direction: "left"}, 1000, function () {
+  					$(".column" + (col + 1)).show("slide", {direction: "right"}, 1000);
   				});
   				//$(".column" + (col + 1)).show("slide", {direction: "right"}, "slow");
   			}
