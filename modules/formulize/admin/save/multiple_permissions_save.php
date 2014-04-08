@@ -44,16 +44,14 @@ global $xoopsDB;
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
  
 // Loop through each of the selected forms.
-foreach($_POST['forms'] as $fid) {
+foreach($_POST['forms'] as $form_id) {
 	
-	$formObject = $form_handler->get($fid);
-	$form_id = $formObject->getVar('id_form');
-	
+	$formObject = $form_handler->get($form_id);
 	// If the form is locked, then do nothing.
 	if($formObject->getVar('lockedform')) {
  		return;
 	}
-
+	
 	$formulize_module_id = getFormulizeModId();
 	// If the user doesn't have edit form permission, then do nothing.
 	if(!$gperm_handler->checkRight("edit_form", $form_id, $xoopsUser->getGroups(), $formulize_module_id)) {

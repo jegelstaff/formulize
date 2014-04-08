@@ -91,8 +91,42 @@ if($aid == 0) {
 
 // get list of group ids that have no default screen set
 $groupsWithDefaultScreen = $application_handler->getGroupsWithDefaultScreen();    
+
+
+// Get group lists.
+$groupListSQL = "SELECT gl_id, gl_name, gl_groups FROM ".$xoopsDB->prefix("group_lists")." ORDER BY gl_name";
+$grouplists = array();
+if(isset($_POST['grouplistname']) AND $_POST['grouplistname']) {
+	$selectedGroupList = $_POST['grouplistname'];
+} 
+elseif(isset($_POST['loadthislist']) AND $_POST['loadthislist']) {
+    $selectedGroupList = intval($_POST['loadthislist']);
+} 
+elseif(isset($_POST['useselection'])) {
+    $selectedGroupList = 0;
+} 
+elseif(isset($_POST['grouplists'])) {
+    $selectedGroupList = intval($_POST['grouplists']);
+}
+$grouplists[0]['id'] = 0;
+$grouplists[0]['name'] = "No group list selected";
+$grouplists[0]['selected'] = $selectedGroupList ? "" : " selected";
+if($result = $xoopsDB->query($groupListSQL)) {
+    while($array = $xoopsDB->fetchArray($result)) {
+      	$grouplists[$array['gl_id']]['id'] = $array['gl_id'];
+      	$grouplists[$array['gl_id']]['name'] = $array['gl_name'];
+      	if((is_numeric($selectedGroupList) AND $array['gl_id'] == $selectedGroupList) OR $array['gl_name'] === $selectedGroupList) {
+        	$glSelectedText = " selected";
+        	$selectedGroups = explode(",",$array['gl_groups']);
+      	} 
+      	else {
+        	$glSelectedText = "";
+      	}
+      	$grouplists[$array['gl_id']]['selected'] = $glSelectedText;
+    }
+}
     
-// get the list of groups
+// Get all groups.
 $member_handler = xoops_gethandler('member');
 $allGroups = $member_handler->getGroups();
 $groups = array();
@@ -244,8 +278,10 @@ $adminPage['tabs'][$i]['template'] = "db:admin/multiple_permissions.html";
 $adminPage['tabs'][$i]['content'] = $common;
 $adminPage['tabs'][$i]['content']['groups'] = $groups;
 $adminPage['tabs'][$i]['content']['order'] = $orderGroups;
+$adminPage['tabs'][$i]['content']['grouplists'] = $grouplists;
 $adminPage['tabs'][$i]['content']['forms'] = $formsInApp;
 $adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "same" ? "same" : "different";
+$adminPage['tabs'][$i]['content']['groupperms'] = $groupperms;
 
 $i++;
 $adminPage['tabs'][$i]['name'] = _AM_APP_MENU_ENTRIES;
