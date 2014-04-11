@@ -580,6 +580,7 @@ define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES_HELP", "<p>The following variab
 <li>\$totalPages</li>
 <li>\$nextPageButton</li>
 <li>\$previousPageButton</li>
+<li>\$savePageButton &mdash; does not change the current page when clicked</li>
 <li>\$pageSelectionList &mdash; draws in the dropdown list for jumping to another page</li>
 <li>\$skippedPagesMessage &mdash; the message saying one or more pages were skipped, it will be an empty string is no pages were skipped</li>
 </ul>
