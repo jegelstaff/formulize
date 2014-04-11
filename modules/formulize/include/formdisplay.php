@@ -824,21 +824,25 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				$printViewPages, $printViewPageTitles);
 			formulize_benchmark("After Compile Elements.");
 		}	// end of for each fids
-	
+
         if(!is_object($form)) {
             exit("Error: the form cannot be displayed.  Does the current group have permission to access the form?");
         }
-	
-				// DRAW IN THE SPECIAL UI FOR A SUBFORM LINK (ONE TO MANY)		
-				if(count($sub_fids) > 0) { // if there are subforms, then draw them in...only once we have a bonafide entry in place already
-					// draw in special params for this form
-			$form->addElement (new XoopsFormHidden ('target_sub', ''));
-			$form->addElement (new XoopsFormHidden ('target_sub_instance', ''));
-			$form->addElement (new XoopsFormHidden ('numsubents', 1));
-			$form->addElement (new XoopsFormHidden ('del_subs', ''));
-			$form->addElement (new XoopsFormHidden ('goto_sub', ''));
-			$form->addElement (new XoopsFormHidden ('goto_sfid', ''));
-			
+
+        // DRAW IN THE SPECIAL UI FOR A SUBFORM LINK (ONE TO MANY)
+        if(count($sub_fids) > 0) { // if there are subforms, then draw them in...only once we have a bonafide entry in place already
+            // draw in special params for this form, but only once per page
+            global $formulize_subformHiddenFieldsDrawn;
+            if ($formulize_subformHiddenFieldsDrawn != true) {
+                $formulize_subformHiddenFieldsDrawn = true;
+                $form->addElement (new XoopsFormHidden ('target_sub', ''));
+                $form->addElement (new XoopsFormHidden ('target_sub_instance', ''));
+                $form->addElement (new XoopsFormHidden ('numsubents', 1));
+                $form->addElement (new XoopsFormHidden ('del_subs', ''));
+                $form->addElement (new XoopsFormHidden ('goto_sub', ''));
+                $form->addElement (new XoopsFormHidden ('goto_sfid', ''));
+            }
+
 			foreach($sub_fids as $subform_id) {
 				// only draw in the subform UI if the subform hasn't been drawn in previously, courtesy of a subform element in the form.
 				// Subform elements are recommended since they provide 1. specific placement, 2. custom captions, 3. direct choice of form elements to include
