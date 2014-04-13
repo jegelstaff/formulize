@@ -2747,6 +2747,7 @@ jQuery(window).load(function() {
 	});
 });
 
+
 function getConditionalHTML(handle) {
 	partsArray = handle.split('_');
 	jQuery.get(\"".XOOPS_URL."/modules/formulize/formulize_xhr_responder.php?uid=".$uid."&op=get_element_row_html&elementId=\"+partsArray[3]+\"&entryId=\"+partsArray[2]+\"&fid=\"+partsArray[1], function(data) {
