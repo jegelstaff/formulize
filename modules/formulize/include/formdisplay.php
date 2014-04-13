@@ -114,6 +114,18 @@ class formulize_themeForm extends XoopsThemeForm {
 
                     <script type=\'text/javascript\'>
 
+                                      $("#entryTable tr").hover(
+			  function () {
+				rowLength=document.getElementById("entryTable").rows.length;
+				if( $(this).index()<rowLength-2 && $(this).index()>1){
+				    	$(this).find("td:last").append("<ul><p style=\"color:blue;\">drag to reorder</p></ul>");
+				}
+			  }, 
+			  function () {
+			  			  	$(this).find("td:last").children("ul").remove();
+			  }
+			);
+			  
                     var fixHelperModified = function(e, tr) {
 
                         var $originals = tr.children();
@@ -130,6 +142,7 @@ class formulize_themeForm extends XoopsThemeForm {
                         };
                         updateTable = function(){
                             var table = document.getElementById(\'entryTable\');
+                            
                             var rowLength = table.rows.length;
                               for(var i=2; i<rowLength-2; i+=1){
                                   var row = table.rows[i];
@@ -142,7 +155,6 @@ class formulize_themeForm extends XoopsThemeForm {
                                     success:function(response){
                                    }
                                 });              
-
 
                                 }
                         };
@@ -215,13 +227,12 @@ class formulize_themeForm extends XoopsThemeForm {
 				}
 				
                 $ret .= "</td><td class='$class'>" . $ele->render() ;
-				
+	
                 $ret .= "</td></tr>\n";
 
 				if ($ele == $elements[20]){
 					error_log(print_r($ret, true));
 
-//					$ret .= "<p><input type="button" class="formButton" name="editx" id="submitx" value="Edit" onclick="javascript:validateAndSubmit();"></p>";
 				}
 			} else {
 				$hidden .= $ele->render();
@@ -2472,6 +2483,7 @@ function writeHiddenSettings($settings, $form = null) {
 // draw in javascript for this form that is relevant to subforms
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
 function drawJavascript($nosave) {
+
 static $drawnJavascript = false;
 if($drawnJavascript) {
 	return;
