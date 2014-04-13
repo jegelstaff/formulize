@@ -107,6 +107,7 @@ class formulize_themeForm extends XoopsThemeForm {
 		$hidden = '';
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
 		$ret .= "</table>\n$hidden\n</div>\n</form>\n";
+
         #some javascript for updating the elements in the table
         #only allow the user to reorganize if user is an admin
         if($isAdmin){
@@ -2703,9 +2704,6 @@ foreach($conditionalElements as $handle=>$theseGoverningElements) {
 
 print "
 <script type='text/javascript'>
-<src>//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css</scr>
-<src>//code.jquery.com/jquery-2.0.2.js</src>
-<src>//code.jquery.com/ui/1.10.4/jquery-ui.js</src>
 var conditionalHTML = new Array(); // needs to be global!
 
 $(\"#entryTable tbody\").sortable().disableSelection(); 
