@@ -541,8 +541,7 @@ class formulizeElementRenderer{
 						$opt_count = 1;
 					}
 					$hiddenOutOfRangeValuesToWrite = array();
-					while( $i = each($ele_value[2]) ){
-	
+					while (is_array($ele_value[2]) and $i = each($ele_value[2])) {
 						// handle requests for full names or usernames -- will only kick in if there is no saved value (otherwise ele_value will have been rewritten by the loadValues function in the form display
 						// note: if the user is about to make a proxy entry, then the list of users displayed will be from their own groups, but not from the groups of the user they are about to make a proxy entry for.  ie: until the proxy user is known, the choice of users for this list can only be based on the current user.  This could lead to confusing or buggy situations, such as users being selected who are outside the groups of the proxy user (who will become the owner) and so there will be an invalid value stored for this element in the db.
 						if($i['key'] === "{FULLNAMES}" OR $i['key'] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
