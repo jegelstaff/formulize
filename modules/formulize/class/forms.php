@@ -668,7 +668,7 @@ class formulizeFormsHandler {
 							if($elementTypes[$elementId] == "date") {
 								$newTableSQL .= "`$thisHandle` date NULL default NULL,";
 							} else {
-								$newTableSQL .= "`$thisHandle` text NULL default NULL,";
+								$newTableSQL .= "`$thisHandle` text,";
 							}
 						}
 		}

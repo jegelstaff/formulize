@@ -1418,7 +1418,7 @@ function createProceduresTable($array, $permTableName = "") {
 	    $fieldType = "datetime NULL default NULL";
 	    $indexList[] = "INDEX i_".$fieldName." ($fieldName)";
 	} else {
-	    $fieldType = "text NULL default NULL";	    
+        $fieldType = "text";
 	}
 	$sql .= "`$fieldName` $fieldType,";
 	$fieldList[]  = $fieldName;

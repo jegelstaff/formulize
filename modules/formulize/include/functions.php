@@ -4935,7 +4935,7 @@ function generateHiddenElements($elements, $entry) {
 function convertSelectBoxToMulti($table, $column) {
     global $xoopsDB;
 
-    $sql1 = "ALTER TABLE `$table` CHANGE `$column` `$column` TEXT NULL DEFAULT NULL";
+    $sql1 = "ALTER TABLE `$table` CHANGE `$column` `$column` TEXT";
     $sql2 = "UPDATE `$table` SET `$column`=CONCAT(',', `$column`, ',') WHERE `$column` NOT LIKE '%[^0-9]%'";
 
     if (!$result1 = $xoopsDB->query($sql1)) {
