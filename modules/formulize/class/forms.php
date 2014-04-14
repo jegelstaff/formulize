@@ -659,10 +659,12 @@ class formulizeFormsHandler {
 							}
 							if($revisionsTable) {
 								// for revision tables, the handles will be exactly the same, so the lookup in the dataTypeMap is really easy
-								$newTableSQL .= "`$thisHandle` ".$dataTypeMap[$thisHandle]." NULL default NULL,";
-							} else {
+								$type_with_default = ("text" == $dataTypeMap[$thisHandle] ? "text" : $dataTypeMap[$thisHandle]." NULL default NULL");
+								$newTableSQL .= "`$thisHandle` $type_with_default,";
 								// for cloned forms, we have to look up the handle name in the map that was passed in, since element handles will have changed in the cloning process
-								$newTableSQL .= "`$thisHandle` ".$dataTypeMap[array_search($thisHandle, $map)]." NULL default NULL,";
+							} else {
+								$type_with_default = ("text" == $dataTypeMap[array_search($thisHandle, $map)] ? "text" : $dataTypeMap[array_search($thisHandle, $map)]." NULL default NULL");
+								$newTableSQL .= "`$thisHandle` $type_with_default,";
 							}
 						} else {
 							if($elementTypes[$elementId] == "date") {
@@ -759,7 +761,8 @@ class formulizeFormsHandler {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($element->getVar('id_form'));
 		$dataType = $dataType ? $dataType : "text";
-		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
+		$type_with_default = ("text" == $dataType ? "text" : "$dataType NULL default NULL");
+		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `" . $element->getVar('ele_handle') . "` $type_with_default";
 		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
 			return false;
 		}

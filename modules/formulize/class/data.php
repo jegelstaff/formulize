@@ -932,7 +932,8 @@ class formulizeDataHandler  {
 		}
 		global $xoopsDB;
 		$formObject = $form_handler->get($element->getVar('id_form'));
-		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `$elementHandle` $dataType NULL default NULL";
+		$type_with_default = ("text" == $dataType ? "text" : "$dataType NULL default NULL");
+		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `$elementHandle` $type_with_default";
 		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
 			return false;
 		}
