@@ -1407,7 +1407,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	if($rowsOrForms=="row" OR $rowsOrForms =='') {
 		$col_two = "<table id=\"formulize-subform-table-$subform_id\" class=\"formulize-subform-table\">";
 	} else {
-		$col_two = "<div id=\"subform-$subformElementId\" class=\"subform-accordion-container\" subelementid=\"$subformElementId\" style=\"display: none;\">";
+		$col_two = "";
+		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+			$col_two .= "<div id=\"subform-$subformElementId\" class=\"subform-accordion-container\" subelementid=\"$subformElementId\" style=\"display: none;\">";
+		}
 		$col_two .= "<input type='hidden' name='subform_entry_".$subformElementId."_active' id='subform_entry_".$subformElementId."_active' value='' />";
 		include_once XOOPS_ROOT_PATH ."/modules/formulize/class/data.php";
 		$data_handler = new formulizeDataHandler($subform_id);
@@ -1508,7 +1511,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					$col_two .= "<tr>\n<td>";
 					// check to see if we draw a delete box or not
 					if ($sub_ent !== "new" and ("hideaddentries" != $hideaddentries)
-						and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent))
+						and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php"))
 					{
 						// note: if the add/delete entry buttons are hidden, then these delete checkboxes are hidden as well
 						$need_delete = 1;
@@ -1530,7 +1533,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 							}
 						}
 					}
-					if(!$nosubforms AND $showViewButtons) { $col_two .= "<td><input type=button name=view".$sub_ent." value='"._formulize_SUBFORM_VIEW."' onclick=\"javascript:goSub('$sub_ent', '$subform_id');return false;\"></input></td>\n"; }
+					if(!$nosubforms AND $showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<td><input type=button name=view".$sub_ent." value='"._formulize_SUBFORM_VIEW."' onclick=\"javascript:goSub('$sub_ent', '$subform_id');return false;\"></input></td>\n"; }
 					$col_two .= "</tr>\n";
 				} else { // display the full form
 					$headerValues = array();
@@ -1549,15 +1552,16 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					
 					// check to see if we draw a delete box or not
 					$deleteBox = "";
-					if ($sub_ent !== "new" and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent)) {
+					if ($sub_ent !== "new" and formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
 						$need_delete = 1;
 						$deleteBox = "<input type=checkbox name=delbox$sub_ent value=$sub_ent></input>&nbsp;&nbsp;";
 					}
 					
-					
-					$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container\" id=\"subform-".$subform_id."-"."$sub_ent\">
+					if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+						$col_two .= "<div class=\"subform-deletebox\">$deleteBox</div><div class=\"subform-entry-container\" id=\"subform-".$subform_id."-"."$sub_ent\">
 	<p class=\"subform-header\"><a href=\"#\"><span class=\"accordion-name\">".$headerToWrite."</span></a></p>
 	<div class=\"accordion-content content\">";
+					}
 					ob_start();
 					$GLOBALS['formulize_inlineSubformFrid'] = $frid;
                     if ($display_screen = get_display_screen_for_subform($subform_element_object)) {
@@ -1573,7 +1577,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					}
 					$col_two_temp = ob_get_contents();
 					ob_end_clean();
-					$col_two .= $col_two_temp . "</div>\n</div>\n";
+					$col_two .= $col_two_temp;
+					if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { 
+						$col_two .= "</div>\n</div>\n";
+					}
 				}
 			}
 		}
@@ -1585,7 +1592,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		// complete the table if we're drawing rows
 		$col_two .= "</table>";	
 	} else {
-		$col_two .= "</div>"; // close of the subform-accordion-container
+		if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+			$col_two .= "</div>"; // close of the subform-accordion-container
+		}
 		static $jqueryUILoaded = false;
 		if(!$jqueryUILoaded) {
 			$col_two .= "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js\"></script>\n";
@@ -1637,7 +1646,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             //  is like editing the main form entry. otherwise they could add subform entries on main form entries owned by other users
             $allowed_to_add_entries = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
         }
-        if ($allowed_to_add_entries) {
+        if ($allowed_to_add_entries AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
             if (count($sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
                 $col_two .= "<p><input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.");\"></p>";
             } elseif(!$sub_single) {
