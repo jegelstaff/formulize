@@ -61,7 +61,15 @@ header("Content-Type: text/css");
     border-bottom: 1px dotted rgb(209, 209, 223);
 }
 
-/*=== Formulize Boutons by Francois T ===*/
+/*=== List of entries ===*/
+.loe-edit-entry{
+	background-image: url('<?php print XOOPS_URL; ?>/modules/formulize/images/detail.gif');
+    background-repeat: no-repeat;
+    display: block;
+    padding: 3px;
+}
+
+/*=== Formulize Buttons ===*/
 button, input[type='submit'], input[type='button'], input[type='reset'] {
 	background-color: 			#F4F9FE;
 	-webkit-border-radius: 5px;
@@ -108,7 +116,6 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 	    font-size: 15px;
 }
 
-/*=== Formulize Boutons by Francois T ===*/
 #formulize_addButton, #formulize_addProxyButton {
     text-indent:45px;	
     background:#2F85DC url('<?php print XOOPS_URL; ?>/modules/formulize/images/contact-new.png') no-repeat 10px;
