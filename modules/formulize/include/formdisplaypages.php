@@ -359,9 +359,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	
 	} 
 	
-	$submitJavascriptNext =  "onclick=\"javascript:submitForm($nextPage, $currentPage);return false;\"";
-	$submitJavascriptPrev =  "onclick=\"javascript:submitForm($previousPage, $currentPage);return false;\"";
-	
 	if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND !$_POST['goto_sfid']) { // only show intro text on first page if there's actually a form there
 	  print html_entity_decode(html_entity_decode($introtext));
 	}
@@ -428,14 +425,15 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		} else {
 		    $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : _formulize_DMULTI_NEXT;
 		}
-		$previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $submitJavascriptPrev, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-		$nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $submitJavascriptNext, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+		$previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+		$nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+		$savePageButton = generatePrevNextButtonMarkup("save", _formulize_SAVE, $usersCanSave, $nextPage, $previousPage, $thanksPage);
 		$totalPages = count($pages);
 		$skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
 		$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "above");   // calling for the 'above' drawPageNav 
 
         // setting up the basic templateVars for all templates
-        $templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton,
+        $templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton, 'savePageButton' => $savePageButton,
             'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage,
             'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles, 'entry_id'=>$entry, 'form_id'=>$fid);
 
@@ -590,13 +588,25 @@ function drawPageNav($usersCanSave="", $currentPage="", $totalPages, $aboveBelow
 }
 
 // THIS FUNCTION GENERATES THE MARKUP FOR THE PREVIOUS AND NEXT BUTTONS
-function generatePrevNextButtonMarkup($buttonType, $buttonText, $buttonJavascriptAndExtraCode, $usersCanSave, $nextPage, $previousPage, $thanksPage) {
+function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $nextPage, $previousPage, $thanksPage) {
     $buttonMarkup = "";
-    if($buttonType == "next") {
+    
+    switch($buttonType) {
+	case 'next':
+		$buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($nextPage, ".($previousPage+1).");return false;\"";
+		break;
+	case 'prev':
+		$buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($previousPage, ".($previousPage+1).");return false;\"";	
+		break;
+	case 'save':
+		$buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm(".($previousPage+1).", ".($previousPage+1).");return false;\"";
+    }
+    
+    if($buttonType == "next" OR $buttonType == "save") {
         if(!$usersCanSave AND $nextPage==$thanksPage) {
             $buttonJavascriptAndExtraCode = "disabled=true";
         }
-        $buttonMarkup = "<input type=button name=next id=next class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
+        $buttonMarkup = "<input type=button name='$buttonType' id='$buttonType' class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
     } elseif($buttonType == "prev") {
         if($previousPage == "none") {
             $buttonJavascriptAndExtraCode = "disabled=true";
