@@ -348,7 +348,7 @@ define("_formulize_PRINTALLVIEW", "Printable View - All Pages"); // nmc 2007.03.
 define("_formulize_DE_CURRENT_VIEW", "Current View: ");
 define("_formulize_DE_FILLINFORM", "Fill In This Form: ");
 define("_formulize_DE_ACTIONS", "Actions: ");
-define("_formulize_DE_NODATAFOUND", "No entries were found in the current view that match the current search terms (if any).");
+define("_formulize_DE_NODATAFOUND", "No entries were found in the current view that match the current search terms.");
 define("_formulize_DE_STANDARD_VIEWS", "STANDARD VIEWS:");
 define("_formulize_DE_NO_STANDARD_VIEWS", "No standard views available");
 define("_formulize_DE_SAVED_VIEWS", "YOUR SAVED VIEWS:");
