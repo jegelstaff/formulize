@@ -348,7 +348,7 @@ define("_formulize_PRINTALLVIEW", "Printable View - All Pages"); // nmc 2007.03.
 define("_formulize_DE_CURRENT_VIEW", "Current View: ");
 define("_formulize_DE_FILLINFORM", "Fill In This Form: ");
 define("_formulize_DE_ACTIONS", "Actions: ");
-define("_formulize_DE_NODATAFOUND", "No entries were found in the current view that match the current search terms (if any).");
+define("_formulize_DE_NODATAFOUND", "No entries were found in the current view that match the current search terms.");
 define("_formulize_DE_STANDARD_VIEWS", "STANDARD VIEWS:");
 define("_formulize_DE_NO_STANDARD_VIEWS", "No standard views available");
 define("_formulize_DE_SAVED_VIEWS", "YOUR SAVED VIEWS:");
@@ -375,10 +375,12 @@ define("_formulize_DE_EXPORT", "Export Entries");
 
 // new constants related to the export popup
 define("_formulize_DE_EXPORT_FILE_ERROR", "Sorry!  There is an error with the query file.  Please close this window, reload the list of entries page, and try exporting again.");
-define("_formulize_DE_EXPORT_TITLE", "Export options:");
+define("_formulize_DE_EXPORT_TITLE", "Export Data");
 define("_formulize_DB_EXPORT_METAYES", "Include all metadata columns (user who created the entry, last modification time, etc)");
 define("_formulize_DB_EXPORT_METANO", "Do not include metadata columns");
-define("_formulize_DE_EXPORT_MAKEFILE", "Create the data file with these options");
+define("_formulize_DE_EXPORT_MAKEFILE", "Start data file download");
+define("_formulize_DE_EXPORT_SHOW_ADVANCED", "Show advanced options");
+define("_formulize_DE_EXPORT_HIDE_ADVANCED", "Hide advanced options");
 define("_formulize_DB_EXPORT_TO_EXCEL", "Use compatibility mode for some versions of Microsoft Excel (helps with accented characters in some cases)");
 define("_formulize_EXPORT_FILENAME_TEXT", "Exported_data_from");
 
