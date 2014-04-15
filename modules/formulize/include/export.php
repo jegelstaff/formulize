@@ -45,12 +45,35 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 $fid = intval($_GET['fid']);
 $frid = intval($_GET['frid']);
 
-if(!isset($_POST['exportsubmit'])) {
+if(!isset($_POST['metachoice'])) {
 	print "<HTML>";
 	print "<head>";
 	print "<meta http-equiv='Content-Type' content='text/html;charset=utf-8' />\n";
 	print "<title>" . _formulize_DE_EXPORT . "</title>\n";
+	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js'></script>\n";
+	print "<script type='text/javascript'>\n";
+	?>
+		jQuery(window).load(function() {
+			jQuery('#show_hide_advanced').click(function() {
+				if(jQuery('#advanced_options').css('display') == 'none') {
+					jQuery('#advanced_options').fadeIn();
+					jQuery(this).text('<?php print _formulize_DE_EXPORT_HIDE_ADVANCED; ?>');
+				} else {
+					jQuery('#advanced_options').fadeOut();
+					jQuery(this).text('<?php print _formulize_DE_EXPORT_SHOW_ADVANCED; ?>');
+				}
+				return false;
+			});
+			jQuery('[name=exportsubmit]').click(function() {
+				jQuery(this).attr('disabled', 'disabled');
+				jQuery('body').fadeTo(1, 0.25);
+				jQuery('#metachoiceform').submit(); // some browsers won't complete the submit action natively after the button is disabled
+				return false;
+			})
+		});
 
+	<?php
+	print "</script>\n";
 	print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
 	$themecss = xoops_getcss();
 	print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
@@ -58,17 +81,24 @@ if(!isset($_POST['exportsubmit'])) {
 	print "</head>";
 	print "<body style=\"background: white; margin-top:20px;\"><center>"; 
 	print "<table width=100%><tr><td width=5%></td><td width=90%>";
-	print "<form name=\"metachoiceform\" action=\"".getCurrentURL() . "\" method=\"post\">\n";
+	print "<form id=\"metachoiceform\" name=\"metachoiceform\" action=\"".getCurrentURL() . "\" method=\"post\">\n";
 	print "<center><h1>"._formulize_DE_EXPORT_TITLE."</h1><br></center>\n";
-	
-	if(!isset($_GET['type'])) {
-		print "<input type=\"radio\" name=\"metachoice\" value=\"1\">"._formulize_DB_EXPORT_METAYES."</input>\n<br>\n";
-		print "<input type=\"radio\" name=\"metachoice\" value=\"0\" checked>"._formulize_DB_EXPORT_METANO."</input>\n<br><br>\n";
-	}
 	
 	if($_GET['type']=="update") {
 		print "<p>"._formulize_DE_IMPORT_DATATEMP4." <a href=\"\" onclick=\"javascript:window.opener.showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=".intval($_GET['eq'])."');return false;\">"._formulize_DE_IMPORT_DATATEMP5."</a></p>\n";
 		print "<p>"._formulize_DE_IMPORT_DATATEMP3."</p>\n";
+	}
+	
+	print "<center>\n";
+	print "<p><input type=\"submit\" name=\"exportsubmit\" value=\""._formulize_DE_EXPORT_MAKEFILE."\"></p>\n";
+	
+	print "<p><a href='' id='show_hide_advanced'>"._formulize_DE_EXPORT_SHOW_ADVANCED."</a></p>";
+	print "</center>\n";
+	print "<div id='advanced_options' style='display: none;'>";
+	
+	if(!isset($_GET['type'])) {
+		print "<p><input type=\"radio\" name=\"metachoice\" value=\"1\">"._formulize_DB_EXPORT_METAYES."</input>\n<br>\n";
+		print "<input type=\"radio\" name=\"metachoice\" value=\"0\" checked>"._formulize_DB_EXPORT_METANO."</input>\n</p>\n";
 	}
 	
 	$module_handler = xoops_gethandler('module');
@@ -76,11 +106,7 @@ if(!isset($_POST['exportsubmit'])) {
 	$formulizeModule = $module_handler->getByDirname("formulize");
 	$formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
 	$excelChecked = $formulizeConfig['downloadDefaultToExcel'] == 1 ? "checked" : "";
-	print "<label><input type=\"checkbox\" name=\"excel\" value=\"1\" $excelChecked>"._formulize_DB_EXPORT_TO_EXCEL."</input></label>\n<br><br>\n";
-
-	print "<center>\n";
-	print "<input type=\"submit\" name=\"exportsubmit\" value=\""._formulize_DE_EXPORT_MAKEFILE."\">\n";
-	print "</center>\n";
+	print "<p><label><input type=\"checkbox\" name=\"excel\" value=\"1\" $excelChecked>"._formulize_DB_EXPORT_TO_EXCEL."</input></label></p></div>\n";
 	print "</form>";
 
 	print "</td><td width=5%></td></tr></table>";
