@@ -51,26 +51,42 @@ if(!isset($_POST['exportsubmit'])) {
 	print "<meta http-equiv='Content-Type' content='text/html;charset=utf-8' />\n";
 	print "<title>" . _formulize_DE_EXPORT . "</title>\n";
 
-	print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
 	$themecss = xoops_getcss();
 	print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
-	
+
+	print '<script type="text/javascript" src="'.XOOPS_URL.'/libraries/jquery/jquery.js"></script>';
+
+	print <<<EOF
+<script type="text/javascript">
+jQuery(document).ready(function(){
+	jQuery("#advanced-options").hide();
+	jQuery("#open-advanced-options").click(function(){jQuery("#advanced-options").animate({height:'toggle'}, 400);});
+})
+</script>
+EOF;
+
 	print "</head>";
-	print "<body style=\"background: white; margin-top:20px;\"><center>"; 
-	print "<table width=100%><tr><td width=5%></td><td width=90%>";
+	print "<body style=\"background: white; margin: 2em;\">";
+	print "<h1>"._formulize_DE_EXPORT."</h1>\n";
+
 	print "<form name=\"metachoiceform\" action=\"".getCurrentURL() . "\" method=\"post\">\n";
-	print "<center><h1>"._formulize_DE_EXPORT_TITLE."</h1><br></center>\n";
-	
+
+	print "<p>Export with the recommended options, or select <a id=\"open-advanced-options\" href=\"#\">advanced options</a>.</p>";
+
+	print "<div id=\"advanced-options\" style=\"border:1px solid #aaa;border-radius:5px;padding:0 1em;margin-bottom:1em;\">";
+
+	print "<h2>"._formulize_DE_EXPORT_TITLE."</h2>\n";
+
 	if(!isset($_GET['type'])) {
 		print "<input type=\"radio\" name=\"metachoice\" value=\"1\">"._formulize_DB_EXPORT_METAYES."</input>\n<br>\n";
 		print "<input type=\"radio\" name=\"metachoice\" value=\"0\" checked>"._formulize_DB_EXPORT_METANO."</input>\n<br><br>\n";
 	}
-	
+
 	if($_GET['type']=="update") {
 		print "<p>"._formulize_DE_IMPORT_DATATEMP4." <a href=\"\" onclick=\"javascript:window.opener.showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=".intval($_GET['eq'])."');return false;\">"._formulize_DE_IMPORT_DATATEMP5."</a></p>\n";
 		print "<p>"._formulize_DE_IMPORT_DATATEMP3."</p>\n";
 	}
-	
+
 	$module_handler = xoops_gethandler('module');
 	$config_handler = xoops_gethandler('config');
 	$formulizeModule = $module_handler->getByDirname("formulize");
@@ -78,13 +94,12 @@ if(!isset($_POST['exportsubmit'])) {
 	$excelChecked = $formulizeConfig['downloadDefaultToExcel'] == 1 ? "checked" : "";
 	print "<label><input type=\"checkbox\" name=\"excel\" value=\"1\" $excelChecked>"._formulize_DB_EXPORT_TO_EXCEL."</input></label>\n<br><br>\n";
 
-	print "<center>\n";
-	print "<input type=\"submit\" name=\"exportsubmit\" value=\""._formulize_DE_EXPORT_MAKEFILE."\">\n";
-	print "</center>\n";
+	print "</div>";	// close advanced options div
+
+	print "<input type=\"submit\" name=\"exportsubmit\" style=\"float:right;margin-right:3em;font-size:130%;\" value=\""._formulize_DE_EXPORT_MAKEFILE."\">\n";
 	print "</form>";
 
-	print "</td><td width=5%></td></tr></table>";
-	print "</center></body>";
+	print "</body>";
 	print "</HTML>";
 } else {
 	if(!isset($_POST['metachoice'])) {
