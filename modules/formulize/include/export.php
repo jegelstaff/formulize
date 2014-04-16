@@ -56,10 +56,10 @@ if(!isset($_POST['metachoice'])) {
 		jQuery(window).load(function() {
 			jQuery('#show_hide_advanced').click(function() {
 				if(jQuery('#advanced_options').css('display') == 'none') {
-					jQuery('#advanced_options').fadeIn();
+					jQuery('#advanced_options').animate({height:'toggle'}, 400);
 					jQuery(this).text('<?php print _formulize_DE_EXPORT_HIDE_ADVANCED; ?>');
 				} else {
-					jQuery('#advanced_options').fadeOut();
+					jQuery('#advanced_options').animate({height:'toggle'}, 400);
 					jQuery(this).text('<?php print _formulize_DE_EXPORT_SHOW_ADVANCED; ?>');
 				}
 				return false;
@@ -94,7 +94,7 @@ if(!isset($_POST['metachoice'])) {
 	
 	print "<p><a href='' id='show_hide_advanced'>"._formulize_DE_EXPORT_SHOW_ADVANCED."</a></p>";
 	print "</center>\n";
-	print "<div id='advanced_options' style='display: none;'>";
+	print "<div id='advanced_options' style='display: none; border:1px solid #aaa;border-radius:5px;padding:0 1em;margin-bottom:1em;'>";
 	
 	if(!isset($_GET['type'])) {
 		print "<p><input type=\"radio\" name=\"metachoice\" value=\"1\">"._formulize_DB_EXPORT_METAYES."</input>\n<br>\n";
