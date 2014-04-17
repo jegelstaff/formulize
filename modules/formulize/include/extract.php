@@ -156,9 +156,16 @@ function prepvalues($value, $field, $entry_id) {
                 if ($second_source_ele_value = formulize_isLinkedSelectBox($handle, true)) {
                     $secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
                     $secondFormObject = $form_handler->get($secondSourceMeta[0]);
-                    $query_columns[] = "(SELECT t1.`".$secondSourceMeta[1]."` FROM ".DBPRE."formulize_".$secondFormObject->getVar('form_handle').
+                    $sql = "SELECT t1.`".$secondSourceMeta[1]."` FROM ".DBPRE."formulize_".$secondFormObject->getVar('form_handle').
                         " as t1, ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle'). " as t2 WHERE t2.`entry_id` IN (".trim($value, ",").
-                        ") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$handle."`)) ORDER BY t2.`entry_id`)";
+                        ") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$handle."`)) ORDER BY t2.`entry_id`";
+                    if(!$res = $xoopsDB->query($sql)) {
+                        print "Error: could not retrieve the source values for a linked linked selectbox during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
+                    } else {
+                        $row = $xoopsDB->fetchRow($res);
+                        $linkedvalue = prepvalues($row[0], $handle, $entry_id);
+                        $query_columns[] = "'".formulize_escape($linkedvalue[0])."'";
+                    }
                 } else {
                     $query_columns[] = "`$handle`";
                 }
