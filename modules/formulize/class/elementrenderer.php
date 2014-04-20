@@ -480,7 +480,7 @@ class formulizeElementRenderer{
 						// do autocomplete rendering logic here
 						if($boxproperties[2]) {
 							$default_value = $boxproperties[2];
-							$default_value_user = $linkedElementOptions[$boxproperties[2]];
+							$default_value_user = $cachedSourceValuesQ[$sourceValuesQ][$boxproperties[2]];
 						}
 						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedSourceValuesAutocompleteFile[$sourceValuesQ], $default_value, $default_value_user, $cachedSourceValuesAutocompleteLength[$sourceValuesQ]);
 						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
