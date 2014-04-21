@@ -4182,20 +4182,22 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
     $newTermNameOOM = "new_".$filterName."_oom_term";
 
     // make hidden elements for all the old conditions we found
-    $i=0;
-    foreach (${$oldElementsName} as $x=>$thisOldElementsName) {
-        // need to add [$i] to the generation of the hidden values here, so the hidden condition keys equal the flag on the deletion X
-        // $x will be the order based on the filter settings that were passed in, might not start at 0.  $i will always start at 0, so this way we'll catch/correct any malformed arrays as people edit/save them
-        $thisHiddenElement = new xoopsFormHidden($oldElementsName."[$i]", strip_tags(htmlspecialchars(${$oldElementsName}[$x])));
-        $thisHiddenOp = new xoopsFormHidden($oldOpsName."[$i]", strip_tags(htmlspecialchars(${$oldOpsName}[$x])));
-        $thisHiddenTerm = new xoopsFormHidden($oldTermsName."[$i]", strip_tags(htmlspecialchars(${$oldTermsName}[$x])));
-        $thisHiddenType = new xoopsFormHidden($oldTypesName."[$i]", strip_tags(htmlspecialchars(${$oldTypesName}[$x])));
-        if (${$oldTypesName}[$x] == "all") {
-            $conditionlist .= $options[${$oldElementsName}[$x]] . " " . ${$oldOpsName}[$x] . " " . ${$oldTermsName}[$x] . "&nbsp;&nbsp;<a class='conditionsdelete' title='Delete' target='".$filterName."_".$i."' href=''>X</a>\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
-        } else {
-            $conditionlistOOM .= $options[${$oldElementsName}[$x]] . " " . ${$oldOpsName}[$x] . " " . ${$oldTermsName}[$x] . "&nbsp;&nbsp;<a class='conditionsdelete' title='Delete' target='".$filterName."_".$i."' href=''>X</a>\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
+    if (is_array(${$oldElementsName})) {
+        $i=0;
+        foreach (${$oldElementsName} as $x=>$thisOldElementsName) {
+            // need to add [$i] to the generation of the hidden values here, so the hidden condition keys equal the flag on the deletion X
+            // $x will be the order based on the filter settings that were passed in, might not start at 0.  $i will always start at 0, so this way we'll catch/correct any malformed arrays as people edit/save them
+            $thisHiddenElement = new xoopsFormHidden($oldElementsName."[$i]", strip_tags(htmlspecialchars(${$oldElementsName}[$x])));
+            $thisHiddenOp = new xoopsFormHidden($oldOpsName."[$i]", strip_tags(htmlspecialchars(${$oldOpsName}[$x])));
+            $thisHiddenTerm = new xoopsFormHidden($oldTermsName."[$i]", strip_tags(htmlspecialchars(${$oldTermsName}[$x])));
+            $thisHiddenType = new xoopsFormHidden($oldTypesName."[$i]", strip_tags(htmlspecialchars(${$oldTypesName}[$x])));
+            if (${$oldTypesName}[$x] == "all") {
+                $conditionlist .= $options[${$oldElementsName}[$x]] . " " . ${$oldOpsName}[$x] . " " . ${$oldTermsName}[$x] . "&nbsp;&nbsp;<a class='conditionsdelete' title='Delete' target='".$filterName."_".$i."' href=''>X</a>\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
+            } else {
+                $conditionlistOOM .= $options[${$oldElementsName}[$x]] . " " . ${$oldOpsName}[$x] . " " . ${$oldTermsName}[$x] . "&nbsp;&nbsp;<a class='conditionsdelete' title='Delete' target='".$filterName."_".$i."' href=''>X</a>\n".$thisHiddenElement->render()."\n".$thisHiddenOp->render()."\n".$thisHiddenTerm->render()."\n".$thisHiddenType->render()."\n<br />\n";
+            }
+            $i++;
         }
-        $i++;
     }
 
     // setup the new element, operator, term boxes
