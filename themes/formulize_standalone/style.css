@@ -1012,3 +1012,36 @@ a.loe-edit-entry:hover {
 
 td.formulize-controls {
   white-space: nowrap; }
+
+@media print {
+    #xo-header {
+        display: none;
+    }
+    #xo-canvas-leftcolumn {
+        display: none;
+    }
+    #xo-canvas.leftcolumn-layout #xo-canvas-columns, #xo-canvas.threecolumns-layout #xo-canvas-columns {
+        padding-left: 0;
+    }
+    #xo-content {
+        width: 100%;
+    }
+    #formulizeform {
+        width: 100%;
+    }
+    #xo-footer {
+        display: none;
+    }
+    .no-print {
+        display: none;
+    }
+    input, textarea {
+        border: none;
+    }
+    select {
+        -moz-appearance: none;
+        -webkit-appearance: none;
+        appearance: none;
+        border: none;
+    }
+}
