@@ -730,25 +730,28 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
                 // include acknowledgement that information has been updated if we have just done a submit
                 // form_meta includes: last_update, created, last_update_by, created_by
 
+                $breakHTML = "";
+
                 if(!$profileForm AND $titleOverride != "all") {
                     // build the break HTML and then add the break to the form
-                    $breakHTML = "<center>";
                     if(!strstr($currentURL, "printview.php")) {
+                        $breakHTML .= "<center class=\"no-print\">";
                         $breakHTML .= "<p><b>";
                         if($info_received_msg) {
                             $breakHTML .= _formulize_INFO_SAVED . "&nbsp;";
                         }
                         if($info_continue == 1 and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
-                            $breakHTML .= _formulize_INFO_CONTINUE1 . "</b></p>";
+                            $breakHTML .= _formulize_INFO_CONTINUE1;
                         } elseif($info_continue == 2) {
-                            $breakHTML .=  _formulize_INFO_CONTINUE2 . "</b></p>";
+                            $breakHTML .=  _formulize_INFO_CONTINUE2;
                         } elseif(!$entry and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
-                            $breakHTML .=  _formulize_INFO_MAKENEW . "</b></p>";
-                        } else {
-                            $breakHTML .= "</b></p>";
+                            $breakHTML .=  _formulize_INFO_MAKENEW;
                         }
+                        $breakHTML .= "</b></p>";
+                        $breakHTML .= "</center>";
                     }
-                    $breakHTML .= "</center><table cellpadding=5 width=100%><tr><td width=50% style=\"vertical-align: bottom;\">";
+
+                    $breakHTML .= "<table cellpadding=5 width=100%><tr><td width=50% style=\"vertical-align: bottom;\">";
                     $breakHTML .= "<p><b>" . _formulize_FD_ABOUT . "</b><br>";
 
                     if($entries[$this_fid][0]) {
