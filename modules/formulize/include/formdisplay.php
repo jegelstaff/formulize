@@ -725,41 +725,39 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
                 if(is_array($settings)) {
                     $form = writeHiddenSettings($settings, $form);
                 }
-	
-				// include who the entry belongs to and the date
-				// include acknowledgement that information has been updated if we have just done a submit
-				// form_meta includes: last_update, created, last_update_by, created_by
-	
-				if(!$profileForm AND $titleOverride != "all") {
-							// build the break HTML and then add the break to the form
-						$breakHTML = "<center>";
+
+                // include who the entry belongs to and the date
+                // include acknowledgement that information has been updated if we have just done a submit
+                // form_meta includes: last_update, created, last_update_by, created_by
+
+                if(!$profileForm AND $titleOverride != "all") {
+                    // build the break HTML and then add the break to the form
+                    $breakHTML = "<center>";
                     if(!strstr($currentURL, "printview.php")) {
                         $breakHTML .= "<p><b>";
                         if($info_received_msg) {
                             $breakHTML .= _formulize_INFO_SAVED . "&nbsp;";
                         }
                         if($info_continue == 1 and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
-									$breakHTML .= _formulize_INFO_CONTINUE1 . "</b></p>";
-								} elseif($info_continue == 2) {
-									$breakHTML .=  _formulize_INFO_CONTINUE2 . "</b></p>";
+                            $breakHTML .= _formulize_INFO_CONTINUE1 . "</b></p>";
+                        } elseif($info_continue == 2) {
+                            $breakHTML .=  _formulize_INFO_CONTINUE2 . "</b></p>";
                         } elseif(!$entry and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
-									$breakHTML .=  _formulize_INFO_MAKENEW . "</b></p>";
-								} else {
-									$breakHTML .= "</b></p>";
-								}
+                            $breakHTML .=  _formulize_INFO_MAKENEW . "</b></p>";
+                        } else {
+                            $breakHTML .= "</b></p>";
+                        }
+                    }
+                    $breakHTML .= "</center><table cellpadding=5 width=100%><tr><td width=50% style=\"vertical-align: bottom;\">";
+                    $breakHTML .= "<p><b>" . _formulize_FD_ABOUT . "</b><br>";
 
-					}
-							$breakHTML .= "</center><table cellpadding=5 width=100%><tr><td width=50% style=\"vertical-align: bottom;\">";
-	
-							$breakHTML .= "<p><b>" . _formulize_FD_ABOUT . "</b><br>";
-							
-							if($entries[$this_fid][0]) {
-								$form_meta = getMetaData($entries[$this_fid][0], $member_handler, $this_fid);
-								$breakHTML .= _formulize_FD_CREATED . $form_meta['created_by'] . " " . formulize_formatDateTime($form_meta['created']) . "<br>" . _formulize_FD_MODIFIED . $form_meta['last_update_by'] . " " . formulize_formatDateTime($form_meta['last_update']) . "</p>";
-							} else {
-								$breakHTML .= _formulize_FD_NEWENTRY . "</p>";
-							}
-	
+                    if($entries[$this_fid][0]) {
+                        $form_meta = getMetaData($entries[$this_fid][0], $member_handler, $this_fid);
+                        $breakHTML .= _formulize_FD_CREATED . $form_meta['created_by'] . " " . formulize_formatDateTime($form_meta['created']) . "<br>" . _formulize_FD_MODIFIED . $form_meta['last_update_by'] . " " . formulize_formatDateTime($form_meta['last_update']) . "</p>";
+                    } else {
+                        $breakHTML .= _formulize_FD_NEWENTRY . "</p>";
+                    }
+
 					$breakHTML .= "</td><td width=50% style=\"vertical-align: bottom;\">";
 					if (strstr($currentURL, "printview.php") or !formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 						$breakHTML .= "<p>";
