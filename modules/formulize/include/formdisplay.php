@@ -323,32 +323,33 @@ function getEntryValues($entry, $formulize_mgr, $groups, $fid, $elements="", $mi
 function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button_text="", $settings="", $titleOverride="", $overrideValue="",
     $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $profileForm=0, $printall=0, $screen=null) 
 {
-include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
-include_once XOOPS_ROOT_PATH.'/modules/formulize/include/extract.php';
-formulize_benchmark("Start of formDisplay.");
+    include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+    include_once XOOPS_ROOT_PATH.'/modules/formulize/include/extract.php';
+    formulize_benchmark("Start of formDisplay.");
 
-if($titleOverride == "formElementsOnly") {
-	$titleOverride = "all";
-	$formElementsOnly = true;
-}
-if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "all") {
+    if($titleOverride == "formElementsOnly") {
+        $titleOverride = "all";
+        $formElementsOnly = true;
+    }
+
+    if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "all") {
         // we can pass in a text title for the form, and that will cause the $titleOverride "all" behaviour to be invoked, and meanwhile we will use this title for the top of the form
         $passedInTitle = $titleOverride;
-	$titleOverride = "all";
-} 
+        $titleOverride = "all";
+    }
 
-//syntax:
-//displayform($formframe, $entry, $mainform)
-//$formframe is the id of the form OR title of the form OR name of the framework.  Can also be an array.  If it is an array, then flag 'formframe' is the $formframe variable, and flag 'elements' is an array of all the elements that are to be displayed.
-//the array option is intended for displaying only part of a form at a time
-//$entry is the numeric entry to display in the form -- if $entry is the word 'proxy' then it is meant to force a new form entry when the form is a single-entry form that the user already may have an entry in
-//$mainform is the starting form to use, if this is a framework (can be specified by form id or by handle)
-//$done_dest is the URL to go to after the form has been submitted
-//Steps:
-//1. identify form or framework
-//2. if framework, check for unified display options
-//3. if entry specified, then get data for that entry
-//4. drawform with data if necessary
+    //syntax:
+    //displayform($formframe, $entry, $mainform)
+    //$formframe is the id of the form OR title of the form OR name of the framework.  Can also be an array.  If it is an array, then flag 'formframe' is the $formframe variable, and flag 'elements' is an array of all the elements that are to be displayed.
+    //the array option is intended for displaying only part of a form at a time
+    //$entry is the numeric entry to display in the form -- if $entry is the word 'proxy' then it is meant to force a new form entry when the form is a single-entry form that the user already may have an entry in
+    //$mainform is the starting form to use, if this is a framework (can be specified by form id or by handle)
+    //$done_dest is the URL to go to after the form has been submitted
+    //Steps:
+    //1. identify form or framework
+    //2. if framework, check for unified display options
+    //3. if entry specified, then get data for that entry
+    //4. drawform with data if necessary
 
 	global $xoopsDB, $xoopsUser, $myts;
 
@@ -708,12 +709,15 @@ if(!is_numeric($titleOverride) AND $titleOverride != "" AND $titleOverride != "a
 				//get the form title: (do only once)
 			$firstform = 0;
 			if(!$form) {
-	
-				$firstform = 1; 	      	
-				$title = isset($passedInTitle) ? $passedInTitle : trans(getFormTitle($this_fid));
-				unset($form);
-				if($formElementsOnly) {
-					$form = new formulize_elementsOnlyForm($title, 'formulize', "$currentURL", "post", true);
+
+                $firstform = 1;
+                $title = isset($passedInTitle) ? $passedInTitle : trans(getFormTitle($this_fid));
+                if ($screen) {
+                    $title = trans($screen->getVar('title'));
+                }
+                unset($form);
+                if($formElementsOnly) {
+                    $form = new formulize_elementsOnlyForm($title, 'formulize', "$currentURL", "post", true);
                 } else {
                     // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
                     $form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true);
