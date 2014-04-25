@@ -136,14 +136,17 @@ if($ele_type == "select") {
   }
   $processedValues['elements']['ele_value'][8] = 0;
   if($_POST['elements_listordd'] == 2) {
-    $processedValues['elements']['ele_value'][0] = 1;
-    $processedValues['elements']['ele_value'][8] = 1;
+    $processedValues['elements']['ele_value'][0] = 1; // rows is 1
+    $processedValues['elements']['ele_value'][8] = 1; // is autocomplete
+	$processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
   } else if($_POST['elements_listordd']) {
     $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0] > 1 ? intval($processedValues['elements']['ele_value'][0]) : 1;
+	$processedValues['elements']['ele_value'][1] = $_POST['elements_multiple'];
   } else {
     $processedValues['elements']['ele_value'][0] = 1;
+	$processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
   }
-  $processedValues['elements']['ele_value'][1] = $_POST['elements_multiple'];
+  
     // if there is a change, need to adjust the database!!
     $ele_value = $element->getVar('ele_value');
     if (isset($ele_value[1]) AND $linked AND $ele_value[1] != $_POST['elements_multiple']) {
