@@ -2207,12 +2207,12 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 						$assignedSelectedValues = array();
 						foreach($temparraykeys as $k)
 						{
-							if((string)$k === (string)html_entity_decode($value, ENT_QUOTES)) // if there's a straight match (not a multiple selection)
+							if((string)$k === (string)$value) // if there's a straight match (not a multiple selection)
 							{
 								$temparray[$k] = 1;
 								$assignedSelectedValues[$k] = true;
 							}
-							elseif( is_array($selvalarray) AND in_array((string)htmlspecialchars($k, ENT_QUOTES), $selvalarray, TRUE) ) // or if there's a match within a multiple selection array) -- TRUE is like ===, matches type and value
+							elseif( is_array($selvalarray) AND in_array((string)$k, $selvalarray, TRUE) ) // or if there's a match within a multiple selection array) -- TRUE is like ===, matches type and value
 							{
 								$temparray[$k] = 1;
 								$assignedSelectedValues[$k] = true;
