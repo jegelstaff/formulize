@@ -2752,6 +2752,9 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                         }
                         continue;
                     }
+                                        
+                    $terms[$i] = parseUserAndToday($terms[$i]);
+                                        
                     if ($start) {
                         $filter = $entry."][".$elements[$i]."/**/".$terms[$i]."/**/".$ops[$i];
                         $start = 0;
@@ -2953,8 +2956,17 @@ function sendNotificationToEmail($email, $event, $tags, $subject, $template) {
             break;
     }
 
-    $xoopsMailer =& getMailer();
     include_once XOOPS_ROOT_PATH . '/include/notification_constants.php';
+
+  if(strstr($email, ',')) {
+	$emails = explode(',',$email);
+  } else {
+	$emails = array($email);
+  }
+  $toreturn = true;
+  
+  foreach($emails as $email) {
+	  $xoopsMailer = getMailer();
     $xoopsMailer->useMail();
     foreach ($tags as $k=>$v) {
         $xoopsMailer->assign($k, preg_replace("/&amp;/i", '&', $v));
@@ -2969,7 +2981,9 @@ function sendNotificationToEmail($email, $event, $tags, $subject, $template) {
 
     $xoopsMailer->setSubject($subject);
     $success = $xoopsMailer->send();
-    return $success;
+	  $toreturn = $success AND $toreturn ? true : false;
+  }
+  return $toreturn;
 }
 
 
