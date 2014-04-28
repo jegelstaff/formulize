@@ -169,7 +169,7 @@ class formulizeElementRenderer{
 					$ele_value[2]	  //	default value
 					);
 				} else {															// nmc 2007.03.24 - added 
-					$form_ele = new XoopsFormLabel ($ele_caption, $ele_value[2]);	// nmc 2007.03.24 - added 
+					$form_ele = new XoopsFormLabel ($ele_caption, formulize_numberFormat($ele_value[2], $this->_ele->getVar('ele_handle')));	// nmc 2007.03.24 - added 
 				}
 				
 				//if placeholder value is set
@@ -1268,7 +1268,7 @@ class formulizeElementRenderer{
 					$hiddenValue = date("Y-m-d", $element->getValue());
 					break;
 				default:
-					$hiddenValue = $element->getValue(); // should work for all elements, since non-textbox type elements where the value would not be passed straight back, are handled differently at the time they are constructed
+					$hiddenValue = formulize_numberFormat($element->getValue(), $this->_ele->getVar('ele_handle')); // should work for all elements, since non-textbox type elements where the value would not be passed straight back, are handled differently at the time they are constructed
 			}
 			if(is_array($hiddenValue)) { // not sure when/if this would ever happen
 				foreach($hiddenValue as $value) {
