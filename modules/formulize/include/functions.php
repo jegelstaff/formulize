@@ -3992,7 +3992,7 @@ function _formulize_numberFormat($value, $decimalOverride, $decimals="", $decSep
         // if no prefix actually is specified for the element, then use module pref if one is set, otherwise use ""
         $suffix = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : "";
     }
-    return $prefix . number_format($value, $decimals, $decsep, $sep) . $suffix;
+    return trans($prefix) . number_format($value, $decimals, trans($decsep), trans($sep)) . trans($suffix);
 }
 
 
