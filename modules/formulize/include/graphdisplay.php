@@ -35,7 +35,17 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pData.
 include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pDraw.class.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pImage.class.php";
 
+global $xoopsConfig;
+// load the formulize language constants if they haven't been loaded already
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+} else {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+}
+
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 /**
  * IMPORTANT: Implemented User Cases:
@@ -101,6 +111,142 @@ function displayGraph($graphType, $fid, $frid, $labelElement, $dataElement, $ope
  * parameters have same meaning as displayGraph's parameters
  */
 function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {
+
+    global $xoopsUser;
+
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+    $mid = getFormulizeModId();
+    $gperm_handler =& xoops_gethandler('groupperm');
+    $view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
+    $view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
+    $uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+    print $graphOptions['defaultview'];
+    print $_POST['loadreport'];
+
+    //code below is from entriesDisplay, only 1 part copied below is in use in this situation I think
+/*
+    // handling change in view, and loading reports/saved views if necessary
+    if($_POST['loadreport']) {
+        //$_POST['currentview'] replaced by $graphOptions['defaultview']; and there's no "p" at the start only the number
+        //so no need for substr, however I don't know what this does to legacy support
+        if(substr($_POST['currentview'], 1, 4) == "old_") { // legacy report
+            // load old report values and then assign them to the correct $_POST keys in order to present the view
+            $loadedView = $_POST['currentview'];
+            $settings['loadedview'] = $loadedView;
+            // kill the quicksearches
+            foreach($_POST as $k=>$v) {
+                if(substr($k, 0, 7) == "search_" AND $v != "") {
+                    unset($_POST[$k]);
+                }
+            }
+
+            list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols']) = loadOldReport(substr($_POST['currentview'], 5), $fid, $view_groupscope);
+
+        } elseif(is_numeric(substr($_POST['currentview'], 1))) { // saved or published view
+            print "in here";
+            print $graphOptions['defaultview'];
+            $loadedView = $_POST['currentview'];
+            $settings['loadedview'] = $loadedView;
+            // kill the quicksearches
+            foreach($_POST as $k=>$v) {
+                if(substr($k, 0, 7) == "search_" AND $v != "") {
+                    unset($_POST[$k]);
+                }
+            }
+            list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
+            // explode quicksearches into the search_ values
+            $allqsearches = explode("&*=%4#", $quicksearches);
+            $colsforsearches = explode(",", $_POST['oldcols']);
+            for($i=0;$i<count($allqsearches);$i++) {
+                if($allqsearches[$i] != "") {
+                    $_POST["search_" . str_replace("hiddencolumn_", "", dealWithDeprecatedFrameworkHandles($colsforsearches[$i], $frid))] = $allqsearches[$i]; // need to remove the hiddencolumn indicator if it is present
+                    if(strstr($colsforsearches[$i], "hiddencolumn_")) {
+                        unset($colsforsearches[$i]); // remove columns that were added to the column list just so we would know the name of the hidden searches
+                    }
+                }
+            }
+            $_POST['oldcols'] = implode(",",$colsforsearches); // need to reconstruct this in case any columns were removed because of persistent searches on a hidden column
+        }
+
+        $currentView = $_POST['currentview'];
+
+        // need to check that the user is allowed to have this scope, unless the view is unlocked
+        // only works for the default levels of views, not specific group selections that a view might have...that would be more complicated and could be built in later
+        if($_POST['lockcontrols']) {
+            if($currentView == "all" AND !$view_globalscope) {
+                $currentView = "group";
+            }
+            if($currentView == "group" AND !$view_groupscope AND !$view_globalscope) {
+                $currentView = "mine";
+            }
+        }
+        // must check for this and set it here, inside this section, where we know for sure that $_POST['lockcontrols'] has been set based on the database value for the saved view, and not anything else sent from the user!!!  Otherwise the user might be injecting a greater scope for themselves than they should have!
+        //$currentViewCanExpand = $_POST['lockcontrols'] ? false : true; // if the controls are not locked, then we can expand the view for the user so they can see things they wouldn't normally see
+        //true in this case? probably
+
+    } elseif($_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
+        $currentView = $_POST['advscope'];
+    } elseif($_POST['currentview']) { // could have been unset by deletion of a view or something else, so we must check to make sure it exists before we override the default that was determined above
+        if(is_numeric(substr($_POST['currentview'], 1))) {
+            // a saved view was requested as the current view, but we don't want to load the entire thing....this means that we just want to use the view to generate the scope, we don't want to load all settings.  So we have to load the view, but discard everything but the view's currentview value
+            // if we were supposed to load the whole thing, loadreport would have been set in post and the above code would have kicked in
+            $loadedViewSettings = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
+            $currentview = $loadedViewSettings[0];
+        } else {
+            $currentView = $_POST['currentview'];
+        }
+    } /*elseif($loadview) {
+        $currentView = $loadview;
+    }*/ //Not used, probably
+    if(is_numeric($graphOptions['defaultview'])) { // saved or published view
+        print "in here";
+        print $graphOptions['defaultview'];
+        $settings['loadedview'] = "p" . $graphOptions['defaultview'];
+        // kill the quicksearches
+        foreach($_POST as $k=>$v) {
+            if(substr($k, 0, 7) == "search_" AND $v != "") {
+                unset($_POST[$k]);
+            }
+        }
+        list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport($graphOptions['defaultview'], $fid, $frid);
+        // explode quicksearches into the search_ values
+        $allqsearches = explode("&*=%4#", $quicksearches);
+        $colsforsearches = explode(",", $_POST['oldcols']);
+        for($i=0;$i<count($allqsearches);$i++) {
+            if($allqsearches[$i] != "") {
+                $_POST["search_" . str_replace("hiddencolumn_", "", dealWithDeprecatedFrameworkHandles($colsforsearches[$i], $frid))] = $allqsearches[$i]; // need to remove the hiddencolumn indicator if it is present
+                if(strstr($colsforsearches[$i], "hiddencolumn_")) {
+                    unset($colsforsearches[$i]); // remove columns that were added to the column list just so we would know the name of the hidden searches
+                }
+            }
+        }
+        $_POST['oldcols'] = implode(",",$colsforsearches); // need to reconstruct this in case any columns were removed because of persistent searches on a hidden column
+    }
+
+        $currentView = $_POST['currentview'];
+
+    $settings['asearch'] = $_POST['asearch'];
+    if($_POST['asearch']) {
+        $as_array = explode("/,%^&2", $_POST['asearch']);
+        foreach($as_array as $k=>$one_as) {
+            $settings['as_' . $k] = $one_as;
+        }
+    }
+
+    //get all submitted search text
+    foreach($_POST as $k=>$v) {
+        if(substr($k, 0, 7) == "search_" AND $v != "") {
+            $thiscol = substr($k, 7);
+            $searches[$thiscol] = $v;
+            $temp_key = "search_" . $thiscol;
+            $settings[$temp_key] = $v;
+        }
+    }
+
+    list($scope, $currentView) = buildScope($currentView, null, $gperm_handler, $uid, $groups, $fid, $mid, true);
+    $data = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, intval($_POST['forcequery']));
+    print_r($data);
 	// getting data from DB
 	if (is_int($frid) && $frid > 0) {
 		$dbData = getData($frid, $fid);
@@ -346,7 +492,7 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 
 	/* Draw the chart */
 	$myPicture -> drawBarChart(array("DisplayPos" => LABEL_POS_INSIDE, "DisplayValues" => TRUE, "Rounded" => TRUE, "Surrounding" => 30, "OverrideColors"=>$Palette));
-	renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions);
+	renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions, $dataPoints);
 	return;
 }
 
@@ -362,111 +508,13 @@ function YAxisFormat($Value) {
 /**
  * Save the graph to the local file system and render the graph
  */
-function renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {	// establish text and code for buttons, whether a screen is in effect or not
-	$screenButtonText = array();
-	$screenButtonText['modifyScreenLink'] = ($edit_form AND $screen) ? _formulize_DE_MODIFYSCREEN : "";
-	$screenButtonText['changeColsButton'] = _formulize_DE_CHANGECOLS;
-	$screenButtonText['calcButton'] = _formulize_DE_CALCS;
-	$screenButtonText['advCalcButton'] = _formulize_DE_ADVCALCS;
-	$screenButtonText['advSearchButton'] = _formulize_DE_ADVSEARCH;
-	$screenButtonText['exportButton'] = _formulize_DE_EXPORT;
-	$screenButtonText['exportCalcsButton'] = _formulize_DE_EXPORT_CALCS;
-	$screenButtonText['importButton'] = _formulize_DE_IMPORTDATA;
-	$screenButtonText['notifButton'] = _formulize_DE_NOTBUTTON;
-	$screenButtonText['cloneButton'] = _formulize_DE_CLONESEL;
-	$screenButtonText['deleteButton'] = _formulize_DE_DELETESEL;
-	$screenButtonText['selectAllButton'] = _formulize_DE_SELALL;
-	$screenButtonText['clearSelectButton'] = _formulize_DE_CLEARALL;
-	$screenButtonText['resetViewButton'] = _formulize_DE_RESETVIEW;
-	$screenButtonText['saveViewButton'] = _formulize_DE_SAVE;
-	$screenButtonText['deleteViewButton'] = _formulize_DE_DELETE;
-	$screenButtonText['currentViewList'] = _formulize_DE_CURRENT_VIEW;
-	$screenButtonText['saveButton'] = _formulize_SAVE;
-	$screenButtonText['addButton'] = $singleMulti[0]['singleentry'] == "" ? _formulize_DE_ADDENTRY : _formulize_DE_UPDATEENTRY;
-	$screenButtonText['addMultiButton'] = _formulize_DE_ADD_MULTIPLE_ENTRY;
-	$screenButtonText['addProxyButton'] = _formulize_DE_PROXYENTRY;
-	if($screen) {
-		if($add_own_entry) {
-			$screenButtonText['addButton'] = $screen->getVar('useaddupdate');
-			$screenButtonText['addMultiButton'] = $screen->getVar('useaddmultiple');
-		} else {
-			$screenButtonText['addButton'] = "";
-			$screenButtonText['addMultiButton'] = "";
-		}
-		if($proxy) {
-			$screenButtonText['addProxyButton'] = $screen->getVar('useaddproxy');
-		} else {
-			$screenButtonText['addProxyButton'] = "";
-		}
-		$screenButtonText['exportButton'] = $screen->getVar('useexport');
-		$screenButtonText['importButton'] = $screen->getVar('useimport');
-		$screenButtonText['notifButton'] = $screen->getVar('usenotifications');
-		$screenButtonText['currentViewList'] = $screen->getVar('usecurrentviewlist');
-		$screenButtonText['saveButton'] = $screen->getVar('desavetext');
-		$screenButtonText['changeColsButton'] = $screen->getVar('usechangecols');
-		$screenButtonText['calcButton'] = $screen->getVar('usecalcs');
-		$screenButtonText['advCalcButton'] = $screen->getVar('useadvcalcs');
-		$screenButtonText['advSearchButton'] = $screen->getVar('useadvsearch');
-		$screenButtonText['exportCalcsButton'] = $screen->getVar('useexportcalcs');
-		// only include clone and delete if the checkboxes are in effect (2 means do not use checkboxes)
-		if($screen->getVar('usecheckboxes') != 2) {
-			$screenButtonText['cloneButton'] = $screen->getVar('useclone');
-            if ($user_can_delete and !$settings['lockcontrols']) {
-				$screenButtonText['deleteButton'] = $screen->getVar('usedelete');
-			} else {
-				$screenButtonText['deleteButton'] = "";
-			}
-			$screenButtonText['selectAllButton'] = $screen->getVar('useselectall');
-			$screenButtonText['clearSelectButton'] = $screen->getVar('useclearall');
-		} else {
-			$screenButtonText['cloneButton'] = "";
-			$screenButtonText['deleteButton'] = "";
-			$screenButtonText['selectAllButton'] = "";
-			$screenButtonText['clearSelectButton'] = "";
-		}
-		// only include the reset, save, deleteview buttons if the current view list is in effect
-		if($screen->getVar('usecurrentviewlist')) {
-			$screenButtonText['resetViewButton'] = $screen->getVar('usereset');
-			$screenButtonText['saveViewButton'] = $screen->getVar('usesave');
-			$screenButtonText['deleteViewButton'] = $screen->getVar('usedeleteview');
-		} else {
-			$screenButtonText['resetViewButton'] = "";
-			$screenButtonText['saveViewButton'] = "";
-			$screenButtonText['deleteViewButton'] = "";
-		}
-	} 
-	if($delete_other_reports = $gperm_handler->checkRight("delete_other_reports", $fid, $groups, $mid)) { $pubstart = 10000; }
-	if($screenButtonText['saveButton']) { $screenButtonText['goButton'] = $screenButtonText['saveButton']; } // want this button accessible by two names, essentially, since it serves two purposes semantically/logically
-	$onActionButtonCounter = 0;
-	$atLeastOneActionButton = false;
-	foreach($screenButtonText as $scrButton=>$scrText) {
-    formulize_benchmark("before creating button: ".$scrButton);
-		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
-    formulize_graphScreenLOEButton($scrButton, $scrText, $fid, $frid, $flatcols, $pubstart, $loadOnlyView, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $screen)
-    formulize_benchmark("button done");
-		if($buttonCodeArray[$scrButton] AND $onActionButtonCounter < 14) { // first 14 items in the array should be the action buttons only
-			$atLeastOneActionButton = true;
-		}
-		$onActionButtonCounter++;
-	}
-
+function renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions, $dataPoints) {
 	// TODO: make some kind of cron job clear up or some kind of caches, update graph only when needed!
 	$graphRelativePathPrefix = "modules/formulize/images/graphs/";
     // Uses md5 hash of the data points and graph options to shorten filename and handle non alphanumeric chars
 	$graphRelativePath = $graphRelativePathPrefix . md5(SDATA_DB_SALT.var_export($dataPoints, true).var_export($graphOptions, true)).".png";
 	$myPicture -> render(XOOPS_ROOT_PATH . "/" . $graphRelativePath);
 	echo "<img src='" . XOOPS_URL . "/$graphRelativePath' />";
-  
-  
-	$useXhr = false;
-	if($screen) {
-		if($screen->getVar('dedisplay')) {
-			$useXhr = true;
-		}
-	}
-
-  
-  interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $settings['lockedColumns']); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
 	return;
 }
 
@@ -482,585 +530,274 @@ function echoBR() {
 	echo "<br \>";
 }
 
+function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order="", $frid, $fid, $scope, $forcequery = 0) {
+    if (!is_array($searches))
+        $searches = array();
+
+    // Order of operations for the requested advanced search options
+    // 1. unpack the settings necessary for the search
+    // 2. loop through the data and store the results, unsetting $data as we go, and then reassigning the found array to $data at the end
+
+    // example of as $settings:
+    /*	global $xoopsUser;
+        if($xoopsUser->getVar('uid') == 'j') {
+        $settings['as_1'] = "[field]545[/field]";
+        $settings['as_2'] = "==";
+        $settings['as_3'] = "Ontario";
+        $settings['as_4'] = "AND";
+        $settings['as_5'] = "(";
+        $settings['as_6'] = "[field]557[/field]";
+        $settings['as_7'] = "==";
+        $settings['as_8'] = "visiting classrooms";
+        $settings['as_9'] = "OR";
+        $settings['as_10'] = "[field]557[/field]";
+        $settings['as_11'] = "==";
+        $settings['as_12'] = "advocacy";
+        $settings['as_13'] = ")";
+        } // end of xoopsuser check
+    */
+//	545 prov
+//	556 are you still interested, yes/no
+//	570 where vol with LTS (university name)
+//	557 which of following areas... (multi)
+
+    $query_string = "";
+    if($settings['as_0']) {
+        // build the query string
+        // string looks like this:
+        //if([query here]) {
+        //	$query_result = 1;
+        //}
+
+        $query_string .= "if(";
+        $firstTermNot = false;
+        for($i=0;$settings['as_' . $i];$i++) {
+            // save query for writing later
+            $wq['as_' . $i] = $settings['as_' . $i];
+            if(substr($settings['as_' . $i], 0, 7) == "[field]" AND substr($settings['as_' . $i], -8) == "[/field]") { // a field has been found, next two should be part of the query
+                $fieldLen = strlen($settings['as_' . $i]);
+                $field = substr($settings['as_' . $i], 7, $fieldLen-15); // 15 is the length of [field][/field]
+                $field = calcHandle($field, $fid);
+                $query_string .= "evalAdvSearch(\$entry, \"$field\", \"";
+                $i++;
+                $wq['as_' . $i] = $settings['as_' . $i];
+                $query_string .= $settings['as_' . $i] . "\", \"";
+                $i++;
+                $wq['as_' . $i] = $settings['as_' . $i];
+                $query_string .= $settings['as_' . $i] . "\")";
+            } else {
+                if($i==0 AND $settings['as_'.$i] == "NOT") {
+                    $firstTermNot = true; // must flag initial negations and handle differently
+                    continue;
+                }
+                if($firstTermNot == true AND $i==1 AND $settings['as_'.$i] != "(") {
+                    $firstTermNot = false; // only actually preserve the full negation if the second term is a parenthesis
+                    $query_string .= " NOT ";
+                }
+                $query_string .= " " . $settings['as_' . $i] . " ";
+            }
+        }
+
+        if($firstTermNot) { // if we are looking for the negative of the entire query...
+            $query_string .= ") { \$query_result=0; } else { \$query_result=1; }";
+        } else {
+            $query_string .= ") { \$query_result=1; } else { \$query_result=0; }";
+        }
+    }
+    // build the filter out of the searches array
+    $start = 1;
+    $filter = "";
+    $ORstart = 1;
+    $ORfilter = "";
+    $individualORSearches = array();
+    global $xoopsUser;
+    foreach($searches as $key=>$master_one_search) { // $key is handles for frameworks, and ele_handles for non-frameworks.
+
+        // convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
+        $count = preg_match("/^[bB][eE][tT][wW][eE][eE][nN] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4}) [aA][nN][dD] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4})\$/", $master_one_search, $matches);
+        if ($count > 0) {
+            $master_one_search = ">={$matches[1]}//<={$matches[2]}";
+        }
+
+        // split search based on new split string
+        $searchArray = explode("//", $master_one_search);
+
+        foreach($searchArray as $one_search) {
+
+            $addToItsOwnORFilter = false; // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
+
+            // remove the qsf_ parts to make the quickfilter searches work
+            if(substr($one_search, 0, 4)=="qsf_") {
+                $qsfparts = explode("_", $one_search);
+                // need to determine if the key is a multi selection element or not.  If it is, then this should not be a straight equals!
+                $one_search = "=".$qsfparts[2];
+            }
+
+            // strip out any starting and ending ! that indicate that the column should not be stripped
+            if(substr($one_search, 0, 1) == "!" AND substr($one_search, -1) == "!") {
+                $one_search = substr($one_search, 1, -1);
+            }
+
+            // look for OR indicators...if all caps OR is at the front, then that means that this search is to put put into a separate set of OR filters that gets appended as a set to the main set of AND filters
+            $addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms
+            if(substr($one_search, 0, 2) == "OR" AND strlen($one_search) > 2) {
+                $addToORFilter = true;
+                $one_search = substr($one_search, 2);
+            }
+
+
+            // look for operators
+            $operators = array(0=>"=", 1=>">", 2=>"<", 3=>"!");
+            $operator = "";
+            if(in_array(substr($one_search, 0, 1), $operators)) {
+                // operator found, check to see if it's <= or >= and set start point for term accordingly
+                $startpoint = (substr($one_search, 0, 2) == ">=" OR substr($one_search, 0, 2) == "<=" OR substr($one_search, 0, 2) == "!=" OR substr($one_search, 0, 2) == "<>") ? 2 : 1;
+                $operator = substr($one_search, 0, $startpoint);
+                if($operator == "!") { $operator = "NOT LIKE"; }
+                $one_search = substr($one_search, $startpoint);
+
+            }
+
+            // look for blank search terms and convert them to {BLANK} so they are handled properly
+            if($one_search === "") {
+                $one_search = "{BLANK}";
+            }
+
+            // look for { } and transform special terms into what they should be for the filter
+            if(substr($one_search, 0, 1) == "{" AND substr($one_search, -1) == "}") {
+                $searchgetkey = substr($one_search, 1, -1);
+
+                if (ereg_replace("[^A-Z]","", $searchgetkey) == "TODAY") {
+                    $number = ereg_replace("[^0-9+-]","", $searchgetkey);
+                    $one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+                } elseif($searchgetkey == "USER") {
+                    if($xoopsUser) {
+                        $one_search = $xoopsUser->getVar('name');
+                        if(!$one_search) { $one_search = $xoopsUser->getVar('uname'); }
+                    } else {
+                        $one_search = 0;
+                    }
+                } elseif($searchgetkey == "USERNAME") {
+                    if($xoopsUser) {
+                        $one_search = $xoopsUser->getVar('uname');
+                    } else {
+                        $one_search = "";
+                    }
+                } elseif($searchgetkey == "BLANK") { // special case, we need to construct a special OR here that will look for "" OR IS NULL
+                    if($operator == "!=" OR $operator == "NOT LIKE") {
+                        $blankOp1 = "!=";
+                        $blankOp2 = " IS NOT NULL ";
+                    } else {
+                        $addToItsOwnORFilter = $addToORFilter ? false : true; // if this is not going into an OR filter already because the user asked for it to, then let's
+                        $blankOp1 = "=";
+                        $blankOp2 = " IS NULL ";
+                    }
+                    $one_search = "/**/$blankOp1][$key/**//**/$blankOp2";
+                    $operator = ""; // don't use an operator, we've specially constructed the one_search string to have all the info we need
+                } elseif($searchgetkey == "PERGROUPFILTER") {
+                    $one_search = $searchgetkey;
+                    $operator = "";
+                } elseif(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
+                    $one_search = $_POST[$searchgetkey] ? htmlspecialchars(strip_tags($_POST[$searchgetkey])) : "";
+                    $one_search = (!$one_search AND $_GET[$searchgetkey]) ? htmlspecialchars(strip_tags($_GET[$searchgetkey])) : $one_search;
+                    if(!$one_search) {
+                        continue;
+                    }
+                } elseif($searchgetkey) { // we were supposed to find something above, but did not, so there is a user defined search term, which has no value, ergo disregard this search term
+                    continue;
+                } else {
+                    $one_search = "";
+                    $operator = "";
+                }
+            }
+
+            // do additional search for {USERNAME} or {USER} in case they are embedded in another string
+            if($xoopsUser) {
+                $one_search = str_replace("{USER}", $xoopsUser->getVar('name'), $one_search);
+                $one_search = str_replace("{USERNAME}", $xoopsUser->getVar('uname'), $one_search);
+            }
+
+
+            if($operator) {
+                $one_search = $one_search . "/**/" . $operator;
+            }
+            if($addToItsOwnORFilter) {
+                $individualORSearches[] = $key ."/**/$one_search";
+            } elseif($addToORFilter) {
+                if(!$ORstart) { $ORfilter .= "]["; }
+                $ORfilter .= $key . "/**/$one_search"; // . formulize_escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
+                $ORstart = 0;
+            } else {
+                if(!$start) { $filter .= "]["; }
+                $filter .= $key . "/**/$one_search"; // . formulize_escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
+                $start = 0;
+            }
+
+        }
+    }
+    //print $filter;
+    // if there's a set of options that have been OR'd, then we need to construction a more complex filter
+
+    if($ORfilter OR count($individualORSearches)>0) {
+        $filterIndex = 0;
+        $arrayFilter[$filterIndex][0] = "and";
+        $arrayFilter[$filterIndex][1] = $filter;
+        if($ORfilter) {
+            $filterIndex++;
+            $arrayFilter[$filterIndex][0] = "or";
+            $arrayFilter[$filterIndex][1] = $ORfilter;
+        }
+        if(count($individualORSearches)>0) {
+            foreach($individualORSearches as $thisORfilter) {
+                $filterIndex++;
+                $arrayFilter[$filterIndex][0] = "or";
+                $arrayFilter[$filterIndex][1] = $thisORfilter;
+            }
+        }
+        $filter = $arrayFilter;
+        $filterToCompare = serialize($filter);
+    } else {
+        $filterToCompare = $filter;
+    }
+
+    $data = getData($frid, $fid, $filter, "AND", $scope, 0, 0, $sort, $order, $forcequery);
+    if($query_string AND is_array($data)) { $data = formulize_runAdvancedSearch($query_string, $data); } // must do advanced search after caching the data, so the advanced search results are not contained in the cached data.  Otherwise, we would have to rerun the base extraction every time we wanted to change just the advanced search query.  This way, advanced search changes can just hit the cache, and not the db.
+    return $data;
+}
 
 // THIS FUNCTION LOADS A SAVED VIEW
 // fid and frid are only used if a report is being asked for by name
 function loadReport($id, $fid, $frid) {
-	global $xoopsDB;
-  if(is_numeric($id)) {
-    $thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id='$id'");
-  } else {
-    if($frid) {
-      $formframe = intval($frid);
-      $mainform = intval($fid);
+    global $xoopsDB;
+    if(is_numeric($id)) {
+        $thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id='$id'");
     } else {
-      $formframe = intval($fid);
-      $mainform = "''";
+        if($frid) {
+            $formframe = intval($frid);
+            $mainform = intval($fid);
+        } else {
+            $formframe = intval($fid);
+            $mainform = "''";
+        }
+        $thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_name='".formulize_escape($id)."' AND sv_formframe = $formframe AND sv_mainform = $mainform");
     }
-    $thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_name='".formulize_escape($id)."' AND sv_formframe = $formframe AND sv_mainform = $mainform");
-  }
-  if(!isset($thisview[0]['sv_currentview'])) {
-    print "Error: could not load the specified saved view: '".strip_tags(htmlspecialchars($id))."'";
-    return false;
-  }
-	$to_return[0] = $thisview[0]['sv_currentview']; 
-	$to_return[1] = $thisview[0]['sv_oldcols'];
-	$to_return[2] = $thisview[0]['sv_asearch'];
-	$to_return[3] = $thisview[0]['sv_calc_cols'];
-	$to_return[4] = $thisview[0]['sv_calc_calcs'];
-	$to_return[5] = $thisview[0]['sv_calc_blanks'];
-	$to_return[6] = $thisview[0]['sv_calc_grouping'];
-	$to_return[7] = $thisview[0]['sv_sort'];
-	$to_return[8] = $thisview[0]['sv_order'];
-	$to_return[9] = $thisview[0]['sv_hidelist'];
-	$to_return[10] = $thisview[0]['sv_hidecalc'];
-	$to_return[11] = $thisview[0]['sv_lockcontrols'];
-	$to_return[12] = $thisview[0]['sv_quicksearches'];
-	return $to_return;
-}
-
-// THIS FUNCTION GENERATES HTML FOR ANY BUTTONS THAT ARE REQUESTED
-function formulize_graphScreenLOEButton($button, $buttonText, $fid, $frid, $flatcols, $pubstart, $loadOnlyView, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $screen) {
-  static $importExportCleanupDone = false;
-	if($buttonText) {
-		$buttonText = trans($buttonText);
-		switch ($button) {
-			case "modifyScreenLink":
-				return "<a href=" . XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid').">" . $buttonText . "</a>";
-				break;
-			case "addButton":
-				$addNewParam = $doNotForceSingle ? "" : "'single'"; // force the addNew behaviour to single entry unless this button is being used on a single entry form, in which case we don't need to force anything
-				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=addentry value='" . $buttonText . "' onclick=\"javascript:addNew($addNewParam);\"></input>";
-				break;
-			case "addMultiButton":
-				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=addentry value='" . $buttonText . "' onclick=\"javascript:addNew();\"></input>";
-				break;
-			case "resetViewButton":
-				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=resetviewbutton value='" . $buttonText . "' onclick=\"javascript:showLoadingReset();\"></input>";
-				break;
-			case "saveViewButton":
-				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=save value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/save.php?fid=$fid&frid=$frid&lastloaded=$lastloaded&cols=$flatcols&currentview=$currentview&loadonlyview=$loadOnlyView');\"></input>";
-				break;
-			case "deleteViewButton":
-				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=delete value='" . $buttonText . "' onclick=\"javascript:delete_view(this.form, '$pubstart', '$endstandard');\"></input>";
-				break;
-			case "currentViewList":
-				$currentViewList = "<b>" . $buttonText . "</b><br><SELECT style=\"width: 350px;\" name=currentview id=currentview size=1 onchange=\"javascript:change_view(this.form, '$pickgroups', '$endstandard');\">\n";
-				$currentViewList .= $viewoptions;
-				$currentViewList .= "\n</SELECT>\n";
-				if(!$loadviewname AND strstr($currentview, ",") AND !$loadOnlyView) { // if we're on a genuine pick-groups view (not a loaded view)...and the load-only-view override is not in place (which eliminates other viewing options besides the loaded view)
-					$currentViewList .= "<br><input type=button name=pickdiffgroup value='" . _formulize_DE_PICKDIFFGROUP . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changescope.php?fid=$fid&frid=$frid&scope=$currentview');\"></input>";		
-				}
-				return $currentViewList;
-				break;
-		}
-	} elseif($button == "currentViewList") { // must always set a currentview value in POST even if the list is not visible
-		return "<input type=hidden name=currentview value='$currentview'></input>\n";
-	} else {
-		return false;
-	}
-}
-
-
-
-// this function includes the javascript necessary make the interface operate properly
-// note the mandatory clearing of the ventry value upon loading of the page.  Necessary to make the back button work right (otherwise ventry setting is retained from the previous loading of the page and the form is displayed after the next submission of the controls form)
-function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns) {
-?>
-<script type='text/javascript'>
-
-if (typeof jQuery == 'undefined') { 
-	var head = document.getElementsByTagName('head')[0];
-	script = document.createElement('script');
-	script.id = 'jQuery';
-	script.type = 'text/javascript';
-	script.src = '<?php print XOOPS_URL; ?>/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
-	head.appendChild(script);
-}
-
-<?php
-if($useXhr) {
-	print " initialize_formulize_xhr();\n";
-	drawXhrJavascript();
-	print "</script>";
-	print "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js\"></script>\n";
-	print "<script type='text/javascript'>";
-	print "var elementStates = new Array();";
-	print "var savingNow = \"\";";
-	print "var elementActive = \"\";";
-?>
-function renderElement(handle,element_id,entryId,fid,check) {
-	if(elementStates[handle] == undefined) {
-		elementStates[handle] = new Array();
-	}
-	if(elementStates[handle][entryId] == undefined) {
-		if(elementActive) {
-			// this is a bit cheap...we should be able to track multiple elements open at once.  But there seem to be race condition issues in the asynchronous requests that we have to track down.  This UI restriction isn't too bad though.
-			alert("You need to close the form element that is open first, before you can edit this one.");
-			return false;
-		}
-		elementActive = true;
-		elementStates[handle][entryId] = jQuery("#deDiv_"+handle+"_"+entryId).html();
-		var formulize_xhr_params = [];
-		formulize_xhr_params[0] = handle;
-		formulize_xhr_params[1] = element_id;
-		formulize_xhr_params[2] = entryId;
-		formulize_xhr_params[3] = fid;
-		formulize_xhr_send('get_element_html',formulize_xhr_params);
-	} else {
-		if(check && savingNow == "") {
-			savingNow = true;
-			jQuery("#deDiv_"+handle+"_"+entryId).fadeTo("fast",0.33);
-			if(jQuery("[name='de_"+fid+"_"+entryId+"_"+element_id+"[]']").length > 0) { 
-			  nameToUse = "[name='de_"+fid+"_"+entryId+"_"+element_id+"[]']";
-			} else {
-			  nameToUse = "[name='de_"+fid+"_"+entryId+"_"+element_id+"']";
-			}
-			jQuery.post("<?php print XOOPS_URL; ?>/modules/formulize/include/readelements.php", jQuery(nameToUse+",[name='decue_"+fid+"_"+entryId+"_"+element_id+"']").serialize(), function(data) {
-				if(data) {
-				   alert(data);	
-				} else {
-					// need to get the current value, and then prep it, and then format it
-					var formulize_xhr_params = [];
-					formulize_xhr_params[0] = handle;
-					formulize_xhr_params[1] = element_id;
-					formulize_xhr_params[2] = entryId;
-					formulize_xhr_params[3] = fid;
-					formulize_xhr_send('get_element_value',formulize_xhr_params);
-				}
-			});
-		} else if(check) {
-			// do nothing...only allow one saving operation at a time
-		} else {
-			jQuery("#deDiv_"+handle+"_"+entryId).html(elementStates[handle][entryId]);
-			elementStates[handle].splice(entryId, 1);
-			elementActive = "";
-		}
-	}
-}
-
-function renderElementHtml(elementHtml,params) {
-	handle = params[0];
-	element_id = params[1];
-	entryId = params[2];
-	fid = params[3];
-	jQuery("#deDiv_"+handle+"_"+entryId).html(elementHtml+"<br /><a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+",1);return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/check.gif\" /></a>&nbsp;&nbsp;&nbsp;<a href=\"\" onclick=\"javascript:renderElement('"+handle+"', "+element_id+", "+entryId+", "+fid+");return false;\"><img src=\"<?php print XOOPS_URL; ?>/modules/formulize/images/x-wide.gif\" /></a>");
-}
-
-function renderElementNewValue(elementValue,params) {
-	handle = params[0];
-	element_id = params[1];
-	entryId = params[2];
-	fid = params[3];
-	jQuery("#deDiv_"+handle+"_"+entryId).fadeTo("fast",1);
-	jQuery("#deDiv_"+handle+"_"+entryId).html(elementValue);
-	elementStates[handle].splice(entryId, 1);
-	savingNow = "";
-	elementActive = "";
-}
-
-<?php	
-}
-?>
-
-
-window.document.controls.ventry.value = '';
-window.document.controls.loadreport.value = '';
-
-function warnLock() {
-	alert('<?php print _formulize_DE_WARNLOCK; ?>');
-	return false;
-}
-
-function clearSearchHelp(formObj, defaultHelp) {
-	if(formObj.firstbox.value == defaultHelp) {
-		formObj.firstbox.value = "";
-	}
-}
-
-function showPop(url) {
-
-	window.document.controls.ventry.value = '';
-	if (window.formulize_popup == null) {
-		formulize_popup = window.open(url,'formulize_popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
-      } else {
-		if (window.formulize_popup.closed) {
-			formulize_popup = window.open(url,'formulize_popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
-            } else {
-			window.formulize_popup.location = url;              
-		}
-	}
-	window.formulize_popup.focus();
-
-}
-
-
-function confirmDel() {
-	var answer = confirm ('<?php print _formulize_DE_CONFIRMDEL; ?>');
-	if (answer) {
-		window.document.controls.delconfirmed.value = 1;
-		window.document.controls.ventry.value = '';
-		showLoading();
-	} else {
-		return false;
-	}
-}
-
-function confirmClone() {
-	var clonenumber = prompt("<?php print _formulize_DE_CLONE_PROMPT; ?>", "1");
-	if(eval(clonenumber) > 0) {
-		window.document.controls.cloneconfirmed.value = clonenumber;
-		window.document.controls.ventry.value = '';
-		window.document.controls.forcequery.value = 1;
-		showLoading();
-	} else {
-		return false;
-	}
-}
-
-
-function sort_data(col) {
-	if(window.document.controls.sort.value == col) {
-		var ord = window.document.controls.order.value;
-		if(ord == 'SORT_DESC') {
-			window.document.controls.order.value = 'SORT_ASC';
-		} else {
-			window.document.controls.order.value = 'SORT_DESC';
-		}
-	} else {
-		window.document.controls.order.value = 'SORT_ASC';
-	}
-	window.document.controls.sort.value = col;
-	window.document.controls.ventry.value = '';
-	showLoading();
-}
-
-
-function runExport(type) {
-	window.document.controls.xport.value = type;
-	window.document.controls.ventry.value = '';
-	showLoading();
-
-}
-
-function showExport() {
-	window.document.getElementById('exportlink').style.display = 'block';
-}
-
-//Select All and Clear All new JQuery Function Instead the Javascript 
-function selectAll(check) {
-   $('.formulize_selection_checkbox').each(function(){
-      $('.formulize_selection_checkbox').attr('checked', true);
-   });
-}
-
-function unselectAll(uncheck) {
-   $('.formulize_selection_checkbox').each(function(){
-      $('.formulize_selection_checkbox').attr('checked', false);
-   });
-}
-/* ---------------------------------------
-   The selectall and clearall functions are based on a function by
-   Vincent Puglia, GrassBlade Software
-   site:   http://members.aol.com/grassblad
-   
-   NOTE: MUST RETROFIT THIS SO IN ADDITION TO CHECKING TYPE, WE ARE CHECKING FOR 'delete_' in the name, so we can have other checkbox elements in the screen templates!
-------------------------------------------- */
-/*
-function selectAll(formObj) 
-{
-   for (var i=0;i < formObj.length;i++) 
-   {
-      fldObj = formObj.elements[i];
-      if (fldObj.type == 'checkbox')
-      { 
-         fldObj.checked = true; 
-      }
-   }
-}
-
-function clearAll(formObj)
-{
-   for (var i=0;i < formObj.length;i++) 
-   {
-      fldObj = formObj.elements[i];
-      if (fldObj.type == 'checkbox')
-      { 
-         fldObj.checked = false; 
-      }
-   }
-}
-*/
-function delete_view(formObj, pubstart, endstandard) {
-
-	for (var i=0; i < formObj.currentview.options.length; i++) {
-		if (formObj.currentview.options[i].selected) {
-			if( i > endstandard && i < pubstart && formObj.currentview.options[i].value != "") {
-				var answer = confirm ('<?php print _formulize_DE_CONF_DELVIEW; ?>');
-				if (answer) {
-					window.document.controls.delview.value = 1;
-					window.document.controls.ventry.value = '';
-					showLoading();
-				} else {
-					return false;
-				}
-			} else {
-				if(formObj.currentview.options[i].value != "") {
-					alert('<?php print _formulize_DE_DELETE_ALERT; ?>');
-				}
-				return false;
-			}
-		}
-	}
-
-}
-
-function change_view(formObj, pickgroups, endstandard) {
-	for (var i=0; i < formObj.currentview.options.length; i++) {
-		if (formObj.currentview.options[i].selected) {
-			if(i == pickgroups && pickgroups != 0) {
-				<?php print "showPop('" . XOOPS_URL . "/modules/formulize/include/changescope.php?fid=$fid&frid=$frid&scope=$currentview');"; ?>				
-				return false;
-			} else {
-				if ( formObj.currentview.options[i].value == "" ) {
-					return false;
-				} else {
-					window.document.controls.loadreport.value = 1;
-					if(i <= endstandard && window.document.controls.lockcontrols.value == 1) {
-						window.document.controls.resetview.value = 1;
-						window.document.controls.curviewid.value = "";
-					}
-					window.document.controls.lockcontrols.value = 0;
-					window.document.controls.ventry.value = '';
-					showLoading();
-				}
-			}
-		}
-	}
-}
-
-function addNew(flag) {
-	if(flag=='proxy') {
-		window.document.controls.ventry.value = 'proxy';
-	} else if(flag=='single') {
-		window.document.controls.ventry.value = 'single';
-	} else {
-		window.document.controls.ventry.value = 'addnew';
-	}
-	window.document.controls.submit();
-}
-
-function goDetails(viewentry, screen) {
-	window.document.controls.ventry.value = viewentry;
-	if(screen>0) {
-		window.document.controls.overridescreen.value = screen;
-	}
-	window.document.controls.submit();
-}
-
-function cancelCalcs() {
-	window.document.controls.calc_cols.value = '';
-	window.document.controls.calc_calcs.value = '';
-	window.document.controls.calc_blanks.value = '';
-	window.document.controls.calc_grouping.value = '';
-	window.document.controls.hlist.value = 0;
-	window.document.controls.hcalc.value = 1;
-	window.document.controls.ventry.value = '';
-	showLoading();
-}
-
-function customButtonProcess(caid, entries) {
-	window.document.controls.caid.value = caid;
-	window.document.controls.caentries.value = entries;
-	showLoading();
-}
-
-
-function hideList() {
-	window.document.controls.hlist.value = 1;
-	window.document.controls.hcalc.value = 0;
-	window.document.controls.ventry.value = '';
-	showLoading();
-}
-
-function showList() {
-	window.document.controls.hlist.value = 0;
-	window.document.controls.hcalc.value = 1;
-	window.document.controls.ventry.value = '';
-	showLoading();
-}
-
-function killSearch() {
-	window.document.controls.asearch.value = '';
-	window.document.controls.ventry.value = '';
-	showLoading();
-}
-
-function forceQ() {
-	window.document.controls.forcequery.value = 1;
-	showLoading();
-}
-
-function showLoading() {
-	window.document.controls.formulize_scrollx.value = jQuery(window).scrollTop();
-	window.document.controls.formulize_scrolly.value = jQuery(window).scrollLeft();
-	<?php
-		if($useWorking) {
-			print "window.document.getElementById('listofentries').style.opacity = 0.5;\n";
-			print "window.document.getElementById('workingmessage').style.display = 'block';\n";
-			print "window.scrollTo(0,0);\n";
-		}
-	?>
-	window.document.controls.ventry.value = '';
-	window.document.controls.submit();
-}
-
-function showLoadingReset() {
-	<?php
-		if($useWorking) {
-			print "window.document.getElementById('listofentries').style.opacity = 0.5;\n";
-			print "window.document.getElementById('workingmessage').style.display = 'block';\n";
-			print "window.scrollTo(0,0);\n";
-		}
-	?>
-	window.document.resetviewform.submit();
-}
-
-function pageJump(page) {
-	window.document.controls.formulize_LOEPageStart.value = page;
-	showLoading();
-}
-
-function getPaddingNumber(element,paddingType) {
-	var value = element.css(paddingType).replace(/[A-Za-z$-]/g, "");;
-	return value;
-}
-
-var floatingContents = new Array();
-
-function toggleColumnInFloat(column) {
-	jQuery('.column'+column).map(function () {
-		var columnAddress = jQuery(this).attr('id').split('_');
-		var row = columnAddress[1];
-		if(floatingContents[column] == true) {
-			jQuery('#floatingcelladdress_'+row+' #cellcontents_'+row+'_'+column).remove();
-			jQuery('#celladdress_'+row+'_'+column).css('display', 'table-cell');
-			jQuery(this).removeClass('now-scrolling');
-		} else {
-			jQuery('#floatingcelladdress_'+row).append(jQuery(this).html());
-			var paddingTop = getPaddingNumber(jQuery(this),'padding-top');
-			var paddingBottom = getPaddingNumber(jQuery(this),'padding-bottom');
-			var paddingLeft = getPaddingNumber(jQuery(this),'padding-left');
-			var paddingRight = getPaddingNumber(jQuery(this),'padding-right');
-			jQuery('#floatingcelladdress_'+row+' #cellcontents_'+row+'_'+column).css('width', (parseInt(jQuery(this).width())+parseInt(paddingLeft)+parseInt(paddingRight)));
-			jQuery('#floatingcelladdress_'+row+' #cellcontents_'+row+'_'+column).css('height', (parseInt(jQuery(this).height())+parseInt(paddingTop)+parseInt(paddingBottom)));
-			jQuery(this).addClass('now-scrolling');
-		}
-	});
-	if(floatingContents[column] == true) {
-		floatingContents[column] = false;
-		jQuery("#lockcolumn_"+column).empty().append('[ ]');
-	} else {
-		floatingContents[column] = true;
-	}
-}
-
-function setScrollDisplay(element) {
-	if(element.scrollLeft() > 0) {
-		var maxWidth = 0;
-		jQuery(".now-scrolling").css('display', 'none');
-		jQuery(".floating-column").css('display', 'table-cell');
-	} else {
-		jQuery(".floating-column").css('display', 'none');
-		jQuery(".now-scrolling").css('display', 'table-cell');
-	}
-}
-
-jQuery(window).load(function() {
-	jQuery('.lockcolumn').live("click", function() {
-		var lockData = jQuery(this).attr('id').split('_');
-		var column = lockData[1];
-		if(floatingContents[column] == true) {
-			jQuery(this).empty();
-			jQuery(this).append('[ ]');
-			var curColumnsArray = jQuery('#formulize_lockedColumns').val().split(',');
-			var curColumnsHTML = '';
-			for (var i=0; i < curColumnsArray.length; i++) {
-				if(curColumnsArray[i] != column) {
-					if(curColumnsHTML != '') {
-						curColumnsHTML = curColumnsHTML+',';
-					}
-					curColumnsHTML = curColumnsHTML+curColumnsArray[i];
-				}
-			}
-			jQuery('#formulize_lockedColumns').val(curColumnsHTML);
-		} else {
-			jQuery(this).empty();
-			jQuery(this).append('[X]');
-			var curColumnsHTML = jQuery('#formulize_lockedColumns').val();
-			jQuery('#formulize_lockedColumns').val(curColumnsHTML+','+column);
-		}
-		toggleColumnInFloat(column);
-		return false;
-	});
-	
-	jQuery(window).scrollTop(<?php print intval($_POST['formulize_scrollx']); ?>);
-	jQuery(window).scrollLeft(<?php print intval($_POST['formulize_scrolly']); ?>);
-
-<?php
-
-foreach($lockedColumns as $thisColumn) {
-	if(is_numeric($thisColumn)) {
-		print "toggleColumnInFloat(".intval($thisColumn).");\n";
-	}
-}
-
-
-?>
-	
-	jQuery('#resbox').scroll(function () {
-		setScrollDisplay(jQuery('#resbox'));
-	});
-	jQuery(window).scroll(function () {
-		setScrollDisplay(jQuery(window));
-	});
-
-	var saveButtonOffset = jQuery('#floating-list-of-entries-save-button').offset();
-	saveButtonOffset.left = 15;
-	floatSaveButton(saveButtonOffset);
-	jQuery(window).scroll(function () {
-		floatSaveButton(saveButtonOffset);
-	});
-	
-});
-
-function floatSaveButton(saveButtonOffset) {
-      var scrollBottom = jQuery(window).height() - jQuery(window).scrollTop();
-      if (saveButtonOffset && (saveButtonOffset.top > scrollBottom || jQuery(window).width() < jQuery(document).width())) {
-	jQuery('#floating-list-of-entries-save-button').addClass('save_button_fixed');
-	jQuery('#floating-list-of-entries-save-button').addClass('ui-corner-all');
-	if(saveButtonOffset.top <= scrollBottom) {
-		jQuery('#floating-list-of-entries-save-button').css('bottom', jQuery(window).height() - saveButtonOffset.top - jQuery('#floating-list-of-entries-save-button').height());
-	}
-	if(jQuery(window).scrollLeft() < saveButtonOffset.left) {
-		newSaveButtonOffset = saveButtonOffset.left - jQuery(window).scrollLeft();
-	} else if(jQuery(window).scrollLeft() > 0){
-		newSaveButtonOffset = 0;
-	} else {
-		newSaveButtonOffset = saveButtonOffset.left;
-	}
-	jQuery('#floating-list-of-entries-save-button').css('left', newSaveButtonOffset);
-      } else if(saveButtonOffset) {
-	jQuery('#floating-list-of-entries-save-button').removeClass('save_button_fixed');
-	jQuery('#floating-list-of-entries-save-button').removeClass('ui-corner-all');
-      };
-}
-
-jQuery(window).scroll(function () {
-        jQuery('.floating-column').css('margin-top', ((window.pageYOffset)*-1));
-});
-
-</script>
-<?php
+    if(!isset($thisview[0]['sv_currentview'])) {
+        print "Error: could not load the specified saved view: '".strip_tags(htmlspecialchars($id))."'";
+        return false;
+    }
+    $to_return[0] = $thisview[0]['sv_currentview'];
+    $to_return[1] = $thisview[0]['sv_oldcols'];
+    $to_return[2] = $thisview[0]['sv_asearch'];
+    $to_return[3] = $thisview[0]['sv_calc_cols'];
+    $to_return[4] = $thisview[0]['sv_calc_calcs'];
+    $to_return[5] = $thisview[0]['sv_calc_blanks'];
+    $to_return[6] = $thisview[0]['sv_calc_grouping'];
+    $to_return[7] = $thisview[0]['sv_sort'];
+    $to_return[8] = $thisview[0]['sv_order'];
+    $to_return[9] = $thisview[0]['sv_hidelist'];
+    $to_return[10] = $thisview[0]['sv_hidecalc'];
+    $to_return[11] = $thisview[0]['sv_lockcontrols'];
+    $to_return[12] = $thisview[0]['sv_quicksearches'];
+    return $to_return;
 }
 ?>

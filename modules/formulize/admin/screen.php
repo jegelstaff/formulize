@@ -408,6 +408,30 @@ if($screen_id != "new" && $settings['type'] == 'graph') {
   $graph_options['labelelem'] = $labelelem->render();
   list($dataelem, $selecteddataelem) = createFieldList($screen->getVar('dataelem'), false, false, "screens-dataelem", "Choose one");
   $graph_options['dataelem'] = $dataelem->render();
+  $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
+  $form_handler =& xoops_getmodulehandler('forms', 'formulize');
+  $formObj = $form_handler->get($form_id, true); // true causes all elements to be included even if they're not visible.
+  $frameworks = $framework_handler->getFrameworksByForm($form_id);
+  $views = $formObj->getVar('views');
+  $viewPublished = $formObj->getVar('viewPublished');
+  $viewNames = $formObj->getVar('viewNames');
+  $viewFrids = $formObj->getVar('viewFrids');
+  $defaultViewOptions = array();
+  $defaultViewOptions['blank'] = _AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW;
+  $defaultViewOptions['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
+  $defaultViewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
+  $defaultViewOptions['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
+  for($i=0;$i<count($views);$i++) {
+      if(!$viewPublished[$i]) { continue; }
+      $defaultViewOptions[$views[$i]] = $viewNames[$i];
+      if($viewFrids[$i]) {
+          $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
+      } else {
+          $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
+      }
+  }
+  $graph_options['defaultviewoptions'] = $defaultViewOptions;
+  $graph_options['defaultview'] = $screen->getVar('defaultview');
 }
 
 // common values should be assigned to all tabs

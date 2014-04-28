@@ -387,6 +387,7 @@ CREATE TABLE `formulize_screen_graph` (
   `ops` varchar(255) NOT NULL default 'count',
   `labelelem` int(8) NOT NULL default 0,
   `dataelem` int(8) NOT NULL default 0,
+  `defaultview` varchar(20) NOT NULL default 'all',
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;

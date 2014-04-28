@@ -31,6 +31,7 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
 $screen->setVar('ops',$screens['ops']);
 $screen->setVar('labelelem',$screens['labelelem']);
 $screen->setVar('dataelem',$screens['dataelem']);
+$screen->setVar('defaultview',$screens['defaultview']);
 
 
 if(!$screen_handler->insert($screen)) {

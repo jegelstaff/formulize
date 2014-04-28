@@ -368,10 +368,13 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// set flag to indicate whether we let the user's scope setting expand beyond their normal permission level (happens when unlocked published views are in effect)
 	$currentViewCanExpand = false;
-
+    print $_POST['currentview'];
+    print $_POST['loadreport'];
 	// handling change in view, and loading reports/saved views if necessary
 	if($_POST['loadreport']) {
+        print "o1";
 		if(substr($_POST['currentview'], 1, 4) == "old_") { // legacy report
+            print "i1";
 			// load old report values and then assign them to the correct $_POST keys in order to present the view
 			$loadedView = $_POST['currentview'];
 			$settings['loadedview'] = $loadedView;
@@ -385,6 +388,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols']) = loadOldReport(substr($_POST['currentview'], 5), $fid, $view_groupscope);
 
 		} elseif(is_numeric(substr($_POST['currentview'], 1))) { // saved or published view
+            print "i2 ";
+            print $_POST['currentview'];
 			$loadedView = $_POST['currentview'];
 			$settings['loadedview'] = $loadedView;
 			// kill the quicksearches
@@ -433,9 +438,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		
 		
 	} elseif($_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
-		$currentView = $_POST['advscope'];
+		print "o2";
+        $currentView = $_POST['advscope'];
 	} elseif($_POST['currentview']) { // could have been unset by deletion of a view or something else, so we must check to make sure it exists before we override the default that was determined above
-		if(is_numeric(substr($_POST['currentview'], 1))) {
+		print "o3";
+        if(is_numeric(substr($_POST['currentview'], 1))) {
 			// a saved view was requested as the current view, but we don't want to load the entire thing....this means that we just want to use the view to generate the scope, we don't want to load all settings.  So we have to load the view, but discard everything but the view's currentview value
 			// if we were supposed to load the whole thing, loadreport would have been set in post and the above code would have kicked in
 			$loadedViewSettings = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
@@ -444,6 +451,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$currentView = $_POST['currentview'];		 
 		}
 	} elseif($loadview) {
+        print "o4";
 		$currentView = $loadview;
 	}
 
@@ -479,7 +487,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 
-	list($scope, $currentView) = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, $currentViewCanExpand);  
+	list($scope, $currentView) = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, $currentViewCanExpand);
 	// generate the available views
 
 	// pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
@@ -727,6 +735,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// create $data and $wq (writable query)
   formulize_benchmark("before gathering dataset");
 	list($data, $wq, $regeneratePageNumbers) = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, $screen, $currentURL, intval($_POST['forcequery']));
+    print_r($data);
   formulize_benchmark("after gathering dataset/before generating nav");
 	$formulize_LOEPageNav = formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers);
   formulize_benchmark("after nav/before interface");

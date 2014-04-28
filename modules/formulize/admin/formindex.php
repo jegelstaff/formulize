@@ -112,7 +112,7 @@ function patch40() {
 	 * ====================================== */
 	
 	$checkThisTable = 'formulize_screen_graph';
-	$checkThisField = 'dataelem';
+	$checkThisField = 'defaultview';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	

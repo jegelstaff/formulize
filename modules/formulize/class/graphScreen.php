@@ -23,6 +23,7 @@ class formulizeGraphScreen extends formulizeScreen {
 		$this->initvar("ops", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initvar("labelelem", XOBJ_DTYPE_INT);
 		$this->initvar("dataelem", XOBJ_DTYPE_INT);
+        $this->initvar("defaultview", XOBJ_DTYPE_TXTBOX, NULL, false, 20);
 	}
 }
 
@@ -59,9 +60,9 @@ class formulizeGraphScreenHandler extends formulizeScreenHandler {
 	    $screen->setVar('dobr', 0);
 		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
 		if (!$update) {
-            $sql = sprintf("INSERT INTO %s (sid, width, height, orientation, bgr, bgg, bgb, barr, barg, barb, ops, labelelem, dataelem) VALUES (%u, %u, %u, %s, %u, %u, %u, %u, %u, %u, %s, %u, %u)", $this->db->prefix('formulize_screen_graph'), $screen->getVar('sid'), $screen->getVar('width'), $screen->getVar('height'), $this->db->quoteString($screen->getVar('orientation')), $screen->getVar('bgr'), $screen->getVar('bgg'), $screen->getVar('bgb'), $screen->getVar('barr'), $screen->getVar('barg'), $screen->getVar('barb'), $this->db->quoteString($screen->getVar('ops')), $screen->getVar('labelelem'), $screen->getVar('dataelem'));
+            $sql = sprintf("INSERT INTO %s (sid, width, height, orientation, bgr, bgg, bgb, barr, barg, barb, ops, labelelem, dataelem, defaultview) VALUES (%u, %u, %u, %s, %u, %u, %u, %u, %u, %u, %s, %u, %u, %s)", $this->db->prefix('formulize_screen_graph'), $screen->getVar('sid'), $screen->getVar('width'), $screen->getVar('height'), $this->db->quoteString($screen->getVar('orientation')), $screen->getVar('bgr'), $screen->getVar('bgg'), $screen->getVar('bgb'), $screen->getVar('barr'), $screen->getVar('barg'), $screen->getVar('barb'), $this->db->quoteString($screen->getVar('ops')), $screen->getVar('labelelem'), $screen->getVar('dataelem'), $this->db->quoteString($screen->getVar('defaultview')));
         } else {
-            $sql = sprintf("UPDATE %s SET width = %u, height = %u, orientation = %s, bgr = %u, bgg = %u, bgb = %u, barr = %u, barg = %u, barb = %u, ops = %s, labelelem = %u, dataelem = %u WHERE sid = %u", $this->db->prefix('formulize_screen_graph'), $screen->getVar('width'), $screen->getVar('height'), $this->db->quoteString($screen->getVar('orientation')), $screen->getVar('bgr'), $screen->getVar('bgg'), $screen->getVar('bgb'), $screen->getVar('barr'), $screen->getVar('barg'), $screen->getVar('barb'), $this->db->quoteString($screen->getVar('ops')), $screen->getVar('labelelem'), $screen->getVar('dataelem'), $screen->getVar('sid'));
+            $sql = sprintf("UPDATE %s SET width = %u, height = %u, orientation = %s, bgr = %u, bgg = %u, bgb = %u, barr = %u, barg = %u, barb = %u, ops = %s, labelelem = %u, dataelem = %u, defaultview = %s WHERE sid = %u", $this->db->prefix('formulize_screen_graph'), $screen->getVar('width'), $screen->getVar('height'), $this->db->quoteString($screen->getVar('orientation')), $screen->getVar('bgr'), $screen->getVar('bgg'), $screen->getVar('bgb'), $screen->getVar('barr'), $screen->getVar('barg'), $screen->getVar('barb'), $this->db->quoteString($screen->getVar('ops')), $screen->getVar('labelelem'), $screen->getVar('dataelem'), $this->db->quoteString($screen->getVar('defaultview')), $screen->getVar('sid'));
         }
         $result = $this->db->query($sql);
         if (!$result) {
@@ -108,7 +109,8 @@ class formulizeGraphScreenHandler extends formulizeScreenHandler {
 			"height" => $screen->getVar('height'),
 			"orientation" => $screen->getVar('orientation'),
 			"backgroundcolor" => $bgc,
-			"barcolor" => $barc
+			"barcolor" => $barc,
+            "defaultview" => $screen->getVar('defaultview')
 		];
 		include_once XOOPS_ROOT_PATH."/modules/formulize/include/graphdisplay.php";
 		displayGraph('Bar', $screen->getVar('fid'), $screen->getVar('frid'), $screen->getVar('labelelem'), $screen->getVar('dataelem'), $screen->getVar('ops'), $options);

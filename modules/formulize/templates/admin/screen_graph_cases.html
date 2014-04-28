@@ -36,6 +36,17 @@
 			<{$content.dataelem}>
 		</div>
 	</fieldset>
+
+    <fieldset>
+        <legend>Default View</legend>
+        <div class="form-item float-left half-width">
+            <label for="screens-defaultview"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW}></label>
+            <select id="screens-defaultview" name="screens-defaultview" size="1">
+                <{html_options options=$content.defaultviewoptions selected=$content.defaultview}>
+            </select>
+            <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW}></div>
+        </div>
+    </fieldset>
 </div>
 
 </form>
