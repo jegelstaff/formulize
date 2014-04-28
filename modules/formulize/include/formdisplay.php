@@ -2287,11 +2287,10 @@ function formulize_formatDateTime($dt) {
 	$tzDiff = $userTimeZone - $serverTimeZone;
 	$tzDiffSeconds = $tzDiff*3600;
 	
-	if(substr($dt, -8) == "00:00:00") { // assume anything at midnight, to the second, is actually an historical entry which did not have the time recorded when it was made/saved
-		return _formulize_TEMP_ON . " " . date("F jS, Y", strtotime($dt)+$tzDiffSeconds); // on October 23rd, 2008
-	} else {
-		return _formulize_TEMP_AT . " " . date("g:i a, F jS, Y", strtotime($dt)+$tzDiffSeconds); // at 2:33pm, May 3rd, 2008
+	if($xoopsConfig['language'] == "french") {
+		$return = setlocale("LC_TIME", "fr_FR");
 	}
+	return _formulize_TEMP_AT . " " . strftime(dateFormatToStrftime(_MEDIUMDATESTRING), strtotime($dt)+$tzDiffSeconds); 
 }
 
 
