@@ -893,6 +893,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			
 			// saving message
 			print "<div id=savingmessage style=\"display: none; position: absolute; width: 100%; right: 0px; text-align: center; padding-top: 50px;\">\n";
+			global $xoopsConfig;
 			if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/saving-".$xoopsConfig['language'].".gif") ) {
 				print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/saving-" . $xoopsConfig['language'] . ".gif\">\n";
 			} else {
