@@ -221,7 +221,7 @@ define("_formulize_DELCONF", "Etes-vous certain de vouloir effacer cette informa
 define("_formulize_DELETE", "Effacer");
 define("_formulize_DELETECONFIRM", "Cochez cette boîte ainsi que le bouton effacer");
 define("_formulize_DELETE_CHECKED", "Supprimer ce qui est sélectionné");
-define("_formulize_DEL_ENTRIES", "Vous allez effacer les entrées sélectionnées!  Merci de confirmer.");
+define("_formulize_DEL_ENTRIES", "Vous vous apprêtez à supprimer les entrées sélectionnées. Veuillez confirmer!");
 define("_formulize_DE_ACTIONS", "Actions: ");
 define("_formulize_DE_ADDENTRY", "Ajouter une entrée");
 define("_formulize_DE_ADD_MULTIPLE_ENTRY", "Ajouter plusieurs entrées");
@@ -287,7 +287,7 @@ define("_formulize_DE_CLICKSAVE", "Clic droit et sauvegarder pour télécharger 
 define("_formulize_DE_CLICKSAVE_TEMPLATE", "Clic droit et sauvegarder pour télécharger votre template.");
 define("_formulize_DE_CLONESEL", "Cloner la selection");
 define("_formulize_DE_CLONE_PROMPT", "How many copies of the selected entries do you want to make? (use numbers, not words)");
-define("_formulize_DE_CONFIRMDEL", "You are about to delete the selected entries.  Please confirm!");
+define("_formulize_DE_CONFIRMDEL", "Vous vous apprêtez à supprimer les entrées sélectionnées. Veuillez confirmer!");
 define("_formulize_DE_CONF_DELVIEW", "You are about to delete this view!  Please confirm.");
 define("_formulize_DE_CREATED", "Créé par");
 define("_formulize_DE_CURRENT_VIEW", "Format de vue courant: ");
