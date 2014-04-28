@@ -4998,3 +4998,37 @@ function formulize_escape($value) {
     return substr($value, 1,-1);
   }
 }
+
+// THANKS TO baptiste.place@utopiaweb.fr on php.net for this conversion function:
+/** 
+ * Convert a date format to a strftime format 
+ * 
+ * Timezone conversion is done for unix. Windows users must exchange %z and %Z. 
+ * 
+ * Unsupported date formats : S, n, t, L, B, u, e, I, P, Z, c, r 
+ * Unsupported strftime formats : %U, %W, %C, %g, %r, %R, %T, %X, %c, %D, %F, %x 
+ * 
+ * @param string $dateFormat a date format 
+ * @return string 
+ */ 
+function dateFormatToStrftime($dateFormat) { 
+    	
+    $caracs = array( 
+        // Day - no strf eq : S 
+        'd' => '%d', 'D' => '%a', 'j' => '%e', 'l' => '%A', 'N' => '%u', 'w' => '%w', 'z' => '%j', 
+        // Week - no date eq : %U, %W 
+        'W' => '%V',  
+        // Month - no strf eq : n, t 
+        'F' => '%B', 'm' => '%m', 'M' => '%b', 
+        // Year - no strf eq : L; no date eq : %C, %g 
+        'o' => '%G', 'Y' => '%Y', 'y' => '%y', 
+        // Time - no strf eq : B, u; no date eq : %r, %R, %T, %X 
+        'a' => '%P', 'A' => '%p', 'g' => '%l', 'h' => '%I', 'H' => '%H', 'G' => '%H', 'i' => '%M', 's' => '%S', 
+        // Timezone - no strf eq : e, I, P, Z 
+        'O' => '%z', 'T' => '%Z', 
+        // Full Date / Time - no strf eq : c, r; no date eq : %c, %D, %F, %x  
+        'U' => '%s' 
+    ); 
+    
+    return strtr((string)$dateFormat, $caracs); 
+} 
