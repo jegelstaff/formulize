@@ -460,7 +460,7 @@ define("_formulize_DMULTI_SAVE", "Sauvegarder et terminer >>");
 define("_formulize_DMULTI_SKIP", "Une ou plusieurs pages furent sautées car elles ne s'appliquent pas");
 define("_formulize_DMULTI_THANKS", "<h1>Vous y êtes arrivés!</h1><p>Merci d'avoir pris le temps.  Nous apprécions beaucoup.</p>");
 define("_formulize_DMULTI_YOUAREON", "Vous êtes à la page:");
-define("_formulize_DONE", "Terminer");
+define("_formulize_DONE", "Fini");
 define("_formulize_EXPORTEXPLANATION", "Cliquez sur le bouton <b>Exporter</b> pour télécharger un fichier au format de tableur lisible contenant les résultats de la requête courante.  Note : vous pouvez utiliser les délimitateurs utiliser entre les champs.  Si le caractère de délimitation que vous choisissez est présent dans vos résultats, le fichier de tableur ne s'ouvrira pas correctement, aussi veillez à essayer avec plusieurs délimitateurs.");
 define("_formulize_EXPORTREPORTBUTTON", "Exporter");
 define("_formulize_EXPORT_FILENAME_TEXT", "Info_exportés_de");
