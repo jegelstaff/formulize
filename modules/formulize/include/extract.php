@@ -2201,9 +2201,11 @@ function internalRecordIds($entry, $formhandle="", $id="NULL", $fidAsKeys = fals
 			}
 		}
 	} else {
-    $formhandle = _parseInternalRecordIdsFormHandle($formhandle);
-		foreach($entry[$formhandle] as $id=>$element) {
-			$ids[] = $id;
+		$formhandle = _parseInternalRecordIdsFormHandle($formhandle);
+		if (is_array($entry[$formhandle])) {
+			foreach($entry[$formhandle] as $id=>$element) {
+				$ids[] = $id;
+			}
 		}
 	}
 	return $ids;
