@@ -768,12 +768,12 @@ class formulizeElementRenderer{
 								'',
 								$form_ele_id.'[]',
 								$selected,
-								($other === $false ? "" : $other).$delimSetting
+								$delimSetting
 							);
 							if($other != false){
-								$t->addOption($o['key'], _formulize_OPT_OTHER);
+								$t->addOption($o['key'], _formulize_OPT_OTHER.$other);
 								if(in_array($o['key'], $selected)) {
-									$disabledOutputText[] = _formulize_OPT_OTHER;
+									$disabledOutputText[] = _formulize_OPT_OTHER.$other;
 								}
 							}else{
 								$t->addOption($o['key'], $o['value']);
