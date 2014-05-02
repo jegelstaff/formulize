@@ -55,13 +55,13 @@ class formulize_themeForm extends XoopsThemeForm {
 	 * @param	string	$class	CSS class name for <td> tag
 	 * @name	string	$name	name of the element being inserted, which we keep so we can then put the right id tag into its row
 	 */
-	public function insertBreakFormulize($extra = '', $class= '', $name) {
-		$class = ($class != '') ? " class='$class'" : '';
+	public function insertBreakFormulize($extra = '', $class= '', $name, $element_handle) {
+		$class = ($class != "") ? "$class " : "";
 		//Fix for $extra tag not showing
 		if ($extra) {
-			$extra = "<td colspan='2' $class>$extra</td>"; // removed tr from here and added it below when we know the right id name to give it
+			$extra = "<td colspan='2' class=\"{$class}formulize-label-$element_handle\">$extra</td>"; // removed tr from here and added it below when we know the right id name to give it
 		} else {
-			$extra = "<td colspan='2' $class>&nbsp;</td>"; // removed tr from here and added it below when we know the right id name to give it
+			$extra = "<td colspan='2' class=\"{$class}formulize-label-$element_handle\">&nbsp;</td>"; // removed tr from here and added it below when we know the right id name to give it
 		}
 		$ibContents = $extra."<<||>>".$name; // can only assign strings or real element objects with addElement, not arrays
 		$this->addElement($ibContents);
@@ -103,21 +103,27 @@ class formulize_themeForm extends XoopsThemeForm {
 		}
 		return $js;
 	}
-	
+
 	function _drawElements($elements, $ret, $hidden) {
 		$class ='even';
 		foreach ( $elements as $ele ) {
+			$label_class = null;
+			$input_class = null;
+			if (isset($ele->formulize_element)) {
+				$label_class = " formulize-label-".$ele->formulize_element->getVar("ele_handle");
+				$input_class = " formulize-input-".$ele->formulize_element->getVar("ele_handle");
+			}
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
 				if(strstr($ele, "<<||>>")) {
 					$ele = explode("<<||>>", $ele);
-					$ret .= "<tr id='formulize-".$ele[1]."'>".$ele[0]."</tr>";					
+					$ret .= "<tr id='formulize-".$ele[1]."'>".$ele[0]."</tr>";
 				} elseif(substr($ele, 0, 3) != "<tr") {
-					$ret .= "<tr>$ele</tr>";	
+					$ret .= "<tr>$ele</tr>";
 				} else {
 					$ret .= $ele;
 				}
 			} elseif ( !$ele->isHidden() ) {
-				$ret .= "<tr id='formulize-".$ele->getName()."' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head'>";
+				$ret .= "<tr id='formulize-".$ele->getName()."' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head$label_class'>";
 				if (($caption = $ele->getCaption()) != '') {
 					$ret .=
 					"<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
@@ -128,7 +134,7 @@ class formulize_themeForm extends XoopsThemeForm {
 				if (($desc = $ele->getDescription()) != '') {
 					$ret .= "<div class='xoops-form-element-help'>{$desc}</div>";
 				}
-				$ret .= "</td><td class='$class'>" . $ele->render() . "</td></tr>\n";
+				$ret .= "</td><td class='$class$input_class'>" . $ele->render() . "</td></tr>\n";
 			} else {
 				$hidden .= $ele->render();
 			}
@@ -722,6 +728,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                     // extended class that puts formulize element names into the tr tags for the table, so we can show/hide them as required
                     $form = new formulize_themeForm($title, 'formulize', "$currentURL", "post", true);
                     // necessary to trigger the proper reloading of the form page, until Done is called and that form does not have this flag.
+                    if (!isset($settings['ventry']))
+                        $settings['ventry'] = 'new';
                     $form->addElement (new XoopsFormHidden ('ventry', $settings['ventry']));
                 }
                 $form->setExtra("enctype='multipart/form-data'"); // impératif!
@@ -1670,10 +1678,15 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         }
     }
 
-	$to_return['c1'] = $col_one;
-	$to_return['c2'] = $col_two;
-	//return $to_return; // now returning a single set of HTML, which should be a configurable option
-	return array('single'=>$col_one . $col_two);
+    $to_return['c1'] = $col_one;
+    $to_return['c2'] = $col_two;
+    $to_return['single'] = $col_one . $col_two;
+
+    if (isset($subform_element_object)) {
+        $to_return['single'] = "<div class=\"formulize-subform-".$subform_element_object->getVar("ele_handle")."\">$col_one $col_two</div>";
+    }
+
+    return $to_return;
 }
 
 
@@ -2001,7 +2014,9 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$form->insertBreak($gridContents, "head"); // head is the css class of the cell				
 			}
 		} elseif($ele_type == "ib" OR is_array($form_ele)) {// if it's a break, handle it differently...$form_ele may be an array if it's a non-interactive element such as a grid
-			$form->insertBreakFormulize("<div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1], 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id); // final param is used as id name in the table row where this element exists, so we can interact with it for showing and hiding
+			// final param is used as id name in the table row where this element exists, so we can interact with it for showing and hiding
+			$form->insertBreakFormulize("<div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div>",
+				$form_ele[1], 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id, $thisElement->getVar("ele_handle"));
 		} else {
 			$form->addElement($form_ele, $req);
 		}
