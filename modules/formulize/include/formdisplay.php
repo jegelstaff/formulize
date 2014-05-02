@@ -1678,10 +1678,15 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         }
     }
 
-	$to_return['c1'] = $col_one;
-	$to_return['c2'] = $col_two;
-	//return $to_return; // now returning a single set of HTML, which should be a configurable option
-	return array('single'=>$col_one . $col_two);
+    $to_return['c1'] = $col_one;
+    $to_return['c2'] = $col_two;
+    $to_return['single'] = $col_one . $col_two;
+
+    if (isset($subform_element_object)) {
+        $to_return['single'] = "<div class=\"formulize-subform-".$subform_element_object->getVar("ele_handle")."\">$col_one $col_two</div>";
+    }
+
+    return $to_return;
 }
 
 
