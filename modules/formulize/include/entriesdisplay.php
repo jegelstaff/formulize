@@ -2735,15 +2735,14 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
 
 //THIS FUNCTION TAKES A MASTER RESULT SET AND DRAWS IT ON THE SCREEN
 function printResults($masterResults, $blankSettings, $groupingSettings, $groupingValues, $filename="", $title="") {
-
 	$output = "";
-  foreach($masterResults as $handle=>$calcs) {
+	foreach($masterResults as $handle=>$calcs) {
 		$output .= "<tr><td class=head colspan=2>\n";
-		$output .= printSmart(trans(getCalcHandleText($handle)), 100);
+		$output .= printSmart(trans(getCalcHandleText($handle)), 300);
 		$output .= "\n</td></tr>\n";
-    foreach($calcs as $calc=>$groups) {
+		foreach($calcs as $calc=>$groups) {
 			$countGroups = count($groups);
-     	$output .= "<tr><td class=even rowspan=$countGroups>\n";
+			$output .= "<tr><td class=even rowspan=$countGroups>\n";
 			switch($calc) {
 				case "sum":
 					$calc_name = _formulize_DE_CALC_SUM;
