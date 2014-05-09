@@ -117,7 +117,7 @@ class formulize_themeForm extends XoopsThemeForm {
 					$ret .= $ele;
 				}
 			} elseif ( !$ele->isHidden() ) {
-				$ret .= "<tr id='formulize-".$ele->getName()."' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head'>";
+				$ret .= "<tr id='formulize-".$ele->getName()."' class='".$ele->getClass()."' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head'>";
 				if (($caption = $ele->getCaption()) != '') {
 					$ret .=
 					"<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
@@ -788,7 +788,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 						} else {
 							$done_button_text = _formulize_INFO_DONE1 . _formulize_DONE . _formulize_INFO_DONE2;					
 						}
-	
+
 						$nosave = false;
 						if(!$save_button_text and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 							$save_button_text = _formulize_INFO_SAVEBUTTON;
@@ -798,18 +798,17 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 							$save_button_text = _formulize_INFO_NOSAVE;
 							$nosave = true;
 						}
-										$breakHTML .= "<p>" . $save_button_text;
+						$breakHTML .= "<p class='no-print'>" . $save_button_text;
 						if($done_button_text) {
-											$breakHTML .= "<br>" . $done_button_text;
-										}
+							$breakHTML .= "<br>" . $done_button_text;
+						}
 					}
-							$breakHTML .= "</p></td></tr></table>";
-							$form->insertBreak($breakHTML, "even");
+					$breakHTML .= "</p></td></tr></table>";
+					$form->insertBreak($breakHTML, "even");
 				} elseif($profileForm) {
 					// if we have a profile form, put the profile fields at the top of the form, populated based on the DB values from the _users table
 					$form = addProfileFields($form, $profileForm);
 				}
-	
 			}
 
 			if($titleOverride=="1" AND !$firstform) { // set onetooneTitle flag to 1 when function invoked to force drawing of the form title over again
@@ -1123,6 +1122,7 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 	} else {
 		$buttontray = new XoopsFormElementTray("", "&nbsp;");
 	}
+	$buttontray->setClass("no-print");
 	if($subButtonText == _formulize_SAVE) { // _formulize_SAVE is passed only when the save button is allowed to be drawn
 		if($save_text_temp) { $subButtonText = $save_text_temp; }
 		if($subButtonText != "{NOBUTTON}") {
@@ -1702,7 +1702,6 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 				$uresqforrealnames = $xoopsDB->query($uqueryforrealnames);
 				$urowqforrealnames = $xoopsDB->fetchRow($uresqforrealnames);
 				$punames[] = $urowqforrealnames[0] ? $urowqforrealnames[0] : $urowqforrealnames[1]; // use the uname if there is no full name
-				//print "username: $urowqforrealnames[0]<br>"; // debug code
 			}
 
 			// alphabetize the proxy list added 11/2/04
@@ -1730,8 +1729,8 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 				$proxylist->setValue('noproxy');
 			} else {
 				$proxylist->setValue('nochange');
-						
 			}
+			$proxylist->setClass("no-print");
 			$form->addElement($proxylist);
 			return $form;
 }
