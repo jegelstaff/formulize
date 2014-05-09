@@ -1014,6 +1014,9 @@ td.formulize-controls {
   white-space: nowrap; }
 
 @media print {
+    body {
+        font-size: 10pt;
+    }
     #xo-header {
         display: none;
     }
@@ -1043,5 +1046,31 @@ td.formulize-controls {
         -webkit-appearance: none;
         appearance: none;
         border: none;
+    }
+    h1.formulize-form-title {
+        font-weight: normal;
+    }
+    td.head h2 {
+        color: #222;
+        font-size: 12pt;
+        font-weight: normal;
+    }
+    td.head span.caption-text {
+        color: #333;
+        font-weight: normal;
+    }
+    td.head div.xoops-form-element-help {
+        color: #ddd;
+        font-size: 8pt;
+        font-weight: normal;
+    }
+    td.even {
+        font-size: 10pt;
+    }
+    tr, td {
+        page-break-inside: avoid;
+    }
+    #pageNavTable, #bottomPageNumber, #bottom-save-block {
+        display: none;
     }
 }
