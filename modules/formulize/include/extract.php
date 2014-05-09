@@ -680,7 +680,6 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    exit("Error: could not count master results.<br>".$xoopsDB->error()."<br>SQL:$countMasterResults<br>");
 	       }
 	       unset($GLOBALS['formulize_getCountForPageNumbers']);
-	  }
          
          // now, if there's framework in effect, get the entry ids of the entries in the main form that match the criteria, so we can use a specific query for them instead of the order clause in the master query
          $limitByEntryId = "";
@@ -716,8 +715,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       } else {
 			$limitByEntryId = "";
 	       }
-              
-         }         
+         }
+      }
 
     $selectClause = "";
     $sqlFilterElements = array();
