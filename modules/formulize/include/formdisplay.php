@@ -80,7 +80,7 @@ class formulize_themeForm extends XoopsThemeForm {
 				. "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">
 			<div class='xo-theme-form'>
 			<table width='100%' class='outer' cellspacing='1'>
-			<tr><th colspan='2'>" . $this->getTitle() . "</th></tr>
+			<tr><th colspan='2'><h1 class=\"formulize-form-title\">" . $this->getTitle() . "</h1></th></tr>
 		";
 		$hidden = '';
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
@@ -745,11 +745,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                             $breakHTML .= _formulize_INFO_SAVED . "&nbsp;";
                         }
                         if($info_continue == 1 and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
-                            $breakHTML .= _formulize_INFO_CONTINUE1;
+                            $breakHTML .= "<p class=\"no-print\">"._formulize_INFO_CONTINUE1."</p>";
                         } elseif($info_continue == 2) {
-                            $breakHTML .=  _formulize_INFO_CONTINUE2;
+                            $breakHTML .=  "<p class=\"no-print\">"._formulize_INFO_CONTINUE2."</p>";
                         } elseif(!$entry and formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
-                            $breakHTML .=  _formulize_INFO_MAKENEW;
+                            $breakHTML .=  "<p class=\"no-print\">"._formulize_INFO_MAKENEW."</p>";
                         }
                         $breakHTML .= "</b></p>";
                         $breakHTML .= "</center>";
