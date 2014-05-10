@@ -1073,4 +1073,13 @@ td.formulize-controls {
     #pageNavTable, #bottomPageNumber, #bottom-save-block {
         display: none;
     }
+    .ui-accordion .ui-accordion-content {
+        display: block !important;
+    }
+    .ui-accordion .ui-accordion-content table.outer {
+        border: none;
+    }
+    .ui-accordion .ui-accordion-content table.outer td{
+        border-bottom: 1px solid #ddd;
+    }
 }
