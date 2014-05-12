@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <script src="jquery.js"></script>
+
+
+	  
+	<!-- for column animation -->
+	<script src="jquery-ui-1.10.4/js/jquery-1.10.2.js"></script>
+  	<script src="jquery-ui-1.10.4/jquery-ui.js"></script>
+
+  	<!-- jquery mobile -->
+    <link rel="stylesheet" href="jquery.mobile-1.4.0.min.css">
+	<script src="jquery.mobile-1.4.0.min.js"></script>
+	<script src="jquery.mobile-1.4.0.min.js"></script>
+</head>
+
+<body>
+
+
+	<div data-role="page">
+
+		<div data-role="panel" id="buttonpanel">
+			
+									<!--<input type="submit" name="submitx" style="visibility: hidden;" value="" id="submit">-->
+								
+									<input type="button" class="formulize_button" id="formulize_changeColsButton" name="changecols" value="Change columns" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/changecols.php?fid=1&amp;frid=&amp;cols=10,11,12');">
+
+									<input type="button" class="formulize_button" id="formulize_resetViewButton" name="resetviewbutton" value="Reset view" onclick="javascript:showLoadingReset();">
+
+									<input type="button" class="formulize_button" id="formulize_saveViewButton" name="save" value="Save view" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/save.php?fid=1&amp;frid=&amp;lastloaded=&amp;cols=10,11,12&amp;currentview=all&amp;loadonlyview=0');">
+
+									<input type="button" class="formulize_button" id="formulize_deleteViewButton" name="delete" value="Delete view" onclick="javascript:delete_view(this.form, '10000', '4');">
+								
+
+									<input type="button" class="formulize_button" id="formulize_selectAllButton" name="sellall" value="Select all" onclick="selectAll(this.check);">
+
+									<input type="button" class="formulize_button" id="formulize_clearSelectButton" name="clearall" value="Clear selection" onclick="unselectAll(this.uncheck);">
+
+									<input type="button" class="formulize_button" id="formulize_cloneButton" name="clonesel" value="Clone selected" onclick="javascript:confirmClone();">
+
+									<input type="button" class="formulize_button" id="formulize_deleteButton" name="deletesel" value="Delete selected" onclick="javascript:confirmDel();">
+							
+									<input type="button" class="formulize_button" id="formulize_calcButton" name="calculations" value="Calculations" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/pickcalcs.php?fid=1&amp;frid=&amp;calc_cols=&amp;calc_calcs=&amp;calc_blanks=&amp;calc_grouping=');">
+
+									<input type="button" class="formulize_button" id="formulize_exportButton" name="export" value="Export Entries" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/export.php?fid=1&amp;frid=&amp;cols=10,11,12&amp;eq=1393200219');">
+
+									<input type="button" class="formulize_button" id="formulize_importButton" name="impdata" value="Import Data" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/import.php?fid=1&amp;eq=1393200219');">
+
+									<input type="button" class="formulize_button" id="formulize_notifButton" name="notbutton" value="Notifications" onclick="javascript:showPop('http://localhost:8888/formulize/modules/formulize/include/setnot.php?fid=1');">	
+		</div>
+
+		<div data-role="content">
+			<a href="#buttonpanel" class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-btn-icon-left ui-icon-bars">Actions</a>
+
+			<div class="ui-field-contain">
+				<label for="currentview" class="select">Current View: </label>
+				<select name="currentview" id="currentview" onchange="javascript:change_view(this.form, '4', '4');" data-mini="true">
+					<option value="">STANDARD VIEWS:</option>
+					<option value="mine">&nbsp;&nbsp;Entries by me</option>
+					<option value="group">&nbsp;&nbsp;Entries by all users in my group(s)</option>
+					<option value="all" selected="">&nbsp;&nbsp;Entries by all users in all groups</option>
+					<option value="">&nbsp;&nbsp;Entries by all users in...[pick groups]</option>
+				</select>
+			</div>
+
+			<!-- Trying out stuff with jQuery mobile -->
+			<!-- <h3>Swipe the green rectangle in the right direction to change its color:</h3>
+			<div class="box" id="box_0_0"></div><br />
+			<div class="box" id="box_0_1"></div> -->
+
+<!-- Columns of stuff -->
+		<div data-role="content">
+			<table class="outer">
+				<tbody>
+					<tr>
+						<td class="head column column0" id="celladdress_h1_0">
+							<div class="main-cell-div" id="cellcontents_h1_0">
+								<div style="float: right;"></div>
+								<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('10');return false;">Hello</a>
+							</div>
+						</td>
+						<td class="head column column1" id="celladdress_h1_1">
+							<div class="main-cell-div" id="cellcontents_h1_1">
+								<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('11');return false;">T</a>
+							</div>
+						</td>
+						<td class="head column column2" id="celladdress_h1_2">
+							<div class="main-cell-div" id="cellcontents_h1_2">
+								<a href="" alt="Click to sort entries by this column" title="Click to sort entries by this column" onclick="javascript:sort_data('12');return false;">Food</a>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td class="head column column0" id="celladdress_1_0">
+							<div class="main-cell-div" id="cellcontents_1_0">
+								<nobr>
+									<input type="text" id="firstbox" name="search_10" value="Type search terms here" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
+									<!--&nbsp;-->
+								</nobr>
+							</div>
+						</td>
+						<td class="head column column1" id="celladdress_1_1">
+							<div class="main-cell-div" id="cellcontents_1_1">
+								<nobr>
+									<input type="text" name="search_11" value="" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
+								</nobr>
+							</div>
+						</td>
+						<td class="head column column2" id="celladdress_1_2">
+							<div class="main-cell-div" id="cellcontents_1_2">
+								<nobr>
+									<input type="text" name="search_12" value="" onfocus="javascript:clearSearchHelp(this.form, 'Type search terms here');" onchange="javascript:window.document.controls.ventry.value = '';">
+								</nobr>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td class="even column column0" id="celladdress_2_0">
+							<div class="main-cell-div" id="cellcontents_2_0">
+								<span>First</span>
+							</div>
+						</td>
+						<td class="even column column1" id="celladdress_2_1">
+							<div class="main-cell-div" id="cellcontents_2_1">
+								<span>giraffe</span>
+							</div>
+						</td>
+						<td class="even column column2" id="celladdress_2_2">
+							<div class="main-cell-div" id="cellcontents_2_2">
+								<span>bananas</span>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td class="odd column column0" id="celladdress_3_0">
+							<div class="main-cell-div" id="cellcontents_3_0">
+								<span>Second</span>
+							</div>
+						</td>
+						<td class="odd column column1" id="celladdress_3_1">
+							<div class="main-cell-div" id="cellcontents_3_1">
+								<span>zebra</span>
+							</div>
+						</td>
+						<td class="odd column column2" id="celladdress_3_2">
+							<div class="main-cell-div" id="cellcontents_3_2">
+								<span>beets</span><br />
+								<span>beets</span>
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<td class="even column column0" id="celladdress_4_0">
+							<div class="main-cell-div" id="cellcontents_4_0">
+								<span>Third</span>
+							</div>
+						</td>
+						<td class="even column column1" id="celladdress_4_1">
+							<div class="main-cell-div" id="cellcontents_4_1">
+								<span>cobra</span>
+							</div>
+						</td>
+						<td class="even column column2" id="celladdress_4_2">
+							<div class="main-cell-div" id="cellcontents_4_2">
+								<span>lettuce</span>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<button>hide the div</button>
+			<div class="div">Hello</div>
+			<div class="div">Goodbye</div>
+		</div>
+
+
+
+
+
+	<script type="text/javascript">
+
+		$( "button" ).swiperight(function() {
+	  		alert("SWIPE DETECTED!");
+	 		//$( ".column0" ).hide( "slide", { direction: "left" }, "slow" );
+	 		$(".column0").animate({'width': 0}, 1000);
+	 		//$(".column1").toggle("slide", {direction:"right"}, 1000);
+	  		/*$( ".column0" ).show( "slide", { direction: "right" }, "slow", function () {
+	  			$(".column1").show("slide", {direction: "right"}, "slow");
+	  		});*/
+	  		//$(".column1").show("slide", {direction: "right"}, "slow");
+		});
+
+		// hide all cols except the first one on page load
+		$( document ).ready(function() {
+    		alert( "ready! - about to hide cols" );
+    		$(".column").not(".column0").hide();
+		});
+
+		jQuery('#addentry').click(function (){
+			alert('HELLO!');
+		});
+
+		// on right swipe, move one col to the left
+		jQuery('td').swiperight(function() {
+			//alert("SWIPE DETECTED!")
+			var id = $(event.target).attr('id');
+			var arr = id.split("_");
+  			//alert("col: " + arr[2]);
+  			var col = parseInt(arr[2]);
+
+  			// if we're on the leftmost col, we can't go to the left,
+  			// so do nothing
+  			if (col != 0) {
+  				$(".column" + arr[2]).hide( "slide", { direction: "right" }, 1000, function(){
+  					$(".column" + (col - 1)).show("slide", {direction: "left"}, 1000);
+  				} );
+  				//$(".column" + (col - 1)).show("slide", {direction: "left"}, "slow");
+  			}
+		});
+
+		// on left swipe, move one col to the right
+		jQuery('td').swipeleft(function() {
+			//alert("SWIPE DETECTED!")
+			var id = $(event.target).attr('id');
+			var arr = id.split("_");
+  			//alert("col: " + arr[2]);
+
+  			// if we're on the rightmost col, we can't go right,
+  			// so do nothing
+  			var col = parseInt(arr[2]);
+  			if (col != 2) {
+  				$(".column" + arr[2]).hide("slide", {direction: "left"}, 1000, function () {
+  					$(".column" + (col + 1)).show("slide", {direction: "right"}, 1000);
+  				});
+  				//$(".column" + (col + 1)).show("slide", {direction: "right"}, "slow");
+  			}
+		});
+
+		// trying out swipe stuff with jQuery mobile - doesn't support tables...
+		$(function(){
+    	// Bind the swiperightHandler callback function to the swipe event on div.box
+  			$( "div.box" ).on( "swiperight", swiperightHandler );
+ 
+  			// Callback function references the event target and adds the 'swiperight' class to it
+  			function swiperightHandler( event ){
+  				alert($(event.target).attr('id'));
+  				var id = $(event.target).attr('id');
+  				var arr = id.split("_");
+  				alert("col: " + arr[2]);
+  				alert("row: " + arr[1]);
+  				var row = parseInt(arr[2]);
+  				row += 1;
+   				$( event.target ).addClass( "swiperight" );
+   				//$(event.target).hide();
+   				$("#box_0_" + row).show();
+  			}
+		});
+
+	</script>
+
+	<style>
+		div.box {
+	    	width: 30em;
+	    	height: 3em;
+	    	background-color: #108040;
+	  	}
+	  	div.box.swiperight {
+	    	background-color: #7ACEF4;
+	  	}
+
+	  	#box_0_1 {
+	  		display: none;
+	  	}
+  	</style>
+
+</body>
+</html>
