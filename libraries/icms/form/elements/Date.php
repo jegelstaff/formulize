@@ -77,7 +77,7 @@ class icms_form_elements_Date extends icms_form_elements_Text {
 
 		if ($icmsConfigPersona['use_jsjalali']) {
 			$dateFormat = dateFormatToStrftime(_SHORTDATESTRING);
-			$result = "<input id='tmp_".$ele_name."' readonly='readonly' size='".$this->getSize()."' maxlength='".$this->getMaxlength()."' value='".$jalali_ele_value."' /><input type='hidden' name='".$ele_name."' id='".$ele_name."' value='".$ele_value."' ".$this->getExtra()." />&nbsp;&nbsp;<img src='" . ICMS_URL . "/images/calendar.png' alt='"._CALENDAR."' title='"._CALENDAR."' id='btn_".$ele_name."'><script type='text/javascript'>
+			$result = "<input id='tmp_".$ele_name."' class=\"icms-date-box\" size='".$this->getSize()."' maxlength='".$this->getMaxlength()."' value='".$jalali_ele_value."' /><input type='hidden' name='".$ele_name."' id='".$ele_name."' value='".$ele_value."' ".$this->getExtra()." />&nbsp;&nbsp;<img src='" . ICMS_URL . "/images/calendar.png' alt='"._CALENDAR."' title='"._CALENDAR."' id='btn_".$ele_name."'><script type='text/javascript'>
 				Calendar.setup({
 					inputField  : 'tmp_".$ele_name."',
 		       		ifFormat    : '$dateFormat',
