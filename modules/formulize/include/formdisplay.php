@@ -1297,7 +1297,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					$criteria = new CriteriaCompo();
 					$criteria->add(new Criteria('ele_type', 'text'), 'OR');
 					$criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
-					$elementsForDefaults = $element_handler->getObjects2($criteria,$_POST['target_sub']); // get all the text or textarea elements in the form 
+					$elementsForDefaults = $element_handler->getObjects($criteria,$_POST['target_sub']); // get all the text or textarea elements in the form 
 				}
 				foreach($elementsForDefaults as $thisDefaultEle) {
 					// need to write in any default values for any text boxes or text areas that are in the subform.  Perhaps other elements could be included too, but that would take too much work right now. (March 9 2009)
@@ -1760,7 +1760,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	$notAllowedCriteria->add($criteria, 'AND');
 	$notAllowedCriteria->setSort('ele_order');
 	$notAllowedCriteria->setOrder('ASC');
-	$notAllowedElements =& $formulize_mgr->getObjects2($notAllowedCriteria,$fid);
+	$notAllowedElements =& $formulize_mgr->getObjects($notAllowedCriteria,$fid);
 
 	$hiddenElements = generateHiddenElements($notAllowedElements, $entryForDEElements); // in functions.php, keys in returned array will be the element ids
 
@@ -1785,7 +1785,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	}
 	$criteria->setSort('ele_order');
 	$criteria->setOrder('ASC');
-	$elements =& $formulize_mgr->getObjects2($criteria,$fid,true); // true makes the keys of the returned array be the element ids
+	$elements =& $formulize_mgr->getObjects($criteria,$fid,true); // true makes the keys of the returned array be the element ids
 	$count = 0;
 	global $gridCounter;
 	$gridCounter = array();

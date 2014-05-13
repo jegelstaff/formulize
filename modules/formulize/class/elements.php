@@ -379,7 +379,7 @@ class formulizeElementsHandler {
 	}
 
 	// id_as_key can be true, false or "handle" or "element_id" in which case handles or the element ids will be used
-	function &getObjects2($criteria = null, $id_form , $id_as_key = false){
+	function &getObjects($criteria = null, $id_form , $id_as_key = false){
 		$ret = array();
 		$limit = $start = 0;
 //		awareness of $criteria added, Sept 1 2005, jwe

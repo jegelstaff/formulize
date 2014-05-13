@@ -267,7 +267,7 @@ class formulizeFrameworkLink extends XoopsObject {
             $target_ele_ids[] = $rowlinksq[2];
 
             // returns an object containing all the details about the form
-            $elements =& $formulize_mgr->getObjects2($criteria, $rowlinksq[0]);
+            $elements =& $formulize_mgr->getObjects($criteria, $rowlinksq[0]);
 
             // search for the elements where the link exists
             foreach ($elements as $e) {

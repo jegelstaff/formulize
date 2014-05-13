@@ -62,7 +62,7 @@ if($_GET['fid'] != "new") {
   $store_revisions = $formObject->getVar('store_revisions');
   
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
-  $elementObjects = $element_handler->getObjects2(null, $fid);
+  $elementObjects = $element_handler->getObjects(null, $fid);
   $elements = array();
   $elementHeadings = array();
   $formApplications = array();
