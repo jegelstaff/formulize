@@ -442,7 +442,8 @@ class formulizeElementRenderer{
 										$linked_column_values[] = "";
 									} else {
 										if ($sourceElementObject->isLinked) {
-											$linked_column_values[] = strip_tags($data_handler->getElementValueInEntry(trim($rowlinkedvaluesq[$linked_column_index], ","), $originalSource[$linked_column_index]));
+											$linked_value = prepvalues($rowlinkedvaluesq[$linked_column_index], $boxproperties[1], $rowlinkedvaluesq[0]);
+											$linked_column_values[] = $linked_value[0];
 										} else {
 											$linked_column_values[] = strip_tags(trim($rowlinkedvaluesq[$linked_column_index]));
 										}
