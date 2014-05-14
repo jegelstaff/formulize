@@ -688,7 +688,10 @@ define("_formulize_DE_CLICKSAVE_TEMPLATE", "Right click and save to download you
 define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR", "There is an error in your template code.  Sorry, we don't know more than that.  Typos or syntax errors are the most common problems.  Also, if your template has an if...else condition around all its code, and that condition is never met, then there will be no template found which can cause this error.  To avoid that, make sure your template always outputs something, even if it's only '&amp;nbsp;'");
 define("_AM_FORMULIZE_LOE_FIRSTPAGE", "<< First");
 define("_AM_FORMULIZE_LOE_LASTPAGE", "Last >>");
-define("_AM_FORMULIZE_LOE_ONPAGE", "On Page ");
+define("_AM_FORMULIZE_LOE_ONPAGE", "Page");
+define("_AM_FORMULIZE_LOE_PREVIOUS", "Previous");
+define("_AM_FORMULIZE_LOE_NEXT", "Next");
+define("_AM_FORMULIZE_LOE_TOTAL", "Total Entries: %d");
 
 define("_formulize_DE_LOE_LIMIT_REACHED1", "There are");
 define("_formulize_DE_LOE_LIMIT_REACHED2", "entries in the list.  It would take a long time to retrieve them.  You can use search terms to limit the number of entries, or");

@@ -4613,21 +4613,30 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 
 // THIS FUNCTION CALCULATES THE NUMBER OF PAGES AND DRAWS HTML FOR NAVIGATING THEM
 function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
-	if(!is_array($data)) { $data = array(); } // $data can now be a flag that says "Limit Reached"
-	$pageNav = "";
-	//print "Passed pagestart: " . $_POST['formulize_LOEPageStart'] . "<br>";
-	$pageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0; // regenerate essentially causes the user to jump back to page 0 because something about the dataset has fundamentally changed (like a new search term or something)
-	//print "Actual pagestart: $pageStart<br>";
-	print "\n<input type=hidden name=formulize_LOEPageStart id=formulize_LOEPageStart value=\"$pageStart\">\n"; // will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens
+	if(!is_array($data)) {
+		// $data can now be a flag that says "Limit Reached"
+		$data = array();
+	}
+
 	$numberPerPage = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
-	if($numberPerPage == 0 OR $_POST['hlist']) { return $pageNav; } // if all entries are supposed to be on one page for this screen, then return no navigation controls.  Also return nothing if the list is hidden.
+	if($numberPerPage == 0 OR $_POST['hlist']) {
+		// if all entries are supposed to be on one page for this screen, then return no navigation controls.  Also return nothing if the list is hidden.
+		return "";
+	}
+
+	$pageNav = "";
+	// regenerate essentially causes the user to jump back to page 0 because something about the dataset has fundamentally changed (like a new search term or something)
+	$currentPage = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
+
+	// will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens
+	print "\n<input type=hidden name=formulize_LOEPageStart id=formulize_LOEPageStart value=\"$currentPage\">\n";
 	$allPageStarts = array();
 	$pageNumbers = 0;
-	for($i=0;$i<$GLOBALS['formulize_countMasterResultsForPageNumbers'];$i=$i+$numberPerPage) {
+	for($i = 0; $i < $GLOBALS['formulize_countMasterResultsForPageNumbers']; $i = $i + $numberPerPage) {
 		$pageNumbers++;
 		$allPageStarts[$pageNumbers] = $i;
 	}
-	$userPageNumber = $pageStart > 0 ? ($pageStart/$numberPerPage)+1 : 1;
+	$userPageNumber = $currentPage > 0 ? ($currentPage / $numberPerPage) + 1 : 1;
 	if($pageNumbers > 1) {
 		if($pageNumbers > 9) {
 			if($userPageNumber < 6) {
@@ -4644,27 +4653,60 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 			$firstDisplayPage = 1;
 			$lastDisplayPage = $pageNumbers;
 		}
-		$pageNav .= "\n<p><nobr>";
-		$pageNav .= "<b>" . _AM_FORMULIZE_LOE_ONPAGE . $userPageNumber . ".</b>&nbsp;&nbsp;[&nbsp;&nbsp;";
-		if($firstDisplayPage > 1) {
-			$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('0');return false;\">" . 1 . "</a>&nbsp;&nbsp;...&nbsp;&nbsp;";
+
+		$pageNav .= <<<EOF
+<style type="text/css">
+.formulize-page-navigation {
+	display: inline-block;
+	margin: 1em 1em 1em 0;
+	padding: 0.6em;
+	background-color: #f7f7f7;
+	border-radius: 4px;
+}
+.page-navigation-label {
+	margin-right: 1em;
+}
+.formulize-page-navigation a {
+	margin: 0 0.1em;
+	padding: 0.4em 0.5em;
+	font-weight: normal;
+}
+.formulize-page-navigation a.page-navigation-active {
+	background-color: #fff;
+	border: 1px solid #70b640;
+	border-radius: 4px;
+}
+.page-navigation-total {
+	color: #555;
+	white-space: nowrap;
+}
+</style>
+EOF;
+
+		$pageNav .= "<p><div class=\"formulize-page-navigation\"><span class=\"page-navigation-label\">". _AM_FORMULIZE_LOE_ONPAGE."</span>";
+		if ($currentPage > 1) {
+			$pageNav .= "<a href=\"\" class=\"page-navigation-prev\" onclick=\"javascript:pageJump('".($currentPage - $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_PREVIOUS."</a>";
 		}
-		//print "$firstDisplayPage<br>$lastDisplayPage<br>";
-		for($i=$firstDisplayPage;$i<=$lastDisplayPage;$i++) {
-			//print "$i<br>";
-			$thisPageStart = ($i*$numberPerPage)-$numberPerPage;
-			if($thisPageStart == $pageStart) {
-				$pageNav .= "<b>$i</b>";
+		if($firstDisplayPage > 1) {
+			$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('0');return false;\">1</a><span class=\"page-navigation-skip\">—</span>";
+		}
+		for($i = $firstDisplayPage; $i <= $lastDisplayPage; $i++) {
+			$thisPageStart = ($i * $numberPerPage) - $numberPerPage;
+			if($thisPageStart == $currentPage) {
+				$pageNav .= "<a href=\"\" class=\"page-navigation-active\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>";
 			} else {
 				$pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>";
 			}
-			$pageNav .= "&nbsp;&nbsp;";
 		}
 		if($lastDisplayPage < $pageNumbers) {
-			$lastPageStart = ($pageNumbers*$numberPerPage)-$numberPerPage;
-			$pageNav .= "...&nbsp;&nbsp;<a href=\"\" onclick=\"javascript:pageJump('$lastPageStart');return false;\">" . $pageNumbers . "</a>&nbsp;&nbsp;";
+			$lastPageStart = ($pageNumbers * $numberPerPage) - $numberPerPage;
+			$pageNav .= "<span class=\"page-navigation-skip\">—</span><a href=\"\" onclick=\"javascript:pageJump('$lastPageStart');return false;\">" . $pageNumbers . "</a>";
 		}
-		$pageNav .= "]</nobr></p>\n";
+		if ($currentPage < ($GLOBALS['formulize_countMasterResultsForPageNumbers'] - $numberPerPage)) {
+			$pageNav .= "<a href=\"\" class=\"page-navigation-next\" onclick=\"javascript:pageJump('".($currentPage + $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_NEXT."</a>";
+		}
+		$pageNav .= "</div><span class=\"page-navigation-total\">".
+			sprintf(_AM_FORMULIZE_LOE_TOTAL, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span></p>\n";
 	}
-	return $pageNav;	
+	return $pageNav;
 }
