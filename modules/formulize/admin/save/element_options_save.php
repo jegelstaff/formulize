@@ -68,7 +68,7 @@ if($_POST['element_delimit']) {
     $processedValues['elements']['ele_delim'] = $_POST['element_delimit'];
   }
 }
-if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != "YYYY-mm-dd" AND $processedValues['elements']['ele_value'][0] != "") {
+if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != "YYYY-mm-dd" AND $processedValues['elements']['ele_value'][0] != "") { // still checking for old YYYY-mm-dd string, just in case.  It should never be sent back as a value now, but if we've missed something and it is sent back, leaving this check here ensures it will properly be turned into "", ie: no date.
 	if(ereg_replace("[^A-Z{}]","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
 	  $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0];
 	} else {

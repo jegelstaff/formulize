@@ -1918,14 +1918,14 @@ function prepDataForWrite($element, $ele) {
 
 
         case 'date':
-        // code below commented/added by jwe 10/23/04 to convert dates into the proper standard format
-        if ($ele != "YYYY-mm-dd" AND $ele != "") {
-            $ele = date("Y-m-d", strtotime($ele));
-        } else {
-            $ele = "{WRITEASNULL}"; // forget about this date element and go on to the next element in the form
-        }
-        $value = ''.$ele;
-        break;
+            $timestamp = strtotime($ele);
+            if ($ele != _DATE_DEFAULT AND $ele != "" AND $timestamp !== false) { // $timestamp !== false should catch everything by itself? under some circumstance not yet figured out, the other checks could be useful?
+                $ele = date("Y-m-d", $timestamp);
+            } else {
+                $ele = "{WRITEASNULL}"; // forget about this date element and go on to the next element in the form
+            }
+            $value = ''.$ele;
+            break;
 
 
         case 'sep':

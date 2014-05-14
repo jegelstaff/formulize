@@ -659,15 +659,13 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 					
 	       //$beforeQueryTime = microtime_float();
 	       
-	  
-	  if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
+		$countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main ";
+	    $countMasterResults .= "$userJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause "; 
+	    $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
+	    $countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
+		if(isset($GLOBALS['formulize_getCountForPageNumbers'])) {
 	       // If there's an LOE Limit in place, check that we're not over it first
 	       global $formulize_LOE_limit;
-
-	       $countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main ";
-	       $countMasterResults .= "$userJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause "; 
-	       $countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
-	       $countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 	       if($countMasterResultsRes = $xoopsDB->query($countMasterResults)) {
 		    $countMasterResultsRow = $xoopsDB->fetchRow($countMasterResultsRes);
 		    if($countMasterResultsRow[0] > $formulize_LOE_limit AND $formulize_LOE_limit > 0 AND !$forceQuery AND !$limitClause) {
@@ -680,44 +678,42 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    exit("Error: could not count master results.<br>".$xoopsDB->error()."<br>SQL:$countMasterResults<br>");
 	       }
 	       unset($GLOBALS['formulize_getCountForPageNumbers']);
-	  }
-         
-         // now, if there's framework in effect, get the entry ids of the entries in the main form that match the criteria, so we can use a specific query for them instead of the order clause in the master query
-         $limitByEntryId = "";
-	 $useAsSortSubQuery = "";
-         if($frid) {
-              $limitByEntryId = " AND (";
-              $entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id", $countMasterResults); // don't count the entries, select their id numbers
-              if(!$sortIsOnMain) {
-										$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
-										$sortFormObject = $form_handler->get($sortFid);
-										if($sortFieldMetaData['ele_encrypt']) {
-										     $useAsSortSubQuery = "(SELECT max(AES_DECRYPT(`$sortField`, '".getAESPassword()."')) as subsort FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. " ORDER BY subsort $sortOrder) as usethissort";
-										} else {
-										     $useAsSortSubQuery = "(SELECT max(`$sortField`) as subsort FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. " ORDER BY subsort $sortOrder) as usethissort";
-										}
-										$entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT $useAsSortSubQuery, main.entry_id as main_entry_id ", $entryIdQuery); // sorts as text which will screw up number fields
-										
-		                $thisOrderByClause = " ORDER BY usethissort $sortOrder ";
-              } else {
-                 $thisOrderByClause = $orderByClause;
-              }
-              $entryIdQuery .= " $thisOrderByClause $limitClause";
-	       $entryIdResult = $xoopsDB->query($entryIdQuery);
-	       $start = true;
-	       while($entryIdValue = $xoopsDB->fetchArray($entryIdResult)) {
-		     $limitByEntryId .= !$start ? " OR " : "";
-		     $limitByEntryId .= "main.entry_id = " . $entryIdValue['main_entry_id'];
-		     $start = false;
-	       }
-	       $limitByEntryId .= ") ";
-	       if(!$start) {
-			$limitClause = ""; // nullify the existing limitClause since we don't want to use it in the actual query 
-	       } else {
-			$limitByEntryId = "";
-	       }
-              
-         }         
+		}   
+        // now, if there's framework in effect, get the entry ids of the entries in the main form that match the criteria, so we can use a specific query for them instead of the order clause in the master query
+        $limitByEntryId = "";
+		$useAsSortSubQuery = "";
+        if($frid) {
+            $limitByEntryId = " AND (";
+            $entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id", $countMasterResults); // don't count the entries, select their id numbers
+            if(!$sortIsOnMain) {
+				$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
+				$sortFormObject = $form_handler->get($sortFid);
+				if($sortFieldMetaData['ele_encrypt']) {
+					$useAsSortSubQuery = "(SELECT max(AES_DECRYPT(`$sortField`, '".getAESPassword()."')) as subsort FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. " ORDER BY subsort $sortOrder) as usethissort";
+				} else {
+					$useAsSortSubQuery = "(SELECT max(`$sortField`) as subsort FROM ".DBPRE."formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE ".$joinTextIndex[$sortFid]. " ORDER BY subsort $sortOrder) as usethissort";
+				}
+				$entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT $useAsSortSubQuery, main.entry_id as main_entry_id ", $entryIdQuery); // sorts as text which will screw up number fields
+				$thisOrderByClause = " ORDER BY usethissort $sortOrder ";
+	        } else {
+				$thisOrderByClause = $orderByClause;
+	        }
+			$entryIdQuery .= " $thisOrderByClause $limitClause";
+		    $entryIdResult = $xoopsDB->query($entryIdQuery);
+		    $start = true;
+		    while($entryIdValue = $xoopsDB->fetchArray($entryIdResult)) {
+			    $limitByEntryId .= !$start ? " OR " : "";
+			    $limitByEntryId .= "main.entry_id = " . $entryIdValue['main_entry_id'];
+			    $start = false;
+		    }
+		    $limitByEntryId .= ") ";
+		    if(!$start) {
+				$limitClause = ""; // nullify the existing limitClause since we don't want to use it in the actual query 
+		    } else {
+				$limitByEntryId = "";
+		    }
+	    }
+      
 
     $selectClause = "";
     $sqlFilterElements = array();

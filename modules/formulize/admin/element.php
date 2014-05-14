@@ -363,7 +363,7 @@ if($ele_type=='text') {
   $grid_elements_criteria = new Criteria();
   $grid_elements_criteria->setSort('ele_order');
   $grid_elements_criteria->setOrder('ASC');
-  $grid_elements = $element_handler->getObjects2($grid_elements_criteria, $fid);
+  $grid_elements = $element_handler->getObjects($grid_elements_criteria, $fid);
   foreach($grid_elements as $this_element) {
     $grid_start_options[$this_element->getVar('ele_id')] = $this_element->getVar('ele_colhead') ? printSmart(trans($this_element->getVar('ele_colhead'))) : printSmart(trans($this_element->getVar('ele_caption')));
   }

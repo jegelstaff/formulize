@@ -59,7 +59,7 @@ foreach($processedValues['elements'] as $property=>$values) {
 }
 
 // retrieve all the elements that belong to this form
-$elements = $element_handler->getObjects2(null,$fid);
+$elements = $element_handler->getObjects(null,$fid);
 
 // get the new order of the elements...
 $newOrder = explode("drawer-2[]=", str_replace("&", "", $_POST['elementorder']));
