@@ -1081,10 +1081,10 @@ class formulizeElementRenderer{
 					return false;
 				}
 			break;
-		}
+		} // end element-type case
 		if(is_object($form_ele) AND !$isDisabled AND $this->_ele->hasData) {
 			if($previousEntryUI) {
-				$previousEntryUIRendered = "&nbsp;&nbsp;" . $previousEntryUI->render();				
+				$previousEntryUIRendered = "&nbsp;&nbsp;" . $previousEntryUI->render();
 			} else {
 				$previousEntryUIRendered = "";
 			}
@@ -1095,7 +1095,9 @@ class formulizeElementRenderer{
 				$elementCue = "";
 			}
 			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
-			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$elementCue); // reuse caption, put two spaces between element and previous entry UI
+			// reuse caption, put two spaces between element and previous entry UI
+			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$elementCue);
+			$form_ele_new->formulize_element = $this->_ele;
 			if($ele_desc != "") {
 				$ele_desc = html_entity_decode($ele_desc,ENT_QUOTES);
 				$ele_desc = $myts->makeClickable($ele_desc);
