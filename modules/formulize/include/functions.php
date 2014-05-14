@@ -2351,7 +2351,7 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
             return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
         }
     } elseif ($ele_type == 'derived') {
-        return $myts->makeClickable(printSmart(trans($matchtext), $textWidth)); // allow HTML codes in derived values
+        return formulize_text_to_hyperlink($matchtext, $textWidth); // allow HTML codes in derived values
     } else { // regular element
         formulize_benchmark("done formatting, about to print");
         return _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted);
@@ -2361,14 +2361,21 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
 
 // this function simply handles the operations for formatLinks when a plain element has been identified (not a linked selectbox, associated textbox, etc, etc)
 function _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted) {
-    global $myts;
     if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
         $elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
         $matchtext = $elementTypeHandler->formatDataForList($matchtext, $handle, $entryBeingFormatted);
         return $matchtext;
     } else {
-        return $myts->makeClickable(printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth));
+        global $myts;
+        return formulize_text_to_hyperlink($myts->htmlSpecialChars($matchtext), $textWidth);
     }
+}
+
+
+function formulize_text_to_hyperlink($text, $textWidth) {
+    global $myts;
+    $text = $myts->makeClickable(printSmart(trans($text), $textWidth));
+    return str_replace("<a ", "<a target='_blank' ", $text);
 }
 
 
