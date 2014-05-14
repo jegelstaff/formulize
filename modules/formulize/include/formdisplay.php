@@ -124,7 +124,6 @@ class formulize_themeForm extends XoopsThemeForm {
 				}
 			} elseif ( !$ele->isHidden() ) {
 				$ret .= "<tr id='formulize-".$ele->getName()."' class='".$ele->getClass()."' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head$label_class'>";
-				$ret .= "<tr id='formulize-".$ele->getName()."' class='".$ele->getClass()."' valign='top' align='" . _GLOBAL_LEFT . "'><td class='head'>";
 				if (($caption = $ele->getCaption()) != '') {
 					$ret .=
 					"<div class='xoops-form-element-caption" . ($ele->isRequired() ? "-required" : "" ) . "'>"
