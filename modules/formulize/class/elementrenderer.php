@@ -984,6 +984,7 @@ class formulizeElementRenderer{
 						15,
 						""
 					);
+					$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
 				}
 				else
 				{
@@ -1001,6 +1002,7 @@ class formulizeElementRenderer{
 						$timestampToUse
 						//$ele_value[0]
 					);
+					$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
 				} // end of check to see if the default setting is for real
 				// added validation code - sept 5 2007 - jwe
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
