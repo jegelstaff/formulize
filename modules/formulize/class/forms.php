@@ -268,6 +268,25 @@ EOF;
         return $element_values;
     }
 
+    public function default_form_screen() {
+        $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+        return $screen_handler->get($this->defaultform);
+    }
+
+    public function default_list_screen() {
+        $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+        return $screen_handler->get($this->defaultlist);
+    }
+
+    public function entry_count() {
+        global $xoopsDB;
+        $result = $xoopsDB->query("select count(*) as row_count from ".$xoopsDB->prefix("formulize_".$this->form_handle));
+        if (false == $result) {
+            error_log(mysql_error());
+        }
+        list($count) = $xoopsDB->fetchRow($result);
+        return $count;
+    }
 
     function __get($name) {
         if (!isset($this->$name)) {
