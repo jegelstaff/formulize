@@ -904,3 +904,28 @@ th {
 table.outer {
     border: 1px solid $colourPrimary;
 }
+
+.formulize-page-navigation {
+    display: inline-block;
+    margin: 1em 1em 1em 0;
+    padding: 0.6em;
+    background-color: #f7f7f7;
+    border-radius: 4px;
+}
+.page-navigation-label {
+    margin-right: 1em;
+}
+.formulize-page-navigation a {
+    margin: 0 0.1em;
+    padding: 0.4em 0.5em;
+    font-weight: normal;
+}
+.formulize-page-navigation a.page-navigation-active {
+    background-color: #fff;
+    border: 1px solid #70b640;
+    border-radius: 4px;
+}
+.page-navigation-total {
+    color: #555;
+    white-space: nowrap;
+}

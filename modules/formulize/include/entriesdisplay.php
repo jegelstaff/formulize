@@ -4654,35 +4654,6 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
 			$lastDisplayPage = $pageNumbers;
 		}
 
-		$pageNav .= <<<EOF
-<style type="text/css">
-.formulize-page-navigation {
-	display: inline-block;
-	margin: 1em 1em 1em 0;
-	padding: 0.6em;
-	background-color: #f7f7f7;
-	border-radius: 4px;
-}
-.page-navigation-label {
-	margin-right: 1em;
-}
-.formulize-page-navigation a {
-	margin: 0 0.1em;
-	padding: 0.4em 0.5em;
-	font-weight: normal;
-}
-.formulize-page-navigation a.page-navigation-active {
-	background-color: #fff;
-	border: 1px solid #70b640;
-	border-radius: 4px;
-}
-.page-navigation-total {
-	color: #555;
-	white-space: nowrap;
-}
-</style>
-EOF;
-
 		$pageNav .= "<p><div class=\"formulize-page-navigation\"><span class=\"page-navigation-label\">". _AM_FORMULIZE_LOE_ONPAGE."</span>";
 		if ($currentPage > 1) {
 			$pageNav .= "<a href=\"\" class=\"page-navigation-prev\" onclick=\"javascript:pageJump('".($currentPage - $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_PREVIOUS."</a>";
