@@ -1040,3 +1040,8 @@ td.formulize-controls {
     // modify the background color instead of the text color so that this text always contrasts with the background
     color: lighten($colorTableHeaderBackground, 18%);
 }
+
+form#formulize td.even textarea, form#formulize td.odd textarea {
+    // expand textarea elements in Formulize data entry forms to fit the width of their container td
+    width: 99%;
+}

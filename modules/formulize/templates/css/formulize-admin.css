@@ -983,6 +983,9 @@ td.formulize-controls {
 .xoops-form-element-help {
   color: #a2cee7; }
 
+form#formulize td.even textarea, form#formulize td.odd textarea {
+  width: 99%; }
+
 .CodeMirror {
   line-height: 1em;
   font-family: monospace;
