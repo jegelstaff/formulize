@@ -700,9 +700,6 @@ th {
 table.outer {
   border: 1px solid #59a7d4; }
 
-div.xo-theme-form > table {
-  table-layout: fixed; }
-
 /* horizontal lines between form questions */
 div.xo-theme-form > table.outer > tbody > tr > td {
   border-bottom: 1px solid #59a7d4; }
