@@ -874,6 +874,115 @@ table.outer {
   color: #555;
   white-space: nowrap; }
 
+a.tooltip {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 11pt;
+  cursor: help;
+  position: relative;
+  background: transparent;
+  background-color: transparent; }
+
+a.tooltip:before {
+  content: "\f110";
+  font-size: 15pt;
+  color: #59a7d4; }
+
+a.tooltip > span {
+  display: none; }
+
+a.tooltip:hover {
+  background: transparent;
+  background-color: transparent; }
+
+a.tooltip:hover > span {
+  position: absolute;
+  top: 2em;
+  left: -5em;
+  width: 25em;
+  display: block;
+  background-color: white;
+  color: black;
+  padding: 1.5em;
+  line-height: 1.5em;
+  opacity: 0.95;
+  border: 2px solid #59a7d4;
+  border-radius: 6px;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.3); }
+
+td a.heading-locked, td a.heading-unlocked {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 11pt;
+  float: right;
+  margin-left: 0.3em;
+  color: #aad2e9; }
+
+td a.heading-locked {
+  color: #d3e7f3; }
+
+.heading-locked:before {
+  content: "\f113"; }
+
+.heading-unlocked:before {
+  content: "\f112"; }
+
+td a.header-info-link {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 11pt;
+  float: right;
+  color: #aad2e9; }
+
+.header-info-link:before {
+  content: "\f110"; }
+
+.heading-locked:hover, .heading-unlocked:hover, .header-info-link:hover {
+  text-shadow: 0px 0px 2px #1e5676; }
+
+a.loe-edit-entry {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 11pt;
+  font-size: 12pt;
+  margin: 0;
+  margin-left: 0.5em;
+  padding: 0.1em; }
+
+.loe-edit-entry:before {
+  content: "\f10d"; }
+
+a.loe-edit-entry:hover {
+  text-shadow: 0px 0px 2px #14384d; }
+
+td.formulize-controls {
+  white-space: nowrap; }
+
+.xoops-form-element-help {
+  color: #a2cee7; }
+
 .CodeMirror {
   line-height: 1em;
   font-family: monospace;
