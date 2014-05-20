@@ -112,11 +112,15 @@ function displayGraph($graphType, $fid, $frid, $labelElement, $dataElement, $ope
  */
 function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {
 
+    // Code from entriesdisplay to get the proper data based on selected views
+
+    // Set up initial vars
     global $xoopsUser;
 
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
     $mid = getFormulizeModId();
     $gperm_handler =& xoops_gethandler('groupperm');
+    $member_handler =& xoops_gethandler('member');
     $view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
     $view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
     $uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
@@ -124,108 +128,37 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
     print $graphOptions['defaultview'];
     print $_POST['loadreport'];
 
-    //code below is from entriesDisplay, only 1 part copied below is in use in this situation I think
-/*
-    // handling change in view, and loading reports/saved views if necessary
-    if($_POST['loadreport']) {
-        //$_POST['currentview'] replaced by $graphOptions['defaultview']; and there's no "p" at the start only the number
-        //so no need for substr, however I don't know what this does to legacy support
-        if(substr($_POST['currentview'], 1, 4) == "old_") { // legacy report
-            // load old report values and then assign them to the correct $_POST keys in order to present the view
-            $loadedView = $_POST['currentview'];
-            $settings['loadedview'] = $loadedView;
-            // kill the quicksearches
-            foreach($_POST as $k=>$v) {
-                if(substr($k, 0, 7) == "search_" AND $v != "") {
-                    unset($_POST[$k]);
-                }
-            }
-
-            list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols']) = loadOldReport(substr($_POST['currentview'], 5), $fid, $view_groupscope);
-
-        } elseif(is_numeric(substr($_POST['currentview'], 1))) { // saved or published view
-            print "in here";
-            print $graphOptions['defaultview'];
-            $loadedView = $_POST['currentview'];
-            $settings['loadedview'] = $loadedView;
-            // kill the quicksearches
-            foreach($_POST as $k=>$v) {
-                if(substr($k, 0, 7) == "search_" AND $v != "") {
-                    unset($_POST[$k]);
-                }
-            }
-            list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
-            // explode quicksearches into the search_ values
-            $allqsearches = explode("&*=%4#", $quicksearches);
-            $colsforsearches = explode(",", $_POST['oldcols']);
-            for($i=0;$i<count($allqsearches);$i++) {
-                if($allqsearches[$i] != "") {
-                    $_POST["search_" . str_replace("hiddencolumn_", "", dealWithDeprecatedFrameworkHandles($colsforsearches[$i], $frid))] = $allqsearches[$i]; // need to remove the hiddencolumn indicator if it is present
-                    if(strstr($colsforsearches[$i], "hiddencolumn_")) {
-                        unset($colsforsearches[$i]); // remove columns that were added to the column list just so we would know the name of the hidden searches
-                    }
-                }
-            }
-            $_POST['oldcols'] = implode(",",$colsforsearches); // need to reconstruct this in case any columns were removed because of persistent searches on a hidden column
-        }
-
-        $currentView = $_POST['currentview'];
-
-        // need to check that the user is allowed to have this scope, unless the view is unlocked
-        // only works for the default levels of views, not specific group selections that a view might have...that would be more complicated and could be built in later
-        if($_POST['lockcontrols']) {
-            if($currentView == "all" AND !$view_globalscope) {
-                $currentView = "group";
-            }
-            if($currentView == "group" AND !$view_groupscope AND !$view_globalscope) {
-                $currentView = "mine";
-            }
-        }
-        // must check for this and set it here, inside this section, where we know for sure that $_POST['lockcontrols'] has been set based on the database value for the saved view, and not anything else sent from the user!!!  Otherwise the user might be injecting a greater scope for themselves than they should have!
-        //$currentViewCanExpand = $_POST['lockcontrols'] ? false : true; // if the controls are not locked, then we can expand the view for the user so they can see things they wouldn't normally see
-        //true in this case? probably
-
-    } elseif($_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
-        $currentView = $_POST['advscope'];
-    } elseif($_POST['currentview']) { // could have been unset by deletion of a view or something else, so we must check to make sure it exists before we override the default that was determined above
-        if(is_numeric(substr($_POST['currentview'], 1))) {
-            // a saved view was requested as the current view, but we don't want to load the entire thing....this means that we just want to use the view to generate the scope, we don't want to load all settings.  So we have to load the view, but discard everything but the view's currentview value
-            // if we were supposed to load the whole thing, loadreport would have been set in post and the above code would have kicked in
-            $loadedViewSettings = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
-            $currentview = $loadedViewSettings[0];
-        } else {
-            $currentView = $_POST['currentview'];
-        }
-    } /*elseif($loadview) {
-        $currentView = $loadview;
-    }*/ //Not used, probably
+    // One part of the loadReport system, the most pertinent one
+    // Other branches such as legacy support is not included because the lack of way to test
     if(is_numeric($graphOptions['defaultview'])) { // saved or published view
         print "in here";
         print $graphOptions['defaultview'];
+        // As "p" is removed in defaultview and needed by formulize_gatherDataSet
         $settings['loadedview'] = "p" . $graphOptions['defaultview'];
-        // kill the quicksearches
+
+        // kill the quicksearches??
+        // Not quite sure what this does probably deletes all the search terms
+        // put in entriesdisplay textfield if empty to be replaced from db
         foreach($_POST as $k=>$v) {
             if(substr($k, 0, 7) == "search_" AND $v != "") {
                 unset($_POST[$k]);
             }
         }
+        // Not all vars are needed because it's based on entriesdisplay need
+        // Right now the needed ones are:
+        // currentview, asearch, sort, order
         list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport($graphOptions['defaultview'], $fid, $frid);
-        // explode quicksearches into the search_ values
-        $allqsearches = explode("&*=%4#", $quicksearches);
-        $colsforsearches = explode(",", $_POST['oldcols']);
-        for($i=0;$i<count($allqsearches);$i++) {
-            if($allqsearches[$i] != "") {
-                $_POST["search_" . str_replace("hiddencolumn_", "", dealWithDeprecatedFrameworkHandles($colsforsearches[$i], $frid))] = $allqsearches[$i]; // need to remove the hiddencolumn indicator if it is present
-                if(strstr($colsforsearches[$i], "hiddencolumn_")) {
-                    unset($colsforsearches[$i]); // remove columns that were added to the column list just so we would know the name of the hidden searches
-                }
-            }
-        }
-        $_POST['oldcols'] = implode(",",$colsforsearches); // need to reconstruct this in case any columns were removed because of persistent searches on a hidden column
     }
 
+    if ($_POST['currentview'] == "") {
+        // when loadReport isn't run (mine, group, all views)
+        $currentView = $graphOptions['defaultview'];
+    } else {
         $currentView = $_POST['currentview'];
+    }
 
+    // Set up the advanced search based on the text filter inputted in entriesdisplay
+    // right now there is no filter field here
     $settings['asearch'] = $_POST['asearch'];
     if($_POST['asearch']) {
         $as_array = explode("/,%^&2", $_POST['asearch']);
@@ -244,15 +177,10 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
         }
     }
 
-    list($scope, $currentView) = buildScope($currentView, null, $gperm_handler, $uid, $groups, $fid, $mid, true);
-    $data = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, intval($_POST['forcequery']));
-    print_r($data);
-	// getting data from DB
-	if (is_int($frid) && $frid > 0) {
-		$dbData = getData($frid, $fid);
-	} else {
-		$dbData = getData("", $fid);
-	}
+    list($scope, $currentView) = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, true);
+    $dbData = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, intval($_POST['forcequery']));
+
+    // End of code from entriesdisplay
 
 	foreach ($dbData as $entry) {
 		// mayor - OR array of mayors if there's more than one in the dataset, depending on the one-to-may in a relationship
@@ -281,7 +209,6 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 	$elementObject = $elementHandler->get($dataElement);
 	$dataElement = $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : printSmart($elementObject->getVar('ele_caption'));
 	// end of Update
-	
 	switch($operation) {
 		case "count" :
 			// count the values in each label of the array
@@ -346,7 +273,9 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 	$BARCOLOR_R = 143;
 	$BARCOLOR_G = 190;
 	$BARCOLOR_B = 88;
-	
+
+    unset($graphOptions['defaultview']);
+
 	if (sizeof($graphOptions) > 0) {
 		foreach ($graphOptions as $graphoption => $value) {
 
@@ -529,6 +458,8 @@ function initializeZeros($keys) {
 function echoBR() {
 	echo "<br \>";
 }
+
+// Functions from entriesdisplay, trimmed to useful bits
 
 function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order="", $frid, $fid, $scope, $forcequery = 0) {
     if (!is_array($searches))
@@ -800,4 +731,5 @@ function loadReport($id, $fid, $frid) {
     $to_return[12] = $thisview[0]['sv_quicksearches'];
     return $to_return;
 }
+
 ?>
