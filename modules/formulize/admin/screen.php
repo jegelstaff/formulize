@@ -430,6 +430,7 @@ if($screen_id != "new" && $settings['type'] == 'graph') {
           $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
       }
   }
+  unset($defaultViewOptions['blank']);
   $graph_options['defaultviewoptions'] = $defaultViewOptions;
   $graph_options['defaultview'] = $screen->getVar('defaultview');
 }
