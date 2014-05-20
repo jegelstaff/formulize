@@ -32,6 +32,8 @@ $screen->setVar('ops',$screens['ops']);
 $screen->setVar('labelelem',$screens['labelelem']);
 $screen->setVar('dataelem',$screens['dataelem']);
 $screen->setVar('defaultview',$screens['defaultview']);
+$screen->setVar('usecurrentviewlist',$screens['usecurrentviewlist']);
+$screen->setVar('limitviews',$screens['limitviews']);
 
 
 if(!$screen_handler->insert($screen)) {

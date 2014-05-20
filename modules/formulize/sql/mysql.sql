@@ -388,6 +388,8 @@ CREATE TABLE `formulize_screen_graph` (
   `labelelem` int(8) NOT NULL default 0,
   `dataelem` int(8) NOT NULL default 0,
   `defaultview` varchar(20) NOT NULL default 'all',
+  `limitviews` text NOT NULL,
+  `usecurrentviewlist` varchar(255) NOT NULL default 'Current View: ',
   PRIMARY KEY (`formid`),
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;

@@ -417,6 +417,7 @@ if($screen_id != "new" && $settings['type'] == 'graph') {
   $viewNames = $formObj->getVar('viewNames');
   $viewFrids = $formObj->getVar('viewFrids');
   $defaultViewOptions = array();
+  $limitViewOptions = array();
   $defaultViewOptions['blank'] = _AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW;
   $defaultViewOptions['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
   $defaultViewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
@@ -430,9 +431,15 @@ if($screen_id != "new" && $settings['type'] == 'graph') {
           $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
       }
   }
+  $limitViewOptions['allviews'] = _AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT;
+  $limitViewOptions += $defaultViewOptions;
+  unset($limitViewOptions['blank']);
   unset($defaultViewOptions['blank']);
   $graph_options['defaultviewoptions'] = $defaultViewOptions;
   $graph_options['defaultview'] = $screen->getVar('defaultview');
+  $graph_options['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
+  $graph_options['limitviewoptions'] = $limitViewOptions;
+  $graph_options['limitviews'] = $screen->getVar('limitviews');
 }
 
 // common values should be assigned to all tabs
