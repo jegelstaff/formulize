@@ -125,14 +125,10 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
     $view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
     $uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-    print $graphOptions['defaultview'];
-    print $_POST['loadreport'];
 
     // One part of the loadReport system, the most pertinent one
     // Other branches such as legacy support is not included because the lack of way to test
     if(is_numeric($graphOptions['defaultview'])) { // saved or published view
-        print "in here";
-        print $graphOptions['defaultview'];
         // As "p" is removed in defaultview and needed by formulize_gatherDataSet
         $settings['loadedview'] = "p" . $graphOptions['defaultview'];
 
