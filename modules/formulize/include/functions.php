@@ -4778,18 +4778,25 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
     $counter = 1;
     static $cachedFormIds = array();
     static $cachedElementIds = array();
+    static $cached_object_type = array();
     if (!isset($cachedFormIds[$handle])) {
         if ($handle == "mod_datetime" OR $handle == "creation_datetime" OR $handle == "creator_email") {
             $cachedFormIds[$handle] = $fid;
             $cachedElementIds[$handle] = $handle;
+            $cached_object_type[$handle] = "email";
+            if ($handle == "mod_datetime" OR $handle == "creation_datetime") {
+                $cached_object_type[$handle] = "date";
+            }
         } else {
             $element_handler = xoops_getmodulehandler('elements', 'formulize');
             $elementObject = $element_handler->get($handle);
             $cachedFormIds[$handle] = $elementObject->getVar('id_form');
             $cachedElementIds[$handle] = $elementObject->getVar('ele_id');
+            $cached_object_type[$handle] = $elementObject->getVar('ele_type');
         }
     }
     $fid = $cachedFormIds[$handle];
+    $element_type = $cached_object_type[$handle];
     foreach ($value as $valueId=>$v) {
         if (is_numeric($v)) {
             $elstyle = 'style="text-align: right;"';
@@ -4797,6 +4804,10 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         $thisEntryId = isset($localIds[$valueId]) ? $localIds[$valueId] : $entryId;
         if ($counter == 1 AND $deDisplay) {
             $output .= '<div style="float: left; margin-right: 5px; margin-bottom: 5px;"><a href="" onclick="javascript:renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.');return false;"><img src="'.XOOPS_URL.'/modules/formulize/images/kedit.gif" /></a></div>';
+        }
+        if ("date" == $element_type) {
+            $time_value = strtotime($v);
+            $v = (false === $time_value) ? "" : date(_SHORTDATESTRING, $time_value);
         }
         $output .= '<div class=\'main-cell-div\' id=\'cellcontents_'.$row.'_'.$column.'\'><span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle). '</span>';
         if ($counter<$countOfValue) {
