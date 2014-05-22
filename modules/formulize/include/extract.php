@@ -439,7 +439,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	     } else {
 		     $linkkeys = "";
 		     $linkisparent = "";
-		     $linkformids = "";
+             $linkformids = array();
 		     $linktargetids = "";
 	 $linkselfids = "";
 		     $linkcommonvalue = "";
