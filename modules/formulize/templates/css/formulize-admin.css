@@ -983,6 +983,9 @@ td.formulize-controls {
 .xoops-form-element-help {
   color: #a2cee7; }
 
+form#formulize td.even, form#formulize td.odd {
+  width: 70%; }
+
 form#formulize td.even textarea, form#formulize td.odd textarea {
   width: 99%; }
 

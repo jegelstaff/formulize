@@ -1041,6 +1041,10 @@ td.formulize-controls {
     color: lighten($colorTableHeaderBackground, 18%);
 }
 
+form#formulize td.even, form#formulize td.odd {
+    width: 70%
+}
+
 form#formulize td.even textarea, form#formulize td.odd textarea {
     // expand textarea elements in Formulize data entry forms to fit the width of their container td
     width: 99%;
