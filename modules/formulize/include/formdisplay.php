@@ -1289,6 +1289,20 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		$value_source_form = $elementq[0]['fl_form1_id'];		
 	}
 
+    if (0 == strlen($element_to_write)) {
+        error_log("Relationship $frid for subform $subform_id on form $fid is invalid.");
+        $to_return = array("c1"=>"", "c2"=>"", "sigle"=>"");
+        global $xoopsUser;
+        if (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+            if (0 == $frid) {
+                $to_return['single'] = "This subform cannot be shown because no relationship is active.";
+            } else {
+                $to_return['single'] = "This subform cannot be shown because the relationship for subform ".
+                    "$subform_id on form $fid is invalid.";
+            }
+        }
+        return $to_return;
+    }
 
 	// check for adding of a sub entry, and handle accordingly -- added September 4 2006
 	static $subformInstance;
@@ -1380,7 +1394,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		$sub_entries[$subform_id][0] = $sub_single_result['entry'];
 	}
 
-	if(!is_array($sub_entries[$subform_id])) { $sub_entries[$subform_id] = array(); }
+    if(!is_array($sub_entries[$subform_id])) {
+        $sub_entries[$subform_id] = array();
+    }
 
 	if($sub_entry_new AND !$sub_single AND $_POST['target_sub'] == $subform_id) {
 		for($i=0;$i<$_POST['numsubents'];$i++) {
