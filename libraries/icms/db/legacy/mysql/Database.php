@@ -218,6 +218,7 @@ abstract class icms_db_legacy_mysql_Database extends icms_db_legacy_Database {
 			$this->logger->addQuery($sql);
 			return $result;
 		} else {
+			error_log("SQL query failed: $sql");
 			$this->logger->addQuery($sql, $this->error(), $this->errno());
 			return false;
 		}
