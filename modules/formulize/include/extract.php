@@ -199,13 +199,15 @@ function prepvalues($value, $field, $entry_id) {
                     }
                     $uidFilter = extract_makeUidFilter($uids);
                     $listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
-                    $names = go("SELECT uname, name FROM " . DBPRE . "users WHERE $uidFilter ORDER BY $listtype");
                     $value = "";
-                    foreach($names as $thisname) {
-                        if($thisname[$listtype]) {
-                            $value .= "*=+*:" . $thisname[$listtype];
-                        } else {
-                            $value .= "*=+*:" . $thisname['uname'];
+                    if (strlen($uidFilter) > 4) {   // skip this when $uidFilter = "uid=" becaues the query will fail
+                        $names = go("SELECT uname, name FROM " . DBPRE . "users WHERE $uidFilter ORDER BY $listtype");
+                        foreach($names as $thisname) {
+                            if($thisname[$listtype]) {
+                                $value .= "*=+*:" . $thisname[$listtype];
+                            } else {
+                                $value .= "*=+*:" . $thisname['uname'];
+                            }
                         }
                     }
                 } else {
