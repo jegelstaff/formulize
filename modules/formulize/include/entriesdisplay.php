@@ -4349,7 +4349,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	$ORfilter = "";
 	$individualORSearches = array();
 	global $xoopsUser;
-	foreach($searches as $key=>$master_one_search) { // $key is handles for frameworks, and ele_handles for non-frameworks.
+	foreach($searches as $key=>$master_one_search) { // $key is the element handle
 
 		// convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
 		$count = preg_match("/^[bB][eE][tT][wW][eE][eE][nN] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4}) [aA][nN][dD] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4})\$/", $master_one_search, $matches);
@@ -4364,12 +4364,28 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		
 			$addToItsOwnORFilter = false; // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
 		
-      // remove the qsf_ parts to make the quickfilter searches work
-      if(substr($one_search, 0, 4)=="qsf_") {
-        $qsfparts = explode("_", $one_search);
-				// need to determine if the key is a multi selection element or not.  If it is, then this should not be a straight equals!
-        $one_search = "=".$qsfparts[2];
-      }
+			$element_handler = xoops_getmodulehandler('elements','formulize');
+			$elementObject = $element_handler->get($key);
+			$ele_type = $elementObject->getVar('ele_type');
+
+		    // remove the qsf_ parts to make the quickfilter searches work
+		    if(substr($one_search, 0, 4)=="qsf_") {
+              $qsfparts = explode("_", $one_search);
+			  $allowsMulti = false;
+			  if($ele_type == "select") {
+				$ele_value = $elementObject->getVar('ele_value');
+				if($ele_value[1]) {
+				  $allowsMulti = true;
+				}
+			  } elseif($ele_type == "checkbox") {
+				$allowsMulti = true;
+		      }
+			  if($allowsMulti) {
+				$one_search = $qsfparts[2]; // will default to using LIKE since there's no operator
+			  } else {
+				$one_search = "=".$qsfparts[2];
+			  }
+		    }
 	
 			// strip out any starting and ending ! that indicate that the column should not be stripped
 			if(substr($one_search, 0, 1) == "!" AND substr($one_search, -1) == "!") {
@@ -4377,12 +4393,11 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 			}
 			
 			// look for OR indicators...if all caps OR is at the front, then that means that this search is to put put into a separate set of OR filters that gets appended as a set to the main set of AND filters
-      $addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms			
+		    $addToORFilter = false; // flag to indicate if we need to apply the current search term to a set of "OR'd" terms			
 			if(substr($one_search, 0, 2) == "OR" AND strlen($one_search) > 2) {
 				$addToORFilter = true;
 				$one_search = substr($one_search, 2);
 			}
-			
 			
 			// look for operators
 			$operators = array(0=>"=", 1=>">", 2=>"<", 3=>"!");
@@ -4393,7 +4408,10 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 				$operator = substr($one_search, 0, $startpoint);
         if($operator == "!") { $operator = "NOT LIKE"; }
 				$one_search = substr($one_search, $startpoint);
+			}
 				
+			if($ele_type=="date") {
+				$one_search = date('Y-m-d', strtotime($one_search));
 			}
 			
 			// look for blank search terms and convert them to {BLANK} so they are handled properly
