@@ -125,7 +125,8 @@ function prepvalues($value, $field, $entry_id) {
             // need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
 
             if($GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
-                list($sourceMeta[1]) = convertElementIdsToElementHandles(array($source_ele_value[11]), $sourceMeta[0]);
+                $source_ele_value[11] = is_array($source_ele_value[11]) ? $source_ele_value[11] : array($source_ele_value[11]);
+                list($sourceMeta[1]) = convertElementIdsToElementHandles($source_ele_value[11], $sourceMeta[0]);
             } elseif(isset($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) AND $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] != "none") {
                 // EV_MULTIPLE_LIST_COLUMNS may be an array now
                 if (!is_array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]))
