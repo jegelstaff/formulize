@@ -4348,6 +4348,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	$ORstart = 1;
 	$ORfilter = "";
 	$individualORSearches = array();
+    $element_handler = xoops_getmodulehandler('elements','formulize');
 	global $xoopsUser;
 	foreach($searches as $key=>$master_one_search) { // $key is the element handle
 
@@ -4359,14 +4360,17 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 
 		// split search based on new split string
 		$searchArray = explode("//", $master_one_search);
-		
+
 		foreach($searchArray as $one_search) {
-		
-			$addToItsOwnORFilter = false; // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
-		
-			$element_handler = xoops_getmodulehandler('elements','formulize');
-			$elementObject = $element_handler->get($key);
-			$ele_type = $elementObject->getVar('ele_type');
+            // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
+            $addToItsOwnORFilter = false;
+
+            if ("creation_uid" == $key) {
+                $ele_type = "text";
+            } else {
+                $elementObject = $element_handler->get($key);
+                $ele_type = $elementObject->getVar('ele_type');
+            }
 
 		    // remove the qsf_ parts to make the quickfilter searches work
 		    if(substr($one_search, 0, 4)=="qsf_") {
