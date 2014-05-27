@@ -1049,3 +1049,8 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     // expand textarea elements in Formulize data entry forms to fit the width of their container td
     width: 99%;
 }
+
+#listofentries div.main-cell-div input {
+    // quick search filters on list screens
+    width: 7em;
+}

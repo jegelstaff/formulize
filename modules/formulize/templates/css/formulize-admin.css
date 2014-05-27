@@ -989,6 +989,9 @@ form#formulize td.even, form#formulize td.odd {
 form#formulize td.even textarea, form#formulize td.odd textarea {
   width: 99%; }
 
+#listofentries div.main-cell-div input {
+  width: 7em; }
+
 .CodeMirror {
   line-height: 1em;
   font-family: monospace;
