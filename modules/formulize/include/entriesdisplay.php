@@ -1777,16 +1777,28 @@ function viewEntryButton($linkContents, $overrideId="", $overrideScreen="") {
 // returnOnly is used to return the HTML code for the boxes, and that only happens when we are gathering the boxes because a custom list template is in use
 // $filtersRequired can be 'true' which means include all valid filters, or it can be a list of fields (matching values in the cols array) which require filters
 function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, $returnOnly=false, $hiddenQuickSearches, $filtersRequired=array()) {
-  
-	$quickSearchBoxes = array();
-	if(!$returnOnly) { print "<tr>"; }
-	if($useBoxes != 2 OR $useLinks) {
-		if(!$returnOnly) { print "<td class=head>&nbsp;</td>\n"; }
-	}
-	
+    $quickSearchBoxes = array();
+
+    if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/docs/search_help_"._LANGCODE.".html")) {
+        $search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help_"._LANGCODE.".html";
+    } elseif(file_exists(XOOPS_ROOT_PATH."/modules/formulize/docs/search_help_"._LANGCODE.".xhtml")) {
+        $search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help_"._LANGCODE.".xhtml";
+    } else {
+        $search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help.xhtml";
+    }
+    $search_help = "<a href=\"\" class=\"header-info-link\" onclick=\"javascript:showPop('".$search_help_filepath."'); return false;\" title=\""._formulize_DE_SEARCH_POP_HELP."\"></a>";
+
+    if(!$returnOnly) {
+        print "<tr>";
+    }
+    if($useBoxes != 2 OR $useLinks) {
+        if(!$returnOnly) {
+            print "<td class='head'>$search_help</td>\n";
+            $search_help = "";
+        }
+    }
+
 	for($i=0;$i<count($cols);$i++) {
-		
-		
 		$classToUse = "head column column".$i;
 		if(!$returnOnly) {
 			if($i==0) {
@@ -1794,7 +1806,13 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 			}
 			print "<td class='$classToUse' id='celladdress_1_$i'><div class='main-cell-div' id='cellcontents_1_".$i."'>\n";
 		}
-    //formulize_benchmark("drawing one search");
+
+        if (0 == $i) {
+            // if search_help was displayed earlier, this will be blank
+            print $search_help;
+        }
+
+        //formulize_benchmark("drawing one search");
 		$search_text = isset($searches[$cols[$i]]) ? strip_tags(htmlspecialchars($searches[$cols[$i]]), ENT_QUOTES) : "";
 		$search_text = get_magic_quotes_gpc() ? stripslashes($search_text) : $search_text;
 		$boxid = "";
@@ -1807,27 +1825,17 @@ function drawSearches($searches, $cols, $useBoxes, $useLinks, $numberOfButtons, 
 			}
 			$clear_help_javascript = "onfocus=\"javascript:clearSearchHelp(this.form, '" . _formulize_DE_SEARCH_HELP . "');\"";
 		}
-		if($i==0) {
-			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/docs/search_help_"._LANGCODE.".html")) {
-				$search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help_"._LANGCODE.".html";
-			} elseif(file_exists(XOOPS_ROOT_PATH."/modules/formulize/docs/search_help_"._LANGCODE.".xhtml")) {
-				$search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help_"._LANGCODE.".xhtml";
-			} else {
-				$search_help_filepath = XOOPS_URL."/modules/formulize/docs/search_help.xhtml";
-			}
-			$helpText = "\n&nbsp;<a href=\"\" class=\"header-info-link\" onclick=\"javascript:showPop('".$search_help_filepath."'); return false;\" title=\""._formulize_DE_SEARCH_POP_HELP."\"><a>\n";
-		}
-    //formulize_benchmark("finished prep of search box");
-		$quickSearchBoxes[$cols[$i]]['search'] = "<input type=text $boxid name='search_" . $cols[$i] . "' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
-    //formulize_benchmark("made search box, starting filter");
-    if(is_array($filtersRequired) OR $filtersRequired === true) {
-      if($filtersRequired === true OR in_array($cols[$i], $filtersRequired)) {
-        $quickSearchBoxes[$cols[$i]]['filter'] = formulize_buildQSFilter($cols[$i], $search_text);
-	$quickSearchBoxes[$cols[$i]]['dateRange'] = formulize_buildDateRangeFilter($cols[$i], $search_text);
-      }
-    }
-    //formulize_benchmark("done filter");
-    
+        //formulize_benchmark("finished prep of search box");
+        $quickSearchBoxes[$cols[$i]]['search'] = "<input type=text $boxid name='search_" . $cols[$i] . "' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
+        //formulize_benchmark("made search box, starting filter");
+        if(is_array($filtersRequired) OR $filtersRequired === true) {
+            if($filtersRequired === true OR in_array($cols[$i], $filtersRequired)) {
+                $quickSearchBoxes[$cols[$i]]['filter'] = formulize_buildQSFilter($cols[$i], $search_text);
+                $quickSearchBoxes[$cols[$i]]['dateRange'] = formulize_buildDateRangeFilter($cols[$i], $search_text);
+            }
+        }
+        //formulize_benchmark("done filter");
+
 		// print out the boxes if we are supposed to (ie: if we're not just returning the arrays)
 		if(!$returnOnly) {
       if(isset($quickSearchBoxes[$cols[$i]]['filter'])) {
