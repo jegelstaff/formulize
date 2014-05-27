@@ -946,7 +946,7 @@ function formulize_findCommonValue($form1, $form2, $key1, $key2) {
 	} elseif(isset($_POST["de_".$form2."_new_".$key2])) { // grab the value just written in the field of the other form
 		$commonValueToWrite = $_POST["de_".$form2."_new_".$key2];
 	} elseif(isset($_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2])) { // grab the value just written in the first entry we saved in the paired form
-		$commonValueToWrite = $_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2]."_".$key2];
+		$commonValueToWrite = $_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2];
 	} elseif(isset($GLOBALS['formulize_allWrittenEntryIds'][$form2][0])) { // try to get the value saved in the DB for the target element in the first entry we just saved in the paired form
 		$common_value_data_handler = new formulizeDataHandler($form2);
 		if($candidateValue = $common_value_data_handler->getElementValueInEntry($GLOBALS['formulize_allWrittenEntryIds'][$form2][0], $key2)) {
