@@ -609,7 +609,7 @@ function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $
         $buttonMarkup = "<input type=button name='$buttonType' id='$buttonType' class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
     } elseif($buttonType == "prev") {
         if($previousPage == "none") {
-            $buttonJavascriptAndExtraCode = "disabled=true";
+            $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($thanksPage, 1);return false;\"";
         }
         $buttonMarkup = "<input type=button name=prev id=prev class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
     }
