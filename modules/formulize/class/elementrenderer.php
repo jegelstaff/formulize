@@ -961,24 +961,14 @@ class formulizeElementRenderer{
 				if($isDisabled) {
 					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
 				}
-
-
 			break;
-			//Marie le 20/04/04
-			case 'date':
-				/*$jr = substr ($ele_value[0], 0, 2);
-				$ms = substr ($ele_value[0], 3, 2);
-				$an = substr ($ele_value[0], 6, 4);
-				$ele_value[0] = $an.'-'.$ms.'-'.$jr;*/ // code block commented to fix bug in remembering previously entered dates.  -- jwe 7/24/04
-				// lines below added/modified to check that the default setting is a valid timestamp, otherwise, send no default value to the date box. -- jwe 9/23/04
-				//print "ele_value: ";
-				//print_r($ele_value);
-				//print "<br>" . strtotime("") . "<br>";
-				//print "<br>" . strtotime("now") . "<br>";
 
+
+			case 'date':
+				// the existing ele_value is unreliable, so get the actual value from the element
+				$ele_value = $this->_ele->getVar("ele_value");
 				if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
 				{
-						//print "Bad date";
 					$form_ele = new XoopsFormTextDateSelect (
 						$ele_caption,
 						$form_ele_id,
@@ -989,7 +979,6 @@ class formulizeElementRenderer{
 				}
 				else
 				{
-						//print "good date";
 					if (ereg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
 						$number = ereg_replace("[^0-9+-]","", $ele_value[0]);
 						$timestampToUse = mktime(0, 0, 0, date("m") , date("d")+$number, date("Y"));
@@ -1001,7 +990,6 @@ class formulizeElementRenderer{
 						$form_ele_id,
 						15,
 						$timestampToUse
-						//$ele_value[0]
 					);
 					$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
 				} // end of check to see if the default setting is for real
