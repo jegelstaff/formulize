@@ -96,17 +96,17 @@ class formulizeGraphScreenHandler extends formulizeScreenHandler {
 	// THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN
 	// $screen is a screen object
 	function render($screen, $entry, $settings = "") { // $settings is used internally to pass list of entries settings back and forth to editing screens
-		$bgc = [
+		$bgc = array(
 			"R" => $screen->getVar('bgr'),
 			"G" => $screen->getVar('bgg'),
 			"B" => $screen->getVar('bgb')
-		];
-		$barc = [
+		);
+		$barc = array(
 			"R" => $screen->getVar('barr'),
 			"G" => $screen->getVar('barg'),
 			"B" => $screen->getVar('barb')
-		];
-		$options = [
+		);
+		$options = array(
 			"width" => $screen->getVar('width'),
 			"height" => $screen->getVar('height'),
 			"orientation" => $screen->getVar('orientation'),
@@ -115,9 +115,8 @@ class formulizeGraphScreenHandler extends formulizeScreenHandler {
       "defaultview" => $screen->getVar('defaultview'),
       "limitviews" => $screen->getVar('limitviews'),
       "usecurrentviewlist" => $screen->getVar('usecurrentviewlist')
-		];
+		);
 		include_once XOOPS_ROOT_PATH."/modules/formulize/include/graphdisplay.php";
 		displayGraph('Bar', $screen->getVar('fid'), $screen->getVar('frid'), $screen->getVar('labelelem'), $screen->getVar('dataelem'), $screen->getVar('ops'), $options);
 	}
 }
-?>
