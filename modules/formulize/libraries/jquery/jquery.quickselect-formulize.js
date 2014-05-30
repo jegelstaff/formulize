@@ -338,10 +338,10 @@ var QuickSelect;
       callback(this.options.data);
     },
     ajax  : function(q,callback){
-      var url = this.options.ajax + "?q=" + encodeURI(q);
+      var url = this.options.ajax + "?q=" + encodeURIComponent(q);
     	for(var i in this.options.ajaxParams){
     	  if(this.options.ajaxParams.hasOwnProperty(i)){
-    		  url += "&" + i + "=" + encodeURI(this.options.ajaxParams[i]);
+    		  url += "&" + i + "=" + encodeURIComponent(this.options.ajaxParams[i]);
     		}
     	}
       $.getJSON(url, callback);
