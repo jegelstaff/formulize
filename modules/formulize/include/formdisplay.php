@@ -2047,12 +2047,15 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			if($headingAtSide) { // grid contents is the two bits for the xoopsformlabel when heading is at side, otherwise, it's just the contents for the break
 				$form->addElement(new XoopsFormLabel($gridContents[0], $gridContents[1]));
 			} else {
-				$form->insertBreak($gridContents, "head"); // head is the css class of the cell				
+				$form->insertBreak($gridContents, "head"); // head is the css class of the cell
 			}
-		} elseif($ele_type == "ib" OR is_array($form_ele)) {// if it's a break, handle it differently...$form_ele may be an array if it's a non-interactive element such as a grid
-			// final param is used as id name in the table row where this element exists, so we can interact with it for showing and hiding
-			$form->insertBreakFormulize("<div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div>",
-				$form_ele[1], 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id, $thisElement->getVar("ele_handle"));
+		} elseif($ele_type == "ib" OR is_array($form_ele)) {
+			// if it's a break, handle it differently...$form_ele may be an array if it's a non-interactive element such as a grid
+			if (is_object($thisElement) /*this happens when printing*/) {
+				// final param is used as id name in the table row where this element exists, so we can interact with it for showing and hiding
+				$form->insertBreakFormulize("<div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div>",
+					$form_ele[1], 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id, $thisElement->getVar("ele_handle"));
+			}
 		} else {
 			$form->addElement($form_ele, $req);
 		}
