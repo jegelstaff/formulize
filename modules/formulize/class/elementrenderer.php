@@ -1263,17 +1263,21 @@ class formulizeElementRenderer{
 	/* ALTERED - 20100318 - freeform - jeff/julian - stop */
 
 	// creates a hidden version of the element so that it can pass its value back, but not be available to the user
-	
 	function formulize_disableElement($element, $type, $ele_desc) {
 		if($type == "text" OR $type == "textarea" OR $type == "date" OR $type == "colorpick") {
 			$newElement = new xoopsFormElementTray($element->getCaption(), "\n");
 			$newElement->setName($element->getName());
 			switch($type) {
 				case 'date':
-					$hiddenValue = date("Y-m-d", $element->getValue());
+					$timeval = $element->getValue();
+					if (is_string($timeval)) {
+						$timeval = strtotime($timeval);
+					}
+					$hiddenValue = date(_SHORTDATESTRING, $timeval);
 					break;
 				default:
-					$hiddenValue = formulize_numberFormat($element->getValue(), $this->_ele->getVar('ele_handle')); // should work for all elements, since non-textbox type elements where the value would not be passed straight back, are handled differently at the time they are constructed
+					// should work for all elements, since non-textbox type elements where the value would not be passed straight back, are handled differently at the time they are constructed
+					$hiddenValue = formulize_numberFormat($element->getValue(), $this->_ele->getVar('ele_handle'));
 			}
 			if(is_array($hiddenValue)) { // not sure when/if this would ever happen
 				foreach($hiddenValue as $value) {
