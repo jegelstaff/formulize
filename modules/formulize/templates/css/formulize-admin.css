@@ -992,6 +992,74 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
 #listofentries div.main-cell-div input {
   width: 7em; }
 
+@media print {
+  body {
+    font-size: 10pt; }
+
+  #xo-header {
+    display: none; }
+
+  #xo-canvas-leftcolumn {
+    display: none; }
+
+  #xo-canvas.leftcolumn-layout #xo-canvas-columns, #xo-canvas.threecolumns-layout #xo-canvas-columns {
+    padding-left: 0 !important; }
+
+  #xo-content {
+    width: 100%; }
+
+  #formulizeform {
+    width: 100%; }
+
+  #xo-footer {
+    display: none; }
+
+  .no-print {
+    display: none; }
+
+  input, textarea {
+    border: none; }
+
+  select {
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
+    border: none; }
+
+  h1.formulize-form-title {
+    font-weight: normal; }
+
+  td.head h2 {
+    color: #222;
+    font-size: 12pt;
+    font-weight: normal; }
+
+  td.head span.caption-text {
+    color: #333;
+    font-weight: normal; }
+
+  td.head div.xoops-form-element-help {
+    color: #ddd;
+    font-size: 8pt;
+    font-weight: normal; }
+
+  td.even {
+    font-size: 10pt; }
+
+  tr, td {
+    page-break-inside: avoid; }
+
+  #pageNavTable, #bottomPageNumber, #bottom-save-block {
+    display: none; }
+
+  .ui-accordion .ui-accordion-content {
+    display: block !important; }
+
+  .ui-accordion .ui-accordion-content table.outer {
+    border: none; }
+
+  .ui-accordion .ui-accordion-content table.outer td {
+    border-bottom: 1px solid #dddddd; } }
 .CodeMirror {
   line-height: 1em;
   font-family: monospace;
