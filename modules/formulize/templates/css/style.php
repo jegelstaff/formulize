@@ -167,4 +167,8 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 
 /*=== End of Formulize Boutons ===*/
 
-
+#graph {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}

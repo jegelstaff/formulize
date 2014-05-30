@@ -126,11 +126,25 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
   $uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
   $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 
+  $viewInUse = $graphOptions['defaultview'];
+  if (isset($_POST['selectedview'])) {
+    if (is_numeric(substr($_POST['selectedview'], 1))) {
+      $viewInUse = substr($_POST['selectedview'], 1);
+    } else {
+      $viewInUse = $_POST['selectedview'];
+    }
+  }
+
   // One part of the loadReport system, the most pertinent one
   // Other branches such as legacy support is not included because the lack of way to test
-  if(is_numeric($graphOptions['defaultview'])) { // saved or published view
+  if(is_numeric($viewInUse)) { // saved or published view
     // As "p" is removed in defaultview and needed by formulize_gatherDataSet
     $settings['loadedview'] = "p" . $graphOptions['defaultview'];
+
+    // Or if from dynamic selector (in screen)
+    if (isset($_POST['selectedview'])) {
+      $settings['loadedview'] = $_POST['selectedview'];
+    }
 
     // kill the quicksearches??
     // Not quite sure what this does probably deletes all the search terms
@@ -143,7 +157,7 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
     // Not all vars are needed because it's based on entriesdisplay need
     // Right now the needed ones are:
     // currentview, asearch, sort, order
-    list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport($graphOptions['defaultview'], $fid, $frid);
+    list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport($viewInUse, $fid, $frid);
 
     // explode quicksearches into the search_ values??
     // I'm not quite sure what this does but it's definitely necessary
@@ -162,11 +176,23 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
     $_POST['oldcols'] = implode(",",$colsforsearches); // need to reconstruct this in case any columns were removed because of persistent searches on a hidden column
   }
 
-  if ($_POST['currentview'] == "") {
-    // when loadReport isn't run (mine, group, all views)
-    $currentView = $graphOptions['defaultview'];
+  // Set the scope, either manually selected or loaded by report from saved view
+  if (is_numeric($viewInUse)) {
+    // Any published or saved view
+    $currentViewScope = $_POST['currentview'];
   } else {
-    $currentView = $_POST['currentview'];
+    $currentViewScope = $viewInUse;
+  }
+
+  // This is to make sure the select in screen is selected to correct option
+  if (isset($_POST['selectedview'])) {
+    $loadedView = $_POST['selectedview'];
+  } else {
+    if (is_numeric($graphOptions['defaultview'])) {
+      $loadedView = "p" . $graphOptions['defaultview'];
+    } else {
+      $loadedView = $graphOptions['defaultview'];
+    }
   }
 
   // Set up the advanced search based on the text filter inputted in entriesdisplay
@@ -189,8 +215,11 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
     }
   }
 
-  list($scope, $currentView) = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, true);
+  list($scope, $currentViewScope) = buildScope($currentViewScope, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, true);
   $dbData = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, intval($_POST['forcequery']));
+
+  list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $loadedView, $loadedView, $view_groupscope, $view_globalscope, /*$_POST['curviewid']*/ "", 0, $graphOptions, $_POST['lastloaded']);
+
   // End of code from entriesdisplay
 
 	foreach ($dbData as $entry) {
@@ -231,9 +260,9 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 				}
 			}
 			if($labelElement == $dataElement){
-				$dataElement = "count of " . $labelElement;
+				$dataElement = "Count of " . $labelElement;
 			} else {
-				$dataElement = "count of " . $dataElement;
+				$dataElement = "Count of " . $dataElement;
 			}
 			break;
 		case "sum" :
@@ -242,16 +271,16 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 			foreach ($dataPoints as $thisLabel => $theseValues) {
 				$dataPoints[$thisLabel] = array_sum($theseValues);
 			}
-			$dataElement = (($operation == "display") ? "number of " : "sum of ") . $dataElement;
+			$dataElement = (($operation == "display") ? "Number of " : "Sum of ") . $dataElement;
 			break;
 		case "count-unique" :
 			foreach ($dataPoints as $thisLabel => $theseValues) {
 				$dataPoints[$thisLabel] = count(array_unique($theseValues));
 			}
 			if($dataElement == $labelElement){
-				$dataElement = "count of unique " . $labelElement;
+				$dataElement = "Count of Unique " . $labelElement;
 			} else {
-				$dataElement = "count of unique " . $dataElement;
+				$dataElement = "Count of Unique " . $dataElement;
 			}
 			break;
 		default :
@@ -284,11 +313,6 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 	$BARCOLOR_R = 143;
 	$BARCOLOR_G = 190;
 	$BARCOLOR_B = 88;
-
-  // Unneeded vars
-  unset($graphOptions['defaultview']);
-  unset($graphOptions['limitviews']);
-  unset($graphOptions['usecurrentviewlist']);
 
 	if (sizeof($graphOptions) > 0) {
 		foreach ($graphOptions as $graphoption => $value) {
@@ -352,6 +376,10 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 					}
 
 					break;
+        case "usecurrentviewlist" :
+        case "limitviews" :
+        case "defaultview" :
+          break;
 				default :
 					echo "Sorry, the graph option \"$graphoption\" for Bar graph is not supported at the moment!<br>";
 					break;
@@ -435,7 +463,7 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 
 	/* Draw the chart */
 	$myPicture -> drawBarChart(array("DisplayPos" => LABEL_POS_INSIDE, "DisplayValues" => TRUE, "Rounded" => TRUE, "Surrounding" => 30, "OverrideColors"=>$Palette));
-	renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions, $dataPoints);
+	renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions, $dataPoints, $settings);
 	return;
 }
 
@@ -451,13 +479,25 @@ function YAxisFormat($Value) {
 /**
  * Save the graph to the local file system and render the graph
  */
-function renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions, $dataPoints) {
+function renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions, $dataPoints, $viewSettings) {
 	// TODO: make some kind of cron job clear up or some kind of caches, update graph only when needed!
+  $currentViewList = "<b>" . $graphOptions['usecurrentviewlist'] . "</b><br><SELECT style=\"width: 350px;\" name=selectedview id=currentview size=1 onchange=\"this.form.submit();\">\n";
+  $currentViewList .= $viewSettings['viewoptions'];
+  $currentViewList .= "\n</SELECT>\n";
 	$graphRelativePathPrefix = "modules/formulize/images/graphs/";
     // Uses md5 hash of the data points and graph options to shorten filename and handle non alphanumeric chars
 	$graphRelativePath = $graphRelativePathPrefix . md5(SDATA_DB_SALT.var_export($dataPoints, true).var_export($graphOptions, true)).".png";
 	$myPicture -> render(XOOPS_ROOT_PATH . "/" . $graphRelativePath);
-	echo "<img src='" . XOOPS_URL . "/$graphRelativePath' />";
+
+  $currentURL = getCurrentURL();
+  echo "<h1>$dataElement</h1>";
+  // TODO: Use the javascript method for changing views like the one in entriesdiplay to be able to have filter by groups, also that you can't select title options like "STANDARD VIEWS"
+  echo "<form action = $currentURL method = 'post'>";
+  echo $currentViewList;
+  echo "</form>";
+  echoBR();
+  echoBR();
+	echo "<img id = 'graph' src='" . XOOPS_URL . "/$graphRelativePath' />";
 	return;
 }
 
@@ -744,6 +784,161 @@ function loadReport($id, $fid, $frid) {
     $to_return[11] = $thisview[0]['sv_lockcontrols'];
     $to_return[12] = $thisview[0]['sv_quicksearches'];
     return $to_return;
+}
+
+// return the available current view settings based on the user's permissions
+function generateViews($fid, $uid, $groups, $frid="0", $currentView, $loadedView="", $view_groupscope, $view_globalscope, $prevview="", $loadOnlyView=0, $screen, $lastLoaded) {
+  global $xoopsDB;
+
+  $limitViews = false;
+  $screenLimitViews = array();
+  $forceLastLoaded = false;
+  if($screen) {
+    $screenLimitViews = $screen['limitviews'];
+    if(!in_array("allviews", $screenLimitViews)) {
+      $limitViews = true;
+
+      // IF LIMIT VIEWS IS IN EFFECT, THEN CHECK FOR BASIC VIEWS BEING ENABLED, AND IF THEY ARE NOT, THEN WE NEED TO SET THE CURRENT VIEW LIST TO THE LASTLOADED
+      // Excuses....This is a future todo item.  Very complex UI issues, in that user could change options, then switch to other view, then switch back and their options are missing now
+      // Right now, without basic views enabled, the first view in the list comes up if an option is changed (since the basic scope cannot be reflected in the available views), so that's just confusing
+      // Could have 'custom' option show up at top of list instead, just to indicate to the user that things are not the options originally loaded from that view
+
+      if((!in_array("mine", $screenLimitViews) AND !in_array("group", $screenLimitViews) AND !in_array("all", $screenLimitViews)) AND !$_POST['loadreport'] ) { // if the basic views are not present, and the user hasn't specifically changed the current view list
+        $forceLastLoaded = true;
+      } else {
+        $forceLastLoaded = false;
+      }
+
+    }
+  }
+
+  $options =  !$limitViews ? "<option value=\"\">" . _formulize_DE_STANDARD_VIEWS . "</option>\n" : "";
+  $vcounter=0;
+
+  if($loadOnlyView AND $loadedView AND !$limitViews) {
+    $vcounter++;
+    $options .= "<option value=\"\">&nbsp;&nbsp;" . _formulize_DE_NO_STANDARD_VIEWS . "</option>\n";
+  }
+
+
+  print "mine bool " . $currentView == "mine" . " " . !$loadOnlyView . " " . !$limitViews . " " . in_array("mine", $screenLimitViews) . ";";
+  if($currentView == "mine" AND !$loadOnlyView AND (!$limitViews OR in_array("mine", $screenLimitViews))) {
+    $options .= "<option value=mine selected>&nbsp;&nbsp;" . _formulize_DE_MINE . "</option>\n";
+    $vcounter++;
+  } elseif(!$loadOnlyView AND (!$limitViews OR in_array("mine", $screenLimitViews))) {
+    $vcounter++;
+    $options .= "<option value=mine>&nbsp;&nbsp;" . _formulize_DE_MINE . "</option>\n";
+  }
+
+
+
+  if($currentView == "group" AND $view_groupscope AND !$loadOnlyView AND (!$limitViews OR in_array("group", $screenLimitViews))) {
+    $options .= "<option value=group selected>&nbsp;&nbsp;" . _formulize_DE_GROUP . "</option>\n";
+    $vcounter++;
+  } elseif($view_groupscope AND !$loadOnlyView AND (!$limitViews OR in_array("group", $screenLimitViews))) {
+    $vcounter++;
+    $options .= "<option value=group>&nbsp;&nbsp;" . _formulize_DE_GROUP . "</option>\n";
+  }
+
+  if($currentView == "all" AND $view_globalscope AND !$loadOnlyView AND (!$limitViews OR in_array("all", $screenLimitViews))) {
+    $options .= "<option value=all selected>&nbsp;&nbsp;" . _formulize_DE_ALL . "</option>\n";
+    $vcounter++;
+  } elseif($view_globalscope AND !$loadOnlyView AND (!$limitViews OR in_array("all", $screenLimitViews))) {
+    $vcounter++;
+    $options .= "<option value=all>&nbsp;&nbsp;" . _formulize_DE_ALL . "</option>\n";
+  }
+
+  /* TODO incompatible with the method to update graph right now, so its commented out for now
+  // check for pressence of advanced scope
+  if(strstr($currentView, ",") AND !$loadedView AND !$limitViews) {
+    $vcounter++;
+    $groupNames = groupNameList(trim($currentView, ","));
+    $options .= "<option value=$currentView selected>&nbsp;&nbsp;" . _formulize_DE_AS_ENTRIESBY . printSmart($groupNames) . "</option>\n";
+  } elseif(($view_globalscope OR $view_groupscope) AND !$loadOnlyView AND !$limitViews) {
+    $vcounter++;
+    $pickgroups = $vcounter;
+    $options .= "<option value=\"\">&nbsp;&nbsp;" . _formulize_DE_AS_PICKGROUPS . "</option>\n";
+  }
+  */
+  $pickgroups = null;
+
+
+  // check for available reports/views
+  list($s_reports, $p_reports, $ns_reports, $np_reports) = availReports($uid, $groups, $fid, $frid);
+  $lastStandardView = $vcounter;
+
+  if(!$limitViews) { // cannot pick saved views in the screen UI so these will never be available if views are being limited
+    if((count($s_reports)>0 OR count($ns_reports)>0) AND !$limitViews) { // we have saved reports...
+      $options .= "<option value=\"\">" . _formulize_DE_SAVED_VIEWS . "</option>\n";
+      $vcounter++;
+    }
+    for($i=0;$i<count($s_reports);$i++) {
+      if($loadedView == "sold_" . $s_reports[$i]['report_id'] OR $prevview == "sold_" . $s_reports[$i]['report_id']) {
+        $vcounter++;
+        $options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($s_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $s_reports[$i]['report_id'] . ")</option>\n";
+        $loadviewname = $s_reports[$i]['report_name'];
+        $curviewid = "sold_" . $s_reports[$i]['report_id'];
+      } else {
+        $vcounter++;
+        $options .= "<option value=sold_" . $s_reports[$i]['report_id'] . ">&nbsp;&nbsp;" . stripslashes($s_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $s_reports[$i]['report_id'] . ")</option>\n";
+      }
+    }
+    for($i=0;$i<count($ns_reports);$i++) {
+      if($loadedView == "s" . $ns_reports[$i]['sv_id'] OR $prevview == "s" . $ns_reports[$i]['sv_id']) {
+        $vcounter++;
+        $options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($ns_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $ns_reports[$i]['sv_id'] . ")</option>\n";
+        $loadviewname = $ns_reports[$i]['sv_name'];
+        $curviewid = "s" . $ns_reports[$i]['sv_id'];
+      } else {
+        $vcounter++;
+        $options .= "<option value=s" . $ns_reports[$i]['sv_id'] . ">&nbsp;&nbsp;" . stripslashes($ns_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $ns_reports[$i]['sv_id'] . ")</option>\n";
+      }
+    }
+  }
+
+
+  if((count($p_reports)>0 OR count($np_reports)>0) AND !$limitViews) { // we have saved reports...
+    $options .= "<option value=\"\">" . _formulize_DE_PUB_VIEWS . "</option>\n";
+    $vcounter++;
+  }
+  $firstPublishedView = $vcounter + 1;
+  if(!$limitViews) { // old reports are not selectable in the screen UI so will never be in the limit list
+    for($i=0;$i<count($p_reports);$i++) {
+      if($loadedView == "pold_" . $p_reports[$i]['report_id'] OR $prevview == "pold_" . $p_reports[$i]['report_id']) {
+        $vcounter++;
+        $options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($p_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $p_reports[$i]['report_id'] . ")</option>\n";
+        $loadviewname = $p_reports[$i]['report_name'];
+        $curviewid = "pold_" . $p_reports[$i]['report_id'];
+      } else {
+        $vcounter++;
+        $options .= "<option value=pold_" . $p_reports[$i]['report_id'] . ">&nbsp;&nbsp;" . stripslashes($p_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $p_reports[$i]['report_id'] . ")</option>\n";
+      }
+    }
+  }
+  $publishedViewNames = array();
+  for($i=0;$i<count($np_reports);$i++) {
+    if(!$limitViews OR in_array($np_reports[$i]['sv_id'], $screenLimitViews)) {
+      if($loadedView == "p" . $np_reports[$i]['sv_id'] OR $prevview == "p" . $np_reports[$i]['sv_id'] OR ($forceLastLoaded AND $lastLoaded == "p" . $np_reports[$i]['sv_id'])) {
+        $vcounter++;
+        $options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($np_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $np_reports[$i]['sv_id'] . ")</option>\n";
+        $loadviewname = $np_reports[$i]['sv_name'];
+        $curviewid = "p" . $np_reports[$i]['sv_id'];
+      } else {
+        $vcounter++;
+        $options .= "<option value=p" . $np_reports[$i]['sv_id'] . ">&nbsp;&nbsp;" . stripslashes($np_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $np_reports[$i]['sv_id'] . ")</option>\n";
+      }
+      $publishedViewNames["p" . $np_reports[$i]['sv_id']] = stripslashes($np_reports[$i]['sv_name']); // used by the screen system to create a variable for each view name, and only the last loaded view is set to true.
+    }
+  }
+  $to_return[0] = $options;
+  $to_return[1] = $firstPublishedView;
+  $to_return[2] = $lastStandardView;
+  $to_return[3] = $pickgroups;
+  $to_return[4] = $loadviewname;
+  $to_return[5] = $curviewid;
+  $to_return[6] = $publishedViewNames;
+  return $to_return;
+
 }
 
 ?>
