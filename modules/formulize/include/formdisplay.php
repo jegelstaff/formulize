@@ -2546,7 +2546,7 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 		validate = window.formulizeExtraFormValidation();
 	}
 	if(validate) {
-		if(savedPage && savedPrevPage) { // set in submitForm and will have values if we're on the second time around of a two step validation, like a uniqueness check with the server
+		if(typeof savedPage != 'undefined' && savedPage && savedPrevPage) { // set in submitForm and will have values if we're on the second time around of a two step validation, like a uniqueness check with the server
 			mulitpageSetHiddenFields(savedPage, savedPrevPage);
 		}
 		jQuery(".subform-accordion-container").map(function() {
