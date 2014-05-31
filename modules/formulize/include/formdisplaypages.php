@@ -305,7 +305,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		}
   }
 
-	function mulitpageSetHiddenFields(page, prevpage) {
+	function multipageSetHiddenFields(page, prevpage) {
 		<?php
 			// neuter the ventry which is the key thing that keeps us on the form page,
 			//  if in fact we just came from a list screen of some kind.
