@@ -271,13 +271,42 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	
 	// Set up the javascript that we need for the form-submit functionality to work
 	// note that validateAndSubmit calls the form validation function again, but obviously it will pass if it passed here.  The validation needs to be called prior to setting the pages, or else you can end up on the wrong page after clicking an ADD button in a subform when you've missed a required field.
+	// savedPage and savedPrevPage are used to pick up the page and prevpage only when a two step validation, such as checking for uniqueness, returns and calls validateAndSubmit again
 	?>
 	
 	<script type='text/javascript'>
-	
+	var savedPage;
+	var savedPrevPage;
 	function submitForm(page, prevpage) {
 		var validate = xoopsFormValidate_formulize();
-		if(validate) {<?php
+		if(validate) {
+			savedPage = 0;
+			savedPrevPage = 0;
+			multipageSetHiddenFields(page, prevpage);
+			if (formulizechanged) {
+        validateAndSubmit();
+      } else {
+        jQuery("#formulizeform").animate({opacity:0.4}, 200, "linear");
+        jQuery("input[name^='decue_']").remove();
+        jQuery.ajax({
+            type: "POST",
+            url: jQuery('form[name=formulize]').attr('action'),
+  					data: jQuery('form[name=formulize]').serialize(),
+            success: function(html, x){
+                document.open();
+                document.write(html);
+                document.close();
+            }
+        });
+      }
+    } else {
+			savedPage = page;
+			savedPrevPage = prevpage;
+		}
+  }
+
+	function multipageSetHiddenFields(page, prevpage) {
+		<?php
 			// neuter the ventry which is the key thing that keeps us on the form page,
 			//  if in fact we just came from a list screen of some kind.
 			// need to use an unusual selector, because something about selecting by id wasn't working,
@@ -286,30 +315,13 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 			if(page == $thanksPage) {
 				window.document.formulize.ventry.value = '';
 				jQuery('form[name=formulize]').attr('action', '$done_dest');
-			}
+      }
 ";?>
-                window.document.formulize.formulize_currentPage.value = page;
-                window.document.formulize.formulize_prevPage.value = prevpage;
-                window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
-                window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
-		if (formulizechanged) {
-                validateAndSubmit();
-            } else {
-                jQuery("#formulizeform").animate({opacity:0.4}, 200, "linear");
-                jQuery("input[name^='decue_']").remove();
-                jQuery.ajax({
-                    type: "POST",
-                    url: jQuery('form[name=formulize]').attr('action'),
-			    data: jQuery('form[name=formulize]').serialize(),
-                    success: function(html, x){
-                        document.open();
-                        document.write(html);
-                        document.close();
-                    }
-                });
-            }
-        }
-    }
+      window.document.formulize.formulize_currentPage.value = page;
+      window.document.formulize.formulize_prevPage.value = prevpage;
+      window.document.formulize.formulize_doneDest.value = '<?php print $done_dest; ?>';
+      window.document.formulize.formulize_buttonText.value = '<?php print $button_text; ?>';
+	}
 
 	function pageJump(options, prevpage) {
 		for (var i=0; i < options.length; i++) {
