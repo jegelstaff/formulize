@@ -226,6 +226,30 @@ class formulizeElementRenderer{
 //        $ele_value[0] = $myts->displayTarea($ele_value[0]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
 				$ele_value[0] = getTextboxDefault($ele_value[0], $id_form, $entry);
 				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added 
+					if(isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
+						include_once XOOPS_ROOT_PATH."/class/xoopsform/formeditor.php";
+						$form_ele = new XoopsFormEditor(
+							$ele_caption,
+							'FCKeditor',
+							$editor_configs = array("name"=>$form_ele_id, "value"=>$ele_value[0]),
+							$noHtml=false,
+							$OnFailure = ""
+						);
+						
+						$eltname = $form_ele_id;
+						$eltcaption = $ele_caption;
+						$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+						$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
+						$form_ele->customValidationCode[] = "\n var FCKGetInstance = FCKeditorAPI.GetInstance('$form_ele_id');\n";
+						$form_ele->customValidationCode[] = "var getText = FCKGetInstance.EditorDocument.body.innerHTML; \n";
+						$form_ele->customValidationCode[] = "var StripTag = getText.replace(/(<([^>]+)>)/ig,''); \n";
+						$form_ele->customValidationCode[] = "if(StripTag=='') {\n";
+						$form_ele->customValidationCode[] = "window.alert(\"{$eltmsg}\");\n FCKGetInstance.Focus();\n return false;\n";
+						$form_ele->customValidationCode[] = "}\n";
+						
+						$GLOBALS['formulize_fckEditors'] = true;
+						
+					} else {
 					$form_ele = new XoopsFormTextArea(
 						$ele_caption,
 						$form_ele_id,
@@ -233,6 +257,7 @@ class formulizeElementRenderer{
 						$ele_value[1],	//	rows
 						$ele_value[2]	  //	cols
 					);
+					}
 				} else {															// nmc 2007.03.24 - added 
 					$form_ele = new XoopsFormLabel ($ele_caption, str_replace("\n", "<br>", $ele_value[0]));	// nmc 2007.03.24 - added 
 				}
