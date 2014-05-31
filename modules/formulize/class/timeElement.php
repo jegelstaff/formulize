@@ -139,7 +139,9 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // $element is the element object
     function prepareDataForSaving($value, $element) {
         // have to convert this to a 24 hour time for saving
-        return $this->convert12To24HourTime($value);
+        $value = $this->convert12To24HourTime($value);
+        if($value == "") { $value = "{WRITEASNULL}"; }
+        return $value;
     }
     
     // this method will handle any final actions that have to happen after data has been saved
@@ -184,7 +186,7 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
             $value = ($timeParts[0]-12).":".$timeParts[1]."PM";
         } elseif($timeParts[0]=="00") {
             $value = "12:".$timeParts[1]."AM";
-        } else {
+        } elseif($value) {
             $value = $timeParts[0].":".$timeParts[1]."AM";
         }
         
