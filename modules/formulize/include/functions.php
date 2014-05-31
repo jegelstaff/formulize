@@ -2366,8 +2366,15 @@ function _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, 
         $matchtext = $elementTypeHandler->formatDataForList($matchtext, $handle, $entryBeingFormatted);
         return $matchtext;
     } else {
-        global $myts;
-        return formulize_text_to_hyperlink($myts->htmlSpecialChars($matchtext), $textWidth);
+        $elementHandler = xoops_getmodulehandler('elements', 'formulize');
+        $elementObject = $elementHandler->get($handle);
+        $ele_value = $elementObject->getVar('ele_value');
+        if($ele_type == "textarea" AND isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
+          return printSmart(strip_tags($matchtext), 100); // don't mess with rich text!   
+        } else {
+        	global $myts;
+        	return formulize_text_to_hyperlink($myts->htmlSpecialChars($matchtext), $textWidth);
+        }
     }
 }
 

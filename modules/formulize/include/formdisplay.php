@@ -2485,6 +2485,16 @@ print "\n<script type='text/javascript'>\n";
 print " initialize_formulize_xhr();\n";
 print " var formulizechanged=0;\n";
 print " var formulize_xhr_returned_check_for_unique_value = 'notreturned';\n";
+
+if(isset($GLOBALS['formulize_fckEditors'])) {
+	print "function FCKeditor_OnComplete( editorInstance ) { \n";
+	print " editorInstance.Events.AttachEvent( 'OnSelectionChange', formulizeFCKChanged ) ;\n";
+	print "}\n";
+	print "function formulizeFCKChanged( editorInstance ) { \n";
+	print "  formulizechanged=1; \n";
+	print "}\n";
+}
+
 ?>
 
 window.onbeforeunload = function (e) {
