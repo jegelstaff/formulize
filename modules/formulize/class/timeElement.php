@@ -139,8 +139,7 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // $element is the element object
     function prepareDataForSaving($value, $element) {
         // have to convert this to a 24 hour time for saving
-        print "time: $value<br>";
-        return $value;
+        return $this->convert12To24HourTime($value);
     }
     
     // this method will handle any final actions that have to happen after data has been saved
@@ -169,7 +168,7 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // if literal text that users type can be used as is to interact with the database, simply return the $value 
     function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
         // some conversion here ought to be done to support searching for >1:00PM etc
-        return $value;
+        return $this->convert12To24HourTime($value);
     }
     
     // this method will format a dataset value for display on screen when a list of entries is prepared
@@ -182,12 +181,31 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
         
         $timeParts = explode(":", $value);
         if($timeParts[0]>12) {
-            $value .= "AM";
+            $value = ($timeParts[0]-12).":".$timeParts[1]."PM";
+        } elseif($timeParts[0]=="00") {
+            $value = "12:".$timeParts[1]."AM";
         } else {
-            $value = ($timeParts[0]-12).$timeparts[1]."PM";
+            $value = $timeParts[0].":".$timeParts[1]."AM";
         }
         
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+    }
+    
+    function convert12To24HourTime($value) {
+        if(!strstr($value, ":")) {
+            return $value;
+        }
+        $timeParts = explode(":", $value);
+        if(strstr($value, "PM")) {
+            if($timeParts[0]<12) {
+                $value = ($timeParts[0]+12).":".$timeParts[1];    
+            }
+        } elseif($timeParts[0]==12) {
+            $value = "00:".$timeParts[1];
+        } else {
+            $value = str_replace("AM","",$value);
+        }
+        return $value;
     }
     
 }
