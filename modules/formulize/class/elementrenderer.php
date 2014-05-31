@@ -926,7 +926,7 @@ class formulizeElementRenderer{
 							);
 							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter);
 							if( $other != false ){
-								$t->addOption($o['key'], _formulize_OPT_OTHER.$other);
+								$t->addOption($o['key'], _formulize_OPT_OTHER."</label><label>$other"); // epic hack to terminate radio button's label so it doesn't include the clickable 'other' box!!
 								if($o['key'] == $selected) {
 									$disabledOutputText = _formulize_OPT_OTHER.$other;
 								}
