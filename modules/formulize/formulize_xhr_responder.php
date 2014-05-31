@@ -36,6 +36,7 @@
 
 require_once "../../mainfile.php"; // initialize the xoops stack so we have access to the user object, etc if necessary
 ob_end_clean(); // stop all buffering of output (ie: related to the error logging, and/or xLangauge?)
+include_once "../../header.php";
 
 // check that the user who sent this request is the same user we have a session for now, if not, bail
 $sentUid = $_GET['uid'];
