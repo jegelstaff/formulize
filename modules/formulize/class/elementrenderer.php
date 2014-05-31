@@ -990,8 +990,6 @@ class formulizeElementRenderer{
 
 
 			case 'date':
-				// the existing ele_value is unreliable, so get the actual value from the element
-				$ele_value = $this->_ele->getVar("ele_value");
 				if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
 				{
 					$form_ele = new XoopsFormTextDateSelect (
