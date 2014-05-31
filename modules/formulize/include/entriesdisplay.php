@@ -4422,9 +4422,6 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 				$one_search = substr($one_search, $startpoint);
 			}
 				
-			if($ele_type=="date") {
-				$one_search = date('Y-m-d', strtotime($one_search));
-			}
 			
 			// look for blank search terms and convert them to {BLANK} so they are handled properly
 			if($one_search === "") {
@@ -4476,6 +4473,11 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 				} else {
 					$one_search = "";
 					$operator = "";
+				}
+			} else {
+				// handle alterations to non { } search terms here...
+				if($ele_type=="date") {
+					$one_search = date('Y-m-d', strtotime($one_search));
 				}
 			}
 			
