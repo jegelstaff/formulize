@@ -941,11 +941,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		$useSearch = ($screen->getVar('usesearch') AND !$screen->getTemplate('listtemplate')) ? 1 : 0;
 	}
 	
-	if(strstr($_SERVER['HTTP_USER_AGENT'], "MSIE")) {
-		$submitButton = "<input type=submit name=submitx style=\"width:0px; height:0px; border-width: 0px; padding: 0px;\" value='' ></input>\n";
-	} else {
-		$submitButton =  "<input type=submit name=submitx style=\"visibility: hidden;\" value='' ></input>\n";
-	}
+	$submitButton =  "<input type=submit name=submitx style=\"position: absolute; left: -10000px;\" value='' ></input>\n";
 
 	// need to establish these here because they are used in conditions lower down
 	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
