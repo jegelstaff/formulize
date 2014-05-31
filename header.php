@@ -84,6 +84,7 @@ if (!empty($icmsConfigPlugins['sanitizer_plugins'])) {
 }
 
 $xoTheme->addScript(ICMS_LIBRARIES_URL . '/jquery/jquery.js', array('type' => 'text/javascript'));
+$xoTheme->addScript(ICMS_LIBRARIES_URL . '/jquery/jquery-migrate-1.2.1.min.js', array('type' => 'text/javascript'));
 $xoTheme->addScript(ICMS_LIBRARIES_URL . '/jquery/ui/ui.min.js', array('type' => 'text/javascript'));
 $xoTheme->addScript(ICMS_URL . '/libraries/jquery/helptip.js', array( 'type' => 'text/javascript'));
 $xoTheme->addStylesheet(ICMS_LIBRARIES_URL . '/jquery/ui/css/ui-smoothness/ui.css', array('media' => 'screen'));
