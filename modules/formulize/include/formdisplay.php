@@ -2546,6 +2546,9 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 		validate = window.formulizeExtraFormValidation();
 	}
 	if(validate) {
+		if(savedPage && savedPrevPage) { // set in submitForm and will have values if we're on the second time around of a two step validation, like a uniqueness check with the server
+			mulitpageSetHiddenFields(savedPage, savedPrevPage);
+		}
 		jQuery(".subform-accordion-container").map(function() {
 			subelementid = jQuery(this).attr('subelementid');
 			window.document.getElementById('subform_entry_'+subelementid+'_active').value = jQuery(this).accordion( "option", "active" );
