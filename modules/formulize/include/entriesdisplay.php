@@ -949,10 +949,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
 	$user_can_delete    = formulizePermHandler::user_can_delete_from_form($fid, $uid);
 	$edit_form = $gperm_handler->checkRight("edit_form", $fid, $groups, $mid);
+	$module_admin_rights = $gperm_handler->checkRight("module_admin", $mid, $groups, 1);
 	
 	// establish text and code for buttons, whether a screen is in effect or not
 	$screenButtonText = array();
-	$screenButtonText['modifyScreenLink'] = ($edit_form AND $screen) ? _formulize_DE_MODIFYSCREEN : "";
+	$screenButtonText['modifyScreenLink'] = ($edit_form AND $screen AND $module_admin_rights) ? _formulize_DE_MODIFYSCREEN : "";
 	$screenButtonText['changeColsButton'] = _formulize_DE_CHANGECOLS;
 	$screenButtonText['calcButton'] = _formulize_DE_CALCS;
 	$screenButtonText['advCalcButton'] = _formulize_DE_ADVCALCS;
