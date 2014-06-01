@@ -1961,8 +1961,10 @@ function prepareLiteralTextForDB($elementObject, $value, $curlyBracketEntry, $us
     $ele_type = $elementObject->getVar('ele_type');
     switch ($ele_type) {
         case "checkbox":
-        $value = "*=+*:".$value;
-        break;
+        	if($value != "{BLANK}") {
+        		$value = "*=+*:".$value;
+        	}
+        	break;
 
 
         case "yn":
