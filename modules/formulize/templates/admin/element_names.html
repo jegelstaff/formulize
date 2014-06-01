@@ -72,20 +72,6 @@
 		</fieldset>
 	</div>
 </div>
-
-<div class="accordion-box">
-	<div class="form-item">
-   	<fieldset>
-      <legend><label for="elements-ele_req" class="question"><{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK}></label></legend>
-			<p><input type="radio" id="elements-ele_use_default_when_blank0" name="elements-ele_use_default_when_blank" value=0> <{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW}></p>
-			<p><input type="radio" id="elements-ele_use_default_when_blank1" name="elements-ele_use_default_when_blank" value=1> <{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK}></p>
-			<div class=description>
-				<p><{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC}></p>
-			</div>
-		</fieldset>
-	</div>
-</div>
-
 <{/if}>
 
 </form>
@@ -103,8 +89,6 @@ $(".savebutton").click(function() {
 		$("[name=reload_names_page]").val(1);
 	}
 });
-
-$("#elements-ele_use_default_when_blank<{$content.ele_use_default_when_blank}>").attr('checked', 'checked');
 
 $("[name=elements-ele_handle]").keydown(function () {
 	$("[name=check_handle]").val(1);

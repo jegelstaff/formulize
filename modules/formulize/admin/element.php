@@ -86,7 +86,7 @@ if($_GET['ele_id'] != "new") {
   $names['ele_desc'] = $elementObject->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
   $ele_req = $elementObject->getVar('ele_req');
   $ele_req = removeNotApplicableRequireds($ele_type, $ele_req); // function returns false when the element cannot be required.
-  $names['ele_req_on'] = $ele_req === false ? false : true;
+  $common['ele_req_on'] = $ele_req === false ? false : true;
   $names['ele_req_no_on'] = $ele_req ? "" : " checked";
   $names['ele_req_yes_on'] = $ele_req ? " checked" : "";
   $ele_display = $elementObject->getVar('ele_display');
@@ -209,7 +209,7 @@ if($_GET['ele_id'] != "new") {
      
   }
     
-  $names['ele_req_on'] = removeNotApplicableRequireds($ele_type);
+  $common['ele_req_on'] = removeNotApplicableRequireds($ele_type);
   $names['ele_req_no_on'] = " checked";
   $display['ele_display']['all'] = " selected";
   $display['ele_disabled']['none'] = " selected";
@@ -230,8 +230,7 @@ if($_GET['ele_id'] != "new") {
   
 }
 
-$names['ele_use_default_when_blank'] = $ele_use_default_when_blank;
-
+$advanced['ele_use_default_when_blank'] = $ele_use_default_when_blank;
 $advanced['datatypeui'] = createDataTypeUI($ele_type, $elementObject,$fid,$ele_encrypt);
 
 $formObject = $form_handler->get($fid);

@@ -52,7 +52,26 @@
 </div>
 <{/if}>
  
+<{if $content.ele_req_on}>		
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_req" class="question"><{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK}></label></legend>
+			<p><input type="radio" id="elements-ele_use_default_when_blank0" name="elements-ele_use_default_when_blank" value=0> <{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW}></p>
+			<p><input type="radio" id="elements-ele_use_default_when_blank1" name="elements-ele_use_default_when_blank" value=1> <{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK}></p>
+			<div class=description>
+				<p><{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC}></p>
+			</div>
+		</fieldset>
+	</div>
+</div>
+<{/if}>
+ 
 </form>
 
 <div style="clear: both;"></div>
 </div> <!--// end content -->
+
+<script type="text/javascript">
+		$("#elements-ele_use_default_when_blank<{$content.ele_use_default_when_blank}>").attr('checked', 'checked');
+</script>
