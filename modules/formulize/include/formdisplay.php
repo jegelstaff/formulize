@@ -2157,7 +2157,7 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 				}
 			}
 
-			// previous value is empty/blank...
+			// no value detected in form submission of this element...
 			if(!$value) {
      				$handle = $element->getVar('ele_handle');
 						$key = "";
@@ -2184,13 +2184,17 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 	     				return $ele_value; 
      				}
 						
-						if($element->getVar('ele_use_default_when_blank')) {
-								// do not load in saved value over top of ele_value when there is no saved value (!$value) and the element has this option turned on
-								return $ele_value;
-						}
 						if($key !== "") {
+						  // grab previously saved value and treat it as the value for this element
 							$value = $prevEntry['values'][$key];
 						}
+						
+						if(($element->getVar('ele_use_default_when_blank') OR $element->getVar('ele_req')) AND !$value) {
+								// do not load in saved value over top of ele_value when the saved value is empty/blank
+								// and the element is required, or the element has the use-defaults-when-blank option on
+								return $ele_value;
+						}
+						
 			}
 
 			/*print_r($ele_value);
