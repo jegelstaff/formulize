@@ -2787,10 +2787,12 @@ function getRelevantElementValues(elements) {
 		} else if(elementType == 'checkbox') {
 			formulize_selectedItems = new Array();
 			jQuery(nameToUse).map(function() { // need to check each one individually, because val isn't working right?!
-			  if(jQuery(this).attr('checked')) {
-				foundval = jQuery(this).attr('value');
-				formulize_selectedItems.push(foundval);
-			  }
+				if(jQuery(this).attr('checked')) {
+					foundval = jQuery(this).attr('value');
+					formulize_selectedItems.push(foundval);
+				} else {
+					formulize_selectedItems.push('');		
+				}
 			});
 		} else {
 			formulize_selectedItems = jQuery(nameToUse).val();
