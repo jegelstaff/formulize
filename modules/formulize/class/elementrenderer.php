@@ -1280,11 +1280,14 @@ class formulizeElementRenderer{
 			$newElement->setName($element->getName());
 			switch($type) {
 				case 'date':
-					$timeval = $element->getValue();
-					if (is_string($timeval)) {
-						$timeval = strtotime($timeval);
+					if($timeval = $element->getValue()) {
+						if (is_string($timeval)) {
+							$timeval = strtotime($timeval);
+						}
+						$hiddenValue = date(_SHORTDATESTRING, $timeval);
+					} else {
+						$hiddenValue = "";
 					}
-					$hiddenValue = date(_SHORTDATESTRING, $timeval);
 					break;
 				default:
 					// should work for all elements, since non-textbox type elements where the value would not be passed straight back, are handled differently at the time they are constructed
