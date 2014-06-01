@@ -787,5 +787,8 @@ define("_AM_FORMULIZE_CLONING_FOUND_ELEMENTS", "After cloning, the following lin
 define("_AM_FORMULIZE_CLONING_CANBELINKEDTO", "can be linked to:");
 define("_AM_FORMULIZE_CLONING_NOCHANGE", "keep it linked to its current source");
 
-
+define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK", "Show the default value for this element:");
+define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC", "For example, showing defaults when the saved value is blank can be useful on multipage forms, if later pages have elements which should still use the default value, even though the user has saved the entry after the first page.");
+define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW", "Only for new entries");
+define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK", "For any entry, when the saved value is blank");
 ?>

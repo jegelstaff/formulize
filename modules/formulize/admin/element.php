@@ -73,6 +73,7 @@ if($_GET['ele_id'] != "new") {
   $caption = $elementObject->getVar('ele_caption', "f"); // the f causes no stupid reformatting by the ICMS core to take place, like making clickable links, etc
   $ele_type = $elementObject->getVar('ele_type');
   $ele_value = $elementObject->getVar('ele_value');
+	$ele_use_default_when_blank = intval($elementObject->getVar('ele_use_default_when_blank'));
   $ele_delim = $elementObject->getVar('ele_delim');
   if($ele_delim != "br" AND $ele_delim != "space" AND $ele_delim != "") {
     $ele_delim_custom_value = $ele_delim;
@@ -173,6 +174,7 @@ if($_GET['ele_id'] != "new") {
   $ele_value = array();
   $ele_delim = "br";
   $ele_uitext = "";
+	$ele_use_default_when_blank = 0;
   global $xoopsModuleConfig;
   switch($ele_type) {
     case("text"):
@@ -227,6 +229,8 @@ if($_GET['ele_id'] != "new") {
   $ele_id = "new";
   
 }
+
+$names['ele_use_default_when_blank'] = $ele_use_default_when_blank;
 
 $advanced['datatypeui'] = createDataTypeUI($ele_type, $elementObject,$fid,$ele_encrypt);
 
