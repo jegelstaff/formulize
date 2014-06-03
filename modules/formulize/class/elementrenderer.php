@@ -225,7 +225,7 @@ class formulizeElementRenderer{
 				$ele_value[0] = stripslashes($ele_value[0]);
 //        $ele_value[0] = $myts->displayTarea($ele_value[0]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
 				$ele_value[0] = getTextboxDefault($ele_value[0], $id_form, $entry);
-				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added 
+				if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) { 				// nmc 2007.03.24 - added 
 					if(isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
 						include_once XOOPS_ROOT_PATH."/class/xoopsform/formeditor.php";
 						$form_ele = new XoopsFormEditor(
@@ -259,7 +259,7 @@ class formulizeElementRenderer{
 					);
 					}
 				} else {															// nmc 2007.03.24 - added 
-					$form_ele = new XoopsFormLabel ($ele_caption, str_replace("\n", "<br>", $ele_value[0]));	// nmc 2007.03.24 - added 
+					$form_ele = new XoopsFormLabel ($ele_caption, str_replace("\n", "<br>", undoAllHTMLChars($ele_value[0], ENT_QUOTES)));	// nmc 2007.03.24 - added 
 				}
 			break;
 			case 'areamodif':
