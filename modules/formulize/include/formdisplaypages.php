@@ -293,9 +293,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
             url: jQuery('form[name=formulize]').attr('action'),
   					data: jQuery('form[name=formulize]').serialize(),
             success: function(html, x){
-                document.open();
-                document.write(html);
-                document.close();
+								removeEntryLocks('rewritePage', html);								
             }
         });
       }

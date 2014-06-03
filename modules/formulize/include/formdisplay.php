@@ -2587,32 +2587,44 @@ print "	function verifyDone() {\n";
 if(!$nosave) {
 	print "	if(formulizechanged==0) {\n";
 }
-	print "		removeEntryLocks();\n";
+	print "		removeEntryLocks('submitGoParent');\n"; // true causes the go_parent form to submit
 if(!$nosave) {
 	print "	} else {\n";
 	print "		var answer = confirm (\"" . _formulize_CONFIRMNOSAVE . "\");\n";
 	print "		if (answer) {\n";
 	print "			formulizechanged = 0;\n"; // don't want to trigger the beforeunload warning
-	print "			removeEntryLocks();\n";
-	print "		} else {\n";
-	print "			return false;\n";
+	print "			removeEntryLocks('submitGoParent');\n"; // true causes the go_parent form to submit
 	print "		}\n";
 	print "	}\n";
 }
+print "   return false;"; // removeEntryLocks calls the go_parent form for us
 print "	}\n";
-print " function removeEntryLocks() {\n";
+print " function removeEntryLocks(action, html) {\n";
 global $entriesThatHaveBeenLockedThisPageLoad;
 if(count($entriesThatHaveBeenLockedThisPageLoad)>0) {
-    print "		jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
-    foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
-            print "			'entry_ids_".$thisForm."[]': [".implode(", ", array_keys($theseEntries))."], \n";
-    }
-    print "			'form_ids[]': [".implode(", ", array_keys($entriesThatHaveBeenLockedThisPageLoad))."],\n";
-    print "			async: false\n";
+		print "var killLocks = " . formulize_javascriptForRemovingEntryLocks();
+		print "		killLocks.done(function() { \n";
+		print "			formulize_javascriptForAfterRemovingLocks(action, html);\n";
     print "			});\n";
+} else {
+		print "formulize_javascriptForAfterRemovingLocks(action, html);\n";
 }
-print "  window.document.go_parent.submit();\n";	// jQuery 1.4.4 does not allow chaining functions to run after the post
 print " }\n";
+	
+?>
+
+function formulize_javascriptForAfterRemovingLocks(action, html) {
+		if(action == 'submitGoParent') {
+				window.document.go_parent.submit();
+		} else {
+				document.open();
+				document.write(html);
+				document.close();
+		}
+}
+
+<?php
+
 	
 print "	function add_sub(sfid, numents, instance_id) {\n";
 print "		document.formulize.target_sub.value=sfid;\n";

@@ -4769,6 +4769,22 @@ function formulize_xhr_send(op,params) {
 <?php
 }
 
+// this function creates the javascript snippet that will send the kill locks request
+function formulize_javascriptForRemovingEntryLocks() {
+    global $entriesThatHaveBeenLockedThisPageLoad;
+    $js = "
+    jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
+    foreach($entriesThatHaveBeenLockedThisPageLoad as $thisForm=>$theseEntries) {
+            $js .= "			'entry_ids_".$thisForm."[]': [".implode(", ", array_keys($theseEntries))."], \n";
+    }
+    $js .= "     'form_ids[]': [".implode(", ", array_keys($entriesThatHaveBeenLockedThisPageLoad))."],
+    async: false
+    });
+    ";
+    return $js;
+}
+
+
 
 // this function takes a value from the database that has gone through prepvalues (so it's ready for a dataset or already part of a dataset), and makes the display HTML for a list of entries
 // we're kind of hacking this...assuming textWidth will be 200 in cases where we don't have it passed in.  With more acrobatics we could get the real text width as specified in the screen, but for columns that are rendered as elements, this is probably an OK compromise
