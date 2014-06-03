@@ -1367,14 +1367,17 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	
 		// need to also enforce any equals conditions that are on the subform element, if any, and assign those values to the entries that were just added
 		if(is_array($subformConditions)) {
+			$filterValues = array();
 			foreach($subformConditions[1] as $i=>$thisOp) {
-				if($thisOp == "=" AND $subformConditions[3][$i] != "oom") {
+				if($thisOp == "=" AND $subformConditions[3][$i] != "oom" AND $subformConditions[2][$i] != "{BLANK}") {
 					$conditionElementObject = $element_handler->get($subformConditions[0][$i]);
 					$filterValues[$subformConditions[0][$i]] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i]); 
 				}
 			}
-			foreach($sub_entry_written as $thisSubEntry) {
-				formulize_writeEntry($filterValues,$thisSubEntry);	
+			if(count($filterValues)>0) {
+				foreach($sub_entry_written as $thisSubEntry) {
+					formulize_writeEntry($filterValues,$thisSubEntry);	
+				}
 			}
 		}
 	
