@@ -501,16 +501,17 @@ class formulizeElementRenderer{
 						} 
 					}
 					
-					// if we're rendering an autocomplete box
-					if(!$isDisabled AND $ele_value[8] == 1) {
-						// do autocomplete rendering logic here
 						if($boxproperties[2]) {
 							$default_value = $boxproperties[2];
 							$default_value_user = $cachedSourceValuesQ[$sourceValuesQ][$boxproperties[2]];
 						}
+					// if we're rendering an autocomplete box
+					if(!$isDisabled AND $ele_value[8] == 1) {
 						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedSourceValuesAutocompleteFile[$sourceValuesQ], $default_value, $default_value_user, $cachedSourceValuesAutocompleteLength[$sourceValuesQ]);
 						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+					} elseif($isDisabled) {
+						$disabledOutputText[] = $default_value_user;
 					}
 					
 					// only do this if we're rendering a normal element, that is not disabled
