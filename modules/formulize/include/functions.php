@@ -2615,7 +2615,7 @@ function cloneEntry($entry, $frid, $fid, $copies, $callback = null) {
                     $dataHandlers[$fid] = new formulizeDataHandler($fid);
                 }
                 $clonedEntryId = $dataHandlers[$fid]->cloneEntry($thisentry, $callback);
-                $dataHandlers[$fid]->setEntryOwnerGroups(getEntryOwner($thisentry, $fid), $clonedEntryId);
+                $dataHandlers[$fid]->setEntryOwnerGroups(getEntryOwner($clonedEntryId, $fid), $clonedEntryId);
                 $entryMap[$fid][$thisentry][] = $clonedEntryId;
             }
         }

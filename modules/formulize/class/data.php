@@ -167,9 +167,8 @@ class formulizeDataHandler  {
 		unset($data['mod_datetime']);
 		unset($data['creation_uid']);
 		unset($data['mod_uid']);
-		global $xoopsUser;
-		return $this->writeEntry("new", $data, $xoopsUser, true, true);
-	}
+		return $this->writeEntry("new", $data, false, true); // no proxy user (use current xoopsuser, the default behaviour), do force the creation of the entry if we're on a GET request
+  }
 
 
 	// this function looks in a particular entry in a particular form, and finds the entries it is pointing at, and then finds the new entries that it should be pointing at, and reassigns the values to match
