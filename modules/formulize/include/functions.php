@@ -2912,7 +2912,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
             // trigger the event
             if (count($uids_cust_real) > 0) {
                 if (in_array(-1, $uids_cust_real)) {
-                    sendNotificationToEmail($GLOBALS['formulize_notification_email'], "cust", $extra_tags, $not_config['event'][$evid]['mail_subject'], $not_config['event'][$evid]['mail_template']);
+                    sendNotificationToEmail($GLOBALS['formulize_notification_email'], "cust", $extra_tags, trans($not_config['event'][$evid]['mail_subject']), $not_config['event'][$evid]['mail_template']);
                     unset($uids_cust_real[array_search(-1, $uids_cust_real)]); // now remove the special flag before triggering the event
                     unset($uids_complete[array_search(-1, $uids_complete)]); // now remove the special flag before triggering the event
                     unset($GLOBALS['formulize_notification_email']);
