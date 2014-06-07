@@ -249,15 +249,15 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                             $GLOBALS['formulize_afterSavingLogicRequired'][$element->getVar('ele_id')] = $element->getVar('ele_type'); // set the flag that will trigger a post-save operation when we can rename the folder where the file resides to match the newly assigned entry id
                         }
                     } else {
-                        $value = " . _AM_UPLOAD_LOST . ";
+                        $value = _AM_UPLOAD_LOST;
                         print "<p><b>$value</b></p>";    
                     }
                 } else {
-                    $value = " . _AM_UPLOAD_NOLOCATION . ";
+                    $value = _AM_UPLOAD_NOLOCATION;
                     print "<p><b>$value</b></p>";
                 }
             } else {
-                $value = " . _AM_UPLOAD_ERROR_MIMETYPES . ".$element->getVar('ele_caption')."'.";
+                $value = _AM_UPLOAD_ERROR_MIMETYPES . $element->getVar('ele_caption')."'";
                 print "<p><b>$value</b></p>";
             }
         } elseif($_FILES[$fileKey]['error'] == UPLOAD_ERR_NO_FILE) {
@@ -265,22 +265,22 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         } else {
             switch($_FILES[$fileKey]['error']) {
                 case UPLOAD_ERR_INI_SIZE:
-                    $value = " . _AM_UPLOAD_ERR_INI_SIZE . ";
+                    $value = _AM_UPLOAD_ERR_INI_SIZE;
                     break;
                 case UPLOAD_ERR_FORM_SIZE:
-                    $value = " . _AM_UPLOAD_ERR_FORM_SIZE . ".$element->getVar('ele_caption')."'.";
+                    $value = _AM_UPLOAD_ERR_FORM_SIZE . $element->getVar('ele_caption')."'";
                     break;
                 case UPLOAD_ERR_PARTIAL:
-                    $value = " . _AM_UPLOAD_ERR_PARTIAL . ";
+                    $value = _AM_UPLOAD_ERR_PARTIAL;
                     break;
                 case UPLOAD_ERR_NO_TMP_DIR:
-                    $value = " . _AM_UPLOAD_ERR_NO_TMP_DIR . ";
+                    $value = _AM_UPLOAD_ERR_NO_TMP_DIR;
                     break;
                 case UPLOAD_ERR_CANT_WRITE:
-                    $value = " . _AM_UPLOAD_ERR_CANT_WRITE . ";
+                    $value = _AM_UPLOAD_ERR_CANT_WRITE;
                     break;
                 case UPLOAD_ERR_EXTENSION:
-                    $value = " . _AM_UPLOAD_ERR_EXTENSION . ";
+                    $value = _AM_UPLOAD_ERR_EXTENSION;
                     break;
             }
             print "<p><b>$value</b></p>";
