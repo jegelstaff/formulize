@@ -2867,9 +2867,9 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                         $form_handler = xoops_getmodulehandler('forms', 'formulize');
                         $formObject = $form_handler->get($fid);
                         foreach ($formObject->getVar('elementHandles') as $elementHandle) {
-                            $extra_tags['ELEMENT'.strtoupper($elementHandle)] = html_entity_decode(displayTogether($notificationTemplateData[$entry][0], $elementHandle, ", "), ENT_QUOTES);
+                            $extra_tags['ELEMENT'.strtoupper($elementHandle)] = trans(html_entity_decode(displayTogether($notificationTemplateData[$entry][0], $elementHandle, ", "), ENT_QUOTES));
                             // for legacy compatibility, we provide both with and without _ keys in the extra tags array.
-                            $extra_tags['ELEMENT_'.strtoupper($elementHandle)] = $extra_tags['ELEMENT'.strtoupper($elementHandle)];
+                            $extra_tags['ELEMENT_'.strtoupper($elementHandle)] = trans($extra_tags['ELEMENT'.strtoupper($elementHandle)]);
                         }
                     }
                 }
@@ -2899,9 +2899,9 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
             $oldtemp = $not_config['event'][$evid]['mail_template'];
             // rewrite the notification with the subject and template we want, then reset
             $GLOBALS['formulize_notificationTemplateOverride'] = $thiscon['not_cons_template'] == "" ? $not_config['event'][$evid]['mail_template'] : $thiscon['not_cons_template'];
-            $GLOBALS['formulize_notificationSubjectOverride'] = $thiscon['not_cons_subject'] == "" ? $not_config['event'][$evid]['mail_subject'] : $thiscon['not_cons_subject'];
+            $GLOBALS['formulize_notificationSubjectOverride'] = $thiscon['not_cons_subject'] == "" ? $not_config['event'][$evid]['mail_subject'] : trans($thiscon['not_cons_subject']);
             $not_config['event'][$evid]['mail_template'] = $thiscon['not_cons_template'] == "" ? $not_config['event'][$evid]['mail_template'] : $thiscon['not_cons_template'];
-            $not_config['event'][$evid]['mail_subject'] = $thiscon['not_cons_subject'] == "" ? $not_config['event'][$evid]['mail_subject'] : $thiscon['not_cons_subject'];
+            $not_config['event'][$evid]['mail_subject'] = $thiscon['not_cons_subject'] == "" ? $not_config['event'][$evid]['mail_subject'] : trans($thiscon['not_cons_subject']);
             // loop through the variables and do replacements in the subject, if any
             if (strstr($not_config['event'][$evid]['mail_subject'], "{ELEMENT")) {
                 foreach ($extra_tags as $tag=>$value) {
@@ -2912,7 +2912,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
             // trigger the event
             if (count($uids_cust_real) > 0) {
                 if (in_array(-1, $uids_cust_real)) {
-                    sendNotificationToEmail($GLOBALS['formulize_notification_email'], "cust", $extra_tags, trans($not_config['event'][$evid]['mail_subject']), $not_config['event'][$evid]['mail_template']);
+                    sendNotificationToEmail($GLOBALS['formulize_notification_email'], "cust", $extra_tags, $not_config['event'][$evid]['mail_subject'], $not_config['event'][$evid]['mail_template']);
                     unset($uids_cust_real[array_search(-1, $uids_cust_real)]); // now remove the special flag before triggering the event
                     unset($uids_complete[array_search(-1, $uids_complete)]); // now remove the special flag before triggering the event
                     unset($GLOBALS['formulize_notification_email']);
