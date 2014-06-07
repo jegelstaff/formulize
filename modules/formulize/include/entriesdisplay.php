@@ -3105,7 +3105,7 @@ function renderElement(handle,element_id,entryId,fid,check) {
 	if(elementStates[handle][entryId] == undefined) {
 		if(elementActive) {
 			// this is a bit cheap...we should be able to track multiple elements open at once.  But there seem to be race condition issues in the asynchronous requests that we have to track down.  This UI restriction isn't too bad though.
-			alert("You need to close the form element that is open first, before you can edit this one.");
+			alert("<?php print _formulize_CLOSE_FORM_ELEMENT; ?>");
 			return false;
 		}
 		elementActive = true;

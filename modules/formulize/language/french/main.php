@@ -603,5 +603,4 @@ define("_formulize_USERSCOPE", "Utilisateur : ");
 define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","Cette valeur sera calculée après sauvegarde des données");
 define("_formulize_VIEWAVAILREPORTS", "Visualisation de Rapport:");
 define("_formulize_exfile", "données_exportees_");
-
-?>
+define("_formulize_CLOSE_FORM_ELEMENT", "Vous devez fermer l’élément de formulaire ouvert avant de pouvoir modifier celui-ci");

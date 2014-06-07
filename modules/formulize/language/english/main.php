@@ -723,7 +723,7 @@ define("_formulize_NO_MATCH_FOUND", "No match found");
 
 define("_formulize_ENTRY_IS_LOCKED", "Some or all of the data on this page has been opened by '%s', therefore it is locked and you cannot make any changes to it.  Wait for the other person to save the data, or get a webmaster to save it (webmasters can override locks like this).");
 
-/* Upload element translation by François */
+/* Upload element translation by FranÃ§ois */
 define("_AM_UPLOAD", "Upload a file:");
 define("_AM_UPLOAD_DELETE", "  Delete this file");
 define("_AM_UPLOAD_DELETE_FAIL", "There was an error deleting the file, please reload the form and try again.");
@@ -737,5 +737,8 @@ define("_AM_UPLOAD_ERR_FORM_SIZE", "Your file is larger than the maximum size al
 define("_AM_UPLOAD_ERR_PARTIAL", "The file was only partially uploaded.  Please try again.");
 define("_AM_UPLOAD_ERR_NO_TMP_DIR", "There is no temporary folder on the server to save your file in.  Please inform the webmaster about this error.");
 define("_AM_UPLOAD_ERR_CANT_WRITE", "Your file was uploaded, but could not be saved on the web server, maybe because the hard drive is full.  Please inform the webmaster about this error.");
-define("_AM_UPLOAD_ERR_EXTENSION", "The web server rejected your file (a PHP extension stopped it form being uploaded).");
-/* End Upload element translation by François */
+define("_AM_UPLOAD_ERR_EXTENSION", "The web server rejected your file (a PHP extension stopped it from being uploaded).");
+/* End Upload element translation by FranÃ§ois */
+
+define("_formulize_CLOSE_FORM_ELEMENT", "You need to close the form element that is open first before you edit this one");
+
