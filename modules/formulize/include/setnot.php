@@ -428,7 +428,7 @@ if(!$noNots) {
 			$text .= "<br />" . _formulize_DE_NOT_TEMPTEXT . $thisnot['not_cons_template'] . "."; 
 		}
 		if($thisnot['not_cons_subject']) {
-			$text .= "<br />" . _formulize_DE_NOT_SUBJTEXT . "'" . $thisnot['not_cons_subject'] . "'.";
+			$text .= "<br />" . _formulize_DE_NOT_SUBJTEXT . "'" . str_replace(array("[","]"), " ", $thisnot['not_cons_subject']) . "'.";
 		}
 		
 		$delbutton = new xoopsFormButton('', 'delete_'.$thisnot['not_cons_id'], _formulize_DELETE, 'submit');
