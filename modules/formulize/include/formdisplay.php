@@ -668,8 +668,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 						if($thisLink->getVar('common')) {
 							if((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allWrittenEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allWrittenEntryIds'][$form1][0]."_".$key1] === "")) {
 								// if we don't have a value for this element, then populate it with the value from the other element
-								if($commonValueToWrite = formulize_findCommonValue($form1, $form2, $key1, $key2)) {
+								if($commonValueToWrite = formulize_findCommonValue($form1, $form2, $key1, $key2) AND $entryToWriteToForm1) {
 									$form1EntryId = formulize_writeEntry(array($key1=>$commonValueToWrite), $entryToWriteToForm1);
+								} elseif(!$entryToWriteToForm1) {
+									error_log("Formulize error: could not identify the entry to write a one-to-one key value to, in form $form1");
 								}
 							}
 							if((!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") AND (!isset($_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2]) OR $_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2] === "")) {
