@@ -31,6 +31,10 @@
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
+// this file contains objects to retrieve screen(s) information for elements
+
+include_once XOOPS_ROOT_PATH."/modules/formulize/class/formScreen.php";
+
 // need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
 $aid = intval($_GET['aid']);
 $application_handler = xoops_getmodulehandler('applications','formulize');
@@ -108,6 +112,7 @@ if($_GET['ele_id'] != "new") {
   } elseif($ele_disabled == 0) {
     $display['ele_disabled']['none'] = " selected"; 
   }
+
   $ele_filtersettings = $elementObject->getVar('ele_filtersettings');
   $filterSettingsToSend = count($ele_filtersettings > 0) ? $ele_filtersettings : "";
   $display['filtersettings'] = formulize_createFilterUI($filterSettingsToSend, "elementfilter", $fid, "form-3");
@@ -506,6 +511,17 @@ if($ele_type!='colorpick') {
 $adminPage['tabs'][++$tabindex]['name'] = _AM_ELE_DISPLAYSETTINGS;
 $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_display.html";
 $adminPage['tabs'][$tabindex]['content'] = $display + $common;
+$formScreenHandler = new formulizeFormScreenHandler();
+$adminPage['tabs'][$tabindex]['content']['form_screens'] = $formScreenHandler->getScreensForElement($common['fid']);
+$adminPage['tabs'][$tabindex]['content']['multi_form_screens'] = $formScreenHandler->getMultiScreens($common['fid']);
+// for new elements, pre-select all of the "filled up" screens
+if ($ele_id == "new") {
+  $adminPage['tabs'][$tabindex]['content']['ele_form_screens'] = $formScreenHandler->getSelectedScreensForNewElement();
+} else {
+  // get all default selected form screens in an array
+  $adminPage['tabs'][$tabindex]['content']['ele_form_screens'] = $formScreenHandler->getSelectedScreens($common['fid']);
+}
+
   
 if($advanced['datatypeui'] OR $advanced['ele_encrypt_show']) {
   $adminPage['tabs'][++$tabindex]['name'] = "Advanced";

@@ -1522,3 +1522,70 @@ if(!defined('_FORMULIZE_UI_PHP_INCLUDED')) {
 }
 
 
+
+function patchEmptyFormScreens() {
+	global $xoopsDB;
+
+    $formScreenSQL = "SELECT formid, sid, formelements FROM " . $xoopsDB->prefix("formulize_screen_form");
+    $formScreenHandler = $xoopsDB->query($formScreenSQL);
+
+    $formScreenIndex = array();
+    $allScreens = array();
+    $formid_to_elementid = array();
+    while($formScreenHandlesArray = $xoopsDB->fetchArray($formScreenHandler)) {
+    	array_push($formScreenIndex, $formScreenHandlesArray);
+    }
+
+    $screenFidSQL = "SELECT sid, fid FROM " . $xoopsDB->prefix("formulize_screen");
+    $screenFidHandler = $xoopsDB->query($screenFidSQL);
+
+    while($screenHandlesArray = $xoopsDB->fetchArray($screenFidHandler)) {
+    	if (!isset($allScreens[$screenHandlesArray['fid']])) {
+    		$allScreens[$screenHandlesArray['fid']] = array();
+    	}
+    	array_push($allScreens[$screenHandlesArray['fid']], $screenHandlesArray['sid']);
+    }
+
+    $formElementsSQL = "SELECT id_form, ele_id FROM " . $xoopsDB->prefix("formulize");
+    $formElementsHandler = $xoopsDB->query($formElementsSQL);
+
+    while($formElementsHandlesArray = $xoopsDB->fetchArray($formElementsHandler)) {
+    	if (!isset($formid_to_elementid[$formElementsHandlesArray['id_form']])) {
+    		$formid_to_elementid[$formElementsHandlesArray['id_form']] = array();
+    	}
+    	array_push($formid_to_elementid[$formElementsHandlesArray['id_form']], $formElementsHandlesArray['ele_id']);
+    }    
+
+    foreach ($formScreenIndex as $key => $value) {
+    	$form_elements = $value['formelements'];
+    	$this_fid = null;
+    	$screen_form_primaryid = $value['formid'];
+    	$all_elements_serialized = "";
+    	if ($form_elements == "b:0;") {
+    		// If formelements is empty, then fill it up with all elements
+    		// First get the real fid from formulize_screen for that screen, and get all elements associated with that fid
+    		foreach ($allScreens as $fid => $screensArray) {
+    			if (in_array($value['sid'], $screensArray)) {
+    				$this_fid = $fid;
+    			}
+    		}
+
+    		if ($this_fid != null) {
+    			// save all elements associated with that fid into a serialized string
+    			if (isset($formid_to_elementid[$this_fid])) {
+	    			$all_elements_serialized = serialize($formid_to_elementid[$this_fid]);
+
+    			}
+
+				$updateSQL = "UPDATE `". $xoopsDB->prefix("formulize_screen_form") ."` SET `formelements`='" . $all_elements_serialized . "' WHERE `formid`='" . $screen_form_primaryid . "'";
+    			if ($result = $xoopsDB->queryF($updateSQL)) {
+    				print "Database update success for formid = " . $screen_form_primaryid . ", sid = " . $value['sid'] . " in table formulize_screen_form <br />";
+    			} else {
+    				print "Database update failed for formid = " . $screen_form_primaryid . ", sid = " . $value['sid'] . " in table formulize_screen_form <br />";
+    			}
+    		}
+    		
+    	}
+    }
+	 exit();
+}
