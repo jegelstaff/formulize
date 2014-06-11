@@ -2118,7 +2118,8 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 
 // $groups is deprecated and not used in this function any longer
 // $owner_groups is used when dealing with a usernames or fullnames selectbox
-function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $profileForm="") {
+// $element is the element object representing the element we're loading the previously saved value for
+function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $entry, $profileForm="") {
 //global $xoopsUser;
 //if($xoopsUser->getVar('uid') == 1) {
 //print_r($prevEntry);
@@ -2137,10 +2138,10 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 	 * Hack by F�lix <INBOX Solutions> for sedonde
 	 * myts == NULL
 	 */
-			$type = $i->getVar('ele_type');
+			$type = $element->getVar('ele_type');
 			// going direct from the DB since if multi-language is active, getVar will translate the caption
-			//$caption = $i->getVar('ele_caption');
-			$ele_id = $i->getVar('ele_id');
+			//$caption = $element->getVar('ele_caption');
+			$ele_id = $element->getVar('ele_id');
 
 			// if we're handling a new profile form, check to see if the user has filled in the form already and use that value if necessary
 			// This logic could be of general use in handling posted requests, except for it's inability to handle 'other' boxes.  An update may pay off in terms of speed of reloading the page.
@@ -2151,7 +2152,7 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 					if( preg_match('/de_/', $k)){
 						$n = explode("_", $k);
 						if($n[3] == $ele_id) { // found the element in $_POST;
-							$dataFromUser = prepDataForWrite($i, $v);
+							$dataFromUser = prepDataForWrite($element, $v);
 							break;
 						}
 					}
@@ -2161,10 +2162,9 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 				}
 			}
 
+			// no value detected in form submission of this element...
 			if(!$value) {
-	     			global $xoopsDB;
-     				$ecq = q("SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '$ele_id'");
-     				$handle = $ecq[0]['ele_handle'];
+     				$handle = $element->getVar('ele_handle');
 						$key = "";
 	     			$keysFound = array_keys($prevEntry['handles'], $handle);
 						foreach($keysFound as $thisKeyFound) {
@@ -2173,7 +2173,8 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 								break;
 							}
 						}
-     				// if the caption was not found in the existing values for this entry, then return the ele_value, unless we're looking at an existing entry, and then we need to clear defaults first
+     				// if the handle was not found in the existing values for this entry, then return the ele_value, unless we're looking at an existing entry, and then we need to clear defaults first
+						// not sure this IF block will ever happen, this could be a holdover from the 2.0 data structure - jwe June 1 2014
      				if(!is_numeric($key) AND $key=="") { 
      					if($entry) {
      						switch($type) {
@@ -2187,14 +2188,25 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
      					} 
 	     				return $ele_value; 
      				}
+						
 						if($key !== "") {
+						  // grab previously saved value and treat it as the value for this element
 							$value = $prevEntry['values'][$key];
 						}
+						
+						if(($element->getVar('ele_use_default_when_blank') OR $element->getVar('ele_req')) AND !$value) {
+								// do not load in saved value over top of ele_value when the saved value is empty/blank
+								// and the element is required, or the element has the use-defaults-when-blank option on
+								return $ele_value;
+						}
+						
 			}
 
 			/*print_r($ele_value);
 			print "<br>After: "; //debug block
 			*/
+			
+			// based on element type, swap in saved value from DB over top of default value for this element
 			switch ($type)
 			{
 				case "derived":
@@ -2220,7 +2232,7 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 				case "radio":
 				case "checkbox":
 
-					// NEED TO ADD IN INITIALIZATION OF LINKED SELECT BOXES FOR SUBFORMS
+					
 
 					// NOTE:  unique delimiter used to identify LINKED select boxes, so they can be handled differently.
 					if(is_string($ele_value[2]) and strstr($ele_value[2], "#*=:*"))
@@ -2323,7 +2335,7 @@ function loadValue($prevEntry, $i, $ele_value, $owner_groups, $groups, $entry, $
 				default:
 					if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 						$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
-						return $customTypeHandler->loadValue($value, $ele_value, $i);
+						return $customTypeHandler->loadValue($value, $ele_value, $element);
 					} 
 			} // end switch
 

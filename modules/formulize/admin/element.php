@@ -77,6 +77,7 @@ if($_GET['ele_id'] != "new") {
   $caption = $elementObject->getVar('ele_caption', "f"); // the f causes no stupid reformatting by the ICMS core to take place, like making clickable links, etc
   $ele_type = $elementObject->getVar('ele_type');
   $ele_value = $elementObject->getVar('ele_value');
+	$ele_use_default_when_blank = intval($elementObject->getVar('ele_use_default_when_blank'));
   $ele_delim = $elementObject->getVar('ele_delim');
   if($ele_delim != "br" AND $ele_delim != "space" AND $ele_delim != "") {
     $ele_delim_custom_value = $ele_delim;
@@ -89,7 +90,7 @@ if($_GET['ele_id'] != "new") {
   $names['ele_desc'] = $elementObject->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
   $ele_req = $elementObject->getVar('ele_req');
   $ele_req = removeNotApplicableRequireds($ele_type, $ele_req); // function returns false when the element cannot be required.
-  $names['ele_req_on'] = $ele_req === false ? false : true;
+  $common['ele_req_on'] = $ele_req === false ? false : true;
   $names['ele_req_no_on'] = $ele_req ? "" : " checked";
   $names['ele_req_yes_on'] = $ele_req ? " checked" : "";
   $ele_display = $elementObject->getVar('ele_display');
@@ -178,6 +179,7 @@ if($_GET['ele_id'] != "new") {
   $ele_value = array();
   $ele_delim = "br";
   $ele_uitext = "";
+	$ele_use_default_when_blank = 0;
   global $xoopsModuleConfig;
   switch($ele_type) {
     case("text"):
@@ -212,7 +214,7 @@ if($_GET['ele_id'] != "new") {
      
   }
     
-  $names['ele_req_on'] = removeNotApplicableRequireds($ele_type);
+  $common['ele_req_on'] = removeNotApplicableRequireds($ele_type);
   $names['ele_req_no_on'] = " checked";
   $display['ele_display']['all'] = " selected";
   $display['ele_disabled']['none'] = " selected";
@@ -233,6 +235,7 @@ if($_GET['ele_id'] != "new") {
   
 }
 
+$advanced['ele_use_default_when_blank'] = $ele_use_default_when_blank;
 $advanced['datatypeui'] = createDataTypeUI($ele_type, $elementObject,$fid,$ele_encrypt);
 
 $formObject = $form_handler->get($fid);

@@ -111,8 +111,8 @@ function patch40() {
 	 * 
 	 * ====================================== */
 	
-	$checkThisTable = 'formulize_deletion_logs';
-	$checkThisField = 'context';
+	$checkThisTable = 'formulize';
+	$checkThisField = 'ele_use_default_when_blank';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
@@ -321,6 +321,8 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		$sql['add_formelements'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_form") . " ADD `formelements` text";
         $sql['add_on_before_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_before_save` text";
 		$sql['add_form_note'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `note` text";
+		$sql['add_use_default_when_blank'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_use_default_when_blank` tinyint(1) NOT NULL default '0'";
+		
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
 				if($key === "add_encrypt") {
@@ -359,6 +361,8 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
                     print "on_before_save field already added.  result: OK<br>";
                 } elseif($key === "add_form_note") {
                     print "form note field already added.  result: OK<br>";
+				} elseif($key === "add_use_default_when_blank") {
+						print "use default when blank already added.  result: OK<br>";
 				} elseif(strstr($key, 'drop_from_formulize_id_')) {
 					continue;
 				} else {
