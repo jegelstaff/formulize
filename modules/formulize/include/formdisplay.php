@@ -2599,24 +2599,26 @@ if(!$nosave) {
 }
 print "   return false;"; // removeEntryLocks calls the go_parent form for us
 print "	}\n";
-print " function removeEntryLocks(action, formAction, formData) {\n";
+print " function removeEntryLocks(action) {\n";
 global $entriesThatHaveBeenLockedThisPageLoad;
 if(count($entriesThatHaveBeenLockedThisPageLoad)>0) {
 		print "var killLocks = " . formulize_javascriptForRemovingEntryLocks();
 		print "		killLocks.done(function() { \n";
-		print "			formulize_javascriptForAfterRemovingLocks(action, formAction, formData);\n";
+		print "			formulize_javascriptForAfterRemovingLocks(action);\n";
     print "			});\n";
 } else {
-		print "formulize_javascriptForAfterRemovingLocks(action, formAction, formData);\n";
+		print "formulize_javascriptForAfterRemovingLocks(action);\n";
 }
 print " }\n";
 	
 ?>
 
-function formulize_javascriptForAfterRemovingLocks(action, formAction, formData) {
+function formulize_javascriptForAfterRemovingLocks(action) {
 	if(action == 'submitGoParent') {
 			window.document.go_parent.submit();
 	} else {
+		var formAction = jQuery('form[name=formulize]').attr('action');
+		var formData = jQuery('form[name=formulize]').serialize();
 		jQuery.ajax({
 			type: "POST",
 			url: formAction,
