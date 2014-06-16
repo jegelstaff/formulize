@@ -288,14 +288,9 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
       } else {
         jQuery("#formulizeform").animate({opacity:0.4}, 200, "linear");
         jQuery("input[name^='decue_']").remove();
-        jQuery.ajax({
-            type: "POST",
-            url: jQuery('form[name=formulize]').attr('action'),
-  					data: jQuery('form[name=formulize]').serialize(),
-            success: function(html, x){
-								removeEntryLocks('rewritePage', html);								
-            }
-        });
+	var formAction = jQuery('form[name=formulize]').attr('action');
+	var formData = jQuery('form[name=formulize]').serialize();
+	removeEntryLocks('rewritePage', formAction, formData); // 'rewritePage' will trigger the page to change after the locks have been removed
       }
     } else {
 			savedPage = page;
