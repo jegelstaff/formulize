@@ -113,10 +113,13 @@ class formulizePermHandler {
                     self::$cached_permissions[$cache_key] = false;  // cannot delete an entry which has not been saved
                 }
             } else {
+                // first check if this an entry by current user and they can edit their own entries
                 if (getEntryOwner($entry_id, $form_id) == $user_id) {
                     // user can update entry because it is their own and they have permission to update their own entries
                     self::$cached_permissions[$cache_key] = $gperm_handler->checkRight("{$action}_own_entry", $form_id, $groups, self::$formulize_module_id);
-                } else {
+                }
+                // next, check group and other permissions, even for own entries
+                if (! self::$cached_permissions[$cache_key]) {
                     // user can update entry because they have permission to update entries by others
                     self::$cached_permissions[$cache_key] = $gperm_handler->checkRight("{$action}_other_entries", $form_id, $groups, self::$formulize_module_id);
 
