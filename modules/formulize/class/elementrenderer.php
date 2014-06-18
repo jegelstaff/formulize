@@ -235,7 +235,7 @@ class formulizeElementRenderer{
 							$noHtml=false,
 							$OnFailure = ""
 						);
-						
+
 						$eltname = $form_ele_id;
 						$eltcaption = $ele_caption;
 						$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
@@ -243,10 +243,10 @@ class formulizeElementRenderer{
 						$form_ele->customValidationCode[] = "\n var FCKGetInstance = FCKeditorAPI.GetInstance('$form_ele_id');\n";
 						$form_ele->customValidationCode[] = "var getText = FCKGetInstance.EditorDocument.body.innerHTML; \n";
 						$form_ele->customValidationCode[] = "var StripTag = getText.replace(/(<([^>]+)>)/ig,''); \n";
-						$form_ele->customValidationCode[] = "if(StripTag=='') {\n";
+						$form_ele->customValidationCode[] = "if(StripTag=='' || StripTag=='&nbsp;') {\n";
 						$form_ele->customValidationCode[] = "window.alert(\"{$eltmsg}\");\n FCKGetInstance.Focus();\n return false;\n";
 						$form_ele->customValidationCode[] = "}\n";
-						
+
 						$GLOBALS['formulize_fckEditors'] = true;
 						
 					} else {
