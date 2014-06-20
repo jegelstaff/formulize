@@ -1207,3 +1207,25 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
   text-indent: 0px; }
 
 /*=== End of Formulize Boutons ===*/
+.formulize_autocomplete {
+  display: inline-block; }
+
+.formulize-element-edit-link {
+  float: right;
+  font-weight: normal;
+  border: 1px solid #b3b3b3;
+  padding: 0.1em 0.5em;
+  border-radius: 1em;
+  -moz-border-radius: 1em;
+  -webkit-border-radius: 1em;
+  opacity: 0.0; }
+
+td.even:hover .formulize-element-edit-link, td.odd:hover .formulize-element-edit-link {
+  -webkit-transition: opacity 400ms linear;
+  transition: opacity 400ms linear;
+  opacity: 0.3; }
+
+td.even .formulize-element-edit-link:hover, td.odd .formulize-element-edit-link:hover {
+  -webkit-transition: opacity 400ms linear;
+  transition: opacity 400ms linear;
+  opacity: 1.0; }

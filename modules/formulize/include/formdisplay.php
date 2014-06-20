@@ -106,6 +106,10 @@ class formulize_themeForm extends XoopsThemeForm {
 
 	function _drawElements($elements, $ret, $hidden) {
 		$class ='even';
+
+        global $xoopsUser;
+        $show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
+
 		foreach ( $elements as $ele ) {
 			$label_class = null;
 			$input_class = null;
@@ -134,7 +138,27 @@ class formulize_themeForm extends XoopsThemeForm {
 				if (($desc = $ele->getDescription()) != '') {
 					$ret .= "<div class='xoops-form-element-help'>{$desc}</div>";
 				}
-				$ret .= "</td><td class='$class$input_class'>" . $ele->render() . "</td></tr>\n";
+
+                $ret .= "</td><td class='$class$input_class'>";
+                if ($show_element_edit_link) {
+                    $element_name = trim($ele->getName());
+                    switch ($element_name) {
+                        case 'control_buttons':
+                        case 'proxyuser':
+                            // Do nothing
+                            break;
+
+                        default:
+                            if (is_object($ele) and isset($ele->formulize_element)) {
+                                $ret .= "<a class=\"formulize-element-edit-link\" href=\"" . XOOPS_URL .
+                                    "/modules/formulize/admin/ui.php?page=element&aid=0&ele_id=" .
+                                    $ele->formulize_element->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
+                            }
+                            break;
+                    }
+                }
+                $ret .=  $ele->render()."</td></tr>\n";
+
 			} else {
 				$hidden .= $ele->render();
 			}

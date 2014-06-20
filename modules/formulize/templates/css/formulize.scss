@@ -166,3 +166,26 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 }
 
 /*=== End of Formulize Boutons ===*/
+
+.formulize_autocomplete {
+    display: inline-block;  // if a formulize-element-edit-link is displayed, this element shouldn't use 100% width
+}
+
+.formulize-element-edit-link {
+    float: right;
+    font-weight: normal;
+    border: 1px solid darken($colorPageBackground, 30%);
+    padding: 0.1em 0.5em;
+    @include border-radius(1em);
+    opacity: 0.0;
+}
+td.even:hover .formulize-element-edit-link, td.odd:hover .formulize-element-edit-link {
+    -webkit-transition: opacity 400ms linear;
+    transition: opacity 400ms linear;
+    opacity: 0.3;
+}
+td.even .formulize-element-edit-link:hover, td.odd .formulize-element-edit-link:hover {
+    -webkit-transition: opacity 400ms linear;
+    transition: opacity 400ms linear;
+    opacity: 1.0;
+}
