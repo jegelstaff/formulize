@@ -483,28 +483,24 @@ class formulizeElementRenderer{
 							// write the possible values to a cached file so we can look them up easily when we need them, don't want to actually send them to the browser, since it could be huge, but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
 							$cachedLinkedOptionsFileName = "formulize_linkedOptions_".str_replace(".","",microtime(true));
 							formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_linkedOptions_");
-							$cachedLinkedOptions = fopen(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName","w");
-							fwrite($cachedLinkedOptions, "<?php\n\r");
-							$maxLength = 0;
+							$maxLength = 10;
+							$the_values = array();
 							foreach($linkedElementOptions as $id=>$text) {
+								$the_values[$id] = $text;
 								$thisTextLength = strlen($text);
 								$maxLength = $thisTextLength > $maxLength ? $thisTextLength : $maxLength;
-								$text = str_replace("\$", "\\\$", $text);
-								$quotedText = "\"".str_replace("\"", "\\\"", html_entity_decode($text, ENT_QUOTES))."\"";
-								$singleQuotedText = str_replace("'", "\'", "[$quotedText,$id]");
-								fwrite($cachedLinkedOptions,"if(stristr($quotedText, \$term)){ \$found[]='".$singleQuotedText."'; }\n");
 							}
-							fwrite($cachedLinkedOptions, "?>");
-							fclose($cachedLinkedOptions);
+							file_put_contents(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName",
+								"<?php\n\$$cachedLinkedOptionsFileName = ".var_export($the_values, true).";\n");
 							$cachedSourceValuesAutocompleteFile[$sourceValuesQ] = $cachedLinkedOptionsFileName;
 							$cachedSourceValuesAutocompleteLength[$sourceValuesQ] = $maxLength;
 						} 
 					}
-					
-						if($boxproperties[2]) {
-							$default_value = $boxproperties[2];
-							$default_value_user = $cachedSourceValuesQ[$sourceValuesQ][$boxproperties[2]];
-						}
+
+					if($boxproperties[2]) {
+						$default_value = $boxproperties[2];
+						$default_value_user = $cachedSourceValuesQ[$sourceValuesQ][$boxproperties[2]];
+					}
 					// if we're rendering an autocomplete box
 					if(!$isDisabled AND $ele_value[8] == 1) {
 						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedSourceValuesAutocompleteFile[$sourceValuesQ], $default_value, $default_value_user, $cachedSourceValuesAutocompleteLength[$sourceValuesQ]);
@@ -513,7 +509,7 @@ class formulizeElementRenderer{
 					} elseif($isDisabled) {
 						$disabledOutputText[] = $default_value_user;
 					}
-					
+
 					// only do this if we're rendering a normal element, that is not disabled
 					if(!$isDisabled AND $ele_value[8] == 0) {
 						$form_ele->addOptionArray($cachedSourceValuesQ[$sourceValuesQ]);
