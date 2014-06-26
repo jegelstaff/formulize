@@ -3,19 +3,21 @@
   "configurations": [
     {
       "settings": [
-	{
-	  "driverOptions": {
-	      "host": "ondemand.saucelabs.com",
-	      "port": 80
-	   },
-	  "browserOptions": {
-	      "browserName": "firefox",
-	      "username": "${SAUCE_USERNAME}",
-	      "accessKey": "${SAUCE_ACCESS_KEY}"
-	   }
-	}
+        {
+          "driverOptions": {
+              "host": "ondemand.saucelabs.com",
+              "port": 80
+           },
+          "browserOptions": {
+              "browserName": "firefox",
+              "username": "${SAUCE_USERNAME}",
+              "accessKey": "${SAUCE_ACCESS_KEY}"
+           }
+        }
       ],
       "scripts": [
-	"selenium-tests/*"
+        "selenium-tests/*"
       ]
+    }
+  ]
 }
