@@ -1,4 +1,4 @@
-language: node_js
+language: php
 before_script:
   - "npm install -g se-interpreter"
 script:
