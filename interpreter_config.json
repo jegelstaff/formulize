@@ -13,7 +13,7 @@
               "username": "${SAUCE_USERNAME}",
               "accessKey": "${SAUCE_ACCESS_KEY}"
            },
-           "tunnel-identifier": "${TRAVIS_JOB_NUMBER}"
+           "tunnel-identifier": "${TRAVIS_BUILD_NUMBER}"
         }
       ],
       "scripts": [
