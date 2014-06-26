@@ -5,7 +5,7 @@
   "steps": [
     {
       "type": "get",
-      "url": "http://127.0.0.1:4443/wd/hub"
+      "url": "http://localhost:4445"
     }
   ],
   "data": {
