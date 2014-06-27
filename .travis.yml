@@ -21,9 +21,7 @@ install:
   - sudo sed -e "s?%TRAVIS_BUILD_DIR%?$(pwd)?g" --in-place /etc/apache2/sites-available/default
   - echo "*** WEBROOT IS: ***"
   - echo $(pwd)
-  # use our own php.ini file
-  - phpenv config-add ci/travis/php.ini
-  - sudo service apache2 restart
+  # add other php.ini directives
   # set 777 on necessary directories
   - sudo chmod 777 cache
   - sudo chmod 777 templates_c
@@ -36,6 +34,8 @@ install:
   - sudo chmod 777 modules/formulize/upload
   - sudo chmod 777 modules/formulize/templates/screens/default
   - sudo chmod 777 modules/formulize/export
+  # restart apache
+  - sudo service apache2 restart
 
 before_script:
   - "npm install -g se-interpreter"
