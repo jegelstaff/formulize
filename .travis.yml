@@ -17,32 +17,10 @@ install:
   - echo "cgi.fix_pathinfo = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - ~/.phpenv/versions/$(phpenv version-name)/sbin/php-fpm
   # configure apache virtual hosts
-  - WEBROOT="$(pwd)"
-  - CGIROOT=`dirname "$(which php-cgi)"`
-  - echo "WEBROOT: $WEBROOT"
-  - echo "CGIROOT: $CGIROOT"
-  - sudo echo "<VirtualHost *:80>
-
-  DocumentRoot $WEBROOT
-
-  <Directory $WEBROOT>
-    Options FollowSymLinks MultiViews ExecCGI
-    AllowOverride All
-    Order deny,allow
-    Allow from all
-  </Directory>
-
-  # Wire up Apache to use Travis CI's php-fpm.
-  <IfModule mod_fastcgi.c>
-    AddHandler php5-fcgi .php
-    Action php5-fcgi /php5-fcgi
-    Alias /php5-fcgi /usr/lib/cgi-bin/php5-fcgi
-    FastCgiExternalServer /usr/lib/cgi-bin/php5-fcgi -host 127.0.0.1:80 -pass-header Authorization
-  </IfModule>
-
-</VirtualHost>" | sudo tee /etc/apache2/sites-available/default > /dev/null
-  - cat /etc/apache2/sites-available/default
+  - sudo cp -f travis/travis-ci-apache /etc/apache2/sites-available/default
+  - sudo sed -e "s?%TRAVIS_BUILD_DIR%?$(pwd)?g" --in-place /etc/apache2/sites-available/default
   - sudo service apache2 restart
+  - echo $(TRAVIS_BUILD_DIR)
 
 before_script:
   - "npm install -g se-interpreter"
@@ -51,7 +29,6 @@ addons:
     sauce_connect: true
 
 script:
-  - curl -s http://localhost/ && sudo cat /var/log/apache2/error.log && curl -s http://localhost/ | grep -F "hello world! $TRAVIS_PHP_VERSION" && curl -s http://localhost/non_existing_url_is_redirected | grep -F "hello world! $TRAVIS_PHP_VERSION" && curl -s http://mydomain.local/ | grep -F "hello world! $TRAVIS_PHP_VERSION"
   - "se-interpreter travis/interpreter_config.json"
 
   
