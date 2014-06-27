@@ -15,8 +15,6 @@ install:
   - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
   - sudo a2enmod rewrite actions fastcgi alias
   - echo "cgi.fix_pathinfo = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - echo "error_log /home/travis/build/jegelstaff/formulize/modules/formulize/temp/php_error_log" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - echo "`cat ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini`"
   - ~/.phpenv/versions/$(phpenv version-name)/sbin/php-fpm
   # configure apache virtual hosts
   - sudo cp -f ci/travis/travis-ci-apache /etc/apache2/sites-available/default
@@ -33,7 +31,8 @@ install:
   - sudo chmod 777 modules/formulize/upload
   - sudo chmod 777 modules/formulize/templates/screens/default
   - sudo chmod 777 modules/formulize/export
-  # restart to engage changes
+  # add to .ini and restart
+  - phpenv config-add ci/travis/php.ini
   - sudo service apache2 restart
   
 addons:
