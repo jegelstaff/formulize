@@ -189,3 +189,17 @@ td.even .formulize-element-edit-link:hover, td.odd .formulize-element-edit-link:
     transition: opacity 400ms linear;
     opacity: 1.0;
 }
+
+#formulize-entry-lock-message {
+    font-size: 80%;
+    margin-bottom: 1em;
+    padding: 0.7em 0.7em 0.7em 0em; // no padding on left side because lock icon provides padding
+    color: #855;    // a dark red
+    border: 1px solid #855;
+    @include border-radius(6px);
+    #formulize-entry-lock-icon {
+        float: left;
+        font-size: 200%;
+        padding: 0.4em 0.7em;
+    }
+}

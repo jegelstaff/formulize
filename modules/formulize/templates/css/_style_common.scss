@@ -1124,4 +1124,8 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     .ui-accordion .ui-accordion-content table.outer td{
         border-bottom: 1px solid #ddd;
     }
+    #formulize-entry-lock-message {
+        // do not print the entry-lock message
+        display: none;
+    }
 }

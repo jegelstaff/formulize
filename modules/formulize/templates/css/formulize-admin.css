@@ -1059,7 +1059,10 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     border: none; }
 
   .ui-accordion .ui-accordion-content table.outer td {
-    border-bottom: 1px solid #dddddd; } }
+    border-bottom: 1px solid #dddddd; }
+
+  #formulize-entry-lock-message {
+    display: none; } }
 .CodeMirror {
   line-height: 1em;
   font-family: monospace;

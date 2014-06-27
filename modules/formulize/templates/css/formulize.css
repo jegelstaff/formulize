@@ -1059,7 +1059,10 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     border: none; }
 
   .ui-accordion .ui-accordion-content table.outer td {
-    border-bottom: 1px solid #dddddd; } }
+    border-bottom: 1px solid #dddddd; }
+
+  #formulize-entry-lock-message {
+    display: none; } }
 .icms_checkboxoption {
   clear: both; }
 
@@ -1229,3 +1232,17 @@ td.even .formulize-element-edit-link:hover, td.odd .formulize-element-edit-link:
   -webkit-transition: opacity 400ms linear;
   transition: opacity 400ms linear;
   opacity: 1.0; }
+
+#formulize-entry-lock-message {
+  font-size: 80%;
+  margin-bottom: 1em;
+  padding: 0.7em 0.7em 0.7em 0em;
+  color: #855;
+  border: 1px solid #885555;
+  border-radius: 6px;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px; }
+  #formulize-entry-lock-message #formulize-entry-lock-icon {
+    float: left;
+    font-size: 200%;
+    padding: 0.4em 0.7em; }

@@ -228,10 +228,15 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 				list($lockUid, $lockUsername) = explode(",", file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName"));
 				if($lockUid != $user_id) {
 					// lock is still valid, hasn't expired yet.
-					if(count($lockedEntries)==0) {
-						print "<script type='text/javascript'>\n";
-						print "alert(\"".sprintf(_formulize_ENTRY_IS_LOCKED, str_replace('"', "'", $lockUsername))."\")\n";
-						print "</script>";
+                    if (count($lockedEntries) == 0) {
+                        $label = json_encode(sprintf(_formulize_ENTRY_IS_LOCKED, $lockUsername));
+                        print <<<EOF
+<script type='text/javascript'>
+$(document).ready(function() {
+    jQuery("<div id=\"formulize-entry-lock-message\"><i id=\"formulize-entry-lock-icon\" class=\"icon-lock\"></i><p>"+$label+"</p></div>").insertBefore("#formulize .xo-theme-form table");
+});
+</script>
+EOF;
 					}
 					$lockedEntries[$form_id][$entry] = true;
 				}
