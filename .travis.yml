@@ -6,6 +6,7 @@ env:
   - version-name: "5.5.10"
 
 language: php
+php:
   - 5.5
 
 install:
