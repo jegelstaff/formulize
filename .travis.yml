@@ -19,8 +19,6 @@ install:
   # configure apache virtual hosts
   - sudo cp -f ci/travis/travis-ci-apache /etc/apache2/sites-available/default
   - sudo sed -e "s?%TRAVIS_BUILD_DIR%?$(pwd)?g" --in-place /etc/apache2/sites-available/default
-  - echo "*** WEBROOT IS: ***"
-  - echo $(pwd)
 
 before_script:
   - "npm install -g se-interpreter"
