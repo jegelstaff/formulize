@@ -1673,7 +1673,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
                 $dataToWrite = array();
                 foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
                     // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
-                    if (($entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] == "" OR isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) {
+                    if ((isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) {
                         $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
                         // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
                         $resetDerivedValueFlag = false;
