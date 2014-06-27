@@ -917,152 +917,6 @@ a.tooltip:hover > span {
   -webkit-border-radius: 6px;
   box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.3); }
 
-td a.heading-locked, td a.heading-unlocked {
-  font-family: "formulize-icons";
-  font-style: normal;
-  font-weight: normal;
-  font-variant: normal;
-  text-transform: none;
-  -webkit-font-smoothing: antialiased;
-  text-decoration: inherit;
-  font-size: 11pt;
-  float: right;
-  margin-left: 0.3em;
-  color: #aad2e9; }
-
-td a.heading-locked {
-  color: #d3e7f3; }
-
-.heading-locked:before {
-  content: "\f113"; }
-
-.heading-unlocked:before {
-  content: "\f112"; }
-
-td a.header-info-link {
-  font-family: "formulize-icons";
-  font-style: normal;
-  font-weight: normal;
-  font-variant: normal;
-  text-transform: none;
-  -webkit-font-smoothing: antialiased;
-  text-decoration: inherit;
-  font-size: 11pt;
-  float: right;
-  color: #aad2e9; }
-
-.header-info-link:before {
-  content: "\f110"; }
-
-.heading-locked:hover, .heading-unlocked:hover, .header-info-link:hover {
-  text-shadow: 0px 0px 2px #1e5676; }
-
-a.loe-edit-entry {
-  font-family: "formulize-icons";
-  font-style: normal;
-  font-weight: normal;
-  font-variant: normal;
-  text-transform: none;
-  -webkit-font-smoothing: antialiased;
-  text-decoration: inherit;
-  font-size: 11pt;
-  font-size: 12pt;
-  margin: 0;
-  margin-left: 0.5em;
-  padding: 0.1em; }
-
-.loe-edit-entry:before {
-  content: "\f10d"; }
-
-a.loe-edit-entry:hover {
-  text-shadow: 0px 0px 2px #14384d; }
-
-td.formulize-controls {
-  white-space: nowrap; }
-
-.xoops-form-element-help {
-  color: #a2cee7; }
-
-form#formulize td.even, form#formulize td.odd {
-  width: 70%; }
-
-form#formulize td.even textarea, form#formulize td.odd textarea {
-  width: 99%; }
-
-#listofentries div.main-cell-div input {
-  width: 7em; }
-
-@media print {
-  body {
-    font-size: 10pt; }
-
-  #xo-header {
-    display: none; }
-
-  #xo-canvas-leftcolumn {
-    display: none; }
-
-  #xo-canvas.leftcolumn-layout #xo-canvas-columns, #xo-canvas.threecolumns-layout #xo-canvas-columns {
-    padding-left: 0 !important; }
-
-  #xo-content {
-    width: 100%; }
-
-  #formulizeform {
-    width: 100%; }
-
-  #xo-footer {
-    display: none; }
-
-  .no-print {
-    display: none; }
-
-  input, textarea {
-    border: none; }
-
-  select {
-    -moz-appearance: none;
-    -webkit-appearance: none;
-    appearance: none;
-    border: none; }
-
-  h1.formulize-form-title {
-    font-weight: normal; }
-
-  td.head h2 {
-    color: #222;
-    font-size: 12pt;
-    font-weight: normal; }
-
-  td.head span.caption-text {
-    color: #333;
-    font-weight: normal; }
-
-  td.head div.xoops-form-element-help {
-    color: #ddd;
-    font-size: 8pt;
-    font-weight: normal; }
-
-  td.even {
-    font-size: 10pt; }
-
-  tr, td {
-    page-break-inside: avoid; }
-
-  #pageNavTable, #bottomPageNumber, #bottom-save-block {
-    display: none; }
-
-  .ui-accordion .ui-accordion-content {
-    display: block !important; }
-
-  .ui-accordion .ui-accordion-content table.outer {
-    border: none; }
-
-  .ui-accordion .ui-accordion-content table.outer td {
-    border-bottom: 1px solid #dddddd; }
-
-  #formulize-entry-lock-message {
-    display: none; } }
 .icms_checkboxoption {
   clear: both; }
 
@@ -1246,3 +1100,150 @@ td.even .formulize-element-edit-link:hover, td.odd .formulize-element-edit-link:
     float: left;
     font-size: 200%;
     padding: 0.4em 0.7em; }
+
+td a.heading-locked, td a.heading-unlocked {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 11pt;
+  float: right;
+  margin-left: 0.3em;
+  color: #aad2e9; }
+
+td a.heading-locked {
+  color: #d3e7f3; }
+
+.heading-locked:before {
+  content: "\f113"; }
+
+.heading-unlocked:before {
+  content: "\f112"; }
+
+td a.header-info-link {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 11pt;
+  float: right;
+  color: #aad2e9; }
+
+.header-info-link:before {
+  content: "\f110"; }
+
+.heading-locked:hover, .heading-unlocked:hover, .header-info-link:hover {
+  text-shadow: 0px 0px 2px #1e5676; }
+
+a.loe-edit-entry {
+  font-family: "formulize-icons";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-decoration: inherit;
+  font-size: 11pt;
+  font-size: 12pt;
+  margin: 0;
+  margin-left: 0.5em;
+  padding: 0.1em; }
+
+.loe-edit-entry:before {
+  content: "\f10d"; }
+
+a.loe-edit-entry:hover {
+  text-shadow: 0px 0px 2px #14384d; }
+
+td.formulize-controls {
+  white-space: nowrap; }
+
+.xoops-form-element-help {
+  color: #a2cee7; }
+
+form#formulize td.even, form#formulize td.odd {
+  width: 70%; }
+
+form#formulize td.even textarea, form#formulize td.odd textarea {
+  width: 99%; }
+
+#listofentries div.main-cell-div input {
+  width: 7em; }
+
+@media print {
+  body {
+    font-size: 10pt; }
+
+  #xo-header {
+    display: none; }
+
+  #xo-canvas-leftcolumn {
+    display: none; }
+
+  #xo-canvas.leftcolumn-layout #xo-canvas-columns, #xo-canvas.threecolumns-layout #xo-canvas-columns {
+    padding-left: 0 !important; }
+
+  #xo-content {
+    width: 100%; }
+
+  #formulizeform {
+    width: 100%; }
+
+  #xo-footer {
+    display: none; }
+
+  .no-print {
+    display: none; }
+
+  input, textarea {
+    border: none; }
+
+  select {
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
+    border: none; }
+
+  h1.formulize-form-title {
+    font-weight: normal; }
+
+  td.head h2 {
+    color: #222;
+    font-size: 12pt;
+    font-weight: normal; }
+
+  td.head span.caption-text {
+    color: #333;
+    font-weight: normal; }
+
+  td.head div.xoops-form-element-help {
+    color: #ddd;
+    font-size: 8pt;
+    font-weight: normal; }
+
+  td.even {
+    font-size: 10pt; }
+
+  tr, td {
+    page-break-inside: avoid; }
+
+  #pageNavTable, #bottomPageNumber, #bottom-save-block {
+    display: none; }
+
+  .ui-accordion .ui-accordion-content {
+    display: block !important; }
+
+  .ui-accordion .ui-accordion-content table.outer {
+    border: none; }
+
+  .ui-accordion .ui-accordion-content table.outer td {
+    border-bottom: 1px solid #dddddd; }
+
+  #formulize-entry-lock-message {
+    display: none; } }
