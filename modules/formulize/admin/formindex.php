@@ -591,30 +591,30 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
                     }
                 }
 
-		
-		print "DB updates completed.  result: OK";
-	}
-}
-
-// Saves the given template to a template file on the disk
-function saveTemplate($template, $sid, $name) {
-    $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/". $sid . "/";
-    
-    $text = html_entity_decode($template);
-    if (!empty($text)) {
-        $fileHandle = fopen($pathname . $name. ".php", "w+");
-        $success = fwrite($fileHandle, "<?php\n" . $text);
-        fclose($fileHandle);
-
-        if ($success) {
-            print "created templates/screens/default/" . $sid . "/". $name . ".php. result: OK<br>";
-        } else {
-            print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
-        }
+        print "DB updates completed.  result: OK";
     }
 }
 
-    function saveMenuEntryAndPermissionsSQL($formid,$appid,$i,$menuText){
+
+// Saves the given template to a template file on the disk
+function saveTemplate($template, $sid, $name) {
+    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/{$sid}/{$name}.php";
+
+    $text = html_entity_decode($template);
+    if (false === strpos($text, "<?php")) {
+        // if there's no php open-tag in the text already, add one
+        $text = "<?php\n" . $text;
+    }
+
+    if (false === file_put_contents($filename, $text)) {
+        print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
+    } else {
+        print "created templates/screens/default/" . $sid . "/". $name . ".php. result: OK<br>";
+    }
+}
+
+
+function saveMenuEntryAndPermissionsSQL($formid,$appid,$i,$menuText){
         global $xoopsDB;
         $gperm_handler = xoops_gethandler('groupperm');
         $permissionsql = "";
