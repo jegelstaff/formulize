@@ -260,7 +260,9 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		formulize_benchmark("Done rendering element.");
 		
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.
-		if ($entry > 0 AND !isset($lockedEntries[$form_id][$entry])) {
+		if ($entry > 0 AND !isset($lockedEntries[$form_id][$entry])
+            and !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry]))
+        {
             if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {
                 $lockFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName", "w");
                 if (false !== $lockFile) {
