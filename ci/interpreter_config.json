@@ -16,13 +16,14 @@
               "build": "${TRAVIS_BUILD_NUMBER}",
               "tags": [
                 "${TRAVIS_BRANCH}",
+                "${TRAVIS_MESSAGE}",
                 "${TRAVIS_PULL_REQUEST}"
               ]
            }
         }
       ],
       "scripts": [
-        "selenium-tests/*"
+        "ci/selenium2-tests/*"
       ]
     }
   ]
