@@ -5,7 +5,7 @@
   "steps": [
     {
       "type": "get",
-      "url": "http://localhost:4445/"
+      "url": "http://localhost/"
     }
   ],
   "data": {
