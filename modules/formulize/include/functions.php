@@ -2603,6 +2603,7 @@ function cloneEntry($entry, $frid, $fid, $copies, $callback = null) {
         $entries_to_clone[$fid][] = $entry;
     }
     $dataHandlers = array();
+    $entryMap = array();
     for ($copy_counter = 0; $copy_counter<$copies; $copy_counter++) {
         foreach ($entries_to_clone as $fid=>$entries) {
             // never clone an entry in a form that is a single-entry form
@@ -2628,6 +2629,7 @@ function cloneEntry($entry, $frid, $fid, $copies, $callback = null) {
         $lsbElement = $element_handler->get($lsb);
         $dataHandlers[$lsbElement->getVar('id_form')]->reassignLSB($sourceElement->getVar('id_form'), $lsbElement, $entryMap);
     }
+    return $entryMap;
 }
 
 
