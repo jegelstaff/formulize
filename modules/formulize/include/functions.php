@@ -1575,7 +1575,7 @@ function writableQuery($items, $mod="") {
 
 // THIS FUNCTION TAKES A ID FROM THE CALCULATIONS RESULT AND RETURNS THE TEXT TO PUT ON THE SCREEN THAT CORRESPONDS TO IT
 // Also used for advanced searches
-function getCalcHandleText($handle, $forceColhead=false) {
+function getCalcHandleText($handle, $forceColhead=true) {
     global $xoopsDB;
     if ($handle == "creation_uid") {
         return _formulize_DE_CALC_CREATOR;
