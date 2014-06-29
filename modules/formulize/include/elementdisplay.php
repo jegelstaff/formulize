@@ -125,6 +125,11 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$prevEntry = getEntryValues($entry, "", $groups, $form_id, "", $mid, $user_id, $owner, $groupEntryWithUpdateRights);
 	}
 
+	// record the list of elements that are allowed in principle for a form (regardless of conditional status)
+	if($allowed) {
+		$GLOBALS['formulize_renderedElementsForForm'][$form_id][$entry][$renderedElementName] = $element->getVar('ele_handle');
+	}
+	
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
 	if($allowed AND count($elementFilterSettings[0]) > 0) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
