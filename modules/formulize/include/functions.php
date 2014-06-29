@@ -1108,7 +1108,9 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
             $formObject = $form_handler->get($fid);
             $mainHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_to_one[0]['keyother']);
             $candidateHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_fid['keyself']);
-            $candidateEntry = q("SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$oneFormObject->getVar('form_handle')) . " AS candidate, ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS main WHERE candidate.".$candidateHandle[0]['ele_handle']."=main.".$mainHandle[0]['ele_handle']." AND main.entry_id = ".intval($entries[$fid][0])." LIMIT 0,1");
+            $valueToCheckAgainst = isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle[0]['ele_handle']]) ? $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle[0]['ele_handle']] : "main.`".$mainHandle[0]['ele_handle']."` AND main.entry_id = ".intval($entries[$fid][0]);
+            $valueToCheckAgainst = is_numeric($valueToCheckAgainst) ? $valueToCheckAgainst : "'".formulize_escape($valueToCheckAgainst)."'";
+            $candidateEntry = q("SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$oneFormObject->getVar('form_handle')) . " AS candidate, ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS main WHERE candidate.`".$candidateHandle[0]['ele_handle']."` = ".$valueToCheckAgainst." LIMIT 0,1");
 
             if ($candidateEntry[0]['entry_id']) {
                 $entries[$one_fid['fid']][] = $candidateEntry[0]['entry_id'];
@@ -1119,13 +1121,19 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
             // figure out which of the two elements is the source of the linked values
             $element_handler = xoops_getmodulehandler('elements', 'formulize');
             $selfElement = $element_handler->get($one_fid['keyself']);
+            $otherElement = $element_handler->get($one_fid['keyother']);
             if (is_object($selfElement)) {
                 $selfEleValue = $selfElement->getVar('ele_value');
-                // self is the linked selectbox, other is the source of the values
                 if (strstr($selfEleValue[2], "#*=:*")) {
-                    // get the entry in the $one_fid['fid'] form (form with the self element), that has the intval($entries[$fid][0]) entry (the entry we are calling up already) as it's linked value (with , , around it)
-                    $data_handler = new formulizeDataHandler($one_fid['fid']);
-                    $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($entries[$fid][0]));
+                    // self is the linked selectbox, other is the source of the values
+                    if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$selfElement->getVar('ele_handle')])) {
+                        // if an asynch request has set an override value, use that!
+                        $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$selfElement->getVar('ele_handle')];
+                    } else {
+                        // get the entry in the $one_fid['fid'] form (form with the self element), that has the intval($entries[$fid][0]) entry (the entry we are calling up already) as it's linked value
+                        $data_handler = new formulizeDataHandler($one_fid['fid']);
+                        $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($entries[$fid][0]));
+                    }
                     if ($foundEntry !== false) {
                         $entries[$one_fid['fid']][] = $foundEntry;
                     } else {
@@ -1133,11 +1141,16 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
                     }
                 } else {
                     // other is the linked selectbox, self is the source of the values
-                    // return the value of the $one_fid['keyother'] element in the $fid, in intval($entries[$fid][0]) entry, the minus the , ,
-                    $data_handler = new formulizeDataHandler($fid);
-                    $foundEntry = $data_handler->getElementValueInEntry(intval($entries[$fid][0]), $one_fid['keyother']);
+                    if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$otherElement->getVar('ele_handle')])) {
+                        // if an asynch request has set an override value, use that!
+                        $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$otherElement->getVar('ele_handle')];
+                    } else {
+                        // return the value of the $one_fid['keyother'] element in the $fid, in intval($entries[$fid][0]) entry
+                        $data_handler = new formulizeDataHandler($fid);
+                        $foundEntry = $data_handler->getElementValueInEntry(intval($entries[$fid][0]), $one_fid['keyother']);
+                    }
                     if ($foundEntry !== false) {
-                        $entries[$one_fid['fid']][] = trim($foundEntry, ",");
+                        $entries[$one_fid['fid']][] = trim($foundEntry, ","); // remove commas, though there shouldn't be any anymore since we're not storing ,id, in the DB as of F5
                     } else {
                         $entries[$one_fid['fid']][] = "";
                     }
