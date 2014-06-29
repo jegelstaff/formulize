@@ -4838,9 +4838,6 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         }
         $output .= '<div class=\'main-cell-div\' id=\'cellcontents_'.$row.'_'.$column.'\'><span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle). '</span>';
         if ($counter<$countOfValue) {
-            $output .= ",";
-        }
-        if ($counter<$countOfValue) {
             $output .= "<br>";
         }
         $counter++;
