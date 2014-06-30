@@ -1364,6 +1364,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					$criteria = new CriteriaCompo();
 					$criteria->add(new Criteria('ele_type', 'text'), 'OR');
 					$criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
+					$criteria->add(new Criteria('ele_type', 'radio'), 'OR');
 					$elementsForDefaults = $element_handler->getObjects($criteria,$_POST['target_sub']); // get all the text or textarea elements in the form 
 				}
 				foreach($elementsForDefaults as $thisDefaultEle) {
@@ -1377,6 +1378,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						case "textarea":
 							$defaultTextToWrite = getTextboxDefault($ele_value_for_default[0], $_POST['target_sub'], $subEntWritten); // position 0 is default value for text boxes
 							break;
+						case "radio":
+						    $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
+							$defaultTextToWrite = array_search(1, $thisDefaultEleValue);
 					}
 					if($defaultTextToWrite) {
 						writeElementValue($_POST['target_sub'], $thisDefaultEle->getVar('ele_id'), $subEntWritten, $defaultTextToWrite);
