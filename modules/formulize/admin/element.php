@@ -204,6 +204,7 @@ if($_GET['ele_id'] != "new") {
     case "subform":
       $ele_value[2] = 1;
       $ele_value[3] = 1;
+	  $ele_value['simple_add_one_button'] = 1;
       break;
     case "grid":
       $ele_value[3] = "horizontal";
