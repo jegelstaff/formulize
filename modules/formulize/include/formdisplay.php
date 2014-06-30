@@ -923,6 +923,9 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 				$form->addElement (new XoopsFormHidden ('sub_submitted', $entries[$fid][0]));
 				$form->addElement (new XoopsFormHidden ('go_back_form', $go_back['form']));
 				$form->addElement (new XoopsFormHidden ('go_back_entry', $go_back['entry']));
+			} else {
+				// drawing a main form...put in the scroll position flag
+				$form->addElement (new XoopsFormHidden ('yposition', 0));
 			}
 			
 			// saving message
@@ -2558,7 +2561,15 @@ window.onbeforeunload = function (e) {
     }
 };
 
-<?php print $codeToIncludejQueryWhenNecessary; ?>
+<?php
+print $codeToIncludejQueryWhenNecessary;
+if(intval($_POST['yposition'])>0) {
+		print "\njQuery(window).load(function () {\n";
+		print "\tjQuery(window).scrollTop(".intval($_POST['yposition']).");\n";
+		print "});\n";
+}
+?>
+
 
 function showPop(url) {
 
@@ -2610,6 +2621,7 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 		if(jQuery('.formulize-form-submit-button')) {
 			jQuery('.formulize-form-submit-button').attr('disabled', 'disabled');
 		}
+		jQuery('#yposition').val(jQuery(window).scrollTop());
         if (formulizechanged) {
             window.document.getElementById('formulizeform').style.opacity = 0.5;
             window.document.getElementById('savingmessage').style.display = 'block';
