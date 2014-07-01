@@ -638,6 +638,17 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// gather id of the cached data, if any
 	$settings['formulize_cacheddata'] = strip_tags($_POST['formulize_cacheddata']);
 
+	// process a clicked custom button
+	// must do this before gathering the data!
+	$messageText = "";
+	if(isset($_POST['caid']) AND $screen AND $formulize_LOESecurityPassed) {
+		$customButtonDetails = $screen->getVar('customactions');
+		if(is_numeric($_POST['caid']) AND isset($customButtonDetails[$_POST['caid']])) {
+			list($caCode, $caElements, $caActions, $caValues, $caMessageText, $caApplyTo, $caPHP, $caInline) = processCustomButton($_POST['caid'], $customButtonDetails[$_POST['caid']]); // just processing to get the info so we can process the click.  Actual output of this button happens lower down
+			$messageText = processClickedCustomButton($caElements, $caValues, $caActions, $caMessageText, $caApplyTo, $caPHP, $caInline);
+		}
+	}
+	
 	if($_POST['ventry']) { // user clicked on a view this entry link
 		include_once XOOPS_ROOT_PATH . '/modules/formulize/include/formdisplay.php';
 
@@ -712,17 +723,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		}
 	}	
 	
-	// process a clicked custom button
-	// must do this before gathering the data!
-	$messageText = "";
-	if(isset($_POST['caid']) AND $screen AND $formulize_LOESecurityPassed) {
-		$customButtonDetails = $screen->getVar('customactions');
-		if(is_numeric($_POST['caid']) AND isset($customButtonDetails[$_POST['caid']])) {
-			list($caCode, $caElements, $caActions, $caValues, $caMessageText, $caApplyTo, $caPHP, $caInline) = processCustomButton($_POST['caid'], $customButtonDetails[$_POST['caid']]); // just processing to get the info so we can process the click.  Actual output of this button happens lower down
-			$messageText = processClickedCustomButton($caElements, $caValues, $caActions, $caMessageText, $caApplyTo, $caPHP, $caInline);
-		}
-	}
-
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 	// create $data and $wq (writable query)
   formulize_benchmark("before gathering dataset");
