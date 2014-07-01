@@ -387,13 +387,19 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		} elseif(is_numeric(substr($_POST['currentview'], 1))) { // saved or published view
 			$loadedView = $_POST['currentview'];
 			$settings['loadedview'] = $loadedView;
-			// kill the quicksearches
-			foreach($_POST as $k=>$v) {
-				if(substr($k, 0, 7) == "search_" AND $v != "") {
-					unset($_POST[$k]);
-				}
+			// kill the quicksearches, unless we've found a special flag that will cause them to be preserved
+			if(!isset($_POST['formulize_preserveQuickSearches']) AND !isset($_GET['formulize_preserveQuickSearches'])) {
+    			foreach($_POST as $k=>$v) {
+    				if(substr($k, 0, 7) == "search_" AND $v != "") {
+    					unset($_POST[$k]);
+    				}
+    			}
 			}
-			list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
+			list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $savedViewHList, $savedViewHCalc, $_POST['lockcontrols'], $quicksearches) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
+			if(!isset($_POST['formulize_preserveListCalcPage']) AND !isset($_GET['formulize_preserveListCalcPage'])) {
+				$_POST['hlist'] = $savedViewHList;
+				$_POST['hcalc'] = $savedViewHCalc;
+			}
 			// explode quicksearches into the search_ values
 			$allqsearches = explode("&*=%4#", $quicksearches);
 			$colsforsearches = explode(",", $_POST['oldcols']);
