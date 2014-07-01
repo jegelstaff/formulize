@@ -1,5 +1,6 @@
 <{php}>
     // if there's a timeout set for the session, then do the stuff in this file...
+    global $icmsConfig;
     if(ini_get('session.cookie_lifetime') OR ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')) {
 <{/php}>
     
