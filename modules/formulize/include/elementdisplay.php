@@ -261,7 +261,9 @@ EOF;
 		formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
 		
 		$form_ele =& $renderer->constructElement($renderedElementName, $ele_value, $entry, $isDisabled, $screen);
-
+		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") AND is_object($form_ele)) {
+			$form_ele->setDescription('');
+		}
 		formulize_benchmark("Done rendering element.");
 		
 		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next time the entry is saved.

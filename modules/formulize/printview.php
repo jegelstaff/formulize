@@ -39,59 +39,69 @@ require_once "../../mainfile.php";
 PRINT "<HTML>
 <meta http-equiv=\"Content-Type\" content=\"text/html; charset="._CHARSET."\" />";
 PRINT "<HEAD>";
-print "<link rel='stylesheet' type='text/css' media='all' href='".getcss($xoopsConfig['theme_set'])."'>\n";
-// figure out if this is XOOPS or ICMS
-if(file_exists(XOOPS_ROOT_PATH."/class/icmsform/index.html")) {
-	print "<link rel=\"stylesheet\" media=\"screen\" href=\"".XOOPS_URL."/icms.css\" type=\"text/css\" />\n";
+
+if(!$formulizeConfig['printviewStylesheets']) {
+   print "<link rel='stylesheet' type='text/css' media='all' href='".getcss($xoopsConfig['theme_set'])."'>\n";
+   // figure out if this is XOOPS or ICMS
+   if(file_exists(XOOPS_ROOT_PATH."/class/icmsform/index.html")) {
+   	print "<link rel=\"stylesheet\" media=\"screen\" href=\"".XOOPS_URL."/icms.css\" type=\"text/css\" />\n";
+   }
+   print <<<EOF
+   <style>
+   body {
+       font-size: 9pt;
+   }
+   h2, th {
+       font-weight: normal;
+       color: #333;
+   }
+   .subform-caption b {
+       font-weight: normal;
+   }
+   .caption-text, #formulize-printpreview-pagetitle {
+       font-weight: normal;
+       color: #333;
+   }
+   td.head div.xoops-form-element-help {
+       color: #ddd;
+       font-size: 8pt;
+       font-weight: normal;
+   }
+   td.head {
+       width: 30%;
+       background-color: white;
+   }
+   td.even, td.odd {
+       width: 70%;
+       border-left: 1px solid #bbb;
+   }
+   table.outer table.outer {
+       width: 100%;
+   }
+   td div.xo-theme-form {
+       padding: 0;
+   }
+   div.xo-theme-form > table.outer > tbody > tr > td {
+       border-bottom: 1px solid #bbb;
+   }
+   table.outer {
+       border: 1px solid #bbb;
+   }
+   table.outer table.outer {
+       border-left: none;
+       border-right: none;
+       border-bottom: none;
+   }
+   </style>
+   EOF;
+} else {
+	foreach(explode(',', $formulizeConfig['printviewStylesheets']) as $styleSheet) {
+		$styleSheet = substr(trim($styleSheet),0,4) == 'http' ? trim($styleSheet) : XOOPS_URL.trim($styleSheet);
+		print "<link rel='stylesheet' type='text/css' media='all' href='$styleSheet' />\n";
+	}
 }
-print <<<EOF
-<style>
-body {
-    font-size: 9pt;
-}
-h2, th {
-    font-weight: normal;
-    color: #333;
-}
-.subform-caption b {
-    font-weight: normal;
-}
-.caption-text, #formulize-printpreview-pagetitle {
-    font-weight: normal;
-    color: #333;
-}
-td.head div.xoops-form-element-help {
-    color: #ddd;
-    font-size: 8pt;
-    font-weight: normal;
-}
-td.head {
-    width: 30%;
-    background-color: white;
-}
-td.even, td.odd {
-    width: 70%;
-    border-left: 1px solid #bbb;
-}
-table.outer table.outer {
-    width: 100%;
-}
-td div.xo-theme-form {
-    padding: 0;
-}
-div.xo-theme-form > table.outer > tbody > tr > td {
-    border-bottom: 1px solid #bbb;
-}
-table.outer {
-    border: 1px solid #bbb;
-}
-table.outer table.outer {
-    border-left: none;
-    border-right: none;
-    border-bottom: none;
-}
-</style>
-EOF;
+
+
 PRINT "</HEAD>";
 
 $formframe = $_POST['formframe'];
