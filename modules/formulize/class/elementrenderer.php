@@ -486,7 +486,7 @@ class formulizeElementRenderer{
 							$maxLength = 10;
 							$the_values = array();
 							foreach($linkedElementOptions as $id=>$text) {
-								$the_values[$id] = $text;
+								$the_values[$id] = trans($text);
 								$thisTextLength = strlen($text);
 								$maxLength = $thisTextLength > $maxLength ? $thisTextLength : $maxLength;
 							}
