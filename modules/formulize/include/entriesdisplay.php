@@ -727,7 +727,17 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// create $data and $wq (writable query)
   formulize_benchmark("before gathering dataset");
 	list($data, $wq, $regeneratePageNumbers) = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, $screen, $currentURL, intval($_POST['forcequery']));
-  formulize_benchmark("after gathering dataset/before generating nav");
+    formulize_benchmark("after gathering dataset/before generating calcs");
+	if($settings['calc_cols'] AND !$settings['hcalc']) {
+	    //formulize_benchmark("before performing calcs");
+		$ccols = explode("/", $settings['calc_cols']);
+		$ccalcs = explode("/", $settings['calc_calcs']);
+		$cblanks = explode("/", $settings['calc_blanks']);
+		$cgrouping = explode("/", $settings['calc_grouping']);
+		$cResults = performCalcs($ccols, $ccalcs, $cblanks, $cgrouping, $frid, $fid);
+    }
+    //formulize_benchmark("after performing calcs");
+	formulize_benchmark("after generating calcs/before creating pagenav");
 	$formulize_LOEPageNav = formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers);
   formulize_benchmark("after nav/before interface");
 	$formulize_buttonCodeArray = array();
@@ -741,7 +751,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
   formulize_benchmark("before entries");
-	drawEntries($fid, $showcols, $searches, $frid, $scope, "", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches); // , $loadview); // -- loadview not passed any longer since the lockcontrols indicator is used to handle whether things should appear or not.
+	drawEntries($fid, $showcols, $searches, $frid, $scope, "", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches, $cResults); // , $loadview); // -- loadview not passed any longer since the lockcontrols indicator is used to handle whether things should appear or not.
   formulize_benchmark("after entries");
 
 	if($screen) {
@@ -1283,7 +1293,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 }
 
 // THIS FUNCTION DRAWS IN THE RESULTS OF THE QUERY
-function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
+function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches, $cResults) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
 
 	// determine if the query reached a limit in the number of entries to return
 	$LOE_limit = 0;
@@ -1378,19 +1388,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	// 2. loop through the array and perform all the requested calculations
 	
 	if($settings['calc_cols'] AND !$settings['hcalc']) {
-		$ccols = explode("/", $settings['calc_cols']);
-		$ccalcs = explode("/", $settings['calc_calcs']);
-		// need to add in proper handling of long calculation results, like grouping percent breakdowns that result in many, many rows.
-		foreach($ccalcs as $onecalc) {
-			$thesecalcs = explode(",", $onecalc);
-			if(!is_array($thesecalcs)) { $thesecalcs[0] = ""; }
-			$totalalcs = $totalcalcs + count($thesecalcs);
-		}
-		$cblanks = explode("/", $settings['calc_blanks']);
-		$cgrouping = explode("/", $settings['calc_grouping']);
-    //formulize_benchmark("before performing calcs");
-		$cResults = performCalcs($ccols, $ccalcs, $cblanks, $cgrouping, $frid, $fid);
-    //formulize_benchmark("after performing calcs");
+    
 //		print "<p><input type=button style=\"width: 140px;\" name=cancelcalcs1 value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input></p>\n";
 //		print "<div";
 //		if($totalcalcs>4) { print " class=scrollbox"; }
@@ -1407,7 +1405,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 
 		$exportFilename = $settings['xport'] == "calcs" ? $filename : "";
     //formulize_benchmark("before printing results");
-    printResults($cResults[0], $cResults[1], $cResults[2], $cResults[3], $exportFilename, $settings['title']); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
+	// $cResults passed in from the main part of displayEntries
+    printResults($cResults[0], $cResults[1], $cResults[2], $cResults[3], $cResults[4], $exportFilename, $settings['title']); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings, 3 is grouping values, 4 is the raw numbers -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
     //formulize_benchmark("after printing results");
 		print "</table>\n";
 
