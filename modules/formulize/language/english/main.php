@@ -455,11 +455,11 @@ define("_formulize_DE_CALC_BTEXT", "Exclude which entries?");
 define("_formulize_DE_CALC_GTEXT", "Group Results?");
 define("_formulize_DE_CALC_GTEXT2", "2nd level Grouping?");
 define("_formulize_DE_CALCHEAD", "Calculation Results");
-define("_formulize_DE_CALC_SUM", "Sum Total");
+define("_formulize_DE_CALC_SUM", "Total");
 define("_formulize_DE_CALC_AVG", "Averages");
 define("_formulize_DE_CALC_MIN", "Minimum Value");
 define("_formulize_DE_CALC_MAX", "Maximum Value");
-define("_formulize_DE_CALC_COUNT", "Count Entries");
+define("_formulize_DE_CALC_COUNT", "Counts");
 define("_formulize_DE_CALC_PER", "Percentage Breakdown");
 define("_formulize_DE_EXCLBLANKS", "Excludes blanks/zeros");
 define("_formulize_DE_INCLBLANKS", "Includes blanks/zeros");
@@ -474,8 +474,9 @@ define("_formulize_DE_CALC_MEDIAN25", "25th Percentile");
 define("_formulize_DE_CALC_MEDIAN75", "75th Percentile");
 define("_formulize_DE_CALC_MODE", "Mode (most common)");
 define("_formulize_DE_CALC_NO25OR75", "Not enough values to calculate this");
-define("_formulize_DE_CALC_NUMENTRIES", "Number of Entries");
-define("_formulize_DE_CALC_NUMUNIQUE", "Number of Unique Values");
+define("_formulize_DE_CALC_NUMENTRIES", "Total");
+define("_formulize_DE_CALC_NUMUNIQUE", "Total Unique");
+define("_formulize_DE_CALC_GRANDTOTAL", "Grand Total");
 define("_formulize_DE_PER_ITEM", "Item");
 define("_formulize_DE_PER_COUNT", "Count");
 define("_formulize_DE_PER_PERCENT", "Percentage");
@@ -723,7 +724,7 @@ define("_formulize_NO_MATCH_FOUND", "No match found");
 
 define("_formulize_ENTRY_IS_LOCKED", "Some or all of the data on this page has been opened by '%s', therefore it is locked and you cannot make any changes to it.  Wait for the other person to save the data, or get a webmaster to save it (webmasters can override locks like this).");
 
-/* Upload element translation by FranÃ§ois */
+/* Upload element translation by François */
 define("_AM_UPLOAD", "Upload a file:");
 define("_AM_UPLOAD_DELETE", "  Delete this file");
 define("_AM_UPLOAD_DELETE_FAIL", "There was an error deleting the file, please reload the form and try again.");
@@ -738,7 +739,7 @@ define("_AM_UPLOAD_ERR_PARTIAL", "The file was only partially uploaded.  Please 
 define("_AM_UPLOAD_ERR_NO_TMP_DIR", "There is no temporary folder on the server to save your file in.  Please inform the webmaster about this error.");
 define("_AM_UPLOAD_ERR_CANT_WRITE", "Your file was uploaded, but could not be saved on the web server, maybe because the hard drive is full.  Please inform the webmaster about this error.");
 define("_AM_UPLOAD_ERR_EXTENSION", "The web server rejected your file (a PHP extension stopped it from being uploaded).");
-/* End Upload element translation by FranÃ§ois */
+/* End Upload element translation by François */
 
 define("_formulize_CLOSE_FORM_ELEMENT", "You need to close the form element that is open first before you edit this one");
 
