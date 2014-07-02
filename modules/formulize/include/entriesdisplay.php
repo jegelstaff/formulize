@@ -1409,14 +1409,14 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
  			print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL ."/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></td></tr>";
  		}
 
-		$exportFilename = $settings['xport'] == "calcs" ? $filename : "";
-    //formulize_benchmark("before printing results");
-	// $cResults passed in from the main part of displayEntries
-    printResults($cResults[0], $cResults[1], $cResults[2], $cResults[3], $cResults[4], $exportFilename, $settings['title']); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings, 3 is grouping values, 4 is the raw numbers -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
-    //formulize_benchmark("after printing results");
-		print "</table>\n";
+        $exportFilename = $settings['xport'] == "calcs" ? $filename : "";
+        //formulize_benchmark("before printing results");
+        // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
+        printResults($cResults[0], $cResults[1], $cResults[2], $cResults[3], $cResults[4], $exportFilename, $settings['title']);
+        //formulize_benchmark("after printing results");
+        print "</table>\n";
+    }
 
-	} 
 	// MASTER HIDELIST CONDITIONAL...
 	if(!$settings['hlist'] AND !$listTemplate) {
 		print "<div class=\"list-of-entries-container\"><table class=\"outer\">";
@@ -2078,6 +2078,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
   
   global $xoopsDB;
   $masterResults = array();
+  $masterResultsRaw = array();
   $blankSettings = array();
   $groupingSettings = array();
   $groupingValues = array();
@@ -2328,6 +2329,8 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		    $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
 		  }
 		}
+				$masterResultsRaw[$cols[$i]][$calc][$calcId]['count'] = $thisResult["count$fidAlias$handle"];
+				$masterResultsRaw[$cols[$i]][$calc][$calcId]['countunique'] = $thisResult["distinct$fidAlias$handle"];
 		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_NUMENTRIES . ": ".$thisResult["count$fidAlias$handle"]."<br>"._formulize_DE_CALC_NUMUNIQUE . ": " .$thisResult["distinct$fidAlias$handle"];
 		break;
 	      case "avg":
@@ -2574,6 +2577,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	$to_return[1] = $blankSettings;
 	$to_return[2] = $groupingSettings;
 	$to_return[3] = $groupingValues;
+	$to_return[4] = $masterResultsRaw;
 	return $to_return;
 }
 
@@ -2744,15 +2748,17 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
 
 
 //THIS FUNCTION TAKES A MASTER RESULT SET AND DRAWS IT ON THE SCREEN
-function printResults($masterResults, $blankSettings, $groupingSettings, $groupingValues, $filename="", $title="") {
+function printResults($masterResults, $blankSettings, $groupingSettings, $groupingValues, $masterResultsRaw, $filename="", $title="") {
+
 	$output = "";
 	foreach($masterResults as $handle=>$calcs) {
 		$output .= "<tr><td class=head colspan=2>\n";
-		$output .= printSmart(trans(getCalcHandleText($handle)), 300);
+		$output .= printSmart(trans(getCalcHandleText($handle)), 100);
 		$output .= "\n</td></tr>\n";
 		foreach($calcs as $calc=>$groups) {
 			$countGroups = count($groups);
-			$output .= "<tr><td class=even rowspan=$countGroups>\n";
+			$rowspan = ($countGroups > 1 AND $calc != "count") ? $countGroups : 1;
+     	$output .= "<tr><td class=even rowspan=$rowspan>\n"; // start of row with calculation results (possibly first row among many)
 			switch($calc) {
 				case "sum":
 					$calc_name = _formulize_DE_CALC_SUM;
@@ -2809,7 +2815,41 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 					}
 					break;
 			}
-			$output .= "<p>$bsetting</p>\n</td>\n";
+			$output .= "<p class='formulize_blank_setting'>$bsetting</p>\n</td>\n";
+
+			// start of right hand column for calculation results
+			if($calc == "count") {
+				$output .= "<td class=odd>\n"; // start of cell with calculations results
+
+				if($countGroups > 1) {
+						$theseGroupSettings = explode("!@^%*", $groupingSettings[$handle][$calc]);
+						$firstGroupSettingText = printSmart(trans(getCalcHandleText($theseGroupSettings[0], true)));
+
+						$output .= "<table style='width: auto;'><tr><th>$firstGroupSettingText</th><td class='count-total' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_NUMENTRIES."</b><center></td><td class='count-unique' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_NUMUNIQUE."</b><center></td></tr>\n";
+
+						$totalCount = 0;
+						$totalUnique = 0;
+						foreach($masterResultsRaw[$handle][$calc] as $group=>$rawResult) {
+								foreach($theseGroupSettings as $id=>$thisGroupSetting) {
+										if($thisGroupSetting === "none") { continue; }
+										$elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
+										$groupText = formulize_swapUIText($groupingValues[$handle][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
+										$output .= "<tr><td>".printSmart(trans($groupText))."</td><td class='count-total' style='text-align: right;'>".$rawResult['count']."</td><td class='count-unique' style='text-align: right;'>".$rawResult['countunique']."</td></tr>";
+										$totalCount += $rawResult['count'];
+										$totalUnique += $rawResult['countunique'];
+								}
+						}
+
+						$output .= "<tr><td style='border-top: 1px solid black;'><b>"._formulize_DE_CALC_GRANDTOTAL."</b></td><td style='border-top: 1px solid black; text-align: right;' class='count-total'><b>$totalCount</b></td><td style='border-top: 1px solid black; text-align: right;' class='count-unique'><b>$totalUnique</b></td></tr>\n";
+						$output .= "</table>";
+				} else {
+						$rawResult = $masterResultsRaw[$handle][$calc][0];
+						$output .= "<div class='count-total'><p><b>"._formulize_DE_CALC_NUMENTRIES." . . . ".$rawResult['count']."</b></p></div><div class='count-unique'><p><b>"._formulize_DE_CALC_NUMUNIQUE." . . . ".$rawResult['countunique']."</b></p></div>\n";
+				}
+
+				$output .= "</td></tr>"; // end of the main row, and the specific cell with the calculations results
+
+			} else {
       $start = 1;
      	foreach($groups as $group=>$result) {
         //foreach($result as $resultID=>$thisResult) {
@@ -2836,6 +2876,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
         //}
      	}
     }
+  }
   }
 	print $output;
 	// addition of calculation download, August 22 2006
