@@ -1407,7 +1407,8 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 
 		$exportFilename = $settings['xport'] == "calcs" ? $filename : "";
     //formulize_benchmark("before printing results");
-    printResults($cResults[0], $cResults[1], $cResults[2], $cResults[3], $exportFilename, $settings['title']); // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
+    // 0 is the masterresults, 1 is the blanksettings, 2 is grouping settings -- exportFilename is the name of the file that we need to create and into which we need to dump a copy of the calcs
+    printResults($cResults[0], $cResults[1], $cResults[2], $cResults[3], $cResults[4], $exportFilename, $settings['title']);
     //formulize_benchmark("after printing results");
 		print "</table>\n";
 
