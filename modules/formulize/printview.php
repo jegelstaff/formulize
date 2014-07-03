@@ -40,6 +40,11 @@ PRINT "<HTML>
 <meta http-equiv=\"Content-Type\" content=\"text/html; charset="._CHARSET."\" />";
 PRINT "<HEAD>";
 
+$module_handler =& xoops_gethandler('module');
+$config_handler =& xoops_gethandler('config');
+$formulizeModule =& $module_handler->getByDirname("formulize");
+$formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+
 if(!$formulizeConfig['printviewStylesheets']) {
    print "<link rel='stylesheet' type='text/css' media='all' href='".getcss($xoopsConfig['theme_set'])."'>\n";
    // figure out if this is XOOPS or ICMS
@@ -93,7 +98,7 @@ if(!$formulizeConfig['printviewStylesheets']) {
        border-bottom: none;
    }
    </style>
-   EOF;
+EOF;
 } else {
 	foreach(explode(',', $formulizeConfig['printviewStylesheets']) as $styleSheet) {
 		$styleSheet = substr(trim($styleSheet),0,4) == 'http' ? trim($styleSheet) : XOOPS_URL.trim($styleSheet);
