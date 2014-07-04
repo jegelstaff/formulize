@@ -480,6 +480,16 @@ $modversion['config'][] = array(
 	'default' => 0,
 );
 
+$modversion['config'][] = array(
+	'name' => 'printviewStylesheets',
+	'title' => '_MI_formulize_PRINTVIEWSTYLESHEETS',
+	'description' => '_MI_formulize_PRINTVIEWSTYLESHEETSDESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => '',
+);
+
+
 
 
 //bloc

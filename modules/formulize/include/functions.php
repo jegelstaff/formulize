@@ -1575,7 +1575,7 @@ function writableQuery($items, $mod="") {
 
 // THIS FUNCTION TAKES A ID FROM THE CALCULATIONS RESULT AND RETURNS THE TEXT TO PUT ON THE SCREEN THAT CORRESPONDS TO IT
 // Also used for advanced searches
-function getCalcHandleText($handle, $forceColhead=false) {
+function getCalcHandleText($handle, $forceColhead=true) {
     global $xoopsDB;
     if ($handle == "creation_uid") {
         return _formulize_DE_CALC_CREATOR;
@@ -2603,6 +2603,7 @@ function cloneEntry($entry, $frid, $fid, $copies, $callback = null) {
         $entries_to_clone[$fid][] = $entry;
     }
     $dataHandlers = array();
+    $entryMap = array();
     for ($copy_counter = 0; $copy_counter<$copies; $copy_counter++) {
         foreach ($entries_to_clone as $fid=>$entries) {
             // never clone an entry in a form that is a single-entry form
@@ -2628,6 +2629,7 @@ function cloneEntry($entry, $frid, $fid, $copies, $callback = null) {
         $lsbElement = $element_handler->get($lsb);
         $dataHandlers[$lsbElement->getVar('id_form')]->reassignLSB($sourceElement->getVar('id_form'), $lsbElement, $entryMap);
     }
+    return $entryMap;
 }
 
 
@@ -4835,9 +4837,6 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
             $v = (false === $time_value) ? "" : date(_SHORTDATESTRING, $time_value);
         }
         $output .= '<div class=\'main-cell-div\' id=\'cellcontents_'.$row.'_'.$column.'\'><span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle). '</span>';
-        if ($counter<$countOfValue) {
-            $output .= ",";
-        }
         if ($counter<$countOfValue) {
             $output .= "<br>";
         }

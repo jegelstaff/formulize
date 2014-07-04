@@ -153,7 +153,15 @@ if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups,
 	if(strstr($currentURL, "/modules/formulize/")) { // if it's a formulize page, reload to login screen
 		redirect_header(XOOPS_URL . "/user.php?xoops_redirect=$currentURL", 3, _formulize_NO_PERMISSION);
 	} else { // if formulize is just being included elsewhere, then simply show error and end script
-		print "<p>"._formulize_NO_PERMISSION."</p>\n";
+		global $user;
+		if(isset($GLOBALS['formulizeHostSystemUserId']) AND is_object($user) AND is_array($user->roles) AND !$xoopsUser) {
+			// Drupal user is not logged in
+			$slashPosition = strpos($currentURL,"/",10);
+			$afterSlashLocation = substr($currentURL,$slashPosition+1);
+			redirect_header("/user?destination=".$afterSlashLocation, 0, _formulize_NO_PERMISSION);
+		} else {
+	       	print "<p>"._formulize_NO_PERMISSION."</p>\n";
+		}
 		return;
 	}
 }

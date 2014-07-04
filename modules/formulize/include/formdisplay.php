@@ -923,6 +923,9 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 				$form->addElement (new XoopsFormHidden ('sub_submitted', $entries[$fid][0]));
 				$form->addElement (new XoopsFormHidden ('go_back_form', $go_back['form']));
 				$form->addElement (new XoopsFormHidden ('go_back_entry', $go_back['entry']));
+			} else {
+				// drawing a main form...put in the scroll position flag
+				$form->addElement (new XoopsFormHidden ('yposition', 0));
 			}
 			
 			// saving message
@@ -1364,6 +1367,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					$criteria = new CriteriaCompo();
 					$criteria->add(new Criteria('ele_type', 'text'), 'OR');
 					$criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
+					$criteria->add(new Criteria('ele_type', 'radio'), 'OR');
 					$elementsForDefaults = $element_handler->getObjects($criteria,$_POST['target_sub']); // get all the text or textarea elements in the form 
 				}
 				foreach($elementsForDefaults as $thisDefaultEle) {
@@ -1377,6 +1381,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						case "textarea":
 							$defaultTextToWrite = getTextboxDefault($ele_value_for_default[0], $_POST['target_sub'], $subEntWritten); // position 0 is default value for text boxes
 							break;
+						case "radio":
+						    $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
+							$defaultTextToWrite = array_search(1, $thisDefaultEleValue);
 					}
 					if($defaultTextToWrite) {
 						writeElementValue($_POST['target_sub'], $thisDefaultEle->getVar('ele_id'), $subEntWritten, $defaultTextToWrite);
@@ -2554,7 +2561,15 @@ window.onbeforeunload = function (e) {
     }
 };
 
-<?php print $codeToIncludejQueryWhenNecessary; ?>
+<?php
+print $codeToIncludejQueryWhenNecessary;
+if(intval($_POST['yposition'])>0) {
+		print "\njQuery(window).load(function () {\n";
+		print "\tjQuery(window).scrollTop(".intval($_POST['yposition']).");\n";
+		print "});\n";
+}
+?>
+
 
 function showPop(url) {
 
@@ -2606,6 +2621,7 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 		if(jQuery('.formulize-form-submit-button')) {
 			jQuery('.formulize-form-submit-button').attr('disabled', 'disabled');
 		}
+		jQuery('#yposition').val(jQuery(window).scrollTop());
         if (formulizechanged) {
             window.document.getElementById('formulizeform').style.opacity = 0.5;
             window.document.getElementById('savingmessage').style.display = 'block';
