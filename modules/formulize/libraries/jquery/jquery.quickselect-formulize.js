@@ -108,7 +108,7 @@ var QuickSelect;
     		$input_element.val(label); // Set the visible value
     		previous_value = label;
     		$results_list.empty(); // clear the results list
-        $(options.additionalFields).each(function(i,input){$(input).val(values[i+1]);}); // set the additional fields' values
+        $(options.additionalFields).each(function(i,input){$(input).val(values[i+1]);$(this).change();}); // set the additional fields' values
         if(!from_hide_now_function)hideResultsNow(); // hide the results when something is selected
     		if(options.onItemSelect)setTimeout(function(){ options.onItemSelect(li); }, 1); // run the user callback, if set
     		return true;
@@ -121,7 +121,7 @@ var QuickSelect;
           // No current selection - blank the fields if options.exactMatch and current value isn't valid.
           if(options.exactMatch){
             $input_element.val('');
-            $(options.additionalFields).each(function(i,input){$(input).val('');});
+            $(options.additionalFields).each(function(i,input){$(input).val('');$(this).change();});
           }
           return false;
     		}
@@ -203,7 +203,7 @@ var QuickSelect;
           repopulate(q,show_results);
     		} else { // if too short, hide the list.
     		  if(q.length === 0 && (options.onBlank ? options.onBlank() : true)) // onBlank callback
-    		    $(options.additionalFields).each(function(i,input){input.value='';});
+    		    $(options.additionalFields).each(function(i,input){input.value='';$(this).change();});
     			$input_element.removeClass(options.loadingClass);
     			$results_list.hide();
     			$results_mask.hide();
@@ -220,7 +220,7 @@ var QuickSelect;
           activeSelection = -1;
           //hasFocus = false;
           $input_element.val('');
-          $(options.additionalFields).each(function(i,input){$(input).val('');});
+          $(options.additionalFields).each(function(i,input){$(input).val('');$(this).change();});
         }
       });
       $input_element.keydown(function(e){
@@ -253,6 +253,11 @@ var QuickSelect;
          	  hideResultsNow();
             e.preventDefault();
             break;
+		  case 86: // v key, so check for CTRL and respond if the user just pasted something
+			if(e.ctrlKey || e.metaKey) {
+			  selectCurrent();
+			}
+			break;
           default:
             if(timeout){clearTimeout(timeout);}
             timeout = setTimeout(onChange, options.delay);
