@@ -1469,24 +1469,24 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 			}
 			print "</td></tr>\n";
 		}
-	
-		if($useHeadings) {
-      $headers = getHeaders($cols, true); // second param indicates we're using element headers and not ids
-      drawHeaders($headers, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockedColumns']); 
-    }
+
+        if($useHeadings) {
+            $headers = getHeaders($cols, true); // second param indicates we're using element headers and not ids
+            drawHeaders($headers, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), $settings['lockedColumns']);
+        }
+
 		if($useSearch) {
 			drawSearches($searches, $cols, $useCheckboxes, $useViewEntryLinks, count($inlineButtons), false, $hiddenQuickSearches);
 		}
-		// get form handles in use
-		$mainFormHandle = key($data[key($data)]);
-	
-		if(count($data) == 0) { // kill an empty dataset so there's no rows drawn
-			unset($data);
-		} 
-	
-  
-    
-  
+
+        if (count($data) == 0) {
+            // kill an empty dataset so there's no rows drawn
+            unset($data);
+        } else {
+            // get form handles in use
+            $mainFormHandle = key($data[key($data)]);
+        }
+
 		$headcounter = 0;
 		$blankentries = 0;
 		$GLOBALS['formulize_displayElement_LOE_Used'] = false;
@@ -1494,16 +1494,10 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		// adjust formulize_LOEPageSize if the actual count of entries is less than the page size
 		$formulize_LOEPageSize = $GLOBALS['formulize_countMasterResultsForPageNumbers'] < $formulize_LOEPageSize ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $formulize_LOEPageSize;
 		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
-    /*print "start: $formulize_LOEPageStart<br>";
-    print "size: $formulize_LOEPageSize<br>";
-    print "actualsize: $actualPageSize<br>";*/
 		if(isset($data)) {
-			//for($entryCounter=$formulize_LOEPageStart;$entryCounter<$actualPageSize;$entryCounter++) {
-      foreach($data as $id=>$entry) {
-        formulize_benchmark("starting to draw one row of results");
-				//$entry = $data[$entryCounter];
-				//$id=$entryCounter;
-						
+            foreach($data as $id=>$entry) {
+                formulize_benchmark("starting to draw one row of results");
+
 				// check to make sure this isn't an unset entry (ie: one that was blanked by the extraction layer just prior to sending back results
 				// Since the extraction layer is unsetting entries to blank them, this condition should never be met?
 				// If this condition is ever met, it may very well screw up the paging of results!
