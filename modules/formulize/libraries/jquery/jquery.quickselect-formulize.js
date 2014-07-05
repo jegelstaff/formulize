@@ -40,12 +40,12 @@ var QuickSelect;
       // Supposedly if we position an iframe behind the results list, before we position the results list, it will hide select elements in IE.
       $results_mask = $('<iframe />');
       $results_mask.css({border:'none',position:'absolute'});
-    	if(options.width>0){
-    	  $results_list.css("width", options.width);
-    	  $results_mask.css("width", options.width);
-    	}
-    	$('body').append($results_list);
-    	$results_list.hide(); // in case for some reason it didn't hide before appending it?
+        if(options.width>0){
+          $results_list.css("width", options.width);
+          $results_mask.css("width", options.width);
+        }
+        $('body').append($results_list);
+        $results_list.hide(); // in case for some reason it didn't hide before appending it?
       if(ie_stupidity) $('body').append($results_mask);
 
     // Set up all of the methods
@@ -55,106 +55,106 @@ var QuickSelect;
       var getValues = function(item){
         return item.values || (item.value ? [item.value] : (typeof(item)==='string' ? [item] : item)) || []; // hash:item.values || item.value; string:item; array:item[1..end]
       };
-     	var moveSelect = function(step_or_li){
-    		var lis = $('li', $results_list);
-    		if(!lis) return;
+        var moveSelect = function(step_or_li){
+            var lis = $('li', $results_list);
+            if(!lis) return;
 
-     	  if(typeof(step_or_li)==="number") activeSelection = activeSelection + step_or_li;
-     	  else activeSelection = lis.index(step_or_li);
+          if(typeof(step_or_li)==="number") activeSelection = activeSelection + step_or_li;
+          else activeSelection = lis.index(step_or_li);
 
-    		if(activeSelection < 0) activeSelection = 0;
-  		  else if(activeSelection >= lis.size()) activeSelection = lis.size() - 1;
+            if(activeSelection < 0) activeSelection = 0;
+          else if(activeSelection >= lis.size()) activeSelection = lis.size() - 1;
 
-    		lis.removeClass(options.selectedClass);
-    		$(lis[activeSelection]).addClass(options.selectedClass);
+            lis.removeClass(options.selectedClass);
+            $(lis[activeSelection]).addClass(options.selectedClass);
 
         if(options.autoFill && self.last_keyCode != 8){ // autoFill value, if option is set and the last user key pressed wasn't backspace
           // 1. Fill in the value (keep the case the user has typed)
-      		$input_element.val(previous_value + $(lis[activeSelection]).text().substring(previous_value.length));
-      		// 2. SELECT the portion of the value not typed by the user (so the next character will erase if they continue typing)
+            $input_element.val(previous_value + $(lis[activeSelection]).text().substring(previous_value.length));
+            // 2. SELECT the portion of the value not typed by the user (so the next character will erase if they continue typing)
             var sel_start = previous_value.length,
                 sel_end = $input_element.val().length,
                 field = $input_element.get(0);
-          	if(field.createTextRange){
-          		var selRange = field.createTextRange();
-          		selRange.collapse(true);
-          		selRange.moveStart("character", sel_start);
-          		selRange.moveEnd("character", sel_end);
-          		selRange.select();
-          	} else if(field.setSelectionRange){
-          		field.setSelectionRange(sel_start, sel_end);
-          	} else if(field.selectionStart){
-        			field.selectionStart = sel_start;
-        			field.selectionEnd = sel_end;
-        		}
-          	field.focus();
-      	}
-    	};
+            if(field.createTextRange){
+                var selRange = field.createTextRange();
+                selRange.collapse(true);
+                selRange.moveStart("character", sel_start);
+                selRange.moveEnd("character", sel_end);
+                selRange.select();
+            } else if(field.setSelectionRange){
+                field.setSelectionRange(sel_start, sel_end);
+            } else if(field.selectionStart){
+                    field.selectionStart = sel_start;
+                    field.selectionEnd = sel_end;
+                }
+            field.focus();
+        }
+        };
       var hideResultsNow = function(){
         if(timeout){clearTimeout(timeout);}
-    		$input_element.removeClass(options.loadingClass);
-    		if($results_list.is(":visible")) $results_list.hide();
-    		if($results_mask.is(":visible")) $results_mask.hide();
-    		activeSelection = -1;
+            $input_element.removeClass(options.loadingClass);
+            if($results_list.is(":visible")) $results_list.hide();
+            if($results_mask.is(":visible")) $results_mask.hide();
+            activeSelection = -1;
       };
       self.selectItem = function(li, from_hide_now_function){
-    		if(!li){
-    			li = document.createElement("li");
-    			li.item = '';
-    		}
+            if(!li){
+                li = document.createElement("li");
+                li.item = '';
+            }
         var label = self.getLabel(li.item),
-    		    values = getValues(li.item);
-    		$input_element.lastSelected = label;
-    		$input_element.val(label); // Set the visible value
-    		previous_value = label;
-    		$results_list.empty(); // clear the results list
+                values = getValues(li.item);
+            $input_element.lastSelected = label;
+            $input_element.val(label); // Set the visible value
+            previous_value = label;
+            $results_list.empty(); // clear the results list
         $(options.additionalFields).each(function(i,input){$(input).val(values[i+1]);$(this).change();}); // set the additional fields' values
         if(!from_hide_now_function)hideResultsNow(); // hide the results when something is selected
-    		if(options.onItemSelect)setTimeout(function(){ options.onItemSelect(li); }, 1); // run the user callback, if set
-    		return true;
+            if(options.onItemSelect)setTimeout(function(){ options.onItemSelect(li); }, 1); // run the user callback, if set
+            return true;
       };
       var selectCurrent = function(){
         var li = $("li."+options.selectedClass, $results_list).get(0);
-    		if(li){
-    			return self.selectItem(li);
-    		} else {
+            if(li){
+                return self.selectItem(li);
+            } else {
           // No current selection - blank the fields if options.exactMatch and current value isn't valid.
           if(options.exactMatch){
             $input_element.val('');
             $(options.additionalFields).each(function(i,input){$(input).val('');$(this).change();});
           }
           return false;
-    		}
+            }
       };
       var repopulate_items = function(items){
         // Clear the results to begin:
         $results_list.empty();
         // If the field no longer has focus or if there are no matches, forget it.
-    		if(!hasFocus || items === null || items.length === 0) return hideResultsNow();
-    		
-      	var ul = document.createElement("ul"),
-      	    total_count = items.length,
+            if(!hasFocus || items === null || items.length === 0) return hideResultsNow();
+
+        var ul = document.createElement("ul"),
+            total_count = items.length,
         // hover functions
             hf = function(){ moveSelect(this); },
             bf = function(){},
             cf = function(e){ e.preventDefault(); e.stopPropagation(); self.selectItem(this); };
-    		$results_list.append(ul);
-      	// limited results to a max number
-      	if(options.maxVisibleItems > 0 && options.maxVisibleItems < total_count) total_count = options.maxVisibleItems;
+            $results_list.append(ul);
+        // limited results to a max number
+        if(options.maxVisibleItems > 0 && options.maxVisibleItems < total_count) total_count = options.maxVisibleItems;
 
         // Add each item:
         for(var i=0; i<total_count; i++){
           var item = items[i],
-      		    li = document.createElement("li");
+                li = document.createElement("li");
           $results_list.append(li);
-    			$(li).text(options.formatItem ? options.formatItem(item, i, total_count) : self.getLabel(item));
+                $(li).text(options.formatItem ? options.formatItem(item, i, total_count) : self.getLabel(item));
 
           // Save the extra values (if any) to the li
-    			li.item = item;
+                li.item = item;
           // Set the class name, if specified
-    			if(item.className) li.className = item.className;
-      		ul.appendChild(li);
-      		$(li).hover(hf, bf).click(cf);
+                if(item.className) li.className = item.className;
+            ul.appendChild(li);
+            $(li).hover(hf, bf).click(cf);
         }
 
         // Lastly, remove the loading class.
@@ -168,46 +168,46 @@ var QuickSelect;
         }]);
       };
       var show_results = function(){
-      	// pos: get the position of the input field before showing the results_list (in case the DOM is shifted)
-      	// iWidth: either use the specified width, or autocalculate based on form element
-      	var pos = $input_element.offset(),
-      	    iWidth = (options.width > 0 ? options.width : $input_element.width()),
+        // pos: get the position of the input field before showing the results_list (in case the DOM is shifted)
+        // iWidth: either use the specified width, or autocalculate based on form element
+        var pos = $input_element.offset(),
+            iWidth = (options.width > 0 ? options.width : $input_element.width()),
             $lis = $('li', $results_list);
-      	// reposition
-      	$results_list.css({
-      		width: parseInt(iWidth,10) + "px",
-      		top: pos.top + $input_element.height() + 5 + "px",
-      		left: pos.left + "px"
-      	});
-      	if(ie_stupidity){$results_mask.css({
-      		width: parseInt(iWidth,10) - 2 + "px",
-      		top: pos.top + $input_element.height() + 6 + "px",
-      		left: pos.left + 1 + "px",
-      		height: $results_list.height() - 2+'px'
-      	}).show();}
-      	$results_list.show();
+        // reposition
+        $results_list.css({
+            width: parseInt(iWidth,10) + "px",
+            top: pos.top + $input_element.height() + 5 + "px",
+            left: pos.left + "px"
+        });
+        if(ie_stupidity){$results_mask.css({
+            width: parseInt(iWidth,10) - 2 + "px",
+            top: pos.top + $input_element.height() + 6 + "px",
+            left: pos.left + 1 + "px",
+            height: $results_list.height() - 2+'px'
+        }).show();}
+        $results_list.show();
         // Option autoSelectFirst, and Option selectSingleMatch (activate the first item if only item)
         if(options.autoSelectFirst || (options.selectSingleMatch && $lis.length == 1)) moveSelect($lis.get(0));
       };
       var onChange = function(){
-    		// ignore if non-consequence key is pressed (such as shift, ctrl, alt, escape, caps, pg up/down, home, end, arrows)
-    		if(last_keyCode >= 9 && last_keyCode <= 45){return;}
+            // ignore if non-consequence key is pressed (such as shift, ctrl, alt, escape, caps, pg up/down, home, end, arrows)
+            if(last_keyCode >= 9 && last_keyCode <= 45){return;}
         // compare with previous value / store new previous value
-    		var q = $input_element.val();
-    		if(q == previous_value) return;
-    		previous_value = q;
+            var q = $input_element.val();
+            if(q == previous_value) return;
+            previous_value = q;
         // if enough characters have been typed, load/populate the list with whatever matches and show the results list.
-    		if(q.length >= options.minChars){
-    			$input_element.addClass(options.loadingClass);
+            if(q.length >= options.minChars){
+                $input_element.addClass(options.loadingClass);
           // Populate the list, then show the list.
           repopulate(q,show_results);
-    		} else { // if too short, hide the list.
-    		  if(q.length === 0 && (options.onBlank ? options.onBlank() : true)) // onBlank callback
-    		    $(options.additionalFields).each(function(i,input){input.value='';$(this).change();});
-    			$input_element.removeClass(options.loadingClass);
-    			$results_list.hide();
-    			$results_mask.hide();
-    		}
+            } else { // if too short, hide the list.
+              if(q.length === 0 && (options.onBlank ? options.onBlank() : true)) // onBlank callback
+                $(options.additionalFields).each(function(i,input){input.value='';$(this).change();});
+                $input_element.removeClass(options.loadingClass);
+                $results_list.hide();
+                $results_mask.hide();
+            }
       };
       
     // Set up the interface events
@@ -249,67 +249,67 @@ var QuickSelect;
           case 27: // Esc - deselect any active selection, hide the drop-down but stay in the field
             // Reset the active selection IF must be exactMatch and is not an exact match.
             if(activeSelection > -1 && options.exactMatch && $input_element.val()!=$($('li', $results_list).get(activeSelection)).text()){activeSelection = -1;}
-        		$('li', $results_list).removeClass(options.selectedClass);
-         	  hideResultsNow();
+                $('li', $results_list).removeClass(options.selectedClass);
+              hideResultsNow();
             e.preventDefault();
             break;
-		  case 86: // v key, so check for CTRL and respond if the user just pasted something
-			if(e.ctrlKey || e.metaKey) {
-			  selectCurrent();
-			}
-			break;
+          case 86: // v key, so check for CTRL and respond if the user just pasted something
+            if(e.ctrlKey || e.metaKey) {
+              selectCurrent();
+            }
+            break;
           default:
             if(timeout){clearTimeout(timeout);}
             timeout = setTimeout(onChange, options.delay);
             break;
         }
       }).focus(function(){
-    		// track whether the field has focus, we shouldn't process any results if the field no longer has focus
-    		hasFocus = true;
-    	}).blur(function(e){
+            // track whether the field has focus, we shouldn't process any results if the field no longer has focus
+            hasFocus = true;
+        }).blur(function(e){
         if(activeSelection>-1){selectCurrent();}
-    		hasFocus = false;
-    		if(timeout){clearTimeout(timeout);}
-    		timeout = setTimeout(function(){
-    		  hideResultsNow();
+            hasFocus = false;
+            if(timeout){clearTimeout(timeout);}
+            timeout = setTimeout(function(){
+              hideResultsNow();
           // Select null element, IF options.exactMatch and there is no selection.
           // !! CLEARS THE FIELD IF YOU BLUR AFTER CHOOSING THE ITEM AND RESULTS ARE ALREADY CLOSED!
           if(options.exactMatch && $input_element.val() != $input_element.lastSelected){self.selectItem(null,true);}
-    		}, 200);
-    	});
+            }, 200);
+        });
   };
 
   QuickSelect.matchers = {
     quicksilver : function(q,data){
-			var match_query, match_label, self=this;
+            var match_query, match_label, self=this;
       match_query = (self.options.matchCase ? q : q.toLowerCase());
-			self.AllItems[match_query] = [];
+            self.AllItems[match_query] = [];
         for(var i=0;i<data.length;i++){
             match_label = (self.options.matchCase ? self.getLabel(data[i]) : self.getLabel(data[i]).toLowerCase());
             // Filter by match/no-match
             if(match_label.score(match_query)>0||data[i][1]=="none"||data[i][1]=="newvalue:"+data[i][0]){self.AllItems[match_query].push(data[i]);}
-	    }
+        }
       // Sort by match relevance
-			return self.AllItems[match_query].sort(function(a,b){
+            return self.AllItems[match_query].sort(function(a,b){
         // Normalize a & b
         a = (self.options.matchCase ? self.getLabel(a) : self.getLabel(a).toLowerCase());
         b = (self.options.matchCase ? self.getLabel(b) : self.getLabel(b).toLowerCase());
         // Score a & b
-    	  a = a.score(match_query);
+          a = a.score(match_query);
         b = b.score(match_query);
         // Compare a & b by score
         return(a > b ? -1 : (b > a ? 1 : 0));
       });
     },
     contains : function(q,data){
-			var match_query, match_label, self=this;
+            var match_query, match_label, self=this;
       match_query = (self.options.matchCase ? q : q.toLowerCase());
       self.AllItems[match_query] = [];
       for(var i=0;i<data.length;i++){
         match_label = (self.options.matchCase ? self.getLabel(data[i]) : self.getLabel(data[i]).toLowerCase());
         if(match_label.indexOf(match_query)>-1){self.AllItems[match_query].push(data[i]);}
       }
-			return self.AllItems[match_query].sort(function(a,b){
+            return self.AllItems[match_query].sort(function(a,b){
         // Normalize a & b
         a = (self.options.matchCase ? self.getLabel(a) : self.getLabel(a).toLowerCase());
         b = (self.options.matchCase ? self.getLabel(b) : self.getLabel(b).toLowerCase());
@@ -321,14 +321,14 @@ var QuickSelect;
       });
     },
     startsWith : function(q,data){
-			var match_query, match_label, self=this;
+            var match_query, match_label, self=this;
       match_query = (self.options.matchCase ? q : q.toLowerCase());
       self.AllItems[match_query] = [];
       for(var i=0;i<data.length;i++){
         match_label = (self.options.matchCase ? self.getLabel(data[i]) : self.getLabel(data[i]).toLowerCase());
         if(match_label.indexOf(match_query)===0){self.AllItems[match_query].push(data[i]);}
       }
-			return self.AllItems[match_query].sort(function(a,b){
+            return self.AllItems[match_query].sort(function(a,b){
         // Normalize a & b
         a = (self.options.matchCase ? self.getLabel(a) : self.getLabel(a).toLowerCase());
         b = (self.options.matchCase ? self.getLabel(b) : self.getLabel(b).toLowerCase());
@@ -344,11 +344,11 @@ var QuickSelect;
     },
     ajax  : function(q,callback){
       var url = this.options.ajax + "?q=" + encodeURIComponent(q);
-    	for(var i in this.options.ajaxParams){
-    	  if(this.options.ajaxParams.hasOwnProperty(i)){
-    		  url += "&" + i + "=" + encodeURIComponent(this.options.ajaxParams[i]);
-    		}
-    	}
+        for(var i in this.options.ajaxParams){
+          if(this.options.ajaxParams.hasOwnProperty(i)){
+              url += "&" + i + "=" + encodeURIComponent(this.options.ajaxParams[i]);
+            }
+        }
       $.getJSON(url, callback);
     }
   };
@@ -357,17 +357,17 @@ var QuickSelect;
     if(options == 'instance' && $(this).data('quickselect')) return $(this).data('quickselect');
 
     // Prepare options and set defaults.
-  	options = options || {};
-  	options.data          = (typeof(options.data) === "object" && options.data.constructor == Array) ? options.data : undefined;
-  	options.ajaxParams    = options.ajaxParams || {};
-  	options.delay         = options.delay || 400;
-  	if(!options.delay) options.delay = (!options.ajax ? 400 : 10);
-  	options.minChars      = options.minChars || 1;
-  	options.cssFlavor     = options.cssFlavor || 'quickselect';
-  	options.inputClass    = options.inputClass || options.cssFlavor+"_input";
-  	options.loadingClass  = options.loadingClass || options.cssFlavor+"_loading";
-  	options.resultsClass  = options.resultsClass || options.cssFlavor+"_results";
-  	options.selectedClass = options.selectedClass || options.cssFlavor+"_selected";
+    options = options || {};
+    options.data          = (typeof(options.data) === "object" && options.data.constructor == Array) ? options.data : undefined;
+    options.ajaxParams    = options.ajaxParams || {};
+    options.delay         = options.delay || 400;
+    if(!options.delay) options.delay = (!options.ajax ? 400 : 10);
+    options.minChars      = options.minChars || 1;
+    options.cssFlavor     = options.cssFlavor || 'quickselect';
+    options.inputClass    = options.inputClass || options.cssFlavor+"_input";
+    options.loadingClass  = options.loadingClass || options.cssFlavor+"_loading";
+    options.resultsClass  = options.resultsClass || options.cssFlavor+"_results";
+    options.selectedClass = options.selectedClass || options.cssFlavor+"_selected";
 // wrap entire thing: .ui-widget
 // default item:      .ui-state-default
 // active / hover:    .ui-state-hover
@@ -379,28 +379,28 @@ var QuickSelect;
     // matchMethod: (quicksilver | contains | startsWith | <custom>). Defaults to 'quicksilver' if quicksilver.js is loaded / 'contains' otherwise.
     options.matchMethod   = options.matchMethod || QuickSelect.matchers[(typeof(''.score) === 'function' && 'l'.score('l') == 1 ? 'quicksilver' : 'contains')];
       if(options.matchMethod==='quicksilver' || options.matchMethod==='contains' || options.matchMethod==='startsWith') options.matchMethod = QuickSelect.matchers[options.matchMethod];
-  	if(options.matchCase === undefined) options.matchCase = false;
-  	if(options.exactMatch === undefined) options.exactMatch = false;
-  	if(options.autoSelectFirst === undefined) options.autoSelectFirst = true;
-  	if(options.selectSingleMatch === undefined) options.selectSingleMatch = true;
-  	if(options.additionalFields === undefined) options.additionalFields = $('nothing');
-  	options.maxVisibleItems = options.maxVisibleItems || -1;
-  	if(options.autoFill === undefined || options.matchMethod != 'startsWith'){options.autoFill = false;} // if you're not using the startsWith match, it really doesn't help to autoFill.
-  	options.width         = parseInt(options.width, 10) || 0;
+    if(options.matchCase === undefined) options.matchCase = false;
+    if(options.exactMatch === undefined) options.exactMatch = false;
+    if(options.autoSelectFirst === undefined) options.autoSelectFirst = true;
+    if(options.selectSingleMatch === undefined) options.selectSingleMatch = true;
+    if(options.additionalFields === undefined) options.additionalFields = $('nothing');
+    options.maxVisibleItems = options.maxVisibleItems || -1;
+    if(options.autoFill === undefined || options.matchMethod != 'startsWith'){options.autoFill = false;} // if you're not using the startsWith match, it really doesn't help to autoFill.
+    options.width         = parseInt(options.width, 10) || 0;
     
     // Make quickselects.
-  	return this.each(function(){
-  		var input = this,
+    return this.each(function(){
+        var input = this,
           my_options = object(options);
 
       if(input.tagName == 'INPUT'){
         // Text input: ready for QuickSelect-ing!
-  	    var qs = new QuickSelect(input, my_options);
-  	    $(input).data('quickselect', qs);
+        var qs = new QuickSelect(input, my_options);
+        $(input).data('quickselect', qs);
 
-  		} else if(input.tagName == 'SELECT'){
+        } else if(input.tagName == 'SELECT'){
         // Select input: transform into Text input, then make QuickSelect.
-      	my_options.delay = my_options.delay || 10; // for selects, we know we're not doing ajax, so we might as well speed up
+        my_options.delay = my_options.delay || 10; // for selects, we know we're not doing ajax, so we might as well speed up
         my_options.finderFunction = 'data';
 
         // Record the html stuff from the select
@@ -412,10 +412,10 @@ var QuickSelect;
             selected_option = $("option:selected", input).get(0);
 
         // Collect the data from the select/options, remove them and create an input box instead.
-  		  my_options.data = [];
-  		  $('option', input).each(function(i,option){
-  		    my_options.data.push({label : $(option).text(), values : [option.value, option.value], className : option.className});
-  		  });
+          my_options.data = [];
+          $('option', input).each(function(i,option){
+            my_options.data.push({label : $(option).text(), values : [option.value, option.value], className : option.className});
+          });
 
         // Create the text input and hidden input
         var text_input = $("<input type='text' class='"+className+"' id='"+id+"_quickselect' accesskey='"+accesskey+"' tabindex='"+tabindex+"' />");
@@ -428,9 +428,9 @@ var QuickSelect;
         my_options.additionalFields = hidden_input;
         
         // Replace the select with a quickselect text_input
-      	$(input).after(text_input).after(hidden_input).remove(); // add text input, hidden input, remove select.
+        $(input).after(text_input).after(hidden_input).remove(); // add text input, hidden input, remove select.
         // console.log(my_options);
-      	text_input.quickselect(my_options); // make the text input into a QuickSelect.
+        text_input.quickselect(my_options); // make the text input into a QuickSelect.
       }
     });
   };
