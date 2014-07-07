@@ -147,7 +147,7 @@ foreach ($raw_pages as $key => $page_value) {
   }
 }
 
-$formScreenHandler = new formulizeFormScreenHandler();
+$formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
 $all_multi_screens = $formScreenHandler->getMultiScreens($fid);
 
 // Go through each possible multi-paged screen's pages, and make changes accordingly
@@ -222,7 +222,7 @@ foreach ($all_multi_screens as $i => $screen_array) {
 $screens_save = $_POST['elements_form_screens'];
 // go through each possible screen, and save whether the element in the UI accordingly by appending to existing screen's elements
 // If the screen is not highlighted in the UI, then we must unset it manually by going through each screen's saved array
-$formScreenHandler = new formulizeFormScreenHandler();
+$formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
 $all_screens = $formScreenHandler->getScreensForElement($fid);
 
 // Due to security, not possible to retrieve formelements from using getmodulehandler, hence used abstract method.
