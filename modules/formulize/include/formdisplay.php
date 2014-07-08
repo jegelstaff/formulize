@@ -1754,7 +1754,15 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     $to_return['single'] = $col_one . $col_two;
 
     if (is_object($subform_element_object)) {
-        $to_return['single'] = "<div class=\"formulize-subform-".$subform_element_object->getVar("ele_handle")."\">$col_one $col_two</div>";
+        global $xoopsUser;
+        $show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
+        $edit_link = "";
+        if ($show_element_edit_link) {
+            $edit_link = "<a class=\"formulize-element-edit-link\" href=\"" . XOOPS_URL .
+                "/modules/formulize/admin/ui.php?page=element&aid=0&ele_id=" .
+                $subform_element_object->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
+        }
+        $to_return['single'] = "<div class=\"formulize-subform-".$subform_element_object->getVar("ele_handle")."\">$edit_link $col_one $col_two</div>";
     }
 
     return $to_return;
