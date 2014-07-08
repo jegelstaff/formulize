@@ -167,6 +167,10 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		$screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
     	$screen = $screen_handler->get($sid);
     	$elements = $screen->getVar('formelements');
+        if (!is_array($elements)) {
+            // this is always expected to be an array, so make sure it is
+            $elements = array();
+        }
     	return $elements;
 	}
 
