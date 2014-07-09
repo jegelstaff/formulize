@@ -617,7 +617,10 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
 
 // THIS FUNCTION TAKES THE VALUES USED IN THE DB, PLUS THE UITEXT FOR THOSE VALUES, AND CONSTRUCTS AN ARRAY SUITABLE FOR USE WHEN EDITING ELEMENTS, SO THE UITEXT IS VISIBLE INLINE WITH THE VALUES, SEPARATED BY A PIPE (|)
 function formulize_mergeUIText($values, $uitext) {
-  if(strstr($values, "#*=:*")) { return $values; } // don't alter linked selectbox properties
+    if (is_string($values) and strstr($values, "#*=:*")) {
+        // don't alter linked selectbox properties
+        return $values;
+    }
 	$newvalues = array();
 	foreach($values as $key=>$value) {
 		if(isset($uitext[$key])) {
