@@ -454,7 +454,7 @@ if($ele_type=='text') {
     $options['exportValue'] = "";
     $options['listValue'] = "";
     $options['optionSortOrder'] = "";
-    $options['optionDefaultSelectionDefaults'] = "";
+    $options['optionDefaultSelectionDefaults'] = array();
     $options['optionDefaultSelection'] = "";
   }
 
