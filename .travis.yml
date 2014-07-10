@@ -41,6 +41,7 @@ addons:
   
 before_script:
   - npm install -g se-interpreter
+  - mysql -e 'create database formulize;'
 
 script:
   - se-interpreter ci/travis/interpreter_config.json
