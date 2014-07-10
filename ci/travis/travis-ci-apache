@@ -18,5 +18,7 @@
     FastCgiExternalServer /usr/lib/cgi-bin/php5-fcgi -host 127.0.0.1:80 -pass-header Authorization
   </IfModule>
 
+  ErrorLog "%TRAVIS_BUILD_DIR%/error.log"
+
   # [...]
 </VirtualHost>
