@@ -10,6 +10,8 @@
  * @version		AVN: $Id: index.php 21047 2011-03-14 15:52:14Z m0nty_ $
  **/
 
+error_log("error logged from php");
+
 /** Need the mainfile */
 include "mainfile.php";
 
