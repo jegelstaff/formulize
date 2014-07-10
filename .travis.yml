@@ -6,6 +6,7 @@ env:
   - version-name: "5.5.10"
 
 language: php
+
 php:
   - 5.5
 
@@ -45,4 +46,4 @@ script:
   - se-interpreter ci/travis/interpreter_config.json
 
 after_script:
-  - echo "`cat /home/travis/build/jegelstaff/formulize/modules/formulize/temp/php_error_log`"
+  - cat /home/travis/build/jegelstaff/formulize/modules/formulize/temp/php_error_log
