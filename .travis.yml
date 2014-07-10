@@ -45,11 +45,10 @@ before_script:
 
 script:
   - se-interpreter ci/travis/interpreter_config.json
-  - pwd
-  - ls -lah
-  - ls -lah "%TRAVIS_BUILD_DIR%"
-  - cat "%TRAVIS_BUILD_DIR%/error.log"
-  - cat /home/travis/build/jegelstaff/formulize/modules/formulize/temp/php_error_log
+  #- pwd
+  #- ls -lah
+  - cat "error.log"
+  - cat "error.php"
 
 after_script:
   - ls -lah "%TRAVIS_BUILD_DIR%"
