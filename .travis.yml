@@ -44,6 +44,9 @@ before_script:
 
 script:
   - se-interpreter ci/travis/interpreter_config.json
+  - ls -lah "%TRAVIS_BUILD_DIR%"
+  - cat "%TRAVIS_BUILD_DIR%/error.log"
+  - cat /home/travis/build/jegelstaff/formulize/modules/formulize/temp/php_error_log
 
 after_script:
   - ls -lah "%TRAVIS_BUILD_DIR%"
