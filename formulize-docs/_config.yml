@@ -1,4 +1,3 @@
-name : formulize-docs
-brand : Formulize
-description : Formulize docs
-author: Julian Egelstaff
+markdown: rdiscount
+pygments: true
+permalink: /:title
