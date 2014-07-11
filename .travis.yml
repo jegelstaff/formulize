@@ -32,6 +32,9 @@ install:
   - sudo chmod 777 modules/formulize/upload
   - sudo chmod 777 modules/formulize/templates/screens/default
   - sudo chmod 777 modules/formulize/export
+  # make the trust path because the fcgi process cannot
+  - sudo mkdir selenium-848d24bb54d726d
+  - sudo chmod 777 selenium-848d24bb54d726d
   # add to .ini and restart
   - phpenv config-add ci/travis/php.ini
   - sudo service apache2 restart
