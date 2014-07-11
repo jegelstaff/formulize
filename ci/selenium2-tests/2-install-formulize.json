@@ -15,12 +15,12 @@
     },
     {
       "type": "store",
-      "text": "formulize",
+      "text": "root",
       "variable": "db_user"
     },
     {
       "type": "store",
-      "text": "formulize",
+      "text": "password",
       "variable": "db_pass"
     },
     {
@@ -89,6 +89,18 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "Server hostname"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "DB_HOST"
+      },
+      "text": "localhost"
+    },
+    {
       "type": "setElementText",
       "locator": {
         "type": "id",
@@ -112,12 +124,32 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "Password Salt Key"
+    },
+    {
       "type": "setElementText",
       "locator": {
         "type": "id",
         "value": "DB_NAME"
       },
       "text": "${db_name}"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "DB_PREFIX"
+      },
+      "text": "selenium"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "DB_SALT"
+      },
+      "text": "s4RyHEWYxWN9OUAGvCdxljYRqqSgEf9qbsvVSvhWSumtfyI7SNx6ct1n5fypNFdi4"
     },
     {
       "type": "clickElement",
