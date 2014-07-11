@@ -46,7 +46,6 @@ before_script:
 script:
   - se-interpreter ci/travis/interpreter_config.json
   - cat "error.log"
-  - sudo cat /var/log/syslog | grep cgi
   - curl http://localhost/index.php
 
 after_script:
