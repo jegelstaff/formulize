@@ -5,7 +5,7 @@
   "steps": [
     {
       "type": "get",
-      "url": "http://localhost:8080/index.php"
+      "url": "http://localhost:9000/index.php"
     }
   ],
   "data": {
