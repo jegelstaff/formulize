@@ -1,0 +1,1252 @@
+{
+  "type": "script",
+  "seleniumVersion": "2",
+  "formatVersion": 2,
+  "steps": [
+    {
+      "type": "store",
+      "text": "/home/travis/build/jegelstaff/formulize",
+      "variable": "web_root"
+    },
+    {
+      "type": "store",
+      "text": "localhost",
+      "variable": "test_domain"
+    },
+    {
+      "type": "store",
+      "text": "root",
+      "variable": "db_user"
+    },
+    {
+      "type": "store",
+      "text": "password",
+      "variable": "db_pass"
+    },
+    {
+      "type": "store",
+      "text": "formulize",
+      "variable": "db_name"
+    },
+    {
+      "type": "store",
+      "text": "password",
+      "variable": "admin_password"
+    },
+    {
+      "type": "store",
+      "text": "short_wait",
+      "variable": "234"
+    },
+    {
+      "type": "store",
+      "text": "save_wait",
+      "variable": "1525"
+    },
+    {
+      "type": "get",
+      "url": "http://${test_domain}/modules/formulize/application.php?id=all"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "uname"
+      },
+      "text": "admin"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "pass"
+      },
+      "text": "${admin_password}"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input[type=\"submit\"]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Admin"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "xo-canvas"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Add a Form"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "forms-title"
+      },
+      "text": "Client"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "forms-form_handle"
+      },
+      "text": "client"
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "new-app-yes"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "applications-name"
+      },
+      "text": "Tracker"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Elements"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Text box"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Client Name"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "client_name"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//div[@id='tabs']//a[.='Name & Settings']"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Client"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-1"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Create a new form"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Create a new form"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "forms-title"
+      },
+      "text": "Project"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "forms-form_handle"
+      },
+      "text": "project"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Elements"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Text box"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Project Name"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "project_name"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-2"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Add elements to the form"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Select box (dropdowns and list boxes)"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Client"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "project_client"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "autocomplete"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "elements-ele_value[16]-1"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-2']/div/div[2]/fieldset/div[1]/select//option[2]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-2"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Add elements to the form"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Radio buttons"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Project Status"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "project_status"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "css selector",
+        "value": "p[name=\"0\"] > input[name=\"defaultoption\"]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[0]"
+      },
+      "text": "Pending"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[1]"
+      },
+      "text": "Active"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[2]"
+      },
+      "text": "Complete"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-2"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Add elements to the form"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-1"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Create a new form"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Create a new form"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "forms-title"
+      },
+      "text": "People"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "forms-form_handle"
+      },
+      "text": "people"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Elements"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Text box"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Name"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "people_name"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-1"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Create a new form"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Create a new form"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "forms-title"
+      },
+      "text": "Stories"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "forms-form_handle"
+      },
+      "text": "stories"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Elements"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Multi-line text box"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Story"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "stories_story"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-2"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Add elements to the form"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Radio buttons"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Status"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "stories_status"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "name",
+        "value": "defaultoption"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[0]"
+      },
+      "text": "Backlog"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[1]"
+      },
+      "text": "Pending"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[2]"
+      },
+      "text": "On Deck"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[3]"
+      },
+      "text": "In Progress"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[4]"
+      },
+      "text": "Blocked"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[5]"
+      },
+      "text": "For Review"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[6]"
+      },
+      "text": "Complete"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-2"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Add elements to the form"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Radio buttons"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Points"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "stories_points"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "234"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[0]"
+      },
+      "text": "-"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[1]"
+      },
+      "text": "0"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[2]"
+      },
+      "text": "0.5"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[3]"
+      },
+      "text": "1"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[4]"
+      },
+      "text": "2"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[5]"
+      },
+      "text": "3"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[6]"
+      },
+      "text": "5"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[7]"
+      },
+      "text": "8"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[8]"
+      },
+      "text": "13"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[9]"
+      },
+      "text": "20"
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "css selector",
+        "value": "p[name=\"0\"] > input[name=\"defaultoption\"]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-1"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Create a new form"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//div[@id='formlisting']/blockquote/div[4]/div/div[1]/a[1]/div[2]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Select box (dropdowns and list boxes)"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Project"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "stories_project"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "autocomplete"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "elements-ele_value[16]-1"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-2']/div/div[2]/fieldset/div[1]/select//option[4]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-1"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Create a new form"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//div[@id='formlisting']/blockquote/div[4]/div/div[1]/a[1]/div[2]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Select box (dropdowns and list boxes)"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Assigned To"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "stories_assigned_to"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "autocomplete"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "elements-ele_value[16]-1"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-2']/div/div[2]/fieldset/div[1]/select//option[3]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-1"
+      }
+    }
+  ],
+  "data": {
+    "configs": {},
+    "source": "none"
+  },
+  "inputs": [],
+  "timeoutSeconds": 60
+}
