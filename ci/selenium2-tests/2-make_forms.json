@@ -80,13 +80,6 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "id",
-        "value": "xo-canvas"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
         "type": "link text",
         "value": "Add a Form"
       }
