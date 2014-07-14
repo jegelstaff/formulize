@@ -338,7 +338,7 @@ footer a:hover {
 .clearfix {display: block;}
 
 .header-home {
-    
+    color: black !important;
 }
 
 /* #Media Queries
