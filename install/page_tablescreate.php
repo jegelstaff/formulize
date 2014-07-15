@@ -43,8 +43,7 @@ $pageHasHelp = false;
 
 $vars =& $_SESSION['settings'];
 
-
-include_once "../mainfile.php";
+include "../mainfile.php";
 include_once './class/dbmanager.php';
 $dbm = new db_manager();
 
