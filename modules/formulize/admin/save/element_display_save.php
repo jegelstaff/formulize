@@ -139,12 +139,14 @@ $element->setVar('ele_disabled', $disabled);
 $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 $raw_pages = $_POST['multi_page_screens'];
 
-foreach ($raw_pages as $key => $page_value) {
-  // can ignore this top tree node (the template must hand back some placeholder value for it).
-  // Since the script below will loop through each child node regardless
-  if ($page_value == "all") {
-    unset($raw_pages[$key]);
-  }
+if (is_array($raw_pages)) {
+    foreach($raw_pages as $key => $page_value) {
+        // can ignore this top tree node (the template must hand back some placeholder value for it).
+        // Since the script below will loop through each child node regardless
+        if ($page_value == "all") {
+            unset($raw_pages[$key]);
+        }
+    }
 }
 
 $formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
@@ -220,6 +222,9 @@ foreach ($all_multi_screens as $i => $screen_array) {
 
 // Saving element existence in screen(s)
 $screens_save = $_POST['elements_form_screens'];
+if (!is_array($screens_save)) {
+    $screens_save = array();
+}
 // go through each possible screen, and save whether the element in the UI accordingly by appending to existing screen's elements
 // If the screen is not highlighted in the UI, then we must unset it manually by going through each screen's saved array
 $formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
@@ -252,7 +257,6 @@ foreach ($all_screens as $key => $screen) {
         $save_element = serialize($screen_elements);
         $screen_stream->setVar('formelements', $save_element);         
       }
-
     }
   }
   

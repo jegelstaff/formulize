@@ -621,15 +621,18 @@ function formulize_mergeUIText($values, $uitext) {
         // don't alter linked selectbox properties
         return $values;
     }
-	$newvalues = array();
-	foreach($values as $key=>$value) {
-		if(isset($uitext[$key])) {
-			$newvalues[$key . "|" . $uitext[$key]] = $value;
-		} else {
-			$newvalues[$key] = $value;
-		}
-	}
-	return $newvalues;
+    if (is_array($value)) {
+        $newvalues = array();
+        foreach($values as $key=>$value) {
+            if(isset($uitext[$key])) {
+                $newvalues[$key . "|" . $uitext[$key]] = $value;
+            } else {
+                $newvalues[$key] = $value;
+            }
+        }
+        return $newvalues;
+    }
+    return $values;
 }
 
 function has_index($element,$id_form) {

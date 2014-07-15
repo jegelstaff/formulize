@@ -298,6 +298,15 @@ EOF;
         }
         return $this->$name;
     }
+
+    public function getVar($key, $format = 's') {
+        $return_value = parent::getVar($key, $format);
+        if (XOBJ_DTYPE_ARRAY == $this->vars[$key]['data_type'] && !is_array($return_value)) {
+            // now it's an array
+            $return_value = array();
+        }
+        return $return_value;
+    }
 }
 
 
