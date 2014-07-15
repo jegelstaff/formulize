@@ -197,24 +197,6 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "xpath",
-        "value": "//div[@id='tabs']//a[.='Name & Settings']"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "link text",
-        "value": "Client"
-      }
-    },
-    {
-      "type": "pause",
-      "waitTime": "543"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
         "type": "css selector",
         "value": ".breadcrumb-1"
       }
