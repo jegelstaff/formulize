@@ -3078,6 +3078,21 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
         $data_handler = new formulizeDataHandler($fid);
         $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_elementemail']));
         if ($value) {
+            // split on commas
+            $values = explode(",", $value);
+            $good_values = array();
+
+            // check each email address, exclude the ones ending with .archive
+            foreach ($values as $a_value) {
+                // build a new array of emails
+                if (".archive" != substr($a_value, -8)) {
+                    $good_values[] = $a_value;
+                }
+            }
+
+            // implode the new array of emails with commas, set $value to this new string
+            $value = implode(",", $good_values);
+
             $GLOBALS['formulize_notification_email'] = $value;
             $uids_conditions = array_merge(array(-1), $uids_conditions);
         }
