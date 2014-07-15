@@ -71,11 +71,19 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
         "value": "Admin"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "clickElement",
@@ -134,11 +142,19 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
         "value": "Text box"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "setElementText",
@@ -162,6 +178,10 @@
         "type": "link text",
         "value": "Options"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "clickElement",
@@ -189,6 +209,10 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
@@ -205,6 +229,10 @@
         "type": "link text",
         "value": "Create a new form"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "setElementText",
@@ -239,6 +267,10 @@
         "type": "link text",
         "value": "Elements"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "clickElement",
@@ -293,6 +325,10 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "setElementText",
       "locator": {
         "type": "name",
@@ -314,6 +350,10 @@
         "type": "link text",
         "value": "Options"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "setElementSelected",
@@ -366,6 +406,10 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "setElementText",
       "locator": {
         "type": "name",
@@ -387,6 +431,10 @@
         "type": "link text",
         "value": "Options"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "setElementSelected",
@@ -482,6 +530,10 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "setElementText",
       "locator": {
         "type": "id",
@@ -516,6 +568,10 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
@@ -546,6 +602,10 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
@@ -573,6 +633,10 @@
         "type": "link text",
         "value": "Create a new form"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "setElementText",
@@ -609,11 +673,19 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
         "value": "Multi-line text box"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "setElementText",
@@ -661,6 +733,10 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "setElementText",
       "locator": {
         "type": "name",
@@ -693,6 +769,10 @@
         "type": "link text",
         "value": "Options"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "setElementSelected",
@@ -762,6 +842,10 @@
         "type": "name",
         "value": "addoption"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "setElementText",
@@ -847,6 +931,10 @@
         "type": "link text",
         "value": "Radio buttons"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "setElementText",
@@ -1174,6 +1262,10 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "setElementText",
       "locator": {
         "type": "name",
@@ -1195,6 +1287,10 @@
         "type": "link text",
         "value": "Options"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "setElementSelected",
