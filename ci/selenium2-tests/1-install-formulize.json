@@ -30,8 +30,18 @@
     },
     {
       "type": "store",
+      "text": "formulize@example.com",
+      "variable": "admin_email"
+    },
+    {
+      "type": "store",
       "text": "password",
       "variable": "admin_password"
+    },
+    {
+      "type": "store",
+      "text": "short_wait",
+      "variable": "543"
     },
     {
       "type": "get",
@@ -45,11 +55,8 @@
       }
     },
     {
-      "type": "clickElement",
-      "locator": {
-        "type": "css selector",
-        "value": "button.next"
-      }
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "clickElement",
@@ -59,19 +66,19 @@
       }
     },
     {
-      "type": "setElementText",
-      "locator": {
-        "type": "id",
-        "value": "trustpath"
-      },
-      "text": "${web_root}/selenium-848d24bb54d726d"
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "clickElement",
       "locator": {
-        "type": "id",
-        "value": "createtrustpath"
+        "type": "css selector",
+        "value": "button.next"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "setElementText",
@@ -159,6 +166,10 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
@@ -166,11 +177,8 @@
       }
     },
     {
-      "type": "clickElement",
-      "locator": {
-        "type": "css selector",
-        "value": "html"
-      }
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "refresh"
@@ -183,11 +191,19 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
         "value": "button[type=\"submit\"]"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "setElementText",
@@ -211,7 +227,7 @@
         "type": "id",
         "value": "adminmail"
       },
-      "text": "support@freeform.ca"
+      "text": "${admin_email}"
     },
     {
       "type": "setElementText",
@@ -237,11 +253,19 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
         "value": "button[type=\"submit\"]"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "clickElement",
@@ -251,11 +275,19 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
         "value": "button[type=\"submit\"]"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "clickElement",
@@ -270,6 +302,10 @@
         "type": "css selector",
         "value": "button[type=\"submit\"]"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "clickElement",
