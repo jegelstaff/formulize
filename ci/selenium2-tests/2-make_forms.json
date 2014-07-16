@@ -175,17 +175,6 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "link text",
-        "value": "Options"
-      }
-    },
-    {
-      "type": "pause",
-      "waitTime": "543"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
         "type": "css selector",
         "value": "input.savebutton"
       }
