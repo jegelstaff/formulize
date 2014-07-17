@@ -117,11 +117,13 @@ function make_data(&$dbm, &$cm, $adminname, $adminlogin_name, $adminpass, $admin
 	$dbm->insert("modules", " VALUES (1, '"._MI_SYSTEM_NAME."'," . $modversion['version'] * 100 . ", ".$time.", 0, 1, 'system', 0, 1, 0, 0, 0, 0, 40, 'system', 0)");
 
 	foreach ($modversion['templates'] as $tplfile) {
-		if ($fp = fopen('../modules/system/templates/'.$tplfile['file'], 'r')) {
-			$newtplid = $dbm->insert('tplfile', " VALUES (0, 1, 'system', 'default', '".addslashes($tplfile['file'])."', '".addslashes($tplfile['description'])."', ".$time.", ".$time.", 'module')");
-			$tplsource = fread($fp, filesize('../modules/system/templates/'.$tplfile['file']));
-			fclose($fp);
-			$dbm->insert('tplsource', " (tpl_id, tpl_source) VALUES (".$newtplid.", '".addslashes($tplsource)."')");
+		if (file_exists('../modules/system/templates/'.$tplfile['file'])) {
+			if ($fp = fopen('../modules/system/templates/'.$tplfile['file'], 'r')) {
+				$newtplid = $dbm->insert('tplfile', " VALUES (0, 1, 'system', 'default', '".addslashes($tplfile['file'])."', '".addslashes($tplfile['description'])."', ".$time.", ".$time.", 'module')");
+				$tplsource = fread($fp, filesize('../modules/system/templates/'.$tplfile['file']));
+				fclose($fp);
+				$dbm->insert('tplsource', " (tpl_id, tpl_source) VALUES (".$newtplid.", '".addslashes($tplsource)."')");
+			}
 		}
 	}
 
