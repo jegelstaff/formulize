@@ -1,0 +1,176 @@
+{
+  "type": "script",
+  "seleniumVersion": "2",
+  "formatVersion": 2,
+  "steps": [
+    {
+      "type": "store",
+      "text": "formulize",
+      "variable": "test_domain"
+    },
+    {
+      "type": "store",
+      "text": "password",
+      "variable": "admin_password"
+    },
+    {
+      "type": "get",
+      "url": "http://${test_domain}/index.php"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "uname"
+      },
+      "text": "admin"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "pass"
+      },
+      "text": "${admin_password}"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input[type=\"submit\"]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Admin"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Screens"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//div[@id='tabs-3']/div/table/tbody/tr[5]/td[2]/a"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-2']/div/div/select/option[@value='2']"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-2']/div/div/select/option[@value='3']"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-2']/div/div/select/option[@value='4']"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Tracker"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Screens"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//div[@id='tabs-3']/div/table/tbody/tr[9]/td[2]/a"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-2']/div/div/select/option[@value='6']"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-2']/div/div/select/option[@value='7']"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-2']/div/div/select/option[@value='8']"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-2']/div/div/select/option[@value='9']"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-2']/div/div/select/option[@value='10']"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    }
+  ],
+  "data": {
+    "configs": {},
+    "source": "none"
+  },
+  "inputs": [],
+  "timeoutSeconds": 60
+}
