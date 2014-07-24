@@ -5,7 +5,7 @@
   "steps": [
     {
       "type": "store",
-      "text": "formulize",
+      "text": "localhost",
       "variable": "test_domain"
     },
     {
