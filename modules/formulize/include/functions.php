@@ -3082,10 +3082,10 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
             $values = explode(",", $value);
             $good_values = array();
 
-            // check each email address, exclude the ones ending with .archive
+            // check each email address, exclude the ones ending with .archived
             foreach ($values as $a_value) {
                 // build a new array of emails
-                if (".archive" != substr($a_value, -8)) {
+                if (".archived" != substr($a_value, -9)) {
                     $good_values[] = $a_value;
                 }
             }
