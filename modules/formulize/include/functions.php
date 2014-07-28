@@ -4554,12 +4554,13 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
             // convert the $filterElementId to a real id, since it's possible it could find its way in here as a handle...a legacy issue sort of
             if (!is_numeric($filterElementIds[$filterId])) {
                 $elementObject = $element_handler->get($filterElementIds[$filterId]);
-                $filterElementIds[$filterId] = $elementObject->getVar('ele_id');
+                if (is_object($elementObject)) {
+                    $filterElementIds[$filterId] = $elementObject->getVar('ele_id');
+                }
             }
 
-	    
-	    list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
-	    
+            list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $targetFormElementTypes, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
+
             if ($filterTypes[$filterId] != "oom") {
                 if ($start) {
                     $conditionsfilter = " AND (";
