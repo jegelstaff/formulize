@@ -1,3 +1,4 @@
+markdown: kramdown
 baseurl: /formulize
 url: http://jegelstaff.github.io/formulize/
 permalink: formulize/:title
