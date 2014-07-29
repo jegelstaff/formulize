@@ -4664,6 +4664,10 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
                 $conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntry ";
             }
         }
+    } else {
+        foreach ($filterTerms as $key => $value) {
+            $filterTerms[$key] = parseUserAndToday($value);
+        }
     }
 
     if ($filterOps[$filterId] == "=") {
