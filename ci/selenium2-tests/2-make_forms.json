@@ -187,6 +187,55 @@
       "type": "clickElement",
       "locator": {
         "type": "css selector",
+        "value": ".breadcrumb-2"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Add elements to the form"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Text box"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "City"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "client_city"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "3525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
         "value": ".breadcrumb-1"
       }
     },
@@ -485,6 +534,100 @@
     {
       "type": "clickElement",
       "locator": {
+        "type": "link text",
+        "value": "Date box"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Start Date"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "project_start_date"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "element-date"
+      },
+      "text": "{TODAY}"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-2"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Add elements to the form"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Date box"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Launch Date"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "project_launch_date"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
         "type": "css selector",
         "value": ".breadcrumb-1"
       }
@@ -586,6 +729,55 @@
     {
       "type": "pause",
       "waitTime": "1525"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-2"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Add elements to the form"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Text box"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Email"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "people_email"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "3525"
     },
     {
       "type": "clickElement",
