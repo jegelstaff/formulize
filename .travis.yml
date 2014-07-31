@@ -11,6 +11,7 @@ php:
   - 5.5
 
 install:
+  - sudo apt-get update
   - sudo apt-get install apache2 libapache2-mod-fastcgi
   # enable php-fpm
   - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
