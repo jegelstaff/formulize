@@ -195,6 +195,47 @@
         "type": "id",
         "value": "de_3_new_5"
       },
+      "text": "Julian"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "submitx"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Your information has been saved"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "donebutton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Entries in "
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "formulize_addButton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "You can make a new entry by filling in the form below"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "de_3_new_5"
+      },
       "text": "Daniel"
     },
     {
