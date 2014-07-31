@@ -62,6 +62,10 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "You can make a new entry by filling in the form below"
+    },
+    {
       "type": "setElementText",
       "locator": {
         "type": "id",
@@ -84,6 +88,10 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "Entries in "
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
@@ -96,6 +104,10 @@
         "type": "id",
         "value": "formulize_addButton"
       }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "You can make a new entry by filling in the form below"
     },
     {
       "type": "setElementText",
@@ -121,13 +133,11 @@
       "text": "Blue Sea Ocean Science"
     },
     {
-      "type": "waitForElementStyle",
+      "type": "waitForElementPresent",
       "locator": {
         "type": "css selector",
         "value": ".quickselect_results ul"
-      },
-      "propertyName": "display",
-      "value": "block"
+      }
     },
     {
       "type": "clickElement",
@@ -158,6 +168,10 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "Entries in "
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
@@ -170,6 +184,10 @@
         "type": "id",
         "value": "formulize_addButton"
       }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "You can make a new entry by filling in the form below"
     },
     {
       "type": "setElementText",
@@ -187,11 +205,19 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "Your information has been saved"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "id",
         "value": "donebutton"
       }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Entries in "
     },
     {
       "type": "clickElement",
@@ -206,6 +232,10 @@
         "type": "id",
         "value": "formulize_addButton"
       }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "You can make a new entry by filling in the form below"
     },
     {
       "type": "setElementText",
@@ -245,13 +275,11 @@
       "text": "Octopus Survey"
     },
     {
-      "type": "waitForElementStyle",
+      "type": "waitForElementPresent",
       "locator": {
         "type": "css selector",
         "value": ".quickselect_results ul"
-      },
-      "propertyName": "display",
-      "value": "block"
+      }
     },
     {
       "type": "clickElement",
@@ -261,8 +289,16 @@
       }
     },
     {
+      "type": "waitForElementPresent",
+      "negated": true,
+      "locator": {
+        "type": "css selector",
+        "value": ".quickselect_results ul"
+      }
+    },
+    {
       "type": "pause",
-      "waitTime": "134"
+      "waitTime": "1234"
     },
     {
       "type": "clickElement",
@@ -280,13 +316,11 @@
       "text": "Daniel"
     },
     {
-      "type": "waitForElementStyle",
+      "type": "waitForElementPresent",
       "locator": {
         "type": "css selector",
         "value": ".quickselect_results ul"
-      },
-      "propertyName": "display",
-      "value": "block"
+      }
     },
     {
       "type": "clickElement",
@@ -296,6 +330,18 @@
       }
     },
     {
+      "type": "waitForElementPresent",
+      "negated": true,
+      "locator": {
+        "type": "css selector",
+        "value": ".quickselect_results ul"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "345"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "id",
@@ -303,8 +349,8 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "543"
+      "type": "waitForTextPresent",
+      "text": "Your information has been saved"
     },
     {
       "type": "clickElement",
