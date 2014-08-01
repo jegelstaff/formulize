@@ -57,8 +57,8 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "xpath",
-        "value": "//div[@id='tabs-3']/div/table/tbody/tr[5]/td[2]/a"
+        "type": "link text",
+        "value": "Regular 'Client'"
       }
     },
     {
@@ -72,21 +72,7 @@
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@value='2']"
-      }
-    },
-    {
-      "type": "setElementNotSelected",
-      "locator": {
-        "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@value='3']"
-      }
-    },
-    {
-      "type": "setElementNotSelected",
-      "locator": {
-        "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@value='4']"
+        "value": "//form[@id='form-2']/div/div/select/option[@label='City']"
       }
     },
     {
@@ -99,8 +85,8 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "link text",
-        "value": "Tracker"
+        "type": "css selector",
+        "value": ".breadcrumb-1"
       }
     },
     {
@@ -113,8 +99,8 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "xpath",
-        "value": "//div[@id='tabs-3']/div/table/tbody/tr[9]/td[2]/a"
+        "type": "link text",
+        "value": "Regular 'Project'"
       }
     },
     {
@@ -128,35 +114,91 @@
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@value='6']"
+        "value": "//form[@id='form-2']/div/div/select/option[@label='Client']"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-1"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Screens"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Regular 'People'"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
       }
     },
     {
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@value='7']"
+        "value": "//form[@id='form-2']/div/div/select/option[@label='Email']"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": ".breadcrumb-1"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Screens"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Regular 'Stories'"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
       }
     },
     {
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@value='8']"
-      }
-    },
-    {
-      "type": "setElementNotSelected",
-      "locator": {
-        "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@value='9']"
-      }
-    },
-    {
-      "type": "setElementNotSelected",
-      "locator": {
-        "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@value='10']"
+        "value": "//form[@id='form-2']/div/div/select/option[@label='Status']"
       }
     },
     {
