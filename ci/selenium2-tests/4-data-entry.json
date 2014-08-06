@@ -68,10 +68,63 @@
     {
       "type": "setElementText",
       "locator": {
-        "type": "id",
-        "value": "de_1_new_1"
+        "type": "css selector",
+        "value": "td.formulize-input-client_name input[type=text]"
       },
       "text": "Blue Sea Ocean Science"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-client_city input[type=text]"
+      },
+      "text": "Vancouver"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "submitx"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "donebutton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Entries in "
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "formulize_addButton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "You can make a new entry by filling in the form below"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-client_name input[type=text]"
+      },
+      "text": "Humans For Humanity"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-client_city input[type=text]"
+      },
+      "text": "Toronto"
     },
     {
       "type": "clickElement",
@@ -112,23 +165,23 @@
     {
       "type": "setElementText",
       "locator": {
-        "type": "id",
-        "value": "de_2_new_2"
+        "type": "css selector",
+        "value": "td.formulize-input-project_name input"
       },
       "text": "Octopus Survey"
     },
     {
       "type": "clickElement",
       "locator": {
-        "type": "id",
-        "value": "de_2_new_3_user"
+        "type": "css selector",
+        "value": "td.formulize-input-project_client input"
       }
     },
     {
       "type": "sendKeysToElement",
       "locator": {
-        "type": "id",
-        "value": "de_2_new_3_user"
+        "type": "css selector",
+        "value": "td.formulize-input-project_client input"
       },
       "text": "Blue Sea Ocean Science"
     },
@@ -147,10 +200,10 @@
       }
     },
     {
-      "type": "setElementSelected",
+      "type": "clickElement",
       "locator": {
-        "type": "id",
-        "value": "de_2_new_4-2"
+        "type": "css selector",
+        "value": "td.formulize-input-project_status input[type=radio][value=2]"
       }
     },
     {
@@ -192,10 +245,18 @@
     {
       "type": "setElementText",
       "locator": {
-        "type": "id",
-        "value": "de_3_new_5"
+        "type": "css selector",
+        "value": "td.formulize-input-people_name input"
       },
       "text": "Julian"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-people_email input"
+      },
+      "text": "julian@example.com"
     },
     {
       "type": "clickElement",
@@ -233,10 +294,18 @@
     {
       "type": "setElementText",
       "locator": {
-        "type": "id",
-        "value": "de_3_new_5"
+        "type": "css selector",
+        "value": "td.formulize-input-people_name input"
       },
       "text": "Daniel"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-people_email input"
+      },
+      "text": "daniel@example.com"
     },
     {
       "type": "clickElement",
@@ -281,37 +350,37 @@
     {
       "type": "setElementText",
       "locator": {
-        "type": "id",
-        "value": "de_4_new_6_tarea"
+        "type": "css selector",
+        "value": "td.formulize-input-stories_story textarea"
       },
       "text": "As marine biologists, we want a data-entry form so that we can record octopus details."
     },
     {
       "type": "setElementSelected",
       "locator": {
-        "type": "id",
-        "value": "de_4_new_8-14"
+        "type": "css selector",
+        "value": "td.formulize-input-stories_status input[type=radio]"
       }
     },
     {
       "type": "setElementSelected",
       "locator": {
-        "type": "id",
-        "value": "de_4_new_8-13"
+        "type": "css selector",
+        "value": "td.formulize-input-stories_points input[type=radio]"
       }
     },
     {
       "type": "clickElement",
       "locator": {
-        "type": "id",
-        "value": "de_4_new_9_user"
+        "type": "css selector",
+        "value": "td.formulize-input-stories_project input"
       }
     },
     {
       "type": "sendKeysToElement",
       "locator": {
-        "type": "id",
-        "value": "de_4_new_9_user"
+        "type": "css selector",
+        "value": "td.formulize-input-stories_project input"
       },
       "text": "Octopus Survey"
     },
@@ -339,20 +408,20 @@
     },
     {
       "type": "pause",
-      "waitTime": "1234"
+      "waitTime": "3234"
     },
     {
       "type": "clickElement",
       "locator": {
-        "type": "id",
-        "value": "de_4_new_10_user"
+        "type": "css selector",
+        "value": "td.formulize-input-stories_assigned_to input[type=text]"
       }
     },
     {
       "type": "sendKeysToElement",
       "locator": {
-        "type": "id",
-        "value": "de_4_new_10_user"
+        "type": "css selector",
+        "value": "td.formulize-input-stories_assigned_to input[type=text]"
       },
       "text": "Daniel"
     },
@@ -380,7 +449,7 @@
     },
     {
       "type": "pause",
-      "waitTime": "345"
+      "waitTime": "543"
     },
     {
       "type": "clickElement",
