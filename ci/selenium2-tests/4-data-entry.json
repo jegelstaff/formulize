@@ -202,8 +202,8 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "css selector",
-        "value": "td.formulize-input-project_status input[type=radio][value=2]"
+        "type": "xpath",
+        "value": "//td[contains(@class, \"formulize-input-project_status\")]/input[2]"
       }
     },
     {
@@ -356,17 +356,17 @@
       "text": "As marine biologists, we want a data-entry form so that we can record octopus details."
     },
     {
-      "type": "setElementSelected",
+      "type": "clickElement",
       "locator": {
-        "type": "css selector",
-        "value": "td.formulize-input-stories_status input[type=radio]"
+        "type": "xpath",
+        "value": "//td[contains(@class, \"formulize-input-stories_status\")]/input[3]"
       }
     },
     {
-      "type": "setElementSelected",
+      "type": "clickElement",
       "locator": {
-        "type": "css selector",
-        "value": "td.formulize-input-stories_points input[type=radio]"
+        "type": "xpath",
+        "value": "//td[contains(@class, \"formulize-input-stories_points\")]/input[7]"
       }
     },
     {
@@ -399,14 +399,6 @@
       }
     },
     {
-      "type": "waitForElementPresent",
-      "negated": true,
-      "locator": {
-        "type": "css selector",
-        "value": ".quickselect_results ul"
-      }
-    },
-    {
       "type": "pause",
       "waitTime": "3234"
     },
@@ -414,14 +406,14 @@
       "type": "clickElement",
       "locator": {
         "type": "css selector",
-        "value": "td.formulize-input-stories_assigned_to input[type=text]"
+        "value": "td.formulize-input-stories_assigned_to input[type=text].formulize_autocomplete"
       }
     },
     {
       "type": "sendKeysToElement",
       "locator": {
         "type": "css selector",
-        "value": "td.formulize-input-stories_assigned_to input[type=text]"
+        "value": "td.formulize-input-stories_assigned_to input[type=text].formulize_autocomplete"
       },
       "text": "Daniel"
     },
@@ -440,16 +432,8 @@
       }
     },
     {
-      "type": "waitForElementPresent",
-      "negated": true,
-      "locator": {
-        "type": "css selector",
-        "value": ".quickselect_results ul"
-      }
-    },
-    {
       "type": "pause",
-      "waitTime": "543"
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
