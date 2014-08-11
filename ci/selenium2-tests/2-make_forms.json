@@ -131,8 +131,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -180,8 +185,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "3525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -229,8 +239,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "3525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -278,8 +293,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -323,8 +343,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -404,8 +429,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -517,8 +547,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -577,8 +612,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -622,8 +662,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -671,8 +716,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -727,8 +777,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -776,8 +831,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "3525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -825,8 +885,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -874,8 +939,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -923,8 +993,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -1074,8 +1149,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -1316,8 +1396,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "4525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -1396,8 +1481,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "1525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -1484,8 +1574,13 @@
       }
     },
     {
-      "type": "pause",
-      "waitTime": "3525"
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
