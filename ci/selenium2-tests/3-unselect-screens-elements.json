@@ -83,6 +83,15 @@
       }
     },
     {
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
@@ -123,6 +132,15 @@
         "type": "css selector",
         "value": "input.savebutton"
       }
+    },
+    {
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     },
     {
       "type": "clickElement",
@@ -167,6 +185,15 @@
       }
     },
     {
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
@@ -207,6 +234,15 @@
         "type": "css selector",
         "value": "input.savebutton"
       }
+    },
+    {
+      "type": "waitForElementStyle",
+      "locator": {
+        "type": "id",
+        "value": "savewarning"
+      },
+      "propertyName": "display",
+      "value": "none"
     }
   ],
   "data": {
