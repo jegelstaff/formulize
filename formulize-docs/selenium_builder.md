@@ -1,5 +1,6 @@
 ---
 layout: default
+permalink: selenium_builder/
 ---
 
 # Creating Selenium 2 Tests with Selenium Builder
