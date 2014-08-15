@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: documentation/
+permalink: version_control/documentation/
 ---
 
 # Documentation

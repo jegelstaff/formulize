@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: testing/
+permalink: version_control/testing/
 ---
 
 # Testing

@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: merging/
+permalink: version_control/merging/
 ---
 
 # Merging
