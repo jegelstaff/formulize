@@ -295,22 +295,16 @@ if($ele_type=='text') {
   $options['listofelementsoptions'] = $listOfElements->render();
 
   //new relationship dropdown
-  $formObjects = $form_handler->getFormsByApplication($aid);
   $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-  $allRelationships = array();
-  foreach ($formObjects as $thisForm) {
-    // returns array of objects
-    $allRelationships = array_merge($allRelationships, $framework_handler->getFrameworksByForm($thisForm->getVar('id_form')));
-  }
+  $allRelationships = $framework_handler->getFrameworksByForm($fid);
   $relationships = array();
   $relationshipIndex = array();
   $relationships[""] = "this form only, no relationship.";
-  $i = 1;
   foreach ($allRelationships as $thisRelationship) {
     $frid = $thisRelationship->getVar('frid');
-    if(isset($relationshipIndex[$frid])) { continue; }
-    $relationships[$i] = $thisRelationship->getVar('name');
-    $relationshipIndex[$frid] = true;
+    if(!isset($relationships[$frid])) {
+        $relationships[$frid] = $thisRelationship->getVar('name');
+    }
   }
   $listOfRelationships = new XoopsFormSelect("", 'listofrelationshipoptions');
   $listOfRelationships->addOptionArray($relationships);
