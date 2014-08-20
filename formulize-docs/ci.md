@@ -15,7 +15,7 @@ If all the tests pass successfully, then this lets us know that the current buil
 
 On Sauce Labs, Julian has signed up for an "Open Sauce" account that is free and allows for automated, unlimited Selenium testing, provided it is only used to test open source software.  Selenium tests are application level tests, based on recorded actions in a web browser. Sauce Labs plays back the tests, using a spontaneously built cloud server that Travis has spun into existence in response to the latest Github commit.
 
-The credentials for this account need to be used by Travis in order to establish a connection to Sauce Labs. Using a Ruby gem, the credentials have been encrypted in a way that Travis and Sauce can work with. You can read about that process, on this page of the Sauce documentation: [https://docs.saucelabs.com/ci-integrations/travis-ci/](https://docs.saucelabs.com/ci-integrations/travis-ci/)
+The credentials for this account need to be used by Travis in order to establish a connection to Sauce Labs. Using a Ruby gem, the credentials have been encrypted in a way that Travis and Sauce can work with. You can read about that process on this page of the Sauce documentation: [https://docs.saucelabs.com/ci-integrations/travis-ci/](https://docs.saucelabs.com/ci-integrations/travis-ci/)
 
 ## Travis Configuration
 
