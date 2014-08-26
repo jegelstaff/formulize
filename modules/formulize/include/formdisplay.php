@@ -1799,26 +1799,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	
 	global $xoopsDB, $xoopsUser;
 
-	// find hidden elements first...
-	$notAllowedCriteria = new CriteriaCompo();
-	$notAllowedCriteria->add(new Criteria('ele_forcehidden', 1));
-	$criteria = new CriteriaCompo();
-	$criteria->add(new Criteria('ele_display', 0), 'OR');
-	$criteria2 = new CriteriaCompo();
-	foreach($groups as $thisgroup) {
-		$criteria2->add(new Criteria('ele_display', '%,'.$thisgroup.',%', 'NOT LIKE'), 'AND');
-	}
-	$criteria->add($criteria2, 'OR');
-	$notAllowedCriteria->add($criteria, 'AND');
-	$notAllowedCriteria->setSort('ele_order');
-	$notAllowedCriteria->setOrder('ASC');
-	$notAllowedElements =& $formulize_mgr->getObjects($notAllowedCriteria,$fid);
-
-	$hiddenElements = generateHiddenElements($notAllowedElements, $entryForDEElements); // in functions.php, keys in returned array will be the element ids
-
-	//} // if(!$entry) is now broken out locally, since for plain textboxes, we are allowing special hidden values when there is an entry.  This feature will likely evolve.
-	unset($criteria);
-	unset($ele_value);
+    $elementsAvailableToUser = array();
 
 	// set criteria for matching on display
 	// set the basics that everything has to match
@@ -1870,19 +1851,6 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			$this_ele_id = $i->getVar('ele_id'); // get the element ID number
 		}
 	
-	/*
-	 // old code that is superseded by the new element_order_array stuff above
-	 foreach( $elements as $i ){
-
-		$this_ele_id = $i->getVar('ele_id');
-
-		if(is_array($elements_allowed)) {
-			if(!in_array($this_ele_id, $elements_allowed)) {
-				continue;
-			}
-		}
-  */
-	
 		// check if we're at the start of a page, when doing a printable view of all pages (only situation when printViewPageTitles and printViewPages will be present), and if we are, then put in a break for the page titles
 		if($printViewPages) {
 			if(!$currentPrintViewPage) {
@@ -1918,17 +1886,6 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			// assumption is there will only be one parent link for this form
 			for($z=0;$z<count($parentLinks['source']);$z++) {					
 				if($this_ele_id == $parentLinks['self'][$z]) { // this is the element
-					// get the caption of the parent's field
-					/*$pcq = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='" . $go_back['form'] . "' AND ele_id='" . $parentLinks['source'][$z] . "'");				
-					$parentCap = str_replace ("'", "`", $pcq[0]['ele_caption']);
-					$parentCap = str_replace ("&quot;", "`", $parentCap);
-					$parentCap = str_replace ("&#039;", "`", $parentCap);
-					$pvq = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form='" . $go_back['form'] . "' AND id_req='" . $go_back['entry'] . "' AND ele_caption='$parentCap'");
-					$pid = $pvq[0]['ele_id'];
-
-					// NOTE: assuming that there will only be one value in the match, ie: the link field is not a multiple select box!
-					// format of value should be $formid#*=:*$formcaption#*=:*$ele_id
-					$ele_value[2] = $go_back['form'] . "#*=:*" . $parentCap . "#*=:*" . $pid; */
 					$ele_value[2] = $go_back['entry']; // 3.0 datastructure...needs to be tested!! -- now updated for 5.0
 				}
 			}
@@ -1976,6 +1933,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$form_ele = $deReturnValue;
 				$isDisabled = false;
 			}
+            $elementsAvailableToUser[$this_ele_id] = true;
 			if(($form_ele == "not_allowed" OR $form_ele == "hidden")) {
 				if(isset($GLOBALS['formulize_renderedElementHasConditions']["de_".$fid."_".$entryForDEElements."_".$this_ele_id])) {
 					// need to add a tr container for elements that are not allowed, since if it was a condition that caused them to not show up, they might appear later on asynchronously, and we'll need the row to attach them to
@@ -2000,6 +1958,8 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 						unset($conditionalValidationRenderer);
 					}
 					$form->addElement($rowHTML);
+                    // since it was treated as a conditional element, and the user might interact with it, then we don't consider it a not-available-to-user element
+                    unset($elementsAvailableToUser[$this_ele_id]);
 				}
 				continue;
 			}
@@ -2068,6 +2028,19 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 
 	formulize_benchmark("Done looping elements.");
 
+    // find any hidden elements in the form, that aren't available to the user in this rendering of the form...	
+	unset($criteria);
+	$notAllowedCriteria = new CriteriaCompo();
+	$notAllowedCriteria->add(new Criteria('ele_forcehidden', 1));
+    foreach($elementsAvailableToUser as $availElementId=>$boolean) {
+        $notAllowedCriteria->add(new Criteria('ele_id', $availElementId, '!='));
+    }
+	$notAllowedCriteria->setSort('ele_order');
+	$notAllowedCriteria->setOrder('ASC');
+	$notAllowedElements =& $formulize_mgr->getObjects($notAllowedCriteria,$fid);
+
+	$hiddenElements = generateHiddenElements($notAllowedElements, $entryForDEElements); // in functions.php, keys in returned array will be the element ids
+  
 	foreach($hiddenElements as $element_id=>$thisHiddenElement) {
 		$form->addElement(new xoopsFormHidden("decue_".$fid."_".$entryForDEElements."_".$element_id, 1));
 		if(is_array($thisHiddenElement)) { // could happen for checkboxes
@@ -2080,6 +2053,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 		unset($thisHiddenElement); // some odd reference thing going on here...$thisHiddenElement is being added by reference or something like that, so that when $thisHiddenElement changes in the next run through, every previous element that was created by adding it is updated to point to the next element.  So if you unset at the end of the loop, it forces each element to be added as you would expect.
 	}
 
+    
 	if($entry AND !is_a($form, 'formulize_elementsOnlyForm')) { 
 		$form->addElement (new XoopsFormHidden ('entry'.$fid, $entry));
 	}
@@ -2087,6 +2061,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 		$form->addElement (new XoopsFormHidden ('back_from_sub', 1));
 	}
 	
+    
 	// add a hidden element to carry all the validation javascript that might be associated with elements rendered with elementdisplay.php...only relevant for elements rendered inside subforms or grids...the validation code comes straight from the element, doesn't have a check around it for the conditional table row id, like the custom form classes at the top of the file use, since those elements won't render as hidden and show/hide in the same way
 	if(isset($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']])) {
 		$formulizeHiddenValidation = new XoopsFormHidden('validation', '');
