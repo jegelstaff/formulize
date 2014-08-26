@@ -5215,3 +5215,71 @@ function parseUserAndToday($term) {
 	}
   return $term;
 }
+
+// THIS FUNCTION ESTABLISHES LINKS BETWEEN ANY 1-1 LINKED FORMS, ON THE SAME PAGE LOAD IN WHICH DATA WAS SAVED
+// THIS FUNCTION SHOULD BE CALLED AFTER NEW ENTRIES HAVE BEEN SAVED IN A FORM, AND 1-1 LINKS NEED TO BE ESTABLISHED BETWEEN THE ENTRIES IN THAT RELATIONSHIP
+// THIS FUNCTION SHOULD BE CALLED AFTER ANY APPLICABLE SECURITY CHECKS!  SO WE KNOW THE USER IS ALLOWED TO WRITE DATA TO THE POTENTIALLY AFFECTED ENTRIES.
+// $frid is the form relationship id that in which we are trying to establish the links
+// $fid is the form we're checking to see if new entry ids were written or not, and if they were, then we try to write the linked values into the right fields in the corresponding entries
+// returns an array of arrays, that tells all the affected forms and entry ids
+function formulize_makeOneToOneLinks($frid, $fid) {
+    static $oneToOneLinksMade = array();
+    $form1EntryIds = array();
+    $form2EntryIds = array();
+    $form1s = array();
+    $form2s = array();
+    if(!isset($oneToOneLinksMade[$frid]) AND isset($GLOBALS['formulize_newEntryIds'][$fid])) {
+        $frameworkHandler = xoops_getmodulehandler('frameworks', 'formulize');
+        $frameworkObject = $frameworkHandler->get($frid);
+        foreach($frameworkObject->getVar('links') as $thisLink) {
+            if($thisLink->getVar('relationship') == 1) { // 1 signifies one to one relationships
+                $form1 = $thisLink->getVar('form1');
+                $form2 = $thisLink->getVar('form2');
+                $key1 = $thisLink->getVar('key1');
+                $key2 = $thisLink->getVar('key2');
+                $form1EntryId = "";
+                $form2EntryId = "";
+                $entryToWriteToForm1 = $GLOBALS['formulize_newEntryIds'][$form1][0] ? $GLOBALS['formulize_newEntryIds'][$form1][0] : $GLOBALS['formulize_allWrittenEntryIds'][$form1][0];
+                if(!$entryToWriteToForm1) { exit("Error: we could not determine which entry in form $form1 we should use for writing the key value for the relationship."); }
+                $entryToWriteToForm2 = $GLOBALS['formulize_newEntryIds'][$form2][0] ? $GLOBALS['formulize_newEntryIds'][$form2][0] : $GLOBALS['formulize_allWrittenEntryIds'][$form2][0];
+                if(!$entryToWriteToForm2) { exit("Error: we could not determine which entry in form $form2 we should use for writing the key value for the relationship."); }
+                if($thisLink->getVar('common')) {
+                    if((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allWrittenEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allWrittenEntryIds'][$form1][0]."_".$key1] === "")) {
+                        // if we don't have a value for this element, then populate it with the value from the other element
+                        if($commonValueToWrite = formulize_findCommonValue($form1, $form2, $key1, $key2)) {
+                            $form1EntryId = formulize_writeEntry(array($key1=>$commonValueToWrite), $entryToWriteToForm1);
+                        }
+                    }
+                    if((!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") AND (!isset($_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2]) OR $_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2] === "")) {
+                        // if we don't have a value for this element, then populate it with the value from the other element
+                        if($commonValueToWrite = formulize_findCommonValue($form2, $form1, $key2, $key1)) { // since we're looking for the other form, swap the order of param inputs
+                            $form2EntryId = formulize_writeEntry(array($key2=>$commonValueToWrite), $entryToWriteToForm2);
+                        }
+                    }
+                } elseif($thisLink->getVar('unifiedDisplay')) {
+                    // figure out which one is on which side of the linked selectbox
+                    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+                    $linkedElement1 = $element_handler->get($key1);
+                    $linkedElement1EleValue = $linkedElement1->getVar('ele_value');
+                    if(strstr($linkedElement1EleValue[2], "#*=:*")) {
+                        // element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1
+                        $linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form2][0]) ? $GLOBALS['formulize_newEntryIds'][$form2][0] : "";
+                        $linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allWrittenEntryIds'][$form2][0])) ? $GLOBALS['formulize_allWrittenEntryIds'][$form2][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
+                        $form1EntryId = formulize_writeEntry(array($key1=>$linkedValueToWrite), $entryToWriteToForm1);
+                    } else {
+                        // element 2 is the linked selectbox, so get the value of entry id for what we just created in form 1 and put it in element 2
+                        $linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form1][0]) ? $GLOBALS['formulize_newEntryIds'][$form1][0] : "";
+                        $linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allWrittenEntryIds'][$form1][0])) ? $GLOBALS['formulize_allWrittenEntryIds'][$form1][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
+                        $form2EntryId = formulize_writeEntry(array($key2=>$linkedValueToWrite), $entryToWriteToForm2);
+                    }
+                }
+                $form1EntryIds[] = $form1EntryId;
+                $form2EntryIds[] = $form2EntryId;
+                $form1s[] = $form1;
+                $form2s[] = $form2;
+            } 
+        }
+        $oneToOneLinksMade[$frid] = true;
+    }
+    return array($form1s, $form2s, $form1EntryIds, $form2EntryIds);
+}
