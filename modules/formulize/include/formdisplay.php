@@ -2054,8 +2054,13 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	}
 
     
-	if($entry AND !is_a($form, 'formulize_elementsOnlyForm')) { 
+	if($entry AND !is_a($form, 'formulize_elementsOnlyForm')) {
+        // two hidden fields encode the main entry id, the first difficult-to-use format is a legacy thing
+        // the 'lastentry' format is more sensible, but is only available when there was a real entry, not 'new' (also a legacy convention)
 		$form->addElement (new XoopsFormHidden ('entry'.$fid, $entry));
+        if(is_numeric($entry)) {
+            $form->addElement (new XoopsFormHidden ('lastentry', $entry));
+        }
 	}
 	if($_POST['parent_form']) { // if we just came back from a parent form, then if they click save, we DO NOT want an override condition, even though we are now technically editing an entry that was previously saved when we went to the subform in the first place.  So the override logic looks for this hidden value as an exception.
 		$form->addElement (new XoopsFormHidden ('back_from_sub', 1));
