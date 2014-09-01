@@ -770,12 +770,12 @@ class formulizeDataHandler  {
         foreach ($element_values as $key => $value) {
             $encrypt_this = in_array($key, $encrypt_element_handles);
             unset($element_values[$key]);   // since field name is not escaped, remove from array
-            $key = "`$key`";                // escape field name
+            $key = "`".mysql_real_escape_string($key)."`";                // escape field name
 
             if ("{WRITEASNULL}" == $value or null === $value) {
                 $element_values[$key] = "NULL";
             } else {
-                $element_values[$key] = "'".formulize_escape($value)."'";
+                $element_values[$key] = "'".mysql_real_escape_string(formulize_escape($value))."'";
             }
             if ($encrypt_this) {
                 // this element should be encrypted. note that the actual value is quoted and escapted already
@@ -788,7 +788,7 @@ class formulizeDataHandler  {
             $element_values["`mod_datetime`"]   = "NOW()";
             $element_values["`mod_uid`"]        = intval($uid);
         }
-
+        
         // do the actual writing now that we have prepared all the info we need
         if ($entry == "new") {
             // set metadata for new record
