@@ -1333,57 +1333,57 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // handle linked selectboxes
                     } elseif($sourceMeta = $formFieldFilterMap[$mappedForm][$element_id]['islinked']) {
 			 
-			 // check if user is searching for blank values, and if so, then query this element directly, rather than looking in the source
-			 if($ifParts[1]==='' OR $operator == ' IS NULL ' OR $operator == ' IS NOT NULL ') {
-			      $newWhereClause = "$queryElement " . $operator . $quotes . $likebits . formulize_escape($ifParts[1]) . $likebits . $quotes;
-			 } else {
-			      
-			      // need to check if an alternative value field has been defined for use in lists or data sets and search on that field instead 
-			      if(isset($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10] != "none") {
-				   list($sourceMeta[1]) = convertElementIdsToElementHandles(array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]), $sourceMeta[0]); // ele_value 10 is the alternate field to use for datasets and in lists
-			      }
-
-                $sourceFormObject = $form_handler->get($sourceMeta[0]);
-                if($ifParts[1] == "PERGROUPFILTER") {
-                    // invoke the per group filter that applies to the form that we are pointing to...if XOOPS is in effect (ie: we're not included directly in other code as per Formulize 1)
-                    global $xoopsDB;
-                    if($xoopsDB) {
-                        $form_handler = xoops_getmodulehandler('forms', 'formulize');
-                        $otherpgfCount = count($otherPerGroupFilterJoins) + 1;
-                        $otherPerGroupFilterWhereClause[] = $form_handler->getPerGroupFilterWhereClause($sourceMeta[0], "otherpgf".$otherpgfCount);
-                        $tempOtherPGFJoin = " LEFT JOIN ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." AS otherpgf".$otherpgfCount." ON ";
-                        $tempOtherPGFJoin .= " otherpgf".$otherpgfCount.".entry_id IN (TRIM(',' FROM $queryElement)) ";
-                        $otherPerGroupFilterJoins[] = $tempOtherPGFJoin;
-                    }
-                    $newWhereClause = "1";
-                } else {
-                    // Neal's suggestion:  use EXISTS...other forms of subquery using field IN subquery or subquery LIKE field,
-                    //  and a CONCAT in the subquery, failed in various conditions.  IN did not work with multiple selection boxes
-                    //  and LIKE did not work with search terms too general to return only one match in the source form.
-                    // Exists works in all cases.  :-)
-                    if (is_array($sourceMeta[1])) {
-                        // when searching a linked box which presents multiple columns, concat the columns to search
-                        if (1 == count($sourceMeta[1]) and "none" == $sourceMeta[1][0]) {
-                            // no columns were selected for display, so search all of them
-                            $search_column = convertElementIdsToElementHandles($sourceFormObject->getVar('elements'), $sourceMeta[0]);
-                            $search_column = "CONCAT(source.`".implode("`, source.`", $search_column)."`)";
+                        // check if user is searching for blank values, and if so, then query this element directly, rather than looking in the source
+                        if($ifParts[1]==='' OR $operator == ' IS NULL ' OR $operator == ' IS NOT NULL ') {
+                             $newWhereClause = "$queryElement " . $operator . $quotes . $likebits . formulize_escape($ifParts[1]) . $likebits . $quotes;
                         } else {
-                            // search in the columns which were selected for display
-                            $search_column = convertElementIdsToElementHandles($sourceMeta[1], $sourceMeta[0]);
-                            $search_column = "CONCAT(source.`".implode("`, source.`", $search_column)."`)";
-                        }
-                    } else {
-                        $search_column = "source.`" . $sourceMeta[1] . "`";
-                    }
-		    $queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
-                    $ele_value = $queryElementMetaData['ele_value'];
-                    if ($ele_value[0] > 1 AND $ele_value[1]) { // if the number of rows is greater than 1, and the element supports multiple selections
-                         $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement LIKE CONCAT('%,',source.entry_id,',%') AND " . $search_column . $operator . $quotes . $likebits . formulize_escape($ifParts[1]) . $likebits . $quotes . ")";
-                    } else {
-                         $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement = source.entry_id AND " . $search_column . $operator . $quotes . $likebits . formulize_escape($ifParts[1]) . $likebits . $quotes . ")";
-                    }
-                }
-            }
+                             
+                             // need to check if an alternative value field has been defined for use in lists or data sets and search on that field instead 
+                             if(isset($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]) AND $formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10][0] != "none") {
+                              list($sourceMeta[1]) = convertElementIdsToElementHandles(array($formFieldFilterMap[$mappedForm][$element_id]['ele_value'][10]), $sourceMeta[0]); // ele_value 10 is the alternate field to use for datasets and in lists
+                             }
+           
+                           $sourceFormObject = $form_handler->get($sourceMeta[0]);
+                           if($ifParts[1] == "PERGROUPFILTER") {
+                               // invoke the per group filter that applies to the form that we are pointing to...if XOOPS is in effect (ie: we're not included directly in other code as per Formulize 1)
+                               global $xoopsDB;
+                               if($xoopsDB) {
+                                   $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                                   $otherpgfCount = count($otherPerGroupFilterJoins) + 1;
+                                   $otherPerGroupFilterWhereClause[] = $form_handler->getPerGroupFilterWhereClause($sourceMeta[0], "otherpgf".$otherpgfCount);
+                                   $tempOtherPGFJoin = " LEFT JOIN ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle')." AS otherpgf".$otherpgfCount." ON ";
+                                   $tempOtherPGFJoin .= " otherpgf".$otherpgfCount.".entry_id IN (TRIM(',' FROM $queryElement)) ";
+                                   $otherPerGroupFilterJoins[] = $tempOtherPGFJoin;
+                               }
+                               $newWhereClause = "1";
+                           } else {
+                               // Neal's suggestion:  use EXISTS...other forms of subquery using field IN subquery or subquery LIKE field,
+                               //  and a CONCAT in the subquery, failed in various conditions.  IN did not work with multiple selection boxes
+                               //  and LIKE did not work with search terms too general to return only one match in the source form.
+                               // Exists works in all cases.  :-)
+                               if (is_array($sourceMeta[1])) {
+                                   // when searching a linked box which presents multiple columns, concat the columns to search
+                                   if (1 == count($sourceMeta[1]) and "none" == $sourceMeta[1][0]) {
+                                       // no columns were selected for display, so search all of them
+                                       $search_column = convertElementIdsToElementHandles($sourceFormObject->getVar('elements'), $sourceMeta[0]);
+                                       $search_column = "CONCAT(source.`".implode("`, source.`", $search_column)."`)";
+                                   } else {
+                                       // search in the columns which were selected for display
+                                       $search_column = convertElementIdsToElementHandles($sourceMeta[1], $sourceMeta[0]);
+                                       $search_column = "CONCAT(source.`".implode("`, source.`", $search_column)."`)";
+                                   }
+                               } else {
+                                   $search_column = "source.`" . $sourceMeta[1] . "`";
+                               }
+                       $queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
+                               $ele_value = $queryElementMetaData['ele_value'];
+                               if ($ele_value[0] > 1 AND $ele_value[1]) { // if the number of rows is greater than 1, and the element supports multiple selections
+                                    $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement LIKE CONCAT('%,',source.entry_id,',%') AND " . $search_column . $operator . $quotes . $likebits . formulize_escape($ifParts[1]) . $likebits . $quotes . ")";
+                               } else {
+                                    $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement = source.entry_id AND " . $search_column . $operator . $quotes . $likebits . formulize_escape($ifParts[1]) . $likebits . $quotes . ")";
+                               }
+                           }
+                       }
                     // usernames/fullnames boxes
                     } elseif($listtype = $formFieldFilterMap[$mappedForm][$element_id]['isnamelist'] AND $ifParts[1] !== "") {
                          if(!is_numeric($ifParts[1])) {
