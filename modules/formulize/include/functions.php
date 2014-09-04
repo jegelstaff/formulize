@@ -2069,8 +2069,13 @@ function checkOther($key, $id){
     if (!preg_match('/\{OTHER\|+[0-9]+\}/', $key) ){
         return false;
     }else{
-        if (!empty($_POST['other']['ele_'.$id]) ){
-            return $_POST['other']['ele_'.$id];
+        if( !empty($_POST['other'])) {
+            $otherValues = array();
+            foreach($_POST['other'] as $key=>$value) {
+              list($eletext, $element_id, $entry_id) = $keyParts = explode("_", $key);
+              $otherValues[$entry_id] = $value;
+            }
+            return $otherValues;
         }else{
             return "";
         }
@@ -2090,7 +2095,8 @@ function writeOtherValues($id_req, $fid) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
     $thisForm = new formulizeForm($fid);
     if (isset($GLOBALS['formulize_other']) and is_array($GLOBALS['formulize_other'])) {
-        foreach ($GLOBALS['formulize_other'] as $ele_id=>$value) {
+        foreach ($GLOBALS['formulize_other'] as $ele_id=>$values) {
+            $value = $values[$id_req];
             // filter out any ele_ids that are not part of this form, since when a framework is used, the formulize_other array would contain ele_ids from multiple forms
             if (!in_array($ele_id, $thisForm->getVar('elements'))) {
                 continue;
