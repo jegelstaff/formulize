@@ -1370,7 +1370,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                                    } else {
                                        // search in the columns which were selected for display
                                        $search_column = convertElementIdsToElementHandles($sourceMeta[1], $sourceMeta[0]);
-                                       $search_column = "CONCAT_WS,('', source.`".implode("`, source.`", $search_column)."`)";
+                                       $search_column = "CONCAT_WS('', source.`".implode("`, source.`", $search_column)."`)";
                                    }
                                } else {
                                    $search_column = "source.`" . $sourceMeta[1] . "`";
