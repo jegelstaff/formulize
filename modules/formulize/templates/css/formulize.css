@@ -1246,4 +1246,7 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     border-bottom: 1px solid #dddddd; }
 
   #formulize-entry-lock-message {
+    display: none; }
+
+  #formulize-element-edit-link {
     display: none; } }
