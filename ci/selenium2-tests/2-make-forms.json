@@ -181,13 +181,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -235,13 +231,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -289,13 +281,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -339,13 +327,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -425,13 +409,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -543,13 +523,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -608,13 +584,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -658,13 +630,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -712,13 +680,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -773,13 +737,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -827,13 +787,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -881,13 +837,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -935,13 +887,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -989,13 +937,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -1145,13 +1089,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -1392,13 +1332,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -1477,13 +1413,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
@@ -1570,13 +1502,9 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
