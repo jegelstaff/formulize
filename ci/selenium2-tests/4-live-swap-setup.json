@@ -18,13 +18,6 @@
       "url": "http://${test_domain}/index.php"
     },
     {
-      "type": "clickElement",
-      "locator": {
-        "type": "css selector",
-        "value": "p"
-      }
-    },
-    {
       "type": "setElementText",
       "locator": {
         "type": "name",
