@@ -237,7 +237,7 @@ function importCsvSetup(&$importSet, $id_reqs)
 					
 					    $sql = "SELECT * FROM " . $xoopsDB->prefix("formulize") . 
 						" WHERE id_form='" . $parts[0] . "'" .
-					    " AND ele_handle='" . formulize_escape($parts[1]) . "'";
+					    " AND ele_handle='" . formulize_db_escape($parts[1]) . "'";
 									    $form_elementlinkq = q($sql);
 					    if($form_elementlinkq == null)
 					    {
@@ -1126,7 +1126,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 							foreach($fieldValues as $elementHandle=>$fieldValue) {
 								if(!$start) { $updateSQL .= ", "; } // on subsequent fields, add a comma
 								$start = false;
-								$updateSQL .= "`$elementHandle` = '".formulize_escape($fieldValue)."'";
+								$updateSQL .= "`$elementHandle` = '".formulize_db_escape($fieldValue)."'";
 							}
 							$updateSQL .= ", mod_datetime=NOW(), mod_uid=$form_proxyid WHERE entry_id=".intval($this_id_req);
 							
@@ -1143,7 +1143,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 							$element_handler = xoops_getmodulehandler('elements', 'formulize');
 							foreach($fieldValues as $elementHandle=>$fieldValue) {
 									$fields .= ", `".$elementHandle."`";
-									$values .= ", '".formulize_escape($fieldValue) . "'";
+									$values .= ", '".formulize_db_escape($fieldValue) . "'";
 									$elementObject = $element_handler->get($elementHandle);
 									if($elementObject->getVar('ele_desc')=="Primary Key") {
 										$newEntryId = $fieldValue;
@@ -1222,8 +1222,8 @@ function getElementID($id_form, $ele_caption, $ele_value)
 	
 	    $sql = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize_form") .  
 		" WHERE id_form='" . $id_form . "'" .
-		" AND ele_caption='" . formulize_escape(formformCaption($ele_caption)) . "'" .
-		" AND ele_value='" . formulize_escape($myts->htmlSpecialChars($ele_value)) . "'";
+		" AND ele_caption='" . formulize_db_escape(formformCaption($ele_caption)) . "'" .
+		" AND ele_value='" . formulize_db_escape($myts->htmlSpecialChars($ele_value)) . "'";
 	
 	    //echo $sql . "<br>";
 	    $foundResult = "";
@@ -1277,7 +1277,7 @@ function getUserID($stringName)
 	global $xoopsDB, $xoopsUser;
 
     $sql = "SELECT uid FROM " . $xoopsDB->prefix("users") .  
-        " WHERE uname='" . formulize_escape($stringName) . "'";
+        " WHERE uname='" . formulize_db_escape($stringName) . "'";
 
 	$result = $xoopsDB->query($sql);
     if($xoopsDB->getRowsNum($result) > 0)
@@ -1291,7 +1291,7 @@ function getUserID($stringName)
     else // or, if no username match found, get the first matching full name -- added June 29, 2006
     {
 	    $sql = "SELECT uid FROM " . $xoopsDB->prefix("users") .  
-        " WHERE name='" . formulize_escape($stringName) . "'";
+        " WHERE name='" . formulize_db_escape($stringName) . "'";
 
 	    if($result = $xoopsDB->query($sql))
 	    {
