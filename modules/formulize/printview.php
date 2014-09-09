@@ -97,6 +97,9 @@ if(!$formulizeConfig['printviewStylesheets']) {
        border-right: none;
        border-bottom: none;
    }
+   .formulize-element-edit-link {
+       display: none;
+   }
    </style>
 EOF;
 } else {
