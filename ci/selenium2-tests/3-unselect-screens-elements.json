@@ -48,11 +48,19 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "Manage your applications"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
         "value": "Screens"
       }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Application: Tracker"
     },
     {
       "type": "clickElement",
@@ -62,10 +70,21 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "Settings for the Screen: Regular 'Client'"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
         "value": "Options"
+      }
+    },
+    {
+      "type": "setElementNotSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-2']/div/div/select/option[@label='Client Name']"
       }
     },
     {
