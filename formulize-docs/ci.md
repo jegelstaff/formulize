@@ -21,7 +21,7 @@ The credentials for this account need to be used by Travis in order to establish
 
 Julian has signed up for a free account on Travis. In the profile for that account, there is an option to connect it to the Formulize Github repository (since the Travis account knows Julian's GitHub username). When that connection is switched on, Travis listens for commits to Github. 
 
-When there is a commit, Travis reads the **.travis.yml** file in the root of the repository. That file contains the code like this:
+When there is a commit, Travis spins up a Debian Linux server in the cloud, and copies the contents of the GitHub repository to this folder on the server: **/home/travis/build/jegelstaff/formulize/**.  It then reads the **.travis.yml** file in the root of the repository, and proceeds to apply further configuration to the server. That file contains code like this:
     
     env:
       global:
@@ -91,7 +91,7 @@ This records global variables for the username and password, and declares the ph
 
 #### install
 
-This runs a series of commands on the spontaneous cloud server that Travis builds for us.  These commands install and Apache server with PHP, and configure it so the webroot folder is the folder where Travis has copied all the files from our GitHub repository.
+This runs a series of commands on the spontaneous cloud server that Travis builds for us.  These commands install an Apache server with PHP, and configure it so the webroot folder is the folder where Travis has copied all the files from our GitHub repository.
 
 These commands depend on two other files:
 
@@ -102,7 +102,7 @@ For more information on setting up Apache and PHP on Travis, see: [http://docs.t
 
 #### addons
 
-This tells Travis that it should open up a special tunnel with Sauce Labs, so that we can run our Selenium tests there, and point them at the server Travis has built.
+This tells Travis that it should open up a special tunnel with Sauce Labs, so that we can run our Selenium tests there, and point them at the server Travis has built. You can see a diagram of how this works, on the Sauce website here: [https://saucelabs.com/images/docs/sauce-connect/sauce-connect-architecture.jpg](https://saucelabs.com/images/docs/sauce-connect/sauce-connect-architecture.jpg)
 
 #### before_script
 
@@ -145,7 +145,7 @@ The se-interpreter reads this file: **ci/travis/interpreter_config.json**, which
 
 #### Critical points:
 
-* **driverOptions** - this declares the host and port that are used to connect to Selenium on Sauce. These are simply *by convention*; they don't arise from any other part of the configuration.
+* **driverOptions** - this declares the host and port that are used to connect to the Selenium WebDriver on Sauce. These are critical, and are simply the defaults used by Sauce Connect. They do not arise from nor are dependent on any other part of the configuration.
 * **browserOptions** - Sauce Labs supports all kinds of browser and OS combinations.  Here we declare that we're using Firefox, and we also pass in our Sauce Labs username and password, and metadata about the Travis instance that is spawning these tests.
 * **scripts** - this points to the directory where the actual Selenium tests are located.  They are run in alphanumeric order according to their file names.
 
