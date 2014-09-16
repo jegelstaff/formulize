@@ -1574,7 +1574,10 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 								$nameToDisplay = _FORM_ANON_USER;
 							}
 							$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, $col) . "\" target=_blank>" . $nameToDisplay . "</a>";
-						} else {
+						} elseif($col == "entry_id") {
+    						$value = $entryId;
+    					}
+						 else {
 							$value = display($entry, $col);
 						}
 

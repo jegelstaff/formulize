@@ -3137,7 +3137,9 @@ function getHeaders($cols, $colsIsElementHandles = false) {
     global $xoopsDB;
 
     foreach ($cols as $col) {
-        if ($col == "creation_uid") {
+        if($col == "entry_id") {
+            $headers[] = _formulize_ENTRY_ID;
+        }elseif ($col == "creation_uid") {
             $headers[] = _formulize_DE_CALC_CREATOR;
         } elseif ($col == "mod_uid") {
             $headers[] = _formulize_DE_CALC_MODIFIER;
