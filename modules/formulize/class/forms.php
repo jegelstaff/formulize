@@ -36,8 +36,9 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeForm extends XoopsObject {
-function checkFormOwnership($id_form,$form_handle){
 
+    function checkFormOwnership($id_form,$form_handle){
+		
 		global $xoopsDB;
                 //check to see if there are entries in the form which 
                 //do not appear in the entry_owner_groups table. If so, it finds the 
@@ -52,9 +53,11 @@ function checkFormOwnership($id_form,$form_handle){
                                 print "ERROR: failed to write the entry ownership information to the database.<br>";
                         }
                 }
-	return count($missingEntries);
-        }
-	function formulizeForm($id_form="", $includeAllElements=false){
+		
+		return count($missingEntries);
+    }
+    
+    function formulizeForm($id_form="", $includeAllElements=false){
 
 		// validate $id_form
 		global $xoopsDB;
@@ -72,9 +75,10 @@ function checkFormOwnership($id_form,$form_handle){
 			$elementHandles = array();
 			$elementTypes = array();
 			$encryptedElements = array();
+			$elementsWithData = array();
 			$headerlist = array();
 			$defaultform = "";
-            $defaultlist = "";
+			$defaultlist = "";
 		} else {
 			$formq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$id_form");
 			if(!isset($formq[0])) {
@@ -91,9 +95,10 @@ function checkFormOwnership($id_form,$form_handle){
 				$elementHandles = array();
 				$elementTypes = array();
 				$encryptedElements = array();
+				$elementsWithData = array();
 				$headerlist = array();
-			  $defaultform = "";
-			  $defaultlist = "";
+				$defaultform = "";
+				$defaultlist = "";
 				$formq[0]['menutext'] = "";
 				$formq[0]['form_handle'] = "";
 			} else {
@@ -101,6 +106,9 @@ function checkFormOwnership($id_form,$form_handle){
 				$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
 				$elementsq = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle, ele_type, ele_encrypt FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$id_form $displayFilter ORDER BY ele_order ASC");
 				$encryptedElements = array();
+				$elementTypesWithData = array();
+				$element_handler = xoops_getmodulehandler('elements', 'formulize');
+				
 				foreach($elementsq as $row=>$value) {
 					$elements[$value['ele_id']] = $value['ele_id'];
 					$elementCaptions[$value['ele_id']] = $value['ele_caption'];
@@ -109,6 +117,16 @@ function checkFormOwnership($id_form,$form_handle){
 					$elementTypes[$value['ele_id']] = $value['ele_type'];
 					if($value['ele_encrypt']) {
 						$encryptedElements[$value['ele_id']] = $value['ele_handle'];
+					}
+					
+					if(!isset($elementTypesWithData[$value['ele_type']])) {
+						// instantiate element object for this element, and check if it has data
+						$elementObject = $element_handler->get($value['ele_id']);
+						$elementTypesWithData[$value['ele_type']] = $elementObject->hasData ? true : false;
+					}
+					
+					if($elementTypesWithData[$value['ele_type']]) {
+						$elementsWithData[$value['ele_id']] = $value['ele_id'];
 					}
 				}
 				
@@ -173,19 +191,20 @@ function checkFormOwnership($id_form,$form_handle){
 		$this->initVar("elementHandles", XOBJ_DTYPE_ARRAY, serialize($elementHandles));
 		$this->initVar("elementTypes", XOBJ_DTYPE_ARRAY, serialize($elementTypes));
 		$this->initVar("encryptedElements", XOBJ_DTYPE_ARRAY, serialize($encryptedElements));
+		$this->initVar("elementsWithData", XOBJ_DTYPE_ARRAY, serialize($elementsWithData));
 		$this->initVar("views", XOBJ_DTYPE_ARRAY, serialize($views));
 		$this->initVar("viewNames", XOBJ_DTYPE_ARRAY, serialize($viewNames));
 		$this->initVar("viewFrids", XOBJ_DTYPE_ARRAY, serialize($viewFrids));
 		$this->initVar("viewPublished", XOBJ_DTYPE_ARRAY, serialize($viewPublished));
 		$this->initVar("filterSettings", XOBJ_DTYPE_ARRAY, serialize($filterSettings));
-        $this->initVar("headerlist", XOBJ_DTYPE_TXTAREA, $headerlist);
-        $this->initVar("defaultform", XOBJ_DTYPE_INT, $defaultform, true);
-        $this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);
-        $this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
-        $this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
-        $this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
-        $this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_before_save']);
-        $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
+		$this->initVar("headerlist", XOBJ_DTYPE_TXTAREA, $headerlist);
+		$this->initVar("defaultform", XOBJ_DTYPE_INT, $defaultform, true);
+		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);
+		$this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
+		$this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
+		$this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
+		$this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_before_save']);
+		$this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
     }
 
     static function sanitize_handle_name($handle_name) {
