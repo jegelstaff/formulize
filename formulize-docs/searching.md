@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: version_control/searching/
+permalink: searching/
 ---
 
 # Cheat Sheet for searching through your entries
