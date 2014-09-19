@@ -48,21 +48,16 @@ There are a lot of different search terms that you can type in the “quicksearc
 :-------------------------------|:--------------------------------------------------------------|:----------------------------------------------------------------------
  >10//<100 						| find numbers between 11 and 99 								| 11, 12, etc
  >10//<10 						| find entries that are both greater than 10 and less than 10 	| it will find nothing...the search condition is logically impossible
- santa//!monica 				| find entries that contain “santa” and not “monica” 			| Santa Claus <br/> Santa Cruz
+ santa AND !monica 				| find entries that contain “santa” and not “monica” 			| Santa Claus <br/> Santa Cruz
  >=2008-10-01//<=2008-10-31 	| find dates within October 2008 								| 2008-10-01 <br/> 2008-10-15
- red//orange//blue 				| find those three values.  You can have as many terms as you want in a single column. | Searches like this will usually only find matches if the field you're searching accepts multiple selections (ie: checkboxes), and red, orange and blue were three of the options.
+ red AND orange AND blue 		| find those three values.  You can have as many terms as you want in a single column. | Searches like this will usually only find matches if the field you're searching accepts multiple selections (ie: checkboxes), and red, orange and blue were three of the options.
 
 
-## Wildcard terms {TODAY}, {USER} and {BLANK}
+## "OR" searches in a single column
 
- **This search term:**		| **Means this:** 											| **It will find:**
-:---------------------------|:----------------------------------------------------------|:--------------------------------------------------
- {TODAY} 					| find today's date 										| the text of today's date, in YYYY-mm-dd format
- >={TODAY-30} 				| find dates anytime from the past 30 days into the future 	| you get the idea
- >={TODAY+30}//<={TODAY}	| find dates between 30 days ago and today
- >{TODAY+14} 				| Find dates more than 14 days in the future
- {USER} 					| Find entries that match the current user's full name, or if no full name is in their profile, then match on their username
- {BLANK} 					| Find entries that are blank or empty
+ **This search term:** | **Means this:**																		| **It will find:**
+ :---------------------|:---------------------------------------------------------------------------------------|:-------------------
+ banana OR apple	   | find entries that contain banana or apple.  This is equivalent to ORbanana//ORapple.	| bananas <br/> apples <br/> grapples
 
 
 ## "OR" searches on multiple columns
@@ -71,12 +66,18 @@ There are a lot of different search terms that you can type in the “quicksearc
 :----------------------|:----------------
  on the fruit column: <br/> ORapples <br/> and at the same time on the vegetable column: <br/> ORcarrots | Find entries that match either apples in the fruit column, or carrots in the vegetable column (normally, search terms on multiple columns must all be matched)
 
-## "natural language" searches in a single column
 
- **This search term:** | **Means this:**																		| **It will find:**
- :---------------------|:---------------------------------------------------------------------------------------|:-------------------
- banana OR apple	   | find entries that contain banana or apple.  This is equivalent to ORbanana//ORapple.	| bananas <br/> apples <br/> grapples
- red AND orange AND blue | find entries that contain all three values.  Equivalent to red//orange//blue.		| red orange blue
+## Wildcard terms {TODAY}, {USER} and {BLANK}
+
+ **This search term:**		| **Means this:** 											| **It will find:**
+:---------------------------|:----------------------------------------------------------|:--------------------------------------------------
+ {TODAY} 					| find today's date 										| the text of today's date, in YYYY-mm-dd format
+ >={TODAY-30} 				| find dates anytime from the past 30 days into the future 	| you get the idea
+ >={TODAY+30} AND <={TODAY}	| find dates between 30 days ago and today
+ >{TODAY+14} 				| Find dates more than 14 days in the future
+ {USER} 					| Find entries that match the current user's full name, or if no full name is in their profile, then match on their username
+ {BLANK} 					| Find entries that are blank or empty
+
 
 ## Advanced developer-focused search terms
 
