@@ -41,13 +41,13 @@
         <div class="form-item" id="add-button-appearance">
             <p>If the button for adding entries is shown, how should it look?</p><br />
             <div class="form-radios">
-                <label for="elements-ele_value[simple_add_one_button]"><input type="radio" id="elements-ele_value[simple_add_one_button]" name="elements-ele_value[simple_add_one_button]" value="1"<{if $content.ele_value[simple_add_one_button] eq 1}> checked="checked"<{/if}>/><{$smarty.const._formulize_SUBFORM_SIMPLE_BUTTON}></label>
+                <label for="elements-ele_value[simple_add_one_button]"><input type="radio" id="elements-ele_value[simple_add_one_button]" name="elements-ele_value[simple_add_one_button]" value="1"<{if $content.ele_value.simple_add_one_button eq 1}> checked="checked"<{/if}>/><{$smarty.const._formulize_SUBFORM_SIMPLE_BUTTON}></label>
                 <p style="margin-left:2em;"><{$smarty.const._formulize_SUBFORM_SIMPLE_LABEL}><br />
-                &nbsp;&nbsp;&nbsp;<input type="text" name="elements-ele_value[simple_add_one_button_text]" value="<{if $content.ele_value[simple_add_one_button]}><{$content.ele_value[simple_add_one_button]}><{else}>Add One<{/if}>" /></p>
+                &nbsp;&nbsp;&nbsp;<input type="text" name="elements-ele_value[simple_add_one_button_text]" value="<{if $content.ele_value.simple_add_one_button_text}><{$content.ele_value.simple_add_one_button_text}><{else}>Add One<{/if}>" /></p>
             </div>
             <br />
             <div class="form-radios">
-                <label for="elements-ele_value[simple_add_one_button]-no"><input type="radio" id="elements-ele_value[simple_add_one_button]-no" name="elements-ele_value[simple_add_one_button]" value="0"<{if $content.ele_value[simple_add_one_button] eq 0}> checked="checked"<{/if}>/><{$smarty.const._formulize_SUBFORM_MULTIPLE_BUTTON}></label>
+                <label for="elements-ele_value[simple_add_one_button]-no"><input type="radio" id="elements-ele_value[simple_add_one_button]-no" name="elements-ele_value[simple_add_one_button]" value="0"<{if $content.ele_value.simple_add_one_button eq 0}> checked="checked"<{/if}>/><{$smarty.const._formulize_SUBFORM_MULTIPLE_BUTTON}></label>
                 <p style="margin-left:2em;"><{$smarty.const._formulize_SUBFORM_MULTIPLE_LABEL}><br />
                 &nbsp;&nbsp;&nbsp;Add x <input type="text" name="elements-ele_value[9]" value="<{if $content.ele_value[9]}><{$content.ele_value[9]}><{else}><{$smarty.const._formulize_ADD_ENTRIES}><{/if}>" /></p>
             </div>

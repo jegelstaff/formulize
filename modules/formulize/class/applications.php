@@ -410,7 +410,7 @@ class formulizeApplicationsHandler {
         
         //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen
         $linkValues = explode("::",$menuitem);
-        $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". formulize_escape($linkValues[2])."',".$rank.",'".formulize_escape($linkValues[3])."','".formulize_escape($linkValues[1])."');";
+        $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". formulize_db_escape($linkValues[2])."',".$rank.",'".formulize_db_escape($linkValues[3])."','".formulize_db_escape($linkValues[1])."');";
 		if(!$result = $xoopsDB->query($insertsql)) {
 			exit("Error inserting Menu Item. SQL dump:\n" . $insertsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 		}else{
@@ -457,12 +457,12 @@ class formulizeApplicationsHandler {
         global $xoopsDB;       
         //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen 
         $linkValues = explode("::",$menuitems);
-        $updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET screen= '".formulize_escape($linkValues[2])."', url= '".formulize_escape($linkValues[3])."', link_text='".formulize_escape($linkValues[1])."' where menu_id=".formulize_escape($linkValues[0])." AND appid=".$appid.";";
+        $updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET screen= '".formulize_db_escape($linkValues[2])."', url= '".formulize_db_escape($linkValues[3])."', link_text='".formulize_db_escape($linkValues[1])."' where menu_id=".formulize_db_escape($linkValues[0])." AND appid=".$appid.";";
         if(!$result = $xoopsDB->query($updatesql)) {
             exit("Error updating Menu Item. SQL dump:\n" . $updatesql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
         }else{
         	//delete existing permissions for this menu item
-        	$deletepermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=".formulize_escape($linkValues[0]).";";
+        	$deletepermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=".formulize_db_escape($linkValues[0]).";";
        	 	$result = $xoopsDB->query($deletepermissions);
         
        	 	if($linkValues[4] != "null" and count($linkValues[4]) > 0){
@@ -476,7 +476,7 @@ class formulizeApplicationsHandler {
                     if (in_array($groupid, $groupsWithDefaultPage)){
                         $defaultScreen = 1;
                     }
-                    $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".formulize_escape($linkValues[0]).",". $groupid.",".$defaultScreen.")";                     
+                    $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".formulize_db_escape($linkValues[0]).",". $groupid.",".$defaultScreen.")";                     
            	     if(!$result = $xoopsDB->query($permissionsql)) {
            	     	exit("Error updating Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
            	 		}

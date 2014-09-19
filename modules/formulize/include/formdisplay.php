@@ -671,54 +671,16 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 				continue;
 			}
 			
-			// if there is more than one form, then force the setting of the linked element after there has been a form submission
-			// do this after the security check, hence its placement here
-			static $oneToOneLinksMade = false;
-			if(!$oneToOneLinksMade AND count($fids)> 1 AND isset($GLOBALS['formulize_newEntryIds'][$this_fid])) {
-				$frameworkHandler = xoops_getmodulehandler('frameworks', 'formulize');
-				$frameworkObject = $frameworkHandler->get($frid);
-				foreach($frameworkObject->getVar('links') as $thisLink) {
-					if($thisLink->getVar('relationship') == 1) { // 1 signifies one to one relationships
-						$form1 = $thisLink->getVar('form1');
-						$form2 = $thisLink->getVar('form2');
-						$key1 = $thisLink->getVar('key1');
-						$key2 = $thisLink->getVar('key2');
-						$form1EntryId = "";
-						$form2EntryId = "";
-						$entryToWriteToForm1 = $GLOBALS['formulize_newEntryIds'][$form1][0] ? $GLOBALS['formulize_newEntryIds'][$form1][0] : $GLOBALS['formulize_allWrittenEntryIds'][$form1][0];
-						if(!$entryToWriteToForm1) { exit("Error: we could not determine which entry in form $form1 we should use for writing the key value for the relationship."); }
-						$entryToWriteToForm2 = $GLOBALS['formulize_newEntryIds'][$form2][0] ? $GLOBALS['formulize_newEntryIds'][$form2][0] : $GLOBALS['formulize_allWrittenEntryIds'][$form2][0];
-						if(!$entryToWriteToForm2) { exit("Error: we could not determine which entry in form $form2 we should use for writing the key value for the relationship."); }
-						if($thisLink->getVar('common')) {
-							if((!isset($_POST["de_".$form1."_new_".$key1]) OR $_POST["de_".$form1."_new_".$key1] === "") AND (!isset($_POST["de_".$form1."_".$GLOBALS['formulize_allWrittenEntryIds'][$form1][0]."_".$key1]) OR $_POST["de_".$form1."_".$GLOBALS['formulize_allWrittenEntryIds'][$form1][0]."_".$key1] === "")) {
-								// if we don't have a value for this element, then populate it with the value from the other element
-								if($commonValueToWrite = formulize_findCommonValue($form1, $form2, $key1, $key2)) {
-									$form1EntryId = formulize_writeEntry(array($key1=>$commonValueToWrite), $entryToWriteToForm1);
-								} 
-							}
-							if((!isset($_POST["de_".$form2."_new_".$key2]) OR $_POST["de_".$form2."_new_".$key2] === "") AND (!isset($_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2]) OR $_POST["de_".$form2."_".$GLOBALS['formulize_allWrittenEntryIds'][$form2][0]."_".$key2] === "")) {
-								// if we don't have a value for this element, then populate it with the value from the other element
-								if($commonValueToWrite = formulize_findCommonValue($form2, $form1, $key2, $key1)) { // since we're looking for the other form, swap the order of param inputs
-									$form2EntryId = formulize_writeEntry(array($key2=>$commonValueToWrite), $entryToWriteToForm2);
-								}
-							}
-						} elseif($thisLink->getVar('unifiedDisplay')) {
-							// figure out which one is on which side of the linked selectbox
-							$element_handler = xoops_getmodulehandler('elements', 'formulize');
-							$linkedElement1 = $element_handler->get($key1);
-							$linkedElement1EleValue = $linkedElement1->getVar('ele_value');
-							if(strstr($linkedElement1EleValue[2], "#*=:*")) {
-								// element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1
-								$linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form2][0]) ? $GLOBALS['formulize_newEntryIds'][$form2][0] : "";
-								$linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allWrittenEntryIds'][$form2][0])) ? $GLOBALS['formulize_allWrittenEntryIds'][$form2][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
-								$form1EntryId = formulize_writeEntry(array($key1=>$linkedValueToWrite), $entryToWriteToForm1);
-							} else {
-								// element 2 is the linked selectbox, so get the value of entry id for what we just created in form 1 and put it in element 2
-								$linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form1][0]) ? $GLOBALS['formulize_newEntryIds'][$form1][0] : "";
-								$linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allWrittenEntryIds'][$form1][0])) ? $GLOBALS['formulize_allWrittenEntryIds'][$form1][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
-								$form2EntryId = formulize_writeEntry(array($key2=>$linkedValueToWrite), $entryToWriteToForm2);
-							}
-						}
+            // if there is more than one form, try to make the 1-1 links
+            // and if we made any, then include the newly linked up entries
+            // in the index of entries that we're keeping track of
+            if(count($fids) > 1) {
+                list($form1s, $form2s, $form1EntryIds, $form2EntryIds) = formulize_makeOneToOneLinks($frid, $this_fid);
+                foreach($form1EntryIds as $i=>$form1EntryId) {
+                    // $form1EntryId set above, now set other values for this iteration based on the key
+                    $form2EntryId = $form2EntryIds[$i];
+                    $form1 = $form1s[$i];
+                    $form2 = $form2s[$i];
 						if($form1EntryId) {
 							$entries[$form1][0] = $form1EntryId;
 						}
@@ -727,8 +689,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 						}
 					} 
 				}
-				$oneToOneLinksMade = true;
-			}
 			
 				unset($prevEntry);
             // if there is an entry, then get the data for that entry
@@ -923,6 +883,9 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 				$form->addElement (new XoopsFormHidden ('sub_submitted', $entries[$fid][0]));
 				$form->addElement (new XoopsFormHidden ('go_back_form', $go_back['form']));
 				$form->addElement (new XoopsFormHidden ('go_back_entry', $go_back['entry']));
+			} else {
+				// drawing a main form...put in the scroll position flag
+				$form->addElement (new XoopsFormHidden ('yposition', 0));
 			}
 			
 			// saving message
@@ -1419,6 +1382,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					$criteria = new CriteriaCompo();
 					$criteria->add(new Criteria('ele_type', 'text'), 'OR');
 					$criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
+					$criteria->add(new Criteria('ele_type', 'radio'), 'OR');
 					$elementsForDefaults = $element_handler->getObjects($criteria,$_POST['target_sub']); // get all the text or textarea elements in the form 
 				}
 				foreach($elementsForDefaults as $thisDefaultEle) {
@@ -1432,6 +1396,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						case "textarea":
 							$defaultTextToWrite = getTextboxDefault($ele_value_for_default[0], $_POST['target_sub'], $subEntWritten); // position 0 is default value for text boxes
 							break;
+						case "radio":
+						    $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
+							$defaultTextToWrite = array_search(1, $thisDefaultEleValue);
 					}
 					if($defaultTextToWrite) {
 						writeElementValue($_POST['target_sub'], $thisDefaultEle->getVar('ele_id'), $subEntWritten, $defaultTextToWrite);
@@ -1802,7 +1769,15 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     $to_return['single'] = $col_one . $col_two;
 
     if (is_object($subform_element_object)) {
-        $to_return['single'] = "<div class=\"formulize-subform-".$subform_element_object->getVar("ele_handle")."\">$col_one $col_two</div>";
+        global $xoopsUser;
+        $show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
+        $edit_link = "";
+        if ($show_element_edit_link) {
+            $edit_link = "<a class=\"formulize-element-edit-link\" href=\"" . XOOPS_URL .
+                "/modules/formulize/admin/ui.php?page=element&aid=0&ele_id=" .
+                $subform_element_object->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
+        }
+        $to_return['single'] = "<div class=\"formulize-subform-".$subform_element_object->getVar("ele_handle")."\">$edit_link $col_one $col_two</div>";
     }
 
     return $to_return;
@@ -1879,26 +1854,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 	
 	global $xoopsDB, $xoopsUser;
 
-	// find hidden elements first...
-	$notAllowedCriteria = new CriteriaCompo();
-	$notAllowedCriteria->add(new Criteria('ele_forcehidden', 1));
-	$criteria = new CriteriaCompo();
-	$criteria->add(new Criteria('ele_display', 0), 'OR');
-	$criteria2 = new CriteriaCompo();
-	foreach($groups as $thisgroup) {
-		$criteria2->add(new Criteria('ele_display', '%,'.$thisgroup.',%', 'NOT LIKE'), 'AND');
-	}
-	$criteria->add($criteria2, 'OR');
-	$notAllowedCriteria->add($criteria, 'AND');
-	$notAllowedCriteria->setSort('ele_order');
-	$notAllowedCriteria->setOrder('ASC');
-	$notAllowedElements =& $formulize_mgr->getObjects($notAllowedCriteria,$fid);
-
-	$hiddenElements = generateHiddenElements($notAllowedElements, $entryForDEElements); // in functions.php, keys in returned array will be the element ids
-
-	//} // if(!$entry) is now broken out locally, since for plain textboxes, we are allowing special hidden values when there is an entry.  This feature will likely evolve.
-	unset($criteria);
-	unset($ele_value);
+    $elementsAvailableToUser = array();
 
 	// set criteria for matching on display
 	// set the basics that everything has to match
@@ -1950,19 +1906,6 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			$this_ele_id = $i->getVar('ele_id'); // get the element ID number
 		}
 	
-	/*
-	 // old code that is superseded by the new element_order_array stuff above
-	 foreach( $elements as $i ){
-
-		$this_ele_id = $i->getVar('ele_id');
-
-		if(is_array($elements_allowed)) {
-			if(!in_array($this_ele_id, $elements_allowed)) {
-				continue;
-			}
-		}
-  */
-	
 		// check if we're at the start of a page, when doing a printable view of all pages (only situation when printViewPageTitles and printViewPages will be present), and if we are, then put in a break for the page titles
 		if($printViewPages) {
 			if(!$currentPrintViewPage) {
@@ -1998,17 +1941,6 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			// assumption is there will only be one parent link for this form
 			for($z=0;$z<count($parentLinks['source']);$z++) {					
 				if($this_ele_id == $parentLinks['self'][$z]) { // this is the element
-					// get the caption of the parent's field
-					/*$pcq = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='" . $go_back['form'] . "' AND ele_id='" . $parentLinks['source'][$z] . "'");				
-					$parentCap = str_replace ("'", "`", $pcq[0]['ele_caption']);
-					$parentCap = str_replace ("&quot;", "`", $parentCap);
-					$parentCap = str_replace ("&#039;", "`", $parentCap);
-					$pvq = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form='" . $go_back['form'] . "' AND id_req='" . $go_back['entry'] . "' AND ele_caption='$parentCap'");
-					$pid = $pvq[0]['ele_id'];
-
-					// NOTE: assuming that there will only be one value in the match, ie: the link field is not a multiple select box!
-					// format of value should be $formid#*=:*$formcaption#*=:*$ele_id
-					$ele_value[2] = $go_back['form'] . "#*=:*" . $parentCap . "#*=:*" . $pid; */
 					$ele_value[2] = $go_back['entry']; // 3.0 datastructure...needs to be tested!! -- now updated for 5.0
 				}
 			}
@@ -2056,6 +1988,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 				$form_ele = $deReturnValue;
 				$isDisabled = false;
 			}
+            $elementsAvailableToUser[$this_ele_id] = true;
 			if(($form_ele == "not_allowed" OR $form_ele == "hidden")) {
 				if(isset($GLOBALS['formulize_renderedElementHasConditions']["de_".$fid."_".$entryForDEElements."_".$this_ele_id])) {
 					// need to add a tr container for elements that are not allowed, since if it was a condition that caused them to not show up, they might appear later on asynchronously, and we'll need the row to attach them to
@@ -2080,6 +2013,8 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 						unset($conditionalValidationRenderer);
 					}
 					$form->addElement($rowHTML);
+                    // since it was treated as a conditional element, and the user might interact with it, then we don't consider it a not-available-to-user element
+                    unset($elementsAvailableToUser[$this_ele_id]);
 				}
 				continue;
 			}
@@ -2148,6 +2083,19 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 
 	formulize_benchmark("Done looping elements.");
 
+    // find any hidden elements in the form, that aren't available to the user in this rendering of the form...	
+	unset($criteria);
+	$notAllowedCriteria = new CriteriaCompo();
+	$notAllowedCriteria->add(new Criteria('ele_forcehidden', 1));
+    foreach($elementsAvailableToUser as $availElementId=>$boolean) {
+        $notAllowedCriteria->add(new Criteria('ele_id', $availElementId, '!='));
+    }
+	$notAllowedCriteria->setSort('ele_order');
+	$notAllowedCriteria->setOrder('ASC');
+	$notAllowedElements =& $formulize_mgr->getObjects($notAllowedCriteria,$fid);
+
+	$hiddenElements = generateHiddenElements($notAllowedElements, $entryForDEElements); // in functions.php, keys in returned array will be the element ids
+  
 	foreach($hiddenElements as $element_id=>$thisHiddenElement) {
 		$form->addElement(new xoopsFormHidden("decue_".$fid."_".$entryForDEElements."_".$element_id, 1));
 		if(is_array($thisHiddenElement)) { // could happen for checkboxes
@@ -2160,13 +2108,20 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 		unset($thisHiddenElement); // some odd reference thing going on here...$thisHiddenElement is being added by reference or something like that, so that when $thisHiddenElement changes in the next run through, every previous element that was created by adding it is updated to point to the next element.  So if you unset at the end of the loop, it forces each element to be added as you would expect.
 	}
 
-	if($entry AND !is_a($form, 'formulize_elementsOnlyForm')) { 
+    
+	if($entry AND !is_a($form, 'formulize_elementsOnlyForm')) {
+        // two hidden fields encode the main entry id, the first difficult-to-use format is a legacy thing
+        // the 'lastentry' format is more sensible, but is only available when there was a real entry, not 'new' (also a legacy convention)
 		$form->addElement (new XoopsFormHidden ('entry'.$fid, $entry));
+        if(is_numeric($entry)) {
+            $form->addElement (new XoopsFormHidden ('lastentry', $entry));
+        }
 	}
 	if($_POST['parent_form']) { // if we just came back from a parent form, then if they click save, we DO NOT want an override condition, even though we are now technically editing an entry that was previously saved when we went to the subform in the first place.  So the override logic looks for this hidden value as an exception.
 		$form->addElement (new XoopsFormHidden ('back_from_sub', 1));
 	}
 	
+    
 	// add a hidden element to carry all the validation javascript that might be associated with elements rendered with elementdisplay.php...only relevant for elements rendered inside subforms or grids...the validation code comes straight from the element, doesn't have a check around it for the conditional table row id, like the custom form classes at the top of the file use, since those elements won't render as hidden and show/hide in the same way
 	if(isset($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']])) {
 		$formulizeHiddenValidation = new XoopsFormHidden('validation', '');
@@ -2609,7 +2564,15 @@ window.onbeforeunload = function (e) {
     }
 };
 
-<?php print $codeToIncludejQueryWhenNecessary; ?>
+<?php
+print $codeToIncludejQueryWhenNecessary;
+if(intval($_POST['yposition'])>0) {
+		print "\njQuery(window).load(function () {\n";
+		print "\tjQuery(window).scrollTop(".intval($_POST['yposition']).");\n";
+		print "});\n";
+}
+?>
+
 
 function showPop(url) {
 
@@ -2661,6 +2624,7 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 		if(jQuery('.formulize-form-submit-button')) {
 			jQuery('.formulize-form-submit-button').attr('disabled', 'disabled');
 		}
+		jQuery('#yposition').val(jQuery(window).scrollTop());
         if (formulizechanged) {
             window.document.getElementById('formulizeform').style.opacity = 0.5;
             window.document.getElementById('savingmessage').style.display = 'block';

@@ -204,6 +204,7 @@ if($_GET['ele_id'] != "new") {
     case "subform":
       $ele_value[2] = 1;
       $ele_value[3] = 1;
+	  $ele_value['simple_add_one_button'] = 1;
       break;
     case "grid":
       $ele_value[3] = "horizontal";
@@ -294,22 +295,16 @@ if($ele_type=='text') {
   $options['listofelementsoptions'] = $listOfElements->render();
 
   //new relationship dropdown
-  $formObjects = $form_handler->getFormsByApplication($aid);
   $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-  $allRelationships = array();
-  foreach ($formObjects as $thisForm) {
-    // returns array of objects
-    $allRelationships = array_merge($allRelationships, $framework_handler->getFrameworksByForm($thisForm->getVar('id_form')));
-  }
+  $allRelationships = $framework_handler->getFrameworksByForm($fid);
   $relationships = array();
   $relationshipIndex = array();
   $relationships[""] = "this form only, no relationship.";
-  $i = 1;
   foreach ($allRelationships as $thisRelationship) {
     $frid = $thisRelationship->getVar('frid');
-    if(isset($relationshipIndex[$frid])) { continue; }
-    $relationships[$i] = $thisRelationship->getVar('name');
-    $relationshipIndex[$frid] = true;
+    if(!isset($relationships[$frid])) {
+        $relationships[$frid] = $thisRelationship->getVar('name');
+    }
   }
   $listOfRelationships = new XoopsFormSelect("", 'listofrelationshipoptions');
   $listOfRelationships->addOptionArray($relationships);
@@ -453,7 +448,7 @@ if($ele_type=='text') {
     $options['exportValue'] = "";
     $options['listValue'] = "";
     $options['optionSortOrder'] = "";
-    $options['optionDefaultSelectionDefaults'] = "";
+    $options['optionDefaultSelectionDefaults'] = array();
     $options['optionDefaultSelection'] = "";
   }
 
@@ -514,7 +509,7 @@ if($ele_type!='colorpick') {
 $adminPage['tabs'][++$tabindex]['name'] = _AM_ELE_DISPLAYSETTINGS;
 $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_display.html";
 $adminPage['tabs'][$tabindex]['content'] = $display + $common;
-$formScreenHandler = new formulizeFormScreenHandler();
+$formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
 $adminPage['tabs'][$tabindex]['content']['form_screens'] = $formScreenHandler->getScreensForElement($common['fid']);
 $adminPage['tabs'][$tabindex]['content']['multi_form_screens'] = $formScreenHandler->getMultiScreens($common['fid']);
 // for new elements, pre-select all of the "filled up" screens
@@ -616,16 +611,22 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
 
 // THIS FUNCTION TAKES THE VALUES USED IN THE DB, PLUS THE UITEXT FOR THOSE VALUES, AND CONSTRUCTS AN ARRAY SUITABLE FOR USE WHEN EDITING ELEMENTS, SO THE UITEXT IS VISIBLE INLINE WITH THE VALUES, SEPARATED BY A PIPE (|)
 function formulize_mergeUIText($values, $uitext) {
-  if(strstr($values, "#*=:*")) { return $values; } // don't alter linked selectbox properties
-	$newvalues = array();
-	foreach($values as $key=>$value) {
-		if(isset($uitext[$key])) {
-			$newvalues[$key . "|" . $uitext[$key]] = $value;
-		} else {
-			$newvalues[$key] = $value;
-		}
-	}
-	return $newvalues;
+    if (is_string($values) and strstr($values, "#*=:*")) {
+        // don't alter linked selectbox properties
+        return $values;
+    }
+    if (is_array($value)) {
+        $newvalues = array();
+        foreach($values as $key=>$value) {
+            if(isset($uitext[$key])) {
+                $newvalues[$key . "|" . $uitext[$key]] = $value;
+            } else {
+                $newvalues[$key] = $value;
+            }
+        }
+        return $newvalues;
+    }
+    return $values;
 }
 
 function has_index($element,$id_form) {

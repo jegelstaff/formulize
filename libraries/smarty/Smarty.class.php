@@ -1837,7 +1837,10 @@ class Smarty
                 return @unlink($resource);
             }
         } else {
-            return @unlink($resource);
+            if (file_exists($resource)) {
+                return @unlink($resource);
+            }
+            return true;
         }
     }
 

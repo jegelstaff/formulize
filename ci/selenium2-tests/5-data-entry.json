@@ -1,0 +1,463 @@
+{
+  "type": "script",
+  "seleniumVersion": "2",
+  "formatVersion": 2,
+  "steps": [
+    {
+      "type": "store",
+      "text": "localhost",
+      "variable": "test_domain"
+    },
+    {
+      "type": "store",
+      "text": "password",
+      "variable": "admin_password"
+    },
+    {
+      "type": "get",
+      "url": "http://${test_domain}/index.php"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "p"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "uname"
+      },
+      "text": "admin"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "pass"
+      },
+      "text": "${admin_password}"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input[type=\"submit\"]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "p > a"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "formulize_addButton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "You can make a new entry by filling in the form below"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-client_name input[type=text]"
+      },
+      "text": "Blue Sea Ocean Science"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-client_city input[type=text]"
+      },
+      "text": "Vancouver"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "submitx"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "donebutton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Entries in "
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "formulize_addButton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "You can make a new entry by filling in the form below"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-client_name input[type=text]"
+      },
+      "text": "Humans For Humanity"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-client_city input[type=text]"
+      },
+      "text": "Toronto"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "submitx"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "donebutton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Entries in "
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Project"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "formulize_addButton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "You can make a new entry by filling in the form below"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-project_name input"
+      },
+      "text": "Octopus Survey"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-project_client input"
+      }
+    },
+    {
+      "type": "sendKeysToElement",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-project_client input"
+      },
+      "text": "Blue Sea Ocean Science"
+    },
+    {
+      "type": "waitForElementPresent",
+      "locator": {
+        "type": "css selector",
+        "value": ".quickselect_results ul"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "li.quickselect_selected"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//td[contains(@class, \"formulize-input-project_status\")]/input[2]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "submitx"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "donebutton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Entries in "
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "People"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "formulize_addButton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "You can make a new entry by filling in the form below"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-people_name input"
+      },
+      "text": "Julian"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-people_email input"
+      },
+      "text": "julian@example.com"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "submitx"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Your information has been saved"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "donebutton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Entries in "
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "formulize_addButton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "You can make a new entry by filling in the form below"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-people_name input"
+      },
+      "text": "Daniel"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-people_email input"
+      },
+      "text": "daniel@example.com"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "submitx"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Your information has been saved"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "donebutton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Entries in "
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Stories"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "formulize_addButton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "You can make a new entry by filling in the form below"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-stories_story textarea"
+      },
+      "text": "As marine biologists, we want a data-entry form so that we can record octopus details."
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//td[contains(@class, \"formulize-input-stories_status\")]/input[3]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//td[contains(@class, \"formulize-input-stories_points\")]/input[7]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-stories_project input"
+      }
+    },
+    {
+      "type": "sendKeysToElement",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-stories_project input"
+      },
+      "text": "Octopus Survey"
+    },
+    {
+      "type": "waitForElementPresent",
+      "locator": {
+        "type": "css selector",
+        "value": ".quickselect_results ul"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "li.quickselect_selected"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "3234"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-stories_assigned_to input[type=text].formulize_autocomplete"
+      }
+    },
+    {
+      "type": "sendKeysToElement",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-stories_assigned_to input[type=text].formulize_autocomplete"
+      },
+      "text": "Daniel"
+    },
+    {
+      "type": "waitForElementPresent",
+      "locator": {
+        "type": "css selector",
+        "value": ".quickselect_results ul"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "li.quickselect_selected"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1543"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "submitx"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Your information has been saved"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "donebutton"
+      }
+    }
+  ],
+  "data": {
+    "configs": {},
+    "source": "none"
+  },
+  "inputs": [],
+  "timeoutSeconds": 60
+}

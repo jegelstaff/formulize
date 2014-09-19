@@ -8,3 +8,4 @@ trust_*/
 uploads/profile/
 *.bak
 *.db
+formulize-docs/_site

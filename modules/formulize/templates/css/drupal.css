@@ -7,7 +7,6 @@
   src: url("./formulize-icons/formulize-icons.eot?#iefix") format("embedded-opentype"), url("./formulize-icons/formulize-icons.woff") format("woff"), url("./formulize-icons/formulize-icons.ttf") format("truetype"), url("./formulize-icons/formulize-icons.svg#formulize-icons") format("svg");
   font-weight: normal;
   font-style: normal; }
-
 [data-icon]:before {
   content: attr(data-icon); }
 
