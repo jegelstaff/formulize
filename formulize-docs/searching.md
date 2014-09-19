@@ -65,12 +65,18 @@ There are a lot of different search terms that you can type in the “quicksearc
  {BLANK} 					| Find entries that are blank or empty
 
 
-## “OR” searches on multiple columns
+## "OR" searches on multiple columns
 
  **This search term:** | **Means this:**
 :----------------------|:----------------
  on the fruit column: <br/> ORapples <br/> and at the same time on the vegetable column: <br/> ORcarrots | Find entries that match either apples in the fruit column, or carrots in the vegetable column (normally, search terms on multiple columns must all be matched)
 
+## "natural language" searches in a single column
+
+ **This search term:** | **Means this:**																		| **It will find:**
+ :---------------------|:---------------------------------------------------------------------------------------|:-------------------
+ banana OR apple	   | find entries that contain banana or apple.  This is equivalent to ORbanana//ORapple.	| bananas <br/> apples <br/> grapples
+ red AND orange AND blue | find entries that contain all three values.  Equivalent to red//orange//blue.		| red orange blue
 
 ## Advanced developer-focused search terms
 
