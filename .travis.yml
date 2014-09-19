@@ -5,8 +5,6 @@ env:
   - secure: H5basCAhwXO3SicUX3VClC9KgLzoeJ1unMeYgP6+HHFxSv+81W5AJG8i8xmbziWC+dsO1c2POFbvS2BRkjhPqh9Me94g0FInBoUlVHiP0TlbSBsRv7K5Ke5fm8LHz5Obkeq2BrE6O76m6m2M301MTwZj43LVw8cPtPbXybQ0MoI=
   phpenv:
   - version-name: "5.5.10"
-  mysql:
-  - blank: ""
 
 language: php
 
@@ -17,4 +15,5 @@ php:
 script:
   - echo ${GITHUB_TOKEN}
   - se-interpreter ci/travis/interpreter_config.json
-  - mysqldump -u root -p ${blank} formulize > ci/formulize_test_db.sql
+  - mysql -e 'create database formulize;'
+  - mysqldump --user=root --password= formulize > ci/formulize_test_db.sql
