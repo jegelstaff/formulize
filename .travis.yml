@@ -2,6 +2,7 @@ env:
   global:
   - secure: f1Dkf/AObhtZJf/OtM/NREIZRzVeuw/QXQkV82WrbszKdpLrm1RwfwTAgcUa+JDiE931LJ41W86JWUia3PbS3pLVSL9gSwfBPk+PU6VM7AeYIVuje1V1tXpZoGlf+0RcfGHZA3JzeNSo65QjKl5iUxrT31wnpQpQ9rdG/bXQrUg=
   - secure: Xjc2qZs42LLIk4lRMc/JdFxeN5pmXUTLFd/stohOTX3g1rmRInXXqYpnXW/S15FjShqgtQAvvmnU/SV9QNpfaMhQVgS1ORVTS10gvy3aLPodW5hB9AGCDiQHXD0r9p+73LfNzenvdtmDme9Pp8PdLwb+spSroRbXgJ3tqHpXntM=
+  - secure: H5basCAhwXO3SicUX3VClC9KgLzoeJ1unMeYgP6+HHFxSv+81W5AJG8i8xmbziWC+dsO1c2POFbvS2BRkjhPqh9Me94g0FInBoUlVHiP0TlbSBsRv7K5Ke5fm8LHz5Obkeq2BrE6O76m6m2M301MTwZj43LVw8cPtPbXybQ0MoI=
   phpenv:
   - version-name: "5.5.10"
 
@@ -54,3 +55,7 @@ script:
   - curl http://localhost/index.php
 
 after_script:
+  - mysqldump --user=root --password= formulize > ci/formulize_test_db.sql
+  - git add ci/formulize_test_db.sql
+  - git commit -m "updating test db [skip ci]"
+  - git push https://${GITHUB_TOKEN}@github.com/jegelstaff/formulize.git

@@ -4386,7 +4386,32 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		}
 
 		// split search based on new split string
-		$searchArray = explode("//", $master_one_search);
+		$intermediateArray = explode("//", $master_one_search);
+
+		$searchArray = array();
+
+		foreach($intermediateArray as $one_search) {
+			// if $one_search contains both OR and AND, just add it as-is; we don't support this kind of nesting
+			if (strpos($one_search, " OR ") !== FALSE AND strpos($one_search, " AND ") !== FALSE) {
+				$searchArray[] = $one_search;
+			}
+			// split on OR and add all split results, prepended with OR
+			else if (strpos($one_search, " OR ") !== FALSE) {
+				foreach(explode(" OR ", $one_search) as $or_term) {
+						$searchArray[] = "OR" . $or_term;
+				}
+			}
+			// split on AND and add all split results
+			else if (strpos($one_search, " AND ") !== FALSE) {
+				foreach(explode(" AND ", $one_search) as $and_term) {
+					$searchArray[] = $and_term;
+				}
+			}
+			// otherwise just add to the array
+			else {
+				$searchArray[] = $one_search;
+			}
+		}
 
 		foreach($searchArray as $one_search) {
             // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
