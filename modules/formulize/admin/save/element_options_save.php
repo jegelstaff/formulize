@@ -122,8 +122,6 @@ if($ele_type == "select") {
   if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
     // select box is not currently linked and user is requesting to link
     if (!$element->isLinked){
-      // TODO: Add Javascript warning to confirm that the user is alright
-      // with potential loss of data from conversion
       $form_handler->updateField($element, $element->getVar("ele_handle"), "bigint(20)");
     }
 
