@@ -19,7 +19,7 @@
         }
       ],
       "scripts": [
-        "ci/selenium2-tests/1-install-formulize.json"
+        "ci/selenium2-tests/*"
       ]
     }
   ]
