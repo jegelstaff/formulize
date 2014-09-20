@@ -1489,16 +1489,20 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			} else {
 				$headersToDraw[] = $thisHeaderResult['ele_colhead'] ? $thisHeaderResult['ele_colhead'] : $thisHeaderResult['ele_caption'];
 			}
-		}		
+		}
 	} else {
 		$subHeaderList = getHeaderList($subform_id);
 		$subHeaderList1 = getHeaderList($subform_id, true);
-		$headersToDraw[] = trans($subHeaderList[0]);
-		$headersToDraw[] = trans($subHeaderList[1]);
-		$headersToDraw[] = trans($subHeaderList[2]);
-		$elementsToDraw[] = $subHeaderList1[0];
-		$elementsToDraw[] = $subHeaderList1[1];
-		$elementsToDraw[] = $subHeaderList1[2];
+		if (isset($subHeaderList[0])) {
+			$headersToDraw[] = trans($subHeaderList[0]);
+		}
+		if (isset($subHeaderList[1])) {
+			$headersToDraw[] = trans($subHeaderList[1]);
+		}
+		if (isset($subHeaderList[2])) {
+			$headersToDraw[] = trans($subHeaderList[2]);
+		}
+		$elementsToDraw = array_slice($subHeaderList1, 0, 3);
 	}
 
 	$need_delete = 0;
