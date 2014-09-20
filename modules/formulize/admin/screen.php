@@ -98,7 +98,6 @@ if ($res) {
   }
 }
 $settings['links'] = $links;
-
 // prepare data for sub-page
 if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // display data
@@ -183,6 +182,7 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $elementOptionsFid = array();
   $listTemplateHelp = array();
   $class = "odd";
+  
   foreach($allFids as $thisFid) {
       unset($thisFidObj);
       if($form_id == $thisFid) {
@@ -191,11 +191,12 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
           $thisFidObj = $form_handler->get($thisFid, true); // true causes all elements to be included, even if they're not visible
       }
       $allFidObjs[$thisFid] = $thisFidObj; // for use later on
-      $thisFidElements = $thisFidObj->getVar('elements');
+      $thisFidElements = $thisFidObj->getVar('elementsWithData');
       $thisFidCaptions = $thisFidObj->getVar('elementCaptions');
       $thisFidColheads = $thisFidObj->getVar('elementColheads');
-			$thisFidHandles = $thisFidObj->getVar('elementHandles');
-			foreach($thisFidElements as $i=>$thisFidElement) {
+      $thisFidHandles = $thisFidObj->getVar('elementHandles');
+      
+      foreach($thisFidElements as $i=>$thisFidElement) {
       //for($i=0;$i<count($thisFidElements);$i++) {
           $elementHeading = $thisFidColheads[$i] ? $thisFidColheads[$i] : $thisFidCaptions[$i];
           $elementOptions[$thisFidHandles[$i]] = printSmart(trans(strip_tags($elementHeading)), 75);
@@ -296,23 +297,23 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
     $allFormOptions[$thisFormObject->getVar('id_form')] = printSmart($thisFormObject->getVar('title'));
   }
 
-	// setup all the elements in this form for use in the listboxes
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
-	$options = multiPageScreen_addToOptionsList($form_id, array());
+  // setup all the elements in this form for use in the listboxes
+  include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
+  $options = getElementCaptions($form_id);
 
-	// add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
-	// added March 20 2008, by jwe
-	$frid = $screen->getVar("frid");
-	if($frid) {
-			$framework_handler =& xoops_getModuleHandler('frameworks');
-			$frameworkObject = $framework_handler->get($frid);
-			foreach($frameworkObject->getVar("links") as $thisLinkObject) {
-					if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
-							$thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-							$options = multiPageScreen_addToOptionsList($thisFid, $options);
-					}
-			}
-	}
+  // add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
+  // added March 20 2008, by jwe
+  $frid = $screen->getVar("frid");
+  if($frid) {
+    $framework_handler =& xoops_getModuleHandler('frameworks');
+    $frameworkObject = $framework_handler->get($frid);
+    foreach($frameworkObject->getVar("links") as $thisLinkObject) {
+        if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
+            $thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
+            $options = getElementCaptions($thisFid, $options);
+        }
+    }
+  }
 
     // get page titles
     $pageTitles = $screen->getVar("pagetitles");
@@ -358,18 +359,8 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
 }
 
 if($screen_id != "new" && $settings['type'] == 'form') {
-  if (!function_exists("multiPageScreen_addToOptionsList")) {
-    function multiPageScreen_addToOptionsList($form_id, $options) {
-        $formObject = new formulizeForm($form_id, true); // true causes all elements, even ones now shown to any user, to be included
-        $elements = $formObject->getVar('elements');
-        $elementCaptions = $formObject->getVar('elementCaptions');
-        foreach($elementCaptions as $key=>$elementCaption) {
-          $options[$elements[$key]] = printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption
-        }
-        return $options;
-    }
-  }
-  $element_list = multiPageScreen_addToOptionsList($form_id, array());
+  $element_list = getElementCaptions($form_id);
+  echo "<script>alert('Test screen')</script>";
   $frid = $screen->getVar("frid");
   if($frid) {
       $framework_handler =& xoops_getModuleHandler('frameworks');
@@ -377,7 +368,7 @@ if($screen_id != "new" && $settings['type'] == 'form') {
       foreach($frameworkObject->getVar("links") as $thisLinkObject) {
           if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
               $thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-              $element_list = multiPageScreen_addToOptionsList($thisFid, $element_list);
+              $element_list = getElementCaptions($thisFid, $element_list);
           }
       }
   }

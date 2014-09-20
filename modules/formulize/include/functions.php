@@ -2025,6 +2025,18 @@ function getElementValue($entry, $element_id, $fid) {
     }
 }
 
+// This function returns an array with  the 'captions' or titles of all the elements of the given form.
+function getElementCaptions($form_id, $arrayOfCaptions = array()) {
+    
+    $formObject = new formulizeForm($form_id, true);
+    $elementIds = $formObject->getVar('elements');
+    $elementCaptionsIds = $formObject->getVar('elementCaptions');
+    
+    foreach($elementIds as $key) {
+        $arrayOfCaptions[$key] = printSmart(trans(strip_tags($elementCaptionsIds[$key])));
+    }
+    return $arrayOfCaptions;
+}
 
 // this function checks for singleentry status and returns the appropriate entry in the form if there is one
 function getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid) {

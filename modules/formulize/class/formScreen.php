@@ -153,16 +153,6 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
             $settings, $displayheading, "", $overrideMulti, "", 0, 0, 0, $screen);
 	}
 
-	function _getElementsForScreen($fid, $options) {
-	    $formObject = new formulizeForm($fid, true); // true causes all elements, even ones now shown to any user, to be included
-	    $elements = $formObject->getVar('elements');
-	    $elementCaptions = $formObject->getVar('elementCaptions');
-	    foreach($elementCaptions as $key=>$elementCaption) {
-	      $options[$elements[$key]] = printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption
-	    }
-	    return $options;
-	}
-
 	public function getSelectedElementsForScreen($sid) {
 		$screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
     	$screen = $screen_handler->get($sid);

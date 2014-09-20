@@ -84,7 +84,7 @@ $xoopsTpl->display("db:admin/relationship_common_values.html");
 // THIS FUNCTION CREATES THE ARRAY OF ELEMENTS FOR USE IN THE LISTBOXES
 function generateElementList($form) {
 	$element_handler =& xoops_getmodulehandler('elements', 'formulize');
-	foreach($form->getVar('elements') as $element) {
+	foreach($form->getVar('elementsWithData') as $element) {
 		$ele = $element_handler->get($element);
 		if($ele->getVar('ele_type') != "ib" AND $ele->getVar('ele_type') != "areamodif" AND $ele->getVar('ele_type') != "subform"){
 			$saveoptions[$ele->getVar('ele_id')] = $ele->getVar('ele_colhead') ? $ele->getVar('ele_colhead') : $ele->getVar('ele_caption');
