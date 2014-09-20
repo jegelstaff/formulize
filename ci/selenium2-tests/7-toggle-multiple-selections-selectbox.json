@@ -5,7 +5,7 @@
   "steps": [
     {
       "type": "get",
-      "url": "http://localhost:8888/index.php"
+      "url": "http://localhost/index.php"
     },
     {
       "type": "setElementText",
