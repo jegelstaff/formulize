@@ -57,7 +57,7 @@ script:
   - curl http://localhost/index.php
 
 after_script:
-  - mysqldump -u root formulize > ci/formulize_test_db.sql
+  - mysqldump -u travis formulize > ci/formulize_test_db.sql
   - cat "ci/formulize_test_db.sql"
   - git add ci/formulize_test_db.sql
   - git commit -m "updating test db [skip ci]"
