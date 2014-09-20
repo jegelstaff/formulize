@@ -66,10 +66,10 @@ after_script:
   # Comment or remove all the following lines, to NOT update the GitHub repo with the final
   # state of the database after all tests have run.
   - mysqldump -u travis formulize > ci/formulize_test_db.sql
-  - git config user.email "julian@freeform.ca"
-  - git config user.name "Julian Egelstaff"
+  - git config user.email "formulize@travis.ci"
+  - git config user.name "Travis CI"
   - git config push.default simple
   - git add ci/formulize_test_db.sql
   - git commit -m "Travis updating test DB [skip ci]"
-  - git push https://${GITHUB_TOKEN}@github.com/jegelstaff/formulize.git HEAD:${TRAVIS_BRANCH}
+  - git push https://${GITHUB_TOKEN}@github.com/jegelstaff/formulize.git HEAD:${TRAVIS_BRANCH} > /dev/null
   
