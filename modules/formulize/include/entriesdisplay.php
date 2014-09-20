@@ -621,6 +621,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$settings[$temp_key] = $v;
 		}
 	}
+
+	// get the submitted global search text
+	$settings['global_search'] = $_POST['global_search'];
   
 	// get all requested calculations...assign to settings array.
 	$settings['calc_cols'] = $_POST['calc_cols'];	
@@ -987,6 +990,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$screenButtonText['deleteViewButton'] = _formulize_DE_DELETE;
 	$screenButtonText['currentViewList'] = _formulize_DE_CURRENT_VIEW;
 	$screenButtonText['saveButton'] = _formulize_SAVE;
+	$screenButtonText['globalQuickSearch'] = _formulize_GLOBAL_SEARCH;
 	$screenButtonText['addButton'] = $singleMulti[0]['singleentry'] == "" ? _formulize_DE_ADDENTRY : _formulize_DE_UPDATEENTRY;
 	$screenButtonText['addMultiButton'] = _formulize_DE_ADD_MULTIPLE_ENTRY;
 	$screenButtonText['addProxyButton'] = _formulize_DE_PROXYENTRY;
@@ -4253,6 +4257,9 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 			case "goButton":
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=deSubmitButton value='" . $buttonText . "' onclick=\"javascript:showLoading();\"></input>";
 				break;
+			case "globalQuickSearch":
+				return "<input type=text id=\"formulize_$button\" name=\"global_search\" placeholder='" . $buttonText . "' value='" . $settings['global_search'] . "' onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>";
+				break;
 		}
 	} elseif($button == "currentViewList") { // must always set a currentview value in POST even if the list is not visible
 		return "<input type=hidden name=currentview value='$currentview'></input>\n";
@@ -4295,6 +4302,17 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		$flatscope = serialize($scope);
 	} else {
 		$flatscope = $scope;
+	}
+
+	$showcols = explode(",", $settings['oldcols']);
+	if ($settings['global_search']) {
+		foreach($showcols as $column) {
+			if ($searches[$column]) {
+				$searches[$column] .= "//OR" . $settings['global_search'];
+			} else {
+				$searches[$column] = "OR" . $settings['global_search'];
+			}
+		}
 	}
 
 				 
