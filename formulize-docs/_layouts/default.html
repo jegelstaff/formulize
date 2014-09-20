@@ -30,6 +30,44 @@
 
         <hr>
 
+        <script type='text/javascript'>
+            
+            // Thanks to Donald Sutherland for this function
+            // http://mynameisdonald.com/javascript-functions-how-to-capitalize-words/
+            function eachWord(str){
+               return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1);});
+            }
+            
+            var path = new String(window.document.location);
+            var pathParts = new Array();
+            var crumbPath = '';
+            var homePath = '';
+            var crumbSep = ' >> ';
+            var startCrumbsNextTime = false;
+            var crumbsStarted;
+            pathParts = path.split('/');
+            for(i in pathParts) {
+                crumbPath = crumbPath + pathParts[i] + '/';
+                if(!startCrumbsNextTime || pathParts[i] == '') {
+                    if(pathParts[i] == 'formulize') {
+                        startCrumbsNextTime = true;
+                        homePath = crumbPath;
+                    }
+                    continue;
+                } else if(!crumbsStarted) {
+                    crumbsStarted = true;
+                    window.document.write('<a href="'+homePath+'">Home</a>\n');
+                }
+                pathParts[i] = pathParts[i].replace('_', ' ');
+                pathParts[i] = eachWord(pathParts[i]);
+                window.document.write(crumbSep+'<a href="'+crumbPath+'">'+pathParts[i]+'</a>\n');
+            }
+            if(crumbsStarted) {
+                window.document.write('<hr>');
+            }
+            
+        </script>
+        
         <section id="main_content">
           
           {{ content }}

@@ -1,11 +1,11 @@
 ---
 layout: default
-permalink: selenium_builder/
+permalink: developers/version_control/testing/selenium_builder/
 ---
 
 # Creating Selenium 2 Tests with Selenium Builder
 
-We use run Selenium 2 tests on [Sauce Labs](http://www.saucelabs.com) as part of our [continuous integration platform](/formulize/ci).  This page describes how to use [Selenium Builder](http://www.saucelabs.com/builder) to create tests in [Firefox](http://www.mozilla.org/firefox).
+We use run Selenium 2 tests on [Sauce Labs](http://www.saucelabs.com) as part of our [continuous integration platform](../../../ci).  This page describes how to use [Selenium Builder](http://www.saucelabs.com/builder) to create tests in [Firefox](http://www.mozilla.org/firefox).
 
 ## Current Tests
 
@@ -13,15 +13,26 @@ Current tests start with a blank slate, and install Formulize, then set up a dem
 
 ## Creating A New Test
 
-Before creating a new test, it would be best to run the existing tests to create a demo site, so that the new test works with the existing ones.
+### Setup
 
-A test can be recorded in Firefox using the Selenium Builder plugin. Taking a database backup before making changes to forms is advised. After recording the test, the database can be restored, then the test can be played back to confirm that it works.
+Before creating a new test, you need to get your location installation into the same condition as the Travis CI system is in after it runs all the tests. This way, your new test will build on the setup and configuration of all the other tests. There are two ways you can do this:
+
+1. Run all the existing tests locally
+2. Dump all the tables in your database and then import a SQL dump from a system where all the tests have been completed.
+
+If you follow method 2, then you will need to alter the file in your trust path so it has the database table prefix  **selenium** and has the salt **s4RyHEWYxWN9OUAGvCdxljYRqqSgEf9qbsvVSvhWSumtfyI7SNx6ct1n5fypNFdi4**.
+
+### Recording
+
+A test can be recorded in Firefox using the Selenium Builder plugin. Taking a database backup before making changes to forms is advised, so that after recording the test, the database can be restored, and the test can be played back to confirm that it works.
 
 Choose the Selenium 2 version of the test file format. The scripts are text files containing json data which is easy to edit with a regular text editor.
 
 A drawback to the json format is that comments cannot be included in the file, as this breaks json-parsing.
 
 ## General Tips
+
+All tests should start with logging in to the website.  When Selenium starts a test, it clears all session information so the new test starts from scratch.
 
 Avoid unnecessary clicks on page elements, and if you do make unnecessary clicks, these steps can be deleted from the test script while still recording.
 

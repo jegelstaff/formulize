@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: building/
+permalink: developers/building/
 ---
 
 # Building Formulize for Release

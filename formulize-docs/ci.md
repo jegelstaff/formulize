@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: ci/
+permalink: developers/ci/
 ---
 
 # Continuous Integration
@@ -9,7 +9,7 @@ We use [Travis](https://travis-ci.org/jegelstaff/formulize/builds) and [Sauce La
 
 If all the tests pass successfully, then this lets us know that the current build of Formulize has not broken any features that are used in the recorded Selenium tests. In addition, Sauce Labs records videos of the tests running in the browser so that you can see exactly what happens when a test fails.
 
-[Learn more about creating tests](/formulize/selenium_builder).
+[Learn more about creating tests](../version_control/testing/selenium_builder).
 
 ## Sauce Labs Setup
 

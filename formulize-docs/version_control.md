@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: version_control/
+permalink: developers/version_control/
 ---
 
 # Version Control
