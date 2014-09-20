@@ -973,7 +973,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 			      $prevFieldNotMeta = false;
 			      // setup handles to use for metadata fields
 			      if($curFormAlias == "main") {
-				      if($field == "main_creation_uid" OR $field == "main_mod_uid" OR $field == "main_creation_datetime" OR $field == "main_mod_datetime" OR $field == "entry_id") {
+				      if($field == "main_creation_uid" OR $field == "main_mod_uid" OR $field == "main_creation_datetime" OR $field == "main_mod_datetime" OR $field == "main_entry_id") {
 					      $elementHandle = $fieldNameParts[1] . "_" . $fieldNameParts[2];
 				      } 
 			      } else {

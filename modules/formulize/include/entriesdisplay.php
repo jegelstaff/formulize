@@ -4395,7 +4395,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
             // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
             $addToItsOwnORFilter = false;
 
-            if ("creation_uid" == $key) {
+            if ("creation_uid" == $key OR "entry_id" == $key) {
                 $ele_type = "text";
             } else {
                 $elementObject = $element_handler->get($key);

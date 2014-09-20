@@ -1310,7 +1310,6 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
         $id = $ids[0];
         $id_req[] = $id;
         
-        $c_entry_id = $id;
         $c_uid = display($entry, 'creation_uid');
         $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
         $c_name = $c_name_q[0]['name'];
