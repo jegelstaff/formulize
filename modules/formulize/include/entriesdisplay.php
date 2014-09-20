@@ -468,9 +468,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	
 	// convert framework handles to element handles if necessary
 	$showcols = dealWithDeprecatedFrameworkHandles($showcols, $frid);	
-
 	$showcols = removeNotAllowedCols($fid, $frid, $showcols, $groups); // converts old format metadata fields to new ones too if necessary
-
 		
 	// Create settings array to pass to form page or to other functions
 
@@ -1574,10 +1572,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 								$nameToDisplay = _FORM_ANON_USER;
 							}
 							$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, $col) . "\" target=_blank>" . $nameToDisplay . "</a>";
-						} elseif($col == "entry_id") {
-    						$value = $entryId;
-    					}
-						 else {
+						} else {
 							$value = display($entry, $col);
 						}
 
@@ -1615,7 +1610,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 								}
 							}
 							$GLOBALS['formulize_displayElement_LOE_Used'] = true;
-						} elseif($col != "creation_uid" AND $col!= "mod_uid") {
+						} elseif($col != "creation_uid" AND $col!= "mod_uid" AND $col != "entry_id") {
 							print getHTMLForList($value, $col, $linkids[0], 0, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
 						} else { // no special formatting on the uid columns:
 							print $value;
@@ -2704,7 +2699,7 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
   if($handle=="creation_date" OR $handle == "mod_date" OR $handle == "creation_datetime" OR $handle == "mod_datetime" OR $handle == "creator_email") {
     return $value;    
   }
-  if($handle == "uid" OR $handle=="proxyid" OR $handle == "creation_uid" OR $handle == "mod_uid") {
+  if($handle == "uid" OR $handle=="proxyid" OR $handle == "creation_uid" OR $handle == "mod_uid" OR $handle == "entry_id") {
     $member_handler = xoops_gethandler('member');
     $userObject = $member_handler->getUser(display($entry, $handle));
     $nameToDisplay = $userObject->getVar('name') ? $userObject->getVar('name') : $userObject->getVar('uname');
@@ -2943,11 +2938,11 @@ $output
 	formulize_benchmark("after creating file");
 }
 
-// this function converts a UID to a full name, or user name, if the handle is creation_uid or mod_uid
+// this function converts a UID to a full name, or user name, if the handle is creation_uid, mod_uid or entry_id
 // also converts blanks to [blank]
 function convertUids($value, $handle) {
 	if(!is_numeric($value) AND $value == "") { $value = "[blank]"; }
-	if($handle != "creation_uid" AND $handle != "mod_uid") { return $value; }
+	if($handle != "creation_uid" AND $handle != "mod_uid" AND $handle != "entry_id") { return $value; }
 	global $xoopsDB;
 	$name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$value'");
 	$name = $name_q[0]['name'];
@@ -2972,7 +2967,7 @@ function evalAdvSearch($entry, $handle, $op, $term) {
 	$result = 0;
 	$term = str_replace("\'", "'", $term); // seems that apostrophes are the only things that arrive at this point still escaped.
 	$values = display($entry, $handle);
-	if($handle == "creation_uid" OR $handle=="mod_uid") {
+	if($handle == "creation_uid" OR $handle=="mod_uid" OR $handle == "entry_id") {
 		$values = convertUids($values, $handle);
 	} 
 	if ($term == "{USER}") {
@@ -3892,12 +3887,17 @@ function removeNotAllowedCols($fid, $frid, $cols, $groups) {
 	
 	$all_allowed_cols = array();
 	$allowed_cols_in_view = array();
+	
 	// metadata columns always allowed!
-	$all_allowed_cols[] = "creation_uid";
-	$all_allowed_cols[] = "mod_uid";
-	$all_allowed_cols[] = "creation_datetime";
-	$all_allowed_cols[] = "mod_datetime";
-	$all_allowed_cols[] = "creator_email";
+    $dataHandler = new formulizeDataHandler(false);
+    $metadataFields = $dataHandler->metadataFields;
+
+    foreach ($metadataFields as $field) 
+    {
+    	$lcField = strtolower($field);
+    	$all_allowed_cols[] = $lcField;
+    }
+
 	$all_allowed_cols_raw = getAllColList($fid, $frid, $groups);
 	foreach($all_allowed_cols_raw as $form_id=>$values) {
 		foreach($values as $id=>$value) {

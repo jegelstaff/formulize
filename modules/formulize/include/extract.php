@@ -87,7 +87,7 @@ function prepvalues($value, $field, $entry_id) {
   global $xoopsDB;
 
   // return metadata values without putting them in an array
-  if($field == "creation_uid" OR $field == "mod_uid" OR $field == "creation_datetime" OR $field == "mod_datetime" OR $field=="email" OR $field=="user_viewemail") {
+  if(isMetaDataField($field)) {
      return $value;
   }
 
@@ -948,44 +948,42 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    
 		    foreach($masterQueryArray as $field=>$value) {
 			 if($field == "entry_id" OR $field == "creation_uid" OR $field == "mod_uid" OR $field == "creation_datetime" OR $field == "mod_datetime" OR $field == "main_email" OR $field == "main_user_viewemail") { continue; } // ignore those plain fields, since we can only work with the ones that are properly aliased to their respective tables.  More details....Must refer to metadata fields by aliases only!  since * is included in SQL syntax, fetch_assoc will return plain column names from all forms with the values from those columns.....Also want to ignore the email fields, since the fact they're prefixed with "main" can throwoff the calculation of which entry we're currently writing
-			 if(strstr($field, "creation_uid") OR strstr($field, "creation_datetime") OR strstr($field, "mod_uid") OR strstr($field, "mod_datetime")) {
+			 if(strstr($field, "creation_uid") OR strstr($field, "creation_datetime") OR strstr($field, "mod_uid") OR strstr($field, "mod_datetime") OR strstr($field, "entry_id")) {
 			      // dealing with a new metadata field
 			      $fieldNameParts = explode("_", $field);
 			      // We account for a mainform entry appearing multiple times in the list, because when there are multiple entries in a subform, and SQL returns one row per subform,  we need to not change the main form and internal record until we pass to a new mainform entry
 			      if($prevFieldNotMeta) { // only do once for each form
-				   $curFormId = $fieldNameParts[0] == "main" ? $fid : $linkformids[substr($fieldNameParts[0], 1)]; // the table aliases are based on the keys of the linked forms in the linkformids array, so if we get the number out of the table alias, that key will give us the form id of the linked form as stored in the linkformids array
-				   $prevFormAlias = $curFormAlias;
-				   $curFormAlias = $fieldNameParts[0];
-				   if($prevFormAlias == "main") { // if we just finished up a main form entry, then log that
-					$writtenMains[$prevMainId] = true;
-				   }
-				   //print "curFormAlias: $curFormAlias<br>prevMainId: $prevMainId<br>current main id: ". $masterQueryArray['main_entry_id'] . "<br><br>";
-				   if($curFormAlias == "main" AND $prevMainId != $masterQueryArray['main_entry_id']) {
-					if($writtenMains[$masterQueryArray['main_entry_id']]) {
-					     $masterIndexer = $masterQueryArrayIndex[$masterQueryArray['main_entry_id']]; // use the master index value for this main entry id if we've already logged it
-					} else {
-					     $masterIndexer = count($masterResults); // use the next available number for the master indexer
-					     $masterQueryArrayIndex[$masterQueryArray['main_entry_id']] = $masterIndexer; // log it so we can reuse it for this entry when it comes up in another query
-					}
-					$prevMainId = $masterQueryArray['main_entry_id']; // if the current form is a main, then store it's ID for use later when we're on a new form
-				   }
+    				   $curFormId = $fieldNameParts[0] == "main" ? $fid : $linkformids[substr($fieldNameParts[0], 1)]; // the table aliases are based on the keys of the linked forms in the linkformids array, so if we get the number out of the table alias, that key will give us the form id of the linked form as stored in the linkformids array
+    				   $prevFormAlias = $curFormAlias;
+    				   $curFormAlias = $fieldNameParts[0];
+    				   if($prevFormAlias == "main") { // if we just finished up a main form entry, then log that
+      					$writtenMains[$prevMainId] = true;
+    				   }
+    				   //print "curFormAlias: $curFormAlias<br>prevMainId: $prevMainId<br>current main id: ". $masterQueryArray['main_entry_id'] . "<br><br>";
+    				   if($curFormAlias == "main" AND $prevMainId != $masterQueryArray['main_entry_id']) {
+        					if($writtenMains[$masterQueryArray['main_entry_id']]) {
+        					     $masterIndexer = $masterQueryArrayIndex[$masterQueryArray['main_entry_id']]; // use the master index value for this main entry id if we've already logged it
+        					} else {
+        					     $masterIndexer = count($masterResults); // use the next available number for the master indexer
+        					     $masterQueryArrayIndex[$masterQueryArray['main_entry_id']] = $masterIndexer; // log it so we can reuse it for this entry when it comes up in another query
+        					}
+    					   $prevMainId = $masterQueryArray['main_entry_id']; // if the current form is a main, then store it's ID for use later when we're on a new form
+    				   }
 			      }  
 			      $prevFieldNotMeta = false;
 			      // setup handles to use for metadata fields
 			      if($curFormAlias == "main") {
-				   if($field == "main_creation_uid" OR $field == "main_mod_uid" OR $field == "main_creation_datetime" OR $field == "main_mod_datetime") {
-					$elementHandle = $fieldNameParts[1] . "_" . $fieldNameParts[2];
-				   } else {
-					continue; // do not include main_entry_id as a value in the array...though it should not be in here anyway now that we're checking with strstr for metadata field names above
-				   }
+				      if($field == "main_creation_uid" OR $field == "main_mod_uid" OR $field == "main_creation_datetime" OR $field == "main_mod_datetime" OR $field == "entry_id") {
+					      $elementHandle = $fieldNameParts[1] . "_" . $fieldNameParts[2];
+				      } 
 			      } else {
-				   continue; // do not include metadata from the linked forms, or anything else (such as email, etc)
+				      continue; // do not include metadata from the linked forms, or anything else (such as email, etc)
 			      }
-			 } elseif(!strstr($field, "main_email") AND !strstr($field, "main_user_viewemail") AND !strstr($field, "entry_id")) {
+			 } elseif(!strstr($field, "main_email") AND !strstr($field, "main_user_viewemail")) {
 			      // dealing with a regular element field
 			      $prevFieldNotMeta = true;
 			      $elementHandle = $field;
-			 } else { // it's an e-mail related or entry_id field
+			 } else { // it's some other field...
 			      continue;
 			 }               
 			 // Check to see if this is a main entry that has already been catalogued, and if so, then skip it
@@ -997,7 +995,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 			 $valueArray = prepvalues($value, $elementHandle, $masterQueryArray[$curFormAlias . "_entry_id"]); // note...metadata fields must not be in an array for compatibility with the 'display' function...not all values returned will actually be arrays, but if there are multiple values in a cell, then those will be arrays
 			 formulize_benchmark("done preping value");
 			 $masterResults[$masterIndexer][getFormTitle($curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][$elementHandle] = $valueArray;
-			 if($elementHandle == "creation_uid" OR $elementHandle == "mod_uid" OR $elementHandle == "creation_datetime" OR $elementHandle == "mod_datetime") {
+			 if($elementHandle == "creation_uid" OR $elementHandle == "mod_uid" OR $elementHandle == "creation_datetime" OR $elementHandle == "mod_datetime" OR $elementHandle == "entry_id") {
 			      // add in the creator_email when we have done the creation_uid
 			      if($elementHandle == "creation_uid") {
 				   if(!isset($is_webmaster)) {
@@ -1063,7 +1061,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       foreach($masterQueryArray as $field=>$value) {
 		    //formulize_benchmark("Starting to process one value");
 		    if($field == "entry_id" OR $field == "creation_uid" OR $field == "mod_uid" OR $field == "creation_datetime" OR $field == "mod_datetime" OR $field == "main_email" OR $field == "main_user_viewemail") { continue; } // ignore those plain fields, since we can only work with the ones that are properly aliased to their respective tables.  More details....Must refer to metadata fields by aliases only!  since * is included in SQL syntax, fetch_assoc will return plain column names from all forms with the values from those columns.....Also want to ignore the email fields, since the fact they're prefixed with "main" can throwoff the calculation of which entry we're currently writing
-		    if(strstr($field, "creation_uid") OR strstr($field, "creation_datetime") OR strstr($field, "mod_uid") OR strstr($field, "mod_datetime")) {
+		    if(strstr($field, "creation_uid") OR strstr($field, "creation_datetime") OR strstr($field, "mod_uid") OR strstr($field, "mod_datetime") OR strstr($field, "entry_id")) {
 			 //formulize_benchmark("Starting to process metadata");
 			 // dealing with a new metadata field
 			 $fieldNameParts = explode("_", $field);
@@ -1095,7 +1093,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 			 $prevFieldNotMeta = false;
 			 // setup handles to use for metadata fields
 			 if($curFormAlias == "main") {
-			      if($field == "main_creation_uid" OR $field == "main_mod_uid" OR $field == "main_creation_datetime" OR $field == "main_mod_datetime") {
+			      if($field == "main_creation_uid" OR $field == "main_mod_uid" OR $field == "main_creation_datetime" OR $field == "main_mod_datetime" OR $field == "main_entry_id") {
 				   $elementHandle = $fieldNameParts[1] . "_" . $fieldNameParts[2];
 			      } else {
 				   continue; // do not include main_entry_id as a value in the array...though it should not be in here anyway now that we're checking with strstr for metadata field names above
@@ -1103,12 +1101,12 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 			 } else {
 			      continue; // do not include metadata from the linked forms, or anything else (such as email, etc)
 			 }
-		    } elseif(!strstr($field, "main_email") AND !strstr($field, "main_user_viewemail") AND !strstr($field, "entry_id")) {
+		    } elseif(!strstr($field, "main_email") AND !strstr($field, "main_user_viewemail")) {
 										     // dealing with a regular element field
 			 $prevFieldNotMeta = true;
 			 $elementHandle = $field;
-		    } else { // it's an e-mail related or entry_id field
-			 continue;
+		    } else { // it's some other field
+        			 continue;
 		    }               
 		    // Check to see if this is a main entry that has already been catalogued, and if so, then skip it
 		    if($curFormAlias == "main" AND isset($writtenMains[$masterQueryArray['main_entry_id']])) {
@@ -1120,7 +1118,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    $valueArray = prepvalues($value, $elementHandle, $masterQueryArray[$curFormAlias . "_entry_id"]); // note...metadata fields must not be in an array for compatibility with the 'display' function...not all values returned will actually be arrays, but if there are multiple values in a cell, then those will be arrays
 		    formulize_benchmark("done preping value");
 		    $masterResults[$masterIndexer][getFormTitle($curFormId)][$masterQueryArray[$curFormAlias . "_entry_id"]][$elementHandle] = $valueArray;
-		    if($elementHandle == "creation_uid" OR $elementHandle == "mod_uid" OR $elementHandle == "creation_datetime" OR $elementHandle == "mod_datetime") {
+		    if($elementHandle == "creation_uid" OR $elementHandle == "mod_uid" OR $elementHandle == "creation_datetime" OR $elementHandle == "mod_datetime" OR $elementHandle == "entry_id") {
 			 // add in the creator_email when we have done the creation_uid
 			 if($elementHandle == "creation_uid") {
 			      if(!isset($is_webmaster)) {
@@ -2042,8 +2040,7 @@ function display($entry, $handle, $id="NULL", $localid="NULL") {
 					$GLOBALS['formulize_mostRecentLocalId'][] = $lid;
 				}
 			} else { // the handle is for metadata, all other fields will be arrays in the dataset
-		    $GLOBALS['formulize_mostRecentLocalId'] = $lid;
-				return $elements[$handle];
+        return $elements[$handle];  
 			}
 		}
 	}
