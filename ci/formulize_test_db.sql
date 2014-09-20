@@ -429,7 +429,7 @@ CREATE TABLE `selenium_formulize` (
   PRIMARY KEY (`ele_id`),
   KEY `ele_display` (`ele_display`(255)),
   KEY `ele_order` (`ele_order`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=20 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -438,6 +438,7 @@ CREATE TABLE `selenium_formulize` (
 
 LOCK TABLES `selenium_formulize` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize` DISABLE KEYS */;
+INSERT INTO `selenium_formulize` VALUES (1,1,'text','Client Name','','','client_name',2,0,0,'a:10:{i:0;s:2:\"30\";i:1;s:3:\"255\";i:2;s:0:\"\";i:11;s:1:\"0\";i:3;s:1:\"0\";i:5;s:1:\"0\";i:6;s:0:\"\";i:10;s:0:\"\";i:7;s:1:\".\";i:8;s:1:\",\";}','','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(1,2,'text','City','','','client_city',4,0,0,'a:10:{i:0;s:2:\"30\";i:1;s:3:\"255\";i:2;s:0:\"\";i:11;s:1:\"0\";i:3;s:1:\"0\";i:5;s:1:\"0\";i:6;s:0:\"\";i:10;s:0:\"\";i:7;s:1:\".\";i:8;s:1:\",\";}','','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(2,3,'text','Project Name','','','project_name',2,0,0,'a:10:{i:0;s:2:\"30\";i:1;s:3:\"255\";i:2;s:0:\"\";i:11;s:1:\"0\";i:3;s:1:\"0\";i:5;s:1:\"0\";i:6;s:0:\"\";i:10;s:0:\"\";i:7;s:1:\".\";i:8;s:1:\",\";}','','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(2,4,'select','Client','','','project_client',4,0,0,'a:13:{i:0;i:1;i:16;s:1:\"1\";i:4;s:1:\"0\";i:6;s:1:\"0\";i:7;s:1:\"0\";i:9;s:1:\"0\";i:15;s:1:\"1\";i:14;s:1:\"0\";i:2;s:17:\"1#*=:*client_name\";i:8;i:1;i:1;i:0;i:3;s:3:\"all\";i:5;s:0:\"\";}','','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(2,5,'radio','Project Status','','','project_status',6,0,0,'a:3:{s:7:\"Pending\";i:1;s:6:\"Active\";i:0;s:8:\"Complete\";i:0;}','a:0:{}','br','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(2,6,'date','Start Date','','','project_start_date',8,0,0,'a:1:{i:0;s:7:\"{TODAY}\";}','','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(2,7,'date','Launch Date','','','project_launch_date',10,0,0,'a:1:{i:0;s:0:\"\";}','','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(3,8,'text','Name','','','people_name',2,0,0,'a:10:{i:0;s:2:\"30\";i:1;s:3:\"255\";i:2;s:0:\"\";i:11;s:1:\"0\";i:3;s:1:\"0\";i:5;s:1:\"0\";i:6;s:0:\"\";i:10;s:0:\"\";i:7;s:1:\".\";i:8;s:1:\",\";}','','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(3,9,'text','Email','','','people_email',4,0,0,'a:10:{i:0;s:2:\"30\";i:1;s:3:\"255\";i:2;s:0:\"\";i:11;s:1:\"0\";i:3;s:1:\"0\";i:5;s:1:\"0\";i:6;s:0:\"\";i:10;s:0:\"\";i:7;s:1:\".\";i:8;s:1:\",\";}','','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(4,10,'textarea','Story','','','stories_story',3,0,0,'a:3:{i:1;s:1:\"5\";i:2;s:2:\"35\";i:0;s:0:\"\";}','','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(4,11,'radio','Status','','','stories_status',4,0,0,'a:7:{s:7:\"Backlog\";i:1;s:7:\"Pending\";i:0;s:7:\"On Deck\";i:0;s:11:\"In Progress\";i:0;s:7:\"Blocked\";i:0;s:10:\"For Review\";i:0;s:8:\"Complete\";i:0;}','a:0:{}','br','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(4,12,'radio','Points','','','stories_points',6,0,0,'a:10:{s:1:\"-\";i:1;i:0;i:0;s:3:\"0.5\";i:0;i:1;i:0;i:2;i:0;i:3;i:0;i:5;i:0;i:8;i:0;i:13;i:0;i:20;i:0;}','a:0:{}','br','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(4,13,'select','Project','','','stories_project',8,0,0,'a:13:{i:0;i:1;i:16;s:1:\"1\";i:4;s:1:\"0\";i:6;s:1:\"0\";i:7;s:1:\"0\";i:9;s:1:\"0\";i:15;s:1:\"1\";i:14;s:1:\"0\";i:2;s:18:\"2#*=:*project_name\";i:8;i:1;i:1;i:0;i:3;s:3:\"all\";i:5;s:0:\"\";}','','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(4,14,'select','Assigned To','','','stories_assigned_to',10,0,0,'a:13:{i:0;i:1;i:16;s:1:\"1\";i:4;s:1:\"0\";i:6;s:1:\"0\";i:7;s:1:\"0\";i:9;s:1:\"0\";i:15;s:1:\"1\";i:14;s:1:\"0\";i:2;s:17:\"3#*=:*people_name\";i:8;i:1;i:1;i:0;i:3;s:3:\"all\";i:5;s:0:\"\";}','','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(4,15,'text','Story ID','','','stories_id',1,0,0,'a:10:{i:0;s:2:\"30\";i:1;s:3:\"255\";i:2;s:4:\"{ID}\";i:11;s:1:\"0\";i:3;s:1:\"1\";i:5;s:1:\"0\";i:6;s:0:\"\";i:10;s:0:\"\";i:7;s:1:\".\";i:8;s:1:\",\";}','','','0','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',1,0,0),(5,16,'text','StoryID','','','storypeople_story_id',2,0,0,'a:10:{i:0;s:2:\"30\";i:1;s:3:\"255\";i:2;s:0:\"\";i:11;s:1:\"0\";i:3;s:1:\"0\";i:5;s:1:\"0\";i:6;s:0:\"\";i:10;s:0:\"\";i:7;s:1:\".\";i:8;s:1:\",\";}','','','0','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',1,0,0),(5,17,'select','Person','','','storypeople_person',4,0,0,'a:13:{i:0;i:1;i:16;s:1:\"1\";i:4;s:1:\"0\";i:6;s:1:\"0\";i:7;s:1:\"0\";i:9;s:1:\"0\";i:15;s:1:\"1\";i:14;s:1:\"0\";i:2;s:17:\"3#*=:*people_name\";i:8;i:1;i:1;i:0;i:3;s:3:\"all\";i:5;s:0:\"\";}','','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(4,18,'subform','People','','','stories_people',12,0,0,'a:13:{i:0;s:1:\"5\";i:8;s:4:\"form\";i:6;s:6:\"parent\";s:21:\"simple_add_one_button\";s:1:\"1\";s:26:\"simple_add_one_button_text\";s:10:\"Add Person\";i:9;s:7:\"entries\";i:4;s:1:\"0\";i:2;s:1:\"1\";i:3;s:1:\"1\";s:14:\"display_screen\";s:1:\"9\";i:5;s:1:\"0\";i:1;N;i:7;s:0:\"\";}','','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0),(4,19,'select','SelectBoxTest','','','19',13,0,0,'a:13:{i:0;i:1;i:16;s:1:\"0\";i:4;s:1:\"0\";i:6;s:1:\"0\";i:7;s:1:\"0\";i:9;s:1:\"0\";i:15;s:1:\"1\";i:14;s:1:\"0\";i:2;s:17:\"3#*=:*people_name\";i:8;i:0;i:1;i:0;i:3;s:3:\"all\";i:5;s:0:\"\";}','a:0:{}','','1','0','a:4:{i:0;N;i:1;N;i:2;N;i:3;N;}',0,0,0);
 /*!40000 ALTER TABLE `selenium_formulize` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -487,7 +488,7 @@ CREATE TABLE `selenium_formulize_application_form_link` (
   PRIMARY KEY (`linkid`),
   KEY `i_fid` (`fid`),
   KEY `i_appid` (`appid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -496,6 +497,7 @@ CREATE TABLE `selenium_formulize_application_form_link` (
 
 LOCK TABLES `selenium_formulize_application_form_link` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_application_form_link` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_application_form_link` VALUES (1,1,1),(2,1,2),(3,1,3),(4,1,4),(5,1,5);
 /*!40000 ALTER TABLE `selenium_formulize_application_form_link` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -511,7 +513,7 @@ CREATE TABLE `selenium_formulize_applications` (
   `name` varchar(255) NOT NULL DEFAULT '',
   `description` text NOT NULL,
   PRIMARY KEY (`appid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -520,7 +522,38 @@ CREATE TABLE `selenium_formulize_applications` (
 
 LOCK TABLES `selenium_formulize_applications` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_applications` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_applications` VALUES (1,'Tracker','');
 /*!40000 ALTER TABLE `selenium_formulize_applications` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `selenium_formulize_client`
+--
+
+DROP TABLE IF EXISTS `selenium_formulize_client`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `selenium_formulize_client` (
+  `entry_id` int(7) unsigned NOT NULL AUTO_INCREMENT,
+  `creation_datetime` datetime DEFAULT NULL,
+  `mod_datetime` datetime DEFAULT NULL,
+  `creation_uid` int(7) DEFAULT '0',
+  `mod_uid` int(7) DEFAULT '0',
+  `client_name` text,
+  `client_city` text,
+  PRIMARY KEY (`entry_id`),
+  KEY `i_creation_uid` (`creation_uid`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `selenium_formulize_client`
+--
+
+LOCK TABLES `selenium_formulize_client` WRITE;
+/*!40000 ALTER TABLE `selenium_formulize_client` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_client` VALUES (1,'2014-09-20 21:27:17','2014-09-20 21:27:17',1,1,'Blue Sea Ocean Science','Vancouver'),(2,'2014-09-20 21:27:25','2014-09-20 21:27:25',1,1,'Humans For Humanity','Toronto');
+/*!40000 ALTER TABLE `selenium_formulize_client` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -567,7 +600,7 @@ CREATE TABLE `selenium_formulize_entry_owner_groups` (
   KEY `i_fid` (`fid`),
   KEY `i_entry_id` (`entry_id`),
   KEY `i_groupid` (`groupid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -576,6 +609,7 @@ CREATE TABLE `selenium_formulize_entry_owner_groups` (
 
 LOCK TABLES `selenium_formulize_entry_owner_groups` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_entry_owner_groups` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_entry_owner_groups` VALUES (1,1,1,1),(2,1,1,2),(3,1,2,1),(4,1,2,2),(5,2,1,1),(6,2,1,2),(7,3,1,1),(8,3,1,2),(9,3,2,1),(10,3,2,2),(11,4,1,1),(12,4,1,2);
 /*!40000 ALTER TABLE `selenium_formulize_entry_owner_groups` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -598,7 +632,7 @@ CREATE TABLE `selenium_formulize_framework_links` (
   `fl_unified_delete` smallint(5) DEFAULT NULL,
   `fl_common_value` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`fl_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -607,6 +641,7 @@ CREATE TABLE `selenium_formulize_framework_links` (
 
 LOCK TABLES `selenium_formulize_framework_links` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_framework_links` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_framework_links` VALUES (1,1,4,5,15,16,2,1,0,1),(2,1,5,3,17,8,1,1,0,0);
 /*!40000 ALTER TABLE `selenium_formulize_framework_links` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -621,7 +656,7 @@ CREATE TABLE `selenium_formulize_frameworks` (
   `frame_id` smallint(5) NOT NULL AUTO_INCREMENT,
   `frame_name` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`frame_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -630,6 +665,7 @@ CREATE TABLE `selenium_formulize_frameworks` (
 
 LOCK TABLES `selenium_formulize_frameworks` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_frameworks` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_frameworks` VALUES (1,'Stories + StoryPeople');
 /*!40000 ALTER TABLE `selenium_formulize_frameworks` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -710,7 +746,7 @@ CREATE TABLE `selenium_formulize_id` (
   `on_before_save` text,
   `note` text,
   PRIMARY KEY (`id_form`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -719,6 +755,7 @@ CREATE TABLE `selenium_formulize_id` (
 
 LOCK TABLES `selenium_formulize_id` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_id` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_id` VALUES (1,'Client','','','',NULL,1,2,'','client',0,'',''),(2,'Project','','','',NULL,3,4,'','project',0,'',''),(3,'People','','','',NULL,5,6,'','people',0,'',''),(4,'Stories','','','',NULL,7,8,'','stories',0,'',''),(5,'StoryPeople','','','',NULL,9,10,'','storypeople',0,'','');
 /*!40000 ALTER TABLE `selenium_formulize_id` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -795,7 +832,7 @@ CREATE TABLE `selenium_formulize_menu_links` (
   `link_text` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`menu_id`),
   KEY `i_menus_appid` (`appid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -804,6 +841,7 @@ CREATE TABLE `selenium_formulize_menu_links` (
 
 LOCK TABLES `selenium_formulize_menu_links` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_menu_links` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_menu_links` VALUES (1,1,'fid=1',1,'','Client'),(2,1,'fid=2',2,'','Project'),(3,1,'fid=3',3,'','People'),(4,1,'fid=4',4,'','Stories'),(5,1,'fid=5',5,'','StoryPeople');
 /*!40000 ALTER TABLE `selenium_formulize_menu_links` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -821,7 +859,7 @@ CREATE TABLE `selenium_formulize_menu_permissions` (
   `default_screen` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`permission_id`),
   KEY `i_menu_permissions` (`menu_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -830,6 +868,7 @@ CREATE TABLE `selenium_formulize_menu_permissions` (
 
 LOCK TABLES `selenium_formulize_menu_permissions` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_menu_permissions` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_menu_permissions` VALUES (1,1,1,0),(2,1,2,0),(3,2,1,0),(4,2,2,0),(5,3,1,0),(6,3,2,0),(7,4,1,0),(8,4,2,0),(9,5,1,0),(10,5,2,0);
 /*!40000 ALTER TABLE `selenium_formulize_menu_permissions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -899,6 +938,37 @@ LOCK TABLES `selenium_formulize_other` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `selenium_formulize_people`
+--
+
+DROP TABLE IF EXISTS `selenium_formulize_people`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `selenium_formulize_people` (
+  `entry_id` int(7) unsigned NOT NULL AUTO_INCREMENT,
+  `creation_datetime` datetime DEFAULT NULL,
+  `mod_datetime` datetime DEFAULT NULL,
+  `creation_uid` int(7) DEFAULT '0',
+  `mod_uid` int(7) DEFAULT '0',
+  `people_name` text,
+  `people_email` text,
+  PRIMARY KEY (`entry_id`),
+  KEY `i_creation_uid` (`creation_uid`),
+  FULLTEXT KEY `people_name` (`people_name`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `selenium_formulize_people`
+--
+
+LOCK TABLES `selenium_formulize_people` WRITE;
+/*!40000 ALTER TABLE `selenium_formulize_people` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_people` VALUES (1,'2014-09-20 21:27:48','2014-09-20 21:27:48',1,1,'Julian','julian@example.com'),(2,'2014-09-20 21:27:59','2014-09-20 21:27:59',1,1,'Daniel','daniel@example.com');
+/*!40000 ALTER TABLE `selenium_formulize_people` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `selenium_formulize_procedure_logs`
 --
 
@@ -949,6 +1019,39 @@ CREATE TABLE `selenium_formulize_procedure_logs_params` (
 LOCK TABLES `selenium_formulize_procedure_logs_params` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_procedure_logs_params` DISABLE KEYS */;
 /*!40000 ALTER TABLE `selenium_formulize_procedure_logs_params` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `selenium_formulize_project`
+--
+
+DROP TABLE IF EXISTS `selenium_formulize_project`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `selenium_formulize_project` (
+  `entry_id` int(7) unsigned NOT NULL AUTO_INCREMENT,
+  `creation_datetime` datetime DEFAULT NULL,
+  `mod_datetime` datetime DEFAULT NULL,
+  `creation_uid` int(7) DEFAULT '0',
+  `mod_uid` int(7) DEFAULT '0',
+  `project_name` text,
+  `project_client` bigint(20) DEFAULT NULL,
+  `project_status` text,
+  `project_start_date` date DEFAULT NULL,
+  `project_launch_date` date DEFAULT NULL,
+  PRIMARY KEY (`entry_id`),
+  KEY `i_creation_uid` (`creation_uid`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `selenium_formulize_project`
+--
+
+LOCK TABLES `selenium_formulize_project` WRITE;
+/*!40000 ALTER TABLE `selenium_formulize_project` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_project` VALUES (1,'2014-09-20 21:27:39','2014-09-20 21:27:39',1,1,'Octopus Survey',1,'Active','2014-09-20',NULL);
+/*!40000 ALTER TABLE `selenium_formulize_project` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -1036,7 +1139,7 @@ CREATE TABLE `selenium_formulize_screen` (
   `type` varchar(100) NOT NULL DEFAULT '',
   `useToken` tinyint(1) NOT NULL,
   PRIMARY KEY (`sid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1045,6 +1148,7 @@ CREATE TABLE `selenium_formulize_screen` (
 
 LOCK TABLES `selenium_formulize_screen` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_screen` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_screen` VALUES (1,'Regular \'Client\'',1,0,'form',1),(2,'Entries in \'Client\'',1,0,'listOfEntries',1),(3,'Regular \'Project\'',2,0,'form',1),(4,'Entries in \'Project\'',2,0,'listOfEntries',1),(5,'Regular \'People\'',3,0,'form',1),(6,'Entries in \'People\'',3,0,'listOfEntries',1),(7,'Regular \'Stories\'',4,1,'form',1),(8,'Entries in \'Stories\'',4,0,'listOfEntries',1),(9,'Regular \'StoryPeople\'',5,1,'form',1),(10,'Entries in \'StoryPeople\'',5,0,'listOfEntries',1);
 /*!40000 ALTER TABLE `selenium_formulize_screen` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1066,7 +1170,7 @@ CREATE TABLE `selenium_formulize_screen_form` (
   `formelements` text,
   PRIMARY KEY (`formid`),
   KEY `i_sid` (`sid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1075,6 +1179,7 @@ CREATE TABLE `selenium_formulize_screen_form` (
 
 LOCK TABLES `selenium_formulize_screen_form` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_screen_form` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_screen_form` VALUES (1,1,'','Save','All Done',1,0,'b:0;'),(2,3,'','Save','All Done',1,0,'b:0;'),(3,5,'','Save','All Done',1,0,'b:0;'),(4,7,'','Save','All Done',1,0,'b:0;'),(5,9,'','Save','All Done',1,0,'a:2:{i:0;s:2:\"17\";i:1;s:1:\"9\";}');
 /*!40000 ALTER TABLE `selenium_formulize_screen_form` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1131,7 +1236,7 @@ CREATE TABLE `selenium_formulize_screen_listofentries` (
   `viewentryscreen` varchar(10) NOT NULL DEFAULT '',
   PRIMARY KEY (`listofentriesid`),
   KEY `i_sid` (`sid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1140,6 +1245,7 @@ CREATE TABLE `selenium_formulize_screen_listofentries` (
 
 LOCK TABLES `selenium_formulize_screen_listofentries` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_screen_listofentries` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_screen_listofentries` VALUES (1,2,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'1'),(2,4,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'3'),(3,6,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'5'),(4,8,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'7'),(5,10,1,5,'Add one entry','Add multiple entries','Make a proxy entry','Current View: ','a:1:{i:0;s:8:\"allviews\";}','all','Change columns','Calculations','Procedures','','Export Entries','Export Calcs','Import Data','Clone selected','Delete selected','Select all','Clear selection','Notifications','Reset view','Save view','Delete view',1,1,0,1,1,1,'b:0;','b:0;',0,'Save',0,35,'b:0;','','','',10,'9');
 /*!40000 ALTER TABLE `selenium_formulize_screen_listofentries` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1179,6 +1285,73 @@ CREATE TABLE `selenium_formulize_screen_multipage` (
 LOCK TABLES `selenium_formulize_screen_multipage` WRITE;
 /*!40000 ALTER TABLE `selenium_formulize_screen_multipage` DISABLE KEYS */;
 /*!40000 ALTER TABLE `selenium_formulize_screen_multipage` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `selenium_formulize_stories`
+--
+
+DROP TABLE IF EXISTS `selenium_formulize_stories`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `selenium_formulize_stories` (
+  `entry_id` int(7) unsigned NOT NULL AUTO_INCREMENT,
+  `creation_datetime` datetime DEFAULT NULL,
+  `mod_datetime` datetime DEFAULT NULL,
+  `creation_uid` int(7) DEFAULT '0',
+  `mod_uid` int(7) DEFAULT '0',
+  `stories_story` text,
+  `stories_status` text,
+  `stories_points` text,
+  `stories_project` bigint(20) DEFAULT NULL,
+  `stories_assigned_to` bigint(20) DEFAULT NULL,
+  `stories_id` int(10) DEFAULT NULL,
+  `19` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`entry_id`),
+  KEY `i_creation_uid` (`creation_uid`),
+  KEY `stories_id` (`stories_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `selenium_formulize_stories`
+--
+
+LOCK TABLES `selenium_formulize_stories` WRITE;
+/*!40000 ALTER TABLE `selenium_formulize_stories` DISABLE KEYS */;
+INSERT INTO `selenium_formulize_stories` VALUES (1,'2014-09-20 21:28:21','2014-09-20 21:28:21',1,1,'As marine biologists, we want a data-entry form so that we can record octopus details.','On Deck','5',1,2,1,NULL);
+/*!40000 ALTER TABLE `selenium_formulize_stories` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `selenium_formulize_storypeople`
+--
+
+DROP TABLE IF EXISTS `selenium_formulize_storypeople`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `selenium_formulize_storypeople` (
+  `entry_id` int(7) unsigned NOT NULL AUTO_INCREMENT,
+  `creation_datetime` datetime DEFAULT NULL,
+  `mod_datetime` datetime DEFAULT NULL,
+  `creation_uid` int(7) DEFAULT '0',
+  `mod_uid` int(7) DEFAULT '0',
+  `storypeople_story_id` int(10) DEFAULT NULL,
+  `storypeople_person` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`entry_id`),
+  KEY `i_creation_uid` (`creation_uid`),
+  KEY `storypeople_story_id` (`storypeople_story_id`),
+  KEY `storypeople_person` (`storypeople_person`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `selenium_formulize_storypeople`
+--
+
+LOCK TABLES `selenium_formulize_storypeople` WRITE;
+/*!40000 ALTER TABLE `selenium_formulize_storypeople` DISABLE KEYS */;
+/*!40000 ALTER TABLE `selenium_formulize_storypeople` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -1246,7 +1419,7 @@ CREATE TABLE `selenium_group_permission` (
   `gperm_name` varchar(50) NOT NULL DEFAULT '',
   PRIMARY KEY (`gperm_id`),
   KEY `name_mod_group` (`gperm_name`(10),`gperm_modid`,`gperm_groupid`)
-) ENGINE=InnoDB AUTO_INCREMENT=181 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=191 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1255,7 +1428,7 @@ CREATE TABLE `selenium_group_permission` (
 
 LOCK TABLES `selenium_group_permission` WRITE;
 /*!40000 ALTER TABLE `selenium_group_permission` DISABLE KEYS */;
-INSERT INTO `selenium_group_permission` VALUES (1,2,20,1,'use_extension'),(2,1,20,1,'use_extension'),(3,2,19,1,'use_extension'),(4,1,19,1,'use_extension'),(5,2,76,1,'use_extension'),(6,1,76,1,'use_extension'),(7,2,77,1,'use_extension'),(8,1,77,1,'use_extension'),(9,2,82,1,'use_extension'),(10,1,82,1,'use_extension'),(11,2,79,1,'use_extension'),(12,1,79,1,'use_extension'),(13,2,80,1,'use_extension'),(14,1,80,1,'use_extension'),(15,2,81,1,'use_extension'),(16,1,81,1,'use_extension'),(17,2,83,1,'use_extension'),(18,1,83,1,'use_extension'),(19,2,84,1,'use_extension'),(20,1,84,1,'use_extension'),(21,2,100,1,'use_extension'),(22,1,100,1,'use_extension'),(23,2,101,1,'use_extension'),(24,1,101,1,'use_extension'),(25,1,1,1,'module_admin'),(26,1,1,1,'module_read'),(28,3,1,1,'module_read'),(29,1,1,1,'system_admin'),(30,1,2,1,'system_admin'),(31,1,3,1,'system_admin'),(32,1,4,1,'system_admin'),(33,1,5,1,'system_admin'),(34,1,6,1,'system_admin'),(35,1,7,1,'system_admin'),(36,1,8,1,'system_admin'),(37,1,9,1,'system_admin'),(38,1,10,1,'system_admin'),(39,1,11,1,'system_admin'),(40,1,12,1,'system_admin'),(41,1,13,1,'system_admin'),(42,1,14,1,'system_admin'),(43,1,15,1,'system_admin'),(44,1,16,1,'system_admin'),(45,1,17,1,'system_admin'),(46,1,18,1,'system_admin'),(47,1,19,1,'system_admin'),(48,1,20,1,'system_admin'),(49,1,1,1,'group_manager'),(50,1,2,1,'group_manager'),(51,1,3,1,'group_manager'),(52,1,1,1,'content_read'),(53,2,1,1,'content_read'),(54,3,1,1,'content_read'),(55,1,1,1,'content_admin'),(56,1,1,1,'use_wysiwygeditor'),(57,1,1,1,'imgcat_write'),(58,1,1,1,'imgcat_read'),(59,1,1,1,'block_read'),(61,3,1,1,'block_read'),(62,1,2,1,'block_read'),(64,3,2,1,'block_read'),(65,1,3,1,'block_read'),(67,3,3,1,'block_read'),(68,1,4,1,'block_read'),(70,3,4,1,'block_read'),(71,1,5,1,'block_read'),(73,3,5,1,'block_read'),(74,1,6,1,'block_read'),(76,3,6,1,'block_read'),(77,1,7,1,'block_read'),(79,3,7,1,'block_read'),(80,1,8,1,'block_read'),(82,3,8,1,'block_read'),(83,1,9,1,'block_read'),(85,3,9,1,'block_read'),(86,1,10,1,'block_read'),(88,3,10,1,'block_read'),(89,1,11,1,'block_read'),(91,3,11,1,'block_read'),(92,1,12,1,'block_read'),(94,3,12,1,'block_read'),(95,1,13,1,'block_read'),(97,3,13,1,'block_read'),(98,1,14,1,'block_read'),(100,3,14,1,'block_read'),(101,1,15,1,'block_read'),(103,3,15,1,'block_read'),(104,1,16,1,'block_read'),(106,3,16,1,'block_read'),(107,1,17,1,'block_read'),(109,3,17,1,'block_read'),(110,1,18,1,'block_read'),(112,3,18,1,'block_read'),(113,1,19,1,'block_read'),(115,3,19,1,'block_read'),(118,1,2,1,'module_admin'),(119,1,2,1,'module_read'),(120,1,1,1,'block_read'),(121,1,1,1,'block_read'),(125,3,2,1,'module_read'),(126,3,1,1,'block_read'),(127,3,1,1,'block_read'),(128,1,3,1,'module_admin'),(129,1,3,1,'module_read'),(130,1,1,1,'block_read'),(133,3,3,1,'module_read'),(134,3,1,1,'block_read'),(135,1,4,1,'module_admin'),(136,1,4,1,'module_read'),(137,1,1,1,'block_read'),(138,1,1,1,'block_read'),(142,3,4,1,'module_read'),(143,3,1,1,'block_read'),(144,3,1,1,'block_read'),(145,1,5,1,'module_admin'),(146,1,5,1,'module_read'),(147,3,21,1,'block_read'),(148,1,20,1,'block_read'),(149,2,2,1,'module_read'),(150,2,3,1,'module_read'),(151,2,4,1,'module_read'),(152,2,1,1,'module_read'),(153,2,1,1,'block_read'),(154,2,2,1,'block_read'),(155,2,5,1,'block_read'),(156,2,6,1,'block_read'),(157,2,10,1,'block_read'),(158,2,11,1,'block_read'),(159,2,12,1,'block_read'),(160,2,13,1,'block_read'),(161,2,18,1,'block_read'),(162,2,19,1,'block_read'),(164,2,3,1,'block_read'),(165,2,14,1,'block_read'),(166,2,4,1,'block_read'),(167,2,7,1,'block_read'),(168,2,8,1,'block_read'),(169,2,9,1,'block_read'),(170,2,16,1,'block_read'),(171,2,15,1,'block_read'),(172,2,17,1,'block_read'),(173,2,24,1,'block_read'),(179,2,18,4,'profile_edit'),(180,2,19,4,'profile_edit');
+INSERT INTO `selenium_group_permission` VALUES (1,2,20,1,'use_extension'),(2,1,20,1,'use_extension'),(3,2,19,1,'use_extension'),(4,1,19,1,'use_extension'),(5,2,76,1,'use_extension'),(6,1,76,1,'use_extension'),(7,2,77,1,'use_extension'),(8,1,77,1,'use_extension'),(9,2,82,1,'use_extension'),(10,1,82,1,'use_extension'),(11,2,79,1,'use_extension'),(12,1,79,1,'use_extension'),(13,2,80,1,'use_extension'),(14,1,80,1,'use_extension'),(15,2,81,1,'use_extension'),(16,1,81,1,'use_extension'),(17,2,83,1,'use_extension'),(18,1,83,1,'use_extension'),(19,2,84,1,'use_extension'),(20,1,84,1,'use_extension'),(21,2,100,1,'use_extension'),(22,1,100,1,'use_extension'),(23,2,101,1,'use_extension'),(24,1,101,1,'use_extension'),(25,1,1,1,'module_admin'),(26,1,1,1,'module_read'),(28,3,1,1,'module_read'),(29,1,1,1,'system_admin'),(30,1,2,1,'system_admin'),(31,1,3,1,'system_admin'),(32,1,4,1,'system_admin'),(33,1,5,1,'system_admin'),(34,1,6,1,'system_admin'),(35,1,7,1,'system_admin'),(36,1,8,1,'system_admin'),(37,1,9,1,'system_admin'),(38,1,10,1,'system_admin'),(39,1,11,1,'system_admin'),(40,1,12,1,'system_admin'),(41,1,13,1,'system_admin'),(42,1,14,1,'system_admin'),(43,1,15,1,'system_admin'),(44,1,16,1,'system_admin'),(45,1,17,1,'system_admin'),(46,1,18,1,'system_admin'),(47,1,19,1,'system_admin'),(48,1,20,1,'system_admin'),(49,1,1,1,'group_manager'),(50,1,2,1,'group_manager'),(51,1,3,1,'group_manager'),(52,1,1,1,'content_read'),(53,2,1,1,'content_read'),(54,3,1,1,'content_read'),(55,1,1,1,'content_admin'),(56,1,1,1,'use_wysiwygeditor'),(57,1,1,1,'imgcat_write'),(58,1,1,1,'imgcat_read'),(59,1,1,1,'block_read'),(61,3,1,1,'block_read'),(62,1,2,1,'block_read'),(64,3,2,1,'block_read'),(65,1,3,1,'block_read'),(67,3,3,1,'block_read'),(68,1,4,1,'block_read'),(70,3,4,1,'block_read'),(71,1,5,1,'block_read'),(73,3,5,1,'block_read'),(74,1,6,1,'block_read'),(76,3,6,1,'block_read'),(77,1,7,1,'block_read'),(79,3,7,1,'block_read'),(80,1,8,1,'block_read'),(82,3,8,1,'block_read'),(83,1,9,1,'block_read'),(85,3,9,1,'block_read'),(86,1,10,1,'block_read'),(88,3,10,1,'block_read'),(89,1,11,1,'block_read'),(91,3,11,1,'block_read'),(92,1,12,1,'block_read'),(94,3,12,1,'block_read'),(95,1,13,1,'block_read'),(97,3,13,1,'block_read'),(98,1,14,1,'block_read'),(100,3,14,1,'block_read'),(101,1,15,1,'block_read'),(103,3,15,1,'block_read'),(104,1,16,1,'block_read'),(106,3,16,1,'block_read'),(107,1,17,1,'block_read'),(109,3,17,1,'block_read'),(110,1,18,1,'block_read'),(112,3,18,1,'block_read'),(113,1,19,1,'block_read'),(115,3,19,1,'block_read'),(118,1,2,1,'module_admin'),(119,1,2,1,'module_read'),(120,1,1,1,'block_read'),(121,1,1,1,'block_read'),(125,3,2,1,'module_read'),(126,3,1,1,'block_read'),(127,3,1,1,'block_read'),(128,1,3,1,'module_admin'),(129,1,3,1,'module_read'),(130,1,1,1,'block_read'),(133,3,3,1,'module_read'),(134,3,1,1,'block_read'),(135,1,4,1,'module_admin'),(136,1,4,1,'module_read'),(137,1,1,1,'block_read'),(138,1,1,1,'block_read'),(142,3,4,1,'module_read'),(143,3,1,1,'block_read'),(144,3,1,1,'block_read'),(145,1,5,1,'module_admin'),(146,1,5,1,'module_read'),(147,3,21,1,'block_read'),(148,1,20,1,'block_read'),(149,2,2,1,'module_read'),(150,2,3,1,'module_read'),(151,2,4,1,'module_read'),(152,2,1,1,'module_read'),(153,2,1,1,'block_read'),(154,2,2,1,'block_read'),(155,2,5,1,'block_read'),(156,2,6,1,'block_read'),(157,2,10,1,'block_read'),(158,2,11,1,'block_read'),(159,2,12,1,'block_read'),(160,2,13,1,'block_read'),(161,2,18,1,'block_read'),(162,2,19,1,'block_read'),(164,2,3,1,'block_read'),(165,2,14,1,'block_read'),(166,2,4,1,'block_read'),(167,2,7,1,'block_read'),(168,2,8,1,'block_read'),(169,2,9,1,'block_read'),(170,2,16,1,'block_read'),(171,2,15,1,'block_read'),(172,2,17,1,'block_read'),(173,2,24,1,'block_read'),(179,2,18,4,'profile_edit'),(180,2,19,4,'profile_edit'),(181,1,1,3,'edit_form'),(182,2,1,3,'edit_form'),(183,1,2,3,'edit_form'),(184,2,2,3,'edit_form'),(185,1,3,3,'edit_form'),(186,2,3,3,'edit_form'),(187,1,4,3,'edit_form'),(188,2,4,3,'edit_form'),(189,1,5,3,'edit_form'),(190,2,5,3,'edit_form');
 /*!40000 ALTER TABLE `selenium_group_permission` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1422,7 +1595,7 @@ CREATE TABLE `selenium_image` (
 
 LOCK TABLES `selenium_image` WRITE;
 /*!40000 ALTER TABLE `selenium_image` DISABLE KEYS */;
-INSERT INTO `selenium_image` VALUES (1,'img482278e29e81c.png','ImpressCMS','image/png',1411246319,1,0,1);
+INSERT INTO `selenium_image` VALUES (1,'img482278e29e81c.png','ImpressCMS','image/png',1411247197,1,0,1);
 /*!40000 ALTER TABLE `selenium_image` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1626,7 +1799,7 @@ CREATE TABLE `selenium_modules` (
 
 LOCK TABLES `selenium_modules` WRITE;
 /*!40000 ALTER TABLE `selenium_modules` DISABLE KEYS */;
-INSERT INTO `selenium_modules` VALUES (1,'System',130,1411246322,0,1,'system',0,1,0,0,0,0,41,'system',0),(2,'Profile',200,1411246322,1,1,'profile',1,1,1,1,1,1,2,'profile',1),(3,'Forms',500,1411246323,1,1,'formulize',1,1,0,1,0,1,0,'',0),(4,'Content',110,1411246323,1,1,'content',1,1,1,1,1,1,1,'content',1),(5,'Protector',350,1411246323,1,1,'protector',0,1,0,1,0,0,0,'',0);
+INSERT INTO `selenium_modules` VALUES (1,'System',130,1411247203,0,1,'system',0,1,0,0,0,0,41,'system',0),(2,'Profile',200,1411247204,1,1,'profile',1,1,1,1,1,1,2,'profile',1),(3,'Forms',500,1411247204,1,1,'formulize',1,1,0,1,0,1,0,'',0),(4,'Content',110,1411247205,1,1,'content',1,1,1,1,1,1,1,'content',1),(5,'Protector',350,1411247205,1,1,'protector',0,1,0,1,0,0,0,'',0);
 /*!40000 ALTER TABLE `selenium_modules` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2299,7 +2472,7 @@ CREATE TABLE `selenium_session` (
 
 LOCK TABLES `selenium_session` WRITE;
 /*!40000 ALTER TABLE `selenium_session` DISABLE KEYS */;
-INSERT INTO `selenium_session` VALUES ('amkc72fkgkuorr3dag45pvsoc1',1411246333,'::1','xoopsUserGroups|a:1:{i:0;s:1:\"3\";}ad_sess_regen|b:0;icms_fprint|s:64:\"82dcb3d3abbabac2d91ad2747fc3c6a3afb465ec32ce5791e3592ae8b7db1fac\";'),('uqv7nl5db0pj10l3hbc3nd9lc3',1411246332,'127.0.0.1','xoopsUserId|s:1:\"1\";xoopsUserGroups|a:2:{i:0;s:1:\"1\";i:1;s:1:\"2\";}xoopsUserLastLogin|i:1411246331;xoopsUserTheme|s:20:\"formulize_standalone\";UserLanguage|s:7:\"english\";ad_sess_regen|b:0;icms_fprint|s:64:\"14c4811d0e8aee9e7c577bb216226c2a1dfd233dc37b39c71ad16486c4289571\";');
+INSERT INTO `selenium_session` VALUES ('02jj9ummjvscksfq1o2k05ldu7',1411248526,'127.0.0.1','xoopsUserId|s:1:\"1\";xoopsUserGroups|a:2:{i:0;s:1:\"1\";i:1;s:1:\"2\";}xoopsUserLastLogin|i:1411248516;xoopsUserTheme|s:20:\"formulize_standalone\";UserLanguage|s:7:\"english\";ad_sess_regen|b:0;icms_fprint|s:64:\"14c4811d0e8aee9e7c577bb216226c2a1dfd233dc37b39c71ad16486c4289571\";XOOPS_TOKEN_SESSION|a:4:{i:0;a:2:{s:2:\"id\";s:32:\"27916f6f5721362d94e67e99920ed0b3\";s:6:\"expire\";i:1411249417;}i:1;a:2:{s:2:\"id\";s:32:\"514550c082f909ad1ca0eb6ce24980e7\";s:6:\"expire\";i:1411249420;}i:2;a:2:{s:2:\"id\";s:32:\"c892a7948769f69413f5372e96aac0dd\";s:6:\"expire\";i:1411249424;}i:3;a:2:{s:2:\"id\";s:32:\"fe4709abc6cd4b5542f604e06c170327\";s:6:\"expire\";i:1411249426;}}'),('atjvgek70u3ikfcrp66l6e1re5',1411248653,'::1','xoopsUserGroups|a:1:{i:0;s:1:\"3\";}ad_sess_regen|b:0;icms_fprint|s:64:\"82dcb3d3abbabac2d91ad2747fc3c6a3afb465ec32ce5791e3592ae8b7db1fac\";'),('co3pc2vvf0bq84p3e3bm1hfud7',1411248505,'127.0.0.1','xoopsUserId|s:1:\"1\";xoopsUserGroups|a:2:{i:0;s:1:\"1\";i:1;s:1:\"2\";}xoopsUserLastLogin|i:1411248428;xoopsUserTheme|s:20:\"formulize_standalone\";UserLanguage|s:7:\"english\";ad_sess_regen|b:0;icms_fprint|s:64:\"14c4811d0e8aee9e7c577bb216226c2a1dfd233dc37b39c71ad16486c4289571\";XOOPS_TOKEN_SESSION|a:28:{i:0;a:2:{s:2:\"id\";s:32:\"d6896067a50b637a9de22f2b5f804e6a\";s:6:\"expire\";i:1411249330;}i:2;a:2:{s:2:\"id\";s:32:\"254830bf665261f6d86af34476579b7f\";s:6:\"expire\";i:1411249331;}i:3;a:2:{s:2:\"id\";s:32:\"d0cb440fc5b65592a59459fca024fadd\";s:6:\"expire\";i:1411249337;}i:4;a:2:{s:2:\"id\";s:32:\"138de66b69d93729c4553ca82ee0b847\";s:6:\"expire\";i:1411249337;}i:5;a:2:{s:2:\"id\";s:32:\"0103b7e355fd69be36913648ab4c7e83\";s:6:\"expire\";i:1411249338;}i:7;a:2:{s:2:\"id\";s:32:\"6246918be012c30e3751e2cc2f11201b\";s:6:\"expire\";i:1411249340;}i:8;a:2:{s:2:\"id\";s:32:\"b8abcadd8a2312cd0dcc7749782a19ac\";s:6:\"expire\";i:1411249345;}i:9;a:2:{s:2:\"id\";s:32:\"e21a5edd15842b527622a3202f39c2d4\";s:6:\"expire\";i:1411249345;}i:10;a:2:{s:2:\"id\";s:32:\"513d8d64351cb294744ed5eab461c286\";s:6:\"expire\";i:1411249346;}i:11;a:2:{s:2:\"id\";s:32:\"0a49230c76bd0cb7359d37825901c781\";s:6:\"expire\";i:1411249349;}i:13;a:2:{s:2:\"id\";s:32:\"98addbbede703151ddab8f6751bc144e\";s:6:\"expire\";i:1411249350;}i:14;a:2:{s:2:\"id\";s:32:\"f95a9819e1dd735195042a86b28b2726\";s:6:\"expire\";i:1411249359;}i:15;a:2:{s:2:\"id\";s:32:\"3fd985eb6dd9efead30800e8a78f21d1\";s:6:\"expire\";i:1411249359;}i:16;a:2:{s:2:\"id\";s:32:\"0490aac91b3a3c659aa0c61b532fd849\";s:6:\"expire\";i:1411249360;}i:17;a:2:{s:2:\"id\";s:32:\"019033c7f9f07643e093d134572d7be1\";s:6:\"expire\";i:1411249362;}i:19;a:2:{s:2:\"id\";s:32:\"8ace570312e10eeb86ebe60c85fb89c6\";s:6:\"expire\";i:1411249363;}i:20;a:2:{s:2:\"id\";s:32:\"e740e90ef3ba2cdb213777315e84ebb8\";s:6:\"expire\";i:1411249368;}i:21;a:2:{s:2:\"id\";s:32:\"10726c4ff920664ac2d46d1a18f60123\";s:6:\"expire\";i:1411249368;}i:22;a:2:{s:2:\"id\";s:32:\"2506fd7eb2e69ff13c9f7370f8a51b32\";s:6:\"expire\";i:1411249371;}i:24;a:2:{s:2:\"id\";s:32:\"400fd2d5f7f34e3472095da8c286a9a2\";s:6:\"expire\";i:1411249374;}i:25;a:2:{s:2:\"id\";s:32:\"14427d60c15397eaf94fc84d0ae4dc07\";s:6:\"expire\";i:1411249379;}i:26;a:2:{s:2:\"id\";s:32:\"5d52dfe8e7127b6311ec9f4f47f1a4c2\";s:6:\"expire\";i:1411249379;}i:27;a:2:{s:2:\"id\";s:32:\"c0f6a1d171d696c5f7407ba9fe002c1a\";s:6:\"expire\";i:1411249382;}i:28;a:2:{s:2:\"id\";s:32:\"b02914465370f0e7c6cd0fbb9328fb30\";s:6:\"expire\";i:1411249384;}i:30;a:2:{s:2:\"id\";s:32:\"c0be42fb387c781b1c32bce11c8e6314\";s:6:\"expire\";i:1411249385;}i:31;a:2:{s:2:\"id\";s:32:\"209cc568f0308112bb3e5d2dfb720624\";s:6:\"expire\";i:1411249401;}i:32;a:2:{s:2:\"id\";s:32:\"80a68cac668c60cf1e6c65d7587fecd8\";s:6:\"expire\";i:1411249401;}i:33;a:2:{s:2:\"id\";s:32:\"e86bc58f64980db7c0f71da4c55a1335\";s:6:\"expire\";i:1411249405;}}'),('cqbuondpqeu09iqg08vil9aio5',1411248545,'127.0.0.1','xoopsUserId|s:1:\"1\";xoopsUserGroups|a:2:{i:0;s:1:\"1\";i:1;s:1:\"2\";}xoopsUserLastLogin|i:1411248540;xoopsUserTheme|s:20:\"formulize_standalone\";UserLanguage|s:7:\"english\";ad_sess_regen|b:0;icms_fprint|s:64:\"14c4811d0e8aee9e7c577bb216226c2a1dfd233dc37b39c71ad16486c4289571\";XOOPS_TOKEN_SESSION|a:3:{i:0;a:2:{s:2:\"id\";s:32:\"fdca3823e085e50e622f74e8f60a6ca9\";s:6:\"expire\";i:1411249442;}i:1;a:2:{s:2:\"id\";s:32:\"c3575c33dbd94f0d94731e09acbc4132\";s:6:\"expire\";i:1411249444;}i:2;a:2:{s:2:\"id\";s:32:\"99990547d7b5b1c76b5177999e5359bf\";s:6:\"expire\";i:1411249444;}}'),('fqbql2ol3c0o1s8r6tl1qm01u7',1411248592,'127.0.0.1','xoopsUserId|s:1:\"1\";xoopsUserGroups|a:2:{i:0;s:1:\"1\";i:1;s:1:\"2\";}xoopsUserLastLogin|i:1411248562;xoopsUserTheme|s:20:\"formulize_standalone\";UserLanguage|s:7:\"english\";ad_sess_regen|b:0;icms_fprint|s:64:\"14c4811d0e8aee9e7c577bb216226c2a1dfd233dc37b39c71ad16486c4289571\";XOOPS_TOKEN_SESSION|a:5:{i:0;a:2:{s:2:\"id\";s:32:\"5aafcf8b8f0262383a98621244b0ceed\";s:6:\"expire\";i:1411249464;}i:1;a:2:{s:2:\"id\";s:32:\"6622f0032ef8e0b23eac4a30accaa96f\";s:6:\"expire\";i:1411249466;}i:2;a:2:{s:2:\"id\";s:32:\"afb16bd4886b2957e4894bdd95dbf411\";s:6:\"expire\";i:1411249466;}i:3;a:2:{s:2:\"id\";s:32:\"330f9175f228469a219bfdb42ef93dec\";s:6:\"expire\";i:1411249479;}i:4;a:2:{s:2:\"id\";s:32:\"604740562d54ddf74425f58696c11d4f\";s:6:\"expire\";i:1411249479;}}'),('m93oj97lr89r7hjurqleo1hvk0',1411248414,'127.0.0.1','xoopsUserId|s:1:\"1\";xoopsUserGroups|a:2:{i:0;s:1:\"1\";i:1;s:1:\"2\";}xoopsUserLastLogin|i:1411248105;xoopsUserTheme|s:20:\"formulize_standalone\";UserLanguage|s:7:\"english\";ad_sess_regen|b:0;icms_fprint|s:64:\"14c4811d0e8aee9e7c577bb216226c2a1dfd233dc37b39c71ad16486c4289571\";XOOPS_TOKEN_SESSION|a:24:{i:0;a:2:{s:2:\"id\";s:32:\"5afe54bad984e8ac5f27597a3cfcbb0f\";s:6:\"expire\";i:1411249007;}i:1;a:2:{s:2:\"id\";s:32:\"151e1c7af177395c0ee43b3a4563f2da\";s:6:\"expire\";i:1411249009;}i:2;a:2:{s:2:\"id\";s:32:\"04c1c638565d6ddb3d28d51c6591dd54\";s:6:\"expire\";i:1411249009;}i:3;a:2:{s:2:\"id\";s:32:\"93d1d266ca0891b43ae7ea873d79eb6c\";s:6:\"expire\";i:1411249092;}i:4;a:2:{s:2:\"id\";s:32:\"3adfa4c7cd95fa4e23979b57b0a57b67\";s:6:\"expire\";i:1411249095;}i:5;a:2:{s:2:\"id\";s:32:\"656db7554f5b2bd1325c936010f5facf\";s:6:\"expire\";i:1411249098;}i:6;a:2:{s:2:\"id\";s:32:\"f029962cd66efd6575f25457aaf811d9\";s:6:\"expire\";i:1411249098;}i:7;a:2:{s:2:\"id\";s:32:\"5acc071643373258e647022c8d691843\";s:6:\"expire\";i:1411249178;}i:8;a:2:{s:2:\"id\";s:32:\"e62cca1f4bb951477f539b15e7f6753b\";s:6:\"expire\";i:1411249178;}i:9;a:2:{s:2:\"id\";s:32:\"0ea0d95c4d4dc9c5896512963593c3e6\";s:6:\"expire\";i:1411249254;}i:10;a:2:{s:2:\"id\";s:32:\"204e6d4f8563d34cc9176ee7cde80ab7\";s:6:\"expire\";i:1411249257;}i:11;a:2:{s:2:\"id\";s:32:\"9dccaf61d40f9115455f9ece4dad1e60\";s:6:\"expire\";i:1411249257;}i:12;a:2:{s:2:\"id\";s:32:\"6eb1c60b9838ccb518681a6cfbe57671\";s:6:\"expire\";i:1411249257;}i:13;a:2:{s:2:\"id\";s:32:\"f336419f6a87e9d989f37a7c42c1c815\";s:6:\"expire\";i:1411249258;}i:14;a:2:{s:2:\"id\";s:32:\"2e8fee7d0b113eb6ca6ab450ef8e4f83\";s:6:\"expire\";i:1411249262;}i:15;a:2:{s:2:\"id\";s:32:\"468671cefc6e8ba152e3f51d45fda0fc\";s:6:\"expire\";i:1411249267;}i:16;a:2:{s:2:\"id\";s:32:\"72873dc6381e2a5b45645a61de1982ff\";s:6:\"expire\";i:1411249273;}i:17;a:2:{s:2:\"id\";s:32:\"928225f1f2e58903b0d96155b51f45df\";s:6:\"expire\";i:1411249276;}i:18;a:2:{s:2:\"id\";s:32:\"afd9d4f7f663400a211cb70e4be6501c\";s:6:\"expire\";i:1411249276;}i:19;a:2:{s:2:\"id\";s:32:\"ba75b0e8e7301151baa0108873c12822\";s:6:\"expire\";i:1411249289;}i:20;a:2:{s:2:\"id\";s:32:\"5fc13fe4e26b7a7385cff6b311e3d3b5\";s:6:\"expire\";i:1411249293;}i:21;a:2:{s:2:\"id\";s:32:\"0ae4b0234a954af051432d993e7b198c\";s:6:\"expire\";i:1411249293;}i:22;a:2:{s:2:\"id\";s:32:\"36549c305caf9c2928b4f6b6a5565bbc\";s:6:\"expire\";i:1411249307;}i:23;a:2:{s:2:\"id\";s:32:\"85669819c53395687c6369433313bafe\";s:6:\"expire\";i:1411249307;}}'),('t84khl85qqaf4oe5bpmkrm2si6',1411248044,'127.0.0.1','xoopsUserId|s:1:\"1\";xoopsUserGroups|a:2:{i:0;s:1:\"1\";i:1;s:1:\"2\";}xoopsUserLastLogin|i:1411247229;xoopsUserTheme|s:20:\"formulize_standalone\";UserLanguage|s:7:\"english\";ad_sess_regen|b:0;icms_fprint|s:64:\"14c4811d0e8aee9e7c577bb216226c2a1dfd233dc37b39c71ad16486c4289571\";XOOPS_TOKEN_SESSION|a:51:{i:0;a:2:{s:2:\"id\";s:32:\"dc26d1dad83f7dd78c47f83692d087c5\";s:6:\"expire\";i:1411248131;}i:1;a:2:{s:2:\"id\";s:32:\"e74bd5740a45e141718e6e3e04389fc9\";s:6:\"expire\";i:1411248137;}i:2;a:2:{s:2:\"id\";s:32:\"3b818aa729ae4116f217a91c9cb080d1\";s:6:\"expire\";i:1411248143;}i:3;a:2:{s:2:\"id\";s:32:\"8c7f0e443ca623ab185a4b366434f22f\";s:6:\"expire\";i:1411248143;}i:4;a:2:{s:2:\"id\";s:32:\"f8d05ee5873fbe23326ee8cd9532bf6a\";s:6:\"expire\";i:1411248214;}i:5;a:2:{s:2:\"id\";s:32:\"7ee4ff43a67667db7300a5dc1884227a\";s:6:\"expire\";i:1411248214;}i:6;a:2:{s:2:\"id\";s:32:\"d7c7eaf41699832c024a3095008d4c6c\";s:6:\"expire\";i:1411248290;}i:7;a:2:{s:2:\"id\";s:32:\"913351c542c14fc2d4e6f2a6db1af966\";s:6:\"expire\";i:1411248290;}i:8;a:2:{s:2:\"id\";s:32:\"f17520e7ca598093ba52a72ce9eb9484\";s:6:\"expire\";i:1411248290;}i:9;a:2:{s:2:\"id\";s:32:\"52d49cf20e18778f574c05c91c23a9a9\";s:6:\"expire\";i:1411248293;}i:10;a:2:{s:2:\"id\";s:32:\"95a1469d7f93695b762e50557979a352\";s:6:\"expire\";i:1411248299;}i:11;a:2:{s:2:\"id\";s:32:\"8a6b948f8946fdf6e92bf07b03f89aed\";s:6:\"expire\";i:1411248299;}i:12;a:2:{s:2:\"id\";s:32:\"2f55a7004a42a5568953a665ce0fc05a\";s:6:\"expire\";i:1411248314;}i:13;a:2:{s:2:\"id\";s:32:\"41179660bd5c6b0bb554360e45c57e5b\";s:6:\"expire\";i:1411248314;}i:14;a:2:{s:2:\"id\";s:32:\"a6871f0433208605dd4d313adc8e43d0\";s:6:\"expire\";i:1411248329;}i:15;a:2:{s:2:\"id\";s:32:\"06d574b4ee671a3b3c4c239c1386d107\";s:6:\"expire\";i:1411248329;}i:16;a:2:{s:2:\"id\";s:32:\"1e1134a761356466c448649ecd6a4997\";s:6:\"expire\";i:1411248346;}i:17;a:2:{s:2:\"id\";s:32:\"d86c12b1eebdd5bc9153f6b9711246a9\";s:6:\"expire\";i:1411248346;}i:18;a:2:{s:2:\"id\";s:32:\"f73ab2c9799e57e5bf0ee79c76d9f11a\";s:6:\"expire\";i:1411248419;}i:19;a:2:{s:2:\"id\";s:32:\"2b97003294007d6fb58ed01d0de9dd9c\";s:6:\"expire\";i:1411248419;}i:20;a:2:{s:2:\"id\";s:32:\"4f70fca8b563418666c661eab6709c21\";s:6:\"expire\";i:1411248493;}i:21;a:2:{s:2:\"id\";s:32:\"89ac6c96315e63314d52b0ecfba0e7aa\";s:6:\"expire\";i:1411248493;}i:22;a:2:{s:2:\"id\";s:32:\"0e781f543dced7979726f0ec30856382\";s:6:\"expire\";i:1411248493;}i:23;a:2:{s:2:\"id\";s:32:\"c30add399ed1de7d890561189302ac35\";s:6:\"expire\";i:1411248496;}i:24;a:2:{s:2:\"id\";s:32:\"6cd12bf737a714df9f7071fb0a9ba842\";s:6:\"expire\";i:1411248500;}i:25;a:2:{s:2:\"id\";s:32:\"7de23ea0159a7012dc15af5f2171a720\";s:6:\"expire\";i:1411248500;}i:26;a:2:{s:2:\"id\";s:32:\"114dfd5462f365c9ec1836419e49c2db\";s:6:\"expire\";i:1411248573;}i:27;a:2:{s:2:\"id\";s:32:\"3a5b992d35d6810e908bb4dce1474a8d\";s:6:\"expire\";i:1411248573;}i:28;a:2:{s:2:\"id\";s:32:\"612f0ab12067a968bd17dade893ed6e0\";s:6:\"expire\";i:1411248644;}i:29;a:2:{s:2:\"id\";s:32:\"8f9101313362b651fc80fca47df2b442\";s:6:\"expire\";i:1411248644;}i:30;a:2:{s:2:\"id\";s:32:\"eaa4a140eec110affb3592013b96c9c4\";s:6:\"expire\";i:1411248644;}i:31;a:2:{s:2:\"id\";s:32:\"a68b1eb0713731f202f133cf4d486eeb\";s:6:\"expire\";i:1411248648;}i:32;a:2:{s:2:\"id\";s:32:\"7f7d2ee7faa1c129659741c6758e3886\";s:6:\"expire\";i:1411248651;}i:33;a:2:{s:2:\"id\";s:32:\"5195fb1286242324882f32d36df603cd\";s:6:\"expire\";i:1411248651;}i:34;a:2:{s:2:\"id\";s:32:\"dada37e3fdde412a938f199884381749\";s:6:\"expire\";i:1411248663;}i:35;a:2:{s:2:\"id\";s:32:\"830569d0e776e024517be413fcd91680\";s:6:\"expire\";i:1411248663;}i:36;a:2:{s:2:\"id\";s:32:\"8286111ae39351e713032469a117fd4a\";s:6:\"expire\";i:1411248751;}i:37;a:2:{s:2:\"id\";s:32:\"5338c2a4727ff3c53fa76caff3cf0bc3\";s:6:\"expire\";i:1411248751;}i:38;a:2:{s:2:\"id\";s:32:\"1ebd9805784f56907aaa66ee6c30d0c0\";s:6:\"expire\";i:1411248842;}i:39;a:2:{s:2:\"id\";s:32:\"c5baa45d08cf338a14695c0864fc86cd\";s:6:\"expire\";i:1411248842;}i:40;a:2:{s:2:\"id\";s:32:\"fc0fb0b3ee9727274685a4227eb1fccb\";s:6:\"expire\";i:1411248842;}i:41;a:2:{s:2:\"id\";s:32:\"674e19965fb2853412b082d1d5aa96ff\";s:6:\"expire\";i:1411248848;}i:42;a:2:{s:2:\"id\";s:32:\"b54c202a0694fb3b48cf0e0bf12e0504\";s:6:\"expire\";i:1411248848;}i:43;a:2:{s:2:\"id\";s:32:\"d00f15e8db8a8320b9bdb64e8eb23d43\";s:6:\"expire\";i:1411248861;}i:44;a:2:{s:2:\"id\";s:32:\"421eaf9f1f471138b06146908624e7cf\";s:6:\"expire\";i:1411248861;}i:45;a:2:{s:2:\"id\";s:32:\"f2c3902f6c74136f61c5a218dc5ee3e0\";s:6:\"expire\";i:1411248861;}i:46;a:2:{s:2:\"id\";s:32:\"d45ebdd923b0bfb8c435700d95d58a2d\";s:6:\"expire\";i:1411248865;}i:47;a:2:{s:2:\"id\";s:32:\"c8c89366546a9c6cffa6bb4a5b997bcd\";s:6:\"expire\";i:1411248865;}i:48;a:2:{s:2:\"id\";s:32:\"12d81fe9ee0ad987a37abb995053f09f\";s:6:\"expire\";i:1411248944;}i:49;a:2:{s:2:\"id\";s:32:\"75eaec8181ffea8c67e34d8533bd86b6\";s:6:\"expire\";i:1411248944;}i:50;a:2:{s:2:\"id\";s:32:\"601415b9af18393bb24c39912c928d28\";s:6:\"expire\";i:1411248944;}}'),('uqvrr8qbo9ik9gmelm08ikr2e4',1411248093,'127.0.0.1','xoopsUserId|s:1:\"1\";xoopsUserGroups|a:2:{i:0;s:1:\"1\";i:1;s:1:\"2\";}xoopsUserLastLogin|i:1411248056;xoopsUserTheme|s:20:\"formulize_standalone\";UserLanguage|s:7:\"english\";ad_sess_regen|b:0;icms_fprint|s:64:\"14c4811d0e8aee9e7c577bb216226c2a1dfd233dc37b39c71ad16486c4289571\";XOOPS_TOKEN_SESSION|a:13:{i:0;a:2:{s:2:\"id\";s:32:\"3c7aac64dd6c7827f736047d06249442\";s:6:\"expire\";i:1411248959;}i:1;a:2:{s:2:\"id\";s:32:\"0eeca1dd35b9f0dc6d65d469492db53b\";s:6:\"expire\";i:1411248962;}i:2;a:2:{s:2:\"id\";s:32:\"f738dd7e5b9bf25f21f9b0152a0d4a13\";s:6:\"expire\";i:1411248962;}i:3;a:2:{s:2:\"id\";s:32:\"082b9f5db1a60a78ee478cd505333c3b\";s:6:\"expire\";i:1411248962;}i:4;a:2:{s:2:\"id\";s:32:\"3783aee2aad61d73bdbf8688018c6bf2\";s:6:\"expire\";i:1411248973;}i:5;a:2:{s:2:\"id\";s:32:\"be8a5107dca0ed459e9a0b36bc2f2a37\";s:6:\"expire\";i:1411248973;}i:6;a:2:{s:2:\"id\";s:32:\"d697506c5988aecaad125d8d7987673c\";s:6:\"expire\";i:1411248973;}i:7;a:2:{s:2:\"id\";s:32:\"5ea4924ae56cb9487773a92e97739ea1\";s:6:\"expire\";i:1411248980;}i:8;a:2:{s:2:\"id\";s:32:\"5354d7a7fc8ee12984c3eb2a131dc6b3\";s:6:\"expire\";i:1411248980;}i:9;a:2:{s:2:\"id\";s:32:\"eef43f6ac431978434445ccc6b8ec392\";s:6:\"expire\";i:1411248980;}i:10;a:2:{s:2:\"id\";s:32:\"119eb2b69f5b2b00411b0254389237c3\";s:6:\"expire\";i:1411248987;}i:11;a:2:{s:2:\"id\";s:32:\"b92a133436b1f38fea1f84d74efabff7\";s:6:\"expire\";i:1411248987;}i:12;a:2:{s:2:\"id\";s:32:\"6aae6226c638b90cfa2c6f1860ad093a\";s:6:\"expire\";i:1411248987;}}');
 /*!40000 ALTER TABLE `selenium_session` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2394,7 +2567,7 @@ CREATE TABLE `selenium_system_autotasks` (
 
 LOCK TABLES `selenium_system_autotasks` WRITE;
 /*!40000 ALTER TABLE `selenium_system_autotasks` DISABLE KEYS */;
-INSERT INTO `selenium_system_autotasks` VALUES (1,'Inactivating users','autotask.php',0,1440,0,1,1411246319,'addon/system',00),(2,'Reactivate suspended users','include/autotasks/reactivate_suspended.php',0,360,0,1,1411246326,'addon/profile',00);
+INSERT INTO `selenium_system_autotasks` VALUES (1,'Inactivating users','autotask.php',0,1440,0,1,1411247197,'addon/system',00),(2,'Reactivate suspended users','include/autotasks/reactivate_suspended.php',0,360,0,1,1411247209,'addon/profile',00);
 /*!40000 ALTER TABLE `selenium_system_autotasks` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2509,7 +2682,7 @@ CREATE TABLE `selenium_tplfile` (
 
 LOCK TABLES `selenium_tplfile` WRITE;
 /*!40000 ALTER TABLE `selenium_tplfile` DISABLE KEYS */;
-INSERT INTO `selenium_tplfile` VALUES (1,1,'system','default','system_userinfo.html','',1411246319,1411246319,'module'),(2,1,'system','default','system_userform.html','',1411246319,1411246319,'module'),(3,1,'system','default','system_rss.html','',1411246319,1411246319,'module'),(4,1,'system','default','system_comment.html','',1411246319,1411246319,'module'),(5,1,'system','default','system_comments_flat.html','',1411246319,1411246319,'module'),(6,1,'system','default','system_comments_thread.html','',1411246319,1411246319,'module'),(7,1,'system','default','system_comments_nest.html','',1411246319,1411246319,'module'),(8,1,'system','default','system_siteclosed.html','',1411246319,1411246319,'module'),(9,1,'system','default','system_redirect.html','',1411246319,1411246319,'module'),(10,1,'system','default','system_dummy.html','',1411246319,1411246319,'module'),(11,1,'system','default','system_notification_list.html','',1411246319,1411246319,'module'),(12,1,'system','default','system_notification_select.html','',1411246319,1411246319,'module'),(13,1,'system','default','system_block_dummy.html','',1411246319,1411246319,'module'),(14,1,'system','default','system_privpolicy.html','',1411246319,1411246319,'module'),(15,1,'system','default','system_error.html','',1411246319,1411246319,'module'),(16,1,'system','default','system_openid.html','',1411246319,1411246319,'module'),(17,1,'system','default','admin/blockspadmin/system_adm_blockspadmin.html','',1411246319,1411246319,'module'),(18,1,'system','default','admin/pages/system_adm_pagemanager_index.html','',1411246319,1411246319,'module'),(19,1,'system','default','admin/blocksadmin/system_adm_blocksadmin.html','',1411246319,1411246319,'module'),(20,1,'system','default','admin/modulesadmin/system_adm_modulesadmin.html','',1411246319,1411246319,'module'),(21,1,'system','default','system_common_form.html','',1411246319,1411246319,'module'),(22,1,'system','default','system_persistabletable_display.html','',1411246319,1411246319,'module'),(23,1,'system','default','admin/customtag/system_adm_customtag.html','',1411246319,1411246319,'module'),(24,1,'system','default','system_default_form.html','',1411246319,1411246319,'module'),(25,1,'system','default','admin/images/system_adm_imagemanager.html','',1411246319,1411246319,'module'),(26,1,'system','default','admin/images/system_adm_imagemanager_imglist.html','',1411246319,1411246319,'module'),(27,1,'system','default','admin/images/system_adm_imagemanager_img.html','',1411246319,1411246319,'module'),(28,1,'system','default','admin/images/system_adm_imagemanager_editimg.html','',1411246319,1411246319,'module'),(29,1,'system','default','admin/images/system_adm_imagemanager_cloneimg.html','',1411246319,1411246319,'module'),(30,1,'system','default','admin/system_adm_rss.html','',1411246319,1411246319,'module'),(31,1,'system','default','system_search.html','',1411246319,1411246319,'module'),(32,1,'system','default','system_persistable_singleview.html','',1411246319,1411246319,'module'),(33,1,'system','default','system_breadcrumb.html','',1411246319,1411246319,'module'),(34,1,'system','default','admin/adsense/system_adm_adsense.html','',1411246319,1411246319,'module'),(35,1,'system','default','system_print.html','',1411246319,1411246319,'module'),(36,1,'system','default','admin/rating/system_adm_rating.html','',1411246319,1411246319,'module'),(37,1,'system','default','system_rating_form.html','',1411246319,1411246319,'module'),(38,1,'system','default','admin/mimetype/system_adm_mimetype.html','',1411246319,1411246319,'module'),(39,1,'system','default','admin/userrank/system_adm_userrank.html','',1411246319,1411246319,'module'),(40,1,'system','default','admin/autotasks/system_adm_autotasks.html','',1411246319,1411246319,'module'),(41,1,'system','default','system_block_user.html','',1411246319,1411246319,'block'),(42,2,'system','default','system_block_login.html','',1411246319,1411246319,'block'),(43,3,'system','default','system_block_search.html','',1411246319,1411246319,'block'),(44,4,'system','default','system_block_waiting.html','',1411246319,1411246319,'block'),(45,5,'system','default','system_block_mainmenu.html','',1411246319,1411246319,'block'),(46,6,'system','default','system_block_siteinfo.html','',1411246319,1411246319,'block'),(47,7,'system','default','system_block_online.html','',1411246319,1411246319,'block'),(48,8,'system','default','system_block_topusers.html','',1411246319,1411246319,'block'),(49,9,'system','default','system_block_newusers.html','',1411246319,1411246319,'block'),(50,10,'system','default','system_block_comments.html','',1411246319,1411246319,'block'),(51,11,'system','default','system_block_notification.html','',1411246319,1411246319,'block'),(52,12,'system','default','system_block_themes.html','',1411246319,1411246319,'block'),(53,13,'system','default','system_block_multilanguage.html','',1411246319,1411246319,'block'),(54,14,'system','default','system_block_socialbookmark.html','',1411246319,1411246319,'block'),(55,15,'system','default','system_admin_block_warnings.html','',1411246319,1411246319,'block'),(56,16,'system','default','system_admin_block_cp.html','',1411246319,1411246319,'block'),(57,17,'system','default','system_admin_block_modules.html','',1411246319,1411246319,'block'),(58,18,'system','default','system_block_bookmarks.html','Things I have bookmarked',1411246319,1411246319,'block'),(59,19,'system','default','system_admin_block_cp_new.html','',1411246319,1411246319,'block'),(60,2,'profile','default','profile_admin_audio.html','',1411246322,0,'module'),(61,2,'profile','default','profile_admin_category.html','',1411246322,0,'module'),(62,2,'profile','default','profile_admin_field.html','',1411246322,0,'module'),(63,2,'profile','default','profile_admin_pictures.html','',1411246322,0,'module'),(64,2,'profile','default','profile_admin_regstep.html','',1411246322,0,'module'),(65,2,'profile','default','profile_admin_tribes.html','',1411246322,0,'module'),(66,2,'profile','default','profile_admin_tribeuser.html','',1411246322,0,'module'),(67,2,'profile','default','profile_admin_videos.html','',1411246322,0,'module'),(68,2,'profile','default','profile_admin_visibility.html','',1411246322,0,'module'),(69,2,'profile','default','profile_audio.html','',1411246322,0,'module'),(70,2,'profile','default','profile_changemail.html','',1411246322,0,'module'),(71,2,'profile','default','profile_changepass.html','',1411246322,0,'module'),(72,2,'profile','default','profile_configs.html','',1411246322,0,'module'),(73,2,'profile','default','profile_footer.html','',1411246322,0,'module'),(74,2,'profile','default','profile_friendship.html','',1411246322,0,'module'),(75,2,'profile','default','profile_header.html','',1411246322,0,'module'),(76,2,'profile','default','profile_index.html','',1411246322,0,'module'),(77,2,'profile','default','profile_pictures.html','',1411246322,0,'module'),(78,2,'profile','default','profile_register.html','',1411246322,0,'module'),(79,2,'profile','default','profile_requirements.html','',1411246322,0,'module'),(80,2,'profile','default','profile_results.html','',1411246322,0,'module'),(81,2,'profile','default','profile_search.html','',1411246322,0,'module'),(82,2,'profile','default','profile_tribes.html','',1411246322,0,'module'),(83,2,'profile','default','profile_userinfo.html','',1411246322,0,'module'),(84,2,'profile','default','profile_videos.html','',1411246322,0,'module'),(85,22,'profile','default','profile_block_friends.html','',1411246322,0,'block'),(86,23,'profile','default','profile_block_usermenu.html','',1411246322,0,'block'),(87,3,'formulize','default','admin/element_type_fileUpload.html','',1411246323,0,'module'),(88,3,'formulize','default','admin/element_type_provinceList.html','',1411246323,0,'module'),(89,3,'formulize','default','admin/element_type_time.html','',1411246323,0,'module'),(90,3,'formulize','default','formulize_cat.html','',1411246323,0,'module'),(91,3,'formulize','default','formulize_application.html','',1411246323,0,'module'),(92,3,'formulize','default','calendar_month.html','',1411246323,0,'module'),(93,3,'formulize','default','calendar_mini_month.html','',1411246323,0,'module'),(94,3,'formulize','default','calendar_micro_month.html','',1411246323,0,'module'),(95,3,'formulize','default','admin/ui.html','',1411246323,0,'module'),(96,3,'formulize','default','admin/ui-tabs.html','',1411246323,0,'module'),(97,3,'formulize','default','admin/ui-accordion.html','',1411246323,0,'module'),(98,3,'formulize','default','admin/application_settings.html','',1411246323,0,'module'),(99,3,'formulize','default','admin/application_forms.html','',1411246323,0,'module'),(100,3,'formulize','default','admin/application_menu_entries.html','',1411246323,0,'module'),(101,3,'formulize','default','admin/application_menu_entries_sections.html','',1411246323,0,'module'),(102,3,'formulize','default','admin/application_screens.html','',1411246323,0,'module'),(103,3,'formulize','default','admin/form_listing.html','',1411246323,0,'module'),(104,3,'formulize','default','admin/form_settings.html','',1411246323,0,'module'),(105,3,'formulize','default','admin/form_permissions.html','',1411246323,0,'module'),(106,3,'formulize','default','admin/form_screens.html','',1411246323,0,'module'),(107,3,'formulize','default','admin/form_elements.html','',1411246323,0,'module'),(108,3,'formulize','default','admin/form_elements_sections.html','',1411246323,0,'module'),(109,3,'formulize','default','admin/form_advanced_calculations.html','',1411246323,0,'module'),(110,3,'formulize','default','admin/application_relationships.html','',1411246323,0,'module'),(111,3,'formulize','default','admin/application_relationships_sections.html','',1411246323,0,'module'),(112,3,'formulize','default','admin/relationship_settings.html','',1411246323,0,'module'),(113,3,'formulize','default','admin/relationship_common_values.html','',1411246323,0,'module'),(114,3,'formulize','default','admin/screen_settings.html','',1411246323,0,'module'),(115,3,'formulize','default','admin/element_names.html','',1411246323,0,'module'),(116,3,'formulize','default','admin/element_options.html','',1411246323,0,'module'),(117,3,'formulize','default','admin/element_display.html','',1411246323,0,'module'),(118,3,'formulize','default','admin/element_advanced.html','',1411246323,0,'module'),(119,3,'formulize','default','admin/element_type_checkbox.html','',1411246323,0,'module'),(120,3,'formulize','default','admin/element_type_date.html','',1411246323,0,'module'),(121,3,'formulize','default','admin/element_type_derived.html','',1411246323,0,'module'),(122,3,'formulize','default','admin/element_type_grid.html','',1411246323,0,'module'),(123,3,'formulize','default','admin/element_type_areamodif.html','',1411246323,0,'module'),(124,3,'formulize','default','admin/element_type_ib.html','',1411246323,0,'module'),(125,3,'formulize','default','admin/element_type_radio.html','',1411246323,0,'module'),(126,3,'formulize','default','admin/element_type_select.html','',1411246323,0,'module'),(127,3,'formulize','default','admin/element_type_sep.html','',1411246323,0,'module'),(128,3,'formulize','default','admin/element_type_subform.html','',1411246323,0,'module'),(129,3,'formulize','default','admin/element_type_textarea.html','',1411246323,0,'module'),(130,3,'formulize','default','admin/element_type_text.html','',1411246323,0,'module'),(131,3,'formulize','default','admin/element_type_yn.html','',1411246323,0,'module'),(132,3,'formulize','default','admin/home.html','',1411246323,0,'module'),(133,3,'formulize','default','admin/home_sections.html','',1411246323,0,'module'),(134,3,'formulize','default','admin/screen_list_entries.html','',1411246323,0,'module'),(135,3,'formulize','default','admin/screen_list_custom.html','',1411246323,0,'module'),(136,3,'formulize','default','admin/screen_list_custom_sections.html','',1411246323,0,'module'),(137,3,'formulize','default','admin/screen_form_options.html','',1411246323,0,'module'),(138,3,'formulize','default','admin/screen_list_buttons.html','',1411246323,0,'module'),(139,3,'formulize','default','admin/screen_list_templates.html','',1411246323,0,'module'),(140,3,'formulize','default','admin/screen_list_headings.html','',1411246323,0,'module'),(141,3,'formulize','default','admin/screen_multipage_options.html','',1411246323,0,'module'),(142,3,'formulize','default','admin/screen_multipage_text.html','',1411246323,0,'module'),(143,3,'formulize','default','admin/screen_multipage_pages.html','',1411246323,0,'module'),(144,3,'formulize','default','admin/screen_multipage_pages_sections.html','',1411246323,0,'module'),(145,3,'formulize','default','admin/screen_multipage_pages_settings.html','',1411246323,0,'module'),(146,3,'formulize','default','admin/screen_multipage_templates.html','',1411246323,0,'module'),(147,3,'formulize','default','admin/element_optionlist.html','',1411246323,0,'module'),(148,3,'formulize','default','admin/advanced_calculation_settings.html','',1411246323,0,'module'),(149,3,'formulize','default','admin/advanced_calculation_input_output.html','',1411246323,0,'module'),(150,3,'formulize','default','admin/advanced_calculation_steps.html','',1411246323,0,'module'),(151,3,'formulize','default','admin/advanced_calculation_steps_sections.html','',1411246323,0,'module'),(152,3,'formulize','default','admin/advanced_calculation_fltr_grp.html','',1411246323,0,'module'),(153,3,'formulize','default','admin/advanced_calculation_fltr_grp_sections.html','',1411246323,0,'module'),(154,3,'formulize','default','admin/import_template.html','',1411246323,0,'module'),(155,3,'formulize','default','admin/export_template.html','',1411246323,0,'module'),(156,4,'content','default','content_header.html','Module Header',1411246323,0,'module'),(157,4,'content','default','content_footer.html','Module Footer',1411246323,0,'module'),(158,4,'content','default','content_admin_content.html','Content Index',1411246323,0,'module'),(159,4,'content','default','content_index.html','Content Index',1411246323,0,'module'),(160,4,'content','default','content_single_content.html','Single content template',1411246323,0,'module'),(161,4,'content','default','content_content.html','Content page',1411246323,0,'module'),(162,4,'content','default','content_requirements.html','Content page',1411246323,0,'module'),(163,4,'content','default','content_content_menu_structure.html','Structure used to create recursive menu.',1411246323,0,'module'),(164,25,'content','default','content_content_display.html','Display the desired content page with some defined configurations.',1411246323,0,'block'),(165,26,'content','default','content_content_menu.html','Show a block with a menu of content pages.',1411246323,0,'block');
+INSERT INTO `selenium_tplfile` VALUES (1,1,'system','default','system_userinfo.html','',1411247197,1411247197,'module'),(2,1,'system','default','system_userform.html','',1411247197,1411247197,'module'),(3,1,'system','default','system_rss.html','',1411247197,1411247197,'module'),(4,1,'system','default','system_comment.html','',1411247197,1411247197,'module'),(5,1,'system','default','system_comments_flat.html','',1411247197,1411247197,'module'),(6,1,'system','default','system_comments_thread.html','',1411247197,1411247197,'module'),(7,1,'system','default','system_comments_nest.html','',1411247197,1411247197,'module'),(8,1,'system','default','system_siteclosed.html','',1411247197,1411247197,'module'),(9,1,'system','default','system_redirect.html','',1411247197,1411247197,'module'),(10,1,'system','default','system_dummy.html','',1411247197,1411247197,'module'),(11,1,'system','default','system_notification_list.html','',1411247197,1411247197,'module'),(12,1,'system','default','system_notification_select.html','',1411247197,1411247197,'module'),(13,1,'system','default','system_block_dummy.html','',1411247197,1411247197,'module'),(14,1,'system','default','system_privpolicy.html','',1411247197,1411247197,'module'),(15,1,'system','default','system_error.html','',1411247197,1411247197,'module'),(16,1,'system','default','system_openid.html','',1411247197,1411247197,'module'),(17,1,'system','default','admin/blockspadmin/system_adm_blockspadmin.html','',1411247197,1411247197,'module'),(18,1,'system','default','admin/pages/system_adm_pagemanager_index.html','',1411247197,1411247197,'module'),(19,1,'system','default','admin/blocksadmin/system_adm_blocksadmin.html','',1411247197,1411247197,'module'),(20,1,'system','default','admin/modulesadmin/system_adm_modulesadmin.html','',1411247197,1411247197,'module'),(21,1,'system','default','system_common_form.html','',1411247197,1411247197,'module'),(22,1,'system','default','system_persistabletable_display.html','',1411247197,1411247197,'module'),(23,1,'system','default','admin/customtag/system_adm_customtag.html','',1411247197,1411247197,'module'),(24,1,'system','default','system_default_form.html','',1411247197,1411247197,'module'),(25,1,'system','default','admin/images/system_adm_imagemanager.html','',1411247197,1411247197,'module'),(26,1,'system','default','admin/images/system_adm_imagemanager_imglist.html','',1411247197,1411247197,'module'),(27,1,'system','default','admin/images/system_adm_imagemanager_img.html','',1411247197,1411247197,'module'),(28,1,'system','default','admin/images/system_adm_imagemanager_editimg.html','',1411247197,1411247197,'module'),(29,1,'system','default','admin/images/system_adm_imagemanager_cloneimg.html','',1411247197,1411247197,'module'),(30,1,'system','default','admin/system_adm_rss.html','',1411247197,1411247197,'module'),(31,1,'system','default','system_search.html','',1411247197,1411247197,'module'),(32,1,'system','default','system_persistable_singleview.html','',1411247197,1411247197,'module'),(33,1,'system','default','system_breadcrumb.html','',1411247197,1411247197,'module'),(34,1,'system','default','admin/adsense/system_adm_adsense.html','',1411247197,1411247197,'module'),(35,1,'system','default','system_print.html','',1411247197,1411247197,'module'),(36,1,'system','default','admin/rating/system_adm_rating.html','',1411247197,1411247197,'module'),(37,1,'system','default','system_rating_form.html','',1411247197,1411247197,'module'),(38,1,'system','default','admin/mimetype/system_adm_mimetype.html','',1411247197,1411247197,'module'),(39,1,'system','default','admin/userrank/system_adm_userrank.html','',1411247197,1411247197,'module'),(40,1,'system','default','admin/autotasks/system_adm_autotasks.html','',1411247197,1411247197,'module'),(41,1,'system','default','system_block_user.html','',1411247197,1411247197,'block'),(42,2,'system','default','system_block_login.html','',1411247197,1411247197,'block'),(43,3,'system','default','system_block_search.html','',1411247197,1411247197,'block'),(44,4,'system','default','system_block_waiting.html','',1411247197,1411247197,'block'),(45,5,'system','default','system_block_mainmenu.html','',1411247197,1411247197,'block'),(46,6,'system','default','system_block_siteinfo.html','',1411247197,1411247197,'block'),(47,7,'system','default','system_block_online.html','',1411247197,1411247197,'block'),(48,8,'system','default','system_block_topusers.html','',1411247197,1411247197,'block'),(49,9,'system','default','system_block_newusers.html','',1411247197,1411247197,'block'),(50,10,'system','default','system_block_comments.html','',1411247197,1411247197,'block'),(51,11,'system','default','system_block_notification.html','',1411247197,1411247197,'block'),(52,12,'system','default','system_block_themes.html','',1411247197,1411247197,'block'),(53,13,'system','default','system_block_multilanguage.html','',1411247197,1411247197,'block'),(54,14,'system','default','system_block_socialbookmark.html','',1411247197,1411247197,'block'),(55,15,'system','default','system_admin_block_warnings.html','',1411247197,1411247197,'block'),(56,16,'system','default','system_admin_block_cp.html','',1411247197,1411247197,'block'),(57,17,'system','default','system_admin_block_modules.html','',1411247197,1411247197,'block'),(58,18,'system','default','system_block_bookmarks.html','Things I have bookmarked',1411247197,1411247197,'block'),(59,19,'system','default','system_admin_block_cp_new.html','',1411247197,1411247197,'block'),(60,2,'profile','default','profile_admin_audio.html','',1411247203,0,'module'),(61,2,'profile','default','profile_admin_category.html','',1411247203,0,'module'),(62,2,'profile','default','profile_admin_field.html','',1411247203,0,'module'),(63,2,'profile','default','profile_admin_pictures.html','',1411247203,0,'module'),(64,2,'profile','default','profile_admin_regstep.html','',1411247203,0,'module'),(65,2,'profile','default','profile_admin_tribes.html','',1411247203,0,'module'),(66,2,'profile','default','profile_admin_tribeuser.html','',1411247203,0,'module'),(67,2,'profile','default','profile_admin_videos.html','',1411247203,0,'module'),(68,2,'profile','default','profile_admin_visibility.html','',1411247203,0,'module'),(69,2,'profile','default','profile_audio.html','',1411247203,0,'module'),(70,2,'profile','default','profile_changemail.html','',1411247203,0,'module'),(71,2,'profile','default','profile_changepass.html','',1411247203,0,'module'),(72,2,'profile','default','profile_configs.html','',1411247203,0,'module'),(73,2,'profile','default','profile_footer.html','',1411247203,0,'module'),(74,2,'profile','default','profile_friendship.html','',1411247203,0,'module'),(75,2,'profile','default','profile_header.html','',1411247203,0,'module'),(76,2,'profile','default','profile_index.html','',1411247203,0,'module'),(77,2,'profile','default','profile_pictures.html','',1411247203,0,'module'),(78,2,'profile','default','profile_register.html','',1411247203,0,'module'),(79,2,'profile','default','profile_requirements.html','',1411247203,0,'module'),(80,2,'profile','default','profile_results.html','',1411247203,0,'module'),(81,2,'profile','default','profile_search.html','',1411247203,0,'module'),(82,2,'profile','default','profile_tribes.html','',1411247204,0,'module'),(83,2,'profile','default','profile_userinfo.html','',1411247204,0,'module'),(84,2,'profile','default','profile_videos.html','',1411247204,0,'module'),(85,22,'profile','default','profile_block_friends.html','',1411247204,0,'block'),(86,23,'profile','default','profile_block_usermenu.html','',1411247204,0,'block'),(87,3,'formulize','default','admin/element_type_fileUpload.html','',1411247204,0,'module'),(88,3,'formulize','default','admin/element_type_provinceList.html','',1411247204,0,'module'),(89,3,'formulize','default','admin/element_type_time.html','',1411247204,0,'module'),(90,3,'formulize','default','formulize_cat.html','',1411247204,0,'module'),(91,3,'formulize','default','formulize_application.html','',1411247204,0,'module'),(92,3,'formulize','default','calendar_month.html','',1411247204,0,'module'),(93,3,'formulize','default','calendar_mini_month.html','',1411247204,0,'module'),(94,3,'formulize','default','calendar_micro_month.html','',1411247204,0,'module'),(95,3,'formulize','default','admin/ui.html','',1411247204,0,'module'),(96,3,'formulize','default','admin/ui-tabs.html','',1411247204,0,'module'),(97,3,'formulize','default','admin/ui-accordion.html','',1411247204,0,'module'),(98,3,'formulize','default','admin/application_settings.html','',1411247204,0,'module'),(99,3,'formulize','default','admin/application_forms.html','',1411247204,0,'module'),(100,3,'formulize','default','admin/application_menu_entries.html','',1411247204,0,'module'),(101,3,'formulize','default','admin/application_menu_entries_sections.html','',1411247204,0,'module'),(102,3,'formulize','default','admin/application_screens.html','',1411247204,0,'module'),(103,3,'formulize','default','admin/form_listing.html','',1411247204,0,'module'),(104,3,'formulize','default','admin/form_settings.html','',1411247204,0,'module'),(105,3,'formulize','default','admin/form_permissions.html','',1411247204,0,'module'),(106,3,'formulize','default','admin/form_screens.html','',1411247204,0,'module'),(107,3,'formulize','default','admin/form_elements.html','',1411247204,0,'module'),(108,3,'formulize','default','admin/form_elements_sections.html','',1411247204,0,'module'),(109,3,'formulize','default','admin/form_advanced_calculations.html','',1411247204,0,'module'),(110,3,'formulize','default','admin/application_relationships.html','',1411247204,0,'module'),(111,3,'formulize','default','admin/application_relationships_sections.html','',1411247204,0,'module'),(112,3,'formulize','default','admin/relationship_settings.html','',1411247204,0,'module'),(113,3,'formulize','default','admin/relationship_common_values.html','',1411247204,0,'module'),(114,3,'formulize','default','admin/screen_settings.html','',1411247204,0,'module'),(115,3,'formulize','default','admin/element_names.html','',1411247204,0,'module'),(116,3,'formulize','default','admin/element_options.html','',1411247204,0,'module'),(117,3,'formulize','default','admin/element_display.html','',1411247204,0,'module'),(118,3,'formulize','default','admin/element_advanced.html','',1411247204,0,'module'),(119,3,'formulize','default','admin/element_type_checkbox.html','',1411247204,0,'module'),(120,3,'formulize','default','admin/element_type_date.html','',1411247204,0,'module'),(121,3,'formulize','default','admin/element_type_derived.html','',1411247204,0,'module'),(122,3,'formulize','default','admin/element_type_grid.html','',1411247204,0,'module'),(123,3,'formulize','default','admin/element_type_areamodif.html','',1411247204,0,'module'),(124,3,'formulize','default','admin/element_type_ib.html','',1411247204,0,'module'),(125,3,'formulize','default','admin/element_type_radio.html','',1411247204,0,'module'),(126,3,'formulize','default','admin/element_type_select.html','',1411247204,0,'module'),(127,3,'formulize','default','admin/element_type_sep.html','',1411247204,0,'module'),(128,3,'formulize','default','admin/element_type_subform.html','',1411247204,0,'module'),(129,3,'formulize','default','admin/element_type_textarea.html','',1411247204,0,'module'),(130,3,'formulize','default','admin/element_type_text.html','',1411247204,0,'module'),(131,3,'formulize','default','admin/element_type_yn.html','',1411247204,0,'module'),(132,3,'formulize','default','admin/home.html','',1411247204,0,'module'),(133,3,'formulize','default','admin/home_sections.html','',1411247204,0,'module'),(134,3,'formulize','default','admin/screen_list_entries.html','',1411247204,0,'module'),(135,3,'formulize','default','admin/screen_list_custom.html','',1411247204,0,'module'),(136,3,'formulize','default','admin/screen_list_custom_sections.html','',1411247204,0,'module'),(137,3,'formulize','default','admin/screen_form_options.html','',1411247204,0,'module'),(138,3,'formulize','default','admin/screen_list_buttons.html','',1411247204,0,'module'),(139,3,'formulize','default','admin/screen_list_templates.html','',1411247204,0,'module'),(140,3,'formulize','default','admin/screen_list_headings.html','',1411247204,0,'module'),(141,3,'formulize','default','admin/screen_multipage_options.html','',1411247204,0,'module'),(142,3,'formulize','default','admin/screen_multipage_text.html','',1411247204,0,'module'),(143,3,'formulize','default','admin/screen_multipage_pages.html','',1411247204,0,'module'),(144,3,'formulize','default','admin/screen_multipage_pages_sections.html','',1411247204,0,'module'),(145,3,'formulize','default','admin/screen_multipage_pages_settings.html','',1411247204,0,'module'),(146,3,'formulize','default','admin/screen_multipage_templates.html','',1411247204,0,'module'),(147,3,'formulize','default','admin/element_optionlist.html','',1411247204,0,'module'),(148,3,'formulize','default','admin/advanced_calculation_settings.html','',1411247204,0,'module'),(149,3,'formulize','default','admin/advanced_calculation_input_output.html','',1411247204,0,'module'),(150,3,'formulize','default','admin/advanced_calculation_steps.html','',1411247204,0,'module'),(151,3,'formulize','default','admin/advanced_calculation_steps_sections.html','',1411247204,0,'module'),(152,3,'formulize','default','admin/advanced_calculation_fltr_grp.html','',1411247204,0,'module'),(153,3,'formulize','default','admin/advanced_calculation_fltr_grp_sections.html','',1411247204,0,'module'),(154,3,'formulize','default','admin/import_template.html','',1411247204,0,'module'),(155,3,'formulize','default','admin/export_template.html','',1411247204,0,'module'),(156,4,'content','default','content_header.html','Module Header',1411247205,0,'module'),(157,4,'content','default','content_footer.html','Module Footer',1411247205,0,'module'),(158,4,'content','default','content_admin_content.html','Content Index',1411247205,0,'module'),(159,4,'content','default','content_index.html','Content Index',1411247205,0,'module'),(160,4,'content','default','content_single_content.html','Single content template',1411247205,0,'module'),(161,4,'content','default','content_content.html','Content page',1411247205,0,'module'),(162,4,'content','default','content_requirements.html','Content page',1411247205,0,'module'),(163,4,'content','default','content_content_menu_structure.html','Structure used to create recursive menu.',1411247205,0,'module'),(164,25,'content','default','content_content_display.html','Display the desired content page with some defined configurations.',1411247205,0,'block'),(165,26,'content','default','content_content_menu.html','Show a block with a menu of content pages.',1411247205,0,'block');
 /*!40000 ALTER TABLE `selenium_tplfile` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2536,7 +2709,7 @@ CREATE TABLE `selenium_tplset` (
 
 LOCK TABLES `selenium_tplset` WRITE;
 /*!40000 ALTER TABLE `selenium_tplset` DISABLE KEYS */;
-INSERT INTO `selenium_tplset` VALUES (1,'default','ImpressCMS Default Template Set','',1411246319);
+INSERT INTO `selenium_tplset` VALUES (1,'default','ImpressCMS Default Template Set','',1411247197);
 /*!40000 ALTER TABLE `selenium_tplset` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2622,7 +2795,7 @@ CREATE TABLE `selenium_users` (
 
 LOCK TABLES `selenium_users` WRITE;
 /*!40000 ALTER TABLE `selenium_users` DISABLE KEYS */;
-INSERT INTO `selenium_users` VALUES (1,'','admin','formulize@example.com','http://localhost/','blank.gif',1411246319,'','','',0,'','','','','0383b11abedf6f8870c40ac3c4e018eee2c2eb9d11299aab39d66a5be07e426c',0,0,7,'5','formulize_standalone',0.0,1411246331,'thread',0,1,0,'','','',0,'english','','oB9E7zoRwyjjBmtyUiulBqE7CcW4wTWMnX6z1hEIiBuXj4vdX3MEOD1t6Ivup6qFr',0,0,1,'admin');
+INSERT INTO `selenium_users` VALUES (1,'','admin','formulize@example.com','http://localhost/','blank.gif',1411247197,'','','',0,'','','','','4d8bbec8f8afbb17b0794cda2120334497acb9689169a6b462f682739a53f575',0,0,7,'5','formulize_standalone',0.0,1411248562,'thread',0,1,0,'','','',0,'english','','3NB7AsX7n1ZeT4j334u4hQTeaBJi8zvESLTuyzizKPgwCbZ0kSbRQyxBStUMNjdMz',0,0,1,'admin');
 /*!40000 ALTER TABLE `selenium_users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2713,4 +2886,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-09-20 20:52:13
+-- Dump completed on 2014-09-20 21:30:54
