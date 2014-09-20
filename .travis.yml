@@ -58,7 +58,9 @@ script:
 
 after_script:
   - mysqldump -u travis formulize > ci/formulize_test_db.sql
-  - cat "ci/formulize_test_db.sql"
+  - git config user.email "julian@freeform.ca"
+  - git config user.name "Julian Egelstaff"
+  - git config push.default simple
   - git add ci/formulize_test_db.sql
   - git commit -m "updating test db [skip ci]"
   - git push https://${GITHUB_TOKEN}@github.com/jegelstaff/formulize.git
