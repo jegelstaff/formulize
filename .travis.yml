@@ -40,6 +40,8 @@ install:
   # add to .ini and restart
   - phpenv config-add ci/travis/php.ini
   - sudo service apache2 restart
+  # copy mysql config file to home dir
+  - sudo cp ci/travis/.my.cnf ~/.my.cnf
 
 addons:
   sauce_connect: true
@@ -55,7 +57,8 @@ script:
   - curl http://localhost/index.php
 
 after_script:
-  - mysqldump --user=root --password= formulize > ci/formulize_test_db.sql
+  - mysqldump -u root formulize > ci/formulize_test_db.sql
+  - cat "ci/formulize_test_db.sql"
   - git add ci/formulize_test_db.sql
   - git commit -m "updating test db [skip ci]"
   - git push https://${GITHUB_TOKEN}@github.com/jegelstaff/formulize.git
