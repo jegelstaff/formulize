@@ -137,13 +137,6 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "link text",
-        "value": "SelectBoxTest - Dropdown box - 19"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
         "type": "xpath",
         "value": "//div[@id='drawer-2-8']//a[.=' Configure']"
       }
@@ -197,13 +190,6 @@
       "locator": {
         "type": "link text",
         "value": "Stories"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "link text",
-        "value": "SelectBoxTest - Dropdown box - 19"
       }
     },
     {
