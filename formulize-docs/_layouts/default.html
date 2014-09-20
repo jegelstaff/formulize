@@ -35,7 +35,7 @@
             // Thanks to Donald Sutherland for this function
             // http://mynameisdonald.com/javascript-functions-how-to-capitalize-words/
             function eachWord(str){
-               return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1);});
+               return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
             }
             
             var path = new String(window.document.location);
