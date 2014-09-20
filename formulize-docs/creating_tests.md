@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: developers/version_control/testing/selenium_builder/
+permalink: developers/version_control/testing/creating_tests/
 ---
 
 # Creating Selenium 2 Tests with Selenium Builder
@@ -15,12 +15,16 @@ Current tests start with a blank slate, and install Formulize, then set up a dem
 
 ### Setup
 
-Before creating a new test, you need to get your location installation into the same condition as the Travis CI system is in after it runs all the tests. This way, your new test will build on the setup and configuration of all the other tests. There are two ways you can do this:
+Before creating a new test, you need to get your local configuration to match the the configuration that the Travis CI system has after it has run all the tests. This way, your new test will build on the setup and configuration of all the other tests. There are two ways you can do this:
 
 1. Run all the existing tests locally
 2. Dump all the tables in your database and then import a SQL dump from a system where all the tests have been completed.
 
 If you follow method 2, then you will need to alter the file in your trust path so it has the database table prefix  **selenium** and has the salt **s4RyHEWYxWN9OUAGvCdxljYRqqSgEf9qbsvVSvhWSumtfyI7SNx6ct1n5fypNFdi4**.
+
+Also, you need to ensure that your local installation is being treated as the DocumentRoot of your webserver, ie: when you go to [http://localhost](http://localhost) you see your local installation; your local installation does not have a directory name after the localhost domain name.
+
+If you do not configure your local installation to behave this way, then you will need to manually edit the test file after you save it, to change the references to the URL so they are simply 'localhost' and include no directory names.
 
 ### Recording
 

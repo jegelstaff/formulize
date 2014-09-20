@@ -5,7 +5,7 @@ permalink: developers/version_control/testing/
 
 # Testing
 
-We use Selenium 2 tests to perform application level testing of Formulize.  [Learn more about creating tests](selenium_builder).
+We use Selenium 2 tests to perform application level testing of Formulize.  [Learn more about creating tests](creating_tests).
 
 There is an existing body of tests that creates a sample application in Formulize.  You can make tests for your new functionality using Selenium Builder, and then include those in the branch that you are working on.
 
