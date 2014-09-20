@@ -49,6 +49,8 @@ before_script:
   - mysql -e 'create database formulize;'
   # Uncomment the next line to initialize the database as if all existing tests have run.
   # This is useful for quickly running just one new test, to see if it is working.
+  # Alter the ci/travis/interpreter_config.json file to refer to your one test by name
+  # instead of referring to * for all tests.
   # IF your new test MODIFIES the DATABASE, then you will need to turn OFF the
   # push of the database back to GitHub (below), so Travis doesn't update this initial state
   # with the changes from your test.
@@ -68,6 +70,6 @@ after_script:
   - git config user.name "Julian Egelstaff"
   - git config push.default simple
   - git add ci/formulize_test_db.sql
-  - git commit -m "Travis-CI: updating test db [skip ci]"
+  - git commit -m "Travis updating test DB [skip ci]"
   - git push https://${GITHUB_TOKEN}@github.com/jegelstaff/formulize.git HEAD:${TRAVIS_BRANCH}
   
