@@ -2,7 +2,7 @@
 
 echo $TRAVIS_BRANCH
 echo $COMMIT_MESSAGE
-if test "${COMMIT_MESSAGE#*'[update test db]'}" != "$COMMIT_MESSAGE" && "$TRAVIS_BRANCH" == "master"
+if [[ "${COMMIT_MESSAGE#*'[update test db]'}" != "$COMMIT_MESSAGE" && "$TRAVIS_BRANCH" == "master" ]]
     echo '[update test db] sent from master branch!'
 fi
 echo ${COMMIT_MESSAGE#*'[update test db]'}
