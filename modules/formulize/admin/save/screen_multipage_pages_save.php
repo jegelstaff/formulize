@@ -31,7 +31,7 @@
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
-  return;
+	return;
 }
 
 //print_r($_POST);
@@ -51,11 +51,11 @@ $screen = $screen_handler->get($sid);
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($screen->getVar('fid'));
 if($formObject->getVar('lockedform')) {
-  return;
+	return;
 }
 // check if the user has permission to edit the form
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
-  return;
+	return;
 }
 
 // get page titles
@@ -116,30 +116,30 @@ if($pagesHaveBeenReordered) {
 // handle "deleting" conditions...
 /*foreach($conditions as $pagenum=>$datapiece) {
    if(isset($datapiece['pagecons']) AND $datapiece['pagecons'] == "none") {
-        $conditions[$pagenum]['details']['elements'] = array();
-        $conditions[$pagenum]['details']['ops'] = array();
-        $conditions[$pagenum]['details']['terms'] = array();
-    }
+		$conditions[$pagenum]['details']['elements'] = array();
+		$conditions[$pagenum]['details']['ops'] = array();
+		$conditions[$pagenum]['details']['terms'] = array();
+	}
 }*/
 
 // alter the information based on a user add or delete
 switch ($op) {
 	case "addpage":
-    $pages[]=array();
-    $pagetitles[]='New page';
-    $conditions[]=array();
-		break;
+	$pages[]=array();
+	$pagetitles[]='New page';
+	$conditions[]=array();
+	break;
 	case "delpage":
-		ksort($pages);
+	ksort($pages);
 
-		ksort($pagetitles);
+	ksort($pagetitles);
 
-		ksort($conditions);
+	ksort($conditions);
 
-    array_splice($pages, $index, 1);
-    array_splice($pagetitles, $index, 1);
-    array_splice($conditions, $index, 1);
-		break;
+	array_splice($pages, $index, 1);
+	array_splice($pagetitles, $index, 1);
+	array_splice($conditions, $index, 1);
+	break;
 }
 
 $screen->setVar('pages',serialize($pages));
@@ -148,12 +148,12 @@ $screen->setVar('conditions',serialize($conditions));
 
 
 if(!$screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".$xoopsDB->error();
+	print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
 
 
 // reload the page if the state has changed
 if($op == "addpage" OR $op=="delpage" OR $_POST['reload_multipage_pages']) {
-    print "/* eval */ reloadWithScrollPosition();";
+	print "/* eval */ reloadWithScrollPosition();";
 }
 ?>

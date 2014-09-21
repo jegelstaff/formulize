@@ -31,7 +31,7 @@
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
-  return;
+	return;
 }
 
 
@@ -47,17 +47,17 @@ $screen = $screen_handler->get($sid);
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($screen->getVar('fid'));
 if($formObject->getVar('lockedform')) {
-  return;
+	return;
 }
 // check if the user has permission to edit the form
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
-  return;
+	return;
 }
 $screen->setVar('introtext',get_magic_quotes_gpc() ? stripslashes($screens['introtext']) : $screens['introtext']);
 $screen->setVar('thankstext',get_magic_quotes_gpc() ? stripslashes($screens['thankstext']) : $screens['thankstext']);
 
 
 if(!$screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".$xoopsDB->error();
+	print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
 ?>

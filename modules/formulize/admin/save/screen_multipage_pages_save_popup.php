@@ -31,7 +31,7 @@
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
-  return;
+	return;
 }
 
 //print_r($_POST);
@@ -47,11 +47,11 @@ $screen = $screen_handler->get($sid);
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($screen->getVar('fid'));
 if($formObject->getVar('lockedform')) {
-  return;
+	return;
 }
 // check if the user has permission to edit the form
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
-  return;
+	return;
 }
 $pages = $screen->getVar('pages');
 $pagetitles = $screen->getVar('pagetitles');
@@ -61,30 +61,30 @@ foreach($screens as $k=>$v) {
 	if(substr($k, 0, 10) == "pagetitle_") {
 		$page_number = substr($k, 10);
 		$pagetitles[$page_number] = $v;
-		
+
 		// grab any conditions for this page too
 		// first delete any that we need to
 		$conditionsDeleteParts = explode("_", $_POST['conditionsdelete']);
 		$filter_key = 'pagefilter_'.$page_number;
 		if($_POST['conditionsdelete'] != "" AND $conditionsDeleteParts[1] == $page_number) { // key 1 will be the page number where the X was clicked
-		  // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
-		  // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-		  $originalCount = count($_POST[$filter_key.'_elements']);
-		  for($i=$conditionsDeleteParts[2];$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
-		    if($i>$conditionsDeleteParts[2]) {
-		      $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
-		      $_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
-		      $_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
-		      $_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
-		    }
-		    if($i==$conditionsDeleteParts[2] OR $i+1 == $originalCount) {
-		      // first time through or last time through, unset things
-		      unset($_POST[$filter_key."_elements"][$i]);
-		      unset($_POST[$filter_key."_ops"][$i]);
-		      unset($_POST[$filter_key."_terms"][$i]);
-		      unset($_POST[$filter_key."_types"][$i]);
-			  }
-			}
+			// go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
+			// need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
+			$originalCount = count($_POST[$filter_key.'_elements']);
+		for($i=$conditionsDeleteParts[2];$i<$originalCount;$i++) { // 2 is the X that was clicked for this page
+		  	if($i>$conditionsDeleteParts[2]) {
+		  		$_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
+		  		$_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
+		  		$_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
+		  		$_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
+		  	}
+		  	if($i==$conditionsDeleteParts[2] OR $i+1 == $originalCount) {
+				// first time through or last time through, unset things
+		  		unset($_POST[$filter_key."_elements"][$i]);
+		  		unset($_POST[$filter_key."_ops"][$i]);
+		  		unset($_POST[$filter_key."_terms"][$i]);
+		  		unset($_POST[$filter_key."_types"][$i]);
+		  	}
+		}
 			$conditionsStateChanged = true;
 		}
 		$conditions[$page_number] = array();
@@ -122,9 +122,9 @@ foreach($screens as $k=>$v) {
 			$conditions[$page_number] = array();
 		}
 
-  }elseif(substr($k, 0, 4) == "page") { // page must come last since those letters are common to the beginning of everything
+	} elseif(substr($k, 0, 4) == "page") { // page must come last since those letters are common to the beginning of everything
 		$pages[substr($k, 4)] = unserialize($v); // arrays will have been serialized when they were put into processedValues
-	} 
+	}
 }
 
 $screen->setVar('pages',serialize($pages));
@@ -136,11 +136,11 @@ $screen->setVar('introtext', undoAllHTMLChars($screen->getVar('introtext', "e"))
 $screen->setVar('thankstext', undoAllHTMLChars($screen->getVar('thankstext', "e")));
 
 if(!$screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".$xoopsDB->error();
+	print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
 
 // reload the page if the state has changed
 if($conditionsStateChanged) {
-    print "/* eval */ reloadPopup();";
+	print "/* eval */ reloadPopup();";
 }
 ?>
