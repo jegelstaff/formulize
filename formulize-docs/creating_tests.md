@@ -13,7 +13,7 @@ Current tests start with a blank slate, and install Formulize, then set up a dem
 
 ## Creating A New Test
 
-### Setup
+### Local Setup
 
 Before creating a new test, you need to get your local configuration to match the the configuration that the Travis CI system has after it has run all the tests. This way, your new test will build on the setup and configuration of all the other tests. There are two ways you can do this:
 
@@ -25,6 +25,20 @@ If you follow method 2, then you will need to alter the file in your trust path 
 Also, you need to ensure that your local installation is being treated as the DocumentRoot of your webserver, ie: when you go to [http://localhost](http://localhost) you see your local installation; your local installation does not have a directory name after the localhost domain name.
 
 If you do not configure your local installation to behave this way, then you will need to manually edit the test file after you save it, to change the references to the URL so they are simply 'localhost' and include no directory names.
+
+### CI Setup
+
+If you are checking to see that your test works in the Travis CI and Sauce Labs system, you can uncomment this line of the **.travis.yml** file:
+
+    # - mysql formulize < ci/formulize_test_db.sql
+    
+That will cause the Travis CI system to prepopulate the database, as if all the current tests had already run. This way you can run just your own new test to make sure it works.
+
+To cause the system to run only your new test, you need to modify this line in the **ci/travis/interpreter_config.json** file:
+
+    "ci/selenium2-tests/*"
+    
+Replace the * with the name of your new test.
 
 ### Recording
 

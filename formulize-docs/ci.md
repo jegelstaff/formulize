@@ -101,11 +101,13 @@ Some of the contents of the file are based on the Sauce-Travis documentation lin
 
 #### env
 
-This records global variables for the Sauce username and password, and a GitHub access token we may need if the commit has requested an update to our official copy of the test application database.  This section also declares the php environment we're going to use.
+This records global variables for the Sauce username and password, and a GitHub access token we may need if the commit has requested an update to our official copy of the test application database. For details about how to encrypt these credentials to include them in your .travis.yml file, see [https://docs.saucelabs.com/ci-integrations/travis-ci/](https://docs.saucelabs.com/ci-integrations/travis-ci/).
+
+This section also declares the php environment we're going to use.
 
 #### install
 
-This runs a series of commands on the spontaneous cloud server that Travis builds for us.  These commands install an Apache server with PHP, and configure it so the webroot folder is the folder where Travis has copied all the files from our GitHub repository.
+This runs a series of commands on the spontaneous cloud server that Travis builds for us.  These commands install an Apache server with PHP, and configure it so the webroot folder is the folder where Travis has copied all the files from our GitHub repository. These commands also give global write permissions to certain folders that need to be writable by the application.
 
 These commands depend on two other files:
 
@@ -124,6 +126,8 @@ This installs the se-interpreter which is a tool for reading the Selenium tests 
 
 Optionally, you can uncomment the line **# - mysql formulize < ci/formulize_test_db.sql** to instruct Travis to prepopulate the database as if all the tests had already been run. This is useful when you are trying to perfect a single new test. In this case, you will need to modify the **interpreter_config.json** file (see below) so that it runs only your one test and not all the tests.
 
+See [Creating Tests](../version_control/testing/creating_tests) for more information about testing.
+
 #### script
 
 This runs the se-interpreter, and points it at a configuration file.  It also dumps the error log to the screen after se-interpreter is finished, and tries to load the site index.php file as a last resort to give us a clue what's going on just in case all else fails.
@@ -136,7 +140,7 @@ It is critical that **[update test db]** is only used from the master branch! It
 
 These commands depend on a shell script that will do the actual dump and push to GitHub, using the secure access token encrypted in the **env** section:  [ci/travis/update-test-db.sh](https://github.com/jegelstaff/formulize/blob/master/ci/travis/update-test-db.sh)
 
-Huge thanks Project-OSRM for the [example of how to listen to the commit message and react accordingly](to https://github.com/Project-OSRM/node-osrm/blob/master/.travis.yml).
+Huge thanks Project-OSRM for the [example of how to listen to the commit message and react accordingly](https://github.com/Project-OSRM/node-osrm/blob/master/.travis.yml).
 
 ### se-interpreter configuration
 

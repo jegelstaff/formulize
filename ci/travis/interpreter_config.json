@@ -14,7 +14,7 @@
               "accessKey": "${SAUCE_ACCESS_KEY}",
               "tunnel-identifier": "${TRAVIS_JOB_NUMBER}",
               "build": "${TRAVIS_BUILD_NUMBER}",
-              "tags": "${TRAVIS_COMMIT_MESSAGE}"
+              "tags": "${TRAVIS_BRANCH}"
            }
         }
       ],
