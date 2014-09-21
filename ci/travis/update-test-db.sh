@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo $TRAVIS_BRANCH
-echo $TRAVIS_COMMIT_MESSAGE
+echo $TRAVIS_COMMIT
 
 
 # - mysqldump -u travis formulize > ci/formulize_test_db.sql
