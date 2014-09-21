@@ -634,6 +634,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
                } elseif($sortField == "mod_date") {
                     $sortField = "mod_datetime";
                     $elementMetaData['id_form'] = $fid;
+               } elseif($sortField == "entry_id") {
+                    $sortField = "entry_id";
+                    $elementMetaData['id_form'] = $fid;
                } else {
                     $elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...               
                }
