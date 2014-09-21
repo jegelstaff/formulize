@@ -12,5 +12,7 @@ php:
   - 5.5
 
 script:
+  # get commit message
+  - COMMIT_MESSAGE=$(git show -s --format=%B $TRAVIS_COMMIT | tr -d '\n')
   - bash ci/travis/update-test-db.sh
   
