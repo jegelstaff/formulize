@@ -1,3 +1,9 @@
+#!/bin/bash
+
+echo $TRAVIS_BRANCH
+echo $TRAVIS_COMMIT_MESSAGE
+
+
 # - mysqldump -u travis formulize > ci/formulize_test_db.sql
 # - git config user.email "formulize@travis.ci"
 # - git config user.name "Travis CI"
