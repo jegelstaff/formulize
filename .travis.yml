@@ -57,7 +57,3 @@ script:
   - curl http://localhost/index.php
 
 after_script:
-  - mysqldump --user=root --password= formulize > ci/formulize_test_db.sql
-  - git add ci/formulize_test_db.sql
-  - git commit -m "updating test db [skip ci]"
-  - git push https://${GITHUB_TOKEN}@github.com/jegelstaff/formulize.git
