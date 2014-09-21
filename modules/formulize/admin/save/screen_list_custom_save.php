@@ -31,7 +31,7 @@
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
-  return;
+	return;
 }
 
 $aid = intval($_POST['aid']);
@@ -45,11 +45,11 @@ $screen = $screen_handler->get($sid);
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($screen->getVar('fid'));
 if($formObject->getVar('lockedform')) {
-  return;
+	return;
 }
 // check if the user has permission to edit the form
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
-  return;
+	return;
 }
 
 // data schema:
@@ -75,67 +75,67 @@ $removeEffect = $_POST['removeeffect'] ? explode("_", $_POST['removeeffect']) : 
 
 // read all the button info that was submitted, pack it up and assign it to the screen object
 foreach($_POST as $k=>$v) {
-  if(substr($k, 0, 7)=="handle_") {
-    // found a button, grab all its info
-    $buttonId = substr($k, 7);
-    if((string)$buttonId === (string)$deleteButton) { continue; }
-    $buttonData[$buttonId]['handle'] = $v;
-    $buttonData[$buttonId]['buttontext'] = $_POST['buttontext_'.$buttonId];
-    $buttonData[$buttonId]['messagetext'] = $_POST['messagetext_'.$buttonId];
-    $buttonData[$buttonId]['appearinline'] = $_POST['appearinline_'.$buttonId];
-    $buttonData[$buttonId]['applyto'] = $_POST['applyto_'.$buttonId];
-    $buttonData[$buttonId]['groups'] = $_POST['groups_'.$buttonId];
-    if(isset($_POST['code_'.$buttonId])) {
-      foreach($_POST['code_'.$buttonId] as $effectId=>$code) { 
-        if((string)$effectId === (string)$removeEffect[1] AND (string)$buttonId === (string)$removeEffect[0]) { continue; }
-        $buttonData[$buttonId][$effectId]['code'] = $code;    
-      }
-    }
-    if(isset($_POST['html_'.$buttonId])) {
-      foreach($_POST['html_'.$buttonId] as $effectId=>$html) {
-        if((string)$effectId === (string)$removeEffect[1] AND (string)$buttonId === (string)$removeEffect[0]) { continue; }
-        $buttonData[$buttonId][$effectId]['html'] = $html;    
-      }
-    }
-    if(isset($_POST['element_'.$buttonId])) {
-      foreach($_POST['element_'.$buttonId] as $effectId=>$element) {
-        if((string)$effectId === (string)$removeEffect[1] AND (string)$buttonId === (string)$removeEffect[0]) { continue; }
-        $buttonData[$buttonId][$effectId]['element'] = $element;
-        $buttonData[$buttonId][$effectId]['action'] = $_POST['action_'.$buttonId][$effectId];
-        $buttonData[$buttonId][$effectId]['value'] = $_POST['value_'.$buttonId][$effectId];
-      }
-    }
-  }
+	if(substr($k, 0, 7)=="handle_") {
+		// found a button, grab all its info
+		$buttonId = substr($k, 7);
+		if((string)$buttonId === (string)$deleteButton) { continue; }
+		$buttonData[$buttonId]['handle'] = $v;
+		$buttonData[$buttonId]['buttontext'] = $_POST['buttontext_'.$buttonId];
+		$buttonData[$buttonId]['messagetext'] = $_POST['messagetext_'.$buttonId];
+		$buttonData[$buttonId]['appearinline'] = $_POST['appearinline_'.$buttonId];
+		$buttonData[$buttonId]['applyto'] = $_POST['applyto_'.$buttonId];
+		$buttonData[$buttonId]['groups'] = $_POST['groups_'.$buttonId];
+		if(isset($_POST['code_'.$buttonId])) {
+			foreach($_POST['code_'.$buttonId] as $effectId=>$code) {
+				if((string)$effectId === (string)$removeEffect[1] AND (string)$buttonId === (string)$removeEffect[0]) { continue; }
+				$buttonData[$buttonId][$effectId]['code'] = $code;
+			}
+		}
+		if(isset($_POST['html_'.$buttonId])) {
+			foreach($_POST['html_'.$buttonId] as $effectId=>$html) {
+				if((string)$effectId === (string)$removeEffect[1] AND (string)$buttonId === (string)$removeEffect[0]) { continue; }
+				$buttonData[$buttonId][$effectId]['html'] = $html;
+			}
+		}
+		if(isset($_POST['element_'.$buttonId])) {
+			foreach($_POST['element_'.$buttonId] as $effectId=>$element) {
+				if((string)$effectId === (string)$removeEffect[1] AND (string)$buttonId === (string)$removeEffect[0]) { continue; }
+				$buttonData[$buttonId][$effectId]['element'] = $element;
+				$buttonData[$buttonId][$effectId]['action'] = $_POST['action_'.$buttonId][$effectId];
+				$buttonData[$buttonId][$effectId]['value'] = $_POST['value_'.$buttonId][$effectId];
+			}
+		}
+	}
 }
 
 // handle any requests for new buttons or effects
 if($_POST['newbutton']) {
-  $buttonId = count($buttonData);
-  $buttonData[$buttonId]['handle'] = "New button";
+	$buttonId = count($buttonData);
+	$buttonData[$buttonId]['handle'] = "New button";
 }
 if($_POST['neweffect']!=="") {
-  $buttonId = $_POST['neweffect'];
-  $effectCounter = 1;
-  foreach($buttonData[$buttonId] as $key=>$value) {
-    if(is_numeric($key)) {
-      $effectCounter++;
-    }
-  }
-  if($buttonData[$buttonId]['applyto'] == "custom_code") {
-    $buttonData[$buttonId][$effectCounter]['code'] = "";  
-  } elseif($buttonData[$buttonId]['applyto'] == "custom_html") {
-    $buttonData[$buttonId][$effectCounter]['html'] = "";
-  } else {
-    $buttonData[$buttonId][$effectCounter]['element'] = "";  
-  }
+	$buttonId = $_POST['neweffect'];
+	$effectCounter = 1;
+	foreach($buttonData[$buttonId] as $key=>$value) {
+		if(is_numeric($key)) {
+			$effectCounter++;
+		}
+	}
+	if($buttonData[$buttonId]['applyto'] == "custom_code") {
+		$buttonData[$buttonId][$effectCounter]['code'] = "";
+	} elseif($buttonData[$buttonId]['applyto'] == "custom_html") {
+		$buttonData[$buttonId][$effectCounter]['html'] = "";
+	} else {
+		$buttonData[$buttonId][$effectCounter]['element'] = "";
+	}
 }
 
 $screen->setVar('customactions', serialize($buttonData));
 if(!$screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".$xoopsDB->error();
+	print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
 
 if($_POST['reload_list_pages']) {
-  print "/* eval */ reloadWithScrollPosition();";
+	print "/* eval */ reloadWithScrollPosition();";
 }
 ?>

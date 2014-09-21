@@ -31,7 +31,7 @@
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
-  return;
+	return;
 }
 
 
@@ -46,7 +46,7 @@ $screen = $screen_handler->get($sid);
 
 // check if the user has permission to edit the form
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
-  return;
+	return;
 }
 
 
@@ -60,6 +60,6 @@ $screen->setVar('viewentryscreen',$screens['viewentryscreen']);
 
 
 if(!$screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".$xoopsDB->error();
+	print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
 ?>
