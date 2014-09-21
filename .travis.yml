@@ -51,9 +51,6 @@ before_script:
   # This is useful for quickly running just one new test, to see if it is working.
   # Alter the ci/travis/interpreter_config.json file to refer to your one test by name
   # instead of referring to * for all tests.
-  # IF your new test MODIFIES the DATABASE, then you will need to turn OFF the
-  # push of the database back to GitHub (below), so Travis doesn't update this initial state
-  # with the changes from your test.
   # - mysql formulize < ci/formulize_test_db.sql
   - echo "USE mysql;\nUPDATE user SET password=PASSWORD('password') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
 
@@ -63,14 +60,7 @@ script:
   - curl http://localhost/index.php
 
 after_script:
-  # Comment or remove all the following lines, to NOT update the GitHub repo with the final
-  # state of the database after all tests have run.
-  - mysqldump -u travis formulize > ci/formulize_test_db.sql
-  - git config user.email "formulize@travis.ci"
-  - git config user.name "Travis CI"
-  - git config push.default simple
-  - git add ci/formulize_test_db.sql
-  - git commit -m "Travis updating test DB [skip ci]"
-  - stty -echo
-  - git push https://${GITHUB_TOKEN}@github.com/jegelstaff/formulize.git HEAD:${TRAVIS_BRANCH}
-  - stty echo
+  # Include '[update test db]' in a commit message from the master branch, if you want
+  # to reset the ci/formulize_test_db.sql to be based on all the current tests.
+  - bash ci/travis/update-test-db.sh
+  

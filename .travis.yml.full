@@ -47,6 +47,14 @@ addons:
 before_script:
   - npm install -g se-interpreter
   - mysql -e 'create database formulize;'
+  # Uncomment the next line to initialize the database as if all existing tests have run.
+  # This is useful for quickly running just one new test, to see if it is working.
+  # Alter the ci/travis/interpreter_config.json file to refer to your one test by name
+  # instead of referring to * for all tests.
+  # IF your new test MODIFIES the DATABASE, then you will need to turn OFF the
+  # push of the database back to GitHub (below), so Travis doesn't update this initial state
+  # with the changes from your test.
+  # - mysql formulize < ci/formulize_test_db.sql
   - echo "USE mysql;\nUPDATE user SET password=PASSWORD('password') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
 
 script:
@@ -55,10 +63,6 @@ script:
   - curl http://localhost/index.php
 
 after_script:
-  - if [ ${TRAVIS_BRANCH} == 'master' ]; then mysqldump -u travis formulize > ci/formulize_test_db.sql;
-  - if [ ${TRAVIS_BRANCH} == 'master' ]; then git config user.email "julian@freeform.ca";
-  - if [ ${TRAVIS_BRANCH} == 'master' ]; then git config user.name "Julian Egelstaff";
-  - if [ ${TRAVIS_BRANCH} == 'master' ]; then git config push.default simple;
-  - if [ ${TRAVIS_BRANCH} == 'master' ]; then git add ci/formulize_test_db.sql;
-  - if [ ${TRAVIS_BRANCH} == 'master' ]; then git commit -m "Travis-CI: updating test db [skip ci]";
-  - if [ ${TRAVIS_BRANCH} == 'master' ]; then git push https://${GITHUB_TOKEN}@github.com/jegelstaff/formulize.git HEAD:master;
+  # Comment or remove all the following lines, to NOT update the GitHub repo with the final
+  # state of the database after all tests have run.
+  
