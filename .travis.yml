@@ -14,4 +14,5 @@ php:
 script:
   # get commit message
   - COMMIT_MESSAGE=$(git show -s --format=%B $TRAVIS_COMMIT | tr -d '\n')
+  - echo ${COMMIT_MESSAGE}
   - if test "${COMMIT_MESSAGE#*'[update test db]'}" != "$COMMIT_MESSAGE"; then bash ci/travis/update-test-db.sh; fi;
