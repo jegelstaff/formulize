@@ -31,7 +31,7 @@
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
-	return;
+  return;
 }
 
 // CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
@@ -39,13 +39,13 @@ $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($_POST['formulize_admin_key']);
 $form_id = $formObject->getVar('id_form');
 if($formObject->getVar('lockedform')) {
-	return;
+  return;
 }
 
 // If the user doesn't have edit form permission, then do nothing
 $formulize_module_id = getFormulizeModId();
 if(!$gperm_handler->checkRight("edit_form", $form_id, $xoopsUser->getGroups(), $formulize_module_id)) {
-	return;
+  return;
 }
 
 global $xoopsDB;
@@ -53,39 +53,39 @@ global $xoopsDB;
 // check to see if we're dealing with a grouplist save or deletion
 if($_POST['grouplistname']) {
 
-	$groupListId = intval($_POST['grouplistid']);
-	$groupListGroups = formulize_db_escape(implode(",",$_POST['groups']));
-	$name = formulize_db_escape($_POST['grouplistname']);
-	// are we inserting or updating?
-	$newList = $groupListId == 0 ? true : false;
-	if(!$newList) {
-		// Get exisitng name to see if we update, or create new.
-		$result = $xoopsDB->query("SELECT gl_name FROM ".$xoopsDB->prefix("group_lists")." WHERE gl_id='".intval($groupListId)."'");
-		if($xoopsDB->getRowsNum($result) > 0) {
-			$entry = $xoopsDB->fetchArray($result);
-			if($entry['gl_name'] != $name) {
-				$newList = true;
-			}
-		}
-	}
-	if($newList) {
-		$grouplist_query = "INSERT INTO ". $xoopsDB->prefix("group_lists") . " (gl_name, gl_groups) VALUES ('" . $name . "', '" . $groupListGroups . "')";
-		$groupListId = $xoopsDB->getInsertId();
-	} else {
-		$grouplist_query = "UPDATE ". $xoopsDB->prefix("group_lists") . " SET gl_groups = '" . $groupListGroups . "', gl_name = '".$name."' WHERE gl_id='" . $groupListId . "'";
-	}
-	if(!$grouplist_result = $xoopsDB->query($grouplist_query)) {
-		print "Error: could not add a group list ".$xoopsDB->error();
-	}
+  $groupListId = intval($_POST['grouplistid']);
+  $groupListGroups = formulize_db_escape(implode(",",$_POST['groups']));
+  $name = formulize_db_escape($_POST['grouplistname']);
+  // are we inserting or updating?
+  $newList = $groupListId == 0 ? true : false;
+  if(!$newList) {
+    // Get exisitng name to see if we update, or create new.
+    $result = $xoopsDB->query("SELECT gl_name FROM ".$xoopsDB->prefix("group_lists")." WHERE gl_id='".intval($groupListId)."'");
+    if($xoopsDB->getRowsNum($result) > 0) {
+      $entry = $xoopsDB->fetchArray($result);
+      if($entry['gl_name'] != $name) {
+        $newList = true;
+      }
+    }
+  }
+  if($newList) {
+    $grouplist_query = "INSERT INTO ". $xoopsDB->prefix("group_lists") . " (gl_name, gl_groups) VALUES ('" . $name . "', '" . $groupListGroups . "')";
+    $groupListId = $xoopsDB->getInsertId();
+  } else {
+    $grouplist_query = "UPDATE ". $xoopsDB->prefix("group_lists") . " SET gl_groups = '" . $groupListGroups . "', gl_name = '".$name."' WHERE gl_id='" . $groupListId . "'";
+  }
+  if(!$grouplist_result = $xoopsDB->query($grouplist_query)) {
+    print "Error: could not add a group list ".$xoopsDB->error();
+  }
 }
 
 if ($_POST['removelistid']) {
-	if ($removelistid = intval($_POST['removelistid'])) {
-		if (!$delete_result = $xoopsDB->query("DELETE FROM ".$xoopsDB->prefix("group_lists") . " WHERE gl_id='" . $removelistid . "'")) {
-			print "Error: could not delete group list ".$xoopsDB->error();
-		}
-	}
-	$_SESSION['formulize_selectedGroupList'] = 0;
+  if ($removelistid = intval($_POST['removelistid'])) {
+    if (!$delete_result = $xoopsDB->query("DELETE FROM ".$xoopsDB->prefix("group_lists") . " WHERE gl_id='" . $removelistid . "'")) {
+      print "Error: could not delete group list ".$xoopsDB->error();
+    }
+  }
+  $_SESSION['formulize_selectedGroupList'] = 0;
 }
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
@@ -94,91 +94,91 @@ $groupsToClear = array();
 $filterSettings = array();
 $group_list = (isset($_POST['group_list']) and is_array($_POST['group_list'])) ? $_POST['group_list'] : array();
 foreach($group_list as $group_id) {
-	if(!is_numeric($group_id)) {
-		continue;
-	}
+  if(!is_numeric($group_id)) {
+    continue;
+  }
 
-	// delete existing permission records for this group to start with a blank slate
-	if (!$xoopsDB->query("DELETE FROM ".$xoopsDB->prefix("group_permission") . " WHERE gperm_groupid='$group_id' AND gperm_itemid='$form_id' AND gperm_modid='$formulize_module_id'")) {
-		print "Error: could not delete the permissions for group $group_id";
-	}
+  // delete existing permission records for this group to start with a blank slate
+  if (!$xoopsDB->query("DELETE FROM ".$xoopsDB->prefix("group_permission") . " WHERE gperm_groupid='$group_id' AND gperm_itemid='$form_id' AND gperm_modid='$formulize_module_id'")) {
+    print "Error: could not delete the permissions for group $group_id";
+  }
 
-	// collect the list of enabled permissions submitted through the form
-	$enabled_permissions = array();
-	foreach(formulizePermHandler::getPermissionList() as $permission_name) {
-		if ($_POST[$form_id."_".$group_id."_".$permission_name]) {
-			$enabled_permissions[] = "($group_id, $form_id, $formulize_module_id, '$permission_name')";
-		}
-	}
+  // collect the list of enabled permissions submitted through the form
+  $enabled_permissions = array();
+  foreach(formulizePermHandler::getPermissionList() as $permission_name) {
+    if ($_POST[$form_id."_".$group_id."_".$permission_name]) {
+      $enabled_permissions[] = "($group_id, $form_id, $formulize_module_id, '$permission_name')";
+    }
+  }
 
-	// enable only the selected permissions
-	if (count($enabled_permissions) > 0) {
-		$insertSQL = "INSERT INTO ".$xoopsDB->prefix("group_permission") . " (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES ".
-		implode(", ", $enabled_permissions);
-		if(!$xoopsDB->query($insertSQL)) {
-			print "Error: could not set the permissions for group $group_id";
-		}
-	}
+  // enable only the selected permissions
+  if (count($enabled_permissions) > 0) {
+    $insertSQL = "INSERT INTO ".$xoopsDB->prefix("group_permission") . " (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES ".
+    implode(", ", $enabled_permissions);
+    if(!$xoopsDB->query($insertSQL)) {
+      print "Error: could not set the permissions for group $group_id";
+    }
+  }
 
-	// deal with specific groupscope settings
-	if(!$formulize_permHandler->setGroupScopeGroups($group_id, $_POST["groupsscope_choice_".$form_id."_".$group_id])) {
-		print "Error: could not set the groupscope groups for form $form_id.";
-	}
+  // deal with specific groupscope settings
+  if(!$formulize_permHandler->setGroupScopeGroups($group_id, $_POST["groupsscope_choice_".$form_id."_".$group_id])) {
+    print "Error: could not set the groupscope groups for form $form_id.";
+  }
 
-	// handle the per-group-filter-settings
-	$filter_key = $form_id."_".$group_id."_filter";
+  // handle the per-group-filter-settings
+  $filter_key = $form_id."_".$group_id."_filter";
 
-	if($_POST["new_".$filter_key."_term"] != "") {
-		$_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
-		$_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
-		$_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
-		$_POST[$filter_key."_types"][] = "all";
-	}
-	if($_POST["new_".$filter_key."_oom_term"] != "") {
-		$_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
-		$_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
-		$_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
-		$_POST[$filter_key."_types"][] = "oom";
-	}
-	$conditionsDeleteParts = explode("_", $_POST['conditionsdelete']);
-	if($_POST['conditionsdelete'] != "" AND $conditionsDeleteParts[1] == $group_id) { // key 1 will be the group id where the X was clicked
-		// go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
-		// need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
-	  	$originalCount = count($_POST[$filter_key."_elements"]);
-		for($i=$conditionsDeleteParts[3];$i<$originalCount;$i++) { // 3 is the X that was clicked for this group
-			if($i>$conditionsDeleteParts[3]) {
-				$_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
-				$_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
-				$_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
-				$_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
-			}
-			if($i==$conditionsDeleteParts[3] OR $i+1 == $originalCount) {
-				// first time through or last time through, unset the first elements
-				unset($_POST[$filter_key."_elements"][$i]);
-				unset($_POST[$filter_key."_ops"][$i]);
-				unset($_POST[$filter_key."_terms"][$i]);
-				unset($_POST[$filter_key."_types"][$i]);
-			}
-		}
-	}
-	if(!is_array($_POST[$filter_key."_elements"]) OR count($_POST[$filter_key."_elements"]) == 0) {
-		$groupsToClear[] = $group_id;
-	} else {
-		$filterSettings[$group_id][0] = $_POST[$filter_key."_elements"];
-		$filterSettings[$group_id][1] = $_POST[$filter_key."_ops"];
-		$filterSettings[$group_id][2] = $_POST[$filter_key."_terms"];
-		$filterSettings[$group_id][3] = $_POST[$filter_key."_types"];
-	}
+  if($_POST["new_".$filter_key."_term"] != "") {
+    $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
+    $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_op"];
+    $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_term"];
+    $_POST[$filter_key."_types"][] = "all";
+  }
+  if($_POST["new_".$filter_key."_oom_term"] != "") {
+    $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_oom_element"];
+    $_POST[$filter_key."_ops"][] = $_POST["new_".$filter_key."_oom_op"];
+    $_POST[$filter_key."_terms"][] = $_POST["new_".$filter_key."_oom_term"];
+    $_POST[$filter_key."_types"][] = "oom";
+  }
+  $conditionsDeleteParts = explode("_", $_POST['conditionsdelete']);
+  if($_POST['conditionsdelete'] != "" AND $conditionsDeleteParts[1] == $group_id) { // key 1 will be the group id where the X was clicked
+    // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
+    // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
+    $originalCount = count($_POST[$filter_key."_elements"]);
+    for($i=$conditionsDeleteParts[3];$i<$originalCount;$i++) { // 3 is the X that was clicked for this group
+      if($i>$conditionsDeleteParts[3]) {
+        $_POST[$filter_key."_elements"][$i-1] = $_POST[$filter_key."_elements"][$i];
+        $_POST[$filter_key."_ops"][$i-1] = $_POST[$filter_key."_ops"][$i];
+        $_POST[$filter_key."_terms"][$i-1] = $_POST[$filter_key."_terms"][$i];
+        $_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
+      }
+      if($i==$conditionsDeleteParts[3] OR $i+1 == $originalCount) {
+        // first time through or last time through, unset the first elements
+        unset($_POST[$filter_key."_elements"][$i]);
+        unset($_POST[$filter_key."_ops"][$i]);
+        unset($_POST[$filter_key."_terms"][$i]);
+        unset($_POST[$filter_key."_types"][$i]);
+      }
+    }
+  }
+  if(!is_array($_POST[$filter_key."_elements"]) OR count($_POST[$filter_key."_elements"]) == 0) {
+    $groupsToClear[] = $group_id;
+  } else {
+    $filterSettings[$group_id][0] = $_POST[$filter_key."_elements"];
+    $filterSettings[$group_id][1] = $_POST[$filter_key."_ops"];
+    $filterSettings[$group_id][2] = $_POST[$filter_key."_terms"];
+    $filterSettings[$group_id][3] = $_POST[$filter_key."_types"];
+  }
 }
 
 // now update the per group filters
 if(count($groupsToClear)>0) {
-	$form_handler->clearPerGroupFilters($groupsToClear, $form_id);
+  $form_handler->clearPerGroupFilters($groupsToClear, $form_id);
 }
 if(count($filterSettings)>0) {
-	$form_handler->setPerGroupFilters($filterSettings, $form_id);
+  $form_handler->setPerGroupFilters($filterSettings, $form_id);
 }
 
 if($_POST['reload'] OR $_POST['loadthislist']) {
-	print "/* eval */ window.document.getElementById('form-".intval($_POST['form_number'])."').submit();";
+  print "/* eval */ window.document.getElementById('form-".intval($_POST['form_number'])."').submit();";
 }

@@ -31,7 +31,7 @@
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
-	return;
+  return;
 }
 
 $fid = intval($_POST['formulize_admin_key']);
@@ -41,43 +41,43 @@ $aid = intval($_POST['formulize_admin_aid']);
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($fid);
 if($formObject->getVar('lockedform')) {
-	return;
+  return;
 }
 // check if the user has permission to edit the form
 if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
-	return;
+  return;
 }
 
 // currently, this only saves the forms-on_before_save value, but if more items are added this will save them
 foreach ($processedValues['forms'] as $property => $value) {
-	$formObject->setVar($property, $value);
+  $formObject->setVar($property, $value);
 }
 if (!$form_handler->insert($formObject)) {
-	print "Error: could not save the form properly: ".$xoopsDB->error();
+  print "Error: could not save the form properly: ".$xoopsDB->error();
 }
 
 // do cloning here
 if(intval($_POST['cloneadvanced_calculations'])) {
-	$advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
-	if(!$advanced_calculation_handler->cloneProcedure(intval($_POST['cloneadvanced_calculations']))) {
-		print "Error: could not clone Procedure ".intval($_POST['cloneadvanced_calculations']);
-	} else {
-		print "/* eval */ reloadWithScrollPosition()";
-	}
+  $advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
+  if(!$advanced_calculation_handler->cloneProcedure(intval($_POST['cloneadvanced_calculations']))) {
+    print "Error: could not clone Procedure ".intval($_POST['cloneadvanced_calculations']);
+  } else {
+    print "/* eval */ reloadWithScrollPosition()";
+  }
 }
 
 // do deletion here
 if(intval($_POST['deleteadvanced_calculations'])) {
-	$advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
-	if(!$advanced_calculation_handler->delete(intval($_POST['deleteadvanced_calculations']))) {
-		print "Error: could not delete Procedure ".intval($_POST['deleteadvanced_calculations']);
-	} else {
-		print "/* eval */ reloadWithScrollPosition()";
-	}
+  $advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
+  if(!$advanced_calculation_handler->delete(intval($_POST['deleteadvanced_calculations']))) {
+    print "Error: could not delete Procedure ".intval($_POST['deleteadvanced_calculations']);
+  } else {
+    print "/* eval */ reloadWithScrollPosition()";
+  }
 }
 
 // if the form name was changed, then force a reload of the page...reload will be the application id
 if($_POST['gotoadvanced_calculations']) {
-	$gotoacid = $_POST['gotoadvanced_calculations'] === "new" ? "new" : intval($_POST['gotoadvanced_calculations']);
-	print "/* eval */ window.location = '". XOOPS_URL ."/modules/formulize/admin/ui.php?page=advanced-calculation&aid=$aid&fid=$fid&acid=$gotoacid'";
+  $gotoacid = $_POST['gotoadvanced_calculations'] === "new" ? "new" : intval($_POST['gotoadvanced_calculations']);
+  print "/* eval */ window.location = '". XOOPS_URL ."/modules/formulize/admin/ui.php?page=advanced-calculation&aid=$aid&fid=$fid&acid=$gotoacid'";
 }
