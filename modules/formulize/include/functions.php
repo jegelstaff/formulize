@@ -566,12 +566,17 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
         }
 
         // if the headerlist is using the new ID based system
-        if (is_numeric($headerlist[0]) OR $headerlist[0] == "uid" OR $headerlist[0] == "proxyid" OR $headerlist[0] == "creation_date" OR $headerlist[0] == "mod_date" OR $headerlist[0] == "creator_email" OR $headerlist[0] == "creation_uid" OR $headerlist[0] == "mod_uid" OR $headerlist[0] == "creation_datetime" OR $headerlist[0] == "mod_datetime") {
+        if (is_numeric($headerlist[0]) OR isMetaDataField($headerlist[0])) {
             // if we want actual text headers, convert ids to text
             if (!$needids) {
                 $start = 1;
                 $metaHeaderlist = array();
                 foreach ($headerlist as $headerid=>$thisheaderid) {
+                    if ($thisheaderid == "entry_id") {
+                        $metaHeaderlist[] = _formulize_ENTRY_ID;
+                        unset($headerlist[$headerid]);
+                        continue;
+                    }
                     if ($thisheaderid == "uid" OR $thisheaderid == "creation_uid") {
                         $metaHeaderlist[] = _formulize_DE_CALC_CREATOR;
                         unset($headerlist[$headerid]);
@@ -1253,10 +1258,15 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
         }
     } elseif ($_POST['metachoice'] == 1) {
         // only include metadata columns if the user requested them
-        $csvfile =  "\"" . _formulize_DE_CALC_CREATOR . "\"$fd\"" . _formulize_DE_CALC_CREATEDATE . "\"$fd\"" . _formulize_DE_CALC_MODIFIER . "\"$fd\"" . _formulize_DE_CALC_MODDATE . "\"";
+        $csvfile =  "\"" . _formulize_ENTRY_ID . "\"$fd\"" . _formulize_DE_CALC_CREATOR . "\"$fd\"" . _formulize_DE_CALC_CREATEDATE . "\"$fd\"" . _formulize_DE_CALC_MODIFIER . "\"$fd\"" . _formulize_DE_CALC_MODDATE . "\"";
         $lineStarted = true;
     } else {
+        if (in_array("entry_id", $cols)) {
+            $csvfile .= "\"" . _formulize_ENTRY_ID . "\"";
+            $lineStarted = true;
+        }        
         if (in_array("uid", $cols) OR in_array("creation_uid", $cols)) {
+            $csvfile .= $lineStarted ? $fd : "";
             $csvfile .= "\"" . _formulize_DE_CALC_CREATOR . "\"";
             $lineStarted = true;
         }
@@ -1279,7 +1289,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 
     foreach ($headers as $header) {
         // ignore the metadata columns if they are selected, since we already handle them better above. as long as the user requested that they be included
-        if ($header == "" OR ($_POST['metachoice'] == 1 AND ($header == _formulize_DE_CALC_CREATOR OR $header == _formulize_DE_CALC_MODIFIER OR $header==_formulize_DE_CALC_CREATEDATE OR $header ==_formulize_DE_CALC_MODDATE))) {
+        if ($header == "" OR ($_POST['metachoice'] == 1 AND ($header == _formulized_ENTRY_ID OR $header == _formulize_DE_CALC_CREATOR OR $header == _formulize_DE_CALC_MODIFIER OR $header==_formulize_DE_CALC_CREATEDATE OR $header ==_formulize_DE_CALC_MODDATE))) {
             continue;
         }
         $header = str_replace("\"", "\"\"", $header);
@@ -1295,14 +1305,11 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
     $colcounter = 0;
     $i=0;
     foreach ($data as $entry) {
-        // if this file is being generated for downloading and then uploading with changes, record all the id_reqs
-        if ($template == "update") {
-            $formhandle = getFormHandlesFromEntry($entry);
-            $ids = internalRecordIds($entry, $formhandle[0]);
-            $id = $ids[0];
-            $id_req[] = $id;
-        }
-
+        $formhandle = getFormHandlesFromEntry($entry);
+        $ids = internalRecordIds($entry, $formhandle[0]);
+        $id = $ids[0];
+        $id_req[] = $id;
+        
         $c_uid = display($entry, 'creation_uid');
         $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
         $c_name = $c_name_q[0]['name'];
@@ -1329,14 +1336,14 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
             $csvfile .= $id . $fd . "\"$c_name\"";
             $lineStarted = true;
         } elseif ($_POST['metachoice'] == 1) {
-            $csvfile .= "\"$c_name\"" . $fd . "\"$c_date\"" . $fd . "\"$m_name\"" . $fd . "\"$m_date\"";
+            $csvfile .= "\"$id\"" . $fd . "\"$c_name\"" . $fd . "\"$c_date\"" . $fd . "\"$m_name\"" . $fd . "\"$m_date\"";
             $lineStarted = true;
         }
 
         // write in data
         foreach ($cols as $col) {
             // ignore the metadata columns if they are selected, since we already handle them better above
-            if (($col == "uid" OR $col == "proxyid" OR $col=="creation_date" OR $col =="mod_date" OR $col == "creation_uid" OR $col == "mod_uid" OR $col == "creation_datetime" OR $col == "mod_datetime") AND $_POST['metachoice'] == 1) {
+            if (isMetaDataField($col) AND $_POST['metachoice'] == 1) {
                 continue;
             }
             if ($col == "creation_uid" OR $col == "mod_uid" OR $col == "uid" OR $col == "proxyid") {
@@ -1577,7 +1584,9 @@ function writableQuery($items, $mod="") {
 // Also used for advanced searches
 function getCalcHandleText($handle, $forceColhead=true) {
     global $xoopsDB;
-    if ($handle == "creation_uid") {
+    if ($handle == "entry_id") {
+        return _formulize_ENTRY_ID;
+    } elseif ($handle == "creation_uid") {
         return _formulize_DE_CALC_CREATOR;
     } elseif ($handle == "mod_uid") {
         return _formulize_DE_CALC_MODIFIER;
@@ -2254,7 +2263,7 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
     static $cachedValues = array();
     static $cachedTypes = array();
     $matchtext = $myts->undoHtmlSpecialChars($matchtext);
-    if ($handle == "uid" OR $handle=="proxyid" OR $handle=="creation_date" OR $handle == "mod_date" OR $handle == "creator_email" OR $handle == "creation_uid" OR $handle == "mod_uid" OR $handle == "creation_datetime" OR $handle == "mod_datetime") {
+    if (isMetaDataField($handle)) {
         return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
     }
     if (!isset($cachedValues[$handle])) {
@@ -3137,7 +3146,9 @@ function getHeaders($cols, $colsIsElementHandles = false) {
     global $xoopsDB;
 
     foreach ($cols as $col) {
-        if ($col == "creation_uid") {
+        if($col == "entry_id") {
+            $headers[] = _formulize_ENTRY_ID;
+        }elseif ($col == "creation_uid") {
             $headers[] = _formulize_DE_CALC_CREATOR;
         } elseif ($col == "mod_uid") {
             $headers[] = _formulize_DE_CALC_MODIFIER;
@@ -5288,4 +5299,19 @@ function formulize_makeOneToOneLinks($frid, $fid) {
         $oneToOneLinksMade[$frid] = true;
     }
     return array($form1s, $form2s, $form1EntryIds, $form2EntryIds);
+}
+
+//Function used to check if the given field is within the list of metadata fields.
+function isMetaDataField($field){
+    $ucField = strtoupper($field);
+    $dataHandler = new formulizeDataHandler(false);
+    $metadataFields = $dataHandler->metadataFields;
+    foreach ($metadataFields as $value) 
+    {
+        if($value == $ucField)
+        {
+            return true;
+        }
+    }
+    return false;
 }
