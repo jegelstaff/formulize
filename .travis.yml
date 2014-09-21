@@ -11,6 +11,58 @@ language: php
 php:
   - 5.5
 
+install:
+  - sudo apt-get update
+  - sudo apt-get install apache2 libapache2-mod-fastcgi
+  # enable php-fpm
+  - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
+  - sudo a2enmod rewrite actions fastcgi alias
+  - echo "cgi.fix_pathinfo = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - ~/.phpenv/versions/$(phpenv version-name)/sbin/php-fpm
+  # configure apache virtual hosts
+  - sudo cp -f ci/travis/travis-ci-apache /etc/apache2/sites-available/default
+  - sudo sed -e "s?%TRAVIS_BUILD_DIR%?$(pwd)?g" --in-place /etc/apache2/sites-available/default
+  # set 777 on necessary directories
+  - sudo chmod 777 cache
+  - sudo chmod 777 templates_c
+  - sudo chmod 777 uploads
+  - sudo chmod 777 install
+  - sudo chmod 777 mainfile.php
+  - sudo chmod 777 cache
+  - sudo chmod 777 modules/formulize/cache
+  - sudo chmod 777 modules/formulize/temp
+  - sudo chmod 777 modules/formulize/upload
+  - sudo chmod 777 modules/formulize/templates/screens/default
+  - sudo chmod 777 modules/formulize/export
+  # make the trust path because the fcgi process cannot
+  - sudo mkdir selenium-848d24bb54d726d
+  - sudo chmod 777 selenium-848d24bb54d726d
+  # add to .ini and restart
+  - phpenv config-add ci/travis/php.ini
+  - sudo service apache2 restart
+
+addons:
+  sauce_connect: true
+
+before_script:
+  - npm install -g se-interpreter
+  - mysql -e 'create database formulize;'
+  # Uncomment the next line to initialize the database as if all existing tests have run.
+  # This is useful for quickly running just one new test, to see if it is working.
+  # Alter the ci/travis/interpreter_config.json file to refer to your one test by name
+  # instead of referring to * for all tests.
+  # - mysql formulize < ci/formulize_test_db.sql
+  - echo "USE mysql;\nUPDATE user SET password=PASSWORD('password') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
+
 script:
-  - bash ci/travis/update-test-db.sh
-  
+  - se-interpreter ci/travis/interpreter_config.json
+  - cat "error.log"
+  - curl http://localhost/index.php
+
+after_script:
+  # Include '[update test db]' in a commit message from the master branch, if you want
+  # to reset the ci/formulize_test_db.sql to be based on all the current tests.
+  # ONLY DO THIS WITH COMMITS FROM THE MASTER BRANCH!!
+  # DO NOT DO THIS IN A BRANCH THAT HAS AN ACTIVE PULL REQUEST!!
+  - COMMIT_MESSAGE=$(git show -s --format=%B $TRAVIS_COMMIT | tr -d '\n')
+  - if test "${COMMIT_MESSAGE#*'[update test db]'}" != "$COMMIT_MESSAGE"; then bash ci/travis/update-test-db.sh; fi;
