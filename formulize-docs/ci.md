@@ -140,7 +140,7 @@ It is critical that **[update test db]** is only used from the master branch! It
 
 These commands depend on a shell script that will do the actual dump and push to GitHub, using the secure access token encrypted in the **env** section:  [ci/travis/update-test-db.sh](https://github.com/jegelstaff/formulize/blob/master/ci/travis/update-test-db.sh)
 
-Huge thanks Project-OSRM for the [example of how to listen to the commit message and react accordingly](https://github.com/Project-OSRM/node-osrm/blob/master/.travis.yml).
+Huge thanks Project-OSRM for the [example of how to listen to the commit message and react accordingly](https://github.com/Project-OSRM/node-osrm/blob/master/.travis.yml). 
 
 ### se-interpreter configuration
 
