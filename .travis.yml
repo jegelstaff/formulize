@@ -22,6 +22,8 @@ install:
   # configure apache virtual hosts
   - sudo cp -f ci/travis/travis-ci-apache /etc/apache2/sites-available/default
   - sudo sed -e "s?%TRAVIS_BUILD_DIR%?$(pwd)?g" --in-place /etc/apache2/sites-available/default
+  # copy selenium_debug.js which modifies some javascript behaviour to behave better with selenium
+  - sudo cp -f ci/travis/selenium_debug.js modules/formulize/selenium_debug.js
   # set 777 on necessary directories
   - sudo chmod 777 cache
   - sudo chmod 777 templates_c

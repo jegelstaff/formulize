@@ -4,6 +4,16 @@
   "formatVersion": 2,
   "steps": [
     {
+      "type": "store",
+      "text": "admin",
+      "variable": "username"
+    },
+    {
+      "type": "store",
+      "text": "password",
+      "variable": "password"
+    },
+    {
       "type": "get",
       "url": "http://localhost/index.php"
     },
@@ -13,7 +23,7 @@
         "type": "name",
         "value": "uname"
       },
-      "text": "admin"
+      "text": "${username}"
     },
     {
       "type": "setElementText",
@@ -21,7 +31,7 @@
         "type": "name",
         "value": "pass"
       },
-      "text": "password"
+      "text": "${password}"
     },
     {
       "type": "clickElement",

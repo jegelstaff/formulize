@@ -4,6 +4,16 @@
   "formatVersion": 2,
   "steps": [
     {
+      "type": "store",
+      "text": "admin",
+      "variable": "username"
+    },
+    {
+      "type": "store",
+      "text": "password",
+      "variable": "password"
+    },
+    {
       "type": "get",
       "url": "http://localhost/index.php"
     },
@@ -13,7 +23,7 @@
         "type": "name",
         "value": "uname"
       },
-      "text": "admin"
+      "text": "${username}"
     },
     {
       "type": "setElementText",
@@ -21,7 +31,7 @@
         "type": "name",
         "value": "pass"
       },
-      "text": "password"
+      "text": "${password}"
     },
     {
       "type": "clickElement",
@@ -81,19 +91,19 @@
       }
     },
     {
-      "type": "clickElement",
-      "locator": {
-        "type": "xpath",
-        "value": "//form[@id='form-6']//pre[.='<?php']"
-      }
-    },
-    {
       "type": "setElementText",
       "locator": {
-        "type": "css selector",
-        "value": "div > textarea"
+        "type": "name",
+        "value": "screens-toptemplate"
       },
-      "text": "QuickSearch;"
+      "text": "<?php\n\nprint $globalQuickSearch;\n"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "screens-toptemplate"
+      }
     },
     {
       "type": "clickElement",
@@ -101,6 +111,11 @@
         "type": "css selector",
         "value": "input.savebutton"
       }
+    },
+    {
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
     },
     {
       "type": "clickElement",
