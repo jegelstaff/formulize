@@ -31,7 +31,7 @@
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
-  return;
+	return;
 }
 
 $fid = intval($_POST['formulize_admin_key']);
@@ -41,12 +41,12 @@ $aid = intval($_POST['formulize_admin_aid']);
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($fid);
 if($formObject->getVar('lockedform')) {
-  return;
+	return;
 }
 
 // check if the user has permission to edit the form
 if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
-  return;
+	return;
 }
 
 // do saving of defaults here
@@ -56,22 +56,22 @@ $form->setVar('defaultform',intval($screens['defaultform']));
 $form->setVar('defaultlist',intval($screens['defaultlist']));
 
 if(!$fid = $form_handler->insert($form)) {
-  print "Error: could not save the form properly: ".$xoopsDB->error();
+	print "Error: could not save the form properly: ".$xoopsDB->error();
 }
 
 
 // do deletion here
 if($_POST['deletescreen']) {
-  $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-  $screen = $screen_handler->get(intval($_POST['deletescreen']));
-  if(!$screen_handler->delete($screen->getVar('sid'), $screen->getVar('type'))) {
-    print "Error: could not delete screen ".intval($_POST['deletescreen']);
-  } else {
-    print "/* eval */ reloadWithScrollPosition()";
-  }
+	$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+	$screen = $screen_handler->get(intval($_POST['deletescreen']));
+	if(!$screen_handler->delete($screen->getVar('sid'), $screen->getVar('type'))) {
+		print "Error: could not delete screen ".intval($_POST['deletescreen']);
+	} else {
+		print "/* eval */ reloadWithScrollPosition()";
+	}
 }
 
 // if the form name was changed, then force a reload of the page...reload will be the application id
 if($_POST['gotoscreen']) {
-  print "/* eval */ window.location = '". XOOPS_URL ."/modules/formulize/admin/ui.php?page=screen&aid=$aid&fid=$fid&sid=".intval($_POST['gotoscreen'])."'";
+	print "/* eval */ window.location = '". XOOPS_URL ."/modules/formulize/admin/ui.php?page=screen&aid=$aid&fid=$fid&sid=".intval($_POST['gotoscreen'])."'";
 }
