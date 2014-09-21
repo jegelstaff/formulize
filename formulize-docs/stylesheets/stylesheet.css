@@ -90,7 +90,7 @@ header h2 {
 }
 
 .inner {
-  width: 620px;
+  width: 920px;
   margin: 0 auto;
 }
 
@@ -196,7 +196,6 @@ ul, ol, dl {
   margin-bottom: 20px;
 }
 
-
 /* COMMON STYLES */
 
 hr {
@@ -218,15 +217,18 @@ em {
 
 table {
   width: 100%;
-  border: 1px solid #ebebeb;
+  border: 1px solid #aaaaaa;
 }
 
 th {
+  border: 1px solid #aaaaaa;
+  padding: 5px;
   font-weight: 500;
 }
 
 td {
-  border: 1px solid #ebebeb;
+  border: 1px solid #aaaaaa;
+  padding: 5px;
   text-align: center; 
   font-weight: 300;
 }
@@ -295,13 +297,17 @@ blockquote {
 }
 
 ul li {
-  list-style: disc inside;
-  padding-left: 20px;
+  list-style: disc outside;
+  margin-left: 17px;
+  padding-left: 3px;
+  padding-bottom: 10px;
 }
 
 ol li {
-  list-style: decimal inside;
+  list-style: decimal outside;
+  margin-left: 17px;
   padding-left: 3px;
+  padding-bottom: 10px;
 }
 
 dl dt {

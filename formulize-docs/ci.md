@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: ci/
+permalink: developers/ci/
 ---
 
 # Continuous Integration
@@ -9,13 +9,15 @@ We use [Travis](https://travis-ci.org/jegelstaff/formulize/builds) and [Sauce La
 
 If all the tests pass successfully, then this lets us know that the current build of Formulize has not broken any features that are used in the recorded Selenium tests. In addition, Sauce Labs records videos of the tests running in the browser so that you can see exactly what happens when a test fails.
 
-[Learn more about creating tests](/formulize/selenium_builder).
+[Learn more about creating tests](../version_control/testing/creating_tests).
 
 ## Sauce Labs Setup
 
 On Sauce Labs, Julian has signed up for an "Open Sauce" account that is free and allows for automated, unlimited Selenium testing, provided it is only used to test open source software.  Selenium tests are application level tests, based on recorded actions in a web browser. Sauce Labs plays back the tests, using a spontaneously built cloud server that Travis has spun into existence in response to the latest Github commit.
 
 The credentials for this account need to be used by Travis in order to establish a connection to Sauce Labs. Using a Ruby gem, the credentials have been encrypted in a way that Travis and Sauce can work with. You can read about that process on this page of the Sauce documentation: [https://docs.saucelabs.com/ci-integrations/travis-ci/](https://docs.saucelabs.com/ci-integrations/travis-ci/)
+
+These credentials are dependent on the repo; the same encrypted credentials will not work when transplanted into a forked copy of the repo.  Therefore, forks will need to specify their own Sauce Labs credentials in order for builds to work.
 
 ## Travis Configuration
 
@@ -158,6 +160,14 @@ Once the tests have run, you can see the results on Travis: [https://travis-ci.o
 That page is publically available.  Clicking on a build number will take you to a detailed results page, that shows the complete command line output of the server over its lifetime, including a full listing of the results of every step of every Selenium test.
 
 To see the Selenium tests in action, you have to log in to the Open Sauce account on Sauce Labs.  From there, you can see screencasts of the tests while they run in Firefox.
+
+## Getting Build Status in GitHub
+
+By adding this line to the readme.md file in the Formulize repo, we can get an automatic indication of the current build status:
+
+    [![Build Status](https://travis-ci.org/jegelstaff/formulize.png)](https://travis-ci.org/jegelstaff/formulize)
+    
+In addition, in the list of pull requests, there will be green checkmarks or red x's, depending if the code passes or not. Note that the Sauce credentials are only valid when used in conjunction with the original, jegelstaff/formulize repo. A pull request from a forked repo will automatically fail because of that dependency, but a forked repo could alter the .travis.yml file to use their own Sauce credentials and then it should work.
 
 
 
