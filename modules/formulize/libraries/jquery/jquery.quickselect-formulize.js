@@ -124,6 +124,7 @@ var QuickSelect;
             $(options.additionalFields).each(function(i,input){
                 // set the additional fields' values
                 $(input).val(values[i+1]);
+                $(this).change();
             });
             if (!from_hide_now_function)hideResultsNow(); // hide the results when something is selected
                 if (options.onItemSelect)
@@ -139,7 +140,10 @@ var QuickSelect;
                     // No current selection - blank the fields if options.exactMatch and current value isn't valid.
                     if (options.exactMatch) {
                         $input_element.val('');
-            $(options.additionalFields).each(function(i,input){$(input).val('');$(this).change();});
+                        $(options.additionalFields).each(function(i,input){
+                            $(input).val('');
+                            $(this).change();
+                        });
                     }
                     return false;
                 }
@@ -234,7 +238,10 @@ var QuickSelect;
                     // if too short, hide the list.
                     if (q.length === 0 && (options.onBlank ? options.onBlank() : true)) {
                         // onBlank callback
-                        $(options.additionalFields).each(function(i,input){input.value='';});
+                        $(options.additionalFields).each(function(i,input){
+                            $(input).val('');
+                            $(this).change();
+                        });
                     }
                     $input_element.removeClass(options.loadingClass);
                     $results_list.hide();
@@ -246,12 +253,15 @@ var QuickSelect;
             // Mark that actual item was clicked if clicked item was NOT a DIV, so the focus doesn't leave the items.
             $results_list.mousedown(function(e){if (e.srcElement)clickedLI=e.srcElement.tagName!='DIV';});
             $(document).mousedown(function (e) {
-            if (hasFocus && $results_list.is(":visible") && $results_list.has(e.target).length === 0 && !$input_element.is($(e.target)) && $input_element.val() != $($('li', $results_list).get(activeSelection)).text() ) {
-                // list is visible and user has clicked outside the list, so clear selection and blank the input box
-                activeSelection = -1;
-                //hasFocus = false;
-                $input_element.val('');
-          $(options.additionalFields).each(function(i,input){$(input).val('');$(this).change();});
+                if (hasFocus && $results_list.is(":visible") && $results_list.has(e.target).length === 0 && !$input_element.is($(e.target)) && $input_element.val() != $($('li', $results_list).get(activeSelection)).text() ) {
+                    // list is visible and user has clicked outside the list, so clear selection and blank the input box
+                    activeSelection = -1;
+                    //hasFocus = false;
+                    $input_element.val('');
+                    $(options.additionalFields).each(function(i,input){
+                        $(input).val('');
+                        $(this).change();
+                    });
                 }
             });
             $input_element.keydown(function(e){
