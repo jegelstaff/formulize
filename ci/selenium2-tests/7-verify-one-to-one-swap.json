@@ -89,15 +89,15 @@
     },
     {
       "type": "pause",
-      "waitTime": "1234"
+      "waitTime": "4234"
     },
     {
       "type": "verifyElementValue",
       "locator": {
         "type": "xpath",
-        "value": "//div[3]/div[2]/div/div[2]/div/div[2]/form/div/table/tbody/tr[8]/td/div/div/div[2]/div/div/div/table/tbody/tr[3]/td[2]/input[1]"
+        "value": "//div[@id='formulize-subform-stories_people']/div[@id='subform-entry-container’]/td[@id='formulize-input-people_email']/input[1]"
       },
-      "value": ""
+      "value": "daniel@example.com"
     }
   ],
   "data": {
