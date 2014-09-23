@@ -95,7 +95,7 @@
       "type": "verifyElementValue",
       "locator": {
         "type": "xpath",
-        "value": "//div[@id='formulize-subform-stories_people']//div[@id='subform-entry-container’]//td[@id='formulize-input-people_email']//input[1]"
+        "value": "//tr[contains(@class, \"formulize-input-people_email\")]/input[1]"
       },
       "value": "daniel@example.com"
     }
