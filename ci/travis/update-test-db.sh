@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ "master" == "${TRAVIS_BRANCH}" ]; then
+if [ "master" == "${TRAVIS_BRANCH}" -a "false" == "${TRAVIS_PULL_REQUEST}" ]; then
     echo 'Updating formulize_test_db.sql dump with current database.'
 
     mysqldump -u travis formulize > ci/formulize_test_db.sql
