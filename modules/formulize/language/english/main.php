@@ -743,3 +743,5 @@ define("_AM_UPLOAD_ERR_EXTENSION", "The web server rejected your file (a PHP ext
 
 define("_formulize_CLOSE_FORM_ELEMENT", "You need to close the form element that is open first before you edit this one");
 
+define("_formulize_ENTRY_ID", "Entry ID");
+
