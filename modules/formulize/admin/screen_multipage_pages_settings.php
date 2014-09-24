@@ -61,14 +61,14 @@ $options = multiPageScreen_addToOptionsList($fid, array());
 // added March 20 2008, by jwe
 $frid = $screen->getVar("frid");
 if($frid) {
-		$framework_handler =& xoops_getModuleHandler('frameworks', 'formulize');
-		$frameworkObject = $framework_handler->get($frid);
-		foreach($frameworkObject->getVar("links") as $thisLinkObject) {
-				if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
-						$thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-						$options = multiPageScreen_addToOptionsList($thisFid, $options);
-				}
-		}
+  $framework_handler =& xoops_getModuleHandler('frameworks', 'formulize');
+  $frameworkObject = $framework_handler->get($frid);
+  foreach($frameworkObject->getVar("links") as $thisLinkObject) {
+    if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
+      $thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
+      $options = multiPageScreen_addToOptionsList($thisFid, $options);
+    }
+  }
 }
 
 // get page titles
@@ -80,13 +80,13 @@ $pageTitle = $pageTitles[$pageIndex];
 $pageNumber = $pageIndex+1;
 $pageElements = $elements[$pageIndex];
 $filterSettingsToSend = count($conditions[$pageIndex] > 0) ? $conditions[$pageIndex] : "";
-  if(isset($filterSettingsToSend['details'])) { // if this is in the old format (pre-version 4, these conditions used a non-standard syntax), convert it!
-    $newFilterSettingsToSend = array();
-    $newFilterSettingsToSend[0] = $filterSettingsToSend['details']['elements'];
-    $newFilterSettingsToSend[1] = $filterSettingsToSend['details']['ops'];
-    $newFilterSettingsToSend[2] = $filterSettingsToSend['details']['terms'];
-    $filterSettingsToSend = $newFilterSettingsToSend;      
-  }
+if(isset($filterSettingsToSend['details'])) { // if this is in the old format (pre-version 4, these conditions used a non-standard syntax), convert it!
+  $newFilterSettingsToSend = array();
+  $newFilterSettingsToSend[0] = $filterSettingsToSend['details']['elements'];
+  $newFilterSettingsToSend[1] = $filterSettingsToSend['details']['ops'];
+  $newFilterSettingsToSend[2] = $filterSettingsToSend['details']['terms'];
+  $filterSettingsToSend = $newFilterSettingsToSend;
+}
 $pageConditions = formulize_createFilterUI($filterSettingsToSend, "pagefilter_".$pageIndex, $screen->getVar('fid'), "popupform");
 
 $xoopsTpl->assign("pageTitle",$pageTitle);

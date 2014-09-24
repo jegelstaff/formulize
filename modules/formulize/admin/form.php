@@ -39,10 +39,10 @@ $application_handler = xoops_getmodulehandler('applications','formulize');
 $allApps = $application_handler->getAllApplications();
 
 if($aid == 0) {
-	$appName = _AM_APP_FORMWITHNOAPP; 
+  $appName = _AM_APP_FORMWITHNOAPP;
 } else {
-	$appObject = $application_handler->get($aid);
-	$appName = $appObject->getVar('name');
+  $appObject = $application_handler->get($aid);
+  $appName = $appObject->getVar('name');
 }
 
 $elements = array();
@@ -60,7 +60,7 @@ if($_GET['fid'] != "new") {
   $menutext = $formObject->getVar('menutext');
   $form_handle = $formObject->getVar('form_handle');
   $store_revisions = $formObject->getVar('store_revisions');
-  
+
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
   $elementObjects = $element_handler->getObjects(null, $fid);
   $elements = array();
@@ -69,14 +69,14 @@ if($_GET['fid'] != "new") {
   // $elements array is going to be used to populate accordion sections, so it must contain the following:
   // a 'name' key and a 'content' key for each form that is found
   // Name will be the heading of the section, content is data used in the template for each section
-  $i = 1; 
+  $i = 1;
   foreach($elementObjects as $thisElement) {
     $elementCaption = strip_tags($thisElement->getVar('ele_caption'));
-		$colhead = strip_tags($thisElement->getVar('ele_colhead'));
-		$cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
+    $colhead = strip_tags($thisElement->getVar('ele_colhead'));
+    $cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
     $ele_id = $thisElement->getVar('ele_id');
-		$ele_handle = $thisElement->getVar('ele_handle');
-		$nameText = $colhead ? printSmart($colhead,55) : printSmart($elementCaption,55);
+    $ele_handle = $thisElement->getVar('ele_handle');
+    $nameText = $colhead ? printSmart($colhead,55) : printSmart($elementCaption,55);
     $elements[$i]['name'] = "$nameText - $cleanType - $ele_handle";
     $elements[$i]['content']['ele_id'] = $ele_id;
     $elements[$i]['content']['ele_handle'] = $ele_handle;
@@ -101,7 +101,7 @@ if($_GET['fid'] != "new") {
       case("select"):
         $converttext = _AM_ELE_CONVERT_CB;
         $linktype = "checkboxfromsb";
-	break;
+        break;
       default:
         $converttext = "";
         $linktype = "";
@@ -112,22 +112,22 @@ if($_GET['fid'] != "new") {
     $elements[$i]['content']['ele_req'] = removeNotApplicableRequireds($thisElement->getVar('ele_type'), $thisElement->getVar('ele_req'));
     $ele_display = $thisElement->getVar('ele_display');
     $multiGroupDisplay = false;
-		if(substr($ele_display, 0, 1) == ",") {
-			$multiGroupDisplay = true;
+    if(substr($ele_display, 0, 1) == ",") {
+      $multiGroupDisplay = true;
       $fs_member_handler =& xoops_gethandler('member');
       $fs_xoops_groups =& $fs_member_handler->getGroups();
       $displayGroupList = explode(",", trim($ele_display, ","));
       $check_display = '';
       foreach($displayGroupList as $groupList) {
-				if($groupList != "") {
-		      if($check_display != '') { $check_display .= ", "; }
-					$group_display = $fs_member_handler->getGroup($groupList);
-					if(is_object($group_display)) {
-						$check_display .= $group_display->getVar('name');
-					} else {
-						$check_display .= "???";
-					}
-				}                               
+        if($groupList != "") {
+          if($check_display != '') { $check_display .= ", "; }
+          $group_display = $fs_member_handler->getGroup($groupList);
+          if(is_object($group_display)) {
+            $check_display .= $group_display->getVar('name');
+          } else {
+            $check_display .= "???";
+          }
+        }
       }
       $check_display = '<a class=info href="" onclick="return false;" alt="' . $check_display . '" title="' . $check_display . '">' . _AM_FORM_DISPLAY_MULTIPLE . '</a>';
     } else {
@@ -146,22 +146,22 @@ if($_GET['fid'] != "new") {
 
   $mod_datetime_selected = (in_array('mod_datetime', $headerlistArray) OR in_array('mod_date', $headerlistArray)) ? " selected" : "";
   array_unshift($elementHeadings,array('text'=>_formulize_DE_CALC_MODDATE, 'ele_id'=>'mod_date', 'selected'=>$mod_datetime_selected));
-  
+
   $creation_datetime_selected = (in_array('creation_datetime', $headerlistArray) OR in_array('creation_date', $headerlistArray)) ? " selected" : "";
   array_unshift($elementHeadings,array('text'=>_formulize_DE_CALC_CREATEDATE, 'ele_id'=>'creation_datetime', 'selected'=>$creation_datetime_selected));
 
   $mod_uid_selected = (in_array('mod_uid', $headerlistArray) OR in_array('proxyid', $headerlistArray)) ? " selected" : "";
   array_unshift($elementHeadings,array('text'=>_formulize_DE_CALC_MODIFIER, 'ele_id'=>'mod_uid', 'selected'=>$mod_uid_selected));
- 
+
   $creation_uid_selected = (in_array('creation_uid', $headerlistArray) OR in_array('uid', $headerlistArray)) ? " selected" : "";
   array_unshift($elementHeadings,array('text'=>_formulize_DE_CALC_CREATOR, 'ele_id'=>'creation_uid', 'selected'=>$creation_uid_selected));
-  
+
   // get a list of applications this form is involved with
   $thisFormApplications = $application_handler->getApplicationsByForm($fid);
   foreach($thisFormApplications as $thisApp) {
     $formApplications[] = $thisApp->getVar('appid');
   }
-  
+
   // get permission data for this form
   // get group lists
   $groupListSQL = "SELECT gl_id, gl_name, gl_groups FROM ".$xoopsDB->prefix("group_lists")." ORDER BY gl_name";
@@ -191,13 +191,13 @@ if($_GET['fid'] != "new") {
       $grouplists[$array['gl_id']]['selected'] = $glSelectedText;
     }
   }
-  
+
   // get the list of groups
   $member_handler = xoops_gethandler('member');
   $allGroups = $member_handler->getGroups();
   $groups = array();
   if(!isset($selectedGroups)) {
-    $selectedGroups = isset($_POST['groups']) ? $_POST['groups'] : array();  
+    $selectedGroups = isset($_POST['groups']) ? $_POST['groups'] : array();
   }
   $orderGroups = isset($_POST['order']) ? $_POST['order'] : "creation";
   foreach($allGroups as $thisGroup) {
@@ -205,10 +205,10 @@ if($_GET['fid'] != "new") {
     $groups[$thisGroup->getVar('name')]['name'] = $thisGroup->getVar('name');
     $groups[$thisGroup->getVar('name')]['selected'] = in_array($thisGroup->getVar('groupid'), $selectedGroups) ? " selected" : "";
   }
-  if($orderGroups == "alpha") {  
-  	ksort($groups);
+  if($orderGroups == "alpha") {
+    ksort($groups);
   }
-  
+
   // get all the permissions for the selected groups for this form
   $gperm_handler =& xoops_gethandler('groupperm');
   $formulize_permHandler = new formulizePermHandler($fid);
@@ -218,32 +218,32 @@ if($_GET['fid'] != "new") {
   $i = 0;
   foreach($selectedGroups as $thisGroup) {
     // get all the permissions this group has on this form
-  		$criteria = new CriteriaCompo(new Criteria('gperm_groupid', $thisGroup));
-  		$criteria->add(new Criteria('gperm_itemid', $fid));
-  		$criteria->add(new Criteria('gperm_modid', getFormulizeModId()));
-  		$perms = $gperm_handler->getObjects($criteria, true);
-      $groupObject = $member_handler->getGroup($thisGroup);
-      $groupperms[$i]['name'] = $groupObject->getVar('name');
-      $groupperms[$i]['id'] = $groupObject->getVar('groupid');
-  		foreach($perms as $perm) {
-        $groupperms[$i][$perm->getVar('gperm_name')] = " checked";
-  		}
+    $criteria = new CriteriaCompo(new Criteria('gperm_groupid', $thisGroup));
+    $criteria->add(new Criteria('gperm_itemid', $fid));
+    $criteria->add(new Criteria('gperm_modid', getFormulizeModId()));
+    $perms = $gperm_handler->getObjects($criteria, true);
+    $groupObject = $member_handler->getGroup($thisGroup);
+    $groupperms[$i]['name'] = $groupObject->getVar('name');
+    $groupperms[$i]['id'] = $groupObject->getVar('groupid');
+    foreach($perms as $perm) {
+      $groupperms[$i][$perm->getVar('gperm_name')] = " checked";
+    }
       // group-specific-scope
-      $scopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groupObject->getVar('groupid'));
-      if($scopeGroups===false) {
-        $groupperms[$i]['groupscope_choice'][0] = " selected";
-      } else {
-        foreach($scopeGroups as $thisScopeGroupId) {
-          $groupperms[$i]['groupscope_choice'][$thisScopeGroupId] = " selected";
-        }
+    $scopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groupObject->getVar('groupid'));
+    if($scopeGroups===false) {
+      $groupperms[$i]['groupscope_choice'][0] = " selected";
+    } else {
+      foreach($scopeGroups as $thisScopeGroupId) {
+        $groupperms[$i]['groupscope_choice'][$thisScopeGroupId] = " selected";
       }
+    }
       // per-group-filters
-      $filterSettingsToSend = isset($filterSettings[$thisGroup]) ? $filterSettings[$thisGroup] : "";
-      $htmlFormId = $tableform ? "form-2" : "form-3"; // the form id will vary depending on the tabs, and tableforms have no elements tab
-      $groupperms[$i]['groupfilter'] = formulize_createFilterUI($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, "oom");
-      $groupperms[$i]['hasgroupfilter'] = $filterSettingsToSend ? " checked" : "";
-      $i++;
-  		unset($criteria);
+    $filterSettingsToSend = isset($filterSettings[$thisGroup]) ? $filterSettings[$thisGroup] : "";
+    $htmlFormId = $tableform ? "form-2" : "form-3"; // the form id will vary depending on the tabs, and tableforms have no elements tab
+    $groupperms[$i]['groupfilter'] = formulize_createFilterUI($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, "oom");
+    $groupperms[$i]['hasgroupfilter'] = $filterSettingsToSend ? " checked" : "";
+    $i++;
+    unset($criteria);
   }
 
 } else {
@@ -259,15 +259,15 @@ if($_GET['fid'] != "new") {
   $form_handle = "";
   $store_revisions = 0;
   if($_GET['aid']) {
-	$formApplications = array(intval($_GET['aid']));
+    $formApplications = array(intval($_GET['aid']));
   }
   $groupsCanEditDefaults = $xoopsUser->getGroups();
   $member_handler = xoops_gethandler('member');
   $allGroups = $member_handler->getGroups();
   foreach($allGroups as $thisGroup) {
-	$groupsCanEditOptions[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name'); 	
+    $groupsCanEditOptions[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name');
   }
-  
+
 }
 
 // get a list of all the custom element types that are present
@@ -276,14 +276,14 @@ $classFiles = scandir(XOOPS_ROOT_PATH."/modules/formulize/class/");
 $customElements = array();
 $i = 0;
 foreach($classFiles as $thisFile) {
-	if(substr($thisFile, -11)=="Element.php") {
-		$customType = substr($thisFile, 0, strpos($thisFile, "Element.php"));
-		$customElementHandler = xoops_getmodulehandler($customType."Element", "formulize");
-		$customElementObject = $customElementHandler->create();
-		$customElements[$i]['type'] = $customType;
-		$customElements[$i]['name'] = $customElementObject->name;
-		$i++;
-	}
+  if(substr($thisFile, -11)=="Element.php") {
+    $customType = substr($thisFile, 0, strpos($thisFile, "Element.php"));
+    $customElementHandler = xoops_getmodulehandler($customType."Element", "formulize");
+    $customElementObject = $customElementHandler->create();
+    $customElements[$i]['type'] = $customType;
+    $customElements[$i]['name'] = $customElementObject->name;
+    $i++;
+  }
 }
 
 
@@ -340,8 +340,8 @@ $settings['form_handle'] = $form_handle;
 $settings['store_revisions'] = $store_revisions;
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
 if(isset($groupsCanEditOptions)) {
-	$settings['groupsCanEditOptions'] = $groupsCanEditOptions;
-	$settings['groupsCanEditDefaults'] = $groupsCanEditDefaults;
+  $settings['groupsCanEditOptions'] = $groupsCanEditOptions;
+  $settings['groupsCanEditDefaults'] = $groupsCanEditDefaults;
 }
 
 $i = 1;
@@ -358,11 +358,11 @@ if(isset($formApplications)) {
 $i++;
 
 if($fid != "new") {
-  
-	$advanced_calculations = array();
-	$advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
-	$advanced_calculations['advanced_calculations'] = $advanced_calculation_handler->getList($fid);
-	
+
+  $advanced_calculations = array();
+  $advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
+  $advanced_calculations['advanced_calculations'] = $advanced_calculation_handler->getList($fid);
+
   if(!$tableform AND !$newtableform) {
     $adminPage['tabs'][$i]['name'] = "Elements";
     $adminPage['tabs'][$i]['template'] = "db:admin/form_elements.html";
@@ -371,11 +371,11 @@ if($fid != "new") {
       $adminPage['tabs'][$i]['content']['elements'] = $elements;
     }
     if(count($customElements)>0) {
-	$adminPage['tabs'][$i]['content']['customElements'] = $customElements;
+      $adminPage['tabs'][$i]['content']['customElements'] = $customElements;
     }
     $i++;
   }
-  
+
   $adminPage['tabs'][$i]['name'] = "Permissions";
   $adminPage['tabs'][$i]['template'] = "db:admin/form_permissions.html";
   $adminPage['tabs'][$i]['content'] = $common;
@@ -384,19 +384,19 @@ if($fid != "new") {
   $adminPage['tabs'][$i]['content']['order'] = $orderGroups;
   $adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "same" ? "same" : "different";
   $adminPage['tabs'][$i]['content']['groupperms'] = $groupperms;
-  
+
   $i++;
-  
+
   $adminPage['tabs'][$i]['name'] = "Screens";
   $adminPage['tabs'][$i]['template'] = "db:admin/form_screens.html";
   $adminPage['tabs'][$i]['content'] = $screens + $common;
   $i++;
-  
-	$adminPage['tabs'][$i]['name'] = "Procedures";
+
+  $adminPage['tabs'][$i]['name'] = "Procedures";
   $adminPage['tabs'][$i]['template'] = "db:admin/form_advanced_calculations.html";
   $adminPage['tabs'][$i]['content'] = $advanced_calculations + $common;
   $i++;
-	
+
 }
 
 $adminPage['pagetitle'] = _AM_APP_FORM.$formName;

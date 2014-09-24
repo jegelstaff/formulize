@@ -38,7 +38,7 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 global $xoopsTpl;
 
 if(!isset($xoopsTpl)) {
-	global $xoopsOption, $xoopsConfig, $xoopsModule;
+  global $xoopsOption, $xoopsConfig, $xoopsModule;
 
   $xoopsOption['theme_use_smarty'] = 1;
 
@@ -47,18 +47,19 @@ if(!isset($xoopsTpl)) {
   require_once XOOPS_ROOT_PATH . '/class/theme.php';
   require_once XOOPS_ROOT_PATH . '/class/theme_blocks.php';
 
-	if ( @$xoopsOption['template_main'] ) {
-		if ( false === strpos( $xoopsOption['template_main'], ':' ) ) {
-			$xoopsOption['template_main'] = 'db:' . $xoopsOption['template_main'];
-		}
-	}
-	$xoopsThemeFactory = new xos_opal_ThemeFactory();
+  if ( @$xoopsOption['template_main'] ) {
+    if ( false === strpos( $xoopsOption['template_main'], ':' ) ) {
+      $xoopsOption['template_main'] = 'db:' . $xoopsOption['template_main'];
+    }
+  }
+  $xoopsThemeFactory = new xos_opal_ThemeFactory();
   $xoopsThemeFactory->allowedThemes = $xoopsConfig['theme_set_allowed'];
   $xoopsThemeFactory->defaultTheme = $xoopsConfig['theme_set'];
 
   $xoTheme =& $xoopsThemeFactory->createInstance( array(
-  	'contentTemplate' => @$xoopsOption['template_main'],
-  ) );
+    'contentTemplate' => @$xoopsOption['template_main'],
+    )
+  );
   $xoopsTpl =& $xoTheme->template;
 }
 
@@ -72,38 +73,37 @@ $adminPage = array();
 $active_page = isset($_GET['page']) ? $_GET['page'] : "home";
 switch($active_page) {
   case "application":
-    include "application.php"; 
+    include "application.php";
     break;
   case "form":
     include "form.php";
     break;
-	case "screen":
-		include "screen.php";
-		break;
-	case "relationship":
-		include "relationship.php";
-		break;
-	case "element":
-		include "element.php";
-		break;
-	case "advanced-calculation":
-		include "advanced_calculation.php";
-		break;
-	case "export":
-		// do export stuff
-		$_GET['aid'] = 1;
-		include "export.php";
-		break;
-	case "import":
-		// do import stuff
-		$_GET['aid'] = 1;
-		include "import.php";
-		break;
-	default:
-	case "home":
-		include "home.php";
-		break;
-
+  case "screen":
+    include "screen.php";
+    break;
+  case "relationship":
+    include "relationship.php";
+    break;
+  case "element":
+    include "element.php";
+    break;
+  case "advanced-calculation":
+    include "advanced_calculation.php";
+    break;
+  case "export":
+      // do export stuff
+    $_GET['aid'] = 1;
+    include "export.php";
+    break;
+  case "import":
+      // do import stuff
+    $_GET['aid'] = 1;
+    include "import.php";
+    break;
+  default:
+  case "home":
+    include "home.php";
+    break;
 }
 $adminPage['logo'] = "/modules/formulize/images/formulize-logo.png";
 
@@ -118,19 +118,17 @@ if(isset($_GET['tab']) AND (!isset($_POST['tabs_selected']) OR $_POST['tabs_sele
     }
   }
 } elseif(isset($_POST['tabs_selected']) and $_POST['tabs_selected'] !== "") {
-	$adminPage['tabselected']  = intval($_POST['tabs_selected']);
+  $adminPage['tabselected']  = intval($_POST['tabs_selected']);
 }
 
 // assign the contents to the template and display
 $adminPage['formulizeModId'] = getFormulizeModId();
 $xoopsTpl->assign('adminPage', $adminPage);
 if (isset($breadcrumbtrail))
-$xoopsTpl->assign('breadcrumbtrail', $breadcrumbtrail);
+  $xoopsTpl->assign('breadcrumbtrail', $breadcrumbtrail);
 $xoopsTpl->assign('scrollx', (isset($_POST['scrollx']) ? intval($_POST['scrollx']) : 0));
 $accordion_active = (isset($_POST['accordion_active']) AND $_POST['accordion_active'] !== "" AND $_POST['accordion_active'] !== "false") ? intval($_POST['accordion_active']) : "false";
 $xoopsTpl->assign('accordion_active', $accordion_active);
 $xoopsTpl->display("db:admin/ui.html");
 
 xoops_cp_footer();
-
-

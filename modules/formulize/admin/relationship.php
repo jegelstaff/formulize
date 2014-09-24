@@ -32,11 +32,11 @@
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
 if(0 == $aid = intval($_GET['aid'])) {
-    $appName = "Forms with no app";
+  $appName = "Forms with no app";
 } else {
-    $application_handler = xoops_getmodulehandler('applications', 'formulize');
-    $appObject = $application_handler->get($aid);
-    $appName = $appObject->getVar('name');
+  $application_handler = xoops_getmodulehandler('applications', 'formulize');
+  $appObject = $application_handler->get($aid);
+  $appName = $appObject->getVar('name');
 }
 
 // retrieve the names and ids of all forms, and create the form options for the Add Form section
@@ -44,9 +44,9 @@ $formsq = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id") .
 $res = $xoopsDB->query($formsq);
 $i = 0;
 while($array = $xoopsDB->fetchArray($res)) {
-    $common['formoptions'][$i]['value'] = $array['id_form'];
-    $common['formoptions'][$i]['name'] = $array['desc_form'];
-    $i++;
+  $common['formoptions'][$i]['value'] = $array['id_form'];
+  $common['formoptions'][$i]['name'] = $array['desc_form'];
+  $i++;
 }
 
 $breadcrumbtrail[1]['url'] = "page=home";
@@ -55,16 +55,16 @@ $breadcrumbtrail[2]['url'] = "page=application&aid=$aid&tab=relationships";
 $breadcrumbtrail[2]['text'] = $appName;
 
 if($_GET['frid'] != "new") {
-    $relationship_id = intval($_GET['frid']);
-    $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-    $relationship = $framework_handler->get($relationship_id);
-    $common['relationship'] = $relationship;
-    $breadcrumbtrail[3]['text'] = $relationship->name;
+  $relationship_id = intval($_GET['frid']);
+  $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+  $relationship = $framework_handler->get($relationship_id);
+  $common['relationship'] = $relationship;
+  $breadcrumbtrail[3]['text'] = $relationship->name;
 } else {
     // new framework
-    $common['name'] = "New Relationship";
-    $relationship_id = "new";
-    $breadcrumbtrail[3]['text'] = "New Relationship";
+  $common['name'] = "New Relationship";
+  $relationship_id = "new";
+  $breadcrumbtrail[3]['text'] = "New Relationship";
 }
 
 // common values should be assigned to all tabs

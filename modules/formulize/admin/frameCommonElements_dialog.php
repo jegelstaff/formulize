@@ -26,7 +26,7 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions 					     ##
+##  Author of this file: Freeform Solutions                ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -46,15 +46,15 @@ $xoopsTpl =& $xoTheme->template;
 global $xoopsConfig, $xoopsDB;
 // load the formulize language constants if they haven't been loaded already
 if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
-	include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+  include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
 } else {
-	include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+  include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
 }
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/frameworks.php";
 
-global $xoopsDB; 
+global $xoopsDB;
 
 include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
 
@@ -83,23 +83,23 @@ $xoopsTpl->display("db:admin/relationship_common_values.html");
 
 // THIS FUNCTION CREATES THE ARRAY OF ELEMENTS FOR USE IN THE LISTBOXES
 function generateElementList($form) {
-	$element_handler =& xoops_getmodulehandler('elements', 'formulize');
-	foreach($form->getVar('elements') as $element) {
-		$ele = $element_handler->get($element);
-		if($ele->getVar('ele_type') != "ib" AND $ele->getVar('ele_type') != "areamodif" AND $ele->getVar('ele_type') != "subform"){
-			$saveoptions[$ele->getVar('ele_id')] = $ele->getVar('ele_colhead') ? $ele->getVar('ele_colhead') : $ele->getVar('ele_caption');
-		}
-	}
-	return $saveoptions;
+  $element_handler =& xoops_getmodulehandler('elements', 'formulize');
+  foreach($form->getVar('elements') as $element) {
+    $ele = $element_handler->get($element);
+    if($ele->getVar('ele_type') != "ib" AND $ele->getVar('ele_type') != "areamodif" AND $ele->getVar('ele_type') != "subform"){
+      $saveoptions[$ele->getVar('ele_id')] = $ele->getVar('ele_colhead') ? $ele->getVar('ele_colhead') : $ele->getVar('ele_caption');
+    }
+  }
+  return $saveoptions;
 }
 
 function getDefault($lid, $order) {
-	$link = new formulizeFrameworkLink($lid);
-	if($link->getVar('common')) {
-		if($order == 1) { return $link->getVar('key1'); }
-		if($order == 2) { return $link->getVar('key2'); }
-	} else {
-		return false;
-	}
+  $link = new formulizeFrameworkLink($lid);
+  if($link->getVar('common')) {
+    if($order == 1) { return $link->getVar('key1'); }
+    if($order == 2) { return $link->getVar('key2'); }
+  } else {
+    return false;
+  }
 }
 ?>
