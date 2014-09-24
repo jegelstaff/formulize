@@ -95,7 +95,7 @@
       "type": "verifyElementValue",
       "locator": {
         "type": "css selector",
-        "value": "tr.formulize-input-people_email input[type='text']"
+        "value": "td.formulize-input-people_email input[type='text']"
       },
       "value": "daniel@example.com"
     }
