@@ -89,13 +89,13 @@
     },
     {
       "type": "pause",
-      "waitTime": "4234"
+      "waitTime": "8234"
     },
     {
       "type": "verifyElementValue",
       "locator": {
-        "type": "xpath",
-        "value": "//tr[contains(@class, \"formulize-input-people_email\")]/input[type='text']"
+        "type": "css selector",
+        "value": "tr.formulize-input-people_email input[type='text']"
       },
       "value": "daniel@example.com"
     }
