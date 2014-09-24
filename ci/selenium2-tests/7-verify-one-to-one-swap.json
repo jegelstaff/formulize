@@ -95,7 +95,7 @@
       "type": "verifyElementValue",
       "locator": {
         "type": "xpath",
-        "value": "//tr[contains(@class, \"formulize-input-people_email\")]/input"
+        "value": "//tr[contains(@class, \"formulize-input-people_email\")]/input[type='text']"
       },
       "value": "daniel@example.com"
     }
