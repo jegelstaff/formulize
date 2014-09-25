@@ -178,6 +178,10 @@ switch($op) {
       if(is_array($deReturnValue)) {
       	$form_ele = $deReturnValue[0];
       	$isDisabled = $deReturnValue[1];
+
+        $label_class = " formulize-label-".$elementObject->getVar("ele_handle");
+        $input_class = " formulize-input-".$elementObject->getVar("ele_handle");
+
       	// rendered HTML code below is taken from the formulize classes at the top of include/formdisplay.php
       	if($elementObject->getVar('ele_type') == "ib") {// if it's a break, handle it differently...
       	  $class = ($form_ele[1] != '') ? " class='".$form_ele[1]."'" : '';
@@ -188,7 +192,7 @@ switch($op) {
       	  }
       	} else {
       	  $req = !$isDisabled ? intval($elementObject->getVar('ele_req')) : 0;
-      	  $html = "<td class='head'>";
+      	  $html = "<td class='head$label_class'>";
       	  if (($caption = $form_ele->getCaption()) != '') {
       	    $html .=
       	    "<div class='xoops-form-element-caption" . ($req ? "-required" : "" ) . "'>"
@@ -199,7 +203,7 @@ switch($op) {
       	  if (($desc = $form_ele->getDescription()) != '') {
       		  $html .= "<div class='xoops-form-element-help'>{$desc}</div>";
       	  }
-      	  $html .= "</td><td class='even'>" . $form_ele->render() . "</td>";
+      	  $html .= "</td><td class='even$input_class'>" . $form_ele->render() . "</td>";
       	}
       	if(count($sendBackValue)>0) {
       	  // if we wrote any new values in autocomplete boxes, pass them back so we can alter their values in markup so new entries are not created again!
