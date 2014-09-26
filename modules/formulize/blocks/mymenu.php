@@ -21,56 +21,50 @@
 // ------------------------------------------------------------------------- //
 
 function block_formulizeMENU_show() {
-        global $xoopsDB, $xoopsUser, $xoopsModule, $myts;
-		    $myts =& MyTextSanitizer::getInstance();
+  global $xoopsDB, $xoopsUser, $xoopsModule, $myts;
+  $myts =& MyTextSanitizer::getInstance();
 
-        $block = array();
-        $groups = array();
-        $block['title'] = ""; //_MB_formulizeMENU_TITLE;
-        $block['content'] = "<table cellspacing='0' border='0'><tr><td id=\"mainmenu\">";
+  $block = array();
+  $groups = array();
+  $block['title'] = ""; //_MB_formulizeMENU_TITLE;
+  $block['content'] = "<table cellspacing='0' border='0'><tr><td id=\"mainmenu\">";
 
-	// MODIFIED April 25/05 to handle menu categories
+  // MODIFIED April 25/05 to handle menu categories
 
-	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+  include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
-	// GENERATE THE ID_FORM
-	$id_form = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
-    $id_form = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $id_form ;
+  // GENERATE THE ID_FORM
+  $id_form = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
+  $id_form = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $id_form ;
 
-    $application_handler = xoops_getmodulehandler('applications', 'formulize');
-	$form_handler = xoops_getmodulehandler('forms', 'formulize');
-	$allApplications = $application_handler->getAllApplications();
-	$menuTexts = array();
-	$i = 0;
-    
-        foreach($allApplications as $thisApplication) {
-        
-        		$links = $thisApplication->getVar('links');
-        
-        		if(count($links) > 0){
-            
-            			$menuTexts[$i]['application'] = $thisApplication;
-            
-            			$menuTexts[$i]['links'] = $links;
-            
-            			$i++;
-            
-            		}
- 	}
-	$links = $application_handler->getMenuLinksForApp(0);
-	if(count($links)>0) {
-        $menuTexts[$i]['links'] = $links;
-        $menuTexts[$i]['application'] = 0;
+  $application_handler = xoops_getmodulehandler('applications', 'formulize');
+  $form_handler = xoops_getmodulehandler('forms', 'formulize');
+  $allApplications = $application_handler->getAllApplications();
+  $menuTexts = array();
+  $i = 0;
+
+  foreach($allApplications as $thisApplication) {
+    $links = $thisApplication->getVar('links');
+    if(count($links) > 0){
+      $menuTexts[$i]['application'] = $thisApplication;
+      $menuTexts[$i]['links'] = $links;
+      $i++;
+    }
   }
-	if(count($menuTexts) == 0) { // if no menu entries were found, return nothing
-				$block['content'] = _AM_NOFORMS_AVAIL;
-				return $block;
+  $links = $application_handler->getMenuLinksForApp(0);
+  if(count($links)>0) {
+    $menuTexts[$i]['links'] = $links;
+    $menuTexts[$i]['application'] = 0;
   }
-	$forceOpen = count($menuTexts)==1 ? true : false;
-	foreach($menuTexts as $thisMenuData) {
-				$block['content'] .= drawMenuSection($thisMenuData['application'], $thisMenuData['links'], $forceOpen, $form_handler);
-	}
-	
+  if(count($menuTexts) == 0) { // if no menu entries were found, return nothing
+    $block['content'] = _AM_NOFORMS_AVAIL;
+    return $block;
+  }
+  $forceOpen = count($menuTexts)==1 ? true : false;
+  foreach($menuTexts as $thisMenuData) {
+    $block['content'] .= drawMenuSection($thisMenuData['application'], $thisMenuData['links'], $forceOpen, $form_handler);
+  }
+
   $block['content'] .= "</td></tr></table>";
 
   return $block;
@@ -78,80 +72,60 @@ function block_formulizeMENU_show() {
 }
 
 function getMenuTextsForForms($forms, $form_handler) {
-				$menuTexts = array();
-				foreach($forms as $thisForm) {
-								$thisFormObject = $form_handler->get($thisForm);
-								if($menuText = $thisFormObject->getVar('menutext')) {
-												$menuTexts[$thisFormObject->getVar('id_form')] = html_entity_decode($menuText, ENT_QUOTES) == "Use the form's title" ? $thisFormObject->getVar('title') : $menuText;
-								}
-								
-				}
-				return $menuTexts;
+  $menuTexts = array();
+  foreach($forms as $thisForm) {
+    $thisFormObject = $form_handler->get($thisForm);
+    if($menuText = $thisFormObject->getVar('menutext')) {
+      $menuTexts[$thisFormObject->getVar('id_form')] = html_entity_decode($menuText, ENT_QUOTES) == "Use the form's title" ? $thisFormObject->getVar('title') : $menuText;
+    }
+  }
+  return $menuTexts;
 }
 
 function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
-        
-        if($application == 0) {
-            
-            $aid = 0;
-            
-            $name = _AM_CATGENERAL;
-            
-            $forms = $form_handler->getFormsByApplication(0,true); // true forces ids, not objects, to be returned
-            
-        } else {
-            $aid = intval($application->getVar('appid'));
-                
-            $name = printSmart($application->getVar('name'), 200);
-                
-            $forms = $application->getVar('forms');
-                
+  if($application == 0) {
+    $aid = 0;
+    $name = _AM_CATGENERAL;
+    $forms = $form_handler->getFormsByApplication(0,true); // true forces ids, not objects, to be returned
+  } else {
+    $aid = intval($application->getVar('appid'));
+
+    $name = printSmart($application->getVar('name'), 200);
+
+    $forms = $application->getVar('forms');
+
+  }
+  static $topwritten = false;
+  $itemurl = XOOPS_URL."/modules/formulize/application.php?id=$aid";
+  if (!$topwritten) {
+    $block = "<a class=\"menuTop\" href=\"$itemurl\">$name</a>";
+    $topwritten = 1;
+  } else {
+   $block = "<a class=\"menuMain\" href=\"$itemurl\">$name</a>";
+  }
+ $isThisSubMenu = false;
+
+  foreach($menulinks as $menulink) {
+    if($menulink->getVar("menu_id") == $_GET['menuid']){
+      $isThisSubMenu = true;
+    }
+  }
+
+  if($forceOpen OR (isset($_GET['id']) AND strstr(getCurrentURL(), "/modules/formulize/application.php") AND $aid == $_GET['id']) OR (strstr(getCurrentURL(), "/modules/formulize/index.php?fid=") AND in_array($_GET['fid'], $forms)) OR $isThisSubMenu ) { // if we're viewing this application or a form in this application, or this is the being forced open (only application)...
+    foreach($menulinks as $menulink) {
+      $suburl = XOOPS_URL."/modules/formulize/index.php?".$menulink->getVar("screen");
+      $url = $menulink->getVar("url");
+      $target = "";
+      if(strlen($url) > 0){
+        $target = " target='_blank' ";
+        $pos = strpos($url,"://");
+        if($pos === false){
+          $url = "http://".$url;
         }
-        static $topwritten = false;
-        
-        $itemurl = XOOPS_URL."/modules/formulize/application.php?id=$aid";
-        
-        if (!$topwritten) {
-            
-            $block = "<a class=\"menuTop\" href=\"$itemurl\">$name</a>";
-            
-            $topwritten = 1;
-            
-         } else {
-                
-             $block = "<a class=\"menuMain\" href=\"$itemurl\">$name</a>";
-                
-         }
-        
-        $isThisSubMenu = false;
-        
-        foreach($menulinks as $menulink) {
-            
-            if($menulink->getVar("menu_id") == $_GET['menuid']){
-                
-                $isThisSubMenu = true;
-    
-            }
-            
-        }        
-				
-				
-        if($forceOpen OR (isset($_GET['id']) AND strstr(getCurrentURL(), "/modules/formulize/application.php") AND $aid == $_GET['id']) OR (strstr(getCurrentURL(), "/modules/formulize/index.php?fid=") AND in_array($_GET['fid'], $forms)) OR $isThisSubMenu ) { // if we're viewing this application or a form in this application, or this is the being forced open (only application)...
-        
-		foreach($menulinks as $menulink) {
-			$suburl = XOOPS_URL."/modules/formulize/index.php?".$menulink->getVar("screen");
-			$url = $menulink->getVar("url");
-			$target = "";
-			if(strlen($url) > 0){
-				$target = " target='_blank' ";
-				$pos = strpos($url,"://");
-				if($pos === false){
-					$url = "http://".$url;
-				}
-				$suburl = $url;
-			}
-			$block .= "<a class=\"menuSub\" $target href='$suburl'>".$menulink->getVar("text")."</a>";
-		}	
-	}
-	return $block;
+        $suburl = $url;
+      }
+      $block .= "<a class=\"menuSub\" $target href='$suburl'>".$menulink->getVar("text")."</a>";
+    }
+  }
+  return $block;
 }
