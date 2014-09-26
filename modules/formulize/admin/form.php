@@ -287,7 +287,10 @@ foreach($classFiles as $thisFile) {
 	}
 }
 
-$allRelationships = $framework_handler->getFrameworksByForm($formObject->getVar('id_form')); // returns array of objects
+$allRelationships = array();
+if (! is_null($formObject)) {
+  $allRelationships = $framework_handler->getFrameworksByForm($formObject->getVar('id_form')); // returns array of objects
+}
 
 $relationships = array();
 $relationshipIndex = array();
