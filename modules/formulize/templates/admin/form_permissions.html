@@ -436,6 +436,12 @@ $("[name=show_user_perms]").click(function () {
     $("[name=search_by_user]").val(1);
     formulize_reload();
 });
+$("[name=submitted_user]").keyup(function(e) {
+    if(e.keyCode == 13) {
+        $("[name=search_by_user]").val(1);
+        formulize_reload();
+    }
+});
 
 $(".conditionsdelete").click(function () {
 	$("[name=conditionsdelete]").val($(this).attr('target'));
