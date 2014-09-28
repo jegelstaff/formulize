@@ -4293,6 +4293,86 @@ function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$op
 }
 
 
+function getExistingFilter($filterSettings, $filterName, $formWithSourceElements, $formName, $defaultTypeIfNoFilterTypeGiven="all", $groups=false, $filterAllText=_formulize_GENERIC_FILTER_ALL, $filterConText=_formulize_GENERIC_FILTER_CON, $filterButtonText=_formulize_GENERIC_FILTER_ADDBUTTON) {
+    if (!$filterName OR !$formWithSourceElements OR !$formName) {
+        return false;
+    }
+
+    // set all the elements that we want to show the user
+    $cols = "";
+    if ($groups) {
+        $cols = getAllColList($formWithSourceElements, "", $groups);
+    } else {
+        $cols = getAllColList($formWithSourceElements);
+    }
+
+    $options = array('creation_uid'=>_formulize_DE_CALC_CREATOR, 'creation_datetime'=>_formulize_DE_CALC_CREATEDATE, 'mod_uid'=>_formulize_DE_CALC_MODIFIER, 'mod_datetime'=>_formulize_DE_CALC_MODDATE);
+    if (is_array($cols)) {
+        // setup the options array for form elements
+        foreach ($cols as $f=>$vs) {
+            foreach ($vs as $row=>$values) {
+                if ($values['ele_colhead'] != "") {
+                    $options[$values['ele_handle']] = printSmart(trans($values['ele_colhead']), 40);
+                } else {
+                    $options[$values['ele_handle']] = printSmart(trans(strip_tags($values['ele_caption'])), 40);
+                }
+            }
+        }
+    }
+
+    // process existing conditions...setup needed variables
+    $oldElementsName = $filterName."_elements";
+    $oldOpsName = $filterName."_ops";
+    $oldTermsName = $filterName."_terms";
+    $oldTypesName = $filterName."_types";
+
+    // unpack existing conditions
+    if (is_array($filterSettings)) {
+        ${$oldElementsName} = $filterSettings[0];
+        ${$oldOpsName} = $filterSettings[1];
+        ${$oldTermsName} = $filterSettings[2];
+        if (isset($filterSettings[3])) {
+            ${$oldTypesName} = $filterSettings[3];
+        } else {
+            if (is_array($filterSettings[0])) {
+                foreach ($filterSettings[0] as $i => $thisFilterSettingsZero) {
+                    ${$oldTypesName}[$i] = $defaultTypeIfNoFilterTypeGiven;
+                }
+            }
+        }
+    }
+
+    // setup needed variables for the all or oom
+    // > match all of these
+    $conditionlist = array();
+
+    // > match one or more of these
+    $conditionlistOOM = array();
+
+
+    if (is_array(${$oldElementsName})) {
+        $i=0;
+        foreach (${$oldElementsName} as $x=>$thisOldElementsName) {
+            // need to add [$i] to the generation of the hidden values here, so the hidden condition keys equal the flag on the deletion X
+            // $x will be the order based on the filter settings that were passed in, might not start at 0.  $i will always start at 0, so this way we'll catch/correct any malformed arrays as people edit/save them
+
+            if (${$oldTypesName}[$x] == "all") {
+                array_push($conditionlist, $options[${$oldElementsName}[$x]] . " " . ${$oldOpsName}[$x] . " " . ${$oldTermsName}[$x]);
+            } else {
+                array_push($conditionlistOOM, $options[${$oldElementsName}[$x]] . " " . ${$oldOpsName}[$x] . " " . ${$oldTermsName}[$x]);
+            }
+            $i++;
+        }
+    }
+
+    $existingConditions = array();
+    $existingConditions['all'] = $conditionlist;
+    $existingConditions['oom'] = $conditionlistOOM;
+
+    return $existingConditions;
+}
+
+
 // this function gets the password for the encryption/decryption process
 // want to has the db pass since we don't want any SQL logging processes to include the db pass as plaintext
 function getAESPassword() {
