@@ -39,6 +39,14 @@ if(0 == $aid = intval($_GET['aid'])) {
     $appName = $appObject->getVar('name');
 }
 
+if(0 != $fid = intval($_GET['fid'])) {
+  $form_handler = xoops_getmodulehandler('forms', 'formulize');
+  $formObject = $form_handler->get($fid);
+  $common['required_form']['value'] = $fid;
+  $formName = $formObject->getVar('title');
+  $common['required_form']['name'] = $formObject->getVar('title');
+}
+
 // retrieve the names and ids of all forms, and create the form options for the Add Form section
 $formsq = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id") . " ORDER BY desc_form";
 $res = $xoopsDB->query($formsq);
@@ -49,27 +57,36 @@ while($array = $xoopsDB->fetchArray($res)) {
     $i++;
 }
 
-$breadcrumbtrail[1]['url'] = "page=home";
-$breadcrumbtrail[1]['text'] = "Home";
-$breadcrumbtrail[2]['url'] = "page=application&aid=$aid&tab=relationships";
-$breadcrumbtrail[2]['text'] = $appName;
+$crumb_ix = 1;
+$breadcrumbtrail[$crumb_ix]['url'] = "page=home";
+$breadcrumbtrail[$crumb_ix]['text'] = "Home";
+$crumb_ix++;
+$breadcrumbtrail[$crumb_ix]['url'] = "page=application&aid=$aid&tab=relationships";
+$breadcrumbtrail[$crumb_ix]['text'] = $appName;
+$crumb_ix++;
+if($fid != 0) {
+    $breadcrumbtrail[$crumb_ix]['url'] = "page=form&aid=$aid&fid=$fid&tab=relationships";
+    $breadcrumbtrail[$crumb_ix]['text'] = $common['required_form']['name'];
+    $crumb_ix++;
+}
 
 if($_GET['frid'] != "new") {
     $relationship_id = intval($_GET['frid']);
     $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
     $relationship = $framework_handler->get($relationship_id);
     $common['relationship'] = $relationship;
-    $breadcrumbtrail[3]['text'] = $relationship->name;
+    $breadcrumbtrail[$crumb_ix]['text'] = $relationship->name;
 } else {
     // new framework
     $common['name'] = "New Relationship";
     $relationship_id = "new";
-    $breadcrumbtrail[3]['text'] = "New Relationship";
+    $breadcrumbtrail[$crumb_ix]['text'] = "New Relationship";
 }
 
 // common values should be assigned to all tabs
 $common['frid'] = $relationship_id;
 $common['aid'] = $aid;
+$common['fid'] = $fid;
 
 $adminPage['tabs'][1]['name'] = "Relationship Settings";
 $adminPage['tabs'][1]['template'] = "db:admin/relationship_settings.html";

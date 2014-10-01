@@ -49,6 +49,9 @@ if($relationship_id == "new") {
         print "Error: could not create the framework";
     }
     $redirectionURL = XOOPS_URL . "/modules/formulize/admin/ui.php?page=relationship&aid=".intval($_POST['aid'])."&frid=$relationship_id";
+    if (isset($_POST['fid'])) {
+        $redirectionURL .= "&fid=" . intval($_POST['fid']);
+    }
 }
 
 // save all changes, the user could have modified links and then clicked add or
