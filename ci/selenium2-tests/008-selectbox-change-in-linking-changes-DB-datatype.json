@@ -121,6 +121,11 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
@@ -128,17 +133,21 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "Manage the elements in the form"
+    },
+    {
       "type": "clickElement",
       "locator": {
-        "type": "link text",
-        "value": "SelectBoxTest - Dropdown box - 19"
+        "type": "xpath",
+        "value": "//span[starts-with(text(), 'SelectBoxTest - Dropdown box')]"
       }
     },
     {
       "type": "clickElement",
       "locator": {
         "type": "xpath",
-        "value": "//div[@id='drawer-2-8']//a[.=' Configure']"
+        "value": "//span[starts-with(text(), 'SelectBoxTest - Dropdown box')]/parent::a/parent::h3/parent::div/div/div/p/a[.=' Configure']"
       }
     },
     {
@@ -186,6 +195,11 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
@@ -193,17 +207,21 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "Manage the elements in the form"
+    },
+    {
       "type": "clickElement",
       "locator": {
-        "type": "link text",
-        "value": "SelectBoxTest - Dropdown box - 19"
+        "type": "xpath",
+        "value": "//span[starts-with(text(), 'SelectBoxTest - Dropdown box')]"
       }
     },
     {
       "type": "clickElement",
       "locator": {
         "type": "xpath",
-        "value": "//div[@id='drawer-2-8']//a[.=' Configure']"
+        "value": "//span[starts-with(text(), 'SelectBoxTest - Dropdown box')]/parent::a/parent::h3/parent::div/div/div/p/a[.=' Configure']"
       }
     },
     {
