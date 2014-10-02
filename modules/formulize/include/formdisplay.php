@@ -639,6 +639,15 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	
 	if($allDoneOverride AND $_POST['form_submitted']) {
 		drawGoBackForm($go_back, $currentURL, $settings, $entry);
+        foreach($fids as $this_fid) {
+            if(!$scheck = security_check($this_fid, $entries[$this_fid][0], $uid, $owner, $groups, $mid, $gperm_handler) AND !$viewallforms) {
+				continue;
+			}			
+			// if there is more than one form, try to make the 1-1 links
+            if(count($fids) > 1) {
+                list($form1s, $form2s, $form1EntryIds, $form2EntryIds) = formulize_makeOneToOneLinks($frid, $this_fid);
+            }
+        }
 		print "<script type=\"text/javascript\">window.document.go_parent.submit();</script>\n";
 		return;
 	} else {
