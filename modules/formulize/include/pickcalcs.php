@@ -307,26 +307,30 @@ $cols = getAllColList($fid, $frid, $groups);
 
 $deleted = handleDelete(); // returns 1 if a deletion was made, 0 if not.  
 
+$visible_columns = explode(",", $_GET['cols']);
+
 foreach($cols as $f=>$vs) {
-	foreach($vs as $row=>$values) {
-		$reqdcol = 'reqdcalc_column_' . $values['ele_id'];
-		if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.  
-			$usedvals[] = $values['ele_id'];
-			if(!$_POST[$reqdcol] AND !in_array($values['ele_id'], $_POST['column'])) { // Also exclude columns that have been used already.
-				if($values['ele_colhead'] != "") {
-					$options[$values['ele_id']] = printSmart(trans($values['ele_colhead']), 60);
-				} else {
-					$options[$values['ele_id']] = printSmart(trans(strip_tags($values['ele_caption'])), 60);
-				}
-			}
-			// used for the grouping list box
-			if($values['ele_colhead'] != "") {
-				$options2[$values['ele_id']] = "Group by: " . printSmart(trans($values['ele_colhead']));
-			} else {
-				$options2[$values['ele_id']] = "Group by: " . printSmart(trans(strip_tags($values['ele_caption'])));
-			}
-		}
-	}		
+    foreach($vs as $row=>$values) {
+        if (in_array($values['ele_handle'], $visible_columns)) {
+            $reqdcol = 'reqdcalc_column_' . $values['ele_id'];
+            if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.  
+                $usedvals[] = $values['ele_id'];
+                if(!$_POST[$reqdcol] AND !in_array($values['ele_id'], $_POST['column'])) { // Also exclude columns that have been used already.
+                    if($values['ele_colhead'] != "") {
+                        $options[$values['ele_id']] = printSmart(trans($values['ele_colhead']), 60);
+                    } else {
+                        $options[$values['ele_id']] = printSmart(trans(strip_tags($values['ele_caption'])), 60);
+                    }
+                }
+                // used for the grouping list box
+                if($values['ele_colhead'] != "") {
+                    $options2[$values['ele_id']] = "Group by: " . printSmart(trans($values['ele_colhead']));
+                } else {
+                    $options2[$values['ele_id']] = "Group by: " . printSmart(trans(strip_tags($values['ele_caption'])));
+                }
+            }
+        }
+    }
 }
 
 include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
@@ -347,7 +351,7 @@ print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$theme
 print "</head>";
 print "<body style=\"background: white; margin-top:20px;\"><center>"; 
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
-$pickcalc = new xoopsThemeForm(_formulize_DE_PICKCALCS, 'pickcalc', XOOPS_URL."/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid");
+$pickcalc = new xoopsThemeForm(_formulize_DE_PICKCALCS, 'pickcalc', $_SERVER["REQUEST_URI"]);
 
 $returned = addReqdCalcs($pickcalc);
 $pickcalc = $returned['form'];
@@ -359,7 +363,7 @@ if($xoopsUser) {
 	}
 }
 
-$columns = new xoopsFormSelect(_formulize_DE_CALC_COL, 'column', "", 10, true);
+$columns = new xoopsFormSelect(_formulize_DE_CALC_COL, 'column', "", min(count($options) + 6, 18), true);
 if(!in_array("creation_uid", $_POST['column']) AND !$_POST['reqdcalc_column_uid']) {
 	$columns->addOption("creation_uid", _formulize_DE_CALC_CREATOR);
 }
