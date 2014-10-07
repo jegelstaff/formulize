@@ -115,6 +115,8 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $formObj = $form_handler->get($form_id, true); // true causes all elements to be included even if they're not visible.
   $frameworks = $framework_handler->getFrameworksByForm($form_id);
   $selectedFramework = $settings['frid'];
+  
+  //Get the options for the dropdown
   $views = $formObj->getVar('views');
   $viewNames = $formObj->getVar('viewNames');
   $viewFrids = $formObj->getVar('viewFrids');
@@ -398,6 +400,7 @@ $common['title'] = $screenName; // oops, we've got two copies of this data float
 $common['sid'] = $screen_id;
 $common['fid'] = $form_id;
 $common['aid'] = $aid;
+$common['uid'] = $xoopsUser->getVar('uid');
 
 // generate a group list for use with the custom buttons
 $sql = "SELECT name, groupid FROM ".$xoopsDB->prefix("groups")." ORDER BY groupid";

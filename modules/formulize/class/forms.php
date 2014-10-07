@@ -133,21 +133,8 @@ function checkFormOwnership($id_form,$form_handle){
 				$defaultlist = $formq[0]['defaultlist'];
 			}
 			
-			// gather the view information
-			$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '$id_form' OR (sv_mainform = '' AND sv_formframe = '$id_form')");
-			if(!isset($viewq[0])) {
-				$views = array();
-				$viewNames = array();
-				$viewFrids = array();
-				$viewPublished = array();
-			} else {
-				for($i=0;$i<count($viewq);$i++) {
-					$views[$i] = $viewq[$i]['sv_id'];
-					$viewNames[$i] = stripslashes($viewq[$i]['sv_name']);
-					$viewFrids[$i] = $viewq[$i]['sv_mainform'] ? $viewq[$i]['sv_formframe'] : "";
-					$viewPublished[$i] = $viewq[$i]['sv_pubgroups'] ? true : false;
-				}
-			}
+			// gather the views information
+			list($views, $viewNames, $viewFrids, $viewPublished) = self::getFormViews($id_form);
 			
 			// setup the filter settings
 			$filterSettingsq = q("SELECT groupid, filter FROM " . $xoopsDB->prefix("formulize_group_filters") . " WHERE fid='$id_form'");
@@ -186,6 +173,31 @@ function checkFormOwnership($id_form,$form_handle){
         $this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
         $this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_before_save']);
         $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
+    }
+    
+    /* Get the views for the supplied form id
+    *  This function also gets invoked by an ajax call from screen_list_entries.html to reload all available views on the dropdown menu.
+    */
+    function getFormViews($id_form) {
+	
+	global $xoopsDB;	
+		
+	$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '$id_form' OR (sv_mainform = '' AND sv_formframe = '$id_form')");
+	if(!isset($viewq[0])) {
+	    $views = array();
+	    $viewNames = array();
+	    $viewFrids = array();
+	    $viewPublished = array();
+	} else {
+	    for($i=0;$i<count($viewq);$i++) {
+		
+	        $views[$i] = $viewq[$i]['sv_id'];
+	        $viewNames[$i] = stripslashes($viewq[$i]['sv_name']);
+	        $viewFrids[$i] = $viewq[$i]['sv_mainform'] ? $viewq[$i]['sv_formframe'] : "";
+	        $viewPublished[$i] = $viewq[$i]['sv_pubgroups'] ? true : false;
+	    }
+	}
+	return array($views, $viewNames, $viewFrids, $viewPublished);
     }
 
     static function sanitize_handle_name($handle_name) {
