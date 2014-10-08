@@ -13,7 +13,7 @@ below:
 2. Go to the 'Permissions' tab.
 
 
-3. Scroll down to the 'Review permissions for a user' section, enter the username in the textbox.  
+3. Scroll down to the 'Review permissions for a user' section, enter the username in the textbox.
 **Note:** you'll have to search by the **Display Name** of the user, not he/she's loggin name.
 
 4. Press 'Enter' or click 'Show permissions for the user'
