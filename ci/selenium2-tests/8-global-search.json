@@ -121,6 +121,28 @@
       "type": "verifyTextPresent",
       "negated": true,
       "text": "Manitobans for Toronto"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "formulize_addButton"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "donebutton"
+      }
+    },
+    {
+      "type": "verifyElementValue",
+      "locator": {
+        "type": "id",
+        "value": "formulize_globalQuickSearch"
+      },
+      "value": "toronto"
     }
   ],
   "data": {
