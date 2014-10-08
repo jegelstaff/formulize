@@ -38,6 +38,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 class formulizeDataHandler  {
 	
 	var $fid; // the form this Data Handler object is attached to
+	var $metadataFields; //
 
 	// $fid must be an id
 	function formulizeDataHandler($fid){
@@ -47,6 +48,15 @@ class formulizeDataHandler  {
 		} else {
 			$this->fid = false;
 		}
+		
+		//set the avaiable metadata fields to a global
+		$this->metadataFields = array("ENTRY_ID", 
+		  						"CREATION_DATETIME",
+		   						"CREATION_UID",
+		   						"CREATOR_EMAIL",
+		  						"MOD_DATETIME",
+		   						"MOD_UID",
+		   						"USER_VIEWEMAIL");  
 	}
 	
 	// this function copies data from one form to another

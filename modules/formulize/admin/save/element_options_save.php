@@ -117,16 +117,25 @@ if($ele_type == "checkbox") {
 }
 
 if($ele_type == "select") {
+  $ele_value = $element->getVar('ele_value');
+
   if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
-   // select box is linked
-      $linked = TRUE;
+    // select box is not currently linked and user is requesting to link
+    if (!$element->isLinked){
+      $form_handler->updateField($element, $element->getVar("ele_handle"), "bigint(20)");
+    }
+
     global $xoopsDB;
     $sql_link = "SELECT ele_caption, id_form, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
 		$res_link = $xoopsDB->query($sql_link);
 		$array_link = $xoopsDB->fetchArray($res_link);
 		$processedValues['elements']['ele_value'][2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
   } else {
-        $linked = FALSE;
+    // a user requests to unlink the select box and select box is currently linked
+    if ($_POST['formlink'] == "none" AND $element->isLinked){
+      $form_handler->updateField($element, $element->getVar("ele_handle"), "text");
+    }
+
     list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
     foreach($_POST['ele_value'] as $id=>$text) {
 			if($text !== "") {
@@ -146,10 +155,9 @@ if($ele_type == "select") {
     $processedValues['elements']['ele_value'][0] = 1;
 	$processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
   }
-  
-    // if there is a change, need to adjust the database!!
-    $ele_value = $element->getVar('ele_value');
-    if (isset($ele_value[1]) AND $linked AND $ele_value[1] != $_POST['elements_multiple']) {
+
+    // if there is a change to the multiple selection status, need to adjust the database!!
+    if (isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple']) {
         if ($ele_value[1] == 0) {
             $result = convertSelectBoxToMulti($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
         } else {
@@ -160,11 +168,11 @@ if($ele_type == "select") {
         }
     }
   $processedValues['elements']['ele_value'][3] = implode(",", $_POST['element_formlink_scope']);
-  
+
   // handle conditions
   // grab any conditions for this page too
   // add new ones to what was passed from before
-  
+
   $filter_key = 'formlinkfilter';
   if($_POST["new_".$filter_key."_term"] != "") {
     $_POST[$filter_key."_elements"][] = $_POST["new_".$filter_key."_element"];
@@ -179,10 +187,10 @@ if($ele_type == "select") {
     $_POST[$filter_key."_types"][] = "oom";
   }
   // then remove any that we need to
-  
+
   $conditionsDeleteParts = explode("_", $_POST['optionsconditionsdelete']);
   $deleteTarget = $conditionsDeleteParts[1];
-  if($_POST['optionsconditionsdelete']) { 
+  if($_POST['optionsconditionsdelete']) {
     // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
     // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
     $originalCount = count($_POST[$filter_key."_elements"]);
@@ -200,7 +208,7 @@ if($ele_type == "select") {
         unset($_POST[$filter_key."_terms"][$i]);
         unset($_POST[$filter_key."_types"][$i]);
       }
-    }	
+    }
   }
   if(count($_POST[$filter_key."_elements"]) > 0){
     $processedValues['elements']['ele_value'][5][0] = $_POST[$filter_key."_elements"];
@@ -248,10 +256,10 @@ foreach($processedValues['elements'] as $property=>$value) {
   // during the adminSave step, then set the property now.
   // We don't want to set ele_value if it was modified during
   // adminSave, because we might clobber user's changes
-  	
-  
+
+
   if($property != 'ele_value' OR $ele_value_before_adminSave === $ele_value_after_adminSave) {
-  
+
   	$element->setVar($property, $value);
   }
 }
