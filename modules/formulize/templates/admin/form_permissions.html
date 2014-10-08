@@ -93,7 +93,7 @@
 
     <!--Show the submitted user's permission-->
     <{if $content.submitted_user}>
-         <div class="accordion-box">
+         <div class="accordion-box" id="user_perms_accordion_box">
              <div class="form-item">
                  <fieldset>
                      <legend><label class="question">Permissions of user: <{$content.submitted_user}></label></legend>
@@ -109,59 +109,59 @@
                      <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_BASIC}></b></p>
                      <div class="permissiongroup">
                         <{if $content.userperms.view_form}>
-                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}> --
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}> <span class="user_groups"> --
                                 <{foreach from=$content.userperms.view_form item=group}>
                                     <{$group}>;
-                                <{/foreach}>
+                                <{/foreach}> </span>
                              </p>
                          <{/if}>
                          <{if $content.userperms.add_own_entry}>
-                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES}> --
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES}> <span class="user_groups">--
                                  <{foreach from=$content.userperms.add_own_entry item=group}>
                                  <{$group}>;
-                                 <{/foreach}>
+                                 <{/foreach}> </span>
                              </p>
                          <{/if}>
                          <{if $content.userperms.update_own_entry}>
-                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES}> --
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES}> <span class="user_groups">--
                                  <{foreach from=$content.userperms.update_own_entry item=group}>
                                  <{$group}>;
-                                 <{/foreach}>
+                                 <{/foreach}> </span>
                              </p>
                          <{/if}>
                          <{if $content.userperms.update_group_entries}>
-                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATE_GROUP_ENTRIES}> --
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATE_GROUP_ENTRIES}> <span class="user_groups">--
                                  <{foreach from=$content.userperms.update_group_entries item=group}>
                                  <{$group}>;
-                                 <{/foreach}>
+                                 <{/foreach}> </span>
                              </p>
                          <{/if}>
                          <{if $content.userperms.update_other_entries}>
-                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOTHERENTRIES}> --
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOTHERENTRIES}> <span class="user_groups">--
                                  <{foreach from=$content.userperms.update_other_entries item=group}>
                                  <{$group}>;
-                                 <{/foreach}>
+                                 <{/foreach}> </span>
                              </p>
                          <{/if}>
                          <{if $content.userperms.delete_own_entry}>
-                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOWNENTRIES}> --
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOWNENTRIES}> <span class="user_groups">--
                                  <{foreach from=$content.userperms.delete_own_entry item=group}>
                                  <{$group}>;
-                                 <{/foreach}>
+                                 <{/foreach}> </span>
                              </p>
                          <{/if}>
                          <{if $content.userperms.delete_group_entries}>
-                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETE_GROUP_ENTRIES}> --
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETE_GROUP_ENTRIES}> <span class="user_groups">--
                                  <{foreach from=$content.userperms.delete_group_entries item=group}>
                                  <{$group}>;
-                                 <{/foreach}>
+                                 <{/foreach}> </span>
                              </p>
                          <{/if}>
                          <{if $content.userperms.delete_other_entries}>
-                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOTHERENTRIES}> --
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOTHERENTRIES}> <span class="user_groups">--
                                  <{foreach from=$content.userperms.delete_other_entries item=group}>
                                  <{$group}>;
-                                 <{/foreach}>
+                                 <{/foreach}> </span>
                              </p>
                          <{/if}>
 
@@ -171,25 +171,25 @@
                      <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY}></b></p>
                      <div class="permissiongroup">
                          <{if $content.userperms.view_private_elements}>
-                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_PRIVATE}> --
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_PRIVATE}> <span class="user_groups">--
                                  <{foreach from=$content.userperms.view_private_elements item=group}>
                                  <{$group}>;
-                                 <{/foreach}>
+                                 <{/foreach}> </span>
                              </p>
                          <{/if}>
 
                          <{if $content.userperms.view_their_own_entries}>
-                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_THEIROWN}> --
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_THEIROWN}> <span class="user_groups">--
                                  <{foreach from=$content.userperms.view_their_own_entries item=group}>
                                  <{$group}>;
-                                 <{/foreach}>
+                                 <{/foreach}> </span>
                              </p>
                          <{/if}>
                          <{if $content.userperms.view_globalscope}>
-                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL}> --
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL}> <span class="user_groups">--
                                  <{foreach from=$content.userperms.view_globalscope item=group}>
                                  <{$group}>;
-                                 <{/foreach}>
+                                 <{/foreach}> </span>
                              </p>
                          <{/if}>
 
@@ -198,10 +198,10 @@
                              <ul>
                                  <{foreach from=$content.groups item=group}>
                                      <{if $content.userperms.view_groupscope[$group.id]}>
-                                         <li><{$group.name}> --
+                                         <li class="user_perms_li"><{$group.name}> <span class="user_groups">--
                                              <{foreach from=$content.userperms.view_groupscope[$group.id] item=group}>
                                                  <{$group}>;
-                                             <{/foreach}>
+                                             <{/foreach}> </span>
                                          </li>
                                      <{/if}>
                                  <{/foreach}>
@@ -210,20 +210,25 @@
 
                          <{if $content.userperms.view_groupfilter.all || $content.userperms.view_groupfilter.oom }>
                              <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_CONDITIONS}> </p>
-                             <{if $content.userperms.view_groupfilter.all}>
-                                 <p>Match all of these:</p>
-                                 <{foreach from=$content.userperms.view_groupfilter.all key="filter" item="groups"}>
-                                    <p><{$filter}> -- <{foreach from=$groups item="group"}><{$group}>;<{/foreach}></p>
-                                 <{/foreach}>
-                             <{/if}>
+                             <ul>
+                                 <{if $content.userperms.view_groupfilter.all}>
+                                     <li class="user_perms_li">Match all of these:</li>
+                                     <ul>
+                                         <{foreach from=$content.userperms.view_groupfilter.all key="filter" item="groups"}>
+                                            <li class="user_perms_li_li"><{$filter}> <span class="user_groups">-- <{foreach from=$groups item="group"}><{$group}>;<{/foreach}> </span></li>
+                                         <{/foreach}>
+                                     </ul>
+                                 <{/if}>
 
-                             <{if $content.userperms.view_groupfilter.oom}>
-                                 <p>Match one or more of these:</p>
-                                 <{foreach from=$content.userperms.view_groupfilter.oom key="filter" item="groups"}>
-                                    <p><{$filter}> -- <{foreach from=$groups item="group"}><{$group}>;<{/foreach}></p>
-                                 <{/foreach}>
-                             <{/if}>
-
+                                 <{if $content.userperms.view_groupfilter.oom}>
+                                     <li class="user_perms_li">Match one or more of these:</li>
+                                     <ul>
+                                         <{foreach from=$content.userperms.view_groupfilter.oom key="filter" item="groups"}>
+                                             <li class="user_perms_li_li"><{$filter}> <span class="user_groups">-- <{foreach from=$groups item="group"}><{$group}>;<{/foreach}></span></li>
+                                         <{/foreach}>
+                                     </ul>
+                                 <{/if}>
+                            </ul>
                          <{/if}>
                      </div>
 
@@ -231,38 +236,38 @@
                     <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_CONDITIONS}></b></p>
                     <div class="permissiongroup">
                         <{if $content.userperms.manage_own}>
-                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_THEIROWN}> --
+                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_THEIROWN}> <span class="user_groups">--
                                 <{foreach from=$content.userperms.manage_own item=group}>
                                     <{$group}>;
-                                <{/foreach}>
+                                <{/foreach}> </span>
                             </p>
                         <{/if}>
                         <{if $content.userperms.publish_reports}>
-                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_INTHEIR}> --
+                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_INTHEIR}> <span class="user_groups">--
                                 <{foreach from=$content.userperms.publish_reports item=group}>
                                     <{$group}>;
-                                <{/foreach}>
+                                <{/foreach}> </span>
                             </p>
                         <{/if}>
                         <{if $content.userperms.publish_globalscope}>
-                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_FOROTHER}> --
+                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_FOROTHER}> <span class="user_groups">--
                                 <{foreach from=$content.userperms.publish_globalscope item=group}>
                                     <{$group}>;
-                                <{/foreach}>
+                                <{/foreach}> </span>
                             </p>
                         <{/if}>
                         <{if $content.userperms.update_other_reports}>
-                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_UPDATE}> --
+                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_UPDATE}> <span class="user_groups">--
                                 <{foreach from=$content.userperms.update_other_reports item=group}>
                                     <{$group}>;
-                                <{/foreach}>
+                                <{/foreach}> </span>
                             </p>
                         <{/if}>
                         <{if $content.userperms.delete_other_reports}>
-                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_DELETE}> --
+                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_DELETE}> <span class="user_groups">--
                                 <{foreach from=$content.userperms.delete_other_reports item=group}>
                                     <{$group}>;
-                                <{/foreach}>
+                                <{/foreach}> </span>
                             </p>
                         <{/if}>
                     </div>
@@ -271,52 +276,52 @@
                     <p><b><{$smarty.const._AM_PERMISSIONS_ADVANCED}></b></p>
                     <div class="permissiongroup">
                         <{if $content.userperms.import_data}>
-                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_IMPORT}> --
+                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_IMPORT}> <span class="user_groups">--
                                 <{foreach from=$content.userperms.import_data item=group}>
                                     <{$group}>;
-                                <{/foreach}>
+                                <{/foreach}> </span>
                             </p>
                         <{/if}>
                         <{if $content.userperms.set_notifications_for_others}>
-                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_NOTIFICATIONS}> --
+                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_NOTIFICATIONS}> <span class="user_groups">--
                                 <{foreach from=$content.userperms.set_notifications_for_others item=group}>
                                     <{$group}>;
-                                <{/foreach}>
+                                <{/foreach}> </span>
                             </p>
                         <{/if}>
                         <{if $content.userperms.add_proxy_entries}>
-                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_CREATEFOROTHER}> --
+                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_CREATEFOROTHER}> <span class="user_groups">--
                                 <{foreach from=$content.userperms.add_proxy_entries item=group}>
                                     <{$group}>;
-                                <{/foreach}>
+                                <{/foreach}> </span>
                             </p>
                         <{/if}>
                         <{if $content.userperms.update_entry_ownership}>
-                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_CHANGEOWNER}> --
+                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_CHANGEOWNER}> <span class="user_groups">--
                                 <{foreach from=$content.userperms.update_entry_ownership item=group}>
                                     <{$group}>;
-                                <{/foreach}>
+                                <{/foreach}> </span>
                             </p>
                         <{/if}>
                         <{if $content.userperms.ignore_editing_lock}>
-                            <p>Save entries even when they are locked while being edited elsewhere (saving cancels existing locks) --
+                            <p>Save entries even when they are locked while being edited elsewhere (saving cancels existing locks) <span class="user_groups">--
                                 <{foreach from=$content.userperms.ignore_editing_lock item=group}>
                                     <{$group}>;
-                                <{/foreach}>
+                                <{/foreach}> </span>
                             </p>
                         <{/if}>
                         <{if $content.userperms.edit_form}>
-                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_ALTER}> --
+                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_ALTER}> <span class="user_groups">--
                                 <{foreach from=$content.userperms.edit_form item=group}>
                                     <{$group}>;
-                                <{/foreach}>
+                                <{/foreach}> </span>
                             </p>
                         <{/if}>
                         <{if $content.userperms.delete_form}>
-                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_DELETEFORM}> --
+                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_DELETEFORM}> <span class="user_groups">--
                                 <{foreach from=$content.userperms.delete_form item=group}>
                                     <{$group}>;
-                                <{/foreach}>
+                                <{/foreach}> </span>
                             </p>
                         <{/if}>
                     </div>
@@ -436,7 +441,7 @@ $("[name=show_user_perms]").click(function () {
     $("[name=search_by_user]").val(1);
     formulize_reload();
 });
-$("[name=submitted_user]").keyup(function(e) {
+$("[name=submitted_user]").keypress(function(e) {
     if(e.keyCode == 13) {
         $("[name=search_by_user]").val(1);
         formulize_reload();

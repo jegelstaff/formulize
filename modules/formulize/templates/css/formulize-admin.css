@@ -7,7 +7,6 @@
   src: url("./formulize-icons/formulize-icons.eot?#iefix") format("embedded-opentype"), url("./formulize-icons/formulize-icons.woff") format("woff"), url("./formulize-icons/formulize-icons.ttf") format("truetype"), url("./formulize-icons/formulize-icons.svg#formulize-icons") format("svg");
   font-weight: normal;
   font-style: normal; }
-
 [data-icon]:before {
   content: attr(data-icon); }
 
@@ -151,8 +150,8 @@
   content: "\f11f"; }
 
 html, body {
-  background: white;
-  color: black;
+  background: #ffffff;
+  color: #000;
   margin: 0;
   padding: 0;
   font-family: Verdana, Arial, Helvetica, sans-serif;
@@ -172,7 +171,7 @@ img {
   border: 0; }
 
 a {
-  color: #8fbe58;
+  color: #8fBe58;
   text-decoration: none;
   font-weight: bold; }
 
@@ -201,7 +200,7 @@ h6 {
   color: #F3AC03;
   font-weight: bold;
   padding-bottom: 3px;
-  border-bottom: 1px dashed #8dbde1; }
+  border-bottom: 1px dashed #8DBDE1; }
 
 /* ---------- Column left/right rules ---------- */
 /* ------ Main content ------ */
@@ -237,7 +236,7 @@ h6 {
   border-top: 5px solid #82bcde; }
 
 #xo-footer a {
-  color: white; }
+  color: #fff; }
 
 #xo-footer a:hover {
   color: #cccccc; }
@@ -245,8 +244,8 @@ h6 {
 /* ---------- Module display rules ---------- */
 #xo-content {
   padding: 5px;
-  background-color: white;
-  color: black;
+  background-color: #ffffff;
+  color: #000;
   border-radius: 3px;
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px; }
@@ -263,7 +262,7 @@ h6 {
   font-weight: bold;
   padding: 10px;
   text-align: center;
-  border: 2px solid #ddddff; }
+  border: 2px solid #DDDDFF; }
 
 /* ---------- Site close ------------ */
 #xo-siteclose-login {
@@ -278,12 +277,12 @@ h6 {
   padding: 2px;
   margin: 0px;
   text-align: center;
-  border: 1px solid #ddddff; }
+  border: 1px solid #DDDDFF; }
 
 #xo-siteclose-login form {
   padding: 5px 0;
   margin: 0;
-  border: 1px solid #ddddff;
+  border: 1px solid #DDDDFF;
   text-align: center; }
 
 #xo-siteclose-login input {
@@ -306,15 +305,15 @@ h6 {
   clear: both;
   height: 90px;
   position: relative;
-  background-color: white;
+  background-color: #ffffff;
   margin-left: 0px;
   margin-right: 0px;
   border-bottom: 10px solid #e6e6e6;
-  background: -webkit-linear-gradient(top, white, #fafafa);
-  background: -moz-linear-gradient(top, white, #fafafa);
-  background: -ms-linear-gradient(top, white, #fafafa);
-  background: -o-linear-gradient(top, white, #fafafa);
-  background: linear-gradient(to bottom, white, #fafafa); }
+  background: -webkit-linear-gradient(top, #ffffff, #fafafa);
+  background: -moz-linear-gradient(top, #ffffff, #fafafa);
+  background: -ms-linear-gradient(top, #ffffff, #fafafa);
+  background: -o-linear-gradient(top, #ffffff, #fafafa);
+  background: linear-gradient(to bottom, #ffffff, #fafafa); }
 
 #xo-headerlogo {
   float: left;
@@ -341,7 +340,7 @@ h6 {
   background: -ms-linear-gradient(top, #59a7d4, #3391c7);
   background: -o-linear-gradient(top, #59a7d4, #3391c7);
   background: linear-gradient(to bottom, #59a7d4, #3391c7);
-  color: white;
+  color: #fff;
   font-weight: normal;
   padding: 0.5em 0.75em;
   margin: 0 0.25em;
@@ -440,7 +439,7 @@ h6 {
   text-align: left; }
 
 #xo-canvas-leftcolumn .xo-blocktitle h3 {
-  color: #8fbe58;
+  color: #8fBe58;
   font-weight: bold;
   font-size: larger;
   margin: 0;
@@ -451,7 +450,7 @@ h6 {
   text-align: right; }
 
 #xo-canvas-rightcolumn .xo-blocktitle h3 {
-  color: #8fbe58;
+  color: #8fBe58;
   font-weight: bold;
   font-size: larger;
   margin: 0;
@@ -466,18 +465,18 @@ h6 {
 
 /* ------ Center column content ------ */
 #xo-page th {
-  color: black; }
+  color: #000; }
 
 #xo-page .xo-block {
   margin-bottom: 5px; }
 
 #xo-page .xo-blocktitle {
   padding: .2em;
-  margin: 0 0.5em;
+  margin: 0 .5em;
   text-align: center; }
 
 #xo-page .xo-blocktitle h3 {
-  color: black;
+  color: #000;
   font-weight: bold;
   padding: 0;
   margin: 0; }
@@ -485,7 +484,7 @@ h6 {
 #xo-page .xo-blockcontent {
   padding: .5em;
   background-color: #F2F2F2;
-  border-top: 4px solid #f3ac03; }
+  border-top: 4px solid #F3AC03; }
 
 /* Start Main Menu */
 #mainmenu {
@@ -495,7 +494,7 @@ h6 {
   display: block;
   margin: 0;
   padding: 4px;
-  color: #8fbe58; }
+  color: #8fBe58; }
 
 #mainmenu a:hover {
   color: #689138; }
@@ -508,10 +507,10 @@ h6 {
 
 #mainmenu a.menuSub {
   padding-left: 17px;
-  color: #8fbe58; }
+  color: #8fBe58; }
 
 #mainmenu a.menuSub:hover {
-  color: #8fbe58; }
+  color: #8fBe58; }
 
 /* End Main Menu */
 /* Start User Menu */
@@ -519,19 +518,19 @@ h6 {
   font-size: .8em; }
 
 #usermenu a {
-  color: #8fbe58;
+  color: #8fBe58;
   display: block;
   margin: 0;
   padding: 4px;
-  border-right: 1px solid #666666;
-  border-bottom: 1px solid #666666;
-  border-left: 1px solid #cccccc; }
+  border-right: 1px solid #666;
+  border-bottom: 1px solid #666;
+  border-left: 1px solid #ccc; }
 
 #usermenu a:hover {
   color: #689138; }
 
 #usermenu a.menuTop {
-  border-top: 1px solid #cccccc; }
+  border-top: 1px solid #ccc; }
 
 #usermenu a.highlight {
   background-color: #fcc;
@@ -548,8 +547,8 @@ table td {
   vertical-align: top; }
 
 th {
-  background-color: white;
-  color: black;
+  background-color: #ffffff;
+  color: #000;
   padding: 2px;
   vertical-align: middle; }
 
@@ -561,28 +560,28 @@ th {
 
 td.head {
   background-color: #59a7d4;
-  color: white;
+  color: #fff;
   font-weight: bold;
   padding: 0.5em 1em 0.5em 0.4em; }
 
 .even, tr.even td {
-  background-color: white;
-  color: black;
+  background-color: #ffffff;
+  color: #000;
   padding: 5px; }
 
 .odd, tr.odd td {
   background-color: #e6e6e6;
-  color: black;
+  color: #000;
   padding: 5px; }
 
 .foot {
-  background-color: white;
+  background-color: #ffffff;
   color: inherit;
   padding: 5px;
   font-weight: bold; }
 
 th {
-  background-color: white !important;
+  background-color: #ffffff !important;
   /* TODO: why important?? */ }
 
 /* core messages */
@@ -590,10 +589,10 @@ th {
   background-color: #FFCCCC;
   color: inherit;
   text-align: center;
-  border-top: 1px solid #ddddff;
-  border-left: 1px solid #ddddff;
-  border-right: 1px solid #aaaaaa;
-  border-bottom: 1px solid #aaaaaa;
+  border-top: 1px solid #DDDDFF;
+  border-left: 1px solid #DDDDFF;
+  border-right: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
   font-weight: bold;
   padding: 10px; }
 
@@ -601,10 +600,10 @@ th {
   background-color: #DDFFDF;
   color: #136C99;
   text-align: center;
-  border-top: 1px solid #ddddff;
-  border-left: 1px solid #ddddff;
-  border-right: 1px solid #aaaaaa;
-  border-bottom: 1px solid #aaaaaa;
+  border-top: 1px solid #DDDDFF;
+  border-left: 1px solid #DDDDFF;
+  border-right: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
   font-weight: bold;
   padding: 10px; }
 
@@ -612,18 +611,18 @@ th {
   background-color: #bbb;
   color: #333;
   text-align: center;
-  border-top: 1px solid #cccccc;
-  border-left: 1px solid #cccccc;
+  border-top: 1px solid #ccc;
+  border-left: 1px solid #ccc;
   font-weight: bold;
-  border-right: 1px solid #666666;
-  border-bottom: 1px solid #666666;
+  border-right: 1px solid #666;
+  border-bottom: 1px solid #666;
   padding: 10px; }
 
 /* codes and quotes */
 .xoopsCode {
   background-color: #fff;
   color: inherit;
-  border: 1px inset navy;
+  border: 1px inset #000080;
   font-family: "Courier New",Courier,monospace;
   padding: 0 6px 6px 6px;
   max-height: 200px;
@@ -632,7 +631,7 @@ th {
 .xoopsQuote {
   background-color: #fff;
   color: inherit;
-  border: 1px inset navy;
+  border: 1px inset #000080;
   font-family: "Courier New",Courier,monospace;
   font-style: italic;
   padding: 0 6px 6px 6px; }
@@ -640,7 +639,7 @@ th {
 .icmsCode {
   background-color: #fff;
   color: inherit;
-  border: 1px inset navy;
+  border: 1px inset #000080;
   font-family: "Courier New",Courier,monospace;
   padding: 0 6px 6px 6px;
   max-height: 200px;
@@ -649,7 +648,7 @@ th {
 .icmsQuote {
   background-color: #fff;
   color: inherit;
-  border: 1px inset navy;
+  border: 1px inset #000080;
   font-family: "Courier New",Courier,monospace;
   font-style: italic;
   padding: 0 6px 6px 6px; }
@@ -666,19 +665,19 @@ th {
 
 /* articles */
 .item {
-  border: 1px solid #cccccc; }
+  border: 1px solid #ccc; }
 
 .itemHead {
   padding-left: 3px;
   color: #639ACE;
-  border-bottom: 1px solid #bbbbbb;
+  border-bottom: 1px solid #bbb;
   font-size: .8em; }
 
 .itemInfo {
   text-align: right;
   padding: 3px;
   background-color: #e6e6e6;
-  color: black; }
+  color: #000; }
 
 .itemTitle a {
   font-size: 1.1em;
@@ -715,7 +714,7 @@ th {
   text-align: right;
   padding: 3px;
   background-color: #e6e6e6;
-  color: black; }
+  color: #000; }
 
 .itemAdminLink {
   font-size: .9em; }
@@ -745,12 +744,12 @@ th {
   font-size: .7em;
   color: #639ACE;
   font-weight: bold;
-  border: 1px solid #cccccc;
+  border: 1px solid #ccc;
   background-color: #fff;
   margin: 2px;
   padding: 2px;
-  border-right: 2px solid #999999;
-  border-bottom: 2px solid #999999; }
+  border-right: 2px solid #999;
+  border-bottom: 2px solid #999; }
 
 .comUserStatCaption {
   font-weight: normal; }
@@ -803,9 +802,9 @@ th {
 
 .forum_controls {
   background-color: #EEE;
-  border-left: 1px solid #999999;
-  border-right: 1px solid #999999;
-  border-top: 1px solid #999999;
+  border-left: 1px solid #999;
+  border-right: 1px solid #999;
+  border-top: 1px solid #999;
   width: 100%; }
 
 .userrow {
@@ -845,7 +844,7 @@ th {
   width: 99%;
   background: #dcdee0;
   padding: 3px;
-  border-bottom: 1px solid #cccccc; }
+  border-bottom: 1px solid #ccc; }
 
 table.outer {
   border: 1px solid #59a7d4; }
@@ -906,8 +905,8 @@ a.tooltip:hover > span {
   left: -5em;
   width: 25em;
   display: block;
-  background-color: white;
-  color: black;
+  background-color: #ffffff;
+  color: #000;
   padding: 1.5em;
   line-height: 1.5em;
   opacity: 0.95;
@@ -968,14 +967,14 @@ a.tooltip:hover > span {
   top: 0;
   z-index: 10;
   background-color: #f7f7f7;
-  border-right: 1px solid #eeeeee;
+  border-right: 1px solid #eee;
   min-width: 2em;
   height: 100%; }
 
 .CodeMirror-gutter-text {
   color: #aaa;
   text-align: right;
-  padding: 0.4em 0.2em 0.4em 0.4em;
+  padding: .4em .2em .4em .4em;
   white-space: pre !important;
   cursor: default; }
 
@@ -1144,7 +1143,7 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {
 /* ------ Header top menu navigation rules ------ */
 #xo-globalnav a:hover {
   color: #fff;
-  border-top: 4px solid #f3ac03; }
+  border-top: 4px solid #F3AC03; }
 
 /* ---------- Image Manager / Folder not writeable ------------ */
 tr.blocked td {
@@ -1181,8 +1180,8 @@ tr.blocked td {
   box-shadow: 2px 2px 15px #d9d9d9; }
 
 .formulize-application-panel-header {
-  color: white;
-  border-bottom: 1px solid #8fbe58;
+  color: #fff;
+  border-bottom: 1px solid #8fBe58;
   padding: 1em 0.5em;
   border-radius: 3px 3px 0 0; }
 
@@ -1195,7 +1194,7 @@ tr.blocked td {
 
 .formulize-application-panel-header a {
   background-color: #459ccf;
-  color: white;
+  color: #fff;
   margin: 0 0.25em;
   padding: 0.25em 0.5em;
   border-radius: 3px; }
@@ -1213,7 +1212,7 @@ tr.blocked td {
   clear: none; }
 
 .formulize-application-panel-body {
-  background-color: white;
+  background-color: #ffffff;
   margin: 0;
   padding: 2em 1em;
   border-radius: 0 0 3px 3px; }
@@ -1246,7 +1245,7 @@ ul.admin-application-form-list li {
   background: -ms-linear-gradient(top, #59a7d4, #3391c7);
   background: -o-linear-gradient(top, #59a7d4, #3391c7);
   background: linear-gradient(to bottom, #59a7d4, #3391c7);
-  color: white;
+  color: #fff;
   font-weight: normal;
   padding: 0.5em 0.75em;
   margin: 0 0.25em;
@@ -1402,7 +1401,7 @@ div.clear-both {
 div.save-view-access {
   margin-left: 55%;
   margin-right: 15px;
-  border: 1px solid #0085b6;
+  border: 1px solid #0085B6;
   padding: 10px; }
 
 /* modified by S.Gray, April 11, 2011, floating save button so save button is always visible */
@@ -1418,7 +1417,7 @@ div.save-view-access {
   margin-top: 0;
   margin-bottom: 0;
   padding: 1.5em;
-  border: solid 1px #1d65a5; }
+  border: solid 1px #1D65A5; }
 
 #savebutton input, #popupsavebutton input {
   float: left;
@@ -1440,7 +1439,7 @@ div.save-view-access {
   background-repeat: no-repeat;
   background-position: 5px center;
   padding: 10px 5px 10px 40px;
-  border: solid 1px #9f6000; }
+  border: solid 1px #9F6000; }
 
 #popupsavewarning {
   padding-top: 1.75em;
@@ -1485,6 +1484,24 @@ form legend {
   font-weight: bold;
   color: #0085b6;
   white-space: normal; }
+
+span.user_groups {
+  color: #808080;
+  font-size: smaller;
+  font-style: italic; }
+
+#user_perms_accordion_box {
+  width: 600px; }
+
+li.user_perms_li {
+  list-style-type: disc !important;
+  margin-left: 30px !important;
+  padding: 0; }
+
+li.user_perms_li_li {
+  list-style-type: circle !important;
+  margin-left: 50px !important;
+  padding: 0; }
 
 form div.form-item {
   margin: 0 0 2.5em 0; }
@@ -1636,3 +1653,5 @@ form .groupselectionbox {
   height: 13em;
   overflow: auto;
   border: 1px solid blue; }
+
+/*# sourceMappingURL=formulize-admin.css.map */
