@@ -1293,12 +1293,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$returnArray = array();
 	$returnArray[0] = $buttonCodeArray; // send this back so it's available in the bottom template if necessary.  MUST USE NUMERICAL KEYS FOR list TO WORK ON RECEIVING END.
 	return $returnArray;
-
 }
+
 
 // THIS FUNCTION DRAWS IN THE RESULTS OF THE QUERY
 function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone="", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $wq, $regeneratePageNumbers, $hiddenQuickSearches, $cResults) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
-
 	// determine if the query reached a limit in the number of entries to return
 	$LOE_limit = 0;
 	if(!is_array($data)) {
@@ -1307,7 +1306,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 	}
 
 	global $xoopsDB;
-	
+
 	$useScrollBox = true;
 	$useHeadings = true;
 	$repeatHeaders = 5;
@@ -1402,10 +1401,19 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		$calc_blanks = $settings['calc_blanks'];
 		$calc_grouping = $settings['calc_grouping'];
 
- 		print "<table class=outer><tr><th colspan=2>" . _formulize_DE_CALCHEAD . "</th></tr>\n";
- 		if(!$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
- 			print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL ."/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."&cols=".urlencode($colhandles)."');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST . "' onclick=\"javascript:showList();\"></input></td></tr>";
- 		}
+        print "<table class=outer><tr><th colspan=2>" . _formulize_DE_CALCHEAD . "</th></tr>\n";
+        if(!$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
+            print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" .
+            _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL .
+            "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".
+            urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".
+            urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."&cols=".
+            urlencode(implode(",",$cols))."');\"></input>&nbsp;&nbsp;".
+            "<input type=button style=\"width: 140px;\" name=cancelcalcs value='" .
+            _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp".
+            "<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST .
+            "' onclick=\"javascript:showList();\"></input></td></tr>";
+        }
 
         $exportFilename = $settings['xport'] == "calcs" ? $filename : "";
         //formulize_benchmark("before printing results");
@@ -1428,15 +1436,20 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 		$count_colspan_calcs = $count_colspan_calcs + count($inlineButtons); // add to the column count for each inline custom button
 		$count_colspan_calcs++; // add one more for the hidden floating column
 		if(!$screen) { print "<tr><th colspan=$count_colspan_calcs>" . _formulize_DE_DATAHEADING . "</th></tr>\n"; }
-	
+
 		if($settings['calc_cols'] AND !$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
 			$calc_cols = $settings['calc_cols'];
 			$calc_calcs = $settings['calc_calcs'];
 			$calc_blanks = $settings['calc_blanks'];
 			$calc_grouping = $settings['calc_grouping'];
-			print "<tr><td class=head colspan=$count_colspan_calcs><input type=button style=\"width: 140px;\" name=mod_calculations value='" . _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping&cols=".urlencode($colhandles)."');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='" . _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=hidelist value='" . _formulize_DE_HIDELIST . "' onclick=\"javascript:hideList();\"></input></td></tr>";
-		}
-	
+            print "<tr><td class=head colspan=$count_colspan_calcs><input type=button style=\"width: 140px;\" name=mod_calculations value='".
+                _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL.
+                "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping&cols=".
+                urlencode(implode(",",$cols))."');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='".
+                _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=hidelist value='".
+                _formulize_DE_HIDELIST . "' onclick=\"javascript:hideList();\"></input></td></tr>";
+        }
+
 		// draw advanced search notification
 		if($settings['as_0'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 2)) {
 			$writable_q = writableQuery($wq);
