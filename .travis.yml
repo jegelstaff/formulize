@@ -51,7 +51,7 @@ before_script:
   # This is useful for quickly running just one new test, to see if it is working.
   # Alter the ci/travis/interpreter_config.json file to refer to your one test by name
   # instead of referring to * for all tests.
-  - mysql formulize < ci/formulize_test_db.sql
+  # - mysql formulize < ci/formulize_test_db.sql
   - echo "USE mysql;\nUPDATE user SET password=PASSWORD('password') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
 
 script:

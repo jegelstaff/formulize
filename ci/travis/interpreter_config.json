@@ -19,9 +19,7 @@
         }
       ],
       "scripts": [
-
-          "ci/selenium2-tests/001-install-formulize.json",
-        "ci/selenium2-tests/011-view-user-permissions.json"
+          "ci/selenium2-tests/001-install-formulize.json*"
       ]
     }
   ]
