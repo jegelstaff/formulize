@@ -201,11 +201,8 @@
       }
     },
     {
-      "type": "clickElement",
-      "locator": {
-        "type": "css selector",
-        "value": "input.savebutton"
-      }
+      "type": "waitForTextPresent",
+      "text": "View elements in the form that are marked as 'private'"
     },
     {
       "type": "setElementSelected",
@@ -400,20 +397,6 @@
       "text": "cc"
     },
     {
-      "type": "clickElement",
-      "locator": {
-        "type": "id",
-        "value": "addcon"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "css selector",
-        "value": "input.savebutton"
-      }
-    },
-    {
       "type": "setElementSelected",
       "locator": {
         "type": "name",
@@ -549,22 +532,22 @@
       },
       "text": "Registered Users"
     },
-      {
-          "type": "waitForText",
-          "locator": {
-              "type": "xpath",
-              "value": "//div[@id='user_perms_accordion_box']/div/fieldset/div[1]/p[2]"
-          },
-          "text": "test_group"
+    {
+      "type": "waitForText",
+      "locator": {
+        "type": "xpath",
+        "value": "//div[@id='user_perms_accordion_box']/div/fieldset/div[1]/p[2]"
       },
-      {
-          "type": "waitForText",
-          "locator": {
-              "type": "xpath",
-              "value": "//div[@id='user_perms_accordion_box']/div/fieldset/div[1]/p[3]"
-          },
-          "text": "test_group2"
+      "text": "test_group"
+    },
+    {
+      "type": "waitForText",
+      "locator": {
+        "type": "xpath",
+        "value": "//div[@id='user_perms_accordion_box']/div/fieldset/div[1]/p[3]"
       },
+      "text": "test_group2"
+    },
     {
       "type": "verifyTextPresent",
       "text": "Creation date = 123 -- test_group;test_group2;"
