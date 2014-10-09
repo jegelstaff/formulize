@@ -718,14 +718,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		} // end of "if there's a viewentryscreen, then show that"
 	
 	} 
-
-	// check if we're coming back from a page where a form entry was saved, and if so, synch any subform blanks that might have been written on this page load, synch them with the mainform entry that was written
-	$formToSynch = isset($_POST['primaryfid']) ? intval($_POST['primaryfid']) : 0;
-	if($formToSynch) {
-		if(isset($_POST['entry'.$formToSynch]) AND $enryToSynch = $_POST['entry'.$formToSynch]) {
-			synchSubformBlankDefaults($formToSynch, $entryToSynch);
-		}
-	}	
 	
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 	// create $data and $wq (writable query)

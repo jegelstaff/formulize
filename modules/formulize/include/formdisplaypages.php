@@ -129,7 +129,6 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 				$entry = $entries[$fid][0];
 			}
 			
-			synchSubformBlankDefaults($fid, $entry);
 		}
 	}
 

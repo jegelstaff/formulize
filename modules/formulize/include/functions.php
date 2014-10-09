@@ -3504,7 +3504,7 @@ function formulize_writeEntry($values, $entry="new", $action="replace", $proxyUs
 
 
 // THIS FUNCTION SYNCHS ENTRIES WRITTEN IN BLANK DEFAULTS IN A SUBFORM, WITH THE PARENT FORM.  GETS EXECUTED IN FORMDISPLAY.PHP AND FORMDISPLAYPAGES.PHP AFTER A FORM SUBMISSION
-function synchSubformBlankDefaults($fid, $entry) {
+function synchSubformBlankDefaults() {
     // handle creating linked/common values when default blank entries have been filled in on a subform -- sept 8 2007
     static $ids_to_return = array();
     if (isset($GLOBALS['formulize_subformCreateEntry'])) {
@@ -3524,7 +3524,8 @@ function synchSubformBlankDefaults($fid, $entry) {
                     $value_to_write = $data_handler->getElementValueInEntry($_POST['formulize_subformValueSourceEntry_'.$sfid], $_POST['formulize_subformValueSource_'.$sfid]);
                 }
             } else {
-                $value_to_write = "$entry";
+                // if we need to get the parent entry id, take the first written new entry id in the source form, if the source entry was 'new', otherwise use the source entry id posted from the form
+                $value_to_write = $_POST['formulize_subformValueSourceEntry_'.$sfid] == "new" ? $GLOBALS['formulize_newEntryIds'][$_POST['formulize_subformValueSourceForm_'.$sfid]][0] : intval($_POST['formulize_subformValueSourceEntry_'.$sfid]);
             }
 
             // actually write the linked/common values
@@ -3550,6 +3551,7 @@ function synchSubformBlankDefaults($fid, $entry) {
             }
         }
     }
+    
     unset($GLOBALS['formulize_subformCreateEntry']); // unset so this function only runs once
     return $ids_to_return;
 }

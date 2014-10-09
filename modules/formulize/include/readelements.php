@@ -257,6 +257,13 @@ if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership
 	$data_handler_for_owner_updating->updateCaches($updateOwnerEntryId);
 }
 
+// set the variables that need to be in global space, just in case this file was included from inside a function, which can happen in some cases
+$GLOBALS['formulize_newEntryIds'] = $formulize_newEntryIds;
+$GLOBALS['formulize_newEntryUsers'] = $formulize_newEntryUsers;
+$GLOBALS['formulize_allWrittenEntryIds'] = $formulize_allWrittenEntryIds;
+$GLOBALS['formulize_newSubformBlankElementIds'] = $formulize_newSubformBlankElementIds;
+
+synchSubformBlankDefaults();
 
 // update the derived values for all forms that we saved data for, now that we've saved all the data from all the forms
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -344,13 +351,7 @@ foreach($notEntriesList as $notEvent=>$notDetails) {
 }
 
 $formulize_readElementsWasRun = true; // flag that will prevent this from running again
-
-// set the variables that need to be in global space, just in case this file was included from inside a function, which can happen in some cases
-$GLOBALS['formulize_newEntryIds'] = $formulize_newEntryIds;
-$GLOBALS['formulize_newEntryUsers'] = $formulize_newEntryUsers;
-$GLOBALS['formulize_allWrittenEntryIds'] = $formulize_allWrittenEntryIds;
-$GLOBALS['formulize_newSubformBlankElementIds'] = $formulize_newSubformBlankElementIds;
-$GLOBALS['formulize_readElementsWasRun'] = $formulize_readElementsWasRun;
+$GLOBALS['formulize_readElementsWasRun'] = $formulize_readElementsWasRun; // just in case we're not in globals scope at the moment
 
 return $formulize_allWrittenEntryIds;
 
