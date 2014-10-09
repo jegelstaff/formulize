@@ -1404,15 +1404,15 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
         print "<table class=outer><tr><th colspan=2>" . _formulize_DE_CALCHEAD . "</th></tr>\n";
         if(!$settings['lockcontrols'] AND ($useSearchCalcMsgs == 1 OR $useSearchCalcMsgs == 3)) { // AND !$loadview) { // -- loadview removed from this function sept 24 2005
             print "<tr><td class=head colspan=2><input type=button style=\"width: 140px;\" name=mod_calculations value='" .
-            _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL .
-            "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".
-            urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".
-            urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."&cols=".
-            urlencode(implode(",",$cols))."');\"></input>&nbsp;&nbsp;".
-            "<input type=button style=\"width: 140px;\" name=cancelcalcs value='" .
-            _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp".
-            "<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST .
-            "' onclick=\"javascript:showList();\"></input></td></tr>";
+                _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL .
+                "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".
+                urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".
+                urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."&cols=".
+                urlencode(implode(",",$cols))."');\"></input>&nbsp;&nbsp;".
+                "<input type=button style=\"width: 140px;\" name=cancelcalcs value='" .
+                _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp".
+                "<input type=button style=\"width: 140px;\" name=showlist value='" . _formulize_DE_SHOWLIST .
+                "' onclick=\"javascript:showList();\"></input></td></tr>";
         }
 
         $exportFilename = $settings['xport'] == "calcs" ? $filename : "";
