@@ -2206,7 +2206,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	    } else {
 	      $replacementTable = DBPRE . "formulize_".$handleFormObject->getVar('form_handle');
 	    }
-	    $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable, "INNER JOIN " . $replacementTable, $thisBaseQuery);
+	    $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable. " AS", "INNER JOIN " . $replacementTable. " AS", $thisBaseQuery);
 	  }
 	}
 	
@@ -2236,7 +2236,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	      $replacementTable = DBPRE . "formulize_".$handleFormObject->getVar('form_handle');
 	    }
 	    // replace any LEFT JOIN on this form in the query with an INNER JOIN, since there are now search criteria for this form
-	    $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable, "INNER JOIN " . $replacementTable, $thisBaseQuery);
+	    $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable. " AS", "INNER JOIN " . $replacementTable. " AS", $thisBaseQuery);
 	  } 
 	}
 	  
