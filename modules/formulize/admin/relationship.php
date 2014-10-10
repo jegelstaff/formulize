@@ -39,12 +39,24 @@ if(0 == $aid = intval($_GET['aid'])) {
     $appName = $appObject->getVar('name');
 }
 
-if(0 != $fid = intval($_GET['fid'])) {
-  $form_handler = xoops_getmodulehandler('forms', 'formulize');
-  $formObject = $form_handler->get($fid);
-  $common['required_form']['value'] = $fid;
-  $formName = $formObject->getVar('title');
-  $common['required_form']['name'] = $formObject->getVar('title');
+$fid = 0;
+$sid = 0;
+if(0 != $sid = intval($_GET['sid'])) {
+    // we came from a screen page
+    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    $screenObject = $screen_handler->get($sid);
+    $screenName = $screenObject->getVar('title');
+
+    $common['from_screen']['value'] = $sid;
+    $common['from_screen']['name'] = $screenName;
+
+    $fid = intval($_GET['fid']);
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $formObject = $form_handler->get($fid);
+    $formName = $formObject->getVar('title');
+
+    $common['required_form']['value'] = $fid;
+    $common['required_form']['name'] = $formName;
 }
 
 // retrieve the names and ids of all forms, and create the form options for the Add Form section
@@ -57,17 +69,28 @@ while($array = $xoopsDB->fetchArray($res)) {
     $i++;
 }
 
-$crumb_ix = 1;
-$breadcrumbtrail[$crumb_ix]['url'] = "page=home";
-$breadcrumbtrail[$crumb_ix]['text'] = "Home";
-$crumb_ix++;
-$breadcrumbtrail[$crumb_ix]['url'] = "page=application&aid=$aid&tab=relationships";
-$breadcrumbtrail[$crumb_ix]['text'] = $appName;
-$crumb_ix++;
+$breadcrumbtrail[1] = [
+    'url' => "page=home",
+    'text' => "Home"
+];
+
+$breadcrumbtrail[] = [
+    'url' => "page=application&aid=$aid&tab=relationships",
+    'text' => $appName
+];
+
 if($fid != 0) {
-    $breadcrumbtrail[$crumb_ix]['url'] = "page=form&aid=$aid&fid=$fid&tab=relationships";
-    $breadcrumbtrail[$crumb_ix]['text'] = $common['required_form']['name'];
-    $crumb_ix++;
+    $breadcrumbtrail[] = [
+        'url' => "page=form&aid=$aid&fid=$fid&tab=screens",
+        'text' => $common['required_form']['name']
+    ];
+}
+
+if ($sid != 0) {
+    $breadcrumbtrail[] = [
+        'url' => "page=screen&aid=$aid&fid=$fid&sid=$sid&tab=relationships",
+        'text' => $common['from_screen']['name']
+    ];
 }
 
 if($_GET['frid'] != "new") {
@@ -87,6 +110,7 @@ if($_GET['frid'] != "new") {
 $common['frid'] = $relationship_id;
 $common['aid'] = $aid;
 $common['fid'] = $fid;
+$common['sid'] = $sid;
 
 $adminPage['tabs'][1]['name'] = "Relationship Settings";
 $adminPage['tabs'][1]['template'] = "db:admin/relationship_settings.html";

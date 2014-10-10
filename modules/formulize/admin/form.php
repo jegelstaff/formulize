@@ -34,7 +34,6 @@ global $xoopsDB;
 
 // need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
 $aid = intval($_GET['aid']);
-$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 $application_handler = xoops_getmodulehandler('applications','formulize');
 // get a list of all applications
 $allApps = $application_handler->getAllApplications();
@@ -287,48 +286,6 @@ foreach($classFiles as $thisFile) {
 	}
 }
 
-$allRelationships = array();
-if (! is_null($formObject)) {
-  $allRelationships = $framework_handler->getFrameworksByForm($formObject->getVar('id_form')); // returns array of objects
-}
-
-$relationships = array();
-$relationshipIndex = array();
-$i = 1;
-foreach($allRelationships as $thisRelationship) {
-  $frid = $thisRelationship->getVar('frid');
-  if(isset($relationshipIndex[$frid])) { continue; }
-  $relationships[$i]['name'] = $thisRelationship->getVar('name');
-  $relationships[$i]['content']['frid'] = $frid;
-
-  $relationshipObject = $framework_handler->get($frid);
-  $relationshipLinks = $relationshipObject->getVar('links');
-  $li = 1;
-  $links = array();
-  foreach($relationshipLinks as $relationshipLink) {
-    // get names of forms in the link
-    $links[$li]['form1'] = printSmart(getFormTitle($relationshipLink->getVar('form1')));
-    $links[$li]['form2'] = printSmart(getFormTitle($relationshipLink->getVar('form2')));
-    // get the name of the relationship
-    switch($relationshipLink->getVar('relationship')) {
-      case 1:
-        $relationship = _AM_FRAME_ONETOONE;
-        break;
-      case 2:
-        $relationship = _AM_FRAME_ONETOMANY;
-        break;
-      case 3:
-        $relationship = _AM_FRAME_MANYTOONE;
-        break;
-    }
-    $links[$li]['relationship'] = printSmart($relationship);
-    $li++;
-  }
-  $relationships[$i]['content']['links'] = $links;
-
-  $relationshipIndex[$frid] = true;
-  $i++;
-}
 
 $i = 1;
 $applications = array();
@@ -427,12 +384,6 @@ if($fid != "new") {
   $adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "same" ? "same" : "different";
   $adminPage['tabs'][$i]['content']['groupperms'] = $groupperms;
   
-  $i++;
-  $adminPage['tabs'][$i]['name'] = _AM_APP_RELATIONSHIPS;
-  $adminPage['tabs'][$i]['template'] = "db:admin/application_relationships.html";
-  $adminPage['tabs'][$i]['content'] = $common;
-  $adminPage['tabs'][$i]['content']['relationships'] = $relationships; 
-
   $i++;
   
   $adminPage['tabs'][$i]['name'] = "Screens";

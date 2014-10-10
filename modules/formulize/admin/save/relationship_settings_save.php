@@ -52,6 +52,9 @@ if($relationship_id == "new") {
     if (isset($_POST['fid'])) {
         $redirectionURL .= "&fid=" . intval($_POST['fid']);
     }
+    if (isset($_POST['sid'])) {
+        $redirectionURL .= "&sid=" . intval($_POST['sid']);
+    }
 }
 
 // save all changes, the user could have modified links and then clicked add or
