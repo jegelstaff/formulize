@@ -1152,6 +1152,7 @@ class formulizeElementRenderer{
 	// THIS FUNCTION COPIED FROM LIASE 1.26, onchange control added
 	// JWE -- JUNE 1 2006
 	function optOther($s='', $id, $entry, $counter, $checkbox=false){
+        static $blankSubformCounters = array();
 		global $xoopsModuleConfig, $xoopsDB;
 		if( !preg_match('/\{OTHER\|+[0-9]+\}/', $s) ){
 			return false;
@@ -1179,7 +1180,14 @@ class formulizeElementRenderer{
 		}
 		$s = explode('|', preg_replace('/[\{\}]/', '', $s));
 		$len = !empty($s[1]) ? $s[1] : $xoopsModuleConfig['t_width'];
-		$box = new XoopsFormText('', 'other[ele_'.$ele_id.'_'.$entry.']', $len, 255, $other_text);
+        if($entry == "new") {
+            $blankSubformCounters[$ele_id] = isset($blankSubformCounters[$ele_id]) ? $blankSubformCounters[$ele_id] + 1 : 0;
+            $blankSubformCounter = $blankSubformCounters[$ele_id];
+            $otherKey = 'ele_'.$ele_id.'_'.$entry.'_'.$blankSubformCounter;
+        } else {
+            $otherKey = 'ele_'.$ele_id.'_'.$entry;
+        }
+		$box = new XoopsFormText('', 'other['.$otherKey.']', $len, 255, $other_text);
 		if($checkbox) {
 			$box->setExtra("onchange=\"javascript:formulizechanged=1;\" onfocus=\"javascript:this.form.elements['" . $id . "[]'][$counter].checked = true;\"");
 		} else {
