@@ -123,37 +123,32 @@ function prepvalues($value, $field, $entry_id) {
         $sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
         if($value AND $sourceMeta[1]) {
             // need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
-
+            // save the value before convertElementIdsToElementHandles()
+            $before_conversion = $sourceMeta[1];
+            $altFieldSource = "";
             if($GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
-                $source_ele_value[11] = is_array($source_ele_value[11]) ? $source_ele_value[11] : array($source_ele_value[11]);
-                list($sourceMeta[1]) = convertElementIdsToElementHandles($source_ele_value[11], $sourceMeta[0]);
+                $altFieldSource = $source_ele_value[11];
             } elseif(isset($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) AND $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] != "none") {
-                // EV_MULTIPLE_LIST_COLUMNS may be an array now
-                if (!is_array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]))
-                    $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] = array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]);
-
-                // save the value before convertElementIdsToElementHandles()
-                $before_conversion = $sourceMeta[1];
-
-                $sourceMeta[1] = convertElementIdsToElementHandles(is_array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) ?
-                    $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] : array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]), $sourceMeta[0]);
-
+                $altFieldSource = $source_ele_value[EV_MULTIPLE_LIST_COLUMNS];
+            }
+            if($altFieldSource) {
+                $altFieldSource = is_array($altFieldSource) ? $altFieldSource : array($altFieldSource);
+                $sourceMeta[1] = convertElementIdsToElementHandles($altFieldSource, $sourceMeta[0]);
                 // remove empty entries, which can happen if the "use the linked field selected above" option is selected
                 $sourceMeta[1] = array_filter($sourceMeta[1]);
-
                 // unfortunately, sometimes sourceMeta[1] seems to be saved as element handles rather than element IDs, and in that case,
-                //  convertElementIdsToElementHandles() returns array(0 => 'none') which causes an error in the query below.
-                //  check for that case here and revert back to the value of sourceMeta[1] before convertElementIdsToElementHandles()
-                if (1 == count($sourceMeta[1]) and isset($sourceMeta[1][0]) and "none" == $sourceMeta[1][0])
+                // convertElementIdsToElementHandles() returns array(0 => 'none') which causes an error in the query below.
+                // check for that case here and revert back to the value of sourceMeta[1] before convertElementIdsToElementHandles()
+                if ((1 == count($sourceMeta[1]) and isset($sourceMeta[1][0]) and "none" == $sourceMeta[1][0]) OR $sourceMeta[1] == "none") {
                     $sourceMeta[1] = $before_conversion;
+                }
             }
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
             $sourceFormObject = $form_handler->get($sourceMeta[0]);
-            // check if this is a link to a link
-            if (!is_array($sourceMeta[1]))
-                $sourceMeta[1] = array($sourceMeta[1]);
+            $sourceMeta[1] = is_array($sourceMeta[1]) ? $sourceMeta[1] : array($sourceMeta[1]);
             $query_columns = array();
             foreach ($sourceMeta[1] as $key => $handle) {
+                // check if this is a link to a link
                 if ($second_source_ele_value = formulize_isLinkedSelectBox($handle, true)) {
                     $secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
                     $secondFormObject = $form_handler->get($secondSourceMeta[0]);
