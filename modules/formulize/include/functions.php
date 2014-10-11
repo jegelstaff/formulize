@@ -3671,7 +3671,6 @@ function convertElementIdsToElementHandles($ids, $fid=false) {
     $idsToFrameworks = false;
     $frid = 0;
     $needToConvert = false;
-    $sendAsValue = false;
     // convert values to array for checking in standard way
     if(!is_array($ids)) {
         $ids = array($ids);
