@@ -2686,10 +2686,78 @@ print "jQuery(document).ready(function() {
 \n";
 
 drawXhrJavascript();
-
-
-print "</script>\n";
-$drawnJavascript = true;
+?>
+jQuery(document).ready(function() {
+    jQuery(".icms-date-box").each(function(){
+        date_input = jQuery(this);
+        var options = {};
+        var min_date = date_input.attr('min-date');
+        if (min_date && min_date.length > 0) {
+            // adjust so that the date does use the current time zone
+            min_date = new Date(min_date);
+            min_date.setTime(min_date.getTime() + min_date.getTimezoneOffset()*60*1000);
+            options.minDate = new Date(min_date);
+        }
+        var max_date = date_input.attr('max-date');
+        if (max_date && max_date.length > 0) {
+            // adjust so that the date does use the current time zone
+            max_date = new Date(max_date);
+            max_date.setTime(max_date.getTime() + max_date.getTimezoneOffset()*60*1000);
+            options.maxDate = new Date(max_date);
+        }
+        if (!jQuery.isEmptyObject(options)) {
+            date_input.datepicker("destroy");
+            date_input.datepicker(options);
+        }
+    });
+});
+function check_date_limits(element_id) {
+    var date_input = jQuery("#"+element_id);
+    var min_date = date_input.attr('min-date');
+    var max_date = date_input.attr('max-date');
+    var selected_date = new Date(date_input.val());
+    <?php
+        // if the selected_date is not valid then getTime() returns NaN (not-a-number)
+        // NaN is NOT equal to NaN, so the comparison ensures the date is valid
+    ?>
+    if (selected_date.getTime() === selected_date.getTime()) {
+        if (min_date && min_date.length > 0) {
+            min_date = new Date(min_date);
+            if (selected_date < min_date) {
+                // date is too far in the past
+                selected_date = null;
+                date_input.val('');
+                <?php
+                // adjust the time zone before displaying the date, otherwise it could show the wrong day if
+                //  the user and server are in different time zones
+                 ?>
+                min_date.setTime(min_date.getTime() + (min_date.getTimezoneOffset() * 60 * 1000));
+                alert("The date you selected is too far in the past.\n\n"+
+                    "Please select a date on or after "+min_date.toDateString()+".");
+            }
+        }
+        if (null != selected_date && max_date && max_date.length > 0) {
+            max_date = new Date(max_date);
+            if (selected_date > max_date) {
+                // date is too far in the future
+                date_input.val('');
+                <?php
+                // adjust the time zone before displaying the date, otherwise it could show the wrong day if
+                //  the user and server are in different time zones
+                 ?>
+                max_date.setTime(max_date.getTime() + (max_date.getTimezoneOffset() * 60 * 1000));
+                alert("The date you selected is too far in the future.\n\n"+
+                    "Please select a date on or before "+max_date.toDateString()+".");
+            }
+        }
+    } else {
+        // not a valid date
+        date_input.val('');
+    }
+}
+<?php
+    print "</script>\n";
+    $drawnJavascript = true;
 }
 
 

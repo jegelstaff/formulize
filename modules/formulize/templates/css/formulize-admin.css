@@ -1494,7 +1494,6 @@ form div.form-item > fieldset {
 
 form label {
   display: inline-block;
-  vertical-align: top;
   padding: 0 4px 0 0; }
 
 form fieldset fieldset {

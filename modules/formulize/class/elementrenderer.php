@@ -981,19 +981,16 @@ class formulizeElementRenderer{
 			break;
 
 
-			case 'date':
-				if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
-				{
+            case 'date':
+                // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
+                if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") {
 					$form_ele = new XoopsFormTextDateSelect (
 						$ele_caption,
 						$form_ele_id,
 						15,
 						""
 					);
-					$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
-				}
-				else
-				{
+				} else {
 					if (ereg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
 						$number = ereg_replace("[^0-9+-]","", $ele_value[0]);
 						$timestampToUse = mktime(0, 0, 0, date("m") , date("d")+$number, date("Y"));
@@ -1006,7 +1003,6 @@ class formulizeElementRenderer{
 						15,
 						$timestampToUse
 					);
-					$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
 				} // end of check to see if the default setting is for real
 				// added validation code - sept 5 2007 - jwe
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
@@ -1018,7 +1014,33 @@ class formulizeElementRenderer{
 					// Date.parse() would be better, except that it will fail for dd-mm-YYYY format, ie: 22-11-2013
 					$form_ele->customValidationCode[] = "\nif (isNaN(parseInt(myform.{$eltname}.value))) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 				}
-			break;
+                if (!$isDisabled) {
+                    $limit_past = (isset($ele_value["date_limit_past"]) and $ele_value["date_limit_past"] != "");
+                    $limit_future = (isset($ele_value["date_limit_future"]) and $ele_value["date_limit_future"] != "");
+                    if ($limit_past or $limit_future) {
+                        $reference_date = time();
+                        if ("new" != $entry) {
+                            $entryData = $this->formulize_getCachedEntryData($id_form, $entry);
+                            $reference_date = strtotime(display($entryData, "creation_date"));
+                        }
+
+                        if ($limit_past) {
+                            $form_ele->setExtra(" min-date='".
+                                date("Y-m-d", strtotime("-".$ele_value["date_past_days"]." days", $reference_date))."' ");
+                        }
+                        if ($limit_future) {
+                            $form_ele->setExtra(" max-date='".
+                                date("Y-m-d", strtotime("+".$ele_value["date_future_days"]." days", $reference_date))."' ");
+                        }
+
+                        $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;check_date_limits('$form_ele_id');\" jquerytag=\"$form_ele_id\" ");
+                    } else {
+                        $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
+                    }
+                }
+            break;
+
+
 			case 'sep':
 				//$ele_value[0] = $myts->displayTarea($ele_value[0]);
 				$ele_value[0] = $myts->xoopsCodeDecode($ele_value[0]);
@@ -1034,13 +1056,13 @@ class formulizeElementRenderer{
 					$ele_value[1]
 				);
 			break;
+
+
 			/*
 			 * Hack by F�lix<INBOX International>
 			 * Adding colorpicker form element
 			 */
 			case 'colorpick':
-
-
 				if($ele_value[0] == "") // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
 				{
 					//print "Bad date";
