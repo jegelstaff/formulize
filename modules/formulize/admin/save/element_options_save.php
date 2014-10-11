@@ -93,6 +93,26 @@ if($ele_type == "subform") {
   if(!$_POST['elements-ele_value'][3]) {
     $processedValues['elements']['ele_value'][3] = 0;
   }
+  // handle the "start" value, formerlly the blanks value (ele_value[2])
+  // $_POST['subform_start'] will be 'empty', 'blanks', or 'prepop'
+  // We need to set ele_value[2] to be the appropriate number of blanks
+  // We need to set ele_value[subform_prepop_element] to be the element id of the element prepops are based on
+  switch($_POST['subform_start']) {
+    case "blanks":
+        $processedValues['elements']['ele_value'][2] = intval($_POST['number_of_subform_blanks']);
+        $processedValues['elements']['ele_value']['subform_prepop_element'] = 0;
+        break;
+    case "prepop":
+        $processedValues['elements']['ele_value'][2] = 0;
+        $processedValues['elements']['ele_value']['subform_prepop_element'] = intval($_POST['subform_start_prepop_element']);
+        break;
+    default:
+        // implicitly case 'empty'
+        $processedValues['elements']['ele_value'][2] = 0;
+        $processedValues['elements']['ele_value']['subform_prepop_element'] = 0;
+        break;
+
+  }
   $processedValues['elements']['ele_value'][1] = implode(",",$_POST['elements_ele_value_1']);
   $processedValues = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete', $processedValues, 7); // post key, delete key, processedValues, ele_value key for conditions
 }
