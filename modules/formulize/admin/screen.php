@@ -418,6 +418,40 @@ if($screen_id != "new" && $settings['type'] == 'form') {
   $adminPage['tabs'][2]['content'] = $options + $common;
 }
 
+$elements_temp =  array();
+$element1 =  array();
+$element2 =  array();
+$content1 =  array();
+$content2 =  array();
+
+$content1['ele_id'] = '16';
+$content1['ele_handle'] = 'storypeople_story_id';
+$content1['converttext'] = 'Convert to multi-line text box';
+$content1['linktype'] = 'textarea';
+$content1['ele_type'] = 'Textbox';
+$content1['ele_req'] = '0';
+$content1['ele_display'] = '0';
+$content1['ele_private'] = '0';
+
+$element1['name'] = 'StoryID - Textbox - storypeople_story_id';
+$element1['content'] = $content1;
+
+$elements_temp[1] = $element1;
+
+$content2['ele_id'] = '17';
+$content2['ele_handle'] = 'storypeople_person';
+$content2['converttext'] = 'Convert to check boxes';
+$content2['linktype'] = 'checkboxfromsb';
+$content2['ele_type'] = 'Autocomplete box';
+$content2['ele_req'] = '0';
+$content2['ele_display'] = '1';
+$content2['ele_private'] = '0';
+
+$element2['name'] = 'Person - Autocomplete box - storypeople_person';
+$element2['content'] = $content2;
+
+$elements_temp[2] = $element2;
+
 if($screen_id != "new" && $settings['type'] == 'multiPage') {
   $adminPage['tabs'][2]['name'] = _AM_ELE_OPT;
   $adminPage['tabs'][2]['template'] = "db:admin/screen_multipage_options.html";
@@ -430,6 +464,7 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
   $adminPage['tabs'][4]['name'] = _AM_FORM_SCREEN_PAGES;
   $adminPage['tabs'][4]['template'] = "db:admin/screen_multipage_pages.html";
   $adminPage['tabs'][4]['content'] = $multipagePages + $common;
+  $adminPage['tabs'][4]['content']['pages'][0]['content']['elements_temp'] = $elements_temp;
 
   $adminPage['tabs'][5]['name'] = _AM_FORM_SCREEN_TEMPLATES;
   $adminPage['tabs'][5]['template'] = "db:admin/screen_multipage_templates.html";
@@ -469,3 +504,6 @@ $breadcrumbtrail[2]['text'] = $appName;
 $breadcrumbtrail[3]['url'] = "page=form&aid=$aid&fid=$form_id&tab=screens";
 $breadcrumbtrail[3]['text'] = $formName;
 $breadcrumbtrail[4]['text'] = $screenName;
+
+
+

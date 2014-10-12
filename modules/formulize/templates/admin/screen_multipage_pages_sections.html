@@ -4,7 +4,14 @@
 		<p>Form Elements on this page:</p>
 		<ul>
 			<{foreach from=$sectionContent.elements item=thiselement}>
-			<li><{$thiselement}></li>	
+				<li><{$thiselement}></li>	
 			<{/foreach}>
 		</ul>
 
+		<div class="accordion-box-wide">
+			<h2><{$smarty.const._AM_ELE_MANAGINGELEFORM}></h2>
+			<p><{$smarty.const._AM_ELE_CLICKDRAGANDDROP}></p>
+				<div id="sortable-list">
+					<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$sectionContent.elements_temp}>
+				</div>
+		</div>
