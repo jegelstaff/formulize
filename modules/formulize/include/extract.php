@@ -161,7 +161,7 @@ function prepvalues($value, $field, $entry_id) {
                         " as t1, ".DBPRE."formulize_".$sourceFormObject->getVar('form_handle'). " as t2 WHERE t2.`entry_id` IN (".trim($value, ",").
                         ") AND t1.`entry_id` IN (TRIM(',' FROM t2.`".$handle."`)) ORDER BY t2.`entry_id`";
                     if(!$res = $xoopsDB->query($sql)) {
-                        print "Error: could not retrieve the source values for a linked linked selectbox during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
+                        print "Error: could not retrieve the source values for a linked linked selectbox ($field) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
                     } else {
                         $row = $xoopsDB->fetchRow($res);
                         $linkedvalue = prepvalues($row[0], $handle, $entry_id);
