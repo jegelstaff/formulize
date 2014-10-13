@@ -1,18 +1,18 @@
 
 <script type="text/javascript">
 
-	pagehasaccordion["accordion-<{$number}>-<{$section.subid}>"] = true;
+	pagehasaccordion["accordion-<{$number}>"] = true;
 
 	$(function() {
 		var stop = false;
-		$("#accordion-<{$number}>-<{$section.subid}> h3").click(function(event) {
+		$("#accordion-<{$number}> h3").click(function(event) {
 			if (stop) {
 				event.stopImmediatePropagation();
 				event.preventDefault();
 				stop = false;
 			}
 		});
-		$("#accordion-<{$number}>-<{$section.subid}>").accordion({
+		$("#accordion-<{$number}>").accordion({
 			autoHeight: false, // no fixed height for sections
 			collapsible: true, // sections can be collapsed 
 			active: <{$accordion_active}>,
@@ -24,13 +24,12 @@
 				stop = true;
 			}
 		});
-		$("#accordion-<{$number}>-<{$section.subid}>").accordion("activate" , 0);
+		$("#accordion-<{$number}>").accordion("activate" , 0);
 	});
 
 </script>
-<{debug}>
 
-<div id="accordion-<{$number}>-<{$section.subid}>">
+<div id="accordion-<{$number}>">
 	<{foreach from=$sections key=sectionNumber item=section}>
 	<div id="drawer-<{$number}>-<{$sectionNumber}>">
         <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
