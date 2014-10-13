@@ -435,6 +435,7 @@ $content1['ele_private'] = '0';
 
 $element1['name'] = 'StoryID - Textbox - storypeople_story_id';
 $element1['content'] = $content1;
+$element1['subid'] = 1;
 
 $elements_temp[1] = $element1;
 
@@ -449,6 +450,7 @@ $content2['ele_private'] = '0';
 
 $element2['name'] = 'Person - Autocomplete box - storypeople_person';
 $element2['content'] = $content2;
+$element2['subid'] = 2;
 
 $elements_temp[2] = $element2;
 

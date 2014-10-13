@@ -51,7 +51,9 @@
     <!--<p><a href="ui.php?page=screen&tab=pages&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$content.sid}>&op=new">Create a new page</a></p>-->
   
 <div id="sortable-list">
-	<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/screen_multipage_pages_sections.html" sections=$content.pages}>
+	<{include 	file="db:admin/ui-accordion.html" 
+				sectionTemplate="db:admin/screen_multipage_pages_sections.html" 
+				sections=$content.pages}>
 </div>
 
 
