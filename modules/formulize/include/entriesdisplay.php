@@ -1444,8 +1444,9 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 			$calc_grouping = $settings['calc_grouping'];
             print "<tr><td class=head colspan=$count_colspan_calcs><input type=button style=\"width: 140px;\" name=mod_calculations value='".
                 _formulize_DE_MODCALCS . "' onclick=\"javascript:showPop('" . XOOPS_URL.
-                "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=$calc_grouping&cols=".
-                urlencode(implode(",",$cols))."');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='".
+                "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=$calc_cols&calc_calcs=$calc_calcs&calc_blanks=$calc_blanks&calc_grouping=".
+                urlencode($calc_grouping)."&cols=".urlencode(implode(",",$cols)).
+                "');\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=cancelcalcs value='".
                 _formulize_DE_CANCELCALCS . "' onclick=\"javascript:cancelCalcs();\"></input>&nbsp;&nbsp;<input type=button style=\"width: 140px;\" name=hidelist value='".
                 _formulize_DE_HIDELIST . "' onclick=\"javascript:hideList();\"></input></td></tr>";
         }
