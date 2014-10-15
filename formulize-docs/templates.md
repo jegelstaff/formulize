@@ -1,5 +1,6 @@
 ---
 layout: default
+permalink: developers/templates/
 ---
 
 # Working With Templates
