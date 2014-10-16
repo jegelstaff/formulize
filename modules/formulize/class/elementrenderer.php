@@ -1023,14 +1023,13 @@ class formulizeElementRenderer{
                             $entryData = $this->formulize_getCachedEntryData($id_form, $entry);
                             $reference_date = strtotime(display($entryData, "creation_date"));
                         }
-
                         if ($limit_past) {
                             $form_ele->setExtra(" min-date='".
-                                date("Y-m-d", strtotime("-".$ele_value["date_past_days"]." days", $reference_date))."' ");
+                                date("Y-m-d", strtotime("-".max(0, intval($ele_value["date_past_days"]))." days", $reference_date))."' ");
                         }
                         if ($limit_future) {
                             $form_ele->setExtra(" max-date='".
-                                date("Y-m-d", strtotime("+".$ele_value["date_future_days"]." days", $reference_date))."' ");
+                                date("Y-m-d", strtotime("+".max(0, intval($ele_value["date_future_days"]))." days", $reference_date))."' ");
                         }
 
                         $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;check_date_limits('$form_ele_id');\" jquerytag=\"$form_ele_id\" ");
