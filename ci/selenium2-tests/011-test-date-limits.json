@@ -31,6 +31,10 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "General Forms"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "link text",
@@ -38,11 +42,19 @@
       }
     },
     {
+      "type": "waitForTextPresent",
+      "text": "Entries in "
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "id",
         "value": "formulize_addButton"
       }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "You can make a new entry by filling in the form below"
     },
     {
       "type": "setElementText",
@@ -59,6 +71,10 @@
         "value": "td.formulize-input-project_start_date input"
       },
       "text": "2005-06-07\t"
+    },
+    {
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "verifyAlertPresent"
