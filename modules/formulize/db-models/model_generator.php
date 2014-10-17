@@ -2,6 +2,17 @@
 
 # Purpose: this generates rowobj model files for tables in a mysql database.
 
+if (!function_exists("iterable")) {
+    function iterable($var) {
+        return is_array($var) || $var instanceof ArrayAccess;
+    }
+}
+if (!function_exists("log_var")) {
+    function log_var($var, $description = "") {
+        error_log($description.print_r($var, true));
+    }
+}
+
 include_once(realpath(dirname(__FILE__))."/rowobj.php");
 
 function model_autoloader($class) {
@@ -24,7 +35,13 @@ function model_autoloader($class) {
         break;
 
         default:
-        $table_name = SDATA_DB_PREFIX . "_formulize_" . $class;
+        if ("_form" == substr($class, -5)) {
+            $class = substr($class, 0, (strlen($class) - 5));
+            $table_name = SDATA_DB_PREFIX . "_formulize_" . $class;
+            $class .= "_form";
+        } else {
+            return;
+        }
     }
     if (null != $xoopsDB->queryF("select count(*) from $table_name")) {
         $the_class = create_model_file_for_tables($table_name, $class);
@@ -34,21 +51,6 @@ function model_autoloader($class) {
     }
 }
 spl_autoload_register("model_autoloader");
-
-function log_var($object, $text = "") {
-    return error_log($text.print_r($object, true));
-}
-
-if (!function_exists("iterable")) {
-    function iterable($var) {
-        return is_array($var) || $var instanceof ArrayAccess;
-    }
-}
-if (!function_exists("log_var")) {
-    function log_var($var, $description = "") {
-        error_log($description.print_r($var, true));
-    }
-}
 
 function create_model_file_for_tables($tablename = null, $class = null, $output_file_path = null) {
     $definitions = array();
@@ -62,9 +64,8 @@ function create_model_file_for_tables($tablename = null, $class = null, $output_
     $entry_id_column = "entry_id";
     $column_definition = "static \$fields = array(\n";
     foreach ($columns as $column) {
-
         if (NULL === $column->Default) {
-            #$default_def = ", \"default\"=>null";
+            $default_def = ", \"default\"=>null";
         } else {
             $default_def = ", \"default\"=>\"$column->Default\"";
         }
@@ -184,6 +185,10 @@ function create_model_file_for_tables($tablename = null, $class = null, $output_
 
             case "longblob":
             $column_definition .= "\"type\"=>\"blob\"";
+            break;
+
+            case "time":
+            $column_definition .= "\"type\"=>\"time\"";
             break;
 
             default:

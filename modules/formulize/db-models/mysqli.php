@@ -33,9 +33,10 @@ class db {
     public static $booloan_false   = 0;
 
     const GET_RESULTS              = 0;
-    const GET_INSERT               = 1;
-    const GET_AFFECTED             = 2;
-    const GET_NOTHING              = 3;
+    const GET_RESULTS_ARRAY        = 1;
+    const GET_INSERT               = 2;
+    const GET_AFFECTED             = 3;
+    const GET_NOTHING              = 4;
 
     function __construct() {
         if (self::_open_connection()) {
@@ -128,6 +129,12 @@ class db {
                     do {} while(null !== ($row = mysqli_fetch_object($result)) && $ret[] = $row);
                 }
                 break;
+                case self::GET_RESULTS_ARRAY:
+                {
+                    $ret = array();
+                    do {} while(null !== ($row = mysqli_fetch_array($result, MYSQL_ASSOC)) && $ret[] = $row);
+                }
+                break;
                 case self::GET_INSERT:
                 $ret = $this->get_insert_id();
                 break;
@@ -154,7 +161,7 @@ class db {
         return $count[0]->row_count;
     }
 
-    function select($table) {
+    function select($table, $type = self::GET_RESULTS) {
         # if no column specified, then assume all columns
         $select_columns = "*";
         if (0 == count($this->columns)) {
@@ -185,12 +192,12 @@ class db {
                 $sql .= ' offset '.$this->offset;
             }
         }
-        return $this->query($sql, self::GET_RESULTS);
+        return $this->query($sql, $type);
     }
 
-    function select_one($table) {
+    function select_one($table, $type = self::GET_RESULTS) {
         # note: do not limit to one result because the query must do that
-        $result = $this->select($table);
+        $result = $this->select($table, $type);
         return (1 == count($result) ? $result[0] : null);
     }
 
@@ -766,6 +773,11 @@ throw new Exception("bam"); # how does subquery work?
                 case "datetime":
                 $null = (isset($attributes["null"]) && $attributes["null"]) ? "" : " NOT NULL";
                 $value = "DATETIME{$null}";
+                break;
+
+                case "date":
+                $null = (isset($attributes["null"]) && $attributes["null"]) ? "" : " NOT NULL";
+                $value = "DATE{$null}";
                 break;
 
                 case "time":
