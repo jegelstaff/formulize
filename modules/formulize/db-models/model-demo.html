@@ -1,0 +1,10 @@
+<{ if $client_data }>
+    <table style="width:40%;">
+        <tr><th>Name</th><th>City</th></tr>
+    <{ foreach from=$client_data key=key item=item }>
+        <tr><td><{ $item->client_name }></td><td><{ $item->client_city }></td></tr>
+    <{ /foreach }>
+    </table>
+<{ else }>
+we did not find client data
+<{ /if }>
