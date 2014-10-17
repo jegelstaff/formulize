@@ -21,35 +21,37 @@ abstract class rowobj {
     static $_array_class = "rowobj_set";
 
     function __construct($class_name, $row_data) {
-        foreach ($class_name::$fields as $name => $field) {
-            switch ($field["type"]) {
+        $this->_data = new stdClass;
+        foreach ($row_data as $field => $value) {
+            switch ($class_name::$fields[$name]["type"]) {
                 case "id":
                 case "int":
                 case "bigint":
-                $row_data->$name = (int)$row_data->$name;
+                $this->_data->{$field} = (int)$value;
                 break;
 
                 case "float":
                 case "double":
                 case "decimal": # ?
                 case "numeric": # ?
-                $row_data->$name = (double)$row_data->$name;
+                $this->_data->{$field} = (double)$value;
                 break;
 
                 case "bool":
                 case "boolean":
-                $row_data->$name = ($row_data->$name == db::$booloan_true);
+                $this->_data->{$field} = ($value == db::$booloan_true);
                 break;
 
                 case "createdate":
                 case "timestamp":
                 case "datetime":
-                $row_data->$name = new date_obj($row_data->$name);
-                #$row_data->$date_item = new DateTime($row_data->$date_item);    # PHP 5.2+ only
+                $this->_data->{$field} = new date_obj($value);
                 break;
+
+                default:
+                $this->_data->{$field} = $value;
             }
         }
-        $this->_data = $row_data;
         $this->_generated = array();    # track the names of generated values so they can be reset if the stored data is changed
         if (isset($this->_data->id) && is_int($this->_data->id) && $this->_data->id > 0) {
             if (!isset($GLOBALS["rowobj-cache"][$class_name]))
@@ -290,7 +292,7 @@ class dbquery extends db {
     }
 
     function &one() {
-        $obj = $this->select_one($this->table);
+        $obj = $this->select_one($this->table, db::GET_RESULTS_ARRAY);
         if ($obj) {
             $class_name = $this->class_name;
             $obj = new $class_name($class_name, $obj);
@@ -300,7 +302,7 @@ class dbquery extends db {
 
     function &many() {
         $class_name = $this->class_name;
-        $objects = $this->select($this->table);
+        $objects = $this->select($this->table, db::GET_RESULTS_ARRAY);
         $array_class_name = $class_name::$_array_class;
         $items = new $array_class_name();
         if (false !== $objects && count($objects) > 0) {

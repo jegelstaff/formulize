@@ -37,8 +37,37 @@ function title() {
     return $this->desc_form;
 }
 
+function form_tablename() {
+    return SDATA_DB_PREFIX . "_formulize_" . $this->form_handle;
+}
+
+function form_revision_tablename() {
+    if (1 == $this->store_revisions) {
+        return SDATA_DB_PREFIX . "_formulize_" . $this->form_handle . "_revisions";
+    }
+    return null;
+}
+
 function set_title($title) {
     return parent::update(array(
         "desc_form" => $title
     ));
+}
+
+function enable_revisions() {
+    if (0 == $this->store_revisions) {
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        // 0 is the id of a form we're cloning, false is the map of old elements to new elements when cloning so n/a here,
+        //  true is the flag for making a revisions table
+        if ($form_handler->createDataTable($this->id_form, 0, false, true)) {
+            return parent::update(array(
+                "store_revisions" => 1
+            ));
+        }
+        print "Error: could not create the revision history table for the '{$this->form_handle}' form.<br/>";
+        error_log("Error: could not create the revision history table for the '{$this->form_handle}' form.");
+    } else {
+        error_log("Already enabled revisions for {$this->form_handle}.");
+    }
+    return 0;
 }
