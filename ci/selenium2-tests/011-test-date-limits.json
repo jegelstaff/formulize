@@ -77,13 +77,6 @@
       "waitTime": "1543"
     },
     {
-      "type": "clickElement",
-      "locator": {
-        "type": "css selector",
-        "value": "td.formulize-input-project_start_date input"
-      }
-    },
-    {
       "type": "verifyAlertPresent"
     }
   ],
