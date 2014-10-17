@@ -577,6 +577,21 @@
       "text": "{TODAY}"
     },
     {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "validate-past-dates"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "date_past_days"
+      },
+      "text": "60"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
@@ -621,6 +636,28 @@
         "value": "elements-ele_handle"
       },
       "text": "project_launch_date"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "validate-past-dates"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "date_past_days"
+      },
+      "text": "0"
     },
     {
       "type": "clickElement",
