@@ -589,7 +589,7 @@
         "type": "id",
         "value": "date_past_days"
       },
-      "text": "60"
+      "text": "50"
     },
     {
       "type": "clickElement",
