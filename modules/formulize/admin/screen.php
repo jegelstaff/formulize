@@ -121,10 +121,21 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $viewPublished = $formObj->getVar('viewPublished');
   $defaultViewOptions = array();
   $limitViewOptions = array();
-  $defaultViewOptions['blank'] = _AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW;
-  $defaultViewOptions['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
-  $defaultViewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
-  $defaultViewOptions['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
+
+  $member_handler = xoops_gethandler('member');
+  $allGroups = $member_handler->getGroups();
+  $groups = array();
+  foreach($allGroups as $thisGroup) {
+    $groups[$thisGroup->getVar('name')]['id'] = $thisGroup->getVar('groupid');
+    $groups[$thisGroup->getVar('name')]['name'] = $thisGroup->getVar('name');
+    $defaultViewOptions[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name');
+  }
+  $viewArray = array();
+  $viewArray['blank'] = _AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW;
+  $viewArray['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
+  $viewArray['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
+  $viewArray['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
+
   for($i=0;$i<count($views);$i++) {
       if(!$viewPublished[$i]) { continue; }
       $defaultViewOptions[$views[$i]] = $viewNames[$i];
@@ -160,6 +171,7 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $entries = array();
   $entries['defaultviewoptions'] = $defaultViewOptions;
   $entries['defaultview'] = $screen->getVar('defaultview');
+  $entries['viewArray'] = $viewArray;
   $entries['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
   $entries['limitviewoptions'] = $limitViewOptions;
   $entries['limitviews'] = $screen->getVar('limitviews');
@@ -349,8 +361,8 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
   // template data
   $multipageTemplates = array();   // Added by Gordon Woodmansey, 29-08-2012
   $multipageTemplates['toptemplate'] = $screen->getTemplate('toptemplate');
-  $multipageTemplates['elementtemplate'] = $screen->getTemplate('elementtemplate'); 
-  $multipageTemplates['bottomtemplate'] = $screen->getTemplate('bottomtemplate'); 
+  $multipageTemplates['elementtemplate'] = $screen->getTemplate('elementtemplate');
+  $multipageTemplates['bottomtemplate'] = $screen->getTemplate('bottomtemplate');
 
   // pages data
   $multipagePages = array();
