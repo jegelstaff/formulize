@@ -119,7 +119,7 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $viewNames = $formObj->getVar('viewNames');
   $viewFrids = $formObj->getVar('viewFrids');
   $viewPublished = $formObj->getVar('viewPublished');
-  $defaultViewOptions = array();
+  $groupOptions = array();
   $limitViewOptions = array();
 
   $member_handler = xoops_gethandler('member');
@@ -128,25 +128,26 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   foreach($allGroups as $thisGroup) {
     $groups[$thisGroup->getVar('name')]['id'] = $thisGroup->getVar('groupid');
     $groups[$thisGroup->getVar('name')]['name'] = $thisGroup->getVar('name');
-    $defaultViewOptions[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name');
+    $groupOptions[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name');
   }
-  $viewArray = array();
-  $viewArray['blank'] = _AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW;
-  $viewArray['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
-  $viewArray['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
-  $viewArray['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
+
+  $viewOptions = array();
+  $viewOptions['blank'] = _AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW;
+  $viewOptions['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
+  $viewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
+  $viewOptions['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
 
   for($i=0;$i<count($views);$i++) {
       if(!$viewPublished[$i]) { continue; }
-      $defaultViewOptions[$views[$i]] = $viewNames[$i];
+      $viewOptions[$views[$i]] = $viewNames[$i];
       if($viewFrids[$i]) {
-          $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
+          $viewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
       } else {
-          $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
+          $viewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
       }
   }
   $limitViewOptions['allviews'] = _AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT;
-  $limitViewOptions += $defaultViewOptions;
+  $limitViewOptions += $viewOptions;
   unset($limitViewOptions['blank']);
   // get the available screens
   $screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -157,21 +158,21 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   foreach($viewentryscreenOptionsDB as $thisViewEntryScreenOption) {
       $viewentryscreenOptions[$thisViewEntryScreenOption->getVar('sid')] = printSmart(trans($thisViewEntryScreenOption->getVar('title')), 100);
   }
-	// get all the pageworks page IDs and include them too with a special prefix that will be picked up when this screen is rendered, so we don't confuse "view entry screens" and "view entry pageworks pages" -- added by jwe April 16 2009
-	if(file_exists(XOOPS_ROOT_PATH."/modules/pageworks/index.php")) {
-			global $xoopsDB;
-			$pageworksSQL = "SELECT page_id, page_name, page_title FROM ".$xoopsDB->prefix("pageworks_pages")." ORDER BY page_name, page_title, page_id";
-			$pageworksResult = $xoopsDB->query($pageworksSQL);
-			while($pageworksArray = $xoopsDB->fetchArray($pageworksResult)) {
-					$pageworksName = $pageworksArray['page_name'] ? $pageworksArray['page_name'] : $pageworksArray['page_title'];
-					$viewentryscreenOptions["p".$pageworksArray['page_id']] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYPAGEWORKS . " -- " . printSmart(trans($pageworksName), 85);
-			}
-	}
+  // get all the pageworks page IDs and include them too with a special prefix that will be picked up when this screen is rendered, so we don't confuse "view entry screens" and "view entry pageworks pages" -- added by jwe April 16 2009
+  if(file_exists(XOOPS_ROOT_PATH."/modules/pageworks/index.php")) {
+      global $xoopsDB;
+      $pageworksSQL = "SELECT page_id, page_name, page_title FROM ".$xoopsDB->prefix("pageworks_pages")." ORDER BY page_name, page_title, page_id";
+      $pageworksResult = $xoopsDB->query($pageworksSQL);
+      while($pageworksArray = $xoopsDB->fetchArray($pageworksResult)) {
+          $pageworksName = $pageworksArray['page_name'] ? $pageworksArray['page_name'] : $pageworksArray['page_title'];
+          $viewentryscreenOptions["p".$pageworksArray['page_id']] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYPAGEWORKS . " -- " . printSmart(trans($pageworksName), 85);
+      }
+  }
   // create the template information
   $entries = array();
-  $entries['defaultviewoptions'] = $defaultViewOptions;
+  $entries['groupOptions'] = $groupOptions;
   $entries['defaultview'] = $screen->getVar('defaultview');
-  $entries['viewArray'] = $viewArray;
+  $entries['viewOptions'] = $viewOptions;
   $entries['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
   $entries['limitviewoptions'] = $limitViewOptions;
   $entries['limitviews'] = $screen->getVar('limitviews');
@@ -206,8 +207,8 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
       $thisFidElements = $thisFidObj->getVar('elements');
       $thisFidCaptions = $thisFidObj->getVar('elementCaptions');
       $thisFidColheads = $thisFidObj->getVar('elementColheads');
-			$thisFidHandles = $thisFidObj->getVar('elementHandles');
-			foreach($thisFidElements as $i=>$thisFidElement) {
+      $thisFidHandles = $thisFidObj->getVar('elementHandles');
+      foreach($thisFidElements as $i=>$thisFidElement) {
       //for($i=0;$i<count($thisFidElements);$i++) {
           $elementHeading = $thisFidColheads[$i] ? $thisFidColheads[$i] : $thisFidCaptions[$i];
           $elementOptions[$thisFidHandles[$i]] = printSmart(trans(strip_tags($elementHeading)), 75);
@@ -308,23 +309,23 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
     $allFormOptions[$thisFormObject->getVar('id_form')] = printSmart($thisFormObject->getVar('title'));
   }
 
-	// setup all the elements in this form for use in the listboxes
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
-	$options = multiPageScreen_addToOptionsList($form_id, array());
+  // setup all the elements in this form for use in the listboxes
+  include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
+  $options = multiPageScreen_addToOptionsList($form_id, array());
 
-	// add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
-	// added March 20 2008, by jwe
-	$frid = $screen->getVar("frid");
-	if($frid) {
-			$framework_handler =& xoops_getModuleHandler('frameworks');
-			$frameworkObject = $framework_handler->get($frid);
-			foreach($frameworkObject->getVar("links") as $thisLinkObject) {
-					if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
-							$thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-							$options = multiPageScreen_addToOptionsList($thisFid, $options);
-					}
-			}
-	}
+  // add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
+  // added March 20 2008, by jwe
+  $frid = $screen->getVar("frid");
+  if($frid) {
+      $framework_handler =& xoops_getModuleHandler('frameworks');
+      $frameworkObject = $framework_handler->get($frid);
+      foreach($frameworkObject->getVar("links") as $thisLinkObject) {
+          if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
+              $thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
+              $options = multiPageScreen_addToOptionsList($thisFid, $options);
+          }
+      }
+  }
 
     // get page titles
     $pageTitles = $screen->getVar("pagetitles");
@@ -333,14 +334,14 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
 
   // group entries
   $pages = array();
-	for($i=0;$i<(count($pageTitles)+$pageCounterOffset);$i++) {
+  for($i=0;$i<(count($pageTitles)+$pageCounterOffset);$i++) {
     $pages[$i]['name'] = $pageTitles[$i];
     $pages[$i]['content']['index'] = $i;
     $pages[$i]['content']['number'] = $i+1;
     $pages[$i]['content']['title'] = $pageTitles[$i];
-		foreach($elements[$i] as $thisElement) {
-			$pages[$i]['content']['elements'][] = $options[$thisElement];
-		}
+    foreach($elements[$i] as $thisElement) {
+      $pages[$i]['content']['elements'][] = $options[$thisElement];
+    }
   }
 
   // options data
@@ -414,9 +415,9 @@ $common['aid'] = $aid;
 // generate a group list for use with the custom buttons
 $sql = "SELECT name, groupid FROM ".$xoopsDB->prefix("groups")." ORDER BY groupid";
 if($res = $xoopsDB->query($sql)) {
-	while($array = $xoopsDB->fetchArray($res)) {
-		$common['grouplist'][$array['groupid']] = $array['name'];
-	}
+  while($array = $xoopsDB->fetchArray($res)) {
+    $common['grouplist'][$array['groupid']] = $array['name'];
+  }
 }
 
 // define tabs for screen sub-page

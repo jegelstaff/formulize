@@ -19,10 +19,10 @@
 
         <div class="form-item">
           <select id="group">
-            <{html_options options=$content.defaultviewoptions selected=$content.defaultview}>
+            <{html_options options=$content.groupOptions}>
           </select>
           <select id="views">
-            <{html_options options=$content.viewArray}>
+            <{html_options options=$content.viewOptions selected=$content.defaultView}>
           </select>
         </div>
 
