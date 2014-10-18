@@ -100,48 +100,6 @@ if ($res) {
 }
 $settings['links'] = $links;
 
-$allRelationships = array();
-if (! is_null($formObject)) {
-  $allRelationships = $framework_handler->getFrameworksByForm($formObject->getVar('id_form')); // returns array of objects
-}
-
-$relationships = array();
-$relationshipIndex = array();
-$i = 1;
-foreach($allRelationships as $thisRelationship) {
-  $frid = $thisRelationship->getVar('frid');
-  if(isset($relationshipIndex[$frid])) { continue; }
-  $relationships[$i]['name'] = $thisRelationship->getVar('name');
-  $relationships[$i]['content']['frid'] = $frid;
-
-  $relationshipObject = $framework_handler->get($frid);
-  $relationshipLinks = $relationshipObject->getVar('links');
-  $li = 1;
-  $links = array();
-  foreach($relationshipLinks as $relationshipLink) {
-    // get names of forms in the link
-    $links[$li]['form1'] = printSmart(getFormTitle($relationshipLink->getVar('form1')));
-    $links[$li]['form2'] = printSmart(getFormTitle($relationshipLink->getVar('form2')));
-    // get the name of the relationship
-    switch($relationshipLink->getVar('relationship')) {
-      case 1:
-        $relationship = _AM_FRAME_ONETOONE;
-        break;
-      case 2:
-        $relationship = _AM_FRAME_ONETOMANY;
-        break;
-      case 3:
-        $relationship = _AM_FRAME_MANYTOONE;
-        break;
-    }
-    $links[$li]['relationship'] = printSmart($relationship);
-    $li++;
-  }
-  $relationships[$i]['content']['links'] = $links;
-
-  $relationshipIndex[$frid] = true;
-  $i++;
-}
 
 // prepare data for sub-page
 if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
@@ -460,8 +418,8 @@ $adminPage['tabs'][1] = [
 
 $adminPage['tabs'][] = [
 	'name'		=> _AM_APP_RELATIONSHIPS,
-	'template'	=> "db:admin/application_relationships.html",
-	'content'	=> $common + ['relationships' => $relationships]
+	'template'	=> "db:admin/screen_relationships.html",
+	'content'	=> $common + ['links' => $links, 'frid' => $screen->getVar('frid'), 'type' => $settings['type']]
 ]; 
 
 if($screen_id != "new" && $settings['type'] == 'form') {

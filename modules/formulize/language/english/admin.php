@@ -7,6 +7,7 @@ define("_AM_APP_SETTINGS","Settings");
 define("_AM_APP_FORMS","Forms");
 define("_AM_APP_FORM","Form: ");
 define("_AM_APP_RELATIONSHIPS_CREATE"," Create a new relationship");
+define("_AM_APP_RELATIONSHIPS_MANAGE"," Manage existing relationships");
 define("_AM_APP_RELATIONSHIPS_DELETE_CONFIRM","Are you sure you want to delete this relationship, and all its links?");
 define("_AM_APP_RELATIONSHIPS","Relationships");
 define("_AM_APP_FORMWITHNOAPP","Forms that don't belong to an application");

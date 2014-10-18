@@ -44,8 +44,8 @@ function checkForCommon(Obj, form1, form2, lid) {
 
     <h2><{$smarty.const._AM_FRAME_ADDFORM}></h2>
     <{if $content.required_form}>
-        <select name=relationships-fid1 size=1 readonly='true'>
-            <option value="<{$content.required_form.value}>"><{$content.required_form.name}></option>
+        <input type="hidden" name=relationships-fid1 value="<{$content.required_form.value}>">
+        <text><{$content.required_form.name}></text>
         </select>
     <{else}>
         <select name=relationships-fid1 size=1>
