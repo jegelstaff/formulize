@@ -552,10 +552,17 @@
       "waitTime": "534"
     },
     {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Relationships"
+      }
+    },
+    {
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-admin-form']/div/fieldset[1]/div[3]/select//option[2]"
+        "value": "//form[@id='form-2']/fieldset/select//option[2]"
       }
     },
     {
@@ -766,10 +773,17 @@
       "waitTime": "534"
     },
     {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Relationships"
+      }
+    },
+    {
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-admin-form']/div/fieldset[1]/div[3]/select//option[2]"
+        "value": "//form[@id='form-2']/fieldset/select//option[2]"
       }
     },
     {
