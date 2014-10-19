@@ -277,10 +277,74 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$owneruid = $olduid[0]['report_uid'];
 				$moduid = $uid;
 			}
-			$savesql = "INSERT INTO " . $xoopsDB->prefix("formulize_saved_views") . " (sv_name, sv_pubgroups, sv_owner_uid, sv_mod_uid, sv_formframe, sv_mainform, sv_lockcontrols, sv_hidelist, sv_hidecalc, sv_asearch, sv_sort, sv_order, sv_oldcols, sv_currentview, sv_calc_cols, sv_calc_calcs, sv_calc_blanks, sv_calc_grouping, sv_quicksearches) VALUES (\"$savename\", \"$savegroups\", \"$owneruid\", \"$moduid\", \"$saveformframe\", \"$savemainform\", \"{$_POST['savelock']}\", \"{$_POST['hlist']}\", \"{$_POST['hcalc']}\", \"$savesearches\", \"{$_POST['sort']}\", \"{$_POST['order']}\", \"{$_POST['oldcols']}\", \"{$_POST['savescope']}\", \"{$_POST['calc_cols']}\", \"{$_POST['calc_calcs']}\", \"{$_POST['calc_blanks']}\", \"{$_POST['calc_grouping']}\", \"$qsearches\")";
+			$savesql = 
+				"INSERT INTO " . $xoopsDB->prefix("formulize_saved_views") . " (" .
+					"sv_name, " .
+					"sv_pubgroups, " .
+					"sv_owner_uid, " .
+					"sv_mod_uid, " .
+					"sv_formframe, " .
+					"sv_mainform, " .
+					"sv_lockcontrols, " .
+					"sv_hidelist, " .
+					"sv_hidecalc, " .
+					"sv_asearch, " .
+					"sv_sort, " .
+					"sv_order, " .
+					"sv_oldcols, " .
+					"sv_currentview, " .
+					"sv_calc_cols, " .
+					"sv_calc_calcs, " .
+					"sv_calc_blanks, " .
+					"sv_calc_grouping, " .
+					"sv_quicksearches, " .
+					"sv_global_search" .
+				") VALUES (" .
+					"\"".formulize_db_escape($savename)					."\", ".
+					"\"".formulize_db_escape($savegroups)				."\", ".
+					"\"".formulize_db_escape($owneruid)					."\", ".
+					"\"".formulize_db_escape($moduid)					."\", ".
+					"\"".formulize_db_escape($saveformframe)			."\", ".
+					"\"".formulize_db_escape($savemainform)				."\", ".
+					"\"".formulize_db_escape($_POST['savelock'])		."\", ".
+					"\"".formulize_db_escape($_POST['hlist'])			."\", ".
+					"\"".formulize_db_escape($_POST['hcalc'])			."\", ".
+					"\"".formulize_db_escape($savesearches)				."\", ".
+					"\"".formulize_db_escape($_POST['sort'])			."\", ".
+					"\"".formulize_db_escape($_POST['order'])			."\", ".
+					"\"".formulize_db_escape($_POST['oldcols'])			."\", ".
+					"\"".formulize_db_escape($_POST['savescope'])		."\", ".
+					"\"".formulize_db_escape($_POST['calc_cols'])		."\", ".
+					"\"".formulize_db_escape($_POST['calc_calcs'])		."\", ".
+					"\"".formulize_db_escape($_POST['calc_blanks'])		."\", ".
+					"\"".formulize_db_escape($_POST['calc_grouping'])	."\", ".
+					"\"".formulize_db_escape($qsearches)				."\", ".
+					"\"".formulize_db_escape($_POST['global_search'])	."\"  ".
+				")";
 		} else {
 			// print "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"{$_POST['savelock']}\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid_formulize, 1) . "\"";
-			$savesql = "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_name=\"$savename\", sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"{$_POST['savelock']}\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid_formulize, 1) . "\"";
+			$savesql = 
+				"UPDATE " . $xoopsDB->prefix("formulize_saved_views") . 
+				" SET " .
+					"sv_name 			= \"".formulize_db_escape($savename) 				."\", ".
+					"sv_pubgroups 		= \"".formulize_db_escape($savegroups) 				."\", ".
+					"sv_mod_uid 		= \"".formulize_db_escape($uid) 					."\", ".
+					"sv_lockcontrols 	= \"".formulize_db_escape($_POST['savelock'])		."\", ".
+					"sv_hidelist 		= \"".formulize_db_escape($_POST['hlist']) 			."\", ".
+					"sv_hidecalc 		= \"".formulize_db_escape($_POST['hcalc']) 			."\", ".
+					"sv_asearch 		= \"".formulize_db_escape($savesearches) 			."\", ".
+					"sv_sort 			= \"".formulize_db_escape($_POST['sort']) 			."\", ".
+					"sv_order 			= \"".formulize_db_escape($_POST['order']) 			."\", ".
+					"sv_oldcols 		= \"".formulize_db_escape($_POST['oldcols']) 		."\", ".
+					"sv_currentview 	= \"".formulize_db_escape($_POST['savescope']) 		."\", ".
+					"sv_calc_cols 		= \"".formulize_db_escape($_POST['calc_cols']) 		."\", ".
+					"sv_calc_calcs 		= \"".formulize_db_escape($_POST['calc_calcs']) 	."\", ".
+					"sv_calc_blanks 	= \"".formulize_db_escape($_POST['calc_blanks']) 	."\", ".
+					"sv_calc_grouping 	= \"".formulize_db_escape($_POST['calc_grouping']) 	."\", ".
+					"sv_quicksearches 	= \"".formulize_db_escape($qsearches) 				."\", ".
+					"sv_global_search   = \"".formulize_db_escape($_POST['global_search'])	."\"  ".
+				" WHERE " .
+					"sv_id = \"" . substr($saveid_formulize, 1) . "\"";
 		}
 
 		// save the report
@@ -395,7 +459,21 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
     				}
     			}
 			}
-			list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $savedViewHList, $savedViewHCalc, $_POST['lockcontrols'], $quicksearches) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
+			list(
+				$_POST['currentview'], 
+				$_POST['oldcols'], 
+				$_POST['asearch'], 
+				$_POST['calc_cols'], 
+				$_POST['calc_calcs'], 
+				$_POST['calc_blanks'], 
+				$_POST['calc_grouping'], 
+				$_POST['sort'], 
+				$_POST['order'], 
+				$savedViewHList, 
+				$savedViewHCalc, 
+				$_POST['lockcontrols'], 
+				$quicksearches,
+				$_POST['global_search']) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
 			if(!isset($_POST['formulize_preserveListCalcPage']) AND !isset($_GET['formulize_preserveListCalcPage'])) {
 				$_POST['hlist'] = $savedViewHList;
 				$_POST['hcalc'] = $savedViewHCalc;
@@ -3868,6 +3946,7 @@ function loadReport($id, $fid, $frid) {
 	$to_return[10] = $thisview[0]['sv_hidecalc'];
 	$to_return[11] = $thisview[0]['sv_lockcontrols'];
 	$to_return[12] = $thisview[0]['sv_quicksearches'];
+	$to_return[13] = $thisview[0]['sv_global_search'];
 	return $to_return;
 }
 
