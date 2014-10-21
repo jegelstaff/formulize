@@ -150,7 +150,7 @@ class formulize_themeForm extends XoopsThemeForm {
 
                         default:
                             if (is_object($ele) and isset($ele->formulize_element)) {
-                                $ret .= "<a class=\"formulize-element-edit-link\" href=\"" . XOOPS_URL .
+                                $ret .= "<a class=\"formulize-element-edit-link\" tabindex=\"-1\" href=\"" . XOOPS_URL .
                                     "/modules/formulize/admin/ui.php?page=element&aid=0&ele_id=" .
                                     $ele->formulize_element->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
                             }
@@ -1718,7 +1718,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         $show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
         $edit_link = "";
         if ($show_element_edit_link) {
-            $edit_link = "<a class=\"formulize-element-edit-link\" href=\"" . XOOPS_URL .
+            $edit_link = "<a class=\"formulize-element-edit-link\" tabindex=\"-1\" href=\"" . XOOPS_URL .
                 "/modules/formulize/admin/ui.php?page=element&aid=0&ele_id=" .
                 $subform_element_object->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
         }
