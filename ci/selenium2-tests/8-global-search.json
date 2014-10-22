@@ -167,9 +167,6 @@
       "text": "Toronto Global Search"
     },
     {
-      "type": "acceptAlert"
-    },
-    {
       "type": "switchToWindow",
       "name": ""
     },
