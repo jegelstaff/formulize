@@ -1714,7 +1714,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
     foreach($metadata as $formulaNumber => $thisMetaData) {
         $formula = $thisMetaData['formula'];
         $quotePos = 0;
-        while($quotePos = strpos($formula, "\"", $quotePos + 1)) {
+        while ((strlen($formula) > $quotePos + 1) and ($quotePos = strpos($formula, "\"", $quotePos + 1))) {
             $endQuotePos = strpos($formula, "\"", $quotePos + 1);
             $term = substr($formula, $quotePos, $endQuotePos - $quotePos+1);
             if(!is_numeric($term)) {
