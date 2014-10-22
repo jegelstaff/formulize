@@ -143,6 +143,57 @@
         "value": "formulize_globalQuickSearch"
       },
       "value": "toronto"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "formulize_saveViewButton"
+      }
+    },
+    {
+      "type": "switchToWindow",
+      "name": "formulize_popup"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//table[@class='outer']/tbody/tr[6]/td[2]/input"
+      }
+    },
+    {
+      "type": "answerAlert",
+      "text": "Toronto Global Search"
+    },
+    {
+      "type": "acceptAlert"
+    },
+    {
+      "type": "switchToWindow",
+      "name": ""
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "formulize_resetViewButton"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='controls']/select//option[7]"
+      }
+    },
+    {
+      "type": "verifyElementValue",
+      "locator": {
+        "type": "id",
+        "value": "formulize_globalQuickSearch"
+      },
+      "value": "toronto"
     }
   ],
   "data": {

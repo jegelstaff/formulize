@@ -96,7 +96,7 @@
         "type": "name",
         "value": "screens-toptemplate"
       },
-      "text": "<?php\nprint $addButton;\nprint $globalQuickSearch;\n"
+      "text": "<?php\nprint $addButton;\nprint $globalQuickSearch;\nprint \"<br>\";\nprint $saveViewButton;\nprint $resetViewButton;\nprint $currentViewList;"
     },
     {
       "type": "clickElement",
