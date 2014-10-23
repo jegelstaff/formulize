@@ -418,41 +418,83 @@ if($screen_id != "new" && $settings['type'] == 'form') {
   $adminPage['tabs'][2]['content'] = $options + $common;
 }
 
-$elements_temp =  array();
-$element1 =  array();
-$element2 =  array();
-$content1 =  array();
-$content2 =  array();
+$fid = intval($_GET['fid']);
+$element_handler = xoops_getmodulehandler('elements', 'formulize');
+$elementObjects = $element_handler->getObjects(null, $fid);
+$elements = array();
 
-$content1['ele_id'] = '16';
-$content1['ele_handle'] = 'storypeople_story_id';
-$content1['converttext'] = 'Convert to multi-line text box';
-$content1['linktype'] = 'textarea';
-$content1['ele_type'] = 'Textbox';
-$content1['ele_req'] = '0';
-$content1['ele_display'] = '0';
-$content1['ele_private'] = '0';
-
-$element1['name'] = 'StoryID - Textbox - storypeople_story_id';
-$element1['content'] = $content1;
-$element1['subid'] = 1;
-
-$elements_temp[1] = $element1;
-
-$content2['ele_id'] = '17';
-$content2['ele_handle'] = 'storypeople_person';
-$content2['converttext'] = 'Convert to check boxes';
-$content2['linktype'] = 'checkboxfromsb';
-$content2['ele_type'] = 'Autocomplete box';
-$content2['ele_req'] = '0';
-$content2['ele_display'] = '1';
-$content2['ele_private'] = '0';
-
-$element2['name'] = 'Person - Autocomplete box - storypeople_person';
-$element2['content'] = $content2;
-$element2['subid'] = 2;
-
-$elements_temp[2] = $element2;
+$i = 1; 
+  foreach($elementObjects as $thisElement) 
+  {
+    $elementCaption = strip_tags($thisElement->getVar('ele_caption'));
+    $colhead = strip_tags($thisElement->getVar('ele_colhead'));
+    $cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
+    $ele_id = $thisElement->getVar('ele_id');
+    $ele_handle = $thisElement->getVar('ele_handle');
+    $nameText = $colhead ? printSmart($colhead,55) : printSmart($elementCaption,55);
+    $elements[$i]['name'] = "$nameText - $cleanType - $ele_handle";
+    $elements[$i]['content']['ele_id'] = $ele_id;
+    $elements[$i]['content']['ele_handle'] = $ele_handle;
+    $ele_type = $thisElement->getVar('ele_type');
+    switch($ele_type) {
+      case("text"):
+        $converttext = _AM_ELE_CONVERT_ML;
+        $linktype = "textarea";
+        break;
+      case("textarea"):
+        $converttext = _AM_ELE_CONVERT_SL;
+        $linktype = "text";
+        break;
+      case("radio"):
+        $converttext = _AM_ELE_CONVERT_CB;
+        $linktype = "checkbox";
+        break;
+      case("checkbox"):
+        $converttext = _AM_ELE_CONVERT_RB;
+        $linktype = "radio";
+        break;
+      case("select"):
+        $converttext = _AM_ELE_CONVERT_CB;
+        $linktype = "checkboxfromsb";
+  break;
+      default:
+        $converttext = "";
+        $linktype = "";
+    }
+    $elements[$i]['content']['converttext'] = $converttext;
+    $elements[$i]['content']['linktype'] = $linktype;
+    $elements[$i]['content']['ele_type'] = $cleanType;
+    $elements[$i]['content']['ele_req'] = removeNotApplicableRequireds($thisElement->getVar('ele_type'), $thisElement->getVar('ele_req'));
+    $ele_display = $thisElement->getVar('ele_display');
+    $multiGroupDisplay = false;
+    if(substr($ele_display, 0, 1) == ",") {
+      $multiGroupDisplay = true;
+      $fs_member_handler =& xoops_gethandler('member');
+      $fs_xoops_groups =& $fs_member_handler->getGroups();
+      $displayGroupList = explode(",", trim($ele_display, ","));
+      $check_display = '';
+      foreach($displayGroupList as $groupList) {
+        if($groupList != "") {
+          if($check_display != '') { $check_display .= ", "; }
+          $group_display = $fs_member_handler->getGroup($groupList);
+          if(is_object($group_display)) {
+            $check_display .= $group_display->getVar('name');
+          } else {
+            $check_display .= "???";
+          }
+        }                               
+      }
+      $check_display = '<a class=info href="" onclick="return false;" alt="' . $check_display . '" title="' . $check_display . '">' . _AM_FORM_DISPLAY_MULTIPLE . '</a>';
+    } else {
+      $check_display = $ele_display;
+    }
+    $elements[$i]['content']['ele_display'] = $check_display;
+    $elements[$i]['content']['ele_private'] = $thisElement->getVar('ele_private');
+    $elementHeadings[$i]['text'] = $colhead ? printSmart($colhead) : printSmart($elementCaption);
+    $elementHeadings[$i]['ele_id'] = $ele_id;
+    $elementHeadings[$i]['selected'] = in_array($ele_id, $headerlistArray) ? " selected" : "";
+    $i++;
+  }
 
 if($screen_id != "new" && $settings['type'] == 'multiPage') {
   $adminPage['tabs'][2]['name'] = _AM_ELE_OPT;
@@ -466,7 +508,7 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
   $adminPage['tabs'][4]['name'] = _AM_FORM_SCREEN_PAGES;
   $adminPage['tabs'][4]['template'] = "db:admin/screen_multipage_pages.html";
   $adminPage['tabs'][4]['content'] = $multipagePages + $common;
-  $adminPage['tabs'][4]['content']['pages'][0]['content']['elements_temp'] = $elements_temp;
+  $adminPage['tabs'][4]['content']['pages'][0]['content']['elements_temp'] = $elements;
 
   $adminPage['tabs'][5]['name'] = _AM_FORM_SCREEN_TEMPLATES;
   $adminPage['tabs'][5]['template'] = "db:admin/screen_multipage_templates.html";
