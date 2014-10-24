@@ -19,7 +19,6 @@ We maintain a working copy of the gh-pages branch, inside the **/formulize-docs/
     git read-tree master:formulize-docs
     git commit -m "Publish docs from master branch"
     git push origin gh-pages
-    git checkout -- .
     git checkout master
     
 Bad things will happen if you run that from a folder other than the root of your local git repository.
