@@ -34,6 +34,17 @@ if(!isset($processedValues)) {
   return;
 }
 
+if($_POST['deleteframework']) {
+    $framework_handler = xoops_getmodulehandler('frameworks','formulize');
+    $frameworkObject = $framework_handler->get($_POST['deleteframework']);
+    if(!$framework_handler->delete($frameworkObject)) {
+        print "Error: could not delete the requested relationship.";
+    } else {
+        print "/* eval */ reloadWithScrollPosition();";
+    }
+    return;
+}
+
 
 $aid = intval($_POST['aid']);
 $sid = $_POST['formulize_admin_key'];

@@ -90,16 +90,18 @@ if ($form_id != "new") {
 }
 
 $elements = array();
-$links = array();
-$sql = 'SELECT DISTINCT frameworks.frame_id, frameworks.frame_name FROM '.$xoopsDB->prefix("formulize_framework_links").' as links, '.$xoopsDB->prefix("formulize_frameworks").' as frameworks WHERE (fl_form1_id='.intval($form_id).' OR fl_form2_id='.intval($form_id).') AND links.fl_frame_id=frameworks.frame_id';
-$res = $xoopsDB->query($sql);
-if ($res) {
-  while ($row = $xoopsDB->fetchRow($res)) {
-    $links[] = array("id"=>$row[0], "name"=>$row[1]);
-  }
-}
-$settings['links'] = $links;
 
+$frameworks = $framework_handler->getFrameworksByForm($form_id);
+$relationships = $framework_handler->formatFrameworksAsRelationships($frameworks);
+
+$relationshipSettings = [
+  'relationships' => $relationships, 
+  'type' => $settings['type']
+];
+
+if($screen_id != 'new') {
+  $relationshipSettings['frid'] = $screen->getVar('frid');
+}
 
 // prepare data for sub-page
 if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
@@ -419,7 +421,7 @@ $adminPage['tabs'][1] = [
 $adminPage['tabs'][] = [
 	'name'		=> _AM_APP_RELATIONSHIPS,
 	'template'	=> "db:admin/screen_relationships.html",
-	'content'	=> $common + ['links' => $links, 'frid' => $screen->getVar('frid'), 'type' => $settings['type']]
+	'content'	=> $common + $relationshipSettings
 ]; 
 
 if($screen_id != "new" && $settings['type'] == 'form') {
