@@ -78,9 +78,9 @@
         <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_ENTRIESPERPAGE}></div>
       </div>
       <div class="form-item">
-        <label for="screens-viewentryscreen"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN}></label>
-        <select id="screens-viewentryscreen" name="screens-viewentryscreen" size="1">
-          <{html_options options=$content.viewentryscreenoptions selected=$content.viewentryscreen}>
+        <label for="screens-limitviews"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS}></label>
+        <select id="screens-limitviews[]" name="screens-limitviews[]" size="8" multiple>
+          <{html_options options=$content.limitviewoptions selected=$content.limitviews}>
         </select>
         <div class="description"></div>
       </div>
