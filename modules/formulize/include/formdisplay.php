@@ -200,7 +200,7 @@ class formulize_elementsOnlyForm extends formulize_themeForm {
 		$ele_name = $this->getName();
 		$ret = "<div class='xo-theme-form'>
 			<table width='100%' class='outer' cellspacing='1'>
-			<tr><th colspan='2'>" . $this->getTitle() . "</th></tr>
+			<tr><th colspan='2' class=\"formulize-subform-title\">" . $this->getTitle() . "</th></tr>
 		";
 		$hidden = '';
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
@@ -2019,7 +2019,7 @@ function compileElements($fid, $form, $formulize_mgr, $prevEntry, $entry, $go_ba
 			// if it's a break, handle it differently...$form_ele may be an array if it's a non-interactive element such as a grid
 			if (is_object($thisElement) /*this happens when printing*/) {
 				// final param is used as id name in the table row where this element exists, so we can interact with it for showing and hiding
-				$form->insertBreakFormulize("<div style=\"font-weight: normal;\">" . trans(stripslashes($form_ele[0])) . "</div>",
+				$form->insertBreakFormulize("<div class=\"formulize-subform-heading\">" . trans(stripslashes($form_ele[0])) . "</div>",
 					$form_ele[1], 'de_'.$fid.'_'.$entryForDEElements.'_'.$this_ele_id, $thisElement->getVar("ele_handle"));
 			}
 		} else {
