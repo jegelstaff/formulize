@@ -8,7 +8,6 @@
   <input type="hidden" name="formulize_admin_handler" value="screen_list_entries">
   <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
 
-
   <div class="panel-content content">
     <fieldset>
       <legend>How entries should be displayed</legend>
@@ -17,17 +16,33 @@
       <div class="form-item float-left half-width">
         <label for="screens-defaultview"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW}></label>
 
-        <div class="form-item">
-          <select id="group">
+        <p><input type="button" name="add_view" class="formButton" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> Default View"</p><br /><br />
+
+        <div class="view-list">
+          <select id="view_group" name="defaultview_group[0]" >
             <{html_options options=$content.groupOptions}>
           </select>
-          <select id="views">
+          <select id="view_view" name="defaultview_view[0]">
             <{html_options options=$content.viewOptions selected=$content.defaultView}>
           </select>
         </div>
 
-       <!-- This has the 'Add 1' code -->
-        <!-- <{include file="db:admin/element_optionlist.html"}> -->
+        <script>
+          $("[name=add_view]").click(function(){
+            group = $("#view_group:last");
+            view = $("#view_view:last");
+
+            appendContentsGroup ='<select id="view_group" name="defaultview_group[]">' + group.html() + '</select>';
+            appendContentsView = '<select id="view_view" name="defaultview_view[]">' + view.html() +'</select>';
+
+            $('div.view-list').append('<br /><br />');
+            $('div.view-list').append(appendContentsGroup);
+            $('div.view-list').append('&nbsp;');
+            $('div.view-list').append(appendContentsView);
+            $("[name=add_view]").blur();
+            setDisplay('savewarning','block');
+          });
+        </script>
 
         <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW}></div>
       </div>
