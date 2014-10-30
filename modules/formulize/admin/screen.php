@@ -303,6 +303,7 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
 	// add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
 	// added March 20 2008, by jwe
 	$frid = $screen->getVar("frid");
+  $tempStuff = array();
 	if($frid) {
 			$framework_handler =& xoops_getModuleHandler('frameworks');
 			$frameworkObject = $framework_handler->get($frid);
@@ -310,9 +311,11 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
 					if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
 							$thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
 							$options = multiPageScreen_addToOptionsList($thisFid, $options);
+              $tempStuff =  multiPageScreen_addToOptionsList_new();
 					}
 			}
 	}
+
 
     // get page titles
     $pageTitles = $screen->getVar("pagetitles");
@@ -328,6 +331,7 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
     $pages[$i]['content']['title'] = $pageTitles[$i];
 		foreach($elements[$i] as $thisElement) {
 			$pages[$i]['content']['elements'][] = $options[$thisElement];
+      $pages[$i]['content']['newElements'][] = $tempStuff[$thisElement];
 		}
   }
 
@@ -418,84 +422,6 @@ if($screen_id != "new" && $settings['type'] == 'form') {
   $adminPage['tabs'][2]['content'] = $options + $common;
 }
 
-$fid = intval($_GET['fid']);
-$element_handler = xoops_getmodulehandler('elements', 'formulize');
-$elementObjects = $element_handler->getObjects(null, $fid);
-$elements = array();
-
-$i = 1; 
-  foreach($elementObjects as $thisElement) 
-  {
-    $elementCaption = strip_tags($thisElement->getVar('ele_caption'));
-    $colhead = strip_tags($thisElement->getVar('ele_colhead'));
-    $cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
-    $ele_id = $thisElement->getVar('ele_id');
-    $ele_handle = $thisElement->getVar('ele_handle');
-    $nameText = $colhead ? printSmart($colhead,55) : printSmart($elementCaption,55);
-    $elements[$i]['name'] = "$nameText - $cleanType - $ele_handle";
-    $elements[$i]['content']['ele_id'] = $ele_id;
-    $elements[$i]['content']['ele_handle'] = $ele_handle;
-    $ele_type = $thisElement->getVar('ele_type');
-    switch($ele_type) {
-      case("text"):
-        $converttext = _AM_ELE_CONVERT_ML;
-        $linktype = "textarea";
-        break;
-      case("textarea"):
-        $converttext = _AM_ELE_CONVERT_SL;
-        $linktype = "text";
-        break;
-      case("radio"):
-        $converttext = _AM_ELE_CONVERT_CB;
-        $linktype = "checkbox";
-        break;
-      case("checkbox"):
-        $converttext = _AM_ELE_CONVERT_RB;
-        $linktype = "radio";
-        break;
-      case("select"):
-        $converttext = _AM_ELE_CONVERT_CB;
-        $linktype = "checkboxfromsb";
-  break;
-      default:
-        $converttext = "";
-        $linktype = "";
-    }
-    $elements[$i]['content']['converttext'] = $converttext;
-    $elements[$i]['content']['linktype'] = $linktype;
-    $elements[$i]['content']['ele_type'] = $cleanType;
-    $elements[$i]['content']['ele_req'] = removeNotApplicableRequireds($thisElement->getVar('ele_type'), $thisElement->getVar('ele_req'));
-    $ele_display = $thisElement->getVar('ele_display');
-    $multiGroupDisplay = false;
-    if(substr($ele_display, 0, 1) == ",") {
-      $multiGroupDisplay = true;
-      $fs_member_handler =& xoops_gethandler('member');
-      $fs_xoops_groups =& $fs_member_handler->getGroups();
-      $displayGroupList = explode(",", trim($ele_display, ","));
-      $check_display = '';
-      foreach($displayGroupList as $groupList) {
-        if($groupList != "") {
-          if($check_display != '') { $check_display .= ", "; }
-          $group_display = $fs_member_handler->getGroup($groupList);
-          if(is_object($group_display)) {
-            $check_display .= $group_display->getVar('name');
-          } else {
-            $check_display .= "???";
-          }
-        }                               
-      }
-      $check_display = '<a class=info href="" onclick="return false;" alt="' . $check_display . '" title="' . $check_display . '">' . _AM_FORM_DISPLAY_MULTIPLE . '</a>';
-    } else {
-      $check_display = $ele_display;
-    }
-    $elements[$i]['content']['ele_display'] = $check_display;
-    $elements[$i]['content']['ele_private'] = $thisElement->getVar('ele_private');
-    $elementHeadings[$i]['text'] = $colhead ? printSmart($colhead) : printSmart($elementCaption);
-    $elementHeadings[$i]['ele_id'] = $ele_id;
-    $elementHeadings[$i]['selected'] = in_array($ele_id, $headerlistArray) ? " selected" : "";
-    $i++;
-  }
-
 if($screen_id != "new" && $settings['type'] == 'multiPage') {
   $adminPage['tabs'][2]['name'] = _AM_ELE_OPT;
   $adminPage['tabs'][2]['template'] = "db:admin/screen_multipage_options.html";
@@ -508,7 +434,6 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
   $adminPage['tabs'][4]['name'] = _AM_FORM_SCREEN_PAGES;
   $adminPage['tabs'][4]['template'] = "db:admin/screen_multipage_pages.html";
   $adminPage['tabs'][4]['content'] = $multipagePages + $common;
-  $adminPage['tabs'][4]['content']['pages'][0]['content']['elements_temp'] = $elements;
 
   $adminPage['tabs'][5]['name'] = _AM_FORM_SCREEN_TEMPLATES;
   $adminPage['tabs'][5]['template'] = "db:admin/screen_multipage_templates.html";
