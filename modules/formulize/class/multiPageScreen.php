@@ -182,8 +182,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
 }
 
-function multiPageScreen_addToOptionsList_new() {
-	$fid = intval($_GET['fid']);
+function multiPageScreen_addToOptionsList_new($fid, $elements) {
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	$elementObjects = $element_handler->getObjects(null, $fid);
 

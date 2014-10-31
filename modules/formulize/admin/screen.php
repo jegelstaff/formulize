@@ -299,11 +299,13 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
 	// setup all the elements in this form for use in the listboxes
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
 	$options = multiPageScreen_addToOptionsList($form_id, array());
+  $tempStuff = array();
+  $tempStuff =  multiPageScreen_addToOptionsList_new($form_id, $tempStuff);
 
 	// add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
 	// added March 20 2008, by jwe
 	$frid = $screen->getVar("frid");
-  $tempStuff = array();
+
 	if($frid) {
 			$framework_handler =& xoops_getModuleHandler('frameworks');
 			$frameworkObject = $framework_handler->get($frid);
@@ -311,7 +313,7 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
 					if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
 							$thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
 							$options = multiPageScreen_addToOptionsList($thisFid, $options);
-              $tempStuff =  multiPageScreen_addToOptionsList_new();
+              $tempStuff = multiPageScreen_addToOptionsList_new($thisFid, $tempStuff);
 					}
 			}
 	}
@@ -374,6 +376,7 @@ if($screen_id != "new" && $settings['type'] == 'form') {
     }
   }
   $element_list = multiPageScreen_addToOptionsList($form_id, array());
+  $tempStuff = multiPageScreen_addToOptionsList_new($form_id, $tempStuff);
   $frid = $screen->getVar("frid");
   if($frid) {
       $framework_handler =& xoops_getModuleHandler('frameworks');
@@ -382,6 +385,7 @@ if($screen_id != "new" && $settings['type'] == 'form') {
           if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
               $thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
               $element_list = multiPageScreen_addToOptionsList($thisFid, $element_list);
+              $tempStuff = multiPageScreen_addToOptionsList_new($thisFid, $tempStuff);
           }
       }
   }
