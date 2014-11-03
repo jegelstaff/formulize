@@ -4634,8 +4634,19 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
     //print "limitStart: $limitStart<br>limitSize: $limitSize<br>";
     
 		$GLOBALS['formulize_getCountForPageNumbers'] = true; // flag used to trigger setting of the count of entries in the dataset
-		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
-    
+
+
+    // if there's a list template
+    if ($screen->getTemplate('listtemplate')) {
+        $data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
+    }
+    // if there's no list template
+    else {
+
+        $filterElements = $settings['columns'];
+        $data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery, 0, false, "", false, false, $filterElements);
+
+        }
     if($currentURL=="") { return array(0=>"", 1=>"", 2=>""); } //current URL should only be "" if this is called directly by the special formulize_getCalcs function
     
 		if($query_string AND is_array($data)) { $data = formulize_runAdvancedSearch($query_string, $data); } // must do advanced search after caching the data, so the advanced search results are not contained in the cached data.  Otherwise, we would have to rerun the base extraction every time we wanted to change just the advanced search query.  This way, advanced search changes can just hit the cache, and not the db.

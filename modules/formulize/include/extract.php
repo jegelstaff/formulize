@@ -254,8 +254,19 @@ function microtime_float()
 }
 
 function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitStart="", $limitSize="", $sortField="", $sortOrder="", $forceQuery=false, $mainFormOnly=0, $includeArchived=false, $dbTableUidField="", $id_reqsOnly=false, $resultOnly=false, $filterElements=null, $cacheKey="") { // IDREQS ONLY, only works with the main form!! returns array where keys and values are the id_reqs
-     
-     
+
+    $columns = $filterElements;
+    if(is_array($columns) AND !is_array($columns[array_keys($columns)[0]])) {
+        // $columns is not a multidimensional array...reorganize it by form
+        $element_handler = xoops_getmodulehandler('elements','formulize');
+        $newColumns = array();
+        foreach($columns as $col) {
+            if($elementObject = $element_handler->get($col)) {
+                $newColumns[$elementObject->getVar('id_form')][] = $elementObject->getVar('ele_handle');
+            }
+        }
+        $filterElements = $newColumns;
+    }
      
      if($framework == "") { $framework = 0; } // we want to afirmatively make this a zero and not a null or anything else, for purposes of having consistent cacheKeys
      if(is_numeric($framework)) { $framework = intval($framework); } // further standardization, to make cachekeys work better....
@@ -830,11 +841,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      // Debug Code
      
-     //global $xoopsUser;
-     //if($xoopsUser->getVar('uid') == 1) {
-     //     print "<br>Count query: $countMasterResults<br><br>";
-     //     print "Master query: $masterQuerySQL<br>";
-     //}
+//     global $xoopsUser;
+//     if($xoopsUser->getVar('uid') == 1) {
+//          print "<br>Count query: $countMasterResults<br><br>";
+//          print "Master query: $masterQuerySQL<br>";
+//     }
      
 		 formulize_benchmark("Before query");
 
@@ -861,7 +872,14 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    // FURTHER OPTIMIZATIONS ARE POSSIBLE HERE...WE COULD NOT INCLUDE THE MAIN FORM AGAIN IN ALL THE SELECTS, THAT WOULD IMPROVE THE PROCESSING TIME A BIT, BUT WE WOULD HAVE TO CAREFULLY REFACTOR MORE OF THE LOOPING CODE BELOW THAT PARSES THE ENTRIES, BECAUSE RIGHT NOW IT'S ASSUMING THE FULL MAIN ENTRY IS PRESENT.  AT LEAST THE MAIN ENTRY ID WOULD NEED TO STILL BE USED, SINCE WE USE THAT TO SYNCH UP ALL THE ENTRIES FROM THE OTHER FORMS.
 		    foreach($linkformids as $linkId=>$thisLinkFid) {
 
-                $columnSelect = findColumnSelect($filterElements, null, $thisLinkFid);
+//                if ($linkId == $fid) {
+//                    $columnSelect = findColumnSelect($filterElements, null, $thisLinkFid);
+//                }
+//                else {
+//                    $columnSelect = findColumnSelect($filterElements, $thisLinkFid, $thisLinkFid);
+//                }
+
+                $columnSelect = findColumnSelect($filterElements, null, $fid);
 
                 $linkQuery = "SELECT
    main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime".$columnSelect.", "
