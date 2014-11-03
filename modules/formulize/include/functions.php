@@ -5315,3 +5315,22 @@ function isMetaDataField($field){
     }
     return false;
 }
+
+// Function used to find the selected columns from $filterElements
+function findColumnSelect($filterElements, $id, $linkedFid) {
+    if($id === null) {
+        $id = "main";
+    }
+    else {
+        $id = "f".$id;
+    }
+    $columnSelect = "";
+    if(isset($filterElements[$linkedFid])) {
+        foreach($filterElements[$linkedFid] as $thisCol) {
+            $columnSelect .= ", $id.`$thisCol`";
+        }
+    } else {
+        $columnSelect = ", $id.*";
+    }
+    return $columnSelect;
+}

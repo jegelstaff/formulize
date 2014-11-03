@@ -553,12 +553,19 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
            $joinText = ""; // not "new" variables persist (with .= operator)
            $existsJoinText = "";
            foreach($linkformids as $id=>$linkedFid) {
+
+               $columnSelect = findColumnSelect($filterElements, $id, $linkedFid);
+
 	       // validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
-	       if(($joinHandles[$linkselfids[$id]] AND $joinHandles[$linktargetids[$id]]) OR ($linkselfids[$id] == '' AND $linktargetids[$id] == '')) { 
+	       if(($joinHandles[$linkselfids[$id]] AND $joinHandles[$linktargetids[$id]]) OR ($linkselfids[$id] == '' AND $linktargetids[$id] == '')) {
 		   
 		    formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
-		    $linkSelectIndex[$linkedFid] = "f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
-		    $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
+//		    $linkSelectIndex[$linkedFid] = "f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
+//		    $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
+
+            $linkSelectIndex[$linkedFid] = "f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime".$columnSelect;
+            $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime".$columnSelect;
+
 		    $joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
 		    $linkedFormObject = $form_handler->get($linkedFid);
 		    $joinTextTableRef[$linkedFid] = DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON ";
@@ -749,7 +756,9 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
     if( count( $sqlFilterElements ) > 0 ) {
       $selectClause = implode( ",", $sqlFilterElements );
     } else {
-      $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect";
+      $columnSelect = findColumnSelect($filterElements, null, $linkedFid);
+//      $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect";
+        $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime" . $columnSelect. $linkSelect;
     }
 
 
@@ -851,9 +860,13 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		 } else {
 		    // FURTHER OPTIMIZATIONS ARE POSSIBLE HERE...WE COULD NOT INCLUDE THE MAIN FORM AGAIN IN ALL THE SELECTS, THAT WOULD IMPROVE THE PROCESSING TIME A BIT, BUT WE WOULD HAVE TO CAREFULLY REFACTOR MORE OF THE LOOPING CODE BELOW THAT PARSES THE ENTRIES, BECAUSE RIGHT NOW IT'S ASSUMING THE FULL MAIN ENTRY IS PRESENT.  AT LEAST THE MAIN ENTRY ID WOULD NEED TO STILL BE USED, SINCE WE USE THAT TO SYNCH UP ALL THE ENTRIES FROM THE OTHER FORMS.
 		    foreach($linkformids as $linkId=>$thisLinkFid) {
-			  
-			  $linkQuery = "SELECT
-   main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.*, "
+
+                $columnSelect = findColumnSelect($filterElements, null, $thisLinkFid);
+
+                $linkQuery = "SELECT
+   main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime".$columnSelect.", "
+//			  $linkQuery = "SELECT
+//   main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.*, "
    .$linkSelectIndex[$thisLinkFid].
    ", usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM "
    .DBPRE."formulize_" . $formObject->getVar('form_handle') . " AS main
@@ -1675,7 +1688,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
                 foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
                     // if there's nothing already in the DB, then derive it, unless we're being asked specifically to update the derived values, which happens during a save operation.  In that case, always do a derivation regardless of what's in the DB.
                     if ((isset($GLOBALS['formulize_forceDerivedValueUpdate'])) AND !isset($GLOBALS['formulize_doingExport'])) {
-                        $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
+                        $functionName = "derivedValueFormula_".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "ï¿½", ",", ")", "(", "[", "]"), "_", $formHandle)."_".$formulaNumber;
                         // want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
                         $resetDerivedValueFlag = false;
                         if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
@@ -1746,7 +1759,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
             $formula = implode("\n", $formulaLines);
         }
         $functionsToWrite .= "function derivedValueFormula_".
-            str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", $formHandle).
+            str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "ï¿½", ",", ")", "(", "[", "]"), "_", $formHandle).
             "_".$formulaNumber."(\$entry, \$form_id, \$entry_id, \$relationship_id) {\n$formula\nreturn \$value;\n}\n\n";
     }
     eval($functionsToWrite);
