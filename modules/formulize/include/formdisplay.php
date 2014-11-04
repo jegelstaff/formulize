@@ -2193,28 +2193,23 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $groups, $en
 				case "derived":
 					$ele_value[5] = $value;	// there is not a number 5 position in ele_value for derived values...we add the value to print in this position so we don't mess up any other information that might need to be carried around
 					break;
-				case "text":
-					$ele_value[2] = $value;				
-					$ele_value[2] = eregi_replace("'", "&#039;", $ele_value[2]);				
-					break;
-				case "textarea":
-				/*
-				 * Hack by F�lix<INBOX International>
-				 * Adding colorpicker form element
-				 */
-				case "colorpick":
-				/*
-				 * End of Hack by F�lix<INBOX International>
-				 * Adding colorpicker form element
-				 */
-					$ele_value[0] = $value;								
-					break;
+
+
+                case "text":
+                    $ele_value[2] = $value;
+                    $ele_value[2] = eregi_replace("'", "&#039;", $ele_value[2]);
+                    break;
+
+
+                case "textarea":
+                case "colorpick":
+                    $ele_value[0] = $value;
+                    break;
+
+
 				case "select":
 				case "radio":
 				case "checkbox":
-
-					
-
 					// NOTE:  unique delimiter used to identify LINKED select boxes, so they can be handled differently.
 					if(is_string($ele_value[2]) and strstr($ele_value[2], "#*=:*"))
                     {
