@@ -803,9 +803,12 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	    $masterQuerySQL = "INSERT INTO ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQL ";
 	    $masterQuerySQLForExport = "INSERT INTO ".DBPRE."formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQLForExport ";
        }
-     } else { 
-	  $masterQuerySQL = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail $restOfTheSQL ";
-	  $masterQuerySQLForExport = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail $restOfTheSQLForExport ";
+     } else {
+        // add meta data
+        $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime," . $selectClause;
+
+	    $masterQuerySQL = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail $restOfTheSQL ";
+        $masterQuerySQLForExport = "SELECT $selectClause, usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail $restOfTheSQLForExport ";
      }
      
 
