@@ -558,8 +558,8 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
            $joinHandles = formulize_getJoinHandles(array(0=>$linkselfids, 1=>$linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
            $newJoinText = ""; // "new" variables initilized in each loop
            $joinTextIndex = array();
-	   $joinTextTableRef = array();
-	   $linkSelectIndex = array();
+	       $joinTextTableRef = array();
+	       $linkSelectIndex = array();
            $newexistsJoinText = "";
            $joinText = ""; // not "new" variables persist (with .= operator)
            $existsJoinText = "";
@@ -571,8 +571,6 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	       if(($joinHandles[$linkselfids[$id]] AND $joinHandles[$linktargetids[$id]]) OR ($linkselfids[$id] == '' AND $linktargetids[$id] == '')) {
 		   
 		    formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
-//		    $linkSelectIndex[$linkedFid] = "f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
-//		    $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime, f$id.*";
 
             $linkSelectIndex[$linkedFid] = "f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime".$columnSelect;
             $linkSelect .= ", f$id.entry_id AS f".$id."_entry_id, f$id.creation_uid AS f".$id."_creation_uid, f$id.mod_uid AS f".$id."_mod_uid, f$id.creation_datetime AS f".$id."_creation_datetime, f$id.mod_datetime AS f".$id."_mod_datetime".$columnSelect;
@@ -768,8 +766,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
       $selectClause = implode( ",", $sqlFilterElements );
     } else {
       $columnSelect = findColumnSelect($filterElements, null, $linkedFid);
-//      $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.* $linkSelect";
-        $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime" . $columnSelect. $linkSelect;
+      $selectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime" . $columnSelect. $linkSelect;
     }
 
 
@@ -844,11 +841,11 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
      
      // Debug Code
      
-//     global $xoopsUser;
-//     if($xoopsUser->getVar('uid') == 1) {
-//          print "<br>Count query: $countMasterResults<br><br>";
-//          print "Master query: $masterQuerySQL<br>";
-//     }
+     // global $xoopsUser;
+     // if($xoopsUser->getVar('uid') == 1) {
+     //      print "<br>Count query: $countMasterResults<br><br>";
+     //      print "Master query: $masterQuerySQL<br>";
+     // }
      
 		 formulize_benchmark("Before query");
 
@@ -875,19 +872,10 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    // FURTHER OPTIMIZATIONS ARE POSSIBLE HERE...WE COULD NOT INCLUDE THE MAIN FORM AGAIN IN ALL THE SELECTS, THAT WOULD IMPROVE THE PROCESSING TIME A BIT, BUT WE WOULD HAVE TO CAREFULLY REFACTOR MORE OF THE LOOPING CODE BELOW THAT PARSES THE ENTRIES, BECAUSE RIGHT NOW IT'S ASSUMING THE FULL MAIN ENTRY IS PRESENT.  AT LEAST THE MAIN ENTRY ID WOULD NEED TO STILL BE USED, SINCE WE USE THAT TO SYNCH UP ALL THE ENTRIES FROM THE OTHER FORMS.
 		    foreach($linkformids as $linkId=>$thisLinkFid) {
 
-//                if ($linkId == $fid) {
-//                    $columnSelect = findColumnSelect($filterElements, null, $thisLinkFid);
-//                }
-//                else {
-//                    $columnSelect = findColumnSelect($filterElements, $thisLinkFid, $thisLinkFid);
-//                }
-
                 $columnSelect = findColumnSelect($filterElements, null, $fid);
 
                 $linkQuery = "SELECT
    main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime".$columnSelect.", "
-//			  $linkQuery = "SELECT
-//   main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime, main.*, "
    .$linkSelectIndex[$thisLinkFid].
    ", usertable.email AS main_email, usertable.user_viewemail AS main_user_viewemail FROM "
    .DBPRE."formulize_" . $formObject->getVar('form_handle') . " AS main
