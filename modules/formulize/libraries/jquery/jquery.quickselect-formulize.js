@@ -246,7 +246,7 @@ var QuickSelect;
             // Mark that actual item was clicked if clicked item was NOT a DIV, so the focus doesn't leave the items.
             $results_list.mousedown(function(e){if (e.srcElement)clickedLI=e.srcElement.tagName!='DIV';});
             $(document).mousedown(function (e) {
-            if (hasFocus && $results_list.is(":visible") && $results_list.has(e.target).length === 0 && !$input_element.is($(e.target)) && $input_element.val() != $($('li', $results_list).get(activeSelection)).text() ) {
+            if (hasFocus && $results_list.is(":visible") && $results_list.has(e.target).length === 0 && !$input_element.is($(e.target)) && $input_element.val().toLowerCase() != $($('li', $results_list).get(activeSelection)).text().toLowerCase() ) {
                 // list is visible and user has clicked outside the list, so clear selection and blank the input box
                 activeSelection = -1;
                 //hasFocus = false;
