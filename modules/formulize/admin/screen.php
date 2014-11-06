@@ -119,17 +119,7 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $viewNames = $formObj->getVar('viewNames');
   $viewFrids = $formObj->getVar('viewFrids');
   $viewPublished = $formObj->getVar('viewPublished');
-  $groupOptions = array();
   $limitViewOptions = array();
-
-  $member_handler = xoops_gethandler('member');
-  $allGroups = $member_handler->getGroups();
-  $groups = array();
-  foreach($allGroups as $thisGroup) {
-    $groups[$thisGroup->getVar('name')]['id'] = $thisGroup->getVar('groupid');
-    $groups[$thisGroup->getVar('name')]['name'] = $thisGroup->getVar('name');
-    $groupOptions[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name');
-  }
 
   $viewOptions = array();
   $viewOptions['blank'] = _AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW;
@@ -170,8 +160,12 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   }
   // create the template information
   $entries = array();
-  $entries['groupOptions'] = $groupOptions;
   $entries['defaultview'] = $screen->getVar('defaultview');
+  // Convert to arrays if a legacy value
+  if(!is_array($entries['defaultview'])) {
+    $entries['defaultview'] = array(XOOPS_GROUP_USERS => $entries['defaultview']);
+  }
+
   $entries['viewOptions'] = $viewOptions;
   $entries['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
   $entries['limitviewoptions'] = $limitViewOptions;

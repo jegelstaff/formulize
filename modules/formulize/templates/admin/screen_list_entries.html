@@ -19,12 +19,14 @@
         <p><input type="button" name="add_view" class="formButton" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> Default View"</p><br /><br />
 
         <div class="view-list">
-          <select id="view_group" name="defaultview_group[0]" >
-            <{html_options options=$content.groupOptions}>
-          </select>
-          <select id="view_view" name="defaultview_view[0]">
-            <{html_options options=$content.viewOptions selected=$content.defaultView}>
-          </select>
+          <{foreach from=$content.defaultview key=groupid item=viewid}>
+            <select id="view_group" name="defaultview_group[]">
+              <{html_options options=$content.grouplist selected=$groupid}>
+            </select>
+            <select id="view_view" name="defaultview_view[]">
+              <{html_options options=$content.viewOptions selected=$viewid}>
+            </select>
+          <{/foreach}>
         </div>
 
         <script>
