@@ -329,6 +329,9 @@ var QuickSelect;
     };
 
     QuickSelect.matchers = {
+        all : function(q,data){
+            return data;
+        },
         quicksilver : function(q,data){
             var match_query, match_label, self=this;
             match_query = (self.options.matchCase ? q : q.toLowerCase());
@@ -433,13 +436,12 @@ var QuickSelect;
         // active / hover:    .ui-state-hover
         // finderFunction: (data | ajax | <custom>)
         options.finderFunction = options.finderFunction || QuickSelect.finders[!options.data ? 'ajax' : 'data'];
-        // console.log(options.finderFunction);
         if (options.finderFunction === 'data' || options.finderFunction === 'ajax')
             options.finderFunction = QuickSelect.finders[options.finderFunction];
-        // console.log(options.finderFunction);
         // matchMethod: (quicksilver | contains | startsWith | <custom>). Defaults to 'quicksilver' if quicksilver.js is loaded / 'contains' otherwise.
         options.matchMethod   = options.matchMethod || QuickSelect.matchers[(typeof(''.score) === 'function' && 'l'.score('l') == 1 ? 'quicksilver' : 'contains')];
         if (options.matchMethod === 'quicksilver' || options.matchMethod === 'contains' || options.matchMethod === 'startsWith') options.matchMethod = QuickSelect.matchers[options.matchMethod];
+        options.matchMethod   = QuickSelect.matchers['all'];
         if (options.matchCase === undefined) options.matchCase = false;
         if (options.exactMatch === undefined) options.exactMatch = false;
         if (options.autoSelectFirst === undefined) options.autoSelectFirst = true;
@@ -496,7 +498,6 @@ var QuickSelect;
 
                 // Replace the select with a quickselect text_input
                 $(input).after(text_input).after(hidden_input).remove(); // add text input, hidden input, remove select.
-                // console.log(my_options);
                 text_input.quickselect(my_options); // make the text input into a QuickSelect.
             }
         });
