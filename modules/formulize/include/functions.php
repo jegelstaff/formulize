@@ -5315,3 +5315,90 @@ function isMetaDataField($field){
     }
     return false;
 }
+
+function getElementsData($fid, $elements) {
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$elementObjects = $element_handler->getObjects(null, $fid);
+
+	foreach($elementObjects as $thisElement) 
+	{
+		$elementCaption = strip_tags($thisElement->getVar('ele_caption'));
+		$colhead = strip_tags($thisElement->getVar('ele_colhead'));
+		$cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
+		$ele_id = $thisElement->getVar('ele_id');
+		$ele_handle = $thisElement->getVar('ele_handle');
+		$nameText = $colhead ? printSmart($colhead,55) : printSmart($elementCaption,55);
+		$elements[$ele_id]['name'] = "$nameText - $cleanType - $ele_handle";
+		$elements[$ele_id]['content']['ele_id'] = $ele_id;
+		$elements[$ele_id]['content']['ele_handle'] = $ele_handle;
+		$ele_type = $thisElement->getVar('ele_type');
+		switch($ele_type) {
+			case("text"):
+				$converttext = _AM_ELE_CONVERT_ML;
+				$linktype = "textarea";
+				break;
+			case("textarea"):
+				$converttext = _AM_ELE_CONVERT_SL;
+				$linktype = "text";
+				break;
+			case("radio"):
+				$converttext = _AM_ELE_CONVERT_CB;
+				$linktype = "checkbox";
+				break;
+			case("checkbox"):
+				$converttext = _AM_ELE_CONVERT_RB;
+				$linktype = "radio";
+				break;
+			case("select"):
+				$converttext = _AM_ELE_CONVERT_CB;
+				$linktype = "checkboxfromsb";
+				break;
+			default:
+				$converttext = "";
+				$linktype = "";
+		}
+		$elements[$ele_id]['content']['converttext'] = $converttext;
+		$elements[$ele_id]['content']['linktype'] = $linktype;
+		$elements[$ele_id]['content']['ele_type'] = $cleanType;
+		$elements[$ele_id]['content']['ele_req'] = removeNotApplicableRequireds($thisElement->getVar('ele_type'), $thisElement->getVar('ele_req'));
+		$ele_display = $thisElement->getVar('ele_display');
+		$multiGroupDisplay = false;
+		if(substr($ele_display, 0, 1) == ",") 
+		{
+		  	$multiGroupDisplay = true;
+		  	$fs_member_handler =& xoops_gethandler('member');
+		  	$fs_xoops_groups =& $fs_member_handler->getGroups();
+		  	$displayGroupList = explode(",", trim($ele_display, ","));
+		  	$check_display = '';
+		  	foreach($displayGroupList as $groupList) 
+		  	{
+			    if($groupList != "") 
+			    {
+		    	  	if($check_display != '') 
+		    	  	{ 
+		    	  		$check_display .= ", "; 
+		    	  	}
+
+		      		$group_display = $fs_member_handler->getGroup($groupList);
+		      	
+			      	if(is_object($group_display)) 
+			      	{
+			        	$check_display .= $group_display->getVar('name');
+			      	} 
+			      	else {
+			        $check_display .= "???";
+			      	}
+		    	}                               
+		  	}
+		  	$check_display = '<a class=info href="" onclick="return false;" alt="' . $check_display . '" title="' . $check_display . '">' . _AM_FORM_DISPLAY_MULTIPLE . '</a>';
+		} else {
+		  	$check_display = $ele_display;
+		}
+		$elements[$ele_id]['content']['ele_display'] = $check_display;
+		$elements[$ele_id]['content']['ele_private'] = $thisElement->getVar('ele_private');
+		$elementHeadings[$ele_id]['text'] = $colhead ? printSmart($colhead) : printSmart($elementCaption);
+		$elementHeadings[$ele_id]['ele_id'] = $ele_id;
+		$elementHeadings[$ele_id]['selected'] = in_array($ele_id, $headerlistArray) ? " selected" : "";
+	}
+	return $elements;
+}

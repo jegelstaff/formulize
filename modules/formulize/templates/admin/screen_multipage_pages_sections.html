@@ -6,12 +6,6 @@
 	<img src="../images/kedit.png"> Edit this page</a>
 </p>
 <p>Form Elements on this page:</p>
-<ul>
-	<{foreach from=$sectionContent.elements item=thiselement}>
-		<li><{$thiselement}></li>	
-	<{/foreach}>
-</ul>
-
 <div class="accordion-box-wide">
 	<h2><{$smarty.const._AM_ELE_MANAGINGELEFORM}></h2>
 	<p><{$smarty.const._AM_ELE_CLICKDRAGANDDROP}></p>
@@ -19,6 +13,6 @@
 			<{include 	file="db:admin/ui-sub-accordion.html" 
 						sectionTemplate="db:admin/form_elements_sections.html"
 						subid = $sectionContent.number
-						sections=$sectionContent.newElements}>
+						sections=$sectionContent.elements}>
 		</div>
 </div>

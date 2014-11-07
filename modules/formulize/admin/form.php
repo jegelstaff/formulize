@@ -69,77 +69,7 @@ if($_GET['fid'] != "new") {
   // $elements array is going to be used to populate accordion sections, so it must contain the following:
   // a 'name' key and a 'content' key for each form that is found
   // Name will be the heading of the section, content is data used in the template for each section
-  $i = 1; 
-  foreach($elementObjects as $thisElement) {
-    $elementCaption = strip_tags($thisElement->getVar('ele_caption'));
-		$colhead = strip_tags($thisElement->getVar('ele_colhead'));
-		$cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
-    $ele_id = $thisElement->getVar('ele_id');
-		$ele_handle = $thisElement->getVar('ele_handle');
-		$nameText = $colhead ? printSmart($colhead,55) : printSmart($elementCaption,55);
-    $elements[$i]['name'] = "$nameText - $cleanType - $ele_handle";
-    $elements[$i]['content']['ele_id'] = $ele_id;
-    $elements[$i]['content']['ele_handle'] = $ele_handle;
-    $ele_type = $thisElement->getVar('ele_type');
-    switch($ele_type) {
-      case("text"):
-        $converttext = _AM_ELE_CONVERT_ML;
-        $linktype = "textarea";
-        break;
-      case("textarea"):
-        $converttext = _AM_ELE_CONVERT_SL;
-        $linktype = "text";
-        break;
-      case("radio"):
-        $converttext = _AM_ELE_CONVERT_CB;
-        $linktype = "checkbox";
-        break;
-      case("checkbox"):
-        $converttext = _AM_ELE_CONVERT_RB;
-        $linktype = "radio";
-        break;
-      case("select"):
-        $converttext = _AM_ELE_CONVERT_CB;
-        $linktype = "checkboxfromsb";
-	break;
-      default:
-        $converttext = "";
-        $linktype = "";
-    }
-    $elements[$i]['content']['converttext'] = $converttext;
-    $elements[$i]['content']['linktype'] = $linktype;
-    $elements[$i]['content']['ele_type'] = $cleanType;
-    $elements[$i]['content']['ele_req'] = removeNotApplicableRequireds($thisElement->getVar('ele_type'), $thisElement->getVar('ele_req'));
-    $ele_display = $thisElement->getVar('ele_display');
-    $multiGroupDisplay = false;
-		if(substr($ele_display, 0, 1) == ",") {
-			$multiGroupDisplay = true;
-      $fs_member_handler =& xoops_gethandler('member');
-      $fs_xoops_groups =& $fs_member_handler->getGroups();
-      $displayGroupList = explode(",", trim($ele_display, ","));
-      $check_display = '';
-      foreach($displayGroupList as $groupList) {
-				if($groupList != "") {
-		      if($check_display != '') { $check_display .= ", "; }
-					$group_display = $fs_member_handler->getGroup($groupList);
-					if(is_object($group_display)) {
-						$check_display .= $group_display->getVar('name');
-					} else {
-						$check_display .= "???";
-					}
-				}                               
-      }
-      $check_display = '<a class=info href="" onclick="return false;" alt="' . $check_display . '" title="' . $check_display . '">' . _AM_FORM_DISPLAY_MULTIPLE . '</a>';
-    } else {
-      $check_display = $ele_display;
-    }
-    $elements[$i]['content']['ele_display'] = $check_display;
-    $elements[$i]['content']['ele_private'] = $thisElement->getVar('ele_private');
-    $elementHeadings[$i]['text'] = $colhead ? printSmart($colhead) : printSmart($elementCaption);
-    $elementHeadings[$i]['ele_id'] = $ele_id;
-    $elementHeadings[$i]['selected'] = in_array($ele_id, $headerlistArray) ? " selected" : "";
-    $i++;
-  }
+  $elements = getElementsData($fid, $elements);
   // add in the metadata headers
   $creator_email_selected = (in_array('creator_email', $headerlistArray)) ? " selected" : "";
   array_unshift($elementHeadings,array('text'=>_formulize_DE_CALC_CREATOR_EMAIL, 'ele_id'=>'creator_email', 'selected'=>$creator_email_selected));

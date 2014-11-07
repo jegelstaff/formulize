@@ -297,10 +297,7 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
   }
 
 	// setup all the elements in this form for use in the listboxes
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
-	$options = multiPageScreen_addToOptionsList($form_id, array());
-  $tempStuff = array();
-  $tempStuff =  multiPageScreen_addToOptionsList_new($form_id, $tempStuff);
+	$options =  getElementsData($form_id, $options);
 
 	// add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
 	// added March 20 2008, by jwe
@@ -312,8 +309,7 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
 			foreach($frameworkObject->getVar("links") as $thisLinkObject) {
 					if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
 							$thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-							$options = multiPageScreen_addToOptionsList($thisFid, $options);
-              $tempStuff = multiPageScreen_addToOptionsList_new($thisFid, $tempStuff);
+							$options = getElementsData($thisFid, $options);
 					}
 			}
 	}
@@ -333,7 +329,6 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
     $pages[$i]['content']['title'] = $pageTitles[$i];
 		foreach($elements[$i] as $thisElement) {
 			$pages[$i]['content']['elements'][] = $options[$thisElement];
-      $pages[$i]['content']['newElements'][] = $tempStuff[$thisElement];
 		}
   }
 
@@ -376,7 +371,6 @@ if($screen_id != "new" && $settings['type'] == 'form') {
     }
   }
   $element_list = multiPageScreen_addToOptionsList($form_id, array());
-  $tempStuff = multiPageScreen_addToOptionsList_new($form_id, $tempStuff);
   $frid = $screen->getVar("frid");
   if($frid) {
       $framework_handler =& xoops_getModuleHandler('frameworks');
@@ -385,7 +379,6 @@ if($screen_id != "new" && $settings['type'] == 'form') {
           if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
               $thisFid = $thisLinkObject->getVar("form1") == $form_id ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
               $element_list = multiPageScreen_addToOptionsList($thisFid, $element_list);
-              $tempStuff = multiPageScreen_addToOptionsList_new($thisFid, $tempStuff);
           }
       }
   }
