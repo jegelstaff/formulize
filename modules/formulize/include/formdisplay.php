@@ -1284,7 +1284,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             if (0 == $frid) {
                 $to_return['single'] = "This subform cannot be shown because no relationship is active.";
             } else {
-                $to_return['single'] = "This subform cannot be shown because the relationship for subform ".
+                $to_return['single'] = "This subform cannot be shown because relationship $frid for subform ".
                     "$subform_id on form $fid is invalid.";
             }
         }
