@@ -1055,6 +1055,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  $prevMainId = "";
 		      //formulize_benchmark("About to prepare results.");
 	  while($masterQueryArray = $xoopsDB->fetchArray($masterQueryRes)) {
+            set_time_limit(120);
 	     //formulize_benchmark("Starting to process one entry.");
 	       foreach($masterQueryArray as $field=>$value) {
 		    //formulize_benchmark("Starting to process one value");
