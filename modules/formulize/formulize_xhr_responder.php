@@ -58,6 +58,7 @@ if($op != "check_for_unique_value"
    AND $op != 'get_element_value'
    AND $op != 'get_element_row_html'
    AND $op != 'update_derived_value'
+   AND $op != 'validate_php_code'
   ) {
   exit();
 }
@@ -203,5 +204,19 @@ switch($op) {
     ob_clean(); // this catches any errors or other output because it would stop the update from running
     $GLOBALS['formulize_forceDerivedValueUpdate'] = false;
     print count($data); // return the number of entries found. when this reaches 0, the client will know to stop calling
+    break;
+
+    case "validate_php_code":
+    if (function_exists("shell_exec")) {
+        $tmpfname = tempnam(sys_get_temp_dir(), 'FZ');
+        file_put_contents($tmpfname, trim(urldecode($_POST["the_code"])));
+        $output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
+        unlink($tmpfname);
+        if (false !== strpos($output, "PHP Parse error")) {
+            // remove the second line because detail about the error is on the first line
+            $output = str_replace("\nErrors parsing {$tmpfname}\n", "", $output);
+            echo str_replace("PHP Parse error:  s", "S", str_replace(" in $tmpfname", "", $output));
+        }
+    }
     break;
 }
