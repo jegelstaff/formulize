@@ -310,6 +310,7 @@ define("_AM_ELE_OPT_UITEXT", "The text visible to the user can be different from
 define("_AM_ELE_ADD_OPT","Add %s options");
 define("_AM_ELE_ADD_OPT_SUBMIT","Add");
 define("_AM_ELE_OPT_CHANGEUSERVALUES", "When saving changes to these options, also change the values users have made in the form to match the new options (ie: where users had selected the old first option, replace their selection with the new first option instead)");
+define("_AM_ELE_OPT_SAVEDEFAULTTOEXISTING", "When creating this element, save the default value to existing items in the form");
 define("_AM_ELE_SELECTED","Selected");
 define("_AM_ELE_CHECKED","Checked");
 define("_AM_ELE_MULTIPLE","Allow multiple selections");

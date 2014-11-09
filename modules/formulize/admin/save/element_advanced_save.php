@@ -138,9 +138,26 @@ if($databaseElement AND $_GET['ele_id']) { // ele_id is only in the URL when we'
 		}
 	}
 
-		if(!$insertResult = $form_handler->insertElementField($element, $dataType)) {
-			exit("Error: could not add the new element to the data table in the database.");
+	if(!$insertResult = $form_handler->insertElementField($element, $dataType)) {
+		exit("Error: could not add the new element to the data table in the database.");
+	}
+
+	if($ele_type=="radio" AND isset($_POST['savedefaulttoexisting']) AND $_POST['savedefaulttoexisting']==1) {
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+	$data_handler = new formulizeDataHandler($fid);
+	$defaultValue = "";
+	foreach($ele_value as $text=>$is_default) {
+		if ($is_default == 1) {
+			$defaultValue = $text;
 		}
+	}
+	if ($defaultValue !== "") {
+		if (!$changeResult = $data_handler->fillInDefaultValues($ele_id, $defaultValue)) {
+			print "Error filling in default values for element $ele_id";
+		}
+	}
+}
+
 
 } elseif(($_POST['original_handle'] != $element->getVar('ele_handle') OR (isset($_POST['element_default_datatype']) AND $_POST['element_datatype'] != $_POST['element_default_datatype'])) AND $databaseElement) {
   // figure out if the datatype needs changing...
