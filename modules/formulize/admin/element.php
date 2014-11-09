@@ -263,7 +263,8 @@ $common['fid'] = $fid;
 $common['aid'] = $aid;
 $common['type'] = $ele_type;
 $common['uid'] = $xoopsUser->getVar('uid');
-
+print("".get_form_entries_count($fid));
+$common['form_has_entries'] = get_form_entries_count($fid) > 0 ? true : false;
 
 $options = array();
 $options['ele_delim'] = $ele_delim;
@@ -627,6 +628,17 @@ function formulize_mergeUIText($values, $uitext) {
         return $newvalues;
     }
     return $values;
+}
+
+function get_form_entries_count($id_form) {
+  global $xoopsDB;
+  $form_handler = xoops_getmodulehandler('forms', 'formulize');
+  $formObject = $form_handler->get($id_form);
+  $sql = "SELECT COUNT(*) AS num_entries FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar("form_handle"));
+  $res = $xoopsDB->query($sql);
+  $arr = $xoopsDB->fetchArray($res);
+  $num_entries = $arr['num_entries'];
+  return $num_entries;
 }
 
 function has_index($element,$id_form) {
