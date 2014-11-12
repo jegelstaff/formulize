@@ -6,7 +6,7 @@
 <input type="hidden" name="original_handle" value="<{$content.original_handle}>">
 <input type="hidden" name="original_index_name" value="<{$content.original_index_name}>">
 <input type="hidden" name="original_ele_index" value="<{$content.original_ele_index}>">
-
+<input type="hidden" id="savedefaulttoexisting" name="savedefaulttoexisting" value="false">
 
 <{if $content.datatypeui}>
 <div class="accordion-box-wide">
@@ -67,21 +67,6 @@
 	</div>
 </div>
 <{/if}>
-
-<{if $content.type == "radio" and $content.ele_id == "new" and $content.form_has_entries}>
-<div class="accordion-box">
-<div class="form-item">
-<fieldset>
-    <legend>Save the default value in existing items?</legend>
-    <p><label for="element-savedefaulttoexisting">
-        <input type="checkbox" id="element-savedefaulttoexisting" name="savedefaulttoexisting" value="1"/>
-        <{$smarty.const._AM_ELE_OPT_SAVEDEFAULTTOEXISTING}>
-    </label></p>
-</fieldset>
-</div>
-</div>
-<{/if}>
-
  
 </form>
 

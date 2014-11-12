@@ -966,8 +966,11 @@ class formulizeDataHandler  {
     	$form_handler = xoops_getmodulehandler('forms', 'formulize');
     	$formObject = $form_handler->get($this->fid);
     	
-		$updateSql = "UPDATE ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." SET `".$element->getVar('ele_handle')."` = '".formulize_db_escape($defaultValue)."'";
-
+		$updateSql = 
+			"UPDATE ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')).
+			" SET `".$element->getVar('ele_handle')."` = '".formulize_db_escape($defaultValue).
+			"' WHERE `".$element->getVar('ele_handle')."` IS NULL";
+			
 		if (!$res = $xoopsDB->query($updateSql)) {
 			return false;
 		}

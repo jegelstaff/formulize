@@ -80,6 +80,18 @@
     {
       "type": "clickElement",
       "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
         "type": "link text",
         "value": "Options"
       }
@@ -127,13 +139,6 @@
       "locator": {
         "type": "css selector",
         "value": "p[name=\"1\"] > input[name=\"defaultoption\"]"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "link text",
-        "value": "Advanced"
       }
     },
     {

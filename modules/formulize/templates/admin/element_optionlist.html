@@ -33,6 +33,19 @@
 <input type="checkbox" id="element-changeuservalues" name="changeuservalues" value="1"/>
 <{$smarty.const._AM_ELE_OPT_CHANGEUSERVALUES}></label></p>
 </fieldset>
+</div>
+
+<{if $content.type == "radio" and $content.form_has_entries}>
+<div class="form-item">
+<fieldset>
+    <legend>Save the default value in existing items?</legend>
+    <p><label for="element-savedefaulttoexisting">
+        <input type="checkbox" onchange="setSaveDefault(this);" id="element-savedefaulttoexisting" value="1"/>
+        <{$smarty.const._AM_ELE_OPT_SAVEDEFAULTTOEXISTING}>
+    </label></p>
+</fieldset>
+</div>
+<{/if}>
 
 <script type="text/javascript">
   $("[name=addoption]").click(function (){
@@ -54,5 +67,9 @@
     $("[name=cleardef]").blur();
   });
   <{/if}>
+
+  function setSaveDefault(checkbox) {
+    $("#savedefaulttoexisting").val(checkbox.checked);
+  }
 
 </script>
