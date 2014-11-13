@@ -3510,6 +3510,8 @@ function synchSubformBlankDefaults() {
     if (isset($GLOBALS['formulize_subformCreateEntry'])) {
         foreach ($GLOBALS['formulize_subformCreateEntry'] as $sfid=>$sfid_id_reqs) {
             $sourceEntryId = $_POST['formulize_subformValueSourceEntry_'.$sfid] ? $_POST['formulize_subformValueSourceEntry_'.$sfid] : "new";
+            // if we need to get the parent entry id, take the first written new entry id in the source form, if the source entry was 'new', otherwise use the source entry id posted from the form
+            $savedMainFormEntryId = $sourceEntryId == "new" ? $GLOBALS['formulize_newEntryIds'][$_POST['formulize_subformValueSourceForm_'.$sfid]][0] : intval($sourceEntryId);
             global $xoopsDB;
             // first, figure out the value we need to write in the subform entry
             if ($_POST['formulize_subformSourceType_'.$sfid]) {
@@ -3521,11 +3523,10 @@ function synchSubformBlankDefaults() {
                 } else {
                     // get this entry and see what the source value is
                     $data_handler = new formulizeDataHandler($_POST['formulize_subformValueSourceForm_'.$sfid]);
-                    $value_to_write = $data_handler->getElementValueInEntry($_POST['formulize_subformValueSourceEntry_'.$sfid], $_POST['formulize_subformValueSource_'.$sfid]);
+                    $value_to_write = $data_handler->getElementValueInEntry($savedMainFormEntryId, $_POST['formulize_subformValueSource_'.$sfid]);
                 }
             } else {
-                // if we need to get the parent entry id, take the first written new entry id in the source form, if the source entry was 'new', otherwise use the source entry id posted from the form
-                $value_to_write = $_POST['formulize_subformValueSourceEntry_'.$sfid] == "new" ? $GLOBALS['formulize_newEntryIds'][$_POST['formulize_subformValueSourceForm_'.$sfid]][0] : intval($_POST['formulize_subformValueSourceEntry_'.$sfid]);
+                $value_to_write = $savedMainFormEntryId; 
             }
 
             // actually write the linked/common values
