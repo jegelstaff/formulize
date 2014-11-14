@@ -984,10 +984,10 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 .formulize_button {
   text-indent: 30px;
   border-color: #0076a3;
-  color: white !important;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
-  font-size: 15px;
-  font-weight: bold;
+  color: #959595 !important;
+/*   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4); */
+  font-size: 16px;
+/*   font-weight: bold; */
   height: 36px;
   width: 185px !important; }
 
@@ -1011,53 +1011,68 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 /*=== Formulize Boutons by Francois T ===*/
 #formulize_addButton, #formulize_addProxyButton {
   text-indent: 45px;
-  background: #2f85dc url("../../images/contact-new.png") no-repeat 10px;
-  width: 210px !important; }
+  background:transparent url('/modules/formulize/images/iconsLoe/newEntry.png') no-repeat 10px;
+  background-size: contain;
+  width: auto !important; }
 
 #formulize_addMultiButton {
   text-indent: 45px;
-  background: #2f85dc url("../../images/multi.png") no-repeat 10px;
+  background:transparent url('/modules/formulize/images/iconsLoe/multi.png') no-repeat 10px;
+  background-size: contain;
   width: 210px !important; }
 
 #formulize_changeColsButton {
-  background: #61a6ee url("../../images/table.png") no-repeat 10px; }
+  background:transparent url('/modules/formulize/images/iconsLoe/columns.png') no-repeat 10px;
+  background-size: contain; }
+
+#formulize_resetViewButton {
+  background:transparent url('/modules/formulize/images/iconsLoe/refreshView.png') no-repeat 10px;
+  background-size: contain; }
+
+#formulize_saveViewButton {
+  background:transparent url('/modules/formulize/images/iconsLoe/saveView.png') no-repeat 10px;
+  background-size: contain; }
+
+#formulize_deleteViewButton {
+  background:transparent url('/modules/formulize/images/iconsLoe/delete.png') no-repeat 10px;
+  background-size: contain; }
 
 #formulize_exportButton {
-  background: #2f85dc url("../../images/math.png") no-repeat 10px; }
+  background:transparent url('/modules/formulize/images/iconsLoe/export.png') no-repeat 10px;
+  background-size: contain; }
 
 #formulize_exportCalcsButton {
-  background: #2f85dc url("../../images/math.png") no-repeat 10px; }
+  background:transparent url('/modules/formulize/images/iconsLoe/export.png') no-repeat 10px;
+  background-size: contain; }
 
 #formulize_importButton {
-  background: #2f85dc url("../../images/import.png") no-repeat 10px; }
+  background:transparent url('/modules/formulize/images/iconsLoe/import.png') no-repeat 10px;
+  background-size: contain; }
 
 #formulize_calcButton, #formulize_advCalcButton, #formulize_advSearchButton {
   border-color: #8E8E8E;
-  background: #a3a3a3 url("../../images/calculator.png") no-repeat 10px; }
+  background:transparent url('/modules/formulize/images/iconsLoe/calculations.png') no-repeat 10px;
+  background-size: contain; }
 
 #formulize_selectAllButton {
-  background: #3ca683 url("../../images/select.png") no-repeat 10px; }
+  background: transparent url('/modules/formulize/images/iconsLoe/select.png') no-repeat 10px;
+  background-size: contain; }
 
 #formulize_clearSelectButton {
-  background: #3ca683 url("../../images/unselect.png") no-repeat 10px; }
-
-#formulize_deleteButton {
-  background: #3ca683 url("../../images/delete.png") no-repeat 10px; }
+  background: transparent url('/modules/formulize/images/iconsLoe/unselect.png') no-repeat 10px;
+  background-size: contain; }
 
 #formulize_cloneButton {
-  background: #3ca683 url("../../images/clone.png") no-repeat 10px; }
+  background:transparent url('/modules/formulize/images/iconsLoe/clone.png') no-repeat 10px;
+  background-size: contain; }
+
+#formulize_deleteButton {
+  background: transparent url('/modules/formulize/images/iconsLoe/delete.png') no-repeat 10px;
+  background-size: contain; }
 
 #formulize_notifButton {
-  background: #5450a5 url("../../images/notif.png") no-repeat 10px; }
-
-#formulize_resetViewButton {
-  background: #61a6ee url("../../images/find.png") no-repeat 10px; }
-
-#formulize_saveViewButton {
-  background: #61a6ee url("../../images/findsave.png") no-repeat 10px; }
-
-#formulize_deleteViewButton {
-  background: #61a6ee url("../../images/finddel.png") no-repeat 10px; }
+  background:transparent url('/modules/formulize/images/iconsLoe/notifications.png') no-repeat 10px;
+  background-size: contain; }
 
 #formulize_saveButton {
   background-color: #61A6EE;
