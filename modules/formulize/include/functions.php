@@ -1818,19 +1818,26 @@ function prepDataForWrite($element, $ele) {
 
         if (is_string($ele) and substr($ele, 0, 9) == "newvalue:") {
             // need to add a new entry to the underlying source form if this is a link
-            // need to add an option to the option list for the element list, if this is not a link. to do later
+            // need to add an option to the option list for the element list, if this is not a link. 
+            // check for the value first, in case we are handling a series of quick ajax requests for new elements, in which a new value is being sent with all of them. We don't want to write the new value once per request!
             $newValue = substr($ele, 9);
             if ($element->isLinked) {
                 $boxproperties = explode("#*=:*", $ele_value[2]);
                 $sourceHandle = $boxproperties[1];
-                $newEntryId = formulize_writeEntry(array($sourceHandle=>$newValue));
+                $dataHandler = new formulizeDataHandler($boxproperties[0]); // 0 key is the source fid
+                $newEntryId = $dataHandler->findFirstEntryWithValue($sourceHandle, $newValue); // check if this value has been written already, if so, use that ID
+                if(!$newEntryId) {
+                    $newEntryId = formulize_writeEntry(array($sourceHandle=>$newValue));
+                } 
                 $value = $newEntryId;
             } else {
                 $value = $newValue;
                 $element_handler = xoops_getmodulehandler('elements', 'formulize');
-                $ele_value[2][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
-                $element->setVar('ele_value', $ele_value);
-                $element_handler->insert($element);
+                if(!isset($ele_value[2][$newValue])) {
+                    $ele_value[2][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
+                    $element->setVar('ele_value', $ele_value);
+                    $element_handler->insert($element);
+                }
             }
             break;
         }
