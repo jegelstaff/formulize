@@ -110,10 +110,10 @@ switch($op) {
     $fileInfo = $data_handler->getElementValueInEntry($entry_id, $elementObject);
     $fileInfo = unserialize($fileInfo);
     $filePath = XOOPS_ROOT_PATH."/uploads/$folderName/".$fileInfo['name'];
-    $result = unlink($filePath);
-    if($result) {
-      $data_handler->writeEntry($entry_id, array($elementObject->getVar('ele_handle')=>''), false, true); // erase the recorded values for this file in the database, false is proxy user, true is force update (on a GET request)
-      print "{ \"element_id\": \"$element_id\", \"entry_id\": \"$entry_id\" }";
+    if (!file_exists($filePath) or unlink($filePath)) {
+        // erase the recorded values for this file in the database, false is proxy user, true is force update (on a GET request)
+        $data_handler->writeEntry($entry_id, array($elementObject->getVar('ele_handle')=>''), false, true);
+        print json_encode(array("element_id"=>$element_id, "entry_id"=>$entry_id));
     }
     break;
   case 'get_element_html':
