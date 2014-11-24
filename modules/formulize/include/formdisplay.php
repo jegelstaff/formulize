@@ -2691,6 +2691,8 @@ jQuery(document).ready(function() {
     jQuery(".icms-date-box").each(function(){
         date_input = jQuery(this);
         var options = {};
+        // copy datepicker_defaults so the original is not modified
+        jQuery.extend(options, datepicker_defaults);
         var min_date = date_input.attr('min-date');
         if (min_date && min_date.length > 0) {
             // adjust so that the date does use the current time zone
@@ -2705,7 +2707,7 @@ jQuery(document).ready(function() {
             max_date.setTime(max_date.getTime() + max_date.getTimezoneOffset()*60*1000);
             options.maxDate = new Date(max_date);
         }
-        if (!jQuery.isEmptyObject(options)) {
+        if (options.minDate || options.maxDate) {
             date_input.datepicker("destroy");
             date_input.datepicker(options);
         }

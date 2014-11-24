@@ -98,9 +98,10 @@ class icms_form_elements_Date extends icms_form_elements_Text {
                 // yyyy-mm-dd gives a date like '20142014-10-11', so only yy, not yyyy.
                 $dateFormat = dateFormatToStrftime(_SHORTDATESTRING);
                 $dateFormat = str_replace(array("%y", "%m", "%d"), array("yy", "m", "d"), strtolower($dateFormat));
+                // note: datepicker_defaults is a var so it is available later for date elements with date limits
                 $result .= <<<EOF
 <script>
-jQuery.datepicker.setDefaults({
+var datepicker_defaults = {
     dateFormat: "$dateFormat",
     changeMonth: true,
     changeYear: true,
@@ -111,10 +112,13 @@ jQuery.datepicker.setDefaults({
     buttonImageOnly: true,
     buttonImage: "$ICMS_URL/images/calendar.png",
     buttonText: "Calendar"
-});
+};
 
-jQuery(function() {
-    jQuery(".icms-date-box").datepicker();
+jQuery(document).ready(function() {
+    jQuery.datepicker.setDefaults(datepicker_defaults);
+    jQuery(function() {
+        jQuery(".icms-date-box").datepicker();
+    });
 });
 </script>
 EOF;
