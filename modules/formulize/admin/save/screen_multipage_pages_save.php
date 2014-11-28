@@ -27,16 +27,14 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+include_once XOOPS_ROOT_PATH."/modules/formulize/admin/save/elements_save.php";
+
 // this file handles saving of submissions from the screen_multipage_pages page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
   return;
 }
-
-//print_r($_POST);
-//print_r($processedValues);
-
 
 $aid = intval($_POST['aid']);
 $sid = $_POST['formulize_admin_key'];
@@ -47,16 +45,23 @@ $screens = $processedValues['screens'];
 
 $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 $screen = $screen_handler->get($sid);
+$fid = $screen->getVar('fid');
 // CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
-$formObject = $form_handler->get($screen->getVar('fid'));
+$formObject = $form_handler->get($fid);
 if($formObject->getVar('lockedform')) {
   return;
 }
 // check if the user has permission to edit the form
-if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
+if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
+
+$drawernumber = $_POST['drawernumber']; // Not returning anything
+print "POST".print_r($_POST)."\n";
+print "Drawer Number = ".$drawernumber."\n";
+
+saveElements($processedValues, $fid, "4");
 
 // get page titles
 

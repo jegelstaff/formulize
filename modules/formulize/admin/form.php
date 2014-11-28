@@ -70,6 +70,7 @@ if($_GET['fid'] != "new") {
   // a 'name' key and a 'content' key for each form that is found
   // Name will be the heading of the section, content is data used in the template for each section
   $elements = getElementsData($fid, $elements);
+  $elementHeadings = getElementHeadings($fid, $elements, $elementHeadings);
   // add in the metadata headers
   $creator_email_selected = (in_array('creator_email', $headerlistArray)) ? " selected" : "";
   array_unshift($elementHeadings,array('text'=>_formulize_DE_CALC_CREATOR_EMAIL, 'ele_id'=>'creator_email', 'selected'=>$creator_email_selected));

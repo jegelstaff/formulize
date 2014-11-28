@@ -298,7 +298,7 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
 
 	// setup all the elements in this form for use in the listboxes
 	$options =  getElementsData($form_id, $options);
-
+  // print_r($options);
 	// add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
 	// added March 20 2008, by jwe
 	$frid = $screen->getVar("frid");
@@ -318,17 +318,26 @@ if($screen_id != "new" && $settings['type'] == 'multiPage') {
     // get page titles
     $pageTitles = $screen->getVar("pagetitles");
     $elements = $screen->getVar("pages");
+    //print_r($elements);
     $conditions = $screen->getVar("conditions");
 
   // group entries
   $pages = array();
-	for($i=0;$i<(count($pageTitles)+$pageCounterOffset);$i++) {
+	for($i=0;$i<(count($pageTitles)+$pageCounterOffset);$i++) 
+  {
     $pages[$i]['name'] = $pageTitles[$i];
     $pages[$i]['content']['index'] = $i;
     $pages[$i]['content']['number'] = $i+1;
     $pages[$i]['content']['title'] = $pageTitles[$i];
-		foreach($elements[$i] as $thisElement) {
-			$pages[$i]['content']['elements'][] = $options[$thisElement];
+		foreach($elements[$i] as $thisElement) 
+    {
+      foreach($options as $option)
+      {
+        if($option['content']['ele_id'] == $thisElement)
+        {
+          $pages[$i]['content']['elements'][] = $option;
+        }
+      }
 		}
   }
 

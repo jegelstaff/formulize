@@ -31,16 +31,25 @@
 
 <div id="accordion-<{$number}>-<{$subid}>">
 	<{foreach from=$sections key=sectionNumber item=section}>
-	<div id="drawer-<{$number}>-<{$sectionNumber}>">
-        <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
-		<div class="accordion-content content">
-			<{if $section.header}>
-			<div style="position: absolute; top: 10px; right: 10px;">
-				<{$section.header}>
+		<div id="drawer-<{$number}>-<{$sectionNumber}>">
+	        <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
+			<div class="accordion-content content">
+				<{if $section.header}>
+				<div style="position: absolute; top: 10px; right: 10px;">
+					<{$section.header}>
+				</div>
+				<{/if}>
+				<{include file=$sectionTemplate sectionContent=$section.content}>
 			</div>
-			<{/if}>
-			<{include file=$sectionTemplate sectionContent=$section.content}>
 		</div>
-	</div>
 	<{/foreach}>
 </div><!-- end accordion -->
+
+<script type="text/javascript">
+
+  $(".savebutton").click(function () {
+  	$("[name=elementorder]").val($("#accordion-<{$number}>-<{$subid}>").sortable('serialize'));
+  	$("[name=drawernumber]").val(<{$number}>);
+  });
+
+</script>
