@@ -855,7 +855,7 @@ function patch31() {
   useaddproxy varchar(255) NOT NULL default '',
   usecurrentviewlist varchar(255) NOT NULL default '',
   limitviews text NOT NULL,
-  defaultview varchar(20) NOT NULL default '',
+  defaultview text NOT NULL default '',
   usechangecols varchar(255) NOT NULL default '',
   usecalcs varchar(255) NOT NULL default '',
   useadvcalcs varchar(255) NOT NULL default '',
