@@ -30,8 +30,6 @@
 include_once XOOPS_ROOT_PATH."/modules/formulize/admin/save/elements_save.php";
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
-//saveElements(2);
-
 // this file handles saving of submissions from the form_elements page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
@@ -44,8 +42,7 @@ function saveElements($processedValues, $elementOrder, $fid, $drawerNum, $isForm
 	$element_handler = xoops_getmodulehandler('elements','formulize');
 	// group elements by id
 	$processedElements = array();
-	    // print "Processed Elements : \n";
-	    // print_r($processedValues['elements']);
+
 	foreach($processedValues['elements'] as $property=>$values) {
 	  foreach($values as $key=>$value) {
 	    $processedElements[$key][$property] = $value;
@@ -67,16 +64,17 @@ function saveElements($processedValues, $elementOrder, $fid, $drawerNum, $isForm
 
 	// modify elements
 	$oldOrderNumber = 1;
-	    // print "Processed Elements: \n";
-	    // print (print_r($processedElements));
+
+	//I believe this for loop no longer works as intended as the elements will not all be within the new order
+	//We may need to strip the $elements array to just have the elements within the newOrder
 	foreach($elements as $element) {
 	  $ele_id = $element->getVar('ele_id');
 
-	  // reset elements to deault
-	  $element->setVar('ele_req',0);
-	  $element->setVar('ele_private',0);
-	  $newOrderNumber = array_search($oldOrderNumber,$newOrder);
-	  $element->setVar('ele_order',$newOrderNumber);
+	  // reset elements to default
+	  $element->setVar('ele_req', 0);
+	  $element->setVar('ele_private', 0);
+	  $newOrderNumber = array_search($oldOrderNumber, $newOrder);
+	  $element->setVar('ele_order', $newOrderNumber);
 	  if($oldOrderNumber != $newOrderNumber) {
 	    $_POST['reload_elements'] = 1; // need to reload since the drawer numbers will be out of sequence now
 	  }
