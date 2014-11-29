@@ -309,18 +309,21 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$forceLoadView = false;
 	if($screen) {
 		$loadview = is_numeric($loadview) ? $loadview : $screen->getVar('defaultview'); // flag the screen default for loading if no specific view has been requested
-		$foundAView = false;
-		// Search for group user belongs to in list of default views
-		foreach(array_keys($loadview) as $checkGroup) {
-		  // First group/default view found that user belongs to will be set
-		  if(in_array($checkGroup, $groups)) {
-		    $loadview = $loadview[$checkGroup];
-		    $foundAView = true;
-		    break;
-		  }
-		}
-		if(!$foundAView) {
-		  $loadview = null;
+
+		if (is_array($loadview)) {
+			$foundAView = false;
+			// Search for group user belongs to in list of default views
+			foreach(array_keys($loadview) as $checkGroup) {
+			  // First group/default view found that user belongs to will be set
+			  if(in_array($checkGroup, $groups)) {
+			    $loadview = $loadview[$checkGroup];
+			    $foundAView = true;
+			    break;
+			  }
+			}
+			if(!$foundAView) {
+			  $loadview = null;
+			}
 		}
 		if($loadview == "mine" OR $loadview == "group" OR $loadview == "all" OR ($loadview == "blank" AND (!isset($_POST['hlist']) AND !isset($_POST['hcalc'])))) { // only pay attention to the "blank" default list if we are on an initial page load, ie: no hcalc or hlist is set yet, and one of those is set on each page load hereafter
 			$currentView = $loadview; // if the default is a standard view, then use that instead and don't load anything
