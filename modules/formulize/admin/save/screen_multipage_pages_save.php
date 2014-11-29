@@ -57,11 +57,13 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
 
-$drawernumber = $_POST['drawernumber']; // Not returning anything
-print "POST".print_r($_POST)."\n";
-print "Drawer Number = ".$drawernumber."\n";
+foreach($_POST as $key => $val){
+    preg_match('#elementorder-\d#i', $key, $found);
+    if(isset($found[0])){
+    	saveElements($processedValues, $val, $fid, "4", false);
+    }
 
-saveElements($processedValues, $fid, "4");
+}
 
 // get page titles
 
@@ -84,8 +86,6 @@ if(count($newOrder) != count($pagetitles)) {
 	return;
 
 }
-
-
 
 // newOrder will have keys corresponding to the new order, and values corresponding to the old order
 // need to add in conditions handling here too

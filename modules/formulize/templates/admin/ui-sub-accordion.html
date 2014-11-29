@@ -28,7 +28,8 @@
 	});
 
 </script>
-
+<input type="hidden" name="elementorder-<{$subid}>"  value="">
+<input type="hidden" name="drawernumber-<{$subid}>"  value="">	
 <div id="accordion-<{$number}>-<{$subid}>">
 	<{foreach from=$sections key=sectionNumber item=section}>
 		<div id="drawer-<{$number}>-<{$sectionNumber}>">
@@ -48,8 +49,8 @@
 <script type="text/javascript">
 
   $(".savebutton").click(function () {
-  	$("[name=elementorder]").val($("#accordion-<{$number}>-<{$subid}>").sortable('serialize'));
-  	$("[name=drawernumber]").val(<{$number}>);
+  	$("[name=elementorder-<{$subid}>").val($("#accordion-<{$number}>-<{$subid}>").sortable('serialize'));
+  	$("[name=drawernumber-<{$subid}>").val(<{$number}>);
   });
 
 </script>

@@ -35,7 +35,7 @@ include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 // this file handles saving of submissions from the form_elements page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
-function saveElements($processedValues, $fid, $drawerNum)
+function saveElements($processedValues, $elementOrder, $fid, $drawerNum, $isForms)
 {
 	$form_handler = xoops_getmodulehandler('forms','formulize');
 	$formObject = $form_handler->get($fid);
@@ -56,12 +56,12 @@ function saveElements($processedValues, $fid, $drawerNum)
 	$elements = $element_handler->getObjects(null,$fid);
 
 	// get the new order of the elements...
-	$newOrder = explode("drawer-".$drawerNum."[]=", str_replace("&", "", $_POST['elementorder']));
+	$newOrder = explode("drawer-".$drawerNum."[]=", str_replace("&", "", $elementOrder));
 	unset($newOrder[0]);
 	// newOrder will have keys corresponding to the new order, and values corresponding to the old order
 
-	if(count($elements) != count($newOrder)) {
-		print "Error: the number of elements being saved did not match the number of elements already in the database";
+	if(count($elements) != count($newOrder) && $isForms) {
+		print "Error: the number of elements being saved did not match the number of elements already in the database\n\n";
 		return;
 	}
 
@@ -82,8 +82,9 @@ function saveElements($processedValues, $fid, $drawerNum)
 	  }
 	  $oldOrderNumber++;
 
-	     print "\nVar: $ele_id";
 	  // apply settings submitted by user
+	  //NOTE: processedElements[$ele_id] may not exist if the user has not checked any of the fields
+	  // 	  so ignore any php error warning you get
 	  foreach($processedElements[$ele_id] as $property=>$value) {
 	    $element->setVar($property,$value);
 	  }
@@ -95,7 +96,7 @@ function saveElements($processedValues, $fid, $drawerNum)
 
 	  // presist changes
 	  if(!$element_handler->insert($element)) {
-	    print "Error: could not save the form elements properly: ".$xoopsDB->error();
+	    print "Error: could not save the form elements properly: ".$xoopsDB->error()."\n\n";
 	  }
 	}
 
@@ -114,7 +115,7 @@ function saveElements($processedValues, $fid, $drawerNum)
 			$element->setVar('ele_value', $new_ele_value);
 			$element->setVar('ele_type', "textarea");
 	    if( !$element_handler->insert($element)) {
-				print "Error: could not complete conversion of the element";
+				print "Error: could not complete conversion of the element\n\n";
 			} 
 		} elseif($ele_type=="textarea") {
 			$ele_value = $element->getVar('ele_value');
@@ -126,12 +127,12 @@ function saveElements($processedValues, $fid, $drawerNum)
 			$element->setVar('ele_value', $new_ele_value);
 			$element->setVar('ele_type', "text");
 			if( !$element_handler->insert($element)) {
-				print "Error: could not complete conversion of the element";
+				print "Error: could not complete conversion of the element\n\n";
 			} 
 		} elseif($ele_type=="radio") {
 			$element->setVar('ele_type', "checkbox"); // just need to change type, ele_value format is the same
 			if( !$element_handler->insert($element)) {
-				print "Error: could not complete conversion of the element";
+				print "Error: could not complete conversion of the element\n\n";
 			} else {
 				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 				$data_handler = new formulizeDataHandler($element->getVar('id_form'));
@@ -142,7 +143,7 @@ function saveElements($processedValues, $fid, $drawerNum)
 		} elseif($ele_type=="checkbox") {
 			$element->setVar('ele_type', "radio");  // just need to change type, ele_value format is the same
 			if( !$element_handler->insert($element)) {
-				print "Error: could not complete conversion of the element";
+				print "Error: could not complete conversion of the element\n\n";
 			} else {
 				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 				$data_handler = new formulizeDataHandler($element->getVar('id_form'));
@@ -169,7 +170,7 @@ function saveElements($processedValues, $fid, $drawerNum)
 	    $element->setVar('ele_value', $new_ele_value);
 	    $element->setVar('ele_delim', 'br');
 	    if( !$element_handler->insert($element)) {
-	      print "Error: could not complete conversion of the element";
+	      print "Error: could not complete conversion of the element\n\n";
 	    }
 		}
 	}
