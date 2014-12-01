@@ -113,8 +113,8 @@ function patch40() {
 
 	$checkThisTable = 'formulize_screen_listofentries';
 	$checkThisField = 'defaultview';
-	$checkThisProperty = false;
-	$checkPropertyForValue = false;
+	$checkThisProperty = 'DATA_TYPE';
+	$checkPropertyForValue = 'text';
 
 	$needsPatch = false;
 
@@ -322,7 +322,7 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
         $sql['add_on_before_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_before_save` text";
 		$sql['add_form_note'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `note` text";
 		$sql['add_use_default_when_blank'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_use_default_when_blank` tinyint(1) NOT NULL default '0'";
-		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL DEFAULT";
+		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL DEFAULT ''";
 
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
