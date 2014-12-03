@@ -1165,7 +1165,8 @@ td.formulize-controls {
   white-space: nowrap; }
 
 .xoops-form-element-help {
-  color: #a2cee7; }
+  color: #a2cee7;
+  width: 40px; }
 
 form#formulize td.even, form#formulize td.odd {
   width: 70%; }
