@@ -98,10 +98,37 @@ class formulizeScreen extends xoopsObject {
                 // strip out opening <?php since we use this value for comparisons a lot, and it should be otherwise empty in that case
                 $templates[$templatename] = substr($templates[$templatename], 5);
             } else {
-                $templates[$templatename] = null;
+                $templates[$templatename] = $this->getVar($templatename);
+                if (strlen($templates[$templatename]) > 0) {
+                    // the template content is stored in the database, but not the cache file
+                    // database may have been copied from another site, so write to cache file
+                    $this->writeTemplateFile($templates[$templatename], $templatename);
+                }
             }
         }
         return $templates[$templatename];
+    }
+
+    function writeTemplateFile($template_content, $template_name) {
+        $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/";
+        // check if folder exists, if not, make it.
+        if (!is_dir($pathname)) {
+            mkdir($pathname, 0777, true);
+        }
+
+        if (!is_writable($pathname)) {
+            chmod($pathname, 0777);
+        }
+
+        $filename = $pathname."/".$template_name.".php";
+
+        $success = file_put_contents($filename, $template_content);
+        if (false == $success) {
+            error_log("ERROR: Could not write to template cache file: $filename");
+            return false;
+        }
+
+        return true;
     }
 }
 
@@ -240,27 +267,7 @@ class formulizeScreenHandler {
 		 return $sid;
 	}
 
-	function writeTemplateToFile($text, $filename, $screen) {
-
-            $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/";
-            // check if folder exists, if not, make it.
-            if (!is_dir($pathname)) {
-                mkdir($pathname, 0777, true);
-            }
-            
-            if (!is_writable($pathname)) {
-                chmod($pathname, 0777);
-	    }
-
-            $fileHandle = fopen($pathname."/".$filename.".php", "w+");
-            $success = fwrite($fileHandle, $text);
-            fclose($fileHandle);
-            
-            // return true or false based on writing success or failure 
-            // (you'll need to make sure your web server has write permission in the /templates/screens/default/ folder
-            if ($success === FALSE) {
-                return false;
-            } else return true;
-        }
-	
+    function writeTemplateToFile($text, $filename, $screen) {
+        return $screen->writeTemplateFile($text, $filename);
+    }
 }
