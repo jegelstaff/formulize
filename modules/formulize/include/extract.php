@@ -224,9 +224,12 @@ function prepvalues($value, $field, $entry_id) {
 		$realcap = str_replace("`", "'", $ffcaption);
 		$newValueq = go("SELECT other_text FROM " . DBPRE . "formulize_other, " . DBPRE . "formulize WHERE " . DBPRE . "formulize_other.ele_id=" . DBPRE . "formulize.ele_id AND " . DBPRE . "formulize.ele_handle=\"" . formulize_db_escape($field) . "\" AND " . DBPRE . "formulize_other.id_req='".intval($entry_id)."' LIMIT 0,1");
 		//$value_other = _formulize_OPT_OTHER . $newValueq[0]['other_text'];
-    $value_other = $newValueq[0]['other_text']; // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
+        // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
+        $value_other = $newValueq[0]['other_text'];
 		$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value); 
-	}
+	} else {
+        $value = formulize_swapUIText($value, unserialize($elementArray['ele_uitext']));
+    }
 
 	  if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 	       $elementTypeHandler = xoops_getmodulehandler($type."Element", "formulize");
