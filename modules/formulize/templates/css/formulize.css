@@ -715,7 +715,7 @@ th {
   text-align: right;
   padding: 3px;
   background-color: #e6e6e6;
-  color: black; }
+  color: #000; }
 
 .itemAdminLink {
   font-size: .9em; }
@@ -745,12 +745,12 @@ th {
   font-size: .7em;
   color: #639ACE;
   font-weight: bold;
-  border: 1px solid #cccccc;
+  border: 1px solid #ccc;
   background-color: #fff;
   margin: 2px;
   padding: 2px;
-  border-right: 2px solid #999999;
-  border-bottom: 2px solid #999999; }
+  border-right: 2px solid #999;
+  border-bottom: 2px solid #999; }
 
 .comUserStatCaption {
   font-weight: normal; }
@@ -845,7 +845,7 @@ th {
   width: 99%;
   background: #dcdee0;
   padding: 3px;
-  border-bottom: 1px solid #cccccc; }
+  border-bottom: 1px solid #ccc; }
 
 table.outer {
   border: 1px solid #59a7d4; }
@@ -906,8 +906,8 @@ a.tooltip:hover > span {
   left: -5em;
   width: 25em;
   display: block;
-  background-color: white;
-  color: black;
+  background-color: #ffffff;
+  color: #000;
   padding: 1.5em;
   line-height: 1.5em;
   opacity: 0.95;
@@ -916,6 +916,9 @@ a.tooltip:hover > span {
   -moz-border-radius: 6px;
   -webkit-border-radius: 6px;
   box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.3); }
+
+a.formulize-open-close-link {
+  cursor: pointer; }
 
 .icms_checkboxoption {
   clear: both; }
