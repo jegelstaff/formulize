@@ -95,19 +95,18 @@ class formulizeScreen extends xoopsObject {
             $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/".$templatename.".php";
             if (file_exists($pathname)) {
                 $templates[$templatename] = file_get_contents($pathname);
-                // strip out opening <?php since we use this value for comparisons a lot, and it should be otherwise empty in that case
-                $templates[$templatename] = substr($templates[$templatename], 5);
             } else {
                 $templates[$templatename] = $this->getVar($templatename);
                 if (strlen($templates[$templatename]) > 0) {
                     // the template content is stored in the database, but not the cache file
                     // database may have been copied from another site, so write to cache file
-                    $this->writeTemplateFile($templates[$templatename], $templatename);
+                    $this->writeTemplateFile(htmlspecialchars_decode($templates[$templatename], ENT_QUOTES), $templatename);
                 }
             }
         }
         return $templates[$templatename];
     }
+
 
     function writeTemplateFile($template_content, $template_name) {
         $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/";
