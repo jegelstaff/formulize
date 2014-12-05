@@ -209,7 +209,7 @@ switch($op) {
     case "validate_php_code":
     if (function_exists("shell_exec")) {
         $tmpfname = tempnam(sys_get_temp_dir(), 'FZ');
-        file_put_contents($tmpfname, trim(urldecode($_POST["the_code"])));
+        file_put_contents($tmpfname, trim($_POST["the_code"]));
         $output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
         unlink($tmpfname);
         if (false !== strpos($output, "PHP Parse error")) {

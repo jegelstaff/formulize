@@ -122,7 +122,7 @@ class formulizeScreen extends xoopsObject {
         $filename = $pathname."/".$template_name.".php";
 
         $success = file_put_contents($filename, $template_content);
-        if (false == $success) {
+        if (false === $success) {
             error_log("ERROR: Could not write to template cache file: $filename");
             return false;
         }
