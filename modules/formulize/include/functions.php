@@ -2402,6 +2402,64 @@ function formulize_text_to_hyperlink($text, $textWidth) {
     return str_replace("<a ", "<a target='_blank' ", $text);
 }
 
+// THIS FUNCTION INTERPRET'S A RADIO BUTTON'S VALUE AND RETURNS THE DEFAULT
+// Takes $ele_value from the element object
+function getRadioButtonDefault($ele_value) {
+    global $xoopsUser;
+
+    $defaultValue = "";
+    foreach($ele_value as $text=>$is_default) {
+        if ($is_default == 1) {
+            $defaultValue = $text;
+        }
+    }
+
+    return $defaultValue;
+}
+
+function getCheckboxDefault($ele_value) {
+    global $xoopsUser;
+
+    $defaultValue = "";
+    foreach($ele_value as $text=>$is_default) {
+        if ($is_default == 1) {
+            $defaultValue .= "*=+*:".$text;
+        }
+    }
+    if ($defaultValue == "")
+        return null;
+    return $defaultValue;
+}
+
+function getSelectboxDefault($ele_value) {
+    global $xoopsUser;
+
+    $defaultValue = "";
+    foreach($ele_value[2] as $text=>$is_default) {
+        if ($is_default == 1) {
+            $defaultValue .= "*=+*:".$text;
+        }
+    }
+    if ($defaultValue == "")
+        return null;
+    return $defaultValue;
+}
+
+function getYnDefault($ele_value) {
+    global $xoopsUser;
+
+    $defaultValue = null;
+    foreach($ele_value as $text=>$is_default) {
+        if ($is_default == 1) {
+            if ($text == "_YES")
+                $defaultValue = 1;
+            else {
+                $defaultValue = 0;
+            }
+        }
+    }
+    return $defaultValue;
+}
 
 // THIS FUNCTION INTERPRETS A TEXTBOX'S DEFAULT VALUE AND RETURNS THE CORRECT STRING
 // Takes $ele_value[2] as the input (third position in ele_value array from element object)

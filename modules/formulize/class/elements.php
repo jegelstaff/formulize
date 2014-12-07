@@ -494,4 +494,42 @@ class formulizeElementsHandler {
 		}
 		return $value;
 	}
+
+	function getDefaultValue($element) {
+		global $xoopsDB;
+
+		$ele_type = $element->getVar('ele_type');
+		$ele_value = $element->getVar('ele_value');
+		switch($ele_type) {
+			case "radio":
+				return getRadioButtonDefault($ele_value);
+				break;
+			case "checkbox":
+				return getCheckboxDefault($ele_value);
+				break;
+			case "select":
+				return getSelectboxDefault($ele_value);
+				break;
+			case "yn":
+				return getYnDefault($ele_value);
+				break;
+			case "date":
+				return $ele_value[0];
+				break;
+			case "text":
+			case "textarea":
+				if (strstr($ele_value[2], "\$default")) {
+					return $ele_value[2]; // we can't evaluate it because we don't have an $entry_id
+				} else {
+					// not user-defined PHP code so $form_id and $entry_id are not required
+					return getTextboxDefault($ele_value[2], NULL, NULL);
+				}
+				break;
+			case "subform":
+				return NULL;
+				break;
+			default:
+				return NULL;
+		}
+	}
 }
