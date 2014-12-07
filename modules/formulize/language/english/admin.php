@@ -746,6 +746,14 @@ define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE", "Template for each entry in the 
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_LISTTEMPLATE", "If you specify a List Template, certain buttons and configuration options mentioned above may be unavailable.");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FRAMEWORK", "Below is a list of handles for all the form elements in this Framework.  Use them with the <i>display</i> function.<br><br>Use \"<i>\$entry_id</i>\" to refer to the main form's entry id number.<br><br>Use \"<i>\$form_id</i>\" to refer to the id number of the main form.");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FORM", "Below is a list of element data handles for all the elements in this form. Use them with the <i>display</i> function.<br><br>Use \"<i>\$entry_id</i>\" to refer to the entry id number.<br><br>Use \"<i>\$form_id</i>\" to refer to the form id number.");
+define("_AM_FORMULIZE_SCREEN_LOE_DISPLAY_ONLY_COLUMNS", "Display only these columns");
+define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_COLUMNS", "Column");
+define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_BY", "Search by this");
+define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY", "Sort by this");
+define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DELETE_COLUMN", "Remove column");
+define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DESCRIPTION", "If you add columns here this will become the default view. The 'search by this' and 'sort by this' are optional fields");
+define("_AM_FORMULIZE_SCREEN_LOE_VIEW_DATA_TO_DISPLAY_HEADER", "How entries should be displayed?");
+
 // CUSTOM BUTTONS
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTONINTRO", "Specify any custom buttons for this screen:");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTONINTRO2", "Custom buttons can be added above, below, or inside a list, using the templates (see below).  You must specify what effects each custom button should have.  For instance, a custom button labelled 'Cancel Subscription' might update a form element called 'Subscription end date', and use today's date as the value to put there.");
@@ -781,6 +789,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_VALUE", "Use what value?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE", "Replace the current value with the specified value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE", "Remove the specified value from the current value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND", "Append the specified value to the end of the current value");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_ADVANCE_VIEW_ADD_COLUMN", "Add Column");
 
 define("_AM_FORMULIZE_CLONING_TITLE", "Cloning options");
 define("_AM_FORMULIZE_CLONING_FOUND_ELEMENTS", "After cloning, the following linked selectboxes in this form can be relinked to source elements in these other recently cloned forms:");

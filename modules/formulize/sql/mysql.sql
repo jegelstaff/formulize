@@ -95,6 +95,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `usecurrentviewlist` varchar(255) NOT NULL default '',
   `limitviews` text NOT NULL, 
   `defaultview` varchar(20) NOT NULL default '',
+  `advanceview` text NOT NULL, 
   `usechangecols` varchar(255) NOT NULL default '',
   `usecalcs` varchar(255) NOT NULL default '',
   `useadvcalcs` varchar(255) NOT NULL default '',

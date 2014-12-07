@@ -227,7 +227,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					$loadedView =  "p" . substr($saveid_formulize, 1);
 				}
 			}
-		} 
+		}
 		$savename = $_POST['savename'];
 		if(get_magic_quotes_gpc()) {
 			$savename = stripslashes($savename);
@@ -306,8 +306,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	}
 
-
-
+	
 	$forceLoadView = false;
 	if($screen) {
 		$loadview = is_numeric($loadview) ? $loadview : $screen->getVar('defaultview'); // flag the screen default for loading if no specific view has been requested
@@ -315,7 +314,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$currentView = $loadview; // if the default is a standard view, then use that instead and don't load anything
 			unset($loadview);
 		} elseif($_POST['userClickedReset']) { // only set if the user actually clicked that button, and in that case, we want to be sure we load the default as specified for the screen
-			$forceLoadView = true; 
+			$forceLoadView = true;
 		}
 	}
 		
@@ -340,7 +339,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	} elseif(!$currentView) {
 		$currentView = "mine";
 	}
-		
 	// debug block to show key settings being passed back to the page
 /*
 	if($uid == 1) {
@@ -365,12 +363,38 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 	}*/
 
-
 	// set flag to indicate whether we let the user's scope setting expand beyond their normal permission level (happens when unlocked published views are in effect)
 	$currentViewCanExpand = false;
 
+	if($screen AND count($screen->getVar('advanceview')) > 0){
+		$loadedView = $_POST['currentview'];
+		$settings['loadedview'] = $loadedView;
+		// kill the quicksearches, unless we've found a special flag that will cause them to be preserved
+		if(!isset($_POST['formulize_preserveQuickSearches']) AND !isset($_GET['formulize_preserveQuickSearches'])) {
+    			foreach($_POST as $k=>$v) {
+    				if(substr($k, 0, 7) == "search_" AND $v != "") {
+    					unset($_POST[$k]);
+    				}
+    			  }
+		}
+		list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $savedViewHList, $savedViewHCalc, $_POST['lockcontrols'], $quicksearches) = loadAdvanceView($fid, $screen->getVar('advanceview'));
+			
+		// explode quicksearches into the search_ values
+		$allqsearches = explode(",", $quicksearches);
+		$colsforsearches = explode(",", $_POST['oldcols']);
+		for($i=0;$i<count($allqsearches);$i++) {
+			if($allqsearches[$i] != "") {
+				$_POST["search_" . str_replace("hiddencolumn_", "", dealWithDeprecatedFrameworkHandles($colsforsearches[$i], $frid))] = $allqsearches[$i]; // need to remove the hiddencolumn indicator if it is present
+				if(strstr($colsforsearches[$i], "hiddencolumn_")) {
+					unset($colsforsearches[$i]); // remove columns that were added to the column list just so we would know the name of the hidden searches
+				}
+			}
+		}
+		$_POST['oldcols'] = implode(",",$colsforsearches);
+	}
 	// handling change in view, and loading reports/saved views if necessary
-	if($_POST['loadreport']) {
+	else if($_POST['loadreport']) {
+		
 		if(substr($_POST['currentview'], 1, 4) == "old_") { // legacy report
 			// load old report values and then assign them to the correct $_POST keys in order to present the view
 			$loadedView = $_POST['currentview'];
@@ -396,6 +420,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
     			}
 			}
 			list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $savedViewHList, $savedViewHCalc, $_POST['lockcontrols'], $quicksearches) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
+			
 			if(!isset($_POST['formulize_preserveListCalcPage']) AND !isset($_GET['formulize_preserveListCalcPage'])) {
 				$_POST['hlist'] = $savedViewHList;
 				$_POST['hcalc'] = $savedViewHCalc;
@@ -3849,7 +3874,7 @@ function loadReport($id, $fid, $frid) {
     print "Error: could not load the specified saved view: '".strip_tags(htmlspecialchars($id))."'";
     return false;
   }
-	$to_return[0] = $thisview[0]['sv_currentview']; 
+	$to_return[0] = $thisview[0]['sv_currentview'];
 	$to_return[1] = $thisview[0]['sv_oldcols'];
 	$to_return[2] = $thisview[0]['sv_asearch'];
 	$to_return[3] = $thisview[0]['sv_calc_cols'];
@@ -3862,7 +3887,69 @@ function loadReport($id, $fid, $frid) {
 	$to_return[10] = $thisview[0]['sv_hidecalc'];
 	$to_return[11] = $thisview[0]['sv_lockcontrols'];
 	$to_return[12] = $thisview[0]['sv_quicksearches'];
+	
 	return $to_return;
+}
+
+//This function loads the Advance view that was set up at the "Data to be displayed" tab
+function loadAdvanceView($fid, $advance_view) {
+	$sort = null;
+	$sortby = null;
+	if($advance_view){
+	    $advanceViewSelected = array();
+            foreach($advance_view as $id=>$arr) {
+	       $advanceViewSelected["column"][$id] = $arr[0];
+	       if($arr[2] == "1"){
+		$sort = $arr[0];
+	       }
+               $advanceViewSelected["search"][$arr[0]] = $arr[1];
+            }
+	    $cols = getAllColList($fid, "", "");
+      
+	    $columns = "";
+	    $search = "";
+            foreach($cols as $id=>$arr) {
+		foreach($arr as $innerId=>$value) {
+		   if(in_array($value["ele_id"], $advanceViewSelected["column"])){
+		        $columns = $columns . $value["ele_handle"] . ",";
+		   }
+		   if($advanceViewSelected["search"][$value["ele_id"]]){
+		        $search = $search . $advanceViewSelected["search"][$value["ele_id"]] . ",";
+		   }
+		   else{
+			$search = $search . ",";
+		   }
+		   if($sort && $sort == $value["ele_id"]){
+			$sort = $value["ele_handle"];
+			$sortby = "SORT_ASC";
+		   }
+		}
+	    }
+	    
+	    //Remove the trailing ','
+	    $columns = rtrim($columns, ",");
+	    $search = rtrim($search, ",");
+	    $advanceViewSelected["sort"] = rtrim($advanceViewSelected["sort"], ",");
+	    
+	    $to_return[0] = "all"; 
+	    $to_return[1] = $columns;
+	    $to_return[2] = "";
+	    $to_return[3] = "";
+	    $to_return[4] = "";
+	    $to_return[5] = "";
+	    $to_return[6] = "";
+	    $to_return[7] = $sort;
+	    $to_return[8] = $sortby;
+	    $to_return[9] = "";
+	    $to_return[10] = "";
+	    $to_return[11] = "";
+	    $to_return[12] = $search;
+	
+	    return $to_return;
+	}
+	else{
+	    return null;
+	}
 }
 
 // remove columns that the user does not have permission to view -- added June 29, 2006 -- jwe
