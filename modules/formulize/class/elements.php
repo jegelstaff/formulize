@@ -499,7 +499,14 @@ class formulizeElementsHandler {
 		global $xoopsDB;
 
 		$ele_type = $element->getVar('ele_type');
-		$ele_value = $element->getVar('ele_value');
+		// Make sure we have the actual default, and not the value the element holds right now
+		$sql = "SELECT ele_value FROM ".$xoopsDB->prefix("formulize").
+			" WHERE ele_handle = '".formulize_db_escape($element->getVar('ele_handle'))."'";
+		$result = $xoopsDB.query($sql);
+		if (is_null($result)) {
+			return false;
+		}
+		$ele_value = $xoopsDB->fetchArray($result)['ele_value'];
 		switch($ele_type) {
 			case "radio":
 				return getRadioButtonDefault($ele_value);
