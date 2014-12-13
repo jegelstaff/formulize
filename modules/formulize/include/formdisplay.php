@@ -1778,7 +1778,9 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 			
 			for($i=0;$i<count($unique_users);$i++)
 			{
-				$proxylist->addOption($unique_users[$i], $punames[$i]);
+                if($unique_users[$i]) {
+                    $proxylist->addOption($unique_users[$i], $punames[$i]);
+                }
 			}
 
 			if(!$entry_id) {
