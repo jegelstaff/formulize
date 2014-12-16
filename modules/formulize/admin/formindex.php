@@ -111,8 +111,8 @@ function patch40() {
 	 * 
 	 * ====================================== */
 	
-	$checkThisTable = 'formulize';
-	$checkThisField = 'ele_use_default_when_blank';
+	$checkThisTable = 'formulize_id';
+	$checkThisField = 'on_after_save';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
@@ -320,6 +320,7 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		$sql['add_bottomtext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `bottomtemplate` text NOT NULL"; 
 		$sql['add_formelements'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_form") . " ADD `formelements` text";
         $sql['add_on_before_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_before_save` text";
+        $sql['add_on_after_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_after_save` text";
 		$sql['add_form_note'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `note` text";
 		$sql['add_use_default_when_blank'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_use_default_when_blank` tinyint(1) NOT NULL default '0'";
 		
@@ -359,6 +360,8 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
                     print "formelements field already added for single page screens.  result: OK<br>";
                 } elseif($key === "add_on_before_save") {
                     print "on_before_save field already added.  result: OK<br>";
+                } elseif($key === "add_on_after_save") {
+                    print "on_after_save field already added.  result: OK<br>";
                 } elseif($key === "add_form_note") {
                     print "form note field already added.  result: OK<br>";
 				} elseif($key === "add_use_default_when_blank") {

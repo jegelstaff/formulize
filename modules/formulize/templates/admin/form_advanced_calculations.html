@@ -19,6 +19,11 @@
     <textarea id="forms-on_before_save" name="forms-on_before_save" class="code-textarea"><{$content.form_object->on_before_save}>
 </textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
 
+    <h2>After Saving</h2>
+    <p>This special procedure runs after an entry is saved. The ID of the saved entry is available as $entry_id.</p><br />
+    <textarea id="forms-on_after_save" name="forms-on_after_save" class="code-textarea"><{$content.form_object->on_after_save}>
+</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
+
     <p><i>Procedures</i> <{$smarty.const._AM_CALC_EXPLAIN}></p>
 
     <h2><a name="newprocedure" href="ui.php?page=advanced-calculation&tab=settings&aid=<{$content.aid}>&fid=<{$content.fid}>&acid=new"><img src="../images/filenew2.png"> <{$smarty.const._AM_CALC_CREATE_NEW}></a></h2>
