@@ -2899,18 +2899,20 @@ function compileGoverningLinkedSelectBoxSourceConditionElements($governingElemen
 	if(is_object($elementObject) AND $elementObject->isLinked) {
 		$ele_value = $elementObject->getVar('ele_value');
 		$elementConditions = $ele_value[5];
-		foreach($elementConditions[2] as $thisTerm) {
-			if(substr($thisTerm,0,1)=="{" AND substr($thisTerm, -1) == "}") {
-				// figure out the element, which is presumably in the same form, and assume the same entry
-				$curlyBracketElement = $element_handler->get(trim($thisTerm,"{}"));
-				if(!isset($recordedEntries[$curlyBracketElement->getVar('id_form')][$handleParts[2]][$curlyBracketElement->getVar('ele_id')][$handle])) {
-				$governingElements['de_'.$curlyBracketElement->getVar('id_form').'_'.$handleParts[2].'_'.$curlyBracketElement->getVar('ele_id')][] = $handle;
-					$recordedEntries[$curlyBracketElement->getVar('id_form')][$handleParts[2]][$curlyBracketElement->getVar('ele_id')][$handle] = true;
-				}
-			}
-		}
-	} 
-	return $governingElements;
+        if (is_array($elementConditions[2])) {
+            foreach($elementConditions[2] as $thisTerm) {
+                if (substr($thisTerm,0,1) == "{" AND substr($thisTerm, -1) == "}") {
+                    // figure out the element, which is presumably in the same form, and assume the same entry
+                    $curlyBracketElement = $element_handler->get(trim($thisTerm,"{}"));
+                    if (!isset($recordedEntries[$curlyBracketElement->getVar('id_form')][$handleParts[2]][$curlyBracketElement->getVar('ele_id')][$handle])) {
+                        $governingElements['de_'.$curlyBracketElement->getVar('id_form').'_'.$handleParts[2].'_'.$curlyBracketElement->getVar('ele_id')][] = $handle;
+                        $recordedEntries[$curlyBracketElement->getVar('id_form')][$handleParts[2]][$curlyBracketElement->getVar('ele_id')][$handle] = true;
+                    }
+                }
+            }
+        }
+    }
+    return $governingElements;
 }
 
 // determine which screen to use when displaying a subform
