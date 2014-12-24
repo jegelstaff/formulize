@@ -635,22 +635,19 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	$config_handler =& xoops_gethandler('config');
 	$formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
 	// remove the all done button if the config option says 'no', and we're on a single-entry form, or the function was called to look at an existing entry, or we're on an overridden Multi-entry form
-	$allDoneOverride = (!$formulizeConfig['all_done_singles'] AND !$profileForm AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
-	
-	if($allDoneOverride AND $_POST['form_submitted']) {
+    $allDoneOverride = (!$formulizeConfig['all_done_singles'] AND !$profileForm AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
+    if(($allDoneOverride OR (isset($_POST['save_and_leave']) AND $_POST['save_and_leave'])) AND $_POST['form_submitted']) {
 		drawGoBackForm($go_back, $currentURL, $settings, $entry);
 		print "<script type=\"text/javascript\">window.document.go_parent.submit();</script>\n";
 		return;
 	} else {
 		// only do all this stuff below, the normal form displaying stuff, if we are not leaving this page now due to the all done button being overridden
-		
+
 		// we cannot have the back logic above invoked when dealing with a subform, but if the override is supposed to be in place, then we need to invoke it
 		if(!$allDoneOverride AND !$formulizeConfig['all_done_singles'] AND !$profileForm AND ($_POST['target_sub'] OR $_POST['goto_sfid'] OR $_POST['deletesubsflag'] OR $_POST['parent_form']) AND ($single OR $original_entry OR $overrideMulti)) {
 			$allDoneOverride = true;
 		}
-	
-	
-	
+
 		/*if($uid==1) {
 		print "Forms: ";
 		print_r($fids);
@@ -902,6 +899,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			if(count($GLOBALS['formulize_renderedElementHasConditions'])>0) {
 				drawJavascriptForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $entries, $sub_entries);
 			}
+            print $form->addElement(new xoopsFormHidden('save_and_leave', 0));
 
 		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
 		$form->addElement (new XoopsFormHidden ('primaryfid', $fids[0]));
@@ -911,7 +909,28 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 		$idForForm = $formElementsOnly ? "" : "id=\"formulizeform\""; // when rendering disembodied forms, don't use the master id!
 		print "<div $idForForm>".$form->render()."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
-		
+
+        // floating save button
+        if($printall != 2 AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php") AND !$formElementsOnly){
+            print "<div id=floattest></div>";
+            if( $done_text !="{NOBUTTON}" OR $save_text !="{NOBUTTON}") {
+                print "<div id=floatingsave>";
+                if( $subButtonText == _formulize_SAVE ){
+                    if($save_text) { $subButtonText = $save_text; }
+                    if($subButtonText != "{NOBUTTON}") {
+                        print "<input type='button' name='submitx' id='submitx' class=floatingsavebuttons onclick=javascript:validateAndSubmit(); value='"._formulize_SAVE."' >";
+                        print "<input type='button' name='submit_save_and_leave' id='submit_save_and_leave' class=floatingsavebuttons onclick=javascript:validateAndSubmit('leave'); value='"._formulize_SAVE_AND_LEAVE."' >";
+                    }
+                }
+                if((($button_text != "{NOBUTTON}" AND !$done_text) OR (isset($done_text) AND $done_text != "{NOBUTTON}")) AND !$allDoneOverride){
+                    if($done_text) { $button_text = $done_text_temp; }
+                    print "<input type='button' class=floatingsavebuttons onclick=javascript:verifyDone(); value='"._formulize_DONE."' >";
+                }
+                print "</div>";
+            }
+        }
+        // end floating save button
+
 		// if we're in Drupal, include the main XOOPS js file, so the calendar will work if present...
 		// assumption is that the calendar javascript has already been included by the datebox due to no
 		// $xoopsTpl being in effect in Drupal -- this assumption will fail if Drupal is displaying a pageworks
@@ -1139,15 +1158,20 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 		$buttontray = new XoopsFormElementTray("", "&nbsp;");
 	}
 	$buttontray->setClass("no-print");
-	if($subButtonText == _formulize_SAVE) { // _formulize_SAVE is passed only when the save button is allowed to be drawn
-		if($save_text_temp) { $subButtonText = $save_text_temp; }
-		if($subButtonText != "{NOBUTTON}") {
-			$saveButton = new XoopsFormButton('', 'submitx', trans($subButtonText), 'button'); // doesn't use name submit since that conflicts with the submit javascript function
-			$saveButton->setExtra("onclick=javascript:validateAndSubmit();");
-			$buttontray->addElement($saveButton);
-		}
-	}
-	
+
+    if($subButtonText == _formulize_SAVE) { // _formulize_SAVE is passed only when the save button is allowed to be drawn
+        if($save_text_temp) { $subButtonText = $save_text_temp; }
+        if($subButtonText != "{NOBUTTON}") {
+            $saveButton = new XoopsFormButton('', 'submitx', trans($subButtonText), 'button'); // doesn't use name submit since that conflicts with the submit javascript function
+            $saveButton->setExtra("onclick=javascript:validateAndSubmit();");
+            $buttontray->addElement($saveButton);
+            // also add in the save and leave button
+            $saveAndLeaveButton = new XoopsFormButton('', 'submit_save_and_leave', trans(_formulize_SAVE_AND_LEAVE), 'button');
+            $saveAndLeaveButton->setExtra("onclick=javascript:validateAndSubmit('leave');");
+            $buttontray->addElement($saveAndLeaveButton);
+        }
+    }
+
 	if((($button_text != "{NOBUTTON}" AND !$done_text_temp) OR (isset($done_text_temp) AND $done_text_temp != "{NOBUTTON}")) AND !$allDoneOverride) { 
 		if($done_text_temp) { $button_text = $done_text_temp; }
 		$donebutton = new XoopsFormButton('', 'donebutton', trans($button_text), 'button');
@@ -2521,7 +2545,6 @@ if(intval($_POST['yposition'])>0) {
 
 
 function showPop(url) {
-
 	if (window.formulize_popup == null) {
 		formulize_popup = window.open(url,'formulize_popup','toolbar=no,scrollbars=yes,resizable=yes,width=800,height=550,screenX=0,screenY=0,top=0,left=0');
       } else {
@@ -2534,7 +2557,7 @@ function showPop(url) {
 	window.formulize_popup.focus();
 }
 
-function validateAndSubmit() {
+function validateAndSubmit(leave) {
     var formulize_numbersonly_found= false;
     jQuery(".numbers-only-textbox").each(function() {
         if(jQuery(this).val().match(/[a-z]/i) !== null) {
@@ -2570,12 +2593,18 @@ if(!$nosave) { // need to check for add or update permissions on the current use
 		if(jQuery('.formulize-form-submit-button')) {
 			jQuery('.formulize-form-submit-button').attr('disabled', 'disabled');
 		}
-		jQuery('#yposition').val(jQuery(window).scrollTop());
+        if(jQuery('#save_and_leave_button')) {
+            jQuery('#save_and_leave_button').attr('disabled', 'disabled');
+        }
+        jQuery('#yposition').val(jQuery(window).scrollTop());
         if (formulizechanged) {
             window.document.getElementById('formulizeform').style.opacity = 0.5;
             window.document.getElementById('savingmessage').style.display = 'block';
             window.scrollTo(0,0);
             formulizechanged = 0; // don't want to trigger the beforeunload warning
+        }
+        if (leave) {
+            jQuery('#save_and_leave').val(1);
         }
         window.document.formulize.submit();
     }
