@@ -4474,8 +4474,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	$individualORSearches = array();
     $element_handler = xoops_getmodulehandler('elements','formulize');
 	global $xoopsUser;
-	foreach($searches as $key=>$master_one_search) { // $key is the element handle
-
+	foreach($searches as $key => $master_one_search) { // $key is the element handle
 		// convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
 		$count = preg_match("/^[bB][eE][tT][wW][eE][eE][nN] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4}) [aA][nN][dD] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4})\$/", $master_one_search, $matches);
 		if ($count > 0) {
@@ -4562,17 +4561,16 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
         if($operator == "!") { $operator = "NOT LIKE"; }
 				$one_search = substr($one_search, $startpoint);
 			}
-				
-			
+
 			// look for blank search terms and convert them to {BLANK} so they are handled properly
 			if($one_search === "") {
 				$one_search = "{BLANK}";
 			}
-			
+
 			// look for { } and transform special terms into what they should be for the filter
 			if(substr($one_search, 0, 1) == "{" AND substr($one_search, -1) == "}") {
 				$searchgetkey = substr($one_search, 1, -1);
-        
+
 				if (ereg_replace("[^A-Z]","", $searchgetkey) == "TODAY") {
 					$number = ereg_replace("[^0-9+-]","", $searchgetkey);
 					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
@@ -4617,11 +4615,15 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 				}
 			} else {
 				// handle alterations to non { } search terms here...
-				if($ele_type=="date") {
-					$one_search = date('Y-m-d', strtotime($one_search));
+				if ($ele_type == "date") {
+                    $search_date = strtotime($one_search);
+                    // only search on a valid date string (otherwise it will be converted to the unix epoch)
+                    if (false !== $search_date) {
+                        $one_search = date('Y-m-d', $search_date);
+                    }
 				}
 			}
-			
+
 			// do additional search for {USERNAME} or {USER} in case they are embedded in another string
 			if($xoopsUser) {
 				$one_search = str_replace("{USER}", $xoopsUser->getVar('name'), $one_search);
