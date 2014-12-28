@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: github_pages/
+permalink: developers/github_pages/
 ---
 
 # GitHub Pages and Jekyll Configuration
@@ -33,4 +33,4 @@ The Jekyll site relies on one main configuration file called **_config.yml**.  T
     url: http://jegelstaff.github.io/formulize/
     permalink: formulize/:title/
     
-That file is critical for making sure the navigation and everything else works as expected.  Most pages of the site are written in Markdown, but regular HTML can be used as well.  For more details about writing documentation and the structure of the pages, [see the Documentation page](/formulize/version_control/documentation)
+That file is critical for making sure the navigation and everything else works as expected.  Most pages of the site are written in Markdown, but regular HTML can be used as well.  For more details about writing documentation and the structure of the pages, [see the Documentation page](../version_control/documentation)

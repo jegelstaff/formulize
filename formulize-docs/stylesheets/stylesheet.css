@@ -60,8 +60,17 @@ a {
   color: #d5000d;
 }
 a:hover {
-  color: #c5000c;
+  color: #950009;
 }
+
+#main_content a {
+    text-decoration: underline !important;
+}
+
+#main_content a:hover {
+    text-decoration: none !important;
+}
+
 
 header {
   padding-top: 35px;

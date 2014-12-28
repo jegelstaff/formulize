@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: version_control/branching/
+permalink: developers/version_control/branching/
 ---
 
 # Branching
