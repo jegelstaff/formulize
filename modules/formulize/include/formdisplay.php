@@ -2374,6 +2374,7 @@ function writeHiddenSettings($settings, $form = null) {
 	$order = $settings['order'];
 	$oldcols = $settings['oldcols'];
 	$currentview = $settings['currentview'];
+	$global_search = $settings['global_search'];
 	$searches = array();
 	if (!isset($settings['calhidden']) and !is_array($settings['calhidden']))
 		$settings['calhidden'] = array();
@@ -2409,6 +2410,7 @@ function writeHiddenSettings($settings, $form = null) {
 		$form->addElement (new XoopsFormHidden ('order', $order));
 		$form->addElement (new XoopsFormHidden ('currentview', $currentview));
 		$form->addElement (new XoopsFormHidden ('oldcols', $oldcols));
+		$form->addElement (new XoopsFormHidden ('global_search', $global_search));
 		foreach($searches as $key=>$search) {
 			$search_key = "search_" . $key;
 			$search = str_replace("'", "&#39;", $search);
@@ -2449,6 +2451,7 @@ function writeHiddenSettings($settings, $form = null) {
 		print "<input type=hidden name=order value='" . $order . "'>";
 		print "<input type=hidden name=currentview value='" . $currentview . "'>";
 		print "<input type=hidden name=oldcols value='" . $oldcols . "'>";
+		print "<input type=hidden name=global_search value='" . $global_search . "'>";
 		foreach($searches as $key=>$search) {
 			$search_key = "search_" . $key;
 			$search = str_replace("\"", "&quot;", $search);
