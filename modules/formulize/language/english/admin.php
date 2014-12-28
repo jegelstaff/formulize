@@ -81,9 +81,9 @@ define("_AM_FORM_CREATE_EXPLAIN","To assign a form to an application, look on th
 define("_AM_FORM_SCREEN","Screen: ");
 define("_AM_FORM_SCREEN_TEXT","Text");
 define("_AM_FORM_SCREEN_PAGES","Pages");
-define("_AM_FORM_SCREEN_ENTRIES_DISPLAY","Entries to display");
-define("_AM_FORM_SCREEN_HEADINGS_INTERFACE","Headings and Interface");
-define("_AM_FORM_SCREEN_ACTION_BUTTONS","Action Buttons");
+define("_AM_FORM_SCREEN_ENTRIES_DISPLAY","Entries");
+define("_AM_FORM_SCREEN_HEADINGS_INTERFACE","Interface");
+define("_AM_FORM_SCREEN_ACTION_BUTTONS","Buttons");
 define("_AM_FORM_SCREEN_CUSTOM_BUTTONS","Custom buttons");
 define("_AM_FORM_SCREEN_TEMPLATES","Templates");
 define("_AM_SETTINGS_FORM_TITLE_QUESTION","What is the name of the form?");
