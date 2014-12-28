@@ -125,6 +125,8 @@ if($isNew) {
 
 $screen->setVar('title',$screens['title']);
 $screen->setVar('fid',$fid);
+$originalFrid = $screen->getVar('frid');
+$screen->setVar('frid',$screens['frid']);
 $screen->setVar('type',$screens['type']);
 $screen->setVar('useToken',$screens['useToken']);
 
@@ -137,17 +139,18 @@ if($isNew) {
   // write out the necessary templates...
   // templates - initialize with the necessary php opening tags
   if($screens['type'] == "multiPage") {
-    $screen_handler->writeTemplateToFile("<?php\n", 'toptemplate', $screen);
-    $screen_handler->writeTemplateToFile("<?php\n", 'elementtemplate', $screen);
-    $screen_handler->writeTemplateToFile("<?php\n", 'bottomtemplate', $screen);
+    $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
+    $screen_handler->writeTemplateToFile("", 'elementtemplate', $screen);
+    $screen_handler->writeTemplateToFile("", 'bottomtemplate', $screen);
   } elseif($screens['type'] == "listOfEntries") {
-    $screen_handler->writeTemplateToFile("<?php\n", 'toptemplate', $screen);
-    $screen_handler->writeTemplateToFile("<?php\n", 'listtemplate', $screen);
-    $screen_handler->writeTemplateToFile("<?php\n", 'bottomtemplate', $screen);
+    $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
+    $screen_handler->writeTemplateToFile("", 'listtemplate', $screen);
+    $screen_handler->writeTemplateToFile("", 'bottomtemplate', $screen);
   }
-  
+
   // send code to client that will to be evaluated
   $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&tab=settings&aid=".$aid.'&fid='.$fid.'&sid='.$sid;
   print '/* eval */ window.location = "'.$url.'";';
-} 
-?>
+} elseif($originalFrid != $screens['frid']) {
+  print '/* eval */ reloadWithScrollPosition();';
+}

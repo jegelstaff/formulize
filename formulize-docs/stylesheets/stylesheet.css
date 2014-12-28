@@ -58,12 +58,19 @@ body {
 
 a {
   color: #d5000d;
-  text-decoration: underline !important;
 }
 a:hover {
-  color: #c5000c;
-  text-decoration: none !important; 
+  color: #950009;
 }
+
+#main_content a {
+    text-decoration: underline !important;
+}
+
+#main_content a:hover {
+    text-decoration: none !important;
+}
+
 
 header {
   padding-top: 35px;

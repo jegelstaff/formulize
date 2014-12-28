@@ -345,9 +345,16 @@ EOF;
 }
 
 /* ALTERED - 20100316 - freeform - jeff/julian - start */
-function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData)
-{
-	$evaluationCondition = "";
+function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData) {
+    $evaluationCondition = "";
+
+    // convert the internal database representation to the displayed value, if this element has uitext
+    foreach ($filterElements as $key => $element) {
+        $element_metadata = formulize_getElementMetaData($element, true);
+        if (isset($element_metadata['ele_uitext'])) {
+            $filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
+        }
+    }
 
 	for($io=0;$io<count($indexes);$io++) {
 		$i = $indexes[$io];

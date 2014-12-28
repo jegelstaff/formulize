@@ -198,14 +198,14 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
       $thisFidElements = $thisFidObj->getVar('elements');
       $thisFidCaptions = $thisFidObj->getVar('elementCaptions');
       $thisFidColheads = $thisFidObj->getVar('elementColheads');
-			$thisFidHandles = $thisFidObj->getVar('elementHandles');
-			foreach($thisFidElements as $i=>$thisFidElement) {
-      //for($i=0;$i<count($thisFidElements);$i++) {
-          $elementHeading = $thisFidColheads[$i] ? $thisFidColheads[$i] : $thisFidCaptions[$i];
-          $elementOptions[$thisFidHandles[$i]] = printSmart(trans(strip_tags($elementHeading)), 75);
-          $elementOptionsFid[$thisFid][$thisFidElement] = printSmart(trans(strip_tags($elementHeading)), 75); // for passing to custom button logic, so we know all the element options for each form in framework
-          $class = $class == "even" ? "odd" : "even";
-          $listTemplateHelp[] = "<tr><td class=$class><nobr><b>" . printSmart(trans(strip_tags($elementHeading))) . "</b></nobr></td><td class=$class><nobr>".$thisFidHandles[$i]."</nobr></td></tr>";
+      $thisFidHandles = $thisFidObj->getVar('elementHandles');
+      foreach($thisFidElements as $i => $thisFidElement) {
+        $elementHeading = $thisFidColheads[$i] ? $thisFidColheads[$i] : $thisFidCaptions[$i];
+        $elementOptions[$thisFidHandles[$i]] = printSmart(trans(strip_tags($elementHeading)), 75);
+        // for passing to custom button logic, so we know all the element options for each form in framework
+        $elementOptionsFid[$thisFid][$thisFidElement] = printSmart(trans(strip_tags($elementHeading)), 75);
+        $class = $class == "even" ? "odd" : "even";
+        $listTemplateHelp[] = "<tr><td class=$class><nobr><b>" . printSmart(trans(strip_tags($elementHeading)), 75) . "</b></nobr></td><td class=$class><nobr>".$thisFidHandles[$i]."</nobr></td></tr>";
       }
   }
   $templates['listtemplatehelp'] = $listTemplateHelp;

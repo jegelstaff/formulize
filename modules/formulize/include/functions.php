@@ -4560,6 +4560,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         $targetFormElementTypes = $targetFormObject->getVar('elementTypes');
         $targetAlias .= $targetAlias ? "." : ""; // add a period to the end of the alias, if there is one, so it will work in the sql statement
         for ($filterId = 0;$filterId<count($filterElementHandles);$filterId++) {
+            $filterOps[$filterId] = $filterOps[$filterId] == 'NOT' ? '!=' : $filterOps[$filterId]; // convert NOT to != to avoid syntax error
             // if this filter term is a { } term that matches a $_GET value, then let's use that instead
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
                 $bracketlessFilterTerm = substr($filterTerms[$filterId],1,-1);
