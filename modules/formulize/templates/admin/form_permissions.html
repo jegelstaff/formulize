@@ -96,9 +96,9 @@
          <div class="accordion-box" id="user_perms_accordion_box">
              <div class="form-item">
                  <fieldset>
-                     <legend><label class="question">Permissions of user: <{$content.submitted_user}></label></legend>
+                     <legend><label class="question">User Permissions for <{$content.submitted_user}></label></legend>
 
-                     <p><b>Groups of <{$content.submitted_user}>: </b></p>
+                     <p><b>Groups</b></p>
                      <div class="permissiongroup">
                          <{foreach from=$content.groupperms item=groupperm}>
                             <p><{$groupperm.name}></p>
