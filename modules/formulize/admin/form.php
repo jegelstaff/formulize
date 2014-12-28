@@ -287,7 +287,6 @@ foreach($classFiles as $thisFile) {
 }
 
 
-
 $i = 1;
 $applications = array();
 foreach($allApps as $thisApp) {
