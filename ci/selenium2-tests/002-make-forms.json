@@ -181,11 +181,6 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
-    },
-    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
