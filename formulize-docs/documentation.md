@@ -1,13 +1,13 @@
 ---
 layout: default
-permalink: version_control/documentation/
+permalink: developers/version_control/documentation/
 ---
 
 # Documentation
 
 All documentation for Formulize is kept in the /formulize-docs/ folder.  This folder contains a Jekyll based website.  The website is publically accessible here:  [http://jegelstaff.github.io/formulize/](http://jegelstaff.github.io/formulize/)
 
-[Learn more about the configuration of the Jekyll site and deploying to GitHub Pages](/formulize/github_pages). 
+[Learn more about the configuration of the Jekyll site and deploying to GitHub Pages](../../github_pages). 
 
 Our intention is that documentation will be committed as part of each branch, so that the code changes come with relevant explanations and updated documentation.  The easiest way to write the documentation, is to install Jekyll on your local development machine.  This makes it easy to then review the documentation, and make changes to it, without having to deploy the entire set of docs to GitHub.
 
@@ -25,15 +25,15 @@ Pages can be written in Markdown syntax.  All pages must start with the followin
 
     ---
     layout: default
-    permalink: version_control/documentation/
+    permalink: version_control/developers/documentation/
     ---
     
 The **permalink** is the URL for this page, relative to the root of the documentation.  The **layout** is simply a reference to the page template that is being used for the contents of the page outside the main body section.
 
 You can link to other pages in the documentation using standard Markdown syntax:
 
-    [This text will be clickable and will go to the permalink in parens](/formulize/github_pages)
-    [This link will resolve to a permalink that is relative to the current page's permalink](documentation)
+    [This text will be clickable and will go to the permalink in parens](/formulize/developers/github_pages)
+    [This link will resolve to a permalink that is relative to the current page's permalink](../documentation)
     
 Note that when using a fully qualified permalink as the destination, there is a preceding slash and no ending slash, which is the opposite format from how you must specify the permalink in the snippet at the top of each page!  Nothing is ever simple.
 

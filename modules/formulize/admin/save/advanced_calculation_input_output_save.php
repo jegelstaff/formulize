@@ -31,7 +31,7 @@
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
-  return;
+	return;
 }
 
 // get admin info
@@ -50,7 +50,7 @@ $advCalcObject = $advanced_calculation_handler->get($acid);
 
 // check if the user has permission to edit the form
 if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
-  return;
+	return;
 }
 
 // apply user changes
@@ -59,5 +59,5 @@ $advCalcObject->setVar('output',$advCalc['output']);
 
 // save object, and if a new item, reload page
 if(!$acid = $advanced_calculation_handler->insert($advCalcObject)) {
-  print "Error: could not save the advanced calculation properly: ".$xoopsDB->error();
+	print "Error: could not save the advanced calculation properly: ".$xoopsDB->error();
 }

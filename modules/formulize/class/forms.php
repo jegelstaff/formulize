@@ -531,8 +531,7 @@ class formulizeFormsHandler {
 	// check to see if a handle is unique within a form
 	function isHandleUnique($handle, $element_id="") {
         $handle = formulizeForm::sanitize_handle_name($handle);
-		$ucHandle = strtoupper($handle);
-		if($ucHandle == "CREATION_UID" OR $ucHandle == "CREATION_DATETIME" OR $ucHandle == "MOD_UID" OR $ucHandle == "MOD_DATETIME" OR $ucHandle == "CREATOR_EMAIL" OR $ucHandle == "UID" OR $ucHandle == "PROXYID" OR $ucHandle == "CREATION_DATE" OR $ucHandle == "MOD_DATE" OR $ucHandle == "MAIN_EMAIL" OR $ucHandle == "MAIN_USER_VIEWEMAIL") {
+		if(isMetaDataField($handle)){
 			return false; // don't allow reserved words that will be used in the main data extraction queries
 		}
 		global $xoopsDB;
@@ -1051,7 +1050,7 @@ class formulizeFormsHandler {
 			}
 			if(!$start) { $insert_sql .= ", "; }
 			$start = 0;
-			$insert_sql .= "\"$value\"";
+            $insert_sql .= '"'.formulize_db_escape($value).'"';
 		}
 		$insert_sql .= ")";
 		if(!$result = $this->db->query($insert_sql)) {

@@ -392,12 +392,26 @@
       "type": "clickElement",
       "locator": {
         "type": "link text",
-        "value": "Home"
+        "value": "StoryPeople"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Screens"
       }
     },
     {
       "type": "waitForTextPresent",
-      "text": "Create a new form"
+      "text": "Create a new Screen"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Regular 'StoryPeople'"
+      }
     },
     {
       "type": "clickElement",
@@ -417,14 +431,7 @@
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-admin-form']/div/select[1]//option[4]"
-      }
-    },
-    {
-      "type": "setElementSelected",
-      "locator": {
-        "type": "xpath",
-        "value": "//form[@id='form-admin-form']/div/select[2]//option[5]"
+        "value": "//form[@id='form-admin-form']/div/select//option[4]"
       }
     },
     {
@@ -460,14 +467,7 @@
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-admin-form']/div/select[1]//option[5]"
-      }
-    },
-    {
-      "type": "setElementSelected",
-      "locator": {
-        "type": "xpath",
-        "value": "//form[@id='form-admin-form']/div/select[2]//option[2]"
+        "value": "//form[@id='form-admin-form']/div/select[1]//option[2]"
       }
     },
     {
@@ -485,7 +485,7 @@
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//tr[@class='even']/td[4]/select//option[2]"
+        "value": "//tr[@class='even']/td[4]/select//option[3]"
       }
     },
     {
@@ -511,39 +511,6 @@
       "type": "clickElement",
       "locator": {
         "type": "link text",
-        "value": "Home"
-      }
-    },
-    {
-      "type": "waitForTextPresent",
-      "text": "Create a new form"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "link text",
-        "value": "StoryPeople"
-      }
-    },
-    {
-      "type": "pause",
-      "waitTime": "534"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "link text",
-        "value": "Screens"
-      }
-    },
-    {
-      "type": "pause",
-      "waitTime": "534"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "link text",
         "value": "Regular 'StoryPeople'"
       }
     },
@@ -555,7 +522,7 @@
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-admin-form']/div/fieldset[1]/div[3]/select//option[2]"
+        "value": "//form[@id='form-2']/fieldset/select//option[2]"
       }
     },
     {
@@ -581,28 +548,28 @@
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@value='16']"
+        "value": "//form[@id='form-3']/div/div/select/option[@value='16']"
       }
     },
     {
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@value='17']"
+        "value": "//form[@id='form-3']/div/div/select/option[@value='17']"
       }
     },
     {
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@value='8']"
+        "value": "//form[@id='form-3']/div/div/select/option[@value='8']"
       }
     },
     {
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@value='9']"
+        "value": "//form[@id='form-3']/div/div/select/option[@value='9']"
       }
     },
     {
@@ -766,10 +733,17 @@
       "waitTime": "534"
     },
     {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Relationships"
+      }
+    },
+    {
       "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-admin-form']/div/fieldset[1]/div[3]/select//option[2]"
+        "value": "//form[@id='form-2']/fieldset/select//option[2]"
       }
     },
     {

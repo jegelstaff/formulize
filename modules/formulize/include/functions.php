@@ -566,12 +566,17 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
         }
 
         // if the headerlist is using the new ID based system
-        if (is_numeric($headerlist[0]) OR $headerlist[0] == "uid" OR $headerlist[0] == "proxyid" OR $headerlist[0] == "creation_date" OR $headerlist[0] == "mod_date" OR $headerlist[0] == "creator_email" OR $headerlist[0] == "creation_uid" OR $headerlist[0] == "mod_uid" OR $headerlist[0] == "creation_datetime" OR $headerlist[0] == "mod_datetime") {
+        if (is_numeric($headerlist[0]) OR isMetaDataField($headerlist[0])) {
             // if we want actual text headers, convert ids to text
             if (!$needids) {
                 $start = 1;
                 $metaHeaderlist = array();
                 foreach ($headerlist as $headerid=>$thisheaderid) {
+                    if ($thisheaderid == "entry_id") {
+                        $metaHeaderlist[] = _formulize_ENTRY_ID;
+                        unset($headerlist[$headerid]);
+                        continue;
+                    }
                     if ($thisheaderid == "uid" OR $thisheaderid == "creation_uid") {
                         $metaHeaderlist[] = _formulize_DE_CALC_CREATOR;
                         unset($headerlist[$headerid]);
@@ -1125,14 +1130,14 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
             if (is_object($selfElement)) {
                 $selfEleValue = $selfElement->getVar('ele_value');
                 if (strstr($selfEleValue[2], "#*=:*")) {
-                    // self is the linked selectbox, other is the source of the values
+                // self is the linked selectbox, other is the source of the values
                     if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$selfElement->getVar('ele_handle')])) {
                         // if an asynch request has set an override value, use that!
                         $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$selfElement->getVar('ele_handle')];
                     } else {
                         // get the entry in the $one_fid['fid'] form (form with the self element), that has the intval($entries[$fid][0]) entry (the entry we are calling up already) as it's linked value
-                        $data_handler = new formulizeDataHandler($one_fid['fid']);
-                        $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($entries[$fid][0]));
+                    $data_handler = new formulizeDataHandler($one_fid['fid']);
+                    $foundEntry = $data_handler->findFirstEntryWithValue($selfElement, intval($entries[$fid][0]));
                     }
                     if ($foundEntry !== false) {
                         $entries[$one_fid['fid']][] = $foundEntry;
@@ -1146,8 +1151,8 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
                         $foundEntry = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$otherElement->getVar('ele_handle')];
                     } else {
                         // return the value of the $one_fid['keyother'] element in the $fid, in intval($entries[$fid][0]) entry
-                        $data_handler = new formulizeDataHandler($fid);
-                        $foundEntry = $data_handler->getElementValueInEntry(intval($entries[$fid][0]), $one_fid['keyother']);
+                    $data_handler = new formulizeDataHandler($fid);
+                    $foundEntry = $data_handler->getElementValueInEntry(intval($entries[$fid][0]), $one_fid['keyother']);
                     }
                     if ($foundEntry !== false) {
                         $entries[$one_fid['fid']][] = trim($foundEntry, ","); // remove commas, though there shouldn't be any anymore since we're not storing ,id, in the DB as of F5
@@ -1266,10 +1271,15 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
         }
     } elseif ($_POST['metachoice'] == 1) {
         // only include metadata columns if the user requested them
-        $csvfile =  "\"" . _formulize_DE_CALC_CREATOR . "\"$fd\"" . _formulize_DE_CALC_CREATEDATE . "\"$fd\"" . _formulize_DE_CALC_MODIFIER . "\"$fd\"" . _formulize_DE_CALC_MODDATE . "\"";
+        $csvfile =  "\"" . _formulize_ENTRY_ID . "\"$fd\"" . _formulize_DE_CALC_CREATOR . "\"$fd\"" . _formulize_DE_CALC_CREATEDATE . "\"$fd\"" . _formulize_DE_CALC_MODIFIER . "\"$fd\"" . _formulize_DE_CALC_MODDATE . "\"";
         $lineStarted = true;
     } else {
+        if (in_array("entry_id", $cols)) {
+            $csvfile .= "\"" . _formulize_ENTRY_ID . "\"";
+            $lineStarted = true;
+        }        
         if (in_array("uid", $cols) OR in_array("creation_uid", $cols)) {
+            $csvfile .= $lineStarted ? $fd : "";
             $csvfile .= "\"" . _formulize_DE_CALC_CREATOR . "\"";
             $lineStarted = true;
         }
@@ -1292,7 +1302,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
 
     foreach ($headers as $header) {
         // ignore the metadata columns if they are selected, since we already handle them better above. as long as the user requested that they be included
-        if ($header == "" OR ($_POST['metachoice'] == 1 AND ($header == _formulize_DE_CALC_CREATOR OR $header == _formulize_DE_CALC_MODIFIER OR $header==_formulize_DE_CALC_CREATEDATE OR $header ==_formulize_DE_CALC_MODDATE))) {
+        if ($header == "" OR ($_POST['metachoice'] == 1 AND ($header == _formulized_ENTRY_ID OR $header == _formulize_DE_CALC_CREATOR OR $header == _formulize_DE_CALC_MODIFIER OR $header==_formulize_DE_CALC_CREATEDATE OR $header ==_formulize_DE_CALC_MODDATE))) {
             continue;
         }
         $header = str_replace("\"", "\"\"", $header);
@@ -1308,14 +1318,11 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
     $colcounter = 0;
     $i=0;
     foreach ($data as $entry) {
-        // if this file is being generated for downloading and then uploading with changes, record all the id_reqs
-        if ($template == "update") {
-            $formhandle = getFormHandlesFromEntry($entry);
-            $ids = internalRecordIds($entry, $formhandle[0]);
-            $id = $ids[0];
-            $id_req[] = $id;
-        }
-
+        $formhandle = getFormHandlesFromEntry($entry);
+        $ids = internalRecordIds($entry, $formhandle[0]);
+        $id = $ids[0];
+        $id_req[] = $id;
+        
         $c_uid = display($entry, 'creation_uid');
         $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
         $c_name = $c_name_q[0]['name'];
@@ -1342,14 +1349,14 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
             $csvfile .= $id . $fd . "\"$c_name\"";
             $lineStarted = true;
         } elseif ($_POST['metachoice'] == 1) {
-            $csvfile .= "\"$c_name\"" . $fd . "\"$c_date\"" . $fd . "\"$m_name\"" . $fd . "\"$m_date\"";
+            $csvfile .= "\"$id\"" . $fd . "\"$c_name\"" . $fd . "\"$c_date\"" . $fd . "\"$m_name\"" . $fd . "\"$m_date\"";
             $lineStarted = true;
         }
 
         // write in data
         foreach ($cols as $col) {
             // ignore the metadata columns if they are selected, since we already handle them better above
-            if (($col == "uid" OR $col == "proxyid" OR $col=="creation_date" OR $col =="mod_date" OR $col == "creation_uid" OR $col == "mod_uid" OR $col == "creation_datetime" OR $col == "mod_datetime") AND $_POST['metachoice'] == 1) {
+            if (isMetaDataField($col) AND $_POST['metachoice'] == 1) {
                 continue;
             }
             if ($col == "creation_uid" OR $col == "mod_uid" OR $col == "uid" OR $col == "proxyid") {
@@ -1590,7 +1597,9 @@ function writableQuery($items, $mod="") {
 // Also used for advanced searches
 function getCalcHandleText($handle, $forceColhead=true) {
     global $xoopsDB;
-    if ($handle == "creation_uid") {
+    if ($handle == "entry_id") {
+        return _formulize_ENTRY_ID;
+    } elseif ($handle == "creation_uid") {
         return _formulize_DE_CALC_CREATOR;
     } elseif ($handle == "mod_uid") {
         return _formulize_DE_CALC_MODIFIER;
@@ -2267,7 +2276,7 @@ function formatLinks($matchtext, $handle, $textWidth=35, $entryBeingFormatted) {
     static $cachedValues = array();
     static $cachedTypes = array();
     $matchtext = $myts->undoHtmlSpecialChars($matchtext);
-    if ($handle == "uid" OR $handle=="proxyid" OR $handle=="creation_date" OR $handle == "mod_date" OR $handle == "creator_email" OR $handle == "creation_uid" OR $handle == "mod_uid" OR $handle == "creation_datetime" OR $handle == "mod_datetime") {
+    if (isMetaDataField($handle)) {
         return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
     }
     if (!isset($cachedValues[$handle])) {
@@ -3150,7 +3159,9 @@ function getHeaders($cols, $colsIsElementHandles = false) {
     global $xoopsDB;
 
     foreach ($cols as $col) {
-        if ($col == "creation_uid") {
+        if($col == "entry_id") {
+            $headers[] = _formulize_ENTRY_ID;
+        }elseif ($col == "creation_uid") {
             $headers[] = _formulize_DE_CALC_CREATOR;
         } elseif ($col == "mod_uid") {
             $headers[] = _formulize_DE_CALC_MODIFIER;
@@ -4306,6 +4317,86 @@ function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$op
 }
 
 
+function getExistingFilter($filterSettings, $filterName, $formWithSourceElements, $formName, $defaultTypeIfNoFilterTypeGiven="all", $groups=false, $filterAllText=_formulize_GENERIC_FILTER_ALL, $filterConText=_formulize_GENERIC_FILTER_CON, $filterButtonText=_formulize_GENERIC_FILTER_ADDBUTTON) {
+    if (!$filterName OR !$formWithSourceElements OR !$formName) {
+        return false;
+    }
+
+    // set all the elements that we want to show the user
+    $cols = "";
+    if ($groups) {
+        $cols = getAllColList($formWithSourceElements, "", $groups);
+    } else {
+        $cols = getAllColList($formWithSourceElements);
+    }
+
+    $options = array('creation_uid'=>_formulize_DE_CALC_CREATOR, 'creation_datetime'=>_formulize_DE_CALC_CREATEDATE, 'mod_uid'=>_formulize_DE_CALC_MODIFIER, 'mod_datetime'=>_formulize_DE_CALC_MODDATE);
+    if (is_array($cols)) {
+        // setup the options array for form elements
+        foreach ($cols as $f=>$vs) {
+            foreach ($vs as $row=>$values) {
+                if ($values['ele_colhead'] != "") {
+                    $options[$values['ele_handle']] = printSmart(trans($values['ele_colhead']), 40);
+                } else {
+                    $options[$values['ele_handle']] = printSmart(trans(strip_tags($values['ele_caption'])), 40);
+                }
+            }
+        }
+    }
+
+    // process existing conditions...setup needed variables
+    $oldElementsName = $filterName."_elements";
+    $oldOpsName = $filterName."_ops";
+    $oldTermsName = $filterName."_terms";
+    $oldTypesName = $filterName."_types";
+
+    // unpack existing conditions
+    if (is_array($filterSettings)) {
+        ${$oldElementsName} = $filterSettings[0];
+        ${$oldOpsName} = $filterSettings[1];
+        ${$oldTermsName} = $filterSettings[2];
+        if (isset($filterSettings[3])) {
+            ${$oldTypesName} = $filterSettings[3];
+        } else {
+            if (is_array($filterSettings[0])) {
+                foreach ($filterSettings[0] as $i => $thisFilterSettingsZero) {
+                    ${$oldTypesName}[$i] = $defaultTypeIfNoFilterTypeGiven;
+                }
+            }
+        }
+    }
+
+    // setup needed variables for the all or oom
+    // > match all of these
+    $conditionlist = array();
+
+    // > match one or more of these
+    $conditionlistOOM = array();
+
+
+    if (is_array(${$oldElementsName})) {
+        $i=0;
+        foreach (${$oldElementsName} as $x=>$thisOldElementsName) {
+            // need to add [$i] to the generation of the hidden values here, so the hidden condition keys equal the flag on the deletion X
+            // $x will be the order based on the filter settings that were passed in, might not start at 0.  $i will always start at 0, so this way we'll catch/correct any malformed arrays as people edit/save them
+
+            if (${$oldTypesName}[$x] == "all") {
+                array_push($conditionlist, $options[${$oldElementsName}[$x]] . " " . ${$oldOpsName}[$x] . " " . ${$oldTermsName}[$x]);
+            } else {
+                array_push($conditionlistOOM, $options[${$oldElementsName}[$x]] . " " . ${$oldOpsName}[$x] . " " . ${$oldTermsName}[$x]);
+            }
+            $i++;
+        }
+    }
+
+    $existingConditions = array();
+    $existingConditions['all'] = $conditionlist;
+    $existingConditions['oom'] = $conditionlistOOM;
+
+    return $existingConditions;
+}
+
+
 // this function gets the password for the encryption/decryption process
 // want to has the db pass since we don't want any SQL logging processes to include the db pass as plaintext
 function getAESPassword() {
@@ -4562,6 +4653,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         $targetFormElementTypes = $targetFormObject->getVar('elementTypes');
         $targetAlias .= $targetAlias ? "." : ""; // add a period to the end of the alias, if there is one, so it will work in the sql statement
         for ($filterId = 0;$filterId<count($filterElementHandles);$filterId++) {
+            $filterOps[$filterId] = $filterOps[$filterId] == 'NOT' ? '!=' : $filterOps[$filterId]; // convert NOT to != to avoid syntax error
             // if this filter term is a { } term that matches a $_GET value, then let's use that instead
             if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
                 $bracketlessFilterTerm = substr($filterTerms[$filterId],1,-1);
@@ -5301,4 +5393,19 @@ function formulize_makeOneToOneLinks($frid, $fid) {
         $oneToOneLinksMade[$frid] = true;
     }
     return array($form1s, $form2s, $form1EntryIds, $form2EntryIds);
+}
+
+//Function used to check if the given field is within the list of metadata fields.
+function isMetaDataField($field){
+    $ucField = strtoupper($field);
+    $dataHandler = new formulizeDataHandler(false);
+    $metadataFields = $dataHandler->metadataFields;
+    foreach ($metadataFields as $value) 
+    {
+        if($value == $ucField)
+        {
+            return true;
+        }
+    }
+    return false;
 }
