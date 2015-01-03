@@ -181,6 +181,10 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "1543"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
