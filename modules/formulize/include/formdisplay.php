@@ -906,6 +906,61 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		
 		}
 
+		global $formulize_governingElements;
+		global $formulize_oneToOneElements;
+		global $formulize_oneToOneMetaData;
+		if(!is_array($formulize_governingElements)) {
+				$formulize_governingElements = array();
+		}
+		if(!is_array($formulize_oneToOneElements)) {
+				$oneToOneElements = array();
+		}
+		if(!is_array($oneToOneMetaData)) {
+				$oneToOneMetaData = array();		
+		}
+		if(count($GLOBALS['formulize_renderedElementHasConditions'])>0) {
+			$governingElements1 = compileGoverningElementsForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $entries, $sub_entries);
+			foreach($governingElements1 as $key=>$value) {
+					$oneToOneElements[$key]	= false;
+			}
+			$formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements1);
+		}
+		// add in any onetoone elements that we need to deal with at the same time (in case their joining key value changes on the fly)
+		if(count($fids)>1) {
+			$i = 1;
+			while($i<=count($fids)) {
+					$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
+					$relationship = $relationship_handler->get($frid);
+					foreach($relationship->getVar('links') as $thisLink) {
+							if($thisLink->getVar('form1') == $fids[$i]) {
+									$keyElement = $thisLink->getVar('key2');
+									break;
+							} elseif($thisLink->getVar('form2') == $fids[$i]) {
+									$keyElement = $thisLink->getVar('key1');
+									break;
+							}
+					}
+					// prepare to loop through elements for the rendered entry, or 'new', if there is no rendered entry
+					$entryToLoop = isset($entries[$fids[$i]][0]) ? $entries[$fids[$i]][0] : null;
+					if(!$entryToLoop AND isset($GLOBALS['formulize_renderedElementsForForm'][$fids[$i]]['new'])) {
+						$entryToLoop = 'new';
+					}
+					foreach($GLOBALS['formulize_renderedElementsForForm'][$fids[$i]][$entryToLoop] as $renderedMarkupName => $thisElement) {
+							$GLOBALS['formulize_renderedElementHasConditions'][$renderedMarkupName] = $thisElement;
+							$governingElements2 = _compileGoverningElements($entries, _getElementObject($keyElement), $renderedMarkupName);
+							foreach($governingElements2 as $key=>$value) {
+									$formulize_oneToOneElements[$key] = true;
+									$formulize_oneToOneMetaData[$key] = array('onetoonefrid' => $frid, 'onetoonefid' => $fid, 'onetooneentries' => urlencode(serialize($entries)), 'onetoonefids'=>urlencode(serialize($fids)));			
+							}
+							$formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements2);
+					}
+					$i++;
+			}
+		}
+		if(count($formulize_governingElements)> 0 AND !$formElementsOnly) { // render this once at the end of rendering the main form!
+			drawJavascriptForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData);	
+		}
+		
 
 		$idForForm = $formElementsOnly ? "" : "id=\"formulizeform\""; // when rendering disembodied forms, don't use the master id!
 		print "<div $idForForm>".$form->render()."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
@@ -2725,31 +2780,13 @@ print "</script>\n";
 $drawnJavascript = true;
 }
 
-
-function drawJavascriptForConditionalElements($conditionalElements, $entries, $sub_entries) {
+// THIS FUNCTION ACTUALLY DRAWS IN THE NECESSARY JAVASCRIPT FOR ALL ELEMENTS FOR WHICH ITS PROPERTIES ARE DEPENDENT ON ANOTHER ELEMENT
+// PRIMARILY THIS APPLIES TO CONDITIONAL ELEMENTS, BUT ALSO USED IN ONE-TO-ONE RELATIONSHIPS
+// NOTE THAT THROUGHOUT THIS CODE, HANDLE MEANS THE RENDERED MARKUP NAME!!  This should totally be refactored, ala XP
+function drawJavascriptForConditionalElements($conditionalElements, $governingElements, $oneToOneElements, $oneToOneMetaData=false) {
 
 global $xoopsUser;
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-
-// need to setup governing elements array...which is inverse of the conditional elements
-$element_handler = xoops_getmodulehandler('elements','formulize');
-$governingElements = array();
-$GLOBALS['recordedEntries'] = array(); // global array used in the compile functions below, to make sure we only record a given element pair one time
-foreach($conditionalElements as $handle=>$theseGoverningElements) {
-	foreach($theseGoverningElements as $governingElementKey=>$thisGoverningElement) {
-		$elementObject = $element_handler->get($thisGoverningElement);
-		if(is_object($elementObject)) {
-			if($elementObject->getVar('ele_type') == "derived") {
-				unset($conditionalElements[$handle][$governingElementKey]); // derived value elements have no DOM instantiation that we can latch onto, so skip them...we should find a way to update them with the current state of the form maybe??
-				continue;
-			}
-			$governingElements = compileGoverningElements($entries, $governingElements, $elementObject, $handle);
-			$governingElements = compileGoverningElements($sub_entries, $governingElements, $elementObject, $handle);
-			$governingElements = compileGoverningLinkedSelectBoxSourceConditionElements($governingElements, $handle);
-		}
-		// must wrap required validation javascript in some check for the pressence of the element??  
-	}
-}
 
 print "
 <script type='text/javascript'>
@@ -2762,6 +2799,7 @@ jQuery(window).load(function() {
 	var conditionalElements = new Array('".implode("', '",array_keys($conditionalElements))."');
 	var governedElements = new Array();
 	var relevantElements = new Array();
+	var oneToOneElements = new Array();
 	";
 	$topKey = 0;
 	$relevantElementArray = array();
@@ -2770,10 +2808,20 @@ jQuery(window).load(function() {
 		foreach($theseGovernedElements as $innerKey=>$thisGovernedElement) {
 			if(!isset($relevantElementArray[$thisGovernedElement])) {
 				print "relevantElements['".$thisGovernedElement."'] = new Array();\n";
+				print "oneToOneElements['".$thisGovernedElement."'] = new Array();\n";
 				$relevantElementArray[$thisGovernedElement] = true;
 			}
 			print "relevantElements['".$thisGovernedElement."'][$topKey] = '".$thisGoverningElement."';\n";
 			print "governedElements['".$thisGoverningElement."'][$innerKey] = '".$thisGovernedElement."';\n";
+			print "oneToOneElements['".$thisGovernedElement."'][$topKey] = ";
+			if($oneToOneElements[$thisGoverningElement] == true) {
+				print "true;\n";
+				foreach($oneToOneMetaData[$thisGoverningElement] as $key=>$value) {
+						print "oneToOneElements['".$thisGovernedElement."']['$key'] = '$value';\n"; 
+				}
+			} else {
+				print "false;\n";
+			}
 		}
 		$topKey++;
 	}
@@ -2787,6 +2835,9 @@ jQuery(window).load(function() {
 		for(key in governedElements[jQuery(this).attr('name')]) {
 			var handle = governedElements[jQuery(this).attr('name')][key];
 			elementValuesForURL = getRelevantElementValues(relevantElements[handle]);
+			if(oneToOneElements[handle]) {
+				elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[handle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[handle]['onetoonefid']+'&onetooneentries='+oneToOneElements[handle]['onetooneentries']+'&onetoonefids='+oneToOneElements[handle]['onetoonefids'];			
+			}
 			checkCondition(handle, conditionalHTML[handle], elementValuesForURL);	
 		}
 	});
@@ -2805,8 +2856,19 @@ function assignConditionalHTML(handle, html) {
 
 function checkCondition(handle, currentHTML, elementValuesForURL) {
 	partsArray = handle.split('_');
-	jQuery.get(\"".XOOPS_URL."/modules/formulize/formulize_xhr_responder.php?uid=".$uid."&op=get_element_row_html&elementId=\"+partsArray[3]+\"&entryId=\"+partsArray[2]+\"&fid=\"+partsArray[1]+\"\"+elementValuesForURL, function(data) {
+	jQuery.post(\"".XOOPS_URL."/modules/formulize/formulize_xhr_responder.php?uid=".$uid."&op=get_element_row_html&elementId=\"+partsArray[3]+\"&entryId=\"+partsArray[2]+\"&fid=\"+partsArray[1]+elementValuesForURL, function(data) {
 		if(data) {
+			try {
+				results = JSON.parse(data);
+				// data is JSON, so will have extra instructions for us
+				data = results.data;
+				newvalues = results.newvalues;
+				for(key in newvalues) {
+						jQuery(\"[name=\"+newvalues[key].name+\"]\").val(newvalues[key].value);
+				}
+		    } catch (e) {
+                // do nothing
+            }
 			// should only empty if there is a change from the current state
 			if(window.document.getElementById('formulize-'+handle).style.display == 'none' || currentHTML != data) {
 				jQuery('#formulize-'+handle).empty();
@@ -2897,7 +2959,51 @@ function ShowHideTableRow(rowSelector, show, speed, callback)
 	
 }
 
-function compileGoverningElements($entries, $governingElements, $elementObject, $handle) {
+
+function compileGoverningElementsForConditionalElements($conditionalElements, $entries, $sub_entries) {
+
+		// need to setup governing elements array...which is inverse of the conditional elements
+		$element_handler = xoops_getmodulehandler('elements','formulize');
+		$governingElements = array();
+		$GLOBALS['recordedEntries'] = array(); // global array used in the compile functions below, to make sure we only record a given element pair one time
+		// so called 'handle' is in this case the rendered markup name?!
+		foreach($conditionalElements as $handle=>$theseGoverningElements) {
+			foreach($theseGoverningElements as $governingElementKey=>$thisGoverningElement) {
+				$elementObject = $element_handler->get($thisGoverningElement);
+				if(is_object($elementObject)) {
+					if($elementObject->getVar('ele_type') == "derived") {
+						unset($conditionalElements[$handle][$governingElementKey]); // derived value elements have no DOM instantiation that we can latch onto, so skip them...we should find a way to update them with the current state of the form maybe??
+						continue;
+					}
+					$governingElements1 = _compileGoverningElements($entries, $elementObject, $handle);
+					$governingElements2 = _compileGoverningElements($sub_entries, $elementObject, $handle);
+					$governingElements3 = _compileGoverningLinkedSelectBoxSourceConditionElements($governingElements, $handle);
+					$governingElements = mergeGoverningElements($governingElements, $governingElements1);
+					$governingElements = mergeGoverningElements($governingElements, $governingElements2);
+					$governingElements = mergeGoverningElements($governingElements, $governingElements3);
+				}
+				// must wrap required validation javascript in some check for the pressence of the element??  
+			}
+		}
+
+		return $governingElements;
+
+}
+
+// this function takes a list of governing elements, and adds them to a master list, cleanly, so keys aren't overwritten
+function mergeGoverningElements($masterList, $governingElements) {
+		
+		foreach($governingElements as $key=>$values) {
+				foreach($values as $value) {
+						$masterList[$key][] = $value;
+				}
+		}
+		return $masterList;
+}
+
+// elementObject is the element that governs whether the handle element shows up
+// renderedMarkupName is the de_ name for the handle element, in the current form
+function _compileGoverningElements($entries, $elementObject, $renderedMarkupName) {
 	$type = $elementObject->getVar('ele_type');
 	$ele_value = $elementObject->getVar('ele_value');
 	if($type == "checkbox" OR ($type == "select" AND $ele_value[1])) {
@@ -2906,21 +3012,22 @@ function compileGoverningElements($entries, $governingElements, $elementObject, 
 		$additionalNameParts = "";
 	}
 	global $recordedEntries;
+	$governingElements = array();
 	if(isset($entries[$elementObject->getVar('id_form')])) {
 		foreach($entries[$elementObject->getVar('id_form')] as $thisEntry) {
 			if($thisEntry == "") {
 				$thisEntry = "new";
 			}
-			if(!isset($recordedEntries[$elementObject->getVar('id_form')][$thisEntry][$elementObject->getVar('ele_id')][$handle])) {
-			$governingElements['de_'.$elementObject->getVar('id_form').'_'.$thisEntry.'_'.$elementObject->getVar('ele_id').$additionalNameParts][] = $handle;
-				$recordedEntries[$elementObject->getVar('id_form')][$thisEntry][$elementObject->getVar('ele_id')][$handle] = true;
+			if(!isset($recordedEntries[$elementObject->getVar('id_form')][$thisEntry][$elementObject->getVar('ele_id')][$renderedMarkupName])) {
+			$governingElements['de_'.$elementObject->getVar('id_form').'_'.$thisEntry.'_'.$elementObject->getVar('ele_id').$additionalNameParts][] = $renderedMarkupName;
+				$recordedEntries[$elementObject->getVar('id_form')][$thisEntry][$elementObject->getVar('ele_id')][$renderedMarkupName] = true;
 			}
 		}
 	}
 	return $governingElements;
 }
 
-function compileGoverningLinkedSelectBoxSourceConditionElements($governingElements, $handle) {
+function _compileGoverningLinkedSelectBoxSourceConditionElements($handle) {
 	// figure out if the $handle is for a lsb
 	// if so, check if there are conditions on the lsb
 	// check if the terms include any { } elements and grab those
@@ -2928,6 +3035,7 @@ function compileGoverningLinkedSelectBoxSourceConditionElements($governingElemen
 	$element_handler = xoops_getmodulehandler('elements','formulize');
 	$elementObject = $element_handler->get($handleParts[3]);
 	global $recordedEntries;
+	$governingElements = array();
 	if(is_object($elementObject) AND $elementObject->isLinked) {
 		$ele_value = $elementObject->getVar('ele_value');
 		$elementConditions = $ele_value[5];
