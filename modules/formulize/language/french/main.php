@@ -459,7 +459,7 @@ define("_formulize_DMULTI_NEXT", "Continuer");
 define("_formulize_DMULTI_OF", "de");
 define("_formulize_DMULTI_PAGE", "Page");
 define("_formulize_DMULTI_PREV", "Revenir");
-define("_formulize_DMULTI_SAVE", "Sauvegarder et terminer >>");
+define("_formulize_DMULTI_SAVE", "Sauver & Terminer");
 define("_formulize_DMULTI_SKIP", "Une ou plusieurs pages furent sautées car elles ne s'appliquent pas");
 define("_formulize_DMULTI_THANKS", "<h1>Vous y êtes arrivés!</h1><p>Merci d'avoir pris le temps.  Nous apprécions beaucoup.</p>");
 define("_formulize_DMULTI_YOUAREON", "Vous êtes à la page:");
