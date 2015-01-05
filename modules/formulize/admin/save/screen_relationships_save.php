@@ -71,17 +71,19 @@ if($screens['type'] == 'multiPage') {
   $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
 }
 
-$screen = $screen_handler->get($sid);
+if ("new" != $sid) {
+    $screen = $screen_handler->get($sid);
+    if (null == $screen) {
+        error_log("coald not load screen with id ".print_r($sid, true));
+    }
+    $originalFrid = $screen->getVar('frid');
+    $screen->setVar('frid',$screens['frid']);
 
-$originalFrid = $screen->getVar('frid');
-$screen->setVar('frid',$screens['frid']);
+    if (!$sid = $screen_handler->insert($screen)) {
+        print "Error: could not save the screen properly: ".$xoopsDB->error();
+    }
 
-if(!$sid = $screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".$xoopsDB->error();
+    if ($originalFrid != $screens['frid']) {
+        print '/* eval */ reloadWithScrollPosition();';
+    }
 }
-
-if($originalFrid != $screens['frid']) {
-  print '/* eval */ reloadWithScrollPosition();';
-}
-
-?>
