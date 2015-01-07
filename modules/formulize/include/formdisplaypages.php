@@ -330,6 +330,11 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		
 	if($currentPage == $thanksPage) {
 	
+        if($screen AND $screen->getVar('finishisdone')) {
+            print "<script type='text/javascript'>location = '$done_dest';</script>";
+            return; // if we've ended up on the thanks page via conditions (last page was not shown) then we should just bail if there is not supposed to be a thanks page
+        }
+    
 		if(is_array($thankstext)) { 
 			if($thankstext[0] === "PHP") {
 				eval($thankstext[1]);
@@ -438,7 +443,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
         // setting up the basic templateVars for all templates
         $templateVariables = array('previousPageButton' => $previousPageButton, 'nextPageButton' => $nextPageButton, 'savePageButton' => $savePageButton,
             'totalPages' => $totalPages, 'currentPage' => $currentPage, 'skippedPageMessage' => $skippedPageMessage,
-            'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles, 'entry_id'=>$entry, 'form_id'=>$fid);
+            'pageSelectionList'=>$pageSelectionList, 'pageTitles' => $pageTitles, 'entry_id'=>$entry, 'form_id'=>$fid, 'owner'=>$owner);
 
 		print "<form name=\"pageNavOptions_above\" id=\"pageNavOptions_above\">\n";
 		if($screen AND $toptemplate = $screen->getTemplate('toptemplate')) {
@@ -529,7 +534,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		    print $formObjectForRequiredJS->renderValidationJS(true, true); // with tags, true, skip the extra js that checks for the formulize theme form divs around the elements so that conditional animation works, true
 		    // print "<script type=\"text/javascript\">function xoopsFormValidate_formulize(){return true;}</script>"; // shim for the validation javascript that is created by the xoopsThemeForms, and which our saving logic currently references...saving won't work without this...we should actually render the proper validation logic at some point, but not today.
 	    } else {
-		displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, "", "", 0, 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
+            displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, "", "", 0, 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
 	    }
 	    
 		formulize_benchmark("After displayForm.");
