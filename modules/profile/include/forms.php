@@ -247,7 +247,7 @@ function getUserForm(&$user, $profile = false, $action = false) {
         include_once ICMS_ROOT_PATH."/modules/system/constants.php";
         if ($gperm_handler->checkRight("system_admin", XOOPS_SYSTEM_GROUP, icms::$user->getGroups(), 1)) {
             //add group selection
-            $group_select = new icms_form_elements_select_Group(_AM_PROFILE_GROUP, 'groups', false, $user->getGroups(), 5, true);
+            $group_select = new icms_form_elements_select_Group(_AM_PROFILE_GROUP, 'groups', false, $user->getGroups(), 15, true); // UPDATED BY FREEFORM SOLUTIONS - MAKE LIST TALLER
             $elements[0][] = array('element' => $group_select, 'required' => 0);
             $weights[0][] = 15000;
         }

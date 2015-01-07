@@ -15,6 +15,13 @@
           <p><{$smarty.const._AM_ELE_TEXT_DESC}></p>
       </div>
     </div>
+	    <div class="form-item">
+	    <input type='checkbox' id="elements-ele_value-use-rich-text" name="elements-ele_value[use_rich_text]" value=1 <{if $content.ele_value.use_rich_text}>checked='checked'<{/if}>> <label for="elements-ele_value-use-rich-text"><{$smarty.const._AM_ELE_USERICHTEXT}></label>
+	    <div class="description">
+          <p><{$smarty.const._AM_ELE_RICHTEXT_DESC}></p>
+      </div>
+    </div>
+	
     <div class="form-item">
 	    <label for="formlink"><{$smarty.const._AM_ELE_FORMLINK_TEXTBOX}></label>
       <{$content.formlink}>

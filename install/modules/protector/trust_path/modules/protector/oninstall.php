@@ -55,9 +55,9 @@ function protector_oninstall_base( $module , $mydirname )
 	}
 
 	// TEMPLATES
-	$tplfile_handler =& new icms_view_template_file_Handler(icms::$xoopsDB);
+	$tplfile_handler = new icms_view_template_file_Handler(icms::$xoopsDB);
 	$tpl_path = dirname(__FILE__).'/templates' ;
-	if( $handler = @opendir( $tpl_path . '/' ) ) {
+	if (is_dir(($tpl_path . '/')) and $handler = @opendir($tpl_path . '/')) {
 		while( ( $file = readdir( $handler ) ) !== false ) {
 			if( substr( $file , 0 , 1 ) == '.' ) continue ;
 			$file_path = $tpl_path . '/' . $file ;

@@ -15,7 +15,7 @@ $colorPageBackground:   #ffffff;
     @return if((lightness($bg) > 50), darken($bg, $percentage), lighten($bg, $percentage));
 }
 
-// header colours
+// page header colours
 $colorHeaderMenuBG:     $colourPrimary;
 $colorHeaderText:       contrasting-color($colorHeaderBackground, #000, #fff);
 $colorHeaderLink:       contrasting-color($colorHeaderMenuBG, #000, #fff);
@@ -23,6 +23,7 @@ $colorHeaderAccent:     contrasting-color($colorHeaderBackground, darken($colorH
 
 
 // page colours
+$colourTextOnPrimary:   contrasting-color($colourPrimary, #000, #fff);
 $colorPageText:         contrasting-color($colorPageBackground, #000, #fff);
 $colorPageHeaders:      $colourAccent;
 
@@ -36,6 +37,7 @@ $colorTableHeaderText:  contrasting-color($colorTableHeaderBackground, #000, #ff
 $colorEvenBackground:   $colorPageBackground;
 $colorOddBackground:    lighten-or-darken($colorPageBackground, 10);
 $colorTableText:        contrasting-color($colorPageBackground, #000, #fff);
+$colorTableLink:        contrasting-color($colorTableHeaderBackground, #000, #fff);
 
 
 // form colours

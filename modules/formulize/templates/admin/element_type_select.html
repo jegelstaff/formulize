@@ -77,7 +77,7 @@
 				  </div>
 			  </fieldset>
 		  </div>
-		  
+
 		  <div class="form-item">
 		    <fieldset>
 			    <legend>Show as links in lists of entries?</legend>
@@ -127,7 +127,7 @@
 			    </div>
 		    </fieldset>
 	    </div>
-	    
+
 	    <div class="form-item">
 		    <fieldset>
 			    <legend>Which option(s) should be selected by default?</legend>
@@ -177,7 +177,7 @@
 			    </div>
 		    </fieldset>
 	    </div>
-	    
+
 
     </fieldset>
   </div>
@@ -189,7 +189,11 @@
  });
 
  $("[name=elements_multiple]").click(function() {
-	  $("#list").attr('checked',1);
+	$("#list").attr('checked',1);
+ });
+
+ $("#elements_multiple_notallowed").click( function(){
+ 	alert("WARNING: You may lose data when changing the multiple selection of your select box!");
  });
 
  $("#formlink").change(function() {
@@ -198,23 +202,23 @@
 		$("#filterdiv").empty();
 		$("#filterdiv").append('<p><input type="button" class="formButton" name="refreshfilter" onclick="refreshfilterjq()" value="Save changes to update filter options"></p>');
  });
- 
+
  function refreshfilterjq() {
 	 $("[name=reload_option_page]").val(1);
 	 $(".savebutton").click();
-	 	
+
  }
- 
+
  $("[name=addoption]").click(function () {
 		$("#no").attr('checked',1);
  })
- 
+
  $("[name=ele_value[0]]").keydown(function () {
 	$("#no").attr('checked',1);
 	$("#formlink").val('none');
 	$("#filterdiv").empty();
 	$("#filterdiv").append('<p>The options are not linked.</p>');
-	
+
  });
 
 	$("div#filterdiv > a.conditionsdelete").click(function () {
@@ -230,5 +234,5 @@
 	  $(".savebutton").click();
 		return false;
 	});
- 
+
 </script>

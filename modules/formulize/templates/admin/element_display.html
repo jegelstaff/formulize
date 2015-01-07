@@ -1,3 +1,8 @@
+<!-- start checkboxTree configuration -->
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/checkboxtree/jquery.checkboxtree.js"></script>
+<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/jquery/checkboxtree/jquery.checkboxtree.css"/>
+<!-- end checkboxTree configuration -->
+
 <div class="panel-content content">
 
 <form id="form-<{$number}>" class="formulize-admin-form">
@@ -6,6 +11,22 @@
 <input type="hidden" name="reload_element_pages" value="">
 <input type="hidden" class="conditionsdelete" name="conditionsdelete" value="">
 
+<!-- initialize checkboxTree plugin -->
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#multi-screen-tree').checkboxTree({
+        onCheck: {
+            ancestors: 'checkIfFull',
+            descendants: 'check'
+        },
+        onUncheck: {
+            ancestors: 'uncheck'
+        },
+        initializeChecked: 'expanded',
+        initializeUnchecked: 'collapsed'
+    });
+});
+</script>       
 
 <div class="accordion-box">
 	<div class="form-item">
@@ -42,6 +63,23 @@
 	</div>
 </div>
 
+<div class="accordion-box">
+    <div class="form-item">
+    <fieldset>
+	<legend>Regular Form Screens to display to</legend>
+	<div class="form-item">
+		<label for="elements_form_screens">Which form screens should element display on?</label>
+		<select id="elements_form_screens" name="elements_form_screens[]" size="8" multiple>
+		<{foreach from=$content.form_screens item=form_screen}>
+		<{assign var=formscreenid value=$form_screen.sid}>
+        <option value=<{$formscreenid}><{$content.ele_form_screens.$formscreenid}>><{$form_screen.title}></option>
+        <{/foreach}>
+		</select>
+    </div>
+    </fieldset>
+    </div>
+</div>
+
 <div class="accordion-box-wide">
 	<div class="form-item">
    	<fieldset>
@@ -54,6 +92,33 @@
 			</div>
 		</fieldset>
 	</div>
+</div>
+
+<div class="accordion-box">
+    <div class="form-item">
+    <fieldset>
+	<legend>Multi-Page Form Screens to display to</legend>
+    <ul id="multi-screen-tree">
+		<label for="multi_page_screens">Which pages of the screens should element display on?</label>
+		<{foreach from=$content.multi_form_screens item=form_screen}>
+			<{assign var=formscreenid value=$form_screen.sid}>
+			<{assign var=formscreenpages value=$form_screen.pages}>
+			<li><input type="checkbox" name="multi_page_screens[]" value=all><label><{$form_screen.title}></label>
+			<{foreach from=$formscreenpages key=k item=screen_page}>
+				<{if in_array($content.ele_id, $screen_page)}>
+				 <ul>
+	                <li><input type="checkbox" name="multi_page_screens[]" value=<{$formscreenid|cat:'-'|cat:$k}> checked><label><{$form_screen.pagetitles[$k]}></label>
+	            </ul>
+	            <{else}>
+	            <ul>
+	                <li><input type="checkbox" name="multi_page_screens[]" value=<{$formscreenid|cat:'-'|cat:$k}>><label><{$form_screen.pagetitles[$k]}></label>
+	            </ul>
+	            <{/if}>
+			<{/foreach}>
+        <{/foreach}>         
+	</ul>
+    </fieldset>
+    </div>
 </div>
 
 <div class="accordion-box">
@@ -71,7 +136,6 @@
 		</fieldset>
 	</div>
 </div>
-
 
 </form>
 
