@@ -1,5 +1,7 @@
 
 <div class="optionlist">
+<p><input type="button" class="formButton" name="addoption" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> 1"></p>
+
 <{if $content.useroptions|@count > 0}>
   <{foreach from=$content.useroptions key=text item=checked name=optionsloop}>
   <p class="useroptions" name="<{$smarty.foreach.optionsloop.index}>"><{if $content.type == "radio"}><input type="radio" name="defaultoption" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input><{else}><input type="checkbox" name="defaultoption[<{$smarty.foreach.optionsloop.index}>]" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input><{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[<{$smarty.foreach.optionsloop.index}>]" value="<{$text}>"></input></p>
@@ -13,7 +15,6 @@
 <p><input type="button" class="formButton" name="cleardef" value="<{$smarty.const._AM_CLEAR_DEFAULT}>"/></p>
 <{/if}>
 
-<p><input type="button" class="formButton" name="addoption" value="<{$smarty.const._AM_ELE_ADD_OPT_SUBMIT}> 1"</p>
 
 <div class="description">
   <{if $content.type == "radio"}><p><{$smarty.const._AM_ELE_OPT_DESC2}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
@@ -46,7 +47,7 @@
     $("[name=addoption]").blur();
     setDisplay('savewarning','block');
   });
-  
+
   <{if $content.type == "radio"}>
   $("[name=cleardef]").click(function () {
     $("[name=defaultoption]").attr('checked',0);

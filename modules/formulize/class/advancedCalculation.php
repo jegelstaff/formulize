@@ -1300,7 +1300,7 @@ jQuery(document).ready(function() {
 		    if( count( $optionValue ) == 2 ) {
 			$optionValue = $optionValue[0];
 		    }
-		    $options[] = is_numeric($optionValue) ? $optionValue : "'".formulize_escape($optionValue)."'";
+		    $options[] = is_numeric($optionValue) ? $optionValue : "'".formulize_db_escape($optionValue)."'";
 		}
 		if(count($options) > 0) {
 		    $filterValue .= implode(", ",$options);
@@ -1314,7 +1314,7 @@ jQuery(document).ready(function() {
 		if ($thisFilter['type']['kind'] ==1) { // 1 is dateboxes
 		    $filterValue= date("Y-m-d", strtotime($_POST[$postName]));
 		} else {
-		    $filterValue .= is_numeric($_POST[$postName]) ? $_POST[$postName] : formulize_escape($_POST[$postName]);
+		    $filterValue .= is_numeric($_POST[$postName]) ? $_POST[$postName] : formulize_db_escape($_POST[$postName]);
 		    $filterValue .= $fieldName ? "'" : ""; // close out the ' started above after we figured out the field this filter belongs to
 		}
 	    }
@@ -1418,7 +1418,7 @@ function createProceduresTable($array, $permTableName = "") {
 	    $fieldType = "datetime NULL default NULL";
 	    $indexList[] = "INDEX i_".$fieldName." ($fieldName)";
 	} else {
-	    $fieldType = "text NULL default NULL";	    
+        $fieldType = "text";
 	}
 	$sql .= "`$fieldName` $fieldType,";
 	$fieldList[]  = $fieldName;

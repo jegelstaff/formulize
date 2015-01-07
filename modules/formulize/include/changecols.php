@@ -114,38 +114,45 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	$cols = getAllColList($fid, $frid, $groups,"ele_list_order"); // $groups indicates that we only want columns which are visible to the current user
 
 	// handle metadata columns
-	// UID
-	$options[0] = "<option value=\"creation_uid\"";
-	if(in_array("creation_uid", $selectedCols)) {
+
+	//ENTRY_ID
+	$options[0] = "<option value=\"entry_id\"";
+	if(in_array("entry_id", $selectedCols)) {
 		$options[0] .= " selected";
 	}
-	$options[0] .= ">" . _formulize_DE_CALC_CREATOR . "</option>";
-	// PROXYID
-	$options[1] = "<option value=\"mod_uid\"";
-	if(in_array("mod_uid", $selectedCols)) {
+	$options[0] .= ">" . _formulize_ENTRY_ID . "</option>";
+	// UID
+	$options[1] = "<option value=\"creation_uid\"";
+	if(in_array("creation_uid", $selectedCols)) {
 		$options[1] .= " selected";
 	}
-	$options[1] .= ">" . _formulize_DE_CALC_MODIFIER . "</option>";
-	// CREATION_DATE
-	$options[2] = "<option value=\"creation_datetime\"";
-	if(in_array("creation_datetime", $selectedCols)) {
+	$options[1] .= ">" . _formulize_DE_CALC_CREATOR . "</option>";
+	// PROXYID
+	$options[2] = "<option value=\"mod_uid\"";
+	if(in_array("mod_uid", $selectedCols)) {
 		$options[2] .= " selected";
 	}
-	$options[2] .= ">" . _formulize_DE_CALC_CREATEDATE . "</option>";
-	// MOD_DATE
-	$options[3] = "<option value=\"mod_datetime\"";
-	if(in_array("mod_datetime", $selectedCols)) {
+	$options[2] .= ">" . _formulize_DE_CALC_MODIFIER . "</option>";
+	// CREATION_DATE
+	$options[3] = "<option value=\"creation_datetime\"";
+	if(in_array("creation_datetime", $selectedCols)) {
 		$options[3] .= " selected";
 	}
-	$options[3] .= ">" . _formulize_DE_CALC_MODDATE . "</option>";
-	// CREATOR EMAIL -- added September 24 2006
-	$options[4] = "<option value=\"creator_email\"";
-	if(in_array("creator_email", $selectedCols)) {
+	$options[3] .= ">" . _formulize_DE_CALC_CREATEDATE . "</option>";
+	// MOD_DATE
+	$options[4] = "<option value=\"mod_datetime\"";
+	if(in_array("mod_datetime", $selectedCols)) {
 		$options[4] .= " selected";
 	}
-	$options[4] .= ">" . _formulize_DE_CALC_CREATOR_EMAIL . "</option>";
+	$options[4] .= ">" . _formulize_DE_CALC_MODDATE . "</option>";
+	// CREATOR EMAIL -- added September 24 2006
+	$options[5] = "<option value=\"creator_email\"";
+	if(in_array("creator_email", $selectedCols)) {
+		$options[5] .= " selected";
+	}
+	$options[5] .= ">" . _formulize_DE_CALC_CREATOR_EMAIL . "</option>";
 
-	$numcols = 5;
+	$numcols = 6;
 	foreach($cols as $f=>$vs) {
 		foreach($vs as $row=>$values) {
 			if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.

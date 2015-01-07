@@ -53,6 +53,9 @@ if(isset($_GET['op'])) {
     case "patch30datastructure":
       patch30DataStructure();
       break;
+    case "patchEmptyFormScreens":
+      patchEmptyFormScreens();
+      break;      
    
   }
   
