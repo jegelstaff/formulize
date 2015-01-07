@@ -208,13 +208,13 @@ define("_FORM_LOCK", "Prevent anyone from editing this form again");
 define("_AM_CONFIRM_LOCK", "If you lockdown this form, then no one, not even you, will be able to make any changes to the form or its elements.  Are you sure you want to lockdown this form?");
 define("_formulize_FORMLOCK", "This form has now been locked.  No further changes to this form will be possible.");
 define("_formulize_FORMLOCK_FAILED", "There was an error and Formulize could not lock this form.");
-define("_FORM_NUM_ENTRIES_ANON_HELP", "<b>About Anonymous Users:</b> Formulize determines entry ownership based on a user's id number, and all Anonymous Users are viewed as \"User Number 0\".  Therefore, \"One entry per user\" does not really work for anonymous users in most cases, since everyone who is not logged in will share the same entry, because they all share the same id number, 0.<br><br>Also, \"More than one entry per user\" will behave differently for Anonymous Users, since all the entries created by anyone who isn't logged in, will all belong to \"user 0\", so everyone who is not logged in, will be treated as the same person.<br><br>Formulize is designed primarily for use in a website with a strict set of usernames and groups of users, but there are ways around these issues, in some cases using the API.  Post to the <a href=\"http://www.freeformsolutions.ca/en/forums\">support forums</a> for more information.");  
+define("_FORM_NUM_ENTRIES_ANON_HELP", "<b>About Anonymous Users:</b> Formulize determines entry ownership based on a user's id number, and all Anonymous Users are viewed as \"User Number 0\".  Therefore, \"One entry per user\" does not really work for anonymous users in most cases, since everyone who is not logged in will share the same entry, because they all share the same id number, 0.<br><br>Also, \"More than one entry per user\" will behave differently for Anonymous Users, since all the entries created by anyone who isn't logged in, will all belong to \"user 0\", so everyone who is not logged in, will be treated as the same person.<br><br>Formulize is designed primarily for use in a website with a strict set of usernames and groups of users, but there are ways around these issues, in some cases using the API.  Post to the <a href=\"http://www.freeformsolutions.ca/en/forums\">support forums</a> for more information.");
 
 define("_AM_FORCE_GROUPSCOPE_HELP", "If view_groupscope is selected, you can pick specific groups it should apply to.  If none are selected, then when a list of entries is shown to a user, groupscope will apply to the groups they are a member of, which also have view_form permission.");
 define("_AM_FORCE_GROUPSCOPE_INTRO", "Use specific groups for groupscope?");
 
 define("_AM_PER_GROUP_FILTER_INTRO", "Filter the entries this group can see in this form?");
-       
+
 define("_AM_SAVE","Save");
 define("_AM_COPIED","%s copy");
 define("_AM_DBUPDATED","Database Updated Successfully!");
@@ -353,9 +353,9 @@ define("_AM_ELE_FORMLINK_SCOPEFILTER_ALL", "No filter in effect (select this to 
 define("_AM_ELE_FORMLINK_SCOPEFILTER_CON", "Filter the options based on this/these conditions:");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_ADDCON", "Add another condition");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(If the first list here is empty, click the 'Add another condition' button to refresh it.)");
-       
-       
-  
+
+
+
 
 // subforms
 define("_AM_ELE_SUBFORM_FORM", "Which form do you want to include as a subform?");
@@ -634,7 +634,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW", "Which published view should be u
 define("_AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW", "Configure the available views for this screen");
 define("_AM_FORMULIZE_SCREEN_LOE_EDIT_VIEW_DETAILS", "This link will open a new page that shows the master version of the list of entries, where you can manage the views.  If a relationship is in effect for this screen, then it will be active on the page that opens.");
 define("_AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW", "Use a blank default view (ie: display no entries)");
-define("_AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW", "If you are customizing the list template, the default view will still be used to control which entries are initially included in the list.");
+define("_AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW", "If you are customizing the list template, the default view will still be used to control which entries are initially included in the list. NOTE: In the case of a user belonging to multiple groups with different default views, the view displayed to the user will be in order of priority.");
 define("_AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS", "If the 'Current View' list is in use, include these views:");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_LIMITVIEWS", "If you include the basic views (\"Entries by...\"), then the selected view will switch to a basic view when the user makes a change, such as a sort or Quicksearch.");
 define("_AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT", "Include all views");

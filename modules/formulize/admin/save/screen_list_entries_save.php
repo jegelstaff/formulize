@@ -49,8 +49,12 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
   return;
 }
 
+$defaultview = array();
+foreach($_POST['defaultview_group'] as $key=>$groupid) {
+  $defaultview[$groupid] = $_POST['defaultview_view'][$key];
+}
 
-$screen->setVar('defaultview',$screens['defaultview']);
+$screen->setVar('defaultview',serialize($defaultview));
 $screen->setVar('usecurrentviewlist',$screens['usecurrentviewlist']);
 $screen->setVar('limitviews',$screens['limitviews']);
 $screen->setVar('useworkingmsg',(array_key_exists('useworkingmsg',$screens))?$screens['useworkingmsg']:0);

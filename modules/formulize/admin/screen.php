@@ -123,23 +123,25 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $viewNames = $formObj->getVar('viewNames');
   $viewFrids = $formObj->getVar('viewFrids');
   $viewPublished = $formObj->getVar('viewPublished');
-  $defaultViewOptions = array();
   $limitViewOptions = array();
-  $defaultViewOptions['blank'] = _AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW;
-  $defaultViewOptions['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
-  $defaultViewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
-  $defaultViewOptions['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
+
+  $viewOptions = array();
+  $viewOptions['blank'] = _AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW;
+  $viewOptions['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
+  $viewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
+  $viewOptions['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
+
   for($i=0;$i<count($views);$i++) {
       if(!$viewPublished[$i]) { continue; }
-      $defaultViewOptions[$views[$i]] = $viewNames[$i];
+      $viewOptions[$views[$i]] = $viewNames[$i];
       if($viewFrids[$i]) {
-          $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
+          $viewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
       } else {
-          $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
+          $viewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
       }
   }
   $limitViewOptions['allviews'] = _AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT;
-  $limitViewOptions += $defaultViewOptions;
+  $limitViewOptions += $viewOptions;
   unset($limitViewOptions['blank']);
   // get the available screens
   $screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -162,8 +164,13 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
 	}
   // create the template information
   $entries = array();
-  $entries['defaultviewoptions'] = $defaultViewOptions;
   $entries['defaultview'] = $screen->getVar('defaultview');
+  // Convert to arrays if a legacy value
+  if(!is_array($entries['defaultview'])) {
+    $entries['defaultview'] = array(XOOPS_GROUP_USERS => $entries['defaultview']);
+  }
+
+  $entries['viewOptions'] = $viewOptions;
   $entries['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
   $entries['limitviewoptions'] = $limitViewOptions;
   $entries['limitviews'] = $screen->getVar('limitviews');
