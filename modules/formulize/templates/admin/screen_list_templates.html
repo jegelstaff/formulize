@@ -7,6 +7,9 @@
     <{$securitytoken}>
     <input type="hidden" name="formulize_admin_handler" value="screen_list_templates">
     <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+<input type ="hidden" name="screens-toptemplate-prototype" value="<{$content.prototype_toptemplate|escape}>"></textarea>
+<input type ="hidden" name="screens-tabletemplate-prototype" value="<{$content.prototype_tabletemplate|escape}>"></textarea>
+<input type ="hidden" name="screens-listtemplate-prototype" value="<{$content.prototype_listtemplate|escape}>"></textarea>
 
     <div class="panel-content content">
         <p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE}></p>
@@ -30,6 +33,23 @@
 
         <div class="form-item">
             <fieldset>
+		  <legend>Table Template</legend>
+		  	<input type="button" class="importDefaultTableTemplate"  name="importDefaultTableTemplate" value="Import Default Table Template">
+
+			  <textarea name="screens-tabletemplate" class="code-textarea" rows="20"/>&lt;?php
+<{$content.tabletemplate}></textarea>
+				  <a name="elementhandles"></a>
+					<table>
+					<tr><th>Form element</th><th>handle</th></tr>
+					<!--<{foreach from=$content.tableetemplatehelp item=row}>
+						<{$row}>
+					<{/foreach}>-->
+					</table>
+		  </fieldset>
+	  </div>
+
+	  <div class="form-item">
+		  <fieldset>
                 <legend>List Template</legend>
                 <textarea id="screens-listtemplate" name="screens-listtemplate" class="code-textarea" rows="20"/>
 <{$content.listtemplate}></textarea>

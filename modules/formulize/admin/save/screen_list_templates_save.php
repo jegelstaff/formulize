@@ -60,6 +60,7 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
 $screen->setVar('toptemplate',htmlspecialchars(trim($screens['toptemplate'])));
 $screen->setVar('bottomtemplate',htmlspecialchars(trim($screens['bottomtemplate'])));
 $screen->setVar('listtemplate',htmlspecialchars(trim($screens['listtemplate'])));
+$screen->setVar('tabletemplate',htmlspecialchars(trim($screens['tabletemplate'])));
 
 
 if(!$screen_handler->insert($screen)) {

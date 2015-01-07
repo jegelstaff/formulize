@@ -599,7 +599,12 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 		    $success3 = $this->writeTemplateToFile(trim($_POST['screens-listtemplate']), 'listtemplate', $screen);
 		}
                 
-                if (!$success1 || !$success2 || !$success3) {
+		$success4 = true;
+		if(isset($_POST['screens-tabletemplate'])) { 
+		    $success4 = $this->writeTemplateToFile(trim($_POST['screens-tabletemplate']), 'tabletemplate', $screen);
+		}
+                
+                if (!$success1 || !$success2 || !$success3 || !$success4) {
                     return false;
                 }
 		
