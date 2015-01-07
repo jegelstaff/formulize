@@ -429,6 +429,29 @@ form legend {
   color: #0085b6;
   white-space: normal;
 }
+
+span.user_groups {
+  color: #808080;
+  font-size: smaller;
+  font-style: italic;
+}
+
+#user_perms_accordion_box {
+  width: 600px;
+}
+
+li.user_perms_li {
+  list-style-type: disc !important;
+  margin-left: 30px !important;
+  padding: 0;
+}
+
+li.user_perms_li_li {
+  list-style-type: circle !important;
+  margin-left: 50px !important;
+  padding: 0;
+}
+
 form div.form-item {
     margin: 0 0 2.5em 0;
 }

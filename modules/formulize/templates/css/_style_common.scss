@@ -980,3 +980,7 @@ a.tooltip:hover > span{
     @include border-radius(6px);
     @include shadow-floating();
 }
+
+a.formulize-open-close-link {
+    cursor: pointer;
+}
