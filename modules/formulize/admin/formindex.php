@@ -322,6 +322,7 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
         $sql['add_on_before_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_before_save` text";
 		$sql['add_form_note'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `note` text";
 		$sql['add_use_default_when_blank'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_use_default_when_blank` tinyint(1) NOT NULL default '0'";
+        $sql['add_global_search_to_saved_view'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_global_search` text";
 		$sql['add_advance_view_field'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `advanceview` text NOT NULL"; 
 		
 		foreach($sql as $key=>$thissql) {
@@ -364,6 +365,8 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
                     print "form note field already added.  result: OK<br>";
 				} elseif($key === "add_use_default_when_blank") {
 					print "use default when blank already added.  result: OK<br>";
+                } elseif($key === "add_global_search_to_saved_view") {
+                        print "global search saved view already added.  result: OK<br>";
 				} elseif($key === "add_advance_view_field") {
 					print "advance view field already added.  result: OK<br>";
 				} elseif(strstr($key, 'drop_from_formulize_id_')) {
