@@ -38,13 +38,6 @@
     $appid = $_POST['formulize_admin_key'];
     $setOfMenuItems = $_POST['menu_items'];
     
-    // added Oct 2013 W.R.
-    if($_POST['deletemenuitem']) {
-  		$menuitem = $_POST['deletemenuitem'];
-		$application_handler->deleteMenuLink($appid, $menuitem);  
-		$_POST['reload_settings'] = 1;
-  	}
-    
     $menuLinkAdded = false;
     foreach($setOfMenuItems as $menuitems) {
     
@@ -102,6 +95,15 @@
 			$application_handler->updateSorting($Links);
 		}
     
+    
+    // added Oct 2013 W.R.
+    if($_POST['deletemenuitem']) {
+  		$menuitem = $_POST['deletemenuitem'];
+		$application_handler->deleteMenuLink($appid, $menuitem);  
+		$_POST['reload_settings'] = 1;
+  	}
+	
+	
     // if the form name was changed, then force a reload of the page...reload will be the application id
     if(isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) {
         print "/* eval */ reloadWithScrollPosition();";

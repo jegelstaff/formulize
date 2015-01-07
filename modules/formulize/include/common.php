@@ -44,5 +44,10 @@ $formulize_mgr =& xoops_getmodulehandler('elements');
 include_once formulize_ROOT_PATH.'class/elementrenderer.php';
 
 include_once formulize_ROOT_PATH.'include/functions.php';
-
-?>
+include_once formulize_ROOT_PATH.'include/formdisplay.php';
+include_once formulize_ROOT_PATH.'include/entriesdisplay.php';
+include_once formulize_ROOT_PATH.'include/graphdisplay.php';
+include_once formulize_ROOT_PATH.'include/calendardisplay.php';
+include_once formulize_ROOT_PATH.'include/elementdisplay.php';
+include_once formulize_ROOT_PATH.'include/extract.php';
+include_once formulize_ROOT_PATH.'class/data.php';

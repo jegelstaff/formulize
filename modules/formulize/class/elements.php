@@ -73,7 +73,7 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("ele_disabled", XOBJ_DTYPE_TXTBOX); // added June 17 2007 by jwe
 		$this->initVar("ele_encrypt", XOBJ_DTYPE_INT); // added July 15 2009 by jwe
 		$this->initVar("ele_filtersettings", XOBJ_DTYPE_ARRAY);
-		
+		$this->initVar("ele_use_default_when_blank", XOBJ_DTYPE_INT);
 	}
 	
 	//this method is used to to retreive the elements dataType and size
@@ -116,7 +116,7 @@ class formulizeformulize extends XoopsObject {
         
 		$index_fulltext = $defaultType == "text" ? "FULLTEXT" : "INDEX";
 		
-		$sql = "ALTER TABLE ".$xoopsDB->prefix("formulize_".mysql_real_escape_string($formObject->getVar('form_handle')))." ADD $index_fulltext `". mysql_real_escape_string($this->getVar('ele_handle')) ."` (`".mysql_real_escape_string($this->getVar('ele_handle'))."`)";
+		$sql = "ALTER TABLE ".$xoopsDB->prefix("formulize_".formulize_db_escape($formObject->getVar('form_handle')))." ADD $index_fulltext `". formulize_db_escape($this->getVar('ele_handle')) ."` (`".formulize_db_escape($this->getVar('ele_handle'))."`)";
 		$res = $xoopsDB->query($sql);
 	}
 	
@@ -124,7 +124,7 @@ class formulizeformulize extends XoopsObject {
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->getVar('id_form'));
-		$sql = "DROP INDEX `".mysql_real_escape_string($original_index_name)."` ON ".$xoopsDB->prefix("formulize_".mysql_real_escape_string($formObject->getVar('form_handle')));
+		$sql = "DROP INDEX `".formulize_db_escape($original_index_name)."` ON ".$xoopsDB->prefix("formulize_".formulize_db_escape($formObject->getVar('form_handle')));
 		$res = $xoopsDB->query($sql);
 	}
 	
@@ -193,7 +193,7 @@ class formulizeElementsHandler {
 				return false;
 			}
 		} else {
-			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_handle="'.mysql_real_escape_string($id).'"';
+			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_handle="'.formulize_db_escape($id).'"';
 			if (!$result = $this->db->query($sql)) {
 				$cachedElements[$id] = false;
 				return false;
@@ -215,9 +215,7 @@ class formulizeElementsHandler {
 			$ele_type = $element->getVar('ele_type');
 			if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {
 			    $element->hasData = true;
-			} else {
-			    $element->hasData = false;
-			}
+			} 
 			if($ele_type=="select") {
 				$ele_value = $element->getVar('ele_value');
 				if(!is_array($ele_value[2])) {
@@ -245,9 +243,9 @@ class formulizeElementsHandler {
 				}
    		if( $element->isNew() || $ele_id == 0){
 				$sql = sprintf("INSERT INTO %s (
-				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings
+				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_req, ele_value, ele_uitext, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_use_default_when_blank
 				) VALUES (
-				%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u, %u, %s
+				%u, %s, %s, %s, %s, %s, %u, %u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %u
 				)",
 				formulize_TABLE,
 				$id_form,
@@ -266,7 +264,8 @@ class formulizeElementsHandler {
 				$ele_forcehidden,
 				$ele_private,
 				$ele_encrypt,
-				$this->db->quoteString($ele_filtersettings)
+				$this->db->quoteString($ele_filtersettings),
+				$ele_use_default_when_blank
 			);            
             // changed - end - August 19 2005 - jpc
 			}else{
@@ -287,7 +286,8 @@ class formulizeElementsHandler {
 				ele_forcehidden = %u,
 				ele_private = %u,
 				ele_encrypt = %u,
-				ele_filtersettings = %s
+				ele_filtersettings = %s,
+				ele_use_default_when_blank = %u
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),
@@ -306,6 +306,7 @@ class formulizeElementsHandler {
 				$ele_private,
 				$ele_encrypt,
 				$this->db->quoteString($ele_filtersettings),
+				$ele_use_default_when_blank,
 				$ele_id,
 				$id_form
 			);
@@ -320,7 +321,7 @@ class formulizeElementsHandler {
         }
 
 		if( !$result ){
-			print "Error: this element could not be saved in the database.  SQL: $sql<br>".mysql_error();
+			print "Error: this element could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
 			return false;
 		}
 		if( $ele_id == 0 ){ // only occurs for new elements
@@ -381,7 +382,7 @@ class formulizeElementsHandler {
 	}
 
 	// id_as_key can be true, false or "handle" or "element_id" in which case handles or the element ids will be used
-	function &getObjects2($criteria = null, $id_form , $id_as_key = false){
+	function &getObjects($criteria = null, $id_form , $id_as_key = false){
 		$ret = array();
 		$limit = $start = 0;
 //		awareness of $criteria added, Sept 1 2005, jwe
@@ -427,9 +428,7 @@ class formulizeElementsHandler {
 			}
 			if($ele_type == "text" OR $ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="checkbox" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type == "derived") {
 			    $elements->hasData = true;
-			} else {
-			    $elements->hasData = false;
-			}
+			} 
 			if($id_as_key === true OR $id_as_key == "element_id"){
 				$ret[$myrow['ele_id']] =& $elements;
 			}elseif($id_as_key == "handle") {

@@ -81,7 +81,7 @@ class formulizeNewGridElementHandler extends formulizeElementsHandler {
 		$grid_elements_criteria->setSort('ele_order');
 		$grid_elements_criteria->setOrder('ASC');
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		$grid_elements = $element_handler->getObjects2($grid_elements_criteria, $fid);
+		$grid_elements = $element_handler->getObjects($grid_elements_criteria, $fid);
 		foreach($grid_elements as $this_element) {
 			$grid_start_options[$this_element->getVar('ele_id')] = $this_element->getVar('ele_colhead') ? printSmart(trans($this_element->getVar('ele_colhead'))) : printSmart(trans($this_element->getVar('ele_caption')));
 		}
@@ -160,7 +160,7 @@ class formulizeNewGridElementHandler extends formulizeElementsHandler {
     // $value is what the user submitted
     // $element is the element object
     function prepareDataForSaving($value, $element) {
-        return mysql_real_escape_string($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
+        return formulize_db_escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
     }
     
     // this method will handle any final actions that have to happen after data has been saved

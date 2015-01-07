@@ -173,6 +173,9 @@ $modversion['templates'][] = array(
 	'file' => 'admin/screen_settings.html',
 	'description' => '');
 $modversion['templates'][] = array(
+	'file' => 'admin/screen_relationships.html',
+	'description' => '');
+$modversion['templates'][] = array(
 	'file' => 'admin/element_names.html',
 	'description' => '');
 $modversion['templates'][] = array(
@@ -289,7 +292,12 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/advanced_calculation_fltr_grp_sections.html',
 	'description' => '');
-
+$modversion['templates'][] = array(
+	'file' => 'admin/import_template.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/export_template.html',
+	'description' => '');
 
 //	Module Configs
 // $xoopsModuleConfig['t_width']
@@ -474,6 +482,16 @@ $modversion['config'][] = array(
 	'valuetype' => 'int',
 	'default' => 0,
 );
+
+$modversion['config'][] = array(
+	'name' => 'printviewStylesheets',
+	'title' => '_MI_formulize_PRINTVIEWSTYLESHEETS',
+	'description' => '_MI_formulize_PRINTVIEWSTYLESHEETSDESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => '',
+);
+
 
 
 

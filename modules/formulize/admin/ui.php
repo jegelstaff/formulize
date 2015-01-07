@@ -60,9 +60,6 @@ if(!isset($xoopsTpl)) {
   	'contentTemplate' => @$xoopsOption['template_main'],
   ) );
   $xoopsTpl =& $xoTheme->template;
-
-	//$xoTheme->addScript( '/include/xoops.js', array( 'type' => 'text/javascript' ) );
-	//$xoTheme->addScript( '/include/linkexternal.js', array( 'type' => 'text/javascript' ) );
 }
 
 // handle any operations requested as part of this page load
@@ -72,7 +69,8 @@ include_once "op.php";
 // create the contents that we want to display for the currently selected page
 // the included php files create the values for $adminPage that are used for this page
 $adminPage = array();
-switch($_GET['page']) {
+$active_page = isset($_GET['page']) ? $_GET['page'] : "home";
+switch($active_page) {
   case "application":
     include "application.php"; 
     break;
@@ -90,6 +88,16 @@ switch($_GET['page']) {
 		break;
 	case "advanced-calculation":
 		include "advanced_calculation.php";
+		break;
+	case "export":
+		// do export stuff
+		$_GET['aid'] = 1;
+		include "export.php";
+		break;
+	case "import":
+		// do import stuff
+		$_GET['aid'] = 1;
+		include "import.php";
 		break;
 	default:
 	case "home":
@@ -109,15 +117,16 @@ if(isset($_GET['tab']) AND (!isset($_POST['tabs_selected']) OR $_POST['tabs_sele
       break;
     }
   }
-} elseif($_POST['tabs_selected'] !== "") {
+} elseif(isset($_POST['tabs_selected']) and $_POST['tabs_selected'] !== "") {
 	$adminPage['tabselected']  = intval($_POST['tabs_selected']);
 }
 
 // assign the contents to the template and display
 $adminPage['formulizeModId'] = getFormulizeModId();
 $xoopsTpl->assign('adminPage', $adminPage);
+if (isset($breadcrumbtrail))
 $xoopsTpl->assign('breadcrumbtrail', $breadcrumbtrail);
-$xoopsTpl->assign('scrollx', intval($_POST['scrollx']));
+$xoopsTpl->assign('scrollx', (isset($_POST['scrollx']) ? intval($_POST['scrollx']) : 0));
 $accordion_active = (isset($_POST['accordion_active']) AND $_POST['accordion_active'] !== "" AND $_POST['accordion_active'] !== "false") ? intval($_POST['accordion_active']) : "false";
 $xoopsTpl->assign('accordion_active', $accordion_active);
 $xoopsTpl->display("db:admin/ui.html");

@@ -91,14 +91,14 @@ h6 {
 }
 
 /* lists */
-#xo-canvas-content ul {
+ul {
     margin: 5px;
     padding: 2px;
     list-style: decimal inside;
     text-align: left;
 }
 
-#xo-canvas-content li {
+li {
     margin-left: 5px;
     color: #000;     // TODO: CHANGE TO A VARIABLE COLOR
     background-color: inherit;
@@ -354,7 +354,7 @@ head~body #xo-canvas-rightcolumn {
 }
 
 #xo-content {
-    position:       relative;
+    //position: relative;
     clear: both;
 }
 
@@ -547,6 +547,10 @@ td.head {
     color: $colorTableHeaderText;
     font-weight: bold;
     padding: 0.5em 1em 0.5em 0.4em;
+}
+
+td.head a {
+    color: $colorTableLink;
 }
 
 .even, tr.even td {
@@ -899,4 +903,36 @@ th {
 
 table.outer {
     border: 1px solid $colourPrimary;
+}
+
+#session-timeout-warning {
+    display: none;
+    position: fixed;
+    top: 7%;
+    left: 50%;
+    margin-left: -250px;
+    width: 500px;
+    z-index: 101;
+    text-align: center;
+    background-color: #fff;
+    color: black;
+    border: 3px solid #ce8c22;
+    padding: 1em;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    box-shadow: 1px 1px 20px 3px #aaa; }
+#session-timeout-warning img.session-timeout-warning-icon {
+    position: absolute;
+    top: calc(50% - 16px);
+    left: 1.3em;
+}
+#session-timeout-warning img.session-timeout-warning-close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+}
+#session-timeout-warning p {
+    margin: 1em;
 }

@@ -114,6 +114,13 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
 		$id_form = $element->getVar('id_form');
 		$ele_value[2] = stripslashes($ele_value[2]);
         $ele_value[2] = getTextboxDefault($ele_value[2], $id_form, $entry_id);
+        
+        //if placeholder value is set
+		if($ele_value[11]) {
+			$placeholder = $ele_value[2];
+			$ele_value[2] = "";
+		}
+        
 		if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added
 			$form_ele = new XoopsFormText(
 			$caption,
@@ -124,6 +131,11 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
 			);
 		} else {															// nmc 2007.03.24 - added 
 			$form_ele = new XoopsFormLabel($caption, $ele_value[2]);	// nmc 2007.03.24 - added 
+		}
+		
+		//if placeholder value is set
+		if($ele_value[11]) {
+			$form_ele->setExtra("placeholder='".$placeholder."'");
 		}
 		
 		$ele_value = $element->getVar('ele_value');
@@ -188,7 +200,7 @@ class formulizeNewTextElementHandler extends formulizeElementsHandler {
 			$value = stripslashes($value); 
 		}
 		$value = $myts->htmlSpecialChars($value);
-        return mysql_real_escape_string($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
+        return formulize_db_escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
     }
     
     // this method will handle any final actions that have to happen after data has been saved

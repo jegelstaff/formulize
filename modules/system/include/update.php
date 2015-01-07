@@ -279,7 +279,7 @@ function xoops_module_update_system(&$module, $oldversion = NULL, $dbVersion = N
 
 		/* rename gperm_name from view to view_customtag for system module */
 		$table = new icms_db_legacy_updater_Table("group_permission");
-		$icmsDatabaseUpdater->runQuery("UPDATE `" . $table->name() . "` SET gperm_name = 'view_customtag' WHERE gperm_name = 'view' AND gperm_modid = 1");
+		$icmsDatabaseUpdater->runQuery("UPDATE `" . $table->name() . "` SET gperm_name = 'view_customtag' WHERE gperm_name = 'view' AND gperm_modid = 1", "", "");
 		unset($table);
 
 		/* reset default source editor if jsvi is used */
@@ -303,7 +303,7 @@ function xoops_module_update_system(&$module, $oldversion = NULL, $dbVersion = N
 		$configs = icms::$config->getConfigs(icms_buildCriteria(array("conf_name" => "purifier_HTML_AttrNameUseCDATA")));
 		$p = $configs[0]->getVar('conf_order') + 1;
 		//move all the other options down
-		$icmsDatabaseUpdater->runQuery("UPDATE `" . $table->name() . "` SET conf_order = conf_order + 2 WHERE conf_order >= " . $p . " AND conf_catid = " . ICMS_CONF_PURIFIER);
+		$icmsDatabaseUpdater->runQuery("UPDATE `" . $table->name() . "` SET conf_order = conf_order + 2 WHERE conf_order >= " . $p . " AND conf_catid = " . ICMS_CONF_PURIFIER, "", "");
 		$icmsDatabaseUpdater->insertConfig(ICMS_CONF_PURIFIER, 'purifier_HTML_FlashAllowFullScreen', '_MD_AM_PURIFIER_HTML_FLASHFULLSCRN', '0', '_MD_AM_PURIFIER_HTML_FLASHFULLSCRNDSC', 'yesno', 'int', $p);
 		$icmsDatabaseUpdater->insertConfig(ICMS_CONF_PURIFIER, 'purifier_Output_FlashCompat', '_MD_AM_PURIFIER_OUTPUT_FLASHCOMPAT', '0', '_MD_AM_PURIFIER_OUTPUT_FLASHCOMPATDSC', 'yesno', 'int', $p++);
 				
@@ -311,14 +311,14 @@ function xoops_module_update_system(&$module, $oldversion = NULL, $dbVersion = N
 		$configs = icms::$config->getConfigs(icms_buildCriteria(array("conf_name" => "purifier_Filter_YouTube")));
 		$p = $configs[0]->getVar('conf_order') + 1;
 		//move all the other options down
-		$icmsDatabaseUpdater->runQuery("UPDATE `" . $table->name() . "` SET conf_order = conf_order + 1 WHERE conf_order >= " . $p . " AND conf_catid = " . ICMS_CONF_PURIFIER);
+		$icmsDatabaseUpdater->runQuery("UPDATE `" . $table->name() . "` SET conf_order = conf_order + 1 WHERE conf_order >= " . $p . " AND conf_catid = " . ICMS_CONF_PURIFIER, "", "");
 		$icmsDatabaseUpdater->insertConfig(ICMS_CONF_PURIFIER, 'purifier_Filter_AllowCustom', '_MD_AM_PURIFIER_FILTER_ALLOWCUSTOM', '0', '_MD_AM_PURIFIER_FILTER_ALLOWCUSTOMDSC', 'yesno', 'int', $p);
 
 		// retrieve the value of the position before the config to be inserted. 
 		$configs = icms::$config->getConfigs(icms_buildCriteria(array("conf_name" => "purifier_Core_RemoveInvalidImg")));
 		$p = $configs[0]->getVar('conf_order') + 1;
 		//move all the other options down
-		$icmsDatabaseUpdater->runQuery("UPDATE `" . $table->name() . "` SET conf_order = conf_order + 1 WHERE conf_order >= " . $p . " AND conf_catid = " . ICMS_CONF_PURIFIER);
+		$icmsDatabaseUpdater->runQuery("UPDATE `" . $table->name() . "` SET conf_order = conf_order + 1 WHERE conf_order >= " . $p . " AND conf_catid = " . ICMS_CONF_PURIFIER, "", "");
 		$icmsDatabaseUpdater->insertConfig(ICMS_CONF_PURIFIER, 'purifier_Core_NormalizeNewlines', '_MD_AM_PURIFIER_CORE_NORMALNEWLINES', '1', '_MD_AM_PURIFIER_CORE_NORMALNEWLINESDSC', 'yesno', 'int', $p);
 		
 		unset($table);

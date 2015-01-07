@@ -237,7 +237,7 @@ function importCsvSetup(&$importSet, $id_reqs)
 					
 					    $sql = "SELECT * FROM " . $xoopsDB->prefix("formulize") . 
 						" WHERE id_form='" . $parts[0] . "'" .
-					    " AND ele_handle='" . mysql_real_escape_string($parts[1]) . "'";
+					    " AND ele_handle='" . formulize_db_escape($parts[1]) . "'";
 									    $form_elementlinkq = q($sql);
 					    if($form_elementlinkq == null)
 					    {
@@ -1126,13 +1126,13 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 							foreach($fieldValues as $elementHandle=>$fieldValue) {
 								if(!$start) { $updateSQL .= ", "; } // on subsequent fields, add a comma
 								$start = false;
-								$updateSQL .= "`$elementHandle` = '".mysql_real_escape_string($fieldValue)."'";
+								$updateSQL .= "`$elementHandle` = '".formulize_db_escape($fieldValue)."'";
 							}
 							$updateSQL .= ", mod_datetime=NOW(), mod_uid=$form_proxyid WHERE entry_id=".intval($this_id_req);
 							
 							if(IMPORT_WRITE) {
 								if(!$result = $xoopsDB->queryF($updateSQL)) {
-									print "<br><b>FAILED</b> to update data, SQL: $updateSQL<br>".mysql_error()."<br>";
+									print "<br><b>FAILED</b> to update data, SQL: $updateSQL<br>".$xoopsDB->error()."<br>";
 								}
 							}
 
@@ -1143,7 +1143,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 							$element_handler = xoops_getmodulehandler('elements', 'formulize');
 							foreach($fieldValues as $elementHandle=>$fieldValue) {
 									$fields .= ", `".$elementHandle."`";
-									$values .= ", '".mysql_real_escape_string($fieldValue) . "'";
+									$values .= ", '".formulize_db_escape($fieldValue) . "'";
 									$elementObject = $element_handler->get($elementHandle);
 									if($elementObject->getVar('ele_desc')=="Primary Key") {
 										$newEntryId = $fieldValue;
@@ -1164,13 +1164,13 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 									{
 										
 										static $duplicatesFound = false;
-										if(strstr(mysql_error(), "Duplicate entry")) {
+										if(strstr($xoopsDB->error(), "Duplicate entry")) {
 											if(!$duplicatesFound) {
 												print "<br><b>FAILED</b> to insert <i>some</i> data.  At least one duplicate value was found in a column that does not allow duplicate values.<br>";
 												$duplicatesFound = true;
 											}
 										} else {
-											print "<br><b>FAILED</b> to insert data, SQL: $insertElement<br>".mysql_error()."<br>";
+											print "<br><b>FAILED</b> to insert data, SQL: $insertElement<br>".$xoopsDB->error()."<br>";
 										}
 									} else {
 										// need to record new group ownership info too
@@ -1195,7 +1195,7 @@ function importCsvProcess(& $importSet, $id_reqs, $regfid, $validateOverride)
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 			$data_handler = new formulizeDataHandler($id_form);
 			if(!$groupResult = $data_handler->setEntryOwnerGroups($usersMap, $entriesMap)) {
-				print "ERROR: failed to write the entry ownership information to the database.<br>".mysql_error()."<br>";
+				print "ERROR: failed to write the entry ownership information to the database.<br>".$xoopsDB->error()."<br>";
 			}
 		}
 
@@ -1222,8 +1222,8 @@ function getElementID($id_form, $ele_caption, $ele_value)
 	
 	    $sql = "SELECT ele_id FROM " . $xoopsDB->prefix("formulize_form") .  
 		" WHERE id_form='" . $id_form . "'" .
-		" AND ele_caption='" . mysql_real_escape_string(formformCaption($ele_caption)) . "'" .
-		" AND ele_value='" . mysql_real_escape_string($myts->htmlSpecialChars($ele_value)) . "'";
+		" AND ele_caption='" . formulize_db_escape(formformCaption($ele_caption)) . "'" .
+		" AND ele_value='" . formulize_db_escape($myts->htmlSpecialChars($ele_value)) . "'";
 	
 	    //echo $sql . "<br>";
 	    $foundResult = "";
@@ -1277,7 +1277,7 @@ function getUserID($stringName)
 	global $xoopsDB, $xoopsUser;
 
     $sql = "SELECT uid FROM " . $xoopsDB->prefix("users") .  
-        " WHERE uname='" . mysql_real_escape_string($stringName) . "'";
+        " WHERE uname='" . formulize_db_escape($stringName) . "'";
 
 	$result = $xoopsDB->query($sql);
     if($xoopsDB->getRowsNum($result) > 0)
@@ -1291,7 +1291,7 @@ function getUserID($stringName)
     else // or, if no username match found, get the first matching full name -- added June 29, 2006
     {
 	    $sql = "SELECT uid FROM " . $xoopsDB->prefix("users") .  
-        " WHERE name='" . mysql_real_escape_string($stringName) . "'";
+        " WHERE name='" . formulize_db_escape($stringName) . "'";
 
 	    if($result = $xoopsDB->query($sql))
 	    {

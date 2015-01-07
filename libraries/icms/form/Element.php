@@ -169,7 +169,7 @@ abstract class icms_form_Element {
 	public function setClass($class) {
 		$class = trim($class);
 		if (!empty($class)) {
-			$this->_class[] = $class;
+			$this->_class[] = htmlspecialchars($class, ENT_QUOTES);
 		}
 	}
 
@@ -179,12 +179,7 @@ abstract class icms_form_Element {
 	 * @return 	string  "class" attribute value
 	 */
 	public function getClass() {
-		if(empty($this->_class)) return '';
-		$class = array();
-		foreach ($this->_class as $class) {
-			$class[] = htmlspecialchars($class, ENT_QUOTES);
-		}
-		return implode(" ", $class);
+		return implode(" ", $this->_class);
 	}
 
 	/**

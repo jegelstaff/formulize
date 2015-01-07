@@ -64,6 +64,6 @@ $screen->setVar('tabletemplate',htmlspecialchars(trim($screens['tabletemplate'])
 
 
 if(!$screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".mysql_error();
+  print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
 ?>

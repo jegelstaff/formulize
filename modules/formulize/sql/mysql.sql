@@ -236,6 +236,7 @@ CREATE TABLE formulize_saved_views (
   sv_calc_blanks text,
   sv_calc_grouping text,
   sv_quicksearches text,
+  sv_global_search text,
   PRIMARY KEY (sv_id)
 ) ENGINE=MyISAM;
 
@@ -310,6 +311,7 @@ CREATE TABLE formulize (
   ele_filtersettings text NOT NULL,
   ele_forcehidden tinyint(1) NOT NULL default '0',
   ele_private tinyint(1) NOT NULL default '0',
+  ele_use_default_when_blank tinyint(1) NOT NULL default '0',
   PRIMARY KEY  (`ele_id`),
   KEY `ele_display` (`ele_display` ( 255 ) ),
   KEY `ele_order` (`ele_order`)
@@ -360,3 +362,15 @@ CREATE TABLE `formulize_procedure_logs_params` (
   PRIMARY KEY (`proc_log_param_id`),
   INDEX i_proc_log_id (proc_log_id)
 ) ENGINE=MyISAM;
+
+CREATE TABLE formulize_deletion_logs (
+  del_log_id int(11) unsigned NOT NULL auto_increment,
+  form_id int(11) NOT NULL,
+  entry_id int(7) NOT NULL,
+  user_id mediumint(8) NOT NULL,
+  context text,
+  deletion_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (del_log_id),
+  INDEX i_del_id (del_log_id)
+) ENGINE=MyISAM;
+

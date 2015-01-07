@@ -92,7 +92,7 @@ foreach ($processedValues['elements'] as $property => $element_handle_name) {
 }
 
 if(!$ele_id = $element_handler->insert($element)) {
-  print "Error: could not save the element: ".mysql_error();
+  print "Error: could not save the element: ".$xoopsDB->error();
 }
 
 if($original_handle) { // rewrite references in other elements to this handle (linked selectboxes)

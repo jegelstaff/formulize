@@ -86,8 +86,8 @@ class formulizeScreen extends xoopsObject {
         }
         return $this->$name;
     }
-    
-        
+
+
     function getTemplatePath($templatename, $usePrototype = false)
     {
 	if($usePrototype)
@@ -109,34 +109,40 @@ class formulizeScreen extends xoopsObject {
             $pathname = $this->getTemplatePath($templatename);
             if (file_exists($pathname)) {
                 $templates[$templatename] = file_get_contents($pathname);
-                // strip out opening <?php since we use this value for comparisons a lot, and it should be otherwise empty in that case
-                $templates[$templatename] = substr($templates[$templatename], 6);
-	    }
-	    else
-	    {
-	    	$templates[$templatename] = null;
-	    }
-	}
-	if (!isset($templates["prototype_".$templatename])){
-	    $pathname = $this->getTemplatePath($templatename, true);
-	    if (file_exists($pathname)) {
-
-		$templates["prototype_".$templatename] = file_get_contents($pathname);
-		// strip out opening <?php since we use this value for comparisons a lot, and it should be otherwise empty in that case
-		$templates["prototype_".$templatename] = substr($templates["prototype_".$templatename], 6);
-	    }
-	    else
-	    {
-		$templates["prototype_".$templatename] = null;
-	    }
+            } else {
+                $templates[$templatename] = $this->getVar($templatename);
+                if (strlen($templates[$templatename]) > 0) {
+                    // the template content is stored in the database, but not the cache file
+                    // database may have been copied from another site, so write to cache file
+                    $this->writeTemplateFile(htmlspecialchars_decode($templates[$templatename], ENT_QUOTES), $templatename);
+                }
+            }
         }
-	if($usePrototype){
-	    return $templates["prototype_".$templatename];
-	}
-	else
-	{
-            return $templates[$templatename];
-	}
+        return $templates[$templatename];
+    }
+
+
+    function writeTemplateFile($template_content, $template_name) {
+        $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/";
+        // check if folder exists, if not, make it.
+        if (!is_dir($pathname)) {
+            mkdir($pathname, 0777, true);
+        }
+}
+
+        if (!is_writable($pathname)) {
+            chmod($pathname, 0777);
+        }
+
+        $filename = $pathname."/".$template_name.".php";
+
+        $success = file_put_contents($filename, $template_content);
+        if (false === $success) {
+            error_log("ERROR: Could not write to template cache file: $filename");
+            return false;
+        }
+
+        return true;
     }
 }
 
@@ -171,14 +177,14 @@ class formulizeScreenHandler {
             }
         }
         $sql .= " order by fid, title";
-        if(!$result = $this->db->query($sql)) {
-            return false;
-        }
+        $screens = array();
+        if($result = $this->db->query($sql)) {
         while($array = $this->db->fetchArray($result)) {
             $screen = $this->create();
             $screen->assignVars($array);
             $screens[] = $screen;
             unset($screen);
+            }
         }
         return $screens;
     }
@@ -275,27 +281,7 @@ class formulizeScreenHandler {
 		 return $sid;
 	}
 
-	function writeTemplateToFile($text, $filename, $screen) {
-
-            $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/";
-            // check if folder exists, if not, make it.
-            if (!is_dir($pathname)) {
-                mkdir($pathname, 0777, true);
-            }
-            
-            if (!is_writable($pathname)) {
-                chmod($pathname, 0777);
-	    }
-
-            $fileHandle = fopen($pathname."/".$filename.".php", "w+");
-            $success = fwrite($fileHandle, $text);
-            fclose($fileHandle);
-            
-            // return true or false based on writing success or failure 
-            // (you'll need to make sure your web server has write permission in the /templates/screens/default/ folder
-            if ($success === FALSE) {
-                return false;
-            } else return true;
-        }
-	
+    function writeTemplateToFile($text, $filename, $screen) {
+        return $screen->writeTemplateFile($text, $filename);
+    }
 }

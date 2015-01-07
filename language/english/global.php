@@ -161,7 +161,7 @@ define('_WEEK', '1 week');
 define('_MONTH', '1 month');
 
 define("_DATESTRING","Y/n/j G:i:s");
-define("_MEDIUMDATESTRING","Y/n/j G:i");
+define("_MEDIUMDATESTRING","g:ia, F j Y");
 define("_SHORTDATESTRING","Y-m-d"); // ALTERED BY FREEFORM SOLUTIONS FOR BACKWARDS COMPATIBILITY WITH PREVIOUS DATE FORMATS
 /*
  The following characters are recognized in the format string:

@@ -90,6 +90,7 @@ define("_AM_SETTINGS_FORM_DATABASE","Vers quelle table de la base de données do
 define("_AM_SETTINGS_FORM_DATABASE_EXPLAIN","Tapez le nom exact, incluant le préfixe, par exemple: mysite_groups");
 define("_AM_SETTINGS_FORM_ENTRIES_ALLOWED","Combien d'entrées sont autorisées dans ce formulaire?");
 define("_AM_SETTINGS_FORM_ENTRIES_ONEPERGROUP","Une entrée par <b>groupe</b>");
+define("_AM_EOG_Repair","Réparer la table de propriété des entrées");
 define("_AM_SETTINGS_FORM_ENTRIES_ONEPERUSER","Une entrée par <b>utilisateur</b>");
 define("_AM_SETTINGS_FORM_ENTRIES_MORETHANONE","<b>Plus d'une entrée</b> par utilisateur");
 define("_AM_SETTINGS_FORM_SHOWING_LIST","Quand la liste des entrées s'affiche pour ce formulaire, quels éléments souhaitez vous afficher par défaut?");
@@ -301,9 +302,11 @@ define("_AM_ELE_SUBFORM_DESC", "When you display the current form as part of a f
 define("_AM_ELE_SUBFORM_ELEMENTS", "Which elements should be displayed as part of the subform interface?");
 define("_AM_ELE_SUBFORM_ELEMENTS_DESC", "About three or four elements from the subform can be displayed comfortably as part of the main form.  More than four elements starts to make the interface cluttered.  You can choose which elements you want to display by selecting them from this list.  Users can always modify all elements by clicking a button next to each subform entry that it listed in the main form.<br><br>You do not need to choose the element that joins the subform to the mainform; Formulize will automatically populate that element with the correct values for you.");
 define("_AM_ELE_SUBFORM_FORM", "Quel formulaire voulez vous inclure en tant que sous formulaire?");
-define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS", "Should each element be labeled with its column heading or caption?");
-define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS", "Caption");
-define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS", "Column heading (captions will be used for elements with no column heading");
+define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS", "Chaque élément doit-il être nommé par son en-tête de colonne ou sa légende?");
+define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS", "Légendes");
+define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS", "En-têtes de colonnes (les légendes seront utilisées pour les éléments n'ayant pas d'en-têtes");
+define("_AM_ELE_SUBFORM_IFFORM", "If the subform entries are shown in a full form:");
+define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each entry?");
 define("_AM_ELE_SUBFORM_NONE", "Pas de sous formulaires valides - définissez d'abord un Framework");
 define("_AM_ELE_SUBFORM_REFRESH", "Refresh elements list to match selected form");
 define("_AM_ELE_SUBFORM_VIEW", "Montrer les boutons<i>Voir</i> a coté de chaque entrée du sous formulaire?");
@@ -340,11 +343,14 @@ define("_AM_FORMULIZE_SCREEN_CONS_PAGE", "Conditions pour afficher cette page");
 define("_AM_FORMULIZE_SCREEN_CONS_YES", "N'afficher que si les conditions suivantes sont réunies:");
 define("_AM_FORMULIZE_SCREEN_DONEDEST", "L' URL du lien que les utilisateurs auront à la fin du formulaire");
 define("_AM_FORMULIZE_SCREEN_FORM", "Créer ou modifier un Screen");
+define("_AM_FORMULIZE_SCREEN_FINISHISDONE", "La page finale du formulaire devrait être...");
+define("_AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE", "<b>La page de remerciements</b>, vers lequel l'utilisateur va après avoir cliqué le bouton \"Sauver et terminer\" sur la dernière page avec des questions");
+define("_AM_FORMULIZE_SCREEN_FINISHISDONE_FINISHBUTTON", "<b>La dernière page avec des questions</b>, et quand l'utilisateur clique le bouton \"Sauver et terminer\" , il quitte le formulaire");
 define("_AM_FORMULIZE_SCREEN_INSERTPAGE", "Insérer une nouvelle page ici");
 define("_AM_FORMULIZE_SCREEN_INTRO", "Texte en introduction pour la première page du formulaire");
 define("_AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON", "Ajouter un bouton personnalisé");
 define("_AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON_EFFECT", "Ajouter un effet pour ce bouton");
-define("_AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW", "Use a blank default view (ie: aucune entrée affichée)");
+define("_AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW", "Utiliser une vue vierge par défaut (ie: aucune entrée affichée)");
 define("_AM_FORMULIZE_SCREEN_LOE_BOTTOMTEMPLATE", "Template pour la portion basse de la page, sous la liste:");
 define("_AM_FORMULIZE_SCREEN_LOE_BUTTON1", "Quel texte doit être sur le '");
 define("_AM_FORMULIZE_SCREEN_LOE_BUTTON2", "' bouton?");
@@ -357,21 +363,21 @@ define("_AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION1", "The configuration options be
 define("_AM_FORMULIZE_SCREEN_LOE_CONFIG_SECTION2", "Most configuration options below have NO effect if you use a custom List Template, except as noted.");
 define("_AM_FORMULIZE_SCREEN_LOE_CURRENTVIEWLIST", "Quel texte d’introduction pour la liste des  'Vues en cours'");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON", "Bouton personnalisé");
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTONINTRO", "Specify any custom buttons for this screen:");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTONINTRO", "Specifier un ou des boutons personnalisés pour ce screen:");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTONINTRO2", "Les boutons personnalisés peuvent être ajoutés au-dessus, ci-dessous, ou à l'intérieur d'une liste, en utilisant les modèles (voir ci-dessous). Vous devez spécifier quels sont les effets que chaque bouton personnalisé devrait avoir. Par exemple, un bouton personnalisé portant la mention «Annuler l'abonnement» peut mettre à jour un élément de formulaire appelé «date de fin d'abonnement, et y mettre la date d'aujourd'hui comme valeur.");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO", "Quelles entrées doivent être modifiées lorsque ce bouton est cliqué?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_ALL", "Toutes les entrées dans ce formulaire");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_CODE", "Aucune.  Charger un code php lorsque ce bouton est cliqué.");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_CUSTOM_HTML", "Aucune.  Utiliser le PHP pour générer du HTML précisément à l’endroit ou ce code apparait.");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_INLINE", "Only the entry on the line where the button is (only works if this button appears on every line)");
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW", "The button should create a new entry in this form");
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED", "The button should create a new entry in this form for each checkbox that's checked");
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED_OTHER", "' for each checkbox that's checked");
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW_OTHER", "The button should create a new entry in the form '");
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_SELECTED", "Only the selected entries (only works if checkboxes are enabled above)");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW", "Le bouton devrait créer une nouvelle entrée dans ce formulaire");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED", "Le bouton devrait créer une nouvelle entrée dans ce formulaire pour chaque case qui est cochée");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEWPERSELECTED_OTHER", "' pour chaque case qui est cochée");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_NEW_OTHER", "Le bouton devrait créer une nouvelle entrée dans ce formulaire '");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_APPLYTO_SELECTED", "Seulement les entrées selectionnées (ne marche que si les cases à cocher sont activées plus haut)");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_BUTTONTEXT", "Quel texte doit apparaitre sur ce bouton?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_DELETE", "Effacer ce bouton");
-define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT", "Effect number");
+define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT", "Nombre d'effet");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION", "Effectuer cette action?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND", "Ajouter la valeur spécifiée à la fin de la valeur actuelle");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE", "Supprimer la valeur spécifiée de la valeur actuelle");
@@ -423,6 +429,29 @@ define("_AM_FORMULIZE_SCREEN_LOE_NOPUBDVIEWS", "Il n'y a pas de vue publiée pou
 define("_AM_FORMULIZE_SCREEN_LOE_NOVIEWSAVAIL", "Il n'y a aucune vue disponible");
 define("_AM_FORMULIZE_SCREEN_LOE_REPEATHEADERS", "Si vous utilisez des en-têtes, au bout de combien de lignes doivent-ils se répéter?");
 define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO", "Specify any custom template options for this screen:");
+
+define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES", "Mise en page du formulaire Multi page:");
+define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES_HELP", "<p>Les variables suivantes pourront être utilisées dans ces modèles pour générer certains textes ou éléments de l'interface utilisateur UI:</p>
+<ul>
+<li>\$currentPage</li>
+<li>\$totalPages</li>
+<li>\$nextPageButton</li>
+<li>\$previousPageButton</li>
+<li>\$pageSelectionList &mdash; dessine la liste déroulante pour sauter vers une nouvelle page</li>
+<li>\$skippedPagesMessage &mdash; le message disant qu'une ou plusieurs pages ont été ignorées, ce sera vide si ce n'est pas le cas</li>
+</ul>
+<p>De plus, dans les modèles pour les éléments, les variables suivantes sont disponibles.  Le modèle pour les éléments sera utilisé plusieurs fois, une fois par élément de la page.  Dans chaque cas, ces variables se référeront à l'élément en train d'être affiché.</p>
+<ul>
+<li>\$elementCaption &mdash; le texte de la question actuelle</li>
+<li>\$elementDescription &mdash; le texte de description ou d'aide pour cet élément</li>
+<li>\$elementMarkup &mdash; le code HTML pour générer la question sur la page</li>
+<li>\$element_id &mdash; L'ID de l'élément qui est généré</li>
+<li>\$elementObjectForRendering &mdash; l'objet qui a été préparé, basé sur les réglages de l'élément, et qui a été utilisé pour générer le balisage.  Ce n'est pas la même chose que l' Element Object dans l'API Formulize, qui contient simplement tous ces réglages.  Utilisez cet objet si vous avez besoin d'avoir la légende, comme préparé dans l'élément actuel s'il été généré, si, par exemple, vous utilisez un élément personnalisé qui change le texte de légende au moment où il est généré.</li>
+</ul>");
+define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES_INTRO", "Laissez blanc pour voir l'aspect par défaut.  Actuellement toutes les modifications ne sont pas supportées pour générer les éléments dans des modèles personnalisés.  Les conditions des éléments seront ignorées, même si des éléments sont requis pour certaines validations.");
+define("_AM_FORMULIZE_SCREEN_TOPTEMPLATE", "Modèle pour la partie haute de la page, au dessus du formulaire");
+define("_AM_FORMULIZE_SCREEN_ELEMENTTEMPLATE", "Ce modèle sera utilisé une fois pour dessiner chaque élément de la page");
+define("_AM_FORMULIZE_SCREEN_BOTTOMTEMPLATE", "Modèle pour le bas de la page, sous le formulaire");
 define("_AM_FORM_DATATYPE_CHAR1","Stocker exactement comme le texte, ");
 define("_AM_FORM_DATATYPE_CHAR2"," caractères de long (char)");
 define("_AM_FORM_DATATYPE_CONTROLS","How should the data for this element by stored in the database?");

@@ -54,8 +54,8 @@ global $xoopsDB;
 if($_POST['grouplistname']) {
  
   $groupListId = intval($_POST['grouplistid']);
-  $groupListGroups = mysql_real_escape_string(implode(",",$_POST['groups']));
-  $name = mysql_real_escape_string($_POST['grouplistname']);
+  $groupListGroups = formulize_db_escape(implode(",",$_POST['groups']));
+  $name = formulize_db_escape($_POST['grouplistname']);
   // are we inserting or updating? 
   $newList = $groupListId == 0 ? true : false;
   if(!$newList) {
@@ -75,14 +75,14 @@ if($_POST['grouplistname']) {
     $grouplist_query = "UPDATE ". $xoopsDB->prefix("group_lists") . " SET gl_groups = '" . $groupListGroups . "', gl_name = '".$name."' WHERE gl_id='" . $groupListId . "'";
   }
   if(!$grouplist_result = $xoopsDB->query($grouplist_query)) {
-    print "Error: could not add a group list ".mysql_error(); 
+    print "Error: could not add a group list ".$xoopsDB->error(); 
   }
 }
 
 if ($_POST['removelistid']) {
     if ($removelistid = intval($_POST['removelistid'])) {
         if (!$delete_result = $xoopsDB->query("DELETE FROM ".$xoopsDB->prefix("group_lists") . " WHERE gl_id='" . $removelistid . "'")) {
-            print "Error: could not delete group list ".mysql_error();
+            print "Error: could not delete group list ".$xoopsDB->error();
         }
     }
     $_SESSION['formulize_selectedGroupList'] = 0;

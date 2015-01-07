@@ -160,7 +160,7 @@ class formulizeNewDerivedElementHandler extends formulizeElementsHandler {
     // $value is what the user submitted
     // $element is the element object
     function prepareDataForSaving($value, $element) {
-        return mysql_real_escape_string($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
+        return formulize_db_escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
     }
     
     // this method will handle any final actions that have to happen after data has been saved

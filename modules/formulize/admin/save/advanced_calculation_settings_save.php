@@ -31,7 +31,7 @@
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
-  return;
+	return;
 }
 
 // get admin info
@@ -41,10 +41,10 @@ $aid = $_POST['aid'];
 // get advanced calculations info
 $acid = $_POST['formulize_admin_key'];
 if($acid == 'new') {
-  $isNew = true;
+	$isNew = true;
 } else {
-  $isNew = false;
-  $acid = intval($acid);
+	$isNew = false;
+	$acid = intval($acid);
 }
 
 $advCalc = $processedValues['advcalc'];
@@ -52,18 +52,18 @@ $advCalc = $processedValues['advcalc'];
 // create a new item, or load an existing item
 $advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
 if($isNew) {
-  $advCalcObject = $advanced_calculation_handler->create();
-  $advCalcObject->setVar('steptitles',array(0=>'New step'));
+	$advCalcObject = $advanced_calculation_handler->create();
+	$advCalcObject->setVar('steptitles',array(0=>'New step'));
   //$advCalcObject->setVar('steps',array(0=>array()));
   //$advCalcObject->setVar('steps',array(0=>array('description'=>'This step...','sql'=>'SELECT * FROM [...]','preCalculate'=>'// setup','calculate'=>'// do per entry','postCalculate'=>'// teardown')));
-  $advCalcObject->setVar('steps',array(0=>array('description'=>'','sql'=>'','preCalculate'=>'','calculate'=>'','postCalculate'=>'')));
+	$advCalcObject->setVar('steps',array(0=>array('description'=>'','sql'=>'','preCalculate'=>'','calculate'=>'','postCalculate'=>'')));
 } else {
-  $advCalcObject = $advanced_calculation_handler->get($acid);
+	$advCalcObject = $advanced_calculation_handler->get($acid);
 }
 
 // check if the user has permission to edit the form
 if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
-  return;
+	return;
 }
 
 // apply user changes
@@ -73,9 +73,9 @@ $advCalcObject->setVar('fid',$fid);
 
 // save object, and if a new item, reload page
 if(!$acid = $advanced_calculation_handler->insert($advCalcObject)) {
-  print "Error: could not save the advanced calculation properly: ".mysql_error();
+	print "Error: could not save the advanced calculation properly: ".$xoopsDB->error();
 } else if($isNew) {
   // send code to client that will to be evaluated
-  $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=advanced-calculation&tab=settings&aid=".$aid.'&fid='.$fid.'&acid='.$acid;
-  print '/* eval */ window.location = "'.$url.'";';
+	$url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=advanced-calculation&tab=settings&aid=".$aid.'&fid='.$fid.'&acid='.$acid;
+	print '/* eval */ window.location = "'.$url.'";';
 }

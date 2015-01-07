@@ -132,7 +132,7 @@ if($_POST['neweffect']!=="") {
 
 $screen->setVar('customactions', serialize($buttonData));
 if(!$screen_handler->insert($screen)) {
-  print "Error: could not save the screen properly: ".mysql_error();
+  print "Error: could not save the screen properly: ".$xoopsDB->error();
 }
 
 if($_POST['reload_list_pages']) {

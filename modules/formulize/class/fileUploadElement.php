@@ -130,7 +130,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         } else {
             // create the file upload element, and also a hidden element with the correct markup name.  That hidden value will trigger the correct saving logic, and is necessary because file upload elements are excluded from POST.
             if(!$ele_value[5]) {
-                $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id'>".$ele_value[3]."" . _AM_UPLOAD . "</div>";
+                $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print'>".$ele_value[3]."" . _AM_UPLOAD . "</div>";
             } elseif($ele_value[3]) {
                 if(!$fileDeleteCode) { // only do this once per page load
                     $fileDeleteCode = "<script type='text/javascript'>
@@ -168,11 +168,11 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                     var formulizeFile".$markupName."Exists = true;
                     </script>";
                 }
-                $introToUploadBox .= "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id'>".$this->createDownloadLink($element, $entry_id, $ele_value[3], $ele_value[4])." &mdash; <a href='' onclick='warnAboutFileDelete(\"".str_replace("de_","formulize_",$markupName)."\", \"".$element->getVar('ele_id')."\", \"$entry_id\");return false;'><img src='".XOOPS_URL."/modules/formulize/images/x.gif' />" . _AM_UPLOAD_DELETE . "</a><br />" . _AM_UPLOAD_MOD . "</div>";
+                $introToUploadBox .= "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print'>".$this->createDownloadLink($element, $entry_id, $ele_value[3], $ele_value[4])." &mdash; <a href='' onclick='warnAboutFileDelete(\"".str_replace("de_","formulize_",$markupName)."\", \"".$element->getVar('ele_id')."\", \"$entry_id\");return false;'><img src='".XOOPS_URL."/modules/formulize/images/x.gif' />" . _AM_UPLOAD_DELETE . "</a><br />" . _AM_UPLOAD_MOD . "</div>";
             } else {
-                $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id'>" . _AM_UPLOAD . "</div>";
+                $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print'>" . _AM_UPLOAD . "</div>";
             }
-            $htmlForUpload = "$introToUploadBox<div><input type='hidden' name='MAX_FILE_SIZE' value='".($ele_value[0]*1048576)."' /><input type='file' name='fileupload_".$markupName."' size=50 id='".$markupName."' /><input type='hidden' id='$markupName' name='$markupName' value='$markupName' /></div>";
+            $htmlForUpload = "$introToUploadBox<div><input type='hidden' name='MAX_FILE_SIZE' value='".($ele_value[0]*1048576)."' /><input type='file' name='fileupload_".$markupName."' size=50 id='".$markupName."' class='no-print' /><input type='hidden' id='$markupName' name='$markupName' value='$markupName' /></div>";
             $formElement = new xoopsFormLabel($caption, $htmlForUpload); 
         }
         return $formElement;
@@ -249,15 +249,15 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                             $GLOBALS['formulize_afterSavingLogicRequired'][$element->getVar('ele_id')] = $element->getVar('ele_type'); // set the flag that will trigger a post-save operation when we can rename the folder where the file resides to match the newly assigned entry id
                         }
                     } else {
-                        $value = " . _AM_UPLOAD_LOST . ";
+                        $value = _AM_UPLOAD_LOST;
                         print "<p><b>$value</b></p>";    
                     }
                 } else {
-                    $value = " . _AM_UPLOAD_NOLOCATION . ";
+                    $value = _AM_UPLOAD_NOLOCATION;
                     print "<p><b>$value</b></p>";
                 }
             } else {
-                $value = " . _AM_UPLOAD_ERROR_MIMETYPES . ".$element->getVar('ele_caption')."'.";
+                $value = _AM_UPLOAD_ERROR_MIMETYPES . $element->getVar('ele_caption')."'";
                 print "<p><b>$value</b></p>";
             }
         } elseif($_FILES[$fileKey]['error'] == UPLOAD_ERR_NO_FILE) {
@@ -265,22 +265,22 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         } else {
             switch($_FILES[$fileKey]['error']) {
                 case UPLOAD_ERR_INI_SIZE:
-                    $value = " . _AM_UPLOAD_ERR_INI_SIZE . ";
+                    $value = _AM_UPLOAD_ERR_INI_SIZE;
                     break;
                 case UPLOAD_ERR_FORM_SIZE:
-                    $value = " . _AM_UPLOAD_ERR_FORM_SIZE . ".$element->getVar('ele_caption')."'.";
+                    $value = _AM_UPLOAD_ERR_FORM_SIZE . $element->getVar('ele_caption')."'";
                     break;
                 case UPLOAD_ERR_PARTIAL:
-                    $value = " . _AM_UPLOAD_ERR_PARTIAL . ";
+                    $value = _AM_UPLOAD_ERR_PARTIAL;
                     break;
                 case UPLOAD_ERR_NO_TMP_DIR:
-                    $value = " . _AM_UPLOAD_ERR_NO_TMP_DIR . ";
+                    $value = _AM_UPLOAD_ERR_NO_TMP_DIR;
                     break;
                 case UPLOAD_ERR_CANT_WRITE:
-                    $value = " . _AM_UPLOAD_ERR_CANT_WRITE . ";
+                    $value = _AM_UPLOAD_ERR_CANT_WRITE;
                     break;
                 case UPLOAD_ERR_EXTENSION:
-                    $value = " . _AM_UPLOAD_ERR_EXTENSION . ";
+                    $value = _AM_UPLOAD_ERR_EXTENSION;
                     break;
             }
             print "<p><b>$value</b></p>";
