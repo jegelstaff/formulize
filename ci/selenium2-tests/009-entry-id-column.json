@@ -5,7 +5,7 @@
   "steps": [
     {
       "type": "get",
-      "url": "http://localhost/user.php?xoops_redirect=http://localhost/modules/formulize/index.php?fid=1&xoops_redirect=%2Fmodules%2Fformulize%2Findex.php%3Ffid%3D1&ICMSSESSION=5dm2bbr6bri2c2811mt2q8snh3"
+      "url": "http://localhost/user.php?xoops_redirect=/modules/formulize/index.php?fid=1"
     },
     {
       "type": "setElementText",
@@ -27,21 +27,7 @@
       "type": "clickElement",
       "locator": {
         "type": "css selector",
-        "value": "div.xo-blockcontent"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "css selector",
         "value": "input[type=\"submit\"]"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "id",
-        "value": "xo-canvas"
       }
     },
     {
@@ -88,23 +74,16 @@
       "name": ""
     },
     {
+      "type": "pause",
+      "waitTime": "1543"
+    },
+    {
       "type": "verifyTextPresent",
       "text": "1"
     },
     {
       "type": "verifyTextPresent",
       "text": "2"
-    },
-    {
-      "type": "verifyTextPresent",
-      "text": "3"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "css selector",
-        "value": "#innerAddEntryPanel > p"
-      }
     },
     {
       "type": "setElementText",
@@ -117,23 +96,13 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "id",
-        "value": "celladdress_h1_0"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "id",
-        "value": "cellcontents_h1_0"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
         "type": "link text",
         "value": "Entry ID"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "verifyTextPresent",
@@ -145,14 +114,7 @@
         "type": "name",
         "value": "search_entry_id"
       },
-      "text": "3"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "id",
-        "value": "footer-padding"
-      }
+      "text": "1"
     },
     {
       "type": "clickElement",
@@ -162,8 +124,12 @@
       }
     },
     {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
       "type": "verifyTextPresent",
-      "text": "3"
+      "text": "1"
     },
     {
       "type": "setElementText",
@@ -176,16 +142,13 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "id",
-        "value": "xo-canvas"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
         "type": "link text",
         "value": "Entry ID"
       }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
     },
     {
       "type": "verifyTextPresent",
@@ -194,10 +157,6 @@
     {
       "type": "verifyTextPresent",
       "text": "2"
-    },
-    {
-      "type": "verifyTextPresent",
-      "text": "3"
     }
   ],
   "data": {

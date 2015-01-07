@@ -490,4 +490,45 @@ class formulizeFrameworksHandler {
 		$cachedResults[$fid] = $ret;
 		return $ret;
 	}
+
+    function formatFrameworksAsRelationships($frameworks) {
+        $relationships = array();
+        $relationshipIndices = array();
+        $i = 1;
+        foreach($frameworks as $framework) {
+            $frid = $framework->getVar('frid');
+            if (isset($relationshipIndices[$frid])) { continue; }
+
+            $relationships[$i]['name'] = $framework->getVar('name');
+            $relationships[$i]['content']['frid'] = $frid;
+
+            $frameworkLinks = $framework->getVar('links');
+
+            $li = 1;
+            $links = array();
+            foreach($frameworkLinks as $link) {
+                $links[$li]['form1'] = printSmart(getFormTitle($link->getVar('form1')));
+                $links[$li]['form2'] = printSmart(getFormTitle($link->getVar('form2')));
+
+                switch($link->getVar('relationship')) {
+                    case 1:
+                        $relationship = _AM_FRAME_ONETOONE;
+                        break;
+                    case 2:
+                        $relationship = _AM_FRAME_ONETOMANY;
+                        break;
+                    case 3:
+                        $relationship = _AM_FRAME_MANYTOONE;
+                        break;
+                }
+                $links[$li]['relationship'] = printSmart($relationship);
+                $li++;
+            }
+            $relationships[$i]['content']['links'] = $links;
+            $relationshipIndices[$frid] = true;
+            $i++;
+        }
+
+        return $relationships;
+    }
 }
