@@ -715,7 +715,7 @@ th {
   text-align: right;
   padding: 3px;
   background-color: #e6e6e6;
-  color: black; }
+  color: #000; }
 
 .itemAdminLink {
   font-size: .9em; }
@@ -745,12 +745,12 @@ th {
   font-size: .7em;
   color: #639ACE;
   font-weight: bold;
-  border: 1px solid #cccccc;
+  border: 1px solid #ccc;
   background-color: #fff;
   margin: 2px;
   padding: 2px;
-  border-right: 2px solid #999999;
-  border-bottom: 2px solid #999999; }
+  border-right: 2px solid #999;
+  border-bottom: 2px solid #999; }
 
 .comUserStatCaption {
   font-weight: normal; }
@@ -845,7 +845,7 @@ th {
   width: 99%;
   background: #dcdee0;
   padding: 3px;
-  border-bottom: 1px solid #cccccc; }
+  border-bottom: 1px solid #ccc; }
 
 table.outer {
   border: 1px solid #59a7d4; }
@@ -906,8 +906,8 @@ a.tooltip:hover > span {
   left: -5em;
   width: 25em;
   display: block;
-  background-color: white;
-  color: black;
+  background-color: #ffffff;
+  color: #000;
   padding: 1.5em;
   line-height: 1.5em;
   opacity: 0.95;
@@ -916,6 +916,9 @@ a.tooltip:hover > span {
   -moz-border-radius: 6px;
   -webkit-border-radius: 6px;
   box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.3); }
+
+a.formulize-open-close-link {
+  cursor: pointer; }
 
 .icms_checkboxoption {
   clear: both; }
@@ -1092,7 +1095,7 @@ td.even .formulize-element-edit-link:hover, td.odd .formulize-element-edit-link:
   margin-bottom: 1em;
   padding: 0.7em 0.7em 0.7em 0em;
   color: #855;
-  border: 1px solid #885555;
+  border: 1px solid #855;
   border-radius: 6px;
   -moz-border-radius: 6px;
   -webkit-border-radius: 6px; }
@@ -1162,7 +1165,8 @@ a.loe-edit-entry:hover {
   text-shadow: 0px 0px 2px #14384d; }
 
 td.formulize-controls {
-  white-space: nowrap; }
+  white-space: nowrap;
+  width: 40px; }
 
 .xoops-form-element-help {
   color: #a2cee7; }
@@ -1243,7 +1247,7 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     border: none; }
 
   .ui-accordion .ui-accordion-content table.outer td {
-    border-bottom: 1px solid #dddddd; }
+    border-bottom: 1px solid #ddd; }
 
   #formulize-entry-lock-message {
     display: none; }

@@ -123,37 +123,32 @@ function prepvalues($value, $field, $entry_id) {
         $sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
         if($value AND $sourceMeta[1]) {
             // need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
-
+            // save the value before convertElementIdsToElementHandles()
+            $before_conversion = $sourceMeta[1];
+            $altFieldSource = "";
             if($GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
-                $source_ele_value[11] = is_array($source_ele_value[11]) ? $source_ele_value[11] : array($source_ele_value[11]);
-                list($sourceMeta[1]) = convertElementIdsToElementHandles($source_ele_value[11], $sourceMeta[0]);
+                $altFieldSource = $source_ele_value[11];
             } elseif(isset($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) AND $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] != "none") {
-                // EV_MULTIPLE_LIST_COLUMNS may be an array now
-                if (!is_array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]))
-                    $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] = array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]);
-
-                // save the value before convertElementIdsToElementHandles()
-                $before_conversion = $sourceMeta[1];
-
-                $sourceMeta[1] = convertElementIdsToElementHandles(is_array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) ?
-                    $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] : array($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]), $sourceMeta[0]);
-
+                $altFieldSource = $source_ele_value[EV_MULTIPLE_LIST_COLUMNS];
+            }
+            if($altFieldSource) {
+                $altFieldSource = is_array($altFieldSource) ? $altFieldSource : array($altFieldSource);
+                $sourceMeta[1] = convertElementIdsToElementHandles($altFieldSource, $sourceMeta[0]);
                 // remove empty entries, which can happen if the "use the linked field selected above" option is selected
                 $sourceMeta[1] = array_filter($sourceMeta[1]);
-
                 // unfortunately, sometimes sourceMeta[1] seems to be saved as element handles rather than element IDs, and in that case,
-                //  convertElementIdsToElementHandles() returns array(0 => 'none') which causes an error in the query below.
-                //  check for that case here and revert back to the value of sourceMeta[1] before convertElementIdsToElementHandles()
-                if (1 == count($sourceMeta[1]) and isset($sourceMeta[1][0]) and "none" == $sourceMeta[1][0])
+                // convertElementIdsToElementHandles() returns array(0 => 'none') which causes an error in the query below.
+                // check for that case here and revert back to the value of sourceMeta[1] before convertElementIdsToElementHandles()
+                if ((1 == count($sourceMeta[1]) and isset($sourceMeta[1][0]) and "none" == $sourceMeta[1][0]) OR $sourceMeta[1] == "none") {
                     $sourceMeta[1] = $before_conversion;
+                }
             }
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
             $sourceFormObject = $form_handler->get($sourceMeta[0]);
-            // check if this is a link to a link
-            if (!is_array($sourceMeta[1]))
-                $sourceMeta[1] = array($sourceMeta[1]);
+            $sourceMeta[1] = is_array($sourceMeta[1]) ? $sourceMeta[1] : array($sourceMeta[1]);
             $query_columns = array();
             foreach ($sourceMeta[1] as $key => $handle) {
+                // check if this is a link to a link
                 if ($second_source_ele_value = formulize_isLinkedSelectBox($handle, true)) {
                     $secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
                     $secondFormObject = $form_handler->get($secondSourceMeta[0]);
@@ -229,9 +224,12 @@ function prepvalues($value, $field, $entry_id) {
 		$realcap = str_replace("`", "'", $ffcaption);
 		$newValueq = go("SELECT other_text FROM " . DBPRE . "formulize_other, " . DBPRE . "formulize WHERE " . DBPRE . "formulize_other.ele_id=" . DBPRE . "formulize.ele_id AND " . DBPRE . "formulize.ele_handle=\"" . formulize_db_escape($field) . "\" AND " . DBPRE . "formulize_other.id_req='".intval($entry_id)."' LIMIT 0,1");
 		//$value_other = _formulize_OPT_OTHER . $newValueq[0]['other_text'];
-    $value_other = $newValueq[0]['other_text']; // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
+        // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
+        $value_other = $newValueq[0]['other_text'];
 		$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value); 
-	}
+	} else {
+        $value = formulize_swapUIText($value, unserialize($elementArray['ele_uitext']));
+    }
 
 	  if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 	       $elementTypeHandler = xoops_getmodulehandler($type."Element", "formulize");
@@ -267,7 +265,7 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
      global $xoopsDB;
 
      if(substr($filter, 0, 7) == "SELECT ") { // a proper SQL statement has been passed in so use that instead of constructing one...initially added for the new export feature
-	  $result = dataExtraction(intval($framework), intval($form), $filter);
+	  $result = dataExtraction(intval($framework), intval($form), $filter, null, null, null, null, null, null, null, null);
 	  return $result;
      }
 		 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
@@ -841,6 +839,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 		    $creatTableSQL = "CREATE TABLE ".DBPRE."formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=MyISAM;";
 		 }
 		 $createTableRes = $xoopsDB->queryF($creatTableSQL);
+        $gatherIdsRes = $xoopsDB->queryF(str_replace("REPLACEWITHTIMESTAMP", $timestamp, $masterQuerySQL));
 		 $linkQueryRes = array();
 	         if(isset($exportOverrideQueries[2])) {
 		    for($i=2;$i<count($exportOverrideQueries);$i++) {
@@ -1059,6 +1058,7 @@ function dataExtraction($frame="", $form, $filter, $andor, $scope, $limitStart, 
 	  $prevMainId = "";
 		      //formulize_benchmark("About to prepare results.");
 	  while($masterQueryArray = $xoopsDB->fetchArray($masterQueryRes)) {
+            set_time_limit(120);
 	     //formulize_benchmark("Starting to process one entry.");
 	       foreach($masterQueryArray as $field=>$value) {
 		    //formulize_benchmark("Starting to process one value");
@@ -1387,7 +1387,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // usernames/fullnames boxes
                     } elseif($listtype = $formFieldFilterMap[$mappedForm][$element_id]['isnamelist'] AND $ifParts[1] !== "") {
                          if(!is_numeric($ifParts[1])) {
-                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;  // search name and uname, since often name might be empty these days
+                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape(html_entity_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape(html_entity_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes;  // search name and uname, since often name might be empty these days
                          } else {
                               $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uid ".$operator.$quotes.$likebits.$ifParts[1].$likebits.$quotes;
                          }
@@ -1713,7 +1713,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
     foreach($metadata as $formulaNumber => $thisMetaData) {
         $formula = $thisMetaData['formula'];
         $quotePos = 0;
-        while($quotePos = strpos($formula, "\"", $quotePos + 1)) {
+        while ((strlen($formula) > $quotePos + 1) and ($quotePos = strpos($formula, "\"", $quotePos + 1))) {
             $endQuotePos = strpos($formula, "\"", $quotePos + 1);
             $term = substr($formula, $quotePos, $endQuotePos - $quotePos+1);
             if(!is_numeric($term)) {

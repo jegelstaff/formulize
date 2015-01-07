@@ -1,5 +1,5 @@
 <?php
-/*mod Language for admin side, by François T*/
+/*mod Language for admin side, by Franï¿½ois T*/
 
 /*mod Language for applications*/
 define("_AM_APP_APPLICATION","Application: ");
@@ -7,6 +7,7 @@ define("_AM_APP_SETTINGS","Settings");
 define("_AM_APP_FORMS","Forms");
 define("_AM_APP_FORM","Form: ");
 define("_AM_APP_RELATIONSHIPS_CREATE"," Create a new relationship");
+define("_AM_APP_RELATIONSHIPS_MANAGE"," Manage existing relationships");
 define("_AM_APP_RELATIONSHIPS_DELETE_CONFIRM","Are you sure you want to delete this relationship, and all its links?");
 define("_AM_APP_RELATIONSHIPS","Relationships");
 define("_AM_APP_FORMWITHNOAPP","Forms that don't belong to an application");
@@ -80,9 +81,9 @@ define("_AM_FORM_CREATE_EXPLAIN","To assign a form to an application, look on th
 define("_AM_FORM_SCREEN","Screen: ");
 define("_AM_FORM_SCREEN_TEXT","Text");
 define("_AM_FORM_SCREEN_PAGES","Pages");
-define("_AM_FORM_SCREEN_ENTRIES_DISPLAY","Entries to display");
-define("_AM_FORM_SCREEN_HEADINGS_INTERFACE","Headings and Interface");
-define("_AM_FORM_SCREEN_ACTION_BUTTONS","Action Buttons");
+define("_AM_FORM_SCREEN_ENTRIES_DISPLAY","Entries");
+define("_AM_FORM_SCREEN_HEADINGS_INTERFACE","Interface");
+define("_AM_FORM_SCREEN_ACTION_BUTTONS","Buttons");
 define("_AM_FORM_SCREEN_CUSTOM_BUTTONS","Custom buttons");
 define("_AM_FORM_SCREEN_TEMPLATES","Templates");
 define("_AM_SETTINGS_FORM_TITLE_QUESTION","What is the name of the form?");
@@ -147,6 +148,7 @@ define("_AM_PERMISSIONS_ADVANCED_CREATEFOROTHER","Create entries on behalf of ot
 define("_AM_PERMISSIONS_ADVANCED_CHANGEOWNER","Change the owner/creator of an existing entry");
 define("_AM_PERMISSIONS_ADVANCED_ALTER","Alter this form's configuration settings");
 define("_AM_PERMISSIONS_ADVANCED_DELETEFORM","Delete this form");
+define("_AM_PERMISSIONS_REVIEW_PERMISSIONS","Review permissions for a user");
 
 /*mod Language for procedures*/
 define("_AM_CALC_EXPLAIN","let you create a series of queries and logical steps, that get carried out on the data that users have submitted in the form.  You can use Procedures for advanced, multi-step calculations, or any other situation where a single query or single operation is not enough to get to the outcome you want.");
@@ -192,7 +194,7 @@ define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? 
 
 
 
-/*End mod Language for admin side, by François T*/
+/*End mod Language for admin side, by Franï¿½ois T*/
 
 // Admin
 define("_FORM_RENAME_TEXT", "Rename this form");
