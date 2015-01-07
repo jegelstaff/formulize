@@ -588,15 +588,15 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 		
 		$success1 = true;
 		if(isset($_POST['screens-toptemplate'])) { 
-		    $success1 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-toptemplate'])), 'toptemplate', $screen);
+		    $success1 = $this->writeTemplateToFile(trim($_POST['screens-toptemplate']), 'toptemplate', $screen);
 		}
 		$success2 = true;
 		if(isset($_POST['screens-bottomtemplate'])) { 
-		    $success2 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-bottomtemplate'])), 'bottomtemplate', $screen);
+		    $success2 = $this->writeTemplateToFile(trim($_POST['screens-bottomtemplate']), 'bottomtemplate', $screen);
 		}
 		$success3 = true;
 		if(isset($_POST['screens-listtemplate'])) { 
-		    $success3 = $this->writeTemplateToFile(stripslashes(trim($_POST['screens-listtemplate'])), 'listtemplate', $screen);
+		    $success3 = $this->writeTemplateToFile(trim($_POST['screens-listtemplate']), 'listtemplate', $screen);
 		}
                 
                 if (!$success1 || !$success2 || !$success3) {

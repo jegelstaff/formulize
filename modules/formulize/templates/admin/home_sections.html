@@ -1,21 +1,37 @@
-<p><{$sectionContent.description}></p>
-
-<{if $sectionContent.aid > 0}>
-<p><a href="ui.php?page=application&aid=<{$sectionContent.aid}>"><img src="../images/kedit.png">&nbsp;&nbsp;<{$smarty.const._AM_HOME_APP_CONFIG}></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="deleteapplink" target="<{$sectionContent.aid}>" href=""><img src="../images/editdelete.gif">&nbsp;&nbsp;<{$smarty.const._AM_HOME_APP_DELETE}></a></p>
-
-<p><a  href="ui.php?page=export">Export this Application</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a  href="ui.php?page=import">Import Application</a></p>
-
-
-<{/if}>
-	
 <{if $sectionContent.aid == 0}>
-<div class="description"><{$smarty.const._AM_HOME_APP_DESC}></div><br>
-<p style="clear: both;"><a href="ui.php?page=application&aid=<{$sectionContent.aid}>&tab=relationships"><img src="../images/kedit.png">&nbsp;&nbsp;<{$smarty.const._AM_HOME_APP_RELATION}></a></p>
+<div class="description homepage-description"><p><{$smarty.const._AM_HOME_APP_DESC}></p></div>
+<{else}>
+<div class="description homepage-description"><p><{$sectionContent.description}></p></div>
 <{/if}>
 
-<blockquote>
-<{include file="db:admin/form_listing.html"}>
-</blockquote>  
+<span class="formulize-toolbar left-toolbar">
+    <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$sectionContent.aid}>&tab=settings&fid=new"><i class="icon-add"></i> Add a Form</a>&emsp;
+</span>
+<{if count($sectionContent.forms) == 0}>
+<p>No forms.</p>
+<{else}>
+<h2>Forms</h2>
+<table>
+  <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Elements</th>
+      <th>Entries</th>
+      <th>Data-entry Screen</th>
+      <th>List Screen</th>
+  </tr>
+  <{foreach from=$sectionContent.forms item=form}>
+  <tr>
+      <td style="text-align:right;padding-right:1em;"><{$form.fid}></td>
+      <td><a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=elements"><i class="icon-form"></i> <{$form.form->title}></a></td>
+      <td style="text-align:right;padding-right:1em;"><{$form.form->elementHandles|@count}></td>
+      <td style="text-align:right;padding-right:1em;"><{$form.form->entry_count}></td>
+      <td><{if $form.form->defaultform > 0}><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$form.form->default_form_screen->sid}>" target="_blank"><i class="icon-screen"></i> <{$form.form->default_form_screen->title}></a><{/if}></td>
+      <td><{if $form.form->defaultlist > 0}><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$form.form->default_list_screen->sid}>" target="_blank"><i class="icon-screen"></i> <{$form.form->default_list_screen->title}></a><{/if}></td>
+  </tr>
+  <{/foreach}>
+</table>
+<{/if}>
 
 
 	

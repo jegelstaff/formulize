@@ -27,8 +27,8 @@ class icms_core_Session {
 	 */
 	static public function service() {
 		global $icmsConfig;
-		if (file_exists("integration_api.php"))
-			include_once('integration_api.php'); // ADDED CODE BY FREEFORM SOLUTIONS
+		if (file_exists(XOOPS_ROOT_PATH."/integration_api.php"))
+			include_once(XOOPS_ROOT_PATH.'/integration_api.php'); // ADDED CODE BY FREEFORM SOLUTIONS
 		$instance = new icms_core_Session(icms::$xoopsDB);
 		session_set_save_handler(
 			array($instance, 'open'), array($instance, 'close'), array($instance, 'read'),
@@ -76,9 +76,11 @@ class icms_core_Session {
 				$cookie_time = time() + (60 * $icms_session_expiry);
 				$instance->update_cookie(session_id(), $cookie_time);
 			}
-			
+
 			if (function_exists("i18n_get_lang")) { // set icms language to match the currently active Drupal language
 				$_GET['lang'] = i18n_get_lang();
+			} elseif(function_exists("i18n_langcode")) {
+				$_GET['lang'] = i18n_langcode();
 			}
 		}
 

@@ -1,7 +1,8 @@
 @import '_style_common';
 
 div.xo-theme-form > table {
-    table-layout: fixed;    // prevent subforms from making the table too wide
+    // this does prevent subforms from making the table too wide, but then all columns are the same width
+    // table-layout: fixed;
 }
 
 /* horizontal lines between form questions */
@@ -196,23 +197,6 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
 }
 /* from style.php */
 
-#session-timeout-warning {
-    display: none;
-    position: fixed;
-    top: 30px;
-    left: 50%;
-    margin-left: -250px;
-    width: 500px;
-    z-index: 101;
-    text-align: center;
-    background-color: lighten-or-darken($colorPageBackground, 20%);
-    color: black;
-    border: 8px solid lighten-or-darken($colorHeaderBackground, 20%);
-    padding: 1em;
-    @include border-radius(5px);
-    box-shadow: 1px 1px 20px 3px #000;
-}
-
 /* this forces the footer to the bottom of the page even when the page content is shorter than the window */
 html, body, #content
 {
@@ -237,9 +221,4 @@ body > #content
     height: 2em;
     padding: 0em;
     margin-top: -2.3em; // height + top padding + bottom padding
-}
-
-.xoops-form-element-help {
-    // modify the background color instead of the text color so that this text always contrasts with the background
-    color: desaturate(lighten-or-darken($colorHeaderBackground, 40%), 60%);
 }

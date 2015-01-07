@@ -48,7 +48,10 @@ set_time_limit(0);
 include_once './class/dbmanager.php';
 $dbm = new db_manager();
 $dbm->db->connect();
-$formulizeStandaloneQueries = str_replace("REPLACE_WITH_PREFIX", SDATA_DB_PREFIX, file_get_contents(ICMS_ROOT_PATH."/install/sql/mysql.formulize_standalone.sql"));
+$formulizeStandaloneQueries = "";
+if (file_exists(ICMS_ROOT_PATH."/install/sql/mysql.formulize_standalone.sql")) {
+    $formulizeStandaloneQueries = str_replace("REPLACE_WITH_PREFIX", SDATA_DB_PREFIX, file_get_contents(ICMS_ROOT_PATH."/install/sql/mysql.formulize_standalone.sql"));
+}
 
 // Check what the module ids are, and replace in the file
 include_once ICMS_ROOT_PATH."/mainfile.php";

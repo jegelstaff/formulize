@@ -173,6 +173,9 @@ $modversion['templates'][] = array(
 	'file' => 'admin/screen_settings.html',
 	'description' => '');
 $modversion['templates'][] = array(
+	'file' => 'admin/screen_relationships.html',
+	'description' => '');
+$modversion['templates'][] = array(
 	'file' => 'admin/element_names.html',
 	'description' => '');
 $modversion['templates'][] = array(
@@ -479,6 +482,16 @@ $modversion['config'][] = array(
 	'valuetype' => 'int',
 	'default' => 0,
 );
+
+$modversion['config'][] = array(
+	'name' => 'printviewStylesheets',
+	'title' => '_MI_formulize_PRINTVIEWSTYLESHEETS',
+	'description' => '_MI_formulize_PRINTVIEWSTYLESHEETSDESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => '',
+);
+
 
 
 
