@@ -321,7 +321,8 @@ define("_formulize_ADD_HELP4", "Delete an entry by checking the boxes and clicki
 define("_formulize_SUBFORM_VIEW", "View");
 define("_AM_ELE_SUBFORM_NEWENTRY_LABEL", "New entry");
 define("_formulize_SAVE", "Save");
-define("_formulize_DONE", "All Done");
+define("_formulize_SAVE_AND_LEAVE", "Save and Leave");
+define("_formulize_DONE", "Leave Page");
 define("_formulize_CONFIRMNOSAVE", "You have not saved your changes!  Is that OK?  Click 'Cancel' to return to the form and then click 'Save' to save your changes.");
 define("_formulize_CONFIRMNOSAVE_UNLOAD", "You have not saved your changes!  Is that OK?");
 
@@ -330,9 +331,11 @@ define("_formulize_INFO_DONE1", "Click the <i>");
 define("_formulize_INFO_DONE2", "</i> button if you are finished.");
 define("_formulize_INFO_CONTINUE1", "You can update your information below.");
 define("_formulize_INFO_CONTINUE2", "You can make another entry by filling in the form again.");
-define("_formulize_INFO_SAVEBUTTON", "Click the <i>" . _formulize_SAVE . "</i> button to save your changes.");
+define("_formulize_INFO_SAVEBUTTON", "Click the <i>" . _formulize_SAVE . "</i> button to save your changes.<br />Click the "._formulize_SAVE_AND_LEAVE.
+    " button to save your changes and leave the page.");
 define("_formulize_INFO_SAVE1", "Click the <i>");
-define("_formulize_INFO_SAVE2", "</i> button to save your changes.");
+define("_formulize_INFO_SAVE2", "</i> button to save your changes.<br />Click the "._formulize_SAVE_AND_LEAVE.
+    " button if you are finished and want to save your changes.");
 define("_formulize_INFO_NOSAVE", "You can review this entry, but you <i>cannot save changes</i>.");
 define("_formulize_INFO_MAKENEW", "You can make a new entry by filling in the form below.");
 
@@ -742,4 +745,6 @@ define("_AM_UPLOAD_ERR_EXTENSION", "The web server rejected your file (a PHP ext
 /* End Upload element translation by François */
 
 define("_formulize_CLOSE_FORM_ELEMENT", "You need to close the form element that is open first before you edit this one");
+
+define("_formulize_ENTRY_ID", "Entry ID");
 
