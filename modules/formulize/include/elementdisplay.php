@@ -125,6 +125,11 @@ function displayElement($formframe="", $ele, $entry="new", $noSave = false, $scr
 		$prevEntry = getEntryValues($entry, "", $groups, $form_id, "", $mid, $user_id, $owner, $groupEntryWithUpdateRights);
 	}
 
+	// record the list of elements that are allowed in principle for a form (regardless of conditional status)
+	if($allowed) {
+		$GLOBALS['formulize_renderedElementsForForm'][$form_id][$entry][$renderedElementName] = $element->getVar('ele_handle');
+	}
+	
 	$elementFilterSettings = $element->getVar('ele_filtersettings');
 	if($allowed AND count($elementFilterSettings[0]) > 0) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
@@ -345,9 +350,16 @@ EOF;
 }
 
 /* ALTERED - 20100316 - freeform - jeff/julian - start */
-function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData)
-{
-	$evaluationCondition = "";
+function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData) {
+    $evaluationCondition = "";
+
+    // convert the internal database representation to the displayed value, if this element has uitext
+    foreach ($filterElements as $key => $element) {
+        $element_metadata = formulize_getElementMetaData($element, true);
+        if (isset($element_metadata['ele_uitext'])) {
+            $filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
+        }
+    }
 
 	for($io=0;$io<count($indexes);$io++) {
 		$i = $indexes[$io];
