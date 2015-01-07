@@ -2,6 +2,7 @@
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror-compressed.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/formulize.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/selenium_debug.js"></script>
 
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css">
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/css/formulize-admin.css">
@@ -254,7 +255,7 @@ $(document).ready(function() {
 
   $(document).ready(
     $('.code-textarea').each(function() {
-        if (this.type !== 'textarea') {
+        if (this.type !== 'textarea' || SELENIUM_DEBUG == 'ON') {
             return true; // continue
         }
         CodeMirror.fromTextArea(this, {

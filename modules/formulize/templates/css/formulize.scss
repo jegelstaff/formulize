@@ -257,12 +257,12 @@ a.loe-edit-entry:hover {
 
 td.formulize-controls {
     white-space: nowrap;    // keeps checkbox and edit link side-by-side instead of awkwardly stacking
+    width: 40px;
 }
 
 .xoops-form-element-help {
     // modify the background color instead of the text color so that this text always contrasts with the background
     color: lighten($colorTableHeaderBackground, 18%);
-    width: 40px;
 }
 
 form#formulize td.even, form#formulize td.odd {

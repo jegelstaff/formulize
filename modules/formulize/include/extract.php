@@ -265,7 +265,7 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
      global $xoopsDB;
 
      if(substr($filter, 0, 7) == "SELECT ") { // a proper SQL statement has been passed in so use that instead of constructing one...initially added for the new export feature
-	  $result = dataExtraction(intval($framework), intval($form), $filter);
+	  $result = dataExtraction(intval($framework), intval($form), $filter, null, null, null, null, null, null, null, null);
 	  return $result;
      }
 		 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
