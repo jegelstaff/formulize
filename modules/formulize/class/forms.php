@@ -1050,7 +1050,7 @@ class formulizeFormsHandler {
 			}
 			if(!$start) { $insert_sql .= ", "; }
 			$start = 0;
-			$insert_sql .= "\"$value\"";
+            $insert_sql .= '"'.formulize_db_escape($value).'"';
 		}
 		$insert_sql .= ")";
 		if(!$result = $this->db->query($insert_sql)) {

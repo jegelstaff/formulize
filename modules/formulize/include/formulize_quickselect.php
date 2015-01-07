@@ -27,7 +27,7 @@ if (isset($$cache)) {
         // allow adding new values, so allow this as a new value, except if it matches an existing value
         if (!$match_existing_value) {
             // write the $term and newterm:$term as the key/value
-            $found[] = array($term, "newvalue:'".addslashes($term)."'");
+            $found[] = array($term, "newvalue:".addslashes($term));
         }
     }
 }
