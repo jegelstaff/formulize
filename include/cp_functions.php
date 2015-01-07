@@ -540,10 +540,13 @@ function impresscms_get_adminmenu() {
 	#########################################################################
 	$module_handler = icms::handler('icms_module');
 	$mod = & $module_handler->getByDirname ( 'system' );
-	$menu = array ( );
-	foreach ( $mod->getAdminMenu () as $lkn ) {
-		$lkn['dir'] = 'system';
-		$menu[] = $lkn;
+	$menu = array();
+	$admin_menu_items = $mod->getAdminMenu();
+	if (is_array($admin_menu_items)) {
+		foreach ($admin_menu_items as $lkn) {
+			$lkn['dir'] = 'system';
+			$menu[] = $lkn;
+		}
 	}
 
 	$admin_menu[] = array(

@@ -31,6 +31,10 @@
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
+// this file contains objects to retrieve screen(s) information for elements
+
+include_once XOOPS_ROOT_PATH."/modules/formulize/class/formScreen.php";
+
 // need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
 $aid = intval($_GET['aid']);
 $application_handler = xoops_getmodulehandler('applications','formulize');
@@ -73,6 +77,7 @@ if($_GET['ele_id'] != "new") {
   $caption = $elementObject->getVar('ele_caption', "f"); // the f causes no stupid reformatting by the ICMS core to take place, like making clickable links, etc
   $ele_type = $elementObject->getVar('ele_type');
   $ele_value = $elementObject->getVar('ele_value');
+	$ele_use_default_when_blank = intval($elementObject->getVar('ele_use_default_when_blank'));
   $ele_delim = $elementObject->getVar('ele_delim');
   if($ele_delim != "br" AND $ele_delim != "space" AND $ele_delim != "") {
     $ele_delim_custom_value = $ele_delim;
@@ -85,7 +90,7 @@ if($_GET['ele_id'] != "new") {
   $names['ele_desc'] = $elementObject->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
   $ele_req = $elementObject->getVar('ele_req');
   $ele_req = removeNotApplicableRequireds($ele_type, $ele_req); // function returns false when the element cannot be required.
-  $names['ele_req_on'] = $ele_req === false ? false : true;
+  $common['ele_req_on'] = $ele_req === false ? false : true;
   $names['ele_req_no_on'] = $ele_req ? "" : " checked";
   $names['ele_req_yes_on'] = $ele_req ? " checked" : "";
   $ele_display = $elementObject->getVar('ele_display');
@@ -108,6 +113,7 @@ if($_GET['ele_id'] != "new") {
   } elseif($ele_disabled == 0) {
     $display['ele_disabled']['none'] = " selected"; 
   }
+
   $ele_filtersettings = $elementObject->getVar('ele_filtersettings');
   $filterSettingsToSend = count($ele_filtersettings > 0) ? $ele_filtersettings : "";
   $display['filtersettings'] = formulize_createFilterUI($filterSettingsToSend, "elementfilter", $fid, "form-3");
@@ -173,6 +179,7 @@ if($_GET['ele_id'] != "new") {
   $ele_value = array();
   $ele_delim = "br";
   $ele_uitext = "";
+	$ele_use_default_when_blank = 0;
   global $xoopsModuleConfig;
   switch($ele_type) {
     case("text"):
@@ -197,6 +204,7 @@ if($_GET['ele_id'] != "new") {
     case "subform":
       $ele_value[2] = 1;
       $ele_value[3] = 1;
+	  $ele_value['simple_add_one_button'] = 1;
       break;
     case "grid":
       $ele_value[3] = "horizontal";
@@ -207,7 +215,7 @@ if($_GET['ele_id'] != "new") {
      
   }
     
-  $names['ele_req_on'] = removeNotApplicableRequireds($ele_type);
+  $common['ele_req_on'] = removeNotApplicableRequireds($ele_type);
   $names['ele_req_no_on'] = " checked";
   $display['ele_display']['all'] = " selected";
   $display['ele_disabled']['none'] = " selected";
@@ -228,6 +236,7 @@ if($_GET['ele_id'] != "new") {
   
 }
 
+$advanced['ele_use_default_when_blank'] = $ele_use_default_when_blank;
 $advanced['datatypeui'] = createDataTypeUI($ele_type, $elementObject,$fid,$ele_encrypt);
 
 $formObject = $form_handler->get($fid);
@@ -286,22 +295,16 @@ if($ele_type=='text') {
   $options['listofelementsoptions'] = $listOfElements->render();
 
   //new relationship dropdown
-  $formObjects = $form_handler->getFormsByApplication($aid);
   $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-  $allRelationships = array();
-  foreach ($formObjects as $thisForm) {
-    // returns array of objects
-    $allRelationships = array_merge($allRelationships, $framework_handler->getFrameworksByForm($thisForm->getVar('id_form')));
-  }
+  $allRelationships = $framework_handler->getFrameworksByForm($fid);
   $relationships = array();
   $relationshipIndex = array();
   $relationships[""] = "this form only, no relationship.";
-  $i = 1;
   foreach ($allRelationships as $thisRelationship) {
     $frid = $thisRelationship->getVar('frid');
-    if(isset($relationshipIndex[$frid])) { continue; }
-    $relationships[$i] = $thisRelationship->getVar('name');
-    $relationshipIndex[$frid] = true;
+    if(!isset($relationships[$frid])) {
+        $relationships[$frid] = $thisRelationship->getVar('name');
+    }
   }
   $listOfRelationships = new XoopsFormSelect("", 'listofrelationshipoptions');
   $listOfRelationships->addOptionArray($relationships);
@@ -363,7 +366,7 @@ if($ele_type=='text') {
   $grid_elements_criteria = new Criteria();
   $grid_elements_criteria->setSort('ele_order');
   $grid_elements_criteria->setOrder('ASC');
-  $grid_elements = $element_handler->getObjects2($grid_elements_criteria, $fid);
+  $grid_elements = $element_handler->getObjects($grid_elements_criteria, $fid);
   foreach($grid_elements as $this_element) {
     $grid_start_options[$this_element->getVar('ele_id')] = $this_element->getVar('ele_colhead') ? printSmart(trans($this_element->getVar('ele_colhead'))) : printSmart(trans($this_element->getVar('ele_caption')));
   }
@@ -445,7 +448,7 @@ if($ele_type=='text') {
     $options['exportValue'] = "";
     $options['listValue'] = "";
     $options['optionSortOrder'] = "";
-    $options['optionDefaultSelectionDefaults'] = "";
+    $options['optionDefaultSelectionDefaults'] = array();
     $options['optionDefaultSelection'] = "";
   }
 
@@ -506,6 +509,17 @@ if($ele_type!='colorpick') {
 $adminPage['tabs'][++$tabindex]['name'] = _AM_ELE_DISPLAYSETTINGS;
 $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_display.html";
 $adminPage['tabs'][$tabindex]['content'] = $display + $common;
+$formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
+$adminPage['tabs'][$tabindex]['content']['form_screens'] = $formScreenHandler->getScreensForElement($common['fid']);
+$adminPage['tabs'][$tabindex]['content']['multi_form_screens'] = $formScreenHandler->getMultiScreens($common['fid']);
+// for new elements, pre-select all of the "filled up" screens
+if ($ele_id == "new") {
+  $adminPage['tabs'][$tabindex]['content']['ele_form_screens'] = $formScreenHandler->getSelectedScreensForNewElement();
+} else {
+  // get all default selected form screens in an array
+  $adminPage['tabs'][$tabindex]['content']['ele_form_screens'] = $formScreenHandler->getSelectedScreens($common['fid']);
+}
+
   
 if($advanced['datatypeui'] OR $advanced['ele_encrypt_show']) {
   $adminPage['tabs'][++$tabindex]['name'] = "Advanced";
@@ -597,16 +611,22 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
 
 // THIS FUNCTION TAKES THE VALUES USED IN THE DB, PLUS THE UITEXT FOR THOSE VALUES, AND CONSTRUCTS AN ARRAY SUITABLE FOR USE WHEN EDITING ELEMENTS, SO THE UITEXT IS VISIBLE INLINE WITH THE VALUES, SEPARATED BY A PIPE (|)
 function formulize_mergeUIText($values, $uitext) {
-  if(strstr($values, "#*=:*")) { return $values; } // don't alter linked selectbox properties
-	$newvalues = array();
-	foreach($values as $key=>$value) {
-		if(isset($uitext[$key])) {
-			$newvalues[$key . "|" . $uitext[$key]] = $value;
-		} else {
-			$newvalues[$key] = $value;
-		}
-	}
-	return $newvalues;
+    if (is_string($values) and strstr($values, "#*=:*")) {
+        // don't alter linked selectbox properties
+        return $values;
+    }
+    if (is_array($value)) {
+        $newvalues = array();
+        foreach($values as $key=>$value) {
+            if(isset($uitext[$key])) {
+                $newvalues[$key . "|" . $uitext[$key]] = $value;
+            } else {
+                $newvalues[$key] = $value;
+            }
+        }
+        return $newvalues;
+    }
+    return $values;
 }
 
 function has_index($element,$id_form) {

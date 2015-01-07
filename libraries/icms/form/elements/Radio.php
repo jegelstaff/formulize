@@ -144,7 +144,7 @@ class icms_form_elements_Radio extends icms_form_Element {
 		$ele_options = $this->getOptions();
 		$ele_extra = $this->getExtra();
 		$ele_delimeter = $this->getDelimeter();
-		$counter = 0;
+		static $counter = 0;
 		foreach ($ele_options as $value => $name) {
 			$counter++;
 			$ret .= "<input type='radio' id='" . $ele_name."-".$counter . "' name='" . $ele_name . "' value='" . htmlspecialchars($value, ENT_QUOTES) . "'";

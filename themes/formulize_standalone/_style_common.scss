@@ -1,19 +1,5 @@
 @import '_style_colors';
 
-@import 'formulize-icons/formulize-icons.css';
-
-@mixin use-icon-font()
-{
-    font-family: "formulize-icons";
-    font-style: normal;
-    font-weight: normal;
-    font-variant: normal;
-    text-transform: none;
-    -webkit-font-smoothing: antialiased;
-    text-decoration: inherit;
-    font-size: 11pt;
-}
-
 html, body {
     background: $colorPageBackground;
     color: $colorPageText;
@@ -919,74 +905,34 @@ table.outer {
     border: 1px solid $colourPrimary;
 }
 
-a.tooltip{
-    @include use-icon-font();
-    cursor: help;
-    position: relative;
-    background: transparent;
-    background-color: transparent;
-}
-
-a.tooltip:before{
-    content: "\f110";   // icon-help
-    font-size: 15pt;
-    color: $colourPrimary;
-}
-
-a.tooltip > span{
+#session-timeout-warning {
     display: none;
-}
-
-a.tooltip:hover{
-    background: transparent;
-    background-color: transparent;
-}
-
-a.tooltip:hover > span{
+    position: fixed;
+    top: 7%;
+    left: 50%;
+    margin-left: -250px;
+    width: 500px;
+    z-index: 101;
+    text-align: center;
+    background-color: #fff;
+    color: black;
+    border: 3px solid #ce8c22;
+    padding: 1em;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    box-shadow: 1px 1px 20px 3px #aaa; }
+#session-timeout-warning img.session-timeout-warning-icon {
     position: absolute;
-    top: 2em;
-    left: -5em;
-    width: 25em;
-    display: block;
-    background-color: $colorPageBackground;
-    color: $colorPageText;
-    padding: 1.5em;
-    line-height: 1.5em;
-    opacity: 0.95;
-    border: 2px solid $colourPrimary;
-    @include border-radius(6px);
-    @include shadow-floating();
+    top: calc(50% - 16px);
+    left: 1.3em;
 }
-
-td a.heading-locked, td a.heading-unlocked {
-    @include use-icon-font();
-    float: right;
-    margin-left: 0.3em; // some space between this and the info/help icon to the left
-    color: contrasting-color($colorTableHeaderBackground, darken($colorTableHeaderBackground, 20%), lighten($colorTableHeaderBackground, 20%));
+#session-timeout-warning img.session-timeout-warning-close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
 }
-td a.heading-locked {
-    color: contrasting-color($colorTableHeaderBackground, darken($colorTableHeaderBackground, 30%), lighten($colorTableHeaderBackground, 30%));
-}
-
-.heading-locked:before{
-    content: "\f113";   // icon-lock
-}
-
-.heading-unlocked:before{
-    content: "\f112";   // icon-unlock
-}
-
-td a.header-info-link {
-    @include use-icon-font();
-    float: right;
-    color: contrasting-color($colorTableHeaderBackground, darken($colorTableHeaderBackground, 20%), lighten($colorTableHeaderBackground, 20%));
-}
-
-.header-info-link:before{
-    content: "\f110";   // icon-help
-}
-
-.heading-locked:hover, .heading-unlocked:hover, .header-info-link:hover{
-    text-shadow: 0px 0px 2px
-        contrasting-color($colorTableHeaderBackground, lighten($colorTableHeaderBackground, 30%), darken($colorTableHeaderBackground, 30%));
+#session-timeout-warning p {
+    margin: 1em;
 }

@@ -184,44 +184,7 @@ foreach($formObjects as $thisForm) {
 		$allForms[$thisForm->getVar('id_form')]['selected'] = " selected";
 	}
 }
-$relationships = array();
-$relationshipIndex = array();
-$i = 1;
-foreach($allRelationships as $thisRelationship) {
-	$frid = $thisRelationship->getVar('frid');
-	if(isset($relationshipIndex[$frid])) { continue; }
-	$relationships[$i]['name'] = $thisRelationship->getVar('name');
-	$relationships[$i]['content']['frid'] = $frid;
-
-  $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-  $relationshipObject = $framework_handler->get($frid);
-  $relationshipLinks = $relationshipObject->getVar('links');
-  $li = 1;
-  $links = array();
-  foreach($relationshipLinks as $relationshipLink) {
-    // get names of forms in the link
-    $links[$li]['form1'] = printSmart(getFormTitle($relationshipLink->getVar('form1')));
-    $links[$li]['form2'] = printSmart(getFormTitle($relationshipLink->getVar('form2')));
-    // get the name of the relationship
-    switch($relationshipLink->getVar('relationship')) {
-      case 1:
-        $relationship = _AM_FRAME_ONETOONE;
-        break;
-      case 2:
-        $relationship = _AM_FRAME_ONETOMANY;
-        break;
-      case 3:
-        $relationship = _AM_FRAME_MANYTOONE;
-        break;
-    }
-    $links[$li]['relationship'] = printSmart($relationship);
-    $li++;
-  }
-	$relationships[$i]['content']['links'] = $links;
-
-	$relationshipIndex[$frid] = true;
-	$i++;
-}
+$relationships = $framework_handler->formatFrameworksAsRelationships($allRelationships);
 
 $all_screens = array();
 $screen_types = array("form" => "Single Page", "multiPage" => "Multi-page", "listOfEntries" => "List of Entries");

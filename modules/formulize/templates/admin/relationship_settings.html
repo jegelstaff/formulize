@@ -33,6 +33,8 @@ function checkForCommon(Obj, form1, form2, lid) {
 <input type="hidden" name="formulize_admin_op" value="">
 <input type="hidden" name="formulize_admin_lid" value="">
 <input type="hidden" name="aid" value="<{$content.aid}>">  
+<input type="hidden" name="fid" value="<{$content.fid}>">
+<input type="hidden" name="sid" value="<{$content.sid}>">
 
 <div class="pane-content content">
     <{if $content.relationship}>
@@ -41,11 +43,17 @@ function checkForCommon(Obj, form1, form2, lid) {
     <{/if}>
 
     <h2><{$smarty.const._AM_FRAME_ADDFORM}></h2>
-    <select name=relationships-fid1 size=1>
-        <{foreach from=$content.formoptions key=linkNumber item=formoption}>
-            <option value="<{$formoption.value}>"><{$formoption.name}></option>
-        <{/foreach}>
-    </select>
+    <{if $content.required_form}>
+        <input type="hidden" name=relationships-fid1 value="<{$content.required_form.value}>">
+        <text><{$content.required_form.name}></text>
+        </select>
+    <{else}>
+        <select name=relationships-fid1 size=1>
+            <{foreach from=$content.formoptions key=linkNumber item=formoption}>
+                <option value="<{$formoption.value}>"><{$formoption.name}></option>
+            <{/foreach}>
+        </select>
+    <{/if}>
     <select name=relationships-fid2 size=1>
         <{foreach from=$content.formoptions key=formoptionNumber item=formoption}>
             <option value="<{$formoption.value}>"><{$formoption.name}></option>
