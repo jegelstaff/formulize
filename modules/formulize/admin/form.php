@@ -62,7 +62,7 @@ if($_GET['fid'] != "new") {
   $store_revisions = $formObject->getVar('store_revisions');
   
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
-  $elementObjects = $element_handler->getObjects2(null, $fid);
+  $elementObjects = $element_handler->getObjects(null, $fid);
   $elements = array();
   $elementHeadings = array();
   $formApplications = array();
@@ -170,7 +170,7 @@ if($_GET['fid'] != "new") {
     $selectedGroupList = $_POST['grouplistname'];
   } elseif(isset($_POST['loadthislist']) AND $_POST['loadthislist']) {
     $selectedGroupList = intval($_POST['loadthislist']);
-  } elseif(isset($_POST['useselection'])) {
+  } elseif(isset($_POST['useselection']) || isset($_POST['search_by_user'])) {
     $selectedGroupList = 0;
   } elseif(isset($_POST['grouplists'])) {
     $selectedGroupList = intval($_POST['grouplists']);
@@ -197,7 +197,15 @@ if($_GET['fid'] != "new") {
   $allGroups = $member_handler->getGroups();
   $groups = array();
   if(!isset($selectedGroups)) {
-    $selectedGroups = isset($_POST['groups']) ? $_POST['groups'] : array();  
+    if($_POST['search_by_user']) {
+        $submitted_user = $_POST['submitted_user'];
+        $requestedUser = $member_handler->getUsers(new Criteria('uname', $submitted_user));
+        if(is_object($requestedUser[0])) {
+            $selectedGroups = $requestedUser[0]->getGroups();
+        }
+    } else {
+        $selectedGroups = isset($_POST['groups']) ? $_POST['groups'] : array();
+    }
   }
   $orderGroups = isset($_POST['order']) ? $_POST['order'] : "creation";
   foreach($allGroups as $thisGroup) {
@@ -241,10 +249,160 @@ if($_GET['fid'] != "new") {
       $filterSettingsToSend = isset($filterSettings[$thisGroup]) ? $filterSettings[$thisGroup] : "";
       $htmlFormId = $tableform ? "form-2" : "form-3"; // the form id will vary depending on the tabs, and tableforms have no elements tab
       $groupperms[$i]['groupfilter'] = formulize_createFilterUI($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, "oom");
+      $groupperms[$i]['existingFilter'] = getExistingFilter($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, "oom");
       $groupperms[$i]['hasgroupfilter'] = $filterSettingsToSend ? " checked" : "";
       $i++;
   		unset($criteria);
   }
+
+    // get all the permissions for the submitted_user
+    if($_POST['search_by_user']) {
+        // Initialize $userperms
+        // The basics
+        $userperms['view_form'] = array();
+        $userperms['add_own_entry'] = array();
+        $userperms['update_own_entry'] = array();
+        $userperms['update_group_entries'] = array();
+        $userperms['update_other_entries'] = array();
+        $userperms['delete_own_entry'] = array();
+        $userperms['delete_group_entries'] = array();
+        $userperms['delete_other_entries'] = array();
+
+        // Visibility
+        $userperms['view_private_elements'] = array();
+        $userperms['view_their_own_entries'] = array(); //always on
+        $userperms['view_globalscope'] = array();
+
+        $userperms['view_groupscope'] = array();
+        foreach($groups as $group) {
+            $userperms['view_groupscope'][$group['id']] = array();
+        }
+
+        $userperms['view_groupfilter'] = array();
+        $userperms['view_groupfilter']['all'] = array();
+        $userperms['view_groupfilter']['oom'] = array();
+
+        // Publishing 'Saved Views' of form entries
+        $userperms['manage_own'] = array(); //always on
+        $userperms['publish_reports'] = array();
+        $userperms['publish_globalscope'] = array();
+        $userperms['update_other_reports'] = array();
+        $userperms['delete_other_reports'] = array();
+
+        // Advanced options
+        $userperms['import_data'] = array();
+        $userperms['set_notifications_for_others'] = array();
+        $userperms['add_proxy_entries'] = array();
+        $userperms['update_entry_ownership'] = array();
+        $userperms['ignore_editing_lock'] = array();
+        $userperms['edit_form'] = array();
+        $userperms['delete_form'] = array();
+
+        foreach($groupperms as $groupperm) {
+            // The basics
+            if ($groupperm['view_form'] == " checked") {
+                array_push($userperms['view_form'], $groupperm['name']);
+            }
+            if ($groupperm['add_own_entry'] == " checked") {
+                array_push($userperms['add_own_entry'], $groupperm['name']);
+            }
+            if ($groupperm['update_own_entry'] == " checked") {
+                array_push($userperms['update_own_entry'], $groupperm['name']);
+            }
+            if ($groupperm['update_group_entries'] == " checked") {
+                array_push($userperms['update_group_entries'], $groupperm['name']);
+            }
+            if ($groupperm['update_other_entries'] == " checked") {
+                array_push($userperms['update_other_entries'], $groupperm['name']);
+            }
+            if ($groupperm['delete_own_entry'] == " checked") {
+                array_push($userperms['delete_own_entry'], $groupperm['name']);
+            }
+            if ($groupperm['delete_group_entries'] == " checked") {
+                array_push($userperms['delete_group_entries'], $groupperm['name']);
+            }
+            if ($groupperm['delete_other_entries'] == " checked") {
+                array_push($userperms['delete_other_entries'], $groupperm['name']);
+            }
+
+            // Visibility
+            if ($groupperm['view_private_elements'] == " checked") {
+                array_push($userperms['view_private_elements'], $groupperm['name']);
+            }
+
+            array_push($userperms['view_their_own_entries'], $groupperm['name']); //always on
+
+            if ($groupperm['view_globalscope'] == " checked") {
+                array_push($userperms['view_globalscope'], $groupperm['name']);
+            }
+
+            foreach($groups as $group) {
+                if ($groupperm['groupscope_choice'][$group['id']] == " selected" ) {
+                    $userperms['view_groupscope']["checked"] = true;
+                    array_push($userperms['view_groupscope'][$group['id']], $groupperm['name']);
+                }
+            }
+
+            if ($groupperm['existingFilter']['all']) {
+                foreach($groupperm['existingFilter']['all'] as $filter) {
+                    if(!$userperms['view_groupfilter']['all'][$filter]) {
+                        $userperms['view_groupfilter']['all'][$filter] = array();
+                    }
+                    array_push($userperms['view_groupfilter']['all'][$filter], $groupperm['name']);
+                }
+            }
+
+            if ($groupperm['existingFilter']['oom']) {
+                foreach($groupperm['existingFilter']['oom'] as $filter) {
+                    if(!$userperms['view_groupfilter']['oom'][$filter]) {
+                        $userperms['view_groupfilter']['oom'][$filter] = array();
+                    }
+                    array_push($userperms['view_groupfilter']['oom'][$filter], $groupperm['name']);
+                }
+            }
+
+
+            // Publishing 'Saved Views' of form entries
+            array_push($userperms['manage_own'], $groupperm['name']); //always on
+
+            if ($groupperm['publish_reports'] == " checked") {
+                array_push($userperms['publish_reports'], $groupperm['name']);
+            }
+            if ($groupperm['publish_globalscope'] == " checked") {
+                array_push($userperms['publish_globalscope'], $groupperm['name']);
+            }
+            if ($groupperm['update_other_reports'] == " checked") {
+                array_push($userperms['update_other_reports'], $groupperm['name']);
+            }
+            if ($groupperm['delete_other_reports'] == " checked") {
+                array_push($userperms['delete_other_reports'], $groupperm['name']);
+            }
+
+            // Advanced options
+
+            if ($groupperm['import_data'] == " checked") {
+                array_push($userperms['import_data'], $groupperm['name']);
+            }
+            if ($groupperm['set_notifications_for_others'] == " checked") {
+                array_push($userperms['set_notifications_for_others'], $groupperm['name']);
+            }
+            if ($groupperm['add_proxy_entries'] == " checked") {
+                array_push($userperms['add_proxy_entries'], $groupperm['name']);
+            }
+            if ($groupperm['update_entry_ownership'] == " checked") {
+                array_push($userperms['update_entry_ownership'], $groupperm['name']);
+            }
+            if ($groupperm['ignore_editing_lock'] == " checked") {
+                array_push($userperms['ignore_editing_lock'], $groupperm['name']);
+            }
+            if ($groupperm['edit_form'] == " checked") {
+                array_push($userperms['edit_form'], $groupperm['name']);
+            }
+            if ($groupperm['delete_form'] == " checked") {
+                array_push($userperms['delete_form'], $groupperm['name']);
+            }
+        }
+    }
 
 } else {
   $fid = $_GET['fid'];
@@ -285,7 +443,6 @@ foreach($classFiles as $thisFile) {
 		$i++;
 	}
 }
-
 
 
 $i = 1;
@@ -392,7 +549,8 @@ if($fid != "new") {
   $adminPage['tabs'][$i]['content']['order'] = $orderGroups;
   $adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "same" ? "same" : "different";
   $adminPage['tabs'][$i]['content']['groupperms'] = $groupperms;
-  
+  $adminPage['tabs'][$i]['content']['submitted_user'] = $submitted_user;
+  $adminPage['tabs'][$i]['content']['userperms'] = $userperms;
   $i++;
   
   $adminPage['tabs'][$i]['name'] = "Screens";

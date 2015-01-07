@@ -145,7 +145,7 @@ function updateDerivedValues(fid,frid,limitstart){
             if(data > 0){
                 $("[name=updateder]").hide();
                 $("[name=updateder_Info]").show();
-                limitStart += 1000;
+                limitStart += parseInt(data);
                 updateDerivedValues(fid,frid,limitstart);
             }else{
                 $("[name=updateder_Info]").hide();

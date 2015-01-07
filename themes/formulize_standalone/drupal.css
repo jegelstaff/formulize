@@ -17,23 +17,23 @@
   border-top: 3px solid #f3f3f3; }
 
 #formulize_form .even {
-  color: black;
+  color: #000;
   padding: 5px;
   border-top: 3px solid #f3f3f3; }
 
 #formulize_form .odd {
-  color: black;
+  color: #000;
   padding: 5px;
   border-top: 3px solid #f3f3f3;
   background-color: white; }
 
 #formulize_form tr.even td {
-  color: black;
+  color: #000;
   padding: 5px;
   border-top: 3px solid #f3f3f3; }
 
 #formulize_form tr.odd td {
-  color: black;
+  color: #000;
   padding: 5px;
   border-top: 3px solid #f3f3f3;
   background-color: white; }

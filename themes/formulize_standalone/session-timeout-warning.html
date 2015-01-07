@@ -1,0 +1,26 @@
+<{php}>
+    // if there's a timeout set for the session, then do the stuff in this file...
+    global $icmsConfig;
+    if(ini_get('session.cookie_lifetime') OR ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')) {
+<{/php}>
+    
+<div id="session-timeout-warning" style="display: none;">
+    <img class="session-timeout-warning-icon" src="<{$icms_url}>/modules/formulize/images/warning.png">
+    <img class="session-timeout-warning-close" src="<{$icms_url}>/modules/formulize/images/x.gif">
+    <p>Your session will time out soon.</p>
+    <p>If you have unsaved changes, you should save now.</p>
+</div>
+<script type="text/javascript">
+setTimeout(function(){jQuery("#session-timeout-warning").show();}, <{php}>
+    // javascript uses times in milliseconds, so convert from minutes
+    $session_timeout_ms = ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') ? $icmsConfig['session_expire'] * 60 * 1000 : ini_get('session.cookie_lifetime') * 1000;
+    // show notice five minutes before session timeout
+    $grace_time_ms = (5 * 60 * 1000);
+    echo ($session_timeout_ms - $grace_time_ms);
+<{/php}>);
+jQuery(".session-timeout-warning-close").click(function(){jQuery("#session-timeout-warning").hide()});
+</script>
+
+<{php}>
+    }
+<{/php}>
