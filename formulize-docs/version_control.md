@@ -17,6 +17,7 @@ We use [Github](http://www.github.com/jegelstaff/formulize/) as our version cont
 8. Give "thumbs up" in your pull request when you think it is ready
 9. A maintainer will review the pull request and merge it
 10. A maintainer will publish the documentation updates, if any [help](../github_pages)
+11. A maintainer will reset the .travis.yml file and the ci/travis/interepreter.json file if necessary, to ensure they run the entire test suite (in case they were modified to run only a single test on top of an imported copy of the test application's database -- see [CI Setup on the Creating Tests page](testing/creating_tests) for more info)
 
 For more details about each major part of this process, see the following pages:
 

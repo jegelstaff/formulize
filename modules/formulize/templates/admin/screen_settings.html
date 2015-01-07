@@ -31,15 +31,6 @@
 				<input type="hidden" name="screens-type" value="<{$content.type}>">
 			<{/if}>
 	  </div>
-	  <div class="form-item">
-		  <label for="screens-frid">Is this screen based on the form alone, or on a relationship with another form?</label>
-		  <select id="screens-frid" name="screens-frid">
-			  <option value="0"<{if $content.frid eq 0}> selected="selected"<{/if}>>The form alone, no relationship</option>
-	      <{foreach from=$content.links key=linkNumber item=link}>
-          <option value="<{$link.id}>"<{if $content.frid eq $link.id}> selected="selected"<{/if}>><{$link.name}></option>
-      	<{/foreach}>
-		  </select>
-	  </div>
   </fieldset>
 
 	<fieldset>
