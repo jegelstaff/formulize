@@ -48,6 +48,9 @@ include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW
 class formulize_themeForm extends XoopsThemeForm {
+
+	var $form_id = "";
+
 	/**
 	 * Insert an empty row in the table to serve as a seperator.
 	 *
@@ -79,12 +82,31 @@ class formulize_themeForm extends XoopsThemeForm {
 				. "' method='" . $this->getMethod()
 				. "' onsubmit='return xoopsFormValidate_" . $ele_name . "();'" . $this->getExtra() . ">
 			<div class='xo-theme-form'>
+			<head>
+			<script type=\"text/javascript\" src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js\"></script>
+			<script type=\"text/javascript\" src=\"../../plugins/slidepanel/js/jquery.slidepanel.js\"></script>
+			<link rel=\"stylesheet\" type=\"text/css\" href=\"../../plugins/slidepanel/css/jquery.slidepanel.css\">
+            </head>
 			<table width='100%' class='outer' cellspacing='1'>
 			<tr><th colspan='2'><h1 class=\"formulize-form-title\">" . $this->getTitle() . "</h1></th></tr>
 		";
 		$hidden = '';
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
 		$ret .= "</table>\n$hidden\n</div>\n</form>\n";
+		$ret .= '
+		<html lang="en">
+		<script type="text/javascript">
+      	$(document).ready(function(){
+          $("[data-slidepanel]").slidepanel({
+              orientation: "right",
+              mode: "push"
+          });
+      	});
+		</script>
+
+        </body>
+        </html>
+		';
 		$ret .= $this->renderValidationJS(true);
 		return $ret;
 	}
@@ -188,6 +210,24 @@ class formulize_themeForm extends XoopsThemeForm {
 		}
 		
 		return $fullJs;
+	}
+	
+	function addFrontsideEditButton ($thisEleName) {
+		global $xoopsUser;
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+		$mid = getFormulizeModId();
+		$gperm_handler = xoops_gethandler('groupperm');
+		$isAdmin = $gperm_handler->checkRight("edit_form", $this->form_id, $groups, $mid);
+
+		if (!$isAdmin) {
+			return;
+}
+
+		$editButton = 'edit_' . $thisEleName;
+		$returnButton = '<a href="../../modules/formulize/admin/admin_editor.php?' . 'ele_name=' . $thisEleName . '" data-slidepanel="panel"><input type="button" class="formulize_adminEditButton" name="editx" id="' . $editButton . '" value="Edit"></a>';
+
+		return $returnButton;
 	}
 	
 }
@@ -716,6 +756,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                         $settings['ventry'] = 'new';
                     $form->addElement (new XoopsFormHidden ('ventry', $settings['ventry']));
                 }
+                $form->form_id = $this_fid;
                 $form->setExtra("enctype='multipart/form-data'"); // impératif!
 
                 if(is_array($settings)) {
@@ -1275,6 +1316,7 @@ function addSubmitButton($form, $subButtonText, $go_back="", $currentURL, $butto
 
 	$trayElements = $buttontray->getElements();
 	if(count($trayElements) > 0 OR $nosubforms) {
+		$buttontray->setName("control_buttons");
 		$form->addElement($buttontray);
 	}
 	return $form;

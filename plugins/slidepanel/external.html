@@ -1,0 +1,111 @@
+<!--
+<div id="admin_toolbar">
+<div id=savebutton><input type="button" class="savebutton" value="Save your changes"/></div>
+<div id="savewarning" class="ui-corner-all">You have unsaved changes!</div>
+<div id="derivedfinished" class="ui-corner-all" style="display:none">Finished updating values!</div>
+</div>
+
+
+  
+<script type="text/javascript">
+	
+	$(function() {
+		$("#tabs").tabs({
+					});
+	});
+	
+</script>
+
+<div id="tabs">
+	<ul>
+				<li><a href="#tabs-1">Name & Settings</a></li>
+				<li><a href="#tabs-2">Options</a></li>
+				<li><a href="#tabs-3">Display Settings</a></li>
+				<li><a href="#tabs-4">Advanced</a></li>
+			</ul>
+		<div id="tabs-1" class="tab-content">
+		<div class="panel-content content">
+
+<form id="form-1" class="formulize-admin-form">
+<input type="hidden" name="formulize_admin_handler" value="element_names">
+<input type="hidden" name="formulize_admin_key" value="1">
+<input type="hidden" name="formulize_form_id" value="1">
+<input type="hidden" name="aid" value="0">
+<input type="hidden" name="element_type" value="text">
+<input type="hidden" name="reload_names_page" value="">
+
+
+	<div class="form-item required">
+   	<fieldset>
+      <legend><label for="elements-ele_caption" class="question">Caption</label></legend>
+			<input type="text" name="elements-ele_caption" class="required_formulize_element" value="text1" size=70>
+			<div class="description">
+				<p>The text that users see when this element appears on a form.</p>
+			</div>
+		</fieldset>
+	</div>
+
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_colhead" class="question">Column Heading</label></legend>
+			<input type="text" name="elements-ele_colhead" value="" size=70>
+			<div class="description">
+				<p>Optional. The text that users see when this element appears at the top of a column in a list.</p>
+			</div>
+		</fieldset>
+	</div>
+
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_desc" class="question">Help text</label></legend>
+			<textarea name="elements-ele_desc" rows=4 cols=70></textarea>
+			<div class="description">
+				<p>Optional. Descriptive or explanatory text that accompanies the element.</p>
+			</div>
+		</fieldset>
+	</div>
+
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_handle" class="question">Data handle</label></legend>
+			<input type="text" name="elements-ele_handle" value="1" size=70>
+			<div class="description">
+				<p>Optional. The name used to refer to this element in programming code and in the database.</p>
+			</div>
+		</fieldset>
+	</div>
+
+
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="orderpref" class="question">Position of this element</label></legend>
+			<select name="orderpref" size=1>
+				<option value="bottom">At the end of the form</option>
+				<option value="top" selected>At the beginning of the form</option>
+				<option label="After: text2" value="2">After: text2</option>
+<option label="After: texttodisplay1" value="3">After: texttodisplay1</option>
+<option label="After: texttodisplay2" value="4">After: texttodisplay2</option>
+<option label="After: texttodisplay3" value="5">After: texttodisplay3</option>
+<option label="After: test4" value="6">After: test4</option>
+
+			</select>
+		</fieldset>
+	</div>
+</div>
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_req" class="question">Make this element "required" so users must give a response:</label></legend>
+			<p><input type="radio" name="elements-ele_req" value=1> Yes</p>
+			<p><input type="radio" name="elements-ele_req" value=0 checked> No</p>
+		</fieldset>
+	</div>
+</div>
+
+</form>
+<div style="clear: both;"></div>
+</div>
+
+
+-->

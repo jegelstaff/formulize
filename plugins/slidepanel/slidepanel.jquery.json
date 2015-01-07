@@ -1,0 +1,38 @@
+{
+    "name": "slidepanel",
+    "title": "Slidepanel",
+    "description": "A quick and easy way to add a contextual ajax sliding panel to your site.",
+    "keywords": [
+        "ui",
+        "ajax",
+        "panel",
+        "slide",
+        "contextual",
+        "navigation"
+    ],
+    "version": "2.0.0",
+    "author": {
+        "name": "William Golden",
+        "url": "http://codebomber.com"
+    },
+    "maintainers": [
+        {
+            "name": "William Golden",
+            "email": "egdelwonk@gmail.com",
+            "url": "http://codebomber.com"
+        }
+    ],
+    "licenses": [
+        {
+            "type": "MIT",
+            "url": "https://github.com/jquery/jquery-color/blob/2.1.2/MIT-LICENSE.txt"
+        }
+    ],
+    "bugs": "https://github.com/egdelwonk/slidepanel/issues",
+    "homepage": "http://codebomber.com/jquery/slidepanel",
+    "docs": "http://codebomber.com/jquery/slidepanel",
+    "download": "http://codebomber.com/jquery/slidepanel",
+    "dependencies": {
+        "jquery": ">=1.7"
+    }
+}

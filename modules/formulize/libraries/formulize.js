@@ -1,5 +1,4 @@
 // formulize.js
-// 
 
 if (typeof xoopsGetElementById != 'function') {
     // the 'xoopsGetElementById' function is included with xoops, so when it is missing, Formulize is embedded in another CMS
@@ -37,3 +36,27 @@ jQuery(document).ready(function() {
         hidden_section.toggle();
     });
 });
+
+function adminEdit(thisElement) {
+    var editButtons = document.getElementsByClassName('formulize_adminEditButton');
+    //console.log(editButtons);
+    /*
+    for (var i = 0; i<editButtons.length; i++) {
+        editButtons[i].hidden = 'true';
+    }
+    */
+    //console.log(editButtons);
+
+    var url_link = '../formulize/admin/renderhtml.php?ele_name=';
+    url_link = url_link.concat(thisElement.name);
+
+    $.ajax({
+       url: url_link,
+       dataType: 'json',
+       success: function(data){
+            // No need to return anything
+       }
+    });    
+
+}
+
