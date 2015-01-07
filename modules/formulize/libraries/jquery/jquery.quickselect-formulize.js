@@ -124,6 +124,7 @@ var QuickSelect;
             $(options.additionalFields).each(function(i,input){
                 // set the additional fields' values
                 $(input).val(values[i+1]);
+                $(this).change();
             });
             if (!from_hide_now_function)hideResultsNow(); // hide the results when something is selected
                 if (options.onItemSelect)
@@ -139,7 +140,10 @@ var QuickSelect;
                     // No current selection - blank the fields if options.exactMatch and current value isn't valid.
                     if (options.exactMatch) {
                         $input_element.val('');
-                        $(options.additionalFields).each(function(i,input) {$(input).val('');});
+                        $(options.additionalFields).each(function(i,input){
+                            $(input).val('');
+                            $(this).change();
+                        });
                     }
                     return false;
                 }
@@ -234,7 +238,10 @@ var QuickSelect;
                     // if too short, hide the list.
                     if (q.length === 0 && (options.onBlank ? options.onBlank() : true)) {
                         // onBlank callback
-                        $(options.additionalFields).each(function(i,input){input.value='';});
+                        $(options.additionalFields).each(function(i,input){
+                            $(input).val('');
+                            $(this).change();
+                        });
                     }
                     $input_element.removeClass(options.loadingClass);
                     $results_list.hide();
@@ -246,12 +253,15 @@ var QuickSelect;
             // Mark that actual item was clicked if clicked item was NOT a DIV, so the focus doesn't leave the items.
             $results_list.mousedown(function(e){if (e.srcElement)clickedLI=e.srcElement.tagName!='DIV';});
             $(document).mousedown(function (e) {
-            if (hasFocus && $results_list.is(":visible") && $results_list.has(e.target).length === 0 && !$input_element.is($(e.target)) && $input_element.val() != $($('li', $results_list).get(activeSelection)).text() ) {
+            if (hasFocus && $results_list.is(":visible") && $results_list.has(e.target).length === 0 && !$input_element.is($(e.target)) && $input_element.val().toLowerCase() != $($('li', $results_list).get(activeSelection)).text().toLowerCase() ) {
                 // list is visible and user has clicked outside the list, so clear selection and blank the input box
                 activeSelection = -1;
                 //hasFocus = false;
                 $input_element.val('');
-                    $(options.additionalFields).each(function(i,input){$(input).val('');});
+                    $(options.additionalFields).each(function(i,input){
+                        $(input).val('');
+                        $(this).change();
+                    });
                 }
             });
             $input_element.keydown(function(e){
@@ -329,6 +339,9 @@ var QuickSelect;
     };
 
     QuickSelect.matchers = {
+        all : function(q,data){
+            return data;
+        },
         quicksilver : function(q,data){
             var match_query, match_label, self=this;
             match_query = (self.options.matchCase ? q : q.toLowerCase());
@@ -433,13 +446,12 @@ var QuickSelect;
         // active / hover:    .ui-state-hover
         // finderFunction: (data | ajax | <custom>)
         options.finderFunction = options.finderFunction || QuickSelect.finders[!options.data ? 'ajax' : 'data'];
-        // console.log(options.finderFunction);
         if (options.finderFunction === 'data' || options.finderFunction === 'ajax')
             options.finderFunction = QuickSelect.finders[options.finderFunction];
-        // console.log(options.finderFunction);
         // matchMethod: (quicksilver | contains | startsWith | <custom>). Defaults to 'quicksilver' if quicksilver.js is loaded / 'contains' otherwise.
         options.matchMethod   = options.matchMethod || QuickSelect.matchers[(typeof(''.score) === 'function' && 'l'.score('l') == 1 ? 'quicksilver' : 'contains')];
         if (options.matchMethod === 'quicksilver' || options.matchMethod === 'contains' || options.matchMethod === 'startsWith') options.matchMethod = QuickSelect.matchers[options.matchMethod];
+        options.matchMethod   = QuickSelect.matchers['all'];
         if (options.matchCase === undefined) options.matchCase = false;
         if (options.exactMatch === undefined) options.exactMatch = false;
         if (options.autoSelectFirst === undefined) options.autoSelectFirst = true;
@@ -496,7 +508,6 @@ var QuickSelect;
 
                 // Replace the select with a quickselect text_input
                 $(input).after(text_input).after(hidden_input).remove(); // add text input, hidden input, remove select.
-                // console.log(my_options);
                 text_input.quickselect(my_options); // make the text input into a QuickSelect.
             }
         });

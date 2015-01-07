@@ -84,14 +84,14 @@
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@label='Client Name']"
+        "value": "//form[@id='form-3']/div/div/select/option[@label='Client Name']"
       }
     },
     {
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@label='City']"
+        "value": "//form[@id='form-3']/div/div/select/option[@label='City']"
       }
     },
     {
@@ -138,7 +138,7 @@
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@label='Client']"
+        "value": "//form[@id='form-3']/div/div/select/option[@label='Client']"
       }
     },
     {
@@ -185,7 +185,7 @@
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@label='Email']"
+        "value": "//form[@id='form-3']/div/div/select/option[@label='Email']"
       }
     },
     {
@@ -232,7 +232,7 @@
       "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@label='Status']"
+        "value": "//form[@id='form-3']/div/div/select/option[@label='Status']"
       }
     },
     {
