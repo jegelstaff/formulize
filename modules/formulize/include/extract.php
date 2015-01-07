@@ -224,9 +224,12 @@ function prepvalues($value, $field, $entry_id) {
 		$realcap = str_replace("`", "'", $ffcaption);
 		$newValueq = go("SELECT other_text FROM " . DBPRE . "formulize_other, " . DBPRE . "formulize WHERE " . DBPRE . "formulize_other.ele_id=" . DBPRE . "formulize.ele_id AND " . DBPRE . "formulize.ele_handle=\"" . formulize_db_escape($field) . "\" AND " . DBPRE . "formulize_other.id_req='".intval($entry_id)."' LIMIT 0,1");
 		//$value_other = _formulize_OPT_OTHER . $newValueq[0]['other_text'];
-    $value_other = $newValueq[0]['other_text']; // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
+        // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
+        $value_other = $newValueq[0]['other_text'];
 		$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value); 
-	}
+	} else {
+        $value = formulize_swapUIText($value, unserialize($elementArray['ele_uitext']));
+    }
 
 	  if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 	       $elementTypeHandler = xoops_getmodulehandler($type."Element", "formulize");
@@ -262,7 +265,7 @@ function getData($framework, $form, $filter="", $andor="AND", $scope="", $limitS
      global $xoopsDB;
 
      if(substr($filter, 0, 7) == "SELECT ") { // a proper SQL statement has been passed in so use that instead of constructing one...initially added for the new export feature
-	  $result = dataExtraction(intval($framework), intval($form), $filter);
+	  $result = dataExtraction(intval($framework), intval($form), $filter, null, null, null, null, null, null, null, null);
 	  return $result;
      }
 		 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
@@ -1384,7 +1387,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // usernames/fullnames boxes
                     } elseif($listtype = $formFieldFilterMap[$mappedForm][$element_id]['isnamelist'] AND $ifParts[1] !== "") {
                          if(!is_numeric($ifParts[1])) {
-                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;  // search name and uname, since often name might be empty these days
+                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape(html_entity_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape(html_entity_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes;  // search name and uname, since often name might be empty these days
                          } else {
                               $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uid ".$operator.$quotes.$likebits.$ifParts[1].$likebits.$quotes;
                          }

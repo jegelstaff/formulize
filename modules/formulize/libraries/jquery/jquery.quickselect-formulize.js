@@ -124,6 +124,7 @@ var QuickSelect;
             $(options.additionalFields).each(function(i,input){
                 // set the additional fields' values
                 $(input).val(values[i+1]);
+                $(this).change();
             });
             if (!from_hide_now_function)hideResultsNow(); // hide the results when something is selected
                 if (options.onItemSelect)
@@ -139,7 +140,10 @@ var QuickSelect;
                     // No current selection - blank the fields if options.exactMatch and current value isn't valid.
                     if (options.exactMatch) {
                         $input_element.val('');
-                        $(options.additionalFields).each(function(i,input) {$(input).val('');});
+                        $(options.additionalFields).each(function(i,input){
+                            $(input).val('');
+                            $(this).change();
+                        });
                     }
                     return false;
                 }
@@ -234,7 +238,10 @@ var QuickSelect;
                     // if too short, hide the list.
                     if (q.length === 0 && (options.onBlank ? options.onBlank() : true)) {
                         // onBlank callback
-                        $(options.additionalFields).each(function(i,input){input.value='';});
+                        $(options.additionalFields).each(function(i,input){
+                            $(input).val('');
+                            $(this).change();
+                        });
                     }
                     $input_element.removeClass(options.loadingClass);
                     $results_list.hide();
@@ -251,7 +258,10 @@ var QuickSelect;
                 activeSelection = -1;
                 //hasFocus = false;
                 $input_element.val('');
-                    $(options.additionalFields).each(function(i,input){$(input).val('');});
+                    $(options.additionalFields).each(function(i,input){
+                        $(input).val('');
+                        $(this).change();
+                    });
                 }
             });
             $input_element.keydown(function(e){

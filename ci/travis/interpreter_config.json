@@ -19,7 +19,7 @@
         }
       ],
       "scripts": [
-        "ci/selenium2-tests/*"
+          "ci/selenium2-tests/*"
       ]
     }
   ]
