@@ -485,6 +485,7 @@ class formulizeElementRenderer{
 							formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_linkedOptions_");
 							$maxLength = 10;
 							$the_values = array();
+							asort($linkedElementOptions);
 							foreach($linkedElementOptions as $id=>$text) {
 								$the_values[$id] = trans($text);
 								$thisTextLength = strlen($text);
