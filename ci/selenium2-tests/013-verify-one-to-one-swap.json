@@ -1,0 +1,109 @@
+{
+  "type": "script",
+  "seleniumVersion": "2",
+  "formatVersion": 2,
+  "steps": [
+    {
+      "type": "store",
+      "text": "localhost",
+      "variable": "test_domain"
+    },
+    {
+      "type": "store",
+      "text": "password",
+      "variable": "admin_password"
+    },
+    {
+      "type": "get",
+      "url": "http://${test_domain}/index.php"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "uname"
+      },
+      "text": "admin"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "pass"
+      },
+      "text": "${admin_password}"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input[type=\"submit\"]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Stories"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//table[@class='outer']/tbody/tr[3]/td[1]/a"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addsub"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Regular 'StoryPeople'"
+    },
+    {
+      "type": "sendKeysToElement",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-storypeople_person input"
+      },
+      "text": "Daniel"
+    },
+    {
+      "type": "waitForElementPresent",
+      "locator": {
+        "type": "css selector",
+        "value": ".quickselect_results ul"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "li.quickselect_selected"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "8234"
+    },
+    {
+      "type": "verifyElementValue",
+      "locator": {
+        "type": "css selector",
+        "value": "td.formulize-input-people_email input[type='text']"
+      },
+      "value": "daniel@example.com"
+    }
+  ],
+  "data": {
+    "configs": {},
+    "source": "none"
+  },
+  "inputs": [],
+  "timeoutSeconds": 60
+}

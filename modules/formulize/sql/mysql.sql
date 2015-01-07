@@ -236,6 +236,7 @@ CREATE TABLE formulize_saved_views (
   sv_calc_blanks text,
   sv_calc_grouping text,
   sv_quicksearches text,
+  sv_global_search text,
   PRIMARY KEY (sv_id)
 ) ENGINE=MyISAM;
 
@@ -310,6 +311,7 @@ CREATE TABLE formulize (
   ele_filtersettings text NOT NULL,
   ele_forcehidden tinyint(1) NOT NULL default '0',
   ele_private tinyint(1) NOT NULL default '0',
+  ele_use_default_when_blank tinyint(1) NOT NULL default '0',
   PRIMARY KEY  (`ele_id`),
   KEY `ele_display` (`ele_display` ( 255 ) ),
   KEY `ele_order` (`ele_order`)

@@ -31,17 +31,17 @@
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
-  return;
+	return;
 }
 
 $application_handler = xoops_getmodulehandler('applications', 'formulize');
 $appObject = $application_handler->get($_POST['formulize_admin_key']);
 foreach($processedValues['applications'] as $property=>$value) {
-  $appObject->setVar($property, $value);
+	$appObject->setVar($property, $value);
 }
 $application_handler->insert($appObject);
 
 // if the form name was changed, then force a reload of the page...reload will be the application id
 if(isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) {
-  print "/* eval */ reloadWithScrollPosition();";
+	print "/* eval */ reloadWithScrollPosition();";
 }

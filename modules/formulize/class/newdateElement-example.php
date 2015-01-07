@@ -144,13 +144,14 @@ class formulizeNewDateElementHandler extends formulizeElementsHandler {
     // $value is what the user submitted
     // $element is the element object
     function prepareDataForSaving($value, $element) {
-		if($value != "YYYY-mm-dd" AND $value != "") { 
-			$value = date("Y-m-d", strtotime($value)); 
+		$timestamp = strtotime($value);
+		if($value != _DATE_DEFAULT AND $value != "" AND $timestamp !== false) { // $timestamp !== false should catch everything by itself? under some circumstance not yet figured out, the other checks could be useful?
+			$value = date("Y-m-d", $timestamp); 
 		} else {
 			$value = "{WRITEASNULL}"; // forget about this date element and go on to the next element in the form
 		}
 		$value = ''.$value;
-        return formulize_escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
+        return formulize_db_escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
     }
     
     // this method will handle any final actions that have to happen after data has been saved

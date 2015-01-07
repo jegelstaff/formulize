@@ -1,5 +1,5 @@
 <?php
-/*mod Language for admin side, by François T*/
+/*mod Language for admin side, by Franï¿½ois T*/
 
 /*mod Language for applications*/
 define("_AM_APP_APPLICATION","Application: ");
@@ -7,6 +7,7 @@ define("_AM_APP_SETTINGS","Settings");
 define("_AM_APP_FORMS","Forms");
 define("_AM_APP_FORM","Form: ");
 define("_AM_APP_RELATIONSHIPS_CREATE"," Create a new relationship");
+define("_AM_APP_RELATIONSHIPS_MANAGE"," Manage existing relationships");
 define("_AM_APP_RELATIONSHIPS_DELETE_CONFIRM","Are you sure you want to delete this relationship, and all its links?");
 define("_AM_APP_RELATIONSHIPS","Relationships");
 define("_AM_APP_FORMWITHNOAPP","Forms that don't belong to an application");
@@ -80,9 +81,9 @@ define("_AM_FORM_CREATE_EXPLAIN","To assign a form to an application, look on th
 define("_AM_FORM_SCREEN","Screen: ");
 define("_AM_FORM_SCREEN_TEXT","Text");
 define("_AM_FORM_SCREEN_PAGES","Pages");
-define("_AM_FORM_SCREEN_ENTRIES_DISPLAY","Entries to display");
-define("_AM_FORM_SCREEN_HEADINGS_INTERFACE","Headings and Interface");
-define("_AM_FORM_SCREEN_ACTION_BUTTONS","Action Buttons");
+define("_AM_FORM_SCREEN_ENTRIES_DISPLAY","Entries");
+define("_AM_FORM_SCREEN_HEADINGS_INTERFACE","Interface");
+define("_AM_FORM_SCREEN_ACTION_BUTTONS","Buttons");
 define("_AM_FORM_SCREEN_CUSTOM_BUTTONS","Custom buttons");
 define("_AM_FORM_SCREEN_TEMPLATES","Templates");
 define("_AM_SETTINGS_FORM_TITLE_QUESTION","What is the name of the form?");
@@ -147,6 +148,7 @@ define("_AM_PERMISSIONS_ADVANCED_CREATEFOROTHER","Create entries on behalf of ot
 define("_AM_PERMISSIONS_ADVANCED_CHANGEOWNER","Change the owner/creator of an existing entry");
 define("_AM_PERMISSIONS_ADVANCED_ALTER","Alter this form's configuration settings");
 define("_AM_PERMISSIONS_ADVANCED_DELETEFORM","Delete this form");
+define("_AM_PERMISSIONS_REVIEW_PERMISSIONS","Review permissions for a user");
 
 /*mod Language for procedures*/
 define("_AM_CALC_EXPLAIN","let you create a series of queries and logical steps, that get carried out on the data that users have submitted in the form.  You can use Procedures for advanced, multi-step calculations, or any other situation where a single query or single operation is not enough to get to the outcome you want.");
@@ -192,7 +194,7 @@ define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? 
 
 
 
-/*End mod Language for admin side, by François T*/
+/*End mod Language for admin side, by Franï¿½ois T*/
 
 // Admin
 define("_FORM_RENAME_TEXT", "Rename this form");
@@ -269,6 +271,9 @@ define("_AM_ELE_SEP","Break up line");
 define("_AM_ELE_NOM_SEP","Break up name");
 define("_AM_ELE_UPLOAD","Join a file");
 define("_AM_ELE_CLR","with the color");
+define("_AM_ELE_PLACEHOLDER_DESC","How do you want to use the default value?");
+define("_AM_ELE_NO_PLACEHOLDER","Add it to the text box when the form loads, it will be saved as-is if the user leaves it alone");
+define("_AM_ELE_PLACEHOLDER_OPTION","Show it as an example in the text box, but don't save it if the form is submitted");
 
 // number options for textboxes
 define("_AM_ELE_NUMBER_OPTS","If a number is typed...");
@@ -295,6 +300,8 @@ define("_AM_ELE_SIZE","Size");
 define("_AM_ELE_MAX_LENGTH","Maximum length");
 define("_AM_ELE_ROWS","Rows");
 define("_AM_ELE_COLS","Columns");
+define("_AM_ELE_USERICHTEXT","Display this element using a Rich Text Editor");
+define("_AM_ELE_RICHTEXT_DESC","This option provides a full editor interface in the textbox, with font sizes and bold, etc, instead of just a simple box. You can control which editor is used on <a href='../../system/admin.php?fct=preferences&op=show&confcat_id=1' target='_blank'>the General Settings page</a>");
 define("_AM_ELE_OPT","Options");
 define("_AM_ELE_OPT_DESC","Setting a single option of '{FULLNAMES}' or '{USERNAMES}' will produce a list of users based on the group limits set below.<br /><br />Tick the check boxes for selecting default values");
 define("_AM_ELE_OPT_DESC_CHECKBOXES","Tick the check boxes for selecting default values<br>Boxes with no text in them will be ignored when you click <i>Save</i>");
@@ -352,6 +359,8 @@ define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(If the first list here is e
 
 // subforms
 define("_AM_ELE_SUBFORM_FORM", "Which form do you want to include as a subform?");
+define("_AM_ELE_SUBFORM_IFFORM", "If the subform entries are shown in a full form:");
+define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each entry?");
 define("_AM_ELE_SUBFORM", "Subform (from a form framework)");
 define("_AM_ELE_SUBFORM_DESC", "When you display the current form as part of a framework, the subform interface can be included in the form.  The subform interface allows users to create and modify entries in a related subform without leaving the main form.  The list here shows all the possible subforms from all frameworks that this form is part of.");
 define("_AM_ELE_SUBFORM_NONE", "No subforms available - define a framework first");
@@ -575,6 +584,7 @@ define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES_HELP", "<p>The following variab
 <li>\$totalPages</li>
 <li>\$nextPageButton</li>
 <li>\$previousPageButton</li>
+<li>\$savePageButton &mdash; does not change the current page when clicked</li>
 <li>\$pageSelectionList &mdash; draws in the dropdown list for jumping to another page</li>
 <li>\$skippedPagesMessage &mdash; the message saying one or more pages were skipped, it will be an empty string is no pages were skipped</li>
 </ul>
@@ -779,5 +789,8 @@ define("_AM_FORMULIZE_CLONING_FOUND_ELEMENTS", "After cloning, the following lin
 define("_AM_FORMULIZE_CLONING_CANBELINKEDTO", "can be linked to:");
 define("_AM_FORMULIZE_CLONING_NOCHANGE", "keep it linked to its current source");
 
-
+define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK", "Show the default value for this element:");
+define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC", "For example, showing defaults when the saved value is blank can be useful on multipage forms, if later pages have elements which should still use the default value, even though the user has saved the entry after the first page.<br><b>Note</b> that required elements are always treated as if this option is turned on regardless, since required elements should never have empty/blank values.");
+define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW", "Only for new entries");
+define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK", "For any entry, when the saved value is blank");
 ?>

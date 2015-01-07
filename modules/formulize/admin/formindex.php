@@ -111,17 +111,17 @@ function patch40() {
 	 * 
 	 * ====================================== */
 	
-	$checkThisTable = 'formulize_deletion_logs';
-	$checkThisField = 'context';
+	$checkThisTable = 'formulize_saved_views';
+	$checkThisField = 'sv_global_search';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
 	$needsPatch = false;
 	
-	$tableCheckSql = "SELECT 1 FROM information_schema.tables WHERE table_name = '".$xoopsDB->prefix(formulize_escape($checkThisTable)) ."'";
+	$tableCheckSql = "SELECT 1 FROM information_schema.tables WHERE table_name = '".$xoopsDB->prefix(formulize_db_escape($checkThisTable)) ."'";
 	$tableCheckRes = formulize_DBPatchCheckSQL($tableCheckSql, $needsPatch); // may modify needsPatch!
 	if($tableCheckRes AND !$needsPatch AND $checkThisField) { // table was found, and we're looking for a field in it
-		$fieldCheckSql = "SHOW COLUMNS FROM " . $xoopsDB->prefix(formulize_escape($checkThisTable)) ." LIKE '".formulize_escape($checkThisField)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+		$fieldCheckSql = "SHOW COLUMNS FROM " . $xoopsDB->prefix(formulize_db_escape($checkThisTable)) ." LIKE '".formulize_db_escape($checkThisField)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
 		$fieldCheckRes = formulize_DBPatchCheckSQL($fieldCheckSql, $needsPatch); // may modify needsPatch!	
 	} 
 	if($fieldCheckRes AND !$needsPatch AND $checkPropertyForValue) {
@@ -321,6 +321,9 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		$sql['add_formelements'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_form") . " ADD `formelements` text";
         $sql['add_on_before_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_before_save` text";
 		$sql['add_form_note'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `note` text";
+		$sql['add_use_default_when_blank'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_use_default_when_blank` tinyint(1) NOT NULL default '0'";
+        $sql['add_global_search_to_saved_view'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_global_search` text";
+		
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
 				if($key === "add_encrypt") {
@@ -359,6 +362,10 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
                     print "on_before_save field already added.  result: OK<br>";
                 } elseif($key === "add_form_note") {
                     print "form note field already added.  result: OK<br>";
+				} elseif($key === "add_use_default_when_blank") {
+					print "use default when blank already added.  result: OK<br>";
+                } elseif($key === "add_global_search_to_saved_view") {
+                        print "global search saved view already added.  result: OK<br>";
 				} elseif(strstr($key, 'drop_from_formulize_id_')) {
 					continue;
 				} else {
@@ -587,30 +594,30 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
                     }
                 }
 
-		
-		print "DB updates completed.  result: OK";
-	}
-}
-
-// Saves the given template to a template file on the disk
-function saveTemplate($template, $sid, $name) {
-    $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/". $sid . "/";
-    
-    $text = html_entity_decode($template);
-    if (!empty($text)) {
-        $fileHandle = fopen($pathname . $name. ".php", "w+");
-        $success = fwrite($fileHandle, "<?php\n" . $text);
-        fclose($fileHandle);
-
-        if ($success) {
-            print "created templates/screens/default/" . $sid . "/". $name . ".php. result: OK<br>";
-        } else {
-            print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
-        }
+        print "DB updates completed.  result: OK";
     }
 }
 
-    function saveMenuEntryAndPermissionsSQL($formid,$appid,$i,$menuText){
+
+// Saves the given template to a template file on the disk
+function saveTemplate($template, $sid, $name) {
+    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/{$sid}/{$name}.php";
+
+    $text = html_entity_decode($template);
+    if (false === strpos($text, "<?php")) {
+        // if there's no php open-tag in the text already, add one
+        $text = "<?php\n" . $text;
+    }
+
+    if (false === file_put_contents($filename, $text)) {
+        print "Warning: could not save " . $name . ".php for screen " . $sid . ".<br>";
+    } else {
+        print "created templates/screens/default/" . $sid . "/". $name . ".php. result: OK<br>";
+    }
+}
+
+
+function saveMenuEntryAndPermissionsSQL($formid,$appid,$i,$menuText){
         global $xoopsDB;
         $gperm_handler = xoops_gethandler('groupperm');
         $permissionsql = "";
@@ -712,7 +719,7 @@ function patch31() {
 								$start = false;
 							} elseif(strtoupper($thisFidDataTableInfo['Null']) != "YES") {
 								$alterTableSQL .= !$start ? "," : ""; // add comma if we're on a subsequent run through
-								$alterTableSQL .= " CHANGE `".$thisFidDataTableInfo['Field']."` `".$thisFidDataTableInfo['Field']."` text NULL default NULL";
+								$alterTableSQL .= " CHANGE `".$thisFidDataTableInfo['Field']."` `".$thisFidDataTableInfo['Field']."` text";
 								$start = false;
 							}
 						}
@@ -1103,7 +1110,7 @@ if(!in_array($xoopsDB->prefix("formulize_entry_owner_groups"), $existingTables))
                         $dataRes = $xoopsDB->query($dataSql);
                         while($dataArray = $xoopsDB->fetchArray($dataRes)) {
                                 if(!isset($formCaptions[$dataArray['id_form']][$dataArray['ele_caption']])) {
-                                        $deleteSql = "DELETE FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=".$dataArray['id_form']." AND ele_caption=\"".formulize_escape($dataArray['ele_caption'])."\"";
+                                        $deleteSql = "DELETE FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_form=".$dataArray['id_form']." AND ele_caption=\"".formulize_db_escape($dataArray['ele_caption'])."\"";
                                         if(!$result = $xoopsDB->query($deleteSql)) {
                                                 exit("Error patching DB for Formulize 3.1. SQL dump:<br>" . $deletesql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
                                         }
@@ -1278,7 +1285,7 @@ function patch22convertdata() {
 			if(get_magic_quotes_gpc()) { $sanArray['ele_value'] = stripslashes($sanArray['ele_value']); }
 			$newvalue = $myts->htmlSpecialChars($sanArray['ele_value']);
 			if($newvalue != $origvalue) {
-				$newsql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET ele_value = \"" . formulize_escape($newvalue) . "\" WHERE ele_id = " . $sanArray['ele_id'];
+				$newsql = "UPDATE " . $xoopsDB->prefix("formulize_form") . " SET ele_value = \"" . formulize_db_escape($newvalue) . "\" WHERE ele_id = " . $sanArray['ele_id'];
 				if(!$newres = $xoopsDB->query($newsql)) {
 					exit("Error patching DB for Formulize 2.2. SQL dump:<br>" . $sansql . "<br>".$xoopsDB->error()."<br>Could not write data for sanitizing.  Please contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
 				}
@@ -1460,7 +1467,7 @@ function patch30DataStructure($auto = false) {
 																	continue; // don't write in blank date values, let them get the default NULL value for the field
 																} 
 																
-                                $insertSQL .= ", `" . $captionHandleIndex[$dataArray['ele_caption']] . "`=\"" . formulize_escape($dataArray['ele_value']) . "\"";
+                                $insertSQL .= ", `" . $captionHandleIndex[$dataArray['ele_caption']] . "`=\"" . formulize_db_escape($dataArray['ele_value']) . "\"";
                         }
                         if($insertSQL) {
                                 if(!$insertRes = $xoopsDB->query($insertSQL)) {
@@ -1492,7 +1499,7 @@ function patch30DataStructure($auto = false) {
         $elementObject = $element_handler->get($array['ele_id']);
         $ele_value = $elementObject->getVar('ele_value');
         $parts = explode("#*=:*", $ele_value[2]);
-        $sql2 = "SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_caption = '". formulize_escape($parts[1]) . "' AND id_form=". $parts[0];
+        $sql2 = "SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_caption = '". formulize_db_escape($parts[1]) . "' AND id_form=". $parts[0];
 				//print "$sql2<br>";
         if(!$res2 = $xoopsDB->query($sql2)) {
           exit("Error: could not get the handle for a linked selectbox source.  SQL: $sql2<br>".$xoopsDB->error()."<br>Please report this error to <a href=\"mailto:formulize@freeformsolutions.ca\">Freeform Solutions</a>.");
@@ -1522,3 +1529,70 @@ if(!defined('_FORMULIZE_UI_PHP_INCLUDED')) {
 }
 
 
+
+function patchEmptyFormScreens() {
+	global $xoopsDB;
+
+    $formScreenSQL = "SELECT formid, sid, formelements FROM " . $xoopsDB->prefix("formulize_screen_form");
+    $formScreenHandler = $xoopsDB->query($formScreenSQL);
+
+    $formScreenIndex = array();
+    $allScreens = array();
+    $formid_to_elementid = array();
+    while($formScreenHandlesArray = $xoopsDB->fetchArray($formScreenHandler)) {
+    	array_push($formScreenIndex, $formScreenHandlesArray);
+    }
+
+    $screenFidSQL = "SELECT sid, fid FROM " . $xoopsDB->prefix("formulize_screen");
+    $screenFidHandler = $xoopsDB->query($screenFidSQL);
+
+    while($screenHandlesArray = $xoopsDB->fetchArray($screenFidHandler)) {
+    	if (!isset($allScreens[$screenHandlesArray['fid']])) {
+    		$allScreens[$screenHandlesArray['fid']] = array();
+    	}
+    	array_push($allScreens[$screenHandlesArray['fid']], $screenHandlesArray['sid']);
+    }
+
+    $formElementsSQL = "SELECT id_form, ele_id FROM " . $xoopsDB->prefix("formulize");
+    $formElementsHandler = $xoopsDB->query($formElementsSQL);
+
+    while($formElementsHandlesArray = $xoopsDB->fetchArray($formElementsHandler)) {
+    	if (!isset($formid_to_elementid[$formElementsHandlesArray['id_form']])) {
+    		$formid_to_elementid[$formElementsHandlesArray['id_form']] = array();
+    	}
+    	array_push($formid_to_elementid[$formElementsHandlesArray['id_form']], $formElementsHandlesArray['ele_id']);
+    }    
+
+    foreach ($formScreenIndex as $key => $value) {
+    	$form_elements = $value['formelements'];
+    	$this_fid = null;
+    	$screen_form_primaryid = $value['formid'];
+    	$all_elements_serialized = "";
+    	if ($form_elements == "b:0;") {
+    		// If formelements is empty, then fill it up with all elements
+    		// First get the real fid from formulize_screen for that screen, and get all elements associated with that fid
+    		foreach ($allScreens as $fid => $screensArray) {
+    			if (in_array($value['sid'], $screensArray)) {
+    				$this_fid = $fid;
+    			}
+    		}
+
+    		if ($this_fid != null) {
+    			// save all elements associated with that fid into a serialized string
+    			if (isset($formid_to_elementid[$this_fid])) {
+	    			$all_elements_serialized = serialize($formid_to_elementid[$this_fid]);
+
+    			}
+
+				$updateSQL = "UPDATE `". $xoopsDB->prefix("formulize_screen_form") ."` SET `formelements`='" . $all_elements_serialized . "' WHERE `formid`='" . $screen_form_primaryid . "'";
+    			if ($result = $xoopsDB->queryF($updateSQL)) {
+    				print "Database update success for formid = " . $screen_form_primaryid . ", sid = " . $value['sid'] . " in table formulize_screen_form <br />";
+    			} else {
+    				print "Database update failed for formid = " . $screen_form_primaryid . ", sid = " . $value['sid'] . " in table formulize_screen_form <br />";
+    			}
+    		}
+    		
+    	}
+    }
+	 exit();
+}

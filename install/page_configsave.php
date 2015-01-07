@@ -134,7 +134,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 				if (fwrite( $file, $content ) == -1) {
 					$error = ERR_WRITE_MAINFILE;
 				}
+				fflush($file);
 				fclose($file);
+				clearstatcache();
 			}
 		}
 	}
