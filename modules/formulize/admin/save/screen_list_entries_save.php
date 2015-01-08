@@ -49,10 +49,36 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
   return;
 }
 
+$advanceview = array();
+$currentRow = 0;
+$index = 0;
+$numberOfRows = intval($_POST['rows']);
+
+while($currentRow <= $numberOfRows) {
+  if($_POST['sort-by'] == $index) {
+    $sort = 1;
+  }
+  else {
+    $sort = 0;
+  }
+  
+  if($_POST['col-value'][$index] != NULL && $_POST['col-value'][$index] != 0) {
+    $advanceview[$currentRow] = array($_POST['col-value'][$index], $_POST['search-value'][$index], $sort);
+    $currentRow++;
+  }
+  
+  //If the value is of the columns is the default, do not save it as part of the view
+  if($_POST['col-value'][$index] == 0) {
+    $currentRow++;
+  }
+  $index++;
+}
+$screens['advanceview'] = serialize($advanceview);
 
 $screen->setVar('defaultview',$screens['defaultview']);
 $screen->setVar('usecurrentviewlist',$screens['usecurrentviewlist']);
 $screen->setVar('limitviews',$screens['limitviews']);
+$screen->setVar('advanceview', $screens['advanceview']);
 $screen->setVar('useworkingmsg',(array_key_exists('useworkingmsg',$screens))?$screens['useworkingmsg']:0);
 $screen->setVar('usescrollbox',(array_key_exists('usescrollbox',$screens))?$screens['usescrollbox']:0);
 $screen->setVar('entriesperpage',$screens['entriesperpage']);

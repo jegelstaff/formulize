@@ -10,9 +10,65 @@
 
 
 <div class="panel-content content">
+  
   <fieldset>
-    <legend>How entries should be displayed</legend>
-
+    <legend><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DISPLAY_ONLY_COLUMNS}></legend>
+    <p><input type="button" class="formButton" name="addColumn" value="<{$smarty.const._AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_ADVANCE_VIEW_ADD_COLUMN}>"></p>
+    <br/>
+    <table class="advanceview" style="border:none">
+      <tr>
+	<td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_COLUMNS}></label></td>
+	<td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_BY}></label></td>
+	<td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY}></label></td>
+	<td></td>
+      </tr>
+	<{if $content.advanceview|@count > 0}>
+	  <{foreach from=$content.advanceview key=index item=value}>
+	    <tr class="advanceviewcol" name="<{$index}>">
+	      <td>
+		<select id="cols-<{$index}>" name="col-value[<{$index}>]" size="1">
+		  <{html_options options=$content.advanceviewoptions selected=$value.column}>
+		</select>
+	      </td>
+	      <td>
+		<input type="text" name="search-value[<{$index}>]" value="<{$value.text}>"></input>
+	      </td>
+	      <td>
+		<{if $value.sort == 1}>
+		  <input type="radio" name="sort-by" value=<{$index}> checked></input>
+		<{else}>
+		  <input type="radio" name="sort-by" value=<{$index}>></input>
+		<{/if}>
+	      </td>
+	      <td class='removeImage'>
+		<img class="removeCol" id="<{$index}>" onclick="removeColumn()" src="../images/editdelete.gif"></img>
+	      </td>
+	    </tr>
+	  <{/foreach}>
+	  <input type="hidden" id="numberOfRows" name="rows" value=<{$content.advanceview|@count}>></input>
+	<{else}>
+	    <tr class="advanceviewcol" name="0">
+	      <td>
+		<select id="cols-0" name="col-value[0]" size="1">
+		  <{html_options options=$content.advanceviewoptions}>
+		</select>
+	      </td>
+	      <td>
+		<input type="text" name="search-value[0]"></input>
+	      </td>
+	      <td>
+		<input type="radio" name="sort-by" value=0></input>
+	      </td>
+	      <td></td>
+	    </tr>
+	    <input type="hidden" id="numberOfRows" name="rows" value=<{$content.advanceview|@count}>></input>
+	<{/if}>
+    </table>
+    <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DESCRIPTION}></div>
+    
+  </fieldset>
+  <fieldset>
+    <legend><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_VIEW_DATA_TO_DISPLAY_HEADER}></legend>
     
       <div class="form-item float-left half-width">
 	<label for="screens-defaultview"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEW}></label>
@@ -78,3 +134,114 @@
 </div>
 
 </form>
+
+<script type="text/javascript">
+  
+  setInterval(function () {
+    $.ajax({
+      type:"POST",
+      url:"<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?op=get_views_for_form&uid=<{$content.uid}>",
+      data:{"form_id":"<{$content.fid}>"},
+      dataType: "json",
+      success:function(response){
+	$.each(response, function( index, value ) {
+	  if (!existsOnDropDown(value[0])) {
+	    addToDropDown(value[0], value[1]);
+	  }
+	});
+      }
+    });
+  }, 5000);
+  
+  function existsOnDropDown(id) {
+    var options = $("#screens-defaultview option");
+    var result = false;
+    $.each(options, function() {
+      if (this.value == id) {
+	result = true;
+      }
+    });
+      
+    return result;
+  }
+  
+  function addToDropDown(id, text) {
+    $('#screens-defaultview')
+      .append($('<option>', { value : id })
+      .text(text));
+  }
+  
+  function getFormColumns(number) {
+    $.ajax({
+      type:"POST",
+      url:"<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?op=get_form_columns&uid=<{$content.uid}>",
+      data:{"form_id":"<{$content.fid}>"},
+      dataType: "json",
+      success:function(response){
+	$.each(response, function( index, value ) {
+	  $("#cols-"+number).append($('<option>', { 
+	    value: index })
+	    .text(value));
+	});
+      }
+    });
+  }
+  
+  function addAdvanceViewRow(number) {
+    appendContents1 = '<td><select id="cols-'+number+'" name="col-value['+number+']"></select></td>';
+    appendContents2 = '<td><input type="text" name="search-value['+number+']"></input></td>';
+    appendContents3 = '<td><input type="radio" name="sort-by" value='+number+'></input></td>';
+    $(".advanceview:last").append('<tr class="advanceviewcol" name="'+number+'"></tr>');
+    $(".advanceviewcol:last").append(appendContents1);
+    $(".advanceviewcol:last").append(appendContents2);
+    $(".advanceviewcol:last").append(appendContents3);
+    $(".advanceviewcol:last").append("<td class='removeImage'></td>");
+  }
+  
+  $("[name=addColumn]").click(function (){
+    number = $(".advanceviewcol:last").attr('name');
+    number = parseInt(number) + 1;
+    addAdvanceViewRow(number);
+    
+    //Append the remove column
+    appendContents4 = '<img class="removeCol" id="'+number+'" onclick="removeColumn()" src="../images/editdelete.gif"></img>';
+    $(".removeImage:last").append(appendContents4);
+    
+    //Populate the columns
+    getFormColumns(number);
+    
+    //Update the number of rows
+    rows = $("#numberOfRows").val();
+    rows = parseInt(rows) + 1;
+    $("#numberOfRows").val(rows);
+    
+    //$("#numberOfRows").text($("#numberOfRows").val() + 1);
+    $("[name=addColumn]").blur();
+    setDisplay('savewarning','block');
+  });
+  
+  function removeColumn(){
+    id = event.target.id;
+    firstNumber = $(".advanceviewcol:first").attr('name');
+    lastNumber = $(".advanceviewcol:last").attr('name');
+    
+    if(firstNumber == lastNumber) {
+      //Remove the row with past values but add another row with the default values
+      $("tr").remove("[name="+id+"]");
+      addAdvanceViewRow(id);
+      getFormColumns(id);
+      $("#numberOfRows").html(1);
+    }
+    else {
+      $("tr").remove("[name="+id+"]");
+      
+      //Update the number of rows
+      rows = $("#numberOfRows").val();
+      rows = parseInt(rows) - 1;
+      $("#numberOfRows").val(rows);
+    }
+    
+    setDisplay('savewarning','block');
+  }
+  
+</script>

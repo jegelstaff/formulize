@@ -119,6 +119,8 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $formObj = $form_handler->get($form_id, true); // true causes all elements to be included even if they're not visible.
   $frameworks = $framework_handler->getFrameworksByForm($form_id);
   $selectedFramework = $settings['frid'];
+  
+  //Get the options for the dropdown
   $views = $formObj->getVar('views');
   $viewNames = $formObj->getVar('viewNames');
   $viewFrids = $formObj->getVar('viewFrids');
@@ -160,9 +162,49 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
 					$viewentryscreenOptions["p".$pageworksArray['page_id']] = _AM_FORMULIZE_SCREEN_LOE_VIEWENTRYPAGEWORKS . " -- " . printSmart(trans($pageworksName), 85);
 			}
 	}
+        
+    $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+    $screen = $screen_handler->get($screen_id);
+    $adv = $screen->getVar('advanceview');
+    
+    $advanceViewSelected = array();
+    $index = 0;
+    foreach($adv as $id=>$arr) {
+        $advanceViewSelected[$index]["column"] = $arr[0];
+        $advanceViewSelected[$index]["text"] = $arr[1];
+        $advanceViewSelected[$index]["sort"] = $arr[2];
+        $index++;
+    }
+        
+    //Get the columns for the advance view
+    $mid = getFormulizeModId();
+    $frid = ((isset( $_GET['frid'])) AND is_numeric( $_GET['frid'])) ? intval( $_GET['frid']) : "" ;
+    $frid = ((isset($_POST['frid'])) AND is_numeric($_POST['frid'])) ? intval($_POST['frid']) : $frid ;
+
+    $temp_selectedCols = $_GET['cols'];
+    $selectedCols = explode(",", $temp_selectedCols);
+    $gperm_handler = &xoops_gethandler('groupperm');
+    $member_handler =& xoops_gethandler('member');
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+
+    $cols = getAllColList($form_id, $frid, $groups);
+    
+    $columns = array();
+    $columns[0] = "Select a column";
+    
+    foreach($cols as $id=>$arr) {
+	foreach($arr as $innerId=>$value) {
+	    $columns[$value["ele_id"]] = $value["ele_caption"];
+        }
+    }
+    
+        
+    $cols = array();
   // create the template information
   $entries = array();
   $entries['defaultviewoptions'] = $defaultViewOptions;
+  $entries['advanceviewoptions'] = $columns;
+  $entries['advanceview'] = $advanceViewSelected;
   $entries['defaultview'] = $screen->getVar('defaultview');
   $entries['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
   $entries['limitviewoptions'] = $limitViewOptions;
@@ -402,6 +444,7 @@ $common['title'] = $screenName; // oops, we've got two copies of this data float
 $common['sid'] = $screen_id;
 $common['fid'] = $form_id;
 $common['aid'] = $aid;
+$common['uid'] = $xoopsUser->getVar('uid');
 
 // generate a group list for use with the custom buttons
 $sql = "SELECT name, groupid FROM ".$xoopsDB->prefix("groups")." ORDER BY groupid";

@@ -37,6 +37,7 @@
 require_once "../../mainfile.php"; // initialize the xoops stack so we have access to the user object, etc if necessary
 ob_end_clean(); // stop all buffering of output (ie: related to the error logging, and/or xLangauge?)
 include_once "../../header.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 
 // check that the user who sent this request is the same user we have a session for now, if not, bail
 $sentUid = $_GET['uid'];
@@ -59,6 +60,8 @@ if($op != "check_for_unique_value"
    AND $op != 'get_element_row_html'
    AND $op != 'update_derived_value'
    AND $op != 'validate_php_code'
+   AND $op != 'get_views_for_form'
+   AND $op != 'get_form_columns'
   ) {
   exit();
 }
@@ -224,6 +227,7 @@ switch($op) {
     }
     break;
 
+
     case "update_derived_value":
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     $formID = $_GET['fid'];
@@ -237,6 +241,7 @@ switch($op) {
     print count($data); // return the number of entries found. when this reaches 0, the client will know to stop calling
     break;
 
+
     case "validate_php_code":
     if (function_exists("shell_exec")) {
         $tmpfname = tempnam(sys_get_temp_dir(), 'FZ');
@@ -249,5 +254,54 @@ switch($op) {
             echo str_replace("PHP Parse error:  s", "S", str_replace(" in $tmpfname", "", $output));
         }
     }
+    break;
+
+
+    case "get_views_for_form":
+    //This is to respond to an Ajax request from the file screen_list_entries.html
+    $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+    include_once XOOPS_ROOT_PATH ."/modules/formulize/class/forms.php";
+
+    $formulizeForm = new formulizeForm();
+
+    list($views, $viewNames, $viewFrids, $viewPublished) = $formulizeForm->getFormViews($_POST['form_id']);
+    $frameworks = $framework_handler->getFrameworksByForm($_POST['form_id']);
+    for ($i = 0; $i <= count($viewNames); $i++) {
+        if(!$viewPublished[$i]) {
+            continue;
+        }
+        if($viewFrids[$i]) {
+            $viewNames[$i] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
+        } else {
+            $viewNames[$i] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
+        }
+    }
+
+    $array = array_map(null, $views, $viewNames);
+
+    echo json_encode($array);
+    break;
+
+
+    case "get_form_columns":
+    $temp_selectedCols = $_GET['cols'];
+    $selectedCols = explode(",", $temp_selectedCols);
+    $gperm_handler = &xoops_gethandler('groupperm');
+    $member_handler =& xoops_gethandler('member');
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+
+    $cols = getAllColList($_POST['form_id'], "", $groups);
+
+    $columns = array();
+    $columns[0] = "Select a column";
+
+    foreach($cols as $id=>$arr) {
+        foreach($arr as $innerId=>$value) {
+            $columns[$value["ele_id"]] = $value["ele_caption"];
+        }
+    }
+
+    echo json_encode($columns);
     break;
 }

@@ -39,21 +39,26 @@ class formulizeForm extends XoopsObject {
 function checkFormOwnership($id_form,$form_handle){
 
 		global $xoopsDB;
-                //check to see if there are entries in the form which 
-                //do not appear in the entry_owner_groups table. If so, it finds the 
-                // owner/creator of the entry and calls setEntryOwnerGroups() which inserts the
+		//check to see if there are entries in the form which do not appear in
+		//the entry_owner_groups table. If so, it finds the
+		// owner/creator of the entry and calls setEntryOwnerGroups()
+		// which inserts the
                 //first, get the form ids and handles.  
-                $missingEntries=q("SELECT main.entry_id,main.creation_uid From " . $xoopsDB->prefix("formulize_".$form_handle) . " as main WHERE NOT EXISTS(
-               SELECT 1 FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " as eog WHERE eog.fid=".$id_form ." and eog.entry_id=main.entry_id )");
-                //now we got the missing entries in the form and the users who created them.    
-                $data_handler = new formulizeDataHandler($id_form);
-                foreach ($missingEntries as $entry){
-                        if (!$groupResult = $data_handler->setEntryOwnerGroups($entry['creation_uid'],$entry['entry_id'])) {
+		$missingEntries=q("SELECT main.entry_id,main.creation_uid From ". $xoopsDB->prefix("formulize_".$form_handle) . " as main WHERE
+		NOT EXISTS(SELECT 1 FROM " .$xoopsDB->prefix("formulize_entry_owner_groups") . " as eog WHERE eog.fid=".$id_form ." and eog.entry_id=main.entry_id )");
+		//now we got the missing entries in the form and the users who
+		//created them.
+		$data_handler = new formulizeDataHandler($id_form); foreach
+		($missingEntries as $entry){
+			if (!$groupResult =
+			$data_handler->setEntryOwnerGroups($entry['creation_uid'],$entry['entry_id']))
+			{
                                 print "ERROR: failed to write the entry ownership information to the database.<br>";
                         }
                 }
 	return count($missingEntries);
         }
+		
 	function formulizeForm($id_form="", $includeAllElements=false){
 
 		// validate $id_form
@@ -110,6 +115,7 @@ function checkFormOwnership($id_form,$form_handle){
 					if($value['ele_encrypt']) {
 						$encryptedElements[$value['ele_id']] = $value['ele_handle'];
 					}
+					$value = $elementColheads[$value['ele_id']];
 				}
 				
 				// propertly format the single value
@@ -127,27 +133,15 @@ function checkFormOwnership($id_form,$form_handle){
 						$single = "";
 						break;
 				}
+				
 				// setup the headerlist -- note...it's still in screwed up string format and must be processed after this by the user code that gets it
 				$headerlist = $formq[0]['headerlist'];
 				$defaultform = $formq[0]['defaultform'];
 				$defaultlist = $formq[0]['defaultlist'];
 			}
 			
-			// gather the view information
-			$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '$id_form' OR (sv_mainform = '' AND sv_formframe = '$id_form')");
-			if(!isset($viewq[0])) {
-				$views = array();
-				$viewNames = array();
-				$viewFrids = array();
-				$viewPublished = array();
-			} else {
-				for($i=0;$i<count($viewq);$i++) {
-					$views[$i] = $viewq[$i]['sv_id'];
-					$viewNames[$i] = stripslashes($viewq[$i]['sv_name']);
-					$viewFrids[$i] = $viewq[$i]['sv_mainform'] ? $viewq[$i]['sv_formframe'] : "";
-					$viewPublished[$i] = $viewq[$i]['sv_pubgroups'] ? true : false;
-				}
-			}
+			// gather the views information
+			list($views, $viewNames, $viewFrids, $viewPublished) = self::getFormViews($id_form);
 			
 			// setup the filter settings
 			$filterSettingsq = q("SELECT groupid, filter FROM " . $xoopsDB->prefix("formulize_group_filters") . " WHERE fid='$id_form'");
@@ -188,6 +182,31 @@ function checkFormOwnership($id_form,$form_handle){
         $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
     }
 
+	/* Get the views for the supplied form id
+	*  This function also gets invoked by an ajax call from screen_list_entries.html to reload all available views on the dropdown menu.
+	*/
+	function getFormViews($id_form) {
+		
+		global $xoopsDB;        
+		
+		$viewq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_mainform = '$id_form' OR (sv_mainform = '' AND sv_formframe = '$id_form')");
+		if(!isset($viewq[0])) {
+			$views = array();
+			$viewNames = array();
+			$viewFrids = array();
+			$viewPublished = array();
+		} else {
+			for($i=0;$i<count($viewq);$i++) {
+				
+				$views[$i] = $viewq[$i]['sv_id'];
+				$viewNames[$i] = stripslashes($viewq[$i]['sv_name']);
+				$viewFrids[$i] = $viewq[$i]['sv_mainform'] ? $viewq[$i]['sv_formframe'] : "";
+				$viewPublished[$i] = $viewq[$i]['sv_pubgroups'] ? true : false;
+			}
+		}
+		return array($views, $viewNames, $viewFrids, $viewPublished);
+	}
+	
     static function sanitize_handle_name($handle_name) {
         // strip non-alphanumeric characters from form and element handles
         return preg_replace("/[^a-zA-Z0-9_]+/", "", $handle_name);
@@ -232,7 +251,6 @@ function form_{$this->id_form}_on_before_save(\$entry_id, \$element_values, \$fo
 
     return get_defined_vars();  // this converts PHP variables back into an array
 }
-
 EOF;
             // todo: there is a way to validate php files on disk, so do that and report any syntax errors
             return (false !== file_put_contents($this->on_before_save_filename, $on_before_save_code));
@@ -345,7 +363,6 @@ class formulizeFormsHandler {
 			$array = $xoopsDB->fetchArray($res);
 			return $this->get($array['id_form']);
 		}
-		
 	}
 
 	function getAllForms($includeAllElements=false) {
@@ -425,6 +442,7 @@ class formulizeFormsHandler {
         if( !$formObject->cleanVars() ){
             return false;
         }
+		
 				foreach( $formObject->cleanVars as $k=>$v ){
 					${$k} = $v;
 				}
@@ -509,6 +527,7 @@ class formulizeFormsHandler {
 			}	
 			unset($element);
 		}
+		
 		$handleUpdateSQL = "UPDATE ".$this->db->prefix("formulize")." SET ele_handle=ele_id WHERE id_form=".intval($fid);
     if(!$res = $this->db->query($handleUpdateSQL)) {
       print "Error: could not synchronize handles with element ids for the '".strip_tags(htmlspecialchars($_POST['tablename'])). "' form";
