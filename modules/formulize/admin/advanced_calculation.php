@@ -37,18 +37,18 @@ include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 $aid = intval($_GET['aid']);
 $application_handler = xoops_getmodulehandler('applications','formulize');
 if($aid == 0) {
-	$appName = "Forms with no app";
+  $appName = "Forms with no app";
 } else {
-	$appObject = $application_handler->get($aid);
-	$appName = $appObject->getVar('name');
+  $appObject = $application_handler->get($aid);
+  $appName = $appObject->getVar('name');
 }
 
 // get form info
 $fid = intval($_GET['fid']);
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 if(!($fid == 0)) {
-	$formObject = $form_handler->get($fid);
-	$formName = $formObject->getVar('title');
+  $formObject = $form_handler->get($fid);
+  $formName = $formObject->getVar('title');
 }
 
 // get advanced calculations info
@@ -78,33 +78,33 @@ if($isNew) {
   $advCalc['input'] = $advCalcObject->getVar('input');
   $advCalc['output'] = $advCalcObject->getVar('output');
 
-	// get step titles
+  // get step titles
   $stepTitles = $advCalcObject->getVar('steptitles');
   $stepElements = $advCalcObject->getVar('steps');
 
   // group entries
   $steps = array();
-	//for($i=0;$i<(count($stepTitles)+$stepCounterOffset);$i++) {
-	for($i=0;$i<(count($stepTitles));$i++) {
+  //for($i=0;$i<(count($stepTitles)+$stepCounterOffset);$i++) {
+  for($i=0;$i<(count($stepTitles));$i++) {
     $steps[$i]['name'] = $stepTitles[$i];
     $steps[$i]['content']['index'] = $i;
     $steps[$i]['content']['number'] = $i+1;
     $steps[$i]['content']['title'] = $stepTitles[$i];
     $steps[$i]['content']['steps'] = $stepElements[$i];
-    //print_r( $steps[$i]['content']['steps'] );
+  //print_r( $steps[$i]['content']['steps'] );
   }
 
   $advCalc['steps'] = $steps;
 
 
-	// get filters and grouping titles
+  // get filters and grouping titles
   $fltr_grpTitles = $advCalcObject->getVar('fltr_grptitles');
   $fltr_grpElements = $advCalcObject->getVar('fltr_grps');
 
   // group entries
   $fltr_grps = array();
-	//for($i=0;$i<(count($fltr_grpTitles)+$fltr_grpCounterOffset);$i++) {
-	for($i=0;$i<(count($fltr_grpTitles));$i++) {
+  //for($i=0;$i<(count($fltr_grpTitles)+$fltr_grpCounterOffset);$i++) {
+  for($i=0;$i<(count($fltr_grpTitles));$i++) {
     $fltr_grps[$i]['name'] = $fltr_grpTitles[$i];
     $fltr_grps[$i]['content']['index'] = $i;
     $fltr_grps[$i]['content']['number'] = $i+1;
@@ -117,7 +117,7 @@ if($isNew) {
     $fltr_grps[$i]['content']['form_html'] = $elementList->render();
   }
   if($fltr_grps[0]['name'] == "") {
-	$fltr_grps[0]['name'] = "New filter";
+    $fltr_grps[0]['name'] = "New filter";
   }
 
   $advCalc['fltr_grps'] = $fltr_grps;

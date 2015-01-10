@@ -101,7 +101,7 @@ function readApplicationData($aid, $apps) {
   if($aid>0) {
     $apps[$i]['header'] .= '<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=settings"><i class="icon-config"></i> Settings</a>';
   }
-  // menu entries link does not work!!  can't pass names with spaces?  
+  // menu entries link does not work!!  can't pass names with spaces?
   $apps[$i]['header'] .= '<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=forms"><i class="icon-form"></i> Forms</a>
 <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=screens"><i class="icon-screen"></i> Screens</a>
 <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=relationships"><i class="icon-connection"></i> Relationships</a>

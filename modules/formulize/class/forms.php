@@ -36,8 +36,8 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeForm extends XoopsObject {
-function checkFormOwnership($id_form,$form_handle){
 
+function checkFormOwnership($id_form,$form_handle){
 		global $xoopsDB;
                 //check to see if there are entries in the form which 
                 //do not appear in the entry_owner_groups table. If so, it finds the 
@@ -54,8 +54,8 @@ function checkFormOwnership($id_form,$form_handle){
                 }
 	return count($missingEntries);
         }
-	function formulizeForm($id_form="", $includeAllElements=false){
 
+	function formulizeForm($id_form="", $includeAllElements=false){
 		// validate $id_form
 		global $xoopsDB;
 
@@ -312,9 +312,11 @@ EOF;
 
 class formulizeFormsHandler {
 	var $db;
+
 	function formulizeFormsHandler(&$db) {
 		$this->db =& $db;
 	}
+
 	function &getInstance(&$db) {
 		static $instance;
 		if (!isset($instance)) {
@@ -322,6 +324,7 @@ class formulizeFormsHandler {
 		}
 		return $instance;
 	}
+
 	function &create() {
 		return new formulizeForm();
 	}
@@ -478,7 +481,6 @@ class formulizeFormsHandler {
 					$formObject->setVar('form_handle', $id_form);
 					$this->insert($formObject, $force); 
 				}
-				
 				return $id_form;
 				
 	}
@@ -1180,5 +1182,4 @@ class formulizeFormsHandler {
 		}
 		return true;
 	}
-
 }

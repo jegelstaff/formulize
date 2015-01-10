@@ -67,8 +67,8 @@ unset($newOrder[0]);
 // newOrder will have keys corresponding to the new order, and values corresponding to the old order
 
 if(count($elements) != count($newOrder)) {
-	print "Error: the number of elements being saved did not match the number of elements already in the database";
-	return;
+  print "Error: the number of elements being saved did not match the number of elements already in the database";
+  return;
 }
 
 // modify elements
@@ -90,11 +90,11 @@ foreach($elements as $element) {
   foreach($processedElements[$ele_id] as $property=>$value) {
     $element->setVar($property,$value);
   }
-	
-	// if there was no display property sent, and there was no custom flag sent, then blank the display settings
-	if(!isset($processedElements[$ele_id]['ele_display']) AND !isset($_POST['customDisplayFlag'][$ele_id])) {
-		$element->setVar('ele_display',0);
-	}
+
+  // if there was no display property sent, and there was no custom flag sent, then blank the display settings
+  if(!isset($processedElements[$ele_id]['ele_display']) AND !isset($_POST['customDisplayFlag'][$ele_id])) {
+    $element->setVar('ele_display',0);
+  }
 
   // presist changes
   if(!$element_handler->insert($element)) {
@@ -106,53 +106,53 @@ foreach($elements as $element) {
 if($_POST['convertelement']) {
   global $xoopsModuleConfig;
   $element =& $element_handler->get($_POST['convertelement']);
-	$ele_type = $element->getVar('ele_type');
-	$new_ele_value = array();
-	if($ele_type == "text") { // converting to textarea
-		$ele_value = $element->getVar('ele_value');
-		$new_ele_value[0] = $ele_value[2]; // default value
-		$new_ele_value[1] = $xoopsModuleConfig['ta_rows'];
-		$new_ele_value[2] = $ele_value[0]; // width become cols
-		$new_ele_value[3] = $ele_value[4]; // preserve any association that is going on
-		$element->setVar('ele_value', $new_ele_value);
-		$element->setVar('ele_type', "textarea");
+  $ele_type = $element->getVar('ele_type');
+  $new_ele_value = array();
+  if($ele_type == "text") { // converting to textarea
+    $ele_value = $element->getVar('ele_value');
+    $new_ele_value[0] = $ele_value[2]; // default value
+    $new_ele_value[1] = $xoopsModuleConfig['ta_rows'];
+    $new_ele_value[2] = $ele_value[0]; // width become cols
+    $new_ele_value[3] = $ele_value[4]; // preserve any association that is going on
+    $element->setVar('ele_value', $new_ele_value);
+    $element->setVar('ele_type', "textarea");
     if( !$element_handler->insert($element)) {
-			print "Error: could not complete conversion of the element";
-		} 
-	} elseif($ele_type=="textarea") {
-		$ele_value = $element->getVar('ele_value');
-		$new_ele_value[0] = $ele_value[2]; // cols become width
-		$new_ele_value[1] = $xoopsModuleConfig['t_max'];
-		$new_ele_value[2] = $ele_value[0]; // default value
-		$new_ele_value[3] = 0; // allow anything (do not restrict to just numbers)
-		$new_ele_value[4] = $ele_value[3]; // preserve any association that is going on
-		$element->setVar('ele_value', $new_ele_value);
-		$element->setVar('ele_type', "text");
-		if( !$element_handler->insert($element)) {
-			print "Error: could not complete conversion of the element";
-		} 
-	} elseif($ele_type=="radio") {
-		$element->setVar('ele_type', "checkbox"); // just need to change type, ele_value format is the same
-		if( !$element_handler->insert($element)) {
-			print "Error: could not complete conversion of the element";
-		} else {
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-			$data_handler = new formulizeDataHandler($element->getVar('id_form'));
-			if(!$data_handler->convertRadioDataToCheckbox($element)) {
-				print "Error: ". _AM_ELE_CHECKBOX_DATA_NOT_READY;
-			} 
-		}
-	} elseif($ele_type=="checkbox") {
-		$element->setVar('ele_type', "radio");  // just need to change type, ele_value format is the same
-		if( !$element_handler->insert($element)) {
-			print "Error: could not complete conversion of the element";
-		} else {
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-			$data_handler = new formulizeDataHandler($element->getVar('id_form'));
-			if(!$data_handler->convertCheckboxDataToRadio($element)) {
-				print "Error: "._AM_ELE_RADIO_DATA_NOT_READY;
-			} 
-		}
+      print "Error: could not complete conversion of the element";
+    }
+  } elseif($ele_type=="textarea") {
+    $ele_value = $element->getVar('ele_value');
+    $new_ele_value[0] = $ele_value[2]; // cols become width
+    $new_ele_value[1] = $xoopsModuleConfig['t_max'];
+    $new_ele_value[2] = $ele_value[0]; // default value
+    $new_ele_value[3] = 0; // allow anything (do not restrict to just numbers)
+    $new_ele_value[4] = $ele_value[3]; // preserve any association that is going on
+    $element->setVar('ele_value', $new_ele_value);
+    $element->setVar('ele_type', "text");
+    if( !$element_handler->insert($element)) {
+      print "Error: could not complete conversion of the element";
+    }
+  } elseif($ele_type=="radio") {
+    $element->setVar('ele_type', "checkbox"); // just need to change type, ele_value format is the same
+    if( !$element_handler->insert($element)) {
+      print "Error: could not complete conversion of the element";
+    } else {
+      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+      $data_handler = new formulizeDataHandler($element->getVar('id_form'));
+      if(!$data_handler->convertRadioDataToCheckbox($element)) {
+        print "Error: ". _AM_ELE_CHECKBOX_DATA_NOT_READY;
+      }
+    }
+  } elseif($ele_type=="checkbox") {
+    $element->setVar('ele_type', "radio");  // just need to change type, ele_value format is the same
+    if( !$element_handler->insert($element)) {
+      print "Error: could not complete conversion of the element";
+    } else {
+      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+      $data_handler = new formulizeDataHandler($element->getVar('id_form'));
+      if(!$data_handler->convertCheckboxDataToRadio($element)) {
+        print "Error: "._AM_ELE_RADIO_DATA_NOT_READY;
+      }
+    }
   } elseif($ele_type=="select") {
     $element->setVar('ele_type', 'checkbox');
     $old_ele_value = $element->getVar('ele_value');
@@ -164,7 +164,7 @@ if($_POST['convertelement']) {
       $data_handler = new formulizeDataHandler($sourceFid);
       $options = $data_handler->findAllValuesForField($sourceHandle, "ASC");
       foreach($options as $option) {
-	$new_ele_value[$option] = 0;
+        $new_ele_value[$option] = 0;
       }
     } else {
       $new_ele_value = $old_ele_value[2];
@@ -174,15 +174,15 @@ if($_POST['convertelement']) {
     if( !$element_handler->insert($element)) {
       print "Error: could not complete conversion of the element";
     }
-	}
+  }
 }
 
 if($_POST['deleteelement']) {
   $element = $element_handler->get($_POST['deleteelement']);
   $ele_type = $element->getVar('ele_type');
-	$element_handler->delete($element);
+  $element_handler->delete($element);
   if($ele_type != "areamodif" AND $ele_type != "ib" AND $ele_type != "sep" AND $ele_type != "subform" AND $ele_type != "grid") {
-    $element_handler->deleteData($element); //added aug 14 2005 by jwe  
+    $element_handler->deleteData($element); //added aug 14 2005 by jwe
   }
 }
 
@@ -206,13 +206,13 @@ if($_POST['cloneelement']) {
   $element_handler->insert($thisElementObject);
   $ele_id = $thisElementObject->getVar('ele_id');
   $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $thisElementObject->getVar('form_handle')) ." LIKE '$oldHandle'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
-  	if(!$fieldStateRes = $xoopsDB->query($fieldStateSQL)) {
-		$dataType = "text";
-	} else {
-		$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
-		$dataType = $fieldStateData['Type'];
-	}
-  $form_handler->insertElementField($thisElementObject, $dataType); 
+  if(!$fieldStateRes = $xoopsDB->query($fieldStateSQL)) {
+    $dataType = "text";
+  } else {
+    $fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
+    $dataType = $fieldStateData['Type'];
+  }
+  $form_handler->insertElementField($thisElementObject, $dataType);
   print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=element&ele_id=$ele_id&aid=".intval($_POST['aid'])."';";
 }
 

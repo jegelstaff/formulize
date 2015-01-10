@@ -57,10 +57,8 @@ if(isset($_GET['op'])) {
       break;
     case "patchEmptyFormScreens":
       patchEmptyFormScreens();
-      break;      
-   
+      break;
   }
-  
 } else {
   patch40(); // do this which will double check if the user needs to apply a DB patch or not!!
 }
@@ -71,35 +69,34 @@ $xoopsTpl->assign('opResults', ob_get_clean());
 function deleteForm($fid) {
 
   $gperm_handler = &xoops_gethandler('groupperm');
-	global $xoopsUser, $xoopsModule;
-  $module_id = $xoopsModule->getVar('mid'); 
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-		if(!$gperm_handler->checkRight("delete_form", $fid, $groups, $module_id)) {
-		return; 
-	}
+  global $xoopsUser, $xoopsModule;
+  $module_id = $xoopsModule->getVar('mid');
+  $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+  if(!$gperm_handler->checkRight("delete_form", $fid, $groups, $module_id)) {
+    return;
+  }
 
-	global $xoopsDB, $myts, $eh;
-        
-        $form_handler = xoops_getmodulehandler('forms', 'formulize');
-        $form_handler->dropDataTable($fid);
-        
-	$sql = sprintf("DELETE FROM %s WHERE id_form = '%s'", $xoopsDB->prefix("formulize_id"), $fid);
-	$xoopsDB->queryF($sql) or $eh->show("error supression 1 dans delform");
+  global $xoopsDB, $myts, $eh;
 
-	$sql = sprintf("DELETE FROM %s WHERE id_form = '%u'", $xoopsDB->prefix("formulize"), $fid);
-	$xoopsDB->queryF($sql) or $eh->show("error supression 2 dans delform");
+  $form_handler = xoops_getmodulehandler('forms', 'formulize');
+  $form_handler->dropDataTable($fid);
 
-	$sql = sprintf("DELETE FROM %s WHERE itemname = '%s'", $xoopsDB->prefix("formulize_menu"), $fid);
-	$xoopsDB->queryF($sql) or $eh->show("error supression 3 dans delform");
+  $sql = sprintf("DELETE FROM %s WHERE id_form = '%s'", $xoopsDB->prefix("formulize_id"), $fid);
+  $xoopsDB->queryF($sql) or $eh->show("error supression 1 dans delform");
+
+  $sql = sprintf("DELETE FROM %s WHERE id_form = '%u'", $xoopsDB->prefix("formulize"), $fid);
+  $xoopsDB->queryF($sql) or $eh->show("error supression 2 dans delform");
+
+  $sql = sprintf("DELETE FROM %s WHERE itemname = '%s'", $xoopsDB->prefix("formulize_menu"), $fid);
+  $xoopsDB->queryF($sql) or $eh->show("error supression 3 dans delform");
 
 
-// PERMISSION DELETION NOT OPERATING PROPERLY RIGHT NOW	
-/*	$perms = getFormulizePerms();
-	foreach($perms as $perm_name) {
-		xoops_groupperm_deletebymoditem ($module_id,$perm_name,$id_form) ;
-	}
+// PERMISSION DELETION NOT OPERATING PROPERLY RIGHT NOW
+/*  $perms = getFormulizePerms();
+  foreach($perms as $perm_name) {
+    xoops_groupperm_deletebymoditem ($module_id,$perm_name,$id_form) ;
+  }
 */
-  
-	xoops_notification_deletebyitem ($module_id, "form", $id_form); // added by jwe-10/10/04 to handle removing notifications for a form once it's gone
 
+  xoops_notification_deletebyitem ($module_id, "form", $id_form); // added by jwe-10/10/04 to handle removing notifications for a form once it's gone
 }

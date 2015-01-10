@@ -116,10 +116,7 @@ if($isNew) {
       $screen->setVar('savebuttontext', _formulize_SAVE);
       $screen->setVar('alldonebuttontext', _formulize_DONE);
   } 
-
 } else {
-  
-
   $screen = $screen_handler->get($sid);
 }
 

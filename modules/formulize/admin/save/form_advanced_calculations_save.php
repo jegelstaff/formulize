@@ -50,10 +50,10 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 
 // currently, this only saves the forms-on_before_save value, but if more items are added this will save them
 foreach ($processedValues['forms'] as $property => $value) {
-    $formObject->setVar($property, $value);
+  $formObject->setVar($property, $value);
 }
 if (!$form_handler->insert($formObject)) {
-    print "Error: could not save the form properly: ".$xoopsDB->error();
+  print "Error: could not save the form properly: ".$xoopsDB->error();
 }
 
 // do cloning here

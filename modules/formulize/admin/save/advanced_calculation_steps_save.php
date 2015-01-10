@@ -31,7 +31,7 @@
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
-	return;
+  return;
 }
 
 /*print_r($_POST);
@@ -53,11 +53,11 @@ $advCalcObject = $advanced_calculation_handler->get($acid);
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($advCalcObject->getVar('fid'));
 if($formObject->getVar('lockedform')) {
-	return;
+  return;
 }
 // check if the user has permission to edit the form
 if(!$gperm_handler->checkRight("edit_form", $advCalcObject->getVar('fid'), $groups, $mid)) {
-	return;
+  return;
 }
 
 /*
@@ -76,25 +76,25 @@ $steptitles = array();
 
 foreach($advcalc as $k=>$v) {
   //print $k . '=>' . $v ."\n";
-	if(substr($k, 0, 10) == "steptitle_") {
-		$step_number = intval(substr($k, 10));
-		$steptitles[$step_number] = $v;
-	} else if(substr($k, 0, 12) == "description_") {
-		$step_number = intval(substr($k, 12));
-		$steps[$step_number][substr($k, 0, 11)] = $v;
-	} else if(substr($k, 0, 4) == "sql_") {
-		$step_number = intval(substr($k, 4));
-		$steps[$step_number][substr($k, 0, 3)] = $v;
-	} else if(substr($k, 0, 13) == "preCalculate_") {
-		$step_number = intval(substr($k, 13));
-		$steps[$step_number][substr($k, 0, 12)] = $v;
-	} else if(substr($k, 0, 10) == "calculate_") {
-		$step_number = intval(substr($k, 10));
-		$steps[$step_number][substr($k, 0, 9)] = $v;
-	} else if(substr($k, 0, 14) == "postCalculate_") {
-		$step_number = intval(substr($k, 14));
-		$steps[$step_number][substr($k, 0, 13)] = $v;
-	}
+  if(substr($k, 0, 10) == "steptitle_") {
+    $step_number = intval(substr($k, 10));
+    $steptitles[$step_number] = $v;
+  } else if(substr($k, 0, 12) == "description_") {
+    $step_number = intval(substr($k, 12));
+    $steps[$step_number][substr($k, 0, 11)] = $v;
+  } else if(substr($k, 0, 4) == "sql_") {
+    $step_number = intval(substr($k, 4));
+    $steps[$step_number][substr($k, 0, 3)] = $v;
+  } else if(substr($k, 0, 13) == "preCalculate_") {
+    $step_number = intval(substr($k, 13));
+    $steps[$step_number][substr($k, 0, 12)] = $v;
+  } else if(substr($k, 0, 10) == "calculate_") {
+    $step_number = intval(substr($k, 10));
+    $steps[$step_number][substr($k, 0, 9)] = $v;
+  } else if(substr($k, 0, 14) == "postCalculate_") {
+    $step_number = intval(substr($k, 14));
+    $steps[$step_number][substr($k, 0, 13)] = $v;
+  }
 }
 
 
@@ -109,41 +109,41 @@ $newsteps = array();
 $newsteptitles = array();
 $stepsHaveBeenReordered = false;
 foreach($steptitles as $oldOrderNumber=>$values) {
-	$newOrderNumber = array_search($oldOrderNumber,$newOrder);
-	$newOrderNumberKey = $newOrderNumber-1;
-	$newsteps[$newOrderNumberKey] = $steps[$oldOrderNumber];
-	$newsteptitles[$newOrderNumberKey] = $steptitles[$oldOrderNumber];
-	if(($newOrderNumber - 1) != $oldOrderNumber) {
-		$stepsHaveBeenReordered = true;
-		$_POST['reload_advance_calculation_steps'] = 1;
-	}
+  $newOrderNumber = array_search($oldOrderNumber,$newOrder);
+  $newOrderNumberKey = $newOrderNumber-1;
+  $newsteps[$newOrderNumberKey] = $steps[$oldOrderNumber];
+  $newsteptitles[$newOrderNumberKey] = $steptitles[$oldOrderNumber];
+  if(($newOrderNumber - 1) != $oldOrderNumber) {
+    $stepsHaveBeenReordered = true;
+    $_POST['reload_advance_calculation_steps'] = 1;
+  }
 }
 
 if($stepsHaveBeenReordered) {
-	$steps = $newsteps;
-	$steptitles = $newsteptitles;
+  $steps = $newsteps;
+  $steptitles = $newsteptitles;
 }
 
 
 // alter the information based on a user add or delete
 switch ($op) {
-	case "addstep":
-		$steps[]=array('description'=>'','sql'=>'','preCalculate'=>'','calculate'=>'','postCalculate'=>'');
-		$steptitles[]='New step';
-		break;
-	case "delstep":
-		array_splice($steps, $index, 1);
-		array_splice($steptitles, $index, 1);
-		break;
-	case "clonestep":
-		$step = $steps[$index];
-		$newStep = array();
-		foreach( $step as $key => $value ) {
-			$newStep[$key] = $value;
-		}
-		$steps[]=$newStep;
-		$steptitles[]=$steptitles[$index].' copy';
-		break;
+  case "addstep":
+    $steps[]=array('description'=>'','sql'=>'','preCalculate'=>'','calculate'=>'','postCalculate'=>'');
+    $steptitles[]='New step';
+    break;
+  case "delstep":
+    array_splice($steps, $index, 1);
+    array_splice($steptitles, $index, 1);
+    break;
+  case "clonestep":
+    $step = $steps[$index];
+    $newStep = array();
+    foreach( $step as $key => $value ) {
+      $newStep[$key] = $value;
+    }
+    $steps[]=$newStep;
+    $steptitles[]=$steptitles[$index].' copy';
+    break;
 }
 
 
@@ -155,11 +155,11 @@ $advCalcObject->setVar('steps',$steps);
 $advCalcObject->setVar('steptitles',$steptitles);
 
 if(!$advanced_calculation_handler->insert($advCalcObject)) {
-	print "Error: could not save the advanced calculation properly: ".$xoopsDB->error();
+  print "Error: could not save the advanced calculation properly: ".$xoopsDB->error();
 }
 
 // reload the step if the state has changed
 if($op == "addstep" OR $op=="delstep" OR $op=="clonestep" OR $_POST['reload_advance_calculation_steps']) {
-	print "/* eval */ reloadWithScrollPosition();";
+  print "/* eval */ reloadWithScrollPosition();";
 }
 ?>

@@ -67,7 +67,7 @@ if(isset($_POST['apps']) AND count($_POST['apps']) > 0) {
 
 // interpret form object values that were submitted and need special handling
 $processedValues['forms']['headerlist'] = (isset($_POST['headerlist']) and is_array($_POST['headerlist']))
-    ? "*=+*:".implode("*=+*:",$_POST['headerlist']) : "";
+? "*=+*:".implode("*=+*:",$_POST['headerlist']) : "";
 
 // form_handle cannot have any period, strip all of the periods out
 $form_handle_from_ui = $processedValues['forms']['form_handle'];
@@ -167,12 +167,12 @@ if($_POST['formulize_admin_key'] == "new") {
   foreach($_POST['groups_can_edit'] as $thisGroupId) {
     $gperm_handler->addRight('edit_form', $fid, intval($thisGroupId), getFormulizeModId());
   }
-  
-  
+
+
 } else if( $old_form_handle && $formObject->getVar( "form_handle" ) != $old_form_handle ) {
   //print "rename from $old_form_handle to " . $formObject->getVar( "form_handle" );
   if(!$renameResult = $form_handler->renameDataTable($old_form_handle, $formObject->getVar( "form_handle" ), $formObject)) {
-   exit("Error: could not rename the data table in the database.");
+    exit("Error: could not rename the data table in the database.");
   }
 }
 
@@ -230,7 +230,7 @@ if(isset($_POST['forms-tableform'])) {
 // if the revision history flag was on, then create the revisions history table, if it doesn't exist already
 if(isset($_POST['forms-store_revisions']) AND $_POST['forms-store_revisions'] AND !$form_handler->revisionsTableExists($formObject)) {
   if(!$form_handler->createDataTable($fid, 0, false, true)) { // 0 is the id of a form we're cloning, false is the map of old elements to new elements when cloning so n/a here, true is the flag for making a revisions table
-    print "Error: could not create the revision history table for the form";  
+    print "Error: could not create the revision history table for the form";
   }
 }
 

@@ -77,7 +77,7 @@ if($_POST["new_elementfilter_oom_term"] != "") {
 $filter_key = 'elementfilter';
 $conditionsDeleteParts = explode("_", $_POST['conditionsdelete']);
 $deleteTarget = $conditionsDeleteParts[1];
-if($_POST['conditionsdelete']) { 
+if($_POST['conditionsdelete']) {
   // go through the passed filter settings starting from the one we need to remove, and shunt the rest down one space
   // need to do this in a loop, because unsetting and key-sorting will maintain the key associations of the remaining high values above the one that was deleted
   $originalCount = count($_POST[$filter_key."_elements"]);
@@ -95,40 +95,40 @@ if($_POST['conditionsdelete']) {
       unset($_POST[$filter_key."_terms"][$i]);
       unset($_POST[$filter_key."_types"][$i]);
     }
-  }	
+  }
 }
 $elementFilterSettings = array();
 $elementFilterSettings[0] = $_POST["elementfilter_elements"];
 $elementFilterSettings[1] = $_POST["elementfilter_ops"];
 $elementFilterSettings[2] = $_POST["elementfilter_terms"];
 $elementFilterSettings[3] = $_POST["elementfilter_types"];
-	
+
 $element->setVar('ele_filtersettings',$elementFilterSettings); // do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays
 
 // check that the checkboxes have no values, and if so, set them to "" in the processedValues array
 if(!isset($_POST['elements-ele_forcehidden'])) {
-    $processedValues['elements']['ele_forcehidden'] = "";
+  $processedValues['elements']['ele_forcehidden'] = "";
 }
 if(!isset($_POST['elements-ele_private'])) {
-    $processedValues['elements']['ele_private'] = "";
+  $processedValues['elements']['ele_private'] = "";
 }
 foreach($processedValues['elements'] as $property=>$value) {
   $element->setVar($property, $value);
 }
 
 if($_POST['elements_ele_display'][0] == "all") {
-	$display = 1;        
+  $display = 1;
 } else if($_POST['elements_ele_display'][0] == "none") {
-	$display = 0;        
+  $display = 0;
 } else {
-	$display = "," . implode(",", $_POST['elements_ele_display']) . ",";
+  $display = "," . implode(",", $_POST['elements_ele_display']) . ",";
 }
 $element->setVar('ele_display', $display);
 
 if($_POST['elements_ele_disabled'][0] == "none") {
-	$disabled = 0;        
+  $disabled = 0;
 } else if($_POST['elements_ele_disabled'][0] == "all"){
-  $disabled = 1;        
+  $disabled = 1;
 } else {
   $disabled = "," . implode(",", $_POST['elements_ele_disabled']) . ",";
 }
@@ -140,13 +140,13 @@ $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 $raw_pages = $_POST['multi_page_screens'];
 
 if (is_array($raw_pages)) {
-    foreach($raw_pages as $key => $page_value) {
-        // can ignore this top tree node (the template must hand back some placeholder value for it).
-        // Since the script below will loop through each child node regardless
-        if ($page_value == "all") {
-            unset($raw_pages[$key]);
-        }
+  foreach($raw_pages as $key => $page_value) {
+    // can ignore this top tree node (the template must hand back some placeholder value for it).
+    // Since the script below will loop through each child node regardless
+    if ($page_value == "all") {
+      unset($raw_pages[$key]);
     }
+  }
 }
 
 $formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
@@ -161,7 +161,7 @@ foreach ($all_multi_screens as $i => $screen_array) {
   if (empty($raw_pages)) {
     // Check if this element exists in each page, if it exists, then unset them
     foreach ($existing_pages as $page_index => $page_elements) {
-      // Since PHP does not know how to differentiate between false and 0 that well, have a double checking for element existence
+        // Since PHP does not know how to differentiate between false and 0 that well, have a double checking for element existence
       $element_exists = in_array($ele_id, $page_elements);
       $element_index = array_search($ele_id, $page_elements);
       if ($element_exists) {
@@ -169,13 +169,13 @@ foreach ($all_multi_screens as $i => $screen_array) {
       }
     }
   } else {
-     foreach ($existing_pages as $page_index => $page_elements) {
+    foreach ($existing_pages as $page_index => $page_elements) {
       if (empty($page_elements)) {
         // Necessary to loop through each treeview checkbox value, since every value is concatenated with its page index
         $element_exists_in_treeview = false;
         foreach ($raw_pages as $k => $raw_pair) {
           $screen_page = explode("-", $raw_pair);
-            
+
           if ($screen_id == $screen_page[0] && $page_index == $screen_page[1]) {
             $element_exists_in_treeview = true;
           }
@@ -189,7 +189,7 @@ foreach ($all_multi_screens as $i => $screen_array) {
         }
       } else {
         foreach ($page_elements as $ele_index => $page_element) {
-          // Necessary to loop through each treeview checkbox value, since every value is concatenated with its page index
+            // Necessary to loop through each treeview checkbox value, since every value is concatenated with its page index
           $element_exists_in_treeview = false;
           foreach ($raw_pages as $k => $raw_pair) {
             $screen_page = explode("-", $raw_pair);
@@ -201,29 +201,29 @@ foreach ($all_multi_screens as $i => $screen_array) {
 
           if ($element_exists_in_treeview) {
             if (!in_array($ele_id, $existing_pages[$page_index])) {
-              // If this element does not exist yet under the page's element array, then add it
+                // If this element does not exist yet under the page's element array, then add it
               array_push($existing_pages[$page_index], $ele_id);
             }
           } else {
             if (in_array($ele_id, $existing_pages[$page_index])) {
-              // If this element exists under the page's element array, then remove it
+                // If this element exists under the page's element array, then remove it
               unset($existing_pages[$page_index][$ele_index]);
             }
           }
         }
       }
-    }   
+    }
   }
-  $screen->setVar('pages',serialize($existing_pages)); 
+  $screen->setVar('pages',serialize($existing_pages));
   if(!$screen_handler->insert($screen)) {
-      print "Error: could not save the screen properly: ".$xoopsDB->error();
-  }      
+    print "Error: could not save the screen properly: ".$xoopsDB->error();
+  }
 }
 
 // Saving element existence in screen(s)
 $screens_save = $_POST['elements_form_screens'];
 if (!is_array($screens_save)) {
-    $screens_save = array();
+  $screens_save = array();
 }
 // go through each possible screen, and save whether the element in the UI accordingly by appending to existing screen's elements
 // If the screen is not highlighted in the UI, then we must unset it manually by going through each screen's saved array
@@ -245,25 +245,25 @@ foreach ($all_screens as $key => $screen) {
     $screen_stream->setVar('formelements', $save_element);
   } else {
     if (in_array($ele_id, $screen_elements)) {
-      // If the element exists in the screen's element, array, then unset it
+        // If the element exists in the screen's element, array, then unset it
       if(($index = array_search($ele_id, $screen_elements)) !== false) {
-          unset($screen_elements[$index]);
+        unset($screen_elements[$index]);
       }
 
-      // if resulting array is empty, then send an empty quotation as data to setVar
-      if (empty($screen_elements)){ 
+        // if resulting array is empty, then send an empty quotation as data to setVar
+      if (empty($screen_elements)){
         $screen_stream->setVar('formelements', "");
       } else {
         $save_element = serialize($screen_elements);
-        $screen_stream->setVar('formelements', $save_element);         
+        $screen_stream->setVar('formelements', $save_element);
       }
     }
   }
-  
+
   if(!$screen_handler->insert($screen_stream)) {
     print "Error: could not save the screen properly: ".$xoopsDB->error();
-  }  
-} 
+  }
+}
 
 if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the display settings for element: ".$xoopsDB->error();

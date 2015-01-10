@@ -160,7 +160,6 @@ class formulizeElementRenderer{
 				
 
 				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added
-					
 					$form_ele = new XoopsFormText(
 					$ele_caption,
 					$form_ele_id,
@@ -369,7 +368,6 @@ class formulizeElementRenderer{
 					if($ele_value[9]) {
 					 $t4_ele_value = $this->_ele->getVar('ele_value');
                      if($t4_ele_value[1]) { // allows multiple selections
-                                 
 						$restrictSQL = " AND (
 						NOT EXISTS (
 						SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` LIKE CONCAT( '%,', t1.`entry_id` , ',%' ) AND t4.entry_id != ".intval($entry);
@@ -380,9 +378,7 @@ class formulizeElementRenderer{
                                                     $restrictSQL .= $this->addEntryRestrictionSQL($ele_value[9], $id_form, $groups); // pass in the flag about restriction scope, and the form id, and the groups
                                                     $restrictSQL .= " ) OR EXISTS (
                                                     SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS t4 WHERE t4.`".$this->_ele->getVar('ele_handle')."` = t1.`entry_id` AND t4.entry_id = ".intval($entry);
-
                                                 }
-						
 						
 						$restrictSQL .= $this->addEntryRestrictionSQL($ele_value[9], $id_form, $groups); // pass in the flag about restriction scope, and the form id, and the groups
 						$restrictSQL .= " ) OR EXISTS (
@@ -1040,8 +1036,6 @@ class formulizeElementRenderer{
 			 * Adding colorpicker form element
 			 */
 			case 'colorpick':
-
-
 				if($ele_value[0] == "") // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
 				{
 					//print "Bad date";
@@ -1061,7 +1055,6 @@ class formulizeElementRenderer{
 					$ele_value[0]
 
 				);
-				
 				} // end of check to see if the default setting is for real
 			break;
 			/*
@@ -1405,6 +1398,5 @@ class formulizeElementRenderer{
 		$prevUI->setExtra($javascript);
 		return $prevUI;
 	}
-
 }
 ?>

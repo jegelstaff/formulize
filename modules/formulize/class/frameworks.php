@@ -91,7 +91,6 @@ class formulizeFramework extends XoopsObject {
 					}
 				}
 			}
-					
 		}
 		if($notAFramework) { list($frid, $fids, $name, $handles, $element_ids, $links, $formHandles) = $this->initializeNull(); }
 
@@ -253,9 +252,7 @@ class formulizeFrameworkLink extends XoopsObject {
 
     function link_options() {
         global $xoopsDB;
-
         $elements = array();
-
         // initialize the class that can read the ele_value field
         $formulize_mgr =& xoops_getmodulehandler('elements');
 
@@ -391,9 +388,11 @@ class formulizeFrameworkLink extends XoopsObject {
 
 class formulizeFrameworksHandler {
 	var $db;
+
 	function formulizeFrameworksHandler(&$db) {
 		$this->db =& $db;
 	}
+
 	function &getInstance(&$db) {
 		static $instance;
 		if (!isset($instance)) {
@@ -401,6 +400,7 @@ class formulizeFrameworksHandler {
 		}
 		return $instance;
 	}
+
 	function &create() {
 		return new formulizeFramework();
 	}

@@ -68,14 +68,18 @@ if($_POST['element_delimit']) {
     $processedValues['elements']['ele_delim'] = $_POST['element_delimit'];
   }
 }
-if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != "YYYY-mm-dd" AND $processedValues['elements']['ele_value'][0] != "") { // still checking for old YYYY-mm-dd string, just in case.  It should never be sent back as a value now, but if we've missed something and it is sent back, leaving this check here ensures it will properly be turned into "", ie: no date.
-	if(ereg_replace("[^A-Z{}]","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
-	  $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0];
-	} else {
-	  $processedValues['elements']['ele_value'][0] = date("Y-m-d", strtotime($processedValues['elements']['ele_value'][0]));
-	}
+// still checking for old YYYY-mm-dd string, just in case.
+// It should never be sent back as a value now, but if we've missed
+// something and it is sent back, leaving this check here ensures it
+// will properly be turned into "", ie: no date.
+if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != "YYYY-mm-dd" AND $processedValues['elements']['ele_value'][0] != "") {
+  if(ereg_replace("[^A-Z{}]","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
+    $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0];
+  } else {
+    $processedValues['elements']['ele_value'][0] = date("Y-m-d", strtotime($processedValues['elements']['ele_value'][0]));
+  }
 } elseif($ele_type == "date") {
-	$processedValues['elements']['ele_value'][0] = "";
+  $processedValues['elements']['ele_value'][0] = "";
 }
 if($ele_type == "yn") {
   if($_POST['elements_ele_value'] == "_YES") {
@@ -101,18 +105,18 @@ if($ele_type == "radio") {
   $checked = is_numeric($_POST['defaultoption']) ? intval($_POST['defaultoption']) : "";
   list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
   foreach($_POST['ele_value'] as $id=>$text) {
-		if($text !== "") {
-			$processedValues['elements']['ele_value'][$text] = intval($id) === $checked ? 1 : 0;
-		}
+    if($text !== "") {
+      $processedValues['elements']['ele_value'][$text] = intval($id) === $checked ? 1 : 0;
+    }
   }
 }
 
 if($ele_type == "checkbox") {
   list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
   foreach($_POST['ele_value'] as $id=>$text) {
-		if($text !== "") {
+    if($text !== "") {
       $processedValues['elements']['ele_value'][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
-		}
+    }
   }
 }
 
@@ -127,9 +131,9 @@ if($ele_type == "select") {
 
     global $xoopsDB;
     $sql_link = "SELECT ele_caption, id_form, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
-		$res_link = $xoopsDB->query($sql_link);
-		$array_link = $xoopsDB->fetchArray($res_link);
-		$processedValues['elements']['ele_value'][2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
+    $res_link = $xoopsDB->query($sql_link);
+    $array_link = $xoopsDB->fetchArray($res_link);
+    $processedValues['elements']['ele_value'][2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
   } else {
     // a user requests to unlink the select box and select box is currently linked
     if ($_POST['formlink'] == "none" AND $element->isLinked){
@@ -138,35 +142,35 @@ if($ele_type == "select") {
 
     list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
     foreach($_POST['ele_value'] as $id=>$text) {
-			if($text !== "") {
-				$processedValues['elements']['ele_value'][2][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
-			}
+      if($text !== "") {
+        $processedValues['elements']['ele_value'][2][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
+      }
     }
   }
   $processedValues['elements']['ele_value'][8] = 0;
   if($_POST['elements_listordd'] == 2) {
     $processedValues['elements']['ele_value'][0] = 1; // rows is 1
     $processedValues['elements']['ele_value'][8] = 1; // is autocomplete
-	$processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
+    $processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
   } else if($_POST['elements_listordd']) {
     $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0] > 1 ? intval($processedValues['elements']['ele_value'][0]) : 1;
-	$processedValues['elements']['ele_value'][1] = $_POST['elements_multiple'];
+    $processedValues['elements']['ele_value'][1] = $_POST['elements_multiple'];
   } else {
     $processedValues['elements']['ele_value'][0] = 1;
-	$processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
+    $processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed
   }
 
-    // if there is a change to the multiple selection status, need to adjust the database!!
-    if (isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple']) {
-        if ($ele_value[1] == 0) {
-            $result = convertSelectBoxToMulti($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
-        } else {
-            $result = convertSelectBoxToSingle($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
-        }
-        if (!$result) {
-            print "Could not convert select boxes from multiple options to single option or vice-versa.";
-        }
+  // if there is a change to the multiple selection status, need to adjust the database!!
+  if (isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple']) {
+    if ($ele_value[1] == 0) {
+      $result = convertSelectBoxToMulti($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
+    } else {
+      $result = convertSelectBoxToSingle($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
     }
+    if (!$result) {
+      print "Could not convert select boxes from multiple options to single option or vice-versa.";
+    }
+  }
   $processedValues['elements']['ele_value'][3] = implode(",", $_POST['element_formlink_scope']);
 
   // handle conditions
@@ -202,7 +206,7 @@ if($ele_type == "select") {
         $_POST[$filter_key."_types"][$i-1] = $_POST[$filter_key."_types"][$i];
       }
       if($i==$deleteTarget OR $i+1 == $originalCount) {
-        // first time through or last time through, unset things
+      // first time through or last time through, unset things
         unset($_POST[$filter_key."_elements"][$i]);
         unset($_POST[$filter_key."_ops"][$i]);
         unset($_POST[$filter_key."_terms"][$i]);
@@ -232,23 +236,23 @@ if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.ph
   }
 }
 
-		// check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
-		if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
-      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-			$data_handler = new formulizeDataHandler($fid);
-			switch($ele_type) {
-				case "radio":
-				case "check":
-					$newValues = $processedValues['elements']['ele_value'];
-					break;
-				case "select":
-					$newValues = $processedValues['elements']['ele_value'][2];
-					break;
-			}
-			if(!$changeResult = $data_handler->changeUserSubmittedValues($ele_id, $newValues)) {
-				print "Error updating user submitted values for the options in element $ele_id";
-			}
-		}
+// check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
+if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
+  include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+  $data_handler = new formulizeDataHandler($fid);
+  switch($ele_type) {
+    case "radio":
+    case "check":
+      $newValues = $processedValues['elements']['ele_value'];
+      break;
+    case "select":
+      $newValues = $processedValues['elements']['ele_value'][2];
+      break;
+  }
+  if(!$changeResult = $data_handler->changeUserSubmittedValues($ele_id, $newValues)) {
+    print "Error updating user submitted values for the options in element $ele_id";
+  }
+}
 
 foreach($processedValues['elements'] as $property=>$value) {
   // if we're setting something other than ele_value, or
@@ -260,7 +264,7 @@ foreach($processedValues['elements'] as $property=>$value) {
 
   if($property != 'ele_value' OR $ele_value_before_adminSave === $ele_value_after_adminSave) {
 
-  	$element->setVar($property, $value);
+    $element->setVar($property, $value);
   }
 }
 
@@ -275,25 +279,25 @@ if($_POST['reload_option_page']) {
 // THIS FUNCTION TAKES A SERIES OF VALUES TYPED IN FORM RADIO BUTTONS, CHECKBOXES OR SELECTBOX OPTIONS, AND CHECKS TO SEE IF THEY WERE ENTERED WITH A UITEXT INDICATOR, AND IF SO, SPLITS THEM INTO THEIR ACTUAL VALUE PLUS THE UI TEXT AND RETURNS BOTH
 // $values should be an array of all the options, so $ele_value for radio and checkboxes, $ele_value[2] for selectboxes
 function formulize_extractUIText($values) {
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-	// values are the text that was typed in
-	// keys should remain unchanged
-	$uitext = array();
-	foreach($values as $key=>$value) {
-		//print "<br>original value: $value<br>";
-		//print "key: $key<br>";
-		if(strstr($value, "|") AND substr(trans($value), 0, 7) != "{OTHER|") { // check for the pressence of the uitext deliminter, the "pipe" character
-			$pipepos = strpos($value, "|");
-			//print "pipe found: $pipepos<br>";
-			$uivalue = substr($value, $pipepos+1);
-			//print "uivalue: $uivalue<br>";
-			$value = substr($value, 0, $pipepos);
-			//print "value: $value<br>";
-			$values[$key] = $value;
-			$uitext[$value] = $uivalue;
-		} else {
-			$values[$key] = $value;
-		}
-	}
-	return array(0=>$values, 1=>$uitext);
+  include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+  // values are the text that was typed in
+  // keys should remain unchanged
+  $uitext = array();
+  foreach($values as $key=>$value) {
+    //print "<br>original value: $value<br>";
+    //print "key: $key<br>";
+    if(strstr($value, "|") AND substr(trans($value), 0, 7) != "{OTHER|") { // check for the pressence of the uitext deliminter, the "pipe" character
+    $pipepos = strpos($value, "|");
+      //print "pipe found: $pipepos<br>";
+    $uivalue = substr($value, $pipepos+1);
+      //print "uivalue: $uivalue<br>";
+    $value = substr($value, 0, $pipepos);
+      //print "value: $value<br>";
+    $values[$key] = $value;
+    $uitext[$value] = $uivalue;
+    } else {
+      $values[$key] = $value;
+    }
+}
+  return array(0=>$values, 1=>$uitext);
 }

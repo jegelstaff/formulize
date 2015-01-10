@@ -74,9 +74,9 @@ unset($newOrder[0]);
 
 if(count($newOrder) != count($pagetitles)) {
 
-	print "Error: number of pages being saved does not match number of pages in this screen!";
+  print "Error: number of pages being saved does not match number of pages in this screen!";
 
-	return;
+  return;
 
 }
 
@@ -89,26 +89,26 @@ $newpagetitles = array();
 $newconditions = array();
 $pagesHaveBeenReordered = false;
 foreach($pagetitles as $oldOrderNumber=>$values) {
-	$newOrderNumber = array_search($oldOrderNumber,$newOrder);
-	$newOrderNumberKey = $newOrderNumber-1;
-	$newpages[$newOrderNumberKey] = $pages[$oldOrderNumber];
-	$newpagetitles[$newOrderNumberKey] = $pagetitles[$oldOrderNumber];
-	$newconditions[$newOrderNumberKey] = $conditions[$oldOrderNumber];
-	if(($newOrderNumber - 1) != $oldOrderNumber) {
-		$pagesHaveBeenReordered = true;
-		$_POST['reload_multipage_pages'] = 1;
-	}
+  $newOrderNumber = array_search($oldOrderNumber,$newOrder);
+  $newOrderNumberKey = $newOrderNumber-1;
+  $newpages[$newOrderNumberKey] = $pages[$oldOrderNumber];
+  $newpagetitles[$newOrderNumberKey] = $pagetitles[$oldOrderNumber];
+  $newconditions[$newOrderNumberKey] = $conditions[$oldOrderNumber];
+  if(($newOrderNumber - 1) != $oldOrderNumber) {
+    $pagesHaveBeenReordered = true;
+    $_POST['reload_multipage_pages'] = 1;
+  }
 }
 
 if($pagesHaveBeenReordered) {
-	$pages = $newpages;
-	$pagetitles = $newpagetitles;
-	$conditions = $newconditions;
-	// change the deletion index so we get the page at its new position!!
+  $pages = $newpages;
+  $pagetitles = $newpagetitles;
+  $conditions = $newconditions;
+  // change the deletion index so we get the page at its new position!!
 
-	$index = array_search($index,$newOrder);
+  $index = array_search($index,$newOrder);
 
-	$index--;
+  $index--;
 
 }
 
@@ -116,30 +116,30 @@ if($pagesHaveBeenReordered) {
 // handle "deleting" conditions...
 /*foreach($conditions as $pagenum=>$datapiece) {
    if(isset($datapiece['pagecons']) AND $datapiece['pagecons'] == "none") {
-        $conditions[$pagenum]['details']['elements'] = array();
-        $conditions[$pagenum]['details']['ops'] = array();
-        $conditions[$pagenum]['details']['terms'] = array();
-    }
+    $conditions[$pagenum]['details']['elements'] = array();
+    $conditions[$pagenum]['details']['ops'] = array();
+    $conditions[$pagenum]['details']['terms'] = array();
+  }
 }*/
 
 // alter the information based on a user add or delete
 switch ($op) {
-	case "addpage":
+  case "addpage":
     $pages[]=array();
     $pagetitles[]='New page';
     $conditions[]=array();
-		break;
-	case "delpage":
-		ksort($pages);
+    break;
+  case "delpage":
+    ksort($pages);
 
-		ksort($pagetitles);
+    ksort($pagetitles);
 
-		ksort($conditions);
+    ksort($conditions);
 
     array_splice($pages, $index, 1);
     array_splice($pagetitles, $index, 1);
     array_splice($conditions, $index, 1);
-		break;
+    break;
 }
 
 $screen->setVar('pages',serialize($pages));
@@ -154,6 +154,6 @@ if(!$screen_handler->insert($screen)) {
 
 // reload the page if the state has changed
 if($op == "addpage" OR $op=="delpage" OR $_POST['reload_multipage_pages']) {
-    print "/* eval */ reloadWithScrollPosition();";
+  print "/* eval */ reloadWithScrollPosition();";
 }
 ?>
