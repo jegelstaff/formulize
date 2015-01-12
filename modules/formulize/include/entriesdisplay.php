@@ -253,11 +253,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 		$qsearches = implode("&*=%4#", $allquicksearches);
 
-		$savename = formulize_escape($savename);
-		$savesearches = formulize_escape($_POST['asearch']);
+		$savename = formulize_db_escape($savename);
+		$savesearches = formulize_db_escape($_POST['asearch']);
 		//print $_POST['asearch'] . "<br>";
 		//print "$savesearches<br>";
-		$qsearches = formulize_escape($qsearches);
+		$qsearches = formulize_db_escape($qsearches);
 
 		if($frid) { 
 			$saveformframe = $frid;
@@ -277,10 +277,74 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$owneruid = $olduid[0]['report_uid'];
 				$moduid = $uid;
 			}
-			$savesql = "INSERT INTO " . $xoopsDB->prefix("formulize_saved_views") . " (sv_name, sv_pubgroups, sv_owner_uid, sv_mod_uid, sv_formframe, sv_mainform, sv_lockcontrols, sv_hidelist, sv_hidecalc, sv_asearch, sv_sort, sv_order, sv_oldcols, sv_currentview, sv_calc_cols, sv_calc_calcs, sv_calc_blanks, sv_calc_grouping, sv_quicksearches) VALUES (\"$savename\", \"$savegroups\", \"$owneruid\", \"$moduid\", \"$saveformframe\", \"$savemainform\", \"{$_POST['savelock']}\", \"{$_POST['hlist']}\", \"{$_POST['hcalc']}\", \"$savesearches\", \"{$_POST['sort']}\", \"{$_POST['order']}\", \"{$_POST['oldcols']}\", \"{$_POST['savescope']}\", \"{$_POST['calc_cols']}\", \"{$_POST['calc_calcs']}\", \"{$_POST['calc_blanks']}\", \"{$_POST['calc_grouping']}\", \"$qsearches\")";
+			$savesql = 
+				"INSERT INTO " . $xoopsDB->prefix("formulize_saved_views") . " (" .
+					"sv_name, " .
+					"sv_pubgroups, " .
+					"sv_owner_uid, " .
+					"sv_mod_uid, " .
+					"sv_formframe, " .
+					"sv_mainform, " .
+					"sv_lockcontrols, " .
+					"sv_hidelist, " .
+					"sv_hidecalc, " .
+					"sv_asearch, " .
+					"sv_sort, " .
+					"sv_order, " .
+					"sv_oldcols, " .
+					"sv_currentview, " .
+					"sv_calc_cols, " .
+					"sv_calc_calcs, " .
+					"sv_calc_blanks, " .
+					"sv_calc_grouping, " .
+					"sv_quicksearches, " .
+					"sv_global_search" .
+				") VALUES (" .
+					"\"".formulize_db_escape($savename)					."\", ".
+					"\"".formulize_db_escape($savegroups)				."\", ".
+					"\"".formulize_db_escape($owneruid)					."\", ".
+					"\"".formulize_db_escape($moduid)					."\", ".
+					"\"".formulize_db_escape($saveformframe)			."\", ".
+					"\"".formulize_db_escape($savemainform)				."\", ".
+					"\"".formulize_db_escape($_POST['savelock'])		."\", ".
+					"\"".formulize_db_escape($_POST['hlist'])			."\", ".
+					"\"".formulize_db_escape($_POST['hcalc'])			."\", ".
+					"\"".formulize_db_escape($savesearches)				."\", ".
+					"\"".formulize_db_escape($_POST['sort'])			."\", ".
+					"\"".formulize_db_escape($_POST['order'])			."\", ".
+					"\"".formulize_db_escape($_POST['oldcols'])			."\", ".
+					"\"".formulize_db_escape($_POST['savescope'])		."\", ".
+					"\"".formulize_db_escape($_POST['calc_cols'])		."\", ".
+					"\"".formulize_db_escape($_POST['calc_calcs'])		."\", ".
+					"\"".formulize_db_escape($_POST['calc_blanks'])		."\", ".
+					"\"".formulize_db_escape($_POST['calc_grouping'])	."\", ".
+					"\"".formulize_db_escape($qsearches)				."\", ".
+					"\"".formulize_db_escape($_POST['global_search'])	."\"  ".
+				")";
 		} else {
 			// print "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"{$_POST['savelock']}\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid_formulize, 1) . "\"";
-			$savesql = "UPDATE " . $xoopsDB->prefix("formulize_saved_views") . " SET sv_name=\"$savename\", sv_pubgroups=\"$savegroups\", sv_mod_uid=\"$uid\", sv_lockcontrols=\"{$_POST['savelock']}\", sv_hidelist=\"{$_POST['hlist']}\", sv_hidecalc=\"{$_POST['hcalc']}\", sv_asearch=\"$savesearches\", sv_sort=\"{$_POST['sort']}\", sv_order=\"{$_POST['order']}\", sv_oldcols=\"{$_POST['oldcols']}\", sv_currentview=\"{$_POST['savescope']}\", sv_calc_cols=\"{$_POST['calc_cols']}\", sv_calc_calcs=\"{$_POST['calc_calcs']}\", sv_calc_blanks=\"{$_POST['calc_blanks']}\", sv_calc_grouping=\"{$_POST['calc_grouping']}\", sv_quicksearches=\"$qsearches\" WHERE sv_id = \"" . substr($saveid_formulize, 1) . "\"";
+			$savesql = 
+				"UPDATE " . $xoopsDB->prefix("formulize_saved_views") . 
+				" SET " .
+					"sv_name 			= \"".formulize_db_escape($savename) 				."\", ".
+					"sv_pubgroups 		= \"".formulize_db_escape($savegroups) 				."\", ".
+					"sv_mod_uid 		= \"".formulize_db_escape($uid) 					."\", ".
+					"sv_lockcontrols 	= \"".formulize_db_escape($_POST['savelock'])		."\", ".
+					"sv_hidelist 		= \"".formulize_db_escape($_POST['hlist']) 			."\", ".
+					"sv_hidecalc 		= \"".formulize_db_escape($_POST['hcalc']) 			."\", ".
+					"sv_asearch 		= \"".formulize_db_escape($savesearches) 			."\", ".
+					"sv_sort 			= \"".formulize_db_escape($_POST['sort']) 			."\", ".
+					"sv_order 			= \"".formulize_db_escape($_POST['order']) 			."\", ".
+					"sv_oldcols 		= \"".formulize_db_escape($_POST['oldcols']) 		."\", ".
+					"sv_currentview 	= \"".formulize_db_escape($_POST['savescope']) 		."\", ".
+					"sv_calc_cols 		= \"".formulize_db_escape($_POST['calc_cols']) 		."\", ".
+					"sv_calc_calcs 		= \"".formulize_db_escape($_POST['calc_calcs']) 	."\", ".
+					"sv_calc_blanks 	= \"".formulize_db_escape($_POST['calc_blanks']) 	."\", ".
+					"sv_calc_grouping 	= \"".formulize_db_escape($_POST['calc_grouping']) 	."\", ".
+					"sv_quicksearches 	= \"".formulize_db_escape($qsearches) 				."\", ".
+					"sv_global_search   = \"".formulize_db_escape($_POST['global_search'])	."\"  ".
+				" WHERE " .
+					"sv_id = \"" . substr($saveid_formulize, 1) . "\"";
 		}
 
 		// save the report
@@ -395,7 +459,21 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
     				}
     			}
 			}
-			list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $savedViewHList, $savedViewHCalc, $_POST['lockcontrols'], $quicksearches) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
+			list(
+				$_POST['currentview'], 
+				$_POST['oldcols'], 
+				$_POST['asearch'], 
+				$_POST['calc_cols'], 
+				$_POST['calc_calcs'], 
+				$_POST['calc_blanks'], 
+				$_POST['calc_grouping'], 
+				$_POST['sort'], 
+				$_POST['order'], 
+				$savedViewHList, 
+				$savedViewHCalc, 
+				$_POST['lockcontrols'], 
+				$quicksearches,
+				$_POST['global_search']) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
 			if(!isset($_POST['formulize_preserveListCalcPage']) AND !isset($_GET['formulize_preserveListCalcPage'])) {
 				$_POST['hlist'] = $savedViewHList;
 				$_POST['hcalc'] = $savedViewHCalc;
@@ -468,9 +546,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	
 	// convert framework handles to element handles if necessary
 	$showcols = dealWithDeprecatedFrameworkHandles($showcols, $frid);	
-
 	$showcols = removeNotAllowedCols($fid, $frid, $showcols, $groups); // converts old format metadata fields to new ones too if necessary
-
 		
 	// Create settings array to pass to form page or to other functions
 
@@ -526,9 +602,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
 				if(!$update_other_reports AND $uid != $ownerOfLastLoadedView) {
 					if(isset($_POST[$requestKeyToUse])) {
-						$_POST[$k] = $_POST[$requestKeyToUse];
+						$_POST[$k] = htmlspecialchars(strip_tags(trim($_POST[$requestKeyToUse])));
 					} elseif(isset($_GET[$requestKeyToUse])) {
-						$_POST[$k] = $_GET[$requestKeyToUse];
+						$_POST[$k] = htmlspecialchars(strip_tags(trim($_GET[$requestKeyToUse])));
 					} elseif($v == "{USER}" AND $xoopsUser) {
 						$_POST[$k] = $xoopsUser->getVar('name') ? $xoopsUser->getVar('name') : $xoopsUser->getVar('uname');
 					} elseif(!strstr($v, "{BLANK}") AND !strstr($v, "{TODAY") AND !strstr($v, "{PERGROUPFILTER}") AND !strstr($v, "{USER")) { 
@@ -621,6 +697,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$settings[$temp_key] = $v;
 		}
 	}
+
+	// get the submitted global search text
+	$settings['global_search'] = $_POST['global_search'];
   
 	// get all requested calculations...assign to settings array.
 	$settings['calc_cols'] = $_POST['calc_cols'];	
@@ -987,6 +1066,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$screenButtonText['deleteViewButton'] = _formulize_DE_DELETE;
 	$screenButtonText['currentViewList'] = _formulize_DE_CURRENT_VIEW;
 	$screenButtonText['saveButton'] = _formulize_SAVE;
+	$screenButtonText['globalQuickSearch'] = _formulize_GLOBAL_SEARCH;
 	$screenButtonText['addButton'] = $singleMulti[0]['singleentry'] == "" ? _formulize_DE_ADDENTRY : _formulize_DE_UPDATEENTRY;
 	$screenButtonText['addMultiButton'] = _formulize_DE_ADD_MULTIPLE_ENTRY;
 	$screenButtonText['addProxyButton'] = _formulize_DE_PROXYENTRY;
@@ -1612,7 +1692,7 @@ function drawEntries($fid, $cols, $searches="", $frid="", $scope, $standalone=""
 								}
 							}
 							$GLOBALS['formulize_displayElement_LOE_Used'] = true;
-						} elseif($col != "creation_uid" AND $col!= "mod_uid") {
+						} elseif($col != "creation_uid" AND $col!= "mod_uid" AND $col != "entry_id") {
 							print getHTMLForList($value, $col, $linkids[0], 0, $textWidth, $currentColumnLocalId, $fid, $cellRowAddress, $i);
 						} else { // no special formatting on the uid columns:
 							print $value;
@@ -2208,7 +2288,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	    } else {
 	      $replacementTable = DBPRE . "formulize_".$handleFormObject->getVar('form_handle');
 	    }
-	    $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable, "INNER JOIN " . $replacementTable, $thisBaseQuery);
+	    $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable. " AS", "INNER JOIN " . $replacementTable. " AS", $thisBaseQuery);
 	  }
 	}
 	
@@ -2238,7 +2318,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	      $replacementTable = DBPRE . "formulize_".$handleFormObject->getVar('form_handle');
 	    }
 	    // replace any LEFT JOIN on this form in the query with an INNER JOIN, since there are now search criteria for this form
-	    $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable, "INNER JOIN " . $replacementTable, $thisBaseQuery);
+	    $thisBaseQuery = str_replace("LEFT JOIN " . $replacementTable. " AS", "INNER JOIN " . $replacementTable. " AS", $thisBaseQuery);
 	  } 
 	}
 	  
@@ -2295,6 +2375,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		    $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
 		  }
 		}
+        $masterResultsRaw[$cols[$i]][$calc][$calcId]['sum'] = $thisResult["$fidAlias$handle"];
 		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_SUM . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);                
 		break;
 	      case "min":
@@ -2682,9 +2763,9 @@ function calcParseBlanksSetting($setting) {
 			foreach($setting as $thisSetting) {
 				// does it have ! at the front, which is the "not" indicator
 				if(substr($thisSetting,0,1)=="!") {
-  				$allowed[] = formulize_escape(substr($thisSetting,1));
+  				$allowed[] = formulize_db_escape(substr($thisSetting,1));
 				} else {
-					$excluded[] = formulize_escape($thisSetting);
+					$excluded[] = formulize_db_escape($thisSetting);
 				}
 			}
 			break;
@@ -2701,7 +2782,7 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
   if($handle=="creation_date" OR $handle == "mod_date" OR $handle == "creation_datetime" OR $handle == "mod_datetime" OR $handle == "creator_email") {
     return $value;    
   }
-  if($handle == "uid" OR $handle=="proxyid" OR $handle == "creation_uid" OR $handle == "mod_uid") {
+  if($handle == "uid" OR $handle=="proxyid" OR $handle == "creation_uid" OR $handle == "mod_uid" OR $handle == "entry_id") {
     $member_handler = xoops_gethandler('member');
     $userObject = $member_handler->getUser(display($entry, $handle));
     $nameToDisplay = $userObject->getVar('name') ? $userObject->getVar('name') : $userObject->getVar('uname');
@@ -2745,13 +2826,13 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
 function printResults($masterResults, $blankSettings, $groupingSettings, $groupingValues, $masterResultsRaw, $filename="", $title="") {
 
 	$output = "";
-	foreach($masterResults as $handle=>$calcs) {
+	foreach($masterResults as $elementId=>$calcs) {
 		$output .= "<tr><td class=head colspan=2>\n";
-		$output .= printSmart(trans(getCalcHandleText($handle)), 100);
+		$output .= printSmart(trans(getCalcHandleText($elementId)), 100);
 		$output .= "\n</td></tr>\n";
 		foreach($calcs as $calc=>$groups) {
 			$countGroups = count($groups);
-			$rowspan = ($countGroups > 1 AND $calc != "count") ? $countGroups : 1;
+			$rowspan = ($countGroups > 1 AND $calc != "count" AND $calc != "sum") ? $countGroups : 1;
      	$output .= "<tr><td class=even rowspan=$rowspan>\n"; // start of row with calculation results (possibly first row among many)
 			switch($calc) {
 				case "sum":
@@ -2774,7 +2855,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 					break;
 			}
 			$output .= "<p><b>$calc_name</b></p>\n";
-			switch($blankSettings[$handle][$calc]) {
+			switch($blankSettings[$elementId][$calc]) {
 				case "all":
 					$bsetting = _formulize_DE_INCLBLANKS;
 					break;
@@ -2792,7 +2873,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 					break;
 				default: // must be custom
 					$bsetting = _formulize_DE_EXCLCUSTOM;
-					$setting = explode(",",substr(str_replace("!@^%*", ",", $blankSettings[$handle][$calc]),6)); // replace back the commas and remove the word custom from the front, and explode it into an array
+					$setting = explode(",",substr(str_replace("!@^%*", ",", $blankSettings[$elementId][$calc]),6)); // replace back the commas and remove the word custom from the front, and explode it into an array
 					$start = 1;
 					foreach($setting as $thissetting) {
 						if(!$start) {
@@ -2816,18 +2897,18 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 				$output .= "<td class=odd>\n"; // start of cell with calculations results
 
 				if($countGroups > 1) {
-						$theseGroupSettings = explode("!@^%*", $groupingSettings[$handle][$calc]);
+						$theseGroupSettings = explode("!@^%*", $groupingSettings[$elementId][$calc]);
 						$firstGroupSettingText = printSmart(trans(getCalcHandleText($theseGroupSettings[0], true)));
 
 						$output .= "<table style='width: auto;'><tr><th>$firstGroupSettingText</th><td class='count-total' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_NUMENTRIES."</b><center></td><td class='count-unique' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_NUMUNIQUE."</b><center></td></tr>\n";
 
 						$totalCount = 0;
 						$totalUnique = 0;
-						foreach($masterResultsRaw[$handle][$calc] as $group=>$rawResult) {
+						foreach($masterResultsRaw[$elementId][$calc] as $group=>$rawResult) {
 								foreach($theseGroupSettings as $id=>$thisGroupSetting) {
 										if($thisGroupSetting === "none") { continue; }
 										$elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
-										$groupText = formulize_swapUIText($groupingValues[$handle][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
+										$groupText = formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
 										$output .= "<tr><td>".printSmart(trans($groupText))."</td><td class='count-total' style='text-align: right;'>".$rawResult['count']."</td><td class='count-unique' style='text-align: right;'>".$rawResult['countunique']."</td></tr>";
 										$totalCount += $rawResult['count'];
 										$totalUnique += $rawResult['countunique'];
@@ -2837,12 +2918,42 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 						$output .= "<tr><td style='border-top: 1px solid black;'><b>"._formulize_DE_CALC_GRANDTOTAL."</b></td><td style='border-top: 1px solid black; text-align: right;' class='count-total'><b>$totalCount</b></td><td style='border-top: 1px solid black; text-align: right;' class='count-unique'><b>$totalUnique</b></td></tr>\n";
 						$output .= "</table>";
 				} else {
-						$rawResult = $masterResultsRaw[$handle][$calc][0];
+						$rawResult = $masterResultsRaw[$elementId][$calc][0];
 						$output .= "<div class='count-total'><p><b>"._formulize_DE_CALC_NUMENTRIES." . . . ".$rawResult['count']."</b></p></div><div class='count-unique'><p><b>"._formulize_DE_CALC_NUMUNIQUE." . . . ".$rawResult['countunique']."</b></p></div>\n";
 				}
 
 				$output .= "</td></tr>"; // end of the main row, and the specific cell with the calculations results
 
+            } elseif($calc == "sum") {
+                $output .= "<td class=odd>\n"; // start of cell with calculations results
+                $handle = convertElementIdsToElementHandles($elementId); // returns an array, since it might be passed multiple values
+                $handle = $handle[0];
+                if($countGroups > 1) {
+                    
+                    $theseGroupSettings = explode("!@^%*", $groupingSettings[$elementId][$calc]);
+                    $firstGroupSettingText = printSmart(trans(getCalcHandleText($theseGroupSettings[0], true)));
+                    
+                    $output .= "<table style='width: auto;'><tr><th>$firstGroupSettingText</th><td class='sum-total' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_SUM."</b><center></td></tr>\n";
+                    $totalSum = 0;
+                    foreach($masterResultsRaw[$elementId][$calc] as $group=>$rawResult) {
+                            foreach($theseGroupSettings as $id=>$thisGroupSetting) {
+                                    if($thisGroupSetting === "none") { continue; }
+                                    $elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
+                                    $groupText = formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
+                                    $output .= "<tr><td>".printSmart(trans($groupText))."</td><td class='sum-total' style='text-align: right;'>".formulize_numberFormat($rawResult['sum'],$handle)."</td></tr>";
+                                    $totalSum += $rawResult['sum'];
+                            }
+                    }
+                    
+                    $output .= "<tr><td style='border-top: 1px solid black;'><b>"._formulize_DE_CALC_GRANDTOTAL."</b></td><td style='border-top: 1px solid black; text-align: right;' class='sum-total'><b>".formulize_numberFormat($totalSum,$handle)."</b></td></tr>\n";
+					$output .= "</table>";
+                    
+                } else {
+                    $rawResult = $masterResultsRaw[$elementId][$calc][0];
+                    $output .= "<div class='sum-total'><p><b>"._formulize_DE_CALC_SUM." . . . ".formulize_numberFormat($rawResult['sum'],$handle)."</b></p></div>\n";
+                }
+                $output .= "</td></tr>"; // end of the main row, and the specific cell with the calculations results
+                
 			} else {
       $start = 1;
      	foreach($groups as $group=>$result) {
@@ -2853,14 +2964,14 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
           //if(count($groups)>1) { // OR count($groups)>1) { // output the heading section for this group of results
             $output .= "<p><b>";
             $start2 = true;
-            foreach(explode("!@^%*", $groupingSettings[$handle][$calc]) as $id=>$thisGroupSetting) {
+            foreach(explode("!@^%*", $groupingSettings[$elementId][$calc]) as $id=>$thisGroupSetting) {
               if($thisGroupSetting === "none") { continue; }
               if(!$start2) {
                 $output .= "<br>\n";
               }
               $start2 = false;
               $elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
-              $groupText = formulize_swapUIText($groupingValues[$handle][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
+              $groupText = formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
               $output .= printSmart(trans(getCalcHandleText($thisGroupSetting, true))) . ": " . printSmart(trans($groupText)) . "\n";
             }
             $output .= "</b></p>\n";
@@ -2940,11 +3051,11 @@ $output
 	formulize_benchmark("after creating file");
 }
 
-// this function converts a UID to a full name, or user name, if the handle is creation_uid or mod_uid
+// this function converts a UID to a full name, or user name, if the handle is creation_uid, mod_uid or entry_id
 // also converts blanks to [blank]
 function convertUids($value, $handle) {
 	if(!is_numeric($value) AND $value == "") { $value = "[blank]"; }
-	if($handle != "creation_uid" AND $handle != "mod_uid") { return $value; }
+	if($handle != "creation_uid" AND $handle != "mod_uid" AND $handle != "entry_id") { return $value; }
 	global $xoopsDB;
 	$name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$value'");
 	$name = $name_q[0]['name'];
@@ -2969,7 +3080,7 @@ function evalAdvSearch($entry, $handle, $op, $term) {
 	$result = 0;
 	$term = str_replace("\'", "'", $term); // seems that apostrophes are the only things that arrive at this point still escaped.
 	$values = display($entry, $handle);
-	if($handle == "creation_uid" OR $handle=="mod_uid") {
+	if($handle == "creation_uid" OR $handle=="mod_uid" OR $handle == "entry_id") {
 		$values = convertUids($values, $handle);
 	} 
 	if ($term == "{USER}") {
@@ -3845,7 +3956,7 @@ function loadReport($id, $fid, $frid) {
       $formframe = intval($fid);
       $mainform = "''";
     }
-    $thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_name='".formulize_escape($id)."' AND sv_formframe = $formframe AND sv_mainform = $mainform");
+    $thisview = q("SELECT * FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_name='".formulize_db_escape($id)."' AND sv_formframe = $formframe AND sv_mainform = $mainform");
   }
   if(!isset($thisview[0]['sv_currentview'])) {
     print "Error: could not load the specified saved view: '".strip_tags(htmlspecialchars($id))."'";
@@ -3864,6 +3975,7 @@ function loadReport($id, $fid, $frid) {
 	$to_return[10] = $thisview[0]['sv_hidecalc'];
 	$to_return[11] = $thisview[0]['sv_lockcontrols'];
 	$to_return[12] = $thisview[0]['sv_quicksearches'];
+	$to_return[13] = $thisview[0]['sv_global_search'];
 	return $to_return;
 }
 
@@ -3889,12 +4001,17 @@ function removeNotAllowedCols($fid, $frid, $cols, $groups) {
 	
 	$all_allowed_cols = array();
 	$allowed_cols_in_view = array();
+	
 	// metadata columns always allowed!
-	$all_allowed_cols[] = "creation_uid";
-	$all_allowed_cols[] = "mod_uid";
-	$all_allowed_cols[] = "creation_datetime";
-	$all_allowed_cols[] = "mod_datetime";
-	$all_allowed_cols[] = "creator_email";
+    $dataHandler = new formulizeDataHandler(false);
+    $metadataFields = $dataHandler->metadataFields;
+
+    foreach ($metadataFields as $field) 
+    {
+    	$lcField = strtolower($field);
+    	$all_allowed_cols[] = $lcField;
+    }
+
 	$all_allowed_cols_raw = getAllColList($fid, $frid, $groups);
 	foreach($all_allowed_cols_raw as $form_id=>$values) {
 		foreach($values as $id=>$value) {
@@ -4253,6 +4370,9 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 			case "goButton":
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=deSubmitButton value='" . $buttonText . "' onclick=\"javascript:showLoading();\"></input>";
 				break;
+			case "globalQuickSearch":
+				return "<input type=text id=\"formulize_$button\" name=\"global_search\" placeholder='" . $buttonText . "' value='" . $settings['global_search'] . "' onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>";
+				break;
 		}
 	} elseif($button == "currentViewList") { // must always set a currentview value in POST even if the list is not visible
 		return "<input type=hidden name=currentview value='$currentview'></input>\n";
@@ -4295,6 +4415,17 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		$flatscope = serialize($scope);
 	} else {
 		$flatscope = $scope;
+	}
+
+	$showcols = explode(",", $settings['oldcols']);
+	if ($settings['global_search']) {
+		foreach($showcols as $column) {
+			if ($searches[$column]) {
+				$searches[$column] .= "//OR" . $settings['global_search'];
+			} else {
+				$searches[$column] = "OR" . $settings['global_search'];
+			}
+		}
 	}
 
 				 
@@ -4377,8 +4508,7 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 	$individualORSearches = array();
     $element_handler = xoops_getmodulehandler('elements','formulize');
 	global $xoopsUser;
-	foreach($searches as $key=>$master_one_search) { // $key is the element handle
-
+	foreach($searches as $key => $master_one_search) { // $key is the element handle
 		// convert "between 2001-01-01 and 2002-02-02" to a normal date filter with two dates
 		$count = preg_match("/^[bB][eE][tT][wW][eE][eE][nN] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4}) [aA][nN][dD] ([\d]{1,4}[-][\d]{1,2}[-][\d]{1,4})\$/", $master_one_search, $matches);
 		if ($count > 0) {
@@ -4386,13 +4516,38 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 		}
 
 		// split search based on new split string
-		$searchArray = explode("//", $master_one_search);
+		$intermediateArray = explode("//", $master_one_search);
+
+		$searchArray = array();
+
+		foreach($intermediateArray as $one_search) {
+			// if $one_search contains both OR and AND, just add it as-is; we don't support this kind of nesting
+			if (strpos($one_search, " OR ") !== FALSE AND strpos($one_search, " AND ") !== FALSE) {
+				$searchArray[] = $one_search;
+			}
+			// split on OR and add all split results, prepended with OR
+			else if (strpos($one_search, " OR ") !== FALSE) {
+				foreach(explode(" OR ", $one_search) as $or_term) {
+						$searchArray[] = "OR" . $or_term;
+				}
+			}
+			// split on AND and add all split results
+			else if (strpos($one_search, " AND ") !== FALSE) {
+				foreach(explode(" AND ", $one_search) as $and_term) {
+					$searchArray[] = $and_term;
+				}
+			}
+			// otherwise just add to the array
+			else {
+				$searchArray[] = $one_search;
+			}
+		}
 
 		foreach($searchArray as $one_search) {
             // used for trapping the {BLANK} keywords into their own space so they don't interfere with each other, or other filters
             $addToItsOwnORFilter = false;
 
-            if ("creation_uid" == $key) {
+            if ("creation_uid" == $key OR "entry_id" == $key) {
                 $ele_type = "text";
             } else {
                 $elementObject = $element_handler->get($key);
@@ -4440,17 +4595,16 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
         if($operator == "!") { $operator = "NOT LIKE"; }
 				$one_search = substr($one_search, $startpoint);
 			}
-				
-			
+
 			// look for blank search terms and convert them to {BLANK} so they are handled properly
 			if($one_search === "") {
 				$one_search = "{BLANK}";
 			}
-			
+
 			// look for { } and transform special terms into what they should be for the filter
 			if(substr($one_search, 0, 1) == "{" AND substr($one_search, -1) == "}") {
 				$searchgetkey = substr($one_search, 1, -1);
-        
+
 				if (ereg_replace("[^A-Z]","", $searchgetkey) == "TODAY") {
 					$number = ereg_replace("[^0-9+-]","", $searchgetkey);
 					$one_search = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
@@ -4482,8 +4636,8 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 					$one_search = $searchgetkey;
 					$operator = "";
 				} elseif(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
-					$one_search = $_POST[$searchgetkey] ? htmlspecialchars(strip_tags($_POST[$searchgetkey])) : "";
-					$one_search = (!$one_search AND $_GET[$searchgetkey]) ? htmlspecialchars(strip_tags($_GET[$searchgetkey])) : $one_search;
+					$one_search = $_POST[$searchgetkey] ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey]))) : "";
+					$one_search = (!$one_search AND $_GET[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey]))) : $one_search;
 					if(!$one_search) {
 						continue;
 					}
@@ -4495,11 +4649,15 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 				}
 			} else {
 				// handle alterations to non { } search terms here...
-				if($ele_type=="date") {
-					$one_search = date('Y-m-d', strtotime($one_search));
+				if ($ele_type == "date") {
+                    $search_date = strtotime($one_search);
+                    // only search on a valid date string (otherwise it will be converted to the unix epoch)
+                    if (false !== $search_date) {
+                        $one_search = date('Y-m-d', $search_date);
+                    }
 				}
 			}
-			
+
 			// do additional search for {USERNAME} or {USER} in case they are embedded in another string
 			if($xoopsUser) {
 				$one_search = str_replace("{USER}", $xoopsUser->getVar('name'), $one_search);
@@ -4514,11 +4672,11 @@ function formulize_gatherDataSet($settings=array(), $searches, $sort="", $order=
 				$individualORSearches[] = $key ."/**/$one_search";
 			} elseif($addToORFilter) {
 				if(!$ORstart) { $ORfilter .= "]["; }
-				$ORfilter .= $key . "/**/$one_search"; // . formulize_escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
+				$ORfilter .= $key . "/**/$one_search"; // . formulize_db_escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
 				$ORstart = 0;
 			} else {
 				if(!$start) { $filter .= "]["; }
-				$filter .= $key . "/**/$one_search"; // . formulize_escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
+				$filter .= $key . "/**/$one_search"; // . formulize_db_escape($one_search); // mysql_real_escape_string no longer necessary here since the extraction layer does the necessary dirty work for us
 				$start = 0;
 			}
 			

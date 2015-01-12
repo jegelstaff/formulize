@@ -1,10 +1,11 @@
 ---
 layout: default
+permalink: developers/version_control/testing/creating_tests/
 ---
 
 # Creating Selenium 2 Tests with Selenium Builder
 
-We use run Selenium 2 tests on [Sauce Labs](http://www.saucelabs.com) as part of our [continuous integration platform](ci).  This page describes how to use [Selenium Builder](http://www.saucelabs.com/builder) to create tests in [Firefox](http://www.mozilla.org/firefox).
+We use run Selenium 2 tests on [Sauce Labs](http://www.saucelabs.com) as part of our [continuous integration platform](../../../ci).  This page describes how to use [Selenium Builder](http://www.saucelabs.com/builder) to create tests in [Firefox](http://www.mozilla.org/firefox).
 
 ## Current Tests
 
@@ -12,15 +13,44 @@ Current tests start with a blank slate, and install Formulize, then set up a dem
 
 ## Creating A New Test
 
-Before creating a new test, it would be best to run the existing tests to create a demo site, so that the new test works with the existing ones.
+### Local Setup
 
-A test can be recorded in Firefox using the Selenium Builder plugin. Taking a database backup before making changes to forms is advised. After recording the test, the database can be restored, then the test can be played back to confirm that it works.
+Before creating a new test, you need to get your local configuration to match the the configuration that the Travis CI system has after it has run all the tests. This way, your new test will build on the setup and configuration of all the other tests. There are two ways you can do this:
+
+1. Run all the existing tests locally
+2. Dump all the tables in your database and then import the **ci/formulize_test_db.sql** file, which is from the test system after all the tests have been completed.
+
+If you follow method 2, then you will need to alter the file in your trust path so it has the database table prefix  **selenium** and has the salt **s4RyHEWYxWN9OUAGvCdxljYRqqSgEf9qbsvVSvhWSumtfyI7SNx6ct1n5fypNFdi4**.
+
+Also, you need to ensure that your local installation is being treated as the DocumentRoot of your webserver, ie: when you go to [http://localhost](http://localhost) you see your local installation; your local installation does not have a directory name after the localhost domain name.
+
+If you do not configure your local installation to behave this way, then you will need to manually edit the test file after you save it, to change the references to the URL so they are simply 'localhost' and include no directory names.
+
+### CI Setup
+
+If you are checking to see that your test works in the Travis CI and Sauce Labs system, you can uncomment this line of the **.travis.yml** file:
+
+    # - mysql formulize < ci/formulize_test_db.sql
+    
+That will cause the Travis CI system to prepopulate the database, as if all the current tests had already run. This way you can run just your own new test to make sure it works.
+
+To cause the system to run only your new test, you need to modify this line in the **ci/travis/interpreter_config.json** file:
+
+    "ci/selenium2-tests/*"
+    
+Replace the * with the name of your new test.
+
+### Recording
+
+A test can be recorded in Firefox using the Selenium Builder plugin. Taking a database backup before making changes to forms is advised, so that after recording the test, the database can be restored, and the test can be played back to confirm that it works.
 
 Choose the Selenium 2 version of the test file format. The scripts are text files containing json data which is easy to edit with a regular text editor.
 
 A drawback to the json format is that comments cannot be included in the file, as this breaks json-parsing.
 
 ## General Tips
+
+All tests should start with logging in to the website.  When Selenium starts a test, it clears all session information so the new test starts from scratch.
 
 Avoid unnecessary clicks on page elements, and if you do make unnecessary clicks, these steps can be deleted from the test script while still recording.
 

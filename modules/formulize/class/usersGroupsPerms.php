@@ -266,9 +266,9 @@ class formulizePermHandler {
 		}
 		global $xoopsDB;
 		if(!$different) {
-			$sql = "SELECT groupid FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." WHERE view_groupid IN (".formulize_escape(implode(", ", $gids)).") AND fid=".$this->fid;
+			$sql = "SELECT groupid FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." WHERE view_groupid IN (".formulize_db_escape(implode(", ", $gids)).") AND fid=".$this->fid;
 		} else {
-			$sql = "SELECT groupid FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." as t1 WHERE fid = ".$this->fid." AND view_groupid != 0 AND NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." as t2 WHERE view_groupid IN (".formulize_escape(implode(", ", $gids)).") AND fid=".$this->fid." AND t1.groupid = t2.groupid)";
+			$sql = "SELECT groupid FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." as t1 WHERE fid = ".$this->fid." AND view_groupid != 0 AND NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." as t2 WHERE view_groupid IN (".formulize_db_escape(implode(", ", $gids)).") AND fid=".$this->fid." AND t1.groupid = t2.groupid)";
 		}
 		$res = $xoopsDB->query($sql);
 		$foundGids = array();

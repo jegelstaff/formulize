@@ -58,13 +58,12 @@ if(security_check($fid, $entry_id, $uid)) {
     }
     if($userCanAccessElement) {
         // USER IS ALLOWED TO SEE THIS ELEMENT
-        include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data/php";
+        include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
         $data_handler = new formulizeDataHandler($fid);
         $fileInfo = $data_handler->getElementValueInEntry($entry_id, $elementObject);
         $fileInfo = unserialize($fileInfo);
         $filePath = XOOPS_ROOT_PATH."/uploads/formulize_".$fid."_".$entry_id."_".$element_id."/".$fileInfo['name'];
         if (file_exists($filePath)) {
-
             header('Content-Description: File Transfer');
             header('Content-Type: '.$fileInfo['type']);
             header('Content-Disposition: attachment; filename='.$element_handler->getFileDisplayName($fileInfo['name']));
@@ -75,7 +74,6 @@ if(security_check($fid, $entry_id, $uid)) {
             header('Content-Length: ' . $fileInfo['size']);
             readfile($filePath);
             exit;
-            
         } else {
             include "../../header.php";
             print "<p><b>The file you requested could not be found.  It may have been deleted from the server.</b></p>";
@@ -83,4 +81,3 @@ if(security_check($fid, $entry_id, $uid)) {
         }
     }
 }
-

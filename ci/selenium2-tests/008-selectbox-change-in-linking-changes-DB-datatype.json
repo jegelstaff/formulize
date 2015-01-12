@@ -4,18 +4,8 @@
   "formatVersion": 2,
   "steps": [
     {
-      "type": "store",
-      "text": "localhost",
-      "variable": "test_domain"
-    },
-    {
-      "type": "store",
-      "text": "password",
-      "variable": "admin_password"
-    },
-    {
       "type": "get",
-      "url": "http://${test_domain}/index.php"
+      "url": "http://localhost/index.php"
     },
     {
       "type": "setElementText",
@@ -31,7 +21,7 @@
         "type": "name",
         "value": "pass"
       },
-      "text": "${admin_password}"
+      "text": "password"
     },
     {
       "type": "clickElement",
@@ -51,15 +41,23 @@
       "type": "clickElement",
       "locator": {
         "type": "link text",
-        "value": "Screens"
+        "value": "Stories"
       }
     },
     {
       "type": "clickElement",
       "locator": {
         "type": "link text",
-        "value": "Regular 'Client'"
+        "value": "Select box (dropdowns and list boxes)"
       }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "SelectBoxTest"
     },
     {
       "type": "clickElement",
@@ -69,10 +67,10 @@
       }
     },
     {
-      "type": "setElementNotSelected",
+      "type": "setElementSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@label='City']"
+        "value": "//form[@id='form-2']/div/div[2]/fieldset/div[1]/select//option[4]"
       }
     },
     {
@@ -83,34 +81,19 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "css selector",
-        "value": ".breadcrumb-1"
-      }
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
       "locator": {
         "type": "link text",
-        "value": "Screens"
+        "value": "Advanced"
       }
     },
     {
-      "type": "clickElement",
-      "locator": {
-        "type": "link text",
-        "value": "Regular 'Project'"
-      }
+      "type": "waitForTextPresent",
+      "text": "bigint"
     },
     {
       "type": "clickElement",
@@ -120,10 +103,91 @@
       }
     },
     {
-      "type": "setElementNotSelected",
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "no"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[0]"
+      },
+      "text": "Alice"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "1543"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Stories"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Manage the elements in the form"
+    },
+    {
+      "type": "clickElement",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@label='Client']"
+        "value": "//span[starts-with(text(), 'SelectBoxTest - Dropdown box')]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//span[starts-with(text(), 'SelectBoxTest - Dropdown box')]/parent::a/parent::h3/parent::div/div/div/p/a[.=' Configure']"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Advanced"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "It doesn't matter"
+    },
+    {
+      "type": "verifyTextPresent",
+      "negated": true,
+      "text": "bigint"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "yes"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//form[@id='form-2']/div/div[2]/fieldset/div[1]/select//option[4]"
       }
     },
     {
@@ -134,115 +198,44 @@
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "css selector",
-        "value": ".breadcrumb-1"
-      }
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
       "locator": {
         "type": "link text",
-        "value": "Screens"
+        "value": "Stories"
       }
+    },
+    {
+      "type": "waitForTextPresent",
+      "text": "Manage the elements in the form"
     },
     {
       "type": "clickElement",
-      "locator": {
-        "type": "link text",
-        "value": "Regular 'People'"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "link text",
-        "value": "Options"
-      }
-    },
-    {
-      "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@label='Email']"
+        "value": "//span[starts-with(text(), 'SelectBoxTest - Dropdown box')]"
       }
     },
     {
       "type": "clickElement",
-      "locator": {
-        "type": "css selector",
-        "value": "input.savebutton"
-      }
-    },
-    {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "css selector",
-        "value": ".breadcrumb-1"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "link text",
-        "value": "Screens"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "link text",
-        "value": "Regular 'Stories'"
-      }
-    },
-    {
-      "type": "clickElement",
-      "locator": {
-        "type": "link text",
-        "value": "Options"
-      }
-    },
-    {
-      "type": "setElementNotSelected",
       "locator": {
         "type": "xpath",
-        "value": "//form[@id='form-2']/div/div/select/option[@label='Status']"
+        "value": "//span[starts-with(text(), 'SelectBoxTest - Dropdown box')]/parent::a/parent::h3/parent::div/div/div/p/a[.=' Configure']"
       }
     },
     {
       "type": "clickElement",
       "locator": {
-        "type": "css selector",
-        "value": "input.savebutton"
+        "type": "link text",
+        "value": "Advanced"
       }
     },
     {
-      "type": "waitForElementStyle",
-      "locator": {
-        "type": "id",
-        "value": "savewarning"
-      },
-      "propertyName": "display",
-      "value": "none"
+      "type": "waitForTextPresent",
+      "text": "bigint"
     }
   ],
   "data": {

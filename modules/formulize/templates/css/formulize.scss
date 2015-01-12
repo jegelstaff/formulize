@@ -257,6 +257,7 @@ a.loe-edit-entry:hover {
 
 td.formulize-controls {
     white-space: nowrap;    // keeps checkbox and edit link side-by-side instead of awkwardly stacking
+    width: 40px;
 }
 
 .xoops-form-element-help {
@@ -349,6 +350,10 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
     }
     #formulize-entry-lock-message {
         // do not print the entry-lock message
+        display: none;
+    }
+    .formulize-element-edit-link {
+        // do not print the edit element link
         display: none;
     }
 }

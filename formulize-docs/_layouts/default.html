@@ -4,9 +4,9 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <link rel="stylesheet" type="text/css" href="/formulize/stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/formulize/stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/formulize/stylesheets/print.css" media="print" />
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -18,7 +18,7 @@
       <div class="inner">
 
         <header>
-          <h1><a href='/formulize' class='header-home'>Formulize</a></h1>
+          <h1><a href='/formulize/' class='header-home'>Formulize</a></h1>
           <h2>Data management and reporting on the web, in your CMS, and on your mobile device.</h2>
         </header>
 
@@ -30,6 +30,44 @@
 
         <hr>
 
+        <script type='text/javascript'>
+            
+            // Thanks to Donald Sutherland for this function
+            // http://mynameisdonald.com/javascript-functions-how-to-capitalize-words/
+            function eachWord(str){
+               return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+            }
+            
+            var path = new String(window.document.location);
+            var pathParts = new Array();
+            var crumbPath = '';
+            var homePath = '';
+            var crumbSep = ' >> ';
+            var startCrumbsNextTime = false;
+            var crumbsStarted;
+            pathParts = path.split('/');
+            for(i in pathParts) {
+                crumbPath = crumbPath + pathParts[i] + '/';
+                if(!startCrumbsNextTime || pathParts[i] == '') {
+                    if(pathParts[i] == 'formulize') {
+                        startCrumbsNextTime = true;
+                        homePath = crumbPath;
+                    }
+                    continue;
+                } else if(!crumbsStarted) {
+                    crumbsStarted = true;
+                    window.document.write('<a href="'+homePath+'">Home</a>\n');
+                }
+                pathParts[i] = pathParts[i].replace('_', ' ');
+                pathParts[i] = eachWord(pathParts[i]);
+                window.document.write(crumbSep+'<a href="'+crumbPath+'">'+pathParts[i]+'</a>\n');
+            }
+            if(crumbsStarted) {
+                window.document.write('<hr>');
+            }
+            
+        </script>
+        
         <section id="main_content">
           
           {{ content }}

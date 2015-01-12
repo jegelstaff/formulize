@@ -58,7 +58,7 @@ class formulizeFramework extends XoopsObject {
 					}
 				}
 			}
-			$frame_links_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=\"" . formulize_escape($frid). "\"");
+			$frame_links_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=\"" . formulize_db_escape($frid). "\"");
 			if(!isset($frame_links_q[0])) {
 				$notAFramework = true;
 			} else {
@@ -192,7 +192,7 @@ class formulizeFrameworkLink extends XoopsObject {
 			$relationship = "";
 			$unified_display = "";
 		} else {
-			$link_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_id = \"" . formulize_escape($lid). "\"");
+			$link_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_id = \"" . formulize_db_escape($lid). "\"");
 			if(!isset($link_q[0])) {
 				// set empty defaults
 				$lid = "";
@@ -279,7 +279,7 @@ class formulizeFrameworkLink extends XoopsObject {
                     $source_form_ids[] = $details[0];
 
                     //get the element ID for the source we've just found
-                    $sourceq = "SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . formulize_escape($details[1]) . "' AND id_form = '$details[0]'";
+                    $sourceq = "SELECT ele_id, ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . formulize_db_escape($details[1]) . "' AND id_form = '$details[0]'";
                     if ($ressourceq = $xoopsDB->query($sourceq)) {
                         $rowsourceq = $xoopsDB->fetchRow($ressourceq);
                         $source_ele_ids[] = $rowsourceq[0];
@@ -490,4 +490,45 @@ class formulizeFrameworksHandler {
 		$cachedResults[$fid] = $ret;
 		return $ret;
 	}
+
+    function formatFrameworksAsRelationships($frameworks) {
+        $relationships = array();
+        $relationshipIndices = array();
+        $i = 1;
+        foreach($frameworks as $framework) {
+            $frid = $framework->getVar('frid');
+            if (isset($relationshipIndices[$frid])) { continue; }
+
+            $relationships[$i]['name'] = $framework->getVar('name');
+            $relationships[$i]['content']['frid'] = $frid;
+
+            $frameworkLinks = $framework->getVar('links');
+
+            $li = 1;
+            $links = array();
+            foreach($frameworkLinks as $link) {
+                $links[$li]['form1'] = printSmart(getFormTitle($link->getVar('form1')));
+                $links[$li]['form2'] = printSmart(getFormTitle($link->getVar('form2')));
+
+                switch($link->getVar('relationship')) {
+                    case 1:
+                        $relationship = _AM_FRAME_ONETOONE;
+                        break;
+                    case 2:
+                        $relationship = _AM_FRAME_ONETOMANY;
+                        break;
+                    case 3:
+                        $relationship = _AM_FRAME_MANYTOONE;
+                        break;
+                }
+                $links[$li]['relationship'] = printSmart($relationship);
+                $li++;
+            }
+            $relationships[$i]['content']['links'] = $links;
+            $relationshipIndices[$frid] = true;
+            $i++;
+        }
+
+        return $relationships;
+    }
 }
