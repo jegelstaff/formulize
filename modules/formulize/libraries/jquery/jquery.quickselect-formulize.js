@@ -322,6 +322,8 @@ var QuickSelect;
         }).blur(function(e){
             if (activeSelection>-1) {
                 selectCurrent();
+            } else if(options.exactMatch == false && hasFocus) {
+                $(options.additionalFields).each(function(i,input){$(input).val('newvalue:'+$input_element.val());}); // set the additional fields' value to the text of the box and move on
             }
             hasFocus = false;
             if (timeout) {
