@@ -201,24 +201,27 @@ if(isset($formulize_entry_id) AND is_numeric($formulize_entry_id)) {
 
 $formulize_screen_loadview = (!isset($formulize_screen_loadview) OR !is_numeric($formulize_screen_loadview)) ? intval($_GET['loadview']) : $formulize_screen_loadview;
 $loadThisView = (isset($formulize_screen_loadview) AND is_numeric($formulize_screen_loadview)) ? $formulize_screen_loadview : "";
-if(!$loadThisView) { $loadThisView = ""; } // a 0 could possibly screw things up, so change to ""
+if (!$loadThisView) {
+    // a 0 could possibly screw things up, so change to ""
+    $loadThisView = "";
+}
 
-if($screen) {
-	// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-	$renderedFormulizeScreen = $screen;
-	if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
-		if($screen->getVar('frid')) {
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-			displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
-		} else {
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-			displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
-		}
-	} else {
-		$screen_handler->render($screen, $entry, $loadThisView);	
-	}
-	$rendered = true;
+if ($screen) {
+    // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
+    $renderedFormulizeScreen = $screen;
+    if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
+        if($screen->getVar('frid')) {
+            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+            displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
+        } else {
+            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+            displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
+        }
+    } else {
+        $screen_handler->render($screen, $entry, $loadThisView);
+    }
+    $rendered = true;
 }
 
 // IF NO SCREEN IS REQUESTED (or none rendered successfully, ie: a bad screen id was passed), THEN USE THE DEFAULT DISPLAY LOGIC TO DETERMINE WHAT TO SHOW THE USER

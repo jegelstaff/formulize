@@ -26,7 +26,7 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions 					     ##
+##  Author of this file: Freeform Solutions                                  ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -44,36 +44,35 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 $allowedForms = allowedForms();
 
 if(isset($_GET['id']) AND $_GET['id'] === "all") {
-	$applicationsToDraw = $application_handler->getAllApplications();
-	$applicationsToDraw[] = 0; // add in forms with no app at the end of the list
+    $applicationsToDraw = $application_handler->getAllApplications();
+    $applicationsToDraw[] = 0; // add in forms with no app at the end of the list
 } else {
-	$aid = (isset($_GET['id'])) ? intval($_GET['id']) : 0 ;
-	$applicationsToDraw = array($aid);
+    $aid = (isset($_GET['id'])) ? intval($_GET['id']) : 0 ;
+    $applicationsToDraw = array($aid);
 }
 
 $allAppData = array();
 foreach($applicationsToDraw as $aid) {
-	if(is_object($aid)) {
-		$aid = $aid->getVar('appid'); // when 'all' is requested, the array will be of objects, not ids
-	}
+    if(is_object($aid)) {
+        $aid = $aid->getVar('appid'); // when 'all' is requested, the array will be of objects, not ids
+    }
 
-	$links;
-	if($aid) {
+    $links;
+    if($aid) {
         $links = $application_handler->getMenuLinksForApp($aid);
-		$application = $application_handler->get($aid);
-		$app_name = $application->getVar('name');
-	} else {
+        $application = $application_handler->get($aid);
+        $app_name = $application->getVar('name');
+    } else {
         $links = $application_handler->getMenuLinksForApp(0);
-		$app_name = _AM_CATGENERAL;
-	}
+        $app_name = _AM_CATGENERAL;
+    }
     $formsToSend = getNavDataForForms($links);
-	if(count($formsToSend)==0) {
-		$noforms =  _AM_NOFORMS_AVAIL;
-	} else {
-		$noforms = 0;
-	}
-	$allAppData[] = array('app_name'=>$app_name, 'noforms'=>$noforms, 'formData'=>$formsToSend);
-
+    if(count($formsToSend)==0) {
+        $noforms =  _AM_NOFORMS_AVAIL;
+    } else {
+        $noforms = 0;
+    }
+    $allAppData[] = array('app_name'=>$app_name, 'noforms'=>$noforms, 'formData'=>$formsToSend);
 }
 
 $xoopsTpl->assign("allAppData", $allAppData);
@@ -82,22 +81,21 @@ require(XOOPS_ROOT_PATH."/footer.php");
 
 // $forms must be an array of form ids
 function getNavDataForForms($links) {
-	$formsToSend = array();
-	$i=0;
-	foreach($links as $link) {
-		$suburl = XOOPS_URL."/modules/formulize/index.php?".$link->getVar("screen");
-		$url = $link->getVar("url");
-		if(strlen($url) > 0){
-			$pos = strpos($url,"://");
-			if($pos === false){
-				$url = "http://".$url;
-			}
+    $formsToSend = array();
+    $i=0;
+    foreach($links as $link) {
+        $suburl = XOOPS_URL."/modules/formulize/index.php?".$link->getVar("screen");
+        $url = $link->getVar("url");
+        if(strlen($url) > 0){
+            $pos = strpos($url,"://");
+            if($pos === false){
+                $url = "http://".$url;
+            }
             $suburl = $url;
-		}
+        }
         $formsToSend[$i]['url'] = $suburl;
         $formsToSend[$i]['title'] = $link->getVar("text");
         $i++;
-	}
-	return $formsToSend;
+    }
+    return $formsToSend;
 }
-
