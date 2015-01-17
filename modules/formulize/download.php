@@ -81,4 +81,3 @@ if(security_check($fid, $entry_id, $uid)) {
         }
     }
 }
-
