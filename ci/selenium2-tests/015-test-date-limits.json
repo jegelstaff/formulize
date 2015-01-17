@@ -53,8 +53,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "text": "You can make a new entry by filling in the form below"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "setElementText",
