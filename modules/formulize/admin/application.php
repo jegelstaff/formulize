@@ -209,6 +209,15 @@ $adminPage['tabs'][$i]['content']['links'] = $menulinks;
 $adminPage['tabs'][$i]['content']['groups'] = $groups;
 $adminPage['tabs'][$i]['content']['groupsWithDefaultScreen'] = $groupsWithDefaultScreen;
     
+if(is_object($appObject)){
+    $i++;
+    $adminPage['tabs'][$i]['name'] = "Code";
+    $adminPage['tabs'][$i]['template'] = "db:admin/application_code.html";
+    $adminPage['tabs'][$i]['content'] = $common;
+    $adminPage['tabs'][$i]['content']['custom_code'] = $appObject->getVar("custom_code");
+}
+
+
 $adminPage['pagetitle'] = _AM_APP_APPLICATION.$appName;
 $adminPage['needsave'] = true;
 
