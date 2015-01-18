@@ -32,6 +32,7 @@ switch($op) {
 		$button_tray = new icms_form_elements_Tray('');
 		$button_tray->addElement(new icms_form_elements_Button('', 'edit', _EDIT, 'submit'));
 		$button_tray->addElement(new icms_form_elements_Button('', 'delete', _DELETE, 'submit'));
+		$button_tray->addElement(new icms_form_elements_Button('', 'masquerade', 'Masquerade', 'submit'));
 		$form->addElement($button_tray);
 		//$form->addElement(new icms_form_elements_Button('', 'submit', _SUBMIT, 'submit'));
 		$form->display();
