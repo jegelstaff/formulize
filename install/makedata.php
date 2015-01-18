@@ -208,7 +208,9 @@ function make_data(&$dbm, &$cm, $adminname, $adminlogin_name, $adminpass, $admin
 	while ($myrow = $dbm->fetchArray($result)) {
 		# Adding dynamic block area/position system - TheRpLima - 2007-10-21
 		#if ($myrow['side'] == 0) {
-		if ($myrow['side'] == 1 OR $myrow['side'] == 2 OR $myrow['side'] == 7) {
+		if ($myrow['bid'] == 2) { // Login block ID to fix redundancy
+			$dbm->insert("block_module_link", " VALUES (".$myrow['bid'].", 0, 1)");
+		} elseif ($myrow['side'] == 1 OR $myrow['side'] == 2 OR $myrow['side'] == 7) {
 			$dbm->insert("block_module_link", " VALUES (".$myrow['bid'].", 0, 0)");
 		} elseif (in_array($myrow['template'],array('system_admin_block_warnings.html','system_admin_block_cp.html','system_admin_block_modules.html','system_block_newusers.html','system_block_online.html','system_block_waiting.html','system_block_topusers.html'))) {
 			$dbm->insert("block_module_link", " VALUES (".$myrow['bid'].", 1, 2)");
