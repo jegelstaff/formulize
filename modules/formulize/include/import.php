@@ -176,7 +176,7 @@ print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP1 . "</p></td><td clas
 
 // determine if this is the profile form and if so, send special flag to template creation
 
-$cols1 = getAllColList($fid, "", $groups);
+$cols1 = getAllColList($fid, "", $groups,"ele_list_order");
 $cols = array();
 foreach($cols1[$fid] as $col) {
 	$cols[] = $col['ele_id'];

@@ -4012,7 +4012,7 @@ function removeNotAllowedCols($fid, $frid, $cols, $groups) {
     	$all_allowed_cols[] = $lcField;
     }
 
-	$all_allowed_cols_raw = getAllColList($fid, $frid, $groups);
+	$all_allowed_cols_raw = getAllColList($fid, $frid, $groups, "ele_list_order");
 	foreach($all_allowed_cols_raw as $form_id=>$values) {
 		foreach($values as $id=>$value) {
 			if(!in_array($value['ele_handle'], $all_allowed_cols)) {	$all_allowed_cols[] = $value['ele_handle']; }

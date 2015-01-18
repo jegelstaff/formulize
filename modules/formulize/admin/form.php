@@ -76,12 +76,15 @@ if($_GET['fid'] != "new") {
 		$colhead = strip_tags($thisElement->getVar('ele_colhead'));
 		$cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
     $ele_id = $thisElement->getVar('ele_id');
-		$ele_handle = $thisElement->getVar('ele_handle');
+    $ele_handle = $thisElement->getVar('ele_handle');
 		$nameText = $colhead ? printSmart($colhead,55) : printSmart($elementCaption,55);
     $elements[$i]['name'] = "$nameText - $cleanType - $ele_handle";
     $elements[$i]['content']['ele_id'] = $ele_id;
     $elements[$i]['content']['ele_handle'] = $ele_handle;
+    $elements[$i]['order']=$thisElement->getVar("ele_list_order");
+    
     $ele_type = $thisElement->getVar('ele_type');
+    
     switch($ele_type) {
       case("text"):
         $converttext = _AM_ELE_CONVERT_ML;
@@ -91,7 +94,7 @@ if($_GET['fid'] != "new") {
         $converttext = _AM_ELE_CONVERT_SL;
         $linktype = "text";
         break;
-      case("radio"):
+        case("radio"):
         $converttext = _AM_ELE_CONVERT_CB;
         $linktype = "checkbox";
         break;
@@ -135,6 +138,8 @@ if($_GET['fid'] != "new") {
       $check_display = $ele_display;
     }
     $elements[$i]['content']['ele_display'] = $check_display;
+    $elements[$i]['content']['ele_list_display'] = $thisElement->getVar('ele_list_display'); 
+
     $elements[$i]['content']['ele_private'] = $thisElement->getVar('ele_private');
     $elementHeadings[$i]['text'] = $colhead ? printSmart($colhead) : printSmart($elementCaption);
     $elementHeadings[$i]['ele_id'] = $ele_id;
@@ -430,7 +435,7 @@ if($_GET['fid'] != "new") {
 }
 
 // get a list of all the custom element types that are present
-// cusotm element classes must contain "Element.php" as the final part of the filename
+// custom element classes must contain "Element.php" as the final part of the filename
 $classFiles = scandir(XOOPS_ROOT_PATH."/modules/formulize/class/");
 $customElements = array();
 $i = 0;
@@ -528,7 +533,26 @@ if($fid != "new") {
     $adminPage['tabs'][$i]['content'] = $common;
     if(isset($elements)) {
       $adminPage['tabs'][$i]['content']['elements'] = $elements;
+      
+      //listElements are the same as elements, but sorted with ele_list_order      
+      $listElements=$elements;
+
+      //sort listElements
+      uasort($listElements,function($a,$b){
+        return $a['order']-$b['order'];
+      });
+
+      //unset ele_display for listelements, and ele_list_display for elements
+      foreach ($listElements as $key => $value) {
+          unset($listElements[$key]['content']['ele_display']);
+      }
+      foreach ($elements as $key => $value) {
+          unset($elements[$key]['content']['ele_list_display']);
+      }
+
+      $adminPage['tabs'][$i]['content']['listElements'] = $listElements;
     }
+    
     if(count($customElements)>0) {
 	$adminPage['tabs'][$i]['content']['customElements'] = $customElements;
     }

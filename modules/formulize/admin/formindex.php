@@ -111,8 +111,8 @@ function patch40() {
 	 * 
 	 * ====================================== */
 	
-	$checkThisTable = 'formulize_saved_views';
-	$checkThisField = 'sv_global_search';
+	$checkThisTable = 'formulize';
+	$checkThisField = 'ele_list_order';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
@@ -540,6 +540,22 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		    }
         }
 
+        // if ele_list_order doesn't exist, create it. The initial values can be the same as ele_order
+		$myCol = q("SELECT * FROM ". $xoopsDB->prefix("formulize"). " LIMIT 1");
+		if(!isset($myCol[0]["ele_list_order"])){
+		  $statement="Alter table `".$xoopsDB->prefix("formulize")."` ADD `ele_list_order` smallint(5)";
+		  $result=$xoopsDB->queryF($statement);
+		  $statement = "update " . $xoopsDB->prefix("formulize") . " set `ele_list_order` = `ele_order`";
+		  $result=$xoopsDB->queryF($sql);
+		}
+      //if ele_list_display doesn't exist, create it
+		$myCol = q("SELECT * FROM ". $xoopsDB->prefix("formulize"). " LIMIT 1");
+		if(!isset($myCol[0]["ele_list_display"])){
+		  $statement="Alter table `".$xoopsDB->prefix("formulize")."` ADD `ele_list_display` text";
+		  $result=$xoopsDB->queryF($statement);
+		  $statement = "update " . $xoopsDB->prefix("formulize") . " set `ele_list_display` = `ele_display`";
+		  $result=$xoopsDB->queryF($sql);
+		}
 		
 		// CONVERTING EXISTING TEMPLATES IN DB TO TEMPLATE FILES
 		$screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/";

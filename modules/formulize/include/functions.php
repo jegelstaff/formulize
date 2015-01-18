@@ -610,7 +610,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
                     }
                 }
                 if ($where_clause) {
-                    $captionq = "SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $where_clause AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order";
+                    $captionq = "SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $where_clause AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_list_order";
                     if ($rescaptionq = $xoopsDB->query($captionq)) {
                         unset($headerlist);
                         $headerlist = $metaHeaderlist;
@@ -667,7 +667,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
 
     if (count($headerlist) == 0) {
         // IF there are no required fields THEN ... go with first three fields
-        $firstfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
+        $firstfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_list_order ASC LIMIT 3";
         if ($result = $xoopsDB->query($firstfq)) {
             while ($row = $xoopsDB->fetchArray($result)) {
                 if ($needids) {
@@ -693,7 +693,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
         }
         // if there are any numeric headers, then get the handles
         if (count($headerlist)>0) {
-            $sql = "SELECT ele_handle FROM ".$xoopsDB->prefix("formulize") . " WHERE ele_id IN (".implode(",",$headerlist).") ORDER BY ele_order";
+            $sql = "SELECT ele_handle FROM ".$xoopsDB->prefix("formulize") . " WHERE ele_id IN (".implode(",",$headerlist).") ORDER BY ele_list_order";
             if ($res = $xoopsDB->query($sql)) {
                 $headerlist = array();
                 while ($array = $xoopsDB->fetchArray($res)) {
@@ -1232,7 +1232,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel="", $title, $tem
     if ($fdchoice == "update") { // reset headers and cols to include all data -- when creating a blank template, this reset has already happened before prepexport is called
         $fdchoice = "comma";
         $template = "update";
-        $cols1 = getAllColList($fid, "", $groups); // $cols1 will be a multidimensional array, one "entry" per column, and for each column the entry is an assoc array with ele_id, ele_colhead, ele_caption and ele_handle.
+        $cols1 = getAllColList($fid, "", $groups,"ele_list_order"); // $cols1 will be a multidimensional array, one "entry" per column, and for each column the entry is an assoc array with ele_id, ele_colhead, ele_caption and ele_handle.
         unset($cols);
         $cols = array();
         foreach ($cols1[$fid] as $col) {
@@ -1479,8 +1479,9 @@ function getMetaData($entry, $member_handler, $fid="", $useOldCode=false) {
 // in this case the db fields are ele_id and ele_caption and ele_colhead
 // $fid is required, $frid is optional
 // $groups is the grouplist of the current user.  It is optional.  If present it will limit the columns returned to the ones where display is 1 or the display includes that group
-function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
+function getAllColList($fid, $frid="", $groups="",$order, $includeBreaks=false) {
     global $xoopsDB, $xoopsUser;
+    $order="ele_list_order";
     $gperm_handler = &xoops_gethandler('groupperm');
     $mid = getFormulizeModId();
 
@@ -1488,9 +1489,9 @@ function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
     // build query for display groups
     $gq = "";
     if ($groups) {
-        $gq = "AND (ele_display='1'";
+        $gq = "AND (ele_list_display='1'";
         foreach ($groups as $thisgroup) {
-            $gq .= " OR ele_display LIKE '%,$thisgroup,%'";
+            $gq .= " OR ele_list_display LIKE '%,$thisgroup,%'";
         }
         $gq .= ")";
     }
@@ -1523,18 +1524,18 @@ function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
         $uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
         foreach ($fids as $this_fid) {
             if (security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
-                $c = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$this_fid' $gq $pq $incbreaks AND ele_type != \"subform\" AND ele_type != \"grid\" ORDER BY ele_order");
+                $c = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$this_fid' $gq $pq $incbreaks AND ele_type != \"subform\" AND ele_type != \"grid\" ORDER BY ".$order);
                 $cols[$this_fid] = $c;
             }
         }
         foreach ($sub_fids as $this_fid) {
             if (security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
-                $c = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$this_fid' $gq $pq $incbreaks AND ele_type != \"subform\" AND ele_type != \"grid\" ORDER BY ele_order");
+                $c = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$this_fid' $gq $pq $incbreaks AND ele_type != \"subform\" AND ele_type != \"grid\" ORDER BY ".$order);
                 $cols[$this_fid] = $c;
             }
         }
     } else {
-        $cols[$fid] = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' $gq $pq $incbreaks AND ele_type != \"subform\" AND ele_type != \"grid\" ORDER BY ele_order");
+        $cols[$fid] = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' $gq $pq $incbreaks AND ele_type != \"subform\" AND ele_type != \"grid\" ORDER BY ". $order);
     }
 
     return $cols;
@@ -4226,7 +4227,7 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
     // set all the elements that we want to show the user
     $cols = "";
     if ($groups) {
-        $cols = getAllColList($formWithSourceElements, "", $groups);
+        $cols = getAllColList($formWithSourceElements, "",$groups,"ele_list_order");
     } else {
         $cols = getAllColList($formWithSourceElements);
     }

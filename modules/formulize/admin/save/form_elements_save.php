@@ -62,45 +62,52 @@ foreach($processedValues['elements'] as $property=>$values) {
 $elements = $element_handler->getObjects(null,$fid);
 
 // get the new order of the elements...
-$newOrder = explode("drawer-2[]=", str_replace("&", "", $_POST['elementorder']));
-unset($newOrder[0]);
-// newOrder will have keys corresponding to the new order, and values corresponding to the old order
+$newFormOrder = explode("drawer-2-form[]=", str_replace("&", "", $_POST['elementorder']));
+$newListOrder = explode("drawer-2-list[]=", str_replace("&", "", $_POST['element-list-order']));
+unset($newFormOrder[0]);
+unset($newListOrder[0]);
 
-if(count($elements) != count($newOrder)) {
-	print "Error: the number of elements being saved did not match the number of elements already in the database";
-	return;
-}
-
-// modify elements
-$oldOrderNumber = 1;
-foreach($elements as $element) {
-  $ele_id = $element->getVar('ele_id');
-
-  // reset elements to deault
-  $element->setVar('ele_req',0);
-  $element->setVar('ele_private',0);
-  $newOrderNumber = array_search($oldOrderNumber,$newOrder);
-  $element->setVar('ele_order',$newOrderNumber);
-  if($oldOrderNumber != $newOrderNumber) {
-    $_POST['reload_elements'] = 1; // need to reload since the drawer numbers will be out of sequence now
+  // newOrder will have keys corresponding to the new order, and values corresponding to the old order
+  if(count($elements) != count($newListOrder)  || count($elements) != count($newFormOrder) ) {
+    print "Error: the number of elements being saved did not match the number of elements already in the database";
+    return;
   }
-  $oldOrderNumber++;
+  // modify elements
+  $oldOrderNumber = 1;
+  foreach($elements as $element) {
+    $ele_id = $element->getVar('ele_id');
+    // reset elements to deault
+    $element->setVar('ele_req',0);
+    $element->setVar('ele_private',0);
 
-  // apply settings submitted by user
-  foreach($processedElements[$ele_id] as $property=>$value) {
-    $element->setVar($property,$value);
-  }
-	
-	// if there was no display property sent, and there was no custom flag sent, then blank the display settings
-	if(!isset($processedElements[$ele_id]['ele_display']) AND !isset($_POST['customDisplayFlag'][$ele_id])) {
-		$element->setVar('ele_display',0);
-	}
+    $newListOrderNumber = array_search($oldOrderNumber,$newListOrder);
+    $newFormOrderNumber = array_search($oldOrderNumber,$newFormOrder);
+    
+    $element->setVar("ele_list_order",$newListOrderNumber);
+    $element->setVar("ele_order",$newFormOrderNumber);
 
-  // presist changes
-  if(!$element_handler->insert($element)) {
-    print "Error: could not save the form elements properly: ".$xoopsDB->error();
+
+    $oldOrderNumber++;
+
+    // apply settings submitted by user
+    foreach($processedElements[$ele_id] as $property=>$value) {
+      $element->setVar($property,$value);
+    }
+  	
+  	// if there was no display property sent, and there was no custom flag sent, then blank the display settings
+  	if(!isset($processedElements[$ele_id]['ele_display']) AND !isset($_POST['customDisplayFlag'][$ele_id])) {
+  		$element->setVar('ele_display',0);
+  	}
+      if(!isset($processedElements[$ele_id]['ele_list_display']) AND !isset($_POST['customListDisplayFlag'][$ele_id])) {
+      $element->setVar('ele_list_display',0);
+    }
+    // presist changes
+    if(!$element_handler->insert($element)) {
+      print "Error: could not save the form elements properly: ".$xoopsDB->error();
+    }
   }
-}
+  //always refresh the page
+ $_POST['reload_elements'] = 1;
 
 // handle any operations
 if($_POST['convertelement']) {
@@ -139,7 +146,7 @@ if($_POST['convertelement']) {
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 			$data_handler = new formulizeDataHandler($element->getVar('id_form'));
 			if(!$data_handler->convertRadioDataToCheckbox($element)) {
-				print "Error: ". _AM_ELE_CHECKBOX_DATA_NOT_READY;
+				print- "Error: ". _AM_ELE_CHECKBOX_DATA_NOT_READY;
 			} 
 		}
 	} elseif($ele_type=="checkbox") {

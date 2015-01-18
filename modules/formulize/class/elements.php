@@ -60,16 +60,16 @@ class formulizeformulize extends XoopsObject {
 		$this->initVar("ele_colhead", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_handle", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_order", XOBJ_DTYPE_INT);
+		$this->initVar("ele_list_order", XOBJ_DTYPE_INT);
+
 		$this->initVar("ele_req", XOBJ_DTYPE_INT);
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_uitext", XOBJ_DTYPE_ARRAY); // used for having an alternative text to display on screen, versus the actual value recorded in the database, for radio buttons, checkboxes and selectboxes
 		$this->initVar("ele_delim", XOBJ_DTYPE_TXTBOX, NULL, true, 255);
 		$this->initVar("ele_forcehidden", XOBJ_DTYPE_INT);
 		$this->initVar("ele_private", XOBJ_DTYPE_INT);
- 		// changed - start - August 19 2005 - jpc 		
-		//$this->initVar("ele_display", XOBJ_DTYPE_INT);
 		$this->initVar("ele_display", XOBJ_DTYPE_TXTBOX);
-		// changed - end - August 19 2005 - jpc
+		$this->initVar("ele_list_display", XOBJ_DTYPE_TXTBOX);
 		$this->initVar("ele_disabled", XOBJ_DTYPE_TXTBOX); // added June 17 2007 by jwe
 		$this->initVar("ele_encrypt", XOBJ_DTYPE_INT); // added July 15 2009 by jwe
 		$this->initVar("ele_filtersettings", XOBJ_DTYPE_ARRAY);
@@ -288,6 +288,9 @@ class formulizeElementsHandler {
 				ele_encrypt = %u,
 				ele_filtersettings = %s,
 				ele_use_default_when_blank = %u
+				ele_filtersettings = %s,
+				ele_list_order = %u,
+				ele_list_display=%s
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),
@@ -307,6 +310,8 @@ class formulizeElementsHandler {
 				$ele_encrypt,
 				$this->db->quoteString($ele_filtersettings),
 				$ele_use_default_when_blank,
+				$ele_list_order, 
+				$this->db->quoteString($ele_list_display),
 				$ele_id,
 				$id_form
 			);

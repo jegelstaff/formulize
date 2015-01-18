@@ -30,13 +30,11 @@
 // handles all operations requested through the UI
 // included in ui.php
 // depends on declarations in ui.php file!!
-
+global $xoopsDB;
 include_once "formindex.php";
 
 ob_start();
-
 if(isset($_GET['op'])) {
-
   switch($_GET['op']) {
     case "delete":
       deleteForm($_GET['fid']);
