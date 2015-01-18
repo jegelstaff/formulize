@@ -1,7 +1,7 @@
 <?php
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) 2013 Freeform Solutions                  ##
+##                    Copyright (c) 2010 Freeform Solutions                  ##
 ###############################################################################
 ##  This program is free software; you can redistribute it and/or modify     ##
 ##  it under the terms of the GNU General Public License as published by     ##
@@ -27,54 +27,63 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-include "../../mainfile.php";
+// this file handles saving of submissions from the screen_relationships page of the new admin UI
 
-/*
-    This is an access point for mobile clients to retrieve the list
-    of availible menu links in Formulize for the given user in JSON.
-    Clients must access this page with a valid cookie session.
-*/
-
-$application_handler = xoops_getmodulehandler('applications', 'formulize');
-$application_list = $application_handler->getAllApplications();
-
-// Convert the list of applications retrieved from application handler into an array representation
-$applications_array = array();
-
-foreach ($application_list as $application) {
-    // Application metadata into array
-    $app_data = array (
-        "appid" => $application->getVar("appid"),
-        "name" => $application->getVar("name"),
-        "description" => $application->getVar("description"),
-    );
-
-    // Convert all menu links within the application into an array
-    $links = $application->getVar("links");
-    $links_arr = array();
-    foreach ($links as $link) {
-        // Convert the link object into a key value map array
-        $link_data = array (
-            "menu_id" => $link->getVar("menu_id"),
-            "appid" => $link->getVar("appid"),
-            "screen" => $link->getVar("screen"),
-            "rank" => $link->getVar("rank"),
-            "url" => $link->getVar("url"),
-            "link_text" => $link->getVar("link_text"),
-            "name" => $link->getVar("name"),
-            "text" => $link->getVar("text"),
-            //"permissions" => $link->getVar("permissions")
-        );
-
-        array_push($links_arr, $link_data);
-    }
-
-    // Only add applications that have links accessible to the user
-    if (count($links_arr) > 0) {
-        $app_data["links"] = $links_arr;
-        array_push($applications_array, $app_data);
-    }
+// if we aren't coming from what appears to be save.php, then return nothing
+if(!isset($processedValues)) {
+  return;
 }
 
-// Output application menu links in a JSON format for mobile clients
-exit(json_encode($applications_array));
+if($_POST['deleteframework']) {
+    $framework_handler = xoops_getmodulehandler('frameworks','formulize');
+    $frameworkObject = $framework_handler->get($_POST['deleteframework']);
+    if(!$framework_handler->delete($frameworkObject)) {
+        print "Error: could not delete the requested relationship.";
+    } else {
+        print "/* eval */ reloadWithScrollPosition();";
+    }
+    return;
+}
+
+
+$aid = intval($_POST['aid']);
+$sid = $_POST['formulize_admin_key'];
+$fid = intval($_POST['formulize_admin_fid']);
+
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+$formObject = $form_handler->get($fid);
+if($formObject->getVar('lockedform')) {
+  return;
+}
+// check if the user has permission to edit the form
+if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
+  return;
+}
+
+
+$screens = $processedValues['screens'];
+
+if($screens['type'] == 'multiPage') {
+  $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+} else if($screens['type'] == 'listOfEntries') {
+  $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+} else if($screens['type'] == 'form') {
+  $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+}
+
+if ("new" != $sid) {
+    $screen = $screen_handler->get($sid);
+    if (null == $screen) {
+        error_log("coald not load screen with id ".print_r($sid, true));
+    }
+    $originalFrid = $screen->getVar('frid');
+    $screen->setVar('frid',$screens['frid']);
+
+    if (!$sid = $screen_handler->insert($screen)) {
+        print "Error: could not save the screen properly: ".$xoopsDB->error();
+    }
+
+    if ($originalFrid != $screens['frid']) {
+        print '/* eval */ reloadWithScrollPosition();';
+    }
+}
