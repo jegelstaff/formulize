@@ -1,6 +1,10 @@
 <?php
-//this file saves the info from application_code
-
+/*************************************************************************************************
+ *get information from \modules\formulize\admin\application.php by passing object $appObject
+ *and put custom_code into $appObject then pass it to function insert(Object) in \modules\formulize\class\applications.php to insert
+ *
+ *ADDED BY JINFU IN JAN 2015
+ ************************************************************************************************/
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
@@ -10,20 +14,10 @@ if(!isset($processedValues)) {
 $application_handler = xoops_getmodulehandler('applications', 'formulize');
 $appObject = $application_handler->get($_POST['formulize_admin_key']);
 
-//error_log("variable: ".print_r($processedValues, true));
-
-//echo("variable: ".print_r($_GET['aid'], true));
 foreach($processedValues['applications'] as $property=>$value) {
-	
-	$appObject->setVar($property, $value);
-	error_log("variable: ".print_r($property, true));
-	error_log("variable: ".print_r($value, true));
-	error_log("variable: ".print_r($appObject, true));
+    $appObject->setVar($property, $value);
 }
 
-
-
 $application_handler->insert($appObject);
-
 
 ?>

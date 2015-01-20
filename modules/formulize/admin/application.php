@@ -208,7 +208,8 @@ $adminPage['tabs'][$i]['content'] = $options + $common;
 $adminPage['tabs'][$i]['content']['links'] = $menulinks;
 $adminPage['tabs'][$i]['content']['groups'] = $groups;
 $adminPage['tabs'][$i]['content']['groupsWithDefaultScreen'] = $groupsWithDefaultScreen;
-    
+
+//this new part creates an object for application_code_save.php if user is allowed to use custom code
 if(is_object($appObject)){
     $i++;
     $adminPage['tabs'][$i]['name'] = "Code";
