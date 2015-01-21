@@ -1,9 +1,8 @@
 <?php
 
 include  'PDO_Conn.php';//Include the Connection File
-include_once('../admin/admin_header.php');
-xoops_cp_header();
-echo '<div style="margin-bottom: 10px;" id="formulize-logo"><img src="../images/formulize-logo.png" title="" align=""></div>';
+
+
 echo '<div style="margin-left: 10px;" id= "log">';
 echo '<h3>Import Log:</h3>';
 Import();
@@ -835,6 +834,7 @@ Function Check_Uniquines ($ID,$field)
 	/*
 	This Function Checks if the ID are Unique or not .If Unique then it will return 0.
 	*/
+
 	$Check;
 	$tables=array (1=>'_formulize_application_form_link/`linkid` ',2=>'_formulize_applications/`appid`',3=>'_formulize_id/`id_form`'
 	,4=>'_formulize/ele_id',5=>'_formulize/`ele_handle`',6=>'_formulize_frameworks/`frame_id`',7=>'_formulize_framework_links/`fl_id`',8=>'_formulize_id/desc_form',9=>'_groups/`groupid`'
@@ -850,6 +850,7 @@ Function Check_Uniquines ($ID,$field)
 	$Check=$Query->fetch(\PDO::FETCH_ASSOC);
 	return $Check['num'];
 }
+
 
 Function getlastID ($statment)
 { //This Is used because the default getlastID syntax doesn't work
@@ -1212,5 +1213,3 @@ Function Statement_ID ($statement,$Flag=null,$sec=null,$table=null)
 	}
 }
 
-include '../admin/footer.php';
-xoops_cp_footer();

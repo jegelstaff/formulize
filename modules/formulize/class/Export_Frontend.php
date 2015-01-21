@@ -1,8 +1,6 @@
 <?php
 
 include_once ('Export_backend.php');
-include_once('../admin/admin_header.php');
-xoops_cp_header();
 echo '<div style="margin-bottom: 10px;" id="formulize-logo"><img src="../images/formulize-logo.png" title="" align=""></div>';
 ?>
 <h3 style="font-family:verdana;color:rgb(0,100,100)">Export Application</h3>
@@ -92,6 +90,4 @@ if (isset($_POST['formSubmit']))
 	echo "<script language='javascript'> unhide('download');</script>";
 }
 
-include '../admin/footer.php';
-xoops_cp_footer();
 ?>

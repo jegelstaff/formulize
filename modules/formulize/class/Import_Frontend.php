@@ -1,6 +1,4 @@
 <?php
-include_once('../admin/admin_header.php');
-xoops_cp_header();
 echo '<div style="margin-bottom: 10px;" id="formulize-logo"><img src="../images/formulize-logo.png" title="" align=""></div>';
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
@@ -178,7 +176,3 @@ function Getall($Flag, $fileName = null){
 
 ?>
 </form>
-<?php
-include '../admin/footer.php';
-xoops_cp_footer();
-?>
