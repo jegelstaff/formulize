@@ -1,24 +1,9 @@
 <?php
-	// need to listen for $_GET['aid'] later so we can limit this to just the application that is requested
-	
-
-	$aid = intval($_GET['aid']);
-
-
-	$application_handler = xoops_getmodulehandler('applications','formulize');
-	// get a list of all applications
-
-	$allApps = $application_handler->getAllApplications();
-
-
-	($application_handler->get($aid)) ? $appName = $appObject->getVar('name') : $appName = _AM_APP_FORMWITHNOAPP;
-		
 
 	// display breadcrumb trail
 		$breadcrumbtrail[1]['url'] = 'page=home';
 		$breadcrumbtrail[1]['text'] = 'Home';
 		$breadcrumbtrail[2]['url'] = "page=application&aid=$aid&tab=forms";
-		$breadcrumbtrail[2]['text'] = $appName;
 		$breadcrumbtrail[3]['text'] = 'Import';
 		$_GET['select'] = 'Import';
 
