@@ -23,7 +23,7 @@
 
 	// output buffering to make sure that everything is in the right place on the page
 	ob_start();
-	include "../class/Export_Frontend_Backend.php";
+	include "../class/Export_Frontend.php";
 	$htmlContents = ob_get_clean();
 	$adminPage['htmlContents'] = $htmlContents;
 	$adminPage['template'] = "db:admin/export_template.html";

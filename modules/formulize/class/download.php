@@ -1,5 +1,5 @@
 <?php
-    $file_name ="Application -".$_GET['aid'];
+    $file_name ='Application -'.$_GET['aid'];
     $mime="application/octet-stream";
 	header('Pragma: public'); 	// required
 	header('Expires: 0');		// no cache
