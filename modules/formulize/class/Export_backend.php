@@ -1,7 +1,7 @@
 <?php
 include  'PDO_Conn.php';//Include the Connection File
 
-class Export{
+class Export_Model{
 
 	public function sqlQuery($sql,$colname = NULL,$bindvar = NULL)
 	{
@@ -9,7 +9,7 @@ class Export{
 		global $i;
 		$conn = new Connection ();
 		$Query=$conn->connect()->prepare($sql) ;
-	
+
 		if (!empty($bindvar)){
 		$Query->bindValue(':id',$bindvar,PDO::PARAM_STR);}
 

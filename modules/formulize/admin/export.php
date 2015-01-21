@@ -4,13 +4,8 @@
 	$application_handler = xoops_getmodulehandler('applications','formulize');
 	// get a list of all applications
 	$allApps = $application_handler->getAllApplications();
-
-	if($aid == 0) {
-		$appName = _AM_APP_FORMWITHNOAPP; 
-	} else {
-		$appObject = $application_handler->get($aid);
-		$appName = $appObject->getVar('name');
-	}
+	
+	($application_handler->get($aid)) ? $appName = $appObject->getVar('name') : $appName = _AM_APP_FORMWITHNOAPP;
 
 	// display breadcrumb trail
 	$breadcrumbtrail[1]['url'] = "page=home";
@@ -23,7 +18,9 @@
 
 	// output buffering to make sure that everything is in the right place on the page
 	ob_start();
-	include "../class/Export_Frontend.php";
+
+	include '../class/Export_Frontend.php';
+
 	$htmlContents = ob_get_clean();
 	$adminPage['htmlContents'] = $htmlContents;
 	$adminPage['template'] = "db:admin/export_template.html";

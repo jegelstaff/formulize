@@ -1,7 +1,7 @@
 <?php
 
-include_once ('Export_backend.php');
-echo '<div style="margin-bottom: 10px;" id="formulize-logo"><img src="../images/formulize-logo.png" title="" align=""></div>';
+include '../class/Export_backend.php';
+
 ?>
 <h3 style="font-family:verdana;color:rgb(0,100,100)">Export Application</h3>
 <p style="margin-bottom: 10px;font-family:arial;color:rgb(100,100,0);font-size:medium;">
@@ -15,14 +15,14 @@ echo '<div style="margin-bottom: 10px;" id="formulize-logo"><img src="../images/
 		
 			<?php
 				
-				$Export = new Export();
-			
+				$Export = new Export_Model();	
+		
 				$appid =$_GET['aid'];
 
 				if (is_null($appid) || !isset($appid) || empty($appid)){
 					exit('Error [0] : Invalid Application Id Contact the Administrator ...No Export File is Created ... Exiting');
 				}
-				$row = $Export->sqlQuery("SELECT count(appid) as appid FROM ".Prefix."_formulize_applications WHERE appid = :id;","appid","$appid");
+				$row = $Export->sqlQuery('SELECT count(appid) as appid FROM '.Prefix.'_formulize_applications WHERE appid = :id;','appid',"$appid");
 				
 				$i = 0;
 				if ($row[0]> 0)	
@@ -72,7 +72,7 @@ echo '<div style="margin-bottom: 10px;" id="formulize-logo"><img src="../images/
 	 function myfunction()
 	 { var tmp =<?php echo $appid?>;
 	   // link need to be updated
-	   url ='download.php?aid='+tmp;
+	   url ='../class/download.php?aid='+tmp;
 	   window.open(url);
 	 }
 </script>

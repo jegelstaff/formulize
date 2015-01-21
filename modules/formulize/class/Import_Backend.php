@@ -373,7 +373,7 @@ function Creat_Applications()
 			}
 		}
 		if (Statement_ID($statement,null,null,1)=='_formulize_notification_conditions')
-		{echo "Here";
+		{
 			preg_match('/\^.*\^/', $statement, $matches1);//To get the UID 
 			$UID=explode("^",$matches1[0]);//
 			$UID=$UID[1];
@@ -447,7 +447,7 @@ function Creat_Applications()
 			}
 		}
 		if (Statement_ID($statement,null,null,1)=='_formulize_saved_views')
-		{echo "Here";///echo $statement;
+		{
 			$sv_ID=Statement_ID($statement);echo $sv_ID;
 			if (Check_Uniquines ($sv_ID,18)==0)
 			{///echo "Trying";
@@ -546,9 +546,9 @@ function Creat_Applications()
 			
 		}
 		if (Statement_ID($statement,null,null,1)=='_formulize_screen'|| Statement_ID($statement,null,null,1)=='_formulize_screen_form')
-		{echo "Herescreen";
+		{
 			$ID=Statement_ID($statement);
-			echo $ID;
+		
 			$table=Statement_ID($statement,null,null,1);
 			$tables=array('_formulize_screen'=>19,'_formulize_screen_form'=>20);
 			//echo $table."     $ID <br/>";
@@ -559,7 +559,7 @@ function Creat_Applications()
 				echo "Inserting New Row in $table with ID : $ID <br/>";
 			}else
 			{
-				echo "Here";
+				
 				$Auto_Incr=Statement_ID($statement,1);
 				$ID1=getlastID ($Auto_Incr);
 				if ($table=='_formulize_screen'){
