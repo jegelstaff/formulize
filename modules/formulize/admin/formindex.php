@@ -111,8 +111,8 @@ function patch40() {
 	 * 
 	 * ====================================== */
 	
-	$checkThisTable = 'formulize_saved_views';
-	$checkThisField = 'sv_global_search';
+	$checkThisTable = 'formulize_screen_graph';
+	$checkThisField = 'usecurrentviewlist';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
@@ -281,6 +281,29 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 				  INDEX i_del_id (del_log_id)
 		) ENGINE=MyISAM;";
 	}
+
+	if(!in_array($xoopsDB->prefix("formulize_screen_graph"), $existingTables)) {
+			$sql[] = "CREATE TABLE `".$xoopsDB->prefix("formulize_screen_graph")."` (
+  `formid` int(11) NOT NULL auto_increment,
+  `sid` int(11) NOT NULL default 0,
+  `width` int(11) NOT NULL default 800,
+  `height` int(11) NOT NULL default 600,
+  `orientation` varchar(255) NOT NULL default 'horizontal',
+  `bgr` int(8) NOT NULL default 141,
+  `bgg` int(8) NOT NULL default 189,
+  `bgb` int(8) NOT NULL default 225,
+  `barr` int(8) NOT NULL default 143,
+  `barg` int(8) NOT NULL default 190,
+  `barb` int(8) NOT NULL default 88,
+  `ops` varchar(255) NOT NULL default 'count',
+  `labelelem` int(8) NOT NULL default 0,
+  `dataelem` int(8) NOT NULL default 0,
+  `limitviews` text NOT NULL,
+  `usecurrentviewlist` varchar(255) NOT NULL default 'Current View: ',
+  PRIMARY KEY (`formid`),
+  INDEX i_sid (`sid`)
+) ENGINE=MyISAM;";
+		}
 
 		// if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
 		if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {

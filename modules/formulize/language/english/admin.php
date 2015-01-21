@@ -169,6 +169,7 @@ define("_AM_SCREEN_EXPLAIN","<p><i>Screens</i> let you show users different vers
 define("_AM_SCREEN_CREATE"," Create a new Screen");
 define("_AM_SCREEN_FORMSCREENS","Form Screens");
 define("_AM_SCREEN_LISTSCREENS","List Screens");
+define("_AM_SCREEN_GRAPHSCREENS","Graph Screens");
 define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? All configuration settings for this screen will be lost!");
 
 
@@ -793,4 +794,7 @@ define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK", "Show the default value for this 
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC", "For example, showing defaults when the saved value is blank can be useful on multipage forms, if later pages have elements which should still use the default value, even though the user has saved the entry after the first page.<br><b>Note</b> that required elements are always treated as if this option is turned on regardless, since required elements should never have empty/blank values.");
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW", "Only for new entries");
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK", "For any entry, when the saved value is blank");
+// Graph Screen Definitions
+define("_AM_GRAPH_SCREEN_OPTIONS", "Graph Options");
+define("_AM_GRAPH_SCREEN_CASES", "Graph Cases");
 ?>

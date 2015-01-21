@@ -432,7 +432,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// set flag to indicate whether we let the user's scope setting expand beyond their normal permission level (happens when unlocked published views are in effect)
 	$currentViewCanExpand = false;
-
 	// handling change in view, and loading reports/saved views if necessary
 	if($_POST['loadreport']) {
 		if(substr($_POST['currentview'], 1, 4) == "old_") { // legacy report
@@ -491,7 +490,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 			$_POST['oldcols'] = implode(",",$colsforsearches); // need to reconstruct this in case any columns were removed because of persistent searches on a hidden column
 		}
-		
 		$currentView = $_POST['currentview'];
 		
 		// need to check that the user is allowed to have this scope, unless the view is unlocked
@@ -517,9 +515,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		
 		
 	} elseif($_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
-		$currentView = $_POST['advscope'];
+        $currentView = $_POST['advscope'];
 	} elseif($_POST['currentview']) { // could have been unset by deletion of a view or something else, so we must check to make sure it exists before we override the default that was determined above
-		if(is_numeric(substr($_POST['currentview'], 1))) {
+        if(is_numeric(substr($_POST['currentview'], 1))) {
 			// a saved view was requested as the current view, but we don't want to load the entire thing....this means that we just want to use the view to generate the scope, we don't want to load all settings.  So we have to load the view, but discard everything but the view's currentview value
 			// if we were supposed to load the whole thing, loadreport would have been set in post and the above code would have kicked in
 			$loadedViewSettings = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
@@ -561,7 +559,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 
-	list($scope, $currentView) = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, $currentViewCanExpand);  
+	list($scope, $currentView) = buildScope($currentView, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, $currentViewCanExpand);
 	// generate the available views
 
 	// pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)

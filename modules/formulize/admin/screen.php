@@ -65,6 +65,8 @@ if($screen_id == "new") {
         $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
     } else if($settings['type'] == 'multiPage') {
         $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+    } else if($settings['type'] == 'graph') {
+        $screen_handler = xoops_getmodulehandler('graphScreen', 'formulize');
     }
     $screen = $screen_handler->get($screen_id);
 
@@ -396,6 +398,56 @@ if($screen_id != "new" && $settings['type'] == 'form') {
   $options['element_list'] = $element_list;
 }
 
+if($screen_id != "new" && $settings['type'] == 'graph') {
+  $graph_options = array();
+  $graph_options['width'] = $screen->getVar('width');
+  $graph_options['height'] = $screen->getVar('height');
+  $graph_options['orientation'] = $screen->getVar('orientation');
+  $graph_options['bgr'] = $screen->getVar('bgr');
+  $graph_options['bgg'] = $screen->getVar('bgg');
+  $graph_options['bgb'] = $screen->getVar('bgb');
+  $graph_options['barr'] = $screen->getVar('barr');
+  $graph_options['barg'] = $screen->getVar('barg');
+  $graph_options['barb'] = $screen->getVar('barb');
+  $graph_options['ops'] = $screen->getVar('ops');
+  list($labelelem, $selectedlabelelem) = createFieldList($screen->getVar('labelelem'), false, false, "screens-labelelem", "Choose one");
+  $graph_options['labelelem'] = $labelelem->render();
+  list($dataelem, $selecteddataelem) = createFieldList($screen->getVar('dataelem'), false, false, "screens-dataelem", "Choose one");
+  $graph_options['dataelem'] = $dataelem->render();
+  $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
+  $form_handler =& xoops_getmodulehandler('forms', 'formulize');
+  $formObj = $form_handler->get($form_id, true); // true causes all elements to be included even if they're not visible.
+  $frameworks = $framework_handler->getFrameworksByForm($form_id);
+  $views = $formObj->getVar('views');
+  $viewPublished = $formObj->getVar('viewPublished');
+  $viewNames = $formObj->getVar('viewNames');
+  $viewFrids = $formObj->getVar('viewFrids');
+  $defaultViewOptions = array();
+  $limitViewOptions = array();
+  $defaultViewOptions['blank'] = _AM_FORMULIZE_SCREEN_LOE_BLANK_DEFAULTVIEW;
+  $defaultViewOptions['mine'] = _AM_FORMULIZE_SCREEN_LOE_DVMINE;
+  $defaultViewOptions['group'] = _AM_FORMULIZE_SCREEN_LOE_DVGROUP;
+  $defaultViewOptions['all'] = _AM_FORMULIZE_SCREEN_LOE_DVALL;
+  for($i=0;$i<count($views);$i++) {
+      if(!$viewPublished[$i]) { continue; }
+      $defaultViewOptions[$views[$i]] = $viewNames[$i];
+      if($viewFrids[$i]) {
+          $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
+      } else {
+          $defaultViewOptions[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
+      }
+  }
+  $limitViewOptions['allviews'] = _AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT;
+  $limitViewOptions += $defaultViewOptions;
+  unset($limitViewOptions['blank']);
+  unset($defaultViewOptions['blank']);
+  $graph_options['defaultviewoptions'] = $defaultViewOptions;
+  $graph_options['defaultview'] = $screen->getVar('defaultview');
+  $graph_options['usecurrentviewlist'] = $screen->getVar('usecurrentviewlist');
+  $graph_options['limitviewoptions'] = $limitViewOptions;
+  $graph_options['limitviews'] = $screen->getVar('limitviews');
+}
+
 // common values should be assigned to all tabs
 $common['name'] = $screenName;
 $common['title'] = $screenName; // oops, we've got two copies of this data floating around...standardize sometime
@@ -488,6 +540,16 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
 		'template'	=> "db:admin/screen_list_templates.html",
 		'content'	=> $templates + $common
 	);
+}
+
+if($screen_id != "new" && $settings['type'] == 'graph') {
+  $adminPage['tabs'][2]['name'] = _AM_GRAPH_SCREEN_OPTIONS;
+  $adminPage['tabs'][2]['template'] = "db:admin/screen_graph_options.html";
+  $adminPage['tabs'][2]['content'] = $graph_options + $common;
+  
+  $adminPage['tabs'][3]['name'] = _AM_GRAPH_SCREEN_CASES;
+  $adminPage['tabs'][3]['template'] = "db:admin/screen_graph_cases.html";
+  $adminPage['tabs'][3]['content'] = $graph_options + $common;
 }
 
 $adminPage['pagetitle'] = _AM_FORM_SCREEN.$screenName;

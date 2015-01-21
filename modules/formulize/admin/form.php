@@ -465,6 +465,7 @@ $common['fid'] = $fid;
 $common['aid'] = $aid;
 $common['defaultform'] = $defaultform;
 $common['defaultlist'] = $defaultlist;
+// no default graph
 $common['form_object'] = $formObject;
 $common['note'] = $note;
 
@@ -489,6 +490,13 @@ $i = 1;
 foreach($listOfEntriesScreens as $screen) {
   $screens['listOfEntries'][$i]['sid'] = $screen->getVar('sid');
   $screens['listOfEntries'][$i]['title'] = $screen->getVar('title');
+  $i++;
+}
+$graphsScreens = $screen_handler->getObjects(new Criteria('type','graph'),$fid);
+$i = 1;
+foreach($graphsScreens as $screen) {
+  $screens['graphs'][$i]['sid'] = $screen->getVar('sid');
+  $screens['graphs'][$i]['title'] = $screen->getVar('title');
   $i++;
 }
 
