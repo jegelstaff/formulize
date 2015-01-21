@@ -1,6 +1,3 @@
-<?php
-echo '<div style="margin-bottom: 10px;" id="formulize-logo"><img src="../images/formulize-logo.png" title="" align=""></div>';
-?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <HTML>
 <HEAD>
@@ -51,17 +48,21 @@ attributes to an existing group code.
 to proceed with the import, or <SPAN STYLE="background: #ffff00"><b><u>Cancel</b></u></SPAN>to Exit
 </UL>
 <P ALIGN=CENTER STYLE="margin-bottom: 0.21in; border-top: none; border-bottom: 1.00pt solid #4f81bd; border-left: none; border-right: none; padding-top: 0in; padding-bottom: 0.06in; padding-left: 0in; padding-right: 0in; line-height: 100%">
-		<form name="Upload " method="POST" enctype="multipart/form-data">
+		<form name="Upload" method="POST" enctype="multipart/form-data">
 		<input type="file" name="file"/>
 		<input type="submit" value="Upload"/>
 		</form>
-        <form action="Import.php"  id="submit" name="SubmitResults">
+        <form   action = "ui.php" method="GET" id="submit" name="SubmitResults">
           <input type="Submit" value="Submit" />
+ 			<input type="hidden" name = "page" value="import" />
+ 			<input type="hidden" name = "next_import" value="import" />
 		  <br/>
 
 <?php
+
 include 'PDO_Conn.php';
-Import();
+
+ Import();
 
 Function Import ()
 {
@@ -72,8 +73,6 @@ Function Import ()
 	$filePath = '../upload/'.$fileName;
 
 	move_uploaded_file ($fileTmp, $filePath);
-
-	$f=explode('/',$filePath);//To notify User File Uploaded ,becaus ethe screen won't change if the File doesn't contain groups
 
 	replaces_Prefix_in_file ($filePath);
 	displ($filePath);
