@@ -4,19 +4,22 @@ class Import_file_upload{
 
 	public Function Import (){
 
-		$fileName=$_FILES['file']['name'];
-		$fileTmp=$_FILES['file']['tmp_name'];
+		if (isset($_FILES['file']['name'])){
 
-		if (!file_exists('../upload/')) { mkdir('../upload/', 0777, true); }
+			$fileName=$_FILES['file']['name'].'--'.time();
+			$fileTmp=$_FILES['file']['tmp_name'];
 
-		$filePath = '../upload/'.$fileName;
+			if (!file_exists('../upload/')) { mkdir('../upload/', 0777, true); }
+
+			$filePath = '../upload/'.$fileName;
 
 
-		move_uploaded_file ($fileTmp, $filePath);
+			move_uploaded_file ($fileTmp, $filePath);
 
-		$this->replaces_Prefix_in_file ($filePath);
+			$this->replaces_Prefix_in_file ($filePath);
 
-		$this->render_table($filePath);
+			$this->render_table($filePath);
+		}
 	}
 
 	private function replaces_Prefix_in_file ($fileName){

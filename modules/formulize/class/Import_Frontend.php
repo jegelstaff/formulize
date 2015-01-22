@@ -48,7 +48,7 @@ attributes to an existing group code.
 to proceed with the import.
 </UL>
 <P ALIGN=CENTER STYLE="margin-bottom: 0.21in; border-top: none; border-bottom: 1.00pt solid #4f81bd; border-left: none; border-right: none; padding-top: 0in; padding-bottom: 0.06in; padding-left: 0in; padding-right: 0in; line-height: 100%">
-		<form   name="Upload" method="POST" enctype="multipart/form-data">
+		<form   action = "" name="Upload" method="POST" enctype="multipart/form-data">
 			<input type="file" name="file"/>
 			<input type="submit" value="Upload"/>
 		</form>
@@ -63,24 +63,27 @@ to proceed with the import.
 include 'PDO_Conn.php';
 include 'Import_Backend.php';
 
-
-if (!isset($_GET['next_import'])){
+if (!empty($_FILES)){
 
 	$import_file_obj = new Import_file_upload();
-	$import_file_obj->Import();   	
-
+	$import_file_obj->Import();
+	unset($_POST , $_FILES);   	
+	
 }else{
 
-	echo '<div id ="Log report" style="font-weight: bold; margin-top: 10px; margin-bottom: 20px;">';
- 	echo 'Import Log:<br> ';
- 	
- 	$import_model_obj = new Import_model();
-	echo '<div style="font-weight: bold; margin-left: 30px; margin-top: 20px; margin-bottom: 20px;">';
+	if (isset($_GET['next_import'])){
 
-	$import_model_obj->Create_Applications();
-	echo '</div>';
-	echo 'Successfully Imported all Insert Statements .</br>';
-	echo '</div>';
+		echo '<div id ="Log report" style="font-weight: bold; margin-top: 10px; margin-bottom: 20px;">';
+	 	echo 'Import Log:<br> ';
+	 	
+	 	$import_model_obj = new Import_model();
+		echo '<div style="font-weight: bold; margin-left: 30px; margin-top: 20px; margin-bottom: 20px;">';
+
+		$import_model_obj->Create_Applications();
+		echo '</div>';
+		echo 'Successfully Imported all Insert Statements .</br>';
+		echo '</div>';
+	}
 }
 
 ?>
