@@ -40,17 +40,17 @@ one of the following options to complete the required mapping:
 <LI><b><u>Ignore:</b></u> To drop  this group
 from the imported list.
 <LI><b><u>Add:</b></u> To add the selected group
-attributes as is to the current groups 
+attributes as is to the current groups. 
 <LI><b><u>Map:</b></u> To map the old code and
 attributes to an existing group code.
 </UL>
 <LI>Following Click  <SPAN STYLE="background: #ffff00"><b><u>Submit</b></u></SPAN>
-to proceed with the import, or <SPAN STYLE="background: #ffff00"><b><u>Cancel</b></u></SPAN>to Exit
+to proceed with the import.
 </UL>
 <P ALIGN=CENTER STYLE="margin-bottom: 0.21in; border-top: none; border-bottom: 1.00pt solid #4f81bd; border-left: none; border-right: none; padding-top: 0in; padding-bottom: 0.06in; padding-left: 0in; padding-right: 0in; line-height: 100%">
-		<form name="Upload" method="POST" enctype="multipart/form-data">
-		<input type="file" name="file"/>
-		<input type="submit" value="Upload"/>
+		<form   name="Upload" method="POST" enctype="multipart/form-data">
+			<input type="file" name="file"/>
+			<input type="submit" value="Upload"/>
 		</form>
         <form   action = "ui.php" method="GET" id="submit" name="SubmitResults">
           <input type="Submit" value="Submit" />
@@ -61,116 +61,26 @@ to proceed with the import, or <SPAN STYLE="background: #ffff00"><b><u>Cancel</b
 <?php
 
 include 'PDO_Conn.php';
+include 'Import_Backend.php';
 
- Import();
 
-Function Import ()
-{
-	$fileName=$_FILES['file']['name'];
-	$fileTmp=$_FILES['file']['tmp_name'];
+if (!isset($_GET['next_import'])){
 
-	if (!file_exists('../upload/')) { mkdir('../upload/', 0777, true); }
-	$filePath = '../upload/'.$fileName;
+	$import_file_obj = new Import_file_upload();
+	$import_file_obj->Import();   	
 
-	move_uploaded_file ($fileTmp, $filePath);
+}else{
 
-	replaces_Prefix_in_file ($filePath);
-	displ($filePath);
-}
+	echo '<div id ="Log report" style="font-weight: bold; margin-top: 10px; margin-bottom: 20px;">';
+ 	echo 'Import Log:<br> ';
+ 	
+ 	$import_model_obj = new Import_model();
+	echo '<div style="font-weight: bold; margin-left: 30px; margin-top: 20px; margin-bottom: 20px;">';
 
-function replaces_Prefix_in_file ($fileName)
-{
-	
-	$str=implode("\n",file($fileName));
-	$fp=fopen($fileName,'w');
-	
-	//replace Prefix word file string with the current DB Prefix 
-	$str=str_replace('Prefix',Prefix,$str);
-
-	fwrite($fp,$str,strlen($str));
-	fclose($fileName);
-}
-
-function displ ($fileName){
-
-	$newGroups = Getall(2);
-	$oldGroups = Getall(1, $fileName);
-	if ($oldGroups !=null){
-	echo '<table border=\'1\'>';
-	echo '<tr>';
-	echo '<th> No </th>';
-	echo '<th> Old Group </th>';
-	echo '<th> New Group </th>';
-	echo '</tr>';
-	$k=1;
-	
-	foreach($oldGroups as $x=>$x_value)
-	{
-		echo '<tr>';
-		echo '<td>'. $k .'</td>';
-		echo '<td>'. $x_value .'</td>';
-		echo '<td>'; 
-		$id = "$x";
-		echo '<select name='.$x.' id='.$x.'>';
-		echo '<option value=\'\'>---Select---</option>';
-		echo '<option value=\'Ignore\'>Ignore this Group</option>';
-		echo '<option value=\'New\'>Add as New</option>';
-		foreach($newGroups as $y=>$y_value)
-		{ 
-			
-			echo '<option value='.$y.'>Map This Group To ->'.$y_value.'</option>';
-		}
-		echo '</select>';
-		echo  '</td>';
-		echo '</tr>';
-		$k++;
-	}
-	echo '</table> ';
-	}
-}
-
-function Getall($Flag, $fileName = null){
-	global $get;
-	$get=array();
-	if ($Flag==1){
-		session_start();
-		$_SESSION['file'] = $fileName;//Send the File Location to Import.php
-		$file =$fileName;
-		$getlines = file_get_contents($file);
-		$get_line=explode(";",$getlines);//print_r($get_line);
-		foreach ($get_line as $statement)
-		{
-		preg_match('/_.*\(\`/', $statement, $table);//To get the Table name
-		$rem=array('VALUES','`','(',' ',')','\'');
-		$table=str_replace($rem,'', $table[0]);
-			if($table=='_groups') {
-				preg_match('/\(\'\d*\'\,\'.*\'/', $statement, $matches);
-				///print_r($matches);
-				str_replace($rem,'', $matches[0]);
-				$m=str_replace($rem,'', $matches[0]);
-				$m1=explode(',',$m);
-				$get[$m1[0]] = $m1[1]; //Array push Group ID and name
-			}
-		}
-
-		fclose($file);
-
-		return $get;
-	}
-
-	else
-	{
-		$conn=new Connection ();
-		$sql='SELECT groupid , name FROM '.Prefix.'_groups;';
-		$Query=$conn->connect()->prepare($sql) ;
-		$Query->execute();
-		while ($row=$Query->fetch(\PDO::FETCH_ASSOC))
-		{
-			$get[$row['groupid']] = $row['name']; //Array push Group ID and name
-		}
-		return $get;
-	}
-
+	$import_model_obj->Create_Applications();
+	echo '</div>';
+	echo 'Successfully Imported all Insert Statements .</br>';
+	echo '</div>';
 }
 
 ?>

@@ -10,7 +10,7 @@
 	// output buffering to make sure that everything is in the right place on the page
 	ob_start();
 
-	(isset($_GET['next_import']))?  include '../class/Import_Backend.php' : include '../class/Import_Frontend.php' ;
+	include '../class/Import_Frontend.php' ;
 
 	$htmlContents = ob_get_clean();
 	$adminPage['htmlContents'] = $htmlContents;

@@ -34,7 +34,7 @@ class Export_Model{
 		return $returnrow;
 	}
 
-	public function output($output)
+	private function output($output)
 	{
 
 		$file_name ='Application -'.$_GET['aid'];
@@ -59,7 +59,7 @@ class Export_Model{
 		 sleep(.03);
 	}
 
-	public Function chk_integrity($tables,$prefix)
+	private Function chk_integrity($tables,$prefix)
 	{
 		$flag = true;
 		foreach ($tables as $table)
@@ -168,7 +168,7 @@ class Export_Model{
 
 
 	// Function expTable(padding,insert style,table name, excluded columns array, criteria for selection, post selection fields character replacement array)
-	public Function expTable($Prefix,$padText,$insStyle,$Table_Name,$Exclude_Columns = Null,$Criteria = Null)
+	private Function expTable($Prefix,$padText,$insStyle,$Table_Name,$Exclude_Columns = Null,$Criteria = Null)
 	{///echo "here";
 		// Replace all (;) with (&) for the following fields 
 		$replace=array('not_cons_con','gl_name','fltr_grps','steptitles','steps','ele_filtersettings','ele_value','fltr_grptitles','filter',
