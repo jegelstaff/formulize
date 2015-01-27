@@ -218,7 +218,13 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
   list($scope, $currentViewScope) = buildScope($currentViewScope, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, true);
   $dbData = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, intval($_POST['forcequery']));
 
-  list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $loadedView, $loadedView, $view_groupscope, $view_globalscope, /*$_POST['curviewid']*/ "", 0, $graphOptions, $_POST['lastloaded']);
+  list($settings['viewoptions'],
+       $settings['pubstart'],
+       $settings['endstandard'],
+       $settings['pickgroups'],
+       $settings['loadviewname'],
+       $settings['curviewid'],
+       $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $loadedView, $loadedView, $view_groupscope, $view_globalscope, /*$_POST['curviewid']*/ "", 0, $graphOptions, $_POST['lastloaded']);
 
   // End of code from entriesdisplay
 

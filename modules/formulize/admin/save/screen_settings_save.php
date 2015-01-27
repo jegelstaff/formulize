@@ -128,6 +128,9 @@ if($isNew) {
 	  $screen->setVar('barr', 143);
 	  $screen->setVar('barg', 190);
 	  $screen->setVar('barb', 88);
+          $screen->setVar('labelelem',1);
+          $screen->setVar('dataelem',1);
+          $screen->setVar('ops','count');
   }
 
 } else {
