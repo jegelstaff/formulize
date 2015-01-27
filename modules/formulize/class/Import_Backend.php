@@ -82,7 +82,7 @@ class Import_file_upload{
 			$_SESSION['file'] = $fileName;//Send the File Location to Import.php
 		
 			$getlines = file_get_contents($fileName);
-			$get_line=explode(';',$getlines);//print_r($get_line);
+			$get_line=explode(';',$getlines);
 			foreach ($get_line as $statement)
 			{
 			preg_match('/_.*\(\`/', $statement, $table);//To get the Table name
@@ -90,7 +90,7 @@ class Import_file_upload{
 			$table=str_replace($rem,'', $table[0]);
 				if($table=='_groups') {
 					preg_match('/\(\'\d*\'\,\'.*\'/', $statement, $matches);
-					///print_r($matches);
+				
 					str_replace($rem,'', $matches[0]);
 					$m=str_replace($rem,'', $matches[0]);
 					$m1=explode(',',$m);
@@ -143,20 +143,22 @@ class Import_Model{
 		$this->get_Groups();
 		/*
 		1)It Gets the Statement row ID.Checks if the ID is Unique or not .If not then removes the ID and let the row use the Auto-increment to assign an ID 
-		2)The only process is done before the Import is to check if the row contains Table handle.If it's text ,also  Uniq or not in the DB ,so to avoid multiple duplicates after Insert.If it was ID then updated after we get the New ID 
+		2)The only process is done before the Import is to check if the row contains Table handle.If it's text or handles it also  checks if it's Uniq or not in the DB ,so to avoid multiple duplicates after Insert.
 		3)Usually post Process for each table is done after each insert .Unless the Post process involves a global process ,for example Ele_Value might contain groups ID so we need to wait till we are done with the Group Insert  
 		*/
+
 		//Those  variables will store the New AppID/Form ID  if Needed.
 		global $Element_ID; //Every time ID is Inserted in the DB it will be pushed here to be used later on for the Ele_Filter settings and Ele_Value 
 		global $Calc_ID; //To store the Calculation IDs
-		$Calc_ID=array ();
+		$Calc_ID=array();
 		$Element_ID=array();
-		echo $fileName;
+		
 		$getlines = file_get_contents($this->_fileName);
 		$get_line=explode(';',$getlines);
 	
 	
 		set_time_limit(0);
+
 		foreach ($get_line as $statement){ 
 			if(strstr($statement, 'Create table')) {
 				$this->Create_table($statement);
@@ -166,7 +168,7 @@ class Import_Model{
 				if ($this->Check_Uniquines($App_ID,2)==0) //If Unique then no need to Update the ID
 				{
 					echo 'New App <br/>';
-					$this->Insert($statement);echo $statement;
+					$this->Insert($statement);
 				}else {
 					echo 'App Exists Updating ID <br/>';
 					$Auto_Incr= $this->Statement_ID($statement,1);
@@ -174,10 +176,11 @@ class Import_Model{
 					$this->formIdMap(1,'AppID',$App_ID,$NewID);
 
 				}} 
-			//The Formalize Updates to Fields in the INsert statement if needed.It Updates the ID and the Desc_From 
-			if($this->Statement_ID($statement,null,null,1)=='_formulize_id') {//echo $statement;
+			
+			if($this->Statement_ID($statement,null,null,1)=='_formulize_id') {
 				$Form_ID=$this->Statement_ID($statement);
 				global $up;
+
 				//Process Form Handle//
 				preg_match('/\^.*\^/', $statement, $handle);//To get the Form Handle 
 				$form_Handle_Text=explode('^',$handle[0]);//To Get the Form Handle As Text 
@@ -201,7 +204,7 @@ class Import_Model{
 					$NewID= $this->getlastID($Auto_Incr);
 					$this->formIdMap(1,'Form',$Form_ID,$NewID);
 					$up=2;
-					//$Form_ID=$NewID;
+					
 				}
 				if ($Flag!=null) {
 					if ($up==2){
@@ -210,7 +213,7 @@ class Import_Model{
 					}
 					$this->Post_Process($Form_ID,$Form_ID,null,2,13);}
 			}
-			//First, it checks if the Link Id is in use or not.If not then no need to update the Form ID.Second,It checks if the AppID has been updated by checking  the APP ID variable.If it's empty then it doesn't update the APP ID in the Link $this->Insert statement.Third,It checks if the Form ID that's in the link insert statement has been updated or not.If the ID is updated it will be included in the Form_ID_Replace array.After,if gets the Old ID it query the Form_Map table to check the new ID that corresponds to the OLD ID and then updates the Insert Statement and Insert the new Row. 
+			
 			if($this->Statement_ID($statement,null,null,1)=='_formulize_application_form_link') {
 				$Link_ID=$this->Statement_ID($statement);
 				if ( $this->Check_Uniquines($Link_ID,1)==0)
@@ -219,65 +222,64 @@ class Import_Model{
 					echo 'New Link Form/App  <br/>';
 				}
 				else {
-					//Use the Auto Increment 
+					
 					echo 'Updating the Link ID  <br/>';
 					$Auto_Incr= $this->Statement_ID($statement,1);
 					$NewID= $this->getlastID($Auto_Incr);
 					$Link_ID=$NewID;
 				}
-				//Post Process To Update the Link with the Latest App and Form
+
 				$result= $this->get_result('_formulize_application_form_link',$Link_ID);
-				if ($this->formIdMap(2,'AppID',$result['appid'])!=null ) {//Update the App ID 
-					$this->Post_Process ($Link_ID,$this->formIdMap(2,'AppID',$result['appid']),null,2,2);
+				if ( null != $appID = $this->formIdMap(2,'AppID',$result['appid']) ) {//Update the App ID 
+					$this->Post_Process ($Link_ID, $appID ,null,2,2);
 				}
-				if ($this->formIdMap(2,'Form',$result['fid'])!=null ) { //Update the Form ID
-					$NewFormID=$this->formIdMap(2,'Form',$result['fid']);
+				if ( null != $NewFormID = $this->formIdMap(2,'Form',$result['fid'])) { //Update the Form ID
+
 					$this->Post_Process($Link_ID,$NewFormID,null,2,3);
 				}
 			}
 			if( $this->Statement_ID($statement,null,null,1)=='_formulize') {
-				///echo $statement."<br/>";
+				
 				preg_match('/\^.*\^/', $statement, $matches1);//To get the Ele Handle 
 				$ele_Handle_Text=explode('^',$matches1[0]);//To Get the Ele Handle As Text 
-				$Ele_ID= $this->Statement_ID($statement,null,2);///
-				///echo $Ele_ID;
-				///$NewID;
+				$Ele_ID= $this->Statement_ID($statement,null,2);
+
 				global $up;
 				$Flag;//This Flag will be Used to determine if the ee_Handle is Text or Integer 
 				$Flag=is_numeric($ele_Handle_Text[1]);//This Flag will be Used to determine if the ele_Handle is Text or Integer Flag=1 if Yes or Null
 				$statement=str_replace('&', ';',$statement);//This to bring back the ; to the Sterilized Array after we broke the statements with ; 
-				///echo $statement;  
+				
 				$rem=array('\'');
 				$Ele_ID=str_replace($rem,'', $Ele_ID);
 				$this->formIdMap(1,'ElementOri',$Ele_ID,2); //Used For Warning
 				
-				if ($Flag==null) //Ele_Handle Needs to be Done before Insert if it was a Text due to conflict might appear after the Insert
+				if ($Flag==null) 
 				{
 					if ( $this->Check_Uniquines($ele_Handle_Text[1],5)!=0){
 						$statement=preg_replace('/\^.*\^/','Imp_'.$ele_Handle_Text[1].'', $statement);
 						$this->formIdMap(1,'Element_Handle',$ele_Handle_Text[1],'Imp_'.$ele_Handle_Text[1].'');
 					} else {$statement=preg_replace('/\^.*\^/',''.$ele_Handle_Text[1].'', $statement);}//To Remove The ^^ if Unique
 				}
-				//echo $Ele_ID."Here";
+				
 
-				if ( $this->Check_Uniquines($Ele_ID,4)==0)//Check IF Ele_ID is Unique or not 
+				if ( $this->Check_Uniquines($Ele_ID,4) == 0)
 				{
 					$this->Insert ($statement);
 					array_push($Element_ID,$Ele_ID);
-					echo 'New Formulize row <br/>';  //cho $statement;
+					echo 'New Formulize row <br/>';  
 				}
 				else {
-					//echo "Updating the Ele_ID in Formulize  <br/>";
+					
 					$Auto_Incr= $this->Statement_ID($statement,1,1);
-					////echo $Auto_Incr;
+					
 					$NewID_1= $this->getlastID($Auto_Incr);
-					///echo $NewID_1;
+					
 					array_push($Element_ID,$NewID_1);
 					$this->formIdMap(1,'Element',$Ele_ID,$NewID_1);
 					echo 'Updating the Ele_ID in Formulize from : '.$Ele_ID.' to '.$NewID_1.' <br/>';
 					$up=1;
 				}
-				////echo "Inserted";
+				
 				if ($Flag!=null) {
 					if ($up==1){//This to check if THe ID has been Updated or not
 						$Ele_ID=$NewID_1;//We initialize the ELE_ID here with the latest ID  to be able to keep track of the Element_Handle the New with OLD
@@ -285,9 +287,9 @@ class Import_Model{
 					$this->Post_Process($Ele_ID,$Ele_ID,null,2,14);
 				} 
 				if (!empty($NewID_1)){$Ele_ID=$NewID_1;} //This is used as a precaution if the ELe_Handle is not a Number then the Ele_ID will always contain the OLD ID   
-				$result= $this->get_result('_formulize',$Ele_ID);
-				if ($this->formIdMap(2,'Form',$result['id_form'])!=null ) {
-					$this->Post_Process($Ele_ID,$this->formIdMap(2,'Form',$result['id_form']),null,2,4);
+				$result = $this->get_result('_formulize',$Ele_ID);
+				if ( null != $data_formID = $this->formIdMap(2,'Form',$result['id_form'])) {
+					$this->Post_Process($Ele_ID,$data_formID,null,2,4);
 				}
 			}
 			if( $this->Statement_ID($statement,null,null,1)=='_formulize_frameworks') {
@@ -321,29 +323,23 @@ class Import_Model{
 					$this->formIdMap(1,'Framelinks',$frame_links_ID,$NEWID);
 					$frame_links_ID=$NEWID;
 				}
-				///echo $frame_links_ID;
+
 				//Post Process// To Update the Fields
 				$result= $this->get_result('_formulize_framework_links',$frame_links_ID);
-				///echo "Here".$result;
-				//if (is_numeric($result['fl_form1_id'])){echo "Tre";}
-				if ($this->formIdMap(2,'Frame',$result['fl_frame_id'])!=null){ //Updates the Frame ID
-					$FrID=$this->formIdMap(2,'Frame',$result['fl_frame_id']);
+
+				if (null != $FrID = $this->formIdMap(2,'Frame',$result['fl_frame_id'])){ //Updates the Frame ID
 					$this->Post_Process($frame_links_ID,$FrID,null,2,6);
 				}
-				if ($this->formIdMap(2,'Form',$result['fl_form1_id'])!=null){ // Updates Form 1
-					$ForID1=$this->formIdMap(2,'Form',$result['fl_form1_id']);
+				if (null != $ForID1 = $this->formIdMap(2,'Form',$result['fl_form1_id'])) { // Updates Form 1
 					$this->Post_Process($frame_links_ID,$ForID1,null,2,7);
 				}
-				if ($this->formIdMap(2,'Form',$result['fl_form2_id'])!=null){ // Updates Form 2
-					$ForID2=$this->formIdMap(2,'Form',$result['fl_form2_id']);
+				if (null != $ForID2 = $this->formIdMap(2,'Form',$result['fl_form2_id'])) { // Updates Form 2
 					$this->Post_Process($frame_links_ID,$ForID2,null,2,8);
 				}
-				if ($this->formIdMap(2,'Element',$result['fl_key1'])!=null){ // Updates Elements 1
-					$Element1=$this->formIdMap(2,'Element',$result['fl_key1']);
+				if (null != $Element1 = $this->formIdMap(2,'Element',$result['fl_key1'])){ // Updates Elements 1
 					$this->Post_Process($frame_links_ID,$Element1,null,2,9);
 				}
-				if ($this->formIdMap(2,'Element',$result['fl_key2'])!=null){ // Updates Elements 2
-					$Element2=$this->formIdMap(2,'Element',$result['fl_key2']);
+				if (null != $Element2 = $this->formIdMap(2,'Element',$result['fl_key2'])) { // Updates Elements 2
 					$this->Post_Process($frame_links_ID,$Element2,null,2,10);
 				}
 				//Alert The User If Form,Elements Are not Part of the App 
@@ -351,10 +347,10 @@ class Import_Model{
 				if ($this->formIdMap(2,'ElementOri',$result['fl_key1'])==null || $this->formIdMap(2,'ElementOri',$result['fl_key2'])==null ){ echo 'Warning Element Doesn\'t Exist in Export <br/>';} //Alert For Element
 			}
 			if( $this->Statement_ID($statement,null,null,1)=='_groups'){
-				//The Only ID it will Insert is the One that's in Group_Insert Array//It checks that's Included in Array and then Inserts it
-				////echo "Here in groups";
+				
+
 				$groups_ID= $this->Statement_ID($statement);
-				////echo $groups_ID."<br/>";
+
 				if ($this->formIdMap(2,'Group_Insert',$groups_ID)!=null){
 					
 					if ( $this->Check_Uniquines($groups_ID,9)==0)
@@ -374,44 +370,38 @@ class Import_Model{
 					|| $this->Statement_ID($statement,null,null,1)=='_formulize_groupscope_settings'|| $this->Statement_ID($statement,null,null,1)=='_group_lists'
 					|| $this->Statement_ID($statement,null,null,1)=='_group_permission')
 			{
-				preg_match('/VALUES \(.*\)/', $statement, $values);//To get the Values
+				preg_match('/VALUES \(.*\)/', $statement, $values);
 				$rem=array('VALUES','`','(',')');
 				$table= $this->Statement_ID($statement,null,null,1);
 				$values=str_replace($rem,'',$values[0]);
 				$values=explode(',',$values);
 				$tt=$values[1];
-				///print_r($values);
-				//$values=str_replace('&',' ',$values);
+
 				if ($table=='_formulize_group_filters'){
 					$statement=str_replace('&', ';',$statement);}
 				if ($table=='_group_lists'){
-					$values[1]=explode('\'',$values[1]);//Add a check only to Group_Lists
+					$values[1]=explode('\'',$values[1]);
 					$values[1]=$values[1][1];}
-				$ID=$values[0]; //Statement ID
+				$ID=$values[0]; 
 				$ID=$values[0];
-				///print_r($values);
-				///echo "Here".Check_Uniquines($values[1],15);
-				///print_r($values);
+
 				if ($table=='_group_lists'&&  $this->Check_Uniquines($values[1],15)!=0)
-				{  ///echo "Not Ui";
+				{ 
 					$gl_name='Imp_'.$values[1];
-					///echo $gl_name;
+					
 				}
-				///echo "Here";
+				
 				//To get the table name \\
 				//***********************************
-				//***********************************
-				//This is Needed because the Tables in the DB are poorly designed .FID should have been consistent in the column number in all tables,also the group ID 
+				//This is Needed because FID should have been consistent in the column number in all tables,also the group ID 
 				$map_fid=array('_formulize_entry_owner_groups'=>'1/17','_formulize_group_filters'=>'1/19','_formulize_groupscope_settings'=>'2/23','_group_permission'=>'2/56');
 				$map_grpid=array('_formulize_entry_owner_groups'=>3,'_formulize_group_filters'=>2,'_formulize_groupscope_settings'=>1,'_group_permission'=>1);
 				$map_check=array('_formulize_entry_owner_groups'=>11,'_formulize_group_filters'=>12,'_formulize_groupscope_settings'=>13,'_group_lists'=>14,'_group_permission'=>24);
 				$map_fid=explode('/',$map_fid[$table]);
-				//echo"FID <br/>";
-				//print_r($map_fid);
-				//echo"FID <br/>";
+
 				$rem=array('\'');
 				$ID=str_replace($rem,'',$ID);
-				///echo $ID;
+
 				if ( $this->Check_Uniquines($ID,$map_check[$table])==0)
 				{
 					$this->Insert($statement);
@@ -419,17 +409,17 @@ class Import_Model{
 				}
 				else
 				{
-					///echo "Not Unique <br/>";
+
 					if ($table=='_group_lists') { 
 						$ee=preg_replace('/\(\'\d*\'\,/','(\'\',', $statement);
-						///echo $ee;
-						if (!empty($gl_name)){// A fix added ,because if the Field is Unique then it will always get a null value
-							$ee=str_replace($tt,"'$gl_name'",$ee);}//echo "here";
-						//echo $ee;
+
+						if (!empty($gl_name)){
+							$ee=str_replace($tt,"'$gl_name'",$ee);}
+
 					} else{
 						$ee=preg_replace('/\(\'\d*\'\,/','(\'\',', $statement);
 					}
-					///	echo $ID;
+
 					$ID= $this->getlastID($ee);
 					echo 'Updating Row in '.$table.'<br/>';
 					//Post Process
@@ -444,9 +434,9 @@ class Import_Model{
 					$rem=array('\'');
 					$v=str_replace($rem,'',$v);
 					if ($map_fid[0]==$k && $table!='_group_lists')
-					{ ////echo $v;
-						if ($this->formIdMap(2,'Form',$v)!=null){ // Updates Form 1
-							$ForID1=$this->formIdMap(2,'Form',$v);
+					{ 
+						if (null != $ForID1 = $this->formIdMap(2,'Form',$v) ){ // Updates Form 1
+		
 							$this->Post_Process($ID,$ForID1,null,2,$map_fid[1]);
 						}}
 					if ($map_grpid[$table]==$k &&$table!='_formulize_groupscope_settings')
@@ -455,7 +445,7 @@ class Import_Model{
 					}
 					if ($map_grpid[$table]==$k &&$table=='_formulize_groupscope_settings')
 					{
-						 $this->update_groups($table,$ID,1); //This function will take care of retrieving the Group ID using the ID and check if needs update ,new or ignore 
+						 $this->update_groups($table,$ID,1); 
 						 $this->update_groups($table,$ID,2);
 					}
 				}}
@@ -476,13 +466,12 @@ class Import_Model{
 				}
 				//Post Process
 				$result= $this->get_result('_formulize_advanced_calculations',$ID);
-				if ($this->formIdMap(2,'Form',$result['fid'])!=null){ // Updates Form 1
-					$ForID1=$this->formIdMap(2,'Form',$result['fid']);
+				if (null != $ForID1 = $this->formIdMap(2,'Form',$result['fid'])){ // Updates Form 1
 					$this->Post_Process ($ID,$ForID1,null,2,26);
 				}
 				$a=array();
-				array_push($a,$ID);//Because the Function Expects an Array of IDS
-				 $this->ser($a,2,3);
+				array_push($a,$ID);
+				$this->ser($a,2,3);
 			}
 			if ( $this->Statement_ID($statement,null,null,1)=='_formulize_other')
 			{
@@ -499,9 +488,9 @@ class Import_Model{
 					echo 'Updating Row in Formulize Other <br/>';
 				}
 				$result= $this->get_result('_formulize_other',$ID);
-				if ($this->formIdMap(2,'Element',$result['ele_id'])!=null){ // Updates Form 1
-					$ForID1=$this->formIdMap(2,'Element',$result['ele_id']);
-					$this->Post_Process ($ID,$ForID1,null,2,27);
+				if (null != $ele_id = $this->formIdMap(2,'Element',$result['ele_id']) ){ // Updates Form 1
+
+					$this->Post_Process ($ID,$ele_id,null,2,27);
 				}
 			}
 			if ( $this->Statement_ID($statement,null,null,1)=='_formulize_notification_conditions')
@@ -511,29 +500,29 @@ class Import_Model{
 				$UID=$UID[1];
 				$ID= $this->Statement_ID($statement);
 				
-				///echo $UID."   ".$ID;
+				
 				if ($UID==0)//To check if the UID is 0 or not .IF its not zero then this row won't be Inserted 
-				{///	echo "I UID";
+				{
 					$statement=str_replace('^','',$statement);
 					$statement=str_replace('&',';',$statement);
 					if ( $this->Check_Uniquines($ID,22)==0)
-					{///echo "Uniq";echo $statement;
+					{
 						$this->Insert($statement);
 						echo 'Inserting New Row in _formulize_notification_conditions<br/>';
 					}
 					else
 					{
-						///echo "Not Uniq";
+						
 						$Auto_Incr= $this->Statement_ID($statement,1);
 						$ID= $this->getlastID ($Auto_Incr);
-						//echo $ID;
+					
 						echo 'Updating Row in  formulize_notification_conditions <br/>';
 					}
 					$result= $this->get_result('_formulize_notification_conditions',$ID);
 					///Post Process\\\
-					if ($this->formIdMap(2,'Form',$result['not_cons_fid'])!=null){ // Updates Form ID in the Table
-						$ForID1=$this->formIdMap(2,'Form',$result['not_cons_fid']);
-						$this->Post_Process($ID,$ForID1,null,2,28);
+					if (null != $not_cons_fid = $this->formIdMap(2,'Form',$result['not_cons_fid'])){ // Updates Form ID in the Table
+
+						$this->Post_Process($ID,$not_cons_fid,null,2,28);
 					}
 					if ($result['not_cons_groupid']!=0)//Check if the GroupID is null or nut
 					{
@@ -541,34 +530,32 @@ class Import_Model{
 					}
 					if ($result['not_cons_elementuids']!=0)
 					{
-						if ($this->formIdMap(2,'Element',$result['not_cons_elementuids'])!=null){ // Updates Elements not_cons_elementuids
-							$ForID1=$this->formIdMap(2,'Element',$result['not_cons_elementuids']);
-							$this->Post_Process($ID,$ForID1,null,2,31);
+						if (null != $not_cons_elementuids = $this->formIdMap(2,'Element',$result['not_cons_elementuids'])) { // Updates Elements not_cons_elementuids
+							
+							$this->Post_Process($ID,$not_cons_elementuids,null,2,31);
 						}
 					}
 					if ($result['not_cons_elementemail']!=0)
 					{
-						if ($this->formIdMap(2,'Element',$result['not_cons_elementemail'])!=null){ // Updates Elements not_cons_elementemail
-							$ForID1=$this->formIdMap(2,'Element',$result['not_cons_elementemail']);
-							$this->Post_Process($ID,$ForID1,null,2,32);
+						if (null != $not_cons_elementemail = $this->formIdMap(2,'Element',$result['not_cons_elementemail'])) { // Updates Elements not_cons_elementemail
+							
+							$this->Post_Process($ID,$not_cons_elementemail,null,2,32);
 						}
 					}
 					$Data_Ser=@unserialize($result['not_cons_con']);//To check if its a serialized array or Not
 					if ($Data_Ser!=false && $Data_Ser !='b:0;'){
-						$Data_Ser=unserialize($result['not_cons_con']); //$Data_Ser[0] Elements Handle and $Data_Ser[2]
+						$Data_Ser=unserialize($result['not_cons_con']); 
 						$DS=unserialize($Data_Ser[0]);//For Array 0 Element Handle 
 						$DS1=unserialize($Data_Ser[2]);//For Array 2 Element Handle between { } 
-						if ($this->formIdMap(2,'Element_Handle',$DS[0])!=null){///echo 'Here';
-							$NewIDSer=array();
-							$NewIDSer0[0]=$this->formIdMap(2,'Element_Handle',$DS[0]);
+						if (null != $NewIDSer0[0] = $this->formIdMap(2,'Element_Handle',$DS[0])) {
+
 							$Data_Ser[0]=serialize($NewIDSer0);
 						}
 						if (preg_match('/\{.*\}/',$DS1[0])) {
 							$rem=array('{','}',' ');
 							$DS1=str_replace($rem,'', $DS1[0]);
-							if ($this->formIdMap(2,'Element_Handle',$DS1)!=null){
-								$NewIDSer2=array();
-								$NewIDSer2[0]='{'.$this->formIdMap(2,'Element_Handle',$DS1).'}';
+							if (null != $NewIDSer2[0]= $this->formIdMap(2,'Element_Handle',$DS1)){
+								$NewIDSer2[0]='{'.$NewIDSer2[0].'}';
 								$Data_Ser[2]=serialize($NewIDSer2);
 							}}
 						$this->Post_Process($ID,serialize($Data_Ser),null,2,33);
@@ -589,18 +576,18 @@ class Import_Model{
 				}else
 				{
 					$Auto_Incr= $this->Statement_ID($statement,1);
-					$ID= $this->getlastID($Auto_Incr);///echo $Auto_Incr;
+					$ID= $this->getlastID($Auto_Incr);
 					$this->formIdMap(1,'SV_ID',$sv_ID,$ID);//No Need to store it in the Map array but it won't hurt
 					$sv_ID=$ID;
 					echo 'Updating Row in  Saved Views <br/>';
 				}
-				//By this point we carry the Post Process Procedure//
+		
 				$result= $this->get_result('_formulize_saved_views',$sv_ID);
-				//print_r ($result);
+				
 				foreach ($result as $field_name=>$field_value)
 				{
 					switch ($field_name){
-					case 'sv_pubgroups'://Actually the $field_vlaue is useless in here because the Function  $this->update_groups gets the values by it self
+					case 'sv_pubgroups':
 						 $this->update_groups('_formulize_saved_views',$sv_ID);
 						break;
 					case 'sv_owner_uid':
@@ -618,25 +605,25 @@ class Import_Model{
 						}
 						break;
 					case 'sv_mainform':
-						if ($this->formIdMap(2,'Form',$field_value)!=null){
-							$this->Post_Process($sv_ID,$this->formIdMap(2,'Form',$field_value),null,2,38);
+						if (null != $form_id = $this->formIdMap(2,'Form',$field_value)){
+							$this->Post_Process($sv_ID,$form_id,null,2,38);
 						}
 						break;
 					case 'sv_sort':
 						break;
 					case 'sv_oldcols':
 						$Temp_value=explode(',',$field_value);
-						//print_r($Temp_value);
+		
 						foreach ($Temp_value as $v)
 						{
-							if ($this->formIdMap(2,'Element_Handle',$v)!=null){
-								$field_value=str_replace($v, $this->formIdMap(2,'Element_Handle',$v), $field_value);
+							if ( null != $element_handle_id = $this->formIdMap(2,'Element_Handle',$v)){
+								$field_value=str_replace($v, $element_handle_id, $field_value);
 							}
 							if (strstr($v,'hiddencolumn_')){
 								$hdncolm=explode('hiddencolumn_',$v);
-								if ($this->formIdMap(2,'Element_Handle',$hdncolm[1])!=null)
+								if (null != $element_handle_hidden_col = $this->formIdMap(2,'Element_Handle',$hdncolm[1]))
 								{
-									$field_value=str_replace($v,'hiddencolumn_'.$this->formIdMap(2,'Element_Handle',$hdncolm[1]), $field_value);
+									$field_value=str_replace($v,'hiddencolumn_'.$element_handle_hidden_col, $field_value);
 								}
 				
 							}
@@ -651,24 +638,24 @@ class Import_Model{
 						{
 							if (is_numeric($v))
 							{
-								if ($this->formIdMap(2,'Element',$v)!=null){
-									$field_value=str_replace($v, $this->formIdMap(2,'Element',$v), $field_value);
+								if (null != $element_id_sv_calc_cols = $this->formIdMap(2,'Element',$v)) {
+									$field_value=str_replace($v, $element_id_sv_calc_cols, $field_value);
 								}
 							}
 							$this->Post_Process($sv_ID,$field_value,null,2,39);
 						}
 						break;
 					case 'sv_calc_grouping':
-						preg_match_all('!\d+!', $field_value, $numbers);//This will return all the numbers in the string
-						///	print_r($numbers);
+						preg_match_all('!\d+!', $field_value, $numbers);
+				
 						foreach ($numbers[0] as $v)
 						{
 
-							if ($this->formIdMap(2,'Element',$v)!=null){
-								$field_value=str_replace($v,$this->formIdMap(2,'Element',$v), $field_value);
+							if (null != $element_sv_calc_grouping = $this->formIdMap(2,'Element',$v)){
+								$field_value=str_replace($v,$element_sv_calc_grouping, $field_value);
 							}
 						}
-						///echo $field_value;
+		
 						$this->Post_Process($sv_ID,$field_value,null,2,41);
 						break;
 					}
@@ -693,7 +680,7 @@ class Import_Model{
 					$ID1= $this->getlastID($Auto_Incr);
 
 					if ($table=='_formulize_screen'){
-						$this->formIdMap(1,'SID',$ID,$ID1);}//No Need to store it in the Map array but it won't hurt
+						$this->formIdMap(1,'SID',$ID,$ID1);}
 					echo 'Updating Row in in '.$table.' with ID :'. $ID1 .'<br/>';
 					$ID=$ID1;
 				}
@@ -703,18 +690,18 @@ class Import_Model{
 
 				//Update the FID 
 				if ($table=='_formulize_screen'){
-					if ($this->formIdMap(2,'Form',$result['fid'])!=null)
+					if (null != $fid_formulize_screen = $this->formIdMap(2,'Form',$result['fid']))
 					{
-						$this->Post_Process($ID,$this->formIdMap(2,'Form',$result['fid']),null,2,42);
+						$this->Post_Process($ID, $fid_formulize_screen ,null,2,42);
 					}
-					if ($this->formIdMap(2,'Framelinks',$result['frid'])!=null)
+					if (null != $frid_formulize_screen = $this->formIdMap(2,'Framelinks',$result['frid']))
 					{
-						$this->Post_Process($ID,$this->formIdMap(2,'Form',$result['frid']),null,2,43);
+						$this->Post_Process($ID,$frid_formulize_screen,null,2,43);
 					}}
 				if ($table=='_formulize_screen_form'){
-					if ($this->formIdMap(2,'SID',$result['sid'])!=null)
+					if ( null != $sid_formulize_screen_form = $this->formIdMap(2,'SID',$result['sid']))
 					{
-						$this->Post_Process($ID,$this->formIdMap(2,'SID',$result['sid']),null,2,44);
+						$this->Post_Process($ID,$sid_formulize_screen_form,null,2,44);
 					}
 				}
 			}
@@ -722,7 +709,7 @@ class Import_Model{
 			{
 				$statement=str_replace('&', ';',$statement);
 				$Multi_ID= $this->Statement_ID($statement);
-				//echo $Multi_ID;
+		
 				if ( $this->Check_Uniquines($Multi_ID,21)==0)
 				{
 					$this->Insert($statement);
@@ -731,16 +718,16 @@ class Import_Model{
 				{
 					$Aut_Incr= $this->Statement_ID($statement,1);
 					$ID1= $this->getlastID($Aut_Incr);
-					//echo $ID1;
+			
 					$this->formIdMap(1,'multipageid',$Multi_ID,$ID1);//No Need to store it in the Map array but it won't hurt
 					echo 'Updating Row in in Screen Multipage  with ID : '. $ID1 .' <br/>';
 					$Multi_ID=$ID1;
 				}
 				//Post Process
 				$result= $this->get_result('_formulize_screen_multipage',$Multi_ID);
-				if ($this->formIdMap(2,'SID',$result['sid'])!=null)
+				if ( null != $sid_formulize_screen_multipage = $this->formIdMap(2,'SID',$result['sid']))
 				{
-					$this->Post_Process($Multi_ID,$this->formIdMap(2,'SID',$result['sid']),null,2,45);
+					$this->Post_Process($Multi_ID,$sid_formulize_screen_multipage,null,2,45);
 				}
 				if ($result['paraentryform']!=0)//If not default Zero 
 				{
@@ -751,10 +738,10 @@ class Import_Model{
 					$data1=unserialize($result['pages']);
 					foreach($data1[0] as $k=>$v)
 					{
-						if ($this->formIdMap(2,'Element',$v)!=null){ // Updates Elements not_cons_elementuids 
-							$v=$this->formIdMap(2,'Element',$v);
-							$data1[0][$k]=$v;
-							//$this->Post_Process ($ID,$ForID1,null,2,31);
+						if (null != $element_id_data = $this->formIdMap(2,'Element',$v)){ // Updates Elements not_cons_elementuids 
+							
+							$data1[0][$k]=$element_id_data;
+							
 						}
 					}
 					$this->Post_Process($Multi_ID,serialize($data1),null,2,46);
@@ -765,21 +752,21 @@ class Import_Model{
 					//$data1);
 					foreach ($data1 as $K1=>$D){
 						foreach ($D[0] as $k => $d) //To Change the Array of Elements Handle 
-						{//echo "$d";
-							//print_r($d);
-							if ($this->formIdMap(2,'Element_Handle',$D[0][$k])!=null)
-							{ //echo 'Here";
-								$data1[$K1][0][$k]=$this->formIdMap(2,'Element_Handle',$D[0][$k]);
-								//echo $
+						{
+							if (null != $element_handle_conditions = $this->formIdMap(2,'Element_Handle',$D[0][$k]))
+							{ 
+								$data1[$K1][0][$k]= $element_handle_conditions ;
+							
 							}}
 						foreach ($D[2] as $k => $d)
 						{
 							if (preg_match('/\{.*\}/',$d)) {
 								$s=explode('{',$d);
 								$s=explode('}',$s[1]);
-								if ($this->formIdMap(2,'Element_Handle',$s[0])!=null){
-									$v='{'.$this->formIdMap(2,'Element_Handle',$s[0]).'}';
-									$data1[$K1][2][$k]=$v;
+								if (null != $element_handle_conditions_data = $this->formIdMap(2,'Element_Handle',$s[0])){
+									
+									$data1[$K1][2][$k]= '{'.$element_handle_conditions_data.'}';
+
 								}}}
 					}
 					$this->Post_Process($Multi_ID,serialize($data1),null,2,47);
@@ -796,7 +783,7 @@ class Import_Model{
 					$Aut_Incr= $this->Statement_ID($statement,1);
 					$ID1= $this->getlastID($Aut_Incr);
 					//echo $ID1;
-					$this->formIdMap(1,'ListofEntriesID',$ListEntries_ID,$ID1);//No Need to store it in the Map array but it won't hurt
+					$this->formIdMap(1,'ListofEntriesID',$ListEntries_ID,$ID1);
 					echo 'Updating Row in in Screen List of Entries  with ID :'. $ID1 .'<br/>';
 					$ListEntries_ID=$ID1;
 				}
@@ -804,28 +791,28 @@ class Import_Model{
 				$Decolums=unserialize($result['decolumns']);
 				$hiddencolumns=unserialize($result['hiddencolumns']);
 				$limitviews=unserialize($result['limitviews']);
-				if ($this->formIdMap(2,'SID',$result['sid'])!=null)
+				if (null != $sid_data = $this->formIdMap(2,'SID',$result['sid']))
 				{
-					$this->Post_Process($ListEntries_ID,$this->formIdMap(2,'SID',$result['sid']),null,2,50);
+					$this->Post_Process($ListEntries_ID, $sid_data ,null,2,50);
 				}
-				if ($this->formIdMap(2,'SID',$result['defaultview'])!=null)
+				if (null != $sid_defaultview = $this->formIdMap(2,'SID',$result['defaultview']))
 				{
-					$this->Post_Process($ListEntries_ID,$this->formIdMap(2,'SID',$result['sid']),null,2,52);
+					$this->Post_Process($ListEntries_ID, $sid_defaultview ,null,2,52);
 				}
 				foreach ($limitviews as $key=>$value)
 				{
-					if ($this->formIdMap(2,'SID',$value)!=null)
+					if (null != $sid_loop = $this->formIdMap(2,'SID',$value))
 					{
-						$limitviews[$key]=''.$this->formIdMap(2,'SID',$value).'';
+						$limitviews[$key]=''.$sid_loop.'';
 					}
 				}
 				if ($result['decolumns']!='b:0;'|| $result['decolumns']!='a:0:{}')
 				{
 					foreach ($Decolums as $key=>$data)
 					{
-						if ($this->formIdMap(2,'Element_Handle',$data)!=null)
+						if ( null != $element_handle_decolumns = $this->formIdMap(2,'Element_Handle',$data))
 						{
-							$Decolums[$key]=$this->formIdMap(2,'Element_Handle',$data);
+							$Decolums[$key]=$element_handle_decolumns;
 						}
 					}
 					$this->Post_Process($ListEntries_ID,serialize($Decolums),null,2,54);
@@ -834,16 +821,16 @@ class Import_Model{
 				{
 					foreach ($hiddencolumns as $key=>$data)
 					{
-						if ($this->formIdMap(2,'Element_Handle',$data)!=null)
+						if (null != $element_hidden_columns = $this->formIdMap(2,'Element_Handle',$data))
 						{
-							$hiddencolumns[$key]=$this->formIdMap(2,'Element_Handle',$data);
+							$hiddencolumns[$key]= $element_hidden_columns;
 						}
 					}
 					$this->Post_Process($ListEntries_ID,serialize($hiddencolumns),null,2,53);
 				}
-				if ($this->formIdMap(2,'SID',$result['viewentryscreen'])!=null)
+				if ( null != $sid_view_entryscreen = $this->formIdMap(2,'SID',$result['viewentryscreen']))
 				{
-					$this->Post_Process($ListEntries_ID,$this->formIdMap(2,'SID',$result['viewentryscreen']),null,2,55);
+					$this->Post_Process($ListEntries_ID, $sid_view_entryscreen ,null,2,55);
 				}
 				$this->Post_Process($ListEntries_ID,serialize($limitviews),null,2,51);
 			}
@@ -884,9 +871,6 @@ class Import_Model{
 		$fields=explode ('/',$tables[$table]);
 
 		switch ($switch) {
-		case 1:
-			//Removed this Case statement Part and changed it to a more efficient one //Will Remove this Case and Update the Function Parameters in the next code Cleaning  
-			break;
 		case 2:
 			$sql='UPDATE '.Prefix.''.$fields[0].' SET '.$fields[1].'= :Update WHERE '.$fields[2].'= :id';
 			$Query=$this->_db->connect()->prepare($sql);
@@ -990,15 +974,15 @@ class Import_Model{
 				case 'text':
 				case 'grid'://If Row was Text or Grid
 					if (array_key_exists(4, $data1)){
-						if ($this->formIdMap(2,'Element',$data1[4])!=null){
-							$data1[4]= $this->formIdMap(2,'Element',$data1[4]);
+						if (null != $grid_element_id = $this->formIdMap(2,'Element',$data1[4])){
+							$data1[4]= $grid_element_id;
 							$this->Post_Process($keyid,serialize($data1),null,2,5);
 						}}
 					break;
 				case 'textarea': //If Row was Text Area
 					if (array_key_exists(3, $data1)){
-						if ($this->formIdMap(2,'Element',$data1[3])!=null){
-							$data1[3]=$this->formIdMap(2,'Element',$data1[3]);
+						if (null != $text_area_element_id = $this->formIdMap(2,'Element',$data1[3])){
+							$data1[3]=$text_area_element_id;
 							$this->Post_Process($keyid,serialize($data1),null,2,5);}}
 					break;
 					
@@ -1009,28 +993,29 @@ class Import_Model{
 						case 2:
 							if (strstr ($d,'#*=:*')){
 								$s=explode ('#*=:*',$d);///print_r($s);echo $keyid."<br/>";
-								if ($this->formIdMap(2,'Form',$s[0])!=null){ 
-									$d=str_replace($s[0],$this->formIdMap(2,'Form',$s[0]),$d);}
-								if ($this->formIdMap(2,'Element_Handle',$s[1])!=null)
+								if (null != $select_form_id = $this->formIdMap(2,'Form',$s[0])){ 
+									$d=str_replace($s[0], $select_form_id ,$d);}
+								if (null != $select_element_handle = $this->formIdMap(2,'Element_Handle',$s[1]))
 								{
-									$d=str_replace($s[1],$this->formIdMap(2,'Element_Handle',$s[1]),$d);
+									$d=str_replace($s[1],$select_element_handle,$d);
 								}
 								$data1[2]=$d;
 							}
-							//echo $data1[2];
-							break;//End of Case 2
+						
+							break;
 						case 3:
 							if (strstr ($d,',') || is_numeric($d)){//If it was a List of Groups or Single ID\\\\
 								$s=explode(',',$d);
-								foreach ($s as $key=>$v){//Update the Code Instead of Using Str_Replace to replace the value ,I reassign the Key of the array.It won't make difference in the Front end ,but just to keep things cleaner in the back end.For example if we ignored a group the str_replace will remove the grp id but keep the comma,however,unset will remove the value and , because of how Implode works. 
-									if ($this->formIdMap(2,'Group_Map_Auto',$v)!=null){//To Update The Create New Group
-										$grpID_N=$this->formIdMap(2,'Group_Map_Auto',$v);
-										$s[$key]=$grpID_N;}
-									if ($this->formIdMap(2,'Group_Map',$v)!=null){ //To Update the Map Group
-										$grpID_N=$this->formIdMap(2,'Group_Map',$v);
-										$s[$key]=$grpID_N;}
-									if ($this->formIdMap(2,'Group_Ignore',$v)!=null){ //To Remove the Group that's flagged as Ignore by replacing it with ''
-										unset($s[$key]);}
+								foreach ($s as $key=>$v){
+									if ( null != $grpID_auto = $this->formIdMap(2,'Group_Map_Auto',$v)){//To Update The Create New Group
+										$s[$key]=$grpID_auto;
+									}
+									if ( null != $grpID_map = $this->formIdMap(2,'Group_Map',$v)){ //To Update the Map Group
+										$s[$key]=$grpID_map;
+									}
+									if ($this->formIdMap(2,'Group_Ignore',$v)!=null){ 
+										unset($s[$key]);
+									}
 								}
 								$data1[3]=implode(',',$s);;
 							}
@@ -1038,8 +1023,8 @@ class Import_Model{
 						case 5://To Update the Array of Ele_ID=>{ele_handle}
 							foreach ($data1[5][0] as $k => $d) //To Change the Array of Elements Handle 
 							{
-								if ($this->formIdMap(2,'Element_Handle',$data1[5][0][$k])!=null)
-								{$data1[5][0][$k]=$this->formIdMap(2,'Element_Handle',$data1[5][0][$k]);} 
+								if (null != $data_element_handle = $this->formIdMap(2,'Element_Handle',$data1[5][0][$k]) )
+								{ $data1[5][0][$k]= $data_element_handle ;} 
 							}
 							foreach ($data1[5][2] as $k => $d)
 							{
@@ -1053,8 +1038,8 @@ class Import_Model{
 						case 11:
 						case 12:
 							if ($d!='none'){
-								if ($this->formIdMap(2,'Element',$d)!=null){ // Updates Elements 1
-									$data[$k]=''.$this->formIdMap(2,'Element',$d).'';}}
+								if (null != $element_id_data_none = $this->formIdMap(2,'Element',$d)){ // Updates Elements 1
+									$data[$k]=''.$element_id_data_none.'';}}
 							break;
 						}
 					}
@@ -1081,35 +1066,35 @@ class Import_Model{
 				$result=$Query->fetch(\PDO::FETCH_ASSOC);
 
 				$data1=unserialize($result[$fields[1]]); 
-				//print_r($data1);
+			
 				if ($fields[2]!='acid'){
 					foreach ($data1[0] as $k => $d) //To Change the Array of Elements Handle 
-					{//echo "$d";
-						///print_r($d);
-						if ($this->formIdMap(2,'Element_Handle',$data1[0][$k])!=null)
-						{ //echo "Here";
-							$data1[0][$k]=$this->formIdMap(2,'Element_Handle',$data1[0][$k]);
-							//echo $
-						}}
+					{
+
+						if (null != $element_handle_id_f = $this->formIdMap(2,'Element_Handle',$data1[0][$k]))
+						{ 
+							$data1[0][$k]=$element_handle_id;
+							
+						}
+					}
 					foreach ($data1[2] as $k => $d)
 					{
 						if (preg_match('/\{.*\}/',$d)) {
 							$s=explode('{',$d);
 							$s=explode('}',$s[1]);
-							if ($this->formIdMap(2,'Element_Handle',$s[0])!=null){
-								$v='{'.$this->formIdMap(2,'Element_Handle',$s[0]).'}';
-								$data1[2][$k]=$v;
+							if (null != $element_handle_id_s = $this->formIdMap(2,'Element_Handle',$s[0])){
+								$data1[2][$k]='{'.$element_handle_id.'}';
 							}
 						}
 					}
 				}
 				else 
 				{
-					if ($this->formIdMap(2,'Element_Handle',$data1[0]['form'])!=null){//To get the App cal ELement Handle we don't need to loop in it because it will always be one Element
-						$data1[0]['form']=$this->formIdMap(2,'Element_Handle',$data1[0]['form']);
+					if (null != $form_handle_id_s = $this->formIdMap(2,'Element_Handle',$data1[0]['form'])){//To get the App cal ELement Handle we don't need to loop in it because it will always be one Element
+						$data1[0]['form']=$form_handle_id_s;
 					}
 				}
-				//print_r($data1);
+
 				$this->Post_Process($keyid,serialize($data1),null,2,$fields[3]);
 			}}
 	}
@@ -1140,9 +1125,9 @@ class Import_Model{
 		$insert_sql=explode('^',$insert_sql);
 		$AllHandles1=explode (',',$insert_sql[1]);
 		$AllHandles2=explode ('\'',$AllHandles1[0]);
-		if ($this->formIdMap(2,'Form_Handle',$AllHandles2[0])!=null)
+		if (null != $form_handle_id = $this->formIdMap(2,'Form_Handle',$AllHandles2[0]))
 		{
-			$AllHandles2[0]=$this->formIdMap(2,'Form_Handle',$AllHandles2[0]);
+			$AllHandles2[0]=$form_handle_id;
 		}
 		$sql_1='CREATE TABLE IF NOT EXISTS `'.Prefix.'_formulize_'.$AllHandles2[0].'` (
 			`entry_id` int(7) unsigned NOT NULL AUTO_INCREMENT,
@@ -1158,7 +1143,9 @@ class Import_Model{
 		{
 			if ($k!=0){
 				if ( $this->formIdMap(2,'Element_Handle',$column) != null){
-					$column = $this->formIdMap(2,"Element_Handle",$column);}
+					$column = $this->formIdMap(2,"Element_Handle",$column);
+				}
+				
 				$sql_1.="`$column` text,";
 			}}
 		$sql_1.=$sql_2;
@@ -1172,13 +1159,13 @@ class Import_Model{
 
 
 	private function update_groups ($table,$ID,$flag=null){ 
-		///echo $ID;
+
 		$tables=array ('_formulize_entry_owner_groups'=>'groupid/owner_id/16','_formulize_group_filters'=>'groupid/filterid/18'
 		,'_formulize_groupscope_settings'=>'groupid/groupscope_id/21','_2formulize_groupscope_settings'=>'view_groupid/groupscope_id/22','_group_lists'=>'gl_groups/gl_id/24'
 		,'_formulize_notification_conditions'=>'not_cons_groupid/not_cons_id/30','_formulize_saved_views'=>'sv_pubgroups/sv_id/34'
 		,'_formulize'=>'ele_display/ele_id/11','_2formulize'=>'ele_disabled/ele_id/12','_group_permission'=>'gperm_groupid/gperm_id/57');
 		$f;
-		//echo $tables[$table];
+
 		switch ($flag){
 		case null:
 			$fields=explode ('/',$tables[$table]);
@@ -1213,17 +1200,15 @@ class Import_Model{
 
 		$result=explode(',',$result[$fields[0]]);
 		foreach ($result as $k=>$d){
-			if ($this->formIdMap(2,'Group_Map_Auto',$d)!=null){//To Update The Create New Group
-				$grpID_N=$this->formIdMap(2,'Group_Map_Auto',$d);
+			if (null != $grpID_auto = $this->formIdMap(2,'Group_Map_Auto',$d)){//To Update The Create New Group
 				if (empty($f)){
-					$this->Post_Process($ID,$grpID_N,null,2,$fields[2]);}else {$result[$k]=$grpID_N; ///print_r($result);
+					$this->Post_Process($ID,$grpID_auto,null,2,$fields[2]);}else {$result[$k]=$grpID_auto; 
 				}
 			}
-			if ($this->formIdMap(2,'Group_Map',$d)!=null){ //To Update the Map Group
-				$grpID_N=$this->formIdMap(2,'Group_Map',$d);
+			if (null != $grpID_map = $this->formIdMap(2,'Group_Map',$d)){ //To Update the Map Group
 				if (empty($f)){
-					$this->Post_Process($ID,$grpID_N,null,2,$fields[2]);}else {
-					$result[$k]=$grpID_N;
+					$this->Post_Process($ID,$grpID_map,null,2,$fields[2]);}else {
+					$result[$k]=$grpID_map;
 				}
 			}
 
@@ -1246,7 +1231,7 @@ class Import_Model{
 	}
 
 	private function get_result($table,$ID){
-		//Adapted Juilan regarding Array Map Idea instead of Explode on /
+
 		$tables = array('_formulize_saved_views'=>array('sv_pubgroups,sv_owner_uid,sv_mod_uid,sv_formframe,sv_mainform,sv_sort,sv_oldcols,sv_currentview,sv_calc_cols,sv_calc_grouping',Prefix.'_formulize_saved_views','sv_id')
 		,'_formulize_screen'=>array('fid,frid',Prefix.'_formulize_screen','sid'),'_formulize_screen_form'=>array('sid',Prefix.'_formulize_screen_form','formid'),
 		'_formulize_screen_multipage'=>array('sid,pages,conditions,paraentryform',Prefix.'_formulize_screen_multipage','multipageid'),
@@ -1256,7 +1241,7 @@ class Import_Model{
 		,'_formulize_notification_conditions'=>array('not_cons_fid,not_cons_groupid,not_cons_elementuids,not_cons_elementemail,not_cons_con',Prefix.'_formulize_notification_conditions','not_cons_id')
 		,'_formulize_screen_listofentries'=>array('sid,limitviews,defaultview,hiddencolumns,decolumns,viewentryscreen',Prefix.'_formulize_screen_listofentries','listofentriesid'));
 
-		//echo "SELECT ".$tables[$table][0]." from ".$tables[$table][1]." where ".$tables[$table][2]." =$ID";
+	
 		$Query=$this->_db->connect()->prepare("SELECT ".$tables[$table][0]." from ".$tables[$table][1]." where ".$tables[$table][2]." =:id") ;
 		$Query->bindValue(":id",$ID);
 		$Query->execute();
@@ -1277,7 +1262,7 @@ class Import_Model{
 			{
 				preg_match('/\(\'\d*\'\,\'\d*\'/', $statement, $matches);
 				$ID=explode(',',$matches[0]);
-				//echo $ID[1];
+		
 				return $ID[1];
 			}
 		}
@@ -1285,16 +1270,16 @@ class Import_Model{
 			if (empty($table)){ 
 				if ($sec==null){
 					$statement=preg_replace('/\(\'\d*\'\,/',"('',", $statement);
-					///echo $statement;
+			
 					return $statement; 
 				}
 				if ($sec!=null)
 				{
 					preg_match('/\(\'\d*\'\,\'\d*\'/', $statement, $matches);
 					$ID=explode(',',$matches[0]);
-					///print_r($ID);
+				
 					$statement=preg_replace('/\w*VALUES \(\'\d*\'\,\'\d*\'/', "VALUES ".$ID[0].",''", $statement);
-					//echo $statement;
+			
 					return $statement;
 				}
 			}}
