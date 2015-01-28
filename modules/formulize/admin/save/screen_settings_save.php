@@ -118,7 +118,9 @@ if($isNew) {
       $screen->setVar('savebuttontext', _formulize_SAVE);
       $screen->setVar('alldonebuttontext', _formulize_DONE);
   } else if($screens['type'] == 'graph') {
-      // Defaults
+      // Defaults settings for graph screen. When trying to load graph screen with default settings
+      // user will be redirected to setting section
+      // Re-editted by Jinfu Jan 2015
 	  $screen->setVar('width', 500);
 	  $screen->setVar('height', 300);
 	  $screen->setVar('orientation', "horizontal");
@@ -128,6 +130,9 @@ if($isNew) {
 	  $screen->setVar('barr', 143);
 	  $screen->setVar('barg', 190);
 	  $screen->setVar('barb', 88);
+          $screen->setVar('labelelem',0);
+          $screen->setVar('dataelem',0);
+          $screen->setVar('ops','');
   }
 
 } else {

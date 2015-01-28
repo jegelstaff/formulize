@@ -112,7 +112,7 @@ function patch40() {
 	 * ====================================== */
 	
 	$checkThisTable = 'formulize_screen_graph';
-	$checkThisField = 'usecurrentviewlist';
+	$checkThisField = 'defaultview';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
@@ -307,7 +307,7 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 
 		// if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
 		if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
-	$sql['increase_session_id_size'] = "ALTER TABLE ".$xoopsDB->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";
+			$sql['increase_session_id_size'] = "ALTER TABLE ".$xoopsDB->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";
 		}
 
 		$sql['add_encrypt'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_encrypt` tinyint(1) NOT NULL default '0'";
@@ -342,8 +342,10 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		$sql['add_elementtext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `elementtemplate` text NOT NULL"; 
 		$sql['add_bottomtext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `bottomtemplate` text NOT NULL"; 
 		$sql['add_formelements'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_form") . " ADD `formelements` text";
-        $sql['add_on_before_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_before_save` text";
+		$sql['add_on_before_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_before_save` text";
 		$sql['add_form_note'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `note` text";
+		$sql['add_defaultview']="ALTER TABLE " . $xoopsDB->prefix("formulize_screen_graph") . " ADD `defaultview` varchar(255)";
+		//added formulize_screen_graph/defaultview jan 2015
 		foreach($sql as $key=>$thissql) {
 			if(!$result = $xoopsDB->query($thissql)) {
 				if($key === "add_encrypt") {
@@ -376,12 +378,14 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 					print "elementtemplate already added for multipage screens.  result: OK<br>";
 				} elseif($key === "add_bottomtext") {
 					print "bottomtemplate already added for multipage screens.  result: OK<br>";
-                } elseif($key === "add_formelements") {
-                    print "formelements field already added for single page screens.  result: OK<br>";
-                } elseif($key === "add_on_before_save") {
-                    print "on_before_save field already added.  result: OK<br>";
-                } elseif($key === "add_form_note") {
-                    print "form note field already added.  result: OK<br>";
+				} elseif($key === "add_formelements") {
+					 print "formelements field already added for single page screens.  result: OK<br>";
+				} elseif($key === "add_on_before_save") {
+					    print "on_before_save field already added.  result: OK<br>";
+				} elseif($key === "add_form_note") {
+					 print "form note field already added.  result: OK<br>";
+				} elseif($key === "add_defaultview") {
+					 print "defaultview field already added.  result: OK<br>";
 				} elseif(strstr($key, 'drop_from_formulize_id_')) {
 					continue;
 				} else {

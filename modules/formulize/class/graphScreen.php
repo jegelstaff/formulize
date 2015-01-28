@@ -23,9 +23,9 @@ class formulizeGraphScreen extends formulizeScreen {
 		$this->initvar("ops", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initvar("labelelem", XOBJ_DTYPE_INT);
 		$this->initvar("dataelem", XOBJ_DTYPE_INT);
-    $this->initvar("defaultview", XOBJ_DTYPE_TXTBOX, NULL, false, 20);
-    $this->initVar("limitviews", XOBJ_DTYPE_ARRAY); // 'allviews' in array means no limit, otherwise use view id numbers, or 'mine', 'group' and 'all' for the Standard Views
-    $this->initVar("usecurrentviewlist", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+		$this->initvar("defaultview", XOBJ_DTYPE_TXTBOX, NULL, false, 20);
+		$this->initVar("limitviews", XOBJ_DTYPE_ARRAY); // 'allviews' in array means no limit, otherwise use view id numbers, or 'mine', 'group' and 'all' for the Standard Views
+		$this->initVar("usecurrentviewlist", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 	}
 }
 
@@ -62,7 +62,13 @@ class formulizeGraphScreenHandler extends formulizeScreenHandler {
 	    $screen->setVar('dobr', 0);
 		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI	
 		if (!$update) {
-            $sql = sprintf("INSERT INTO %s (sid, width, height, orientation, bgr, bgg, bgb, barr, barg, barb, ops, labelelem, dataelem, defaultview, limitviews, usecurrentviewlist) VALUES (%u, %u, %u, %s, %u, %u, %u, %u, %u, %u, %s, %u, %u, %s, %s, %s)", $this->db->prefix('formulize_screen_graph'), $screen->getVar('sid'), $screen->getVar('width'), $screen->getVar('height'), $this->db->quoteString($screen->getVar('orientation')), $screen->getVar('bgr'), $screen->getVar('bgg'), $screen->getVar('bgb'), $screen->getVar('barr'), $screen->getVar('barg'), $screen->getVar('barb'), $this->db->quoteString($screen->getVar('ops')), $screen->getVar('labelelem'), $screen->getVar('dataelem'), $this->db->quoteString($screen->getVar('defaultview')), $this->db->quoteString(serialize($screen->getVar('limitviews'))), $this->db->quoteString($screen->getVar('usecurrentviewlist')));
+            $sql = sprintf("INSERT INTO %s (sid, width, height, orientation, bgr, bgg, bgb, barr, barg, barb, ops, labelelem, dataelem, defaultview, limitviews, usecurrentviewlist)
+			   VALUES (%u, %u, %u, %s, %u, %u, %u, %u, %u, %u, %s, %u, %u, %s, %s, %s)",
+			   $this->db->prefix('formulize_screen_graph'), $screen->getVar('sid'), $screen->getVar('width'),
+			   $screen->getVar('height'), $this->db->quoteString($screen->getVar('orientation')),
+			   $screen->getVar('bgr'), $screen->getVar('bgg'), $screen->getVar('bgb'), $screen->getVar('barr'), $screen->getVar('barg'), $screen->getVar('barb'),
+			   $this->db->quoteString($screen->getVar('ops')), $screen->getVar('labelelem'), $screen->getVar('dataelem'), $this->db->quoteString($screen->getVar('defaultview')),
+			   $this->db->quoteString(serialize($screen->getVar('limitviews'))), $this->db->quoteString($screen->getVar('usecurrentviewlist')));
         } else {
             $sql = sprintf("UPDATE %s SET width = %u, height = %u, orientation = %s, bgr = %u, bgg = %u, bgb = %u, barr = %u, barg = %u, barb = %u, ops = %s, labelelem = %u, dataelem = %u, defaultview = %s, limitviews = %s, usecurrentviewlist = %s WHERE sid = %u", $this->db->prefix('formulize_screen_graph'), $screen->getVar('width'), $screen->getVar('height'), $this->db->quoteString($screen->getVar('orientation')), $screen->getVar('bgr'), $screen->getVar('bgg'), $screen->getVar('bgb'), $screen->getVar('barr'), $screen->getVar('barg'), $screen->getVar('barb'), $this->db->quoteString($screen->getVar('ops')), $screen->getVar('labelelem'), $screen->getVar('dataelem'), $this->db->quoteString($screen->getVar('defaultview')), $this->db->quoteString(serialize($screen->getVar('limitviews'))), $this->db->quoteString($screen->getVar('usecurrentviewlist')), $screen->getVar('sid'));
         }
@@ -112,9 +118,9 @@ class formulizeGraphScreenHandler extends formulizeScreenHandler {
 			"orientation" => $screen->getVar('orientation'),
 			"backgroundcolor" => $bgc,
 			"barcolor" => $barc,
-      "defaultview" => $screen->getVar('defaultview'),
-      "limitviews" => $screen->getVar('limitviews'),
-      "usecurrentviewlist" => $screen->getVar('usecurrentviewlist')
+			"defaultview" => $screen->getVar('defaultview'),
+			"limitviews" => $screen->getVar('limitviews'),
+			"usecurrentviewlist" => $screen->getVar('usecurrentviewlist')
 		);
 		include_once XOOPS_ROOT_PATH."/modules/formulize/include/graphdisplay.php";
 		displayGraph('Bar', $screen->getVar('fid'), $screen->getVar('frid'), $screen->getVar('labelelem'), $screen->getVar('dataelem'), $screen->getVar('ops'), $options);

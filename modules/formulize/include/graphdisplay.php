@@ -96,6 +96,11 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
  * @param $graphOptions the graph parameters passed in by user!
  */
 function displayGraph($graphType, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {
+	if(!graphParamCheck($graphType, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions)){
+	    header("refresh:3; url=".XOOPS_URL."/modules/formulize/admin/ui.php?page=screen&aid=".$_GET['aid']."&fid=".$_GET['fid']."&sid=".$_GET['sid']);
+	    die("<br>Please check graph settings. <br>Jumping back to screen settings in 3 seconds.");
+	}
+	
 	switch ($graphType) {
 		case "Bar" :
 			displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $graphOptions);
@@ -106,6 +111,55 @@ function displayGraph($graphType, $fid, $frid, $labelElement, $dataElement, $ope
 	}
 }
 
+/**
+ *Check method to make sure everything using producing graph is ok
+ * @param $graphType type of the graph to be displayed with input data
+ * @param $fid the id of the form where the data is coming from
+ * @param $frid the id of the relation(relating fid's form to another form) $frid == fid if no relation is specified
+ * @param $labelElement the field in the form to be used as label
+ * @param $dataElement the field in the form to be used as data to graph
+ * @param $operation the operation to be used to draw graphs
+ * @param $graphOptions the graph parameters passed in by user!
+ *
+ * Added Jan 2015 by Jinfu 
+ */
+function graphParamCheck($graphType, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions){
+    $form_handler = xoops_getmodulehandler('forms','formulize');
+    $formObject=$form_handler->get($fid);
+    
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    $labelElemtntObject=$element_handler->get($labelElement);
+    $dataElementObject=$element_handler->get($dataElement);
+    
+    /*if(!isset($graphType)){
+	echo "Graph Type didn't set";
+	return false;
+    }*/
+    
+    if(!isset($fid) || $formObject==null){
+	echo "Form Id did not found.";
+	return false;
+    }
+    /*if(!isset($frid))
+	echo "";*/
+    if($labelElement==0 || $labelElemtntObject==null){
+	echo "Label Element did not found.";
+	return false;
+    }
+    if($dataElement==0 || $dataElementObject==null){
+	echo "Data Element did not found.";
+	return false;
+    }
+    if(!isset($operation)){
+	echo "Operation did not found.";
+	return false;
+    }
+    /*reserve to check graph options*/
+    
+    return true;
+}
+ 
+ 
 /**
  * Helper method to draw bar graph
  * parameters have same meaning as displayGraph's parameters
@@ -218,7 +272,13 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
   list($scope, $currentViewScope) = buildScope($currentViewScope, $member_handler, $gperm_handler, $uid, $groups, $fid, $mid, true);
   $dbData = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, intval($_POST['forcequery']));
 
-  list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $loadedView, $loadedView, $view_groupscope, $view_globalscope, /*$_POST['curviewid']*/ "", 0, $graphOptions, $_POST['lastloaded']);
+  list($settings['viewoptions'],
+       $settings['pubstart'],
+       $settings['endstandard'],
+       $settings['pickgroups'],
+       $settings['loadviewname'],
+       $settings['curviewid'],
+       $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $loadedView, $loadedView, $view_groupscope, $view_globalscope, /*$_POST['curviewid']*/ "", 0, $graphOptions, $_POST['lastloaded']);
 
   // End of code from entriesdisplay
 
