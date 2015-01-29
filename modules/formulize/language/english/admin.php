@@ -170,7 +170,7 @@ define("_AM_SCREEN_CREATE"," Create a new Screen");
 define("_AM_SCREEN_FORMSCREENS","Form Screens");
 define("_AM_SCREEN_LISTSCREENS","List Screens");
 define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? All configuration settings for this screen will be lost!");
-
+define("_AM_SCREEN_RELATIONWARNING", "Note: This uses a different relationship settings than the list screen");
 
 
 
