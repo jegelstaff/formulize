@@ -503,7 +503,6 @@ function getcss($theme = '') {
  */
 function xoops_getcss($theme = '')
 {
-	
 	if($theme == '') {$theme = $GLOBALS['icmsConfig']['theme_set'];}
 	$uagent = xoops_getenv('HTTP_USER_AGENT');
 	if(stristr($uagent, 'mac')) {$str_css = 'styleMAC.css';}

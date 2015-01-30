@@ -45,7 +45,6 @@ global $xoopsDB;
             $this->initVar("text", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
             $this->initVar("permissions", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
             $this->initVar("default_screen", XOBJ_DTYPE_TXTBOX, NULL, false, 255); //added oct 2013
-	    
         }
     }
     
@@ -292,12 +291,11 @@ class formulizeApplicationsHandler {
       ${$k} = $v;
     }
     if($appObject->isNew() || empty($appid)) {
-      
-      $sql = "INSERT INTO ".$this->db->prefix("formulize_applications") . " (`name`, `description`) VALUES (".$this->db->quoteString($name).", ".$this->db->quoteString($description).",".$this->db->quoteString($custom_code).")";
+        $sql = "INSERT INTO ".$this->db->prefix("formulize_applications") . " (`name`, `description`) VALUES (".$this->db->quoteString($name).", ".$this->db->quoteString($description).",".$this->db->quoteString($custom_code).")";
     } else {
-      $sql = "UPDATE ".$this->db->prefix("formulize_applications") . " SET `name` = ".$this->db->quoteString($name).", `description` = ".$this->db->quoteString($description).", `custom_code` = ".$this->db->quoteString($custom_code)." WHERE appid = ".intval($appid);
-	
+        $sql = "UPDATE ".$this->db->prefix("formulize_applications") . " SET `name` = ".$this->db->quoteString($name).", `description` = ".$this->db->quoteString($description).", `custom_code` = ".$this->db->quoteString($custom_code)." WHERE appid = ".intval($appid);
     }
+
     //after executing insertion or updating, we put file in the following path with custom_code
     $filename=XOOPS_ROOT_PATH."/modules/formulize/temp/application_custom_code_".$appid.".php";
     file_put_contents($filename,$custom_code);

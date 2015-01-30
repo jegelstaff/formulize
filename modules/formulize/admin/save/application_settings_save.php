@@ -38,7 +38,6 @@ $application_handler = xoops_getmodulehandler('applications', 'formulize');
 $appObject = $application_handler->get($_POST['formulize_admin_key']);
 
 foreach($processedValues['applications'] as $property=>$value) {
-	
 	$appObject->setVar($property, $value);
 }
 $application_handler->insert($appObject);

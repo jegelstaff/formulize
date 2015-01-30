@@ -8,7 +8,7 @@
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
-	return;
+    return;
 }
 
 $application_handler = xoops_getmodulehandler('applications', 'formulize');
@@ -19,5 +19,3 @@ foreach($processedValues['applications'] as $property=>$value) {
 }
 
 $application_handler->insert($appObject);
-
-?>
