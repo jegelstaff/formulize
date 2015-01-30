@@ -291,7 +291,7 @@ class formulizeApplicationsHandler {
       ${$k} = $v;
     }
     if($appObject->isNew() || empty($appid)) {
-        $sql = "INSERT INTO ".$this->db->prefix("formulize_applications") . " (`name`, `description`) VALUES (".$this->db->quoteString($name).", ".$this->db->quoteString($description).",".$this->db->quoteString($custom_code).")";
+        $sql = "INSERT INTO ".$this->db->prefix("formulize_applications") . " (`name`, `description`, `custom_code`) VALUES (".$this->db->quoteString($name).", ".$this->db->quoteString($description).",".$this->db->quoteString($custom_code).")";
     } else {
         $sql = "UPDATE ".$this->db->prefix("formulize_applications") . " SET `name` = ".$this->db->quoteString($name).", `description` = ".$this->db->quoteString($description).", `custom_code` = ".$this->db->quoteString($custom_code)." WHERE appid = ".intval($appid);
     }
