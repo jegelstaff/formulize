@@ -482,6 +482,7 @@ foreach($mulitPageAndFormScreens as $screen) {
   $screens['screens'][$i]['sid'] = $screen->getVar('sid');
   $screens['screens'][$i]['title'] = $screen->getVar('title');
   $screens['screens'][$i]['type'] = $screen->getVar('type');
+  $screens['screens'][$i]['frid'] = $screen->getVar('frid'); // allows frid use in smarty template.
   $i++;
 }
 $listOfEntriesScreens = $screen_handler->getObjects(new Criteria('type','listOfEntries'),$fid);
@@ -489,6 +490,7 @@ $i = 1;
 foreach($listOfEntriesScreens as $screen) {
   $screens['listOfEntries'][$i]['sid'] = $screen->getVar('sid');
   $screens['listOfEntries'][$i]['title'] = $screen->getVar('title');
+  $screens['listOfEntries'][$i]['frid'] = $screen->getVar('frid');
   $i++;
 }
 
