@@ -46,7 +46,7 @@ if($aid == 0) {
 	$appDesc = "";
 	$appForms = array();
 	$formObjects = $form_handler->getFormsByApplication(0); // returns array of objects
-    $appLinks = $application_handler->getMenuLinksForApp(0,true);	
+	$appLinks = $application_handler->getMenuLinksForApp(0,true);	
 } else {
 	$appObject = $application_handler->get($aid);
 	$appName = $appObject->getVar('name');
@@ -68,6 +68,7 @@ if($aid == 0) {
         $menulinks[$index]['text'] = $menulink->getVar('text');	
         $menulinks[$index]['permissions'] = $menulink->getVar('permissions');
         $menulinks[$index]['default_screen'] = $menulink->getVar('default_screen'); //Oct 2013 W.R.
+	$menulinks[$index]['note']=$menulink->getVar('note');//Jan 2015 Jinfu
         $index ++; // JAKEADDED
     }
     
