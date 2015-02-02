@@ -1,0 +1,17 @@
+<div class="panel-content content">
+    <fieldset>
+        <div class="form-item required">
+            <label for="elements-ele_value[0]"><{$smarty.const._AM_ELE_MIN_VALUE}><em>*</em></label>
+	          <input type="text" id="elements-ele_value[0]" name="elements-ele_value[0]" value="<{$content.ele_value[0]}>" size="5" maxlength="5"/>
+        </div>
+        <div class="form-item required">
+            <label for="elements-ele_value[1]"><{$smarty.const._AM_ELE_MAX_VALUE}><em>*</em></label>
+	          <input type="text" id="elements-ele_value[1]" name="elements-ele_value[0]" value="<{$content.ele_value[1]}>" size="5" maxlength="5"/>
+        </div>
+        <div class="form-item required">
+            <label for="elements-ele_value[2]"><{$smarty.const._AM_ELE_DEFAULT}><em>*</em></label>
+	          <input type="text" id="elements-ele_value[2]" name="elements-ele_value[0]" value="<{$content.ele_value[2]}>" size="5" maxlength="5"/>
+        </div>
+    </fieldset>
+        <input id="element-slider" type ="range" min ="100" max="500" step ="50" value ="100"/>
+</div>
