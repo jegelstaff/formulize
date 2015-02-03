@@ -12,6 +12,8 @@ define("_AM_APP_RELATIONSHIPS_DELETE_CONFIRM","Are you sure you want to delete t
 define("_AM_APP_RELATIONSHIPS","Relationships");
 define("_AM_APP_FORMWITHNOAPP","Forms that don't belong to an application");
 define("_AM_APP_SCREENS","Screens");
+define("_AM_APP_MENU_ENTRIES"," Menu Entries");
+define("_AM_APP_PERMISSIONS","Permissions");
 define("_AM_APP_NEWFORM","New form");
 define("_AM_APP_USETITLE","Use the form's title");
 define("_AM_APP_NAMEQUESTION","What is the name of this Application?");
@@ -107,6 +109,8 @@ define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have
 
 /*mod Language for permissions*/
 define("_AM_PERMISSIONS_CHOOSE_GROUPS","Which groups do you want to set permissions for?");
+define("_AM_PERMISSIONS_CHOOSE_FORMS","Which forms do you want to set permissions for?");
+define("_AM_PERMISSIONS_SHOW_PERMS_FOR_GROUPS", "Show permissions for these groups");
 define("_AM_PERMISSIONS_LIST_GROUPS","List groups alphabetically or in creation order?");
 define("_AM_PERMISSIONS_LIST_ALPHA","Alphabetical");
 define("_AM_PERMISSIONS_LIST_CREATION","Creation order");
@@ -118,6 +122,7 @@ define("_AM_PERMISSIONS_SAME_CHECKBOX_YES","Yes, when I check a box for one grou
 define("_AM_PERMISSIONS_SAME_CHECKBOX_NO","No, I will set each group individually");
 define("_AM_PERMISSIONS_SAME_CHECKBOX_EXPLAIN","You can change this setting at any time while you are adjusting the checkboxes.  Set it to <b>Yes</b>, to quickly set some checkboxes the same for all groups.  Change it to <b>No</b> when you need to set specific checkboxes for only certain groups.");
 define("_AM_PERMISSIONS_SELECT_GROUP","Select some groups to see their permissions");
+define("_AM_PERMISSIONS_SELECTS_FORMS_AND_GROUPS","Select forms and groups to view a group's current permissions");
 define("_AM_PERMISSIONS_DEFINE_BASIC","The basics:");
 define("_AM_PERMISSIONS_DEFINE_VIEWFORM","View the form");
 define("_AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES","Create their own entries in the form");
@@ -149,6 +154,10 @@ define("_AM_PERMISSIONS_ADVANCED_CHANGEOWNER","Change the owner/creator of an ex
 define("_AM_PERMISSIONS_ADVANCED_ALTER","Alter this form's configuration settings");
 define("_AM_PERMISSIONS_ADVANCED_DELETEFORM","Delete this form");
 define("_AM_PERMISSIONS_REVIEW_PERMISSIONS","Review permissions for a user");
+define("_AM_MULTIPLE_FORM_PERMISSIONS","Multiple Form Permissions");
+define("_AM_MULTIPLE_PERMISSIONS_HOW_TO_APPLY","How do you want these permissions to be applied?");
+define("_AM_MULTIPLE_PERMISSIONS_ADD_ONLY","Only add new permissions, but don't remove any if the checkboxes are left unchecked.");
+define("_AM_MULTIPLE_PERMISSIONS_ADD_REMOVE","Start with a blank slate and apply these exact permissions.");
 
 /*mod Language for procedures*/
 define("_AM_CALC_EXPLAIN","let you create a series of queries and logical steps, that get carried out on the data that users have submitted in the form.  You can use Procedures for advanced, multi-step calculations, or any other situation where a single query or single operation is not enough to get to the outcome you want.");
