@@ -90,20 +90,21 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
  * @param $graphType type of the graph to be displayed with input data
  * @param $fid the id of the form where the data is coming from
  * @param $frid the id of the relation(relating fid's form to another form) $frid == fid if no relation is specified
- * @param $labelElement the field in the form to be used as label
- * @param $dataElement the field in the form to be used as data to graph
+ * @param $labelEleHandle the field in the form to be used as label
+ * @param $dataEleHandle the field in the form to be used as data to graph
  * @param $operation the operation to be used to draw graphs
  * @param $graphOptions the graph parameters passed in by user!
  */
-function displayGraph($graphType, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {
-	if(!graphParamCheck($graphType, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions)){
+function displayGraph($graphType, $fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions) {
+    
+	if(!graphParamCheck($graphType, $fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions)){
 	    header("refresh:3; url=".XOOPS_URL."/modules/formulize/admin/ui.php?page=screen&aid=".$_GET['aid']."&fid=".$_GET['fid']."&sid=".$_GET['sid']);
 	    die("<br>Please check graph settings. <br>Jumping back to screen settings in 3 seconds.");
 	}
 	
 	switch ($graphType) {
 		case "Bar" :
-			displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $graphOptions);
+			displayBarGraph($fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions);
 			break;
 		default :
 			echo "Sorry, the graph type \"$graphType\" is not supported at the moment!";
@@ -116,21 +117,21 @@ function displayGraph($graphType, $fid, $frid, $labelElement, $dataElement, $ope
  * @param $graphType type of the graph to be displayed with input data
  * @param $fid the id of the form where the data is coming from
  * @param $frid the id of the relation(relating fid's form to another form) $frid == fid if no relation is specified
- * @param $labelElement the field in the form to be used as label
- * @param $dataElement the field in the form to be used as data to graph
+ * @param $labelEleHandle the field in the form to be used as label
+ * @param $dataEleHandle the field in the form to be used as data to graph
  * @param $operation the operation to be used to draw graphs
  * @param $graphOptions the graph parameters passed in by user!
  *
  * Added Jan 2015 by Jinfu 
  */
-function graphParamCheck($graphType, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions){
+function graphParamCheck($graphType, $fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions){
     $form_handler = xoops_getmodulehandler('forms','formulize');
     $formObject=$form_handler->get($fid);
     
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    $labelElemtntObject=$element_handler->get($labelElement);
-    $dataElementObject=$element_handler->get($dataElement);
-    
+    $labelElemtntObject=$element_handler->get($labelEleHandle);
+    $dataEleHandleObject=$element_handler->get($dataEleHandle);
+
     /*if(!isset($graphType)){
 	echo "Graph Type didn't set";
 	return false;
@@ -142,11 +143,11 @@ function graphParamCheck($graphType, $fid, $frid, $labelElement, $dataElement, $
     }
     /*if(!isset($frid))
 	echo "";*/
-    if($labelElement==0 || $labelElemtntObject==null){
+    if(!isset($labelEleHandle) || $labelElemtntObject==null){
 	echo "Label Element did not found.";
 	return false;
     }
-    if($dataElement==0 || $dataElementObject==null){
+    if(!isset($dataEleHandle) || $dataEleHandleObject==null){
 	echo "Data Element did not found.";
 	return false;
     }
@@ -164,7 +165,7 @@ function graphParamCheck($graphType, $fid, $frid, $labelElement, $dataElement, $
  * Helper method to draw bar graph
  * parameters have same meaning as displayGraph's parameters
  */
-function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {
+function displayBarGraph($fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions) {
 
   // Code from entriesdisplay to get the proper data based on selected views
 
@@ -284,9 +285,9 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 
 	foreach ($dbData as $entry) {
 		// mayor - OR array of mayors if there's more than one in the dataset, depending on the one-to-may in a relationship
-		$dataRawValue = display($entry, $dataElement);
+		$dataRawValue = display($entry, $dataEleHandle);
 		// city_name;
-		$labelRawValue = display($entry, $labelElement);
+		$labelRawValue = display($entry, $labelEleHandle);
 		if (!is_array($dataRawValue) && $dataRawValue) {
 			$dataRawValue = array($dataRawValue);
 		}
@@ -304,10 +305,10 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 
 	// Oct 29 Update for column heading for graphs:
 	$elementHandler = xoops_getmodulehandler('elements', 'formulize');
-	$elementObject = $elementHandler->get($labelElement);
-	$labelElement = $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : printSmart($elementObject->getVar('ele_caption'));
-	$elementObject = $elementHandler->get($dataElement);
-	$dataElement = $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : printSmart($elementObject->getVar('ele_caption'));
+	$elementObject = $elementHandler->get($labelEleHandle);
+	$labelEleHandle = $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : printSmart($elementObject->getVar('ele_caption'));
+	$elementObject = $elementHandler->get($dataEleHandle);
+	$dataEleHandle = $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : printSmart($elementObject->getVar('ele_caption'));
 	// end of Update
 	switch($operation) {
 		case "count" :
@@ -319,10 +320,10 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 					$dataPoints[$key] = 0;
 				}
 			}
-			if($labelElement == $dataElement){
-				$dataElement = "Count of " . $labelElement;
+			if($labelEleHandle == $dataEleHandle){
+				$dataEleHandle = "Count of " . $labelEleHandle;
 			} else {
-				$dataElement = "Count of " . $dataElement;
+				$dataEleHandle = "Count of " . $dataEleHandle;
 			}
 			break;
 		case "sum" :
@@ -331,16 +332,16 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 			foreach ($dataPoints as $thisLabel => $theseValues) {
 				$dataPoints[$thisLabel] = array_sum($theseValues);
 			}
-			$dataElement = (($operation == "display") ? "Number of " : "Sum of ") . $dataElement;
+			$dataEleHandle = (($operation == "display") ? "Number of " : "Sum of ") . $dataEleHandle;
 			break;
 		case "count-unique" :
 			foreach ($dataPoints as $thisLabel => $theseValues) {
 				$dataPoints[$thisLabel] = count(array_unique($theseValues));
 			}
-			if($dataElement == $labelElement){
-				$dataElement = "Count of Unique " . $labelElement;
+			if($dataEleHandle == $labelEleHandle){
+				$dataEleHandle = "Count of Unique " . $labelEleHandle;
 			} else {
-				$dataElement = "Count of Unique " . $dataElement;
+				$dataEleHandle = "Count of Unique " . $dataEleHandle;
 			}
 			break;
 		default :
@@ -348,8 +349,8 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 			return;
 	}
 	
-	// print("dataElement: ".$dataElement." ");
-	// print("labelElement: ".$labelElement." ");
+	// print("dataElement: ".$dataEleHandle." ");
+	// print("labelElement: ".$labelEleHandle." ");
 
 	
 	// process the graph options
@@ -448,29 +449,29 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 	}
 	
 	// reset width/height of the image in case the label is too long
-	if( (strlen($labelElement)*4.5 >= $IMAGE_HEIGHT) AND $IMAGE_ORIENTATION == "vertical"){
+	if( (strlen($labelEleHandle)*4.5 >= $IMAGE_HEIGHT) AND $IMAGE_ORIENTATION == "vertical"){
 		if( $IMAGE_HEIGHT == $IMAGE_DEFAULT_HEIGHT ){
-			$IMAGE_HEIGHT = strlen($labelElement)*5;
+			$IMAGE_HEIGHT = strlen($labelEleHandle)*5;
 		}else{
-			$labelElement = substr($labelElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
+			$labelEleHandle = substr($labelEleHandle, 0, $IMAGE_HEIGHT/4.5-3)."...";
 		}
-	}elseif((strlen($dataElement)*4.5 >= $IMAGE_HEIGHT) AND $IMAGE_ORIENTATION == "horizontal"){
+	}elseif((strlen($dataEleHandle)*4.5 >= $IMAGE_HEIGHT) AND $IMAGE_ORIENTATION == "horizontal"){
 		if( $IMAGE_HEIGHT == $IMAGE_DEFAULT_HEIGHT ){
-			$IMAGE_HEIGHT = strlen($dataElement)*5;
+			$IMAGE_HEIGHT = strlen($dataEleHandle)*5;
 		}else{
-			$dataElement = substr($dataElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
+			$dataEleHandle = substr($dataEleHandle, 0, $IMAGE_HEIGHT/4.5-3)."...";
 		}
-	}elseif((strlen($labelElement)*4.5 >= $IMAGE_WIDTH) AND $IMAGE_ORIENTATION == "horizontal"){
+	}elseif((strlen($labelEleHandle)*4.5 >= $IMAGE_WIDTH) AND $IMAGE_ORIENTATION == "horizontal"){
 		if( $IMAGE_WIDTH == $IMAGE_DEFAULT_WIDTH){
-			$IMAGE_WIDTH = strlen($labelElement)*5;
+			$IMAGE_WIDTH = strlen($labelEleHandle)*5;
 		}else{
-			$labelElement = substr($labelElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
+			$labelEleHandle = substr($labelEleHandle, 0, $IMAGE_HEIGHT/4.5-3)."...";
 		}
-	}elseif((strlen($dataElement)*4.5 >= $IMAGE_WIDTH) AND $IMAGE_ORIENTATION == "vertical"){
+	}elseif((strlen($dataEleHandle)*4.5 >= $IMAGE_WIDTH) AND $IMAGE_ORIENTATION == "vertical"){
 		if( $IMAGE_WIDTH == $IMAGE_DEFAULT_WIDTH){
-			$IMAGE_WIDTH = strlen($dataElement)*5;
+			$IMAGE_WIDTH = strlen($dataEleHandle)*5;
 		}else{
-			$dataElement = substr($dataElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
+			$dataEleHandle = substr($dataEleHandle, 0, $IMAGE_HEIGHT/4.5-3)."...";
 		}
 	}
 
@@ -479,12 +480,12 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 
 	// Code straightly copied from pChart documentation to draw the graph
 	$myData = new pData();
-	$myData -> addPoints(array_values($dataPoints), $dataElement);
-	$myData -> setAxisName(0, $dataElement);
-	$myData -> addPoints(array_keys($dataPoints), $labelElement);
-	$myData -> setSerieDescription($labelElement, $labelElement);
-	$myData -> setAbscissa($labelElement);
-	$myData -> setAbscissaName($labelElement);
+	$myData -> addPoints(array_values($dataPoints), $dataEleHandle);
+	$myData -> setAxisName(0, $dataEleHandle);
+	$myData -> addPoints(array_keys($dataPoints), $labelEleHandle);
+	$myData -> setSerieDescription($labelEleHandle, $labelEleHandle);
+	$myData -> setAbscissa($labelEleHandle);
+	$myData -> setAbscissaName($labelEleHandle);
 	// $myData -> setAxisDisplay(0, AXIS_FORMAT_CUSTOM, "YAxisFormat");
 
 	/* Create the pChart object */
@@ -523,7 +524,7 @@ function displayBarGraph($fid, $frid, $labelElement, $dataElement, $operation, $
 
 	/* Draw the chart */
 	$myPicture -> drawBarChart(array("DisplayPos" => LABEL_POS_INSIDE, "DisplayValues" => TRUE, "Rounded" => TRUE, "Surrounding" => 30, "OverrideColors"=>$Palette));
-	renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions, $dataPoints, $settings);
+	renderGraph($myPicture, $fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions, $dataPoints, $settings);
 	return;
 }
 
@@ -539,7 +540,7 @@ function YAxisFormat($Value) {
 /**
  * Save the graph to the local file system and render the graph
  */
-function renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions, $dataPoints, $viewSettings) {
+function renderGraph($myPicture, $fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions, $dataPoints, $viewSettings) {
 	// TODO: make some kind of cron job clear up or some kind of caches, update graph only when needed!
   $currentViewList = "<b>" . $graphOptions['usecurrentviewlist'] . "</b><br><SELECT style=\"width: 350px;\" name=selectedview id=currentview size=1 onchange=\"this.form.submit();\">\n";
   $currentViewList .= $viewSettings['viewoptions'];
@@ -550,7 +551,7 @@ function renderGraph($myPicture, $fid, $frid, $labelElement, $dataElement, $oper
 	$myPicture -> render(XOOPS_ROOT_PATH . "/" . $graphRelativePath);
 
   $currentURL = getCurrentURL();
-  echo "<h1>$dataElement</h1>";
+  echo "<h1>$dataEleHandle</h1>";
   // TODO: Use the javascript method for changing views like the one in entriesdiplay to be able to have filter by groups, also that you can't select title options like "STANDARD VIEWS"
   echo "<form action = $currentURL method = 'post'>";
   echo $currentViewList;

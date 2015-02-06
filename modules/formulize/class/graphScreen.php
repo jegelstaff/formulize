@@ -123,6 +123,14 @@ class formulizeGraphScreenHandler extends formulizeScreenHandler {
 			"usecurrentviewlist" => $screen->getVar('usecurrentviewlist')
 		);
 		include_once XOOPS_ROOT_PATH."/modules/formulize/include/graphdisplay.php";
-		displayGraph('Bar', $screen->getVar('fid'), $screen->getVar('frid'), $screen->getVar('labelelem'), $screen->getVar('dataelem'), $screen->getVar('ops'), $options);
+		
+		//convert element ids to element handles
+		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php"; 
+
+		$labelElementMetaData = formulize_getElementMetaData($screen->getVar('labelelem'), false);
+		$labelEleHandle=$labelElementMetaData['ele_handle'];
+		$dataElementMetaData = formulize_getElementMetaData($screen->getVar('dataelem'), false);
+		$dataEleHandle=$dataElementMetaData['ele_handle'];
+		displayGraph('Bar', $screen->getVar('fid'), $screen->getVar('frid'), $labelEleHandle, $dataEleHandle, $screen->getVar('ops'), $options);
 	}
 }
