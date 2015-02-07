@@ -64,7 +64,7 @@ class formulizeNewSliderElementHandler extends formulizeElementsHandler {
         $formlink = createFieldList($ele_value[3], true);
         if (!$element) {
             //Min Velue
-            $ele_value[0] = 1;
+            $ele_value[0] = 0;
             //Max Value
             $ele_value[1] = 100;
             //Step size
@@ -157,7 +157,6 @@ class formulizeNewSliderElementHandler extends formulizeElementsHandler {
 
         $value = ereg_replace ('[^0-9.-]+', '', $value);
         $value = $myts->htmlSpecialChars($value);
-        echo $value;
 
         return formulize_db_escape($value); 
     }
