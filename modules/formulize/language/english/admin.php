@@ -299,6 +299,9 @@ define("_AM_ELE_TYPE_NUMBER","Numbers Only");
 
 define("_AM_ELE_SIZE","Size");
 define("_AM_ELE_MAX_LENGTH","Maximum length");
+define("_AM_ELE_MAX_VALUE","Maximum value");
+define("_AM_ELE_MIN_VALUE","Minimum value");
+define("_AM_ELE_STEPSIZE","Slider step size");
 define("_AM_ELE_ROWS","Rows");
 define("_AM_ELE_COLS","Columns");
 define("_AM_ELE_USERICHTEXT","Display this element using a Rich Text Editor");
