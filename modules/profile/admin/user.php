@@ -17,7 +17,7 @@ include_once "admin_header.php";
 icms_cp_header();
 
 $op = isset($_REQUEST['op']) ? trim($_REQUEST['op']) : 'list';
-if($op == 'editordelete') $op = isset($_REQUEST['delete'])?'delete':'edit';
+if($op == 'editordeleteormasquerade') $op = isset($_REQUEST['delete'])?'delete':isset($_REQUEST['edit'])?'edit':'masquerade';
 $adminMenuIncluded = false;
 $member_handler = icms::handler('icms_member');
 
@@ -28,7 +28,7 @@ switch($op) {
 		$adminMenuIncluded = true;
 		$form = new icms_form_Theme(_AM_PROFILE_EDITUSER, 'form', 'user.php');
 		$form->addElement(new icms_form_elements_select_User(_AM_PROFILE_SELECTUSER, 'id'));
-		$form->addElement(new icms_form_elements_Hidden('op', 'editordelete'));
+		$form->addElement(new icms_form_elements_Hidden('op', 'editordeleteormasquerade'));
 		$button_tray = new icms_form_elements_Tray('');
 		$button_tray->addElement(new icms_form_elements_Button('', 'edit', _EDIT, 'submit'));
 		$button_tray->addElement(new icms_form_elements_Button('', 'delete', _DELETE, 'submit'));
@@ -41,7 +41,7 @@ switch($op) {
 			if(count($user_count)>1){
 				$form = new icms_form_Theme(_AM_PROFILE_REMOVEDUSERS, 'form', 'user.php');
 				$form->addElement(new icms_form_elements_select_User(_AM_PROFILE_SELECTUSER, 'id', false, false, false, false, true, true));
-				$form->addElement(new icms_form_elements_Hidden('op', 'editordelete'));
+				$form->addElement(new icms_form_elements_Hidden('op', 'editordeleteormasquerade'));
 				$button_tray = new icms_form_elements_Tray('');
 				$button_tray->addElement(new icms_form_elements_Button('', 'edit', _EDIT, 'submit'));
 				$form->addElement($button_tray);
@@ -215,6 +215,17 @@ switch($op) {
 		} else {
 			icms_core_Message::confirm(array('ok' => 1, 'id' => (int)$_REQUEST['id'], 'op' => 'delete'), $_SERVER['REQUEST_URI'], sprintf(_AM_PROFILE_RUSUREDEL, $obj->getVar('uname').' ('.$obj->getVar('email').')'));
 		}
+		break;
+	
+	case 'masquerade':
+		//$xoopsUser = new icms_member_user_Object($_REQUEST['id']);
+		//$_SESSION['xoopsUserId'] = $_REQUEST['id'];
+		//foreach($xoopsUser->vars as $key=>$value){
+		//	icms_core_Message::error($key . ": " . $xoopsUser->vars[$key]['value']);
+		//}
+		//$xoopsUser = $tempUser;
+		//redirect_header(SITE_BASE_URL);
+		
 		break;
 }
 
