@@ -56,6 +56,7 @@ foreach($applicationsToDraw as $aid) {
     if(is_object($aid)) {
         $aid = $aid->getVar('appid'); // when 'all' is requested, the array will be of objects, not ids
     }
+    checkMenuLinks($aid);
 
     $links;
     if($aid) {
@@ -98,4 +99,51 @@ function getNavDataForForms($links) {
         $i++;
     }
     return $formsToSend;
+}
+
+
+
+/*This function checks if the menu link is still valid
+ *added by Jian Feb 2015
+ *not done yet
+ *
+ *question 1: form_handler-> get is going to give back cached form object, aren't we suppose get if from db?
+ *if we keep this, how do we check if the form exists?
+ *
+ *question 2: can we use sql directly delete menu_link, because application_handler did not provide function we need
+ *
+ */
+function checkMenuLinks($aid){
+    $application_handler = xoops_getmodulehandler('applications', 'formulize');
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    $appLinks = $application_handler->getMenuLinksForApp($aid);
+
+    $menulinks=array(); 
+    $index = 0;
+    foreach ($appLinks as $menulink){
+        $menulinks[$index] = $menulink->getVar('screen');
+        if(preg_match("/^fid=.*$/",$menulinks[$index])){
+            error_log("a fid");
+            $fid=intval(substr($menulinks[$index],4));
+            $form_object=$form_handler->get($fid);
+            if($form_object==null){
+                echo("fid= ".$fid." not found");
+            }else {
+                error_log("fid found");
+            }
+        }else if(preg_match("/^sid=.*$/",$menulinks[$index])){
+            error_log("a sid");
+            $sid=intval(substr($menulinks[$index],4));
+            $screen_object=$screen_handler->get($sid);
+            if($screen_object==null){
+                echo("sid= ".$sid." not found");
+                //$application_handler->deleteMenuLink($aid, $menuitem);  
+            }else {
+                error_log("sid found");
+            }
+        }
+        $index ++;
+    }
+    error_log("linsScreen ".print_r($menulinks));
 }
