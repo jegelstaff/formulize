@@ -411,7 +411,7 @@ class formulizeApplicationsHandler {
         
         //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen  6=note 
         $linkValues = explode("::",$menuitem);
-	error_log("link values ".print_r($linkValues));
+//	error_log("link values ".print_r($linkValues));
         $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". formulize_db_escape($linkValues[2])."',".$rank.",'".formulize_db_escape($linkValues[3])."','".formulize_db_escape($linkValues[1])."','". formulize_db_escape($linkValues[6])."');";
 		if(!$result = $xoopsDB->query($insertsql)) {
 			exit("Error inserting Menu Item. SQL dump:\n" . $insertsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
@@ -459,7 +459,7 @@ class formulizeApplicationsHandler {
         global $xoopsDB;       
         //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen 6=note
         $linkValues = explode("::",$menuitems);
-	error_log("link values ".print_r($linkValues));
+	//error_log("link values ".print_r($linkValues));
         $updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links").
 	"` SET screen= '".formulize_db_escape($linkValues[2])."', url= '".formulize_db_escape($linkValues[3])."', link_text='".formulize_db_escape($linkValues[1])."',note='".formulize_db_escape($linkValues[6])."' where menu_id=".formulize_db_escape($linkValues[0])." AND appid=".$appid.";";
         if(!$result = $xoopsDB->query($updatesql)) {
