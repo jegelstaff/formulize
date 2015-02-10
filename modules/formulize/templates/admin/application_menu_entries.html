@@ -96,8 +96,8 @@
   
     $(".savebutton").click(function () {
         $("[name=menuorder]").val($("#accordion-<{$number}>").sortable('serialize'));
-	
-	var menuText = $("#addmenutext").val().trim().replace(/\'/g, " ") ;
+
+	var menuText = $("#addmenutext").val().trim();
 	if(menuText) {
 		var url = $("#addurl").val();
 	        var screen = $("#listofscreenoptions select").val();

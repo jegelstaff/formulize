@@ -33,6 +33,8 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+
+
 if (file_exists(XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php'))
     include_once XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php';
 
@@ -312,3 +314,17 @@ if ($renderedFormulizeScreen AND is_object($xoopsTpl)) {
 
 // go back to the previous rendering flag, in case this operation was nested inside something else
 $GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering];
+
+
+/*get the aid and include custom_code if exists
+ *
+ *Added By Jinfu Jan 2015
+ */
+$application_handler = xoops_getmodulehandler('applications','formulize');
+$apps = $application_handler->getAllApplications();
+
+foreach($apps as $appObject){
+	$aid=$appObject->getVar('appid');
+	if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/temp/application_custom_code_'.$aid.'.php'))
+		include_once(XOOPS_ROOT_PATH.'/modules/formulize/temp/application_custom_code_'.$aid.'.php');
+}
