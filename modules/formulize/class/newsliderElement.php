@@ -132,7 +132,7 @@ class formulizeNewSliderElementHandler extends formulizeElementsHandler {
         } else {
             $renderedSlider = $form_slider->render();
             $renderedValue = $form_slider_value->render();
-            $form_ele = new XoopsFormLabel($caption, "<nobr>$renderedSlider $renderedValue</nobr>.$update_script");
+            $form_ele = new XoopsFormLabel($caption, "<nobr>$renderedSlider $renderedValue</nobr>$update_script");
         }
 
         return $form_ele;
