@@ -583,12 +583,31 @@ class formulizeFormsHandler {
 					print "Error: could not delete screen ".htmlspecialchars(strip_tags($array['sid']))." for form $fid";
 					$isError = true;
 				}
+				$application_handler = xoops_getmodulehandler('applications', 'formulize');
+				$application_handler->deleteMenuLinkByScreen("sid=".intval($array['sid']));
+				/*
+				$sql1="select menu_id from ".$xoopsDB->prefix("formulize_menu_links")." where sid=".intval($array['sid']);
+				$res1=$xoopsDB->query($sql1);
+				$sql2="DELETE FROM ".$xoopsDB->prefix("formulize_menu_links")." where sid=".intval($array['sid']);
+				
+				if(!$result = $xoopsDB->query($sql2)) {
+						print "Error: could not delete menu item ".htmlspecialchars(strip_tags($array['sid']))." for form $fid";
+						$isError=true;
+				}else{
+						while($arr=$xoopsDB->fecthArray($res1)){
+								$deletemenupermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=" .intval($arr['menu_id']) .";";
+								$xoopsDB->query($deletemenupermissions);
+						}
+				}
+				*/
 			}
 			$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=$fid";
 			if(!$xoopsDB->query($sql)) {
 				print "Error: could not delete screens for form $fid";
 				$isError = true;
 			}
+				$application_handler = xoops_getmodulehandler('applications', 'formulize');
+				$application_handler->deleteMenuLinkByScreen("fid=".intval($fid));
 		}
 		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_application_form_link")." WHERE fid=$fid";
 		if(!$xoopsDB->query($sql)) {

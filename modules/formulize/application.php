@@ -105,14 +105,15 @@ function getNavDataForForms($links) {
 
 /*This function checks if the menu link is still valid
  *added by Jian Feb 2015
- *not done yet
+ *not done yet. I left this function in case of we want to check menu links when loading the page.
  *
- *question 1: form_handler-> get is going to give back cached form object, aren't we suppose get if from db?
- *if we keep this, how do we check if the form exists?
- *
- *question 2: can we use sql directly delete menu_link, because application_handler did not provide function we need
- *
- */
+
+ *you can check ApplicationHandler->deleteMenuLinkByScreen($screen)
+ * *form_screens_save.php  uses this function means to delete menu links when deleting a screen
+ * *application_forms_save.php uses this function means to delete menu links when deleting a form,this is just for making sure links to form get deleted
+ * *forms.php also using this function because forms.php will internally delete some screen and other stuff with out using form_screens_save.php
+ * *
+ 
 function checkMenuLinks($aid){
     $application_handler = xoops_getmodulehandler('applications', 'formulize');
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -147,3 +148,4 @@ function checkMenuLinks($aid){
     }
     error_log("linsScreen ".print_r($menulinks));
 }
+*/

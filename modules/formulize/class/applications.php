@@ -447,12 +447,23 @@ class formulizeApplicationsHandler {
         $deletemenuitems = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_links")."` WHERE appid=".$appid." AND menu_id=" .$menuitem .";";
         $deletemenupermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=" .$menuitem .";";
         if(!$result = $xoopsDB->query($deletemenuitems)) {
-            //no menu items deleted
+            echo("Delete menu link $menuitem failed.");
         }else{
             $xoopsDB->query($deletemenupermissions);
         }
     }
-
+    //$screen should be something like "sid=1" or "fid=1" be careful when you use it
+    //Added by Jinfu FEB 2015
+    function deleteMenuLinkByScreen($screen){
+	global $xoopsDB;
+	$sql="Select menu_id,appid from ".$xoopsDB->prefix("formulize_menu_links")." WHERE screen= '" .$screen."';";
+	//error_log($sql);
+	$res=$xoopsDB->query($sql);
+	while($array=$xoopsDB->fetchArray($res)){
+	    $this->deleteMenuLink($array['appid'],$array['menu_id']);
+	    //error_log("ajslkjalkdjlas: ".$array['appid']." ".$array['menu_id']."\n");
+	}
+    }
 
      // modified Oct 2013 W.R.
     function updateMenuLink($appid,$menuitems){
