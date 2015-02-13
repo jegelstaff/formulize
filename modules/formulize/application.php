@@ -56,7 +56,7 @@ foreach($applicationsToDraw as $aid) {
     if(is_object($aid)) {
         $aid = $aid->getVar('appid'); // when 'all' is requested, the array will be of objects, not ids
     }
-    checkMenuLinks($aid);
+    //checkMenuLinks($aid);
 
     $links;
     if($aid) {
