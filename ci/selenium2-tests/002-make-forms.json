@@ -131,9 +131,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -181,9 +180,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -231,9 +229,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -274,6 +271,14 @@
       "text": "project"
     },
     {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "forms-note"
+      },
+      "text": "this is the note text"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
@@ -281,9 +286,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -327,9 +331,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -409,9 +412,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -523,9 +525,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -584,9 +585,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -630,9 +630,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -680,9 +679,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -737,9 +735,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -787,9 +784,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -837,9 +833,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -887,9 +882,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -937,9 +931,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -1089,9 +1082,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -1332,9 +1324,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -1413,9 +1404,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",
@@ -1502,9 +1492,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "negated": true,
-      "text": "You have unsaved changes!"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "clickElement",

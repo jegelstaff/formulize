@@ -13,7 +13,9 @@
 defined("XOOPS_MAINFILE_INCLUDED") or die();
 
 /** @todo This funtion has been deprecated in PHP 5.3.0 - need to adjust in 1.4 ~skenow */
-@set_magic_quotes_runtime(0);
+if (get_magic_quotes_runtime()) {
+    @set_magic_quotes_runtime(0);
+}
 
 // -- Include common functions and constants file
 require_once ICMS_ROOT_PATH . "/include/constants.php";

@@ -1,4 +1,4 @@
-<div class="panel-content content">
+<div class="panel-content content" xmlns="http://www.w3.org/1999/html">
 
 <form id="form-<{$number}>" class="formulize-admin-form" action="<{$xoops_url}>/modules/formulize/admin/ui.php?page=form&aid=<{$content.aid}>&fid=<{$content.fid}>&tab=permissions" method="post">
 <{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
@@ -9,7 +9,7 @@
 <input type="hidden" name="tabs_selected" value="<{$number-1}>">
 <input type="hidden" name="reload" value="">
 <input type="hidden" name="conditionsdelete" value="">
-<input type="hidden" id="permscrollx" name="scrollx" value="">	
+<input type="hidden" id="permscrollx" name="scrollx" value="">
 
 <div class="accordion-box">
 		<div class="form-item">
@@ -21,7 +21,7 @@
                     <{/foreach}>
                 </select>
 								<br /><br />
-								<input type="button" name="showperms" value="Show permissions for these groups" />
+								<input type="button" name="showperms" value="<{$smarty.const._AM_PERMISSIONS_SHOW_PERMS_FOR_GROUPS}>" />
 								<input type="hidden" name="useselection" value="" />
 								<br /><br />
 								<label class="question"><{$smarty.const._AM_PERMISSIONS_LIST_GROUPS}></label>
@@ -51,7 +51,7 @@
 								<input type="hidden" name="removelistid" value="">
             </fieldset>
 		</div>
-		
+
 		<div class="form-item">
 			<fieldset>
 			<legend><label class="question"><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX}></label></legend>
@@ -64,15 +64,25 @@
 								<div class="description">
 									<p><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX_EXPLAIN}></p>
 								</div>
-		
-	</fieldset>
+
+	        </fieldset>
 		</div>
+
+        <div class="form-item">
+            <fieldset>
+                <legend><label class="question"><{$smarty.const._AM_PERMISSIONS_REVIEW_PERMISSIONS}></label></legend>
+
+                    <input type="text" name="submitted_user">
+                    <input name="show_user_perms" value="Show permissions for the user" type="button">
+                    <input type="hidden" name="search_by_user" value="" />
+            </fieldset>
+        </div>
 
 </div>
 
 
 <div class="accordion-box">
-	
+
 	<{if $content.groupperms|@count == 0}>
 		<div class="form-item">
 		<fieldset>
@@ -80,67 +90,305 @@
 		</fieldset>
 		</div>
 	<{/if}>
-	
-	
-	<{foreach from=$content.groupperms item=groupperm}>
-	<input type="hidden" name="group_list[]" value=<{$groupperm.id}>>
-	<div class="accordion-box">
-	<div class="form-item">
-		<fieldset>
-			<legend><label class="question"><{$groupperm.name}></label></legend>
-			<p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_BASIC}></b></p>
-			<div class="permissiongroup">
-			<input type="checkbox" class="view_form" name="<{$content.fid}>_<{$groupperm.id}>_view_form" value=1<{$groupperm.view_form}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}><br />
-			<input type="checkbox" class="add_own_entry" name="<{$content.fid}>_<{$groupperm.id}>_add_own_entry" value=1<{$groupperm.add_own_entry}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES}><br />
-			<input type="checkbox" class="update_own_entry" name="<{$content.fid}>_<{$groupperm.id}>_update_own_entry" value=1<{$groupperm.update_own_entry}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES}><br />
-			<input type="checkbox" class="update_group_entries" name="<{$content.fid}>_<{$groupperm.id}>_update_group_entries" value=1<{$groupperm.update_group_entries}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATE_GROUP_ENTRIES}><br />
-			<input type="checkbox" class="update_other_entries" name="<{$content.fid}>_<{$groupperm.id}>_update_other_entries" value=1<{$groupperm.update_other_entries}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOTHERENTRIES}><br />
-			<input type="checkbox" class="delete_own_entry" name="<{$content.fid}>_<{$groupperm.id}>_delete_own_entry" value=1<{$groupperm.delete_own_entry}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOWNENTRIES}><br />
-			<input type="checkbox" class="delete_group_entries" name="<{$content.fid}>_<{$groupperm.id}>_delete_group_entries" value=1<{$groupperm.delete_group_entries}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_DELETE_GROUP_ENTRIES}><br />
-			<input type="checkbox" class="delete_other_entries" name="<{$content.fid}>_<{$groupperm.id}>_delete_other_entries" value=1<{$groupperm.delete_other_entries}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOTHERENTRIES}><br />
-			</div>
-			<p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY}></b></p>
-			<div class="permissiongroup">
-			<input type="checkbox" class="view_private_elements" name="<{$content.fid}>_<{$groupperm.id}>_view_private_elements" value=1<{$groupperm.view_private_elements}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_PRIVATE}><br />
-			<input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_dummy1" value=1 checked disabled>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_THEIROWN}><br />
-			<input type="checkbox" class="view_globalscope" name="<{$content.fid}>_<{$groupperm.id}>_view_globalscope" value=1<{$groupperm.view_globalscope}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL}><br />
-			<input type="checkbox" class="view_groupscope" name="<{$content.fid}>_<{$groupperm.id}>_view_groupscope" value=1<{$groupperm.view_groupscope}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPONLY}>
-			<div class="groupselectionbox">
-				<select name="groupsscope_choice_<{$content.fid}>_<{$groupperm.id}>[]" size=6 multiple>
-				<option value=0<{$groupperm.groupscope_choice.0}>><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER}></option>
-				<{foreach from=$content.groups item=group}>
-				<{assign var=groupid value=$group.id}>
-        <option value=<{$groupid}><{$groupperm.groupscope_choice.$groupid}>><{$group.name}></option>
+
+    <!--Show the submitted user's permission-->
+    <{if $content.submitted_user}>
+         <div class="accordion-box" id="user_perms_accordion_box">
+             <div class="form-item">
+                 <fieldset>
+                     <legend><label class="question">User Permissions for <{$content.submitted_user}></label></legend>
+
+                     <p><b>Groups</b></p>
+                     <div class="permissiongroup">
+                         <{foreach from=$content.groupperms item=groupperm}>
+                            <p><{$groupperm.name}></p>
+                         <{/foreach}>
+                     </div>
+
+                     <!--The basics-->
+                     <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_BASIC}></b></p>
+                     <div class="permissiongroup">
+                        <{if $content.userperms.view_form}>
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}> <span class="user_groups"> --
+                                <{foreach from=$content.userperms.view_form item=group}>
+                                    <{$group}>;
+                                <{/foreach}> </span>
+                             </p>
+                         <{/if}>
+                         <{if $content.userperms.add_own_entry}>
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES}> <span class="user_groups">--
+                                 <{foreach from=$content.userperms.add_own_entry item=group}>
+                                 <{$group}>;
+                                 <{/foreach}> </span>
+                             </p>
+                         <{/if}>
+                         <{if $content.userperms.update_own_entry}>
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES}> <span class="user_groups">--
+                                 <{foreach from=$content.userperms.update_own_entry item=group}>
+                                 <{$group}>;
+                                 <{/foreach}> </span>
+                             </p>
+                         <{/if}>
+                         <{if $content.userperms.update_group_entries}>
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATE_GROUP_ENTRIES}> <span class="user_groups">--
+                                 <{foreach from=$content.userperms.update_group_entries item=group}>
+                                 <{$group}>;
+                                 <{/foreach}> </span>
+                             </p>
+                         <{/if}>
+                         <{if $content.userperms.update_other_entries}>
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOTHERENTRIES}> <span class="user_groups">--
+                                 <{foreach from=$content.userperms.update_other_entries item=group}>
+                                 <{$group}>;
+                                 <{/foreach}> </span>
+                             </p>
+                         <{/if}>
+                         <{if $content.userperms.delete_own_entry}>
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOWNENTRIES}> <span class="user_groups">--
+                                 <{foreach from=$content.userperms.delete_own_entry item=group}>
+                                 <{$group}>;
+                                 <{/foreach}> </span>
+                             </p>
+                         <{/if}>
+                         <{if $content.userperms.delete_group_entries}>
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETE_GROUP_ENTRIES}> <span class="user_groups">--
+                                 <{foreach from=$content.userperms.delete_group_entries item=group}>
+                                 <{$group}>;
+                                 <{/foreach}> </span>
+                             </p>
+                         <{/if}>
+                         <{if $content.userperms.delete_other_entries}>
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOTHERENTRIES}> <span class="user_groups">--
+                                 <{foreach from=$content.userperms.delete_other_entries item=group}>
+                                 <{$group}>;
+                                 <{/foreach}> </span>
+                             </p>
+                         <{/if}>
+
+                     </div>
+
+                     <!--Visibility-->
+                     <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY}></b></p>
+                     <div class="permissiongroup">
+                         <{if $content.userperms.view_private_elements}>
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_PRIVATE}> <span class="user_groups">--
+                                 <{foreach from=$content.userperms.view_private_elements item=group}>
+                                 <{$group}>;
+                                 <{/foreach}> </span>
+                             </p>
+                         <{/if}>
+
+                         <{if $content.userperms.view_their_own_entries}>
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_THEIROWN}> <span class="user_groups">--
+                                 <{foreach from=$content.userperms.view_their_own_entries item=group}>
+                                 <{$group}>;
+                                 <{/foreach}> </span>
+                             </p>
+                         <{/if}>
+                         <{if $content.userperms.view_globalscope}>
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL}> <span class="user_groups">--
+                                 <{foreach from=$content.userperms.view_globalscope item=group}>
+                                 <{$group}>;
+                                 <{/foreach}> </span>
+                             </p>
+                         <{/if}>
+
+                         <{if $content.userperms.view_groupscope.checked}>
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPONLY}> </p>
+                             <ul>
+                                 <{foreach from=$content.groups item=group}>
+                                     <{if $content.userperms.view_groupscope[$group.id]}>
+                                         <li class="user_perms_li"><{$group.name}> <span class="user_groups">--
+                                             <{foreach from=$content.userperms.view_groupscope[$group.id] item=group}>
+                                                 <{$group}>;
+                                             <{/foreach}> </span>
+                                         </li>
+                                     <{/if}>
+                                 <{/foreach}>
+                             </ul>
+                         <{/if}>
+
+                         <{if $content.userperms.view_groupfilter.all || $content.userperms.view_groupfilter.oom }>
+                             <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_CONDITIONS}> </p>
+                             <ul>
+                                 <{if $content.userperms.view_groupfilter.all}>
+                                     <li class="user_perms_li">Match all of these:</li>
+                                     <ul>
+                                         <{foreach from=$content.userperms.view_groupfilter.all key="filter" item="groups"}>
+                                            <li class="user_perms_li_li"><{$filter}> <span class="user_groups">-- <{foreach from=$groups item="group"}><{$group}>;<{/foreach}> </span></li>
+                                         <{/foreach}>
+                                     </ul>
+                                 <{/if}>
+
+                                 <{if $content.userperms.view_groupfilter.oom}>
+                                     <li class="user_perms_li">Match one or more of these:</li>
+                                     <ul>
+                                         <{foreach from=$content.userperms.view_groupfilter.oom key="filter" item="groups"}>
+                                             <li class="user_perms_li_li"><{$filter}> <span class="user_groups">-- <{foreach from=$groups item="group"}><{$group}>;<{/foreach}></span></li>
+                                         <{/foreach}>
+                                     </ul>
+                                 <{/if}>
+                            </ul>
+                         <{/if}>
+                     </div>
+
+                    <!--Publishing 'Saved Views' of form entries-->
+                    <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_CONDITIONS}></b></p>
+                    <div class="permissiongroup">
+                        <{if $content.userperms.manage_own}>
+                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_THEIROWN}> <span class="user_groups">--
+                                <{foreach from=$content.userperms.manage_own item=group}>
+                                    <{$group}>;
+                                <{/foreach}> </span>
+                            </p>
+                        <{/if}>
+                        <{if $content.userperms.publish_reports}>
+                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_INTHEIR}> <span class="user_groups">--
+                                <{foreach from=$content.userperms.publish_reports item=group}>
+                                    <{$group}>;
+                                <{/foreach}> </span>
+                            </p>
+                        <{/if}>
+                        <{if $content.userperms.publish_globalscope}>
+                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_FOROTHER}> <span class="user_groups">--
+                                <{foreach from=$content.userperms.publish_globalscope item=group}>
+                                    <{$group}>;
+                                <{/foreach}> </span>
+                            </p>
+                        <{/if}>
+                        <{if $content.userperms.update_other_reports}>
+                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_UPDATE}> <span class="user_groups">--
+                                <{foreach from=$content.userperms.update_other_reports item=group}>
+                                    <{$group}>;
+                                <{/foreach}> </span>
+                            </p>
+                        <{/if}>
+                        <{if $content.userperms.delete_other_reports}>
+                            <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_DELETE}> <span class="user_groups">--
+                                <{foreach from=$content.userperms.delete_other_reports item=group}>
+                                    <{$group}>;
+                                <{/foreach}> </span>
+                            </p>
+                        <{/if}>
+                    </div>
+
+                    <!--Advanced options-->
+                    <p><b><{$smarty.const._AM_PERMISSIONS_ADVANCED}></b></p>
+                    <div class="permissiongroup">
+                        <{if $content.userperms.import_data}>
+                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_IMPORT}> <span class="user_groups">--
+                                <{foreach from=$content.userperms.import_data item=group}>
+                                    <{$group}>;
+                                <{/foreach}> </span>
+                            </p>
+                        <{/if}>
+                        <{if $content.userperms.set_notifications_for_others}>
+                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_NOTIFICATIONS}> <span class="user_groups">--
+                                <{foreach from=$content.userperms.set_notifications_for_others item=group}>
+                                    <{$group}>;
+                                <{/foreach}> </span>
+                            </p>
+                        <{/if}>
+                        <{if $content.userperms.add_proxy_entries}>
+                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_CREATEFOROTHER}> <span class="user_groups">--
+                                <{foreach from=$content.userperms.add_proxy_entries item=group}>
+                                    <{$group}>;
+                                <{/foreach}> </span>
+                            </p>
+                        <{/if}>
+                        <{if $content.userperms.update_entry_ownership}>
+                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_CHANGEOWNER}> <span class="user_groups">--
+                                <{foreach from=$content.userperms.update_entry_ownership item=group}>
+                                    <{$group}>;
+                                <{/foreach}> </span>
+                            </p>
+                        <{/if}>
+                        <{if $content.userperms.ignore_editing_lock}>
+                            <p>Save entries even when they are locked while being edited elsewhere (saving cancels existing locks) <span class="user_groups">--
+                                <{foreach from=$content.userperms.ignore_editing_lock item=group}>
+                                    <{$group}>;
+                                <{/foreach}> </span>
+                            </p>
+                        <{/if}>
+                        <{if $content.userperms.edit_form}>
+                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_ALTER}> <span class="user_groups">--
+                                <{foreach from=$content.userperms.edit_form item=group}>
+                                    <{$group}>;
+                                <{/foreach}> </span>
+                            </p>
+                        <{/if}>
+                        <{if $content.userperms.delete_form}>
+                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_DELETEFORM}> <span class="user_groups">--
+                                <{foreach from=$content.userperms.delete_form item=group}>
+                                    <{$group}>;
+                                <{/foreach}> </span>
+                            </p>
+                        <{/if}>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    <{else}>
+        <{foreach from=$content.groupperms item=groupperm}>
+            <input type="hidden" name="group_list[]" value=<{$groupperm.id}>>
+            <div class="accordion-box">
+                <div class="form-item">
+                    <fieldset>
+                        <legend><label class="question"><{$groupperm.name}></label></legend>
+                        <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_BASIC}></b></p>
+                        <div class="permissiongroup">
+                            <input type="checkbox" class="view_form" name="<{$content.fid}>_<{$groupperm.id}>_view_form" value=1<{$groupperm.view_form}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}><br />
+                            <input type="checkbox" class="add_own_entry" name="<{$content.fid}>_<{$groupperm.id}>_add_own_entry" value=1<{$groupperm.add_own_entry}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES}><br />
+                            <input type="checkbox" class="update_own_entry" name="<{$content.fid}>_<{$groupperm.id}>_update_own_entry" value=1<{$groupperm.update_own_entry}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES}><br />
+                            <input type="checkbox" class="update_group_entries" name="<{$content.fid}>_<{$groupperm.id}>_update_group_entries" value=1<{$groupperm.update_group_entries}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATE_GROUP_ENTRIES}><br />
+                            <input type="checkbox" class="update_other_entries" name="<{$content.fid}>_<{$groupperm.id}>_update_other_entries" value=1<{$groupperm.update_other_entries}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOTHERENTRIES}><br />
+                            <input type="checkbox" class="delete_own_entry" name="<{$content.fid}>_<{$groupperm.id}>_delete_own_entry" value=1<{$groupperm.delete_own_entry}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOWNENTRIES}><br />
+                            <input type="checkbox" class="delete_group_entries" name="<{$content.fid}>_<{$groupperm.id}>_delete_group_entries" value=1<{$groupperm.delete_group_entries}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_DELETE_GROUP_ENTRIES}><br />
+                            <input type="checkbox" class="delete_other_entries" name="<{$content.fid}>_<{$groupperm.id}>_delete_other_entries" value=1<{$groupperm.delete_other_entries}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOTHERENTRIES}><br />
+                        </div>
+                        <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY}></b></p>
+                        <div class="permissiongroup">
+                            <input type="checkbox" class="view_private_elements" name="<{$content.fid}>_<{$groupperm.id}>_view_private_elements" value=1<{$groupperm.view_private_elements}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_PRIVATE}><br />
+                            <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_dummy1" value=1 checked disabled>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_THEIROWN}><br />
+                            <input type="checkbox" class="view_globalscope" name="<{$content.fid}>_<{$groupperm.id}>_view_globalscope" value=1<{$groupperm.view_globalscope}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL}><br />
+                            <input type="checkbox" class="view_groupscope" name="<{$content.fid}>_<{$groupperm.id}>_view_groupscope" value=1<{$groupperm.view_groupscope}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPONLY}>
+                            <div class="groupselectionbox">
+                                <select name="groupsscope_choice_<{$content.fid}>_<{$groupperm.id}>[]" size=6 multiple>
+                                    <option value=0<{$groupperm.groupscope_choice.0}>><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER}></option>
+                                    <{foreach from=$content.groups item=group}>
+                                    <{assign var=groupid value=$group.id}>
+                                    <option value=<{$groupid}><{$groupperm.groupscope_choice.$groupid}>><{$group.name}></option>
+                                    <{/foreach}>
+                                </select>
+                            </div>
+                            <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_filterentries" value=1<{$groupperm.hasgroupfilter}> <{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_DISABLED}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_CONDITIONS}>
+                            <div class="groupselectionbox">
+                                <{$groupperm.groupfilter}>
+                            </div>
+                        </div>
+                        <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_CONDITIONS}></b></p>
+                        <div class="permissiongroup">
+                            <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_dummy2" value=1 checked disabled>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_THEIROWN}><br />
+                            <input type="checkbox" class="publish_reports" name="<{$content.fid}>_<{$groupperm.id}>_publish_reports" value=1<{$groupperm.publish_reports}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_INTHEIR}><br />
+                            <input type="checkbox" class="publish_globalscope" name="<{$content.fid}>_<{$groupperm.id}>_publish_globalscope" value=1<{$groupperm.publish_globalscope}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_FOROTHER}><br />
+                            <input type="checkbox" class="update_other_reports" name="<{$content.fid}>_<{$groupperm.id}>_update_other_reports" value=1<{$groupperm.update_other_reports}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_UPDATE}><br />
+                            <input type="checkbox" class="delete_other_reports" name="<{$content.fid}>_<{$groupperm.id}>_delete_other_reports" value=1<{$groupperm.delete_other_reports}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_DELETE}><br />
+                        </div>
+                        <p><b><{$smarty.const._AM_PERMISSIONS_ADVANCED}></b></p>
+                        <div class="permissiongroup">
+                            <input type="checkbox" class="import_data" name="<{$content.fid}>_<{$groupperm.id}>_import_data" value=1<{$groupperm.import_data}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_IMPORT}><br />
+                            <input type="checkbox" class="set_notifications_for_others" name="<{$content.fid}>_<{$groupperm.id}>_set_notifications_for_others" value=1<{$groupperm.set_notifications_for_others}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_NOTIFICATIONS}><br />
+                            <input type="checkbox" class="add_proxy_entries" name="<{$content.fid}>_<{$groupperm.id}>_add_proxy_entries" value=1<{$groupperm.add_proxy_entries}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_CREATEFOROTHER}><br />
+                            <input type="checkbox" class="update_entry_ownership" name="<{$content.fid}>_<{$groupperm.id}>_update_entry_ownership" value=1<{$groupperm.update_entry_ownership}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_CHANGEOWNER}><br />
+                            <input type="checkbox" class="ignore_editing_lock" name="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock" value=1<{$groupperm.ignore_editing_lock}>>&nbsp;&nbsp;Save entries even when they are locked while being edited elsewhere (saving cancels existing locks)<br />
+                            <input type="checkbox" class="edit_form" name="<{$content.fid}>_<{$groupperm.id}>_edit_form" value=1<{$groupperm.edit_form}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_ALTER}><br />
+                            <input type="checkbox" class="delete_form" name="<{$content.fid}>_<{$groupperm.id}>_delete_form" value=1<{$groupperm.delete_form}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_DELETEFORM}>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
         <{/foreach}>
-				</select>
-			</div>
-	    <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_filterentries" value=1<{$groupperm.hasgroupfilter}> <{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_DISABLED}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_CONDITIONS}>
-			<div class="groupselectionbox">
-			<{$groupperm.groupfilter}>
-			</div>
-			</div>
-			<p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_CONDITIONS}></b></p>
-			<div class="permissiongroup">
-			<input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_dummy2" value=1 checked disabled>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_THEIROWN}><br />
-			<input type="checkbox" class="publish_reports" name="<{$content.fid}>_<{$groupperm.id}>_publish_reports" value=1<{$groupperm.publish_reports}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_INTHEIR}><br />
-			<input type="checkbox" class="publish_globalscope" name="<{$content.fid}>_<{$groupperm.id}>_publish_globalscope" value=1<{$groupperm.publish_globalscope}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_FOROTHER}><br />
-			<input type="checkbox" class="update_other_reports" name="<{$content.fid}>_<{$groupperm.id}>_update_other_reports" value=1<{$groupperm.update_other_reports}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_UPDATE}><br />
-			<input type="checkbox" class="delete_other_reports" name="<{$content.fid}>_<{$groupperm.id}>_delete_other_reports" value=1<{$groupperm.delete_other_reports}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_DELETE}><br />
-			</div>
-			<p><b><{$smarty.const._AM_PERMISSIONS_ADVANCED}></b></p>
-			<div class="permissiongroup">
-			<input type="checkbox" class="import_data" name="<{$content.fid}>_<{$groupperm.id}>_import_data" value=1<{$groupperm.import_data}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_IMPORT}><br />
-			<input type="checkbox" class="set_notifications_for_others" name="<{$content.fid}>_<{$groupperm.id}>_set_notifications_for_others" value=1<{$groupperm.set_notifications_for_others}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_NOTIFICATIONS}><br />
-			<input type="checkbox" class="add_proxy_entries" name="<{$content.fid}>_<{$groupperm.id}>_add_proxy_entries" value=1<{$groupperm.add_proxy_entries}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_CREATEFOROTHER}><br />
-			<input type="checkbox" class="update_entry_ownership" name="<{$content.fid}>_<{$groupperm.id}>_update_entry_ownership" value=1<{$groupperm.update_entry_ownership}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_CHANGEOWNER}><br />
-			<input type="checkbox" class="ignore_editing_lock" name="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock" value=1<{$groupperm.ignore_editing_lock}>>&nbsp;&nbsp;Save entries even when they are locked while being edited elsewhere (saving cancels existing locks)<br />
-			<input type="checkbox" class="edit_form" name="<{$content.fid}>_<{$groupperm.id}>_edit_form" value=1<{$groupperm.edit_form}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_ALTER}><br />
-			<input type="checkbox" class="delete_form" name="<{$content.fid}>_<{$groupperm.id}>_delete_form" value=1<{$groupperm.delete_form}>>&nbsp;&nbsp;<{$smarty.const._AM_PERMISSIONS_ADVANCED_DELETEFORM}>
-			</div>
-		</fieldset>
-	</div>
-	</div>
-	<{/foreach}>
+    <{/if}>
 </div>
 
 </form>
@@ -188,6 +436,18 @@ $("[name=order]").change(function () {
 
 $("[name=addcon]").click(function () {
 	formulize_reload();
+});
+
+$("[name=show_user_perms]").click(function () {
+    $("[name=search_by_user]").val(1);
+    formulize_reload();
+});
+
+$("[name=submitted_user]").keypress(function(e) {
+    if(e.keyCode == 13) {
+        $("[name=search_by_user]").val(1);
+        formulize_reload();
+    }
 });
 
 $(".conditionsdelete").click(function () {
