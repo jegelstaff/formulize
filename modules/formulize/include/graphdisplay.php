@@ -34,6 +34,7 @@
 include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pData.class.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pDraw.class.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pImage.class.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pPie.class.php";
 
 global $xoopsConfig;
 // load the formulize language constants if they haven't been loaded already
@@ -101,15 +102,8 @@ function displayGraph($graphType, $fid, $frid, $labelEleHandle, $dataEleHandle, 
 	    header("refresh:3; url=".XOOPS_URL."/modules/formulize/admin/ui.php?page=screen&aid=".$_GET['aid']."&fid=".$_GET['fid']."&sid=".$_GET['sid']);
 	    die("<br>Please check graph settings. <br>Jumping back to screen settings in 3 seconds.");
 	}
-	
-	switch ($graphType) {
-		case "Bar" :
-			displayBarGraph($fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions);
-			break;
-		default :
-			echo "Sorry, the graph type \"$graphType\" is not supported at the moment!";
-			break;
-	}
+	//error_log("Pie display: ".$graphType);
+	dataProcess($graphType, $fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions);
 }
 
 /**
@@ -159,15 +153,24 @@ function graphParamCheck($graphType, $fid, $frid, $labelEleHandle, $dataEleHandl
     
     return true;
 }
- 
- 
 /**
- * Helper method to draw bar graph
- * parameters have same meaning as displayGraph's parameters
+ *This function is used to do the basic processing for data that needed to producing the image
+ *All params is same with the api
+ *
+ * @param $graphType type of the graph to be displayed with input data
+ * @param $fid the id of the form where the data is coming from
+ * @param $frid the id of the relation(relating fid's form to another form) $frid == fid if no relation is specified
+ * @param $labelEleHandle the field in the form to be used as label
+ * @param $dataEleHandle the field in the form to be used as data to graph
+ * @param $operation the operation to be used to draw graphs
+ * @param $graphOptions the graph parameters passed in by user!
+ *
+ * at the end, a switch will determain which graph should be create and display
+ *
+ * added by Jinfu FEB 2015
  */
-function displayBarGraph($fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions) {
-
-  // Code from entriesdisplay to get the proper data based on selected views
+function dataProcess($graphType, $fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions){
+    // Code from entriesdisplay to get the proper data based on selected views
 
   // Set up initial vars
   global $xoopsUser;
@@ -474,60 +477,95 @@ function displayBarGraph($fid, $frid, $labelEleHandle, $dataEleHandle, $operatio
 			$dataEleHandle = substr($dataEleHandle, 0, $IMAGE_HEIGHT/4.5-3)."...";
 		}
 	}
+	
+    /*
+     *set up myData and My picture for graph then render the graph and return;
+     */
+    switch ($graphType) {
+	case "Bar" :
+	    // Code straightly copied from pChart documentation to draw the graph
+	    $myData = new pData();
+	    $myData -> addPoints(array_values($dataPoints), $dataEleHandle);
+	    $myData -> setAxisName(0, $dataEleHandle);
+	    $myData -> addPoints(array_keys($dataPoints), $labelEleHandle);
+	    $myData -> setSerieDescription($labelEleHandle, $labelEleHandle);
+	    $myData -> setAbscissa($labelEleHandle);
+	    $myData -> setAbscissaName($labelEleHandle);
+	    // $myData -> setAxisDisplay(0, AXIS_FORMAT_CUSTOM, "YAxisFormat");
 
-
-
-
-	// Code straightly copied from pChart documentation to draw the graph
-	$myData = new pData();
-	$myData -> addPoints(array_values($dataPoints), $dataEleHandle);
-	$myData -> setAxisName(0, $dataEleHandle);
-	$myData -> addPoints(array_keys($dataPoints), $labelEleHandle);
-	$myData -> setSerieDescription($labelEleHandle, $labelEleHandle);
-	$myData -> setAbscissa($labelEleHandle);
-	$myData -> setAbscissaName($labelEleHandle);
-	// $myData -> setAxisDisplay(0, AXIS_FORMAT_CUSTOM, "YAxisFormat");
-
-	/* Create the pChart object */
-	$myPicture = new pImage($IMAGE_WIDTH, $IMAGE_HEIGHT, $myData);
-	$myPicture -> drawGradientArea(0, 0, $IMAGE_WIDTH, $IMAGE_HEIGHT, DIRECTION_VERTICAL, array("StartR" => $BACKGROUND_R, "StartG" => $BACKGROUND_G, "StartB" => $BACKGROUND_B, "EndR" => $BACKGROUND_R, "EndG" => $BACKGROUND_G, "EndB" => $BACKGROUND_B, "Alpha" => 100));
-	$myPicture->drawGradientArea(0,0,500,500,DIRECTION_HORIZONTAL,array("StartR"=>240,"StartG"=>240,"StartB"=>240,"EndR"=>180,"EndG"=>180,"EndB"=>180,"Alpha"=>30));
-	$myPicture -> setFontProperties(array("FontName" => XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/fonts/arial.ttf", "FontSize" => 8));
-
-	$paddingtoLeft = $IMAGE_WIDTH * 0.15;
-	$paddingtoTop = $IMAGE_HEIGHT * 0.2;
-	if( $paddingtoTop > 50){
+	    /* Create the pChart object */
+	    $myPicture = new pImage($IMAGE_WIDTH, $IMAGE_HEIGHT, $myData);
+	    $myPicture -> drawGradientArea(0, 0, $IMAGE_WIDTH, $IMAGE_HEIGHT, DIRECTION_VERTICAL, array("StartR" => $BACKGROUND_R, "StartG" => $BACKGROUND_G, "StartB" => $BACKGROUND_B, "EndR" => $BACKGROUND_R, "EndG" => $BACKGROUND_G, "EndB" => $BACKGROUND_B, "Alpha" => 100));
+	    $myPicture->drawGradientArea(0,0,500,500,DIRECTION_HORIZONTAL,array("StartR"=>240,"StartG"=>240,"StartB"=>240,"EndR"=>180,"EndG"=>180,"EndB"=>180,"Alpha"=>30));
+	    $myPicture -> setFontProperties(array("FontName" => XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/fonts/arial.ttf", "FontSize" => 8));
+    
+	    $paddingtoLeft = $IMAGE_WIDTH * 0.15;
+	    $paddingtoTop = $IMAGE_HEIGHT * 0.2;
+	    if( $paddingtoTop > 50){
 		$paddingtoTop = 50;
-	}
+	    }
 
-	/* Draw the chart scale */
-	$myPicture -> setGraphArea($paddingtoLeft, $paddingtoTop, $IMAGE_WIDTH * 0.90, $IMAGE_HEIGHT * 0.88);
+	    /* Draw the chart scale */
+	    $myPicture -> setGraphArea($paddingtoLeft, $paddingtoTop, $IMAGE_WIDTH * 0.90, $IMAGE_HEIGHT * 0.88);
 
-	if($IMAGE_ORIENTATION == "vertical"){
+	    if($IMAGE_ORIENTATION == "vertical"){
 		$myPicture -> drawScale(array("CycleBackground" => TRUE, "DrawSubTicks" => TRUE, "GridR" => 0, "GridG" => 0, "GridB" => 0, "GridAlpha" => 10, "Pos" => SCALE_POS_TOPBOTTOM, "Mode" => SCALE_MODE_ADDALL_START0, "Decimal" => 0, "MinDivHeight" => 50));
-	}else{
+	    }else{
 		$myPicture -> drawScale(array("CycleBackground" => TRUE, "DrawSubTicks" => TRUE, "GridR" => 0, "GridG" => 0, "GridB" => 0, "GridAlpha" => 10, "Mode" => SCALE_MODE_ADDALL_START0, "Decimal" => 0, "MinDivHeight" => 50));
+	    }
+
+	    /* Turn on shadow computing */
+	    $myPicture -> setShadow(TRUE, array("X" => 1, "Y" => 1, "R" => 0, "G" => 0, "B" => 0, "Alpha" => 10));
+
+	    $Palette = array("0"=>array("R"=>$BARCOLOR_R,"G"=>$BARCOLOR_G,"B"=>$BARCOLOR_B,"Alpha"=>100));
+
+	    for($i = 1 ; $i < $sizeMultiplier ; $i++){
+	    	$Palette[$i] = array("R"=>$BARCOLOR_R,"G"=>$BARCOLOR_G,"B"=>$BARCOLOR_B,"Alpha"=>100);
+	    }
+
+	    // print_r($Palette);
+
+	    $myPicture->drawBarChart(array("OverrideColors"=>$Palette));
+
+	    /* Draw the chart */
+	    $myPicture -> drawBarChart(array("DisplayPos" => LABEL_POS_INSIDE, "DisplayValues" => TRUE, "Rounded" => TRUE, "Surrounding" => 30, "OverrideColors"=>$Palette));
+	    renderGraph($myPicture, $fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions, $dataPoints, $settings);
+	    return;
+	
+	case "Pie":		
+	    $myData = new pData();
+	    $myData -> addPoints(array_values($dataPoints), $dataEleHandle);
+	    $myData -> setSerieDescription($dataEleHandle, $dataEleHandle);
+	    $myData -> addPoints(array_keys($dataPoints), $labelEleHandle);
+	    $myData -> setAbscissa($labelEleHandle);
+	    
+	    /* Create the pChart object */
+	    $myPicture = new pImage($IMAGE_WIDTH, $IMAGE_HEIGHT, $myData);
+	    $myPicture ->drawGradientArea(0, 0, $IMAGE_WIDTH, $IMAGE_HEIGHT, DIRECTION_VERTICAL, array("StartR" => $BACKGROUND_R, "StartG" => $BACKGROUND_G, "StartB" => $BACKGROUND_B, "EndR" => $BACKGROUND_R, "EndG" => $BACKGROUND_G, "EndB" => $BACKGROUND_B, "Alpha" => 100));
+	    $myPicture->drawGradientArea(0,0,500,500,DIRECTION_HORIZONTAL,array("StartR"=>240,"StartG"=>240,"StartB"=>240,"EndR"=>180,"EndG"=>180,"EndB"=>180,"Alpha"=>30));
+	    $myPicture ->setFontProperties(array("FontName" => XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/fonts/arial.ttf", "FontSize" => 8));
+	    $myPicture->drawText($IMAGE_WIDTH/2,13,"Pie Charts",array("R"=>0,"G"=>0,"B"=>0)); 
+	    $myPicture->drawRectangle(0,0,$IMAGE_WIDTH-1,$IMAGE_HEIGHT-1,array("R"=>0,"G"=>0,"B"=>0)); 
+	
+	    /* Create the pPie object */ 
+	    $PieChart = new pPie($myPicture,$myData);
+	    /* Draw an AA pie chart */ 
+	    $PieChart->draw2DPie($IMAGE_WIDTH/2,$IMAGE_HEIGHT/2,array("DrawLabels"=>TRUE,"LabelStacked"=>TRUE,"Border"=>TRUE));
+
+	    /* Write the legend box */ 
+	    $myPicture->setShadow(FALSE);
+	    $PieChart->drawPieLegend(15,40,array("Alpha"=>20));
+	
+	    /* Draw the chart */
+	    renderGraph($myPicture, $fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions, $dataPoints, $settings);
+	    return;
+	
+	default :
+	    echo "Sorry, the graph type \"$graphType\" is not supported at the moment!";
+	    break;
 	}
-
-	/* Turn on shadow computing */
-	$myPicture -> setShadow(TRUE, array("X" => 1, "Y" => 1, "R" => 0, "G" => 0, "B" => 0, "Alpha" => 10));
-
-	$Palette = array("0"=>array("R"=>$BARCOLOR_R,"G"=>$BARCOLOR_G,"B"=>$BARCOLOR_B,"Alpha"=>100));
-
-	for($i = 1 ; $i < $sizeMultiplier ; $i++){
-		$Palette[$i] = array("R"=>$BARCOLOR_R,"G"=>$BARCOLOR_G,"B"=>$BARCOLOR_B,"Alpha"=>100);
-	}
-
-	// print_r($Palette);
-
-	$myPicture->drawBarChart(array("OverrideColors"=>$Palette));
-
-	/* Draw the chart */
-	$myPicture -> drawBarChart(array("DisplayPos" => LABEL_POS_INSIDE, "DisplayValues" => TRUE, "Rounded" => TRUE, "Surrounding" => 30, "OverrideColors"=>$Palette));
-	renderGraph($myPicture, $fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions, $dataPoints, $settings);
-	return;
-}
-
+} 
+ 
 function YAxisFormat($Value) {
 	if (round($Value) == $Value) {
 		return round($Value);
@@ -541,25 +579,25 @@ function YAxisFormat($Value) {
  * Save the graph to the local file system and render the graph
  */
 function renderGraph($myPicture, $fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions, $dataPoints, $viewSettings) {
-	// TODO: make some kind of cron job clear up or some kind of caches, update graph only when needed!
-  $currentViewList = "<b>" . $graphOptions['usecurrentviewlist'] . "</b><br><SELECT style=\"width: 350px;\" name=selectedview id=currentview size=1 onchange=\"this.form.submit();\">\n";
-  $currentViewList .= $viewSettings['viewoptions'];
-  $currentViewList .= "\n</SELECT>\n";
-	$graphRelativePathPrefix = "modules/formulize/images/graphs/";
+    // TODO: make some kind of cron job clear up or some kind of caches, update graph only when needed!
+    $currentViewList = "<b>" . $graphOptions['usecurrentviewlist'] . "</b><br><SELECT style=\"width: 350px;\" name=selectedview id=currentview size=1 onchange=\"this.form.submit();\">\n";
+    $currentViewList .= $viewSettings['viewoptions'];
+    $currentViewList .= "\n</SELECT>\n";
+    $graphRelativePathPrefix = "modules/formulize/images/graphs/";
     // Uses md5 hash of the data points and graph options to shorten filename and handle non alphanumeric chars
-	$graphRelativePath = $graphRelativePathPrefix . md5(SDATA_DB_SALT.var_export($dataPoints, true).var_export($graphOptions, true)).".png";
-	$myPicture -> render(XOOPS_ROOT_PATH . "/" . $graphRelativePath);
+    $graphRelativePath = $graphRelativePathPrefix . md5(SDATA_DB_SALT.var_export($dataPoints, true).var_export($graphOptions, true)).".png";
+    $myPicture -> render(XOOPS_ROOT_PATH . "/" . $graphRelativePath);
 
-  $currentURL = getCurrentURL();
-  echo "<h1>$dataEleHandle</h1>";
-  // TODO: Use the javascript method for changing views like the one in entriesdiplay to be able to have filter by groups, also that you can't select title options like "STANDARD VIEWS"
-  echo "<form action = $currentURL method = 'post'>";
-  echo $currentViewList;
-  echo "</form>";
-  echoBR();
-  echoBR();
-	echo "<img id = 'graph' src='" . XOOPS_URL . "/$graphRelativePath' />";
-	return;
+    $currentURL = getCurrentURL();
+    echo "<h1>$dataEleHandle</h1>";
+    // TODO: Use the javascript method for changing views like the one in entriesdiplay to be able to have filter by groups, also that you can't select title options like "STANDARD VIEWS"
+    echo "<form action = $currentURL method = 'post'>";
+    echo $currentViewList;
+    echo "</form>";
+    echoBR();
+    echoBR();
+    echo "<img id = 'graph' src='" . XOOPS_URL . "/$graphRelativePath' />";
+    return;
 }
 
 function initializeZeros($keys) {

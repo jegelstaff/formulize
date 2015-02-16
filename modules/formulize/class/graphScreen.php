@@ -131,6 +131,11 @@ class formulizeGraphScreenHandler extends formulizeScreenHandler {
 		$labelEleHandle=$labelElementMetaData['ele_handle'];
 		$dataElementMetaData = formulize_getElementMetaData($screen->getVar('dataelem'), false);
 		$dataEleHandle=$dataElementMetaData['ele_handle'];
-		displayGraph('Bar', $screen->getVar('fid'), $screen->getVar('frid'), $labelEleHandle, $dataEleHandle, $screen->getVar('ops'), $options);
+		$graphType;
+		if($screen->getVar('orientation')=='pie')
+		    $graphType='Pie';
+		else
+		    $graphType='Bar';
+		displayGraph($graphType, $screen->getVar('fid'), $screen->getVar('frid'), $labelEleHandle, $dataEleHandle, $screen->getVar('ops'), $options);
 	}
 }
