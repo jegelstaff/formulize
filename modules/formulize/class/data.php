@@ -765,6 +765,7 @@ class formulizeDataHandler  {
 
         // call a hook which can modify the values before saving
         $element_values = $formObject->onBeforeSave($entry, $element_values);
+        $element_values = $formObject->customEditCheck($entry, $element_values);
 
         // ensure the hook has not created any invalid element handles because that would cause the sql query to fail
         // note that array_flip means both arrays use element handles as keys. values from the second array are ignored in the intersect
