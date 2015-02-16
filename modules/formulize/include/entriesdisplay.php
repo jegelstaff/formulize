@@ -2389,6 +2389,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		    $groupingValues[$cols[$i]][$calc][$calcId][] = convertRawValuesToRealValues($thisResult["$galias$ghandle"], $ghandle, true);
 		  }
 		}
+        $masterResultsRaw[$cols[$i]][$calc][$calcId]['sum'] = $thisResult["$fidAlias$handle"];
 		$masterResults[$cols[$i]][$calc][$calcId] = _formulize_DE_CALC_SUM . ": ".formulize_numberFormat($thisResult["$fidAlias$handle"], $handle);                
 		break;
 	      case "min":
@@ -2839,13 +2840,13 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
 function printResults($masterResults, $blankSettings, $groupingSettings, $groupingValues, $masterResultsRaw, $filename="", $title="") {
 
 	$output = "";
-	foreach($masterResults as $handle=>$calcs) {
+	foreach($masterResults as $elementId=>$calcs) {
 		$output .= "<tr><td class=head colspan=2>\n";
-		$output .= printSmart(trans(getCalcHandleText($handle)), 100);
+		$output .= printSmart(trans(getCalcHandleText($elementId)), 100);
 		$output .= "\n</td></tr>\n";
 		foreach($calcs as $calc=>$groups) {
 			$countGroups = count($groups);
-			$rowspan = ($countGroups > 1 AND $calc != "count") ? $countGroups : 1;
+			$rowspan = ($countGroups > 1 AND $calc != "count" AND $calc != "sum") ? $countGroups : 1;
      	$output .= "<tr><td class=even rowspan=$rowspan>\n"; // start of row with calculation results (possibly first row among many)
 			switch($calc) {
 				case "sum":
@@ -2868,7 +2869,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 					break;
 			}
 			$output .= "<p><b>$calc_name</b></p>\n";
-			switch($blankSettings[$handle][$calc]) {
+			switch($blankSettings[$elementId][$calc]) {
 				case "all":
 					$bsetting = _formulize_DE_INCLBLANKS;
 					break;
@@ -2886,7 +2887,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 					break;
 				default: // must be custom
 					$bsetting = _formulize_DE_EXCLCUSTOM;
-					$setting = explode(",",substr(str_replace("!@^%*", ",", $blankSettings[$handle][$calc]),6)); // replace back the commas and remove the word custom from the front, and explode it into an array
+					$setting = explode(",",substr(str_replace("!@^%*", ",", $blankSettings[$elementId][$calc]),6)); // replace back the commas and remove the word custom from the front, and explode it into an array
 					$start = 1;
 					foreach($setting as $thissetting) {
 						if(!$start) {
@@ -2910,18 +2911,18 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 				$output .= "<td class=odd>\n"; // start of cell with calculations results
 
 				if($countGroups > 1) {
-						$theseGroupSettings = explode("!@^%*", $groupingSettings[$handle][$calc]);
+						$theseGroupSettings = explode("!@^%*", $groupingSettings[$elementId][$calc]);
 						$firstGroupSettingText = printSmart(trans(getCalcHandleText($theseGroupSettings[0], true)));
 
 						$output .= "<table style='width: auto;'><tr><th>$firstGroupSettingText</th><td class='count-total' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_NUMENTRIES."</b><center></td><td class='count-unique' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_NUMUNIQUE."</b><center></td></tr>\n";
 
 						$totalCount = 0;
 						$totalUnique = 0;
-						foreach($masterResultsRaw[$handle][$calc] as $group=>$rawResult) {
+						foreach($masterResultsRaw[$elementId][$calc] as $group=>$rawResult) {
 								foreach($theseGroupSettings as $id=>$thisGroupSetting) {
 										if($thisGroupSetting === "none") { continue; }
 										$elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
-										$groupText = formulize_swapUIText($groupingValues[$handle][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
+										$groupText = formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
 										$output .= "<tr><td>".printSmart(trans($groupText))."</td><td class='count-total' style='text-align: right;'>".$rawResult['count']."</td><td class='count-unique' style='text-align: right;'>".$rawResult['countunique']."</td></tr>";
 										$totalCount += $rawResult['count'];
 										$totalUnique += $rawResult['countunique'];
@@ -2931,12 +2932,42 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 						$output .= "<tr><td style='border-top: 1px solid black;'><b>"._formulize_DE_CALC_GRANDTOTAL."</b></td><td style='border-top: 1px solid black; text-align: right;' class='count-total'><b>$totalCount</b></td><td style='border-top: 1px solid black; text-align: right;' class='count-unique'><b>$totalUnique</b></td></tr>\n";
 						$output .= "</table>";
 				} else {
-						$rawResult = $masterResultsRaw[$handle][$calc][0];
+						$rawResult = $masterResultsRaw[$elementId][$calc][0];
 						$output .= "<div class='count-total'><p><b>"._formulize_DE_CALC_NUMENTRIES." . . . ".$rawResult['count']."</b></p></div><div class='count-unique'><p><b>"._formulize_DE_CALC_NUMUNIQUE." . . . ".$rawResult['countunique']."</b></p></div>\n";
 				}
 
 				$output .= "</td></tr>"; // end of the main row, and the specific cell with the calculations results
 
+            } elseif($calc == "sum") {
+                $output .= "<td class=odd>\n"; // start of cell with calculations results
+                $handle = convertElementIdsToElementHandles($elementId); // returns an array, since it might be passed multiple values
+                $handle = $handle[0];
+                if($countGroups > 1) {
+                    
+                    $theseGroupSettings = explode("!@^%*", $groupingSettings[$elementId][$calc]);
+                    $firstGroupSettingText = printSmart(trans(getCalcHandleText($theseGroupSettings[0], true)));
+                    
+                    $output .= "<table style='width: auto;'><tr><th>$firstGroupSettingText</th><td class='sum-total' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_SUM."</b><center></td></tr>\n";
+                    $totalSum = 0;
+                    foreach($masterResultsRaw[$elementId][$calc] as $group=>$rawResult) {
+                            foreach($theseGroupSettings as $id=>$thisGroupSetting) {
+                                    if($thisGroupSetting === "none") { continue; }
+                                    $elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
+                                    $groupText = formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
+                                    $output .= "<tr><td>".printSmart(trans($groupText))."</td><td class='sum-total' style='text-align: right;'>".formulize_numberFormat($rawResult['sum'],$handle)."</td></tr>";
+                                    $totalSum += $rawResult['sum'];
+                            }
+                    }
+                    
+                    $output .= "<tr><td style='border-top: 1px solid black;'><b>"._formulize_DE_CALC_GRANDTOTAL."</b></td><td style='border-top: 1px solid black; text-align: right;' class='sum-total'><b>".formulize_numberFormat($totalSum,$handle)."</b></td></tr>\n";
+					$output .= "</table>";
+                    
+                } else {
+                    $rawResult = $masterResultsRaw[$elementId][$calc][0];
+                    $output .= "<div class='sum-total'><p><b>"._formulize_DE_CALC_SUM." . . . ".formulize_numberFormat($rawResult['sum'],$handle)."</b></p></div>\n";
+                }
+                $output .= "</td></tr>"; // end of the main row, and the specific cell with the calculations results
+                
 			} else {
       $start = 1;
      	foreach($groups as $group=>$result) {
@@ -2947,14 +2978,14 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
           //if(count($groups)>1) { // OR count($groups)>1) { // output the heading section for this group of results
             $output .= "<p><b>";
             $start2 = true;
-            foreach(explode("!@^%*", $groupingSettings[$handle][$calc]) as $id=>$thisGroupSetting) {
+            foreach(explode("!@^%*", $groupingSettings[$elementId][$calc]) as $id=>$thisGroupSetting) {
               if($thisGroupSetting === "none") { continue; }
               if(!$start2) {
                 $output .= "<br>\n";
               }
               $start2 = false;
               $elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
-              $groupText = formulize_swapUIText($groupingValues[$handle][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
+              $groupText = formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext']));
               $output .= printSmart(trans(getCalcHandleText($thisGroupSetting, true))) . ": " . printSmart(trans($groupText)) . "\n";
             }
             $output .= "</b></p>\n";
