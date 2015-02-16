@@ -111,8 +111,8 @@ function patch40() {
 	 * 
 	 * ====================================== */
 	
-	$checkThisTable = 'formulize_applications';
-	$checkThisField = 'custom_code';
+	$checkThisTable = 'formulize_id';
+	$checkThisField = 'custom_edit_check';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
@@ -320,6 +320,7 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		$sql['add_bottomtext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `bottomtemplate` text NOT NULL"; 
 		$sql['add_formelements'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_form") . " ADD `formelements` text";
         $sql['add_on_before_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_before_save` text";
+        $sql['add_custom_edit_check'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `custom_edit_check` text";
 		$sql['add_form_note'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `note` text";
 		$sql['add_use_default_when_blank'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_use_default_when_blank` tinyint(1) NOT NULL default '0'";
         $sql['add_global_search_to_saved_view'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_global_search` text";
@@ -361,6 +362,8 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
                     print "formelements field already added for single page screens.  result: OK<br>";
                 } elseif($key === "add_on_before_save") {
                     print "on_before_save field already added.  result: OK<br>";
+                } elseif($key === "add_custom_edit_check") {
+                    print "custom_edit_check field already added.  result: OK<br>";
                 } elseif($key === "add_form_note") {
                     print "form note field already added.  result: OK<br>";
 				} elseif($key === "add_use_default_when_blank") {

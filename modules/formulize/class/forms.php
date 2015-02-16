@@ -209,7 +209,6 @@ function checkFormOwnership($id_form,$form_handle){
         if ("on_before_save" == $key) {
             $this->cache_on_before_save_code();
         }
-        parent::setVar($key, $value, $not_gpc);
         if ("custom_edit_check" == $key) { // Added for custom_edit_check var
             $this->cache_custom_edit_check_code();
         }
@@ -314,23 +313,13 @@ EOF;
         return $element_values;
     }
 
-    public function customEditCheck($entry_id, $element_values) {
+    public function customEditCheck($entry_id) {
         // if there is any code to run to check if editing is allowed, include it (write if necessary), and run the function
         if (strlen($this->custom_edit_check) > 0 and (file_exists($this->custom_edit_check_filename) or $this->cache_custom_edit_check_code())) {
             include_once $this->custom_edit_check_filename;
             // note that the custom code could create new values in the element_values array, so the caller must limit to valid field names
-            $element_values = call_user_func($this->custom_edit_check_function_name, $entry_id, $element_values, $this->getVar('id_form'));
-            foreach ($element_values["element_values"] as $key => $value) {
-                if (0 == preg_match("/^[a-zA-Z_][a-zA-Z0-9_]*$/", $key)) {
-                    // this key is invalid for a PHP variable name, so it was not set in the on-before-save function and
-                    //  the value in the array (which could have been modified) should be returned
-                    $element_values[$key] = $value;
-                }
-            }
-            // due to extract()ing and then collecting back into an array, the array contains itself, so remove the duplicate
-            unset($element_values["element_values"]);
+            call_user_func($this->custom_edit_check_function_name, $entry_id, $this->getVar('id_form'));
         }
-        return $element_values;
     }
 
     public function default_form_screen() {

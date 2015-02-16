@@ -871,6 +871,7 @@ class formulizeDataHandler  {
             if (file_exists($lock_file_name))
                 unlink($lock_file_name);
 		}
+        $formObject->customEditCheck($entry_to_return ? $entry_to_return : $lastWrittenId);
 
 		return $entry_to_return ? $entry_to_return : $lastWrittenId;
 	}
