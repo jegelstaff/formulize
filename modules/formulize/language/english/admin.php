@@ -107,6 +107,7 @@ define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have
 
 /*mod Language for permissions*/
 define("_AM_PERMISSIONS_CHOOSE_GROUPS","Which groups do you want to set permissions for?");
+define("_AM_PERMISSIONS_SHOW_PERMS_FOR_GROUPS", "Show permissions for these groups");
 define("_AM_PERMISSIONS_LIST_GROUPS","List groups alphabetically or in creation order?");
 define("_AM_PERMISSIONS_LIST_ALPHA","Alphabetical");
 define("_AM_PERMISSIONS_LIST_CREATION","Creation order");
@@ -170,7 +171,7 @@ define("_AM_SCREEN_CREATE"," Create a new Screen");
 define("_AM_SCREEN_FORMSCREENS","Form Screens");
 define("_AM_SCREEN_LISTSCREENS","List Screens");
 define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? All configuration settings for this screen will be lost!");
-
+define("_AM_SCREEN_RELATIONWARNING", "Note: This screen uses a different relationship setting than one or more list screens.");
 
 
 

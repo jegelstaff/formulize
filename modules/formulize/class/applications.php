@@ -42,7 +42,7 @@ global $xoopsDB;
             $this->initVar("url", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
             $this->initVar("link_text", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
             $this->initVar("name", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-             $this->initVar("text", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+            $this->initVar("text", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
             $this->initVar("permissions", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
             $this->initVar("default_screen", XOBJ_DTYPE_TXTBOX, NULL, false, 255); //added oct 2013
         }
@@ -142,7 +142,8 @@ class formulizeApplication extends XoopsObject {
     $this->initVar("description", XOBJ_DTYPE_TXTAREA);
     $this->initVar("forms", XOBJ_DTYPE_ARRAY);
     $this->initVar("links", XOBJ_DTYPE_ARRAY);
-    $this->initVar("all_links", XOBJ_DTYPE_ARRAY);  
+    $this->initVar("all_links", XOBJ_DTYPE_ARRAY);
+    $this->initVar("custom_code", XOBJ_DTYPE_TXTBOX, NULL, false); //added jan 2015
   }
   
     function forms() {
@@ -277,7 +278,7 @@ class formulizeApplicationsHandler {
   }
   
   function insert(&$appObject, $force=false) {
-		if( get_class($appObject) != 'formulizeApplication'){
+    if( get_class($appObject) != 'formulizeApplication'){
         return false;
     }
     if( !$appObject->isDirty() ){
@@ -290,10 +291,14 @@ class formulizeApplicationsHandler {
       ${$k} = $v;
     }
     if($appObject->isNew() || empty($appid)) {
-      $sql = "INSERT INTO ".$this->db->prefix("formulize_applications") . " (`name`, `description`) VALUES (".$this->db->quoteString($name).", ".$this->db->quoteString($description).")";
+        $sql = "INSERT INTO ".$this->db->prefix("formulize_applications") . " (`name`, `description`, `custom_code`) VALUES (".$this->db->quoteString($name).", ".$this->db->quoteString($description).",".$this->db->quoteString($custom_code).")";
     } else {
-      $sql = "UPDATE ".$this->db->prefix("formulize_applications") . " SET `name` = ".$this->db->quoteString($name).", `description` = ".$this->db->quoteString($description)." WHERE appid = ".intval($appid);
+        $sql = "UPDATE ".$this->db->prefix("formulize_applications") . " SET `name` = ".$this->db->quoteString($name).", `description` = ".$this->db->quoteString($description).", `custom_code` = ".$this->db->quoteString($custom_code)." WHERE appid = ".intval($appid);
     }
+
+    //after executing insertion or updating, we put file in the following path with custom_code
+    $filename=XOOPS_ROOT_PATH."/modules/formulize/temp/application_custom_code_".$appid.".php";
+    file_put_contents($filename,$custom_code);
     
     if( false != $force ){
         $result = $this->db->queryF($sql);
@@ -514,7 +519,6 @@ class formulizeApplicationsHandler {
             exit("Error checking default screen. SQL dump:\n" . $checksql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:formulize@freeformsolutions.ca>Freeform Solutions</a> for assistance.");
         }
     }
-    
 }
 
 

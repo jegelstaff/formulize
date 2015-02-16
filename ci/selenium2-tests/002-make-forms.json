@@ -271,6 +271,14 @@
       "text": "project"
     },
     {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "forms-note"
+      },
+      "text": "this is the note text"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
