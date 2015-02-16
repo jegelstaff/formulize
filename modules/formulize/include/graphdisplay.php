@@ -165,9 +165,9 @@ function graphParamCheck($graphType, $fid, $frid, $labelEleHandle, $dataEleHandl
  * @param $operation the operation to be used to draw graphs
  * @param $graphOptions the graph parameters passed in by user!
  *
- * at the end, a switch will determain which graph should be create and display
+ * at the end, a switch will determain which graph should be created and displayed
  *
- * added by Jinfu FEB 2015
+ * Added by Jinfu FEB 2015
  */
 function dataProcess($graphType, $fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions){
     // Code from entriesdisplay to get the proper data based on selected views
@@ -479,7 +479,7 @@ function dataProcess($graphType, $fid, $frid, $labelEleHandle, $dataEleHandle, $
 	}
 	
     /*
-     *set up myData and My picture for graph then render the graph and return;
+     *set up myData and myPicture for graph then render the graph and return;
      */
     switch ($graphType) {
 	case "Bar" :
@@ -555,7 +555,6 @@ function dataProcess($graphType, $fid, $frid, $labelEleHandle, $dataEleHandle, $
 	    /* Write the legend box */ 
 	    $myPicture->setShadow(FALSE);
 	    $PieChart->drawPieLegend(15,40,array("Alpha"=>20));
-	
 	    /* Draw the chart */
 	    renderGraph($myPicture, $fid, $frid, $labelEleHandle, $dataEleHandle, $operation, $graphOptions, $dataPoints, $settings);
 	    return;
@@ -591,12 +590,17 @@ function renderGraph($myPicture, $fid, $frid, $labelEleHandle, $dataEleHandle, $
     $currentURL = getCurrentURL();
     echo "<h1>$dataEleHandle</h1>";
     // TODO: Use the javascript method for changing views like the one in entriesdiplay to be able to have filter by groups, also that you can't select title options like "STANDARD VIEWS"
+    /*// dont know what's this for and how it works, so I removed it for now.
     echo "<form action = $currentURL method = 'post'>";
     echo $currentViewList;
-    echo "</form>";
+    echo "</form>";*/
     echoBR();
     echoBR();
     echo "<img id = 'graph' src='" . XOOPS_URL . "/$graphRelativePath' />";
+    echoBR();
+    echoBR();
+    $url=XOOPS_URL."/modules/formulize/admin/ui.php?page=form&fid=".$fid."&tab=screens";
+    echo "<a href= ".$url.">Back to Screens List</a>";
     return;
 }
 

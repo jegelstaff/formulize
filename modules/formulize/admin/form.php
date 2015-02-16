@@ -338,8 +338,11 @@ $i = 1;
 foreach($graphsScreens as $screen) {
   $screens['graphs'][$i]['sid'] = $screen->getVar('sid');
   $screens['graphs'][$i]['title'] = $screen->getVar('title');
-  //TO DO: this type should show the graph is a bar or pie,now it's just graph
-  $screens['graphs'][$i]['type']=$screen->getVar('type');
+  
+  //added a field to show what is the type of this graph screen
+  $graph_screen_handler=xoops_getmodulehandler('graphScreen', 'formulize');
+  $tempScreen=$graph_screen_handler->get($screen->getVar('sid'));
+  $screens['graphs'][$i]['type']=$tempScreen->getVar('orientation');
   $i++;
 }
 

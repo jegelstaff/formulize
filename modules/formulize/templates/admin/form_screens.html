@@ -74,7 +74,9 @@
 	      <tr>
 		      <td><label for="screens-defaultgraph-<{$screen.sid}>"><a class="configscreen" target-sid="<{$screen.sid}>" href="?page=screen&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$screen.sid}>"><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
 					<td><{$screen.sid}></td>
-					<td><{$screen.type}></td>
+					<td><{if $screen.type eq 'horizontal'}>Bar Chart,Horizontal<{/if}>
+						<{if $screen.type eq 'vertical'}>Bar Chart,Vertical<{/if}>
+						<{if $screen.type eq 'pie'}> Pie Chart<{/if}></td>
   		    <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;<a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
 	      </tr>
       <{/foreach}>
