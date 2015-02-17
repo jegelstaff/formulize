@@ -28,7 +28,7 @@
 		    <th>Type</th>
 		    <th>Default</th>
 		    <th>Action</th>
-			<th>Relationships</th>
+
 	    </tr>
       <{foreach from=$content.screens item=screen}>
 	      <tr>
@@ -37,11 +37,7 @@
 		      <td><{if $screen.type eq 'multiPage'}>Multi page<{else}>Regular<{/if}></td>
 		      <td><div class="form-radios"><input type="radio" id="screens-defaultform-<{$screen.sid}>" name="screens-defaultform" value="<{$screen.sid}>"<{if $screen.sid eq $content.defaultform}> checked="checked"<{/if}>/></div></td>
   		    <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;<a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
-	      	<td><{foreach from=$content.listOfEntries item=loe}>
-					<{if $loe.frid ne $screen.frid}> <{assign var="flag" value=true}><{/if}>
-				<{/foreach}>
-				<{if $flag}> <{$smarty.const._AM_SCREEN_RELATIONWARNING}><{/if}></td>
-		  </tr>
+          </tr>
       <{/foreach}>
     </table>
   </div>
