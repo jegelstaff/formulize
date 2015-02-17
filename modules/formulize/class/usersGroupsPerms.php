@@ -27,6 +27,7 @@
 ###############################################################################
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+include_once XOOPS_ROOT_PATH.'/modules/formulize/class/forms.php';
 
 class formulizePermHandler {
 
@@ -146,6 +147,16 @@ class formulizePermHandler {
                     }
                 }
             }
+            //Second update to include custom edit check code
+
+            if("update"== $action && $entry_id > 0){
+                error_log("CACHED PERMISSIONS BEFORE: ".print_r(self::$cached_permissions[$cache_key],true));
+                $formHandler = xoops_getmodulehandler('forms','formulize');
+                $formObject = $formHandler->get($form_id);
+                self::$cached_permissions[$cache_key] = $formObject->customEditCheck($form_id,$user_id,$entry_id, self::$cached_permissions[$cache_key]);
+                error_log("CACHED PERMISSIONS AFTER: ".print_r(self::$cached_permissions[$cache_key],true));
+            }
+
         }
         return self::$cached_permissions[$cache_key];
     }

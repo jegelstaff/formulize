@@ -266,12 +266,8 @@ EOF;
 
 <?php
 
-function form_{$this->id_form}_custom_edit_check(\$entry_id, \$element_values, \$form_id) {
-    extract(\$element_values);  // this converts the array elements into PHP variables
-
+function form_{$this->id_form}_custom_edit_check(\$form_id,\$entry_id,\$user_id, \$allow_editing) {
 {$this->custom_edit_check}
-
-    return get_defined_vars();  // this converts PHP variables back into an array
 }
 
 EOF;
@@ -313,12 +309,14 @@ EOF;
         return $element_values;
     }
 
-    public function customEditCheck($entry_id) {
+    public function customEditCheck($form_id, $entry_id,$user_id, $allow_editing) {
         // if there is any code to run to check if editing is allowed, include it (write if necessary), and run the function
         if (strlen($this->custom_edit_check) > 0 and (file_exists($this->custom_edit_check_filename) or $this->cache_custom_edit_check_code())) {
             include_once $this->custom_edit_check_filename;
             // note that the custom code could create new values in the element_values array, so the caller must limit to valid field names
-            call_user_func($this->custom_edit_check_function_name, $entry_id, $this->getVar('id_form'));
+            call_user_func($this->custom_edit_check_function_name,$form_id, $entry_id, $user_id,$allow_editing);
+        }else{
+            return $allow_editing; // return passed value if there is no code to check with.
         }
     }
 
