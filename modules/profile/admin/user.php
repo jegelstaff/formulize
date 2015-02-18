@@ -218,14 +218,26 @@ switch($op) {
 		break;
 	
 	case 'masquerade':
-		//$xoopsUser = new icms_member_user_Object($_REQUEST['id']);
-		//$_SESSION['xoopsUserId'] = $_REQUEST['id'];
-		//foreach($xoopsUser->vars as $key=>$value){
-		//	icms_core_Message::error($key . ": " . $xoopsUser->vars[$key]['value']);
-		//}
-		//$xoopsUser = $tempUser;
-		//redirect_header(SITE_BASE_URL);
+		//Change effective user
+		$masqueradeUser = new icms_member_user_Object($_REQUEST['id']);
+		$_SESSION['xoopsUserId'] = $masqueradeUser->getVar('uid');
+		$_SESSION['xoopsUserGroups'] = $masqueradeUser->getGroups();
+		$_SESSION['xoopsUserLastLogin'] = $masqueradeUser->getVar('last_login');
+		$_SESSION['xoopsUserLanguage'] = $masqueradeUser->language();
+		if (isset($_SESSION['XOOPS_TOKEN_SESSION'])) unset($_SESSION['XOOPS_TOKEN_SESSION']);
 		
+		$xoops_user_theme = $masqueradeUser->getVar('theme');
+		if (in_array($xoops_user_theme, $icmsConfig['theme_set_allowed'])) 
+			$_SESSION['xoopsUserTheme'] = $xoops_user_theme;
+		else 
+			unset($_SESSION['xoopsUserTheme']);
+			
+		//Not sure if necessary 
+		unset($masqueradeUser);
+		unset($_REQUEST['op']);
+		
+		//Redirect user to formulize home page
+		header('Location: ' . SITE_BASE_URL);
 		break;
 }
 
