@@ -1034,16 +1034,21 @@ class formulizeFormsHandler {
 		$insert_sql = "INSERT INTO " . $this->db->prefix("formulize_id") . " (";
 		$start = 1;
 		foreach($getrow[0] as $field=>$value) {
+			if(is_null($value)) { continue; }
+			if($this->fieldShouldBeSkippedInCloning($field)) { continue; }
 			if(!$start) { $insert_sql .= ", "; }
 			$start = 0;
 			$insert_sql .= $field;
 		}
 		$insert_sql .= ") VALUES (";
 		$start = 1;
+
+		// TODO check to make sure forms are okay and then make sure application info gets transferred
+
 		foreach($getrow[0] as $field=>$value) {
-		if($field == "id_form") { $value = ""; }
+			if(is_null($value)) { continue; }
+			if($this->fieldShouldBeSkippedInCloning($field)) { continue; }
 			if($field == "desc_form") { $value = $newtitle; }
-			if($field == "headerlist" OR $field == "defaultform" OR $field == "defaultlist") { $value = ""; }
 			if($field == "form_handle") {
 				$oldFormHandle = $value;
 				$value = "replace_with_handle_and_id";
@@ -1073,6 +1078,7 @@ class formulizeFormsHandler {
 			$insert_sql = "INSERT INTO " . $this->db->prefix("formulize") . " (";
 			$start = 1;
 			foreach($ele as $field=>$value) {
+				if($field == "ele_id") { continue; }
 				if(!$start) { $insert_sql .= ", "; }
 				$start = 0;
 				$insert_sql .= $field;
@@ -1081,7 +1087,7 @@ class formulizeFormsHandler {
 			$start = 1;
 			foreach($ele as $field=>$value) {
 				if($field == "id_form") { $value = "$newfid"; }
-				if($field == "ele_id") { $value = ""; }
+				if($field == "ele_id") { continue; }
 				if($field == "ele_handle") {
 					if($value === $ele['ele_id']) {
 						$value = "replace_with_ele_id";
@@ -1139,8 +1145,8 @@ class formulizeFormsHandler {
 
 	// if revisions are enabled for the cloned form, then create the revisions table
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
-	$newFormObject = $form_handler->get($newfid);
-	if ($newFormObject->getVar('store_revisions')) {
+	$clonedFormObject = $form_handler->get($newfid);
+	if ($clonedFormObject->getVar('store_revisions')) {
 		if (!$tableCreationResult = $this->createDataTable($newfid, 0, false, true)) {
 			print "Error: could not create revisions table for form $newfid. ".
 				"Please delete the cloned form and report this error to ".
@@ -1160,8 +1166,99 @@ class formulizeFormsHandler {
       $sql = "INSERT INTO ".$this->db->prefix("group_permission"). " (gperm_name, gperm_itemid, gperm_groupid, gperm_modid) VALUES ('".$thisOldPerm->getVar('gperm_name')."', $newfid, ".$thisOldPerm->getVar('gperm_groupid').", ".getFormulizeModId().")";
       $res = $this->db->queryF($sql);
     }
+
+
+	// TODO
+	// create and insert new defaultlist screen and defaultform screen using $newfid and $newtitle
+//	$formscreen_id = $this->formScreenForClonedForm($newtitle, $newfid);
+//	$listscreen_id = $this->listScreenForClonedForm($newtitle, $newfid, $formscreen_id);
+		$formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
+		$defaultFormScreen = $formScreenHandler->create();
+		$defaultFormScreen->setVar('displayheading', 1);
+		$defaultFormScreen->setVar('reloadblank', 0);
+		$defaultFormScreen->setVar('savebuttontext', _formulize_SAVE);
+		$defaultFormScreen->setVar('alldonebuttontext', _formulize_DONE);
+		$defaultFormScreen->setVar('title',"Regular '$newtitle'");
+		$defaultFormScreen->setVar('fid',$newfid);
+		$defaultFormScreen->setVar('frid',0);
+		$defaultFormScreen->setVar('type','form');
+		$defaultFormScreen->setVar('useToken',1);
+		if(!$defaultFormScreenId = $formScreenHandler->insert($defaultFormScreen)) {
+			print "Error: could not create default form screen";
+		}
+		$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+		$screen = $listScreenHandler->create();
+		// View
+		$screen->setVar('defaultview','all');
+		$screen->setVar('usecurrentviewlist',_formulize_DE_CURRENT_VIEW);
+		$screen->setVar('limitviews',serialize(array(0=>'allviews')));
+		$screen->setVar('useworkingmsg',1);
+		$screen->setVar('usescrollbox',1);
+		$screen->setVar('entriesperpage',10);
+		$screen->setVar('viewentryscreen',$defaultFormScreenId);
+		// Headings
+		$screen->setVar('useheadings',1);
+		$screen->setVar('repeatheaders',5);
+		$screen->setVar('usesearchcalcmsgs',1);
+		$screen->setVar('usesearch',1);
+		$screen->setVar('columnwidth',0);
+		$screen->setVar('textwidth',35);
+		$screen->setVar('usecheckboxes',0);
+		$screen->setVar('useviewentrylinks',1);
+		$screen->setVar('desavetext',_formulize_SAVE);
+		// Buttons
+		$screen->setVar('useaddupdate',_formulize_DE_ADDENTRY);
+		$screen->setVar('useaddmultiple',_formulize_DE_ADD_MULTIPLE_ENTRY);
+		$screen->setVar('useaddproxy',_formulize_DE_PROXYENTRY);
+		$screen->setVar('useexport',_formulize_DE_EXPORT);
+		$screen->setVar('useimport',_formulize_DE_IMPORT);
+		$screen->setVar('usenotifications',_formulize_DE_NOTBUTTON);
+		$screen->setVar('usechangecols',_formulize_DE_CHANGECOLS);
+		$screen->setVar('usecalcs',_formulize_DE_CALCS);
+		$screen->setVar('useadvcalcs',_formulize_DE_ADVCALCS);
+		$screen->setVar('useexportcalcs',_formulize_DE_EXPORT_CALCS);
+		$screen->setVar('useadvsearch','');
+		$screen->setVar('useclone',_formulize_DE_CLONESEL);
+		$screen->setVar('usedelete',_formulize_DE_DELETESEL);
+		$screen->setVar('useselectall',_formulize_DE_SELALL);
+		$screen->setVar('useclearall',_formulize_DE_CLEARALL);
+		$screen->setVar('usereset',_formulize_DE_RESETVIEW);
+		$screen->setVar('usesave',_formulize_DE_SAVE);
+		$screen->setVar('usedeleteview',_formulize_DE_DELETE);
+		$screen->setVar('title',"Entries in '$newtitle'");
+		$screen->setVar('fid',$newfid);
+		$screen->setVar('frid',0);
+		$screen->setVar('type','listOfEntries');
+		$screen->setVar('useToken',1);
+		if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
+			print "Error: could not create default list screen";
+		}
+		$clonedFormObject->setVar('defaultform', $defaultFormScreenId);
+		$clonedFormObject->setVar('defaultlist', $defaultListScreenId);
+		if(!$form_handler->insert($clonedFormObject)) {
+			print "Error: could not update form object with default screen ids: ".$xoopsDB->error();
+		}
 	}
-	
+
+	/**
+	 * @param $field
+	 * @return bool
+	 */
+	function fieldShouldBeSkippedInCloning($field)
+	{
+		return $field == "id_form" OR $field == "defaultform" OR $field == "defaultlist";
+	}
+
+	// creates a new default form screen for a cloned form since this should not carry over from the original form
+	// returns the form screen id if insert was successful
+	function formScreenForClonedForm($title, $fid) {
+		// TODO
+	}
+
+	// creates a new default list screen for a cloned form since this should not carry over from the original form
+	function listScreenForClonedForm($title, $fid, $formScreenId) {
+		// TODO
+	}
 
 	function renameDataTable($oldName, $newName, $formObject) {
 		global $xoopsDB;
