@@ -268,6 +268,7 @@ EOF;
 
 function form_{$this->id_form}_custom_edit_check(\$form_id,\$entry_id,\$user_id, \$allow_editing) {
 {$this->custom_edit_check}
+return \$allow_editing; // this will pass the result of the custom operation into the correct variable slot.
 }
 
 EOF;

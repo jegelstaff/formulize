@@ -20,7 +20,7 @@
 </textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
 
     <h2>Enable / Disable Entry Editing</h2>
-    <p>This special procedure allows for a custom condition to be set, to decide whether a user can edit an entry or not. Variables will be available in the code. IE: $entry_id can be used to check values in an entry, $user_id for identifying the logged in user, $form_id to indicate the entire form, and $allow_editing (true or false) to determine if the user can make changes or not. </p><br />
+    <p>This special procedure allows for a custom condition to be set to decide whether a user can edit an entry or not. Variables will be available in the code: $entry_id can be used to identify an entry, $user_id for identifying the logged in user, $form_id to indicate the form, and $allow_editing (true or false) to determine if the user can make changes or not. Do not include a return value after the code: the value of $allow_editing will be returned. </p><br />
     <textarea id="forms-custom_edit_check" name="forms-custom_edit_check" class="code-textarea"><{$content.form_object->custom_edit_check}>
 </textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
 
