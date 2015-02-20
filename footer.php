@@ -12,6 +12,14 @@
  * @version	$Id: footer.php 20900 2011-02-27 02:18:47Z skenow $
  */
 
+if (isset($_REQUEST['op']) && $_REQUEST['op'] == 'masquerade') {
+	if (isset($_REQUEST['revert']) && $_REQUEST['revert'] == 1) {
+		$_SESSION['xoopsUserGroups'] = array(1);
+		$_SESSION['masquerade_end'] = 1;
+		header('Location: ' . ICMS_MODULES_URL . '/profile/admin/user.php');
+	}
+}
+ 
 defined('ICMS_ROOT_PATH') || die('ICMS root path not defined');
 
 if (defined("XOOPS_FOOTER_INCLUDED")) exit();
@@ -80,5 +88,22 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 	}
 	$xoTheme->render();
 }
-icms::$logger->stopTime();
 
+//If user is currently masquerading as another user, show confirm box that allows user to revert back to normal mode
+
+
+if (isset($_REQUEST['op']) == false && isset($_SESSION['masquerade_xoopsUserId']))
+	icms_core_Message::confirm(array('revert' => 1, 'op' => 'masquerade'), $_SERVER['REQUEST_URI'] , 'Go back to normal');
+
+/*
+if (isset($_REQUEST['op']) && $_REQUEST['op'] == 'masquerade') {
+	if (isset($_REQUEST['revert']) && $_REQUEST['revert'] == 1) {
+		$_SESSION['xoopsUserGroups'] = array(1);
+		icms_core_Message::confirm(array('revert' => 1, 'op' => 'masquerade'), ICMS_MODULES_URL . '/profile/admin/user.php', 'Go back to normal111?');
+	}
+} elseif (isset($_SESSION['masquerade_xoopsUserId']))
+	icms_core_Message::confirm(array('revert' => 1, 'op' => 'masquerade'), $_SERVER['REQUEST_URI'] , 'Go back to normal222?');
+	
+*/
+	
+icms::$logger->stopTime();

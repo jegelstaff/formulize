@@ -17,7 +17,8 @@ include_once "admin_header.php";
 icms_cp_header();
 
 $op = isset($_REQUEST['op']) ? trim($_REQUEST['op']) : 'list';
-if($op == 'editordeleteormasquerade') $op = isset($_REQUEST['delete'])?'delete':isset($_REQUEST['edit'])?'edit':'masquerade';
+if($op == 'editordeleteormasquerade') $op = isset($_REQUEST['delete'])?'delete': (isset($_REQUEST['edit'])?'edit':'masquerade');
+if(isset($_SESSION['masquerade_end']) && $_SESSION['masquerade_end'] == 1) $op = 'masquerade';
 $adminMenuIncluded = false;
 $member_handler = icms::handler('icms_member');
 
@@ -218,8 +219,29 @@ switch($op) {
 		break;
 	
 	case 'masquerade':
-		//Change effective user
+		/*
+		*  Allows an admin user to masquerade as a different user.
+		*  This allows the admin to see and do what the other user sees/can-do.
+		*  A confirm box will also be created at the footer to allow the admin
+		*  to revert the masqerading effect [formulize\footer.php]
+		*/
+		
+		//Revert masquerade effect
+		if (isset($_SESSION['masquerade_end']) && $_SESSION['masquerade_end'] == 1) {
+			$masqueradeUser = new icms_member_user_Object($_SESSION['masquerade_xoopsUserId']);
+			unset($_SESSION['masquerade_xoopsUserId']);
+		}
+		//...or masquerade
+		else {
 		$masqueradeUser = new icms_member_user_Object($_REQUEST['id']);
+			
+			//Save UserId of the actual user
+			if (isset($_SESSION['masquerade_xoopsUserId']) == false) {
+				$_SESSION['masquerade_xoopsUserId'] = $_SESSION['xoopsUserId'];
+			}
+		}
+		
+		//Change effective user
 		$_SESSION['xoopsUserId'] = $masqueradeUser->getVar('uid');
 		$_SESSION['xoopsUserGroups'] = $masqueradeUser->getGroups();
 		$_SESSION['xoopsUserLastLogin'] = $masqueradeUser->getVar('last_login');
@@ -229,15 +251,17 @@ switch($op) {
 		$xoops_user_theme = $masqueradeUser->getVar('theme');
 		if (in_array($xoops_user_theme, $icmsConfig['theme_set_allowed'])) 
 			$_SESSION['xoopsUserTheme'] = $xoops_user_theme;
-		else 
+		elseif (isset($_SESSION['xoopsUserTheme']))
 			unset($_SESSION['xoopsUserTheme']);
 			
-		//Not sure if necessary 
-		unset($masqueradeUser);
-		unset($_REQUEST['op']);
-		
-		//Redirect user to formulize home page
-		header('Location: ' . SITE_BASE_URL);
+		//Redirect user
+		if (isset($_SESSION['masquerade_end']) && $_SESSION['masquerade_end'] == 1) {
+			header('Location: ' . $_SERVER['REQUEST_URI']);
+			unset($_SESSION['masquerade_end']);
+		}
+		else {
+			header('Location: ' . SITE_BASE_URL);
+		}
 		break;
 }
 
