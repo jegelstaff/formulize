@@ -315,7 +315,8 @@ EOF;
         if (strlen($this->custom_edit_check) > 0 and (file_exists($this->custom_edit_check_filename) or $this->cache_custom_edit_check_code())) {
             include_once $this->custom_edit_check_filename;
             // note that the custom code could create new values in the element_values array, so the caller must limit to valid field names
-            call_user_func($this->custom_edit_check_function_name,$form_id, $entry_id, $user_id,$allow_editing);
+            $allow_editing =call_user_func($this->custom_edit_check_function_name,$form_id, $entry_id, $user_id,$allow_editing, $this->getVar('id_form'));
+            return $allow_editing;
         }else{
             return $allow_editing; // return passed value if there is no code to check with.
         }
