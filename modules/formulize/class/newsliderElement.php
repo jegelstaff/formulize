@@ -79,9 +79,6 @@ class formulizeNewSliderElementHandler extends formulizeElementsHandler {
     // When dealing with new elements, $element might be FALSE
     function adminSave($element, $ele_value) {
         $changed = false;
-        if ($_POST['formlink'] != "none") {
-            $ele_value[4] = $_POST['formlink'];
-        }
         $element->setVar('ele_value', $ele_value);
         return $changed;
     }
@@ -89,7 +86,6 @@ class formulizeNewSliderElementHandler extends formulizeElementsHandler {
     // Reads current state of element, updates ele_value to a renderable state
     function loadValue($value, $ele_value, $element) {
         $ele_value[3] = $value;
-        //$ele_value[3] = eregi_replace("'", "&#039;", $ele_value[3]);
         return $ele_value;
     }
 
@@ -103,7 +99,6 @@ class formulizeNewSliderElementHandler extends formulizeElementsHandler {
     // $element is the element object
     // $entry_id is the ID of the entry for the element
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id) {
-        $ele_value = $element->getVar('ele_value');
         $slider_html = "<input type=\"range\" ";
         $slider_html .= "name=\"{$markupName}\"";
         $slider_html .= "id=\"{$markupName}\"";
