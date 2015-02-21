@@ -1043,8 +1043,6 @@ class formulizeFormsHandler {
 		$insert_sql .= ") VALUES (";
 		$start = 1;
 
-		// TODO check to make sure forms are okay and then make sure application info gets transferred
-
 		foreach($getrow[0] as $field=>$value) {
 			if(is_null($value)) { continue; }
 			if($this->fieldShouldBeSkippedInCloning($field)) { continue; }
@@ -1168,10 +1166,10 @@ class formulizeFormsHandler {
     }
 
 
-	// TODO
 	// create and insert new defaultlist screen and defaultform screen using $newfid and $newtitle
-//	$formscreen_id = $this->formScreenForClonedForm($newtitle, $newfid);
-//	$listscreen_id = $this->listScreenForClonedForm($newtitle, $newfid, $formscreen_id);
+	// TODO - refactor?
+	//	$formscreen_id = $this->formScreenForClonedForm($newtitle, $newfid);
+	//	$listscreen_id = $this->listScreenForClonedForm($newtitle, $newfid, $formscreen_id);
 		$formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
 		$defaultFormScreen = $formScreenHandler->create();
 		$defaultFormScreen->setVar('displayheading', 1);
@@ -1237,6 +1235,13 @@ class formulizeFormsHandler {
 		$clonedFormObject->setVar('defaultlist', $defaultListScreenId);
 		if(!$form_handler->insert($clonedFormObject)) {
 			print "Error: could not update form object with default screen ids: ".$xoopsDB->error();
+		}
+
+		// set newly cloned form's app to match the app id from the form being cloned
+		$cloned_app_id = $_POST['aid'];
+		$insert_app_form_link_query = "INSERT INTO ".$this->db->prefix("formulize_application_form_link")." (`appid`, `fid`) VALUES ($cloned_app_id, $newfid)";
+		if(!$result = $this->db->query($insert_app_form_link_query)) {
+			print "error adding cloned form to application with id: '$cloned_app_id'<br>SQL: $insert_app_form_link_query<br>".$xoopsDB->error();
 		}
 	}
 
