@@ -12,13 +12,6 @@
  * @version	$Id: footer.php 20900 2011-02-27 02:18:47Z skenow $
  */
 
-if (isset($_REQUEST['op']) && $_REQUEST['op'] == 'masquerade') {
-	if (isset($_REQUEST['revert']) && $_REQUEST['revert'] == 1) {
-		$_SESSION['xoopsUserGroups'] = array(1);
-		$_SESSION['masquerade_end'] = 1;
-		header('Location: ' . ICMS_MODULES_URL . '/profile/admin/user.php');
-	}
-}
  
 defined('ICMS_ROOT_PATH') || die('ICMS root path not defined');
 
@@ -36,6 +29,17 @@ if (isset($_SESSION['sess_regen']) && $_SESSION['sess_regen']) {
 } else {
 	icms::$session->sessionOpen();
 }
+
+
+/** Masquerade part 1/2: Detect confirm box submit to revert user back to normal mode **/
+if (isset($_REQUEST['op']) && $_REQUEST['op'] == 'masquerade') {
+	if (isset($_REQUEST['revert']) && $_REQUEST['revert'] == 1) {
+		$_SESSION['xoopsUserGroups'] = array(1);
+		$_SESSION['masquerade_end'] = 1;
+		header('Location: ' . ICMS_MODULES_URL . '/profile/admin/user.php');
+	}
+}
+
 
 // ################# Preload Trigger beforeFooter ##############
 icms::$preload->triggerEvent('beforeFooter');
@@ -89,21 +93,17 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 	$xoTheme->render();
 }
 
-//If user is currently masquerading as another user, show confirm box that allows user to revert back to normal mode
+/** Masquerade part 2/2: If user if currently masquerading as another user, **/
+/** show confirm box that allows user to revert back to normal mode **/
+if (isset($_SESSION['masquerade_xoopsUserId'])) {
+	echo '<div class="confirmMsg">
+			<h4>' . '[Masquerading as: ' . $xoopsUser->vars['uname']['value'] . ']' . '</h4>
+			<h4>' . "Revert to normal mode now" . ' </h4>
+			<form method="post" action="' . $_SERVER['REQUEST_URI'] . '">';
+	echo '<input type="hidden" name="' . 'revert' . '" value="'. htmlspecialchars(1) . '" />';
+	echo '<input type="hidden" name="' . 'op' . '" value="'. htmlspecialchars('masquerade') . '" />';
+	echo '<input type="submit" name="confirm_submit" value="' . _SUBMIT . '" /> 
+	</form></div>';
+}
 
-
-if (isset($_REQUEST['op']) == false && isset($_SESSION['masquerade_xoopsUserId']))
-	icms_core_Message::confirm(array('revert' => 1, 'op' => 'masquerade'), $_SERVER['REQUEST_URI'] , 'Go back to normal');
-
-/*
-if (isset($_REQUEST['op']) && $_REQUEST['op'] == 'masquerade') {
-	if (isset($_REQUEST['revert']) && $_REQUEST['revert'] == 1) {
-		$_SESSION['xoopsUserGroups'] = array(1);
-		icms_core_Message::confirm(array('revert' => 1, 'op' => 'masquerade'), ICMS_MODULES_URL . '/profile/admin/user.php', 'Go back to normal111?');
-	}
-} elseif (isset($_SESSION['masquerade_xoopsUserId']))
-	icms_core_Message::confirm(array('revert' => 1, 'op' => 'masquerade'), $_SERVER['REQUEST_URI'] , 'Go back to normal222?');
-	
-*/
-	
 icms::$logger->stopTime();

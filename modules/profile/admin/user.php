@@ -245,7 +245,7 @@ switch($op) {
 		$_SESSION['xoopsUserId'] = $masqueradeUser->getVar('uid');
 		$_SESSION['xoopsUserGroups'] = $masqueradeUser->getGroups();
 		$_SESSION['xoopsUserLastLogin'] = $masqueradeUser->getVar('last_login');
-		$_SESSION['xoopsUserLanguage'] = $masqueradeUser->language();
+		//$_SESSION['xoopsUserLanguage'] = $masqueradeUser->language();
 		if (isset($_SESSION['XOOPS_TOKEN_SESSION'])) unset($_SESSION['XOOPS_TOKEN_SESSION']);
 		
 		$xoops_user_theme = $masqueradeUser->getVar('theme');
