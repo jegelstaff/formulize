@@ -34,9 +34,11 @@ if (isset($_SESSION['sess_regen']) && $_SESSION['sess_regen']) {
 /** Masquerade part 1/2: Detect confirm box submit to revert user back to normal mode **/
 if (isset($_REQUEST['op']) && $_REQUEST['op'] == 'masquerade') {
 	if (isset($_REQUEST['revert']) && $_REQUEST['revert'] == 1) {
-		$_SESSION['xoopsUserGroups'] = array(1);
-		$_SESSION['masquerade_end'] = 1;
-		header('Location: ' . ICMS_MODULES_URL . '/profile/admin/user.php');
+		if (isset($_SESSION['masquerade_xoopsUserId'])) {
+			$_SESSION['xoopsUserGroups'] = array(1);
+			$_SESSION['masquerade_end'] = 1;
+			header('Location: ' . ICMS_MODULES_URL . '/profile/admin/user.php');
+		}
 	}
 }
 
@@ -97,12 +99,12 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 /** show confirm box that allows user to revert back to normal mode **/
 if (isset($_SESSION['masquerade_xoopsUserId'])) {
 	echo '<div class="confirmMsg">
-			<h4>' . '[Masquerading as: ' . $xoopsUser->vars['uname']['value'] . ']' . '</h4>
-			<h4>' . "Revert to normal mode now" . ' </h4>
-			<form method="post" action="' . $_SERVER['REQUEST_URI'] . '">';
-	echo '<input type="hidden" name="' . 'revert' . '" value="'. htmlspecialchars(1) . '" />';
-	echo '<input type="hidden" name="' . 'op' . '" value="'. htmlspecialchars('masquerade') . '" />';
-	echo '<input type="submit" name="confirm_submit" value="' . _SUBMIT . '" /> 
+			<h4> [Masquerading as: ' . $xoopsUser->vars['uname']['value'] . ']
+			<br> Revert to normal mode now </h4>
+			<form method="post" action="' . $_SERVER['REQUEST_URI'] . '">
+			<input type="hidden" name="revert" value="1" />
+			<input type="hidden" name="op" value="masquerade" />
+			<input type="submit" name="confirm_submit" value="' . _SUBMIT . '" /> 
 	</form></div>';
 }
 
