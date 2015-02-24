@@ -152,7 +152,7 @@ class formulizePermHandler {
             if("update"== $action && $entry_id > 0){
                 $formHandler = xoops_getmodulehandler('forms','formulize');
                 $formObject = $formHandler->get($form_id);
-                self::$cached_permissions[$cache_key] = $formObject->customEditCheck($form_id,$entry_id,$user_id, &self::$cached_permissions[$cache_key]);
+                self::$cached_permissions[$cache_key] = $formObject->customEditCheck($form_id,$entry_id,$user_id, self::$cached_permissions[$cache_key]);
             }
 
         }

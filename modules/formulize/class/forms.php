@@ -227,8 +227,6 @@ function checkFormOwnership($id_form,$form_handle){
     private function cache_on_before_save_code() {
         if (strlen($this->on_before_save) > 0) {
             $on_before_save_code = <<<EOF
-
-
 <?php
 
 function form_{$this->id_form}_on_before_save(\$entry_id, \$element_values, \$form_id) {
@@ -249,7 +247,7 @@ EOF;
             return true;
         }
     }
-//SAME THREE METHODS AS ABOVE, EXCEPT FOR SPECIAL PROCEDURE custom_edit_check:
+
     protected function custom_edit_check_function_name() {
         // form ID is used so the function name is unique
         return "form_".$this->id_form."_custom_edit_check";
@@ -262,8 +260,6 @@ EOF;
     private function cache_custom_edit_check_code() {
         if (strlen($this->custom_edit_check) > 0) {
             $custom_edit_check_code = <<<EOF
-
-
 <?php
 
 function form_{$this->id_form}_custom_edit_check(\$form_id,\$entry_id,\$user_id, \$allow_editing) {
@@ -281,6 +277,7 @@ EOF;
             return true;
         }
     }
+
     public function on_before_save() {
         // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
         return $this->vars['on_before_save']['value'];
@@ -310,7 +307,7 @@ EOF;
         return $element_values;
     }
 
-    public function customEditCheck($form_id, $entry_id,$user_id, $allow_editing) {
+    public function customEditCheck($form_id, $entry_id, $user_id, $allow_editing) {
         // if there is any code to run to check if editing is allowed, include it (write if necessary), and run the function
         if (strlen($this->custom_edit_check) > 0 and (file_exists($this->custom_edit_check_filename) or $this->cache_custom_edit_check_code())) {
             include_once $this->custom_edit_check_filename;
