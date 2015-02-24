@@ -97,8 +97,11 @@ define("_AM_SETTINGS_FORM_SHOWING_LIST","Quand la liste des entrées s'affiche p
 define("_AM_SETTINGS_FORM_APP_PART","De quel regroupement ce formulaire fait-il parti?");
 define("_AM_SETTINGS_FORM_APPNEW","Créer un nouveau regroupement dont ce formulaire fera parti?");
 
+
+
 /*mod Language for permissions*/
 define("_AM_PERMISSIONS_CHOOSE_GROUPS","De quel(s) groupe(s) voulez vous définir les permissions?");
+define("_AM_PERMISSIONS_SHOW_PERMS_FOR_GROUPS", "Voir les permissions pour ces groupes");
 define("_AM_PERMISSIONS_LIST_GROUPS","Lister les groupes alphabétiquement ou dans l'ordre de leur création?");
 define("_AM_PERMISSIONS_LIST_ALPHA","Alphabétiquement");
 define("_AM_PERMISSIONS_LIST_CREATION","Ordre de création");
