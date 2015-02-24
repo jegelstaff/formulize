@@ -1254,17 +1254,6 @@ class formulizeFormsHandler {
 		return $field == "id_form" OR $field == "defaultform" OR $field == "defaultlist";
 	}
 
-	// creates a new default form screen for a cloned form since this should not carry over from the original form
-	// returns the form screen id if insert was successful
-	function formScreenForClonedForm($title, $fid) {
-		// TODO
-	}
-
-	// creates a new default list screen for a cloned form since this should not carry over from the original form
-	function listScreenForClonedForm($title, $fid, $formScreenId) {
-		// TODO
-	}
-
 	function renameDataTable($oldName, $newName, $formObject) {
 		global $xoopsDB;
 
@@ -1282,5 +1271,4 @@ class formulizeFormsHandler {
 		}
 		return true;
 	}
-
 }
