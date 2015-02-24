@@ -185,6 +185,7 @@ function checkFormOwnership($id_form,$form_handle){
         $this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
         $this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
         $this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_before_save']);
+        $this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $formq[0]['custom_edit_check']);//
         $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
     }
 
@@ -207,6 +208,9 @@ function checkFormOwnership($id_form,$form_handle){
         parent::setVar($key, $value, $not_gpc);
         if ("on_before_save" == $key) {
             $this->cache_on_before_save_code();
+        }
+        if ("custom_edit_check" == $key) { // Added for custom_edit_check var
+            $this->cache_custom_edit_check_code();
         }
     }
 
@@ -244,9 +248,44 @@ EOF;
         }
     }
 
+    protected function custom_edit_check_function_name() {
+        // form ID is used so the function name is unique
+        return "form_".$this->id_form."_custom_edit_check";
+    }
+
+    protected function custom_edit_check_filename() {
+        // save the code in the icms cache folder (because it is known to be writeable)
+        return ICMS_CACHE_PATH."/{$this->custom_edit_check_function_name}.php";
+    }
+    private function cache_custom_edit_check_code() {
+        if (strlen($this->custom_edit_check) > 0) {
+            $custom_edit_check_code = <<<EOF
+<?php
+
+function form_{$this->id_form}_custom_edit_check(\$form_id,\$entry_id,\$user_id, \$allow_editing) {
+{$this->custom_edit_check}
+return \$allow_editing; // this will pass the result of the custom operation into the correct variable slot.
+}
+
+EOF;
+            // todo: there is a way to validate php files on disk, so do that and report any syntax errors
+            return (false !== file_put_contents($this->custom_edit_check_filename, $custom_edit_check_code));
+        } else {
+            if (file_exists($this->custom_edit_check_filename)) {
+                unlink($this->custom_edit_check_filename);
+            }
+            return true;
+        }
+    }
+
     public function on_before_save() {
         // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
         return $this->vars['on_before_save']['value'];
+    }
+
+    public function custom_edit_check() {
+        // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
+        return $this->vars['custom_edit_check']['value'];
     }
 
     public function onBeforeSave($entry_id, $element_values) {
@@ -266,6 +305,18 @@ EOF;
             unset($element_values["element_values"]);
         }
         return $element_values;
+    }
+
+    public function customEditCheck($form_id, $entry_id, $user_id, $allow_editing) {
+        // if there is any code to run to check if editing is allowed, include it (write if necessary), and run the function
+        if (strlen($this->custom_edit_check) > 0 and (file_exists($this->custom_edit_check_filename) or $this->cache_custom_edit_check_code())) {
+            include_once $this->custom_edit_check_filename;
+            // note that the custom code could create new values in the element_values array, so the caller must limit to valid field names
+            $allow_editing =call_user_func($this->custom_edit_check_function_name,$form_id, $entry_id, $user_id,$allow_editing, $this->getVar('id_form'));
+            return $allow_editing;
+        }else{
+            return $allow_editing; // return passed value if there is no code to check with.
+        }
     }
 
     public function default_form_screen() {
@@ -445,17 +496,18 @@ class formulizeFormsHandler {
 
                 if($formObject->isNew() || empty($id_form)) {
                     $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, ".
-                        "`defaultlist`, `menutext`, `form_handle`, `store_revisions`, `on_before_save`, `note`) VALUES (".
+                        "`defaultlist`, `menutext`, `form_handle`, `store_revisions`, `on_before_save`,`custom_edit_check`, `note`) VALUES (".
                         $this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".
                         $this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).
                         ", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
-                        intval($store_revisions).", ".$this->db->quoteString($on_before_save).", ".$this->db->quoteString($note).")";
+                        intval($store_revisions).", ".$this->db->quoteString($on_before_save).", ".$this->db->quoteString($custom_edit_check).
+                        ", ".$this->db->quoteString($note).")";
                 } else {
                     $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).
                     ", `singleentry` = ".$this->db->quoteString($singleToWrite).", `headerlist` = ".$this->db->quoteString($headerlist).
                     ", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist).", `menutext` = ".
                     $this->db->quoteString($menutext).", `form_handle` = ".$this->db->quoteString($form_handle).", `store_revisions` = ".
-                    intval($store_revisions).", `on_before_save` = ".$this->db->quoteString($on_before_save)." , ".
+                    intval($store_revisions).", `on_before_save` = ".$this->db->quoteString($on_before_save).", `custom_edit_check` = ".$this->db->quoteString($custom_edit_check)." , ".
                     "`note` = ".$this->db->quoteString($note)." WHERE id_form = ".intval($id_form);
                 }
 

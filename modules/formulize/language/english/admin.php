@@ -173,29 +173,7 @@ define("_AM_SCREEN_LISTSCREENS","List Screens");
 define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? All configuration settings for this screen will be lost!");
 define("_AM_SCREEN_RELATIONWARNING", "Note: This screen uses a different relationship setting than one or more list screens.");
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*End mod Language for admin side, by Fran�ois T*/
+/*End mod Language for admin side, by François T*/
 
 // Admin
 define("_FORM_RENAME_TEXT", "Rename this form");
@@ -797,4 +775,3 @@ define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK", "Show the default value for this 
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC", "For example, showing defaults when the saved value is blank can be useful on multipage forms, if later pages have elements which should still use the default value, even though the user has saved the entry after the first page.<br><b>Note</b> that required elements are always treated as if this option is turned on regardless, since required elements should never have empty/blank values.");
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW", "Only for new entries");
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK", "For any entry, when the saved value is blank");
-?>
