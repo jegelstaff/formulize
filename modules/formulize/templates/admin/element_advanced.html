@@ -7,27 +7,26 @@
 <input type="hidden" name="original_index_name" value="<{$content.original_index_name}>">
 <input type="hidden" name="original_ele_index" value="<{$content.original_ele_index}>">
 
-<table>
+<table id="plain">
 
 <{if $content.datatypeui}>
 	<tr>
-		<div class="accordion-box-wide">
+
 		<div class="form-item">
-			<td width="40%"><label class="question">How should the data for this element be stored in the database?</label></td>
+			<td width="30%"><label class="question">How should the data for this element be stored in the database?</label></td>
 			<{$content.datatypeui}>
 			<div class="description">
 				<td><p>Elements that will contain only numbers should use a numeric type, so that sorting and calculations work correctly.  When in doubt, leave this value on its default setting.</p></td>
 			</div>
 		</div>
-		</div>
+
 	</tr>
 <{/if}>
 
 <{if $content.ele_encrypt_show}>
 	<tr>
-		<div class="accordion-box">
 		<div class="form-item">
-			<td width="40%"><label for="elements-ele_encrypt" class="question">Encrypt this information in the database?</label></td>
+			<td width="30%"><label for="elements-ele_encrypt" class="question">Encrypt this information in the database?</label></td>
 			<td>
 				<p><input type="radio" name="elements-ele_encrypt" value=1<{$content.ele_encrypt_yes_on}>> Yes</p><p><input type="radio" name="elements-ele_encrypt" value=0<{$content.ele_encrypt_no_on}>> No</p>
 				<div class="description">
@@ -36,15 +35,13 @@
 				</div>
 			</td>
 		</div>
-		</div>
 	</tr>
 <{/if}>
 <{if $content.ele_index_show}>
 <tr>
-	<div class="accordion-box">
 	<div class="form-item">
 
-			<td width="40%"><label for="elements-ele_index" class="question">Index this information in the database?</label></td>
+			<td><label for="elements-ele_index" class="question">Index this information in the database?</label></td>
 			<td>
 				<p><input type="radio" name="elements-ele_index" value=1<{$content.ele_index_yes_on}>> Yes</p>
 				<p><input type="radio" name="elements-ele_index" value=0<{$content.ele_index_no_on}>> No</p>
@@ -54,13 +51,11 @@
 				</div>
 			</td>
 	</div>
-	</div>
 </tr>
 <{/if}>
  
 <{if $content.ele_req_on}>
 <tr>
-	<div class="accordion-box">
 		<div class="form-item">
 		  <td width="40%"><label for="elements-ele_req" class="question"><{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK}></label></td>
 			<td>
@@ -71,7 +66,6 @@
 				</div>
 			</td>
 		</div>
-	</div>
 </tr>
 <{/if}>
 
