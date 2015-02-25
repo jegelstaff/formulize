@@ -1,40 +1,60 @@
 <div class="panel-content content menuEntriesSection" menuentry='<{$sectionNumber}>' menuid='<{$content.links[$sectionNumber].menu_id}>'>
     
-    <p><a href="" class="deletemenulink" target="<{$content.links[$sectionNumber].menu_id}>" menuname="<{$content.links[$sectionNumber].link_text}>"><img src="../images/editdelete.gif"> Delete</a></p>
+    <p><a href="" class="deletemenulink" target="<{$content.links[$sectionNumber].menu_id}>" menuname="<{$content.links[$sectionNumber].link_text}>"><img src="../images/editdelete.gif"> Delete Link </a></p>
 
     <form>
+        <table id="plain">
         <div>
-        <h3>Text for this link:</h3>
-        <input type="text" id="menutext<{$sectionNumber}>" name="menutext" value="<{$content.links[$sectionNumber].link_text}>">
+            <tr>
+                <td width="30%">Text for this link:</td>
+                <td><input type="text" id="menutext<{$sectionNumber}>" name="menutext" value="<{$content.links[$sectionNumber].link_text}>"></td>
+            </tr>
         </div>
-            
+
+        <tr>
         <div id="sectionScreen<{$sectionNumber}>" class="sectionScreen">
-            <h3>This link goes to:</h3>
-            <{html_options name='sectionScreenOptions'|cat:$sectionNumber options=$content.listsofscreenoptions}>
-        </div>  
+            <td>This link goes to:</td>
+            <td><{html_options name='sectionScreenOptions'|cat:$sectionNumber options=$content.listsofscreenoptions}></td>
+        </div>
+
+
         <div id="externalUrl<{$sectionNumber}>">
-        <input type="text" name="url" id="url<{$sectionNumber}>" value="<{$content.links[$sectionNumber].url}>">
+            <input type="text" name="url" id="url<{$sectionNumber}>" value="<{$content.links[$sectionNumber].url}>">
         </div>
-        <div>    
-        <h3>Show this link to these groups:</h3>                        
-        <select name="groups" id="groups<{$sectionNumber}>" size=10 multiple style="overflow-y: scroll;">
-            <{foreach from=$content.groups item=group}>
-                    <option value="<{$group.id}>"> <{$group.name}> </option>
-            <{/foreach}>
-        </select>
+        </tr>
+
+        <tr>
+        <div>
+            <td>Show this link to these groups:</td>
+            <td>
+                <select name="groups" id="groups<{$sectionNumber}>" size=10 multiple style="overflow-y: scroll;">
+                    <{foreach from=$content.groups item=group}>
+                            <option value="<{$group.id}>"> <{$group.name}> </option>
+                    <{/foreach}>
+                </select>
+            </td>
         </div>
+        </tr>
+
+        <tr>
         <div id="defaultScreenSection<{$sectionNumber}>"> 
-            <h3>Send these groups to this link right after they login:</h3>                        
-            <select name="defaultScreenGroups" id="defaultScreenGroups<{$sectionNumber}>" size=10 multiple style="overflow-y: scroll;">
-            <{foreach from=$content.groups item=group}>
-                    <option value="<{$group.id}>"> <{$group.name}> </option>
-            <{/foreach}>
-            </select>
-       </div>
-       <div class="description">
-        <p>This only takes effect if Formulize is also set as the default start page for a group, under <a href='<{$xoops_url}>/modules/system/admin.php?fct=preferences&op=show&confcat_id=1' target='_blank'>General Settings</a></p>
-	</div>
-            
+            <td>Send these groups to this link right after they login:</td>
+            <td>
+                <select name="defaultScreenGroups" id="defaultScreenGroups<{$sectionNumber}>" size=10 multiple style="overflow-y: scroll;">
+                    <{foreach from=$content.groups item=group}>
+                            <option value="<{$group.id}>"> <{$group.name}> </option>
+                    <{/foreach}>
+                </select>
+            </td>
+        </div>
+        </tr>
+
+        <tr>
+           <div class="description">
+               <td colspan="2"> <p>This only takes effect if Formulize is also set as the default start page for a group, under <a href='<{$xoops_url}>/modules/system/admin.php?fct=preferences&op=show&confcat_id=1' target='_blank'>General Settings</a></p></td>
+           </div>
+        </tr>
+        </table>
     </form> 
 </div>
 
