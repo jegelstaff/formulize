@@ -1017,12 +1017,15 @@ class formulizeFormsHandler {
 	  // check if the default title is already in use as the name of a form...keep looking for the title and add numbers onto the end, until we don't find a match any longer
 	  $foundTitle = 1;
 	  $titleCounter = 0;
+      $form_handler = xoops_getmodulehandler('forms', 'formulize');
+      $formObject = $form_handler->get($fid);
+      $title = $formObject->getVar('title');
 	  while($foundTitle) {
 	    if(!isset($titleSearchingFor)) {
-	      $titleSearchingFor = _FORM_MODCLONED_FORM;
+	      $titleSearchingFor = sprintf(_FORM_MODCLONED_FORM,$title);//print 'FormName [Cloned]' instead of generic 'Cloned Form'.
 	    } else {
 	      $titleCounter++;
-	      $titleSearchingFor = _FORM_MODCLONED_FORM." $titleCounter";
+	      $titleSearchingFor = sprintf(_FORM_MODCLONED_FORM,$title)." $titleCounter"; //print 'FormName [Cloned]' instead of generic 'Cloned Form'.
 	    }
 	    $titleCheckSQL = "SELECT desc_form FROM " . $this->db->prefix("formulize_id") . " WHERE desc_form = '$titleSearchingFor'";
 	    $titleCheckResult = $this->db->query($titleCheckSQL);
