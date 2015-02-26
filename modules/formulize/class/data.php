@@ -983,7 +983,7 @@ class formulizeDataHandler  {
 				}
 				break;
 		}
-		$prefix = ($ele_type == "check" OR ($ele_type == "select" AND $ele_value[1])) ? "*=+*:" : ""; // multiple selection possible? if so, setup prefix
+		$prefix = ($ele_type == "check" OR ($ele_type == "select" AND $ele_value[1])) ? "#*=:*" : ""; // multiple selection possible? if so, setup prefix
 		$newValues = array_keys($newValues);
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -1006,7 +1006,7 @@ class formulizeDataHandler  {
 					continue;
 				}
 				$foundIndex = array();
-				$key = array_search($oldValues[$i], $currentValues);
+				$key = array_search($oldValues[$i], $currentValues); 
 				if($key !== false AND !isset($foundIndex[$key])) { // if we find one of the old values in the current values, then swap in the new value it should have
 					// need to check that the match wasn't a 0 or on a string, etc...cannot use strict matching in array_search since that screws up all matches since the values don't really have their correct type owing to having been spun through lots of functions by now
 					if(!is_numeric($currentValues[$key]) AND $oldValues[$i] == '0') { continue; }
