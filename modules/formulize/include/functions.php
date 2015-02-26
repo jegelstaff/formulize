@@ -2497,6 +2497,15 @@ function getTextboxDefault($ele_value, $form_id, $entry_id) {
 }
 
 
+function getDateElementDefault($default_hint) {
+    if (ereg_replace("[^A-Z{}]", "", $default_hint) === "{TODAY}") {
+        $number = ereg_replace("[^0-9+-]", "", $default_hint);
+        return mktime(0, 0, 0, date("m"), date("d") + $number, date("Y"));
+    }
+    return strtotime($default_hint);
+}
+
+
 // this function returns the entry ids of entries in one form that are linked to another
 // IMPORTANT:  assume $startEntry is valid for the user(security check has already been executed by now)
 // therefore just need to know the allowable uids (scope) in the $targetForm

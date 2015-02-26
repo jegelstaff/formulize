@@ -985,33 +985,15 @@ class formulizeElementRenderer{
 			break;
 
 
-			case 'date':
-				if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
-				{
-					$form_ele = new XoopsFormTextDateSelect (
-						$ele_caption,
-						$form_ele_id,
-						15,
-						""
-					);
-					$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
-				}
-				else
-				{
-					if (ereg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
-						$number = ereg_replace("[^0-9+-]","", $ele_value[0]);
-						$timestampToUse = mktime(0, 0, 0, date("m") , date("d")+$number, date("Y"));
-					} else {
-						$timestampToUse = strtotime($ele_value[0]);
-					}
-					$form_ele = new XoopsFormTextDateSelect (
-						$ele_caption,
-						$form_ele_id,
-						15,
-						$timestampToUse
-					);
-					$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
-				} // end of check to see if the default setting is for real
+            case 'date':
+                // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
+                if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") {
+                    $form_ele = new XoopsFormTextDateSelect($ele_caption, $form_ele_id, 15, "");
+                    $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
+                } else {
+                    $form_ele = new XoopsFormTextDateSelect($ele_caption, $form_ele_id, 15, getDateElementDefault($ele_value[0]));
+                    $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
+                } // end of check to see if the default setting is for real
 				// added validation code - sept 5 2007 - jwe
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
