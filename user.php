@@ -136,7 +136,7 @@ switch ($op) {
 		exit();
 		break;
 
-	case $op == 'logout':
+	case 'logout':
 		$sessHandler = icms::$session;
 		$sessHandler->sessionClose(icms::$user->getVar('uid'));
 		redirect_header(ICMS_URL . '/index.php', 3, _US_LOGGEDOUT . '<br />' . _US_THANKYOUFORVISIT);
@@ -217,4 +217,27 @@ switch ($op) {
 			exit();
 		}
 		break;
+	
+	/**
+	 *Added for fixing users who dont have permission and try to access a form leading to
+	 *a redirect loop.
+	 *Now it will jump back to user profile page and show a message indicating an error msg.
+	 *
+	 *Added By Jinfu Feb 2015
+	 */
+	case 'switchuser':
+		if(!icms::$user){
+			redirect_header('index.php',5,_US_NOPERMISS);
+		} elseif (!empty($_GET['xoops_redirect'])) {
+			$redirect = htmlspecialchars(trim($_GET['xoops_redirect']));
+			$isExternal = FALSE;
+			$tragetURL=substr(ICMS_URL,0,strpos(ICMS_URL,"/formulize")).$redirect;
+			redirect_header("user.php?op=main",5, "Visiting: '".$tragetURL."'<br />"._US_NOPERMISS."<br />You may switch user and try again.");
+			exit();
+		} else {
+			header('Location: ' . ICMS_URL . '/userinfo.php?uid='. (int) icms::$user->getVar('uid'));
+			exit();
+		}
+		break;
+		
 }
