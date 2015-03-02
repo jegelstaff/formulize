@@ -395,7 +395,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 	$mid = getFormulizeModId();
 
-	$currentURL = getCurrentURL();
+	$currentURL = ( (isset($_GET['ve']) && isset($_GET['fid'])) ? $_SERVER['PHP_SELF'] . "?fid=" . $_GET['fid'] : getCurrentURL() );
 
 	// identify form or framework
 	$elements_allowed = "";
