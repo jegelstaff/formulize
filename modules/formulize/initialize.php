@@ -153,7 +153,7 @@ $title = $myts->displayTarea($desc_form);
 $currentURL = getCurrentURL();
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
 	if(strstr($currentURL, "/modules/formulize/")) { // if it's a formulize page, reload to login screen
-		redirect_header(XOOPS_URL . "/user.php?op=switchuser&xoops_redirect=$currentURL", 3, _formulize_NO_PERMISSION);
+		redirect_header(XOOPS_URL . "/user.php?op=nopermission&xoops_redirect=$currentURL", 3, _formulize_NO_PERMISSION);
 	} else { // if formulize is just being included elsewhere, then simply show error and end script
 		global $user;
 		if(isset($GLOBALS['formulizeHostSystemUserId']) AND is_object($user) AND is_array($user->roles) AND !$xoopsUser) {
