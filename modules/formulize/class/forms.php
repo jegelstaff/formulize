@@ -186,6 +186,7 @@ function checkFormOwnership($id_form,$form_handle){
         $this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
         $this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_before_save']);
         $this->initVar("on_after_save", XOBJ_DTYPE_TXTAREA, $formq[0]['on_after_save']);
+        $this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $formq[0]['custom_edit_check']);//
         $this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
     }
 
@@ -211,6 +212,9 @@ function checkFormOwnership($id_form,$form_handle){
         }
         if ("on_after_save" == $key) {
             $this->cache_on_after_save_code();
+        }
+        if ("custom_edit_check" == $key) { // Added for custom_edit_check var
+            $this->cache_custom_edit_check_code();
         }
     }
 
@@ -278,6 +282,36 @@ EOF;
         }
     }
 
+    protected function custom_edit_check_function_name() {
+        // form ID is used so the function name is unique
+        return "form_".$this->id_form."_custom_edit_check";
+    }
+
+    protected function custom_edit_check_filename() {
+        // save the code in the icms cache folder (because it is known to be writeable)
+        return ICMS_CACHE_PATH."/{$this->custom_edit_check_function_name}.php";
+    }
+    private function cache_custom_edit_check_code() {
+        if (strlen($this->custom_edit_check) > 0) {
+            $custom_edit_check_code = <<<EOF
+<?php
+
+function form_{$this->id_form}_custom_edit_check(\$form_id,\$entry_id,\$user_id, \$allow_editing) {
+{$this->custom_edit_check}
+return \$allow_editing; // this will pass the result of the custom operation into the correct variable slot.
+}
+
+EOF;
+            // todo: there is a way to validate php files on disk, so do that and report any syntax errors
+            return (false !== file_put_contents($this->custom_edit_check_filename, $custom_edit_check_code));
+        } else {
+            if (file_exists($this->custom_edit_check_filename)) {
+                unlink($this->custom_edit_check_filename);
+            }
+            return true;
+        }
+    }
+
     public function on_before_save() {
         // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
         return $this->vars['on_before_save']['value'];
@@ -286,6 +320,11 @@ EOF;
     public function on_after_save() {
         // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
         return $this->vars['on_after_save']['value'];
+    }
+
+    public function custom_edit_check() {
+        // this function exists only because otherwise xoops automatically converts \n (which is stored in the database) to <br />
+        return $this->vars['custom_edit_check']['value'];
     }
 
     public function onBeforeSave($entry_id, $element_values) {
@@ -313,6 +352,18 @@ EOF;
             include_once $this->on_after_save_filename;
             // note that the custom code could create new values in the element_values array, so the caller must limit to valid field names
             call_user_func($this->on_after_save_function_name, $entry_id, $this->getVar('id_form'));
+        }
+    }
+
+    public function customEditCheck($form_id, $entry_id, $user_id, $allow_editing) {
+        // if there is any code to run to check if editing is allowed, include it (write if necessary), and run the function
+        if (strlen($this->custom_edit_check) > 0 and (file_exists($this->custom_edit_check_filename) or $this->cache_custom_edit_check_code())) {
+            include_once $this->custom_edit_check_filename;
+            // note that the custom code could create new values in the element_values array, so the caller must limit to valid field names
+            $allow_editing =call_user_func($this->custom_edit_check_function_name,$form_id, $entry_id, $user_id,$allow_editing, $this->getVar('id_form'));
+            return $allow_editing;
+        }else{
+            return $allow_editing; // return passed value if there is no code to check with.
         }
     }
 
@@ -492,21 +543,30 @@ class formulizeFormsHandler {
 				}
 
                 if($formObject->isNew() || empty($id_form)) {
-                    $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, `defaultform`, ".
-                        "`defaultlist`, `menutext`, `form_handle`, `store_revisions`, `on_before_save`, `on_after_save`, `note`) VALUES (".
+                    $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, ".
+                        "`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `on_before_save`, ".
+                        "`on_after_save`, `custom_edit_check`, `note`) VALUES (".
                         $this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".
                         $this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).
                         ", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
                         intval($store_revisions).", ".$this->db->quoteString($on_before_save).", ".
-                        $this->db->quoteString($on_after_save).", ".$this->db->quoteString($note).")";
+                        $this->db->quoteString($on_after_save).", ".$this->db->quoteString($custom_edit_check).
+                        ", ".$this->db->quoteString($note).")";
                 } else {
-                    $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET `desc_form` = ".$this->db->quoteString($title).
-                    ", `singleentry` = ".$this->db->quoteString($singleToWrite).", `headerlist` = ".$this->db->quoteString($headerlist).
-                    ", `defaultform` = ".intval($defaultform).", `defaultlist` = ".intval($defaultlist).", `menutext` = ".
-                    $this->db->quoteString($menutext).", `form_handle` = ".$this->db->quoteString($form_handle).", `store_revisions` = ".
-                    intval($store_revisions).", `on_before_save` = ".$this->db->quoteString($on_before_save).
-                    " , `on_after_save` = ".$this->db->quoteString($on_after_save)." , ".
-                    "`note` = ".$this->db->quoteString($note)." WHERE id_form = ".intval($id_form);
+                    $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
+                        " `desc_form` = ".$this->db->quoteString($title).
+                        ", `singleentry` = ".$this->db->quoteString($singleToWrite).
+                        ", `headerlist` = ".$this->db->quoteString($headerlist).
+                        ", `defaultform` = ".intval($defaultform).
+                        ", `defaultlist` = ".intval($defaultlist).
+                        ", `menutext` = ".$this->db->quoteString($menutext).
+                        ", `form_handle` = ".$this->db->quoteString($form_handle).
+                        ", `store_revisions` = ".intval($store_revisions).
+                        ", `on_before_save` = ".$this->db->quoteString($on_before_save).
+                        ", `on_after_save` = ".$this->db->quoteString($on_after_save).
+                        ", `custom_edit_check` = ".$this->db->quoteString($custom_edit_check).
+                        " , "."`note` = ".$this->db->quoteString($note).
+                        " WHERE id_form = ".intval($id_form);
                 }
 
                 if (false != $force) {
@@ -633,12 +693,31 @@ class formulizeFormsHandler {
 					print "Error: could not delete screen ".htmlspecialchars(strip_tags($array['sid']))." for form $fid";
 					$isError = true;
 				}
+				$application_handler = xoops_getmodulehandler('applications', 'formulize');
+				$application_handler->deleteMenuLinkByScreen("sid=".intval($array['sid']));
+				/*
+				$sql1="select menu_id from ".$xoopsDB->prefix("formulize_menu_links")." where sid=".intval($array['sid']);
+				$res1=$xoopsDB->query($sql1);
+				$sql2="DELETE FROM ".$xoopsDB->prefix("formulize_menu_links")." where sid=".intval($array['sid']);
+				
+				if(!$result = $xoopsDB->query($sql2)) {
+						print "Error: could not delete menu item ".htmlspecialchars(strip_tags($array['sid']))." for form $fid";
+						$isError=true;
+				}else{
+						while($arr=$xoopsDB->fecthArray($res1)){
+								$deletemenupermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=" .intval($arr['menu_id']) .";";
+								$xoopsDB->query($deletemenupermissions);
+						}
+				}
+				*/
 			}
 			$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=$fid";
 			if(!$xoopsDB->query($sql)) {
 				print "Error: could not delete screens for form $fid";
 				$isError = true;
 			}
+				$application_handler = xoops_getmodulehandler('applications', 'formulize');
+				$application_handler->deleteMenuLinkByScreen("fid=".intval($fid));
 		}
 		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_application_form_link")." WHERE fid=$fid";
 		if(!$xoopsDB->query($sql)) {
@@ -1064,36 +1143,41 @@ class formulizeFormsHandler {
 		// duplicate rows in form table for that fid, but use new fid and increment ele_ids of course
 		// redraw page
 
-	  // check if the default title is already in use as the name of a form...keep looking for the title and add numbers onto the end, until we don't find a match any longer
-	  $foundTitle = 1;
-	  $titleCounter = 0;
-	  while($foundTitle) {
-	    if(!isset($titleSearchingFor)) {
-	      $titleSearchingFor = _FORM_MODCLONED_FORM;
-	    } else {
-	      $titleCounter++;
-	      $titleSearchingFor = _FORM_MODCLONED_FORM." $titleCounter";
-	    }
-	    $titleCheckSQL = "SELECT desc_form FROM " . $this->db->prefix("formulize_id") . " WHERE desc_form = '$titleSearchingFor'";
-	    $titleCheckResult = $this->db->query($titleCheckSQL);
-	    $foundTitle = $this->db->getRowsNum($titleCheckResult);
-	  }
-		$newtitle = $titleSearchingFor;	// use whatever the last searched for title is (because it was not found)
+        // add a number to the new form name to ensure it is unique
+        $foundTitle = 1;
+        $titleCounter = 0;
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $formObject = $form_handler->get($fid);
+        $title = $formObject->getVar('title');
+        while ($foundTitle) {
+            $titleCounter++;
+            if ($titleCounter > 1) {
+                $newtitle = sprintf(_FORM_MODCLONED_FORM, $title)." $titleCounter";
+            } else {
+                $newtitle = sprintf(_FORM_MODCLONED_FORM, $title);
+            }
+            $titleCheckSQL = "SELECT desc_form FROM " . $this->db->prefix("formulize_id") . " WHERE desc_form = '".formulize_db_escape($newtitle)."'";
+            $titleCheckResult = $this->db->query($titleCheckSQL);
+            $foundTitle = $this->db->getRowsNum($titleCheckResult);
+        }
 
 		$getrow = q("SELECT * FROM " . $this->db->prefix("formulize_id") . " WHERE id_form = $fid");
 		$insert_sql = "INSERT INTO " . $this->db->prefix("formulize_id") . " (";
 		$start = 1;
 		foreach($getrow[0] as $field=>$value) {
+			if(is_null($value)) { continue; }
+			if($this->fieldShouldBeSkippedInCloning($field)) { continue; }
 			if(!$start) { $insert_sql .= ", "; }
 			$start = 0;
 			$insert_sql .= $field;
 		}
 		$insert_sql .= ") VALUES (";
 		$start = 1;
+
 		foreach($getrow[0] as $field=>$value) {
-		if($field == "id_form") { $value = ""; }
+			if(is_null($value)) { continue; }
+			if($this->fieldShouldBeSkippedInCloning($field)) { continue; }
 			if($field == "desc_form") { $value = $newtitle; }
-			if($field == "headerlist" OR $field == "defaultform" OR $field == "defaultlist") { $value = ""; }
 			if($field == "form_handle") {
 				$oldFormHandle = $value;
 				$value = "replace_with_handle_and_id";
@@ -1123,6 +1207,7 @@ class formulizeFormsHandler {
 			$insert_sql = "INSERT INTO " . $this->db->prefix("formulize") . " (";
 			$start = 1;
 			foreach($ele as $field=>$value) {
+				if($field == "ele_id") { continue; }
 				if(!$start) { $insert_sql .= ", "; }
 				$start = 0;
 				$insert_sql .= $field;
@@ -1131,7 +1216,7 @@ class formulizeFormsHandler {
 			$start = 1;
 			foreach($ele as $field=>$value) {
 				if($field == "id_form") { $value = "$newfid"; }
-				if($field == "ele_id") { $value = ""; }
+				if($field == "ele_id") { continue; }
 				if($field == "ele_handle") {
 					if($value === $ele['ele_id']) {
 						$value = "replace_with_ele_id";
@@ -1189,8 +1274,8 @@ class formulizeFormsHandler {
 
 	// if revisions are enabled for the cloned form, then create the revisions table
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
-	$newFormObject = $form_handler->get($newfid);
-	if ($newFormObject->getVar('store_revisions')) {
+	$clonedFormObject = $form_handler->get($newfid);
+	if ($clonedFormObject->getVar('store_revisions')) {
 		if (!$tableCreationResult = $this->createDataTable($newfid, 0, false, true)) {
 			print "Error: could not create revisions table for form $newfid. ".
 				"Please delete the cloned form and report this error to ".
@@ -1210,8 +1295,95 @@ class formulizeFormsHandler {
       $sql = "INSERT INTO ".$this->db->prefix("group_permission"). " (gperm_name, gperm_itemid, gperm_groupid, gperm_modid) VALUES ('".$thisOldPerm->getVar('gperm_name')."', $newfid, ".$thisOldPerm->getVar('gperm_groupid').", ".getFormulizeModId().")";
       $res = $this->db->queryF($sql);
     }
+
+
+	// create and insert new defaultlist screen and defaultform screen using $newfid and $newtitle
+	// TODO - refactor?
+	//	$formscreen_id = $this->formScreenForClonedForm($newtitle, $newfid);
+	//	$listscreen_id = $this->listScreenForClonedForm($newtitle, $newfid, $formscreen_id);
+		$formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
+		$defaultFormScreen = $formScreenHandler->create();
+		$defaultFormScreen->setVar('displayheading', 1);
+		$defaultFormScreen->setVar('reloadblank', 0);
+		$defaultFormScreen->setVar('savebuttontext', _formulize_SAVE);
+		$defaultFormScreen->setVar('alldonebuttontext', _formulize_DONE);
+		$defaultFormScreen->setVar('title',"Regular '$newtitle'");
+		$defaultFormScreen->setVar('fid',$newfid);
+		$defaultFormScreen->setVar('frid',0);
+		$defaultFormScreen->setVar('type','form');
+		$defaultFormScreen->setVar('useToken',1);
+		if(!$defaultFormScreenId = $formScreenHandler->insert($defaultFormScreen)) {
+			print "Error: could not create default form screen";
+		}
+		$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+		$screen = $listScreenHandler->create();
+		// View
+		$screen->setVar('defaultview','all');
+		$screen->setVar('usecurrentviewlist',_formulize_DE_CURRENT_VIEW);
+		$screen->setVar('limitviews',serialize(array(0=>'allviews')));
+		$screen->setVar('useworkingmsg',1);
+		$screen->setVar('usescrollbox',1);
+		$screen->setVar('entriesperpage',10);
+		$screen->setVar('viewentryscreen',$defaultFormScreenId);
+		// Headings
+		$screen->setVar('useheadings',1);
+		$screen->setVar('repeatheaders',5);
+		$screen->setVar('usesearchcalcmsgs',1);
+		$screen->setVar('usesearch',1);
+		$screen->setVar('columnwidth',0);
+		$screen->setVar('textwidth',35);
+		$screen->setVar('usecheckboxes',0);
+		$screen->setVar('useviewentrylinks',1);
+		$screen->setVar('desavetext',_formulize_SAVE);
+		// Buttons
+		$screen->setVar('useaddupdate',_formulize_DE_ADDENTRY);
+		$screen->setVar('useaddmultiple',_formulize_DE_ADD_MULTIPLE_ENTRY);
+		$screen->setVar('useaddproxy',_formulize_DE_PROXYENTRY);
+		$screen->setVar('useexport',_formulize_DE_EXPORT);
+		$screen->setVar('useimport',_formulize_DE_IMPORT);
+		$screen->setVar('usenotifications',_formulize_DE_NOTBUTTON);
+		$screen->setVar('usechangecols',_formulize_DE_CHANGECOLS);
+		$screen->setVar('usecalcs',_formulize_DE_CALCS);
+		$screen->setVar('useadvcalcs',_formulize_DE_ADVCALCS);
+		$screen->setVar('useexportcalcs',_formulize_DE_EXPORT_CALCS);
+		$screen->setVar('useadvsearch','');
+		$screen->setVar('useclone',_formulize_DE_CLONESEL);
+		$screen->setVar('usedelete',_formulize_DE_DELETESEL);
+		$screen->setVar('useselectall',_formulize_DE_SELALL);
+		$screen->setVar('useclearall',_formulize_DE_CLEARALL);
+		$screen->setVar('usereset',_formulize_DE_RESETVIEW);
+		$screen->setVar('usesave',_formulize_DE_SAVE);
+		$screen->setVar('usedeleteview',_formulize_DE_DELETE);
+		$screen->setVar('title',"Entries in '$newtitle'");
+		$screen->setVar('fid',$newfid);
+		$screen->setVar('frid',0);
+		$screen->setVar('type','listOfEntries');
+		$screen->setVar('useToken',1);
+		if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
+			print "Error: could not create default list screen";
+		}
+		$clonedFormObject->setVar('defaultform', $defaultFormScreenId);
+		$clonedFormObject->setVar('defaultlist', $defaultListScreenId);
+		if(!$form_handler->insert($clonedFormObject)) {
+			print "Error: could not update form object with default screen ids: ".$xoopsDB->error();
+		}
+
+		// set newly cloned form's app to match the app id from the form being cloned
+		$cloned_app_id = $_POST['aid'];
+		$insert_app_form_link_query = "INSERT INTO ".$this->db->prefix("formulize_application_form_link")." (`appid`, `fid`) VALUES ($cloned_app_id, $newfid)";
+		if(!$result = $this->db->query($insert_app_form_link_query)) {
+			print "error adding cloned form to application with id: '$cloned_app_id'<br>SQL: $insert_app_form_link_query<br>".$xoopsDB->error();
+		}
 	}
-	
+
+	/**
+	 * @param $field
+	 * @return bool
+	 */
+	function fieldShouldBeSkippedInCloning($field)
+	{
+		return $field == "id_form" OR $field == "defaultform" OR $field == "defaultlist";
+	}
 
 	function renameDataTable($oldName, $newName, $formObject) {
 		global $xoopsDB;
@@ -1230,5 +1402,4 @@ class formulizeFormsHandler {
 		}
 		return true;
 	}
-
 }
