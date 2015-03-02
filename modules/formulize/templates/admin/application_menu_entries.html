@@ -25,6 +25,10 @@
 			<{html_options name='addnewscreenoptions' options=$content.listsofscreenoptions}>
 		    </div>
 		    <div>
+			<h3>A note for this link:</h3>
+			<input type="text" name="addnote" id="addnote">
+		    </div>
+		    <div>
                     <input type="text" name="addurl" id="addurl" value="http://">
 		    </div>
 		    <div>
@@ -96,6 +100,7 @@
   
     $(".savebutton").click(function () {
         $("[name=menuorder]").val($("#accordion-<{$number}>").sortable('serialize'));
+	
 
 	var menuText = $("#addmenutext").val().trim();
 	if(menuText) {
@@ -103,8 +108,9 @@
 	        var screen = $("#listofscreenoptions select").val();
 	        var groupids = $("#addgroups").val();
 	        var default_screen = $("#addDefaultScreenGroups").val();
+		var note=$("#addnote").val()
 	        var value = "null";
-		value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen;
+		value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen+"::"+note;
 	        addHiddenMenuItem(value);
 	}
 	
@@ -115,10 +121,11 @@
 		var url = $("#url"+sectionNumber).val();
 		var screen = $("#sectionScreen"+sectionNumber+" select").val();
 		var groupids = $("#groups"+sectionNumber).val();
-		var default_screen= $("#defaultScreenGroups"+sectionNumber).val();  
+		var default_screen= $("#defaultScreenGroups"+sectionNumber).val();
+		var note=$("#addnote"+sectionNumber).val()
 		var value = menuID;
 		
-		value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen;                                                                               
+		value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen+"::"+note;                                                                               
 		addHiddenMenuItem(value);
 	});
     });
