@@ -82,7 +82,7 @@ define("_FORM_PERM","Permissions");
 
 define("_FORM_MODCLONE", "Clone this form");
 define("_FORM_MODCLONEDATA", "Clone this form and data");
-define("_FORM_MODCLONED_FORM", "Cloned Form");
+define("_FORM_MODCLONED_FORM", "%s - Cloned");
 
 define("_FORM_MODPERMLINKS","Modify scope of linked selectboxes (Deprecated -- edit on each selectbox's properties now)");
 define("_FORM_PERMLINKS","Linked Selectbox Scopes");

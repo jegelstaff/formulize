@@ -1085,21 +1085,23 @@ class formulizeFormsHandler {
 		// duplicate rows in form table for that fid, but use new fid and increment ele_ids of course
 		// redraw page
 
-	  // check if the default title is already in use as the name of a form...keep looking for the title and add numbers onto the end, until we don't find a match any longer
-	  $foundTitle = 1;
-	  $titleCounter = 0;
-	  while($foundTitle) {
-	    if(!isset($titleSearchingFor)) {
-	      $titleSearchingFor = _FORM_MODCLONED_FORM;
-	    } else {
-	      $titleCounter++;
-	      $titleSearchingFor = _FORM_MODCLONED_FORM." $titleCounter";
-	    }
-	    $titleCheckSQL = "SELECT desc_form FROM " . $this->db->prefix("formulize_id") . " WHERE desc_form = '$titleSearchingFor'";
-	    $titleCheckResult = $this->db->query($titleCheckSQL);
-	    $foundTitle = $this->db->getRowsNum($titleCheckResult);
-	  }
-		$newtitle = $titleSearchingFor;	// use whatever the last searched for title is (because it was not found)
+        // add a number to the new form name to ensure it is unique
+        $foundTitle = 1;
+        $titleCounter = 0;
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $formObject = $form_handler->get($fid);
+        $title = $formObject->getVar('title');
+        while ($foundTitle) {
+            $titleCounter++;
+            if ($titleCounter > 1) {
+                $newtitle = sprintf(_FORM_MODCLONED_FORM, $title)." $titleCounter";
+            } else {
+                $newtitle = sprintf(_FORM_MODCLONED_FORM, $title);
+            }
+            $titleCheckSQL = "SELECT desc_form FROM " . $this->db->prefix("formulize_id") . " WHERE desc_form = '".formulize_db_escape($newtitle)."'";
+            $titleCheckResult = $this->db->query($titleCheckSQL);
+            $foundTitle = $this->db->getRowsNum($titleCheckResult);
+        }
 
 		$getrow = q("SELECT * FROM " . $this->db->prefix("formulize_id") . " WHERE id_form = $fid");
 		$insert_sql = "INSERT INTO " . $this->db->prefix("formulize_id") . " (";
