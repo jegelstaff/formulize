@@ -732,6 +732,18 @@ table.outer {
 #session-timeout-warning p {
   margin: 1em; }
 
+#formulize-masquerade-block {
+  margin-right: 1em;
+  color: #ffffff;
+  display: inline-block;
+  float: right; }
+  #formulize-masquerade-block form {
+    display: inline; }
+  #formulize-masquerade-block input[type=submit] {
+    padding: 0px 6px; }
+  #formulize-masquerade-block input[type=submit]:hover {
+    transform: none; }
+
 /* horizontal lines between form questions */
 div.xo-theme-form > table.outer > tbody > tr > td {
   border-bottom: 1px solid #59a7d4; }
