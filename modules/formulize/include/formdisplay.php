@@ -2663,7 +2663,7 @@ if(!$nosave) { // need to check for add or update permissions on the current use
             formulizechanged = 0; // don't want to trigger the beforeunload warning
         }
         if (leave) {
-            jQuery('#save_and_leave').val(1)='';
+            jQuery('#save_and_leave').val(1);
         }
         window.document.formulize.submit();
     }
