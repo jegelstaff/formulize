@@ -98,15 +98,10 @@ if($_POST['formulize_admin_key'] == "new") {
   // create the default screens for this form
   $formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
   $defaultFormScreen = $formScreenHandler->create();
-  $defaultFormScreen->setVar('displayheading', 1);
-  $defaultFormScreen->setVar('reloadblank', 0);
-  $defaultFormScreen->setVar('savebuttontext', _formulize_SAVE);
-  $defaultFormScreen->setVar('alldonebuttontext', _formulize_DONE);
-  $defaultFormScreen->setVar('title',"Regular '".$formObject->getVar('title')."'");
-  $defaultFormScreen->setVar('fid',$fid);
-  $defaultFormScreen->setVar('frid',0);
-  $defaultFormScreen->setVar('type','form');
-  $defaultFormScreen->setVar('useToken',1);
+
+  $formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject->getVar('title'), $fid);
+
+
   if(!$defaultFormScreenId = $formScreenHandler->insert($defaultFormScreen)) {
     print "Error: could not create default form screen";
   }

@@ -1242,15 +1242,7 @@ class formulizeFormsHandler {
 	{
 		$formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
 		$defaultFormScreen = $formScreenHandler->create();
-		$defaultFormScreen->setVar('displayheading', 1);
-		$defaultFormScreen->setVar('reloadblank', 0);
-		$defaultFormScreen->setVar('savebuttontext', _formulize_SAVE);
-		$defaultFormScreen->setVar('alldonebuttontext', _formulize_DONE);
-		$defaultFormScreen->setVar('title', "Regular '$newtitle'");
-		$defaultFormScreen->setVar('fid', $newfid);
-		$defaultFormScreen->setVar('frid', 0);
-		$defaultFormScreen->setVar('type', 'form');
-		$defaultFormScreen->setVar('useToken', 1);
+		$formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $newtitle, $newfid);
 		if (!$defaultFormScreenId = $formScreenHandler->insert($defaultFormScreen)) {
 			print "Error: could not create default form screen";
 			return $defaultFormScreenId;
@@ -1268,6 +1260,17 @@ class formulizeFormsHandler {
 	{
 		$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 		$screen = $listScreenHandler->create();
+
+		// === begin code under consideration ===
+		//$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $newtitle, $newfid);
+		//
+		// when above code is uncommented and below code is commented, I get the following error:
+		//
+		// [Mon Mar 02 13:02:24.138492 2015] [:error] [pid 1037] [client ::1:57107]
+		// icms_core_Logger::handleError(2, Invalid argument supplied for foreach(),
+		// /Users/sukizana/Sites/formulize/modules/formulize/admin/save/application_menu_entries_save.php, 48);,
+		// referer: http://localhost/formulize/modules/formulize/admin/ui.php?page=application&aid=2&tab=forms
+		//
 		// View
 		$screen->setVar('defaultview', 'all');
 		$screen->setVar('usecurrentviewlist', _formulize_DE_CURRENT_VIEW);
@@ -1310,6 +1313,7 @@ class formulizeFormsHandler {
 		$screen->setVar('frid', 0);
 		$screen->setVar('type', 'listOfEntries');
 		$screen->setVar('useToken', 1);
+		// === end code under consideration ===
 		if (!$defaultListScreenId = $listScreenHandler->insert($screen)) {
 			print "Error: could not create default list screen";
 			return $defaultListScreenId;
