@@ -936,3 +936,19 @@ table.outer {
 #session-timeout-warning p {
     margin: 1em;
 }
+
+#formulize-masquerade-block {
+    margin-right: 1em;
+    color: $colorHeaderBackground;
+    display: inline-block;
+    float: right;
+    form {
+        display: inline;
+    }
+    input[type=submit] {
+        padding: 0px 6px;
+    }
+    input[type=submit]:hover {
+        transform: none;
+    }
+}

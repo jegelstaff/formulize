@@ -11,7 +11,6 @@
  * @author	Sina Asghari (aka stranger) <pesian_stranger@users.sourceforge.net>
  * @version	$Id: footer.php 20900 2011-02-27 02:18:47Z skenow $
  */
-
  
 defined('ICMS_ROOT_PATH') || die('ICMS root path not defined');
 
@@ -30,18 +29,13 @@ if (isset($_SESSION['sess_regen']) && $_SESSION['sess_regen']) {
 	icms::$session->sessionOpen();
 }
 
-
 /** Masquerade part 1/2: Detect confirm box submit to revert user back to normal mode **/
-if (isset($_REQUEST['op']) && $_REQUEST['op'] == 'masquerade') {
-	if (isset($_REQUEST['revert']) && $_REQUEST['revert'] == 1) {
-		if (isset($_SESSION['masquerade_xoopsUserId'])) {
-			$_SESSION['xoopsUserGroups'] = array(1);
-			$_SESSION['masquerade_end'] = 1;
-			header('Location: ' . ICMS_MODULES_URL . '/profile/admin/user.php');
-		}
-	}
+if (isset($_POST['masquerade_end']) && $_POST['masquerade_end'] == 1 and isset($_SESSION['masquerade_xoopsUserId'])) {
+    $_SESSION['xoopsUserGroups'] = array(1);    // ensure user has permission to access user.php
+    $_SESSION['masquerade_end'] = 1;
+    header('Location: ' . ICMS_MODULES_URL . '/profile/admin/user.php');
+    die;
 }
-
 
 // ################# Preload Trigger beforeFooter ##############
 icms::$preload->triggerEvent('beforeFooter');
@@ -92,20 +86,11 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 			$xoTheme->contentTemplate = $xoopsOption['template_main'];
 		}
 	}
-	$xoTheme->render();
-}
-
-/** Masquerade part 2/2: If user if currently masquerading as another user, **/
-/** show confirm box that allows user to revert back to normal mode **/
-if (isset($_SESSION['masquerade_xoopsUserId'])) {
-	echo '<div class="confirmMsg">
-			<h4> [Masquerading as: ' . $xoopsUser->vars['uname']['value'] . ']
-			<br> Revert to normal mode now </h4>
-			<form method="post" action="' . $_SERVER['REQUEST_URI'] . '">
-			<input type="hidden" name="revert" value="1" />
-			<input type="hidden" name="op" value="masquerade" />
-			<input type="submit" name="confirm_submit" value="' . _SUBMIT . '" /> 
-	</form></div>';
+    if (isset($_SESSION['masquerade_xoopsUserId'])) {
+        // set a template variable when masquerading
+        $xoTheme->template->assign("masquerade_username", $xoopsUser->vars['uname']['value']);
+    }
+    $xoTheme->render();
 }
 
 icms::$logger->stopTime();
