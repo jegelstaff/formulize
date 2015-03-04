@@ -671,24 +671,26 @@ class formulizeElementRenderer{
 					if($isDisabled) {
 						$disabledHiddenValues = implode("\n", $disabledHiddenValue); // glue the individual value elements together into a set of values
 						$renderedElement = implode(", ", $disabledOutputText);
-          } elseif($ele_value[8] == 1) {
-            // autocomplete construction: make sure that $renderedElement is the final output of this chunk of code
-            // write the possible values to a cached file so we can look them up easily when we need them, don't want to actually send them to the browser, since it could be huge, but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
-            $cachedLinkedOptionsFileName = "formulize_Options_".str_replace(".","",microtime(true));
-            formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_Options_");
-            $maxLength = 10;
-            $the_values = array();
-            foreach($options as $id => $text) {
-                $the_values[$id] = trans($text);
-                $thisTextLength = strlen($the_values[$id]);
-                $maxLength = ($thisTextLength > $maxLength) ? $thisTextLength : $maxLength;
-            }
-            file_put_contents(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName",
-                "<?php\n\$$cachedLinkedOptionsFileName = ".var_export($the_values, true).";\n");
-            $defaultSelected = is_array($selected) ? $selected[0] : $selected;
-            $renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFileName, $defaultSelected, $options[$defaultSelected], $maxLength);
-            $form_ele2 = new xoopsFormLabel($ele_caption, $renderedComboBox);
-            $renderedElement = $form_ele2->render();
+					} elseif($ele_value[8] == 1) {
+						// autocomplete construction: make sure that $renderedElement is the final output of this chunk of code
+						// write the possible values to a cached file so we can look them up easily when we need them,
+						//don't want to actually send them to the browser, since it could be huge,
+						//but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
+						$cachedLinkedOptionsFileName = "formulize_Options_".str_replace(".","",microtime(true));
+						formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_Options_");
+						$maxLength = 10;
+						$the_values = array();
+						foreach($options as $id => $text) {
+							$the_values[$id] = trans($text);
+							$thisTextLength = strlen($the_values[$id]);
+							$maxLength = ($thisTextLength > $maxLength) ? $thisTextLength : $maxLength;
+						}
+						file_put_contents(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName",
+							"<?php\n\$$cachedLinkedOptionsFileName = ".var_export($the_values, true).";\n");
+						$defaultSelected = is_array($selected) ? $selected[0] : $selected;
+						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFileName, $defaultSelected, $options[$defaultSelected], $maxLength);
+						$form_ele2 = new xoopsFormLabel($ele_caption, $renderedComboBox);
+						$renderedElement = $form_ele2->render();
 					} else { // normal element
 						$renderedElement = $form_ele1->render();
 					}
@@ -707,9 +709,9 @@ class formulizeElementRenderer{
 					$eltcaption = $ele_caption;
 					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-          if($ele_value[8] == 1) {// Has been edited in order to not allow the user to submit a form when "No match found" or "Choose an Option" is selected from the quickselect box.
+					if($ele_value[8] == 1) {// Has been edited in order to not allow the user to submit a form when "No match found" or "Choose an Option" is selected from the quickselect box.
 						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.value == '' || myform.{$eltname}.value == 'none'  ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}_user.focus();\n return false;\n }\n";
-          } elseif($ele_value[0] == 1) { 
+					} elseif($ele_value[0] == 1) { 
 						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.options[0].selected ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 					} elseif($ele_value[0] > 1) {
 						$form_ele->customValidationCode[] = "selection = false;\n";

@@ -4,10 +4,16 @@
 
 <{if $content.useroptions|@count > 0}>
   <{foreach from=$content.useroptions key=text item=checked name=optionsloop}>
-  <p class="useroptions" name="<{$smarty.foreach.optionsloop.index}>"><{if $content.type == "radio"}><input type="radio" name="defaultoption" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input><{else}><input type="checkbox" name="defaultoption[<{$smarty.foreach.optionsloop.index}>]" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input><{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[<{$smarty.foreach.optionsloop.index}>]" value="<{$text}>"></input></p>
+    <p class="useroptions" name="<{$smarty.foreach.optionsloop.index}>">
+    <{if $content.type == "radio"}><input type="radio" name="defaultoption" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
+    <{else}><input type="checkbox" name="defaultoption[<{$smarty.foreach.optionsloop.index}>]" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
+    <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[<{$smarty.foreach.optionsloop.index}>]" value="<{$text}>"></input></p>
   <{/foreach}>
 <{else}>
-  <p class="useroptions" name="0"><{if $content.type == "radio"}><input type="radio" name="defaultoption" value=0></input><{else}><input type="checkbox" name="defaultoption[0]" value=0></input><{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[0]"></input></p>
+  <p class="useroptions" name="0">
+  <{if $content.type == "radio"}><input type="radio" name="defaultoption" value=0></input>
+  <{else}><input type="checkbox" name="defaultoption[0]" value=0></input>
+  <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[0]"></input></p>
 <{/if}>
 </div>
 
@@ -35,6 +41,7 @@
 </fieldset>
 
 <script type="text/javascript">
+  
   $("[name=addoption]").click(function (){
     number = $(".useroptions:last").attr('name');
     number = parseInt(number) + 1;
@@ -52,6 +59,51 @@
   $("[name=cleardef]").click(function () {
     $("[name=defaultoption]").attr('checked',0);
     $("[name=cleardef]").blur();
+  });
+  <{/if}>
+  
+  <{if $content.type eq "select"}>
+  var i=0;
+  var length=<{$content.useroptions|@count}>;
+  for(i=0;i<length;i++){
+    if (($("[name=ele_value["+i+"]]").val()=="{USERNAMES}" ||$("[name=ele_value["+i+"]]").val()=="{FULLNAMES}")&&$("[name=defaultoption["+i+"]]").is(":checked")){
+     $("input[name=elements-ele_value[16]]:eq(1)").attr("disabled","disabled");
+     $("input[name=elements-ele_value[16]]:eq(0)").attr("checked","checked");
+     $("[name=addoption]").attr("disabled","disabled");
+     break;
+    }else {
+     $("input[name=elements-ele_value[16]]:eq(1)").attr("disabled",0);
+     if($("input[name=elements-ele_value[16]]:eq(0)").is(":checked")) {
+        $("input[name=elements-ele_value[16]]:eq(0)").attr("checked","checked");
+     }
+      if($("input[name=elements-ele_value[16]]:eq(1)").is(":checked")) {
+        $("input[name=elements-ele_value[16]]:eq(1)").attr("checked","checked");
+     }
+     $("[name=addoption]").attr("disabled",0);
+    }
+  }
+  var x=0;
+  for(x=0;x<length;x++){
+    if ($("[name=ele_value["+x+"]]").val()=="{USERNAMES}" ||$("[name=ele_value["+x+"]]").val()=="{FULLNAMES}"){
+      break;
+    }
+  }
+  
+  $("[name=defaultoption["+x+"]]").click(function(){
+    if($(this).is(':checked')){
+      $("input[name=elements-ele_value[16]]:eq(1)").attr("disabled","disabled");
+      $("input[name=elements-ele_value[16]]:eq(0)").attr("checked","checked");
+      $("[name=addoption]").attr("disabled","disabled");
+    } else {
+      $("input[name=elements-ele_value[16]]:eq(1)").attr("disabled",0);
+      if($("input[name=elements-ele_value[16]]:eq(0)").is(":checked")) {
+        $("input[name=elements-ele_value[16]]:eq(0)").attr("checked","checked");
+      }
+      if($("input[name=elements-ele_value[16]]:eq(1)").is(":checked")) {
+        $("input[name=elements-ele_value[16]]:eq(1)").attr("checked","checked");
+      }
+      $("[name=addoption]").attr("disabled",0);
+    }
   });
   <{/if}>
 
