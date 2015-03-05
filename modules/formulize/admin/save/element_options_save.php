@@ -252,8 +252,9 @@ if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
 }
 
 //newly added for autocomplete box to make sure when {USERNAMES} and {FULLNAMES} are selected, system will not allow new entries to be added
+//ele_value[8] ==1 will make sure it's an autocomplete box
 //Added by Jinfu MAR 2015
-if($processedValues['elements']['ele_value'][2]['{USERNAMES}']==1||$processedValues['elements']['ele_value'][2]['{FULLNAMES}']==1){
+if($processedValues['elements']['ele_value'][8]==1&&($processedValues['elements']['ele_value'][2]['{USERNAMES}']==1||$processedValues['elements']['ele_value'][2]['{FULLNAMES}']==1)){
   $processedValues['elements']['ele_value'][16]=0;
 }
 
