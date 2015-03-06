@@ -233,8 +233,8 @@ switch ($op) {
 		} elseif (!empty($_GET['xoops_redirect'])) {
 			$redirect = htmlspecialchars(trim($_GET['xoops_redirect']));
 			$isExternal = FALSE;
-			$tragetURL=substr(ICMS_URL,0,strpos(ICMS_URL,"/formulize")).$redirect;
-			redirect_header(ICMS_URL."/modules/formulize/application.php?id=all",5, _US_NOPERMISS."<br />Viewing: '".$tragetURL."'<br />");
+			$tragetURL=substr(ICMS_URL,0,strpos(ICMS_URL,"/formulize")).$redirect;			//saved in case of any other uses
+			redirect_header(ICMS_URL."/modules/formulize/application.php?id=all",5, "Sorry, you do not have permission to view this page. Please contact your site administrator.");
 			exit();
 		} else {
 			header('Location: ' . ICMS_URL . '/userinfo.php?uid='. (int) icms::$user->getVar('uid'));
