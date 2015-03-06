@@ -17,9 +17,15 @@ include_once "admin_header.php";
 icms_cp_header();
 
 $op = isset($_REQUEST['op']) ? trim($_REQUEST['op']) : 'list';
-if($op == 'editordelete') $op = isset($_REQUEST['delete'])?'delete':'edit';
+if($op == 'editordeleteormasquerade') $op = isset($_REQUEST['delete'])?'delete': (isset($_REQUEST['edit'])?'edit':'masquerade');
+if(isset($_SESSION['masquerade_end']) && $_SESSION['masquerade_end'] == 1) $op = 'masquerade';
 $adminMenuIncluded = false;
 $member_handler = icms::handler('icms_member');
+
+if (("masquerade" == $op) and ($_REQUEST['id'] == $_SESSION['xoopsUserId'])) {
+    // prevent masquerading as the current user
+    $op = "list";
+}
 
 switch($op) {
 	default:
@@ -28,10 +34,11 @@ switch($op) {
 		$adminMenuIncluded = true;
 		$form = new icms_form_Theme(_AM_PROFILE_EDITUSER, 'form', 'user.php');
 		$form->addElement(new icms_form_elements_select_User(_AM_PROFILE_SELECTUSER, 'id'));
-		$form->addElement(new icms_form_elements_Hidden('op', 'editordelete'));
+		$form->addElement(new icms_form_elements_Hidden('op', 'editordeleteormasquerade'));
 		$button_tray = new icms_form_elements_Tray('');
 		$button_tray->addElement(new icms_form_elements_Button('', 'edit', _EDIT, 'submit'));
 		$button_tray->addElement(new icms_form_elements_Button('', 'delete', _DELETE, 'submit'));
+		$button_tray->addElement(new icms_form_elements_Button('', 'masquerade', 'Masquerade', 'submit'));
 		$form->addElement($button_tray);
 		//$form->addElement(new icms_form_elements_Button('', 'submit', _SUBMIT, 'submit'));
 		$form->display();
@@ -40,7 +47,7 @@ switch($op) {
 			if(count($user_count)>1){
 				$form = new icms_form_Theme(_AM_PROFILE_REMOVEDUSERS, 'form', 'user.php');
 				$form->addElement(new icms_form_elements_select_User(_AM_PROFILE_SELECTUSER, 'id', false, false, false, false, true, true));
-				$form->addElement(new icms_form_elements_Hidden('op', 'editordelete'));
+				$form->addElement(new icms_form_elements_Hidden('op', 'editordeleteormasquerade'));
 				$button_tray = new icms_form_elements_Tray('');
 				$button_tray->addElement(new icms_form_elements_Button('', 'edit', _EDIT, 'submit'));
 				$form->addElement($button_tray);
@@ -215,6 +222,45 @@ switch($op) {
 			icms_core_Message::confirm(array('ok' => 1, 'id' => (int)$_REQUEST['id'], 'op' => 'delete'), $_SERVER['REQUEST_URI'], sprintf(_AM_PROFILE_RUSUREDEL, $obj->getVar('uname').' ('.$obj->getVar('email').')'));
 		}
 		break;
+
+    case 'masquerade':
+        /*
+        *  Allows an admin user to masquerade as a different user.
+        *  This allows the admin to see and do what the other user sees/can-do.
+        *  A confirm box will also be created at the footer to allow the admin
+        *  to revert the masqerading effect [formulize\footer.php]
+        */
+
+        // Revert masquerade effect
+        if (isset($_SESSION['masquerade_end']) && $_SESSION['masquerade_end'] == 1) {
+            $masqueradeUser = new icms_member_user_Object($_SESSION['masquerade_xoopsUserId']);
+            unset($_SESSION['masquerade_xoopsUserId']);
+            unset($_SESSION['masquerade_end']);
+        } else {
+            $masqueradeUser = new icms_member_user_Object($_REQUEST['id']);
+            // Save UserId of the actual user
+            if (isset($_SESSION['masquerade_xoopsUserId']) == false) {
+                $_SESSION['masquerade_xoopsUserId'] = $_SESSION['xoopsUserId'];
+            }
+        }
+
+        // Change effective user
+        $_SESSION['xoopsUserId'] = $masqueradeUser->getVar('uid');
+        $_SESSION['xoopsUserGroups'] = $masqueradeUser->getGroups();
+        $_SESSION['xoopsUserLastLogin'] = $masqueradeUser->getVar('last_login');
+        $_SESSION['xoopsUserLanguage'] = $masqueradeUser->language();
+        if (isset($_SESSION['XOOPS_TOKEN_SESSION'])) unset($_SESSION['XOOPS_TOKEN_SESSION']);
+
+        $xoops_user_theme = $masqueradeUser->getVar('theme');
+        if (in_array($xoops_user_theme, $icmsConfig['theme_set_allowed'])) 
+            $_SESSION['xoopsUserTheme'] = $xoops_user_theme;
+        elseif (isset($_SESSION['xoopsUserTheme']))
+            unset($_SESSION['xoopsUserTheme']);
+
+        // Redirect user
+        header('Location: ' . SITE_BASE_URL . "/");
+        die;
+        break;
 }
 
 icms_cp_footer();
