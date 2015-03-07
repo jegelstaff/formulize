@@ -396,7 +396,12 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	$mid = getFormulizeModId();
 
 	$currentURL = ( (isset($_GET['ve']) && isset($_GET['fid'])) ? $_SERVER['PHP_SELF'] . "?fid=" . $_GET['fid'] : getCurrentURL() );
-
+	if (isset($_GET['sid'])) {
+	    list($fid) = icms::$xoopsDB->fetchRow(icms::$xoopsDB->query("SELECT fid FROM " . icms::$xoopsDB->prefix('formulize_screen') . " WHERE sid=" . $_GET['sid']));
+	    $currentURL = $_SERVER['PHP_SELF'] . "?fid=" . $fid;
+	    unset($fid);
+	}
+	
 	// identify form or framework
 	$elements_allowed = "";
 	// if a screen object is passed in, select the elements for display based on the screen's settings
