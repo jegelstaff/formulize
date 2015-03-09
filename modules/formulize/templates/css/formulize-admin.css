@@ -1552,6 +1552,7 @@ div.description {
   text-align: left !important; }
 
 .homepage-description {
+  max-width: 45%;
   margin-bottom: 1em;
   margin-top: -20px; }
 
