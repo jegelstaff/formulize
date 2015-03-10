@@ -395,11 +395,19 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 	$mid = getFormulizeModId();
 
-	$currentURL = ( (isset($_GET['ve']) && isset($_GET['fid'])) ? $_SERVER['PHP_SELF'] . "?fid=" . $_GET['fid'] : getCurrentURL() );
+	$currentURL = getCurrentURL();
+	
+	/* Alter currentURL if necessary.
+	 * Display list of entries screen on-click of form buttons "Save and Leave" and "Leave Page".
+	 */
 	if (isset($_GET['sid'])) {
-	    list($fid) = icms::$xoopsDB->fetchRow(icms::$xoopsDB->query("SELECT fid FROM " . icms::$xoopsDB->prefix('formulize_screen') . " WHERE sid=" . $_GET['sid']));
-	    $currentURL = $_SERVER['PHP_SELF'] . "?fid=" . $fid;
-	    unset($fid);
+	    $screen = xoops_getmodulehandler('screen', 'formulize')->get($_GET['sid']);
+	    if ($screen->getVar('type') == 'form') {
+		$currentURL = $_SERVER['PHP_SELF'] . "?fid=" . $screen->form_id();
+	    }
+	    $screen = null;
+	} elseif (isset($_GET['ve']) && isset($_GET['fid'])) {
+	    $currentURL = $_SERVER['PHP_SELF'] . "?fid=" . $_GET['fid'];
 	}
 	
 	// identify form or framework
