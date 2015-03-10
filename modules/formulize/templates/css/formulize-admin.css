@@ -356,6 +356,7 @@ h6 {
   margin-bottom: -19px; }
 
 #xo-canvas-content {
+  min-width: 782px;
   margin-left: 30px;
   margin-right: 30px; }
 
@@ -1552,9 +1553,8 @@ div.description {
   text-align: left !important; }
 
 .homepage-description {
-  max-width: 45%;
   margin-bottom: 1em;
-  margin-top: -20px; }
+  margin-top: 5px; }
 
 form textarea {
   width: 80%; }
