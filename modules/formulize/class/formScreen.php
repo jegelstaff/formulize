@@ -227,36 +227,26 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 
 	public function getSelectedScreensForNewElement() {
 		global $xoopsDB;
-		$selected_screens = array();
-		$allScreensForForm = $this->getScreensForElement($_GET['fid']);
+		$screenID_to_elementID = array();
 
-	    $formScreenSQL = "SELECT formid, sid, formelements FROM " . $xoopsDB->prefix("formulize_screen_form");
-	    $formScreenHandler = $xoopsDB->query($formScreenSQL);
+		$screenElementsSQL = "SELECT forms.id_form, forms.ele_id, screens.sid FROM " .
+								$xoopsDB->prefix("formulize") . "forms INNER JOIN " . $xoopsDB->prefix("formulize_screen_form") .
+								" screens ON forms.id_form = screens.formid
+								WHERE id_form = " .$_GET['fid'];
+		$screenElementsHandler = $xoopsDB->query($screenElementsSQL);
 
-	    $formScreenIndex = array();
-	    $allScreens = array();
-	    $formid_to_elementid = array();
-	    while($formScreenHandlesArray = $xoopsDB->fetchArray($formScreenHandler)) {
-	    	array_push($formScreenIndex, $formScreenHandlesArray);
-	    }
+		while ($screenElementsHolder = $xoopsDB->fetchArray($screenElementsHandler)){
+			if (!isset($screenElements[$screenElementsHolder['sid']])){
+				$screenID_to_elementID[$screenElementsHolder['sid']] = array();
+			}
+			array_push ($screenID_to_elementID[$screenElementsHolder['sid']], $screenElementsHolder['ele_id']);
+		}
 
-	    $formElementsSQL = "SELECT id_form, ele_id FROM " . $xoopsDB->prefix("formulize");
-	    $formElementsHandler = $xoopsDB->query($formElementsSQL);
-
-	    while($formElementsHandlesArray = $xoopsDB->fetchArray($formElementsHandler)) {
-	    	if (!isset($formid_to_elementid[$formElementsHandlesArray['id_form']])) {
-	    		$formid_to_elementid[$formElementsHandlesArray['id_form']] = array();
-	    	}
-	    	array_push($formid_to_elementid[$formElementsHandlesArray['id_form']], $formElementsHandlesArray['ele_id']);
-	    }
-
-		foreach ($allScreensForForm as $i => $thisScreen) {
-			foreach ($formScreenIndex as $j => $screenData) {
-				if ($screenData['sid'] == $thisScreen['sid']) {
-					$unserializedData = unserialize($screenData['formelements']);
-					if (count($formid_to_elementid[$_GET['fid']]) == count($unserializedData)) {
-						$selected_screens[$screenData['sid']] = " selected";
-					}
+		if (sizeof($screenID_to_elementID) <= sizeof($screenID_to_elementID, 1)){
+			foreach ($screenID_to_elementID as $i => $screenData) {
+				//need to fix display if one or more are displayed
+				if (sizeof($screenData) > 1){
+					$selected_screens['sid'] = "selected"; 	//this stuff may be unset by the element_display_save class...
 				}
 			}
 		}
