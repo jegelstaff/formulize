@@ -251,10 +251,25 @@ if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
   }
 }
 
-//newly added for autocomplete box to make sure when {USERNAMES} and {FULLNAMES} are selected, system will not allow new entries to be added
-//ele_value[8] ==1 will make sure it's an autocomplete box
-//Added by Jinfu MAR 2015
-if($processedValues['elements']['ele_value'][8]==1&&($processedValues['elements']['ele_value'][2]['{USERNAMES}']==1||$processedValues['elements']['ele_value'][2]['{FULLNAMES}']==1)){
+/**newly added for autocomplete box to make sure when {USERNAMES} and {FULLNAMES} are selected, system will not allow new entries to be added
+*ele_value[8] ==1 will make sure it's an autocomplete box
+*ele_value[16]=0 means say no match found,
+*	       1 means add as new entry.
+*
+*when $processedValues['elements']['ele_value'][2]['{USERNAMES}'] = 1, that means this one is checked;
+*	if it's 0, then it's not checked
+*							
+*this also applys in database: "{USERNAMES}";i:1; as selected;
+*			       "{USERNAMES}";i:0; for not selected.
+*
+*you can use those lines to check the value. 
+*  error_log("usernames: ".print_r($processedValues['elements']['ele_value'][2]['{USERNAMES}']));
+*  error_log("fullnames: ".print_r($processedValues['elements']['ele_value'][2]['{FULLNAMES}']));
+*
+*Added by Jinfu MAR 2015
+*/
+if($processedValues['elements']['ele_value'][8] == 1 &&
+   ($processedValues['elements']['ele_value'][2]['{USERNAMES}'] == 1 || $processedValues['elements']['ele_value'][2]['{FULLNAMES}'] == 1 )){
   $processedValues['elements']['ele_value'][16]=0;
 }
 
