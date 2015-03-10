@@ -401,11 +401,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	 * Display list of entries screen on-click of form buttons "Save and Leave" and "Leave Page".
 	 */
 	if (isset($_GET['sid'])) {
-	    $screen = xoops_getmodulehandler('screen', 'formulize')->get($_GET['sid']);
-	    if ($screen->getVar('type') == 'form') {
-		$currentURL = $_SERVER['PHP_SELF'] . "?fid=" . $screen->form_id();
+	    $curr_screen = xoops_getmodulehandler('screen', 'formulize')->get($_GET['sid']);
+	    if ($curr_screen->getVar('type') == 'form') {
+		$currentURL = $_SERVER['PHP_SELF'] . "?fid=" . $curr_screen->form_id();
 	    }
-	    $screen = null;
 	} elseif (isset($_GET['ve']) && isset($_GET['fid'])) {
 	    $currentURL = $_SERVER['PHP_SELF'] . "?fid=" . $_GET['fid'];
 	}
