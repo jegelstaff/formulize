@@ -7,13 +7,13 @@
     <p class="useroptions" name="<{$smarty.foreach.optionsloop.index}>">
     <{if $content.type == "radio"}><input type="radio" name="defaultoption" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
     <{else}><input type="checkbox" name="defaultoption[<{$smarty.foreach.optionsloop.index}>]" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
-    <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[<{$smarty.foreach.optionsloop.index}>]" value="<{$text}>" onchange="checkNAMES()"></input></p>
+    <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[<{$smarty.foreach.optionsloop.index}>]" value="<{$text}>" onchange="checkForNames()"></input></p>
   <{/foreach}>
 <{else}>
   <p class="useroptions" name="0">
   <{if $content.type == "radio"}><input type="radio" name="defaultoption" value=0></input>
   <{else}><input type="checkbox" name="defaultoption[0]" value=0></input>
-  <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[0]" onchange="checkNAMES()"></input></p>
+  <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[0]" onchange="checkForNames()"></input></p>
 <{/if}>
 </div>
 
@@ -41,7 +41,6 @@
 </fieldset>
 
 <script type="text/javascript">
-  var length=<{$content.useroptions|@count}>;   //option count it will change when add button clicked
   
   $("[name=addoption]").click(function (){
     number = $(".useroptions:last").attr('name');
@@ -54,7 +53,6 @@
     $(".useroptions:last").append(appendContents2);
     $("[name=addoption]").blur();
     setDisplay('savewarning','block');
-    length+=1;
   });
 
   <{if $content.type == "radio"}>
@@ -65,45 +63,16 @@
   <{/if}>
   
   <{if $content.type eq "select"}>
-  checkNAMES();
-  /**
-   *this function will consantly check for {USERNAMES} and {FULLNAMES}
-   */
-  function checkNAMES(){
-    var x=0,y=-1,z=-1;    //y for {FULLNAMES}  z for {USERNAMES}
-    for(x=0;x<length;x++){
-      if ($("[name=ele_value["+x+"]]").val()=="{USERNAMES}"){
-        z=x;
-        if ($("[name=defaultoption["+x+"]]").is(":checked")){
-          disableForAutocomplete();
-        }
-      }
-      if($("[name=ele_value["+x+"]]").val()=="{FULLNAMES}"){
-        y=x;     
-        if ($("[name=defaultoption["+x+"]]").is(":checked")) {
-          disableForAutocomplete();
-        }
-      }
+  checkForNames();
+  
+  function checkForNames() {
+    if ($("[name=ele_value[0]]").val() == "{USERNAMES}" || $("[name=ele_value[0]]").val() == "{FULLNAMES}"){
+      disableForAutocomplete();
+    }else{
+      enableForAutocomplete();
     }
-    
-    $("[name=defaultoption["+z+"]]").click(function(){
-      if($(this).is(':checked')){
-        disableForAutocomplete();
-      } else {
-        enableForAutocomplete();
-      }
-    });
-
-    $("[name=defaultoption["+y+"]]").click(function(){
-      if($(this).is(':checked')){
-        disableForAutocomplete();
-      } else {
-        enableForAutocomplete();
-      }
-    });
   }
 
-  
   function disableForAutocomplete(){
     $("input[name=elements-ele_value[16]]:eq(1)").attr("disabled","disabled");
     $("input[name=elements-ele_value[16]]:eq(0)").attr("checked","checked");
@@ -112,12 +81,12 @@
   
   function enableForAutocomplete(){
     $("input[name=elements-ele_value[16]]:eq(1)").attr("disabled",0);
-    if($("input[name=elements-ele_value[16]]:eq(0)").is(":checked")) {
+    /*if($("input[name=elements-ele_value[16]]:eq(0)").is(":checked")) {
       $("input[name=elements-ele_value[16]]:eq(0)").attr("checked","checked");
     }
     if($("input[name=elements-ele_value[16]]:eq(1)").is(":checked")) {
       $("input[name=elements-ele_value[16]]:eq(1)").attr("checked","checked");
-    }
+    }*/
     $("[name=addoption]").attr("disabled",0);
   }
   <{/if}>
