@@ -356,6 +356,7 @@ h6 {
   margin-bottom: -19px; }
 
 #xo-canvas-content {
+  min-width:962px;
   margin-left: 30px;
   margin-right: 30px; }
 
