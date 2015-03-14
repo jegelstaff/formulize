@@ -217,29 +217,19 @@ switch ($op) {
 			exit();
 		}
 		break;
-	
-	/**
-	 *Added for fixing users who dont have permission and try to access a form leading to
-	 *a redirect loop.
-	 *Now it will jump back to main page and show a message indicating an error msg.
-	 *
-	 *other functions can be added to this part accordingly
-	 *
-	 *Added By Jinfu Feb 2015
-	 */
-	case 'nopermission':
-		if(!icms::$user){
-			redirect_header('index.php',5,_US_NOPERMISS);
-		} elseif (!empty($_GET['xoops_redirect'])) {
-			$redirect = htmlspecialchars(trim($_GET['xoops_redirect']));
-			$isExternal = FALSE;
-			$tragetURL=substr(ICMS_URL,0,strpos(ICMS_URL,"/formulize")).$redirect;			//saved in case of any other uses
-			redirect_header(ICMS_URL."/modules/formulize/application.php?id=all",5, "Sorry, you do not have permission to view this page. Please contact your site administrator.");
-			exit();
-		} else {
-			header('Location: ' . ICMS_URL . '/userinfo.php?uid='. (int) icms::$user->getVar('uid'));
-			exit();
-		}
-		break;
-		
+
+
+    // when users do not have permission, display a message instead of getting into a redirect loop
+    case 'nopermission':
+        if (!icms::$user){
+            redirect_header('index.php', 5, _US_NOPERMISS);
+        } elseif (!empty($_GET['xoops_redirect'])) {
+            redirect_header(ICMS_URL."/modules/formulize/application.php?id=all", 5,
+                "Sorry, you do not have permission to view this page. Please contact your site administrator.");
+            exit();
+        } else {
+            header('Location: ' . ICMS_URL . '/userinfo.php?uid=' . intval(icms::$user->getVar('uid')));
+            exit();
+        }
+        break;
 }
