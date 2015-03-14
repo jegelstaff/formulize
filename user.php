@@ -136,7 +136,7 @@ switch ($op) {
 		exit();
 		break;
 
-	case $op == 'logout':
+	case 'logout':
 		$sessHandler = icms::$session;
 		$sessHandler->sessionClose(icms::$user->getVar('uid'));
 		redirect_header(ICMS_URL . '/index.php', 3, _US_LOGGEDOUT . '<br />' . _US_THANKYOUFORVISIT);
@@ -217,4 +217,19 @@ switch ($op) {
 			exit();
 		}
 		break;
+
+
+    // when users do not have permission, display a message instead of getting into a redirect loop
+    case 'nopermission':
+        if (!icms::$user){
+            redirect_header('index.php', 5, _US_NOPERMISS);
+        } elseif (!empty($_GET['xoops_redirect'])) {
+            redirect_header(ICMS_URL."/modules/formulize/application.php?id=all", 5,
+                "Sorry, you do not have permission to view this page. Please contact your site administrator.");
+            exit();
+        } else {
+            header('Location: ' . ICMS_URL . '/userinfo.php?uid=' . intval(icms::$user->getVar('uid')));
+            exit();
+        }
+        break;
 }
