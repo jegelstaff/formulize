@@ -638,6 +638,53 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
         displayEntries($formframe, $mainform, $loadThisView, 0, 0, $screen);
     }
+
+
+    public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $title, $fid)
+    {
+        // View
+        $defaultListScreen->setVar('defaultview', 'all');
+        $defaultListScreen->setVar('usecurrentviewlist', _formulize_DE_CURRENT_VIEW);
+        $defaultListScreen->setVar('limitviews', serialize(array(0 => 'allviews')));
+        $defaultListScreen->setVar('useworkingmsg', 1);
+        $defaultListScreen->setVar('usescrollbox', 1);
+        $defaultListScreen->setVar('entriesperpage', 10);
+        $defaultListScreen->setVar('viewentryscreen', $defaultFormScreenId);
+        // Headings
+        $defaultListScreen->setVar('useheadings', 1);
+        $defaultListScreen->setVar('repeatheaders', 5);
+        $defaultListScreen->setVar('usesearchcalcmsgs', 1);
+        $defaultListScreen->setVar('usesearch', 1);
+        $defaultListScreen->setVar('columnwidth', 0);
+        $defaultListScreen->setVar('textwidth', 35);
+        $defaultListScreen->setVar('usecheckboxes', 0);
+        $defaultListScreen->setVar('useviewentrylinks', 1);
+        $defaultListScreen->setVar('desavetext', _formulize_SAVE);
+        // Buttons
+        $defaultListScreen->setVar('useaddupdate', _formulize_DE_ADDENTRY);
+        $defaultListScreen->setVar('useaddmultiple', _formulize_DE_ADD_MULTIPLE_ENTRY);
+        $defaultListScreen->setVar('useaddproxy', _formulize_DE_PROXYENTRY);
+        $defaultListScreen->setVar('useexport', _formulize_DE_EXPORT);
+        $defaultListScreen->setVar('useimport', _formulize_DE_IMPORT);
+        $defaultListScreen->setVar('usenotifications', _formulize_DE_NOTBUTTON);
+        $defaultListScreen->setVar('usechangecols', _formulize_DE_CHANGECOLS);
+        $defaultListScreen->setVar('usecalcs', _formulize_DE_CALCS);
+        $defaultListScreen->setVar('useadvcalcs', _formulize_DE_ADVCALCS);
+        $defaultListScreen->setVar('useexportcalcs', _formulize_DE_EXPORT_CALCS);
+        $defaultListScreen->setVar('useadvsearch', '');
+        $defaultListScreen->setVar('useclone', _formulize_DE_CLONESEL);
+        $defaultListScreen->setVar('usedelete', _formulize_DE_DELETESEL);
+        $defaultListScreen->setVar('useselectall', _formulize_DE_SELALL);
+        $defaultListScreen->setVar('useclearall', _formulize_DE_CLEARALL);
+        $defaultListScreen->setVar('usereset', _formulize_DE_RESETVIEW);
+        $defaultListScreen->setVar('usesave', _formulize_DE_SAVE);
+        $defaultListScreen->setVar('usedeleteview', _formulize_DE_DELETE);
+        $defaultListScreen->setVar('title', "Entries in '$title'");
+        $defaultListScreen->setVar('fid', $fid);
+        $defaultListScreen->setVar('frid', 0);
+        $defaultListScreen->setVar('type', 'listOfEntries');
+        $defaultListScreen->setVar('useToken', 1);
+    }
 }
 
 
