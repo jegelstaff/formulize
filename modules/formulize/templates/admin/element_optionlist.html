@@ -46,7 +46,7 @@
     number = $(".useroptions:last").attr('name');
     number = parseInt(number) + 1;
     appendContents1 = '<{if $content.type == "radio"}><input type="radio" name="defaultoption" value='+number+'></input><{else}><input type="checkbox" name="defaultoption['+number+']" value='+number+'></input><{/if}>';
-    appendContents2 = '<input type="text" name="ele_value['+number+']" onchange="checkNAMES()"></input>';
+    appendContents2 = '<input type="text" name="ele_value['+number+']" onchange="checkForNAMES()"></input>';
     $(".optionlist").append('<p class="useroptions" name="'+number+'"></p>');
     $(".useroptions:last").append(appendContents1);
     $(".useroptions:last").append('&nbsp;&nbsp;');
