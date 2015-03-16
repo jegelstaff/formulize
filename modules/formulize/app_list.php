@@ -30,9 +30,9 @@
 include "../../mainfile.php";
 
 /*
-	This is an access point for mobile clients to retrieve the list 
-	of availible menu links in Formulize for the given user in JSON.
-	Clients must access this page with a valid cookie session.
+    This is an access point for mobile clients to retrieve the list
+    of availible menu links in Formulize for the given user in JSON.
+    Clients must access this page with a valid cookie session.
 */
 
 $application_handler = xoops_getmodulehandler('applications', 'formulize');
@@ -42,40 +42,38 @@ $application_list = $application_handler->getAllApplications();
 $applications_array = array();
 
 foreach ($application_list as $application) {
+    // Application metadata into array
+    $app_data = array (
+        "appid" => $application->getVar("appid"),
+        "name" => $application->getVar("name"),
+        "description" => $application->getVar("description"),
+    );
 
-	// Application metadata into array
-	$app_data = array (
-		"appid" => $application->getVar("appid"),
-		"name" => $application->getVar("name"),
-		"description" => $application->getVar("description"),
-		);
+    // Convert all menu links within the application into an array
+    $links = $application->getVar("links");
+    $links_arr = array();
+    foreach ($links as $link) {
+        // Convert the link object into a key value map array
+        $link_data = array (
+            "menu_id" => $link->getVar("menu_id"),
+            "appid" => $link->getVar("appid"),
+            "screen" => $link->getVar("screen"),
+            "rank" => $link->getVar("rank"),
+            "url" => $link->getVar("url"),
+            "link_text" => $link->getVar("link_text"),
+            "name" => $link->getVar("name"),
+            "text" => $link->getVar("text"),
+            //"permissions" => $link->getVar("permissions")
+        );
 
-	// Convert all menu links within the application into an array
-	$links = $application->getVar("links");
-	$links_arr = array();
-	foreach ($links as $link) {
+        array_push($links_arr, $link_data);
+    }
 
-		// Convert the link object into a key value map array
-		$link_data = array (
-			"menu_id" => $link->getVar("menu_id"),
-			"appid" => $link->getVar("appid"),
-			"screen" => $link->getVar("screen"),
-			"rank" => $link->getVar("rank"),
-			"url" => $link->getVar("url"),
-			"link_text" => $link->getVar("link_text"),
-			"name" => $link->getVar("name"),
-			"text" => $link->getVar("text"),
-			//"permissions" => $link->getVar("permissions")
-			);
-
-		array_push($links_arr, $link_data);
-	}
-
-	// Only add applications that have links accessible to the user
-	if (count($links_arr) > 0) {
-		$app_data["links"] = $links_arr;
-		array_push($applications_array, $app_data);
-	}
+    // Only add applications that have links accessible to the user
+    if (count($links_arr) > 0) {
+        $app_data["links"] = $links_arr;
+        array_push($applications_array, $app_data);
+    }
 }
 
 // Output application menu links in a JSON format for mobile clients

@@ -518,6 +518,7 @@ function xoops_getcss($theme = '')
 		if(file_exists(ICMS_THEME_PATH.'/'.$theme.'/css/'.$str_css)) {return ICMS_THEME_URL.'/'.$theme.'/css/'.$str_css;}
 		elseif(file_exists(ICMS_THEME_PATH.'/'.$theme.'/css/style.css')) {return ICMS_THEME_URL.'/'.$theme.'/css/style.css';}
 	}
+	echo("<h1>The '".$theme."' theme does not exist.</h1>");
 	return '';
 }
 

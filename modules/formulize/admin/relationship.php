@@ -69,25 +69,25 @@ while($array = $xoopsDB->fetchArray($res)) {
     $i++;
 }
 
-$breadcrumbtrail[1] = [
+$breadcrumbtrail[1] = array[
     'url' => "page=home",
     'text' => "Home"
 ];
 
-$breadcrumbtrail[] = [
+$breadcrumbtrail[] = array[
     'url' => "page=application&aid=$aid&tab=relationships",
     'text' => $appName
 ];
 
 if($fid != 0) {
-    $breadcrumbtrail[] = [
+    $breadcrumbtrail[] = array[
         'url' => "page=form&aid=$aid&fid=$fid&tab=screens",
         'text' => $common['required_form']['name']
     ];
 }
 
 if ($sid != 0) {
-    $breadcrumbtrail[] = [
+    $breadcrumbtrail[] = array[
         'url' => "page=screen&aid=$aid&fid=$fid&sid=$sid&tab=relationships",
         'text' => $common['from_screen']['name']
     ];
