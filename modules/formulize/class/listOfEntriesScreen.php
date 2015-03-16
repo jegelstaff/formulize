@@ -104,9 +104,11 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
 
 class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
     var $db;
+
     function formulizeListOfEntriesScreenHandler(&$db) {
         $this->db =& $db;
     }
+
     function &getInstance(&$db) {
         static $instance;
         if (!isset($instance)) {
@@ -114,10 +116,10 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         }
         return $instance;
     }
+
     function &create() {
         return new formulizeListOfEntriesScreen();
     }
-
 
     // this function handles all the admin side ui for this kind of screen
     function editForm($screen, $fid) {
@@ -627,6 +629,90 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         }
         return false;
     }
+
+
+    // THIS METHOD CLONES A LIST_OF_ENTRIES_SCREEN
+    function cloneScreen($sid) {
+
+        $newtitle = $this->titleForClonedLoeScreen($sid);
+
+        // INSERT INTO FORMULIZE_SCREEN TABLE
+        $getrow = q("SELECT * FROM " . $this->db->prefix("formulize_screen") . " WHERE sid = $sid");
+        $insert_sql = "INSERT INTO " . $this->db->prefix("formulize_screen") . " (";
+        $start = 1;
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "sid") { continue; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= $field;
+        }
+        $insert_sql .= ") VALUES (";
+        $start = 1;
+
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "sid") { continue; }
+            if($field == "title") { $value = $newtitle; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= '"'.formulize_db_escape($value).'"';
+        }
+        $insert_sql .= ")";
+        if(!$result = $this->db->query($insert_sql)) {
+            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+            return false;
+        }
+        $newsid = $this->db->getInsertId();
+
+        // INSERT INTO FORMULIZE_SCREEN_LISTOFENTRIES TABLE
+        $getrow = q("SELECT * FROM " . $this->db->prefix("formulize_screen_listofentries") . " WHERE sid = $sid");
+        $insert_sql = "INSERT INTO " . $this->db->prefix("formulize_screen_listofentries") . " (";
+        $start = 1;
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "listofentriesid") { continue; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= $field;
+        }
+        $insert_sql .= ") VALUES (";
+        $start = 1;
+
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "listofentriesid") { continue; }
+            if($field == "sid") { $value = $newsid; }
+            if($field == "title") { $value = $newtitle; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= '"'.formulize_db_escape($value).'"';
+        }
+        $insert_sql .= ")";
+        if(!$result = $this->db->query($insert_sql)) {
+            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+            return false;
+        }
+    }
+
+    // FINDS AND RETURNS A NEW TITLE FOR A CLONED SCREEN
+    // Pattern for naming is "[Original Screen Name] - Cloned", "[Original Screen Name] - Cloned 2", etc.
+    function titleForClonedLoeScreen($sid) {
+        $foundTitle = 1;
+        $titleCounter = 0;
+        $screenObject = $this->get($sid);
+        $title = $screenObject->getVar('title');
+        while ($foundTitle) {
+            $titleCounter++;
+            if ($titleCounter > 1) {
+                // add a number to the new form name to ensure it is unique
+                $newtitle = sprintf(_AM_FORMULIZE_LOE_CLONED, $title)." $titleCounter";
+            } else {
+                $newtitle = sprintf(_AM_FORMULIZE_LOE_CLONED, $title);
+            }
+            $titleCheckSQL = "SELECT title FROM " . $this->db->prefix("formulize_screen") . " WHERE title = '".formulize_db_escape($newtitle)."'";
+            $titleCheckResult = $this->db->query($titleCheckSQL);
+            $foundTitle = $this->db->getRowsNum($titleCheckResult);
+        }
+        return $newtitle; // use the last searched title (because it was not found)
+    }
+
 
 
     // THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN
