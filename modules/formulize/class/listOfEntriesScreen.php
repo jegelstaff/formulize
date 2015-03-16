@@ -636,6 +636,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 
         $newtitle = $this->titleForClonedLoeScreen($sid);
 
+        // INSERT INTO FORMULIZE_SCREEN TABLE
         $getrow = q("SELECT * FROM " . $this->db->prefix("formulize_screen") . " WHERE sid = $sid");
         $insert_sql = "INSERT INTO " . $this->db->prefix("formulize_screen") . " (";
         $start = 1;
@@ -660,8 +661,34 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
             print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
             return false;
         }
+        $newsid = $this->db->getInsertId();
 
-        // TODO store in other tables?
+        // INSERT INTO FORMULIZE_SCREEN_LISTOFENTRIES TABLE
+        $getrow = q("SELECT * FROM " . $this->db->prefix("formulize_screen_listofentries") . " WHERE sid = $sid");
+        $insert_sql = "INSERT INTO " . $this->db->prefix("formulize_screen_listofentries") . " (";
+        $start = 1;
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "listofentriesid") { continue; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= $field;
+        }
+        $insert_sql .= ") VALUES (";
+        $start = 1;
+
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "listofentriesid") { continue; }
+            if($field == "sid") { $value = $newsid; }
+            if($field == "title") { $value = $newtitle; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= '"'.formulize_db_escape($value).'"';
+        }
+        $insert_sql .= ")";
+        if(!$result = $this->db->query($insert_sql)) {
+            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+            return false;
+        }
     }
 
     // FINDS AND RETURNS A NEW TITLE FOR A CLONED SCREEN
@@ -683,7 +710,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
             $titleCheckResult = $this->db->query($titleCheckSQL);
             $foundTitle = $this->db->getRowsNum($titleCheckResult);
         }
-        return htmlspecialchars_decode($newtitle, ENT_QUOTES); // use the last searched title (because it was not found)
+        return $newtitle; // use the last searched title (because it was not found)
     }
 
 
