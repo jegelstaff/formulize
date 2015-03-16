@@ -160,6 +160,22 @@ $(document).ready(function() {
     }
   });
 
+  $(".delete-templates").click(function(){
+      var conf = confirm("Are you sure you want to Delete the template files? This should only be done when undergoing template development.");
+      if (conf) {
+          $.ajax({
+              url:'<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$icms_userid}>&op=delete_template_cache',
+              method:'GET',
+              success:function(response){
+                      alert('Temporary Files have been deleted.'); // Inform the user we have run the script.
+              },
+              error:function(exception){
+                  alert('Exception:'+exception);
+              }
+          });
+      }
+  });
+
   function runSaveEvent() {
     $(".admin-ui").fadeTo(1,0.5);
     var formulize_formlist = $(".formulize-admin-form");

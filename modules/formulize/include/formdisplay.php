@@ -27,7 +27,7 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions 					     ##
+##  Author of this file: Freeform Solutions                                  ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -35,11 +35,11 @@
 
 global $xoopsConfig;
 // load the formulize language constants if they haven't been loaded already
-	if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
-		include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
-	} else {
-		include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
-	}
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+} else {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+}
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
@@ -48,24 +48,25 @@ include_once XOOPS_ROOT_PATH . "/include/functions.php";
 
 // NEED TO USE OUR OWN VERSION OF THE CLASS, TO GET ELEMENT NAMES IN THE TR TAGS FOR EACH ROW
 class formulize_themeForm extends XoopsThemeForm {
-	/**
-	 * Insert an empty row in the table to serve as a seperator.
-	 *
-	 * @param	string  $extra  HTML to be displayed in the empty row.
-	 * @param	string	$class	CSS class name for <td> tag
-	 * @name	string	$name	name of the element being inserted, which we keep so we can then put the right id tag into its row
-	 */
-	public function insertBreakFormulize($extra = '', $class= '', $name, $element_handle) {
-		$class = ($class != "") ? "$class " : "";
-		//Fix for $extra tag not showing
-		if ($extra) {
-			$extra = "<td colspan='2' class=\"{$class}formulize-label-$element_handle\">$extra</td>"; // removed tr from here and added it below when we know the right id name to give it
-		} else {
-			$extra = "<td colspan='2' class=\"{$class}formulize-label-$element_handle\">&nbsp;</td>"; // removed tr from here and added it below when we know the right id name to give it
-		}
-		$ibContents = $extra."<<||>>".$name; // can only assign strings or real element objects with addElement, not arrays
-		$this->addElement($ibContents);
-	}
+    /**
+     * Insert an empty row in the table to serve as a seperator.
+     *
+     * @param   string  $extra  HTML to be displayed in the empty row.
+     * @param   string  $class  CSS class name for <td> tag
+     * @name    string  $name   name of the element being inserted, which we keep so we can then put the right id tag into its row
+     */
+    public function insertBreakFormulize($extra = '', $class= '', $name, $element_handle) {
+        $class = ($class != "") ? "$class " : "";
+        //Fix for $extra tag not showing
+        if ($extra) {
+            $extra = "<td colspan='2' class=\"{$class}formulize-label-$element_handle\">$extra</td>"; // removed tr from here and added it below when we know the right id name to give it
+        } else {
+            $extra = "<td colspan='2' class=\"{$class}formulize-label-$element_handle\">&nbsp;</td>"; // removed tr from here and added it below when we know the right id name to give it
+        }
+        $ibContents = $extra."<<||>>".$name; // can only assign strings or real element objects with addElement, not arrays
+        $this->addElement($ibContents);
+    }
+
 	/**
 	 * create HTML to output the form as a theme-enabled table with validation.
 	 *
@@ -395,6 +396,18 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	$mid = getFormulizeModId();
 
 	$currentURL = getCurrentURL();
+
+    /* Alter currentURL if necessary.
+     * Display list of entries screen on-click of form buttons "Save and Leave" and "Leave Page".
+     */
+    if (isset($_GET['sid'])) {
+        $curr_screen = xoops_getmodulehandler('screen', 'formulize')->get($_GET['sid']);
+        if ($curr_screen->getVar('type') == 'form') {
+            $currentURL = $_SERVER['PHP_SELF'] . "?fid=" . $curr_screen->form_id();
+        }
+    } elseif (isset($_GET['ve']) && isset($_GET['fid'])) {
+        $currentURL = $_SERVER['PHP_SELF'] . "?fid=" . $_GET['fid'];
+    }
 
 	// identify form or framework
 	$elements_allowed = "";

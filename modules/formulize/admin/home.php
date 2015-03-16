@@ -106,7 +106,8 @@ function readApplicationData($aid, $apps) {
 <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=screens"><i class="icon-screen"></i> Screens</a>
 <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=relationships"><i class="icon-connection"></i> Relationships</a>
 <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=menu%20entries"><i class="icon-menu"></i> Menu Entries</a>
-<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=export&aid='.$aid.'"><i class="icon-download"></i> Export (beta!)</a>';
+<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=export&aid='.$aid.'"><i class="icon-download"></i> Export (beta!)</a>
+<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=form&aid='.$aid.'&tab=settings&fid=new"><i class="icon-add"></i> Add a Form</a>';
   if($aid>0) {
     $apps[$i]['header'] .= '<a href="" class="deleteapplink" target="'.$aid.'"><i class="icon-delete"></i> Delete</a>';
   }

@@ -263,5 +263,18 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		return $selected_screens;
 	}
 
+	public function setDefaultFormScreenVars($defaultFormScreen, $title, $fid)
+	{
+		$defaultFormScreen->setVar('displayheading', 1);
+		$defaultFormScreen->setVar('reloadblank', 0);
+		$defaultFormScreen->setVar('savebuttontext', _formulize_SAVE);
+		$defaultFormScreen->setVar('alldonebuttontext', _formulize_DONE);
+		$defaultFormScreen->setVar('title', "Regular '$title'");
+		$defaultFormScreen->setVar('fid', $fid);
+		$defaultFormScreen->setVar('frid', 0);
+		$defaultFormScreen->setVar('type', 'form');
+		$defaultFormScreen->setVar('useToken', 1);
+	}
+
 }
 ?>

@@ -1387,7 +1387,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     // usernames/fullnames boxes
                     } elseif($listtype = $formFieldFilterMap[$mappedForm][$element_id]['isnamelist'] AND $ifParts[1] !== "") {
                          if(!is_numeric($ifParts[1])) {
-                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape(html_entity_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape(html_entity_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes;  // search name and uname, since often name might be empty these days
+                              $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;  // search name and uname, since often name might be empty these days
                          } else {
                               $preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uid ".$operator.$quotes.$likebits.$ifParts[1].$likebits.$quotes;
                          }

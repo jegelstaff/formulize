@@ -7,7 +7,12 @@
         <h3>Text for this link:</h3>
         <input type="text" id="menutext<{$sectionNumber}>" name="menutext" value="<{$content.links[$sectionNumber].link_text}>">
         </div>
-            
+        <div>
+	    
+        <h3>Note for this link:</h3>
+        <input type="text" id="addnote<{$sectionNumber}>" name="addnote" value="<{$content.links[$sectionNumber].note}>">
+        </div>
+	
         <div id="sectionScreen<{$sectionNumber}>" class="sectionScreen">
             <h3>This link goes to:</h3>
             <{html_options name='sectionScreenOptions'|cat:$sectionNumber options=$content.listsofscreenoptions}>

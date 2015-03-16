@@ -46,7 +46,7 @@ if($aid == 0) {
 	$appDesc = "";
 	$appForms = array();
 	$formObjects = $form_handler->getFormsByApplication(0); // returns array of objects
-    $appLinks = $application_handler->getMenuLinksForApp(0,true);	
+	$appLinks = $application_handler->getMenuLinksForApp(0,true);	
 } else {
 	$appObject = $application_handler->get($aid);
 	$appName = $appObject->getVar('name');
@@ -68,6 +68,7 @@ if($aid == 0) {
         $menulinks[$index]['text'] = $menulink->getVar('text');	
         $menulinks[$index]['permissions'] = $menulink->getVar('permissions');
         $menulinks[$index]['default_screen'] = $menulink->getVar('default_screen'); //Oct 2013 W.R.
+	$menulinks[$index]['note']=$menulink->getVar('note');//Jan 2015 Jinfu
         $index ++; // JAKEADDED
     }
     
@@ -208,7 +209,17 @@ $adminPage['tabs'][$i]['content'] = $options + $common;
 $adminPage['tabs'][$i]['content']['links'] = $menulinks;
 $adminPage['tabs'][$i]['content']['groups'] = $groups;
 $adminPage['tabs'][$i]['content']['groupsWithDefaultScreen'] = $groupsWithDefaultScreen;
-    
+
+//this new part creates an object for application_code_save.php if user is allowed to use custom code
+if(is_object($appObject)){
+    $i++;
+    $adminPage['tabs'][$i]['name'] = "Code";
+    $adminPage['tabs'][$i]['template'] = "db:admin/application_code.html";
+    $adminPage['tabs'][$i]['content'] = $common;
+    $adminPage['tabs'][$i]['content']['custom_code'] = $appObject->getVar("custom_code");
+}
+
+
 $adminPage['pagetitle'] = _AM_APP_APPLICATION.$appName;
 $adminPage['needsave'] = true;
 
