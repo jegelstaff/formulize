@@ -4,10 +4,16 @@
 
 <{if $content.useroptions|@count > 0}>
   <{foreach from=$content.useroptions key=text item=checked name=optionsloop}>
-  <p class="useroptions" name="<{$smarty.foreach.optionsloop.index}>"><{if $content.type == "radio"}><input type="radio" name="defaultoption" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input><{else}><input type="checkbox" name="defaultoption[<{$smarty.foreach.optionsloop.index}>]" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input><{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[<{$smarty.foreach.optionsloop.index}>]" value="<{$text}>"></input></p>
+    <p class="useroptions" name="<{$smarty.foreach.optionsloop.index}>">
+    <{if $content.type == "radio"}><input type="radio" name="defaultoption" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
+    <{else}><input type="checkbox" name="defaultoption[<{$smarty.foreach.optionsloop.index}>]" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
+    <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[<{$smarty.foreach.optionsloop.index}>]" value="<{$text}>" onchange="checkForNames()"></input></p>
   <{/foreach}>
 <{else}>
-  <p class="useroptions" name="0"><{if $content.type == "radio"}><input type="radio" name="defaultoption" value=0></input><{else}><input type="checkbox" name="defaultoption[0]" value=0></input><{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[0]"></input></p>
+  <p class="useroptions" name="0">
+  <{if $content.type == "radio"}><input type="radio" name="defaultoption" value=0></input>
+  <{else}><input type="checkbox" name="defaultoption[0]" value=0></input>
+  <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[0]" onchange="checkForNames()"></input></p>
 <{/if}>
 </div>
 
@@ -35,6 +41,7 @@
 </fieldset>
 
 <script type="text/javascript">
+  
   $("[name=addoption]").click(function (){
     number = $(".useroptions:last").attr('name');
     number = parseInt(number) + 1;
@@ -53,6 +60,29 @@
     $("[name=defaultoption]").attr('checked',0);
     $("[name=cleardef]").blur();
   });
+  <{/if}>
+  
+  <{if $content.type eq "select"}>
+  checkForNames();
+  
+  function checkForNames() {
+    if ($("[name=ele_value[0]]").val() == "{USERNAMES}" || $("[name=ele_value[0]]").val() == "{FULLNAMES}"){
+      disableForAutocomplete();
+    }else{
+      enableForAutocomplete();
+    }
+  }
+
+  function disableForAutocomplete(){
+    $("input[name=elements-ele_value[16]]:eq(1)").attr("disabled","disabled");
+    $("input[name=elements-ele_value[16]]:eq(0)").attr("checked","checked");
+    $("[name=addoption]").attr("disabled","disabled");
+  }
+  
+  function enableForAutocomplete(){
+    $("input[name=elements-ele_value[16]]:eq(1)").attr("disabled",0);
+    $("[name=addoption]").attr("disabled",0);
+  }
   <{/if}>
 
 </script>
