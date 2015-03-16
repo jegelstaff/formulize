@@ -261,5 +261,7 @@ switch($op) {
                 unlink($file); // delete file
             }
         }
+        // also delete the admin menu cache file
+        unlink(XOOPS_ROOT_PATH."/cache/adminmenu_english.php");
     break;
 }
