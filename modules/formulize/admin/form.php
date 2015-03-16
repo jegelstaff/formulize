@@ -60,6 +60,7 @@ if($_GET['fid'] != "new") {
   $menutext = $formObject->getVar('menutext');
   $form_handle = $formObject->getVar('form_handle');
   $store_revisions = $formObject->getVar('store_revisions');
+  $note = $formObject->getVar('note');
   
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
   $elementObjects = $element_handler->getObjects(null, $fid);
@@ -465,6 +466,7 @@ $common['aid'] = $aid;
 $common['defaultform'] = $defaultform;
 $common['defaultlist'] = $defaultlist;
 $common['form_object'] = $formObject;
+$common['note'] = $note;
 
 $permissions = array();
 $permissions['hello'] = "Hello Permission World";

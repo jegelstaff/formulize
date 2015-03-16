@@ -201,8 +201,8 @@
       }
     },
     {
-      "type": "waitForTextPresent",
-      "text": "View elements in the form that are marked as 'private'"
+      "type": "pause",
+      "waitTime": "1543"
     },
     {
       "type": "setElementSelected",

@@ -11,7 +11,7 @@
  * @author	Sina Asghari (aka stranger) <pesian_stranger@users.sourceforge.net>
  * @version	$Id: footer.php 20900 2011-02-27 02:18:47Z skenow $
  */
-
+ 
 defined('ICMS_ROOT_PATH') || die('ICMS root path not defined');
 
 if (defined("XOOPS_FOOTER_INCLUDED")) exit();
@@ -27,6 +27,14 @@ if (isset($_SESSION['sess_regen']) && $_SESSION['sess_regen']) {
 	$_SESSION['sess_regen'] = FALSE;
 } else {
 	icms::$session->sessionOpen();
+}
+
+/** Masquerade part 1/2: Detect confirm box submit to revert user back to normal mode **/
+if (isset($_POST['masquerade_end']) && $_POST['masquerade_end'] == 1 and isset($_SESSION['masquerade_xoopsUserId'])) {
+    $_SESSION['xoopsUserGroups'] = array(1);    // ensure user has permission to access user.php
+    $_SESSION['masquerade_end'] = 1;
+    header('Location: ' . ICMS_MODULES_URL . '/profile/admin/user.php');
+    die;
 }
 
 // ################# Preload Trigger beforeFooter ##############
@@ -78,7 +86,11 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 			$xoTheme->contentTemplate = $xoopsOption['template_main'];
 		}
 	}
-	$xoTheme->render();
+    if (isset($_SESSION['masquerade_xoopsUserId'])) {
+        // set a template variable when masquerading
+        $xoTheme->template->assign("masquerade_username", $xoopsUser->vars['uname']['value']);
+    }
+    $xoTheme->render();
 }
-icms::$logger->stopTime();
 
+icms::$logger->stopTime();

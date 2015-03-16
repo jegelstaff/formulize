@@ -33,6 +33,8 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+
+
 if (file_exists(XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php'))
     include_once XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php';
 
@@ -151,7 +153,7 @@ $title = $myts->displayTarea($desc_form);
 $currentURL = getCurrentURL();
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
 	if(strstr($currentURL, "/modules/formulize/")) { // if it's a formulize page, reload to login screen
-		redirect_header(XOOPS_URL . "/user.php?xoops_redirect=$currentURL", 3, _formulize_NO_PERMISSION);
+		redirect_header(XOOPS_URL . "/user.php?op=nopermission&xoops_redirect=$currentURL", 3, _formulize_NO_PERMISSION);
 	} else { // if formulize is just being included elsewhere, then simply show error and end script
 		global $user;
 		if(isset($GLOBALS['formulizeHostSystemUserId']) AND is_object($user) AND is_array($user->roles) AND !$xoopsUser) {
@@ -201,24 +203,27 @@ if(isset($formulize_entry_id) AND is_numeric($formulize_entry_id)) {
 
 $formulize_screen_loadview = (!isset($formulize_screen_loadview) OR !is_numeric($formulize_screen_loadview)) ? intval($_GET['loadview']) : $formulize_screen_loadview;
 $loadThisView = (isset($formulize_screen_loadview) AND is_numeric($formulize_screen_loadview)) ? $formulize_screen_loadview : "";
-if(!$loadThisView) { $loadThisView = ""; } // a 0 could possibly screw things up, so change to ""
+if (!$loadThisView) {
+    // a 0 could possibly screw things up, so change to ""
+    $loadThisView = "";
+}
 
-if($screen) {
-	// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-	$renderedFormulizeScreen = $screen;
-	if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
-		if($screen->getVar('frid')) {
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-			displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
-		} else {
-			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-			displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
-		}
-	} else {
-		$screen_handler->render($screen, $entry, $loadThisView);	
-	}
-	$rendered = true;
+if ($screen) {
+    // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
+    $renderedFormulizeScreen = $screen;
+    if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
+        if($screen->getVar('frid')) {
+            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+            displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
+        } else {
+            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
+            displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
+        }
+    } else {
+        $screen_handler->render($screen, $entry, $loadThisView);
+    }
+    $rendered = true;
 }
 
 // IF NO SCREEN IS REQUESTED (or none rendered successfully, ie: a bad screen id was passed), THEN USE THE DEFAULT DISPLAY LOGIC TO DETERMINE WHAT TO SHOW THE USER
@@ -309,3 +314,17 @@ if ($renderedFormulizeScreen AND is_object($xoopsTpl)) {
 
 // go back to the previous rendering flag, in case this operation was nested inside something else
 $GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering];
+
+
+/*get the aid and include custom_code if exists
+ *
+ *Added By Jinfu Jan 2015
+ */
+$application_handler = xoops_getmodulehandler('applications','formulize');
+$apps = $application_handler->getAllApplications();
+
+foreach($apps as $appObject){
+	$aid=$appObject->getVar('appid');
+	if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/temp/application_custom_code_'.$aid.'.php'))
+		include_once(XOOPS_ROOT_PATH.'/modules/formulize/temp/application_custom_code_'.$aid.'.php');
+}

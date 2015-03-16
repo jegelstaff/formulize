@@ -107,6 +107,7 @@ define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have
 
 /*mod Language for permissions*/
 define("_AM_PERMISSIONS_CHOOSE_GROUPS","Which groups do you want to set permissions for?");
+define("_AM_PERMISSIONS_SHOW_PERMS_FOR_GROUPS", "Show permissions for these groups");
 define("_AM_PERMISSIONS_LIST_GROUPS","List groups alphabetically or in creation order?");
 define("_AM_PERMISSIONS_LIST_ALPHA","Alphabetical");
 define("_AM_PERMISSIONS_LIST_CREATION","Creation order");
@@ -170,31 +171,9 @@ define("_AM_SCREEN_CREATE"," Create a new Screen");
 define("_AM_SCREEN_FORMSCREENS","Form Screens");
 define("_AM_SCREEN_LISTSCREENS","List Screens");
 define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? All configuration settings for this screen will be lost!");
+define("_AM_SCREEN_RELATIONWARNING", "Note: This screen uses a different relationship setting than one or more list screens.");
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*End mod Language for admin side, by Fran�ois T*/
+/*End mod Language for admin side, by François T*/
 
 // Admin
 define("_FORM_RENAME_TEXT", "Rename this form");
@@ -298,6 +277,9 @@ define("_AM_ELE_TYPE_NUMBER","Numbers Only");
 
 define("_AM_ELE_SIZE","Size");
 define("_AM_ELE_MAX_LENGTH","Maximum length");
+define("_AM_ELE_MAX_VALUE","Maximum value");
+define("_AM_ELE_MIN_VALUE","Minimum value");
+define("_AM_ELE_STEPSIZE","Slider step size");
 define("_AM_ELE_ROWS","Rows");
 define("_AM_ELE_COLS","Columns");
 define("_AM_ELE_USERICHTEXT","Display this element using a Rich Text Editor");
@@ -793,4 +775,3 @@ define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK", "Show the default value for this 
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC", "For example, showing defaults when the saved value is blank can be useful on multipage forms, if later pages have elements which should still use the default value, even though the user has saved the entry after the first page.<br><b>Note</b> that required elements are always treated as if this option is turned on regardless, since required elements should never have empty/blank values.");
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW", "Only for new entries");
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK", "For any entry, when the saved value is blank");
-?>

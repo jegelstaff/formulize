@@ -3707,18 +3707,32 @@ function dealWithDeprecatedFrameworkHandles($handles, $frid=false, $returnFormId
 
 
 // still in use but could/should be refactored
-function convertElementIdsToElementHandles($ids, $fid) {
+function convertElementIdsToElementHandles($ids, $fid=false) {
     $elementsToFrameworks = false;
     $idsToFrameworks = false;
     $frid = 0;
     $needToConvert = false;
+    // convert values to array for checking in standard way
+    if(!is_array($ids)) {
+        $ids = array($ids);
+    }
     foreach ($ids as $id) {
         if (is_numeric($id)) {
             $needToConvert = true;
+            break;
         }
     }
     if ($needToConvert) {
-        return convertAllHandlesAndIds($ids, $frid, $elementsToFrameworks, $idsToFrameworks, $fid);
+        if(!$fid) {
+            $element_handler = xoops_getModuleHandler('elements','formulize');
+            $elementObject = $element_handler->get($ids[0]);
+            $fid = $elementObject ? $elementObject->getVar('id_form') : false;
+        }
+        if($fid) {
+            return convertAllHandlesAndIds($ids, $frid, $elementsToFrameworks, $idsToFrameworks, $fid);
+        } else {
+            exit("Error: cannot get handle for element ".$ids[0].", in 'convertElementIdsToElementHandles' function. There is no such element.");
+        }
     } else {
         return $ids;
     }
