@@ -634,7 +634,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
     // THIS METHOD CLONES A LIST_OF_ENTRIES_SCREEN
     function cloneScreen($sid) {
 
-        $newtitle = $this->titleForClonedLoeScreen($sid);
+        $newtitle = $this->titleForClonedScreen($sid);
 
         // INSERT INTO FORMULIZE_SCREEN TABLE
         $getrow = q("SELECT * FROM " . $this->db->prefix("formulize_screen") . " WHERE sid = $sid");
@@ -693,7 +693,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 
     // FINDS AND RETURNS A NEW TITLE FOR A CLONED SCREEN
     // Pattern for naming is "[Original Screen Name] - Cloned", "[Original Screen Name] - Cloned 2", etc.
-    function titleForClonedLoeScreen($sid) {
+    function titleForClonedScreen($sid) {
         $foundTitle = 1;
         $titleCounter = 0;
         $screenObject = $this->get($sid);
@@ -702,9 +702,9 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
             $titleCounter++;
             if ($titleCounter > 1) {
                 // add a number to the new form name to ensure it is unique
-                $newtitle = sprintf(_AM_FORMULIZE_LOE_CLONED, $title)." $titleCounter";
+                $newtitle = sprintf(_FORM_MODCLONED, $title)." $titleCounter";
             } else {
-                $newtitle = sprintf(_AM_FORMULIZE_LOE_CLONED, $title);
+                $newtitle = sprintf(_FORM_MODCLONED, $title);
             }
             $titleCheckSQL = "SELECT title FROM " . $this->db->prefix("formulize_screen") . " WHERE title = '".formulize_db_escape($newtitle)."'";
             $titleCheckResult = $this->db->query($titleCheckSQL);
