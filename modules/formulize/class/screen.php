@@ -292,4 +292,36 @@ class formulizeScreenHandler {
         return $newtitle; // use the last searched title (because it was not found)
     }
 
+    // CLONE AND INSERT CLONED FORM INTO FORMULIZE_SCREEN TABLE
+    // Takes the screen id of the screen being cloned
+    // Returns the id of the newly cloned screen inserted into table
+    function insertCloneIntoScreenTable($sid, $newtitle) {
+        $getrow = q("SELECT * FROM " . $this->db->prefix("formulize_screen") . " WHERE sid = $sid");
+        $insert_sql = "INSERT INTO " . $this->db->prefix("formulize_screen") . " (";
+        $start = 1;
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "sid") { continue; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= $field;
+        }
+        $insert_sql .= ") VALUES (";
+        $start = 1;
+
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "sid") { continue; }
+            if($field == "title") { $value = $newtitle; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= '"'.formulize_db_escape($value).'"';
+        }
+        $insert_sql .= ")";
+        if(!$result = $this->db->query($insert_sql)) {
+            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+            return false;
+        }
+        $newsid = $this->db->getInsertId();
+        return $newsid;
+    }
+
 }

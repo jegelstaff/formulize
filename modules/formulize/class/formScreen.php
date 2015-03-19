@@ -263,6 +263,45 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		return $selected_screens;
 	}
 
+    // THIS METHOD CLONES A FORM_SCREEN
+    function cloneScreen($sid) {
+
+        $newtitle = parent::titleForClonedScreen($sid);
+
+        $newsid = parent::insertCloneIntoScreenTable($sid, $newtitle);
+
+        if (!$newsid) {
+            return false;
+        }
+
+        // INSERT INTO FORMULIZE_SCREEN_FORM TABLE
+        $getrow = q("SELECT * FROM " . $this->db->prefix("formulize_screen_form") . " WHERE sid = $sid");
+        $insert_sql = "INSERT INTO " . $this->db->prefix("formulize_screen_form") . " (";
+        $start = 1;
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "formid") { continue; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= $field;
+        }
+        $insert_sql .= ") VALUES (";
+        $start = 1;
+
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "formid") { continue; }
+            if($field == "sid") { $value = $newsid; }
+            if($field == "title") { $value = $newtitle; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= '"'.formulize_db_escape($value).'"';
+        }
+        $insert_sql .= ")";
+        if(!$result = $this->db->query($insert_sql)) {
+            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+            return false;
+        }
+    }
+
 	public function setDefaultFormScreenVars($defaultFormScreen, $title, $fid)
 	{
 		$defaultFormScreen->setVar('displayheading', 1);
