@@ -269,4 +269,27 @@ class formulizeScreenHandler {
     function writeTemplateToFile($text, $filename, $screen) {
         return $screen->writeTemplateFile($text, $filename);
     }
+
+    // FINDS AND RETURNS A NEW TITLE FOR A CLONED SCREEN
+    // Pattern for naming is "[Original Screen Name] - Cloned", "[Original Screen Name] - Cloned 2", etc.
+    function titleForClonedScreen($sid) {
+        $foundTitle = 1;
+        $titleCounter = 0;
+        $screenObject = $this->get($sid);
+        $title = $screenObject->getVar('title');
+        while ($foundTitle) {
+            $titleCounter++;
+            if ($titleCounter > 1) {
+                // add a number to the new form name to ensure it is unique
+                $newtitle = sprintf(_FORM_MODCLONED, $title)." $titleCounter";
+            } else {
+                $newtitle = sprintf(_FORM_MODCLONED, $title);
+            }
+            $titleCheckSQL = "SELECT title FROM " . $this->db->prefix("formulize_screen") . " WHERE title = '".formulize_db_escape($newtitle)."'";
+            $titleCheckResult = $this->db->query($titleCheckSQL);
+            $foundTitle = $this->db->getRowsNum($titleCheckResult);
+        }
+        return $newtitle; // use the last searched title (because it was not found)
+    }
+
 }
