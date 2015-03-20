@@ -231,31 +231,6 @@ if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.ph
   if($changed) {
     $_POST['reload_option_page'] = true; // force a reload, since the developer probably changed something the user did in the form, so we should reload to show the effect of this change
   }
-}
-
-
-// replace all existing blank radio button selections to the currently selected default
-if(isset($_POST['replaceblankswithdefault']) AND $_POST['replaceblankswithdefault']==1) {
-  if($ele_type == "radio" AND $default_entry = array_search(1, $element->getVar('ele_value'))) {
-    $sql = "SELECT `entry_id`, `".$element->getVar('ele_handle')."` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
-    if(!$res = $xoopsDB->query($sql)) {
-      print "Error replacing blank values for the options in element $ele_id";
-    } else {
-      $update_array = array();
-      // find the blank entries
-      while($res2 = $xoopsDB->fetchRow($res)) {
-	list($entry_id, $entry_value) = $res2;
-	if ($entry_value == NULL) {
-	  array_push($update_array, $entry_id);
-	}
-      }
-      // replace with default value
-      foreach ($update_array as $entry_id) {
-	$sql = "UPDATE `".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')."` SET `".$element->getVar('ele_handle')."`='".$default_entry."' WHERE entry_id=".$entry_id);
-	$xoopsDB->query($sql);
-      }
-    }
-  }
 }	
 
 // check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
@@ -273,6 +248,31 @@ if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
   }
   if(!$changeResult = $data_handler->changeUserSubmittedValues($ele_id, $newValues)) {
     print "Error updating user submitted values for the options in element $ele_id";
+  }
+}
+
+// replace all existing blank radio button selections to the currently selected default
+if(isset($_POST['replaceblankswithdefault']) AND $_POST['replaceblankswithdefault']==1 AND $ele_type == "radio") {
+  $default_entry = (isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) ? array_search(1, $newValues) : array_search(1, $element->getVar('ele_value'));
+  if($default_entry) {
+    $sql = "SELECT `entry_id`, `".$element->getVar('ele_handle')."` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
+    if(!$res = $xoopsDB->query($sql)) {
+      print "Error replacing blank values for the options in element $ele_id";
+    } else {
+      $update_array = array();
+      // find the blank entries
+      while($res2 = $xoopsDB->fetchRow($res)) {
+	list($entry_id, $entry_value) = $res2;
+	if ($entry_value == NULL || $entry_value == "") {
+	  array_push($update_array, $entry_id);
+	}
+      }
+      // replace with default value
+      foreach ($update_array as $entry_id) {
+	$sql = "UPDATE `".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')."` SET `".$element->getVar('ele_handle')."`='".$default_entry."' WHERE entry_id=".$entry_id);
+	$xoopsDB->query($sql);
+      }
+    }
   }
 }
 
