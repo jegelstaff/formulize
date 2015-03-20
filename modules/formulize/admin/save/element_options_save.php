@@ -233,6 +233,31 @@ if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.ph
   }
 }
 
+
+// replace all existing blank radio button selections to the currently selected default
+if(isset($_POST['replaceblankswithdefault']) AND $_POST['replaceblankswithdefault']==1) {
+  if($ele_type == "radio" AND $default_entry = array_search(1, $element->getVar('ele_value'))) {
+    $sql = "SELECT `entry_id`, `".$element->getVar('ele_handle')."` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'));
+    if(!$res = $xoopsDB->query($sql)) {
+      print "Error replacing blank values for the options in element $ele_id";
+    } else {
+      $update_array = array();
+      // find the blank entries
+      while($res2 = $xoopsDB->fetchRow($res)) {
+	list($entry_id, $entry_value) = $res2;
+	if ($entry_value == NULL) {
+	  array_push($update_array, $entry_id);
+	}
+      }
+      // replace with default value
+      foreach ($update_array as $entry_id) {
+	$sql = "UPDATE `".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')."` SET `".$element->getVar('ele_handle')."`='".$default_entry."' WHERE entry_id=".$entry_id);
+	$xoopsDB->query($sql);
+      }
+    }
+  }
+}	
+
 // check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
 if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
   include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
