@@ -75,6 +75,22 @@ if(isset($_POST['clonelistscreen']) AND ($_POST['clonelistscreen'])) {
   print "/* evalnow */ reloadWithScrollPosition()";
 }
 
+// do cloning of list screens here
+if(isset($_POST['clonemultiscreen']) AND ($_POST['clonemultiscreen'])) {
+    $screenToClone = intval($_POST['clonemultiscreen']);
+    $screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+    $screenHandler->cloneScreen($screenToClone);
+    print "/* evalnow */ reloadWithScrollPosition()";
+}
+
+//// do cloning of list screens here
+//if(isset($_POST['clonescreen']) AND ($_POST['clonescreen'])) {
+//    $screenToClone = intval($_POST['clonescreen']);
+//    $screenHandler = xoops_getmodulehandler('screen', 'formulize');
+//    $screenHandler->cloneScreen($screenToClone);
+//    print "/* evalnow */ reloadWithScrollPosition()";
+//}
+
 // do deletion here
 if($_POST['deletescreen']) {
   $screen_handler = xoops_getmodulehandler('screen', 'formulize');

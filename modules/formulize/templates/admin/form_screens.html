@@ -9,8 +9,9 @@
 <input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
 <input type="hidden" name="formulize_admin_aid" value="<{$content.aid}>">
 <input type="hidden" name="gotoscreen" value="">
-	<input type="hidden" name="clonelistscreen" value="">
     <input type="hidden" name="cloneformscreen" value="">
+    <input type="hidden" name="clonemultiscreen" value="">
+    <input type="hidden" name="clonelistscreen" value="">
     <input type="hidden" name="deletescreen" value="">
 
 <div class="panel-content content">
@@ -39,7 +40,9 @@
 		      <td><{if $screen.type eq 'multiPage'}>Multi page<{else}>Regular<{/if}></td>
 		      <td><div class="form-radios"><input type="radio" id="screens-defaultform-<{$screen.sid}>" name="screens-defaultform" value="<{$screen.sid}>"<{if $screen.sid eq $content.defaultform}> checked="checked"<{/if}>/></div></td>
   		    <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;
-                <a class="cloneformscreen" target="<{$screen.sid}>" href=""><img src="../images/clone.gif">Clone</a>&nbsp;&nbsp;&nbsp;&nbsp;
+                <a target="<{$screen.sid}>" href="" <{if $screen.type eq 'form'}> class="cloneformscreen"<{/if}>
+                <{if $screen.type eq 'multiPage'}> class="clonemultiscreen"<{/if}>/>
+                <img src="../images/clone.gif">Clone</a>&nbsp;&nbsp;&nbsp;&nbsp;
                 <a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
             <td>
                 <{foreach from=$content.listOfEntries item=loe}>
@@ -81,8 +84,20 @@
 <{* Use javascript to save any changes to the settings before following the link *}>
 
 
+$(".clonescreen").click(function () {
+    $("[name=clonescreen]").val($(this).attr('target'));
+    $(".savebutton").click();
+    return false;
+});
+
 $(".cloneformscreen").click(function () {
     $("[name=cloneformscreen]").val($(this).attr('target'));
+    $(".savebutton").click();
+    return false;
+});
+
+$(".clonemultiscreen").click(function () {
+    $("[name=clonemultiscreen]").val($(this).attr('target'));
     $(".savebutton").click();
     return false;
 });

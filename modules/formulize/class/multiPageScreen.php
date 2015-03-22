@@ -180,6 +180,46 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $screen->getVar('donedest'), $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
 	}
 
+
+    // THIS METHOD CLONES A MULTIPAGE SCREEN
+    function cloneScreen($sid) {
+
+        $newtitle = parent::titleForClonedScreen($sid);
+
+        $newsid = parent::insertCloneIntoScreenTable($sid, $newtitle);
+
+        if (!$newsid) {
+            return false;
+        }
+
+        // INSERT INTO FORMULIZE_SCREEN_FORM TABLE
+        $getrow = q("SELECT * FROM " . $this->db->prefix("formulize_screen_multipage") . " WHERE sid = $sid");
+        $insert_sql = "INSERT INTO " . $this->db->prefix("formulize_screen_multipage") . " (";
+        $start = 1;
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "multipageid") { continue; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= $field;
+        }
+        $insert_sql .= ") VALUES (";
+        $start = 1;
+
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "multipageid") { continue; }
+            if($field == "sid") { $value = $newsid; }
+            if($field == "title") { $value = $newtitle; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= '"'.formulize_db_escape($value).'"';
+        }
+        $insert_sql .= ")";
+        if(!$result = $this->db->query($insert_sql)) {
+            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+            return false;
+        }
+    }
+
 }
 
 function multiPageScreen_addToOptionsList($fid, $options) {
