@@ -24,4 +24,19 @@
 jQuery(function() {
     jQuery('#element-date').datepicker({dateFormat: 'yy-mm-dd', constrainInput: false});
 });
+
+$('#validate-past-dates').click(function() {
+    if (this.checked && $('#date_past_days').val() == ''){ //we have checked the box, and the value is empty.
+        $('#date_past_days').focus();
+        $('#date_past_days').val('0'); // focus on the input box.
+
+    }
+});
+
+$('#validate-future-dates').click(function(){
+    if (this.checked && $('#date_future_days').val() == '') { //we have checked the box, and the value is empty.
+        $('#date_future_days').focus();
+        $('#date_future_days').val('0'); // focus on the input box.
+    }
+});
 </script>
