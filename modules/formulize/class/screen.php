@@ -324,4 +324,47 @@ class formulizeScreenHandler {
         return $newsid;
     }
 
+    // INSERT CLONED SCREEN INTO SCREEN-TYPE SPECIFIC TABLE
+    // Takes the screen id of the screen being cloned, the screen id of the newly cloned screen,
+    // and the title of the newly cloned screen.
+    // Inserts the newly cloned screen into the specific table for that type of screen
+    // (i.e. form, listOfEntries, or multiPage).
+    function insertCloneIntoScreenTypeTable($sid, $newsid, $newtitle, $tablename) {
+        $getrow = q("SELECT * FROM " . $this->db->prefix($tablename) . " WHERE sid = $sid");
+        $insert_sql = "INSERT INTO " . $this->db->prefix($tablename) . " (";
+        $start = 1;
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "formid" OR $field == "listofentriesid" OR $field == "multipageid") { continue; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= $field;
+        }
+        $insert_sql .= ") VALUES (";
+        $start = 1;
+
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "formid" OR $field == "listofentriesid" OR $field == "multipageid") { continue; }
+            if($field == "sid") { $value = $newsid; }
+            if($field == "title") { $value = $newtitle; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= '"'.formulize_db_escape($value).'"';
+        }
+        $insert_sql .= ")";
+        if(!$result = $this->db->query($insert_sql)) {
+            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+            return false;
+        }
+        return $result;
+    }
+
+    // FINDS AND RETURNS THE CORRECT SCREEN TABLE NAME TO INSERT A CLONED FORM INTO
+    function tableNameForClonedForm($sid) {
+        $entry = q("SELECT * FROM " . $this->db->prefix("formulize_screen") . " WHERE sid = $sid");
+        $type = $entry["type"];
+        if ($type == "form") { return "formulize_screen_form"; }
+        if ($type == "listOfEntries") { return "formulize_screen_listofentries"; }
+        else if ($type == "multiPage") { return "formulize_screen_multipage"; }
+    }
+
 }
