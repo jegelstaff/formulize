@@ -358,13 +358,4 @@ class formulizeScreenHandler {
         return $result;
     }
 
-    // FINDS AND RETURNS THE CORRECT SCREEN TABLE NAME TO INSERT A CLONED FORM INTO
-    function tableNameForClonedForm($sid) {
-        $entry = q("SELECT * FROM " . $this->db->prefix("formulize_screen") . " WHERE sid = $sid");
-        $type = $entry["type"];
-        if ($type == "form") { return "formulize_screen_form"; }
-        if ($type == "listOfEntries") { return "formulize_screen_listofentries"; }
-        else if ($type == "multiPage") { return "formulize_screen_multipage"; }
-    }
-
 }
