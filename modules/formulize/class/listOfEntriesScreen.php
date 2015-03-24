@@ -642,30 +642,10 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
             return false;
         }
 
-        // INSERT INTO FORMULIZE_SCREEN_LISTOFENTRIES TABLE
-        $getrow = q("SELECT * FROM " . $this->db->prefix("formulize_screen_listofentries") . " WHERE sid = $sid");
-        $insert_sql = "INSERT INTO " . $this->db->prefix("formulize_screen_listofentries") . " (";
-        $start = 1;
-        foreach($getrow[0] as $field=>$value) {
-            if($field == "listofentriesid") { continue; }
-            if(!$start) { $insert_sql .= ", "; }
-            $start = 0;
-            $insert_sql .= $field;
-        }
-        $insert_sql .= ") VALUES (";
-        $start = 1;
+        $tablename = "formulize_screen_listofentries";
+        $result = parent::insertCloneIntoScreenTypeTable($sid, $newsid, $newtitle, $tablename);
 
-        foreach($getrow[0] as $field=>$value) {
-            if($field == "listofentriesid") { continue; }
-            if($field == "sid") { $value = $newsid; }
-            if($field == "title") { $value = $newtitle; }
-            if(!$start) { $insert_sql .= ", "; }
-            $start = 0;
-            $insert_sql .= '"'.formulize_db_escape($value).'"';
-        }
-        $insert_sql .= ")";
-        if(!$result = $this->db->query($insert_sql)) {
-            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+        if (!$result) {
             return false;
         }
     }
