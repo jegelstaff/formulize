@@ -82,12 +82,11 @@
 		  return false;
 	});
 
-  $(".savebutton").click(function () {
-  	$("[name=pageorder]").val($("#accordion-4").sortable('serialize')); 
-  });
+    $(".savebutton").click(function () {
+        $("[name=pageorder]").val($("#accordion-5").sortable('serialize'));
+    });
 
-  $("#accordion-4").bind( "sortupdate", function(event, ui) {
-    setDisplay('savewarning','block');
-  });
-	
+    $("#accordion-5").bind( "sortupdate", function(event, ui) {
+        setDisplay('savewarning','block');
+    });
 </script>
