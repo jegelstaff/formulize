@@ -104,9 +104,11 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
 
 class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
     var $db;
+
     function formulizeListOfEntriesScreenHandler(&$db) {
         $this->db =& $db;
     }
+
     function &getInstance(&$db) {
         static $instance;
         if (!isset($instance)) {
@@ -114,10 +116,10 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         }
         return $instance;
     }
+
     function &create() {
         return new formulizeListOfEntriesScreen();
     }
-
 
     // this function handles all the admin side ui for this kind of screen
     function editForm($screen, $fid) {
@@ -627,6 +629,28 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         }
         return false;
     }
+
+
+    // THIS METHOD CLONES A LIST_OF_ENTRIES_SCREEN
+    function cloneScreen($sid) {
+
+        $newtitle = parent::titleForClonedScreen($sid);
+
+        $newsid = parent::insertCloneIntoScreenTable($sid, $newtitle);
+
+        if (!$newsid) {
+            return false;
+        }
+
+        $tablename = "formulize_screen_listofentries";
+        $result = parent::insertCloneIntoScreenTypeTable($sid, $newsid, $newtitle, $tablename);
+
+        if (!$result) {
+            return false;
+        }
+    }
+
+
 
 
     // THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN

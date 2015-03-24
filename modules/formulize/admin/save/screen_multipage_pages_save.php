@@ -68,7 +68,7 @@ $conditions = $screen->getVar('conditions');
 
 
 // get the new order of the elements...
-$newOrder = explode("drawer-4[]=", str_replace("&", "", $_POST['pageorder']));
+$newOrder = explode("drawer-5[]=", str_replace("&", "", $_POST['pageorder']));
 unset($newOrder[0]);
 
 
