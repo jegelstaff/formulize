@@ -711,7 +711,7 @@ class formulizeElementRenderer{
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
 					if($ele_value[8] == 1) {// Has been edited in order to not allow the user to submit a form when "No match found" or "Choose an Option" is selected from the quickselect box.
 						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.value == '' || myform.{$eltname}.value == 'none'  ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}_user.focus();\n return false;\n }\n";
-					} elseif($ele_value[0] == 1) { 
+					} elseif($ele_value[0] == 1) {
 						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.options[0].selected ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 					} elseif($ele_value[0] > 1) {
 						$form_ele->customValidationCode[] = "selection = false;\n";
@@ -1006,6 +1006,29 @@ class formulizeElementRenderer{
 					// Date.parse() would be better, except that it will fail for dd-mm-YYYY format, ie: 22-11-2013
 					$form_ele->customValidationCode[] = "\nif (isNaN(parseInt(myform.{$eltname}.value))) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 				}
+                if (!$isDisabled) {
+                    $limit_past = (isset($ele_value["date_limit_past"]) and $ele_value["date_limit_past"] != "");
+                    $limit_future = (isset($ele_value["date_limit_future"]) and $ele_value["date_limit_future"] != "");
+                    if ($limit_past or $limit_future) {
+                        $reference_date = time();
+                        if ("new" != $entry) {
+                            $entryData = $this->formulize_getCachedEntryData($id_form, $entry);
+                            $reference_date = strtotime(display($entryData, "creation_date"));
+                        }
+                        if ($limit_past) {
+                            $form_ele->setExtra(" min-date='".
+                                date("Y-m-d", strtotime("-".max(0, intval($ele_value["date_past_days"]))." days", $reference_date))."' ");
+                        }
+                        if ($limit_future) {
+                            $form_ele->setExtra(" max-date='".
+                                date("Y-m-d", strtotime("+".max(0, intval($ele_value["date_future_days"]))." days", $reference_date))."' ");
+                        }
+
+                        $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;check_date_limits('$form_ele_id');\" onclick=\"javascript:check_date_limits('$form_ele_id');\" onblur=\"javascript:check_date_limits('$form_ele_id');\" jquerytag=\"$form_ele_id\" ");
+                    } else {
+                        $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
+                    }
+                }
 			break;
 
 
