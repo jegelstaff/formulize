@@ -263,6 +263,25 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		return $selected_screens;
 	}
 
+    // THIS METHOD CLONES A FORM_SCREEN
+    function cloneScreen($sid) {
+
+        $newtitle = parent::titleForClonedScreen($sid);
+
+        $newsid = parent::insertCloneIntoScreenTable($sid, $newtitle);
+
+        if (!$newsid) {
+            return false;
+        }
+
+        $tablename = "formulize_screen_form";
+        $result = parent::insertCloneIntoScreenTypeTable($sid, $newsid, $newtitle, $tablename);
+
+        if (!$result) {
+            return false;
+        }
+    }
+
 	public function setDefaultFormScreenVars($defaultFormScreen, $title, $fid)
 	{
 		$defaultFormScreen->setVar('displayheading', 1);
