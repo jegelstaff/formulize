@@ -1458,4 +1458,3 @@ function importCsvDebug(& $importSet)
     
     echo $output . "</table>";
 }
-?>

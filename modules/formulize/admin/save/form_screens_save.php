@@ -59,6 +59,30 @@ if(!$fid = $form_handler->insert($form)) {
   print "Error: could not save the form properly: ".$xoopsDB->error();
 }
 
+// do cloning of form screens here
+if(isset($_POST['cloneformscreen']) AND ($_POST['cloneformscreen'])) {
+    $screenToClone = intval($_POST['cloneformscreen']);
+    $formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
+    $formScreenHandler->cloneScreen($screenToClone);
+    print "/* evalnow */ reloadWithScrollPosition()";
+}
+
+// do cloning of list screens here
+if(isset($_POST['clonelistscreen']) AND ($_POST['clonelistscreen'])) {
+  $screenToClone = intval($_POST['clonelistscreen']);
+  $listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+  $listScreenHandler->cloneScreen($screenToClone);
+  print "/* evalnow */ reloadWithScrollPosition()";
+}
+
+// do cloning of list screens here
+if(isset($_POST['clonemultiscreen']) AND ($_POST['clonemultiscreen'])) {
+    $screenToClone = intval($_POST['clonemultiscreen']);
+    $screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+    $screenHandler->cloneScreen($screenToClone);
+    print "/* evalnow */ reloadWithScrollPosition()";
+}
+
 
 // do deletion here
 if($_POST['deletescreen']) {
@@ -67,9 +91,27 @@ if($_POST['deletescreen']) {
   if(!$screen_handler->delete($screen->getVar('sid'), $screen->getVar('type'))) {
     print "Error: could not delete screen ".intval($_POST['deletescreen']);
   } else {
+    $application_handler = xoops_getmodulehandler('applications', 'formulize');
+    $application_handler->deleteMenuLinkByScreen("sid=".intval($_POST['deletescreen']));
     print "/* eval */ reloadWithScrollPosition()";
   }
+  
 }
+/*
+//if deleting a screen, check for menu entires related to this screen and delete them  Added BY JINFU FEB 2015
+function deleteScreenMenuLink($aid,$sid){
+  $application_handler = xoops_getmodulehandler('applications', 'formulize');
+  $all_links=$application_handler->getMenuLinksForApp($aid, all);
+  $menuid=-1;
+  foreach($all_links as $link){
+    if($link->getVar('screen')=="sid=".$sid)
+        $menuid=$link->getVar('menu_id');
+    //error_log("menuid: ".print_r($link->getVar("screen")));
+    //error_log("menuid: ".print_r($menuid));
+  }
+  if($menuid!=-1)
+    $application_handler->deleteMenuLink($aid,$menuid);
+}*/
 
 // if the form name was changed, then force a reload of the page...reload will be the application id
 if($_POST['gotoscreen']) {

@@ -205,6 +205,3 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
   print "</td><td style=\"width: 5%;\"></td></tr></table>\n";
   print "</center></body>\n";
   print "</HTML>\n";
-
-?>
-

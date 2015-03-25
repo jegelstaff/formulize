@@ -271,6 +271,14 @@
       "text": "project"
     },
     {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "forms-note"
+      },
+      "text": "this is the note text"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
@@ -570,6 +578,21 @@
       "text": "{TODAY}"
     },
     {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "validate-past-dates"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "date_past_days"
+      },
+      "text": "50"
+    },
+    {
       "type": "clickElement",
       "locator": {
         "type": "css selector",
@@ -613,6 +636,28 @@
         "value": "elements-ele_handle"
       },
       "text": "project_launch_date"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "validate-past-dates"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "id",
+        "value": "date_past_days"
+      },
+      "text": "0"
     },
     {
       "type": "clickElement",

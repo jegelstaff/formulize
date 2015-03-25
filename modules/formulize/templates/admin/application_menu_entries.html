@@ -11,40 +11,43 @@
                             
         <table id="plain">
             <div class="form-item">
-
+            
                 <tr><td colspan="2"><legend> Add links to the menu</legend></td> </tr>
-
+                
                 <tr>
                     <td width="30%">Text for this link:</td>
                     <td><input type="text" id="addmenutext" name="addmenutext"></td>
                 </tr>
                 <tr>
-                    <div id="listofscreenoptions">
+		    <div id="listofscreenoptions">
                         <td>This link goes to:</td>
                         <td><{html_options name='addnewscreenoptions' options=$content.listsofscreenoptions}></td>
-                    </div>
-                </tr>
-                <tr>
-                    <td><input type="text" name="addurl" id="addurl" value="http://"></td>
-                </tr>
-                <tr>
-                    <td>Show this link to these groups:</td>
-                    <td><select name="addgroups" id="addgroups" size=10 multiple style="overflow-y: scroll;">
+		    </div>
+		    <div>
+			<h3>A note for this link:</h3>
+			<input type="text" name="addnote" id="addnote">
+		    </div>
+		    <div>
+                    <input type="text" name="addurl" id="addurl" value="http://">
+		    </div>
+		    <div>
+                    <h3>Show this link to these groups:</h3>
+                    <select name="addgroups" id="addgroups" size=10 multiple style="overflow-y: scroll;">
                         <{foreach from=$content.groups item=group}>
-                        <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
+                            <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>                 
                         <{/foreach}></select>
                     </td>
                 </tr>
                 <tr>
-                    <div id="defaultScreenSection">
+                    <div id="defaultScreenSection"> 
                         <td>Send these groups to this link right after they login:</td>
                         <td><select name="defaultScreenGroups" id="addDefaultScreenGroups" size=10 multiple style="overflow-y: scroll;">
-                            <{foreach from=$content.groups item=group}>
-                            <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
+			    <{foreach from=$content.groups item=group}>
+				<option value=<{$group.id}><{$group.selected}>><{$group.name}></option>                 
                             <{/foreach}></select>
-                            <div class="description">
-                                <p>This only takes effect if Formulize is also set as the default start page for a group, under <a href='<{$xoops_url}>/modules/system/admin.php?fct=preferences&op=show&confcat_id=1' target='_blank'>General Settings</a></p>
-                            </div>
+			<div class="description">
+			<p>This only takes effect if Formulize is also set as the default start page for a group, under <a href='<{$xoops_url}>/modules/system/admin.php?fct=preferences&op=show&confcat_id=1' target='_blank'>General Settings</a></p>
+			</div>
                         </td>
                     </div>
                 </tr>
@@ -53,15 +56,15 @@
                     <td><button class="menuButton" id="addMenuItem" type="button" >Add Menu Item</button></td>
                 </tr>
             </div> <!-- class formitem-->
-
+                   
         </table>
-
-        <div class="accordion-box">
+                
+        <div class="accordion-box">			
             <br/><legend> Manage the links in the menu</legend>
             <p>Click and drag the links to re-order them</p><br/>
-            <div id="sortable-list">
+            <div id="sortable-list">        
                 <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/application_menu_entries_sections.html" sections=$content.links}>
-            </div>
+            </div>                                                    
         </div>
     </form>
     
@@ -99,14 +102,16 @@
     $(".savebutton").click(function () {
         $("[name=menuorder]").val($("#accordion-<{$number}>").sortable('serialize'));
 	
-	var menuText = $("#addmenutext").val().trim().replace(/\'/g, " ") ;
+
+	var menuText = $("#addmenutext").val().trim();
 	if(menuText) {
 		var url = $("#addurl").val();
 	        var screen = $("#listofscreenoptions select").val();
 	        var groupids = $("#addgroups").val();
 	        var default_screen = $("#addDefaultScreenGroups").val();
+		var note=$("#addnote").val()
 	        var value = "null";
-		value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen;
+		value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen+"::"+note;
 	        addHiddenMenuItem(value);
 	}
 	
@@ -117,10 +122,11 @@
 		var url = $("#url"+sectionNumber).val();
 		var screen = $("#sectionScreen"+sectionNumber+" select").val();
 		var groupids = $("#groups"+sectionNumber).val();
-		var default_screen= $("#defaultScreenGroups"+sectionNumber).val();  
+		var default_screen= $("#defaultScreenGroups"+sectionNumber).val();
+		var note=$("#addnote"+sectionNumber).val()
 		var value = menuID;
 		
-		value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen;                                                                               
+		value += "::"+menuText+ "::" + screen + "::" + url + "::"+groupids+"::"+default_screen+"::"+note;                                                                               
 		addHiddenMenuItem(value);
 	});
     });

@@ -397,6 +397,18 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 	$currentURL = getCurrentURL();
 
+    /* Alter currentURL if necessary.
+     * Display list of entries screen on-click of form buttons "Save and Leave" and "Leave Page".
+     */
+    if (isset($_GET['sid'])) {
+        $curr_screen = xoops_getmodulehandler('screen', 'formulize')->get($_GET['sid']);
+        if ($curr_screen->getVar('type') == 'form') {
+            $currentURL = $_SERVER['PHP_SELF'] . "?fid=" . $curr_screen->form_id();
+        }
+    } elseif (isset($_GET['ve']) && isset($_GET['fid'])) {
+        $currentURL = $_SERVER['PHP_SELF'] . "?fid=" . $_GET['fid'];
+    }
+
 	// identify form or framework
 	$elements_allowed = "";
 	// if a screen object is passed in, select the elements for display based on the screen's settings
@@ -1407,6 +1419,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					$criteria = new CriteriaCompo();
 					$criteria->add(new Criteria('ele_type', 'text'), 'OR');
 					$criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
+                    $criteria->add(new Criteria('ele_type', 'date'), 'OR');
 					$criteria->add(new Criteria('ele_type', 'radio'), 'OR');
 					$elementsForDefaults = $element_handler->getObjects($criteria,$_POST['target_sub']); // get all the text or textarea elements in the form 
 				}
@@ -1421,6 +1434,16 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						case "textarea":
 							$defaultTextToWrite = getTextboxDefault($ele_value_for_default[0], $_POST['target_sub'], $subEntWritten); // position 0 is default value for text boxes
 							break;
+
+                        case "date":
+                            $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0]);
+                            if (false === $defaultTextToWrite) {
+                                $defaultTextToWrite = "";
+                            } else {
+                                $defaultTextToWrite = date("c", $defaultTextToWrite);
+                            }
+                            break;
+
 						case "radio":
 						    $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
 							$defaultTextToWrite = array_search(1, $thisDefaultEleValue);
@@ -2775,10 +2798,80 @@ print "jQuery(document).ready(function() {
 \n";
 
 drawXhrJavascript();
-
-
-print "</script>\n";
-$drawnJavascript = true;
+?>
+jQuery(document).ready(function() {
+    jQuery(".icms-date-box").each(function(){
+        date_input = jQuery(this);
+        var options = {};
+        // copy datepicker_defaults so the original is not modified
+        jQuery.extend(options, datepicker_defaults);
+        var min_date = date_input.attr('min-date');
+        if (min_date && min_date.length > 0) {
+            // adjust so that the date does use the current time zone
+            min_date = new Date(min_date);
+            min_date.setTime(min_date.getTime() + min_date.getTimezoneOffset()*60*1000);
+            options.minDate = new Date(min_date);
+        }
+        var max_date = date_input.attr('max-date');
+        if (max_date && max_date.length > 0) {
+            // adjust so that the date does use the current time zone
+            max_date = new Date(max_date);
+            max_date.setTime(max_date.getTime() + max_date.getTimezoneOffset()*60*1000);
+            options.maxDate = new Date(max_date);
+        }
+        if (options.minDate || options.maxDate) {
+            date_input.datepicker("destroy");
+            date_input.datepicker(options);
+        }
+    });
+});
+function check_date_limits(element_id) {
+    var date_input = jQuery("#"+element_id);
+    var min_date = date_input.attr('min-date');
+    var max_date = date_input.attr('max-date');
+    var selected_date = new Date(date_input.datepicker('getDate'));
+    <?php
+        // if the selected_date is not valid then getTime() returns NaN (not-a-number)
+        // NaN is NOT equal to NaN, so the comparison ensures the date is valid
+    ?>
+    if (selected_date.getTime() === selected_date.getTime()) {
+        if (min_date && min_date.length > 0) {
+            min_date = new Date(min_date);
+            <?php
+            // adjust the time zone before displaying the date, otherwise it could show the wrong day if
+            //  the user and server are in different time zones
+             ?>
+            min_date.setTime(min_date.getTime() + (min_date.getTimezoneOffset() * 60 * 1000));
+            if (selected_date < min_date) {
+                // date is too far in the past
+                selected_date = null;
+                date_input.val('');
+                alert("The date you selected is too far in the past.\n\n"+
+                    "Please select a date on or after "+min_date.toDateString()+".");
+            }
+        }
+        if (null != selected_date && max_date && max_date.length > 0) {
+            max_date = new Date(max_date);
+            <?php
+            // adjust the time zone before displaying the date, otherwise it could show the wrong day if
+            //  the user and server are in different time zones
+             ?>
+            max_date.setTime(max_date.getTime() + (max_date.getTimezoneOffset() * 60 * 1000));
+            if (selected_date > max_date) {
+                // date is too far in the future
+                date_input.val('');
+                alert("The date you selected is too far in the future.\n\n"+
+                    "Please select a date on or before "+max_date.toDateString()+".");
+            }
+        }
+    } else {
+        // not a valid date
+        date_input.val('');
+    }
+}
+<?php
+    print "</script>\n";
+    $drawnJavascript = true;
 }
 
 // THIS FUNCTION ACTUALLY DRAWS IN THE NECESSARY JAVASCRIPT FOR ALL ELEMENTS FOR WHICH ITS PROPERTIES ARE DEPENDENT ON ANOTHER ELEMENT

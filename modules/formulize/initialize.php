@@ -33,6 +33,8 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+
+
 if (file_exists(XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php'))
     include_once XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php';
 
@@ -151,7 +153,7 @@ $title = $myts->displayTarea($desc_form);
 $currentURL = getCurrentURL();
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
 	if(strstr($currentURL, "/modules/formulize/")) { // if it's a formulize page, reload to login screen
-		redirect_header(XOOPS_URL . "/user.php?xoops_redirect=$currentURL", 3, _formulize_NO_PERMISSION);
+		redirect_header(XOOPS_URL . "/user.php?op=nopermission&xoops_redirect=$currentURL", 3, _formulize_NO_PERMISSION);
 	} else { // if formulize is just being included elsewhere, then simply show error and end script
 		global $user;
 		if(isset($GLOBALS['formulizeHostSystemUserId']) AND is_object($user) AND is_array($user->roles) AND !$xoopsUser) {
@@ -312,3 +314,17 @@ if ($renderedFormulizeScreen AND is_object($xoopsTpl)) {
 
 // go back to the previous rendering flag, in case this operation was nested inside something else
 $GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering];
+
+
+/*get the aid and include custom_code if exists
+ *
+ *Added By Jinfu Jan 2015
+ */
+$application_handler = xoops_getmodulehandler('applications','formulize');
+$apps = $application_handler->getAllApplications();
+
+foreach($apps as $appObject){
+	$aid=$appObject->getVar('appid');
+	if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/temp/application_custom_code_'.$aid.'.php'))
+		include_once(XOOPS_ROOT_PATH.'/modules/formulize/temp/application_custom_code_'.$aid.'.php');
+}
