@@ -519,4 +519,3 @@ print "<br>".$thisnot['not_cons_sub_id']."<br>";
 	}	
 }
 */
-?>
