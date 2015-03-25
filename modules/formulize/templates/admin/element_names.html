@@ -87,7 +87,7 @@ $(".savebutton").click(function() {
 	<{* reload after ele_handle is blank, since it will be reset to the ele_id and that's a state change we'll need to reload to show the user *}>
 	if($("[name=elements-ele_handle]").val() == "") {
 		if ("<{$content.ele_id}>" == "new") {
-			var str="<{$content.formhandle}>"+"_"+$("[name=elements-ele_caption]").val().replace(new RegExp(" ","gm"),"_");
+			var str="<{$content.formhandle}>"+"_"+$("[name=elements-ele_caption]").val();
 			$("[name=elements-ele_handle]").val(str);
 		}
 		$("[name=reload_names_page]").val(1);

@@ -191,7 +191,7 @@
 			$("[name=forms-title]").focus();
 		}
 		if ($("[name=forms-form_handle]").val() == "" && "<{$content.fid}>" == "new") {
-			var str=$("[name=forms-title]").val().replace(new RegExp(" ","gm"),"_");
+			var str=$("[name=forms-title]").val();
 			$("[name=forms-form_handle]").val(str);
 		}
 	});
