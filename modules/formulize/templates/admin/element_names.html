@@ -106,7 +106,7 @@ function fillHandle(){
 	if ("<{$content.ele_id}>" == "new") {
 		var str="<{$content.formhandle}>"+"_"+$("[name=elements-ele_caption]").val();
 		str=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
-		str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);
+		str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,40);
 		$("[name=elements-ele_handle]").val(str);
 	}
 }
