@@ -916,6 +916,17 @@ function patch31() {
   INDEX i_sid (`sid`)
 ) ENGINE=MyISAM;";
                 }
+
+        if(!in_array($xoopsDB->prefix("formulize_screen_template"), $existingTables)) {
+            $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_template") . " (
+  templateid int(11) NOT NULL auto_increment,
+  sid int(11) NOT NULL default 0,
+  custom_code text NOT NULL,
+  template text NOT NULL,
+  PRIMARY KEY (`templateid`),
+  INDEX i_sid (`sid`)
+) ENGINE=MyISAM;";
+        }
                 
                 if(!in_array($xoopsDB->prefix("formulize_screen"), $existingTables)) {
                         $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen") . " (
