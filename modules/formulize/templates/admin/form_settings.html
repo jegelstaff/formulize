@@ -186,9 +186,13 @@
 		});
 	
 	$(".savebutton").click(function() {
-	  if($("[name=forms-title]").val() == "") {
+		if($("[name=forms-title]").val() == "") {
 			alert("Forms must have a name!");
 			$("[name=forms-title]").focus();
+		}
+		if ($("[name=forms-form_handle]").val() == "" && "<{$content.fid}>" == "new") {
+			var str=$("[name=forms-title]").val().replace(new RegExp(" ","gm"),"_");
+			$("[name=forms-form_handle]").val(str);
 		}
 	});
 	$('#fix_entries').click(function(){
