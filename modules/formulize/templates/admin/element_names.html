@@ -12,7 +12,7 @@
 	<div class="form-item required">
    	<fieldset>
       <legend><label for="elements-ele_caption" class="question">Caption</label></legend>
-			<input type="text" name="elements-ele_caption" class="required_formulize_element" value="<{$content.ele_caption}>" size=70>
+			<input type="text" name="elements-ele_caption" class="required_formulize_element" value="<{$content.ele_caption}>" size=70 onkeyup="fillHandle()">
 			<div class="description">
 				<p>The text that users see when this element appears on a form.</p>
 			</div>
@@ -87,6 +87,7 @@ $(".savebutton").click(function() {
 	<{* reload after ele_handle is blank, since it will be reset to the ele_id and that's a state change we'll need to reload to show the user *}>
 	if($("[name=elements-ele_handle]").val() == "") {
 		if ("<{$content.ele_id}>" == "new") {
+			//kept this incase they didnt enter a new title, we can still update title when saving
 			var str="<{$content.formhandle}>"+"_"+$("[name=elements-ele_caption]").val();
 			str=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
 			str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);
@@ -99,6 +100,17 @@ $(".savebutton").click(function() {
 $("[name=elements-ele_handle]").keydown(function () {
 	$("[name=check_handle]").val(1);
 });
+
+function fillHandle(){
+	//this function will be called when they are typing title to update handle
+	if ("<{$content.ele_id}>" == "new") {
+		var str="<{$content.formhandle}>"+"_"+$("[name=elements-ele_caption]").val();
+		str=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
+		str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);
+		$("[name=elements-ele_handle]").val(str);
+	}
+}
+
 
 $("[name=elements-ele_caption]").keydown(function () {
 	$("[name=reload_names_page]").val(1);
