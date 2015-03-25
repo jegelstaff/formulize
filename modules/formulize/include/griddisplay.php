@@ -267,5 +267,4 @@ function compileGrid($ele_value, $title, $element) {
 	$toreturn[] = count($toreturn[1]) * count($toreturn[2]);
 
 	return $toreturn;
-
 }

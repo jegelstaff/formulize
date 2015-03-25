@@ -307,5 +307,3 @@ print $advsearch->render();
 print "</td><td style=\"width: 5%;\"></td></tr></table>";
 print "</center></body>";
 print "</HTML>";
-
-?>
