@@ -185,6 +185,3 @@ print $advscope->render();
 print "</td><td style=\"width: 5%;\"></td></tr></table>\n";
 print "</center></body>\n";
 print "</HTML>";
-
-
-?>

@@ -40,4 +40,3 @@ function handleSubmission($formulize_mgr, $entries, $uid, $owner, $fid, $owner_g
 	}
 	return $GLOBALS['formulize_allWrittenEntryIds']; // for backwards compatibility, we want to return this same info as before, but really, this function is deprecated now
 }
-?>

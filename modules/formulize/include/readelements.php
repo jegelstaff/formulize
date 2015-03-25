@@ -479,5 +479,3 @@ function writeUserProfile($data, $uid) {
     }
 
 }
-
-?>

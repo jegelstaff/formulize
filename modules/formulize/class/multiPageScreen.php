@@ -180,6 +180,26 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $screen->getVar('donedest'), $screen->getVar('buttontext'), $settings,"", $screen->getVar('printall'), $screen); //nmc 2007.03.24 added 'printall' & 2 empty params
 	}
 
+
+    // THIS METHOD CLONES A MULTIPAGE SCREEN
+    function cloneScreen($sid) {
+
+        $newtitle = parent::titleForClonedScreen($sid);
+
+        $newsid = parent::insertCloneIntoScreenTable($sid, $newtitle);
+
+        if (!$newsid) {
+            return false;
+        }
+
+        $tablename = "formulize_screen_multipage";
+        $result = parent::insertCloneIntoScreenTypeTable($sid, $newsid, $newtitle, $tablename);
+
+        if (!$result) {
+            return false;
+        }
+    }
+
 }
 
 function multiPageScreen_addToOptionsList($fid, $options) {
