@@ -671,24 +671,26 @@ class formulizeElementRenderer{
 					if($isDisabled) {
 						$disabledHiddenValues = implode("\n", $disabledHiddenValue); // glue the individual value elements together into a set of values
 						$renderedElement = implode(", ", $disabledOutputText);
-          } elseif($ele_value[8] == 1) {
-            // autocomplete construction: make sure that $renderedElement is the final output of this chunk of code
-            // write the possible values to a cached file so we can look them up easily when we need them, don't want to actually send them to the browser, since it could be huge, but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
-            $cachedLinkedOptionsFileName = "formulize_Options_".str_replace(".","",microtime(true));
-            formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_Options_");
-            $maxLength = 10;
-            $the_values = array();
-            foreach($options as $id => $text) {
-                $the_values[$id] = trans($text);
-                $thisTextLength = strlen($the_values[$id]);
-                $maxLength = ($thisTextLength > $maxLength) ? $thisTextLength : $maxLength;
-            }
-            file_put_contents(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName",
-                "<?php\n\$$cachedLinkedOptionsFileName = ".var_export($the_values, true).";\n");
-            $defaultSelected = is_array($selected) ? $selected[0] : $selected;
-            $renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFileName, $defaultSelected, $options[$defaultSelected], $maxLength);
-            $form_ele2 = new xoopsFormLabel($ele_caption, $renderedComboBox);
-            $renderedElement = $form_ele2->render();
+					} elseif($ele_value[8] == 1) {
+						// autocomplete construction: make sure that $renderedElement is the final output of this chunk of code
+						// write the possible values to a cached file so we can look them up easily when we need them,
+						//don't want to actually send them to the browser, since it could be huge,
+						//but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
+						$cachedLinkedOptionsFileName = "formulize_Options_".str_replace(".","",microtime(true));
+						formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_Options_");
+						$maxLength = 10;
+						$the_values = array();
+						foreach($options as $id => $text) {
+							$the_values[$id] = trans($text);
+							$thisTextLength = strlen($the_values[$id]);
+							$maxLength = ($thisTextLength > $maxLength) ? $thisTextLength : $maxLength;
+						}
+						file_put_contents(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName",
+							"<?php\n\$$cachedLinkedOptionsFileName = ".var_export($the_values, true).";\n");
+						$defaultSelected = is_array($selected) ? $selected[0] : $selected;
+						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFileName, $defaultSelected, $options[$defaultSelected], $maxLength);
+						$form_ele2 = new xoopsFormLabel($ele_caption, $renderedComboBox);
+						$renderedElement = $form_ele2->render();
 					} else { // normal element
 						$renderedElement = $form_ele1->render();
 					}
@@ -707,9 +709,9 @@ class formulizeElementRenderer{
 					$eltcaption = $ele_caption;
 					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-          if($ele_value[8] == 1) {// Has been edited in order to not allow the user to submit a form when "No match found" or "Choose an Option" is selected from the quickselect box.
+					if($ele_value[8] == 1) {// Has been edited in order to not allow the user to submit a form when "No match found" or "Choose an Option" is selected from the quickselect box.
 						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.value == '' || myform.{$eltname}.value == 'none'  ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}_user.focus();\n return false;\n }\n";
-          } elseif($ele_value[0] == 1) { 
+					} elseif($ele_value[0] == 1) {
 						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.options[0].selected ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 					} elseif($ele_value[0] > 1) {
 						$form_ele->customValidationCode[] = "selection = false;\n";
@@ -985,33 +987,15 @@ class formulizeElementRenderer{
 			break;
 
 
-			case 'date':
-				if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
-				{
-					$form_ele = new XoopsFormTextDateSelect (
-						$ele_caption,
-						$form_ele_id,
-						15,
-						""
-					);
-					$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
-				}
-				else
-				{
-					if (ereg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
-						$number = ereg_replace("[^0-9+-]","", $ele_value[0]);
-						$timestampToUse = mktime(0, 0, 0, date("m") , date("d")+$number, date("Y"));
-					} else {
-						$timestampToUse = strtotime($ele_value[0]);
-					}
-					$form_ele = new XoopsFormTextDateSelect (
-						$ele_caption,
-						$form_ele_id,
-						15,
-						$timestampToUse
-					);
-					$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
-				} // end of check to see if the default setting is for real
+            case 'date':
+                // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
+                if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") {
+                    $form_ele = new XoopsFormTextDateSelect($ele_caption, $form_ele_id, 15, "");
+                    $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
+                } else {
+                    $form_ele = new XoopsFormTextDateSelect($ele_caption, $form_ele_id, 15, getDateElementDefault($ele_value[0]));
+                    $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
+                } // end of check to see if the default setting is for real
 				// added validation code - sept 5 2007 - jwe
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
@@ -1022,6 +1006,29 @@ class formulizeElementRenderer{
 					// Date.parse() would be better, except that it will fail for dd-mm-YYYY format, ie: 22-11-2013
 					$form_ele->customValidationCode[] = "\nif (isNaN(parseInt(myform.{$eltname}.value))) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 				}
+                if (!$isDisabled) {
+                    $limit_past = (isset($ele_value["date_limit_past"]) and $ele_value["date_limit_past"] != "");
+                    $limit_future = (isset($ele_value["date_limit_future"]) and $ele_value["date_limit_future"] != "");
+                    if ($limit_past or $limit_future) {
+                        $reference_date = time();
+                        if ("new" != $entry) {
+                            $entryData = $this->formulize_getCachedEntryData($id_form, $entry);
+                            $reference_date = strtotime(display($entryData, "creation_date"));
+                        }
+                        if ($limit_past) {
+                            $form_ele->setExtra(" min-date='".
+                                date("Y-m-d", strtotime("-".max(0, intval($ele_value["date_past_days"]))." days", $reference_date))."' ");
+                        }
+                        if ($limit_future) {
+                            $form_ele->setExtra(" max-date='".
+                                date("Y-m-d", strtotime("+".max(0, intval($ele_value["date_future_days"]))." days", $reference_date))."' ");
+                        }
+
+                        $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;check_date_limits('$form_ele_id');\" onclick=\"javascript:check_date_limits('$form_ele_id');\" onblur=\"javascript:check_date_limits('$form_ele_id');\" jquerytag=\"$form_ele_id\" ");
+                    } else {
+                        $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
+                    }
+                }
 			break;
 
 

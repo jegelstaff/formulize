@@ -442,7 +442,3 @@ $to_return[0] = $saveoptions;
 $to_return[1] = $defaultSave;
 return $to_return;
 }
-
-
-?>
-

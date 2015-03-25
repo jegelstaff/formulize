@@ -59,6 +59,7 @@ if($op != "check_for_unique_value"
    AND $op != 'get_element_row_html'
    AND $op != 'update_derived_value'
    AND $op != 'validate_php_code'
+   AND $op != 'delete_template_cache'
   ) {
   exit();
 }
@@ -249,5 +250,18 @@ switch($op) {
             echo str_replace("PHP Parse error:  s", "S", str_replace(" in $tmpfname", "", $output));
         }
     }
+    break;
+
+    case "delete_template_cache":
+        // This scipt is called by an administrator of the Formulize install within the Admin section of the site, in order to remove all files in the 'templates_c' folder.
+        // This script should only be called if the user is developing new templates and needs a a quick way to delete existing cached template data.
+        $files = glob(XOOPS_ROOT_PATH.'/templates_c/*.php'); // Get all php files in directory.
+        foreach ($files as $file) { // iterate files
+            if (is_file($file)) {
+                unlink($file); // delete file
+            }
+        }
+        // also delete the admin menu cache file
+        unlink(XOOPS_ROOT_PATH."/cache/adminmenu_english.php");
     break;
 }

@@ -1337,9 +1337,9 @@ class formulizeFormsHandler {
             $titleCounter++;
             if ($titleCounter > 1) {
                 // add a number to the new form name to ensure it is unique
-                $newtitle = sprintf(_FORM_MODCLONED_FORM, $title)." $titleCounter";
+                $newtitle = sprintf(_FORM_MODCLONED, $title)." $titleCounter";
             } else {
-                $newtitle = sprintf(_FORM_MODCLONED_FORM, $title);
+                $newtitle = sprintf(_FORM_MODCLONED, $title);
             }
             $titleCheckSQL = "SELECT desc_form FROM " . $this->db->prefix("formulize_id") . " WHERE desc_form = '".formulize_db_escape($newtitle)."'";
             $titleCheckResult = $this->db->query($titleCheckSQL);
