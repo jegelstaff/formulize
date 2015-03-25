@@ -227,27 +227,19 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 
 	public function getSelectedScreensForNewElement() {
 		global $xoopsDB;
-		$screenID_to_elementID = array();
+		$selected_screens = array();
+		$screenElementsSQL =   "SELECT sid, formelements
+								FROM " . $xoopsDB->prefix("formulize_screen_form") .
+							   " WHERE formid = " .$_GET['fid'];
+		$screenElementsResult = $xoopsDB->query($screenElementsSQL);
 
-		$screenElementsSQL = "SELECT forms.id_form, forms.ele_id, screens.sid FROM " .
-								$xoopsDB->prefix("formulize") . "forms INNER JOIN " . $xoopsDB->prefix("formulize_screen_form") .
-								" screens ON forms.id_form = screens.formid
-								WHERE id_form = " .$_GET['fid'];
-		$screenElementsHandler = $xoopsDB->query($screenElementsSQL);
-
-		while ($screenElementsHolder = $xoopsDB->fetchArray($screenElementsHandler)){
-			if (!isset($screenElements[$screenElementsHolder['sid']])){
-				$screenID_to_elementID[$screenElementsHolder['sid']] = array();
-			}
-			array_push ($screenID_to_elementID[$screenElementsHolder['sid']], $screenElementsHolder['ele_id']);
-		}
-
-		if (sizeof($screenID_to_elementID) <= sizeof($screenID_to_elementID, 1)){
-			foreach ($screenID_to_elementID as $i => $screenData) {
-				//need to fix display if one or more are displayed
-				if (sizeof($screenData) > 1){
-					$selected_screens['sid'] = "selected"; 	//this stuff may be unset by the element_display_save class...
-				}
+		while ($screenElements = $xoopsDB->fetchArray($screenElementsResult)){
+			$selected_elements = unserialize($screenElements['formelements']);
+			if (is_array($selected_elements) AND count($selected_elements)>0){
+				$this_screen_id = $screenElements['sid'];
+				//space before 'selected' is needed as this is output directly into html
+				$selected_screens[$this_screen_id] = " selected";
+				break;
 			}
 		}
 		return $selected_screens;
