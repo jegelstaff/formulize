@@ -90,7 +90,7 @@ $(".savebutton").click(function() {
 			//kept this incase they didnt enter a new title, we can still update title when saving
 			var str="<{$content.formhandle}>"+"_"+$("[name=elements-ele_caption]").val();
 			str=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
-			str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);
+			str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,40);
 			$("[name=elements-ele_handle]").val(str);
 		}
 		$("[name=reload_names_page]").val(1);
