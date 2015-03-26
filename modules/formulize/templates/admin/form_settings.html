@@ -190,12 +190,8 @@
 			alert("Forms must have a name!");
 			$("[name=forms-title]").focus();
 		}
-		if ($("[name=forms-form_handle]").val() == "" && "<{$content.fid}>" == "new") {
-			//kept this incase they didnt enter a new title, we can still update title when saving
-			var str=$("[name=forms-title]").val();
-			str=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
-			str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);
-			$("[name=forms-form_handle]").val(str);
+		if ($("[name=forms-form_handle]").val() == "") {
+			fillHandle();
 		}
 		
 	});

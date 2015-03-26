@@ -86,13 +86,7 @@ $(".savebutton").click(function() {
 	}
 	<{* reload after ele_handle is blank, since it will be reset to the ele_id and that's a state change we'll need to reload to show the user *}>
 	if($("[name=elements-ele_handle]").val() == "") {
-		if ("<{$content.ele_id}>" == "new") {
-			//kept this incase they didnt enter a new title, we can still update title when saving
-			var str="<{$content.formhandle}>"+"_"+$("[name=elements-ele_caption]").val();
-			str=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
-			str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,40);
-			$("[name=elements-ele_handle]").val(str);
-		}
+		fillHandle();
 		$("[name=reload_names_page]").val(1);
 	}
 });
