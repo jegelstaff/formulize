@@ -241,6 +241,7 @@ $advanced['datatypeui'] = createDataTypeUI($ele_type, $elementObject,$fid,$ele_e
 
 $formObject = $form_handler->get($fid);
 $formName = printSmart($formObject->getVar('title'), 30);
+$formHandle=printSmart($formObject->getVar('form_handle'), 30);
 
 // package up the elements into a list for ordering purposes
 $orderOptions = array();
@@ -260,6 +261,7 @@ $names['firstelementorder'] = $firstElementOrder;
 $common['name'] = '';
 $common['ele_id'] = $ele_id;
 $common['fid'] = $fid;
+$common['formhandle']=$formHandle;
 $common['aid'] = $aid;
 $common['type'] = $ele_type;
 $common['uid'] = $xoopsUser->getVar('uid');
