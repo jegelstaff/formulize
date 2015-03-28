@@ -51,6 +51,8 @@ class formulizeTemplateScreen extends formulizeScreen {
 class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     var $db;
 
+    const TEMPLATE_SCREENS_CACHE_FOLDER = "/modules/formulize/templates/screens/default/";
+
     function formulizeTemplateScreenHandler(&$db) {
         $this->db =& $db;
     }
@@ -88,18 +90,18 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         }
 
         // TODO something like this will be necessary when allowing users to create/edit code and template
-//        $success1 = true;
-//        if(isset($_POST['screens-custom_code'])) {
-//            $success1 = $this->writeTemplateToFile(trim($_POST['screens-custom_code']), 'custom_code', $screen);
-//        }
-//        $success2 = true;
-//        if(isset($_POST['screens-template'])) {
-//            $success2 = $this->writeTemplateToFile(trim($_POST['screens-template']), 'template', $screen);
-//        }
-//
-//        if (!$success1 || !$success2) {
-//            return false;
-//        }
+        $success1 = true;
+        if(isset($_POST['screens-custom_code'])) {
+            $success1 = $this->write_custom_code_to_file(trim($_POST['screens-custom_code']), $screen);
+        }
+        $success2 = true;
+        if(isset($_POST['screens-template'])) {
+            $success2 = $this->write_template_to_file(trim($_POST['screens-template']), $screen);
+        }
+
+        if (!$success1 || !$success2) {
+            return false;
+        }
 
         return $sid;
     }
@@ -125,6 +127,8 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
 
     function render($screen) {
+        include XOOPS_ROOT_PATH.'/header.php';
+
         global $xoTheme;
         if($xoTheme) {
             $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css");
@@ -133,6 +137,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
         $custom_code_filename = custom_code_filename($screen);
         $template_filename = template_filename($screen);
+
         if (file_exists($custom_code_filename) and file_exists($template_filename)) {
             $vars = run_template_php_code($custom_code_filename);
             global $xoopsTpl;
@@ -141,7 +146,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             }
             $xoopsTpl->display("file:".$template_filename);
         } else {
-            echo "<p>Error: specified page template does not exist.</p>";
+            echo "<p>Error: specified screen template does not exist.</p>";
         }
 
         include XOOPS_ROOT_PATH.'/footer.php';
@@ -153,17 +158,43 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         return get_defined_vars();
     }
 
-
-    function template_screen_folder_name($screen) {
-        return "screen_".$screen->getVar('sid')."_template";
-    }
-
+    // Returns a custom code filename of shape "{ROOT_PATH}/modules/formulize/templates/screens/default/{$sid}/code.php"
     function custom_code_filename($screen) {
-        return XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".template_screen_folder_name($screen)."/code.php";
+        return XOOPS_ROOT_PATH. self::TEMPLATE_SCREENS_CACHE_FOLDER .$screen->getVar('sid')."/code.php";
     }
 
+    // Returns a template filename of shape "{ROOT_PATH}/modules/formulize/templates/screens/default/{$sid}/template.html"
     function template_filename($screen) {
-        return XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".template_screen_folder_name($screen)."/template.html";
+        return XOOPS_ROOT_PATH. self::TEMPLATE_SCREENS_CACHE_FOLDER .$screen->getVar('sid')."/template.html";
+    }
+
+
+    // Writes a code.php file in /modules/formulize/templates/screens/default/$sid/code.php
+    function write_custom_code_to_file($content, $screen) {
+        return parent::writeTemplateToFile($content, "code", $screen);
+    }
+
+    // Writes a template.html file in /modules/formulize/templates/screens/default/$sid/template.html
+    function write_template_to_file($content, $screen) {
+        $pathname = XOOPS_ROOT_PATH. self::TEMPLATE_SCREENS_CACHE_FOLDER .$screen->getVar('sid')."/";
+        // check if folder exists, if not, make it.
+        if (!is_dir($pathname)) {
+            mkdir($pathname, 0777, true);
+        }
+
+        if (!is_writable($pathname)) {
+            chmod($pathname, 0777);
+        }
+
+        $filename = $pathname."/template.html";
+
+        $success = file_put_contents($filename, $content);
+        if (false === $success) {
+            error_log("ERROR: Could not write to template cache file: $filename");
+            return false;
+        }
+
+        return true;
     }
 
 }
