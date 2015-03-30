@@ -132,11 +132,18 @@ if (!isset($_POST['metachoice'])) {
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
     // query fid must match passed fid in URL, and the current user id must match the userid at the time the export file was created
     if (trim($queryData[0]) == intval($_GET['fid']) AND trim($queryData[1]) == $exportUid) {
-            $GLOBALS['formulize_doingExport'] = true;
-            unset($queryData[0]); // get rid of the fid and userid lines
-            unset($queryData[1]);
-            $queryData = implode(" ",$queryData); // merge all remaining lines into one string to send to getData
-            $data = getData($frid, $fid, $queryData);
+            if ($_GET['type'] == "update") {
+                $fileForUser = str_replace(XOOPS_URL. SPREADSHEET_EXPORT_FOLDER, "", $filename);
+            } else {
+                $form_handler = xoops_getmodulehandler('forms','formulize');
+                $formObject = $form_handler->get($fid);
+                if (is_object($formObject)) {
+                    $formTitle = "'".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", trans($formObject->getVar('title')))."'";
+                } else {
+                    $formTitle = "a_form";
+                }
+                $fileForUser = _formulize_EXPORT_FILENAME_TEXT."_".$formTitle."_".date("M_j_Y_Hi").".csv";
+            }
 
             $cols = explode(",",$_GET['cols']);
             $headers = array();
@@ -154,22 +161,15 @@ if (!isset($_POST['metachoice'])) {
                 $fdchoice = "comma";
             }
 
+            unset($queryData[0]); // get rid of the fid and userid lines
+            unset($queryData[1]);
+            $GLOBALS['formulize_doingExport'] = true;
+            $queryData = implode(" ",$queryData); // merge all remaining lines into one string to send to getData
+            $data = getData($frid, $fid, $queryData);
+
             $filename = prepExport($headers, $cols, $data, $fdchoice, "", "", false, $fid, $groups);
 
             $pathToFile = str_replace(XOOPS_URL,XOOPS_ROOT_PATH,$filename);
-
-            if ($_GET['type'] == "update") {
-                $fileForUser = str_replace(XOOPS_URL. SPREADSHEET_EXPORT_FOLDER, "", $filename);
-            } else {
-                $form_handler = xoops_getmodulehandler('forms','formulize');
-                $formObject = $form_handler->get($fid);
-                if (is_object($formObject)) {
-                    $formTitle = "'".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "’", ",", ")", "(", "[", "]"), "_", trans($formObject->getVar('title')))."'";
-                } else {
-                    $formTitle = "a_form";
-                }
-                $fileForUser = _formulize_EXPORT_FILENAME_TEXT."_".$formTitle."_".date("M_j_Y_Hi").".csv";
-            }
 
             header('Content-Description: File Transfer');
             header('Content-Type: text/csv; charset='._CHARSET);
