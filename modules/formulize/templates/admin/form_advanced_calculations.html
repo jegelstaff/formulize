@@ -85,6 +85,7 @@ $(".cloneadvanced_calculation").click(function() {
 jQuery(document).ready(function() {
     jQuery(".savebutton").click(function() {
         fz_check_php_code(jQuery("#forms-on_before_save").val(), "Before Save", "<{$icms_url}>", <{$icms_userid}>);
+        fz_check_php_code(jQuery("#forms-on_after_save").val(), "After Save", "<{$icms_url}>", <{$icms_userid}>);
         fz_check_php_code(jQuery("#forms-custom_edit_check").val(), "Disable Entry Editing", "<{$icms_url}>", <{$icms_userid}>);
     });
 });
