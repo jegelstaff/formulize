@@ -52,6 +52,8 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     var $db;
 
     const TEMPLATE_SCREENS_CACHE_FOLDER = "/modules/formulize/templates/screens/default/";
+    const FORMULIZE_CSS_FILE = "/modules/formulize/templates/css/formulize.css";
+    const FORMULIZE_JS_FILE = "/modules/formulize/libraries/formulize.js";
 
     function formulizeTemplateScreenHandler(&$db) {
         $this->db =& $db;
@@ -89,7 +91,6 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             return false;
         }
 
-        // TODO something like this will be necessary when allowing users to create/edit code and template
         $success1 = true;
         if(isset($_POST['screens-custom_code'])) {
             $success1 = $this->write_custom_code_to_file(trim($_POST['screens-custom_code']), $screen);
@@ -98,7 +99,6 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         if(isset($_POST['screens-template'])) {
             $success2 = $this->write_template_to_file(trim($_POST['screens-template']), $screen);
         }
-
         if (!$success1 || !$success2) {
             return false;
         }
@@ -108,8 +108,6 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
 
     function get($sid) {
-        // TODO this function should first check cache for screen?
-
         $sid = intval($sid);
         if ($sid > 0) {
             $sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' AS t1, '. $this->db->prefix('formulize_screen_template').' AS t2 WHERE t1.sid='.$sid.' AND t1.sid=t2.sid';
@@ -124,15 +122,14 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             }
         }
         return false;
-
     }
 
 
     function render($screen) {
         global $xoTheme;
         if($xoTheme) {
-            $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css");
-            $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
+            $xoTheme->addStylesheet(self::FORMULIZE_CSS_FILE);
+            $xoTheme->addScript(self::FORMULIZE_JS_FILE);
         }
 
         $custom_code_filename = custom_code_filename($screen);
