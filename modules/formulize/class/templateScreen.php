@@ -108,6 +108,8 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
 
     function get($sid) {
+        // TODO this function should first check cache for screen?
+
         $sid = intval($sid);
         if ($sid > 0) {
             $sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' AS t1, '. $this->db->prefix('formulize_screen_template').' AS t2 WHERE t1.sid='.$sid.' AND t1.sid=t2.sid';
@@ -127,8 +129,6 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
 
     function render($screen) {
-        include XOOPS_ROOT_PATH.'/header.php';
-
         global $xoTheme;
         if($xoTheme) {
             $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css");
@@ -148,8 +148,6 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         } else {
             echo "<p>Error: specified screen template does not exist.</p>";
         }
-
-        include XOOPS_ROOT_PATH.'/footer.php';
     }
 
 
