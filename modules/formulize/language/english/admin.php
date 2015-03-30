@@ -170,6 +170,7 @@ define("_AM_SCREEN_EXPLAIN","<p><i>Screens</i> let you show users different vers
 define("_AM_SCREEN_CREATE"," Create a new Screen");
 define("_AM_SCREEN_FORMSCREENS","Form Screens");
 define("_AM_SCREEN_LISTSCREENS","List Screens");
+define("_AM_SCREEN_TEMPLATESCREENS","Template Screens");
 define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? All configuration settings for this screen will be lost!");
 define("_AM_SCREEN_RELATIONWARNING", "Note: This screen uses a different relationship setting than one or more list screens.");
 

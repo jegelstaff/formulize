@@ -193,7 +193,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     }
 
 
-    // THIS METHOD CLONES A FORM_SCREEN
+    // THIS METHOD CLONES A TEMPLATE_SCREEN
     function cloneScreen($sid) {
 
         $newtitle = parent::titleForClonedScreen($sid);
