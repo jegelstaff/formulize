@@ -60,6 +60,8 @@ if($screens['type'] == 'multiPage') {
   $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 } else if($screens['type'] == 'form') {
   $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+} else if($screens['type'] == 'template') {
+    $screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
 }
 
 
@@ -71,7 +73,7 @@ if($isNew) {
   } else if($screens['type'] == 'listOfEntries') {
 
     // set the defaults for the new screen
-    
+
       // View
       $screen->setVar('defaultview','all');
       $screen->setVar('usecurrentviewlist',_formulize_DE_CURRENT_VIEW);
@@ -115,11 +117,9 @@ if($isNew) {
       $screen->setVar('reloadblank', 0);
       $screen->setVar('savebuttontext', _formulize_SAVE);
       $screen->setVar('alldonebuttontext', _formulize_DONE);
-  } 
+  }
 
 } else {
-  
-
   $screen = $screen_handler->get($sid);
 }
 
@@ -146,6 +146,9 @@ if($isNew) {
     $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
     $screen_handler->writeTemplateToFile("", 'listtemplate', $screen);
     $screen_handler->writeTemplateToFile("", 'bottomtemplate', $screen);
+  } elseif($screens['type'] == "template") {
+      $screen_handler->write_custom_code_to_file("", $screen);
+      $screen_handler->write_template_to_file("", $screen);
   }
 
   // send code to client that will to be evaluated
