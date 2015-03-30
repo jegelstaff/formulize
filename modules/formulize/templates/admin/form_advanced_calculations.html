@@ -50,7 +50,6 @@
 </form>
 
 <script type="text/javascript">
-
 $(".configadvanced_calculation").click(function() {
 	$("[name=gotoadvanced_calculations]").val($(this).attr('target'));
 	$(".savebutton").click();
@@ -78,4 +77,10 @@ $(".cloneadvanced_calculation").click(function() {
 	return false;
 })
 
+jQuery(document).ready(function() {
+    jQuery(".savebutton").click(function() {
+        fz_check_php_code(jQuery("#forms-on_before_save").val(), "Before Save", "<{$icms_url}>", <{$icms_userid}>);
+        fz_check_php_code(jQuery("#forms-custom_edit_check").val(), "Disable Entry Editing", "<{$icms_url}>", <{$icms_userid}>);
+    });
+});
 </script>
