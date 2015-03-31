@@ -322,7 +322,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                         break;
 
                         default:
-                        $row[] = html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES);
+                        $row[] = trans(html_entity_decode(displayTogether($entry, $column, ", "), ENT_QUOTES));
                     }
                 }
                 // output this row to the browser
