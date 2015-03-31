@@ -1042,7 +1042,7 @@ class formulizeElementRenderer{
 			break;
 
 
-			case 'upload':
+			case 'fileUpload':
 				$form_ele = new XoopsFormFile (
 					$ele_caption,
 					$form_ele_id,
