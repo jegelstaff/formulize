@@ -56,6 +56,7 @@
     </table>
   </div>
 
+
   <h2><{$smarty.const._AM_SCREEN_LISTSCREENS}></h2>
   <div class="form-item">
     <table>
@@ -78,6 +79,8 @@
     </table>
   </div>
 
+
+    <{if $content.template|@count != 0}>
     <h2><{$smarty.const._AM_SCREEN_TEMPLATESCREENS}></h2>
     <div class="form-item">
         <table>
@@ -97,6 +100,7 @@
             <{/foreach}>
         </table>
     </div>
+    <{/if}>
 
 </div>
 
