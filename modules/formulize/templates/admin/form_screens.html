@@ -84,14 +84,12 @@
             <tr>
                 <th>Name</th>
                 <th>id</th>
-                <th>Default</th>
                 <th>Action</th>
             </tr>
             <{foreach from=$content.template item=screen}>
             <tr>
-                <td><label for="screens-defaulttemplate-<{$screen.sid}>"><a class="configscreen" target-sid="<{$screen.sid}>" href="?page=screen&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$screen.sid}>"><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
+                <td><a class="configscreen" target-sid="<{$screen.sid}>" href="?page=screen&aid=<{$content.aid}>&fid=<{$content.fid}>&sid=<{$screen.sid}>"><img src="../images/kedit.png"> <{$screen.title}></a></label></td>
                 <td><{$screen.sid}></td>
-                <td><div class="form-radios"><input type="radio" id="screens-defaulttemplate-<{$screen.sid}>" name="screens-defaulttemplate" value="<{$screen.sid}>"<{if $screen.sid eq $content.defaulttemplate}> checked="checked"<{/if}>/></div></td>
                 <td><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$screen.sid}>" target="_blank"><img src="../images/kfind.png"> View</a>&nbsp;&nbsp;&nbsp;&nbsp;
                     <a class="clonetemplatescreen" target="<{$screen.sid}>" href=""><img src="../images/clone.gif">Clone</a>&nbsp;&nbsp;&nbsp;&nbsp;
                     <a class="deletescreen" target="<{$screen.sid}>" href=""><img src="../images/editdelete.gif"> Remove</a></td>
