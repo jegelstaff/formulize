@@ -1042,7 +1042,7 @@ class formulizeElementRenderer{
 			break;
 
 
-			case 'fileUpload':
+			case 'upload':
 				$form_ele = new XoopsFormFile (
 					$ele_caption,
 					$form_ele_id,
@@ -1116,6 +1116,7 @@ class formulizeElementRenderer{
 			} else {
 				$elementCue = "";
 			}
+			
 			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
 			// reuse caption, put two spaces between element and previous entry UI
 			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$elementCue);
