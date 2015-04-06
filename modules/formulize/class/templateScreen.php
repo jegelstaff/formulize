@@ -153,42 +153,84 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         return get_defined_vars();
     }
 
+    // Returns a cache folder name of shape "{ROOT_PATH}/modules/formulize/templates/screens/default/{$sid}/
+    function cache_folder_name($screen) {
+        return XOOPS_ROOT_PATH. self::TEMPLATE_SCREENS_CACHE_FOLDER .$screen->getVar('sid')."/";
+    }
+
     // Returns a custom code filename of shape "{ROOT_PATH}/modules/formulize/templates/screens/default/{$sid}/code.php"
     function custom_code_filename($screen) {
-        return XOOPS_ROOT_PATH. self::TEMPLATE_SCREENS_CACHE_FOLDER .$screen->getVar('sid')."/code.php";
+        return $this->cache_folder_name($screen) . "/code.php";
     }
 
     // Returns a template filename of shape "{ROOT_PATH}/modules/formulize/templates/screens/default/{$sid}/template.html"
     function template_filename($screen) {
-        return XOOPS_ROOT_PATH. self::TEMPLATE_SCREENS_CACHE_FOLDER .$screen->getVar('sid')."/template.html";
+        return $this->cache_folder_name($screen) ."/template.html";
     }
 
+    // returns code.php file
+    function getCustomCode($screen) {
+        static $templates = array();
+        if (!isset($templates['custom_code'])) {
+            $pathname = $this->custom_code_filename($screen);
+            if (file_exists($pathname)) {
+                $templates['custom_code'] = file_get_contents($pathname);
+            } else {
+                $templates['custom_code'] = $screen->getVar('custom_code');
+                if (strlen($templates['custom_code']) > 0) {
+                    $this->write_custom_code_to_file(htmlspecialchars_decode($templates['custom_code'], ENT_QUOTES), $screen);
+                }
+            }
+        }
+        return $templates['custom_code'];
+
+    }
+
+    // returns template.html file
+    function getTemplateHtml($screen) {
+        static $templates = array();
+        if (!isset($templates['template'])) {
+            // there is no template saved in memory, read it from the file;
+            $pathname = $this->template_filename($screen);
+            if (file_exists($pathname)) {
+                $templates['template'] = file_get_contents($pathname);
+            } else {
+                $templates['template'] = $screen->getVar('template');
+                if (strlen($templates['template']) > 0) {
+                    $this->write_template_to_file(htmlspecialchars_decode($templates['template'], ENT_QUOTES), $screen);
+                }
+            }
+        }
+        return $templates['template'];
+    }
 
     // Writes a code.php file in /modules/formulize/templates/screens/default/$sid/code.php
     function write_custom_code_to_file($content, $screen) {
-        return parent::writeTemplateToFile($content, "code", $screen);
+        return $this->write_to_file($content, $screen, "/code.php");
     }
 
     // Writes a template.html file in /modules/formulize/templates/screens/default/$sid/template.html
     function write_template_to_file($content, $screen) {
-        $pathname = XOOPS_ROOT_PATH. self::TEMPLATE_SCREENS_CACHE_FOLDER .$screen->getVar('sid')."/";
-        // check if folder exists, if not, make it.
-        if (!is_dir($pathname)) {
-            mkdir($pathname, 0777, true);
+        return $this->write_to_file($content, $screen, "/template.html");
+    }
+
+    function write_to_file($content, $screen, $name) {
+        $foldername = $this->cache_folder_name($screen);
+
+        if (!is_dir($foldername)) {
+            mkdir($foldername, 0777, true);
+        }
+        if (!is_writable($foldername)) {
+            chmod($foldername, 0777);
         }
 
-        if (!is_writable($pathname)) {
-            chmod($pathname, 0777);
-        }
-
-        $filename = $pathname."/template.html";
+        $filename = $foldername . $name;
 
         $success = file_put_contents($filename, $content);
         if (false === $success) {
-            error_log("ERROR: Could not write to template cache file: $filename");
+            error_log("ERROR: Could not write to template screen cache file: $filename");
             return false;
         }
-
         return true;
     }
 

@@ -117,6 +117,9 @@ if($isNew) {
       $screen->setVar('reloadblank', 0);
       $screen->setVar('savebuttontext', _formulize_SAVE);
       $screen->setVar('alldonebuttontext', _formulize_DONE);
+  } else if ($screens['type'] == 'template') {
+      $screen->setVar('custom_code', "");
+      $screen->setVar('template', "");
   }
 
 } else {
@@ -151,7 +154,7 @@ if($isNew) {
       $screen_handler->write_template_to_file("", $screen);
   }
 
-  // send code to client that will to be evaluated
+    // send code to client that will to be evaluated
   $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&tab=settings&aid=".$aid.'&fid='.$fid.'&sid='.$sid;
   print '/* eval */ window.location = "'.$url.'";';
 } elseif($originalFrid != $screens['frid']) {
