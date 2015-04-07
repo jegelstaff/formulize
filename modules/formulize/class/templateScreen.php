@@ -72,7 +72,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     }
 
     function insert($screen) {
+
         $update = ($screen->getVar('sid') == 0) ? false : true;
+
         if(!$sid = parent::insert($screen)) {
             return false;
         }
@@ -83,7 +85,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
                 $screen->getVar('sid'), $this->db->quoteString($screen->getVar('custom_code')), $this->db->quoteString($screen->getVar('template')));
         } else {
             $sql = sprintf("UPDATE %s SET custom_code = %s, template = %s WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
-                $this->db->quoteString($screen->getVar('custom_code')), $this->db->quoteString($screen->getVar('template')));
+                $this->db->quoteString($screen->getVar('custom_code')), $this->db->quoteString($screen->getVar('template')), $sid);
         }
         $result = $this->db->query($sql);
         if (!$result) {
