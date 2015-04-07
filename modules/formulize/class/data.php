@@ -871,6 +871,8 @@ class formulizeDataHandler  {
                 unlink($lock_file_name);
 		}
 
+        $formObject->onAfterSave($entry_to_return ? $entry_to_return : $lastWrittenId);
+
 		return $entry_to_return ? $entry_to_return : $lastWrittenId;
 	}
 
