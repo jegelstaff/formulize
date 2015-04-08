@@ -134,11 +134,11 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             $xoTheme->addScript(self::FORMULIZE_JS_FILE);
         }
 
-        $custom_code_filename = custom_code_filename($screen);
-        $template_filename = template_filename($screen);
+        $custom_code_filename = $this->custom_code_filename($screen);
+        $template_filename = $this->template_filename($screen);
 
         if (file_exists($custom_code_filename) and file_exists($template_filename)) {
-            $vars = run_template_php_code($custom_code_filename);
+            $vars = $this->run_template_php_code($custom_code_filename);
             global $xoopsTpl;
             foreach ($vars as $key => $value) {
                 $xoopsTpl->assign($key, $value);
