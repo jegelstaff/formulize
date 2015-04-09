@@ -491,6 +491,13 @@ foreach($listOfEntriesScreens as $screen) {
   $screens['listOfEntries'][$i]['title'] = $screen->getVar('title');
   $i++;
 }
+$templateScreens = $screen_handler->getObjects(new Criteria('type','template'),$fid);
+$i = 1;
+foreach($templateScreens as $screen) {
+    $screens['template'][$i]['sid'] = $screen->getVar('sid');
+    $screens['template'][$i]['title'] = $screen->getVar('title');
+    $i++;
+}
 
 $settings = array();
 $settings['singleentry'] = $singleentry;

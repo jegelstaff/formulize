@@ -26,15 +26,15 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions 					     ##
+##  Author of this file: Freeform Solutions                                  ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
 // This file contains the logic for the advanced search options popup
 
 //stuff that needs to be recorded for sending back to the main controls interface...
-//1. 
-//2. 
+//1.
+//2.
 
 function searchJavascript($items) {
 ?>
@@ -45,7 +45,7 @@ function searchJavascript($items) {
 function sendSearch(formObj) {
 
 <?php
-// process the $items array 
+// process the $items array
 
 $flatItems = implode("/,%^&2", $items);
 print "window.opener.document.controls.asearch.value = '$flatItems';\n";
@@ -62,131 +62,124 @@ print "window.self.close();\n";
 
 }
 
-
 //this function reads the query items passed from previous page
 function readQueryItems() {
-	foreach($_REQUEST as $k=>$v) { // look through get and post
-		if(substr($k, 0, 3) == "as_") {
-			$items[$k] = $v;
-			$v = str_replace("'", "&#39;", $v);
-			$hidden[] = new xoopsFormHidden($k, stripslashes($v));
-		}
-	}
-	$count = count($items);
-	// read what was just sent back...
-	if($_POST['addq']) {
-		$columnsProcessed = false;
-		foreach($_POST['column'] AS $selectedColumn) { 
-			if($columnsProcessed) { // handle AND/OR setting
-				switch($_POST['multi_andor']) {
-					case "1": // AND
-						$items['as_' . $count] = "AND"; 
-						$hidden[] = new xoopsFormHidden('as_' . $count, "AND");
-			      		$count++;
-						break;
-					case "2": // OR
-						$items['as_' . $count] = "OR"; 
-						$hidden[] = new xoopsFormHidden('as_' . $count, "OR");
-			      		$count++;
-						break;
-				}
-			}
-           		$items['as_' . $count] = "[field]" . $selectedColumn . "[/field]";
-      		$hidden[] = new xoopsFormHidden('as_' . $count, "[field]" . $selectedColumn . "[/field]");
-			$count++;
-			$items['as_' . $count] = $_POST['op'];
-			$hidden[] = new xoopsFormHidden('as_' . $count, $_POST['op']);
-			$count++;
-			$items['as_' . $count] = $_POST['term'];
-			$thisterm = str_replace("'", "&#39;", $_POST['term']);
-			$hidden[] = new xoopsFormHidden('as_' . $count, stripslashes($thisterm));
-			$count++;
-			$columnsProcessed = true;
-		}
-	}
-	if($_POST['openb']) { 
-		$items['as_' . $count] = "("; 
-		$hidden[] = new xoopsFormHidden('as_' . $count, "(");
-	}
-	if($_POST['closeb']) { 
-		$items['as_' . $count] = ")"; 
-		$hidden[] = new xoopsFormHidden('as_' . $count, ")");
-	}
-	if($_POST['and']) { 
-		$items['as_' . $count] = "AND"; 
-		$hidden[] = new xoopsFormHidden('as_' . $count, "AND");
-	}
-	if($_POST['or']) { 
-		$items['as_' . $count] = "OR"; 
-		$hidden[] = new xoopsFormHidden('as_' . $count, "OR");
-	}
-	if($_POST['not']) { 
-		$items['as_' . $count] = "NOT"; 
-		$hidden[] = new xoopsFormHidden('as_' . $count, "NOT");
-	}
+    foreach($_REQUEST as $k=>$v) { // look through get and post
+        if(substr($k, 0, 3) == "as_") {
+            $items[$k] = $v;
+            $v = str_replace("'", "&#39;", $v);
+            $hidden[] = new xoopsFormHidden($k, stripslashes($v));
+        }
+    }
+    $count = count($items);
+    // read what was just sent back...
+    if($_POST['addq']) {
+        $columnsProcessed = false;
+        foreach($_POST['column'] AS $selectedColumn) {
+            if($columnsProcessed) { // handle AND/OR setting
+                switch($_POST['multi_andor']) {
+                    case "1": // AND
+                        $items['as_' . $count] = "AND";
+                        $hidden[] = new xoopsFormHidden('as_' . $count, "AND");
+                        $count++;
+                        break;
+                    case "2": // OR
+                        $items['as_' . $count] = "OR";
+                        $hidden[] = new xoopsFormHidden('as_' . $count, "OR");
+                        $count++;
+                        break;
+                }
+            }
+                $items['as_' . $count] = "[field]" . $selectedColumn . "[/field]";
+            $hidden[] = new xoopsFormHidden('as_' . $count, "[field]" . $selectedColumn . "[/field]");
+            $count++;
+            $items['as_' . $count] = $_POST['op'];
+            $hidden[] = new xoopsFormHidden('as_' . $count, $_POST['op']);
+            $count++;
+            $items['as_' . $count] = $_POST['term'];
+            $thisterm = str_replace("'", "&#39;", $_POST['term']);
+            $hidden[] = new xoopsFormHidden('as_' . $count, stripslashes($thisterm));
+            $count++;
+            $columnsProcessed = true;
+        }
+    }
+    if($_POST['openb']) {
+        $items['as_' . $count] = "(";
+        $hidden[] = new xoopsFormHidden('as_' . $count, "(");
+    }
+    if($_POST['closeb']) {
+        $items['as_' . $count] = ")";
+        $hidden[] = new xoopsFormHidden('as_' . $count, ")");
+    }
+    if($_POST['and']) {
+        $items['as_' . $count] = "AND";
+        $hidden[] = new xoopsFormHidden('as_' . $count, "AND");
+    }
+    if($_POST['or']) {
+        $items['as_' . $count] = "OR";
+        $hidden[] = new xoopsFormHidden('as_' . $count, "OR");
+    }
+    if($_POST['not']) {
+        $items['as_' . $count] = "NOT";
+        $hidden[] = new xoopsFormHidden('as_' . $count, "NOT");
+    }
 
-	$to_return[0] = $items;
-	$to_return[1] = $hidden;
-	return $to_return;
+    $to_return[0] = $items;
+    $to_return[1] = $hidden;
+    return $to_return;
 }
 
 // delete calculations from request list
 function handleDelete($items, $hidden) {
-	if($_POST['remove']) {
-		$count = count($items);
-		$checkField = $count-3;
-		if(substr($items['as_' . $checkField], 0, 7) == "[field]" AND substr($items['as_' . $checkField], -8) == "[/field]") {
-			for($i=0;$i<3;$i++) {
-				array_pop($items);
-				array_pop($hidden);
-			}
-		} else {
-			array_pop($items);
-			array_pop($hidden);
-		}
-	}
-	$to_return[0] = $items;
-	$to_return[1] = $hidden;
-	return $to_return;
+    if($_POST['remove']) {
+        $count = count($items);
+        $checkField = $count-3;
+        if(substr($items['as_' . $checkField], 0, 7) == "[field]" AND substr($items['as_' . $checkField], -8) == "[/field]") {
+            for($i=0;$i<3;$i++) {
+                array_pop($items);
+                array_pop($hidden);
+            }
+        } else {
+            array_pop($items);
+            array_pop($hidden);
+        }
+    }
+    $to_return[0] = $items;
+    $to_return[1] = $hidden;
+    return $to_return;
 }
-
-
-
 
 require_once "../../../mainfile.php";
 
 global $xoopsConfig;
 // load the formulize language constants if they haven't been loaded already
-	if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
-		include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
-	} else {
-		include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
-	}
-
+if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
+} else {
+    include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
+}
 
 global $xoopsDB, $xoopsUser;
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
-	// Set some required variables
-	$mid = getFormulizeModId();
+// Set some required variables
+$mid = getFormulizeModId();
 
-  $fid = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
-  $fid = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $fid ;
+$fid = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
+$fid = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $fid ;
 
-  $frid = ((isset( $_GET['frid'])) AND is_numeric( $_GET['frid'])) ? intval( $_GET['frid']) : "" ;
-  $frid = ((isset($_POST['frid'])) AND is_numeric($_POST['frid'])) ? intval($_POST['frid']) : $frid ;
+$frid = ((isset( $_GET['frid'])) AND is_numeric( $_GET['frid'])) ? intval( $_GET['frid']) : "" ;
+$frid = ((isset($_POST['frid'])) AND is_numeric($_POST['frid'])) ? intval($_POST['frid']) : $frid ;
 
+$gperm_handler = &xoops_gethandler('groupperm');
+$member_handler =& xoops_gethandler('member');
+$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
-	$gperm_handler = &xoops_gethandler('groupperm');
-	$member_handler =& xoops_gethandler('member');
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-
-
-	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
-		print "<p>" . _NO_PERM . "</p>";
-		exit;
-	}
+if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
+    print "<p>" . _NO_PERM . "</p>";
+    exit;
+}
 
 // main body of page goes here...
 include_once XOOPS_ROOT_PATH . "/class/xoopsformloader.php";
@@ -195,25 +188,23 @@ $returned = readQueryItems();
 
 $cols = getAllColList($fid, $frid, $groups);
 
-$returned = handleDelete($returned[0], $returned[1]); // returns 1 if a deletion was made, 0 if not.  
+$returned = handleDelete($returned[0], $returned[1]); // returns 1 if a deletion was made, 0 if not.
 $items = $returned[0];
 $hidden = $returned[1];
 
-
 foreach($cols as $f=>$vs) {
-	foreach($vs as $row=>$values) {
-		$reqdcol = 'reqdcalc_column_' . $values['ele_id'];
-		if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.  
-			$usedvals[] = $values['ele_id'];
-			if($values['ele_colhead'] != "") {
-				$options[$values['ele_id']] = printSmart(trans($values['ele_colhead']), 60);
-			} else {
-				$options[$values['ele_id']] = printSmart(trans(strip_tags($values['ele_caption'])), 60);
-			}
-		}
-	}		
+    foreach($vs as $row=>$values) {
+        $reqdcol = 'reqdcalc_column_' . $values['ele_id'];
+        if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.
+            $usedvals[] = $values['ele_id'];
+            if($values['ele_colhead'] != "") {
+                $options[$values['ele_id']] = printSmart(trans($values['ele_colhead']), 60);
+            } else {
+                $options[$values['ele_id']] = printSmart(trans(strip_tags($values['ele_caption'])), 60);
+            }
+        }
+    }
 }
-
 
 print "<HTML>";
 print "<head>";
@@ -229,7 +220,7 @@ $themecss = xoops_getcss();
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 
 print "</head>";
-print "<body style=\"background: white; margin-top:20px;\"><center>"; 
+print "<body style=\"background: white; margin-top:20px;\"><center>";
 print "<table style=\"width: 100%;\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
 $advsearch = new xoopsThemeForm(_formulize_DE_BUILDQUERY, 'buildq', XOOPS_URL."/modules/formulize/include/advsearch.php?fid=$fid&frid=$frid");
 
@@ -283,8 +274,8 @@ $addOtherTray->addElement($closeBracketButton);
 
 // add hidden items...
 foreach($hidden as $oneHidden) {
-	$advsearch->addElement($oneHidden);
-	unset($oneHidden);
+    $advsearch->addElement($oneHidden);
+    unset($oneHidden);
 }
 
 $advsearch->insertBreak("<div style=\"font-weight: normal;\">" . _formulize_DE_AS_DEPRECATED . "</div>", "head"); // advanced search officially deprecated with work on version 3.1
@@ -294,12 +285,12 @@ $advsearch->addElement($addButton);
 $advsearch->addElement($addOtherTray);
 
 if($items['as_0']) {
-	$removeButton = new xoopsFormButton('', 'remove', _formulize_DE_AS_REMOVE, 'submit');
-	$doneButton = new xoopsFormButton('', 'done', _formulize_DE_SEARCHGO, 'button');
-	$doneButton->setExtra("onclick=\"javascript:sendSearch(this.form);return false;\"");
-	$advsearch->insertBreak("</td></tr></table><table class=outer><tr><th colspan=2>" . _formulize_DE_AS_QUERYSOFAR . "</th></tr><tr><td class=even colspan=2><center>" . $doneButton->render() . "</center>", "");
-	$qstring = writableQuery($items, 1); // 1 flag indicates to not translate special terms
-	$advsearch->insertBreak("<p>$qstring" . "<br />" . $removeButton->render() . "</p>", 'head');
+    $removeButton = new xoopsFormButton('', 'remove', _formulize_DE_AS_REMOVE, 'submit');
+    $doneButton = new xoopsFormButton('', 'done', _formulize_DE_SEARCHGO, 'button');
+    $doneButton->setExtra("onclick=\"javascript:sendSearch(this.form);return false;\"");
+    $advsearch->insertBreak("</td></tr></table><table class=outer><tr><th colspan=2>" . _formulize_DE_AS_QUERYSOFAR . "</th></tr><tr><td class=even colspan=2><center>" . $doneButton->render() . "</center>", "");
+    $qstring = writableQuery($items, 1); // 1 flag indicates to not translate special terms
+    $advsearch->insertBreak("<p>$qstring" . "<br />" . $removeButton->render() . "</p>", 'head');
 }
 
 print $advsearch->render();

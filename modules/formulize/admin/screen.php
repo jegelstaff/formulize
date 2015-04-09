@@ -65,6 +65,8 @@ if($screen_id == "new") {
         $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
     } else if($settings['type'] == 'multiPage') {
         $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+    } else if($settings['type'] == 'template') {
+        $screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
     }
     $screen = $screen_handler->get($screen_id);
 
@@ -396,6 +398,15 @@ if($screen_id != "new" && $settings['type'] == 'form') {
   $options['element_list'] = $element_list;
 }
 
+
+if($screen_id != "new" && $settings['type'] == 'template') {
+    $screen = $screen_handler->get($screen_id);
+    $templates = array();
+    $templates['custom_code'] = $screen_handler->getCustomCode($screen);
+    $templates['template'] = $screen_handler->getTemplateHtml($screen);
+}
+
+
 // common values should be assigned to all tabs
 $common['name'] = $screenName;
 $common['title'] = $screenName; // oops, we've got two copies of this data floating around...standardize sometime
@@ -418,11 +429,14 @@ $adminPage['tabs'][1] = array(
 	'content'	=> $settings + $common
 );
 
-$adminPage['tabs'][] = array(
-	'name'		=> _AM_APP_RELATIONSHIPS,
-	'template'	=> "db:admin/screen_relationships.html",
-	'content'	=> $common + $relationshipSettings
-); 
+
+if($screen_id != "new" && ($settings['type'] == 'form' OR $settings['type'] == 'multiPage' OR $settings['type'] == 'listOfEntries')) {
+    $adminPage['tabs'][] = array(
+        'name' => _AM_APP_RELATIONSHIPS,
+        'template' => "db:admin/screen_relationships.html",
+        'content' => $common + $relationshipSettings
+    );
+}
 
 if($screen_id != "new" && $settings['type'] == 'form') {
 	$adminPage['tabs'][] = array(
@@ -489,6 +503,17 @@ if($screen_id != "new" && $settings['type'] == 'listOfEntries') {
 		'content'	=> $templates + $common
 	);
 }
+
+
+if($screen_id != "new" && $settings['type'] == 'template') {
+    $adminPage['tabs'][] = array(
+        'name'		=> _AM_FORM_SCREEN_TEMPLATES,
+        'template'	=> "db:admin/screen_template_templates.html",
+        'content'	=> $templates + $common
+    );
+}
+
+
 
 $adminPage['pagetitle'] = _AM_FORM_SCREEN.$screenName;
 $adminPage['needsave'] = true;

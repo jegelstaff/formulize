@@ -1180,6 +1180,9 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
 #listofentries div.main-cell-div input {
   width: 7em; }
 
+#pageNavTable {
+  margin: 1em 0; }
+
 @media print {
   body {
     font-size: 10pt; }
