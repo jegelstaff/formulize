@@ -1,0 +1,226 @@
+{
+  "type": "script",
+  "seleniumVersion": "2",
+  "formatVersion": 2,
+  "steps": [
+    {
+      "type": "get",
+      "url": "http://localhost/index.php"
+    },
+    {
+      "type": "store",
+      "text": "admin",
+      "variable": "uname"
+    },
+    {
+      "type": "store",
+      "text": "password",
+      "variable": "password"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "uname"
+      },
+      "text": "${uname}"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "pass"
+      },
+      "text": "${password}"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input[type=\"submit\"]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Admin"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Stories"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Radio buttons"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_caption"
+      },
+      "text": "Priority"
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "elements-ele_handle"
+      },
+      "text": "stories_priority"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "waitForTextPresent",
+      "negated": true,
+      "text": "You have unsaved changes!"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Options"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[0]"
+      },
+      "text": "High"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[1]"
+      },
+      "text": "Medium"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "name",
+        "value": "addoption"
+      }
+    },
+    {
+      "type": "setElementText",
+      "locator": {
+        "type": "name",
+        "value": "ele_value[2]"
+      },
+      "text": "Low"
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "css selector",
+        "value": "p[name=\"1\"] > input[name=\"defaultoption\"]"
+      }
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "id",
+        "value": "element-savedefaulttoexisting"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "input.savebutton"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Stories"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Screens"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Entries in 'Stories'"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "View Screen"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "id",
+        "value": "formulize_changeColsButton"
+      }
+    },
+    {
+      "type": "switchToWindow",
+      "name": "formulize_popup"
+    },
+    {
+      "type": "setElementSelected",
+      "locator": {
+        "type": "xpath",
+        "value": "//table[@class='outer']/tbody/tr[2]/td[2]/select/option[13]"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//table[@class='outer']/tbody/tr[3]/td[2]/input"
+      }
+    },
+    {
+      "type": "switchToWindow",
+      "name": ""
+    },
+    {
+      "type": "verifyTextPresent",
+      "text": "Medium"
+    }
+  ],
+  "data": {
+    "configs": {},
+    "source": "none"
+  },
+  "inputs": [],
+  "timeoutSeconds": 60
+}

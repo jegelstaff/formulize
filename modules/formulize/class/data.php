@@ -959,6 +959,26 @@ class formulizeDataHandler  {
 		return true;
 	}
 	
+	function fillInDefaultValues($element_id_or_handle, $defaultValue) {
+		$element = _getElementObject($element_id_or_handle);
+		if(is_null($element) || $element->getVar('ele_type') != "radio") {
+			return false;
+		}		
+		global $xoopsDB;
+    	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+    	$formObject = $form_handler->get($this->fid);
+    	
+		$updateSql = 
+			"UPDATE ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')).
+			" SET `".$element->getVar('ele_handle')."` = '".formulize_db_escape($defaultValue).
+			"' WHERE `".$element->getVar('ele_handle')."` IS NULL";
+			
+		if (!$res = $xoopsDB->query($updateSql)) {
+			return false;
+		}
+		return true;
+	}
+
 	// this function changes selected options that users have made in radio buttons, checkboxes or selectboxes so that they match new options specified by the user...ie: old first option converted to new first option, etc
 	// newValues is the array that is about to be passed in as the new $ele_value[2], which is the array of options
 	// element_id_or_handle is the element we're working with, cannot pass in object!
