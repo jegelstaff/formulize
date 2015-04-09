@@ -32,21 +32,7 @@
 <script>
 jQuery(document).ready(function() {
     jQuery(".savebutton").click(function() {
-        check_php_code("#screens-template", "template");
-        check_php_code("#screens-custom_code", "custom code");
+        fz_check_php_code(jQuery("#screens-custom_code").val(), "Template Code", "<{$icms_url}>", <{$icms_userid}>);
     });
-    function check_php_code(template_id, template_name) {
-        jQuery.ajax({
-            type: "POST",
-            url: "<{$icms_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$icms_userid}>&op=validate_php_code",
-            data: {the_code: jQuery(template_id).val()},
-            success: function(result) {
-                if (result.length > 0) {
-                    alert("The "+template_name+" has an error:\n\n"+result+".");
-                }
-            },
-            async: false
-        });
-    }
 });
 </script>
