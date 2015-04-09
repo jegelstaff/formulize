@@ -767,8 +767,8 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE", "Replace t
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE", "Remove the specified value from the current value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND", "Append the specified value to the end of the current value");
 
-define("_AM_FORMULIZE_SCREEN_TEMPLATE_DESC_TEMPLATE", "Here is some bogus text description about template.html stuff for testing.");
-define("_AM_FORMULIZE_SCREEN_TEMPLATE_DESC_CUSTOM_CODE", "Here is some bogus text description about code.php stuff for testing.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DESC_TEMPLATE", "Enter Smarty html template code here.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DESC_CUSTOM_CODE", "Enter PHP code here. Any variables defined in this code will be available in the Smarty template.");
 
 
 define("_AM_FORMULIZE_CLONING_TITLE", "Cloning options");
