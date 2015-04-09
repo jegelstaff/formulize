@@ -282,6 +282,17 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		) ENGINE=MyISAM;";
 	}
 
+    if(!in_array($xoopsDB->prefix("formulize_screen_template"), $existingTables)) {
+        $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_template") . " (
+            templateid int(11) NOT NULL auto_increment,
+            sid int(11) NOT NULL default 0,
+            custom_code text NOT NULL,
+            template text NOT NULL,
+            PRIMARY KEY (`templateid`),
+            INDEX i_sid (`sid`)
+        ) ENGINE=MyISAM;";
+    }
+
 		// if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
 		if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
 	$sql['increase_session_id_size'] = "ALTER TABLE ".$xoopsDB->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";

@@ -170,6 +170,7 @@ define("_AM_SCREEN_EXPLAIN","<p><i>Screens</i> let you show users different vers
 define("_AM_SCREEN_CREATE"," Create a new Screen");
 define("_AM_SCREEN_FORMSCREENS","Form Screens");
 define("_AM_SCREEN_LISTSCREENS","List Screens");
+define("_AM_SCREEN_TEMPLATESCREENS","Template Screens");
 define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? All configuration settings for this screen will be lost!");
 define("_AM_SCREEN_RELATIONWARNING", "Note: This screen uses a different relationship setting than one or more list screens.");
 
@@ -765,6 +766,10 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_VALUE", "Use what value?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE", "Replace the current value with the specified value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE", "Remove the specified value from the current value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND", "Append the specified value to the end of the current value");
+
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DESC_TEMPLATE", "Enter Smarty html template code here.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DESC_CUSTOM_CODE", "Enter PHP code here. Any variables defined in this code will be available in the Smarty template.");
+
 
 define("_AM_FORMULIZE_CLONING_TITLE", "Cloning options");
 define("_AM_FORMULIZE_CLONING_FOUND_ELEMENTS", "After cloning, the following linked selectboxes in this form can be relinked to source elements in these other recently cloned forms:");
