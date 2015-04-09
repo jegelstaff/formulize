@@ -538,9 +538,7 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 	    }
 	    
 		formulize_benchmark("After displayForm.");
-
-}
-    
+    }
 
     if($currentPage != $thanksPage AND !$_POST['goto_sfid']) {
 	    // have to get the new value for $pageSelection list if the user requires it on the users view.
@@ -553,47 +551,29 @@ function displayFormPages($formframe, $entry="", $mainform="", $pages, $conditio
 		    drawPageNav($usersCanSave, $currentPage, $totalPages, "below", $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList);
 	    }
 	    print "</form>";
-    }	
-
-
+    }
     formulize_benchmark("End of displayFormPages.");
-
-
 } // end of the function!
 
-// Added $pageSelectionList by Gordon Woodmansey 2012-09-04
-function drawPageNav($usersCanSave="", $currentPage="", $totalPages, $aboveBelow, $nextPageButton, $previousPageButton, $skippedPageMessage, $pageSelectionList) {
 
-	if($aboveBelow == "above") {
-		//navigation options above the form print like this
-		print "<br /><div id=\"pageNavTable\"><table><tr>\n";
-		print "<td style=\"vertical-align: middle; padding-right: 5px;\"><nobr><b>" . _formulize_DMULTI_YOUAREON . "</b></nobr><br /><nobr>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . $totalPages . "</nobr></td>";
-		print "<td style=\"vertical-align: middle; padding-right: 5px;\">";
-		print $previousPageButton;
-		print "</td>";
-		print "<td style=\"vertical-align: middle; padding-right: 5px;\">";
-                print $nextPageButton;
-	
-		print "</td>";
-		print "<td style=\"vertical-align: middle;\">";
-		print _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . $pageSelectionList;
-		print "</td></tr></table></div></form><br />";
-        } else { 
-                //navigation options below the form print like this
-                print "<div id=\"bottomPageNumber\"><br /><p><b>" . _formulize_DMULTI_PAGE . " $currentPage " . _formulize_DMULTI_OF . " " . $totalPages."</b></p>";
-                if(!$usersCanSave) {print "<br>" . _formulize_INFO_NOSAVE;}
-                if($skippedPageMessage) {
-                    print "<br>". $skippedPageMessage;
-                }
-                print "<div id=\"bottomJumpList\"><br /><p>". _formulize_DMULTI_JUMPTO . "&nbsp;&nbsp;" . $pageSelectionList . "</p></div>";
-                print "</p></div>";
-                print "<div id=\"bottom-save-block\"><br /><form name=\"pageNavOptions_$aboveBelow\" id==\"pageNavOptions_$aboveBelow\">";
-                print $previousPageButton;
-                print "&nbsp;&nbsp;&nbsp;&nbsp;";
-                print $nextPageButton;
-                print "</div>";
-        }
+function drawPageNav($usersCanSave="", $currentPage="", $totalPages, $aboveBelow, $nextPageButton, $previousPageButton,
+    $skippedPageMessage, $pageSelectionList)
+{
+    global $xoopsTpl;
+    $xoopsTpl->assign("usersCanSave", $usersCanSave);
+    $xoopsTpl->assign("currentPage", $currentPage);
+    $xoopsTpl->assign("totalPages", $totalPages);
+    $xoopsTpl->assign("aboveBelow", $aboveBelow);
+    $xoopsTpl->assign("nextPageButton", $nextPageButton);
+    $xoopsTpl->assign("previousPageButton", $previousPageButton);
+    $xoopsTpl->assign("skippedPageMessage", $skippedPageMessage);
+    $xoopsTpl->assign("pageSelectionList", $pageSelectionList);
+    $xoopsTpl->assign("_formulize_DMULTI_PAGE", _formulize_DMULTI_PAGE);
+    $xoopsTpl->assign("_formulize_DMULTI_OF", _formulize_DMULTI_OF);
+    $xoopsTpl->assign("_formulize_DMULTI_JUMPTO", _formulize_DMULTI_JUMPTO);
+    $xoopsTpl->display("file:".XOOPS_ROOT_PATH."/modules/formulize/templates/multipage-navigation.html");
 }
+
 
 // THIS FUNCTION GENERATES THE MARKUP FOR THE PREVIOUS AND NEXT BUTTONS
 function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $nextPage, $previousPage, $thanksPage) {

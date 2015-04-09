@@ -112,7 +112,7 @@ function patch40() {
 	 * ====================================== */
 	
 	$checkThisTable = 'formulize_id';
-	$checkThisField = 'custom_edit_check';
+	$checkThisField = 'on_after_save';
 	$checkThisProperty = false;
 	$checkPropertyForValue = false;
 	
@@ -282,6 +282,17 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		) ENGINE=MyISAM;";
 	}
 
+    if(!in_array($xoopsDB->prefix("formulize_screen_template"), $existingTables)) {
+        $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_template") . " (
+            templateid int(11) NOT NULL auto_increment,
+            sid int(11) NOT NULL default 0,
+            custom_code text NOT NULL,
+            template text NOT NULL,
+            PRIMARY KEY (`templateid`),
+            INDEX i_sid (`sid`)
+        ) ENGINE=MyISAM;";
+    }
+
 		// if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
 		if(file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
 	$sql['increase_session_id_size'] = "ALTER TABLE ".$xoopsDB->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";
@@ -320,6 +331,7 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
 		$sql['add_bottomtext'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_multipage") . " ADD `bottomtemplate` text NOT NULL"; 
 		$sql['add_formelements'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_form") . " ADD `formelements` text";
         $sql['add_on_before_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_before_save` text";
+        $sql['add_on_after_save'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `on_after_save` text";
         $sql['add_custom_edit_check'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `custom_edit_check` text";
 		$sql['add_form_note'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `note` text";
 		$sql['add_use_default_when_blank'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_use_default_when_blank` tinyint(1) NOT NULL default '0'";
@@ -363,6 +375,8 @@ if(!in_array($xoopsDB->prefix("formulize_resource_mapping"), $existingTables)) {
                     print "formelements field already added for single page screens.  result: OK<br>";
                 } elseif($key === "add_on_before_save") {
                     print "on_before_save field already added.  result: OK<br>";
+                } elseif($key === "add_on_after_save") {
+                    print "on_after_save field already added.  result: OK<br>";
                 } elseif($key === "add_custom_edit_check") {
                     print "custom_edit_check field already added.  result: OK<br>";
                 } elseif($key === "add_form_note") {
