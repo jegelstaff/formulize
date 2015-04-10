@@ -1321,7 +1321,7 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry) {
 // this function draws in the UI for sub links
 function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry,
 	$customCaption = "", $customElements = "", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings = 0,
-	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries, $subformConditions, $subformElementId = 0,
+	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries = "", $subformConditions = null, $subformElementId = 0,
 	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES, $subform_element_object = null)
 {
 	$nestedSubform = false;
