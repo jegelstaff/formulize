@@ -12,12 +12,12 @@
 	<tr>
 		<td width="30%"><label for="elements-ele_caption" class="question">Caption</label></td>
 		<td>
-			<div class="form-item required">
-				<input type="text" name="elements-ele_caption" class="required_formulize_element" value="<{$content.ele_caption}>" size=70>
-				<div class="description">
-					<p>The text that users see when this element appears on a form.</p>
-				</div>
+	<div class="form-item required">
+				<input type="text" name="elements-ele_caption" class="required_formulize_element" value="<{$content.ele_caption}>" size=70 onkeyup="fillHandle()">
+			<div class="description">
+				<p>The text that users see when this element appears on a form.</p>
 			</div>
+	</div>
 		</td>
 	</tr>
 
@@ -70,7 +70,7 @@
 		</td>
 	</tr>
 
-	<{if $content.ele_req_on}>
+<{if $content.ele_req_on}>
 	<tr>
 		<td>
 			<label for="elements-ele_req" class="question">Make this element "required" so users must give a response:</label>
@@ -80,7 +80,7 @@
 			<p><input type="radio" name="elements-ele_req" value=0<{$content.ele_req_no_on}>> No</p>
 		</td>
 	</tr>
-	<{/if}>
+<{/if}>
 
 </table>
 
@@ -91,12 +91,13 @@
 
 <script type="text/javascript">
 $(".savebutton").click(function() {
-  if($("[name=elements-ele_caption]").val() == "") {
+	if($("[name=elements-ele_caption]").val() == "") {
 		alert("Elements must have a caption!");
 		$("[name=elements-ele_caption]").focus();
 	}
 	<{* reload after ele_handle is blank, since it will be reset to the ele_id and that's a state change we'll need to reload to show the user *}>
 	if($("[name=elements-ele_handle]").val() == "") {
+		fillHandle();
 		$("[name=reload_names_page]").val(1);
 	}
 });
@@ -104,6 +105,17 @@ $(".savebutton").click(function() {
 $("[name=elements-ele_handle]").keydown(function () {
 	$("[name=check_handle]").val(1);
 });
+
+function fillHandle(){
+	//this function will be called when they are typing title to update handle
+	if ("<{$content.ele_id}>" == "new") {
+		var str="<{$content.formhandle}>"+"_"+$("[name=elements-ele_caption]").val();
+		str=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
+		str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,40);
+		$("[name=elements-ele_handle]").val(str);
+	}
+}
+
 
 $("[name=elements-ele_caption]").keydown(function () {
 	$("[name=reload_names_page]").val(1);

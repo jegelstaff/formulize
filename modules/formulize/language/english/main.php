@@ -639,7 +639,7 @@ define("_formulize_DMULTI_NEXT", "Save and Continue");
 define("_formulize_DMULTI_PREV", "Save and Go Back");
 define("_formulize_DMULTI_SAVE", "Save and Finish");
 define("_formulize_DMULTI_PAGE", "Page");
-define("_formulize_DMULTI_OF", "Of");
+define("_formulize_DMULTI_OF", "of");
 define("_formulize_DMULTI_SKIP", "One or more pages was skipped because they don't apply");
 define("_formulize_DMULTI_ALLDONE", "Leave this form and continue browsing the site");
 define("_formulize_DMULTI_JUMPTO", "Jump to page:");

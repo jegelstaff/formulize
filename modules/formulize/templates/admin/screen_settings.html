@@ -18,25 +18,26 @@
 			<td colspan="2"> <legend>Settings for the Screen: <em><{$content.title}></em></legend> </td>
 		</tr>
 		<tr>
-			<div class="form-item">
+	  <div class="form-item">
 				<td width="30%"><label for="screens-title">Name of the screen:</label> </td>
 				<td> <input type="text" id="screens-title" name="screens-title" value="<{$content.title}>"/></td>
-			</div>
+	  </div>
 		</tr>
 		<tr>
-			<div class="form-item">
+	  <div class="form-item">
 				<td><label for="screens-type">What kind of screen is this:</label></td>
 				<td>
-					<select id="screens-type" size="1" name="screens-type"<{if $content.sid neq 'new'}> disabled<{/if}>>
-					<option value="listOfEntries"<{if $content.type eq 'listOfEntries'}> selected="selected"<{/if}>>List of entries</option>
-					<option value="form"<{if $content.type eq 'form'}> selected="selected"<{/if}>>Regular form</option>
-					<option value="multiPage"<{if $content.type eq 'multiPage'}> selected="selected"<{/if}>>Multi page form</option>
-					</select>
-					<{if $content.sid neq 'new'}>
-					<input type="hidden" name="screens-type" value="<{$content.type}>">
-					<{/if}>
+	    <select id="screens-type" size="1" name="screens-type"<{if $content.sid neq 'new'}> disabled<{/if}>>
+		    <option value="listOfEntries"<{if $content.type eq 'listOfEntries'}> selected="selected"<{/if}>>List of entries</option>
+		    <option value="form"<{if $content.type eq 'form'}> selected="selected"<{/if}>>Regular form</option>
+		    <option value="multiPage"<{if $content.type eq 'multiPage'}> selected="selected"<{/if}>>Multi page form</option>
+          <option value="template"<{if $content.type eq 'template'}> selected="selected"<{/if}>>Template</option>
+	    </select>
+			<{if $content.sid neq 'new'}>
+				<input type="hidden" name="screens-type" value="<{$content.type}>">
+			<{/if}>
 				</td>
-			</div>
+	  </div>
 		</tr>
 
 		<tr>
@@ -46,7 +47,7 @@
 			<td width="30%"><p>To give people access to this screen, send them to this URL:</p></td>
 			<td><blockquote><{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}></blockquote></td>
 		</tr>
-
+	
 		<tr>
 			<td colspan="2"><legend>PHP code for including this screen anywhere</legend></td>
 		</tr>
@@ -56,9 +57,9 @@
 		<tr>
 			<td width="30%">Use this snippet of PHP code to include it:</td>
 			<td>
-				<blockquote class="code">include_once "<{$smarty.const.XOOPS_ROOT_PATH}>/mainfile.php";<br/>
-					$formulize_screen_id = <{$content.sid}>;<br/>
-					include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockquote>
+		<blockquote class="code">include_once "<{$smarty.const.XOOPS_ROOT_PATH}>/mainfile.php";<br/>
+$formulize_screen_id = <{$content.sid}>;<br/>
+include "<{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/index.php";</blockquote>
 			</td>
 		</tr>
 
