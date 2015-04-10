@@ -5,26 +5,27 @@
 	// get a list of all applications
 	$allApps = $application_handler->getAllApplications();
 
-	if($aid == 0) {
-		$appName = _AM_APP_FORMWITHNOAPP; 
-	} else {
-		$appObject = $application_handler->get($aid);
-		$appName = $appObject->getVar('name');
-	}
-
-	// display breadcrumb trail
-	$breadcrumbtrail[1]['url'] = "page=home";
-	$breadcrumbtrail[1]['text'] = "Home";
-	$breadcrumbtrail[2]['url'] = "page=application&aid=$aid&tab=forms";
-	$breadcrumbtrail[2]['text'] = $appName;
-	$breadcrumbtrail[3]['text'] = "Export";
-	
-	$_GET['select'] = 'Export';
-
-	// output buffering to make sure that everything is in the right place on the page
 	ob_start();
-	include "../class/Export_Frontend_Backend.php";
-	$htmlContents = ob_get_clean();
-	$adminPage['htmlContents'] = $htmlContents;
-	$adminPage['template'] = "db:admin/export_template.html";
+	if (is_object($appObject = $application_handler->get($aid))){
+		
+		$appName = $appObject->getVar('name');
+		$breadcrumbtrail[1]['url'] = "page=home";
+		$breadcrumbtrail[1]['text'] = "Home";
+		$breadcrumbtrail[2]['url'] = "page=application&aid=$aid&tab=forms";
+		$breadcrumbtrail[2]['text'] = $appName;
+		$breadcrumbtrail[3]['text'] = "Export";
+		
+		$_GET['select'] = 'Export';
+
+		// output buffering to make sure that everything is in the right place on the page
+		include '../class/Export_Frontend.php';
+
+		}else{
+		
+			echo 'Not a valid APP ID';
+		}
+
+		$htmlContents = ob_get_clean();
+		$adminPage['htmlContents'] = $htmlContents;
+		$adminPage['template'] = "db:admin/export_template.html";
 ?>

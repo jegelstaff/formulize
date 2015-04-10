@@ -91,12 +91,10 @@ switch($active_page) {
 		break;
 	case "export":
 		// do export stuff
-		$_GET['aid'] = 1;
 		include "export.php";
 		break;
 	case "import":
 		// do import stuff
-		$_GET['aid'] = 1;
 		include "import.php";
 		break;
 	default:
