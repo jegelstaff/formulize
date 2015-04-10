@@ -334,7 +334,7 @@ class formulizeScreenHandler {
         $insert_sql = "INSERT INTO " . $this->db->prefix($tablename) . " (";
         $start = 1;
         foreach($getrow[0] as $field=>$value) {
-            if($field == "formid" OR $field == "listofentriesid" OR $field == "multipageid") { continue; }
+            if($field == "formid" OR $field == "listofentriesid" OR $field == "multipageid" OR $field == "templateid") { continue; }
             if(!$start) { $insert_sql .= ", "; }
             $start = 0;
             $insert_sql .= $field;
@@ -343,7 +343,7 @@ class formulizeScreenHandler {
         $start = 1;
 
         foreach($getrow[0] as $field=>$value) {
-            if($field == "formid" OR $field == "listofentriesid" OR $field == "multipageid") { continue; }
+            if($field == "formid" OR $field == "listofentriesid" OR $field == "multipageid" OR $field == "templateid") { continue; }
             if($field == "sid") { $value = $newsid; }
             if($field == "title") { $value = $newtitle; }
             if(!$start) { $insert_sql .= ", "; }

@@ -113,14 +113,14 @@ function getNavDataForForms($links) {
  * *application_forms_save.php uses this function means to delete menu links when deleting a form,this is just for making sure links to form get deleted
  * *forms.php also using this function because forms.php will internally delete some screen and other stuff with out using form_screens_save.php
  * *
- 
+
 function checkMenuLinks($aid){
     $application_handler = xoops_getmodulehandler('applications', 'formulize');
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
     $appLinks = $application_handler->getMenuLinksForApp($aid);
 
-    $menulinks=array(); 
+    $menulinks=array();
     $index = 0;
     foreach ($appLinks as $menulink){
         $menulinks[$index] = $menulink->getVar('screen');
@@ -139,7 +139,7 @@ function checkMenuLinks($aid){
             $screen_object=$screen_handler->get($sid);
             if($screen_object==null){
                 echo("sid= ".$sid." not found");
-                //$application_handler->deleteMenuLink($aid, $menuitem);  
+                //$application_handler->deleteMenuLink($aid, $menuitem);
             }else {
                 error_log("sid found");
             }

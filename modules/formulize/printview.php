@@ -183,7 +183,7 @@ if (! is_array($formframe) && $screenid && !$ele_allowed) {
         //  for readability when manually using the API, so we bump up all the numbers by one by adding
         //  something to the front of the array
         array_unshift($pages, "");
-        array_unshift($pagetitles, ""); 
+        array_unshift($pagetitles, "");
         unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
         unset($pagetitles[0]);
         $formframe['pagetitles'] = $pagetitles;
@@ -209,7 +209,7 @@ if (isset($GLOBALS['xoopsSecurity']) AND $useToken) {
     }
 }
 
-print "<center>"; 
+print "<center>";
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 print "<div id=\"formulize-printpreview\">";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
