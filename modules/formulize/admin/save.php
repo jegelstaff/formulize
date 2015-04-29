@@ -33,9 +33,9 @@ include_once "../../../mainfile.php";
 ob_end_clean();
 ob_end_clean(); // in some cases ther appear to be two buffers active?!  So we must try to end twice.
 global $xoopsUser;
-if(!$xoopsUser) {
-  print "Error: you are not logged in";
-  return;
+if (!$xoopsUser) {
+    print "Error: you are not logged in";
+    return;
 }
 $gperm_handler = xoops_gethandler('groupperm');
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
@@ -44,26 +44,30 @@ $mid = getFormulizeModId();
 $permissionToCheck = "module_admin";
 $itemToCheck = $mid;
 $moduleToCheck = 1; // system module
-if(!$gperm_handler->checkRight($permissionToCheck, $itemToCheck, $groups, $moduleToCheck)) {
-  print "Error: you do not have permission to save this data";
-  return;
+if (!$gperm_handler->checkRight($permissionToCheck, $itemToCheck, $groups, $moduleToCheck)) {
+    print "Error: you do not have permission to save this data";
+    return;
 }
 
 // process all the submitted form values, looking for ones that can be immediately assigned to objects
 $processedValues = array();
 foreach($_POST as $k=>$v) {
-  if(!strstr($k, "-")) { continue; } // ignore fields with no hyphen
-  list($class, $property) = explode("-", $k);
-  $v = recursive_stripslashes($v);
-  if(is_array($v) AND $class != "elements") { // elements class is written using cleanVars so arrays are serialized automagically
-    $v = serialize($v);
-  }
-  $processedValues[$class][$property] = $v;
+    if (!strstr($k, "-")) {
+        // ignore fields with no hyphen
+        continue;
+    }
+    list($class, $property) = explode("-", $k);
+    $v = recursive_stripslashes($v);
+    if (is_array($v) AND $class != "elements") {
+        // elements class is written using cleanVars so arrays are serialized automagically
+        $v = serialize($v);
+    }
+    $processedValues[$class][$property] = $v;
 }
 
 $popupSave = isset($_GET['popupsave']) ? "_popup" : "";
 
 // include the form-specific handler to invoke the necessary objects and insert them all in the DB
-if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save".$popupSave.".php")) {
-  include XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save".$popupSave.".php";
+if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save".$popupSave.".php")) {
+    include XOOPS_ROOT_PATH."/modules/formulize/admin/save/".str_replace(array("\\","/"),"", $_POST['formulize_admin_handler'])."_save".$popupSave.".php";
 }

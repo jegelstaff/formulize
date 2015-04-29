@@ -38,7 +38,7 @@ $apps = array();
 $foundForms = array();
 
 foreach($appObjects as $thisAppObject) {
-  $apps = readApplicationData($thisAppObject->getVar('appid'), $apps);
+    $apps = readApplicationData($thisAppObject->getVar('appid'), $apps);
 }
 $apps = readApplicationData(0,$apps); // lastly, get forms that don't have an application
 
@@ -54,64 +54,64 @@ $adminPage['template'] = "db:admin/home.html";
 $breadcrumbtrail[1]['text'] = "Home";
 
 function readApplicationData($aid, $apps) {
-  static $i = 1;
-  global $form_handler, $application_handler, $gperm_handler, $screen_handler, $xoopsUser;
-  $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-  if($aid == 0) {
-    $apps[$i]['name'] = _AM_APP_FORMWITHNOAPP;
-    $apps[$i]['content']['description'] = "";
-  } else {
-    $thisAppObject = $application_handler->get($aid);
-    $apps[$i]['name'] = "Application: ".$thisAppObject->getVar('name');
-    $apps[$i]['content']['description'] = $thisAppObject->getVar('description');
-  }
-  $apps[$i]['content']['aid'] = $aid;
-  $formObjects = $form_handler->getFormsByApplication($aid);
-  $x = 0;
-  foreach($formObjects as $thisFormObject) {
-    $fid = $thisFormObject->getVar('id_form');
-    // check if the user has edit permission on this form
-    if(!$gperm_handler->checkRight("edit_form", $fid, $groups, getFormulizeModId())) {
-      continue;
+    static $i = 1;
+    global $form_handler, $application_handler, $gperm_handler, $screen_handler, $xoopsUser;
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+    if ($aid == 0) {
+        $apps[$i]['name'] = _AM_APP_FORMWITHNOAPP;
+        $apps[$i]['content']['description'] = "";
+    } else {
+        $thisAppObject = $application_handler->get($aid);
+        $apps[$i]['name'] = "Application: ".$thisAppObject->getVar('name');
+        $apps[$i]['content']['description'] = $thisAppObject->getVar('description');
     }
-    $hasDelete = $gperm_handler->checkRight("delete_form", $fid, $groups, getFormulizeModId());
-    $apps[$i]['content']['forms'][$x]['fid'] = $fid;
-    $apps[$i]['content']['forms'][$x]['name'] = $thisFormObject->getVar('title');
-    $apps[$i]['content']['forms'][$x]['hasdelete'] = $hasDelete;
-    $apps[$i]['content']['forms'][$x]['lockedform'] = $thisFormObject->getVar('lockedform');
-    $apps[$i]['content']['forms'][$x]['istableform'] = $thisFormObject->getVar('tableform');
-    $defaultFormScreen = $thisFormObject->getVar('defaultform');
-    $defaultListScreen = $thisFormObject->getVar('defaultlist');
-    $defaultFormObject = $screen_handler->get($defaultFormScreen);
-    $defaultListObject = $screen_handler->get($defaultListScreen);
-    if(is_object($defaultFormObject)) {
-      $defaultFormName = $defaultFormObject->getVar('title');
-      $apps[$i]['content']['forms'][$x]['defaultformscreenid'] = $defaultFormScreen;
-      $apps[$i]['content']['forms'][$x]['defaultformscreenname'] = $defaultFormName;
+    $apps[$i]['content']['aid'] = $aid;
+    $formObjects = $form_handler->getFormsByApplication($aid);
+    $x = 0;
+    foreach($formObjects as $thisFormObject) {
+        $fid = $thisFormObject->getVar('id_form');
+        // check if the user has edit permission on this form
+        if (!$gperm_handler->checkRight("edit_form", $fid, $groups, getFormulizeModId())) {
+            continue;
+        }
+        $hasDelete = $gperm_handler->checkRight("delete_form", $fid, $groups, getFormulizeModId());
+        $apps[$i]['content']['forms'][$x]['fid'] = $fid;
+        $apps[$i]['content']['forms'][$x]['name'] = $thisFormObject->getVar('title');
+        $apps[$i]['content']['forms'][$x]['hasdelete'] = $hasDelete;
+        $apps[$i]['content']['forms'][$x]['lockedform'] = $thisFormObject->getVar('lockedform');
+        $apps[$i]['content']['forms'][$x]['istableform'] = $thisFormObject->getVar('tableform');
+        $defaultFormScreen = $thisFormObject->getVar('defaultform');
+        $defaultListScreen = $thisFormObject->getVar('defaultlist');
+        $defaultFormObject = $screen_handler->get($defaultFormScreen);
+        $defaultListObject = $screen_handler->get($defaultListScreen);
+        if (is_object($defaultFormObject)) {
+            $defaultFormName = $defaultFormObject->getVar('title');
+            $apps[$i]['content']['forms'][$x]['defaultformscreenid'] = $defaultFormScreen;
+            $apps[$i]['content']['forms'][$x]['defaultformscreenname'] = $defaultFormName;
+        }
+        if (is_object($defaultListObject)) {
+            $defaultListName = $defaultListObject->getVar('title');
+            $apps[$i]['content']['forms'][$x]['defaultlistscreenid'] = $defaultListScreen;
+            $apps[$i]['content']['forms'][$x]['defaultlistscreenname'] = $defaultListName;
+        }
+        $apps[$i]['content']['forms'][$x]['form'] = $thisFormObject;
+        $x++;
     }
-    if(is_object($defaultListObject)) {
-      $defaultListName = $defaultListObject->getVar('title');
-      $apps[$i]['content']['forms'][$x]['defaultlistscreenid'] = $defaultListScreen;
-      $apps[$i]['content']['forms'][$x]['defaultlistscreenname'] = $defaultListName;
+    $apps[$i]['header'] = '<span class="formulize-toolbar right-toolbar">';
+    if ($aid>0) {
+        $apps[$i]['header'] .= '<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=settings"><i class="icon-config"></i> Settings</a>';
     }
-    $apps[$i]['content']['forms'][$x]['form'] = $thisFormObject;
-    $x++;
-  }
-  $apps[$i]['header'] = '<span class="formulize-toolbar right-toolbar">';
-  if($aid>0) {
-    $apps[$i]['header'] .= '<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=settings"><i class="icon-config"></i> Settings</a>';
-  }
-  // menu entries link does not work!!  can't pass names with spaces?  
-  $apps[$i]['header'] .= '<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=forms"><i class="icon-form"></i> Forms</a>
-<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=screens"><i class="icon-screen"></i> Screens</a>
-<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=relationships"><i class="icon-connection"></i> Relationships</a>
-<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=menu%20entries"><i class="icon-menu"></i> Menu Entries</a>
-<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=export&aid='.$aid.'"><i class="icon-download"></i> Export (beta!)</a>
-<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=form&aid='.$aid.'&tab=settings&fid=new"><i class="icon-add"></i> Add a Form</a>';
-  if($aid>0) {
-    $apps[$i]['header'] .= '<a href="" class="deleteapplink" target="'.$aid.'"><i class="icon-delete"></i> Delete</a>';
-  }
-  $apps[$i]['header'] .= '</span>';
-  $i++;
-  return $apps;
+    // menu entries link does not work!!  can't pass names with spaces?
+    $apps[$i]['header'] .= '<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=forms"><i class="icon-form"></i> Forms</a>
+        <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=screens"><i class="icon-screen"></i> Screens</a>
+        <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=relationships"><i class="icon-connection"></i> Relationships</a>
+        <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=menu%20entries"><i class="icon-menu"></i> Menu Entries</a>
+        <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=export&aid='.$aid.'"><i class="icon-download"></i> Export (beta!)</a>
+        <a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=form&aid='.$aid.'&tab=settings&fid=new"><i class="icon-add"></i> Add a Form</a>';
+    if ($aid>0) {
+        $apps[$i]['header'] .= '<a href="" class="deleteapplink" target="'.$aid.'"><i class="icon-delete"></i> Delete</a>';
+    }
+    $apps[$i]['header'] .= '</span>';
+    $i++;
+    return $apps;
 }
