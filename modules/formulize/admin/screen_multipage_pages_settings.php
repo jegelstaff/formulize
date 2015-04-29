@@ -47,7 +47,7 @@ $pageIndex = intval($_GET['page']);
 $sid = intval($_GET['sid']);
 $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 $screen = $screen_handler->get($sid);
-if(!is_object($screen)) {
+if (!is_object($screen)) {
   return "Error: could not load information for the specified page";
 }
 
@@ -60,15 +60,15 @@ $options = multiPageScreen_addToOptionsList($fid, array());
 // add in elements from other forms in the framework, by looping through each link in the framework and checking if it is a display as one, one-to-one link
 // added March 20 2008, by jwe
 $frid = $screen->getVar("frid");
-if($frid) {
-		$framework_handler =& xoops_getModuleHandler('frameworks', 'formulize');
-		$frameworkObject = $framework_handler->get($frid);
-		foreach($frameworkObject->getVar("links") as $thisLinkObject) {
-				if($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
-						$thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
-						$options = multiPageScreen_addToOptionsList($thisFid, $options);
-				}
-		}
+if ($frid) {
+    $framework_handler =& xoops_getModuleHandler('frameworks', 'formulize');
+    $frameworkObject = $framework_handler->get($frid);
+    foreach($frameworkObject->getVar("links") as $thisLinkObject) {
+        if ($thisLinkObject->getVar("unifiedDisplay") AND $thisLinkObject->getVar("relationship") == 1) {
+            $thisFid = $thisLinkObject->getVar("form1") == $fid ? $thisLinkObject->getVar("form2") : $thisLinkObject->getVar("form1");
+            $options = multiPageScreen_addToOptionsList($thisFid, $options);
+        }
+    }
 }
 
 // get page titles
@@ -80,13 +80,13 @@ $pageTitle = $pageTitles[$pageIndex];
 $pageNumber = $pageIndex+1;
 $pageElements = $elements[$pageIndex];
 $filterSettingsToSend = count($conditions[$pageIndex] > 0) ? $conditions[$pageIndex] : "";
-  if(isset($filterSettingsToSend['details'])) { // if this is in the old format (pre-version 4, these conditions used a non-standard syntax), convert it!
+if (isset($filterSettingsToSend['details'])) { // if this is in the old format (pre-version 4, these conditions used a non-standard syntax), convert it!
     $newFilterSettingsToSend = array();
     $newFilterSettingsToSend[0] = $filterSettingsToSend['details']['elements'];
     $newFilterSettingsToSend[1] = $filterSettingsToSend['details']['ops'];
     $newFilterSettingsToSend[2] = $filterSettingsToSend['details']['terms'];
-    $filterSettingsToSend = $newFilterSettingsToSend;      
-  }
+    $filterSettingsToSend = $newFilterSettingsToSend;
+}
 $pageConditions = formulize_createFilterUI($filterSettingsToSend, "pagefilter_".$pageIndex, $screen->getVar('fid'), "popupform");
 
 $xoopsTpl->assign("pageTitle",$pageTitle);
