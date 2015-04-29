@@ -35,71 +35,58 @@ include_once "formindex.php";
 
 ob_start();
 
-if(isset($_GET['op'])) {
-
-  switch($_GET['op']) {
-    case "delete":
-      deleteForm($_GET['fid']);
-      break;
-    // patch ops are only in formindex.php, must be called by going to that URL with the patch op in the URL as a param
-    case "patch40":
-    case "patchDB";
-      patch40();
-      break;
-    case "patch31":
-      patch31();
-      break;
-    case "patch22convertdata":
-      patch22convertdata();
-      break;
-    case "patch30datastructure":
-      patch30DataStructure();
-      break;
-    case "patchEmptyFormScreens":
-      patchEmptyFormScreens();
-      break;      
-   
-  }
-  
+if (isset($_GET['op'])) {
+    switch($_GET['op']) {
+        case "delete":
+            deleteForm($_GET['fid']);
+            break;
+        // patch ops are only in formindex.php, must be called by going to that URL with the patch op in the URL as a param
+        case "patch40":
+        case "patchDB";
+            patch40();
+            break;
+        case "patch31":
+            patch31();
+            break;
+        case "patch22convertdata":
+            patch22convertdata();
+            break;
+        case "patch30datastructure":
+            patch30DataStructure();
+            break;
+        case "patchEmptyFormScreens":
+            patchEmptyFormScreens();
+            break;
+    }
 } else {
-  patch40(); // do this which will double check if the user needs to apply a DB patch or not!!
+    patch40(); // do this which will double check if the user needs to apply a DB patch or not!!
 }
 
 $xoopsTpl->assign('opResults', ob_get_clean());
 
 
 function deleteForm($fid) {
+    global $xoopsDB, $myts, $eh;
+    global $xoopsUser, $xoopsModule;
 
-  $gperm_handler = &xoops_gethandler('groupperm');
-	global $xoopsUser, $xoopsModule;
-  $module_id = $xoopsModule->getVar('mid'); 
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-		if(!$gperm_handler->checkRight("delete_form", $fid, $groups, $module_id)) {
-		return; 
-	}
+    $gperm_handler = &xoops_gethandler('groupperm');
+    $module_id = $xoopsModule->getVar('mid');
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+    if (!$gperm_handler->checkRight("delete_form", $fid, $groups, $module_id)) {
+        return;
+    }
 
-	global $xoopsDB, $myts, $eh;
-        
-        $form_handler = xoops_getmodulehandler('forms', 'formulize');
-        $form_handler->dropDataTable($fid);
-        
-	$sql = sprintf("DELETE FROM %s WHERE id_form = '%s'", $xoopsDB->prefix("formulize_id"), $fid);
-	$xoopsDB->queryF($sql) or $eh->show("error supression 1 dans delform");
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $form_handler->dropDataTable($fid);
 
-	$sql = sprintf("DELETE FROM %s WHERE id_form = '%u'", $xoopsDB->prefix("formulize"), $fid);
-	$xoopsDB->queryF($sql) or $eh->show("error supression 2 dans delform");
+    $sql = sprintf("DELETE FROM %s WHERE id_form = '%s'", $xoopsDB->prefix("formulize_id"), $fid);
+    $xoopsDB->queryF($sql) or $eh->show("error supression 1 dans delform");
 
-	$sql = sprintf("DELETE FROM %s WHERE itemname = '%s'", $xoopsDB->prefix("formulize_menu"), $fid);
-	$xoopsDB->queryF($sql) or $eh->show("error supression 3 dans delform");
+    $sql = sprintf("DELETE FROM %s WHERE id_form = '%u'", $xoopsDB->prefix("formulize"), $fid);
+    $xoopsDB->queryF($sql) or $eh->show("error supression 2 dans delform");
 
+    $sql = sprintf("DELETE FROM %s WHERE itemname = '%s'", $xoopsDB->prefix("formulize_menu"), $fid);
+    $xoopsDB->queryF($sql) or $eh->show("error supression 3 dans delform");
 
-// PERMISSION DELETION NOT OPERATING PROPERLY RIGHT NOW	
-/*	$perms = getFormulizePerms();
-	foreach($perms as $perm_name) {
-		xoops_groupperm_deletebymoditem ($module_id,$perm_name,$id_form) ;
-	}
-*/
-  
-	xoops_notification_deletebyitem ($module_id, "form", $id_form); // added by jwe-10/10/04 to handle removing notifications for a form once it's gone
-
+    xoops_notification_deletebyitem ($module_id, "form", $id_form); // added by jwe-10/10/04 to handle removing notifications for a form once it's gone
 }

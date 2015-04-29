@@ -32,9 +32,9 @@
 include_once "../../../mainfile.php";
 ob_end_clean(); // in some cases ther appear to be two buffers active?!  So we must try to end twice.
 global $xoopsUser;
-if(!$xoopsUser) {
-  print "Error: you are not logged in";
-  return;
+if (!$xoopsUser) {
+    print "Error: you are not logged in";
+    return;
 }
 $gperm_handler = xoops_gethandler('groupperm');
 include_once XOOPS_ROOT_PATH . "/modules/formulizSe/include/functions.php";
@@ -45,13 +45,13 @@ $mid = getFormulizeModId();
 $permissionToCheck = "module_admin";
 $itemToCheck = $mid;
 $moduleToCheck = 1; // system module
-if(!$gperm_handler->checkRight($permissionToCheck, $itemToCheck, $groups, $moduleToCheck)) {
-  print "Error: you do not have permission to save this data";
-  return;
+if (!$gperm_handler->checkRight($permissionToCheck, $itemToCheck, $groups, $moduleToCheck)) {
+    print "Error: you do not have permission to save this data";
+    return;
 }
 
 $formulizeForm = new formulizeForm();
 error_log(method_exists($formulizeForm, "checkFormOwnership"));
 
-$n=$formulizeForm->checkFormOwnership($_POST['form_id'],$_POST['form_handle']);
+$n = $formulizeForm->checkFormOwnership($_POST['form_id'], $_POST['form_handle']);
 echo "found and fixed ". $n . " ownership problems in your form";
