@@ -1207,7 +1207,7 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
 }
 
 
-// THIS FUNCTION CREATES AN EXPORT FILE ON THE SERVER AND RETURNS THE FILESNAME
+// THIS FUNCTION CREATES AN EXPORT FILE ON THE SERVER AND RETURNS THE FILENAME
 // $headers is the list of column headings in use
 // $cols is the list of handles in the $data to use to get all the data for display, must be in synch with headers
 // $data is the full dataset that is being prepped
