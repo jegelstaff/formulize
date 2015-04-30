@@ -1,16 +1,16 @@
 
     <div class="form-item">
-	<fieldset>
-		<legend><{$smarty.const._AM_ELE_SUBFORM_FORM}></legend>
-	    <select id="element-subform" name="elements-ele_value[0]" size="1">
+    <fieldset>
+        <legend><{$smarty.const._AM_ELE_SUBFORM_FORM}></legend>
+        <select id="element-subform" name="elements-ele_value[0]" size="1">
         <{html_options options=$content.subforms selected=$content.ele_value[0]}>
-	    </select>
-	    <div class="description">
-		    <{$smarty.const._AM_ELE_SUBFORM_DESC}>
-	    </div>
-	</fieldset>
+        </select>
+        <div class="description">
+            <{$smarty.const._AM_ELE_SUBFORM_DESC}>
+        </div>
+    </fieldset>
     </div>
-    
+
     <div class="form-item">
 	<fieldset>
 		<legend>User interface options</legend>
@@ -25,7 +25,7 @@
 		</div>
 
         <div class="form-item">
-            <p>Show the "Add x Entries" button below the list of subform entries?</p>
+            <p>Show the button to add entries?</p>
             <div class="description">The "Add x Entries" button lets users create additional entries in the subform.</div>
             <div class="form-radios">
                 <label for="elements-ele_value[6]-subform"><input type="radio" id="elements-ele_value[6]-subform" name="elements-ele_value[6]" value="subform"<{if $content.ele_value[6] eq 'subform' OR $content.ele_value[6] eq '1'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_SUBFORM}></label>
@@ -38,9 +38,19 @@
             </div>
         </div>
 
-        <div class="form-item">
-            <p>What text should be used to describe each entry? ie: Add x Entries, Add x Participants, Add x Activities, etc.<br />
-            &nbsp;&nbsp;&nbsp;Add x <input type="text" name="elements-ele_value[9]" value="<{if $content.ele_value[9]}><{$content.ele_value[9]}><{else}><{$smarty.const._formulize_ADD_ENTRIES}><{/if}>" /></p>
+        <div class="form-item" id="add-button-appearance">
+            <p>If the button for adding entries is shown, how should it look?</p><br />
+            <div class="form-radios">
+                <label for="elements-ele_value[simple_add_one_button]"><input type="radio" id="elements-ele_value[simple_add_one_button]" name="elements-ele_value[simple_add_one_button]" value="1"<{if $content.ele_value.simple_add_one_button eq 1}> checked="checked"<{/if}>/><{$smarty.const._formulize_SUBFORM_SIMPLE_BUTTON}></label>
+                <p style="margin-left:2em;"><{$smarty.const._formulize_SUBFORM_SIMPLE_LABEL}><br />
+                &nbsp;&nbsp;&nbsp;<input type="text" name="elements-ele_value[simple_add_one_button_text]" value="<{if $content.ele_value.simple_add_one_button_text}><{$content.ele_value.simple_add_one_button_text}><{else}>Add One<{/if}>" /></p>
+            </div>
+            <br />
+            <div class="form-radios">
+                <label for="elements-ele_value[simple_add_one_button]-no"><input type="radio" id="elements-ele_value[simple_add_one_button]-no" name="elements-ele_value[simple_add_one_button]" value="0"<{if $content.ele_value.simple_add_one_button eq 0}> checked="checked"<{/if}>/><{$smarty.const._formulize_SUBFORM_MULTIPLE_BUTTON}></label>
+                <p style="margin-left:2em;"><{$smarty.const._formulize_SUBFORM_MULTIPLE_LABEL}><br />
+                &nbsp;&nbsp;&nbsp;Add x <input type="text" name="elements-ele_value[9]" value="<{if $content.ele_value[9]}><{$content.ele_value[9]}><{else}><{$smarty.const._formulize_ADD_ENTRIES}><{/if}>" /></p>
+            </div>
         </div>
 	</fieldset>
     </div>
@@ -81,7 +91,19 @@
 			
 			    
 			    </fieldset>
-			    </div>		
+			    </div>
+
+    <div class="form-item">
+        <fieldset>
+            <legend><{$smarty.const._AM_ELE_SUBFORM_IFFORM}></legend>
+	    <p><{$smarty.const._AM_ELE_SUBFORM_SCREEN}></p>
+            <select id="element-subform" name="elements-ele_value[display_screen]" size="1">
+                <{html_options options=$content.subform_screens selected=$content.ele_value.display_screen}>
+            </select>
+        </fieldset>
+    </div>
+
+
     
 
 <div class="form-item">
@@ -148,6 +170,5 @@ By default, all entries in a subform that are tied to the main form will be acce
 	  $(".savebutton").click();
 		return false;
 	});
-
 
 </script>

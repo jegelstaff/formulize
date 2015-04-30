@@ -1,5 +1,5 @@
 <?php
-/*mod Language for admin side, by François T*/
+/*mod Language for admin side, by Franï¿½ois T*/
 
 /*mod Language for applications*/
 define("_AM_APP_APPLICATION","Application: ");
@@ -7,6 +7,7 @@ define("_AM_APP_SETTINGS","Settings");
 define("_AM_APP_FORMS","Forms");
 define("_AM_APP_FORM","Form: ");
 define("_AM_APP_RELATIONSHIPS_CREATE"," Create a new relationship");
+define("_AM_APP_RELATIONSHIPS_MANAGE"," Manage existing relationships");
 define("_AM_APP_RELATIONSHIPS_DELETE_CONFIRM","Are you sure you want to delete this relationship, and all its links?");
 define("_AM_APP_RELATIONSHIPS","Relationships");
 define("_AM_APP_FORMWITHNOAPP","Forms that don't belong to an application");
@@ -80,9 +81,9 @@ define("_AM_FORM_CREATE_EXPLAIN","To assign a form to an application, look on th
 define("_AM_FORM_SCREEN","Screen: ");
 define("_AM_FORM_SCREEN_TEXT","Text");
 define("_AM_FORM_SCREEN_PAGES","Pages");
-define("_AM_FORM_SCREEN_ENTRIES_DISPLAY","Entries to display");
-define("_AM_FORM_SCREEN_HEADINGS_INTERFACE","Headings and Interface");
-define("_AM_FORM_SCREEN_ACTION_BUTTONS","Action Buttons");
+define("_AM_FORM_SCREEN_ENTRIES_DISPLAY","Entries");
+define("_AM_FORM_SCREEN_HEADINGS_INTERFACE","Interface");
+define("_AM_FORM_SCREEN_ACTION_BUTTONS","Buttons");
 define("_AM_FORM_SCREEN_CUSTOM_BUTTONS","Custom buttons");
 define("_AM_FORM_SCREEN_TEMPLATES","Templates");
 define("_AM_SETTINGS_FORM_TITLE_QUESTION","What is the name of the form?");
@@ -106,6 +107,7 @@ define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have
 
 /*mod Language for permissions*/
 define("_AM_PERMISSIONS_CHOOSE_GROUPS","Which groups do you want to set permissions for?");
+define("_AM_PERMISSIONS_SHOW_PERMS_FOR_GROUPS", "Show permissions for these groups");
 define("_AM_PERMISSIONS_LIST_GROUPS","List groups alphabetically or in creation order?");
 define("_AM_PERMISSIONS_LIST_ALPHA","Alphabetical");
 define("_AM_PERMISSIONS_LIST_CREATION","Creation order");
@@ -147,6 +149,7 @@ define("_AM_PERMISSIONS_ADVANCED_CREATEFOROTHER","Create entries on behalf of ot
 define("_AM_PERMISSIONS_ADVANCED_CHANGEOWNER","Change the owner/creator of an existing entry");
 define("_AM_PERMISSIONS_ADVANCED_ALTER","Alter this form's configuration settings");
 define("_AM_PERMISSIONS_ADVANCED_DELETEFORM","Delete this form");
+define("_AM_PERMISSIONS_REVIEW_PERMISSIONS","Review permissions for a user");
 
 /*mod Language for procedures*/
 define("_AM_CALC_EXPLAIN","let you create a series of queries and logical steps, that get carried out on the data that users have submitted in the form.  You can use Procedures for advanced, multi-step calculations, or any other situation where a single query or single operation is not enough to get to the outcome you want.");
@@ -168,32 +171,11 @@ define("_AM_SCREEN_CREATE"," Create a new Screen");
 define("_AM_SCREEN_FORMSCREENS","Form Screens");
 define("_AM_SCREEN_LISTSCREENS","List Screens");
 define("_AM_SCREEN_GRAPHSCREENS","Graph Screens");
+define("_AM_SCREEN_TEMPLATESCREENS","Template Screens");
 define("_AM_SCREEN_DELETESCREENS","Are you sure you want to delete this screen? All configuration settings for this screen will be lost!");
+define("_AM_SCREEN_RELATIONWARNING", "Note: This screen uses a different relationship setting than one or more list screens.");
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*End mod Language for admin side, by François T*/
+/*End mod Language for admin side, by FranÃ§ois T*/
 
 // Admin
 define("_FORM_RENAME_TEXT", "Rename this form");
@@ -207,13 +189,13 @@ define("_FORM_LOCK", "Prevent anyone from editing this form again");
 define("_AM_CONFIRM_LOCK", "If you lockdown this form, then no one, not even you, will be able to make any changes to the form or its elements.  Are you sure you want to lockdown this form?");
 define("_formulize_FORMLOCK", "This form has now been locked.  No further changes to this form will be possible.");
 define("_formulize_FORMLOCK_FAILED", "There was an error and Formulize could not lock this form.");
-define("_FORM_NUM_ENTRIES_ANON_HELP", "<b>About Anonymous Users:</b> Formulize determines entry ownership based on a user's id number, and all Anonymous Users are viewed as \"User Number 0\".  Therefore, \"One entry per user\" does not really work for anonymous users in most cases, since everyone who is not logged in will share the same entry, because they all share the same id number, 0.<br><br>Also, \"More than one entry per user\" will behave differently for Anonymous Users, since all the entries created by anyone who isn't logged in, will all belong to \"user 0\", so everyone who is not logged in, will be treated as the same person.<br><br>Formulize is designed primarily for use in a website with a strict set of usernames and groups of users, but there are ways around these issues, in some cases using the API.  Post to the <a href=\"http://www.freeformsolutions.ca/en/forums\">support forums</a> for more information.");  
+define("_FORM_NUM_ENTRIES_ANON_HELP", "<b>About Anonymous Users:</b> Formulize determines entry ownership based on a user's id number, and all Anonymous Users are viewed as \"User Number 0\".  Therefore, \"One entry per user\" does not really work for anonymous users in most cases, since everyone who is not logged in will share the same entry, because they all share the same id number, 0.<br><br>Also, \"More than one entry per user\" will behave differently for Anonymous Users, since all the entries created by anyone who isn't logged in, will all belong to \"user 0\", so everyone who is not logged in, will be treated as the same person.<br><br>Formulize is designed primarily for use in a website with a strict set of usernames and groups of users, but there are ways around these issues, in some cases using the API.  Post to the <a href=\"http://www.freeformsolutions.ca/en/forums\">support forums</a> for more information.");
 
 define("_AM_FORCE_GROUPSCOPE_HELP", "If view_groupscope is selected, you can pick specific groups it should apply to.  If none are selected, then when a list of entries is shown to a user, groupscope will apply to the groups they are a member of, which also have view_form permission.");
 define("_AM_FORCE_GROUPSCOPE_INTRO", "Use specific groups for groupscope?");
 
 define("_AM_PER_GROUP_FILTER_INTRO", "Filter the entries this group can see in this form?");
-       
+
 define("_AM_SAVE","Save");
 define("_AM_COPIED","%s copy");
 define("_AM_DBUPDATED","Database Updated Successfully!");
@@ -270,6 +252,9 @@ define("_AM_ELE_SEP","Break up line");
 define("_AM_ELE_NOM_SEP","Break up name");
 define("_AM_ELE_UPLOAD","Join a file");
 define("_AM_ELE_CLR","with the color");
+define("_AM_ELE_PLACEHOLDER_DESC","How do you want to use the default value?");
+define("_AM_ELE_NO_PLACEHOLDER","Add it to the text box when the form loads, it will be saved as-is if the user leaves it alone");
+define("_AM_ELE_PLACEHOLDER_OPTION","Show it as an example in the text box, but don't save it if the form is submitted");
 
 // number options for textboxes
 define("_AM_ELE_NUMBER_OPTS","If a number is typed...");
@@ -294,8 +279,13 @@ define("_AM_ELE_TYPE_NUMBER","Numbers Only");
 
 define("_AM_ELE_SIZE","Size");
 define("_AM_ELE_MAX_LENGTH","Maximum length");
+define("_AM_ELE_MAX_VALUE","Maximum value");
+define("_AM_ELE_MIN_VALUE","Minimum value");
+define("_AM_ELE_STEPSIZE","Slider step size");
 define("_AM_ELE_ROWS","Rows");
 define("_AM_ELE_COLS","Columns");
+define("_AM_ELE_USERICHTEXT","Display this element using a Rich Text Editor");
+define("_AM_ELE_RICHTEXT_DESC","This option provides a full editor interface in the textbox, with font sizes and bold, etc, instead of just a simple box. You can control which editor is used on <a href='../../system/admin.php?fct=preferences&op=show&confcat_id=1' target='_blank'>the General Settings page</a>");
 define("_AM_ELE_OPT","Options");
 define("_AM_ELE_OPT_DESC","Setting a single option of '{FULLNAMES}' or '{USERNAMES}' will produce a list of users based on the group limits set below.<br /><br />Tick the check boxes for selecting default values");
 define("_AM_ELE_OPT_DESC_CHECKBOXES","Tick the check boxes for selecting default values<br>Boxes with no text in them will be ignored when you click <i>Save</i>");
@@ -347,12 +337,14 @@ define("_AM_ELE_FORMLINK_SCOPEFILTER_ALL", "No filter in effect (select this to 
 define("_AM_ELE_FORMLINK_SCOPEFILTER_CON", "Filter the options based on this/these conditions:");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_ADDCON", "Add another condition");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_REFRESHHINT", "(If the first list here is empty, click the 'Add another condition' button to refresh it.)");
-       
-       
-  
+
+
+
 
 // subforms
 define("_AM_ELE_SUBFORM_FORM", "Which form do you want to include as a subform?");
+define("_AM_ELE_SUBFORM_IFFORM", "If the subform entries are shown in a full form:");
+define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each entry?");
 define("_AM_ELE_SUBFORM", "Subform (from a form framework)");
 define("_AM_ELE_SUBFORM_DESC", "When you display the current form as part of a framework, the subform interface can be included in the form.  The subform interface allows users to create and modify entries in a related subform without leaving the main form.  The list here shows all the possible subforms from all frameworks that this form is part of.");
 define("_AM_ELE_SUBFORM_NONE", "No subforms available - define a framework first");
@@ -576,6 +568,7 @@ define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES_HELP", "<p>The following variab
 <li>\$totalPages</li>
 <li>\$nextPageButton</li>
 <li>\$previousPageButton</li>
+<li>\$savePageButton &mdash; does not change the current page when clicked</li>
 <li>\$pageSelectionList &mdash; draws in the dropdown list for jumping to another page</li>
 <li>\$skippedPagesMessage &mdash; the message saying one or more pages were skipped, it will be an empty string is no pages were skipped</li>
 </ul>
@@ -775,12 +768,20 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE", "Replace t
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE", "Remove the specified value from the current value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND", "Append the specified value to the end of the current value");
 
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DESC_TEMPLATE", "Enter Smarty html template code here.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DESC_CUSTOM_CODE", "Enter PHP code here. Any variables defined in this code will be available in the Smarty template.");
+
+
 define("_AM_FORMULIZE_CLONING_TITLE", "Cloning options");
 define("_AM_FORMULIZE_CLONING_FOUND_ELEMENTS", "After cloning, the following linked selectboxes in this form can be relinked to source elements in these other recently cloned forms:");
 define("_AM_FORMULIZE_CLONING_CANBELINKEDTO", "can be linked to:");
 define("_AM_FORMULIZE_CLONING_NOCHANGE", "keep it linked to its current source");
 
+define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK", "Show the default value for this element:");
+define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC", "For example, showing defaults when the saved value is blank can be useful on multipage forms, if later pages have elements which should still use the default value, even though the user has saved the entry after the first page.<br><b>Note</b> that required elements are always treated as if this option is turned on regardless, since required elements should never have empty/blank values.");
+define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW", "Only for new entries");
+define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK", "For any entry, when the saved value is blank");
+
 // Graph Screen Definitions
 define("_AM_GRAPH_SCREEN_OPTIONS", "Graph Options");
 define("_AM_GRAPH_SCREEN_CASES", "Graph Cases");
-?>

@@ -73,10 +73,10 @@ Calendar.setup = function (params) {
 	param_default("disableFunc",     null);
 	param_default("dateStatusFunc",  params["disableFunc"]);	// takes precedence if both are defined
 	param_default("dateText",        null);
-	param_default("firstDay",        null);
+	param_default("firstDay",        0);
 	param_default("align",           "Br");
 	param_default("range",           [1000, 3000]);
-	param_default("weekNumbers",     true);
+	param_default("weekNumbers",     false);
 	param_default("flat",            null);
 	param_default("flatCallback",    null);
 	param_default("onSelect",        null);

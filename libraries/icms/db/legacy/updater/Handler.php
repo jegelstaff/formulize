@@ -88,7 +88,7 @@ class icms_db_legacy_updater_Handler {
 	 * @return bool true if success, false if an error occured
 	 *
 	 */
-	function runQuery($query, $goodmsg, $badmsg, $force=false) {
+	function runQuery($query, $goodmsg = "", $badmsg = "", $force = false) {
 		if ($force) {
 			$ret = $this->_db->queryF($query);
 		} else {

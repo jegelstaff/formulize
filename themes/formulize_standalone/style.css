@@ -1,6 +1,6 @@
 html, body {
-  background: white;
-  color: black;
+  background: #ffffff;
+  color: #000;
   margin: 0;
   padding: 0;
   font-family: Verdana, Arial, Helvetica, sans-serif;
@@ -20,7 +20,7 @@ img {
   border: 0; }
 
 a {
-  color: #8fbe58;
+  color: #8fBe58;
   text-decoration: none;
   font-weight: bold; }
 
@@ -49,7 +49,7 @@ h6 {
   color: #F3AC03;
   font-weight: bold;
   padding-bottom: 3px;
-  border-bottom: 1px dashed #8dbde1; }
+  border-bottom: 1px dashed #8DBDE1; }
 
 /* ---------- Column left/right rules ---------- */
 /* ------ Main content ------ */
@@ -57,13 +57,13 @@ h6 {
   line-height: 1.3em; }
 
 /* lists */
-#xo-canvas-content ul {
+ul {
   margin: 5px;
   padding: 2px;
   list-style: decimal inside;
   text-align: left; }
 
-#xo-canvas-content li {
+li {
   margin-left: 5px;
   color: #000;
   background-color: inherit;
@@ -85,7 +85,7 @@ h6 {
   border-top: 5px solid #82bcde; }
 
 #xo-footer a {
-  color: white; }
+  color: #fff; }
 
 #xo-footer a:hover {
   color: #cccccc; }
@@ -93,8 +93,8 @@ h6 {
 /* ---------- Module display rules ---------- */
 #xo-content {
   padding: 5px;
-  background-color: white;
-  color: black;
+  background-color: #ffffff;
+  color: #000;
   border-radius: 3px;
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px; }
@@ -111,7 +111,7 @@ h6 {
   font-weight: bold;
   padding: 10px;
   text-align: center;
-  border: 2px solid #ddddff; }
+  border: 2px solid #DDDDFF; }
 
 /* ---------- Site close ------------ */
 #xo-siteclose-login {
@@ -126,12 +126,12 @@ h6 {
   padding: 2px;
   margin: 0px;
   text-align: center;
-  border: 1px solid #ddddff; }
+  border: 1px solid #DDDDFF; }
 
 #xo-siteclose-login form {
   padding: 5px 0;
   margin: 0;
-  border: 1px solid #ddddff;
+  border: 1px solid #DDDDFF;
   text-align: center; }
 
 #xo-siteclose-login input {
@@ -154,15 +154,15 @@ h6 {
   clear: both;
   height: 90px;
   position: relative;
-  background-color: white;
+  background-color: #ffffff;
   margin-left: 0px;
   margin-right: 0px;
   border-bottom: 10px solid #e6e6e6;
-  background: -webkit-linear-gradient(top, white, #fafafa);
-  background: -moz-linear-gradient(top, white, #fafafa);
-  background: -ms-linear-gradient(top, white, #fafafa);
-  background: -o-linear-gradient(top, white, #fafafa);
-  background: linear-gradient(to bottom, white, #fafafa); }
+  background: -webkit-linear-gradient(top, #ffffff, #fafafa);
+  background: -moz-linear-gradient(top, #ffffff, #fafafa);
+  background: -ms-linear-gradient(top, #ffffff, #fafafa);
+  background: -o-linear-gradient(top, #ffffff, #fafafa);
+  background: linear-gradient(to bottom, #ffffff, #fafafa); }
 
 #xo-headerlogo {
   float: left;
@@ -189,7 +189,7 @@ h6 {
   background: -ms-linear-gradient(top, #59a7d4, #3391c7);
   background: -o-linear-gradient(top, #59a7d4, #3391c7);
   background: linear-gradient(to bottom, #59a7d4, #3391c7);
-  color: white;
+  color: #fff;
   font-weight: normal;
   padding: 0.5em 0.75em;
   margin: 0 0.25em;
@@ -201,8 +201,7 @@ h6 {
 #xo-canvas {
   float: right;
   width: 100%;
-  min-height: 100%;
-  margin-bottom: -19px; }
+  min-height: calc(100% - 19px); }
 
 #xo-canvas-content {
   margin-left: 30px;
@@ -276,7 +275,6 @@ h6 {
   width: 30.6%; }
 
 #xo-content {
-  position: relative;
   clear: both; }
 
 /* ------ Left column / Right column content------ */
@@ -288,7 +286,7 @@ h6 {
   text-align: left; }
 
 #xo-canvas-leftcolumn .xo-blocktitle h3 {
-  color: #8fbe58;
+  color: #8fBe58;
   font-weight: bold;
   font-size: larger;
   margin: 0;
@@ -299,7 +297,7 @@ h6 {
   text-align: right; }
 
 #xo-canvas-rightcolumn .xo-blocktitle h3 {
-  color: #8fbe58;
+  color: #8fBe58;
   font-weight: bold;
   font-size: larger;
   margin: 0;
@@ -314,18 +312,18 @@ h6 {
 
 /* ------ Center column content ------ */
 #xo-page th {
-  color: black; }
+  color: #000; }
 
 #xo-page .xo-block {
   margin-bottom: 5px; }
 
 #xo-page .xo-blocktitle {
   padding: .2em;
-  margin: 0 0.5em;
+  margin: 0 .5em;
   text-align: center; }
 
 #xo-page .xo-blocktitle h3 {
-  color: black;
+  color: #000;
   font-weight: bold;
   padding: 0;
   margin: 0; }
@@ -333,7 +331,7 @@ h6 {
 #xo-page .xo-blockcontent {
   padding: .5em;
   background-color: #F2F2F2;
-  border-top: 4px solid #f3ac03; }
+  border-top: 4px solid #F3AC03; }
 
 /* Start Main Menu */
 #mainmenu {
@@ -343,7 +341,7 @@ h6 {
   display: block;
   margin: 0;
   padding: 4px;
-  color: #8fbe58; }
+  color: #8fBe58; }
 
 #mainmenu a:hover {
   color: #689138; }
@@ -356,10 +354,10 @@ h6 {
 
 #mainmenu a.menuSub {
   padding-left: 17px;
-  color: #8fbe58; }
+  color: #8fBe58; }
 
 #mainmenu a.menuSub:hover {
-  color: #8fbe58; }
+  color: #8fBe58; }
 
 /* End Main Menu */
 /* Start User Menu */
@@ -367,19 +365,19 @@ h6 {
   font-size: .8em; }
 
 #usermenu a {
-  color: #8fbe58;
+  color: #8fBe58;
   display: block;
   margin: 0;
   padding: 4px;
-  border-right: 1px solid #666666;
-  border-bottom: 1px solid #666666;
-  border-left: 1px solid #cccccc; }
+  border-right: 1px solid #666;
+  border-bottom: 1px solid #666;
+  border-left: 1px solid #ccc; }
 
 #usermenu a:hover {
   color: #689138; }
 
 #usermenu a.menuTop {
-  border-top: 1px solid #cccccc; }
+  border-top: 1px solid #ccc; }
 
 #usermenu a.highlight {
   background-color: #fcc;
@@ -396,8 +394,8 @@ table td {
   vertical-align: top; }
 
 th {
-  background-color: white;
-  color: black;
+  background-color: #ffffff;
+  color: #000;
   padding: 2px;
   vertical-align: middle; }
 
@@ -409,28 +407,31 @@ th {
 
 td.head {
   background-color: #59a7d4;
-  color: white;
+  color: #fff;
   font-weight: bold;
   padding: 0.5em 1em 0.5em 0.4em; }
 
+td.head a {
+  color: #fff; }
+
 .even, tr.even td {
-  background-color: white;
-  color: black;
+  background-color: #ffffff;
+  color: #000;
   padding: 5px; }
 
 .odd, tr.odd td {
   background-color: #e6e6e6;
-  color: black;
+  color: #000;
   padding: 5px; }
 
 .foot {
-  background-color: white;
+  background-color: #ffffff;
   color: inherit;
   padding: 5px;
   font-weight: bold; }
 
 th {
-  background-color: white !important;
+  background-color: #ffffff !important;
   /* TODO: why important?? */ }
 
 /* core messages */
@@ -438,10 +439,10 @@ th {
   background-color: #FFCCCC;
   color: inherit;
   text-align: center;
-  border-top: 1px solid #ddddff;
-  border-left: 1px solid #ddddff;
-  border-right: 1px solid #aaaaaa;
-  border-bottom: 1px solid #aaaaaa;
+  border-top: 1px solid #DDDDFF;
+  border-left: 1px solid #DDDDFF;
+  border-right: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
   font-weight: bold;
   padding: 10px; }
 
@@ -449,10 +450,10 @@ th {
   background-color: #DDFFDF;
   color: #136C99;
   text-align: center;
-  border-top: 1px solid #ddddff;
-  border-left: 1px solid #ddddff;
-  border-right: 1px solid #aaaaaa;
-  border-bottom: 1px solid #aaaaaa;
+  border-top: 1px solid #DDDDFF;
+  border-left: 1px solid #DDDDFF;
+  border-right: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
   font-weight: bold;
   padding: 10px; }
 
@@ -460,18 +461,18 @@ th {
   background-color: #bbb;
   color: #333;
   text-align: center;
-  border-top: 1px solid #cccccc;
-  border-left: 1px solid #cccccc;
+  border-top: 1px solid #ccc;
+  border-left: 1px solid #ccc;
   font-weight: bold;
-  border-right: 1px solid #666666;
-  border-bottom: 1px solid #666666;
+  border-right: 1px solid #666;
+  border-bottom: 1px solid #666;
   padding: 10px; }
 
 /* codes and quotes */
 .xoopsCode {
   background-color: #fff;
   color: inherit;
-  border: 1px inset navy;
+  border: 1px inset #000080;
   font-family: "Courier New",Courier,monospace;
   padding: 0 6px 6px 6px;
   max-height: 200px;
@@ -480,7 +481,7 @@ th {
 .xoopsQuote {
   background-color: #fff;
   color: inherit;
-  border: 1px inset navy;
+  border: 1px inset #000080;
   font-family: "Courier New",Courier,monospace;
   font-style: italic;
   padding: 0 6px 6px 6px; }
@@ -488,7 +489,7 @@ th {
 .icmsCode {
   background-color: #fff;
   color: inherit;
-  border: 1px inset navy;
+  border: 1px inset #000080;
   font-family: "Courier New",Courier,monospace;
   padding: 0 6px 6px 6px;
   max-height: 200px;
@@ -497,7 +498,7 @@ th {
 .icmsQuote {
   background-color: #fff;
   color: inherit;
-  border: 1px inset navy;
+  border: 1px inset #000080;
   font-family: "Courier New",Courier,monospace;
   font-style: italic;
   padding: 0 6px 6px 6px; }
@@ -514,19 +515,19 @@ th {
 
 /* articles */
 .item {
-  border: 1px solid #cccccc; }
+  border: 1px solid #ccc; }
 
 .itemHead {
   padding-left: 3px;
   color: #639ACE;
-  border-bottom: 1px solid #bbbbbb;
+  border-bottom: 1px solid #bbb;
   font-size: .8em; }
 
 .itemInfo {
   text-align: right;
   padding: 3px;
   background-color: #e6e6e6;
-  color: black; }
+  color: #000; }
 
 .itemTitle a {
   font-size: 1.1em;
@@ -563,7 +564,7 @@ th {
   text-align: right;
   padding: 3px;
   background-color: #e6e6e6;
-  color: black; }
+  color: #000; }
 
 .itemAdminLink {
   font-size: .9em; }
@@ -593,12 +594,12 @@ th {
   font-size: .7em;
   color: #639ACE;
   font-weight: bold;
-  border: 1px solid #cccccc;
+  border: 1px solid #ccc;
   background-color: #fff;
   margin: 2px;
   padding: 2px;
-  border-right: 2px solid #999999;
-  border-bottom: 2px solid #999999; }
+  border-right: 2px solid #999;
+  border-bottom: 2px solid #999; }
 
 .comUserStatCaption {
   font-weight: normal; }
@@ -651,9 +652,9 @@ th {
 
 .forum_controls {
   background-color: #EEE;
-  border-left: 1px solid #999999;
-  border-right: 1px solid #999999;
-  border-top: 1px solid #999999;
+  border-left: 1px solid #999;
+  border-right: 1px solid #999;
+  border-top: 1px solid #999;
   width: 100%; }
 
 .userrow {
@@ -693,13 +694,54 @@ th {
   width: 99%;
   background: #dcdee0;
   padding: 3px;
-  border-bottom: 1px solid #cccccc; }
+  border-bottom: 1px solid #ccc; }
 
 table.outer {
   border: 1px solid #59a7d4; }
 
-div.xo-theme-form > table {
-  table-layout: fixed; }
+#session-timeout-warning {
+  display: none;
+  position: fixed;
+  top: 7%;
+  left: 50%;
+  margin-left: -250px;
+  width: 500px;
+  z-index: 101;
+  text-align: center;
+  background-color: #fff;
+  color: black;
+  border: 3px solid #ce8c22;
+  padding: 1em;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  box-shadow: 1px 1px 20px 3px #aaa; }
+
+#session-timeout-warning img.session-timeout-warning-icon {
+  position: absolute;
+  top: calc(50% - 16px);
+  left: 1.3em; }
+
+#session-timeout-warning img.session-timeout-warning-close {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  cursor: pointer; }
+
+#session-timeout-warning p {
+  margin: 1em; }
+
+#formulize-masquerade-block {
+  margin-right: 1em;
+  color: #ffffff;
+  display: inline-block;
+  float: right; }
+  #formulize-masquerade-block form {
+    display: inline; }
+  #formulize-masquerade-block input[type=submit] {
+    padding: 0px 6px; }
+  #formulize-masquerade-block input[type=submit]:hover {
+    transform: none; }
 
 /* horizontal lines between form questions */
 div.xo-theme-form > table.outer > tbody > tr > td {
@@ -730,9 +772,9 @@ div.jGrowl-notification {
   z-index: 100;
   margin-top: 0;
   margin-bottom: 0;
-  border-top: solid 1px #1d65a5;
-  border-left: solid 1px #1d65a5;
-  border-right: solid 1px #1d65a5;
+  border-top: solid 1px #1D65A5;
+  border-left: solid 1px #1D65A5;
+  border-right: solid 1px #1D65A5;
   border-radius: 5px 5px 0 0; }
 
 .floating-column {
@@ -783,7 +825,7 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
   box-shadow: inset 4px 4px 10px rgba(255, 255, 255, 0.3); }
 
 .formulize_button {
-  color: black;
+  color: #000;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
   text-indent: 30px;
   font-size: 105%;
@@ -850,24 +892,6 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
   text-indent: 0px; }
 
 /* from style.php */
-#session-timeout-warning {
-  display: none;
-  position: fixed;
-  top: 30px;
-  left: 50%;
-  margin-left: -250px;
-  width: 500px;
-  z-index: 101;
-  text-align: center;
-  background-color: #cccccc;
-  color: black;
-  border: 8px solid #cccccc;
-  padding: 1em;
-  border-radius: 5px;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
-  box-shadow: 1px 1px 20px 3px black; }
-
 /* this forces the footer to the bottom of the page even when the page content is shorter than the window */
 html, body, #content {
   height: 100%;
@@ -882,13 +906,10 @@ body > #content {
   margin-bottom: -2em; }
 
 #footer {
-  background-color: white;
+  background-color: #ffffff;
   clear: both;
   position: relative;
   z-index: 10;
   height: 2em;
   padding: 0em;
   margin-top: -2.3em; }
-
-.xoops-form-element-help {
-  color: #999999; }

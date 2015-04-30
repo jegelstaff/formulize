@@ -82,7 +82,7 @@ define("_FORM_PERM","Permissions");
 
 define("_FORM_MODCLONE", "Clone this form");
 define("_FORM_MODCLONEDATA", "Clone this form and data");
-define("_FORM_MODCLONED_FORM", "Cloned Form");
+define("_FORM_MODCLONED", "%s - Cloned");
 
 define("_FORM_MODPERMLINKS","Modify scope of linked selectboxes (Deprecated -- edit on each selectbox's properties now)");
 define("_FORM_PERMLINKS","Linked Selectbox Scopes");
@@ -309,6 +309,10 @@ define("_formulize_FD_NEWENTRY", "This is a new entry that has not been saved ye
 define("_formulize_ADD", "Add");
 define("_formulize_ADD_ONE", "Add One");
 define("_formulize_ADD_ENTRIES", "entries");
+define("_formulize_SUBFORM_SIMPLE_BUTTON", "Display a simple button for adding one entry at a time");
+define("_formulize_SUBFORM_SIMPLE_LABEL", "What text should appear on the button?");
+define("_formulize_SUBFORM_MULTIPLE_BUTTON", "Display a button with a text box for choosing the number of entries to add");
+define("_formulize_SUBFORM_MULTIPLE_LABEL", "What text should be used to describe each entry? ie: Add x Entries, Add x Participants, etc.");
 define("_formulize_DELETE_CHECKED", "Delete checked items");
 define("_formulize_ADD_HELP", "Add an entry in this section by clicking the <i>Add</i> button.");
 define("_formulize_ADD_HELP2", "See an entire entry by clicking the <i>View</i> button.");
@@ -317,7 +321,8 @@ define("_formulize_ADD_HELP4", "Delete an entry by checking the boxes and clicki
 define("_formulize_SUBFORM_VIEW", "View");
 define("_AM_ELE_SUBFORM_NEWENTRY_LABEL", "New entry");
 define("_formulize_SAVE", "Save");
-define("_formulize_DONE", "All Done");
+define("_formulize_SAVE_AND_LEAVE", "Save and Leave");
+define("_formulize_DONE", "Leave Page");
 define("_formulize_CONFIRMNOSAVE", "You have not saved your changes!  Is that OK?  Click 'Cancel' to return to the form and then click 'Save' to save your changes.");
 define("_formulize_CONFIRMNOSAVE_UNLOAD", "You have not saved your changes!  Is that OK?");
 
@@ -326,9 +331,11 @@ define("_formulize_INFO_DONE1", "Click the <i>");
 define("_formulize_INFO_DONE2", "</i> button if you are finished.");
 define("_formulize_INFO_CONTINUE1", "You can update your information below.");
 define("_formulize_INFO_CONTINUE2", "You can make another entry by filling in the form again.");
-define("_formulize_INFO_SAVEBUTTON", "Click the <i>" . _formulize_SAVE . "</i> button to save your changes.");
+define("_formulize_INFO_SAVEBUTTON", "Click the <i>" . _formulize_SAVE . "</i> button to save your changes.<br />Click the "._formulize_SAVE_AND_LEAVE.
+    " button to save your changes and leave the page.");
 define("_formulize_INFO_SAVE1", "Click the <i>");
-define("_formulize_INFO_SAVE2", "</i> button to save your changes.");
+define("_formulize_INFO_SAVE2", "</i> button to save your changes.<br />Click the "._formulize_SAVE_AND_LEAVE.
+    " button if you are finished and want to save your changes.");
 define("_formulize_INFO_NOSAVE", "You can review this entry, but you <i>cannot save changes</i>.");
 define("_formulize_INFO_MAKENEW", "You can make a new entry by filling in the form below.");
 
@@ -344,7 +351,7 @@ define("_formulize_PRINTALLVIEW", "Printable View - All Pages"); // nmc 2007.03.
 define("_formulize_DE_CURRENT_VIEW", "Current View: ");
 define("_formulize_DE_FILLINFORM", "Fill In This Form: ");
 define("_formulize_DE_ACTIONS", "Actions: ");
-define("_formulize_DE_NODATAFOUND", "No entries were found in the current view that match the current search terms (if any).");
+define("_formulize_DE_NODATAFOUND", "No entries were found in the current view that match the current search terms.");
 define("_formulize_DE_STANDARD_VIEWS", "STANDARD VIEWS:");
 define("_formulize_DE_NO_STANDARD_VIEWS", "No standard views available");
 define("_formulize_DE_SAVED_VIEWS", "YOUR SAVED VIEWS:");
@@ -371,10 +378,12 @@ define("_formulize_DE_EXPORT", "Export Entries");
 
 // new constants related to the export popup
 define("_formulize_DE_EXPORT_FILE_ERROR", "Sorry!  There is an error with the query file.  Please close this window, reload the list of entries page, and try exporting again.");
-define("_formulize_DE_EXPORT_TITLE", "Export options:");
+define("_formulize_DE_EXPORT_TITLE", "Export Data");
 define("_formulize_DB_EXPORT_METAYES", "Include all metadata columns (user who created the entry, last modification time, etc)");
 define("_formulize_DB_EXPORT_METANO", "Do not include metadata columns");
-define("_formulize_DE_EXPORT_MAKEFILE", "Create the data file with these options");
+define("_formulize_DE_EXPORT_MAKEFILE", "Start data file download");
+define("_formulize_DE_EXPORT_SHOW_ADVANCED", "Show advanced options");
+define("_formulize_DE_EXPORT_HIDE_ADVANCED", "Hide advanced options");
 define("_formulize_DB_EXPORT_TO_EXCEL", "Use compatibility mode for some versions of Microsoft Excel (helps with accented characters in some cases)");
 define("_formulize_EXPORT_FILENAME_TEXT", "Exported_data_from");
 
@@ -449,11 +458,11 @@ define("_formulize_DE_CALC_BTEXT", "Exclude which entries?");
 define("_formulize_DE_CALC_GTEXT", "Group Results?");
 define("_formulize_DE_CALC_GTEXT2", "2nd level Grouping?");
 define("_formulize_DE_CALCHEAD", "Calculation Results");
-define("_formulize_DE_CALC_SUM", "Sum Total");
+define("_formulize_DE_CALC_SUM", "Total");
 define("_formulize_DE_CALC_AVG", "Averages");
 define("_formulize_DE_CALC_MIN", "Minimum Value");
 define("_formulize_DE_CALC_MAX", "Maximum Value");
-define("_formulize_DE_CALC_COUNT", "Count Entries");
+define("_formulize_DE_CALC_COUNT", "Counts");
 define("_formulize_DE_CALC_PER", "Percentage Breakdown");
 define("_formulize_DE_EXCLBLANKS", "Excludes blanks/zeros");
 define("_formulize_DE_INCLBLANKS", "Includes blanks/zeros");
@@ -468,8 +477,9 @@ define("_formulize_DE_CALC_MEDIAN25", "25th Percentile");
 define("_formulize_DE_CALC_MEDIAN75", "75th Percentile");
 define("_formulize_DE_CALC_MODE", "Mode (most common)");
 define("_formulize_DE_CALC_NO25OR75", "Not enough values to calculate this");
-define("_formulize_DE_CALC_NUMENTRIES", "Number of Entries");
-define("_formulize_DE_CALC_NUMUNIQUE", "Number of Unique Values");
+define("_formulize_DE_CALC_NUMENTRIES", "Total");
+define("_formulize_DE_CALC_NUMUNIQUE", "Total Unique");
+define("_formulize_DE_CALC_GRANDTOTAL", "Grand Total");
 define("_formulize_DE_PER_ITEM", "Item");
 define("_formulize_DE_PER_COUNT", "Count");
 define("_formulize_DE_PER_PERCENT", "Percentage");
@@ -629,7 +639,7 @@ define("_formulize_DMULTI_NEXT", "Save and Continue");
 define("_formulize_DMULTI_PREV", "Save and Go Back");
 define("_formulize_DMULTI_SAVE", "Save and Finish");
 define("_formulize_DMULTI_PAGE", "Page");
-define("_formulize_DMULTI_OF", "Of");
+define("_formulize_DMULTI_OF", "of");
 define("_formulize_DMULTI_SKIP", "One or more pages was skipped because they don't apply");
 define("_formulize_DMULTI_ALLDONE", "Leave this form and continue browsing the site");
 define("_formulize_DMULTI_JUMPTO", "Jump to page:");
@@ -682,7 +692,10 @@ define("_formulize_DE_CLICKSAVE_TEMPLATE", "Right click and save to download you
 define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATE_ERROR", "There is an error in your template code.  Sorry, we don't know more than that.  Typos or syntax errors are the most common problems.  Also, if your template has an if...else condition around all its code, and that condition is never met, then there will be no template found which can cause this error.  To avoid that, make sure your template always outputs something, even if it's only '&amp;nbsp;'");
 define("_AM_FORMULIZE_LOE_FIRSTPAGE", "<< First");
 define("_AM_FORMULIZE_LOE_LASTPAGE", "Last >>");
-define("_AM_FORMULIZE_LOE_ONPAGE", "On Page ");
+define("_AM_FORMULIZE_LOE_ONPAGE", "Page");
+define("_AM_FORMULIZE_LOE_PREVIOUS", "Previous");
+define("_AM_FORMULIZE_LOE_NEXT", "Next");
+define("_AM_FORMULIZE_LOE_TOTAL", "Total Entries: %d");
 
 define("_formulize_DE_LOE_LIMIT_REACHED1", "There are");
 define("_formulize_DE_LOE_LIMIT_REACHED2", "entries in the list.  It would take a long time to retrieve them.  You can use search terms to limit the number of entries, or");
@@ -693,7 +706,7 @@ define("_formulize_OUTOFRANGE_DATA","Keep this other value found in the database
 define("_AM_FORMULIZE_PREVIOUS_OPTION", "Use a previous answer:");
 define("_formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE","This value will be calculated after the data is saved");
 
-define("_formulize_QSF_DefaultText", "Search for:");
+define("_formulize_QSF_DefaultText", "Any");
 define("_formulize_QDR_to", "to");
 define("_formulize_QDR_go", "Go");
 define("_formulize_BLANK_KEYWORD", "{BLANK}");
@@ -714,7 +727,7 @@ define("_formulize_NO_MATCH_FOUND", "No match found");
 
 define("_formulize_ENTRY_IS_LOCKED", "Some or all of the data on this page has been opened by '%s', therefore it is locked and you cannot make any changes to it.  Wait for the other person to save the data, or get a webmaster to save it (webmasters can override locks like this).");
 
-/* Upload element translation by François */
+/* Upload element translation by FranÃ§ois */
 define("_AM_UPLOAD", "Upload a file:");
 define("_AM_UPLOAD_DELETE", "  Delete this file");
 define("_AM_UPLOAD_DELETE_FAIL", "There was an error deleting the file, please reload the form and try again.");
@@ -728,5 +741,10 @@ define("_AM_UPLOAD_ERR_FORM_SIZE", "Your file is larger than the maximum size al
 define("_AM_UPLOAD_ERR_PARTIAL", "The file was only partially uploaded.  Please try again.");
 define("_AM_UPLOAD_ERR_NO_TMP_DIR", "There is no temporary folder on the server to save your file in.  Please inform the webmaster about this error.");
 define("_AM_UPLOAD_ERR_CANT_WRITE", "Your file was uploaded, but could not be saved on the web server, maybe because the hard drive is full.  Please inform the webmaster about this error.");
-define("_AM_UPLOAD_ERR_EXTENSION", "The web server rejected your file (a PHP extension stopped it form being uploaded).");
-/* End Upload element translation by François */
+define("_AM_UPLOAD_ERR_EXTENSION", "The web server rejected your file (a PHP extension stopped it from being uploaded).");
+/* End Upload element translation by FranÃ§ois */
+
+define("_formulize_CLOSE_FORM_ELEMENT", "You need to close the form element that is open first before you edit this one");
+
+define("_formulize_ENTRY_ID", "Entry ID");
+

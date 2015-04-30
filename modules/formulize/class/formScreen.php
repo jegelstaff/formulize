@@ -38,6 +38,7 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 require_once XOOPS_ROOT_PATH.'/modules/formulize/class/screen.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
+
 class formulizeFormScreen extends formulizeScreen {
 
 	function formulizeFormScreen() {
@@ -115,7 +116,8 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 
 	// THIS METHOD HANDLES ALL THE LOGIC ABOUT HOW TO ACTUALLY DISPLAY THIS TYPE OF SCREEN
 	// $screen is a screen object
-	function render($screen, $entry, $settings = "") { // $settings is used internally to pass list of entries settings back and forth to editing screens
+    // $settings is used internally to pass list of entries settings back and forth to editing screens
+    function render($screen, $entry, $settings = "", $elements_only = false) {
 		if(!is_array($settings)) {
 				$settings = "";
 		}
@@ -128,6 +130,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		$alldonebuttontext = $alldonebuttontext ? $alldonebuttontext : "{NOBUTTON}";
 		$displayheading = $screen->getVar('displayheading');
 		$displayheading = $displayheading ? "" : "all"; // if displayheading is off, then need to pass the "all" keyword to supress all the headers
+		$displayheading = $elements_only ? "formElementsOnly" : $displayheading;
 		$reloadblank = $screen->getVar('reloadblank');
 		// figure out the form's properties...
 		// if it's more than one entry per user, and we have requested reload blank, then override multi is 0, otherwise 1
@@ -149,5 +152,130 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		displayForm($formframe, $entry, $mainform, $donedest, array(0=>$alldonebuttontext, 1=>$savebuttontext),
             $settings, $displayheading, "", $overrideMulti, "", 0, 0, 0, $screen);
 	}
+
+	function _getElementsForScreen($fid, $options) {
+	    $formObject = new formulizeForm($fid, true); // true causes all elements, even ones now shown to any user, to be included
+	    $elements = $formObject->getVar('elements');
+	    $elementCaptions = $formObject->getVar('elementCaptions');
+	    foreach($elementCaptions as $key=>$elementCaption) {
+	      $options[$elements[$key]] = printSmart(trans(strip_tags($elementCaption))); // need to pull out potential HTML tags from the caption
+	    }
+	    return $options;
+	}
+
+	public function getSelectedElementsForScreen($sid) {
+		$screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
+    	$screen = $screen_handler->get($sid);
+    	$elements = $screen->getVar('formelements');
+        if (!is_array($elements)) {
+            // this is always expected to be an array, so make sure it is
+            $elements = array();
+        }
+    	return $elements;
+	}
+
+	public function getScreensForElement($fid) {
+
+		$screens = array();
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$criteria_object = new CriteriaCompo(new Criteria('type','form'));
+		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
+		foreach($formScreens as $screen) {
+			$sid = $screen->getVar('sid');
+		  	$screens[$sid]['sid'] = $screen->getVar('sid');
+		  	$screens[$sid]['title'] = $screen->getVar('title');
+		  	$screens[$sid]['type'] = $screen->getVar('type');
+		}
+		return $screens;
+	}
+
+	public function getMultiScreens($fid) {
+
+		$screens = array();
+		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
+		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
+		foreach($formScreens as $screen) {
+			$sid = $screen->getVar('sid');
+			$screenData = $screen_handler->get($sid);	
+		  	$screens[$sid]['sid'] = $screenData->getVar('sid');
+		  	$screens[$sid]['title'] = $screenData->getVar('title');
+		  	$screens[$sid]['type'] = $screenData->getVar('type');
+		  	$screens[$sid]['pages'] = $screenData->getVar('pages');
+		  	$screens[$sid]['pagetitles'] = $screenData->getVar('pagetitles');
+		}
+		return $screens;
+	}	
+
+	public function getSelectedScreens($fid) {
+		$selected_screens = array();
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$criteria_object = new CriteriaCompo(new Criteria('type','form'));
+		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
+		foreach($formScreens as $screen) {
+			$sid = $screen->getVar('sid');
+
+	  		// See if this element is being selected by the screen(s) already
+			$selected_elements = $this->getSelectedElementsForScreen($sid);
+			if (in_array($_GET['ele_id'], $selected_elements)) {
+				$selected_screens[$sid] = " selected";
+			}
+		}
+
+		return $selected_screens;
+	}
+
+	public function getSelectedScreensForNewElement() {
+		global $xoopsDB;
+		$selected_screens = array();
+		$screenElementsSQL =   "SELECT sid, formelements
+								FROM " . $xoopsDB->prefix("formulize_screen_form") .
+							   " WHERE formid = " .$_GET['fid'];
+		$screenElementsResult = $xoopsDB->query($screenElementsSQL);
+
+		while ($screenElements = $xoopsDB->fetchArray($screenElementsResult)){
+			$selected_elements = unserialize($screenElements['formelements']);
+			if (is_array($selected_elements) AND count($selected_elements)>0){
+				$this_screen_id = $screenElements['sid'];
+				//space before 'selected' is needed as this is output directly into html
+				$selected_screens[$this_screen_id] = " selected";
+				break;
+			}
+		}
+		return $selected_screens;
+	}
+
+    // THIS METHOD CLONES A FORM_SCREEN
+    function cloneScreen($sid) {
+
+        $newtitle = parent::titleForClonedScreen($sid);
+
+        $newsid = parent::insertCloneIntoScreenTable($sid, $newtitle);
+
+        if (!$newsid) {
+            return false;
+        }
+
+        $tablename = "formulize_screen_form";
+        $result = parent::insertCloneIntoScreenTypeTable($sid, $newsid, $newtitle, $tablename);
+
+        if (!$result) {
+            return false;
+        }
+    }
+
+	public function setDefaultFormScreenVars($defaultFormScreen, $title, $fid)
+	{
+		$defaultFormScreen->setVar('displayheading', 1);
+		$defaultFormScreen->setVar('reloadblank', 0);
+		$defaultFormScreen->setVar('savebuttontext', _formulize_SAVE);
+		$defaultFormScreen->setVar('alldonebuttontext', _formulize_DONE);
+		$defaultFormScreen->setVar('title', "Regular '$title'");
+		$defaultFormScreen->setVar('fid', $fid);
+		$defaultFormScreen->setVar('frid', 0);
+		$defaultFormScreen->setVar('type', 'form');
+		$defaultFormScreen->setVar('useToken', 1);
+	}
+
 }
 ?>

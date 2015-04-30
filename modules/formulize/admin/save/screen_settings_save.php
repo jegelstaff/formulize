@@ -62,6 +62,8 @@ if($screens['type'] == 'multiPage') {
   $screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
 } else if($screens['type'] == 'graph') {
   $screen_handler = xoops_getmodulehandler('graphScreen', 'formulize');
+} else if($screens['type'] == 'template') {
+    $screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
 }
 
 
@@ -73,7 +75,7 @@ if($isNew) {
   } else if($screens['type'] == 'listOfEntries') {
 
     // set the defaults for the new screen
-    
+
       // View
       $screen->setVar('defaultview','all');
       $screen->setVar('usecurrentviewlist',_formulize_DE_CURRENT_VIEW);
@@ -111,33 +113,33 @@ if($isNew) {
       $screen->setVar('usereset',_formulize_DE_RESETVIEW);
       $screen->setVar('usesave',_formulize_DE_SAVE);
       $screen->setVar('usedeleteview',_formulize_DE_DELETE);
-    
+
   } else if($screens['type'] == 'form') {
       $screen->setVar('displayheading', 1);
       $screen->setVar('reloadblank', 0);
       $screen->setVar('savebuttontext', _formulize_SAVE);
       $screen->setVar('alldonebuttontext', _formulize_DONE);
   } else if($screens['type'] == 'graph') {
-      // Defaults settings for graph screen. When trying to load graph screen with default settings
-      // user will be redirected to setting section
-      // Re-editted by Jinfu Jan 2015
-	  $screen->setVar('width', 500);
-	  $screen->setVar('height', 300);
-	  $screen->setVar('orientation', "horizontal");
-	  $screen->setVar('bgr', 141);
-	  $screen->setVar('bgg', 189);
-	  $screen->setVar('bgb', 225);
-	  $screen->setVar('barr', 143);
-	  $screen->setVar('barg', 190);
-	  $screen->setVar('barb', 88);
-          $screen->setVar('labelelem',0);
-          $screen->setVar('dataelem',0);
-          $screen->setVar('ops','');
+    // Defaults settings for graph screen. When trying to load graph screen with default settings
+    // user will be redirected to setting section
+    $screen->setVar('width', 500);
+    $screen->setVar('height', 300);
+    $screen->setVar('orientation', "horizontal");
+    $screen->setVar('bgr', 141);
+    $screen->setVar('bgg', 189);
+    $screen->setVar('bgb', 225);
+    $screen->setVar('barr', 143);
+    $screen->setVar('barg', 190);
+    $screen->setVar('barb', 88);
+    $screen->setVar('labelelem', 0);
+    $screen->setVar('dataelem', 0);
+    $screen->setVar('ops', '');
+  } else if ($screens['type'] == 'template') {
+      $screen->setVar('custom_code', "");
+      $screen->setVar('template', "");
   }
 
 } else {
-  
-
   $screen = $screen_handler->get($sid);
 }
 
@@ -153,24 +155,25 @@ if(!$sid = $screen_handler->insert($screen)) {
 }
 
 if($isNew) {
-  
+
   // write out the necessary templates...
   // templates - initialize with the necessary php opening tags
   if($screens['type'] == "multiPage") {
-    $screen_handler->writeTemplateToFile("<?php\n", 'toptemplate', $screen);
-    $screen_handler->writeTemplateToFile("<?php\n", 'elementtemplate', $screen);
-    $screen_handler->writeTemplateToFile("<?php\n", 'bottomtemplate', $screen);
+    $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
+    $screen_handler->writeTemplateToFile("", 'elementtemplate', $screen);
+    $screen_handler->writeTemplateToFile("", 'bottomtemplate', $screen);
   } elseif($screens['type'] == "listOfEntries") {
-    $screen_handler->writeTemplateToFile("<?php\n", 'toptemplate', $screen);
-    $screen_handler->writeTemplateToFile("<?php\n", 'listtemplate', $screen);
-    $screen_handler->writeTemplateToFile("<?php\n", 'bottomtemplate', $screen);
+    $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
+    $screen_handler->writeTemplateToFile("", 'listtemplate', $screen);
+    $screen_handler->writeTemplateToFile("", 'bottomtemplate', $screen);
+  } elseif($screens['type'] == "template") {
+      $screen_handler->write_custom_code_to_file("", $screen);
+      $screen_handler->write_template_to_file("", $screen);
   }
-  
-  // send code to client that will to be evaluated
+
+    // send code to client that will to be evaluated
   $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&tab=settings&aid=".$aid.'&fid='.$fid.'&sid='.$sid;
   print '/* eval */ window.location = "'.$url.'";';
 } elseif($originalFrid != $screens['frid']) {
   print '/* eval */ reloadWithScrollPosition();';
-  
 }
-?>

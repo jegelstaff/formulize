@@ -95,13 +95,39 @@ class formulizeScreen extends xoopsObject {
             $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/".$templatename.".php";
             if (file_exists($pathname)) {
                 $templates[$templatename] = file_get_contents($pathname);
-                // strip out opening <?php since we use this value for comparisons a lot, and it should be otherwise empty in that case
-                $templates[$templatename] = substr($templates[$templatename], 5);
             } else {
-                $templates[$templatename] = null;
+                $templates[$templatename] = $this->getVar($templatename);
+                if (strlen($templates[$templatename]) > 0) {
+                    // the template content is stored in the database, but not the cache file
+                    // database may have been copied from another site, so write to cache file
+                    $this->writeTemplateFile(htmlspecialchars_decode($templates[$templatename], ENT_QUOTES), $templatename);
+                }
             }
         }
         return $templates[$templatename];
+    }
+
+
+    function writeTemplateFile($template_content, $template_name) {
+        $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$this->getVar('sid')."/";
+        // check if folder exists, if not, make it.
+        if (!is_dir($pathname)) {
+            mkdir($pathname, 0777, true);
+        }
+
+        if (!is_writable($pathname)) {
+            chmod($pathname, 0777);
+        }
+
+        $filename = $pathname."/".$template_name.".php";
+
+        $success = file_put_contents($filename, $template_content);
+        if (false === $success) {
+            error_log("ERROR: Could not write to template cache file: $filename");
+            return false;
+        }
+
+        return true;
     }
 }
 
@@ -136,14 +162,14 @@ class formulizeScreenHandler {
             }
         }
         $sql .= " order by fid, title";
-        if(!$result = $this->db->query($sql)) {
-            return false;
-        }
+        $screens = array();
+        if($result = $this->db->query($sql)) {
         while($array = $this->db->fetchArray($result)) {
             $screen = $this->create();
             $screen->assignVars($array);
             $screens[] = $screen;
             unset($screen);
+            }
         }
         return $screens;
     }
@@ -240,27 +266,96 @@ class formulizeScreenHandler {
 		 return $sid;
 	}
 
-	function writeTemplateToFile($text, $filename, $screen) {
+    function writeTemplateToFile($text, $filename, $screen) {
+        return $screen->writeTemplateFile($text, $filename);
+    }
 
-            $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$screen->getVar('sid')."/";
-            // check if folder exists, if not, make it.
-            if (!is_dir($pathname)) {
-                mkdir($pathname, 0777, true);
+    // FINDS AND RETURNS A NEW TITLE FOR A CLONED SCREEN
+    // Pattern for naming is "[Original Screen Name] - Cloned", "[Original Screen Name] - Cloned 2", etc.
+    function titleForClonedScreen($sid) {
+        $foundTitle = 1;
+        $titleCounter = 0;
+        $screenObject = $this->get($sid);
+        $title = $screenObject->getVar('title');
+        while ($foundTitle) {
+            $titleCounter++;
+            if ($titleCounter > 1) {
+                // add a number to the new form name to ensure it is unique
+                $newtitle = sprintf(_FORM_MODCLONED, $title)." $titleCounter";
+            } else {
+                $newtitle = sprintf(_FORM_MODCLONED, $title);
             }
-            
-            if (!is_writable($pathname)) {
-                chmod($pathname, 0777);
-	    }
-
-            $fileHandle = fopen($pathname."/".$filename.".php", "w+");
-            $success = fwrite($fileHandle, $text);
-            fclose($fileHandle);
-            
-            // return true or false based on writing success or failure 
-            // (you'll need to make sure your web server has write permission in the /templates/screens/default/ folder
-            if ($success === FALSE) {
-                return false;
-            } else return true;
+            $titleCheckSQL = "SELECT title FROM " . $this->db->prefix("formulize_screen") . " WHERE title = '".formulize_db_escape($newtitle)."'";
+            $titleCheckResult = $this->db->query($titleCheckSQL);
+            $foundTitle = $this->db->getRowsNum($titleCheckResult);
         }
-	
+        return $newtitle; // use the last searched title (because it was not found)
+    }
+
+    // CLONE AND INSERT CLONED FORM INTO FORMULIZE_SCREEN TABLE
+    // Takes the screen id of the screen being cloned
+    // Returns the id of the newly cloned screen inserted into table
+    function insertCloneIntoScreenTable($sid, $newtitle) {
+        $getrow = q("SELECT * FROM " . $this->db->prefix("formulize_screen") . " WHERE sid = $sid");
+        $insert_sql = "INSERT INTO " . $this->db->prefix("formulize_screen") . " (";
+        $start = 1;
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "sid") { continue; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= $field;
+        }
+        $insert_sql .= ") VALUES (";
+        $start = 1;
+
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "sid") { continue; }
+            if($field == "title") { $value = $newtitle; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= '"'.formulize_db_escape($value).'"';
+        }
+        $insert_sql .= ")";
+        if(!$result = $this->db->query($insert_sql)) {
+            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+            return false;
+        }
+        $newsid = $this->db->getInsertId();
+        return $newsid;
+    }
+
+    // INSERT CLONED SCREEN INTO SCREEN-TYPE SPECIFIC TABLE
+    // Takes the screen id of the screen being cloned, the screen id of the newly cloned screen,
+    // and the title of the newly cloned screen.
+    // Inserts the newly cloned screen into the specific table for that type of screen
+    // (i.e. form, listOfEntries, or multiPage).
+    function insertCloneIntoScreenTypeTable($sid, $newsid, $newtitle, $tablename) {
+        $getrow = q("SELECT * FROM " . $this->db->prefix($tablename) . " WHERE sid = $sid");
+        $insert_sql = "INSERT INTO " . $this->db->prefix($tablename) . " (";
+        $start = 1;
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "formid" OR $field == "listofentriesid" OR $field == "multipageid" OR $field == "templateid") { continue; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= $field;
+        }
+        $insert_sql .= ") VALUES (";
+        $start = 1;
+
+        foreach($getrow[0] as $field=>$value) {
+            if($field == "formid" OR $field == "listofentriesid" OR $field == "multipageid" OR $field == "templateid") { continue; }
+            if($field == "sid") { $value = $newsid; }
+            if($field == "title") { $value = $newtitle; }
+            if(!$start) { $insert_sql .= ", "; }
+            $start = 0;
+            $insert_sql .= '"'.formulize_db_escape($value).'"';
+        }
+        $insert_sql .= ")";
+        if(!$result = $this->db->query($insert_sql)) {
+            print "error cloning screen: '$title'<br>SQL: $insert_sql<br>".$xoopsDB->error();
+            return false;
+        }
+        return $result;
+    }
+
 }

@@ -49,17 +49,17 @@ if(isset($formulize_screen_id)) {
     if(is_numeric($formulize_screen_id)) {
         global $xoTheme;
         if($xoTheme) {
-            $xoTheme->addStylesheet("/modules/formulize/templates/css/style.php");
+            $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css");
             $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
         }
-        include 'initialize.php';        
+        include 'initialize.php';
     }
 } else {
     require_once "../../mainfile.php";
     include XOOPS_ROOT_PATH.'/header.php';
     global $xoTheme;
     if($xoTheme) {
-        $xoTheme->addStylesheet("/modules/formulize/templates/css/style.php");
+        $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css");
         $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
     }
     include 'initialize.php';

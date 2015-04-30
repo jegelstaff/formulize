@@ -126,6 +126,7 @@ class formulizeElementRenderer{
 				}
 				break;
 
+
 			case 'ib':
 				if(get_magic_quotes_gpc()) {
 					$ele_value[0] = stripslashes($ele_value[0]);
@@ -151,6 +152,12 @@ class formulizeElementRenderer{
 //        $ele_value[2] = $myts->displayTarea($ele_value[2]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
 				
 				$ele_value[2] = getTextboxDefault($ele_value[2], $id_form, $entry);
+				
+				//if placeholder value is set
+				if($ele_value[11]) {
+					$placeholder = $ele_value[2];
+					$ele_value[2] = "";
+				}
 
 				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added
 					
@@ -162,15 +169,19 @@ class formulizeElementRenderer{
 					$ele_value[2]	  //	default value
 					);
 				} else {															// nmc 2007.03.24 - added 
-					$form_ele = new XoopsFormLabel ($ele_caption, $ele_value[2]);	// nmc 2007.03.24 - added 
+					$form_ele = new XoopsFormLabel ($ele_caption, formulize_numberFormat($ele_value[2], $this->_ele->getVar('ele_handle')));	// nmc 2007.03.24 - added 
 				}
 
+				//if placeholder value is set
+				if($ele_value[11]) {
+					$form_ele->setExtra("placeholder='".$placeholder."'");
+				}
                 
 				//if numbers-only option is set 
 				if ($ele_value[3]) {
 					$form_ele->setExtra("class='numbers-only-textbox'");
 				}
-				
+
 				// if required unique option is set, create validation javascript that will ask the database if the value is unique or not
 				if($ele_value[9]) {
 					$eltname = $form_ele_id;
@@ -198,7 +209,6 @@ class formulizeElementRenderer{
 					$form_ele->customValidationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
 					$form_ele->customValidationCode[] = "return false;\n"; 
 					$form_ele->customValidationCode[] = "}\n";
-					
 				} elseif($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
 					$eltcaption = $ele_caption;
@@ -206,14 +216,38 @@ class formulizeElementRenderer{
 					$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
 					$form_ele->customValidationCode[] = "if (myform.{$eltname}.value == \"\") { window.alert(\"{$eltmsg}\"); myform.{$eltname}.focus(); return false; }";
 				}
+            break;
 
-			break;
-			
+
 			case 'textarea':
 				$ele_value[0] = stripslashes($ele_value[0]);
 //        $ele_value[0] = $myts->displayTarea($ele_value[0]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
 				$ele_value[0] = getTextboxDefault($ele_value[0], $id_form, $entry);
-				if (!strstr(getCurrentURL(),"printview.php")) { 				// nmc 2007.03.24 - added 
+				if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) { 				// nmc 2007.03.24 - added 
+					if(isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
+						include_once XOOPS_ROOT_PATH."/class/xoopsform/formeditor.php";
+						$form_ele = new XoopsFormEditor(
+							$ele_caption,
+							'FCKeditor',
+							$editor_configs = array("name"=>$form_ele_id, "value"=>$ele_value[0]),
+							$noHtml=false,
+							$OnFailure = ""
+						);
+
+						$eltname = $form_ele_id;
+						$eltcaption = $ele_caption;
+						$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
+						$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
+						$form_ele->customValidationCode[] = "\n var FCKGetInstance = FCKeditorAPI.GetInstance('$form_ele_id');\n";
+						$form_ele->customValidationCode[] = "var getText = FCKGetInstance.EditorDocument.body.innerHTML; \n";
+						$form_ele->customValidationCode[] = "var StripTag = getText.replace(/(<([^>]+)>)/ig,''); \n";
+						$form_ele->customValidationCode[] = "if(StripTag=='' || StripTag=='&nbsp;') {\n";
+						$form_ele->customValidationCode[] = "window.alert(\"{$eltmsg}\");\n FCKGetInstance.Focus();\n return false;\n";
+						$form_ele->customValidationCode[] = "}\n";
+
+						$GLOBALS['formulize_fckEditors'] = true;
+						
+					} else {
 					$form_ele = new XoopsFormTextArea(
 						$ele_caption,
 						$form_ele_id,
@@ -221,10 +255,13 @@ class formulizeElementRenderer{
 						$ele_value[1],	//	rows
 						$ele_value[2]	  //	cols
 					);
+					}
 				} else {															// nmc 2007.03.24 - added 
-					$form_ele = new XoopsFormLabel ($ele_caption, str_replace("\n", "<br>", $ele_value[0]));	// nmc 2007.03.24 - added 
+					$form_ele = new XoopsFormLabel ($ele_caption, str_replace("\n", "<br>", undoAllHTMLChars($ele_value[0], ENT_QUOTES)));	// nmc 2007.03.24 - added 
 				}
 			break;
+
+
 			case 'areamodif':
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
@@ -244,6 +281,7 @@ class formulizeElementRenderer{
 					$ele_value[0]
 				);
 			break;
+
 
 			case 'select':
 				if(is_string($ele_value[2]) and strstr($ele_value[2], "#*=:*")) // if we've got a link on our hands... -- jwe 7/29/04
@@ -318,7 +356,7 @@ class formulizeElementRenderer{
 						}
 						$pgroupsfilter .= ")";
 					} elseif(count($pgroups) > 0) {
-						$pgroupsfilter = " t2.groupid IN (".formulize_escape(implode(",",$pgroups)).") AND t2.entry_id=t1.entry_id AND t2.fid=$sourceFid";
+						$pgroupsfilter = " t2.groupid IN (".formulize_db_escape(implode(",",$pgroups)).") AND t2.entry_id=t1.entry_id AND t2.fid=$sourceFid";
 					} else {
 						$pgroupsfilter = "";
 					}
@@ -430,7 +468,8 @@ class formulizeElementRenderer{
 										$linked_column_values[] = "";
 									} else {
 										if ($sourceElementObject->isLinked) {
-											$linked_column_values[] = strip_tags($data_handler->getElementValueInEntry(trim($rowlinkedvaluesq[$linked_column_index], ","), $originalSource[$linked_column_index]));
+											$linked_value = prepvalues($rowlinkedvaluesq[$linked_column_index], $boxproperties[1], $rowlinkedvaluesq[0]);
+											$linked_column_values[] = $linked_value[0];
 										} else {
 											$linked_column_values[] = strip_tags(trim($rowlinkedvaluesq[$linked_column_index]));
 										}
@@ -445,37 +484,34 @@ class formulizeElementRenderer{
 							// write the possible values to a cached file so we can look them up easily when we need them, don't want to actually send them to the browser, since it could be huge, but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
 							$cachedLinkedOptionsFileName = "formulize_linkedOptions_".str_replace(".","",microtime(true));
 							formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_linkedOptions_");
-							$cachedLinkedOptions = fopen(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName","w");
-							fwrite($cachedLinkedOptions, "<?php\n\r");
-							$maxLength = 0;
+							$maxLength = 10;
+							$the_values = array();
+							asort($linkedElementOptions);
 							foreach($linkedElementOptions as $id=>$text) {
+								$the_values[$id] = trans($text);
 								$thisTextLength = strlen($text);
 								$maxLength = $thisTextLength > $maxLength ? $thisTextLength : $maxLength;
-								$text = str_replace("\$", "\\\$", $text);
-								$quotedText = "\"".str_replace("\"", "\\\"", html_entity_decode($text, ENT_QUOTES))."\"";
-								$singleQuotedText = str_replace("'", "\'", "[$quotedText,$id]");
-								fwrite($cachedLinkedOptions,"if(stristr($quotedText, \$term)){ \$found[]='".$singleQuotedText."'; }\n");
 							}
-							fwrite($cachedLinkedOptions, "?>");
-							fclose($cachedLinkedOptions);
+							file_put_contents(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName",
+								"<?php\n\$$cachedLinkedOptionsFileName = ".var_export($the_values, true).";\n");
 							$cachedSourceValuesAutocompleteFile[$sourceValuesQ] = $cachedLinkedOptionsFileName;
 							$cachedSourceValuesAutocompleteLength[$sourceValuesQ] = $maxLength;
 						} 
 					}
-					
+
+					if($boxproperties[2]) {
+						$default_value = $boxproperties[2];
+						$default_value_user = $cachedSourceValuesQ[$sourceValuesQ][$boxproperties[2]];
+					}
 					// if we're rendering an autocomplete box
 					if(!$isDisabled AND $ele_value[8] == 1) {
-						// do autocomplete rendering logic here
-						if($boxproperties[2]) {
-							$default_value = trim($boxproperties[2], ",");
-							$data_handler_autocomplete = new formulizeDataHandler($boxproperties[0]);
-							$default_value_user = $data_handler_autocomplete->getElementValueInEntry(trim($boxproperties[2], ","), $boxproperties[1]);
-						}
 						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedSourceValuesAutocompleteFile[$sourceValuesQ], $default_value, $default_value_user, $cachedSourceValuesAutocompleteLength[$sourceValuesQ]);
 						$form_ele = new xoopsFormLabel($ele_caption, $renderedComboBox);
 						$form_ele->setDescription(html_entity_decode($ele_desc,ENT_QUOTES));
+					} elseif($isDisabled) {
+						$disabledOutputText[] = $default_value_user;
 					}
-					
+
 					// only do this if we're rendering a normal element, that is not disabled
 					if(!$isDisabled AND $ele_value[8] == 0) {
 						$form_ele->addOptionArray($cachedSourceValuesQ[$sourceValuesQ]);
@@ -530,8 +566,7 @@ class formulizeElementRenderer{
 						$opt_count = 1;
 					}
 					$hiddenOutOfRangeValuesToWrite = array();
-					while( $i = each($ele_value[2]) ){
-	
+					while (is_array($ele_value[2]) and $i = each($ele_value[2])) {
 						// handle requests for full names or usernames -- will only kick in if there is no saved value (otherwise ele_value will have been rewritten by the loadValues function in the form display
 						// note: if the user is about to make a proxy entry, then the list of users displayed will be from their own groups, but not from the groups of the user they are about to make a proxy entry for.  ie: until the proxy user is known, the choice of users for this list can only be based on the current user.  This could lead to confusing or buggy situations, such as users being selected who are outside the groups of the proxy user (who will become the owner) and so there will be an invalid value stored for this element in the db.
 						if($i['key'] === "{FULLNAMES}" OR $i['key'] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
@@ -636,29 +671,26 @@ class formulizeElementRenderer{
 					if($isDisabled) {
 						$disabledHiddenValues = implode("\n", $disabledHiddenValue); // glue the individual value elements together into a set of values
 						$renderedElement = implode(", ", $disabledOutputText);
-          } elseif($ele_value[8] == 1) {
-            // autocomplete construction: make sure that $renderedElement is the final output of this chunk of code
-            // write the possible values to a cached file so we can look them up easily when we need them, don't want to actually send them to the browser, since it could be huge, but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
-            $cachedOptionsFileName = "formulize_Options_".str_replace(".","",microtime(true));
-            formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_Options_");
-            $cachedOptions = fopen(XOOPS_ROOT_PATH."/cache/$cachedOptionsFileName","w");
-            fwrite($cachedOptions, "<?php\n\r");
-	    $maxLength = 0;
-            foreach($options as $id=>$text) {
-	      $thisTextLength = strlen($text);
-	      $maxLength = $thisTextLength > $maxLength ? $thisTextLength : $maxLength;
-              //$quotedText = "\"".str_replace("\"", "\\\"", trim($text))."\"";
-              $quotedText = "\"".str_replace("\"", "\\\"", $text)."\"";
-              fwrite($cachedOptions,"if(stristr($quotedText, \$term)){ \$found[]='[$quotedText,$id]'; }\n\r");
-
-            }
-            fwrite($cachedOptions, "?>");
-            fclose($cachedOptions);
-            //print_r($selected); print_r($options);
-            $defaultSelected = is_array($selected) ? $selected[0] : $selected;
-            $renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedOptionsFileName, $defaultSelected, $options[$defaultSelected], $maxLength);
-            $form_ele2 = new xoopsFormLabel($ele_caption, $renderedComboBox);
-            $renderedElement = $form_ele2->render();
+					} elseif($ele_value[8] == 1) {
+						// autocomplete construction: make sure that $renderedElement is the final output of this chunk of code
+						// write the possible values to a cached file so we can look them up easily when we need them,
+						//don't want to actually send them to the browser, since it could be huge,
+						//but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
+						$cachedLinkedOptionsFileName = "formulize_Options_".str_replace(".","",microtime(true));
+						formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_Options_");
+						$maxLength = 10;
+						$the_values = array();
+						foreach($options as $id => $text) {
+							$the_values[$id] = trans($text);
+							$thisTextLength = strlen($the_values[$id]);
+							$maxLength = ($thisTextLength > $maxLength) ? $thisTextLength : $maxLength;
+						}
+						file_put_contents(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName",
+							"<?php\n\$$cachedLinkedOptionsFileName = ".var_export($the_values, true).";\n");
+						$defaultSelected = is_array($selected) ? $selected[0] : $selected;
+						$renderedComboBox = $this->formulize_renderQuickSelect($form_ele_id, $cachedLinkedOptionsFileName, $defaultSelected, $options[$defaultSelected], $maxLength);
+						$form_ele2 = new xoopsFormLabel($ele_caption, $renderedComboBox);
+						$renderedElement = $form_ele2->render();
 					} else { // normal element
 						$renderedElement = $form_ele1->render();
 					}
@@ -677,9 +709,9 @@ class formulizeElementRenderer{
 					$eltcaption = $ele_caption;
 					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
 					$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-          if($ele_value[8] == 1) {
-						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.value == '' ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}_user.focus();\n return false;\n }\n";
-          } elseif($ele_value[0] == 1) { 
+					if($ele_value[8] == 1) {// Has been edited in order to not allow the user to submit a form when "No match found" or "Choose an Option" is selected from the quickselect box.
+						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.value == '' || myform.{$eltname}.value == 'none'  ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}_user.focus();\n return false;\n }\n";
+					} elseif($ele_value[0] == 1) {
 						$form_ele->customValidationCode[] = "\nif ( myform.{$eltname}.options[0].selected ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 					} elseif($ele_value[0] > 1) {
 						$form_ele->customValidationCode[] = "selection = false;\n";
@@ -691,13 +723,13 @@ class formulizeElementRenderer{
 						$form_ele->customValidationCode[] = "if(selection == false) { window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 					}
 				}
-				
+
 				if($isDisabled) {
 					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
 				}
-				
 			break;
-			
+
+
 			case 'checkbox':
 				$selected = array();
 				$options = array();
@@ -758,12 +790,12 @@ class formulizeElementRenderer{
 								'',
 								$form_ele_id.'[]',
 								$selected,
-								($other === $false ? "" : $other).$delimSetting
+								$delimSetting
 							);
 							if($other != false){
-								$t->addOption($o['key'], _formulize_OPT_OTHER);
+								$t->addOption($o['key'], _formulize_OPT_OTHER.$other);
 								if(in_array($o['key'], $selected)) {
-									$disabledOutputText[] = _formulize_OPT_OTHER;
+									$disabledOutputText[] = _formulize_OPT_OTHER.$other;
 								}
 							}else{
 								$t->addOption($o['key'], $o['value']);
@@ -817,9 +849,9 @@ class formulizeElementRenderer{
 				if($isDisabled) {
 					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
 				}
-				
-			break;
-			
+            break;
+
+
 			case 'radio':
 			case 'yn':
 				$selected = '';
@@ -878,6 +910,8 @@ class formulizeElementRenderer{
 						}
 						$form_ele1->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 					break;
+
+
 					default:
 						$form_ele1 = new XoopsFormElementTray('', $delimSetting);
 						$counter = 0;
@@ -890,7 +924,7 @@ class formulizeElementRenderer{
 							);
 							$other = $this->optOther($o['value'], $form_ele_id, $entry, $counter);
 							if( $other != false ){
-								$t->addOption($o['key'], _formulize_OPT_OTHER.$other);
+								$t->addOption($o['key'], _formulize_OPT_OTHER."</label><label>$other"); // epic hack to terminate radio button's label so it doesn't include the clickable 'other' box!!
 								if($o['key'] == $selected) {
 									$disabledOutputText = _formulize_OPT_OTHER.$other;
 								}
@@ -950,48 +984,18 @@ class formulizeElementRenderer{
 				if($isDisabled) {
 					$isDisabled = false; // disabled stuff handled here in element, so don't invoke generic disabled handling below (which is only for textboxes and their variations)
 				}
-
-
 			break;
-			//Marie le 20/04/04
-			case 'date':
-				/*$jr = substr ($ele_value[0], 0, 2);
-				$ms = substr ($ele_value[0], 3, 2);
-				$an = substr ($ele_value[0], 6, 4);
-				$ele_value[0] = $an.'-'.$ms.'-'.$jr;*/ // code block commented to fix bug in remembering previously entered dates.  -- jwe 7/24/04
-				// lines below added/modified to check that the default setting is a valid timestamp, otherwise, send no default value to the date box. -- jwe 9/23/04
-				//print "ele_value: ";
-				//print_r($ele_value);
-				//print "<br>" . strtotime("") . "<br>";
-				//print "<br>" . strtotime("now") . "<br>";
 
-				if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
-				{
-						//print "Bad date";
-					$form_ele = new XoopsFormTextDateSelect (
-						$ele_caption,
-						$form_ele_id,
-						15,
-						""
-					);
-				}
-				else
-				{
-						//print "good date";
-					if (ereg_replace("[^A-Z{}]","", $ele_value[0]) === "{TODAY}") {
-						$number = ereg_replace("[^0-9+-]","", $ele_value[0]);
-						$timestampToUse = mktime(0, 0, 0, date("m") , date("d")+$number, date("Y"));
-					} else {
-						$timestampToUse = strtotime($ele_value[0]);
-					}
-					$form_ele = new XoopsFormTextDateSelect (
-						$ele_caption,
-						$form_ele_id,
-						15,
-						$timestampToUse
-						//$ele_value[0]
-					);
-				} // end of check to see if the default setting is for real
+
+            case 'date':
+                // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
+                if($ele_value[0] == "" OR $ele_value[0] == "YYYY-mm-dd") {
+                    $form_ele = new XoopsFormTextDateSelect($ele_caption, $form_ele_id, 15, "");
+                    $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
+                } else {
+                    $form_ele = new XoopsFormTextDateSelect($ele_caption, $form_ele_id, 15, getDateElementDefault($ele_value[0]));
+                    $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
+                } // end of check to see if the default setting is for real
 				// added validation code - sept 5 2007 - jwe
 				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
 					$eltname = $form_ele_id;
@@ -1002,7 +1006,32 @@ class formulizeElementRenderer{
 					// Date.parse() would be better, except that it will fail for dd-mm-YYYY format, ie: 22-11-2013
 					$form_ele->customValidationCode[] = "\nif (isNaN(parseInt(myform.{$eltname}.value))) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 				}
+                if (!$isDisabled) {
+                    $limit_past = (isset($ele_value["date_limit_past"]) and $ele_value["date_limit_past"] != "");
+                    $limit_future = (isset($ele_value["date_limit_future"]) and $ele_value["date_limit_future"] != "");
+                    if ($limit_past or $limit_future) {
+                        $reference_date = time();
+                        if ("new" != $entry) {
+                            $entryData = $this->formulize_getCachedEntryData($id_form, $entry);
+                            $reference_date = strtotime(display($entryData, "creation_date"));
+                        }
+                        if ($limit_past) {
+                            $form_ele->setExtra(" min-date='".
+                                date("Y-m-d", strtotime("-".max(0, intval($ele_value["date_past_days"]))." days", $reference_date))."' ");
+                        }
+                        if ($limit_future) {
+                            $form_ele->setExtra(" max-date='".
+                                date("Y-m-d", strtotime("+".max(0, intval($ele_value["date_future_days"]))." days", $reference_date))."' ");
+                        }
+
+                        $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;check_date_limits('$form_ele_id');\" onclick=\"javascript:check_date_limits('$form_ele_id');\" onblur=\"javascript:check_date_limits('$form_ele_id');\" jquerytag=\"$form_ele_id\" ");
+                    } else {
+                        $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$form_ele_id\" ");
+                    }
+                }
 			break;
+
+
 			case 'sep':
 				//$ele_value[0] = $myts->displayTarea($ele_value[0]);
 				$ele_value[0] = $myts->xoopsCodeDecode($ele_value[0]);
@@ -1011,6 +1040,8 @@ class formulizeElementRenderer{
 					$ele_value[0]
 				);
 			break;
+
+
 			case 'upload':
 				$form_ele = new XoopsFormFile (
 					$ele_caption,
@@ -1018,13 +1049,13 @@ class formulizeElementRenderer{
 					$ele_value[1]
 				);
 			break;
+
+
 			/*
 			 * Hack by F�lix<INBOX International>
 			 * Adding colorpicker form element
 			 */
 			case 'colorpick':
-
-
 				if($ele_value[0] == "") // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
 				{
 					//print "Bad date";
@@ -1033,7 +1064,7 @@ class formulizeElementRenderer{
 					$form_ele_id,
 					""
 				);
-				
+
 				}
 				else
 				{
@@ -1042,11 +1073,12 @@ class formulizeElementRenderer{
 					$ele_caption,
 					$form_ele_id,
 					$ele_value[0]
-
 				);
 				
 				} // end of check to see if the default setting is for real
 			break;
+
+
 			/*
 			 * End of Hack by F�lix<INBOX International>
 			 * Adding colorpicker form element
@@ -1071,10 +1103,10 @@ class formulizeElementRenderer{
 					return false;
 				}
 			break;
-		}
+		} // end element-type case
 		if(is_object($form_ele) AND !$isDisabled AND $this->_ele->hasData) {
 			if($previousEntryUI) {
-				$previousEntryUIRendered = "&nbsp;&nbsp;" . $previousEntryUI->render();				
+				$previousEntryUIRendered = "&nbsp;&nbsp;" . $previousEntryUI->render();
 			} else {
 				$previousEntryUIRendered = "";
 			}
@@ -1084,8 +1116,11 @@ class formulizeElementRenderer{
 			} else {
 				$elementCue = "";
 			}
+			
 			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
-			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$elementCue); // reuse caption, put two spaces between element and previous entry UI
+			// reuse caption, put two spaces between element and previous entry UI
+			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$elementCue);
+			$form_ele_new->formulize_element = $this->_ele;
 			if($ele_desc != "") {
 				$ele_desc = html_entity_decode($ele_desc,ENT_QUOTES);
 				$ele_desc = $myts->makeClickable($ele_desc);
@@ -1105,8 +1140,8 @@ class formulizeElementRenderer{
 		} else { // form ele is not an object...and/or has no data.  Happens for IBs and for non-interactive elements, like grids.
 			return $form_ele;
 		}
-		
 	}
+
 
 	// a function that builds some SQL snippets that we use to properly scope queries related to ensuring the uniqueness of selections in linked selectboxes
 	// uniquenessFlag is the ele_value[9] property of the element, that tells us how strict the uniqueness is (per user or per group or neither)
@@ -1129,7 +1164,7 @@ class formulizeElementRenderer{
 		}
 		return $sql;
 	}
-	
+
 
 	// THIS FUNCTION COPIED FROM LIASE 1.26, onchange control added
 	// JWE -- JUNE 1 2006
@@ -1156,9 +1191,12 @@ class formulizeElementRenderer{
 			$otherq = q("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$entry' AND ele_id='$ele_id' LIMIT 0,1");
 			$other_text = $otherq[0]['other_text'];
 		}
+		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+			return $other_text;			
+		}
 		$s = explode('|', preg_replace('/[\{\}]/', '', $s));
 		$len = !empty($s[1]) ? $s[1] : $xoopsModuleConfig['t_width'];
-		$box = new XoopsFormText('', 'other[ele_'.$ele_id.']', $len, 255, $other_text);
+		$box = new XoopsFormText('', 'other[ele_'.$ele_id.'_'.$entry.']', $len, 255, $other_text);
 		if($checkbox) {
 			$box->setExtra("onchange=\"javascript:formulizechanged=1;\" onfocus=\"javascript:this.form.elements['" . $id . "[]'][$counter].checked = true;\"");
 		} else {
@@ -1213,8 +1251,9 @@ class formulizeElementRenderer{
 			// quickselect-formulize has a change in it so that "none" is an allowed value for matches, so that we can give the user good UI when something wrong is happening
 			$output = "<!-- Dependencies - note: quickselect-formulize has a change in it so that \"none\" is an allowed value for matches, so that we can give the user good UI when something wrong is happening -->\n";
 
-			if( ! defined( "FORMULIZE_DONT_INCLUDE_JQUERY" ) )
-				$output .= "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js\"></script>\n";
+			if( ! defined( "FORMULIZE_DONT_INCLUDE_JQUERY" ) ) {
+				$output .= "<script type=\"text/javascript\">$codeToIncludejQueryWhenNecessary</script>";
+			}
 
 			$output .= "<script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/quicksilver.js\"></script>\n
 <script type=\"text/javascript\" src=\"".XOOPS_URL."/modules/formulize/libraries/jquery/jquery.quickselect-formulize.min.js\"></script>\n
@@ -1244,17 +1283,24 @@ class formulizeElementRenderer{
 	/* ALTERED - 20100318 - freeform - jeff/julian - stop */
 
 	// creates a hidden version of the element so that it can pass its value back, but not be available to the user
-	
 	function formulize_disableElement($element, $type, $ele_desc) {
 		if($type == "text" OR $type == "textarea" OR $type == "date" OR $type == "colorpick") {
 			$newElement = new xoopsFormElementTray($element->getCaption(), "\n");
 			$newElement->setName($element->getName());
 			switch($type) {
 				case 'date':
-					$hiddenValue = date("Y-m-d", $element->getValue());
+					if($timeval = $element->getValue()) {
+						if (is_string($timeval)) {
+							$timeval = strtotime($timeval);
+						}
+						$hiddenValue = date(_SHORTDATESTRING, $timeval);
+					} else {
+						$hiddenValue = "";
+					}
 					break;
 				default:
-					$hiddenValue = $element->getValue(); // should work for all elements, since non-textbox type elements where the value would not be passed straight back, are handled differently at the time they are constructed
+					// should work for all elements, since non-textbox type elements where the value would not be passed straight back, are handled differently at the time they are constructed
+					$hiddenValue = formulize_numberFormat($element->getValue(), $this->_ele->getVar('ele_handle'));
 			}
 			if(is_array($hiddenValue)) { // not sure when/if this would ever happen
 				foreach($hiddenValue as $value) {

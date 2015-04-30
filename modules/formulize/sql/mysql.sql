@@ -8,7 +8,7 @@ CREATE TABLE `formulize_menu_links` (
     PRIMARY KEY (`menu_id`),
     INDEX i_menus_appid (appid)
 ) ENGINE=MyISAM;
-    
+
 CREATE TABLE `formulize_menu_permissions` (
     `permission_id` int(11) unsigned NOT NULL auto_increment,
     `menu_id` int(11) unsigned NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE `formulize_advanced_calculations` (
   `fltr_grptitles` text NOT NULL,
   PRIMARY KEY  (`acid`),
   KEY `i_fid` (`fid`)
-) ENGINE=MyISAM; 
+) ENGINE=MyISAM;
 
 CREATE TABLE `formulize_applications` (
   `appid` int(11) NOT NULL auto_increment,
@@ -93,7 +93,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `useaddmultiple` varchar(255) NOT NULL default '',
   `useaddproxy` varchar(255) NOT NULL default '',
   `usecurrentviewlist` varchar(255) NOT NULL default '',
-  `limitviews` text NOT NULL, 
+  `limitviews` text NOT NULL,
   `defaultview` varchar(20) NOT NULL default '',
   `usechangecols` varchar(255) NOT NULL default '',
   `usecalcs` varchar(255) NOT NULL default '',
@@ -111,8 +111,8 @@ CREATE TABLE `formulize_screen_listofentries` (
   `usesave` varchar(255) NOT NULL default '',
   `usedeleteview` varchar(255) NOT NULL default '',
   `useheadings` tinyint(1) NOT NULL,
-  `usesearch` tinyint(1) NOT NULL, 
-  `usecheckboxes` tinyint(1) NOT NULL, 
+  `usesearch` tinyint(1) NOT NULL,
+  `usecheckboxes` tinyint(1) NOT NULL,
   `useviewentrylinks` tinyint(1) NOT NULL,
   `usescrollbox` tinyint(1) NOT NULL,
   `usesearchcalcmsgs` tinyint(1) NOT NULL,
@@ -122,7 +122,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `desavetext` varchar(255) NOT NULL default '',
   `columnwidth` int(1) NOT NULL,
   `textwidth` int(1) NOT NULL,
-  `customactions` text NOT NULL, 
+  `customactions` text NOT NULL,
   `toptemplate` text NOT NULL,
   `listtemplate` text NOT NULL,
   `bottomtemplate` text NOT NULL,
@@ -137,9 +137,9 @@ CREATE TABLE `formulize_screen_multipage` (
   `sid` int(11) NOT NULL default 0,
   `introtext` text NOT NULL,
   `thankstext` text NOT NULL,
-  `toptemplate` text NOT NULL,       
-  `elementtemplate` text NOT NULL,   
-  `bottomtemplate` text NOT NULL,	
+  `toptemplate` text NOT NULL,
+  `elementtemplate` text NOT NULL,
+  `bottomtemplate` text NOT NULL,
   `donedest` varchar(255) NOT NULL default '',
   `buttontext` varchar(255) NOT NULL default '',
   `finishisdone` tinyint(1) NOT NULL default 0,
@@ -236,6 +236,7 @@ CREATE TABLE formulize_saved_views (
   sv_calc_blanks text,
   sv_calc_grouping text,
   sv_quicksearches text,
+  sv_global_search text,
   PRIMARY KEY (sv_id)
 ) ENGINE=MyISAM;
 
@@ -287,6 +288,7 @@ CREATE TABLE formulize_id (
   form_handle varchar(255) NOT NULL default '',
   store_revisions tinyint(1) NOT NULL default '0',
   on_before_save text,
+  custom_edit_code text,
   note text,
   PRIMARY KEY  (`id_form`)
 ) ENGINE=MyISAM;
@@ -310,6 +312,7 @@ CREATE TABLE formulize (
   ele_filtersettings text NOT NULL,
   ele_forcehidden tinyint(1) NOT NULL default '0',
   ele_private tinyint(1) NOT NULL default '0',
+  ele_use_default_when_blank tinyint(1) NOT NULL default '0',
   PRIMARY KEY  (`ele_id`),
   KEY `ele_display` (`ele_display` ( 255 ) ),
   KEY `ele_order` (`ele_order`)

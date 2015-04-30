@@ -18,7 +18,7 @@
  * @version		$Id: admin.php 20456 2010-12-02 17:57:52Z skenow $
  */
 
-define('ICMS_IN_ADMIN', 1);
+define('ICMS_IN_ADMIN', 1); 
 
 $xoopsOption['pagetype'] = 'admin';
 include 'mainfile.php';

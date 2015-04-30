@@ -33,7 +33,7 @@ $modversion = array(
 	'name' => _MI_formulize_NAME,
 	'version' => "5.0",
 	'description' => _MI_formulize_DESC,
-	'author' => "Freeform Solutions",                                            
+	'author' => "Freeform Solutions",
 	'credits' => "",
 	'help' => "",
 	'license' => "GPL",
@@ -98,7 +98,7 @@ foreach($classFiles as $thisFile) {
 }
 
 $modversion['templates'][] = array(
-	'file' => 'formulize_cat.html', 
+	'file' => 'formulize_cat.html',
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'formulize_application.html',
@@ -129,10 +129,13 @@ $modversion['templates'][] = array(
 	'description' => '');
 $modversion['templates'][] = array(
     'file' => 'admin/application_menu_entries.html',
-    'description' => ''); 
+    'description' => '');
+$modversion['templates'][] = array(
+    'file' => 'admin/application_code.html',
+    'description' => '');
 $modversion['templates'][] = array(
     'file' => 'admin/application_menu_entries_sections.html',
-    'description' => '');     
+    'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/application_screens.html',
 	'description' => '');
@@ -171,6 +174,9 @@ $modversion['templates'][] = array(
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/screen_settings.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_relationships.html',
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/element_names.html',
@@ -269,6 +275,9 @@ $modversion['templates'][] = array(
 	'file' => 'admin/screen_multipage_templates.html',
 	'description' => '');
 $modversion['templates'][] = array(
+    'file' => 'admin/screen_template_templates.html',
+    'description' => '');
+$modversion['templates'][] = array(
 	'file' => 'admin/element_optionlist.html',
 	'description' => '');
 $modversion['templates'][] = array(
@@ -334,7 +343,7 @@ $modversion['config'][] = array(
 );
 
 // $xoopsModuleConfig['ta_cols']
-$modversion['config'][] = array( 
+$modversion['config'][] = array(
 	'name' => 'ta_cols',
 	'title' => '_MI_formulize_TAREA_COLS',
 	'description' => '',
@@ -343,7 +352,7 @@ $modversion['config'][] = array(
 	'default' => '35',
 );
 
-// $xoopsModuleConfig['delimeter'] 
+// $xoopsModuleConfig['delimeter']
 $modversion['config'][] = array(
 	'name' => 'delimeter',
 	'title' => '_MI_formulize_DELIMETER',
@@ -485,6 +494,16 @@ $modversion['config'][] = array(
 	'valuetype' => 'int',
 	'default' => 0,
 );
+
+$modversion['config'][] = array(
+	'name' => 'printviewStylesheets',
+	'title' => '_MI_formulize_PRINTVIEWSTYLESHEETS',
+	'description' => '_MI_formulize_PRINTVIEWSTYLESHEETSDESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => '',
+);
+
 
 
 

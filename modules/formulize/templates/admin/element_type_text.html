@@ -15,7 +15,18 @@
 	    <textarea id="elements-ele_value[2]" name="elements-ele_value[2]" rows="5" cols="35"><{$content.ele_value[2]}></textarea>
 	    <div class="description">
           <p><{$smarty.const._AM_ELE_TEXT_DESC}><{$smarty.const._AM_ELE_TEXT_DESC2}></p>
-      </div>
+      	</div>
+    </div>
+    <div class="form-item">
+      	<fieldset>
+      	<legend><{$smarty.const._AM_ELE_PLACEHOLDER_DESC}></legend>
+      		<div class="form-radios">
+      			<label for="no-placeholder"><input type="radio" id="no-placeholder" name="elements-ele_value[11]" value="0"<{if $content.ele_value[11] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_NO_PLACEHOLDER}></label>
+      		</div>
+      		<div class="form-radios">
+      			<label for="placeholder"><input type="radio" id="placeholder" name="elements-ele_value[11]" value="1"<{if $content.ele_value[11] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_PLACEHOLDER_OPTION}></label>
+      		</div>
+      	</fieldset>
     </div>
     <div class="form-item">
 	    <fieldset>

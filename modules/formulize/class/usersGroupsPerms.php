@@ -27,6 +27,7 @@
 ###############################################################################
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+include_once XOOPS_ROOT_PATH.'/modules/formulize/class/forms.php';
 
 class formulizePermHandler {
 
@@ -59,7 +60,7 @@ class formulizePermHandler {
                 self::$formulize_module_id = getFormulizeModId();
 
             $gperm_handler =& xoops_gethandler('groupperm');
-            $member_handler =& xoops_gethandler('icms_member');
+            $member_handler =& xoops_gethandler('member');
             $groups = $member_handler->getGroupsByUser($user_id);
 
             if ($gperm_handler->checkRight("delete_own_entry", $form_id, $groups, self::$formulize_module_id)
@@ -98,7 +99,7 @@ class formulizePermHandler {
                 self::$formulize_module_id = getFormulizeModId();
 
             $gperm_handler =& xoops_gethandler('groupperm');
-            $member_handler =& xoops_gethandler('icms_member');
+            $member_handler =& xoops_gethandler('member');
             $groups = $member_handler->getGroupsByUser($user_id);
 
             if ("new" == $entry_id or "" == $entry_id) {
@@ -113,10 +114,13 @@ class formulizePermHandler {
                     self::$cached_permissions[$cache_key] = false;  // cannot delete an entry which has not been saved
                 }
             } else {
+                // first check if this an entry by current user and they can edit their own entries
                 if (getEntryOwner($entry_id, $form_id) == $user_id) {
                     // user can update entry because it is their own and they have permission to update their own entries
                     self::$cached_permissions[$cache_key] = $gperm_handler->checkRight("{$action}_own_entry", $form_id, $groups, self::$formulize_module_id);
-                } else {
+                }
+                // next, check group and other permissions, even for own entries
+                if (! self::$cached_permissions[$cache_key]) {
                     // user can update entry because they have permission to update entries by others
                     self::$cached_permissions[$cache_key] = $gperm_handler->checkRight("{$action}_other_entries", $form_id, $groups, self::$formulize_module_id);
 
@@ -143,6 +147,14 @@ class formulizePermHandler {
                     }
                 }
             }
+            //Second update to include custom edit check code
+
+            if("update"== $action && $entry_id > 0){
+                $formHandler = xoops_getmodulehandler('forms','formulize');
+                $formObject = $formHandler->get($form_id);
+                self::$cached_permissions[$cache_key] = $formObject->customEditCheck($form_id,$entry_id,$user_id, self::$cached_permissions[$cache_key]);
+            }
+
         }
         return self::$cached_permissions[$cache_key];
     }
@@ -263,9 +275,9 @@ class formulizePermHandler {
 		}
 		global $xoopsDB;
 		if(!$different) {
-			$sql = "SELECT groupid FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." WHERE view_groupid IN (".formulize_escape(implode(", ", $gids)).") AND fid=".$this->fid;
+			$sql = "SELECT groupid FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." WHERE view_groupid IN (".formulize_db_escape(implode(", ", $gids)).") AND fid=".$this->fid;
 		} else {
-			$sql = "SELECT groupid FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." as t1 WHERE fid = ".$this->fid." AND view_groupid != 0 AND NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." as t2 WHERE view_groupid IN (".formulize_escape(implode(", ", $gids)).") AND fid=".$this->fid." AND t1.groupid = t2.groupid)";
+			$sql = "SELECT groupid FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." as t1 WHERE fid = ".$this->fid." AND view_groupid != 0 AND NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." as t2 WHERE view_groupid IN (".formulize_db_escape(implode(", ", $gids)).") AND fid=".$this->fid." AND t1.groupid = t2.groupid)";
 		}
 		$res = $xoopsDB->query($sql);
 		$foundGids = array();

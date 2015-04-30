@@ -1,11 +1,13 @@
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-1.4.2.min.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror-compressed.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/formulize.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jscolor/jscolor.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/selenium_debug.js"></script>
 
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css">
-<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/admin/css/ui.css">
-<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror.css">
+<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/css/formulize-admin.css">
+
 <script type="text/javascript">
  var pagehasaccordion = new Array();
 </script>
@@ -16,7 +18,7 @@ $(document).ready(function() {
 	//Select all anchor tag with rel set to tooltip
 	$('a[rel=tooltip]').mouseover(function(e) {
 		//Grab the title attribute's value and assign it to a variable
-		var tip = $(this).attr('title');		
+		var tip = $(this).attr('title');
 		//Remove the title attribute's to avoid the native tooltip from the browser
 		$(this).attr('title','');
 		//Append the tooltip template and its value
@@ -47,7 +49,7 @@ $(document).ready(function() {
 <script type="text/javascript">
 $(document).ready(function() {
 	var offset = $('#admin_toolbar').offset();
-	
+
 	  $(window).scroll(function () {
 		var scrollTop = $(window).scrollTop();
 		if (offset && offset.top<scrollTop) {
@@ -58,13 +60,13 @@ $(document).ready(function() {
 		  $('#admin_toolbar').removeClass('ui-corner-all');
 		};
 	  });
-		
+
 	});
 </script>
 <!-- end jquery -->
 
-<!--[if IE 6]> 
-	<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/admin/css/ie6.css" />
+<!--[if IE 6]>
+	<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/css/ie6.css" />
 <![endif]-->
 
 <div class="admin-ui">
@@ -88,30 +90,26 @@ $(document).ready(function() {
 <{/if}>
 
 <{if $adminPage.pagetitle}>
-  <h1><{$adminPage.pagetitle}></h1>
-  <p class="smallhead"><{$adminPage.pagesubtitle}></p>
+  <h1><{$adminPage.pagetitle}> <span class="smallhead"><{$adminPage.pagesubtitle}></span></h1>
   <{if $lasturl}>
     <p><a href="ui.php?<{$lasturl}>"><{$smarty.const._AM_HOME_GOBACKTO}><i><{$lasttext}></i></a></p>
   <{/if}>
 <{/if}>
 
 <{if $breadcrumbtrail}>
-<p>
-  <{counter start=0 assign=crumbcount print=false}>
-  <{foreach from=$breadcrumbtrail item=crumb}>
-
-  <{if $crumbcount}> &raquo; <{/if}>
-
-  <{if $crumb.url}>
-    <a href="ui.php?<{$crumb.url}>"><{$crumb.text}></a>
-    <{assign var='lasturl' value=$crumb.url}>
-    <{assign var='lasttext' value=$crumb.text}>
-  <{else}>
-    <{$crumb.text}>
-  <{/if}>
-
-  <{counter}>
-  <{/foreach}>
+<p id="admin-breadcrumbs">
+    <{counter start=0 assign=crumbcount print=false}>
+    <{foreach from=$breadcrumbtrail item=crumb}>
+        <{if $crumbcount}> &raquo; <{/if}>
+        <{if $crumb.url}>
+            <a href="ui.php?<{$crumb.url}>" class="breadcrumb-<{$crumbcount}>"><{$crumb.text}></a>
+            <{assign var='lasturl' value=$crumb.url}>
+            <{assign var='lasttext' value=$crumb.text}>
+        <{else}>
+            <{$crumb.text}>
+        <{/if}>
+    <{counter}>
+    <{/foreach}>
 </p>
 <{/if}>
 
@@ -125,13 +123,13 @@ $(document).ready(function() {
 <{/if}>
 
 <{if $adminPage.template}>
-<{include file=$adminPage.template}>  
+<{include file=$adminPage.template}>
 <{/if}>
 
-<{if $adminPage.tabs}>  
+<{if $adminPage.tabs}>
 <{include file="db:admin/ui-tabs.html" tabs=$adminPage.tabs}>
 <{/if}>
-  
+
 <p class="versionnumber">Version 5.0 RC1</p>
 
 </div><!-- End admin-ui -->
@@ -163,6 +161,22 @@ $(document).ready(function() {
     }
   });
 
+  $(".delete-templates").click(function(){
+      var conf = confirm("Are you sure you want to Delete the template files? This should only be done when undergoing template development.");
+      if (conf) {
+          $.ajax({
+              url:'<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$icms_userid}>&op=delete_template_cache',
+              method:'GET',
+              success:function(response){
+                      alert('Temporary Files have been deleted.'); // Inform the user we have run the script.
+              },
+              error:function(exception){
+                  alert('Exception:'+exception);
+              }
+          });
+      }
+  });
+
   function runSaveEvent() {
     $(".admin-ui").fadeTo(1,0.5);
     var formulize_formlist = $(".formulize-admin-form");
@@ -177,10 +191,10 @@ $(document).ready(function() {
       }
     }
     if(saveTarget > 0) {
-      sendFormData(formdata[0]); // send the first form's data 
+      sendFormData(formdata[0]); // send the first form's data
     }
   }
-  
+
   function sendFormData(thisformdata, ele_id) {
     if(!ele_id) { ele_id = 0 }
     $.post("save.php?ele_id="+ele_id, $(thisformdata).serialize(), function(data) {
@@ -210,14 +224,14 @@ $(document).ready(function() {
       }
     });
   }
-  
+
   function reloadWithScrollPosition(url) {
     if(url) {
       $("[name=scrollposition]").attr('action', url);
     }
     window.document.scrollposition.scrollx.value = $(window).scrollTop();
     var tabs_selected = "";
-    <{if $adminPage.tabs}> 
+    <{if $adminPage.tabs}>
     tabs_selected = $("#tabs").tabs("option","selected");
     window.document.scrollposition.tabs_selected.value = tabs_selected;
     tabs_selected = tabs_selected+1;
@@ -244,7 +258,7 @@ $(document).ready(function() {
   $().ajaxError(function () {
     alert("There was an error when saving your data.  Please try again.");
   });
-  
+
   $(window).load(function () {
     $(window).scrollTop(<{$scrollx}>);
   });
@@ -258,7 +272,7 @@ $(document).ready(function() {
 
   $(document).ready(
     $('.code-textarea').each(function() {
-        if (this.type !== 'textarea') {
+        if (this.type !== 'textarea' || SELENIUM_DEBUG == 'ON') {
             return true; // continue
         }
         CodeMirror.fromTextArea(this, {
@@ -270,12 +284,12 @@ $(document).ready(function() {
             enterMode: "keep",
             tabMode: "shift",
             lineWrapping: true,
-            onChange: function(instance) { 
+            onChange: function(instance) {
                 setDisplay('savewarning','block');
                 instance.save(); // Call this to update the textarea value for the ajax post
             }
         });
     })
   );
-  
+
 </script>

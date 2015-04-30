@@ -73,20 +73,58 @@ class icms_form_elements_Date extends icms_form_elements_Text {
 
 		include_once ICMS_ROOT_PATH . '/include/calendar' . ($icmsConfigPersona['use_jsjalali'] == true ? 'jalali' : '') . 'js.php';
 
-		$result = "<input type='text' name='".$ele_name."' id='".$ele_name."' size='".$this->getSize()."' maxlength='".$this->getMaxlength()."' value='".$ele_value."'".$this->getExtra()." />&nbsp;&nbsp;<img src='" . ICMS_URL . "/images/calendar.png' alt='"._CALENDAR."' title='"._CALENDAR."' id='btn_".$ele_name."' onclick='return showCalendar(\"".$ele_name."\");'>";
-		
-		if ($icmsConfigPersona['use_jsjalali']) {
-			$result = "<input id='tmp_".$ele_name."' readonly='readonly' size='".$this->getSize()."' maxlength='".$this->getMaxlength()."' value='".$jalali_ele_value."' /><input type='hidden' name='".$ele_name."' id='".$ele_name."' value='".$ele_value."' ".$this->getExtra()." />&nbsp;&nbsp;<img src='" . ICMS_URL . "/images/calendar.png' alt='"._CALENDAR."' title='"._CALENDAR."' id='btn_".$ele_name."'><script type='text/javascript'>
+		$result = "<input type='text' name='".$ele_name."' id='".$ele_name."' class=\"icms-date-box\" size='".$this->getSize()."' maxlength='".$this->getMaxlength()."' value='".$ele_value."'".$this->getExtra()." />&nbsp;&nbsp;<img src='" . ICMS_URL . "/images/calendar.png' class='no-print' alt='"._CALENDAR."' title='"._CALENDAR."' id='btn_".$ele_name."' onclick='return showCalendar(\"".$ele_name."\");'>";
+
+		if (false and $icmsConfigPersona['use_jsjalali']) {
+			$dateFormat = dateFormatToStrftime(_SHORTDATESTRING);
+			$result = "<input name='".$ele_name."' id='".$ele_name."' class=\"icms-date-box\" size='".$this->getSize()."' maxlength='".$this->getMaxlength()."' value='".$jalali_ele_value."'".$this->getExtra()." />&nbsp;&nbsp;<img src='" . ICMS_URL . "/images/calendar.png' class='no-print' alt='"._CALENDAR."' title='"._CALENDAR."' id='btn_".$ele_name."'><script type='text/javascript'>
 				Calendar.setup({
-					inputField  : 'tmp_".$ele_name."',
-		       		ifFormat    : '%Y-%m-%d',
-		       		button      : 'btn_".$ele_name."',
-        			langNumbers : true,
-        			dateType	: '"._CALENDAR_TYPE."',
-					onUpdate	: function(cal){document.getElementById('".$ele_name."').value = cal.date.print('%Y-%m-%d');}
+					inputField  : '".$ele_name."',
+					ifFormat    : '$dateFormat',
+					button      : 'btn_".$ele_name."',
+					langNumbers : true,
+					dateType    : '"._CALENDAR_TYPE."',
+					onUpdate    : function(cal){document.getElementById('".$ele_name."').value = cal.date.print('$dateFormat');}
 				});
 			</script>";
-		}
-		return $result;
-	}
+		} else {
+            $result = "<input type='text' name='".$ele_name."' id='".$ele_name.
+                "' class=\"icms-date-box\" size='".$this->getSize()."' maxlength='".$this->getMaxlength().
+                "' value='".$ele_value."'".$this->getExtra()." />";
+            static $output_datepicker_defaults = true;
+            if ($output_datepicker_defaults) {
+                $ICMS_URL = ICMS_URL;
+                // the jQuery datepicker wants a date format such as yy-mm-dd, or yy-m-d.
+                // yyyy-mm-dd gives a date like '20142014-10-11', so only yy, not yyyy.
+                $dateFormat = dateFormatToStrftime(_SHORTDATESTRING);
+                $dateFormat = str_replace(array("%y", "%m", "%d"), array("yy", "m", "d"), strtolower($dateFormat));
+                // note: datepicker_defaults is a var so it is available later for date elements with date limits
+                $result .= <<<EOF
+<script>
+var datepicker_defaults = {
+    dateFormat: "$dateFormat",
+    changeMonth: true,
+    changeYear: true,
+    hideIfNoPrevNext: true, // do not show the prev/next links if they are disabled
+    numberOfMonths: 1,
+    yearRange: "c-20:c+20",
+    showOn: "both",
+    buttonImageOnly: true,
+    buttonImage: "$ICMS_URL/images/calendar.png",
+    buttonText: "Calendar"
+};
+
+jQuery(document).ready(function() {
+    jQuery.datepicker.setDefaults(datepicker_defaults);
+    jQuery(function() {
+        jQuery(".icms-date-box").datepicker();
+    });
+});
+</script>
+EOF;
+                $output_datepicker_defaults = false;
+            }
+        }
+        return $result;
+    }
 }

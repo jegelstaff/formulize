@@ -8,34 +8,33 @@
 <input type="hidden" name="formulize_admin_handler" value="screen_graph_cases">
 <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
 
-
 <div class="panel-content content">
-	<fieldset>
-		<legend>User Cases</legend>
-		<div class="form-item">
-			<label for="screens-ops">User Cases</label>
-			<select id="screens-ops" size="1" name="screens-ops">
-				<option value="count"<{if $content.ops eq 'count'}> selected="selected"<{/if}>>Count</option>
-				<option value="unique-count"<{if $content.ops eq 'unique-count'}> selected="selected"<{/if}>>Unique Count</option>
-				<option value="display"<{if $content.ops eq 'display'}> selected="selected"<{/if}>>Display</option>
-				<option value="sum"<{if $content.ops eq 'sum'}> selected="selected"<{/if}>>Sum</option>
-			</select>
-		</div>
-	</fieldset>
-	<fieldset>
-		<legend>Graph Label Element</legend>
-		<div class="form-item">
-			<label for="screens-label">Graph Label Element</label>
-			<{$content.labelelem}>
-		</div>
-	</fieldset>
-	<fieldset>
-		<legend>Graph Data Element</legend>
-		<div class="form-item">
-			<label for="screens-data">Graph Data Element</label>
-			<{$content.dataelem}>
-		</div>
-	</fieldset>
+    <fieldset>
+        <legend>User Cases</legend>
+        <div class="form-item">
+            <label for="screens-ops">User Cases</label>
+            <select id="screens-ops" size="1" name="screens-ops">
+                <option value="count"<{if $content.ops eq 'count'}> selected="selected"<{/if}>>Count</option>
+                <option value="unique-count"<{if $content.ops eq 'unique-count'}> selected="selected"<{/if}>>Unique Count</option>
+                <option value="display"<{if $content.ops eq 'display'}> selected="selected"<{/if}>>Display</option>
+                <option value="sum"<{if $content.ops eq 'sum'}> selected="selected"<{/if}>>Sum</option>
+            </select>
+        </div>
+    </fieldset>
+    <fieldset>
+        <legend>Graph Label Element</legend>
+        <div class="form-item">
+            <label for="screens-label">Graph Label Element</label>
+            <{$content.labelelem}>
+        </div>
+    </fieldset>
+    <fieldset>
+        <legend>Graph Data Element</legend>
+        <div class="form-item">
+            <label for="screens-data">Graph Data Element</label>
+            <{$content.dataelem}>
+        </div>
+    </fieldset>
 
     <fieldset>
         <legend>Views</legend>
@@ -64,5 +63,5 @@
 </form>
 
 <script type="text/javascript">
-	$("#<{$content.reloadblank}>").attr('checked', true);
+    $("#<{$content.reloadblank}>").attr('checked', true);
 </script>

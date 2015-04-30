@@ -196,9 +196,9 @@ div#logoHead span.left{
 div#logoHead span.right{
 	float: right;
 }
-div#navbarCP{background:url(images/bg-lr-titles.gif);font-weight:normal;font-family:Arial, Helvetica, sans-serif;height:25px;position:absolute;width:100%;z-index:10;clear:both;}
+div#navbarCP{background:url(images/bg-lr-titles.gif);font-weight:normal;font-family:Arial, Helvetica, sans-serif;height:25px;width:100%;z-index:10;}
 div#navbarCP ul {list-style:none;padding:0;margin:0;}
-div#navbarCP ul li {list-style:none;padding:0;float:left;margin:0;margin-left:3px;position:relative;}
+div#navbarCP ul li {list-style:none;padding:0.3em;float:left;margin:0;margin-left:3px;position:relative;}
 div#navbarCP ul li a {padding:4px;display:block;color:#4d4d4d;font-weight:normal;font-size:14px;padding-right:20px;}
 div#navbarCP ul li a:hover {border-color:#ADD8E6;color:#000;text-decoration:none;}
 div#navbarCP ul li ul {display:none;position:absolute;top:1em;margin-left:15px;background:#FFFFFF;border:1px solid #000000;padding:0;z-index:1;}
@@ -230,9 +230,6 @@ div#navOptionsCP{
 	border-top: 1px solid #FFFFFF;
 	border-bottom: 1px solid #CCCCCC;
 	height: 35px;
-	position: relative;
-	top: 25px;
-	clear: both;
 }
 div#navOptionsCP a{
 	border: 1px solid #DFE0FD;
@@ -462,11 +459,11 @@ tr.blocked td {background-color: #FF0000;}
 /* Tooltip box */
 .caption-text img {float: right; padding-top: 2px;}
 span.helptext {position: absolute; right: 50px; z-index: 9000; background-color:#000; outline:1px solid #669; border:2px solid #fff; padding:10px 15px; width:200px; display:none; color:#fff; text-align:left; font-size:12px; font-weight:normal;
-/* outline radius for mozilla/firefox only */ 
-outline-radius:4px; 
--moz-outline-radius:4px; 
+/* outline radius for mozilla/firefox only */
+outline-radius:4px;
+-moz-outline-radius:4px;
 -webkit-outline-radius:4px;
-/* opacity for tooltip box */ 
+/* opacity for tooltip box */
 filter:alpha(opacity=70);
 -moz-opacity:0.75;
 -khtml-opacity: 0.75;

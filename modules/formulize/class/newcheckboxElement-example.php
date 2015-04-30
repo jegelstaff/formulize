@@ -365,7 +365,7 @@ class formulizeNewCheckboxElementHandler extends formulizeElementsHandler {
 		}
 			$opt_count++;
 		}
-        return formulize_escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
+        return formulize_db_escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
     }
     
     // this method will handle any final actions that have to happen after data has been saved
@@ -386,7 +386,7 @@ class formulizeNewCheckboxElementHandler extends formulizeElementsHandler {
 		if (preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
 			// convert ffcaption to regular and then query for id
 			$realcap = str_replace("`", "'", $ffcaption);
-			$newValueq = go("SELECT other_text FROM " . DBPRE . "formulize_other, " . DBPRE . "formulize WHERE " . DBPRE . "formulize_other.ele_id=" . DBPRE . "formulize.ele_id AND " . DBPRE . "formulize.ele_handle=\"" . formulize_escape($handle) . "\" AND " . DBPRE . "formulize_other.id_req='".intval($entry_id)."' LIMIT 0,1");
+			$newValueq = go("SELECT other_text FROM " . DBPRE . "formulize_other, " . DBPRE . "formulize WHERE " . DBPRE . "formulize_other.ele_id=" . DBPRE . "formulize.ele_id AND " . DBPRE . "formulize.ele_handle=\"" . formulize_db_escape($handle) . "\" AND " . DBPRE . "formulize_other.id_req='".intval($entry_id)."' LIMIT 0,1");
 			$value_other = $newValueq[0]['other_text']; // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
 			$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value); 
 		}
