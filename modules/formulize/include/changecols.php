@@ -98,6 +98,7 @@ if (!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)
     exit;
 }
 
+$defaultCols = getDefaultCols($fid, $frid); // returns ele_handles
 $cols = getAllColList($fid, $frid, $groups); // $groups indicates that we only want columns which are visible to the current user
 
 // handle metadata columns
@@ -139,10 +140,25 @@ print "<table class=outer><tr><th colspan=2>" . _formulize_DE_PICKNEWCOLS . "</t
 print "<tr><td class=head>" . _formulize_DE_AVAILCOLS . "</td><td class=even>";
 
 $counter = 1;
+// add in the default columns first and they'll be visible
 foreach($options as $value=>$option) {
-    $selected = in_array($value, $selectedCols) ? "checked='checked'" : "";
-    print "<label><input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"$value\" $selected />&nbsp;&nbsp;&nbsp;$option</label><br />\n";
-    $counter++;
+    if(in_array($value, $defaultCols)) {
+        $selected = in_array($value, $selectedCols) ? "checked='checked'" : "";
+        print "<label><input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"$value\" $selected />&nbsp;&nbsp;&nbsp;$option</label><br />\n";
+        $counter++;
+        unset($options[$value]);
+    }
+}
+// add in the rest of the columns second, they'll be invisible
+if(count($options) > 0) {
+    print "<p><a onclick='javascript:toggleAllCols();return false;'>"._formulize_DE_SHOWALLCOLS."</a></p>";
+    print "<div id='allcols'>";// style='display:none;'>";
+    foreach($options as $value=>$option) {
+        $selected = in_array($value, $selectedCols) ? "checked='checked'" : "";
+        print "<label><input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"$value\" $selected />&nbsp;&nbsp;&nbsp;$option</label><br />\n";
+        $counter++;
+    }
+    print "</div>";
 }
 
 print "</td></tr>\n";

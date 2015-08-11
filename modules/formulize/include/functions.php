@@ -3204,6 +3204,42 @@ function getHeaders($cols, $colsIsElementHandles = false) {
     return $headers;
 }
 
+// this function returns the handles of form elements based on the requested form and optionally framework id
+function getDefaultCols($fid, $frid="") {
+	global $xoopsDB, $xoopsUser;
+
+	if($frid) { // expand the headerlist to include the other forms
+		$fids[0] = $fid;
+		$check_results = checkForLinks($frid, $fids, $fid, "", "", "", "", "", "", "0");
+		$fids = $check_results['fids'];
+		$sub_fids = $check_results['sub_fids'];
+		$gperm_handler = &xoops_gethandler('groupperm');
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
+		$mid = getFormulizeModId();
+		$ele_handles = array();
+		$processedFids = array();
+		foreach($fids as $this_fid) {
+			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
+				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
+				$processedFids[$this_fid] = true;
+			}
+		}
+		foreach($sub_fids as $this_fid) {
+			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
+				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
+				$processedFids[$this_fid] = true;
+			}
+		}
+
+		return $ele_handles;
+		
+	} else {
+		$ele_handles = getHeaderList($fid, true, true); // third param causes element handles to be returned instead of IDs
+		return $ele_handles;
+	}
+
+} 
 
 // THIS FUNCTION OVERWRITES OR APPENDS TO A VALUE IN A SPECIFIED FORM ELEMENT
 // Formerly located in pageworks/include/functions.php

@@ -367,6 +367,7 @@ define("_formulize_DE_MODIFYSCREEN", "Configure this Screen");
 define("_formulize_DE_CHANGECOLS", "Change columns");
 define("_formulize_DE_PICKNEWCOLS", "Pick different columns to view");
 define("_formulize_DE_AVAILCOLS", "Available columns:");
+define("_formulize_DE_SHOWALLCOLS", "Click to show/hide more columns");
 define("_formulize_DE_LASTMOD", "Last modified by");
 define("_formulize_DE_CREATED", "Created by");
 define("_formulize_DE_ON", "on");
