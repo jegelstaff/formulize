@@ -60,6 +60,15 @@ function updateCols(formObj) {
     }
 }
 
+function toggleAllCols() {
+    currentStyle = document.getElementById('allcols').style.display;
+    if (currentStyle == 'none') { 
+        document.getElementById('allcols').style.display = 'block';
+    } else {
+        document.getElementById('allcols').style.display = 'none';
+    }
+}
+
 -->
 </script>
 <?php
@@ -152,7 +161,7 @@ foreach($options as $value=>$option) {
 // add in the rest of the columns second, they'll be invisible
 if(count($options) > 0) {
     print "<p><a onclick='javascript:toggleAllCols();return false;'>"._formulize_DE_SHOWALLCOLS."</a></p>";
-    print "<div id='allcols'>";// style='display:none;'>";
+    print "<div id='allcols' style='display:none;'>";
     foreach($options as $value=>$option) {
         $selected = in_array($value, $selectedCols) ? "checked='checked'" : "";
         print "<label><input type='checkbox' name='popnewcols[]' id='popnewcols".$counter."' class='colbox' value=\"$value\" $selected />&nbsp;&nbsp;&nbsp;$option</label><br />\n";
