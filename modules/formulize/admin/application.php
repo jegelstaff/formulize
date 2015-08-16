@@ -36,69 +36,68 @@ $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $application_handler = xoops_getmodulehandler('applications','formulize');
 
 $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-    
-$menulinks = array(); // JAKEADDED
+
+$menulinks = array();
 $formscreens = array();
 $options = array();
-    
-if($aid == 0) {
-	$appName = "Forms with no app";
-	$appDesc = "";
-	$appForms = array();
-	$formObjects = $form_handler->getFormsByApplication(0); // returns array of objects
-	$appLinks = $application_handler->getMenuLinksForApp(0,true);	
+
+if ($aid == 0) {
+    $appName = "Forms with no app";
+    $appDesc = "";
+    $appForms = array();
+    $formObjects = $form_handler->getFormsByApplication(0); // returns array of objects
+    $appLinks = $application_handler->getMenuLinksForApp(0,true);
 } else {
-	$appObject = $application_handler->get($aid);
-	$appName = $appObject->getVar('name');
-	$appDesc = $appObject->getVar('description');
-	$appLinks = $appObject->getVar('all_links'); // JAKEADDED
+    $appObject = $application_handler->get($aid);
+    $appName = $appObject->getVar('name');
+    $appDesc = $appObject->getVar('description');
+    $appLinks = $appObject->getVar('all_links');
 }
-    
-    // get list of all the links
-    
-    $index = 0; // JAKEADDED
-    foreach ($appLinks as $menulink) // JAKEADDED
-    {
-        $menulinks[$index]['menu_id'] = $menulink->getVar('menu_id'); //Oct 2013 W. R.
-        $menulinks[$index]['url'] = $menulink->getVar('url') ? $menulink->getVar('url') : "http://"; // JAKEADDED
-        $menulinks[$index]['link_text'] = $menulink->getVar('link_text'); // JAKEADDED
-        $menulinks[$index]['screen'] = $menulink->getVar('screen'); // JAKEADDED
-        $menulinks[$index]['rank'] = $menulink->getVar('rank');	
-        $menulinks[$index]['name'] = $menulink->getVar('name');	
-        $menulinks[$index]['text'] = $menulink->getVar('text');	
-        $menulinks[$index]['permissions'] = $menulink->getVar('permissions');
-        $menulinks[$index]['default_screen'] = $menulink->getVar('default_screen'); //Oct 2013 W.R.
-	$menulinks[$index]['note']=$menulink->getVar('note');//Jan 2015 Jinfu
-        $index ++; // JAKEADDED
+
+// get list of all the links
+
+$index = 0;
+foreach ($appLinks as $menulink) {
+    $menulinks[$index]['menu_id'] = $menulink->getVar('menu_id'); //Oct 2013 W. R.
+    $menulinks[$index]['url'] = $menulink->getVar('url') ? $menulink->getVar('url') : "http://";
+    $menulinks[$index]['link_text'] = $menulink->getVar('link_text');
+    $menulinks[$index]['screen'] = $menulink->getVar('screen');
+    $menulinks[$index]['rank'] = $menulink->getVar('rank');
+    $menulinks[$index]['name'] = $menulink->getVar('name');
+    $menulinks[$index]['text'] = $menulink->getVar('text');
+    $menulinks[$index]['permissions'] = $menulink->getVar('permissions');
+    $menulinks[$index]['default_screen'] = $menulink->getVar('default_screen'); //Oct 2013 W.R.
+    $menulinks[$index]['note']=$menulink->getVar('note');//Jan 2015 Jinfu
+    $index ++;
+}
+
+$formObjects = $form_handler->getFormsByApplication($aid);
+// get list of all the forms and screens
+$allFormObjects = $form_handler->getAllForms();
+$forms = array();
+$forms[''] = "Select the form or screen:";
+foreach($allFormObjects as $thisFormObject) {
+    $allForms[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
+    // settings tab uses id
+    $allForms[$thisFormObject->getVar('id_form')]['id'] = $thisFormObject->getVar('id_form');
+    $forms['fid='.$thisFormObject->getVar('id_form')] = $thisFormObject->getVar('title');
+    $screens = $screen_handler->getObjects(null,$thisFormObject->getVar('id_form'));
+    foreach($screens as $screen) {
+        $forms['sid='.$screen->getVar('sid')] = "&nbsp;&nbsp;   ". $screen->getVar('title');
     }
-    
-    $formObjects = $form_handler->getFormsByApplication($aid);
-    // get list of all the forms and screens
-    $allFormObjects = $form_handler->getAllForms();
-    $forms = array();
-    $forms[''] = "Select the form or screen:";
-    foreach($allFormObjects as $thisFormObject) {
-        $allForms[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
-        $allForms[$thisFormObject->getVar('id_form')]['id'] = $thisFormObject->getVar('id_form'); // settings tab uses id
-        $forms['fid='.$thisFormObject->getVar('id_form')] = $thisFormObject->getVar('title');
-        $screens = $screen_handler->getObjects(null,$thisFormObject->getVar('id_form'));
-        //echo 'ASSIGNED ' . var_dump($screens);
-        foreach($screens as $screen) {
-            $forms['sid='.$screen->getVar('sid')] = "&nbsp;&nbsp;   ". $screen->getVar('title');
-	}
-    }
-    $forms['url'] = "An external URL";
-    
+}
+$forms['url'] = "An external URL";
+
 
 // get list of group ids that have no default screen set
-$groupsWithDefaultScreen = $application_handler->getGroupsWithDefaultScreen();    
-    
+$groupsWithDefaultScreen = $application_handler->getGroupsWithDefaultScreen();
+
 // get the list of groups
 $member_handler = xoops_gethandler('member');
 $allGroups = $member_handler->getGroups();
 $groups = array();
-if(!isset($selectedGroups)) {
-    $selectedGroups = isset($_POST['groups']) ? $_POST['groups'] : array();  
+if (!isset($selectedGroups)) {
+    $selectedGroups = isset($_POST['groups']) ? $_POST['groups'] : array();
 }
 $orderGroups = isset($_POST['order']) ? $_POST['order'] : "creation";
 foreach($allGroups as $thisGroup) {
@@ -106,50 +105,50 @@ foreach($allGroups as $thisGroup) {
     $groups[$thisGroup->getVar('name')]['name'] = $thisGroup->getVar('name');
     $groups[$thisGroup->getVar('name')]['selected'] = in_array($thisGroup->getVar('groupid'), $selectedGroups) ? " selected" : "";
 }
-if($orderGroups == "alpha") {  
+if ($orderGroups == "alpha") {
     ksort($groups);
 }
-    
+
 $options['listsofscreenoptions'] = $forms;
-    
+
 $screen_handler = xoops_getmodulehandler('screen', 'formulize');
 $gperm_handler = xoops_gethandler('groupperm');
 global $xoopsUser;
 foreach($formObjects as $thisFormObject) {
-	if(!$gperm_handler->checkRight("edit_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId())) {
-		continue;
-	}
-	$formsInApp[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
-	$formsInApp[$thisFormObject->getVar('id_form')]['fid'] = $thisFormObject->getVar('id_form'); // forms tab uses fid
-	$hasDelete = $gperm_handler->checkRight("delete_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId());
-	$formsInApp[$thisFormObject->getVar('id_form')]['hasdelete'] = $hasDelete;
-	// get the default screens for each form too
-	$defaultFormScreen = $thisFormObject->getVar('defaultform');
-	$defaultListScreen = $thisFormObject->getVar('defaultlist');
-	$defaultFormObject = $screen_handler->get($defaultFormScreen);
-	if(is_object($defaultFormObject)) {
-		$defaultFormName = $defaultFormObject->getVar('title');
-	}
-	$defaultListObject = $screen_handler->get($defaultListScreen);
-	if(is_object($defaultListObject)) {
-		$defaultListName = $defaultListObject->getVar('title');
-	}
-	$formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenid'] = $defaultFormScreen;
-	$formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenid'] = $defaultListScreen;
-	$formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenname'] = $defaultFormName;
-	$formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenname'] = $defaultListName;
-	$formsInApp[$thisFormObject->getVar('id_form')]['lockedform'] = $thisFormObject->getVar('lockedform');
-	$formsInApp[$thisFormObject->getVar('id_form')]['istableform'] = $thisFormObject->getVar('tableform');
+    if (!$gperm_handler->checkRight("edit_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId())) {
+        continue;
+    }
+    $formsInApp[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
+    $formsInApp[$thisFormObject->getVar('id_form')]['fid'] = $thisFormObject->getVar('id_form'); // forms tab uses fid
+    $hasDelete = $gperm_handler->checkRight("delete_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId());
+    $formsInApp[$thisFormObject->getVar('id_form')]['hasdelete'] = $hasDelete;
+    // get the default screens for each form too
+    $defaultFormScreen = $thisFormObject->getVar('defaultform');
+    $defaultListScreen = $thisFormObject->getVar('defaultlist');
+    $defaultFormObject = $screen_handler->get($defaultFormScreen);
+    if (is_object($defaultFormObject)) {
+        $defaultFormName = $defaultFormObject->getVar('title');
+    }
+    $defaultListObject = $screen_handler->get($defaultListScreen);
+    if (is_object($defaultListObject)) {
+        $defaultListName = $defaultListObject->getVar('title');
+    }
+    $formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenid'] = $defaultFormScreen;
+    $formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenid'] = $defaultListScreen;
+    $formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenname'] = $defaultFormName;
+    $formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenname'] = $defaultListName;
+    $formsInApp[$thisFormObject->getVar('id_form')]['lockedform'] = $thisFormObject->getVar('lockedform');
+    $formsInApp[$thisFormObject->getVar('id_form')]['istableform'] = $thisFormObject->getVar('tableform');
 }
 
 
 $allRelationships = array();
 foreach($formObjects as $thisForm) {
-	$allRelationships = array_merge($allRelationships, $framework_handler->getFrameworksByForm($thisForm->getVar('id_form'))); // returns array of objects
-	if($aid) {
-		// package up the info we need for drawing the list of forms in the app
-		$allForms[$thisForm->getVar('id_form')]['selected'] = " selected";
-	}
+    $allRelationships = array_merge($allRelationships, $framework_handler->getFrameworksByForm($thisForm->getVar('id_form'))); // returns array of objects
+    if ($aid) {
+        // package up the info we need for drawing the list of forms in the app
+        $allForms[$thisForm->getVar('id_form')]['selected'] = " selected";
+    }
 }
 $relationships = $framework_handler->formatFrameworksAsRelationships($allRelationships);
 
@@ -175,7 +174,7 @@ $common['name'] = $appName;
 // accordion content is available as $sectionContent.foo
 
 $i=0;
-if($aid > 0) {
+if ($aid > 0) {
     $i++;
     $adminPage['tabs'][$i]['name'] = _AM_APP_SETTINGS;
     $adminPage['tabs'][$i]['template'] = "db:admin/application_settings.html";
@@ -200,7 +199,7 @@ $i++;
 $adminPage['tabs'][$i]['name'] = _AM_APP_RELATIONSHIPS;
 $adminPage['tabs'][$i]['template'] = "db:admin/application_relationships.html";
 $adminPage['tabs'][$i]['content'] = $common;
-$adminPage['tabs'][$i]['content']['relationships'] = $relationships; 
+$adminPage['tabs'][$i]['content']['relationships'] = $relationships;
 
 $i++;
 $adminPage['tabs'][$i]['name'] = " Menu Entries";
@@ -211,7 +210,7 @@ $adminPage['tabs'][$i]['content']['groups'] = $groups;
 $adminPage['tabs'][$i]['content']['groupsWithDefaultScreen'] = $groupsWithDefaultScreen;
 
 //this new part creates an object for application_code_save.php if user is allowed to use custom code
-if(is_object($appObject)){
+if (is_object($appObject)){
     $i++;
     $adminPage['tabs'][$i]['name'] = "Code";
     $adminPage['tabs'][$i]['template'] = "db:admin/application_code.html";
@@ -219,11 +218,9 @@ if(is_object($appObject)){
     $adminPage['tabs'][$i]['content']['custom_code'] = $appObject->getVar("custom_code");
 }
 
-
 $adminPage['pagetitle'] = _AM_APP_APPLICATION.$appName;
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['text'] = $appName;
-

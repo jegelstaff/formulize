@@ -1114,7 +1114,7 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
             $mainHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_to_one[0]['keyother']);
             $candidateHandle = q("SELECT ele_handle FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id=".$one_fid['keyself']);
             $valueToCheckAgainst = isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle[0]['ele_handle']]) ? $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][intval($entries[$fid][0])][$mainHandle[0]['ele_handle']] : "main.`".$mainHandle[0]['ele_handle']."` AND main.entry_id = ".intval($entries[$fid][0]);
-            $valueToCheckAgainst = is_numeric($valueToCheckAgainst) ? $valueToCheckAgainst : "'".formulize_escape($valueToCheckAgainst)."'";
+            $valueToCheckAgainst = is_numeric($valueToCheckAgainst) ? $valueToCheckAgainst : "'".formulize_db_escape($valueToCheckAgainst)."'";
             $candidateEntry = q("SELECT candidate.entry_id FROM " . $xoopsDB->prefix("formulize_".$oneFormObject->getVar('form_handle')) . " AS candidate, ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS main WHERE candidate.`".$candidateHandle[0]['ele_handle']."` = ".$valueToCheckAgainst." LIMIT 0,1");
 
             if ($candidateEntry[0]['entry_id']) {
@@ -1207,7 +1207,7 @@ function checkForLinks($frid, $fids, $fid, $entries, $gperm_handler, $owner_grou
 }
 
 
-// THIS FUNCTION CREATES AN EXPORT FILE ON THE SERVER AND RETURNS THE FILESNAME
+// THIS FUNCTION CREATES AN EXPORT FILE ON THE SERVER AND RETURNS THE FILENAME
 // $headers is the list of column headings in use
 // $cols is the list of handles in the $data to use to get all the data for display, must be in synch with headers
 // $data is the full dataset that is being prepped
@@ -2497,6 +2497,15 @@ function getTextboxDefault($ele_value, $form_id, $entry_id) {
 }
 
 
+function getDateElementDefault($default_hint) {
+    if (ereg_replace("[^A-Z{}]", "", $default_hint) === "{TODAY}") {
+        $number = ereg_replace("[^0-9+-]", "", $default_hint);
+        return mktime(0, 0, 0, date("m"), date("d") + $number, date("Y"));
+    }
+    return strtotime($default_hint);
+}
+
+
 // this function returns the entry ids of entries in one form that are linked to another
 // IMPORTANT:  assume $startEntry is valid for the user(security check has already been executed by now)
 // therefore just need to know the allowable uids (scope) in the $targetForm
@@ -3195,6 +3204,42 @@ function getHeaders($cols, $colsIsElementHandles = false) {
     return $headers;
 }
 
+// this function returns the handles of form elements based on the requested form and optionally framework id
+function getDefaultCols($fid, $frid="") {
+	global $xoopsDB, $xoopsUser;
+
+	if($frid) { // expand the headerlist to include the other forms
+		$fids[0] = $fid;
+		$check_results = checkForLinks($frid, $fids, $fid, "", "", "", "", "", "", "0");
+		$fids = $check_results['fids'];
+		$sub_fids = $check_results['sub_fids'];
+		$gperm_handler = &xoops_gethandler('groupperm');
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
+		$mid = getFormulizeModId();
+		$ele_handles = array();
+		$processedFids = array();
+		foreach($fids as $this_fid) {
+			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
+				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
+				$processedFids[$this_fid] = true;
+			}
+		}
+		foreach($sub_fids as $this_fid) {
+			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
+				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
+				$processedFids[$this_fid] = true;
+			}
+		}
+
+		return $ele_handles;
+		
+	} else {
+		$ele_handles = getHeaderList($fid, true, true); // third param causes element handles to be returned instead of IDs
+		return $ele_handles;
+	}
+
+} 
 
 // THIS FUNCTION OVERWRITES OR APPENDS TO A VALUE IN A SPECIFIED FORM ELEMENT
 // Formerly located in pageworks/include/functions.php
@@ -4286,7 +4331,8 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
             // need to add [$i] to the generation of the hidden values here, so the hidden condition keys equal the flag on the deletion X
             // $x will be the order based on the filter settings that were passed in, might not start at 0.  $i will always start at 0, so this way we'll catch/correct any malformed arrays as people edit/save them
             $thisHiddenElement = new xoopsFormHidden($oldElementsName."[$i]", strip_tags(htmlspecialchars(${$oldElementsName}[$x])));
-            $thisHiddenOp = new xoopsFormHidden($oldOpsName."[$i]", strip_tags(htmlspecialchars(${$oldOpsName}[$x])));
+            ${$oldOpsName}[$x] = formulize_conditionsCleanOps(${$oldOpsName}[$x]);
+            $thisHiddenOp = new xoopsFormHidden($oldOpsName."[$i]", ${$oldOpsName}[$x]); 
             $thisHiddenTerm = new xoopsFormHidden($oldTermsName."[$i]", strip_tags(htmlspecialchars(${$oldTermsName}[$x])));
             $thisHiddenType = new xoopsFormHidden($oldTypesName."[$i]", strip_tags(htmlspecialchars(${$oldTypesName}[$x])));
             if (${$oldTypesName}[$x] == "all") {
@@ -4310,6 +4356,24 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
     $addcon = new xoopsFormButton('', 'addcon', $filterButtonText, 'button');
 
     return $conditionui . $addcon->render();
+}
+
+// this function checks the passed in op and returns it only if it matches one of the allowed types of ops (necessary since we cannot sanitize out < and > easily using normal sanitizing functions due to them being angle brackets in HTML)
+function formulize_conditionsCleanOps($op) {
+ $ops = array();
+ $ops['='] = "=";
+ $ops['NOT'] = "NOT";
+ $ops['>'] = ">";
+ $ops['<'] = "<";
+ $ops['>='] = ">=";
+ $ops['<='] = "<=";
+ $ops['LIKE'] = "LIKE";
+ $ops['NOT LIKE'] = "NOT LIKE";
+ if(isset($ops[$op])) {
+    return $op;
+ } else {
+    return "";
+ }
 }
 
 

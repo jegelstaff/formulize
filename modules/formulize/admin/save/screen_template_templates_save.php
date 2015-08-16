@@ -27,66 +27,41 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// handles all operations requested through the UI
-// included in ui.php
-// depends on declarations in ui.php file!!
+// this file handles saving of submissions from the screen_list_display page of the new admin UI
 
-include_once "formindex.php";
-
-ob_start();
-
-if (isset($_GET['op'])) {
-    switch($_GET['op']) {
-        case "delete":
-            deleteForm($_GET['fid']);
-            break;
-        // patch ops are only in formindex.php, must be called by going to that URL with the patch op in the URL as a param
-        case "patch40":
-        case "patchDB";
-            patch40();
-            break;
-        case "patch31":
-            patch31();
-            break;
-        case "patch22convertdata":
-            patch22convertdata();
-            break;
-        case "patch30datastructure":
-            patch30DataStructure();
-            break;
-        case "patchEmptyFormScreens":
-            patchEmptyFormScreens();
-            break;
-    }
-} else {
-    patch40(); // do this which will double check if the user needs to apply a DB patch or not!!
+// if we aren't coming from what appears to be save.php, then return nothing
+if(!isset($processedValues)) {
+  return;
 }
 
-$xoopsTpl->assign('opResults', ob_get_clean());
+
+//print_r($_POST);
+//print_r($processedValues);
 
 
-function deleteForm($fid) {
-    global $xoopsDB, $myts, $eh;
-    global $xoopsUser, $xoopsModule;
+$aid = intval($_POST['aid']);
+$sid = $_POST['formulize_admin_key'];
 
-    $gperm_handler = &xoops_gethandler('groupperm');
-    $module_id = $xoopsModule->getVar('mid');
-    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-    if (!$gperm_handler->checkRight("delete_form", $fid, $groups, $module_id)) {
-        return;
-    }
+$screens = $processedValues['screens'];
 
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $form_handler->dropDataTable($fid);
 
-    $sql = sprintf("DELETE FROM %s WHERE id_form = '%s'", $xoopsDB->prefix("formulize_id"), $fid);
-    $xoopsDB->queryF($sql) or $eh->show("error supression 1 dans delform");
-
-    $sql = sprintf("DELETE FROM %s WHERE id_form = '%u'", $xoopsDB->prefix("formulize"), $fid);
-    $xoopsDB->queryF($sql) or $eh->show("error supression 2 dans delform");
-
-    $sql = sprintf("DELETE FROM %s WHERE itemname = '%s'", $xoopsDB->prefix("formulize_menu"), $fid);
-    $xoopsDB->queryF($sql) or $eh->show("error supression 3 dans delform");
-
-    xoops_notification_deletebyitem ($module_id, "form", $id_form); // added by jwe-10/10/04 to handle removing notifications for a form once it's gone
+$screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
+$screen = $screen_handler->get($sid);
+// CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+$formObject = $form_handler->get($screen->getVar('fid'));
+if($formObject->getVar('lockedform')) {
+  return;
 }
+// check if the user has permission to edit the form
+if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
+  return;
+}
+$screen->setVar('custom_code',htmlspecialchars(trim($screens['custom_code'])));
+$screen->setVar('template',htmlspecialchars(trim($screens['template'])));
+
+
+if(!$screen_handler->insert($screen)) {
+  print "Error: could not save the screen properly: ".$xoopsDB->error();
+}
+?>

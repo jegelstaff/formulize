@@ -17,7 +17,7 @@
 		<div class="form-item required">
         	<fieldset>
                 <legend><label for="forms-title" class="question"><{$smarty.const._AM_SETTINGS_FORM_TITLE_QUESTION}></label></legend>
-                <p><{$smarty.const._AM_SETTINGS_FORM_TITLE}><input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" /></p>
+                <p><{$smarty.const._AM_SETTINGS_FORM_TITLE}><input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" onkeyup="fillHandle()" /></p>
             
             </fieldset>
 		</div>
@@ -27,7 +27,7 @@
 	  <div class="form-item">
      	<fieldset>
         <legend><label for="forms-form_handle" class="question"><{$smarty.const._AM_SETTINGS_FORM_HANDLE}></label></legend>
-			  <input type="text" name="forms-form_handle" value="<{$content.form_handle}>">
+			  <input type="text" name="forms-form_handle" value="<{$content.form_handle}>" >
               <a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_HANDLE_EXPLAIN}></span></a>
 		  </fieldset>
 	  </div>
@@ -186,11 +186,24 @@
 		});
 	
 	$(".savebutton").click(function() {
-	  if($("[name=forms-title]").val() == "") {
+		if($("[name=forms-title]").val() == "") {
 			alert("Forms must have a name!");
 			$("[name=forms-title]").focus();
 		}
+		if ($("[name=forms-form_handle]").val() == "") {
+			fillHandle();
+		}
+		
 	});
+	function fillHandle(){
+		//this function will be called when they are typing title to update handle
+		if ("<{$content.fid}>" == "new") {
+			var str=$("[name=forms-title]").val();
+			str=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
+			str=str.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);
+			$("[name=forms-form_handle]").val(str);
+		}
+	}
 	$('#fix_entries').click(function(){
 		$.ajax({
 			type:"POST",

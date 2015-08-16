@@ -380,4 +380,3 @@ function initializeZeros($keys) {
 function echoBR() {
 	echo "<br \>";
 }
-?>

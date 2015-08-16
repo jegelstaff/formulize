@@ -59,6 +59,37 @@ if(!$fid = $form_handler->insert($form)) {
   print "Error: could not save the form properly: ".$xoopsDB->error();
 }
 
+// do cloning of form screens here
+if(isset($_POST['cloneformscreen']) AND ($_POST['cloneformscreen'])) {
+    $screenToClone = intval($_POST['cloneformscreen']);
+    $formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
+    $formScreenHandler->cloneScreen($screenToClone);
+    print "/* evalnow */ reloadWithScrollPosition()";
+}
+
+// do cloning of list screens here
+if(isset($_POST['clonelistscreen']) AND ($_POST['clonelistscreen'])) {
+  $screenToClone = intval($_POST['clonelistscreen']);
+  $listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+  $listScreenHandler->cloneScreen($screenToClone);
+  print "/* evalnow */ reloadWithScrollPosition()";
+}
+
+// do cloning of multi screens here
+if(isset($_POST['clonemultiscreen']) AND ($_POST['clonemultiscreen'])) {
+    $screenToClone = intval($_POST['clonemultiscreen']);
+    $screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+    $screenHandler->cloneScreen($screenToClone);
+    print "/* evalnow */ reloadWithScrollPosition()";
+}
+
+// do cloning of template screens here
+if(isset($_POST['clonetemplatescreen']) AND ($_POST['clonetemplatescreen'])) {
+    $screenToClone = intval($_POST['clonetemplatescreen']);
+    $screenHandler = xoops_getmodulehandler('templateScreen', 'formulize');
+    $screenHandler->cloneScreen($screenToClone);
+    print "/* evalnow */ reloadWithScrollPosition()";
+}
 
 // do deletion here
 if($_POST['deletescreen']) {

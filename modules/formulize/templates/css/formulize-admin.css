@@ -356,6 +356,7 @@ h6 {
   margin-bottom: -19px; }
 
 #xo-canvas-content {
+  min-width: 782px;
   margin-left: 30px;
   margin-right: 30px; }
 
@@ -1514,7 +1515,6 @@ form div.form-item > fieldset {
 
 form label {
   display: inline-block;
-  vertical-align: top;
   padding: 0 4px 0 0; }
 
 form fieldset fieldset {
@@ -1553,7 +1553,7 @@ div.description {
 
 .homepage-description {
   margin-bottom: 1em;
-  margin-top: -20px; }
+  margin-top: 5px; }
 
 form textarea {
   width: 80%; }
