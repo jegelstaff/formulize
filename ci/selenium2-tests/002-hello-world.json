@@ -1,0 +1,28 @@
+{
+  "type": "script",
+  "seleniumVersion": "2",
+  "formatVersion": 2,
+  "steps": [
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "link text",
+        "value": "Admin"
+      }
+    },
+    {
+      "type": "pause",
+      "waitTime": "543"
+    },
+    {
+      "type": "verifyTextPresent",
+      "text": ""
+    }
+  ],
+  "data": {
+    "configs": {},
+    "source": "none"
+  },
+  "inputs": [],
+  "timeoutSeconds": 60
+}
