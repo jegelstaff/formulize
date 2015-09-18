@@ -288,6 +288,7 @@ CREATE TABLE formulize_id (
   form_handle varchar(255) NOT NULL default '',
   store_revisions tinyint(1) NOT NULL default '0',
   on_before_save text,
+  on_after_save text,
   custom_edit_code text,
   note text,
   PRIMARY KEY  (`id_form`)
