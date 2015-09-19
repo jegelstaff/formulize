@@ -13,65 +13,39 @@
 <input type="hidden" name="application_url_id" value="<{$content.aid}>">
 <input type="hidden" id="reload_settings" name="reload_settings" value="<{if $content.fid == 'new'}>1<{/if}>">
 
-	<div class="accordion-box">
-		<div class="form-item required">
-        	<fieldset>
-                <legend><label for="forms-title" class="question"><{$smarty.const._AM_SETTINGS_FORM_TITLE_QUESTION}></label></legend>
-                <p><{$smarty.const._AM_SETTINGS_FORM_TITLE}><input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" onkeyup="fillHandle()" /></p>
+	<table id="plain">
+		<tr>
+				<td width="30%"><label for="forms-title" class="question"><{$smarty.const._AM_SETTINGS_FORM_TITLE_QUESTION}></label></fieldset></td>
+				<td><{*$smarty.const._AM_SETTINGS_FORM_TITLE*}><input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" onkeyup="fillHandle()" /></td>
+        </tr>
             
-            </fieldset>
-		</div>
-	</div>
+        <tr>
+				<td><label for="forms-form_handle" class="question"><{$smarty.const._AM_SETTINGS_FORM_HANDLE}></label></td>
+				<td><input type="text" name="forms-form_handle" value="<{$content.form_handle}>">
+					<a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_HANDLE_EXPLAIN}></span></a></td>
+        </tr>
 
-  <div class="accordion-box">
-	  <div class="form-item">
-     	<fieldset>
-        <legend><label for="forms-form_handle" class="question"><{$smarty.const._AM_SETTINGS_FORM_HANDLE}></label></legend>
-			  <input type="text" name="forms-form_handle" value="<{$content.form_handle}>" >
-              <a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_HANDLE_EXPLAIN}></span></a>
-		  </fieldset>
-	  </div>
-  </div>
+        <tr>
+				<td><label for="forms-title" class="question"><{$smarty.const._AM_EOG_Repair}></label></td>
+				<td><input type="button" id="fix_entries" value="Repair Ownership table"></td>
+		</tr>
 
-	<div class="accordion-box">
-		<div class="form-item">
-			<fieldset>
-				<legend><label class="question">Note</label></legend>
-				<textarea id="forms-note" name="forms-note"><{$content.note}></textarea>
-			</fieldset>
-		</div>
-	</div>
-
-	<div class="accordion-box">
-		<div class="form-item required">
-        	<fieldset>
-                <legend><label for="forms-title" class="question"><{$smarty.const._AM_EOG_Repair}>
-                </label>
-                </legend><input type="button" id="fix_entries" value="Repair Ownership table">
-             </fieldset>
-		</div>
-	</div>
 		<{if $content.istableform == true && $content.fid == "new"}>
-		<div class="accordion-box">
-			<div class="form-item">
-				<fieldset>
-                    <legend><label for="database_table" class="question"><{$smarty.const._AM_SETTINGS_FORM_DATABASE}></label></legend>
-                    <input type="text" id="forms-tableform" name="forms-tableform" value="" />
+		<tr>
+					<td><label for="database_table" class="question"><{$smarty.const._AM_SETTINGS_FORM_DATABASE}></label></td>
+					<td><input type="text" id="forms-tableform" name="forms-tableform" value="" />
                     <div class="description">
                         <p><{$smarty.const._AM_SETTINGS_FORM_DATABASE_EXPLAIN}></p>
                     </div>
-                </fieldset>
-			</div>
-		</div>
-		<div style="clear: both;"></div>
+					</td>
+		</tr>
 		<{/if}>
 	
 		<{if $content.istableform == false}>
-		<div class="accordion-box">
-			<div class="form-item">
-        	<fieldset>
-				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ALLOWED}></label></legend>
 				
+			<tr>
+						<td><label class="question"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ALLOWED}></label></td>
+						<td>
 				<div class="form-radios">
 					<label for="group"><input type="radio" id="group" name="forms-single" value="group" /><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ONEPERGROUP}></label>
 				</div>
@@ -81,45 +55,32 @@
 				<div class="form-radios">
 					<label for="empty"><input type="radio" id="off" name="forms-single" value="off" /><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_MORETHANONE}></label>
 				</div>
-             </fieldset>
-		</div>
-	</div>
-	<div style="clear: both;"></div>
+						</td>
+			</tr>
 	
 		<{if $content.fid == "new"}>
-			<div class="accordion-box">
-			<div class="form-item">
-			<fieldset>
-				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_DEFAULT_GROUP_PERM}></label></legend>
-				<select name="groups_can_edit[]" multiple size=8>
-				<{html_options options=$content.groupsCanEditOptions selected=$content.groupsCanEditDefaults}>
-				</select>
-			</fieldset>
-			</div>
-			</div>
-			<div style="clear: both;"></div>
+			<tr>
+						<tr><label class="question"><{$smarty.const._AM_SETTINGS_FORM_DEFAULT_GROUP_PERM}></label></tr>
+						<tr><select name="groups_can_edit[]" multiple size=8>
+							<{html_options options=$content.groupsCanEditOptions selected=$content.groupsCanEditDefaults}></select>
+						</tr>
+			</tr>
 		<{/if}>
 	
 		<{if $content.fid != "new" && $content.elementheadings|@count}>
-		<div class="accordion-box">
-			<div class="form-item">
-				<fieldset>
-									<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_SHOWING_LIST}></label></legend>
-									<select name=headerlist[] size=10 multiple class="form-multiple-select">
+			<tr>
+						<td><label class="question"><{$smarty.const._AM_SETTINGS_FORM_SHOWING_LIST}></label></td>
+						<td><select name=headerlist[] size=10 multiple class="form-multiple-select">
 											<{foreach from=$content.elementheadings item=element}>
 											<option value=<{$element.ele_id}><{$element.selected}>><{$element.text}></option>
-											<{/foreach}>
-									</select>
-							</fieldset>
-			</div>
-		</div>
+							<{/foreach}></select>
+						</td>
+			</tr>
 		<{/if}>
 
-		<div class="accordion-box">
-			<div class="form-item">
-				<fieldset>
-					<legend><label class="question">Do you want to keep a revision history of all the changes people make to entries in this form?</label></legend>
-					<div class="form-radios">
+			<tr>
+						<td><label class="question">Do you want to keep a revision history of all the changes people make to entries in this form?</label></td>
+						<td><div class="form-radios">
 						<label for="store_revisions-0"><input type="radio" id="store_revisions-0" name="forms-store_revisions" value="0" />No</label>
 					</div>
 					<div class="form-radios">
@@ -128,32 +89,26 @@
 					<div class="description">
 						<p>This can increase the size of your database <b>a lot</b> if you turn on revisions for a form where entries are updated very often!</p>
 					</div>
-				</fieldset>
-			</div>
-		</div>
-					
-	
+						</td>
+			</tr>
 	<{/if}>
 	
 	<{if $content.applications|@count > 0}>
-	<div class="accordion-box">
-		<div class="form-item">
-			<fieldset>
-                <legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_APP_PART}></label></legend>
-                <select name="apps[]" id="apps" size=10 multiple>
+			<tr>
+						<td>
+							<label class="question"><{$smarty.const._AM_SETTINGS_FORM_APP_PART}></label>
+						</td>
+						<td><select name="apps[]" id="apps" size=10 multiple>
                     <{foreach from=$content.applications item=application}>
                         <option value=<{$application.appid}><{$application.selected}>><{$application.text}></option>
-                    <{/foreach}>
-                </select>
-            </fieldset>
-		</div>
-	</div>
+							<{/foreach}></select>
+						</td>
+			</tr>
 	<{/if}>
-	<div class="accordion-box">
-		<div class="form-item">
-			<fieldset>
-                <legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_APPNEW}></label></legend>
-                <div class="form-radios radio-inline">
+
+		<tr>
+					<td><label class="question"><{$smarty.const._AM_SETTINGS_FORM_APPNEW}></label></td>
+					<td><div class="form-radios radio-inline">
                     <label for="yes"><input type="radio" id="new-app-yes" name="new_app_yes_no" value="yes"/><{$smarty.const._AM_YES}></label>
                 </div>
                 <div class="form-radios radio-inline">
@@ -164,11 +119,18 @@
 			          <label class="question">What is the name of the new application?</label>
                 <input type="text" id="applications-name" name="applications-name" value="" />
 							</div>
-            </fieldset>
-		</div>
-	</div> 
+					</td>
+		</tr>
+
+        <tr>
+            <td><label class="question">Note</label></td>
+            <td><textarea id="forms-note" name="forms-note"><{$content.note}></textarea></td>
+        <tr>
+
+	</table>
 
 </form>
+
 <script type="text/javascript">
   $("#<{$content.singleentry}>").attr('checked', true);
   $("#store_revisions-<{$content.store_revisions}>").attr('checked', true);

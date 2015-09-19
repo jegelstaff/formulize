@@ -1294,7 +1294,6 @@ label {
 
 div.accordion-box {
   float: left;
-  width: 385px;
   margin: 0 2em 1.5em 0; }
 
 div.accordion-box-wide {
@@ -1403,8 +1402,7 @@ div.clear-both {
   clear: both; }
 
 div.save-view-access {
-  margin-left: 55%;
-  margin-right: 15px;
+  width: 100%;
   border: 1px solid #0085B6;
   padding: 10px; }
 
@@ -1516,6 +1514,15 @@ form div.form-item > fieldset {
 form label {
   display: inline-block;
   padding: 0 4px 0 0; }
+
+#plain {
+  width: 100%;
+  border: none; }
+  #plain td {
+    padding-bottom: 20px;
+    padding-right: 30px; }
+  #plain blockquote {
+    margin-left: 0; }
 
 form fieldset fieldset {
   /*  border: none; 
