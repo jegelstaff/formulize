@@ -1,4 +1,7 @@
 <?php
+
+print "another change"; 
+
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
 ##                    Copyright (c) 2010 Freeform Solutions                  ##
