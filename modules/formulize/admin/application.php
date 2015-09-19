@@ -156,7 +156,9 @@ $all_screens = array();
 $screen_types = array("form" => "Single Page", "multiPage" => "Multi-page", "listOfEntries" => "List of Entries");
 $screen_sort = $_GET['sort'];
 $screen_sort_order = $_GET['order'];
-foreach ($screen_handler->getObjects(null, null, $screen_sort, $screen_sort_order) as $key => $value) {
+$screen_page = intval($_GET['nav']);
+$screen_limit = 20;
+foreach ($screen_handler->getObjects(null, null, $screen_sort, $screen_sort_order, true, $screen_page, $screen_limit) as $key => $value) {
     $sid = $value->getVar("sid");
     $all_screens[$sid] = array(
         'sid'       => $sid,
@@ -168,11 +170,19 @@ foreach ($screen_handler->getObjects(null, null, $screen_sort, $screen_sort_orde
 }
 
 $common['screenSort'] = $screen_sort;
+$common['order'] = $screen_sort_order;
 if ($screen_sort_order == "DESC") {
 	$common['nextOrder'] = "ASC";
 } else {
 	$common['nextOrder'] = "DESC";
 }
+
+$screen_page = $screen_page < 1 ? 1 : $screen_page;
+$common['prevPage'] = $screen_page - 1;
+$common['nextPage'] = $screen_page + 1;
+$max = count($screen_handler->getObjects(null, null));
+$common['hasPrevPage'] = $screen_page > 1;
+$common['hasNextPage'] = $screen_page * $screen_limit < $max;
 
 $common['aid'] = $aid;
 $common['name'] = $appName;

@@ -18,3 +18,11 @@
 	<{/foreach}>
 	</table>
 </div>
+<div class="form-item">
+<{if $content.hasPrevPage}>
+	<a href="?page=application&aid=<{$content.aid}>&tab=screens&sort=<{$content.screenSort}>&order=<{$content.order}>&nav=<{$content.prevPage}>">Previous Page</a>
+<{/if}>
+<{if $content.hasNextPage}>
+	<a href="?page=application&aid=<{$content.aid}>&tab=screens&sort=<{$content.screenSort}>&order=<{$content.order}>&nav=<{$content.nextPage}>">Next Page</a>
+<{/if}>
+</div>

@@ -149,7 +149,7 @@ class formulizeScreenHandler {
 	}
 
     // returns an array of screen objects
-    function &getObjects($criteria = null, $fid, $sort = null, $order = null) {
+    function &getObjects($criteria = null, $fid, $sort = null, $order = null, $paged = false, $offset = -1, $limit = 20) {
         $sql = "SELECT * FROM " . $this->db->prefix("formulize_screen");
         if(is_object($criteria)) {
             $sql .= " WHERE " . $criteria->render();
@@ -168,6 +168,11 @@ class formulizeScreenHandler {
         	$order = "ASC";
         }
         $sql .= " order by " . $sort . " " . $order;
+        if($paged) {
+        	$sql .= " LIMIT " . $limit;
+        	$begin = $offset < 2 ? 0 : ($offset - 1) * $limit;
+        	$sql .= " OFFSET " . $begin;
+        }
         $screens = array();
         if($result = $this->db->query($sql)) {
         while($array = $this->db->fetchArray($result)) {
