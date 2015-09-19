@@ -286,7 +286,6 @@ function patch40() {
             $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_template") . " (
             templateid int(11) NOT NULL auto_increment,
             sid int(11) NOT NULL default 0,
-            custom_code text NOT NULL,
             template text NOT NULL,
             PRIMARY KEY (`templateid`),
             INDEX i_sid (`sid`)
@@ -336,7 +335,6 @@ function patch40() {
         $sql['add_form_note'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `note` text";
         $sql['add_use_default_when_blank'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_use_default_when_blank` tinyint(1) NOT NULL default '0'";
         $sql['add_global_search_to_saved_view'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_saved_views") . " ADD `sv_global_search` text";
-        $sql['add_application_code'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_applications") . " ADD `custom_code` mediumtext";
         $sql['add_note_to_menu_links']="ALTER TABLE ".$xoopsDB->prefix("formulize_menu_links")." ADD `note` text";
 
         foreach($sql as $key=>$thissql) {
@@ -385,8 +383,6 @@ function patch40() {
                     print "use default when blank already added.  result: OK<br>";
                 } elseif ($key === "add_global_search_to_saved_view") {
                         print "global search saved view already added.  result: OK<br>";
-                } elseif ($key === "add_application_code") {
-                        print "application custom_code field added.  result: OK<br>";
                 } elseif ($key === "add_note_to_menu_links") {
                     print "note already added for menu links.  result: OK<br>";
                 } elseif (strstr($key, 'drop_from_formulize_id_')) {

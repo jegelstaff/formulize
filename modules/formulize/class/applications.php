@@ -80,9 +80,7 @@ global $xoopsDB;
             $sql = 'SELECT links.*, group_concat(group_id separator \',\') as permissions FROM '.$xoopsDB->prefix("formulize_menu_links").' as links ';
 			$sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' as perm ON links.menu_id = perm.menu_id ';
 			$sql .= ' WHERE appid = ' . $id. ' '. $groupSQL .' GROUP BY menu_id,appid,screen,rank,url,link_text,note ORDER BY rank';
-            
-            //echo $sql;
-            
+      
             if ($result = $this->db->query($sql)) { 
                 
                 while($resultArray = $this->db->fetchArray($result)) {			
@@ -144,7 +142,6 @@ class formulizeApplication extends XoopsObject {
     $this->initVar("forms", XOBJ_DTYPE_ARRAY);
     $this->initVar("links", XOBJ_DTYPE_ARRAY);
     $this->initVar("all_links", XOBJ_DTYPE_ARRAY);
-    $this->initVar("custom_code", XOBJ_DTYPE_TXTBOX, NULL, false); //added jan 2015
   }
   
     function forms() {
@@ -292,14 +289,10 @@ class formulizeApplicationsHandler {
       ${$k} = $v;
     }
     if($appObject->isNew() || empty($appid)) {
-        $sql = "INSERT INTO ".$this->db->prefix("formulize_applications") . " (`name`, `description`, `custom_code`) VALUES (".$this->db->quoteString($name).", ".$this->db->quoteString($description).",".$this->db->quoteString($custom_code).")";
+        $sql = "INSERT INTO ".$this->db->prefix("formulize_applications") . " (`name`, `description`) VALUES (".$this->db->quoteString($name).", ".$this->db->quoteString($description).")";
     } else {
-        $sql = "UPDATE ".$this->db->prefix("formulize_applications") . " SET `name` = ".$this->db->quoteString($name).", `description` = ".$this->db->quoteString($description).", `custom_code` = ".$this->db->quoteString($custom_code)." WHERE appid = ".intval($appid);
+        $sql = "UPDATE ".$this->db->prefix("formulize_applications") . " SET `name` = ".$this->db->quoteString($name).", `description` = ".$this->db->quoteString($description)." WHERE appid = ".intval($appid);
     }
-
-    //after executing insertion or updating, we put file in the following path with custom_code
-    $filename=XOOPS_ROOT_PATH."/modules/formulize/temp/application_custom_code_".$appid.".php";
-    file_put_contents($filename,$custom_code);
     
     if( false != $force ){
         $result = $this->db->queryF($sql);
