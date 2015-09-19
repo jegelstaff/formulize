@@ -6,37 +6,35 @@
 <input type="hidden" name="formulize_admin_key" value="<{$content.aid}>">
 <input type="hidden" id="reload_settings" name="reload_settings" value="">
 
-	<table id="plain">
-		<tr><td colspan="2"><legend> Settings </legend></td> </tr>
-			<div class="form-item">
-				<tr>
-					<td  width="30%"><label for="applications-name" class="question"><{$smarty.const._AM_APP_NAMEQUESTION}></label></td>
-					<td><input type="text" id="applications-name" name="applications-name" value="<{$content.name}>" class="input-text" /></td>
-				</tr>
-			</div>
+	<div class="accordion-box">
+		<div class="form-item">
+        	<fieldset>
+                <legend><label for="applications-name" class="question"><{$smarty.const._AM_APP_NAMEQUESTION}></label></legend>
+                <input type="text" id="applications-name" name="applications-name" value="<{$content.name}>" class="input-text" />
+            </fieldset>
+		</div>
 
-			<div class="form-item">
-				<tr>
-					<td><label for="applications-description" class="question"><{$smarty.const._AM_APP_DESCQUESTION}></label></td>
-					<td><textarea rows="4" id="applications-description" name="applications-description"><{$content.description}></textarea></td>
-				</tr>
-			</div>
-
-			<div class="form-item">
-				<tr>
-					<td><label for="applications-forms" class="question"><{$smarty.const._AM_APP_FORMSIN}></label></td>
-					<td>
-						<select id="applications-forms" name="applications-forms[]" size=6 multiple>
-						<{foreach from=$content.forms item=thisform}>
+		<div class="form-item">
+        	<fieldset>
+                <legend><label for="applications-description" class="question"><{$smarty.const._AM_APP_DESCQUESTION}></label></legend>
+                <textarea rows="4" id="applications-description" name="applications-description"><{$content.description}></textarea>
+            </fieldset>
+		</div>
+	
+	</div>
+	
+	<div class="accordion-box">
+		<div class="form-item">
+			<fieldset>
+				<legend><label for="applications-forms" class="question"><{$smarty.const._AM_APP_FORMSIN}></label></legend>
+				<select id="applications-forms" name="applications-forms[]" size=6 multiple>
+					<{foreach from=$content.forms item=thisform}>
 						<option value=<{$thisform.id}><{$thisform.selected}>><{$thisform.name}></option>
-						<{/foreach}>
-						</select>
-					</td>
-				</tr>
-			</div>
-
-	</table>
-
+					<{/foreach}>
+				</select>
+			</fieldset>
+		</div>
+	</div>
 	
 
 </form>

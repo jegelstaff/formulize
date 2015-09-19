@@ -28,120 +28,114 @@ $(document).ready(function() {
 });
 </script>       
 
-	<table id="plain">
-		<tr>
-			<div class="form-item">
-				<td width="30%"><label for="elements_ele_display" class="question">Which groups should see this element?</label></td>
-				<td>
-					<select name="elements_ele_display[]" size=8 multiple>
-						<option value="all"<{$content.ele_display.all}>>All groups with permission to view the form</option>
-						<option value="none"<{$content.ele_display.none}>>No groups</option>
-						<{foreach from=$content.groups item=group}>
-						<{assign var=groupid value=$group.id}>
-						<option value=<{$groupid}><{$content.ele_display.$groupid}>><{$group.name}></option>
-						<{/foreach}>
-					</select>
-				</td>
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements_ele_display" class="question">Which groups should see this element?</label></legend>
+			<select name="elements_ele_display[]" size=8 multiple>
+				<option value="all"<{$content.ele_display.all}>>All groups with permission to view the form</option>
+				<option value="none"<{$content.ele_display.none}>>No groups</option>
+				<{foreach from=$content.groups item=group}>
+				<{assign var=groupid value=$group.id}>
+        <option value=<{$groupid}><{$content.ele_display.$groupid}>><{$group.name}></option>
+        <{/foreach}>
+			</select>
+		</fieldset>
+	</div>
+</div>
+
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements_ele_disabled" class="question">Disable this element for any groups?</label></legend>
+			<select name="elements_ele_disabled[]" size=8 multiple>
+				<option value="none"<{$content.ele_disabled.none}>>Disable for no groups</option>
+				<option value="all"<{$content.ele_disabled.all}>>Disable for all groups</option>
+				<{foreach from=$content.groups item=group}>
+				<{assign var=groupid value=$group.id}>
+        <option value=<{$groupid}><{$content.ele_disabled.$groupid}>><{$group.name}></option>
+        <{/foreach}>
+			</select>
+			<div class="description">
+				<p>Users will see this element if they are a member of any group for which the element is not disabled.  Only users who have all their groups selected here, will see the element as disabled.</p>
 			</div>
-		</tr>
+		</fieldset>
+	</div>
+</div>
 
-		<tr>
-			<td><label for="elements_ele_disabled" class="question">Disable this element for any groups?</label></td>
-			<td>
-				<select name="elements_ele_disabled[]" size=8 multiple>
-					<option value="none"<{$content.ele_disabled.none}>>Disable for no groups</option>
-					<option value="all"<{$content.ele_disabled.all}>>Disable for all groups</option>
-					<{foreach from=$content.groups item=group}>
-					<{assign var=groupid value=$group.id}>
-					<option value=<{$groupid}><{$content.ele_disabled.$groupid}>><{$group.name}></option>
-					<{/foreach}>
-				</select>
-				<div class="description">
-					<p>Users will see this element if they are a member of any group for which the element is not disabled.  Only users who have all their groups selected here, will see the element as disabled.</p>
-				</div>
-			</td>
-		</tr>
+<div class="accordion-box">
+    <div class="form-item">
+    <fieldset>
+	<legend>Regular Form Screens to display to</legend>
+	<div class="form-item">
+		<label for="elements_form_screens">Which form screens should element display on?</label>
+		<select id="elements_form_screens" name="elements_form_screens[]" size="8" multiple>
+		<{foreach from=$content.form_screens item=form_screen}>
+		<{assign var=formscreenid value=$form_screen.sid}>
+        <option value=<{$formscreenid}><{$content.ele_form_screens.$formscreenid}>><{$form_screen.title}></option>
+        <{/foreach}>
+		</select>
+    </div>
+    </fieldset>
+    </div>
+</div>
 
-		<tr>
-			<td colspan="2">
-				<legend>Regular Form Screens to display to</legend>
-			</td>
-		</tr>
-		<tr>
-			<td><label for="elements_form_screens">Which form screens should element display on?</label></td>
-			<td>
-				<select id="elements_form_screens" name="elements_form_screens[]" size="8" multiple>
-					<{foreach from=$content.form_screens item=form_screen}>
-					<{assign var=formscreenid value=$form_screen.sid}>
-					<option value=<{$formscreenid}><{$content.ele_form_screens.$formscreenid}>><{$form_screen.title}></option>
-					<{/foreach}>
-				</select>
-			</td>
-		</tr>
+<div class="accordion-box-wide">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements_ele_filtersettings" class="question">Only display the element in the form if the entry being edited meets these conditions:</label></legend>
+			<div id="displayfilter">
+			<{$content.filtersettings}>
+			</div>
+			<div class="description">
+				<p>When an entry is saved, these conditions will be checked and this element will be displayed or not displayed on the next page load.  This feature is most useful on multipage form screens, which save the entry between pages.</p>
+			</div>
+		</fieldset>
+	</div>
+</div>
 
-		<tr>
-			<td colspan="2"><legend> Display conditions </legend></td>
-		</tr>
-		<tr>
-			<td>
-				<label for="elements_ele_filtersettings" class="question">Only display the element in the form if the entry being edited meets these conditions:</label>
-			</td>
-			<td>
-				<div id="displayfilter">
-					<{$content.filtersettings}>
-				</div>
-				<div class="description">
-					<p>When an entry is saved, these conditions will be checked and this element will be displayed or not displayed on the next page load.  This feature is most useful on multipage form screens, which save the entry between pages.</p>
-				</div>
-			</td>
-		</tr>
+<div class="accordion-box">
+    <div class="form-item">
+    <fieldset>
+	<legend>Multi-Page Form Screens to display to</legend>
+    <ul id="multi-screen-tree">
+		<label for="multi_page_screens">Which pages of the screens should element display on?</label>
+		<{foreach from=$content.multi_form_screens item=form_screen}>
+			<{assign var=formscreenid value=$form_screen.sid}>
+			<{assign var=formscreenpages value=$form_screen.pages}>
+			<li><input type="checkbox" name="multi_page_screens[]" value=all><label><{$form_screen.title}></label>
+			<{foreach from=$formscreenpages key=k item=screen_page}>
+				<{if in_array($content.ele_id, $screen_page)}>
+				 <ul>
+	                <li><input type="checkbox" name="multi_page_screens[]" value=<{$formscreenid|cat:'-'|cat:$k}> checked><label><{$form_screen.pagetitles[$k]}></label>
+	            </ul>
+	            <{else}>
+	            <ul>
+	                <li><input type="checkbox" name="multi_page_screens[]" value=<{$formscreenid|cat:'-'|cat:$k}>><label><{$form_screen.pagetitles[$k]}></label>
+	            </ul>
+	            <{/if}>
+			<{/foreach}>
+        <{/foreach}>         
+	</ul>
+    </fieldset>
+    </div>
+</div>
 
-		<tr>
-			<td colspan="2"><legend>Multi-Page Form Screens to display to</legend></td>
-		</tr>
-		<tr>
-			<td colspan="2">
-				<ul id="multi-screen-tree">
-					<label for="multi_page_screens">Which pages of the screens should element display on?</label>
-					<{foreach from=$content.multi_form_screens item=form_screen}>
-					<{assign var=formscreenid value=$form_screen.sid}>
-					<{assign var=formscreenpages value=$form_screen.pages}>
-					<li><input type="checkbox" name="multi_page_screens[]" value=all><label><{$form_screen.title}></label></li>
-						<{foreach from=$formscreenpages key=k item=screen_page}>
-						<{if in_array($content.ele_id, $screen_page)}>
-						<ul>
-							<li><input type="checkbox" name="multi_page_screens[]" value=<{$formscreenid|cat:'-'|cat:$k}> checked><label><{$form_screen.pagetitles[$k]}></label></li>
-						</ul>
-						<{else}>
-						<ul>
-							<li><input type="checkbox" name="multi_page_screens[]" value=<{$formscreenid|cat:'-'|cat:$k}>><label><{$form_screen.pagetitles[$k]}></label></li>
-						</ul>
-						<{/if}>
-						<{/foreach}>
-						<{/foreach}>
-				</ul>
-			</td>
-
-		</tr>
-
-		<tr>
-			<td colspan="2"><legend><label class="question">Additional display options:</label></legend></td>
-		</tr>
-		<tr>
-			<td colspan="2">
-				<input type="checkbox" name="elements-ele_forcehidden" value="1"<{$content.ele_forcehidden}>> If this element is not displayed to a user, still save its value when the form is submitted.
-				<div class="description">
-					This can be useful for setting default values in a form, for elements the user should not interact with.
-				</div>
-				<br /><input type="checkbox" name="elements-ele_private" value="1"<{$content.ele_private}>> Only display this element to users who have permission to "view private elements".
-				<div class="description">
-					This can be useful for hiding information like phone numbers and other personal details from most other users.
-				</div>
-			</td>
-
-		</tr>
-	</table>
-
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label class="question">Additional display options:</label></legend>
+			<input type="checkbox" name="elements-ele_forcehidden" value="1"<{$content.ele_forcehidden}>> If this element is not displayed to a user, still save its value when the form is submitted.
+			<div class="description">
+				This can be useful for setting default values in a form, for elements the user should not interact with.
+			</div>
+			<br /><input type="checkbox" name="elements-ele_private" value="1"<{$content.ele_private}>> Only display this element to users who have permission to "view private elements".
+			<div class="description">
+				This can be useful for hiding information like phone numbers and other personal details from most other users.
+			</div>
+		</fieldset>
+	</div>
+</div>
 
 </form>
 
