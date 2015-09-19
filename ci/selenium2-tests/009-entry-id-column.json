@@ -44,22 +44,29 @@
     {
       "type": "clickElement",
       "locator": {
-        "type": "xpath",
-        "value": "//table[@class='outer']/tbody/tr[2]/td[2]/select/option[1]"
+          "type": "xpath",
+          "value": "//table[@class='outer']/tbody/tr[2]/td[2]/p/a"
       }
     },
     {
       "type": "clickElement",
       "locator": {
         "type": "xpath",
-        "value": "//table[@class='outer']/tbody/tr[2]/td[2]/select/option[7]"
+        "value": "//table[@class='outer']/tbody/tr[2]/td[2]//*[@id='popnewcols1']"
       }
     },
     {
       "type": "clickElement",
       "locator": {
         "type": "xpath",
-        "value": "//table[@class='outer']/tbody/tr[2]/td[2]/select/option[8]"
+        "value": "//table[@class='outer']/tbody/tr[2]/td[2]//*[@id='popnewcols7']"
+      }
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//table[@class='outer']/tbody/tr[2]/td[2]//*[@id='popnewcols8]"
       }
     },
     {
