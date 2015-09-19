@@ -50,7 +50,6 @@ CREATE TABLE `formulize_applications` (
   `appid` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL default '',
   `description` text NOT NULL,
-  `custom_code` mediumtext,
   PRIMARY KEY (`appid`)
 ) ENGINE=MyISAM;
 
