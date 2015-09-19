@@ -9,6 +9,8 @@
  * @author	    Sina Asghari(aka stranger) <pesian_stranger@users.sourceforge.net>
  * @version		AVN: $Id: index.php 21047 2011-03-14 15:52:14Z m0nty_ $
  **/
+ 
+ //useless
 
 /** Need the mainfile */
 include "mainfile.php";
