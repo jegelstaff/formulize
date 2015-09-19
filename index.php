@@ -11,9 +11,6 @@
  **/
 
 /** Need the mainfile */
-
-
-//useless comment to generate commit. delete this.
 include "mainfile.php";
 
 $member_handler = icms::handler('icms_member');
