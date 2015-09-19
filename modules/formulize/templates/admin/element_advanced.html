@@ -7,69 +7,65 @@
 <input type="hidden" name="original_index_name" value="<{$content.original_index_name}>">
 <input type="hidden" name="original_ele_index" value="<{$content.original_ele_index}>">
 
-<table id="plain">
-
 <{if $content.datatypeui}>
-	<tr>
-
-		<div class="form-item">
-			<td width="30%"><label class="question">How should the data for this element be stored in the database?</label></td>
+<div class="accordion-box-wide">
+<div class="form-item">
+		<fieldset>
+			<legend><label class="question">How should the data for this element be stored in the database?</label></legend>
 			<{$content.datatypeui}>
 			<div class="description">
-				<td><p>Elements that will contain only numbers should use a numeric type, so that sorting and calculations work correctly.  When in doubt, leave this value on its default setting.</p></td>
+				<p>Elements that will contain only numbers should use a numeric type, so that sorting and calculations work correctly.  When in doubt, leave this value on its default setting.</p>
 			</div>
-		</div>
-
-	</tr>
+		</fieldset>
+</div>
+</div>
 <{/if}>
 
-<{if $content.ele_encrypt_show}>
-	<tr>
-		<div class="form-item">
-			<td width="30%"><label for="elements-ele_encrypt" class="question">Encrypt this information in the database?</label></td>
-			<td>
-				<p><input type="radio" name="elements-ele_encrypt" value=1<{$content.ele_encrypt_yes_on}>> Yes</p><p><input type="radio" name="elements-ele_encrypt" value=0<{$content.ele_encrypt_no_on}>> No</p>
-				<div class="description">
-					<p>To prevent anyone who has access to the database from reading the information users submit, you can encrypt the information before it is stored in the database.  Most features of Formulize work with encrypted information, but some unusual operations, like grouping calculation results by an encrypted field, don't work.</p>
-					<p><b>Encryption is dependent on the current database password; if you change the database password, all your encrypted information will be inaccessible!</b></p>
-				</div>
-			</td>
-		</div>
-	</tr>
+<{if $content.ele_encrypt_show}>  
+<div class="accordion-box">
+<div class="form-item">
+		<fieldset>
+			<legend><label for="elements-ele_encrypt" class="question">Encrypt this information in the database?</label></legend>
+      <p><input type="radio" name="elements-ele_encrypt" value=1<{$content.ele_encrypt_yes_on}>> Yes</p>
+			<p><input type="radio" name="elements-ele_encrypt" value=0<{$content.ele_encrypt_no_on}>> No</p>
+      <div class="description">
+				<p>To prevent anyone who has access to the database from reading the information users submit, you can encrypt the information before it is stored in the database.  Most features of Formulize work with encrypted information, but some unusual operations, like grouping calculation results by an encrypted field, don't work.</p>
+        <p><b>Encryption is dependent on the current database password; if you change the database password, all your encrypted information will be inaccessible!</b></p>
+			</div>
+  </fieldset>
+</div>
+</div>
 <{/if}>
-<{if $content.ele_index_show}>
-<tr>
-	<div class="form-item">
-
-			<td><label for="elements-ele_index" class="question">Index this information in the database?</label></td>
-			<td>
-				<p><input type="radio" name="elements-ele_index" value=1<{$content.ele_index_yes_on}>> Yes</p>
-				<p><input type="radio" name="elements-ele_index" value=0<{$content.ele_index_no_on}>> No</p>
-				<div class="description">
-					<p>An index can help speed up searchs but can impact performance in other areas.</p>
-					<p><b>Do not add to all elements as it will create unnecessary overhead!</b></p>
-				</div>
-			</td>
-	</div>
-</tr>
+<{if $content.ele_index_show}>  
+<div class="accordion-box">
+<div class="form-item">
+		<fieldset>
+			<legend><label for="elements-ele_index" class="question">Index this information in the database?</label></legend>
+      <p><input type="radio" name="elements-ele_index" value=1<{$content.ele_index_yes_on}>> Yes</p>
+			<p><input type="radio" name="elements-ele_index" value=0<{$content.ele_index_no_on}>> No</p>
+      <div class="description">
+				<p>An index can help speed up searchs but can impact performance in other areas.</p>
+        <p><b>Do not add to all elements as it will create unnecessary overhead!</b></p>
+			</div>
+  </fieldset>
+</div>
+</div>
 <{/if}>
  
-<{if $content.ele_req_on}>
-<tr>
-		<div class="form-item">
-		  <td width="40%"><label for="elements-ele_req" class="question"><{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK}></label></td>
-			<td>
-				<p><input type="radio" id="elements-ele_use_default_when_blank0" name="elements-ele_use_default_when_blank" value=0> <{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW}></p>
-				<p><input type="radio" id="elements-ele_use_default_when_blank1" name="elements-ele_use_default_when_blank" value=1> <{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK}></p>
-				<div class=description>
-					<p><{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC}></p>
-				</div>
-			</td>
-		</div>
-</tr>
+<{if $content.ele_req_on}>		
+<div class="accordion-box">
+	<div class="form-item">
+   	<fieldset>
+      <legend><label for="elements-ele_req" class="question"><{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK}></label></legend>
+			<p><input type="radio" id="elements-ele_use_default_when_blank0" name="elements-ele_use_default_when_blank" value=0> <{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW}></p>
+			<p><input type="radio" id="elements-ele_use_default_when_blank1" name="elements-ele_use_default_when_blank" value=1> <{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK}></p>
+			<div class=description>
+				<p><{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC}></p>
+			</div>
+		</fieldset>
+	</div>
+</div>
 <{/if}>
-
-</table>
  
 </form>
 

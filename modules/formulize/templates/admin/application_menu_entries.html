@@ -9,19 +9,20 @@
 	<input type="hidden" name="tabnumber" value=<{$number}>>
 		
                             
-        <table id="plain">
+                            
+        <div class="accordion-box">
             <div class="form-item">
             
-                <tr><td colspan="2"><legend> Add links to the menu</legend></td> </tr>
+                <h2> Add links to the menu</h2> 
                 
-                <tr>
-                    <td width="30%">Text for this link:</td>
-                    <td><input type="text" id="addmenutext" name="addmenutext"></td>
-                </tr>
-                <tr>
+                <fieldset>		
+                    <div>
+			<h3>Text for this link:</h3>
+			<input type="text" id="addmenutext" name="addmenutext">
+		    </div>
 		    <div id="listofscreenoptions">
-                        <td>This link goes to:</td>
-                        <td><{html_options name='addnewscreenoptions' options=$content.listsofscreenoptions}></td>
+			<h3>This link goes to:</h3>
+			<{html_options name='addnewscreenoptions' options=$content.listsofscreenoptions}>
 		    </div>
 		    <div>
 			<h3>A note for this link:</h3>
@@ -35,32 +36,30 @@
                     <select name="addgroups" id="addgroups" size=10 multiple style="overflow-y: scroll;">
                         <{foreach from=$content.groups item=group}>
                             <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>                 
-                        <{/foreach}></select>
-                    </td>
-                </tr>
-                <tr>
+                        <{/foreach}>
+                    </select>
+		    </div>
                     <div id="defaultScreenSection"> 
-                        <td>Send these groups to this link right after they login:</td>
-                        <td><select name="defaultScreenGroups" id="addDefaultScreenGroups" size=10 multiple style="overflow-y: scroll;">
+			<h3>Send these groups to this link right after they login:</h3>                        
+			<select name="defaultScreenGroups" id="addDefaultScreenGroups" size=10 multiple style="overflow-y: scroll;">
 			    <{foreach from=$content.groups item=group}>
 				<option value=<{$group.id}><{$group.selected}>><{$group.name}></option>                 
-                            <{/foreach}></select>
+			    <{/foreach}>
+			</select>
+                    </div>
 			<div class="description">
 			<p>This only takes effect if Formulize is also set as the default start page for a group, under <a href='<{$xoops_url}>/modules/system/admin.php?fct=preferences&op=show&confcat_id=1' target='_blank'>General Settings</a></p>
 			</div>
-                        </td>
-                    </div>
-                </tr>
-                <tr>
-                    <td>Add another menu item</td>
-                    <td><button class="menuButton" id="addMenuItem" type="button" >Add Menu Item</button></td>
-                </tr>
-            </div> <!-- class formitem-->
                    
-        </table>
+                </fieldset>
+                
+                <button class="menuButton" id="addMenuItem" type="button" >Add Menu Item</button>				
+                
+            </div>		
+        </div>
                 
         <div class="accordion-box">			
-            <br/><legend> Manage the links in the menu</legend>
+            <h2> Manage the links in the menu</h2>
             <p>Click and drag the links to re-order them</p><br/>
             <div id="sortable-list">        
                 <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/application_menu_entries_sections.html" sections=$content.links}>
