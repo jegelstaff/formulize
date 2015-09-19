@@ -202,7 +202,7 @@ $adminPage['tabs'][$i]['content'] = $common;
 $adminPage['tabs'][$i]['content']['relationships'] = $relationships;
 
 $i++;
-$adminPage['tabs'][$i]['name'] = " Menu Entries";
+$adminPage['tabs'][$i]['name'] = "Menu Entries";
 $adminPage['tabs'][$i]['template'] = "db:admin/application_menu_entries.html";
 $adminPage['tabs'][$i]['content'] = $options + $common;
 $adminPage['tabs'][$i]['content']['links'] = $menulinks;
